@@ -12,6 +12,7 @@ using GagspeakAPI.Dto.Sharehub;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using ImGuiNET;
+using GagspeakAPI.Attributes;
 
 namespace GagSpeak.Services;
 
@@ -21,8 +22,6 @@ public class ShareHubService : DisposableMediatorSubscriberBase
     private readonly MainHub _hub;
     private readonly IpcProvider _ipcProvider;
     private readonly PatternManager _patterns;
-
-    private Task? UiBlockingTask = null;
     public ShareHubService(ILogger<ShareHubService> logger, GagspeakMediator mediator,
         MainHub hub, IpcProvider ipcProvider, PatternManager patterns) : base(logger, mediator)
     {
@@ -30,59 +29,59 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         _ipcProvider = ipcProvider;
         _patterns = patterns;
 
-        Mediator.Subscribe<MainHubConnectedMessage>(this, _ =>
+        Mediator.Subscribe<PostConnectionDataRecievedMessage>(this, msg =>
         {
-            if (MainHub.ConnectionResponse is null)
-                return;
-            ClientPublishedPatterns = MainHub.ConnectionResponse.PublishedPatterns;
-            ClientPublishedMoodles = MainHub.ConnectionResponse.PublishedMoodles;
-
-            // grab the tags.
-            AssignBlockingTask(FetchLatestTags());
+            ClientPublishedPatterns = msg.Info.PublishedPatterns;
+            ClientPublishedMoodles = msg.Info.PublishedMoodles;
+            FetchedTags = msg.Info.HubTags;
         });
     }
 
     public string SearchString { get; set; } = string.Empty;
     public string SearchTags { get; set; } = string.Empty;
-    public ResultFilter SearchFilter { get; set; } = ResultFilter.DatePosted;
+    public HubFilter SearchFilter { get; set; } = HubFilter.DatePosted;
     public DurationLength SearchDuration { get; set; } = DurationLength.Any;
-    public SupportedTypes SearchType { get; set; } = SupportedTypes.Vibration;
-    public SearchSort SearchSort { get; set; } = SearchSort.Descending;
-    public List<ServerPatternInfo> LatestPatternResults { get; private set; } = new List<ServerPatternInfo>();
-    public List<ServerMoodleInfo> LatestMoodleResults { get; private set; } = new List<ServerMoodleInfo>();
-    public HashSet<string> FetchedTags { get; private set; } = new HashSet<string>();
-    public List<PublishedPattern> ClientPublishedPatterns { get; private set; } = new List<PublishedPattern>();
-    public List<PublishedMoodle> ClientPublishedMoodles { get; private set; } = new List<PublishedMoodle>();
+    public ToyBrandName SearchDevice { get; set; } = ToyBrandName.Unknown;
+    public ToyMotor MotorType { get; set; } = ToyMotor.Vibration;
+    public HubDirection SortOrder { get; set; } = HubDirection.Descending;
+    public List<ServerPatternInfo> LatestPatternResults { get; private set; } = new();
+    public List<ServerMoodleInfo> LatestMoodleResults { get; private set; } = new();
+    public List<string> FetchedTags { get; private set; } = new List<string>();
+    public List<PublishedPattern> ClientPublishedPatterns { get; private set; } = new();
+    public List<PublishedMoodle> ClientPublishedMoodles { get; private set; } = new();
 
     // This makes sure that we only automatically fetch the patterns and moodles and tags once automatically.
     // Afterwards, manual updates are requied.
     public bool InitialPatternsCall { get; private set; } = false;
     public bool InitialMoodlesCall { get; private set; } = false;
-    public bool HasPatternResults => LatestPatternResults.Count > 0;
-    public bool HasMoodleResults => LatestMoodleResults.Count > 0;
-    public bool HasTags => FetchedTags.Count > 0;
-    public bool DisableUI => !MainHub.IsConnected || (UiBlockingTask is not null && !UiBlockingTask.IsCompleted);
-
-    public void ToggleSortDirection() => SearchSort = SearchSort == SearchSort.Ascending ? SearchSort.Descending : SearchSort.Ascending;
-
-    private void AssignBlockingTask(Task task)
-    {
-        Logger.LogDebug("Assigning UI blocking task: " + task.Id);
-        UiBlockingTask = task;
-    }
+    public bool HasPatternResults 
+        => LatestPatternResults.Count > 0;
+    public bool HasMoodleResults 
+        => LatestMoodleResults.Count > 0;
+    public bool HasTags 
+        => FetchedTags.Count > 0;
+    public void ToggleSortDirection() 
+        => SortOrder = SortOrder is HubDirection.Ascending ? HubDirection.Descending : HubDirection.Ascending;
 
     // Pattern Tasks
-    public void DownloadPattern(Guid patternId) => AssignBlockingTask(DownloadPatternTask(patternId));
-    public void PerformPatternLikeAction(Guid patternId) => AssignBlockingTask(LikePatternActionTask(patternId));
-    public void UploadPattern(Pattern pattern, string authorName, HashSet<string> tags) => AssignBlockingTask(PatternUploadTask(pattern, authorName, tags));
-    public void RemovePattern(Guid patternId) => AssignBlockingTask(PatternRemoveTask(patternId));
+    public void DownloadPattern(Guid patternId) 
+        => UiService.SetUITask(DownloadPatternTask(patternId));
+    public void PerformPatternLikeAction(Guid patternId) 
+        => UiService.SetUITask(LikePatternActionTask(patternId));
+    public void UploadPattern(Pattern pattern, string authorName, HashSet<string> tags) 
+        => UiService.SetUITask(PatternUploadTask(pattern, authorName, tags));
+    public void RemovePattern(Guid patternId) 
+        => UiService.SetUITask(PatternRemoveTask(patternId));
 
     // Moodles Tasks
-    public void PerformMoodleSearch() => AssignBlockingTask(FetchMoodleTask());
-    public void PerformMoodleLikeAction(Guid moodleId) => AssignBlockingTask(LikeMoodleActionTask(moodleId));
-    public void UploadMoodle(string authorName, HashSet<string> tags, MoodlesStatusInfo moodleInfo) => AssignBlockingTask(UploadMoodleTask(authorName, tags, moodleInfo));
+    public void PerformMoodleSearch() 
+        => UiService.SetUITask(FetchMoodleTask());
+    public void PerformMoodleLikeAction(Guid moodleId) 
+        => UiService.SetUITask(LikeMoodleActionTask(moodleId));
+    public void UploadMoodle(string authorName, HashSet<string> tags, MoodlesStatusInfo moodleInfo) 
+        => UiService.SetUITask(UploadMoodleTask(authorName, tags, moodleInfo));
     public void RemoveMoodle(Guid idToRemove)
-        => UiBlockingTask = RemoveMoodleTask(idToRemove);
+        => UiService.SetUITask(RemoveMoodleTask(idToRemove));
 
     public void TryOnMoodle(Guid moodleId)
     {
@@ -95,63 +94,42 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         _ipcProvider.TryOnStatus(moodleTupleToTry);
     }
 
-    private async Task FetchLatestTags()
-    {
-        var response = await _hub.FetchSearchTags();
-        if (response.ErrorCode is not GagSpeakApiEc.Success)
-        {
-            Logger.LogError($"Failed to fetch tags from servers. Error: {response.ErrorCode}");
-            FetchedTags = new HashSet<string>();
-            return;
-        }
-
-        // make sure the response value is valid.
-        if (response.Value is not { } latestTags)
-        {
-            Logger.LogWarning("No tags returned, or tags were null.");
-            FetchedTags.Clear();
-            return;
-        }
-        
-        // set the fetched tags to the latest tags.
-        FetchedTags = latestTags.OrderBy(x => x).ToHashSet();
-        Logger.LogDebug("Retrieved tags from servers.");
-    }
-
     #region PatternHub Tasks
-    public void PerformPatternSearch()
+    public async Task PerformPatternSearch()
     {
         Logger.LogTrace("Performing Pattern Search.", LoggerType.ShareHub);
-        UiBlockingTask = Task.Run(async () =>
+        // take the comma seperated search string, split them by commas, convert to lowercase, and trim tailing and leading whitespaces.
+        var tags = SearchTags.Split(',')
+            .Select(x => x.ToLower().Trim())
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Where(x => x.Length > 0);
+
+        // Firstly, we should compose the Dto for the search operation.
+        var dto = new PatternSearch(SearchString, tags.ToArray(), SearchFilter, SortOrder)
         {
-            // take the comma seperated search string, split them by commas, convert to lowercase, and trim tailing and leading whitespaces.
-            var tags = SearchTags.Split(',')
-                .Select(x => x.ToLower().Trim())
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Where(x => x.Length > 0)
-                .ToHashSet();
+            Duration = SearchDuration,
+            Toy = SearchDevice,
+            Motor = MotorType
+        };
 
-            // Firstly, we should compose the Dto for the search operation.
-            PatternSearch dto = new(SearchString, tags, SearchFilter, SearchDuration, SearchType, SearchSort);
-            var hubResponse = await _hub.SearchPatterns(dto);
-            var result = hubResponse.Value ?? new List<ServerPatternInfo>();
+        var hubResponse = await _hub.SearchPatterns(dto);
+        var result = hubResponse.Value ?? new List<ServerPatternInfo>();
 
-            // if the result contains an empty list, then we failed to retrieve patterns.
-            if (result.Count <= 0)
-            {
-                Logger.LogError("Failed to retrieve patterns from servers.");
-                LatestPatternResults.Clear();
-            }
-            else
-            {
-                Logger.LogInformation("Retrieved patterns from servers.", LoggerType.ShareHub);
-                LatestPatternResults = result;
-            }
+        // if the result contains an empty list, then we failed to retrieve patterns.
+        if (result.Count <= 0)
+        {
+            Logger.LogError("Failed to retrieve patterns from servers.");
+            LatestPatternResults.Clear();
+        }
+        else
+        {
+            Logger.LogInformation("Retrieved patterns from servers.", LoggerType.ShareHub);
+            LatestPatternResults = result;
+        }
 
-            // if we have not called the initial patterns call, then we set it to true.
-            if (!InitialPatternsCall)
-                InitialPatternsCall = true;
-        });
+        // if we have not called the initial patterns call, then we set it to true.
+        if (!InitialPatternsCall)
+            InitialPatternsCall = true;
     }
 
     private async Task PatternUploadTask(Pattern pattern, string authorName, HashSet<string> tags)
@@ -161,6 +139,10 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             var json = JsonConvert.SerializeObject(pattern);
             var compressed = json.Compress(6);
             var base64Pattern = Convert.ToBase64String(compressed);
+
+            var devices = pattern.PlaybackData.DeviceData.Select(x => x.Toy).Distinct().ToArray();
+            var motors = pattern.PlaybackData.DeviceData.SelectMany(d => d.MotorData).Select(m => m.Motor).Aggregate(ToyMotor.Unknown, (acc, val) => acc | val);
+
             // construct the serverPatternInfo for the upload.
             var patternInfo = new ServerPatternInfo()
             {
@@ -171,8 +153,9 @@ public class ShareHubService : DisposableMediatorSubscriberBase
                 Tags = tags,
                 Length = pattern.Duration,
                 Looping = pattern.ShouldLoop,
-                UsesVibrations = true,
-                UsesRotations = false,
+                PrimaryDeviceUsed = devices.Length > 0 ? devices[0] : ToyBrandName.Unknown,
+                SecondaryDeviceUsed = devices.Length > 1 ? devices[1] : ToyBrandName.Unknown,
+                MotorsUsed = motors,
             };
             Logger.LogTrace("Uploading Pattern to server.", LoggerType.ShareHub);
             // construct the dto for the upload.
@@ -194,7 +177,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
                 Length = pattern.Duration,
                 UploadedDate = DateTime.UtcNow
             });
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Published, Guid.Empty, false);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternHubAction, PatternHubInteractionKind.Published);
         }
         catch (Exception e)
         {
@@ -249,7 +232,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
 
             // Set the active pattern
             _patterns.CreateClone(pattern, pattern.Label);
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Downloaded, pattern.Identifier, false);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternHubAction, PatternHubInteractionKind.Downloaded);
         }
     }
 
@@ -271,7 +254,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             pattern.HasLiked = !pattern.HasLiked;
 
             if (pattern.HasLiked)
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Liked, pattern.Identifier, false);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternHubAction, PatternHubInteractionKind.Liked);
         }
     }
 
@@ -308,10 +291,10 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             .Select(x => x.ToLower().Trim())
             .Where(x => !string.IsNullOrWhiteSpace(x))
             .Where(x => x.Length > 0)
-            .ToHashSet();
+            .ToArray();
 
         // perform the search operation.
-        var res = await _hub.SearchMoodles(new(SearchString, tags, SearchFilter, SearchSort));
+        var res = await _hub.SearchMoodles(new(SearchString, tags, SearchFilter, SortOrder));
         var serverMoodles = res.Value ?? [];
         if (serverMoodles.Count <= 0)
             LatestMoodleResults = new List<ServerMoodleInfo>();
@@ -344,7 +327,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         moodle.HasLikedMoodle = !moodle.HasLikedMoodle;
 
         if (moodle.HasLikedMoodle)
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Liked, moodle.MoodleStatus.GUID, false);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternHubAction, PatternHubInteractionKind.Liked);
     }
 
     private async Task UploadMoodleTask(string authorName, HashSet<string> tags, MoodlesStatusInfo moodleInfo)
@@ -359,7 +342,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             // if the upload was successful, then we can notify the user.
             Mediator.Publish(new NotificationMessage("Moodle Upload", "uploaded successful!", NotificationType.Info));
             ClientPublishedMoodles.Add(new PublishedMoodle() { AuthorName = authorName, MoodleStatus = moodleInfo });
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternAction, PatternInteractionKind.Published, Guid.Empty, false);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternHubAction, PatternHubInteractionKind.Published);
         }
         catch (Exception e)
         {

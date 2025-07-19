@@ -1,3 +1,4 @@
+using CkCommons;
 using CkCommons.FileSystem;
 using CkCommons.FileSystem.Selector;
 using CkCommons.Gui;
@@ -5,20 +6,31 @@ using CkCommons.Helpers;
 using CkCommons.Widgets;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Gui.Remote;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
+using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
+using GagspeakAPI.Data.Permissions;
+using GagspeakAPI.Hub;
 using ImGuiNET;
 using OtterGui;
+using OtterGui.Text;
+using OtterGuiInternal.Structs;
 
 namespace GagSpeak.FileSystems;
 
 // Continue reworking this to integrate a combined approach if we can figure out a better file management system.
 public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternFileSelector.PatternState>, IMediatorSubscriber, IDisposable
 {
+    private readonly MainHub _hub;
     private readonly FavoritesManager _favorites;
     private readonly PatternManager _manager;
+    private readonly RemoteService _remotes;
     public GagspeakMediator Mediator { get; init; }
 
     /// <summary> 
@@ -33,13 +45,15 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
     public new PatternFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
-    public PatternFileSelector(ILogger<PatternFileSelector> log, GagspeakMediator mediator,
-        FavoritesManager favorites, PatternManager manager, PatternFileSystem fileSystem) 
+    public PatternFileSelector(ILogger<PatternFileSelector> log, GagspeakMediator mediator, MainHub hub,
+        FavoritesManager favorites, PatternManager manager, RemoteService remotes, PatternFileSystem fileSystem) 
         : base(fileSystem, Svc.Logger.Logger, Svc.KeyState, "##PatternsFS")
     {
         Mediator = mediator;
+        _hub = hub;
         _favorites = favorites;
         _manager = manager;
+        _remotes = remotes;
 
         Mediator.Subscribe<ConfigPatternChanged>(this, (msg) => OnPatternChange(msg.Type, msg.Item, msg.OldString));
         // Do not subscribe to the default renamer, we only want to rename the item itself.
@@ -73,11 +87,20 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
         // must be a valid drag-drop source, so use invisible button.
         var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
         ImGui.InvisibleButton("leaf", leafSize);
-        var hovered = ImGui.IsItemHovered();
         var rectMin = ImGui.GetItemRectMin();
         var rectMax = ImGui.GetItemRectMax();
-        var bgColor = hovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
-        ImGui.GetWindowDrawList().AddRectFilled(rectMin, rectMax, bgColor, 5);
+
+        var iconSize = CkGui.IconSize(FAI.Trash).X;
+        var spacing = ImGui.GetStyle().ItemSpacing.X;
+        var iconSpacing = iconSize + spacing;
+
+        ImRect leftOfFav = new(rectMin, rectMin + new Vector2(spacing, leafSize.Y));
+        ImRect rightOfFav = new(rectMin + new Vector2(iconSpacing, 0), rectMin + leafSize - new Vector2(iconSpacing * 2, 0));
+
+        var wasHovered = ImGui.IsMouseHoveringRect(leftOfFav.Min, leftOfFav.Max) || ImGui.IsMouseHoveringRect(rightOfFav.Min, rightOfFav.Max);
+        // Draw the base frame, colored.
+        var bgColor = wasHovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
+        ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), bgColor, 5);
 
         // the border if selected.
         if (selected)
@@ -94,55 +117,43 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
         }
 
         ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
-        Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restriction, leaf.Value.Identifier);
+        Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Pattern, leaf.Value.Identifier);
         CkGui.TextFrameAlignedInline(leaf.Value.Label);
-        // Only draw the deletion if the item is not active or occupied.
-        if (!leaf.Value.Identifier.Equals(_manager.ActivePattern?.Identifier))
+        if(leaf.Value.ShouldLoop)
         {
-            ImGui.SameLine((rectMax.X - rectMin.X) - ImGui.GetFrameHeightWithSpacing());
-            var pos = ImGui.GetCursorScreenPos();
-            var hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
-            var col = (hovering && KeyMonitor.ShiftPressed()) ? ImGuiCol.Text : ImGuiCol.TextDisabled;
-            CkGui.FramedIconText(FAI.Trash, ImGui.GetColorU32(col));
-            if (hovering && KeyMonitor.ShiftPressed() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
-            {
-                Log.Debug($"Deleting {leaf.Value.Label} with SHIFT pressed.");
-                _manager.Delete(leaf.Value);
-            }
-            CkGui.AttachToolTip("Delete this Pattern. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
+            ImUtf8.SameLineInner();
+            CkGui.FramedIconText(FAI.Sync, ImGuiColors.ParsedPink);
+            CkGui.AttachToolTip("This Pattern will loop indefinitely until stopped.");
         }
 
-        //using (ImRaii.Group())
-        //{
-        //    // display name, then display the downloads and likes on the other side.
-        //    CkGui.GagspeakText(activeItem.Label);
-        //    CkGui.HelpText("Description:--SEP--" + activeItem.Description);
+        var shiftPressed = KeyMonitor.ShiftPressed();
+        var mouseReleased = ImGui.IsMouseReleased(ImGuiMouseButton.Left);
+        var isActiveItem = leaf.Value.Identifier.Equals(_manager.ActivePatternId);
+        var currentX = leafSize.X - iconSpacing;
 
-        //    // playback button
-        //    ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X);
-        //    // Draw the delete button
-        //    ImGui.SameLine();
-        //}
-        //// next line:
-        //using (var group2 = ImRaii.Group())
-        //{
-        //    ImGui.AlignTextToFramePadding();
-        //    CkGui.IconText(FAI.Clock);
-        //    ImUtf8.SameLineInner();
-        //    CkGui.ColorText(durationTxt, ImGuiColors.DalamudGrey);
-        //    CkGui.AttachToolTip("Total Length of the Pattern.");
+        ImGui.SameLine((rectMax.X - rectMin.X) - ImGui.GetFrameHeightWithSpacing());
+        var pos = ImGui.GetCursorScreenPos();
+        var hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
+        var col = (hovering && shiftPressed) ? ImGuiCol.Text : ImGuiCol.TextDisabled;
+        CkGui.FramedIconText(FAI.Trash, ImGui.GetColorU32(col));
+        if (!isActiveItem && hovering && shiftPressed && mouseReleased)
+        {
+            if (leaf.Value.Identifier.Equals(_manager.ItemInEditor?.Identifier))
+                return;
 
-        //    ImGui.SameLine();
-        //    ImGui.AlignTextToFramePadding();
-        //    CkGui.IconText(FAI.Stopwatch20);
-        //    ImUtf8.SameLineInner();
-        //    CkGui.ColorText(startpointTxt, ImGuiColors.DalamudGrey);
-        //    CkGui.AttachToolTip("Start Point of the Pattern.");
+            Log.Debug($"Deleting {leaf.Value.Label} with SHIFT pressed.");
+            _manager.Delete(leaf.Value);
+        }
+        CkGui.AttachToolTip("Delete this Pattern from storage.--SEP--Must be holding SHIFT to remove.");
 
-        //    ImGui.SameLine(ImGui.GetContentRegionAvail().X - CkGui.IconSize(FAI.Sync).X - ImGui.GetStyle().ItemInnerSpacing.X);
-        //    CkGui.IconText(FAI.Sync, activeItem.ShouldLoop ? ImGuiColors.ParsedPink : ImGuiColors.DalamudGrey2);
-        //    CkGui.AttachToolTip(activeItem.ShouldLoop ? "Pattern is set to loop." : "Pattern does not loop.");
-        //}
+        currentX -= iconSpacing;
+        ImGui.SameLine(currentX);
+        pos = ImGui.GetCursorScreenPos();
+        hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
+        CkGui.FramedIconText(FAI.QuestionCircle, hovering ? ImGui.GetColorU32(ImGuiColors.TankBlue) : ImGui.GetColorU32(ImGuiCol.TextDisabled));
+        CkGui.AttachToolTip($"Total Length: --COL--{leaf.Value.Duration.ToString("mm\\:ss")}--COL--" +
+            $"--NL--Start Time: --COL--{leaf.Value.StartPoint.ToString("mm\\:ss")}--COL--" +
+            $"--NL--Playback Time: --COL--{leaf.Value.PlaybackDuration.ToString("mm\\:ss")}--COL--", color: CkColor.VibrantPink.Vec4());
     }
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>
@@ -161,9 +172,13 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
 
     protected override void DrawCustomFilters()
     {
-        if (CkGui.IconButton(FAI.Plus, inPopup: true))
-            ImGui.OpenPopup("##NewPattern");
-        CkGui.AttachToolTip("Create a new Pattern.");
+        var canRecord = _remotes.CanBeginRecording;
+        if (CkGui.IconButton(FAI.Plus, disabled: !canRecord, inPopup: true))
+        {
+            if(_remotes.TryEnableRecordingMode())
+                Mediator.Publish(new UiToggleMessage(typeof(BuzzToyRemoteUI), ToggleType.Show));
+        }
+        CkGui.AttachToolTip(canRecord ? "Create a new Pattern." : "Cannot be in a VibeRoom, or playing a pattern!");
 
         ImGui.SameLine(0, 1);
         DrawFolderButton();

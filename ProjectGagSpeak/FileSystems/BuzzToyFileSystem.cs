@@ -31,10 +31,10 @@ public sealed class BuzzToyFileSystem : CkFileSystem<BuzzToy>, IMediatorSubscrib
 
     private void Reload()
     {
-        if (Load(new FileInfo(_hybridSaver.FileNames.CKFS_BuzzToys), _manager.SexToys.Values, SexToyToIdentifier, SexToyToName))
+        if (Load(new FileInfo(_hybridSaver.FileNames.CKFS_BuzzToys), _manager.Storage.Values, SexToyToIdentifier, SexToyToName))
             _hybridSaver.Save(this);
 
-        _logger.LogDebug($"Reloaded BuzzToys filesystem with {_manager.SexToys.Count} items.");
+        _logger.LogDebug($"Reloaded BuzzToys filesystem with {_manager.Storage.Count} items.");
     }
 
     public void Dispose()

@@ -1,3 +1,4 @@
+using CkCommons.Gui;
 using CkCommons.Helpers;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.FileSystems;
@@ -20,15 +21,15 @@ namespace GagSpeak.Gui;
 public class DebugStorageUI : WindowMediatorSubscriberBase
 {
     private readonly KinksterRequests _kinksterRequests;
-    private readonly GlobalPermissions _globals;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
     private readonly CursedLootManager _cursedLoot;
     private readonly PuppeteerManager _puppeteer;
-    private readonly TriggerManager _triggers;
-    private readonly AlarmManager _alarms;
+    private readonly BuzzToyManager _toys;
     private readonly PatternManager _patterns;
+    private readonly AlarmManager _alarms;
+    private readonly TriggerManager _triggers;
     private readonly GagFileSystem _gagFS;
     private readonly RestrictionFileSystem _restrictionsFS;
     private readonly RestraintSetFileSystem _restraintsFS;
@@ -38,15 +39,15 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
         ILogger<DebugStorageUI> logger,
         GagspeakMediator mediator,
         KinksterRequests kinksterRequests,
-        GlobalPermissions globals,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
         CursedLootManager cursedLoot,
         PuppeteerManager puppeteer,
-        TriggerManager triggers,
-        AlarmManager alarms,
+        BuzzToyManager toys,
         PatternManager patterns,
+        AlarmManager alarms,
+        TriggerManager triggers,
         GagFileSystem gagFS,
         RestrictionFileSystem restrictionsFS,
         RestraintSetFileSystem restraintsFS,
@@ -55,15 +56,15 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
         : base(logger, mediator, "Debugger for Storages")
     {
         _kinksterRequests = kinksterRequests;
-        _globals = globals;
         _gags = gags;
         _restrictions = restrictions;
         _restraints = restraints;
         _cursedLoot = cursedLoot;
         _puppeteer = puppeteer;
-        _triggers = triggers;
-        _alarms = alarms;
+        _toys = toys;
         _patterns = patterns;
+        _alarms = alarms;
+        _triggers = triggers;
         _gagFS = gagFS;
         _restrictionsFS = restrictionsFS;
         _restraintsFS = restraintsFS;
@@ -106,13 +107,16 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
         DrawPuppeteerPairStorage();
 
         ImGui.Separator();
-        DrawTriggerStorage();
-        
-        ImGui.Separator();
-        DrawAlarmStorage();
-        
+        DrawToyStorage();
+
         ImGui.Separator();
         DrawPatternStorage();
+
+        ImGui.Separator();
+        DrawAlarmStorage();
+
+        ImGui.Separator();
+        DrawTriggerStorage();
     }
 
     public void DrawGlobalData()
@@ -167,90 +171,87 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
                 using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
                 {
                     ImGuiUtil.DrawTableColumn("AllowedGarblerChannels:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current!.AllowedGarblerChannels.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms!.AllowedGarblerChannels.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ChatGarblerActive:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.ChatGarblerActive.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.ChatGarblerActive.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ChatGarblerLocked:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.ChatGarblerLocked.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.ChatGarblerLocked.ToString());
                     ImGui.TableNextRow();
 
                     // wardrobe global modifiable permissions
                     ImGuiUtil.DrawTableColumn("WardrobeEnabled:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.WardrobeEnabled.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.WardrobeEnabled.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("GagVisuals:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.GagVisuals.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.GagVisuals.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("RestrictionVisuals:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.RestrictionVisuals.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.RestrictionVisuals.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("RestraintSetVisuals:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.RestraintSetVisuals.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.RestraintSetVisuals.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("PuppeteerEnabled:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.PuppeteerEnabled.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.PuppeteerEnabled.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("TriggerPhrase:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.TriggerPhrase.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.TriggerPhrase.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("PuppetPerms:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.PuppetPerms.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.PuppetPerms.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ToyboxEnabled:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.ToyboxEnabled.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.ToyboxEnabled.ToString());
                     ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("LockToyboxUI:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.LockToyboxUI.ToString());
+                    ImGuiUtil.DrawTableColumn("ToysInteractable:");
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.ToysAreInteractable.ToString());
                     ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("ToysAreConnected:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.ToysAreConnected.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("ToysAreInUse:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.ToysAreInUse.ToString());
+                    ImGuiUtil.DrawTableColumn("InVibeRoom:");
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.InVibeRoom.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("SpatialAudio:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.SpatialAudio.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.SpatialAudio.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ForcedFollow:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.ForcedFollow.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.ForcedFollow.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ForcedEmoteState:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.ForcedEmoteState.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.ForcedEmoteState.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ForcedStay:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.ForcedStay.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.ForcedStay.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ChatBoxesHidden:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.ChatBoxesHidden.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.ChatBoxesHidden.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ChatInputHidden:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.ChatInputHidden.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.ChatInputHidden.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ChatInputBlocked:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.ChatInputBlocked.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.ChatInputBlocked.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("GlobalShockShareCode:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.GlobalShockShareCode.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.GlobalShockShareCode.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("AllowShocks:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.AllowShocks.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.AllowShocks.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("AllowVibrations:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.AllowVibrations.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.AllowVibrations.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("AllowBeeps:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.AllowBeeps.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.AllowBeeps.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("MaxIntensity:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.MaxIntensity.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.MaxIntensity.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("MaxDuration:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.MaxDuration.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.MaxDuration.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("ShockVibrateDuration:");
-                    ImGuiUtil.DrawTableColumn(_globals.Current.ShockVibrateDuration.ToString());
+                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.ShockVibrateDuration.ToString());
                     ImGui.TableNextRow();
                     ImGuiUtil.DrawTableColumn("User");
                     ImGuiUtil.DrawTableColumn("RecipientUser");
@@ -335,24 +336,6 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
         }
     }
 
-    public void DrawTriggerStorage()
-    {
-        if (!ImGui.CollapsingHeader("Trigger Storage"))
-            return;
-        if (_triggers.Storage.IsNullOrEmpty())
-        {
-            ImGui.TextUnformatted("Trigger Storage is null or empty");
-            return;
-        }
-        foreach (var (trigger, idx) in _triggers.Storage.WithIndex())
-        {
-            using var node = ImRaii.TreeNode($"{trigger.Label}##{idx}");
-            if (!node)
-                continue;
-            DrawTrigger(trigger);
-        }
-    }
-
     public void DrawPuppeteerGlobalStorage()
     {
         if (!ImGui.CollapsingHeader("Puppeteer Global Alias Storage"))
@@ -396,8 +379,26 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
                 DrawAliasTrigger(aliasTrigger);
             }
         }
-
     }
+
+    public void DrawToyStorage()
+    {
+        if (!ImGui.CollapsingHeader("Sex Toy Storage"))
+            return;
+        if (_toys.Storage.IsNullOrEmpty())
+        {
+            ImGui.TextUnformatted("Sex Toy Storage is null/empty");
+            return;
+        }
+        foreach (var (guid, buzzToy) in _toys.Storage)
+        {
+            using var node = ImRaii.TreeNode($"{buzzToy.FactoryName}##{guid}");
+            if (!node)
+                continue;
+            DrawBuzzToy(buzzToy);
+        }
+    }
+
     public void DrawPatternStorage()
     {
         if (!ImGui.CollapsingHeader("Pattern Storage"))
@@ -430,6 +431,24 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
             if (!node)
                 continue;
             DrawAlarm(alarm);
+        }
+    }
+
+    public void DrawTriggerStorage()
+    {
+        if (!ImGui.CollapsingHeader("Trigger Storage"))
+            return;
+        if (_triggers.Storage.IsNullOrEmpty())
+        {
+            ImGui.TextUnformatted("Trigger Storage is null or empty");
+            return;
+        }
+        foreach (var (trigger, idx) in _triggers.Storage.WithIndex())
+        {
+            using var node = ImRaii.TreeNode($"{trigger.Label}##{idx}");
+            if (!node)
+                continue;
+            DrawTrigger(trigger);
         }
     }
 
@@ -784,30 +803,48 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
             }
         }
     }
-    private void DrawTrigger(Trigger trigger)
+
+    private void DrawBuzzToy(BuzzToy toy)
     {
         using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
+            ImGuiUtil.DrawTableColumn("Toy Type");
+            ImGuiUtil.DrawTableColumn(toy.Type.ToString());
+            ImGui.TableNextRow();
+
             ImGuiUtil.DrawTableColumn("Identifier");
-            ImGuiUtil.DrawTableColumn(trigger.Identifier.ToString());
+            ImGuiUtil.DrawTableColumn(toy.Id.ToString());
             ImGui.TableNextRow();
-            ImGuiUtil.DrawTableColumn("Enabled");
-            ImGuiUtil.DrawTableColumn(trigger.Enabled.ToString());
+            
+            ImGuiUtil.DrawTableColumn("BrandName");
+            ImGuiUtil.DrawTableColumn(toy.FactoryName.ToString());
             ImGui.TableNextRow();
-            ImGuiUtil.DrawTableColumn("Priority");
-            ImGuiUtil.DrawTableColumn(trigger.Priority.ToString());
+            
+            ImGuiUtil.DrawTableColumn("LabelName");
+            ImGuiUtil.DrawTableColumn(toy.LabelName);
             ImGui.TableNextRow();
-            ImGuiUtil.DrawTableColumn("Label");
-            ImGuiUtil.DrawTableColumn(trigger.Label);
+            
+            ImGuiUtil.DrawTableColumn("Valid For Remotes:");
+            if (toy is IntifaceBuzzToy ibt)
+            {
+                ImGui.TableNextColumn();
+                CkGui.ColorTextBool($"Device Connected: {ibt.DeviceConnected}", ibt.DeviceConnected);
+                ImGui.TableNextColumn();
+                CkGui.ColorTextBool($"Device Index: {ibt.DeviceIdx}", ibt.DeviceIdx != uint.MaxValue);
+
+            }
+            ImGui.TableNextColumn();
+            CkGui.ColorTextBool("Interactable", toy.Interactable);
             ImGui.TableNextRow();
-            ImGuiUtil.DrawTableColumn("Description");
-            ImGuiUtil.DrawTableColumn(trigger.Description);
-            ImGui.TableNextRow();
-            ImGuiUtil.DrawTableColumn("Action Type");
-            ImGuiUtil.DrawTableColumn(trigger.ActionType.ToString());
-            ImGui.TableNextRow();
-            ImGuiUtil.DrawTableColumn("Invokable Action");
-            ImGuiUtil.DrawTableColumn(trigger.InvokableAction.ToString());
+
+            foreach (var (idx, motor) in toy.MotorMap)
+            {
+                ImGuiUtil.DrawTableColumn($"{motor.Type} (Motor#{idx})");
+                ImGuiUtil.DrawTableColumn($"{motor.StepCount} steps");
+                ImGuiUtil.DrawTableColumn($"{motor.Interval} interval");
+                ImGuiUtil.DrawTableColumn($"{motor.Intensity} intensity");
+                ImGui.TableNextRow();
+            }
         }
     }
 
@@ -864,6 +901,33 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
             ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("RepeatFrequency");
             ImGuiUtil.DrawTableColumn(alarm.DaysToFire.ToString());
+        }
+    }
+
+    private void DrawTrigger(Trigger trigger)
+    {
+        using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        {
+            ImGuiUtil.DrawTableColumn("Identifier");
+            ImGuiUtil.DrawTableColumn(trigger.Identifier.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Enabled");
+            ImGuiUtil.DrawTableColumn(trigger.Enabled.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Priority");
+            ImGuiUtil.DrawTableColumn(trigger.Priority.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Label");
+            ImGuiUtil.DrawTableColumn(trigger.Label);
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Description");
+            ImGuiUtil.DrawTableColumn(trigger.Description);
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Action Type");
+            ImGuiUtil.DrawTableColumn(trigger.ActionType.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Invokable Action");
+            ImGuiUtil.DrawTableColumn(trigger.InvokableAction.ToString());
         }
     }
 

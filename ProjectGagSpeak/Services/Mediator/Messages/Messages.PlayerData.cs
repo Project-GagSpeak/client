@@ -12,8 +12,6 @@ public record TargetPairMessage(Kinkster Pair) : MessageBase; // called when pub
 public record CreateCacheForObjectMessage(GameObjectHandler ObjectToCreateFor) : MessageBase;
 public record ClearCacheForObjectMessage(GameObjectHandler ObjectToCreateFor) : MessageBase; // called when we should clear a GameObject from cache creation service.
 public record MufflerLanguageChanged : MessageBase; // called whenever the client language changes to a new language.
-public record GlobalHardcorePermChange(InteractionType Type, bool State) : MessageBase;
-public record PiShockExecuteOperation(string shareCode, int OpCode, int Intensity, int Duration) : MessageBase;
 
 
 // Kinkster Data Changes

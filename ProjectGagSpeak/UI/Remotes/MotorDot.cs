@@ -3,27 +3,21 @@ using GagSpeak.State.Models;
 
 namespace GagSpeak.Gui.Remote;
 
-// NOTE: Maybe replace lists with stacks for better performance? idk.
-
 /// <summary>
-///     Represents a single plot point in a SexToyRemote used to control a Toy's Motor.
+///     Represents a single plot point in a SexToyRemote used to control a Toy's Motor. <para/>
+///     The <see cref="BuzzToyMotor"/> associated with the MotorDot is intended to be 
+///     defined by <see cref="DeviceDot"/>, which holds the <see cref="BuzzToy"/>'s data.
 /// </summary>
-/// <remarks> 
-///     The <see cref="SexToyMotor"/> associated with the MotorDot is intended to be 
-///     defined by <see cref="DevicePlotState"/>, which holds the <see cref="BuzzToy"/>'s data.
-/// </remarks>
-public class MotorDot(SexToyMotor motor)
+public class MotorDot(BuzzToyMotor motor) : IEquatable<MotorDot>
 {
-    private SexToyMotor _motor { get; } = motor;
+    public readonly BuzzToyMotor Motor = motor;
+    public uint MotorIdx => Motor.MotorIdx;
 
-    /// <summary> Cache holding position data during a drag, when <see cref="IsLooping"/> is true. </summary>
-    private List<double> _cachedLoopData = new();
-
-    /// <summary> The index of <see cref="_cachedLoopData"/> being played back. </summary>
-    private int _loopPlaybackIdx = 0;
-
-    /// <summary> If the latest insertion should grab the loop cache or the position </summary>
-    private bool _prioritizeLoopCache => IsLooping && !IsDragging && _cachedLoopData.Count > 0;
+    private List<double> _dragLoopData = new();
+    private int _dragLoopPlaybackIdx = 0;
+    private bool _useDragLoopData = false;
+    private bool _dragging = false;
+    private bool _looping = false;
 
     /// <summary> The current Position of the MotorDot on the PlotGraph. </summary>
     public double[] Position = new double[2];
@@ -37,107 +31,136 @@ public class MotorDot(SexToyMotor motor)
     public List<double> RecordedData { get; private set; } = new();
 
     /// <summary> If we are moving the MotorDot around. </summary>
-    public bool IsDragging { get; set; }
+    public bool IsDragging
+    {
+        get => _dragging;
+        set
+        {
+            Svc.Logger.Verbose($"Dragging is now {value.ToString()}");
+            _dragging = value;
+            // if the new value was false, disable drag logic.
+            if (!value)
+            {
+                // if we are looping, we should revert the playback idx and enable using drag loop data.
+                if (IsLooping)
+                {
+                    _useDragLoopData = true;
+                    _dragLoopPlaybackIdx = 0;
+                }
+            }
+            // the new value was true, so enable drag logic.
+            else
+            {
+                // if looping, we should begin to record our new loop data chunk.
+                _dragLoopData.Clear();
+                _dragLoopPlaybackIdx = 0;
+                _useDragLoopData = false;
+            }
+        }
+    }
 
     /// <summary> 
     ///     Determines if the MotorDot is recording data in loop mode. <para/>
     ///     While in loop mode, all data from the start to the end of a dragged motion is played back repeatedly.
     /// </summary>
     /// <remarks> Looping playback stops upon being false, or starting another drag loop. </remarks>
-    public bool IsLooping { get; set; }
+    public bool IsLooping
+    {
+        get => _looping;
+        set
+        {
+            Svc.Logger.Verbose($"Looping is now {value.ToString()}");
+            _looping = value;
+            // enabling or disabling looping, it doesnt madder, at the start of either state, loop data should be reset.
+            _dragLoopData.Clear();
+            _dragLoopPlaybackIdx = 0;
+            _useDragLoopData = false;
+        }
+    }
 
     /// <summary> Determines if the MotorDot should defy the laws of gravity or not. </summary>
     public bool IsFloating { get; set; }
 
-    /// <summary> Determines if the MotorDot is displayed in the Plot Graph. </summary>
-    /// <remarks> Positions are still updated when not visible. </remarks>
+    /// <summary> Just a visual property that determines how strong the opacity of the dot is. </summary>
     public bool Visible { get; set; } = true;
 
-    public double GetLastMotorPos() => _prioritizeLoopCache 
-        ? _cachedLoopData[_loopPlaybackIdx] : Position[1];
-
-    public double GetLastMotorIntervalPos() => _prioritizeLoopCache 
-        ? _cachedLoopData[_loopPlaybackIdx] : Math.Round(Position[1] / _motor.Interval) * _motor.Interval;
-
-    public void ClearData(bool keepRecordedData)
+    public double LatestIntervalPos(bool deviceEnabled)
+        => deviceEnabled
+            ? Math.Round((_useDragLoopData ? _dragLoopData[_dragLoopPlaybackIdx] : PosHistory[0]) / Motor.Interval) * Motor.Interval
+            : 0.0;
+    public void ClearData()
     {
-        _cachedLoopData.Clear();
         PosHistory.Clear();
-        if (!keepRecordedData)
-            RecordedData.Clear();
-        Svc.Logger.Verbose("MotorDot Data Cleared!");
-    }
-
-    /// <summary> Begin the dragging state on a motor. </summary>
-    /// <remarks> Resets <see cref="_loopPlaybackIdx"/> and <see cref="_cachedLoopData"/> to record a new loop if looping. </remarks>
-    public void BeginDrag()
-    {
-        IsDragging = true;
-        if (IsLooping)
-        {
-            // reset the loop idx and stored loop data to begin saving a new loop.
-            _loopPlaybackIdx = 0;
-            _cachedLoopData.Clear();
-        }
-        Svc.Logger.Verbose("Dragging Period Started!");
-    }
-
-    /// <summary> Ends the dragging state on a motor. </summary>
-    /// <remarks> If looping, resets <see cref="_loopPlaybackIdx"/> but keeps <see cref="_cachedLoopData"/> so it can be played back. </remarks>
-    public void EndDrag()
-    {
+        RecordedData.Clear();
+        _dragLoopData.Clear();
+        _dragLoopPlaybackIdx = 0;
+        _useDragLoopData = false;
+        IsLooping = false;
         IsDragging = false;
-        if (IsLooping)
-        {
-            // If we end dragging while looping, we should reset the loop index.
-            _loopPlaybackIdx = 0;
-        }
-        Svc.Logger.Verbose("Dragging Period Ended!");
+        IsFloating = false;
+        Visible = true;
     }
 
     /// <summary>
-    ///     Adds the latest position to the PosDisplayHistory. <para/>
-    ///     
-    ///     This should be used for handling the <see cref="PosDisplayHistory"/> and 
-    ///     <see cref="_cachedLoopData"/>, as they are not interval dependant
+    ///     Adds the latest position of the motorDot to the PosHistory. <para/>
+    ///     If <paramref name="deviceEnabled"/> is false, store 0.0 instead.
     /// </summary>
-    public void AddPosToHistory()
+    public void AddPosToHistory(bool deviceEnabled)
     {
-        var pos= _prioritizeLoopCache ? _cachedLoopData[_loopPlaybackIdx] : Position[1];
-        PosHistory.PushFront(pos);
+        var posToPush = deviceEnabled
+            ? (_useDragLoopData ? _dragLoopData[_dragLoopPlaybackIdx] : Position[1])
+            : 0.0;
+        PosHistory.PushFront(posToPush);
+
+        // if we recorded from the loop cache, be sure to increment it.
+        if (_useDragLoopData)
+        {
+            _dragLoopPlaybackIdx++;
+            if (_dragLoopPlaybackIdx >= _dragLoopData.Count)
+                _dragLoopPlaybackIdx = 0;
+        }
+
         // add to cache if recording a loop atm.
-        if (IsLooping && IsDragging)
-            _cachedLoopData.Add(Position[1]);
+        if (_looping && _dragging)
+            _dragLoopData.Add(Position[1]);
     }
 
-    /// <summary> Updates the pos with latest data. </summary>
-    /// <returns> True if it was different from the last sent data, false otherwise. </returns>
-    /// <remarks> Handles <see cref="_loopPlaybackIdx"/> automatically for the looped cache. </remarks>
-    public bool RecordPosition()
+    /// <summary> 
+    ///     Records the latest position to the recorded data. <para/>
+    ///     Records 0.0 if <paramref name="deviceEnabled"/> is false.
+    /// </summary>
+    /// <returns> True an the latest data is a different interval from the last recorded one. </returns>
+    public bool RecordPosition(bool deviceEnabled)
     {
-        // if we are not looping, or looping and not
-        var posToRecord = _prioritizeLoopCache ? _cachedLoopData[_loopPlaybackIdx] 
-            : Math.Round(Position[1] / _motor.Interval) * _motor.Interval;
-
+        var posToRecord = deviceEnabled ? LatestIntervalPos(deviceEnabled) : 0.0;
         var differentValue = RecordedData.LastOrDefault() != posToRecord;
         RecordedData.Add(posToRecord);
-
-        // Handle playback buffer for loops.
-        if (_prioritizeLoopCache)
-        {
-            _loopPlaybackIdx++;
-            if (_loopPlaybackIdx >= _cachedLoopData.Count)
-                _loopPlaybackIdx = 0;
-        }
         return differentValue;
     }
 
-    public void InjectRecordedPositions(IEnumerable<double> positions)
+    // UNKNOWN HOW TO INCORPORATE THIS INTO THE NEW FRAMEWORK.
+    public void InjectPlaybackData(IEnumerable<double> playbackData)
     {
         RecordedData.Clear();
-        RecordedData.AddRange(positions);
-        _cachedLoopData.Clear();
-        _loopPlaybackIdx = 0;
+        RecordedData.AddRange(playbackData);
+        _dragLoopData.Clear();
+        _dragLoopPlaybackIdx = 0;
         Svc.Logger.Verbose("Recorded Positions Injected!");
     }
+
+    public bool Equals(MotorDot? other)
+    {
+        if (other is null) return false;
+        return ReferenceEquals(Motor, other.Motor);
+    }
+
+    public override bool Equals(object? obj)
+    {
+        if (obj is null) return false;
+        if (obj is not MotorDot other) return false;
+        return ReferenceEquals(Motor, other.Motor);
+    }
+
+    public override int GetHashCode()
+        => Motor.GetHashCode();
 }

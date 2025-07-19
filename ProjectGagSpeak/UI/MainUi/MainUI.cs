@@ -44,7 +44,7 @@ public class MainUI : WindowMediatorSubscriberBase
         MainConfig config, KinksterManager pairs, ServerConfigManager serverConfigs,
         HomepageTab home, WhitelistTab whitelist, PatternHubTab patternHub, 
         MoodleHubTab moodlesHub, GlobalChatTab globalChat, AccountTab account, 
-        MainMenuTabs tabMenu, TutorialService tutorialService) 
+        MainMenuTabs tabMenu, TutorialService guides) 
         : base(logger, mediator, "###GagSpeakMainUI")
     {
         _hub = hub;
@@ -58,78 +58,27 @@ public class MainUI : WindowMediatorSubscriberBase
         _globalChat = globalChat;
         _account = account;
         _tabMenu = tabMenu;
-        _guides = tutorialService;
-
-        AllowPinning = false;
-        AllowClickthrough = false;
-        TitleBarButtons = new()
-        {
-            new TitleBarButton()
-            {
-                Icon = FAI.Cog,
-                Click = (msg) => Mediator.Publish(new UiToggleMessage(typeof(SettingsUi))),
-                IconOffset = new(2,1),
-                ShowTooltip = () =>
-                {
-                    ImGui.BeginTooltip();
-                    ImGui.Text("Open Gagspeak Settings");
-                    ImGui.EndTooltip();
-                }
-            },
-            new TitleBarButton()
-            {
-                Icon = FAI.Book,
-                Click = (msg) => Mediator.Publish(new UiToggleMessage(typeof(ChangelogUI))),
-                IconOffset = new(2,1),
-                ShowTooltip = () =>
-                {
-                    ImGui.BeginTooltip();
-                    ImGui.Text("Changelog");
-                    ImGui.EndTooltip();
-                }
-            },
-            new TitleBarButton()
-            {
-                Icon = FAI.QuestionCircle,
-                Click = (msg) =>
-                {
-                    if(_guides.IsTutorialActive(TutorialType.MainUi))
-                    {
-                        _guides.SkipTutorial(TutorialType.MainUi);
-                        _logger.LogInformation("Skipping Main UI Tutorial");
-                    }
-                    else
-                    {
-                        _guides.StartTutorial(TutorialType.MainUi);
-                        _logger.LogInformation("Starting Main UI Tutorial");
-                    }
-                },
-                IconOffset = new(2,1),
-                ShowTooltip = () =>
-                {
-                    ImGui.BeginTooltip();
-                    ImGui.Text("Start/Stop MainUI Tutorial");
-                    ImGui.EndTooltip();
-                }
-            }
-        };
+        _guides = guides;
 
         // display info about the folders
         var ver = Assembly.GetExecutingAssembly().GetName().Version!;
         WindowName = $"GagSpeak Open Beta ({ver.Major}.{ver.Minor}.{ver.Build}.{ver.Revision})###GagSpeakMainUI";
+        Flags |= WFlags.NoDocking;
+
+        this.PinningClickthroughFalse();
+        this.SetBoundaries(new Vector2(380, 500), new Vector2(380, 2000));
+        TitleBarButtons = new TitleBarButtonBuilder()
+            .Add(FAI.Book, "Changelog", () => Mediator.Publish(new UiToggleMessage(typeof(ChangelogUI))))
+            .Add(FAI.Cog, "Settings", () => Mediator.Publish(new UiToggleMessage(typeof(SettingsUi))))
+            .AddTutorial(_guides, TutorialType.MainUi)
+            .Build();
+        
         // Default to open if the user desires for it to be open.
-        if(_configService.Current.OpenMainUiOnStartup) Toggle();
+        if(_configService.Current.OpenMainUiOnStartup)
+            Toggle();
 
         Mediator.Subscribe<SwitchToMainUiMessage>(this, (_) => IsOpen = true);
         Mediator.Subscribe<SwitchToIntroUiMessage>(this, (_) => IsOpen = false);
-
-        Flags |= WFlags.NoDocking;
-
-        SizeConstraints = new WindowSizeConstraints()
-        {
-            MinimumSize = new Vector2(380, 500),
-            MaximumSize = new Vector2(380, 2000),
-        };
     }
 
     private bool ThemePushed = false;
@@ -407,7 +356,7 @@ public class MainUI : WindowMediatorSubscriberBase
             "\n\nIf there is no update Available, then this message Likely Means Cordy is running some last minute tests " +
             "to ensure everyone doesn't crash with the latest update. Hang in there!",
             ServerState.Unauthorized => "You are Unauthorized to access GagSpeak Servers with this account due to an " +
-            "Unauthorized Access. \n\nDetails:\n" + GagspeakHubBase.AuthFailureMessage,
+            "Unauthorized Access. \n\nDetails:\n" + MainHub.AuthFailureMessage,
             _ => string.Empty
         };
     }

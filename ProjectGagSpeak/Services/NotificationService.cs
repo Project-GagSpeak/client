@@ -21,14 +21,11 @@ public enum NotificationLocation
 public class NotificationService : DisposableMediatorSubscriberBase, IHostedService
 {
     private readonly MainConfig _mainConfig;
-    private readonly GlobalPermissions _globals;
     private readonly GagRestrictionManager _gags;
-    public NotificationService(ILogger<NotificationService> logger, GagspeakMediator mediator,
-        MainConfig mainConfig, GlobalPermissions globals, GagRestrictionManager gags)
-        : base(logger, mediator)
+    public NotificationService(ILogger<NotificationService> logger, GagspeakMediator mediator, 
+        MainConfig mainConfig, GagRestrictionManager gags) : base(logger, mediator)
     {
         _mainConfig = mainConfig;
-        _globals = globals;
         _gags = gags;
 
         Mediator.Subscribe<NotificationMessage>(this, ShowNotification);
@@ -36,7 +33,7 @@ public class NotificationService : DisposableMediatorSubscriberBase, IHostedServ
         // notify about live chat garbler on zone switch.
         Mediator.Subscribe<ZoneSwitchStartMessage>(this, (_) =>
         {
-            if(_gags.ServerGagData is not { } gags || _globals.Current is not { } perms)
+            if(_gags.ServerGagData is not { } gags || OwnGlobals.Perms is not { } perms)
                 return;
 
             if (_mainConfig.Current.LiveGarblerZoneChangeWarn && gags.IsGagged() && perms.ChatGarblerActive)

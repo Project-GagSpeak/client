@@ -1,7 +1,8 @@
+using CkCommons;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Network;
 using System.Diagnostics.CodeAnalysis;
-using GagSpeak.PlayerClient;
 
 namespace GagSpeak.Services.Configs;
 

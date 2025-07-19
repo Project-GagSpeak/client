@@ -6,7 +6,9 @@ using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
+using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
@@ -111,9 +113,8 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
             // next line:
             using (ImRaii.Group())
             {
-                var vibeSize = CkGui.IconSize(FAI.Water);
-                var rotationSize = CkGui.IconSize(FAI.GroupArrowsRotate);
-                var allowedLength = ImGui.GetContentRegionAvail().X - vibeSize.X - rotationSize.X - ImGui.GetStyle().ItemSpacing.X;
+                var iconWithSpacing = CkGui.IconSize(FAI.Water).X + ImGui.GetStyle().ItemSpacing.X;
+                var allowedLength = ImGui.GetContentRegionAvail().X - iconWithSpacing * 5;
 
                 ImGui.AlignTextToFramePadding();
                 CkGui.IconText(FAI.Tags);
@@ -126,13 +127,20 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
                     tagsString = tagsString.Substring(0, (int)(allowedLength / ImGui.CalcTextSize("A").X)) + "...";
                 }
                 ImGui.TextUnformatted(tagsString);
-                var rightEnd = ImGui.GetContentRegionAvail().X - vibeSize.X - rotationSize.X - ImGui.GetStyle().ItemSpacing.X;
-                ImGui.SameLine(rightEnd);
-                CkGui.BooleanToColoredIcon(patternInfo.UsesVibrations, false, FAI.Water, FAI.Water, ImGuiColors.ParsedPink, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(patternInfo.UsesVibrations ? "Uses Vibrations" : "Does not use Vibrations");
-                CkGui.BooleanToColoredIcon(patternInfo.UsesRotations, true, FAI.Sync, FAI.Sync, ImGuiColors.ParsedPink, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(patternInfo.UsesRotations ? "Uses Rotations" : "Does not use Rotations");
+
+                ImGui.SameLine(allowedLength);
+                BoolIconWithTooltip(patternInfo.MotorsUsed.HasAny(ToyMotor.Vibration), FAI.Water, "Uses Vibrations" , "Does not use Vibrations");
+                BoolIconWithTooltip(patternInfo.MotorsUsed.HasAny(ToyMotor.Oscillation), FAI.WaveSquare, "Uses Oscillations", "Does not use Oscillations");
+                BoolIconWithTooltip(patternInfo.MotorsUsed.HasAny(ToyMotor.Rotation), FAI.GroupArrowsRotate, "Uses Rotations", "Does not use Rotations");
+                BoolIconWithTooltip(patternInfo.MotorsUsed.HasAny(ToyMotor.Constriction), FAI.ArrowsToDot, "Uses Constrictions", "Does not use Constrictions");
+                BoolIconWithTooltip(patternInfo.MotorsUsed.HasAny(ToyMotor.Inflation), FAI.Expand, "Uses Inflation", "Does not use Inflation");
             }
+        }
+
+        void BoolIconWithTooltip(bool condition, FAI icon, string tooltipOn, string tooltipOff)
+        {
+            CkGui.BooleanToColoredIcon(condition, false, icon, icon, ImGuiColors.ParsedPink, ImGuiColors.DalamudGrey3);
+            CkGui.AttachToolTip(condition ? tooltipOn : tooltipOff);
         }
 
     }
@@ -146,7 +154,7 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
         var sortIconSize = CkGui.IconButtonSize(FAI.SortAmountUp).X;
         var filterTypeSize = 80f;
         var durationFilterSize = 60f;
-        var sortIcon = _shareHub.SearchSort == SearchSort.Ascending ? FAI.SortAmountUp : FAI.SortAmountDown;
+        var sortIcon = _shareHub.SortOrder == HubDirection.Ascending ? FAI.SortAmountUp : FAI.SortAmountDown;
 
         // Draw out the first row. This contains the search bar, the Update Search Button, and the Show 
         using (ImRaii.Group())
@@ -158,8 +166,8 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHubSearch, ImGui.GetWindowPos(), ImGui.GetWindowSize());
 
             ImUtf8.SameLineInner();
-            if (CkGui.IconButton(FAI.Search, disabled: !_shareHub.DisableUI))
-                _shareHub.PerformPatternSearch();
+            if (CkGui.IconButton(FAI.Search, disabled: UiService.DisableUI))
+                UiService.SetUITask(_shareHub.PerformPatternSearch());
             CkGui.AttachToolTip("Update Search Results");
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHubUpdate, ImGui.GetWindowPos(), ImGui.GetWindowSize());
 
@@ -181,7 +189,7 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
             if (CkGui.IconButton(sortIcon))
                 _shareHub.ToggleSortDirection();
             CkGui.AttachToolTip("Sort Direction" +
-                "--SEP--Current: " + _shareHub.SearchSort + "");
+                $"--SEP--Current: {_shareHub.SortOrder}");
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHubResultOrder, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => GagspeakEventManager.AchievementEvent(UnlocksEvent.TutorialCompleted));
         }
 

@@ -1,3 +1,4 @@
+using CkCommons;
 using CkCommons.Helpers;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.ImGuiNotification;
@@ -26,7 +27,6 @@ public sealed class LootHandler
 {
     private readonly ILogger<LootHandler> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly GlobalPermissions _globals;
     private readonly MainHub _hub;
     private readonly KinksterManager _pairs;
     private readonly GagRestrictionManager _gags;
@@ -40,14 +40,12 @@ public sealed class LootHandler
     private uint _prevOpenedLootObjectId = 0;
     private Task? _openLootTask = null;
 
-    public LootHandler(ILogger<LootHandler> logger, GagspeakMediator mediator,
-        GlobalPermissions globals, MainHub hub, KinksterManager pairs,
-        GagRestrictionManager gags, RestrictionManager restrictions,
+    public LootHandler(ILogger<LootHandler> logger, GagspeakMediator mediator, MainHub hub,
+        KinksterManager pairs, GagRestrictionManager gags, RestrictionManager restrictions,
         CursedLootManager manager, MainConfig config, OnFrameworkService frameworkUtils)
     {
         _logger = logger;
         _mediator = mediator;
-        _globals = globals;
         _hub = hub;
         _pairs = pairs;
         _gags = gags;
@@ -212,7 +210,7 @@ public sealed class LootHandler
         // Apply the gag restriction to that player.
         _logger.LogInformation("Applying a cursed Gag Item (" + gag.GagType + ") to layer " + Idx, LoggerType.CursedItems);
         var interactedItem = new LightCursedItem(item.Identifier, item.Label, gag.GagType, Guid.Empty, DateTimeOffset.UtcNow.Add(lockTime));
-        var newInfo = new PushClientCursedLootUpdate(_pairs.GetOnlineUserDatas(), _manager.Storage.ActiveIds, interactedItem);
+        var newInfo = new PushClientCursedLootUpdate(_pairs.GetOnlineUserDatas(), _manager.Storage.ActiveIds.ToList(), interactedItem);
 
         var result = await _hub.UserPushDataCursedLoot(newInfo);
         if (result.ErrorCode is GagSpeakApiEc.Success)
@@ -221,7 +219,7 @@ public sealed class LootHandler
             var message = new SeStringBuilder().AddItalics("As the coffer opens, cursed loot spills forth, silencing your mouth with a Gag now strapped on tight!").BuiltString;
             Svc.Chat.PrintError(message);
 
-            if (_globals.Current?.ChatGarblerActive ?? false)
+            if (OwnGlobals.Perms?.ChatGarblerActive ?? false)
                 _mediator.Publish(new NotificationMessage("Chat Garbler", "LiveChatGarbler Is Active and you were just Gagged! Be cautious of chatting around strangers!", NotificationType.Warning));
 
             // Update the cursed items offset time.
@@ -253,7 +251,7 @@ public sealed class LootHandler
         // Apply the restriction to that player.
         _logger.LogInformation("Applying a cursed Item (" + cursedItem.Label + ") to you!", LoggerType.CursedItems);
         var item = new LightCursedItem(cursedItem.Identifier, cursedItem.Label, GagType.None, restriction.Identifier, DateTimeOffset.UtcNow.Add(lockTime));
-        var newInfo = new PushClientCursedLootUpdate(_pairs.GetOnlineUserDatas(), _manager.Storage.ActiveIds, item);
+        var newInfo = new PushClientCursedLootUpdate(_pairs.GetOnlineUserDatas(), _manager.Storage.ActiveIds.ToList(), item);
 
         var result = await _hub.UserPushDataCursedLoot(newInfo);
         if (result.ErrorCode is GagSpeakApiEc.Success)

@@ -158,8 +158,8 @@ public class ServerStorage
 {
     public List<Authentication> Authentications { get; set; } = [];  // the authentications we have for this client
     public bool FullPause { get; set; } = false;                     // if client is disconnected from the server (not integrated yet)
-    public string ServerName { get; set; } = MainHub.MainServer;     // name of the server client is connected to
-    public string ServiceUri { get; set; } = MainHub.MainServiceUri; // address of the server the client is connected to
+    public string ServerName { get; set; } = MainHub.MAIN_SERVER_NAME;     // name of the server client is connected to
+    public string ServiceUri { get; set; } = MainHub.MAIN_SERVER_URI; // address of the server the client is connected to
 }
 
 

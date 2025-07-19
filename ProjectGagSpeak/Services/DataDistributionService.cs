@@ -1,12 +1,16 @@
+using CkCommons;
 using Dalamud.Interface;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
+using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
+using static FFXIVClientStructs.FFXIV.Component.GUI.AtkComponentNumericInput.Delegates;
 
 namespace GagSpeak.Services;
 
@@ -15,7 +19,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _hub;
     private readonly ClientAchievements _achievements;
-    private readonly KinksterManager _pairs;
+    private readonly KinksterManager _kinksters;
     private readonly GagRestrictionManager _gagManager;
     private readonly RestrictionManager _restrictionManager;
     private readonly RestraintManager _restraintManager;
@@ -30,16 +34,25 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
     private readonly HashSet<UserData> _newVisibleKinksters = [];
     private readonly HashSet<UserData> _newOnlineKinksters = [];
 
-    public DataDistributionService(ILogger<DataDistributionService> logger, GagspeakMediator mediator,
-        MainHub hub, ClientAchievements achievements, KinksterManager pairManager, GagRestrictionManager gags,
-        RestrictionManager restrictions, RestraintManager restraints, CursedLootManager cursedLoot,
-        PuppeteerManager puppetManager, PatternManager patterns, AlarmManager alarms,
-        TriggerManager triggers, TraitAllowanceManager traitAllowances)
+    public DataDistributionService(ILogger<DataDistributionService> logger,
+        GagspeakMediator mediator,
+        MainHub hub,
+        ClientAchievements achievements,
+        KinksterManager kinksters,
+        GagRestrictionManager gags,
+        RestrictionManager restrictions,
+        RestraintManager restraints,
+        CursedLootManager cursedLoot,
+        PuppeteerManager puppetManager,
+        PatternManager patterns,
+        AlarmManager alarms,
+        TriggerManager triggers,
+        TraitAllowanceManager traitAllowances)
         : base(logger, mediator)
     {
         _hub = hub;
         _achievements = achievements;
-        _pairs = pairManager;
+        _kinksters = kinksters;
         _gagManager = gags;
         _restrictionManager = restrictions;
         _restraintManager = restraints;
@@ -62,22 +75,20 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         Mediator.Subscribe<PairHandlerVisibleMessage>(this, msg => _newVisibleKinksters.Add(msg.Player.OnlineUser.User));
 
         // Generic Updaters
-        Mediator.Subscribe<PushGlobalPermChange>(this, arg      => _hub.UserChangeOwnGlobalPerm(new(MainHub.PlayerUserData, new KeyValuePair<string, object>
-            (arg.PermName, arg.NewValue), UpdateDir.Own, MainHub.PlayerUserData)).ConfigureAwait(false));
-
+        Mediator.Subscribe<PushGlobalPermChange>(this, arg      => _hub.UserChangeOwnGlobalPerm(arg.PermName, arg.NewValue).ConfigureAwait(false));
         // Visible Data Updaters
         Mediator.Subscribe<MoodlesApplyStatusToPair>(this, msg  => _hub.UserApplyMoodlesByStatus(msg.StatusDto).ConfigureAwait(false));
-        Mediator.Subscribe<IpcDataChangedMessage>(this, msg     => DistributeDataVisible(_pairs.GetVisibleUsers(), msg.NewIpcData, msg.UpdateType).ConfigureAwait(false));
+        Mediator.Subscribe<IpcDataChangedMessage>(this, msg     => DistributeDataVisible(_kinksters.GetVisibleUsers(), msg.NewIpcData, msg.UpdateType).ConfigureAwait(false));
 
         // Online Data Updaters
-        Mediator.Subscribe<MainHubConnectedMessage>(this, _         => PushCompositeData(_pairs.GetOnlineUserDatas()).ConfigureAwait(false));
-        Mediator.Subscribe<GagDataChangedMessage>(this, arg         => DistributeDataGag(_pairs.GetOnlineUserDatas(), arg).ConfigureAwait(false));
-        Mediator.Subscribe<RestrictionDataChangedMessage>(this, arg => DistributeDataRestriction(_pairs.GetOnlineUserDatas(), arg).ConfigureAwait(false));
-        Mediator.Subscribe<RestraintDataChangedMessage>(this, arg   => DistributeDataRestraint(_pairs.GetOnlineUserDatas(), arg).ConfigureAwait(false));
-        Mediator.Subscribe<AliasGlobalUpdateMessage>(this, arg      => DistributeDataGlobalAlias(_pairs.GetOnlineUserDatas(), arg).ConfigureAwait(false));
+        Mediator.Subscribe<MainHubConnectedMessage>(this, _         => PushCompositeData(_kinksters.GetOnlineUserDatas()).ConfigureAwait(false));
+        Mediator.Subscribe<GagDataChangedMessage>(this, arg         => DistributeDataGag(_kinksters.GetOnlineUserDatas(), arg).ConfigureAwait(false));
+        Mediator.Subscribe<RestrictionDataChangedMessage>(this, arg => DistributeDataRestriction(_kinksters.GetOnlineUserDatas(), arg).ConfigureAwait(false));
+        Mediator.Subscribe<RestraintDataChangedMessage>(this, arg   => DistributeDataRestraint(_kinksters.GetOnlineUserDatas(), arg).ConfigureAwait(false));
+        Mediator.Subscribe<AliasGlobalUpdateMessage>(this, arg      => DistributeDataGlobalAlias(_kinksters.GetOnlineUserDatas(), arg).ConfigureAwait(false));
         Mediator.Subscribe<AliasPairUpdateMessage>(this, arg        => DistributeDataUniqueAlias(arg).ConfigureAwait(false));
-        Mediator.Subscribe<ToyboxDataChangedMessage>(this, arg      => DistributeDataToybox(_pairs.GetOnlineUserDatas(), arg).ConfigureAwait(false));
-        Mediator.Subscribe<LightStorageDataChangedMessage>(this, arg=> DistributeDataStorage(_pairs.GetOnlineUserDatas(), arg).ConfigureAwait(false));
+        Mediator.Subscribe<ToyboxDataChangedMessage>(this, arg      => DistributeDataToybox(_kinksters.GetOnlineUserDatas(), arg).ConfigureAwait(false));
+        Mediator.Subscribe<LightStorageDataChangedMessage>(this, arg=> DistributeDataStorage(_kinksters.GetOnlineUserDatas(), arg).ConfigureAwait(false));
     }
 
     // Storage of previously sent data, to avoid excessive calls when nothing changes.
@@ -99,9 +110,9 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         // Handle Online Players.
         if (_newOnlineKinksters.Count > 0)
         {
-            var newOnlinePairs = _newOnlineKinksters.ToList();
+            var newOnlinekinksters = _newOnlineKinksters.ToList();
             _newOnlineKinksters.Clear();
-            PushCompositeData(newOnlinePairs).ConfigureAwait(false);
+            PushCompositeData(newOnlinekinksters).ConfigureAwait(false);
         }
 
         // Handle Visible Players.
@@ -203,22 +214,22 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
 
 
     /// <summary> 
-    ///     Pushes all our Player Data to all online pairs once connected, or to any new pairs that go online.
+    ///     Pushes all our Player Data to all online kinksters once connected, or to any new kinksters that go online.
     /// </summary>
     /// <remarks>
     ///     TODO: Make this be more optimized so that the composite data is calculated less if possible? Idk.
     /// </remarks>
-    private async Task PushCompositeData(List<UserData> newOnlinePairs)
+    private async Task PushCompositeData(List<UserData> newOnlinekinksters)
     {
-        // if not connected and data synced just add the pairs to the list. (Extra safety net)
+        // if not connected and data synced just add the kinksters to the list. (Extra safety net)
         if (!MainHub.IsConnectionDataSynced)
         {
             Logger.LogDebug("Not pushing Composite Data, not connected to server or data not synced.", LoggerType.ApiCore);
-            _newOnlineKinksters.UnionWith(newOnlinePairs);
+            _newOnlineKinksters.UnionWith(newOnlinekinksters);
             return;
         }
 
-        if (newOnlinePairs.Count <= 0)
+        if (newOnlinekinksters.Count <= 0)
             return;
 
         try
@@ -235,15 +246,15 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
                 PairAliasData = _puppetManager.PairAliasStorage.ToDictionary(),
                 ToyboxData = new CharaToyboxData()
                 {
-                    ActivePattern = _patternManager.ActivePattern?.Identifier ?? Guid.Empty,
+                    ActivePattern = _patternManager.ActivePatternId,
                     ActiveAlarms = _alarmManager.ActiveAlarms.Where(a => a.Enabled).Select(x => x.Identifier).ToList(),
                     ActiveTriggers = _triggerManager.Storage.Where(a => a.Enabled).Select(x => x.Identifier).ToList(),
                 },
                 LightStorageData = newLightStorage,
             };
             
-            Logger.LogDebug($"Pushing CharaCompositeData to: {string.Join(", ", newOnlinePairs.Select(v => v.UID))}", LoggerType.ApiCore);
-            var result = await _hub.UserPushData(new(newOnlinePairs, data, true)).ConfigureAwait(false);
+            Logger.LogDebug($"Pushing CharaCompositeData to: {string.Join(", ", newOnlinekinksters.Select(v => v.UID))}", LoggerType.ApiCore);
+            var result = await _hub.UserPushData(new(newOnlinekinksters, data, true)).ConfigureAwait(false);
             if(result.ErrorCode is GagSpeakApiEc.Success)
             {
                 Logger.LogDebug("Successfully pushed Composite Data to server", LoggerType.ApiCore);
@@ -287,7 +298,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
     /// <remarks> Useful for handlers and services that must await the callback. </remarks>
     /// <returns> True if the operation returned successfully, false if it failed. </returns>
     public async Task<bool> PushGagTriggerAction(int layerIdx, ActiveGagSlot newData, DataUpdateType type)
-        => await DistributeDataGag(_pairs.GetOnlineUserDatas(), new(type, layerIdx, newData));
+        => await DistributeDataGag(_kinksters.GetOnlineUserDatas(), new(type, layerIdx, newData));
 
     /// <summary> Pushes the new GagData to the server. </summary>
     /// <remarks> If this call fails, the previous data will not be updated. </remarks>
@@ -325,7 +336,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
     /// <remarks> Useful for handlers and services that must await the callback. </remarks>
     /// <returns> True if the operation returned successfully, false if it failed. </returns>
     public async Task<bool> PushRestrictionTriggerAction(int layerIdx, ActiveRestriction newData, DataUpdateType type)
-        => await DistributeDataRestriction(_pairs.GetOnlineUserDatas(), new(type, layerIdx, newData));
+        => await DistributeDataRestriction(_kinksters.GetOnlineUserDatas(), new(type, layerIdx, newData));
 
     /// <summary> Pushes the new RestrictionData to the server. </summary>
     /// <remarks> If this call fails, the previous data will not be updated. </remarks>
@@ -363,7 +374,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
     /// <remarks> Useful for handlers and services that must await the callback. </remarks>
     /// <returns> True if the operation returned successfully, false if it failed. </returns>
     public async Task<bool> PushRestraintTriggerAction(CharaActiveRestraint newData, DataUpdateType type)
-        => await DistributeDataRestraint(_pairs.GetOnlineUserDatas(), new(type, newData));
+        => await DistributeDataRestraint(_kinksters.GetOnlineUserDatas(), new(type, newData));
 
     /// <summary> Pushes the new RestraintData to the server. </summary>
     /// <remarks> If this call fails, the previous data will not be updated. </remarks>

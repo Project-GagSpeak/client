@@ -1,3 +1,4 @@
+using CkCommons.Audio;
 using CkCommons.GarblerCore;
 using GagSpeak.Services;
 using GagspeakAPI.Attributes;
@@ -43,16 +44,24 @@ public class GagspeakConfig
 
     // GLOBAL SETTINGS for client user.
     public float FileIconScale { get; set; } = 1.0f; // File Icon Scale
+
     public string Safeword { get; set; } = "";
     public GarbleCoreLang Language { get; set; } = GarbleCoreLang.English; // MuffleCore
     public GarbleCoreDialect LanguageDialect { get; set; } = GarbleCoreDialect.US; // MuffleCore
+    
     public bool CursedLootPanel { get; set; } = false; // CursedLootPanel
     public bool CursedItemsApplyTraits { get; set; } = false; // If Mimics can apply restriction traits to you.
     public bool RemoveRestrictionOnTimerExpire { get; set; } = false; // Auto-Remove Items when timer falloff occurs.
 
-    // GLOBAL VIBRATOR SETTINGS
-    public VibratorEnums VibratorMode { get; set; } = VibratorEnums.Actual;       // if the user is using a simulated vibrator
-    public VibeSimType VibeSimAudio { get; set; } = VibeSimType.Quiet;          // the audio settings for the simulated vibrator
+    // GLOBAL TOYBOX SETTINGS
+    public OutputType AudioOutputType { get; set; } = OutputType.DirectSound; // Best for FFXIV.
+    public Guid DirectOutDevice { get; set; } = Guid.Empty;
+    public string AsioDevice { get; set; } = "";
+    public string WasapiDevice { get; set; } = "";
+
+    // The name displayed when entering a vibe lobby and chatting in it. Should not be changed while in a room.
+    public string NicknameInVibeRooms { get; set; } = "Anon. Kinkster";
+
     public bool IntifaceAutoConnect { get; set; } = false;                      // if we should auto-connect to intiface
     public string IntifaceConnectionSocket { get; set; } = "ws://localhost:12345"; // connection link from plugin to intiface
 

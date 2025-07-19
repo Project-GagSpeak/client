@@ -1,3 +1,4 @@
+using CkCommons;
 using Dalamud.Game.ClientState.Objects;
 using GagSpeak.GameInternals;
 using GagSpeak.GameInternals.Addons;
@@ -16,7 +17,6 @@ namespace GagSpeak.State.Handlers;
 public class HardcoreHandler
 {
     private readonly ILogger<HardcoreHandler> _logger;
-    private readonly GlobalPermissions _globals;
     private readonly AutoPromptController _prompts;
     private readonly KeystateController _keyStates;
     private readonly MovementController _movement;
@@ -25,12 +25,10 @@ public class HardcoreHandler
     // Stores the players's movement mode, useful for when we change it.
     private MovementMode _cachedPlayerMoveMode = MovementMode.NotSet;
 
-    public HardcoreHandler(ILogger<HardcoreHandler> logger, GlobalPermissions globals,
-        AutoPromptController prompts, KeystateController keyStates,
-        MovementController movement, ChatboxController chatbox)
+    public HardcoreHandler(ILogger<HardcoreHandler> logger, AutoPromptController prompts, 
+        KeystateController keyStates, MovementController movement, ChatboxController chatbox)
     {
         _logger = logger;
-        _globals = globals;
         _prompts = prompts;
         _keyStates = keyStates;
         _movement = movement;
@@ -92,7 +90,7 @@ public class HardcoreHandler
 
         // get our current emoteID.
         var currentEmote = EmoteService.CurrentEmoteId(PlayerData.ObjectAddress);
-        var expectedEmote = _globals.ForcedEmoteState;
+        var expectedEmote = OwnGlobals.ForcedEmoteState;
 
         // Handle forcing the state based on what is expected.
         if (expectedEmote.EmoteID is 50 or 52)

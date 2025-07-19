@@ -7,12 +7,12 @@ using CkCommons.Helpers;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Interop;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
-using GagSpeak.Utils;
+using GagspeakAPI.Attributes;
+using GagspeakAPI.Extensions;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Text;
@@ -26,7 +26,7 @@ public sealed class BuzzToyFileSelector : CkFileSystemSelector<BuzzToy, BuzzToyF
     private readonly BuzzToyManager _manager;
     public GagspeakMediator Mediator { get; init; }
 
-    private CoreIntifaceElement _newItemName = CoreIntifaceElement.UnknownDevice;
+    private ToyBrandName _newItemName = ToyBrandName.Unknown;
 
     /// <summary> 
     /// For now, use this 'state storage', it is a list of attributes linked to each leaf.
@@ -113,7 +113,7 @@ public sealed class BuzzToyFileSelector : CkFileSystemSelector<BuzzToy, BuzzToyF
 
         var shiftPressed = KeyMonitor.ShiftPressed();
         var mouseReleased = ImGui.IsMouseReleased(ImGuiMouseButton.Left);
-        bool isEditingItem = leaf.Value.Id.Equals(_manager.ItemInEditor?.Id);
+        var isEditingItem = leaf.Value.Id.Equals(_manager.ItemInEditor?.Id);
         var currentX = leafSize.X - iconSpacing;
 
         ImGui.SameLine((rectMax.X - rectMin.X) - ImGui.GetFrameHeightWithSpacing());
@@ -188,8 +188,9 @@ public sealed class BuzzToyFileSelector : CkFileSystemSelector<BuzzToy, BuzzToyF
         if (ImGui.IsKeyPressed(ImGuiKey.Escape))
             ImGui.CloseCurrentPopup();
 
-        if (CkGuiUtils.EnumCombo("##newName", 300 * ImGuiHelpers.GlobalScale, _newItemName, out var newVal, (n) => n.ToFactoryName(), "Choose Brand Name..", 5, CFlags.None))
+        if (CkGuiUtils.EnumCombo("##newName", 300 * ImGuiHelpers.GlobalScale, _newItemName, out var newVal, (n) => n.ToName(), "Choose Brand Name..", flags: CFlags.None))
         {
+            _newItemName = newVal;
             _manager.CreateNew(_newItemName);
             _newName = string.Empty;
             ImGui.CloseCurrentPopup();

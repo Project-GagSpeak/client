@@ -1,86 +1,71 @@
+using CkCommons;
+using CkCommons.Gui;
+using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Gui.MainWindow;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.Gui.MainWindow;
+using GagSpeak.Utils;
+using GagSpeak.WebAPI;
 using ImGuiNET;
-using CkCommons.Gui;
 
 namespace GagSpeak.Gui;
 
 public class GlobalChatPopoutUI : WindowMediatorSubscriberBase
 {
-    private readonly GlobalChatTab _globalChat;
-    private readonly CosmeticService _cosmetics;
+    private readonly KinkPlateService _plateService;
+    private readonly PopoutGlobalChatlog _popoutGlobalChat;
+    private bool _themePushed = false;
+
     public GlobalChatPopoutUI(ILogger<GlobalChatPopoutUI> logger, GagspeakMediator mediator,
-        GlobalChatTab globalChat, CosmeticService cosmetics) : base(logger, mediator, "Global Chat Popout UI")
+        KinkPlateService plateService, PopoutGlobalChatlog popoutGlobalChat) 
+        : base(logger, mediator, "Global Chat Popout UI")
     {
-        _globalChat = globalChat;
-        _cosmetics = cosmetics;
+        _plateService = plateService;
+        _popoutGlobalChat = popoutGlobalChat;
 
         IsOpen = false;
-        RespectCloseHotkey = false;
-        AllowPinning = false;
-        AllowClickthrough = false;
-
-        SizeConstraints = new WindowSizeConstraints()
-        {
-            MinimumSize = new Vector2(380, 500),
-            MaximumSize = new Vector2(700, 2000),
-        };
+        this.PinningClickthroughFalse();
+        this.SetBoundaries(new Vector2(380, 500), new Vector2(700, 2000));
     }
-
-    private bool HoveringCloseButton { get; set; } = false;
-
-    private bool ThemePushed = false;
     protected override void PreDrawInternal()
     {
-        if (!ThemePushed)
+        if (!_themePushed)
         {
             ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .803f));
             ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.579f, 0.170f, 0.359f, 0.828f));
 
-            ThemePushed = true;
+            _themePushed = true;
         }
     }
 
     protected override void PostDrawInternal()
     {
-        if (ThemePushed)
+        if (_themePushed)
         {
             ImGui.PopStyleColor(2);
-            ThemePushed = false;
+            _themePushed = false;
         }
     }
 
     protected override void DrawInternal()
     {
-        CkGui.AttachToolTip("Right-Click this area to close Global Chat Popout!");
-        if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+        using var font = UiFontService.Default150Percent.Push();
+        using var col = ImRaii.PushColor(ImGuiCol.ScrollbarBg, CkColor.LushPinkButton.Uint())
+            .Push(ImGuiCol.ScrollbarGrab, CkColor.VibrantPink.Uint())
+            .Push(ImGuiCol.ScrollbarGrabHovered, CkColor.VibrantPinkHovered.Uint());
+        // grab the profile object from the profile service.
+        var profile = _plateService.GetKinkPlate(MainHub.PlayerUserData);
+        if (profile.KinkPlateInfo.Disabled || !MainHub.IsVerifiedUser)
         {
-            IsOpen = false;
+            ImGui.Spacing();
+            CkGui.ColorTextCentered("Social Features have been Restricted", ImGuiColors.DalamudRed);
+            ImGui.Spacing();
+            CkGui.ColorTextCentered("Cannot View Global Chat because of this.", ImGuiColors.DalamudRed);
             return;
         }
-        // draw out global chat here.
-        _globalChat.DrawGlobalChatlog("GS_MainGlobal_Popout");
+        
+        _popoutGlobalChat.DrawChat(ImGui.GetContentRegionAvail());
     }
-
-/*    private void CloseButton(ImDrawListPtr drawList)
-    {
-        var btnPos = CloseButtonPos;
-        var btnSize = CloseButtonSize;
-
-        var closeButtonColor = HoveringCloseButton ? ImGui.GetColorU32(new Vector4(1f, 1f, 1f, 1f)) : ImGui.GetColorU32(ImGuiColors.ParsedPink);
-
-        drawList.AddLine(btnPos, btnPos + btnSize, closeButtonColor, 3);
-        drawList.AddLine(new Vector2(btnPos.X + btnSize.X, btnPos.Y), new Vector2(btnPos.X, btnPos.Y + btnSize.Y), closeButtonColor, 3);
-
-
-        ImGui.SetCursorScreenPos(btnPos);
-        if (ImGui.InvisibleButton($"CloseButton##KinkPlateClosePreview" + MainHub.UID, btnSize))
-        {
-            this.IsOpen = false;
-        }
-        HoveringCloseButton = ImGui.IsItemHovered();
-    }*/
-
-
 }

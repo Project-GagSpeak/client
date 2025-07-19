@@ -1,3 +1,4 @@
+using Dalamud.Interface;
 using Dalamud.Interface.ManagedFontAtlas;
 using ImGuiNET;
 using Microsoft.Extensions.Hosting;
@@ -9,6 +10,8 @@ public sealed class UiFontService : IHostedService
 {
     public static IFontHandle IconFont => Svc.PluginInterface.UiBuilder.IconFontFixedWidthHandle;
     public static IFontHandle UidFont { get; private set; }
+    public static IFontHandle Default150Percent { get; private set; }
+    public unsafe static ImFontPtr Default150PercentPtr { get; private set; }
     public static IFontHandle FullScreenFont { get; private set; }
     public unsafe static ImFontPtr FullScreenFontPtr { get; private set; }
 
@@ -77,6 +80,14 @@ public sealed class UiFontService : IHostedService
 
     private void InitLargeFonts()
     {
+        Default150Percent = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
+        {
+            tk.OnPreBuild(prebuild =>
+            {
+                Default150PercentPtr = prebuild.AddDalamudDefaultFont(UiBuilder.DefaultFontSizePx * 1.5f);
+            });
+        });
+
         FullScreenFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
         {
             tk.OnPreBuild(prebuild =>

@@ -1,4 +1,6 @@
+using CkCommons;
 using Dalamud.Game.ClientState.Objects.Types;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using GagSpeak.GameInternals;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
@@ -74,7 +76,6 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         _events.Subscribe<int>(UnlocksEvent.PuppeteerEmoteRecieved, OnPuppeteerReceivedEmoteOrder);
         _events.Subscribe<PuppetPerms>(UnlocksEvent.PuppeteerAccessGiven, OnPuppetAccessGiven);
 
-        _events.Subscribe<PatternInteractionKind, Guid, bool>(UnlocksEvent.PatternAction, OnPatternAction);
 
         _events.Subscribe(UnlocksEvent.DeviceConnected, OnDeviceConnected);
         _events.Subscribe(UnlocksEvent.TriggerFired, OnTriggerFired);
@@ -85,9 +86,9 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
 
         _events.Subscribe<HardcoreSetting, bool, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
 
-        _events.Subscribe(UnlocksEvent.RemoteOpened, () => (ClientAchievements.SaveData[Achievements.JustVibing.Id] as ProgressAchievement)?.IncrementProgress());
-        _events.Subscribe(UnlocksEvent.VibeRoomCreated, () => (ClientAchievements.SaveData[Achievements.VibingWithFriends.Id] as ProgressAchievement)?.IncrementProgress());
-        _events.Subscribe<bool>(UnlocksEvent.VibratorsToggled, OnVibratorToggled);
+        _events.Subscribe<PatternHubInteractionKind>(UnlocksEvent.PatternHubAction, OnPatternHubAction);
+        _events.Subscribe<RemoteInteraction, Guid>(UnlocksEvent.RemoteAction, OnRemoteInteraction);
+        _events.Subscribe<VibeRoomInteraction>(UnlocksEvent.VibeRoomAction, OnVibeRoomInteraction);
 
         _events.Subscribe(UnlocksEvent.PvpPlayerSlain, OnPvpKill);
         _events.Subscribe(UnlocksEvent.ClientSlain, () => (ClientAchievements.SaveData[Achievements.BadEndHostage.Id] as ConditionalAchievement)?.CheckCompletion());
@@ -155,8 +156,6 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         _events.Unsubscribe<int>(UnlocksEvent.PuppeteerEmoteRecieved, OnPuppeteerReceivedEmoteOrder);
         _events.Unsubscribe<PuppetPerms>(UnlocksEvent.PuppeteerAccessGiven, OnPuppetAccessGiven);
 
-        _events.Unsubscribe<PatternInteractionKind, Guid, bool>(UnlocksEvent.PatternAction, OnPatternAction);
-
         _events.Unsubscribe(UnlocksEvent.DeviceConnected, OnDeviceConnected);
         _events.Unsubscribe(UnlocksEvent.TriggerFired, OnTriggerFired);
         _events.Unsubscribe(UnlocksEvent.DeathRollCompleted, () => (ClientAchievements.SaveData[Achievements.KinkyGambler.Id] as ConditionalAchievement)?.CheckCompletion());
@@ -166,9 +165,9 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
 
         _events.Unsubscribe<HardcoreSetting, bool, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
 
-        _events.Unsubscribe(UnlocksEvent.RemoteOpened, () => (ClientAchievements.SaveData[Achievements.JustVibing.Id] as ProgressAchievement)?.CheckCompletion());
-        _events.Unsubscribe(UnlocksEvent.VibeRoomCreated, () => (ClientAchievements.SaveData[Achievements.VibingWithFriends.Id] as ProgressAchievement)?.CheckCompletion());
-        _events.Unsubscribe<bool>(UnlocksEvent.VibratorsToggled, OnVibratorToggled);
+        _events.Unsubscribe<PatternHubInteractionKind>(UnlocksEvent.PatternHubAction, OnPatternHubAction);
+        _events.Unsubscribe<RemoteInteraction, Guid>(UnlocksEvent.RemoteAction, OnRemoteInteraction);
+        _events.Unsubscribe<VibeRoomInteraction>(UnlocksEvent.VibeRoomAction, OnVibeRoomInteraction);
 
         _events.Unsubscribe(UnlocksEvent.PvpPlayerSlain, OnPvpKill);
         _events.Unsubscribe(UnlocksEvent.ClientSlain, () => (ClientAchievements.SaveData[Achievements.BadEndHostage.Id] as ConditionalAchievement)?.CheckCompletion());
@@ -735,63 +734,136 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         }
     }
 
-    private void OnPatternAction(PatternInteractionKind actionType, Guid patternGuid, bool wasAlarm)
+    private void OnPatternHubAction(PatternHubInteractionKind actionType)
     {
         switch (actionType)
         {
-            case PatternInteractionKind.Published:
+            case PatternHubInteractionKind.Published:
                 (ClientAchievements.SaveData[Achievements.MyPleasantriesForAll.Id] as ProgressAchievement)?.IncrementProgress();
                 (ClientAchievements.SaveData[Achievements.DeviousComposer.Id] as ProgressAchievement)?.IncrementProgress();
                 return;
-            case PatternInteractionKind.Downloaded:
+
+            case PatternHubInteractionKind.Downloaded:
                 (ClientAchievements.SaveData[Achievements.TasteOfTemptation.Id] as ProgressAchievement)?.IncrementProgress();
                 (ClientAchievements.SaveData[Achievements.SeekerOfSensations.Id] as ProgressAchievement)?.IncrementProgress();
                 (ClientAchievements.SaveData[Achievements.CravingPleasure.Id] as ProgressAchievement)?.IncrementProgress();
                 return;
-            case PatternInteractionKind.Liked:
+
+            case PatternHubInteractionKind.Liked:
                 (ClientAchievements.SaveData[Achievements.GoodVibes.Id] as ProgressAchievement)?.IncrementProgress();
                 (ClientAchievements.SaveData[Achievements.DelightfulPleasures.Id] as ProgressAchievement)?.IncrementProgress();
                 (ClientAchievements.SaveData[Achievements.PatternLover.Id] as ProgressAchievement)?.IncrementProgress();
                 (ClientAchievements.SaveData[Achievements.SensualConnoisseur.Id] as ProgressAchievement)?.IncrementProgress();
                 (ClientAchievements.SaveData[Achievements.PassionateAdmirer.Id] as ProgressAchievement)?.IncrementProgress();
                 return;
-            case PatternInteractionKind.Started:
-                if (patternGuid != Guid.Empty)
+        }
+    }
+
+    private void OnRemoteInteraction(RemoteInteraction kind, Guid id)
+    {
+        switch (kind)
+        {
+            case RemoteInteraction.RemoteOpened:
+                (ClientAchievements.SaveData[Achievements.JustVibing.Id] as ProgressAchievement)?.IncrementProgress();
+                break;
+
+            case RemoteInteraction.RemoteClosed:
+                break;
+
+            case RemoteInteraction.PersonalStart:
+                // check regardless of pattern ID.
+                (ClientAchievements.SaveData[Achievements.GaggedPleasure.Id] as ConditionalAchievement)?.CheckCompletion();
+                (ClientAchievements.SaveData[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion();
+                break;
+
+            case RemoteInteraction.PersonalEnd:
+                break;
+
+            case RemoteInteraction.PatternRecordStart:
+                break;
+
+            case RemoteInteraction.PatternRecordEnd:
+                break;
+
+            case RemoteInteraction.PatternPlaybackStart:
+                if (id != Guid.Empty)
                 {
-                    (ClientAchievements.SaveData[Achievements.ALittleTease.Id] as DurationAchievement)?.StartTracking(patternGuid.ToString(), MainHub.UID);
-                    (ClientAchievements.SaveData[Achievements.ShortButSweet.Id] as DurationAchievement)?.StartTracking(patternGuid.ToString(), MainHub.UID);
-                    (ClientAchievements.SaveData[Achievements.TemptingRythms.Id] as DurationAchievement)?.StartTracking(patternGuid.ToString(), MainHub.UID);
-                    (ClientAchievements.SaveData[Achievements.MyBuildingDesire.Id] as DurationAchievement)?.StartTracking(patternGuid.ToString(), MainHub.UID);
-                    (ClientAchievements.SaveData[Achievements.WithWavesOfSensation.Id] as DurationAchievement)?.StartTracking(patternGuid.ToString(), MainHub.UID);
-                    (ClientAchievements.SaveData[Achievements.WithHeightenedSensations.Id] as DurationAchievement)?.StartTracking(patternGuid.ToString(), MainHub.UID);
-                    (ClientAchievements.SaveData[Achievements.MusicalMoaner.Id] as DurationAchievement)?.StartTracking(patternGuid.ToString(), MainHub.UID);
-                    (ClientAchievements.SaveData[Achievements.StimulatingExperiences.Id] as DurationAchievement)?.StartTracking(patternGuid.ToString(), MainHub.UID);
-                    (ClientAchievements.SaveData[Achievements.EnduranceKing.Id] as DurationAchievement)?.StartTracking(patternGuid.ToString(), MainHub.UID);
-                    (ClientAchievements.SaveData[Achievements.EnduranceQueen.Id] as DurationAchievement)?.StartTracking(patternGuid.ToString(), MainHub.UID);
+                    (ClientAchievements.SaveData[Achievements.ALittleTease.Id] as DurationAchievement)?.StartTracking(id.ToString(), MainHub.UID);
+                    (ClientAchievements.SaveData[Achievements.ShortButSweet.Id] as DurationAchievement)?.StartTracking(id.ToString(), MainHub.UID);
+                    (ClientAchievements.SaveData[Achievements.TemptingRythms.Id] as DurationAchievement)?.StartTracking(id.ToString(), MainHub.UID);
+                    (ClientAchievements.SaveData[Achievements.MyBuildingDesire.Id] as DurationAchievement)?.StartTracking(id.ToString(), MainHub.UID);
+                    (ClientAchievements.SaveData[Achievements.WithWavesOfSensation.Id] as DurationAchievement)?.StartTracking(id.ToString(), MainHub.UID);
+                    (ClientAchievements.SaveData[Achievements.WithHeightenedSensations.Id] as DurationAchievement)?.StartTracking(id.ToString(), MainHub.UID);
+                    (ClientAchievements.SaveData[Achievements.MusicalMoaner.Id] as DurationAchievement)?.StartTracking(id.ToString(), MainHub.UID);
+                    (ClientAchievements.SaveData[Achievements.StimulatingExperiences.Id] as DurationAchievement)?.StartTracking(id.ToString(), MainHub.UID);
+                    (ClientAchievements.SaveData[Achievements.EnduranceKing.Id] as DurationAchievement)?.StartTracking(id.ToString(), MainHub.UID);
+                    (ClientAchievements.SaveData[Achievements.EnduranceQueen.Id] as DurationAchievement)?.StartTracking(id.ToString(), MainHub.UID);
 
                     // motivation for restoration: Unlike the DutyStart check, this accounts for us starting a pattern AFTER entering Diadem.
-                    if (PlayerContent.TerritoryID is 939 && (ClientAchievements.SaveData[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.TaskStarted is false)
+                    if (PlayerContent.TerritoryID is 939)
                         (ClientAchievements.SaveData[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.StartTask();
                 }
-                if (wasAlarm && patternGuid != Guid.Empty)
-                    (ClientAchievements.SaveData[Achievements.HornyMornings.Id] as ProgressAchievement)?.IncrementProgress();
+                // check regardless of pattern ID.
+                (ClientAchievements.SaveData[Achievements.GaggedPleasure.Id] as ConditionalAchievement)?.CheckCompletion();
+                (ClientAchievements.SaveData[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion();
+
                 return;
-            case PatternInteractionKind.Stopped:
-                if (patternGuid != Guid.Empty)
-                    (ClientAchievements.SaveData[Achievements.ALittleTease.Id] as DurationAchievement)?.StopTracking(patternGuid.ToString(), MainHub.UID);
-                (ClientAchievements.SaveData[Achievements.ShortButSweet.Id] as DurationAchievement)?.StopTracking(patternGuid.ToString(), MainHub.UID);
-                (ClientAchievements.SaveData[Achievements.TemptingRythms.Id] as DurationAchievement)?.StopTracking(patternGuid.ToString(), MainHub.UID);
-                (ClientAchievements.SaveData[Achievements.MyBuildingDesire.Id] as DurationAchievement)?.StopTracking(patternGuid.ToString(), MainHub.UID);
-                (ClientAchievements.SaveData[Achievements.WithWavesOfSensation.Id] as DurationAchievement)?.StopTracking(patternGuid.ToString(), MainHub.UID);
-                (ClientAchievements.SaveData[Achievements.WithHeightenedSensations.Id] as DurationAchievement)?.StopTracking(patternGuid.ToString(), MainHub.UID);
-                (ClientAchievements.SaveData[Achievements.MusicalMoaner.Id] as DurationAchievement)?.StopTracking(patternGuid.ToString(), MainHub.UID);
-                (ClientAchievements.SaveData[Achievements.StimulatingExperiences.Id] as DurationAchievement)?.StopTracking(patternGuid.ToString(), MainHub.UID);
-                (ClientAchievements.SaveData[Achievements.EnduranceKing.Id] as DurationAchievement)?.StopTracking(patternGuid.ToString(), MainHub.UID);
-                (ClientAchievements.SaveData[Achievements.EnduranceQueen.Id] as DurationAchievement)?.StopTracking(patternGuid.ToString(), MainHub.UID);
+
+            case RemoteInteraction.PatternPlaybackEnd:
+                if (id != Guid.Empty)
+                    (ClientAchievements.SaveData[Achievements.ALittleTease.Id] as DurationAchievement)?.StopTracking(id.ToString(), MainHub.UID);
+
+                (ClientAchievements.SaveData[Achievements.ShortButSweet.Id] as DurationAchievement)?.StopTracking(id.ToString(), MainHub.UID);
+                (ClientAchievements.SaveData[Achievements.TemptingRythms.Id] as DurationAchievement)?.StopTracking(id.ToString(), MainHub.UID);
+                (ClientAchievements.SaveData[Achievements.MyBuildingDesire.Id] as DurationAchievement)?.StopTracking(id.ToString(), MainHub.UID);
+                (ClientAchievements.SaveData[Achievements.WithWavesOfSensation.Id] as DurationAchievement)?.StopTracking(id.ToString(), MainHub.UID);
+                (ClientAchievements.SaveData[Achievements.WithHeightenedSensations.Id] as DurationAchievement)?.StopTracking(id.ToString(), MainHub.UID);
+                (ClientAchievements.SaveData[Achievements.MusicalMoaner.Id] as DurationAchievement)?.StopTracking(id.ToString(), MainHub.UID);
+                (ClientAchievements.SaveData[Achievements.StimulatingExperiences.Id] as DurationAchievement)?.StopTracking(id.ToString(), MainHub.UID);
+                (ClientAchievements.SaveData[Achievements.EnduranceKing.Id] as DurationAchievement)?.StopTracking(id.ToString(), MainHub.UID);
+                (ClientAchievements.SaveData[Achievements.EnduranceQueen.Id] as DurationAchievement)?.StopTracking(id.ToString(), MainHub.UID);
                 // motivation for restoration:
                 (ClientAchievements.SaveData[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
                 return;
+
+            case RemoteInteraction.VibeDataStreamStart:
+                // check regardless of pattern ID.
+                (ClientAchievements.SaveData[Achievements.GaggedPleasure.Id] as ConditionalAchievement)?.CheckCompletion();
+                (ClientAchievements.SaveData[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion();
+                break;
+
+            case RemoteInteraction.VibeDataStreamEnd:
+                break;
         }
+    }
+
+    public void OnVibeRoomInteraction(VibeRoomInteraction kind)
+    {
+        switch (kind)
+        {
+            case VibeRoomInteraction.CreatedRoom:
+                break;
+
+            case VibeRoomInteraction.JoinedRoom:
+                (ClientAchievements.SaveData[Achievements.VibingWithFriends.Id] as ProgressAchievement)?.IncrementProgress();
+                break;
+
+            case VibeRoomInteraction.ChangedHost:
+                break;
+
+            case VibeRoomInteraction.GrantedAccess:
+                break;
+
+            case VibeRoomInteraction.RevokedAccess:
+                break;
+
+            case VibeRoomInteraction.ControlOtherStart:
+                break;
+
+            case VibeRoomInteraction.ControlOtherEnd:
+                break;
+        }
+
     }
 
     private void OnDeviceConnected()
@@ -1149,19 +1221,6 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
     private void OnJobChange(uint newJobId)
     {
         (ClientAchievements.SaveData[Achievements.EscapingIsNotEasy.Id] as ConditionalAchievement)?.CheckCompletion();
-    }
-
-    private void OnVibratorToggled(bool newState)
-    {
-        if (newState)
-        {
-            (ClientAchievements.SaveData[Achievements.GaggedPleasure.Id] as ConditionalAchievement)?.CheckCompletion();
-            (ClientAchievements.SaveData[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion();
-        }
-        else
-        {
-
-        }
     }
 
     private void OnPvpKill()

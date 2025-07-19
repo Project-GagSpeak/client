@@ -1,3 +1,4 @@
+using CkCommons;
 using CkCommons.Helpers;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Text.SeStringHandling;
@@ -23,36 +24,31 @@ namespace GagSpeak.State.Handlers;
 public class TriggerHandler
 {
     private readonly ILogger<TriggerHandler> _logger;
-    private readonly MainConfig _config;
-    private readonly GlobalPermissions _globals;
     private readonly PuppeteerManager _aliases;
     private readonly TriggerManager _triggers;
     private readonly TriggerActionService _triggerService;
     private readonly OnFrameworkService _frameworkUtils;
 
-    public TriggerHandler(ILogger<TriggerHandler> logger, MainConfig config,
-        GlobalPermissions globals, PuppeteerManager aliases, TriggerManager triggers,
-        TriggerActionService triggerService, OnFrameworkService frameworkUtils)
+    public TriggerHandler(ILogger<TriggerHandler> logger, PuppeteerManager aliases, 
+        TriggerManager triggers, TriggerActionService service, OnFrameworkService onFramework)
     {
         _logger = logger;
-        _config = config;
-        _globals = globals;
         _aliases = aliases;
         _triggers = triggers;
-        _triggerService = triggerService;
-        _frameworkUtils = frameworkUtils;
+        _triggerService = service;
+        _frameworkUtils = onFramework;
     }
 
     public bool PotentialGlobalTriggerMsg(string senderName, string senderWorld, InputChannel channel, SeString msg)
     {
-        if (_globals.Current is not { } globals)
+        if (OwnGlobals.Perms is not { } globals)
             return false;
 
         // Check for Global Triggers first.
         var globalTriggers = globals.TriggerPhrase.Split('|').ToList();
         if (IsValidTriggerWord(globalTriggers, msg, out var globalMatch))
         {
-            ExecuteTrigger(globalMatch, msg, _globals.Current.PuppetPerms, _aliases.GlobalAliasStorage, ActionSource.GlobalAlias, MainHub.UID);
+            ExecuteTrigger(globalMatch, msg, OwnGlobals.Perms.PuppetPerms, _aliases.GlobalAliasStorage, ActionSource.GlobalAlias, MainHub.UID);
             return true;
         }
         return false;

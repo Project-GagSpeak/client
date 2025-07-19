@@ -7,6 +7,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
@@ -14,6 +15,7 @@ using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
+using GagspeakAPI.Hub;
 using ImGuiNET;
 
 namespace GagSpeak.Gui.Modules.Puppeteer;
@@ -21,10 +23,8 @@ public sealed partial class PuppetVictimGlobalPanel
 {
     private readonly ILogger<PuppetVictimGlobalPanel> _logger;
     private readonly MainHub _hub;
-    private readonly GlobalPermissions _globals;
     private readonly AliasItemDrawer _aliasDrawer;
     private readonly PuppeteerManager _manager;
-    private readonly CosmeticService _cosmetics;
 
     private string _searchStr = string.Empty;
     private IReadOnlyList<AliasTrigger> _filteredItems = new List<AliasTrigger>();
@@ -33,21 +33,13 @@ public sealed partial class PuppetVictimGlobalPanel
 
     private static TagCollection GlobalTriggerTags = new();
 
-    public PuppetVictimGlobalPanel(
-        ILogger<PuppetVictimGlobalPanel> logger,
-        MainHub hub,
-        GlobalPermissions globals,
-        AliasItemDrawer aliasDrawer,
-        PuppeteerManager manager,
-        FavoritesManager favorites,
-        CosmeticService cosmetics)
+    public PuppetVictimGlobalPanel(ILogger<PuppetVictimGlobalPanel> logger, MainHub hub,
+        AliasItemDrawer aliasDrawer, PuppeteerManager manager, FavoritesManager favorites)
     {
         _logger = logger;
         _hub = hub;
-        _globals = globals;
         _manager = manager;
         _aliasDrawer = aliasDrawer;
-        _cosmetics = cosmetics;
 
         _filteredItems = _manager.GlobalAliasStorage.Items;
     }
@@ -139,11 +131,17 @@ public sealed partial class PuppetVictimGlobalPanel
         // extract the tabs by splitting the string by comma's
         using (CkRaii.FramedChildPaddedW("Triggers", c.InnerRegion.X, triggerPhrasesH, CkColor.FancyHeaderContrast.Uint(), DFlags.RoundCornersAll))
         {
-            var globalPhrase = _globals.Current?.TriggerPhrase ?? string.Empty;
-            if (GlobalTriggerTags.DrawTagsEditor("##GlobalPhrases", globalPhrase, out var updatedString) && _globals.Current is { } globals)
+            var globalPhrase = OwnGlobals.Perms?.TriggerPhrase ?? string.Empty;
+            if (GlobalTriggerTags.DrawTagsEditor("##GlobalPhrases", globalPhrase, out var updatedString) && OwnGlobals.Perms is { } globals)
             {
                 _logger.LogTrace("The Tag Editor had an update!");
-                PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.TriggerPhrase), updatedString).ConfigureAwait(false);
+                UiService.SetUITask(async () =>
+                {
+                    var res = await _hub.UserChangeOwnGlobalPerm(new(MainHub.PlayerUserData, new KeyValuePair<string, object>(
+                        nameof(GlobalPerms.TriggerPhrase), updatedString), UpdateDir.Own, MainHub.PlayerUserData)).ConfigureAwait(false);
+                    if (res.ErrorCode is not GagSpeakApiEc.Success)
+                        _logger.LogError($"Failed to update global trigger phrase: {res.ErrorCode}");
+                });
             }
         }
 
@@ -161,12 +159,18 @@ public sealed partial class PuppetVictimGlobalPanel
         ImGui.SameLine(c.InnerRegion.X / 2, ImGui.GetStyle().ItemInnerSpacing.X);
         using (ImRaii.Group())
         {
-            var categoryFilter = (uint)(_globals.Current?.PuppetPerms ?? PuppetPerms.None);
+            var categoryFilter = (uint)(OwnGlobals.Perms?.PuppetPerms ?? PuppetPerms.None);
             foreach (var category in Enum.GetValues<PuppetPerms>().Skip(1))
                 ImGui.CheckboxFlags($"Allow {category}", ref categoryFilter, (uint)category);
 
-            if (_globals.Current is { } globals && globals.PuppetPerms != (PuppetPerms)categoryFilter)
-                PermissionHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.PuppetPerms), (PuppetPerms)categoryFilter).ConfigureAwait(false);
+            if (OwnGlobals.Perms is { } globals && globals.PuppetPerms != (PuppetPerms)categoryFilter)
+                UiService.SetUITask(async () =>
+                {
+                    var res = await _hub.UserChangeOwnGlobalPerm(new(MainHub.PlayerUserData, new KeyValuePair<string, object>(
+                        nameof(GlobalPerms.PuppetPerms), (PuppetPerms)categoryFilter), UpdateDir.Own, MainHub.PlayerUserData)).ConfigureAwait(false);
+                    if (res.ErrorCode is not GagSpeakApiEc.Success)
+                        _logger.LogError($"Failed to update global puppet perms: {res.ErrorCode}");
+                });
         }
     }
 

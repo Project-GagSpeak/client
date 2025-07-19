@@ -3,9 +3,16 @@ using Dalamud.Interface.ImGuiNotification;
 using GagSpeak.GameInternals;
 using GagSpeak.Kinksters;
 using GagSpeak.Services.Events;
+using GagspeakAPI.Data;
 using GagspeakAPI.Network;
 
 namespace GagSpeak.Services.Mediator;
+
+public enum GlobalChatMsgSource
+{
+    MainUi,
+    Popout,
+}
 
 /// <summary> Every time we need to compose a message for the notification message, this is fired. </summary>
 /// <param name="Title"> The title of the notification. </param>
@@ -33,6 +40,9 @@ public record MainHubClosedMessage(Exception? Exception) : SameThreadMessage;
 /// <summary> Fires whenever the client has connected to the GagSpeak Hub. </summary>
 public record MainHubConnectedMessage : MessageBase;
 
+/// <summary> Fired once all personal data related to sharehubs and invites are recieved after connection. </summary>
+public record PostConnectionDataRecievedMessage(LobbyAndHubInfoResponce Info) : MessageBase;
+
 /// <summary> When we want to send off our current Achievement Data. </summary>
 public record SendAchievementData : MessageBase;
 
@@ -41,6 +51,10 @@ public record UpdateCompletedAchievements: MessageBase;
 
 /// <summary> Contains the message content of a Global Chat message. </summary>
 public record GlobalChatMessage(ChatMessageGlobal Message, bool FromSelf) : MessageBase;
+
+/// <summary> Notifies you that a Kinkster in the VibeRoom has sent a message. </summary>
+/// <param name="User"> The Kinkster that sent the message. </param>
+public record VibeRoomChatMessage(UserData Kinkster, string Message) : MessageBase;
 
 /// <summary> Fires once we trigger the safeword command. </summary>
 /// <param name="UID"> The UID of the user we want to safeword for. </param>

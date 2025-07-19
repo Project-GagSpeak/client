@@ -38,7 +38,7 @@ public class ToyboxUI : WindowMediatorSubscriberBase
 
         _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Vibrator], ToyboxTabs.SelectedTab.BuzzToys,
             "Configure your interactable Sex Toy Devices");
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Vibrator], ToyboxTabs.SelectedTab.VibeLobbies,
+        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.VibeLobby], ToyboxTabs.SelectedTab.VibeLobbies,
             "Invite, Join, or create Vibe Rooms to play with others");
         _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Stimulated], ToyboxTabs.SelectedTab.Patterns,
             "Create, Edit, and playback patterns");

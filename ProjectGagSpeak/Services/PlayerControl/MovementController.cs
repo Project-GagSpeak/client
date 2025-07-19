@@ -1,3 +1,4 @@
+using CkCommons;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using GagSpeak.GameInternals.Detours;
 using GagSpeak.PlayerClient;
@@ -16,7 +17,6 @@ namespace GagSpeak.Services.Controller;
 public sealed class MovementController : DisposableMediatorSubscriberBase
 {
     private readonly TraitsCache _traitCache;
-    private readonly GlobalPermissions _globals;
     private readonly MovementDetours _moveDtor;
 
     // Fields useful for forced-follow behavior.
@@ -31,11 +31,10 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     private bool _forceRunDuringTask = false;
 
     public MovementController(ILogger<KeystateController> logger, GagspeakMediator mediator,
-        TraitsCache traitsCache, GlobalPermissions globals, MovementDetours moveDtor)
+        TraitsCache traitsCache, MovementDetours moveDtor)
         : base(logger, mediator)
     {
         _traitCache = traitsCache;
-        _globals = globals;
         _moveDtor = moveDtor;
 
         _timeoutTracker = new Stopwatch();

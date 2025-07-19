@@ -20,7 +20,6 @@ namespace GagSpeak.Gui;
 
 public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 {
-    private readonly GlobalPermissions _globals;
     private readonly KinksterManager _pairs;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
@@ -30,7 +29,6 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
     public DebugPersonalDataUI(
         ILogger<DebugPersonalDataUI> logger,
         GagspeakMediator mediator,
-        GlobalPermissions globals,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
@@ -40,7 +38,6 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         CosmeticService icon)
         : base(logger, mediator, "Kinkster Data Debugger")
     {
-        _globals = globals;
         _pairs = pairs;
         _gags = gags;
         _restrictions = restrictions;
@@ -109,7 +106,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 
     private void DrawPlayerCharacterDebug()
     {
-        DrawGlobalPermissions("Player", _globals.Current ?? new GlobalPerms());
+        DrawGlobalPermissions("Player", OwnGlobals.Perms ?? new GlobalPerms());
         DrawGagData("Player", _gags.ServerGagData ?? new CharaActiveGags());
         DrawRestrictions("Player", _restrictions.ServerRestrictionData ?? new CharaActiveRestrictions());
         DrawRestraint("Player", _restraints.ServerData ?? new CharaActiveRestraint());
@@ -131,60 +128,67 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         ImGui.TableNextRow();
     }
 
-    private void DrawGlobalPermissions(string uid, GlobalPerms perms)
+    private void DrawGlobalPermissions(string uid, IReadOnlyGlobalPerms perms)
     {
         using var nodeMain = ImRaii.TreeNode(uid + " Global Perms");
         if (!nodeMain) return;
 
-        using var table = ImRaii.Table("##debug-global" + uid, 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit);
-        ImGui.TableSetupColumn("Permission");
-        ImGui.TableSetupColumn("Value");
-        ImGui.TableHeadersRow();
+        try
+        {
+            using var table = ImRaii.Table("##debug-global" + uid, 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit);
+            if (!table) return;
+            ImGui.TableSetupColumn("Permission");
+            ImGui.TableSetupColumn("Value");
+            ImGui.TableHeadersRow();
 
-        DrawPermissionRowString("Allowed Garble Channels", perms.AllowedGarblerChannels.ToString());
-        DrawPermissionRowBool("Live Chat Garbler", perms.ChatGarblerActive);
-        DrawPermissionRowBool("Live Chat Garbler Locked", perms.ChatGarblerLocked);
-        DrawPermissionRowBool("Gagged Nameplate", perms.GaggedNameplate);
-        
-        ImGui.TableNextRow();
-        DrawPermissionRowBool("Wardrobe Active", perms.WardrobeEnabled);
-        DrawPermissionRowBool("Gag Visuals", perms.GagVisuals);
-        DrawPermissionRowBool("Restriction Visuals", perms.RestrictionVisuals);
-        DrawPermissionRowBool("Restraint Visuals", perms.RestraintSetVisuals);
-        
-        ImGui.TableNextRow();
-        DrawPermissionRowBool("Puppeteer Active", perms.PuppeteerEnabled);
-        DrawPermissionRowString("Global Trigger Phrase", perms.TriggerPhrase);
-        DrawPermissionRowBool("Allow Sit Requests", perms.PuppetPerms.HasAny(PuppetPerms.Sit));
-        DrawPermissionRowBool("Allow Motion Requests", perms.PuppetPerms.HasAny(PuppetPerms.Emotes));
-        DrawPermissionRowBool("Allow Alias Requests", perms.PuppetPerms.HasAny(PuppetPerms.Alias));
-        DrawPermissionRowBool("Allow All Requests", perms.PuppetPerms.HasAny(PuppetPerms.All));
-        
-        ImGui.TableNextRow();
-        DrawPermissionRowBool("Toybox Active", perms.ToyboxEnabled);
-        DrawPermissionRowBool("Lock Toybox UI", perms.LockToyboxUI);
-        DrawPermissionRowBool("Sex Toy Active", perms.ToysAreConnected);
-        DrawPermissionRowBool("Toys In Use", perms.ToysAreInUse);
-        DrawPermissionRowBool("Spatial Vibrator Audio", perms.SpatialAudio);
+            DrawPermissionRowString("Allowed Garble Channels", perms.AllowedGarblerChannels.ToString());
+            DrawPermissionRowBool("Live Chat Garbler", perms.ChatGarblerActive);
+            DrawPermissionRowBool("Live Chat Garbler Locked", perms.ChatGarblerLocked);
+            DrawPermissionRowBool("Gagged Nameplate", perms.GaggedNameplate);
 
-        ImGui.TableNextRow();
-        DrawPermissionRowString("ActiveHypnosisEffect", perms.HypnosisCustomEffect);
-        
-        ImGui.TableNextRow();
-        DrawPermissionRowString("Forced Follow", perms.ForcedFollow);
-        DrawPermissionRowString("Forced Emote State", perms.ForcedEmoteState);
-        DrawPermissionRowString("Forced Stay", perms.ForcedStay);
-        DrawPermissionRowString("Chat Boxes Hidden", perms.ChatBoxesHidden);
-        DrawPermissionRowString("Chat Input Hiddeen", perms.ChatInputHidden);
-        DrawPermissionRowString("Chat Input Blocked", perms.ChatInputBlocked);
-        
-        ImGui.TableNextRow();
-        DrawPermissionRowString("Shock Collar Code", perms.GlobalShockShareCode);
-        DrawPermissionRowBool("Allow Shocks ", perms.AllowShocks);
-        DrawPermissionRowBool("Allow Vibrations", perms.AllowVibrations);
-        DrawPermissionRowBool("Allow Beeps", perms.AllowBeeps);
-        DrawPermissionRowString("Max Intensity", perms.MaxIntensity.ToString());
-        DrawPermissionRowString("Max Duration", perms.MaxDuration.ToString());
+            ImGui.TableNextRow();
+            DrawPermissionRowBool("Wardrobe Active", perms.WardrobeEnabled);
+            DrawPermissionRowBool("Gag Visuals", perms.GagVisuals);
+            DrawPermissionRowBool("Restriction Visuals", perms.RestrictionVisuals);
+            DrawPermissionRowBool("Restraint Visuals", perms.RestraintSetVisuals);
+
+            ImGui.TableNextRow();
+            DrawPermissionRowBool("Puppeteer Active", perms.PuppeteerEnabled);
+            DrawPermissionRowString("Global Trigger Phrase", perms.TriggerPhrase);
+            DrawPermissionRowBool("Allow Sit Requests", perms.PuppetPerms.HasAny(PuppetPerms.Sit));
+            DrawPermissionRowBool("Allow Motion Requests", perms.PuppetPerms.HasAny(PuppetPerms.Emotes));
+            DrawPermissionRowBool("Allow Alias Requests", perms.PuppetPerms.HasAny(PuppetPerms.Alias));
+            DrawPermissionRowBool("Allow All Requests", perms.PuppetPerms.HasAny(PuppetPerms.All));
+
+            ImGui.TableNextRow();
+            DrawPermissionRowBool("Toybox Active", perms.ToyboxEnabled);
+            //DrawPermissionRowBool("Toys Are Interactable", perms.ToysAreInteractable);
+            //DrawPermissionRowBool("In VibeRoom", perms.InVibeRoom);
+            DrawPermissionRowBool("Spatial Vibrator Audio", perms.SpatialAudio);
+
+            ImGui.TableNextRow();
+            DrawPermissionRowString("ActiveHypnosisEffect", perms.HypnosisCustomEffect);
+
+            ImGui.TableNextRow();
+            DrawPermissionRowString("Forced Follow", perms.ForcedFollow);
+            DrawPermissionRowString("Forced Emote State", perms.ForcedEmoteState);
+            DrawPermissionRowString("Forced Stay", perms.ForcedStay);
+            DrawPermissionRowString("Chat Boxes Hidden", perms.ChatBoxesHidden);
+            DrawPermissionRowString("Chat Input Hiddeen", perms.ChatInputHidden);
+            DrawPermissionRowString("Chat Input Blocked", perms.ChatInputBlocked);
+
+            ImGui.TableNextRow();
+            DrawPermissionRowString("Shock Collar Code", perms.GlobalShockShareCode);
+            DrawPermissionRowBool("Allow Shocks ", perms.AllowShocks);
+            DrawPermissionRowBool("Allow Vibrations", perms.AllowVibrations);
+            DrawPermissionRowBool("Allow Beeps", perms.AllowBeeps);
+            DrawPermissionRowString("Max Intensity", perms.MaxIntensity.ToString());
+            DrawPermissionRowString("Max Duration", perms.MaxDuration.ToString());
+        }
+        catch (Exception e)
+        {
+            _logger.LogError($"Error while drawing global permissions for {uid}: {e.Message}");
+        }
     }
 
     private void DrawPairPerms(string uid, PairPerms perms)

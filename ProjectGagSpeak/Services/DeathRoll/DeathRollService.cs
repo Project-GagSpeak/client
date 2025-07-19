@@ -1,26 +1,21 @@
+using CkCommons;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Plugin.Services;
-using Dalamud.Utility;
 using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
 using System.Text.RegularExpressions;
-using GagSpeak.PlayerClient;
 
 namespace GagSpeak.Services;
 
 public sealed class DeathRollService
 {
     private readonly ILogger<DeathRollService> _logger;
-    private readonly KinksterRequests _globals;
     private readonly TriggerManager _triggers;
     private readonly TriggerActionService _triggerActions;
 
-    public DeathRollService(ILogger<DeathRollService> logger, KinksterRequests globals,
-        TriggerManager manager, TriggerActionService actions)
+    public DeathRollService(ILogger<DeathRollService> logger, TriggerManager manager, TriggerActionService actions)
     {
         _logger = logger;
-        _globals = globals;
         _triggers = manager;
         _triggerActions = actions;
     }

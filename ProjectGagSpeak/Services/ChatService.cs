@@ -1,9 +1,10 @@
+using CkCommons;
+using CkCommons.Helpers;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI;
-using CkCommons.Helpers;
 using GagSpeak.GameInternals;
 using GagSpeak.GameInternals.Agents;
 using GagSpeak.Kinksters;
@@ -12,9 +13,9 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Handlers;
 using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using System.Text.RegularExpressions;
-using GagspeakAPI.Attributes;
 
 
 namespace GagSpeak.Services;
@@ -26,7 +27,6 @@ namespace GagSpeak.Services;
 public class ChatService : DisposableMediatorSubscriberBase
 {
     private readonly MainConfig _config;
-    private readonly GlobalPermissions _globals;
     private readonly KinksterManager _pairs;
     private readonly GagRestrictionManager _gags;
     private readonly PuppeteerManager _puppetManager;
@@ -37,14 +37,12 @@ public class ChatService : DisposableMediatorSubscriberBase
     public static readonly ConcurrentQueue<string> _messagesToSend = new();
     private readonly Stopwatch _delayTimer = new();
 
-    public ChatService(ILogger<ChatService> logger, GagspeakMediator mediator,
-        MainConfig config, GlobalPermissions globals, KinksterManager pairs,
-        GagRestrictionManager gags, PuppeteerManager puppetManager,
+    public ChatService(ILogger<ChatService> logger, GagspeakMediator mediator, MainConfig config, 
+        KinksterManager pairs, GagRestrictionManager gags, PuppeteerManager puppetManager, 
         TriggerHandler triggerHandler, DeathRollService dr)
         : base(logger, mediator)
     {
         _config = config;
-        _globals = globals;
         _gags = gags;
         _pairs = pairs;
         _puppetManager = puppetManager;
@@ -103,7 +101,7 @@ public class ChatService : DisposableMediatorSubscriberBase
         if(ChatLogAgent.FromXivChatType(type) is not { } channel)
             return;
 
-        Logger.LogTrace($"Chatbox Message Received: {senderName}@{senderWorld} in {channel} - {msg.TextValue}");
+        Logger.LogTrace($"Chatbox Message Received: {senderName}@{senderWorld} in {channel} - {msg.TextValue}", LoggerType.ChatDetours);
 
         // if we are the sender, return after checking if what we sent matches any of our pairs triggers.
         if (senderName + "@" + senderWorld == PlayerData.NameWithWorld)

@@ -1,3 +1,4 @@
+using CkCommons;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
@@ -32,7 +33,7 @@ public partial class StaticDetours
             await _frameworkUtils.RunOnFrameworkThread(() =>
             {
                 var emoteCaller = _frameworkUtils.CreateGameObject((nint)emoteCallerAddr);
-                var emoteCallerName = (emoteCaller as IPlayerCharacter)?.GetNameWithWorld() ?? "No Player Was Emote Caller";
+                var emoteCallerName = PlayerData.GetNameWithWorld(emoteCaller as IPlayerCharacter) ?? "No Player Was Emote Caller";
                 var emoteName = EmoteService.EmoteName(emoteId);
                 var targetObj = (_frameworkUtils.SearchObjectTableById((uint)targetId));
                 var targetName = (targetObj as IPlayerCharacter)?.GetNameWithWorld() ?? "No Player Was Target";
@@ -57,14 +58,14 @@ public partial class StaticDetours
         Logger.LogTrace("OnExecuteEmote >> Emote [" + EmoteService.EmoteName(emoteId) + "](ID:"+emoteId+") requested to be Executed", LoggerType.EmoteMonitor);
             
         // Block all emotes if forced to follow
-        if(_globals.Current?.HcFollowState() ?? false)
+        if(OwnGlobals.Perms?.HcFollowState() ?? false)
             return;
 
         // If we are forced to emote, then we should prevent execution unless NextEmoteAllowed is true.
-        if (_globals.Current?.HcEmoteState() ?? false)
+        if (OwnGlobals.Perms?.HcEmoteState() ?? false)
         {
             // if our current emote state is any sitting pose and we are attempting to perform yes or no, allow it.
-            if (_globals.ForcedEmoteState.EmoteID is 50 or 52 && emoteId is 42 or 24)
+            if (OwnGlobals.ForcedEmoteState.EmoteID is 50 or 52 && emoteId is 42 or 24)
             {
                 Logger.LogDebug($"Allowing Emote Execution for [{EmoteService.EmoteName(emoteId)} ({emoteId})]", LoggerType.EmoteMonitor);
             }

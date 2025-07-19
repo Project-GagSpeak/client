@@ -25,7 +25,6 @@ namespace GagSpeak.GameInternals.Detours;
 /// <remarks> All related Detours that are turned on during startup, and off during shutdown. </remarks>
 public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
 {
-    private readonly GlobalPermissions _globals;
     private readonly GagRestrictionManager _gags;
     private readonly LootHandler _lootHandler;
     private readonly GlamourHandler _glamourHandler;
@@ -35,12 +34,11 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
     private readonly OnFrameworkService _frameworkUtils;
 
     public StaticDetours(ILogger<StaticDetours> logger, GagspeakMediator mediator,
-        GlobalPermissions globals, GagRestrictionManager gags, GlamourHandler glamourHandler,
-        LootHandler lootHandler, TraitsCache traitCache, TriggerHandler triggerHandler,
-        MufflerService muffler, OnFrameworkService frameworkUtils)
+        GagRestrictionManager gags, GlamourHandler glamourHandler, LootHandler lootHandler, 
+        TraitsCache traitCache, TriggerHandler triggerHandler, MufflerService muffler, 
+        OnFrameworkService frameworkUtils)
         : base(logger, mediator)
     {
-        _globals = globals;
         _gags = gags;
         _lootHandler = lootHandler;
         _traitCache = traitCache;

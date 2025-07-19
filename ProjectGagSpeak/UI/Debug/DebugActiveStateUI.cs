@@ -9,6 +9,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
+using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui.Text;
 
@@ -36,6 +37,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
     private readonly TraitsCache _traitsCache;
     private readonly OverlayCache _overlayCache;
     private readonly ArousalService _arousal;
+    private readonly RemoteService _remotes;
     private readonly TextureService _iconTextures;
 
     public DebugActiveStateUI(ILogger<DebugActiveStateUI> logger, 
@@ -56,6 +58,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         TraitsCache traitsCache,
         OverlayCache overlayCache,
         ArousalService arousal,
+        RemoteService remotes,
         TextureService iconTextures)
         : base(logger, mediator, "Active State Debugger")
     {
@@ -75,15 +78,11 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         _traitsCache = traitsCache;
         _overlayCache = overlayCache;
         _arousal = arousal;
+        _remotes = remotes;
         _iconTextures = iconTextures;
 
         IsOpen = true;
-
-        SizeConstraints = new WindowSizeConstraints()
-        {
-            MinimumSize = new Vector2(625, 400),
-            MaximumSize = ImGui.GetIO().DisplaySize,
-        };
+        this.SetBoundaries(new Vector2(625, 400), ImGui.GetIO().DisplaySize);
     }
 
     protected override void PreDrawInternal() { }
@@ -121,6 +120,10 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         ImGui.Separator();
         if (ImGui.CollapsingHeader("Stimulation Cache"))
             _arousal.DrawCacheTable();
+
+        ImGui.Separator();
+        if (ImGui.CollapsingHeader("RemoteService Cache"))
+            _remotes.DrawCacheTable();
     }
 
     // Draws the current state of the moodles IPC data.

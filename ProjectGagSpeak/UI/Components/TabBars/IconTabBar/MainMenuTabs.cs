@@ -1,10 +1,13 @@
+using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Widgets;
 using Dalamud.Interface;
+using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
+using GagSpeak.Utils;
 using ImGuiNET;
 
 namespace GagSpeak.Gui.Components;
@@ -68,9 +71,7 @@ public class MainMenuTabs : IconTabBar<MainMenuTabs.SelectedTab>
         ImGuiHelpers.ScaledDummy(spacing.Y / 2f);
 
         foreach (var tab in _tabButtons)
-        {
             DrawTabButton(tab, buttonSize, spacing, drawList);
-        }
 
         // advance to the new line and dispose of the button color.
         ImGui.NewLine();
@@ -78,6 +79,48 @@ public class MainMenuTabs : IconTabBar<MainMenuTabs.SelectedTab>
 
         ImGuiHelpers.ScaledDummy(3f);
         ImGui.Separator();
+    }
+
+    protected override void DrawTabButton(TabButtonDefinition tab, Vector2 buttonSize, Vector2 spacing, ImDrawListPtr drawList)
+    {
+        var x = ImGui.GetCursorScreenPos();
+
+        var isDisabled = IsTabDisabled(tab.TargetTab);
+        using (ImRaii.Disabled(isDisabled))
+        {
+
+            using (ImRaii.PushFont(UiBuilder.IconFont))
+            {
+                if (ImGui.Button(tab.Icon.ToIconString(), buttonSize))
+                    TabSelection = tab.TargetTab;
+            }
+
+            ImGui.SameLine();
+            var xPost = ImGui.GetCursorScreenPos();
+
+            if (EqualityComparer<SelectedTab>.Default.Equals(TabSelection, tab.TargetTab))
+            {
+                drawList.AddLine(
+                    x with { Y = x.Y + buttonSize.Y + spacing.Y },
+                    xPost with { Y = xPost.Y + buttonSize.Y + spacing.Y, X = xPost.X - spacing.X },
+                    ImGui.GetColorU32(ImGuiCol.Separator), 2f);
+            }
+
+            if (tab.TargetTab is SelectedTab.GlobalChat)
+            {
+                if (GlobalChatLog.NewMsgCount > 0)
+                {
+                    var newMsgTxtPos = new Vector2(x.X + buttonSize.X / 2, x.Y - spacing.Y);
+                    var newMsgTxt = GlobalChatLog.NewMsgCount > 99 ? "99+" : GlobalChatLog.NewMsgCount.ToString();
+                    var newMsgCol = GlobalChatLog.NewMsgFromDev ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGold;
+                    drawList.OutlinedFont(newMsgTxt, newMsgTxtPos, newMsgCol.ToUint(), 0xFF000000, 1);
+                }
+            }
+        }
+        CkGui.AttachToolTip(tab.Tooltip);
+
+        // invoke action if we should.
+        tab.CustomAction?.Invoke();
     }
 
 }

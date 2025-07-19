@@ -11,17 +11,14 @@ using OtterGui.Text;
 
 namespace GagSpeak.Gui;
 
+// used less and less every update it seems lol.
 public class SettingsHardcore
 {
-    private readonly ILogger<SettingsHardcore> _logger;
     private readonly MainConfig _clientConfigs;
-    private readonly GlobalPermissions _globals;
 
-    public SettingsHardcore(ILogger<SettingsHardcore> logger, MainConfig config, GlobalPermissions globals)
+    public SettingsHardcore(MainConfig config)
     {
-        _logger = logger;
         _clientConfigs = config;
-        _globals = globals;
     }
 
     public void DrawHardcoreSettings()
@@ -34,7 +31,7 @@ public class SettingsHardcore
 
     private void DisplayTextButtons()
     {
-        if (_globals.Current is not { } globals)
+        if (OwnGlobals.Perms is not { } globals)
             return;
 
         // replace disabled with ForcedStay == true

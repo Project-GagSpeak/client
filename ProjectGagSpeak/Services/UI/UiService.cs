@@ -3,6 +3,7 @@ using GagSpeak.Gui;
 using GagSpeak.Gui.Components;
 using GagSpeak.Gui.MainWindow;
 using GagSpeak.Gui.Profile;
+using GagSpeak.Gui.Remote;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
@@ -12,7 +13,7 @@ namespace GagSpeak.Services;
 /// <summary> A sealed class dictating the UI service for the plugin. </summary>
 public sealed class UiService : DisposableMediatorSubscriberBase
 {
-    private readonly List<WindowMediatorSubscriberBase> _createdWindows = [];
+    private static readonly List<WindowMediatorSubscriberBase> _createdWindows = [];
     private readonly MainMenuTabs _mainTabMenu;
 
     private readonly ILogger<UiService> _logger;
@@ -165,6 +166,8 @@ public sealed class UiService : DisposableMediatorSubscriberBase
         UiTask = Task.Run(asyncAction);
         Svc.Logger.Verbose("Assigned new UI blocking task.", LoggerType.UI);
     }
+
+    public static bool IsRemoteUIOpen() => _createdWindows.OfType<BuzzToyRemoteUI>().FirstOrDefault() is { } m && m.IsOpen;
 
 
     /// <summary> Method to toggle the main UI for the plugin. </summary>

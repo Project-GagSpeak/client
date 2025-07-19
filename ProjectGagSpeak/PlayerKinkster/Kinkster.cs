@@ -354,7 +354,7 @@ public class Kinkster : IComparable<Kinkster>
     }
 
     /// <summary> Method that creates the cached player (PairHandler) object for the client pair.
-    /// <para> This method is ONLY EVER CALLED BY THE PAIR MANAGER under the <c>MarkPairOnline</c> method! </para>
+    /// <para> This method is ONLY EVER CALLED BY THE PAIR MANAGER under the <c>MarkKinksterOnline</c> method! </para>
     /// <remarks> Until the CachedPlayer object is made, the client will not apply any data sent from this paired user. </remarks>
     /// </summary>
     public void CreateCachedPlayer(OnlineKinkster? dto = null)

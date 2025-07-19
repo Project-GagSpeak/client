@@ -1,62 +1,61 @@
 using GagSpeak.Kinksters;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
-using GagSpeak.Toybox;
+using GagspeakAPI.Data;
+using GagspeakAPI.Dto.VibeRoom;
+using GagspeakAPI.Network;
 
 namespace GagSpeak.State.Listeners;
 
 /// <summary>
-///     Listens for callback changes related to Alarms, Patterns, Triggers, and future Vibe Server Lobby System.
+///     Listens for callback changes related to Alarms, Patterns, Triggers. <para/>
+///     Unfortunitely was unable to fit most vibe lobby calls in here, maybe will figure out how in the future.
 /// </summary>
 public sealed class ToyboxStateListener
 {
-    private readonly ILogger<ToyboxStateListener> _logger;
-    private readonly GagspeakMediator   _mediator;
-    private readonly KinksterManager        _pairs;
+    private readonly GagspeakMediator _mediator;
+    private readonly KinksterManager _pairs;
 
-    // Managers:
-    // - BuzzToyManager (Manages what kind of toy is connected (actual vs simulated), and handles various reactions.
-    // MAYBE CONSIDER ADDING:
-    // - VibeControlLobbyManager (Future WIP Section)
-    // - SpatialAudioManager (Huge WIP, highly dependant on if SCD's data can be properly parsed out or whatever.
-    //      I've tried to get it working for so long ive lost hope.)
+    private readonly VibeLobbyManager _vibeLobbies;
     private readonly PatternManager _patterns;
     private readonly AlarmManager   _alarms;
     private readonly TriggerManager _triggers;
-/*    private readonly VibeRoomManager _vibeLobbyManager;*/    // Currently Caused circular dependancy with the mainhub, see how to fix later.
-    private readonly BuzzToyManager _toys;
-    // private readonly ShockCollarManager = _shockCollars;
-    // private readonly SpatialAudioManager _spatialAudio;
-
-    private readonly OnFrameworkService _frameworkUtils;
-    public ToyboxStateListener(
-        ILogger<ToyboxStateListener> logger,
-        GagspeakMediator mediator,
-        KinksterManager pairs,
-        PatternManager patterns,
-        AlarmManager alarmManager,
-        TriggerManager triggers,
-        BuzzToyManager toys,
-        OnFrameworkService frameworkUtils)
+    public ToyboxStateListener(GagspeakMediator mediator, KinksterManager pairs,
+        VibeLobbyManager vibeLobbies, PatternManager patterns, AlarmManager alarms,
+        TriggerManager triggers, OnFrameworkService frameworkUtils)
     {
-        _logger = logger;
         _mediator = mediator;
         _pairs = pairs;
+        _vibeLobbies = vibeLobbies;
         _patterns = patterns;
-        _alarms = alarmManager;
+        _alarms = alarms;
         _triggers = triggers;
-        // _vibeLobbyManager = vibeLobbyManager;
-        _toys = toys;
-        _frameworkUtils = frameworkUtils;
     }
 
-    private void PostActionMsg(string enactor, InteractionType type, string message)
-    {
-        if (_pairs.TryGetNickAliasOrUid(enactor, out var nick))
-            _mediator.Publish(new EventMessage(new(nick, enactor, type, message)));
-    }
+    public void KinksterJoinedRoom(RoomParticipant newKinkster)
+        => _vibeLobbies.OnKinksterJoinedRoom(newKinkster);
+
+    public void KinksterLeftRoom(UserData kinkster)
+        => _vibeLobbies.OnKinksterLeftRoom(kinkster);
+
+    public void VibeRoomInviteRecieved(RoomInvite invite)
+        => _vibeLobbies.OnInviteRecieved(invite);
+
+    public void VibeRoomHostChanged(UserData newHost)
+        => _vibeLobbies.OnHostChanged(newHost);
+
+    public void KinksterUpdatedDevice(UserData kinkster, ToyInfo newDeviceInfo)
+        => _vibeLobbies.OnKinksterUpdatedDevice(kinkster, newDeviceInfo);
+
+    public void RecievedBuzzToyDataStream(ToyDataStreamResponse dataStreamChunk)
+        => _vibeLobbies.OnRecievedBuzzToyDataStream(dataStreamChunk);
+
+    public void KinksterGrantedAccess(UserData participantWhoGranted)
+        => _vibeLobbies.OnKinksterGrantedAccess(participantWhoGranted);
+
+    public void KinksterRevokedAccess(UserData participantWhoRevoked)
+        => _vibeLobbies.OnKinksterRevokedAccess(participantWhoRevoked);
 
     public void PatternSwitched(Guid newPattern, string enactor)
     {
@@ -86,5 +85,11 @@ public sealed class ToyboxStateListener
     {
         _triggers.ToggleTrigger(triggerId, enactor);
         PostActionMsg(enactor, InteractionType.ToggleTrigger, "Trigger Toggled");
+    }
+
+    private void PostActionMsg(string enactor, InteractionType type, string message)
+    {
+        if (_pairs.TryGetNickAliasOrUid(enactor, out var nick))
+            _mediator.Publish(new EventMessage(new(nick, enactor, type, message)));
     }
 }

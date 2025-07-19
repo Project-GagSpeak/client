@@ -19,13 +19,11 @@ public class UiFactory
 
     // Managers
     private readonly KinksterManager _pairManager;
-    private readonly GlobalPermissions _globals;
 
     // Services
     private readonly CosmeticService _cosmetics;
     private readonly KinkPlateLight _kinkPlateLight;
     private readonly KinkPlateService _kinkPlates;
-    private readonly PresetLogicDrawer _presetService;
     private readonly TextureService _textures;
 
     public UiFactory(
@@ -35,12 +33,10 @@ public class UiFactory
         ImageImportTool imageImport,
         // Managers
         KinksterManager pairManager,
-        GlobalPermissions globals,
         // Services
         CosmeticService cosmetics,
         KinkPlateLight kinkPlateLight,
         KinkPlateService kinkPlates,
-        PresetLogicDrawer presetService,
         TextureService textures)
     {
         _loggerFactory = loggerFactory;
@@ -49,12 +45,10 @@ public class UiFactory
         _imageImport = imageImport;
         
         _pairManager = pairManager;
-        _globals = globals;
         
         _cosmetics = cosmetics;
         _kinkPlateLight = kinkPlateLight;
         _kinkPlates = kinkPlates;
-        _presetService = presetService;
         _textures = textures;
     }
 

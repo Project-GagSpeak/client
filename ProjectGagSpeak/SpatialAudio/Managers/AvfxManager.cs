@@ -1,3 +1,4 @@
+using CkCommons.Textures;
 using Dalamud.Plugin.Services;
 using GagSpeak.Services.Configs;
 
@@ -6,7 +7,7 @@ namespace GagSpeak.UpdateMonitoring.SpatialAudio;
 public class AvfxManager
 {
     private readonly ILogger<AvfxManager> _logger;
-    public string AvfxFilesFolder => Path.Combine(ConfigFileProvider.GagSpeakDirectory, "audiofiles");
+    public string AvfxFilesFolder => Path.Combine(TextureManager.AssetFolderPath, "Audio");
     public string Extension { get; } = "avfx";
 
     public AvfxManager(ILogger<AvfxManager> logger)

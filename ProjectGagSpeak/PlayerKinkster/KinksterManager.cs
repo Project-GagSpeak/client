@@ -35,7 +35,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         _mainConfig = config;
         _serverConfigs = serverConfigs;
 
-        Mediator.Subscribe<MainHubDisconnectedMessage>(this, (_) => ClearPairs());
+        Mediator.Subscribe<MainHubDisconnectedMessage>(this, (_) => ClearKinksters());
         Mediator.Subscribe<CutsceneEndMessage>(this, (_) => ReapplyPairData());
 
         _directPairsInternal = DirectPairsLazy();
@@ -70,7 +70,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
 
     /// <summary> Appends a new pair to our pair list after a two-way contact has been established. </summary>
     /// <remarks> This occurs upon initial connection while retrieving your pair list of established pairings. </remarks>
-    public void AddUserPair(KinksterPair dto)
+    public void AddKinksterPair(KinksterPair dto)
     {
         // if the user is not in the client's pair list, create a new pair for them.
         if (!_allClientPairs.ContainsKey(dto.User))
@@ -89,7 +89,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Method of addUserPair that allows multiple KinksterPair to be appended, with a single log output after. </summary>
-    public void AddUserPair(IEnumerable<KinksterPair> dtoList)
+    public void AddKinksterPair(IEnumerable<KinksterPair> dtoList)
     {
         var created = new List<string>();
         var refreshed = new List<string>();
@@ -119,7 +119,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
 
     /// <summary> Appends a new pair to our pair list after a two-way contact has been established. </summary>
     /// <remarks> Fired by a server callback upon someone accepting your pair request, or after you accept theirs. </remarks>
-    public void AddNewUserPair(KinksterPair dto)
+    public void AddNewKinksterPair(KinksterPair dto)
     {
         if (!_allClientPairs.ContainsKey(dto.User))
             _allClientPairs[dto.User] = _pairFactory.Create(dto);
@@ -132,7 +132,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Clears all pairs from the client's pair list.</summary>
-    public void ClearPairs()
+    public void ClearKinksters()
     {
         Logger.LogDebug("Clearing all Pairs", LoggerType.PairManagement);
         // dispose of all our pairs
@@ -144,7 +144,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Fetches the filtered list of user pair objects where only users that are currently online are returned.</summary>
-    public List<Kinkster> GetOnlineUserPairs()
+    public List<Kinkster> GetOnlineKinksterPairs()
         => _allClientPairs.Where(p => !string.IsNullOrEmpty(p.Value.GetPlayerNameHash())).Select(p => p.Value).ToList();
 
     /// <summary> Fetches all online userPairs, but returns the key instead of value like above.</summary>
@@ -212,7 +212,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Marks a user pair as offline.</summary>
-    public void MarkPairOffline(UserData user)
+    public void MarkKinksterOffline(UserData user)
     {
         if (_allClientPairs.TryGetValue(user, out var pair))
         {
@@ -224,7 +224,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
 
     /// <summary> Called by ApiController.Callbacks, and marks our pair online, if cached and offline. </summary>
     /// <remarks> This sends the client an OnlineKinkster, meaning they were in the clients pair list and are now online. </remarks>
-    public void MarkPairOnline(OnlineKinkster dto, bool sendNotification = true)
+    public void MarkKinksterOnline(OnlineKinkster dto, bool sendNotification = true)
     {
         if (!_allClientPairs.ContainsKey(dto.User)) 
             throw new InvalidOperationException("No user found for " + dto);

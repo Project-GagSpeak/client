@@ -1,16 +1,18 @@
-using GagSpeak.Gui;
+using CkCommons;
+using CkCommons.Audio;
 using GagSpeak.GameInternals.Detours;
+using GagSpeak.Gui;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Listeners;
+using GagSpeak.UpdateMonitoring.SpatialAudio;
 using GagSpeak.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using System.Reflection;
-using GagSpeak.UpdateMonitoring.SpatialAudio;
 
 namespace GagSpeak;
 
@@ -131,6 +133,9 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             // startup services that have no other services that call on them, yet are essential.
             _runtimeServiceScope.ServiceProvider.GetRequiredService<UiService>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<CommandManager>();
+
+            // Initialize the audio manager for our configured audio devices.
+            AudioSystem.InitializeOutputDevice(_mainConfig.Current.AudioOutputType, _mainConfig.GetDefaultAudioDevice());
 
             // display changelog if we should.
             if (_mainConfig.Current.LastRunVersion != Assembly.GetExecutingAssembly().GetName().Version!)

@@ -27,6 +27,7 @@ public abstract class WindowMediatorSubscriberBase : Window, IMediatorSubscriber
 
                     case ToggleType.Show:
                         IsOpen = true;
+                        BringToFront();
                         _logger.LogTrace("Showing UI", LoggerType.Mediator);
                         break;
 

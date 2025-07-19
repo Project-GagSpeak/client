@@ -6,7 +6,6 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Handlers;
 using GagSpeak.State.Managers;
-using GagSpeak.Toybox;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
@@ -25,8 +24,7 @@ namespace GagSpeak.Services;
 public class TriggerActionService
 {
     private readonly ILogger<TriggerActionService> _logger;
-    private readonly GagspeakMediator _mediator;
-    private readonly GlobalPermissions _globals;
+    private readonly PiShockProvider _shockies;
     private readonly KinksterManager _pairs;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
@@ -40,9 +38,7 @@ public class TriggerActionService
 
     public TriggerActionService(
         ILogger<TriggerActionService> logger,
-        GagspeakMediator mediator,
-        DataDistributionService distributer,
-        GlobalPermissions globals,
+        PiShockProvider shockies,
         KinksterManager pairs,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
@@ -51,9 +47,7 @@ public class TriggerActionService
         MoodleHandler moodles)
     {
         _logger = logger;
-        _mediator = mediator;
-        _distributer = distributer;
-        _globals = globals;
+        _shockies = shockies;
         _pairs = pairs;
         _gags = gags;
         _restrictions = restrictions;
@@ -140,7 +134,7 @@ public class TriggerActionService
         switch (source)
         {
             case ActionSource.GlobalAlias:
-                if(_globals.Current is not { } globals || !globals.PuppetPerms.HasAny(PuppetPerms.Alias))
+                if(OwnGlobals.Perms is not { } globals || !globals.PuppetPerms.HasAny(PuppetPerms.Alias))
                     return false;
 
                 break;
@@ -392,10 +386,10 @@ public class TriggerActionService
 
     private bool DoPiShockAction(PiShockAction act, string enactor)
     {
-        if (_globals.Current is not { } perms)
+        if (OwnGlobals.Perms is not { } perms)
             return false;
 
-        if(perms.GlobalShockShareCode.IsNullOrWhitespace() || !perms.HasValidShareCode())
+        if(string.IsNullOrWhiteSpace(perms.GlobalShockShareCode) || !perms.HasValidShareCode())
         {
             _logger.LogWarning("Can't execute Shock Instruction if none are currently connected!");
             return false;
@@ -404,7 +398,7 @@ public class TriggerActionService
         // execute the instruction with our global share code.
         _logger.LogInformation("DoPiShock Action is executing instruction based on global sharecode settings!", LoggerType.PiShock);
         var shareCode = perms.GlobalShockShareCode;
-        _mediator.Publish(new PiShockExecuteOperation(shareCode, (int)act.ShockInstruction.OpCode, act.ShockInstruction.Intensity, act.ShockInstruction.Duration));
+        _shockies.ExecuteOperation(shareCode, (int)act.ShockInstruction.OpCode, act.ShockInstruction.Intensity, act.ShockInstruction.Duration);
         return true;
     }
 

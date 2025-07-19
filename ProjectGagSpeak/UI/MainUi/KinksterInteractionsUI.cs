@@ -1,13 +1,16 @@
+using CkCommons;
+using CkCommons.Gui;
+using CkCommons.Gui.Utility;
+using CkCommons.Helpers;
+using CkCommons.Raii;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using CkCommons.Raii;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.CustomCombos.Moodles;
 using GagSpeak.CustomCombos.Padlock;
 using GagSpeak.CustomCombos.Pairs;
 using GagSpeak.Gui.Components;
-using CkCommons.Gui.Utility;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
@@ -16,6 +19,7 @@ using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
@@ -23,8 +27,6 @@ using GagspeakAPI.Network;
 using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui.Text;
-using CkCommons.Gui;
-using CkCommons.Helpers;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -60,8 +62,6 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 {
     private readonly MainMenuTabs _mainTabMenu;
     private readonly MainHub _hub;
-    private readonly GlobalPermissions _globals;
-    private readonly PresetLogicDrawer _presets;
     private readonly KinksterPermsForClient _kinksterPerms;
     private readonly ClientPermsForKinkster _permsForKinkster;
 
@@ -92,16 +92,12 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         GagspeakMediator mediator,
         MainMenuTabs mainTabMenu,
         MainHub hub,
-        GlobalPermissions globals,
-        PresetLogicDrawer presets,
         KinksterPermsForClient permsForSelf,
         ClientPermsForKinkster permsForKinkster)
         : base(logger, mediator, $"StickyPermissionUI")
     {
         _mainTabMenu = mainTabMenu;
         _hub = hub;
-        _globals = globals;
-        _presets = presets;
         _kinksterPerms = permsForSelf;
         _permsForKinkster = permsForKinkster;
 
@@ -613,8 +609,6 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
     {
         ImGui.TextUnformatted("Toybox Actions");
 
-        var toysActive = k.PairGlobals.ToysAreConnected;
-
         // Probably rework this once we figure more of this stuff out.
         if (CkGui.IconTextButton(FAI.Mobile, $"Toggle {dispName}'s SexToys", width, true, !k.PairPerms.ToggleToyState))
             _logger.LogDebug("Would be focibly controlling the toy state here!");
@@ -622,7 +616,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 
 
         // Pattern Execution
-        if (CkGui.IconTextButton(FAI.PlayCircle, $"Execute {dispName}'s Patterns", width, true, !k.PairPerms.ExecutePatterns || !toysActive || !k.LastLightStorage.Patterns.Any()))
+        if (CkGui.IconTextButton(FAI.PlayCircle, $"Execute {dispName}'s Patterns", width, true, !k.PairPerms.ExecutePatterns || k.PairGlobals.InVibeRoom || !k.LastLightStorage.Patterns.Any()))
             _selections.OpenOrClose(InteractionType.StartPattern);
         CkGui.AttachToolTip($"Play one of {dispName}'s patterns to the selected toys.");
 
@@ -635,7 +629,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         }
 
         // Stop a Pattern
-        if (CkGui.IconTextButton(FAI.StopCircle, $"Stop {dispName}'s Active Pattern", width, true, !k.PairPerms.StopPatterns || !toysActive || k.LastToyboxData.ActivePattern == Guid.Empty))
+        if (CkGui.IconTextButton(FAI.StopCircle, $"Stop {dispName}'s Active Pattern", width, true, !k.PairPerms.StopPatterns || k.PairGlobals.InVibeRoom || k.LastToyboxData.ActivePattern == Guid.Empty))
         {
             var idToStop = k.LastToyboxData.ActivePattern;
             // Avoid blocking the UI by executing this off the UI thread.
@@ -654,7 +648,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         CkGui.AttachToolTip($"Halt the active pattern on {dispName}'s Toy");
 
         // Expander for toggling an alarm.
-        if (CkGui.IconTextButton(FAI.Clock, $"Toggle {dispName}'s Alarms", width, true, !k.PairPerms.ToggleAlarms || !k.LastLightStorage.Alarms.Any()))
+        if (CkGui.IconTextButton(FAI.Clock, $"Toggle {dispName}'s Alarms", width, true, !k.PairPerms.ToggleAlarms || k.PairGlobals.InVibeRoom || !k.LastLightStorage.Alarms.Any()))
             _selections.OpenOrClose(InteractionType.ToggleAlarm);
         CkGui.AttachToolTip($"Switch the state of {dispName}'s Alarms.");
 

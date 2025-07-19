@@ -14,10 +14,8 @@ namespace GagSpeak.Services;
 public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
 {
     private readonly MainHub _hub;
-    private readonly GlobalPermissions _globals;
+    private readonly OwnGlobals _globals;
     private readonly KinksterManager _pairManager;
-    private readonly VisualStateListener _visualListener; // can directly call upon all reversion operations.
-    private readonly ToyboxStateListener _toyboxListener;
 
     // Handle the monitoring of our safeword checks that will occur outside the framework thread.
     // This helps to prevent bloating framework drawtimes.
@@ -29,15 +27,12 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
     private static DateTime _lastHcSafewordTime = DateTime.MinValue;
 
     public SafewordService(ILogger<SafewordService> logger, GagspeakMediator mediator,
-        MainHub hub, GlobalPermissions globals, KinksterManager pairManager,
-        VisualStateListener visualListener, ToyboxStateListener toyboxListener)
+        MainHub hub, OwnGlobals globals, KinksterManager pairManager)
         : base(logger, mediator)
     {
         _hub = hub;
         _globals = globals;
         _pairManager = pairManager;
-        _visualListener = visualListener;
-        _toyboxListener = toyboxListener;
 
         // set the chat log up.
         Mediator.Subscribe<SafewordUsedMessage>(pairManager, (msg) => OnSafewordUsed(msg.UID));

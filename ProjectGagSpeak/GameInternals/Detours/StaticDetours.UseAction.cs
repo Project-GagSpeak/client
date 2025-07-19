@@ -1,5 +1,6 @@
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.State.Handlers;
 using GagspeakAPI.Attributes;
@@ -32,7 +33,7 @@ public unsafe partial class StaticDetours
         if (_traitCache.FinalTraits.HasAny(Traits.Immobile))
             return false;
 
-        if (_globals.Current?.HcStayState() ?? false)
+        if (OwnGlobals.Perms?.HcStayState() ?? false)
         {
             // check if we are trying to hit teleport or return from hotbars /  menus
             if (type is ActionType.GeneralAction && acId is 7 or 8)

@@ -38,7 +38,7 @@ public sealed class IntifaceListener : DisposableMediatorSubscriberBase
         {
             // Get the idx of the removed device.
             Logger.LogInformation($"Device {removed.Name} removed from device list.", LoggerType.Toys);
-            var realToys = _manager.SexToys.Values.OfType<IntifaceBuzzToy>();
+            var realToys = _manager.Storage.Values.OfType<IntifaceBuzzToy>();
             if (realToys.FirstOrDefault(st => st.DeviceIdx == removed.Index) is { } match)
                 _manager.RemoveDevice(match);
             else

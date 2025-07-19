@@ -11,7 +11,6 @@ namespace GagSpeak.State.Managers;
 
 public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
-    private readonly KinksterRequests _globals;
     private readonly KinksterManager _pairs;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
@@ -19,10 +18,9 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
     private StorageItemEditor<AliasTrigger> _itemEditor = new();
 
     public PuppeteerManager(ILogger<PuppeteerManager> logger, GagspeakMediator mediator,
-        KinksterRequests clientData, KinksterManager pairs, ConfigFileProvider fileNames,
-        HybridSaveService saver) : base(logger, mediator)
+        KinksterManager pairs, ConfigFileProvider fileNames, HybridSaveService saver) 
+        : base(logger, mediator)
     {
-        _globals = clientData;
         _pairs = pairs;
         _fileNames = fileNames;
         _saver = saver;

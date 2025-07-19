@@ -1,19 +1,20 @@
+using CkCommons.Gui;
+using CkCommons.Textures;
 using Dalamud.Interface.Colors;
 using Dalamud.Utility;
+using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
-using ImGuiNET;
-using Penumbra.GameData.Enums;
-using System.Globalization;
-using GagSpeak.Kinksters;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
+using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;
-using CkCommons.Gui;
-using CkCommons.Textures;
+using Penumbra.GameData.Enums;
+using System.Globalization;
 
 namespace GagSpeak.Gui.Profile;
 public partial class KinkPlateUI : WindowMediatorSubscriberBase
@@ -184,13 +185,6 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         var iconOverviewPos = IconOverviewListPos;
 
         // draw out the icon row. For each item, we will first determine the color, and its tooltip text.
-        var vibeColor = Pair.PairGlobals.ToysAreConnected ? Gold : ImGuiColors.DalamudGrey3;
-        var vibeTT = Pair.PairGlobals.ToysAreConnected
-            ? DisplayName + " has a Sex Toy connected and active."
-            : DisplayName + " does not have any Sex Toys connected and active.";
-        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Vibrator], iconOverviewPos, Vector2.One * 34, vibeColor, vibeTT);
-        iconOverviewPos.X += iconWidthPlusSpacing;
-
         var shockColor = Pair.PairGlobals.HasValidShareCode() ? Gold : ImGuiColors.DalamudGrey3;
         var shockTT = Pair.PairGlobals.HasValidShareCode()
             ? DisplayName + " is connected to their Shock Collar while in Hardcore Mode."
@@ -198,22 +192,22 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.ShockCollar], iconOverviewPos, Vector2.One * 34, shockColor, shockTT);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
-        var forcedFollowColor = !Pair.PairGlobals.ForcedFollow.NullOrEmpty() ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
-        var forcedFollowTT = !Pair.PairGlobals.ForcedFollow.NullOrEmpty()
+        var forcedFollowColor = Pair.PairGlobals.HcFollowState() ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
+        var forcedFollowTT = Pair.PairGlobals.HcFollowState()
             ? DisplayName + " is being leashed around by another pair while in Hardcore Mode."
             : DisplayName + " is not following anyone.";
         wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Leash], iconOverviewPos, Vector2.One * 34, forcedFollowColor, forcedFollowTT);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
-        var forcedEmoteColor = !Pair.PairGlobals.ForcedEmoteState.NullOrEmpty() ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
-        var forcedEmoteTT = !Pair.PairGlobals.ForcedEmoteState.NullOrEmpty()
+        var forcedEmoteColor = Pair.PairGlobals.HcEmoteState() ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
+        var forcedEmoteTT = Pair.PairGlobals.HcEmoteState()
             ? DisplayName + " is being put on display for another pair while in Hardcore Mode."
             : DisplayName + " is not on display for anyone.";
         wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.ForcedEmote], iconOverviewPos, Vector2.One * 34, forcedEmoteColor, forcedEmoteTT);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
-        var forcedStayColor =!Pair.PairGlobals.ForcedStay.NullOrEmpty() ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
-        var forcedStayTT = !Pair.PairGlobals.ForcedStay.NullOrEmpty()
+        var forcedStayColor = Pair.PairGlobals.HcStayState() ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
+        var forcedStayTT = Pair.PairGlobals.HcStayState()
             ? DisplayName + " has been ordered to stay put for another pair while in Hardcore Mode."
             : DisplayName + " has not been ordered to stay put by anyone.";
         wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.ForcedStay], iconOverviewPos, Vector2.One * 34, forcedStayColor, forcedStayTT);
@@ -224,6 +218,12 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         var chatBlockedTT = chatManipulated
             ? DisplayName + " is having their chat access restricted by another pair while in Hardcore Mode."
             : DisplayName + " is not under any chat restrictions.";
+        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.ChatBlocked], iconOverviewPos, Vector2.One * 34, chatBlockedColor, chatBlockedTT);
+
+        iconOverviewPos.X += iconWidthPlusSpacing;
+
+        var hypnotizedColor = Pair.PairGlobals.HcHypnoState() ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
+        var hypnotizedTT = $"{DisplayName} {(Pair.PairGlobals.HcHypnoState() ? "is being hypnotized." : "is not being hypnotized")}";
         wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.ChatBlocked], iconOverviewPos, Vector2.One * 34, chatBlockedColor, chatBlockedTT);
     }
 

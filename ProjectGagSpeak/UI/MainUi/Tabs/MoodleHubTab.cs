@@ -28,7 +28,7 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
     public void DrawMoodlesHub()
     {
         // Handle grabbing new info from the server if none is present. (not the most elegent but it works)
-        if (!_shareHub.InitialMoodlesCall && !_shareHub.DisableUI)
+        if (!_shareHub.InitialMoodlesCall && UiService.DisableUI)
             _shareHub.PerformMoodleSearch();
 
         DrawSearchFilter();
@@ -175,7 +175,7 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
         var updateSize = CkGui.IconTextButtonSize(FAI.Search, "Search");
         var sortIconSize = CkGui.IconButtonSize(FAI.SortAmountUp).X;
         var filterTypeSize = 80f;
-        var sortIcon = _shareHub.SearchSort == SearchSort.Ascending ? FAI.SortAmountUp : FAI.SortAmountDown;
+        var sortIcon = _shareHub.SortOrder == HubDirection.Ascending ? FAI.SortAmountUp : FAI.SortAmountDown;
 
         // Draw out the first row. This contains the search bar, the Update Search Button, and the Show 
         using (ImRaii.Group())
@@ -185,7 +185,7 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
             if (ImGui.InputTextWithHint("##moodleSearchFilter", "Search for Moodles...", ref searchString, 125))
                 _shareHub.SearchString = searchString;
             ImUtf8.SameLineInner();
-            if (CkGui.IconTextButton(FAI.Search, "Search", disabled: _shareHub.DisableUI))
+            if (CkGui.IconTextButton(FAI.Search, "Search", disabled: UiService.DisableUI))
                 _shareHub.PerformMoodleSearch();
             CkGui.AttachToolTip("Update Search Results");
 
@@ -199,7 +199,7 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
             ImUtf8.SameLineInner();
             if (CkGui.IconButton(sortIcon))
                 _shareHub.ToggleSortDirection();
-            CkGui.AttachToolTip("Sort Direction--SEP--Current: " + _shareHub.SearchSort + "");
+            CkGui.AttachToolTip($"Sort Direction--SEP--Current: {_shareHub.SortOrder}");
         }
 
         using (ImRaii.Group())

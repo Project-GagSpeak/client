@@ -2,8 +2,11 @@ using CkCommons;
 using CkCommons.Chat;
 using CkCommons.Gui;
 using CkCommons.Helpers;
+using CkCommons.Raii;
 using CkCommons.RichText;
 using Dalamud.Interface;
+using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui;
 using GagSpeak.Gui.Components;
@@ -12,6 +15,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Services.Textures;
 using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
@@ -20,41 +24,33 @@ using OtterGui.Text;
 using System.Globalization;
 
 namespace GagSpeak.Utils;
-public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber, IDisposable
+public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber, IDisposable
 {
     private static string RecentFile => Path.Combine(ConfigFileProvider.GagSpeakDirectory, "global-chat-recent.log");
     private static RichTextFilter AllowedTypes = RichTextFilter.Emotes;
 
-    private readonly ILogger<GlobalChatLog> _logger;
     private readonly MainHub _hub;
     private readonly MainMenuTabs _tabMenu;
     private readonly MainConfig _config;
-    private readonly GlobalPermissions _globals;
     private readonly GagRestrictionManager _gags;
     private readonly KinksterManager _kinksters;
     private readonly MufflerService _garbler;
+    // load the popout to sync our message sending.
 
+    private static bool _newMsgFromDev = false;
+    private static int _newMsgCount = 0;
     private string _requestMessage = string.Empty;
-    private static int _newMessages = 0;
+    private bool _showEmotes = false;
 
-    public GlobalChatLog(
-        ILogger<GlobalChatLog> logger,
-        GagspeakMediator mediator,
-        MainHub hub,
-        MainMenuTabs tabs,
-        MainConfig config,
-        GlobalPermissions globals, 
-        GagRestrictionManager gags,
-        KinksterManager kinksters,
-        MufflerService garbler) 
+    public GlobalChatLog(GagspeakMediator mediator, MainHub hub, MainMenuTabs tabs, 
+        MainConfig config, GagRestrictionManager gags, KinksterManager kinksters, 
+        MufflerService garbler)
         : base(0, "Global Chat", 1000)
     {
-        _logger = logger;
         Mediator = mediator;
         _hub = hub;
         _tabMenu = tabs;
         _config = config;
-        _globals = globals;
         _gags = gags;
         _kinksters = kinksters;
         _garbler = garbler;
@@ -68,14 +64,16 @@ public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber
             if (msg.NewTab is MainMenuTabs.SelectedTab.GlobalChat)
             {
                 ShouldScrollToBottom = true;
-                _newMessages = 0;
+                unreadSinceScroll = 0;
+                _newMsgFromDev = false;
+                _newMsgCount = 0;
             }
         });
     }
 
     public GagspeakMediator Mediator { get; }
-    public bool CreatedSameDay => DateTime.UtcNow.DayOfYear == TimeCreated.DayOfYear;
-    public int NewMessages => _newMessages;
+    public static int NewMsgCount => _newMsgCount;
+    public static bool NewMsgFromDev => _newMsgFromDev;
 
     void IDisposable.Dispose()
     {
@@ -89,7 +87,7 @@ public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber
     public void SetAutoScroll (bool newState)
         => DoAutoScroll = newState;
 
-    protected override string ToTooltip(GSGlobalChatMessage message)
+    protected override string ToTooltip(GagSpeakChatMessage message)
         => $"Sent @ {message.Timestamp.ToString("T", CultureInfo.CurrentCulture)}" +
         "--NL----COL--[Right-Click]--COL-- View Interactions" +
         "--NL----COL--[Middle-Click]--COL-- Open KinkPlate";
@@ -97,7 +95,13 @@ public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber
     private void AddNetworkMessage(GlobalChatMessage networkChat)
     {
         if (_tabMenu.TabSelection is not MainMenuTabs.SelectedTab.GlobalChat)
-            _newMessages++;
+            _newMsgCount++;
+        else
+        {
+            _newMsgCount = 0;
+            _newMsgFromDev = false;
+        }
+        
         // Default sender name and tag, respects 3-4 character string.
         var userTagCode = networkChat.Message.UserTagCode;
         var SenderName = "Kinkster-" + userTagCode;
@@ -111,12 +115,11 @@ public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber
         else if (networkChat.FromSelf)
             SenderName = userData.AliasOrUID + " (" + userTagCode + ")";
         // construct the chat message struct to add, and append it.
-        AddMessage(new GSGlobalChatMessage(userData, SenderName, networkChat.Message.Message));
+        AddMessage(new GagSpeakChatMessage(userData, SenderName, networkChat.Message.Message));
     }
 
-    protected override void AddMessage(GSGlobalChatMessage newMsg)
+    protected override void AddMessage(GagSpeakChatMessage newMsg)
     {
-        _logger.LogDebug($"Adding Message: {newMsg.Message} from {newMsg.Name} ({newMsg.UID})", LoggerType.GlobalChat);
         // Cordy is special girl :3
         if (newMsg.Tier is CkSupporterTier.KinkporiumMistress)
         {
@@ -126,6 +129,7 @@ public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber
             var prefix = $"[img=RequiredImages\\Tier4Icon][rawcolor={CkColor.CkMistressColor.Uint()}]{newMsg.Name}[/rawcolor]: ";
             Messages.PushBack(newMsg with { Message = prefix + newMsg.Message });
             unreadSinceScroll++;
+            _newMsgFromDev = true;
         }
         else if (newMsg.UID == "System")
         {
@@ -154,9 +158,8 @@ public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber
         }
     }
 
-    private void AddExistingMessage(GSGlobalChatMessage newMsg)
+    private void AddExistingMessage(GagSpeakChatMessage newMsg)
     {
-        _logger.LogDebug($"Adding Message: {newMsg.Message} from {newMsg.Name} ({newMsg.UID})", LoggerType.GlobalChat);
         // Cordy is special girl :3
         if (newMsg.Tier is CkSupporterTier.KinkporiumMistress)
         {
@@ -174,40 +177,44 @@ public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber
         }
     }
 
-    public override void DrawChatInputRow(ref bool showPreview)
+    public override void DrawChatInputRow()
     {
         using var _ = ImRaii.Group();
 
-        var Icon = DoAutoScroll ? FAI.ArrowDownUpLock : FAI.ArrowDownUpAcrossLine;
+        var scrollIcon = DoAutoScroll ? FAI.ArrowDownUpLock : FAI.ArrowDownUpAcrossLine;
         var width = ImGui.GetContentRegionAvail().X;
 
         // Set keyboard focus to the chat input box if needed
-        if (shouldFocusChatInput)
+        if (shouldFocusChatInput && ImGui.IsWindowFocused())
         {
-            // if we currently are focusing the window this is present on, set the keyboard focus.
-            if (ImGui.IsWindowFocused())
-            {
-                ImGui.SetKeyboardFocusHere(0);
-                shouldFocusChatInput = false;
-            }
+            Svc.Logger.Information("Setting keyboard focus to chat input box.", LoggerType.GlobalChat);
+            ImGui.SetKeyboardFocusHere(0);
+            shouldFocusChatInput = false;
         }
 
-        ImGui.SetNextItemWidth(width - CkGui.IconButtonSize(Icon).X * 2 - ImGui.GetStyle().ItemInnerSpacing.X * 2);
-        ImGui.InputTextWithHint($"##ChatInput{Label}{ID}", "type here...", ref previewMessage, 400);
+        ImGui.SetNextItemWidth(width - (CkGui.IconButtonSize(scrollIcon).X + ImGui.GetStyle().ItemInnerSpacing.X) * 3);
+        ImGui.InputTextWithHint($"##ChatInput{Label}{ID}", "type here...", ref previewMessage, 300);
 
         // Process submission Prevent losing chat focus after pressing the Enter key.
         if (ImGui.IsItemFocused() && ImGui.IsKeyPressed(ImGuiKey.Enter))
         {
             shouldFocusChatInput = true;
+            _showEmotes = false;
             OnSendMessage(previewMessage);
         }
 
-        // Update preview display based on input field activity
-        showPreview = ImGui.IsItemActive();
+        // toggle emote viewing.
+        ImUtf8.SameLineInner();
+        using (ImRaii.PushColor(ImGuiCol.Text, CkColor.VibrantPink.Uint(), _showEmotes))
+        {
+            if (CkGui.IconButton(FAI.Heart))
+                _showEmotes = !_showEmotes;
+        }
+        CkGui.AttachToolTip($"Toggles Quick-Emote selection.");
 
         // Toggle AutoScroll functionality
         ImUtf8.SameLineInner();
-        if (CkGui.IconButton(Icon))
+        if (CkGui.IconButton(scrollIcon))
             DoAutoScroll = !DoAutoScroll;
         CkGui.AttachToolTip($"Toggles AutoScroll (Current: {(DoAutoScroll ? "Enabled" : "Disabled")})");
 
@@ -218,7 +225,65 @@ public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber
         CkGui.AttachToolTip("Open the Global Chat in a Popout Window--SEP--Hold SHIFT to activate!");
     }
 
-    protected override void OnMiddleClick(GSGlobalChatMessage message)
+    protected override void DrawPostChatLog(Vector2 inputPosMin)
+    {
+        // Preview Text padding area
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(5));
+        var drawTextPreview = !string.IsNullOrWhiteSpace(previewMessage);
+        // if we should show the preview, do so.
+        if (drawTextPreview)
+            DrawTextPreview(previewMessage, inputPosMin);
+
+        // Afterwards, we need to make sure that we can create a new window for the emotes at the correct space if so.
+        if (_showEmotes)
+        {
+            var drawPos = drawTextPreview ? ImGui.GetItemRectMin() : inputPosMin;
+            DrawQuickEmoteWindow(drawPos);
+        }
+    }
+
+    private void DrawQuickEmoteWindow(Vector2 drawPos)
+    {
+        var totalWidth = ImGui.GetContentRegionAvail().X;
+        var spacing = ImGui.GetStyle().ItemInnerSpacing;
+        var emoteCache = CosmeticService.EmoteTextures.Cache;
+        var totalEmotes = emoteCache.Count;
+        var emoteSize = new Vector2(ImGui.GetFrameHeightWithSpacing());
+        var emotesPerRow = Math.Max(1, (int)((totalWidth.RemoveWinPadX() + spacing.X) / (emoteSize.X + spacing.X)));
+        var rows = (int)Math.Ceiling((float)totalEmotes / emotesPerRow);
+        var winHeight = (emoteSize.Y + spacing.Y) * Math.Clamp(rows, 1, 2) + spacing.Y;
+
+
+        var winPos = drawPos - new Vector2(0, winHeight.AddWinPadY() + spacing.Y);
+        ImGui.SetNextWindowPos(winPos);
+        using var c = CkRaii.ChildPaddedW("Quick-Emote-View", totalWidth, winHeight, wFlags: WFlags.AlwaysVerticalScrollbar);
+
+        var wdl = ImGui.GetWindowDrawList();
+        wdl.PushClipRect(winPos, winPos + c.InnerRegion.WithWinPadding(), false);
+        wdl.AddRectFilled(winPos, winPos + c.InnerRegion.WithWinPadding(), 0xCC000000, 5, ImDrawFlags.RoundCornersAll);
+        wdl.AddRect(winPos, winPos + c.InnerRegion.WithWinPadding(), ImGuiColors.ParsedGold.ToUint(), 5, ImDrawFlags.RoundCornersAll);
+        wdl.PopClipRect();
+
+        var count = 0;
+        foreach (var (key, wrap) in CosmeticService.EmoteTextures.Cache)
+        {
+            ImGui.Dummy(emoteSize);
+            var min = ImGui.GetItemRectMin();
+            wdl.AddDalamudImageRounded(wrap, min, emoteSize, 5, key.ToRichTextString());
+            // if clicked, append the string to our message.
+            if (ImGui.IsItemClicked())
+            {
+                previewMessage += $"{key.ToRichTextString()} ";
+                shouldFocusChatInput = true;
+            }
+
+            count++;
+            if (count % emotesPerRow != 0)
+                ImUtf8.SameLineInner();
+        }
+    }
+
+    protected override void OnMiddleClick(GagSpeakChatMessage message)
         => Mediator.Publish(new KinkPlateOpenStandaloneLightMessage(message.UserData));
 
     protected override void OnSendMessage(string message)
@@ -228,11 +293,10 @@ public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber
             return;
 
         // Process message if gagged
-        if ((_gags.ServerGagData?.IsGagged() ?? true) && (_globals.Current?.ChatGarblerActive ?? false))
+        if ((_gags.ServerGagData?.IsGagged() ?? true) && (OwnGlobals.Perms?.ChatGarblerActive ?? false))
             previewMessage = _garbler.ProcessMessage(previewMessage);
 
         // Send message to the server
-        _logger.LogTrace($"Sending Message: {previewMessage}", LoggerType.GlobalChat);
         _hub.UserSendGlobalChat(new(MainHub.PlayerUserData, previewMessage, _config.Current.PreferThreeCharaAnonName)).ConfigureAwait(false);
 
         // Clear message and trigger achievement event
@@ -258,15 +322,16 @@ public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber
         CkGui.AttachToolTip($"Opens {LastInteractedMsg.Name}'s Light KinkPlate.");
 
         ImGui.Separator();
-        using (ImRaii.Disabled(!shiftHeld))
+        using (ImRaii.Disabled(!shiftHeld || string.IsNullOrWhiteSpace(_requestMessage)))
             if (ImGui.Selectable("Send Kinkster Request"))
             {
                 _hub.UserSendKinksterRequest(new(new(LastInteractedMsg.UID), _requestMessage)).ConfigureAwait(false);
                 ClosePopupAndResetMsg();
             }
-        CkGui.AttachToolTip(shiftHeld
-            ? $"Sends a Kinkster Request to {LastInteractedMsg.Name}."
-            : "Must be holding SHIFT to select.");
+        CkGui.AttachToolTip(!shiftHeld ? "Must be holding SHIFT to select."
+            : string.IsNullOrWhiteSpace(_requestMessage)
+            ? "Must attach a message to the request!"
+                : $"Sends a Kinkster Request to {LastInteractedMsg.Name}.");
 
         ImGui.SetNextItemWidth(ImGui.GetWindowWidth() - 20);
         ImGui.InputTextWithHint("##attachedPairMsg", "Attached Request Msg..", ref _requestMessage, 150);
@@ -308,7 +373,7 @@ public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber
         if (!File.Exists(RecentFile))
         {
             // Add the basic welcome message and return.
-            _logger.LogInformation("Chat log file does not exist. Adding welcome message.", LoggerType.GlobalChat);
+            Svc.Logger.Information("Chat log file does not exist. Adding welcome message.", LoggerType.GlobalChat);
             AddMessage(new(new("System"), "System",
                 "Welcome to the GagSpeak Global Chat![para]" +
                 "Your Name in here is Anonymous to anyone you have not yet added. Feel free to say hi![line]"));
@@ -331,7 +396,7 @@ public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to load chat log.");
+            Svc.Logger.Error(ex, "Failed to load chat log.");
             AddMessage(new(new("System"), "System",
                 "Welcome to the GagSpeak Global Chat![para]" +
                 "Your Name in here is Anonymous to anyone you have not yet added. Feel free to say hi![line]"));
@@ -341,7 +406,7 @@ public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber
         // If the de-serialized date is not the same date as our current date, do not restore the data.
         if (savedChatlog.DateStarted.DayOfYear != DateTime.Now.DayOfYear)
         {
-            _logger.LogInformation("Chat log is from a different day. Not restoring.", LoggerType.GlobalChat);
+            Svc.Logger.Information("Chat log is from a different day. Not restoring.", LoggerType.GlobalChat);
             AddMessage(new(new("System"), "System",
                 "Welcome to the GagSpeak Global Chat![para]" +
                 "Your Name in here is Anonymous to anyone you have not yet added. Feel free to say hi![line]"));
@@ -352,18 +417,6 @@ public class GlobalChatLog : CkChatlog<GSGlobalChatMessage>, IMediatorSubscriber
         foreach (var msg in savedChatlog.Messages)
             AddExistingMessage(msg);
 
-        _logger.LogInformation($"Loaded {savedChatlog.Messages.Count} messages from the chat log.", LoggerType.GlobalChat);
-    }
-
-    internal struct SerializableChatLog
-    {
-        public DateTime DateStarted { get; set; }
-        public List<GSGlobalChatMessage> Messages { get; set; }
-
-        public SerializableChatLog(DateTime dateStarted, List<GSGlobalChatMessage> messages)
-        {
-            DateStarted = dateStarted;
-            Messages = messages;
-        }
+        Svc.Logger.Information($"Loaded {savedChatlog.Messages.Count} messages from the chat log.", LoggerType.GlobalChat);
     }
 }

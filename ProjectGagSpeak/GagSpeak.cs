@@ -41,7 +41,6 @@ using GagSpeak.State.Caches;
 using GagSpeak.State.Handlers;
 using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
-using GagSpeak.Toybox;
 using GagSpeak.UpdateMonitoring.SpatialAudio;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
@@ -224,7 +223,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<ClientAchievements>()
         .AddSingleton<AchievementEventHandler>()
         .AddSingleton<FavoritesManager>()
-        .AddSingleton<GlobalPermissions>()
+        .AddSingleton<OwnGlobals>()
         .AddSingleton<KinksterRequests>()
         .AddSingleton<TraitAllowanceManager>()
 
@@ -281,7 +280,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<ShareHubService>()
         .AddSingleton<SpellActionService>()
         .AddSingleton<TriggerActionService>()
-        .AddSingleton<VibeSimService>()
+        .AddSingleton<VibeLobbyDistributionService>()
 
         // Spatial Audio
         .AddSingleton<ResourceLoader>()
@@ -326,7 +325,6 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<CursedLootManager>()
         .AddSingleton<GagRestrictionManager>()
         .AddSingleton<ModSettingPresetManager>()
-        .AddSingleton<OwnGlobalsManager>()
         .AddSingleton<BuzzToyManager>()
         .AddSingleton<VibeLobbyManager>()
         .AddSingleton<PatternManager>()
@@ -340,6 +338,8 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<IdDisplayHandler>()
         .AddSingleton<AccountInfoExchanger>()
         .AddSingleton<GlobalChatLog>()
+        .AddSingleton<PopoutGlobalChatlog>()
+        .AddSingleton<VibeRoomChatlog>()
 
         // WebAPI (Server stuff)
         .AddSingleton<MainHub>()

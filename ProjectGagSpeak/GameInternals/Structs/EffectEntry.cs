@@ -1,3 +1,5 @@
+using CkCommons;
+
 namespace GagSpeak.GameInternals.Structs;
 public struct EffectEntry
 {

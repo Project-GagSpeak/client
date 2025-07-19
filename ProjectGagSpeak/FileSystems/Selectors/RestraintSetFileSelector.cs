@@ -16,6 +16,7 @@ using ImGuiNET;
 using OtterGui;
 using CkCommons.Gui;
 using CkCommons.Helpers;
+using OtterGuiInternal.Structs;
 
 namespace GagSpeak.FileSystems;
 
@@ -87,11 +88,21 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
         // must be a valid drag-drop source, so use invisible button.
         var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight() * 2);
         ImGui.InvisibleButton("button-leaf", leafSize);
-        var hovered = ImGui.IsItemHovered();
         var rectMin = ImGui.GetItemRectMin();
         var rectMax = ImGui.GetItemRectMax();
-        var bgColor = hovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
-        ImGui.GetWindowDrawList().AddRectFilled(rectMin, rectMax, bgColor, 5);
+
+        var iconSize = CkGui.IconSize(FAI.Trash).X;
+        var spacing = ImGui.GetStyle().ItemSpacing.X;
+        var iconSpacing = iconSize + spacing;
+
+        ImRect leftOfFav = new(rectMin, rectMin + new Vector2(spacing, leafSize.Y));
+        ImRect rightOfFav = new(rectMin + new Vector2(iconSpacing, 0), rectMin + leafSize - new Vector2(iconSpacing * 2, 0));
+
+        var wasHovered = ImGui.IsMouseHoveringRect(leftOfFav.Min, leftOfFav.Max) || ImGui.IsMouseHoveringRect(rightOfFav.Min, rightOfFav.Max);
+        
+        // Draw the base frame, colored.
+        var bgColor = wasHovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
+        ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), bgColor, 5);
 
         if (selected)
         {
@@ -125,7 +136,7 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
                 }
             }
             // Optimize later.
-            ImGui.SameLine((rectMax.X - rectMin.X) - CkGui.IconSize(FAI.Trash).X - ImGui.GetStyle().ItemSpacing.X);
+            ImGui.SameLine((rectMax.X - rectMin.X) - iconSpacing);
             var centerHeight = (ImGui.GetItemRectSize().Y - CkGui.IconSize(FAI.Trash).Y) / 2;
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + centerHeight);
             var pos = ImGui.GetCursorScreenPos();

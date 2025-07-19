@@ -1,16 +1,17 @@
+using CkCommons;
+using CkCommons.Gui;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
-using ImGuiNET;
-using System.Runtime.InteropServices;
-using GagSpeak.PlayerClient;
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility.Raii;
+using GagSpeak.PlayerClient;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
+using ImGuiNET;
 using OtterGui.Classes;
 using Penumbra.GameData.Structs;
-using CkCommons.Gui;
-using Dalamud.Interface.Utility.Raii;
+using System.Runtime.InteropServices;
 
 namespace GagSpeak.Utils;
 public static class GsExtensions
@@ -157,98 +158,19 @@ public static class GsExtensions
         };
     }
 
-    public static CoreIntifaceElement FromFactoryName(string factoryName)
+    public static string ToName(this LimitedActionEffectType type)
     {
-        return factoryName switch
+        return type switch
         {
-            "Lovense Ambi" => CoreIntifaceElement.Ambi,
-            "Lovense Calor" => CoreIntifaceElement.Calor,
-            "Lovense Diamo" => CoreIntifaceElement.Diamo,
-            "Lovense Dolce" => CoreIntifaceElement.Dolce,
-            "Lovense Domi" => CoreIntifaceElement.Domi,
-            "Lovense Domi 2" => CoreIntifaceElement.Domi2,
-            "Lovense Edge" => CoreIntifaceElement.Edge,
-            "Lovense Edge 2" => CoreIntifaceElement.Edge2,
-            "Lovense Exomoon" => CoreIntifaceElement.Exomoon,
-            "Lovense Ferri" => CoreIntifaceElement.Ferri,
-            "Lovense Flexer" => CoreIntifaceElement.Flexer,
-            "Lovense Gemini" => CoreIntifaceElement.Gemini,
-            "Lovense Gravity" => CoreIntifaceElement.Gravity,
-            "Lovense Gush" => CoreIntifaceElement.Gush,
-            "Lovense Gush 2" => CoreIntifaceElement.Gush2,
-            "Lovense Hush" => CoreIntifaceElement.Hush,
-            "Lovense Hush 2 (1 Inch)" => CoreIntifaceElement.Hush2,
-            "Lovense Hush 2 (1.5 Inch)" => CoreIntifaceElement.Hush2,
-            "Lovense Hush 2 (1.75 Inch)" => CoreIntifaceElement.Hush2,
-            "Lovense Hush 2 (2.25 Inch)" => CoreIntifaceElement.Hush2,
-            "Lovense Hyphy" => CoreIntifaceElement.Hyphy,
-            "Lovense Lapis" => CoreIntifaceElement.Lapis,
-            "Lovense Mini Sex Machine" => CoreIntifaceElement.MiniSexMachine,
-            "Lovense Sex Machine" => CoreIntifaceElement.SexMachine,
-            "Lovense Lush" => CoreIntifaceElement.Lush,
-            "Lovense Lush 2" => CoreIntifaceElement.Lush2,
-            "Lovense Lush 3" => CoreIntifaceElement.Lush3,
-            "Lovense Lush 4" => CoreIntifaceElement.Lush4,
-            "Lovense Max" => CoreIntifaceElement.Max,
-            "Lovense Max 2" => CoreIntifaceElement.Max2,
-            "Lovense Mission" => CoreIntifaceElement.Mission,
-            "Lovense Mission 2" => CoreIntifaceElement.Mission2,
-            "Lovense Nora" => CoreIntifaceElement.Nora,
-            "Lovense Osci" => CoreIntifaceElement.Osci,
-            "Lovense Osci 2" => CoreIntifaceElement.Osci2,
-            "Lovense Osci 3" => CoreIntifaceElement.Osci3,
-            "Lovense Ridge" => CoreIntifaceElement.Ridge,
-            "Lovense Solace" => CoreIntifaceElement.Solace,
-            "Lovense Solace Pro" => CoreIntifaceElement.SolacePro,
-            "Lovense Tenera 2" => CoreIntifaceElement.Tenera2,
-            "Lovense Vulse" => CoreIntifaceElement.Vulse,
-            _ => CoreIntifaceElement.UnknownDevice // fallback case to tell us we failed.
-        };
-    }
-
-    public static string ToFactoryName(this CoreIntifaceElement intifaceItem)
-    {
-        return intifaceItem switch
-        {
-            CoreIntifaceElement.Ambi => "Lovense Ambi",
-            CoreIntifaceElement.Calor => "Lovense Calor",
-            CoreIntifaceElement.Diamo => "Lovense Diamo",
-            CoreIntifaceElement.Dolce => "Lovense Dolce",
-            CoreIntifaceElement.Domi => "Lovense Domi",
-            CoreIntifaceElement.Domi2 => "Lovense Domi 2",
-            CoreIntifaceElement.Edge => "Lovense Edge",
-            CoreIntifaceElement.Edge2 => "Lovense Edge 2",
-            CoreIntifaceElement.Exomoon => "Lovense Exomoon",
-            CoreIntifaceElement.Ferri => "Lovense Ferri",
-            CoreIntifaceElement.Flexer => "Lovense Flexer",
-            CoreIntifaceElement.Gemini => "Lovense Gemini",
-            CoreIntifaceElement.Gravity => "Lovense Gravity",
-            CoreIntifaceElement.Gush => "Lovense Gush",
-            CoreIntifaceElement.Gush2 => "Lovense Gush 2",
-            CoreIntifaceElement.Hush => "Lovense Hush",
-            CoreIntifaceElement.Hush2 => "Lovense Hush 2 (1.75 Inch)",
-            CoreIntifaceElement.Hyphy => "Lovense Hyphy",
-            CoreIntifaceElement.Lapis => "Lovense Lapis",
-            CoreIntifaceElement.MiniSexMachine => "Lovense Mini Sex Machine",
-            CoreIntifaceElement.SexMachine => "Lovense Sex Machine",
-            CoreIntifaceElement.Lush => "Lovense Lush",
-            CoreIntifaceElement.Lush2 => "Lovense Lush 2",
-            CoreIntifaceElement.Lush3 => "Lovense Lush 3",
-            CoreIntifaceElement.Lush4 => "Lovense Lush 4",
-            CoreIntifaceElement.Max => "Lovense Max",
-            CoreIntifaceElement.Max2 => "Lovense Max 2",
-            CoreIntifaceElement.Mission => "Lovense Mission",
-            CoreIntifaceElement.Mission2 => "Lovense Mission 2",
-            CoreIntifaceElement.Nora => "Lovense Nora",
-            CoreIntifaceElement.Osci => "Lovense Osci",
-            CoreIntifaceElement.Osci2 => "Lovense Osci 2",
-            CoreIntifaceElement.Osci3 => "Lovense Osci 3",
-            CoreIntifaceElement.Ridge => "Lovense Ridge",
-            CoreIntifaceElement.Solace => "Lovense Solace",
-            CoreIntifaceElement.SolacePro => "Lovense Solace Pro",
-            CoreIntifaceElement.Tenera2 => "Lovense Tenera 2",
-            CoreIntifaceElement.Vulse => "Lovense Vulse",
-            _ => string.Empty
+            LimitedActionEffectType.Nothing => "Anything",
+            LimitedActionEffectType.Miss => "Action Missed",
+            LimitedActionEffectType.Damage => "Damage Related",
+            LimitedActionEffectType.Heal => "Heal Related",
+            LimitedActionEffectType.BlockedDamage => "Damage Blocked",
+            LimitedActionEffectType.ParriedDamage => "Damage Parried",
+            LimitedActionEffectType.Attract1 => "Rescue Used",
+            LimitedActionEffectType.Knockback => "Pushed Back",
+            _ => "UNK"
         };
     }
 

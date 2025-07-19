@@ -7,7 +7,8 @@ using GagspeakAPI.Util;
 namespace GagSpeak.Utils;
 
 /// <summary>
-///     Helps update permissions from Globals, PairPerms, and PairPermAccess, through object transfer handling.
+///     WARNING: This class can bypass any special permissions that need to happen on value change, 
+///     be sure to account for these, or else it will become problematic.
 /// </summary>
 public static class PermissionHelper
 {

@@ -1,9 +1,14 @@
+using CkCommons;
 using CkCommons.Textures;
+using Dalamud.Game.Addon.Lifecycle;
+using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.Gui.NamePlate;
 using Dalamud.Interface.Textures.TextureWraps;
+using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Kernel;
 using FFXIVClientStructs.FFXIV.Client.UI;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using GagSpeak.GameInternals;
 using GagSpeak.Kinksters;
@@ -12,12 +17,145 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
+using Lumina.Excel.Sheets;
+using NAudio.CoreAudioApi;
 
 namespace GagSpeak.Services;
 
 // MAINTAINERS NOTE:
 // Modifying the ORIGIN_X and ORIGIN_Y values of an image allow you to perminantly altar their changed location.
 // using SetPositionFloat and other methods will NOT change this. Calculate the offsets with the ORIGIN, for persisted changes.
+
+public sealed class PlayerPortaitManager(ulong id) : IDisposable
+{
+    private readonly Dictionary<string, IDalamudTextureWrap> _portaitsPerJob = new();
+    private readonly IDalamudTextureWrap? _adventurePlateWrap = null;
+
+    public readonly ulong ContentID = id;
+    public IReadOnlyDictionary<string, IDalamudTextureWrap> Portraits => _portaitsPerJob;
+    public IDalamudTextureWrap? AdventurePlateTexture { get; private set; } = null;
+
+    public IDalamudTextureWrap? GetWrapForJob(string jobName)
+    {
+        if (_portaitsPerJob.TryGetValue(jobName, out var wrap))
+            return wrap;
+        Svc.Logger.Warning($"No portrait found for job {jobName} in PlayerPortaitManager.");
+        return null;
+    }
+
+    public bool TrySetAdventurePlateWrap(string localPath)
+    {
+        var texture = Svc.Texture.GetFromFile(Path.Combine(Svc.PluginInterface.ConfigDirectory.FullName, localPath)).GetWrapOrDefault();
+        if (texture is null)
+        {
+            Svc.Logger.Error($"Failed to load adventure plate texture from {localPath}");
+            return false;
+        }
+        AdventurePlateTexture = texture;
+        return true;
+    }
+
+    public bool SetWrapForJob(string jobName, IDalamudTextureWrap wrap)
+    {
+        if (_portaitsPerJob.ContainsKey(jobName))
+        {
+            _portaitsPerJob[jobName].Dispose();
+            _portaitsPerJob[jobName] = wrap;
+            return true;
+        }
+        _portaitsPerJob.Add(jobName, wrap);
+        return false;
+    }
+
+    public void Dispose()
+    {
+        foreach (var wrap in _portaitsPerJob.Values)
+        {
+            wrap.Dispose();
+        }
+        _portaitsPerJob.Clear();
+    }
+}
+
+
+public sealed class PortaitService : IDisposable
+{
+    private readonly ILogger<PortaitService> _logger;
+    private Dictionary<ulong, PlayerPortaitManager> _playerPortaits = new();
+
+    public PortaitService(ILogger<PortaitService> logger)
+    {
+        _logger = logger;
+        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "CharaCard", AdventurePlatePostSetup);
+        Svc.AddonLifecycle.RegisterListener(AddonEvent.PreDraw, "CharaCard", AdventurePlatePreDraw);
+    }
+
+    public void Dispose()
+    {
+        Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostSetup, "CharaCard", AdventurePlatePostSetup);
+        Svc.AddonLifecycle.UnregisterListener(AddonEvent.PreDraw, "CharaCard", AdventurePlatePreDraw);
+        // Cleanup
+        foreach (var portait in _playerPortaits.Values)
+            portait.Dispose();
+
+        _playerPortaits.Clear();
+    }
+
+    private void AdventurePlatePostSetup(AddonEvent type, AddonArgs args)
+    {
+        // grab info here & download the image
+    }
+
+    private unsafe void AdventurePlatePreDraw(AddonEvent type, AddonArgs args)
+    {
+        var charaCardStruct = (AgentCharaCard.Storage*)args.Addon;
+        var cid = charaCardStruct->ContentId;
+
+        // if the content ID is not present, return.
+        if (!_playerPortaits.ContainsKey(cid))
+            return;
+
+        // /xldata -> Addon Inspector -> Depth Layer 5 -> CharaCard
+        var charaCard = (AtkUnitBase*)args.Addon;
+
+        // sample only covers ownID as a usecase for now.
+        var ownId = Svc.ClientState.LocalContentId;
+
+        // if the image isnt set, dont change it.
+        if (!_playerPortaits.TryGetValue(ownId, out var portaitManager) || portaitManager.AdventurePlateTexture is not { } texture)
+            return;
+
+        // swap the texture.
+        var portraitNode = (AtkComponentNode*)charaCard->GetNodeById(19);
+        var portrait = (AtkImageNode*)portraitNode->Component->UldManager.SearchNodeById(2);
+        // inject the texture we found.
+        InjectJobTextureToAsset(portrait, texture);
+    }
+
+    private unsafe void InjectJobTextureToAsset(AtkImageNode* node, IDalamudTextureWrap wrap)
+    {
+        // If the parts list is less than 1 its a corruypted image so do nothing.
+        if (node->PartsList->PartCount < 1)
+            return;
+
+        // get the original width and height of the texture.
+        var width = node->PartsList->Parts[0].UldAsset->AtkTexture.KernelTexture->ActualWidth;
+        var height = node->PartsList->Parts[0].UldAsset->AtkTexture.KernelTexture->ActualHeight;
+
+        // Convert the texture to kernal, and make sure it keeps original dimentions.
+        var texturePointer = (Texture*)Svc.Texture.ConvertToKernelTexture(wrap);
+        // Update the actual width to be reflected in resolution
+        texturePointer->ActualWidth = width;
+        texturePointer->ActualHeight = height;
+
+        // Release the original texture.
+        node->PartsList->Parts[0].UldAsset->AtkTexture.ReleaseTexture();
+        // Replace it with the new one and update the texture type.
+        node->PartsList->Parts[0].UldAsset->AtkTexture.KernelTexture = texturePointer;
+        node->PartsList->Parts[0].UldAsset->AtkTexture.TextureType = TextureType.KernelTexture;
+    }
+}
+
 
 
 /// <summary>
@@ -27,7 +165,6 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
 {
     private enum DisplayMode { JobIcon, AboveName }
 
-    private readonly GlobalPermissions _globals;
     private readonly GagRestrictionManager _gags;
     private readonly MainConfig _mainConfig;
     private readonly GagspeakEventManager _events;
@@ -40,11 +177,10 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
     private IDalamudTextureWrap GaggedSpeakingIcon;
 
     public NameplateService(ILogger<NameplateService> logger, GagspeakMediator mediator,
-        GlobalPermissions globals, GagRestrictionManager gags, MainConfig mainConfig,
-        GagspeakEventManager events, KinksterManager kinksters, OnFrameworkService frameworkUtils)
+        GagRestrictionManager gags, MainConfig mainConfig, GagspeakEventManager events, 
+        KinksterManager kinksters, OnFrameworkService frameworkUtils)
         : base(logger, mediator)
     {
-        _globals = globals;
         _gags = gags;
         _mainConfig = mainConfig;
         _events = events;
@@ -91,7 +227,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
 
     private void UpdateClientGagState(int _, GagType __, bool applied, string ___)
     {
-        if (_globals.Current is not { } globals)
+        if (OwnGlobals.Perms is not { } globals)
             return;
 
         if (globals.GaggedNameplate && applied)
@@ -150,7 +286,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
 
     private void OnOwnMessage(InputChannel c, string message)
     {
-        if (_gags.ServerGagData is not { } data || _globals.Current is not { } perms)
+        if (_gags.ServerGagData is not { } data || OwnGlobals.Perms is not { } perms)
             return;
 
         // Discard if not a garbled message.

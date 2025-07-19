@@ -1,3 +1,4 @@
+using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Raii;
 using CkCommons.Widgets;
@@ -5,9 +6,13 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.FileSystems;
 using GagSpeak.Gui.Components;
+using GagSpeak.Services;
+using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
+using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using ImGuiNET;
 using OtterGui.Text;
 
@@ -18,17 +23,20 @@ public partial class PatternsPanel
     private readonly ILogger<PatternsPanel> _logger;
     private readonly PatternFileSelector _selector;
     private readonly PatternManager _manager;
+    private readonly RemoteService _remotes;
     private readonly TutorialService _guides;
 
     public PatternsPanel(
         ILogger<PatternsPanel> logger,
         PatternFileSelector selector,
         PatternManager manager,
+        RemoteService remotes,
         TutorialService guides)
     {
         _logger = logger;
         _selector = selector;
         _manager = manager;
+        _remotes = remotes;
         _guides = guides;
     }
 
@@ -64,14 +72,14 @@ public partial class PatternsPanel
         var item = _selector.Selected;
         var editorItem = _manager.ItemInEditor;
 
-        var isEditing = item is not null && item.Identifier == editorItem?.Identifier;
-        var isActive = item is not null && item.Identifier.Equals(_manager.ActivePattern?.Identifier);
+        var isEditing = item is not null && item.Identifier.Equals(editorItem?.Identifier);
+        var isActive = item is not null && item.Identifier.Equals(_remotes.ClientData.ActivePattern);
 
         var label = item is null ? "No Item Selected!" : isEditing ? $"{item.Label} - (Editing)" : item.Label;
         var tooltip = item is null ? "No item selected!" : isActive ? "Pattern is Active!"
                 : $"Double Click to {(editorItem is null ? "Edit" : "Save Changes to")} this Pattern.--SEP--Right Click to cancel and exit Editor.";
 
-        using (CkRaii.ChildLabelCustomButton("##PatternSel", region.Size, ImGui.GetFrameHeight(), DrawLabel, BeginEdits, tooltip, DFlags.RoundCornersRight, LabelFlags.SizeIncludesHeader))
+        using (var c = CkRaii.ChildLabelCustomButton("##PatternSel", region.Size, ImGui.GetFrameHeight(), DrawLabel, BeginEdits, tooltip, DFlags.RoundCornersRight, LabelFlags.SizeIncludesHeader))
         {
             if (item is null)
                 return;
@@ -121,6 +129,45 @@ public partial class PatternsPanel
         CkGui.Separator();
         DrawPatternTimeSpans(pattern, isEditorItem);
 
+        if (!isEditorItem)
+            DrawPatternToggleButton(pattern);
+
         DrawFooter(pattern);
+    }
+
+    private void DrawPatternToggleButton(Pattern pattern)
+    {
+        var region = ImGui.GetContentRegionAvail();
+        var height = region.Y - CkStyle.ThreeRowHeight();
+        var offset = region.X - height;
+        ImGui.SetCursorPos(ImGui.GetCursorPos() + new Vector2(offset * .5f, ImGui.GetFrameHeight()));
+
+        ImGui.Dummy(new Vector2(height));
+        var hovered = ImGui.IsItemHovered();
+        var clicked = ImGui.IsItemClicked(ImGuiMouseButton.Left);
+        var isActive = _remotes.ClientData.ActivePattern.Equals(pattern.Identifier);
+        var icon = isActive ? CoreTexture.Stop : CoreTexture.Play;
+        var color = hovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkColor.FancyHeaderContrast.Uint();
+        var size = ImGui.GetItemRectSize();
+        ImGui.GetWindowDrawList().AddDalamudImageRounded(CosmeticService.CoreTextures.Cache[icon], ImGui.GetItemRectMin(), size, 45);
+        ImGui.GetWindowDrawList().AddCircleFilled(ImGui.GetItemRectMin() + size * .5f, size.X * .55f, color);
+        if (clicked)
+        {
+            // at the moment this does not interact with the server but probably should so that pairs dont fall out of sync.
+            if (isActive)
+                _manager.DisablePattern(_manager.ActivePatternId, MainHub.UID);
+            else
+            {
+                if (_manager.ActivePatternId != Guid.Empty && !isActive)
+                {
+                    _manager.SwitchPattern(pattern.Identifier, MainHub.UID);
+                }
+                else
+                {
+                    _manager.EnablePattern(pattern.Identifier, MainHub.UID);
+                }
+            }
+        }
+        CkGui.AttachToolTip("Start this Pattern on all Toys.");
     }
 }

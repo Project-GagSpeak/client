@@ -1,48 +1,55 @@
+using CkCommons.Gui;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Services;
-using GagSpeak.Services.Mediator;
+using GagSpeak.GameInternals.Addons;
+using GagSpeak.GameInternals.Structs;
 using GagSpeak.Gui.Modules.Puppeteer;
 using GagSpeak.Gui.Publications;
+using GagSpeak.Gui.Remote;
 using GagSpeak.Gui.Toybox;
 using GagSpeak.Gui.UiRemote;
 using GagSpeak.Gui.Wardrobe;
-using ImGuiNET;
-using GagSpeak.GameInternals.Addons;
-using GagSpeak.GameInternals.Structs;
-using OtterGui.Text;
+using GagSpeak.PlayerClient;
+using GagSpeak.Services;
+using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using CkCommons.Gui;
-using GagSpeak.Gui.Remote;
+using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
+using GagspeakAPI.Data.Permissions;
+using GagspeakAPI.Hub;
+using ImGuiNET;
+using OtterGui.Text;
 
 namespace GagSpeak.Gui.MainWindow;
 
 /// <summary> The homepage will provide the player with links to open up other windows in the plugin via components </summary>
 public class HomepageTab
 {
+    private readonly ILogger<HomepageTab> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly OnFrameworkService _framework;
+    private readonly MainHub _hub;
 
     private int HoveredItemIndex = -1;
-    private readonly List<(string Label, FontAwesomeIcon Icon, Type ToggleType)> Modules;
+    private readonly List<(string Label, FontAwesomeIcon Icon, Action OnClick)> Modules;
 
-    public HomepageTab(GagspeakMediator mediator, OnFrameworkService framework)
+    public HomepageTab(ILogger<HomepageTab> logger, GagspeakMediator mediator, MainHub hub)
     {
+        _logger = logger;
         _mediator = mediator;
-        _framework = framework;
+        _hub = hub;
 
         // Define all module information in a single place
-        Modules = new List<(string, FontAwesomeIcon, Type)>
+        Modules = new List<(string, FontAwesomeIcon, Action)>
         {
-            ("Sex Toy Remote", FAI.WaveSquare, typeof(BuzzToyRemoteUI)),
-            ("Wardrobe", FAI.ToiletPortable, typeof(WardrobeUI)),
-            ("Puppeteer", FAI.PersonHarassing, typeof(PuppeteerUI)),
-            ("Toybox", FAI.BoxOpen, typeof(ToyboxUI)),
-            ("Mod Presets", FAI.FileAlt, typeof(ModPresetsUI)),
-            ("Trait Allowances", FAI.UserShield, typeof(TraitAllowanceUI)),
-            ("Publications", FAI.CloudUploadAlt, typeof(PublicationsUI)),
-            ("Achievements", FAI.Trophy, typeof(AchievementsUI)),
+            ("Sex Toy Remote", FAI.WaveSquare, () => _mediator.Publish(new UiToggleMessage(typeof(BuzzToyRemoteUI)))),
+            ("Wardrobe", FAI.ToiletPortable, () => _mediator.Publish(new UiToggleMessage(typeof(WardrobeUI)))),
+            ("Puppeteer", FAI.PersonHarassing, () => _mediator.Publish(new UiToggleMessage(typeof(PuppeteerUI)))),
+            ("Toybox", FAI.BoxOpen, () => _mediator.Publish(new UiToggleMessage(typeof(ToyboxUI)))),
+            ("Mod Presets", FAI.FileAlt, () => _mediator.Publish(new UiToggleMessage(typeof(ModPresetsUI)))),
+            ("Trait Allowances", FAI.UserShield, () => _mediator.Publish(new UiToggleMessage(typeof(TraitAllowanceUI)))),
+            ("Publications", FAI.CloudUploadAlt, () => _mediator.Publish(new UiToggleMessage(typeof(PublicationsUI)))),
+            ("Achievements", FAI.Trophy, () => _mediator.Publish(new UiToggleMessage(typeof(AchievementsUI))))
         };
     }
 
@@ -65,11 +72,7 @@ public class HomepageTab
             var isHovered = HoveredItemIndex == i;
 
             if (HomepageSelectable(module.Label, module.Icon, selectableSize, isHovered))
-            {
-                _mediator.Publish(new UiToggleMessage(module.ToggleType));
-                if (module.ToggleType == typeof(BuzzToyRemoteUI))
-                    GagspeakEventManager.AchievementEvent(UnlocksEvent.RemoteOpened);
-            }
+                module.OnClick?.Invoke();
 
             if (ImGui.IsItemHovered())
             {
@@ -109,7 +112,7 @@ public class HomepageTab
         // draw the button over the child.
         ImGui.SetCursorScreenPos(buttonPos);
         if (ImGui.InvisibleButton("##Button-" + label, region))
-            return true;
+            return true && !UiService.DisableUI;
 
         return false;
     }

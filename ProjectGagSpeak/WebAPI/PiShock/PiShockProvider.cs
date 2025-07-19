@@ -13,18 +13,14 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
 {
     private readonly MainConfig _mainConfig;
     private readonly KinksterManager _pairManager;
-    private readonly MainHub _mainHub;
     private readonly HttpClient _httpClient;
 
     public PiShockProvider(ILogger<PiShockProvider> logger, GagspeakMediator mediator,
-        MainConfig mainConfig, KinksterManager pairManager, MainHub mainHub) : base(logger, mediator)
+        MainConfig mainConfig, KinksterManager pairManager) : base(logger, mediator)
     {
         _mainConfig = mainConfig;
         _pairManager = pairManager;
-        _mainHub = mainHub;
         _httpClient = new HttpClient();
-
-        Mediator.Subscribe<PiShockExecuteOperation>(this, (msg) => ExecuteOperation(msg.shareCode, msg.OpCode, msg.Intensity, msg.Duration));
     }
 
     protected override void Dispose(bool disposing)

@@ -1,3 +1,4 @@
+using CkCommons;
 using Dalamud.Game.ClientState.Objects;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Plugin.Services;
@@ -20,7 +21,6 @@ namespace GagSpeak.Services.Controller;
 public sealed class AutoPromptController : DisposableMediatorSubscriberBase
 {
     private readonly MainConfig _config;
-    private readonly GlobalPermissions _globals;
     private readonly SelectStringPrompt _promptsString;
     private readonly YesNoPrompt _promptsYesNo;
     private readonly RoomSelectPrompt _promptsRooms;
@@ -31,13 +31,11 @@ public sealed class AutoPromptController : DisposableMediatorSubscriberBase
     private PlayerControlSource _sources = PlayerControlSource.None;
 
     public AutoPromptController(ILogger<AutoPromptController> logger, GagspeakMediator mediator,
-        MainConfig mainConfig, GlobalPermissions globals, SelectStringPrompt strPrompts, 
-        YesNoPrompt ynPrompts, RoomSelectPrompt roomPrompts, KeystateController keyCtrl, 
-        MovementController moveCtrl) 
+        MainConfig mainConfig, SelectStringPrompt strPrompts, YesNoPrompt ynPrompts, 
+        RoomSelectPrompt roomPrompts, KeystateController keyCtrl, MovementController moveCtrl) 
         : base(logger, mediator)
     {
         _config = mainConfig;
-        _globals = globals;
         _promptsString = strPrompts;
         _promptsYesNo = ynPrompts;
         _promptsRooms = roomPrompts;

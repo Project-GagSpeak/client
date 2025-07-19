@@ -8,7 +8,6 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
-using GagSpeak.Toybox;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -23,7 +22,6 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
 {
     private readonly ClientAchievements _saveData;
     private readonly MainConfig _config;
-    private readonly GlobalPermissions _globals;
     private readonly TraitsCache _traits;
     private readonly KinksterManager _pairs;
     private readonly GagRestrictionManager _gags;
@@ -46,13 +44,11 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
     private Task? _updateLoopTask = null;
     private CancellationTokenSource? _updateLoopCTS = new();
 
-
     public AchievementsService(
         ILogger<AchievementsService> logger,
         GagspeakMediator mediator,
         ClientAchievements saveData,
         MainConfig config,
-        GlobalPermissions globals,
         TraitsCache traits,
         KinksterManager pairs,
         GagRestrictionManager gags,
@@ -70,7 +66,6 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
     {
         _saveData = saveData;
         _config = config;
-        _globals = globals;
         _traits = traits;
         _pairs = pairs;
         _gags = gags;
@@ -369,7 +364,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
             var activeItems = 0;
             if (_gags.ServerGagData?.IsGagged() ?? false) activeItems++;
             if (_restraints.AppliedRestraint is not null) activeItems++;
-            if (_remoteService.ClientIsBeingBuzzed) activeItems++;
+            if (_remoteService.IsClientBeingBuzzed) activeItems++;
             return activeItems >= 2;
         }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Duties Completed");
 
@@ -497,12 +492,12 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         _saveData.AddDuration(AchievementModuleKind.Toybox, Achievements.EnduranceQueen, TimeSpan.FromMinutes(59), DurationTimeUnit.Minutes, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Minutes", "Vibrated for");
 
         _saveData.AddConditional(AchievementModuleKind.Toybox, Achievements.CollectorOfSinfulTreasures, () =>
-        { return (_globals.Current?.HasValidShareCode() ?? false) || _remoteService.ClientIsBeingBuzzed; }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Devices Connected");
+        { return (OwnGlobals.Perms?.HasValidShareCode() ?? false) || _remoteService.IsClientBeingBuzzed; }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Devices Connected");
 
         _saveData.AddRequiredTimeConditional(AchievementModuleKind.Toybox, Achievements.MotivationForRestoration, TimeSpan.FromMinutes(30),
-            () => _patterns.ActivePattern is not null, DurationTimeUnit.Minutes, (id, name) => OnCompletion(id, name).ConfigureAwait(false), suffix: " Vibrated in Diadem");
+            () => _remoteService.ClientData.ActivePattern != Guid.Empty, DurationTimeUnit.Minutes, (id, name) => OnCompletion(id, name).ConfigureAwait(false), suffix: " Vibrated in Diadem");
 
-        _saveData.AddConditional(AchievementModuleKind.Toybox, Achievements.VulnerableVibrations, () => _patterns.ActivePattern is not null, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Staggers Performed");
+        _saveData.AddConditional(AchievementModuleKind.Toybox, Achievements.VulnerableVibrations, () => _remoteService.ClientData.ActivePattern != Guid.Empty, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Staggers Performed");
 
         _saveData.AddConditional(AchievementModuleKind.Toybox, Achievements.KinkyGambler,
             () => _triggers.Storage.Social.Count() > 0, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "DeathRolls Gambled");
@@ -517,27 +512,27 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         #region HARDCORE MODULE
         _saveData.AddProgress(AchievementModuleKind.Hardcore, Achievements.AllTheCollarsOfTheRainbow, 20, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Forced", suffix: "Pairs To Follow You");
         _saveData.AddConditionalProgress(AchievementModuleKind.Hardcore, Achievements.UCanTieThis, 1,
-            () => _globals.Current?.HcFollowState() ?? false, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Completed", suffix: "Duties in ForcedFollow.");
+            () => OwnGlobals.Perms?.HcFollowState() ?? false, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Completed", suffix: "Duties in ForcedFollow.");
 
         // Forced follow achievements
         _saveData.AddDuration(AchievementModuleKind.Hardcore, Achievements.ForcedFollow, TimeSpan.FromMinutes(1), DurationTimeUnit.Minutes, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Minutes", "Leashed a Kinkster for");
         _saveData.AddDuration(AchievementModuleKind.Hardcore, Achievements.ForcedWalkies, TimeSpan.FromMinutes(5), DurationTimeUnit.Minutes, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Minutes", "Leashed a Kinkster for");
 
         // Time for Walkies achievements
-        _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.TimeForWalkies, TimeSpan.FromMinutes(1), () => _globals.Current?.HcFollowState() ?? false,
+        _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.TimeForWalkies, TimeSpan.FromMinutes(1), () => OwnGlobals.Perms?.HcFollowState() ?? false,
             DurationTimeUnit.Minutes, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Leashed", "Spent");
-        _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.GettingStepsIn, TimeSpan.FromMinutes(5), () => _globals.Current?.HcFollowState() ?? false,
+        _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.GettingStepsIn, TimeSpan.FromMinutes(5), () => OwnGlobals.Perms?.HcFollowState() ?? false,
             DurationTimeUnit.Minutes, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Leashed", "Spent");
-        _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.WalkiesLover, TimeSpan.FromMinutes(10), () => _globals.Current?.HcFollowState() ?? false,
+        _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.WalkiesLover, TimeSpan.FromMinutes(10), () => OwnGlobals.Perms?.HcFollowState() ?? false,
             DurationTimeUnit.Minutes, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Leashed", "Spent");
 
         //Part of the Furniture - Be forced to sit for 1 hour or more
-        _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.LivingFurniture, TimeSpan.FromHours(1), () => _globals.Current?.HcEmoteIsAnySitting() ?? false,
+        _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.LivingFurniture, TimeSpan.FromHours(1), () => OwnGlobals.Perms?.HcEmoteIsAnySitting() ?? false,
             DurationTimeUnit.Minutes, (id, name) => OnCompletion(id, name).ConfigureAwait(false), suffix: "Forced to Sit");
         _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.WalkOfShame, TimeSpan.FromMinutes(5),
         () =>
         {
-            if (_restraints.AppliedRestraint is not null && (_traits.FinalTraits & Traits.Blindfolded) != 0 && (_globals.Current?.HcFollowState() ?? false))
+            if (_restraints.AppliedRestraint is not null && (_traits.FinalTraits & Traits.Blindfolded) != 0 && (OwnGlobals.Perms?.HcFollowState() ?? false))
                 if (PlayerContent.InMainCity)
                     return true;
             return false;
@@ -560,11 +555,11 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.WhoNeedsToSee, TimeSpan.FromHours(3), () => (_traits.FinalTraits & Traits.Blindfolded) != 0,
         DurationTimeUnit.Hours, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Blindfolded for");
 
-        _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.OfDomesticDiscipline, TimeSpan.FromMinutes(30), () => (_globals.Current?.HcStayState() ?? false),
+        _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.OfDomesticDiscipline, TimeSpan.FromMinutes(30), () => (OwnGlobals.Perms?.HcStayState() ?? false),
             DurationTimeUnit.Minutes, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Locked away for");
-        _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.HomeboundSubmission, TimeSpan.FromHours(1), () => (_globals.Current?.HcStayState() ?? false),
+        _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.HomeboundSubmission, TimeSpan.FromHours(1), () => (OwnGlobals.Perms?.HcStayState() ?? false),
             DurationTimeUnit.Hours, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Locked away for");
-        _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.PerfectHousePet, TimeSpan.FromDays(1), () => (_globals.Current?.HcStayState() ?? false),
+        _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.PerfectHousePet, TimeSpan.FromDays(1), () => (OwnGlobals.Perms?.HcStayState() ?? false),
             DurationTimeUnit.Days, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Locked away for");
 
         // Shock-related achievements - Give out shocks
@@ -650,21 +645,21 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
             return targetIsImmobile;
         }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Helpless Kinksters", "Pet", false);
 
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.EscapedPatient, 10, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.ClientIsBeingBuzzed),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.EscapedPatient, 10, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundToKill, 25, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.ClientIsBeingBuzzed),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundToKill, 25, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.TheShackledSlayer, 50, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.ClientIsBeingBuzzed),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.TheShackledSlayer, 50, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.DangerousConvict, 100, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.ClientIsBeingBuzzed),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.DangerousConvict, 100, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.OfUnyieldingForce, 200, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.ClientIsBeingBuzzed),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.OfUnyieldingForce, 200, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.StimulationOverdrive, 300, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.ClientIsBeingBuzzed),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.StimulationOverdrive, 300, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundYetUnbroken, 400, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.ClientIsBeingBuzzed),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundYetUnbroken, 400, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.ChainsCantHoldMe, 500, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.ClientIsBeingBuzzed),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.ChainsCantHoldMe, 500, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
         #endregion GENERIC MODULE
 
@@ -673,20 +668,20 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
 
         _saveData.AddConditional(AchievementModuleKind.Secrets, Achievements.Experimentalist, () =>
         {
-            return _gags.ServerGagData is { } gags && gags.IsGagged() && _restraints.AppliedRestraint is not null && _patterns.ActivePattern is not null && _triggers.ActiveTriggers.Count() > 0 && _alarms.ActiveAlarms.Count() > 0 && _remoteService.ClientIsBeingBuzzed;
+            return _gags.ServerGagData is { } gags && gags.IsGagged() && _restraints.AppliedRestraint is not null && _remoteService.ClientData.ActivePattern != Guid.Empty && _triggers.ActiveTriggers.Count() > 0 && _alarms.ActiveAlarms.Count() > 0 && _remoteService.IsClientBeingBuzzed;
         }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Met", suffix: "Conditions", isSecret: true);
 
         _saveData.AddConditional(AchievementModuleKind.Secrets, Achievements.HelplessDamsel, () =>
         {
-            return _gags.ServerGagData is { } gags && gags.IsGagged() && _restraints.AppliedRestraint is not null && _remoteService.ClientIsBeingBuzzed && _pairs.DirectPairs.Any(x => x.OwnPerms.InHardcore)
-            && _globals.Current is { } globals && (!globals.ForcedFollow.IsNullOrWhitespace() || !globals.ForcedEmoteState.IsNullOrWhitespace());
+            return _gags.ServerGagData is { } gags && gags.IsGagged() && _restraints.AppliedRestraint is not null && _remoteService.IsClientBeingBuzzed && _pairs.DirectPairs.Any(x => x.OwnPerms.InHardcore)
+            && OwnGlobals.Perms is { } g && (g.HcFollowState() || g.HcEmoteState());
         }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Met", suffix: "Hardcore Conditions", isSecret: true);
 
-        _saveData.AddConditional(AchievementModuleKind.Secrets, Achievements.GaggedPleasure, () => _remoteService.ClientIsBeingBuzzed && _gags.ServerGagData is { } gags && gags.IsGagged(), (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Pleasure Requirements Met", isSecret: true);
+        _saveData.AddConditional(AchievementModuleKind.Secrets, Achievements.GaggedPleasure, () => _remoteService.IsClientBeingBuzzed && _gags.ServerGagData is { } gags && gags.IsGagged(), (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Pleasure Requirements Met", isSecret: true);
         _saveData.AddThreshold(AchievementModuleKind.Secrets, Achievements.BondageClub, 8, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Club Members Gathered", isSecret: true);
         _saveData.AddConditional(AchievementModuleKind.Secrets, Achievements.BadEndHostage, () => _restraints.AppliedRestraint is not null && PlayerData.IsDead, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Encountered", suffix: "Bad Ends", isSecret: true);
         _saveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.TourDeBound, 11, () => _restraints.AppliedRestraint is not null, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Taken", suffix: "Tours in Bondage", isSecret: true);
-        _saveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.MuffledProtagonist, 1, () => _gags.ServerGagData is { } gags && gags.IsGagged() && _globals.Current is { } globals && globals.ChatGarblerActive, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "MissTypes Made", isSecret: true);
+        _saveData.AddConditionalProgress(AchievementModuleKind.Secrets, Achievements.MuffledProtagonist, 1, () => _gags.ServerGagData is { } gags && gags.IsGagged() && OwnGlobals.Perms is { } globals && globals.ChatGarblerActive, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "MissTypes Made", isSecret: true);
         // The above is currently non functional as i dont have the data to know which chat message type contains these request tasks.
 
         _saveData.AddConditional(AchievementModuleKind.Secrets, Achievements.BoundgeeJumping, () => _restraints.AppliedRestraint is not null, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Attempted", suffix: "Dangerous Acts", isSecret: true);

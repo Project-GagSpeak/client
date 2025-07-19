@@ -13,7 +13,7 @@ namespace GagSpeak.Services;
 /// <remarks> Helps update config folder locations, update stored data, and update achievement data status. </remarks>
 public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
 {
-    private readonly GlobalPermissions _globals;
+    private readonly OwnGlobals _globals;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
@@ -28,7 +28,7 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
     public ConnectionSyncService(
         ILogger<ConnectionSyncService> logger,
         GagspeakMediator mediator,
-        GlobalPermissions globals,
+        OwnGlobals globals,
         ConfigFileProvider fileNames,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
@@ -92,7 +92,7 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
 
         // 2. Load in the data from the server into our storages.
         Logger.LogInformation("Syncing Data with Connection DTO");
-        _globals.ApplyFullDataChange(connectionInfo.GlobalPerms);
+        _globals.ApplyBulkChange(connectionInfo.GlobalPerms, MainHub.UID);
         await _visuals.SyncServerData(connectionInfo);
 
         // 3. Update the achievement manager with the latest UID and the latest data.

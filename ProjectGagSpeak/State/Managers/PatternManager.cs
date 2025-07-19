@@ -2,11 +2,14 @@ using CkCommons.Helpers;
 using CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Handlers;
 using GagSpeak.State.Models;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
+using GagspeakAPI.Dto.VibeRoom;
 
 namespace GagSpeak.State.Managers;
 public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSavable
@@ -15,25 +18,26 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
     private readonly FavoritesManager _favorites;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
+    private readonly RemoteService _remotes;
 
     private PatternStorage _storage = new PatternStorage();
     private StorageItemEditor<Pattern> _itemEditor = new();
 
     public PatternManager(ILogger<PatternManager> logger, GagspeakMediator mediator,
         RemoteHandler handler, FavoritesManager favorites, ConfigFileProvider fileNames,
-        HybridSaveService saver) : base(logger, mediator)
+        HybridSaveService saver, RemoteService remotes) : base(logger, mediator)
     {
         _handler = handler;
         _favorites = favorites;
         _fileNames = fileNames;
         _saver = saver;
+        _remotes = remotes;
         Load();
     }
 
     public PatternStorage Storage => _storage;
     public Pattern? ItemInEditor => _itemEditor.ItemInEditor;
-    public Pattern? ActivePattern => _storage.FirstOrDefault(p => p.Identifier == Guid.Empty); // TODO: MAKE VALID LATER.
-
+    public Guid ActivePatternId => _remotes.ClientData.ActivePattern;
     public Pattern CreateNew(string patternName)
     {
         patternName = RegexEx.EnsureUniqueName(patternName, Storage, t => t.Label);
@@ -104,33 +108,21 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
     /// <summary> Attempts to remove the pattern as a favorite. </summary>
     public bool RemoveFavorite(Pattern p) => _favorites.RemoveRestriction(FavoriteIdContainer.Pattern, p.Identifier);
 
-
-    public bool CanEnable(Guid id)
-    {
-        if (ActivePattern is not null)
-            return false;
-        // currently cannot think of any case where this would not be allowed, so mark as true.
-        return true;
-    }
-
-    public bool CanDisable(Guid id)
-    {
-        if(ActivePattern is null)
-            return false;
-        // a pattern is running that we can disable.
-        return true;
-    }
-
     /// <summary> Switches from a currently active pattern to a new one. </summary>
     /// <remarks> If no pattern is currently active, it will simply start one. </remarks>
     public void SwitchPattern(Guid patternId, string enactor)
     {
         // This only actually fires if a pattern is active, and is skipped otherwise.
-        if(ActivePattern is not null)
-            DisablePattern(ActivePattern.Identifier, enactor);
-
-        // now enable it.
-        EnablePattern(patternId, enactor);
+        if (Storage.TryGetPattern(patternId, out var pattern))
+        {
+            Logger.LogDebug($"Switching to pattern {pattern.Label} ({patternId}) by {enactor}.");
+            _remotes.ClientData.SwitchPlaybackData(pattern, pattern.StartPoint, pattern.Duration, enactor);
+        }
+        else
+        {
+            Logger.LogWarning($"Attempted to switch to non-existent pattern {patternId} by {enactor}.");
+            return;
+        }
     }
 
     /// <summary> Enables a pattern, beginning the execution to the simulated, or connected sex toy. </summary>
@@ -138,13 +130,15 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
     public void EnablePattern(Guid patternId, string enactor)
     {
         if(Storage.TryGetPattern(patternId, out var pattern))
-            _handler.StartPattern(pattern);
+            _remotes.ClientData.StartPlaybackData(pattern, pattern.StartPoint, pattern.Duration, enactor);
     }
 
     public void DisablePattern(Guid patternId, string enactor)
     {
-        if(ActivePattern is not null && ActivePattern.Identifier == patternId)
-            _handler.StopActivePattern();
+        if (_remotes.ClientData.IsPlayingPattern)
+            _remotes.ClientData.EndPlaybackData(enactor);
+        else
+            Logger.LogWarning("Tried to stop a pattern when no pattern was active??!?");
     }
 
     #region HybridSavable
@@ -251,8 +245,8 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
 
 
                 // Build motor/device pattern, defaulted to Hush, but can be migrated later.
-                var motor = new PatternMotorData(CoreIntifaceElement.MotorVibration, 0, doubleData);
-                var device = new PatternDeviceData(CoreIntifaceElement.Hush, [ motor ]);
+                var motor = new MotorStream(ToyMotor.Vibration, 0, doubleData);
+                var device = new DeviceStream(ToyBrandName.Hush, [ motor ]);
                 var fullPattern = new FullPatternData([ device ]);
 
                 // Set new format

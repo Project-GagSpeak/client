@@ -7,7 +7,6 @@ public enum SPPID : byte
 {
     ChatGarblerActive,
     ChatGarblerLocked,
-    LockToyboxUI,
 
     PermanentLocks,
     OwnerLocks,
@@ -77,7 +76,6 @@ public static class SPPIDExtensions
         {
             SPPID.ChatGarblerActive     => (nameof(GlobalPerms.ChatGarblerActive),            PermissionType.Global),
             SPPID.ChatGarblerLocked     => (nameof(GlobalPerms.ChatGarblerLocked),            PermissionType.Global),
-            SPPID.LockToyboxUI          => (nameof(GlobalPerms.LockToyboxUI),                 PermissionType.Global),
 
             SPPID.PermanentLocks        => (nameof(PairPerms.PermanentLocks),                 PermissionType.PairPerm),
             SPPID.OwnerLocks            => (nameof(PairPerms.OwnerLocks),                     PermissionType.PairPerm),
@@ -143,7 +141,6 @@ public static class SPPIDExtensions
         {
             SPPID.ChatGarblerActive     => nameof(PairPermAccess.ChatGarblerActiveAllowed),
             SPPID.ChatGarblerLocked     => nameof(PairPermAccess.ChatGarblerLockedAllowed),
-            SPPID.LockToyboxUI          => nameof(PairPermAccess.LockToyboxUIAllowed),
             SPPID.PermanentLocks        => nameof(PairPermAccess.PermanentLocksAllowed),
             SPPID.OwnerLocks            => nameof(PairPermAccess.OwnerLocksAllowed),
             SPPID.DevotionalLocks       => nameof(PairPermAccess.DevotionalLocksAllowed),

@@ -643,6 +643,7 @@ namespace GagSpeak.Localization
         public readonly string HeaderWardrobe = Loc.Localize("MainOptions_HeaderWardrobe", "Wardrobe");
         public readonly string HeaderPuppet = Loc.Localize("MainOptions_HeaderPuppet", "Puppeteer");
         public readonly string HeaderToybox = Loc.Localize("MainOptions_HeaderToybox", "Toybox");
+        public readonly string HeaderAudio = Loc.Localize("MainOptions_HeaderAudio", "Spatial Audio");
 
         public readonly string LiveChatGarbler = Loc.Localize("MainOptions_LiveChatGarbler", "Live Chat Garbler");
         public readonly string LiveChatGarblerTT = Loc.Localize("MainOptions_LiveChatGarblerTT", "Generates garbled text using GagSpeak's server-side chat garbler." +
@@ -712,18 +713,19 @@ namespace GagSpeak.Localization
         public readonly string ToyboxActive = Loc.Localize("MainOptions_ToyboxActive", "Toybox Features");
         public readonly string ToyboxActiveTT = Loc.Localize("MainOptions_ToyboxActiveTT", "Enables Toybox functionality.");
 
+        public readonly string SpatialAudioActive = Loc.Localize("MainOptions_SpatialAudioActive", "Spatial Audio Features");
+        public readonly string SpatialAudioActiveTT = Loc.Localize("MainOptions_SpatialAudioActiveTT", "Emits vibrator audio to nearby paired players when a sex toy is active." +
+            "--SEP--Also allows you to hear nearby paired players' sex toy vibrations when they are active.");
+
+        public readonly string VibeLobbyNickname = Loc.Localize("MainOptions_VibeLobbyNickname", "Displayed Name in VibeRooms™");
+        public readonly string VibeLobbyNicknameTT = Loc.Localize("MainOptions_VibeLobbyNicknameTT", "Your name in a VibeRoom chat or participant list.--SEP--If left blank, defaults to 'Anon. Kinkster'" +
+            "--SEP--This trigger phrase will work when said by ANYONE.");
+
         public readonly string IntifaceAutoConnect = Loc.Localize("MainOptions_IntifaceAutoConnect", "Auto-Connect to Intiface");
         public readonly string IntifaceAutoConnectTT = Loc.Localize("MainOptions_IntifaceAutoConnectTT", "Automatically connect to the Intiface Desktop App when GagSpeak starts.");
 
         public readonly string IntifaceAddressTT = Loc.Localize("MainOptions_IntifaceAddressTT", "Set a custom Intiface server address." +
             "--SEP--Leave blank to use the default Intiface server address.");
-
-        public readonly string VibeServerAutoConnect = Loc.Localize("MainOptions_VibeServerAutoConnect", "Auto-Connect to Vibe Server");
-        public readonly string VibeServerAutoConnectTT = Loc.Localize("MainOptions_VibeServerAutoConnectTT", "Automatically connect to the Vibe Server when GagSpeak starts.");
-
-        public readonly string SpatialAudioActive = Loc.Localize("MainOptions_SpatialAudioActive", "Spatial Audio Features");
-        public readonly string SpatialAudioActiveTT = Loc.Localize("MainOptions_SpatialAudioActiveTT", "Emits vibrator audio to nearby paired players when a sex toy is active." +
-            "--SEP--Also allows you to hear nearby paired players' sex toy vibrations when they are active.");
 
         public readonly string PiShockKeyTT = Loc.Localize("MainOptions_PiShockKeyTT", "Required PiShock API key for any PiShock related items to function.");
         public readonly string PiShockUsernameTT = Loc.Localize("MainOptions_PiShockUsernameTT", "Username associated with the PiShock API key.");
@@ -738,8 +740,8 @@ namespace GagSpeak.Localization
         public readonly string PiShockAllowShocks = Loc.Localize("MainOptions_PiShockAllowShocks", "Allow Shocks");
         public readonly string PiShockAllowVibes = Loc.Localize("MainOptions_PiShockAllowVibes", "Allow Vibrations");
         public readonly string PiShockAllowBeeps = Loc.Localize("MainOptions_PiShockAllowBeeps", "Allow Beeps");
-        public readonly string PiShockMaxShockIntensity = Loc.Localize("MainOptions_PiShockMaxShockIntensity", "Global Max Shock Intensity: ");
-        public readonly string PiShockMaxShockDuration = Loc.Localize("MainOptions_PiShockMaxShockDuration", "Global Max Shock Duration: ");
+        public readonly string PiShockMaxShockIntensity = Loc.Localize("MainOptions_PiShockMaxShockIntensity", "Max Shock: ");
+        public readonly string PiShockMaxShockDuration = Loc.Localize("MainOptions_PiShockMaxShockDuration", "Max Shock Time: ");
     }
 
     public class Hardcore
