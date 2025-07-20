@@ -27,62 +27,117 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
 
     protected override async Task<bool> OnLockButtonPress(int _)
     {
-        if (Items[0].CanLock() && _ref.PairPerms.LockRestraintSets)
-        {
-            var dto = new PushKinksterRestraintUpdate(_ref.UserData, DataUpdateType.Locked)
-            {
-                Padlock = SelectedLock,
-                Password = Password,
-                Timer = Timer.GetEndTimeUTC(),
-                PadlockAssigner = MainHub.UID,
-            };
+        // return if we cannot lock.
+        if (!Items[0].CanLock() || !_ref.PairPerms.LockRestraintSets)
+            return false;
 
-            var result = await _mainHub.UserChangeKinksterRestraintState(dto);
-            if (result.ErrorCode is not GagSpeakApiEc.Success)
-            {
-                Log.LogDebug($"Failed to perform LockRestraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
-                ResetSelection();
-                ResetInputs();
-                return false;
-            }
-            else
-            {
-                Log.LogDebug($"Locking Restraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
-                ResetSelection();
-                ResetInputs();
-                return true;
-            }
+        // we know it was valid, so begin assigning the new data to send off.
+        var finalTime = SelectedLock == Padlocks.FiveMinutesPadlock
+            ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
+
+        var dto = new PushKinksterRestraintUpdate(_ref.UserData, DataUpdateType.Locked)
+        {
+            Padlock = SelectedLock,
+            Password = Password,
+            Timer = finalTime,
+            PadlockAssigner = MainHub.UID,
+        };
+
+        var result = await _mainHub.UserChangeKinksterRestraintState(dto);
+        if (result.ErrorCode is not GagSpeakApiEc.Success)
+        {
+            Log.LogDebug($"Failed to perform LockRestraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
+            DisplayToastErrorAndReset(result.ErrorCode);
+            return false;
         }
-        return false;
+        else
+        {
+            Log.LogDebug($"Locking Restraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
+            ResetSelection();
+            ResetInputs();
+            return true;
+        }
     }
 
     protected override async Task<bool> OnUnlockButtonPress(int _)
     {
-        if (Items[0].CanUnlock() && _ref.PairPerms.UnlockRestraintSets)
-        {
-            var dto = new PushKinksterRestraintUpdate(_ref.UserData, DataUpdateType.Unlocked)
-            {
-                Padlock = Items[0].Padlock,
-                Password = Password,
-                PadlockAssigner = MainHub.UID,
-            };
+        if (!Items[0].CanUnlock() || !_ref.PairPerms.UnlockRestraintSets)
+            return false;
 
-            var result = await _mainHub.UserChangeKinksterRestraintState(dto);
-            if (result.ErrorCode is not GagSpeakApiEc.Success)
-            {
-                Log.LogDebug($"Failed to perform UnlockRestraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
-                ResetSelection();
-                ResetInputs();
-                return false;
-            }
-            else
-            {
-                Log.LogDebug($"Unlocking Restraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
-                ResetSelection();
-                ResetInputs();
-                return true;
-            }
+        var dto = new PushKinksterRestraintUpdate(_ref.UserData, DataUpdateType.Unlocked)
+        {
+            Padlock = Items[0].Padlock,
+            Password = Password,
+            PadlockAssigner = MainHub.UID,
+        };
+
+        var result = await _mainHub.UserChangeKinksterRestraintState(dto);
+        if (result.ErrorCode is not GagSpeakApiEc.Success)
+        {
+            Log.LogDebug($"Failed to perform UnlockRestraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
+            DisplayToastErrorAndReset(result.ErrorCode);
+            return false;
         }
+        else
+        {
+            Log.LogDebug($"Unlocking Restraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
+            ResetSelection();
+            ResetInputs();
+            return true;
+        }
+    }
+
+    private bool DisplayToastErrorAndReset(GagSpeakApiEc errorCode)
+    {
+        // Determine if we have access to unlock.
+        switch (errorCode)
+        {
+            case GagSpeakApiEc.BadUpdateKind:
+                Svc.Toasts.ShowError("Invalid Update Kind. Please try again.");
+                break;
+
+            case GagSpeakApiEc.InvalidLayer:
+                Svc.Toasts.ShowError("Attempted to apply to a layer that was invalid.");
+                break;
+
+            case GagSpeakApiEc.InvalidPassword when SelectedLock is Padlocks.CombinationPadlock:
+                Svc.Toasts.ShowError("Invalid Syntax. Must be 4 digits (0-9).");
+                break;
+
+            case GagSpeakApiEc.InvalidPassword when SelectedLock is Padlocks.PasswordPadlock or Padlocks.TimerPasswordPadlock:
+                Svc.Toasts.ShowError("Invalid Syntax. Must be 4-20 characters.");
+                break;
+
+            case GagSpeakApiEc.InvalidTime when SelectedLock is Padlocks.TimerPadlock or Padlocks.TimerPasswordPadlock:
+                Svc.Toasts.ShowError("Invalid Timer Syntax. Must be a valid time format (Ex: 0h2m7s).");
+                break;
+
+            case GagSpeakApiEc.LackingPermissions:
+                Svc.Toasts.ShowError("You do not have permission to perform this action.");
+                break;
+
+            case GagSpeakApiEc.ItemIsLocked:
+                Svc.Toasts.ShowError("This item is already locked.");
+                break;
+
+            case GagSpeakApiEc.ItemNotLocked:
+                Svc.Toasts.ShowError("Cannot unlock item, as it is not yet locked.");
+                break;
+
+            case GagSpeakApiEc.NoActiveItem:
+                Svc.Toasts.ShowError("Cannot remove this item as you are did not apply it.");
+                break;
+
+            case GagSpeakApiEc.NotItemAssigner:
+                Svc.Toasts.ShowError("Cannot remove lock, it can only be removed by it's assigner.");
+                break;
+
+            default:
+                Svc.Logger.Warning($"UNK Padlock Error: {errorCode}.");
+                break;
+        }
+        ResetSelection();
+        ResetInputs();
         return false;
     }
 }
