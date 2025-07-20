@@ -8,6 +8,8 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
 using GagspeakAPI.Util;
+using Penumbra.GameData.Interop;
+using System.Windows.Forms;
 
 namespace GagSpeak.State.Listeners;
 
@@ -317,8 +319,21 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 
     public async void ApplyStatusesToSelf(MoodlesApplierByStatus dto, string clientPlayerNameWithWorld)
     {
-        if(PostActionMsg(dto.User.UID, InteractionType.ApplyPairMoodle, "Pair's Moodle Status(s) Applied"))
-            await _interop.Moodles.ApplyStatusesFromPairToSelf(dto.User.UID, clientPlayerNameWithWorld, dto.Statuses);
+        if (_pairs.DirectPairs.FirstOrDefault(p => p.UserData.UID == dto.User.UID) is not { } pair)
+        {
+            Logger.LogWarning($"Recieved ApplyStatusesToSelf for an unpaired user: {dto.User.AliasOrUID}");
+            return;
+        }
+
+        // Pair is valid, make sure are visible.
+        if (!pair.IsVisible)
+        {
+            Logger.LogWarning($"Refusing to apply moodles. The sender is not visible: {dto.User.AliasOrUID}");
+            return;
+        }
+
+        Mediator.Publish(new EventMessage(new(pair.GetNickAliasOrUid(), pair.UserData.UID, InteractionType.ApplyPairMoodle, "Pair's Moodle Status(s) Applied")));
+        await _interop.Moodles.ApplyStatusesFromPairToSelf(pair.PlayerNameWithWorld, clientPlayerNameWithWorld, dto.Statuses);
     }
 
     public async void RemoveStatusesFromSelf(MoodlesRemoval dto)

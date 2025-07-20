@@ -60,14 +60,6 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
 
     public void ResetInputs() => (Password, Timer) = (string.Empty, string.Empty);
 
-    public float PadlockLockWindowHeight() => SelectedLock.IsTwoRowLock()
-    ? ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2
-    : ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
-
-    public float PadlockUnlockWindowHeight(int layer) => Items[layer].Padlock.IsPasswordLock()
-        ? ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y
-        : ImGui.GetFrameHeight();
-
     protected abstract bool DisableCondition(int layerIdx);
 
     protected virtual string ItemName(T item) => item.ToString() ?? string.Empty;

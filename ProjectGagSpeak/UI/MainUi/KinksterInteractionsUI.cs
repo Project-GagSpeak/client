@@ -305,7 +305,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         
         if (_openInteraction is InteractionType.LockGag)
         {
-            using (ImRaii.Child("###LockGag", new Vector2(width, _pairGagPadlocks.PadlockLockWindowHeight())))
+            using (ImRaii.Child("###LockGag", new Vector2(width, CkStyle.TwoRowHeight())))
                 _pairGagPadlocks.DrawLockCombo("##LockGag", width, _selections.GagLayer, lockTxt, lockTT, true);
             ImGui.Separator();
         }
@@ -317,7 +317,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 
         if (_openInteraction is InteractionType.UnlockGag)
         {
-            using (ImRaii.Child("###UnlockGag", new Vector2(width, _pairGagPadlocks.PadlockUnlockWindowHeight(_selections.GagLayer))))
+            using (ImRaii.Child("###UnlockGag", new Vector2(width, ImGui.GetFrameHeight())))
                 _pairGagPadlocks.DrawUnlockCombo("##UnlockGag", width, _selections.GagLayer, unlockTT, unlockTxt);
             ImGui.Separator();
         }
@@ -410,7 +410,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 
         if (_selections.OpenInteraction is InteractionType.LockRestriction)
         {
-            using (ImRaii.Child("###LockRestriction", new Vector2(width, _pairRestrictionPadlocks.PadlockLockWindowHeight())))
+            using (ImRaii.Child("###LockRestriction", new Vector2(width, CkStyle.TwoRowHeight())))
                 _pairRestrictionPadlocks.DrawLockCombo("LockRestriction", width, _selections.RestrictionLayer, lockTxt, lockTT, true);
             ImGui.Separator();
         }
@@ -422,7 +422,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 
         if (_selections.OpenInteraction is InteractionType.UnlockRestriction)
         {
-            using (ImRaii.Child("###UnlockRestriction", new Vector2(width, _pairRestrictionPadlocks.PadlockUnlockWindowHeight(_selections.RestrictionLayer))))
+            using (ImRaii.Child("###UnlockRestriction", new Vector2(width, ImGui.GetFrameHeight())))
                 _pairRestrictionPadlocks.DrawUnlockCombo("UnlockRestriction", width, _selections.RestrictionLayer, unlockTT, unlockTxt);
             ImGui.Separator();
         }
@@ -522,7 +522,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         // Interaction Window for LockRestraint
         if (_selections.OpenInteraction is InteractionType.LockRestraint)
         {
-            using (ImRaii.Child("SetLockChild", new Vector2(width, _pairRestraintSetPadlocks.PadlockLockWindowHeight())))
+            using (ImRaii.Child("SetLockChild", new Vector2(width, CkStyle.TwoRowHeight())))
                 _pairRestraintSetPadlocks.DrawLockCombo("PairLockRestraint", width, 0, lockTxt, lockTT, true);
             ImGui.Separator();
         }
@@ -536,7 +536,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         // Interaction Window for UnlockRestraint
         if (_selections.OpenInteraction is InteractionType.UnlockRestraint)
         {
-            using (ImRaii.Child("SetUnlockChild", new Vector2(width, _pairRestraintSetPadlocks.PadlockUnlockWindowHeight(0))))
+            using (ImRaii.Child("SetUnlockChild", new Vector2(width, ImGui.GetFrameHeight())))
                 _pairRestraintSetPadlocks.DrawUnlockCombo("PairUnlockRestraint", width, 0, unlockTxt, unlockTT);
             ImGui.Separator();
         }
