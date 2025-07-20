@@ -131,7 +131,7 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
         PrintButtonRichText(data, current);
         CkGui.AttachToolTip(data.IsGlobal
             ? $"Your {data.PermLabel} {data.JoinWord} {(current ? data.AllowedStr : data.BlockedStr)}. (Globally)"
-            : $"You have {(current ? data.AllowedStr : data.BlockedStr)} {dispName} {(current ? data.PairAllowedTT : data.PairBlockedTT)}");
+            : $"You {(current ? data.AllowedStr : data.BlockedStr)} {dispName} {(current ? data.PairAllowedTT : data.PairBlockedTT)}");
     }
 
     private void PrintButtonRichText(PermDataClient pdp, bool current)

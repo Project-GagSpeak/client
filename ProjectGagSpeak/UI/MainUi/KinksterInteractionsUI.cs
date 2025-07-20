@@ -86,7 +86,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
     private StickyWindowSelections _selections = new();
     private Kinkster? _kinkster = null;
     private InteractionsTab _openTab = InteractionsTab.None;
-    private InteractionType _openInteraction = InteractionType.None;
+    private InteractionType _openInteraction => _selections.OpenInteraction;
     public KinksterInteractionsUI(
         ILogger<KinksterInteractionsUI> logger,
         GagspeakMediator mediator,
@@ -281,7 +281,10 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 
         // Applying.
         if (CkGui.IconTextButton(FAI.CommentDots, applyTxt, width, true, !k.PairPerms.ApplyGags || !slot.CanApply()))
+        {
+            Svc.Logger.Information($"Opening Apply Gag for {dispName} with Layer {_selections.GagLayer}.");
             _selections.OpenOrClose(InteractionType.ApplyGag);
+        }
         CkGui.AttachToolTip(applyTT);
         
         if (_openInteraction is InteractionType.ApplyGag)
