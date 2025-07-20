@@ -268,11 +268,14 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         var hasPadlock = slot.Padlock is not Padlocks.None;
         var applyTxt = hasGag ? $"A {slot.GagItem} is applied." : $"Apply a Gag to {dispName}";
         var applyTT = hasGag ? $"This user is currently Gagged with a {slot.GagItem.GagName()}." : $"Apply a Gag to {dispName}.";
-        var lockTxt = hasPadlock ? $"Locked with a {slot.Padlock.ToName()}" : $"Lock {dispName}'s Gag";
-        var lockTT = hasPadlock ? $"This Gag is locked with a {slot.Padlock.ToName()}" : $"Locks the Gag on {dispName}.";
-        var unlockTxt = $"Unlock {dispName}'s Gag";
-        var unlockTT = $"{unlockTxt}.";
-        var removeTxt = $"Remove {dispName}'s Gag";
+        var lockTxt = hasPadlock ? $"Locked with a {slot.Padlock.ToName()}" : hasGag
+            ? $"Lock {dispName}'s Gag" : "No Gag To Lock!";
+        var lockTT = hasPadlock ? $"This Gag is locked with a {slot.Padlock.ToName()}" : hasGag
+            ? $"Locks the Gag on {dispName}." : "Cannot lock a Gag that is not applied.";
+
+        var unlockTxt = hasPadlock ? $"Unlock {dispName}'s Gag" : "No Padlock to unlock!";
+        var unlockTT = hasPadlock ? $"Attempt to unlock {dispName}'s Gag." : "Cannot unlock a Gag that is not locked!";
+        var removeTxt = hasGag ? $"Remove {dispName}'s Gag" : "Nothing to remove!";
         var removeTT = $"{removeTxt}.";
 
 
@@ -303,10 +306,9 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         if (_openInteraction is InteractionType.LockGag)
         {
             using (ImRaii.Child("###LockGag", new Vector2(width, _pairGagPadlocks.PadlockLockWindowHeight())))
-                _pairGagPadlocks.DrawLockComboWithActive("##LockGag", width, _selections.GagLayer, lockTxt, lockTT, false);
+                _pairGagPadlocks.DrawLockCombo("##LockGag", width, _selections.GagLayer, lockTxt, lockTT, true);
             ImGui.Separator();
         }
-
 
         // Unlocking.
         if (CkGui.IconTextButton(FAI.Unlock, unlockTxt, width, true, !slot.CanUnlock() || !k.PairPerms.UnlockGags))
@@ -377,12 +379,14 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 
         var applyText = "Apply Restriction";
         var applyTT = $"Applies a Restriction to {dispName}.";
-        var lockText = hasPadlock ? $"Locked with a {slot.Padlock.ToName()}" : $"Lock {dispName}'s Restriction";
-        var lockTT = hasPadlock ? $"This Restriction is locked with a {slot.Padlock.ToName()}." : $"Locks the Restriction on {dispName}.";
-        var unlockText = $"Unlock {dispName}.";
-        var unlockTT = $"Unlock {dispName}'s Restriction.";
-        var removeText = $"Remove {dispName}.";
-        var removeTT = $"Remove {dispName}'s Restriction.";
+        var lockTxt = hasPadlock ? $"Locked with a {slot.Padlock.ToName()}" : hasItem
+            ? $"Lock {dispName}'s Restriction" : "No Restriction To Lock!";
+        var lockTT = hasPadlock ? $"This Restriction is locked with a {slot.Padlock.ToName()}" : hasItem
+            ? $"Locks the Restriction on {dispName}." : "No Restriction to lock on this layer!";
+        var unlockTxt = hasPadlock ? $"Unlock {dispName}'s Restriction" : "No Padlock to unlock!";
+        var unlockTT = hasPadlock ? $"Attempt to unlock {dispName}'s Restriction." : "No padlock is set!";
+        var removeTxt = hasItem ? $"Remove {dispName}'s Restriction" : "Nothing to remove!";
+        var removeTT = $"{removeTxt}.";
 
         // Expander for ApplyRestriction
         if (CkGui.IconTextButton(FAI.CommentDots, applyText, width, true, !slot.CanApply() || !k.PairPerms.ApplyRestrictions))
@@ -399,7 +403,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         // Expander for LockRestriction
         using (ImRaii.PushColor(ImGuiCol.Text, (slot.Padlock is Padlocks.None ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudYellow)))
         {
-            if (CkGui.IconTextButton(FAI.Lock, lockText, width, true, !slot.CanLock() || !k.PairPerms.LockRestrictions))
+            if (CkGui.IconTextButton(FAI.Lock, lockTxt, width, true, !slot.CanLock() || !k.PairPerms.LockRestrictions))
                 _selections.OpenOrClose(InteractionType.LockRestriction);
         }
         CkGui.AttachToolTip(lockTT + (PadlockEx.IsTimerLock(slot.Padlock) ? "--SEP----COL--" + slot.Timer.ToGsRemainingTimeFancy() : ""), color: ImGuiColors.ParsedPink);
@@ -407,24 +411,24 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         if (_selections.OpenInteraction is InteractionType.LockRestriction)
         {
             using (ImRaii.Child("###LockRestriction", new Vector2(width, _pairRestrictionPadlocks.PadlockLockWindowHeight())))
-                _pairRestrictionPadlocks.DrawLockComboWithActive("LockRestriction", width, _selections.RestrictionLayer, lockText, lockTT, false);
+                _pairRestrictionPadlocks.DrawLockCombo("LockRestriction", width, _selections.RestrictionLayer, lockTxt, lockTT, true);
             ImGui.Separator();
         }
 
         // Expander for unlocking.
-        if (CkGui.IconTextButton(FAI.Unlock, unlockText, width, true, !slot.CanUnlock() || !k.PairPerms.UnlockRestrictions))
+        if (CkGui.IconTextButton(FAI.Unlock, unlockTxt, width, true, !slot.CanUnlock() || !k.PairPerms.UnlockRestrictions))
             _selections.OpenOrClose(InteractionType.UnlockRestriction);
         CkGui.AttachToolTip(unlockTT);
 
         if (_selections.OpenInteraction is InteractionType.UnlockRestriction)
         {
             using (ImRaii.Child("###UnlockRestriction", new Vector2(width, _pairRestrictionPadlocks.PadlockUnlockWindowHeight(_selections.RestrictionLayer))))
-                _pairRestrictionPadlocks.DrawUnlockCombo("UnlockRestriction", width, _selections.RestrictionLayer, unlockTT, unlockText);
+                _pairRestrictionPadlocks.DrawUnlockCombo("UnlockRestriction", width, _selections.RestrictionLayer, unlockTT, unlockTxt);
             ImGui.Separator();
         }
 
         // Expander for removing.
-        if (CkGui.IconTextButton(FAI.TimesCircle, removeText, width, true, !slot.CanRemove() || !k.PairPerms.RemoveRestrictions))
+        if (CkGui.IconTextButton(FAI.TimesCircle, removeTxt, width, true, !slot.CanRemove() || !k.PairPerms.RemoveRestrictions))
             _selections.OpenOrClose(InteractionType.RemoveRestriction);
         CkGui.AttachToolTip(removeTT);
 
@@ -464,16 +468,19 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 
         var applyText = "Apply Restraint Set";
         var applyTT = $"Applies a Restraint Set to {dispName}.";
-        var applyLayerText = "Apply Restraint Layer";
-        var applyLayerTT = $"Applies a Restraint Layer to {dispName}'s Restraint Set.";
-        var lockText = hasPadlock ? "Lock Restraint Set" : $"Locked with a {k.LastRestraintData.Padlock.ToName()}.";
-        var lockTT = hasPadlock ? $"Set is currently locked with a {k.LastRestraintData.Padlock.ToName()}." : $"Locks the active Restraint Set on {dispName}.";
-        var unlockText = $"Unlock {dispName}'s Restraint Set.";
-        var unlockTT = $"Unlock {dispName}'s Restriction.";
-        var removeLayerText = $"Remove a Restraint Layer.";
-        var removeLayerTT = $"Remove a Restraint Layer from {dispName}'s Restraint Set.";
-        var removeText = $"Remove {dispName}'s Restraint Set.";
-        var removeTT = $"Remove {dispName}'s Restriction.";
+        var applyLayerText = hasItem ? $"Apply Restraint Layer to {dispName}" : "Must apply Restraint Set first!";
+        var applyLayerTT = hasItem ? $"Applies a Restraint Layer to {dispName}'s Restraint Set." : "Must apply a Restraint Set first!";
+        var lockTxt = hasPadlock ? $"Locked with a {k.LastRestraintData.Padlock.ToName()}" : hasItem
+            ? $"Lock {dispName}'s Restraint Set" : "No Restraint Set to lock!";
+        var lockTT = hasPadlock ? $"This Restraint Set is locked with a {k.LastRestraintData.Padlock.ToName()}" : hasItem
+            ? $"Locks the Restraint Set on {dispName}." : "No Restraint Set to lock!";        
+        
+        var unlockTxt = hasPadlock ? $"Unlock {dispName}'s Restraint Set" : "No Padlock to unlock!";
+        var unlockTT = hasPadlock ? $"Attempt to unlock {dispName}'s Restraint Set." : "No padlock is set!";
+        var removeLayerText = hasItem ? $"Remove a Layer from {dispName}'s Restraint Set." : "Must apply a Restraint Set first!";
+        var removeLayerTT = hasItem ? $"Remove a Restraint Layer from {dispName}'s Restraint Set." : "Must apply a Restraint Set first!";
+        var removeTxt = hasItem ? $"Remove {dispName}'s Restraint Set" : "Nothing to remove!";
+        var removeTT = $"{removeTxt}.";
 
         // Expander for ApplyRestraint
         if (CkGui.IconTextButton(FAI.Handcuffs, applyText, width, true, !k.PairPerms.ApplyRestraintSets || k.LastRestraintData.CanApply()))
@@ -506,7 +513,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         var disableLockExpand = k.LastRestraintData.Identifier == Guid.Empty || k.LastRestraintData.Padlock is not Padlocks.None || !k.PairPerms.LockRestraintSets;
         using (ImRaii.PushColor(ImGuiCol.Text, (k.LastRestraintData.Padlock is Padlocks.None ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudYellow)))
         {
-            if (CkGui.IconTextButton(FAI.Lock, lockText, width, true, disableLockExpand))
+            if (CkGui.IconTextButton(FAI.Lock, lockTxt, width, true, disableLockExpand))
                 _selections.OpenOrClose(InteractionType.LockRestraint);
         }
         CkGui.AttachToolTip(lockTT +
@@ -516,13 +523,13 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         if (_selections.OpenInteraction is InteractionType.LockRestraint)
         {
             using (ImRaii.Child("SetLockChild", new Vector2(width, _pairRestraintSetPadlocks.PadlockLockWindowHeight())))
-                _pairRestraintSetPadlocks.DrawLockComboWithActive("PairLockRestraint", width, 0, lockText, lockTT, false);
+                _pairRestraintSetPadlocks.DrawLockCombo("PairLockRestraint", width, 0, lockTxt, lockTT, true);
             ImGui.Separator();
         }
 
         // Expander for unlocking.
         var disableUnlockExpand = k.LastRestraintData.Padlock is Padlocks.None || !k.PairPerms.UnlockRestraintSets;
-        if (CkGui.IconTextButton(FAI.Unlock, unlockText, width, true, disableUnlockExpand))
+        if (CkGui.IconTextButton(FAI.Unlock, unlockTxt, width, true, disableUnlockExpand))
             _selections.OpenOrClose(InteractionType.UnlockRestraint);
         CkGui.AttachToolTip(unlockTT);
 
@@ -530,7 +537,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         if (_selections.OpenInteraction is InteractionType.UnlockRestraint)
         {
             using (ImRaii.Child("SetUnlockChild", new Vector2(width, _pairRestraintSetPadlocks.PadlockUnlockWindowHeight(0))))
-                _pairRestraintSetPadlocks.DrawUnlockCombo("PairUnlockRestraint", width, 0, unlockText, unlockTT);
+                _pairRestraintSetPadlocks.DrawUnlockCombo("PairUnlockRestraint", width, 0, unlockTxt, unlockTT);
             ImGui.Separator();
         }
 
@@ -550,7 +557,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 
         // Expander for removing.
         var disableRemoveExpand = k.LastRestraintData.Identifier == Guid.Empty || k.LastRestraintData.Padlock is not Padlocks.None || !k.PairPerms.RemoveRestraintSets;
-        if (CkGui.IconTextButton(FAI.TimesCircle, removeText, width, true, disableRemoveExpand))
+        if (CkGui.IconTextButton(FAI.TimesCircle, removeTxt, width, true, disableRemoveExpand))
             _selections.OpenOrClose(InteractionType.RemoveRestraint);
         CkGui.AttachToolTip(removeTT);
 

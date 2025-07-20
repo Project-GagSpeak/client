@@ -107,7 +107,7 @@ public static class SPPIDExtensions
             SPPID.MaxRestraintTime      => (nameof(PairPerms.MaxRestraintTime),               PermissionType.PairPerm),
             SPPID.UnlockRestraintSets   => (nameof(PairPerms.UnlockRestraintSets),            PermissionType.PairPerm),
             SPPID.RemoveLayers          => (nameof(PairPerms.RemoveLayers),                   PermissionType.PairPerm),
-            SPPID.RemoveLayersWhileLocked => (nameof(PairPerms.RemoveLayersWhileLocked),     PermissionType.PairPerm),
+            SPPID.RemoveLayersWhileLocked => (nameof(PairPerms.RemoveLayersWhileLocked),      PermissionType.PairPerm),
             SPPID.RemoveRestraintSets   => (nameof(PairPerms.RemoveRestraintSets),            PermissionType.PairPerm),
 
             SPPID.PuppetPermSit         => (nameof(PairPerms.PuppetPerms),                    PermissionType.PairPerm),

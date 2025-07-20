@@ -254,7 +254,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             };
             
             Logger.LogDebug($"Pushing CharaCompositeData to: {string.Join(", ", newOnlinekinksters.Select(v => v.UID))}", LoggerType.ApiCore);
-            var result = await _hub.UserPushData(new(newOnlinekinksters, data, true)).ConfigureAwait(false);
+            var result = await _hub.UserPushData(new(newOnlinekinksters, data, false)).ConfigureAwait(false);
             if(result.ErrorCode is GagSpeakApiEc.Success)
             {
                 Logger.LogDebug("Successfully pushed Composite Data to server", LoggerType.ApiCore);

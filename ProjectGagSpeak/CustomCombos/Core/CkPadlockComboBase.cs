@@ -80,12 +80,6 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
     /// <returns> If the operation was successful or not. </returns>
     protected abstract Task<bool> OnUnlockButtonPress(int layerIdx);
 
-    public virtual void DrawLockComboWithActive(string label, float width, int layerIdx, string buttonTxt, string tooltip, bool isTwoRow)
-    {
-        DisplayActiveItem(width, layerIdx);
-        DrawLockCombo(label, width, layerIdx, buttonTxt, tooltip, isTwoRow);
-    }
-
     public virtual void DrawLockCombo(string label, float width, int layerIdx, string buttonTxt, string tooltip, bool isTwoRow)
     {
         // we need to calculate the size of the button for locking, so do so.
@@ -194,14 +188,6 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
             }
             CkGui.FramedIconText(FAI.Key, ImGui.GetColorU32(ImGuiCol.TextDisabled));
         }
-    }
-
-
-    private void DisplayActiveItem(float width, int layer)
-    {
-        ImGui.SetNextItemWidth(width);
-        using var disabled = ImRaii.Disabled(true);
-        using var combo = ImRaii.Combo("ActiveDisplay", ItemName(Items[layer]));
     }
 
     /// <summary> Draws out the padlock fields below. </summary>
