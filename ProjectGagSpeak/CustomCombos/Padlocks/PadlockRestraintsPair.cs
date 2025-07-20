@@ -47,7 +47,7 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform LockRestraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
-            DisplayToastErrorAndReset(result.ErrorCode);
+            DisplayToastErrorAndReset(result.ErrorCode, SelectedLock);
             return false;
         }
         else
@@ -75,7 +75,7 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform UnlockRestraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
-            DisplayToastErrorAndReset(result.ErrorCode);
+            DisplayToastErrorAndReset(result.ErrorCode, Items[0].Padlock);
             return false;
         }
         else
@@ -87,7 +87,7 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
         }
     }
 
-    private bool DisplayToastErrorAndReset(GagSpeakApiEc errorCode)
+    private bool DisplayToastErrorAndReset(GagSpeakApiEc errorCode, Padlocks padlock)
     {
         // Determine if we have access to unlock.
         switch (errorCode)
@@ -100,15 +100,15 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
                 Svc.Toasts.ShowError("Attempted to apply to a layer that was invalid.");
                 break;
 
-            case GagSpeakApiEc.InvalidPassword when SelectedLock is Padlocks.CombinationPadlock:
+            case GagSpeakApiEc.InvalidPassword when padlock is Padlocks.CombinationPadlock:
                 Svc.Toasts.ShowError("Invalid Syntax. Must be 4 digits (0-9).");
                 break;
 
-            case GagSpeakApiEc.InvalidPassword when SelectedLock is Padlocks.PasswordPadlock or Padlocks.TimerPasswordPadlock:
+            case GagSpeakApiEc.InvalidPassword when padlock is Padlocks.PasswordPadlock or Padlocks.TimerPasswordPadlock:
                 Svc.Toasts.ShowError("Invalid Syntax. Must be 4-20 characters.");
                 break;
 
-            case GagSpeakApiEc.InvalidTime when SelectedLock is Padlocks.TimerPadlock or Padlocks.TimerPasswordPadlock:
+            case GagSpeakApiEc.InvalidTime when padlock is Padlocks.TimerPadlock or Padlocks.TimerPasswordPadlock:
                 Svc.Toasts.ShowError("Invalid Timer Syntax. Must be a valid time format (Ex: 0h2m7s).");
                 break;
 

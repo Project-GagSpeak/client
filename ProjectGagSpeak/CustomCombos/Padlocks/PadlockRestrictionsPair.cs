@@ -1,9 +1,9 @@
 using GagSpeak.Kinksters;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Network;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
 
 namespace GagSpeak.CustomCombos.Padlock;
 
@@ -27,7 +27,7 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
     protected override async Task<bool> OnLockButtonPress(int layerIdx)
     {
         // return if we cannot lock.
-        if (!Items[0].CanLock() || !_ref.PairPerms.LockRestrictions)
+        if (!Items[layerIdx].CanLock() || !_ref.PairPerms.LockRestrictions)
             return false;
 
         // we know it was valid, so begin assigning the new data to send off.
@@ -47,7 +47,7 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform LockRestriction with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
-            DisplayToastErrorAndReset(result.ErrorCode);
+            DisplayToastErrorAndReset(result.ErrorCode, SelectedLock);
             return false;
         }
         else
@@ -76,7 +76,7 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform UnlockRestriction with {Items[layerIdx].Padlock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
-            DisplayToastErrorAndReset(result.ErrorCode);
+            DisplayToastErrorAndReset(result.ErrorCode, Items[layerIdx].Padlock);
             return false;
         }
         else
@@ -88,7 +88,7 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
         }
     }
 
-    private bool DisplayToastErrorAndReset(GagSpeakApiEc errorCode)
+    private bool DisplayToastErrorAndReset(GagSpeakApiEc errorCode, Padlocks padlock)
     {
         // Determine if we have access to unlock.
         switch (errorCode)
@@ -101,15 +101,15 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
                 Svc.Toasts.ShowError("Attempted to apply to a layer that was invalid.");
                 break;
 
-            case GagSpeakApiEc.InvalidPassword when SelectedLock is Padlocks.CombinationPadlock:
+            case GagSpeakApiEc.InvalidPassword when padlock is Padlocks.CombinationPadlock:
                 Svc.Toasts.ShowError("Invalid Syntax. Must be 4 digits (0-9).");
                 break;
 
-            case GagSpeakApiEc.InvalidPassword when SelectedLock is Padlocks.PasswordPadlock or Padlocks.TimerPasswordPadlock:
+            case GagSpeakApiEc.InvalidPassword when padlock is Padlocks.PasswordPadlock or Padlocks.TimerPasswordPadlock:
                 Svc.Toasts.ShowError("Invalid Syntax. Must be 4-20 characters.");
                 break;
 
-            case GagSpeakApiEc.InvalidTime when SelectedLock is Padlocks.TimerPadlock or Padlocks.TimerPasswordPadlock:
+            case GagSpeakApiEc.InvalidTime when padlock is Padlocks.TimerPadlock or Padlocks.TimerPasswordPadlock:
                 Svc.Toasts.ShowError("Invalid Timer Syntax. Must be a valid time format (Ex: 0h2m7s).");
                 break;
 
