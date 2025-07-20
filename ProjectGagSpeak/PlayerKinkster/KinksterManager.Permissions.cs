@@ -270,7 +270,14 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
             if (propertyInfo.CanWrite)
             {
                 // convert the value to the appropriate type before setting.
-                var value = Convert.ChangeType(ChangedValue, propertyInfo.PropertyType);
+                var value = propertyInfo.PropertyType switch
+                {
+                    Type t when t.IsEnum =>
+                        ChangedValue?.GetType() == Enum.GetUnderlyingType(t)
+                            ? Enum.ToObject(t, ChangedValue)
+                            : Convert.ChangeType(ChangedValue, t), // If newValue type matches enum underlying type, convert it directly.
+                    _ => Convert.ChangeType(ChangedValue, propertyInfo.PropertyType)
+                };
                 propertyInfo.SetValue(pair.OwnPermAccess, value);
                 Logger.LogDebug($"Updated self pair access permission '{NewPerm}' to '{ChangedValue}'", LoggerType.PairDataTransfer);
             }

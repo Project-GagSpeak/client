@@ -47,13 +47,13 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
     private void DrawPermRow(Kinkster kinkster, string dispName, float width, SPPID perm, PuppetPerms current, PuppetPerms canEdit, PuppetPerms editFlag)
     {
         var isFlagSet = (current & editFlag) == editFlag;
-        DrawPermRowCommon(kinkster, dispName, width, perm, isFlagSet, canEdit.HasAny(editFlag), () => current ^ editFlag);
+        DrawPermRowCommonEnum(kinkster, dispName, width, perm, isFlagSet, canEdit.HasAny(editFlag), () => current ^ editFlag, () => canEdit ^ editFlag);
     }
 
     private void DrawPermRow(Kinkster kinkster, string dispName, float width, SPPID perm, MoodlePerms current, MoodlePerms canEdit, MoodlePerms editFlag)
     {
         var isFlagSet = (current & editFlag) == editFlag;
-        DrawPermRowCommon(kinkster, dispName, width, perm, isFlagSet, canEdit.HasAny(editFlag), () => current ^ editFlag);
+        DrawPermRowCommonEnum(kinkster, dispName, width, perm, isFlagSet, canEdit.HasAny(editFlag), () => current ^ editFlag, () => canEdit ^ editFlag);
     }
 
     private void DrawPermRow(Kinkster kinkster, string dispName, float width, SPPID perm, TimeSpan current, bool canEdit)
@@ -133,6 +133,53 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
             ? $"Your {data.PermLabel} {data.JoinWord} {(current ? data.AllowedStr : data.BlockedStr)}. (Globally)"
             : $"You {(current ? data.AllowedStr : data.BlockedStr)} {dispName} {(current ? data.PairAllowedTT : data.PairBlockedTT)}");
     }
+
+    private void DrawPermRowCommonEnum<T>(Kinkster kinkster, string dispName, float width, SPPID perm, bool current, bool canEdit, Func<T> newStateFunc, Func<T> newEditStateFunc)
+    {
+        using var _ = ImRaii.PushColor(ImGuiCol.Button, 0);
+        var data = ClientPermData[perm];
+        var buttonW = width - (ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.X);
+        var editCol = canEdit ? ImGuiColors.HealerGreen.ToUint() : ImGuiColors.DalamudRed.ToUint();
+        var pos = ImGui.GetCursorScreenPos();
+
+        // change to ckgui for disabled?
+        if (ImGui.Button("##pair" + perm, new Vector2(buttonW, ImGui.GetFrameHeight())))
+        {
+            Svc.Logger.Information($"Setting {dispName} {data.PermLabel} to {(current ? "false" : "true")} for {kinkster.UserData.AliasOrUID}.");
+            var res = perm.ToPermValue();
+            var newState = newStateFunc();
+            if (newState is null || res.name.IsNullOrEmpty())
+                return;
+
+            Svc.Logger.Information($"Setting {dispName} {res.name} to {newState} for {kinkster.UserData.AliasOrUID}.");
+
+            UiService.SetUITask(async () =>
+            {
+                switch (res.type)
+                {
+                    case PermissionType.Global: await _hub.UserChangeOwnGlobalPerm(res.name, newState); break;
+                    case PermissionType.PairPerm: await PermissionHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.PairPerms, res.name, newState); break;
+                    case PermissionType.PairAccess: await PermissionHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.OwnPermAccess, res.name, newState); break;
+                    default: break;
+                }
+            });
+        }
+        ImGui.SameLine();
+        if (EditAccessCheckbox.Draw($"##{perm}", canEdit, out var newVal) && canEdit != newVal)
+        {
+            var newEditVal = newEditStateFunc();
+            UiService.SetUITask(async () => await PermissionHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.OwnPermAccess, perm.ToPermAccessValue(), newEditVal!));
+        }
+        CkGui.AttachToolTip($"{dispName} {(canEdit ? "can" : "can not")} change your {data.PermLabel} setting.");
+
+        // draw inside of the button.
+        ImGui.SetCursorScreenPos(pos);
+        PrintButtonRichText(data, current);
+        CkGui.AttachToolTip(data.IsGlobal
+            ? $"Your {data.PermLabel} {data.JoinWord} {(current ? data.AllowedStr : data.BlockedStr)}. (Globally)"
+            : $"You {(current ? data.AllowedStr : data.BlockedStr)} {dispName} {(current ? data.PairAllowedTT : data.PairBlockedTT)}");
+    }
+
 
     private void PrintButtonRichText(PermDataClient pdp, bool current)
     {

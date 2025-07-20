@@ -12,14 +12,11 @@ using GagSpeak.CustomCombos.Padlock;
 using GagSpeak.CustomCombos.Pairs;
 using GagSpeak.Gui.Components;
 using GagSpeak.Kinksters;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Attributes;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
@@ -298,7 +295,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         // Locking
         using (ImRaii.PushColor(ImGuiCol.Text, slot.Padlock is Padlocks.None ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudYellow))
         {
-            if (CkGui.IconTextButton(FAI.Lock, lockTxt, width, true, !k.PairPerms.LockGags || slot.CanLock()))
+            if (CkGui.IconTextButton(FAI.Lock, lockTxt, width, true, !k.PairPerms.LockGags || !slot.CanLock()))
                 _selections.OpenOrClose(InteractionType.LockGag);
         }
         CkGui.AttachToolTip(lockTT + (PadlockEx.IsTimerLock(slot.Padlock) ? "--SEP----COL--" + slot.Timer.ToGsRemainingTimeFancy() : ""), color: ImGuiColors.ParsedPink);
