@@ -109,19 +109,11 @@ public sealed class OwnGlobals : DisposableMediatorSubscriberBase
     public void SingleGlobalPermissionChange(SingleChangeGlobal dto)
     {
         if (string.Equals(dto.Enactor.UID, MainHub.UID))
-        {
-            Logger.LogDebug("OWN SingleChangeGlobal (From Self): " + dto, LoggerType.Callbacks);
             PerformPermissionChange(dto);
-        }
         else if (_pairs.DirectPairs.FirstOrDefault(x => x.UserData.UID == dto.Enactor.UID) is { } pair)
-        {
-            Logger.LogDebug("OWN SingleChangeGlobal (From Other): " + dto, LoggerType.Callbacks);
             PerformPermissionChange(dto, pair);
-        }
         else
-        {
             Logger.LogWarning("Change was not from self or a pair, not setting!");
-        }
     }
 
     public void ExecutePiShockAction(ShockCollarAction dto)

@@ -224,14 +224,14 @@ public partial class MainHub
         // Our Client's Global Permissions should be updated.
         if (dto.Direction is UpdateDir.Own)
         {
-            Logger.LogDebug("OWN Callback_SingleChangeGlobal: " + dto, LoggerType.Callbacks);
+            Logger.LogDebug("OWN SingleChangeGlobal (From Self): " + dto, LoggerType.Callbacks);
             Generic.Safe(() => _globalPerms.SingleGlobalPermissionChange(dto));
             return Task.CompletedTask;
         }
         // One of our added Kinkster's Global Permissions should be updated.
         else
         {
-            Logger.LogDebug("OTHER Callback_SingleChangeGlobal: " + dto, LoggerType.Callbacks);
+            Logger.LogDebug("OWN SingleChangeGlobal (From Other): " + dto, LoggerType.Callbacks);
             Generic.Safe(() => _kinksters.UpdateOtherPairGlobalPermission(dto));
             return Task.CompletedTask;
         }

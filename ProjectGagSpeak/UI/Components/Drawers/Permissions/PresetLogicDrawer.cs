@@ -9,6 +9,7 @@ using OtterGui.Text;
 using GagSpeak.Services;
 using GagspeakAPI.Hub;
 using CkCommons.Gui;
+using ImGuiNET;
 
 namespace GagSpeak.Gui.Components;
 
@@ -27,10 +28,14 @@ public class PresetLogicDrawer
 
     public void DrawPresetList(Kinkster pairToDrawListFor, float width)
     {
-        var comboW = width - CkGui.IconTextButtonSize(FAI.Sync, "Apply Preset");
+        var padding = ImGui.GetFrameHeight();
+        var spacing = ImGui.GetStyle().ItemInnerSpacing.X;
+        var buttonW =CkGui.IconTextButtonSize(FAI.Sync, "Apply Preset");
+        var comboW = width - buttonW - padding * 2 - spacing * 3;
+        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + padding);
         using (ImRaii.Disabled(DisableUI))
         {
-            if(CkGuiUtils.EnumCombo("##Presets", comboW, _selected, out var newVal))
+            if(CkGuiUtils.EnumCombo("##Presets", comboW, _selected, out var newVal, flags: CFlags.None))
                 _selected = newVal;
 
             ImUtf8.SameLineInner();

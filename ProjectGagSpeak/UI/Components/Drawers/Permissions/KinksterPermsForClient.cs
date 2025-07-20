@@ -13,8 +13,7 @@ public class KinksterPermsForClient{
     // internal storage.
     private Dictionary<SPPID, string> _timespanCache = new();
 
-    public void DrawPermissions(Kinkster kinkster, float width)    {
-        var dispName = kinkster.GetNickAliasOrUid();
+    public void DrawPermissions(Kinkster kinkster, string dispName, float width)    {
         ImGuiUtil.Center($"{dispName}'s Permissions for You");
         ImGui.Separator();
         using var _ = CkRaii.Child("KinksterPerms", new Vector2(0, ImGui.GetContentRegionAvail().Y), WFlags.NoScrollbar);
@@ -34,7 +33,7 @@ public class KinksterPermsForClient{
         DrawPermRow(kinkster, dispName, width, SPPID.ApplyLayers,             kinkster.PairPerms.ApplyLayers,               kinkster.PairPermAccess.ApplyLayersAllowed);
         DrawPermRow(kinkster, dispName, width, SPPID.ApplyLayersWhileLocked,  kinkster.PairPerms.ApplyLayersWhileLocked,    kinkster.PairPermAccess.ApplyLayersWhileLockedAllowed);
         DrawPermRow(kinkster, dispName, width, SPPID.LockRestraintSets,       kinkster.PairPerms.LockRestraintSets,         kinkster.PairPermAccess.LockRestraintSetsAllowed);
-        DrawPermRow(kinkster, dispName, width, SPPID.MaxRestrictionTime,      kinkster.PairPerms.MaxRestrictionTime,        kinkster.PairPermAccess.MaxRestrictionTimeAllowed);
+        DrawPermRow(kinkster, dispName, width, SPPID.MaxRestraintTime,        kinkster.PairPerms.MaxRestraintTime,          kinkster.PairPermAccess.MaxRestraintTimeAllowed);
         DrawPermRow(kinkster, dispName, width, SPPID.UnlockRestraintSets,     kinkster.PairPerms.UnlockRestraintSets,       kinkster.PairPermAccess.UnlockRestraintSetsAllowed);
         DrawPermRow(kinkster, dispName, width, SPPID.RemoveLayers,            kinkster.PairPerms.RemoveLayers,              kinkster.PairPermAccess.RemoveLayersAllowed);
         DrawPermRow(kinkster, dispName, width, SPPID.RemoveLayersWhileLocked, kinkster.PairPerms.RemoveLayersWhileLocked,   kinkster.PairPermAccess.RemoveLayersWhileLockedAllowed);
@@ -57,6 +56,10 @@ public class KinksterPermsForClient{
         DrawPermRow(kinkster, dispName, width, SPPID.MaxMoodleTime,           kinkster.PairPerms.MaxMoodleTime,            kinkster.PairPermAccess.MaxMoodleTimeAllowed);
         DrawPermRow(kinkster, dispName, width, SPPID.PermanentMoodles,        kinkster.PairPerms.MoodlePerms,              kinkster.PairPermAccess.MoodlePermsAllowed, MoodlePerms.PermanentMoodles);
         DrawPermRow(kinkster, dispName, width, SPPID.RemoveMoodles,           kinkster.PairPerms.MoodlePerms,              kinkster.PairPermAccess.MoodlePermsAllowed, MoodlePerms.RemovingMoodles);
+        ImGui.Separator();
+
+        ImGui.TextUnformatted("Misc. Permissions");
+        DrawPermRow(kinkster, dispName, width, SPPID.HypnoticEffect,          kinkster.PairPerms.HypnoEffectSending,       kinkster.PairPermAccess.HypnoEffectSendingAllowed);
         ImGui.Separator();
 
         ImGui.TextUnformatted("Toybox Permissions");
@@ -85,11 +88,11 @@ public class KinksterPermsForClient{
     {
         using var disabled = ImRaii.Disabled(kinkster.PairPerms.InHardcore);
 
-        var buttonW = width - ImGui.GetFrameHeightWithSpacing();
+        var inputTxtWidth = width * .4f;
         var str = _timespanCache.TryGetValue(perm, out var value) ? value : current.ToGsRemainingTime();
         var data = PairPermData[perm];
 
-        if (CkGui.IconInputText($"##{perm}", data.IconYes, data.Label, "0d0h0m0s", ref str, 32, buttonW, true, !canEdit))
+        if (CkGui.IconInputText(data.IconYes, data.Label, "0d0h0m0s", ref str, 32, inputTxtWidth, true, !canEdit))
         {
             if (str != current.ToGsRemainingTime() && PadlockEx.TryParseTimeSpan(str, out var newTime))
             {
@@ -98,16 +101,17 @@ public class KinksterPermsForClient{
 
                 // Assign the blocking task if allowed.
                 if (!res.name.IsNullOrEmpty() && res.type is PermissionType.PairPerm)
-                    UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.PairPerms, res.name, ticks));
+                {
+                    Svc.Logger.Information($"Attempting to change {dispName}'s {res.name} to {ticks} ticks.", LoggerType.UI);
+                    UiService.SetUITask(async () => await PermissionHelper.ChangeOtherUnique(_hub, kinkster.UserData, kinkster.PairPerms, res.name, ticks));
+                }
             }
             _timespanCache.Remove(perm);
         }
-        CkGui.AttachToolTip($"The Max Duration {dispName} can lock you for.");
+        CkGui.AttachToolTip($"The Maximum Time {dispName} can be locked for.");
 
-        ImGui.SameLine(buttonW);
-        var refVar = canEdit;
-        if (ImGui.Checkbox("##" + perm + "edit", ref refVar))
-            UiService.SetUITask(async () => await PermissionHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.PairPermAccess, perm.ToPermAccessValue(), refVar));
+        ImGui.SameLine(width - ImGui.GetFrameHeight());
+        CkGui.BooleanToColoredIcon(canEdit, false, FAI.Pen, FAI.Pen);
         CkGui.AttachToolTip(canEdit ? $"{dispName} allows you to change this." : $"Only {dispName} can update this permission.");
     }
 
@@ -120,7 +124,7 @@ public class KinksterPermsForClient{
         var pos = ImGui.GetCursorScreenPos();
 
         // change to ckgui for disabled?
-        if(ImGui.Button("##pair" + perm, new Vector2(buttonW, ImGui.GetFrameHeight())))
+        if(ImGui.Button("##pair" + perm, new Vector2(buttonW, ImGui.GetFrameHeight())) && canEdit)
         {
             var res = perm.ToPermValue();
             var newState = newStateFunc();
@@ -135,7 +139,7 @@ public class KinksterPermsForClient{
                         await PermissionHelper.ChangeOtherGlobal(_hub, kinkster.UserData, kinkster.PairGlobals, res.name, newState);
                         break;
                     case PermissionType.PairPerm:
-                        await PermissionHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.PairPerms, res.name, newState);
+                        await PermissionHelper.ChangeOtherUnique(_hub, kinkster.UserData, kinkster.PairPerms, res.name, newState);
                         break;
                     default:
                         break;
@@ -143,14 +147,15 @@ public class KinksterPermsForClient{
             });
         }
         ImUtf8.SameLineInner();
-        CkGui.BooleanToColoredIcon(canEdit, false, FAI.Unlock, FAI.Lock);
+        CkGui.BooleanToColoredIcon(canEdit, false, FAI.Pen, FAI.Pen);
         CkGui.AttachToolTip(dispName + (canEdit
             ? " allows you to change this permission at will."
             : " is preventing you from changing this permission. Only they can update it."));
 
         ImGui.SetCursorScreenPos(pos);
         PrintButtonRichText(data, dispName, current, canEdit);
-        CkGui.AttachToolTip($"Toggle {dispName}'s permission.");
+        if (canEdit)
+            CkGui.AttachToolTip($"Toggle {dispName}'s permission.");
     }
 
     private void PrintButtonRichText(PermDataPair pdp, string dispName, bool current, bool canEdit)
@@ -184,7 +189,7 @@ public class KinksterPermsForClient{
     private readonly ImmutableDictionary<SPPID, PermDataPair> PairPermData = ImmutableDictionary<SPPID, PermDataPair>.Empty
         .Add(SPPID.ChatGarblerActive,     new PermDataPair(FAI.MicrophoneSlash,       FAI.Microphone, "enabled",       "disabled",     "Chat Garbler",           true , "is"))
         .Add(SPPID.ChatGarblerLocked,     new PermDataPair(FAI.Key,                   FAI.UnlockAlt,  "locked",        "unlocked",     "Chat Garbler",           true , "is"))
-        .Add(SPPID.GaggedNameplate,       new PermDataPair(FAI.IdCard,                FAI.Ban,        "enabled",       "disabled",     "Gagged Nameplates",      true , "are"))
+        .Add(SPPID.GaggedNameplate,       new PermDataPair(FAI.IdCard,                FAI.Ban,        "enabled",       "disabled",     "GagPlates",              true , "are"))
 
         .Add(SPPID.PermanentLocks,        new PermDataPair(FAI.Infinity,              FAI.Ban,        "allows",        "prevents",     "Permanent Locks",        false))
         .Add(SPPID.OwnerLocks,            new PermDataPair(FAI.UserLock,              FAI.Ban,        "allows",        "prevents",     "Owner Locks",            false))

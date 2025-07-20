@@ -123,6 +123,9 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         IsOpen = true;
     }
 
+    private string DispName = "Anon. Kinkster";
+    private float GetKinksterPermWidth() => (ImGui.CalcTextSize($"{DispName} prevents Removing Layers While Locked. ").X + ImGui.GetFrameHeightWithSpacing() * 2).AddWinPadX();
+
     public void SetWindowForKinkster(Kinkster kinkster)
     {
         _kinkster = kinkster;
@@ -148,6 +151,9 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         _emoteCombo = new EmoteCombo(_logger, 1.3f, () => [
             .._kinkster.PairPerms.AllowForcedEmote ? EmoteExtensions.LoopedEmotes() : EmoteExtensions.SittingEmotes()
         ]);
+
+        // set the max width to the longest possible text string.
+        DispName = _kinkster.GetNickAliasOrUid();
     }
 
     protected override void PreDrawInternal()
@@ -160,8 +166,15 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 
         Flags |= WFlags.NoMove;
 
-        var width = ImGuiHelpers.GlobalScale * (_openTab is InteractionsTab.KinkstersPerms ? 160 : 110);
-        var size = new Vector2(7 * ImGui.GetFrameHeight() + 3 * ImGui.GetStyle().ItemInnerSpacing.X + width, MainUI.LastSize.Y - ImGui.GetFrameHeightWithSpacing() * 2);
+        DispName = _kinkster?.GetNickAliasOrUid() ?? "Anon. Kinkster";
+        var width = ImGuiHelpers.GlobalScale * _openTab switch
+        {
+            InteractionsTab.KinkstersPerms => GetKinksterPermWidth(),
+            InteractionsTab.PermsForKinkster => 300f,
+            _ => 280f
+        };
+
+        var size = new Vector2(width, MainUI.LastSize.Y - ImGui.GetFrameHeightWithSpacing() * 2);
         ImGui.SetNextWindowSize(size);
     }
 
@@ -170,8 +183,8 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 
     protected override void DrawInternal()
     {
+        using var _ = CkRaii.Child("##KinksterInteractions", ImGui.GetContentRegionAvail(), WFlags.NoScrollbar);
         var width = ImGui.GetContentRegionAvail().X;
-        using var _ = CkRaii.Child("##KinksterInteractions", ImGui.GetContentRegionAvail());
 
         // if the pair is not valid dont draw anything after this.
         if (_kinkster is null)
@@ -181,17 +194,16 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         }
 
         if (_openTab is InteractionsTab.KinkstersPerms)
-            _kinksterPerms.DrawPermissions(_kinkster, width);
+            _kinksterPerms.DrawPermissions(_kinkster, DispName, width);
         else if (_openTab is InteractionsTab.PermsForKinkster)
-            _permsForKinkster.DrawPermissions(_kinkster, width);
+            _permsForKinkster.DrawPermissions(_kinkster, DispName, width);
         else if (_openTab is InteractionsTab.Interactions)
-            DrawInteractions(_kinkster, width);
+            DrawInteractions(_kinkster, DispName, width);
     }
 
-    private void DrawInteractions(Kinkster k, float width)
+    private void DrawInteractions(Kinkster k, string dispName, float width)
     {
         /* ----------- GLOBAL SETTINGS ----------- */
-        var dispName = _kinkster!.GetNickAliasOrUid();
         DrawCommon(k, width, dispName);
 
         if (k.IsOnline)

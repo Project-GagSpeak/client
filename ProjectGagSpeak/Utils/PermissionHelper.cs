@@ -1,3 +1,4 @@
+using GagSpeak.PlayerClient;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
@@ -9,6 +10,12 @@ namespace GagSpeak.Utils;
 /// <summary>
 ///     WARNING: This class can bypass any special permissions that need to happen on value change, 
 ///     be sure to account for these, or else it will become problematic.
+///     
+///     This classes primary purpose is for the UI to display updated values before recieving the callback, and processing the callback after it gets it
+///     to handle any achievement tracking or handlers.
+///     
+///     Either find a way to handle the callbacks automatically based on their changed state, or setup callbacks to never callback to the caller 
+///     that made the change and process internally. Either way, do this AFTER the update, as it mostly saves on server cost for interactions.
 /// </summary>
 public static class PermissionHelper
 {
@@ -17,8 +24,14 @@ public static class PermissionHelper
     ///     After the client-side change is made, it requests the change serverside.
     ///     If any error occurs from the server-call, the value is reverted to its state before the change.
     /// </summary>
-    public static async Task<bool> ChangeOwnGlobal(MainHub hub, GlobalPerms perms, string propertyName, object newValue)
+    public static async Task<bool> ChangeOwnGlobal(MainHub hub, GlobalPerms ownGlobals, string propertyName, object newValue)
     {
+        if (OwnGlobals.Perms is not { } perms)
+        {
+            Svc.Logger.Error("OwnGlobals.Permissions is null, cannot change own global permissions.");
+            return false;
+        }
+
         var type = perms.GetType();
         var property = type.GetProperty(propertyName);
         if (property is null || !property.CanRead || !property.CanWrite)
