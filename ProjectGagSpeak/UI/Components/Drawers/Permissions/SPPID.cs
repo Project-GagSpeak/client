@@ -121,6 +121,7 @@ public static class SPPIDExtensions
             SPPID.ApplyPairsMoodles     => (nameof(PairPerms.MoodlePerms),                    PermissionType.PairPerm),
             SPPID.ApplyOwnMoodles       => (nameof(PairPerms.MoodlePerms),                    PermissionType.PairPerm),
             SPPID.MaxMoodleTime         => (nameof(PairPerms.MaxMoodleTime),                  PermissionType.PairPerm),
+            SPPID.PermanentMoodles      => (nameof(PairPerms.MoodlePerms),                    PermissionType.PairPerm),
             SPPID.RemoveMoodles         => (nameof(PairPerms.MoodlePerms),                    PermissionType.PairPerm),
 
             SPPID.PatternStarting       => (nameof(PairPerms.ExecutePatterns),                PermissionType.PairPerm),
@@ -202,7 +203,7 @@ public static class SPPIDExtensions
             SPPID.AlarmToggling         => nameof(PairPermAccess.ToggleAlarmsAllowed),
             SPPID.TriggerToggling       => nameof(PairPermAccess.ToggleTriggersAllowed),
 
-            SPPID.HypnoticEffect        => nameof(PairPerms.HypnoEffectSending),
+            SPPID.HypnoticEffect        => nameof(PairPermAccess.HypnoEffectSendingAllowed),
 
             SPPID.ForcedFollow          => nameof(PairPerms.AllowForcedFollow),
             SPPID.ForcedEmoteState      => isAllEmote ? nameof(PairPerms.AllowForcedEmote) : nameof(PairPerms.AllowForcedEmote),
