@@ -21,7 +21,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
 {
     protected readonly ILogger Log;
 
-    public readonly IReadOnlyList<T> Items;
+    public readonly ICachingList<T> Items;
 
     /// <summary> Contains the list of padlocks. </summary>
     public readonly ICachingList<Padlocks> ComboPadlocks;
@@ -29,19 +29,20 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
     protected int? NewSelection;
     protected string Password = string.Empty;
     protected string Timer = string.Empty;
+    private bool _closePopup;
 
     public Padlocks SelectedLock { get; protected set; } = Padlocks.None;
     protected CkPadlockComboBase(IEnumerable<T> items, IEnumerable<Padlocks> padlocks, ILogger log)
     {
         Log = log;
-        Items = new TemporaryList<T>(items);
+        Items = (ICachingList<T>)(new TemporaryList<T>(items));
         ComboPadlocks = new TemporaryList<Padlocks>(padlocks);
     }
 
     protected CkPadlockComboBase(Func<IReadOnlyList<T>> itemGen, IEnumerable<Padlocks> padlocks, ILogger log)
     {
         Log = log;
-        Items = new LazyList<T>(itemGen);
+        Items = (ICachingList<T>)(new LazyList<T>(itemGen));
         ComboPadlocks = new TemporaryList<Padlocks>(padlocks);
     }
 
@@ -58,6 +59,12 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
         ResetInputs();
     }
 
+    protected void RefreshStorage(string label)
+    {
+        Log.LogWarning($"Clearing storage for padlock combo: {label}");
+        Items.ClearList();
+    }
+
     public void ResetInputs() => (Password, Timer) = (string.Empty, string.Empty);
 
     protected abstract bool DisableCondition(int layerIdx);
@@ -66,11 +73,11 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
 
     /// <summary> The logic that occurs when the lock button is pressed. </summary>
     /// <returns> If the operation was successful or not. </returns>
-    protected abstract Task<bool> OnLockButtonPress(int layerIdx);
+    protected abstract Task<bool> OnLockButtonPress(string label, int layerIdx);
 
     /// <summary> The logic that occurs when the unlock button is pressed. </summary>
     /// <returns> If the operation was successful or not. </returns>
-    protected abstract Task<bool> OnUnlockButtonPress(int layerIdx);
+    protected abstract Task<bool> OnUnlockButtonPress(string label, int layerIdx);
 
     public virtual void DrawLockCombo(string label, float width, int layerIdx, string buttonTxt, string tooltip, bool isTwoRow)
     {
@@ -99,7 +106,16 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
             {
                 foreach (var item in ComboPadlocks)
                     if (ImGui.Selectable(item.ToName(), item == SelectedLock))
+                    {
                         SelectedLock = item;
+                        _closePopup = true;
+                    }
+
+                if(_closePopup)
+                {
+                    RefreshStorage(label);
+                    _closePopup = false;
+                }
             }
         }
 
@@ -108,12 +124,12 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
         if(buttonTxt.IsNullOrEmpty())
         {
             if (CkGui.IconButton(FAI.Lock, disabled: SelectedLock is Padlocks.None, id: "##" + SelectedLock + "-LockButton"))
-                OnLockButtonPress(layerIdx);
+                OnLockButtonPress(label, layerIdx);
         }
         else
         {
             if (CkGui.IconTextButton(FAI.Lock, "Lock", disabled: SelectedLock is Padlocks.None, id: "##" + SelectedLock + "-LockButton"))
-                OnLockButtonPress(layerIdx);
+                OnLockButtonPress(label, layerIdx);
         }
         CkGui.AttachToolTip(tooltip);
 
@@ -151,12 +167,12 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
         if (buttonTxt.IsNullOrEmpty())    
         {
             if (CkGui.IconButton(FAI.Unlock, disabled: lastPadlock is Padlocks.None, id: "##" + label + "-UnlockButton"))
-                OnUnlockButtonPress(layerIdx);
+                OnUnlockButtonPress(label, layerIdx);
         }
         else
         {
             if (CkGui.IconTextButton(FAI.Unlock, "Unlock", disabled: lastPadlock is Padlocks.None, id: "##" + label + "-UnlockButton"))
-                OnUnlockButtonPress(layerIdx);
+                OnUnlockButtonPress(label, layerIdx);
         }
         CkGui.AttachToolTip(tooltip);
         

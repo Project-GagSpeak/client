@@ -25,7 +25,7 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
     protected override bool DisableCondition(int layerIdx)
         => Items[layerIdx].GagItem is GagType.None;
 
-    protected override async Task<bool> OnLockButtonPress(int layerIdx)
+    protected override async Task<bool> OnLockButtonPress(string label, int layerIdx)
     {
         // return if we cannot lock.
         if (!Items[layerIdx].CanLock() || !_ref.PairPerms.LockGags)
@@ -55,15 +55,19 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
             Log.LogDebug($"Locking Gag with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
             ResetSelection();
             ResetInputs();
+            RefreshStorage(label);
             return true;
         }
     }
 
-    protected override async Task<bool> OnUnlockButtonPress(int layerIdx)
+    protected override async Task<bool> OnUnlockButtonPress(string label, int layerIdx)
     {
         // return if we cannot lock.
         if (!Items[layerIdx].CanUnlock() || !_ref.PairPerms.UnlockGags)
+        {
+            Log.LogDebug($"Cannot unlock Gag with {Items[layerIdx].Padlock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason: Cannot Unlock", LoggerType.StickyUI);
             return false;
+        }
 
         var dto = new PushKinksterGagSlotUpdate(_ref.UserData, DataUpdateType.Unlocked)
         {
@@ -85,6 +89,7 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
             Log.LogDebug($"Unlocking Gag with {Items[layerIdx].Padlock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
             ResetSelection();
             ResetInputs();
+            RefreshStorage(label);
             return true;
         }
     }

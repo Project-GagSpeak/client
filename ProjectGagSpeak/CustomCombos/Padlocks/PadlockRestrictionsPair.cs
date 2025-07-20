@@ -24,7 +24,7 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
     protected override bool DisableCondition(int layerIdx)
         => !_ref.PairPerms.ApplyRestrictions || SelectedLock == Items[layerIdx].Padlock || !Items[layerIdx].CanLock();
 
-    protected override async Task<bool> OnLockButtonPress(int layerIdx)
+    protected override async Task<bool> OnLockButtonPress(string label, int layerIdx)
     {
         // return if we cannot lock.
         if (!Items[layerIdx].CanLock() || !_ref.PairPerms.LockRestrictions)
@@ -55,11 +55,12 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
             Log.LogDebug($"Locking Restriction with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
             ResetSelection();
             ResetInputs();
+            RefreshStorage(label);
             return true;
         }
     }
 
-    protected override async Task<bool> OnUnlockButtonPress(int layerIdx)
+    protected override async Task<bool> OnUnlockButtonPress(string label, int layerIdx)
     {
         if (!Items[0].CanUnlock() || !_ref.PairPerms.UnlockRestrictions)
             return false;
@@ -84,6 +85,7 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
             Log.LogDebug($"Unlocking Restriction with {Items[layerIdx].Padlock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
             ResetSelection();
             ResetInputs();
+            RefreshStorage(label);
             return true;
         }
     }

@@ -31,7 +31,7 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
     public void DrawUnlockCombo(float width, int layerIdx, string tooltip)
         => DrawUnlockCombo($"##ClientGagUnlock-{layerIdx}", width, layerIdx, string.Empty, tooltip);
 
-    protected override Task<bool> OnLockButtonPress(int layerIdx)
+    protected override Task<bool> OnLockButtonPress(string label, int layerIdx)
     {
         // return if we cannot lock.
         if (!Items[layerIdx].CanLock())
@@ -54,10 +54,11 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
         _mediator.Publish(new GagDataChangedMessage(DataUpdateType.Locked, layerIdx, newData));
         ResetSelection();
         ResetInputs();
+        RefreshStorage(label);
         return Task.FromResult(true);
     }
 
-    protected override Task<bool> OnUnlockButtonPress(int layerIdx)
+    protected override Task<bool> OnUnlockButtonPress(string label, int layerIdx)
     {
         // make a general common sense assumption logic check here, the rest can be handled across the server.
         if (!Items[layerIdx].CanUnlock())
@@ -76,6 +77,7 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
         _mediator.Publish(new GagDataChangedMessage(DataUpdateType.Unlocked, layerIdx, newData));
         ResetSelection();
         ResetInputs();
+        RefreshStorage(label);
         return Task.FromResult(true);
     }
 

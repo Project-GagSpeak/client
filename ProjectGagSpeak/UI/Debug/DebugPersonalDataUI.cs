@@ -5,10 +5,12 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
 using GagSpeak.Gui.Handlers;
+using GagSpeak.Interop;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
+using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
@@ -17,6 +19,7 @@ using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui;
+using OtterGui.Text;
 using System.Buffers;
 using System.Collections.Immutable;
 
@@ -25,6 +28,7 @@ namespace GagSpeak.Gui;
 public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 {
     private readonly MainConfig _config;
+    private readonly MoodleDrawer _moodleDrawer;
     private readonly KinksterManager _pairs;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
@@ -35,6 +39,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         ILogger<DebugPersonalDataUI> logger,
         GagspeakMediator mediator,
         MainConfig config,
+        MoodleDrawer moodleDrawer,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
@@ -123,6 +128,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawGlobalPermissions(pair.UserData.UID + "'s Global Perms", pair.PairGlobals);
         DrawPairPerms(pair.UserData.UID + "'s Pair Perms for you.", pair.PairPerms);
         DrawPairPermAccess(pair.UserData.UID + "'s Pair Perm Access for you", pair.PairPermAccess);
+        DrawPairIpcData(pair.UserData.UID, pair.LastIpcData);
         DrawGagData(pair.UserData.UID, pair.LastGagData);
         DrawRestrictions(pair.UserData.UID, pair.LastRestrictionsData);
         DrawRestraint(pair.UserData.UID, pair.LastRestraintData);
@@ -378,6 +384,19 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawPermissionRowBool("Can Stop Patterns", perms.StopPatternsAllowed);
         DrawPermissionRowBool("Can Toggle Alarms", perms.ToggleAlarmsAllowed);
         DrawPermissionRowBool("Can Toggle Triggers", perms.ToggleTriggersAllowed);
+    }
+
+    private void DrawPairIpcData(string uid, CharaIPCData ipcData)
+    {
+        using var nodeMain = ImRaii.TreeNode(uid + " IPC Data");
+        if (!nodeMain) return;
+
+        ImUtf8.TextFrameAligned($"Active Moodles: {ipcData.DataInfo.Count()}");
+        ImGui.SameLine();
+        _moodleDrawer.DrawStatusInfos(ipcData.DataInfoList, MoodleDrawer.IconSizeFramed);
+
+        ImGui.Text($"Total Moodles: {ipcData.StatusList.Count()}");
+        ImGui.Text($"Total Presets: {ipcData.PresetList.Count()}");
     }
 
     private void DrawGagData(string uid, CharaActiveGags appearance)

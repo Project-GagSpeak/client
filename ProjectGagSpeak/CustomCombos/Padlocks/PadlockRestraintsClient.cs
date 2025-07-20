@@ -30,7 +30,7 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
     public void DrawUnlockCombo(float width, string tooltip)
         => DrawUnlockCombo("##ClientRestraintUnlock", width, 0, string.Empty, tooltip);
 
-    protected override Task<bool> OnLockButtonPress(int _)
+    protected override Task<bool> OnLockButtonPress(string label, int _)
     {
         if (Items[0].CanLock())
         {
@@ -44,13 +44,14 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
             _mediator.Publish(new RestraintDataChangedMessage(DataUpdateType.Locked, newData));
             ResetSelection();
             ResetInputs();
+            RefreshStorage(label);
             return Task.FromResult(true);
         }
 
         ResetInputs();
         return Task.FromResult(false);
     }
-    protected override Task<bool> OnUnlockButtonPress(int _)
+    protected override Task<bool> OnUnlockButtonPress(string label, int _)
     {
         if (Items[0].CanUnlock())
         {
@@ -64,6 +65,7 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
             _mediator.Publish(new RestraintDataChangedMessage(DataUpdateType.Unlocked, newData));
             ResetSelection();
             ResetInputs();
+            RefreshStorage(label);
             return Task.FromResult(true);
         }
         ResetInputs();
