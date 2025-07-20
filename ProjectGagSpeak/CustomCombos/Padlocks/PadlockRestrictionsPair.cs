@@ -47,7 +47,7 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform LockRestriction with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
-            DisplayToastErrorAndReset(result.ErrorCode, SelectedLock);
+            DisplayToastErrorAndReset(result.ErrorCode, SelectedLock, false);
             return false;
         }
         else
@@ -76,7 +76,7 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform UnlockRestriction with {Items[layerIdx].Padlock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
-            DisplayToastErrorAndReset(result.ErrorCode, Items[layerIdx].Padlock);
+            DisplayToastErrorAndReset(result.ErrorCode, Items[layerIdx].Padlock, true);
             return false;
         }
         else
@@ -88,7 +88,7 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
         }
     }
 
-    private bool DisplayToastErrorAndReset(GagSpeakApiEc errorCode, Padlocks padlock)
+    private bool DisplayToastErrorAndReset(GagSpeakApiEc errorCode, Padlocks padlock, bool unlocking)
     {
         // Determine if we have access to unlock.
         switch (errorCode)
@@ -99,6 +99,10 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
 
             case GagSpeakApiEc.InvalidLayer:
                 Svc.Toasts.ShowError("Attempted to apply to a layer that was invalid.");
+                break;
+
+            case GagSpeakApiEc.InvalidPassword when unlocking:
+                Svc.Toasts.ShowError("Incorrectly guessed this padlocks password!");
                 break;
 
             case GagSpeakApiEc.InvalidPassword when padlock is Padlocks.CombinationPadlock:
@@ -126,11 +130,11 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
                 break;
 
             case GagSpeakApiEc.NoActiveItem:
-                Svc.Toasts.ShowError("Cannot remove this item as you are did not apply it.");
+                Svc.Toasts.ShowError("No active item is present.");
                 break;
 
             case GagSpeakApiEc.NotItemAssigner:
-                Svc.Toasts.ShowError("Cannot remove lock, it can only be removed by it's assigner.");
+                Svc.Toasts.ShowError("This padlock can only be removed by its assigner.");
                 break;
 
             default:
