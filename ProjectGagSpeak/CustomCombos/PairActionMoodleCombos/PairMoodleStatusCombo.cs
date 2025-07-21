@@ -14,13 +14,18 @@ namespace GagSpeak.CustomCombos.Moodles;
 
 public sealed class PairMoodleStatusCombo : CkMoodleComboButtonBase<MoodlesStatusInfo>
 {
-    public PairMoodleStatusCombo(ILogger log, MainHub hub, Kinkster kinkster, float scale)
+    private Action? PostButtonPress;
+    public PairMoodleStatusCombo(ILogger log, MainHub hub, Kinkster kinkster, float scale, Action postButtonPress)
         : base(log, hub, kinkster, scale, () => [ .. kinkster.LastIpcData.Statuses.Values.OrderBy(x => x.Title)])
-    { }
+    {
+        PostButtonPress = postButtonPress;
+    }
 
-    public PairMoodleStatusCombo(ILogger log, MainHub hub, Kinkster kinkster, float scale, Func<IReadOnlyList<MoodlesStatusInfo>> generator)
+    public PairMoodleStatusCombo(ILogger log, MainHub hub, Kinkster kinkster, float scale, Func<IReadOnlyList<MoodlesStatusInfo>> generator, Action postButtonPress)
         : base(log, hub, kinkster, scale, generator)
-    { }
+    {
+        PostButtonPress = postButtonPress;
+    }
 
     protected override bool DisableCondition()
         => _kinksterRef.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou) is false;
@@ -56,11 +61,13 @@ public sealed class PairMoodleStatusCombo : CkMoodleComboButtonBase<MoodlesStatu
         if (res.ErrorCode is GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Applying moodle status {item.Title} on {_kinksterRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
+            PostButtonPress?.Invoke();
             return true;
         }
         else
         {
             Log.LogDebug($"Failed to apply moodle status {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
+            PostButtonPress?.Invoke();
             return false;
         }
     }
@@ -72,11 +79,13 @@ public sealed class PairMoodleStatusCombo : CkMoodleComboButtonBase<MoodlesStatu
         if (res.ErrorCode is GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Removing moodle status {item.Title} from {_kinksterRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
+            PostButtonPress?.Invoke();
             return true;
         }
         else
         {
             Log.LogDebug($"Failed to remove moodle status {item.Title} from {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
+            PostButtonPress?.Invoke();
             return false;
 
         }

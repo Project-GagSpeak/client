@@ -62,7 +62,7 @@ public class HypnoEffectEditor : IDisposable
         // Halt any running tasks.
         _tasksCTS?.Cancel();
         // Set the new effect.
-        _effect = effect;
+        _effect = new(effect);
         _activeState = new HypnosisState { ImageColor = _effect.ImageColor };
 
         // Assign the new tasks for the display editor.

@@ -13,10 +13,13 @@ namespace GagSpeak.CustomCombos.Moodles;
 
 public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePresetInfo>
 {
+    private Action PostButtonPress;
     private int MaxPresetCount => _kinksterRef.LastIpcData.Presets.Values.Max(x => x.Statuses.Count);
-    public PairMoodlePresetCombo(ILogger log, MainHub hub, Kinkster kinkster, float scale)
-        : base(log, hub, kinkster, scale, () => [ ..kinkster.LastIpcData.Presets.Values.OrderBy(x => x.Title)])
-    { }
+    public PairMoodlePresetCombo(ILogger log, MainHub hub, Kinkster kinkster, float scale, Action postButtonPress)
+        : base(log, hub, kinkster, scale, () => [.. kinkster.LastIpcData.Presets.Values.OrderBy(x => x.Title)])
+    {
+        PostButtonPress = postButtonPress;
+    }
 
     protected override bool DisableCondition()
         => _kinksterRef.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou) is false;
@@ -73,11 +76,13 @@ public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePreset
         if (res.ErrorCode is GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Applying moodle preset {item.Title} on {_kinksterRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
+            PostButtonPress?.Invoke();
             return true;
         }
         else
         {
             Log.LogDebug($"Failed to apply moodle preset {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
+            PostButtonPress?.Invoke();
             return false;
         }
     }

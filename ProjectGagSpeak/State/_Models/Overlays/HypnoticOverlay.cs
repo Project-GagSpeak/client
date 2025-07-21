@@ -20,6 +20,7 @@ public class HypnoticOverlay : IOverlayEffect
     {
         ForceFirstPerson = other.ForceFirstPerson;
         OverlayPath = other.OverlayPath;
+        Effect = new(other.Effect);
     }
 
     public bool IsValid() => File.Exists(

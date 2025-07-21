@@ -10,13 +10,15 @@ namespace GagSpeak.CustomCombos.Padlock;
 // only has one item in it? idk if it works it works lol.
 public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint>
 {
+    private Action PostButtonPress;
     private readonly MainHub _mainHub;
     private Kinkster _ref;
-    public PairRestraintPadlockCombo(ILogger log, MainHub hub, Kinkster k)
+    public PairRestraintPadlockCombo(ILogger log, MainHub hub, Kinkster k, Action postButtonPress)
         : base(() => [k.LastRestraintData], () => [..PadlockEx.GetLocksForPair(k.PairPerms)], log)
     {
         _mainHub = hub;
         _ref = k;
+        PostButtonPress = postButtonPress;
     }
 
     protected override string ItemName(CharaActiveRestraint item)
@@ -56,6 +58,7 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
             ResetSelection();
             ResetInputs();
             RefreshStorage(label);
+            PostButtonPress.Invoke();
             return true;
         }
     }
@@ -85,6 +88,8 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
             ResetSelection();
             ResetInputs();
             RefreshStorage(label);
+            SelectedLock = Padlocks.None;
+            PostButtonPress.Invoke();
             return true;
         }
     }

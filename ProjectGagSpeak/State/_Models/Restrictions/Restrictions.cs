@@ -29,7 +29,7 @@ public interface IAttributeItem
 
 /// <summary> Basic Restriction Item Contract requirements. </summary>
 /// <remarks> Also contains ModSettingsPreset, and Traits, and Arousal. </remarks>
-public interface IRestriction : IModPreset, IAttributeItem
+public interface IRestriction : IModPreset
 {
     /// <summary> Determines the Glamour applied from this restriction item. </summary>
     GlamourSlot Glamour { get; set; }
@@ -46,14 +46,14 @@ public interface IRestriction : IModPreset, IAttributeItem
 
 /// <summary> Requirements for a restriction Item. </summary>
 /// <remarks> Used to keep GagRestrictions and other restrictions with separate identifier sources but shared material. </remarks>
-public interface IRestrictionItem : IRestriction
+public interface IRestrictionItem : IRestriction, IAttributeItem
 {
     Guid Identifier { get; }
     string Label { get; }
 }
 
 // Used for Gags. | Ensure C+ Allowance & Meta Allowance. Uses shared functionality but is independent.
-public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRestriction
+public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRestriction, IAttributeItem
 {
     public GagType GagType { get; init; }
     public bool IsEnabled { get; set; } = false;
@@ -369,44 +369,64 @@ public class BlindfoldRestriction : RestrictionItem
     }
 }
 
-public class CollarRestriction : RestrictionItem
-{
-    public override RestrictionType Type { get; } = RestrictionType.Collar;
-    public string OwnerUID { get; set; } = string.Empty;
-    public string CollarWriting { get; set; } = string.Empty;
 
+public class CollarRestriction : IEditableStorageItem<CollarRestriction>, IRestriction
+{
+    public Guid Identifier { get; internal set; } = Guid.NewGuid();
+    public string OwnerUID { get; set; } = string.Empty;
+    public string ThumbnailPath { get; set; } = string.Empty;
+    public string CollarWriting { get; set; } = string.Empty;
+    public GlamourSlot Glamour { get; set; } = new GlamourSlot();
+    public ModSettingsPreset Mod { get; set; } = new ModSettingsPreset(new ModPresetContainer());
+    public Moodle Moodle { get; set; } = new Moodle();
+    public CustomizeProfile CPlusProfile { get; set; } = CustomizeProfile.Empty;
+    public bool DoRedraw { get; set; } = false;
+    
     public CollarRestriction()
     { }
 
-    public CollarRestriction(CollarRestriction other, bool keepIdentifier)
-        : base(other, keepIdentifier)
+    public CollarRestriction(CollarRestriction other, bool keepId = false)
     {
-        OwnerUID = other.OwnerUID;
-        CollarWriting = other.CollarWriting;
+        Identifier = keepId ? other.Identifier : Guid.NewGuid();
+        ApplyChanges(other);
     }
 
-    public override CollarRestriction Clone(bool keepId = false)
-        => new CollarRestriction(this, keepId);
+    public CollarRestriction Clone(bool keepId = true) => new CollarRestriction(this, keepId);
 
     /// <summary> Applies updated changes to an edited item, while still maintaining the original references. <summary>
     public void ApplyChanges(CollarRestriction other)
     {
-        base.ApplyChanges(other);
         OwnerUID = other.OwnerUID;
+        ThumbnailPath = other.ThumbnailPath;
         CollarWriting = other.CollarWriting;
+        Glamour = other.Glamour;
+        Mod = other.Mod;
+        Moodle = other.Moodle;
+        CPlusProfile = other.CPlusProfile;
+        DoRedraw = other.DoRedraw;
     }
 
-    public override JObject Serialize()
+    public JObject Serialize()
     {
-        var json = base.Serialize();
-        json["OwnerUID"] = OwnerUID;
-        json["CollarWriting"] = CollarWriting;
-        return json;
+        return new JObject
+        {
+            ["Identifier"] = Identifier.ToString(),
+            ["OwnerUID"] = OwnerUID,
+            ["ThumbnailPath"] = ThumbnailPath,
+            ["CollarWriting"] = CollarWriting,
+            ["Glamour"] = Glamour.Serialize(),
+            ["Mod"] = Mod.SerializeReference(),
+            ["Moodle"] = Moodle.Serialize(),
+            ["ProfileGuid"] = CPlusProfile.ProfileGuid.ToString(),
+            ["ProfilePriority"] = CPlusProfile.Priority,
+            ["ProfileName"] = CPlusProfile.ProfileName,
+            ["DoRedraw"] = DoRedraw,
+        };
     }
 
     /// <summary> Constructs the CollarItem from a JToken. </summary>
     /// <remarks> This method can throw an exception if tokens are not valid. </remarks>
-    public new static CollarRestriction FromToken(JToken? token, ItemService items, ModSettingPresetManager mp)
+    public static CollarRestriction FromToken(JToken? token, ItemService items, ModSettingPresetManager mp)
     {
         if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
             throw new ArgumentException("Invalid JObjectToken!");
@@ -416,20 +436,22 @@ public class CollarRestriction : RestrictionItem
         var moodle = jsonMoodle.TryGetValue("StatusIds", out var statusToken) && statusToken is JArray
             ? new MoodlePreset(id, statusToken.Select(x => x.ToObject<Guid>()) ?? Enumerable.Empty<Guid>()) : new Moodle(id);
 
+        var profileId = json["ProfileGuid"]?.ToObject<Guid>() ?? throw new ArgumentNullException("ProfileGuid");
+        var profilePrio = json["ProfilePriority"]?.ToObject<int>() ?? throw new ArgumentNullException("ProfilePriority");
+        var profileName = json["ProfileName"]?.ToObject<string>() ?? string.Empty;
+
         // Construct the item to return.
         return new CollarRestriction()
         {
             Identifier = json["Identifier"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier"),
-            Label = json["Label"]?.ToObject<string>() ?? string.Empty,
+            OwnerUID = json["OwnerUID"]?.ToObject<string>() ?? string.Empty,
             ThumbnailPath = json["ThumbnailPath"]?.ToObject<string>() ?? string.Empty,
+            CollarWriting = json["CollarWriting"]?.ToObject<string>() ?? string.Empty,
             Glamour = items.ParseGlamourSlot(json["Glamour"]),
             Mod = ModSettingsPreset.FromRefToken(json["Mod"], mp),
             Moodle = moodle,
-            Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
-            Arousal = Enum.TryParse<Arousal>(json["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
+            CPlusProfile = new CustomizeProfile(profileId, profilePrio, profileName),
             DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
-            OwnerUID = json["OwnerUID"]?.ToObject<string>() ?? string.Empty,
-            CollarWriting = json["CollarWriting"]?.ToObject<string>() ?? string.Empty,
         };
     }
 }

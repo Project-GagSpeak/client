@@ -10,6 +10,7 @@ using GagSpeak.CustomCombos.Editor;
 using GagSpeak.CustomCombos.Padlock;
 using GagSpeak.Gui.Wardrobe;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Managers;
@@ -51,6 +52,7 @@ public class ActiveItemsDrawer
         RestrictionManager restrictions,
         RestraintManager restraints,
         FavoritesManager favorites,
+        DataDistributionService dds,
         TextureService textures,
         CosmeticService cosmetics)
     {
@@ -73,7 +75,7 @@ public class ActiveItemsDrawer
         // Init Gag Padlocks.
         _gagPadlocks = new PadlockGagsClient[Constants.MaxGagSlots];
         for (var i = 0; i < _gagPadlocks.Length; i++)
-            _gagPadlocks[i] = new PadlockGagsClient(logger, mediator, gags);
+            _gagPadlocks[i] = new PadlockGagsClient(logger, dds, gags);
 
         // Init Restriction Combos.
         _restrictionItems = new RestrictionCombo[Constants.MaxRestrictionSlots];
@@ -85,13 +87,13 @@ public class ActiveItemsDrawer
         // Init Restriction Padlocks.
         _restrictionPadlocks = new PadlockRestrictionsClient[Constants.MaxRestrictionSlots];
         for (var i = 0; i < _restrictionPadlocks.Length; i++)
-            _restrictionPadlocks[i] = new PadlockRestrictionsClient(logger, mediator, restrictions);
+            _restrictionPadlocks[i] = new PadlockRestrictionsClient(logger, dds, restrictions);
 
         // Init Restraint Combo & Padlock.
         _restraintItem = new RestraintCombo(logger, mediator, favorites, () => [
             ..restraints.Storage.OrderByDescending(p => favorites._favoriteRestraints.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
-        _restraintPadlocks = new PadlockRestraintsClient(logger, mediator, restraints);
+        _restraintPadlocks = new PadlockRestraintsClient(logger, dds, restraints);
 
         // Init Layer Editor Client.
         _layerEditorClient = new LayerEditorClient(mediator);

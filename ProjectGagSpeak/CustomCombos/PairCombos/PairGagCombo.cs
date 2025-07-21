@@ -12,10 +12,11 @@ using Penumbra.GameData.Enums;
 namespace GagSpeak.CustomCombos.Pairs;
 public sealed class PairGagCombo : CkFilterComboButton<GagType>
 {
+    private Action PostButtonPress;
     private readonly MainHub _mainHub;
     private Kinkster _kinksterRef;
 
-    public PairGagCombo(ILogger log, MainHub hub, Kinkster pair)
+    public PairGagCombo(ILogger log, MainHub hub, Kinkster pair, Action postButtonPress)
         : base(() => [.. Enum.GetValues<GagType>().Skip(1)], log)
     {
         _mainHub = hub;
@@ -23,6 +24,7 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
 
         // update current selection to the last registered gagType from that pair on construction.
         Current = GagType.None;
+        PostButtonPress = postButtonPress;
     }
 
     // we need to override the drawSelectable method here for a custom draw display.
@@ -72,6 +74,7 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
         else
         {
             Log.LogDebug($"Applying Gag with {Current.GagName()} on {_kinksterRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
+            PostButtonPress?.Invoke();
             return true;
         }
     }

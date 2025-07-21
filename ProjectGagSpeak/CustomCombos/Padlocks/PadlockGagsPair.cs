@@ -10,13 +10,15 @@ namespace GagSpeak.CustomCombos.Padlock;
 
 public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
 {
+    private Action PostButtonPress;
     private readonly MainHub _mainHub;
     private Kinkster _ref;
-    public PairGagPadlockCombo(ILogger log, MainHub hub, Kinkster k)
+    public PairGagPadlockCombo(ILogger log, MainHub hub, Kinkster k, Action postButtonPress)
         : base(() => [ .. k.LastGagData.GagSlots ], () => [ ..PadlockEx.GetLocksForPair(k.PairPerms) ], log)
     {
         _mainHub = hub;
         _ref = k;
+        PostButtonPress = postButtonPress;
     }
 
     protected override string ItemName(ActiveGagSlot item)
@@ -34,6 +36,8 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
         // we know it was valid, so begin assigning the new data to send off.
         var finalTime = SelectedLock == Padlocks.FiveMinutesPadlock
             ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
+
+        Log.LogInformation($"Locking with a final time of {finalTime} for {SelectedLock.ToName()} which is a timespan of {finalTime - DateTimeOffset.UtcNow} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
 
         var newData = new PushKinksterGagSlotUpdate(_ref.UserData, DataUpdateType.Locked)
         {
@@ -56,6 +60,7 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
             ResetSelection();
             ResetInputs();
             RefreshStorage(label);
+            PostButtonPress?.Invoke();
             return true;
         }
     }
@@ -90,6 +95,8 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
             ResetSelection();
             ResetInputs();
             RefreshStorage(label);
+            SelectedLock = Padlocks.None;
+            PostButtonPress?.Invoke();
             return true;
         }
     }
@@ -119,7 +126,7 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
                 Svc.Toasts.ShowError("Invalid Syntax. Must be 4-20 characters.");
                 break;
 
-            case GagSpeakApiEc.InvalidTime when padlock is Padlocks.TimerPadlock or Padlocks.TimerPasswordPadlock:
+            case GagSpeakApiEc.InvalidTime when padlock is Padlocks.TimerPadlock or Padlocks.TimerPasswordPadlock or Padlocks.OwnerTimerPadlock or Padlocks.DevotionalTimerPadlock:
                 Svc.Toasts.ShowError("Invalid Timer Syntax. Must be a valid time format (Ex: 0h2m7s).");
                 break;
 

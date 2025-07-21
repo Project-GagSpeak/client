@@ -13,13 +13,15 @@ namespace GagSpeak.CustomCombos.Pairs;
 
 public sealed class PairPatternCombo : CkFilterComboIconButton<LightPattern>
 {
+    private Action PostButtonPress;
     private readonly MainHub _mainHub;
     private Kinkster _kinksterRef;
-    public PairPatternCombo(ILogger log, MainHub hub, Kinkster pair)
+    public PairPatternCombo(ILogger log, MainHub hub, Kinkster pair, Action postButtonPress)
         : base(log, FAI.PlayCircle, "Execute", () => [ .. pair.LastLightStorage.Patterns.OrderBy(x => x.Label)])
     {
         _mainHub = hub;
         _kinksterRef = pair;
+        PostButtonPress = postButtonPress;
 
         // update current selection to the last registered LightPattern from that pair on construction.
         Current = _kinksterRef.LastLightStorage.Patterns.FirstOrDefault(r => r.Id == _kinksterRef.LastToyboxData.ActivePattern);
@@ -67,11 +69,13 @@ public sealed class PairPatternCombo : CkFilterComboIconButton<LightPattern>
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform Pattern with {Current.Label} on {_kinksterRef.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
+            PostButtonPress?.Invoke();
             return false;
         }
         else
         {
             Log.LogDebug($"Executing Pattern {Current.Label} on {_kinksterRef.GetNickAliasOrUid()}'s Toy", LoggerType.StickyUI);
+            PostButtonPress?.Invoke();
             return true;
         }
     }

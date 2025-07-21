@@ -14,14 +14,16 @@ namespace GagSpeak.CustomCombos.Pairs;
 
 public sealed class PairAlarmCombo : CkFilterComboIconButton<LightAlarm>
 {
+    private Action PostButtonPress;
     private readonly MainHub _mainHub;
     private Kinkster _kinksterRef;
 
-    public PairAlarmCombo(ILogger log, MainHub hub, Kinkster kinkster) 
+    public PairAlarmCombo(ILogger log, MainHub hub, Kinkster kinkster, Action postButtonPress)
         : base(log, FAI.Bell, "Enable", () => [ ..kinkster.LastLightStorage.Alarms.OrderBy(x => x.Label)])
     {
         _mainHub = hub;
         _kinksterRef = kinkster;
+        PostButtonPress = postButtonPress;
 
         // update current selection to the last registered LightAlarm from that pair on construction.
         Current = kinkster.LastLightStorage?.Alarms.FirstOrDefault();
@@ -67,11 +69,13 @@ public sealed class PairAlarmCombo : CkFilterComboIconButton<LightAlarm>
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform AlarmToggled on {_kinksterRef.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
+            PostButtonPress?.Invoke();
             return false;
         }
         else
         {
             Log.LogDebug($"Toggling Alarm on {_kinksterRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
+            PostButtonPress?.Invoke();
             return true;
         }
     }

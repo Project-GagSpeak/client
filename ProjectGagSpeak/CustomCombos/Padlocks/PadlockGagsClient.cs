@@ -1,10 +1,13 @@
 using Dalamud.Game.Gui.Toast;
+using GagSpeak.Kinksters;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
 using GagspeakAPI.Util;
 
 namespace GagSpeak.CustomCombos.Padlock;
@@ -12,11 +15,11 @@ namespace GagSpeak.CustomCombos.Padlock;
 // These are displayed seperately so dont use a layer updater.
 public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
 {
-    private readonly GagspeakMediator _mediator;
-    public PadlockGagsClient(ILogger log, GagspeakMediator mediator, GagRestrictionManager manager)
+    private readonly DataDistributionService _dds;
+    public PadlockGagsClient(ILogger log, DataDistributionService dds, GagRestrictionManager manager)
         : base(() => [ ..manager.ServerGagData?.GagSlots ?? [new ActiveGagSlot()] ], PadlockEx.ClientLocks, log)
     {
-        _mediator = mediator;
+        _dds = dds;
     }
 
     protected override string ItemName(ActiveGagSlot item)
@@ -31,54 +34,74 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
     public void DrawUnlockCombo(float width, int layerIdx, string tooltip)
         => DrawUnlockCombo($"##ClientGagUnlock-{layerIdx}", width, layerIdx, string.Empty, tooltip);
 
-    protected override Task<bool> OnLockButtonPress(string label, int layerIdx)
+    protected override async Task<bool> OnLockButtonPress(string label, int layerIdx)
     {
         // return if we cannot lock.
         if (!Items[layerIdx].CanLock())
-            return Task.FromResult(false);
+            return false;
 
-        // validate the lock, if it is not valid, we will display an error and reset inputs.
         if (!ValidateLock(layerIdx))
-            return Task.FromResult(false);
+            return false;
 
         // we know it was valid, so begin assigning the new data to send off.
         var finalTime = SelectedLock == Padlocks.FiveMinutesPadlock
             ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
+
         var newData = new ActiveGagSlot()
         {
             Padlock = SelectedLock,
             Password = Password,
             Timer = finalTime,
-            PadlockAssigner = MainHub.UID // use the same assigner. (To remove devotional timers)
+            PadlockAssigner = MainHub.UID
         };
-        _mediator.Publish(new GagDataChangedMessage(DataUpdateType.Locked, layerIdx, newData));
-        ResetSelection();
-        ResetInputs();
-        RefreshStorage(label);
-        return Task.FromResult(true);
+
+        if (await _dds.SendUpdatedGagData(layerIdx, newData, DataUpdateType.Locked) is { } res && res is not GagSpeakApiEc.Success)
+        {
+            Log.LogDebug($"Failed to perform LockGag with {SelectedLock.ToName()} on self. Reason:{res}", LoggerType.StickyUI);
+            ResetSelection();
+            ResetInputs();
+            return false;
+        }
+        else
+        {
+            ResetSelection();
+            ResetInputs();
+            RefreshStorage(label);
+            return true;
+        }
     }
 
-    protected override Task<bool> OnUnlockButtonPress(string label, int layerIdx)
+    protected override async Task<bool> OnUnlockButtonPress(string label, int layerIdx)
     {
         // make a general common sense assumption logic check here, the rest can be handled across the server.
         if (!Items[layerIdx].CanUnlock())
-            return Task.FromResult(false);
+            return false;
 
         if(!ValidateUnlock(layerIdx))
-            return Task.FromResult(false);
+            return false;
 
-        // we can send off the data, it is valid.
         var newData = new ActiveGagSlot()
         {
             Padlock = Items[layerIdx].Padlock,
             Password = Items[layerIdx].Password,
             PadlockAssigner = MainHub.UID
         };
-        _mediator.Publish(new GagDataChangedMessage(DataUpdateType.Unlocked, layerIdx, newData));
-        ResetSelection();
-        ResetInputs();
-        RefreshStorage(label);
-        return Task.FromResult(true);
+
+        if (await _dds.SendUpdatedGagData(layerIdx, newData, DataUpdateType.Unlocked) is { } res && res is not GagSpeakApiEc.Success)
+        {
+            Log.LogDebug($"Failed to perform UnlockGag with {Items[layerIdx].Padlock.ToName()} on self. Reason:{res}", LoggerType.StickyUI);
+            ResetSelection();
+            ResetInputs();
+            return false;
+        }
+        else
+        {
+            ResetSelection();
+            ResetInputs();
+            RefreshStorage(label);
+            SelectedLock = Padlocks.None;
+            return true;
+        }
     }
 
     private bool ValidateLock(int layerIdx)

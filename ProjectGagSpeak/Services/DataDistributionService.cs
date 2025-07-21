@@ -82,7 +82,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
 
         // Online Data Updaters
         Mediator.Subscribe<MainHubConnectedMessage>(this, _         => PushCompositeData(_kinksters.GetOnlineUserDatas()).ConfigureAwait(false));
-        Mediator.Subscribe<GagDataChangedMessage>(this, arg         => DistributeDataGag(_kinksters.GetOnlineUserDatas(), arg).ConfigureAwait(false));
+        Mediator.Subscribe<GagDataChangedMessage>(this, arg         => DistributeDataGagMessage(_kinksters.GetOnlineUserDatas(), arg).ConfigureAwait(false));
         Mediator.Subscribe<RestrictionDataChangedMessage>(this, arg => DistributeDataRestriction(_kinksters.GetOnlineUserDatas(), arg).ConfigureAwait(false));
         Mediator.Subscribe<RestraintDataChangedMessage>(this, arg   => DistributeDataRestraint(_kinksters.GetOnlineUserDatas(), arg).ConfigureAwait(false));
         Mediator.Subscribe<AliasGlobalUpdateMessage>(this, arg      => DistributeDataGlobalAlias(_kinksters.GetOnlineUserDatas(), arg).ConfigureAwait(false));
@@ -297,113 +297,118 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
     /// </summary>
     /// <remarks> Useful for handlers and services that must await the callback. </remarks>
     /// <returns> True if the operation returned successfully, false if it failed. </returns>
-    public async Task<bool> PushGagTriggerAction(int layerIdx, ActiveGagSlot newData, DataUpdateType type)
-        => await DistributeDataGag(_kinksters.GetOnlineUserDatas(), new(type, layerIdx, newData));
+    public async Task<GagSpeakApiEc> PushGagTriggerAction(int layerIdx, ActiveGagSlot newData, DataUpdateType type)
+        => await SendUpdatedGagData(_kinksters.GetOnlineUserDatas(), layerIdx, newData, type);
 
     /// <summary> Pushes the new GagData to the server. </summary>
     /// <remarks> If this call fails, the previous data will not be updated. </remarks>
-    private async Task<bool> DistributeDataGag(List<UserData> onlinePlayers, GagDataChangedMessage msg)
+    private async Task<GagSpeakApiEc> DistributeDataGagMessage(List<UserData> onlinePlayers, GagDataChangedMessage msg)
+        => await SendUpdatedGagData(onlinePlayers, msg.Layer, msg.NewData, msg.UpdateType);
+
+    public async Task<GagSpeakApiEc> SendUpdatedGagData(int layer, ActiveGagSlot slot, DataUpdateType type)
+        => await SendUpdatedGagData(_kinksters.GetOnlineUserDatas(), layer, slot, type);
+
+    public async Task<GagSpeakApiEc> SendUpdatedGagData(List<UserData> onlinePlayers, int layer, ActiveGagSlot slot, DataUpdateType type)
     {
-        if (DataIsDifferent(_prevGagData, msg.NewData) is false)
-            return false;
+        if (DataIsDifferent(_prevGagData, slot) is false)
+            return GagSpeakApiEc.DuplicateEntry;
 
-        _prevGagData = msg.NewData;
-        Logger.LogDebug($"Pushing GagChange [{msg.UpdateType}] to: {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
+        _prevGagData = slot;
+        Logger.LogDebug($"Pushing GagChange [{type}] to: {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
 
-        var dto = new PushClientGagSlotUpdate(onlinePlayers, msg.UpdateType)
+        var dto = new PushClientGagSlotUpdate(onlinePlayers, type)
         {
-            Layer = msg.Layer,
-            Gag = msg.NewData.GagItem,
-            Enabler = msg.NewData.Enabler,
-            Padlock = msg.NewData.Padlock,
-            Password = msg.NewData.Password,
-            Timer = msg.NewData.Timer,
-            Assigner = msg.NewData.PadlockAssigner
+            Layer = layer,
+            Gag = slot.GagItem,
+            Enabler = slot.Enabler,
+            Padlock = slot.Padlock,
+            Password = slot.Password,
+            Timer = slot.Timer,
+            Assigner = slot.PadlockAssigner
         };
 
         if (await _hub.UserPushDataGags(dto) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
         {
             Logger.LogError($"Failed to push GagData to server [{res}]");
-            return false;
+            return res.ErrorCode;
         }
-
-        return true;
+        else
+        {
+            return GagSpeakApiEc.Success;
+        }
     }
-
-    /// <summary>
-    ///     A publically accessible variant that is not mediator dependant.
-    /// </summary>
-    /// <remarks> Useful for handlers and services that must await the callback. </remarks>
-    /// <returns> True if the operation returned successfully, false if it failed. </returns>
-    public async Task<bool> PushRestrictionTriggerAction(int layerIdx, ActiveRestriction newData, DataUpdateType type)
-        => await DistributeDataRestriction(_kinksters.GetOnlineUserDatas(), new(type, layerIdx, newData));
 
     /// <summary> Pushes the new RestrictionData to the server. </summary>
     /// <remarks> If this call fails, the previous data will not be updated. </remarks>
-    private async Task<bool> DistributeDataRestriction(List<UserData> onlinePlayers, RestrictionDataChangedMessage msg)
+    private async Task<GagSpeakApiEc> DistributeDataRestriction(List<UserData> onlinePlayers, RestrictionDataChangedMessage msg)
+        => await PushUpdatedRestrictionData(onlinePlayers, msg.Layer, msg.NewData, msg.UpdateType);
+
+    public async Task<GagSpeakApiEc> PushUpdatedRestrictionData(int layerIdx, ActiveRestriction newData, DataUpdateType type)
+        => await PushUpdatedRestrictionData(_kinksters.GetOnlineUserDatas(), layerIdx, newData, type);
+
+    public async Task<GagSpeakApiEc> PushUpdatedRestrictionData(List<UserData> onlinePlayers, int layerIdx, ActiveRestriction newData, DataUpdateType type)
     {
-        if (DataIsDifferent(_prevRestrictionData, msg.NewData) is false)
-            return false;
+        if (DataIsDifferent(_prevRestrictionData, newData) is false)
+            return GagSpeakApiEc.DuplicateEntry;
 
-        _prevRestrictionData = msg.NewData;
-        Logger.LogDebug($"Pushing RestrictionChange [{msg.UpdateType}] to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
+        _prevRestrictionData = newData;
+        Logger.LogDebug($"Pushing RestrictionChange [{type}] to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
 
-        var dto = new PushClientRestrictionUpdate(onlinePlayers, msg.UpdateType)
+        var dto = new PushClientRestrictionUpdate(onlinePlayers, type)
         {
-            Layer = msg.Layer,
-            Identifier = msg.NewData.Identifier,
-            Enabler = msg.NewData.Enabler,
-            Padlock = msg.NewData.Padlock,
-            Password = msg.NewData.Password,
-            Timer = msg.NewData.Timer,
-            Assigner = msg.NewData.PadlockAssigner
+            Layer = layerIdx,
+            Identifier = newData.Identifier,
+            Enabler = newData.Enabler,
+            Padlock = newData.Padlock,
+            Password = newData.Password,
+            Timer = newData.Timer,
+            Assigner = newData.PadlockAssigner
         };
 
         if (await _hub.UserPushDataRestrictions(dto) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
         {
             Logger.LogError($"Failed to push RestrictionData to server [{res}]");
-            return false;
+            return res.ErrorCode;
         }
 
-        return true;
+        return GagSpeakApiEc.Success;
     }
-
-    /// <summary>
-    ///     A publically accessible variant that is not mediator dependant.
-    /// </summary>
-    /// <remarks> Useful for handlers and services that must await the callback. </remarks>
-    /// <returns> True if the operation returned successfully, false if it failed. </returns>
-    public async Task<bool> PushRestraintTriggerAction(CharaActiveRestraint newData, DataUpdateType type)
-        => await DistributeDataRestraint(_kinksters.GetOnlineUserDatas(), new(type, newData));
 
     /// <summary> Pushes the new RestraintData to the server. </summary>
     /// <remarks> If this call fails, the previous data will not be updated. </remarks>
-    private async Task<bool> DistributeDataRestraint(List<UserData> onlinePlayers, RestraintDataChangedMessage msg)
+    private async Task<GagSpeakApiEc> DistributeDataRestraint(List<UserData> onlinePlayers, RestraintDataChangedMessage msg)
+        => await PushUpdatedRestraintData(onlinePlayers, msg.NewData, msg.UpdateType);
+
+    public async Task<GagSpeakApiEc> PushUpdatedRestraintData(CharaActiveRestraint newData, DataUpdateType type)
+        => await PushUpdatedRestraintData(_kinksters.GetOnlineUserDatas(), newData, type);
+
+    public async Task<GagSpeakApiEc> PushUpdatedRestraintData(List<UserData> onlinePlayers, CharaActiveRestraint newData, DataUpdateType type)
+
     {
-        if (DataIsDifferent(_prevRestraintData, msg.NewData) is false)
-            return false;
+        if (DataIsDifferent(_prevRestraintData, newData) is false)
+            return GagSpeakApiEc.DuplicateEntry;
 
-        _prevRestraintData = msg.NewData;
-        Logger.LogDebug($"Pushing RestraintData to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))} [{msg.UpdateType}]", LoggerType.OnlinePairs);
+        _prevRestraintData = newData;
+        Logger.LogDebug($"Pushing RestraintData to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))} [{type}]", LoggerType.OnlinePairs);
 
-        var dto = new PushClientRestraintUpdate(onlinePlayers, msg.UpdateType)
+        var dto = new PushClientRestraintUpdate(onlinePlayers, type)
         {
-            ActiveSetId = msg.NewData.Identifier,
-            ActiveLayers = msg.NewData.ActiveLayers,
-            Enabler = msg.NewData.Enabler,
-            Padlock = msg.NewData.Padlock,
-            Password = msg.NewData.Password,
-            Timer = msg.NewData.Timer,
-            Assigner = msg.NewData.PadlockAssigner
+            ActiveSetId = newData.Identifier,
+            ActiveLayers = newData.ActiveLayers,
+            Enabler = newData.Enabler,
+            Padlock = newData.Padlock,
+            Password = newData.Password,
+            Timer = newData.Timer,
+            Assigner = newData.PadlockAssigner
         };
 
         if (await _hub.UserPushDataRestraint(dto) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
         {
             Logger.LogError($"Failed to push RestraintData to server [{res}]");
-            return false;
+            return res.ErrorCode;
         }
 
-        return true;
+        return GagSpeakApiEc.Success;
     }
 
     /// <summary> Pushes the new Global AliasTrigger update to the server. </summary>

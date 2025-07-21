@@ -77,7 +77,6 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         name = RegexEx.EnsureUniqueName(name, Storage, x => x.Label);
         var restriction = type switch
         {
-            RestrictionType.Collar => new CollarRestriction() { Label = name },
             RestrictionType.Hypnotic => new HypnoticRestriction() { Label = name },
             RestrictionType.Blindfold => new BlindfoldRestriction() { Label = name },
             _ => new RestrictionItem() { Label = name }
@@ -96,7 +95,6 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         {
             BlindfoldRestriction b => new BlindfoldRestriction(b, false) { Label = newName },
             HypnoticRestriction  h => new HypnoticRestriction(h, false) { Label = newName },
-            CollarRestriction    c => new CollarRestriction(c, false) { Label = newName },
             RestrictionItem      r => new RestrictionItem(r, false) { Label = newName },
             _ => throw new NotImplementedException("Unknown restriction type."),
         };
@@ -347,9 +345,8 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
             try
             {
                 // Create an instance of the correct type
-                var restrictionItem = restrictionType switch
+                RestrictionItem restrictionItem = restrictionType switch
                 {
-                    RestrictionType.Collar => CollarRestriction.FromToken(itemJson, _items, _modPresets),
                     RestrictionType.Hypnotic => HypnoticRestriction.FromToken(itemJson, _items, _modPresets),
                     RestrictionType.Blindfold => BlindfoldRestriction.FromToken(itemJson, _items, _modPresets),
                     _ => RestrictionItem.FromToken(itemJson, _items, _modPresets),

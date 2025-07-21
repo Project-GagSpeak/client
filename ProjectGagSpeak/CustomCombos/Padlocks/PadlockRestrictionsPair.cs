@@ -9,20 +9,22 @@ namespace GagSpeak.CustomCombos.Padlock;
 
 public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
 {
+    private Action PostButtonPress;
     private readonly MainHub _mainHub;
     private Kinkster _ref;
-    public PairRestrictionPadlockCombo(ILogger log, MainHub hub, Kinkster k)
+    public PairRestrictionPadlockCombo(ILogger log, MainHub hub, Kinkster k, Action postButtonPress)
         : base(() => [..k.LastRestrictionsData.Restrictions], () => [..PadlockEx.GetLocksForPair(k.PairPerms)], log)
     {
         _mainHub = hub;
         _ref = k;
+        PostButtonPress = postButtonPress;
     }
 
     protected override string ItemName(ActiveRestriction item)
         => _ref.LastLightStorage.Restrictions.FirstOrDefault(r => r.Id == item.Identifier) is { } restriction
             ? restriction.Label : "None";
     protected override bool DisableCondition(int layerIdx)
-        => !_ref.PairPerms.ApplyRestrictions || SelectedLock == Items[layerIdx].Padlock || !Items[layerIdx].CanLock();
+        => Items[layerIdx].Identifier == Guid.Empty;
 
     protected override async Task<bool> OnLockButtonPress(string label, int layerIdx)
     {
@@ -56,13 +58,14 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
             ResetSelection();
             ResetInputs();
             RefreshStorage(label);
+            PostButtonPress?.Invoke();
             return true;
         }
     }
 
     protected override async Task<bool> OnUnlockButtonPress(string label, int layerIdx)
     {
-        if (!Items[0].CanUnlock() || !_ref.PairPerms.UnlockRestrictions)
+        if (!Items[layerIdx].CanUnlock() || !_ref.PairPerms.UnlockRestrictions)
             return false;
 
         var dto = new PushKinksterRestrictionUpdate(_ref.UserData, DataUpdateType.Unlocked)
@@ -86,6 +89,8 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
             ResetSelection();
             ResetInputs();
             RefreshStorage(label);
+            SelectedLock = Padlocks.None;
+            PostButtonPress?.Invoke();
             return true;
         }
     }

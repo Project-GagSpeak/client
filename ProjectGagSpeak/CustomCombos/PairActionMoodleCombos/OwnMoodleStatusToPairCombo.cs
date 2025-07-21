@@ -15,9 +15,12 @@ namespace GagSpeak.CustomCombos.Moodles;
 
 public sealed class OwnMoodleStatusToPairCombo : CkMoodleComboButtonBase<MoodlesStatusInfo>
 {
-    public OwnMoodleStatusToPairCombo(ILogger log, MainHub hub, Kinkster kinkster, float scale)
-        : base(log, hub, kinkster, scale, () => [ ..MoodleCache.IpcData.Statuses.Values.OrderBy(x => x.Title)])
-    { }
+    private Action PostButtonPress;
+    public OwnMoodleStatusToPairCombo(ILogger log, MainHub hub, Kinkster kinkster, float scale, Action postButtonPress)
+        : base(log, hub, kinkster, scale, () => [.. MoodleCache.IpcData.Statuses.Values.OrderBy(x => x.Title)])
+    {
+        PostButtonPress = postButtonPress;
+    }
 
     protected override bool DisableCondition()
         => _kinksterRef.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyTheirMoodlesToYou) is false;
@@ -53,11 +56,13 @@ public sealed class OwnMoodleStatusToPairCombo : CkMoodleComboButtonBase<Moodles
         if (res.ErrorCode is GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Applying moodle status {item.Title} on {_kinksterRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
+            PostButtonPress?.Invoke();
             return true;
         }
         else
         {
             Log.LogDebug($"Failed to apply moodle status {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
+            PostButtonPress?.Invoke();
             return false;
         }
     }

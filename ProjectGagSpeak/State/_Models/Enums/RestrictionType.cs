@@ -8,6 +8,4 @@ public enum RestrictionType
     Normal = 0,
     Blindfold = 1,
     Hypnotic = 2,
-    Collar = 3,
-    Gag = 4,
 }

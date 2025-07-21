@@ -23,6 +23,7 @@ using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using GagspeakAPI.Util;
 using ImGuiNET;
+using JetBrains.Annotations;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.MainWindow;
@@ -108,9 +109,16 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 
     private void UpdateWindow(Kinkster kinkster, InteractionsTab type)
     {
+        if (_openTab == type)
+        {
+            _openTab = InteractionsTab.None;
+            IsOpen = false;
+            return;
+        }
+
         _logger.LogInformation($"Updating Sticky UI for {kinkster.GetNickAliasOrUid()} with type {type}.");
         // if this is not 0 it means they do not have the same UID and are different.
-        if (kinkster.CompareTo(_kinkster) != 0)
+        if (kinkster.CompareTo(_kinkster) != 0 || _openTab is InteractionsTab.None)
             SetWindowForKinkster(kinkster);
 
         // After setting the window for the Kinkster, we need to make sure the main window is opened.
@@ -128,22 +136,22 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         _kinkster = kinkster;
         _selections = new StickyWindowSelections();
 
-        _pairGags = new PairGagCombo(_logger, _hub, _kinkster);
-        _pairGagPadlocks = new PairGagPadlockCombo(_logger, _hub, _kinkster);
-        _pairRestrictionItems = new PairRestrictionCombo(_logger, _hub, _kinkster);
-        _pairRestrictionPadlocks = new PairRestrictionPadlockCombo(_logger, _hub, _kinkster);
-        _pairRestraintSets = new PairRestraintCombo(_logger, _hub, _kinkster);
-        _pairRestraintSetPadlocks = new PairRestraintPadlockCombo(_logger, _hub, _kinkster);
-        _pairMoodleStatuses = new PairMoodleStatusCombo(_logger, _hub, _kinkster, 1.3f);
-        _pairMoodlePresets = new PairMoodlePresetCombo(_logger, _hub, _kinkster, 1.3f);
-        _pairPatterns = new PairPatternCombo(_logger, _hub, _kinkster);
-        _pairAlarmToggles = new PairAlarmCombo(_logger, _hub, _kinkster);
-        _pairTriggerToggles = new PairTriggerCombo(_logger, _hub, _kinkster);
-        _moodleStatuses = new OwnMoodleStatusToPairCombo(_logger, _hub, _kinkster, 1.3f);
-        _moodlePresets = new OwnMoodlePresetToPairCombo(_logger, _hub, _kinkster, 1.3f);
+        _pairGags = new PairGagCombo(_logger, _hub, _kinkster, () => _selections.CloseInteraction());
+        _pairGagPadlocks = new PairGagPadlockCombo(_logger, _hub, _kinkster, () => _selections.CloseInteraction());
+        _pairRestrictionItems = new PairRestrictionCombo(_logger, _hub, _kinkster, () => _selections.CloseInteraction());
+        _pairRestrictionPadlocks = new PairRestrictionPadlockCombo(_logger, _hub, _kinkster, () => _selections.CloseInteraction());
+        _pairRestraintSets = new PairRestraintCombo(_logger, _hub, _kinkster, () => _selections.CloseInteraction());
+        _pairRestraintSetPadlocks = new PairRestraintPadlockCombo(_logger, _hub, _kinkster, () => _selections.CloseInteraction());
+        _pairMoodleStatuses = new PairMoodleStatusCombo(_logger, _hub, _kinkster, 1.3f, () => _selections.CloseInteraction());
+        _pairMoodlePresets = new PairMoodlePresetCombo(_logger, _hub, _kinkster, 1.3f, () => _selections.CloseInteraction());
+        _pairPatterns = new PairPatternCombo(_logger, _hub, _kinkster, () => _selections.CloseInteraction());
+        _pairAlarmToggles = new PairAlarmCombo(_logger, _hub, _kinkster, () => _selections.CloseInteraction());
+        _pairTriggerToggles = new PairTriggerCombo(_logger, _hub, _kinkster, () => _selections.CloseInteraction());
+        _moodleStatuses = new OwnMoodleStatusToPairCombo(_logger, _hub, _kinkster, 1.3f, () => _selections.CloseInteraction());
+        _moodlePresets = new OwnMoodlePresetToPairCombo(_logger, _hub, _kinkster, 1.3f, () => _selections.CloseInteraction());
         _activePairStatusCombo = new PairMoodleStatusCombo(_logger, _hub, _kinkster, 1.3f,
             () => [ .. _kinkster.LastIpcData.DataInfo.Values.OrderBy(x => x.Title)
-        ]);
+        ], () => _selections.CloseInteraction());
 
         _emoteCombo = new EmoteCombo(_logger, 1.3f, () => [
             .._kinkster.PairPerms.AllowForcedEmote ? EmoteExtensions.LoopedEmotes() : EmoteExtensions.SittingEmotes()
@@ -367,7 +375,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 
         // Drawing out restriction layers.
         if (CkGuiUtils.LayerIdxCombo("##restrictionLayer", width, _selections.RestrictionLayer, out var newVal, 5))
-            _selections.GagLayer = newVal;
+            _selections.RestrictionLayer = newVal;
         CkGui.AttachToolTip("Select the layer to apply a Restriction to.");
 
         if (k.LastRestrictionsData.Restrictions[_selections.RestrictionLayer] is not { } slot)
@@ -375,21 +383,21 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 
         // register display texts for the buttons.
         var hasItem = slot.Identifier != Guid.Empty;
+        var itemName = k.LastLightStorage.Restrictions.FirstOrDefault(r => r.Id == slot.Identifier) is { } item ? item.Label : string.Empty;
         var hasPadlock = slot.Padlock is not Padlocks.None;
-
-        var applyText = "Apply Restriction";
+        var applyTxt = hasItem ? $"Currently Applied: {itemName}" : $"Apply a Restriction to {dispName}";
         var applyTT = $"Applies a Restriction to {dispName}.";
         var lockTxt = hasPadlock ? $"Locked with a {slot.Padlock.ToName()}" : hasItem
-            ? $"Lock {dispName}'s Restriction" : "No Restriction To Lock!";
+            ? $"Lock {dispName}'s {itemName}" : "No Restriction To Lock!";
         var lockTT = hasPadlock ? $"This Restriction is locked with a {slot.Padlock.ToName()}" : hasItem
-            ? $"Locks the Restriction on {dispName}." : "No Restriction to lock on this layer!";
-        var unlockTxt = hasPadlock ? $"Unlock {dispName}'s Restriction" : "No Padlock to unlock!";
-        var unlockTT = hasPadlock ? $"Attempt to unlock {dispName}'s Restriction." : "No padlock is set!";
-        var removeTxt = hasItem ? $"Remove {dispName}'s Restriction" : "Nothing to remove!";
+            ? $"Locks {dispName}'s {itemName} Restriction item." : "No Restriction to lock on this layer!";
+        var unlockTxt = hasPadlock ? $"Unlock {dispName}'s {itemName}" : "No Padlock to unlock!";
+        var unlockTT = hasPadlock ? $"Attempt to unlock {dispName}'s {itemName} Restriction item." : "No padlock is set!";
+        var removeTxt = hasItem ? $"Remove {dispName}'s {itemName}" : "Nothing to remove!";
         var removeTT = $"{removeTxt}.";
 
         // Expander for ApplyRestriction
-        if (CkGui.IconTextButton(FAI.CommentDots, applyText, width, true, !slot.CanApply() || !k.PairPerms.ApplyRestrictions))
+        if (CkGui.IconTextButton(FAI.CommentDots, applyTxt, width, true, !slot.CanApply() || !k.PairPerms.ApplyRestrictions))
             _selections.OpenOrClose(InteractionType.ApplyRestriction);
         CkGui.AttachToolTip(applyTT);
 
@@ -411,7 +419,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         if (_selections.OpenInteraction is InteractionType.LockRestriction)
         {
             using (ImRaii.Child("###LockRestriction", new Vector2(width, CkStyle.TwoRowHeight())))
-                _pairRestrictionPadlocks.DrawLockCombo("LockRestriction", width, _selections.RestrictionLayer, lockTxt, lockTT, true);
+                _pairRestrictionPadlocks.DrawLockCombo("##LockRestriction", width, _selections.RestrictionLayer, lockTxt, lockTT, true);
             ImGui.Separator();
         }
 
@@ -423,7 +431,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         if (_selections.OpenInteraction is InteractionType.UnlockRestriction)
         {
             using (ImRaii.Child("###UnlockRestriction", new Vector2(width, ImGui.GetFrameHeight())))
-                _pairRestrictionPadlocks.DrawUnlockCombo("UnlockRestriction", width, _selections.RestrictionLayer, unlockTT, unlockTxt);
+                _pairRestrictionPadlocks.DrawUnlockCombo("##UnlockRestriction", width, _selections.RestrictionLayer, unlockTT, unlockTxt);
             ImGui.Separator();
         }
 

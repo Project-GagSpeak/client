@@ -146,10 +146,6 @@ public partial class RestrictionsPanel
 
         _equipDrawer.DrawAssociatedGlamour("RestrictionGlamour", item.Glamour, width);
 
-        // Draw collar information, if our type is a collar.
-        if (item is CollarRestriction collarRestriction)
-            DrawCollarInfo(collarRestriction, width);
-
         // Draw hypnotic section, if our type is a hypnotic restriction.
         if (item is HypnoticRestriction hypnoticRestriction)
             DrawHypnoInfo(hypnoticRestriction, width);
@@ -161,7 +157,6 @@ public partial class RestrictionsPanel
         // Determine the disabled traits based on the restriction type.
         var shownTraits = item switch
         {
-            CollarRestriction => Traits.None,
             BlindfoldRestriction => Traits.Blindfolded,
             HypnoticRestriction => Traits.Blindfolded,
             _ => Traits.All

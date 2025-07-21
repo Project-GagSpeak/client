@@ -12,12 +12,14 @@ namespace GagSpeak.CustomCombos.Pairs;
 
 public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
 {
+    private Action PostButtonPress;
     private readonly MainHub _mainHub;
     private Kinkster _ref;
 
-    public PairRestrictionCombo(ILogger log, MainHub hub, Kinkster kinkster)
+    public PairRestrictionCombo(ILogger log, MainHub hub, Kinkster kinkster, Action postButtonPress)
         : base(() => [.. kinkster.LastLightStorage.Restrictions.OrderBy(x => x.Label)], log)
     {
+        PostButtonPress = postButtonPress;
         _mainHub = hub;
         _ref = kinkster;
         Current = default;
@@ -80,6 +82,7 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
         else
         {
             Log.LogDebug($"Applying Restraint with {Current.Label} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
+            PostButtonPress.Invoke();
             return true;
         }
     }

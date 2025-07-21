@@ -13,14 +13,16 @@ namespace GagSpeak.CustomCombos.Pairs;
 
 public sealed class PairTriggerCombo : CkFilterComboIconButton<LightTrigger>
 {
+    private Action PostButtonPress;
     private readonly MainHub _mainHub;
     private Kinkster _ref;
 
-    public PairTriggerCombo(ILogger log, MainHub hub, Kinkster kinkster)
+    public PairTriggerCombo(ILogger log, MainHub hub, Kinkster kinkster, Action postButtonPress)
         : base(log, FAI.Bell, "Enable", () => [ .. kinkster.LastLightStorage.Triggers.OrderBy(x => x.Label)])
     {
         _mainHub = hub;
         _ref = kinkster;
+        PostButtonPress = postButtonPress;
 
         // update current selection to the last registered LightTrigger from that pair on construction.
         Current = _ref.LastLightStorage?.Triggers.FirstOrDefault();
@@ -56,11 +58,13 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<LightTrigger>
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform TriggerToggle on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
+            PostButtonPress?.Invoke();
             return false;
         }
         else
         {
             Log.LogDebug($"Toggling Trigger {Current.Label} on {_ref.GetNickAliasOrUid()}'s TriggerList", LoggerType.StickyUI);
+            PostButtonPress?.Invoke();
             return true;
         }
     }

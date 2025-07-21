@@ -61,7 +61,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
 
     protected void RefreshStorage(string label)
     {
-        Log.LogWarning($"Clearing storage for padlock combo: {label}");
+        Log.LogTrace($"Clearing storage for padlock combo: {label}", LoggerType.Combos);
         Items.ClearList();
     }
 

@@ -10,6 +10,7 @@ using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.Hub;
 using OtterGui.Extensions;
 
 namespace GagSpeak.Services;
@@ -231,7 +232,7 @@ public class TriggerActionService
         }
 
         // Call the new distribution method
-        if (!await _distributer.PushGagTriggerAction(layerIdx, gagSlot, updateType))
+        if ((await _distributer.PushGagTriggerAction(layerIdx, gagSlot, updateType)) is not GagSpeakApiEc.Success)
         {
             _logger.LogWarning("The GagTriggerAction was not processed sucessfully by the server!");
             return false;
@@ -304,7 +305,7 @@ public class TriggerActionService
                 return false;
         }
 
-        if (!await _distributer.PushRestrictionTriggerAction(layerIdx, restriction, updateType))
+        if ((await _distributer.PushUpdatedRestrictionData(layerIdx, restriction, updateType)) is not GagSpeakApiEc.Success)
         {
             _logger.LogWarning("The RestrictionTriggerAction was not processed successfully by the server!");
             return false;
@@ -362,7 +363,7 @@ public class TriggerActionService
                 return false;
         }
 
-        if (!await _distributer.PushRestraintTriggerAction(restraintData, updateType))
+        if (await _distributer.PushUpdatedRestraintData(restraintData, updateType) is not GagSpeakApiEc.Success)
         {
             _logger.LogWarning("The RestraintTriggerAction was not processed successfully by the server!");
             return false;
