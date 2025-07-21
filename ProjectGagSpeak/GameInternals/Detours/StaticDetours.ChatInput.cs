@@ -45,10 +45,7 @@ public partial class StaticDetours
             Logger.LogTrace($"Message Payload Present", LoggerType.ChatDetours);
 
             if (string.IsNullOrWhiteSpace(messageDecoded))
-            {
-                Logger.LogTrace("Message was null or whitespace, returning original.", LoggerType.ChatDetours);
                 return ProcessChatInputHook.Original(uiModule, message, a3);
-            }
 
             // If we are not meant to garble the message, then return original.
             if (!globals.ChatGarblerActive || !gagData.AnyGagActive())
@@ -105,7 +102,9 @@ public partial class StaticDetours
                 // Get the string to garble starting after the prefix text.
                 var stringToProcess = originalText.Substring(prefix.Length);
                 // set the output to the prefix + the garbled message.
-                var output = prefix + _muffler.ProcessMessage(stringToProcess);
+                var output = string.IsNullOrEmpty(prefix)
+                    ? _muffler.ProcessMessage(stringToProcess)
+                    : prefix + " " + _muffler.ProcessMessage(stringToProcess);
 
                 if (string.IsNullOrWhiteSpace(output))
                     return 0; // Do not sent message.

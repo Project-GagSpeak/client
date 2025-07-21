@@ -25,7 +25,7 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
         => _ref.LastLightStorage.Restraints.FirstOrDefault(r => r.Id == item.Identifier) is { } restraint
             ? restraint.Label : "None";
     protected override bool DisableCondition(int _)
-        => !_ref.PairPerms.ApplyRestraintSets || SelectedLock == Items[0].Padlock || !Items[0].CanLock();
+        => Items[0].Identifier == Guid.Empty;
 
     protected override async Task<bool> OnLockButtonPress(string label, int _)
     {

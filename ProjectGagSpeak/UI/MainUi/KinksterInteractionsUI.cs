@@ -491,7 +491,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         var removeTT = $"{removeTxt}.";
 
         // Expander for ApplyRestraint
-        if (CkGui.IconTextButton(FAI.Handcuffs, applyText, width, true, !k.PairPerms.ApplyRestraintSets || k.LastRestraintData.CanApply()))
+        if (CkGui.IconTextButton(FAI.Handcuffs, applyText, width, true, !k.PairPerms.ApplyRestraintSets || !k.LastRestraintData.CanApply()))
             _selections.OpenOrClose(InteractionType.ApplyRestraint);
         CkGui.AttachToolTip(applyTT);
 
@@ -499,7 +499,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         if (_selections.OpenInteraction is InteractionType.ApplyRestraint)
         {
             using (ImRaii.Child("SetApplyChild", new Vector2(width, ImGui.GetFrameHeight())))
-                _pairRestrictionItems.DrawComboButton("##PairApplyRestraint", width, -1, "Apply", applyTT);
+                _pairRestraintSets.DrawComboButton("##PairApplyRestraint", width, -1, "Apply", applyTT);
             ImGui.Separator();
         }
 
@@ -531,7 +531,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         if (_selections.OpenInteraction is InteractionType.LockRestraint)
         {
             using (ImRaii.Child("SetLockChild", new Vector2(width, CkStyle.TwoRowHeight())))
-                _pairRestraintSetPadlocks.DrawLockCombo("PairLockRestraint", width, 0, lockTxt, lockTT, true);
+                _pairRestraintSetPadlocks.DrawLockCombo("##PairLockRestraint", width, 0, lockTxt, lockTT, true);
             ImGui.Separator();
         }
 
@@ -545,7 +545,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         if (_selections.OpenInteraction is InteractionType.UnlockRestraint)
         {
             using (ImRaii.Child("SetUnlockChild", new Vector2(width, ImGui.GetFrameHeight())))
-                _pairRestraintSetPadlocks.DrawUnlockCombo("PairUnlockRestraint", width, 0, unlockTxt, unlockTT);
+                _pairRestraintSetPadlocks.DrawUnlockCombo("##PairUnlockRestraint", width, 0, unlockTxt, unlockTT);
             ImGui.Separator();
         }
 

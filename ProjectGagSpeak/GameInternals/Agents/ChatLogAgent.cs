@@ -1,6 +1,7 @@
 using Dalamud.Game.Text;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using Lumina.Data;
 using System.Collections.Immutable;
 
 namespace GagSpeak.GameInternals.Agents;
@@ -120,15 +121,14 @@ public static class ChatLogAgent
 
     public static bool IsPrefixForGsChannel(string message, out string prefix, out InputChannel channel)
     {
-        foreach (var kvp in PrefixToChannel)
+        var spaceIdx = message.IndexOf(' ');
+        var firstWord = spaceIdx == -1 ? message : message[..spaceIdx];
+        if (PrefixToChannel.TryGetValue(firstWord, out channel))
         {
-            if (message.StartsWith(kvp.Key, StringComparison.OrdinalIgnoreCase))
-            {
-                prefix = kvp.Key;
-                channel = kvp.Value;
-                return true;
-            }
+            prefix = firstWord;
+            return true;
         }
+
         prefix = string.Empty;
         channel = 0;
         return false;

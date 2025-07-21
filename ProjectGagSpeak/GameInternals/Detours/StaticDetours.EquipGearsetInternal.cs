@@ -20,6 +20,7 @@ public unsafe partial class StaticDetours
     private unsafe int GearsetInternalDetour(RaptureGearsetModule* module, int gearsetId, byte glamourPlateId)
     {
         var priorGearsetId = module->CurrentGearsetIndex;
+        Svc.Logger.Warning($"GearsetInternalDetour called with GearsetId: {gearsetId}, GlamourPlateId: {glamourPlateId}, PriorGearsetId: {priorGearsetId}");
         // process the original now.
         var ret = GearsetInternalHook.Original(module, gearsetId, glamourPlateId);
 

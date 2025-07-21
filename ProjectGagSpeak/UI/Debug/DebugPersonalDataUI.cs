@@ -599,7 +599,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         {
             if (subnodeRestrictions)
             {
-                using (ImRaii.Table("##debug-lightstorage-restraints" + uid, 3, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+                using (ImRaii.Table("##debug-lightstorage-restrictions" + uid, 3, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
                 {
                     ImGui.TableSetupColumn("Set ID");
                     ImGui.TableSetupColumn("Restriction Name");
@@ -607,6 +607,28 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
                     ImGui.TableHeadersRow();
 
                     foreach (var set in lightStorage.Restrictions)
+                    {
+                        ImGuiUtil.DrawTableColumn(set.Id.ToString());
+                        ImGuiUtil.DrawTableColumn(set.Label);
+                        ImGui.TableNextRow();
+                    }
+                }
+            }
+        }
+
+        // lightStorage subnode restraints.
+        using (var subnodeRestrictions = ImRaii.TreeNode("Restraints"))
+        {
+            if (subnodeRestrictions)
+            {
+                using (ImRaii.Table("##debug-lightstorage-restraints" + uid, 3, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+                {
+                    ImGui.TableSetupColumn("Set ID");
+                    ImGui.TableSetupColumn("Restraint Set Name");
+                    ImGui.TableSetupColumn("Affected Slots");
+                    ImGui.TableHeadersRow();
+
+                    foreach (var set in lightStorage.Restraints)
                     {
                         ImGuiUtil.DrawTableColumn(set.Id.ToString());
                         ImGuiUtil.DrawTableColumn(set.Label);
