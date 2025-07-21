@@ -132,7 +132,7 @@ public static class ConfigMigrator
         foreach (var gagItem in oldGagEquipData)
         {
             // continue if the key is "None"
-            if(gagItem.Key == "None")
+            if (gagItem.Key == "None")
                 continue;
 
             var gagName = gagItem.Key;
@@ -212,15 +212,32 @@ public static class ConfigMigrator
     {
         Svc.Logger.Warning("Outdated CursedLootConfig detected, migrating to new format!");
 
+        // Only Feasible to convert gags, too much work to create new restriction items from given items.
+        var items = oldConfig["CursedLootStorage"]!["CursedItems"]!;
+        var newItems = new JArray();
+        foreach (var item in items)
+        {
+            if ((bool)item["IsGag"]!)
+            {
+                var newobj = new JObject() {
+                        { "Identifier", (string)item["LootId"]! },
+                        { "Label", (string)item["Name"]!},
+                        { "InPool", (bool)item["InPool"]! },
+                        { "CanOverride", (bool)item["CanOverride"]!},
+                        { "Precedence", (string)item["OverridePrecedence"]!},
+                        { "RestrictionRef", (string)item["GagType"]! },
+                    };
+                newItems.Add(newobj);
+            }
+        }
+
         var newFormat = new JObject()
         {
             ["Version"] = oldConfig["Version"],
-            ["CursedItems"] = new JObject(),
-            ["LockRangeLower"] = oldConfig["CursedLootStorage"]!["LockRangeLower"],
+            ["CursedItems"] = newItems,
             ["LockRangeUpper"] = oldConfig["CursedLootStorage"]!["LockRangeUpper"],
             ["LockChance"] = oldConfig["CursedLootStorage"]!["LockChance"],
         };
-
         // remove the backups of old versions.
         var oldFormatBackupDir = Path.Combine(fileNames.CurrentPlayerDirectory, "OldFormatBackups");
         if (!Directory.Exists(oldFormatBackupDir))
