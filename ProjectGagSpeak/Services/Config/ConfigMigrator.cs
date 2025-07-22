@@ -204,7 +204,89 @@ public static class ConfigMigrator
     {
         Svc.Logger.Warning("Outdated RestraintConfig detected, migrating to new format!");
 
-        return oldConfig;
+        var restraintSets = new JArray();
+        var oldRestraints = oldConfig["WardrobeStorage"]!["RestraintSets"]!;
+
+        foreach (var restraint in oldRestraints)
+        {
+            var slots = new JObject();
+            foreach (JProperty property in restraint["DrawData"]!)
+            {
+                var slot = (JObject)property.Value;
+                string name = (string)slot["Slot"]!;
+                var newslot = new JObject()
+                {
+                    ["Type"] = "Basic",
+                    ["ApplyFlags"] = 33,
+                    ["Glamour"] = new JObject()
+                    {
+                        ["Slot"] = name,
+                        ["CustomItemId"] = slot["CustomItemId"],
+                        ["Stains"] = slot["GameStain"]
+                    }
+                };
+                slots.Add(new JProperty(name, newslot));
+            }
+            // There seems to be an issue where the serialized data from old-GS could have written overflow values in here
+            // So to prevent issues, double checking the data here.
+            UInt16 glasses = 0;
+            if (!UInt16.TryParse((string)restraint["BonusDrawData"]![0]!["BonusDrawData"]!["CustomItemId"]!, out glasses))
+            {
+                glasses = 0;
+            }
+            var newrestraint = new JObject
+            {
+                ["Identifier"] = (string)restraint["RestraintId"]!,
+                ["Label"] = (string)restraint["Name"]!,
+                ["Description"] = (string)restraint["Description"]!,
+                ["ThumbnailPath"] = "",
+                ["DoRedraw"] = false,
+                ["RestraintSlots"] = slots,
+                ["RestraintLayers"] = new JArray(),
+                ["Glasses"] = new JObject()
+                {
+                    ["Slot"] = "Glasses",
+                    ["CustomItemId"] = glasses
+                },
+                ["MetaStates"] = new JObject()
+                {
+                    ["Headgear"] = restraint["ForceHeadgear"],
+                    ["Visor"] = restraint["ForceVisor"],
+                    ["Weapon"] = "null"
+                },
+                ["BaseMods"] = new JArray(),
+                ["BaseMoodles"] = new JArray(),
+                ["BaseTraits"] = "None",
+                ["BaseArousal"] = "None",
+            }
+        ;
+            restraintSets.Add(newrestraint);
+        }
+
+        // remove the backups of old versions.
+        var oldFormatBackupDir = Path.Combine(fileNames.CurrentPlayerDirectory, "OldFormatBackups");
+        if (!Directory.Exists(oldFormatBackupDir))
+            Directory.CreateDirectory(oldFormatBackupDir);
+
+        // move all old files into the backup folder.
+        foreach (var file in Directory.GetFiles(fileNames.CurrentPlayerDirectory, "wardrobe.json*"))
+        {
+            var fileName = Path.GetFileName(file);
+            var destPath = Path.Combine(oldFormatBackupDir, fileName);
+
+            // Overwrite by deleting first
+            if (File.Exists(destPath))
+                File.Delete(destPath);
+
+            File.Move(file, destPath);
+
+        }
+        var newFormat = new JObject()
+        {
+            ["Version"] = 0,
+            ["RestraintSets"] = restraintSets
+        };
+        return newFormat;
     }
 
     /// <summary> "Migrates" the few external values. Actual cursed items must be reset. </summary>
