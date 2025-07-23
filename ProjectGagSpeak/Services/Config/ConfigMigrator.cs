@@ -267,7 +267,7 @@ public static class ConfigMigrator
                     ["Weapon"] = "null"
                 },
                 ["BaseMods"] = new JArray(),
-                ["BaseMoodles"] = new JArray(),
+                ["BaseMoodles"] = moodles,
                 ["BaseTraits"] = "None",
                 ["BaseArousal"] = "None",
             }
@@ -564,6 +564,55 @@ public static class ConfigMigrator
         return nicknamesConfig;
     }
 
+    private static JObject? MigrateAction(JObject oldaction)
+    {
+        var action_type = (int)oldaction["ExecutionType"]!;
+        switch (action_type)
+        {
+            // Text output actions
+            case 0:
+                return new JObject()
+                {
+                    ["ActionType"] = 0,
+                    ["OutputCommand"] = oldaction["OutputCommand"]
+                };
+            // Gag actions
+            case 1:
+                return new JObject()
+                {
+                    ["ActionType"] = 1,
+                    ["LayerIdx"] = -1,
+                    ["NewState"] = oldaction["NewState"],
+                    ["GagType"] = oldaction["GagType"],
+                    ["Padlock"] = 0,
+                    ["LowerBound"] = "00:00:00",
+                    ["UpperBound"] = "00:00:00"
+                };
+
+            // Case for restraint types
+            case 2:
+                return new JObject()
+                {
+                    ["ActionType"] = 3,
+                    ["NewState"] = oldaction["NewState"],
+                    ["RestrictionId"] = oldaction["OutputIdentifier"]
+                };
+
+            // Moodleitems
+            case 3:
+                return new JObject()
+                {
+                    ["ActionType"] = 4,
+                    ["MoodleItem"] = new JObject()
+                    {
+                        ["Id"] = oldaction["Identifier"]!
+                    }
+                    ["IsValid"] = true
+                };
+                // Other options may be in here, but don't have the data to confirm.
+        }
+        return null;
+    }
     public static JObject MigratePuppeteerAliasConfig(JObject oldConfig, ConfigFileProvider fileNames, string oldPath)
     {
         Svc.Logger.Warning("Outdated PuppeteerAliasConfig detected, migrating to new format!");
@@ -571,61 +620,15 @@ public static class ConfigMigrator
         var globalStorage = new JArray();
         foreach (JObject aliasitem in oldConfig["GlobalAliasList"]!)
         {
-            Svc.Logger.Debug($"{aliasitem}");
             var actions = new JArray();
             foreach (JProperty actionprop in aliasitem["Executions"]!)
             {
                 Svc.Logger.Debug($"{actionprop})");
                 JObject oldaction = (JObject)actionprop.Value;
-                var action_type = (int)oldaction["ExecutionType"]!;
-                switch (action_type)
+                var action = MigrateAction(oldaction);
+                if (action is not null)
                 {
-                    // Text output actions
-                    case 0:
-                        actions.Add(new JObject()
-                        {
-                            ["ActionType"] = 0,
-                            ["OutputCommand"] = oldaction["OutputCommand"]
-                        });
-                        break;
-
-                    // Gag actions
-                    case 1:
-                        actions.Add(new JObject()
-                        {
-                            ["ActionType"] = 1,
-                            ["LayerIdx"] = -1,
-                            ["NewState"] = oldaction["NewState"],
-                            ["GagType"] = oldaction["GagType"],
-                            ["Padlock"] = 0,
-                            ["LowerBound"] = "00:00:00",
-                            ["UpperBound"] = "00:00:00"
-                        });
-                        break;
-
-                    // Case for restraint types
-                    case 2:
-                        actions.Add(new JObject()
-                        {
-                            ["ActionType"] = 3,
-                            ["NewState"] = oldaction["NewState"],
-                            ["RestrictionId"] = oldaction["OutputIdentifier"]
-                        });
-                        break;
-
-                    // Moodleitems
-                    case 3:
-                        actions.Add(new JObject()
-                        {
-                            ["ActionType"] = 4,
-                            ["MoodleItem"] = new JObject()
-                            {
-                                ["Id"] = oldaction["Identifier"]!
-                            }
-                            ["IsValid"] = true
-                        });
-                        break;
-                        // Other options may be in here, but don't have the data to confirm.
+                    actions.Add(action);
                 }
             }
             var newalias = new JObject()
@@ -639,7 +642,40 @@ public static class ConfigMigrator
             globalStorage.Add(newalias);
         }
         var pairStorage = new JObject();
-
+        foreach (JProperty pair in oldConfig["AliasStorage"]!)
+        {
+            var name = pair.Name;
+            JObject value = (JObject)pair.Value;
+            JArray aliases = new JArray();
+            foreach (JObject pairalias in value["AliasList"]!)
+            {
+                JArray actions = new JArray();
+                foreach (JProperty actionprop in pairalias["Executions"]!)
+                {
+                    var actionobj = (JObject)actionprop.Value;
+                    var action = MigrateAction(actionobj);
+                    if (action is not null)
+                    {
+                        actions.Add(action);
+                    }
+                }
+                var newalias = new JObject()
+                {
+                    ["Identifier"] = pairalias["AliasIdentifier"]!,
+                    ["Enabled"] = pairalias["Enabled"]!,
+                    ["Label"] = pairalias["Name"],
+                    ["InputCommand"] = pairalias["InputCommand"],
+                    ["Actions"] = actions
+                };
+                aliases.Add(newalias);
+            }
+            var newpair = new JObject()
+            {
+                ["StoredNameWorld"] = "",
+                ["Storage"] = aliases
+            };
+            pairStorage.Add(new JProperty(name, newpair));
+        }
         var newFormat = new JObject()
         {
             ["Version"] = 0,
@@ -653,7 +689,7 @@ public static class ConfigMigrator
             Directory.CreateDirectory(oldFormatBackupDir);
 
         // move all old files into the backup folder.
-        foreach (var file in Directory.GetFiles(fileNames.CurrentPlayerDirectory, "alias-list.json*"))
+        foreach (var file in Directory.GetFiles(fileNames.CurrentPlayerDirectory, "alias-lists.json*"))
         {
             var fileName = Path.GetFileName(file);
             var destPath = Path.Combine(oldFormatBackupDir, fileName);
