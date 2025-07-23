@@ -564,6 +564,110 @@ public static class ConfigMigrator
         return nicknamesConfig;
     }
 
+    public static JObject MigratePuppeteerAliasConfig(JObject oldConfig, ConfigFileProvider fileNames, string oldPath)
+    {
+        Svc.Logger.Warning("Outdated PuppeteerAliasConfig detected, migrating to new format!");
+
+        var globalStorage = new JArray();
+        foreach (JObject aliasitem in oldConfig["GlobalAliasList"]!)
+        {
+            Svc.Logger.Debug($"{aliasitem}");
+            var actions = new JArray();
+            foreach (JProperty actionprop in aliasitem["Executions"]!)
+            {
+                Svc.Logger.Debug($"{actionprop})");
+                JObject oldaction = (JObject)actionprop.Value;
+                var action_type = (int)oldaction["ExecutionType"]!;
+                switch (action_type)
+                {
+                    // Text output actions
+                    case 0:
+                        actions.Add(new JObject()
+                        {
+                            ["ActionType"] = 0,
+                            ["OutputCommand"] = oldaction["OutputCommand"]
+                        });
+                        break;
+
+                    // Gag actions
+                    case 1:
+                        actions.Add(new JObject()
+                        {
+                            ["ActionType"] = 1,
+                            ["LayerIdx"] = -1,
+                            ["NewState"] = oldaction["NewState"],
+                            ["GagType"] = oldaction["GagType"],
+                            ["Padlock"] = 0,
+                            ["LowerBound"] = "00:00:00",
+                            ["UpperBound"] = "00:00:00"
+                        });
+                        break;
+
+                    // Case for restraint types
+                    case 2:
+                        actions.Add(new JObject()
+                        {
+                            ["ActionType"] = 3,
+                            ["NewState"] = oldaction["NewState"],
+                            ["RestrictionId"] = oldaction["OutputIdentifier"]
+                        });
+                        break;
+
+                    // Moodleitems
+                    case 3:
+                        actions.Add(new JObject()
+                        {
+                            ["ActionType"] = 4,
+                            ["MoodleItem"] = new JObject()
+                            {
+                                ["Id"] = oldaction["Identifier"]!
+                            }
+                            ["IsValid"] = true
+                        });
+                        break;
+                        // Other options may be in here, but don't have the data to confirm.
+                }
+            }
+            var newalias = new JObject()
+            {
+                ["Identifier"] = aliasitem["AliasIdentifier"]!,
+                ["Enabled"] = aliasitem["Enabled"]!,
+                ["Label"] = aliasitem["Name"],
+                ["InputCommand"] = aliasitem["InputCommand"],
+                ["Actions"] = actions
+            };
+            globalStorage.Add(newalias);
+        }
+        var pairStorage = new JObject();
+
+        var newFormat = new JObject()
+        {
+            ["Version"] = 0,
+            ["GlobalStorage"] = globalStorage,
+            ["PairStorage"] = pairStorage
+        };
+
+        // remove the backups of old versions.
+        var oldFormatBackupDir = Path.Combine(fileNames.CurrentPlayerDirectory, "OldFormatBackups");
+        if (!Directory.Exists(oldFormatBackupDir))
+            Directory.CreateDirectory(oldFormatBackupDir);
+
+        // move all old files into the backup folder.
+        foreach (var file in Directory.GetFiles(fileNames.CurrentPlayerDirectory, "alias-list.json*"))
+        {
+            var fileName = Path.GetFileName(file);
+            var destPath = Path.Combine(oldFormatBackupDir, fileName);
+
+            // Overwrite by deleting first
+            if (File.Exists(destPath))
+                File.Delete(destPath);
+
+            File.Move(file, destPath);
+        }
+
+        return newFormat;
+
+    }
     public static int ConvertToBitfield(List<int> channelsPuppeteer)
     {
         var bitfield = 0;
