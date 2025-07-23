@@ -35,6 +35,7 @@ public struct GlamourActorState
 
     public static GlamourActorState Clone(GlamourActorState other)
     {
+        // Handle this properly later, should not be cloning a struct.
         var clone = new GlamourActorState(other.State?.DeepClone() as JObject);
         foreach (var kvp in other.ParsedEquipment)
             clone.ParsedEquipment[kvp.Key] = kvp.Value;
@@ -80,7 +81,7 @@ public struct GlamourActorState
                 // IF the item is the same as the current bound state, do NOT set it.
                 if (boundState.TryGetValue(slot, out var boundItem) && boundItem.Equals(newItem))
                 {
-                    Svc.Logger.Information($"[GlamourActorState] Skipping update for slot {slot} as it matches the current bound state.");
+                    Svc.Logger.Verbose($"[GlamourActorState] Skipping update for slot {slot} as it matches the current bound state.");
                     continue;
                 }
 
@@ -108,43 +109,22 @@ public struct GlamourActorState
         var av = newState["Equipment"]?["Visor"]?["Apply"]?.Value<bool>() ?? false;
         var sw = newState["Equipment"]?["Weapon"]?["Show"]?.Value<bool>() ?? false;
         var aw = newState["Equipment"]?["Weapon"]?["Apply"]?.Value<bool>() ?? false;
-        Svc.Logger.Information($"[GlamourActorState] Updating Meta: Hat({sh}, {ah}), Visor({sv}, {av}), Weapon({sw}, {aw})");
+        //Svc.Logger.Verbose($"[GlamourActorState] Updating Meta: Hat({sh}, {ah}), Visor({sv}, {av}), Weapon({sw}, {aw})");
         // set the metadata based on the retrieved values.
         var hatState = (sh, ah) switch { (true, true) => TriStateBool.True, (false, true) => TriStateBool.False, _ => TriStateBool.Null };
         // If no hatstates are stored, just apply whatever was passed in.
         if (!anyHat)
-        {
-            Svc.Logger.Information($"[GlamourActorState] Setting Hat State if different: {hatState}");
             MetaStates = MetaStates.WithMetaIfDifferent(MetaIndex.HatState, hatState);
-        }
-        else
-        {
-            Svc.Logger.Information($"[GlamourActorState] Skipping Hat Update. A bound hat attribute is active.");
-        }
         
         var visorState = (sv, av) switch { (true, true) => TriStateBool.True, (false, true) => TriStateBool.False, _ => TriStateBool.Null };
         // If no visor states are stored, just apply whatever was passed in.
         if (!anyVisor)
-        {
-            Svc.Logger.Information($"[GlamourActorState] Setting Visor State if different: {visorState}");
             MetaStates = MetaStates.WithMetaIfDifferent(MetaIndex.VisorState, visorState);
-        }
-        else
-        {
-            Svc.Logger.Information($"[GlamourActorState] Skipping Visor Update. A bound visor attribute is active.");
-        }
-
+       
         // If no weapon states are stored, just apply whatever was passed in.
         var weaponState = (sw, aw) switch { (true, true) => TriStateBool.True, (false, true) => TriStateBool.False, _ => TriStateBool.Null };
         if (!anyWep)
-        {
-            Svc.Logger.Information($"[GlamourActorState] Setting Weapon State if different: {weaponState}");
             MetaStates = MetaStates.WithMetaIfDifferent(MetaIndex.WeaponState, weaponState);
-        }
-        else
-        {
-            Svc.Logger.Information($"[GlamourActorState] Skipping Weapon Update. A bound weapon attribute is active.");
-        }
     }
 
     /// <summary> Forcibly updates all metastates to the latest JObject state. </summary>
@@ -183,7 +163,6 @@ public struct GlamourActorState
         var av = equipmentObj?["Visor"]?["Apply"]?.Value<bool>() ?? false;
         var sw = equipmentObj?["Weapon"]?["Show"]?.Value<bool>() ?? false;
         var aw = equipmentObj?["Weapon"]?["Apply"]?.Value<bool>() ?? false;
-        Svc.Logger.Information($"[GlamourActorState] Parsing Meta: Hat({sh}, {ah}), Visor({sv}, {av}), Weapon({sw}, {aw})");
         // set the metadata based on the retrieved values.
         var hatState = (sh, ah) switch { (true, true) => TriStateBool.True, (false, true) => TriStateBool.False, _ => TriStateBool.Null };
         MetaStates = MetaStates.WithMetaIfDifferent(MetaIndex.HatState, hatState);

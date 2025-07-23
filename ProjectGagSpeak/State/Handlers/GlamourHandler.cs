@@ -120,11 +120,10 @@ public class GlamourHandler
         _logger.LogDebug("Reapplying Glamourer Caches.");
         await ExecuteWithSemaphore(async () =>
         {
-            CacheActorFromLatest();
             // Run both operations in parallel.
             await Task.WhenAll(
-                ApplyGlamourCache(false),
-                ApplyMetaCache(false)
+                ApplyGlamourCache(true),
+                ApplyMetaCache(true)
             );
             _logger.LogInformation($"Reapplied Cache Updates Successfully!");
         });
@@ -274,7 +273,7 @@ public class GlamourHandler
 
     public void CacheActorEquip()
     {
-        _logger.LogWarning("Caching latest Equip from Glamourer IPC.", LoggerType.IpcGlamourer);
+        _logger.LogTrace("Caching latest Equip from Glamourer IPC.", LoggerType.IpcGlamourer);
         var latestState = _ipc.GetClientGlamourerState();
         if (latestState != null)
         {
@@ -300,7 +299,7 @@ public class GlamourHandler
     /// </summary>
     public void CacheActorMeta(bool flagFromLatest)
     {
-        _logger.LogWarning("Caching latest state from Glamourer IPC.", LoggerType.IpcGlamourer);
+        _logger.LogTrace("Caching latest state from Glamourer IPC.", LoggerType.IpcGlamourer);
         var latestState = _ipc.GetClientGlamourerState();
         if (latestState != null)
         {
@@ -321,7 +320,7 @@ public class GlamourHandler
     }
     public void CacheActorFromLatest()
     {
-        _logger.LogWarning("Caching Actor from Latest State from Glamourer IPC.", LoggerType.IpcGlamourer);
+        _logger.LogTrace("Caching Actor from Latest State from Glamourer IPC.", LoggerType.IpcGlamourer);
         var latestState = _ipc.GetClientGlamourerState();
         if (latestState != null)
         {
