@@ -276,7 +276,6 @@ public partial class MainHub
     {
         if (dto.User.UID != UID)
         {
-            Logger.LogDebug($"User {dto.User.AliasOrUID} went online and updated you with their composite data!", LoggerType.Callbacks);
             Generic.Safe(() => _kinksterListener.NewActiveComposite(dto.User, dto.Data, dto.WasSafeword));
             return Task.CompletedTask;
         }

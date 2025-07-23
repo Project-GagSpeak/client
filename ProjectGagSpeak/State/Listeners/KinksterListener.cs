@@ -28,6 +28,7 @@ public sealed class KinksterListener
     {
         if(!_kinksters.TryGetKinkster(targetUser, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
+        _logger.LogDebug($"Recieved Composite Active Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
         kinkster.NewActiveCompositeData(data, safeword);
     }
 

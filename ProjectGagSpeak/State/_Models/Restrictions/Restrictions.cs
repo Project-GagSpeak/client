@@ -113,7 +113,7 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
         {
             Slot = Glamour.ToLightSlot(),
             ModName = Mod.ToString(),
-            Moodle = new LightMoodle(Moodle is MoodlePreset ? MoodleType.Preset : MoodleType.Status, Moodle.Id),
+            Moodle = new LightMoodle(Moodle.Type, Moodle.Id),
             Traits = Traits,
             Arousal = Arousal
         };

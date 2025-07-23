@@ -69,7 +69,12 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => DelayedFrameworkOnUpdate());
 
         // Kinkster Pair management.
-        Mediator.Subscribe<PairWentOnlineMessage>(this, arg => _newOnlineKinksters.Add(arg.UserData));
+        Mediator.Subscribe<PairWentOnlineMessage>(this, arg =>
+        {
+            if (!MainHub.IsConnectionDataSynced)
+                return;
+            _newOnlineKinksters.Add(arg.UserData);
+        });
         Mediator.Subscribe<PairHandlerVisibleMessage>(this, msg => _newVisibleKinksters.Add(msg.Player.OnlineUser.User));
 
         // Generic Updaters
