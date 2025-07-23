@@ -50,6 +50,7 @@ public partial class RestrictionsPanel
         using var style = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 10f)
             .Push(ImGuiStyleVar.ChildRounding, 10f);
         using var col = ImRaii.PushColor(ImGuiCol.Button, CkColor.FancyHeaderContrast.Uint())
+            .Push(ImGuiCol.FrameBg, CkColor.FancyHeaderContrast.Uint())
             .Push(ImGuiCol.ChildBg, CkColor.FancyHeaderContrast.Uint());
 
         ImGui.SetWindowFontScale(1.25f);
@@ -63,8 +64,25 @@ public partial class RestrictionsPanel
 
         // Handle the Meta ONLY if they are a blindfold restriction.
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + itemSpacing);
-        DrawMetaGroups();
+        using (ImRaii.Child("HelmetMetaGroup", childGroupSize))
+        {
+            ImGui.AlignTextToFramePadding();
+            if (HelmetCheckbox.Draw("##RestrictionHelmetMeta", item.HeadgearState, out var newHelmValue))
+                item.HeadgearState = newHelmValue;
+            ImUtf8.SameLineInner();
+            CkGui.FramedIconText(FAI.HardHat);
+            CkGui.AttachToolTip("The Forced Helmet State.--SEP--Note: conflicts priorize ON over OFF.");
+        }
 
+        ImGui.SameLine(0, itemSpacing);
+        using (ImRaii.Child("VisorMetaGroup", childGroupSize))
+        {
+            if (VisorCheckbox.Draw("##RestrictionVisorMeta", item.VisorState, out var newVisorValue))
+                item.VisorState = newVisorValue;
+            ImUtf8.SameLineInner();
+            CkGui.FramedIconText(FAI.Glasses);
+            CkGui.AttachToolTip("The Forced Visor State.--SEP--Note: conflicts priorize ON over OFF.");
+        }
         ImGui.SameLine(0, itemSpacing);
         using (ImRaii.Child("RedrawMetaGroup", childGroupSize))
         {
@@ -84,56 +102,6 @@ public partial class RestrictionsPanel
         CkGui.AttachToolTip("Save Changes to this Gag Restriction.");
 
         ImGui.SetWindowFontScale(1f);
-
-        ///////////////////////////////////////
-        void DrawMetaGroups()
-        {
-            if (item is BlindfoldRestriction blindfoldRestriction)
-                DrawInteractableMeta(blindfoldRestriction);
-            else
-                DrawDisabledMeta();
-        }
-
-        void DrawInteractableMeta(BlindfoldRestriction blindfold)
-        {
-            using (ImRaii.Child("HelmetMetaGroup", childGroupSize))
-            {
-                ImGui.AlignTextToFramePadding();
-                if (HelmetCheckbox.Draw("##RestrictionHelmetMeta", blindfold.HeadgearState, out var newHelmValue))
-                    blindfold.HeadgearState = newHelmValue;
-                ImUtf8.SameLineInner();
-                CkGui.IconText(FAI.HardHat);
-                CkGui.AttachToolTip("The Forced Helmet State.--SEP--Note: conflicts priorize ON over OFF.");
-            }
-            ImGui.SameLine(0, itemSpacing);
-            using (ImRaii.Child("VisorMetaGroup", childGroupSize))
-            {
-                if (VisorCheckbox.Draw("##RestrictionVisorMeta", blindfold.VisorState, out var newVisorValue))
-                    blindfold.VisorState = newVisorValue;
-                ImUtf8.SameLineInner();
-                CkGui.IconText(FAI.Glasses);
-                CkGui.AttachToolTip("The Forced Visor State.--SEP--Note: conflicts priorize ON over OFF.");
-            }
-        }
-
-        void DrawDisabledMeta()
-        {
-            using (ImRaii.Child("HelmetMetaGroup", childGroupSize))
-            {
-                HelmetCheckbox.Draw("##RestrictionHelmetMeta", TriStateBool.Null, out var _, true);
-                ImUtf8.SameLineInner();
-                CkGui.IconText(FAI.HardHat);
-                CkGui.AttachToolTip("The Forced Helmet State.--SEP--Note: conflicts priorize ON over OFF.");
-            }
-            ImGui.SameLine(0, itemSpacing);
-            using (ImRaii.Child("VisorMetaGroup", childGroupSize))
-            {
-                VisorCheckbox.Draw("##RestrictionVisorMeta", TriStateBool.Null, out var _, true);
-                ImUtf8.SameLineInner();
-                CkGui.IconText(FAI.Glasses);
-                CkGui.AttachToolTip("The Forced Visor State.--SEP--Note: conflicts priorize ON over OFF.");
-            }
-        }
     }
 
     private void DrawEditorLeft(float width)

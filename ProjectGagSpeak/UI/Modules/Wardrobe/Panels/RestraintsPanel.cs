@@ -277,13 +277,12 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         var itemSpacing = (remainingWidth - CkGui.IconButtonSize(FAI.Save).X - (childGroupSize.X * 4)) / 6;
 
         // Cast a child group for the drawer.
-        var curMeta = setInEdit.MetaStates;
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + itemSpacing);
         using (ImRaii.Child("HelmetMetaGroup", childGroupSize))
         {
             ImGui.AlignTextToFramePadding();
-            if (HelmetCheckbox.Draw("##MetaHelmet", curMeta.Headgear, out var newHelmValue))
-                curMeta.SetMeta(MetaIndex.HatState, newHelmValue);
+            if (HelmetCheckbox.Draw("##MetaHelmet", setInEdit.MetaStates.Headgear, out var newHelmValue))
+                setInEdit.MetaStates = setInEdit.MetaStates.WithMetaIfDifferent(MetaIndex.HatState, newHelmValue);
 
             ImUtf8.SameLineInner();
             CkGui.IconText(FAI.HatCowboySide);
@@ -293,8 +292,8 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         ImGui.SameLine(0, itemSpacing);
         using (ImRaii.Child("VisorMetaGroup", childGroupSize))
         {
-            if (VisorCheckbox.Draw("##MetaVisor", curMeta.Visor, out var newVisorValue))
-                curMeta.SetMeta(MetaIndex.VisorState, newVisorValue);
+            if (VisorCheckbox.Draw("##MetaVisor", setInEdit.MetaStates.Visor, out var newVisorValue))
+                setInEdit.MetaStates = setInEdit.MetaStates.WithMetaIfDifferent(MetaIndex.VisorState, newVisorValue);
 
             ImUtf8.SameLineInner();
             CkGui.IconText(FAI.Glasses);
@@ -304,14 +303,13 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         ImGui.SameLine(0, itemSpacing);
         using (ImRaii.Child("WeaponMetaGroup", childGroupSize))
         {
-            if (WeaponCheckbox.Draw("##MetaWeapon", curMeta.Weapon, out var newWeaponValue))
-                curMeta.SetMeta(MetaIndex.WeaponState, newWeaponValue);
+            if (WeaponCheckbox.Draw("##MetaWeapon", setInEdit.MetaStates.Weapon, out var newWeaponValue))
+                setInEdit.MetaStates = setInEdit.MetaStates.WithMetaIfDifferent(MetaIndex.WeaponState, newWeaponValue);
 
             ImUtf8.SameLineInner();
             CkGui.IconText(FAI.Explosion);
             CkGui.AttachToolTip("The locked weapon state while active.--SEP--Note: conflicts prioritize ON over OFF.");
         }
-        setInEdit.MetaStates = curMeta;
 
         ImGui.SameLine(0, itemSpacing);
         using (ImRaii.Child("RedrawMetaGroup", childGroupSize))

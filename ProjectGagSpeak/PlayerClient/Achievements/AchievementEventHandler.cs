@@ -629,7 +629,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         // we locked our set.
         if (isLocking)
         {
-            if (padlock is not Padlocks.None or Padlocks.FiveMinutesPadlock)
+            if (padlock is not Padlocks.None or Padlocks.FiveMinutes)
             {
                 // make sure that someone is locking us up in a set.
                 if (true /*enactorUID != MainHub.UID*/)
@@ -648,7 +648,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         else
         {
             // if the set is being unlocked, stop progress regardless.
-            if (padlock is not Padlocks.None or Padlocks.FiveMinutesPadlock)
+            if (padlock is not Padlocks.None or Padlocks.FiveMinutes)
             {
                 (ClientAchievements.SaveData[Achievements.FirstTimeBondage.Id] as DurationAchievement)?.StopTracking(restraintId.ToString(), MainHub.UID);
                 (ClientAchievements.SaveData[Achievements.AmateurBondage.Id] as DurationAchievement)?.StopTracking(restraintId.ToString(), MainHub.UID);
@@ -683,7 +683,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         // if the pair's set is being locked and it is a timed lock.
         if (isLocking)
         {
-            if (padlock is not Padlocks.None or Padlocks.FiveMinutesPadlock) // locking
+            if (padlock is not Padlocks.None or Padlocks.FiveMinutes) // locking
             {
                 // make sure we are the locker before continuing
                 if (enactorUID == MainHub.UID)
@@ -700,7 +700,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         if (!isLocking)
         {
             // if the padlock is a timed padlock that we have unlocked, we should stop tracking it from these achievements.
-            if (padlock is not Padlocks.None or Padlocks.FiveMinutesPadlock)
+            if (padlock is not Padlocks.None or Padlocks.FiveMinutes)
             {
                 (ClientAchievements.SaveData[Achievements.RiggersFirstSession.Id] as DurationAchievement)?.StopTracking(restraintId.ToString(), affectedPairUID);
                 (ClientAchievements.SaveData[Achievements.MyLittlePlaything.Id] as DurationAchievement)?.StopTracking(restraintId.ToString(), affectedPairUID);

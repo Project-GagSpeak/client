@@ -167,7 +167,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
         var size = new Vector2(ImGui.GetContentRegionAvail().X, IconSize.Y + ImGui.GetStyle().WindowPadding.Y * 2 + ImGui.GetStyle().CellPadding.Y * 2);
         using var c = ImRaii.Child($"Achievement-{achievementItem.Title}", size, true, WFlags.ChildWindow);
 
-        using var t = ImRaii.Table($"##AchievementTable {achievementItem.Title}", 2, ImGuiTableFlags.RowBg);
+        using var t = ImRaii.Table($"AchievementTable {achievementItem.Title}", 2, ImGuiTableFlags.RowBg);
         if (!t) return;
 
         ImGui.TableSetupColumn("##AchievementText", ImGuiTableColumnFlags.WidthStretch);

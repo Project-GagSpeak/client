@@ -33,7 +33,7 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
             return false;
 
         // we know it was valid, so begin assigning the new data to send off.
-        var finalTime = SelectedLock == Padlocks.FiveMinutesPadlock
+        var finalTime = SelectedLock == Padlocks.FiveMinutes
             ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
 
         var dto = new PushKinksterActiveRestraint(_ref.UserData, DataUpdateType.Locked)
@@ -110,15 +110,15 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
                 Svc.Toasts.ShowError("Incorrectly guessed this padlocks password!");
                 break;
 
-            case GagSpeakApiEc.InvalidPassword when padlock is Padlocks.CombinationPadlock:
+            case GagSpeakApiEc.InvalidPassword when padlock is Padlocks.Combination:
                 Svc.Toasts.ShowError("Invalid Syntax. Must be 4 digits (0-9).");
                 break;
 
-            case GagSpeakApiEc.InvalidPassword when padlock is Padlocks.PasswordPadlock or Padlocks.TimerPasswordPadlock:
+            case GagSpeakApiEc.InvalidPassword when padlock.IsPasswordLock():
                 Svc.Toasts.ShowError("Invalid Syntax. Must be 4-20 characters.");
                 break;
 
-            case GagSpeakApiEc.InvalidTime when padlock is Padlocks.TimerPadlock or Padlocks.TimerPasswordPadlock:
+            case GagSpeakApiEc.InvalidTime when padlock.IsTimerLock():
                 Svc.Toasts.ShowError("Invalid Timer Syntax. Must be a valid time format (Ex: 0h2m7s).");
                 break;
 

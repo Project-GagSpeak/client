@@ -4,14 +4,15 @@ public enum TutorialType
 {
     MainUi,
     Remote,
-    Gags,
-    GagStorage,
     Restraints,
+    Restrictions,
+    Gags,
     CursedLoot,
-    Toybox,
+    Toys,
+    VibeLobbies,
     Patterns,
-    Triggers,
     Alarms,
+    Triggers,
     Achievements,
 }
 
@@ -38,7 +39,6 @@ public enum StepsMainUi
     PatternHubUpdate,
     PatternHubFilterType,
     PatternHubResultOrder,
-
 }
 public enum StepsRemote
 {
@@ -50,28 +50,7 @@ public enum StepsRemote
     OutputDisplay,
     DeviceList,
 }
-
-public enum StepsActiveGags
-{
-    LayersInfo,
-    EquippingGags,
-    SelectingPadlocks,
-    PadlockTypes, // Types of padlocks.
-    LockingPadlocks, // Lock password Padlock.
-    UnlockingPadlocks, // unlock the padlock.
-    RemovingGags, // Removing Gag
-}
-
-public enum StepsGagStorage
-{
-    GagStorageSelection, // picking a gag to customize
-    GagGlamours, // How to change the look of a gag.
-    Adjustements, // How to adjust the gag.
-    Moodles, // skip if no moodles available.
-    Audio,
-    SavingCustomizations, // Mention changes are not saved until save is pressed.
-}
-
+// rework these please.
 public enum StepsRestraints
 {
     AddingNewRestraint,
@@ -102,6 +81,22 @@ public enum StepsRestraints
     LockingSets,
 }
 
+public enum StepsRestrictions
+{
+
+}
+
+public enum StepsGags
+{
+    LayersInfo,
+    EquippingGags,
+    SelectingPadlocks,
+    PadlockTypes, // Types of padlocks.
+    LockingPadlocks, // Lock password Padlock.
+    UnlockingPadlocks, // unlock the padlock.
+    RemovingGags, // Removing Gag
+}
+
 public enum StepsCursedLoot
 {
     CreatingCursedItems,
@@ -116,7 +111,7 @@ public enum StepsCursedLoot
     UpperLockTimer,
     RollChance,
 }
-public enum StepsToybox
+public enum StepsToys
 {
     IntifaceConnection,
     OpeningIntiface,
@@ -124,6 +119,11 @@ public enum StepsToybox
     AudioTypeSelection,
     PlaybackAudioDevice, // after this is done switch to action mode
     DeviceScanner,
+}
+
+public enum StepsVibeLobby
+{
+
 }
 
 public enum StepsPatterns
@@ -148,6 +148,21 @@ public enum StepsPatterns
     ApplyChanges,
 }
 
+public enum StepsAlarms
+{
+    CreatingAlarms,
+    SettingAlarmName,
+    AlarmLocalTimeZone,
+    SettingAlarmTime,
+    SettingAlarmPattern,
+    SettingAlarmStartPoint,
+    SettingAlarmDuration,
+    SettingFrequency,
+    SavingAlarms,
+    AlarmList,
+    TogglingAlarms,
+}
+
 public enum StepsTriggers
 {
     CreatingTriggers,
@@ -165,21 +180,6 @@ public enum StepsTriggers
     SavingTriggers,
     TriggerList,
     TogglingTriggers,
-}
-
-public enum StepsAlarms
-{
-    CreatingAlarms,
-    SettingAlarmName,
-    AlarmLocalTimeZone,
-    SettingAlarmTime,
-    SettingAlarmPattern,
-    SettingAlarmStartPoint,
-    SettingAlarmDuration,
-    SettingFrequency,
-    SavingAlarms,
-    AlarmList,
-    TogglingAlarms,
 }
 
 public enum StepsAchievements

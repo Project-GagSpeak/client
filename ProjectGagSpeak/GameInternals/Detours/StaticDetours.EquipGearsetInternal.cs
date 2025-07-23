@@ -24,8 +24,7 @@ public unsafe partial class StaticDetours
         // process the original now.
         var ret = GearsetInternalHook.Original(module, gearsetId, glamourPlateId);
 
-        // if it is different, we need to inform the handler.
-        if(gearsetId != priorGearsetId)
+        if (priorGearsetId != gearsetId)
             _glamourHandler.OnEquipGearsetInternal(gearsetId, glamourPlateId);
 
         return ret;

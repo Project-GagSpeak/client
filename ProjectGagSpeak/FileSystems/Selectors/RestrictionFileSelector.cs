@@ -178,7 +178,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
         var doit = ImGui.InputTextWithHint("##newName", "Enter New Name...", ref newName, 512, ITFlags.EnterReturnsTrue);
 
         if (CkGuiUtils.EnumCombo("##RestrictionType", comboWidth, _newType, out var newType,
-            Enum.GetValues<RestrictionType>().SkipLast(1), defaultText: "Select Type.."))
+            Enum.GetValues<RestrictionType>(), defaultText: "Select Type.."))
         {
             _newType = newType;
         }

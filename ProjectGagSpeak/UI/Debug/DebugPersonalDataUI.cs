@@ -21,6 +21,7 @@ using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using ImGuiNET;
 using OtterGui;
+using OtterGui.Extensions;
 using OtterGui.Text;
 using System.Buffers;
 using System.Collections.Immutable;
@@ -133,7 +134,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawPairIpcData(pair.UserData.UID, pair.LastIpcData);
         DrawGagData(pair.UserData.UID, pair.ActiveGags);
         DrawPairRestrictions(pair.UserData.UID, pair);
-        DrawRestraint(pair.UserData.UID, pair.ActiveRestraint);
+        DrawRestraint(pair.UserData.UID, pair);
         DrawAlias(pair.UserData.UID, "Global", pair.LastGlobalAliasData);
         DrawAlias(pair.UserData.UID, "Unique", pair.LastPairAliasData.Storage);
         DrawToybox(pair.UserData.UID, pair.ActivePattern, pair.ActiveAlarms, pair.ActiveTriggers);
@@ -479,8 +480,9 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         using var nodeMain = ImRaii.TreeNode($"Restrictions Data##{uid}");
         if (!nodeMain) return;
 
-        using (ImRaii.Table("##debug-restrictions" + uid, 6, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        using (ImRaii.Table("##debug-restrictions" + uid, 7, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
+            ImGui.TableSetupColumn("Layer");
             ImGui.TableSetupColumn("Name");
             ImGui.TableSetupColumn("Enabler");
             ImGui.TableSetupColumn("Padlock");
@@ -489,17 +491,18 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
             ImGui.TableSetupColumn("Assigner");
             ImGui.TableHeadersRow();
 
-            foreach (var restriction in kinkster.ActiveRestrictions.Restrictions)
+            foreach (var (item, idx) in kinkster.ActiveRestrictions.Restrictions.WithIndex())
             {
-                var name = kinkster.LightCache.Restrictions.TryGetValue(restriction.Identifier, out var i)
-                    ? i.Label : restriction.Identifier == Guid.Empty ? restriction.Identifier.ToString() : "None";
+                var name = kinkster.LightCache.Restrictions.TryGetValue(item.Identifier, out var i)
+                    ? i.Label : item.Identifier == Guid.Empty ? "None" : item.Identifier.ToString();
+                ImGuiUtil.DrawTableColumn($"{idx + 1}");
                 ImGuiUtil.DrawTableColumn(name);
-                ImGuiUtil.DrawTableColumn(restriction.Enabler);
-                ImGuiUtil.DrawTableColumn(restriction.Padlock.ToName());
-                ImGuiUtil.DrawTableColumn(restriction.Password);
+                ImGuiUtil.DrawTableColumn(item.Enabler);
+                ImGuiUtil.DrawTableColumn(item.Padlock.ToName());
+                ImGuiUtil.DrawTableColumn(item.Password);
                 ImGui.TableNextColumn();
-                CkGui.ColorText(restriction.Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
-                ImGuiUtil.DrawTableColumn(restriction.PadlockAssigner);
+                CkGui.ColorText(item.Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
+                ImGuiUtil.DrawTableColumn(item.PadlockAssigner);
                 ImGui.TableNextRow();
             }
         }
@@ -510,17 +513,54 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         using var nodeMain = ImRaii.TreeNode("Restraint Data");
         if (!nodeMain) return;
 
-        using (ImRaii.Table("##debug-wardrobe" + uid, 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        using (ImRaii.Table("##debug-wardrobe" + uid, 6, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
-            DrawPermissionRowString("Active Set ID", restraint.Identifier.ToString());
-            DrawPermissionRowString("Active Set Enabled By", restraint.Enabler);
-            DrawPermissionRowString("Padlock", restraint.Padlock.ToName());
-            DrawPermissionRowString("Password", restraint.Password);
-            ImGuiUtil.DrawTableColumn("Expiration Time");
+            ImGui.TableSetupColumn("Name");
+            ImGui.TableSetupColumn("Enabler");
+            ImGui.TableSetupColumn("Padlock");
+            ImGui.TableSetupColumn("Password");
+            ImGui.TableSetupColumn("TimeLeft");
+            ImGui.TableSetupColumn("Assigner");
+            ImGui.TableHeadersRow();
+           
+            ImGuiUtil.DrawFrameColumn(restraint.Identifier.ToString());
+            ImGuiUtil.DrawFrameColumn(restraint.Enabler);
+            ImGuiUtil.DrawFrameColumn(restraint.Padlock.ToName());
+            ImGuiUtil.DrawFrameColumn(restraint.Password);
             ImGui.TableNextColumn();
             CkGui.ColorText(restraint.Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
+            ImGuiUtil.DrawFrameColumn(restraint.PadlockAssigner);
             ImGui.TableNextRow();
-            DrawPermissionRowString("Assigner", restraint.PadlockAssigner);
+        }
+    }
+
+    private void DrawRestraint(string uid, Kinkster kinkster)
+    {
+        using var nodeMain = ImRaii.TreeNode($"Restraint Data##{uid}");
+        if (!nodeMain) return;
+
+        var item = kinkster.ActiveRestraint;
+        using (ImRaii.Table("##debug-restraint" + uid, 6, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        {
+            var name = kinkster.LightCache.Restraints.TryGetValue(item.Identifier, out var i)
+                ? i.Label : item.Identifier == Guid.Empty ? "None" : item.Identifier.ToString();
+
+            ImGui.TableSetupColumn("Name");
+            ImGui.TableSetupColumn("Enabler");
+            ImGui.TableSetupColumn("Padlock");
+            ImGui.TableSetupColumn("Password");
+            ImGui.TableSetupColumn("TimeLeft");
+            ImGui.TableSetupColumn("Assigner");
+            ImGui.TableHeadersRow();
+
+            ImGuiUtil.DrawTableColumn(name);
+            ImGuiUtil.DrawTableColumn(item.Enabler);
+            ImGuiUtil.DrawTableColumn(item.Padlock.ToName());
+            ImGuiUtil.DrawTableColumn(item.Password);
+            ImGui.TableNextColumn();
+            CkGui.ColorText(item.Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
+            ImGuiUtil.DrawTableColumn(item.PadlockAssigner);
+            ImGui.TableNextRow();
         }
     }
 

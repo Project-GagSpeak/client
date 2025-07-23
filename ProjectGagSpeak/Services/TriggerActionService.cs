@@ -203,9 +203,9 @@ public class TriggerActionService
                 // We have found one to lock. Check what lock we chose, and define accordingly.
                 var password = act.Padlock switch
                 {
-                    Padlocks.PasswordPadlock => Generators.GetRandomCharaString(10),
-                    Padlocks.CombinationPadlock => Generators.GetRandomIntString(4),
-                    Padlocks.TimerPasswordPadlock => Generators.GetRandomCharaString(10),
+                    Padlocks.Password => Generators.GetRandomCharaString(10),
+                    Padlocks.Combination => Generators.GetRandomIntString(4),
+                    Padlocks.TimerPassword => Generators.GetRandomCharaString(10),
                     _ => string.Empty
                 };
                 // define a random time between 2 timespan bounds.
@@ -279,9 +279,9 @@ public class TriggerActionService
                 restriction.Padlock = act.Padlock;
                 restriction.Password = act.Padlock switch
                 {
-                    Padlocks.PasswordPadlock => Generators.GetRandomCharaString(10),
-                    Padlocks.CombinationPadlock => Generators.GetRandomIntString(4),
-                    Padlocks.TimerPasswordPadlock => Generators.GetRandomCharaString(10),
+                    Padlocks.Password => Generators.GetRandomCharaString(10),
+                    Padlocks.Combination => Generators.GetRandomIntString(4),
+                    Padlocks.TimerPassword => Generators.GetRandomCharaString(10),
                     _ => string.Empty
                 };
                 restriction.Timer = new DateTimeOffset(DateTime.UtcNow + (act.Padlock.IsTimerLock() ? Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound) : TimeSpan.Zero));
@@ -341,9 +341,9 @@ public class TriggerActionService
                 restraintData.Padlock = act.Padlock;
                 restraintData.Password = act.Padlock switch
                 {
-                    Padlocks.PasswordPadlock => Generators.GetRandomCharaString(10),
-                    Padlocks.CombinationPadlock => Generators.GetRandomIntString(4),
-                    Padlocks.TimerPasswordPadlock => Generators.GetRandomCharaString(10),
+                    Padlocks.Password => Generators.GetRandomCharaString(10),
+                    Padlocks.Combination => Generators.GetRandomIntString(4),
+                    Padlocks.TimerPassword => Generators.GetRandomCharaString(10),
                     _ => string.Empty
                 };
                 restraintData.Timer = new DateTimeOffset(DateTime.UtcNow + (act.Padlock.IsTimerLock() ? Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound) : TimeSpan.Zero));

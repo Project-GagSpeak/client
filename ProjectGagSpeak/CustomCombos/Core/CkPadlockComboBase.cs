@@ -154,9 +154,9 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
         {
             var hint = lastPadlock switch
             {
-                Padlocks.CombinationPadlock => "Guess Combo...",
-                Padlocks.PasswordPadlock => "Guess Password...",
-                Padlocks.TimerPasswordPadlock => "Guess Password...",
+                Padlocks.Combination => "Guess Combo...",
+                Padlocks.Password => "Guess Password...",
+                Padlocks.TimerPassword => "Guess Password...",
                 _ => string.Empty,
             };
             DrawUnlockFieldSpecial(unlockWidth, hint, lastPadlock.IsTimerLock());
@@ -180,7 +180,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
         void DrawUnlockFieldSpecial(float width, string hint, bool isTimer)
         {
             using var _ = ImRaii.Group();
-            (ITFlags flags, int len) = SelectedLock == Padlocks.CombinationPadlock ? (ITFlags.CharsDecimal, 4) : (ITFlags.None, 20);
+            (ITFlags flags, int len) = SelectedLock == Padlocks.Combination ? (ITFlags.CharsDecimal, 4) : (ITFlags.None, 20);
             ImGui.SetNextItemWidth(width);
             using (ImRaii.Disabled(!Items[layerIdx].Padlock.IsPasswordLock()))
                 ImGui.InputTextWithHint($"##Unlocker_{label}", hint, ref Password, (uint)len, flags);
@@ -206,10 +206,10 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
         var rightWidth = width - leftWidth - ImGui.GetStyle().ItemInnerSpacing.X;
 
         var passLabel = "##Input_" + id;
-        var passHint = SelectedLock == Padlocks.CombinationPadlock ? "Set 4 digit combo.." : "Guess password..";
+        var passHint = SelectedLock == Padlocks.Combination ? "Set 4 digit combo.." : "Guess password..";
         var timerHint = "Ex: 0h2m7s";
-        var maxLength = SelectedLock == Padlocks.CombinationPadlock ? 4 : 20;
-        var flags = SelectedLock == Padlocks.CombinationPadlock ? ITFlags.CharsDecimal : ITFlags.None;
+        var maxLength = SelectedLock == Padlocks.Combination ? 4 : 20;
+        var flags = SelectedLock == Padlocks.Combination ? ITFlags.CharsDecimal : ITFlags.None;
 
         using (ImRaii.Disabled(!SelectedLock.IsPasswordLock()))
             CkGui.IconInputText($"##Input_{id}", leftWidth, FAI.Key, passHint, ref Password, maxLength, flags);
@@ -224,10 +224,10 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
 
     protected void ThreeRowLockFields(string id, float width)
     {
-        var passHint = SelectedLock == Padlocks.CombinationPadlock ? "Set 4 digit combo.." : "Guess password..";
+        var passHint = SelectedLock == Padlocks.Combination ? "Set 4 digit combo.." : "Guess password..";
         var timerHint = "Ex: 0h2m7s";
-        var maxLength = SelectedLock == Padlocks.CombinationPadlock ? 4 : 20;
-        var flags = SelectedLock == Padlocks.CombinationPadlock ? ITFlags.CharsDecimal : ITFlags.None;
+        var maxLength = SelectedLock == Padlocks.Combination ? 4 : 20;
+        var flags = SelectedLock == Padlocks.Combination ? ITFlags.CharsDecimal : ITFlags.None;
 
         // Password Row
         using (ImRaii.Disabled(!SelectedLock.IsPasswordLock()))

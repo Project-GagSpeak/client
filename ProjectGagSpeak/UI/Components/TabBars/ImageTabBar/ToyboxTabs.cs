@@ -1,4 +1,5 @@
 using CkCommons.Widgets;
+using GagSpeak.Services.Textures;
 
 namespace GagSpeak.Gui.Components;
 
@@ -15,6 +16,17 @@ public class ToyboxTabs : ImageTabBar<ToyboxTabs.SelectedTab>
     }
 
     public ToyboxTabs()
-    { }
+    {
+        AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Vibrator], SelectedTab.BuzzToys,
+            "Configure your interactable Sex Toy Devices");
+        AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.VibeLobby], SelectedTab.VibeLobbies,
+            "Invite, Join, or create Vibe Rooms to play with others");
+        AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Stimulated], SelectedTab.Patterns,
+            "Create, Edit, and playback patterns");
+        AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Clock], SelectedTab.Alarms,
+            "Set various Alarms that play patterns when triggered");
+        AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.CircleDot], SelectedTab.Triggers,
+            "Create various kinds of Triggers");
+    }
 
 }

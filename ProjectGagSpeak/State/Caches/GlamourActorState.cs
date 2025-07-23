@@ -1,4 +1,6 @@
+using CkCommons.Classes;
 using GagSpeak.Services;
+using GagSpeak.State.Models;
 using InteropGenerator.Runtime;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
@@ -19,12 +21,14 @@ public struct GlamourActorState
 
     // This will hold the parsed equipment for all slots
     public readonly Dictionary<EquipSlot, EquipItem> ParsedEquipment;
+    public MetaDataStruct MetaStates = MetaDataStruct.Empty;
 
     public GlamourActorState(JObject? state)
     {
         State = state;
         ParsedEquipment = new Dictionary<EquipSlot, EquipItem>();
         ParseEquipments(Equipment);
+        ParseMeta(Equipment);
     }
 
     public static GlamourActorState Empty => new GlamourActorState(null);
@@ -34,12 +38,14 @@ public struct GlamourActorState
         var clone = new GlamourActorState(other.State?.DeepClone() as JObject);
         foreach (var kvp in other.ParsedEquipment)
             clone.ParsedEquipment[kvp.Key] = kvp.Value;
+        clone.MetaStates = new(other.MetaStates.Headgear, other.MetaStates.Visor, other.MetaStates.Weapon);
         return clone;
     }
 
     /// <summary>
-    ///     Attempts to update the active Glamour Actors state with its most recent data.
-    ///     Current bound state is passed in so that we can run a comparison against the slots.
+    ///     Attempts to update the active Glamour Actors state with its most recent data. <para />
+    ///     Current bound state is passed in so that we can run a comparison against the slots. <para />
+    ///     However, do not pass in the FinalMeta, as we should cache the latest metadata state in accordance to base game.
     /// </summary>
     public void UpdateEquipment(JObject newState, IReadOnlyDictionary<EquipSlot, EquipItem> boundState)
     {
@@ -48,6 +54,7 @@ public struct GlamourActorState
         {
             State = newState;
             ParseEquipments(Equipment);
+            ParseMeta(Equipment);
             return;
         }
 
@@ -84,6 +91,72 @@ public struct GlamourActorState
         }
     }
 
+    /// <summary> Only updates metadata when no flags for a particular metastate are occupied by bound items. </summary>
+    public void UpdateMetaCheckBinds(JObject newState, MetaDataStruct finalMeta, bool anyHat, bool anyVisor, bool anyWep)
+    {
+        // Update object entirely if it was null before.
+        if (State is null)
+            State = newState;
+
+        if (newState?["Equipment"] is not JToken equipment)
+            return;
+
+        // parse the metadata.
+        var sh = newState["Equipment"]?["Hat"]?["Show"]?.Value<bool>() ?? false;
+        var ah = newState["Equipment"]?["Hat"]?["Apply"]?.Value<bool>() ?? false;
+        var sv = newState["Equipment"]?["Visor"]?["IsToggled"]?.Value<bool>() ?? false;
+        var av = newState["Equipment"]?["Visor"]?["Apply"]?.Value<bool>() ?? false;
+        var sw = newState["Equipment"]?["Weapon"]?["Show"]?.Value<bool>() ?? false;
+        var aw = newState["Equipment"]?["Weapon"]?["Apply"]?.Value<bool>() ?? false;
+        Svc.Logger.Information($"[GlamourActorState] Updating Meta: Hat({sh}, {ah}), Visor({sv}, {av}), Weapon({sw}, {aw})");
+        // set the metadata based on the retrieved values.
+        var hatState = (sh, ah) switch { (true, true) => TriStateBool.True, (false, true) => TriStateBool.False, _ => TriStateBool.Null };
+        // If no hatstates are stored, just apply whatever was passed in.
+        if (!anyHat)
+        {
+            Svc.Logger.Information($"[GlamourActorState] Setting Hat State if different: {hatState}");
+            MetaStates = MetaStates.WithMetaIfDifferent(MetaIndex.HatState, hatState);
+        }
+        else
+        {
+            Svc.Logger.Information($"[GlamourActorState] Skipping Hat Update. A bound hat attribute is active.");
+        }
+        
+        var visorState = (sv, av) switch { (true, true) => TriStateBool.True, (false, true) => TriStateBool.False, _ => TriStateBool.Null };
+        // If no visor states are stored, just apply whatever was passed in.
+        if (!anyVisor)
+        {
+            Svc.Logger.Information($"[GlamourActorState] Setting Visor State if different: {visorState}");
+            MetaStates = MetaStates.WithMetaIfDifferent(MetaIndex.VisorState, visorState);
+        }
+        else
+        {
+            Svc.Logger.Information($"[GlamourActorState] Skipping Visor Update. A bound visor attribute is active.");
+        }
+
+        // If no weapon states are stored, just apply whatever was passed in.
+        var weaponState = (sw, aw) switch { (true, true) => TriStateBool.True, (false, true) => TriStateBool.False, _ => TriStateBool.Null };
+        if (!anyWep)
+        {
+            Svc.Logger.Information($"[GlamourActorState] Setting Weapon State if different: {weaponState}");
+            MetaStates = MetaStates.WithMetaIfDifferent(MetaIndex.WeaponState, weaponState);
+        }
+        else
+        {
+            Svc.Logger.Information($"[GlamourActorState] Skipping Weapon Update. A bound weapon attribute is active.");
+        }
+    }
+
+    /// <summary> Forcibly updates all metastates to the latest JObject state. </summary>
+    public void UpdateMetaWithLatest(JObject newState)
+    {
+        if (newState?["Equipment"] is not JToken equipment)
+            return;
+
+        // parse the metadata.
+        ParseMeta(equipment);
+    }
+
     private void ParseEquipments(JToken? equipmentToken)
     {
         if (equipmentToken is not JObject equipmentObj)
@@ -96,6 +169,28 @@ public struct GlamourActorState
             // set the item in the parsed equipment.
             ParsedEquipment[slot] = ItemSvc.Resolve(slot, customId);
         }
+    }
+
+    private void ParseMeta(JToken? equipmentToken)
+    {
+        if (equipmentToken is not JObject equipmentObj)
+            return;
+
+        // parse the metadata.
+        var sh = equipmentObj?["Hat"]?["Show"]?.Value<bool>() ?? false;
+        var ah = equipmentObj?["Hat"]?["Apply"]?.Value<bool>() ?? false;
+        var sv = equipmentObj?["Visor"]?["IsToggled"]?.Value<bool>() ?? false;
+        var av = equipmentObj?["Visor"]?["Apply"]?.Value<bool>() ?? false;
+        var sw = equipmentObj?["Weapon"]?["Show"]?.Value<bool>() ?? false;
+        var aw = equipmentObj?["Weapon"]?["Apply"]?.Value<bool>() ?? false;
+        Svc.Logger.Information($"[GlamourActorState] Parsing Meta: Hat({sh}, {ah}), Visor({sv}, {av}), Weapon({sw}, {aw})");
+        // set the metadata based on the retrieved values.
+        var hatState = (sh, ah) switch { (true, true) => TriStateBool.True, (false, true) => TriStateBool.False, _ => TriStateBool.Null };
+        MetaStates = MetaStates.WithMetaIfDifferent(MetaIndex.HatState, hatState);
+        var visorState = (sv, av) switch { (true, true) => TriStateBool.True, (false, true) => TriStateBool.False, _ => TriStateBool.Null };
+        MetaStates = MetaStates.WithMetaIfDifferent(MetaIndex.VisorState, visorState);
+        var weaponState = (sw, aw) switch { (true, true) => TriStateBool.True, (false, true) => TriStateBool.False, _ => TriStateBool.Null };
+        MetaStates = MetaStates.WithMetaIfDifferent(MetaIndex.WeaponState, weaponState);
     }
 
     public bool RecoverSlot(EquipSlot slot, out ulong customItemId, out byte stain, out byte stain2)

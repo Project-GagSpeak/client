@@ -154,6 +154,8 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
     public string ThumbnailPath { get; set; } = string.Empty;
     public GlamourSlot Glamour { get; set; } = new GlamourSlot(EquipSlot.Head, ItemSvc.NothingItem(EquipSlot.Head));
     public ModSettingsPreset Mod { get; set; } = new ModSettingsPreset(new ModPresetContainer());
+    public TriStateBool HeadgearState { get; set; } = TriStateBool.Null;
+    public TriStateBool VisorState { get; set; } = TriStateBool.Null;
     public Moodle Moodle { get; set; } = new Moodle();
     public Traits Traits { get; set; } = Traits.None;
     public Arousal Arousal { get; set; } = Arousal.None;
@@ -178,6 +180,8 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
         Glamour = other.Glamour;
         Mod = other.Mod;
         Moodle = other.Moodle;
+        HeadgearState = other.HeadgearState;
+        VisorState = other.VisorState;
         Traits = other.Traits;
         Arousal = other.Arousal;
         DoRedraw = other.DoRedraw;
@@ -194,6 +198,8 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
             ["Glamour"] = Glamour.Serialize(),
             ["Mod"] = Mod.SerializeReference(),
             ["Moodle"] = Moodle.Serialize(),
+            ["HeadgearState"] = HeadgearState.ToString(),
+            ["VisorState"] = VisorState.ToString(),
             ["Traits"] = Traits.ToString(),
             ["Arousal"] = Arousal.ToString(),
             ["Redraw"] = DoRedraw,
@@ -234,6 +240,8 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
             Glamour = ItemSvc.ParseGlamourSlot(json["Glamour"]),
             Mod = ModSettingsPreset.FromRefToken(json["Mod"], mp),
             Moodle = moodle,
+            HeadgearState = TriStateBool.FromJObject(json["HeadgearState"]),
+            VisorState = TriStateBool.FromJObject(json["VisorState"]),
             Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
             Arousal = Enum.TryParse<Arousal>(json["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
             DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
@@ -244,8 +252,6 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
 public class HypnoticRestriction : RestrictionItem
 {
     public override RestrictionType Type { get; } = RestrictionType.Hypnotic;
-    public TriStateBool HeadgearState { get; set; } = TriStateBool.Null;
-    public TriStateBool VisorState { get; set; } = TriStateBool.Null;
     public HypnoticOverlay Properties { get; set; } = new();
 
     public HypnoticRestriction() 
@@ -267,17 +273,13 @@ public class HypnoticRestriction : RestrictionItem
     public void ApplyChanges(HypnoticRestriction other)
     {
         base.ApplyChanges(other);
-        HeadgearState = other.HeadgearState;
-        VisorState = other.VisorState;
-        Properties = other.Properties;
+        Properties = new(other.Properties);
     }
 
     public override JObject Serialize()
     {
         // serialize the base, and add to it the additional.
         var json = base.Serialize();
-        json["HeadgearState"] = HeadgearState.ToString();
-        json["VisorState"] = VisorState.ToString();
         json["Properties"] = JObject.FromObject(Properties);
         return json;
     }
@@ -318,8 +320,6 @@ public class HypnoticRestriction : RestrictionItem
 public class BlindfoldRestriction : RestrictionItem
 {
     public override RestrictionType Type { get; } = RestrictionType.Blindfold;
-    public TriStateBool HeadgearState { get; set; } = TriStateBool.Null;
-    public TriStateBool VisorState { get; set; } = TriStateBool.Null;
     public BlindfoldOverlay Properties { get; set; } = new("Blindfold_Light.png");
 
     public BlindfoldRestriction()
@@ -328,8 +328,6 @@ public class BlindfoldRestriction : RestrictionItem
     public BlindfoldRestriction(BlindfoldRestriction other, bool keepIdentifier)
         : base(other, keepIdentifier)
     {
-        HeadgearState = other.HeadgearState;
-        VisorState = other.VisorState;
         Properties = other.Properties;
     }
 
@@ -343,8 +341,6 @@ public class BlindfoldRestriction : RestrictionItem
     public void ApplyChanges(BlindfoldRestriction other)
     {
         base.ApplyChanges(other);
-        HeadgearState = other.HeadgearState;
-        VisorState = other.VisorState;
         Properties = other.Properties;
     }
 
@@ -353,8 +349,6 @@ public class BlindfoldRestriction : RestrictionItem
     {
         // serialize the base, and add to it the additional.
         var json = base.Serialize();
-        json["HeadgearState"] = HeadgearState.ToString();
-        json["VisorState"] = VisorState.ToString();
         json["Properties"] = JObject.FromObject(Properties);
         return json;
     }
@@ -401,7 +395,6 @@ public class CollarRestriction : IEditableStorageItem<CollarRestriction>, IRestr
     public GlamourSlot Glamour { get; set; } = new GlamourSlot();
     public ModSettingsPreset Mod { get; set; } = new ModSettingsPreset(new ModPresetContainer());
     public Moodle Moodle { get; set; } = new Moodle();
-    public CustomizeProfile CPlusProfile { get; set; } = CustomizeProfile.Empty;
     public bool DoRedraw { get; set; } = false;
     
     public CollarRestriction()
@@ -424,7 +417,6 @@ public class CollarRestriction : IEditableStorageItem<CollarRestriction>, IRestr
         Glamour = other.Glamour;
         Mod = other.Mod;
         Moodle = other.Moodle;
-        CPlusProfile = other.CPlusProfile;
         DoRedraw = other.DoRedraw;
     }
 
@@ -439,9 +431,6 @@ public class CollarRestriction : IEditableStorageItem<CollarRestriction>, IRestr
             ["Glamour"] = Glamour.Serialize(),
             ["Mod"] = Mod.SerializeReference(),
             ["Moodle"] = Moodle.Serialize(),
-            ["ProfileGuid"] = CPlusProfile.ProfileGuid.ToString(),
-            ["ProfilePriority"] = CPlusProfile.Priority,
-            ["ProfileName"] = CPlusProfile.ProfileName,
             ["DoRedraw"] = DoRedraw,
         };
     }
@@ -472,7 +461,6 @@ public class CollarRestriction : IEditableStorageItem<CollarRestriction>, IRestr
             Glamour = ItemSvc.ParseGlamourSlot(json["Glamour"]),
             Mod = ModSettingsPreset.FromRefToken(json["Mod"], mp),
             Moodle = moodle,
-            CPlusProfile = new CustomizeProfile(profileId, profilePrio, profileName),
             DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
         };
     }

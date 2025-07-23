@@ -26,7 +26,7 @@ public class GlamourListener : IDisposable
         _handler = handler;
 
         // Always attempt to immidiately cache our player.
-        _handler.CacheActorState();
+        _handler.CacheActorFromLatest();
         
         _ipc.StateWasChanged = StateChangedWithType.Subscriber(Svc.PluginInterface, OnStateChanged);
         _ipc.StateWasFinalized = StateFinalized.Subscriber(Svc.PluginInterface, OnStateFinalized);
@@ -74,6 +74,12 @@ public class GlamourListener : IDisposable
         }
         else if (changeType is StateChangeType.Other)
         {
+            if (_cacheLatestForNextMeta)
+            {
+                _handler.CacheActorMeta(true);
+                _cacheLatestForNextMeta = false;
+            }
+
             if (!_cache.FinalMeta.AnySet())
                 return;
 
@@ -81,6 +87,10 @@ public class GlamourListener : IDisposable
             await _handler.UpdateMetaCacheSlim(true);
         }
     }
+
+    // stupid dumb variable that only even partially helps assist an overarching
+    // problem with metadata I wish i never bothered with.
+    private bool _cacheLatestForNextMeta = false;
 
     /// <summary> 
     ///     Any any primary Glamourer Operation has completed, StateFinalized will fire. 
@@ -94,18 +104,20 @@ public class GlamourListener : IDisposable
         if (address != PlayerData.ObjectAddress)
             return;
 
+        _logger.LogDebug($"[OnStateFinalized] Type: ({finalizationType})", LoggerType.IpcGlamourer);
+
         // if the finalization type was a gearset finalized, remove the gearset from the ipc blocker filter.
         if (finalizationType is StateFinalizationType.Gearset)
         {
-            // if there was not a gearset blocker that means we are just spamming the same gearset, so dont process it.
+            // if there was a gearset blocker for the same class
             if (_handler.BlockIpcCalls.HasFlag(IpcBlockReason.Gearset))
             {
                 _logger.LogDebug($"[OnStateFinalized] Type was ({finalizationType}), removing Gearset Blocker!", LoggerType.IpcGlamourer);
                 _handler.OnEquipGearsetFinalized();
+                _cacheLatestForNextMeta = true;
             }
         }
-
-        // we can always remove this if it ends up becoming an issue, and isntead making the conditional of storing the cache based if the ipc blockers == 0
+        
         if (_handler.BlockIpcCalls is not IpcBlockReason.None)
         {
             _logger.LogDebug($"[OnStateFinalized] Type: ({finalizationType}) blocked! Still processing! ({_handler.BlockIpcCalls})", LoggerType.IpcGlamourer);
@@ -113,6 +125,6 @@ public class GlamourListener : IDisposable
         }
 
         _logger.LogDebug($"[OnStateFinalized] Type: ({finalizationType}) accepted, Caching & Applying!", LoggerType.IpcGlamourer);
-        await _handler.ReapplyCaches();
+        await _handler.ReapplyAllCaches();
     }
 }

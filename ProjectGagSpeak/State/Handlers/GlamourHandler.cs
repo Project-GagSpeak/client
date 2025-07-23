@@ -104,8 +104,8 @@ public class GlamourHandler
         {
             // Run both operations in parallel.
             await Task.WhenAll(
-                UpdateGlamourInternal(false, true),
-                UpdateMetaInternal(true)
+                UpdateMetaInternal(false, true),
+                UpdateGlamourInternal(false, true)
             );
             _logger.LogInformation($"Processed Cache Updates Successfully!");
         });
@@ -115,15 +115,16 @@ public class GlamourHandler
     /// <summary> Use this after any glamour Finalization type occurs. </summary>
     /// <param name="storeProfile"> If true, will force the cache to be applied before updating. </param>
     /// <remarks> This runs through a SemaphoreSlim execution and is handled safely. </remarks>
-    public async Task ReapplyCaches(bool storeProfile = true)
+    public async Task ReapplyAllCaches()
     {
         _logger.LogDebug("Reapplying Glamourer Caches.");
         await ExecuteWithSemaphore(async () =>
         {
+            CacheActorFromLatest();
             // Run both operations in parallel.
             await Task.WhenAll(
-                ApplyGlamourCache(storeProfile),
-                ApplyMetaCache()
+                ApplyGlamourCache(false),
+                ApplyMetaCache(false)
             );
             _logger.LogInformation($"Reapplied Cache Updates Successfully!");
         });
@@ -137,7 +138,7 @@ public class GlamourHandler
     /// <summary> Should only ever be used by the GlamourListener. </summary>
     /// <remarks> Handled safely through a SemaphoreSlim. </remarks>
     public async Task UpdateMetaCacheSlim(bool reapply)
-        => await ExecuteWithSemaphore(() => UpdateMetaInternal(reapply));
+        => await ExecuteWithSemaphore(() => UpdateMetaInternal(true, reapply));
 
     /// <summary>
     ///     Updates the Final Glamour Cache, and then applies the visual updates.
@@ -167,19 +168,22 @@ public class GlamourHandler
     /// <summary>
     ///     Updates the Final Meta Cache, and then applies the visual updates.
     /// </summary>
-    private async Task UpdateMetaInternal(bool reapply)
+    private async Task UpdateMetaInternal(bool forceCacheCall, bool reapply)
     {
         // Update the final cache. `removedSlots` contains slots that are no longer restricted after the change.
-        if (_cache.UpdateFinalMetaCache())
+        if (_cache.UpdateFinalMetaCache(out bool noHat, out bool noVisor, out bool noWeapon))
         {
             _logger.LogDebug($"Final MetaState Cache was updated!", LoggerType.VisualCache);
-            await ApplyMetaCache();
+            if (noHat || noVisor || noWeapon)
+                await RestoreMetaAndReapply(forceCacheCall, noHat, noVisor, noWeapon);
+            else
+                await ApplyMetaCache(forceCacheCall);
             return;
         }
         else if (reapply)
         {
             _logger.LogDebug("Reapplying MetaState Cache", LoggerType.VisualCache);
-            await ApplyMetaCache();
+            await ApplyMetaCache(forceCacheCall);
             return;
         }
         // No Change
@@ -203,7 +207,6 @@ public class GlamourHandler
                 }
             }));
         _logger.LogDebug($"Restored Glamourer Slots to last applied base value.", LoggerType.IpcGlamourer);
-
         // Now reapply the cache.
         _logger.LogDebug("Reapplying Glamourer Cache", LoggerType.IpcGlamourer);
         await ApplyGlamourCache(forceCacheCall);
@@ -215,7 +218,7 @@ public class GlamourHandler
     private async Task ApplyGlamourCache(bool cacheBeforeApply)
     {
         if (cacheBeforeApply || ActorCacheIsEmpty)
-            CacheActorState();
+            CacheActorEquip();
 
         // configure the tasks to run asynchronously.
         await Task.WhenAll(_cache.FinalGlamour
@@ -232,27 +235,101 @@ public class GlamourHandler
         _logger.LogTrace("Applied Active Slots to Glamour", LoggerType.IpcGlamourer);
     }
 
-    /// <summary>
-    ///     Apples the _finalMeta from the <see cref="_cache"/> Cache to the Client.
-    /// </summary>
-    private async Task ApplyMetaCache()
+    private async Task RestoreMetaAndReapply(bool forceCacheCall, bool restoreHat, bool restoreVisor, bool restoreWeapon)
     {
-        await _ipc.SetMetaStates(_cache.FinalMeta.OnFlags(), true);
-        await _ipc.SetMetaStates(_cache.FinalMeta.OffFlags(), false);
-        //_logger.LogDebug("Updated Meta States", LoggerType.IpcGlamourer);
+        // If we are restoring the hat, visor or weapon, we need to restore the slots.
+        if (restoreHat && (bool?)_cache.LastUnboundState.MetaStates.Headgear is { } newVal)
+            await _ipc.SetMetaStates(MetaFlag.HatState, newVal);
+        if (restoreVisor && (bool?)_cache.LastUnboundState.MetaStates.Visor is { } newVal2)
+            await _ipc.SetMetaStates(MetaFlag.VisorState, newVal2);
+        if (restoreWeapon && (bool?)_cache.LastUnboundState.MetaStates.Weapon is { } newVal3)
+            await _ipc.SetMetaStates(MetaFlag.WeaponState, newVal3);
+
+        _logger.LogDebug($"Restored Meta Slots to last applied base value.", LoggerType.IpcGlamourer);
+
+        // Now reapply the states
+        _logger.LogDebug("Reapplying Meta Cache", LoggerType.IpcGlamourer);
+        await ApplyMetaCache(forceCacheCall);
     }
 
     /// <summary>
-    ///     Caches the latest state from Glamourer IPC to store the latest unbound state.
+    ///     Apples the _finalMeta from the <see cref="_cache"/> Cache to the Client.
     /// </summary>
-    public void CacheActorState()
+    private async Task ApplyMetaCache(bool cacheBeforeApply)
+    {
+        if (cacheBeforeApply || ActorCacheIsEmpty)
+            CacheActorMeta(false);
+
+        await _ipc.SetMetaStates(_cache.FinalMeta.OnFlags(), true);
+        await _ipc.SetMetaStates(_cache.FinalMeta.OffFlags(), false);
+        // attempt to work around glamourer's wonky issue where it fails to sync meta state updates with visor.
+        // this will result in the visor 'flashing' if out of sync, but the headgear will stay in sync at least.
+        if (_cache.FinalMeta.Visor.Value is true)
+        {
+            await Task.Delay(1);
+            await _ipc.SetMetaStates(MetaFlag.HatState, true);
+        }
+        //_logger.LogDebug("Updated Meta States", LoggerType.IpcGlamourer);
+    }
+
+    public void CacheActorEquip()
+    {
+        _logger.LogWarning("Caching latest Equip from Glamourer IPC.", LoggerType.IpcGlamourer);
+        var latestState = _ipc.GetClientGlamourerState();
+        if (latestState != null)
+        {
+            // create a clone of our latest unbound state to avoid modifying the original.
+            var latestUnboundCopy = GlamourActorState.Clone(_cache.LastUnboundState);
+            latestUnboundCopy.UpdateEquipment(latestState, _cache.FinalGlamour.ToDictionary(x => x.Key, x => x.Value.GameItem));
+            _cache.CacheUnboundState(latestUnboundCopy);
+        }
+        else
+        {
+            _logger.LogDebug("Failed to cache Glamourer state, latest state was null.", LoggerType.IpcGlamourer);
+            _cache.CacheUnboundState(new GlamourActorState(latestState));
+        }
+    }
+
+    /// <summary>
+    ///     Caches the latest state from Glamourer IPC to store the latest unbound state. <para />
+    ///     To anyone reviewing this code, I am so sorry you have to try and understand this clusterfuck of a method to adapt with 
+    ///     Glamourer's MetaState handling. <para />
+    ///     Idealy we could set these by detouring the direct detours from the game's virtual table, but it would also
+    ///     mean falling out of sync with glamourer's internal state, which may not reflect the game state (it does this sometimes). <para />
+    ///     This is the best I could get it. Hopefully it improves down the line.
+    /// </summary>
+    public void CacheActorMeta(bool flagFromLatest)
     {
         _logger.LogWarning("Caching latest state from Glamourer IPC.", LoggerType.IpcGlamourer);
         var latestState = _ipc.GetClientGlamourerState();
         if (latestState != null)
         {
+            // must clone since the struct contains an internal dictionary.
+            var latestUnboundCopy = GlamourActorState.Clone(_cache.LastUnboundState);
+            if (flagFromLatest)
+                latestUnboundCopy.UpdateMetaWithLatest(latestState);
+            else
+                latestUnboundCopy.UpdateMetaCheckBinds(latestState, _cache.FinalMeta, _cache.AnyHatMeta, _cache.AnyVisorMeta, _cache.AnyWeaponMeta);
+            // finalize the state.
+            _cache.CacheUnboundState(latestUnboundCopy);
+        }
+        else
+        {
+            _logger.LogDebug("Failed to cache Glamourer state, latest state was null.", LoggerType.IpcGlamourer);
+            _cache.CacheUnboundState(new GlamourActorState(latestState));
+        }
+    }
+    public void CacheActorFromLatest()
+    {
+        _logger.LogWarning("Caching Actor from Latest State from Glamourer IPC.", LoggerType.IpcGlamourer);
+        var latestState = _ipc.GetClientGlamourerState();
+        if (latestState != null)
+        {
+            // must clone since the struct contains an internal dictionary.
             var latestUnboundCopy = GlamourActorState.Clone(_cache.LastUnboundState);
             latestUnboundCopy.UpdateEquipment(latestState, _cache.FinalGlamour.ToDictionary(x => x.Key, x => x.Value.GameItem));
+            latestUnboundCopy.UpdateMetaWithLatest(latestState);
+            // finalize the state.
             _cache.CacheUnboundState(latestUnboundCopy);
         }
         else

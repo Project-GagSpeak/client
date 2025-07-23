@@ -40,6 +40,9 @@ public class GlamourCache
 
     public IReadOnlyDictionary<EquipSlot, GlamourSlot> FinalGlamour => _finalGlamour;
     public MetaDataStruct FinalMeta => _finalMeta;
+    public bool AnyHatMeta => _metaStates.TryGetValue(MetaIndex.HatState, out var sl) && sl.Count > 0;
+    public bool AnyVisorMeta => _metaStates.TryGetValue(MetaIndex.VisorState, out var sl) && sl.Count > 0;
+    public bool AnyWeaponMeta => _metaStates.TryGetValue(MetaIndex.WeaponState, out var sl) && sl.Count > 0;
     public GlamourActorState LastUnboundState => _latestUnboundState;
     public void CacheUnboundState(GlamourActorState state)
     {
@@ -203,13 +206,34 @@ public class GlamourCache
         return anyChanges || removedSlots.Any();
     }
 
-    public bool UpdateFinalMetaCache()
+    public bool UpdateFinalMetaCache(out bool noHat, out bool noVisor, out bool noWeapon)
     {
-        var anyChanges = false;
+        var firstHat = GetFirstHatState();
+        var firstVisor = GetFirstVisorState();
+        var firstWeapon = GetFirstWeaponState();
+        noHat = !_metaStates.TryGetValue(MetaIndex.HatState, out var hatList) || hatList.Count <= 0;
+        noVisor = !_metaStates.TryGetValue(MetaIndex.VisorState, out var visorList) || visorList.Count <= 0;
+        noWeapon = !_metaStates.TryGetValue(MetaIndex.WeaponState, out var weaponList) || weaponList.Count <= 0;
         // True if any update occured (which it always will in this case)
-        anyChanges |= _finalMeta.SetMeta(MetaIndex.HatState, GetFirstHatState());
-        anyChanges |= _finalMeta.SetMeta(MetaIndex.VisorState, GetFirstVisorState());
-        anyChanges |= _finalMeta.SetMeta(MetaIndex.WeaponState, GetFirstWeaponState());
+        var anyChanges = false;
+        if (_finalMeta.IsDifferent(MetaIndex.HatState, firstHat))
+        {
+            anyChanges |= true;
+            _logger.LogDebug($"Updating Final Meta Cache: Hat({firstHat})");
+            _finalMeta = _finalMeta.WithMeta(MetaIndex.HatState, firstHat);
+        }
+        if (_finalMeta.IsDifferent(MetaIndex.VisorState, firstVisor))
+        {
+            anyChanges |= true;
+            _logger.LogDebug($"Updating Final Meta Cache: Visor({firstVisor})");
+            _finalMeta = _finalMeta.WithMeta(MetaIndex.VisorState, firstVisor);
+        }
+        if (_finalMeta.IsDifferent(MetaIndex.WeaponState, firstWeapon))
+        {
+            anyChanges |= true;
+            _logger.LogDebug($"Updating Final Meta Cache: Weapon({firstWeapon})");
+            _finalMeta = _finalMeta.WithMeta(MetaIndex.WeaponState, firstWeapon);
+        }
         return anyChanges;
     }
 
@@ -375,6 +399,12 @@ public class GlamourCache
                     ItemSvc.NothingItem(slot).DrawIcon(textures, iconSize, slot);
             }
         }
+        ImGui.Text("Headgear");
+        CkGui.ColorTextInline(_latestUnboundState.MetaStates.Headgear.ToString(), CkColor.LushPinkLine.Uint());
+        CkGui.TextInline("Visor", false);
+        CkGui.ColorTextInline(_latestUnboundState.MetaStates.Visor.ToString(), CkColor.LushPinkLine.Uint());
+        CkGui.TextInline("Weapon", false);
+        CkGui.ColorTextInline(_latestUnboundState.MetaStates.Weapon.ToString(), CkColor.LushPinkLine.Uint());
     }
 
     private void DrawMetaTableRows(MetaIndex idx)

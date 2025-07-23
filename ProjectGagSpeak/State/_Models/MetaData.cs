@@ -48,25 +48,38 @@ public struct MetaDataStruct
     public bool AnySet()
         => Headgear.HasValue || Visor.HasValue || Weapon.HasValue;
 
-    public bool SetMeta(MetaIndex index, TriStateBool newValue)
-    {
-        if (index is MetaIndex.HatState && !newValue.Equals(Headgear))
+    public bool IsDifferent(MetaIndex index, TriStateBool newValue)
+        => index switch
         {
-            Headgear = newValue;
-            return true;
-        }
-        if (index is MetaIndex.VisorState && !newValue.Equals(Visor))
-        {
-            Visor = newValue;
-            return true;
-        }
-        if (index is MetaIndex.WeaponState && !newValue.Equals(Weapon))
-        {
-            Weapon = newValue;
-            return true;
-        }
+            MetaIndex.HatState => !newValue.Equals(Headgear),
+            MetaIndex.VisorState => !newValue.Equals(Visor),
+            MetaIndex.WeaponState => !newValue.Equals(Weapon),
+            _ => false,
+        };
 
-        return false;
+    public MetaDataStruct WithMeta(MetaIndex index, TriStateBool newValue)
+    {
+        return index switch
+        {
+            MetaIndex.HatState => new MetaDataStruct(newValue, Visor, Weapon),
+            MetaIndex.VisorState => new MetaDataStruct(Headgear, newValue, Weapon),
+            MetaIndex.WeaponState => new MetaDataStruct(Headgear, Visor, newValue),
+            _ => this,
+        };
+    }
+
+    public MetaDataStruct WithMetaIfDifferent(MetaIndex index, TriStateBool newValue)
+    {
+        if (!IsDifferent(index, newValue))
+            return this;
+
+        return index switch
+        {
+            MetaIndex.HatState => new MetaDataStruct(newValue, Visor, Weapon),
+            MetaIndex.VisorState => new MetaDataStruct(Headgear, newValue, Weapon),
+            MetaIndex.WeaponState => new MetaDataStruct(Headgear, Visor, newValue),
+            _ => this,
+        };
     }
 
     public MetaFlag OnFlags()

@@ -34,7 +34,7 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
             return false;
 
         // we know it was valid, so begin assigning the new data to send off.
-        var finalTime = SelectedLock == Padlocks.FiveMinutesPadlock
+        var finalTime = SelectedLock == Padlocks.FiveMinutes
             ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
 
         Log.LogInformation($"Locking with a final time of {finalTime} for {SelectedLock.ToName()} which is a timespan of {finalTime - DateTimeOffset.UtcNow} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
@@ -118,16 +118,16 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
                 Svc.Toasts.ShowError("Incorrectly guessed this padlocks password!");
                 break;
 
-            case GagSpeakApiEc.InvalidPassword when padlock is Padlocks.CombinationPadlock:
-                Svc.Toasts.ShowError("Invalid Syntax. Must be 4 digits (0-9).");
+            case GagSpeakApiEc.InvalidPassword when padlock is Padlocks.Combination:
+                Svc.Toasts.ShowError("Invalid Combination Format. Must be 4 digits (0-9).");
                 break;
 
-            case GagSpeakApiEc.InvalidPassword when padlock is Padlocks.PasswordPadlock or Padlocks.TimerPasswordPadlock:
-                Svc.Toasts.ShowError("Invalid Syntax. Must be 4-20 characters.");
+            case GagSpeakApiEc.InvalidPassword when padlock.IsPasswordLock():
+                Svc.Toasts.ShowError("Invalid Password Format. Must be 4-20 characters.");
                 break;
 
-            case GagSpeakApiEc.InvalidTime when padlock is Padlocks.TimerPadlock or Padlocks.TimerPasswordPadlock or Padlocks.OwnerTimerPadlock or Padlocks.DevotionalTimerPadlock:
-                Svc.Toasts.ShowError("Invalid Timer Syntax. Must be a valid time format (Ex: 0h2m7s).");
+            case GagSpeakApiEc.InvalidTime when padlock.IsTimerLock():
+                Svc.Toasts.ShowError("Invalid Timer Format. Must be a valid time format (Ex: 0h2m7s).");
                 break;
 
             case GagSpeakApiEc.LackingPermissions:

@@ -4,6 +4,7 @@ using GagSpeak.Gui.Components;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
+using GagSpeak.Utils;
 using ImGuiNET;
 using static GagSpeak.Gui.Components.WardrobeTabs;
 
@@ -34,63 +35,20 @@ public class WardrobeUI : WindowMediatorSubscriberBase
         _cosmetics = cosmetics;
         _guides = guides;
 
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Restrained], SelectedTab.MyRestraints,
-            "Restraints--SEP--Apply, Lock, Unlock, Remove, or Configure your various Restraints");
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.RestrainedArmsLegs], SelectedTab.MyRestrictions,
-            "Restrictions--SEP--Apply, Lock, Unlock, Remove, or Configure your various Restrictions");
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged], SelectedTab.MyGags,
-            "Gags--SEP--Apply, Lock, Unlock, Remove, or Configure your various Gags");
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.CursedLoot], SelectedTab.MyCursedLoot,
-            "Cursed Loot--SEP--Configure your Cursed Items, or manage the active Loot Pool.");
+        // recompile the tab menu, along with its buttons.
+        _tabMenu = new WardrobeTabs();
 
-        AllowPinning = false;
-        AllowClickthrough = false;
-        TitleBarButtons = new()
-        {
-            new TitleBarButton()
-            {
-                Icon = FAI.CloudDownloadAlt,
-                Click = (msg) => Mediator.Publish(new UiToggleMessage(typeof(MigrationsUI))),
-                IconOffset = new(2,1),
-                ShowTooltip = () =>
-                {
-                    ImGui.BeginTooltip();
-                    ImGui.Text("Migrate Old Restriction Sets");
-                    ImGui.EndTooltip();
-                }
-            },
-            new TitleBarButton()
-            {
-                Icon = FAI.QuestionCircle,
-                Click = (msg) => TutorialClickedAction(),
-                IconOffset = new (2, 1),
-                ShowTooltip = () =>
-                {
-                    ImGui.BeginTooltip();
-                    var text = _tabMenu.TabSelection switch
-                    {
-                        SelectedTab.MyRestraints => "Start/Stop Restraints Tutorial",
-                        SelectedTab.MyRestrictions => "Start/Stop Restrictions Tutorial",
-                        SelectedTab.MyGags => "Start/Stop Gags Tutorial",
-                        SelectedTab.MyCursedLoot => "Start/Stop Cursed Loot Tutorial",
-                        _ => "No Tutorial Available"
-                    };
-                    ImGui.Text(text);
-                    ImGui.EndTooltip();
-                }
-            }
-        };
+        this.PinningClickthroughFalse();
+        this.SetBoundaries(new Vector2(600, 490), ImGui.GetIO().DisplaySize);
+        TitleBarButtons = new TitleBarButtonBuilder()
+            .Add(FAI.CloudDownloadAlt, "Wardrobe Migrations", () => Mediator.Publish(new UiToggleMessage(typeof(MigrationsUI))))
+            .AddTutorial(_guides, TutorialFromTab())
+            .Build();
 
-        // define initial size of window and to not respect the close hotkey.
-        this.SizeConstraints = new WindowSizeConstraints
-        {
-            MinimumSize = new Vector2(600, 490),
-            MaximumSize = ImGui.GetIO().DisplaySize,
-        };
         RespectCloseHotkey = false;
     }
 
-    private static WardrobeTabs _tabMenu = new WardrobeTabs();
+    private WardrobeTabs _tabMenu { get; init; }
     private bool ThemePushed = false;
 
     public static float SelectedRestrictionH() => ImGui.GetFrameHeight() * 2 + MoodleDrawer.IconSize.Y + ImGui.GetStyle().ItemSpacing.Y * 2;
@@ -166,40 +124,12 @@ public class WardrobeUI : WindowMediatorSubscriberBase
         _ => false,
     };
 
-    private void TutorialClickedAction()
-    {
-        switch (_tabMenu.TabSelection)
+    private TutorialType TutorialFromTab()
+        => _tabMenu.TabSelection switch
         {
-            case SelectedTab.MyRestraints:
-                if (_guides.IsTutorialActive(TutorialType.Restraints))
-                {
-                    _guides.SkipTutorial(TutorialType.Restraints);
-                    _logger.LogInformation("Skipping Restrictions Tutorial");
-                }
-                else
-                {
-                    _guides.StartTutorial(TutorialType.Restraints);
-                    _logger.LogInformation("Starting Restrictions Tutorial");
-                }
-                return;
-            case SelectedTab.MyRestrictions:
-                return;
-            // DO LATER
-            case SelectedTab.MyGags:
-                return;
-            // DO LATER
-            case SelectedTab.MyCursedLoot:
-                if (_guides.IsTutorialActive(TutorialType.CursedLoot))
-                {
-                    _guides.SkipTutorial(TutorialType.CursedLoot);
-                    _logger.LogInformation("Skipping CursedLoot Tutorial");
-                }
-                else
-                {
-                    _guides.StartTutorial(TutorialType.CursedLoot);
-                    _logger.LogInformation("Starting CursedLoot Tutorial");
-                }
-                return;
-        }
-    }
+            SelectedTab.MyRestraints => TutorialType.Restraints,
+            SelectedTab.MyRestrictions => TutorialType.Restraints,
+            SelectedTab.MyGags => TutorialType.Gags,
+            _ => TutorialType.CursedLoot,
+        };
 }

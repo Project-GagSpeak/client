@@ -42,7 +42,7 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
         if (!ValidateLock())
             return false;
 
-        var finalTime = SelectedLock == Padlocks.FiveMinutesPadlock
+        var finalTime = SelectedLock == Padlocks.FiveMinutes
             ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
 
         var newData = new CharaActiveRestraint()
@@ -105,11 +105,12 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
         // Determine if we have access to unlock.
         bool valid = SelectedLock switch
         {
-            Padlocks.MetalPadlock or Padlocks.FiveMinutesPadlock => true,
-            Padlocks.CombinationPadlock => PadlockValidation.IsValidCombo(Password),
-            Padlocks.PasswordPadlock => PadlockValidation.IsValidPass(Password),
-            Padlocks.TimerPadlock => PadlockValidation.IsValidTime(Timer, TimeSpan.FromDays(999)),
-            Padlocks.TimerPasswordPadlock => PadlockValidation.IsValidTime(Timer, TimeSpan.FromDays(999)) && PadlockValidation.IsValidPass(Password),
+            Padlocks.Metal or Padlocks.FiveMinutes => true,
+            Padlocks.Combination => PadlockValidation.IsValidCombo(Password),
+            Padlocks.Password => PadlockValidation.IsValidPass(Password),
+            Padlocks.Timer => PadlockValidation.IsValidTime(Timer, TimeSpan.FromDays(999)),
+            Padlocks.PredicamentTimer => PadlockValidation.IsValidTime(Timer, TimeSpan.FromDays(999)),
+            Padlocks.TimerPassword => PadlockValidation.IsValidTime(Timer, TimeSpan.FromDays(999)) && PadlockValidation.IsValidPass(Password),
             _ => false
         };
 
@@ -119,17 +120,18 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
         // If we don't, display the appropriate error and reset inputs.
         switch (SelectedLock)
         {
-            case Padlocks.CombinationPadlock:
+            case Padlocks.Combination:
                 Svc.Toasts.ShowError("Invalid Syntax. Must be 4 digits (0-9).");
                 break;
 
-            case Padlocks.PasswordPadlock:
-            case Padlocks.TimerPasswordPadlock when !PadlockValidation.IsValidPass(Password):
+            case Padlocks.Password:
+            case Padlocks.TimerPassword when !PadlockValidation.IsValidPass(Password):
                 Svc.Toasts.ShowError("Invalid Syntax. Must be 4-20 characters.");
                 break;
 
-            case Padlocks.TimerPadlock:
-            case Padlocks.TimerPasswordPadlock when !PadlockValidation.IsValidTime(Timer, TimeSpan.FromDays(999)):
+            case Padlocks.Timer:
+            case Padlocks.PredicamentTimer:
+            case Padlocks.TimerPassword when !PadlockValidation.IsValidTime(Timer, TimeSpan.FromDays(999)):
                 Svc.Toasts.ShowError("Invalid Timer Syntax. Must be a valid time format (Ex: 0h2m7s).");
                 break;
 
@@ -147,11 +149,10 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
         // Determine if we have access to unlock.
         bool valid = Items[0].Padlock switch
         {
-            Padlocks.MetalPadlock or Padlocks.FiveMinutesPadlock => true,
-            Padlocks.CombinationPadlock => Items[0].Password == Password,
-            Padlocks.PasswordPadlock => Items[0].Password == Password,
-            Padlocks.TimerPadlock => Items[0].PadlockAssigner == MainHub.UID,
-            Padlocks.TimerPasswordPadlock => Items[0].Password == Password,
+            Padlocks.Metal or Padlocks.FiveMinutes or Padlocks.Timer => true,
+            Padlocks.Combination => Items[0].Password == Password,
+            Padlocks.Password => Items[0].Password == Password,
+            Padlocks.TimerPassword => Items[0].Password == Password,
             _ => false
         };
 
@@ -161,14 +162,14 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
         // If we don't, display the appropriate error and reset inputs.
         switch (SelectedLock)
         {
-            case Padlocks.CombinationPadlock:
-            case Padlocks.PasswordPadlock:
-            case Padlocks.TimerPasswordPadlock:
+            case Padlocks.Combination:
+            case Padlocks.Password:
+            case Padlocks.TimerPassword:
                 Svc.Toasts.ShowError("Password does not match!");
                 break;
 
-            case Padlocks.TimerPadlock:
-                Svc.Toasts.ShowError("Can only be removed early by Assigner!");
+            case Padlocks.PredicamentTimer:
+                Svc.Toasts.ShowError("Cannot be removed by yourself!");
                 break;
 
             default:

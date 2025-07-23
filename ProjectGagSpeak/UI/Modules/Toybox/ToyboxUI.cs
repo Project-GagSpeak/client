@@ -6,6 +6,7 @@ using GagSpeak.Gui.UiToybox;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
+using GagSpeak.Utils;
 using ImGuiNET;
 
 namespace GagSpeak.Gui.Toybox;
@@ -36,64 +37,18 @@ public class ToyboxUI : WindowMediatorSubscriberBase
         _triggers = triggers;
         _guides = guides;
 
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Vibrator], ToyboxTabs.SelectedTab.BuzzToys,
-            "Configure your interactable Sex Toy Devices");
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.VibeLobby], ToyboxTabs.SelectedTab.VibeLobbies,
-            "Invite, Join, or create Vibe Rooms to play with others");
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Stimulated], ToyboxTabs.SelectedTab.Patterns,
-            "Create, Edit, and playback patterns");
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Clock], ToyboxTabs.SelectedTab.Alarms,
-            "Set various Alarms that play patterns when triggered");
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.CircleDot], ToyboxTabs.SelectedTab.Triggers,
-            "Create various kinds of Triggers");
+        _tabMenu = new ToyboxTabs();
 
-        AllowPinning = false;
-        AllowClickthrough = false;
-        TitleBarButtons = new()
-        {
-            new TitleBarButton()
-            {
-                Icon = FAI.CloudDownloadAlt,
-                Click = (msg) =>
-                {
-                    Mediator.Publish(new UiToggleMessage(typeof(MigrationsUI)));
-                },
-                IconOffset = new(2,1),
-                ShowTooltip = () => ImGui.SetTooltip("Migrate Old Toybox Data")
-            },
-            new TitleBarButton()
-            {
-                Icon = FAI.QuestionCircle,
-                Click = (msg) => TutorialClickedAction(),
-                IconOffset = new (2, 1),
-                ShowTooltip = () =>
-                {
-                    ImGui.BeginTooltip();
-                    var text = _tabMenu.TabSelection switch
-                    {
-                        ToyboxTabs.SelectedTab.BuzzToys => "Start/Stop Personal Toys Tutorial",
-                        ToyboxTabs.SelectedTab.VibeLobbies => "Start/Stop Vibe Lobbies Tutorial",
-                        ToyboxTabs.SelectedTab.Patterns => "Start/Stop Patterns Tutorial",
-                        ToyboxTabs.SelectedTab.Alarms => "Start/Stop Alarms Tutorial",
-                        ToyboxTabs.SelectedTab.Triggers => "Start/Stop Triggers Tutorial",
-                        _ => "No Tutorial Available"
-                    };
-                    ImGui.Text(text);
-                    ImGui.EndTooltip();
-                }
-            }
-        };
-
-        // define initial size of window and to not respect the close hotkey.
-        this.SizeConstraints = new WindowSizeConstraints
-        {
-            MinimumSize = new Vector2(600, 530),
-            MaximumSize = ImGui.GetIO().DisplaySize,
-        };
+        this.PinningClickthroughFalse();
+        this.SetBoundaries(new Vector2(600, 530), ImGui.GetIO().DisplaySize);
+        TitleBarButtons = new TitleBarButtonBuilder()
+            .Add(FAI.CloudDownloadAlt, "Migrate Old Toybox Data", () => Mediator.Publish(new UiToggleMessage(typeof(MigrationsUI))))
+            .AddTutorial(_guides, TutorialFromTab())
+            .Build();
         RespectCloseHotkey = false;
     }
 
-    private static ToyboxTabs _tabMenu = new ToyboxTabs();
+    private ToyboxTabs _tabMenu { get; init; }
     private bool ThemePushed = false;
 
     private static float RightLength() => 300 * ImGuiHelpers.GlobalScale;
@@ -147,18 +102,13 @@ public class ToyboxUI : WindowMediatorSubscriberBase
                 break;
         }
     }
-
-    private void TutorialClickedAction()
-    {
-        switch (_tabMenu.TabSelection)
+    private TutorialType TutorialFromTab()
+        => _tabMenu.TabSelection switch
         {
-            case ToyboxTabs.SelectedTab.BuzzToys:
-            case ToyboxTabs.SelectedTab.VibeLobbies:
-            case ToyboxTabs.SelectedTab.Patterns:
-            case ToyboxTabs.SelectedTab.Alarms:
-            case ToyboxTabs.SelectedTab.Triggers:
-                // DO LATER. I hate everything! :D
-                break;
-        }
-    }
+            ToyboxTabs.SelectedTab.BuzzToys => TutorialType.Toys,
+            ToyboxTabs.SelectedTab.VibeLobbies => TutorialType.VibeLobbies,
+            ToyboxTabs.SelectedTab.Patterns => TutorialType.Patterns,
+            ToyboxTabs.SelectedTab.Alarms => TutorialType.Alarms,
+            _ => TutorialType.Triggers
+        };
 }
