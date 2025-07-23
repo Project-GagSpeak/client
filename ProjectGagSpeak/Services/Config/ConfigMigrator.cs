@@ -234,6 +234,18 @@ public static class ConfigMigrator
             {
                 glasses = 0;
             }
+            // Note: While individual moodles can be saved, presets cannot because it now requires storing the associated moodles.
+            var moodles = new JArray();
+            foreach (JValue moodle in restraint["AssociatedMoodles"]!)
+            {
+
+                var newmoodle = new JObject()
+                {
+                    ["Type"] = "Status",
+                    ["Id"] = moodle
+                };
+                moodles.Add(newmoodle);
+            }
             var newrestraint = new JObject
             {
                 ["Identifier"] = (string)restraint["RestraintId"]!,
