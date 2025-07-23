@@ -267,7 +267,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         // assume a local copy of the kinksters, in which the remaining kinksters are gagged with an active chat garbler.
         var visibleKinksters = _kinksters.DirectPairs
             .Where(k => k.VisiblePairGameObject is not null)
-            .Where(k => k.LastGagData.IsGagged() && k.PairGlobals.ChatGarblerActive);
+            .Where(k => k.ActiveGags.IsGagged() && k.PairGlobals.ChatGarblerActive);
 
         // assign them to the dictionary.
         var newTrackedKinksters = new ConcurrentDictionary<string, bool>();
@@ -305,7 +305,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
     private void OnKinksterMessage(Kinkster k, InputChannel c, string message)
     {
         // Discard if not a garbled message.
-        if (!k.LastGagData.IsGagged() || !k.PairGlobals.ChatGarblerActive || !k.PairGlobals.AllowedGarblerChannels.IsActiveChannel((int)c))
+        if (!k.ActiveGags.IsGagged() || !k.PairGlobals.ChatGarblerActive || !k.PairGlobals.AllowedGarblerChannels.IsActiveChannel((int)c))
             return;
 
         // Fire achievement if it was longer than 5 words and stuff.

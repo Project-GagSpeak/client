@@ -24,13 +24,7 @@ public struct GlamourActorState
     {
         State = state;
         ParsedEquipment = new Dictionary<EquipSlot, EquipItem>();
-    }
-
-    public GlamourActorState(JObject? stateObject, ItemService resolver) : this()
-    {
-        State = stateObject;
-        ParsedEquipment = new Dictionary<EquipSlot, EquipItem>();
-        ParseEquipments(Equipment, resolver);
+        ParseEquipments(Equipment);
     }
 
     public static GlamourActorState Empty => new GlamourActorState(null);
@@ -47,13 +41,13 @@ public struct GlamourActorState
     ///     Attempts to update the active Glamour Actors state with its most recent data.
     ///     Current bound state is passed in so that we can run a comparison against the slots.
     /// </summary>
-    public void UpdateEquipment(JObject newState, ItemService resolver, IReadOnlyDictionary<EquipSlot, EquipItem> boundState)
+    public void UpdateEquipment(JObject newState, IReadOnlyDictionary<EquipSlot, EquipItem> boundState)
     {
         // Update object entirely if it was null before.
         if (State is null)
         {
             State = newState;
-            ParseEquipments(Equipment, resolver);
+            ParseEquipments(Equipment);
             return;
         }
 
@@ -75,7 +69,7 @@ public struct GlamourActorState
                 // look inside and grab its custom ID.
                 var customId = slotToken?["ItemId"]?.Value<ulong>() ?? ulong.MaxValue;
                 // Attempt to resolve the item.
-                var newItem = resolver.Resolve(slot, customId);
+                var newItem = ItemSvc.Resolve(slot, customId);
                 // IF the item is the same as the current bound state, do NOT set it.
                 if (boundState.TryGetValue(slot, out var boundItem) && boundItem.Equals(newItem))
                 {
@@ -90,7 +84,7 @@ public struct GlamourActorState
         }
     }
 
-    private void ParseEquipments(JToken? equipmentToken, ItemService resolver)
+    private void ParseEquipments(JToken? equipmentToken)
     {
         if (equipmentToken is not JObject equipmentObj)
             return;
@@ -100,7 +94,7 @@ public struct GlamourActorState
             var slotToken = equipmentObj[slot.ToString()];
             var customId = slotToken?["ItemId"]?.Value<ulong>() ?? ulong.MaxValue;
             // set the item in the parsed equipment.
-            ParsedEquipment[slot] = resolver.Resolve(slot, customId);
+            ParsedEquipment[slot] = ItemSvc.Resolve(slot, customId);
         }
     }
 

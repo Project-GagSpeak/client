@@ -8,5 +8,6 @@ public enum ManagerPriority : byte
     Restraints = 0,
     Restrictions = 1,
     Gags = 2,
-    CursedLoot = 3
+    CursedLoot = 3,
+    Collar = 4,
 }

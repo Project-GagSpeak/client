@@ -269,7 +269,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
             _selections.GagLayer = newVal;
         CkGui.AttachToolTip("Select the layer to apply a Gag to.");
 
-        if (k.LastGagData.GagSlots[_selections.GagLayer] is not { } slot)
+        if (k.ActiveGags.GagSlots[_selections.GagLayer] is not { } slot)
             return;
 
         var hasGag = slot.GagItem is not GagType.None;
@@ -340,7 +340,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         {
             if (ImGui.Button("Remove Gag", new Vector2(width, ImGui.GetFrameHeight())))
             {
-                var dto = new PushKinksterGagSlotUpdate(k.UserData, DataUpdateType.Removed)
+                var dto = new PushKinksterActiveGagSlot(k.UserData, DataUpdateType.Removed)
                 {
                     Layer = _selections.GagLayer,
                     Gag = GagType.None,
@@ -349,7 +349,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 
                 UiService.SetUITask(async () =>
                 {
-                    var result = await _hub.UserChangeKinksterGagState(dto).ConfigureAwait(false);
+                    var result = await _hub.UserChangeKinksterActiveGag(dto).ConfigureAwait(false);
                     if (result.ErrorCode is not GagSpeakApiEc.Success)
                     {
                         _logger.LogDebug($"Failed to Remove ({slot.GagItem.GagName()}) on {dispName}, Reason:{result}", LoggerType.StickyUI);
@@ -378,12 +378,12 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
             _selections.RestrictionLayer = newVal;
         CkGui.AttachToolTip("Select the layer to apply a Restriction to.");
 
-        if (k.LastRestrictionsData.Restrictions[_selections.RestrictionLayer] is not { } slot)
+        if (k.ActiveRestrictions.Restrictions[_selections.RestrictionLayer] is not { } slot)
             return;
 
         // register display texts for the buttons.
         var hasItem = slot.Identifier != Guid.Empty;
-        var itemName = k.LastLightStorage.Restrictions.FirstOrDefault(r => r.Id == slot.Identifier) is { } item ? item.Label : string.Empty;
+        var itemName = k.LightCache.Restrictions.TryGetValue(slot.Identifier, out var item) ? item.Label : string.Empty;
         var hasPadlock = slot.Padlock is not Padlocks.None;
         var applyTxt = hasItem ? $"Currently Applied: {itemName}" : $"Apply a Restriction to {dispName}";
         var applyTT = $"Applies a Restriction to {dispName}.";
@@ -445,10 +445,10 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         {
             if (ImGui.Button("Remove Restriction", new Vector2(width, ImGui.GetFrameHeight())))
             {
-                var dto = new PushKinksterRestrictionUpdate(k.UserData, DataUpdateType.Removed) { Layer = _selections.RestrictionLayer };
+                var dto = new PushKinksterActiveRestriction(k.UserData, DataUpdateType.Removed) { Layer = _selections.RestrictionLayer };
                 UiService.SetUITask(async () =>
                 {
-                    var result = await _hub.UserChangeKinksterRestrictionState(dto).ConfigureAwait(false);
+                    var result = await _hub.UserChangeKinksterActiveRestriction(dto).ConfigureAwait(false);
                     if (result.ErrorCode is not GagSpeakApiEc.Success)
                     {
                         _logger.LogDebug($"Failed to Remove Restriction Item on {dispName}, Reason:{result}", LoggerType.StickyUI);
@@ -471,16 +471,16 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
     {
         ImGui.TextUnformatted("Restraint Actions");
 
-        var hasItem = k.LastRestraintData.Identifier != Guid.Empty;
-        var hasPadlock = k.LastRestraintData.Padlock is not Padlocks.None;
+        var hasItem = k.ActiveRestraint.Identifier != Guid.Empty;
+        var hasPadlock = k.ActiveRestraint.Padlock is not Padlocks.None;
 
         var applyText = "Apply Restraint Set";
         var applyTT = $"Applies a Restraint Set to {dispName}.";
         var applyLayerText = hasItem ? $"Apply Restraint Layer to {dispName}" : "Must apply Restraint Set first!";
         var applyLayerTT = hasItem ? $"Applies a Restraint Layer to {dispName}'s Restraint Set." : "Must apply a Restraint Set first!";
-        var lockTxt = hasPadlock ? $"Locked with a {k.LastRestraintData.Padlock.ToName()}" : hasItem
+        var lockTxt = hasPadlock ? $"Locked with a {k.ActiveRestraint.Padlock.ToName()}" : hasItem
             ? $"Lock {dispName}'s Restraint Set" : "No Restraint Set to lock!";
-        var lockTT = hasPadlock ? $"This Restraint Set is locked with a {k.LastRestraintData.Padlock.ToName()}" : hasItem
+        var lockTT = hasPadlock ? $"This Restraint Set is locked with a {k.ActiveRestraint.Padlock.ToName()}" : hasItem
             ? $"Locks the Restraint Set on {dispName}." : "No Restraint Set to lock!";        
         
         var unlockTxt = hasPadlock ? $"Unlock {dispName}'s Restraint Set" : "No Padlock to unlock!";
@@ -491,7 +491,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         var removeTT = $"{removeTxt}.";
 
         // Expander for ApplyRestraint
-        if (CkGui.IconTextButton(FAI.Handcuffs, applyText, width, true, !k.PairPerms.ApplyRestraintSets || !k.LastRestraintData.CanApply()))
+        if (CkGui.IconTextButton(FAI.Handcuffs, applyText, width, true, !k.PairPerms.ApplyRestraintSets || !k.ActiveRestraint.CanApply()))
             _selections.OpenOrClose(InteractionType.ApplyRestraint);
         CkGui.AttachToolTip(applyTT);
 
@@ -518,14 +518,14 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         }
 
         // Expander for LockRestraint
-        var disableLockExpand = k.LastRestraintData.Identifier == Guid.Empty || k.LastRestraintData.Padlock is not Padlocks.None || !k.PairPerms.LockRestraintSets;
-        using (ImRaii.PushColor(ImGuiCol.Text, (k.LastRestraintData.Padlock is Padlocks.None ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudYellow)))
+        var disableLockExpand = k.ActiveRestraint.Identifier == Guid.Empty || k.ActiveRestraint.Padlock is not Padlocks.None || !k.PairPerms.LockRestraintSets;
+        using (ImRaii.PushColor(ImGuiCol.Text, (k.ActiveRestraint.Padlock is Padlocks.None ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudYellow)))
         {
             if (CkGui.IconTextButton(FAI.Lock, lockTxt, width, true, disableLockExpand))
                 _selections.OpenOrClose(InteractionType.LockRestraint);
         }
         CkGui.AttachToolTip(lockTT +
-            (PadlockEx.IsTimerLock(k.LastRestraintData.Padlock) ? "--SEP----COL--" + k.LastRestraintData.Timer.ToGsRemainingTimeFancy() : ""), color: ImGuiColors.ParsedPink);
+            (PadlockEx.IsTimerLock(k.ActiveRestraint.Padlock) ? "--SEP----COL--" + k.ActiveRestraint.Timer.ToGsRemainingTimeFancy() : ""), color: ImGuiColors.ParsedPink);
 
         // Interaction Window for LockRestraint
         if (_selections.OpenInteraction is InteractionType.LockRestraint)
@@ -536,7 +536,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         }
 
         // Expander for unlocking.
-        var disableUnlockExpand = k.LastRestraintData.Padlock is Padlocks.None || !k.PairPerms.UnlockRestraintSets;
+        var disableUnlockExpand = k.ActiveRestraint.Padlock is Padlocks.None || !k.PairPerms.UnlockRestraintSets;
         if (CkGui.IconTextButton(FAI.Unlock, unlockTxt, width, true, disableUnlockExpand))
             _selections.OpenOrClose(InteractionType.UnlockRestraint);
         CkGui.AttachToolTip(unlockTT);
@@ -564,7 +564,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         }
 
         // Expander for removing.
-        var disableRemoveExpand = k.LastRestraintData.Identifier == Guid.Empty || k.LastRestraintData.Padlock is not Padlocks.None || !k.PairPerms.RemoveRestraintSets;
+        var disableRemoveExpand = k.ActiveRestraint.Identifier == Guid.Empty || k.ActiveRestraint.Padlock is not Padlocks.None || !k.PairPerms.RemoveRestraintSets;
         if (CkGui.IconTextButton(FAI.TimesCircle, removeTxt, width, true, disableRemoveExpand))
             _selections.OpenOrClose(InteractionType.RemoveRestraint);
         CkGui.AttachToolTip(removeTT);
@@ -576,7 +576,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
             {
                 UiService.SetUITask(async () =>
                 {
-                    var result = await _hub.UserChangeKinksterRestraintState(new(k.UserData, DataUpdateType.Removed)).ConfigureAwait(false);
+                    var result = await _hub.UserChangeKinksterActiveRestraint(new(k.UserData, DataUpdateType.Removed)).ConfigureAwait(false);
                     if (result.ErrorCode is not GagSpeakApiEc.Success)
                     {
                         _logger.LogDebug($"Failed to Remove {dispName}'s Restraint Set. ({result})", LoggerType.StickyUI);
@@ -674,7 +674,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         ImGui.TextUnformatted("Toybox Actions");
 
         // Pattern Execution
-        if (CkGui.IconTextButton(FAI.PlayCircle, $"Execute {dispName}'s Patterns", width, true, !k.PairPerms.ExecutePatterns || k.PairGlobals.InVibeRoom || !k.LastLightStorage.Patterns.Any()))
+        if (CkGui.IconTextButton(FAI.PlayCircle, $"Execute {dispName}'s Patterns", width, true, !k.PairPerms.ExecutePatterns || k.PairGlobals.InVibeRoom || !k.LightCache.Patterns.Any()))
             _selections.OpenOrClose(InteractionType.StartPattern);
         CkGui.AttachToolTip($"Play one of {dispName}'s patterns to the selected toys.");
 
@@ -687,13 +687,12 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         }
 
         // Stop a Pattern
-        if (CkGui.IconTextButton(FAI.StopCircle, $"Stop {dispName}'s Active Pattern", width, true, !k.PairPerms.StopPatterns || k.PairGlobals.InVibeRoom || k.LastToyboxData.ActivePattern == Guid.Empty))
+        if (CkGui.IconTextButton(FAI.StopCircle, $"Stop {dispName}'s Active Pattern", width, true, !k.PairPerms.StopPatterns || k.PairGlobals.InVibeRoom || k.ActivePattern == Guid.Empty))
         {
-            var idToStop = k.LastToyboxData.ActivePattern;
             // Avoid blocking the UI by executing this off the UI thread.
             UiService.SetUITask(async () =>
             {
-                var res = await _hub.UserChangeKinksterToyboxState(new(k.UserData, k.LastToyboxData, idToStop, DataUpdateType.PatternStopped));
+                var res = await _hub.UserChangeKinksterActivePattern(new(k.UserData, Guid.Empty, DataUpdateType.PatternStopped));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                 {
                     _logger.LogError($"Failed to stop {dispName}'s active pattern. ({res.ErrorCode})", LoggerType.StickyUI);
@@ -706,7 +705,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         CkGui.AttachToolTip($"Halt the active pattern on {dispName}'s Toy");
 
         // Expander for toggling an alarm.
-        if (CkGui.IconTextButton(FAI.Clock, $"Toggle {dispName}'s Alarms", width, true, !k.PairPerms.ToggleAlarms || k.PairGlobals.InVibeRoom || !k.LastLightStorage.Alarms.Any()))
+        if (CkGui.IconTextButton(FAI.Clock, $"Toggle {dispName}'s Alarms", width, true, !k.PairPerms.ToggleAlarms || k.PairGlobals.InVibeRoom || !k.LightCache.Alarms.Any()))
             _selections.OpenOrClose(InteractionType.ToggleAlarm);
         CkGui.AttachToolTip($"Switch the state of {dispName}'s Alarms.");
 
@@ -718,7 +717,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         }
 
         // Expander for toggling a trigger.
-        if (CkGui.IconTextButton(FAI.LandMineOn, $"Toggle {dispName}'s Triggers", width, true, !k.PairPerms.ToggleTriggers || !k.LastLightStorage.Triggers.Any()))
+        if (CkGui.IconTextButton(FAI.LandMineOn, $"Toggle {dispName}'s Triggers", width, true, !k.PairPerms.ToggleTriggers || !k.LightCache.Triggers.Any()))
             _selections.OpenOrClose(InteractionType.ToggleTrigger);
         CkGui.AttachToolTip($"Toggle the state of a trigger in {dispName}'s triggerList.");
 

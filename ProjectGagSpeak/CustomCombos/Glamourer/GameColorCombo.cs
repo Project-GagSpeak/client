@@ -6,7 +6,7 @@ using Penumbra.GameData.Structs;
 namespace GagSpeak.CustomCombos.Glamourer;
 
 /// <summary> In Theory, only one of these should need to be made, as when drawing you define the label. </summary>
-public sealed class GameStainCombo(DictStain _stains, ILogger log) : CkFilterComboColors(CreateFunc(_stains), log)
+public sealed class GameStainCombo(ILogger log) : CkFilterComboColors(CreateFunc(), log)
 {
     protected override bool DrawSelectable(int globalIdx, bool selected)
     {
@@ -17,8 +17,8 @@ public sealed class GameStainCombo(DictStain _stains, ILogger log) : CkFilterCom
         return base.DrawSelectable(globalIdx, selected);
     }
 
-    private static Func<IReadOnlyList<KeyValuePair<byte, (string Name, uint Color, bool Gloss)>>> CreateFunc(DictStain stains)
-        => () => stains.Select(kvp => kvp)
+    private static Func<IReadOnlyList<KeyValuePair<byte, (string Name, uint Color, bool Gloss)>>> CreateFunc()
+        => () => ItemSvc.Stains.Select(kvp => kvp)
             .Prepend(new KeyValuePair<StainId, Stain>(Stain.None.RowIndex, Stain.None)).Select(kvp
                 => new KeyValuePair<byte, (string, uint, bool)>(kvp.Key.Id, (kvp.Value.Name, kvp.Value.RgbaColor, kvp.Value.Gloss))).ToList();
 }

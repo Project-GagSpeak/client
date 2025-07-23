@@ -509,7 +509,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
         _logger.LogDebug("Loading data for UID: " + uid);
 /*
         var gagStorage = _infoExchanger.GetGagStorageFromUID(uid);
-        LoadedGagData = gagStorage.GagEquipData.Where(kvp => kvp.Value.GameItem.ItemId != ItemService.NothingItem(kvp.Value.Slot).ItemId).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+        LoadedGagData = gagStorage.GagEquipData.Where(kvp => kvp.Value.GameItem.ItemId != ItemSvc.NothingItem(kvp.Value.Slot).ItemId).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
         var importedSets = _infoExchanger.GetRestraintSetsFromUID(uid);
         LoadedRestrictions = importedSets.Where(x => _clientConfigs.GetSetIdxByGuid(x.RestrictionId) == -1).ToList();

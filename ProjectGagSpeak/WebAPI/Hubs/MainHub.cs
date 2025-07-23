@@ -29,6 +29,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     private readonly TokenProvider _tokenProvider;
     private readonly ServerConfigManager _serverConfigs;
     private readonly KinksterManager _kinksters;
+    private readonly KinksterListener _kinksterListener;
     private readonly VisualStateListener _visualListener;
     private readonly PuppeteerListener _puppetListener;
     private readonly ToyboxStateListener _kinkListener;
@@ -60,6 +61,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         TokenProvider tokenProvider,
         ServerConfigManager serverConfigs,
         KinksterManager kinksters,
+        KinksterListener kinksterListener,
         VisualStateListener visuals,
         PuppeteerListener puppeteer,
         ToyboxStateListener toybox,
@@ -73,6 +75,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         _serverConfigs = serverConfigs;
         _globalPerms = globalPerms;
         _kinksters = kinksters;
+        _kinksterListener = kinksterListener;
         _visualListener = visuals;
         _puppetListener = puppeteer;
         _kinkListener = toybox;
@@ -200,16 +203,26 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
 
         OnKinksterUpdateComposite(dto => _ = Callback_KinksterUpdateComposite(dto));
         OnKinksterUpdateIpc(dto => _ = Callback_KinksterUpdateIpc(dto));
-        OnKinksterUpdateGagSlot(dto => _ = Callback_KinksterUpdateGagSlot(dto));
-        OnKinksterUpdateRestriction(dto => _ = Callback_KinksterUpdateRestriction(dto));
-        OnKinksterUpdateRestraint(dto => _ = Callback_KinksterUpdateRestraint(dto));
-        OnKinksterUpdateCursedLoot(dto => _ = Callback_KinksterUpdateCursedLoot(dto));
+        OnKinksterUpdateActiveGag(dto => _ = Callback_KinksterUpdateActiveGag(dto));
+        OnKinksterUpdateActiveRestriction(dto => _ = Callback_KinksterUpdateActiveRestriction(dto));
+        OnKinksterUpdateActiveRestraint(dto => _ = Callback_KinksterUpdateActiveRestraint(dto));
+        OnKinksterUpdateActiveCursedLoot(dto => _ = Callback_KinksterUpdateActiveCursedLoot(dto));
         OnKinksterUpdateAliasGlobal(dto => _ = Callback_KinksterUpdateAliasGlobal(dto));
         OnKinksterUpdateAliasUnique(dto => _ = Callback_KinksterUpdateAliasUnique(dto));
-        OnKinksterUpdateToybox(dto => _ = Callback_KinksterUpdateToybox(dto));
-        OnKinksterUpdateLightStorage(dto => _ = Callback_KinksterUpdateLightStorage(dto));
+        OnKinksterUpdateActivePattern(dto => _ = Callback_KinksterUpdateActivePattern(dto));
+        OnKinksterUpdateActiveAlarms(dto => _ = Callback_KinksterUpdateActiveAlarms(dto));
+        OnKinksterUpdateActiveTriggers(dto => _ = Callback_KinksterUpdateActiveTriggers(dto));
         OnListenerName((user, name) => _ = Callback_ListenerName(user, name));
         OnShockInstruction(dto => _ = Callback_ShockInstruction(dto));
+
+        OnKinksterNewGagData(dto => _ = Callback_KinksterNewGagData(dto));
+        OnKinksterNewRestrictionData(dto => _ = Callback_KinksterNewRestrictionData(dto));
+        OnKinksterNewRestraintData(dto => _ = Callback_KinksterNewRestraintData(dto));
+        OnKinksterNewLootData(dto => _ = Callback_KinksterNewLootData(dto));
+        OnKinksterNewPatternData(dto => _ = Callback_KinksterNewPatternData(dto));
+        OnKinksterNewAlarmData(dto => _ = Callback_KinksterNewAlarmData(dto));
+        OnKinksterNewTriggerData(dto => _ = Callback_KinksterNewTriggerData(dto));
+        OnKinksterNewAllowances(dto => _ = Callback_KinksterNewAllowances(dto));
 
         OnChatMessageGlobal(dto => _ = Callback_ChatMessageGlobal(dto));
         OnKinksterOffline(dto => _ = Callback_KinksterOffline(dto));

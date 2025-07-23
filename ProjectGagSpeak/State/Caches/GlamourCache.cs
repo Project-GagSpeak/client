@@ -277,7 +277,7 @@ public class GlamourCache
                             if (slotMap.TryGetValue(slot, out var glam))
                                 glam.GameItem.DrawIcon(textures, iconSize, slot);
                             else
-                                ItemService.NothingItem(slot).DrawIcon(textures, iconSize, slot);
+                                ItemSvc.NothingItem(slot).DrawIcon(textures, iconSize, slot);
                         }
                     }
                 }
@@ -311,7 +311,7 @@ public class GlamourCache
                 if (_finalGlamour.TryGetValue(slot, out var glamour))
                     glamour.GameItem.DrawIcon(textures, iconSize, slot);
                 else
-                    ItemService.NothingItem(slot).DrawIcon(textures, iconSize, slot);
+                    ItemSvc.NothingItem(slot).DrawIcon(textures, iconSize, slot);
             }
         }
 
@@ -372,7 +372,7 @@ public class GlamourCache
                 if (_latestUnboundState.ParsedEquipment.TryGetValue(slot, out var glamour))
                     glamour.DrawIcon(textures, iconSize, slot);
                 else
-                    ItemService.NothingItem(slot).DrawIcon(textures, iconSize, slot);
+                    ItemSvc.NothingItem(slot).DrawIcon(textures, iconSize, slot);
             }
         }
     }

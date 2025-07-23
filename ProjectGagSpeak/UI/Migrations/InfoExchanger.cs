@@ -58,7 +58,7 @@ public class AccountInfoExchanger
                 var gagType = Enum.GetValues(typeof(GagType)).Cast<GagType>().FirstOrDefault(gt => gt.GagName() == gagData.Key);
                 var slotString = itemObject["Slot"]?.Value<string>() ?? "Head";
                 var slot = (EquipSlot)Enum.Parse(typeof(EquipSlot), slotString);
-                var gagDrawData = new GagDrawData(ItemService.NothingItem(slot));
+                var gagDrawData = new GagDrawData(ItemSvc.NothingItem(slot));
                 gagDrawData.Deserialize(itemObject);
                 if (ret.GagEquipData.ContainsKey(gagType))
                 {

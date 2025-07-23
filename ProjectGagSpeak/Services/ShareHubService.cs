@@ -139,10 +139,6 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             var json = JsonConvert.SerializeObject(pattern);
             var compressed = json.Compress(6);
             var base64Pattern = Convert.ToBase64String(compressed);
-
-            var devices = pattern.PlaybackData.DeviceData.Select(x => x.Toy).Distinct().ToArray();
-            var motors = pattern.PlaybackData.DeviceData.SelectMany(d => d.MotorData).Select(m => m.Motor).Aggregate(ToyMotor.Unknown, (acc, val) => acc | val);
-
             // construct the serverPatternInfo for the upload.
             var patternInfo = new ServerPatternInfo()
             {
@@ -153,9 +149,9 @@ public class ShareHubService : DisposableMediatorSubscriberBase
                 Tags = tags,
                 Length = pattern.Duration,
                 Looping = pattern.ShouldLoop,
-                PrimaryDeviceUsed = devices.Length > 0 ? devices[0] : ToyBrandName.Unknown,
-                SecondaryDeviceUsed = devices.Length > 1 ? devices[1] : ToyBrandName.Unknown,
-                MotorsUsed = motors,
+                PrimaryDeviceUsed = pattern.PlaybackData.PrimaryDeviceUsed,
+                SecondaryDeviceUsed = pattern.PlaybackData.SecondaryDeviceUsed,
+                MotorsUsed = pattern.PlaybackData.MotorsUsed,
             };
             Logger.LogTrace("Uploading Pattern to server.", LoggerType.ShareHub);
             // construct the dto for the upload.

@@ -55,7 +55,7 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
             PadlockAssigner = MainHub.UID
         };
 
-        if (await _dds.SendUpdatedGagData(layerIdx, newData, DataUpdateType.Locked) is { } res && res is not GagSpeakApiEc.Success)
+        if (await _dds.PushGagTriggerAction(layerIdx, newData, DataUpdateType.Locked) is { } res && res is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform LockGag with {SelectedLock.ToName()} on self. Reason:{res}", LoggerType.StickyUI);
             ResetSelection();
@@ -87,7 +87,7 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
             PadlockAssigner = MainHub.UID
         };
 
-        if (await _dds.SendUpdatedGagData(layerIdx, newData, DataUpdateType.Unlocked) is { } res && res is not GagSpeakApiEc.Success)
+        if (await _dds.PushGagTriggerAction(layerIdx, newData, DataUpdateType.Unlocked) is { } res && res is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform UnlockGag with {Items[layerIdx].Padlock.ToName()} on self. Reason:{res}", LoggerType.StickyUI);
             ResetSelection();

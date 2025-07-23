@@ -149,11 +149,11 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
         { "LFinger", EquipSlot.LFinger }
     };
 
-    public bool TryObtainActorGear(ItemService items, bool asOverlay, out Dictionary<EquipSlot, RestraintSlotBasic> curGear)
-        => TryObtainFromSlots(items, asOverlay, GearSlotMap, out curGear);
+    public bool TryObtainActorGear(bool asOverlay, out Dictionary<EquipSlot, RestraintSlotBasic> curGear)
+        => TryObtainFromSlots(asOverlay, GearSlotMap, out curGear);
 
-    public bool TryObtainActorAccessories(ItemService items, bool asOverlay, out Dictionary<EquipSlot, RestraintSlotBasic> curAccessories)
-        => TryObtainFromSlots(items, asOverlay, AccessorySlotMap, out curAccessories);
+    public bool TryObtainActorAccessories(bool asOverlay, out Dictionary<EquipSlot, RestraintSlotBasic> curAccessories)
+        => TryObtainFromSlots(asOverlay, AccessorySlotMap, out curAccessories);
 
     public bool TryObtainActorCustomization(out JObject customize, out JObject parameters)
     {
@@ -183,7 +183,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
         return true;
     }
 
-    private bool TryObtainFromSlots(ItemService items, bool asOverlay, Dictionary<string, EquipSlot> slotMap, out Dictionary<EquipSlot, RestraintSlotBasic> result)
+    private bool TryObtainFromSlots(bool asOverlay, Dictionary<string, EquipSlot> slotMap, out Dictionary<EquipSlot, RestraintSlotBasic> result)
     {
         result = new Dictionary<EquipSlot, RestraintSlotBasic>();
 
@@ -197,7 +197,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
             result[equipSlot] = new RestraintSlotBasic
             {
                 ApplyFlags = asOverlay ? RestraintFlags.IsOverlay : 0,
-                Glamour = new GlamourSlot(equipSlot, ItemService.NothingItem(equipSlot))
+                Glamour = new GlamourSlot(equipSlot, ItemSvc.NothingItem(equipSlot))
             };
 
             if (equipment[name] is not JObject itemData)
@@ -210,7 +210,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
             result[equipSlot].Glamour = new GlamourSlot
             {
                 Slot = equipSlot,
-                GameItem = items.Resolve(equipSlot, customItemId),
+                GameItem = ItemSvc.Resolve(equipSlot, customItemId),
                 GameStain = new StainIds((StainId)stain, (StainId)stain2),
             };
         }

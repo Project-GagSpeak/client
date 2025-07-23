@@ -166,7 +166,7 @@ public partial class GagRestrictionsPanel
         CkGui.AttachToolTip("Visual Alterations " + (_selector.Selected!.IsEnabled ? "will" : "will not") + " be applied with this Gag.");
 
         ImUtf8.SameLineInner();
-        var hasGlamour = ItemService.NothingItem(_selector.Selected!.Glamour.Slot).Id != _selector.Selected!.Glamour.GameItem.Id;
+        var hasGlamour = ItemSvc.NothingItem(_selector.Selected!.Glamour.Slot).Id != _selector.Selected!.Glamour.GameItem.Id;
         CkGui.FramedIconText(FAI.Vest);
         CkGui.AttachToolTip(hasGlamour
             ? $"A --COL--{_selector.Selected!.Glamour.GameItem.Name}--COL-- is attached to the --COL--{_selector.Selected!.GagType.GagName()}--COL--."

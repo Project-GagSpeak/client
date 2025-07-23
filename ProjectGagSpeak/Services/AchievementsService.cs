@@ -304,7 +304,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
                 if (targetPair is not null)
                 {
                     Logger.LogTrace("Target is in the direct pairs, checking if they are gagged.", LoggerType.Achievements);
-                    targetIsGagged = targetPair.LastGagData.GagSlots.Any(x => x.GagItem is not GagType.None);
+                    targetIsGagged = targetPair.ActiveGags.GagSlots.Any(x => x.GagItem is not GagType.None);
                 }
             }
             return targetIsGagged;

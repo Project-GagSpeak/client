@@ -19,7 +19,7 @@ public class TraitAllowanceManager : IHybridSavable
     public readonly HashSet<string> TraitAllowancesRestrictions = [];
     public readonly HashSet<string> TraitAllowancesGags = [];
     public readonly HashSet<string> TraitAllowancesPatterns = []; // Unsure how yet.
-    public readonly HashSet<string> TraitAllowancesTriggers = []; // Probably Not.
+    public readonly HashSet<string> TraitAllowancesTriggers = []; // doubles as puppeteer.
 
     public Dictionary<GagspeakModule, string[]> GetLightAllowances()
         => new Dictionary<GagspeakModule, string[]>

@@ -14,7 +14,7 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
     private readonly MainHub _mainHub;
     private Kinkster _ref;
     public PairRestraintPadlockCombo(ILogger log, MainHub hub, Kinkster k, Action postButtonPress)
-        : base(() => [k.LastRestraintData], () => [..PadlockEx.GetLocksForPair(k.PairPerms)], log)
+        : base(() => [k.ActiveRestraint], () => [..PadlockEx.GetLocksForPair(k.PairPerms)], log)
     {
         _mainHub = hub;
         _ref = k;
@@ -22,8 +22,7 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
     }
 
     protected override string ItemName(CharaActiveRestraint item)
-        => _ref.LastLightStorage.Restraints.FirstOrDefault(r => r.Id == item.Identifier) is { } restraint
-            ? restraint.Label : "None";
+        => _ref.LightCache.Restraints.TryGetValue(item.Identifier, out var restraint) ? restraint.Label : "None";
     protected override bool DisableCondition(int _)
         => Items[0].Identifier == Guid.Empty;
 
@@ -37,7 +36,7 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
         var finalTime = SelectedLock == Padlocks.FiveMinutesPadlock
             ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
 
-        var dto = new PushKinksterRestraintUpdate(_ref.UserData, DataUpdateType.Locked)
+        var dto = new PushKinksterActiveRestraint(_ref.UserData, DataUpdateType.Locked)
         {
             Padlock = SelectedLock,
             Password = Password,
@@ -45,7 +44,7 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
             PadlockAssigner = MainHub.UID,
         };
 
-        var result = await _mainHub.UserChangeKinksterRestraintState(dto);
+        var result = await _mainHub.UserChangeKinksterActiveRestraint(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform LockRestraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
@@ -68,14 +67,14 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
         if (!Items[0].CanUnlock() || !_ref.PairPerms.UnlockRestraintSets)
             return false;
 
-        var dto = new PushKinksterRestraintUpdate(_ref.UserData, DataUpdateType.Unlocked)
+        var dto = new PushKinksterActiveRestraint(_ref.UserData, DataUpdateType.Unlocked)
         {
             Padlock = Items[0].Padlock,
             Password = Password,
             PadlockAssigner = MainHub.UID,
         };
 
-        var result = await _mainHub.UserChangeKinksterRestraintState(dto);
+        var result = await _mainHub.UserChangeKinksterActiveRestraint(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform UnlockRestraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");

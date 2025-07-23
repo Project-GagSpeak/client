@@ -1,13 +1,11 @@
 using CkCommons;
-using CkCommons.Classes;
-using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
-using GagSpeak.Services;
 using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
+using OtterGui.Extensions;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 
@@ -53,7 +51,7 @@ public class RestraintSlotBasic : IRestraintSlot
 
     public RestraintSlotBasic() => Glamour = new GlamourSlot();
 
-    public RestraintSlotBasic(EquipSlot slot) => Glamour = new GlamourSlot(slot, ItemService.NothingItem(slot));
+    public RestraintSlotBasic(EquipSlot slot) => Glamour = new GlamourSlot(slot, ItemSvc.NothingItem(slot));
 
     public RestraintSlotBasic(RestraintSlotBasic other)
     {
@@ -78,7 +76,7 @@ public class RestraintSlotBasic : IRestraintSlot
     /// <returns> The loaded BasicSlot. </returns>
     /// <exception cref="Exception"> If the JToken is either not valid or the GlamourSlot fails to parse. </exception>
     /// <remarks> Throws if the JToken is either not valid or the GlamourSlot fails to parse.</remarks>
-    public static RestraintSlotBasic FromToken(JToken token, ItemService items)
+    public static RestraintSlotBasic FromToken(JToken token)
     {
         if (token is not JObject slotJson)
             throw new Exception("Invalid JSON Token for Slot.");
@@ -86,7 +84,7 @@ public class RestraintSlotBasic : IRestraintSlot
         return new RestraintSlotBasic()
         {
             ApplyFlags = slotJson["ApplyFlags"]?.ToObject<int>() is int v ? (RestraintFlags)v : RestraintFlags.IsOverlay | RestraintFlags.Glamour,
-            Glamour = items.ParseGlamourSlot(slotJson["Glamour"])
+            Glamour = ItemSvc.ParseGlamourSlot(slotJson["Glamour"])
         };
     }
 }
@@ -127,7 +125,7 @@ public class RestraintSlotAdvanced : IRestraintSlot, IRestrictionRef
     {
         return new RestraintSlotAdvanced()
         {
-            Ref = new RestrictionItem() { Identifier = Guid.Empty, Glamour = new GlamourSlot(slot, ItemService.NothingItem(slot)) },
+            Ref = new RestrictionItem() { Identifier = Guid.Empty, Glamour = new GlamourSlot(slot, ItemSvc.NothingItem(slot)) },
             CustomStains = customStains
         };
     }
@@ -306,6 +304,7 @@ public class ModPresetLayer : IRestraintLayer, IModPreset
 public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
 {
     public Guid Identifier { get; internal set; } = Guid.NewGuid();
+    public bool IsEnabled { get; set; } = true;
     public string Label { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
     public string ThumbnailPath { get; set; } = string.Empty;
@@ -335,6 +334,7 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
     public void ApplyChanges(RestraintSet other)
     {
         // Apply changes from the other RestraintSet to this one
+        IsEnabled = other.IsEnabled;
         Label = other.Label;
         Description = other.Description;
         ThumbnailPath = other.ThumbnailPath;
@@ -358,6 +358,7 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
         return new JObject
         {
             ["Identifier"] = Identifier.ToString(),
+            ["IsEnabled"] = IsEnabled,
             ["Label"] = Label,
             ["Description"] = Description,
             ["ThumbnailPath"] = ThumbnailPath,
@@ -373,7 +374,7 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
         };
     }
 
-    public static RestraintSet FromToken(JToken token, ItemService items, ModSettingPresetManager mods, RestrictionManager restrictions)
+    public static RestraintSet FromToken(JToken token, ModSettingPresetManager mods, RestrictionManager restrictions)
     {
         // if not a valid token, throw an exception
         if (token is not JObject setJObj || setJObj["RestraintSlots"] is not JObject slotsJObj)
@@ -394,7 +395,7 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
             // Attempt to add the type.
             slotDict.TryAdd(equipSlot, type switch
             {
-                RestraintSlotType.Basic => RestraintSlotBasic.FromToken(slotInnerToken, items),
+                RestraintSlotType.Basic => RestraintSlotBasic.FromToken(slotInnerToken),
                 RestraintSlotType.Advanced => RestraintSlotAdvanced.FromToken(slotInnerToken, restrictions),
                 _ => throw new InvalidOperationException($"Unsupported RestraintSlotType: {typeStr}")
             });
@@ -439,12 +440,13 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
         return new RestraintSet
         {
             Identifier = Guid.TryParse(setJObj["Identifier"]?.Value<string>(), out var id) ? id : Guid.NewGuid(),
+            IsEnabled = setJObj["IsEnabled"]?.Value<bool>() ?? true,
             Label = setJObj["Label"]?.Value<string>() ?? string.Empty,
             Description = setJObj["Description"]?.Value<string>() ?? string.Empty,
             ThumbnailPath = setJObj["ThumbnailPath"]?.Value<string>() ?? string.Empty,
             DoRedraw = setJObj["DoRedraw"]?.Value<bool>() ?? false,
             RestraintSlots = slotDict,
-            Glasses = items.ParseBonusSlot(setJObj["Glasses"]),
+            Glasses = ItemSvc.ParseBonusSlot(setJObj["Glasses"]),
             Layers = layers,
             MetaStates = MetaDataStruct.FromJObject(setJObj["MetaStates"]),
             RestraintMods = baseMods,
@@ -455,18 +457,40 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
     }
 
     // Need to serialously overhaul a FromJObect method here.
-    public LightRestraintSet ToLightRestraint()
+    public LightRestraint ToLightItem()
     {
-        var appliedSlots = new List<AppliedSlot>();
-        foreach (var kv in RestraintSlots)
+        var basicSlots = new Dictionary<byte, LightSlotBasic>();
+        var advSlots = new Dictionary<byte, LightSlotAdvanced>();
+        var bindLayers = new List<LightRestrictionLayer>();
+        var modLayers = new List<LightModLayer>();
+        // populate the slots.
+        foreach (var (key, slot) in RestraintSlots)
         {
-            if (kv.Value.ApplyFlags.HasAny(RestraintFlags.Glamour) && kv.Value is RestraintSlotBasic basic)
-                appliedSlots.Add(new AppliedSlot((byte)basic.EquipSlot, basic.Glamour.GameItem.Id.Id));
-            else if (kv.Value is RestraintSlotAdvanced adv && adv.Ref != null)
-                appliedSlots.Add(new AppliedSlot((byte)adv.EquipSlot, adv.EquipItem.ItemId.Id));
+            if (slot is RestraintSlotBasic b)
+                basicSlots.TryAdd((byte)key, new LightSlotBasic((byte)key, b.Glamour.ToLightSlot(), slot.ApplyFlags));
+            else if (slot is RestraintSlotAdvanced a && a.IsValid())
+                advSlots.TryAdd((byte)key, new LightSlotAdvanced((byte)key, a.Ref.Identifier, a.ApplyFlags, a.Stains.Stain1.Id, a.Stains.Stain2.Id));
         }
-
-        var attributes = new Attributes(RestraintFlags.Advanced, Traits, Arousal);
-        return new LightRestraintSet(Identifier, Label, Description, appliedSlots, attributes);
+        // populate the layers.
+        foreach (var (layer, idx) in Layers.WithIndex())
+        {
+            if (layer is RestrictionLayer rl && rl.IsValid())
+                bindLayers.Add(new LightRestrictionLayer(idx, rl.ID, rl.Label, rl.Arousal, rl.Ref.Identifier, rl.ApplyFlags, rl.CustomStains.Stain1.Id, rl.CustomStains.Stain2.Id));
+            else if (layer is ModPresetLayer ml && ml.IsValid())
+                modLayers.Add(new LightModLayer(idx, ml.ID, ml.Label, ml.Arousal, ml.Mod.ToString()));
+        }
+        // populate the remaining data.
+        return new LightRestraint(Identifier, IsEnabled, Label, Description)
+        {
+            BasicSlots = basicSlots,
+            AdvancedSlots = advSlots,
+            RestrictionLayers = bindLayers,
+            ModLayers = modLayers,
+            Mods = RestraintMods.Select(x => x.ToString()).ToList(),
+            Moodles = RestraintMoodles.Select(x => new LightMoodle(x.Type, x.Id)).ToList(),
+            BaseTraits = Traits,
+            Arousal = Arousal,
+            Redraws = DoRedraw,
+        };
     }
 }

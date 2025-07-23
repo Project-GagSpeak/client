@@ -11,21 +11,18 @@ using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.Pairs;
 
-public sealed class PairTriggerCombo : CkFilterComboIconButton<LightTrigger>
+public sealed class PairTriggerCombo : CkFilterComboIconButton<KinksterTrigger>
 {
     private Action PostButtonPress;
     private readonly MainHub _mainHub;
     private Kinkster _ref;
 
     public PairTriggerCombo(ILogger log, MainHub hub, Kinkster kinkster, Action postButtonPress)
-        : base(log, FAI.Bell, "Enable", () => [ .. kinkster.LastLightStorage.Triggers.OrderBy(x => x.Label)])
+        : base(log, FAI.Bell, "Enable", () => [ .. kinkster.LightCache.Triggers.Values.OrderBy(x => x.Label)])
     {
         _mainHub = hub;
         _ref = kinkster;
         PostButtonPress = postButtonPress;
-
-        // update current selection to the last registered LightTrigger from that pair on construction.
-        Current = _ref.LastLightStorage?.Triggers.FirstOrDefault();
     }
 
     // override the method to extract items by extracting all LightTriggers.
@@ -51,10 +48,8 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<LightTrigger>
             return false;
 
         // Construct the dto, and then send it off.
-        PushKinksterToyboxUpdate dto = new(_ref.UserData, _ref.LastToyboxData, Current.Id, DataUpdateType.TriggerToggled);
-        
-        // send the dto to the server.
-        var result = await _mainHub.UserChangeKinksterToyboxState(dto);
+        var dto = new PushKinksterActiveTriggers(_ref.UserData,  _ref.ActiveTriggers, Current.Id, DataUpdateType.TriggerToggled);
+        var result = await _mainHub.UserChangeKinksterActiveTriggers(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform TriggerToggle on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
@@ -69,7 +64,7 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<LightTrigger>
         }
     }
 
-    private void DrawItemTooltip(LightTrigger item)
+    private void DrawItemTooltip(KinksterTrigger item)
     {
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
@@ -114,11 +109,11 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<LightTrigger>
             // Draw the alarm time.
             CkGui.ColorText("Trigger Kind:", ImGuiColors.ParsedGold);
             ImUtf8.SameLineInner();
-            ImGui.TextUnformatted(item.Type.ToName());
+            ImGui.TextUnformatted(item.Kind.ToName());
 
             CkGui.ColorText("Action Kind Performed:", ImGuiColors.ParsedGold);
             ImUtf8.SameLineInner();
-            ImGui.Text(item.ActionOnTrigger.ToName());
+            ImGui.Text(item.ActionType.ToName());
 
             ImGui.EndTooltip();
         }

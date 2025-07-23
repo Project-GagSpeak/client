@@ -46,23 +46,21 @@ public class EquipmentDrawer
     private readonly ILogger _logger;
     private readonly IpcCallerGlamourer _ipcGlamourer;
     private readonly RestrictionManager _restrictions;
-    private readonly ItemService _items;
     private readonly TextureService _textures;
     private readonly CosmeticService _cosmetics;
     public EquipmentDrawer(ILogger<EquipmentDrawer> logger, GagspeakMediator mediator,
         IpcCallerGlamourer glamourer, RestrictionManager restrictions, FavoritesManager favorites,
-        ItemService items, TextureService textures, CosmeticService cosmetics)
+        TextureService textures, CosmeticService cosmetics)
     {
         _logger = logger;
         _ipcGlamourer = glamourer;
         _restrictions = restrictions;
-        _items = items;
         _cosmetics = cosmetics;
         _textures = textures;
         // Preassign these 10 itemCombo slots. They will be consistant throughout the plugins usage.
-        _itemCombos = EquipSlotExtensions.EqdpSlots.Select(e => new GameItemCombo(e, items.ItemData, logger)).ToArray();
-        _bonusCombos = BonusExtensions.AllFlags.Select(f => new BonusItemCombo(items, f, logger)).ToArray();
-        _stainCombo = new GameStainCombo(_items.Stains, logger);
+        _itemCombos = EquipSlotExtensions.EqdpSlots.Select(e => new GameItemCombo(e, logger)).ToArray();
+        _bonusCombos = BonusExtensions.AllFlags.Select(f => new BonusItemCombo(f, logger)).ToArray();
+        _stainCombo = new GameStainCombo(logger);
         _restrictionCombo = new RestrictionCombo(logger, mediator, favorites, () => 
         [ 
             ..restrictions.Storage.OrderByDescending(p => favorites._favoriteRestrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
@@ -70,32 +68,9 @@ public class EquipmentDrawer
         GameIconSize = new Vector2(2 * ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.Y);
     }
 
-    public static float GetRestraintItemH() => ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
-    public static float GlamourH() => ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2;
-
     // Temporary Cached Storage holding the currently resolved item from the latest hover.
     private CachedSlotItemData LastCachedItem;
     public readonly Vector2 GameIconSize;
-
-    /// <summary> Attempts to get the stain data for the stainId passed in. </summary>
-    /// <returns> True if in the stain dictionary, false otherwise.</returns>
-    public bool TryGetStain(StainId stain, out Stain data)
-        => _items.Stains.TryGetValue(stain, out data);
-
-    /// <summary> Draws a slot provided by a paired Kinkster SlotCache </summary>
-    /// <remarks> Intended for lightweight usage. </remarks>
-    public void DrawAppliedSlot(AppliedSlot appliedSlot)
-    {
-        if (LastCachedItem.Item.Id != appliedSlot.CustomItemId)
-            LastCachedItem = new CachedSlotItemData(_items.Resolve((EquipSlot)appliedSlot.Slot, appliedSlot.CustomItemId));
-
-        LastCachedItem.Item.DrawIcon(_textures, GameIconSize, (EquipSlot)appliedSlot.Slot);
-    }
-
-    public void DrawEquipItem(EquipSlot slot, EquipItem item, Vector2 size)
-    {
-        item.DrawIcon(_textures, size, slot);
-    }
 
     // Method for Drawing the Associated Glamour Item (Singular)
     public void DrawAssociatedGlamour(string id, GlamourSlot item, float width)
@@ -116,7 +91,7 @@ public class EquipmentDrawer
                 if (CkGuiUtils.EnumCombo($"##{id}-slot", barWidth, item.Slot, out var newSlot, EquipSlotExtensions.EqdpSlots, slot => slot.ToName()))
                 {
                     item.Slot = newSlot;
-                    item.GameItem = ItemService.NothingItem(item.Slot);
+                    item.GameItem = ItemSvc.NothingItem(item.Slot);
                 }
                 DrawItem(item, barWidth);
                 DrawStains(item, barWidth);
@@ -142,7 +117,7 @@ public class EquipmentDrawer
         {
             DrawRestraintSlotBasic(basicSlot, innerWidth);
             ImUtf8.SameLineInner();
-            if (CkGui.IconButton(FAI.ArrowsLeftRight, GetRestraintItemH(), basicSlot.EquipSlot + "Swapper"))
+            if (CkGui.IconButton(FAI.ArrowsLeftRight, CkStyle.TwoRowHeight(), basicSlot.EquipSlot + "Swapper"))
             {
                 var slot = basicSlot.EquipSlot;
                 _logger.LogTrace($"Swapping {basicSlot.EquipSlot} from Basic to Advanced.");
@@ -153,7 +128,7 @@ public class EquipmentDrawer
         {
             DrawRestrictionRef(advSlot, focus.ToName(), innerWidth);
             ImUtf8.SameLineInner();
-            if (CkGui.IconButton(FAI.ArrowsLeftRight, GetRestraintItemH(), advSlot.EquipSlot + "Swapper"))
+            if (CkGui.IconButton(FAI.ArrowsLeftRight, CkStyle.TwoRowHeight(), advSlot.EquipSlot + "Swapper"))
             {
                 _logger.LogTrace($"Swapping {advSlot.EquipSlot} from Advanced to Basic.");
                 var prevStains = advSlot.CustomStains;
@@ -173,9 +148,9 @@ public class EquipmentDrawer
     {
         using var group = ImRaii.Group();
         // Draw out the icon firstly.
-        basicSlot.EquipItem.DrawIcon(_textures, new Vector2(GetRestraintItemH()), basicSlot.EquipSlot);
+        basicSlot.EquipItem.DrawIcon(_textures, new Vector2(CkStyle.TwoRowHeight()), basicSlot.EquipSlot);
         ImGui.SameLine(0, 3);
-        width -= 3f + GetRestraintItemH();
+        width -= 3f + CkStyle.TwoRowHeight();
 
         // Get the width for the combo stuff.
         var comboWidth = width - CkGui.IconButtonSize(FAI.EyeSlash).X - ImGui.GetStyle().ItemInnerSpacing.X;
@@ -188,7 +163,7 @@ public class EquipmentDrawer
         ImUtf8.SameLineInner();
         var overlayState = basicSlot.ApplyFlags.HasAny(RestraintFlags.IsOverlay);
         using (ImRaii.PushColor(ImGuiCol.Button, CkColor.FancyHeaderContrast.Uint()))
-            if (CkGui.IconButton(overlayState ? FAI.Eye : FAI.EyeSlash, GetRestraintItemH(), basicSlot.EquipSlot + "Overlay"))
+            if (CkGui.IconButton(overlayState ? FAI.Eye : FAI.EyeSlash, CkStyle.TwoRowHeight(), basicSlot.EquipSlot + "Overlay"))
                 basicSlot.ApplyFlags ^= RestraintFlags.IsOverlay;
 
         ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.FancyHeaderContrast.Uint(), ImGui.GetStyle().FrameRounding);
@@ -204,21 +179,21 @@ public class EquipmentDrawer
             if (TextureManagerEx.GetMetadataPath(ImageDataType.Restrictions, restriction.Ref.ThumbnailPath) is { } thumbnail)
             {
                 var pos = ImGui.GetCursorScreenPos();
-                ImGui.GetWindowDrawList().AddDalamudImageRounded(thumbnail, pos, new Vector2(GetRestraintItemH()), ImGui.GetStyle().FrameRounding);
-                ImGui.Dummy(new Vector2(GetRestraintItemH()));
+                ImGui.GetWindowDrawList().AddDalamudImageRounded(thumbnail, pos, new Vector2(CkStyle.TwoRowHeight()), ImGui.GetStyle().FrameRounding);
+                ImGui.Dummy(new Vector2(CkStyle.TwoRowHeight()));
             }
         }
         else
         {
             // Placeholder frame display.
-            ItemService.NothingItem(restriction.Ref.Glamour.Slot).DrawIcon(_textures, new Vector2(GetRestraintItemH()), restriction.Ref.Glamour.Slot);
+            ItemSvc.NothingItem(restriction.Ref.Glamour.Slot).DrawIcon(_textures, new Vector2(CkStyle.TwoRowHeight()), restriction.Ref.Glamour.Slot);
         }
 
         ImGui.SameLine(0, 3);
-        width -= 3f + GetRestraintItemH();
+        width -= 3f + CkStyle.TwoRowHeight();
 
         // restriction selection and custom combos.
-        var comboWidth = width - GetRestraintItemH() - ImGui.GetStyle().ItemInnerSpacing.X;
+        var comboWidth = width - CkStyle.TwoRowHeight() - ImGui.GetStyle().ItemInnerSpacing.X;
         using (ImRaii.Group())
         {
             var change = _restrictionCombo.Draw($"##AdvSelector{id}", restriction.Ref.Identifier, comboWidth, flags: CFlags.NoArrowButton);
@@ -257,10 +232,10 @@ public class EquipmentDrawer
     }
 
     public bool TryImportCurrentGear(out Dictionary<EquipSlot, RestraintSlotBasic> curGear)
-        => _ipcGlamourer.TryObtainActorGear(_items, true, out curGear);
+        => _ipcGlamourer.TryObtainActorGear(true, out curGear);
 
     public bool TryImportCurrentAccessories(out Dictionary<EquipSlot, RestraintSlotBasic> curAccessories)
-        => _ipcGlamourer.TryObtainActorAccessories(_items, true, out curAccessories);
+        => _ipcGlamourer.TryObtainActorAccessories(true, out curAccessories);
 
     public bool TryImportCurrentCustomizations(out JObject customizations, out JObject parameters)
         => _ipcGlamourer.TryObtainActorCustomization(out customizations, out parameters);
@@ -327,9 +302,9 @@ public class EquipmentDrawer
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
         {
-            _logger.LogTrace($"Item changed to {ItemService.NothingItem(item.Slot)} " +
-                $"[{ItemService.NothingItem(item.Slot).ItemId}] from {item.GameItem} [{item.GameItem.ItemId}]");
-            item.GameItem = ItemService.NothingItem(item.Slot);
+            _logger.LogTrace($"Item changed to {ItemSvc.NothingItem(item.Slot)} " +
+                $"[{ItemSvc.NothingItem(item.Slot).ItemId}] from {item.GameItem} [{item.GameItem.ItemId}]");
+            item.GameItem = ItemSvc.NothingItem(item.Slot);
         }
     }
 
@@ -368,7 +343,7 @@ public class EquipmentDrawer
         foreach (var (stainId, index) in item.GameStain.WithIndex())
         {
             using var id = ImUtf8.PushId(index);
-            var found = TryGetStain(stainId, out var stain);
+            var found = ItemSvc.Stains.TryGetValue(stainId, out var stain);
             // draw the stain itemCombo.
             var change = _stainCombo.Draw($"##stain{item.Slot}", widthStains * innerWidthScaler, widthStains, stain.RgbaColor, stain.Name, found, stain.Gloss);
             if (index < item.GameStain.Count - 1)
@@ -377,7 +352,7 @@ public class EquipmentDrawer
             // if we had a change made, update the stain data.
             if (change)
             {
-                if (TryGetStain(_stainCombo.Current.Key, out stain))
+                if (ItemSvc.Stains.TryGetValue(_stainCombo.Current.Key, out stain))
                 {
                     // if changed, change it.
                     item.GameStain = item.GameStain.With(index, stain.RowIndex);
@@ -404,7 +379,7 @@ public class EquipmentDrawer
         foreach (var (stainId, index) in item.CustomStains.WithIndex())
         {
             using var _ = ImUtf8.PushId(index);
-            var found = TryGetStain(stainId, out var stain);
+            var found = ItemSvc.Stains.TryGetValue(stainId, out var stain);
             // draw the stain itemCombo.
             var change = _stainCombo.Draw($"##customStain{id}", width, widthStains, stain.RgbaColor, stain.Name, found, stain.Gloss);
             if (index < item.CustomStains.Count - 1)
@@ -413,7 +388,7 @@ public class EquipmentDrawer
             // if we had a change made, update the stain data.
             if (change)
             {
-                if (TryGetStain(_stainCombo.Current.Key, out stain))
+                if (ItemSvc.Stains.TryGetValue(_stainCombo.Current.Key, out stain))
                 {
                     // if changed, change it.
                     item.CustomStains = item.CustomStains.With(index, stain.RowIndex);

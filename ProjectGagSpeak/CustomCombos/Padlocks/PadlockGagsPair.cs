@@ -14,7 +14,7 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
     private readonly MainHub _mainHub;
     private Kinkster _ref;
     public PairGagPadlockCombo(ILogger log, MainHub hub, Kinkster k, Action postButtonPress)
-        : base(() => [ .. k.LastGagData.GagSlots ], () => [ ..PadlockEx.GetLocksForPair(k.PairPerms) ], log)
+        : base(() => [ .. k.ActiveGags.GagSlots ], () => [ ..PadlockEx.GetLocksForPair(k.PairPerms) ], log)
     {
         _mainHub = hub;
         _ref = k;
@@ -39,7 +39,7 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
 
         Log.LogInformation($"Locking with a final time of {finalTime} for {SelectedLock.ToName()} which is a timespan of {finalTime - DateTimeOffset.UtcNow} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
 
-        var newData = new PushKinksterGagSlotUpdate(_ref.UserData, DataUpdateType.Locked)
+        var newData = new PushKinksterActiveGagSlot(_ref.UserData, DataUpdateType.Locked)
         {
             Layer = layerIdx,
             Padlock = SelectedLock,
@@ -47,7 +47,7 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
             Timer = finalTime,
             PadlockAssigner = MainHub.UID,
         };
-        var result = await _mainHub.UserChangeKinksterGagState(newData);
+        var result = await _mainHub.UserChangeKinksterActiveGag(newData);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform LockGag with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{result}", LoggerType.StickyUI);
@@ -74,7 +74,7 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
             return false;
         }
 
-        var dto = new PushKinksterGagSlotUpdate(_ref.UserData, DataUpdateType.Unlocked)
+        var dto = new PushKinksterActiveGagSlot(_ref.UserData, DataUpdateType.Unlocked)
         {
             Layer = layerIdx,
             Padlock = Items[layerIdx].Padlock,
@@ -82,7 +82,7 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
             PadlockAssigner = MainHub.UID,
         };
 
-        var result = await _mainHub.UserChangeKinksterGagState(dto);
+        var result = await _mainHub.UserChangeKinksterActiveGag(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform UnlockGag with {Items[layerIdx].Padlock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{result}", LoggerType.StickyUI);

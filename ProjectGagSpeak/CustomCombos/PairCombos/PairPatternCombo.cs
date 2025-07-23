@@ -11,26 +11,21 @@ using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.Pairs;
 
-public sealed class PairPatternCombo : CkFilterComboIconButton<LightPattern>
+public sealed class PairPatternCombo : CkFilterComboIconButton<KinksterPattern>
 {
     private Action PostButtonPress;
     private readonly MainHub _mainHub;
     private Kinkster _kinksterRef;
     public PairPatternCombo(ILogger log, MainHub hub, Kinkster pair, Action postButtonPress)
-        : base(log, FAI.PlayCircle, "Execute", () => [ .. pair.LastLightStorage.Patterns.OrderBy(x => x.Label)])
+        : base(log, FAI.PlayCircle, "Execute", () => [ ..pair.LightCache.Patterns.Values.OrderBy(x => x.Label)])
     {
         _mainHub = hub;
         _kinksterRef = pair;
         PostButtonPress = postButtonPress;
-
-        // update current selection to the last registered LightPattern from that pair on construction.
-        Current = _kinksterRef.LastLightStorage.Patterns.FirstOrDefault(r => r.Id == _kinksterRef.LastToyboxData.ActivePattern);
     }
 
     protected override bool DisableCondition()
-        => _kinksterRef.PairPerms.ExecutePatterns is false
-        || _kinksterRef.LastToyboxData.ActivePattern == Current?.Id
-        || Current is null;
+        => !_kinksterRef.PairPerms.ExecutePatterns;
 
     // we need to override the drawSelectable method here for a custom draw display.
     protected override bool DrawSelectable(int globalIdx, bool selected)
@@ -56,16 +51,15 @@ public sealed class PairPatternCombo : CkFilterComboIconButton<LightPattern>
     protected override async Task<bool> OnButtonPress()
     {
         // we need to go ahead and create a deep clone of our new appearanceData, and ensure it is valid.
-        if (Current is null || _kinksterRef.LastToyboxData.ActivePattern == Current.Id)
+        if (Current is null)
             return false;
 
-        var updateType = _kinksterRef.LastRestraintData.Identifier== Guid.Empty
+        var updateType = _kinksterRef.ActivePattern == Guid.Empty
             ? DataUpdateType.PatternExecuted : DataUpdateType.PatternSwitched;
 
         // construct the dto to send.
-        var dto = new PushKinksterToyboxUpdate(_kinksterRef.UserData, _kinksterRef.LastToyboxData, Current.Id, updateType);
-
-        var result = await _mainHub.UserChangeKinksterToyboxState(dto);
+        var dto = new PushKinksterActivePattern(_kinksterRef.UserData, Current.Id, updateType);
+        var result = await _mainHub.UserChangeKinksterActivePattern(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform Pattern with {Current.Label} on {_kinksterRef.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
@@ -80,7 +74,7 @@ public sealed class PairPatternCombo : CkFilterComboIconButton<LightPattern>
         }
     }
 
-    private void DrawItemTooltip(LightPattern item)
+    private void DrawItemTooltip(KinksterPattern item)
     {
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {

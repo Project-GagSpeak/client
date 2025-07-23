@@ -10,23 +10,23 @@ using ImGuiNET;
 
 namespace GagSpeak.CustomCombos.Pairs;
 
-public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
+public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
 {
     private Action PostButtonPress;
     private readonly MainHub _mainHub;
     private Kinkster _pairRef;
 
     public PairRestraintCombo(ILogger log, MainHub hub, Kinkster pair, Action postButtonPress)
-        : base(() => [.. pair.LastLightStorage.Restraints.OrderBy(x => x.Label)], log)
+        : base(() => [ ..pair.LightCache.Restraints.Values ], log)
     {
         _mainHub = hub;
         _pairRef = pair;
         PostButtonPress = postButtonPress;
-        Current = _pairRef.LastLightStorage.Restraints.FirstOrDefault(r => r.Id == _pairRef.LastRestraintData.Identifier);
+        Current = _pairRef.LightCache.Restraints.GetValueOrDefault(_pairRef.ActiveRestraint.Identifier);
     }
 
     protected override bool DisableCondition()
-        => Current is null || !_pairRef.PairPerms.ApplyRestraintSets || _pairRef.LastRestraintData.Identifier == Current.Id;
+        => Current is null || !_pairRef.PairPerms.ApplyRestraintSets || _pairRef.ActiveRestraint.Identifier == Current.Id;
 
     // we need to override the drawSelectable method here for a custom draw display.
     protected override bool DrawSelectable(int globalAlarmIdx, bool selected)
@@ -36,7 +36,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
         var ret = ImGui.Selectable(restraintSet.Label, selected);
         
         var iconWidth = CkGui.IconSize(FAI.InfoCircle).X;
-        var hasGlamour = restraintSet.AffectedSlots.Any();
+        var hasGlamour = restraintSet.SlotData.Any();
         var hasInfo = !restraintSet.Description.IsNullOrWhitespace();
         var shiftOffset = hasInfo ? iconWidth * 2 + ImGui.GetStyle().ItemSpacing.X : iconWidth;
 
@@ -62,16 +62,16 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
         if (Current is null)
             return false;
 
-        var updateType = _pairRef.LastRestraintData.Identifier== Guid.Empty
+        var updateType = _pairRef.ActiveRestraint.Identifier== Guid.Empty
             ? DataUpdateType.Applied : DataUpdateType.Swapped;
         // construct the dto to send.
-        var dto = new PushKinksterRestraintUpdate(_pairRef.UserData, updateType)
+        var dto = new PushKinksterActiveRestraint(_pairRef.UserData, updateType)
         {
             ActiveSetId = Current.Id,
             Enabler = MainHub.UID,
         };
 
-        var result = await _mainHub.UserChangeKinksterRestraintState(dto);
+        var result = await _mainHub.UserChangeKinksterActiveRestraint(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogError($"Failed to Perform PairRestraint action to {_pairRef.GetNickAliasOrUid()} : {result}");
@@ -85,7 +85,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<LightRestraintSet>
         }
     }
 
-    private void DrawItemTooltip(LightRestraintSet setItem)
+    private void DrawItemTooltip(KinksterRestraint setItem)
     {
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {

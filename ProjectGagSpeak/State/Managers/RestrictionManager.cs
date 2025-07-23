@@ -2,11 +2,11 @@ using CkCommons.Helpers;
 using CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
 using GagSpeak.PlayerClient;
-using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using OtterGui.Extensions;
@@ -21,7 +21,6 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
     private readonly FavoritesManager _favorites;
     private readonly ModSettingPresetManager _modPresets;
     private readonly ConfigFileProvider _fileNames;
-    private readonly ItemService _items;
     private readonly HybridSaveService _saver;
 
     private StorageItemEditor<RestrictionItem> _itemEditor = new();
@@ -35,13 +34,11 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         FavoritesManager favorites,
         ModSettingPresetManager modPresets, 
         ConfigFileProvider fileNames,
-        ItemService items,
         HybridSaveService saver) : base(logger, mediator)
     {
         _favorites = favorites;
         _modPresets = modPresets;
         _fileNames = fileNames;
-        _items = items;
         _saver = saver;
 
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, _ => CheckForExpiredLocks());
@@ -347,9 +344,9 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
                 // Create an instance of the correct type
                 RestrictionItem restrictionItem = restrictionType switch
                 {
-                    RestrictionType.Hypnotic => HypnoticRestriction.FromToken(itemJson, _items, _modPresets),
-                    RestrictionType.Blindfold => BlindfoldRestriction.FromToken(itemJson, _items, _modPresets),
-                    _ => RestrictionItem.FromToken(itemJson, _items, _modPresets),
+                    RestrictionType.Hypnotic => HypnoticRestriction.FromToken(itemJson, _modPresets),
+                    RestrictionType.Blindfold => BlindfoldRestriction.FromToken(itemJson, _modPresets),
+                    _ => RestrictionItem.FromToken(itemJson, _modPresets),
                 };
                 Storage.Add(restrictionItem);
             }
@@ -387,7 +384,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
                     Password = restriction.Password, // use the same password.
                     PadlockAssigner = restriction.PadlockAssigner // use the same assigner. (To remove devotional timers)
                 };
-                Mediator.Publish(new RestrictionDataChangedMessage(DataUpdateType.Unlocked, index, newData));
+                Mediator.Publish(new ActiveRestrictionsChangeMessage(DataUpdateType.Unlocked, index, newData));
             }
     }
 }

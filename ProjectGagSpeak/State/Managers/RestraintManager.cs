@@ -23,7 +23,6 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     private readonly RestrictionManager _restrictions;
     private readonly ModSettingPresetManager _modPresets;
     private readonly FavoritesManager _favorites;
-    private readonly ItemService _items;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
 
@@ -31,14 +30,12 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     private CharaActiveRestraint? _serverRestraintData = null;
 
     public RestraintManager(ILogger<RestraintManager> logger, GagspeakMediator mediator,
-        RestrictionManager restrictions, ModSettingPresetManager modPresets,
-        FavoritesManager favorites, ItemService items, ConfigFileProvider fileNames,
-        HybridSaveService saver) : base(logger, mediator)
+        RestrictionManager restrictions, ModSettingPresetManager mods, FavoritesManager favorites, 
+        ConfigFileProvider fileNames, HybridSaveService saver) : base(logger, mediator)
     {
         _restrictions = restrictions;
-        _modPresets = modPresets;
+        _modPresets = mods;
         _favorites = favorites;
-        _items = items;
         _fileNames = fileNames;
         _saver = saver;
 
@@ -153,7 +150,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     #region Active Set Updates
     /// <summary> Applies the restraint set for the defined GUID in the DTO. </summary>
     /// <returns> True if visuals should be applied and were set, false otherwise. </returns>
-    public bool Apply(KinksterUpdateRestraint updateDto, [NotNullWhen(true)] out RestraintSet? visualSet)
+    public bool Apply(KinksterUpdateActiveRestraint updateDto, [NotNullWhen(true)] out RestraintSet? visualSet)
     {
         visualSet = null;
 
@@ -175,7 +172,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
 
     /// <summary> Sets a new active layer configuration, both applying and removing some layers. </summary>
     /// <returns> True if visuals should be applied and were set, false otherwise. </returns>
-    public bool SwapLayers(KinksterUpdateRestraint updateDto, [NotNullWhen(true)] out RestraintSet? visualSet, out RestraintLayer added, out RestraintLayer removed)
+    public bool SwapLayers(KinksterUpdateActiveRestraint updateDto, [NotNullWhen(true)] out RestraintSet? visualSet, out RestraintLayer added, out RestraintLayer removed)
     {
         visualSet = null;
         added = RestraintLayer.None;
@@ -198,7 +195,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
 
     /// <summary> Applies the restraint set layer(s) for the current equipped restraint set. </summary>
     /// <returns> True if visuals should be applied and were set, false otherwise. </returns>
-    public bool ApplyLayers(KinksterUpdateRestraint updateDto, [NotNullWhen(true)] out RestraintSet? visualSet, out RestraintLayer added)
+    public bool ApplyLayers(KinksterUpdateActiveRestraint updateDto, [NotNullWhen(true)] out RestraintSet? visualSet, out RestraintLayer added)
     {
         visualSet = null;
         added = RestraintLayer.None;
@@ -246,7 +243,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
             GagspeakEventManager.AchievementEvent(UnlocksEvent.SoldSlave);
     }
 
-    public bool RemoveLayers(KinksterUpdateRestraint updateDto, [NotNullWhen(true)] out RestraintSet? visualSet, out RestraintLayer removed)
+    public bool RemoveLayers(KinksterUpdateActiveRestraint updateDto, [NotNullWhen(true)] out RestraintSet? visualSet, out RestraintLayer removed)
     {
         visualSet = null;
         removed = RestraintLayer.None;
@@ -373,7 +370,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
             try
             {
                 // probably the single line of code that i fear the most out of this entire plugin.
-                var loadedSet = RestraintSet.FromToken(setToken, _items, _modPresets, _restrictions);
+                var loadedSet = RestraintSet.FromToken(setToken, _modPresets, _restrictions);
                 Storage.Add(loadedSet);
                 Logger.LogInformation($"LOADED IN RETRAINTSET: {loadedSet.Label}");
             }
@@ -413,7 +410,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
                 PadlockAssigner = _serverRestraintData.PadlockAssigner // use the same assigner. (To remove devotional timers)
             };
 
-            Mediator.Publish(new RestraintDataChangedMessage(DataUpdateType.Unlocked, newData));
+            Mediator.Publish(new ActiveRestraintSetChangeMessage(DataUpdateType.Unlocked, newData));
         }
     }
 }

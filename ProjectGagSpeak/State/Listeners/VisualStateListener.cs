@@ -63,7 +63,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 
 
     #region Gag Manipulation
-    public async Task SwapOrApplyGag(KinksterUpdateGagSlot gagData)
+    public async Task SwapOrApplyGag(KinksterUpdateActiveGag gagData)
     {
         if(gagData.PreviousGag is GagType.None)
             await ApplyGag(gagData);
@@ -73,7 +73,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 
     /// <summary> We have received the instruction to swap our gag as a callback from the server. </summary>
     /// <remarks> We can skip all validation checks for this, but don't update if not connected. </remarks>
-    public async Task SwapGag(KinksterUpdateGagSlot gagData)
+    public async Task SwapGag(KinksterUpdateActiveGag gagData)
     {
         if (!MainHub.IsConnectionDataSynced) 
             return;
@@ -85,7 +85,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Applies a Gag to a spesified layer. </summary>
-    public async Task ApplyGag(KinksterUpdateGagSlot gagData)
+    public async Task ApplyGag(KinksterUpdateActiveGag gagData)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
@@ -98,7 +98,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Locks the gag with a padlock on a specified layer. </summary>
-    public void LockGag(KinksterUpdateGagSlot gagData)
+    public void LockGag(KinksterUpdateActiveGag gagData)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
@@ -109,7 +109,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Unlocks the gag's padlock on a spesified layer. </summary>
-    public void UnlockGag(KinksterUpdateGagSlot gagData)
+    public void UnlockGag(KinksterUpdateActiveGag gagData)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
@@ -120,7 +120,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Removes the gag from a defined layer. </summary>
-    public async Task RemoveGag(KinksterUpdateGagSlot gagData, bool updateVisuals = true)
+    public async Task RemoveGag(KinksterUpdateActiveGag gagData, bool updateVisuals = true)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
@@ -135,7 +135,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 
     #region Restrictions Manipulation
 
-    public async Task SwapOrApplyRestriction(KinksterUpdateRestriction itemData)
+    public async Task SwapOrApplyRestriction(KinksterUpdateActiveRestriction itemData)
     {
         if (itemData.PreviousRestriction== Guid.Empty)
             await ApplyRestriction(itemData);
@@ -143,7 +143,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
             await SwapRestriction(itemData);
     }
 
-    public async Task SwapRestriction(KinksterUpdateRestriction itemData)
+    public async Task SwapRestriction(KinksterUpdateActiveRestriction itemData)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
@@ -156,7 +156,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Applies a Restriction to the client at a defined index. </summary>
-    public async Task ApplyRestriction(KinksterUpdateRestriction itemData)
+    public async Task ApplyRestriction(KinksterUpdateActiveRestriction itemData)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
@@ -169,7 +169,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Locks a padlock from a restriction at a defined index. </summary>
-    public void LockRestriction(KinksterUpdateRestriction itemData)
+    public void LockRestriction(KinksterUpdateActiveRestriction itemData)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
@@ -179,7 +179,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Unlocks a padlock from a restriction at a defined index. </summary>
-    public void UnlockRestriction(KinksterUpdateRestriction itemData)
+    public void UnlockRestriction(KinksterUpdateActiveRestriction itemData)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
@@ -189,7 +189,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Removes a restraint item from a defined index. </summary>
-    public async Task RemoveRestriction(KinksterUpdateRestriction itemData, bool updateVisuals = true)
+    public async Task RemoveRestriction(KinksterUpdateActiveRestriction itemData, bool updateVisuals = true)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
@@ -203,7 +203,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     #endregion Restrictions Manipulation
 
     #region RestraintSet Manipulation
-    public async Task SwapOrApplyRestraint(KinksterUpdateRestraint itemData)
+    public async Task SwapOrApplyRestraint(KinksterUpdateActiveRestraint itemData)
     {
         if (itemData.PreviousRestraint == Guid.Empty)
             await ApplyRestraint(itemData);
@@ -212,7 +212,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Swapped a Restraint set to the client. </summary>
-    public async Task SwapRestraint(KinksterUpdateRestraint itemData)
+    public async Task SwapRestraint(KinksterUpdateActiveRestraint itemData)
     {
         Logger.LogTrace("Received SwapGag instruction from server!", LoggerType.Gags);
         await RemoveRestraint(itemData, false);
@@ -222,7 +222,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 
     /// <summary> Applies a Restraint set to the client. </summary>
     /// <remarks> It is assumed, since this is a callback, that this change is valid and allowed. </remarks>
-    public async Task ApplyRestraint(KinksterUpdateRestraint itemData)
+    public async Task ApplyRestraint(KinksterUpdateActiveRestraint itemData)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
@@ -236,7 +236,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 
     /// <summary> Updates the active Restraint Set's layers with a new configuration. Triggering removal and application of certain layers. </summary>
     /// <remarks> It is assumed, since this is a callback, that this change is valid and allowed. </remarks>
-    public async Task SwapRestraintLayers(KinksterUpdateRestraint itemData)
+    public async Task SwapRestraintLayers(KinksterUpdateActiveRestraint itemData)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
@@ -250,7 +250,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 
     /// <summary> Applies a Restraint set layer(s) to the client. </summary>
     /// <remarks> It is assumed, since this is a callback, that this change is valid and allowed. </remarks>
-    public async Task ApplyRestraintLayers(KinksterUpdateRestraint itemData)
+    public async Task ApplyRestraintLayers(KinksterUpdateActiveRestraint itemData)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
@@ -263,7 +263,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 
     /// <summary> Locks the active restraint set. </summary>
     /// <remarks> It is assumed, since this is a callback, that this change is valid and allowed. </remarks>
-    public void LockRestraint(KinksterUpdateRestraint itemData)
+    public void LockRestraint(KinksterUpdateActiveRestraint itemData)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
@@ -274,7 +274,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 
     /// <summary> Unlocks the active restraint set </summary>
     /// <remarks> It is assumed, since this is a callback, that this change is valid and allowed. </remarks>
-    public void UnlockRestraint(KinksterUpdateRestraint itemData)
+    public void UnlockRestraint(KinksterUpdateActiveRestraint itemData)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
@@ -285,7 +285,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 
     /// <summary> Removes restraint layer(s) from the active restraint set. </summary>
     /// <remarks> It is assumed, since this is a callback, that this change is valid and allowed. </remarks>
-    public async Task RemoveRestraintLayers(KinksterUpdateRestraint itemData)
+    public async Task RemoveRestraintLayers(KinksterUpdateActiveRestraint itemData)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
@@ -298,7 +298,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 
     /// <summary> Removes the active restraint. </summary>
     /// <remarks> It is assumed, since this is a callback, that this change is valid and allowed. </remarks>
-    public async Task RemoveRestraint(KinksterUpdateRestraint itemData, bool updateVisuals = true)
+    public async Task RemoveRestraint(KinksterUpdateActiveRestraint itemData, bool updateVisuals = true)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;

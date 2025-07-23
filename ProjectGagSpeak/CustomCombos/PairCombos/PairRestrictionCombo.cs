@@ -10,14 +10,14 @@ using ImGuiNET;
 
 namespace GagSpeak.CustomCombos.Pairs;
 
-public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
+public sealed class PairRestrictionCombo : CkFilterComboButton<KinksterRestriction>
 {
     private Action PostButtonPress;
     private readonly MainHub _mainHub;
     private Kinkster _ref;
 
     public PairRestrictionCombo(ILogger log, MainHub hub, Kinkster kinkster, Action postButtonPress)
-        : base(() => [.. kinkster.LastLightStorage.Restrictions.OrderBy(x => x.Label)], log)
+        : base(() => [.. kinkster.LightCache.Restrictions.Values.OrderBy(x => x.Label)], log)
     {
         PostButtonPress = postButtonPress;
         _mainHub = hub;
@@ -33,47 +33,42 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
         var ret = ImGui.Selectable(restriction.Label, selected);
         
         var iconWidth = CkGui.IconSize(FAI.InfoCircle).X;
-        var hasGlamour = restriction.Item.CustomItemId != ulong.MaxValue;
-        var hasDesc = !restriction.Description.IsNullOrWhitespace();
+        var hasGlamour = restriction.GlamItem.Valid;
         var shiftOffset = iconWidth;
 
         // shift over to the right to draw out the icons.
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - shiftOffset);
 
-        if (hasDesc)
+        if (hasGlamour)
         {
             CkGui.IconText(FAI.InfoCircle, ImGui.GetColorU32(ImGuiColors.ParsedGold));
             DrawItemTooltip(restriction);
             ImGui.SameLine();
         }
-
-        // icon for the glamour preview.
-        CkGui.IconText(FAI.Tshirt, ImGui.GetColorU32(hasGlamour ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey));
-        // if (hasGlamour) _ttPreview.DrawLightRestraintOnHover(restraintItem);
         return ret;
     }
 
 
     protected override bool DisableCondition()
-        => Current is null || !_ref.PairPerms.ApplyRestraintSets || _ref.LastRestraintData.Identifier == Current.Id;
+        => Current is null || !_ref.PairPerms.ApplyRestraintSets || _ref.ActiveRestraint.Identifier == Current.Id;
 
     protected override async Task<bool> OnButtonPress(int layerIdx)
     {
         if (Current is null)
             return false;
 
-        var updateType = _ref.LastRestrictionsData.Restrictions[layerIdx].Identifier== Guid.Empty
+        var updateType = _ref.ActiveRestrictions.Restrictions[layerIdx].Identifier== Guid.Empty
             ? DataUpdateType.Applied : DataUpdateType.Swapped;
 
         // construct the dto to send.
-        var dto = new PushKinksterRestrictionUpdate(_ref.UserData, updateType)
+        var dto = new PushKinksterActiveRestriction(_ref.UserData, updateType)
         {
             Layer = layerIdx,
             RestrictionId = Current.Id,
             Enabler = MainHub.UID,
         };
 
-        var result = await _mainHub.UserChangeKinksterRestrictionState(dto);
+        var result = await _mainHub.UserChangeKinksterActiveRestriction(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform ApplyRestraint with {Current.Label} on {_ref.GetNickAliasOrUid()}, Reason:{result}", LoggerType.StickyUI);
@@ -87,7 +82,7 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
         }
     }
 
-    private void DrawItemTooltip(LightRestriction setItem)
+    private void DrawItemTooltip(KinksterRestriction setItem)
     {
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
@@ -98,31 +93,7 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<LightRestriction>
 
             // begin the tooltip interface
             ImGui.BeginTooltip();
-            var hasDescription = !setItem.Description.IsNullOrWhitespace() && !setItem.Description.Contains("Enter Description Here...");
-
-            if(hasDescription)
-            {
-                // push the text wrap position to the font size times 35
-                ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35f);
-                // we will then check to see if the text contains a tooltip
-                if (setItem.Description.Contains(CkGui.TipSep, StringComparison.Ordinal))
-                {
-                    // if it does, we will split the text by the tooltip
-                    var splitText = setItem.Description.Split(CkGui.TipSep, StringSplitOptions.None);
-                    // for each of the split text, we will display the text unformatted
-                    for (var i = 0; i < splitText.Length; i++)
-                    {
-                        ImGui.TextUnformatted(splitText[i]);
-                        if (i != splitText.Length - 1) ImGui.Separator();
-                    }
-                }
-                else
-                {
-                    ImGui.TextUnformatted(setItem.Description);
-                }
-                ImGui.PopTextWrapPos();
-            }
-
+            ImGui.Text("Im a fancy tooltip!");
             ImGui.EndTooltip();
         }
     }

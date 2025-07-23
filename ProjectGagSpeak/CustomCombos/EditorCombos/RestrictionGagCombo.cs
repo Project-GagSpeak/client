@@ -85,7 +85,7 @@ public sealed class RestrictionGagCombo : CkFilterComboCache<GarblerRestriction>
     private bool ItemIsActiveWithData(GarblerRestriction item)
     {
         return item.IsEnabled 
-            && (item.Glamour.GameItem.ItemId != ItemService.NothingItem(item.Glamour.Slot).ItemId
+            && (item.Glamour.GameItem.ItemId != ItemSvc.NothingItem(item.Glamour.Slot).ItemId
                 || item.Moodle.Id != Guid.Empty || !string.IsNullOrEmpty(item.Mod.Label));
     }
 }

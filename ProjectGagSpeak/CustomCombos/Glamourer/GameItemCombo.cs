@@ -18,11 +18,11 @@ public sealed class GameItemCombo : CkFilterComboCache<EquipItem>
     public ItemId _currentItem;
     public PrimaryId CustomSetId { get; private set; }
     public Variant CustomVariant { get; private set; }
-    public GameItemCombo(EquipSlot slot, ItemData itemData, ILogger log)
-        : base(() => GetItems(itemData, slot), log)
+    public GameItemCombo(EquipSlot slot, ILogger log)
+        : base(() => GetItems(slot), log)
     {
         Label = GetLabel(slot);
-        _currentItem = ItemService.NothingId(slot);
+        _currentItem = ItemSvc.NothingId(slot);
         SearchByParts = true;
     }
 
@@ -88,10 +88,10 @@ public sealed class GameItemCombo : CkFilterComboCache<EquipItem>
         };
     }
 
-    private static IReadOnlyList<EquipItem> GetItems(ItemData itemData, EquipSlot slot)
+    private static IReadOnlyList<EquipItem> GetItems(EquipSlot slot)
     {
-        var nothing = ItemService.NothingItem(slot);
-        if (!itemData.ByType.TryGetValue(slot.ToEquipType(), out var list))
+        var nothing = ItemSvc.NothingItem(slot);
+        if (!ItemSvc.ItemData.ByType.TryGetValue(slot.ToEquipType(), out var list))
             return new[]
             {
                 nothing,
@@ -99,7 +99,7 @@ public sealed class GameItemCombo : CkFilterComboCache<EquipItem>
 
         var enumerable = list.AsEnumerable();
         if (slot.IsEquipment())
-            enumerable = enumerable.Append(ItemService.SmallClothesItem(slot));
+            enumerable = enumerable.Append(ItemSvc.SmallClothesItem(slot));
 
         var itemList = enumerable.OrderBy(i => i.Name).Prepend(nothing).ToList();
 

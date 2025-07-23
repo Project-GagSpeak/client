@@ -1,5 +1,6 @@
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
+using GagspeakAPI.Network;
 
 namespace GagSpeak.State.Models;
 
@@ -38,12 +39,21 @@ public class CursedItem : IEditableStorageItem<CursedItem>, ICursedItem
     }
 
     // May need to be moved up or something. Not sure though. Look into later.
-    public LightCursedItem ToLightItem()
-    {
-        var gagItem = (RestrictionRef is GarblerRestriction gag) ? gag.GagType : GagType.None;
-        var refId = (RestrictionRef is IRestrictionItem restriction) ? restriction.Identifier : Guid.Empty;
-        return new LightCursedItem(Identifier, Label, gagItem, refId, ReleaseTime);
-    }
+    public LightCursedLoot ToLightItem()
+        => RestrictionRef switch
+        {
+            GarblerRestriction gag => new LightCursedLoot(Identifier, Label, CanOverride, Precedence, CursedLootType.Gag, null, gag.GagType),
+            IRestrictionItem restriction => new LightCursedLoot(Identifier, Label, CanOverride, Precedence, CursedLootType.Restriction, restriction.Identifier),
+            _ => new LightCursedLoot(Identifier, Label, CanOverride, Precedence, CursedLootType.None)
+        };
+
+    public AppliedItem ToAppliedItem()
+        => RestrictionRef switch
+        {
+            GarblerRestriction gag => new AppliedItem(ReleaseTime, CursedLootType.Gag, null, gag.GagType),
+            IRestrictionItem restriction => new AppliedItem(ReleaseTime, CursedLootType.Restriction, restriction.Identifier),
+            _ => new AppliedItem(ReleaseTime, CursedLootType.None)
+        };
 
     // parameterless constructor for serialization
     public JObject Serialize()

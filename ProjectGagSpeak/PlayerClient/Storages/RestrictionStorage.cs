@@ -79,8 +79,8 @@ public class GagRestrictionStorage : SortedList<GagType, GarblerRestriction>, IE
     public bool IsEnabled(GagType gag) => ContainsKey(gag) && this[gag].IsEnabled;
 
     
-    public Dictionary<GagType, AppliedSlot> ToLightStorage()
-        => this.Where(x => x.Value.IsEnabled).ToDictionary(x => x.Key, x => x.Value.ToAppliedSlot());
+    public IEnumerable<LightGag> ToLightStorage()
+        => this.Values.Select(x => x.ToLightItem());
 
     // Interface Requirements:
     public bool TryApplyChanges(GarblerRestriction oldItem, GarblerRestriction changedItem)
@@ -120,15 +120,9 @@ public class CursedLootStorage : List<CursedItem>, IEditableStorage<CursedItem>
         return false;
     }
 
-    public List<LightCursedItem> GetItemInfoList() => this
-        .Select(x => x.RestrictionRef switch
-        {
-            GarblerRestriction gag => new LightCursedItem(x.Identifier, x.Label, gag.GagType, Guid.Empty, x.ReleaseTime),
-            RestrictionItem item => new LightCursedItem(x.Identifier, x.Label, GagType.None, item.Identifier, x.ReleaseTime),
-            _ => null
-        })
-        .Where(item => item != null)
-        .ToList()!;
+    public List<LightCursedLoot> GetLightStorage() => this
+        .Select(x => x.ToLightItem())
+        .ToList();
 
     public IEnumerable<Guid> ActiveIds => this
         .Where(x => x.AppliedTime != DateTimeOffset.MinValue)

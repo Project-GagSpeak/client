@@ -305,7 +305,7 @@ public class TriggerActionService
                 return false;
         }
 
-        if ((await _distributer.PushUpdatedRestrictionData(layerIdx, restriction, updateType)) is not GagSpeakApiEc.Success)
+        if ((await _distributer.PushNewActiveRestriction(layerIdx, restriction, updateType)) is not GagSpeakApiEc.Success)
         {
             _logger.LogWarning("The RestrictionTriggerAction was not processed successfully by the server!");
             return false;
@@ -363,7 +363,7 @@ public class TriggerActionService
                 return false;
         }
 
-        if (await _distributer.PushUpdatedRestraintData(restraintData, updateType) is not GagSpeakApiEc.Success)
+        if (await _distributer.PushActiveRestraintUpdate(restraintData, updateType) is not GagSpeakApiEc.Success)
         {
             _logger.LogWarning("The RestraintTriggerAction was not processed successfully by the server!");
             return false;

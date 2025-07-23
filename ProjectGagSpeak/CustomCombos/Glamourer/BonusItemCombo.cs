@@ -17,8 +17,8 @@ public sealed class BonusItemCombo : CkFilterComboCache<EquipItem>
     private float _innerWidth;
     public PrimaryId CustomSetId { get; private set; }
     public Variant CustomVariant { get; private set; }
-    public BonusItemCombo(ItemService items, BonusItemFlag slot, ILogger log)
-        : base(() => GetItems(items, slot), log)
+    public BonusItemCombo(BonusItemFlag slot, ILogger log)
+        : base(() => GetItems(slot), log)
     {
         Label = GetLabel(slot);
         _currentItem = 0;
@@ -81,8 +81,8 @@ public sealed class BonusItemCombo : CkFilterComboCache<EquipItem>
         };
     }
 
-    private static IReadOnlyList<EquipItem> GetItems(ItemService items, BonusItemFlag slot) 
-        => items.GetBonusItems(slot);
+    private static IReadOnlyList<EquipItem> GetItems(BonusItemFlag slot) 
+        => ItemSvc.GetBonusItems(slot);
 
     protected override void OnClosePopup()
     {

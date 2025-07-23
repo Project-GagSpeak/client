@@ -13,7 +13,7 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
     private readonly MainHub _mainHub;
     private Kinkster _ref;
     public PairRestrictionPadlockCombo(ILogger log, MainHub hub, Kinkster k, Action postButtonPress)
-        : base(() => [..k.LastRestrictionsData.Restrictions], () => [..PadlockEx.GetLocksForPair(k.PairPerms)], log)
+        : base(() => [..k.ActiveRestrictions.Restrictions], () => [..PadlockEx.GetLocksForPair(k.PairPerms)], log)
     {
         _mainHub = hub;
         _ref = k;
@@ -21,8 +21,7 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
     }
 
     protected override string ItemName(ActiveRestriction item)
-        => _ref.LastLightStorage.Restrictions.FirstOrDefault(r => r.Id == item.Identifier) is { } restriction
-            ? restriction.Label : "None";
+        => _ref.LightCache.Restrictions.TryGetValue(item.Identifier, out var bind) ? bind.Label : "None";
     protected override bool DisableCondition(int layerIdx)
         => Items[layerIdx].Identifier == Guid.Empty;
 
@@ -36,7 +35,7 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
         var finalTime = SelectedLock == Padlocks.FiveMinutesPadlock
             ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
 
-        var dto = new PushKinksterRestrictionUpdate(_ref.UserData, DataUpdateType.Locked)
+        var dto = new PushKinksterActiveRestriction(_ref.UserData, DataUpdateType.Locked)
         {
             Layer = layerIdx,
             Padlock = SelectedLock,
@@ -45,7 +44,7 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
             PadlockAssigner = MainHub.UID,
         };
 
-        var result = await _mainHub.UserChangeKinksterRestrictionState(dto);
+        var result = await _mainHub.UserChangeKinksterActiveRestriction(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform LockRestriction with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
@@ -68,7 +67,7 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
         if (!Items[layerIdx].CanUnlock() || !_ref.PairPerms.UnlockRestrictions)
             return false;
 
-        var dto = new PushKinksterRestrictionUpdate(_ref.UserData, DataUpdateType.Unlocked)
+        var dto = new PushKinksterActiveRestriction(_ref.UserData, DataUpdateType.Unlocked)
         {
             Layer = layerIdx,
             Padlock = Items[layerIdx].Padlock,
@@ -76,7 +75,7 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
             PadlockAssigner = MainHub.UID,
         };
 
-        var result = await _mainHub.UserChangeKinksterRestrictionState(dto);
+        var result = await _mainHub.UserChangeKinksterActiveRestriction(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform UnlockRestriction with {Items[layerIdx].Padlock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");

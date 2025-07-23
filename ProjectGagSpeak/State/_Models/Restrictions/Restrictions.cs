@@ -107,10 +107,20 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
             ["DoRedraw"] = DoRedraw,
         };
 
-    public AppliedSlot ToAppliedSlot() 
-        => new AppliedSlot((byte)Glamour.Slot, Glamour.GameItem.Id.Id);
+    public LightGag ToLightItem()
+    {
+        var lightProps = new LightItem()
+        {
+            Slot = Glamour.ToLightSlot(),
+            ModName = Mod.ToString(),
+            Moodle = new LightMoodle(Moodle is MoodlePreset ? MoodleType.Preset : MoodleType.Status, Moodle.Id),
+            Traits = Traits,
+            Arousal = Arousal
+        };
+        return new LightGag(GagType, IsEnabled, lightProps, CPlusProfile.ProfileName, DoRedraw);
+    }
 
-    public static GarblerRestriction FromToken(JToken? token, GagType gagType, ItemService items, ModSettingPresetManager mp)
+    public static GarblerRestriction FromToken(JToken? token, GagType gagType, ModSettingPresetManager mp)
     {
         if (token is not JObject json)
             throw new ArgumentException("Invalid JObjectToken!");
@@ -122,7 +132,7 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
         return new GarblerRestriction(gagType)
         {
             IsEnabled = json["IsEnabled"]?.ToObject<bool>() ?? false,
-            Glamour = items.ParseGlamourSlot(json["Glamour"]),
+            Glamour = ItemSvc.ParseGlamourSlot(json["Glamour"]),
             Mod = modAttachment,
             Moodle = moodles,
             Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
@@ -139,9 +149,10 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
 {
     public virtual RestrictionType Type { get; } = RestrictionType.Normal;
     public Guid Identifier { get; internal set; } = Guid.NewGuid();
+    public bool IsEnabled { get; set; } = true;
     public string Label { get; set; } = string.Empty;
     public string ThumbnailPath { get; set; } = string.Empty;
-    public GlamourSlot Glamour { get; set; } = new GlamourSlot(EquipSlot.Head, ItemService.NothingItem(EquipSlot.Head));
+    public GlamourSlot Glamour { get; set; } = new GlamourSlot(EquipSlot.Head, ItemSvc.NothingItem(EquipSlot.Head));
     public ModSettingsPreset Mod { get; set; } = new ModSettingsPreset(new ModPresetContainer());
     public Moodle Moodle { get; set; } = new Moodle();
     public Traits Traits { get; set; } = Traits.None;
@@ -177,6 +188,7 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
         {
             ["Type"] = Type.ToString(),
             ["Identifier"] = Identifier.ToString(),
+            ["IsEnabled"] = IsEnabled,
             ["Label"] = Label,
             ["ThumbnailPath"] = ThumbnailPath,
             ["Glamour"] = Glamour.Serialize(),
@@ -187,15 +199,22 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
             ["Redraw"] = DoRedraw,
         };
 
-    public LightRestriction ToLightRestriction()
-        => new LightRestriction(Identifier, Label, ThumbnailPath, ToAppliedSlot(), new Attributes(RestraintFlags.Restriction, Traits, Arousal));
-
-    public AppliedSlot ToAppliedSlot() 
-        => new AppliedSlot((byte)Glamour.Slot, Glamour.GameItem.Id.Id);
+    public LightRestriction ToLightItem()
+    {
+        var lightProps = new LightItem()
+        {
+            Slot = Glamour.ToLightSlot(),
+            ModName = Mod.ToString(),
+            Moodle = new LightMoodle(Moodle is MoodlePreset ? MoodleType.Preset : MoodleType.Status, Moodle.Id),
+            Traits = Traits,
+            Arousal = Arousal
+        };
+        return new LightRestriction(Identifier, IsEnabled, Type, Label, lightProps);
+    }
 
     /// <summary> Constructs the RestrictionItem from a JToken. </summary>
     /// <remarks> This method can throw an exception if tokens are not valid. </remarks>
-    public static RestrictionItem FromToken(JToken? token, ItemService items, ModSettingPresetManager mp)
+    public static RestrictionItem FromToken(JToken? token, ModSettingPresetManager mp)
     {
         if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
             throw new ArgumentException("Invalid JObjectToken!");
@@ -210,8 +229,9 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
         {
             Identifier = json["Identifier"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier"),
             Label = json["Label"]?.ToObject<string>() ?? string.Empty,
+            IsEnabled = json["IsEnabled"]?.ToObject<bool>() ?? true,
             ThumbnailPath = json["ThumbnailPath"]?.ToObject<string>() ?? string.Empty,
-            Glamour = items.ParseGlamourSlot(json["Glamour"]),
+            Glamour = ItemSvc.ParseGlamourSlot(json["Glamour"]),
             Mod = ModSettingsPreset.FromRefToken(json["Mod"], mp),
             Moodle = moodle,
             Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
@@ -264,7 +284,7 @@ public class HypnoticRestriction : RestrictionItem
 
     /// <summary> Constructs the HypnoticItem from a JToken. </summary>
     /// <remarks> This method can throw an exception if tokens are not valid. </remarks>
-    public new static HypnoticRestriction FromToken(JToken? token, ItemService items, ModSettingPresetManager mp)
+    public new static HypnoticRestriction FromToken(JToken? token, ModSettingPresetManager mp)
     {
         if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
             throw new ArgumentException("Invalid JObjectToken!");
@@ -279,8 +299,9 @@ public class HypnoticRestriction : RestrictionItem
         {
             Identifier = json["Identifier"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier"),
             Label = json["Label"]?.ToObject<string>() ?? string.Empty,
+            IsEnabled = json["IsEnabled"]?.ToObject<bool>() ?? true,
             ThumbnailPath = json["ThumbnailPath"]?.ToObject<string>() ?? string.Empty,
-            Glamour = items.ParseGlamourSlot(json["Glamour"]),
+            Glamour = ItemSvc.ParseGlamourSlot(json["Glamour"]),
             Mod = ModSettingsPreset.FromRefToken(json["Mod"], mp),
             Moodle = moodle,
             Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
@@ -340,7 +361,7 @@ public class BlindfoldRestriction : RestrictionItem
 
     /// <summary> Constructs the BlindfoldItem from a JToken. </summary>
     /// <remarks> This method can throw an exception if tokens are not valid. </remarks>
-    public new static BlindfoldRestriction FromToken(JToken? token, ItemService items, ModSettingPresetManager mp)
+    public new static BlindfoldRestriction FromToken(JToken? token, ModSettingPresetManager mp)
     {
         if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
             throw new ArgumentException("Invalid JObjectToken!");
@@ -355,8 +376,9 @@ public class BlindfoldRestriction : RestrictionItem
         {
             Identifier = json["Identifier"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier"),
             Label = json["Label"]?.ToObject<string>() ?? string.Empty,
+            IsEnabled = json["IsEnabled"]?.ToObject<bool>() ?? true,
             ThumbnailPath = json["ThumbnailPath"]?.ToObject<string>() ?? string.Empty,
-            Glamour = items.ParseGlamourSlot(json["Glamour"]),
+            Glamour = ItemSvc.ParseGlamourSlot(json["Glamour"]),
             Mod = ModSettingsPreset.FromRefToken(json["Mod"], mp),
             Moodle = moodle,
             Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
@@ -426,7 +448,7 @@ public class CollarRestriction : IEditableStorageItem<CollarRestriction>, IRestr
 
     /// <summary> Constructs the CollarItem from a JToken. </summary>
     /// <remarks> This method can throw an exception if tokens are not valid. </remarks>
-    public static CollarRestriction FromToken(JToken? token, ItemService items, ModSettingPresetManager mp)
+    public static CollarRestriction FromToken(JToken? token, ModSettingPresetManager mp)
     {
         if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
             throw new ArgumentException("Invalid JObjectToken!");
@@ -447,7 +469,7 @@ public class CollarRestriction : IEditableStorageItem<CollarRestriction>, IRestr
             OwnerUID = json["OwnerUID"]?.ToObject<string>() ?? string.Empty,
             ThumbnailPath = json["ThumbnailPath"]?.ToObject<string>() ?? string.Empty,
             CollarWriting = json["CollarWriting"]?.ToObject<string>() ?? string.Empty,
-            Glamour = items.ParseGlamourSlot(json["Glamour"]),
+            Glamour = ItemSvc.ParseGlamourSlot(json["Glamour"]),
             Mod = ModSettingsPreset.FromRefToken(json["Mod"], mp),
             Moodle = moodle,
             CPlusProfile = new CustomizeProfile(profileId, profilePrio, profileName),

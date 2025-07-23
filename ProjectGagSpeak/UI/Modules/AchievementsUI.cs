@@ -1,4 +1,5 @@
 using CkCommons.Gui;
+using CkCommons.Raii;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
@@ -8,6 +9,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
+using GagSpeak.Utils;
 using ImGuiNET;
 using OtterGui.Text;
 
@@ -27,19 +29,13 @@ public class AchievementsUI : WindowMediatorSubscriberBase
         _tabMenu = tabMenu;
         _textures = textures;
 
-        AllowPinning = false;
-        AllowClickthrough = false;
-
         Flags |= WFlags.NoDocking;
-
-        SizeConstraints = new WindowSizeConstraints()
-        {
-            MinimumSize = new Vector2(525, 400),
-            MaximumSize = new Vector2(525, 2000)
-        };
+        this.PinningClickthroughFalse();
+        this.SetBoundaries(new Vector2(525, 400), new Vector2(525, 2000));
     }
 
-    private string AchievementSearchString = string.Empty;
+    private string _searchStr = string.Empty;
+    private static readonly Vector2 IconSize = new(96, 96);
 
     protected override void PreDrawInternal()
     {
@@ -64,17 +60,14 @@ public class AchievementsUI : WindowMediatorSubscriberBase
     {
         // get the width of the window content region we set earlier
         var contentRegion = CkGui.GetWindowContentRegionWidth();
-
-        using (ImRaii.PushId("AchievementsHeader")) CenteredHeader();
-
+        
+        CenteredHeader();
         ImGui.Separator();
-        // now we need to draw the tab bar below this.
-        using (ImRaii.PushId("MainMenuTabBar")) _tabMenu.Draw(contentRegion);
+        _tabMenu.Draw(contentRegion);
 
         // Draw out the achievements in a child window we can scroll, but do not display the scroll bar.
-        using (ImRaii.Child("AchievementsSection", new Vector2(contentRegion, 0), false, WFlags.NoScrollbar))
+        using (CkRaii.Child("AchievementsSection", new Vector2(contentRegion, 0), WFlags.NoScrollbar))
         {
-
             // display content based on the tab selected
             switch (_tabMenu.TabSelection)
             {
@@ -111,7 +104,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
 
     private void CenteredHeader()
     {
-        var text = "GagSpeak Achievements (" + ClientAchievements.Completed + "/" + ClientAchievements.Total + ")";
+        var text = $"GagSpeak Achievements ({ClientAchievements.Completed}/{ClientAchievements.Total})";
         using (UiFontService.UidFont.Push())
         {
             var uidTextSize = ImGui.CalcTextSize(text);
@@ -132,7 +125,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
 
         // filter down the unlocks to searchable results.
         var filteredUnlocks = unlocks
-            .Where(goal => goal.Title.Contains(AchievementSearchString, StringComparison.OrdinalIgnoreCase))
+            .Where(goal => goal.Title.Contains(_searchStr, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         // reference the same achievement for every module.
@@ -141,7 +134,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
         ImGui.Separator();
 
         // create a window for scrolling through the available achievements.
-        using var achievementListChild = ImRaii.Child("##AchievementListings" + type.ToString(), ImGui.GetContentRegionAvail(), false, WFlags.NoScrollbar);
+        using var _ = ImRaii.Child($"AchievementListings {type.ToString()}", ImGui.GetContentRegionAvail(), false, WFlags.NoScrollbar);
 
         // draw the achievements in the first column.
         foreach (var achievement in filteredUnlocks)
@@ -150,26 +143,14 @@ public class AchievementsUI : WindowMediatorSubscriberBase
 
     public void DrawSearchFilter(float availableWidth, float spacingX)
     {
-        var clearButtonSize = CkGui.IconTextButtonSize(FAI.Ban, "Clear");
-        var resetButtonSize = CkGui.IconTextButtonSize(FAI.SyncAlt, "Reset");
-
-        //if (CkGui.IconTextButton(FAI.SyncAlt, "Reset", disabled: !(KeyMonitor.ShiftPressed() && KeyMonitor.CtrlPressed())))
-        //{
-        //    // fire and forget.
-        //    _ = _ClientAchievements.ResetAchievementData();
-        //}
-        ImGui.SetNextItemWidth(availableWidth - clearButtonSize - spacingX);
-        var filter = AchievementSearchString;
-        if (ImGui.InputTextWithHint("##AchievementSearchStringFilter", "Search for an Achievement...", ref filter, 255))
-            AchievementSearchString = filter;
+        ImGui.SetNextItemWidth(availableWidth - CkGui.IconTextButtonSize(FAI.Ban, "Clear") - spacingX);
+        ImGui.InputTextWithHint("##AchievementSearchStringFilter", "Search for an Achievement...", ref _searchStr, 255);
 
         ImUtf8.SameLineInner();
-        if (CkGui.IconTextButton(FAI.Ban, "Clear", disabled: string.IsNullOrEmpty(AchievementSearchString)))
-            AchievementSearchString = string.Empty;
+        if (CkGui.IconTextButton(FAI.Ban, "Clear", disabled: string.IsNullOrEmpty(_searchStr)))
+            _searchStr = string.Empty;
         CkGui.AttachToolTip("Clear the search filter.");
     }
-
-    private static Vector2 AchievementIconSize = new(96, 96);
 
     private void DrawAchievementProgressBox(AchievementBase achievementItem)
     {
@@ -181,72 +162,57 @@ public class AchievementsUI : WindowMediatorSubscriberBase
         using var col = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink)
             .Push(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
 
-        var imageTabWidth = AchievementIconSize.X + ImGui.GetStyle().ItemSpacing.X * 2;
+        var imageTabWidth = IconSize.X + ImGui.GetStyle().ItemSpacing.X * 2;
 
-        var size = new Vector2(ImGui.GetContentRegionAvail().X, AchievementIconSize.Y + ImGui.GetStyle().WindowPadding.Y * 2 + ImGui.GetStyle().CellPadding.Y * 2);
-        using (ImRaii.Child("##Achievement-" + achievementItem.Title, size, true, WFlags.ChildWindow))
+        var size = new Vector2(ImGui.GetContentRegionAvail().X, IconSize.Y + ImGui.GetStyle().WindowPadding.Y * 2 + ImGui.GetStyle().CellPadding.Y * 2);
+        using var c = ImRaii.Child($"Achievement-{achievementItem.Title}", size, true, WFlags.ChildWindow);
+
+        using var t = ImRaii.Table($"##AchievementTable {achievementItem.Title}", 2, ImGuiTableFlags.RowBg);
+        if (!t) return;
+
+        ImGui.TableSetupColumn("##AchievementText", ImGuiTableColumnFlags.WidthStretch);
+        ImGui.TableSetupColumn("##AchievementIcon", ImGuiTableColumnFlags.WidthFixed, IconSize.X);
+
+        // draw the information about the achievement and its progress bar within the first section.
+        // maybe the progress bar could span the bottom if icon image size is too much of a concern idk.
+        ImGui.TableNextColumn();
+        using (ImRaii.Group())
         {
-            try
-            {
-                // draw out a table that is 2 columns, and display the subsections in each column
-                using (var table = ImRaii.Table("##AchievementTable" + achievementItem.Title, 2, ImGuiTableFlags.RowBg))
-                {
-                    if (!table)
-                        return;
+            var progress = achievementItem.CurrentProgress();
+            var icon = achievementItem.IsCompleted ? FAI.Trophy : (progress != 0 ? FAI.Stopwatch : FAI.Trophy);
+            var color = achievementItem.IsCompleted ? ImGuiColors.ParsedGold : (progress != 0 ? ImGuiColors.DalamudGrey : ImGuiColors.DalamudGrey3);
+            var tooltip = achievementItem.IsCompleted ? "Achievement Completed!" : (progress != 0 ? "Achievement in Progress" : "Achievement Not Started");
+            ImGui.AlignTextToFramePadding();
+            CkGui.IconText(icon, color);
+            CkGui.AttachToolTip(tooltip);
 
-                    ImGui.TableSetupColumn("##AchievementText", ImGuiTableColumnFlags.WidthStretch);
-                    ImGui.TableSetupColumn("##AchievementIcon", ImGuiTableColumnFlags.WidthFixed, AchievementIconSize.X);
+            // beside it, draw out the achievement's Title in white text.
+            ImUtf8.SameLineInner();
+            ImGui.AlignTextToFramePadding();
+            using (ImRaii.PushFont(UiBuilder.MonoFont)) CkGui.ColorText(achievementItem.Title, ImGuiColors.ParsedGold);
+            // Split between the title and description
+            ImGui.Separator();
 
-                    // draw the information about the achievement and its progress bar within the first section.
-                    // maybe the progress bar could span the bottom if icon image size is too much of a concern idk.
-                    ImGui.TableNextColumn();
-                    using (ImRaii.Group())
-                    {
-                        var progress = achievementItem.CurrentProgress();
-                        var icon = achievementItem.IsCompleted ? FAI.Trophy : (progress != 0 ? FAI.Stopwatch : FAI.Trophy);
-                        var color = achievementItem.IsCompleted ? ImGuiColors.ParsedGold : (progress != 0 ? ImGuiColors.DalamudGrey : ImGuiColors.DalamudGrey3);
-                        var tooltip = achievementItem.IsCompleted ? "Achievement Completed!" : (progress != 0 ? "Achievement in Progress" : "Achievement Not Started");
-                        ImGui.AlignTextToFramePadding();
-                        CkGui.IconText(icon, color);
-                        CkGui.AttachToolTip(tooltip);
+            ImGui.AlignTextToFramePadding();
+            CkGui.IconText(FAI.InfoCircle, ImGuiColors.TankBlue);
 
-                        // beside it, draw out the achievement's Title in white text.
-                        ImUtf8.SameLineInner();
-                        ImGui.AlignTextToFramePadding();
-                        using (ImRaii.PushFont(UiBuilder.MonoFont)) CkGui.ColorText(achievementItem.Title, ImGuiColors.ParsedGold);
-                        // Split between the title and description
-                        ImGui.Separator();
-
-                        ImGui.AlignTextToFramePadding();
-                        CkGui.IconText(FAI.InfoCircle, ImGuiColors.TankBlue);
-
-                        ImUtf8.SameLineInner();
-                        ImGui.AlignTextToFramePadding();
-                        var descText = achievementItem.IsSecretAchievement ? "????" : achievementItem.Description;
-                        CkGui.TextWrapped(descText);
-                        if (achievementItem.IsSecretAchievement)
-                        {
-                            CkGui.AttachToolTip("Explore GagSpeak's Features or work together with others to uncover how you obtain this Achievement!)");
-                        }
-                    }
-                    // underneath this, we should draw the current progress towards the goal.
-                    DrawProgressForAchievement(achievementItem);
-                    if(ImGui.IsItemHovered() && achievementItem is DurationAchievement)
-                        CkGui.AttachToolTip((achievementItem as DurationAchievement)?.GetActiveItemProgressString() ?? "NO PROGRESS");
-
-                    // draw the text in the second column.
-                    ImGui.TableNextColumn();
-                    // Ensure its a valid texture wrap
-                    if (CosmeticService.CoreTextures.Cache[CoreTexture.Icon256Bg] is { } wrap)
-                        ImGui.Image(wrap.ImGuiHandle, AchievementIconSize);
-                }
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Failed to draw achievement progress box.");
-            }
-
+            ImUtf8.SameLineInner();
+            ImGui.AlignTextToFramePadding();
+            var descText = achievementItem.IsSecretAchievement ? "????" : achievementItem.Description;
+            CkGui.TextWrapped(descText);
+            if (achievementItem.IsSecretAchievement)
+                CkGui.AttachToolTip("Explore GagSpeak's Features or work together with others to uncover how you obtain this Achievement!)");
         }
+        // underneath this, we should draw the current progress towards the goal.
+        DrawProgressForAchievement(achievementItem);
+        if(ImGui.IsItemHovered() && achievementItem is DurationAchievement)
+            CkGui.AttachToolTip((achievementItem as DurationAchievement)?.GetActiveItemProgressString() ?? "NO PROGRESS");
+
+        // draw the text in the second column.
+        ImGui.TableNextColumn();
+        // Ensure its a valid texture wrap
+        if (CosmeticService.CoreTextures.Cache[CoreTexture.Icon256Bg] is { } wrap)
+            ImGui.Image(wrap.ImGuiHandle, IconSize);
     }
 
 

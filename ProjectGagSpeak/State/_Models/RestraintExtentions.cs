@@ -18,7 +18,7 @@ public static class RestraintExtentions
     /// <returns> True if it satisfis the conditions, false otherwise. </returns>
     public static bool IsOverlayItem(this IRestraintSlot slot)
     {
-        return slot.EquipItem.ItemId == ItemService.NothingItem(slot.EquipSlot).ItemId
+        return slot.EquipItem.ItemId == ItemSvc.NothingItem(slot.EquipSlot).ItemId
             && slot.ApplyFlags.HasAny(RestraintFlags.IsOverlay);
     }
 
@@ -26,7 +26,7 @@ public static class RestraintExtentions
     /// <returns> True if it satisfis the conditions, false otherwise. </returns>
     public static bool IsOverlayItem(this IRestrictionRef slot)
     {
-        return slot.Ref.Glamour.GameItem.ItemId == ItemService.NothingItem(slot.Ref.Glamour.Slot).ItemId
+        return slot.Ref.Glamour.GameItem.ItemId == ItemSvc.NothingItem(slot.Ref.Glamour.Slot).ItemId
             && slot.ApplyFlags.HasAny(RestraintFlags.IsOverlay);
     }
 
@@ -482,22 +482,6 @@ public static class RestraintExtentions
         return set.Layers[layerIdx] is RestrictionLayer l && l.Ref is HypnoticRestriction hr && hr.HasValidPath()
             ? hr.Properties
             : null;
-    }
-
-    // FIX LATER - Useful for Kinkster interaction.
-    public static LightRestraintSet ToLightRestraint(this RestraintSet set)
-    {
-        var appliedSlots = new List<AppliedSlot>();
-        foreach (var kv in set.RestraintSlots)
-        {
-            if (kv.Value.ApplyFlags.HasAny(RestraintFlags.Glamour) && kv.Value is RestraintSlotBasic basic)
-                appliedSlots.Add(new AppliedSlot((byte)basic.EquipSlot, basic.Glamour.GameItem.Id.Id));
-            else if (kv.Value is RestraintSlotAdvanced adv && adv.Ref != null)
-                appliedSlots.Add(new AppliedSlot((byte)adv.EquipSlot, adv.EquipItem.ItemId.Id));
-        }
-
-        var attributes = new Attributes(RestraintFlags.Advanced, set.Traits, set.Arousal);
-        return new LightRestraintSet(set.Identifier, set.Label, set.Description, appliedSlots, attributes);
     }
 }
 

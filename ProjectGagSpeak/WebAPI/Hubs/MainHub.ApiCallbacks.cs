@@ -272,34 +272,34 @@ public partial class MainHub
     #endregion Pair Permission Exchange
 
     /// <summary> Should only ever get the other pairs. If getting self, something is up. </summary>
-    public Task Callback_KinksterUpdateComposite(KinksterUpdateComposite dataDto)
+    public Task Callback_KinksterUpdateComposite(KinksterUpdateComposite dto)
     {
-        if (dataDto.User.UID != UID)
+        if (dto.User.UID != UID)
         {
-            Logger.LogDebug("User "+ dataDto.User.UID+" has went online and updated you with their composite data!", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksters.ReceiveCompositeData(dataDto, UID));
+            Logger.LogDebug($"User {dto.User.AliasOrUID} went online and updated you with their composite data!", LoggerType.Callbacks);
+            Generic.Safe(() => _kinksterListener.NewActiveComposite(dto.User, dto.Data, dto.WasSafeword));
             return Task.CompletedTask;
         }
         return Task.CompletedTask;
     }
 
     /// <summary> Update Other UserPair Ipc Data </summary>
-    public Task Callback_KinksterUpdateIpc(KinksterUpdateIpc dataDto)
+    public Task Callback_KinksterUpdateIpc(KinksterUpdateIpc dto)
     {
-        if (dataDto.User.UID == UID)
+        if (dto.User.UID == UID)
         {
-            Logger.LogDebug("Callback_ReceiveOwnDataIpc (not executing any functions):" + dataDto.User, LoggerType.Callbacks);
+            Logger.LogDebug($"Callback_ReceiveOwnDataIpc (not executing any functions): {dto.User.AliasOrUID}", LoggerType.Callbacks);
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogDebug("OTHER Callback_ReceiveDataIpc:" + dataDto, LoggerType.Callbacks);
-            Generic.Safe(() => _kinksters.ReceiveIpcData(dataDto));
+            Logger.LogDebug($"OTHER Callback_ReceiveDataIpc: {dto}", LoggerType.Callbacks);
+            Generic.Safe(() => _kinksterListener.NewActiveIpc(dto.User, dto.Enactor, dto.NewData, dto.Type));
             return Task.CompletedTask;
         }
     }
 
-    public Task Callback_KinksterUpdateGagSlot(KinksterUpdateGagSlot dataDto)
+    public Task Callback_KinksterUpdateActiveGag(KinksterUpdateActiveGag dataDto)
     {
         if (dataDto.User.UID == UID)
         {
@@ -327,12 +327,12 @@ public partial class MainHub
         else
         {
             Logger.LogDebug("OTHER Callback_ReceiveDataGags");
-            Generic.Safe(() => _kinksters.ReceiveGagData(dataDto));
+            Generic.Safe(() => _kinksterListener.NewActiveGags(dataDto));
             return Task.CompletedTask;
         }
     }
 
-    public Task Callback_KinksterUpdateRestriction(KinksterUpdateRestriction dataDto)
+    public Task Callback_KinksterUpdateActiveRestriction(KinksterUpdateActiveRestriction dataDto)
     {
         if (dataDto.User.UID == UID)
         {
@@ -365,12 +365,12 @@ public partial class MainHub
         else
         {
             Logger.LogDebug("OTHER Callback_ReceiveDataRestrictions:" + dataDto.User, LoggerType.Callbacks);
-            Generic.Safe(() => _kinksters.ReceiveRestrictionData(dataDto));
+            Generic.Safe(() => _kinksterListener.NewActiveRestriction(dataDto));
             return Task.CompletedTask;
         }
     }
 
-    public Task Callback_KinksterUpdateRestraint(KinksterUpdateRestraint dataDto)
+    public Task Callback_KinksterUpdateActiveRestraint(KinksterUpdateActiveRestraint dataDto)
     {
         // If the update is for us, handle it.
         if (dataDto.User.UID == UID)
@@ -409,96 +409,116 @@ public partial class MainHub
         else
         {
             Logger.LogDebug("OTHER Callback_ReceiveDataRestraint:" + dataDto.User, LoggerType.Callbacks);
-            Generic.Safe(() => _kinksters.ReceiveCharaWardrobeData(dataDto));
+            Generic.Safe(() => _kinksterListener.NewActiveRestraint(dataDto));
             return Task.CompletedTask;
         }
     }
 
     /// <summary> The only condition that we receive this, is if it's for another pair. </summary>
-    public Task Callback_KinksterUpdateCursedLoot(KinksterUpdateCursedLoot dataDto)
+    public Task Callback_KinksterUpdateActiveCursedLoot(KinksterUpdateActiveCursedLoot dataDto)
     {
         if(dataDto.User.UID != UID)
         {
             Logger.LogDebug("OTHER Callback_ReceiveDataCursedLoot:" + dataDto.User, LoggerType.Callbacks);
-            Generic.Safe(() => _kinksters.ReceiveCharaCursedLootData(dataDto));
+            Generic.Safe(() => _kinksterListener.NewActiveCursedLoot(dataDto));
             return Task.CompletedTask;
-        }
-        else
-        {
-            Logger.LogWarning("Consuming Callback_ReceiveDataCursedLoot for self, this should never happen! " + dataDto.User, LoggerType.Callbacks);
         }
         // Consume any request for the Client.
         return Task.CompletedTask;
     }
 
-    public Task Callback_KinksterUpdateToybox(KinksterUpdateToybox dataDto)
+    public Task Callback_KinksterUpdateAliasGlobal(KinksterUpdateAliasGlobal dto)
     {
-        if (dataDto.User.UID == UID)
+        Logger.LogDebug($"Received a Kinksters updated Global AliasTrigger {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Generic.Safe(() => _kinksterListener.NewAliasGlobal(dto.User, dto.AliasId, dto.NewData));
+        return Task.CompletedTask;
+    }
+
+    public Task Callback_KinksterUpdateAliasUnique(KinksterUpdateAliasUnique dto)
+    {
+        Logger.LogDebug($"Received a Kinksters updated Global AliasTrigger {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Generic.Safe(() => _kinksterListener.NewAliasUnique(dto.User, dto.AliasId, dto.NewData));
+        return Task.CompletedTask;
+    }
+
+    public Task Callback_KinksterUpdateActivePattern(KinksterUpdateActivePattern dto)
+    {
+        if (dto.User.UID == UID)
         {
-            Logger.LogDebug("OWN Callback_ReceiveDataToybox:" + dataDto.User, LoggerType.Callbacks);
-            switch (dataDto.Type)
+            Logger.LogDebug($"OWN Callback_ReceiveDataToybox: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+            switch (dto.Type)
             {
                 case DataUpdateType.PatternSwitched:
-                    _kinkListener.PatternSwitched(dataDto.InteractedIdentifier, dataDto.Enactor.UID);
+                    _kinkListener.PatternSwitched(dto.ActivePattern, dto.Enactor.UID);
                     break;
                 case DataUpdateType.PatternExecuted:
-                    _kinkListener.PatternStarted(dataDto.InteractedIdentifier, dataDto.Enactor.UID);
+                    _kinkListener.PatternStarted(dto.ActivePattern, dto.Enactor.UID);
                     break;
                 case DataUpdateType.PatternStopped:
-                    _kinkListener.PatternStopped(dataDto.InteractedIdentifier, dataDto.Enactor.UID);
-                    break;
-                case DataUpdateType.AlarmToggled:
-                    _kinkListener.AlarmToggled(dataDto.InteractedIdentifier, dataDto.Enactor.UID);
-                    break;
-                case DataUpdateType.TriggerToggled:
-                    _kinkListener.TriggerToggled(dataDto.InteractedIdentifier, dataDto.Enactor.UID);
+                    _kinkListener.PatternStopped(dto.ActivePattern, dto.Enactor.UID);
                     break;
             }
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogDebug("OTHER Callback_ReceiveDataToybox:" + dataDto.User, LoggerType.Callbacks);
-            Generic.Safe(() => _kinksters.ReceiveCharaToyboxData(dataDto));
+            Logger.LogDebug($"OTHER Callback_ReceiveDataToybox: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+            Generic.Safe(() => _kinksterListener.NewActivePattern(dto));
             return Task.CompletedTask;
         }
     }
 
-    public Task Callback_KinksterUpdateAliasGlobal(KinksterUpdateAliasGlobal dataDto)
+    public Task Callback_KinksterUpdateActiveAlarms(KinksterUpdateActiveAlarms dto)
     {
-        Logger.LogDebug("Received a Kinksters updated Global AliasTrigger" + dataDto.User, LoggerType.Callbacks);
-        Generic.Safe(() => _kinksters.ReceiveCharaAliasGlobalUpdate(dataDto));
-        return Task.CompletedTask;
-    }
-
-    public Task Callback_KinksterUpdateAliasUnique(KinksterUpdateAliasUnique dataDto)
-    {
-        Logger.LogDebug("Received a Kinksters updated Global AliasTrigger" + dataDto.User, LoggerType.Callbacks);
-        Generic.Safe(() => _kinksters.ReceiveCharaAliasPairUpdate(dataDto));
-        return Task.CompletedTask;
-    }
-
-    /// <summary> Update The Light Storage data of another pair. </summary>
-    public Task Callback_KinksterUpdateLightStorage(KinksterUpdateLightStorage dataDto)
-    {
-        if (dataDto.User.UID != UID)
+        if (dto.Type is not DataUpdateType.AlarmToggled)
         {
-            Logger.LogDebug("Callback_ReceiveOtherLightStorage:" + dataDto.User, LoggerType.Callbacks);
-            Generic.Safe(() => _kinksters.ReceiveCharaLightStorageData(dataDto));
+            Logger.LogWarning("Received an Alarm Update that was not a toggle, this should never happen! " + dto.Type, LoggerType.Callbacks);
+            return Task.CompletedTask;
+        }
+
+        // Valid type, so process the change.
+
+        if (dto.User.UID == UID)
+        {
+            Logger.LogDebug($"OWN Callback_KinksterUpdateActiveAlarms: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+            _kinkListener.AlarmToggled(dto.ChangedItem, dto.Enactor.UID);
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogWarning("Consuming Callback_ReceiveLightStorage for self, this should never happen! " + dataDto.User, LoggerType.Callbacks);
+            Logger.LogDebug($"OTHER Callback_ReceiveDataToybox: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+            Generic.Safe(() => _kinksterListener.NewActiveAlarms(dto));
+            return Task.CompletedTask;
         }
-        // Consume any request for the Client.
-        return Task.CompletedTask;
+    }
+
+    public Task Callback_KinksterUpdateActiveTriggers(KinksterUpdateActiveTriggers dto)
+    {
+        if (dto.Type is not DataUpdateType.TriggerToggled)
+        {
+            Logger.LogWarning("Received a Trigger Update that was not a toggle, this should never happen! " + dto.Type, LoggerType.Callbacks);
+            return Task.CompletedTask;
+        }
+
+        // Valid type, so process the change.
+        if (dto.User.UID == UID)
+        {
+            Logger.LogDebug($"OWN Callback_ReceiveDataToybox: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+            _kinkListener.TriggerToggled(dto.ChangedItem, dto.Enactor.UID);
+            return Task.CompletedTask;
+        }
+        else
+        {
+            Logger.LogDebug($"OTHER Callback_ReceiveDataToybox: {dto.Enactor.AliasOrUID}", LoggerType.Callbacks);
+            Generic.Safe(() => _kinksterListener.NewActiveTriggers(dto));
+            return Task.CompletedTask;
+        }
     }
 
     public Task Callback_ListenerName(UserData user, string trueNameWithWorld)
     {
         Logger.LogDebug("Received a Kinksters updated Global AliasTrigger" + user, LoggerType.Callbacks);
-        Generic.Safe(() => _kinksters.ReceiveListenerName(user, trueNameWithWorld));
+        Generic.Safe(() => _kinksterListener.NewListenerName(user, trueNameWithWorld));
         return Task.CompletedTask;
     }
 
@@ -506,6 +526,62 @@ public partial class MainHub
     public Task Callback_ShockInstruction(ShockCollarAction dto)
     {
         Generic.Safe(() => _globalPerms.ExecutePiShockAction(dto));
+        return Task.CompletedTask;
+    }
+
+    /// <summary> Recieve a Kinkster's updated GagData change. </summary>
+    public Task Callback_KinksterNewGagData(KinksterNewGagData dto)
+    {
+        Generic.Safe(() => _kinksterListener.CachedGagDataChange(dto.User, dto.GagType, dto.Item));
+        return Task.CompletedTask;
+    }
+
+    /// <summary> Recieve a Kinkster's updated RestrictionData change. </summary>
+    public Task Callback_KinksterNewRestrictionData(KinksterNewRestrictionData dto)
+    {
+        Generic.Safe(() => _kinksterListener.CachedRestrictionDataChange(dto.User, dto.ItemId, dto.LightItem));
+        return Task.CompletedTask;
+    }
+
+    /// <summary> Recieve a Kinkster's updated RestraintData change. </summary>
+    public Task Callback_KinksterNewRestraintData(KinksterNewRestraintData dto)
+    {
+        Generic.Safe(() => _kinksterListener.CachedRestraintDataChange(dto.User, dto.ItemId, dto.LightItem));
+        return Task.CompletedTask;
+    }
+
+    /// <summary> Recieve a Kinkster's updated CursedLootData change. </summary>
+    public Task Callback_KinksterNewLootData(KinksterNewLootData dto)
+    {
+        Generic.Safe(() => _kinksterListener.CachedCursedLootDataChange(dto.User, dto.ItemId, dto.LightItem));
+        return Task.CompletedTask;
+    }
+
+    /// <summary> Recieve a Kinkster's updated PatternData change. </summary>
+    public Task Callback_KinksterNewPatternData(KinksterNewPatternData dto)
+    {
+        Generic.Safe(() => _kinksterListener.CachedPatternDataChange(dto.User, dto.ItemId, dto.LightItem));
+        return Task.CompletedTask;
+    }
+
+    /// <summary> Recieve a Kinkster's updated AlarmData change. </summary>
+    public Task Callback_KinksterNewAlarmData(KinksterNewAlarmData dto)
+    {
+        Generic.Safe(() => _kinksterListener.CachedAlarmDataChange(dto.User, dto.ItemId, dto.LightItem));
+        return Task.CompletedTask;
+    }
+
+    /// <summary> Recieve a Kinkster's updated TriggerData change. </summary>
+    public Task Callback_KinksterNewTriggerData(KinksterNewTriggerData dto)
+    {
+        Generic.Safe(() => _kinksterListener.CachedTriggerDataChange(dto.User, dto.ItemId, dto.LightItem));
+        return Task.CompletedTask;
+    }
+
+    /// <summary> Recieve a Kinkster's updated TriggerData change. </summary>
+    public Task Callback_KinksterNewAllowances(KinksterNewAllowances dto)
+    {
+        Generic.Safe(() => _kinksterListener.CachedAllowancesChange(dto.User, dto.Module, [ ..dto.AllowedUids ]));
         return Task.CompletedTask;
     }
 
@@ -739,28 +815,28 @@ public partial class MainHub
         _hubConnection!.On(nameof(Callback_KinksterUpdateIpc), act);
     }
 
-    public void OnKinksterUpdateGagSlot(Action<KinksterUpdateGagSlot> act)
+    public void OnKinksterUpdateActiveGag(Action<KinksterUpdateActiveGag> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_KinksterUpdateGagSlot), act);
+        _hubConnection!.On(nameof(Callback_KinksterUpdateActiveGag), act);
     }
 
-    public void OnKinksterUpdateRestriction(Action<KinksterUpdateRestriction> act)
+    public void OnKinksterUpdateActiveRestriction(Action<KinksterUpdateActiveRestriction> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_KinksterUpdateRestriction), act);
+        _hubConnection!.On(nameof(Callback_KinksterUpdateActiveRestriction), act);
     }
 
-    public void OnKinksterUpdateRestraint(Action<KinksterUpdateRestraint> act)
+    public void OnKinksterUpdateActiveRestraint(Action<KinksterUpdateActiveRestraint> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_KinksterUpdateRestraint), act);
+        _hubConnection!.On(nameof(Callback_KinksterUpdateActiveRestraint), act);
     }
 
-    public void OnKinksterUpdateCursedLoot(Action<KinksterUpdateCursedLoot> act)
+    public void OnKinksterUpdateActiveCursedLoot(Action<KinksterUpdateActiveCursedLoot> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_KinksterUpdateCursedLoot), act);
+        _hubConnection!.On(nameof(Callback_KinksterUpdateActiveCursedLoot), act);
     }
 
     public void OnKinksterUpdateAliasGlobal(Action<KinksterUpdateAliasGlobal> act)
@@ -775,16 +851,22 @@ public partial class MainHub
         _hubConnection!.On(nameof(Callback_KinksterUpdateAliasUnique), act);
     }
 
-    public void OnKinksterUpdateToybox(Action<KinksterUpdateToybox> act)
+    public void OnKinksterUpdateActivePattern(Action<KinksterUpdateActivePattern> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_KinksterUpdateToybox), act);
+        _hubConnection!.On(nameof(Callback_KinksterUpdateActivePattern), act);
     }
 
-    public void OnKinksterUpdateLightStorage(Action<KinksterUpdateLightStorage> act)
+    public void OnKinksterUpdateActiveAlarms(Action<KinksterUpdateActiveAlarms> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_KinksterUpdateLightStorage), act);
+        _hubConnection!.On(nameof(Callback_KinksterUpdateActiveAlarms), act);
+    }
+
+    public void OnKinksterUpdateActiveTriggers(Action<KinksterUpdateActiveTriggers> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_KinksterUpdateActiveTriggers), act);
     }
 
     public void OnListenerName(Action<UserData, string> act)
@@ -797,6 +879,54 @@ public partial class MainHub
     {
         if (_apiHooksInitialized) return;
         _hubConnection!.On(nameof(Callback_ShockInstruction), act);
+    }
+
+    public void OnKinksterNewGagData(Action<KinksterNewGagData> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_KinksterNewGagData), act);
+    }
+
+    public void OnKinksterNewRestrictionData(Action<KinksterNewRestrictionData> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_KinksterNewRestrictionData), act);
+    }
+
+    public void OnKinksterNewRestraintData(Action<KinksterNewRestraintData> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_KinksterNewRestraintData), act);
+    }
+
+    public void OnKinksterNewLootData(Action<KinksterNewLootData> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_KinksterNewLootData), act);
+    }
+
+    public void OnKinksterNewPatternData(Action<KinksterNewPatternData> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_KinksterNewPatternData), act);
+    }
+
+    public void OnKinksterNewAlarmData(Action<KinksterNewAlarmData> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_KinksterNewAlarmData), act);
+    }
+
+    public void OnKinksterNewTriggerData(Action<KinksterNewTriggerData> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_KinksterNewTriggerData), act);
+    }
+
+    public void OnKinksterNewAllowances(Action<KinksterNewAllowances> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_KinksterNewAllowances), act);
     }
 
     public void OnChatMessageGlobal(Action<ChatMessageGlobal> act)

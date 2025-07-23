@@ -82,7 +82,7 @@ public sealed class LayerEditorClient
     private void SendUpdate(DataUpdateType type)
     {
         var newData = new CharaActiveRestraint { ActiveLayers = _selected };
-        _mediator.Publish(new RestraintDataChangedMessage(type, newData));
+        _mediator.Publish(new ActiveRestraintSetChangeMessage(type, newData));
         Reset();
     }
 }

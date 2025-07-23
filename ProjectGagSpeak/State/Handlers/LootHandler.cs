@@ -13,6 +13,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
@@ -209,10 +210,8 @@ public sealed class LootHandler
 
         // Apply the gag restriction to that player.
         _logger.LogInformation("Applying a cursed Gag Item (" + gag.GagType + ") to layer " + Idx, LoggerType.CursedItems);
-        var interactedItem = new LightCursedItem(item.Identifier, item.Label, gag.GagType, Guid.Empty, DateTimeOffset.UtcNow.Add(lockTime));
-        var newInfo = new PushClientCursedLootUpdate(_pairs.GetOnlineUserDatas(), _manager.Storage.ActiveIds.ToList(), interactedItem);
-
-        var result = await _hub.UserPushDataCursedLoot(newInfo);
+        var itemToSet = new AppliedItem(DateTimeOffset.UtcNow.Add(lockTime), CursedLootType.Gag, null, gag.GagType);
+        var result = await _hub.UserPushActiveLoot(new(_pairs.GetOnlineUserDatas(), _manager.Storage.ActiveIds.ToList(), item.Identifier, itemToSet));
         if (result.ErrorCode is GagSpeakApiEc.Success)
         {
             _logger.LogInformation($"Cursed Loot Applied & Locked!", LoggerType.CursedItems);
@@ -230,7 +229,7 @@ public sealed class LootHandler
         }
         else
         {
-            _logger.LogError("Failed to apply gag restriction to player. Error Code: " + result.ErrorCode);
+            _logger.LogError($"Failed to apply gag restriction to player. [{result.ErrorCode}]");
             return false;
         }
     }
@@ -249,12 +248,16 @@ public sealed class LootHandler
             return false;
 
         // Apply the restriction to that player.
-        _logger.LogInformation("Applying a cursed Item (" + cursedItem.Label + ") to you!", LoggerType.CursedItems);
-        var item = new LightCursedItem(cursedItem.Identifier, cursedItem.Label, GagType.None, restriction.Identifier, DateTimeOffset.UtcNow.Add(lockTime));
-        var newInfo = new PushClientCursedLootUpdate(_pairs.GetOnlineUserDatas(), _manager.Storage.ActiveIds.ToList(), item);
-
-        var result = await _hub.UserPushDataCursedLoot(newInfo);
-        if (result.ErrorCode is GagSpeakApiEc.Success)
+        _logger.LogInformation($"Applying a cursed Item [{cursedItem.Label}] to you!", LoggerType.CursedItems);
+        var itemToSet = new AppliedItem(DateTimeOffset.UtcNow.Add(lockTime), CursedLootType.Restriction, restriction.Identifier);
+        var newInfo = new PushClientActiveLoot(_pairs.GetOnlineUserDatas(), _manager.Storage.ActiveIds.ToList(), cursedItem.Identifier, itemToSet);
+        var result = await _hub.UserPushActiveLoot(newInfo);
+        if (await _hub.UserPushActiveLoot(newInfo) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+        {
+            _logger.LogError("Failed to apply restriction to player. Error Code: " + result.ErrorCode);
+            return false;
+        }
+        else
         {
             Svc.Chat.PrintError(new SeStringBuilder()
                 .AddItalics("As the coffer opens, cursed loot spills forth, binding you in an inescapable restraint!")
@@ -263,13 +266,7 @@ public sealed class LootHandler
             // Update the items release time if successful.
             if (_manager.Storage.TryGetLoot(cursedItem.Identifier, out var loot))
                 loot.ReleaseTime = DateTimeOffset.UtcNow.Add(lockTime);
-
             return true;
-        }
-        else
-        {
-            _logger.LogError("Failed to apply restriction to player. Error Code: " + result.ErrorCode);
-            return false;
         }
     }
 }

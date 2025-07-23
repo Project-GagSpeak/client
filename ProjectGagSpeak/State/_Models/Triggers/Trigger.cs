@@ -59,7 +59,7 @@ public abstract class Trigger : IEditableStorageItem<Trigger>
         };
     }
 
-    public LightTrigger ToLightTrigger() 
+    public LightTrigger ToLightItem()
         => new LightTrigger(Identifier, Priority, Label, Description, Type, ActionType);
 }
 

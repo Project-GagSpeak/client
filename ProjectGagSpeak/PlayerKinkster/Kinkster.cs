@@ -56,15 +56,17 @@ public class Kinkster : IComparable<Kinkster>
     // Latest cached data for this pair.
     private PairHandler? CachedPlayer { get; set; }
 
-    public CharaIPCData LastIpcData { get; set; } = new CharaIPCData();
-    public CharaActiveGags LastGagData { get; set; } = new CharaActiveGags();
-    public CharaActiveRestrictions LastRestrictionsData { get; set; } = new CharaActiveRestrictions();
-    public CharaActiveRestraint LastRestraintData { get; set; } = new CharaActiveRestraint();
-    public List<Guid> ActiveCursedItems { get; set; } = new();
-    public AliasStorage LastGlobalAliasData { get; set; } = new AliasStorage();
-    public NamedAliasStorage LastPairAliasData { get; set; } = new NamedAliasStorage();
-    public CharaToyboxData LastToyboxData { get; set; } = new CharaToyboxData();
-    public CharaLightStorageData LastLightStorage { get; set; } = new CharaLightStorageData();
+    public CharaIPCData LastIpcData { get; private set; } = new CharaIPCData();
+    public CharaActiveGags ActiveGags { get; private set; } = new CharaActiveGags();
+    public CharaActiveRestrictions ActiveRestrictions { get; private set; } = new CharaActiveRestrictions();
+    public CharaActiveRestraint ActiveRestraint { get; private set; } = new CharaActiveRestraint();
+    public List<Guid> ActiveCursedItems { get; private set; } = new();
+    public AliasStorage LastGlobalAliasData { get; private set; } = new AliasStorage();
+    public NamedAliasStorage LastPairAliasData { get; private set; } = new NamedAliasStorage();
+    public Guid ActivePattern { get; private set; } = Guid.Empty;
+    public List<Guid> ActiveAlarms { get; private set; } = new();
+    public List<Guid> ActiveTriggers { get; private set; } = new();
+    public KinksterCache LightCache { get; private set; } = new KinksterCache();
 
     // Most of these attributes should be self explanatory, but they are public methods you can fetch from the pair manager.
     public bool HasCachedPlayer => CachedPlayer != null && !string.IsNullOrEmpty(CachedPlayer.PlayerName) && _OnlineKinkster != null;
@@ -76,7 +78,8 @@ public class Kinkster : IComparable<Kinkster>
     public IGameObject? VisiblePairGameObject => IsVisible ? (CachedPlayer?.PairObject ?? null) : null;
     public string PlayerName => CachedPlayer?.PlayerName ?? UserData.AliasOrUID ?? string.Empty;  // Name of pair player. If empty, (pair handler) CachedData is not initialized yet.
     public string PlayerNameWithWorld => CachedPlayer?.PlayerNameWithWorld ?? string.Empty;
-    public string CachedPlayerString() => CachedPlayer?.ToString() ?? "No Cached Player"; // string representation of the cached player.
+
+    // maybe remove this later or something i dunno.
     public Dictionary<EquipSlot, (EquipItem, string)> LockedSlots { get; private set; } = new(); // the locked slots of the pair. Used for quick reference in profile viewer.
 
     // IComparable satisfier
@@ -96,13 +99,13 @@ public class Kinkster : IComparable<Kinkster>
 
         // This only works when you create it prior to adding it to the args,
         // otherwise the += has trouble calling. (it would fall out of scope)
-        /*var subMenu = new MenuItem();
-        subMenu.IsSubmenu = true;
-        subMenu.Name = "SubMenu Test Item";
-        subMenu.PrefixChar = 'G';
-        subMenu.PrefixColor = 561;
-        subMenu.OnClicked += args => OpenSubMenuTest(args, _logger);
-        args.AddMenuItem(subMenu);*/
+        //var subMenu = new MenuItem();
+        //subMenu.IsSubmenu = true;
+        //subMenu.Name = "SubMenu Test Item";
+        //subMenu.PrefixChar = 'G';
+        //subMenu.PrefixColor = 561;
+        //subMenu.OnClicked += args => OpenSubMenuTest(args, _logger);
+        //args.AddMenuItem(subMenu);
         args.AddMenuItem(new MenuItem()
         {
             Name = new SeStringBuilder().AddText("Open KinkPlate").Build(),
@@ -120,47 +123,55 @@ public class Kinkster : IComparable<Kinkster>
         });
     }
 
-    private static unsafe void OpenSubMenuTest(IMenuItemClickedArgs args, ILogger logger)
+    //private static unsafe void OpenSubMenuTest(IMenuItemClickedArgs args, ILogger logger)
+    //{
+    //    // create some dummy test items.
+    //    var menuItems = new List<MenuItem>();
+
+    //    // dummy item 1
+    //    var menuItem = new MenuItem();
+    //    menuItem.Name = "SubMenu Test Item 1";
+    //    menuItem.PrefixChar = 'G';
+    //    menuItem.PrefixColor = 706;
+    //    menuItem.OnClicked += clickedArgs => logger.LogInformation("Submenu Item 1 Clicked!", LoggerType.ContextDtr);
+
+    //    menuItems.Add(menuItem);
+
+
+    //    var menuItem2 = new MenuItem();
+    //    menuItem2.Name = "SubMenu Test Item 2";
+    //    menuItem2.PrefixChar = 'G';
+    //    menuItem2.PrefixColor = 706;
+    //    menuItem2.OnClicked += clickedArgs => logger.LogInformation("Submenu Item 2 Clicked!", LoggerType.ContextDtr);
+
+    //    menuItems.Add(menuItem2);
+
+    //    if (menuItems.Count > 0)
+    //        args.OpenSubmenu(menuItems);
+    //}
+
+    public void ApplyLastIpcData(bool forced = false)
     {
-        // create some dummy test items.
-        var menuItems = new List<MenuItem>();
-
-        // dummy item 1
-        var menuItem = new MenuItem();
-        menuItem.Name = "SubMenu Test Item 1";
-        menuItem.PrefixChar = 'G';
-        menuItem.PrefixColor = 706;
-        menuItem.OnClicked += clickedArgs => logger.LogInformation("Submenu Item 1 Clicked!", LoggerType.ContextDtr);
-
-        menuItems.Add(menuItem);
-
-
-        var menuItem2 = new MenuItem();
-        menuItem2.Name = "SubMenu Test Item 2";
-        menuItem2.PrefixChar = 'G';
-        menuItem2.PrefixColor = 706;
-        menuItem2.OnClicked += clickedArgs => logger.LogInformation("Submenu Item 2 Clicked!", LoggerType.ContextDtr);
-
-        menuItems.Add(menuItem2);
-
-        if (menuItems.Count > 0)
-            args.OpenSubmenu(menuItems);
+        // ( This implies that the pair object has had its CreateCachedPlayer method called )
+        if (CachedPlayer is null || LastIpcData is null)
+            return;
+        // we have satisfied the conditions to apply the character data to our paired user, so apply it.
+        CachedPlayer.ApplyCharacterData(Guid.NewGuid(), LastIpcData);
     }
 
-
     /// <summary> Update IPC Data </summary>
-    public void UpdateVisibleData(KinksterUpdateIpc data)
+    public void NewActiveIpcData(UserData enactor, CharaIPCData newData, DataUpdateType changeType)
     {
         _applicationCts?.Cancel();
         _applicationCts?.Dispose();
         _applicationCts = new CancellationTokenSource();
-        LastIpcData = data.NewData;
+        LastIpcData = newData;
 
         // if the cached player is null
         if (CachedPlayer is null)
         {
             // log that we received data for the user, but the cached player does not exist, and we are waiting.
-            _logger.LogDebug("Received Data for " + data.User.UID + " but CachedPlayer does not exist, waiting", LoggerType.PairDataTransfer);
+            _logger.LogDebug($"Received IpcData change for {GetNickAliasOrUid()}, and a CachedPlayer does not exist, waiting", LoggerType.PairDataTransfer);
             // asynchronously run the following code
             _ = Task.Run(async () =>
             {
@@ -179,7 +190,7 @@ public class Kinkster : IComparable<Kinkster>
                 if (!combined.IsCancellationRequested)
                 {
                     // apply the last received data
-                    _logger.LogDebug("Applying delayed data for " + data.User.UID, LoggerType.PairDataTransfer);
+                    _logger.LogDebug($"Applying delayed data for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
                     ApplyLastIpcData(); // in essence, this means apply the character data send in the Dto
                 }
             });
@@ -190,33 +201,38 @@ public class Kinkster : IComparable<Kinkster>
         ApplyLastIpcData();
     }
 
-    public void LoadCompositeData(KinksterUpdateComposite dto)
+    public void NewActiveCompositeData(CharaCompositeActiveData data, bool wasSafeword)
     {
         _logger.LogDebug("Received Character Composite Data from " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
-        LastGagData = dto.Data.Gags;
-        LastRestrictionsData = dto.Data.Restrictions;
-        LastRestraintData = dto.Data.Restraint;
-        ActiveCursedItems = dto.Data.ActiveCursedItems;
-        LastGlobalAliasData = dto.Data.GlobalAliasData;
-        LastToyboxData = dto.Data.ToyboxData;
-        LastLightStorage = dto.Data.LightStorageData;
+        ActiveGags = data.Gags;
+        ActiveRestrictions = data.Restrictions;
+        ActiveRestraint = data.Restraint;
+        ActiveCursedItems = data.ActiveCursedItems;
+        LastGlobalAliasData = data.GlobalAliasData;
+        ActivePattern = data.ActivePattern;
+        ActiveAlarms = data.ActiveAlarms;
+        ActiveTriggers = data.ActiveTriggers;
+        // Update the kinkster cache with the light storage data.
+        _logger.LogDebug($"Updating LightCache for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+        LightCache = new KinksterCache(data.LightStorageData);
         // Update KinkPlate display.
         UpdateCachedLockedSlots();
         // publish a mediator message that is listened to by the achievement manager for duration cleanup.
-        _mediator.Publish(new PlayerLatestActiveItems(UserData, LastGagData, LastRestrictionsData, LastRestraintData));
-
-        if (dto.WasSafeword)
-            return;
+        _mediator.Publish(new PlayerLatestActiveItems(UserData, ActiveGags, ActiveRestrictions, ActiveRestraint));
 
         // Deterministic AliasData setting.
-        if (dto.Data.PairAliasData.TryGetValue(UserData.UID, out var match))
+        if (data.PairAliasData.TryGetValue(UserData.UID, out var match))
             LastPairAliasData = match;
+
+        // early return if safeword, but not sure why, or what this is causing at the moment.
+        if (wasSafeword)
+            return;
     }
 
-    public void UpdateGagData(KinksterUpdateGagSlot data)
+    public void NewActiveGagData(KinksterUpdateActiveGag data)
     {
-        _logger.LogDebug("Applying updated gag data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
-        LastGagData.GagSlots[data.AffectedLayer] = data.NewData;
+        _logger.LogDebug($"Applying updated gag data for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+        ActiveGags.GagSlots[data.AffectedLayer] = data.NewData;
         switch (data.Type)
         {
             case DataUpdateType.Swapped:
@@ -241,10 +257,10 @@ public class Kinkster : IComparable<Kinkster>
         }
     }
 
-    public void UpdateRestrictionData(KinksterUpdateRestriction data)
+    public void NewActiveRestrictionData(KinksterUpdateActiveRestriction data)
     {
         _logger.LogDebug("Applying updated restriction data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
-        LastRestrictionsData.Restrictions[data.AffectedLayer] = data.NewData;
+        ActiveRestrictions.Restrictions[data.AffectedLayer] = data.NewData;
 
         switch (data.Type)
         {
@@ -270,93 +286,131 @@ public class Kinkster : IComparable<Kinkster>
         }
     }
 
-    public void UpdateRestraintData(KinksterUpdateRestraint data)
+    public void NewActiveRestraintData(KinksterUpdateActiveRestraint data)
     {
         _logger.LogDebug("Applying updated restraint data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
-        LastRestraintData = data.NewData;
+        ActiveRestraint = data.NewData;
 
         switch (data.Type)
         {
             case DataUpdateType.Swapped:
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, data.PreviousRestraint, false, data.Enactor.UID, UserData.UID);
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, data.NewData.Identifier, true, data.NewData.Enabler, UserData.UID);
+                // Update internal cache to reflect latest changes for kinkplates and such.
                 UpdateCachedLockedSlots();
-                return;
+                break;
             case DataUpdateType.Applied:
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, data.NewData.Identifier, true, data.NewData.Enabler, UserData.UID);
+                // Update internal cache to reflect latest changes for kinkplates and such.
                 UpdateCachedLockedSlots();
-                return;
+                break;
             case DataUpdateType.Locked:
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestraintLockChange, data.NewData.Identifier, data.NewData.Padlock, true, data.NewData.PadlockAssigner, UserData.UID);
-                return;
+                break;
             case DataUpdateType.Unlocked:
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestraintLockChange, data.NewData.Identifier, data.PreviousPadlock, false, data.Enactor.UID, UserData.UID);
-                return;
+                break;
             case DataUpdateType.Removed:
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, data.PreviousRestraint, false, data.Enactor.UID, UserData.UID);
+                // Update internal cache to reflect latest changes for kinkplates and such.
                 UpdateCachedLockedSlots();
-                return;
+                break;
         }
     }
 
-    public void UpdateCursedLootData(KinksterUpdateCursedLoot data)
+    public void NewActiveCursedLoot(List<Guid> newActiveLoot, Guid changedItem)
     {
-        _logger.LogDebug("Applying updated orders data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
-        ActiveCursedItems = data.ActiveItems.ToList();
+        _logger.LogDebug($"Updating ActiveCursedLoot for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+        ActiveCursedItems = newActiveLoot;
+        // Update internal cache to reflect latest changes for kinkplates and such.
         UpdateCachedLockedSlots();
     }
 
-    public void UpdateToyboxData(KinksterUpdateToybox data)
+    public void NewActivePattern(UserData enactor, Guid activePattern, DataUpdateType updateType)
     {
-        _logger.LogDebug("Applying updated toybox data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
-        LastToyboxData = data.NewData;
+        _logger.LogDebug($"Applying NewActivePattern for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+        ActivePattern = activePattern;
+        // Handle any achievements for a kinkster's pattern changing states here, by tracking removed
+        // and added patterns ext. [FOR FUTURE IMPLEMENTATION]
     }
 
-    public void UpdateGlobalAlias(AliasTrigger newData)
+    public void NewActiveAlarms(UserData enactor, List<Guid> activeAlarms, DataUpdateType updateType)
     {
-        if (LastGlobalAliasData.Items.FirstOrDefault(a => a.Identifier == newData.Identifier) is { } match)
+        _logger.LogDebug($"Applying NewActiveAlarms for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+        ActiveAlarms = activeAlarms;
+        // Handle any achievements for a kinkster's alarm changing states here, by tracking removed
+        // and added alarms ext. [FOR FUTURE IMPLEMENTATION]
+    }
+
+    public void NewActiveTriggers(UserData enactor, List<Guid> activeTriggers, DataUpdateType updateType)
+    {
+        _logger.LogDebug($"Applying NewActiveTriggers for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+        ActiveTriggers = activeTriggers;
+        // Handle any achievements for a kinkster's Triggers changing states here, by tracking removed
+        // and added Triggers ext. [FOR FUTURE IMPLEMENTATION]
+    }
+
+    public void NewGlobalAlias(Guid id, AliasTrigger? newData)
+    { 
+        // Try and find the existing alias data by its ID.
+        if (LastGlobalAliasData.Items.FirstOrDefault(a => a.Identifier == id) is { } match)
         {
-            _logger.LogDebug("Updating Global Alias for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
+            // If found, and the newData is null, remove it.
+            if (newData is null)
+            {
+                _logger.LogDebug($"Removing Global Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+                LastGlobalAliasData.Items.Remove(match);
+                return; // exit early since we removed it.
+            }
+            
+            // Update it.
+            _logger.LogDebug($"Updating Global Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
             match = newData;
-            return;
+        }
+        // Otherwise, if the ID was not found, the new data is not null, and we should add it.
+        else if (newData != null)
+        {
+            _logger.LogDebug($"Adding Global Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+            LastGlobalAliasData.Items.Add(newData);
         }
     }
 
-    public void UpdateUniqueAlias(AliasTrigger newData)
+    public void NewUniqueAlias(Guid id, AliasTrigger? newData)
     {
-        if (LastPairAliasData.Storage.Items.FirstOrDefault(a => a.Identifier == newData.Identifier) is { } match)
+        // Try and find the existing alias data by its ID.
+        if (LastPairAliasData.Storage.Items.FirstOrDefault(a => a.Identifier == id) is { } match)
         {
-            _logger.LogDebug("Updating Global Alias for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
+            // If found, and the newData is null, remove it.
+            if (newData is null)
+            {
+                _logger.LogDebug($"Removing Unique Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+                LastPairAliasData.Storage.Items.Remove(match);
+                return; // exit early since we removed it.
+            }
+
+            // Update it.
+            _logger.LogDebug($"Updating Unique Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
             match = newData;
-            return;
+        }
+        // Otherwise, if the ID was not found, the new data is not null, and we should add it.
+        else if (newData != null)
+        {
+            _logger.LogDebug($"Adding Unique Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+            LastPairAliasData.Storage.Items.Add(newData);
         }
     }
 
     public void UpdateListenerName(string nameWithWorld)
     {
-        _logger.LogDebug("Updating Listener name to " + nameWithWorld, LoggerType.PairDataTransfer);
+        _logger.LogDebug($"Updating Listener name to {nameWithWorld}", LoggerType.PairDataTransfer);
         LastPairAliasData.StoredNameWorld = nameWithWorld;
     }
 
-    public void UpdateLightStorageData(KinksterUpdateLightStorage data)
-    {
-        _logger.LogDebug("Applying updated light storage data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
-        LastLightStorage = data.NewData;
-    }
-
-    public void ApplyLastIpcData(bool forced = false)
-    {
-        // ( This implies that the pair object has had its CreateCachedPlayer method called )
-        if (CachedPlayer is null || LastIpcData is null) 
-            return;
-        // we have satisfied the conditions to apply the character data to our paired user, so apply it.
-        CachedPlayer.ApplyCharacterData(Guid.NewGuid(), LastIpcData);
-    }
-
-    /// <summary> Method that creates the cached player (PairHandler) object for the client pair.
-    /// <para> This method is ONLY EVER CALLED BY THE PAIR MANAGER under the <c>MarkKinksterOnline</c> method! </para>
-    /// <remarks> Until the CachedPlayer object is made, the client will not apply any data sent from this paired user. </remarks>
+    /// <summary> 
+    ///     Method that creates the cached player (PairHandler) object for the client pair. <para />
+    ///     This method is ONLY EVER CALLED BY THE PAIR MANAGER under the <c>MarkKinksterOnline</c> method! 
     /// </summary>
+    /// <remarks> Until the CachedPlayer object is made, the client will not apply any data sent from this paired user. </remarks>
     public void CreateCachedPlayer(OnlineKinkster? dto = null)
     {
         try
@@ -396,11 +450,11 @@ public class Kinkster : IComparable<Kinkster>
         }
     }
 
+    // Update this method to be obtained by the Kinkster Cache.
     public void UpdateCachedLockedSlots()
     {
         var result = new Dictionary<EquipSlot, (EquipItem, string)>();
-
-        // Rewrite this completely.
+        // Rewrite this completely. It sucks, and it does nothing with the 2.0 structure.
         _logger.LogDebug("Updated Locked Slots for " + UserData.UID, LoggerType.PairInfo);
         LockedSlots = result;
     }

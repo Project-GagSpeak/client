@@ -17,13 +17,15 @@ public record MufflerLanguageChanged : MessageBase; // called whenever the clien
 // Kinkster Data Changes
 public record PushGlobalPermChange(string PermName, object NewValue) : MessageBase;
 public record IpcDataChangedMessage(DataUpdateType UpdateType, CharaIPCData NewIpcData) : SameThreadMessage;
-public record GagDataChangedMessage(DataUpdateType UpdateType, int Layer, ActiveGagSlot NewData) : SameThreadMessage;
-public record RestrictionDataChangedMessage(DataUpdateType UpdateType, int Layer, ActiveRestriction NewData) : SameThreadMessage;
-public record RestraintDataChangedMessage(DataUpdateType UpdateType, CharaActiveRestraint NewData) : SameThreadMessage;
-public record AliasGlobalUpdateMessage(AliasTrigger NewData) : SameThreadMessage;
-public record AliasPairUpdateMessage(AliasTrigger NewData, UserData IntendedUser) : SameThreadMessage;
-public record ToyboxDataChangedMessage(DataUpdateType UpdateType, CharaToyboxData NewData, Guid InteractionId) : SameThreadMessage;
-public record LightStorageDataChangedMessage(CharaLightStorageData NewData) : SameThreadMessage;
+public record ActiveGagsChangeMessage(DataUpdateType UpdateType, int Layer, ActiveGagSlot NewData) : SameThreadMessage;
+public record ActiveRestrictionsChangeMessage(DataUpdateType UpdateType, int Layer, ActiveRestriction NewData) : SameThreadMessage;
+public record ActiveRestraintSetChangeMessage(DataUpdateType UpdateType, CharaActiveRestraint NewData) : SameThreadMessage;
+public record AliasGlobalUpdateMessage(Guid AliasId, AliasTrigger? NewData) : SameThreadMessage;
+public record AliasPairUpdateMessage(UserData IntendedUser, Guid AliasId, AliasTrigger? NewData) : SameThreadMessage;
+public record ActivePatternChangedMessage(DataUpdateType UpdateType, Guid NewActivePattern) : SameThreadMessage;
+public record ActiveAlarmsChangedMessage(DataUpdateType UpdateType, List<Guid> ActiveAlarms, Guid ChangedItem) : SameThreadMessage;
+public record ActiveTriggersChangedMessage(DataUpdateType UpdateType, List<Guid> ActiveTriggers, Guid ChangedItem) : SameThreadMessage;
+
 public record GameObjectHandlerCreatedMessage(GameObjectHandler GameObjectHandler, bool OwnedObject) : MessageBase;
 public record GameObjectHandlerDestroyedMessage(GameObjectHandler GameObjectHandler, bool OwnedObject) : MessageBase;
 

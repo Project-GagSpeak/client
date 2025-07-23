@@ -38,8 +38,9 @@ public class Pattern : IEditableStorageItem<Pattern>
 
     }
 
-    public LightPattern ToLightPattern() 
-        => new LightPattern(Identifier, Label, Description, Duration, ShouldLoop);
+    public LightPattern ToLightItem()
+        => new LightPattern(Identifier, Label, Description, Duration, ShouldLoop, 
+            PlaybackData.PrimaryDeviceUsed, PlaybackData.SecondaryDeviceUsed, PlaybackData.MotorsUsed);
 
     public JObject Serialize()
     {

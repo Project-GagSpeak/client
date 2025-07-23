@@ -12,19 +12,17 @@ public class GlamourHandler
     private readonly ILogger<GlamourHandler> _logger;
     private readonly IpcCallerGlamourer _ipc;
     private readonly GlamourCache _cache;
-    private readonly ItemService _items;
     private readonly OnFrameworkService _frameworkUtils;
 
     private SemaphoreSlim _applySlim = new SemaphoreSlim(1, 1);
     private IpcBlockReason _ipcBlocker = IpcBlockReason.None;
 
     public GlamourHandler(ILogger<GlamourHandler> logger, IpcCallerGlamourer ipc,
-        GlamourCache cache, ItemService items, OnFrameworkService frameworkUtils)
+        GlamourCache cache, OnFrameworkService frameworkUtils)
     {
         _logger = logger;
         _ipc = ipc;
         _cache = cache;
-        _items = items;
         _frameworkUtils = frameworkUtils;
     }
 
@@ -254,7 +252,7 @@ public class GlamourHandler
         if (latestState != null)
         {
             var latestUnboundCopy = GlamourActorState.Clone(_cache.LastUnboundState);
-            latestUnboundCopy.UpdateEquipment(latestState, _items, _cache.FinalGlamour.ToDictionary(x => x.Key, x => x.Value.GameItem));
+            latestUnboundCopy.UpdateEquipment(latestState, _cache.FinalGlamour.ToDictionary(x => x.Key, x => x.Value.GameItem));
             _cache.CacheUnboundState(latestUnboundCopy);
         }
         else

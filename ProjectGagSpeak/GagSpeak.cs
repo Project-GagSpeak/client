@@ -41,6 +41,7 @@ using GagSpeak.State.Caches;
 using GagSpeak.State.Handlers;
 using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
+using GagSpeak.State.Models;
 using GagSpeak.UpdateMonitoring.SpatialAudio;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
@@ -50,57 +51,12 @@ using Microsoft.Extensions.Hosting;
 using OtterGui.Log;
 using Penumbra.GameData.Data;
 using Penumbra.GameData.DataContainers;
+using Penumbra.GameData.Enums;
+using Penumbra.GameData.Structs;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace GagSpeak;
-
-// An intenal Static accessor for all DalamudPlugin interfaces, because im tired of interface includes.
-// And the difference is neglegable and its basically implied to make them static with the PluginService attribute.
-
-/// <summary>
-///     A collection of internally handled Dalamud Interface static services
-/// </summary>
-[SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local")]
-public class Svc
-{
-    [PluginService] public static IDalamudPluginInterface PluginInterface { get; set; } = null!;
-    [PluginService] public static IPluginLog Logger { get; set; } = null!;
-    [PluginService] public static IAddonLifecycle AddonLifecycle { get; set; } = null!;
-    [PluginService] public static IAddonEventManager AddonEventManager { get; private set; }
-    [PluginService] public static IAetheryteList AetheryteList { get; private set; }
-    //[PluginService] public static ITitleScreenMenu TitleScreenMenu { get; private set; } = null!;
-    //[PluginService] public static IBuddyList Buddies { get; private set; } = null!;
-    [PluginService] public static IChatGui Chat { get; set; } = null!;
-    [PluginService] public static IClientState ClientState { get; set; } = null!;
-    [PluginService] public static ICommandManager Commands { get; private set; }
-    [PluginService] public static ICondition Condition { get; private set; }
-    [PluginService] public static IContextMenu ContextMenu { get; private set; }
-    [PluginService] public static IDataManager Data { get; private set; } = null!;
-    [PluginService] public static IDtrBar DtrBar { get; private set; } = null!;
-    [PluginService] public static IDutyState DutyState { get; private set; } = null!;
-    [PluginService] public static IFramework Framework { get; private set; } = null!;
-    [PluginService] public static IGameGui GameGui { get; private set; } = null!;
-    //[PluginService] public static IGameInventory GameInventory { get; private set; } = null!;
-    //[PluginService] public static IGameNetwork GameNetwork { get; private set; } = null!;
-    //[PluginService] public static IJobGauges Gauges { get; private set; } = null!;
-    [PluginService] public static IGameInteropProvider Hook { get; private set; } = null!;
-    [PluginService] public static IGameConfig GameConfig { get; private set; } = null!;
-    [PluginService] public static IGameLifecycle GameLifeCycle { get; private set; } = null!;
-    [PluginService] public static IGamepadState GamepadState { get; private set; } = null!;
-    [PluginService] public static IKeyState KeyState { get; private set; } = null!;
-    [PluginService] public static INotificationManager Notifications { get; private set; } = null!;
-    [PluginService] public static INamePlateGui NamePlate { get; private set; } = null!;
-    [PluginService] public static IObjectTable Objects { get; private set; } = null!;
-    [PluginService] public static IPartyList Party { get; private set; } = null!;
-    [PluginService] public static ISigScanner SigScanner { get; private set; } = null!;
-    [PluginService] public static ITargetManager Targets { get; private set; } = null!;
-    [PluginService] public static ITextureProvider Texture { get; private set; } = null!;
-    [PluginService] public static IToastGui Toasts { get; private set; } = null!;
-    [PluginService] public static ITextureSubstitutionProvider TextureSubstitution { get; private set; } = null!;
-}
-
-
-
 public sealed class GagSpeak : IDalamudPlugin
 {
     private readonly IHost _host;  // the host builder for the plugin instance. (What makes everything work)
@@ -108,6 +64,7 @@ public sealed class GagSpeak : IDalamudPlugin
     {
         pi.Create<Svc>();
         // init the CkCommons.
+        ItemSvc.Init(pi);
         CkCommonsHost.Init(pi, this);
         // create the host builder for the plugin
         _host = ConstructHostBuilder(pi);
@@ -170,6 +127,8 @@ public sealed class GagSpeak : IDalamudPlugin
         _host.StopAsync().GetAwaiter().GetResult();
         // Dispose of CkCommons.
         CkCommonsHost.Dispose();
+        // Dispose of ItemSvc.
+        ItemSvc.Dispose();
         // Dispose the Host.
         _host.Dispose();
 
@@ -270,7 +229,6 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<DataDistributionService>()
         .AddSingleton<DtrBarService>()
         .AddSingleton<EmoteService>()
-        .AddSingleton<ItemService>()
         .AddSingleton<MufflerService>()
         .AddSingleton<NameplateService>()
         .AddSingleton<NotificationService>()
@@ -315,6 +273,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<MoodleListener>()
         .AddSingleton<PlayerHpListener>()
         .AddSingleton<IntifaceListener>()
+        .AddSingleton<KinksterListener>()
         .AddSingleton<PuppeteerListener>()
         .AddSingleton<ToyboxStateListener>()
         .AddSingleton<VisualStateListener>()
@@ -345,16 +304,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<MainHub>()
         .AddSingleton<HubFactory>()
         .AddSingleton<TokenProvider>()
-        .AddSingleton<PiShockProvider>()
-
-        // Penumbra.GameData pain. (I hate how this has to make the injection messy ;-;)
-        .AddSingleton<ItemData>()
-        .AddSingleton((s) => new DictBonusItems(Svc.PluginInterface, new Logger(), Svc.Data))
-        .AddSingleton((s) => new DictStain(Svc.PluginInterface, new Logger(), Svc.Data))
-        .AddSingleton((s) => new ItemsByType(Svc.PluginInterface, new Logger(), Svc.Data, s.GetRequiredService<DictBonusItems>()))
-        .AddSingleton((s) => new ItemsPrimaryModel(Svc.PluginInterface, new Logger(), Svc.Data, s.GetRequiredService<ItemsByType>()))
-        .AddSingleton((s) => new ItemsSecondaryModel(Svc.PluginInterface, new Logger(), Svc.Data, s.GetRequiredService<ItemsByType>()))
-        .AddSingleton((s) => new ItemsTertiaryModel(Svc.PluginInterface, new Logger(), Svc.Data, s.GetRequiredService<ItemsByType>(), s.GetRequiredService<ItemsSecondaryModel>()));
+        .AddSingleton<PiShockProvider>();
     #endregion GenericServices
 
     public static IServiceCollection AddGagSpeakIPC(this IServiceCollection services)

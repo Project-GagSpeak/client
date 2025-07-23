@@ -1,4 +1,5 @@
 using GagSpeak.Services;
+using GagspeakAPI.Data;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 
@@ -29,7 +30,7 @@ public class GlamourBonusSlot
 public class GlamourSlot : IEquatable<GlamourSlot>
 {
     public EquipSlot Slot { get; set; } = EquipSlot.Nothing;
-    public EquipItem GameItem { get; set; } = ItemService.NothingItem(EquipSlot.Nothing);
+    public EquipItem GameItem { get; set; } = ItemSvc.NothingItem(EquipSlot.Nothing);
     public StainIds GameStain { get; set; } = StainIds.None;
 
     public GlamourSlot()
@@ -60,6 +61,9 @@ public class GlamourSlot : IEquatable<GlamourSlot>
 
     public override int GetHashCode()
         => HashCode.Combine(Slot, GameItem, GameStain);
+
+    public LightSlot ToLightSlot()
+        => new((byte)Slot, GameItem.Id.Id, GameStain.Stain1.Id, GameStain.Stain2.Id);
 
 }
 

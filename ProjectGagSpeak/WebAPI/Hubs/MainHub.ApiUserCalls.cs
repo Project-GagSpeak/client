@@ -128,41 +128,41 @@ public partial class MainHub
     #endregion Client Vanity
 
     #region Personal Interactions
-    public async Task<HubResponse> UserPushData(PushClientCompositeUpdate dto)
+    public async Task<HubResponse> UserPushActiveData(PushClientCompositeUpdate dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushData), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActiveData), dto).ConfigureAwait(false);
 
     }
 
-    public async Task<HubResponse> UserPushDataIpc(PushClientIpcUpdate dto)
+    public async Task<HubResponse> UserPushActiveIpc(PushClientIpcUpdate dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushDataIpc), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActiveIpc), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserPushDataGags(PushClientGagSlotUpdate dto)
+    public async Task<HubResponse> UserPushActiveGags(PushClientActiveGagSlot dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushDataGags), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActiveGags), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserPushDataRestrictions(PushClientRestrictionUpdate dto)
+    public async Task<HubResponse> UserPushActiveRestrictions(PushClientActiveRestriction dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushDataRestrictions), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActiveRestrictions), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserPushDataRestraint(PushClientRestraintUpdate dto)
+    public async Task<HubResponse> UserPushActiveRestraint(PushClientActiveRestraint dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushDataRestraint), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActiveRestraint), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserPushDataCursedLoot(PushClientCursedLootUpdate dto)
+    public async Task<HubResponse> UserPushActiveLoot(PushClientActiveLoot dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushDataCursedLoot), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActiveLoot), dto).ConfigureAwait(false);
     }
 
     public async Task<HubResponse> UserPushAliasGlobalUpdate(PushClientAliasGlobalUpdate dto)
@@ -177,16 +177,68 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushAliasUniqueUpdate), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserPushDataToybox(PushClientToyboxUpdate dto)
+    public async Task<HubResponse> UserPushActivePattern(PushClientActivePattern dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushDataToybox), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActivePattern), dto).ConfigureAwait(false);
+    }
+    public async Task<HubResponse> UserPushActiveAlarms(PushClientActiveAlarms dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActiveAlarms), dto).ConfigureAwait(false);
+    }
+    public async Task<HubResponse> UserPushActiveTriggers(PushClientActiveTriggers dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActiveTriggers), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserPushDataLightStorage(PushClientLightStorageUpdate dto)
+    public async Task<HubResponse> UserPushNewGagData(PushClientDataChangeGag dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushDataLightStorage), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushNewGagData), dto).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> UserPushNewRestrictionData(PushClientDataChangeRestriction dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushNewRestrictionData), dto).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> UserPushNewRestraintData(PushClientDataChangeRestraint dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushNewRestraintData), dto).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> UserPushNewLootData(PushClientDataChangeLoot dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushNewLootData), dto).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> UserPushNewPatternData(PushClientDataChangePattern dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushNewPatternData), dto).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> UserPushNewAlarmData(PushClientDataChangeAlarm dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushNewAlarmData), dto).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> UserPushNewTriggerData(PushClientDataChangeTrigger dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushNewTriggerData), dto).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> UserPushNewAllowances(PushClientAllowances dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushNewAllowances), dto).ConfigureAwait(false);
     }
 
     public async Task<HubResponse> UserBulkChangeGlobal(BulkChangeGlobal allGlobalPerms)
@@ -262,28 +314,40 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserRemoveKinkster), KinksterBase).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserChangeKinksterGagState(PushKinksterGagSlotUpdate dto)
+    public async Task<HubResponse> UserChangeKinksterActiveGag(PushKinksterActiveGagSlot dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeKinksterGagState), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeKinksterActiveGag), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserChangeKinksterRestrictionState(PushKinksterRestrictionUpdate dto)
+    public async Task<HubResponse> UserChangeKinksterActiveRestriction(PushKinksterActiveRestriction dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeKinksterRestrictionState), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeKinksterActiveRestriction), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserChangeKinksterRestraintState(PushKinksterRestraintUpdate dto)
+    public async Task<HubResponse> UserChangeKinksterActiveRestraint(PushKinksterActiveRestraint dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeKinksterRestraintState), dto);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeKinksterActiveRestraint), dto);
     }
 
-    public async Task<HubResponse> UserChangeKinksterToyboxState(PushKinksterToyboxUpdate dto)
+    public async Task<HubResponse> UserChangeKinksterActivePattern(PushKinksterActivePattern dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeKinksterToyboxState), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeKinksterActivePattern), dto).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> UserChangeKinksterActiveAlarms(PushKinksterActiveAlarms dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeKinksterActiveAlarms), dto).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> UserChangeKinksterActiveTriggers(PushKinksterActiveTriggers dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeKinksterActiveTriggers), dto).ConfigureAwait(false);
     }
 
     public async Task<HubResponse> UserSendNameToKinkster(KinksterBase recipient, string listenerName)

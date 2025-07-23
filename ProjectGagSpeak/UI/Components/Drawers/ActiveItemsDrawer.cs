@@ -112,7 +112,7 @@ public class ActiveItemsDrawer
             GagItem = combo.Current.GagType,
             Enabler = MainHub.UID,
         };
-        _mediator.Publish(new GagDataChangedMessage(updateType, slotIdx, newSlotData));
+        _mediator.Publish(new ActiveGagsChangeMessage(updateType, slotIdx, newSlotData));
         _logger.LogTrace($"Requesting Server to update layer {slotIdx}'s Gag to {combo.Current.GagType} from {curr}");
     }
 
@@ -129,7 +129,7 @@ public class ActiveItemsDrawer
             Identifier = combo.Current.Identifier,
             Enabler = MainHub.UID,
         };
-        _mediator.Publish(new RestrictionDataChangedMessage(updateType, slotIdx, newSlotData));
+        _mediator.Publish(new ActiveRestrictionsChangeMessage(updateType, slotIdx, newSlotData));
         _logger.LogTrace($"Requesting Server to change restriction layer {slotIdx} to {combo.Current.Identifier} from {curr}");
     }
 
@@ -146,7 +146,7 @@ public class ActiveItemsDrawer
             Identifier = _restraintItem.Current.Identifier,
             Enabler = MainHub.UID,
         };
-        _mediator.Publish(new RestraintDataChangedMessage(updateType, newSlotData));
+        _mediator.Publish(new ActiveRestraintSetChangeMessage(updateType, newSlotData));
         _logger.LogTrace($"Requesting Server to change Restraint Set to {_restraintItem.Current.Identifier} from {curr}");
     }
 
@@ -210,7 +210,7 @@ public class ActiveItemsDrawer
         else if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _gags.CanRemove(slotIdx))
         {
             _logger.LogTrace($"Gag Layer {slotIdx} was cleared. and is now Empty");
-            _mediator.Publish(new GagDataChangedMessage(DataUpdateType.Removed, slotIdx, new ActiveGagSlot()));
+            _mediator.Publish(new ActiveGagsChangeMessage(DataUpdateType.Removed, slotIdx, new ActiveGagSlot()));
         }
 
         // Draw out padlocks selections.
@@ -240,7 +240,7 @@ public class ActiveItemsDrawer
         else if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _restrictions.CanRemove(slotIdx))
         {
             _logger.LogTrace($"Restriction Layer {slotIdx} was cleared. and is now Empty");
-            _mediator.Publish(new RestrictionDataChangedMessage(DataUpdateType.Removed, slotIdx, new ActiveRestriction()));
+            _mediator.Publish(new ActiveRestrictionsChangeMessage(DataUpdateType.Removed, slotIdx, new ActiveRestriction()));
         }
 
         ImUtf8.SameLineInner();
@@ -270,7 +270,7 @@ public class ActiveItemsDrawer
         else if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _restraints.CanRemove())
         {
             _logger.LogTrace($"Active Restraint Set (and all active layers on it) was cleared.");
-            _mediator.Publish(new RestraintDataChangedMessage(DataUpdateType.Removed, new CharaActiveRestraint()));
+            _mediator.Publish(new ActiveRestraintSetChangeMessage(DataUpdateType.Removed, new CharaActiveRestraint()));
         }
 
         ImGui.SameLine();

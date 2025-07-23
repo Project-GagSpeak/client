@@ -14,6 +14,7 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.State;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
+using GagspeakAPI.Attributes;
 using ImGuiNET;
 using OtterGui.Extensions;
 using OtterGui.Text;
@@ -196,7 +197,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
     {
         using var innerGroup = ImRaii.Group();
         // Next row we need to draw the Glamour Icon, Mod Icon, and hardcore Traits.
-        var hasGlamour = ItemService.NothingItem(_selector.Selected!.Glamour.Slot).Id != _selector.Selected!.Glamour.GameItem.Id;
+        var hasGlamour = ItemSvc.NothingItem(_selector.Selected!.Glamour.Slot).Id != _selector.Selected!.Glamour.GameItem.Id;
         CkGui.FramedIconText(FAI.Vest);
         CkGui.AttachToolTip(hasGlamour
             ? $"A --COL--{_selector.Selected!.Glamour.GameItem.Name}--COL-- is attached to the --COL--{_selector.Selected!.Label}--COL--."

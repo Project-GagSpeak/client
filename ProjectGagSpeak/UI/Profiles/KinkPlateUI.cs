@@ -277,21 +277,21 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         }
 
         // we should draw out the gag images here if valid.
-        if (Pair.LastGagData is not null)
+        if (Pair.ActiveGags is not null)
         {
-            if (Pair.LastGagData.GagSlots[0].GagItem is not GagType.None)
+            if (Pair.ActiveGags.GagSlots[0].GagItem is not GagType.None)
             {
-                var gagImage = TextureManager.AssetImageOrDefault("GagImages\\" + Pair.LastGagData.GagSlots[0].GagItem.GagName() + ".png" ?? $"ItemMouth\\None.png");
+                var gagImage = TextureManager.AssetImageOrDefault("GagImages\\" + Pair.ActiveGags.GagSlots[0].GagItem.GagName() + ".png" ?? $"ItemMouth\\None.png");
                 wdl.AddDalamudImageRounded(gagImage, GagSlotOnePos, GagSlotSize, 10f);
             }
-            if (Pair.LastGagData.GagSlots[1].GagItem is not GagType.None)
+            if (Pair.ActiveGags.GagSlots[1].GagItem is not GagType.None)
             {
-                var gagImage = TextureManager.AssetImageOrDefault("GagImages\\" + Pair.LastGagData.GagSlots[1].GagItem.GagName() + ".png" ?? $"ItemMouth\\None.png");
+                var gagImage = TextureManager.AssetImageOrDefault("GagImages\\" + Pair.ActiveGags.GagSlots[1].GagItem.GagName() + ".png" ?? $"ItemMouth\\None.png");
                 wdl.AddDalamudImageRounded(gagImage, GagSlotTwoPos, GagSlotSize, 10f);
             }
-            if (Pair.LastGagData.GagSlots[2].GagItem is not GagType.None)
+            if (Pair.ActiveGags.GagSlots[2].GagItem is not GagType.None)
             {
-                var gagImage = TextureManager.AssetImageOrDefault("GagImages\\" + Pair.LastGagData.GagSlots[2].GagItem.GagName() + ".png" ?? $"ItemMouth\\None.png");
+                var gagImage = TextureManager.AssetImageOrDefault("GagImages\\" + Pair.ActiveGags.GagSlots[2].GagItem.GagName() + ".png" ?? $"ItemMouth\\None.png");
                 wdl.AddDalamudImageRounded(gagImage, GagSlotThreePos, GagSlotSize, 10f);
             }
         }
@@ -319,21 +319,21 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         }
 
         // we should draw out the lock images here if valid.
-        if (Pair.LastGagData is not null)
+        if (Pair.ActiveGags is not null)
         {
-            if (Pair.LastGagData.GagSlots[0].Padlock is not Padlocks.None)
+            if (Pair.ActiveGags.GagSlots[0].Padlock is not Padlocks.None)
             {
-                var padlockImage = TextureManager.AssetImageOrDefault("PadlockImages\\" + Pair.LastGagData.GagSlots[0].Padlock + ".png" ?? "Padlocks\\None.png");
+                var padlockImage = TextureManager.AssetImageOrDefault("PadlockImages\\" + Pair.ActiveGags.GagSlots[0].Padlock + ".png" ?? "Padlocks\\None.png");
                 wdl.AddDalamudImageRounded(padlockImage, GagLockOnePos, GagLockSize, GagLockSize.X / 2);
             }
-            if (Pair.LastGagData.GagSlots[1].Padlock is not Padlocks.None)
+            if (Pair.ActiveGags.GagSlots[1].Padlock is not Padlocks.None)
             {
-                var padlockImage = TextureManager.AssetImageOrDefault("PadlockImages\\" + Pair.LastGagData.GagSlots[1].Padlock + ".png" ?? "Padlocks\\None.png");
+                var padlockImage = TextureManager.AssetImageOrDefault("PadlockImages\\" + Pair.ActiveGags.GagSlots[1].Padlock + ".png" ?? "Padlocks\\None.png");
                 wdl.AddDalamudImageRounded(padlockImage, GagLockTwoPos, GagLockSize, GagLockSize.X / 2);
             }
-            if (Pair.LastGagData.GagSlots[2].Padlock is not Padlocks.None)
+            if (Pair.ActiveGags.GagSlots[2].Padlock is not Padlocks.None)
             {
-                var padlockImage = TextureManager.AssetImageOrDefault("PadlockImages\\" + Pair.LastGagData.GagSlots[2].Padlock + ".png" ?? "Padlocks\\None.png");
+                var padlockImage = TextureManager.AssetImageOrDefault("PadlockImages\\" + Pair.ActiveGags.GagSlots[2].Padlock + ".png" ?? "Padlocks\\None.png");
                 wdl.AddDalamudImageRounded(padlockImage, GagLockThreePos, GagLockSize, GagLockSize.X / 2);
             }
         }
@@ -395,8 +395,8 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
 
         // draw out the blocked causes icon row.
         var blockedAffecterPos = LockAffectersRowPos;
-        var restrainedColor = Pair.LastRestraintData.Identifier== Guid.Empty ? ImGuiColors.DalamudGrey3 : Gold;
-        var restrainedTT = Pair.LastRestraintData.Identifier== Guid.Empty ? DisplayName + " is not wearing a restraint set." : DisplayName + " has an active restraint set.";
+        var restrainedColor = Pair.ActiveRestraint.Identifier== Guid.Empty ? ImGuiColors.DalamudGrey3 : Gold;
+        var restrainedTT = Pair.ActiveRestraint.Identifier== Guid.Empty ? DisplayName + " is not wearing a restraint set." : DisplayName + " has an active restraint set.";
         wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Restrained], blockedAffecterPos, LockAffecterIconSize, restrainedColor, restrainedTT);
         blockedAffecterPos.X += LockAffecterIconSize.X + LockAffecterSpacing.X;
 
@@ -431,7 +431,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
                 else
                 {
                     // Draw the empty icon if the slot is not locked
-                    var (ptr, textureSize, empty) = _textures.GetIcon(ItemService.NothingItem(equipSlot), equipSlot);
+                    var (ptr, textureSize, empty) = _textures.GetIcon(ItemSvc.NothingItem(equipSlot), equipSlot);
                     if (!empty)
                         wdl.AddImageRounded(ptr, blockedSlotsPos, blockedSlotsPos + LockedSlotSize, Vector2.Zero, Vector2.One, 0xFFFFFFFF, 15f);
                 }

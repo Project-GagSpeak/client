@@ -96,6 +96,6 @@ public class Alarm : IEditableStorageItem<Alarm>
         return alarm;
     }
 
-    public LightAlarm ToLightAlarm()
-        => new LightAlarm(Identifier, Label, SetTimeUTC, PatternRef.Identifier);
+    public LightAlarm ToLightItem()
+        => new LightAlarm(Identifier, Label, SetTimeUTC, PatternRef.Identifier, DaysToFire);
 }

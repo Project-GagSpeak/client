@@ -19,7 +19,6 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
     private readonly FavoritesManager _favorites;
     private readonly ModSettingPresetManager _modPresets;
     private readonly ConfigFileProvider _fileNames;
-    private readonly ItemService _items;
     private readonly MufflerService _muffler;
     private readonly HybridSaveService _saver;
 
@@ -33,14 +32,12 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
         FavoritesManager favorites,
         ModSettingPresetManager modPresets,
         ConfigFileProvider fileNames,
-        ItemService items,
         MufflerService muffler,
         HybridSaveService saver) : base(logger, mediator)
     {
         _favorites = favorites;
         _modPresets = modPresets;
         _fileNames = fileNames;
-        _items = items;
         _muffler = muffler;
         _saver = saver;
 
@@ -290,7 +287,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
                     continue;
                 }
 
-                var newGagItem = GarblerRestriction.FromToken(gagData, gagType, _items, _modPresets);
+                var newGagItem = GarblerRestriction.FromToken(gagData, gagType, _modPresets);
                 Storage[gagType] = newGagItem;
             }
         }
@@ -327,7 +324,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
                     Password = gagSlot.Password, // use the same password.
                     PadlockAssigner = gagSlot.PadlockAssigner // use the same assigner. (To remove devotional timers)
                 };
-                Mediator.Publish(new GagDataChangedMessage(DataUpdateType.Unlocked, index, newData));
+                Mediator.Publish(new ActiveGagsChangeMessage(DataUpdateType.Unlocked, index, newData));
             }
     }
 }

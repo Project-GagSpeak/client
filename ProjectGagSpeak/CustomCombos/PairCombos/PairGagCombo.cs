@@ -1,4 +1,5 @@
 using CkCommons.Gui;
+using CkCommons.Widgets;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Kinksters;
@@ -35,11 +36,11 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
         var ret = ImGui.Selectable(gagItem.GagName(), selected);
 
         // IF the GagType is present in their light gag storage dictionary, then draw the link icon.
-        if (_kinksterRef.LastLightStorage.GagItems.ContainsKey(gagItem))
+        if (_kinksterRef.LightCache.Gags.TryGetValue(gagItem, out var gagData))
         {
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetTextLineHeight());
             CkGui.IconText(FAI.Link, ImGui.GetColorU32(ImGuiColors.HealerGreen));
-            DrawItemTooltip(gagItem, _kinksterRef.GetNickAliasOrUid() + " set a Glamour for this Gag.");
+            DrawItemTooltip(gagData, $"View {_kinksterRef.GetNickAliasOrUid()}'s Data for this Gag.");
         }
         return ret;
     }
@@ -50,14 +51,14 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
     protected override async Task<bool> OnButtonPress(int layerIdx)
     {
         // we need to go ahead and create a deep clone of our new appearanceData, and ensure it is valid.
-        if (_kinksterRef.LastGagData.GagSlots[layerIdx].GagItem == Current)
+        if (_kinksterRef.ActiveGags.GagSlots[layerIdx].GagItem == Current)
             return false;
 
-        var updateType = _kinksterRef.LastGagData.GagSlots[layerIdx].GagItem is GagType.None
+        var updateType = _kinksterRef.ActiveGags.GagSlots[layerIdx].GagItem is GagType.None
             ? DataUpdateType.Applied : DataUpdateType.Swapped;
         
         // construct the dto to send.
-        var dto = new PushKinksterGagSlotUpdate(_kinksterRef.UserData, updateType)
+        var dto = new PushKinksterActiveGagSlot(_kinksterRef.UserData, updateType)
         {
             Layer = layerIdx,
             Gag = Current,
@@ -65,7 +66,7 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
         };
 
         // push to server.
-        var result = await _mainHub.UserChangeKinksterGagState(dto);
+        var result = await _mainHub.UserChangeKinksterActiveGag(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform ApplyGag with {Current.GagName()} on {_kinksterRef.GetNickAliasOrUid()}, Reason:{result}", LoggerType.StickyUI);
@@ -79,7 +80,7 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
         }
     }
 
-    private void DrawItemTooltip(GagType item, string headerText)
+    private void DrawItemTooltip(KinksterGag item, string headerText)
     {
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
@@ -112,21 +113,10 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
             ImGui.PopTextWrapPos();
 
             // before we pop the text wrap position, we will draw the item's icon.
-            if (_kinksterRef.LastLightStorage.GagItems.TryGetValue(item, out var appliedSlot))
-            {
-                ImGui.Separator();
-                using (ImRaii.Group())
-                {
-                    //_gagPreview.DrawAppliedSlot(appliedSlot);
-                    ImGui.SameLine();
-                    using (ImRaii.Group())
-                    {
-                        //var equipItem = ItemService.Resolve((EquipSlot)appliedSlot.Slot, appliedSlot.CustomItemId);
-                        //ImGui.Text(equipItem.Name);
-                        ImGui.Text(((EquipSlot)appliedSlot.Slot).ToName() + " Slot");
-                    }
-                }
-            }
+            ImGui.Separator();
+            ImGui.Text(item.GlamItem.Name);
+            ImGui.Text(item.Slot.ToName() + " Slot");
+
             ImGui.EndTooltip();
         }
     }

@@ -9,9 +9,9 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
-using GagSpeak.State;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
+using GagspeakAPI.Attributes;
 using ImGuiNET;
 using OtterGui.Text;
 

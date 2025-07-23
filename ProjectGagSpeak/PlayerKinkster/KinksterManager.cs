@@ -177,6 +177,8 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         return !string.IsNullOrWhiteSpace(nickAliasUid);
     }
 
+    public bool TryGetKinkster(UserData user, [NotNullWhen(true)] out Kinkster? kinkster)
+        => _allClientPairs.TryGetValue(user, out kinkster);
 
     public (MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms) GetMoodlePermsForPairByName(string nameWithWorld)
     {
@@ -256,96 +258,6 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         // push our composite data to them.
         Mediator.Publish(new PairWentOnlineMessage(dto.User));
         RecreateLazy();
-    }
-
-    /// <summary> Only called upon a safeword or initial connection for load. Not called otherwise. </summary>
-    public void ReceiveCompositeData(KinksterUpdateComposite dto, string clientUID)
-    {
-        if (!_allClientPairs.TryGetValue(dto.User, out var pair)) 
-            throw new InvalidOperationException("No user found for " + dto.User);
-
-        _allClientPairs[dto.User].LoadCompositeData(dto);
-    }
-
-    public void ReceiveIpcData(KinksterUpdateIpc dto)
-    {
-        if (!_allClientPairs.TryGetValue(dto.User, out var pair)) 
-            throw new InvalidOperationException("No user found for " + dto.User);
-
-        _allClientPairs[dto.User].UpdateVisibleData(dto);
-    }
-
-    public void ReceiveGagData(KinksterUpdateGagSlot dto)
-    {
-        if (!_allClientPairs.TryGetValue(dto.User, out var pair)) 
-            throw new InvalidOperationException("No user found for " + dto.User);
-
-        _allClientPairs[dto.User].UpdateGagData(dto);
-    }
-
-    public void ReceiveRestrictionData(KinksterUpdateRestriction dto)
-    {
-        if(!_allClientPairs.TryGetValue(dto.User, out var pair)) 
-            throw new InvalidOperationException("No user found for " + dto.User);
-
-        _allClientPairs[dto.User].UpdateRestrictionData(dto);
-    }
-
-    public void ReceiveCharaWardrobeData(KinksterUpdateRestraint dto)
-    {
-        if (!_allClientPairs.TryGetValue(dto.User, out var pair)) 
-            throw new InvalidOperationException("No user found for " + dto.User);
-
-        _allClientPairs[dto.User].UpdateRestraintData(dto);
-    }
-
-    public void ReceiveCharaCursedLootData(KinksterUpdateCursedLoot dto)
-    {
-        if (!_allClientPairs.TryGetValue(dto.User, out var pair)) 
-            throw new InvalidOperationException("No user found for " + dto.User);
-
-        _allClientPairs[dto.User].UpdateCursedLootData(dto);
-    }
-
-    public void ReceiveCharaToyboxData(KinksterUpdateToybox dto)
-    {
-        if (!_allClientPairs.TryGetValue(dto.User, out var pair)) 
-            throw new InvalidOperationException("No user found for " + dto.User);
-
-        _allClientPairs[dto.User].UpdateToyboxData(dto);
-    }
-
-    public void ReceiveCharaAliasGlobalUpdate(KinksterUpdateAliasGlobal dto)
-    {
-        if (!_allClientPairs.TryGetValue(dto.User, out var pair))
-            throw new InvalidOperationException("No user found for " + dto.User);
-
-        _allClientPairs[dto.User].UpdateGlobalAlias(dto.NewData);
-    }
-
-    public void ReceiveCharaAliasPairUpdate(KinksterUpdateAliasUnique dto)
-    {
-        if (!_allClientPairs.TryGetValue(dto.User, out var pair))
-            throw new InvalidOperationException("No user found for " + dto.User);
-
-        _allClientPairs[dto.User].UpdateUniqueAlias(dto.NewData);
-    }
-
-    public void ReceiveListenerName(UserData kinkster, string trueName)
-    {
-        if (!_allClientPairs.TryGetValue(kinkster, out var pair))
-            throw new InvalidOperationException("No user found for " + kinkster);
-
-        _allClientPairs[kinkster].UpdateListenerName(trueName);
-    }
-
-    /// <summary> Method similar to compositeData, but this will only update the latest Light Storage Data of the user pair. </summary>
-    public void ReceiveCharaLightStorageData(KinksterUpdateLightStorage dto)
-    {
-        if (!_allClientPairs.TryGetValue(dto.User, out var pair)) 
-            throw new InvalidOperationException("No user found for " + dto.User);
-
-        _allClientPairs[dto.User].UpdateLightStorageData(dto);
     }
 
     /// <summary> Removes a user pair from the client's pair list.</summary>

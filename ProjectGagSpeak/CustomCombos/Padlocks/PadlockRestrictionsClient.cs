@@ -56,7 +56,7 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
             PadlockAssigner = MainHub.UID
         };
 
-        if (await _dds.PushUpdatedRestrictionData(layerIdx, newData, DataUpdateType.Locked) is { } res && res is not GagSpeakApiEc.Success)
+        if (await _dds.PushNewActiveRestriction(layerIdx, newData, DataUpdateType.Locked) is { } res && res is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform LockRestriction with {SelectedLock.ToName()} on self. Reason:{res}", LoggerType.StickyUI);
             ResetSelection();
@@ -88,7 +88,7 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
             PadlockAssigner = MainHub.UID
         };
 
-        if (await _dds.PushUpdatedRestrictionData(layerIdx, newData, DataUpdateType.Unlocked) is { } res && res is not GagSpeakApiEc.Success)
+        if (await _dds.PushNewActiveRestriction(layerIdx, newData, DataUpdateType.Unlocked) is { } res && res is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform UnlockRestriction with {Items[layerIdx].Padlock.ToName()} on self. Reason:{res}", LoggerType.StickyUI);
             ResetSelection();
