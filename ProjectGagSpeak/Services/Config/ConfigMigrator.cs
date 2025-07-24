@@ -349,8 +349,8 @@ public static class ConfigMigrator
 
             // Overwrite by deleting first
             if (File.Exists(destPath))
-                File.Delete(destPath); 
-            
+                File.Delete(destPath);
+
             File.Move(file, destPath);
         }
 
@@ -602,18 +602,6 @@ public static class ConfigMigrator
                     ["RestrictionId"] = oldaction["OutputIdentifier"]
                 };
 
-            // Moodleitems
-            case 3:
-                return new JObject()
-                {
-                    ["ActionType"] = 4,
-                    ["MoodleItem"] = new JObject()
-                    {
-                        ["Id"] = oldaction["Identifier"]!
-                    }
-                    ["IsValid"] = true
-                };
-                // Other options may be in here, but don't have the data to confirm.
         }
         return null;
     }
