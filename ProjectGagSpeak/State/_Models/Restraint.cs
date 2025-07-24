@@ -55,6 +55,7 @@ public class RestraintSlotBasic : IRestraintSlot
 
     public RestraintSlotBasic(RestraintSlotBasic other)
     {
+        ApplyFlags = other.ApplyFlags;
         Glamour = new GlamourSlot(other.Glamour);
     }
 
@@ -96,9 +97,9 @@ public class RestraintSlotAdvanced : IRestraintSlot, IRestrictionRef
     public RestrictionItem Ref { get; set; } = new RestrictionItem() { Identifier = Guid.Empty };
     public StainIds CustomStains { get; set; } = StainIds.None;
     public EquipSlot EquipSlot => Ref.Glamour.Slot;
-    public EquipItem EquipItem => Ref.Glamour.GameItem ;
+    public EquipItem EquipItem => Ref.Glamour.GameItem;
     public StainIds Stains => CustomStains != StainIds.None ? CustomStains : Ref.Glamour.GameStain;
-    public RestraintSlotAdvanced() 
+    public RestraintSlotAdvanced()
     { }
 
     public RestraintSlotAdvanced(RestraintSlotAdvanced other)
@@ -137,7 +138,7 @@ public class RestraintSlotAdvanced : IRestraintSlot, IRestrictionRef
     /// <remarks> If advanced slot fails to load, a default, invalid restriction item will be put in place. </remarks>
     public static RestraintSlotAdvanced FromToken(JToken? token, RestrictionManager restrictions)
     {
-        if (token is not JObject slotJson) 
+        if (token is not JObject slotJson)
             throw new Exception("Invalid JSON Token for Slot.");
 
         var applyFlags = slotJson["ApplyFlags"]?.ToObject<int>() is int v ? (RestraintFlags)v : RestraintFlags.Advanced;
@@ -145,7 +146,7 @@ public class RestraintSlotAdvanced : IRestraintSlot, IRestrictionRef
         var stains = GsExtensions.ParseCompactStainIds(slotJson["CustomStains"]);
         // Handle invalid advanced slots.
         if (restrictions.Storage.TryGetRestriction(refId, out var restriction))
-            return new RestraintSlotAdvanced() { ApplyFlags = applyFlags, Ref = restriction, CustomStains = stains }; 
+            return new RestraintSlotAdvanced() { ApplyFlags = applyFlags, Ref = restriction, CustomStains = stains };
         else
         {
             Svc.Logger.Warning("ID Was empty for advanced restriction or restriction was not found, resetting to empty item.");

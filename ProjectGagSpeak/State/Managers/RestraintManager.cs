@@ -332,20 +332,36 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         Logger.LogInformation($"Loading in Restraints Config for file: {file}");
 
         Storage.Clear();
+        JObject jObject;
+        // Read the json from the file.
         if (!File.Exists(file))
         {
             Logger.LogWarning($"No Restraints Config file found at {file}");
             // create a new file with default values.
-            _saver.Save(this);
-            return;
+
+            var oldFormatFile = Path.Combine(_fileNames.CurrentPlayerDirectory, "wardrobe.json");
+            if (File.Exists(oldFormatFile))
+            {
+                var oldText = File.ReadAllText(oldFormatFile);
+                var oldObject = JObject.Parse(oldText);
+                jObject = ConfigMigrator.MigrateWardrobeConfig(oldObject, _fileNames, oldFormatFile);
+            }
+            else
+            {
+                Svc.Logger.Warning("No Config file found for: " + oldFormatFile);
+                _saver.Save(this);
+                return;
+                // create a new file with default values.
+            }
         }
-
-        // Read the json from the file.
-        var jsonText = File.ReadAllText(file);
-        var jObject = JObject.Parse(jsonText);
-        var version = jObject["Version"]?.Value<int>() ?? 0;
-
+        else
+        {
+            var jsonText = File.ReadAllText(file);
+            jObject = JObject.Parse(jsonText);
+        }
         // Perform Migrations if any, and then load the data.
+
+        var version = jObject["Version"]?.Value<int>() ?? 0;
         switch (version)
         {
             case 0:
