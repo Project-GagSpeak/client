@@ -214,10 +214,14 @@ public static class ConfigMigrator
             {
                 var slot = (JObject)property.Value;
                 string name = (string)slot["Slot"]!;
+                // All the application info is now encoded into a single flag value.
+                // 1 = Glamour
+                // 32 = IsOverlay (i.e. is enabled and should be displayed/locked even if empty)
+                var applyFlags = (bool)slot["IsEnabled"]! ? 33 : 1;
                 var newslot = new JObject()
                 {
                     ["Type"] = "Basic",
-                    ["ApplyFlags"] = 33,
+                    ["ApplyFlags"] = applyFlags,
                     ["Glamour"] = new JObject()
                     {
                         ["Slot"] = name,
@@ -623,7 +627,6 @@ public static class ConfigMigrator
             var actions = new JArray();
             foreach (JProperty actionprop in aliasitem["Executions"]!)
             {
-                Svc.Logger.Debug($"{actionprop})");
                 JObject oldaction = (JObject)actionprop.Value;
                 var action = MigrateAction(oldaction);
                 if (action is not null)
@@ -682,13 +685,12 @@ public static class ConfigMigrator
             ["GlobalStorage"] = globalStorage,
             ["PairStorage"] = pairStorage
         };
-
-        // remove the backups of old versions.
+        // Begin cleaning up the configuration directory.
         var oldFormatBackupDir = Path.Combine(fileNames.CurrentPlayerDirectory, "OldFormatBackups");
         if (!Directory.Exists(oldFormatBackupDir))
             Directory.CreateDirectory(oldFormatBackupDir);
 
-        // move all old files into the backup folder.
+        // Ensure that there's nothing at the destination path so the move is successful.
         foreach (var file in Directory.GetFiles(fileNames.CurrentPlayerDirectory, "alias-lists.json*"))
         {
             var fileName = Path.GetFileName(file);

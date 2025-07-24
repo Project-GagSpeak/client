@@ -74,7 +74,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         var storage = userUid is null ? GlobalAliasStorage : PairAliasStorage[userUid].Storage;
         if (storage is null)
             return;
-        
+
         if (storage.Items.Remove(trigger))
         {
             Logger.LogDebug($"Deleted Alias Trigger in {nameof(storage)}", LoggerType.Puppeteer);
@@ -84,7 +84,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
 
     public void ToggleState(AliasTrigger trigger, string? userUid = null)
     {
-        if(userUid is not null && !ValidatePairStorage(userUid))
+        if (userUid is not null && !ValidatePairStorage(userUid))
             return;
 
         var storage = userUid is null ? GlobalAliasStorage : PairAliasStorage[userUid].Storage;
@@ -133,7 +133,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
             return false;
 
         // we have the UID, so get its permissions.
-        if(_pairs.DirectPairs.FirstOrDefault(p => p.UserData.UID == match) is not { } pair)
+        if (_pairs.DirectPairs.FirstOrDefault(p => p.UserData.UID == match) is not { } pair)
             return false;
 
         matchedPair = pair;
@@ -142,7 +142,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
 
     public void UpdateStoredAliasName(string pairUid, string listenerName)
     {
-        if(ValidatePairStorage(pairUid))
+        if (ValidatePairStorage(pairUid))
         {
             // set the name.
             PairAliasStorage[pairUid].StoredNameWorld = listenerName;
@@ -301,7 +301,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         };
 
         // Parse AliasList
-        if(obj["Storage"] is not JArray aliasListArray)
+        if (obj["Storage"] is not JArray aliasListArray)
             return aliasStorage;
 
         foreach (var item in aliasListArray)
