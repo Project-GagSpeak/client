@@ -73,7 +73,6 @@ public abstract class DrawFolderBase : IDrawFolder
         // if opened draw content
         if (_serverConfigs.NickStorage.OpenPairListFolders.Contains(_id))
         {
-            using var _ = ImRaii.Child("folder___" + _id, ImGui.GetContentRegionAvail());
             using var indent = ImRaii.PushIndent(CkGui.IconSize(FAI.EllipsisV).X + ImGui.GetStyle().ItemSpacing.X, false);
             if (DrawPairs.Any())
             {
