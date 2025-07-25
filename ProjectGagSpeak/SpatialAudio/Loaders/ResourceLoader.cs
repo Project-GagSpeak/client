@@ -130,7 +130,7 @@ public unsafe partial class ResourceLoader : IDisposable
 
             InitSoundHook?.Dispose();
         }
-        catch (Exception e)
+        catch (Bagagwa e)
         {
             _logger.LogError(e, "Error disposing of ResourceLoader");
         }

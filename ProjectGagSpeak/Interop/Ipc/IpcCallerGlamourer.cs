@@ -90,7 +90,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
         {
             await _frameworkUtils.RunOnFrameworkThread(() => SetItem.Invoke(0, slot, item, dye, 1337)).ConfigureAwait(true);
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             Logger.LogError($"Failed to set Item {item} on Slot {slot} with dyes {dye.ToArray().ToString()}. Reason: {ex}");
             return;
@@ -104,7 +104,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
         {
             await _frameworkUtils.RunOnFrameworkThread(() => SetMetaState.Invoke(0, metaTypes, newValue, 1337)).ConfigureAwait(false);
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             Logger.LogError($"Error during SetMetaStates: {ex}");
         }
@@ -124,7 +124,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
                 ApplyState.Invoke(playerState!, 0, flags: ApplyFlag.Customization);
             }).ConfigureAwait(false);
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             Logger.LogError($"Error during ForceSetCustomize: {ex}");
         }

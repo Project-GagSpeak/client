@@ -54,7 +54,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
         }
 
         _globalChat.DrawChat(ImGui.GetContentRegionAvail());
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.GlobalChat, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+        // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.GlobalChat, ImGui.GetWindowPos(), ImGui.GetWindowSize());
     }
 }
 

@@ -122,30 +122,4 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         ResetTimeoutTracker();
         Mediator.Publish(new PushGlobalPermChange(nameof(GlobalPerms.ForcedFollow), string.Empty));
     }
-
-    /// <summary>
-    ///     Assigns a movement task to the controller, which will be executed.
-    ///     During this time, movement will be restricted.
-    /// </summary>
-    /// <param name="movementTask"></param>
-    /// <param name="forceRunning"></param>
-    public void AssignMovementTask(Task movementTask, bool forceRunning = false)
-    {
-        // If we already have a task running, cancel it.
-        if (IsMoveTaskRunning)
-        {
-            Logger.LogError("Movement Task is already running, cannot execute task.");
-            return;
-        }
-
-        // Assign the task, with forced running if we want.
-        _movementTask = movementTask;
-        _forceRunDuringTask = forceRunning;
-
-        if (forceRunning)
-            ForceRunning();
-
-        // Reset the flag when the task completes
-        _movementTask.ContinueWith(_ => _forceRunDuringTask = false, TaskScheduler.Default);
-    }
 }

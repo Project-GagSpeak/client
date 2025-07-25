@@ -43,7 +43,7 @@ public sealed class DalamudLoggingProvider : ILoggerProvider
             //_pluginLog.Information($"Logger {catName} is created."); // <--- FOR DEBUGGING
             return newLogger;
         }
-        catch (Exception e)
+        catch (Bagagwa e)
         {
             Svc.Logger.Error($"Failed to create logger {catName}.");
             Svc.Logger.Error(e.ToString());

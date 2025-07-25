@@ -224,7 +224,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
             DrawPermissionRowString("Max Intensity", perms.MaxIntensity.ToString());
             DrawPermissionRowString("Max Duration", perms.MaxDuration.ToString());
         }
-        catch (Exception e)
+        catch (Bagagwa e)
         {
             _logger.LogError($"Error while drawing global permissions for {uid}: {e.Message}");
         }

@@ -1,8 +1,4 @@
-using CkCommons.Audio;
-using CkCommons.GarblerCore;
 using CkCommons.HybridSaver;
-using GagSpeak.Game;
-using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 
 namespace GagSpeak.PlayerClient;
@@ -89,123 +85,13 @@ public class MainConfig : IHybridSavable
                 LoggerFilters = token?.ToObject<LoggerType>() ?? LoggerType.Recommended;
             }
 
-            // Load ForcedStayPromptList
-            ForcedStayPromptList = jObject["ForcedStayPromptList"]?.ToObject<TextFolderNode>() 
-                ?? new TextFolderNode { FriendlyName = "ForcedDeclineList" };
-
             Svc.Logger.Information("Config loaded.");
             Save();
         }
-        catch (Exception ex) { Svc.Logger.Error("Failed to load config." + ex); }
+        catch (Bagagwa ex) { Svc.Logger.Error("Failed to load config." + ex); }
     }
 
     public GagspeakConfig Current { get; private set; } = new();
     public static LogLevel LogLevel = LogLevel.Trace;
     public static LoggerType LoggerFilters = LoggerType.Recommended;
-    [JsonConverter(typeof(ConcreteNodeConverter))]
-    public static TextFolderNode ForcedStayPromptList = new TextFolderNode { FriendlyName = "ForcedDeclineList" }; // ForcedToStay storage
-
-
-    // Hardcore RUNTIME ONLY VARIABLE STORAGE.
-    [JsonIgnore] internal static string LastSeenNodeName { get; set; } = string.Empty; // The Node Visible Name
-    [JsonIgnore] internal static string LastSeenNodeLabel { get; set; } = string.Empty; // The Label of the nodes Prompt
-    [JsonIgnore] internal static (int Index, string Text)[] LastSeenListEntries { get; set; } = []; // The nodes Options
-    [JsonIgnore] internal static string LastSeenListSelection { get; set; } = string.Empty; // Option we last selected
-    [JsonIgnore] internal static int LastSeenListIndex { get; set; } // Index in the list that was selected
-    [JsonIgnore] internal static TextEntryNode LastSelectedListNode { get; set; } = new();
-
-    #region Hardcore & Helpers
-    //public string GetDefaultAudioDevice()
-    //{
-    //    return Current.AudioOutputType switch
-    //    {
-    //        OutputType.DirectSound => Current.DirectOutDevice.ToString(),
-    //        OutputType.Asio => Current.AsioDevice,
-    //        OutputType.Wasapi => Current.WasapiDevice,
-    //        _ => throw new NotSupportedException("Unsupported audio output type.")
-    //    };
-    //}
-
-    public static IEnumerable<ITextNode> GetAllNodes()
-    {
-        return new ITextNode[] { ForcedStayPromptList }
-            .Concat(GetAllNodes(ForcedStayPromptList.Children));
-    }
-
-    public static IEnumerable<ITextNode> GetAllNodes(IEnumerable<ITextNode> nodes)
-    {
-        foreach (var node in nodes)
-        {
-            yield return node;
-            if (node is TextFolderNode folder)
-            {
-                var children = GetAllNodes(folder.Children);
-                foreach (var childNode in children)
-                    yield return childNode;
-            }
-        }
-    }
-
-    public bool TryFindParent(ITextNode node, out TextFolderNode? parent)
-    {
-        foreach (var candidate in GetAllNodes())
-        {
-            if (candidate is TextFolderNode folder && folder.Children.Contains(node))
-            {
-                parent = folder;
-                return true;
-            }
-        }
-
-        parent = null;
-        return false;
-    }
-
-    public void AddLastSeenNode()
-    {
-        var newNode = new TextEntryNode()
-        {
-            Enabled = false,
-            FriendlyName = (string.IsNullOrEmpty(LastSeenNodeLabel) ? LastSeenNodeName : LastSeenNodeLabel) + "(Friendly Name)",
-            TargetNodeName = LastSeenNodeName,
-            TargetRestricted = true,
-            TargetNodeLabel = LastSeenNodeLabel,
-            SelectedOptionText = LastSeenListSelection,
-        };
-        ForcedStayPromptList.Children.Add(newNode);
-        Save();
-    }
-
-    public void CreateTextNode()
-    {
-        // create a new blank one
-        var newNode = new TextEntryNode()
-        {
-            Enabled = false,
-            FriendlyName = "Placeholder Friendly Name",
-            TargetNodeName = "Name Of Node You Interact With",
-            TargetRestricted = true,
-            TargetNodeLabel = "Label given to interacted node's prompt menu",
-            SelectedOptionText = "Option we select from the prompt.",
-        };
-        ForcedStayPromptList.Children.Add(newNode);
-        Save();
-    }
-
-    public void CreateChamberNode()
-    {
-        var newNode = new ChambersTextNode()
-        {
-            Enabled = false,
-            FriendlyName = "New ChamberNode",
-            TargetRestricted = true,
-            TargetNodeName = "Name Of Node You Interact With",
-            ChamberRoomSet = 0,
-            ChamberListIdx = 0,
-        };
-        ForcedStayPromptList.Children.Add(newNode);
-        Save();
-    }
-
-    #endregion Hardcore & Helpers
 }

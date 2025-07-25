@@ -255,7 +255,7 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
                 // Remove legacy format
                 patternObj.Remove("PatternByteData");
             }
-            catch (Exception ex)
+            catch (Bagagwa ex)
             {
                 // Log or handle if needed
                 Svc.Logger.Error($"[MigrateV0toV1] Failed to migrate pattern: {ex.Message}");

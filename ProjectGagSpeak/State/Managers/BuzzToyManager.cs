@@ -210,7 +210,7 @@ public class BuzzToyManager : IDisposable, IHybridSavable
             }
         }
         catch (TaskCanceledException) { /* Consume */ }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogError(ex, "Error in Battery Check Loop");
         }
@@ -289,7 +289,7 @@ public class BuzzToyManager : IDisposable, IHybridSavable
                 };
                 _storage.TryAdd(parsedToy.Id, parsedToy);
             }
-            catch (Exception ex)
+            catch (Bagagwa ex)
             {
                 _logger.LogWarning($"Error deserializing SexToy, skipping this item!: {ex}");
             }

@@ -80,7 +80,7 @@ public sealed class GameObjectHandler : DisposableMediatorSubscriberBase
         {
             CheckAndUpdateObject();
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             Logger.LogWarning(ex, "Error during FrameworkUpdate of {this}", this);
         }
@@ -190,7 +190,7 @@ public sealed class GameObjectHandler : DisposableMediatorSubscriberBase
         {
             _zoningCts?.CancelAfter(2500);
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             Logger.LogWarning(ex, "Zoning CTS cancel issue");
         }

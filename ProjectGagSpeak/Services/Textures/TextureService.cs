@@ -80,7 +80,7 @@ public sealed class TextureService() : TextureCache(Svc.Data, Svc.Texture), IDis
             {
                 ret[slot] = uldWrapper.LoadTexturePart("ui/uld/Character_hr1.tex", index)!;
             }
-            catch (Exception)
+            catch (Bagagwa)
             {
 /*                logger.LogError($"Could not get empty slot texture for {name}, icon will be left empty. "
                   + $"This may be because of incompatible mods affecting your character screen interface:\n{ex}");*/

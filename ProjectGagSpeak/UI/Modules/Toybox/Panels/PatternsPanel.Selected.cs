@@ -181,7 +181,7 @@ public partial class PatternsPanel
             // Set the active pattern
             _logger.LogInformation("Set pattern data from clipboard");
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogWarning($"Could not set pattern data from clipboard.{ex.Message}");
         }

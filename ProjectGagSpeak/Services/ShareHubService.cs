@@ -60,28 +60,13 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         => LatestMoodleResults.Count > 0;
     public bool HasTags 
         => FetchedTags.Count > 0;
-    public void ToggleSortDirection() 
-        => SortOrder = SortOrder is HubDirection.Ascending ? HubDirection.Descending : HubDirection.Ascending;
-
-    // Pattern Tasks
-    public void DownloadPattern(Guid patternId) 
-        => UiService.SetUITask(DownloadPatternTask(patternId));
-    public void PerformPatternLikeAction(Guid patternId) 
-        => UiService.SetUITask(LikePatternActionTask(patternId));
-    public void UploadPattern(Pattern pattern, string authorName, HashSet<string> tags) 
-        => UiService.SetUITask(PatternUploadTask(pattern, authorName, tags));
-    public void RemovePattern(Guid patternId) 
-        => UiService.SetUITask(PatternRemoveTask(patternId));
-
-    // Moodles Tasks
-    public void PerformMoodleSearch() 
-        => UiService.SetUITask(FetchMoodleTask());
-    public void PerformMoodleLikeAction(Guid moodleId) 
-        => UiService.SetUITask(LikeMoodleActionTask(moodleId));
-    public void UploadMoodle(string authorName, HashSet<string> tags, MoodlesStatusInfo moodleInfo) 
-        => UiService.SetUITask(UploadMoodleTask(authorName, tags, moodleInfo));
-    public void RemoveMoodle(Guid idToRemove)
-        => UiService.SetUITask(RemoveMoodleTask(idToRemove));
+    public void ToggleSortDirection()
+    {
+        SortOrder = SortOrder is HubDirection.Ascending ? HubDirection.Descending : HubDirection.Ascending;
+        // update the results to reflect the new sort order.
+        LatestMoodleResults.Reverse();
+        LatestPatternResults.Reverse();
+    }
 
     public void TryOnMoodle(Guid moodleId)
     {
@@ -95,7 +80,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
     }
 
     #region PatternHub Tasks
-    public async Task PerformPatternSearch()
+    public async Task SearchPatterns()
     {
         Logger.LogTrace("Performing Pattern Search.", LoggerType.ShareHub);
         // take the comma seperated search string, split them by commas, convert to lowercase, and trim tailing and leading whitespaces.
@@ -132,7 +117,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             InitialPatternsCall = true;
     }
 
-    private async Task PatternUploadTask(Pattern pattern, string authorName, HashSet<string> tags)
+    public async Task UploadPattern(Pattern pattern, string authorName, HashSet<string> tags)
     {
         try
         {
@@ -175,14 +160,14 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             });
             GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternHubAction, PatternHubInteractionKind.Published);
         }
-        catch (Exception e)
+        catch (Bagagwa e)
         {
             Logger.LogError(e, "Failed to upload pattern to servers.");
             Mediator.Publish(new NotificationMessage("Pattern Upload", "upload failed!", NotificationType.Warning));
         }
     }
 
-    private async Task DownloadPatternTask(Guid patternId)
+    public async Task DownloadPattern(Guid patternId)
     {
         HubResponse<string> res = await _hub.DownloadPattern(patternId);
         // if the response is not successful, then we failed to download the pattern.
@@ -232,7 +217,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         }
     }
 
-    private async Task LikePatternActionTask(Guid patternId)
+    public async Task LikePattern(Guid patternId)
     {
         HubResponse res = await _hub.LikePattern(patternId);
         if (res.ErrorCode is not GagSpeakApiEc.Success)
@@ -254,7 +239,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         }
     }
 
-    private async Task PatternRemoveTask(Guid IdToRemove)
+    public async Task RemovePattern(Guid IdToRemove)
     {
         try
         {
@@ -271,7 +256,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             }
             else throw new Exception($"Failed to remove pattern from servers: [{res.ErrorCode}]");
         }
-        catch (Exception e)
+        catch (Bagagwa e)
         {
             Logger.LogError(e, "Failed to upload pattern to servers.");
             Mediator.Publish(new NotificationMessage("Pattern Upload", "upload failed!", NotificationType.Warning));
@@ -280,7 +265,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
     #endregion PatternHub Tasks
 
     #region MoodlesHub Tasks
-    private async Task FetchMoodleTask()
+    public async Task SearchMoodles()
     {
         // take the comma seperated search string, split them by commas, convert to lowercase, and trim tailing and leading whitespaces.
         var tags = SearchTags.Split(',')
@@ -303,7 +288,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         if(!InitialMoodlesCall)
             InitialMoodlesCall = true;
     }
-    private async Task LikeMoodleActionTask(Guid moodleId)
+    public async Task LikeMoodle(Guid moodleId)
     {
         HubResponse res = await _hub.LikeMoodle(moodleId);
         if (res.ErrorCode is not GagSpeakApiEc.Success)
@@ -326,7 +311,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternHubAction, PatternHubInteractionKind.Liked);
     }
 
-    private async Task UploadMoodleTask(string authorName, HashSet<string> tags, MoodlesStatusInfo moodleInfo)
+    public async Task UploadMoodle(string authorName, HashSet<string> tags, MoodlesStatusInfo moodleInfo)
     {
         try
         {
@@ -340,14 +325,14 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             ClientPublishedMoodles.Add(new PublishedMoodle() { AuthorName = authorName, MoodleStatus = moodleInfo });
             GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternHubAction, PatternHubInteractionKind.Published);
         }
-        catch (Exception e)
+        catch (Bagagwa e)
         {
             Logger.LogError(e, "Failed to upload pattern to servers.");
             Mediator.Publish(new NotificationMessage("Pattern Upload", "upload failed!", NotificationType.Warning));
         }
     }
 
-    private async Task RemoveMoodleTask(Guid moodleId)
+    public async Task RemoveMoodle(Guid moodleId)
     {
         if (moodleId == Guid.Empty || !ClientPublishedMoodles.Any(m => m.MoodleStatus.GUID == moodleId))
             return;
@@ -363,7 +348,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             Logger.LogInformation("RemovePatternTask completed.", LoggerType.ShareHub);
             ClientPublishedMoodles.RemoveAll(m => m.MoodleStatus.GUID == moodleId);
         }
-        catch (Exception e)
+        catch (Bagagwa e)
         {
             Logger.LogError(e, "Failed to upload pattern to servers.");
             Mediator.Publish(new NotificationMessage("Pattern Upload", "upload failed!", NotificationType.Warning));

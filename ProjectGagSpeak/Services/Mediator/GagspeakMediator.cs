@@ -240,7 +240,7 @@ public sealed class GagspeakMediator : IHostedService
             {
                 ((Action<T>)subscriber.Action).Invoke(message);
             }
-            catch (Exception ex)
+            catch (Bagagwa ex)
             {
                 if (_lastErrorTime.TryGetValue(subscriber, out var lastErrorTime) && lastErrorTime.Add(TimeSpan.FromSeconds(10)) > DateTime.UtcNow)
                     continue;

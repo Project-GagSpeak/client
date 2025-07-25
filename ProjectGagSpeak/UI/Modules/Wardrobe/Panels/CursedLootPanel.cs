@@ -240,7 +240,7 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
         // Draw UI
         LowerBound.DrawInputTimer("##TimerInputLower", inputWidth, "Ex: 0h2m7s");
         CkGui.AttachToolTip("Min Cursed Lock Time.");
-        _guides.OpenTutorial(TutorialType.CursedLoot, StepsCursedLoot.LowerLockTimer, ImGui.GetItemRectMin(), ImGui.GetItemRectSize());
+        // _guides.OpenTutorial(TutorialType.CursedLoot, StepsCursedLoot.LowerLockTimer, ImGui.GetItemRectMin(), ImGui.GetItemRectSize());
 
         ImGui.SameLine(0, 1);
         CkGui.IconText(FAI.HourglassHalf, ImGuiColors.ParsedGold);
@@ -248,7 +248,7 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
 
         UpperBound.DrawInputTimer("##TimerInputUpper", inputWidth, "Ex: 0h2m7s");
         CkGui.AttachToolTip("Max Cursed Lock Time.");
-        _guides.OpenTutorial(TutorialType.CursedLoot, StepsCursedLoot.UpperLockTimer, ImGui.GetItemRectMin(), ImGui.GetItemRectSize());
+        // _guides.OpenTutorial(TutorialType.CursedLoot, StepsCursedLoot.UpperLockTimer, ImGui.GetItemRectMin(), ImGui.GetItemRectSize());
 
         ImGui.SameLine(0, 1);
         ImGui.SetNextItemWidth(sliderWidth);
@@ -260,6 +260,6 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
             Chance = -1;
         }
         CkGui.AttachToolTip("% Chance of finding Cursed Bondage Loot.");
-        _guides.OpenTutorial(TutorialType.CursedLoot, StepsCursedLoot.RollChance, ImGui.GetItemRectMin(), ImGui.GetItemRectSize());
+        // _guides.OpenTutorial(TutorialType.CursedLoot, StepsCursedLoot.RollChance, ImGui.GetItemRectMin(), ImGui.GetItemRectSize());
     }
 }

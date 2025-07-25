@@ -272,7 +272,7 @@ public class AccountManagerTab
                 await _hub.Reconnect(false);
             }
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogError("Failed to delete account from server." + ex);
         }

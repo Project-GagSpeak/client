@@ -35,7 +35,7 @@ public class WhitelistTab : DisposableMediatorSubscriberBase
             ImGui.Separator();
             _userPairListHandler.DrawPairs();
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             Logger.LogError(ex, "Error drawing whitelist section");
         }

@@ -12,6 +12,7 @@ using GagSpeak.Gui.UiRemote;
 using GagSpeak.Gui.Wardrobe;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
+using GagSpeak.Services.Controller;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
@@ -28,16 +29,16 @@ public class HomepageTab
 {
     private readonly ILogger<HomepageTab> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly MainHub _hub;
+    private readonly AutoPromptController _temp;
 
     private int HoveredItemIndex = -1;
     private readonly List<(string Label, FontAwesomeIcon Icon, Action OnClick)> Modules;
 
-    public HomepageTab(ILogger<HomepageTab> logger, GagspeakMediator mediator, MainHub hub)
+    public HomepageTab(ILogger<HomepageTab> logger, GagspeakMediator mediator, AutoPromptController temp)
     {
         _logger = logger;
         _mediator = mediator;
-        _hub = hub;
+        _temp = temp;
 
         // Define all module information in a single place
         Modules = new List<(string, FontAwesomeIcon, Action)>
@@ -83,6 +84,10 @@ public class HomepageTab
         // if itemGotHovered is false, reset the index.
         if (!itemGotHovered)
             HoveredItemIndex = -1;
+
+        if (CkGui.IconTextButton(FAI.Home, "Enter Nearest Housing Node"))
+            _temp.EnqueueEnterNearestHousingRoom();
+
     }
 
     private bool HomepageSelectable(string label, FontAwesomeIcon icon, Vector2 region, bool hovered = false)

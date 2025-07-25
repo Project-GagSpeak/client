@@ -288,7 +288,7 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
                 Svc.Logger.Information($"User {MainHub.UID} started Pattern Playback using {pattern.Label} vibe data playback for {Owner.DisplayName} at timestamp.");
             // should also fire a toybox update that we now have an active pattern being played or something i guess?
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             // prevent any possible unforseen divide by zero's here.
             Svc.Logger.Error($"Error injecting playback data: {ex}");

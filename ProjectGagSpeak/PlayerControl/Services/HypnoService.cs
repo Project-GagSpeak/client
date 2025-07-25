@@ -169,7 +169,7 @@ public class HypnoService
             _activeState.ImageOpacity = endOpacity;
         }
         catch (OperationCanceledException) { /* Consume */ }
-        catch (Exception ex) { _logger.LogError($"Error during opacity animation: {ex}"); }
+        catch (Bagagwa ex) { _logger.LogError($"Error during opacity animation: {ex}"); }
 
         _logger.LogDebug($"HypnoEffect opacity transition completed: {startOpacity:F2} -> {_activeState.ImageOpacity:F2}");
     }
@@ -284,7 +284,7 @@ public class HypnoService
             }
         }
         catch (TaskCanceledException) { /* Consume */ }
-        catch (Exception ex) { Svc.Logger.Error($"Error in ColorTransposeTask: {ex}"); }
+        catch (Bagagwa ex) { Svc.Logger.Error($"Error in ColorTransposeTask: {ex}"); }
     }
 
     /// <summary> Assignable Task that processes the displayText cycling. </summary>
@@ -297,7 +297,7 @@ public class HypnoService
                 await HandleTextDisplay(effect, state, token);
         }
         catch (TaskCanceledException) { /* Consume */ }
-        catch (Exception ex) { Svc.Logger.Error($"Error in TextDisplayTask: {ex}"); }
+        catch (Bagagwa ex) { Svc.Logger.Error($"Error in TextDisplayTask: {ex}"); }
     }
 
 
@@ -439,7 +439,7 @@ public class HypnoService
         {
             await action();
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogError($"Error during semaphore execution: {ex}");
         }

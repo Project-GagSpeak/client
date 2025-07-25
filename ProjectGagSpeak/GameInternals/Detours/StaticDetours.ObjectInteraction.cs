@@ -1,3 +1,4 @@
+using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
@@ -38,7 +39,7 @@ public partial class StaticDetours
             // Open the Loot Item
             _lootHandler.OpenLootItem(obj);
         }
-        catch (Exception e)
+        catch (Bagagwa e)
         {
             Logger.LogError(e, "Failed to log object information.");
         }

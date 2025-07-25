@@ -44,7 +44,7 @@ public unsafe partial class StaticDetours
             if (affectedTargets.Count > 0)
                 _triggerHandler.OnActionEffectEvent(affectedTargets);
         }
-        catch (Exception e)
+        catch (Bagagwa e)
         {
             Logger.LogError($"An error has occurred in Action Effect hook.\n{e}");
         }

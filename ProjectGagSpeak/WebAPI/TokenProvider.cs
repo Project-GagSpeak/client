@@ -303,7 +303,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
                 }
             }
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             Logger.LogError(ex, "Error creating JWT identifier. Exception: {Message}, StackTrace: {StackTrace}", ex.Message, ex.StackTrace);
             // Fallback to the last known good identifier if an exception occurs

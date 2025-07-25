@@ -13,7 +13,7 @@ public class DebugTab
     private static readonly (string Label, LoggerType[] Flags)[] FlagGroups =
     {
         ("Achievements", [ LoggerType.Achievements, LoggerType.AchievementEvents, LoggerType.AchievementInfo ]),
-        ("Hardcore", [ LoggerType.HardcoreActions, LoggerType.HardcoreMovement, LoggerType.HardcorePrompt ]),
+        ("Hardcore", [ LoggerType.HardcoreActions, LoggerType.HardcoreMovement, LoggerType.HardcorePrompt, LoggerType.HardcoreTasks ]),
         ("Interop / IPC", [ 
             LoggerType.IpcGagSpeak, LoggerType.IpcMare, LoggerType.IpcPenumbra, LoggerType.IpcGlamourer, 
             LoggerType.IpcCustomize, LoggerType.IpcMoodles, LoggerType.IpcLifestream,

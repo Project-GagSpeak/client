@@ -187,7 +187,7 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             // Try and make these not required to initialize:
             //_runtimeServiceScope.ServiceProvider.GetRequiredService<DiscoverService>();
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             Logger?.LogCritical(ex, "Error during launch of managers");
         }

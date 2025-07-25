@@ -62,7 +62,7 @@ public sealed class IpcCallerCustomize : DisposableMediatorSubscriberBase, IIpcC
             return res.Select(tuple => new CustomizeProfile(tuple.UniqueId, tuple.Priority, tuple.Name)).ToList();
 
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             Logger.LogError("Error on fetching profile list" + ex, LoggerType.IpcCustomize);
             return new List<CustomizeProfile>();
@@ -80,7 +80,7 @@ public sealed class IpcCallerCustomize : DisposableMediatorSubscriberBase, IIpcC
             Logger.LogTrace($"IPC-Customize obtained active profile [{result.Item2}] with error code [{result.Item1}]", LoggerType.IpcCustomize);
             return new(result.Item2.Value, result.Item1);
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             Logger.LogError("Error on fetching active profile" + ex, LoggerType.IpcCustomize);
             return CustomizeProfile.Empty;
@@ -104,6 +104,6 @@ public sealed class IpcCallerCustomize : DisposableMediatorSubscriberBase, IIpcC
 
     private void ExecuteSafely(Action act)
     {
-        try { act(); } catch (Exception ex) { Logger.LogCritical(ex, "Error on executing safely"); }
+        try { act(); } catch (Bagagwa ex) { Logger.LogCritical(ex, "Error on executing safely"); }
     }
 }

@@ -1,3 +1,4 @@
+using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Raii;
 using Dalamud.Interface;
@@ -11,6 +12,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Utils;
 using ImGuiNET;
+using NAudio.Utils;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui;
@@ -20,14 +22,16 @@ public class AchievementsUI : WindowMediatorSubscriberBase
 {
     private readonly AchievementTabs _tabMenu;
     private readonly CosmeticService _textures;
+    private readonly ListItemDrawer _drawer;
     public bool ThemePushed = false;
 
     public AchievementsUI(ILogger<AchievementsUI> logger, GagspeakMediator mediator,
-        AchievementTabs tabMenu, CosmeticService textures)
+        AchievementTabs tabMenu, CosmeticService textures, ListItemDrawer drawer)
         : base(logger, mediator, "Achievements###AchievementsUI")
     {
         _tabMenu = tabMenu;
         _textures = textures;
+        _drawer = drawer;
 
         Flags |= WFlags.NoDocking;
         this.PinningClickthroughFalse();
@@ -44,7 +48,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
             ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .803f));
             ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.579f, 0.170f, 0.359f, 0.828f));
             ThemePushed = true;
-        }
+    }
     }
 
     protected override void PostDrawInternal()
@@ -58,48 +62,21 @@ public class AchievementsUI : WindowMediatorSubscriberBase
 
     protected override void DrawInternal()
     {
-        // get the width of the window content region we set earlier
-        var contentRegion = CkGui.GetWindowContentRegionWidth();
-        
         CenteredHeader();
-        ImGui.Separator();
-        _tabMenu.Draw(contentRegion);
+        // draw the tab menu for the achievement types.
+        _tabMenu.Draw(ImGui.GetContentRegionAvail().X);
 
-        // Draw out the achievements in a child window we can scroll, but do not display the scroll bar.
-        using (CkRaii.Child("AchievementsSection", new Vector2(contentRegion, 0), WFlags.NoScrollbar))
-        {
-            // display content based on the tab selected
-            switch (_tabMenu.TabSelection)
-            {
-                case AchievementTabs.SelectedTab.Generic:
-                    using (ImRaii.PushId("UnlocksComponentGeneric")) DrawAchievementList(AchievementModuleKind.Generic);
-                    break;
-                case AchievementTabs.SelectedTab.Gags:
-                    using (ImRaii.PushId("UnlocksComponentGags")) DrawAchievementList(AchievementModuleKind.Gags);
-                    break;
-                case AchievementTabs.SelectedTab.Wardrobe:
-                    using (ImRaii.PushId("UnlocksComponentWardrobe")) DrawAchievementList(AchievementModuleKind.Wardrobe);
-                    break;
-                case AchievementTabs.SelectedTab.Puppeteer:
-                    using (ImRaii.PushId("UnlocksComponentPuppeteer")) DrawAchievementList(AchievementModuleKind.Puppeteer);
-                    break;
-                case AchievementTabs.SelectedTab.Toybox:
-                    using (ImRaii.PushId("UnlocksComponentToybox")) DrawAchievementList(AchievementModuleKind.Toybox);
-                    break;
-                case AchievementTabs.SelectedTab.Remotes:
-                    using (ImRaii.PushId("UnlocksComponentRemotes")) DrawAchievementList(AchievementModuleKind.Remotes);
-                    break;
-                case AchievementTabs.SelectedTab.Arousal:
-                    using (ImRaii.PushId("UnlocksComponentArousal")) DrawAchievementList(AchievementModuleKind.Arousal);
-                    break;
-                case AchievementTabs.SelectedTab.Hardcore:
-                    using (ImRaii.PushId("UnlocksComponentHardcore")) DrawAchievementList(AchievementModuleKind.Hardcore);
-                    break;
-                case AchievementTabs.SelectedTab.Secrets:
-                    using (ImRaii.PushId("UnlocksComponentSecrets")) DrawAchievementList(AchievementModuleKind.Secrets);
-                    break;
-            }
-        }
+        // draw the search filter.
+        DrawSearchFilter(ImGui.GetContentRegionAvail().X, ImGui.GetStyle().ItemInnerSpacing.X);
+        ImGui.Separator();
+
+        // obtain the type based on the selected tab, and the unlocks for that category.
+        var type = GetTypeFromTab();
+
+        // draw the resulting list, wrapped in a child to prevent push pop errors (black magic shit dont ask me)
+        using (ImRaii.Child("ListGuardingChild", ImGui.GetContentRegionAvail()))
+            _drawer.DrawAchievementList(type, ImGui.GetContentRegionAvail());
+
     }
 
     private void CenteredHeader()
@@ -115,32 +92,6 @@ public class AchievementsUI : WindowMediatorSubscriberBase
         }
     }
 
-    private void DrawAchievementList(AchievementModuleKind type)
-    {
-        // We likely want to avoid pushing the style theme here if we are swapping the colors based on the state of an achievement.
-        // If that is not the case. move them here.
-        var unlocks = ClientAchievements.GetByModule(type);
-        if (!unlocks.Any())
-            return;
-
-        // filter down the unlocks to searchable results.
-        var filteredUnlocks = unlocks
-            .Where(goal => goal.Title.Contains(_searchStr, StringComparison.OrdinalIgnoreCase))
-            .ToList();
-
-        // reference the same achievement for every module.
-        // draw the search filter.
-        DrawSearchFilter(ImGui.GetContentRegionAvail().X, ImGui.GetStyle().ItemInnerSpacing.X);
-        ImGui.Separator();
-
-        // create a window for scrolling through the available achievements.
-        using var _ = ImRaii.Child($"AchievementListings {type.ToString()}", ImGui.GetContentRegionAvail(), false, WFlags.NoScrollbar);
-
-        // draw the achievements in the first column.
-        foreach (var achievement in filteredUnlocks)
-            DrawAchievementProgressBox(achievement);
-    }
-
     public void DrawSearchFilter(float availableWidth, float spacingX)
     {
         ImGui.SetNextItemWidth(availableWidth - CkGui.IconTextButtonSize(FAI.Ban, "Clear") - spacingX);
@@ -152,21 +103,34 @@ public class AchievementsUI : WindowMediatorSubscriberBase
         CkGui.AttachToolTip("Clear the search filter.");
     }
 
-    private void DrawAchievementProgressBox(AchievementBase achievementItem)
+    public void DrawAchievementList(AchievementModuleKind type, Vector2 region)
     {
-        // set up the style theme for the box.
-        //using var windowPadding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(ImGui.GetStyle().WindowPadding.X, 3f));
-        //using var itemSpacing = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, new Vector2(ImGui.GetStyle().ItemSpacing.X, 2f));
+        // This window wraps around all of the achievement items.
+        using var _ = ImRaii.Child("Achievement List", ImGui.GetContentRegionAvail(), false, WFlags.NoScrollbar);
+
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f)
             .Push(ImGuiStyleVar.WindowBorderSize, 1f);
         using var col = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink)
             .Push(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
 
+        var unlocks = ClientAchievements.GetByModule(type);
+        if (!unlocks.Any())
+            return;
+
+        // filter down the unlocks to searchable results.
+        var filteredUnlocks = unlocks
+            .Where(goal => goal.Title.Contains(string.Empty, StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        var size = new Vector2(ImGui.GetContentRegionAvail().X, IconSize.Y.AddWinPadY() + ImGui.GetStyle().CellPadding.Y * 2);
+        foreach (var achievement in filteredUnlocks.ToList())
+            DrawAchievementProgressBox(achievement, size);
+    }
+
+    private void DrawAchievementProgressBox(AchievementBase achievementItem, Vector2 size)
+    {
         var imageTabWidth = IconSize.X + ImGui.GetStyle().ItemSpacing.X * 2;
-
-        var size = new Vector2(ImGui.GetContentRegionAvail().X, IconSize.Y + ImGui.GetStyle().WindowPadding.Y * 2 + ImGui.GetStyle().CellPadding.Y * 2);
         using var c = ImRaii.Child($"Achievement-{achievementItem.Title}", size, true, WFlags.ChildWindow);
-
         using var t = ImRaii.Table($"AchievementTable {achievementItem.Title}", 2, ImGuiTableFlags.RowBg);
         if (!t) return;
 
@@ -294,4 +258,19 @@ public class AchievementsUI : WindowMediatorSubscriberBase
             CkGui.Color(53, 24, 39, 255),
             1);
     }
+
+    private AchievementModuleKind GetTypeFromTab()
+        => _tabMenu.TabSelection switch
+        {
+            AchievementTabs.SelectedTab.Gags => AchievementModuleKind.Gags,
+            AchievementTabs.SelectedTab.Wardrobe => AchievementModuleKind.Wardrobe,
+            AchievementTabs.SelectedTab.Puppeteer => AchievementModuleKind.Puppeteer,
+            AchievementTabs.SelectedTab.Toybox => AchievementModuleKind.Toybox,
+            AchievementTabs.SelectedTab.Remotes => AchievementModuleKind.Remotes,
+            AchievementTabs.SelectedTab.Arousal => AchievementModuleKind.Arousal,
+            AchievementTabs.SelectedTab.Hardcore => AchievementModuleKind.Hardcore,
+            AchievementTabs.SelectedTab.Secrets => AchievementModuleKind.Secrets,
+            _ => AchievementModuleKind.Generic
+        };
+    
 }

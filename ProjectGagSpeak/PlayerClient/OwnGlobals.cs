@@ -19,7 +19,7 @@ namespace GagSpeak.PlayerClient;
 public sealed class OwnGlobals : DisposableMediatorSubscriberBase
 {
     private readonly PiShockProvider _shockies;
-    private readonly KinksterManager _pairs;
+    private readonly KinksterManager _kinksters;
     private readonly HardcoreHandler _hcHandler;
     private readonly RemoteService _remoteService;
     private readonly NameplateService _nameplates;
@@ -35,7 +35,7 @@ public sealed class OwnGlobals : DisposableMediatorSubscriberBase
         : base(logger, mediator)
     {
         _shockies = shockies;
-        _pairs = pairs;
+        _kinksters = pairs;
         _hcHandler = hcHandler;
         _remoteService = remoteService;
         _nameplates = nameplates;
@@ -110,48 +110,10 @@ public sealed class OwnGlobals : DisposableMediatorSubscriberBase
     {
         if (string.Equals(dto.Enactor.UID, MainHub.UID))
             PerformPermissionChange(dto);
-        else if (_pairs.DirectPairs.FirstOrDefault(x => x.UserData.UID == dto.Enactor.UID) is { } pair)
+        else if (_kinksters.DirectPairs.FirstOrDefault(x => x.UserData.UID == dto.Enactor.UID) is { } pair)
             PerformPermissionChange(dto, pair);
         else
             Logger.LogWarning("Change was not from self or a pair, not setting!");
-    }
-
-    public void ExecutePiShockAction(ShockCollarAction dto)
-    {
-        // figure out who sent the command, and see if we have a unique sharecode setup for them.
-        if (_pairs.DirectPairs.FirstOrDefault(x => x.UserData.UID == dto.User.UID) is { } enactor)
-        {
-            var interactionType = dto.OpCode switch
-            {
-                0 => "shocked",
-                1 => "vibrated",
-                2 => "beeped",
-                _ => "unknown"
-            };
-            var eventLogMessage = $"Pishock {interactionType}, intensity: {dto.Intensity}, duration: {dto.Duration}";
-            Logger.LogInformation($"Received Instruction for {eventLogMessage}", LoggerType.Callbacks);
-
-            if (!enactor.OwnPerms.PiShockShareCode.IsNullOrEmpty())
-            {
-                Logger.LogDebug("Executing Shock Instruction to UniquePair ShareCode", LoggerType.Callbacks);
-                Mediator.Publish(new EventMessage(new(enactor.GetNickAliasOrUid(), enactor.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
-                _shockies.ExecuteOperation(enactor.OwnPerms.PiShockShareCode, dto.OpCode, dto.Intensity, dto.Duration);
-                if (dto.OpCode is 0)
-                    GagspeakEventManager.AchievementEvent(UnlocksEvent.ShockReceived);
-            }
-            else if (_perms is { } g && !g.GlobalShockShareCode.IsNullOrEmpty())
-            {
-                Logger.LogDebug("Executing Shock Instruction to Global ShareCode", LoggerType.Callbacks);
-                Mediator.Publish(new EventMessage(new(enactor.GetNickAliasOrUid(), enactor.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
-                _shockies.ExecuteOperation(g.GlobalShockShareCode, dto.OpCode, dto.Intensity, dto.Duration);
-                if (dto.OpCode is 0)
-                    GagspeakEventManager.AchievementEvent(UnlocksEvent.ShockReceived);
-            }
-            else
-            {
-                Logger.LogWarning("Someone Attempted to execute an instruction to you, but you don't have any share codes enabled!");
-            }
-        }
     }
 
     private void PerformPermissionChange(SingleChangeGlobal dto, Kinkster? pair = null)
@@ -261,5 +223,77 @@ public sealed class OwnGlobals : DisposableMediatorSubscriberBase
             else _hcHandler.DisableBlockedChatInput(enactor);
             GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.ChatInputBlocked, newState, enactor, MainHub.UID);
         }
+    }
+
+    public void OnPiShockInstruction(ShockCollarAction dto)
+    {
+        // figure out who sent the command, and see if we have a unique sharecode setup for them.
+        if (_kinksters.TryGetKinkster(dto.User, out var enactor))
+        {
+            var interactionType = dto.OpCode switch { 0 => "shocked", 1 => "vibrated", 2 => "beeped", _ => "unknown" };
+            var eventLogMessage = $"Pishock {interactionType}, intensity: {dto.Intensity}, duration: {dto.Duration}";
+            Logger.LogInformation($"Received Instruction for {eventLogMessage}", LoggerType.Callbacks);
+
+            if (!enactor.OwnPerms.PiShockShareCode.IsNullOrEmpty())
+            {
+                Logger.LogDebug("Executing Shock Instruction to UniquePair ShareCode", LoggerType.Callbacks);
+                Mediator.Publish(new EventMessage(new(enactor.GetNickAliasOrUid(), enactor.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
+                _shockies.ExecuteOperation(enactor.OwnPerms.PiShockShareCode, dto.OpCode, dto.Intensity, dto.Duration);
+                if (dto.OpCode is 0)
+                    GagspeakEventManager.AchievementEvent(UnlocksEvent.ShockReceived);
+            }
+            else if (_perms is { } g && !g.GlobalShockShareCode.IsNullOrEmpty())
+            {
+                Logger.LogDebug("Executing Shock Instruction to Global ShareCode", LoggerType.Callbacks);
+                Mediator.Publish(new EventMessage(new(enactor.GetNickAliasOrUid(), enactor.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
+                _shockies.ExecuteOperation(g.GlobalShockShareCode, dto.OpCode, dto.Intensity, dto.Duration);
+                if (dto.OpCode is 0)
+                    GagspeakEventManager.AchievementEvent(UnlocksEvent.ShockReceived);
+            }
+            else
+            {
+                Logger.LogWarning("Someone Attempted to execute an instruction to you, but you don't have any share codes enabled!");
+            }
+        }
+    }
+
+    public void OnHypnosisApplication(HypnoticAction dto)
+    {
+        if (_perms is not { } g)
+            throw new NullReferenceException($"Globals is Null.");
+
+        if (!_kinksters.TryGetKinkster(dto.User, out var enactingKinkster))
+            throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
+        // prevent change is already under hypnosis.
+        if (_hcHandler.IsHypnotized || !string.IsNullOrEmpty(g.HypnosisCustomEffect))
+        {
+            Logger.LogWarning($"Kinkster [{enactingKinkster.GetNickAliasOrUid()}] attempted to hypnotize while already hypnotized, discarding!");
+            return;
+        }
+
+        // handle the hypnosis effect.
+    }
+
+    public void OnForcedStayByAddress(ForcedStayByAddress dto)
+    {
+        if (_perms is not { } g)
+            throw new NullReferenceException($"Globals is Null.");
+
+        if (!_kinksters.TryGetKinkster(dto.User, out var enactingKinkster))
+            throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
+
+        // an override for forced stay that can inject spesific addresses to go to.
+    }
+
+    public void OnImprisonByLocation(ImprisonAtPosition dto)
+    {
+        if (_perms is not { } g)
+            throw new NullReferenceException($"Globals is Null.");
+
+        if (!_kinksters.TryGetKinkster(dto.User, out var enactingKinkster))
+            throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
+
+        // kind of like forced sit, but with a little wiggle room.
+
     }
 }

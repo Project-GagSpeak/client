@@ -29,6 +29,7 @@ using GagSpeak.Kinksters;
 using GagSpeak.Kinksters.Factories;
 using GagSpeak.MufflerCore.Handler;
 using GagSpeak.PlayerClient;
+using GagSpeak.PlayerControl;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Controller;
@@ -169,14 +170,20 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<MovementDetours>()
         .AddSingleton<StaticDetours>()
 
-        // Game Monitors
-        .AddSingleton<SelectStringPrompt>()
-        .AddSingleton<YesNoPrompt>()
-        .AddSingleton<RoomSelectPrompt>()
-
         // MufflerCore
         .AddSingleton<Ipa_EN_FR_JP_SP_Handler>()
         .AddSingleton<MufflerService>()
+
+        // Player Control
+        .AddSingleton<HcTaskManager>()
+        .AddSingleton<AutoPromptController>()
+        .AddSingleton<BlindfoldService>()
+        .AddSingleton<ChatboxController>()
+        .AddSingleton<HotbarActionController>()
+        .AddSingleton<HypnoService>()
+        .AddSingleton<KeystateController>()
+        .AddSingleton<MovementController>()
+        .AddSingleton<OverlayController>()
 
         // Player Client
         .AddSingleton<ClientAchievements>()
@@ -203,14 +210,8 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<KinkPlateService>()
 
         // Services (Player Control)
-        .AddSingleton<AutoPromptController>()
         .AddSingleton<BlindfoldService>()
-        .AddSingleton<ChatboxController>()
-        .AddSingleton<HotbarActionController>()
         .AddSingleton<HypnoService>()
-        .AddSingleton<KeystateController>()
-        .AddSingleton<MovementController>()
-        .AddSingleton<OverlayController>()
 
         // Services (Textures)
         .AddSingleton<CosmeticService>()
@@ -340,6 +341,7 @@ public static class GagSpeakServiceExtensions
         .AddScoped<MoodleDrawer>()
         .AddScoped<ActiveItemsDrawer>()
         .AddScoped<AliasItemDrawer>()
+        .AddScoped<ListItemDrawer>()
         .AddScoped<PuppeteerHelper>()
         .AddScoped<TriggerDrawer>()
         .AddScoped<ImageImportTool>()
@@ -430,7 +432,6 @@ public static class GagSpeakServiceExtensions
 
         // Scoped Settings
         .AddScoped<WindowMediatorSubscriberBase, SettingsUi>()
-        .AddScoped<SettingsHardcore>()
         .AddScoped<AccountManagerTab>()
         .AddScoped<DebugTab>()
 
@@ -526,7 +527,7 @@ public static class ValidateDependencyInjectorEx
             var fullException = string.Join("\n\n", ex.InnerExceptions.Select(e => e.Message.ToString()));
             throw new InvalidOperationException(fullException);
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             throw new InvalidOperationException("ValidateDependencyInjector error detected.", ex);
             // Log the exception to catch any circular dependencies

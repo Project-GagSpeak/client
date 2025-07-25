@@ -106,7 +106,7 @@ public class ToyboxUI : WindowMediatorSubscriberBase
         => _tabMenu.TabSelection switch
         {
             ToyboxTabs.SelectedTab.BuzzToys => TutorialType.Toys,
-            ToyboxTabs.SelectedTab.VibeLobbies => TutorialType.VibeLobbies,
+            ToyboxTabs.SelectedTab.VibeLobbies => TutorialType.VibeLobby,
             ToyboxTabs.SelectedTab.Patterns => TutorialType.Patterns,
             ToyboxTabs.SelectedTab.Alarms => TutorialType.Alarms,
             _ => TutorialType.Triggers

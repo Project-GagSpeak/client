@@ -2,75 +2,64 @@ using Dalamud.Hooking;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using GagSpeak.Utils;
+using System.Data;
 using System.Runtime.InteropServices;
-using GagSpeak.PlayerClient;
-using ValType = FFXIVClientStructs.FFXIV.Component.GUI;
+using ValType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 #nullable disable
 
 namespace GagSpeak.GameInternals.Detours;
 public unsafe partial class StaticDetours
 {
     // Detours the fired callback to get the values from it. Useful for documenting new cases from addon interactions.
-    private unsafe delegate void* FireCallbackDelegate(AtkUnitBase* atkUnitBase, int valueCount, AtkValue* atkValues, byte updateVisibility);
-    [Signature(Signatures.FireCallback, DetourName = nameof(FireCallbackDetour), Fallibility = Fallibility.Auto)]
-    private static Hook<FireCallbackDelegate> FireCallbackHook { get; set; } = null;
+    //private unsafe delegate void* FireCallbackDelegate(AtkUnitBase* atkUnitBase, int valueCount, AtkValue* atkValues, byte updateVisibility);
+    //[Signature(Signatures.FireCallback, DetourName = nameof(AtkUnitBase_FireCallbackDetour), Fallibility = Fallibility.Auto)]
+    //private static Hook<FireCallbackDelegate> FireCallbackHook { get; set; } = null;
 
-    // A delegate Function pointer that we can injection functions into and the game will react to it.
-    internal delegate byte FireCallbackFuncDelegate(AtkUnitBase* Base, int valueCount, AtkValue* values, byte updateState);
+
+    // Delegate for manually invoking a callback fire.
+    public delegate byte AtkUnitBase_FireCallbackDelegate(AtkUnitBase* Base, int valueCount, AtkValue* values, byte updateState);
+    [Signature(Signatures.Callback, DetourName = nameof(AtkUnitBase_FireCallbackDetour), Fallibility = Fallibility.Auto)]
+    private static Hook<AtkUnitBase_FireCallbackDelegate> FireCallbackHook;
+
     // Used to execute things to this callback
-    private static FireCallbackFuncDelegate FireCallback = null!;
+    internal static AtkUnitBase_FireCallbackDelegate FireCallbackFunc = null!;
 
-    /// <summary>
-    ///     Detour for the FireCallback function, which is used to handle callbacks from ATK units.
-    /// </summary>
-    [return: MarshalAs(UnmanagedType.U1)]
-    private unsafe void* FireCallbackDetour(AtkUnitBase* atkUnitBase, int valueCount, AtkValue* atkValues, byte updateVisibility)
+    /// <summary> Detour the callback for a unit base. This is called frequently, so minimize logic checks. </summary>
+    private static byte AtkUnitBase_FireCallbackDetour(AtkUnitBase* atkBase, int valueCount, AtkValue* atkValues, byte updateVis)
     {
-        // If the callback isnt something we care aboput then return the original
-        if (atkUnitBase->NameString is not ("SelectString" or "SelectYesno"))
-            return FireCallbackHook.Original(atkUnitBase, valueCount, atkValues, updateVisibility);
-
+        var ret = FireCallbackHook?.Original(atkBase, valueCount, atkValues, updateVis);
+        // attempt to log it, if we want to. Recommeneded to disable it though.
         try
         {
-            var atkValueList = Enumerable.Range(0, valueCount)
-                .Select<int, object>(i => atkValues[i].Type switch
-                {
-                    ValType.ValueType.Int => atkValues[i].Int,
-                    ValType.ValueType.String => Marshal.PtrToStringUTF8(new IntPtr(atkValues[i].String)) ?? string.Empty,
-                    ValType.ValueType.UInt => atkValues[i].UInt,
-                    ValType.ValueType.Bool => atkValues[i].Byte != 0,
-                    _ => $"Unknown Type: {atkValues[i].Type}"
-                })
-                .ToList();
-            //_logger.LogDebug($"Callback triggered on {atkUnitBase->NameString} with values: {string.Join(", ", atkValueList.Select(value => value.ToString()))}");
-            if(atkUnitBase->NameString == "SelectString")
-            {
-                MainConfig.LastSeenListIndex = atkValues[0].Int;
-                //_logger.LogDebug("Last Seen List Index: " + _mainConfig.LastSeenListIndex);
-            }
-            if(atkUnitBase->NameString == "SelectYesno")
-            {
-                var selection = atkValues[0].Int == 1 ? "No" : "Yes";
-                MainConfig.LastSeenListSelection = selection;
-                //_logger.LogDebug("Last Seen List Selection: " + _mainConfig.LastSeenListSelection);
-            }
+            Svc.Logger.Verbose($"Callback on {atkBase->Name.Read()}, valueCount={valueCount}, updateState={updateVis}\n" +
+                $"{string.Join("\n", DecodeValues(valueCount, atkValues).Select(x => $"    {x}"))}");
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
-            Logger.LogError($"Exception in {nameof(FireCallbackDetour)}: {ex.Message}");
-            return FireCallbackHook.Original(atkUnitBase, valueCount, atkValues, updateVisibility);
+            Svc.Logger.Error($"Error in {nameof(AtkUnitBase_FireCallbackDetour)}: {ex.Message}");
         }
-        return FireCallbackHook.Original(atkUnitBase, valueCount, atkValues, updateVisibility);
+        return ret ?? 0;
     }
 
-    /// <summary>
-    ///     Sends off data to register as a callback to the callback function for the game to respond to.
-    /// </summary>
-    public static void CallbackFuncFire(AtkUnitBase* Base, bool updateState, params object[] values)
+    public static void FireCallbackRaw(AtkUnitBase* atkUnitBase, int valueCount, AtkValue* atkValues, byte updateVisibility)
     {
-        if (Base == null) throw new Exception("Null UnitBase");
+        // if for whatever godforsaken reason this is not set, set it here.
+        if (FireCallbackFunc is null)
+            FireCallbackFunc = Marshal.GetDelegateForFunctionPointer<AtkUnitBase_FireCallbackDelegate>(Svc.SigScanner.ScanText(Signatures.Callback));
+        // Manually invoke the callback fire.
+        FireCallbackFunc(atkUnitBase, valueCount, atkValues, updateVisibility);
+    }
+
+    public static void FireCallback(AtkUnitBase* atkBase, bool updateState, params object[] values)
+    {
+        if (atkBase == null) 
+            throw new Exception("Null UnitBase");
+        // obtain the atkValues.
         var atkValues = (AtkValue*)Marshal.AllocHGlobal(values.Length * sizeof(AtkValue));
-        if (atkValues == null) return;
+        if (atkValues == null) 
+            return;
+
+        // AtkValues are valid, so assign them.
         try
         {
             for (var i = 0; i < values.Length; i++)
@@ -79,24 +68,24 @@ public unsafe partial class StaticDetours
                 switch (v)
                 {
                     case uint uintValue:
-                        atkValues[i].Type = ValType.ValueType.UInt;
+                        atkValues[i].Type = ValType.UInt;
                         atkValues[i].UInt = uintValue;
                         break;
                     case int intValue:
-                        atkValues[i].Type = ValType.ValueType.Int;
+                        atkValues[i].Type = ValType.Int;
                         atkValues[i].Int = intValue;
                         break;
                     case float floatValue:
-                        atkValues[i].Type = ValType.ValueType.Float;
+                        atkValues[i].Type = ValType.Float;
                         atkValues[i].Float = floatValue;
                         break;
                     case bool boolValue:
-                        atkValues[i].Type = ValType.ValueType.Bool;
+                        atkValues[i].Type = ValType.Bool;
                         atkValues[i].Byte = (byte)(boolValue ? 1 : 0);
                         break;
                     case string stringValue:
                         {
-                            atkValues[i].Type = ValType.ValueType.String;
+                            atkValues[i].Type = ValType.String;
                             var stringBytes = Encoding.UTF8.GetBytes(stringValue);
                             var stringAlloc = Marshal.AllocHGlobal(stringBytes.Length + 1);
                             Marshal.Copy(stringBytes, 0, stringAlloc, stringBytes.Length);
@@ -115,47 +104,33 @@ public unsafe partial class StaticDetours
             }
             List<string> CallbackValues = [];
             for (var i = 0; i < values.Length; i++)
-            {
                 CallbackValues.Add($"    Value {i}: [input: {values[i]}/{values[i]?.GetType().Name}] -> {DecodeValue(atkValues[i])})");
-            }
-            Svc.Logger.Verbose($"Firing callback: " + Base->Name.Read() + ", valueCount = " + values.Length + ", " +
-                "updateStatte = " + updateState + ", values:\n" + string.Join("\n", CallbackValues), LoggerType.HardcorePrompt);
 
-            if (FireCallback is not null)
-            {
-                FireCallback(Base, values.Length, atkValues, (byte)(updateState ? 1 : 0));
-            }
-            else
-            {
-                Svc.Logger.Error("FireCallback somehow not yet Initialized!");
-            }
+            Svc.Logger.Verbose($"Firing callback: {atkBase->Name.Read()}, valueCount = {values.Length}, updateStatte = {updateState}, values:\n");
+            FireCallbackRaw(atkBase, values.Length, atkValues, (byte)(updateState ? 1 : 0));
         }
         finally
         {
+            // free up the allocated memory for strings.
             for (var i = 0; i < values.Length; i++)
-            {
-                if (atkValues[i].Type == ValType.ValueType.String)
-                {
+                if (atkValues[i].Type == ValType.String)
                     Marshal.FreeHGlobal(new IntPtr(atkValues[i].String));
-                }
-            }
+            // free the allocated memory for the atkValues.
             Marshal.FreeHGlobal(new IntPtr(atkValues));
         }
     }
 
-    public List<string> DecodeValues(int cnt, AtkValue* values)
+    public static List<string> DecodeValues(int cnt, AtkValue* values)
     {
         var atkValueList = new List<string>();
         try
         {
             for (var i = 0; i < cnt; i++)
-            {
                 atkValueList.Add(DecodeValue(values[i]));
-            }
         }
-        catch (Exception e)
+        catch (Bagagwa e)
         {
-            Logger.LogError(e, "Error in DecodeValues");
+            Svc.Logger.Error(e, "Error in DecodeValues");
         }
         return atkValueList;
     }
@@ -165,25 +140,25 @@ public unsafe partial class StaticDetours
         var str = new StringBuilder(a.Type.ToString()).Append(": ");
         switch (a.Type)
         {
-            case ValType.ValueType.Int:
+            case ValType.Int:
                 {
                     str.Append(a.Int);
                     break;
                 }
-            case ValType.ValueType.String8:
-            case ValType.ValueType.WideString:
-            case ValType.ValueType.ManagedString:
-            case ValType.ValueType.String:
+            case ValType.String8:
+            case ValType.WideString:
+            case ValType.ManagedString:
+            case ValType.String:
                 {
                     str.Append(Marshal.PtrToStringUTF8(new IntPtr(a.String)));
                     break;
                 }
-            case ValType.ValueType.UInt:
+            case ValType.UInt:
                 {
                     str.Append(a.UInt);
                     break;
                 }
-            case ValType.ValueType.Bool:
+            case ValType.Bool:
                 {
                     str.Append(a.Byte != 0);
                     break;

@@ -272,7 +272,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
                 Storage.Add(triggerAbstract);
             }
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             Logger.LogError(ex, "Failed to load Triggers");
         }

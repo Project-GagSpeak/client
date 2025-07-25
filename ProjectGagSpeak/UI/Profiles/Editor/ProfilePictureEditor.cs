@@ -211,7 +211,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
 
                     _showFileDialogError = false;
                 }
-                catch (Exception ex)
+                catch (Bagagwa ex)
                 {
                     _logger.LogError(ex, "Failed to upload new profile picture.");
                 }
@@ -328,7 +328,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
             await _hub.UserSetKinkPlatePicture(new(MainHub.PlayerUserData, Convert.ToBase64String(_croppedImageData))).ConfigureAwait(false);
             _logger.LogInformation("Image Sent to server successfully.");
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogError(ex, "Failed to send image to server.");
         }

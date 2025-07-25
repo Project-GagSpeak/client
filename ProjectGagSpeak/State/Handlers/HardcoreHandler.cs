@@ -2,6 +2,7 @@ using CkCommons;
 using Dalamud.Game.ClientState.Objects;
 using GagSpeak.GameInternals;
 using GagSpeak.GameInternals.Addons;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
@@ -21,19 +22,23 @@ public class HardcoreHandler
     private readonly KeystateController _keyStates;
     private readonly MovementController _movement;
     private readonly ChatboxController _chatbox;
+    private readonly OverlayController _overlay;
 
     // Stores the players's movement mode, useful for when we change it.
     private MovementMode _cachedPlayerMoveMode = MovementMode.NotSet;
-
     public HardcoreHandler(ILogger<HardcoreHandler> logger, AutoPromptController prompts, 
-        KeystateController keyStates, MovementController movement, ChatboxController chatbox)
+        KeystateController keyStates, MovementController movement, ChatboxController chatbox,
+        OverlayController overlay)
     {
         _logger = logger;
         _prompts = prompts;
         _keyStates = keyStates;
         _movement = movement;
         _chatbox = chatbox;
+        _overlay = overlay;
     }
+
+    public bool IsHypnotized => _overlay.HasValidHypnoEffect;
 
     public void EnableForcedFollow(Kinkster? pair = null)
     {
@@ -106,7 +111,14 @@ public class HardcoreHandler
         _keyStates.RemoveControlSources(PlayerControlSource.ForcedEmote);
     }
 
-    public void EnableForcedStay(string enactorUid)
+    public void EnableForcedStay(string enactorUid, AddressBookEntry? spesificAddress = null)
+    {
+        // if the address is null, fallback to nearestNode behavior.
+        _logger.LogInformation($"Manually invoked forcedStay from [{enactorUid}]!", LoggerType.HardcoreMovement);
+        _prompts.AddControlSources(PlayerControlSource.ForcedStay);
+    }
+
+    public void EnableForcedStay(string enactorUid, AddressBookEntryTuple spesificAddress)
     {
         _logger.LogInformation($"[{enactorUid}] Enabled your ForcedStay state!", LoggerType.HardcoreMovement);
         _prompts.AddControlSources(PlayerControlSource.ForcedStay);
@@ -116,7 +128,18 @@ public class HardcoreHandler
     {
         _logger.LogInformation($"[{enactorUid}] Disabled your ForcedStay state!", LoggerType.HardcoreMovement);
         _prompts.RemoveControlSources(PlayerControlSource.ForcedStay);
+    }
 
+    public void EnableImprisonment(string enactorUid, Vector3 originPos, float maxDistanceFromOrigin)
+    {
+        _logger.LogInformation($"[{enactorUid}] Enabled your Imprisonment state!", LoggerType.HardcoreMovement);
+        // do magic here.
+    }
+
+    public void DisableImprisonment(string enactorUid)
+    {
+        _logger.LogInformation($"[{enactorUid}] Disabled your Imprisonment state!", LoggerType.HardcoreMovement);
+        // do magic here.
     }
 
     public void EnableHiddenChatBoxes(string enactorUid)

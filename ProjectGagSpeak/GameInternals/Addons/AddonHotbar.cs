@@ -9,7 +9,8 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
  namespace GagSpeak.GameInternals.Addons;
 public unsafe static class AddonHotbar
 {
-    private static AddonActionBarBase* _hotbar => (AddonActionBarBase*)(AtkUnitBase*)AtkHelper.GetAddonByName("_ActionBar");
+    private static AddonActionBarBase* _hotbar => (ForceStayUtils.TryGetAddonByName<AtkUnitBase>("_ActionBar", out var a) && ForceStayUtils.IsAddonReady(a))
+        ? (AddonActionBarBase*)a : (AddonActionBarBase*)null;
     private static AtkUnitBase* _hotbarBase => (AtkUnitBase*)_hotbar;
 
     // Exposed Properties.

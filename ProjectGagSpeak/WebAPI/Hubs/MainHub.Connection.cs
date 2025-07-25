@@ -137,7 +137,7 @@ public partial class MainHub
                 await Disconnect(ServerState.Disconnected).ConfigureAwait(false);
                 return; // (Prevent further reconnections)
             }
-            catch (Exception ex)
+            catch (Bagagwa ex)
             {
                 try
                 {
@@ -257,7 +257,7 @@ public partial class MainHub
             Logger.LogError($"Error fetching new account details: Missing claim in token. {ex.Message}");
             throw;
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             Logger.LogError($"Error fetching new account details: {ex.StackTrace}", LoggerType.ApiCore);
             throw;
@@ -382,7 +382,7 @@ public partial class MainHub
             AuthFailureMessage = ex.Reason;
             requireReconnect = true;
         }
-        catch (Exception ex) // Other generic exception, force a reconnect.
+        catch (Bagagwa ex) // Other generic exception, force a reconnect.
         {
             Logger.LogWarning(ex, "Could not refresh token, forcing reconnect");
             _suppresssNextNotification = true;
@@ -442,7 +442,7 @@ public partial class MainHub
                 Logger.LogInformation("Client health check loop was canceled.", LoggerType.Health);
                 break;
             }
-            catch (Exception ex)
+            catch (Bagagwa ex)
             {
                 // Log any other exceptions
                 Logger.LogError($"Exception in ClientHealthCheckLoop: {ex}", LoggerType.Health);
@@ -500,7 +500,7 @@ public partial class MainHub
                 Mediator.Publish(new MainHubConnectedMessage());
             }
         }
-        catch (Exception ex) // Failed to connect, to stop connection.
+        catch (Bagagwa ex) // Failed to connect, to stop connection.
         {
             Logger.LogError("Failure to obtain Data after reconnection to GagSpeakHub-Main. Reason: " + ex);
             // disconnect if a non-websocket related issue, otherwise, reconnect.

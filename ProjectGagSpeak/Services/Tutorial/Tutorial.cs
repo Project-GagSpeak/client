@@ -221,7 +221,7 @@ public class Tutorial
                 throw new Exception("Tutorial size for ["+ PopupLabel + "] is incorrect. Current Size is " + _steps.Count + " and expected size is " + size);
             }
         }
-        catch (Exception e)
+        catch (Bagagwa e)
         {
             Svc.Logger.Error("EnsureSize Exception:" + e.Message);
         }

@@ -105,7 +105,7 @@ public partial class TriggersPanel
                 ImGui.SetCursorScreenPos(minPos);
                 DrawLabelWithToggle(new Vector2(region.SizeX * .7f, ImGui.GetFrameHeight()), item, IsEditorItem);
             }
-            catch (Exception ex)
+            catch (Bagagwa ex)
             {
                 _logger.LogError(ex, "Error while drawing the selected trigger.");
             }

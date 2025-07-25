@@ -136,7 +136,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
         //    // reverting character.
         //    Logger.LogInformation("Character reverted.", LoggerType.Safeword);
         //}
-        //catch (Exception ex)
+        //catch (Bagagwa ex)
         //{
         //    Logger.LogError(ex, "An error occurred while trying to process the safeword command.");
         //}
@@ -239,7 +239,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
                 }
             }
             catch (TaskCanceledException) { }
-            catch (Exception ex)
+            catch (Bagagwa ex)
             {
                 Logger.LogError(ex, "Safeword monitor encountered an error.");
             }

@@ -52,7 +52,7 @@ public partial class MovementDetours : IDisposable
             //_logger.LogDebug($"PRE      Struct target4 Unk_0x10: {unk1->Unk_0x450.Unk_0x10};", LoggerType.HardcoreMovement);
             //_logger.LogDebug($"PRE      Struct target4 Unk_0x54: {unk1->Unk_0x450.Unk_0x54};", LoggerType.HardcoreMovement);
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogError($"Error converting Unk_0x10 to string: {ex}", LoggerType.HardcoreMovement);
         }
@@ -89,7 +89,7 @@ public partial class MovementDetours : IDisposable
             //_logger.LogDebug($"POST             FollowingTarget: {unk1->FollowingTarget.ToString("X")}", LoggerType.HardcoreMovement);
             //_logger.LogDebug($"POST                 Follow Type: {unk1->FollowType.ToString("X")}", LoggerType.HardcoreMovement);
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogError($"Error {ex}", LoggerType.HardcoreMovement);
         }

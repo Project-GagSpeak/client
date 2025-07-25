@@ -219,7 +219,7 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
             await Svc.Framework.RunOnTick(() => act(), delayTicks: ticks);
         }
         catch (TaskCanceledException) { /* CONSUME */ }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             // Otherwise, log the exception.
             Logger.LogError($"Safely caught an exception during the delayed framework call by {ticks} ticks: {ex}");

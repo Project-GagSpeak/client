@@ -83,7 +83,6 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
         TitleBarButtons = new TitleBarButtonBuilder().AddTutorial(_guides, TutorialType.Remote).Build();
     }
 
-    // maybe remove later, if it's only needed by this window for tutorials?
     private Vector2 WindowPos => Position.HasValue ? Position.Value : Vector2.Zero;
     private Vector2 WindowSize => Size.HasValue ? Size.Value : Vector2.Zero;
 
@@ -156,7 +155,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
             else
                 DrawRemoteLayout();
         }
-        catch (Exception e)
+        catch (Bagagwa e)
         {
             _logger.LogError(e, "Error while drawing the remote layout.");
             CkGui.ColorTextWrapped("An error occurred while drawing the remote layout. Please check the logs for more information.", ImGuiColors.DalamudRed);
@@ -370,8 +369,8 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
 
         ImGui.TableNextColumn();
         DrawInteractionPlot(plotDeviceData);
-        _guides.OpenTutorial(TutorialType.Remote, StepsRemote.ControllableCircle, WindowPos, WindowSize);
-        _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.DraggableCircle, WindowPos, WindowSize);
+        //// _guides.OpenTutorial(TutorialType.Remote, StepsRemote.ControllableCircle, WindowPos, WindowSize);
+        //// _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.DraggableCircle, WindowPos, WindowSize);
 
         ImGui.TableNextColumn();
         DrawInteractionButtons(plotDeviceData);
@@ -448,7 +447,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
         // draw the timer
         var timerText = plotDeviceData.UserIsBeingBuzzed ? $"{plotDeviceData.TimeAlive:mm\\:ss}" : "00:00";
         CkGui.CenterTextAligned(timerText);
-        _guides.OpenTutorial(TutorialType.Remote, StepsRemote.TimerButton, WindowPos, WindowSize);
+        //// _guides.OpenTutorial(TutorialType.Remote, StepsRemote.TimerButton, WindowPos, WindowSize);
 
         ImGui.Separator();
         ImGui.Spacing();
@@ -467,7 +466,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
             _selectedMotor!.IsLooping = !loopState;
         CkGui.AttachToolTip(disableLoop ? "No Motor currently selected!"
             : $"{(loopState ? "Disable" : "Enable")} looping for this motor.--SEP----COL--Right-Click:--COL--Keybind Alternative", color: ImGuiColors.ParsedGold);
-        _guides.OpenTutorial(TutorialType.Remote, StepsRemote.LoopButton, WindowPos, WindowSize);
+        // _guides.OpenTutorial(TutorialType.Remote, StepsRemote.LoopButton, WindowPos, WindowSize);
 
         CkGui.Separator(0);
 
@@ -479,14 +478,14 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
             _selectedMotor!.IsFloating = !_selectedMotor.IsFloating;
         CkGui.AttachToolTip(disableFloat ? "No Motor currently selected!" : $"{(floatState ? "Disable" : "Enable")} floating for this motor." +
             $"--SEP----COL--Middle-Click:--COL--Keybind Alternative", color: ImGuiColors.ParsedGold);
-        _guides.OpenTutorial(TutorialType.Remote, StepsRemote.FloatButton, WindowPos, WindowSize);
+        // _guides.OpenTutorial(TutorialType.Remote, StepsRemote.FloatButton, WindowPos, WindowSize);
 
         // push to the bottom right  minus the button height to draw the last centered button.
         ImGui.SetCursorPos(powerDrawPos);
         if (CustomImageButton(CosmeticService.CoreTextures.Cache[CoreTexture.Power], false, plotDeviceData.UserIsBeingBuzzed))
             _service.SetUserRemotePower(plotDeviceData.Owner.User.UID, !plotDeviceData.RemotePowerActive, MainHub.UID);
         CkGui.AttachToolTip("Start/Stop Recording the Sex Toy DataStream");
-        _guides.OpenTutorial(TutorialType.Remote, StepsRemote.PowerButton, WindowPos, WindowSize);
+        // _guides.OpenTutorial(TutorialType.Remote, StepsRemote.PowerButton, WindowPos, WindowSize);
 
         bool CustomImageButton(IDalamudTextureWrap wrap, bool isDisabled, bool isActive)
         {

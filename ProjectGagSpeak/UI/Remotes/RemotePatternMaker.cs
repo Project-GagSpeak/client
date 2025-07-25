@@ -76,7 +76,7 @@ namespace GagSpeak.Gui.UiRemote;
 //                ImGui.AlignTextToFramePadding();
 //                ImGuiUtil.Center("00:00");
 //            }
-//            _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.RecordedDuration, CurrentPos, CurrentSize);
+//            // _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.RecordedDuration, CurrentPos, CurrentSize);
 
 //            // move our yposition down to the top of the frame height times a .3f scale of the current region
 //            ImGui.SetCursorPosY(InitPos + CurrentRegion.Y * .1f);
@@ -95,7 +95,7 @@ namespace GagSpeak.Gui.UiRemote;
 //                    if (IsFloating) { IsFloating = false; }
 //                }
 //            }
-//            _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.LoopButton, CurrentPos, CurrentSize);
+//            // _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.LoopButton, CurrentPos, CurrentSize);
 
 
 //            // move it down from current position by another .2f scale
@@ -112,7 +112,7 @@ namespace GagSpeak.Gui.UiRemote;
 //                    if (IsLooping) { IsLooping = false; }
 //                }
 //            }
-//            _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.FloatButton, CurrentPos, CurrentSize);
+//            // _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.FloatButton, CurrentPos, CurrentSize);
 
 
 //            ImGui.SetCursorPosY(CurrentRegion.Y * .775f);
@@ -129,7 +129,7 @@ namespace GagSpeak.Gui.UiRemote;
 //                        StartVibrating();
 //                    }
 //                }
-//                _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.RecordingButton, CurrentPos, CurrentSize);
+//                // _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.RecordingButton, CurrentPos, CurrentSize);
 //            }
 //            // we are recording so display stop
 //            else
@@ -143,7 +143,7 @@ namespace GagSpeak.Gui.UiRemote;
 //                        StopVibrating();
 //                    }
 //                }
-//                _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.StoppingRecording, CurrentPos, CurrentSize);
+//                // _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.StoppingRecording, CurrentPos, CurrentSize);
 //            }
 //        }
 //        // pop what we appended

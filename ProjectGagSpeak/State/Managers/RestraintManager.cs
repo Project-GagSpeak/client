@@ -312,7 +312,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
             {
                 restraintSets.Add(set.Serialize());
             }
-            catch (Exception e)
+            catch (Bagagwa e)
             {
                 Logger.LogError($"Failed to serialize RestraintSet: {e}");
             }
@@ -374,7 +374,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
                 Storage.Add(loadedSet);
                 Logger.LogInformation($"LOADED IN RETRAINTSET: {loadedSet.Label}");
             }
-            catch (Exception ex)
+            catch (Bagagwa ex)
             {
                 Logger.LogError($"Failed to load Restraint Set.\nError {ex}\nFrom JSON: {setToken}");
                 // Do not allow this to continue loading, just fucking crash the game i dont care. We need to see why it didnt load.

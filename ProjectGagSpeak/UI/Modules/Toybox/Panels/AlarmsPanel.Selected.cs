@@ -37,7 +37,7 @@ public partial class AlarmsPanel
             }
             CkGui.AttachToolTip("The time that this alarm will go off at." +
                 "--SEP--This is relative to your local timezone.");
-            _guides.OpenTutorial(TutorialType.Alarms, StepsAlarms.AlarmLocalTimeZone, Vector2.Zero, Vector2.Zero);
+            // _guides.OpenTutorial(TutorialType.Alarms, StepsAlarms.AlarmLocalTimeZone, Vector2.Zero, Vector2.Zero);
 
             // Draw the time in a child.
             if (isEditing)
@@ -51,7 +51,7 @@ public partial class AlarmsPanel
                 CkGuiUtils.DateTimePreviewUtcAsLocal("AlarmTime", alarm.SetTimeUTC, UiFontService.UidFont, c.InnerRegion.X);
             }
         }
-        _guides.OpenTutorial(TutorialType.Alarms, StepsAlarms.SettingAlarmTime, Vector2.Zero, Vector2.Zero);
+        // _guides.OpenTutorial(TutorialType.Alarms, StepsAlarms.SettingAlarmTime, Vector2.Zero, Vector2.Zero);
     }
 
     private void DrawPatternSelection(Alarm alarm, bool isEditing)
@@ -177,7 +177,7 @@ public partial class AlarmsPanel
             if (ImGui.GetContentRegionAvail().X - checkboxWidth < 0)
                 ImGui.NewLine();
         }
-        _guides.OpenTutorial(TutorialType.Alarms, StepsAlarms.SettingFrequency, Vector2.Zero, Vector2.Zero);
+        // _guides.OpenTutorial(TutorialType.Alarms, StepsAlarms.SettingFrequency, Vector2.Zero, Vector2.Zero);
 
         if (dayFilters != (uint)alarm.DaysToFire)
             alarm.DaysToFire = (DaysOfWeek)dayFilters;

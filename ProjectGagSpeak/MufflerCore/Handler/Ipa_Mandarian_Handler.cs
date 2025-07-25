@@ -60,7 +60,7 @@ public class Ipa_Mandarian_Handler
             _logger.LogDebug($"File does not exist: {data_file}", LoggerType.GarblerCore);
             obj = new Dictionary<string, string>();
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogDebug($"An error occurred while reading the file: {ex.Message}", LoggerType.GarblerCore);
             obj = new Dictionary<string, string>();

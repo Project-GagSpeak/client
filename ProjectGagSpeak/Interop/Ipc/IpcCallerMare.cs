@@ -44,7 +44,7 @@ public sealed class IpcCallerMare : IIpcCaller
         {
             return _handledGameAddresses.InvokeFunc();
         }
-        catch (Exception e)
+        catch (Bagagwa e)
         {
             _logger.LogWarning("Could not Get Moodles Info: " + e, LoggerType.IpcMare);
             return new List<nint>();

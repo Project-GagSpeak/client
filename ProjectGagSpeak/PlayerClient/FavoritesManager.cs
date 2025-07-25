@@ -66,7 +66,7 @@ public class FavoritesManager : IHybridSavable
             _favoriteTriggers.UnionWith(load.Triggers);
             _favoriteKinksters.UnionWith(load.Kinksters);
         }
-        catch (Exception e)
+        catch (Bagagwa e)
         {
             Svc.Logger.Error(e, "Failed to load favorites.");
         }

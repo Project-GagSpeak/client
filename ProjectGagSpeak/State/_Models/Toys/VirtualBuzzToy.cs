@@ -174,7 +174,7 @@ public class VirtualBuzzToy : BuzzToy, IEditableStorageItem<VirtualBuzzToy>
                 // Add the motor to the list.
                 motorList.Add(motor);
             }
-            catch (Exception ex)
+            catch (Bagagwa ex)
             {
                 Svc.Logger.Error(ex, "Failed to parse motor from token: {Token}", mToken);
             }

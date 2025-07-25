@@ -56,8 +56,8 @@ public class SavePatternPopupHandler : IPopupHandler
         {
             CompiledPatternData.Label = name;
         }
-        _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.SavingPatternName, ImGui.GetWindowPos(), _size,
-            () => CompiledPatternData.Label = "Tutorial Pattern");
+        // _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.SavingPatternName, ImGui.GetWindowPos(), _size,
+        //    () => CompiledPatternData.Label = "Tutorial Pattern");
 
         // description field
         var description = CompiledPatternData.Description;
@@ -65,7 +65,7 @@ public class SavePatternPopupHandler : IPopupHandler
         {
             CompiledPatternData.Description = description;
         }
-        _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.SavingPatternDescription, ImGui.GetWindowPos(), _size);
+        // _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.SavingPatternDescription, ImGui.GetWindowPos(), _size);
 
         // duration field.
         ImGui.Text("Pattern Duration: ");
@@ -80,13 +80,13 @@ public class SavePatternPopupHandler : IPopupHandler
         {
             CompiledPatternData.ShouldLoop = loop;
         }
-        _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.SavingPatternLoop, ImGui.GetWindowPos(), _size);
+        // _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.SavingPatternLoop, ImGui.GetWindowPos(), _size);
 
         // display save options
         ImGui.Separator();
         if (CkGui.IconTextButton(FAI.Save, "Save Pattern Data", SaveWidth))
             Close();
-        _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.FinalizingSave, ImGui.GetWindowPos(), _size, () => _mediator.Publish(new ClosePatternSavePromptMessage()));
+        // _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.FinalizingSave, ImGui.GetWindowPos(), _size, () => _mediator.Publish(new ClosePatternSavePromptMessage()));
 
         ImGui.SameLine();
         if (CkGui.IconTextButton(FAI.Undo, "Discard Pattern", RevertWidth, disabled: _guides.IsTutorialActive(TutorialType.Patterns)))
@@ -94,7 +94,7 @@ public class SavePatternPopupHandler : IPopupHandler
             CompiledPatternData = new Pattern();
             ImGui.CloseCurrentPopup();
         }
-        _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.DiscardingPattern, ImGui.GetWindowPos(), _size);
+        // _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.DiscardingPattern, ImGui.GetWindowPos(), _size);
 
         var height = ImGui.GetCursorPosY() - start;
         _size = _size with { Y = height };

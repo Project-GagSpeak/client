@@ -8,37 +8,6 @@ namespace GagSpeak.GameInternals.Addons;
 
 public static unsafe class AtkHelper
 {
-    public static AtkUnitBase* Base(this AddonArgs args) => (AtkUnitBase*)args.Addon;
-
-    public static IntPtr GetAddonByName(string name)
-    {
-        var atkStage = AtkStage.Instance();
-        if (atkStage == null)
-            return IntPtr.Zero;
-
-        var unitMgr = atkStage->RaptureAtkUnitManager;
-        if (unitMgr == null)
-            return IntPtr.Zero;
-
-        var addon = unitMgr->GetAddonByName(name, 1);
-        if (addon == null)
-            return IntPtr.Zero;
-
-        return (IntPtr)addon;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsAddonReady(AtkUnitBase* Addon)
-    {
-        return Addon->IsVisible && Addon->UldManager.LoadedState == AtkLoadState.Loaded && Addon->IsFullyLoaded();
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static bool IsAddonReady(AtkComponentNode* Addon)
-    {
-        return Addon->AtkResNode.IsVisible() && Addon->Component->UldManager.LoadedState == AtkLoadState.Loaded;
-    }
-
     public static void ClickAddonButton(this AtkComponentButton target, AtkUnitBase* addon)
     {
         var btnRes = target.AtkComponentBase.OwnerNode->AtkResNode;

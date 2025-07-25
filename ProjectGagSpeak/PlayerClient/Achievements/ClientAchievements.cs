@@ -132,7 +132,7 @@ public class ClientAchievements
             _logger.LogDebug("Achievement Data String Loaded:\n" + compressedBase64Data);
             HasValidData = true;
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogError("Failed to load Achievement Data from server. Blocking all further AchievementAutoSaves." +
                 $"This is done to help keep old data intact. \n[REASON]: {ex.Message}");

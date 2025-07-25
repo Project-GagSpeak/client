@@ -311,7 +311,7 @@ public class IntroUi : WindowMediatorSubscriberBase
 
 
                 }
-                catch (Exception ex)
+                catch (Bagagwa ex)
                 {
                     _logger.LogError(ex, "Failed to create authentication for current character.");
                 }
@@ -338,7 +338,7 @@ public class IntroUi : WindowMediatorSubscriberBase
             }
             _configService.Save(); // save the configuration
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogError(ex, "Failed to connect to the server for the first time.");
             _configService.Save();
@@ -384,7 +384,7 @@ public class IntroUi : WindowMediatorSubscriberBase
             _logger.LogInformation("Fetched Account Details Successfully and finished creating Primary Account.");
 
         }
-        catch (Exception)
+        catch (Bagagwa)
         {
             // Log the error
             _logger.LogError("Failed to fetch account details and create the primary authentication. Performing early return.");
@@ -406,7 +406,7 @@ public class IntroUi : WindowMediatorSubscriberBase
 
             if (MainHub.IsConnected) _guides.StartTutorial(TutorialType.MainUi);
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogError(ex, "Failed to connect to the server for the first time.");
         }

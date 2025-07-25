@@ -394,7 +394,7 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
             if (savedChatlog.Messages.Any(m => m.UserData is null))
                 throw new Exception("One or more user datas are null in the chat log.");
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             Svc.Logger.Error(ex, "Failed to load chat log.");
             AddMessage(new(new("System"), "System",

@@ -100,7 +100,7 @@ public partial class MainHub
             // Handle SignalR hub exceptions
             Svc.Logger.Error($"Operation was canceled while updating achievement data: {ex}");
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             // Handle any other exceptions
             Svc.Logger.Error($"An unexpected error occurred while updating achievement data: {ex}");
@@ -400,6 +400,23 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserShockKinkster), dto).ConfigureAwait(false);
     }
 
+    public async Task<HubResponse> UserSendKinksterHypnoEffect(HypnoticAction dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserSendKinksterHypnoEffect), dto).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> UserLockAwayKinksterByAddress(ForcedStayByAddress dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserLockAwayKinksterByAddress), dto).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> UserImprisonKinkster(ImprisonAtPosition dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserImprisonKinkster), dto).ConfigureAwait(false);
+    }
     #endregion IPC Interactions
 
     #region Vibe Rooms

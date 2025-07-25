@@ -104,7 +104,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         Mediator.Subscribe<KinksterInteractionUiChangeMessage>(this, (msg) => UpdateWindow(msg.Kinkster, msg.Type));
         Mediator.Subscribe<PairWasRemovedMessage>(this, (msg) => IsOpen = false);
         Mediator.Subscribe<ClosedMainUiMessage>(this, (msg) => IsOpen = false);
-        Mediator.Subscribe<MainWindowTabChangeMessage>(this, (msg) => IsOpen = msg.NewTab == MainMenuTabs.SelectedTab.Whitelist);
+        IsOpen = false;
     }
 
     private void UpdateWindow(Kinkster kinkster, InteractionsTab type)

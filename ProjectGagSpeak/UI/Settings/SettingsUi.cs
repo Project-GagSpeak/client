@@ -1,7 +1,5 @@
-using CkCommons.Audio;
 using CkCommons.GarblerCore;
 using CkCommons.Gui;
-using CkCommons.Gui.Utility;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
@@ -18,7 +16,6 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Hub;
 using ImGuiNET;
-using Lumina.Extensions;
 using OtterGui;
 using OtterGui.Text;
 
@@ -27,7 +24,6 @@ namespace GagSpeak.Gui;
 public class SettingsUi : WindowMediatorSubscriberBase
 {
     private readonly MainHub _hub;
-    private readonly SettingsHardcore _hardcoreSettingsUI;
     private readonly AccountManagerTab _accountsTab;
     private readonly DebugTab _debugTab;
     private readonly PiShockProvider _shockProvider;
@@ -35,12 +31,10 @@ public class SettingsUi : WindowMediatorSubscriberBase
     private readonly MainConfig _mainConfig;
 
     public SettingsUi(ILogger<SettingsUi> logger, GagspeakMediator mediator, MainHub hub,
-        SettingsHardcore hardcoreTab, AccountManagerTab accounts, DebugTab debug,
-        PiShockProvider shockProvider, VfxSpawns vfxSpawner, MainConfig config) 
-        : base(logger, mediator, "GagSpeak Settings")
+        AccountManagerTab accounts, DebugTab debug, PiShockProvider shockProvider, 
+        VfxSpawns vfxSpawner, MainConfig config) : base(logger, mediator, "GagSpeak Settings")
     {
         _hub = hub;
-        _hardcoreSettingsUI = hardcoreTab;
         _accountsTab = accounts;
         _debugTab = debug;
         _shockProvider = shockProvider;
@@ -132,11 +126,6 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 if (ImGui.BeginTabItem(GSLoc.Settings.TabsGlobal))
                 {
                     DrawGlobalSettings();
-                    ImGui.EndTabItem();
-                }
-                if (ImGui.BeginTabItem(GSLoc.Settings.TabsHardcore))
-                {
-                    _hardcoreSettingsUI.DrawHardcoreSettings();
                     ImGui.EndTabItem();
                 }
                 if (ImGui.BeginTabItem(GSLoc.Settings.TabsPreferences))

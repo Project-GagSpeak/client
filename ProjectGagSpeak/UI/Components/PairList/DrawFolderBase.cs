@@ -38,7 +38,6 @@ public abstract class DrawFolderBase : IDrawFolder
     {
         if (!RenderIfEmpty && !DrawPairs.Any())
             return;
-
         using var id = ImRaii.PushId("folder_" + _id);
         var color = ImRaii.PushColor(ImGuiCol.ChildBg, ImGui.GetColorU32(ImGuiCol.FrameBgHovered), _wasHovered);
         using (ImRaii.Child("folder__" + _id, new Vector2(
@@ -69,12 +68,12 @@ public abstract class DrawFolderBase : IDrawFolder
         }
 
         color.Dispose();
-
         ImGui.Separator();
 
         // if opened draw content
         if (_serverConfigs.NickStorage.OpenPairListFolders.Contains(_id))
         {
+            using var _ = ImRaii.Child("folder___" + _id, ImGui.GetContentRegionAvail());
             using var indent = ImRaii.PushIndent(CkGui.IconSize(FAI.EllipsisV).X + ImGui.GetStyle().ItemSpacing.X, false);
             if (DrawPairs.Any())
             {

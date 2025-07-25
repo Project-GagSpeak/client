@@ -180,7 +180,7 @@ public class CosmeticService : IHostedService, IDisposable
             }
             _logger.LogInformation("Default files migrated successfully.");
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogError($"Failed to Migrate default files: {ex.Message}");
         }

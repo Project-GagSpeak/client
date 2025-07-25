@@ -123,7 +123,7 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
                 cts.Dispose();
             }
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             Logger.LogWarning(ex, "Error on disposal of {name}", name);
         }

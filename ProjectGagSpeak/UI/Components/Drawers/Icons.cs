@@ -48,7 +48,7 @@ public static class Icons
 
 
         }
-        catch (Exception e)
+        catch (Bagagwa e)
         {
             Svc.Log.Error(e, "Error drawing icon");
         }

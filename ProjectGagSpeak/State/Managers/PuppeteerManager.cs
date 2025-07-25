@@ -251,7 +251,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
                         GlobalAliasStorage.Items.Add(aliasTrigger);
                     }
                 }
-                catch (Exception ex)
+                catch (Bagagwa ex)
                 {
                     Logger.LogError("A GlobalAliasStorage Item failed to parse or had an empty GUID. Skipping.: " + ex.Message, LoggerType.Puppeteer);
                     continue;

@@ -350,7 +350,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
                 };
                 Storage.Add(restrictionItem);
             }
-            catch (Exception ex)
+            catch (Bagagwa ex)
             {
                 Logger.LogError(ex, "Failed to load restriction item from JSON: {0}", itemJson);
             }

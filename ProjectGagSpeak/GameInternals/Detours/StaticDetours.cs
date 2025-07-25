@@ -57,13 +57,31 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
         
         UseActionHook = Svc.Hook.HookFromAddress<ActionManager.Delegates.UseAction>((nint)ActionManager.MemberFunctionPointers.UseAction, UseActionDetour);
         
-        FireCallback = Marshal.GetDelegateForFunctionPointer<FireCallbackFuncDelegate>(Svc.SigScanner.ScanText(Signatures.Callback));
+        FireCallbackFunc = Marshal.GetDelegateForFunctionPointer<AtkUnitBase_FireCallbackDelegate>(Svc.SigScanner.ScanText(Signatures.Callback));
 
         ItemInteractedHook = Svc.Hook.HookFromAddress<TargetSystem.Delegates.InteractWithObject>((nint)TargetSystem.MemberFunctionPointers.InteractWithObject, ItemInteractedDetour);
 
         GearsetInternalHook = Svc.Hook.HookFromAddress<RaptureGearsetModule.Delegates.EquipGearsetInternal>((nint)RaptureGearsetModule.MemberFunctionPointers.EquipGearsetInternal, GearsetInternalDetour);
 
         EnableHooks();
+    }
+
+    // Only trigger if we absolutely need to, as detouring a function that has a callback on EVERYTHING is a bit excessive. If we dont NEED it, dont USE IT.
+    public void EnableCallbackHook()
+    {
+        if (FireCallbackHook.IsEnabled)
+            return;
+
+        Logger.LogInformation("Enabling FireCallbackDetour hook.");
+        FireCallbackHook.Enable();
+    }
+
+    public void DisableCallbackHook()
+    {
+        if (!FireCallbackHook.IsEnabled)
+            return;
+        Logger.LogInformation("Disabling FireCallbackDetour hook.");
+        FireCallbackHook.Disable();
     }
 
     public void EnableHooks()
@@ -76,9 +94,7 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
         OnExecuteEmoteHook?.Enable();
         
         UseActionHook?.Enable();
-        
-        FireCallbackHook?.Enable();
-        
+                
         ItemInteractedHook?.Enable();
         
         ProcessChatInputHook?.Enable();
@@ -104,10 +120,7 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
         
         UseActionHook?.Disable();
         UseActionHook?.Dispose();
-        
-        FireCallbackHook?.Disable();
-        FireCallbackHook?.Dispose();
-        
+                
         ItemInteractedHook?.Disable();
         ItemInteractedHook?.Dispose();
         
@@ -117,6 +130,16 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
         GearsetInternalHook?.Disable();
         GearsetInternalHook?.Dispose();
 
+        // Only dispose if enabled.
+        if (FireCallbackHook?.IsEnabled ?? false)
+        {
+            FireCallbackHook?.Disable();
+            FireCallbackHook?.Dispose();
+        }
+
+
+        // clear the func pointer for deallocation.
+        FireCallbackFunc = null;
         Logger.LogInformation("Disabled all StaticDetours and their hooks.");
     }
 }

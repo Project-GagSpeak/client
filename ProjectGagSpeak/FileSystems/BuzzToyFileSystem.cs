@@ -65,7 +65,7 @@ public sealed class BuzzToyFileSystem : CkFileSystem<BuzzToy>, IMediatorSubscrib
                 var parent = Root;
                 if(oldString != null)
                     try { parent = FindOrCreateAllFolders(oldString); }
-                    catch (Exception ex) { _logger.LogWarning(ex, $"Could not move SexToy because the folder could not be created."); }
+                    catch (Bagagwa ex) { _logger.LogWarning(ex, $"Could not move SexToy because the folder could not be created."); }
 
                 CreateDuplicateLeaf(parent, device.LabelName, device);
                 return;

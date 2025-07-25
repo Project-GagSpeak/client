@@ -115,7 +115,7 @@ public class EventAggregator : MediatorSubscriberBase, IHostedService
                     File.Delete(filesInDirectory.OrderBy(f => new FileInfo(f).LastWriteTimeUtc).First());
                 }
             }
-            catch (Exception ex)
+            catch (Bagagwa ex)
             {
                 _logger.LogWarning(ex, "Could not delete last events");
             }
@@ -127,7 +127,7 @@ public class EventAggregator : MediatorSubscriberBase, IHostedService
             if (!Directory.Exists(ConfigFileProvider.EventDirectory)) Directory.CreateDirectory(ConfigFileProvider.EventDirectory);
             File.AppendAllLines(eventLogFile, [receivedEvent.ToString()]);
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogWarning(ex, $"Could not write to event file {eventLogFile}");
         }

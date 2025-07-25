@@ -21,17 +21,17 @@ public static unsafe class AddonChatLog
     /// <summary> 
     ///     The Area in the Chat Box with the Chat-Input field and button row.
     /// </summary>
-    private static AddonChatLogPanel* _mainChatLog => (AddonChatLogPanel*)(AtkUnitBase*)AtkHelper.GetAddonByName("ChatLog");
+    private static AddonChatLogPanel* _mainChatLog => (AddonChatLogPanel*)(AtkUnitBase*)Svc.GameGui.GetAddonByName("ChatLog");
 
     /// <summary>
     ///     The 4 Chat Panels in your Chat Box.
     /// </summary>
     private static AddonChatLogPanel*[] _chatLogPanels =>
     [
-        (AddonChatLogPanel*)(AtkUnitBase*)AtkHelper.GetAddonByName("ChatLogPanel_0"),
-        (AddonChatLogPanel*)(AtkUnitBase*)AtkHelper.GetAddonByName("ChatLogPanel_1"),
-        (AddonChatLogPanel*)(AtkUnitBase*)AtkHelper.GetAddonByName("ChatLogPanel_2"),
-        (AddonChatLogPanel*)(AtkUnitBase*)AtkHelper.GetAddonByName("ChatLogPanel_3")
+        (AddonChatLogPanel*)(AtkUnitBase*)Svc.GameGui.GetAddonByName("ChatLogPanel_0"),
+        (AddonChatLogPanel*)(AtkUnitBase*)Svc.GameGui.GetAddonByName("ChatLogPanel_1"),
+        (AddonChatLogPanel*)(AtkUnitBase*)Svc.GameGui.GetAddonByName("ChatLogPanel_2"),
+        (AddonChatLogPanel*)(AtkUnitBase*)Svc.GameGui.GetAddonByName("ChatLogPanel_3")
     ];
 
     // Exposed Properties.

@@ -78,24 +78,6 @@ public static unsafe class NodeHelper
         return textNode;
     }
 
-    //private static void LinkNodeAtStart(AtkResNode* imageNode, AtkUnitBase* parent)
-    //{
-    //    var node = parent->RootNode->ChildNode;
-    //    if (parent->GetNodeType() is not NodeType.Component)
-    //    {
-    //        parent->ChildNode->NextSiblingNode = node;
-    //        node->PrevSiblingNode = parent->ChildNode;
-    //        parent->ChildNode = node;
-    //        node->ParentNode = parent;
-    //        parent->ChildCount++;
-    //    }
-    //    else
-    //    {
-    //        node->PrevSiblingNode = parent->ChildNode;
-    //        node->ParentNode = parent;
-    //    }
-    //}
-
     public static void LinkNodeAtEnd(AtkResNode* imageNode, AtkUnitBase* parent)
     {
         var node = parent->RootNode->ChildNode;

@@ -200,7 +200,7 @@ public class GagspeakEventManager
                     UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
                 }
             }
-            catch (Exception ex)
+            catch (Bagagwa ex)
             {
                 UnlocksLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
             }
@@ -224,7 +224,7 @@ public class GagspeakEventManager
                     UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
                 }
             }
-            catch (Exception ex)
+            catch (Bagagwa ex)
             {
                 UnlocksLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
             }
@@ -248,7 +248,7 @@ public class GagspeakEventManager
                     UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
                 }
             }
-            catch (Exception ex)
+            catch (Bagagwa ex)
             {
                 UnlocksLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
             }
@@ -272,7 +272,7 @@ public class GagspeakEventManager
                     UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
                 }
             }
-            catch (Exception ex)
+            catch (Bagagwa ex)
             {
                 UnlocksLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
             }
@@ -296,7 +296,7 @@ public class GagspeakEventManager
                     UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
                 }
             }
-            catch (Exception ex)
+            catch (Bagagwa ex)
             {
                 UnlocksLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
             }
@@ -320,7 +320,7 @@ public class GagspeakEventManager
                     UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
                 }
             }
-            catch (Exception ex)
+            catch (Bagagwa ex)
             {
                 UnlocksLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
             }

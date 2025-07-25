@@ -81,7 +81,7 @@ public class TriggerActionService
                 _ => throw new InvalidOperationException($"Unhandled action type: {invokableAction.GetType().Name}")
             };
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogError(ex, "Error executing action: {Action}", invokableAction);
             return false;

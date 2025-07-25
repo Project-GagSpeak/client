@@ -36,9 +36,8 @@ public class MainUI : WindowMediatorSubscriberBase
     private bool _addingNewUser = false;
     public string _pairToAdd = string.Empty; // the pair to add
     public string _pairToAddMessage = string.Empty; // the message attached to the pair to add
-
-    public static Vector2 LastPos   { get; private set; } = Vector2.Zero;
-    public static Vector2 LastSize  { get; private set; } = Vector2.Zero;
+    
+    private bool ThemePushed = false;
 
     public MainUI(ILogger<MainUI> logger, GagspeakMediator mediator, MainHub hub,
         MainConfig config, KinksterManager pairs, ServerConfigManager serverConfigs,
@@ -81,7 +80,13 @@ public class MainUI : WindowMediatorSubscriberBase
         Mediator.Subscribe<SwitchToIntroUiMessage>(this, (_) => IsOpen = false);
     }
 
-    private bool ThemePushed = false;
+    public static Vector2 LastPos { get; private set; } = Vector2.Zero;
+    public static Vector2 LastSize { get; private set; } = Vector2.Zero;
+
+    // for tutorial.
+    private Vector2 WindowPos => ImGui.GetWindowPos();
+    private Vector2 WindowSize => ImGui.GetWindowSize();
+
     protected override void PreDrawInternal()
     {
         if (!ThemePushed)
@@ -133,7 +138,7 @@ public class MainUI : WindowMediatorSubscriberBase
         }
         else
         {
-            using (ImRaii.PushId("ServerStatus")) DrawServerStatus();
+            DrawServerStatus();
         }
         // separate our UI once more.
         ImGui.Separator();
@@ -146,7 +151,7 @@ public class MainUI : WindowMediatorSubscriberBase
         {
             if (_addingNewUser)
             {
-                using (ImRaii.PushId("AddPair")) DrawAddPair(_windowContentWidth, ImGui.GetStyle().ItemInnerSpacing.X);
+                DrawAddPair(_windowContentWidth, ImGui.GetStyle().ItemInnerSpacing.X);
             }
             // draw the bottom tab bar
             using (ImRaii.PushId("MainMenuTabBar")) _tabMenu.Draw(_windowContentWidth);
@@ -158,13 +163,13 @@ public class MainUI : WindowMediatorSubscriberBase
                     using (ImRaii.PushId("homepageComponent")) _homepage.DrawHomepageSection();
                     break;
                 case MainMenuTabs.SelectedTab.Whitelist:
-                    using (ImRaii.PushId("whitelistComponent")) _whitelist.DrawWhitelistSection();
+                    _whitelist.DrawWhitelistSection();
                     break;
                 case MainMenuTabs.SelectedTab.PatternHub:
                     using (ImRaii.PushId("patternHubComponent"))
                     {
                         _patternHub.DrawPatternHub();
-                        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHub, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+                        // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHub, ImGui.GetWindowPos(), ImGui.GetWindowSize());
                     }
                     break;
                 case MainMenuTabs.SelectedTab.MoodlesHub:
@@ -204,7 +209,12 @@ public class MainUI : WindowMediatorSubscriberBase
         CkGui.AttachToolTip("Pair with " + (_pairToAdd.IsNullOrEmpty() ? "other user" : _pairToAdd));
         // draw a attached message field as well if they want.
         ImGui.SetNextItemWidth(availableXWidth);
-        ImGui.InputTextWithHint("##pairAddOptionalMessage", "Attach Msg to Request (Optional)", ref _pairToAddMessage, 100);        
+        ImGui.InputTextWithHint("##pairAddOptionalMessage", "Attach Msg to Request (Optional)", ref _pairToAddMessage, 100);
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AttachingMessages, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () =>
+        {
+            _addingNewUser = !_addingNewUser;
+            _tabMenu.TabSelection = MainMenuTabs.SelectedTab.MySettings;
+        });
         ImGui.Separator();
     }
 
@@ -261,11 +271,9 @@ public class MainUI : WindowMediatorSubscriberBase
             ImGui.TableNextColumn();
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (totalHeight - addUserButtonSize.Y) / 2);
             if (CkGui.IconButton(addUserIcon, disabled: !MainHub.IsConnected))
-            {
                 _addingNewUser = !_addingNewUser;
-            }
             CkGui.AttachToolTip("Add New User to Whitelist");
-            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AddingKinksters, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AddingKinksters, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => _addingNewUser = !_addingNewUser);
 
             // in the next column, draw the centered status.
             ImGui.TableNextColumn();
@@ -275,9 +283,14 @@ public class MainUI : WindowMediatorSubscriberBase
                 // fancy math shit for clean display, adjust when moving things around
                 ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth())
                     / 2 - (userSize.X + textSize.X) / 2 - ImGui.GetStyle().ItemSpacing.X / 2);
-                ImGui.TextColored(ImGuiColors.ParsedPink, userCount);
-                ImGui.SameLine();
-                ImGui.TextUnformatted("Kinksters Online");
+                using (ImRaii.Group())
+                {
+                    ImGui.TextColored(ImGuiColors.ParsedPink, userCount);
+                    ImGui.SameLine();
+                    ImGui.TextUnformatted("Kinksters Online");
+                }
+                _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.InitialWelcome, WindowPos, WindowSize);
+
             }
             // otherwise, if we are not connected, display that we aren't connected.
             else
@@ -329,7 +342,7 @@ public class MainUI : WindowMediatorSubscriberBase
                     ? "Disconnect from " + _serverConfigs.ServerStorage.ServerName + "--SEP--Current Status: " + MainHub.ServerStatus
                     : "Connect to " + _serverConfigs.ServerStorage.ServerName + "--SEP--Current Status: " + MainHub.ServerStatus);
             }
-            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ConnectionState, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ConnectionState, WindowPos, WindowSize, () => _tabMenu.TabSelection = MainMenuTabs.SelectedTab.Homepage);
         }
     }
 

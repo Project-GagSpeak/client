@@ -178,7 +178,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         // check if in gold saucer (maybe do something better for this later.
         if (PlayerContent.TerritoryID is 144 && PlayerData.IsChocoboRacing)
         {
-            var resultMenu = (AtkUnitBase*)AtkHelper.GetAddonByName("RaceChocoboResult");
+            var resultMenu = (AtkUnitBase*)Svc.GameGui.GetAddonByName("RaceChocoboResult");
             if (resultMenu != null && resultMenu->RootNode->IsVisible())
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.ChocoboRaceFinished);
         }
@@ -236,7 +236,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
                 Logger.LogDebug("SaveData Update loop canceled.", LoggerType.Achievements);
                 break;
             }
-            catch (Exception ex)
+            catch (Bagagwa ex)
             {
                 Logger.LogError(ex, "Unexpected error in SaveData Update loop.");
             }
@@ -694,7 +694,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
             var raceEndVisible = false;
             unsafe
             {
-                var raceEnded = (AtkUnitBase*)AtkHelper.GetAddonByName("RaceChocoboResult");
+                var raceEnded = (AtkUnitBase*)Svc.GameGui.GetAddonByName("RaceChocoboResult");
                 if (raceEnded != null)
                     raceEndVisible = raceEnded->RootNode->IsVisible();
             }

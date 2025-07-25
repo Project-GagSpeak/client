@@ -1,11 +1,8 @@
 using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Gui.Utility;
-using Dalamud.Interface.Utility;
 using GagSpeak.Services;
-using GagspeakAPI.Data;
 using ImGuiNET;
-using OtterGui;
 using OtterGui.Text;
 using static CkCommons.GameDataHelp;
 
@@ -26,6 +23,21 @@ public class AddressBookEntry
     public AddressBookEntryTuple AsTuple()
     {
         return (Name, (int)World, (int)City, Ward, (int)PropertyType, Plot, Apartment, ApartmentSubdivision, false, string.Empty);
+    }
+
+    public static AddressBookEntry FromTuple(AddressBookEntryTuple tuple)
+    {
+        return new AddressBookEntry
+        {
+            Name = tuple.Name,
+            World = tuple.World,
+            City = (ResidentialAetheryteKind)tuple.City,
+            Ward = tuple.Ward,
+            PropertyType = (PropertyType)tuple.PropertyType,
+            Plot = tuple.Plot,
+            Apartment = tuple.Apartment,
+            ApartmentSubdivision = tuple.ApartmentSubdivision
+        };
     }
 }
 
@@ -78,8 +90,8 @@ public static class AddressDetailsDialog
                     ImGui.TableNextColumn();
                     ImUtf8.TextFrameAligned("Property Type:");
                     ImGui.TableNextColumn();
-                    bool isHouse = Entry.PropertyType == PropertyType.House;
-                    bool isApartment = Entry.PropertyType == PropertyType.Apartment;
+                    var isHouse = Entry.PropertyType == PropertyType.House;
+                    var isApartment = Entry.PropertyType == PropertyType.Apartment;
                     if (ImGui.RadioButton("House", isHouse))
                         Entry.PropertyType = PropertyType.House;
                     ImGui.SameLine();

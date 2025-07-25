@@ -291,7 +291,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
                 Storage[gagType] = newGagItem;
             }
         }
-        catch (Exception e)
+        catch (Bagagwa e)
         {
             Logger.LogError("Failed to load Gag Restrictions: {0}", e);
             return;

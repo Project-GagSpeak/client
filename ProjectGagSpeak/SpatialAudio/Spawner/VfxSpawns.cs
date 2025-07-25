@@ -103,7 +103,7 @@ public unsafe class VfxSpawns : DisposableMediatorSubscriberBase
             // create the actor for it & add it.
             Vfxs.Add(new ActorVfx(createdVfx, path), new(path, SpawnType.Self, canLoop));
         }
-        catch (Exception e)
+        catch (Bagagwa e)
         {
             Logger.LogError(e, "Failed to spawn VFX");
         }
@@ -143,7 +143,7 @@ public unsafe class VfxSpawns : DisposableMediatorSubscriberBase
             // create the actor for it & add it.
             Vfxs.Add(new ActorVfx(createdVfx, path), new(path, SpawnType.Target, canLoop));
         }
-        catch (Exception e)
+        catch (Bagagwa e)
         {
             Logger.LogError(e, "Failed to spawn VFX");
         }

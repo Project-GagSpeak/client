@@ -1,3 +1,4 @@
+using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Gui.Utility;
 using CkCommons.Helpers;
@@ -5,9 +6,11 @@ using CkCommons.Textures;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CustomCombos.Editor;
 using GagSpeak.Gui.Components;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Utils;
 using GagspeakAPI.Data;
 using ImGuiNET;
 using OtterGui;
@@ -19,17 +22,20 @@ namespace GagSpeak.Gui.MainWindow;
 public class MoodleHubTab : DisposableMediatorSubscriberBase
 {
     private readonly ShareHubService _shareHub;
-    public MoodleHubTab(ILogger<MoodleHubTab> logger, GagspeakMediator mediator, ShareHubService moodleHubService) 
+    private HubTagsCombo _hubTags;
+    public MoodleHubTab(ILogger<MoodleHubTab> logger, GagspeakMediator mediator, ShareHubService shareHub) 
         : base(logger, mediator)
     {
-        _shareHub = moodleHubService;
+        _shareHub = shareHub;
+
+        _hubTags = new HubTagsCombo(logger, () => [ ..shareHub.FetchedTags.OrderBy(x => x) ]);
     }
 
     public void DrawMoodlesHub()
     {
         // Handle grabbing new info from the server if none is present. (not the most elegent but it works)
-        if (!_shareHub.InitialMoodlesCall && UiService.DisableUI)
-            _shareHub.PerformMoodleSearch();
+        if (!_shareHub.InitialMoodlesCall && !UiService.DisableUI)
+            UiService.SetUITask(_shareHub.SearchMoodles());
 
         DrawSearchFilter();
         ImGui.Separator();
@@ -42,128 +48,111 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
             return;
         }
 
-        using var scrollbarWidth = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12f);
-        using var moodleResultChild = ImRaii.Child("##MoodleResultChild", ImGui.GetContentRegionAvail(), false, WFlags.AlwaysVerticalScrollbar);
-        // inner child styles
-        using var windowRounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f);
-        using var borderColor = ImRaii.PushStyle(ImGuiStyleVar.WindowBorderSize, 1f);
-        using var borderCol = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
-        using var bgColor = ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
-        // draw results.
-        foreach (var moodle in _shareHub.LatestMoodleResults)
-            DrawMoodleResultBox(moodle);
+        using (ImRaii.Child("ResultListGuard", ImGui.GetContentRegionAvail(), false, WFlags.NoScrollbar))
+            DrawResultList();
     }
 
-    private void DrawMoodleResultBox(ServerMoodleInfo moodleInfo)
+    private void DrawResultList()
     {
+        // set the scrollbar width to be shorter than normal
+        using var scrollbarWidth = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12f);
+        using var patternResultChild = ImRaii.Child("##PatternResultChild", ImGui.GetContentRegionAvail(), false, WFlags.AlwaysVerticalScrollbar);
+        // result styles.
+        using var s = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f)
+            .Push(ImGuiStyleVar.WindowBorderSize, 1f)
+            .Push(ImGuiStyleVar.FramePadding, new Vector2(ImGui.GetStyle().FramePadding.X, 2f));
+        using var c = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink)
+            .Push(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
+
+        var size = new Vector2(ImGui.GetContentRegionAvail().X, CkStyle.GetFrameRowsHeight(3).AddWinPadY());
+        foreach (var pattern in _shareHub.LatestMoodleResults)
+            DrawMoodleResultBox(pattern, size);
+    }
+
+    private void DrawMoodleResultBox(ServerMoodleInfo info, Vector2 size)
+    {
+        using var _ = ImRaii.Child($"Moodle-{info.MoodleStatus.GUID}", size, true, WFlags.ChildWindow);
 
         var tryOnButtonSize = CkGui.IconTextButtonSize(FAI.PersonCircleQuestion, "Try");
-        var LikeButtonSize = CkGui.IconTextButtonSize(FAI.Heart, moodleInfo.Likes.ToString());
-        var copyButtonSize = CkGui.IconButtonSize(FAI.Copy).X;
-        var height = ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2 + ImGui.GetStyle().WindowPadding.Y * 2;
-        using (ImRaii.Child($"##MoodleResult_{moodleInfo.MoodleStatus.GUID}", new Vector2(ImGui.GetContentRegionAvail().X, height), true, WFlags.ChildWindow))
+        var LikeButtonSize = CkGui.IconTextButtonSize(FAI.Heart, info.Likes.ToString());
+        var iconSize = new Vector2(ImGui.GetFrameHeight());
+        var imagePos = ImGui.GetCursorPos();
+        var windowEndX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
+        var style = ImGui.GetStyle();
+
+        ImGui.Dummy(iconSize);
+        GsExtensions.DrawMoodleStatusTooltip(info.MoodleStatus, Enumerable.Empty<MoodlesStatusInfo>());
+        CkGui.TextFrameAlignedInline(info.MoodleStatus.Title.StripColorTags());
+
+        var buttonW = tryOnButtonSize + LikeButtonSize + iconSize.X + style.ItemInnerSpacing.X * 2;
+        ImGui.SameLine(windowEndX - buttonW);
+        using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudGrey))
+            if (CkGui.IconTextButton(FAI.PersonCircleQuestion, "Try", isInPopup: true))
+                _shareHub.TryOnMoodle(info.MoodleStatus.GUID);
+        CkGui.AttachToolTip("Try this Moodle on your character to see a preview of it.");
+        
+        ImUtf8.SameLineInner();
+        using (ImRaii.PushColor(ImGuiCol.Text, info.HasLikedMoodle ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey))
+            if (CkGui.IconTextButton(FAI.Heart, info.Likes.ToString(), null, true, UiService.DisableUI))
+                UiService.SetUITask(_shareHub.LikeMoodle(info.MoodleStatus.GUID));
+        CkGui.AttachToolTip(info.HasLikedMoodle ? "Remove Like from this pattern." : "Like this pattern!");
+
+        ImUtf8.SameLineInner();
+        using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudGrey))
+            if (CkGui.IconButton(FAI.Copy, inPopup: true))
+                _shareHub.CopyMoodleToClipboard(info.MoodleStatus.GUID);
+        CkGui.AttachToolTip("Copy this Status for simple Moodles Import!");
+
+        // Middle Row.
+        using (ImRaii.Group())
         {
-            var imagePos = Vector2.Zero;
-            using (ImRaii.Group())
-            {
-                // Handle displaying the icon.
-                imagePos = ImGui.GetCursorPos();
-                ImGuiHelpers.ScaledDummy(ImGui.GetFrameHeight());
-                if (ImGui.IsItemHovered())
-                    if (!moodleInfo.MoodleStatus.Description.IsNullOrWhitespace())
-                        CkGui.AttachToolTip(moodleInfo.MoodleStatus.Description.StripColorTags());
+            CkGui.FramedIconText(FAI.UserCircle);
+            CkGui.ColorTextFrameAlignedInline(info.Author, ImGuiColors.DalamudGrey);
+        }
+        CkGui.AttachToolTip("Publisher of the Moodle");
+        DrawMoodleEffects();
 
-                // Title Display
-                ImGui.SameLine();
-                ImGui.AlignTextToFramePadding();
-                CkGui.ColorText(moodleInfo.MoodleStatus.Title.StripColorTags(), ImGuiColors.DalamudWhite);
+        // Final Row.
+        using (ImRaii.Group())
+        {
+            var allowedLength = ImGui.GetContentRegionAvail().X - style.ItemSpacing.X;
+            CkGui.FramedIconText(FAI.Tags);
+            var tagsString = string.Join(", ", info.Tags);
+            if (ImGui.CalcTextSize(tagsString).X > allowedLength)
+                tagsString = tagsString.Substring(0, (int)(allowedLength / ImGui.CalcTextSize("A").X)) + "...";
+            CkGui.ColorTextFrameAlignedInline(tagsString, ImGuiColors.ParsedGrey);
+        }
+        CkGui.AttachToolTip("Associated Tags");
 
-                // Handle the Try On button.
-                ImGui.SameLine(ImGui.GetContentRegionAvail().X - tryOnButtonSize - LikeButtonSize - copyButtonSize - ImGui.GetStyle().ItemInnerSpacing.X * 2);
-                using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudGrey))
-                    if (CkGui.IconTextButton(FAI.PersonCircleQuestion, "Try", isInPopup: true))
-                        _shareHub.TryOnMoodle(moodleInfo.MoodleStatus.GUID);
-                CkGui.AttachToolTip("Try this Moodle on your character to see a preview of it.");
+        // if the moodle image is valid, display it at the starting pos.
+        if (info.MoodleStatus.IconID != 0)
+        {
+            ImGui.SetCursorPos(imagePos);
+            MoodleDisplay.DrawMoodleIcon(info.MoodleStatus.IconID, info.MoodleStatus.Stacks, MoodleDrawer.IconSize);
+        }
 
-                // Handle the like button
-                ImUtf8.SameLineInner();
-                using (ImRaii.PushColor(ImGuiCol.Text, moodleInfo.HasLikedMoodle ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey))
-                    if (CkGui.IconTextButton(FAI.Heart, moodleInfo.Likes.ToString(), null, true))
-                        _shareHub.PerformMoodleLikeAction(moodleInfo.MoodleStatus.GUID);
-                CkGui.AttachToolTip(moodleInfo.HasLikedMoodle ? "Remove Like from this pattern." : "Like this pattern!");
+        void DrawMoodleEffects()
+        {
+            var width = iconSize.X * 6 + style.ItemInnerSpacing.X * 5;
+            ImGui.SameLine(windowEndX - width);
+            // Draw out each color icon frame aligned.
+            MoodleEffect(FAI.LayerGroup, info.MoodleStatus.Stacks > 1, "Effect Stacks", "Not a stackable Moodle");
+            ImUtf8.SameLineInner();
+            MoodleEffect(FAI.Eraser, info.MoodleStatus.Dispelable, "Can be dispelled", "Cannot be dispelled");
+            ImUtf8.SameLineInner(); 
+            MoodleEffect(FAI.Infinity, info.MoodleStatus.AsPermanent, "Permanent Moodle", "Temporary Moodle");
+            ImUtf8.SameLineInner(); 
+            MoodleEffect(FAI.MapPin, info.MoodleStatus.Persistent, "Is Sticky", "Not Sticky");
+            ImUtf8.SameLineInner();
+            MoodleEffect(FAI.Magic, !string.IsNullOrEmpty(info.MoodleStatus.CustomVFXPath), "Has custom VFX", "No custom VFX");
+            ImUtf8.SameLineInner();
+            MoodleEffect(FAI.SortNumericUpAlt, info.MoodleStatus.StackOnReapply, $"Adds {info.MoodleStatus.StacksIncOnReapply} stacks each application", "Stacks remain as is.");
+        }
 
-                // Handle the copy button.
-                ImUtf8.SameLineInner();
-                using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudGrey))
-                    if (CkGui.IconButton(FAI.Copy, inPopup: true))
-                        _shareHub.CopyMoodleToClipboard(moodleInfo.MoodleStatus.GUID);
-                CkGui.AttachToolTip("Copy this Status for simple Moodles Import!");
-            }
-            // next line:
-            using (ImRaii.Group())
-            {
-                var stacksSize = CkGui.IconSize(FAI.LayerGroup).X;
-                var dispellableSize = CkGui.IconSize(FAI.Eraser).X;
-                var permanentSize = CkGui.IconSize(FAI.Infinity).X;
-                var stickySize = CkGui.IconSize(FAI.MapPin).X;
-                var customVfxPath = CkGui.IconSize(FAI.Magic).X;
-                var stackOnReapply = CkGui.IconSize(FAI.SortNumericUpAlt).X;
-
-                ImGui.AlignTextToFramePadding();
-                CkGui.IconText(FAI.UserCircle);
-                ImUtf8.SameLineInner();
-                CkGui.ColorText(moodleInfo.Author, ImGuiColors.DalamudGrey);
-                CkGui.AttachToolTip("Publisher of the Moodle");
-
-
-                // jump to the right side to draw all the icon data.
-                ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemInnerSpacing.X * 5
-                    - stacksSize - dispellableSize - permanentSize - stickySize - customVfxPath - stackOnReapply);
-                ImGui.AlignTextToFramePadding();
-                CkGui.BooleanToColoredIcon(moodleInfo.MoodleStatus.Stacks > 1, false, FAI.LayerGroup, FAI.LayerGroup, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(moodleInfo.MoodleStatus.Stacks > 1 ? "Has " + moodleInfo.MoodleStatus.Stacks + "Stacks." : "Not a stackable Moodle.");
-
-                ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(moodleInfo.MoodleStatus.Dispelable, false, FAI.Eraser, FAI.Eraser, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(moodleInfo.MoodleStatus.Dispelable ? "Can be dispelled." : "Cannot be dispelled.");
-
-                ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(moodleInfo.MoodleStatus.AsPermanent, false, FAI.Infinity, FAI.Infinity, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(moodleInfo.MoodleStatus.AsPermanent ? "Permanent Moodle." : "Temporary Moodle.");
-
-                ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(moodleInfo.MoodleStatus.AsPermanent, false, FAI.MapPin, FAI.MapPin, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(moodleInfo.MoodleStatus.AsPermanent ? "Marked as a Sticky Moodle." : "Not Sticky.");
-
-                ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(!string.IsNullOrEmpty(moodleInfo.MoodleStatus.CustomVFXPath), false, FAI.Magic, FAI.Magic, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(!string.IsNullOrEmpty(moodleInfo.MoodleStatus.CustomVFXPath) ? "Has a custom VFX path." : "No custom VFX path.");
-
-                ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(moodleInfo.MoodleStatus.StackOnReapply, false, FAI.SortNumericUpAlt, FAI.SortNumericUpAlt, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(moodleInfo.MoodleStatus.StackOnReapply ? "Stacks " + moodleInfo.MoodleStatus.StacksIncOnReapply + " times on Reapplication." : "Doesn't stack on reapplication.");
-            }
-
-            using (ImRaii.Group())
-            {
-                ImGui.AlignTextToFramePadding();
-                CkGui.IconText(FAI.Tags);
-                ImUtf8.SameLineInner();
-                var maxWidth = ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X;
-                var tagsString = string.Join(", ", moodleInfo.Tags);
-                if (ImGui.CalcTextSize(tagsString).X > maxWidth)
-                {
-                    tagsString = tagsString.Substring(0, (int)(maxWidth / ImGui.CalcTextSize("A").X)) + "...";
-                }
-                CkGui.ColorText(tagsString, ImGuiColors.ParsedGrey);
-            }
-            CkGui.AttachToolTip("Tags for the Pattern");
-
-            if (moodleInfo.MoodleStatus.IconID != 0 && imagePos != Vector2.Zero)
-            {
-                ImGui.SetCursorPos(imagePos);
-                MoodleDisplay.DrawMoodleIcon(moodleInfo.MoodleStatus.IconID, moodleInfo.MoodleStatus.Stacks, MoodleDrawer.IconSize);
-            }
+        void MoodleEffect(FAI icon, bool state, string tooltipTrue, string tooltipFalse)
+        {
+            CkGui.BooleanToColoredIcon(state, false, icon, icon, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+            CkGui.AttachToolTip(state ? tooltipTrue : tooltipFalse);
         }
     }
 
@@ -174,60 +163,61 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
         var spacing = ImGui.GetStyle().ItemInnerSpacing.X;
         var updateSize = CkGui.IconTextButtonSize(FAI.Search, "Search");
         var sortIconSize = CkGui.IconButtonSize(FAI.SortAmountUp).X;
-        var filterTypeSize = 80f;
+        var filterTypeSize = 80f * ImGuiHelpers.GlobalScale;
+
         var sortIcon = _shareHub.SortOrder == HubDirection.Ascending ? FAI.SortAmountUp : FAI.SortAmountDown;
-
         // Draw out the first row. This contains the search bar, the Update Search Button, and the Show 
-        using (ImRaii.Group())
+        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - (sortIconSize + filterTypeSize + updateSize + spacing * 3));
+        var searchString = _shareHub.SearchString;
+        if (ImGui.InputTextWithHint("##moodleSearchFilter", "Search for Moodles...", ref searchString, 125))
+            _shareHub.SearchString = searchString;
+        
+        ImUtf8.SameLineInner();
+        if (CkGui.IconTextButton(FAI.Search, "Search", disabled: UiService.DisableUI))
+            UiService.SetUITask(_shareHub.SearchMoodles());
+        CkGui.AttachToolTip("Update Search Results");
+
+        // Show the filter combo.
+        ImUtf8.SameLineInner();
+        if (CkGuiUtils.EnumCombo("##filterType", filterTypeSize, _shareHub.SearchFilter, out var newFilterType, 
+            Enum.GetValues<HubFilter>().Skip(1).SkipLast(1), flags: CFlags.NoArrowButton));
+            _shareHub.SearchFilter = newFilterType;
+        CkGui.AttachToolTip("Sort Method--SEP--Define how results are found.");
+
+        // the sort direction.
+        ImUtf8.SameLineInner();
+        if (CkGui.IconButton(sortIcon))
+            _shareHub.ToggleSortDirection();
+        CkGui.AttachToolTip($"Sort Direction--SEP--Current: {_shareHub.SortOrder}");
+        
+        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FAI.Tags).X - ImGui.GetStyle().ItemInnerSpacing.X);
+        var searchTags = _shareHub.SearchTags;
+        if (ImGui.InputTextWithHint("##shareHubTags", "Enter tags split by , (optional)", ref searchTags, 200))
+            _shareHub.SearchTags = searchTags;
+        // the combo.
+        ImUtf8.SameLineInner();
+        var pressed = CkGui.IconButton(FAI.Tags);
+        var popupDrawPos = ImGui.GetItemRectMin() + new Vector2(ImGui.GetItemRectSize().X, 0);
+        CkGui.AttachToolTip("Select from an existing list of tags." +
+            "--SEP--This will help make your Moodle easier to find.");
+
+        if (pressed)
+            ImGui.OpenPopup("##MoodleHubTags");
+
+        // open the popup if we should.
+        if (_hubTags.DrawPopup("##MoodleHubTags", 200f, popupDrawPos))
         {
-            ImGui.SetNextItemWidth(CkGui.GetWindowContentRegionWidth() - sortIconSize - filterTypeSize - updateSize - 3 * spacing);
-            var searchString = _shareHub.SearchString;
-            if (ImGui.InputTextWithHint("##moodleSearchFilter", "Search for Moodles...", ref searchString, 125))
-                _shareHub.SearchString = searchString;
-            ImUtf8.SameLineInner();
-            if (CkGui.IconTextButton(FAI.Search, "Search", disabled: UiService.DisableUI))
-                _shareHub.PerformMoodleSearch();
-            CkGui.AttachToolTip("Update Search Results");
+            if (_hubTags.Current is not { } selected)
+                return;
 
-            // Show the filter combo.
-            ImUtf8.SameLineInner();
-            if(CkGuiUtils.EnumCombo("##filterType", filterTypeSize, _shareHub.SearchFilter, out var newFilterType, skip: 1))
-                _shareHub.SearchFilter = newFilterType;
-            CkGui.AttachToolTip("Sort Method--SEP--Define how results are found.");
+            if (string.IsNullOrWhiteSpace(selected) || _shareHub.SearchTags.Contains(selected))
+                return;
 
-            // the sort direction.
-            ImUtf8.SameLineInner();
-            if (CkGui.IconButton(sortIcon))
-                _shareHub.ToggleSortDirection();
-            CkGui.AttachToolTip($"Sort Direction--SEP--Current: {_shareHub.SortOrder}");
-        }
-
-        using (ImRaii.Group())
-        {
-            float tagsComboWidth = 125;
-            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - tagsComboWidth - ImGui.GetStyle().ItemInnerSpacing.X);
-            var searchTags = _shareHub.SearchTags;
-            if (ImGui.InputTextWithHint("##shareHubTags", "Enter tags split by , (optional)", ref searchTags, 200))
-                _shareHub.SearchTags = searchTags;
-
-            ImUtf8.SameLineInner();
-            ImGui.SetNextItemWidth(tagsComboWidth);
-            if (CkGuiUtils.StringCombo("##mTagFilter", tagsComboWidth, string.Empty, out var selected, _shareHub.FetchedTags, "Add Tag.."))
-            {
-                if (string.IsNullOrWhiteSpace(selected))
-                    return;
-
-                // append the tag to the search tags if it does not exist.
-                if (!_shareHub.SearchTags.Contains(selected))
-                {
-                    // if there is not a comma at the end of the string, add one.
-                    if (_shareHub.SearchTags.Length > 0 && _shareHub.SearchTags[^1] != ',')
-                        _shareHub.SearchTags += ", ";
-                    // append the tag to it.
-                    _shareHub.SearchTags += selected.ToLower();
-                }
-            }
-            CkGui.AttachToolTip("Select from an existing list of tags.--SEP--This will help make your Moodle easier to find.");
+            // Append the tag.
+            if (_shareHub.SearchTags.Length > 0 && _shareHub.SearchTags[^1] != ',')
+                _shareHub.SearchTags += ", ";
+            // append the tag to it.
+            _shareHub.SearchTags += selected.ToLower();
         }
     }
 }

@@ -216,7 +216,7 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
                 Logger.LogDebug("Loaded Alarm: " + newAlarm.ToString());
                 Storage.Add(newAlarm);
             }
-            catch (Exception ex)
+            catch (Bagagwa ex)
             {
                 Logger.LogError("Error deserializing alarm: " + ex);
             }

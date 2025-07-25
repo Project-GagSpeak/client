@@ -123,7 +123,7 @@ public class KinkPlateService : MediatorSubscriberBase
             _kinkPlates[data].Base64ProfilePicture = profile.ImageBase64 ?? string.Empty;
             Logger.LogDebug("KinkPlate™ for "+data.UID+" loaded.", LoggerType.Kinkplates);
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             // log the failure and set default data.
             Logger.LogWarning(ex, "Failed to get KinkPlate™ from service for user " + data.UID);

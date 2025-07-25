@@ -1,6 +1,8 @@
 using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Handlers;
 using GagSpeak.State.Managers;
 using GagspeakAPI.Data;
 using GagspeakAPI.Dto.VibeRoom;
@@ -9,18 +11,23 @@ using GagspeakAPI.Network;
 namespace GagSpeak.State.Listeners;
 
 /// <summary>
-///     Listens for all incoming updates to the kinkster's data, navigating to the pair to edit, and applying changes.
+///     Listens for all incoming updates to the kinkster's data, navigating to the pair to edit, and applying changes. <para />
+///     This will additionally listen for spesific actions performed by other kinksters, intended for you. (ex. Shocks, Hypnosis)
 /// </summary>
 public sealed class KinksterListener
 {
     private readonly ILogger<KinksterListener> _logger;
     private readonly GagspeakMediator _mediator;
+    private readonly OwnGlobals _ownGlobals;
+    private readonly HardcoreHandler _hcHandler;
     private readonly KinksterManager _kinksters;
     public KinksterListener(ILogger<KinksterListener> logger, GagspeakMediator mediator,
-        KinksterManager kinksters)
+        OwnGlobals ownGlobals, HardcoreHandler hcHandler, KinksterManager kinksters)
     {
         _logger = logger;
         _mediator = mediator;
+        _ownGlobals = ownGlobals;
+        _hcHandler = hcHandler;
         _kinksters = kinksters;
     }
 
@@ -166,8 +173,4 @@ public sealed class KinksterListener
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
         kinkster.LightCache.UpdateAllowances(module, newAllowances);
     }
-
-
-
-
 }

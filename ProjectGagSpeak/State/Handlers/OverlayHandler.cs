@@ -162,7 +162,7 @@ public class OverlayHandler
         {
             await action();
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogError($"Error during semaphore execution: {ex}");
         }

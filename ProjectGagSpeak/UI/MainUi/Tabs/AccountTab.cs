@@ -68,19 +68,19 @@ public class AccountTab
                     ImGui.GetWindowDrawList().AddImageRounded(wrap.ImGuiHandle, pos, pos + imgSize, Vector2.Zero, Vector2.One,
                         ImGui.GetColorU32(new Vector4(1f, 1f, 1f, 1f)), 90f);
                     ImGuiHelpers.ScaledDummy(imgSize);
-                    _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.UserProfilePicture, LastWinPos, LastWinSize);
+                    // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.UserProfilePicture, LastWinPos, LastWinSize);
                     ImGui.SetCursorPos(new Vector2(currentPosition.X, currentPosition.Y + imgSize.Y));
 
                 }
             }
-            catch (Exception ex)
+            catch (Bagagwa ex)
             {
                 Svc.Logger.Error($"Error: {ex}");
             }
 
             // draw the UID header below this.
             DrawUIDHeader();
-            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.UserIdentification, LastWinPos, LastWinSize);
+            // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.UserIdentification, LastWinPos, LastWinSize);
 
             // below this, draw a separator. (temp)
             ImGui.Spacing();
@@ -92,12 +92,12 @@ public class AccountTab
 
             ImGui.AlignTextToFramePadding();
             DrawAccountSettingChild(FAI.PenSquare, "My Profile", "Open and Customize your Profile!", () => _mediator.Publish(new UiToggleMessage(typeof(KinkPlateEditorUI))));
-            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileEditing, LastWinPos, LastWinSize);
+            // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileEditing, LastWinPos, LastWinSize);
 
 
             ImGui.AlignTextToFramePadding();
             DrawAccountSettingChild(FAI.Cog, "My Settings", "Opens the Settings UI", () => _mediator.Publish(new UiToggleMessage(typeof(SettingsUi))));
-            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AccessingSettings, LastWinPos, LastWinSize);
+            // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AccessingSettings, LastWinPos, LastWinSize);
 
             // Actions Notifier thing.
             ImGui.AlignTextToFramePadding();
@@ -110,9 +110,9 @@ public class AccountTab
                 Environment.NewLine + "any support or tips are much appreciated ♥", () =>
                 {
                     try { Process.Start(new ProcessStartInfo { FileName = "https://www.ko-fi.com/cordeliamist", UseShellExecute = true }); }
-                    catch (Exception e) { Svc.Logger.Error($"Failed to open the Ko-Fi link. {e.Message}"); }
+                    catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the Ko-Fi link. {e.Message}"); }
                 });
-            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SelfPlug, LastWinPos, LastWinSize);
+            // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SelfPlug, LastWinPos, LastWinSize);
 
 
             ImGui.AlignTextToFramePadding();
@@ -121,21 +121,21 @@ public class AccountTab
                 Environment.NewLine + "any support / tips are much appreciated ♥", () =>
             {
                 try { Process.Start(new ProcessStartInfo { FileName = "https://www.patreon.com/CordeliaMist", UseShellExecute = true }); }
-                catch (Exception e) { Svc.Logger.Error($"Failed to open the Patreon link. {e.Message}"); }
+                catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the Patreon link. {e.Message}"); }
             });
 
             ImGui.AlignTextToFramePadding();
             DrawAccountSettingChild(FAI.ThumbsUp, "Send Positive Feedback!", "Opens a short 1 question positive feedback form ♥", () =>
             {
                 try { Process.Start(new ProcessStartInfo { FileName = "https://forms.gle/4AL43XUeWna2DtYK7", UseShellExecute = true }); }
-                catch (Exception e) { Svc.Logger.Error($"Failed to open the google form. {e.Message}"); }
+                catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the google form. {e.Message}"); }
             });
 
             ImGui.AlignTextToFramePadding();
             DrawAccountSettingChild(FAI.ThumbsUp, "Frequently Asked Questions", "Opens a google doc of all the most commonly asked questions!", () =>
             {
                 try { Process.Start(new ProcessStartInfo { FileName = "https://docs.google.com/document/d/1nluBM2tsLzTrRdZEZN8FnpvOSPzdPrcH9R-SL78mJdA/edit?tab=t.0", UseShellExecute = true }); }
-                catch (Exception e) { Svc.Logger.Error($"Failed to open the google doc. {e.Message}"); }
+                catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the google doc. {e.Message}"); }
             });
 
             ImGui.AlignTextToFramePadding();
@@ -146,7 +146,7 @@ public class AccountTab
                     var ConfigDirectory = ConfigFileProvider.GagSpeakDirectory;
                     Process.Start(new ProcessStartInfo { FileName = ConfigDirectory, UseShellExecute = true });
                 }
-                catch (Exception e)
+                catch (Bagagwa e)
                 {
                     Svc.Logger.Error($"[ConfigFileOpen] Failed to open the config directory. {e.Message}");
                 }
@@ -249,8 +249,8 @@ public class AccountTab
             }
         }
         CkGui.AttachToolTip("Set a safeword to quickly revert any changes made by the plugin.");
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SafewordPartOne, LastWinPos, LastWinSize);
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SafewordPartTwo, LastWinPos, LastWinSize);
+        // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SafewordPartOne, LastWinPos, LastWinSize);
+        // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SafewordPartTwo, LastWinPos, LastWinSize);
     }
 
     private void DrawAccountSettingChild(FontAwesomeIcon leftIcon, string displayText, string hoverTT, Action buttonAction)

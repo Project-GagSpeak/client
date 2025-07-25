@@ -66,7 +66,7 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
                 ScanningForDevices = false;
             }
             catch (ButtplugException ex) { _logger.LogDebug($"Dumb ButtplugException: {ex}"); }
-            catch (Exception ex)
+            catch (Bagagwa ex)
             {
                 _logger.LogError($"Error disconnecting from Intiface Central: {ex.Message}");
             }
@@ -141,7 +141,7 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
             await Disconnect();
             return;
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogError($"Error connecting to Intiface Central (Potentially timed out?) | {ex}");
             await Disconnect();
@@ -171,7 +171,7 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
         {
             _logger.LogError($"WebSocket Exception while disconnecting: {ex.Message}", LoggerType.Toys);
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogError($"Error disconnecting from Intiface Central: {ex.Message}", LoggerType.Toys);
         }

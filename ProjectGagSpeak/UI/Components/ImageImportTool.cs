@@ -394,7 +394,7 @@ public class ImageImportTool
                     UpdateCroppedImagePreview(newImage);
                     ImportedImage = newImage;
                 }
-                catch (Exception ex)
+                catch (Bagagwa ex)
                 {
                     _logger.LogError($"Error importing image: {ex}");
                 }

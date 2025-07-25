@@ -153,7 +153,7 @@ public class TraitAllowanceManager : IHybridSavable
             TraitAllowancesPatterns.UnionWith(load.Patterns);
             TraitAllowancesTriggers.UnionWith(load.Triggers);
         }
-        catch (Exception e)
+        catch (Bagagwa e)
         {
             Svc.Logger.Error(e, "Failed to load TraitsManager.");
         }

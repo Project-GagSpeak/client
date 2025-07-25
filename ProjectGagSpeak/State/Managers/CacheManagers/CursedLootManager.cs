@@ -337,7 +337,7 @@ public sealed class CursedLootManager : DisposableMediatorSubscriberBase, IHybri
 
             return true;
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             Svc.Logger.Error($"Failed to deserialize loot item: {ex}");
             return false;

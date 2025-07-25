@@ -213,7 +213,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
         {
             await _frameworkUtils.RunOnFrameworkThread(() => act()).ConfigureAwait(false);
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogWarning(ex, "Moodles IPC Action Operation had an Error:\n");
         }
@@ -231,7 +231,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
         {
             return await _frameworkUtils.RunOnFrameworkThread(() => func()).ConfigureAwait(false);
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogWarning(ex, "Moodles IPC Func Operation had an Error:\n");
             return default;

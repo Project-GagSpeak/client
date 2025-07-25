@@ -116,7 +116,7 @@ public class BlindfoldService : IDisposable
             await AnimateOpacityInternal(startOpacity, endOpacity, token);
         }
         catch (OperationCanceledException) { /* Consume */ }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogError($"Error during opacity animation: {ex}");
         }
@@ -156,7 +156,7 @@ public class BlindfoldService : IDisposable
             _currentOpacity = endOpacity;
         }
         catch (OperationCanceledException) { /* Consume */ }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogError($"Error during opacity animation: {ex}");
         }
@@ -199,7 +199,7 @@ public class BlindfoldService : IDisposable
         {
             await action();
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogError($"Error during semaphore execution: {ex}");
         }

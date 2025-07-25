@@ -29,7 +29,7 @@ public class ClipboardHandler<T> : IClipboardHandler<T>
             ImGui.SetClipboardText(base64Pattern);
             _logger.LogInformation("Data copied to clipboard.");
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogWarning($"Failed to copy data to clipboard: {ex.Message}");
         }
@@ -60,7 +60,7 @@ public class ClipboardHandler<T> : IClipboardHandler<T>
 
             _logger.LogInformation("Data imported from clipboard.");
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogWarning($"Could not import data from clipboard: {ex.Message}");
             throw;

@@ -38,7 +38,7 @@ public class Ipa_Cantonese_Handler
             _logger.LogDebug($"[IPA Parser] File does not exist: {data_file}", LoggerType.GarblerCore);
             obj = new Dictionary<string, string>();
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogDebug($"[IPA Parser] An error occurred while reading the file: {ex.Message}", LoggerType.GarblerCore);
             obj = new Dictionary<string, string>();

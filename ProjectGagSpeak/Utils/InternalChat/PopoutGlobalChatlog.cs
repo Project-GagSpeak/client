@@ -346,7 +346,7 @@ public class PopoutGlobalChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubs
             if (savedChatlog.Messages.Any(m => m.UserData is null))
                 throw new Exception("One or more user datas are null in the chat log.");
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             AddMessage(new(new("System"), "System",
                 "Welcome to the GagSpeak Global Chat![para]" +

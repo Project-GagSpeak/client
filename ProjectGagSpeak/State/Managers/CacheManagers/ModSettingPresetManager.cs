@@ -289,7 +289,7 @@ public class ModSettingPresetManager : IHybridSavable
                 // _logger.LogTrace($"Loaded {container.ModPresets.Count} ModSettingPresets for {container.ModName}");
             }
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             _logger.LogError(ex, "Failed to load custom mod settings.");
             ModPresetStorage.Clear();

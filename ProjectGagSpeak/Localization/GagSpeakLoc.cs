@@ -29,11 +29,6 @@ public class GagSpeakLoc : IHostedService
         _logger.LogInformation($"Loading Localization for {languageCode}");
         _localization.SetupWithLangCode(languageCode);
         GSLoc.ReInitialize();
-
-        // Update our forced stay entries as well.
-        MainConfig.ForcedStayPromptList.CheckAndInsertRequired();
-        MainConfig.ForcedStayPromptList.PruneEmpty();
-        _mainConfig.Save();
         // re-initialize tutorial strings.
         _tutorialService.InitializeTutorialStrings();
     }
@@ -43,12 +38,6 @@ public class GagSpeakLoc : IHostedService
         _logger.LogInformation("Starting GagSpeak Localization Service.");
         _localization.SetupWithLangCode(Svc.PluginInterface.UiLanguage);
         GSLoc.ReInitialize();
-
-        // Update our forced stay entries as well.
-        MainConfig.ForcedStayPromptList.CheckAndInsertRequired();
-        MainConfig.ForcedStayPromptList.PruneEmpty();
-        _mainConfig.Save();
-
         // load tutorial strings.
         _tutorialService.InitializeTutorialStrings();
 

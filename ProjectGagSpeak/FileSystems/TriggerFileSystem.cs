@@ -66,7 +66,7 @@ public sealed class TriggerFileSystem : CkFileSystem<Trigger>, IMediatorSubscrib
                 var parent = Root;
                 if(oldString != null)
                     try { parent = FindOrCreateAllFolders(oldString); }
-                    catch (Exception ex) { _logger.LogWarning(ex, $"Could not move trigger because the folder could not be created."); }
+                    catch (Bagagwa ex) { _logger.LogWarning(ex, $"Could not move trigger because the folder could not be created."); }
 
                 CreateDuplicateLeaf(parent, trigger.Label, trigger);
                 return;

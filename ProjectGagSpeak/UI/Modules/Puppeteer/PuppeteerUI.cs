@@ -1,11 +1,14 @@
 using CkCommons;
 using CkCommons.Widgets;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using ImGuiNET;
+using static CkCommons.Widgets.CkHeader;
 using static GagSpeak.Gui.Components.PuppeteerTabs;
 
 namespace GagSpeak.Gui.Modules.Puppeteer;
@@ -44,7 +47,6 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
 
         AllowPinning = false;
         AllowClickthrough = false;
-        TitleBarButtons = new() { };
 
         SizeConstraints = new WindowSizeConstraints
         {
@@ -86,7 +88,8 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         switch (_tabMenu.TabSelection)
         {
             case SelectedTab.VictimGlobal:
-                _victimGlobalPanel.DrawContents(res, ImGui.GetFrameHeight(), _tabMenu);
+                using (ImRaii.Child("PuppeteerBotRight", res.BotRight.Size, false, WFlags.NoScrollbar))
+                    _victimGlobalPanel.DrawAliasItems(res.BotRight.Size);
                 break;
 
             case SelectedTab.VictimUnique:

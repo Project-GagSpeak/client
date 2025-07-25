@@ -42,7 +42,7 @@ public partial class StaticDetours
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.EmoteExecuted, emoteCaller, emoteId, targetObj);
             });
         }
-        catch (Exception e)
+        catch (Bagagwa e)
         {
             Logger.LogError(e, "Error in EmoteDetour");
         }

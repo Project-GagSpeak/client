@@ -209,7 +209,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             currentContent.CompletedAchievementsTotal = ClientAchievements.Completed;
             await _hub.UserSetKinkPlateContent(new(MainHub.PlayerUserData, currentContent));
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             Logger.LogError($"Failed to update KinkPlate™ with latest achievement count: {ex}", LoggerType.Achievements);
         }
@@ -262,7 +262,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
                 return;
             }
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             Logger.LogError("Failed to push Composite Data to server: " + ex);
             return;

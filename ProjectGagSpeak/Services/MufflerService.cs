@@ -53,7 +53,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
             Logger.LogError($"[IPA Parser] File does not exist");
             _gagData = new Dictionary<string, Dictionary<string, PhonemeProperties>>();
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             Logger.LogError($"[IPA Parser] An error occurred while reading the file: {ex.Message}");
             _gagData = new Dictionary<string, Dictionary<string, PhonemeProperties>>();
@@ -110,7 +110,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
             outputStr = ConvertToGagSpeak(inputMessage);
             Logger.LogTrace($"Converted message to GagSpeak: {outputStr}", LoggerType.GarblerCore);
         }
-        catch (Exception e)
+        catch (Bagagwa e)
         {
             Logger.LogError($"Error processing message: {e}");
         }
@@ -188,7 +188,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
                 }
             }
         }
-        catch (Exception e)
+        catch (Bagagwa e)
         {
             Svc.Logger.Error($"[GagGarbleManager] Error converting from IPA Spaced to final output: {e.Message}");
         }
@@ -215,7 +215,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
                     outputString.Append(translationSound);
                 }
             }
-            catch (Exception e)
+            catch (Bagagwa e)
             {
                 Svc.Logger.Error($"Error converting phonetic {phonetic} to GagSpeak: {e.Message}");
             }

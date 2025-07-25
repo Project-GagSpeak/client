@@ -524,7 +524,25 @@ public partial class MainHub
     /// <summary> Receive a Shock Instruction from another Pair. </summary>
     public Task Callback_ShockInstruction(ShockCollarAction dto)
     {
-        Generic.Safe(() => _globalPerms.ExecutePiShockAction(dto));
+        Generic.Safe(() => _globalPerms.OnPiShockInstruction(dto));
+        return Task.CompletedTask;
+    }
+
+    public Task Callback_HypnoticEffect(HypnoticAction dto)
+    {
+        Generic.Safe(() => _globalPerms.OnHypnosisApplication(dto));
+        return Task.CompletedTask;
+    }
+
+    public Task Callback_ForcedStayAtAddress(ForcedStayByAddress dto)
+    {
+        Generic.Safe(() => _globalPerms.OnForcedStayByAddress(dto));
+        return Task.CompletedTask;
+    }
+
+    public Task Callback_ImprisonAtPosition(ImprisonAtPosition dto)
+    {
+        Generic.Safe(() => _globalPerms.OnImprisonByLocation(dto));
         return Task.CompletedTask;
     }
 

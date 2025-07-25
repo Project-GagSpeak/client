@@ -48,7 +48,7 @@ public sealed class ThumbnailFile : IDisposable
             ParentFolder.Log.LogDebug($"Renamed thumbnail from {oldPath} to {FileName}");
             return true;
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             ParentFolder.Log.LogError($"Failed to rename file {FileName} to {newName}: {ex.Message}");
             return false;

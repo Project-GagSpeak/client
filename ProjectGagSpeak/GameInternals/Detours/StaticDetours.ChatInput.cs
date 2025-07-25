@@ -126,7 +126,7 @@ public partial class StaticDetours
                 }
             }
         }
-        catch (Exception e)
+        catch (Bagagwa e)
         {
             Logger.LogError($"Error sending message to chat box (secondary): {e}");
         }

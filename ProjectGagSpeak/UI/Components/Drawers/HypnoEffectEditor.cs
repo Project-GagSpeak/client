@@ -48,7 +48,7 @@ public class HypnoEffectEditor : IDisposable
             _colorTask?.Wait(1000);
             _textTask?.Wait(1000);
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             Svc.Logger.Warning("Exception waiting for hypno background tasks to exit: " + ex);
         }
@@ -465,7 +465,7 @@ public class HypnoEffectEditor : IDisposable
 
             return screenSize;
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             Svc.Logger.Error($"Error displaying Hypnotic Effect Preview: {ex}");
             return Vector2.Zero;

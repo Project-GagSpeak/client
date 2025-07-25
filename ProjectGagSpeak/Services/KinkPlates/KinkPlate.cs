@@ -91,7 +91,7 @@ public class KinkPlate : DisposableMediatorSubscriberBase
             Logger.LogTrace("Loading profile image data to wrap.");
             _storedProfileImage = TextureManagerEx.GetProfilePicture(_imageData.Value);
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             Logger.LogError(ex, "Failed to load profile image data to wrap.");
         }

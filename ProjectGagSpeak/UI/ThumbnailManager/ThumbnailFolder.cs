@@ -43,7 +43,7 @@ public class ThumbnailFolder : IDisposable
                 _files.Remove(file);
                 _logger.LogDebug($"Deleted thumbnail file: {file.FileName}");
             }
-            catch (Exception ex)
+            catch (Bagagwa ex)
             {
                 _logger.LogError($"Failed to delete thumbnail file: {file.FileName}, Error: {ex.Message}");
             }

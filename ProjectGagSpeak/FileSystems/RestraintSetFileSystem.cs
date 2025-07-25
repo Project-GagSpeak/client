@@ -66,7 +66,7 @@ public sealed class RestraintSetFileSystem : CkFileSystem<RestraintSet>, IMediat
                 var parent = Root;
                 if(oldString != null)
                     try { parent = FindOrCreateAllFolders(oldString); }
-                    catch (Exception ex) { _logger.LogWarning(ex, $"Could not move restraintSet because the folder could not be created."); }
+                    catch (Bagagwa ex) { _logger.LogWarning(ex, $"Could not move restraintSet because the folder could not be created."); }
 
                 CreateDuplicateLeaf(parent, restraintSet.Label, restraintSet);
                 return;

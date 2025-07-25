@@ -191,7 +191,7 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
                 .ThenByDescending(p => p.ModInfo.Priority)
                 .ToList();
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             Logger.LogError($"Error fetching mods from Penumbra:\n{ex}");
             return Array.Empty<(ModInfo ModInfo, Dictionary<string, List<string>> CurrentSettings)>();

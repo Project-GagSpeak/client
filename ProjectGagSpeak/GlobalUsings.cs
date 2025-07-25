@@ -16,6 +16,9 @@ global using DFlags = ImGuiNET.ImDrawFlags;
 global using WFlags = ImGuiNET.ImGuiWindowFlags;
 global using FAI = Dalamud.Interface.FontAwesomeIcon;
 
+// MERV! DON'T SUMMON BAGAGWA!
+global using Bagagwa = System.Exception;
+
 /// Global Tuple
 global using MoodlesStatusInfo = (
     System.Guid GUID,
@@ -79,7 +82,3 @@ global using AddressBookEntryTuple = (
     bool AliasEnabled, 
     string Alias
     );
-
-
-// See later https://github.com/xivdev/Penumbra/blob/5c5e45114f25f9429d8757b6edf852ecc37173c9/Penumbra/UI/LaunchButton.cs#L27
-

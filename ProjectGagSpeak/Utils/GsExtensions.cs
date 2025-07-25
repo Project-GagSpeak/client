@@ -226,11 +226,10 @@ public static class GsExtensions
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
             ImGui.SetNextWindowSizeConstraints(new Vector2(350f, 0f), new Vector2(350f, float.MaxValue));
-
-            using var padding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One * 8f);
-            using var rounding = ImRaii.PushStyle(ImGuiStyleVar.WindowRounding, 4f);
-            using var popupBorder = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1f);
-            using var frameColor = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
+            using var s = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One * 8f)
+                .Push(ImGuiStyleVar.WindowRounding, 4f)
+                .Push(ImGuiStyleVar.PopupBorderSize, 1f);
+            using var c =ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
 
             ImGui.BeginTooltip();
 

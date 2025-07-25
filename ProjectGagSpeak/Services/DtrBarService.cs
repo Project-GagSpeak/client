@@ -134,7 +134,7 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
             var mapLink = new MapLinkPayload(PlayerContent.TerritoryID, row.Map.RowId, coords.Item1, coords.Item2);
             PlayerData.OpenMapWithMapLink(mapLink);
         }
-        catch (Exception ex)
+        catch (Bagagwa ex)
         {
             Logger.LogError(ex, "Failed to locate player.");
         }

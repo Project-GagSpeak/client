@@ -15,6 +15,7 @@ using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
+using Lumina.Excel.Sheets;
 using System.Text.RegularExpressions;
 
 
@@ -202,6 +203,8 @@ public class ChatService : DisposableMediatorSubscriberBase
     public static void SendCommand(string command)
         => SendMessage($"/{command}");
 
+    public static void SendGeneralActionCommand(uint actionId)
+        => SendCommand($"generalaction \"{Svc.Data.GetExcelSheet<GeneralAction>().GetRowOrDefault(actionId)?.Name}\"");
 
     #region Helper Methods
     /// <summary>
@@ -227,7 +230,7 @@ public class ChatService : DisposableMediatorSubscriberBase
                     break;
             }
         }
-        catch (Exception exception)
+        catch (Bagagwa exception)
         {
             Svc.Logger.Error($"[ChatSender] Could not send Message!: {exception}");
         }
