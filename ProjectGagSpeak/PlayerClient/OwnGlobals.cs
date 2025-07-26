@@ -7,6 +7,7 @@ using GagSpeak.State.Handlers;
 using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
+using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Data.Struct;
 using GagspeakAPI.Network;
@@ -106,31 +107,37 @@ public sealed class OwnGlobals : DisposableMediatorSubscriberBase
         }
     }
 
-    public void SingleGlobalPermissionChange(SingleChangeGlobal dto)
+    public void DoubleGlobalPermChange(DoubleChangeGlobal dto)
     {
-        if (string.Equals(dto.Enactor.UID, MainHub.UID))
-            PerformPermissionChange(dto);
-        else if (_kinksters.DirectPairs.FirstOrDefault(x => x.UserData.UID == dto.Enactor.UID) is { } pair)
-            PerformPermissionChange(dto, pair);
+        SingleGlobalPermChange(dto.Enactor, dto.NewPerm1);
+        SingleGlobalPermChange(dto.Enactor, dto.NewPerm2);
+    }
+
+    public void SingleGlobalPermChange(UserData enactor, KeyValuePair<string, object> newPerm)
+    {
+        if (string.Equals(enactor.UID, MainHub.UID))
+            PerformPermissionChange(enactor, newPerm);
+        else if (_kinksters.TryGetKinkster(enactor, out var kinkster))
+            PerformPermissionChange(enactor, newPerm, kinkster);
         else
             Logger.LogWarning("Change was not from self or a pair, not setting!");
     }
 
-    private void PerformPermissionChange(SingleChangeGlobal dto, Kinkster? pair = null)
+    private void PerformPermissionChange(UserData enactor, KeyValuePair<string, object> newPerm, Kinkster? pair = null)
     {
-        var prevValue = typeof(GlobalPerms).GetProperty(dto.NewPerm.Key)?.GetValue(_perms);
+        var prevValue = typeof(GlobalPerms).GetProperty(newPerm.Key)?.GetValue(_perms);
 
-        if (!PropertyChanger.TrySetProperty(_perms, dto.NewPerm.Key, dto.NewPerm.Value, out var _))
+        if (!PropertyChanger.TrySetProperty(_perms, newPerm.Key, newPerm.Value, out var _))
         {
-            Logger.LogError($"Failed to apply Global Permission change for [{dto.NewPerm.Key}] to [{dto.NewPerm.Value}].");
+            Logger.LogError($"Failed to apply Global Permission change for [{newPerm.Key}] to [{newPerm.Value}].");
             return;
         }
 
-        if (_changeHandlers.TryGetValue(dto.NewPerm.Key, out var handler))
-            handler(dto.NewPerm.Value, prevValue, dto.Enactor.UID, pair);
+        if (_changeHandlers.TryGetValue(newPerm.Key, out var handler))
+            handler(newPerm.Value, prevValue, enactor.UID, pair);
 
         // Then perform the log.
-        SendActionEventMessage(pair?.GetNickAliasOrUid() ?? "Self-Update", dto.Enactor.UID, $"[{dto.NewPerm.Key}] changed to [{dto.NewPerm.Value}]");
+        SendActionEventMessage(pair?.GetNickAliasOrUid() ?? "Self-Update", enactor.UID, $"[{newPerm.Key}] changed to [{newPerm.Value}]");
     }
 
     private void SendActionEventMessage(string applierNick, string applierUid, string message)

@@ -198,6 +198,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         OnBulkChangeGlobal(dto => _ = Callback_BulkChangeGlobal(dto));
         OnBulkChangeUnique(dto => _ = Callback_BulkChangeUnique(dto));
         OnSingleChangeGlobal(dto => _ = Callback_SingleChangeGlobal(dto));
+        OnDoubleChangeGlobal(dto => _ = Callback_DoubleChangeGlobal(dto));
         OnSingleChangeUnique(dto => _ = Callback_SingleChangeUnique(dto));
         OnSingleChangeAccess(dto => _ = Callback_SingleChangeAccess(dto));
 

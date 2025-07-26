@@ -225,15 +225,33 @@ public partial class MainHub
         // Our Client's Global Permissions should be updated.
         if (dto.Direction is UpdateDir.Own)
         {
-            Logger.LogDebug("OWN SingleChangeGlobal (From Self): " + dto, LoggerType.Callbacks);
-            Generic.Safe(() => _globalPerms.SingleGlobalPermissionChange(dto));
+            Logger.LogDebug("OWN SingleChangeGlobal: " + dto, LoggerType.Callbacks);
+            Generic.Safe(() => _globalPerms.SingleGlobalPermChange(dto.Enactor, dto.NewPerm));
             return Task.CompletedTask;
         }
         // One of our added Kinkster's Global Permissions should be updated.
         else
         {
-            Logger.LogDebug("OWN SingleChangeGlobal (From Other): " + dto, LoggerType.Callbacks);
-            Generic.Safe(() => _kinksters.UpdateOtherPairGlobalPermission(dto));
+            Logger.LogDebug("OTHER SingleChangeGlobal: " + dto, LoggerType.Callbacks);
+            Generic.Safe(() => _kinksters.UpdateKinkstersGlobalPerm(dto.Target, dto.Enactor, dto.NewPerm));
+            return Task.CompletedTask;
+        }
+    }
+
+    public Task Callback_DoubleChangeGlobal(DoubleChangeGlobal dto)
+    {
+        // Our Client's Global Permissions should be updated.
+        if (dto.Direction is UpdateDir.Own)
+        {
+            Logger.LogDebug("OWN DoubleChangeGlobal: " + dto, LoggerType.Callbacks);
+            Generic.Safe(() => _globalPerms.DoubleGlobalPermChange(dto));
+            return Task.CompletedTask;
+        }
+        // Update the Kinkster's permissions.
+        else
+        {
+            Logger.LogDebug("DoubleChangeGlobal: " + dto, LoggerType.Callbacks);
+            Generic.Safe(() => _kinksters.UpdateKinkstersGlobalPerms(dto.Target, dto.Enactor, dto.NewPerm1, dto.NewPerm2));
             return Task.CompletedTask;
         }
     }
@@ -812,6 +830,12 @@ public partial class MainHub
     {
         if (_apiHooksInitialized) return;
         _hubConnection!.On(nameof(Callback_SingleChangeUnique), act);
+    }
+
+    public void OnDoubleChangeGlobal(Action<DoubleChangeGlobal> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_DoubleChangeGlobal), act);
     }
 
     public void OnSingleChangeAccess(Action<SingleChangeAccess> act)

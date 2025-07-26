@@ -194,23 +194,23 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
 
         var forcedFollowColor = Pair.PairGlobals.HcFollowState() ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
         var forcedFollowTT = Pair.PairGlobals.HcFollowState()
-            ? DisplayName + " is being leashed around by another pair while in Hardcore Mode."
+            ? DisplayName + " is being leashed around by a Kinkster while in Hardcore Mode."
             : DisplayName + " is not following anyone.";
         wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Leash], iconOverviewPos, Vector2.One * 34, forcedFollowColor, forcedFollowTT);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
         var forcedEmoteColor = Pair.PairGlobals.HcEmoteState() ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
         var forcedEmoteTT = Pair.PairGlobals.HcEmoteState()
-            ? DisplayName + " is being put on display for another pair while in Hardcore Mode."
+            ? DisplayName + " is being put on display for a Kinkster while in Hardcore Mode."
             : DisplayName + " is not on display for anyone.";
         wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.LockedEmote], iconOverviewPos, Vector2.One * 34, forcedEmoteColor, forcedEmoteTT);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
         var forcedStayColor = Pair.PairGlobals.HcConfinedState() ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
         var forcedStayTT = Pair.PairGlobals.HcConfinedState()
-            ? DisplayName + " has been ordered to stay put for another pair while in Hardcore Mode."
-            : DisplayName + " has not been ordered to stay put by anyone.";
-        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.ForcedStay], iconOverviewPos, Vector2.One * 34, forcedStayColor, forcedStayTT);
+            ? DisplayName + " under indoor confinement by a Kinkster in Hardcore Mode."
+            : DisplayName + " not in indoor confinement by anyone.";
+        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.IndoorConfinement], iconOverviewPos, Vector2.One * 34, forcedStayColor, forcedStayTT);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
         var chatManipulated = Pair.PairGlobals.HcChatVisState() || Pair.PairGlobals.HcChatInputVisState() || Pair.PairGlobals.HcBlockChatInputState();

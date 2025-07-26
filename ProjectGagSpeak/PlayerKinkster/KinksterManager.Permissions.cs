@@ -1,5 +1,6 @@
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
+using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Network;
 
@@ -81,16 +82,22 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         Logger.LogDebug($"Updated pairs unique permissions for '{pair.GetNickname() ?? pair.UserData.AliasOrUID}'", LoggerType.PairDataTransfer);
     }
 
+    public void UpdateKinkstersGlobalPerms(UserData target, UserData enactor, KeyValuePair<string, object> newPerm1, KeyValuePair<string, object> newPerm2)
+    {
+        UpdateKinkstersGlobalPerm(target, enactor, newPerm1);
+        UpdateKinkstersGlobalPerm(target, enactor, newPerm2);
+    }
     /// <summary>
     /// Updates a global permission of a client pair user.
     /// Edit access is checked server-side to prevent abuse, so these should be all accurate.
     /// </summary>>
-    public void UpdateOtherPairGlobalPermission(SingleChangeGlobal dto)
+    public void UpdateKinkstersGlobalPerm(UserData target, UserData enactor, KeyValuePair<string, object> newPerm)
     {
-        if (!_allClientPairs.TryGetValue(dto.User, out var pair)) { throw new InvalidOperationException("No such pair for " + dto); }
+        if (!_allClientPairs.TryGetValue(target, out var kinkster)) 
+            throw new InvalidOperationException("No such pair for " + target);
 
-        var NewPerm = dto.NewPerm.Key;
-        var ChangedValue = dto.NewPerm.Value;
+        var NewPerm = newPerm.Key;
+        var ChangedValue = newPerm.Value;
         var propertyInfo = typeof(GlobalPerms).GetProperty(NewPerm);
         if (propertyInfo is null || !propertyInfo.CanWrite)
             return;
@@ -110,19 +117,12 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         if (convertedValue is null)
             return;
 
-        propertyInfo.SetValue(pair.PairGlobals, convertedValue);
+        propertyInfo.SetValue(kinkster.PairGlobals, convertedValue);
         Logger.LogDebug($"Updated other pair global permission '{NewPerm}' to '{ChangedValue}'", LoggerType.PairDataTransfer);
 
         RecreateLazy(false);
 
         // Handle hardcore changes here. (DO THIS LATER)
-        //if (changeType is InteractionType.None || changeType is InteractionType.ForcedPermChange)
-        //    return;
-
-        //// log the new state, the hardcore change, and the new value.
-        //var newState = string.IsNullOrEmpty(ChangedValue?.ToString()) ? NewState.Disabled : NewState.Enabled;
-        //Logger.LogDebug(changeType.ToString() + " has changed, and is now " + ChangedValue, LoggerType.PairDataTransfer);
-        //GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, changeType, newState, dto.Enactor.UID, pair.UserData.UID);
     }
 
     /// <summary>
