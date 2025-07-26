@@ -534,9 +534,9 @@ public partial class MainHub
         return Task.CompletedTask;
     }
 
-    public Task Callback_ForcedStayAtAddress(ForcedStayByAddress dto)
+    public Task Callback_ConfineToAddress(ConfineByAddress dto)
     {
-        Generic.Safe(() => _globalPerms.OnForcedStayByAddress(dto));
+        Generic.Safe(() => _globalPerms.OnConfineByAddress(dto));
         return Task.CompletedTask;
     }
 
@@ -896,6 +896,24 @@ public partial class MainHub
     {
         if (_apiHooksInitialized) return;
         _hubConnection!.On(nameof(Callback_ShockInstruction), act);
+    }
+
+    public void OnHypnoticEffect(Action<HypnoticAction> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_HypnoticEffect), act);
+    }
+
+    public void OnConfineToAddress(Action<ConfineByAddress> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_ConfineToAddress), act);
+    }
+
+    public void OnImprisonAtPosition(Action<ImprisonAtPosition> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_ImprisonAtPosition), act);
     }
 
     public void OnKinksterNewGagData(Action<KinksterNewGagData> act)

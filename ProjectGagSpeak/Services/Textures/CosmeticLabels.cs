@@ -63,7 +63,7 @@ public static class CosmeticLabels
         { CoreTexture.Clock, "RequiredImages\\clock.png" },
         { CoreTexture.Collar, "RequiredImages\\collar.png" },
         { CoreTexture.CursedLoot, "RequiredImages\\cursedloot.png" },
-        { CoreTexture.ForcedEmote, "RequiredImages\\forcedemote.png" },
+        { CoreTexture.LockedEmote, "RequiredImages\\forcedemote.png" },
         { CoreTexture.ForcedStay, "RequiredImages\\forcedstay.png" },
         { CoreTexture.Gagged, "RequiredImages\\gagged.png" },
         { CoreTexture.HypnoSpiral, "RequiredImages\\hypnospiral.png" },

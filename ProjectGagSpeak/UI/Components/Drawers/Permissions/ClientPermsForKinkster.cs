@@ -32,9 +32,11 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
         DrawPermRow(kinkster, dispName,   width, SPPID.PuppetPermSit,         kinkster.OwnPerms.PuppetPerms,          kinkster.OwnPermAccess.PuppetPermsAllowed, PuppetPerms.Sit );        DrawPermRow(kinkster, dispName,   width, SPPID.PuppetPermEmote,       kinkster.OwnPerms.PuppetPerms,          kinkster.OwnPermAccess.PuppetPermsAllowed, PuppetPerms.Emotes );        DrawPermRow(kinkster, dispName,   width, SPPID.PuppetPermAlias,       kinkster.OwnPerms.PuppetPerms,          kinkster.OwnPermAccess.PuppetPermsAllowed, PuppetPerms.Alias );        DrawPermRow(kinkster, dispName,   width, SPPID.PuppetPermAll,         kinkster.OwnPerms.PuppetPerms,          kinkster.OwnPermAccess.PuppetPermsAllowed, PuppetPerms.All );        ImGui.Separator();        ImGui.TextUnformatted("Moodles Permissions");        DrawPermRow(kinkster, dispName,   width, SPPID.ApplyPositive,         kinkster.OwnPerms.MoodlePerms,          kinkster.OwnPermAccess.MoodlePermsAllowed, MoodlePerms.PositiveStatusTypes );        DrawPermRow(kinkster, dispName,   width, SPPID.ApplyNegative,         kinkster.OwnPerms.MoodlePerms,          kinkster.OwnPermAccess.MoodlePermsAllowed, MoodlePerms.NegativeStatusTypes );        DrawPermRow(kinkster, dispName,   width, SPPID.ApplySpecial,          kinkster.OwnPerms.MoodlePerms,          kinkster.OwnPermAccess.MoodlePermsAllowed, MoodlePerms.SpecialStatusTypes );        DrawPermRow(kinkster, dispName,   width, SPPID.ApplyOwnMoodles,       kinkster.OwnPerms.MoodlePerms,          kinkster.OwnPermAccess.MoodlePermsAllowed, MoodlePerms.PairCanApplyTheirMoodlesToYou );        DrawPermRow(kinkster, dispName,   width, SPPID.ApplyPairsMoodles,     kinkster.OwnPerms.MoodlePerms,          kinkster.OwnPermAccess.MoodlePermsAllowed, MoodlePerms.PairCanApplyYourMoodlesToYou );        DrawPermRow(kinkster, dispName,   width, SPPID.MaxMoodleTime,         kinkster.OwnPerms.MaxMoodleTime,        kinkster.OwnPermAccess.MaxMoodleTimeAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.PermanentMoodles,      kinkster.OwnPerms.MoodlePerms,          kinkster.OwnPermAccess.MoodlePermsAllowed, MoodlePerms.PermanentMoodles );        DrawPermRow(kinkster, dispName,   width, SPPID.RemoveMoodles,         kinkster.OwnPerms.MoodlePerms,          kinkster.OwnPermAccess.MoodlePermsAllowed, MoodlePerms.RemovingMoodles );        ImGui.Separator();
 
         ImGui.TextUnformatted("Miscellaneous Permissions");
-        DrawPermRow(kinkster, dispName,   width, SPPID.HypnoticEffect,        kinkster.OwnPerms.HypnoEffectSending,   kinkster.OwnPermAccess.HypnoEffectSendingAllowed );        ImGui.Separator();
+        DrawPermRow(kinkster, dispName,   width, SPPID.HypnosisMaxTime,       kinkster.OwnPerms.MaxHypnosisTime,      kinkster.OwnPermAccess.HypnosisMaxTimeAllowed );
+        DrawPermRow(kinkster, dispName,   width, SPPID.HypnosisEffect,        kinkster.OwnPerms.HypnoEffectSending,   kinkster.OwnPermAccess.HypnosisSendingAllowed );        ImGui.Separator();
         ImGui.TextUnformatted("Toybox Permissions");        DrawPermRow(kinkster, dispName,   width, SPPID.PatternStarting,       kinkster.OwnPerms.ExecutePatterns,      kinkster.OwnPermAccess.ExecutePatternsAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.PatternStopping,       kinkster.OwnPerms.StopPatterns,         kinkster.OwnPermAccess.StopPatternsAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.AlarmToggling,         kinkster.OwnPerms.ToggleAlarms,         kinkster.OwnPermAccess.ToggleAlarmsAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.TriggerToggling,       kinkster.OwnPerms.ToggleTriggers,       kinkster.OwnPermAccess.ToggleTriggersAllowed );        ImGui.Separator();
-        ImGui.TextUnformatted("Hardcore Permissions");        DrawPermRow(kinkster, dispName,   width, SPPID.HardcoreModeState,     kinkster.OwnPerms.InHardcore,                   kinkster.OwnPerms.InHardcore );        DrawPermRow(kinkster, dispName,   width, SPPID.PairLockedStates,      kinkster.OwnPerms.PairLockedStates,             true );        DrawHcPermRow(kinkster, dispName, width, SPPID.ForcedFollow,          globals.ForcedFollow,                           kinkster.OwnPerms.AllowForcedFollow );        DrawHcPermRow(kinkster, dispName, width, SPPID.ForcedEmoteState,      globals.ForcedEmoteState,                       kinkster.OwnPerms.AllowForcedEmote );        DrawHcPermRow(kinkster, dispName, width, SPPID.ForcedStay,            globals.ForcedStay,                             kinkster.OwnPerms.AllowForcedStay );        DrawHcPermRow(kinkster, dispName, width, SPPID.ChatBoxesHidden,       globals.ChatBoxesHidden,                        kinkster.OwnPerms.AllowHidingChatBoxes );        DrawHcPermRow(kinkster, dispName, width, SPPID.ChatInputHidden,       globals.ChatInputHidden,                        kinkster.OwnPerms.AllowHidingChatInput );        DrawHcPermRow(kinkster, dispName, width, SPPID.ChatInputBlocked,      globals.ChatInputBlocked,                       kinkster.OwnPerms.AllowChatInputBlocking );
+        ImGui.TextUnformatted("Hardcore Permissions");        DrawPermRow(kinkster, dispName,   width, SPPID.HardcoreModeState,     kinkster.OwnPerms.InHardcore,                   kinkster.OwnPerms.InHardcore );        DrawPermRow(kinkster, dispName,   width, SPPID.PairLockedStates,      kinkster.OwnPerms.PairLockedStates,             true );        DrawHcPermRow(kinkster, dispName, width, SPPID.LockedFollowing,       globals.LockedFollowing,                        kinkster.OwnPerms.AllowLockedFollowing );        DrawHcPermRow(kinkster, dispName, width, SPPID.LockedEmoteState,      globals.LockedEmoteState,                       kinkster.OwnPerms.AllowLockedEmoting );        DrawHcPermRow(kinkster, dispName, width, SPPID.IndoorConfinement,     globals.IndoorConfinement,                      kinkster.OwnPerms.AllowIndoorConfinement );
+        DrawHcPermRow(kinkster, dispName, width, SPPID.Imprisonment,          globals.Imprisonment,                           kinkster.OwnPerms.AllowImprisonment );        DrawHcPermRow(kinkster, dispName, width, SPPID.ChatBoxesHidden,       globals.ChatBoxesHidden,                        kinkster.OwnPerms.AllowHidingChatBoxes );        DrawHcPermRow(kinkster, dispName, width, SPPID.ChatInputHidden,       globals.ChatInputHidden,                        kinkster.OwnPerms.AllowHidingChatInput );        DrawHcPermRow(kinkster, dispName, width, SPPID.ChatInputBlocked,      globals.ChatInputBlocked,                       kinkster.OwnPerms.AllowChatInputBlocking );
         DrawHcPermRow(kinkster, dispName, width, SPPID.HypnoticImage,         globals.HypnosisCustomEffect,                   kinkster.OwnPerms.AllowHypnoImageSending );
         // draw garble channel editing here.
 
@@ -261,7 +263,7 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
         using var s = ImRaii.PushStyle(ImGuiStyleVar.Alpha, kinkster.OwnPerms.InHardcore ? 1f : 0.5f);
         using var c = ImRaii.PushColor(ImGuiCol.Button, new Vector4(1.0f, 1.0f, 1.0f, 0.0f));
 
-        var data = ClientPermData[SPPID.ForcedEmoteState];
+        var data = ClientPermData[SPPID.LockedEmoteState];
         var isActive = !current.IsNullOrWhitespace();
         var buttonW = width - (2 * ImGui.GetFrameHeightWithSpacing());
         using (ImRaii.Disabled(kinkster.OwnPerms.InHardcore))
@@ -279,18 +281,18 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
 
         ImGui.SameLine(buttonW);
         var refVar = canUse;
-        if (ImGui.Checkbox("##" + SPPID.ForcedEmoteState + "edit", ref refVar))
+        if (ImGui.Checkbox("##" + SPPID.LockedEmoteState + "edit", ref refVar))
         {
-            var propertyName = SPPID.ForcedEmoteState.ToPermAccessValue();
+            var propertyName = SPPID.LockedEmoteState.ToPermAccessValue();
             UiService.SetUITask(PermissionHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, propertyName, refVar));
         }
         CkGui.AttachToolTip($"Limit {dispName} to only force GroundSit, Sit, and CyclePose.");
 
         ImUtf8.SameLineInner();
         var refVar2 = canUseFull;
-        if (ImGui.Checkbox("##" + SPPID.ForcedEmoteState + "edit2", ref refVar2))
+        if (ImGui.Checkbox("##" + SPPID.LockedEmoteState + "edit2", ref refVar2))
         {
-            var propertyName = SPPID.ForcedEmoteState.ToPermAccessValue(true);
+            var propertyName = SPPID.LockedEmoteState.ToPermAccessValue(true);
             UiService.SetUITask(PermissionHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, propertyName, refVar));
         }
         CkGui.AttachToolTip($"Allow {dispName} to force you into any looped Emote.");
@@ -406,7 +408,8 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
         .Add(SPPID.PermanentMoodles,      new PermDataClient(false, FAI.Infinity,              FAI.Ban,           "allow",       "prevent",      "permanent Moodles", "are", "to apply permanent moodles",       "from applying permanent moodles"))
         .Add(SPPID.RemoveMoodles,         new PermDataClient(false, FAI.Eraser,                FAI.Ban,           "allow",       "prevent",      "removing Moodles", "are", "to remove moodles",                "from removing moodles"))
 
-        .Add(SPPID.HypnoticEffect,        new PermDataClient(false, FAI.CameraRotate,          FAI.Ban,           "allow",       "prevent",      "Hypnotic Effect", "are", "to send hypnotic effects",         "from sending hypnotic effects"))
+        .Add(SPPID.HypnosisMaxTime,       new PermDataClient(false, FAI.HourglassHalf,         FAI.None,          string.Empty,    string.Empty, "Max Hypnosis Time", string.Empty, string.Empty,                       string.Empty))
+        .Add(SPPID.HypnosisEffect,        new PermDataClient(false, FAI.CameraRotate,          FAI.Ban,           "allow",       "prevent",      "Hypnotic Effect", "are", "to send hypnotic effects",         "from sending hypnotic effects"))
 
         .Add(SPPID.PatternStarting,       new PermDataClient(false, FAI.Play,                  FAI.Ban,           "allow",       "prevent",      "Pattern Starting", "is", "to start patterns",                "from starting patterns"))
         .Add(SPPID.PatternStopping,       new PermDataClient(false, FAI.Stop,                  FAI.Ban,           "allow",       "prevent",      "Pattern Stopping", "is", "to stop patterns",                 "from stopping patterns"))
@@ -415,9 +418,9 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
 
         .Add(SPPID.HardcoreModeState,     new PermDataClient(false, FAI.AnchorLock,            FAI.Unlock,        "enabled",       "disabled",        "Hardcore Mode",            "is",  string.Empty,                             string.Empty))
         .Add(SPPID.PairLockedStates,      new PermDataClient(false, FAI.AnchorLock,            FAI.Unlock,        "Devotional",    "not Devotional",  "Hardcore States",          "are", string.Empty, string.Empty))
-        .Add(SPPID.ForcedFollow,          new PermDataClient(false, FAI.Walking,               FAI.Ban,           "active",        "inactive",        "Forced Follow",            "is", string.Empty, string.Empty))
-        .Add(SPPID.ForcedEmoteState,      new PermDataClient(false, FAI.PersonArrowDownToLine, FAI.Ban,           "active",        "inactive",        "Forced Emote",             "is", string.Empty, string.Empty))
-        .Add(SPPID.ForcedStay,            new PermDataClient(false, FAI.HouseLock,             FAI.Ban,           "active",        "inactive",        "Forced Stay",              "is", string.Empty, string.Empty))
+        .Add(SPPID.LockedFollowing,          new PermDataClient(false, FAI.Walking,               FAI.Ban,           "active",        "inactive",        "Forced Follow",            "is", string.Empty, string.Empty))
+        .Add(SPPID.LockedEmoteState,      new PermDataClient(false, FAI.PersonArrowDownToLine, FAI.Ban,           "active",        "inactive",        "Forced Emote",             "is", string.Empty, string.Empty))
+        .Add(SPPID.IndoorConfinement,            new PermDataClient(false, FAI.HouseLock,             FAI.Ban,           "active",        "inactive",        "Forced Stay",              "is", string.Empty, string.Empty))
         .Add(SPPID.ChatBoxesHidden,       new PermDataClient(false, FAI.CommentSlash,          FAI.Ban,           "visible",       "hidden",          "Chatboxes",                "are", string.Empty, string.Empty))
         .Add(SPPID.ChatInputHidden,       new PermDataClient(false, FAI.CommentSlash,          FAI.Ban,           "visible",       "hidden",          "Chat Input",               "is", string.Empty, string.Empty))
         .Add(SPPID.ChatInputBlocked,      new PermDataClient(false, FAI.CommentDots,           FAI.Ban,           "blocked",       "allow",         "Chat Input",               "is", string.Empty, string.Empty))

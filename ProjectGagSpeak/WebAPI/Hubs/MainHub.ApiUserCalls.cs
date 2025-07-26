@@ -400,16 +400,16 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserShockKinkster), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserSendKinksterHypnoEffect(HypnoticAction dto)
+    public async Task<HubResponse> UserHypnotizeKinkster(HypnoticAction dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserSendKinksterHypnoEffect), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserHypnotizeKinkster), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserLockAwayKinksterByAddress(ForcedStayByAddress dto)
+    public async Task<HubResponse> UserConfineKinksterByAddress(ConfineByAddress dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserLockAwayKinksterByAddress), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserConfineKinksterByAddress), dto).ConfigureAwait(false);
     }
 
     public async Task<HubResponse> UserImprisonKinkster(ImprisonAtPosition dto)

@@ -40,7 +40,7 @@ public class HardcoreHandler
 
     public bool IsHypnotized => _overlay.HasValidHypnoEffect;
 
-    public void EnableForcedFollow(Kinkster? pair = null)
+    public void EnableLockedFollowing(Kinkster? pair = null)
     {
         if(pair is null)
         {
@@ -48,7 +48,7 @@ public class HardcoreHandler
             return;
         }
 
-        _logger.LogInformation($"[{pair.GetNickAliasOrUid()}] Enabled your ForcedFollow state!", LoggerType.HardcoreMovement);
+        _logger.LogInformation($"[{pair.GetNickAliasOrUid()}] Enabled your LockedFollowing state!", LoggerType.HardcoreMovement);
         
         // begin by caching the current movement mode of the player.
         _cachedPlayerMoveMode = GameConfig.UiControl.GetBool("MoveMode") ? MovementMode.Legacy : MovementMode.Standard;
@@ -57,7 +57,7 @@ public class HardcoreHandler
 
         // Reset the movement tracker and position values.
         _movement.RestartTimeoutTracker();
-        _movement.AddControlSources(PlayerControlSource.ForcedFollow);
+        _movement.AddControlSources(PlayerControlSource.LockedFollowing);
 
         // Identify the player to target, and begin following them.
         if (pair.VisiblePairGameObject?.IsTargetable ?? false)
@@ -68,18 +68,18 @@ public class HardcoreHandler
         }
     }
 
-    public void DisableForcedFollow(string enactorUid)
+    public void DisableLockedFollowing(string enactorUid)
     {
-        _logger.LogInformation($"[{enactorUid}] Disabled your ForcedFollow state.", LoggerType.HardcoreMovement);
+        _logger.LogInformation($"[{enactorUid}] Disabled your LockedFollowing state.", LoggerType.HardcoreMovement);
         // If the source is already missing it means we stopped it manually.
-        if (!_movement.Sources.HasAny(PlayerControlSource.ForcedFollow))
+        if (!_movement.Sources.HasAny(PlayerControlSource.LockedFollowing))
         {
             _logger.LogDebug("Forced follow is not active, nothing to disable.", LoggerType.HardcoreMovement);
             return;
         }
 
         _movement.ResetTimeoutTracker();
-        _movement.RemoveControlSources(PlayerControlSource.ForcedFollow);
+        _movement.RemoveControlSources(PlayerControlSource.LockedFollowing);
 
         // Restore the movement mode of the player.
         GameConfig.UiControl.Set("MoveMode", (uint)_cachedPlayerMoveMode);
@@ -87,15 +87,15 @@ public class HardcoreHandler
         _cachedPlayerMoveMode = MovementMode.NotSet;
     }
 
-    public async void EnableForcedEmote(string enactorUid)
+    public async void EnableLockedEmote(string enactorUid)
     {
-        _logger.LogInformation($"[{enactorUid}] Enabled your ForcedFollow state!", LoggerType.HardcoreMovement);
-        _movement.AddControlSources(PlayerControlSource.ForcedEmote);
-        _keyStates.AddControlSources(PlayerControlSource.ForcedEmote);
+        _logger.LogInformation($"[{enactorUid}] Enabled your LockedFollowing state!", LoggerType.HardcoreMovement);
+        _movement.AddControlSources(PlayerControlSource.LockedEmote);
+        _keyStates.AddControlSources(PlayerControlSource.LockedEmote);
 
         // get our current emoteID.
         var currentEmote = EmoteService.CurrentEmoteId(PlayerData.ObjectAddress);
-        var expectedEmote = OwnGlobals.ForcedEmoteState;
+        var expectedEmote = OwnGlobals.LockedEmoteState;
 
         // Handle forcing the state based on what is expected.
         if (expectedEmote.EmoteID is 50 or 52)
@@ -104,30 +104,30 @@ public class HardcoreHandler
             await EnsureEmoteState(currentEmote, expectedEmote);
     }
 
-    public void DisableForcedEmote(string enactorUid)
+    public void DisableLockedEmote(string enactorUid)
     {
-        _logger.LogInformation($"[{enactorUid}] Disabled your ForcedFollow state!", LoggerType.HardcoreMovement);
-        _movement.RemoveControlSources(PlayerControlSource.ForcedEmote);
-        _keyStates.RemoveControlSources(PlayerControlSource.ForcedEmote);
+        _logger.LogInformation($"[{enactorUid}] Disabled your LockedFollowing state!", LoggerType.HardcoreMovement);
+        _movement.RemoveControlSources(PlayerControlSource.LockedEmote);
+        _keyStates.RemoveControlSources(PlayerControlSource.LockedEmote);
     }
 
     public void EnableForcedStay(string enactorUid, AddressBookEntry? spesificAddress = null)
     {
         // if the address is null, fallback to nearestNode behavior.
         _logger.LogInformation($"Manually invoked forcedStay from [{enactorUid}]!", LoggerType.HardcoreMovement);
-        _prompts.AddControlSources(PlayerControlSource.ForcedStay);
+        _prompts.AddControlSources(PlayerControlSource.IndoorConfinement);
     }
 
     public void EnableForcedStay(string enactorUid, AddressBookEntryTuple spesificAddress)
     {
         _logger.LogInformation($"[{enactorUid}] Enabled your ForcedStay state!", LoggerType.HardcoreMovement);
-        _prompts.AddControlSources(PlayerControlSource.ForcedStay);
+        _prompts.AddControlSources(PlayerControlSource.IndoorConfinement);
     }
 
     public void DisableForcedStay(string enactorUid)
     {
         _logger.LogInformation($"[{enactorUid}] Disabled your ForcedStay state!", LoggerType.HardcoreMovement);
-        _prompts.RemoveControlSources(PlayerControlSource.ForcedStay);
+        _prompts.RemoveControlSources(PlayerControlSource.IndoorConfinement);
     }
 
     public void EnableImprisonment(string enactorUid, Vector3 originPos, float maxDistanceFromOrigin)

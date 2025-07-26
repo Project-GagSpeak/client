@@ -24,7 +24,7 @@ public sealed class EmoteService : IHostedService
     public static readonly ushort[] SitIdList       = [ 50, 95, 96, 254, 255 ];
     public static readonly ushort[] GroundSitIdList = [ 52, 97, 98, 117 ];
 
-    /// <summary> An Emote that can be whitelisted by OnExecuteEmote while in ForcedEmote state.</summary>
+    /// <summary> An Emote that can be whitelisted by OnExecuteEmote while in LockedEmote state.</summary>
     /// <remarks> Only works for one execution. </remarks>
     public static ushort SpecialAllowanceEmote { get; private set; } = 0;
 

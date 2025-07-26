@@ -294,7 +294,6 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<TriggerManager>()
 
         // UI (Probably mostly in Scoped)
-        .AddSingleton<HypnoEffectEditor>()
         .AddSingleton<IdDisplayHandler>()
         .AddSingleton<AccountInfoExchanger>()
         .AddSingleton<GlobalChatLog>()

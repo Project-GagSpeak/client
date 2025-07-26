@@ -8,9 +8,9 @@ namespace GagSpeak.State;
 public enum PlayerControlSource : ushort
 {
     None             = 0 << 0,
-    ForcedFollow     = 1 << 0,
-    ForcedEmote      = 1 << 1,
-    ForcedStay       = 1 << 2,
+    LockedFollowing  = 1 << 0,
+    LockedEmote      = 1 << 1,
+    IndoorConfinement= 1 << 2,
     ChatBoxesHidden  = 1 << 3,
     ChatInputHidden  = 1 << 4,
     ChatInputBlocked = 1 << 5,

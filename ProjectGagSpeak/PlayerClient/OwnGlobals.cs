@@ -44,9 +44,9 @@ public sealed class OwnGlobals : DisposableMediatorSubscriberBase
         // Assign delegates for handling global permission changes.
         _changeHandlers[nameof(GlobalPerms.GaggedNameplate)] = OnGaggedNameplateChange;
         _changeHandlers[nameof(GlobalPerms.HypnosisCustomEffect)] = OnHypnoEffectChange;
-        _changeHandlers[nameof(GlobalPerms.ForcedFollow)] = OnForcedFollowChange;
-        _changeHandlers[nameof(GlobalPerms.ForcedEmoteState)] = OnForcedEmoteChange;
-        _changeHandlers[nameof(GlobalPerms.ForcedStay)] = OnForcedStayChange;
+        _changeHandlers[nameof(GlobalPerms.LockedFollowing)] = OnLockedFollowingChange;
+        _changeHandlers[nameof(GlobalPerms.LockedEmoteState)] = OnLockedEmoteChange;
+        _changeHandlers[nameof(GlobalPerms.IndoorConfinement)] = OnForcedStayChange;
         _changeHandlers[nameof(GlobalPerms.ChatBoxesHidden)] = OnHiddenChatBoxesChange;
         _changeHandlers[nameof(GlobalPerms.ChatInputHidden)] = OnHiddenChatInputChange;
         _changeHandlers[nameof(GlobalPerms.ChatInputBlocked)] = OnBlockedChatInputChange;
@@ -58,7 +58,7 @@ public sealed class OwnGlobals : DisposableMediatorSubscriberBase
     /// </summary>
     /// <remarks> Might be planting a bomb making an interface possibly nullable, we'll see. </remarks>
     public static IReadOnlyGlobalPerms? Perms => _perms;
-    public static EmoteState ForcedEmoteState => EmoteState.FromString(_perms?.ForcedEmoteState ?? string.Empty);
+    public static EmoteState LockedEmoteState => EmoteState.FromString(_perms?.LockedEmoteState ?? string.Empty);
 
     /// <summary> Create a mutable clone of the current globals, that is not readonly. </summary>
     /// <remarks> Since it's a record, <c>_perms with {}</c> makes a shallow copy, so original is unaffected. </remarks>
@@ -151,29 +151,29 @@ public sealed class OwnGlobals : DisposableMediatorSubscriberBase
         Logger.LogInformation($"Hypnosis Custom Effect changed by {enactor}: {newEffect}");
     }
 
-    private void OnForcedFollowChange(object newVal, object? prevVal, string enactor, Kinkster? pair = null)
+    private void OnLockedFollowingChange(object newVal, object? prevVal, string enactor, Kinkster? pair = null)
     {
         bool prevState = !string.IsNullOrEmpty(prevVal as string);
         bool newState = !string.IsNullOrEmpty(newVal as string);
 
         if (!prevState.Equals(newState))
         {
-            if (newState) _hcHandler.EnableForcedFollow(pair);
-            else _hcHandler.DisableForcedFollow(enactor);
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.ForcedFollow, newState, enactor, MainHub.UID);
+            if (newState) _hcHandler.EnableLockedFollowing(pair);
+            else _hcHandler.DisableLockedFollowing(enactor);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.LockedFollowing, newState, enactor, MainHub.UID);
         }
     }
 
-    private void OnForcedEmoteChange(object newVal, object? prevVal, string enactor, Kinkster? _)
+    private void OnLockedEmoteChange(object newVal, object? prevVal, string enactor, Kinkster? _)
     {
         // We convert to bools to prevent switching between certain active states from causing issues.
         var prevState = string.IsNullOrEmpty(prevVal as string);
         var newState = string.IsNullOrEmpty(newVal as string);
         if (!prevState.Equals(newState))
         {
-            if (newState) _hcHandler.EnableForcedEmote(enactor);
-            else _hcHandler.DisableForcedEmote(enactor);
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.ForcedEmote, newState, enactor, MainHub.UID);
+            if (newState) _hcHandler.EnableLockedEmote(enactor);
+            else _hcHandler.DisableLockedEmote(enactor);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.LockedEmote, newState, enactor, MainHub.UID);
         }
     }
 
@@ -185,7 +185,7 @@ public sealed class OwnGlobals : DisposableMediatorSubscriberBase
         {
             if (newState) _hcHandler.EnableForcedStay(enactor);
             else _hcHandler.DisableForcedStay(enactor);
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.ForcedStay, newState, enactor, MainHub.UID);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.IndoorConfinement, newState, enactor, MainHub.UID);
         }
     }
 
@@ -274,7 +274,7 @@ public sealed class OwnGlobals : DisposableMediatorSubscriberBase
         // handle the hypnosis effect.
     }
 
-    public void OnForcedStayByAddress(ForcedStayByAddress dto)
+    public void OnConfineByAddress(ConfineByAddress dto)
     {
         if (_perms is not { } g)
             throw new NullReferenceException($"Globals is Null.");

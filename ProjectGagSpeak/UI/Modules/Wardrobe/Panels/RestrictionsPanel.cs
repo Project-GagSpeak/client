@@ -24,7 +24,6 @@ namespace GagSpeak.Gui.Wardrobe;
 public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
 {
     private readonly RestrictionFileSelector _selector;
-    private readonly HypnoEffectEditor _hypnoEditor;
     private readonly ActiveItemsDrawer _activeItemDrawer;
     private readonly EquipmentDrawer _equipDrawer;
     private readonly ModPresetDrawer _modDrawer;
@@ -38,7 +37,6 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         ILogger<RestrictionsPanel> logger,
         GagspeakMediator mediator,
         RestrictionFileSelector selector,
-        HypnoEffectEditor hypnoEditor,
         ActiveItemsDrawer activeItemDrawer,
         EquipmentDrawer equipDrawer,
         ModPresetDrawer modDrawer,
@@ -50,7 +48,6 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         TutorialService guides) : base(logger, mediator)
     {
         _selector = selector;
-        _hypnoEditor = hypnoEditor;
         _attributeDrawer = traitsDrawer;
         _equipDrawer = equipDrawer;
         _modDrawer = modDrawer;
@@ -81,6 +78,14 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
                 hypnoItem.Properties.OverlayPath = msg.Name;
             }
         });
+    }
+
+    private HypnoEffectEditor _hypnoEditor = new HypnoEffectEditor("RestrictionEditor");
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        _hypnoEditor.Dispose();
     }
 
     public void DrawContents(CkHeader.QuadDrawRegions drawRegions, float curveSize, WardrobeTabs tabMenu)

@@ -350,9 +350,9 @@ public class PresetLogicDrawer
             ToggleTriggers = true,
 
             InHardcore = false,
-            AllowForcedFollow = true,
-            AllowForcedSit = true,
-            AllowForcedStay = true,
+            AllowLockedFollowing = true,
+            AllowLockedSitting = true,
+            AllowIndoorConfinement = true,
         };
         // all is false by default.
         var pairAccess = new PairPermAccess();
@@ -491,9 +491,9 @@ public class PresetLogicDrawer
 
             InHardcore = false,
             PairLockedStates = false,
-            AllowForcedFollow = false,
-            AllowForcedSit = true,
-            AllowForcedStay = false,
+            AllowLockedFollowing = false,
+            AllowLockedSitting = true,
+            AllowIndoorConfinement = false,
             AllowHidingChatBoxes = false,
             AllowHidingChatInput = false,
             AllowChatInputBlocking = false
@@ -594,9 +594,10 @@ public class PresetLogicDrawer
 
             InHardcore = false,
             PairLockedStates = false,
-            AllowForcedFollow = true,
-            AllowForcedSit = true,
-            AllowForcedStay = true,
+            AllowLockedFollowing = true,
+            AllowLockedSitting = true,
+            AllowIndoorConfinement = true,
+            AllowImprisonment = true,
             AllowHidingChatBoxes = false,
             AllowHidingChatInput = false,
             AllowChatInputBlocking = false

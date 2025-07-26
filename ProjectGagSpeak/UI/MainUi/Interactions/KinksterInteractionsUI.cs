@@ -17,6 +17,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
@@ -25,6 +26,7 @@ using GagspeakAPI.Util;
 using ImGuiNET;
 using JetBrains.Annotations;
 using OtterGui.Text;
+using static FFXIVClientStructs.FFXIV.Client.Game.CurrencyManager.Delegates;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -79,6 +81,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
     private OwnMoodlePresetToPairCombo _moodlePresets;
     private EmoteCombo _emoteCombo;
     private PairMoodleStatusCombo _activePairStatusCombo;
+    private HypnoEffectEditor _hypnoEditor;
 
     // (i was not liking all the private variables ok?)
     private StickyWindowSelections _selections = new();
@@ -98,6 +101,8 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         _hub = hub;
         _kinksterPerms = permsForSelf;
         _permsForKinkster = permsForKinkster;
+
+        _hypnoEditor = new HypnoEffectEditor("KinksterEffectEditor");
 
         Flags = WFlags.NoCollapse | WFlags.NoTitleBar | WFlags.NoResize | WFlags.NoScrollbar;
 
@@ -154,7 +159,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         ], () => _selections.CloseInteraction());
 
         _emoteCombo = new EmoteCombo(_logger, 1.3f, () => [
-            .._kinkster.PairPerms.AllowForcedEmote ? EmoteExtensions.LoopedEmotes() : EmoteExtensions.SittingEmotes()
+            .._kinkster.PairPerms.AllowLockedEmoting ? EmoteExtensions.LoopedEmotes() : EmoteExtensions.SittingEmotes()
         ]);
 
         // set the max width to the longest possible text string.
@@ -218,6 +223,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
             DrawRestraintActions(k, width, dispName);
             DrawMoodlesActions(k, width, dispName);
             DrawToyboxActions(k, width, dispName);
+            DrawMiscActions(k, width, dispName);
             DrawHardcoreActions(k, width, dispName);
             DrawShockActions(k, width, dispName);
         }
@@ -731,32 +737,79 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
     }
     #endregion Toybox
 
+    #region Misc
+    private void DrawMiscActions(Kinkster k, float width, string dispName)
+    {
+        ImGui.TextUnformatted("Misc Actions");
+        var kg = k.PairGlobals;
+
+        var hasEffect = kg.HypnoState();
+        var hypnoTxt = hasEffect ? $"{dispName} is being Hypnotized" : $"Hypnotize {dispName}";
+        var hypnoTT = hasEffect ? $"{dispName} is currently under hypnosis state.--SEP--Cannot apply an effect until {dispName} is not hypnotized."
+            : $"Configure and apply a hypnosis effect on {dispName}.";
+
+        if (CkGui.IconTextButton(FAI.Dizzy, hypnoTxt, width, true, hasEffect || !k.PairPerms.HypnoEffectSending))
+        {
+            if (_selections.OpenInteraction is not InteractionType.HypnosisEffect)
+            {
+                // open it.
+                _selections.OpenOrClose(InteractionType.HypnosisEffect);
+                if (_hypnoEditor.IsEffectNull)
+                    _hypnoEditor.SetHypnoEffect(new HypnoticEffect());
+            }
+            else
+            {
+                // we are closing it.
+                _selections.CloseInteraction();
+                // do something here if need be.
+            }
+        }
+        CkGui.AttachToolTip(hypnoTT);
+
+        if (_selections.OpenInteraction is InteractionType.HypnosisEffect)
+        {
+            using (ImRaii.Child("HypnosisEffectChild", new Vector2(width, _hypnoEditor.GetCompactEditorHeight())))
+            {
+                _hypnoEditor.DrawCompactEditor(width);
+                _hypnoEditor.DrawCompactPreview(CkStyle.ThreeRowHeight());
+            }
+            ImGui.Separator();
+        }
+    }
+    #endregion Misc
+
     #region Hardcore
     private void DrawHardcoreActions(Kinkster k, float width, string dispName)
     {
         ImGui.TextUnformatted("Hardcore Actions");
-        var kg = k.PairGlobals; 
+        var kg = k.PairGlobals;
+
+        //if (!k.PairPerms.InHardcore)
+        //{
+        //    ImGui.Separator();
+        //    return;
+        //}
 
         // Required Close-Ranged Hardcore commands must be in range
         var inRange = PlayerData.Available && k.VisiblePairGameObject is { } vo && PlayerData.DistanceTo(vo) < 3;
         var pairlockTag = k.PairPerms.PairLockedStates ? Constants.DevotedString : string.Empty;
 
         (FAI Icon, string Text) hcLabel = kg.HcFollowState() ? (FAI.StopCircle, $"Have {dispName} stop following you.") : (FAI.PersonWalkingArrowRight, $"Make {dispName} follow you.");
-        if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !inRange || !k.PairPerms.AllowForcedFollow || !k.IsVisible || !kg.CanChangeHcFollow(MainHub.UID), "##HcForcedFollow"))
+        if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !inRange || !k.PairPerms.AllowLockedFollowing || !k.IsVisible || !kg.CanChangeHcFollow(MainHub.UID), "##HcLockedFollowing"))
         {
             var newStr = kg.HcFollowState() ? string.Empty : $"{MainHub.UID}{pairlockTag}";
-            UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, kg, nameof(GlobalPerms.ForcedFollow), newStr));
+            UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, kg, nameof(GlobalPerms.LockedFollowing), newStr));
         }
 
         // ForceEmote is a special child...
-        DrawForcedEmoteSection(k, width, dispName, pairlockTag);
+        DrawLockedEmoteSection(k, width, dispName, pairlockTag);
 
 
-        hcLabel = kg.HcStayState() ? (FAI.StopCircle, $"Release {dispName}.") : (FAI.HouseLock, $"Lock {dispName} away.");
-        if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !k.PairPerms.AllowForcedStay || !kg.CanChangeHcStay(MainHub.UID), "##HcForcedStay"))
+        hcLabel = kg.HcConfinedState() ? (FAI.StopCircle, $"Release {dispName}.") : (FAI.HouseLock, $"Lock {dispName} away.");
+        if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !k.PairPerms.AllowIndoorConfinement || !kg.CanChangeHcConfined(MainHub.UID), "##HcForcedStay"))
         {
-            var newStr = kg.HcStayState() ? string.Empty : $"{MainHub.UID}{pairlockTag}";
-            UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, kg, nameof(GlobalPerms.ForcedStay), newStr));
+            var newStr = kg.HcConfinedState() ? string.Empty : $"{MainHub.UID}{pairlockTag}";
+            UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, kg, nameof(GlobalPerms.IndoorConfinement), newStr));
         }
 
         // Hiding chat message history window, but still allowing typing.
@@ -786,35 +839,35 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         ImGui.Separator();
     }
 
-    private void DrawForcedEmoteSection(Kinkster k, float width, string dispName, string pairlockTag)
+    private void DrawLockedEmoteSection(Kinkster k, float width, string dispName, string pairlockTag)
     {
-        // What to display if we cant do ForcedEmote
-        if (!k.PairGlobals.ForcedEmoteState.NullOrEmpty())
+        // What to display if we cant do LockedEmote
+        if (!k.PairGlobals.LockedEmoteState.NullOrEmpty())
         {
             if (CkGui.IconTextButton(FAI.StopCircle, $"Let {dispName} move again.", width, true, id: "##HcForcedStay"))
             {
-                UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, k.PairGlobals, nameof(GlobalPerms.ForcedEmoteState), string.Empty));
+                UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, k.PairGlobals, nameof(GlobalPerms.LockedEmoteState), string.Empty));
                 _selections.CloseInteraction();
             }
             CkGui.AttachToolTip($"Release {dispName} from forced emote state.");
             return;
         }
 
-        // If we can do ForcedEmote, display options.
-        (FAI Icon, string Text) hcLabel = k.PairPerms.AllowForcedEmote ? (FAI.PersonArrowDownToLine, $"Force {dispName} into an Emote State.") : (FAI.Chair, $"Force {dispName} to Sit.");
-        if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !k.PairPerms.AllowForcedSit && k.PairGlobals.CanChangeHcEmote(MainHub.UID), "##HcForcedEmote"))
-            _selections.OpenOrClose(InteractionType.ForcedEmoteState);
-        CkGui.AttachToolTip($"Force {dispName} to perform any {(k.PairPerms.AllowForcedEmote ? "looped emote state" : "sitting or cycle pose state")}.");
+        // If we can do LockedEmote, display options.
+        (FAI Icon, string Text) hcLabel = k.PairPerms.AllowLockedEmoting ? (FAI.PersonArrowDownToLine, $"Force {dispName} into an Emote State.") : (FAI.Chair, $"Force {dispName} to Sit.");
+        if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !k.PairPerms.AllowLockedSitting && k.PairGlobals.CanChangeHcEmote(MainHub.UID), "##HcLockedEmote"))
+            _selections.OpenOrClose(InteractionType.LockedEmoteState);
+        CkGui.AttachToolTip($"Force {dispName} to perform any {(k.PairPerms.AllowLockedEmoting ? "looped emote state" : "sitting or cycle pose state")}.");
 
-        if (_selections.OpenInteraction is not InteractionType.ForcedEmoteState)
+        if (_selections.OpenInteraction is not InteractionType.LockedEmoteState)
             return;
 
-        using (ImRaii.Child("ForcedEmoteState", new Vector2(width, ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y)))
+        using (ImRaii.Child("LockedEmoteState", new Vector2(width, ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y)))
         {
             var comboWidth = width - CkGui.IconTextButtonSize(FAI.PersonRays, "Force State") - ImGui.GetStyle().ItemInnerSpacing.X;
             // Handle Emote Stuff.
-            var emoteList = k.PairPerms.AllowForcedEmote ? EmoteExtensions.LoopedEmotes() : EmoteExtensions.SittingEmotes();
-            _emoteCombo.Draw("##ForcedEmoteCombo", _selections.EmoteId, comboWidth, 1.3f);
+            var emoteList = k.PairPerms.AllowLockedEmoting ? EmoteExtensions.LoopedEmotes() : EmoteExtensions.SittingEmotes();
+            _emoteCombo.Draw("##LockedEmoteCombo", _selections.EmoteId, comboWidth, 1.3f);
             // Handle Cycle Poses
             var canSetCyclePose = EmoteService.IsAnyPoseWithCyclePose((ushort)_emoteCombo.Current.RowId);
             var maxCycles = canSetCyclePose ? EmoteService.CyclePoseCount((ushort)_emoteCombo.Current.RowId) : 0;
@@ -831,7 +884,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
             {
                 var newStr = $"{MainHub.UID}|{_emoteCombo.Current.RowId}|{_selections.CyclePose}{pairlockTag}";
                 _logger.LogDebug($"Sending EmoteState update for emote: {_emoteCombo.Current.Name}");
-                UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, k.PairGlobals, nameof(GlobalPerms.ForcedEmoteState), newStr));
+                UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, k.PairGlobals, nameof(GlobalPerms.LockedEmoteState), newStr));
                 _selections.CloseInteraction();
             }
             CkGui.AttachToolTip("Apply the selected forced emote state.");

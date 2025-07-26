@@ -7,10 +7,11 @@ namespace GagSpeak.State;
 public enum HardcoreSetting : byte
 {
     None             = 0 << 0,
-    ForcedFollow     = 1 << 0,
-    ForcedEmote      = 1 << 1,
-    ForcedStay       = 1 << 2,
-    ChatBoxesHidden  = 1 << 3,
-    ChatInputHidden  = 1 << 4,
-    ChatInputBlocked = 1 << 5,
+    LockedFollowing  = 1 << 0,
+    LockedEmote      = 1 << 1,
+    IndoorConfinement= 1 << 2,
+    Imprisoned       = 1 << 3,
+    ChatBoxesHidden  = 1 << 4,
+    ChatInputHidden  = 1 << 5,
+    ChatInputBlocked = 1 << 6,
 }

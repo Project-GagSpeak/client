@@ -156,9 +156,9 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
         //// do direct updates so they apply first client side, then push to the server. The callback can validate these changes.
         //if (_playerManager.GlobalPerms is not null)
         //{
-        //    _playerManager.GlobalPerms.ForcedFollow = string.Empty;
-        //    _playerManager.GlobalPerms.ForcedEmoteState = string.Empty;
-        //    _playerManager.GlobalPerms.ForcedStay = string.Empty;
+        //    _playerManager.GlobalPerms.LockedFollowing = string.Empty;
+        //    _playerManager.GlobalPerms.LockedEmoteState = string.Empty;
+        //    _playerManager.GlobalPerms.IndoorConfinement = string.Empty;
         //    _playerManager.GlobalPerms.ForcedBlindfold = string.Empty;
         //    _playerManager.GlobalPerms.ChatBoxesHidden = string.Empty;
         //    _playerManager.GlobalPerms.ChatInputHidden = string.Empty;
@@ -183,9 +183,9 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
         //    {
         //        // put us out of hardcore, and disable any active
         //        isolatedPair.OwnPerms.InHardcore = false;
-        //        isolatedPair.OwnPerms.AllowForcedFollow = false;
+        //        isolatedPair.OwnPerms.AllowLockedFollowing = false;
         //        isolatedPair.OwnPerms.AllowForcedSit = false;
-        //        isolatedPair.OwnPerms.AllowForcedEmote = false;
+        //        isolatedPair.OwnPerms.AllowLockedEmote = false;
         //        isolatedPair.OwnPerms.AllowForcedStay = false;
         //        isolatedPair.OwnPerms.AllowBlindfold = false;
         //        isolatedPair.OwnPerms.AllowHidingChatBoxes = false;
@@ -204,9 +204,9 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
         //        {
         //            // put us out of hardcore, and disable any active hardcore stuff.
         //            pair.OwnPerms.InHardcore = false;
-        //            pair.OwnPerms.AllowForcedFollow = false;
+        //            pair.OwnPerms.AllowLockedFollowing = false;
         //            pair.OwnPerms.AllowForcedSit = false;
-        //            pair.OwnPerms.AllowForcedEmote = false;
+        //            pair.OwnPerms.AllowLockedEmote = false;
         //            pair.OwnPerms.AllowForcedStay = false;
         //            pair.OwnPerms.AllowBlindfold = false;
         //            pair.OwnPerms.AllowHidingChatBoxes = false;

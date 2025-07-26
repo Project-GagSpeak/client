@@ -203,11 +203,11 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         var forcedEmoteTT = Pair.PairGlobals.HcEmoteState()
             ? DisplayName + " is being put on display for another pair while in Hardcore Mode."
             : DisplayName + " is not on display for anyone.";
-        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.ForcedEmote], iconOverviewPos, Vector2.One * 34, forcedEmoteColor, forcedEmoteTT);
+        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.LockedEmote], iconOverviewPos, Vector2.One * 34, forcedEmoteColor, forcedEmoteTT);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
-        var forcedStayColor = Pair.PairGlobals.HcStayState() ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
-        var forcedStayTT = Pair.PairGlobals.HcStayState()
+        var forcedStayColor = Pair.PairGlobals.HcConfinedState() ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
+        var forcedStayTT = Pair.PairGlobals.HcConfinedState()
             ? DisplayName + " has been ordered to stay put for another pair while in Hardcore Mode."
             : DisplayName + " has not been ordered to stay put by anyone.";
         wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.ForcedStay], iconOverviewPos, Vector2.One * 34, forcedStayColor, forcedStayTT);
@@ -222,8 +222,8 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
 
         iconOverviewPos.X += iconWidthPlusSpacing;
 
-        var hypnotizedColor = Pair.PairGlobals.HcHypnoState() ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
-        var hypnotizedTT = $"{DisplayName} {(Pair.PairGlobals.HcHypnoState() ? "is being hypnotized." : "is not being hypnotized")}";
+        var hypnotizedColor = Pair.PairGlobals.HypnoState() ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
+        var hypnotizedTT = $"{DisplayName} {(Pair.PairGlobals.HypnoState() ? "is being hypnotized." : "is not being hypnotized")}";
         wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.ChatBlocked], iconOverviewPos, Vector2.One * 34, chatBlockedColor, chatBlockedTT);
     }
 

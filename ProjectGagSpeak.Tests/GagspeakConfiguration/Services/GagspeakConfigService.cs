@@ -92,7 +92,7 @@ public class MainConfig
 
 //        // Assert
 //#pragma warning disable xUnit2013 // Do not use equality check to check for collection size.
-//        Assert.Equal(1, MainConfig?.ForcedStayPromptList.Children.Count);
+//        Assert.Equal(1, MainConfig?.IndoorConfinementPromptList.Children.Count);
 //#pragma warning restore xUnit2013 // Do not use equality check to check for collection size.
     }
 }

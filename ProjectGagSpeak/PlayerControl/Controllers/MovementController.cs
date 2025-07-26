@@ -46,10 +46,10 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
 
     public bool IsMoveTaskRunning => _movementTask is not null && !_movementTask.IsCompleted;
     public PlayerControlSource Sources => _sources;
-    public bool BanUnfollowing => _sources.HasAny(PlayerControlSource.ForcedFollow);
-    public bool BanAnyMovement => _sources.HasAny(PlayerControlSource.ForcedEmote);
-    public bool BanMouseAutoMove => !_forceRunDuringTask && (_sources & (PlayerControlSource.ForcedEmote | PlayerControlSource.Immobile)) != 0;
-    public bool BanRunning => !_forceRunDuringTask && (_sources & (PlayerControlSource.ForcedFollow | PlayerControlSource.Weighty)) != 0;
+    public bool BanUnfollowing => _sources.HasAny(PlayerControlSource.LockedFollowing);
+    public bool BanAnyMovement => _sources.HasAny(PlayerControlSource.LockedEmote);
+    public bool BanMouseAutoMove => !_forceRunDuringTask && (_sources & (PlayerControlSource.LockedEmote | PlayerControlSource.Immobile)) != 0;
+    public bool BanRunning => !_forceRunDuringTask && (_sources & (PlayerControlSource.LockedFollowing | PlayerControlSource.Weighty)) != 0;
 
     private unsafe void FrameworkUpdate()
     {
@@ -118,8 +118,8 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     private void HandleNaturalExpiration()
     {
         // Forcibly remove the control source.
-        _sources &= ~PlayerControlSource.ForcedFollow;
+        _sources &= ~PlayerControlSource.LockedFollowing;
         ResetTimeoutTracker();
-        Mediator.Publish(new PushGlobalPermChange(nameof(GlobalPerms.ForcedFollow), string.Empty));
+        Mediator.Publish(new PushGlobalPermChange(nameof(GlobalPerms.LockedFollowing), string.Empty));
     }
 }

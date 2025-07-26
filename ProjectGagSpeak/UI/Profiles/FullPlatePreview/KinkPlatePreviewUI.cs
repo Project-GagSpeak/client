@@ -171,7 +171,7 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
         drawList.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Leash], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
-        drawList.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.ForcedEmote], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
+        drawList.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.LockedEmote], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
         drawList.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.ForcedStay], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);

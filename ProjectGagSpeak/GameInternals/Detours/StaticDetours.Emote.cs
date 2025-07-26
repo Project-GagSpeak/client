@@ -65,7 +65,7 @@ public partial class StaticDetours
         if (OwnGlobals.Perms?.HcEmoteState() ?? false)
         {
             // if our current emote state is any sitting pose and we are attempting to perform yes or no, allow it.
-            if (OwnGlobals.ForcedEmoteState.EmoteID is 50 or 52 && emoteId is 42 or 24)
+            if (OwnGlobals.LockedEmoteState.EmoteID is 50 or 52 && emoteId is 42 or 24)
             {
                 Logger.LogDebug($"Allowing Emote Execution for [{EmoteService.EmoteName(emoteId)} ({emoteId})]", LoggerType.EmoteMonitor);
             }

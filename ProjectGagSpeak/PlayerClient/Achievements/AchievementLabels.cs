@@ -233,7 +233,7 @@ public static class Achievements
 
     public static readonly AchievementInfo UCanTieThis = new AchievementInfo(90, "U Can't Tie This", "Be forced to follow someone, throughout a duty.");
 
-    public static readonly AchievementInfo ForcedFollow = new AchievementInfo(91, "Come Follow Along Now", "Force someone to follow you for 1 minute.");
+    public static readonly AchievementInfo LockedFollowing = new AchievementInfo(91, "Come Follow Along Now", "Force someone to follow you for 1 minute.");
     public static readonly AchievementInfo ForcedWalkies = new AchievementInfo(92, "The Leash of Your Worries", "Force someone to follow you for 5 minutes.");
 
     public static readonly AchievementInfo TimeForWalkies = new AchievementInfo(93, "Time for Walkies", "Be forced to follow someone for 1 minute.");
@@ -415,7 +415,7 @@ public static class Achievements
         { 88, ChainsCantHoldMe },
         { 89, AllTheCollarsOfTheRainbow },
         { 90, UCanTieThis },
-        { 91, ForcedFollow },
+        { 91, LockedFollowing },
         { 92, ForcedWalkies },
         { 93, TimeForWalkies },
         { 94, GettingStepsIn },

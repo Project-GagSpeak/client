@@ -512,10 +512,10 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         #region HARDCORE MODULE
         _saveData.AddProgress(AchievementModuleKind.Hardcore, Achievements.AllTheCollarsOfTheRainbow, 20, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Forced", suffix: "Pairs To Follow You");
         _saveData.AddConditionalProgress(AchievementModuleKind.Hardcore, Achievements.UCanTieThis, 1,
-            () => OwnGlobals.Perms?.HcFollowState() ?? false, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Completed", suffix: "Duties in ForcedFollow.");
+            () => OwnGlobals.Perms?.HcFollowState() ?? false, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Completed", suffix: "Duties in LockedFollowing.");
 
         // Forced follow achievements
-        _saveData.AddDuration(AchievementModuleKind.Hardcore, Achievements.ForcedFollow, TimeSpan.FromMinutes(1), DurationTimeUnit.Minutes, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Minutes", "Leashed a Kinkster for");
+        _saveData.AddDuration(AchievementModuleKind.Hardcore, Achievements.LockedFollowing, TimeSpan.FromMinutes(1), DurationTimeUnit.Minutes, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Minutes", "Leashed a Kinkster for");
         _saveData.AddDuration(AchievementModuleKind.Hardcore, Achievements.ForcedWalkies, TimeSpan.FromMinutes(5), DurationTimeUnit.Minutes, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Minutes", "Leashed a Kinkster for");
 
         // Time for Walkies achievements
@@ -555,11 +555,11 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.WhoNeedsToSee, TimeSpan.FromHours(3), () => (_traits.FinalTraits & Traits.Blindfolded) != 0,
         DurationTimeUnit.Hours, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Blindfolded for");
 
-        _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.OfDomesticDiscipline, TimeSpan.FromMinutes(30), () => (OwnGlobals.Perms?.HcStayState() ?? false),
+        _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.OfDomesticDiscipline, TimeSpan.FromMinutes(30), () => (OwnGlobals.Perms?.HcConfinedState() ?? false),
             DurationTimeUnit.Minutes, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Locked away for");
-        _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.HomeboundSubmission, TimeSpan.FromHours(1), () => (OwnGlobals.Perms?.HcStayState() ?? false),
+        _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.HomeboundSubmission, TimeSpan.FromHours(1), () => (OwnGlobals.Perms?.HcConfinedState() ?? false),
             DurationTimeUnit.Hours, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Locked away for");
-        _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.PerfectHousePet, TimeSpan.FromDays(1), () => (OwnGlobals.Perms?.HcStayState() ?? false),
+        _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.PerfectHousePet, TimeSpan.FromDays(1), () => (OwnGlobals.Perms?.HcConfinedState() ?? false),
             DurationTimeUnit.Days, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Locked away for");
 
         // Shock-related achievements - Give out shocks
@@ -620,7 +620,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
                 {
                     Logger.LogTrace("Target is in the direct pairs, checking if they are gagged.", LoggerType.Achievements);
                     // store if they are stuck emoting.
-                    targetIsImmobile = !targetPair.PairGlobals.ForcedEmoteState.IsNullOrWhitespace();
+                    targetIsImmobile = !targetPair.PairGlobals.LockedEmoteState.IsNullOrWhitespace();
                     // TODO:
                     // we can add restraint trait alternatives later, but wait until later when we restructure how we manage pair information.
                 }
@@ -637,7 +637,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
                 if (targetPair is not null)
                 {
                     // store if they are stuck emoting.
-                    targetIsImmobile = !targetPair.PairGlobals.ForcedEmoteState.IsNullOrWhitespace();
+                    targetIsImmobile = !targetPair.PairGlobals.LockedEmoteState.IsNullOrWhitespace();
                     // TODO:
                     // we can add restraint trait alternatives later, but wait until later when we restructure how we manage pair information.
                 }

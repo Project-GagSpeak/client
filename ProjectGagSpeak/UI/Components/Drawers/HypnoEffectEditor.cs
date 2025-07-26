@@ -3,6 +3,7 @@ using CkCommons.Gui;
 using CkCommons.Raii;
 using CkCommons.Widgets;
 using Dalamud.Interface;
+using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services;
 using GagSpeak.Services.Controller;
@@ -29,15 +30,16 @@ public class HypnoEffectEditor : IDisposable
     private bool            _isOpen = false;
     private HypnoticEffect? _effect = null;
     private HypnosisState   _activeState = new();
-
-    private readonly CosmeticService _display;
-    public HypnoEffectEditor(CosmeticService display)
+    public HypnoEffectEditor(string popupLabel)
     {
-        _display = display;
-
+        PopupLabel = popupLabel;
         _tasksCTS = new CancellationTokenSource();
         _displayTextEditor = new TagCollection();
     }
+
+    public readonly string PopupLabel = "HypnosisEditorModal";
+
+    public bool IsEffectNull => _effect is null;
 
     public void Dispose()
     {
@@ -80,21 +82,21 @@ public class HypnoEffectEditor : IDisposable
     }
 
     /// <summary> Draws the editor. Passes in the original so when we save the editor we can update the original entry. </summary>
-    public void DrawPopup(CosmeticService imgFinder, HypnoticOverlay overlay)
+    public void DrawPopup(HypnoticOverlay overlay, Action<HypnoticEffect>? onSaveAndClose = null)
     {
         if (_effect is null)
             return;
 
-        if (!ImGui.IsPopupOpen("###HypnoEditModal"))
+        if (!ImGui.IsPopupOpen($"###{PopupLabel}"))
         {
             _isOpen = true;
-            ImGui.OpenPopup("###HypnoEditModal");
+            ImGui.OpenPopup($"###{PopupLabel}");
         }
 
-        if (ImGui.BeginPopupModal($"Effect Editor###HypnoEditModal", ref _isOpen, ImGuiWindowFlags.AlwaysAutoResize))
+        if (ImGui.BeginPopupModal($"Effect Editor###{PopupLabel}", ref _isOpen, ImGuiWindowFlags.AlwaysAutoResize))
         {
             // Draw out the editor contents.
-            using (ImRaii.Table("##EditorContainerOuter", 2, ImGuiTableFlags.NoPadOuterX | ImGuiTableFlags.BordersInner))
+            using (ImRaii.Table($"EditorContainerOuter{PopupLabel}", 2, ImGuiTableFlags.NoPadOuterX | ImGuiTableFlags.BordersInner))
             {
                 ImGui.TableSetupColumn("EditorArea", ImGuiTableColumnFlags.WidthFixed, 440f);
                 ImGui.TableSetupColumn("PreviewArea", ImGuiTableColumnFlags.WidthStretch);
@@ -114,12 +116,12 @@ public class HypnoEffectEditor : IDisposable
                 // Draw the phrase editors.
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
-                var height = (size.X / 3) - ImGui.GetFrameHeight() * 2;
+                var height = size == Vector2.Zero ? CkStyle.GetFrameRowsHeight(5) : (size.X / 3) - ImGui.GetFrameHeight() * 2;
                 using (var c = CkRaii.HeaderChild("Display Text Phrases", new Vector2(cellWidth, height.AddWinPadY()), HeaderFlags.AddPaddingToHeight))
                 {
-                    using (CkRaii.FramedChildPaddedW("##DisplayPhrases", c.InnerRegion.X, height, CkColor.FancyHeaderContrast.Uint(), DFlags.RoundCornersAll))
+                    using (CkRaii.FramedChildPaddedW($"##DisplayPhrases_{PopupLabel}", c.InnerRegion.X, height, CkColor.FancyHeaderContrast.Uint(), DFlags.RoundCornersAll))
                     {
-                        if (_displayTextEditor.DrawTagsEditor("##EffectPhrases", _effect.DisplayMessages, out var newDisplayWords))
+                        if (_displayTextEditor.DrawTagsEditor($"##EffectPhrases_{PopupLabel}", _effect.DisplayMessages, out var newDisplayWords))
                             _effect.DisplayMessages = newDisplayWords.ToArray();
                         
                         if (_displayTextEditor.DrawHelpButtons(_effect.DisplayMessages, out var newWords, true))
@@ -138,7 +140,7 @@ public class HypnoEffectEditor : IDisposable
             if (CkGui.IconTextButton(FAI.Save, "Save and Close"))
             {
                 _isOpen = false;
-                overlay.Effect = new HypnoticEffect(_effect);
+                onSaveAndClose?.Invoke(_effect);
                 OnEditorClose();
             }
 
@@ -147,6 +149,203 @@ public class HypnoEffectEditor : IDisposable
 
         if (!_isOpen)
             _effect = null;
+    }
+
+    public float GetCompactEditorHeight()
+    {
+        if (_effect is null)
+            return CkStyle.TwoRowHeight();
+        // calculate based on height.
+        var fadeRows = _effect.Attributes.HasAny(HypnoAttributes.TextFade) ? 2 : 0;
+        var hasSpeedUp = _effect.Attributes.HasAny(HypnoAttributes.SpeedUpOnCycle) ? 1 : 0;
+        var hasTranspose = _effect.Attributes.HasAny(HypnoAttributes.TransposeColors) ? 1 : 0;
+        var totalRows = 10 + fadeRows + hasSpeedUp + hasTranspose;
+        return CkStyle.GetFrameRowsHeight((uint)totalRows);
+    }
+
+    public void DrawCompactEditor(float width)
+    {
+        if (_effect is null)
+        {
+            CkGui.ColorText("Trying to draw editor without valid Hypno Effect.", ImGuiColors.DalamudRed);
+            return;
+        }
+
+        ImGui.TextUnformatted("Attributes:");
+        ImGui.Columns(2, "HypnoAttributes", false);
+        ImGui.SetColumnWidth(0, width * .5f);
+
+        var selectedAttributes = (uint)_effect.Attributes;
+        foreach (var attribute in Enum.GetValues<HypnoAttributes>().Skip(5))
+        {
+            if (ImGui.CheckboxFlags(attribute.ToName(), ref selectedAttributes, (uint)attribute))
+                _effect.Attributes ^= attribute;
+            CkGui.AttachToolTip(attribute.ToTooltip());
+            ImGui.TableNextColumn();
+        }
+
+        ImGui.Columns(1);
+        ImGui.Separator();
+        var leftW = ImGui.CalcTextSize("Fade-Out Timem");
+        using var t = ImRaii.Table("CompactEffectEditor", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.SizingFixedFit);
+        if (t)
+        {
+            ImGui.TableSetupColumn("Label", ImGuiTableColumnFlags.WidthFixed, leftW.X);
+            ImGui.TableSetupColumn("Input", ImGuiTableColumnFlags.WidthStretch);
+
+            // Spin Speed
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            ImUtf8.TextFrameAligned("Spin Speed");
+            ImGui.TableNextColumn();
+            var spinRef = _effect.SpinSpeed;
+            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+            if (ImGui.SliderFloat("##SpinSpeed", ref spinRef, HypnoService.SPIN_SPEED_MIN, HypnoService.SPIN_SPEED_MAX, "%.2fx"))
+            {
+                _effect.SpinSpeed = spinRef;
+                _activeState.SpinSpeed = _effect.SpinSpeed; // Update the active state for the preview.
+            }
+
+            // Zoom Depth
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            ImUtf8.TextFrameAligned("Zoom Depth");
+            ImGui.TableNextColumn();
+            var zoomRef = _effect.ZoomDepth;
+            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+            if (ImGui.SliderFloat("##ZoomDepth", ref zoomRef, HypnoService.ZOOM_MIN, HypnoService.ZOOM_MAX, "%.2fx"))
+                _effect.ZoomDepth = zoomRef;
+
+            // Text Mode
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            ImUtf8.TextFrameAligned("Text Order");
+            ImGui.TableNextColumn();
+            var currentMode = _effect.Attributes & HypnoAttributes.TextDisplayMask;
+
+            if (ImGui.RadioButton(HypnoAttributes.TextDisplayOrdered.ToName(), currentMode == HypnoAttributes.TextDisplayOrdered))
+                _effect.Attributes = (_effect.Attributes & ~HypnoAttributes.TextDisplayMask) | HypnoAttributes.TextDisplayOrdered;
+            CkGui.AttachToolTip(HypnoAttributes.TextDisplayOrdered.ToTooltip());
+
+            ImGui.SameLine();
+            if (ImGui.RadioButton(HypnoAttributes.TextDisplayRandom.ToName(), currentMode == HypnoAttributes.TextDisplayRandom))
+                _effect.Attributes = (_effect.Attributes & ~HypnoAttributes.TextDisplayMask) | HypnoAttributes.TextDisplayRandom;
+            CkGui.AttachToolTip(HypnoAttributes.TextDisplayRandom.ToTooltip());
+
+            // Text Scale Properties
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            ImUtf8.TextFrameAligned("Text Scaling");
+            ImGui.TableNextColumn();
+            var scaleMode = _effect.Attributes & HypnoAttributes.ScaleMask;
+
+            if (ImGui.RadioButton("Static", scaleMode == 0))
+                _effect.Attributes &= ~HypnoAttributes.ScaleMask;
+            CkGui.AttachToolTip("Text should remain the same size.");
+
+            ImGui.SameLine();
+            if (ImGui.RadioButton("Grows", scaleMode == HypnoAttributes.LinearTextScale))
+                _effect.Attributes = (_effect.Attributes & ~HypnoAttributes.ScaleMask) | HypnoAttributes.LinearTextScale;
+            CkGui.AttachToolTip(HypnoAttributes.LinearTextScale.ToTooltip());
+
+            ImGui.SameLine();
+            if (ImGui.RadioButton("Random", scaleMode == HypnoAttributes.RandomTextScale))
+                _effect.Attributes = (_effect.Attributes & ~HypnoAttributes.ScaleMask) | HypnoAttributes.RandomTextScale;
+            CkGui.AttachToolTip(HypnoAttributes.RandomTextScale.ToTooltip());
+
+            // Text Font Size
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            ImUtf8.TextFrameAligned("Font Size");
+            ImGui.TableNextColumn();
+            var textSize = _effect.TextFontSize;
+            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+            if (ImGui.SliderInt("##TextSize", ref textSize, HypnoService.FONTSIZE_MIN, HypnoService.FONTSIZE_MAX, "%dpx"))
+                _effect.TextFontSize = textSize;
+
+            // Stroke Thickness
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            ImUtf8.TextFrameAligned("Text Stroke");
+            ImGui.TableNextColumn();
+            var strokeThickness = _effect.StrokeThickness;
+            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+            if (ImGui.SliderInt("##StrokeThickness", ref strokeThickness, HypnoService.STROKE_THICKNESS_MIN, HypnoService.STROKE_THICKNESS_MAX, "%dpx"))
+                _effect.StrokeThickness = strokeThickness;
+
+            // Text Display Time
+            ImGui.TableNextRow();
+            ImGui.TableNextColumn();
+            ImUtf8.TextFrameAligned("Display Time");
+            ImGui.TableNextColumn();
+            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+            var textLife = _effect.TextDisplayTime;
+            if (ImGui.SliderInt("##TextLife", ref textLife, HypnoService.DISPLAY_TIME_MIN, HypnoService.DISPLAY_TIME_MAX, $"%dms"))
+                _effect.TextDisplayTime = textLife;
+            CkGui.AttachToolTip("How frequently the text cycles through the display words.");
+
+            var hasFade = _effect.Attributes.HasAny(HypnoAttributes.TextFade);
+            var hasSpeedUp = _effect.Attributes.HasAny(HypnoAttributes.SpeedUpOnCycle);
+            var hasTranspose = _effect.Attributes.HasAny(HypnoAttributes.TransposeColors);
+
+            if (hasFade)
+            {
+                // Text Fade In
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn();
+                ImUtf8.TextFrameAligned("Fade-In Time");
+                ImGui.TableNextColumn();
+                var fadeIn = _effect.TextFadeInTime;
+                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+                if (ImGui.SliderInt("##TextFadeIn", ref fadeIn, HypnoService.DISPLAY_TIME_MIN, HypnoService.DISPLAY_TIME_MAX / 2, "%dms"))
+                    _effect.TextFadeInTime = fadeIn;
+                // Text Fade Out
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn();
+                ImUtf8.TextFrameAligned("Fade-Out Time");
+                ImGui.TableNextColumn();
+                var fadeOut = _effect.TextFadeOutTime;
+                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+                if (ImGui.SliderInt("##TextFadeOut", ref fadeOut, HypnoService.DISPLAY_TIME_MIN, HypnoService.DISPLAY_TIME_MAX / 2, "%dms"))
+                    _effect.TextFadeOutTime = fadeOut;
+            }
+
+            if (hasSpeedUp)
+            {
+                // Speed Up On Cycle
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn();
+                ImUtf8.TextFrameAligned("Acceleration Time");
+                ImGui.TableNextColumn();
+                var speedUp = _effect.SpeedupTime;
+                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+                if (ImGui.SliderInt("##SpeedUpTime", ref speedUp, HypnoService.SPEED_BETWEEN_MIN, HypnoService.SPEED_BETWEEN_MAX, "%dms"))
+                    _effect.SpeedupTime = speedUp;
+                CkGui.AttachToolTip(HypnoAttributes.SpeedUpOnCycle.ToTooltip());
+            }
+
+            if (hasTranspose)
+            {
+                // Transpose Colors
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn();
+                ImUtf8.TextFrameAligned("Transpose Time");
+                ImGui.TableNextColumn();
+                var transposeRef = _effect.TransposeTime;
+                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+                if (ImGui.DragInt("##TransposeTime", ref transposeRef, 10f, HypnoService.DISPLAY_TIME_MIN, HypnoService.DISPLAY_TIME_MAX, "%dms"))
+                    _effect.TransposeTime = transposeRef;
+            }
+
+            if (!hasFade || !hasSpeedUp || !hasTranspose)
+            {
+                // Filler Frame Heights
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn();
+                var fillerFrameHeights = (hasFade ? 0 : 2) + (hasSpeedUp ? 0 : 1) + (hasTranspose ? 0 : 1);
+                ImGui.Dummy(new Vector2(0, ImGui.GetFrameHeight() * fillerFrameHeights));
+            }
+        }
     }
 
     private void DrawEditorArea(float width)
@@ -374,6 +573,9 @@ public class HypnoEffectEditor : IDisposable
         }
     }
 
+    public void DrawCompactPreview(float height)
+        => DisplayPreviewEffect(height, Constants.DefaultHypnoPath);
+
     private Vector2 DisplayPreviewEffect(float height, string path)
     {
         if (_effect is null || TextureManagerEx.GetMetadataPath(ImageDataType.Hypnosis, path) is not { } hypnoImage)
@@ -409,7 +611,7 @@ public class HypnoEffectEditor : IDisposable
             new Vector2(hypnoImage.Width, -hypnoImage.Height) * _effect.ZoomDepth,
             new Vector2(hypnoImage.Width, hypnoImage.Height) * _effect.ZoomDepth,
             new Vector2(-hypnoImage.Width, hypnoImage.Height) * _effect.ZoomDepth
-        };
+            };
 
             var rotatedBounds = new Vector2[4];
             for (var i = 0; i < corners.Length; i++)

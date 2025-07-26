@@ -59,7 +59,8 @@ public class KinksterPermsForClient{
         ImGui.Separator();
 
         ImGui.TextUnformatted("Misc. Permissions");
-        DrawPermRow(kinkster, dispName, width, SPPID.HypnoticEffect,          kinkster.PairPerms.HypnoEffectSending,       kinkster.PairPermAccess.HypnoEffectSendingAllowed);
+        DrawPermRow(kinkster, dispName, width, SPPID.HypnosisMaxTime,         kinkster.PairPerms.MaxHypnosisTime,          kinkster.PairPermAccess.HypnosisMaxTimeAllowed);
+        DrawPermRow(kinkster, dispName, width, SPPID.HypnosisEffect,          kinkster.PairPerms.HypnoEffectSending,       kinkster.PairPermAccess.HypnosisSendingAllowed);
         ImGui.Separator();
 
         ImGui.TextUnformatted("Toybox Permissions");
@@ -234,7 +235,8 @@ public class KinksterPermsForClient{
         .Add(SPPID.PermanentMoodles,      new PermDataPair(FAI.Infinity,              FAI.Ban,        "allows",        "prevents",     "permanent Moodles",      false))
         .Add(SPPID.RemoveMoodles,         new PermDataPair(FAI.Eraser,                FAI.Ban,        "allows",        "prevents",     "removing Moodles",       false))
 
-        .Add(SPPID.HypnoticEffect,        new PermDataPair(FAI.CameraRotate,          FAI.Ban,        "allows",        "prevents",     "Hypnotic Effect Sending",false))
+        .Add(SPPID.HypnosisMaxTime,       new PermDataPair(FAI.HourglassHalf,         FAI.None,       string.Empty,    string.Empty,   "Max Hypnosis Time",      false))
+        .Add(SPPID.HypnosisEffect,        new PermDataPair(FAI.CameraRotate,          FAI.Ban,        "allows",        "prevents",     "Hypnotic Effect Sending",false))
 
         .Add(SPPID.PatternStarting,       new PermDataPair(FAI.Play,                  FAI.Ban,        "allows",        "prevents",     "Pattern Starting",       false))
         .Add(SPPID.PatternStopping,       new PermDataPair(FAI.Stop,                  FAI.Ban,        "allows",        "prevents",     "Pattern Stopping",       false))

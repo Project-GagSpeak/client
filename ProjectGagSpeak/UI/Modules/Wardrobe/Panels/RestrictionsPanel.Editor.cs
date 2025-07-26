@@ -8,6 +8,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
+using GagspeakAPI.Data;
 using ImGuiNET;
 using OtterGui.Classes;
 using OtterGui.Text;
@@ -185,7 +186,8 @@ public partial class RestrictionsPanel
     private void DrawHypnoInfo(HypnoticRestriction hypnoticItem, float width)
     {
         // render it if we should.
-        _hypnoEditor.DrawPopup(_textures, hypnoticItem.Properties);
+        _hypnoEditor.DrawPopup(hypnoticItem.Properties, (effect) => hypnoticItem.Properties.Effect = new HypnoticEffect(effect));
+
 
         var pos = ImGui.GetCursorScreenPos();
         var displaySize = ImGui.GetIO().DisplaySize;

@@ -209,9 +209,9 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
             DrawPermissionRowString("ActiveHypnosisEffect", perms.HypnosisCustomEffect);
 
             ImGui.TableNextRow();
-            DrawPermissionRowString("Forced Follow", perms.ForcedFollow);
-            DrawPermissionRowString("Forced Emote State", perms.ForcedEmoteState);
-            DrawPermissionRowString("Forced Stay", perms.ForcedStay);
+            DrawPermissionRowString("Forced Follow", perms.LockedFollowing);
+            DrawPermissionRowString("Forced Emote State", perms.LockedEmoteState);
+            DrawPermissionRowString("Forced Stay", perms.IndoorConfinement);
             DrawPermissionRowString("Chat Boxes Hidden", perms.ChatBoxesHidden);
             DrawPermissionRowString("Chat Input Hiddeen", perms.ChatInputHidden);
             DrawPermissionRowString("Chat Input Blocked", perms.ChatInputBlocked);
@@ -295,10 +295,11 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         ImGui.TableNextRow();
         DrawPermissionRowBool("In Hardcore Mode", perms.InHardcore);
         DrawPermissionRowBool("Devotional States For Pair", perms.PairLockedStates);
-        DrawPermissionRowBool("Allow Forced Follow", perms.AllowForcedFollow);
-        DrawPermissionRowBool("Allow Forced Sit", perms.AllowForcedSit);
-        DrawPermissionRowBool("Allow Forced Emote", perms.AllowForcedEmote);
-        DrawPermissionRowBool("Allow Forced To Stay", perms.AllowForcedStay);
+        DrawPermissionRowBool("Allow Forced Follow", perms.AllowLockedFollowing);
+        DrawPermissionRowBool("Allow Forced Sit", perms.AllowLockedSitting);
+        DrawPermissionRowBool("Allow Forced Emote", perms.AllowLockedEmoting);
+        DrawPermissionRowBool("Allow Indoor Confinement", perms.AllowIndoorConfinement);
+        DrawPermissionRowBool("Allow Imprisonment", perms.AllowImprisonment);
         DrawPermissionRowBool("Allow GarbleChannelEditing", perms.AllowGarbleChannelEditing);
         DrawPermissionRowBool("Allow Hiding Chat Boxes", perms.AllowHidingChatBoxes);
         DrawPermissionRowBool("Allow Hiding Chat Input", perms.AllowHidingChatInput);

@@ -214,6 +214,9 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         OnKinksterUpdateActiveTriggers(dto => _ = Callback_KinksterUpdateActiveTriggers(dto));
         OnListenerName((user, name) => _ = Callback_ListenerName(user, name));
         OnShockInstruction(dto => _ = Callback_ShockInstruction(dto));
+        OnHypnoticEffect(dto => _ = Callback_HypnoticEffect(dto));
+        OnConfineToAddress(dto => _ = Callback_ConfineToAddress(dto));
+        OnImprisonAtPosition(dto => _ = Callback_ImprisonAtPosition(dto));
 
         OnKinksterNewGagData(dto => _ = Callback_KinksterNewGagData(dto));
         OnKinksterNewRestrictionData(dto => _ = Callback_KinksterNewRestrictionData(dto));

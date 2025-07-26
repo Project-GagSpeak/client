@@ -33,7 +33,7 @@ public unsafe partial class StaticDetours
         if (_traitCache.FinalTraits.HasAny(Traits.Immobile))
             return false;
 
-        if (OwnGlobals.Perms?.HcStayState() ?? false)
+        if (OwnGlobals.Perms?.HcConfinedState() ?? false)
         {
             // check if we are trying to hit teleport or return from hotbars /  menus
             if (type is ActionType.GeneralAction && acId is 7 or 8)

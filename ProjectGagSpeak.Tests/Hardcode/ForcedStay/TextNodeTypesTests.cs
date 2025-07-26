@@ -4,7 +4,7 @@
 //using Newtonsoft.Json;
 //using Newtonsoft.Json.Linq;
 
-//namespace ProjectGagSpeak.Tests.Hardcode.ForcedStay;
+//namespace ProjectGagSpeak.Tests.Hardcode.IndoorConfinement;
 //#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
 
 //public class TextNodeTypesTests { }

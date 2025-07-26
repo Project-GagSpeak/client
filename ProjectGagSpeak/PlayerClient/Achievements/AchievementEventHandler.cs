@@ -531,7 +531,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         (ClientAchievements.SaveData[Achievements.EnduranceQueen.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { Guid.Empty.ToString() });
 
         // if these are started, inturrupt them so that they do not complete.
-        (ClientAchievements.SaveData[Achievements.ForcedFollow.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { Guid.Empty.ToString() });
+        (ClientAchievements.SaveData[Achievements.LockedFollowing.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { Guid.Empty.ToString() });
         (ClientAchievements.SaveData[Achievements.ForcedWalkies.Id] as DurationAchievement)?.CleanupTracking(user.UID, new List<string>() { Guid.Empty.ToString() });
     }
 
@@ -932,13 +932,13 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
 
             // Handle the tracking start for the pair we just forced to follow, using our affectedUID as the item to track.
             // (We do this so that if another pair enacts the disable we still remove it.)
-            (ClientAchievements.SaveData[Achievements.ForcedFollow.Id] as DurationAchievement)?.StartTracking(affectedUID, affectedUID);
+            (ClientAchievements.SaveData[Achievements.LockedFollowing.Id] as DurationAchievement)?.StartTracking(affectedUID, affectedUID);
             (ClientAchievements.SaveData[Achievements.ForcedWalkies.Id] as DurationAchievement)?.StartTracking(affectedUID, affectedUID);
         }
         else
         {
             // it doesn't madder who the enactor was, we should halt tracking for any progress made once that pair is disabled.
-            (ClientAchievements.SaveData[Achievements.ForcedFollow.Id] as DurationAchievement)?.StopTracking(affectedUID, affectedUID);
+            (ClientAchievements.SaveData[Achievements.LockedFollowing.Id] as DurationAchievement)?.StopTracking(affectedUID, affectedUID);
             (ClientAchievements.SaveData[Achievements.ForcedWalkies.Id] as DurationAchievement)?.StopTracking(affectedUID, affectedUID);
         }
     }
@@ -1034,17 +1034,17 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
 
         var affectedPairIsSelf = affectedPairUID == MainHub.UID;
 
-        if (actionKind is HardcoreSetting.ForcedFollow)
+        if (actionKind is HardcoreSetting.LockedFollowing)
         {
             if (affectedPairIsSelf) ClientHardcoreFollowChanged(enactorUID, state);
             else PairHardcoreFollowChanged(enactorUID, affectedPairUID, state);
         }
-        else if (actionKind is HardcoreSetting.ForcedEmote)
+        else if (actionKind is HardcoreSetting.LockedEmote)
         {
             if (affectedPairIsSelf) ClientHardcoreEmoteStateChanged(enactorUID, state);
             else PairHardcoreEmoteChanged(enactorUID, affectedPairUID, state);
         }
-        else if (actionKind is HardcoreSetting.ForcedStay)
+        else if (actionKind is HardcoreSetting.IndoorConfinement)
         {
             if (affectedPairIsSelf) ClientHardcoreStayChanged(enactorUID, state);
             else PairHardcoreStayChanged(enactorUID, affectedPairUID, state);
