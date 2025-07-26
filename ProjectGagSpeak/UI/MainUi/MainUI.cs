@@ -169,7 +169,7 @@ public class MainUI : WindowMediatorSubscriberBase
                     using (ImRaii.PushId("patternHubComponent"))
                     {
                         _patternHub.DrawPatternHub();
-                        // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHub, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+                        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHub, ImGui.GetWindowPos(), ImGui.GetWindowSize());
                     }
                     break;
                 case MainMenuTabs.SelectedTab.MoodlesHub:

@@ -32,6 +32,7 @@ public class KinkPlateLight
     private readonly KinkPlateService _profileService;
     private readonly CosmeticService _cosmetics;
     private readonly TextureService _textures;
+    private readonly TutorialService _guides;
     public KinkPlateLight(ILogger<KinkPlateLight> logger, GagspeakMediator mediator,
         KinksterManager pairManager, ServerConfigManager serverConfigs,
         KinkPlateService profiles, CosmeticService cosmetics, TextureService textures, TutorialService guides)
@@ -43,6 +44,7 @@ public class KinkPlateLight
         _profileService = profiles;
         _cosmetics = cosmetics;
         _textures = textures;
+        _guides = guides;
     }
 
     public Vector2 RectMin { get; set; } = Vector2.Zero;
@@ -70,7 +72,7 @@ public class KinkPlateLight
     public bool DrawKinkPlateLight(ImDrawListPtr drawList, KinkPlate profile, string displayName, UserData userData, bool isPair, bool hoveringReport)
     {
         DrawPlate(drawList, profile.KinkPlateInfo, displayName);
-
+        
         DrawProfilePic(drawList, profile, displayName, userData, isPair);
 
         DrawDescription(drawList, profile, userData, isPair);

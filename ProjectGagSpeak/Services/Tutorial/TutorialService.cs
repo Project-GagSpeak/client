@@ -120,7 +120,6 @@ public class TutorialService
         .AddStep(mainUiStr.Step30Title, mainUiStr.Step30Desc, mainUiStr.Step30DescExtended)
         .AddStep(mainUiStr.Step31Title, mainUiStr.Step31Desc, mainUiStr.Step31DescExtended)
         .AddStep(mainUiStr.Step32Title, mainUiStr.Step32Desc, mainUiStr.Step32DescExtended)
-        .AddStep(mainUiStr.Step33Title, mainUiStr.Step33Desc, mainUiStr.Step33DescExtended)
         .EnsureSize(_tutorialSizes[TutorialType.MainUi]);
 
         var remoteStr = GSLoc.Tutorials.Remote;

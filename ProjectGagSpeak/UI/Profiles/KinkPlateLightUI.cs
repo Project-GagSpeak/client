@@ -85,7 +85,7 @@ public class KinkPlateLightUI : WindowMediatorSubscriberBase
 
         // draw the plate.
         HoveringReportButton = _lightUI.DrawKinkPlateLight(drawList, KinkPlate, DisplayName, UserDataToDisplay, _showFullUID, HoveringReportButton);
-        //_guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfilePreviewLight, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+        
         // Draw the close button.
         CloseButton(drawList, DisplayName);
         CkGui.AttachToolTipRect(_lightUI.CloseButtonPos, _lightUI.CloseButtonSize, "Close " + DisplayName + "'s KinkPlate™");

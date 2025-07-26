@@ -38,8 +38,8 @@ public enum StepsMainUi
     ProfilePreviewFull, // On click, close full preview, open image editor.
     ProfileEditImage, // On click, close image editor.
     ProfileSaving, // Emphasis on saving changes, and how editing without saving reverts changes.
-    ConfigSettings1, // the menu way to access settings
-    ConfigSettings2, // title bar way to access settings (to patternhub on click)
+    ConfigSettings1, // themenu way to access settings
+    //ConfigSettings2, // title bar way to access settings (to patternhub on click)
     PatternHub, // overview of pattern hub.
     PatternSearch, // how searches are filtered.
     PatternResults, // up to 50 results, ext ext, liking and downloading.

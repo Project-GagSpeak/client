@@ -107,7 +107,8 @@ public class AccountTab
 
             ImGui.AlignTextToFramePadding();
             DrawAccountSettingChild(FAI.Cog, "My Settings", "Opens the Settings UI", () => _mediator.Publish(new UiToggleMessage(typeof(SettingsUi))));
-            // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AccessingSettings, LastWinPos, LastWinSize);
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ConfigSettings1, LastWinPos, LastWinSize,
+                () => { /*move on to the pattern hub here, when my brain isn't cooked*/ });
 
             // Actions Notifier thing.
             ImGui.AlignTextToFramePadding();
