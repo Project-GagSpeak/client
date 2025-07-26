@@ -241,7 +241,7 @@ namespace GagSpeak.Localization
     }
 
     public class HelpRestraints
-    {   
+    {
         // -- DRAFT -- //
         public readonly string Step1Title = Loc.Localize("HelpRestraints_Step1Title", "Searching");
         public readonly string Step1Desc = Loc.Localize("HelpRestraints_Step1Desc", "You can search for a specific restraint set by typing its name here.");
@@ -277,8 +277,8 @@ namespace GagSpeak.Localization
 
         public readonly string Step9Title = Loc.Localize("HelpRestraints_Step9Title", "Hardcore Traits");
         public readonly string Step9Desc = Loc.Localize("HelpRestraints_Step9Desc", "Each of the hardcore traits can be toggled on or off.");
-        public readonly string Step9DescExtended = Loc.Localize("HelpRestraints_Step9DescExtended", "These will always be applied if you applied a restraint to yourself, " + 
-            "so be careful which ones you set, as they can disable various aspects of gameplay!");
+        public readonly string Step9DescExtended = Loc.Localize("HelpRestraints_Step9DescExtended", "These will always be applied if you put on a restraint yourself. " +
+            "Be careful which ones you set, as they each disable various aspects of gameplay!");
 
         public readonly string Step10Title = Loc.Localize("HelpRestraints_Step10Title", "Arousal");
         public readonly string Step10Desc = Loc.Localize("HelpRestraints_Step10Desc", "You can decide how arousing being in this set is.");
@@ -369,18 +369,20 @@ namespace GagSpeak.Localization
         public readonly string Step31Title = Loc.Localize("HelpRestraints_Step31Title", "Applying a Restraint");
         public readonly string Step31Desc = Loc.Localize("HelpRestraints_Step31Desc", "Select a restraint from the dropdown to apply it to yourself.");
         public readonly string Step31DescExtended = Loc.Localize("HelpRestraints_Step31DescExtended", "Favourited restraints will show up at the top. " +
-            "Note: Any hardcore traits enabled on a selected restraint always apply when you put them on yourself.");
+            "Note: Any hardcore traits enabled on a selected restraint always apply when you put it on yourself.");
 
         public readonly string Step32Title = Loc.Localize("HelpRestraints_Step32Title", "Locking a Restraint");
-        public readonly string Step32Desc = Loc.Localize("HelpRestraints_Step32Desc", "Don't forget you can also be locked into a restraint.");
-        public readonly string Step32DescExtended = Loc.Localize("HelpRestraints_Step32DescExtended", "Each lock has a different effect, and can be opened differently." +
-            "\nMETAL - Can be opened by anyone at any time" +
-            "\n5-MINUTES - Opens automatically after 5 minutes, can be opened by anyone, any time." +
-            "\nCOMBINATION - Requires you to set a 4-digit password. Can be opened by anyone who knows the password" +
-            "\nPASSWORD - Same as Combination, but can use more complex passwords." +
-            "\nTIMER - Will automatically unlock after a set time. Can be opened by anyone." +
-            "\nPREDICAMENT TIMER - Same as Timer, but cannot be opened by yourself, BE CAREFUL!" +
-            "\nPASSWORD TIMER - Combies Timer and Password locks."); /* is the description of each lock type needed or wanted? */
+        public readonly string Step32Desc = Loc.Localize("HelpRestraints_Step32Desc", "You can set a lock on the restraint from this list.");
+        public readonly string Step32DescExtended = Loc.Localize("HelpRestraints_Step32DescExtended", "There are several different kinds of locks." + Environment.NewLine +
+            "METAL => Most basic. Can be locked/unlocked by anyone." + Environment.NewLine +
+            "5-MINUTES => Automatically unlocks after 5 minutes, but can be unlocked early by anyone." + Environment.NewLine +
+            "COMBINATION => Locked with a 4-digit combination. Unlocked by anyone who knows the combo." + Environment.NewLine +
+            "PASSWORD => Same as Combination, but can use more complex passwords." + Environment.NewLine +
+            "TIMER => Unlocks after the set time. Can be unlocked early by anyone." + Environment.NewLine +
+            "PREDICAMENT TIMER => Same as Timer. Can only be unlocked early by someone else!" + Environment.NewLine +
+            "PASSWORD TIMER => Combination of Password and normal Timer locks." + Environment.NewLine +
+            "There are other types of locks that only other kinksters can apply to you, that aren't covered here."
+            );
 
         public readonly string Step33Title = Loc.Localize("HelpRestraints_Step33Title", "Adding and Removing Layers");
         public readonly string Step33Desc = Loc.Localize("HelpRestraints_Step33Desc", "Add or remove additional layers without removing your restraint.");
@@ -390,7 +392,7 @@ namespace GagSpeak.Localization
         public readonly string Step34Desc = Loc.Localize("HelpRestraints_Step34Desc", "You can't take a restraint off unless it's unlocked.");
         public readonly string Step34DescExtended = Loc.Localize("HelpRestraints_Step34DescExtended", "(We definitely snuck a Metal Padlock on you while you were reading earlier steps, click next and it will be unlocked for you.)"); //ehehehe i am amused
 
-        public readonly string Step35Title = Loc.Localize("HelpRestraints_Step35Title", "Removing a Restraint"); 
+        public readonly string Step35Title = Loc.Localize("HelpRestraints_Step35Title", "Removing a Restraint");
         public readonly string Step35Desc = Loc.Localize("HelpRestraints_Step35Desc", "Right click the thumbnail to remove a restraint once it's unlocked.");
         public readonly string Step35DescExtended = Loc.Localize("HelpRestraints_Step35DescExtended", " ");
 

@@ -138,7 +138,42 @@ public class TutorialService
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             PopupLabel = "Restraints Tutorial",
         }
-        .EnsureSize(0);
+        .AddStep(restraintsStr.Step1Title, restraintsStr.Step1Desc, restraintsStr.Step1DescExtended)
+        .AddStep(restraintsStr.Step2Title, restraintsStr.Step2Desc, restraintsStr.Step2DescExtended)
+        .AddStep(restraintsStr.Step3Title, restraintsStr.Step3Desc, restraintsStr.Step3DescExtended)
+        .AddStep(restraintsStr.Step4Title, restraintsStr.Step4Desc, restraintsStr.Step4DescExtended)
+        .AddStep(restraintsStr.Step5Title, restraintsStr.Step5Desc, restraintsStr.Step5DescExtended)
+        .AddStep(restraintsStr.Step6Title, restraintsStr.Step6Desc, restraintsStr.Step6DescExtended)
+        .AddStep(restraintsStr.Step7Title, restraintsStr.Step7Desc, restraintsStr.Step7DescExtended)
+        .AddStep(restraintsStr.Step8Title, restraintsStr.Step8Desc, restraintsStr.Step8DescExtended)
+        .AddStep(restraintsStr.Step9Title, restraintsStr.Step9Desc, restraintsStr.Step9DescExtended)
+        .AddStep(restraintsStr.Step10Title, restraintsStr.Step10Desc, restraintsStr.Step10DescExtended)
+        .AddStep(restraintsStr.Step11Title, restraintsStr.Step11Desc, restraintsStr.Step11DescExtended)
+        .AddStep(restraintsStr.Step12Title, restraintsStr.Step12Desc, restraintsStr.Step12DescExtended)
+        .AddStep(restraintsStr.Step13Title, restraintsStr.Step13Desc, restraintsStr.Step13DescExtended)
+        .AddStep(restraintsStr.Step14Title, restraintsStr.Step14Desc, restraintsStr.Step14DescExtended)
+        .AddStep(restraintsStr.Step15Title, restraintsStr.Step15Desc, restraintsStr.Step15DescExtended)
+        .AddStep(restraintsStr.Step16Title, restraintsStr.Step16Desc, restraintsStr.Step16DescExtended)
+        .AddStep(restraintsStr.Step17Title, restraintsStr.Step17Desc, restraintsStr.Step17DescExtended)
+        .AddStep(restraintsStr.Step18Title, restraintsStr.Step18Desc, restraintsStr.Step18DescExtended)
+        .AddStep(restraintsStr.Step19Title, restraintsStr.Step19Desc, restraintsStr.Step19DescExtended)
+        .AddStep(restraintsStr.Step20Title, restraintsStr.Step20Desc, restraintsStr.Step20DescExtended)
+        .AddStep(restraintsStr.Step21Title, restraintsStr.Step21Desc, restraintsStr.Step21DescExtended)
+        .AddStep(restraintsStr.Step22Title, restraintsStr.Step22Desc, restraintsStr.Step22DescExtended)
+        .AddStep(restraintsStr.Step23Title, restraintsStr.Step23Desc, restraintsStr.Step23DescExtended)
+        .AddStep(restraintsStr.Step24Title, restraintsStr.Step24Desc, restraintsStr.Step24DescExtended)
+        .AddStep(restraintsStr.Step25Title, restraintsStr.Step25Desc, restraintsStr.Step25DescExtended)
+        .AddStep(restraintsStr.Step26Title, restraintsStr.Step26Desc, restraintsStr.Step26DescExtended)
+        .AddStep(restraintsStr.Step27Title, restraintsStr.Step27Desc, restraintsStr.Step27DescExtended)
+        .AddStep(restraintsStr.Step28Title, restraintsStr.Step28Desc, restraintsStr.Step28DescExtended)
+        .AddStep(restraintsStr.Step29Title, restraintsStr.Step29Desc, restraintsStr.Step29DescExtended)
+        .AddStep(restraintsStr.Step30Title, restraintsStr.Step30Desc, restraintsStr.Step30DescExtended)
+        .AddStep(restraintsStr.Step31Title, restraintsStr.Step31Desc, restraintsStr.Step31DescExtended)
+        .AddStep(restraintsStr.Step32Title, restraintsStr.Step32Desc, restraintsStr.Step32DescExtended)
+        .AddStep(restraintsStr.Step33Title, restraintsStr.Step33Desc, restraintsStr.Step33DescExtended)
+        .AddStep(restraintsStr.Step34Title, restraintsStr.Step34Desc, restraintsStr.Step34DescExtended)
+        .AddStep(restraintsStr.Step35Title, restraintsStr.Step35Desc, restraintsStr.Step35DescExtended)
+        .EnsureSize(_tutorialSizes[TutorialType.Restraints]);
 
         var restrictionsStr = GSLoc.Tutorials.Restrictions;
         _tutorials[TutorialType.Restrictions] = new Tutorial()
