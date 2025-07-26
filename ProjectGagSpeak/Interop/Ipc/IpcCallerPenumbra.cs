@@ -177,12 +177,17 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
             return allMods
                 // Select the mod, its current settings, and all available settings.
                 .Select(mod => (mod, GetModSettingsSelected.Invoke(collection!.Value.Id, mod.Key), GetModSettingsAll.Invoke(mod.Key)))
-                // Where the return for current settings was successful, the settings were not null, and the available settings were not null.
-                .Where(t => t.Item2.Item1 is PenumbraApiEc.Success && t.Item2.Item2.HasValue && t.Item3 is not null)
                 // From here, create the mod info item, and the mod current settings item.
                 .Select(t =>
                 {
-                    var ModInfo = new ModInfo(t.mod.Key, t.mod.Value, t.Item2.Item2!.Value.Item2, t.Item3!.ToDictionary(t => t.Key, t => (t.Value)));
+                    // Mods don't necessarily need to have any valid settings associated with them in a collection.
+                    // If a mod does not have settings in the current collection, we give it 0 defaults and empty dictionary.
+                    var priority = t.Item2.Item2.HasValue ? t.Item2.Item2!.Value.Item2 : 0;
+                    var allSettings = t.Item3 is not null && t.Item3.Count > 0 ?
+                        t.Item3!.ToDictionary(t => t.Key, (t => t.Value)) :
+                        new Dictionary<string, (string[] Options, GroupType GroupType)>();
+
+                    var ModInfo = new ModInfo(t.mod.Key, t.mod.Value, priority, allSettings);
                     var ModSettings = t.Item2.Item2.HasValue ? t.Item2.Item2!.Value.Item3 : new Dictionary<string, List<string>>();
                     return (ModInfo, ModSettings);
                 })
