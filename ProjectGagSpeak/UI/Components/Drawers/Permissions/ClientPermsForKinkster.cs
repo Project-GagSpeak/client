@@ -342,7 +342,7 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
         using (ImRaii.Group())
         {
             var seconds = (float)pairPerms.MaxVibrateDuration.TotalMilliseconds / 1000;
-            if (CkGui.IconSliderFloat("##maxVibeTime" + kinkster.UserData.UID, FAI.Stopwatch, "Max Vibe Duration",
+            if (CkGui.IconSliderFloat("##maxVibeTime" + kinkster.UserData.UID, FAI.Stopwatch, "Max Vibe Time",
                 ref seconds, 0.1f, 15f, width * .65f, true, pairPerms.HasValidShareCode()))
             {
                 pairPerms.MaxVibrateDuration = TimeSpan.FromSeconds(seconds);
@@ -418,10 +418,11 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
 
         .Add(SPPID.HardcoreModeState,     new PermDataClient(false, FAI.AnchorLock,            FAI.Unlock,        "enabled",       "disabled",        "Hardcore Mode",            "is",  string.Empty,                             string.Empty))
         .Add(SPPID.PairLockedStates,      new PermDataClient(false, FAI.AnchorLock,            FAI.Unlock,        "Devotional",    "not Devotional",  "Hardcore States",          "are", string.Empty, string.Empty))
-        .Add(SPPID.LockedFollowing,          new PermDataClient(false, FAI.Walking,               FAI.Ban,           "active",        "inactive",        "Forced Follow",            "is", string.Empty, string.Empty))
-        .Add(SPPID.LockedEmoteState,      new PermDataClient(false, FAI.PersonArrowDownToLine, FAI.Ban,           "active",        "inactive",        "Forced Emote",             "is", string.Empty, string.Empty))
-        .Add(SPPID.IndoorConfinement,            new PermDataClient(false, FAI.HouseLock,             FAI.Ban,           "active",        "inactive",        "Forced Stay",              "is", string.Empty, string.Empty))
+        .Add(SPPID.LockedFollowing,       new PermDataClient(false, FAI.Walking,               FAI.Ban,           "active",        "inactive",        "Locked Follow",            "is", string.Empty, string.Empty))
+        .Add(SPPID.LockedEmoteState,      new PermDataClient(false, FAI.PersonArrowDownToLine, FAI.Ban,           "active",        "inactive",        "Locked Emote State",             "is", string.Empty, string.Empty))
+        .Add(SPPID.IndoorConfinement,     new PermDataClient(false, FAI.HouseLock,             FAI.Ban,           "active",        "inactive",        "Indoor Confinement",              "is", string.Empty, string.Empty))
+        .Add(SPPID.Imprisonment,          new PermDataClient(false, FAI.Bars,                  FAI.Ban,           "active",        "inactive",        "Imprisonment",      "is", string.Empty, string.Empty))
         .Add(SPPID.ChatBoxesHidden,       new PermDataClient(false, FAI.CommentSlash,          FAI.Ban,           "visible",       "hidden",          "Chatboxes",                "are", string.Empty, string.Empty))
         .Add(SPPID.ChatInputHidden,       new PermDataClient(false, FAI.CommentSlash,          FAI.Ban,           "visible",       "hidden",          "Chat Input",               "is", string.Empty, string.Empty))
         .Add(SPPID.ChatInputBlocked,      new PermDataClient(false, FAI.CommentDots,           FAI.Ban,           "blocked",       "allow",         "Chat Input",               "is", string.Empty, string.Empty))
-        .Add(SPPID.HypnoticImage,         new PermDataClient(false, FAI.Image,                 FAI.Ban,           "allow",       "prevent",      "Hypnotic Image", "is", "to send hypnotic images",         "from sending hypnotic images"));}
+        .Add(SPPID.HypnoticImage,         new PermDataClient(false, FAI.Image,                 FAI.Ban,           "allow",       "prevent",      "Hypnotic Image", "is", string.Empty, string.Empty));}

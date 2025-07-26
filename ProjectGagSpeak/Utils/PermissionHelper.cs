@@ -50,7 +50,7 @@ public static class PermissionHelper
                 throw new InvalidOperationException($"Property {propertyName} in GlobalPerms, has the finalValue was null, which is not allowed.");
 
             // Now that it is updated clientside, attempt to make the change on the server, and get the hub responce.
-            HubResponse response = await hub.UserChangeOwnGlobalPerm(propertyName, finalVal);
+            HubResponse response = await hub.UserChangeOwnGlobalPerm(propertyName, newValue);
 
             if (response.ErrorCode is not GagSpeakApiEc.Success)
                 throw new InvalidOperationException($"Failed to change {propertyName} to {finalVal} for self. Reason: {response.ErrorCode}");
@@ -91,7 +91,7 @@ public static class PermissionHelper
 
             // Now that it is updated clientside, attempt to make the change on the server, and get the hub responce.
             HubResponse response = await hub.UserChangeOwnPairPerm(
-                new(target, new KeyValuePair<string, object>(propertyName, finalVal), UpdateDir.Own, MainHub.PlayerUserData));
+                new(target, new KeyValuePair<string, object>(propertyName, newValue), UpdateDir.Own, MainHub.PlayerUserData));
 
             if (response.ErrorCode is not GagSpeakApiEc.Success)
                 throw new InvalidOperationException($"Failed to change {propertyName} to {finalVal} for self. Reason: {response.ErrorCode}");
@@ -132,7 +132,7 @@ public static class PermissionHelper
 
             // Now that it is updated clientside, attempt to make the change on the server, and get the hub responce.
             HubResponse response = await hub.UserChangeOwnPairPermAccess(
-                new(target, new KeyValuePair<string, object>(propertyName, finalVal), UpdateDir.Own, MainHub.PlayerUserData));
+                new(target, new KeyValuePair<string, object>(propertyName, newValue), UpdateDir.Own, MainHub.PlayerUserData));
 
             if (response.ErrorCode is not GagSpeakApiEc.Success)
                 throw new InvalidOperationException($"Failed to change {propertyName} to {finalVal} for self. Reason: {response.ErrorCode}");

@@ -773,8 +773,9 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
                 _hypnoEditor.DrawCompactEditor(width);
                 _hypnoEditor.DrawCompactPreview(CkStyle.ThreeRowHeight());
             }
-            ImGui.Separator();
         }
+
+        ImGui.Separator();
     }
     #endregion Misc
 
