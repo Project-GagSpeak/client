@@ -6,6 +6,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
+using GagSpeak.Services.Tutorial;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Network;
@@ -20,17 +21,20 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
     private readonly MainHub _hub;
     private readonly KinkPlateService _KinkPlateManager;
     private readonly CosmeticService _cosmetics;
+    private readonly TutorialService _guides;
 
     public KinkPlateEditorUI(
         ILogger<KinkPlateEditorUI> logger,
         GagspeakMediator mediator,
         MainHub hub,
         KinkPlateService KinkPlateManager,
-        CosmeticService cosmetics) : base(logger, mediator, "KinkPlate Editor###KP_EditorUI")
+        CosmeticService cosmetics,
+        TutorialService guides) : base(logger, mediator, "KinkPlate Editor###KP_EditorUI")
     {
         _hub = hub;
         _KinkPlateManager = KinkPlateManager;
         _cosmetics = cosmetics;
+        _guides = guides;
 
         Flags = WFlags.NoScrollbar | WFlags.NoResize;
         SizeConstraints = new WindowSizeConstraints()
@@ -117,6 +121,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
                 CkGui.AttachToolTip("If checked, your profile picture and description will become visible\n" +
                     "to others through private rooms and global chat!" +
                     "--SEP--Non-Paired Kinksters still won't be able to see your UID if viewing your KinkPlate");
+                _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfilePublicity, ImGui.GetWindowPos(), ImGui.GetWindowSize());
             }
         }
 
@@ -139,6 +144,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
             {
                 profile.KinkPlateInfo.ChosenTitleId = newTitleId;
             }
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SettingTitles, ImGui.GetWindowPos(), ImGui.GetWindowSize());
         }
 
         using (ImRaii.Group())
@@ -176,6 +182,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
                     profile.SetOverlay(SelectedComponent, newOverlay);
             }
         }
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.CustomizingProfile, ImGui.GetWindowPos(), ImGui.GetWindowSize());
 
         // below this, we should draw out the description editor
         ImGui.AlignTextToFramePadding();
@@ -187,6 +194,8 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
             if (ImGui.InputTextMultiline("##pfpDescription", ref refText, 1000, size))
                 profile.KinkPlateInfo.Description = refText;
         }
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileDescription, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+            () => Mediator.Publish(new KinkPlateOpenStandaloneLightMessage(MainHub.PlayerUserData))); 
         if (profile.KinkPlateInfo.Disabled)
             CkGui.AttachToolTip("You're Profile Customization Access has been Revoked!" +
                 "--SEP--You will not be able to edit your KinkPlate Description!");

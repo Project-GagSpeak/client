@@ -1,18 +1,19 @@
+using CkCommons.Gui;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Gui.Profile;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.Gui.Profile;
-using GagSpeak.PlayerClient;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using ImGuiNET;
-using CkCommons.Gui;
-using GagSpeak.Utils;
+using OtterGui.Text;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -68,7 +69,7 @@ public class AccountTab
                     ImGui.GetWindowDrawList().AddImageRounded(wrap.ImGuiHandle, pos, pos + imgSize, Vector2.Zero, Vector2.One,
                         ImGui.GetColorU32(new Vector4(1f, 1f, 1f, 1f)), 90f);
                     ImGuiHelpers.ScaledDummy(imgSize);
-                    // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.UserProfilePicture, LastWinPos, LastWinSize);
+                    //_guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.UserProfilePicture, LastWinPos, LastWinSize);
                     ImGui.SetCursorPos(new Vector2(currentPosition.X, currentPosition.Y + imgSize.Y));
 
                 }
@@ -80,19 +81,28 @@ public class AccountTab
 
             // draw the UID header below this.
             DrawUIDHeader();
-            // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.UserIdentification, LastWinPos, LastWinSize);
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ClientUID, LastWinPos, LastWinSize);
 
             // below this, draw a separator. (temp)
             ImGui.Spacing();
             ImGui.Separator();
 
-            DrawSafewordChild();
+            DrawSafewordGroup();
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Safewords, LastWinPos, LastWinSize);
+            ImGui.SameLine(ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FAI.Edit).X);
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ((ImGui.GetItemRectSize().Y - ImGui.GetFrameHeight()) / 2));
+            if (CkGui.IconButton(FAI.Edit, inPopup: true))
+                EditingSafeword = !EditingSafeword;
+            CkGui.AttachToolTip(EditingSafeword ? "Cancel safeword changes." : "Edit current Safeword.");
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SettingSafeword, LastWinPos, LastWinSize);
+            
             ImGui.Separator();
             ImGui.Spacing();
 
             ImGui.AlignTextToFramePadding();
             DrawAccountSettingChild(FAI.PenSquare, "My Profile", "Open and Customize your Profile!", () => _mediator.Publish(new UiToggleMessage(typeof(KinkPlateEditorUI))));
-            // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileEditing, LastWinPos, LastWinSize);
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileEditing, LastWinPos, LastWinSize, 
+                () => _mediator.Publish(new UiToggleMessage(typeof(KinkPlateEditorUI))));
 
 
             ImGui.AlignTextToFramePadding();
@@ -151,6 +161,33 @@ public class AccountTab
                     Svc.Logger.Error($"[ConfigFileOpen] Failed to open the config directory. {e.Message}");
                 }
             });
+        }
+
+        void DrawSafewordGroup()
+        {
+            using var _ = ImRaii.Group();
+            using var font = UiFontService.UidFont.Push();
+
+            ImUtf8.TextFrameAligned("Safeword:");
+            ImUtf8.SameLineInner();
+            var width = ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FAI.Edit).X - _spacingX;
+
+            if (EditingSafeword)
+            {
+                var safeword = _config.Current.Safeword;
+                ImGui.SetNextItemWidth(width);
+                if (ImGui.InputText("##SetSafeword", ref safeword, 30, ITFlags.EnterReturnsTrue))
+                {
+                    _config.Current.Safeword = safeword;
+                    _config.Save();
+                    EditingSafeword = false;
+                }
+            }
+            else
+            {
+                var safeword = string.IsNullOrWhiteSpace(_config.Current.Safeword) ? "<Nothing Set!>" : _config.Current.Safeword;
+                CkGui.ColorTextFrameAligned(safeword, ImGuiColors.DalamudYellow);
+            }
         }
     }
 
@@ -241,16 +278,16 @@ public class AccountTab
                 ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - editButtonSize.X - ImGui.GetStyle().ItemSpacing.X);
                 ImGui.SetCursorPosY(childStartYpos + ((height - editButtonSize.Y) / 2) + 1f);
             }
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Safewords, LastWinPos, LastWinSize);
             // draw out the icon button
             CkGui.IconText(FAI.Edit);
             if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             {
                 EditingSafeword = !EditingSafeword;
             }
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SettingSafeword, LastWinPos, LastWinSize);
         }
         CkGui.AttachToolTip("Set a safeword to quickly revert any changes made by the plugin.");
-        // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SafewordPartOne, LastWinPos, LastWinSize);
-        // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SafewordPartTwo, LastWinPos, LastWinSize);
     }
 
     private void DrawAccountSettingChild(FontAwesomeIcon leftIcon, string displayText, string hoverTT, Action buttonAction)

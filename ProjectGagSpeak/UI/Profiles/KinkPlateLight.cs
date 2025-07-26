@@ -16,6 +16,7 @@ using System.Globalization;
 using GagSpeak.Kinksters;
 using CkCommons.Gui;
 using CkCommons.Helpers;
+using GagSpeak.Services.Tutorial;
 
 namespace GagSpeak.Gui.Profile;
 
@@ -33,7 +34,7 @@ public class KinkPlateLight
     private readonly TextureService _textures;
     public KinkPlateLight(ILogger<KinkPlateLight> logger, GagspeakMediator mediator,
         KinksterManager pairManager, ServerConfigManager serverConfigs,
-        KinkPlateService profiles, CosmeticService cosmetics, TextureService textures)
+        KinkPlateService profiles, CosmeticService cosmetics, TextureService textures, TutorialService guides)
     {
         _logger = logger;
         _mediator = mediator;
@@ -42,7 +43,6 @@ public class KinkPlateLight
         _profileService = profiles;
         _cosmetics = cosmetics;
         _textures = textures;
-
     }
 
     public Vector2 RectMin { get; set; } = Vector2.Zero;

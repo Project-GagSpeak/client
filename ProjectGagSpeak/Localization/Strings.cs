@@ -98,7 +98,7 @@ namespace GagSpeak.Localization
 
         public readonly string Step7Title = Loc.Localize("HelpMainUi_Step7Title", "Account Page");
         public readonly string Step7Desc = Loc.Localize("HelpMainUi_Step7Desc", "Manage account settings here.");
-        public readonly string Step7DescExtended = Loc.Localize("HelpMainUi_Step7DescExtended", "This page will contain all information related to settings, profile setup, configs, and support links!");
+        public readonly string Step7DescExtended = Loc.Localize("HelpMainUi_Step7DescExtended", "This page contains all information related to settings, profile setup, configs, and support links!");
 
         public readonly string Step8Title = Loc.Localize("HelpMainUi_Step8Title", "Client UID");
         public readonly string Step8Desc = Loc.Localize("HelpMainUi_Step8Desc", "Your UID for pairing.");
