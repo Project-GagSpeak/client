@@ -299,6 +299,8 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<GlobalChatLog>()
         .AddSingleton<PopoutGlobalChatlog>()
         .AddSingleton<VibeRoomChatlog>()
+        .AddSingleton<MainMenuTabs>()
+
 
         // WebAPI (Server stuff)
         .AddSingleton<MainHub>()
@@ -359,7 +361,6 @@ public static class GagSpeakServiceExtensions
         // Scoped MainUI (Home)
         .AddScoped<WindowMediatorSubscriberBase, IntroUi>()
         .AddScoped<WindowMediatorSubscriberBase, MainUI>()
-        .AddScoped<MainMenuTabs>()
         .AddScoped<HomepageTab>()
         .AddScoped<WhitelistTab>()
         .AddScoped<PatternHubTab>()
