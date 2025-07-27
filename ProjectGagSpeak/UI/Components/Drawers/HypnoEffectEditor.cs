@@ -813,7 +813,7 @@ public class HypnoEffectEditor : IDisposable
                     {
                         if (_renamingPreset.PresetName.IsNullOrEmpty())
                             _renamingPreset.PresetName = setName;
-                        ImGui.InputText("##RenamePreset", ref _renamingPreset.PresetName, 255);
+                        ImGui.InputText($"##RenamePreset-{setName}", ref _renamingPreset.PresetName, 255);
                         if (ImGui.IsItemDeactivated())
                         {
                             if (_renamingPreset.PresetName == setName)
@@ -880,8 +880,15 @@ public class HypnoEffectEditor : IDisposable
                 var newPresetName = $"_{string.Concat(Enumerable.Range(0, 10).Select(_ => (char)('a' + random.Next(0, 26))))}";
                 while (_presetManager.Presets.ContainsKey(newPresetName))
                     newPresetName = $"_{string.Concat(Enumerable.Range(0, 10).Select(_ => (char)('a' + random.Next(0, 26))))}";
-                if(_presetManager.TryAddPreset(newPresetName, _editorRef._effect))
-                    Svc.Logger.Debug($"Added new Hypno Effect Preset: {newPresetName}");
+
+                var newEffect = new HypnoticEffect(_editorRef._effect);
+                newEffect.EffectId = Guid.NewGuid();
+                if (_presetManager.TryAddPreset(newPresetName, newEffect))
+                {
+                    Svc.Logger.Debug($"Hypno Effect Preset '{newPresetName}' added successfully.");
+                    _selectedPreset = (newEffect.EffectId, newPresetName);
+                    _editorRef.SetHypnoEffect(newEffect);
+                }
             }
         }
     }
