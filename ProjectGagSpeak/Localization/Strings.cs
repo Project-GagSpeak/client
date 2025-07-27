@@ -74,7 +74,7 @@ namespace GagSpeak.Localization
 
         public readonly string Step2Title = Loc.Localize("HelpMainUi_Step2Title", "Connection State");
         public readonly string Step2Desc = Loc.Localize("HelpMainUi_Step2Desc", "Your current connection status.");
-        public readonly string Step2DescExtended = Loc.Localize("HelpMainUi_Step2DescExtended", " ");
+        public readonly string Step2DescExtended = Loc.Localize("HelpMainUi_Step2DescExtended", "You can hover over this button for more details.");
 
         public readonly string Step3Title = Loc.Localize("HelpMainUi_Step3Title", "Homepage");
         public readonly string Step3Desc = Loc.Localize("HelpMainUi_Step3Desc", "Access GagSpeak's many modules here.");
@@ -83,14 +83,14 @@ namespace GagSpeak.Localization
         public readonly string Step4Title = Loc.Localize("HelpMainUi_Step4Title", "Whitelist");
         public readonly string Step4Desc = Loc.Localize("HelpMainUi_Step4Desc", "Where your added Kinksters appear.");
         public readonly string Step4DescExtended = Loc.Localize("HelpMainUi_Step4DescExtended",
-            "MIDDLE-CLICK -> Open this Kinkster's KinkPlate.\n" +
-            "RIGHT-CLICK -> Set a nickname for this Kinkster.\n" +
-            "Magnify Glass -> View the permissions set for you by this Kinkster.\n" +
-            "Gear -> Set your permissions for this Kinkster here.\n" +
-            "Triple Dots -> Interact with this Kinkster.");
+            "MIDDLE-CLICK => Open this Kinkster's KinkPlate.\n" +
+            "RIGHT-CLICK => Set a nickname for this Kinkster.\n" +
+            "Magnify Glass => View the permissions set for you by this Kinkster.\n" +
+            "Gear => Set your permissions for this Kinkster here.\n" +
+            "Triple Dots => Interact with this Kinkster.");
 
         public readonly string Step5Title = Loc.Localize("HelpMainUi_Step5Title", "Adding Kinksters");
-        public readonly string Step5Desc = Loc.Localize("HelpMainUi_Step5Desc", "This sends Kinkster Requests to others.");
+        public readonly string Step5Desc = Loc.Localize("HelpMainUi_Step5Desc", "Send out Kinkster requests here.");
         public readonly string Step5DescExtended = Loc.Localize("HelpMainUi_Step5DescExtended", "Sent requests expire automatically within " +
             "3 days if not responded to, and can also be canceled at anytime.");
 
@@ -107,8 +107,8 @@ namespace GagSpeak.Localization
         public readonly string Step8DescExtended = Loc.Localize("HelpMainUi_Step8DescExtended", "This defines your account, you shouldn't display this in global chats or kinkplates.");
 
         public readonly string Step9Title = Loc.Localize("HelpMainUi_Step9Title", "Safewords");
-        public readonly string Step9Desc = Loc.Localize("HelpMainUi_Step9Desc", "Triggered with [/safeword YOURSAFEWORD], or [/safeword YOURSAFEWORD SPESIFICUID]");
-        public readonly string Step9DescExtended = Loc.Localize("HelpMainUi_Step9DescExtended", "Safewords override everything, and should be used responsibly.");
+        public readonly string Step9Desc = Loc.Localize("HelpMainUi_Step9Desc", "Triggered with [/safeword YOURSAFEWORD], or [/safeword YOURSAFEWORD SPECIFICUID]");
+        public readonly string Step9DescExtended = Loc.Localize("HelpMainUi_Step9DescExtended", "Using your safeword will override everything, so please use it responsibly.");
 
         public readonly string Step10Title = Loc.Localize("HelpMainUi_Step10Title", "Setting Safeword");
         public readonly string Step10Desc = Loc.Localize("HelpMainUi_Step10Desc", "Press this stencil to set your personal Safeword.");
@@ -132,7 +132,7 @@ namespace GagSpeak.Localization
             "if you would like to contribute, please let me know! Until then, this is WIP.");
 
         public readonly string Step15Title = Loc.Localize("HelpMainUi_Step15Title", "Profile Description");
-        public readonly string Step15Desc = Loc.Localize("HelpMainUi_Step15Desc", "More space than search infos provide!");
+        public readonly string Step15Desc = Loc.Localize("HelpMainUi_Step15Desc", "More space than the search info provides!");
         public readonly string Step15DescExtended = Loc.Localize("HelpMainUi_Step15DescExtended", "Results can vary based on how the description is calculated, " +
             "preview result on light and full kinkplates!");
 
@@ -175,7 +175,7 @@ namespace GagSpeak.Localization
 
         public readonly string Step24Title = Loc.Localize("HelpMainUi_Step25Title", "Moodle Hub");
         public readonly string Step24Desc = Loc.Localize("HelpMainUi_Step25Desc", "Browse and explore Moodles uploaded by others.");
-        public readonly string Step24DescExtended = Loc.Localize("HelpMainUi_Step25DescExtended", "Overview of moodle hub.");
+        public readonly string Step24DescExtended = Loc.Localize("HelpMainUi_Step25DescExtended", "");
 
         public readonly string Step25Title = Loc.Localize("HelpMainUi_Step26Title", "Moodle Search");
         public readonly string Step25Desc = Loc.Localize("HelpMainUi_Step26Desc", "Use tags and filters to narrow your search results.");
@@ -183,23 +183,23 @@ namespace GagSpeak.Localization
             "you can't find the result you are looking for, narrow it with filters!");
 
         public readonly string Step26Title = Loc.Localize("HelpMainUi_Step27Title", "Moodle Results");
-        public readonly string Step26Desc = Loc.Localize("HelpMainUi_Step27Desc", "Hover result icons to preview display. Try on, like, or copy results to clipboard.");
-        public readonly string Step26DescExtended = Loc.Localize("HelpMainUi_Step27DescExtended", " ");
+        public readonly string Step26Desc = Loc.Localize("HelpMainUi_Step27Desc", "You can preview a Moodle by hovering over it's icon.");
+        public readonly string Step26DescExtended = Loc.Localize("HelpMainUi_Step27DescExtended", "You can also try on, like, or grab a copy of the Moodle for yourself.");
 
         public readonly string Step27Title = Loc.Localize("HelpMainUi_Step28Title", "Global Chat");
         public readonly string Step27Desc = Loc.Localize("HelpMainUi_Step28Desc", "Chat Anonymously with other Kinksters from anywhere in the world with Global Chat!");
         public readonly string Step27DescExtended = Loc.Localize("HelpMainUi_Step28DescExtended", "ChatLogs are restored on reconnection, and reset at midnight every day relative to your local time zone.");
 
         public readonly string Step28Title = Loc.Localize("HelpMainUi_Step29Title", "Using Global Chat");
-        public readonly string Step28Desc = Loc.Localize("HelpMainUi_Step29Desc", "To talk in Global Chat, you must verify your account first! This protected against anonymous Harassment.");
-        public readonly string Step28DescExtended = Loc.Localize("HelpMainUi_Step29DescExtended", " ");
+        public readonly string Step28Desc = Loc.Localize("HelpMainUi_Step29Desc", "To talk in Global Chat, you must verify your account first! This is to prevent anonymous harassment.");
+        public readonly string Step28DescExtended = Loc.Localize("HelpMainUi_Step29DescExtended", "In order to verify your account, you will need to join the discord server, where further instructions can be found.");
 
         public readonly string Step29Title = Loc.Localize("HelpMainUi_Step30Title", "Chat Emotes");
         public readonly string Step29Desc = Loc.Localize("HelpMainUi_Step30Desc", "You can add expressive emotes to messages!");
         public readonly string Step29DescExtended = Loc.Localize("HelpMainUi_Step30DescExtended", "Emotes can also be manually added to chat messages by typing out emotes like discord emotes. :catsnuggle:");
 
         public readonly string Step30Title = Loc.Localize("HelpMainUi_Step31Title", "Chat Scroll");
-        public readonly string Step30Desc = Loc.Localize("HelpMainUi_Step31Desc", "Sets if the window will always autoscroll to the last sent message.");
+        public readonly string Step30Desc = Loc.Localize("HelpMainUi_Step31Desc", "Sets if the window will always auto-scroll to the last sent message.");
         public readonly string Step30DescExtended = Loc.Localize("HelpMainUi_Step31DescExtended", "Turning Auto-Scroll off lets you scroll up freely.");
 
         public readonly string Step31Title = Loc.Localize("HelpMainUi_Step32Title", "Chat Message Examine");
@@ -208,7 +208,7 @@ namespace GagSpeak.Localization
             "your silence list, hiding messages from them until the next plugin restart.");
 
         public readonly string Step32Title = Loc.Localize("HelpMainUi_Step33Title", "Self Plug");
-        public readonly string Step32Desc = Loc.Localize("HelpMainUi_Step33Desc", "If you ever fancy tossing a tip or becoming a supporter as a thanks for all the hard work, or just to help support me, it would be much apperciated." +
+        public readonly string Step32Desc = Loc.Localize("HelpMainUi_Step33Desc", "If you ever fancy tossing a tip or becoming a supporter as a thanks for all the hard work, or just to help support me, it would be much appreciated." +
             "\n\nBut please don't feel guilty if you don't. Only support me if you want to! I will always love and cherish you all regardless ♥");
         public readonly string Step32DescExtended = Loc.Localize("HelpMainUi_Step33DescExtended", " ");
     }

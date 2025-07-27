@@ -58,8 +58,6 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
 
         _globalChat.DrawChat(ImGui.GetContentRegionAvail());
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.UsingGlobalChat, ImGui.GetWindowPos(), ImGui.GetWindowSize());
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatEmotes, ImGui.GetWindowPos(), ImGui.GetWindowSize());
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatScroll, ImGui.GetWindowPos(), ImGui.GetWindowSize());
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatMessageExamine, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
             () => _tabmenu.TabSelection = MainMenuTabs.SelectedTab.MySettings);
     }
