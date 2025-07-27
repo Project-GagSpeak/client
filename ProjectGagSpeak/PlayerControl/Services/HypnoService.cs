@@ -216,10 +216,9 @@ public class HypnoService : IDisposable
             return;
 
         var clientRes = ImGui.GetIO().DisplaySize;
-        var effectRes = effect.SourceResolution;
         // calculate the size scale factor based on the difference between these.
         // (this lets effects be transferrable between monitor sizes)
-        var sizeScale = new Vector2(clientRes.X / effectRes.X, clientRes.Y / effectRes.Y);
+        var sizeScale = new Vector2(clientRes.X / effect.SourceResX, clientRes.Y / effect.SourceResY);
         var scaleRatio = MathF.Min(sizeScale.X, sizeScale.Y);
 
         // Recalculate the necessary cycle speed that we should need for the rotation (may need optimizations later)

@@ -132,7 +132,15 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
     private void UpdateWindow(Kinkster kinkster, InteractionsTab type)
     {
         if (_openTab == type && kinkster == _kinkster)
+        {
             SilentClose();
+            return;
+        }
+        else if (_openTab == type)
+        {
+            SilentClose();
+            return;
+        }
 
 
         _logger.LogInformation($"Updating Sticky UI for {kinkster.GetNickAliasOrUid()} with type {type}.");
