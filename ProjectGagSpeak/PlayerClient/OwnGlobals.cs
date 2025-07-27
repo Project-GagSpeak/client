@@ -296,7 +296,7 @@ public sealed class OwnGlobals : DisposableMediatorSubscriberBase
         if (!_kinksters.TryGetKinkster(dto.User, out var enactingKinkster))
             throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
         // Secondary preventative measure.
-        if (CanApplyHypnosisEffect(enactingKinkster.UserData.UID))
+        if (!CanApplyHypnosisEffect(enactingKinkster.UserData.UID))
         {
             Logger.LogWarning($"Kinkster [{enactingKinkster.GetNickAliasOrUid()}] attempted to hypnotize while already hypnotized, discarding!");
             Mediator.Publish(new PushGlobalPermChange(nameof(GlobalPerms.HypnosisCustomEffect), string.Empty));
