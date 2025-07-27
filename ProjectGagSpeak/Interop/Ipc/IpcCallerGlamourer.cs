@@ -194,9 +194,14 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
         // Go through our slot map and fetch all the data, appending it as new BasicSlots for the restraint set.
         foreach (var (name, equipSlot) in slotMap)
         {
+            // Note: Apply flags for this function assume that it will only be used in the restraint sets UI.
+            // The base flag for all glamour slots must be set and the overlay can be added conditionally.
+            var applyFlags = RestraintFlags.Glamour;
+            if (asOverlay)
+                applyFlags ^= RestraintFlags.IsOverlay;
             result[equipSlot] = new RestraintSlotBasic
             {
-                ApplyFlags = asOverlay ? RestraintFlags.IsOverlay : 0,
+                ApplyFlags = applyFlags,
                 Glamour = new GlamourSlot(equipSlot, ItemSvc.NothingItem(equipSlot))
             };
 

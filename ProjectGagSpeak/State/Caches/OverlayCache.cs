@@ -33,17 +33,13 @@ public sealed class OverlayCache
     private KeyValuePair<CombinedCacheKey, HypnoticOverlay>? _priorityEffect = null;
 
     // public accessors.
+    public CombinedCacheKey PriorityBlindfoldKey => _priorityBlindfold?.Key ?? CombinedCacheKey.Empty;
     public BlindfoldOverlay? ActiveBlindfold => _priorityBlindfold?.Value;
-    public string? ActiveBlindfoldEnactor => _priorityBlindfold?.Key.EnactorUID;
+
+    public CombinedCacheKey PriorityEffectKey => _priorityEffect?.Key ?? CombinedCacheKey.Empty;
     public HypnoticOverlay? ActiveEffect => _priorityEffect?.Value;
-    public string? ActiveEffectEnactor => _priorityEffect?.Key.EnactorUID;
 
     public bool ShouldBeFirstPerson => (ActiveBlindfold?.ForceFirstPerson ?? false) || (ActiveEffect?.ForceFirstPerson ?? false);
-
-    public void AddEffectPreview(HypnoticEffect effect, TimeSpan duration)
-    {
-        // idk maybe something here to temporarily active a preview effect i dunno lol.
-    }
 
 
     /// <summary>
@@ -131,48 +127,48 @@ public sealed class OverlayCache
     }
 
     /// <summary>
-    ///     Updates the priority blindfold by finding the lowest priority blindfold. 
+    ///     Updates the priority blindfold by finding the highest priority blindfold. 
     /// </summary>
     /// <remarks> Remember, while others see the outermost blindfold, you see the innermost. </remarks>
     /// <returns> If the profile Changed. </returns>
-    public bool UpdateFinalBlindfoldCache([NotNullWhen(true)] out string prevEnactor)
+    public bool UpdateFinalBlindfoldCache([NotNullWhen(true)] out CombinedCacheKey prevPriorityKey)
     {
         bool anyChange;
         if (_blindfolds.Count == 0)
         {
             anyChange = _priorityBlindfold != null;
-            prevEnactor = _priorityBlindfold?.Key.EnactorUID ?? string.Empty;
+            prevPriorityKey = _priorityBlindfold?.Key ?? CombinedCacheKey.Empty;
             _priorityBlindfold = null;
             return anyChange;
         }
 
         var newFinalItem = _blindfolds.Last();
         anyChange = !_priorityBlindfold?.Key.Equals(newFinalItem.Key) ?? true;
-        prevEnactor = _priorityBlindfold?.Key.EnactorUID ?? string.Empty;
+        prevPriorityKey = _priorityBlindfold?.Key ?? CombinedCacheKey.Empty;
         _priorityBlindfold = newFinalItem;
         return anyChange;
     }
 
 
     /// <summary>
-    ///     Updates the priority blindfold by finding the lowest priority blindfold. 
+    ///     Updates the priority hypnotic effect by finding the highest priority blindfold. 
     /// </summary>
     /// <remarks> Outputs the previous effects enactor. If the effect was null, the string will be empty. </remarks>
     /// <returns> If the profile Changed. </returns>
-    public bool UpdateFinalHypnoEffectCache([NotNullWhen(true)] out string prevEnactor)
+    public bool UpdateFinalHypnoEffectCache([NotNullWhen(true)] out CombinedCacheKey prevPriorityKey)
     {
         bool anyChange;
         if (_hypnoEffects.Count == 0)
         {
             anyChange = _priorityEffect != null;
-            prevEnactor = _priorityEffect?.Key.EnactorUID ?? string.Empty;
+            prevPriorityKey = _priorityEffect?.Key ?? CombinedCacheKey.Empty;
             _priorityEffect = null;
             return anyChange;
         }
 
         var newFinalItem = _hypnoEffects.First();
         anyChange = !_priorityEffect?.Key.Equals(newFinalItem.Key) ?? true;
-        prevEnactor = _priorityEffect?.Key.EnactorUID ?? string.Empty;
+        prevPriorityKey = _priorityEffect?.Key ?? CombinedCacheKey.Empty;
         _priorityEffect = newFinalItem;
         return anyChange;
     }

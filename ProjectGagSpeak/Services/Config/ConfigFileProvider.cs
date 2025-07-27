@@ -27,6 +27,7 @@ public class ConfigFileProvider : IConfigFileProvider
     public readonly string CustomModSettings;
     public readonly string TraitAllowances;
     public readonly string Favorites;
+    public readonly string HypnoEffects;
     public readonly string BuzzToys;
     public string CKFS_GagRestrictions => Path.Combine(FileSysDirectory, "fs-gagrestrictions.json");
     public string CKFS_Restrictions => Path.Combine(FileSysDirectory, "fs-restrictions.json");
@@ -49,6 +50,8 @@ public class ConfigFileProvider : IConfigFileProvider
     public string Puppeteer => Path.Combine(CurrentPlayerDirectory, "puppeteer.json");
     public string Alarms => Path.Combine(CurrentPlayerDirectory, "alarms.json");
     public string Triggers => Path.Combine(CurrentPlayerDirectory, "triggers.json");
+    public string MetaData => Path.Combine(CurrentPlayerDirectory, "metadata.json");
+
     public string CurrentPlayerDirectory => Path.Combine(GagSpeakDirectory, CurrentUserUID ?? "InvalidFiles");
     public string? CurrentUserUID { get; private set; } = null;
 
@@ -66,6 +69,7 @@ public class ConfigFileProvider : IConfigFileProvider
         CustomModSettings = Path.Combine(GagSpeakDirectory, "custom-mod-settings.json");
         TraitAllowances = Path.Combine(GagSpeakDirectory, "trait-allowances.json");
         Favorites = Path.Combine(GagSpeakDirectory, "favorites.json");
+        HypnoEffects = Path.Combine(GagSpeakDirectory, "hypno-effect-presets.json");
         BuzzToys = Path.Combine(GagSpeakDirectory, "buzz-devices.json");
 
         Nicknames = Path.Combine(GagSpeakDirectory, "nicknames.json");

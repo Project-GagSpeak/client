@@ -183,12 +183,12 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<HypnoService>()
         .AddSingleton<KeystateController>()
         .AddSingleton<MovementController>()
-        .AddSingleton<OverlayController>()
 
         // Player Client
         .AddSingleton<ClientAchievements>()
         .AddSingleton<AchievementEventHandler>()
         .AddSingleton<FavoritesManager>()
+        .AddSingleton<HypnoEffectManager>()
         .AddSingleton<OwnGlobals>()
         .AddSingleton<KinksterRequests>()
         .AddSingleton<TraitAllowanceManager>()
@@ -326,6 +326,7 @@ public static class GagSpeakServiceExtensions
     => services
         .AddSingleton<ConfigFileProvider>()
         .AddSingleton<MainConfig>()
+        .AddSingleton<PlayerMetaData>()
         .AddSingleton<ServerConfigService>()
         .AddSingleton<NicknamesConfigService>()
         .AddSingleton<ServerConfigManager>()

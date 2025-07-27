@@ -72,11 +72,11 @@ public static unsafe class HcStayApartment
 
     /// <summary> Select the "Go to my Apartment" option from the apartment confirmation menu. </summary>
     public static unsafe bool GoToMyApartment()
-        => ForceStayUtils.TrySelectSpesificEntry(ForcedStayLang.GoToMyApartment, () => NodeThrottler.Throttle("SelectStringApartment"));
+        => ForceStayUtils.TrySelectSpesificEntry(NodeStringLang.GoToMyApartment, () => NodeThrottler.Throttle("SelectStringApartment"));
 
     /// <summary> Select the "Go to specified apartment"? option from the room confirmation menu. </summary>
     public static unsafe bool SelectGoToSpecifiedApartment()
-        => ForceStayUtils.TrySelectSpesificEntry(ForcedStayLang.GoToSpecifiedApartment, () => NodeThrottler.Throttle("SelectStringApartment"));
+        => ForceStayUtils.TrySelectSpesificEntry(NodeStringLang.GoToSpecifiedApartment, () => NodeThrottler.Throttle("SelectStringApartment"));
 
 
     /// <summary> Select a spesific apartment index. </summary>

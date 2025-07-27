@@ -1,9 +1,11 @@
+using CkCommons;
 using CkCommons.Gui;
+using Dalamud.Interface.Textures.TextureWraps;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
+using GagSpeak.State.Caches;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
-using GagSpeak.WebAPI;
 using ImGuiNET;
 
 namespace GagSpeak.Services.Controller;
@@ -18,13 +20,14 @@ public class BlindfoldService : IDisposable
 
     // Animation Control
     private SemaphoreSlim _animationSlim = new(1, 1);
-    private CancellationTokenSource _opacityAnimCTS = new();
+    private CancellationTokenSource _opacityCTS = new();
     private float _currentOpacity = 0.0f;
 
     // Internally stored Item for display.
     // Not synced with cache intentionally to allow for animations.
-    private BlindfoldOverlay? _appliedItem = null;
-    private string            _applierUid  = string.Empty;
+    private BlindfoldOverlay?   _appliedItem = null;
+    private CombinedCacheKey    _activeSourceKey = CombinedCacheKey.Empty;
+    private IDalamudTextureWrap?_storedImage;
 
     public BlindfoldService(ILogger<BlindfoldService> logger, MainConfig config)
     {
@@ -32,99 +35,61 @@ public class BlindfoldService : IDisposable
         _config = config;
     }
 
+    public CombinedCacheKey ActiveSourceKey => _activeSourceKey;
+    public string BlindfoldEnactor => _activeSourceKey.EnactorUID;
     public bool HasValidBlindfold => _appliedItem is not null;
-    public bool CanRemove(string enactor) => string.Equals(_applierUid, enactor);
 
     public void Dispose()
     {
         _logger.LogDebug("Disposing BlindfoldService");
-        _opacityAnimCTS?.Cancel();
-        _opacityAnimCTS?.Dispose();
+        _opacityCTS?.Cancel();
+        _opacityCTS?.Dispose();
     }
 
-    /// <summary> Swaps between two blindfolds by removing one, then applying another. </summary
-    public async Task SwapBlindfold(BlindfoldOverlay overlay, string enactor)
+    public async Task ApplyBlindfold(BlindfoldOverlay overlay, CombinedCacheKey source)
     {
-        if (HasValidBlindfold && !CanRemove(enactor))
-        {
-            _logger.LogWarning($"Cannot Switch! Current is Applied by [{_applierUid}]. Swapper [{enactor}] does not match!");
-            return;
-        }
-
-        _logger.LogDebug($"Swapping blindfolds: ({overlay.OverlayPath}) by [{enactor}]");
-        await ExecuteWithSemaphore(async () =>
-        {
-            // If we have an applied item, remove it first.
-            if (_appliedItem is not null)
-                await RemoveAnimationInternal();
-
-            // Now apply the new blindfold.
-            await EquipAnimationInternal(overlay, enactor);
-        });
-    }
-
-    /// <summary> Performs the equip animation then clears the stored data. Will inturrupt removal-animation. </summary>
-    /// <remarks> Handled safely through a SemaphoreSlim. </remarks>
-    public async Task EquipBlindfold(BlindfoldOverlay overlay, string enactor)
-    {
-        // reset the token thingy.
-        _opacityAnimCTS?.Cancel();
-        _opacityAnimCTS?.Dispose();
-        _opacityAnimCTS = new CancellationTokenSource();
-        await ExecuteWithSemaphore(() => EquipAnimationInternal(overlay, enactor));
-    }
-
-    /// <summary> Performs the remove animation then clears the stored data. Will inturrupt equip-animation. </summary>
-    /// <remarks> Handled safely through a SemaphoreSlim. </remarks>
-    public async Task RemoveBlindfold(string enactor)
-    {
-        if (!HasValidBlindfold || !CanRemove(enactor))
-            return;
-
-        // reset the token thingy.
-        _opacityAnimCTS?.Cancel();
-        _opacityAnimCTS?.Dispose();
-        _opacityAnimCTS = new CancellationTokenSource();
-        await ExecuteWithSemaphore(RemoveAnimationInternal);
-    }
-
-
-    private async Task EquipAnimationInternal(BlindfoldOverlay item, string enactor)
-    {
-        _logger.LogDebug($"{enactor} applied a blindfold: ({item.OverlayPath})");
-        _appliedItem = item;
-        _applierUid = enactor;
+        if (!overlay.IsValid())
+            _storedImage = await TextureManagerEx.RentMetadataPath(ImageDataType.Blindfolds, Constants.DefaultBlindfoldPath);
+        else
+            _storedImage = await TextureManagerEx.RentMetadataPath(ImageDataType.Blindfolds, overlay.OverlayPath);
+        // Img was valid, so set other properties.
+        _logger.LogDebug($"{BlindfoldEnactor} applied a blindfold from ({source.ToString()}): ({overlay.OverlayPath})");
+        // set source and enactor.
+        _activeSourceKey = source;
+        _appliedItem = overlay;
+        _opacityCTS = _opacityCTS.SafeCancelRecreate();
         _currentOpacity = 0.0f;
         // Perform the equip animation!
-        await AnimateOpacityTransition(_currentOpacity, _config.Current.OverlayMaxOpacity, _opacityAnimCTS.Token);
+        await ExecuteWithSemaphore(() => AnimateOpacityTransition(_currentOpacity, _config.Current.OverlayMaxOpacity, _opacityCTS.Token));
     }
 
-    private async Task RemoveAnimationInternal()
+    /// <summary> 
+    ///     Performs the remove animation then clears the stored data. 
+    ///     Will inturrupt equip-animation.
+    /// </summary>
+    public async Task RemoveBlindfold()
     {
-        _logger.LogDebug($"Removing Blindfold: ({_appliedItem?.OverlayPath}) applied by [{_applierUid}]");
-        // Perform the removal animation!
-        await AnimateOpacityTransition(_currentOpacity, 0.0f, _opacityAnimCTS.Token);
+        if (!HasValidBlindfold)
+            return;
+
+        _logger.LogDebug($"Removing Blindfold: ({_appliedItem?.OverlayPath}), originally set by [{BlindfoldEnactor}]");
+
+        // reset the token thingy.
+        _opacityCTS = _opacityCTS.SafeCancelRecreate();
         // Then null the items and complete.
+        await ExecuteWithSemaphore(() => AnimateOpacityTransition(_currentOpacity, 0.0f, _opacityCTS.Token));
         _appliedItem = null;
-        _applierUid = string.Empty;
+        _activeSourceKey = CombinedCacheKey.Empty;
+        _storedImage?.Dispose();
+        _storedImage = null;
     }
 
     private async Task AnimateOpacityTransition(float startOpacity, float endOpacity, CancellationToken token)
-    {
-        try
-        {
-            await AnimateOpacityInternal(startOpacity, endOpacity, token);
-        }
-        catch (OperationCanceledException) { /* Consume */ }
-        catch (Bagagwa ex)
-        {
-            _logger.LogError($"Error during opacity animation: {ex}");
-        }
-    }
+        => await Generic.Safe(async () => await AnimateOpacityInternal(startOpacity, endOpacity, token));
 
     private async Task AnimateOpacityInternal(float startOpacity, float endOpacity, CancellationToken token)
     {
-        try
+        await Generic.Safe(async () =>
         {
             // Redefine duration based on how close the current transition is.
             var opacityDelta = Math.Abs(endOpacity - startOpacity);
@@ -154,22 +119,13 @@ public class BlindfoldService : IDisposable
 
             // Ensure we set the final opacity to the end value.
             _currentOpacity = endOpacity;
-        }
-        catch (OperationCanceledException) { /* Consume */ }
-        catch (Bagagwa ex)
-        {
-            _logger.LogError($"Error during opacity animation: {ex}");
-        }
-
+        });
         _logger.LogDebug($"Blindfold opacity transition completed: {startOpacity:F2} -> {_currentOpacity:F2}");
     }
 
     public void DrawBlindfoldOverlay()
     {
-        if (_appliedItem is null)
-            return;
-
-        if (TextureManagerEx.GetMetadataPath(ImageDataType.Blindfolds, _appliedItem.OverlayPath) is not { } blindfoldImage)
+        if (_storedImage is not { } blindfoldImage)
             return;
 
         // Fetch the windows foreground drawlist. This ensures that we do not conflict drawlist layers, with ChatTwo, or other windows.

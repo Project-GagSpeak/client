@@ -1,16 +1,19 @@
 using CkCommons.HybridSaver;
 using GagSpeak.Services.Configs;
+using GagSpeak.Services.Mediator;
 
 namespace GagSpeak.PlayerClient;
 
 public class TraitAllowanceManager : IHybridSavable
 {
     private readonly ILogger<TraitAllowanceManager> _logger;
+    private readonly GagspeakMediator _mediator;
     private readonly HybridSaveService _saver;
 
-    public TraitAllowanceManager(ILogger<TraitAllowanceManager> logger, HybridSaveService saver)
+    public TraitAllowanceManager(ILogger<TraitAllowanceManager> logger, GagspeakMediator mediator, HybridSaveService saver)
     {
         _logger = logger;
+        _mediator = mediator;
         _saver = saver;
         Load();
     }
@@ -45,6 +48,8 @@ public class TraitAllowanceManager : IHybridSavable
 
         allowances.Add(kinksterUid);
         _saver.Save(this);
+        _mediator.Publish(new AllowancesChanged(type, allowances));
+        
     }
 
     public void AddAllowance(GagspeakModule type, IEnumerable<string> allowances)
@@ -61,6 +66,7 @@ public class TraitAllowanceManager : IHybridSavable
         _logger.LogDebug("Adding Allowances: " + string.Join(", ", allowances));
         set.UnionWith(allowances);
         _saver.Save(this);
+        _mediator.Publish(new AllowancesChanged(type, allowances));
     }
 
     public void RemoveAllowance(GagspeakModule type, string kinksterUid)
@@ -77,6 +83,7 @@ public class TraitAllowanceManager : IHybridSavable
 
         allowances.Remove(kinksterUid);
         _saver.Save(this);
+        _mediator.Publish(new AllowancesChanged(type, allowances));
     }
 
     public void RemoveAllowance(GagspeakModule type, IEnumerable<string> allowances)
@@ -93,6 +100,7 @@ public class TraitAllowanceManager : IHybridSavable
         
         set.ExceptWith(allowances);
         _saver.Save(this);
+        _mediator.Publish(new AllowancesChanged(type, allowances));
     }
 
     public void ResetAllowances(GagspeakModule type)
@@ -109,16 +117,7 @@ public class TraitAllowanceManager : IHybridSavable
 
         set.Clear();
         _saver.Save(this);
-    }
-
-    public void ResetAllowances()
-    {
-        TraitAllowancesRestraints.Clear();
-        TraitAllowancesRestrictions.Clear();
-        TraitAllowancesGags.Clear();
-        TraitAllowancesPatterns.Clear();
-        TraitAllowancesTriggers.Clear();
-        _saver.Save(this);
+        _mediator.Publish(new AllowancesChanged(type, set));
     }
 
     public int ConfigVersion => 0;

@@ -11,7 +11,7 @@ public static unsafe class HcStayHousingEntrance
 {
     public static bool ConfirmHouseEntranceAndEnter()
     {
-        var addon = ForceStayUtils.GetSpesificYesNo(ForcedStayLang.ConfirmHouseEntrance);
+        var addon = ForceStayUtils.GetSpesificYesNo(NodeStringLang.ConfirmHouseEntrance);
         if (addon is null)
             return false;
         // Addon valid, throttle the yesno selection, if possible.
@@ -55,7 +55,7 @@ public static unsafe class HcStayHousingEntrance
         var nearestDist = float.MaxValue;
         IGameObject nearestNode = null!;
 
-        var validNames = ForcedStayLang.Entrance.Concat(ForcedStayLang.EnterApartment);
+        var validNames = NodeStringLang.Entrance.Concat(NodeStringLang.EnterApartment);
 
         // iterate through the current objects in the table.
         foreach (var o in Svc.Objects)

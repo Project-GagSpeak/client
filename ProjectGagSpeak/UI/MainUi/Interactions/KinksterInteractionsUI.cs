@@ -6,12 +6,14 @@ using CkCommons.Raii;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using FFXIVClientStructs.FFXIV.Common;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.CustomCombos.Moodles;
 using GagSpeak.CustomCombos.Padlock;
 using GagSpeak.CustomCombos.Pairs;
 using GagSpeak.Gui.Components;
 using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
@@ -24,28 +26,27 @@ using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using GagspeakAPI.Util;
 using ImGuiNET;
-using JetBrains.Annotations;
 using OtterGui.Text;
-using static FFXIVClientStructs.FFXIV.Client.Game.CurrencyManager.Delegates;
 
 namespace GagSpeak.Gui.MainWindow;
 
 public class StickyWindowSelections
 {
-    public int   GagLayer = 0;
-    public int   RestrictionLayer= 0;
-    public int   RestraintLayer = 0;
-    public Guid  OwnStatus = Guid.Empty;
-    public Guid  OwnPreset = Guid.Empty;
-    public Guid  PairStatus = Guid.Empty;
-    public Guid  PairPreset = Guid.Empty;
-    public Guid  Removal = Guid.Empty;
-    public uint  EmoteId = 0;
-    public int   CyclePose = 0;
-    public int   Intensity = 0;
-    public int   VibrateIntensity = 0;
-    public float Duration = 0;
-    public float VibeDuration = 0;
+    public int      GagLayer = 0;
+    public int      RestrictionLayer= 0;
+    public int      RestraintLayer = 0;
+    public Guid     OwnStatus = Guid.Empty;
+    public Guid     OwnPreset = Guid.Empty;
+    public Guid     PairStatus = Guid.Empty;
+    public Guid     PairPreset = Guid.Empty;
+    public Guid     Removal = Guid.Empty;
+    public string   HypnoTimer = string.Empty;
+    public uint     EmoteId = 0;
+    public int      CyclePose = 0;
+    public int      Intensity = 0;
+    public int      VibrateIntensity = 0;
+    public float    Duration = 0;
+    public float    VibeDuration = 0;
     public InteractionType OpenInteraction { get; private set; } = InteractionType.None;
 
     public void CloseInteraction() => OpenInteraction = InteractionType.None;
@@ -64,7 +65,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
     private readonly MainHub _hub;
     private readonly KinksterPermsForClient _kinksterPerms;
     private readonly ClientPermsForKinkster _permsForKinkster;
-
+    private readonly HypnoEffectManager _effectPresetManager;
     // Private variables for the sticky UI and its respective combos.
     private PairGagCombo _pairGags;
     private PairGagPadlockCombo _pairGagPadlocks;
@@ -94,32 +95,53 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         MainMenuTabs mainTabMenu,
         MainHub hub,
         KinksterPermsForClient permsForSelf,
-        ClientPermsForKinkster permsForKinkster)
+        ClientPermsForKinkster permsForKinkster,
+        HypnoEffectManager effectPresetManager)
         : base(logger, mediator, $"StickyPermissionUI")
     {
         _mainTabMenu = mainTabMenu;
         _hub = hub;
         _kinksterPerms = permsForSelf;
         _permsForKinkster = permsForKinkster;
+        _effectPresetManager = effectPresetManager;
 
-        _hypnoEditor = new HypnoEffectEditor("KinksterEffectEditor");
+        _hypnoEditor = new HypnoEffectEditor("KinksterEffectEditor", effectPresetManager);
 
         Flags = WFlags.NoCollapse | WFlags.NoTitleBar | WFlags.NoResize | WFlags.NoScrollbar;
 
         Mediator.Subscribe<KinksterInteractionUiChangeMessage>(this, (msg) => UpdateWindow(msg.Kinkster, msg.Type));
         Mediator.Subscribe<PairWasRemovedMessage>(this, (msg) => IsOpen = false);
         Mediator.Subscribe<ClosedMainUiMessage>(this, (msg) => IsOpen = false);
+        Mediator.Subscribe<MainWindowTabChangeMessage>(this, _ => { if (_.NewTab != MainMenuTabs.SelectedTab.Whitelist) SilentClose(); });
         IsOpen = false;
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        _hypnoEditor.Dispose();
+    }
+
+    private void SilentClose()
+    {
+        _openTab = InteractionsTab.None;
+        IsOpen = false;
+        _hypnoEditor.OnEditorClose();
     }
 
     private void UpdateWindow(Kinkster kinkster, InteractionsTab type)
     {
-        if (_openTab == type)
+        if (_openTab == type && kinkster == _kinkster)
         {
-            _openTab = InteractionsTab.None;
-            IsOpen = false;
+            SilentClose();
             return;
         }
+        else if (_openTab == type)
+        {
+            SilentClose();
+            return;
+        }
+
 
         _logger.LogInformation($"Updating Sticky UI for {kinkster.GetNickAliasOrUid()} with type {type}.");
         // if this is not 0 it means they do not have the same UID and are different.
@@ -741,38 +763,42 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
     private void DrawMiscActions(Kinkster k, float width, string dispName)
     {
         ImGui.TextUnformatted("Misc Actions");
-        var kg = k.PairGlobals;
-
-        var hasEffect = kg.HypnoState();
+        var hasEffect = k.PairGlobals.HypnoState();
         var hypnoTxt = hasEffect ? $"{dispName} is being Hypnotized" : $"Hypnotize {dispName}";
         var hypnoTT = hasEffect ? $"{dispName} is currently under hypnosis state.--SEP--Cannot apply an effect until {dispName} is not hypnotized."
             : $"Configure and apply a hypnosis effect on {dispName}.";
 
-        if (CkGui.IconTextButton(FAI.Dizzy, hypnoTxt, width, true, hasEffect || !k.PairPerms.HypnoEffectSending))
+        if (CkGui.IconTextButton(FAI.Dizzy, hypnoTxt, width, true, hasEffect || !k.PairPerms.HypnoEffectSending || k.PairGlobals.HypnoState()))
         {
             if (_selections.OpenInteraction is not InteractionType.HypnosisEffect)
             {
                 // open it.
                 _selections.OpenOrClose(InteractionType.HypnosisEffect);
                 if (_hypnoEditor.IsEffectNull)
-                    _hypnoEditor.SetHypnoEffect(new HypnoticEffect());
+                    _hypnoEditor.SetBlankEffect();
             }
             else
             {
-                // we are closing it.
                 _selections.CloseInteraction();
-                // do something here if need be.
             }
         }
         CkGui.AttachToolTip(hypnoTT);
 
         if (_selections.OpenInteraction is InteractionType.HypnosisEffect)
         {
-            using (ImRaii.Child("HypnosisEffectChild", new Vector2(width, _hypnoEditor.GetCompactEditorHeight())))
-            {
-                _hypnoEditor.DrawCompactEditor(width);
-                _hypnoEditor.DrawCompactPreview(CkStyle.ThreeRowHeight());
-            }
+            // draw out the editor for setting a time up.
+            var buttonW = CkGui.IconTextButtonSize(FAI.Upload, "Send Effect");
+            var txtWidth = width - buttonW - ImGui.GetStyle().ItemInnerSpacing.X;
+            CkGui.IconInputText($"##HypnoTime-{k.UserData.UID}", txtWidth, FAI.Clock, "Ex: 20m5s", ref _selections.HypnoTimer, 12);
+            
+            ImUtf8.SameLineInner();
+            if (CkGui.IconTextButton(FAI.Upload, "Send Effect", buttonW, disabled: _selections.HypnoTimer.IsNullOrEmpty()))
+                UiService.SetUITask(TrySendHypnosisAction(k, dispName));
+
+            // Draw the editor below this and the preview display.
+            _hypnoEditor.DrawCompactEditorTabs(width);
+            var size = _hypnoEditor.DisplayPreviewWidthConstrained(width, Constants.DefaultHypnoPath);
+            ImGui.Dummy(size);
         }
 
         ImGui.Separator();
@@ -790,7 +816,6 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         //    ImGui.Separator();
         //    return;
         //}
-
         // Required Close-Ranged Hardcore commands must be in range
         var inRange = PlayerData.Available && k.VisiblePairGameObject is { } vo && PlayerData.DistanceTo(vo) < 3;
         var pairlockTag = k.PairPerms.PairLockedStates ? Constants.DevotedString : string.Empty;
@@ -1031,4 +1056,39 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         }
     }
     #endregion Shock Collar
+
+    #region Misc Action Helpers
+    private async Task TrySendHypnosisAction(Kinkster k, string dispName)
+    {
+        if (!_hypnoEditor.TryGetEffect(out var effect))
+        {
+            _logger.LogTrace("Effect was null or time parsing failed!");
+            return;
+        }
+        if (!PadlockEx.TryParseTimeSpan(_selections.HypnoTimer, out var newTime))
+        {
+            _selections.HypnoTimer = string.Empty;
+            _logger.LogTrace("Effect was null or time parsing failed!");
+            return;
+        }
+        // compose the DTO to send.
+        var dto = new HypnoticAction(k.UserData, (int)newTime.TotalSeconds, effect);
+        if (await _hub.UserHypnotizeKinkster(dto) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+        {
+            switch (res.ErrorCode)
+            {
+                case GagSpeakApiEc.BadUpdateKind: Svc.Toasts.ShowError("Invalid Update Kind. Please try again."); break;
+                case GagSpeakApiEc.InvalidTime: Svc.Toasts.ShowError("Invalid Timer Syntax. Must be a valid time format (Ex: 1h2m7s)."); break;
+                case GagSpeakApiEc.LackingPermissions: Svc.Toasts.ShowError("You do not have permission to perform this action."); break;
+                default: Svc.Logger.Debug($"Failed to send Hypnosis Effect to {dispName}: {res.ErrorCode}."); break;
+            }
+        }
+        else
+        {
+            _logger.LogDebug($"Sent Hypnosis Effect to {dispName} with duration: {newTime} (seconds)", LoggerType.StickyUI);
+        }
+    }
+    #endregion Misc Action Helpers
+
+
 }

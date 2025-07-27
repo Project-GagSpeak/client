@@ -7,6 +7,7 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.FileSystems;
 using GagSpeak.Gui.Components;
 using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
@@ -43,6 +44,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         MoodleDrawer moodleDrawer,
         AttributeDrawer traitsDrawer,
         RestrictionManager manager,
+        HypnoEffectManager effectPresets,
         KinksterManager pairs,
         CosmeticService textures,
         TutorialService guides) : base(logger, mediator)
@@ -56,6 +58,8 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         _manager = manager;
         _textures = textures;
         _guides = guides;
+
+        _hypnoEditor = new HypnoEffectEditor("RestrictionEditor", effectPresets);
 
         Mediator.Subscribe<ThumbnailImageSelected>(this, (msg) =>
         {
@@ -80,7 +84,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         });
     }
 
-    private HypnoEffectEditor _hypnoEditor = new HypnoEffectEditor("RestrictionEditor");
+    private HypnoEffectEditor _hypnoEditor;
 
     protected override void Dispose(bool disposing)
     {

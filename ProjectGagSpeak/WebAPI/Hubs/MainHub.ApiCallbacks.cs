@@ -1,8 +1,11 @@
 using CkCommons;
 using Dalamud.Interface.ImGuiNotification;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data;
+using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Dto.VibeRoom;
+using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
 using Microsoft.AspNetCore.SignalR.Client;
 

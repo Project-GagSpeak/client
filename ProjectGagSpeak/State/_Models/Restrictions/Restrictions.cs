@@ -273,7 +273,7 @@ public class HypnoticRestriction : RestrictionItem
     public void ApplyChanges(HypnoticRestriction other)
     {
         base.ApplyChanges(other);
-        Properties = new(other.Properties);
+        Properties = other.Properties;
     }
 
     public override JObject Serialize()

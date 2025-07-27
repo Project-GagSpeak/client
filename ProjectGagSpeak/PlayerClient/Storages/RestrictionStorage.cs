@@ -43,8 +43,21 @@ public class RestrictionStorage : List<RestrictionItem>, IEditableStorage<Restri
     {
         if (changedItem is null)
             return false;
-        oldItem.ApplyChanges(changedItem);
-        return true;
+
+        return (oldItem, changedItem) switch
+        {
+            (BlindfoldRestriction o, BlindfoldRestriction c) => Apply(o, c),
+            (HypnoticRestriction o, HypnoticRestriction c) => Apply(o, c),
+            (RestrictionItem o, RestrictionItem c) => Apply(o, c),
+            _ => false
+        };
+
+        bool Apply<T>(T oldItem, T changedItem) where T : RestrictionItem
+        {
+            Svc.Logger.Information($" Applying changes to {typeof(T).Name} with ID {oldItem.Identifier}");
+            oldItem.ApplyChanges(changedItem);
+            return true;
+        }
     }
 }
 

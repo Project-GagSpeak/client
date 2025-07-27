@@ -9,6 +9,7 @@ using GagSpeak.Services;
 using GagSpeak.Services.Controller;
 using GagSpeak.Utils;
 using GagspeakAPI.Data.Struct;
+using JetBrains.Annotations;
 
 namespace GagSpeak.State.Handlers;
 
@@ -22,13 +23,13 @@ public class HardcoreHandler
     private readonly KeystateController _keyStates;
     private readonly MovementController _movement;
     private readonly ChatboxController _chatbox;
-    private readonly OverlayController _overlay;
+    private readonly OverlayHandler _overlay;
 
     // Stores the players's movement mode, useful for when we change it.
     private MovementMode _cachedPlayerMoveMode = MovementMode.NotSet;
     public HardcoreHandler(ILogger<HardcoreHandler> logger, AutoPromptController prompts, 
         KeystateController keyStates, MovementController movement, ChatboxController chatbox,
-        OverlayController overlay)
+        OverlayHandler overlay)
     {
         _logger = logger;
         _prompts = prompts;
@@ -37,8 +38,6 @@ public class HardcoreHandler
         _chatbox = chatbox;
         _overlay = overlay;
     }
-
-    public bool IsHypnotized => _overlay.HasValidHypnoEffect;
 
     public void EnableLockedFollowing(Kinkster? pair = null)
     {

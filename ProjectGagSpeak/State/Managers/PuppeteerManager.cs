@@ -74,7 +74,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         var storage = userUid is null ? GlobalAliasStorage : PairAliasStorage[userUid].Storage;
         if (storage is null)
             return;
-        
+
         if (storage.Items.Remove(trigger))
         {
             Logger.LogDebug($"Deleted Alias Trigger in {nameof(storage)}", LoggerType.Puppeteer);
@@ -84,7 +84,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
 
     public void ToggleState(AliasTrigger trigger, string? userUid = null)
     {
-        if(userUid is not null && !ValidatePairStorage(userUid))
+        if (userUid is not null && !ValidatePairStorage(userUid))
             return;
 
         var storage = userUid is null ? GlobalAliasStorage : PairAliasStorage[userUid].Storage;
@@ -133,7 +133,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
             return false;
 
         // we have the UID, so get its permissions.
-        if(_pairs.DirectPairs.FirstOrDefault(p => p.UserData.UID == match) is not { } pair)
+        if (_pairs.DirectPairs.FirstOrDefault(p => p.UserData.UID == match) is not { } pair)
             return false;
 
         matchedPair = pair;
@@ -142,7 +142,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
 
     public void UpdateStoredAliasName(string pairUid, string listenerName)
     {
-        if(ValidatePairStorage(pairUid))
+        if (ValidatePairStorage(pairUid))
         {
             // set the name.
             PairAliasStorage[pairUid].StoredNameWorld = listenerName;
@@ -205,17 +205,35 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
 
         GlobalAliasStorage.Items.Clear();
         PairAliasStorage.Clear();
+
+        JObject jObject;
+        // Read the json from the file.
         if (!File.Exists(file))
         {
-            Logger.LogWarning("No Puppeteer Config file found at {0}", file);
+            Logger.LogWarning($"No Restraints Config file found at {file}");
             // create a new file with default values.
-            _saver.Save(this);
-            return;
-        }
 
+            var oldFormatFile = Path.Combine(_fileNames.CurrentPlayerDirectory, "alias-lists.json");
+            if (File.Exists(oldFormatFile))
+            {
+                var oldText = File.ReadAllText(oldFormatFile);
+                var oldObject = JObject.Parse(oldText);
+                jObject = ConfigMigrator.MigratePuppeteerAliasConfig(oldObject, _fileNames, oldFormatFile);
+            }
+            else
+            {
+                Svc.Logger.Warning("No Config file found for: " + oldFormatFile);
+                _saver.Save(this);
+                return;
+                // create a new file with default values.
+            }
+        }
+        else
+        {
+            var jsonText = File.ReadAllText(file);
+            jObject = JObject.Parse(jsonText);
+        }
         // Read the json from the file.
-        var jsonText = File.ReadAllText(file);
-        var jObject = JObject.Parse(jsonText);
         var version = jObject["Version"]?.Value<int>() ?? 0;
 
         // Perform Migrations if any, and then load the data.
@@ -283,7 +301,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         };
 
         // Parse AliasList
-        if(obj["Storage"] is not JArray aliasListArray)
+        if (obj["Storage"] is not JArray aliasListArray)
             return aliasStorage;
 
         foreach (var item in aliasListArray)

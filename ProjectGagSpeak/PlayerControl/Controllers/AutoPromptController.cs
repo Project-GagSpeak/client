@@ -165,7 +165,7 @@ public sealed class AutoPromptController : DisposableMediatorSubscriberBase
             }, "Target Nearest Valid Housing Entrance");
             // get the correct distance.
             var tName = Svc.Targets.Target?.Name.ToString() ?? string.Empty;
-            var isApartment = ForcedStayLang.EnterApartment.Any(n => n.Equals(tName, StringComparison.OrdinalIgnoreCase));
+            var isApartment = NodeStringLang.EnterApartment.Any(n => n.Equals(tName, StringComparison.OrdinalIgnoreCase));
             var distThreshold = isApartment ? 3.5f : 2.75f;
             // Approach and target the node.
             _hcTaskManager.EnqueueTask(HcCommonTasks.ApproachNode(() => Svc.Targets.Target!, distThreshold));

@@ -1081,7 +1081,6 @@ namespace GagSpeak.Localization
     {
         public Restrictions Restrictions { get; set; } = new();
         public Restraints Restraints { get; set; } = new();
-        public CursedLoot CursedLoot { get; set; } = new();
     }
 
     public class Restrictions
@@ -1093,14 +1092,6 @@ namespace GagSpeak.Localization
     {
         // Add more here if people actually care for it.
     }
-
-    public class CursedLoot
-    {
-        // Add more here if people actually care for it.
-        public readonly string TreasureName = Loc.Localize("CursedLoot_TreasureName", "Treasure Coffer");
-
-    }
-
     #endregion Wardrobe
 
     #region Puppet

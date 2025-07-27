@@ -21,3 +21,5 @@ public record ConfigTriggerChanged(StorageChangeType Type, Trigger Item, string?
 public record ConfigSexToyChanged(StorageChangeType Type, BuzzToy Item, string? OldString = null) : MessageBase;
 
 public record ReloadFileSystem(GagspeakModule Module) : MessageBase;
+
+public record AllowancesChanged(GagspeakModule Module, IEnumerable<string> AllowedUids) : MessageBase;

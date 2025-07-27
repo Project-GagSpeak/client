@@ -132,7 +132,7 @@ public static class ConfigMigrator
         foreach (var gagItem in oldGagEquipData)
         {
             // continue if the key is "None"
-            if(gagItem.Key == "None")
+            if (gagItem.Key == "None")
                 continue;
 
             var gagName = gagItem.Key;
@@ -204,7 +204,105 @@ public static class ConfigMigrator
     {
         Svc.Logger.Warning("Outdated RestraintConfig detected, migrating to new format!");
 
-        return oldConfig;
+        var restraintSets = new JArray();
+        var oldRestraints = oldConfig["WardrobeStorage"]!["RestraintSets"]!;
+
+        foreach (var restraint in oldRestraints)
+        {
+            var slots = new JObject();
+            foreach (JProperty property in restraint["DrawData"]!)
+            {
+                var slot = (JObject)property.Value;
+                string name = (string)slot["Slot"]!;
+                // All the application info is now encoded into a single flag value.
+                // 1 = Glamour
+                // 32 = IsOverlay (i.e. is enabled and should be displayed/locked even if empty)
+                var applyFlags = (bool)slot["IsEnabled"]! ? 33 : 1;
+                var newslot = new JObject()
+                {
+                    ["Type"] = "Basic",
+                    ["ApplyFlags"] = applyFlags,
+                    ["Glamour"] = new JObject()
+                    {
+                        ["Slot"] = name,
+                        ["CustomItemId"] = slot["CustomItemId"],
+                        ["Stains"] = slot["GameStain"]
+                    }
+                };
+                slots.Add(new JProperty(name, newslot));
+            }
+            // There seems to be an issue where the serialized data from old-GS could have written overflow values in here
+            // So to prevent issues, double checking the data here.
+            UInt16 glasses = 0;
+            if (!UInt16.TryParse((string)restraint["BonusDrawData"]![0]!["BonusDrawData"]!["CustomItemId"]!, out glasses))
+            {
+                glasses = 0;
+            }
+            // Note: While individual moodles can be saved, presets cannot because it now requires storing the associated moodles.
+            var moodles = new JArray();
+            foreach (JValue moodle in restraint["AssociatedMoodles"]!)
+            {
+
+                var newmoodle = new JObject()
+                {
+                    ["Type"] = "Status",
+                    ["Id"] = moodle
+                };
+                moodles.Add(newmoodle);
+            }
+            var newrestraint = new JObject
+            {
+                ["Identifier"] = (string)restraint["RestraintId"]!,
+                ["Label"] = (string)restraint["Name"]!,
+                ["Description"] = (string)restraint["Description"]!,
+                ["ThumbnailPath"] = "",
+                ["DoRedraw"] = false,
+                ["RestraintSlots"] = slots,
+                ["RestraintLayers"] = new JArray(),
+                ["Glasses"] = new JObject()
+                {
+                    ["Slot"] = "Glasses",
+                    ["CustomItemId"] = glasses
+                },
+                ["MetaStates"] = new JObject()
+                {
+                    ["Headgear"] = restraint["ForceHeadgear"],
+                    ["Visor"] = restraint["ForceVisor"],
+                    ["Weapon"] = "null"
+                },
+                ["BaseMods"] = new JArray(),
+                ["BaseMoodles"] = moodles,
+                ["BaseTraits"] = "None",
+                ["BaseArousal"] = "None",
+            }
+        ;
+            restraintSets.Add(newrestraint);
+        }
+
+        // remove the backups of old versions.
+        var oldFormatBackupDir = Path.Combine(fileNames.CurrentPlayerDirectory, "OldFormatBackups");
+        if (!Directory.Exists(oldFormatBackupDir))
+            Directory.CreateDirectory(oldFormatBackupDir);
+
+        // move all old files into the backup folder.
+        foreach (var file in Directory.GetFiles(fileNames.CurrentPlayerDirectory, "wardrobe.json*"))
+        {
+            var fileName = Path.GetFileName(file);
+            var destPath = Path.Combine(oldFormatBackupDir, fileName);
+
+            // Overwrite by deleting first
+            if (File.Exists(destPath))
+                File.Delete(destPath);
+
+            File.Move(file, destPath);
+
+        }
+        var newFormat = new JObject()
+        {
+            ["Version"] = 0,
+            ["RestraintSets"] = restraintSets
+        };
+        return newFormat;
     }
 
     /// <summary> "Migrates" the few external values. Actual cursed items must be reset. </summary>
@@ -212,15 +310,32 @@ public static class ConfigMigrator
     {
         Svc.Logger.Warning("Outdated CursedLootConfig detected, migrating to new format!");
 
+        // Only Feasible to convert gags, too much work to create new restriction items from given items.
+        var items = oldConfig["CursedLootStorage"]!["CursedItems"]!;
+        var newItems = new JArray();
+        foreach (var item in items)
+        {
+            if ((bool)item["IsGag"]!)
+            {
+                var newobj = new JObject() {
+                        { "Identifier", (string)item["LootId"]! },
+                        { "Label", (string)item["Name"]!},
+                        { "InPool", (bool)item["InPool"]! },
+                        { "CanOverride", (bool)item["CanOverride"]!},
+                        { "Precedence", (string)item["OverridePrecedence"]!},
+                        { "RestrictionRef", (string)item["GagType"]! },
+                    };
+                newItems.Add(newobj);
+            }
+        }
+
         var newFormat = new JObject()
         {
             ["Version"] = oldConfig["Version"],
-            ["CursedItems"] = new JObject(),
-            ["LockRangeLower"] = oldConfig["CursedLootStorage"]!["LockRangeLower"],
+            ["CursedItems"] = newItems,
             ["LockRangeUpper"] = oldConfig["CursedLootStorage"]!["LockRangeUpper"],
             ["LockChance"] = oldConfig["CursedLootStorage"]!["LockChance"],
         };
-
         // remove the backups of old versions.
         var oldFormatBackupDir = Path.Combine(fileNames.CurrentPlayerDirectory, "OldFormatBackups");
         if (!Directory.Exists(oldFormatBackupDir))
@@ -234,8 +349,8 @@ public static class ConfigMigrator
 
             // Overwrite by deleting first
             if (File.Exists(destPath))
-                File.Delete(destPath); 
-            
+                File.Delete(destPath);
+
             File.Move(file, destPath);
         }
 
@@ -453,6 +568,132 @@ public static class ConfigMigrator
         return nicknamesConfig;
     }
 
+    private static JObject? MigrateAction(JObject oldaction)
+    {
+        var action_type = (int)oldaction["ExecutionType"]!;
+        switch (action_type)
+        {
+            // Text output actions
+            case 0:
+                return new JObject()
+                {
+                    ["ActionType"] = 0,
+                    ["OutputCommand"] = oldaction["OutputCommand"]
+                };
+            // Gag actions
+            case 1:
+                return new JObject()
+                {
+                    ["ActionType"] = 1,
+                    ["LayerIdx"] = -1,
+                    ["NewState"] = oldaction["NewState"],
+                    ["GagType"] = oldaction["GagType"],
+                    ["Padlock"] = 0,
+                    ["LowerBound"] = "00:00:00",
+                    ["UpperBound"] = "00:00:00"
+                };
+
+            // Case for restraint types
+            case 2:
+                return new JObject()
+                {
+                    ["ActionType"] = 3,
+                    ["NewState"] = oldaction["NewState"],
+                    ["RestrictionId"] = oldaction["OutputIdentifier"]
+                };
+
+        }
+        return null;
+    }
+    public static JObject MigratePuppeteerAliasConfig(JObject oldConfig, ConfigFileProvider fileNames, string oldPath)
+    {
+        Svc.Logger.Warning("Outdated PuppeteerAliasConfig detected, migrating to new format!");
+
+        var globalStorage = new JArray();
+        foreach (JObject aliasitem in oldConfig["GlobalAliasList"]!)
+        {
+            var actions = new JArray();
+            foreach (JProperty actionprop in aliasitem["Executions"]!)
+            {
+                JObject oldaction = (JObject)actionprop.Value;
+                var action = MigrateAction(oldaction);
+                if (action is not null)
+                {
+                    actions.Add(action);
+                }
+            }
+            var newalias = new JObject()
+            {
+                ["Identifier"] = aliasitem["AliasIdentifier"]!,
+                ["Enabled"] = aliasitem["Enabled"]!,
+                ["Label"] = aliasitem["Name"],
+                ["InputCommand"] = aliasitem["InputCommand"],
+                ["Actions"] = actions
+            };
+            globalStorage.Add(newalias);
+        }
+        var pairStorage = new JObject();
+        foreach (JProperty pair in oldConfig["AliasStorage"]!)
+        {
+            var name = pair.Name;
+            JObject value = (JObject)pair.Value;
+            JArray aliases = new JArray();
+            foreach (JObject pairalias in value["AliasList"]!)
+            {
+                JArray actions = new JArray();
+                foreach (JProperty actionprop in pairalias["Executions"]!)
+                {
+                    var actionobj = (JObject)actionprop.Value;
+                    var action = MigrateAction(actionobj);
+                    if (action is not null)
+                    {
+                        actions.Add(action);
+                    }
+                }
+                var newalias = new JObject()
+                {
+                    ["Identifier"] = pairalias["AliasIdentifier"]!,
+                    ["Enabled"] = pairalias["Enabled"]!,
+                    ["Label"] = pairalias["Name"],
+                    ["InputCommand"] = pairalias["InputCommand"],
+                    ["Actions"] = actions
+                };
+                aliases.Add(newalias);
+            }
+            var newpair = new JObject()
+            {
+                ["StoredNameWorld"] = "",
+                ["Storage"] = aliases
+            };
+            pairStorage.Add(new JProperty(name, newpair));
+        }
+        var newFormat = new JObject()
+        {
+            ["Version"] = 0,
+            ["GlobalStorage"] = globalStorage,
+            ["PairStorage"] = pairStorage
+        };
+        // Begin cleaning up the configuration directory.
+        var oldFormatBackupDir = Path.Combine(fileNames.CurrentPlayerDirectory, "OldFormatBackups");
+        if (!Directory.Exists(oldFormatBackupDir))
+            Directory.CreateDirectory(oldFormatBackupDir);
+
+        // Ensure that there's nothing at the destination path so the move is successful.
+        foreach (var file in Directory.GetFiles(fileNames.CurrentPlayerDirectory, "alias-lists.json*"))
+        {
+            var fileName = Path.GetFileName(file);
+            var destPath = Path.Combine(oldFormatBackupDir, fileName);
+
+            // Overwrite by deleting first
+            if (File.Exists(destPath))
+                File.Delete(destPath);
+
+            File.Move(file, destPath);
+        }
+
+        return newFormat;
+
+    }
     public static int ConvertToBitfield(List<int> channelsPuppeteer)
     {
         var bitfield = 0;

@@ -83,7 +83,6 @@ public class CacheStateManager : IHostedService
     // Keep in mind that while this looks heavy, everything uses .TryAdd, meaning duplicates will not be reapplied.
     public async Task SyncWithServerData(ConnectionResponse connectionDto)
     {
-        _logger.LogWarning("Syncing Server Data to Active Items & Visuals");
         var sw = Stopwatch.StartNew();
         // Sync all server gag data with the GagRestrictionManager.
         _gags.LoadServerData(connectionDto.SyncedGagData);

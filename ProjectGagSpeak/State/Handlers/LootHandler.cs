@@ -80,10 +80,10 @@ public sealed class LootHandler
     public unsafe bool IsDeepDungeonCoffer(GameObject* obj)
         => obj->ObjectKind is ObjectKind.EventObj
         && obj->SubKind is 0
-        && obj->EventId.Id is 983600
-        && obj->EventId.EntryId is 560
-        && obj->EventId.ContentId is EventHandlerContent.GimmickAccessor
-        && obj->Name.ToString() == GSLoc.Wardrobe.CursedLoot.TreasureName;
+        && obj->EventHandler->Info.EventId.Id is 983600
+        && obj->EventHandler->Info.EventId.EntryId is 560
+        && obj->EventHandler->Info.EventId.ContentId is EventHandlerContent.GimmickAccessor
+        && NodeStringLang.DeepDungeonCoffer.Any(n => n.Equals(obj->NameString.ToString()));
     
     /// <summary> 
     ///     Handles opening a loot item to apply cursed loot!.

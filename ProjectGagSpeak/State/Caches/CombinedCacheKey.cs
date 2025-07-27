@@ -24,6 +24,8 @@ public readonly struct CombinedCacheKey : IComparable<CombinedCacheKey>, IEquata
         Label = label;
     }
 
+    public static CombinedCacheKey Empty => new(ManagerPriority.Restraints, -1, string.Empty, string.Empty);
+
     public override string ToString()
         => $"{Manager}-Layer {LayerIndex} ({Label})";
 
