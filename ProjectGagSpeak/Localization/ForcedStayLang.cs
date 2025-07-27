@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 
 namespace GagSpeak;
 
-internal static class ForcedStayLang
+internal static class NodeStringLang
 {
     public const string SymbolWard = "";
     public const string SymbolPlot = "";
@@ -39,5 +39,7 @@ internal static class ForcedStayLang
     public static readonly string[] ConfirmHouseExit = [ "Leave the estate hall?" ]; // yes | no option.
 
     public static readonly string[] ExitChambers = [ "Exit" ];
+
+    public static readonly string[] DeepDungeonCoffer = [ "Treasure Coffer" ];
 
 }
