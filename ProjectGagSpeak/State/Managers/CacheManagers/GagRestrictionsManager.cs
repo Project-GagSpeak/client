@@ -62,6 +62,8 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
         foreach (var (slot, idx) in serverData.GagSlots.WithIndex())
             if (slot.GagItem is not GagType.None && Storage.TryGetGag(slot.GagItem, out var item))
                 _activeItems.TryAdd(idx, item);
+        // resync the active chat garbler data if any were set.
+        _muffler.UpdateGarblerLogic(serverData.CurrentGagNames());
         Logger.LogInformation("Syncronized all Active GagSlots with Client-Side Manager.");
     }
 

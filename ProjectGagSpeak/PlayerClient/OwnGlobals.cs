@@ -10,6 +10,7 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Data.Struct;
+using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
 using GagspeakAPI.Util;
 using System.Collections.ObjectModel;
@@ -22,6 +23,7 @@ public sealed class OwnGlobals : DisposableMediatorSubscriberBase
     private readonly PiShockProvider _shockies;
     private readonly KinksterManager _kinksters;
     private readonly HardcoreHandler _hcHandler;
+    private readonly OverlayHandler _overlays;
     private readonly RemoteService _remoteService;
     private readonly NameplateService _nameplates;
 
@@ -32,12 +34,13 @@ public sealed class OwnGlobals : DisposableMediatorSubscriberBase
 
     public OwnGlobals(ILogger<OwnGlobals> logger, GagspeakMediator mediator,
         PiShockProvider shockies, KinksterManager pairs, HardcoreHandler hcHandler,
-        RemoteService remoteService, NameplateService nameplates) 
+        OverlayHandler overlays, RemoteService remoteService, NameplateService nameplates) 
         : base(logger, mediator)
     {
         _shockies = shockies;
         _kinksters = pairs;
         _hcHandler = hcHandler;
+        _overlays = overlays;
         _remoteService = remoteService;
         _nameplates = nameplates;
 
@@ -60,6 +63,20 @@ public sealed class OwnGlobals : DisposableMediatorSubscriberBase
     /// <remarks> Might be planting a bomb making an interface possibly nullable, we'll see. </remarks>
     public static IReadOnlyGlobalPerms? Perms => _perms;
     public static EmoteState LockedEmoteState => EmoteState.FromString(_perms?.LockedEmoteState ?? string.Empty);
+
+    // It is possible to come into a race condition here, so accept if the string is empty, or equal to the enactor.
+    public bool CanApplyHypnosisEffect(string enactor)
+    {
+        if (_overlays.IsHypnotized)
+            return false;
+        // If the global perms enactor is not empty, only return true if it matches the applier.
+        if (_perms is not { } gp)
+            return false;
+        if (!string.IsNullOrEmpty(gp.HypnosisCustomEffect))
+            return gp.HypnoEnactor() == enactor;
+        else
+            return true;
+    }
 
     /// <summary> Create a mutable clone of the current globals, that is not readonly. </summary>
     /// <remarks> Since it's a record, <c>_perms with {}</c> makes a shallow copy, so original is unaffected. </remarks>
@@ -154,8 +171,15 @@ public sealed class OwnGlobals : DisposableMediatorSubscriberBase
 
     private void OnHypnoEffectChange(object newVal, object? prevVal, string enactor, Kinkster? _)
     {
+        var oldEffect = prevVal as string ?? string.Empty;
         var newEffect = newVal as string ?? string.Empty;
         Logger.LogInformation($"Hypnosis Custom Effect changed by {enactor}: {newEffect}");
+        // if the effect change made the new value a string.Empty, we should process the effect removal.
+        if (string.IsNullOrEmpty(newEffect) && !string.IsNullOrEmpty(oldEffect) && _overlays.IsHypnotized && _overlays.ActiveHypnoIsSentEffect)
+        {
+            Logger.LogTrace($"Hypnotic effect was cleared by ({enactor}). Removing effect!");
+            _overlays.RemoveHypnoticEffect(enactor);
+        }
     }
 
     private void OnLockedFollowingChange(object newVal, object? prevVal, string enactor, Kinkster? pair = null)
@@ -272,13 +296,15 @@ public sealed class OwnGlobals : DisposableMediatorSubscriberBase
         if (!_kinksters.TryGetKinkster(dto.User, out var enactingKinkster))
             throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
         // prevent change is already under hypnosis.
-        if (_hcHandler.IsHypnotized || !string.IsNullOrEmpty(g.HypnosisCustomEffect))
+        if (_overlays.IsHypnotized || !string.IsNullOrEmpty(g.HypnosisCustomEffect))
         {
             Logger.LogWarning($"Kinkster [{enactingKinkster.GetNickAliasOrUid()}] attempted to hypnotize while already hypnotized, discarding!");
             return;
         }
 
-        // handle the hypnosis effect.
+        // Apply the hypnosis effect.
+        var applyDuration = TimeSpan.FromSeconds(dto.Duration);
+        _overlays.SetTimedHypnoticEffect(dto.Effect, applyDuration, enactingKinkster.UserData.UID, dto.base64Image);   
     }
 
     public void OnConfineByAddress(ConfineByAddress dto)

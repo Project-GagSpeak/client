@@ -1,6 +1,7 @@
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Handlers;
 using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
@@ -13,7 +14,10 @@ namespace GagSpeak.Services;
 /// <remarks> Helps update config folder locations, update stored data, and update achievement data status. </remarks>
 public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
 {
+    private readonly PlayerMetaData _metaData;
     private readonly OwnGlobals _globals;
+    private readonly OverlayHandler _overlays;
+    private readonly HardcoreHandler _hcHandler;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
@@ -28,8 +32,10 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
     public ConnectionSyncService(
         ILogger<ConnectionSyncService> logger,
         GagspeakMediator mediator,
+        PlayerMetaData metaData,
         OwnGlobals globals,
-        ConfigFileProvider fileNames,
+        OverlayHandler overlays,
+        HardcoreHandler hcHandler,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
@@ -38,11 +44,14 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
         AlarmManager alarms,
         TriggerManager triggers,
         VisualStateListener visuals,
+        ConfigFileProvider fileNames,
         AchievementsService achievements)
         : base(logger, mediator)
     {
+        _metaData = metaData;
         _globals = globals;
-        _fileNames = fileNames;
+        _overlays = overlays;
+        _hcHandler = hcHandler;
         _gags = gags;
         _restrictions = restrictions;
         _restraints = restraints;
@@ -51,6 +60,7 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
         _alarms = alarms;
         _triggers = triggers;
         _visuals = visuals;
+        _fileNames = fileNames;
         _achievements = achievements;
 
         Svc.ClientState.Logout += (_,_) => OnLogout();
@@ -79,9 +89,12 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
             return;
 
         // 1. Load in the updated config storages for the profile.
+        Logger.LogInformation($"[SYNC PROGRESS]: Updating FileProvider for Profile ({MainHub.UID})");
         _fileNames.UpdateConfigs(MainHub.UID);
 
-        Logger.LogInformation($"Loading Configs for [{MainHub.UID}]'s Profile!");
+        // 2. Load in Profile-spesific Configs.
+        Logger.LogInformation($"[SYNC PROGRESS]: Loading Configs for Profile!");
+        _metaData.Load();
         _gags.Load();
         _restrictions.Load();
         _restraints.Load();
@@ -90,15 +103,22 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
         _alarms.Load();
         _triggers.Load();
 
-        // 2. Load in the data from the server into our storages.
-        Logger.LogInformation("Syncing Data with Connection DTO");
+        // 3. Load in the data from the server into our storages.
+        Logger.LogInformation("[SYNC PROGRESS]: Syncing Global Permissions!");
         _globals.ApplyBulkChange(connectionInfo.GlobalPerms, MainHub.UID);
+
+        // 4. Sync overlays with the global permissions & metadata.
+        Logger.LogInformation("[SYNC PROGRESS]: Syncing Overlay Data");
+        await _overlays.SyncOverlayWithMetaData();
+
+        // 5. Sync Visual Cache with active state.
+        Logger.LogInformation("[SYNC PROGRESS]: Syncing Visual Cache With Display");
         await _visuals.SyncServerData(connectionInfo);
 
-        // 3. Update the achievement manager with the latest UID and the latest data.
-        Logger.LogInformation($"Loading Achievement Data for [{MainHub.UID}]");
+        // 6. Update the achievement manager with the latest UID and the latest data.
+        Logger.LogInformation($"[SYNC PROGRESS]: Syncing Achievement Data ({MainHub.UID})");
         _achievements.OnServerConnection(connectionInfo.UserAchievements);
 
-        Logger.LogInformation(">>> All Data is now Syncronized. <<<");
+        Logger.LogInformation("[SYNC PROGRESS]: Done!");
     }
 }

@@ -49,6 +49,8 @@ public class ConfigFileProvider : IConfigFileProvider
     public string Puppeteer => Path.Combine(CurrentPlayerDirectory, "puppeteer.json");
     public string Alarms => Path.Combine(CurrentPlayerDirectory, "alarms.json");
     public string Triggers => Path.Combine(CurrentPlayerDirectory, "triggers.json");
+    public string MetaData => Path.Combine(CurrentPlayerDirectory, "metadata.json");
+
     public string CurrentPlayerDirectory => Path.Combine(GagSpeakDirectory, CurrentUserUID ?? "InvalidFiles");
     public string? CurrentUserUID { get; private set; } = null;
 

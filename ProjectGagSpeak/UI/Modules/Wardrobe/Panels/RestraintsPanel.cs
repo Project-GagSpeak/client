@@ -102,7 +102,8 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         using (ImRaii.Child("RestraintEditorBot", botRegion.Size, false, WFlags.AlwaysUseWindowPadding))
         {
             // Draw out the tab bar, and the items respective contents.
-            using (CkRaii.TabBarChild("AllowanceTabBars", WFlags.AlwaysUseWindowPadding, out var selected, EditorTabs))
+            using (CkRaii.TabBarChild("RS_EditBar", CkColor.VibrantPink.Uint(), CkColor.VibrantPinkHovered.Uint(), CkColor.FancyHeader.Uint(),
+                LabelFlags.PadInnerChild | LabelFlags.SizeIncludesHeader, out var selected, EditorTabs))
                 selected?.DrawContents(ImGui.GetContentRegionAvail().X);
         }
     }

@@ -1,24 +1,152 @@
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Controller;
+using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
+using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
+using GagspeakAPI.Data;
+using GagspeakAPI.Data.Permissions;
+using GagspeakAPI.Extensions;
 
 namespace GagSpeak.State.Handlers;
 
 // could maybe merge this with the OverlayController down the line, see how things go.
-public class OverlayHandler
+public class OverlayHandler : DisposableMediatorSubscriberBase
 {
-    private readonly ILogger<OverlayHandler> _logger;
+    private readonly PlayerMetaData _metadata;
     private readonly OverlayCache _cache;
-    private readonly OverlayController _controller;
+    private readonly POVController _perspective;
+    private readonly BlindfoldService _bfService;
+    private readonly HypnoService _hypnoService;
 
     private SemaphoreSlim _applySlim = new(1, 1);
+    private System.Timers.Timer _sentHypnosisTimer = new(int.MaxValue) { AutoReset = false };
 
-    public OverlayHandler(ILogger<OverlayHandler> logger, OverlayCache cache, OverlayController controller)
+    public OverlayHandler(ILogger<OverlayHandler> logger, GagspeakMediator mediator,
+        PlayerMetaData metaData, OverlayCache cache, BlindfoldService bfService,
+        HypnoService hypnoService)
+        : base(logger, mediator)
     {
-        _logger = logger;
+        _metadata = metaData;
         _cache = cache;
-        _controller = controller;
+        _bfService = bfService;
+        _hypnoService = hypnoService;
+
+        _sentHypnosisTimer.Elapsed += (_, _) => OnSentHypnoEffectExpire();
+        Svc.PluginInterface.UiBuilder.Draw += DrawOverlays;
     }
+
+    public bool IsHypnotized => _hypnoService.HasValidEffect;
+    public bool ActiveHypnoIsSentEffect => _hypnoService.IsSentEffect;
+
+    /// <summary>
+    ///     Only call this from the Connection Sync Service! <para />
+    ///     This is able to reapply the active effect without messing up achievements. <para />
+    ///     If possible by merging this with the visualCache sync we could only perform one global 
+    ///     perm callback, but only do if optimization is nessisary)
+    /// </summary>
+    public async Task SyncOverlayWithMetaData()
+    {
+        Logger.LogDebug("Syncing Active Overlays with playerMetaData on connection!");
+        // if the metadatas hypno effect is null we have nothing to worry about here and can return.
+        if (_metadata.MetaData.HypnoEffectInfo is not { } info)
+            return;
+
+        if (OwnGlobals.Perms is not { } gp)
+            return;
+
+        // grab the current data from the metadata.
+        var expectedExpireTime = _metadata.MetaData.AppliedTimeUTC + _metadata.MetaData.AppliedDuration;
+        var remainingTime = expectedExpireTime - DateTimeOffset.UtcNow;
+        if (remainingTime <= TimeSpan.Zero)
+        {
+            // perform a removal. (and remove from service if possible.
+            if (_hypnoService.IsSentEffect)
+            {
+                // Fire Achievements for item removal if true.
+                // do that here in
+                // this comment area!
+                await _hypnoService.RemoveEffect();
+            }
+            // remove metadata.
+            _metadata.ClearHypnoEffect();
+
+            // toggle off our applied effect.
+            Logger.LogError("Effect Expired while offline, setting effect to none.");
+            Mediator.Publish(new PushGlobalPermChange(nameof(GlobalPerms.HypnosisCustomEffect), string.Empty));
+            return;
+        }
+
+        // reapply it.
+        await _hypnoService.ApplyEffect(info, gp.HypnoEnactor(), (int)remainingTime.TotalSeconds, _metadata.MetaData.Base64CustomImageData);
+
+        // update the timer for the new interval.
+        Logger.LogInformation($"Timed Hypnosis Effect reapplied after connection!", LoggerType.VisualCache);
+        _sentHypnosisTimer.Interval = remainingTime.TotalMilliseconds;
+        _sentHypnosisTimer.Start();
+    }
+
+    private void DrawOverlays()
+    {
+        if (!Svc.ClientState.IsLoggedIn)
+            return;
+        // Control Blindfold Draw
+        _bfService.DrawBlindfoldOverlay();
+        // Control Hypnosis Draw (Since it is 'under' the blindfold, but you 'see' it infront of the blindfold)
+        _hypnoService.DrawHypnoEffect();
+    }
+
+    // Effect should be called by a listener that has recieved an instruction from another Kinkster to hypnotize the client.
+    public async void SetTimedHypnoticEffect(HypnoticEffect effect, TimeSpan length, string enactor, string? customImage)
+    {
+        var applyTime = DateTimeOffset.UtcNow;
+        // apply the effect.
+        if (!await _hypnoService.ApplyEffect(effect, enactor, (int)length.TotalSeconds, customImage))
+        {
+            Logger.LogError("Failed to apply effect, reverting and disabling!");
+            Mediator.Publish(new PushGlobalPermChange(nameof(GlobalPerms.HypnosisCustomEffect), string.Empty));
+            return;
+        }
+        // Effect applied correctly, so log it, set metadata, and begin timer!
+        Logger.LogInformation($"Timed Hypnosis Effect successfully applied!", LoggerType.VisualCache);
+        // FIRE ANY ACHIEVEMENTS FOR 
+        // HYPNOTIC APPLICATION
+        // IN THIS SPACE.
+
+        // Set the effect.
+        _metadata.SetHypnoEffect(effect, applyTime, length, customImage);
+        // update the hypnosis timer with our interval timeout.
+        _sentHypnosisTimer.Interval = length.TotalMilliseconds;
+        _sentHypnosisTimer.Start();
+
+    }
+
+    public void RemoveHypnoticEffect(string enactor)
+    {
+        // Only do things this way so that we can in the future maybe add a pairlock function to this?
+        // Regardless, forcibly expire the timer.
+        Logger.LogDebug($"Timed Hypnotic Effect was forcibly cleared by {enactor}!");
+        _sentHypnosisTimer.Stop();
+        // and invoke the on elapsed.
+        OnSentHypnoEffectExpire();    
+    }
+
+    private async void OnSentHypnoEffectExpire()
+    {
+        // The sent hypnosis effect has met its expiration time, and should be removed.
+        Logger.LogDebug("Sent Hypnosis Effect has expired, removing it from the applied effect.");
+        // Fire any achievements related to sent effect removal here.
+
+        // Remove the effect from the hypno service.
+        await _hypnoService.RemoveSentEffectOnExpire().ConfigureAwait(false);
+        // ABOVE LINE MIGHT CAUSE CALCULATION DELAY, BE CAUTIOUS.
+
+        // Once removed, check if there is anything in the cache to apply in its place.
+        // Realistically, this should never happen, but it is important to handle for achievements.
+        await OnApplyHypnoEffect(_cache.ActiveEffect, _cache.PriorityEffectKey).ConfigureAwait(false);
+        // ABOVE LINE MIGHT CAUSE CALCULATION DELAY, BE CAUTIOUS.
+    }
+
 
     /// <summary> Add a single BlindfoldOverlay to the Blindfold Cache for the key. </summary>
     public bool TryAddBlindfoldToCache(CombinedCacheKey key, BlindfoldOverlay? overlay)
@@ -47,7 +175,7 @@ public class OverlayHandler
     /// <summary> Clears the Caches contents and updates the visuals after. </summary>
     public async Task ClearCache()
     {
-        _logger.LogDebug("Clearing Blindfold and Hypnosis Caches, then applying updates.");
+        Logger.LogDebug("Clearing Blindfold and Hypnosis Caches, then applying updates.");
         _cache.ClearCaches();
         await UpdateCaches();
     }
@@ -58,7 +186,7 @@ public class OverlayHandler
     /// <remarks> This runs through a SemaphoreSlim execution and is handled safely. </remarks>
     public async Task UpdateCaches()
     {
-        _logger.LogDebug("Updating Blindfold & HypnoEffect Caches.");
+        Logger.LogDebug("Updating Blindfold & HypnoEffect Caches.");
         await ExecuteWithSemaphore(async () =>
         {
             // Run both operations in parallel.
@@ -66,7 +194,7 @@ public class OverlayHandler
                 UpdateBlindfoldInternal(),
                 UpdateHypnoEffectInternal()
             );
-            _logger.LogInformation($"Processed Cache Updates Successfully!");
+            Logger.LogInformation($"Processed Cache Updates Successfully!");
         });
     }
 
@@ -87,13 +215,60 @@ public class OverlayHandler
     private async Task UpdateBlindfoldInternal()
     {
         // Update the final cache. If the blindfolds have changed, we need to perform a swap operation on them.
-        if (_cache.UpdateFinalBlindfoldCache(out var prevEnactor))
+        if (_cache.UpdateFinalBlindfoldCache(out var prevActiveKey))
         {
-            _logger.LogDebug($"Final Blindfold Cache updated with a change, calling swap function.", LoggerType.VisualCache);
-            await ApplyBlindfoldCache(prevEnactor);
+            // The blindfold cache changed, and we should apply the new cached lace overlay.
+            Logger.LogDebug($"Blindfold Cache changed! Priority was [{prevActiveKey.ToString()}] and is now [{_cache.PriorityEffectKey.ToString()}] Reapplying cache!", LoggerType.VisualCache);
+            // if the previous type was not CombinedCacheKey.Empty, try and remove the blindfold.
+            if (!prevActiveKey.Equals(CombinedCacheKey.Empty))
+            {
+                // use the previous active combined key to properly handle `removing` the current blindfold.
+                await OnRemoveBlindfold(prevActiveKey);
+            }
+
+            // If the active cache currently has a blindfold overlay, and none are applied, apply it.
+            if (!_bfService.HasValidBlindfold && _cache.ActiveBlindfold is { } activeBlindfold)
+            {
+                Logger.LogDebug("Currently no Blindfold applied, but we have one in our cache, so applying!", LoggerType.VisualCache);
+                await OnApplyBlindfold(activeBlindfold, _cache.PriorityEffectKey);
+            }
         }
         else
-            _logger.LogTrace("No change in Final Blindfold Cache.", LoggerType.VisualCache);
+            Logger.LogTrace("No change in Final Blindfold Cache.", LoggerType.VisualCache);
+    }
+
+    // Called whenever a spesific visual cached Blindfold should be removed.
+    private async Task OnRemoveBlindfold(CombinedCacheKey removedSource)
+    {
+        // If you run into this error, you've seriously messed up.
+        if (!_bfService.HasValidBlindfold)
+        {
+            Logger.LogError("Somehow you went to remove an blindfold, but none were found!");
+            return;
+        }
+        // Fire achievements related to the keys removal 
+        // HERE, DO IT HERE
+
+        // we should remove this effect.
+        Logger.LogDebug("Current applied blindfold is a personal overlay. Removing as it is no longer in cache.");
+        await _bfService.RemoveBlindfold().ConfigureAwait(false);
+        // ABOVE LINE MIGHT CAUSE CALCULATION DELAY, BE CAUTIOUS.
+    }
+
+    // Called whenever a spesific visual cached Blindfold should be applied.
+    private async Task OnApplyBlindfold(BlindfoldOverlay? blindfold, CombinedCacheKey enactor)
+    {
+        // Do not validate if effect is null (and maybe even throw an exception lol)
+        if (blindfold is null || _bfService.HasValidBlindfold)
+        {
+            Logger.LogDebug("Not in valid state to apply Blindfold Overlays!");
+            return;
+        }
+        // Fire Achievements related to blindfold application here.
+
+        // If we are here, we are applying.
+        Logger.LogDebug($"[{enactor}] has applied a Blindfold Effect: {blindfold.OverlayPath}");
+        await _bfService.ApplyBlindfold(blindfold, enactor).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -101,55 +276,78 @@ public class OverlayHandler
     /// </summary>
     private async Task UpdateHypnoEffectInternal()
     {
-        // Update the final cache. If the hypno effect has changed, we need to perform a swap operation on them.
-        if (_cache.UpdateFinalHypnoEffectCache(out var enactorOfRemoved))
+        // We need to update the hypnotic cache here.
+        // It is important to note that if we are currently processing a manually applied effect,
+        // it should remain taking precedence over the cached display and their data should not be removed.
+        // Instead, we should handle firing achievements for the enactor of the removed effect.
+        if (_cache.UpdateFinalHypnoEffectCache(out var prevActiveKey))
         {
-            _logger.LogDebug($"Final HypnoEffect Cache updated with a change, reapplying cache!", LoggerType.VisualCache);
-            await ApplyHypnoEffectCache(enactorOfRemoved);
+            // The hypnotic cache changed, and we should apply the new cached effect.
+            Logger.LogDebug($"Hypnosis Cache changed! Priority was [{prevActiveKey.ToString()}] and is now [{_cache.PriorityEffectKey.ToString()}] Reapplying cache!", LoggerType.VisualCache);
+            // if the previous type was not CombinedCacheKey.Empty, try and remove the effect.
+            if (!prevActiveKey.Equals(CombinedCacheKey.Empty))
+            {
+                // use the previous active combined key to properly handle `removing` the current effect.
+                await OnRemoveHypnoEffect(prevActiveKey);
+            }
+
+            // If the active cache currently has an effect, and we are not processing a sent effect, start it.
+            if (!_hypnoService.HasValidEffect && _cache.ActiveEffect is { } effect)
+            {
+                Logger.LogDebug("There is no effect running, and we have an effect in our cache to apply, so applying!", LoggerType.VisualCache);
+                await OnApplyHypnoEffect(effect, _cache.PriorityEffectKey);
+            }
         }
         else
-            _logger.LogTrace("No change in Final HypnoEffect Cache.", LoggerType.VisualCache);
+            Logger.LogTrace("No change in Final HypnoEffect Cache.", LoggerType.VisualCache);
     }
 
-
-    // Do not await these or you will be delaying your cache optimization by like 3000ms lol.
-    public Task ApplyBlindfoldCache(string previousEnactor)
+    // Passes in the enactorUID that had applied the effect which just got removed from the cache.
+    // This should be the only primary source calling an effect removal, outside of manual applications.
+    private async Task OnRemoveHypnoEffect(CombinedCacheKey removedEffectSource)
     {
-        var hasActiveBlindfold = _cache.ActiveBlindfold is not null;
-        // If we have an active item, but there is no more items to apply, remove it.
-        if (!hasActiveBlindfold && _controller.HasValidBlindfold)
+        // If you run into this error, you've seriously messed up.
+        if (!_hypnoService.HasValidEffect)
         {
-            _logger.LogDebug("No active blindfold found in cache, removing current blindfold.");
-            _controller.RemoveBlindfold(previousEnactor).ConfigureAwait(false);
-            return Task.CompletedTask;
+            Logger.LogError("Somehow you went to remove an effect, but no effect was found!");
+            return;
         }
-        // Otherwise, swap / apply it.
-        if (hasActiveBlindfold)
+        // Fire achievements related to the keys removal 
+        // HERE, DO IT HERE
+
+        // If the effect was a sent effect, only worry about processing achievements for removal, and then return.
+        if (_hypnoService.IsSentEffect)
         {
-            _logger.LogDebug("Active blindfold found in cache, applying / swapping it.");
-            _controller.ApplyBlindfold(_cache.ActiveBlindfold!, _cache.ActiveBlindfoldEnactor!).ConfigureAwait(false);
+            Logger.LogDebug("Current applied effect is a sent effect on a timer. Keeping effect active and returning.");
+            return;
         }
-        return Task.CompletedTask;
+        else
+        {
+            // we should remove this effect.
+            Logger.LogDebug("Current applied effect is a personal effect, removing effect as it is no longer in cache.");
+            await _hypnoService.RemoveEffect().ConfigureAwait(false);
+            // ABOVE LINE MIGHT CAUSE CALCULATION DELAY, BE CAUTIOUS.
+        }
     }
 
-    // Do not await these or you will be delaying your cache optimization by like 3000ms lol.
-    public Task ApplyHypnoEffectCache(string prevEnactor)
+    // Called whenever a hypnotic effect should be applied to the player.
+    // There is a chance that this is called while the player is already under a hypnotic effect sent by a Kinkster.
+    // If this occurs, we should invoke the achievement for it being applied, but not actually apply the effect.
+    // (This makes sense as it is still "active" underneath)
+    private async Task OnApplyHypnoEffect(HypnoticOverlay? effect, CombinedCacheKey enactor)
     {
-        var hasActiveEffect = _cache.ActiveEffect is not null;
-        // If we have an active item, but there is no more items to apply, remove it.
-        if (!hasActiveEffect && _controller.HasValidHypnoEffect)
+        // Do not validate if effect is null (and maybe even throw an exception lol)
+        if (effect is null || _hypnoService.HasValidEffect || _hypnoService.IsSentEffect)
         {
-            _logger.LogDebug("No active Effect found in cache, removing current effect.");
-            _controller.RemoveHypnoEffect(prevEnactor).ConfigureAwait(false);
-            return Task.CompletedTask;
+            Logger.LogDebug("Not in valid state to apply hypnotic effects!");
+            return;
         }
-        // Otherwise, swap / apply it.
-        if (hasActiveEffect)
-        {
-            _logger.LogDebug("Active blindfold found in cache, applying / swapping it.");
-            _controller.ApplyHypnoEffect(_cache.ActiveEffect!, _cache.ActiveEffectEnactor!).ConfigureAwait(false);
-        }
-        return Task.CompletedTask;
+        // Fire Achievements related to hypnotic application here.
+
+        // If we are here, we are applying a personal effect.
+        Logger.LogDebug($"Applying Hypnotic Effect: {effect.OverlayPath} by {enactor}");
+        // Apply the effect to the player.
+        await _hypnoService.ApplyEffect(effect, enactor).ConfigureAwait(false);
     }
 
     /// <summary> Ensures that all calls for the hypno service are performed one after the other. </summary>
@@ -164,7 +362,7 @@ public class OverlayHandler
         }
         catch (Bagagwa ex)
         {
-            _logger.LogError($"Error during semaphore execution: {ex}");
+            Logger.LogError($"Error during semaphore execution: {ex}");
         }
         finally
         {

@@ -1,8 +1,11 @@
 using CkCommons;
 using Dalamud.Interface.ImGuiNotification;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data;
+using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Dto.VibeRoom;
+using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
 using Microsoft.AspNetCore.SignalR.Client;
 
@@ -546,10 +549,22 @@ public partial class MainHub
         return Task.CompletedTask;
     }
 
-    public Task Callback_HypnoticEffect(HypnoticAction dto)
+    public async Task Callback_HypnoticEffect(HypnoticAction dto)
     {
-        Generic.Safe(() => _globalPerms.OnHypnosisApplication(dto));
-        return Task.CompletedTask;
+        await Generic.Safe(async () =>
+        {
+            // if we are allowed to apply a hypnosis action, do so.
+            if (!_globalPerms.CanApplyHypnosisEffect(dto.User.UID))
+            {
+                // This should now have happened under any circumstances, reject.
+                await UserChangeOwnGlobalPerm(nameof(GlobalPerms.HypnosisCustomEffect), string.Empty).ConfigureAwait(false);
+            }
+            else
+            {
+                // The effect can be applied, so apply it.
+                _globalPerms.OnHypnosisApplication(dto);
+            }
+        });
     }
 
     public Task Callback_ConfineToAddress(ConfineByAddress dto)

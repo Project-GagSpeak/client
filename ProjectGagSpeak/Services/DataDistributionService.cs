@@ -101,6 +101,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         Mediator.Subscribe<ConfigPatternChanged>(this, msg => DistributePatternUpdate(msg.Item, msg.Type).ConfigureAwait(false));
         Mediator.Subscribe<ConfigAlarmChanged>(this, msg => DistributeAlarmUpdate(msg.Item, msg.Type).ConfigureAwait(false));
         Mediator.Subscribe<ConfigTriggerChanged>(this, msg => DistributeTriggerUpdate(msg.Item, msg.Type).ConfigureAwait(false));
+        Mediator.Subscribe<AllowancesChanged>(this, msg => DistributeAllowancesUpdate(msg.Module, msg.AllowedUids).ConfigureAwait(false));
     }
 
     // Idk why we need this really, anymore, but whatever i guess. If it helps it helps.
@@ -509,21 +510,42 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         var onlinePlayers = _kinksters.GetOnlineUserDatas();
         Logger.LogDebug($"Pushing PatternChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
         var dto = new PushClientDataChangePattern(onlinePlayers, item.Identifier, item.ToLightItem());
-        // do the distribution magic thing Y I P E E
+        if (await _hub.UserPushNewPatternData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+            Logger.LogError($"Failed to push PatternData to paired Kinksters. [{res}]");
+        else
+            Logger.LogDebug("Successfully pushed PatternData to server", LoggerType.OnlinePairs);
     }
 
     private async Task DistributeAlarmUpdate(Alarm item, StorageChangeType kind)
     {
-        // do the distribution magic thing Y I P E E
+        var onlinePlayers = _kinksters.GetOnlineUserDatas();
+        Logger.LogDebug($"Pushing AlarmChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
+        var dto = new PushClientDataChangeAlarm(onlinePlayers, item.Identifier, item.ToLightItem());
+        if (await _hub.UserPushNewAlarmData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+            Logger.LogError($"Failed to push AlarmData to paired Kinksters. [{res}]");
+        else
+            Logger.LogDebug("Successfully pushed AlarmData to server", LoggerType.OnlinePairs);
     }
 
     private async Task DistributeTriggerUpdate(Trigger item, StorageChangeType kind)
     {
-        // do the distribution magic thing
+        var onlinePlayers = _kinksters.GetOnlineUserDatas();
+        Logger.LogDebug($"Pushing TriggerChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
+        var dto = new PushClientDataChangeTrigger(onlinePlayers, item.Identifier, item.ToLightItem());
+        if (await _hub.UserPushNewTriggerData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+            Logger.LogError($"Failed to push TriggerData to paired Kinksters. [{res}]");
+        else
+            Logger.LogDebug("Successfully pushed TriggerData to server", LoggerType.OnlinePairs);
     }
 
-    private async Task DistributeAllowancesUpdate(GagspeakModule module, List<string> allowedUids)
+    private async Task DistributeAllowancesUpdate(GagspeakModule module, IEnumerable<string> allowedUids)
     {
-
+        var onlinePlayers = _kinksters.GetOnlineUserDatas();
+        Logger.LogDebug($"Pushing AllowancesUpdate for GagspeakModule [{module}] to online pairs.", LoggerType.OnlinePairs);
+        var dto = new PushClientAllowances(onlinePlayers, module, allowedUids.ToArray());
+        if (await _hub.UserPushNewAllowances(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+            Logger.LogError($"Failed to push AllowancesUpdate to paired Kinksters. [{res}]");
+        else
+            Logger.LogDebug("Successfully pushed AllowancesUpdate to server", LoggerType.OnlinePairs);
     }
 }

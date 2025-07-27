@@ -134,9 +134,9 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
         if (FireCallbackHook?.IsEnabled ?? false)
         {
             FireCallbackHook?.Disable();
-            FireCallbackHook?.Dispose();
         }
 
+        FireCallbackHook?.Dispose();
 
         // clear the func pointer for deallocation.
         FireCallbackFunc = null;

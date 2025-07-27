@@ -100,7 +100,7 @@ public partial class RestrictionsPanel
         style.Push(ImGuiStyleVar.FrameRounding, 10f);
         if (CkGui.IconButton(FAI.Save))
             _manager.SaveChangesAndStopEditing();
-        CkGui.AttachToolTip("Save Changes to this Gag Restriction.");
+        CkGui.AttachToolTip("Save Changes to this Restriction.");
 
         ImGui.SetWindowFontScale(1f);
     }
@@ -147,9 +147,9 @@ public partial class RestrictionsPanel
     {
         var pos = ImGui.GetCursorScreenPos();
         var displaySize = ImGui.GetIO().DisplaySize;
-        var leftWidth = CkGui.CalcCheckboxWidth("1st Person");
-        var rightWidth = width.RemoveWinPadX() - leftWidth - ImGui.GetStyle().ItemInnerSpacing.X;
-        var scaledPreview = displaySize * (rightWidth / ImGui.GetIO().DisplaySize.X);
+        var rightWidth = CkGui.CalcCheckboxWidth("1st Person");
+        var leftWidth = width.RemoveWinPadX() - rightWidth - ImGui.GetStyle().ItemInnerSpacing.X;
+        var scaledPreview = displaySize * (leftWidth / ImGui.GetIO().DisplaySize.X);
         var winSize = new Vector2(width, scaledPreview.Y.AddWinPadY());
 
         using (var bfInfo = CkRaii.IconButtonHeaderChild("Blindfold Information", FAI.Edit, winSize, () => OpenEditor(ImageDataType.Blindfolds, displaySize),
@@ -159,12 +159,8 @@ public partial class RestrictionsPanel
             {
                 if (TextureManagerEx.GetMetadataPath(ImageDataType.Blindfolds, blindfoldItem.Properties.OverlayPath) is { } validImage)
                 {
-                    // scale down the image to match the available widthInner.X.
-                    var scaler = rightWidth / validImage.Width;
-                    var scaledImage = validImage.Size * scaler;
-
                     pos = ImGui.GetCursorScreenPos();
-                    ImGui.GetWindowDrawList().AddDalamudImageRounded(validImage, pos, scaledImage, CkStyle.HeaderRounding());
+                    ImGui.GetWindowDrawList().AddDalamudImageRounded(validImage, pos, scaledPreview, CkStyle.HeaderRounding());
                 }
             }
             CkGui.AttachToolTip("The overlay image when applied.--SEP--Right-Click to clear.");
@@ -191,9 +187,9 @@ public partial class RestrictionsPanel
 
         var pos = ImGui.GetCursorScreenPos();
         var displaySize = ImGui.GetIO().DisplaySize;
-        var leftWidth = CkGui.IconTextButtonSize(FAI.BookOpen, "Effect Editor");
-        var rightWidth = width.RemoveWinPadX() - leftWidth - ImGui.GetStyle().ItemInnerSpacing.X;
-        var scaledPreview = displaySize * (rightWidth / ImGui.GetIO().DisplaySize.X);
+        var rightWidth = CkGui.IconTextButtonSize(FAI.BookOpen, "Effect Editor");
+        var leftWidth = width.RemoveWinPadX() - rightWidth - ImGui.GetStyle().ItemInnerSpacing.X;
+        var scaledPreview = displaySize * (leftWidth / ImGui.GetIO().DisplaySize.X);
         var winSize = new Vector2(width, scaledPreview.Y.AddWinPadY());
 
         using (var bfInfo = CkRaii.IconButtonHeaderChild("Hypnotic Information", FAI.Edit, winSize, () => OpenEditor(ImageDataType.Hypnosis, displaySize), 
@@ -203,12 +199,8 @@ public partial class RestrictionsPanel
             {
                 if (TextureManagerEx.GetMetadataPath(ImageDataType.Hypnosis, hypnoticItem.Properties.OverlayPath) is { } validImage)
                 {
-                    // scale down the image to match the available widthInner.X.
-                    var scaler = rightWidth / validImage.Width;
-                    var scaledImage = validImage.Size * scaler;
-
                     pos = ImGui.GetCursorScreenPos();
-                    ImGui.GetWindowDrawList().AddDalamudImageRounded(validImage, pos, scaledImage, CkStyle.HeaderRounding());
+                    ImGui.GetWindowDrawList().AddDalamudImageRounded(validImage, pos, scaledPreview, CkStyle.HeaderRounding());
                 }
             }
             CkGui.AttachToolTip("The overlay image when applied.--SEP--Right-Click to clear.");

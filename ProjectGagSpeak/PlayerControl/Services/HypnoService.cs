@@ -1,21 +1,24 @@
-using Dalamud.Interface;
 using CkCommons;
+using CkCommons.Gui;
+using Dalamud.Interface;
+using Dalamud.Interface.Textures.TextureWraps;
 using GagSpeak.Gui;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
+using GagSpeak.State.Caches;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
 using ImGuiNET;
+using NAudio.CoreAudioApi;
 using Timer = System.Timers.Timer;
-using CkCommons.Gui;
 
 namespace GagSpeak.Services.Controller;
 
 /// <summary>
 ///     Manages the rendering of a hypnosis overlay onto your screen.
 /// </summary>
-public class HypnoService
+public class HypnoService : IDisposable
 {
     // Constants.
     public const int ANIMATION_DURATION_MS = 1500;
@@ -39,89 +42,129 @@ public class HypnoService
     private HypnosisState   _activeState = new();
 
     // Active Display Item.
-    private HypnoticEffect? _activeEffect = null;          
-    private string          _applierUid   = string.Empty;
-    private string          _overlayPath  = string.Empty; // For Effects with local FilePaths.
-    private byte[]          _imageBytes   = Array.Empty<byte>(); // For items sent with image data. (look into KinkPlates for more info)
-
+    private bool                    _metaDataEffect = false;
+    private CombinedCacheKey        _activeSourceKey = CombinedCacheKey.Empty;
+    private HypnoticEffect?         _activeEffect = null;          
+    private string                  _applierUid   = string.Empty;
+    private IDalamudTextureWrap?    _storedImage;
     // Animation Control
     private SemaphoreSlim            _animationSlim = new(1, 1);
     private CancellationTokenSource  _opacityCTS = new();
     private CancellationTokenSource  _tasksCTS = new();
     private Task?                    _colorTask;
     private Task?                    _textTask;
-    private Timer                    _expireTime;
 
     private readonly ILogger<HypnoService> _logger;
     private readonly MainConfig            _config;
-    private readonly CosmeticService       _disp;
     public HypnoService(ILogger<HypnoService> logger, MainConfig config, CosmeticService render)
     {
         _logger = logger;
         _config = config;
-        _disp = render;
-
-        // Setup the timer's interval elapsed to remove the item automatically (Handle how we do this later)
-        _expireTime = new(int.MaxValue) { AutoReset = true };
-        _expireTime.Elapsed += (_,_) => RemoveActiveItem();
     }
 
+    /// <summary>
+    ///     Indicates if this spiral came from a sent hypnosis effect, over a personal restraint. 
+    /// </summary>
+    public bool IsSentEffect => _metaDataEffect;
+    public CombinedCacheKey ActiveSourceKey => _activeSourceKey;
+    public string EffectEnactor => _applierUid;
     public bool HasValidEffect => _activeEffect is not null;
 
-    private void RemoveActiveItem()
-        => _logger.LogInformation("Our Timer Expired!");
-
-    public bool CanRemove(string requesterUID) 
-        => string.Equals(_applierUid, requesterUID);
-
-    /// <summary> Swaps between two Hypnotic Effect by removing one, then applying another. </summary>
-    public async Task SwapEffect(HypnoticOverlay overlay, string enactor)
+    public void Dispose()
     {
-        if (HasValidEffect && !CanRemove(enactor))
-        {
-            _logger.LogWarning($"Cannot Switch! Current is Applied by [{_applierUid}]. Swapper [{enactor}] does not match!");
-            return;
-        }
-
-        _logger.LogDebug($"Swapping Hypnotic Effect to: ({overlay.OverlayPath}) by [{enactor}]");
-        await ExecuteWithSemaphore(async () =>
-        {
-            if (HasValidEffect)
-                await RemoveAnimationInternal();
-
-            await EquipAnimationInternal(overlay, enactor);
-        });
+        _logger.LogInformation("Disposing HypnoService.");
+        _animationSlim.Dispose();
+        _opacityCTS.SafeCancelDispose();
+        _tasksCTS.SafeCancelDispose();
+        _storedImage?.Dispose();
     }
 
-    /// <summary> Safely, manually remove a Hypno Effect. (Must match assigner) </summary>
-    public async Task RemoveEffect(string enactor)
+    // For effect application done by bindings.
+    public async Task ApplyEffect(HypnoticOverlay overlay, CombinedCacheKey enactor)
     {
-        if (!HasValidEffect || !CanRemove(enactor))
+        // overlay image path does not exist, fallback to default.
+        if (!overlay.IsValid())
+            _storedImage = await TextureManagerEx.RentMetadataPath(ImageDataType.Hypnosis, Constants.DefaultHypnoPath);
+        else
+            _storedImage = await TextureManagerEx.RentMetadataPath(ImageDataType.Hypnosis, overlay.OverlayPath);
+        // Image was valid, so set other properties.
+        _logger.LogDebug($"{enactor} applied a hypnotic effect.");
+        // set the source and enactor.
+        _activeSourceKey = enactor;
+        _applierUid = enactor.EnactorUID;
+        _activeEffect = overlay.Effect;
+        _activeState = new HypnosisState { ImageColor = _activeEffect.ImageColor };
+        await ExecuteWithSemaphore(EquipAnimationInternal);
+    }
+
+    // For hypnotic effects manually applied.
+    public async Task<bool> ApplyEffect(HypnoticEffect effect, string enactor, int timeInSeconds, string? base64ImgString = null)
+    {
+        // Load method: Custom Image from other Kinkster.
+        if (base64ImgString is not null)
+        {
+            _logger.LogTrace("Attempting to compile image data!");
+            var bytes = new Lazy<byte[]>(() => Convert.FromBase64String(base64ImgString));
+            _storedImage = await Svc.Texture.CreateFromImageAsync(bytes.Value);
+        }
+        else
+        {
+            _storedImage = await TextureManagerEx.RentMetadataPath(ImageDataType.Hypnosis, Constants.DefaultHypnoPath);
+        }
+        // if the image is null at this point, log an error (and maybe even an exception?)
+        if (_storedImage is null)
+        {
+            if (!string.IsNullOrEmpty(base64ImgString))
+                _logger.LogError($"Failed to load Hypnotic Image from Base64 string. : {base64ImgString}");
+            else
+                _logger.LogError($"Failed to load default Hypnotic Image. : {Constants.DefaultHypnoPath}");
+            return false;
+        }
+        // Image was valid, so set other properties.
+        _logger.LogDebug($"{enactor} applied a hypnotic effect.");
+        _applierUid = enactor;
+        _activeEffect = effect;
+        _activeState = new HypnosisState { ImageColor = _activeEffect.ImageColor };
+        await ExecuteWithSemaphore(EquipAnimationInternal);
+        return true;
+    }
+
+    public async Task RemoveSentEffectOnExpire()
+    {
+        // clear the sent effect after removing the effect.
+        await RemoveEffect();
+        _metaDataEffect = false;
+    }
+
+    /// <summary> 
+    ///     Safely, remove a Hypno Effect.
+    /// </summary>
+    public async Task RemoveEffect()
+    {
+        if (!HasValidEffect)
             return;
-        // Cancel, Dispose, Recreate all active tasks.
-        // (This halts any progress on previous animation not yet finished.)
-        _tasksCTS = _tasksCTS.SafeCancelRecreate();
-        _opacityCTS = _opacityCTS.SafeCancelRecreate();
         // Run the Removeal Internal 
         await ExecuteWithSemaphore(RemoveAnimationInternal);
+        // Reset the state.
+        _tasksCTS = _tasksCTS.SafeCancelRecreate();
+        _opacityCTS = _opacityCTS.SafeCancelRecreate();
+        _activeEffect = null;
+        _storedImage?.Dispose();
+        _storedImage = null;
+        _activeState = new HypnosisState();
+        _activeSourceKey = CombinedCacheKey.Empty;
+        _applierUid = string.Empty;
     }
 
     // Assumes the tasks have already been canceled and recreated.
-    private async Task EquipAnimationInternal(HypnoticOverlay item, string enactor)
+    private async Task EquipAnimationInternal()
     {
-        _logger.LogDebug($"{enactor} applied a hypnotic effect: ({item.OverlayPath})");
-        // set the effect, image path, and applier 
-        _activeEffect = item.Effect;
-        _overlayPath = item.OverlayPath;
-        _applierUid = enactor;
-        _activeState = new HypnosisState { ImageColor = _activeEffect.ImageColor };
-
         // Assign the new Tasks.
-        _colorTask = ColorTransposeTask(_activeEffect, _activeState, _tasksCTS.Token);
-        _textTask = TextDisplayTask(_activeEffect, _activeState, _tasksCTS.Token);
+        _colorTask = ColorTransposeTask(_activeEffect!, _activeState, _tasksCTS.Token);
+        _textTask = TextDisplayTask(_activeEffect!, _activeState, _tasksCTS.Token);
         // Begin animation
         _activeState.ImageOpacity = 0;
-        await AnimateOpacityInternal(_activeState.ImageOpacity, CkGui.GetAlpha(_activeEffect.ImageColor), _opacityCTS.Token);
+        await AnimateOpacityInternal(_activeState.ImageOpacity, CkGui.GetAlpha(_activeEffect!.ImageColor), _opacityCTS.Token);
     }
 
     private async Task RemoveAnimationInternal()
@@ -129,13 +172,6 @@ public class HypnoService
         _logger.LogDebug($"Removing HypnoEffect applied by [{_applierUid}]");
         // Perform the removal animation!
         await AnimateOpacityInternal(_activeState.ImageOpacity, 0.0f, _opacityCTS.Token);
-        // Upon completion, cancel the other tasks.
-        _tasksCTS?.Cancel();
-        _activeEffect = null;
-        _overlayPath = string.Empty;
-        _imageBytes = Array.Empty<byte>();
-        _activeState = new HypnosisState();
-        _applierUid = string.Empty;
     }
 
     private async Task AnimateOpacityInternal(float startOpacity, float endOpacity, CancellationToken token)
@@ -174,12 +210,9 @@ public class HypnoService
         _logger.LogDebug($"HypnoEffect opacity transition completed: {startOpacity:F2} -> {_activeState.ImageOpacity:F2}");
     }
 
-    public void DrawHypnoEffect()
+    public unsafe void DrawHypnoEffect()
     {
-        if (_activeEffect is not { } effect)
-            return;
-
-        if (TextureManagerEx.GetMetadataPath(ImageDataType.Hypnosis, _overlayPath) is not { } hypnoImage)
+        if (_activeEffect is not { } effect || _storedImage is not { } hypnoImage)
             return;
 
         // Recalculate the necessary cycle speed that we should need for the rotation (may need optimizations later)
@@ -236,24 +269,23 @@ public class HypnoService
             UVCorners[3],
             imgTint);
 
-        if (string.IsNullOrEmpty(_activeState.CurrentText))
+        // If text is not present, or font is not valid, do not draw.
+        if (_activeState.CurrentText.IsNullOrEmpty() || !UiFontService.FullScreenFont.Available || UiFontService.FullScreenFontPtr.NativePtr is null)
             return;
 
+
         // determine the font scalar.
-        var fontScaler = UiFontService.FullScreenFont.Available
-            ? (_activeEffect.TextFontSize / UiFontService.FullScreenFontPtr.FontSize) * _activeState.TextScale
-            : _activeState.TextScale;
+        var fontScaler = (_activeEffect.TextFontSize / UiFontService.FullScreenFontPtr.FontSize) * _activeState.TextScale;
 
         // determine the new target position.
         var targetPos = _activeEffect.Attributes.HasAny(HypnoAttributes.LinearTextScale)
             ? center - Vector2.Lerp(_activeState.TextOffsetStart, _activeState.TextOffsetEnd, _activeState.TextScaleProgress)
             : center - (CkGui.CalcFontTextSize(_activeState.CurrentText, UiFontService.FullScreenFont) * fontScaler) * 0.5f;
 
-        Svc.Logger.Debug($"Drawing Hypno Text: '{_activeState.CurrentText}' at {targetPos} with scale {fontScaler:F2}");
-
         drawList.OutlinedFontScaled(
             UiFontService.FullScreenFontPtr,
-            UiFontService.FullScreenFontPtr.FontSize * fontScaler,
+            UiFontService.FullScreenFontPtr.FontSize,
+            fontScaler,
             targetPos,
             _activeState.CurrentText,
             ColorHelpers.ApplyOpacity(_activeEffect.TextColor, _activeState.TextOpacity),
