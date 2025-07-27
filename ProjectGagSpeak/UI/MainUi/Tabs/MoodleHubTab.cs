@@ -10,6 +10,7 @@ using GagSpeak.CustomCombos.Editor;
 using GagSpeak.Gui.Components;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Services.Tutorial;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
 using ImGuiNET;
@@ -23,10 +24,15 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
 {
     private readonly ShareHubService _shareHub;
     private HubTagsCombo _hubTags;
-    public MoodleHubTab(ILogger<MoodleHubTab> logger, GagspeakMediator mediator, ShareHubService shareHub) 
+    private readonly TutorialService _guides;
+    private readonly MainMenuTabs _tabMenu;
+    public MoodleHubTab(ILogger<MoodleHubTab> logger, GagspeakMediator mediator, ShareHubService shareHub,
+        TutorialService guides, MainMenuTabs tabMenu) 
         : base(logger, mediator)
     {
         _shareHub = shareHub;
+        _guides = guides;
+        _tabMenu = tabMenu;
 
         _hubTags = new HubTagsCombo(logger, () => [ ..shareHub.FetchedTags.OrderBy(x => x) ]);
     }
@@ -37,7 +43,12 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
         if (!_shareHub.InitialMoodlesCall && !UiService.DisableUI)
             UiService.SetUITask(_shareHub.SearchMoodles());
 
-        DrawSearchFilter();
+        using (ImRaii.Group())
+        {
+            DrawSearchFilter();
+        }
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.MoodleSearch, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+
         ImGui.Separator();
 
         // draw the results if there are any.
@@ -50,6 +61,8 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
 
         using (ImRaii.Child("ResultListGuard", ImGui.GetContentRegionAvail(), false, WFlags.NoScrollbar))
             DrawResultList();
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.MoodleResults, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+            () => _tabMenu.TabSelection = MainMenuTabs.SelectedTab.GlobalChat);
     }
 
     private void DrawResultList()

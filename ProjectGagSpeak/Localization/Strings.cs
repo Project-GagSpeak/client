@@ -154,7 +154,7 @@ namespace GagSpeak.Localization
 
         public readonly string Step20Title = Loc.Localize("HelpMainUi_Step20Title", "GagSpeak Settings Menu");
         public readonly string Step20Desc = Loc.Localize("HelpMainUi_Step20Desc", "You can access the Settings window by clicking this button.");
-        public readonly string Step20DescExtended = Loc.Localize("HelpMainUi_Step20DescExtended", " ");
+        public readonly string Step20DescExtended = Loc.Localize("HelpMainUi_Step20DescExtended", "You can also access it from any of the tabs by pressing the cog in the top bar.");
 
         // public readonly string Step21Title = Loc.Localize("HelpMainUi_Step21Title", "Title Bar GagSpeak Settings");
         // public readonly string Step21Desc = Loc.Localize("HelpMainUi_Step21Desc", "You can also access them from the title bar.");

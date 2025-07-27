@@ -3,6 +3,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Gui.Components;
 using GagSpeak.Gui.Profile;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
@@ -23,16 +24,19 @@ public class AccountTab
     private readonly MainConfig _config;
     private readonly KinkPlateService _profileManager;
     private readonly TutorialService _guides;
+    private readonly MainMenuTabs _tabMenu;
     public AccountTab(
         GagspeakMediator mediator,
         MainConfig config,
         KinkPlateService profiles,
-        TutorialService guides)
+        TutorialService guides,
+        MainMenuTabs tabMenu)
     {
         _mediator = mediator;
         _profileManager = profiles;
         _config = config;
         _guides = guides;
+        _tabMenu = tabMenu;
     }
 
     private static Vector2 LastWinPos = Vector2.Zero;
@@ -108,32 +112,35 @@ public class AccountTab
             ImGui.AlignTextToFramePadding();
             DrawAccountSettingChild(FAI.Cog, "My Settings", "Opens the Settings UI", () => _mediator.Publish(new UiToggleMessage(typeof(SettingsUi))));
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ConfigSettings1, LastWinPos, LastWinSize,
-                () => { /*move on to the pattern hub here, when my brain isn't cooked*/ });
+                () => { _tabMenu.TabSelection = MainMenuTabs.SelectedTab.PatternHub; });
 
             // Actions Notifier thing.
             ImGui.AlignTextToFramePadding();
             DrawAccountSettingChild(FAI.Bell, "Actions Notifier", "See who did what actions on you!", () => _mediator.Publish(new UiToggleMessage(typeof(InteractionEventsUI))));
 
-            // now do one for ko-fi
-            ImGui.AlignTextToFramePadding();
-            DrawAccountSettingChild(FAI.Coffee, "Support via Ko-fi", "This plugin took a massive toll on my life as a solo dev." +
-                Environment.NewLine + "As happy as I am to make this free for all of you to enjoy, " +
-                Environment.NewLine + "any support or tips are much appreciated ♥", () =>
-                {
-                    try { Process.Start(new ProcessStartInfo { FileName = "https://www.ko-fi.com/cordeliamist", UseShellExecute = true }); }
-                    catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the Ko-Fi link. {e.Message}"); }
-                });
-            // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SelfPlug, LastWinPos, LastWinSize);
-
-
-            ImGui.AlignTextToFramePadding();
-            DrawAccountSettingChild(FAI.Pray, "Support via Patreon", "This plugin took a massive toll on my life as a solo dev." +
-                Environment.NewLine + "As happy as I am to make this free for all of you to enjoy, " +
-                Environment.NewLine + "any support / tips are much appreciated ♥", () =>
+            // can i group these to highlight both of them for the tutorial step?
+            using (ImRaii.Group())
             {
-                try { Process.Start(new ProcessStartInfo { FileName = "https://www.patreon.com/CordeliaMist", UseShellExecute = true }); }
-                catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the Patreon link. {e.Message}"); }
-            });
+                // now do one for ko-fi
+                ImGui.AlignTextToFramePadding();
+                DrawAccountSettingChild(FAI.Coffee, "Support via Ko-fi", "This plugin took a massive toll on my life as a solo dev." +
+                    Environment.NewLine + "As happy as I am to make this free for all of you to enjoy, " +
+                    Environment.NewLine + "any support or tips are much appreciated ♥", () =>
+                    {
+                        try { Process.Start(new ProcessStartInfo { FileName = "https://www.ko-fi.com/cordeliamist", UseShellExecute = true }); }
+                        catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the Ko-Fi link. {e.Message}"); }
+                    });
+ 
+                ImGui.AlignTextToFramePadding();
+                DrawAccountSettingChild(FAI.Pray, "Support via Patreon", "This plugin took a massive toll on my life as a solo dev." +
+                    Environment.NewLine + "As happy as I am to make this free for all of you to enjoy, " +
+                    Environment.NewLine + "any support / tips are much appreciated ♥", () =>
+                {
+                    try { Process.Start(new ProcessStartInfo { FileName = "https://www.patreon.com/CordeliaMist", UseShellExecute = true }); }
+                    catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the Patreon link. {e.Message}"); }
+                });
+            }
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SelfPlug, LastWinPos, LastWinSize);
 
             ImGui.AlignTextToFramePadding();
             DrawAccountSettingChild(FAI.ThumbsUp, "Send Positive Feedback!", "Opens a short 1 question positive feedback form ♥", () =>

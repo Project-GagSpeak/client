@@ -3,6 +3,7 @@ using CkCommons.Gui;
 using CkCommons.Helpers;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Gui.Components;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
@@ -23,13 +24,15 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
     private readonly GlobalChatLog _globalChat;
     private readonly KinkPlateService _plateManager;
     private readonly TutorialService _guides;
+    private readonly MainMenuTabs _tabmenu;
 
     public GlobalChatTab(ILogger<GlobalChatTab> logger, GagspeakMediator mediator,
-        GlobalChatLog globalChat, KinkPlateService plateManager, TutorialService guides)
+        GlobalChatLog globalChat, KinkPlateService plateManager, TutorialService guides, MainMenuTabs tabMenu)
         : base(logger, mediator)
     {
         _globalChat = globalChat;
         _plateManager = plateManager;
+        _tabmenu = tabMenu;
         _guides = guides;
     }
 
@@ -54,7 +57,11 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
         }
 
         _globalChat.DrawChat(ImGui.GetContentRegionAvail());
-        // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.GlobalChat, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.UsingGlobalChat, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatEmotes, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatScroll, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatMessageExamine, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+            () => _tabmenu.TabSelection = MainMenuTabs.SelectedTab.MySettings);
     }
 }
 
