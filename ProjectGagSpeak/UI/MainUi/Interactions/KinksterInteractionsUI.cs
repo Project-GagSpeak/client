@@ -13,6 +13,7 @@ using GagSpeak.CustomCombos.Padlock;
 using GagSpeak.CustomCombos.Pairs;
 using GagSpeak.Gui.Components;
 using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
@@ -64,7 +65,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
     private readonly MainHub _hub;
     private readonly KinksterPermsForClient _kinksterPerms;
     private readonly ClientPermsForKinkster _permsForKinkster;
-
+    private readonly HypnoEffectManager _effectPresetManager;
     // Private variables for the sticky UI and its respective combos.
     private PairGagCombo _pairGags;
     private PairGagPadlockCombo _pairGagPadlocks;
@@ -94,15 +95,17 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         MainMenuTabs mainTabMenu,
         MainHub hub,
         KinksterPermsForClient permsForSelf,
-        ClientPermsForKinkster permsForKinkster)
+        ClientPermsForKinkster permsForKinkster,
+        HypnoEffectManager effectPresetManager)
         : base(logger, mediator, $"StickyPermissionUI")
     {
         _mainTabMenu = mainTabMenu;
         _hub = hub;
         _kinksterPerms = permsForSelf;
         _permsForKinkster = permsForKinkster;
+        _effectPresetManager = effectPresetManager;
 
-        _hypnoEditor = new HypnoEffectEditor("KinksterEffectEditor");
+        _hypnoEditor = new HypnoEffectEditor("KinksterEffectEditor", effectPresetManager);
 
         Flags = WFlags.NoCollapse | WFlags.NoTitleBar | WFlags.NoResize | WFlags.NoScrollbar;
 
@@ -764,7 +767,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
                 // open it.
                 _selections.OpenOrClose(InteractionType.HypnosisEffect);
                 if (_hypnoEditor.IsEffectNull)
-                    _hypnoEditor.SetHypnoEffect(new HypnoticEffect());
+                    _hypnoEditor.SetBlankEffect();
             }
             else
             {
@@ -786,7 +789,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 
             // Draw the editor below this and the preview display.
             _hypnoEditor.DrawCompactEditorTabs(width);
-            var size = _hypnoEditor.DisplayPreviewWidthConstrained(width, $"{Constants.DefaultHypnoPath}.png");
+            var size = _hypnoEditor.DisplayPreviewWidthConstrained(width, Constants.DefaultHypnoPath);
             ImGui.Dummy(size);
         }
 

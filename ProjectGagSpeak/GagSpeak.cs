@@ -188,6 +188,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<ClientAchievements>()
         .AddSingleton<AchievementEventHandler>()
         .AddSingleton<FavoritesManager>()
+        .AddSingleton<HypnoEffectManager>()
         .AddSingleton<OwnGlobals>()
         .AddSingleton<KinksterRequests>()
         .AddSingleton<TraitAllowanceManager>()

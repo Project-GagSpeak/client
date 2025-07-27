@@ -58,6 +58,7 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
 
     private ApiVersion                          Version;               // Obtains the current version of Penumbra's API.
     private RedrawObject                        RedrawClient;          // Can force the client to Redraw.
+    private GetModPath                          GetModPath;            // Retrieves the path of the mod with its directory and name, allowing for folder sorting.
     private GetModList                          GetModList;            // Retrieves the client's mod list. (DirectoryName, ModName)
     private GetCollection                       GetActiveCollection;   // Obtains the client's currently active collection. (may not need this)
     private GetAvailableModSettings             GetModSettingsAll;     // Obtains _ALL_ the options for a given mod.
@@ -82,6 +83,7 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
 
         Version = new ApiVersion(Svc.PluginInterface);
         RedrawClient = new RedrawObject(Svc.PluginInterface);
+        GetModPath = new GetModPath(Svc.PluginInterface);
         GetModList = new GetModList(Svc.PluginInterface);
         GetActiveCollection = new GetCollection(Svc.PluginInterface);
         GetModSettingsAll = new GetAvailableModSettings(Svc.PluginInterface);

@@ -1,9 +1,13 @@
 using CkCommons;
 using CkCommons.Gui;
+using CkCommons.Helpers;
 using CkCommons.Raii;
 using CkCommons.Widgets;
 using Dalamud.Interface;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Controller;
 using GagSpeak.Services.Textures;
@@ -13,6 +17,7 @@ using GagspeakAPI.Data;
 using ImGuiNET;
 using OtterGui.Text;
 using System.Diagnostics.CodeAnalysis;
+using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace GagSpeak.Gui.Components;
 public class HypnoEffectEditor : IDisposable
@@ -21,8 +26,11 @@ public class HypnoEffectEditor : IDisposable
     const ImGuiColorEditFlags COLOR_FLAGS = ImGuiColorEditFlags.DisplayHex | ImGuiColorEditFlags.AlphaPreview | ImGuiColorEditFlags.AlphaBar | ImGuiColorEditFlags.NoSidePreview;
     const ImGuiColorEditFlags KINKSTER_COLOR_FLAGS = ImGuiColorEditFlags.DisplayRGB | ImGuiColorEditFlags.AlphaPreview | ImGuiColorEditFlags.AlphaBar | ImGuiColorEditFlags.NoSidePreview;
 
+    private readonly HypnoEffectManager _presetManager;
+
     private CompactConfigTab _compactConfigTab;
     private CompactPhrasesColorsTab _compactPhrasesColorsTab;
+    private CompactPresetsTab _presetsTab;
     private IFancyTab[] EditorTabs;
 
     // Editor Control.
@@ -34,15 +42,18 @@ public class HypnoEffectEditor : IDisposable
     // Locals.
     private bool            _isOpen = false;
     private HypnoticEffect? _effect = null;
+    private string          _presetName = string.Empty;
     private HypnosisState   _activeState = new();
-    public HypnoEffectEditor(string popupLabel)
+    public HypnoEffectEditor(string popupLabel, HypnoEffectManager presetManager)
     {
+        _presetManager = presetManager;
         PopupLabel = popupLabel;
         _tasksCTS = new CancellationTokenSource();
         _displayTextEditor = new TagCollection();
         _compactConfigTab = new CompactConfigTab(this);
         _compactPhrasesColorsTab = new CompactPhrasesColorsTab(this);
-        EditorTabs = [ _compactConfigTab, _compactPhrasesColorsTab ];
+        _presetsTab = new CompactPresetsTab(this, presetManager);
+        EditorTabs = [ _compactConfigTab, _compactPhrasesColorsTab, _presetsTab ];
     }
 
     public readonly string PopupLabel = "HypnosisEditorModal";
@@ -64,6 +75,8 @@ public class HypnoEffectEditor : IDisposable
 
         _tasksCTS?.Dispose();
         _effect = null;
+        _presetName = string.Empty;
+        _presetManager.Save();
     }
 
     public bool TryGetEffect([NotNullWhen(true)] out HypnoticEffect? effect)
@@ -72,18 +85,33 @@ public class HypnoEffectEditor : IDisposable
         return effect != null;
     }
 
+    public void SetBlankEffect()
+    {
+        _tasksCTS?.SafeCancel();
+        _effect = new HypnoticEffect();
+        _presetName = string.Empty;
+        _activeState = new HypnosisState { ImageColor = _effect.ImageColor };
+        // Assign the new tasks for the display editor.
+        _tasksCTS = new CancellationTokenSource();
+        _colorTask = HypnoService.ColorTransposeTask(_effect, _activeState, _tasksCTS.Token);
+        _textTask = HypnoService.TextDisplayTask(_effect, _activeState, _tasksCTS.Token);
+        _presetManager.Save();
+    }
+
     public void SetHypnoEffect(HypnoticEffect effect)
     {
         // Halt any running tasks.
         _tasksCTS?.Cancel();
         // Set the new effect.
         _effect = new(effect);
+        _presetName = string.Empty;
         _activeState = new HypnosisState { ImageColor = _effect.ImageColor };
 
         // Assign the new tasks for the display editor.
         _tasksCTS = new CancellationTokenSource();
         _colorTask = HypnoService.ColorTransposeTask(_effect, _activeState, _tasksCTS.Token);
         _textTask = HypnoService.TextDisplayTask(_effect, _activeState, _tasksCTS.Token);
+        _presetManager.Save();
     }
 
     public void OnEditorClose()
@@ -91,7 +119,9 @@ public class HypnoEffectEditor : IDisposable
         // Cancel any running tasks.
         _tasksCTS?.Cancel();
         _effect = null;
+        _presetName = string.Empty;
         _activeState = new HypnosisState();
+        _presetManager.Save();
     }
 
     /// <summary> Draws the editor. Passes in the original so when we save the editor we can update the original entry. </summary>
@@ -447,7 +477,7 @@ public class HypnoEffectEditor : IDisposable
     }
 
 
-    private Vector2 DisplayPreviewEffect(float sizeScale, string path, float rounding = 0)
+    private unsafe Vector2 DisplayPreviewEffect(float sizeScale, string path, float rounding = 0)
     {
         if (_effect is null || TextureManagerEx.GetMetadataPath(ImageDataType.Hypnosis, path) is not { } hypnoImage)
             return Vector2.Zero;
@@ -515,13 +545,12 @@ public class HypnoEffectEditor : IDisposable
                 imgTint);
             drawList.PopClipRect();
 
-            if (string.IsNullOrEmpty(_activeState.CurrentText))
+            // If text is not present, or font is not valid, do not draw.
+            if (_activeState.CurrentText.IsNullOrEmpty() || !UiFontService.FullScreenFont.Available || UiFontService.FullScreenFontPtr.NativePtr is null)
                 return screenSize;
 
             // determine the font scalar.
-            var fontScaler = sizeScale * (UiFontService.FullScreenFont.Available
-                ? (_effect.TextFontSize / UiFontService.FullScreenFontPtr.FontSize) * _activeState.TextScale
-                : _activeState.TextScale);
+            var fontScaler = sizeScale * (_effect.TextFontSize / UiFontService.FullScreenFontPtr.FontSize) * _activeState.TextScale;
 
             // determine the new target position.
             var targetPos = _effect.Attributes.HasAny(HypnoAttributes.LinearTextScale)
@@ -658,7 +687,8 @@ public class HypnoEffectEditor : IDisposable
             {
                 var maxFadeIn = Math.Max(HypnoService.DISPLAY_TIME_MIN, effect.TextDisplayTime - effect.TextFadeOutTime);
                 var fadeIn = effect.TextFadeInTime;
-                if (ImGui.SliderInt("##TextFadeIn", ref fadeIn, HypnoService.DISPLAY_TIME_MIN, maxFadeIn, "%dms"))
+                ImGui.SetNextItemWidth(fullWidth);
+                if (ImGui.SliderInt("##TextFadeIn", ref fadeIn, HypnoService.DISPLAY_TIME_MIN, maxFadeIn, "%dms Fade-In Time"))
                 {
                     effect.TextFadeInTime = fadeIn;
                     // Adjust fadeout to not exceed.
@@ -667,7 +697,8 @@ public class HypnoEffectEditor : IDisposable
 
                 var maxFadeOut = Math.Max(HypnoService.DISPLAY_TIME_MIN, effect.TextDisplayTime - effect.TextFadeInTime);
                 var fadeOut = effect.TextFadeOutTime;
-                if (ImGui.SliderInt("##TextFadeOut", ref fadeOut, HypnoService.DISPLAY_TIME_MIN, maxFadeOut, "%dms"))
+                ImGui.SetNextItemWidth(fullWidth);
+                if (ImGui.SliderInt("##TextFadeOut", ref fadeOut, HypnoService.DISPLAY_TIME_MIN, maxFadeOut, "%dms Fade-Out Time"))
                 {
                     effect.TextFadeOutTime = fadeOut;
                     // Adjust fadein to not exceed.
@@ -696,7 +727,7 @@ public class HypnoEffectEditor : IDisposable
     internal class CompactPhrasesColorsTab : IFancyTab
     {
         private readonly HypnoEffectEditor _editorRef;
-        public string Label => "Phrases & Colors";
+        public string Label => "Text & Color";
         public string Tooltip => "Adjust Displayed Phrases & Colors!";
         public bool Disabled => false;
         public CompactPhrasesColorsTab(HypnoEffectEditor editor) => _editorRef = editor;
@@ -735,6 +766,123 @@ public class HypnoEffectEditor : IDisposable
             var textOutlineColVec = ColorHelpers.RgbaUintToVector4(effect.StrokeColor);
             if (ImGui.ColorEdit4("##EffectStrokeColor", ref textOutlineColVec, KINKSTER_COLOR_FLAGS))
                 effect.StrokeColor = ColorHelpers.RgbaVector4ToUint(textOutlineColVec);
+        }
+    }
+
+    internal class CompactPresetsTab : IFancyTab
+    {
+        private readonly HypnoEffectManager _presetManager;
+        private readonly HypnoEffectEditor _editorRef;
+        public string Label => "Presets";
+        public string Tooltip => "Set, Create, Remove, Rename, or Modify Presets!";
+        public bool Disabled => false;
+        public CompactPresetsTab(HypnoEffectEditor editor, HypnoEffectManager presets)
+        {
+            _editorRef = editor;
+            _presetManager = presets;
+        }
+
+        private (Guid Id, string PresetName) _selectedPreset = (Guid.Empty, string.Empty);
+        private (Guid ID, string PresetName) _renamingPreset = (Guid.Empty, string.Empty);
+
+        public void DrawContents(float width)
+        {
+            var itemSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
+
+            DrawAddCurrentButton(itemSize);
+
+            foreach (var (name, preset) in _presetManager.Presets)
+            {
+                var selected = _selectedPreset.PresetName == name;
+                if (DrawPresetItemBox(name, preset, selected))
+                    break;
+                CkGui.AttachToolTip("Keybinds:" +
+                    "--SEP----COL--[Double-Click]--COL-- Load Preset" +
+                    "--NL----COL--[Right-Click]--COL-- Rename Preset", color: CkColor.VibrantPink.Vec4());
+            }
+
+            bool DrawPresetItemBox(string setName, HypnoticEffect preset, bool selected)
+            {
+                var pos = ImGui.GetCursorScreenPos();
+                var hovering = ImGui.IsMouseHoveringRect(pos, pos + itemSize);
+                var color = hovering ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkColor.ElementBG.Uint();
+                using (CkRaii.FramedChild($"Preset-{setName}", itemSize, color, CkStyle.ChildRounding(), CkStyle.ThinThickness()))
+                {
+                    CkGui.InlineSpacing();
+                    if (preset.EffectId == _renamingPreset.ID)
+                    {
+                        if (_renamingPreset.PresetName.IsNullOrEmpty())
+                            _renamingPreset.PresetName = setName;
+                        ImGui.InputText("##RenamePreset", ref _renamingPreset.PresetName, 255);
+                        if (ImGui.IsItemDeactivated())
+                        {
+                            if (_renamingPreset.PresetName == setName)
+                            {
+                                // change nothing.
+                                _renamingPreset = (Guid.Empty, string.Empty);
+                                return true;
+                            }
+                            // otherwise a change occured so update it.
+                            var newName = RegexEx.EnsureUniqueName(_renamingPreset.PresetName, _presetManager.Presets.Keys, x => x);
+                            if (_presetManager.TryRenamePreset(setName, newName))
+                            {
+                                _renamingPreset = (Guid.Empty, string.Empty);
+                                _selectedPreset = (preset.EffectId, newName);
+                                _editorRef.SetHypnoEffect(_presetManager.Presets[newName]);
+                                Svc.Logger.Debug($"Renamed Hypno Effect Preset: {setName} to {newName}");
+                                return true;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        ImGui.AlignTextToFramePadding();
+                        ImGui.TextUnformatted(setName);
+                    }
+                    ImGui.SameLine(ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FAI.Eraser).X -ImGui.GetStyle().ItemInnerSpacing.X);
+                    if (CkGui.IconButton(FAI.Eraser, inPopup: true))
+                    {
+                        _selectedPreset = (Guid.Empty, string.Empty);
+                        _presetManager.RemovePreset(setName);
+                        return true;
+                    }
+                }
+                // Handle Mouse Clicking.
+                if (ImGui.IsMouseClicked(ImGuiMouseButton.Right) && hovering)
+                    _renamingPreset = (preset.EffectId, setName);
+                if (ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left) && hovering)
+                {
+                    _renamingPreset = (Guid.Empty, string.Empty);
+                    _selectedPreset = (preset.EffectId, setName);
+                    _editorRef.SetHypnoEffect(preset);
+                    Svc.Logger.Debug($"Selected Preset: {setName}");
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        private void DrawAddCurrentButton(Vector2 size)
+        {
+            var pos = ImGui.GetCursorScreenPos();
+            var hovering = ImGui.IsMouseHoveringRect(pos, pos + size);
+            var color = hovering ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkColor.ElementBG.Uint();
+            using (CkRaii.FramedChild("NewPresetButton", size, color, CkStyle.HeaderRounding(), CkStyle.ThinThickness()))
+            {
+                var offset = (ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize("New Preset").X) / 2;
+                ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offset);
+                ImUtf8.TextFrameAligned("New Preset");
+            }
+            if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && hovering && _editorRef._effect is not null)
+            {
+                // generate a random name, starting with _, that is 10 character long, and not in _presetManager.Presets.Keys.
+                var random = new Random();
+                var newPresetName = $"_{string.Concat(Enumerable.Range(0, 10).Select(_ => (char)('a' + random.Next(0, 26))))}";
+                while (_presetManager.Presets.ContainsKey(newPresetName))
+                    newPresetName = $"_{string.Concat(Enumerable.Range(0, 10).Select(_ => (char)('a' + random.Next(0, 26))))}";
+                if(_presetManager.TryAddPreset(newPresetName, _editorRef._effect))
+                    Svc.Logger.Debug($"Added new Hypno Effect Preset: {newPresetName}");
+            }
         }
     }
 }

@@ -119,6 +119,7 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
         _sentHypnosisTimer.Interval = length.TotalMilliseconds;
         _sentHypnosisTimer.Start();
 
+
     }
 
     public void RemoveHypnoticEffect(string enactor)
@@ -145,6 +146,7 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
         // Realistically, this should never happen, but it is important to handle for achievements.
         await OnApplyHypnoEffect(_cache.ActiveEffect, _cache.PriorityEffectKey).ConfigureAwait(false);
         // ABOVE LINE MIGHT CAUSE CALCULATION DELAY, BE CAUTIOUS.
+        Mediator.Publish(new PushGlobalPermChange(nameof(GlobalPerms.HypnosisCustomEffect), _cache.PriorityEffectKey.EnactorUID));
     }
 
 

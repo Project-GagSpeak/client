@@ -33,7 +33,7 @@ public class HypnoService : IDisposable
     public const int SPEED_BETWEEN_MIN = 20; // ms
     public const int SPEED_BETWEEN_MAX = 500; // ms
     public const int STROKE_THICKNESS_MIN = 0; // px
-    public const int STROKE_THICKNESS_MAX = 16; // px
+    public const int STROKE_THICKNESS_MAX = 24; // px
 
     // Constants that cant be constant because struct stuff.
     public static readonly Vector2[] UVCorners = [new(0, 0), new(1, 0), new(1, 1), new(0, 1)];
@@ -44,7 +44,7 @@ public class HypnoService : IDisposable
     // Active Display Item.
     private bool                    _metaDataEffect = false;
     private CombinedCacheKey        _activeSourceKey = CombinedCacheKey.Empty;
-    private HypnoticEffect?         _activeEffect = null;          
+    private HypnoticEffect?         _activeEffect = null;       
     private string                  _applierUid   = string.Empty;
     private IDalamudTextureWrap?    _storedImage;
     // Animation Control
@@ -215,6 +215,13 @@ public class HypnoService : IDisposable
         if (_activeEffect is not { } effect || _storedImage is not { } hypnoImage)
             return;
 
+        var clientRes = ImGui.GetIO().DisplaySize;
+        var effectRes = effect.SourceResolution;
+        // calculate the size scale factor based on the difference between these.
+        // (this lets effects be transferrable between monitor sizes)
+        var sizeScale = new Vector2(clientRes.X / effectRes.X, clientRes.Y / effectRes.Y);
+        var scaleRatio = MathF.Min(sizeScale.X, sizeScale.Y);
+
         // Recalculate the necessary cycle speed that we should need for the rotation (may need optimizations later)
         var speed = _activeState.SpinSpeed * 0.001f;
         var direction = _activeEffect.Attributes.HasFlag(HypnoAttributes.InvertDirection) ? -1f : 1f;
@@ -224,13 +231,16 @@ public class HypnoService : IDisposable
         // Fetch the windows foreground drawlist to avoid conflict with other UI's & be layered ontop.
         var drawList = ImGui.GetForegroundDrawList();
 
-        // Screen positions
+        // Screen positions (keep this unscaled, as it's native to the client.
         var screenSize = ImGui.GetIO().DisplaySize;
         var center = screenSize * 0.5f;
 
         // time for rotation maths
         var cos = MathF.Cos(_activeState.Rotation);
         var sin = MathF.Sin(_activeState.Rotation);
+
+        // apply the size scalar to the zoom depth.
+        var scaledZoom = _activeEffect.ZoomDepth * scaleRatio;
 
         // Impacted by zoom factor. (Nessisary for Pulsating)
         var corners = new[]
@@ -248,8 +258,8 @@ public class HypnoService : IDisposable
             var y = corners[i].Y;
 
             rotatedBounds[i] = new Vector2(
-                center.X + (x * cos - y * sin) * _activeEffect.ZoomDepth,
-                center.Y + (x * sin + y * cos) * _activeEffect.ZoomDepth
+                center.X + (x * cos - y * sin) * scaledZoom,
+                center.Y + (x * sin + y * cos) * scaledZoom
             );
         }
 
@@ -275,11 +285,11 @@ public class HypnoService : IDisposable
 
 
         // determine the font scalar.
-        var fontScaler = (_activeEffect.TextFontSize / UiFontService.FullScreenFontPtr.FontSize) * _activeState.TextScale;
+        var fontScaler = scaledZoom * (_activeEffect.TextFontSize / UiFontService.FullScreenFontPtr.FontSize) * _activeState.TextScale;
 
         // determine the new target position.
         var targetPos = _activeEffect.Attributes.HasAny(HypnoAttributes.LinearTextScale)
-            ? center - Vector2.Lerp(_activeState.TextOffsetStart, _activeState.TextOffsetEnd, _activeState.TextScaleProgress)
+            ? center - Vector2.Lerp(scaledZoom * _activeState.TextOffsetStart, scaledZoom * _activeState.TextOffsetEnd, _activeState.TextScaleProgress)
             : center - (CkGui.CalcFontTextSize(_activeState.CurrentText, UiFontService.FullScreenFont) * fontScaler) * 0.5f;
 
         drawList.OutlinedFontScaled(

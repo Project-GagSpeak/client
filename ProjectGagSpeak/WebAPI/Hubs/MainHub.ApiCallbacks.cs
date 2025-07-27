@@ -549,22 +549,10 @@ public partial class MainHub
         return Task.CompletedTask;
     }
 
-    public async Task Callback_HypnoticEffect(HypnoticAction dto)
+    public Task Callback_HypnoticEffect(HypnoticAction dto)
     {
-        await Generic.Safe(async () =>
-        {
-            // if we are allowed to apply a hypnosis action, do so.
-            if (!_globalPerms.CanApplyHypnosisEffect(dto.User.UID))
-            {
-                // This should now have happened under any circumstances, reject.
-                await UserChangeOwnGlobalPerm(nameof(GlobalPerms.HypnosisCustomEffect), string.Empty).ConfigureAwait(false);
-            }
-            else
-            {
-                // The effect can be applied, so apply it.
-                _globalPerms.OnHypnosisApplication(dto);
-            }
-        });
+        Generic.Safe(() => _globalPerms.OnHypnosisApplication(dto));
+        return Task.CompletedTask;
     }
 
     public Task Callback_ConfineToAddress(ConfineByAddress dto)
