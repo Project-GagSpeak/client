@@ -175,7 +175,7 @@ namespace GagSpeak.Localization
 
         public readonly string Step24Title = Loc.Localize("HelpMainUi_Step25Title", "Moodle Hub");
         public readonly string Step24Desc = Loc.Localize("HelpMainUi_Step25Desc", "Browse and explore Moodles uploaded by others.");
-        public readonly string Step24DescExtended = Loc.Localize("HelpMainUi_Step25DescExtended", "");
+        public readonly string Step24DescExtended = Loc.Localize("HelpMainUi_Step25DescExtended", " ");
 
         public readonly string Step25Title = Loc.Localize("HelpMainUi_Step26Title", "Moodle Search");
         public readonly string Step25Desc = Loc.Localize("HelpMainUi_Step26Desc", "Use tags and filters to narrow your search results.");
