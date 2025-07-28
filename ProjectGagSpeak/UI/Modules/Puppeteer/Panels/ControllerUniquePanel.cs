@@ -142,7 +142,7 @@ public partial class ControllerUniquePanel : IDisposable
             return;
 
         // extract the tabs by splitting the string by comma's
-        using (CkRaii.FramedChildPaddedW("Triggers", c.InnerRegion.X, triggerPhrasesH, CkColor.FancyHeaderContrast.Uint(), ImDrawFlags.RoundCornersAll))
+        using (CkRaii.FramedChildPaddedW("Triggers", c.InnerRegion.X, triggerPhrasesH, CkColor.FancyHeaderContrast.Uint(), CkColor.FancyHeaderContrast.Uint(), ImDrawFlags.RoundCornersAll))
             PairTriggerTags.DrawTagsPreview("##OtherPairPhrases", validPair.PairPerms.TriggerPhrase);
 
         CkGui.SeparatorSpacedColored(spacing.Y, c.InnerRegion.X, CkColor.FancyHeaderContrast.Uint());

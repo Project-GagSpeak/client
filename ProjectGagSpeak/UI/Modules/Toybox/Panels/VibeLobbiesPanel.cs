@@ -374,7 +374,7 @@ public class VibeLobbiesPanel
 
         // extract the tabs by splitting the string by comma's
         CkGui.ColorText("Tags", ImGuiColors.ParsedGold);
-        using (CkRaii.FramedChildPaddedW("NewRoomTags", c.InnerRegion.X * .75f, CkStyle.GetFrameRowsHeight(2), CkColor.FancyHeaderContrast.Uint(), DFlags.RoundCornersAll))
+        using (CkRaii.FramedChildPaddedW("NewRoomTags", c.InnerRegion.X * .75f, CkStyle.GetFrameRowsHeight(2), CkColor.FancyHeaderContrast.Uint(), CkColor.FancyHeaderContrast.Uint(), DFlags.RoundCornersAll))
         {
             if (_tagCollection.DrawTagsEditor("##NewRoomTags", _newRoomTags, out var updatedTags))
                 _newRoomTags = updatedTags.Take(5).ToList(); // limit to 5 tags

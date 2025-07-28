@@ -42,6 +42,9 @@ public class GlamourSlot : IEquatable<GlamourSlot>
     public GlamourSlot(EquipSlot slot, EquipItem gameItem)
         => (Slot, GameItem) = (slot, gameItem);
 
+    public GlamourSlot(EquipSlot slot, EquipItem item, StainIds dyes)
+    => (Slot, GameItem, dyes) = (slot, item, dyes);
+
     public JObject Serialize()
         => new JObject
         {

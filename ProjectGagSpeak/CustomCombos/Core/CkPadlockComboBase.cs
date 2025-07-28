@@ -182,7 +182,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
             using var _ = ImRaii.Group();
             (ITFlags flags, int len) = SelectedLock == Padlocks.Combination ? (ITFlags.CharsDecimal, 4) : (ITFlags.None, 20);
             ImGui.SetNextItemWidth(width);
-            using (ImRaii.Disabled(!Items[layerIdx].Padlock.IsPasswordLock()))
+            using (ImRaii.Disabled(!lastPadlock.IsPasswordLock()))
                 ImGui.InputTextWithHint($"##Unlocker_{label}", hint, ref Password, (uint)len, flags);
 
             using var s = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(0, ImGui.GetStyle().FramePadding.Y));

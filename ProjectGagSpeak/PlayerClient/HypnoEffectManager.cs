@@ -20,6 +20,17 @@ public class HypnoEffectManager : IHybridSavable
     private Dictionary<string, HypnoticEffect> _presets = new();
     public IReadOnlyDictionary<string, HypnoticEffect> Presets => _presets;
 
+    public bool UpdatePreset(string presetName, HypnoticEffect newInfo)
+    {
+        if (_presets.ContainsKey(presetName))
+        {
+            _presets[presetName] = new(newInfo);
+            _saver.Save(this);
+            return true;
+        }
+        return false;
+    }
+
     public bool TryRenamePreset(string oldName, string newName)
     {
         if (string.IsNullOrWhiteSpace(newName) || _presets.ContainsKey(newName))

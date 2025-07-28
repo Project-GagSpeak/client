@@ -188,7 +188,7 @@ public sealed partial class PuppetVictimUniquePanel : IDisposable
 
     private void DrawTriggerPhraseBox(float paddedWidth, float height)
     {
-        using (CkRaii.FramedChildPaddedW("Triggers", paddedWidth, height, CkColor.FancyHeaderContrast.Uint(), ImDrawFlags.RoundCornersAll))
+        using (CkRaii.FramedChildPaddedW("Triggers", paddedWidth, height, CkColor.FancyHeaderContrast.Uint(), CkColor.FancyHeaderContrast.Uint(), ImDrawFlags.RoundCornersAll))
         {
             var triggerPhrase = _helper.SelectedPair?.OwnPerms.TriggerPhrase ?? string.Empty;
             if (PairTriggerTags.DrawTagsEditor("##OwnPairPhrases", triggerPhrase, out string updatedString) && _helper.SelectedPair is { } validPair)

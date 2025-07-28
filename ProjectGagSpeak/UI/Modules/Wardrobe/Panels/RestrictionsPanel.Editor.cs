@@ -216,7 +216,7 @@ public partial class RestrictionsPanel
 
                 // Editor Button for the effect.
                 if (CkGui.IconTextButton(FAI.BookOpen, "Effect Editor"))
-                    _hypnoEditor.SetHypnoEffect(hypnoticItem.Properties.Effect);
+                    _hypnoEditor.SetGenericEffect(hypnoticItem.Properties.Effect);
             }
         }
     }

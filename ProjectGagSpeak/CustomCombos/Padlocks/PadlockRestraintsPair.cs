@@ -74,6 +74,8 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
             PadlockAssigner = MainHub.UID,
         };
 
+        Svc.Logger.Debug($"Attempting to unlock restraint with {dto.ToString()}");
+
         var result = await _mainHub.UserChangeKinksterActiveRestraint(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {

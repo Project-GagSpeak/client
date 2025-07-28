@@ -165,7 +165,7 @@ public class RestraintSlotAdvanced : IRestraintSlot, IRestrictionRef
 public interface IRestraintLayer
 {
     public Guid ID { get; }
-    public string Label { get; }
+    public string Label { get; set; }
     public Arousal Arousal { get; }
     public bool IsValid();
     public IRestraintLayer Clone();
