@@ -30,18 +30,17 @@ public abstract class CkFilterComboButton<T> : CkFilterComboCache<T>
     public virtual bool DrawComboButton(string label, float width, int layerIdx, string bText, string tt, Action? onButtonSuccess = null)
     {
         // we need to first extract the width of the button.
-        var comboWidth = width - ImGuiHelpers.GetButtonSize(bText).X - ImGui.GetStyle().ItemInnerSpacing.X - ImGui.GetStyle().ItemSpacing.X;
+        var comboWidth = width - ImGuiHelpers.GetButtonSize(bText).X - ImGui.GetStyle().ItemInnerSpacing.X;
         InnerWidth = width;
 
         // if we have a new item selected we need to update some conditionals.
 
-        var previewLabel = Current?.ToString() ?? "Select an Item...";
+        var previewLabel = Current is not null ? ToString(Current) : "Select an Item...";
         var ret = Draw(label, previewLabel, string.Empty, comboWidth, ImGui.GetTextLineHeightWithSpacing(), CFlags.None);
         // move just beside it to draw the button.
         ImUtf8.SameLineInner();
 
         // disable the button if we should.
-        using var disabled = ImRaii.Disabled(DisableCondition());
         if (ImGuiUtil.DrawDisabledButton(bText, new Vector2(), string.Empty, DisableCondition()))
             _ = OnButtonPress(layerIdx);
         CkGui.AttachToolTip(tt);

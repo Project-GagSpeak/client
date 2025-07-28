@@ -131,7 +131,7 @@ public sealed partial class PuppetVictimGlobalPanel
         using var c = CkRaii.ChildLabelTextFull(new Vector2(region.SizeX, childH), "Global Puppeteer Settings", ImGui.GetFrameHeight(), DFlags.RoundCornersLeft, LabelFlags.AddPaddingToHeight);
 
         // extract the tabs by splitting the string by comma's
-        using (CkRaii.FramedChildPaddedW("Triggers", c.InnerRegion.X, triggerPhrasesH, CkColor.FancyHeaderContrast.Uint(), DFlags.RoundCornersAll))
+        using (CkRaii.FramedChildPaddedW("Triggers", c.InnerRegion.X, triggerPhrasesH, CkColor.FancyHeaderContrast.Uint(), CkColor.FancyHeaderContrast.Uint(), DFlags.RoundCornersAll))
         {
             var globalPhrase = OwnGlobals.Perms?.TriggerPhrase ?? string.Empty;
             if (GlobalTriggerTags.DrawTagsEditor("##GlobalPhrases", globalPhrase, out var updatedString) && OwnGlobals.Perms is { } globals)

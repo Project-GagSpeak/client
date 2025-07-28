@@ -19,6 +19,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
@@ -47,6 +48,7 @@ public class StickyWindowSelections
     public int      VibrateIntensity = 0;
     public float    Duration = 0;
     public float    VibeDuration = 0;
+
     public InteractionType OpenInteraction { get; private set; } = InteractionType.None;
 
     public void CloseInteraction() => OpenInteraction = InteractionType.None;
@@ -65,7 +67,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
     private readonly MainHub _hub;
     private readonly KinksterPermsForClient _kinksterPerms;
     private readonly ClientPermsForKinkster _permsForKinkster;
-    private readonly HypnoEffectManager _effectPresetManager;
+
     // Private variables for the sticky UI and its respective combos.
     private PairGagCombo _pairGags;
     private PairGagPadlockCombo _pairGagPadlocks;
@@ -103,7 +105,6 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         _hub = hub;
         _kinksterPerms = permsForSelf;
         _permsForKinkster = permsForKinkster;
-        _effectPresetManager = effectPresetManager;
 
         _hypnoEditor = new HypnoEffectEditor("KinksterEffectEditor", effectPresetManager);
 
@@ -136,10 +137,10 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
             SilentClose();
             return;
         }
-        else if (_openTab == type)
+        else if (_openTab == type && kinkster != _kinkster)
         {
-            SilentClose();
-            return;
+            _openTab = InteractionsTab.None;
+            _hypnoEditor.OnEditorClose();
         }
 
 
@@ -413,7 +414,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         var hasItem = slot.Identifier != Guid.Empty;
         var itemName = k.LightCache.Restrictions.TryGetValue(slot.Identifier, out var item) ? item.Label : string.Empty;
         var hasPadlock = slot.Padlock is not Padlocks.None;
-        var applyTxt = hasItem ? $"Currently Applied: {itemName}" : $"Apply a Restriction to {dispName}";
+        var applyTxt = hasItem ? $"Applied Item: {itemName}" : $"Apply a Restriction to {dispName}";
         var applyTT = $"Applies a Restriction to {dispName}.";
         var lockTxt = hasPadlock ? $"Locked with a {slot.Padlock.ToName()}" : hasItem
             ? $"Lock {dispName}'s {itemName}" : "No Restriction To Lock!";
@@ -500,12 +501,13 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         ImGui.TextUnformatted("Restraint Actions");
 
         var hasItem = k.ActiveRestraint.Identifier != Guid.Empty;
+        var itemName = k.LightCache.Restraints.TryGetValue(k.ActiveRestraint.Identifier, out var item) ? item.Label : string.Empty;
         var hasPadlock = k.ActiveRestraint.Padlock is not Padlocks.None;
 
-        var applyText = "Apply Restraint Set";
-        var applyTT = $"Applies a Restraint Set to {dispName}.";
-        var applyLayerText = hasItem ? $"Apply Restraint Layer to {dispName}" : "Must apply Restraint Set first!";
-        var applyLayerTT = hasItem ? $"Applies a Restraint Layer to {dispName}'s Restraint Set." : "Must apply a Restraint Set first!";
+        var applyTxt = hasItem ? $"Applied Set: {itemName}" : $"Apply a Restraint to {dispName}";
+        var applyTT = $"Applies a Restraint to {dispName}.";
+        var applyLayerText = hasItem ? $"Add Layer(s) to {dispName}'s Set" : "Layers Currently Inaccessible.";
+        var applyLayerTT = hasItem ? $"Apply a Restraint Layer to {dispName}'s Restraint Set." : "Must apply a Restraint Set first!";
         var lockTxt = hasPadlock ? $"Locked with a {k.ActiveRestraint.Padlock.ToName()}" : hasItem
             ? $"Lock {dispName}'s Restraint Set" : "No Restraint Set to lock!";
         var lockTT = hasPadlock ? $"This Restraint Set is locked with a {k.ActiveRestraint.Padlock.ToName()}" : hasItem
@@ -513,13 +515,13 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         
         var unlockTxt = hasPadlock ? $"Unlock {dispName}'s Restraint Set" : "No Padlock to unlock!";
         var unlockTT = hasPadlock ? $"Attempt to unlock {dispName}'s Restraint Set." : "No padlock is set!";
-        var removeLayerText = hasItem ? $"Remove a Layer from {dispName}'s Restraint Set." : "Must apply a Restraint Set first!";
+        var removeLayerText = hasItem ? $"Remove Layer(s) from {dispName}'s Set." : "Layers Currently Inaccessible.";
         var removeLayerTT = hasItem ? $"Remove a Restraint Layer from {dispName}'s Restraint Set." : "Must apply a Restraint Set first!";
         var removeTxt = hasItem ? $"Remove {dispName}'s Restraint Set" : "Nothing to remove!";
         var removeTT = $"{removeTxt}.";
 
         // Expander for ApplyRestraint
-        if (CkGui.IconTextButton(FAI.Handcuffs, applyText, width, true, !k.PairPerms.ApplyRestraintSets || !k.ActiveRestraint.CanApply()))
+        if (CkGui.IconTextButton(FAI.Handcuffs, applyTxt, width, true, !k.PairPerms.ApplyRestraintSets || !k.ActiveRestraint.CanApply()))
             _selections.OpenOrClose(InteractionType.ApplyRestraint);
         CkGui.AttachToolTip(applyTT);
 
@@ -527,13 +529,13 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         if (_selections.OpenInteraction is InteractionType.ApplyRestraint)
         {
             using (ImRaii.Child("SetApplyChild", new Vector2(width, ImGui.GetFrameHeight())))
-                _pairRestraintSets.DrawComboButton("##PairApplyRestraint", width, -1, "Apply", applyTT);
+                _pairRestraintSets.DrawComboButton("##PairApplyRestraint", width, applyTT);
             ImGui.Separator();
         }
 
         // Expander for ApplyRestraintLayer
-        var canOpen = hasItem && (hasPadlock ? k.PairPerms.ApplyLayersWhileLocked : k.PairPerms.ApplyLayers); 
-        if (CkGui.IconTextButton(FAI.LayerGroup, applyLayerText, width, true, !canOpen))
+        var disableApplyLayer = !hasItem || (hasPadlock ? !k.PairPerms.ApplyLayersWhileLocked : !k.PairPerms.ApplyLayers); 
+        if (CkGui.IconTextButton(FAI.LayerGroup, applyLayerText, width, true, disableApplyLayer))
             _selections.OpenOrClose(InteractionType.ApplyRestraintLayers);
         CkGui.AttachToolTip(applyLayerTT);
 
@@ -541,7 +543,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         if (_selections.OpenInteraction is InteractionType.ApplyRestraintLayers)
         {
             using (ImRaii.Child("SetApplyLayerChild", new Vector2(width, ImGui.GetFrameHeight())))
-                CkGui.ColorText("Logic for layer editing has yet to be implemented for paired kinksters!", ImGuiColors.DalamudRed);
+                _pairRestraintSets.DrawApplyLayersComboButton(width);
             ImGui.Separator();
         }
 
@@ -587,7 +589,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         if (_selections.OpenInteraction is InteractionType.RemoveRestraintLayers)
         {
             using (ImRaii.Child("SetRemoveLayerChild", new Vector2(width, ImGui.GetFrameHeight())))
-                CkGui.ColorText("Logic for layer editing has yet to be implemented for paired kinksters!", ImGuiColors.DalamudRed);
+                _pairRestraintSets.DrawRemoveLayersComboButton(width);
             ImGui.Separator();
         }
 

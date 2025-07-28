@@ -64,7 +64,7 @@ public static class RestraintExtentions
             return null;
 
         return set.Layers[idx] is RestrictionLayer l && l.ApplyFlags.HasAny(RestraintFlags.Glamour) && l.IsValid() && !l.IsOverlayItem()
-            ? l.Ref.Glamour : null;
+            ? new GlamourSlot(l.EquipSlot, l.EquipItem, l.Stains) : null;
     }
 
     /// <summary> Core internal Iterator that collects the GlamourSlot items from the base slots. </summary>
@@ -82,8 +82,8 @@ public static class RestraintExtentions
             // Store the item. (no need to worry about slots since we only have one of each here)
             if (item is RestraintSlotBasic b)
                 applied.Add(b.Glamour);
-            else if (item is RestraintSlotAdvanced a && a.Ref != null)
-                applied.Add(a.Ref.Glamour);
+            else if (item is RestraintSlotAdvanced a && a.IsValid() && a.ApplyFlags.HasAny(RestraintFlags.Glamour))
+                applied.Add(new GlamourSlot(a.EquipSlot, a.EquipItem, a.Stains));
         }
         return applied;
     }
@@ -105,7 +105,7 @@ public static class RestraintExtentions
                 || !seen.Add(layer.EquipSlot))
                 continue;
 
-            applied.Add(layer.Ref.Glamour);
+            applied.Add(new GlamourSlot(layer.EquipSlot, layer.EquipItem, layer.Stains));
         }
         return applied;
     }

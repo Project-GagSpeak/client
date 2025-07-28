@@ -1,12 +1,18 @@
 using CkCommons.Gui;
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Gui.Components;
 using GagSpeak.Kinksters;
+using GagSpeak.Services;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using ImGuiNET;
+using OtterGui;
+using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.Pairs;
 
@@ -15,6 +21,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
     private Action PostButtonPress;
     private readonly MainHub _mainHub;
     private Kinkster _pairRef;
+    private LayerFlagsComboButton _layersHelper = new(FAI.LayerGroup, "RestraintLayers", "Select Layers..");
 
     public PairRestraintCombo(ILogger log, MainHub hub, Kinkster pair, Action postButtonPress)
         : base(() => [ ..pair.LightCache.Restraints.Values ], log)
@@ -22,11 +29,18 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
         _mainHub = hub;
         _pairRef = pair;
         PostButtonPress = postButtonPress;
+        _layersHelper = new(FAI.LayerGroup, "RestraintLayers", "Select Layers..");
         Current = _pairRef.LightCache.Restraints.GetValueOrDefault(_pairRef.ActiveRestraint.Identifier);
     }
 
     protected override bool DisableCondition()
-        => Current is null || !_pairRef.PairPerms.ApplyRestraintSets || _pairRef.ActiveRestraint.Identifier == Current.Id;
+        => Current is null || !_pairRef.PairPerms.ApplyRestraintSets || _pairRef.ActiveRestraint.Identifier.Equals(Current?.Id);
+
+    protected override string ToString(KinksterRestraint obj)
+        => obj.Label.IsNullOrWhitespace() ? $"UNK SET NAME" : obj.Label;
+
+    public bool DrawComboButton(string label, float width, string buttonTT)
+        => DrawComboButton(label, width, -1, "Apply", buttonTT);
 
     // we need to override the drawSelectable method here for a custom draw display.
     protected override bool DrawSelectable(int globalAlarmIdx, bool selected)
@@ -82,6 +96,107 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
             Log.LogDebug("Applying Restraint Set " + Current.Label + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.StickyUI);
             PostButtonPress?.Invoke();
             return true;
+        }
+    }
+
+    public void DrawApplyLayersComboButton(float width)
+    {
+        if (_pairRef.ActiveRestraint.Identifier == Guid.Empty)
+            return;
+
+        if (!_pairRef.LightCache.Restraints.TryGetValue(_pairRef.ActiveRestraint.Identifier, out var cacheInfo))
+        {
+            ImGui.Text("No Valid CacheInfo for active Restraint Set!");
+            return;
+        }
+
+        // Valid for draw:
+        var layers = cacheInfo.Layers.Count;
+        var options = Enum.GetValues<RestraintLayer>().Skip(1).SkipLast(5 - layers + 1);
+        if (_layersHelper.DrawApply(width, _pairRef.ActiveRestraint.ActiveLayers, out var changes, options, GetLabel))
+        {
+            UiService.SetUITask(async () =>
+            {
+                // we need to ensure that we have a valid pairRef and that the changes are not empty.
+                if (_pairRef is null || changes == RestraintLayer.None)
+                    return;
+                // if we have changes, we will apply them.
+                var newLayers = _pairRef.ActiveRestraint.ActiveLayers | changes;
+                var dto = new PushKinksterActiveRestraint(_pairRef.UserData, DataUpdateType.LayersApplied) { ActiveLayers = newLayers };
+                var result = await _mainHub.UserChangeKinksterActiveRestraint(dto);
+                if (result.ErrorCode is not GagSpeakApiEc.Success)
+                {
+                    Log.LogError($"Failed to Perform ApplyLayer action to {_pairRef.GetNickAliasOrUid()} : {result}");
+                    Svc.Toasts.ShowError(result.ErrorCode switch
+                    {
+                        GagSpeakApiEc.BadUpdateKind => "Invalid Update Kind. Please try again.",
+                        GagSpeakApiEc.InvalidLayer => "Attempted to apply to a layer that was invalid.",
+                        GagSpeakApiEc.LackingPermissions => "You do not have permission to perform this action.",
+                        GagSpeakApiEc.NoActiveItem => "No active item is present.",
+                        _ => $"UNK ApplyLayer Error: {result.ErrorCode}."
+                    });
+                }
+                else
+                {
+                    Log.LogDebug($"Applied Layers to {_pairRef.GetNickAliasOrUid()}'s Restraint Set.", LoggerType.StickyUI);
+                    PostButtonPress?.Invoke();
+                }
+            });
+        }
+
+        string GetLabel(RestraintLayer layer)
+        {
+            int idx = BitOperations.TrailingZeroCount((int)layer);
+            return idx < layers ? cacheInfo.Layers[idx].Label : $"Layer {idx + 1} (Unknown Contents)";
+        }
+    }
+
+    public void DrawRemoveLayersComboButton(float width)
+    {
+        if (!_pairRef.LightCache.Restraints.TryGetValue(_pairRef.ActiveRestraint.Identifier, out var cacheInfo))
+        {
+            ImGui.Text("No Valid CacheInfo for active Restraint Set!");
+            return;
+        }
+
+        // Valid for draw:
+        var layers = cacheInfo.Layers.Count;
+        var options = Enum.GetValues<RestraintLayer>().Skip(1).SkipLast(5 - layers + 1);
+        if (_layersHelper.DrawRemove(width, _pairRef.ActiveRestraint.ActiveLayers, out var changes, options, GetLabel))
+        {
+            UiService.SetUITask(async () =>
+            {
+                // we need to ensure that we have a valid pairRef and that the changes are not empty.
+                if (_pairRef is null || changes == RestraintLayer.None)
+                    return;
+                // if we have changes, we will apply them.
+                var newLayers = _pairRef.ActiveRestraint.ActiveLayers & ~changes;
+                var dto = new PushKinksterActiveRestraint(_pairRef.UserData, DataUpdateType.LayersRemoved) { ActiveLayers = newLayers };
+                var result = await _mainHub.UserChangeKinksterActiveRestraint(dto);
+                if (result.ErrorCode is not GagSpeakApiEc.Success)
+                {
+                    Log.LogError($"Failed to Perform RemoveLayer action to {_pairRef.GetNickAliasOrUid()} : {result}");
+                    Svc.Toasts.ShowError(result.ErrorCode switch
+                    {
+                        GagSpeakApiEc.BadUpdateKind => "Invalid Update Kind. Please try again.",
+                        GagSpeakApiEc.InvalidLayer => "Attempted to remove a layer that was invalid.",
+                        GagSpeakApiEc.LackingPermissions => "You do not have permission to perform this action.",
+                        GagSpeakApiEc.NoActiveItem => "No active item is present.",
+                        _ => $"UNK RemoveLayer Error: {result.ErrorCode}."
+                    });
+                }
+                else
+                {
+                    Log.LogDebug($"Removed Layers from {_pairRef.GetNickAliasOrUid()}'s Restraint Set", LoggerType.StickyUI);
+                    PostButtonPress?.Invoke();
+                }
+            });
+        }
+
+        string GetLabel(RestraintLayer layer)
+        {
+            int idx = BitOperations.TrailingZeroCount((int)layer);
+            return idx < layers ? cacheInfo.Layers[idx].Label : $"Layer {idx + 1} (Unknown Contents)";
         }
     }
 
