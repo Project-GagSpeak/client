@@ -102,7 +102,10 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
     public void DrawApplyLayersComboButton(float width)
     {
         if (_pairRef.ActiveRestraint.Identifier == Guid.Empty)
+        {
+            PostButtonPress?.Invoke();
             return;
+        }
 
         if (!_pairRef.LightCache.Restraints.TryGetValue(_pairRef.ActiveRestraint.Identifier, out var cacheInfo))
         {
@@ -153,6 +156,12 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
 
     public void DrawRemoveLayersComboButton(float width)
     {
+        if (_pairRef.ActiveRestraint.Identifier == Guid.Empty)
+        {
+            PostButtonPress?.Invoke();
+            return;
+        }
+
         if (!_pairRef.LightCache.Restraints.TryGetValue(_pairRef.ActiveRestraint.Identifier, out var cacheInfo))
         {
             ImGui.Text("No Valid CacheInfo for active Restraint Set!");

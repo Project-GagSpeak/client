@@ -98,7 +98,9 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
         ItemInteractedHook?.Enable();
         
         ProcessChatInputHook?.Enable();
-        
+
+        ApplyGlamourPlateHook?.Enable();
+
         GearsetInternalHook?.Enable();
 
         Logger.LogInformation("Enabled all StaticDetours and their hooks.");
@@ -126,6 +128,10 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
         
         ProcessChatInputHook?.Disable();
         ProcessChatInputHook?.Dispose();
+
+        ApplyGlamourPlateHook?.Disable();
+        ApplyGlamourPlateHook?.Dispose();
+
 
         GearsetInternalHook?.Disable();
         GearsetInternalHook?.Dispose();
