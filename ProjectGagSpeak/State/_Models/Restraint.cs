@@ -189,6 +189,7 @@ public class RestrictionLayer : IRestraintLayer, IRestrictionRef
 
     internal RestrictionLayer(RestrictionLayer other)
     {
+        Label = other.Label;
         ApplyFlags = other.ApplyFlags;
         Ref = other.Ref; // Point to the same reference
         CustomStains = other.CustomStains;
@@ -258,7 +259,9 @@ public class ModPresetLayer : IRestraintLayer, IModPreset
     internal ModPresetLayer() { }
     internal ModPresetLayer(ModPresetLayer other)
     {
+        Label = other.Label;
         Mod = other.Mod;
+        Arousal = other.Arousal;
     }
 
     public bool IsValid() => Mod.HasData;
