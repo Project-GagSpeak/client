@@ -180,7 +180,7 @@ public partial class MainHub
     {
         if(dto.User.UID == UID)
         {
-            Logger.LogError("Should never be calling self for an update all perms.");
+            Logger.LogError("Should never be calling self for an update all perms. Should only update on safeword!");
             return Task.CompletedTask;
         }
         else
@@ -209,18 +209,15 @@ public partial class MainHub
 
     public Task Callback_BulkChangeUnique(BulkChangeUnique dto)
     {
-        if (dto.User.UID == UID)
+        Generic.Safe(() =>
         {
-            Logger.LogWarning("Called Back BulkChangeUnique that was intended for yourself!: " + dto);
-            Generic.Safe(() => _kinksters.UpdatePairUpdateOwnAllUniquePermissions(dto));
-            return Task.CompletedTask;
-        }
-        else
-        {
-            Logger.LogDebug("OTHER Callback_BulkChangeUnique: " + dto, LoggerType.Callbacks);
-            Generic.Safe(() => _kinksters.UpdatePairUpdateOtherAllUniquePermissions(dto));
-            return Task.CompletedTask;
-        }
+            if (dto.User.UID == UID)
+                throw new Exception("Should never be calling a permission update for yourself in bulk, use BulkChangeAll for these!");
+
+            Logger.LogDebug($"Callback_BulkChangeUnique: {dto}", LoggerType.Callbacks);
+            _kinksters.UpdateAllUniqueForKinkster(dto.User, dto.NewPerms, dto.NewAccess);
+        });
+        return Task.CompletedTask;
     }
 
     public Task Callback_SingleChangeGlobal(SingleChangeGlobal dto)
@@ -314,6 +311,10 @@ public partial class MainHub
         else
         {
             Logger.LogDebug($"OTHER Callback_ReceiveDataIpc: {dto}", LoggerType.Callbacks);
+            Logger.LogDebug($"IpcDataString: {dto.NewData.DataString}", LoggerType.Callbacks);
+            Logger.LogDebug($"IpcDatInfoList: {string.Join(", ", dto.NewData.DataInfo.Select(x => $"{x.Key}={x.Value}"))}", LoggerType.Callbacks);
+            Logger.LogDebug($"IpcStatusesList: {string.Join(", ", dto.NewData.Statuses.Select(x => $"{x.Key}={x.Value}"))}", LoggerType.Callbacks);
+            Logger.LogDebug($"IpcPresetsList: {string.Join(", ", dto.NewData.Presets.Select(x => $"{x.Key}={x.Value}"))}", LoggerType.Callbacks);
             Generic.Safe(() => _kinksterListener.NewActiveIpc(dto.User, dto.Enactor, dto.NewData, dto.Type));
             return Task.CompletedTask;
         }

@@ -137,6 +137,11 @@ public partial class MainHub
 
     public async Task<HubResponse> UserPushActiveIpc(PushClientIpcUpdate dto)
     {
+        Logger.LogDebug("Pushing out:", LoggerType.Callbacks);
+        Logger.LogDebug($"IpcDataString: {dto.NewData.DataString}", LoggerType.Callbacks);
+        Logger.LogDebug($"IpcDatInfoList: {string.Join(", ", dto.NewData.DataInfo.Select(x => $"{x.Key}={x.Value}"))}", LoggerType.Callbacks);
+        Logger.LogDebug($"IpcStatusesList: {string.Join(", ", dto.NewData.Statuses.Select(x => $"{x.Key}={x.Value}"))}", LoggerType.Callbacks);
+        Logger.LogDebug($"IpcPresetsList: {string.Join(", ", dto.NewData.Presets.Select(x => $"{x.Key}={x.Value}"))}", LoggerType.Callbacks);
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActiveIpc), dto).ConfigureAwait(false);
     }

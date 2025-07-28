@@ -18,7 +18,7 @@ public enum FlagComboMode
     DisableOnly,
 }
 
-public class LayerFlagsComboButton
+public class LayerFlagsWidget
 {
     private string _preview;
     private RestraintLayer _added = RestraintLayer.None;
@@ -27,7 +27,7 @@ public class LayerFlagsComboButton
     public readonly FAI Icon;
     public readonly string IdLabel;
     
-    public LayerFlagsComboButton(FAI icon, string id, string preview)
+    public LayerFlagsWidget(FAI icon, string id, string preview)
     {
         _preview = preview;
         Icon = icon;
@@ -68,55 +68,7 @@ public class LayerFlagsComboButton
         using (var combo = ImUtf8.Combo(""u8, _preview, flags))
         {
             if (combo)
-            {
-                var blockedLayers = mode switch
-                {
-                    FlagComboMode.EnableOnly => current,
-                    FlagComboMode.DisableOnly => ~current,
-                    _ => RestraintLayer.None,
-                };
-
-                var wdl = ImGui.GetWindowDrawList();
-                foreach (var flag in options)
-                {
-                    var wasSet = (_added | (current & ~_removed)) & flag;
-                    var isSet = wasSet != 0;
-
-                    using var disabled = ImRaii.Disabled(blockedLayers.HasAny(flag));
-                    var name = toName?.Invoke(flag) ?? flag.ToString();
-
-                    var changed = (_added.HasAny(flag) || _removed.HasAny(flag));
-                    using (ImRaii.PushColor(ImGuiCol.CheckMark, ImGuiColors.HealerGreen, changed)) // push only for checkbox.
-                    {
-                        if (ImGui.Checkbox($"##LayerFlag_{(int)flag}", ref isSet))
-                        {
-                            if (isSet == current.HasAny(flag))
-                            {
-                                Svc.Logger.Information("Same as original: clear both added and removed flags for this flag.");
-                                _added &= ~flag;
-                                _removed &= ~flag;
-                            }
-                            else if (isSet)
-                            {
-                                Svc.Logger.Information("Checked on, but originally off → mark as added");
-                                _added |= flag;
-                                _removed &= ~flag;
-                            }
-                            else
-                            {
-                                Svc.Logger.Information("Unchecked off, but originally on → mark as removed");
-                                _removed |= flag;
-                                _added &= ~flag;
-                            }
-                        }
-                        if (!isSet && changed)
-                            wdl.AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), ImGui.GetColorU32(ImGuiCol.CheckMark), ImGui.GetStyle().FrameRounding, ImDrawFlags.RoundCornersAll);
-                    }
-                    // add text.
-                    ImGui.SameLine(0, 0);
-                    ImUtf8.TextFrameAligned(name);
-                }
-            }
+                DrawLayerCheckboxes(current, options, toName, mode);
         }
 
         ImUtf8.SameLineInner();
@@ -125,6 +77,71 @@ public class LayerFlagsComboButton
         added = _added;
         removed = _removed;
         if(CkGui.IconTextButton(Icon, buttonTxt, disabled: !hasChanges))
+        {
+            ResetChanges();
+            return true;
+        }
+        return false;
+    }
+
+    public void DrawLayerCheckboxes(RestraintLayer current, IEnumerable<RestraintLayer> options, Func<RestraintLayer, string>? toName = null, FlagComboMode mode = FlagComboMode.None)
+    {
+        var blockedLayers = mode switch
+        {
+            FlagComboMode.EnableOnly => current,
+            FlagComboMode.DisableOnly => ~current,
+            _ => RestraintLayer.None,
+        };
+
+        var wdl = ImGui.GetWindowDrawList();
+        foreach (var flag in options)
+        {
+            var wasSet = (_added | (current & ~_removed)) & flag;
+            var isSet = wasSet != 0;
+
+            using var disabled = ImRaii.Disabled(blockedLayers.HasAny(flag));
+            var name = toName?.Invoke(flag) ?? flag.ToString();
+
+            var changed = (_added.HasAny(flag) || _removed.HasAny(flag));
+            using (ImRaii.PushColor(ImGuiCol.CheckMark, ImGuiColors.HealerGreen, changed)) // push only for checkbox.
+            {
+                if (ImGui.Checkbox($"##LayerFlag_{(int)flag}", ref isSet))
+                {
+                    if (isSet == current.HasAny(flag))
+                    {
+                        Svc.Logger.Information("Same as original: clear both added and removed flags for this flag.");
+                        _added &= ~flag;
+                        _removed &= ~flag;
+                    }
+                    else if (isSet)
+                    {
+                        Svc.Logger.Information("Checked on, but originally off → mark as added");
+                        _added |= flag;
+                        _removed &= ~flag;
+                    }
+                    else
+                    {
+                        Svc.Logger.Information("Unchecked off, but originally on → mark as removed");
+                        _removed |= flag;
+                        _added &= ~flag;
+                    }
+                }
+                if (!isSet && changed)
+                    wdl.AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), ImGui.GetColorU32(ImGuiCol.CheckMark), ImGui.GetStyle().FrameRounding, ImDrawFlags.RoundCornersAll);
+            }
+            // add text.
+            ImUtf8.SameLineInner();
+            ImUtf8.TextFrameAligned(name);
+        }
+    }
+
+    public bool DrawUpdateButton(FAI icon, string buttonTxt, out RestraintLayer added, out RestraintLayer removed, float? width = null)
+    {
+        // update outs.
+        added = _added;
+        removed = _removed;
+        var hasChanges = _added != RestraintLayer.None || _removed != RestraintLayer.None;
+        if (CkGui.IconTextButton(icon, buttonTxt, width, disabled: !hasChanges))
         {
             ResetChanges();
             return true;

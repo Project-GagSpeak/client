@@ -3,12 +3,14 @@ using GagSpeak.FileSystems;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
+using System.Xml.Linq;
 
 namespace GagSpeak.Services;
 
@@ -61,6 +63,8 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         _triggerManager = triggers;
         _traitManager = traitAllowances;
 
+        _prevIpcData = new CharaIPCData(MoodleCache.IpcData);
+
         // Achievement Handling
         Mediator.Subscribe<SendAchievementData>(this, (_) => UpdateAchievementData().ConfigureAwait(false));
         Mediator.Subscribe<UpdateCompletedAchievements>(this, (_) => UpdateTotalEarned().ConfigureAwait(false));
@@ -105,7 +109,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
     }
 
     // Idk why we need this really, anymore, but whatever i guess. If it helps it helps.
-    private CharaIPCData _prevIpcData = new CharaIPCData();
+    private CharaIPCData _prevIpcData;
     private ActiveGagSlot? _prevGagData;
     private ActiveRestriction? _prevRestrictionData;
     private CharaActiveRestraint? _prevRestraintData;

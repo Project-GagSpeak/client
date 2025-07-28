@@ -44,23 +44,23 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
             Mediator.Publish(new MoodlesPermissionsUpdated(pair.PlayerNameWithWorld));
     }
 
-    public void UpdatePairUpdateOwnAllUniquePermissions(BulkChangeUnique dto)
+    public void UpdateAllUniqueForKinkster(UserData target, PairPerms newUniquePerms, PairPermAccess newAccessPerms)
     {
-        if (!_allClientPairs.TryGetValue(dto.User, out var pair))
-            throw new InvalidOperationException("No such pair for " + dto);
+        if (!_allClientPairs.TryGetValue(target, out var pair))
+            throw new InvalidOperationException("No such pair for " + target.AliasOrUID);
 
         // Find new permissions enabled that were not enabled before
         var prevPerms = pair.OwnPerms.PuppetPerms;
-        var newlyEnabledPermissions = (dto.NewPerms.PuppetPerms & ~prevPerms);
+        var newlyEnabledPermissions = (newUniquePerms.PuppetPerms & ~prevPerms);
 
         // update the permissions.
-        pair.UserPair.OwnPerms = dto.NewPerms;
-        pair.UserPair.OwnAccess = dto.NewAccess;
+        pair.UserPair.OwnPerms = newUniquePerms;
+        pair.UserPair.OwnAccess = newAccessPerms;
 
         if (newlyEnabledPermissions is not PuppetPerms.None)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerAccessGiven, newlyEnabledPermissions);
 
-        Logger.LogDebug($"Updated own unique permissions for '{pair.GetNickname() ?? pair.UserData.AliasOrUID}'", LoggerType.PairDataTransfer);
+        Logger.LogDebug($"Updated own unique permissions for '{pair.GetNickAliasOrUid()}'", LoggerType.PairDataTransfer);
     }
 
 
@@ -70,16 +70,6 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         if (!_allClientPairs.TryGetValue(dto.User, out var pair)) { throw new InvalidOperationException("No such pair for " + dto); }
         pair.UserPair.Globals = dto.NewPerms;
         Logger.LogDebug($"Updated global permissions for '{pair.GetNickname() ?? pair.UserData.AliasOrUID}'", LoggerType.PairDataTransfer);
-    }
-
-    public void UpdatePairUpdateOtherAllUniquePermissions(BulkChangeUnique dto)
-    {
-        if (!_allClientPairs.TryGetValue(dto.User, out var pair))
-            throw new InvalidOperationException("No such pair for " + dto);
-
-        pair.UserPair.Perms = dto.NewPerms;
-        pair.UserPair.Access = dto.NewAccess;
-        Logger.LogDebug($"Updated pairs unique permissions for '{pair.GetNickname() ?? pair.UserData.AliasOrUID}'", LoggerType.PairDataTransfer);
     }
 
     public void UpdateKinkstersGlobalPerms(UserData target, UserData enactor, KeyValuePair<string, object> newPerm1, KeyValuePair<string, object> newPerm2)

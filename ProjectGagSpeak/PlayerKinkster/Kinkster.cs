@@ -162,9 +162,7 @@ public class Kinkster : IComparable<Kinkster>
     /// <summary> Update IPC Data </summary>
     public void NewActiveIpcData(UserData enactor, CharaIPCData newData, DataUpdateType changeType)
     {
-        _applicationCts?.Cancel();
-        _applicationCts?.Dispose();
-        _applicationCts = new CancellationTokenSource();
+        _applicationCts = _applicationCts.SafeCancelRecreate();
         LastIpcData = newData;
 
         // if the cached player is null

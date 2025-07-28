@@ -63,7 +63,6 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
 
         // The editor tab windows.
         EditorTabs = [editorInfo, editorEquipment, editorLayers, editorModsMoodles];
-
         Mediator.Subscribe<TooltipSetItemToEditorMessage>(this, (msg) =>
         {
             if (_manager.ItemInEditor?.RestraintSlots[msg.Slot] is RestraintSlotBasic basicSlot)
@@ -89,6 +88,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
     private static TriStateBoolCheckbox HelmetCheckbox = new();
     private static TriStateBoolCheckbox VisorCheckbox = new();
     private static TriStateBoolCheckbox WeaponCheckbox = new();
+
     public IFancyTab[] EditorTabs;
 
     /// <summary> All Content in here is grouped. Can draw either editor or overview left panel. </summary>

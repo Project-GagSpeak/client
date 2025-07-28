@@ -2,6 +2,7 @@ using CkCommons.Gui;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 using GagSpeak.GameInternals.Addons;
 using GagSpeak.GameInternals.Structs;
 using GagSpeak.Gui.Modules.Puppeteer;
@@ -87,7 +88,6 @@ public class HomepageTab
 
         if (CkGui.IconTextButton(FAI.Home, "Enter Nearest Housing Node"))
             _temp.EnqueueEnterNearestHousingRoom();
-
     }
 
     private bool HomepageSelectable(string label, FontAwesomeIcon icon, Vector2 region, bool hovered = false)
