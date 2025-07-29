@@ -16,8 +16,10 @@ using GagSpeak.Services.Textures;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.Network;
 using ImGuiNET;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
@@ -31,6 +33,7 @@ public class ActiveItemsDrawer
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
     private readonly FavoritesManager _favorites;
+    private readonly DataDistributionService _dds;
     private readonly TextureService _textures;
     private readonly CosmeticService _cosmetics;
 
@@ -43,7 +46,7 @@ public class ActiveItemsDrawer
     private RestraintCombo _restraintItem;
     private PadlockRestraintsClient _restraintPadlocks;
 
-    private LayerEditorClient _layerEditorClient;
+    private LayerFlagsWidget _layerFlagsWidget;
 
     public ActiveItemsDrawer(
         ILogger<ActiveItemsDrawer> logger,
@@ -62,6 +65,7 @@ public class ActiveItemsDrawer
         _restrictions = restrictions;
         _restraints = restraints;
         _favorites = favorites;
+        _dds = dds;
         _textures = textures;
         _cosmetics = cosmetics;
 
@@ -96,7 +100,7 @@ public class ActiveItemsDrawer
         _restraintPadlocks = new PadlockRestraintsClient(logger, dds, restraints);
 
         // Init Layer Editor Client.
-        _layerEditorClient = new LayerEditorClient(mediator);
+        _layerFlagsWidget = new(FAI.LayerGroup, "ClientRestraintLayers", string.Empty);
     }
 
     private void GagComboChanged(RestrictionGagCombo combo, int slotIdx, GagType curr)
@@ -256,11 +260,9 @@ public class ActiveItemsDrawer
     public void LockItemGroup(CharaActiveRestraint data, RestraintSet dispData)
     {
         using var group = ImRaii.Group();
-        
         _restraintPadlocks.DrawLockCombo(ImGui.GetContentRegionAvail().X, "Lock this Padlock!");
-        
         var height = ImGui.GetFrameHeightWithSpacing() * 5 + ImGui.GetFrameHeight();
-        DrawRestraintImage(dispData, new Vector2(height / 1.2f, height), CkStyle.HeaderRounding(), CkColor.FancyHeaderContrast.Uint());
+        DrawRestraintImage(dispData, new Vector2(height / 1.2f, height), CkStyle.ChildRoundingLarge(), CkColor.FancyHeaderContrast.Uint());
         var drawPos = ImGui.GetItemRectMin() + new Vector2(ImGui.GetItemRectSize().X, 0);
         CkGui.AttachToolTip("--COL--Left-Click--COL-- ⇒ Select another Restraint Set." +
                       "--NL----COL--Right-Click--COL-- ⇒ Clear active Restraint Set.", color: ImGuiColors.ParsedGold);
@@ -273,9 +275,22 @@ public class ActiveItemsDrawer
             _mediator.Publish(new ActiveRestraintSetChangeMessage(DataUpdateType.Removed, new CharaActiveRestraint()));
         }
 
-        ImGui.SameLine();
-        _layerEditorClient.Draw("##ClientLayers", data.ActiveLayers, dispData.Layers.Count,
-            (l) => (int)l >= 0 && (int)l < dispData.Layers.Count ? dispData.Layers[(int)l].Label : l.ToString());
+        ImUtf8.SameLineInner();
+        using var s = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, CkStyle.ChildRoundingLarge());
+        using (ImRaii.Group())
+        {
+            // draw sync button, and call layer update if pressed.
+            if(_layerFlagsWidget.DrawUpdateButton(FAI.Sync, "Update Layers", out var added, out var removed, ImGui.GetContentRegionAvail().X))
+            {
+                // calculate the new layers by blending the current with the applied and removed layers.
+                var newLayers = (data.ActiveLayers | added) & ~removed;
+                UiService.SetUITask(async () => await _dds.PushActiveRestraintUpdate(new CharaActiveRestraint() { ActiveLayers = newLayers }, DataUpdateType.LayersChanged));
+            }
+
+            // Below draw out the layers.
+            var options = Enum.GetValues<RestraintLayer>().Skip(1).SkipLast(1).Take(dispData.Layers.Count);
+            _layerFlagsWidget.DrawLayerCheckboxes(data.ActiveLayers, options, _ => ((int)_).IsInRange(dispData.Layers) ? dispData.Layers[(int)_].Label : _.ToString());
+        }
     }
 
     public void UnlockItemGroup(int slotIdx, ActiveGagSlot data)
@@ -335,7 +350,6 @@ public class ActiveItemsDrawer
     public void UnlockItemGroup(CharaActiveRestraint data, RestraintSet? dispData)
     {
         using var group = ImRaii.Group();
-
         var isTimer = data.Padlock.IsTimerLock();
         var size = new Vector2(CkStyle.TwoRowHeight());
         var offsetV = ImGui.GetFrameHeightWithSpacing() * 0.5f;
@@ -353,11 +367,24 @@ public class ActiveItemsDrawer
 
         var height = ImGui.GetFrameHeightWithSpacing() * 5 + ImGui.GetFrameHeight();
         DrawRestraintImage(dispData, new Vector2(height / 1.2f, height), CkStyle.HeaderRounding(), CkColor.FancyHeaderContrast.Uint());
-        ImGui.SameLine();
-        if (data.PadlockAssigner == MainHub.UID && dispData is not null)
+        ImGui.SameLine(0,0);
+        using var s = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, CkStyle.ChildRoundingLarge());
+        using var _ = ImRaii.Disabled(data.PadlockAssigner != MainHub.UID);
+        using (ImRaii.Group())
         {
-            _layerEditorClient.Draw("##ClientLayers", data.ActiveLayers, dispData.Layers.Count,
-                (l) => (int)l >= 0 && (int)l < dispData.Layers.Count ? dispData.Layers[(int)l].Label : l.ToString());
+            // draw sync button, and call layer update if pressed.
+            if (_layerFlagsWidget.DrawUpdateButton(FAI.Sync, "Update Layers", out var added, out var removed, ImGui.GetContentRegionAvail().X))
+            {
+                // calculate the new layers by blending the current with the applied and removed layers.
+                var newLayers = (data.ActiveLayers | added) & ~removed;
+                UiService.SetUITask(async () => await _dds.PushActiveRestraintUpdate(new CharaActiveRestraint() { ActiveLayers = newLayers }, DataUpdateType.LayersChanged));
+            }
+            // dont draw if dispdata is null.
+            if (dispData is null)
+                return;
+            // Below draw out the layers.
+            var options = Enum.GetValues<RestraintLayer>().Skip(1).SkipLast(1).Take(dispData.Layers.Count);
+            _layerFlagsWidget.DrawLayerCheckboxes(data.ActiveLayers, options, _ => ((int)_).IsInRange(dispData.Layers) ? dispData.Layers[(int)_].Label : _.ToString());
         }
     }
 

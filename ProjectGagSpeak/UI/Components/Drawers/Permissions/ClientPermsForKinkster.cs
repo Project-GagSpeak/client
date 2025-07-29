@@ -333,7 +333,7 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
                     pairPerms.AllowBeeps = newPerms.AllowBeeps;
                     pairPerms.MaxDuration = newPerms.MaxDuration;
                     pairPerms.MaxIntensity = newPerms.MaxIntensity;
-                    await _hub.UserBulkChangeUnique(new(kinkster.UserData, pairPerms, pairAccess));                        
+                    await _hub.UserBulkChangeUnique(new(kinkster.UserData, pairPerms, pairAccess, UpdateDir.Own, MainHub.PlayerUserData));                        
                 });
             }
         }

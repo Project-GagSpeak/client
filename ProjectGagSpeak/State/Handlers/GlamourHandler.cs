@@ -1,4 +1,5 @@
 using CkCommons.Classes;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using GagSpeak.Interop;
 using GagSpeak.Services;
 using GagSpeak.State.Caches;
@@ -34,6 +35,12 @@ public class GlamourHandler
     {
         _logger.LogDebug($"EquipGearsetInternal for gearsetId {gearsetId} with plateId {glamourPlateId} occured!" +
             "Blocking any further OnStateChanged calls until gearset application finishes!");
+        _ipcBlocker |= IpcBlockReason.Gearset;
+    }
+
+    public void OnAppliedGlamourPlate(uint glamourPlateIdx)
+    {
+        _logger.LogDebug($"Applied Glamour Plate with index {glamourPlateIdx}.");
         _ipcBlocker |= IpcBlockReason.Gearset;
     }
 

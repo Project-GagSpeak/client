@@ -3,12 +3,14 @@ using GagSpeak.FileSystems;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
+using System.Xml.Linq;
 
 namespace GagSpeak.Services;
 
@@ -69,7 +71,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => DelayedFrameworkOnUpdate());
 
         // Kinkster Pair management.
-        Mediator.Subscribe<PairWentOnlineMessage>(this, arg =>
+        Mediator.Subscribe<PairWentOnlineMessage>(this, arg => 
         {
             if (!MainHub.IsConnectionDataSynced)
                 return;
@@ -79,9 +81,9 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
 
         // Generic Updaters
         Mediator.Subscribe<PushGlobalPermChange>(this, arg => _hub.UserChangeOwnGlobalPerm(arg.PermName, arg.NewValue).ConfigureAwait(false));
+        
         // Visible Data Updaters
         Mediator.Subscribe<MoodlesApplyStatusToPair>(this, msg => _hub.UserApplyMoodlesByStatus(msg.StatusDto).ConfigureAwait(false));
-        Mediator.Subscribe<IpcDataChangedMessage>(this, msg => DistributeDataVisible(_kinksters.GetVisibleUsers(), msg.NewIpcData, msg.UpdateType).ConfigureAwait(false));
 
         // Online Data Updaters
         Mediator.Subscribe<MainHubConnectedMessage>(this, _ => PushCompositeData(_kinksters.GetOnlineUserDatas()).ConfigureAwait(false));
@@ -105,7 +107,6 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
     }
 
     // Idk why we need this really, anymore, but whatever i guess. If it helps it helps.
-    private CharaIPCData _prevIpcData = new CharaIPCData();
     private ActiveGagSlot? _prevGagData;
     private ActiveRestriction? _prevRestrictionData;
     private CharaActiveRestraint? _prevRestraintData;
@@ -129,7 +130,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         {
             var newVisiblePlayers = _newVisibleKinksters.ToList();
             _newVisibleKinksters.Clear();
-            DistributeDataVisible(newVisiblePlayers, _prevIpcData, DataUpdateType.UpdateVisible).ConfigureAwait(false);
+            DistributeFullMoodlesData(newVisiblePlayers).ConfigureAwait(false);
         }
     }
 
@@ -142,6 +143,76 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
 
         Logger.LogDebug("Data was no different. Not sending data", LoggerType.OnlinePairs);
         return false;
+    }
+
+    public async Task UpdateAllVisibleWithMoodles()
+        => await DistributeFullMoodlesData(_kinksters.GetVisibleUsers());
+
+    /// <summary>
+    ///     This IPC Method should ONLY be sent to the newly visible kinksters, as it is the heaviest weight IPC call. <para />
+    ///     Never generate for _kinksters.GetVisibleUsers() as this will cause a lot of unnecessary data to be sent.
+    /// </summary>
+    public async Task DistributeFullMoodlesData(List<UserData> visibleCharas)
+    {
+        // if we are not yet connected, append the visible character list to the _newVisibleKinksters
+        if (!MainHub.IsConnectionDataSynced)
+        {
+            _newVisibleKinksters.UnionWith(visibleCharas);
+            return;
+        }
+
+        // Distribute the full IPC Data to the list of visible characters passed in.
+        Logger.LogDebug($"Pushing Full IPCData to ({string.Join(", ", visibleCharas.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
+        await _hub.UserPushIpcFull(new(visibleCharas, MoodleCache.IpcData));
+    }
+
+    /// <summary>
+    ///     Update all currently visible Kinksters with latest status manager info. <para />
+    ///     This is fairly lightweight, but should only be used for updates, not on VisiblePairsChanged. <para />
+    ///     Intent is to send out to all visible pairs whenever our status manager is changed.
+    /// </summary>
+    public async Task PushMoodleStatusManager()
+    {
+        // Reject when not data synced.
+        if (!MainHub.IsConnectionDataSynced)
+            return;
+
+        var visChara = _kinksters.GetVisibleUsers();
+        Logger.LogDebug($"Pushing updated StatusManager to visible Kinksters: ({string.Join(", ", visChara.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
+        // this will never fail, so no point in scanning the return.
+        await _hub.UserPushIpcStatusManager(new(visChara, MoodleCache.IpcData.DataString, MoodleCache.IpcData.DataInfoList.ToList()));
+    }
+
+    /// <summary>
+    ///     Update all visible Kinksters with your latest status list whenever you make a change to a status in moodles. <para />
+    ///     Slightly heavier weight, but called less frequently, and seperately.
+    /// </summary>
+    public async Task PushMoodleStatusList()
+    {
+        // Reject when not data synced.
+        if (!MainHub.IsConnectionDataSynced)
+            return;
+
+        var visChara = _kinksters.GetVisibleUsers();
+        Logger.LogDebug($"Pushing updated StatusListInfo to visible Kinksters: ({string.Join(", ", visChara.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
+        // this will never fail, so no point in scanning the return.
+        await _hub.UserPushIpcStatusManager(new(visChara, MoodleCache.IpcData.DataString, MoodleCache.IpcData.DataInfoList.ToList()));
+    }
+
+    /// <summary>
+    ///     Update all visible Kinksters with your latest moodle presets whenever you make a change to a preset in moodles. <para />
+    ///     Slightly heavier weight, but called less frequently, and seperately.
+    /// </summary>
+    public async Task PushMoodlePresetList()
+    {
+        // Reject when not data synced.
+        if (!MainHub.IsConnectionDataSynced)
+            return;
+
+        var visChara = _kinksters.GetVisibleUsers();
+        Logger.LogDebug($"Pushing updated PresetListInfo to visible Kinksters: ({string.Join(", ", visChara.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
+        // this will never fail, so no point in scanning the return.
+        await _hub.UserPushIpcPresets(new(visChara, MoodleCache.IpcData.PresetList.ToList()));
     }
 
     private CharaLightStorageData GetLatestLightStorage()
@@ -268,25 +339,6 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             Logger.LogError("Failed to push Composite Data to server: " + ex);
             return;
         }
-    }
-
-    private async Task DistributeDataVisible(List<UserData> visChara, CharaIPCData newData, DataUpdateType kind)
-    {
-        // Do not process if not data synced.
-        if (!MainHub.IsConnectionDataSynced)
-        {
-            _newVisibleKinksters.UnionWith(visChara);
-            return;
-        }
-
-        if (DataIsDifferent(_prevIpcData, newData) is false)
-            return;
-
-        _prevIpcData = newData;
-
-        Logger.LogDebug($"Pushing IPCData to {string.Join(", ", visChara.Select(v => v.AliasOrUID))} [{kind}]", LoggerType.VisiblePairs);
-        if (await _hub.UserPushActiveIpc(new(visChara, newData, kind)).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
-            Logger.LogError("Failed to push IpcData to server Reason: " + res);
     }
 
     /// <summary>

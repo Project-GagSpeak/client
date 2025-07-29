@@ -140,6 +140,31 @@ public partial class MainHub
     #endregion Pairing & Messages
 
     #region Moodles
+    public Task Callback_SetKinksterIpcFull(KinksterIpcDataFull dto)
+    {
+        Logger.LogDebug($"Recieved full IPC Update from Kinkster!: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        _kinksterListener.NewIpcData(dto.User, dto.Enactor, dto.NewData);
+        return Task.CompletedTask;
+    }
+    public Task Callback_SetKinksterIpcStatusManager(KinksterIpcStatusManager dto)
+    {
+        Logger.LogDebug($"Recieved StatusManager update for Kinkster: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        _kinksterListener.NewIpcStatusManager(dto.User, dto.Enactor, dto.DataString, dto.DataInfo);
+        return Task.CompletedTask;
+    }
+    public Task Callback_SetKinksterIpcStatuses(KinksterIpcStatuses dto)
+    {
+        Logger.LogDebug($"Recieved full IPC Update from Kinkster!: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        _kinksterListener.NewIpcStatuses(dto.User, dto.Enactor, dto.Statuses);
+        return Task.CompletedTask;
+    }
+    public Task Callback_SetKinksterIpcPresets(KinksterIpcPresets dto)
+    {
+        Logger.LogDebug($"Recieved full IPC Update from Kinkster!: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        _kinksterListener.NewIpcPresets(dto.User, dto.Enactor, dto.Presets);
+        return Task.CompletedTask;
+    }
+
     public Task Callback_ApplyMoodlesByGuid(MoodlesApplierById dto)
     {
         Logger.LogDebug("Callback_ApplyMoodlesByGuid: "+dto, LoggerType.Callbacks);
@@ -180,7 +205,7 @@ public partial class MainHub
     {
         if(dto.User.UID == UID)
         {
-            Logger.LogError("Should never be calling self for an update all perms.");
+            Logger.LogError("Should never be calling self for an update all perms. Should only update on safeword!");
             return Task.CompletedTask;
         }
         else
@@ -209,18 +234,15 @@ public partial class MainHub
 
     public Task Callback_BulkChangeUnique(BulkChangeUnique dto)
     {
-        if (dto.User.UID == UID)
+        Generic.Safe(() =>
         {
-            Logger.LogWarning("Called Back BulkChangeUnique that was intended for yourself!: " + dto);
-            Generic.Safe(() => _kinksters.UpdatePairUpdateOwnAllUniquePermissions(dto));
-            return Task.CompletedTask;
-        }
-        else
-        {
-            Logger.LogDebug("OTHER Callback_BulkChangeUnique: " + dto, LoggerType.Callbacks);
-            Generic.Safe(() => _kinksters.UpdatePairUpdateOtherAllUniquePermissions(dto));
-            return Task.CompletedTask;
-        }
+            if (dto.User.UID == UID)
+                throw new Exception("Should never be calling a permission update for yourself in bulk, use BulkChangeAll for these!");
+
+            Logger.LogDebug($"Callback_BulkChangeUnique: {dto}", LoggerType.Callbacks);
+            _kinksters.UpdateAllUniqueForKinkster(dto.User, dto.NewPerms, dto.NewAccess);
+        });
+        return Task.CompletedTask;
     }
 
     public Task Callback_SingleChangeGlobal(SingleChangeGlobal dto)
@@ -301,22 +323,6 @@ public partial class MainHub
             return Task.CompletedTask;
         }
         return Task.CompletedTask;
-    }
-
-    /// <summary> Update Other UserPair Ipc Data </summary>
-    public Task Callback_KinksterUpdateIpc(KinksterUpdateIpc dto)
-    {
-        if (dto.User.UID == UID)
-        {
-            Logger.LogDebug($"Callback_ReceiveOwnDataIpc (not executing any functions): {dto.User.AliasOrUID}", LoggerType.Callbacks);
-            return Task.CompletedTask;
-        }
-        else
-        {
-            Logger.LogDebug($"OTHER Callback_ReceiveDataIpc: {dto}", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksterListener.NewActiveIpc(dto.User, dto.Enactor, dto.NewData, dto.Type));
-            return Task.CompletedTask;
-        }
     }
 
     public Task Callback_KinksterUpdateActiveGag(KinksterUpdateActiveGag dataDto)
@@ -781,6 +787,30 @@ public partial class MainHub
         _hubConnection!.On(nameof(Callback_RemovePairRequest), act);
     }
 
+    public void OnSetKinksterIpcFull(Action<KinksterIpcDataFull> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_SetKinksterIpcFull), act);
+    }
+
+    public void OnSetKinksterIpcStatusManager(Action<KinksterIpcStatusManager> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_SetKinksterIpcStatusManager), act);
+    }
+
+    public void OnSetKinksterIpcStatuses(Action<KinksterIpcStatuses> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_SetKinksterIpcStatuses), act);
+    }
+
+    public void OnSetKinksterIpcPresets(Action<KinksterIpcPresets> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_SetKinksterIpcPresets), act);
+    }
+
     public void OnApplyMoodlesByGuid(Action<MoodlesApplierById> act)
     {
         if (_apiHooksInitialized) return;
@@ -851,12 +881,6 @@ public partial class MainHub
     {
         if (_apiHooksInitialized) return;
         _hubConnection!.On(nameof(Callback_KinksterUpdateComposite), act);
-    }
-
-    public void OnKinksterUpdateIpc(Action<KinksterUpdateIpc> act)
-    {
-        if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_KinksterUpdateIpc), act);
     }
 
     public void OnKinksterUpdateActiveGag(Action<KinksterUpdateActiveGag> act)

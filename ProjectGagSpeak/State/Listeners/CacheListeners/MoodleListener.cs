@@ -1,9 +1,12 @@
 using CkCommons;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using GagSpeak.Interop;
+using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
+using GagSpeak.WebAPI;
 
 namespace GagSpeak.State.Listeners;
 
@@ -11,15 +14,17 @@ public class MoodleListener : DisposableMediatorSubscriberBase
 {
     private readonly MoodleCache _cache;
     private readonly IpcCallerMoodles _ipc;
+    private readonly DataDistributionService _dds;
 
     private bool _isZoning = false;
 
     public MoodleListener(ILogger<MoodleListener> logger, GagspeakMediator mediator,
-        MoodleCache cache, IpcCallerMoodles ipc)
+        MoodleCache cache, IpcCallerMoodles ipc, DataDistributionService dds)
         : base(logger, mediator)
     {
         _cache = cache;
         _ipc = ipc;
+        _dds = dds;
 
         _ipc.OnStatusManagerModified.Subscribe(OnStatusManagerModified);
         _ipc.OnStatusSettingsModified.Subscribe(msg => _ = OnStatusModified(msg));
@@ -55,7 +60,7 @@ public class MoodleListener : DisposableMediatorSubscriberBase
         MoodleCache.IpcData.SetStatuses(statuses);
         MoodleCache.IpcData.SetPresets(presets);
         Logger.LogDebug("Moodles is now ready, pushing to all visible pairs", LoggerType.IpcMoodles);
-        Mediator.Publish(new IpcDataChangedMessage(DataUpdateType.UpdateVisible, MoodleCache.IpcData));
+        await _dds.UpdateAllVisibleWithMoodles();
     }
 
     /// <summary> Handles the Moodles Status Manager being modified. </summary>
@@ -83,8 +88,8 @@ public class MoodleListener : DisposableMediatorSubscriberBase
         else
             MoodleCache.IpcData.SetStatuses(await _ipc.GetStatusListDetails());
 
-        // Push the update to the visible pairs.
-        Mediator.Publish(new IpcDataChangedMessage(DataUpdateType.StatusesUpdated, MoodleCache.IpcData));
+        // now push it out to our server.
+        await _dds.PushMoodleStatusList();
     }
 
     /// <summary> Fired whenever we change any setting in any of our Moodles Presets via the Moodles UI </summary>
@@ -98,8 +103,8 @@ public class MoodleListener : DisposableMediatorSubscriberBase
         else
             MoodleCache.IpcData.SetPresets(await _ipc.GetPresetListDetails());
 
-        // Push the update to the visible pairs.
-        Mediator.Publish(new IpcDataChangedMessage(DataUpdateType.PresetsUpdated, MoodleCache.IpcData));
+        // now push it out to our server.
+        await _dds.PushMoodlePresetList();
     }
 
     /// <summary>
@@ -130,6 +135,6 @@ public class MoodleListener : DisposableMediatorSubscriberBase
         }
 
         Logger.LogTrace("Pushing IPC update to CacheCreation for processing", LoggerType.IpcMoodles);
-        Mediator.Publish(new IpcDataChangedMessage(DataUpdateType.StatusManagerChanged, MoodleCache.IpcData));
+        await _dds.PushMoodleStatusManager();
     }
 }

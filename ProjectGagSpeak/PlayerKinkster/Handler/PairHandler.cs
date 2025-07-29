@@ -1,11 +1,9 @@
-using Dalamud.Game.ClientState.Objects.Types;
 using CkCommons;
+using Dalamud.Game.ClientState.Objects.Types;
 using GagSpeak.Interop;
 using GagSpeak.Kinksters.Factories;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagspeakAPI.Data;
 using GagspeakAPI.Network;
 using Microsoft.Extensions.Hosting;
 
@@ -21,11 +19,10 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
     private CancellationTokenSource? _applicationCTS = new();
 
     // the cached data for the paired player.
-    private CharaIPCData? _cachedIpcData = null;
+    private string? _cachedMoodleDataStr = null;
 
     // primarily used for initialization and address checking for visibility
     private GameObjectHandler? _charaHandler;
-
     private bool _isVisible;
 
     public PairHandler(OnlineKinkster onlineUser,
@@ -63,9 +60,7 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
             {
                 _isVisible = value;
                 Logger.LogTrace("User Visibility Changed, now: " + (_isVisible ? "Is Visible" : "Is not Visible"), LoggerType.PairHandlers);
-                // publish a refresh ui message to the mediator
                 Mediator.Publish(new RefreshUiMessage());
-                // push latest list details to Moodles.
                 Mediator.Publish(new VisibleKinkstersChanged());
             }
         }
@@ -92,12 +87,11 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
         // store name and address to reference removal properly.
         var name = PlayerNameWithWorld;
         var address = _charaHandler?.Address ?? nint.Zero;
-        Logger.LogDebug("Disposing " + name + " (" + OnlineUser + ")", LoggerType.PairHandlers);
+        Logger.LogDebug($"Disposing {name} ({OnlineUser})", LoggerType.PairHandlers);
         try
         {
             var applicationId = Guid.NewGuid();
-            _applicationCTS?.Cancel();
-            _applicationCTS?.Dispose();
+            _applicationCTS.SafeCancelDispose();
             _applicationCTS = null;
             _charaHandler?.Dispose();
             _charaHandler = null;
@@ -109,11 +103,12 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
             // Because this is happening, we need to make sure that we revert their IPC data and toggle their address & visibility.
             if (!PlayerData.IsZoning && !string.IsNullOrEmpty(name))
             {
-                Logger.LogTrace("[" + applicationId + "] Restoring State for [" + name + "] (" + OnlineUser + ")", LoggerType.PairHandlers);
+                Logger.LogTrace($"[{applicationId}] Restoring State for [{name}] ({OnlineUser})", LoggerType.PairHandlers);
                 // They are visible but being disposed, so revert their applied customization data
                 var cts = new CancellationTokenSource();
                 cts.CancelAfter(TimeSpan.FromSeconds(30));
-                Logger.LogDebug("[" + applicationId + "] Reverting all Customization for " + OnlineUser.User.AliasOrUID, LoggerType.PairHandlers);
+                Logger.LogDebug($"[{applicationId}] Reverting all IPC for {OnlineUser.User.AliasOrUID}", LoggerType.PairHandlers);
+                // make sure we only revert if they are not a Mare user.
                 if (!IsMareUser(address))
                 {
                     Logger.LogDebug(name + " is not a Mare user. Clearing Moodles for " + OnlineUser.User.AliasOrUID, LoggerType.PairHandlers);
@@ -125,34 +120,34 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
         }
         catch (Bagagwa ex)
         {
-            Logger.LogWarning(ex, "Error on disposal of {name}", name);
+            Logger.LogWarning($"Error on disposal of {name}: {ex}");
         }
         finally
         {
             PlayerName = null;
-            _cachedIpcData = null;
+            _cachedMoodleDataStr = null;
         }
     }
 
     /// <summary> Method responsible for applying the stored character data to the paired user. </summary>
     /// <remarks> This method helps act as an override for mare to apply the moodles data to other non-mare players. </remarks>
-    public void ApplyCharacterData(Guid applicationBase, CharaIPCData characterData)
+    public void ApplyMoodlesToPlayer(Guid applicationBase, string newDataString)
     {
-        var oldMoodleData = new CharaIPCData(_cachedIpcData ?? new());
-        if (oldMoodleData.Equals(characterData))
+        var oldMoodleData = _cachedMoodleDataStr ?? string.Empty;
+        if (oldMoodleData.Equals(newDataString))
             return;
 
         // Changes were made
         if (PairAddress == nint.Zero)
             return;
 
-        Logger.LogDebug("Applying Character IPC Data for (" + PlayerName + ")", LoggerType.PairHandlers);
+        Logger.LogDebug($"Applying Kinksters Moodle Data for ({PlayerName})", LoggerType.PairHandlers);
         if (_charaHandler is not null && _charaHandler.Address != nint.Zero)
-            _ipcManager.Moodles.SetStatus(_charaHandler.NameWithWorld, characterData.DataString).ConfigureAwait(false);
+            _ipcManager.Moodles.SetStatus(_charaHandler.NameWithWorld, newDataString).ConfigureAwait(false);
 
         // Update the cachedData
-        _cachedIpcData = characterData;
-        Logger.LogDebug("ApplyData finished for (" + PlayerName + ")", LoggerType.PairHandlers);
+        _cachedMoodleDataStr = newDataString;
+        Logger.LogDebug($"ApplyData finished for ({PlayerName})", LoggerType.PairHandlers);
     }
 
     private void FrameworkUpdate()
@@ -171,30 +166,29 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
             // initialize the player character
             Initialize(pc.Name);
             if (_charaHandler != null) _charaHandler.UpdatePlayerCharacterRef();
-            Logger.LogDebug("One-Time Initialized " + this + "(" + pc.Name + ")", LoggerType.PairHandlers);
+            Logger.LogDebug($"One-Time Initialized {this} ({pc.Name})", LoggerType.PairHandlers);
         }
 
         // if the game object for this pair has a pointer that is not zero (meaning they are present) but the pair is marked as not visible
-        if (_charaHandler?.Address != nint.Zero && !IsVisible) // in other words, we apply this the first time they render into our view
+        if (_charaHandler?.Address != nint.Zero && !IsVisible)
         {
-            // then we need to create appData for it.
             var appData = Guid.NewGuid();
             // and update their visibility to true
             IsVisible = true;
-            if (_charaHandler != null) _charaHandler.UpdatePlayerCharacterRef();
+            if (_charaHandler is not null) 
+                _charaHandler.UpdatePlayerCharacterRef();
+
             // publish the pairHandlerVisible message to the mediator, passing in this pair handler object
             Mediator.Publish(new PairHandlerVisibleMessage(this));
             // if the pairs cachedData is not null
-            if (_cachedIpcData != null)
+            if (_cachedMoodleDataStr is not null)
             {
-                Logger.LogTrace("[BASE-" + appData + "] " + this + " visibility changed, now: " + IsVisible + ", cached IPC data exists", LoggerType.PairHandlers);
-                // then we should apply it to the character data
-                _ = Task.Run(() => ApplyCharacterData(appData, _cachedIpcData!));
+                Logger.LogTrace($"[BASE-{appData}] {this} visibility changed, now: {IsVisible}, cached IPC data exists", LoggerType.PairHandlers);
+                _ = Task.Run(() => ApplyMoodlesToPlayer(appData, _cachedMoodleDataStr));
             }
             else
             {
-                // otherwise, do not apply it to the character as they are not present
-                Logger.LogTrace(this + " visibility changed, now: " + IsVisible + " (No Ipc Data)", LoggerType.PairHandlers);
+                Logger.LogTrace($"{this} visibility changed, now: {IsVisible} (No Ipc Data)", LoggerType.PairHandlers);
             }
         }
         // if the player address is 0 but they are visible, invalidate them

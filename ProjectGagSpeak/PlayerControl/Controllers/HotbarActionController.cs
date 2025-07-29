@@ -25,9 +25,15 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
     private const uint ACTION_TYPE_NODE_ID = 6;
     private const uint RANGE_NODE_ID = 9;
     private const uint RADIUS_NODE_ID = 12;
+    private const uint CAST_RECAST_CONTAINER_ID = 13;
     private const uint DESCRIPTION_NODE_ID = 19;
 
     private readonly TraitsCache _cache;
+
+    // Stores the pointer that we most recently interacted with. Useful for resetting the height.
+    // NOTE: Have not yet tested
+    private unsafe AtkUnitBase* _lastModifiedTooltip;
+
 
     /// <summary> The currently banned actions determined by the <see cref="_cache"/>'s _finalTrait's </summary>
     private ImmutableDictionary<uint, Traits> _bannedActions = ImmutableDictionary<uint, Traits>.Empty;
@@ -160,6 +166,19 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
             if (hotbarRow is not null)
                 hotbarModule->LoadSavedHotbar(PlayerData.JobIdThreadSafe, (uint)i);
         }
+
+        // Reset the last modified tooltip to null, as we no longer need it.
+        Logger.LogDebug("Resetting last modified tooltip's recast timer item.", LoggerType.HardcoreActions);
+        if (_lastModifiedTooltip is not null)
+        {
+            var castRecastContainer = _lastModifiedTooltip->GetNodeById(CAST_RECAST_CONTAINER_ID);
+            if (castRecastContainer is not null)
+            {
+                castRecastContainer->SetHeight(45);
+                castRecastContainer->ToggleVisibility(true);
+            }
+            _lastModifiedTooltip = null;
+        }
     }
 
     /// <summary>
@@ -236,13 +255,16 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
         if (hoveredAct.ActionKind is not HoverActionKind.Action)
             return;
 
+        // store latest action tooltip.
+        _lastModifiedTooltip = addon;
+
         // Must be a TraitAction Action.
         if (!_traitActionIds.Any(x => x.Id == hoveredAct.ActionID))
             return;
 
         Logger.LogTrace($"Action ({hoveredAct.ActionID}) is a TraitRestriction tooltip, altaring display.", LoggerType.HardcoreActions);
         // hide away the recast container, as it is not needed. (but maybe make it work?)
-        var castRecastContainer = addon->GetNodeById(13);
+        var castRecastContainer = addon->GetNodeById(CAST_RECAST_CONTAINER_ID);
         if (castRecastContainer is not null)
         {
             castRecastContainer->SetHeight(0);

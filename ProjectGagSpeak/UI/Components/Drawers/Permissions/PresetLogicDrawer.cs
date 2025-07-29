@@ -24,7 +24,6 @@ public class PresetLogicDrawer
         _logger = logger;
         _hub = hub;
     }
-    private bool DisableUI => UiService.DisableUI;
 
     public void DrawPresetList(Kinkster pairToDrawListFor, float width)
     {
@@ -33,7 +32,7 @@ public class PresetLogicDrawer
         var buttonW =CkGui.IconTextButtonSize(FAI.Sync, "Apply Preset");
         var comboW = width - buttonW - padding * 2 - spacing * 3;
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + padding);
-        using (ImRaii.Disabled(DisableUI))
+        using (ImRaii.Disabled(UiService.DisableUI))
         {
             if(CkGuiUtils.EnumCombo("##Presets", comboW, _selected, out var newVal, flags: CFlags.None))
                 _selected = newVal;
@@ -114,9 +113,9 @@ public class PresetLogicDrawer
 
     private void PushCmdToServer(Kinkster kinkster, Tuple<PairPerms, PairPermAccess> perms, string presetName)
     {
-        UiService.SetUITask(Task.Run(async () =>
+        UiService.SetUITask(async () =>
         {
-            var res = await _hub.UserBulkChangeUnique(new(kinkster.UserData, perms.Item1, perms.Item2));
+            var res = await _hub.UserBulkChangeUnique(new(kinkster.UserData, perms.Item1, perms.Item2, UpdateDir.Own, MainHub.PlayerUserData));
             if (res.ErrorCode != GagSpeakApiEc.Success)
             {
                 _logger.LogError($"Failed preset application for [{kinkster.GetNickAliasOrUid()}]. Error: {res.ErrorCode}");
@@ -126,7 +125,7 @@ public class PresetLogicDrawer
             {
                 _logger.LogInformation($"Applied Preset [{presetName}] to Kinkster [{kinkster.GetNickAliasOrUid()}]");
             }
-        }));
+        });
     }
 
     private Tuple<PairPerms, PairPermAccess> PresetDominantSetup()

@@ -189,6 +189,10 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         OnAddPairRequest(dto => _ = Callback_AddPairRequest(dto));
         OnRemovePairRequest(dto => _ = Callback_RemovePairRequest(dto));
 
+        OnSetKinksterIpcFull(dto => _ = Callback_SetKinksterIpcFull(dto));
+        OnSetKinksterIpcStatusManager(dto => _ = Callback_SetKinksterIpcStatusManager(dto));
+        OnSetKinksterIpcStatuses(dto => _ = Callback_SetKinksterIpcStatuses(dto));
+        OnSetKinksterIpcPresets(dto => _ = Callback_SetKinksterIpcPresets(dto));
         OnApplyMoodlesByGuid(dto => _ = Callback_ApplyMoodlesByGuid(dto));
         OnApplyMoodlesByStatus(dto => _ = Callback_ApplyMoodlesByStatus(dto));
         OnRemoveMoodles(dto => _ = Callback_RemoveMoodles(dto));
@@ -203,7 +207,6 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         OnSingleChangeAccess(dto => _ = Callback_SingleChangeAccess(dto));
 
         OnKinksterUpdateComposite(dto => _ = Callback_KinksterUpdateComposite(dto));
-        OnKinksterUpdateIpc(dto => _ = Callback_KinksterUpdateIpc(dto));
         OnKinksterUpdateActiveGag(dto => _ = Callback_KinksterUpdateActiveGag(dto));
         OnKinksterUpdateActiveRestriction(dto => _ = Callback_KinksterUpdateActiveRestriction(dto));
         OnKinksterUpdateActiveRestraint(dto => _ = Callback_KinksterUpdateActiveRestraint(dto));

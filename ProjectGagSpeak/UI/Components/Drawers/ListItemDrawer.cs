@@ -47,7 +47,7 @@ public sealed class ListItemDrawer
 
     public void DrawAchievementList(AchievementModuleKind type, Vector2 region)
     {
-        using var _ = CkRaii.Child("##GlobalAliasList2", region);
+        using var _ = CkRaii.Child("##GlobalAliasList2", region, WFlags.NoScrollbar);
 
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f)
             .Push(ImGuiStyleVar.WindowBorderSize, 1f);
