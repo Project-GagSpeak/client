@@ -82,7 +82,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         else
         {
             Logger.LogDebug("User " + dto.User.UID + " found in client pairs, applying last received data instead.", LoggerType.PairManagement);
-            _allClientPairs[dto.User].ApplyLastIpcData();
+            _allClientPairs[dto.User].ApplyLatestMoodles();
         }
         // recreate the lazy list of direct pairs.
         RecreateLazy();
@@ -103,7 +103,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
             }
             else
             {
-                _allClientPairs[dto.User].ApplyLastIpcData();
+                _allClientPairs[dto.User].ApplyLatestMoodles();
                 refreshed.Add(dto.User.UID);
             }
         }
@@ -125,7 +125,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
             _allClientPairs[dto.User] = _pairFactory.Create(dto);
 
         // finally, be sure to apply the last received data to this user's Pair object.
-        _allClientPairs[dto.User].ApplyLastIpcData();
+        _allClientPairs[dto.User].ApplyLatestMoodles();
         RecreateLazy();
         // we just added a pair, so ping the achievement manager that a pair was added!
         GagspeakEventManager.AchievementEvent(UnlocksEvent.PairAdded);
@@ -290,7 +290,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     private void ReapplyPairData()
     {
         foreach (var pair in _allClientPairs.Select(k => k.Value))
-            pair.ApplyLastIpcData(forced: true);
+            pair.ApplyLatestMoodles(forced: true);
     }
 
     /// <summary> Recreates the lazy list of direct pairs.</summary>

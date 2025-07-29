@@ -135,17 +135,6 @@ public partial class MainHub
 
     }
 
-    public async Task<HubResponse> UserPushActiveIpc(PushClientIpcUpdate dto)
-    {
-        Logger.LogDebug("Pushing out:", LoggerType.Callbacks);
-        Logger.LogDebug($"IpcDataString: {dto.NewData.DataString}", LoggerType.Callbacks);
-        Logger.LogDebug($"IpcDatInfoList: {string.Join(", ", dto.NewData.DataInfo.Select(x => $"{x.Key}={x.Value}"))}", LoggerType.Callbacks);
-        Logger.LogDebug($"IpcStatusesList: {string.Join(", ", dto.NewData.Statuses.Select(x => $"{x.Key}={x.Value}"))}", LoggerType.Callbacks);
-        Logger.LogDebug($"IpcPresetsList: {string.Join(", ", dto.NewData.Presets.Select(x => $"{x.Key}={x.Value}"))}", LoggerType.Callbacks);
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActiveIpc), dto).ConfigureAwait(false);
-    }
-
     public async Task<HubResponse> UserPushActiveGags(PushClientActiveGagSlot dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
@@ -375,6 +364,30 @@ public partial class MainHub
     #endregion Kinkster Interactions
 
     #region IPC Interactions
+    public async Task<HubResponse> UserPushIpcFull(PushIpcDataFull dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushIpcFull), dto).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> UserPushIpcStatusManager(PushIpcStatusManager dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushIpcStatusManager), dto).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> UserPushIpcStatuses(PushIpcStatuses dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushIpcStatuses), dto).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> UserPushIpcPresets(PushIpcPresets dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushIpcPresets), dto).ConfigureAwait(false);
+    }
+
     public async Task<HubResponse> UserApplyMoodlesByGuid(MoodlesApplierById dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);

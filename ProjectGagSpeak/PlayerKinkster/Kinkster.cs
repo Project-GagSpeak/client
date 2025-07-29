@@ -123,6 +123,7 @@ public class Kinkster : IComparable<Kinkster>
         });
     }
 
+    // If we ever add more buttons, we should probably make a sub-menu.
     //private static unsafe void OpenSubMenuTest(IMenuItemClickedArgs args, ILogger logger)
     //{
     //    // create some dummy test items.
@@ -150,27 +151,28 @@ public class Kinkster : IComparable<Kinkster>
     //        args.OpenSubmenu(menuItems);
     //}
 
-    public void ApplyLastIpcData(bool forced = false)
+    public void ApplyLatestMoodles(bool forced = false)
     {
-        // ( This implies that the pair object has had its CreateCachedPlayer method called )
         if (CachedPlayer is null || LastIpcData is null)
             return;
-        // we have satisfied the conditions to apply the character data to our paired user, so apply it.
-        CachedPlayer.ApplyCharacterData(Guid.NewGuid(), LastIpcData);
+        // If player is valid & visible, apply their moodles to them.
+        CachedPlayer.ApplyMoodlesToPlayer(Guid.NewGuid(), LastIpcData.DataString);
     }
 
-    /// <summary> Update IPC Data </summary>
-    public void NewActiveIpcData(UserData enactor, CharaIPCData newData, DataUpdateType changeType)
+    /// <summary>
+    ///     Updates the kinksters moodle status manager, and applies the updated display.
+    /// </summary>
+    public void UpdateActiveMoodles(UserData enactor, string dataString, IEnumerable<MoodlesStatusInfo> dataInfo)
     {
         _applicationCts = _applicationCts.SafeCancelRecreate();
-        LastIpcData = newData;
+        // update the data information to the last IPC data.
+        LastIpcData.UpdateDataInfo(dataString, dataInfo);
 
         // if the cached player is null
         if (CachedPlayer is null)
         {
-            // log that we received data for the user, but the cached player does not exist, and we are waiting.
+            // Wait for the player to become valid, and then apply their Moodles dataInfo to the player. (should be faster than mare, since no awaiter.
             _logger.LogDebug($"Received IpcData change for {GetNickAliasOrUid()}, and a CachedPlayer does not exist, waiting", LoggerType.PairDataTransfer);
-            // asynchronously run the following code
             _ = Task.Run(async () =>
             {
                 using var timeoutCts = new CancellationTokenSource();
@@ -187,16 +189,28 @@ public class Kinkster : IComparable<Kinkster>
                 // if the combined token is not cancelled STILL
                 if (!combined.IsCancellationRequested)
                 {
-                    // apply the last received data
                     _logger.LogDebug($"Applying delayed data for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
-                    ApplyLastIpcData(); // in essence, this means apply the character data send in the Dto
+                    ApplyLatestMoodles(); // in essence, this means apply the character data send in the Dto
                 }
             });
-            return;
         }
+        else
+        {
+            // Apply immidiately if they are present.
+            ApplyLatestMoodles();
+        }
+    }
 
-        // otherwise, just apply the last received data.
-        ApplyLastIpcData();
+    public void SetNewMoodlesStatuses(UserData enactor, IEnumerable<MoodlesStatusInfo> statuses)
+    {
+        _logger.LogDebug($"{GetNickAliasOrUid()}'s moodle Statuses updated!", LoggerType.PairDataTransfer);
+        LastIpcData.SetStatuses(statuses);
+    }
+
+    public void SetNewMoodlePresets(UserData enactor, IEnumerable<MoodlePresetInfo> newPresets)
+    {
+        _logger.LogDebug($"{GetNickAliasOrUid()}'s moodle Presets updated!", LoggerType.PairDataTransfer);
+        LastIpcData.SetPresets(newPresets);
     }
 
     public void NewActiveCompositeData(CharaCompositeActiveData data, bool wasSafeword)
@@ -478,7 +492,7 @@ public class Kinkster : IComparable<Kinkster>
         {
             _creationSemaphore.Wait();
             _OnlineKinkster = null;
-            LastIpcData = new();
+            LastIpcData = new CharaIPCData();
             // set the pair handler player to the cached player, to safely null the CachedPlayer object.
             var player = CachedPlayer;
             CachedPlayer = null;

@@ -16,7 +16,6 @@ public record MufflerLanguageChanged : MessageBase; // called whenever the clien
 
 // Kinkster Data Changes
 public record PushGlobalPermChange(string PermName, object NewValue) : MessageBase;
-public record IpcDataChangedMessage(DataUpdateType UpdateType, CharaIPCData NewIpcData) : SameThreadMessage;
 public record ActiveGagsChangeMessage(DataUpdateType UpdateType, int Layer, ActiveGagSlot NewData) : SameThreadMessage;
 public record ActiveRestrictionsChangeMessage(DataUpdateType UpdateType, int Layer, ActiveRestriction NewData) : SameThreadMessage;
 public record ActiveRestraintSetChangeMessage(DataUpdateType UpdateType, CharaActiveRestraint NewData) : SameThreadMessage;

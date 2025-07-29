@@ -36,8 +36,6 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
-
-    private KinksterSearchList _searchList;
     public DebugPersonalDataUI(
         ILogger<DebugPersonalDataUI> logger,
         GagspeakMediator mediator,
@@ -51,13 +49,12 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         CosmeticService icon)
         : base(logger, mediator, "Kinkster Data Debugger")
     {
-        _pairs = pairs;
         _config = config;
+        _moodleDrawer = moodleDrawer;
+        _pairs = pairs;
         _gags = gags;
         _restrictions = restrictions;
         _restraints = restraints;
-
-        _searchList = new KinksterSearchList(config, nameDisplay, pairs, icon);
         // Ensure the list updates properly.
         Mediator.Subscribe<RefreshUiMessage>(this, _ => UpdateList());
 

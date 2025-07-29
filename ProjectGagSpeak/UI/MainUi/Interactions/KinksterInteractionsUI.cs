@@ -283,7 +283,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         if (_kinkster.IsVisible)
         {
             if (CkGui.IconTextButton(FAI.Sync, "Reload IPC data", width, true))
-                _kinkster.ApplyLastIpcData(forced: true);
+                _kinkster.ApplyLatestMoodles(forced: true);
             CkGui.AttachToolTip("This reapplies the latest data from Customize+ and Moodles");
         }
 

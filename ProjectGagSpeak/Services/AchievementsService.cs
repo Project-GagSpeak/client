@@ -90,6 +90,8 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
                 Logger.LogInformation("Had normal disconnect, cleaning up cache for next connection.", LoggerType.Achievements);
                 ReInitializeAchievements(true);
             }
+            // otherwise, they are not re-initialized,
+            // and kept the same, to process offline changes.
         });
     }
 

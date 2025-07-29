@@ -1,3 +1,4 @@
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
@@ -31,19 +32,44 @@ public sealed class KinksterListener
         _kinksters = kinksters;
     }
 
+    public void NewIpcData(UserData targetUser, UserData enactor, CharaIPCData newData)
+    {
+        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
+            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
+        _logger.LogDebug($"Recieved Full IPC Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
+        kinkster.UpdateActiveMoodles(enactor, newData.DataString, newData.DataInfoList);
+        kinkster.SetNewMoodlesStatuses(enactor, newData.StatusList);
+        kinkster.SetNewMoodlePresets(enactor, newData.PresetList);
+    }
+    public void NewIpcStatusManager(UserData targetUser, UserData enactor, string dataString, List<MoodlesStatusInfo> dataInfo)
+    {
+        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
+            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
+        _logger.LogTrace($"{kinkster.GetNickAliasOrUid()}'s Moodle StatusManager updated!", LoggerType.Callbacks);
+        kinkster.UpdateActiveMoodles(enactor, dataString, dataInfo);
+    }
+    public void NewIpcStatuses(UserData targetUser, UserData enactor, List<MoodlesStatusInfo> statuses)
+    {
+        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
+            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
+        _logger.LogDebug($"Recieved IPC Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
+        kinkster.SetNewMoodlesStatuses(enactor, statuses);
+    }
+    public void NewIpcPresets(UserData targetUser, UserData enactor, List<MoodlePresetInfo> newPresets)
+    {
+        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
+            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
+        _logger.LogDebug($"Recieved IPC Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
+        kinkster.SetNewMoodlePresets(enactor, newPresets);
+    }
+
+
     public void NewActiveComposite(UserData targetUser, CharaCompositeActiveData data, bool safeword)
     {
         if(!_kinksters.TryGetKinkster(targetUser, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
         _logger.LogDebug($"Recieved Composite Active Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
         kinkster.NewActiveCompositeData(data, safeword);
-    }
-
-    public void NewActiveIpc(UserData targetUser, UserData enactor, CharaIPCData newData, DataUpdateType changeType)
-    {
-        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
-            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-        kinkster.NewActiveIpcData(enactor, newData, changeType);
     }
 
     public void NewActiveGags(KinksterUpdateActiveGag dto)
