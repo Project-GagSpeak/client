@@ -607,6 +607,9 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
         // grab the currently selected remotedata item.
         // (currently only for client, but later do for other users)
         _service.ClientData.TrySetRemotePower(false, MainHub.UID);
+        // if for some reason we are still in recording mode, disable it.
+        if (_service.ClientData.RecordingData)
+            _service.ClientData.RecordingData = false;
 
         base.OnClose();
         GagspeakEventManager.AchievementEvent(UnlocksEvent.RemoteAction, RemoteInteraction.RemoteClosed);

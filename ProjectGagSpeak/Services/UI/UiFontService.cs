@@ -5,7 +5,11 @@ using Microsoft.Extensions.Hosting;
 
 namespace GagSpeak.Services;
 
-/// <summary> Manages GagSpeaks custom fonts during plugin lifetimtk. </summary>
+/// <summary>
+///     Manages GagSpeaks custom fonts during plugin lifetime. <para />
+///     Should probably look at chat2 to see how to handle 
+///     pointers for fonts and various font scales better at some point.
+/// </summary>
 public sealed class UiFontService : IHostedService
 {
     public static IFontHandle IconFont => Svc.PluginInterface.UiBuilder.IconFontFixedWidthHandle;
@@ -21,17 +25,18 @@ public sealed class UiFontService : IHostedService
     public static IFontHandle GagspeakLabelFont { get; private set; }
     public static IFontHandle GagspeakTitleFont { get; private set; }
 
+    // Shortcut.
+    private IFontAtlas FontAtlas => Svc.PluginInterface.UiBuilder.FontAtlas;
+
     public UiFontService()
-    {
-        
-    }
+    { }
 
     private async Task InitializeAllFonts()
     {
         // Initialize the nessisary fonts.
         await InitNessisaryFonts().ConfigureAwait(false);
         // Build the fonts.
-        await Svc.PluginInterface.UiBuilder.FontAtlas.BuildFontsAsync().ConfigureAwait(false);
+        await FontAtlas.BuildFontsAsync().ConfigureAwait(false);
 
         // Load the large font.
         InitLargeFonts();
@@ -41,7 +46,7 @@ public sealed class UiFontService : IHostedService
 
     private async Task InitNessisaryFonts()
     {
-        UidFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
+        UidFont = FontAtlas.NewDelegateFontHandle(tk =>
         {
             tk.OnPreBuild(tk => tk.AddDalamudAssetFont(Dalamud.DalamudAsset.NotoSansJpMedium, new() { SizePx = 35 }));
         });
@@ -54,17 +59,17 @@ public sealed class UiFontService : IHostedService
             var glyphRanges = GetGlyphRanges();
 
             // Assign the IFontHandltk.
-            GagspeakFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
+            GagspeakFont = FontAtlas.NewDelegateFontHandle(tk =>
             {
                 tk.OnPreBuild(e => e.AddFontFromFile(gsFontFileLoc, new SafeFontConfig { SizePx = 22, GlyphRanges = glyphRanges }));
             });
 
-            GagspeakLabelFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
+            GagspeakLabelFont = FontAtlas.NewDelegateFontHandle(tk =>
             {
                 tk.OnPreBuild(e => e.AddFontFromFile(gsFontFileLoc, new SafeFontConfig { SizePx = 36, GlyphRanges = glyphRanges }));
             });
 
-            GagspeakTitleFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
+            GagspeakTitleFont = FontAtlas.NewDelegateFontHandle(tk =>
             {
                 tk.OnPreBuild(e => e.AddFontFromFile(gsFontFileLoc, new SafeFontConfig { SizePx = 48, GlyphRanges = glyphRanges }));
             });
@@ -80,7 +85,7 @@ public sealed class UiFontService : IHostedService
 
     private void InitLargeFonts()
     {
-        Default150Percent = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
+        Default150Percent = FontAtlas.NewDelegateFontHandle(tk =>
         {
             tk.OnPreBuild(prebuild =>
             {
@@ -88,7 +93,7 @@ public sealed class UiFontService : IHostedService
             });
         });
 
-        FullScreenFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
+        FullScreenFont = FontAtlas.NewDelegateFontHandle(tk =>
         {
             tk.OnPreBuild(prebuild =>
             {

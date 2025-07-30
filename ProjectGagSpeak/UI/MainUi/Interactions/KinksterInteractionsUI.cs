@@ -242,12 +242,12 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 
         if (k.IsOnline)
         {
-            DrawGagActions(k, width, dispName);
-            DrawRestrictionActions(k, width, dispName);
-            DrawRestraintActions(k, width, dispName);
+            DrawGagActions(k, width, dispName); // done
+            DrawRestrictionActions(k, width, dispName); // done
+            DrawRestraintActions(k, width, dispName); // done
             DrawMoodlesActions(k, width, dispName);
             DrawToyboxActions(k, width, dispName);
-            DrawMiscActions(k, width, dispName);
+            DrawMiscActions(k, width, dispName); // done
             DrawHardcoreActions(k, width, dispName);
             DrawShockActions(k, width, dispName);
         }
@@ -638,73 +638,95 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
     private void DrawMoodlesActions(Kinkster k, float width, string dispName)
     {
         ImGui.TextUnformatted("Moodles Actions");
-        var clientIpcValid = MoodleCache.IpcData is not null && MoodleCache.IpcData.Statuses.Count > 0;
-        var kinksterIpcValid = k.LastIpcData is not null && k.LastIpcData.Statuses.Count > 0;
+        if (!k.IsVisible) 
+            CkGui.ColorTextInline("( Not Visible! )", ImGuiColors.DalamudRed);
 
-        var canSetKinkstersMoodles = k.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou) && kinksterIpcValid;
-        var canSetOwnMoodles = k.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyTheirMoodlesToYou) && clientIpcValid;
-        var canRemoveMoodles = k.PairPerms.MoodlePerms.HasAny(MoodlePerms.RemovingMoodles) && clientIpcValid;
+        var clientIpcValid = MoodleCache.IpcData.Statuses.Count > 0 && k.IsVisible;
+        var kinksterIpcValid = k.LastIpcData.Statuses.Count > 0 && k.IsVisible;
 
         ////////// APPLY MOODLES FROM PAIR's LIST //////////
-        if (CkGui.IconTextButton(FAI.PersonCirclePlus, "Apply a Moodle from their list", width, true, !k.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou) || !kinksterIpcValid))
+        var canApplyOther = k.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou) && kinksterIpcValid;
+        var applyOtherStatusTxt = canApplyOther ? $"Apply a Status from {dispName}'s list" : $"Cannot apply {dispName}'s Statuses";
+        var applyOtherStatusTT = canApplyOther
+            ? $"Applies a Moodle Status from {dispName}'s Statuses to them."
+            : $"You don't have permission to apply Statuses to {dispName} or they have none!";
+        if (CkGui.IconTextButton(FAI.PersonCirclePlus, applyOtherStatusTxt, width, true, !canApplyOther))
             _selections.OpenOrClose(InteractionType.ApplyPairMoodle);
-        CkGui.AttachToolTip($"Applies a Moodle from {dispName}'s Moodles List to them.");
+        CkGui.AttachToolTip(applyOtherStatusTT);
 
         if (_selections.OpenInteraction is InteractionType.ApplyPairMoodle)
         {
             using (ImRaii.Child("ApplyPairMoodles", new Vector2(width, ImGui.GetFrameHeight())))
-                _pairMoodleStatuses.DrawComboButton($"##PairPermStatuses-{k.UserData.UID}", width, true, "Select a Status to Apply");
+                _pairMoodleStatuses.DrawApplyStatuses($"##OtherPresets-{k.UserData.UID}", width, $"Applies Selected Status to {dispName}");
             ImGui.Separator();
         }
 
         ////////// APPLY PRESETS FROM PAIR's LIST //////////
-        if (CkGui.IconTextButton(FAI.FileCirclePlus, "Apply a Preset from their list", width, true, canSetKinkstersMoodles))
+        var applyOtherPresetTxt = canApplyOther ? $"Apply a Preset from {dispName}'s list" : $"Cannot apply {dispName}'s Presets";
+        var applyOtherPresetTT = canApplyOther
+            ? $"Applies a Preset from {dispName}'s Presets List to them."
+            : $"You don't have permission to apply Presets to {dispName} or they have none!";
+        if (CkGui.IconTextButton(FAI.FileCirclePlus, applyOtherPresetTxt, width, true, !canApplyOther))
             _selections.OpenOrClose(InteractionType.ApplyPairMoodlePreset);
-        CkGui.AttachToolTip($"Applies a Preset from {dispName}'s Presets List to them.");
+        CkGui.AttachToolTip(applyOtherPresetTT);
 
         if (_selections.OpenInteraction is InteractionType.ApplyPairMoodlePreset)
         {
             using (ImRaii.Child("ApplyPairPresets", new Vector2(width, ImGui.GetFrameHeight())))
-                _pairMoodlePresets.DrawComboButton("##PairPermPresets" + dispName, width, true, "Select a Preset to Apply");
+                _pairMoodlePresets.DrawApplyPresets($"##OtherPresets-{k.UserData.UID}", width, $"Applies Selected Preset to {dispName}");
             ImGui.Separator();
         }
 
         ////////// APPLY MOODLES FROM OWN LIST //////////
-        if (CkGui.IconTextButton(FAI.UserPlus, "Apply a Moodle from your list", width, true, canSetOwnMoodles))
+        var canApplyOwn = k.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou) && clientIpcValid;
+        var applyOwnStatusTxt = canApplyOwn ? $"Apply a Status from your list" : "Cannot apply your Statuses";
+        var applyOwnStatusTT = canApplyOwn
+            ? $"Applies one of your Moodle Statuses to {dispName}."
+            : "You don't have permission to apply your own Statuses, or you have none!";
+        if (CkGui.IconTextButton(FAI.UserPlus, applyOwnStatusTxt, width, true, !canApplyOwn))
             _selections.OpenOrClose(InteractionType.ApplyOwnMoodle);
-        CkGui.AttachToolTip($"Applies a Moodle from your Moodles List to {dispName}.");
+        CkGui.AttachToolTip(applyOwnStatusTT);
 
         if (_selections.OpenInteraction is InteractionType.ApplyOwnMoodle)
         {
             using (ImRaii.Child("ApplyOwnMoodles", new Vector2(width, ImGui.GetFrameHeight())))
-                _moodleStatuses.DrawComboButton("##OwnStatusesSticky" + dispName, width, true, "Select a Status to Apply");
+                _moodleStatuses.DrawApplyStatuses($"##OwnStatus-{k.UserData.UID}", width, $"Applies Selected Status to {dispName}");
             ImGui.Separator();
         }
 
         ////////// APPLY PRESETS FROM OWN LIST //////////
-        if (CkGui.IconTextButton(FAI.FileCirclePlus, "Apply a Preset from your list", width, true, canSetOwnMoodles))
+        var applyOwnPresetTxt = canApplyOwn ? $"Apply a Preset from your list" : "Cannot apply your Presets";
+        var applyOwnPresetTT = canApplyOwn
+            ? $"Applies one of your Moodle Presets to {dispName}."
+            : "You don't have permission to apply your Presets, or you have none created!";
+        if (CkGui.IconTextButton(FAI.FileCirclePlus, applyOwnPresetTxt, width, true, !canApplyOwn))
             _selections.OpenOrClose(InteractionType.ApplyOwnMoodlePreset);
-        CkGui.AttachToolTip($"Applies a Preset from your Presets List to {dispName}.");
+        CkGui.AttachToolTip(applyOwnPresetTT);
 
         if (_selections.OpenInteraction is InteractionType.ApplyOwnMoodlePreset)
         {
             using (ImRaii.Child("ApplyOwnPresets", new Vector2(width, ImGui.GetFrameHeight())))
-                _moodlePresets.DrawComboButton("##OwnPresetsSticky" + dispName, width, true, "Select a Preset to Apply");
+                _moodlePresets.DrawApplyPresets($"##OwnPresets-{k.UserData.UID}", width, $"Applies Selected Preset to {dispName}");
             ImGui.Separator();
         }
 
 
         ////////// REMOVE MOODLES //////////
-        if (CkGui.IconTextButton(FAI.UserMinus, $"Remove a Moodle from {dispName}", width, true, canRemoveMoodles))
+        var canRemove = k.PairPerms.MoodlePerms.HasAny(MoodlePerms.RemovingMoodles) && clientIpcValid;
+        var removeStatusTxt = canRemove ? $"Remove a Status from {dispName}" : "Cannot remove Statuses";
+        var removeStatusTT = canRemove
+            ? $"Removes a Moodle Status from {dispName}'s Status Manager (Active Display)"
+            : $"Permission to remove Moodles was not granted by {dispName}, or they have none active!";
+        if (CkGui.IconTextButton(FAI.UserMinus, removeStatusTxt, width, true, !canRemove))
             _selections.OpenOrClose(InteractionType.RemoveMoodle);
-        CkGui.AttachToolTip($"Removes a Moodle from {dispName}'s Statuses.");
+        CkGui.AttachToolTip(removeStatusTT);
 
         if (_selections.OpenInteraction is InteractionType.RemoveMoodle)
         {
             using (ImRaii.Child("RemoveMoodles", new Vector2(width, ImGui.GetFrameHeight())))
-                _activePairStatusCombo.DrawComboButton("##ActivePairStatuses" + dispName, width, false, "Select a Status to remove.");
-            ImGui.Separator();
+                _activePairStatusCombo.DrawRemoveStatuses("##ActivePairStatuses" + dispName, width, $"Removes Selected Status to {dispName}");
         }
+        ImGui.Separator();
     }
     #endregion Moodles
 
@@ -713,12 +735,16 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
     {
         ImGui.TextUnformatted("Toybox Actions");
 
-        // Pattern Execution
-        if (CkGui.IconTextButton(FAI.PlayCircle, $"Execute {dispName}'s Patterns", width, true, !k.PairPerms.ExecutePatterns || k.PairGlobals.InVibeRoom || !k.LightCache.Patterns.Any()))
+        //////// Pattern Execution ////////
+        var canPlayPattern = k.PairPerms.ExecutePatterns && !k.PairGlobals.InVibeRoom && k.LightCache.Patterns.Any();
+        var playPatternTxt = canPlayPattern ? $"Play a Pattern to {dispName}'s Toy(s)" : "Cannot Play Patterns";
+        var playPatternTT = canPlayPattern
+            ? $"Play one of {dispName}'s patterns to their active toys."
+            : "You don't have permission to play Patterns, or there are no Patterns available!";
+        if (CkGui.IconTextButton(FAI.PlayCircle, playPatternTxt, width, true, !canPlayPattern))
             _selections.OpenOrClose(InteractionType.StartPattern);
-        CkGui.AttachToolTip($"Play one of {dispName}'s patterns to the selected toys.");
+        CkGui.AttachToolTip(playPatternTT);
 
-        // Pattern Execution
         if (_selections.OpenInteraction is InteractionType.StartPattern)
         {
             using (ImRaii.Child("PatternExecute", new Vector2(width, ImGui.GetFrameHeight())))
@@ -726,8 +752,13 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
             ImGui.Separator();
         }
 
-        // Stop a Pattern
-        if (CkGui.IconTextButton(FAI.StopCircle, $"Stop {dispName}'s Active Pattern", width, true, !k.PairPerms.StopPatterns || k.PairGlobals.InVibeRoom || k.ActivePattern == Guid.Empty))
+        ///////// Stop Active Pattern ////////
+        var canStopPattern = k.PairPerms.StopPatterns && !k.PairGlobals.InVibeRoom && k.ActivePattern != Guid.Empty;
+        var stopPatternTxt = canStopPattern ? $"Stop {dispName}'s Active Pattern" : "Cannot Stop Active Pattern";
+        var stopPatternTT = canStopPattern
+            ? $"Stops the currently running Pattern on {dispName}'s Toy(s)."
+            : "You don't have permission to stop Patterns, or there is no active Pattern running!";
+        if (CkGui.IconTextButton(FAI.StopCircle, stopPatternTxt, width, true, !canStopPattern))
         {
             // Avoid blocking the UI by executing this off the UI thread.
             UiService.SetUITask(async () =>
@@ -742,24 +773,34 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
                 _selections.CloseInteraction();
             });
         }
-        CkGui.AttachToolTip($"Halt the active pattern on {dispName}'s Toy");
+        CkGui.AttachToolTip(stopPatternTT);
 
-        // Expander for toggling an alarm.
-        if (CkGui.IconTextButton(FAI.Clock, $"Toggle {dispName}'s Alarms", width, true, !k.PairPerms.ToggleAlarms || k.PairGlobals.InVibeRoom || !k.LightCache.Alarms.Any()))
+        ///////// Toggle Alarms ////////
+        var canToggleAlarms = k.PairPerms.ToggleAlarms && !k.PairGlobals.InVibeRoom && k.LightCache.Alarms.Any();
+        var toggleAlarmTxt = canToggleAlarms ? $"Toggle one of {dispName}'s Alarms" : $"Cannot Toggle {dispName}'s Alarms";
+        var toggleAlarmTT = canToggleAlarms
+            ? $"Toggles the state of {dispName}'s Alarms."
+            : $"Either {dispName} has not created any Alarms, or you don't have permission to toggle them.";
+        if (CkGui.IconTextButton(FAI.Clock, toggleAlarmTxt, width, true, !canToggleAlarms))
             _selections.OpenOrClose(InteractionType.ToggleAlarm);
-        CkGui.AttachToolTip($"Switch the state of {dispName}'s Alarms.");
+        CkGui.AttachToolTip(toggleAlarmTT);
 
         if (_selections.OpenInteraction is InteractionType.ToggleAlarm)
         {
             using (ImRaii.Child("AlarmToggle", new Vector2(width, ImGui.GetFrameHeight())))
-                _pairAlarmToggles.DrawComboIconButton("##ToggleAlarm" + k.UserData.UID, width, "Toggle an Alarm");
+                _pairAlarmToggles.DrawComboIconButton($"##AlarmToggle-{k.UserData.UID}", width, "Toggle an Alarm");
             ImGui.Separator();
         }
 
-        // Expander for toggling a trigger.
-        if (CkGui.IconTextButton(FAI.LandMineOn, $"Toggle {dispName}'s Triggers", width, true, !k.PairPerms.ToggleTriggers || !k.LightCache.Triggers.Any()))
+        //////// Toggle Triggers ////////
+        var canToggleTriggers = k.PairPerms.ToggleTriggers && !k.PairGlobals.InVibeRoom && k.LightCache.Triggers.Any();
+        var toggleTriggerTxt = canToggleTriggers ? $"Toggle one of {dispName}'s Triggers" : $"Cannot Toggle {dispName}'s Triggers";
+        var toggleTriggerTT = canToggleTriggers
+            ? $"Toggles the state of {dispName}'s Triggers."
+            : $"Either {dispName} has not created any Triggers, or you don't have permission to toggle them.";
+        if (CkGui.IconTextButton(FAI.LandMineOn, toggleTriggerTxt, width, true, !canToggleTriggers))
             _selections.OpenOrClose(InteractionType.ToggleTrigger);
-        CkGui.AttachToolTip($"Toggle the state of a trigger in {dispName}'s triggerList.");
+        CkGui.AttachToolTip(toggleTriggerTT);
 
         if (_selections.OpenInteraction is InteractionType.ToggleTrigger)
         {

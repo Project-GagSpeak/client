@@ -27,6 +27,9 @@ public sealed class PairPatternCombo : CkFilterComboIconButton<KinksterPattern>
     protected override bool DisableCondition()
         => !_kinksterRef.PairPerms.ExecutePatterns;
 
+    protected override string ToString(KinksterPattern obj)
+        => obj.Label;
+
     // we need to override the drawSelectable method here for a custom draw display.
     protected override bool DrawSelectable(int globalIdx, bool selected)
     {

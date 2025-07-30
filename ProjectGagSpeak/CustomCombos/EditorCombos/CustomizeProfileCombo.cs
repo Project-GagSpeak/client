@@ -20,9 +20,9 @@ public sealed class CustomizeProfileCombo : CkFilterComboCache<CustomizeProfile>
         SearchByParts = false;
     }
 
-    protected override void DrawList(float width, float itemHeight)
+    protected override void DrawList(float width, float itemHeight, float filterHeight)
     {
-        base.DrawList(width, itemHeight);
+        base.DrawList(width, itemHeight, filterHeight);
         if (NewSelection != null && Items.Count > NewSelection.Value)
             Current = Items[NewSelection.Value];
     }

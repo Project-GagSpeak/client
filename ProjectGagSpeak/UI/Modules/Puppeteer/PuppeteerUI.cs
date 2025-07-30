@@ -1,14 +1,11 @@
 using CkCommons;
 using CkCommons.Widgets;
 using Dalamud.Interface.Utility;
-using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using ImGuiNET;
-using static CkCommons.Widgets.CkHeader;
 using static GagSpeak.Gui.Components.PuppeteerTabs;
 
 namespace GagSpeak.Gui.Modules.Puppeteer;
@@ -21,7 +18,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
     private readonly CosmeticService _cosmetics;
     private readonly TutorialService _guides;
 
-    private static PuppeteerTabs _tabMenu = new PuppeteerTabs();
+    private PuppeteerTabs _tabMenu;
 
     public PuppeteerUI(
         ILogger<PuppeteerUI> logger,
@@ -38,6 +35,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         _cosmetics = cosmetics;
         _guides = guides;
 
+        _tabMenu = new PuppeteerTabs();
         _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.PuppetVictimGlobal], SelectedTab.VictimGlobal,
             "Configure how others can control you like a puppet, Globally!");
         _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.PuppetVictimUnique], SelectedTab.VictimUnique,
@@ -88,8 +86,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         switch (_tabMenu.TabSelection)
         {
             case SelectedTab.VictimGlobal:
-                using (ImRaii.Child("PuppeteerBotRight", res.BotRight.Size, false, WFlags.NoScrollbar))
-                    _victimGlobalPanel.DrawAliasItems(res.BotRight.Size);
+                _victimGlobalPanel.DrawContents(res, ImGui.GetFrameHeight(), _tabMenu);
                 break;
 
             case SelectedTab.VictimUnique:

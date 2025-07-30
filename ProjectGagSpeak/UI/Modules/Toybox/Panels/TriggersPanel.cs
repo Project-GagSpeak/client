@@ -68,7 +68,8 @@ public partial class TriggersPanel
         // Draw either the interactable label child, or the static label.
         if (_selector.Selected is null)
         {
-            using var _ = CkRaii.ChildLabelText(region.Size, .7f, "No Trigger Selected!", ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersRight);
+            using (CkRaii.ChildLabelText(region.Size, .7f, "No Trigger Selected!", ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersRight, LabelFlags.SizeIncludesHeader))
+            { }
         }
         else
         {

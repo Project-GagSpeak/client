@@ -1,21 +1,24 @@
-using CkCommons.Textures;
+using CkCommons.Gui;
 using GagSpeak.Gui.Components;
-using GagSpeak.Services.Textures;
+using GagSpeak.Services;
 using GagSpeak.State.Caches;
 using GagSpeak.Utils;
+using ImGuiNET;
 
 namespace GagSpeak.CustomCombos;
 
 public abstract class CkMoodleComboBase<T> : CkFilterComboCache<T>
 {
-    protected float _iconScale;
-
-    protected CkMoodleComboBase(ILogger log, float iconScale, Func<IReadOnlyList<T>> generator) : base(generator, log)
+    protected float IconScale { get; }
+    protected CkMoodleComboBase(ILogger log, float iconScale, Func<IReadOnlyList<T>> generator)
+        : base(generator, log)
     {
-        _iconScale = iconScale;
+        IconScale = iconScale;
     }
 
-    protected virtual Vector2 IconSize => MoodleDrawer.IconSize * _iconScale;
+    protected unsafe virtual float SelectableTextHeight => UiFontService.Default150PercentPtr.IsLoaded()
+        ? UiFontService.Default150PercentPtr.FontSize : ImGui.GetTextLineHeight();
+    protected virtual Vector2 IconSize => MoodleDrawer.IconSize * IconScale;
 
     protected void DrawItemTooltip(MoodlesStatusInfo item)
         => GsExtensions.DrawMoodleStatusTooltip(item, MoodleCache.IpcData.StatusList);

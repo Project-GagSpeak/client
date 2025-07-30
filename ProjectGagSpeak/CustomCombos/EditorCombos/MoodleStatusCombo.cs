@@ -1,14 +1,10 @@
-using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
-using GagSpeak.Gui.Components;
 using CkCommons.Helpers;
-using GagSpeak.Services.Textures;
+using CkCommons.RichText;
+using CkCommons.Textures;
+using GagSpeak.Services;
 using GagSpeak.State.Caches;
 using ImGuiNET;
-using OtterGui;
 using OtterGui.Extensions;
-using CkCommons.Textures;
-using CkCommons.RichText;
 
 namespace GagSpeak.CustomCombos.Editor;
 
@@ -24,22 +20,6 @@ public sealed class MoodleStatusCombo : CkMoodleComboBase<MoodlesStatusInfo>
     protected override string ToString(MoodlesStatusInfo obj)
         => obj.Title;
 
-    protected override void DrawList(float width, float itemHeight)
-    {
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.SelectableTextAlign, new Vector2(0, 0.5f));
-        try
-        {
-            ImGui.SetWindowFontScale(_iconScale);
-            base.DrawList(width, itemHeight);
-            if (NewSelection != null && Items.Count > NewSelection.Value)
-                Current = Items[NewSelection.Value];
-        }
-        finally
-        {
-            ImGui.SetWindowFontScale(1.0f);
-        }
-    }
-
     protected override int UpdateCurrentSelected(int currentSelected)
     {
         if (Current.GUID == _currentItem)
@@ -54,7 +34,7 @@ public sealed class MoodleStatusCombo : CkMoodleComboBase<MoodlesStatusInfo>
     /// <remarks> Not stored anywhere but in the combo itself. </remarks>
     public bool Draw(string label, float width, uint? searchBg = null)
     {
-        InnerWidth = width * 1.5f;
+        InnerWidth = width + IconSize.X + ImGui.GetStyle().ItemInnerSpacing.X;
         _currentItem = Current.GUID;
         return Draw(label, _currentItem, width, searchBg);
     }
@@ -66,29 +46,31 @@ public sealed class MoodleStatusCombo : CkMoodleComboBase<MoodlesStatusInfo>
 
     public bool Draw(string label, Guid current, float width, CFlags flags, uint? searchBg = null)
     {
-        InnerWidth = width * 1.5f;
+        InnerWidth = width + IconSize.X + ImGui.GetStyle().ItemInnerSpacing.X;
         _currentItem = current;
         // Maybe there is a faster way to know this, but atm I do not know.
         var currentTitle = Items.FirstOrDefault(i => i.GUID == _currentItem).Title?.StripColorTags() ?? string.Empty;
         var previewName = currentTitle.IsNullOrWhitespace() ? "Select Moodle Status..." : currentTitle;
-        return Draw($"##status{label}", previewName, string.Empty, width, MoodleDrawer.IconSize.Y, flags);
+        return Draw($"##status{label}", previewName, string.Empty, width, IconSize.Y, flags);
     }
 
     protected override bool DrawSelectable(int globalIdx, bool selected)
     {
+        var size = new Vector2(GetFilterWidth(), IconSize.Y);
+        var titleSpace = size.X - IconSize.X;
         var moodleStatus = Items[globalIdx];
-        var ret = ImGui.Selectable("##"+moodleStatus.Title, selected, ImGuiSelectableFlags.None, new Vector2(GetFilterWidth(), IconSize.Y));
+        var ret = ImGui.Selectable("##"+moodleStatus.Title, selected, ImGuiSelectableFlags.None, size);
 
-        if (moodleStatus.IconID > 200000)
-        {
-            ImGui.SameLine(2, 2);
-            CkRichText.Text(ImGui.GetContentRegionAvail().X, moodleStatus.Title);
-            ImGui.SameLine();
-            var offset = ImGui.GetContentRegionAvail().X - IconSize.X;
-            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offset);
-            MoodleDisplay.DrawMoodleIcon(moodleStatus.IconID, moodleStatus.Stacks, IconSize);
-            DrawItemTooltip(moodleStatus);
-        }
+        ImGui.SameLine(titleSpace);
+        MoodleDisplay.DrawMoodleIcon(moodleStatus.IconID, moodleStatus.Stacks, IconSize);
+        DrawItemTooltip(moodleStatus);
+
+        ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
+        var pos = ImGui.GetCursorPosY();
+        ImGui.SetCursorPosY(pos + (size.Y - SelectableTextHeight) * 0.5f);
+        using (UiFontService.Default150Percent.Push())
+            CkRichText.Text(titleSpace, moodleStatus.Title);
+
         return ret;
     }
 }

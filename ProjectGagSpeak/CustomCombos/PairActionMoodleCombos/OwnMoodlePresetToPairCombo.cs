@@ -1,7 +1,8 @@
 using CkCommons.Helpers;
+using CkCommons.RichText;
 using CkCommons.Textures;
 using GagSpeak.Kinksters;
-using GagSpeak.Services.Textures;
+using GagSpeak.Services;
 using GagSpeak.State.Caches;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
@@ -9,6 +10,7 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using ImGuiNET;
+using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.Moodles;
 
@@ -16,6 +18,7 @@ public sealed class OwnMoodlePresetToPairCombo : CkMoodleComboButtonBase<MoodleP
 {
     private Action PostButtonPress;
     private int _maxPresetCount => _kinksterRef.LastIpcData.Presets.Values.Max(x => x.Statuses.Count);
+    private float _iconWithPadding => IconSize.X + ImGui.GetStyle().ItemInnerSpacing.X;
     public OwnMoodlePresetToPairCombo(ILogger log, MainHub hub, Kinkster pair, float scale, Action postButtonPress)
         : base(log, hub, pair, scale, () => [ ..MoodleCache.IpcData.Presets.Values.OrderBy(x => x.Title) ])
     {
@@ -23,38 +26,51 @@ public sealed class OwnMoodlePresetToPairCombo : CkMoodleComboButtonBase<MoodleP
     }
 
     protected override bool DisableCondition()
-        => _kinksterRef.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyTheirMoodlesToYou) is false;
+        => Current.GUID == Guid.Empty || !_kinksterRef.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyTheirMoodlesToYou);
+
+    protected override string ToString(MoodlePresetInfo obj)
+        => obj.Title.StripColorTags();
+
+    public bool DrawApplyPresets(string id, float width, string buttonTT, Action? onButtonSuccess = null)
+    {
+        InnerWidth = width + _iconWithPadding * _maxPresetCount;
+        var prevLabel = Current.GUID == Guid.Empty ? "Select Presets.." : Current.Title.StripColorTags();
+        return DrawComboButton(id, prevLabel, width, true, buttonTT, onButtonSuccess);
+    }
 
     protected override bool DrawSelectable(int globalIdx, bool selected)
     {
         var moodlePreset = Items[globalIdx];
-        var ret = ImGui.Selectable(moodlePreset.Title.StripColorTags(), selected);
+        var size = new Vector2(GetFilterWidth(), IconSize.Y);
+        var iconsSpace = (_iconWithPadding * moodlePreset.Statuses.Count);
+        var titleSpace = size.X - iconsSpace;
+        var ret = ImGui.Selectable($"##{moodlePreset.Title}", selected, ImGuiSelectableFlags.None, size);
 
         if (moodlePreset.Statuses.Count <= 0)
             return ret;
 
-        ImGui.SameLine();
-        var offset = ImGui.GetContentRegionAvail().X - IconSize.X * moodlePreset.Statuses.Count;
-        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offset);
-
+        ImGui.SameLine(titleSpace);
         for (int i = 0, iconsDrawn = 0; i < moodlePreset.Statuses.Count; i++)
         {
             var status = moodlePreset.Statuses[i];
             if (!MoodleCache.IpcData.Statuses.TryGetValue(status, out var info))
             {
-                ImGui.SetCursorPosX(ImGui.GetCursorPosX() + IconSize.X);
+                ImGui.SameLine(0, _iconWithPadding);
                 continue;
             }
 
             MoodleDisplay.DrawMoodleIcon(info.IconID, info.Stacks, IconSize);
-            // get the dispelable moodle if any.
-            var title = MoodleCache.IpcData.Statuses.GetValueOrDefault(info.StatusOnDispell).Title ?? "Unknown";
-            DrawItemTooltip(info, title);
+            DrawItemTooltip(info);
 
             if (++iconsDrawn < moodlePreset.Statuses.Count)
-                ImGui.SameLine();
+                ImUtf8.SameLineInner();
         }
 
+        ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
+        var pos = ImGui.GetCursorPosY();
+        ImGui.SetCursorPosY(pos + (size.Y - SelectableTextHeight) * 0.5f);
+        using (UiFontService.Default150Percent.Push())
+            CkRichText.Text(titleSpace, moodlePreset.Title);
         return ret;
     }
 

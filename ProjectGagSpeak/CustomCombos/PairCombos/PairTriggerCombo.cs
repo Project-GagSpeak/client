@@ -26,7 +26,11 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<KinksterTrigger>
     }
 
     // override the method to extract items by extracting all LightTriggers.
-    protected override bool DisableCondition() => _ref.PairPerms.ToggleTriggers is false;
+    protected override bool DisableCondition() 
+        => !_ref.PairPerms.ToggleTriggers;
+
+    protected override string ToString(KinksterTrigger obj)
+        => obj.Label;
 
     // we need to override the drawSelectable method here for a custom draw display.
     protected override bool DrawSelectable(int globalAlarmIdx, bool selected)
