@@ -95,16 +95,13 @@ public sealed partial class PuppetVictimGlobalPanel
             .Push(ImGuiStyleVar.WindowPadding, new Vector2(4))
             .Push(ImGuiStyleVar.FramePadding, new Vector2(2));
         // Place these into a list, so that when we finish changing an item, the list does not throw an error.
-
-        _aliasDrawer.DrawAchievementList(AchievementModuleKind.Generic, region);
-
-        //foreach (var aliasItem in _filteredItems.ToList())
-        //{
-        //    if (aliasItem.Identifier == _manager.ItemInEditor?.Identifier)
-        //        _aliasDrawer.DrawAliasTriggerEditor(_actionTypes, ref _selectedType);
-        //    else
-        //        _aliasDrawer.DrawAliasTrigger(aliasItem, MoodleCache.IpcData);
-        //}
+        foreach (var aliasItem in _filteredItems.ToList())
+        {
+            if (aliasItem.Identifier == _manager.ItemInEditor?.Identifier)
+                _aliasDrawer.DrawAliasTriggerEditor(_actionTypes, ref _selectedType);
+            else
+                _aliasDrawer.DrawAliasTrigger(aliasItem, MoodleCache.IpcData);
+        }
     }
     private void DrawPermsAndExamples(CkHeader.DrawRegion region)
     {

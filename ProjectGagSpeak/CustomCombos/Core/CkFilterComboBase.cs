@@ -109,11 +109,13 @@ public abstract class CkFilterComboBase<T>
 
             // Draws the filter and updates the scroll to the selected items.
             DrawFilter(currentSelected, width, customSearchBg);
+            // grab the filter height for reference incase the list uses custom height.
+            var filterHeight = ImGui.GetFrameHeight();
 
             // Draws the remaining list of items.
             // If any items are selected, they are stored in `NewSelection`.
             // `NewSelection` is cleared at the end of the parent DrawFunction.
-            DrawList(width, itemHeight);
+            DrawList(width, itemHeight, filterHeight);
             // If we should close the popup (after selection), do so.
             ClosePopup(id, label);
         }
@@ -150,11 +152,11 @@ public abstract class CkFilterComboBase<T>
 
             // Draws the filter and updates the scroll to the selected items.
             DrawFilter(currentSelected, width, customSearchBg);
-
+            var filterHeight = ImGui.GetFrameHeight();
             // Draws the remaining list of items.
             // If any items are selected, they are stored in `NewSelection`.
             // `NewSelection` is cleared at the end of the parent DrawFunction.
-            DrawList(width, itemHeight);
+            DrawList(width, itemHeight, filterHeight);
             // If we should close the popup (after selection), do so.
             ClosePopup(id, label);
         }
@@ -205,12 +207,12 @@ public abstract class CkFilterComboBase<T>
 
     /// <summary> Draws the list of items. </summary>
     /// <remarks> If any are selected, the respective DrawSelectedInternal will set the NewSelection to a value. </remarks>
-    protected virtual void DrawList(float width, float itemHeight)
+    protected virtual void DrawList(float width, float itemHeight, float filterHeight)
     {
         // A child for the items, so that the filter remains visible.
         // Height is based on default combo height minus the filter input.
-        var height = ImGui.GetTextLineHeightWithSpacing() * 12 - ImGui.GetFrameHeight() - ImGui.GetStyle().WindowPadding.Y;
-        using var _ = ImRaii.Child("ChildL", new Vector2(width, height));
+        var height = itemHeight * 11 - filterHeight - ImGui.GetStyle().WindowPadding.Y;
+        using var _ = ImRaii.Child("ChildL", new Vector2(width, height), false, WFlags.NoScrollbar);
         using var indent = ImRaii.PushIndent(ImGuiHelpers.GlobalScale);
         if (_setScroll)
             ImGui.SetScrollFromPosY(_lastSelection * itemHeight - ImGui.GetScrollY());

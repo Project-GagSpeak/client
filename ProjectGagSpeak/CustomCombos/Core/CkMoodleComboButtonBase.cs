@@ -4,6 +4,9 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui;
 using GagSpeak.Gui.Components;
 using GagSpeak.Kinksters;
+using GagSpeak.Services;
+using GagSpeak.State.Caches;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using ImGuiNET;
 using OtterGui.Text;
@@ -14,17 +17,21 @@ public abstract class CkMoodleComboButtonBase<T> : CkFilterComboCache<T>
 {
     protected readonly MainHub _mainHub;
     protected readonly Kinkster _kinksterRef;
-    protected float _iconScale;
+    protected float IconScale;
 
     protected CkMoodleComboButtonBase(ILogger log, MainHub hub, Kinkster pair, float scale, Func<IReadOnlyList<T>> generator)
         : base(generator, log)
     {
         _mainHub = hub;
-        _iconScale = scale;
+        IconScale = scale;
+        _kinksterRef = pair;  
         Current = default;
     }
 
-    protected virtual Vector2 IconSize => MoodleDrawer.IconSize * _iconScale;
+
+    protected unsafe virtual float SelectableTextHeight => UiFontService.Default150PercentPtr.IsLoaded()
+        ? UiFontService.Default150PercentPtr.FontSize : ImGui.GetTextLineHeight();
+    protected virtual Vector2 IconSize => MoodleDrawer.IconSize * IconScale;
 
     /// <summary> The condition that when met, prevents the combo from being interacted. </summary>
     protected abstract bool DisableCondition();
@@ -32,33 +39,17 @@ public abstract class CkMoodleComboButtonBase<T> : CkFilterComboCache<T>
     protected abstract Task<bool> OnApplyButton(T item);
     protected virtual Task<bool> OnRemoveButton(T item) => Task.FromResult(true);
 
-    protected override void DrawList(float width, float itemHeight)
-    {
-        try
-        {
-            ImGui.SetWindowFontScale(_iconScale);
-            base.DrawList(width, itemHeight);
-        }
-        finally
-        {
-            ImGui.SetWindowFontScale(1.0f);
-        }
-    }
-
     /// <summary> The virtual function for all filter combo buttons. </summary>
     /// <returns> True if anything was selected, false otherwise. </returns>
     /// <remarks> The action passed in will be invoked if the button interaction was successful. </remarks>
-    public bool DrawComboButton(string label, float width, bool isApply, string tt, Action? onButtonSuccess = null)
+    protected bool DrawComboButton(string label, string preview, float width, bool isApply, string tt, Action? onButtonSuccess = null)
     {
         // we need to first extract the width of the button.
         var buttonText = isApply ? "Apply" : "Remove";
         var comboWidth = width - ImGui.GetStyle().ItemInnerSpacing.X - CkGui.IconTextButtonSize(FAI.PersonRays, buttonText);
-        InnerWidth = width;
 
         // if we have a new item selected we need to update some conditionals.
-
-        var previewLabel = Current?.ToString() ?? "Select an Item...";
-        var ret = Draw(label, previewLabel, string.Empty, comboWidth, ImGui.GetTextLineHeightWithSpacing(), CFlags.None);
+        var ret = Draw(label, preview, string.Empty, comboWidth, IconSize.Y);
         
         // move just beside it to draw the button.
         ImUtf8.SameLineInner();
@@ -86,54 +77,6 @@ public abstract class CkMoodleComboButtonBase<T> : CkFilterComboCache<T>
         return ret;
     }
 
-    protected void DrawItemTooltip(MoodlesStatusInfo item, string dispellMoodleTitle)
-    {
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-        {
-            using var padding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One * 8f);
-            using var rounding = ImRaii.PushStyle(ImGuiStyleVar.WindowRounding, 4f);
-            using var popupBorder = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1f);
-            using var frameColor = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
-
-            ImGui.BeginTooltip();
-
-            if (!item.Description.IsNullOrWhitespace())
-            {
-                ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35f);
-                ImGui.TextUnformatted(item.Description);
-                ImGui.PopTextWrapPos();
-            }
-
-            ImGui.Separator();
-            CkGui.ColorText("Stacks:", ImGuiColors.ParsedGold);
-            ImGui.SameLine();
-            ImGui.Text(item.Stacks.ToString());
-            if (item.StackOnReapply)
-            {
-                ImGui.SameLine();
-                CkGui.ColorText(" (inc by " + item.StacksIncOnReapply + ")", ImGuiColors.ParsedGold);
-            }
-
-            CkGui.ColorText("Duration:", ImGuiColors.ParsedGold);
-            ImGui.SameLine();
-            ImGui.Text($"{item.Days}d {item.Hours}h {item.Minutes}m {item.Seconds}");
-
-            CkGui.ColorText("Category:", ImGuiColors.ParsedGold);
-            ImGui.SameLine();
-            ImGui.Text(item.Type.ToString());
-
-            CkGui.ColorText("Dispellable:", ImGuiColors.ParsedGold);
-            ImGui.SameLine();
-            ImGui.Text(item.Dispelable ? "Yes" : "No");
-
-            if (item.StatusOnDispell != Guid.Empty)
-            {
-                CkGui.ColorText("StatusOnDispell:", ImGuiColors.ParsedGold);
-                ImGui.SameLine();
-                ImGui.Text(dispellMoodleTitle);
-            }
-
-            ImGui.EndTooltip();
-        }
-    }
+    protected void DrawItemTooltip(MoodlesStatusInfo item)
+        => GsExtensions.DrawMoodleStatusTooltip(item, _kinksterRef.LastIpcData.StatusList);
 }

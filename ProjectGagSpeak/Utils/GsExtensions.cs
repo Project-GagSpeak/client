@@ -234,7 +234,7 @@ public static class GsExtensions
             ImGui.BeginTooltip();
 
             // push the title, converting all color tags into the actual label.
-            CkCommons.RichText.CkRichText.Text(item.Title);
+            CkCommons.RichText.CkRichText.Text(item.Title, cloneId: 100);
 
             if (!item.Description.IsNullOrWhitespace())
             {

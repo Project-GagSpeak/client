@@ -1,7 +1,8 @@
 using CkCommons.Helpers;
+using CkCommons.RichText;
 using CkCommons.Textures;
 using GagSpeak.Kinksters;
-using GagSpeak.Services.Textures;
+using GagSpeak.Services;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
@@ -28,26 +29,40 @@ public sealed class PairMoodleStatusCombo : CkMoodleComboButtonBase<MoodlesStatu
     }
 
     protected override bool DisableCondition()
-        => _kinksterRef.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou) is false;
+        => Current.GUID == Guid.Empty || !_kinksterRef.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou);
+
+    protected override string ToString(MoodlesStatusInfo obj)
+        => obj.Title.StripColorTags();
+
+    public bool DrawApplyStatuses(string id, float width, string buttonTT, Action? onButtonSuccess = null)
+    {
+        var prevLabel = Current.GUID == Guid.Empty ? "Select Status.." : Current.Title.StripColorTags();
+        return DrawComboButton(id, prevLabel, width, true, buttonTT, onButtonSuccess);
+    }
+
+    public bool DrawRemoveStatuses(string id, float width, string buttonTT, Action? onButtonSuccess = null)
+    {
+        InnerWidth = width + IconSize.X + ImGui.GetStyle().ItemInnerSpacing.X;
+        var prevLabel = Current.GUID == Guid.Empty ? "Select Status.." : Current.Title.StripColorTags();
+        return DrawComboButton(id, prevLabel, width, false, buttonTT, onButtonSuccess);
+    }
 
     protected override bool DrawSelectable(int globalIdx, bool selected)
     {
+        var size = new Vector2(GetFilterWidth(), IconSize.Y);
+        var titleSpace = size.X - IconSize.X;
         var moodleStatus = Items[globalIdx];
-        var ret = ImGui.Selectable(moodleStatus.Title.StripColorTags(), selected);
+        var ret = ImGui.Selectable("##" + moodleStatus.Title, selected, ImGuiSelectableFlags.None, size);
 
-        if (moodleStatus.IconID > 200000)
-        {
-            ImGui.SameLine();
-            var offset = ImGui.GetContentRegionAvail().X - IconSize.X;
-            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offset);
-            MoodleDisplay.DrawMoodleIcon(moodleStatus.IconID, moodleStatus.Stacks, IconSize);
-            // get the dispelable moodle if any.
-            var title = moodleStatus.StatusOnDispell== Guid.Empty
-                ? "Unknown"
-                : Items.FirstOrDefault(x => x.GUID == moodleStatus.StatusOnDispell).Title ?? "Unknown";
-            DrawItemTooltip(moodleStatus, title);
-        }
+        ImGui.SameLine(titleSpace);
+        MoodleDisplay.DrawMoodleIcon(moodleStatus.IconID, moodleStatus.Stacks, IconSize);
+        DrawItemTooltip(moodleStatus);
 
+        ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
+        var pos = ImGui.GetCursorPosY();
+        ImGui.SetCursorPosY(pos + (size.Y - SelectableTextHeight) * 0.5f);
+        using (UiFontService.Default150Percent.Push())
+            CkRichText.Text(titleSpace, moodleStatus.Title);
         return ret;
     }
 

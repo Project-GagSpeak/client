@@ -41,9 +41,9 @@ public abstract class CkFilterComboCache<T> : CkFilterComboBase<T>
         => _items.ClearList();
 
     /// <summary> Draws the list and updates the selection in the filter cache if needed. </summary>
-    protected override void DrawList(float width, float itemHeight)
+    protected override void DrawList(float width, float itemHeight, float filterHeight)
     {
-        base.DrawList(width, itemHeight);
+        base.DrawList(width, itemHeight, filterHeight);
         if (NewSelection != null && Items.Count > NewSelection.Value)
             UpdateSelection(Items[NewSelection.Value]);
     }

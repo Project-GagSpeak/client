@@ -1,8 +1,10 @@
+using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Raii;
 using CkCommons.Widgets;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
 using GagSpeak.Gui.Components;
 using GagSpeak.Gui.Handlers;
 using GagSpeak.Interop;
@@ -393,12 +395,31 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         using var nodeMain = ImRaii.TreeNode(uid + " IPC Data");
         if (!nodeMain) return;
 
-        ImUtf8.TextFrameAligned($"Active Moodles: {ipcData.DataInfo.Count()}");
-        ImGui.SameLine();
-        _moodleDrawer.DrawStatusInfos(ipcData.DataInfoList, MoodleDrawer.IconSizeFramed);
+        CkGui.ColorTextCentered($"Active Statuses: {ipcData.DataInfo.Count()}", ImGuiColors.ParsedGold);
+        _moodleDrawer.ShowStatusInfosFramed($"DataInfo-{uid}", ipcData.DataInfoList, ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), MoodleDrawer.IconSizeFramed);
 
-        ImGui.Text($"Total Moodles: {ipcData.StatusList.Count()}");
-        ImGui.Text($"Total Presets: {ipcData.PresetList.Count()}");
+        CkGui.ColorTextCentered($"Stored Statuses: {ipcData.StatusList.Count()}", ImGuiColors.ParsedGold);
+        _moodleDrawer.ShowStatusInfosFramed($"StatusList-{uid}", ipcData.StatusList, ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), MoodleDrawer.IconSizeFramed, 2);
+
+        CkGui.ColorTextCentered($"Stored Presets: {ipcData.PresetList.Count()}", ImGuiColors.ParsedGold);
+        using (var t = ImRaii.Table($"PresetTable-{uid}", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.SizingFixedFit))
+        {
+            if (!t)
+                return;
+
+            ImGui.TableSetupColumn("Preset Title");
+            ImGui.TableSetupColumn("Statuses");
+            ImGui.TableHeadersRow();
+            foreach (var preset in ipcData.PresetList)
+            {
+                ImGui.TableNextColumn();
+                ImGui.Text(preset.Title);
+                ImGui.TableNextColumn();
+                var statuses = preset.Statuses.Select(s => ipcData.Statuses.GetValueOrDefault(s)).Where(x => x.GUID != Guid.Empty);
+                _moodleDrawer.DrawStatusInfos(statuses, MoodleDrawer.IconSizeFramed);
+            }
+
+        }
     }
 
     private void DrawGagData(string uid, CharaActiveGags appearance)

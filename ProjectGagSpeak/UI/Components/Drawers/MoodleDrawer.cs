@@ -142,6 +142,13 @@ public class MoodleDrawer
             DrawIconsOrEmpty(ids, width, size, rows);
     }
 
+    public void ShowStatusInfosFramed(string id, IEnumerable<MoodlesStatusInfo> statuses, float width, float rounding, Vector2? iconSize = null, int rows = 1)
+    {
+        var size = iconSize ?? IconSize;
+        using (CkRaii.FramedChildPaddedW($"##{id}-MoodleRowDrawn", width, FramedIconDisplayHeight(size.Y, rows), ImGui.GetColorU32(ImGuiCol.FrameBgHovered), rounding, frameCol: CkColor.VibrantPink.Uint()))
+            ShowStatusInfos(statuses, width, size, rows);
+    }
+
     public void DrawIconsOrEmpty(IEnumerable<Guid> statusIds, float width, Vector2? iconSize = null, int rows = 1)
     {
         if (statusIds == null || !statusIds.Any())
@@ -172,6 +179,34 @@ public class MoodleDrawer
                 continue;
 
             MoodleDisplay.DrawMoodleIcon(status.IconID, status.Stacks, iconSize);
+            GsExtensions.DrawMoodleStatusTooltip(status, MoodleCache.IpcData.StatusList);
+
+            if (++col >= iconsPerRow)
+            {
+                col = 0;
+                if (++row >= rows)
+                    break;
+            }
+            else
+            {
+                ImUtf8.SameLineInner();
+            }
+        }
+    }
+
+    public void ShowStatusInfos(IEnumerable<MoodlesStatusInfo> statuses, float width, Vector2? iconSize = null, int rows = 1)
+    {
+        var size = iconSize ?? IconSize;
+        var padding = ImGui.GetStyle().ItemInnerSpacing.X;
+        var iconsPerRow = MathF.Floor((width - padding) / (size.X + padding));
+
+        int row = 0, col = 0;
+        foreach (var status in statuses)
+        {
+            if (status.IconID is 0)
+                continue;
+
+            MoodleDisplay.DrawMoodleIcon(status.IconID, status.Stacks, size);
             GsExtensions.DrawMoodleStatusTooltip(status, MoodleCache.IpcData.StatusList);
 
             if (++col >= iconsPerRow)

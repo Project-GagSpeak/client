@@ -39,7 +39,7 @@ public class CkFilterComboColors : CkFilterComboCache<KeyValuePair<byte, (string
         return _buttonSize.X + ImGui.GetStyle().ScrollbarSize;
     }
 
-    protected override void DrawList(float width, float itemHeight)
+    protected override void DrawList(float width, float itemHeight, float filterHeight)
     {
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, Vector2.Zero)
             .Push(ImGuiStyleVar.WindowPadding, Vector2.Zero)
@@ -47,7 +47,7 @@ public class CkFilterComboColors : CkFilterComboCache<KeyValuePair<byte, (string
         _buttonSize = new Vector2(_comboWidth * ImGuiHelpers.GlobalScale, 0);
         if (ImGui.GetScrollMaxY() > 0)
             _buttonSize.X += ImGui.GetStyle().ScrollbarSize;
-        base.DrawList(width, itemHeight);
+        base.DrawList(width, itemHeight, filterHeight);
     }
 
     protected override string ToString(KeyValuePair<byte, (string Name, uint Color, bool Gloss)> obj)
