@@ -1,3 +1,4 @@
+using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Helpers;
 using Dalamud.Interface.Utility.Raii;
@@ -9,6 +10,7 @@ using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagspeakAPI.Data;
+using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;
@@ -872,6 +874,32 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
             ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("ShouldLoop");
             ImGuiUtil.DrawTableColumn(pattern.ShouldLoop.ToString());
+            ImGui.TableNextRow();
+
+            // analyze the pattern.
+            ImGuiUtil.DrawTableColumn("Primary Device:");
+            ImGuiUtil.DrawTableColumn(pattern.PlaybackData.PrimaryDeviceUsed.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Secondary Device:");
+            ImGuiUtil.DrawTableColumn(pattern.PlaybackData.SecondaryDeviceUsed.ToString());
+            ImGui.TableNextRow();
+        }
+
+        ImGui.Separator();
+        ImGui.TextUnformatted("Pattern Playback Data:");
+        foreach (var device in pattern.PlaybackData.DeviceData)
+        {
+            using (ImRaii.PushIndent())
+            {
+                ImGui.Text("Device: ");
+                CkGui.ColorTextInline(device.Toy.ToName(), CkColor.VibrantPink.Uint());
+                foreach (var motor in device.MotorData)
+                {
+                    using (ImRaii.PushIndent())
+                        ImGui.Text($"Motor {motor.Motor.ToString()} ({motor.MotorIdx}) Contains {motor.Data.Length} points.");
+                }
+            }
         }
     }
     private void DrawAlarm(Alarm alarm)

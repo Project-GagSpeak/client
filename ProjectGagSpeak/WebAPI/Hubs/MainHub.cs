@@ -32,7 +32,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     private readonly KinksterListener _kinksterListener;
     private readonly VisualStateListener _visualListener;
     private readonly PuppeteerListener _puppetListener;
-    private readonly ToyboxStateListener _kinkListener;
+    private readonly ToyboxStateListener _toyboxListener;
     private readonly ConnectionSyncService _dataSync;
 
     // Static private accessors (persistant across singleton instantiations for other static accessors.)
@@ -78,7 +78,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         _kinksterListener = kinksterListener;
         _visualListener = visuals;
         _puppetListener = puppeteer;
-        _kinkListener = toybox;
+        _toyboxListener = toybox;
         _dataSync = dataSync;
 
         // Subscribe to the things.

@@ -1,6 +1,7 @@
 using CkCommons.Helpers;
 using CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
+using GagSpeak.Gui.Remote;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
@@ -108,37 +109,85 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
     /// <summary> Attempts to remove the pattern as a favorite. </summary>
     public bool RemoveFavorite(Pattern p) => _favorites.RemoveRestriction(FavoriteIdContainer.Pattern, p.Identifier);
 
+    public bool CanRecordPattern() => _remotes.CanBeginRecording;
+
+    public void OpenRemoteForRecording()
+    {
+        if (!CanRecordPattern())
+            return;
+        Logger.LogDebug("We are able to record a pattern, so attempting to open the remote UI for recording.");
+        if (!_remotes.ClientData.TryUpdateRemoteForRecording())
+            return;
+
+        Logger.LogDebug("Remote is ready for recording!");
+    }
+
     /// <summary> Switches from a currently active pattern to a new one. </summary>
     /// <remarks> If no pattern is currently active, it will simply start one. </remarks>
-    public void SwitchPattern(Guid patternId, string enactor)
+    public bool SwitchPattern(Guid patternId, string enactor)
     {
         // This only actually fires if a pattern is active, and is skipped otherwise.
-        if (Storage.TryGetPattern(patternId, out var pattern))
-        {
-            Logger.LogDebug($"Switching to pattern {pattern.Label} ({patternId}) by {enactor}.");
-            _remotes.ClientData.SwitchPlaybackData(pattern, pattern.StartPoint, pattern.Duration, enactor);
-        }
-        else
+        if (!Storage.TryGetPattern(patternId, out var pattern))
         {
             Logger.LogWarning($"Attempted to switch to non-existent pattern {patternId} by {enactor}.");
-            return;
+            return false;
         }
+
+        if (!_remotes.ClientData.CanPlaybackPattern(pattern))
+        {
+            Logger.LogWarning($"Cannot switch to [{pattern.Label}], as you have no valid devices in your remote for them.");
+            return false;
+        }
+
+        Logger.LogDebug($"Attempting to switch to pattern {pattern.Label} ({patternId}) by {enactor}.");
+        if (!_remotes.ClientData.SwitchPlaybackData(pattern, pattern.StartPoint, pattern.Duration, enactor))
+            return false;
+        
+        // Log and return false.
+        Logger.LogWarning($"Switched to new pattern ({pattern.Label}) for playback!");
+        return false;
     }
 
     /// <summary> Enables a pattern, beginning the execution to the simulated, or connected sex toy. </summary>
     /// <remarks> If no pattern in the storage is found, no pattern will activate. </remarks>
-    public void EnablePattern(Guid patternId, string enactor)
+    public bool EnablePattern(Guid patternId, string enactor)
     {
-        if(Storage.TryGetPattern(patternId, out var pattern))
-            _remotes.ClientData.StartPlaybackData(pattern, pattern.StartPoint, pattern.Duration, enactor);
+        if (!Storage.TryGetPattern(patternId, out var pattern))
+        {
+            Logger.LogWarning($"Attempted to enable non-existent pattern {patternId} by {enactor}.");
+            return false;
+        }
+
+        if (!_remotes.ClientData.CanPlaybackPattern(pattern))
+        {
+            Logger.LogWarning($"Cannot play [{pattern.Label}], as you have no valid devices in your remote for them.");
+            return false;
+        }
+
+        // It will log why it failed internally.
+        if (!_remotes.ClientData.StartPlaybackData(pattern, pattern.StartPoint, pattern.Duration, enactor))
+            return false;
+
+        Logger.LogDebug($"Enabling pattern {pattern.Label} ({patternId}) by {enactor}.");
+        return true;
     }
 
-    public void DisablePattern(Guid patternId, string enactor)
+    public bool DisablePattern(Guid patternId, string enactor)
     {
-        if (_remotes.ClientData.IsPlayingPattern)
-            _remotes.ClientData.EndPlaybackData(enactor);
-        else
-            Logger.LogWarning("Tried to stop a pattern when no pattern was active??!?");
+        if (!_remotes.ClientData.IsPlayingPattern)
+        {
+            Logger.LogWarning($"Tried to disable pattern {patternId} by {enactor}, but no pattern was active.");
+            return false;
+        }
+
+        // End it.
+        if (!_remotes.ClientData.EndPlaybackData(enactor))
+        {
+            Logger.LogWarning($"Failed to end playback data for pattern {patternId} by {enactor}.");
+            return false;
+        }
+        
+        return true;
     }
 
     #region HybridSavable

@@ -110,15 +110,18 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
     /// <summary> Attempts to remove the alarm as a favorite. </summary>
     public bool RemoveFavorite(Alarm a) => _favorites.RemoveRestriction(FavoriteIdContainer.Alarm, a.Identifier);
 
-    public void ToggleAlarm(Guid alarmId, string enactor)
+    public bool ToggleAlarm(Guid alarmId, string enactor)
     {
-        if (Storage.TryGetAlarm(alarmId, out var alarm))
+        if (!Storage.TryGetAlarm(alarmId, out var alarm))
         {
-            alarm.Enabled = !alarm.Enabled;
-            _saver.Save(this);
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.AlarmToggled,
-                alarm.Enabled ? NewState.Enabled : NewState.Disabled);
+            Logger.LogWarning("Tried to toggle an alarm that does not exist: {0}", alarmId);
+            return false;
         }
+        // change enabled state of alarm and invoke save & achievement event.
+        alarm.Enabled = !alarm.Enabled;
+        _saver.Save(this);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.AlarmToggled, alarm.Enabled);
+        return true;
     }
 
     public void EnableAlarm(Guid alarmId, string enactor)

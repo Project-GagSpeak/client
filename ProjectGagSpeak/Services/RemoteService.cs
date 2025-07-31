@@ -42,7 +42,7 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
         _toyManager = toyManager;
         _lobbyManager = lobbyManager;
         // set an initial data, this will initially be a empty string, but rectified upon connection.
-        ClientData = new ClientPlotedDevices(mediator, new(new(MainHub.UID), _config.Current.NicknameInVibeRooms));
+        ClientData = new ClientPlotedDevices(mediator, new(new(MainHub.UID), _config.Current.NicknameInVibeRooms), RemoteAccess.All);
 
         /// Monitors for changes to the client players devices.
         Mediator.Subscribe<ConfigSexToyChanged>(this, (msg) => OnClientToyChange(msg.Type, msg.Item));
@@ -56,7 +56,7 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
         Mediator.Subscribe<MainHubConnectedMessage>(this, _ =>
         {
             Logger.LogInformation("Reconnected to GagSpeak. Setting Client Devices.");
-            ClientData = new ClientPlotedDevices(mediator, new(new(MainHub.UID), _config.Current.NicknameInVibeRooms));
+            ClientData = new ClientPlotedDevices(mediator, new(new(MainHub.UID), _config.Current.NicknameInVibeRooms), RemoteAccess.All);
             OnUpdateClientDevice();
             SelectedKey = MainHub.UID;
         });
@@ -73,17 +73,7 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
 
     public string SelectedKey = string.Empty;
     public bool IsClientBeingBuzzed => ClientData.UserIsBeingBuzzed;
-    public bool CanBeginRecording => !ClientData.RecordingData && !_lobbyManager.IsInVibeRoom;
-    public bool TryEnableRecordingMode()
-    {
-        if (!CanBeginRecording)
-            return false;
-
-        ClientData.RecordingData = true;
-        Logger.LogInformation("Enabled Recording Mode for Client.");
-        return true;
-    }
-
+    public bool CanBeginRecording => !ClientData.InRecordingMode && !_lobbyManager.IsInVibeRoom;
     public bool TryGetRemoteData([NotNullWhen(true)] out UserPlotedDevices? data)
     {
         if (SelectedKey == MainHub.UID)
@@ -382,6 +372,8 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
                 ImGuiUtil.DrawTableColumn($"{value.Motor.StepCount} steps");
                 ImGuiUtil.DrawTableColumn($"{value.Motor.Interval} interval");
                 ImGuiUtil.DrawTableColumn($"{value.Motor.Intensity.ToString("F2")} intensity");
+
+                ImGuiUtil.DrawTableColumn($"{value.RecordedData.Count()} DataPoints Stored.");
                 ImGui.TableNextRow();
             }
             ImGui.TableNextRow();

@@ -26,6 +26,7 @@ public class DeviceDot : IEquatable<DeviceDot>
 
     public bool IsEnabled { get; set; } = false;
     public bool IsClockwise { get; set; } = true;
+    public bool ValidForRemote => _device.ValidForRemotes;
     public IReadOnlyDictionary<uint, MotorDot> MotorDotMap => _motorDotMap;
     public ToyBrandName FactoryName => _device.FactoryName;
     public string LabelName => _device.LabelName;
@@ -98,32 +99,42 @@ public class DeviceDot : IEquatable<DeviceDot>
         // Individual calls means more debouncers and more network traffic, so prefer to avoid for smoother performance.
     }
 
-    public void PlaybackLatestPos(int playbackIdx)
+    public void PlaybackLatestPos()
     {
         try
         {
+            // dont bother playing if not enabled.
+            if (!IsEnabled)
+                return;
+
             foreach (var motor in _motorDotMap.Values)
             {
+                // dont bother if no playback data is present.
+                if (motor.PlaybackRef.Idx == -1)
+                    continue;
+
+                // process the intensity to play.
+                var intensityToPlay = motor.RecordedData[motor.PlaybackRef.Idx];
                 switch (motor.Motor.Type)
                 {
                     case ToyMotor.Vibration:
-                        _device.Vibrate(motor.MotorIdx, motor.RecordedData[playbackIdx]);
+                        _device.Vibrate(motor.MotorIdx, intensityToPlay);
                         break;
 
                     case ToyMotor.Oscillation:
-                        _device.Oscillate(motor.MotorIdx, motor.RecordedData[playbackIdx]);
+                        _device.Oscillate(motor.MotorIdx, intensityToPlay);
                         break;
 
                     case ToyMotor.Rotation:
-                        _device.Rotate(motor.RecordedData[playbackIdx], IsClockwise);
+                        _device.Rotate(intensityToPlay, IsClockwise);
                         break;
 
                     case ToyMotor.Constriction:
-                        _device.Constrict(motor.RecordedData[playbackIdx]);
+                        _device.Constrict(intensityToPlay);
                         break;
 
                     case ToyMotor.Inflation:
-                        _device.Inflate(motor.RecordedData[playbackIdx]);
+                        _device.Inflate(intensityToPlay);
                         break;
                 }
             }
@@ -136,7 +147,7 @@ public class DeviceDot : IEquatable<DeviceDot>
         {
             // If the playback index is out of range, we can ignore it.
             // This can happen if the user tries to playback a position that doesn't exist.
-            Svc.Logger.Warning($"Playback index {playbackIdx} is out of range for device {_device.FactoryName}. Recorded data count: {_motorDotMap.Values.First().RecordedData.Count}");
+            Svc.Logger.Warning($"Playback index is out of range for device {_device.FactoryName}. Recorded data count: {_motorDotMap.Values.First().RecordedData.Count}");
         }
     }
 

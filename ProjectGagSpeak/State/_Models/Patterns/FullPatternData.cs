@@ -32,6 +32,7 @@ public readonly record struct FullPatternData
     {
         var bytes = Convert.FromBase64String(compressedString);
         bytes.DecompressToString(out var decompressed);
+        // Deserialize the string back to pattern data
         return JsonConvert.DeserializeObject<FullPatternData>(decompressed);
     }
 }
