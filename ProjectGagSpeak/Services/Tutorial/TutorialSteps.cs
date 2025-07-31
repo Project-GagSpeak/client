@@ -38,7 +38,7 @@ public enum StepsMainUi
     ProfilePreviewFull, // On click, close full preview, open image editor.
     ProfileEditImage, // On click, close image editor.
     ProfileSaving, // Emphasis on saving changes, and how editing without saving reverts changes.
-    ConfigSettings1, // themenu way to access settings
+    ConfigSettings1, // the menu way to access settings
     //ConfigSettings2, // title bar way to access settings (to patternhub on click)
     PatternHub, // overview of pattern hub.
     PatternSearch, // how searches are filtered.
@@ -171,7 +171,7 @@ public enum StepsGags
     PresetPreview, // to view what options you picked for the preset.
     CancelingChanges, // what happens if you dont want to save edits.
     SavingChanges, // on click, saving changes and close.
-    Applying, // where to apply Gags, or view active ones.
+    ActiveGags, // where to apply Gags, or view active ones.
     Selecting, // locate first open one, if all are full, do not apply any. (otherwise, apply tutorial)
     Locking, // lock system overview. (lock on click)
     Unlocking, // how 2 unlocky (if possible, unlock on next)

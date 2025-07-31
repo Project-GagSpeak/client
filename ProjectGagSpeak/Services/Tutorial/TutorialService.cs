@@ -229,7 +229,32 @@ public class TutorialService
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             PopupLabel = "Gags Tutorial",
         }
-        .EnsureSize(0);
+        .AddStep(gagsStr.Step1Title, gagsStr.Step1Desc, gagsStr.Step1DescExtended)
+        .AddStep(gagsStr.Step2Title, gagsStr.Step2Desc, gagsStr.Step2DescExtended)
+        .AddStep(gagsStr.Step3Title, gagsStr.Step3Desc, gagsStr.Step3DescExtended)
+        .AddStep(gagsStr.Step4Title, gagsStr.Step4Desc, gagsStr.Step4DescExtended)
+        .AddStep(gagsStr.Step5Title, gagsStr.Step5Desc, gagsStr.Step5DescExtended)
+        .AddStep(gagsStr.Step6Title, gagsStr.Step6Desc, gagsStr.Step6DescExtended)
+        .AddStep(gagsStr.Step7Title, gagsStr.Step7Desc, gagsStr.Step7DescExtended)
+        .AddStep(gagsStr.Step8Title, gagsStr.Step8Desc, gagsStr.Step8DescExtended)
+        .AddStep(gagsStr.Step9Title, gagsStr.Step9Desc, gagsStr.Step9DescExtended)
+        .AddStep(gagsStr.Step10Title, gagsStr.Step10Desc, gagsStr.Step10DescExtended)
+        .AddStep(gagsStr.Step11Title, gagsStr.Step11Desc, gagsStr.Step11DescExtended)
+        .AddStep(gagsStr.Step12Title, gagsStr.Step12Desc, gagsStr.Step12DescExtended)
+        .AddStep(gagsStr.Step13Title, gagsStr.Step13Desc, gagsStr.Step13DescExtended)
+        .AddStep(gagsStr.Step14Title, gagsStr.Step14Desc, gagsStr.Step14DescExtended)
+        .AddStep(gagsStr.Step15Title, gagsStr.Step15Desc, gagsStr.Step15DescExtended)
+        .AddStep(gagsStr.Step16Title, gagsStr.Step16Desc, gagsStr.Step16DescExtended)
+        .AddStep(gagsStr.Step17Title, gagsStr.Step17Desc, gagsStr.Step17DescExtended)
+        .AddStep(gagsStr.Step18Title, gagsStr.Step18Desc, gagsStr.Step18DescExtended)
+        .AddStep(gagsStr.Step19Title, gagsStr.Step19Desc, gagsStr.Step19DescExtended)
+        .AddStep(gagsStr.Step20Title, gagsStr.Step20Desc, gagsStr.Step20DescExtended)
+        .AddStep(gagsStr.Step21Title, gagsStr.Step21Desc, gagsStr.Step21DescExtended)
+        .AddStep(gagsStr.Step22Title, gagsStr.Step22Desc, gagsStr.Step22DescExtended)
+        .AddStep(gagsStr.Step23Title, gagsStr.Step23Desc, gagsStr.Step23DescExtended)
+        .AddStep(gagsStr.Step24Title, gagsStr.Step24Desc, gagsStr.Step24DescExtended)
+        .AddStep(gagsStr.Step25Title, gagsStr.Step25Desc, gagsStr.Step25DescExtended)
+        .EnsureSize(_tutorialSizes[TutorialType.Gags]);
 
         var cursedLootStr = GSLoc.Tutorials.CursedLoot;
         _tutorials[TutorialType.CursedLoot] = new Tutorial()
