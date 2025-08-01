@@ -1,21 +1,23 @@
+using CkCommons.FileSystem;
+using CkCommons.FileSystem.Selector;
+using CkCommons.Gui;
+using CkCommons.Helpers;
+using CkCommons.Widgets;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using Dalamud.Utility;
-using CkCommons.FileSystem;
-using CkCommons.FileSystem.Selector;
 using GagSpeak.Gui;
-using CkCommons.Widgets;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using ImGuiNET;
+using Lumina.Excel.Sheets;
 using OtterGui;
-using CkCommons.Gui;
-using CkCommons.Helpers;
 using OtterGuiInternal.Structs;
 
 namespace GagSpeak.FileSystems;
@@ -25,6 +27,7 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
 {
     private readonly FavoritesManager _favorites;
     private readonly RestraintManager _manager;
+    private readonly TutorialService _guides;
 
     public GagspeakMediator Mediator { get; init; }
 
@@ -45,13 +48,16 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
     public new RestraintSetFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
+    public RestraintSet tutorialSet { get; private set; }
+
     public RestraintSetFileSelector(ILogger<RestraintSetFileSelector> log, GagspeakMediator mediator,
-        FavoritesManager favorites, RestraintManager manager, RestraintSetFileSystem fileSystem)
+        FavoritesManager favorites, RestraintManager manager, RestraintSetFileSystem fileSystem, TutorialService guides)
         : base(fileSystem, Svc.Logger.Logger, Svc.KeyState, "##RestraintSetFS")
     {
         Mediator = mediator;
         _favorites = favorites;
         _manager = manager;
+        _guides = guides;
 
         Mediator.Subscribe<ConfigRestraintSetChanged>(this, (msg) => OnRestraintSetChange(msg.Type, msg.Item, msg.OldString));
     }
@@ -170,9 +176,15 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
         if (CkGui.IconButton(FAI.Plus, inPopup: true))
             ImGui.OpenPopup("##NewRestraintSet");
         CkGui.AttachToolTip("Create a new restraint set.");
+        // this needs the parent window information
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.CreatingRestraints, ImGui.GetWindowPos(), ImGui.GetWindowSize(), 
+            () => { tutorialSet = _manager.CreateNew("Tutorial Restraint"); });
 
         ImGui.SameLine(0, 1);
         DrawFolderButton();
+        // this also needs the parent window information
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.CreatingFolders, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+            () => CkFileSystem.FindOrCreateAllFolders("Tutorial Folder"));
     }
 
     public override void DrawPopups()

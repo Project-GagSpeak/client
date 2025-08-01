@@ -113,10 +113,17 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         ImGui.SetCursorScreenPos(drawRegions.TopLeft.Pos);
         using (ImRaii.Child("RestraintsTopLeft", drawRegions.TopLeft.Size))
             _selector.DrawFilterRow(drawRegions.TopLeft.SizeX);
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Searching, ImGui.GetWindowPos(), ImGui.GetWindowSize());
 
         ImGui.SetCursorScreenPos(drawRegions.BotLeft.Pos);
         using (ImRaii.Child("RestraintsBottomLeft", drawRegions.BotLeft.Size, false, WFlags.NoScrollbar))
             _selector.DrawList(drawRegions.BotLeft.SizeX);
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.RestraintList, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+            () =>
+            {
+                if (_selector.tutorialSet is not null)
+                    _selector.SelectByValue(_selector.tutorialSet);
+            });
 
         ImGui.SetCursorScreenPos(drawRegions.TopRight.Pos);
         using (ImRaii.Child("RestraintsTopRight", drawRegions.TopRight.Size))
@@ -128,11 +135,13 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         var lineTopLeft = ImGui.GetItemRectMin() - new Vector2(ImGui.GetStyle().WindowPadding.X, 0);
         var lineBotRight = lineTopLeft + new Vector2(ImGui.GetStyle().WindowPadding.X, ImGui.GetItemRectSize().Y);
         ImGui.GetWindowDrawList().AddRectFilled(lineTopLeft, lineBotRight, CkGui.Color(ImGuiColors.DalamudGrey));
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SelectedRestraint, ImGui.GetWindowPos(), ImGui.GetWindowSize());
 
         // Shift down and draw the Active items
         var verticalShift = new Vector2(0, ImGui.GetItemRectSize().Y + ImGui.GetStyle().WindowPadding.Y * 3);
         ImGui.SetCursorScreenPos(drawRegions.BotRight.Pos + verticalShift);
         DrawActiveItemInfo(drawRegions.BotRight.Size - verticalShift);
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.ActiveRestraint, ImGui.GetWindowPos(), ImGui.GetWindowSize());
     }
 
     private void DrawSelectedItemInfo(CkHeader.DrawRegion drawRegion, float rounding)
@@ -150,6 +159,14 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         
         // Draw the inner label child action item.
         using var inner = CkRaii.ChildLabelButton(region, .6f, label, ImGui.GetFrameHeight(), BeginEdits, tooltip, DFlags.RoundCornersRight, LabelFlags.AddPaddingToHeight);
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EnteringEditor, ImGui.GetWindowPos(), ImGui.GetWindowSize(), 
+            () =>
+            {
+                if (_selector.Selected is not null)
+                {
+                    _manager.StartEditing(_selector.Selected);
+                }
+            });
 
         var pos = ImGui.GetItemRectMin();
         var imgSize = new Vector2(inner.InnerRegion.Y / 1.2f, inner.InnerRegion.Y);
@@ -269,6 +286,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         var curLabel = setInEdit.Label;
         if (ImGui.InputTextWithHint("##EditorNameField", "Enter Name...", ref curLabel, 48))
             setInEdit.Label = curLabel;
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EditName, ImGui.GetWindowPos(), ImGui.GetWindowSize());
 
         ImGui.SameLine(0, ImGui.GetStyle().WindowPadding.X);
         var remainingWidth = ImGui.GetContentRegionAvail().X;
@@ -279,50 +297,54 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
 
         // Cast a child group for the drawer.
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + itemSpacing);
-        using (ImRaii.Child("HelmetMetaGroup", childGroupSize))
+        using (ImRaii.Group())
         {
-            ImGui.AlignTextToFramePadding();
-            if (HelmetCheckbox.Draw("##MetaHelmet", setInEdit.MetaStates.Headgear, out var newHelmValue))
-                setInEdit.MetaStates = setInEdit.MetaStates.WithMetaIfDifferent(MetaIndex.HatState, newHelmValue);
+            using (ImRaii.Child("HelmetMetaGroup", childGroupSize))
+            {
+                ImGui.AlignTextToFramePadding();
+                if (HelmetCheckbox.Draw("##MetaHelmet", setInEdit.MetaStates.Headgear, out var newHelmValue))
+                    setInEdit.MetaStates = setInEdit.MetaStates.WithMetaIfDifferent(MetaIndex.HatState, newHelmValue);
 
-            ImUtf8.SameLineInner();
-            CkGui.IconText(FAI.HatCowboySide);
-            CkGui.AttachToolTip("The locked helmet state while active.--SEP--Note: conflicts prioritize ON over OFF.");
+                ImUtf8.SameLineInner();
+                CkGui.IconText(FAI.HatCowboySide);
+                CkGui.AttachToolTip("The locked helmet state while active.--SEP--Note: conflicts prioritize ON over OFF.");
+            }
+
+            ImGui.SameLine(0, itemSpacing);
+            using (ImRaii.Child("VisorMetaGroup", childGroupSize))
+            {
+                if (VisorCheckbox.Draw("##MetaVisor", setInEdit.MetaStates.Visor, out var newVisorValue))
+                    setInEdit.MetaStates = setInEdit.MetaStates.WithMetaIfDifferent(MetaIndex.VisorState, newVisorValue);
+
+                ImUtf8.SameLineInner();
+                CkGui.IconText(FAI.Glasses);
+                CkGui.AttachToolTip("The locked visor state while active.--SEP--Note: conflicts prioritize ON over OFF.");
+            }
+
+            ImGui.SameLine(0, itemSpacing);
+            using (ImRaii.Child("WeaponMetaGroup", childGroupSize))
+            {
+                if (WeaponCheckbox.Draw("##MetaWeapon", setInEdit.MetaStates.Weapon, out var newWeaponValue))
+                    setInEdit.MetaStates = setInEdit.MetaStates.WithMetaIfDifferent(MetaIndex.WeaponState, newWeaponValue);
+
+                ImUtf8.SameLineInner();
+                CkGui.IconText(FAI.Explosion);
+                CkGui.AttachToolTip("The locked weapon state while active.--SEP--Note: conflicts prioritize ON over OFF.");
+            }
+
+            ImGui.SameLine(0, itemSpacing);
+            using (ImRaii.Child("RedrawMetaGroup", childGroupSize))
+            {
+                var doRedraw = setInEdit.DoRedraw;
+                if (ImGui.Checkbox("##MetaRedraw", ref doRedraw))
+                    setInEdit.DoRedraw = doRedraw;
+
+                ImUtf8.SameLineInner();
+                CkGui.IconText(FAI.Repeat);
+                CkGui.AttachToolTip("If you redraw after application.");
+            }
         }
-
-        ImGui.SameLine(0, itemSpacing);
-        using (ImRaii.Child("VisorMetaGroup", childGroupSize))
-        {
-            if (VisorCheckbox.Draw("##MetaVisor", setInEdit.MetaStates.Visor, out var newVisorValue))
-                setInEdit.MetaStates = setInEdit.MetaStates.WithMetaIfDifferent(MetaIndex.VisorState, newVisorValue);
-
-            ImUtf8.SameLineInner();
-            CkGui.IconText(FAI.Glasses);
-            CkGui.AttachToolTip("The locked visor state while active.--SEP--Note: conflicts prioritize ON over OFF.");
-        }
-
-        ImGui.SameLine(0, itemSpacing);
-        using (ImRaii.Child("WeaponMetaGroup", childGroupSize))
-        {
-            if (WeaponCheckbox.Draw("##MetaWeapon", setInEdit.MetaStates.Weapon, out var newWeaponValue))
-                setInEdit.MetaStates = setInEdit.MetaStates.WithMetaIfDifferent(MetaIndex.WeaponState, newWeaponValue);
-
-            ImUtf8.SameLineInner();
-            CkGui.IconText(FAI.Explosion);
-            CkGui.AttachToolTip("The locked weapon state while active.--SEP--Note: conflicts prioritize ON over OFF.");
-        }
-
-        ImGui.SameLine(0, itemSpacing);
-        using (ImRaii.Child("RedrawMetaGroup", childGroupSize))
-        {
-            var doRedraw = setInEdit.DoRedraw;
-            if (ImGui.Checkbox("##MetaRedraw", ref doRedraw))
-                setInEdit.DoRedraw = doRedraw;
-
-            ImUtf8.SameLineInner();
-            CkGui.IconText(FAI.Repeat);
-            CkGui.AttachToolTip("If you redraw after application.");
-        }
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EditMeta, ImGui.GetWindowPos(), ImGui.GetWindowSize());
 
         // beside this, enhances the font scale to 1.5x, draw the save icon, then restore the font scale.
         ImGui.SameLine(0, itemSpacing);

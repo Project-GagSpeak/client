@@ -116,11 +116,8 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
                 if (CkGui.IconTextButton(FAI.Save, "Save Changes"))
                     _ = _hub.UserSetKinkPlateContent(new KinkPlateInfo(new UserData(MainHub.UID), profile.KinkPlateInfo));
                 CkGui.AttachToolTip("Updates your stored profile with latest information");
-                _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileSaving, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () =>
-                {
-                    // do we want to save and close, or just close? (this should just close the editor to go back to main ui anyway
-                    ImGui.SetWindowFocus("###GagSpeakMainUI");
-                });
+                _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileSaving, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+                    () => { IsOpen = false; /* save(?) and close the editor window */ });
 
                 ImUtf8.SameLineInner();
                 if (ImGui.Checkbox("Public", ref publicRef))

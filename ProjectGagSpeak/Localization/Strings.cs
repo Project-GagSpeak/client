@@ -249,32 +249,32 @@ namespace GagSpeak.Localization
         public readonly string Step1DescExtended = Loc.Localize("HelpRestraints_Step1DescExtended", " ");
 
         public readonly string Step2Title = Loc.Localize("HelpRestraints_Step2Title", "Creating a Folder");
-        public readonly string Step2Desc = Loc.Localize("HelpRestraints_Step2Desc", "You can create a folder to organize your restraint sets here.");
-        public readonly string Step2DescExtended = Loc.Localize("HelpRestraints_Step2DescExtended", "Move things into a folder by dragging it underneath the folder.");
+        public readonly string Step2Desc = Loc.Localize("HelpRestraints_Step2Desc", "Create folders to organize your restraints.");
+        public readonly string Step2DescExtended = Loc.Localize("HelpRestraints_Step2DescExtended", "We'll create a new \"Tutorial Folder\" when you click next. You can rearrange things with drag and drop.");
 
         public readonly string Step3Title = Loc.Localize("HelpRestraints_Step3Title", "Creating a New Set");
-        public readonly string Step3Desc = Loc.Localize("HelpRestraints_Step3Desc", "You can create a new restraint set by clicking this button.");
-        public readonly string Step3DescExtended = Loc.Localize("HelpRestraints_Step3DescExtended", " ");
+        public readonly string Step3Desc = Loc.Localize("HelpRestraints_Step3Desc", "Make a new restraint set here.");
+        public readonly string Step3DescExtended = Loc.Localize("HelpRestraints_Step3DescExtended", "Click next and we'll make a new \"Tutorial Restraint\" for you.");
 
         public readonly string Step4Title = Loc.Localize("HelpRestraints_Step4Title", "The Restraints List");
         public readonly string Step4Desc = Loc.Localize("HelpRestraints_Step4Desc", "This is the list of all restraint sets you have created.");
-        public readonly string Step4DescExtended = Loc.Localize("HelpRestraints_Step4DescExtended", "You can click the star next to an item to mark it as a favorite, or delete a set with by holding shift while clicking the trash icon.");
+        public readonly string Step4DescExtended = Loc.Localize("HelpRestraints_Step4DescExtended", "You can click the star next to an item to mark it as a favorite, or delete a set by holding shift while clicking the trash icon.");
 
-        public readonly string Step5Title = Loc.Localize("HelpRestraints_Step5Title", "Selecting Restraints");
-        public readonly string Step5Desc = Loc.Localize("HelpRestraints_Step5Desc", "Click on any of the items to select it and show more details.");
-        public readonly string Step5DescExtended = Loc.Localize("HelpRestraints_Step5DescExtended", " ");
+        public readonly string Step5Title = Loc.Localize("HelpRestraints_Step5Title", "The Selected Restraint");
+        public readonly string Step5Desc = Loc.Localize("HelpRestraints_Step5Desc", "You can see the details of any selected restraint.");
+        public readonly string Step5DescExtended = Loc.Localize("HelpRestraints_Step5DescExtended", "The different properties of your restraint will show up here, as well as any attached hardcore traits and moodles. You can mouse over lit up icons to see each property.");
 
         public readonly string Step6Title = Loc.Localize("HelpRestraints_Step6Title", "Editing a Restraint");
         public readonly string Step6Desc = Loc.Localize("HelpRestraints_Step6Desc", "Edit a restraint set by double-clicking it's name here");
         public readonly string Step6DescExtended = Loc.Localize("HelpRestraints_Step6DescExtended", " ");
 
         public readonly string Step7Title = Loc.Localize("HelpRestraints_Step7Title", "Renaming a Restraint");
-        public readonly string Step7Desc = Loc.Localize("HelpRestraints_Step7Desc", "You can rename a restraint set here.");
+        public readonly string Step7Desc = Loc.Localize("HelpRestraints_Step7Desc", "If you change your mind, you can always rename a restraint.");
         public readonly string Step7DescExtended = Loc.Localize("HelpRestraints_Step7DescExtended", "You can also rename a restraint set by right-clicking it in the main list.");
 
-        public readonly string Step8Title = Loc.Localize("HelpRestraints_Step8Title", "Restraint Description");
-        public readonly string Step8Desc = Loc.Localize("HelpRestraints_Step8Desc", "You can write a short description of this restraint.");
-        public readonly string Step8DescExtended = Loc.Localize("HelpRestraints_Step8DescExtended", " ");
+        public readonly string Step8Title = Loc.Localize("HelpRestraints_Step8Title", "Meta Properties");
+        public readonly string Step8Desc = Loc.Localize("HelpRestraints_Step8Desc", "Restraint sets can also edit meta properties about you.");
+        public readonly string Step8DescExtended = Loc.Localize("HelpRestraints_Step8DescExtended", "A property set to forced show will always override one set to forced hide. Redrawing your character is necessary if animations are being changed.");
 
         public readonly string Step9Title = Loc.Localize("HelpRestraints_Step9Title", "Hardcore Traits");
         public readonly string Step9Desc = Loc.Localize("HelpRestraints_Step9Desc", "Each of the hardcore traits can be toggled on or off.");
@@ -383,7 +383,7 @@ namespace GagSpeak.Localization
             "TIMER => Unlocks after the set time. Can be unlocked early by anyone." + Environment.NewLine +
             "PREDICAMENT TIMER => Same as Timer. Can only be unlocked early by another kinkster!" + Environment.NewLine +
             "PASSWORD TIMER => Combination of Password and normal Timer locks." + Environment.NewLine +
-            "---SEP---There are three other kinds of locks that can be applied to you, that you cannot remove yourself." + Environment.NewLine +
+            "--SEP--There are three other kinds of locks that can be applied to you, that you cannot remove yourself." + Environment.NewLine +
             "OWNER => Requires granting \"Owner Locks\" permission. Only others with \"Owner Locks\" can remove this." + Environment.NewLine +
             "DEVOTIONAL => Requires granting \"Devotional Locks\" permission. Only the kinkster that applied this lock can remove it." + Environment.NewLine +
             "MIMIC => Applied by cursed loot. This lock cannot be removed by anyone, and will only unlock after the timer has expired."

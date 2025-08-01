@@ -36,6 +36,8 @@ public class RestraintEditorInfo : IFancyTab
 
         DrawDescription();
         _attributeDrawer.DrawAttributesChild(item, width, 8, Traits.All);
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.HardcoreTraits, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Arousal, ImGui.GetWindowPos(), ImGui.GetWindowSize());
     }
 
     private void DrawDescription()
