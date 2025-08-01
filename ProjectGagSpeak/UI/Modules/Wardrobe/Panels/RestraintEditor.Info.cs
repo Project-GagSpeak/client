@@ -17,11 +17,13 @@ public class RestraintEditorInfo : IFancyTab
     private readonly RestraintManager _manager;
     private readonly AttributeDrawer _attributeDrawer;
     private readonly TutorialService _guides;
+    private readonly RestraintsPanel _panel;
     public RestraintEditorInfo(RestraintManager manager, AttributeDrawer traitsDrawer, TutorialService guides)
     {
         _attributeDrawer = traitsDrawer;
         _manager = manager;
         _guides = guides;
+        //_panel = panel;
     }
 
     public string   Label       => "Info & Traits";
