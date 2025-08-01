@@ -11,9 +11,11 @@ using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Dto.VibeRoom;
+using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
 using ImGuiNET;
 using OtterGui;
+using OtterGui.Services;
 using OtterGui.Text;
 using System.Diagnostics.CodeAnalysis;
 
@@ -34,6 +36,9 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
     private Dictionary<string, ParticipantPlotedDevices> _participantData = new();
     private CancellationTokenSource _updateLoopCTS = new();
     private Task? _updateLoopTask = null;
+    private string _selectedKey = string.Empty;
+    private UserPlotedDevices? _selectedData = null;
+
     public RemoteService(ILogger<RemoteService> logger, GagspeakMediator mediator,
         MainConfig config, BuzzToyManager toyManager, VibeLobbyManager lobbyManager)
         : base(logger, mediator)
@@ -42,22 +47,22 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
         _toyManager = toyManager;
         _lobbyManager = lobbyManager;
         // set an initial data, this will initially be a empty string, but rectified upon connection.
-        ClientData = new ClientPlotedDevices(mediator, new(new(MainHub.UID), _config.Current.NicknameInVibeRooms), RemoteAccess.All);
+        ClientData = new ClientPlotedDevices(Logger, mediator, new(new(MainHub.UID), _config.Current.NicknameInVibeRooms), RemoteAccess.Full);
 
         /// Monitors for changes to the client players devices.
         Mediator.Subscribe<ConfigSexToyChanged>(this, (msg) => OnClientToyChange(msg.Type, msg.Item));
         Mediator.Subscribe<ReloadFileSystem>(this, (msg) =>
         {
             if (msg.Module is GagspeakModule.SexToys)
-                OnUpdateClientDevice();
+                UpdateClientDevices();
         });
 
         // whenever we connect, we should do a full cleanup of the client devices, then append the current toys.
         Mediator.Subscribe<MainHubConnectedMessage>(this, _ =>
         {
             Logger.LogInformation("Reconnected to GagSpeak. Setting Client Devices.");
-            ClientData = new ClientPlotedDevices(mediator, new(new(MainHub.UID), _config.Current.NicknameInVibeRooms), RemoteAccess.All);
-            OnUpdateClientDevice();
+            ClientData = new ClientPlotedDevices(Logger, mediator, new(new(MainHub.UID), _config.Current.NicknameInVibeRooms), RemoteAccess.Full);
+            UpdateClientDevices();
             SelectedKey = MainHub.UID;
         });
 
@@ -70,28 +75,35 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
     }
 
     public ClientPlotedDevices ClientData { get; private set; }
-
-    public string SelectedKey = string.Empty;
     public bool IsClientBeingBuzzed => ClientData.UserIsBeingBuzzed;
-    public bool CanBeginRecording => !ClientData.InRecordingMode && !_lobbyManager.IsInVibeRoom;
-    public bool TryGetRemoteData([NotNullWhen(true)] out UserPlotedDevices? data)
+    public bool CanRecord => !ClientData.InRecordingMode && !_lobbyManager.IsInVibeRoom;
+    public string SelectedKey
     {
-        if (SelectedKey == MainHub.UID)
+        get => _selectedKey;
+        set
         {
-            data = ClientData;
-            return true;
-        }
-        else
-        {
-            if (_participantData.TryGetValue(SelectedKey, out var participantData))
+            if (_selectedKey == value)
+                return;
+            // update the data.
+            _selectedKey = value;
+            _selectedData = GetSelectedOrDefault();
+            // if the selected key is not present, default to clientData.
+            if (_selectedData is null)
             {
-                data = participantData;
-                return true;
+                _selectedKey = MainHub.UID;
+                _selectedData = ClientData;
             }
+            // Notify the change to mediator subscribers.
+            Mediator.Publish(new RemoteSelectedKeyChanged(_selectedData));
         }
-        data = null;
-        return false;
-    }
+    } 
+
+    public string GetRemoteUiName()
+        => _lobbyManager.IsInVibeRoom ? $"Vibe Room - {_lobbyManager.CurrentRoomName}" : 
+            ClientData.InRecordingMode ? "Pattern Recorder" : "Personal Remote";
+
+    public UserPlotedDevices? GetSelectedOrDefault()
+        => _selectedKey == MainHub.UID ? ClientData : _participantData.GetValueOrDefault(SelectedKey);
 
     protected override void Dispose(bool disposing)
     {
@@ -124,20 +136,28 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
                 break;
 
             case StorageChangeType.Modified:
-                OnUpdateClientDevice();
+                UpdateClientDevices();
                 break;
         }
     }
 
-    private void OnUpdateClientDevice()
+    private void UpdateClientDevices()
     {
-        foreach (var toy in _toyManager.InteractableToys)
+        var toysToCheck = _toyManager.InteractableToys.Where(t => t.ValidForRemotes).ToList();
+        foreach (var device in ClientData.Devices)
         {
-            if (ClientData.Devices.FirstOrDefault(d => d.FactoryName.Equals(toy.FactoryName)) is { } match && !toy.ValidForRemotes)
-                ClientData.RemoveDevice(match);
-            else if (toy.ValidForRemotes)
-                ClientData.AddDevice(new(toy));
+            // check if there is a valid toy in the list for this device.
+            if (toysToCheck.FirstOrDefault(t => t.FactoryName.Equals(device.FactoryName)) is { } match)
+                // this is a match, so this device is already valid and we can remove it from the list of toys to check.
+                toysToCheck.Remove(match);
+            else
+                // otherwise, remove the device from the client data, as it no longer exists.
+                ClientData.RemoveDevice(device);
         }
+        
+        // for each of the remaining toys left, we should add them.
+        foreach (var toyToAdd in toysToCheck)
+            ClientData.AddDevice(new(toyToAdd));
     }
 
     public void SetUserRemotePower(string key, bool newState, string enactor)
@@ -199,15 +219,10 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
     private void AddClientDevice(BuzzToy device)
     {
         if (!device.ValidForRemotes)
-        {
-            Logger.LogWarning($"Device {device.LabelName} is not valid for remotes, cannot add to Client.");
             return;
-        }
 
         // Attempt to add the device to the remoteData list
-        if (!ClientData.AddDevice(new(device)))
-            Logger.LogWarning($"Failed to add device {device.LabelName} for Client.");
-        else
+        if (ClientData.AddDevice(new(device)))
             Logger.LogInformation($"Added device {device.LabelName} for Client.");
     }
 
@@ -217,16 +232,14 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
         if (ClientData.Devices.FirstOrDefault(d => d.FactoryName == device.FactoryName) is not { } match)
             return;
 
-        if (!ClientData.RemoveDevice(match))
-            Logger.LogWarning($"Failed to remove device {device.LabelName} for Client.");
-        else
+        if (ClientData.RemoveDevice(match))
             Logger.LogInformation($"Removed device {device.LabelName} for Client.");
     }
 
     public void AndVibeRoomParticipant(RoomParticipant participant)
     {
         // create a new entry in the dictionary for this kinkster.
-        var newPlottedDevicesData = new ParticipantPlotedDevices(Mediator, participant);
+        var newPlottedDevicesData = new ParticipantPlotedDevices(Logger, Mediator, participant);
         _participantData[participant.User.UID] = newPlottedDevicesData;
 
         // its ok to be a little performance heavy since it's only done once on creation.
@@ -344,39 +357,38 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
     private void DrawDevicePlotState(DeviceDot toy)
     {
         CkGui.ColorTextBool(toy.IsEnabled ? "Enabled" : "Disabled", toy.IsEnabled);
-
-        using (ImRaii.Table("##overview", 10, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        CkGui.TextInline($"| BrandName: {toy.FactoryName.ToString()} ({toy.FactoryName.ToName()})");
+        using (ImRaii.Table("##overview", 11, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
-
-            ImGuiUtil.DrawTableColumn("BrandName");
-            ImGuiUtil.DrawTableColumn(toy.FactoryName.ToString());
-            ImGui.TableNextRow();
+            ImGui.TableSetupColumn("MotorIdx");
+            ImGui.TableSetupColumn("Type");
+            ImGui.TableSetupColumn("Dragging");
+            ImGui.TableSetupColumn("Floating");
+            ImGui.TableSetupColumn("Looping");
+            ImGui.TableSetupColumn("Visible");
+            ImGui.TableSetupColumn("Steps/Interval");
+            ImGui.TableSetupColumn("Intensity");
+            ImGui.TableSetupColumn("Data Recorded");
+            ImGui.TableSetupColumn("Ref Idx/Length/Loop");
+            ImGui.TableHeadersRow();
 
             foreach (var (key, value) in toy.MotorDotMap)
             {
-                ImGuiUtil.DrawTableColumn($"MotorIdx {key}");
+                ImGuiUtil.DrawTableColumn(key.ToString());
                 ImGuiUtil.DrawTableColumn(value.Motor.Type.ToString());
-
+                ImGuiUtil.DrawTableColumn($"{value.IsDragging} ({value.DragLoopStartPos})");
+                ImGuiUtil.DrawTableColumn(value.IsFloating.ToString());
+                ImGuiUtil.DrawTableColumn(value.IsLooping.ToString());
+                ImGuiUtil.DrawTableColumn(value.Visible.ToString());
+                ImGuiUtil.DrawTableColumn($"{value.Motor.StepCount} / {value.Motor.Interval}");
+                ImGuiUtil.DrawTableColumn($"{value.Motor.Intensity.ToString("F2")}");
+                ImGuiUtil.DrawTableColumn(value.RecordedData.Count().ToString());
+                ImGuiUtil.DrawTableColumn($"{value.PlaybackRef.Idx} / {value.PlaybackRef.Length} / {value.PlaybackRef.Looping}");
                 ImGui.TableNextColumn();
-                CkGui.ColorTextBool("Dragging", value.IsDragging);
-
-                ImGui.TableNextColumn();
-                CkGui.ColorTextBool("Floating", value.IsFloating);
-
-                ImGui.TableNextColumn();
-                CkGui.ColorTextBool("Looping", value.IsLooping);
-
-                ImGui.TableNextColumn();
-                CkGui.ColorTextBool("Visible", value.Visible);
-
-                ImGuiUtil.DrawTableColumn($"{value.Motor.StepCount} steps");
-                ImGuiUtil.DrawTableColumn($"{value.Motor.Interval} interval");
-                ImGuiUtil.DrawTableColumn($"{value.Motor.Intensity.ToString("F2")} intensity");
-
-                ImGuiUtil.DrawTableColumn($"{value.RecordedData.Count()} DataPoints Stored.");
+                CkGui.FramedHoverIconText(FAI.InfoCircle, CkColor.VibrantPink.Uint());
+                CkGui.AttachToolTip(string.Join(", ", value.RecordedData.Select(d => d.ToString("F2"))));
                 ImGui.TableNextRow();
             }
-            ImGui.TableNextRow();
         }
     }
     #endregion Debug Helper

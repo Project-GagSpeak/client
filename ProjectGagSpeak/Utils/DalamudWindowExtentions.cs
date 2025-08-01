@@ -86,4 +86,10 @@ public static class DalamudWindowExtentions
             MaximumSize = max
         };
     }
+
+    public static void SetCloseState(this Window window, bool allowClose)
+    {
+        window.ShowCloseButton = allowClose;
+        window.RespectCloseHotkey = allowClose;
+    }
 }

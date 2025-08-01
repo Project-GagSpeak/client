@@ -39,6 +39,8 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
     public PatternStorage Storage => _storage;
     public Pattern? ItemInEditor => _itemEditor.ItemInEditor;
     public Guid ActivePatternId => _remotes.ClientData.ActivePattern;
+    public bool CanRecordPattern => _remotes.CanRecord;
+
     public Pattern CreateNew(string patternName)
     {
         patternName = RegexEx.EnsureUniqueName(patternName, Storage, t => t.Label);
@@ -109,15 +111,13 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
     /// <summary> Attempts to remove the pattern as a favorite. </summary>
     public bool RemoveFavorite(Pattern p) => _favorites.RemoveRestriction(FavoriteIdContainer.Pattern, p.Identifier);
 
-    public bool CanRecordPattern() => _remotes.CanBeginRecording;
-
     public void OpenRemoteForRecording()
     {
-        if (!CanRecordPattern())
-            return;
-        Logger.LogDebug("We are able to record a pattern, so attempting to open the remote UI for recording.");
         if (!_remotes.ClientData.TryUpdateRemoteForRecording())
+        {
+            Logger.LogWarning("Failed to open remote for recording, already in recording mode or not connected.");
             return;
+        }
 
         Logger.LogDebug("Remote is ready for recording!");
     }
@@ -133,14 +133,13 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
             return false;
         }
 
-        if (!_remotes.ClientData.CanPlaybackPattern(pattern))
-        {
-            Logger.LogWarning($"Cannot switch to [{pattern.Label}], as you have no valid devices in your remote for them.");
-            return false;
-        }
+        return SwitchPattern(pattern, pattern.StartPoint, pattern.Duration, enactor);
+    }
 
-        Logger.LogDebug($"Attempting to switch to pattern {pattern.Label} ({patternId}) by {enactor}.");
-        if (!_remotes.ClientData.SwitchPlaybackData(pattern, pattern.StartPoint, pattern.Duration, enactor))
+    public bool SwitchPattern(Pattern pattern, TimeSpan startTime, TimeSpan duration, string enactor)
+    {
+        Logger.LogDebug($"Attempting to switch to pattern {pattern.Label} by {enactor}.");
+        if (!_remotes.ClientData.SwitchPatternPlaybackData(pattern, pattern.StartPoint, pattern.Duration, enactor))
             return false;
         
         // Log and return false.
@@ -158,17 +157,20 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
             return false;
         }
 
-        if (!_remotes.ClientData.CanPlaybackPattern(pattern))
-        {
-            Logger.LogWarning($"Cannot play [{pattern.Label}], as you have no valid devices in your remote for them.");
+        return EnablePattern(pattern, pattern.StartPoint, pattern.Duration, enactor);
+    }
+
+    public bool EnablePattern(Pattern pattern, TimeSpan startPoint, TimeSpan duration, string enactor)
+    {
+        // deny if we cannot play the pattern.
+        if (!_remotes.ClientData.CanExecuteForDevices(pattern))
             return false;
-        }
 
         // It will log why it failed internally.
-        if (!_remotes.ClientData.StartPlaybackData(pattern, pattern.StartPoint, pattern.Duration, enactor))
+        if (!_remotes.ClientData.TryStartPatternPlayback(pattern, startPoint, duration, enactor))
             return false;
 
-        Logger.LogDebug($"Enabling pattern {pattern.Label} ({patternId}) by {enactor}.");
+        Logger.LogDebug($"Enabling pattern {pattern.Label} ({pattern.Identifier}) by {enactor}.");
         return true;
     }
 
@@ -180,13 +182,9 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
             return false;
         }
 
-        // End it.
-        if (!_remotes.ClientData.EndPlaybackData(enactor))
-        {
-            Logger.LogWarning($"Failed to end playback data for pattern {patternId} by {enactor}.");
-            return false;
-        }
-        
+        // This should also publish our new active pattern, IF the enactor is MainHub.UID.
+        // Otherwise it is ignored.
+        _remotes.ClientData.OnPatternPlaybackEnd(enactor, RemoteSource.External);        
         return true;
     }
 

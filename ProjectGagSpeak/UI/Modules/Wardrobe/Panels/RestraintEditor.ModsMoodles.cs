@@ -169,7 +169,7 @@ public class RestraintEditorModsMoodles : IFancyTab
     private void DrawModsList()
     {
         var innerRegion = ImGui.GetContentRegionAvail().WithoutWinPadding();
-        using var _ = CkRaii.FrameChildPadded("MoodlesList", innerRegion, CkColor.FancyHeaderContrast.Uint(), CkStyle.ChildRoundingLarge());
+        using var _ = CkRaii.FrameChildPadded("MoodlesList", innerRegion, CkColor.FancyHeaderContrast.Uint(), 0, CkStyle.ChildRoundingLarge());
 
         var buttonSize = CkGui.IconButtonSize(FAI.Eraser);
         foreach (var mod in _manager.ItemInEditor!.RestraintMods.ToList())
@@ -177,7 +177,7 @@ public class RestraintEditorModsMoodles : IFancyTab
             var itemLabel = mod.Label;
             var itemSource = mod.Container.ModName;
 
-            using (CkRaii.FramedChildPaddedW(mod.Container.DirectoryPath + mod.Label, ImGui.GetContentRegionAvail().X, ImGui.GetTextLineHeight() * 2, CkColor.FancyHeaderContrast.Uint()))
+            using (CkRaii.FramedChildPaddedW(mod.Container.DirectoryPath + mod.Label, ImGui.GetContentRegionAvail().X, ImGui.GetTextLineHeight() * 2, CkColor.FancyHeaderContrast.Uint(), 0))
             {
                 using var style = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, Vector2.Zero);
                 using (ImRaii.Group())
@@ -201,7 +201,7 @@ public class RestraintEditorModsMoodles : IFancyTab
         var size = ImGui.GetContentRegionAvail();
         var height = size.Y - (MoodleDrawer.FramedIconDisplayHeight(2).AddWinPadY() + ImGui.GetStyle().ItemSpacing.Y);
 
-        using var _ = CkRaii.FramedChildPaddedWH("MoodlesList", new Vector2(size.X, height), CkColor.FancyHeaderContrast.Uint(), CkStyle.ChildRoundingLarge());
+        using var _ = CkRaii.FramedChildPaddedWH("MoodlesList", new Vector2(size.X, height), CkColor.FancyHeaderContrast.Uint(), 0, CkStyle.ChildRoundingLarge());
         
         var buttonSize = CkGui.IconButtonSize(FAI.Eraser);
 
@@ -212,7 +212,7 @@ public class RestraintEditorModsMoodles : IFancyTab
                 : MoodleCache.IpcData.Statuses.GetValueOrDefault(moodle.Id).Title.StripColorTags() ?? "<invalid status>";
             var typeText = moodle is MoodlePreset ? "Moodle Preset Item" : "Moodle Status Item";
 
-            using (CkRaii.FramedChildPaddedW(moodle.Id.ToString(), ImGui.GetContentRegionAvail().X, ImGui.GetTextLineHeight() * 2, CkColor.FancyHeaderContrast.Uint()))
+            using (CkRaii.FramedChildPaddedW(moodle.Id.ToString(), ImGui.GetContentRegionAvail().X, ImGui.GetTextLineHeight() * 2, CkColor.FancyHeaderContrast.Uint(), 0))
             {
                 using var style = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, Vector2.Zero);
                 using (ImRaii.Group())

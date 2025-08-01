@@ -170,10 +170,9 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
 
     protected override void DrawCustomFilters()
     {
-        var canRecord = _manager.CanRecordPattern();
-        if (CkGui.IconButton(FAI.Plus, disabled: !canRecord, inPopup: true))
+        if (CkGui.IconButton(FAI.Plus, disabled: !_manager.CanRecordPattern, inPopup: true))
             _manager.OpenRemoteForRecording();
-        CkGui.AttachToolTip(canRecord ? "Create a new Pattern." : "Cannot be in a VibeRoom, or playing a pattern!");
+        CkGui.AttachToolTip(_manager.CanRecordPattern ? "Create a new Pattern." : "Cannot be in a VibeRoom, or playing a pattern!");
 
         ImGui.SameLine(0, 1);
         DrawFolderButton();

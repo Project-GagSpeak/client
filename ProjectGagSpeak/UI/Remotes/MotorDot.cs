@@ -31,6 +31,9 @@ public class MotorDot(BuzzToyMotor motor) : IEquatable<MotorDot>
     /// <remarks> This is not for UI Display, and occurs on a set interval you define. </remarks>
     public List<double> RecordedData { get; private set; } = new();
 
+    /// <summary> The position where a looping drag position started. </summary>
+    public double DragLoopStartPos { get; private set; } = -1;
+
     /// <summary> If we are moving the MotorDot around. </summary>
     public bool IsDragging
     {
@@ -45,6 +48,7 @@ public class MotorDot(BuzzToyMotor motor) : IEquatable<MotorDot>
                 // if we are looping, we should revert the playback idx and enable using drag loop data.
                 if (IsLooping)
                 {
+                    DragLoopStartPos = -1;
                     _useDragLoopData = true;
                     _dragLoopPlaybackIdx = 0;
                 }
@@ -54,6 +58,9 @@ public class MotorDot(BuzzToyMotor motor) : IEquatable<MotorDot>
             {
                 // if looping, we should begin to record our new loop data chunk.
                 _dragLoopData.Clear();
+                if (IsLooping)
+                    DragLoopStartPos = Position[1];
+
                 _dragLoopPlaybackIdx = 0;
                 _useDragLoopData = false;
             }
@@ -71,6 +78,11 @@ public class MotorDot(BuzzToyMotor motor) : IEquatable<MotorDot>
         set
         {
             Svc.Logger.Verbose($"Looping is now {value.ToString()}");
+            if (value)
+                DragLoopStartPos = Position[1];
+            else
+                DragLoopStartPos = -1;
+
             _looping = value;
             // enabling or disabling looping, it doesnt madder, at the start of either state, loop data should be reset.
             _dragLoopData.Clear();
@@ -89,11 +101,22 @@ public class MotorDot(BuzzToyMotor motor) : IEquatable<MotorDot>
         => deviceEnabled
             ? Math.Round((_useDragLoopData ? _dragLoopData[_dragLoopPlaybackIdx] : PosHistory[0]) / Motor.Interval) * Motor.Interval
             : 0.0;
+
+    // Lightweight cleanup method to be used whenever playbacks finish.
+    public void OnPlaybackEnd()
+    {
+        PlaybackRef = new();
+        RecordedData.Clear();
+        _dragLoopPlaybackIdx = 0;
+        Visible = true;
+        IsDragging = false;
+    }
+
+    // Fully cleans out the data and stops everything.
     public void ClearData()
     {
-        PlaybackRef = new();    
+        OnPlaybackEnd();
         PosHistory.Clear();
-        RecordedData.Clear();
         _dragLoopData.Clear();
         _dragLoopPlaybackIdx = 0;
         _useDragLoopData = false;
@@ -149,8 +172,6 @@ public class MotorDot(BuzzToyMotor motor) : IEquatable<MotorDot>
         // inject the recorded data for the motor.
         RecordedData.Clear();
         RecordedData.AddRange(playbackData);
-        _dragLoopData.Clear();
-        _dragLoopPlaybackIdx = 0;
         Svc.Logger.Verbose("Recorded Positions Injected!");
     }
 

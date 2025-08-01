@@ -74,8 +74,8 @@ public class AchievementsUI : WindowMediatorSubscriberBase
         var type = GetTypeFromTab();
 
         // draw the resulting list, wrapped in a child to prevent push pop errors (black magic shit dont ask me)
-        using (CkRaii.Child("ListGuardingChild", ImGui.GetContentRegionAvail(), WFlags.NoScrollbar))
-            _drawer.DrawAchievementList(type, ImGui.GetContentRegionAvail());
+        using (var _ = CkRaii.Child("ListGuardingChild", ImGui.GetContentRegionAvail()))
+            _drawer.DrawAchievementList(type, _.InnerRegion);
     }
 
     private void CenteredHeader()

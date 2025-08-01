@@ -2,26 +2,15 @@ using CkCommons.Gui;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using FFXIVClientStructs.FFXIV.Component.GUI;
-using GagSpeak.GameInternals.Addons;
-using GagSpeak.GameInternals.Structs;
 using GagSpeak.Gui.Modules.Puppeteer;
 using GagSpeak.Gui.Publications;
 using GagSpeak.Gui.Remote;
 using GagSpeak.Gui.Toybox;
-using GagSpeak.Gui.UiRemote;
 using GagSpeak.Gui.Wardrobe;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Controller;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Services.Textures;
-using GagSpeak.WebAPI;
-using GagspeakAPI.Attributes;
-using GagspeakAPI.Data.Permissions;
-using GagspeakAPI.Hub;
 using ImGuiNET;
-using OtterGui.Text;
 
 namespace GagSpeak.Gui.MainWindow;
 

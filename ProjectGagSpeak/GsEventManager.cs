@@ -190,7 +190,7 @@ public class GagspeakEventManager
         {
             try
             {
-                UnlocksLogger.LogDebug("AchievementEvent Fired: " + eventName, LoggerType.AchievementEvents);
+                UnlocksLogger.LogDebug($"EventFired: [({eventName})", LoggerType.AchievementEvents);
                 if (action is Action eventHandler)
                 {
                     eventHandler.Invoke();
@@ -214,7 +214,7 @@ public class GagspeakEventManager
         {
             try
             {
-                UnlocksLogger.LogDebug("AchievementEvent Fired: " + eventName, LoggerType.AchievementEvents);
+                UnlocksLogger.LogDebug($"EventFired: [({eventName}) >> ({param})", LoggerType.AchievementEvents);
                 if (action is Action<T> eventHandler)
                 {
                     eventHandler.Invoke(param);
@@ -238,7 +238,7 @@ public class GagspeakEventManager
         {
             try
             {
-                UnlocksLogger.LogDebug("AchievementEvent Fired: " + eventName, LoggerType.AchievementEvents);
+                UnlocksLogger.LogDebug($"EventFired: [({eventName}) >> ({param1}) ({param2})", LoggerType.AchievementEvents);
                 if (action is Action<T1, T2> eventHandler)
                 {
                     eventHandler.Invoke(param1, param2);
@@ -262,7 +262,7 @@ public class GagspeakEventManager
         {
             try
             {
-                UnlocksLogger.LogDebug("AchievementEvent Fired: " + eventName, LoggerType.AchievementEvents);
+                UnlocksLogger.LogDebug($"EventFired: [({eventName}) >> ({param1}) ({param2}) ({param3})", LoggerType.AchievementEvents);
                 if (action is Action<T1, T2, T3> eventHandler)
                 {
                     eventHandler.Invoke(param1, param2, param3);
@@ -286,7 +286,7 @@ public class GagspeakEventManager
         {
             try
             {
-                UnlocksLogger.LogDebug("AchievementEvent Fired: " + eventName, LoggerType.AchievementEvents);
+                UnlocksLogger.LogDebug($"EventFired: [({eventName}) >> ({param1}) ({param2}) ({param3}) ({param4})", LoggerType.AchievementEvents);
                 if (action is Action<T1, T2, T3, T4> eventHandler)
                 {
                     eventHandler.Invoke(param1, param2, param3, param4);
@@ -310,7 +310,7 @@ public class GagspeakEventManager
         {
             try
             {
-                UnlocksLogger.LogDebug("AchievementEvent Fired: " + eventName, LoggerType.AchievementEvents);
+                UnlocksLogger.LogDebug($"EventFired: [({eventName}) >> ({param1}) ({param2}) ({param3}) ({param4}) ({param5})", LoggerType.AchievementEvents);
                 if (action is Action<T1, T2, T3, T4, T5> eventHandler)
                 {
                     eventHandler.Invoke(param1, param2, param3, param4, param5);

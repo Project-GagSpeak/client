@@ -22,6 +22,7 @@ public sealed class ListItemDrawer
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
     private readonly PuppeteerManager _manager;
+    private readonly AliasItemDrawer _AAAAAAAAAAA;
     private readonly MoodleDrawer _moodleDrawer;
 
     private static readonly string[] ThreeLayerNames = [ "Layer 1", "Layer 2", "Layer 3", "Any Layer" ];
@@ -35,6 +36,7 @@ public sealed class ListItemDrawer
         RestrictionManager restrictions,
         RestraintManager restraints,
         PuppeteerManager manager,
+        AliasItemDrawer AAAAAAAAAAA,
         FavoritesManager favorites)
     {
         _logger = logger;
@@ -43,16 +45,13 @@ public sealed class ListItemDrawer
         _restraints = restraints;
         _manager = manager;
         _moodleDrawer = moodleDrawer;
+        _AAAAAAAAAAA = AAAAAAAAAAA;
     }
 
     public void DrawAchievementList(AchievementModuleKind type, Vector2 region)
     {
-        using var _ = CkRaii.Child("##GlobalAliasList2", region, WFlags.NoScrollbar);
-
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f)
-            .Push(ImGuiStyleVar.WindowBorderSize, 1f);
-        using var col = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink)
-            .Push(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
+        // Push styles for our inner child items.
+        using var _ = CkRaii.Child("AchievementList", region, WFlags.NoScrollbar);
 
         var unlocks = ClientAchievements.GetByModule(type);
         if (!unlocks.Any())
@@ -71,7 +70,8 @@ public sealed class ListItemDrawer
     public void DrawAchievementProgressBox(AchievementBase achievementItem, Vector2 size)
     {
         var imageTabWidth = 96 + ImGui.GetStyle().ItemSpacing.X * 2;
-        using var c = ImRaii.Child($"Achievement-{achievementItem.Title}", size, true, WFlags.ChildWindow);
+        using var _ = CkRaii.FramedChild($"Achievement-{achievementItem.Title}", size, new Vector4(0.25f, 0.2f, 0.2f, 0.4f).ToUint(), 
+            CkColor.VibrantPink.Uint(), 5f, 1f, wFlags: WFlags.AlwaysUseWindowPadding);
 
         using var t = ImRaii.Table($"AchievementTable {achievementItem.Title}", 2, ImGuiTableFlags.RowBg);
         if (!t) return;

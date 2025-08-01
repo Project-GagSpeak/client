@@ -155,7 +155,7 @@ public partial class RestrictionsPanel
         using (var bfInfo = CkRaii.IconButtonHeaderChild("Blindfold Information", FAI.Edit, winSize, () => OpenEditor(ImageDataType.Blindfolds, displaySize),
             HeaderFlags.AddPaddingToHeight, "Click me to select or import a Blindfold Image."))
         {
-            using (CkRaii.FramedChild("Blindfold_Preview", scaledPreview, CkColor.FancyHeaderContrast.Uint()))
+            using (CkRaii.FramedChild("Blindfold_Preview", scaledPreview, CkColor.FancyHeaderContrast.Uint(), 0))
             {
                 if (TextureManagerEx.GetMetadataPath(ImageDataType.Blindfolds, blindfoldItem.Properties.OverlayPath) is { } validImage)
                 {
@@ -195,7 +195,7 @@ public partial class RestrictionsPanel
         using (var bfInfo = CkRaii.IconButtonHeaderChild("Hypnotic Information", FAI.Edit, winSize, () => OpenEditor(ImageDataType.Hypnosis, displaySize), 
             HeaderFlags.AddPaddingToHeight, "Click me to select or import a Hypnosis Image."))
         {
-            using (CkRaii.FramedChild("Hypnotic_Preview", scaledPreview, CkColor.FancyHeaderContrast.Uint()))
+            using (CkRaii.FramedChild("Hypnotic_Preview", scaledPreview, CkColor.FancyHeaderContrast.Uint(), 0))
             {
                 if (TextureManagerEx.GetMetadataPath(ImageDataType.Hypnosis, hypnoticItem.Properties.OverlayPath) is { } validImage)
                 {

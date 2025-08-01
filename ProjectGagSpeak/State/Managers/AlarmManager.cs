@@ -2,11 +2,12 @@ using CkCommons.Helpers;
 using CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.State.Handlers;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 
 namespace GagSpeak.State.Managers;
@@ -14,7 +15,6 @@ namespace GagSpeak.State.Managers;
 public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
     private readonly PatternManager _patterns;
-    private readonly RemoteHandler _remoteHandler;
     private readonly FavoritesManager _favorites;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
@@ -22,13 +22,12 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
     private StorageItemEditor<Alarm> _itemEditor = new();
     private DateTime _lastAlarmCheck = DateTime.MinValue;
     public AlarmManager(ILogger<AlarmManager> logger, GagspeakMediator mediator,
-        PatternManager patterns, RemoteHandler remoteHandler, FavoritesManager favorites,
-        ConfigFileProvider fileNames, HybridSaveService saver) : base(logger, mediator)
+        PatternManager patterns, FavoritesManager favorites, ConfigFileProvider files, 
+        HybridSaveService saver) : base(logger, mediator)
     {
         _patterns = patterns;
-        _remoteHandler = remoteHandler;
         _favorites = favorites;
-        _fileNames = fileNames;
+        _fileNames = files;
         _saver = saver;
 
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => MinutelyAlarmCheck());
@@ -257,7 +256,7 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
                  && DateTime.Now.TimeOfDay.Minutes == alarmTime.TimeOfDay.Minutes)
                 {
                     Logger.LogInformation($"Playing Alarm: {alarm.PatternRef.Label} ({alarm.PatternRef.Identifier})", LoggerType.Alarms);
-                    _remoteHandler.StartPattern(alarm.PatternRef, alarm.PatternStartPoint, alarm.PatternDuration);
+                    _patterns.SwitchPattern(alarm.PatternRef, alarm.PatternStartPoint, alarm.PatternDuration, MainHub.UID);
                 }
             }
         }

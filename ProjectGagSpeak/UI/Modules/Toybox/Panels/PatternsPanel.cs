@@ -23,6 +23,7 @@ public partial class PatternsPanel
     private readonly ILogger<PatternsPanel> _logger;
     private readonly PatternFileSelector _selector;
     private readonly PatternManager _manager;
+    private readonly DataDistributionService _dds;
     private readonly RemoteService _remotes;
     private readonly TutorialService _guides;
 
@@ -30,12 +31,14 @@ public partial class PatternsPanel
         ILogger<PatternsPanel> logger,
         PatternFileSelector selector,
         PatternManager manager,
+        DataDistributionService dds,
         RemoteService remotes,
         TutorialService guides)
     {
         _logger = logger;
         _selector = selector;
         _manager = manager;
+        _dds = dds;
         _remotes = remotes;
         _guides = guides;
     }
@@ -156,19 +159,23 @@ public partial class PatternsPanel
         {
             // at the moment this does not interact with the server but probably should so that pairs dont fall out of sync.
             if (isActive)
+            {
                 _manager.DisablePattern(_manager.ActivePatternId, MainHub.UID);
+            }
             else
             {
                 if (wouldBeSwitching)
+                {
                     _manager.SwitchPattern(pattern.Identifier, MainHub.UID);
+                }
                 else
+                {
                     _manager.EnablePattern(pattern.Identifier, MainHub.UID);
+
+                }
             }
         }
-        CkGui.AttachToolTip(isActive
-            ? "Stop this Pattern."
-            : wouldBeSwitching 
-                ? "Switch to play this Pattern on all valid Toys." 
-                : "Start this Pattern on all Toys.");
+        CkGui.AttachToolTip(isActive ? "Stop this Pattern." : wouldBeSwitching  
+            ? "Switch to play this Pattern on all valid Toys." : "Start this Pattern on all Toys.");
     }
 }
