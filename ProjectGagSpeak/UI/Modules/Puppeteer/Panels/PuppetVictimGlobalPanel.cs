@@ -94,6 +94,9 @@ public sealed partial class PuppetVictimGlobalPanel
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12)
             .Push(ImGuiStyleVar.WindowPadding, new Vector2(4))
             .Push(ImGuiStyleVar.FramePadding, new Vector2(2));
+
+        using var _ = ImRaii.Child("AliasList", region, false);
+
         // Place these into a list, so that when we finish changing an item, the list does not throw an error.
         foreach (var aliasItem in _filteredItems.ToList())
         {

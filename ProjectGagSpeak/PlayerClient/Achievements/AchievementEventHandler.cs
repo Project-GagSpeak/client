@@ -87,7 +87,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         _events.Subscribe<HardcoreSetting, bool, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
 
         _events.Subscribe<PatternHubInteractionKind>(UnlocksEvent.PatternHubAction, OnPatternHubAction);
-        _events.Subscribe<RemoteInteraction, Guid>(UnlocksEvent.RemoteAction, OnRemoteInteraction);
+        _events.Subscribe<RemoteInteraction, Guid, string>(UnlocksEvent.RemoteAction, OnRemoteInteraction);
         _events.Subscribe<VibeRoomInteraction>(UnlocksEvent.VibeRoomAction, OnVibeRoomInteraction);
 
         _events.Subscribe(UnlocksEvent.PvpPlayerSlain, OnPvpKill);
@@ -166,7 +166,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         _events.Unsubscribe<HardcoreSetting, bool, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
 
         _events.Unsubscribe<PatternHubInteractionKind>(UnlocksEvent.PatternHubAction, OnPatternHubAction);
-        _events.Unsubscribe<RemoteInteraction, Guid>(UnlocksEvent.RemoteAction, OnRemoteInteraction);
+        _events.Unsubscribe<RemoteInteraction, Guid, string>(UnlocksEvent.RemoteAction, OnRemoteInteraction);
         _events.Unsubscribe<VibeRoomInteraction>(UnlocksEvent.VibeRoomAction, OnVibeRoomInteraction);
 
         _events.Unsubscribe(UnlocksEvent.PvpPlayerSlain, OnPvpKill);
@@ -759,7 +759,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         }
     }
 
-    private void OnRemoteInteraction(RemoteInteraction kind, Guid id)
+    private void OnRemoteInteraction(RemoteInteraction kind, Guid id, string enactor)
     {
         switch (kind)
         {

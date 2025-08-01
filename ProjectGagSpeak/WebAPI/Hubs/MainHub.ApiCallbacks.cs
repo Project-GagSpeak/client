@@ -471,7 +471,9 @@ public partial class MainHub
     {
         if (dto.User.UID == UID)
         {
-            Logger.LogDebug($"OWN Callback_ReceiveDataToybox: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+            // if the callback wants us to update our pattern state but we are recording or in a vibe room we should reject this?
+            // patterns are fragile babies and must be handled with care.
+            Logger.LogDebug($"OWN KinksterUpdateActivePattern: {dto.User.AliasOrUID}", LoggerType.Callbacks);
             switch (dto.Type)
             {
                 case DataUpdateType.PatternSwitched:
@@ -488,7 +490,7 @@ public partial class MainHub
         }
         else
         {
-            Logger.LogDebug($"OTHER Callback_ReceiveDataToybox: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+            Logger.LogDebug($"OTHER KinksterUpdateActivePattern: {dto.User.AliasOrUID}", LoggerType.Callbacks);
             Generic.Safe(() => _kinksterListener.NewActivePattern(dto));
             return Task.CompletedTask;
         }
@@ -503,7 +505,6 @@ public partial class MainHub
         }
 
         // Valid type, so process the change.
-
         if (dto.User.UID == UID)
         {
             Logger.LogDebug($"OWN Callback_KinksterUpdateActiveAlarms: {dto.User.AliasOrUID}", LoggerType.Callbacks);

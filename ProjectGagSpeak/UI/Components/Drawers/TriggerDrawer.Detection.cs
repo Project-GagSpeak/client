@@ -275,7 +275,7 @@ public sealed partial class TriggerDrawer : IDisposable
         var iconsToShow = spellAct.StoredActions.Values.SelectMany(a => a).Distinct().ToList();
         var iconSize = new Vector2(ImGui.GetFrameHeight());
         var width = ImGui.GetContentRegionAvail().X;
-        using (CkRaii.FramedChildPaddedW("JobActionIcons", width, iconSize.Y * 2, CkColor.FancyHeaderContrast.Uint()))
+        using (CkRaii.FramedChildPaddedW("JobActionIcons", width, iconSize.Y * 2, CkColor.FancyHeaderContrast.Uint(), 0))
         {
             if (iconsToShow.Count() <= 0)
                 return;

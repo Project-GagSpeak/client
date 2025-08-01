@@ -238,7 +238,7 @@ public partial class TriggersPanel
         using var style = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, Vector2.Zero);
 
         var size = new Vector2(ImGui.GetContentRegionAvail().X - ImGui.GetFrameHeight() - ImGui.GetStyle().ItemSpacing.X, ImGui.GetFrameHeight());
-        using (var c = CkRaii.FramedChild("Priority", size, CkColor.FancyHeaderContrast.Uint(), CkStyle.ThinThickness(), 0, DFlags.RoundCornersAll))
+        using (var c = CkRaii.FramedChild("Priority", size, CkColor.FancyHeaderContrast.Uint(), 0, CkStyle.ThinThickness(), 0, DFlags.RoundCornersAll))
         {
             if (isEditing)
             {
@@ -262,8 +262,8 @@ public partial class TriggersPanel
         var flags = isEditing ? WFlags.None : WFlags.AlwaysUseWindowPadding;
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, ImGui.GetStyle().FramePadding);
         using var color = ImRaii.PushColor(ImGuiCol.FrameBg, 0);
-        using var c = CkRaii.FramedChild("Description", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint(),
-            CkStyle.ChildRoundingLarge(), CkStyle.ThinThickness(), 0, DFlags.RoundCornersAll, flags);
+        using var c = CkRaii.FramedChild("Description", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint(), 0,
+            CkStyle.ChildRoundingLarge(), CkStyle.ThinThickness(), DFlags.RoundCornersAll, flags);
 
         // Display the correct text field based on the editing state.
         if (isEditing)

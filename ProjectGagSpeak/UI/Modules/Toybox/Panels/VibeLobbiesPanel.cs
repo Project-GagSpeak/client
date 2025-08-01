@@ -201,7 +201,7 @@ public class VibeLobbiesPanel
             var hovered = ImGui.IsMouseHoveringRect(pos, pos + size);
             var bgCol = hovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
 
-            using (var c = CkRaii.FramedChildPaddedW($"##RoomListing-{vibeRoom.Name}", size.X, size.Y, bgCol, CkStyle.ChildRounding(), 1, DFlags.RoundCornersAll))
+            using (var c = CkRaii.FramedChildPaddedW($"##RoomListing-{vibeRoom.Name}", size.X, size.Y, bgCol, 0, CkStyle.ChildRounding(), 1, DFlags.RoundCornersAll))
             {
                 CkGui.FramedIconText(FAI.DoorOpen);
                 CkGui.TextFrameAlignedInline(vibeRoom.Name);

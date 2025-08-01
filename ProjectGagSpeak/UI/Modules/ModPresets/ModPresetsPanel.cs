@@ -96,7 +96,7 @@ public class ModPresetsPanel
     private void DrawPresetListForSelected()
     {
         using var col = ImRaii.PushColor(ImGuiCol.FrameBg, CkColor.FancyHeaderContrast.Uint());
-        using (CkRaii.FramedChild("PresetList", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint(), CkStyle.ChildRounding(),
+        using (CkRaii.FramedChild("PresetList", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint(), 0, CkStyle.ChildRounding(),
             2 * ImGuiHelpers.GlobalScale, wFlags: WFlags.AlwaysUseWindowPadding))
         {
             // return if the size of the keys is 0.

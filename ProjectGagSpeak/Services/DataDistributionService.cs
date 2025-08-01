@@ -483,7 +483,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             Logger.LogError($"Failed to push AliasPairUpdate to server. [{res}]");
     }
 
-    private async Task PushActivePatternUpdate(ActivePatternChangedMessage msg)
+    public async Task PushActivePatternUpdate(ActivePatternChangedMessage msg)
     {
         var onlinePlayers = _kinksters.GetOnlineUserDatas();
         Logger.LogDebug($"Pushing ActivePatternUpdate to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))} [{msg.UpdateType}]", LoggerType.OnlinePairs);
@@ -493,7 +493,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             Logger.LogError($"Failed to push ActivePattern update to server. Reason: [{res}]");
     }
 
-    private async Task PushActiveAlarmsUpdate(ActiveAlarmsChangedMessage msg)
+    public async Task PushActiveAlarmsUpdate(ActiveAlarmsChangedMessage msg)
     {
         var onlinePlayers = _kinksters.GetOnlineUserDatas();
         Logger.LogDebug($"Pushing ActiveAlarmsUpdate to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))} [{msg.UpdateType}]", LoggerType.OnlinePairs);
@@ -503,7 +503,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             Logger.LogError($"Failed to push ActiveAlarms update to server. Reason: [{res}]");
     }
 
-    private async Task PushActiveTriggersUpdate(ActiveTriggersChangedMessage msg)
+    public async Task PushActiveTriggersUpdate(ActiveTriggersChangedMessage msg)
     {
         var onlinePlayers = _kinksters.GetOnlineUserDatas();
         Logger.LogDebug($"Pushing ActivePatternUpdate to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))} [{msg.UpdateType}]", LoggerType.OnlinePairs);

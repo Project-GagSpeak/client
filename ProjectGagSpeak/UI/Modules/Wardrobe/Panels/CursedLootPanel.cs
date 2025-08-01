@@ -158,7 +158,7 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
 
         // Set the cursor screen pos to the end of the group
         var allItemsInPool = _manager.Storage.AllItemsInPoolByActive;
-        using (CkRaii.FramedChildPaddedWH("PoolItems", c.InnerRegion, CkColor.FancyHeaderContrast.Uint()))
+        using (CkRaii.FramedChildPaddedWH("PoolItems", c.InnerRegion, CkColor.FancyHeaderContrast.Uint(), 0))
         {
             if (allItemsInPool.Count <= 0)
                 return;
@@ -181,7 +181,7 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
     {
         var itemSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
 
-        using (CkRaii.FramedChild(item.Identifier.ToString(), itemSize, CkColor.FancyHeaderContrast.Uint()))
+        using (CkRaii.FramedChild(item.Identifier.ToString(), itemSize, CkColor.FancyHeaderContrast.Uint(), 0))
         {
             var active = item.AppliedTime != DateTimeOffset.MinValue;
             if(active)

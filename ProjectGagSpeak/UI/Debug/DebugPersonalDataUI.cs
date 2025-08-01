@@ -38,17 +38,21 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
+    private readonly PatternManager _patterns;
+    private readonly AlarmManager _alarms;
+    private readonly TriggerManager _triggers;
     public DebugPersonalDataUI(
         ILogger<DebugPersonalDataUI> logger,
         GagspeakMediator mediator,
         MainConfig config,
         MoodleDrawer moodleDrawer,
+        KinksterManager pairs,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
-        IdDisplayHandler nameDisplay,
-        KinksterManager pairs,
-        CosmeticService icon)
+        PatternManager patterns,
+        AlarmManager alarms,
+        TriggerManager triggers)
         : base(logger, mediator, "Kinkster Data Debugger")
     {
         _config = config;
@@ -57,6 +61,9 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         _gags = gags;
         _restrictions = restrictions;
         _restraints = restraints;
+        _patterns = patterns;
+        _alarms = alarms;
+        _triggers = triggers;
         // Ensure the list updates properly.
         Mediator.Subscribe<RefreshUiMessage>(this, _ => UpdateList());
 
@@ -99,7 +106,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 
     protected override void DrawInternal()
     {
-        if (ImGui.CollapsingHeader("Client Player Data"))
+        if (ImGui.CollapsingHeader("Client Player Data (Serverside Active State)"))
             DrawPlayerCharacterDebug();
 
         ImGui.Separator();
@@ -148,6 +155,19 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawGagData("Player", _gags.ServerGagData ?? new CharaActiveGags());
         DrawRestrictions("Player", _restrictions.ServerRestrictionData ?? new CharaActiveRestrictions());
         DrawRestraint("Player", _restraints.ServerData ?? new CharaActiveRestraint());
+
+        // Draw out the active pattern.
+        CkGui.ColorText("Active Pattern:", ImGuiColors.ParsedGold);
+        CkGui.TextInline(_patterns.ActivePatternId.ToString());
+
+        // Alarms.
+        CkGui.ColorText("Active Alarms:", ImGuiColors.ParsedGold);
+        CkGui.TextInline(string.Join(", ", _alarms.ActiveAlarms.Select(a => a.Label)));
+
+        // Triggers.
+        CkGui.ColorText("Active Triggers:", ImGuiColors.ParsedGold);
+        CkGui.TextInline(string.Join(", ", _triggers.ActiveTriggers.Select(t => t.Label)));
+
     }
 
     private void DrawPermissionRowBool(string name, bool value)

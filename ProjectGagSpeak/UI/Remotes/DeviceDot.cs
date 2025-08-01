@@ -31,8 +31,12 @@ public class DeviceDot : IEquatable<DeviceDot>
     public ToyBrandName FactoryName => _device.FactoryName;
     public string LabelName => _device.LabelName;
 
-    // Cleanup data and pass out the recorded data items.
-    // (probably use a better method to get the motor types and such idk)
+    public void OnPlaybackEnd()
+    {
+        foreach (var dot in _motorDotMap.Values)
+            dot.OnPlaybackEnd();
+    }
+
     public void CleanupData()
     {
         foreach (var dot in _motorDotMap.Values)

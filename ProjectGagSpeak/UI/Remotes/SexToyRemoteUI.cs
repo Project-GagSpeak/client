@@ -75,36 +75,35 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
         _hubCaller = hubCaller;
         _service = service;
         _guides = guides;
-        
+
         Flags = WFlags.NoScrollbar | WFlags.NoResize;
         this.PinningClickthroughFalse();
         this.SetBoundaries(new Vector2(REMOTE_W, WIN_H));
         RespectCloseHotkey = false;
         TitleBarButtons = new TitleBarButtonBuilder().AddTutorial(_guides, TutorialType.Remote).Build();
+
+        // we need to have a subscriber tied to our current plottedDevices ref, so we can perform operations in the pre-draw.
+        Mediator.Subscribe<RemoteSelectedKeyChanged>(this, newUser => SelRemoteUser = newUser.NewSelectedItem);
+
     }
 
-    private Vector2 WindowPos => Position.HasValue ? Position.Value : Vector2.Zero;
-    private Vector2 WindowSize => Size.HasValue ? Size.Value : Vector2.Zero;
+    private UserPlotedDevices? SelRemoteUser;
+    private RemoteAccess CurrentAccess => SelRemoteUser?.Access ?? RemoteAccess.Previewing;
 
     public override void OnOpen()
     {
         base.OnOpen();
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.RemoteAction, RemoteInteraction.RemoteOpened);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.RemoteAction, RemoteInteraction.RemoteOpened, Guid.Empty, MainHub.UID);
     }
 
     // This is where we set the remote name, based on the current state our remote is in.
     protected override void PreDrawInternal()
     {
-        // Set the window name here potentially.
-        WindowName = _lobbyManager.IsInVibeRoom
-            ? $"Vibe Room - {_lobbyManager.CurrentRoomName}" : _service.ClientData.InRecordingMode 
-                ? "Pattern Recorder" : "Personal Remote";
-
-        // Update size constraints (or maybe find a way to only do it on change?
+        WindowName = _service.GetRemoteUiName();
         this.SetBoundaries(_lobbyManager.IsInVibeRoom ? _vibeRoomSize : _remoteSize);
-
-        // Assign the theme if we have not already.
-        // _themePushed ensures our style is not sent out of alignment.
+        this.SetCloseState(CurrentAccess.WindowClosable);
+        
+        // Apply theme.
         if (!_themePushed)
         {
             ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0, 0));
@@ -122,7 +121,6 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
             ImPlot.PushStyleColor(ImPlotCol.Line, CkColor.LushPinkLine.Uint());
             ImPlot.PushStyleColor(ImPlotCol.PlotBg, CkColor.RemoteBgDark.Uint());
             ImPlot.PushStyleColor(ImPlotCol.FrameBg, 0x00FFFFFF);
-
             _themePushed = true;
         }
     }
@@ -144,10 +142,16 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
     // The actual juicy part of the code.
     protected override void DrawInternal()
     {
-        // restore window padding?
+        // Do null check for the selected remote user and return before anything else is set.
+        if (SelRemoteUser is null)
+        {
+            CkGui.ColorTextWrapped("No devices are currently connected to the remote " +
+                "for the selected user.", ImGuiColors.DalamudRed);
+            return;
+        }
+
         using var padding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(4));
-        // we need to know if we are creating a table or not, so have a
-        // seperate draw based if we are in a vibe room or not. (also grab devices here)
+        // Draw layout based on VibeRoom state. (can remove trycatch once stable)
         try
         {
             if (_lobbyManager.IsInVibeRoom)
@@ -190,33 +194,26 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
         var lineStroke = ImGui.GetStyle().ItemSpacing.Y * 0.5f;
         var lineYOffset = new Vector2(0, lineStroke * 0.5f);
 
-        // Attempt to get the devices to draw for. If we cannot get them, write a text error and return.
-        if (!_service.TryGetRemoteData(out var plotDeviceData))
-        {
-            CkGui.ColorTextWrapped("No devices are currently connected to the remote for the selected user.", ImGuiColors.DalamudRed);
-            return;
-        }
-
         // above and center (we hate ImPlot here)
         var plotGraphSize = new Vector2(c.InnerRegion.X, PLAYBACK_H * ImGuiHelpers.GlobalScale);
         wdl.AddLine(min + lineYOffset, min + new Vector2(plotGraphSize.X, lineYOffset.Y), CkColor.RemoteLines.Uint(), lineStroke);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + lineStroke);
 
-        DrawLatestPositionGraph(plotGraphSize, plotDeviceData);
+        DrawLatestPositionGraph(plotGraphSize);
 
         // below and center.
         var pbMax = ImGui.GetItemRectMax();
         wdl.AddLine(pbMax with { X = min.X } + lineYOffset, pbMax + lineYOffset, CkColor.RemoteLines.Uint(), lineStroke);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - lineStroke);
 
-        DrawSelectedToys(plotDeviceData);
+        DrawSelectedToys();
 
         // below and center.
         var barMax = ImGui.GetItemRectMax();
         wdl.AddLine(barMax with { X = min.X } + lineYOffset, barMax + lineYOffset, CkColor.RemoteLines.Uint(), lineStroke);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - lineStroke);
 
-        DrawInteractableRow(plotDeviceData);
+        DrawInteractableRow();
         bool isHoveringTable = ImGui.IsMouseHoveringRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax());
 
         if (_selectedMotor is { } motor && isHoveringTable)
@@ -229,7 +226,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
         }
     }
 
-    private void DrawLatestPositionGraph(Vector2 region, UserPlotedDevices plotDeviceData)
+    private void DrawLatestPositionGraph(Vector2 region)
     {
         ImPlot.SetNextAxesLimits(-150, 0, -0.05, 1.1, ImPlotCond.Always);
         using var _ = ImRaii.Plot("##PLAYBACK_GRAPH", region, PLOT_FLAGS);
@@ -238,18 +235,21 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
         ImPlot.SetupAxes("X Label", "Y Label", PLAYBACK_AXIS_FLAGS, PLAYBACK_AXIS_FLAGS);
 
         // Do not process if not running.
-        if (!plotDeviceData.UserIsBeingBuzzed)
+        if (!SelRemoteUser!.UserIsBeingBuzzed)
             return;
 
-        foreach (var device in plotDeviceData.Devices)
+        foreach (var device in SelRemoteUser.Devices)
         {
             // draw out the line for each motor.
             foreach(var motorDot in device.MotorDotMap.Values)
+            {
+                using var density = ImRaii.PushStyle(ImPlotStyleVar.LineWeight, 3f, motorDot.Equals(_selectedMotor));
                 ImPlot.PlotLine($"Motor{motorDot.MotorIdx}", ref _xPosList[0], ref motorDot.PosHistory[0], motorDot.PosHistory.Count);
+            }
         }
     }
 
-    private void DrawSelectedToys(UserPlotedDevices plotDeviceData)
+    private void DrawSelectedToys()
     {
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(4));
         using var c = CkRaii.ChildPaddedW("###CenterBar", ImGui.GetContentRegionAvail().X, DEVICEBAR_H.RemoveWinPadY(), CkColor.RemoteBg.Uint());
@@ -260,14 +260,14 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
         // Draw out the devices first, track which are valid since we dont
         // know if the device type is unknown or the image fails to load.
         // if at least one device was valid, we can draw the motor selections.
-        if (DrawDeviceSelections(plotDeviceData.Devices, imgSize) > 0)
+        if (DrawDeviceSelections(SelRemoteUser!.Devices, imgSize) > 0)
         {
             CkGui.VerticalSeparator(2);
             DrawMotorSelections(imgSize);
         }
 
         // right frame align text of the plotDeviceData user.
-        var displayString = $"{plotDeviceData.Owner.DisplayName}";
+        var displayString = $"{SelRemoteUser.Owner.DisplayName}";
         var textSize = ImGui.CalcTextSize(displayString);
         ImGui.SetCursorPos(ImGui.GetCursorPos() + new Vector2(ImGui.GetContentRegionAvail().X - textSize.X, (imgSize.Y - textSize.Y) / 2));
         CkGui.ColorText(displayString, ImGuiColors.DalamudGrey);
@@ -297,10 +297,10 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
                 ImGui.GetWindowDrawList().AddDalamudImageRounded(wrap, ImGui.GetItemRectMin(), imgSize, 45, col);
 
                 // Handle left click interaction.
-                if (ImGui.IsItemClicked())
+                if (ImGui.IsItemClicked(ImGuiMouseButton.Left) && CurrentAccess.DeviceSelect)
                 {
                     _selectedDevice = (_selectedDevice?.Equals(toyState) ?? false) ? null : toyState;
-                    _selectedMotor = null; // Reset the selected motor when changing devices.
+                    _selectedMotor = _selectedDevice?.MotorDotMap.Values.FirstOrDefault() ?? null;
                 }
 
                 // if this is the selected toy, draw a circle around it.
@@ -313,7 +313,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
                 }
 
                 // if right clicked, toggle IsEnabled state. If IsEnabled is false, all recorded values are always 0.0 for the device.
-                if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+                if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && CurrentAccess.DeviceStates)
                     toyState.IsEnabled = !toyState.IsEnabled;
             }
 
@@ -342,7 +342,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
             ImGui.Dummy(imgSize);
             var col = motorDot.Visible ? uint.MaxValue : ImGui.IsItemHovered() ? _hoverTint : _idleTint;
             ImGui.GetWindowDrawList().AddDalamudImageRounded(wrap, ImGui.GetItemRectMin(), imgSize, 45, col);
-            if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Left) && CurrentAccess.MotorSelect)
                 _selectedMotor = motorDot;
 
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
@@ -359,7 +359,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
         }
     }
 
-    private void DrawInteractableRow(UserPlotedDevices plotDeviceData)
+    private void DrawInteractableRow()
     {
         using var t = ImRaii.Table("Controls", 2, TFlags.NoPadInnerX | TFlags.NoPadOuterX | TFlags.BordersInnerV, ImGui.GetContentRegionAvail());
         if (!t) return;
@@ -368,15 +368,15 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
         ImGui.TableSetupColumn("RightSideButtons", ImGuiTableColumnFlags.WidthFixed, ImGuiHelpers.GlobalScale * 60);
 
         ImGui.TableNextColumn();
-        DrawInteractionPlot(plotDeviceData);
+        DrawInteractionPlot();
         //// _guides.OpenTutorial(TutorialType.Remote, StepsRemote.ControllableCircle, WindowPos, WindowSize);
         //// _guides.OpenTutorial(TutorialType.Patterns, StepsPatterns.DraggableCircle, WindowPos, WindowSize);
 
         ImGui.TableNextColumn();
-        DrawInteractionButtons(plotDeviceData);
+        DrawInteractionButtons();
     }
 
-    private void DrawInteractionPlot(UserPlotedDevices plotDeviceData)
+    private void DrawInteractionPlot()
     {
         ImPlot.SetNextAxesLimits(-50, +50, -0.1, 1.1, ImPlotCond.Always);
         using var plot = ImRaii.Plot("##MOTOR_DOT_INTERACTOR", ImGui.GetContentRegionAvail(), PLOT_FLAGS);
@@ -390,12 +390,13 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
         var mouseReleased = ImGui.IsMouseReleased(ImGuiMouseButton.Left);
         var pdl = ImPlot.GetPlotDrawList();
 
-        foreach (var device in plotDeviceData.Devices)
+        // we wanna still process them all, but only draw the motors for the valid ones.
+        foreach (var device in SelRemoteUser!.Devices)
         {
             // Disable the motors for this device is the device is not enabled.
             // (still process them for updates though)
-            using var dis = ImRaii.Disabled(!device.IsEnabled);
-            var col = device.IsEnabled && plotDeviceData.UserIsBeingBuzzed ? CkColor.LushPinkButton.Vec4() : CkColor.LushPinkButtonDisabled.Vec4();
+            using var dis = ImRaii.Disabled(!device.IsEnabled || !CurrentAccess.MotorControl);
+            var col = device.IsEnabled && SelRemoteUser.UserIsBeingBuzzed ? CkColor.LushPinkButton.Vec4() : CkColor.LushPinkButtonDisabled.Vec4();
 
 
             foreach (var motor in device.MotorDotMap.Values)
@@ -410,6 +411,13 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
                     var label = $"#{motor.MotorIdx}";
                     var textSize = ImGui.CalcTextSize(label);
                     pdl.AddText(plotCenter - textSize * 0.5f, ImGui.GetColorU32(ImGuiCol.Text), label);
+
+                    // if this is the selected motor, and we are dragging and looping, draw the inf line at the startintensity.
+                    if (motor.IsDragging && motor.DragLoopStartPos > 0)
+                    {
+                        var pos = motor.DragLoopStartPos;
+                        ImPlot.PlotInfLines($"DragLoopStart", ref pos, 1, ImPlotInfLinesFlags.Horizontal);
+                    }
                 }
 
                 // Handle a drag release.
@@ -436,16 +444,16 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
                 }
 
                 // Add to history
-                if (plotDeviceData.UserIsBeingBuzzed)
+                if (SelRemoteUser.UserIsBeingBuzzed)
                     motor.AddPosToHistory(device.IsEnabled);
             }
         }
     }
 
-    public void DrawInteractionButtons(UserPlotedDevices plotDeviceData)
+    public void DrawInteractionButtons()
     {
         // draw the timer
-        var timerText = plotDeviceData.UserIsBeingBuzzed ? $"{plotDeviceData.TimeAlive:mm\\:ss}" : "00:00";
+        var timerText = SelRemoteUser!.UserIsBeingBuzzed ? $"{SelRemoteUser.TimeAlive:mm\\:ss}" : "00:00";
         CkGui.CenterTextAligned(timerText);
         //// _guides.OpenTutorial(TutorialType.Remote, StepsRemote.TimerButton, WindowPos, WindowSize);
 
@@ -461,7 +469,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
         // Draw the Loop Button.
         ImGui.SetCursorPosX(ImGui.GetCursorPos().X + xOffset);
         var loopState = _selectedMotor?.IsLooping ?? false;
-        var disableLoop = _selectedMotor is null;
+        var disableLoop = _selectedMotor is null || !CurrentAccess.MotorFunctions;
         if (CustomImageButton(CosmeticService.CoreTextures.Cache[CoreTexture.ArrowSpin], disableLoop, loopState))
             _selectedMotor!.IsLooping = !loopState;
         CkGui.AttachToolTip(disableLoop ? "No Motor currently selected!"
@@ -473,7 +481,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
         // Process the Float Button.
         ImGui.SetCursorPos(new Vector2(ImGui.GetCursorPos().X + xOffset, ImGui.GetCursorPos().Y));
         var floatState = _selectedMotor?.IsFloating ?? false;
-        var disableFloat = _selectedMotor is null;
+        var disableFloat = _selectedMotor is null || !CurrentAccess.MotorFunctions;
         if (CustomImageButton(CosmeticService.CoreTextures.Cache[CoreTexture.CircleDot], disableFloat, floatState))
             _selectedMotor!.IsFloating = !_selectedMotor.IsFloating;
         CkGui.AttachToolTip(disableFloat ? "No Motor currently selected!" : $"{(floatState ? "Disable" : "Enable")} floating for this motor." +
@@ -482,8 +490,9 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
 
         // push to the bottom right  minus the button height to draw the last centered button.
         ImGui.SetCursorPos(powerDrawPos);
-        if (CustomImageButton(CosmeticService.CoreTextures.Cache[CoreTexture.Power], false, plotDeviceData.UserIsBeingBuzzed))
-            _service.SetUserRemotePower(plotDeviceData.Owner.User.UID, !plotDeviceData.RemotePowerActive, MainHub.UID);
+        var disablePower = !CurrentAccess.RemotePower;
+        if (CustomImageButton(CosmeticService.CoreTextures.Cache[CoreTexture.Power], disablePower, SelRemoteUser.UserIsBeingBuzzed))
+            _service.SetUserRemotePower(SelRemoteUser.Owner.User.UID, !SelRemoteUser.RemotePowerActive, MainHub.UID);
         CkGui.AttachToolTip("Start/Stop Recording the Sex Toy DataStream");
         // _guides.OpenTutorial(TutorialType.Remote, StepsRemote.PowerButton, WindowPos, WindowSize);
 
@@ -608,6 +617,6 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
         // (currently only for client, but later do for other users)
         _service.ClientData.OnRemoteWindowClosed();
         base.OnClose();
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.RemoteAction, RemoteInteraction.RemoteClosed);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.RemoteAction, RemoteInteraction.RemoteClosed, Guid.Empty, MainHub.UID);
     }
 }

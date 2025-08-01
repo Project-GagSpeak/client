@@ -126,7 +126,7 @@ public sealed class ModPresetDrawer
     public void DrawPresetPreview(ModSettingsPreset preset)
     {
         var region = ImGui.GetContentRegionAvail();
-        using (CkRaii.FramedChildPaddedWH("MP-Preview" + preset.Container.DirectoryPath, region, CkColor.FancyHeaderContrast.Uint()))
+        using (CkRaii.FramedChildPaddedWH("MP-Preview" + preset.Container.DirectoryPath, region, CkColor.FancyHeaderContrast.Uint(), 0))
         {
             using (UiFontService.GagspeakLabelFont.Push())
             {
@@ -178,7 +178,7 @@ public sealed class ModPresetDrawer
     public void DrawPresetEditor()
     {
         var outerRegion = ImGui.GetContentRegionAvail();
-        using (CkRaii.FramedChild("MP-EditorWindow", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint(), CkStyle.ChildRounding(),
+        using (CkRaii.FramedChild("MP-EditorWindow", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint(), 0, CkStyle.ChildRounding(),
             2 * ImGuiHelpers.GlobalScale, wFlags: WFlags.AlwaysUseWindowPadding))
         {
             if (_manager.ItemInEditor is not { } activeEditor)

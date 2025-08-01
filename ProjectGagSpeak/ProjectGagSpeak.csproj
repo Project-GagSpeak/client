@@ -82,7 +82,7 @@
         <PackageReference Include="Buttplug" Version="4.0.0" />
         
         <!--For image processing and manipulation beyond dalamuds textureprovider capabilities..-->
-        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.7" />
+        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
     </ItemGroup>
     
     <!-- If i could use projectgagspeak.json i would, but sadly dalamud prevents this lol.-->

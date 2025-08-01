@@ -70,8 +70,6 @@ public sealed class AliasItemDrawer
 
     public void DrawAchievementList(AchievementModuleKind type, Vector2 region)
     {
-        using var _ = CkRaii.Child("##GlobalAliasList2", region);
-
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f)
             .Push(ImGuiStyleVar.WindowBorderSize, 1f);
         using var col = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink)
@@ -94,14 +92,12 @@ public sealed class AliasItemDrawer
     public void DrawAchievementProgressBox(AchievementBase achievementItem, Vector2 size)
     {
         var imageTabWidth = 96 + ImGui.GetStyle().ItemSpacing.X * 2;
-        using var c = ImRaii.Child($"Achievement-{achievementItem.Title}", size, true, WFlags.ChildWindow);
-
+        using var _ = CkRaii.FramedChild($"Achievement-{achievementItem.Title}", size, new Vector4(0.25f, 0.2f, 0.2f, 0.4f).ToUint(), CkColor.VibrantPink.Uint(), 5f, 1f);
         using var t = ImRaii.Table($"AchievementTable {achievementItem.Title}", 2, ImGuiTableFlags.RowBg);
         if (!t) return;
 
         ImGui.TableSetupColumn("##AchievementText", ImGuiTableColumnFlags.WidthStretch);
         ImGui.TableSetupColumn("##AchievementIcon", ImGuiTableColumnFlags.WidthFixed, 96);
-
         // draw the information about the achievement and its progress bar within the first section.
         // maybe the progress bar could span the bottom if icon image size is too much of a concern idk.
         ImGui.TableNextColumn();
@@ -231,8 +227,7 @@ public sealed class AliasItemDrawer
         var pos = ImGui.GetCursorScreenPos();
         var childH = (ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.Y) * (shownActions + 1);
 
-        using var _ = CkRaii.FramedChildPaddedW($"AliasItem{aliasItem.Identifier}", ImGui.GetContentRegionAvail().X, childH,
-            CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f)));
+        using var _ = CkRaii.FramedChildPaddedW($"AliasItem{aliasItem.Identifier}", ImGui.GetContentRegionAvail().X, childH, new Vector4(0.25f, 0.2f, 0.2f, 0.4f).ToUint(), 0);
 
         using (ImRaii.Group())
         {
@@ -333,7 +328,7 @@ public sealed class AliasItemDrawer
             : (ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.Y) * (aliasItem.Actions.Count + 2);
 
         using var _ = CkRaii.FramedChildPaddedW($"AliasItem{aliasItem.Identifier}", ImGui.GetContentRegionAvail().X, childH,
-            CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f)), wFlags: ImGuiWindowFlags.NoScrollbar);
+            new Vector4(0.25f, 0.2f, 0.2f, 0.4f).ToUint(), 0, wFlags: ImGuiWindowFlags.NoScrollbar);
 
         using (ImRaii.Group())
         {

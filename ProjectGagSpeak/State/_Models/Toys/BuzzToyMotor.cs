@@ -3,7 +3,7 @@ using GagspeakAPI.Network;
 
 namespace GagSpeak.State.Models;
 
-public class BuzzToyMotor
+public class BuzzToyMotor : IEquatable<BuzzToyMotor>
 {
     public ToyMotor Type { get; }
     /// <summary>
@@ -62,4 +62,13 @@ public class BuzzToyMotor
 
         return new BuzzToyMotor(motorIdx, stepCount, type);
     }
+
+    public override bool Equals(object? obj)
+        => obj is BuzzToyMotor other && Equals(other);
+
+    public bool Equals(BuzzToyMotor? other)
+        => MotorIdx.Equals(other?.MotorIdx);
+
+    public override int GetHashCode()
+        => MotorIdx.GetHashCode();
 }

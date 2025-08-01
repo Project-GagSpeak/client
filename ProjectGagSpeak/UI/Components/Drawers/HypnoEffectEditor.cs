@@ -866,7 +866,7 @@ public class HypnoEffectEditor : IDisposable
                 var hovering = ImGui.IsMouseHoveringRect(pos, pos + itemSize);
                 var color = hovering ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkColor.FancyHeaderContrast.Uint();
                 var frameCol = isBinded ? 0xFF00FF00 : CkColor.VibrantPink.Uint();
-                using (CkRaii.FramedChild($"Preset-{setName}", itemSize, color, CkStyle.HeaderRounding(), 1.5f * ImGuiHelpers.GlobalScale, frameCol))
+                using (CkRaii.FramedChild($"Preset-{setName}", itemSize, color, frameCol, CkStyle.HeaderRounding(), 1.5f * ImGuiHelpers.GlobalScale))
                 {
                     var comboW = ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FAI.Eraser).X - ImGui.GetStyle().ItemInnerSpacing.X;
                     // Renaming Mode.
@@ -946,7 +946,7 @@ public class HypnoEffectEditor : IDisposable
             var pos = ImGui.GetCursorScreenPos();
             var hovering = ImGui.IsMouseHoveringRect(pos, pos + size);
             var color = hovering ? CkColor.ElementBG.Uint() : CkColor.FancyHeader.Uint();
-            using (CkRaii.FramedChild("NewPresetButton", size, color, CkStyle.HeaderRounding(), 1.5f * ImGuiHelpers.GlobalScale, CkColor.VibrantPink.Uint()))
+            using (CkRaii.FramedChild("NewPresetButton", size, color, CkColor.VibrantPink.Uint(), CkStyle.HeaderRounding(), 1.5f * ImGuiHelpers.GlobalScale))
                 CkGui.CenterTextAligned("New Preset From Options");
 
             if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && hovering && _editorRef._current.Effect is { } eff)
