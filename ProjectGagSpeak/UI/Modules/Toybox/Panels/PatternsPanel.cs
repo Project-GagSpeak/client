@@ -151,6 +151,7 @@ public partial class PatternsPanel
         var size = ImGui.GetItemRectSize();
         ImGui.GetWindowDrawList().AddDalamudImageRounded(CosmeticService.CoreTextures.Cache[icon], ImGui.GetItemRectMin(), size, 45);
         ImGui.GetWindowDrawList().AddCircleFilled(ImGui.GetItemRectMin() + size * .5f, size.X * .55f, color);
+        var wouldBeSwitching = _manager.ActivePatternId != Guid.Empty && !isActive;
         if (clicked)
         {
             // at the moment this does not interact with the server but probably should so that pairs dont fall out of sync.
@@ -158,16 +159,16 @@ public partial class PatternsPanel
                 _manager.DisablePattern(_manager.ActivePatternId, MainHub.UID);
             else
             {
-                if (_manager.ActivePatternId != Guid.Empty && !isActive)
-                {
+                if (wouldBeSwitching)
                     _manager.SwitchPattern(pattern.Identifier, MainHub.UID);
-                }
                 else
-                {
                     _manager.EnablePattern(pattern.Identifier, MainHub.UID);
-                }
             }
         }
-        CkGui.AttachToolTip("Start this Pattern on all Toys.");
+        CkGui.AttachToolTip(isActive
+            ? "Stop this Pattern."
+            : wouldBeSwitching 
+                ? "Switch to play this Pattern on all valid Toys." 
+                : "Start this Pattern on all Toys.");
     }
 }

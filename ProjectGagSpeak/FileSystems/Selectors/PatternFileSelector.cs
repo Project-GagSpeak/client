@@ -30,7 +30,6 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
     private readonly MainHub _hub;
     private readonly FavoritesManager _favorites;
     private readonly PatternManager _manager;
-    private readonly RemoteService _remotes;
     public GagspeakMediator Mediator { get; init; }
 
     /// <summary> 
@@ -46,14 +45,13 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
     => base.SelectedLeaf;
 
     public PatternFileSelector(ILogger<PatternFileSelector> log, GagspeakMediator mediator, MainHub hub,
-        FavoritesManager favorites, PatternManager manager, RemoteService remotes, PatternFileSystem fileSystem) 
+        FavoritesManager favorites, PatternManager manager, PatternFileSystem fileSystem) 
         : base(fileSystem, Svc.Logger.Logger, Svc.KeyState, "##PatternsFS")
     {
         Mediator = mediator;
         _hub = hub;
         _favorites = favorites;
         _manager = manager;
-        _remotes = remotes;
 
         Mediator.Subscribe<ConfigPatternChanged>(this, (msg) => OnPatternChange(msg.Type, msg.Item, msg.OldString));
         // Do not subscribe to the default renamer, we only want to rename the item itself.
@@ -172,12 +170,9 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
 
     protected override void DrawCustomFilters()
     {
-        var canRecord = _remotes.CanBeginRecording;
+        var canRecord = _manager.CanRecordPattern();
         if (CkGui.IconButton(FAI.Plus, disabled: !canRecord, inPopup: true))
-        {
-            if(_remotes.TryEnableRecordingMode())
-                Mediator.Publish(new UiToggleMessage(typeof(BuzzToyRemoteUI), ToggleType.Show));
-        }
+            _manager.OpenRemoteForRecording();
         CkGui.AttachToolTip(canRecord ? "Create a new Pattern." : "Cannot be in a VibeRoom, or playing a pattern!");
 
         ImGui.SameLine(0, 1);

@@ -3,17 +3,65 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Dto.VibeRoom;
-using GagspeakAPI.Enums;
 using GagspeakAPI.Network;
-using Penumbra.GameData.Interop;
 
 namespace GagSpeak.Gui.Remote;
+
+// maybe convert to class, not sure.
+public readonly record struct RemoteAccess(
+    bool WindowClosable = true,
+    bool RemotePower = false,
+    bool DeviceStates = false,
+    bool MotorStates = false,
+    bool MotorFunctions = false,
+    bool MotorControl = false
+    )
+{
+    public static readonly RemoteAccess Previewing = new(true, false, false, false, false, false);
+
+    public static readonly RemoteAccess ForcedPlayback = new(false, false, false, false, false, false);
+
+    public static readonly RemoteAccess Playback = new(true, true, false, false, false, false);
+    
+    public static readonly RemoteAccess Recording = new(false, true, true, true, true, true);
+
+    public static readonly RemoteAccess All = new(true, true, true, true, true, true);
+}
+
+// a shared index reference class to hold pattern data that can be ref'd in all associated motors.
+public class RemotePlaybackRef
+{
+    public Guid PatternId { get; set; } = Guid.Empty;
+    public int Idx { get; set; } = -1;
+    public int Length { get; set; } = -1;
+    public bool Looping { get; set; } = false;
+
+    public void Reset()
+    {
+        PatternId = Guid.Empty;
+        Idx = -1;
+        Length = -1;
+        Looping = false;
+    }
+
+    public void SetPattern(Guid patternId, int length, bool looping = false)
+    {
+        // do not set if the idx is not -1.
+        if (Idx != -1)
+            return;
+
+        PatternId = patternId;
+        Idx = 0;
+        Length = length;
+        Looping = looping;
+    }
+}
 
 public sealed class ParticipantPlotedDevices : UserPlotedDevices
 {
     public TimeSpan LastCompileTime { get; private set; } = TimeSpan.Zero;
     public ParticipantPlotedDevices(GagspeakMediator mediator, RoomParticipantBase user)
-        : base(mediator, user)
+        : base(mediator, user, RemoteAccess.Previewing)
     { }
 
     protected override void OnControlBegin(string enactor)
@@ -60,53 +108,66 @@ public sealed class ParticipantPlotedDevices : UserPlotedDevices
 
 public sealed class ClientPlotedDevices : UserPlotedDevices
 {
+    // In the below fields, -1 implies that the data is no longer present or running.
+    private RemotePlaybackRef _patternInfo = new();
+    private RemotePlaybackRef _injectedInfo = new();
 
-    private bool _recordingData = false;
-
-    /// <summary>
-    ///     Informs us the current index in the playback the pattern is at. <para />
-    ///     If -1, it implies not pattern is stored, and replacable.
-    /// </summary>
-    /// <remarks> This idx is passed down to all RemoteDevice items on each update tick. </remarks>
-    private int _playbackDataIdx = -1;
-    private int _playbackLength = -1;
-    private bool _loopingPattern = false;
-    public Guid ActivePattern { get; private set; } = Guid.Empty;
-
-    /// <summary>
-    ///     The playback index of the injected vibeData from a vibeLobby. <para />
-    ///     This index may need to be shifted around to keep the playback data 
-    ///     at a reasonable size, but if -1, it implies no data is injected.
-    /// </summary>
-    /// <remarks> This idx is passed down to all RemoteDevice items on each update tick. </remarks>
-    private int _injectedDataIdx = -1;
-    private int _injectedDataLength = -1;
-
-    public ClientPlotedDevices(GagspeakMediator mediator, RoomParticipantBase user) 
-        : base(mediator, user)
+    public ClientPlotedDevices(GagspeakMediator mediator, RoomParticipantBase user, RemoteAccess access)
+        : base(mediator, user, access)
     { }
 
+    public bool InRecordingMode { get; private set; } = false;
+    public Guid ActivePattern => _patternInfo.PatternId;
+    public bool IsPlayingPattern => _patternInfo.Idx != -1;
+    public bool IsPlayingVibeData => _injectedInfo.Idx != -1;
+
+    public bool TryUpdateRemoteForRecording()
+    {
+        if (InRecordingMode)
+        {
+            Svc.Logger.Warning($"Cannot set remote for recording as it is already in recording mode.");
+            return false;
+        }
+
+        // we should reset the current recording state, and update access for recording.
+        TrySetRemotePower(false, MainHub.UID);
+        Access = RemoteAccess.All;
+        InRecordingMode = true;
+        _mediator.Publish(new UiToggleMessage(typeof(BuzzToyRemoteUI), ToggleType.Show));
+        return true;
+    }
+
     /// <summary>
-    ///     If we are recording all pattern input data. Should be set when wishing to record a pattern.
+    ///     Should be called whenever the remote window closed, and halt any current state.
     /// </summary>
-    public bool RecordingData { get; set; } = false;
+    public void OnRemoteWindowClosed()
+    {
+        Svc.Logger.Information($"Remote window closed for {Owner.DisplayName}, halting all current state.");
+        // if we are in recording mode, we should end the recording and compile the data.
+        if (TrySetRemotePower(false, MainHub.UID, true))
+            Svc.Logger.Information($"Remote power for {Owner.DisplayName} was successfully turned off.");
+        else
+            Svc.Logger.Warning($"Failed to turn off remote power for {Owner.DisplayName}.");
+    }
 
-    public bool IsPlayingPattern => _playbackDataIdx != -1;
-
-    public bool IsPlayingVibeData => _injectedDataIdx != -1;
 
     /// <summary>
     ///     Override method for startup on remote power for the client user. <para />
     ///     If you intend to fire achievements or custom operations for Recording Start, add them here. <para />
     ///     If you want to fire events on custom startup for patterns or injections, use their respective methods.
     /// </summary>
-    /// <param name="enactorUid"> who dun did it. </param>
+    /// <remarks> You will want to fire any achievements in this method, server calls outside it.</remarks>
     protected override void OnControlBegin(string enactor)
     {
-        if (RecordingData)
+        if (InRecordingMode)
         {
             // Achievements for recording start logic here.
 
+        }
+
+        if (IsPlayingPattern)
+        {
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.RemoteAction, RemoteInteraction.PatternPlaybackStart, ActivePattern, enactor);
         }
         // do the base startup control logic
         _timeAlive.Start();
@@ -115,16 +176,16 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
     protected override void OnControlEnd(string enactor)
     {
         var timeAlive = TimeAlive;
-        _timeAlive.Stop();
+        _timeAlive.Reset();
 
         // handle logic for recording end.
-        if (RecordingData)
+        if (InRecordingMode)
         {
             // publish out to the pattern save popup handle.
             Svc.Logger.Information($"User ended control of {Owner.DisplayName}, and recording ended after {timeAlive.TotalSeconds} seconds.");
             _mediator.Publish(new PatternSavePromptMessage(CompileFromRecording(), timeAlive));
             // reset the recording data state.
-            RecordingData = false;
+            InRecordingMode = false;
         }
 
         // If we were in the midst of playing back a pattern (was not stopped prior to it ending),
@@ -134,8 +195,7 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
             // Process achievements here.
             Svc.Logger.Information($"User ended control of {Owner.DisplayName}, and playback of pattern ended.");
             GagspeakEventManager.AchievementEvent(UnlocksEvent.RemoteAction, RemoteInteraction.PatternPlaybackEnd, ActivePattern, enactor);
-            _playbackDataIdx = -1;
-            _playbackLength = -1;
+            _patternInfo.Reset();
             // push new toybox data out so we know the pattern stopped.
             // maybe make another mediator method for it or change how toybox data updates.
         }
@@ -145,7 +205,9 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
             Svc.Logger.Information($"User ended control of {Owner.DisplayName}, and vibe data playback ended.");
             // fire any achievements on vibe data ending here, once added.
             // No additional logic needs to be performed here.
-            _injectedDataIdx = -1;
+            _injectedInfo.Idx = -1;
+            _injectedInfo.Length = -1;
+
         }
 
         // perform a cleanup on all device dot motor dot data.
@@ -170,20 +232,20 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
         {
             // perform a playback index update to the devices.
             foreach (var device in _devices)
-                device.PlaybackLatestPos(_playbackDataIdx);
+                device.PlaybackLatestPos();
             // update the playback index for the next cycle.
-            _playbackDataIdx++;
+            _patternInfo.Idx++;
             // if the playback index is greater than the length of the playback data, reset it.
-            if (_playbackDataIdx >= _playbackLength)
+            if (_patternInfo.Idx >= _patternInfo.Length)
             {
                 // if looping, simply reset it.
-                if (_loopingPattern)
-                    _playbackDataIdx = 0;
+                if (_patternInfo.Looping)
+                    _patternInfo.Idx = 0;
                 else
                 {
                     // otherwise, set the playback idx to -1 and fire achievements for playback end.
-                    _playbackDataIdx = -1;
-                    _playbackLength = -1;
+                    _patternInfo.Idx = -1;
+                    _patternInfo.Length = -1;
                     Svc.Logger.Information($"Playback ended for {Owner.DisplayName}'s remote data.");
                 }
             }
@@ -192,18 +254,17 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
         {
             // perform a playback of the injected vibe data.
             foreach (var device in _devices)
-                device.PlaybackLatestPos(_injectedDataIdx);
-            _injectedDataIdx++;
+                device.PlaybackLatestPos();
+            _injectedInfo.Idx++;
             // if we reached the end, set the index back to -1.
-            if (_injectedDataIdx >= _injectedDataLength)
+            if (_injectedInfo.Idx >= _injectedInfo.Length)
             {
                 // reset the injected data index to -1, and fire achievements for vibe data end.
-                _injectedDataIdx = -1;
-                _injectedDataLength = -1;
+                _injectedInfo.Reset();
                 Svc.Logger.Information($"Vibe data playback ended for {Owner.DisplayName}'s remote data.");
             }
         }
-        else if (RecordingData)
+        else if (InRecordingMode)
         {
             // if we are recording data, update the latest positions of all devices.
             foreach (var device in _devices)
@@ -218,81 +279,126 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
     }
 
     // Clears the current pattern and injects a new one for playback.
-    public void SwitchPlaybackData(Pattern newPattern, TimeSpan startPoint, TimeSpan duration, string enactor)
+    public bool SwitchPlaybackData(Pattern newPattern, TimeSpan startPoint, TimeSpan duration, string enactor)
     {
-        EndPlaybackData(enactor);
+        if(!EndPlaybackData(enactor))
+        {
+            Svc.Logger.Warning($"Failed to end playback data for {Owner.DisplayName} before switching to new pattern playback.");
+            return false;
+        }
         // Now start up the new playback data.
-        StartPlaybackData(newPattern, startPoint, duration, enactor);
+        if (!StartPlaybackData(newPattern, startPoint, duration, enactor))
+        {
+            Svc.Logger.Warning($"Failed to start playback data for {Owner.DisplayName} with the new pattern.");
+            return false;
+        }
+
+        Svc.Logger.Information($"Switched playback data for {Owner.DisplayName} to new pattern {newPattern.Label} at start point {startPoint} with duration {duration}.");
+        return true;
     }
 
     // This assumes the enactor is already valid to do so. May break the flow otherwise.
-    public void EndPlaybackData(string enactor)
+    public bool EndPlaybackData(string enactor)
     {
         Svc.Logger.Information($"User {enactor} ended currently playing Pattern {ActivePattern} for {Owner.DisplayName}.");
         // fire any achievement events for ending the pattern playback.
         GagspeakEventManager.AchievementEvent(UnlocksEvent.RemoteAction, RemoteInteraction.PatternPlaybackEnd, ActivePattern, enactor);
         // reset the playback data idx and length.
-        _playbackDataIdx = -1;
-        _playbackLength = -1;
-        ActivePattern = Guid.Empty;
+        _patternInfo.Reset();
+        return true;
     }
 
-    // inject pattern data for playback. After injection, we should invoke any achievements related to pattern playback start.
-    // as the next update loop cycle will begin playback. (even over injected vibe data).
-    public void StartPlaybackData(Pattern pattern, TimeSpan startPoint, TimeSpan duration, string enactor)
+    public bool CanPlaybackPattern(Pattern pattern) // maybe add actor idk
+    {
+        // get all toys used by the pattern. Motors should not madder, since toys with matching type, have the matching motors.
+        foreach (var toy in pattern.PlaybackData.DeviceData.Select(d => d.Toy))
+            // check if the devices have one of these, if they do, return true.
+            if (_devices.Any(d => d.FactoryName == toy && d.ValidForRemote))
+                return true;
+        // Otherwise return false.
+        return false;
+    }
+
+    /// <summary>
+    ///     You are expected to validate this action with <seealso cref="CanPlaybackPattern(Pattern)"/>, as this will not check for validity.
+    /// </summary>
+    /// <returns> True if the pattern started, false otherwise. </returns>
+    public bool StartPlaybackData(Pattern pattern, TimeSpan startPoint, TimeSpan duration, string enactor)
     {
         // reject if a pattern is already being played back.
         if (IsPlayingPattern)
         {
             Svc.Logger.Warning($"Cannot inject playback data for {Owner.DisplayName} as a pattern is already being played back.");
-            return;
+            return false;
         }
 
-        try
+        Svc.Logger.Information($"Kinkster: {enactor} requested Playback with the pattern ({pattern.Label}) for remote owner ({Owner.DisplayName}) at timestamp.");
+        var startIndex = (int)(startPoint.TotalMilliseconds / 20);
+        var count = (int)(duration.TotalMilliseconds / 20); // universal truth for size.
+        Svc.Logger.Information($"StartingIdx: {startIndex} ({startPoint.ToString()}), Count: {count} ({duration.ToString()}) for pattern playback.");
+
+        // incase the duration is invalid, check and update the count.
+        var maxDataLength = pattern.PlaybackData.DeviceData.Max(d => d.MotorData.Max(m => m.Data.Length));
+        if (count < maxDataLength)
+            count = maxDataLength;
+
+        foreach (var deviceData in pattern.PlaybackData.DeviceData)
         {
-            var results = new List<DeviceStream>();
-            var startIndex = (int)(startPoint.TotalMilliseconds / 20);
-            var count = (int)(duration.TotalMilliseconds / 20);
+            Svc.Logger.Information($"Processing Device: {deviceData.Toy} for playback injection.");
+            // if the device is not a device that we own, and is usable for remotes, do not add it.
+            if (_devices.FirstOrDefault(cd => cd.FactoryName == deviceData.Toy) is not { } device || !device.ValidForRemote)
+                continue;
 
-            foreach (var deviceData in pattern.PlaybackData.DeviceData)
+            Svc.Logger.Information("Device Match Found: " + device.FactoryName);
+            foreach (var motor in deviceData.MotorData)
             {
-                // if the device is not a device that we own, and is usable for remotes, do not add it.
-                if (_devices.FirstOrDefault(cd => cd.FactoryName == deviceData.Toy) is not { } device)
-                    continue;
-
-                // foreach motor in the device data, locate the motor dot via the mapping, and inject the data into the recorded positions.
-                foreach (var motor in deviceData.MotorData)
+                // if the motor is not present in the device, skip it.
+                if (!device.MotorDotMap.TryGetValue(motor.MotorIdx, out var motorDot))
                 {
-                    // if the motor is not present in the device, skip it.
-                    if (!device.MotorDotMap.TryGetValue(motor.MotorIdx, out var motorDot))
-                        continue;
-
-                    // Slice the data via startpoint and duration, and inject it into the motor's recorded positions.
-                    var sliced = motor.Data.Skip(startIndex).Take(count);
-                    motorDot.InjectPlaybackData(sliced);
+                    Svc.Logger.Warning($"Motor {motor.MotorIdx} not found in device {device.FactoryName}. Skipping injection.");
+                    continue;
                 }
+
+                // Slice the data via startpoint and duration, and inject it into the motor's recorded positions.
+                var sliced = motor.Data.Skip(startIndex).Take(count).ToList();
+                // add missing elements to ensure unified size.
+                if (sliced.Count < count)
+                {
+                    var missing = count - sliced.Count;
+                    sliced.AddRange(Enumerable.Repeat(0.0, missing));
+                }
+                // inject data.
+                motorDot.InjectPlaybackData(sliced, _patternInfo);
+                Svc.Logger.Information($"Injected {sliced.Count()} data points into motor [{motor.MotorIdx}] on device [{device.FactoryName}] for playback.");
             }
 
-            // Update the playback idx for pattern to be 0 so we know to prioritize it and disable manual control.
-            _playbackDataIdx = 0;
-            _playbackLength = count;
-            _loopingPattern = pattern.ShouldLoop;
-            ActivePattern = pattern.Identifier;
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.RemoteAction, RemoteInteraction.PatternPlaybackStart, ActivePattern, enactor);
-
-            // Open the remote if not opened already, and begin control if not already in constrol.
-            if (!UiService.IsRemoteUIOpen())
-                _mediator.Publish(new UiToggleMessage(typeof(BuzzToyRemoteUI), ToggleType.Show));
-
-            if (!RemotePowerActive && TrySetRemotePower(true, enactor))
-                Svc.Logger.Information($"User {MainHub.UID} started Pattern Playback using {pattern.Label} vibe data playback for {Owner.DisplayName} at timestamp.");
-            // should also fire a toybox update that we now have an active pattern being played or something i guess?
+            // enable the device if it is not.
+            device.IsEnabled = true;
         }
-        catch (Bagagwa ex)
+
+        // Update the playback idx for pattern to be 0 so we know to prioritize it and disable manual control.
+        _patternInfo.SetPattern(pattern.Identifier, count, pattern.ShouldLoop);
+
+        // activate if not yet active.
+        if (!RemotePowerActive)
         {
-            // prevent any possible unforseen divide by zero's here.
-            Svc.Logger.Error($"Error injecting playback data: {ex}");
+            Svc.Logger.Information($"Remote was not active, powering on to begin playback.");
+            if (!TrySetRemotePower(true, enactor))
+            {
+                Svc.Logger.Error($"Failed to power on remote for playback injection for {Owner.DisplayName}. Enactor: {enactor}");
+                return false;
+            }
+            Svc.Logger.Information($"{enactor} powered on the remote sucessfully. Started Pattern Playback for {Owner.DisplayName}'s remote.");
         }
+
+        // Open the remote if not opened already, and begin control if not already in constrol.
+        if (!UiService.IsRemoteUIOpen())
+        {
+            Svc.Logger.Information($"Opening Remote UI for {Owner.DisplayName} to begin pattern playback.");
+            _mediator.Publish(new UiToggleMessage(typeof(BuzzToyRemoteUI), ToggleType.Show));
+        }
+        
+        return true;
     }
 
     // inject the 2 second vibe data stream for our devices where valid at the timestamp index provided, compared against the start time.
@@ -302,6 +408,9 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
         // Reject this if we are not currently being controlled.
         if (!RemotePowerActive)
             return;
+
+        // get the maximum length among all motors.
+        var maxDataLen = dataStream.Max(d => d.MotorData.Max(m => m.Data.Length));
 
         // it is very important that the data added from this is appended to the motors at the precise index it is intended for.
         foreach (var stream in dataStream)
@@ -314,18 +423,31 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
             foreach (var motorStream in stream.MotorData)
             {
                 // if the motor is not present in the device, skip it.
-                if (device.MotorDotMap.TryGetValue(motorStream.MotorIdx, out var motor))
-                    motor.InjectPlaybackData(motorStream.Data);
+                if (!device.MotorDotMap.TryGetValue(motorStream.MotorIdx, out var motor))
+                    continue;
+
+                // add any missing data as 0.0
+                var missingDataCount = maxDataLen - motorStream.Data.Length;
+                if (missingDataCount > 0)
+                {
+                    var missingData = Enumerable.Repeat(0.0, missingDataCount).ToArray();
+                    motor.InjectPlaybackData(motorStream.Data.Concat(missingData).ToArray(), _injectedInfo);
+                }
+                else
+                {
+                    motor.InjectPlaybackData(motorStream.Data, _injectedInfo);
+                }
             }
         }
-
+        // add the max length to the current injected data length.
+        _injectedInfo.Length += maxDataLen;
         // Fire any achievements for vibe data injection here.
 
 
         // update the injected data playback idx, if not yet playing.
-        if (_injectedDataIdx == -1)
+        if (_injectedInfo.Idx == -1)
         {
-            _injectedDataIdx = 0;
+            _injectedInfo.Idx = 0;
             GagspeakEventManager.AchievementEvent(UnlocksEvent.RemoteAction, RemoteInteraction.VibeDataStreamStart, Guid.Empty, enactor);
         }
         
@@ -367,11 +489,13 @@ public class UserPlotedDevices
 
     protected HashSet<DeviceDot> _devices = new();
     protected Stopwatch _timeAlive = new();
-    public UserPlotedDevices(GagspeakMediator mediator, RoomParticipantBase user)
+    public UserPlotedDevices(GagspeakMediator mediator, RoomParticipantBase user, RemoteAccess access)
     {
         _mediator = mediator;
         Owner = user;
     }
+
+    public RemoteAccess Access { get; protected set; } = RemoteAccess.Previewing;
 
     public bool CanControl => _devices.Count > 0;
 
@@ -382,16 +506,16 @@ public class UserPlotedDevices
     ///     If the value is true, it implies that the power is active and they are part of the update loop. <para />
     ///     This value should not be set outside of a centralized control method (update loop).
     /// </summary>
-    public bool TrySetRemotePower(bool newValue, string enactor)
+    public bool TrySetRemotePower(bool newValue, string enactor, bool forcedStop = false)
     {
         // if we cannot turn on and we are trying to turn on, reject it.
-        if (!CanControl && newValue)
+        if (!forcedStop && (!CanControl && newValue))
         {
             Svc.Logger.Warning($"Cannot set RemotePowerActive to true for {Owner.DisplayName} as they have no devices.");
             return false;
         }
 
-        if (RemotePowerActive == newValue)
+        if (!forcedStop && (RemotePowerActive == newValue))
             return false;
 
         // if new value is true
@@ -454,7 +578,7 @@ public class UserPlotedDevices
     }
 
     protected virtual void OnControlBegin(string enactor) => _timeAlive.Start();
-    protected virtual void OnControlEnd(string enactor) => _timeAlive.Stop();
+    protected virtual void OnControlEnd(string enactor) => _timeAlive.Reset();
 
     /// <summary>
     ///     The update loop task is the essential component of a user's device data. <para />

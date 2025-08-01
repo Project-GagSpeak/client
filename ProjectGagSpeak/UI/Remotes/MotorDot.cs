@@ -10,6 +10,7 @@ namespace GagSpeak.Gui.Remote;
 /// </summary>
 public class MotorDot(BuzzToyMotor motor) : IEquatable<MotorDot>
 {
+    public RemotePlaybackRef PlaybackRef { get; private set; } = new();
     public readonly BuzzToyMotor Motor = motor;
     public uint MotorIdx => Motor.MotorIdx;
 
@@ -90,6 +91,7 @@ public class MotorDot(BuzzToyMotor motor) : IEquatable<MotorDot>
             : 0.0;
     public void ClearData()
     {
+        PlaybackRef = new();    
         PosHistory.Clear();
         RecordedData.Clear();
         _dragLoopData.Clear();
@@ -107,9 +109,10 @@ public class MotorDot(BuzzToyMotor motor) : IEquatable<MotorDot>
     /// </summary>
     public void AddPosToHistory(bool deviceEnabled)
     {
-        var posToPush = deviceEnabled
-            ? (_useDragLoopData ? _dragLoopData[_dragLoopPlaybackIdx] : Position[1])
-            : 0.0;
+        var posToPush = !deviceEnabled
+            ? 0.0 : PlaybackRef.Idx != -1
+                ? RecordedData[PlaybackRef.Idx] : (_useDragLoopData ? _dragLoopData[_dragLoopPlaybackIdx] : Position[1]);
+
         PosHistory.PushFront(posToPush);
 
         // if we recorded from the loop cache, be sure to increment it.
@@ -139,8 +142,11 @@ public class MotorDot(BuzzToyMotor motor) : IEquatable<MotorDot>
     }
 
     // UNKNOWN HOW TO INCORPORATE THIS INTO THE NEW FRAMEWORK.
-    public void InjectPlaybackData(IEnumerable<double> playbackData)
+    public void InjectPlaybackData(IEnumerable<double> playbackData, RemotePlaybackRef playbackRef)
     {
+        // set a reference so that we can easily access the intensity at the right point for sending off recorded data.
+        PlaybackRef = playbackRef;
+        // inject the recorded data for the motor.
         RecordedData.Clear();
         RecordedData.AddRange(playbackData);
         _dragLoopData.Clear();

@@ -475,13 +475,13 @@ public partial class MainHub
             switch (dto.Type)
             {
                 case DataUpdateType.PatternSwitched:
-                    _kinkListener.PatternSwitched(dto.ActivePattern, dto.Enactor.UID);
+                    _toyboxListener.PatternSwitched(dto.ActivePattern, dto.Enactor.UID);
                     break;
                 case DataUpdateType.PatternExecuted:
-                    _kinkListener.PatternStarted(dto.ActivePattern, dto.Enactor.UID);
+                    _toyboxListener.PatternStarted(dto.ActivePattern, dto.Enactor.UID);
                     break;
                 case DataUpdateType.PatternStopped:
-                    _kinkListener.PatternStopped(dto.ActivePattern, dto.Enactor.UID);
+                    _toyboxListener.PatternStopped(dto.ActivePattern, dto.Enactor.UID);
                     break;
             }
             return Task.CompletedTask;
@@ -507,7 +507,7 @@ public partial class MainHub
         if (dto.User.UID == UID)
         {
             Logger.LogDebug($"OWN Callback_KinksterUpdateActiveAlarms: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-            _kinkListener.AlarmToggled(dto.ChangedItem, dto.Enactor.UID);
+            _toyboxListener.AlarmToggled(dto.ChangedItem, dto.Enactor.UID);
             return Task.CompletedTask;
         }
         else
@@ -530,7 +530,7 @@ public partial class MainHub
         if (dto.User.UID == UID)
         {
             Logger.LogDebug($"OWN Callback_ReceiveDataToybox: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-            _kinkListener.TriggerToggled(dto.ChangedItem, dto.Enactor.UID);
+            _toyboxListener.TriggerToggled(dto.ChangedItem, dto.Enactor.UID);
             return Task.CompletedTask;
         }
         else
@@ -674,7 +674,7 @@ public partial class MainHub
     public Task Callback_RoomJoin(RoomParticipant dto)
     {
         Logger.LogDebug("Callback_RoomJoin: " + dto, LoggerType.Callbacks);
-        _kinkListener.KinksterJoinedRoom(dto);
+        _toyboxListener.KinksterJoinedRoom(dto);
         return Task.CompletedTask;
     }
 
@@ -682,7 +682,7 @@ public partial class MainHub
     public Task Callback_RoomLeave(UserData dto)
     {
         Logger.LogDebug("Callback_RoomLeave: " + dto, LoggerType.Callbacks);
-        _kinkListener.KinksterLeftRoom(dto);
+        _toyboxListener.KinksterLeftRoom(dto);
         return Task.CompletedTask;
     }
 
@@ -690,7 +690,7 @@ public partial class MainHub
     public Task Callback_RoomAddInvite(RoomInvite dto)
     {
         Logger.LogDebug("Callback_RoomAddInvite: " + dto, LoggerType.Callbacks);
-        _kinkListener.VibeRoomInviteRecieved(dto);
+        _toyboxListener.VibeRoomInviteRecieved(dto);
         return Task.CompletedTask;
     }
 
@@ -698,7 +698,7 @@ public partial class MainHub
     public Task Callback_RoomHostChanged(UserData dto)
     {
         Logger.LogDebug("Callback_RoomHostChanged: " + dto, LoggerType.Callbacks);
-        _kinkListener.VibeRoomHostChanged(dto);
+        _toyboxListener.VibeRoomHostChanged(dto);
         return Task.CompletedTask;
     }
 
@@ -708,7 +708,7 @@ public partial class MainHub
     public Task Callback_RoomDeviceUpdate(UserData user, ToyInfo device)
     {
         Logger.LogDebug("Callback_RoomDeviceUpdate: " + user, LoggerType.Callbacks);
-        _kinkListener.KinksterUpdatedDevice(user, device);
+        _toyboxListener.KinksterUpdatedDevice(user, device);
         return Task.CompletedTask;
     }
 
@@ -716,7 +716,7 @@ public partial class MainHub
     public Task Callback_RoomIncDataStream(ToyDataStreamResponse dto)
     {
         Logger.LogDebug("Callback_RoomIncDataStream: " + dto, LoggerType.Callbacks); 
-        _kinkListener.RecievedBuzzToyDataStream(dto);
+        _toyboxListener.RecievedBuzzToyDataStream(dto);
         return Task.CompletedTask;
     }
 
@@ -724,7 +724,7 @@ public partial class MainHub
     public Task Callback_RoomAccessGranted(UserData user)
     {
         Logger.LogDebug("Callback_RoomAccessGranted: " + user, LoggerType.Callbacks);
-        _kinkListener.KinksterGrantedAccess(user);
+        _toyboxListener.KinksterGrantedAccess(user);
         return Task.CompletedTask;
     }
 
@@ -732,7 +732,7 @@ public partial class MainHub
     public Task Callback_RoomAccessRevoked(UserData user)
     {
         Logger.LogDebug("Callback_RoomAccessRevoked: " + user, LoggerType.Callbacks);
-        _kinkListener.KinksterRevokedAccess(user);
+        _toyboxListener.KinksterRevokedAccess(user);
         return Task.CompletedTask;
     }
 

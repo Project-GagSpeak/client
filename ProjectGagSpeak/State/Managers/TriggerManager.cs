@@ -135,13 +135,14 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
     public bool RemoveFavorite(Trigger t) => _favorites.RemoveRestriction(FavoriteIdContainer.Trigger, t.Identifier);
 
     // unsure how stable these are to use atm but we will see.
-    public void ToggleTrigger(Guid triggerId, string enactor)
+    public bool ToggleTrigger(Guid triggerId, string enactor)
     {
-        if (Storage.TryGetTrigger(triggerId, out var trigger))
-        {
-            trigger.Enabled = !trigger.Enabled;
-            _saver.Save(this);
-        }
+        if (!Storage.TryGetTrigger(triggerId, out var trigger))
+            return false;
+        
+        trigger.Enabled = !trigger.Enabled;
+        _saver.Save(this);
+        return true;
     }
 
     public void EnableTrigger(Guid triggerId, string enactor)

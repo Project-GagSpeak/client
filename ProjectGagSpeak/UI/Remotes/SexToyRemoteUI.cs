@@ -97,7 +97,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
     {
         // Set the window name here potentially.
         WindowName = _lobbyManager.IsInVibeRoom
-            ? $"Vibe Room - {_lobbyManager.CurrentRoomName}" : _service.ClientData.RecordingData 
+            ? $"Vibe Room - {_lobbyManager.CurrentRoomName}" : _service.ClientData.InRecordingMode 
                 ? "Pattern Recorder" : "Personal Remote";
 
         // Update size constraints (or maybe find a way to only do it on change?
@@ -606,13 +606,8 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
     {
         // grab the currently selected remotedata item.
         // (currently only for client, but later do for other users)
-        _service.ClientData.TrySetRemotePower(false, MainHub.UID);
-        // if for some reason we are still in recording mode, disable it.
-        if (_service.ClientData.RecordingData)
-            _service.ClientData.RecordingData = false;
-
+        _service.ClientData.OnRemoteWindowClosed();
         base.OnClose();
         GagspeakEventManager.AchievementEvent(UnlocksEvent.RemoteAction, RemoteInteraction.RemoteClosed);
-        Svc.Logger.Information("You might have messed this up heavily, good luck fixing it!~");
     }
 }

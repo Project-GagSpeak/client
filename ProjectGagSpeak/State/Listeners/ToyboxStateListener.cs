@@ -57,34 +57,49 @@ public sealed class ToyboxStateListener
     public void KinksterRevokedAccess(UserData participantWhoRevoked)
         => _vibeLobbies.OnKinksterRevokedAccess(participantWhoRevoked);
 
-    public void PatternSwitched(Guid newPattern, string enactor)
+    public bool PatternSwitched(Guid newPattern, string enactor)
     {
-        _patterns.SwitchPattern(newPattern, enactor);
+        if (!_patterns.SwitchPattern(newPattern, enactor))
+            return false;
+        
         PostActionMsg(enactor, InteractionType.SwitchPattern, "Pattern Switched");
+        return true;
     }
 
-    public void PatternStarted(Guid patternId, string enactor)
+    public bool PatternStarted(Guid patternId, string enactor)
     {
-        _patterns.EnablePattern(patternId, enactor);
+        if (!_patterns.EnablePattern(patternId, enactor))
+            return false;
+        
         PostActionMsg(enactor, InteractionType.StartPattern, "Pattern Enabled");
+        return true;
     }
 
-    public void PatternStopped(Guid patternId, string enactor)
+    public bool PatternStopped(Guid patternId, string enactor)
     {
-        _patterns.DisablePattern(patternId, enactor);
+        if (!_patterns.DisablePattern(patternId, enactor))
+            return false;
+        
         PostActionMsg(enactor, InteractionType.StopPattern, "Pattern Disabled");
+        return true;
     }
 
-    public void AlarmToggled(Guid alarmId, string enactor)
+    public bool AlarmToggled(Guid alarmId, string enactor)
     {
-        _alarms.ToggleAlarm(alarmId, enactor);
+        if (!_alarms.ToggleAlarm(alarmId, enactor))
+            return false;
+        
         PostActionMsg(enactor, InteractionType.ToggleAlarm, "Alarm Toggled");
+        return true;
     }
 
-    public void TriggerToggled(Guid triggerId, string enactor)
+    public bool TriggerToggled(Guid triggerId, string enactor)
     {
-        _triggers.ToggleTrigger(triggerId, enactor);
+        if (!_triggers.ToggleTrigger(triggerId, enactor))
+            return false;
+
         PostActionMsg(enactor, InteractionType.ToggleTrigger, "Trigger Toggled");
+        return true;
     }
 
     private void PostActionMsg(string enactor, InteractionType type, string message)
