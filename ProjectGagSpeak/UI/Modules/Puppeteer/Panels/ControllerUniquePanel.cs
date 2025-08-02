@@ -3,12 +3,15 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Utility;
 using GagSpeak.Gui.Components;
+using GagSpeak.Utils;
+using GagSpeak.WebAPI;
 using CkCommons.Raii;
 using CkCommons.Widgets;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Managers;
+using GagspeakAPI.Hub;
 using GagspeakAPI.Data;
 using ImGuiNET;
 using OtterGui;
@@ -21,6 +24,7 @@ namespace GagSpeak.Gui.Modules.Puppeteer;
 public partial class ControllerUniquePanel : IDisposable
 {
     private readonly ILogger<ControllerUniquePanel> _logger;
+    private readonly MainHub _hub;
     private readonly PuppeteerHelper _helper;
     private readonly AliasItemDrawer _aliasDrawer;
     private readonly PuppeteerManager _manager;
@@ -32,6 +36,7 @@ public partial class ControllerUniquePanel : IDisposable
 
     public ControllerUniquePanel(
         ILogger<ControllerUniquePanel> logger,
+        MainHub hub,
         MainConfig config,
         PuppeteerHelper helper,
         AliasItemDrawer aliasDrawer,
@@ -40,6 +45,7 @@ public partial class ControllerUniquePanel : IDisposable
         KinksterManager pairs,
         CosmeticService cosmetics)
     {
+        _hub = hub;
         _logger = logger;
         _helper = helper;
         _manager = manager;
@@ -135,15 +141,41 @@ public partial class ControllerUniquePanel : IDisposable
         var permissionsH = CkStyle.GetFrameRowsHeight(4);
         var childH = triggerPhrasesH.AddWinPadY() + permissionsH + CkGui.GetSeparatorSpacedHeight(spacing.Y);
         var headerText = _helper.SelectedPair is { } p ? $"{p.GetNickAliasOrUid()}'s Settings for You" : "Select a Kinkster from the 2nd panel first!";
-        
+
         using var c = CkRaii.ChildLabelTextFull(new Vector2(region.SizeX, childH), headerText, ImGui.GetFrameHeight(), DFlags.RoundCornersLeft, LabelFlags.AddPaddingToHeight);
 
-        if(_helper.SelectedPair is not { } validPair)
+        if (_helper.SelectedPair is not { } validPair)
             return;
 
         // extract the tabs by splitting the string by comma's
         using (CkRaii.FramedChildPaddedW("Triggers", c.InnerRegion.X, triggerPhrasesH, CkColor.FancyHeaderContrast.Uint(), CkColor.FancyHeaderContrast.Uint(), ImDrawFlags.RoundCornersAll))
+        {
+            ImGui.TextUnformatted($"Listening to: {_helper.PairNamedStorage!.ExtractedListenerName}");
+            if (ImGui.Button("Send Name"))
+            {
+                var name = PlayerData.NameWithWorld;
+                _logger.LogInformation($"Sending name: {PlayerData.NameWithWorld}");
+                try
+                {
+                    var task = Task.Run(
+                        async () => await _hub.UserSendNameToKinkster(new(_helper.SelectedPair.UserData), name)
+                    );
+                    if (task.Result.ErrorCode is not GagSpeakApiEc.Success)
+                    {
+                        _logger.LogError($"Failed to perform UserSendNameToKinker, Task: {task.Result.ErrorCode}");
+                    }
+                    else
+                    {
+                        _logger.LogInformation($"Sending Username `{PlayerData.NameWithWorld}` to `{_helper.SelectedPair.UserData.UID}`");
+                    }
+                }
+                catch (Bagagwa e)
+                {
+                    _logger.LogError($"{e}");
+                }
+            }
             PairTriggerTags.DrawTagsPreview("##OtherPairPhrases", validPair.PairPerms.TriggerPhrase);
+        }
 
         CkGui.SeparatorSpacedColored(spacing.Y, c.InnerRegion.X, CkColor.FancyHeaderContrast.Uint());
 
