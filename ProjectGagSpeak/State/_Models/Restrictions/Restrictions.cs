@@ -120,7 +120,7 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
         return new LightGag(GagType, IsEnabled, lightProps, CPlusProfile.ProfileName, DoRedraw);
     }
 
-    public static GarblerRestriction FromToken(JToken? token, GagType gagType, ModSettingPresetManager mp)
+    public static GarblerRestriction FromToken(JToken? token, GagType gagType, ModPresetManager mp)
     {
         if (token is not JObject json)
             throw new ArgumentException("Invalid JObjectToken!");
@@ -220,7 +220,7 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
 
     /// <summary> Constructs the RestrictionItem from a JToken. </summary>
     /// <remarks> This method can throw an exception if tokens are not valid. </remarks>
-    public static RestrictionItem FromToken(JToken? token, ModSettingPresetManager mp)
+    public static RestrictionItem FromToken(JToken? token, ModPresetManager mp)
     {
         if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
             throw new ArgumentException("Invalid JObjectToken!");
@@ -286,7 +286,7 @@ public class HypnoticRestriction : RestrictionItem
 
     /// <summary> Constructs the HypnoticItem from a JToken. </summary>
     /// <remarks> This method can throw an exception if tokens are not valid. </remarks>
-    public new static HypnoticRestriction FromToken(JToken? token, ModSettingPresetManager mp)
+    public new static HypnoticRestriction FromToken(JToken? token, ModPresetManager mp)
     {
         if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
             throw new ArgumentException("Invalid JObjectToken!");
@@ -355,7 +355,7 @@ public class BlindfoldRestriction : RestrictionItem
 
     /// <summary> Constructs the BlindfoldItem from a JToken. </summary>
     /// <remarks> This method can throw an exception if tokens are not valid. </remarks>
-    public new static BlindfoldRestriction FromToken(JToken? token, ModSettingPresetManager mp)
+    public new static BlindfoldRestriction FromToken(JToken? token, ModPresetManager mp)
     {
         if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
             throw new ArgumentException("Invalid JObjectToken!");
@@ -437,7 +437,7 @@ public class CollarRestriction : IEditableStorageItem<CollarRestriction>, IRestr
 
     /// <summary> Constructs the CollarItem from a JToken. </summary>
     /// <remarks> This method can throw an exception if tokens are not valid. </remarks>
-    public static CollarRestriction FromToken(JToken? token, ModSettingPresetManager mp)
+    public static CollarRestriction FromToken(JToken? token, ModPresetManager mp)
     {
         if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
             throw new ArgumentException("Invalid JObjectToken!");

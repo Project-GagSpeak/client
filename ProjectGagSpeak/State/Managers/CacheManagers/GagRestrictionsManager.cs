@@ -17,7 +17,7 @@ namespace GagSpeak.State.Managers;
 public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
     private readonly FavoritesManager _favorites;
-    private readonly ModSettingPresetManager _modPresets;
+    private readonly ModPresetManager _modPresets;
     private readonly ConfigFileProvider _fileNames;
     private readonly MufflerService _muffler;
     private readonly HybridSaveService _saver;
@@ -30,7 +30,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
         ILogger<GagRestrictionManager> logger,
         GagspeakMediator mediator,
         FavoritesManager favorites,
-        ModSettingPresetManager modPresets,
+        ModPresetManager modPresets,
         ConfigFileProvider fileNames,
         MufflerService muffler,
         HybridSaveService saver) : base(logger, mediator)

@@ -1,3 +1,4 @@
+using GagSpeak.Interop;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.State.Caches;
@@ -21,6 +22,7 @@ namespace GagSpeak.State.Managers;
 public class CacheStateManager : IHostedService
 {
     private readonly ILogger<CacheStateManager> _logger;
+    private readonly IpcCallerPenumbra _redrawAssist;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
@@ -32,12 +34,13 @@ public class CacheStateManager : IHostedService
     private readonly OverlayHandler _overlayHandler;
     private readonly ArousalService _arousalHandler;
 
-    public CacheStateManager(ILogger<CacheStateManager> logger, GagRestrictionManager gags,
-        RestrictionManager restrictions, RestraintManager restraints, CustomizePlusHandler profiles, 
-        GlamourHandler glamours, ModHandler mods, MoodleHandler moodles, TraitsHandler traits,
-        OverlayHandler overlays, ArousalService arousals) 
+    public CacheStateManager(ILogger<CacheStateManager> logger, IpcCallerPenumbra redrawAssist,
+        GagRestrictionManager gags, RestrictionManager restrictions, RestraintManager restraints, 
+        CustomizePlusHandler profiles, GlamourHandler glamours, ModHandler mods, MoodleHandler moodles, 
+        TraitsHandler traits, OverlayHandler overlays, ArousalService arousals) 
     {
         _logger = logger;
+        _redrawAssist = redrawAssist;
         _gags = gags;
         _restrictions = restrictions;
         _restraints = restraints;
@@ -85,6 +88,7 @@ public class CacheStateManager : IHostedService
     {
         var sw = Stopwatch.StartNew();
         // Sync all server gag data with the GagRestrictionManager.
+        bool anyRequestedRedraw = false;
         _gags.LoadServerData(connectionDto.SyncedGagData);
         _logger.LogInformation("------ Syncing Gag Data to Cache ------");
         foreach (var (layer, gagItem) in _gags.ActiveItems)
@@ -100,6 +104,8 @@ public class CacheStateManager : IHostedService
             _traitsHandler.TryAddTraitsToCache(key, gagItem.Traits);
             _cplusHandler.TryAddToCache(key, gagItem.CPlusProfile);
             _arousalHandler.TryAddArousalToCache(key, gagItem.Arousal);
+
+            anyRequestedRedraw |= gagItem.DoRedraw;
         }
         _logger.LogInformation("------ Gag Data synced to Cache ------ ");
 
@@ -127,6 +133,8 @@ public class CacheStateManager : IHostedService
             // Conditional Additions.
             if (item is BlindfoldRestriction bfr) _overlayHandler.TryAddBlindfoldToCache(key, bfr.Properties);
             if (item is HypnoticRestriction hr) _overlayHandler.TryAddEffectToCache(key, hr.Properties);
+
+            anyRequestedRedraw |= item.DoRedraw;
         }
         _logger.LogInformation("------ Restriction Data synced to Cache ------ ");
 
@@ -162,6 +170,8 @@ public class CacheStateManager : IHostedService
                 _overlayHandler.TryAddBlindfoldToCache(layerKey, restraintSet.GetBlindfoldAtLayer(idx));
                 _overlayHandler.TryAddEffectToCache(layerKey, restraintSet.GetHypnoEffectAtLayer(idx));
             }
+
+            anyRequestedRedraw |= restraintSet.DoRedraw;
             _logger.LogInformation("------ Restraint Data synced to Cache ------ ");
         }
 
@@ -177,6 +187,8 @@ public class CacheStateManager : IHostedService
             _arousalHandler.UpdateFinalCache(),
             _overlayHandler.UpdateCaches()
         );
+        if (anyRequestedRedraw)
+            _redrawAssist.RedrawObject();
         sw.Stop();
         _logger.LogInformation($"------ All Updates & Visuals Applied in {sw.ElapsedMilliseconds}ms ------");
     }
@@ -196,6 +208,9 @@ public class CacheStateManager : IHostedService
             AddTraits(key, item.Traits),
             AddArousalStrength(key, item.Arousal)
         );
+        // Handle Redraw afterwards
+        if (item.DoRedraw)
+            _redrawAssist.RedrawObject();
     }
 
     /// <summary> Removes the visuals of a <see cref="GarblerRestriction"/> stored in the caches at a <paramref name="layerIdx"/></summary>
@@ -213,6 +228,9 @@ public class CacheStateManager : IHostedService
             RemoveTraits(key),
             RemoveArousalStrength(key)
         );
+        // Handle Redraw afterwards
+        if (item.DoRedraw)
+            _redrawAssist.RedrawObject();
     }
 
     public async Task AddRestrictionItem(RestrictionItem item, int layerIdx, string enabler)
@@ -239,6 +257,9 @@ public class CacheStateManager : IHostedService
 
         // Run in parallel.
         await TimedWhenAll($"[{key}]'s Visual Attributes added to caches", tasks);
+        // Handle Redraw afterwards
+        if (item.DoRedraw)
+            _redrawAssist.RedrawObject();
     }
 
     public async Task RemoveRestrictionItem(RestrictionItem item, int layerIdx)
@@ -255,6 +276,9 @@ public class CacheStateManager : IHostedService
             RemoveBlindfold(key),
             RemoveHypnoEffect(key)
         );
+        // Handle Redraw afterwards
+        if (item.DoRedraw)
+            _redrawAssist.RedrawObject();
     }
 
     public async Task AddRestraintSet(RestraintSet item, string enabler)
@@ -270,6 +294,9 @@ public class CacheStateManager : IHostedService
             AddBlindfold(key, item.GetBaseBlindfold()),
             AddHypnoEffect(key, item.GetBaseHypnoEffect())
         );
+        // Handle Redraw afterwards
+        if (item.DoRedraw)
+            _redrawAssist.RedrawObject();
     }
 
     public async Task SwapRestraintSetLayers(RestraintSet item, RestraintLayer added, RestraintLayer removed, string enactor)
@@ -377,6 +404,9 @@ public class CacheStateManager : IHostedService
             RemoveBlindfold(key),
             RemoveHypnoEffect(key)
         );
+        // Handle Redraw afterwards
+        if (item.DoRedraw)
+            _redrawAssist.RedrawObject();
     }
 
 

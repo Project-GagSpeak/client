@@ -12,10 +12,10 @@ public class ModListener : DisposableMediatorSubscriberBase
     private readonly IpcCallerPenumbra _ipc;
     private readonly ModCache _cache;
     private readonly ModHandler _handler;
-    private readonly ModSettingPresetManager _manager;
+    private readonly ModPresetManager _manager;
 
     public ModListener(ILogger<ModListener> logger, GagspeakMediator mediator,
-        IpcCallerPenumbra ipc, ModCache cache, ModHandler handler, ModSettingPresetManager manager) 
+        IpcCallerPenumbra ipc, ModCache cache, ModHandler handler, ModPresetManager manager) 
         : base(logger, mediator)
     {
         _ipc = ipc;
@@ -23,7 +23,7 @@ public class ModListener : DisposableMediatorSubscriberBase
         _handler = handler;
         _manager = manager;
 
-        _ipc.OnModMoved = ModMoved.Subscriber(Svc.PluginInterface, OnModInfoChanged);
+        _ipc.OnModMoved = ModMoved.Subscriber(Svc.PluginInterface, OnModDirPathChanged);
         _ipc.OnModAdded = ModAdded.Subscriber(Svc.PluginInterface, OnModAdded);
         _ipc.OnModDeleted = ModDeleted.Subscriber(Svc.PluginInterface, OnModDeleted);
 
@@ -45,22 +45,30 @@ public class ModListener : DisposableMediatorSubscriberBase
     private void OnPenumbraInitialized()
     {
         Logger.LogInformation("Penumbra initialized. Retrieving Mod Info.");
-        _manager.PenumbraInitialized(_ipc.GetModInfo());
+        _manager.PenumbraInitialized(_ipc.GetModListInfo());
     }
 
     /// <summary> Fired whenever a MOD DIRECTORY (not mod name) is moved or renamed in penumbra. We should get a full recalculation if this occurs. </summary>
-    private void OnModInfoChanged(string oldPath, string newPath)
+    private void OnModDirPathChanged(string oldPath, string newPath)
     {
-        // TODO: (Handle how this affects other dependent sources, (Should not be an issue for us but we will see).
+        Logger.LogInformation($"Mod moved from [{oldPath}] to [{newPath}].");
+        // Get the information about the new mod regardless of what happened to it.
+        var res = _ipc.GetModInfo(newPath);
+        _manager.OnModDirChanged(oldPath, res.Info, res.CurrentSettings);
     }
 
     private void OnModAdded(string addedDirectory)
     {
+        Logger.LogInformation($"Mod added at [{addedDirectory}].");
         // TODO: Get the mod name for the directory, and its data necessary to construct a ModInfo object.
+        var res = _ipc.GetModInfo(addedDirectory);
+        _manager.OnModAdded(res.Info, res.CurrentSettings);
+
     }
 
     private void OnModDeleted(string deletedDirectory)
     {
-        // TODO: Handle logic that updates anything using this directory to be removed.
+        Logger.LogInformation($"Mod deleted at [{deletedDirectory}].");
+        _manager.OnModRemoved(deletedDirectory);
     }
 }

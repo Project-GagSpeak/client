@@ -21,7 +21,7 @@ namespace GagSpeak.State.Managers;
 public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
     private readonly RestrictionManager _restrictions;
-    private readonly ModSettingPresetManager _modPresets;
+    private readonly ModPresetManager _modPresets;
     private readonly FavoritesManager _favorites;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
@@ -30,7 +30,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     private CharaActiveRestraint? _serverRestraintData = null;
 
     public RestraintManager(ILogger<RestraintManager> logger, GagspeakMediator mediator,
-        RestrictionManager restrictions, ModSettingPresetManager mods, FavoritesManager favorites, 
+        RestrictionManager restrictions, ModPresetManager mods, FavoritesManager favorites, 
         ConfigFileProvider fileNames, HybridSaveService saver) : base(logger, mediator)
     {
         _restrictions = restrictions;
