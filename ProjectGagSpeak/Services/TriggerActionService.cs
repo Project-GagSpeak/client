@@ -45,7 +45,8 @@ public class TriggerActionService
         RestrictionManager restrictions,
         RestraintManager restraints,
         BuzzToyManager toys,
-        MoodleHandler moodles)
+        MoodleHandler moodles,
+        DataDistributionService distributer)
     {
         _logger = logger;
         _shockies = shockies;
@@ -55,6 +56,7 @@ public class TriggerActionService
         _restraints = restraints;
         _toys = toys;
         _moodles = moodles;
+        _distributer = distributer;
     }
 
     public async Task<bool> HandleActionAsync(InvokableGsAction invokableAction, string enactor, ActionSource source)
@@ -115,8 +117,6 @@ public class TriggerActionService
 
     private bool DoTextAction(TextAction act, string enactor, ActionSource source)
     {
-        if(enactor == MainHub.UID)
-            return false;
 
         // construct the new SeString to send.
         var remainingMessage = new SeString().Append(act.OutputCommand);

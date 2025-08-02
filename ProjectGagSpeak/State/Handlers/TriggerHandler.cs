@@ -141,7 +141,7 @@ public class TriggerHandler
 
         // If it was for an alias, and not a text insstruction, handle the alias and return early.
         if (perms.HasAny(PuppetPerms.Alias))
-            if (await ConvertAliasCommandsIfAny(finalMsg, storage.Items, enactorUid, ActionSource.PairAlias))
+            if (await ConvertAliasCommandsIfAny(finalMsg, storage.Items, enactorUid, source))
                 return;
 
         // Otherwise, handle the final message accordingly.
