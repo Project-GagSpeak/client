@@ -4,6 +4,7 @@ using Dalamud.Interface.Utility;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Services.Tutorial;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using ImGuiNET;
@@ -84,7 +85,7 @@ public class KinkPlateLightUI : WindowMediatorSubscriberBase
 
         // draw the plate.
         HoveringReportButton = _lightUI.DrawKinkPlateLight(drawList, KinkPlate, DisplayName, UserDataToDisplay, _showFullUID, HoveringReportButton);
-
+        
         // Draw the close button.
         CloseButton(drawList, DisplayName);
         CkGui.AttachToolTipRect(_lightUI.CloseButtonPos, _lightUI.CloseButtonSize, "Close " + DisplayName + "'s KinkPlate™");

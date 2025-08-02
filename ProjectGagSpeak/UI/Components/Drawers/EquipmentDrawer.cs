@@ -14,6 +14,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
+using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
@@ -48,9 +49,11 @@ public class EquipmentDrawer
     private readonly RestrictionManager _restrictions;
     private readonly TextureService _textures;
     private readonly CosmeticService _cosmetics;
+    private readonly TutorialService _guides;
+
     public EquipmentDrawer(ILogger<EquipmentDrawer> logger, GagspeakMediator mediator,
         IpcCallerGlamourer glamourer, RestrictionManager restrictions, FavoritesManager favorites,
-        TextureService textures, CosmeticService cosmetics)
+        TextureService textures, CosmeticService cosmetics, TutorialService guides)
     {
         _logger = logger;
         _ipcGlamourer = glamourer;
@@ -61,6 +64,7 @@ public class EquipmentDrawer
         _itemCombos = EquipSlotExtensions.EqdpSlots.Select(e => new GameItemCombo(e, logger)).ToArray();
         _bonusCombos = BonusExtensions.AllFlags.Select(f => new BonusItemCombo(f, logger)).ToArray();
         _stainCombo = new GameStainCombo(logger);
+        _guides = guides;
         _restrictionCombo = new RestrictionCombo(logger, mediator, favorites, () => 
         [ 
             ..restrictions.Storage.OrderByDescending(p => favorites._favoriteRestrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
@@ -165,6 +169,13 @@ public class EquipmentDrawer
         using (ImRaii.PushColor(ImGuiCol.Button, CkColor.FancyHeaderContrast.Uint()))
             if (CkGui.IconButton(overlayState ? FAI.Eye : FAI.EyeSlash, CkStyle.TwoRowHeight(), basicSlot.EquipSlot + "Overlay"))
                 basicSlot.ApplyFlags ^= RestraintFlags.IsOverlay;
+        if (basicSlot.EquipSlot == EquipSlot.Body)
+        {
+            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Overlay, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+                () => basicSlot.ApplyFlags ^= RestraintFlags.IsOverlay);
+            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.OverlayBuffer, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+                () => FancyTabBar.SelectTab("RS_EditBar", Wardrobe.RestraintsPanel.EditorTabs[2], Wardrobe.RestraintsPanel.EditorTabs));
+        }
 
         ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.FancyHeaderContrast.Uint(), ImGui.GetStyle().FrameRounding);
     }

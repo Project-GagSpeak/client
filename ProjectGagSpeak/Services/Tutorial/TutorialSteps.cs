@@ -40,7 +40,7 @@ public enum StepsMainUi
     ProfileEditImage, // On click, close image editor.
     ProfileSaving, // Emphasis on saving changes, and how editing without saving reverts changes.
     ConfigSettings1, // the menu way to access settings
-    ConfigSettings2, // title bar way to access settings (to patternhub on click)
+    //ConfigSettings2, // title bar way to access settings (to patternhub on click)
     PatternHub, // overview of pattern hub.
     PatternSearch, // how searches are filtered.
     PatternResults, // up to 50 results, ext ext, liking and downloading.
@@ -83,9 +83,11 @@ public enum StepsRestraints
     Importing, // on click, import current equipment.
     SlotTypes, // different slot types, on click, swap helmet to advanced.
     Overlay, // what overlay is, and how it works. (move to overlay after)
+    OverlayBuffer, // duplicate previous step, so user can see changes, then switch to layers panel
     Layers, // what layers are, how they work.
     AddingLayers, // show where to add. (on click, add 2)
     LayerTypes, // on click, swap first layer to opposite type.
+    LayerTypesBuffer, // duplicate previous step, then switch to modsmoodles panel
     ModsMoodles, // overview.
     AddingMods,
     AddingMoodles,
@@ -172,7 +174,7 @@ public enum StepsGags
     PresetPreview, // to view what options you picked for the preset.
     CancelingChanges, // what happens if you dont want to save edits.
     SavingChanges, // on click, saving changes and close.
-    Applying, // where to apply Gags, or view active ones.
+    ActiveGags, // where to apply Gags, or view active ones.
     Selecting, // locate first open one, if all are full, do not apply any. (otherwise, apply tutorial)
     Locking, // lock system overview. (lock on click)
     Unlocking, // how 2 unlocky (if possible, unlock on next)

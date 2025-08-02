@@ -37,17 +37,17 @@ public class MainMenuTabs : IconTabBar<MainMenuTabs.SelectedTab>
         AddDrawButton(FontAwesomeIcon.PeopleArrows, SelectedTab.Whitelist, "Kinkster Whitelist", 
             () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Whitelist, ImGui.GetWindowPos(), ImGui.GetWindowSize()));
 
-        AddDrawButton(FontAwesomeIcon.Compass, SelectedTab.PatternHub, "Discover Patterns from the community!"); 
-            //() => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ToPatternHub, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => TabSelection = SelectedTab.PatternHub));
+        AddDrawButton(FontAwesomeIcon.Compass, SelectedTab.PatternHub, "Discover Patterns from the community!", 
+            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHub, ImGui.GetWindowPos(), ImGui.GetWindowSize()));
 
-        AddDrawButton(FontAwesomeIcon.WandMagicSparkles, SelectedTab.MoodlesHub, "Browse Moodles made by others in the community!");
-        /* maybe add some tutorial for this later */
+        AddDrawButton(FontAwesomeIcon.WandMagicSparkles, SelectedTab.MoodlesHub, "Browse Moodles made by others in the community!",
+            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.MoodleHub, ImGui.GetWindowPos(), ImGui.GetWindowSize()));
 
-        AddDrawButton(FontAwesomeIcon.Comments, SelectedTab.GlobalChat, "Meet & Chat with others in a cross-region chat!");
-        // () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ToGlobalChat, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => TabSelection = SelectedTab.GlobalChat));
+        AddDrawButton(FontAwesomeIcon.Comments, SelectedTab.GlobalChat, "Meet & Chat with others in a cross-region chat!",
+            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.GlobalChat, ImGui.GetWindowPos(), ImGui.GetWindowSize()));
 
-        AddDrawButton(FontAwesomeIcon.UserCircle, SelectedTab.MySettings, "Account User Settings");
-           // () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ToAccountPage, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => TabSelection = SelectedTab.MySettings));
+        AddDrawButton(FontAwesomeIcon.UserCircle, SelectedTab.MySettings, "Account User Settings",
+            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AccountPage, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => TabSelection = SelectedTab.MySettings));
 
         TabSelectionChanged += (oldTab, newTab) => _mediator.Publish(new MainWindowTabChangeMessage(newTab));
     }

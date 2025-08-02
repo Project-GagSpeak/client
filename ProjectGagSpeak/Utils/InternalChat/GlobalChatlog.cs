@@ -16,6 +16,7 @@ using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
+using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
@@ -35,6 +36,7 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
     private readonly GagRestrictionManager _gags;
     private readonly KinksterManager _kinksters;
     private readonly MufflerService _garbler;
+    private readonly TutorialService _guides;
     // load the popout to sync our message sending.
 
     private static bool _newMsgFromDev = false;
@@ -44,7 +46,7 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
 
     public GlobalChatLog(GagspeakMediator mediator, MainHub hub, MainMenuTabs tabs, 
         MainConfig config, GagRestrictionManager gags, KinksterManager kinksters, 
-        MufflerService garbler)
+        MufflerService garbler, TutorialService guides)
         : base(0, "Global Chat", 1000)
     {
         Mediator = mediator;
@@ -54,6 +56,7 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
         _gags = gags;
         _kinksters = kinksters;
         _garbler = garbler;
+        _guides = guides;
 
         // Load the chat log from most recent session, if any.
         LoadChatLog();
@@ -191,10 +194,10 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
             ImGui.SetKeyboardFocusHere(0);
             shouldFocusChatInput = false;
         }
+        
 
         ImGui.SetNextItemWidth(width - (CkGui.IconButtonSize(scrollIcon).X + ImGui.GetStyle().ItemInnerSpacing.X) * 3);
         ImGui.InputTextWithHint($"##ChatInput{Label}{ID}", "type here...", ref previewMessage, 300);
-
         // Process submission Prevent losing chat focus after pressing the Enter key.
         if (ImGui.IsItemFocused() && ImGui.IsKeyPressed(ImGuiKey.Enter))
         {
@@ -211,12 +214,14 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
                 _showEmotes = !_showEmotes;
         }
         CkGui.AttachToolTip($"Toggles Quick-Emote selection.");
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatEmotes, ImGui.GetWindowPos(), ImGui.GetWindowSize());
 
         // Toggle AutoScroll functionality
         ImUtf8.SameLineInner();
         if (CkGui.IconButton(scrollIcon))
             DoAutoScroll = !DoAutoScroll;
         CkGui.AttachToolTip($"Toggles AutoScroll (Current: {(DoAutoScroll ? "Enabled" : "Disabled")})");
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatScroll, ImGui.GetWindowPos(), ImGui.GetWindowSize());
 
         // draw the popout button
         ImUtf8.SameLineInner();

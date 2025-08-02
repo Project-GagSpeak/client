@@ -1,18 +1,20 @@
+using CkCommons.Gui;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Gui.Components;
+using GagSpeak.Gui.Profile;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.Gui.Profile;
-using GagSpeak.PlayerClient;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using ImGuiNET;
-using CkCommons.Gui;
-using GagSpeak.Utils;
+using OtterGui.Text;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -22,16 +24,19 @@ public class AccountTab
     private readonly MainConfig _config;
     private readonly KinkPlateService _profileManager;
     private readonly TutorialService _guides;
+    private readonly MainMenuTabs _tabMenu;
     public AccountTab(
         GagspeakMediator mediator,
         MainConfig config,
         KinkPlateService profiles,
-        TutorialService guides)
+        TutorialService guides,
+        MainMenuTabs tabMenu)
     {
         _mediator = mediator;
         _profileManager = profiles;
         _config = config;
         _guides = guides;
+        _tabMenu = tabMenu;
     }
 
     private static Vector2 LastWinPos = Vector2.Zero;
@@ -68,7 +73,7 @@ public class AccountTab
                     ImGui.GetWindowDrawList().AddImageRounded(wrap.ImGuiHandle, pos, pos + imgSize, Vector2.Zero, Vector2.One,
                         ImGui.GetColorU32(new Vector4(1f, 1f, 1f, 1f)), 90f);
                     ImGuiHelpers.ScaledDummy(imgSize);
-                    // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.UserProfilePicture, LastWinPos, LastWinSize);
+                    //_guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.UserProfilePicture, LastWinPos, LastWinSize);
                     ImGui.SetCursorPos(new Vector2(currentPosition.X, currentPosition.Y + imgSize.Y));
 
                 }
@@ -80,49 +85,62 @@ public class AccountTab
 
             // draw the UID header below this.
             DrawUIDHeader();
-            // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.UserIdentification, LastWinPos, LastWinSize);
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ClientUID, LastWinPos, LastWinSize);
 
             // below this, draw a separator. (temp)
             ImGui.Spacing();
             ImGui.Separator();
 
-            DrawSafewordChild();
+            DrawSafewordGroup();
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Safewords, LastWinPos, LastWinSize);
+            ImGui.SameLine(ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FAI.Edit).X);
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ((ImGui.GetItemRectSize().Y - ImGui.GetFrameHeight()) / 2));
+            if (CkGui.IconButton(FAI.Edit, inPopup: true))
+                EditingSafeword = !EditingSafeword;
+            CkGui.AttachToolTip(EditingSafeword ? "Cancel safeword changes." : "Edit current Safeword.");
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SettingSafeword, LastWinPos, LastWinSize);
+            
             ImGui.Separator();
             ImGui.Spacing();
 
             ImGui.AlignTextToFramePadding();
             DrawAccountSettingChild(FAI.PenSquare, "My Profile", "Open and Customize your Profile!", () => _mediator.Publish(new UiToggleMessage(typeof(KinkPlateEditorUI))));
-            // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileEditing, LastWinPos, LastWinSize);
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileEditing, LastWinPos, LastWinSize, 
+                () => _mediator.Publish(new UiToggleMessage(typeof(KinkPlateEditorUI))));
 
 
             ImGui.AlignTextToFramePadding();
             DrawAccountSettingChild(FAI.Cog, "My Settings", "Opens the Settings UI", () => _mediator.Publish(new UiToggleMessage(typeof(SettingsUi))));
-            // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AccessingSettings, LastWinPos, LastWinSize);
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ConfigSettings1, LastWinPos, LastWinSize,
+                () => { _tabMenu.TabSelection = MainMenuTabs.SelectedTab.PatternHub; });
 
             // Actions Notifier thing.
             ImGui.AlignTextToFramePadding();
             DrawAccountSettingChild(FAI.Bell, "Actions Notifier", "See who did what actions on you!", () => _mediator.Publish(new UiToggleMessage(typeof(InteractionEventsUI))));
 
-            // now do one for ko-fi
-            ImGui.AlignTextToFramePadding();
-            DrawAccountSettingChild(FAI.Coffee, "Support via Ko-fi", "This plugin took a massive toll on my life as a solo dev." +
-                Environment.NewLine + "As happy as I am to make this free for all of you to enjoy, " +
-                Environment.NewLine + "any support or tips are much appreciated ♥", () =>
-                {
-                    try { Process.Start(new ProcessStartInfo { FileName = "https://www.ko-fi.com/cordeliamist", UseShellExecute = true }); }
-                    catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the Ko-Fi link. {e.Message}"); }
-                });
-            // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SelfPlug, LastWinPos, LastWinSize);
-
-
-            ImGui.AlignTextToFramePadding();
-            DrawAccountSettingChild(FAI.Pray, "Support via Patreon", "This plugin took a massive toll on my life as a solo dev." +
-                Environment.NewLine + "As happy as I am to make this free for all of you to enjoy, " +
-                Environment.NewLine + "any support / tips are much appreciated ♥", () =>
+            // can i group these to highlight both of them for the tutorial step?
+            using (ImRaii.Group())
             {
-                try { Process.Start(new ProcessStartInfo { FileName = "https://www.patreon.com/CordeliaMist", UseShellExecute = true }); }
-                catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the Patreon link. {e.Message}"); }
-            });
+                // now do one for ko-fi
+                ImGui.AlignTextToFramePadding();
+                DrawAccountSettingChild(FAI.Coffee, "Support via Ko-fi", "This plugin took a massive toll on my life as a solo dev." +
+                    Environment.NewLine + "As happy as I am to make this free for all of you to enjoy, " +
+                    Environment.NewLine + "any support or tips are much appreciated ♥", () =>
+                    {
+                        try { Process.Start(new ProcessStartInfo { FileName = "https://www.ko-fi.com/cordeliamist", UseShellExecute = true }); }
+                        catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the Ko-Fi link. {e.Message}"); }
+                    });
+ 
+                ImGui.AlignTextToFramePadding();
+                DrawAccountSettingChild(FAI.Pray, "Support via Patreon", "This plugin took a massive toll on my life as a solo dev." +
+                    Environment.NewLine + "As happy as I am to make this free for all of you to enjoy, " +
+                    Environment.NewLine + "any support / tips are much appreciated ♥", () =>
+                {
+                    try { Process.Start(new ProcessStartInfo { FileName = "https://www.patreon.com/CordeliaMist", UseShellExecute = true }); }
+                    catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the Patreon link. {e.Message}"); }
+                });
+            }
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SelfPlug, LastWinPos, LastWinSize);
 
             ImGui.AlignTextToFramePadding();
             DrawAccountSettingChild(FAI.ThumbsUp, "Send Positive Feedback!", "Opens a short 1 question positive feedback form ♥", () =>
@@ -151,6 +169,33 @@ public class AccountTab
                     Svc.Logger.Error($"[ConfigFileOpen] Failed to open the config directory. {e.Message}");
                 }
             });
+        }
+
+        void DrawSafewordGroup()
+        {
+            using var _ = ImRaii.Group();
+            using var font = UiFontService.UidFont.Push();
+
+            ImUtf8.TextFrameAligned("Safeword:");
+            ImUtf8.SameLineInner();
+            var width = ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FAI.Edit).X - _spacingX;
+
+            if (EditingSafeword)
+            {
+                var safeword = _config.Current.Safeword;
+                ImGui.SetNextItemWidth(width);
+                if (ImGui.InputText("##SetSafeword", ref safeword, 30, ITFlags.EnterReturnsTrue))
+                {
+                    _config.Current.Safeword = safeword;
+                    _config.Save();
+                    EditingSafeword = false;
+                }
+            }
+            else
+            {
+                var safeword = string.IsNullOrWhiteSpace(_config.Current.Safeword) ? "<Nothing Set!>" : _config.Current.Safeword;
+                CkGui.ColorTextFrameAligned(safeword, ImGuiColors.DalamudYellow);
+            }
         }
     }
 
@@ -241,16 +286,16 @@ public class AccountTab
                 ImGui.SameLine(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - editButtonSize.X - ImGui.GetStyle().ItemSpacing.X);
                 ImGui.SetCursorPosY(childStartYpos + ((height - editButtonSize.Y) / 2) + 1f);
             }
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Safewords, LastWinPos, LastWinSize);
             // draw out the icon button
             CkGui.IconText(FAI.Edit);
             if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             {
                 EditingSafeword = !EditingSafeword;
             }
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SettingSafeword, LastWinPos, LastWinSize);
         }
         CkGui.AttachToolTip("Set a safeword to quickly revert any changes made by the plugin.");
-        // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SafewordPartOne, LastWinPos, LastWinSize);
-        // _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SafewordPartTwo, LastWinPos, LastWinSize);
     }
 
     private void DrawAccountSettingChild(FontAwesomeIcon leftIcon, string displayText, string hoverTT, Action buttonAction)

@@ -7,6 +7,8 @@ using GagSpeak.FileSystems;
 using GagSpeak.State.Managers;
 using ImGuiNET;
 using Penumbra.GameData.Enums;
+using Dalamud.Interface.Utility.Raii;
+using GagSpeak.State.Models;
 
 namespace GagSpeak.Gui.Wardrobe;
 
@@ -45,36 +47,48 @@ public class RestraintEditorEquipment : IFancyTab
         var subWindowSize = new Vector2((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / 2, ImGui.GetContentRegionAvail().Y);
 
         // Draw out one area for the equipment. (And customization management.)
-        using (CkRaii.IconButtonHeaderChild("Equipment", FAI.FileImport, subWindowSize, ImportEquipment, FancyTabBar.Rounding, 
-            HeaderFlags.CR_HeaderCentered, "Import current Equipment on your Character."))
+        using (ImRaii.Group())
         {
-            var region = ImGui.GetContentRegionAvail();
-            var innerWidth = region.X;
-            foreach (var slot in EquipSlotExtensions.EquipmentSlots)
+            using (CkRaii.IconButtonHeaderChild("Equipment", FAI.FileImport, subWindowSize, ImportEquipment, FancyTabBar.Rounding,
+                HeaderFlags.CR_HeaderCentered, "Import current Equipment on your Character."))
             {
-                ImGui.Spacing();
-                _equipDrawer.DrawRestraintSlot(_manager.ItemInEditor.RestraintSlots, slot, innerWidth);
-            }
-        }
-
-        ImGui.SameLine(0, ImGui.GetStyle().WindowPadding.X);
-        // Draw out one area for the accessories. (And glasses management.)
-        using (CkRaii.IconButtonHeaderChild("Accessories", FAI.FileImport, subWindowSize, ImportAccessories, FancyTabBar.Rounding,
-            HeaderFlags.CR_HeaderCentered, "Import current Accessories on your Character."))
-        {
-            var region = ImGui.GetContentRegionAvail();
-            var innerWidth = region.X;
-
-            foreach (var slot in EquipSlotExtensions.AccessorySlots)
-            {
-                ImGui.Spacing();
-                _equipDrawer.DrawRestraintSlot(_manager.ItemInEditor.RestraintSlots, slot, innerWidth);
+                _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Importing, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+                var region = ImGui.GetContentRegionAvail();
+                var innerWidth = region.X;
+                foreach (var slot in EquipSlotExtensions.EquipmentSlots)
+                {
+                    ImGui.Spacing();
+                    _equipDrawer.DrawRestraintSlot(_manager.ItemInEditor.RestraintSlots, slot, innerWidth);
+                    if (slot == EquipSlot.Head)
+                        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SlotTypes, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+                            () =>
+                            {
+                                if (_manager.ItemInEditor.RestraintSlots[slot] is RestraintSlotBasic basicSlot) // swap it to advanced slot here if we can.
+                                    _manager.ItemInEditor.RestraintSlots[slot] = RestraintSlotAdvanced.GetEmpty(slot, basicSlot.Stains);
+                            });
+                }
             }
 
-            // Draw out the glasses management.
-            ImGui.Spacing();
-            _equipDrawer.DrawGlassesSlot(_manager.ItemInEditor.Glasses, innerWidth);
+            ImGui.SameLine(0, ImGui.GetStyle().WindowPadding.X);
+            // Draw out one area for the accessories. (And glasses management.)
+            using (CkRaii.IconButtonHeaderChild("Accessories", FAI.FileImport, subWindowSize, ImportAccessories, FancyTabBar.Rounding,
+                HeaderFlags.CR_HeaderCentered, "Import current Accessories on your Character."))
+            {
+                var region = ImGui.GetContentRegionAvail();
+                var innerWidth = region.X;
+
+                foreach (var slot in EquipSlotExtensions.AccessorySlots)
+                {
+                    ImGui.Spacing();
+                    _equipDrawer.DrawRestraintSlot(_manager.ItemInEditor.RestraintSlots, slot, innerWidth);
+                }
+
+                // Draw out the glasses management.
+                ImGui.Spacing();
+                _equipDrawer.DrawGlassesSlot(_manager.ItemInEditor.Glasses, innerWidth);
+            }
         }
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EquipSlots, ImGui.GetWindowPos(), ImGui.GetWindowSize());
     }
 
     private void ImportEquipment()

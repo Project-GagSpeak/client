@@ -40,10 +40,13 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
     {
         if (!_shareHub.InitialPatternsCall && !UiService.DisableUI)
             UiService.SetUITask(_shareHub.SearchPatterns());
-
-        DrawSearchFilter();
+        
+        using(ImRaii.Group())
+        {
+            DrawSearchFilter();
+        }
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternSearch, ImGui.GetWindowPos(), ImGui.GetWindowSize());
         ImGui.Separator();
-
         // draw the results if there are any.
         if (_shareHub.LatestPatternResults.Count <= 0)
         {

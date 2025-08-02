@@ -92,6 +92,7 @@ public class WardrobeUI : WindowMediatorSubscriberBase
 
         // Otherwise, perform the normal logic for these.
         var drawRegions = CkHeader.FancyCurve(CkColor.FancyHeader.Uint(), ImGui.GetFrameHeight(), ImGui.GetFrameHeight(), RightLength(), !isEditing);
+        
 
         switch (_tabMenu.TabSelection)
         {

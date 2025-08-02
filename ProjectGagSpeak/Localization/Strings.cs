@@ -1,4 +1,6 @@
 using CheapLoc;
+using GagSpeak.Gui.Publications;
+using Lumina.Excel.Sheets;
 
 namespace GagSpeak.Localization
 {
@@ -72,7 +74,7 @@ namespace GagSpeak.Localization
 
         public readonly string Step2Title = Loc.Localize("HelpMainUi_Step2Title", "Connection State");
         public readonly string Step2Desc = Loc.Localize("HelpMainUi_Step2Desc", "Your current connection status.");
-        public readonly string Step2DescExtended = Loc.Localize("HelpMainUi_Step2DescExtended", " ");
+        public readonly string Step2DescExtended = Loc.Localize("HelpMainUi_Step2DescExtended", "You can hover over this button for more details.");
 
         public readonly string Step3Title = Loc.Localize("HelpMainUi_Step3Title", "Homepage");
         public readonly string Step3Desc = Loc.Localize("HelpMainUi_Step3Desc", "Access GagSpeak's many modules here.");
@@ -80,33 +82,34 @@ namespace GagSpeak.Localization
 
         public readonly string Step4Title = Loc.Localize("HelpMainUi_Step4Title", "Whitelist");
         public readonly string Step4Desc = Loc.Localize("HelpMainUi_Step4Desc", "Where your added Kinksters appear.");
-        public readonly string Step4DescExtended = Loc.Localize("HelpMainUi_Step4DescExtended", 
-            "MIDDLE-CLICK -> Open this Kinkster's KinkPlate.\n" +
-            "RIGHT-CLICK -> Set a nickname for this Kinkster.\n" +
-            "Magnify Glass -> View the permissions set for you by this Kinkster.\n" +
-            "Gear -> Set your permissions for this Kinkster here.\n" +
-            "Triple Dots -> Interact with this Kinkster.");
+        public readonly string Step4DescExtended = Loc.Localize("HelpMainUi_Step4DescExtended",
+            "MIDDLE-CLICK => Open this Kinkster's KinkPlate.\n" +
+            "RIGHT-CLICK => Set a nickname for this Kinkster.\n" +
+            "Magnify Glass => View the permissions set for you by this Kinkster.\n" +
+            "Gear => Set your permissions for this Kinkster here.\n" +
+            "Triple Dots => Interact with this Kinkster.");
 
         public readonly string Step5Title = Loc.Localize("HelpMainUi_Step5Title", "Adding Kinksters");
-        public readonly string Step5Desc = Loc.Localize("HelpMainUi_Step5Desc", "This sends Kinkster Requests to others.");
+        public readonly string Step5Desc = Loc.Localize("HelpMainUi_Step5Desc", "Send out Kinkster requests here.");
         public readonly string Step5DescExtended = Loc.Localize("HelpMainUi_Step5DescExtended", "Sent requests expire automatically within " +
             "3 days if not responded to, and can also be canceled at anytime.");
 
         public readonly string Step6Title = Loc.Localize("HelpMainUi_Step6Title", "Attaching Messages");
         public readonly string Step6Desc = Loc.Localize("HelpMainUi_Step6Desc", "Messages can be attached to sent Kinkster Requests, if desired.");
-        public readonly string Step6DescExtended = Loc.Localize("HelpMainUi_Step6DescExtended", "These help provide context for who's sending the request, helping inform recipient who you are!");
+        public readonly string Step6DescExtended = Loc.Localize("HelpMainUi_Step6DescExtended", "These can provide context for who's sending the request, helping inform the recipient who you are!");
 
         public readonly string Step7Title = Loc.Localize("HelpMainUi_Step7Title", "Account Page");
         public readonly string Step7Desc = Loc.Localize("HelpMainUi_Step7Desc", "Manage account settings here.");
-        public readonly string Step7DescExtended = Loc.Localize("HelpMainUi_Step7DescExtended", "This page will contain all information related to settings, profile setup, configs, and support links!");
+        public readonly string Step7DescExtended = Loc.Localize("HelpMainUi_Step7DescExtended", "This page contains important information about you, and access to profile setup, configs, and support links!");
 
         public readonly string Step8Title = Loc.Localize("HelpMainUi_Step8Title", "Client UID");
         public readonly string Step8Desc = Loc.Localize("HelpMainUi_Step8Desc", "Your UID for pairing.");
         public readonly string Step8DescExtended = Loc.Localize("HelpMainUi_Step8DescExtended", "This defines your account, you shouldn't display this in global chats or kinkplates.");
 
         public readonly string Step9Title = Loc.Localize("HelpMainUi_Step9Title", "Safewords");
-        public readonly string Step9Desc = Loc.Localize("HelpMainUi_Step9Desc", "Triggered with [/safeword YOURSAFEWORD], or [/safeword YOURSAFEWORD SPESIFICUID]");
-        public readonly string Step9DescExtended = Loc.Localize("HelpMainUi_Step9DescExtended", "Safewords override everything, and should be used responsible.");
+        public readonly string Step9Desc = Loc.Localize("HelpMainUi_Step9Desc", "Triggered with [/safeword YOURSAFEWORD], or [/safeword YOURSAFEWORD SPECIFICUID]. This removes everything from you!");
+        public readonly string Step9DescExtended = Loc.Localize("HelpMainUi_Step9DescExtended", "Using your safeword will override everything, so please use it responsibly. " +
+            "If you get stuck and can't use your chat, you can use the hardcore safeword with CTRL+ALT+Backspace, which will disable all hardcore settings across all pairs.");
 
         public readonly string Step10Title = Loc.Localize("HelpMainUi_Step10Title", "Setting Safeword");
         public readonly string Step10Desc = Loc.Localize("HelpMainUi_Step10Desc", "Press this stencil to set your personal Safeword.");
@@ -130,7 +133,7 @@ namespace GagSpeak.Localization
             "if you would like to contribute, please let me know! Until then, this is WIP.");
 
         public readonly string Step15Title = Loc.Localize("HelpMainUi_Step15Title", "Profile Description");
-        public readonly string Step15Desc = Loc.Localize("HelpMainUi_Step15Desc", "More space than search infos provide!");
+        public readonly string Step15Desc = Loc.Localize("HelpMainUi_Step15Desc", "More space than the search info provides!");
         public readonly string Step15DescExtended = Loc.Localize("HelpMainUi_Step15DescExtended", "Results can vary based on how the description is calculated, " +
             "preview result on light and full kinkplates!");
 
@@ -148,67 +151,67 @@ namespace GagSpeak.Localization
 
         public readonly string Step19Title = Loc.Localize("HelpMainUi_Step19Title", "Saving Profile Changes");
         public readonly string Step19Desc = Loc.Localize("HelpMainUi_Step19Desc", "Make sure you save changes, or edits will be lost!");
-        public readonly string Step19DescExtended = Loc.Localize("HelpMainUi_Step19DescExtended", "If the window is closed or the discard button is pressed instead, all changes are reverted!");
+        public readonly string Step19DescExtended = Loc.Localize("HelpMainUi_Step19DescExtended", " ");
 
         public readonly string Step20Title = Loc.Localize("HelpMainUi_Step20Title", "GagSpeak Settings Menu");
         public readonly string Step20Desc = Loc.Localize("HelpMainUi_Step20Desc", "You can access the Settings window by clicking this button.");
-        public readonly string Step20DescExtended = Loc.Localize("HelpMainUi_Step20DescExtended", " ");
+        public readonly string Step20DescExtended = Loc.Localize("HelpMainUi_Step20DescExtended", "You can also access it from any of the tabs by pressing the cog in the top bar.");
 
-        public readonly string Step21Title = Loc.Localize("HelpMainUi_Step21Title", "Title Bar GagSpeak Settings");
-        public readonly string Step21Desc = Loc.Localize("HelpMainUi_Step21Desc", "You can also access them from the title bar.");
-        public readonly string Step21DescExtended = Loc.Localize("HelpMainUi_Step21DescExtended", " ");
+        // public readonly string Step21Title = Loc.Localize("HelpMainUi_Step21Title", "Title Bar GagSpeak Settings");
+        // public readonly string Step21Desc = Loc.Localize("HelpMainUi_Step21Desc", "You can also access them from the title bar.");
+        // public readonly string Step21DescExtended = Loc.Localize("HelpMainUi_Step21DescExtended", " ");
 
-        public readonly string Step22Title = Loc.Localize("HelpMainUi_Step22Title", "Pattern Hub");
-        public readonly string Step22Desc = Loc.Localize("HelpMainUi_Step22Desc", "Browse and explore patterns uploaded by others.");
-        public readonly string Step22DescExtended = Loc.Localize("HelpMainUi_Step22DescExtended", " ");
+        public readonly string Step21Title = Loc.Localize("HelpMainUi_Step22Title", "Pattern Hub");
+        public readonly string Step21Desc = Loc.Localize("HelpMainUi_Step22Desc", "Browse and explore patterns uploaded by others.");
+        public readonly string Step21DescExtended = Loc.Localize("HelpMainUi_Step22DescExtended", " ");
 
-        public readonly string Step23Title = Loc.Localize("HelpMainUi_Step23Title", "Pattern Search");
-        public readonly string Step23Desc = Loc.Localize("HelpMainUi_Step23Desc", "Use tags and filters to narrow your search results.");
-        public readonly string Step23DescExtended = Loc.Localize("HelpMainUi_Step23DescExtended", "Up to a maximum of 50 results are polled, so if " +
+        public readonly string Step22Title = Loc.Localize("HelpMainUi_Step23Title", "Pattern Search");
+        public readonly string Step22Desc = Loc.Localize("HelpMainUi_Step23Desc", "Use tags and filters to narrow your search results.");
+        public readonly string Step22DescExtended = Loc.Localize("HelpMainUi_Step23DescExtended", "Up to a maximum of 50 results are polled, so if " +
             "you can't find the result you are looking for, narrow it with filters!");
 
-        public readonly string Step24Title = Loc.Localize("HelpMainUi_Step24Title", "Pattern Results");
-        public readonly string Step24Desc = Loc.Localize("HelpMainUi_Step24Desc", "Results let you preview devices & motors used, duration, and authors.");
-        public readonly string Step24DescExtended = Loc.Localize("HelpMainUi_Step24DescExtended", " ");
+        public readonly string Step23Title = Loc.Localize("HelpMainUi_Step24Title", "Pattern Results");
+        public readonly string Step23Desc = Loc.Localize("HelpMainUi_Step24Desc", "Results let you preview devices & motors used, duration, and authors.");
+        public readonly string Step23DescExtended = Loc.Localize("HelpMainUi_Step24DescExtended", " ");
 
-        public readonly string Step25Title = Loc.Localize("HelpMainUi_Step25Title", "Moodle Hub");
-        public readonly string Step25Desc = Loc.Localize("HelpMainUi_Step25Desc", "Browse and explore Moodles uploaded by others.");
-        public readonly string Step25DescExtended = Loc.Localize("HelpMainUi_Step25DescExtended", "Overview of moodle hub.");
+        public readonly string Step24Title = Loc.Localize("HelpMainUi_Step25Title", "Moodle Hub");
+        public readonly string Step24Desc = Loc.Localize("HelpMainUi_Step25Desc", "Browse and explore Moodles uploaded by others.");
+        public readonly string Step24DescExtended = Loc.Localize("HelpMainUi_Step25DescExtended", " ");
 
-        public readonly string Step26Title = Loc.Localize("HelpMainUi_Step26Title", "Moodle Search");
-        public readonly string Step26Desc = Loc.Localize("HelpMainUi_Step26Desc", "Use tags and filters to narrow your search results.");
-        public readonly string Step26DescExtended = Loc.Localize("HelpMainUi_Step26DescExtended", "Up to a maximum of 75 results are polled, so if " +
+        public readonly string Step25Title = Loc.Localize("HelpMainUi_Step26Title", "Moodle Search");
+        public readonly string Step25Desc = Loc.Localize("HelpMainUi_Step26Desc", "Use tags and filters to narrow your search results.");
+        public readonly string Step25DescExtended = Loc.Localize("HelpMainUi_Step26DescExtended", "Up to a maximum of 75 results are polled, so if " +
             "you can't find the result you are looking for, narrow it with filters!");
 
-        public readonly string Step27Title = Loc.Localize("HelpMainUi_Step27Title", "Moodle Results");
-        public readonly string Step27Desc = Loc.Localize("HelpMainUi_Step27Desc", "Hover result icons to preview display. Try on, like, or copy results to clipboard.");
-        public readonly string Step27DescExtended = Loc.Localize("HelpMainUi_Step27DescExtended", " ");
+        public readonly string Step26Title = Loc.Localize("HelpMainUi_Step27Title", "Moodle Results");
+        public readonly string Step26Desc = Loc.Localize("HelpMainUi_Step27Desc", "You can preview a Moodle by hovering over it's icon.");
+        public readonly string Step26DescExtended = Loc.Localize("HelpMainUi_Step27DescExtended", "You can also try on, like, or grab a copy of the Moodle for yourself.");
 
-        public readonly string Step28Title = Loc.Localize("HelpMainUi_Step28Title", "Global Chat");
-        public readonly string Step28Desc = Loc.Localize("HelpMainUi_Step28Desc", "Chat Anonymously with other Kinksters from anywhere in the world with Global Chat!");
-        public readonly string Step28DescExtended = Loc.Localize("HelpMainUi_Step28DescExtended", "ChatLogs are restored on reconnection, and reset at midnight every day relative to your local time zone.");
+        public readonly string Step27Title = Loc.Localize("HelpMainUi_Step28Title", "Global Chat");
+        public readonly string Step27Desc = Loc.Localize("HelpMainUi_Step28Desc", "Chat Anonymously with other Kinksters from anywhere in the world with Global Chat!");
+        public readonly string Step27DescExtended = Loc.Localize("HelpMainUi_Step28DescExtended", "ChatLogs are restored on reconnection, and reset at midnight every day relative to your local time zone.");
 
-        public readonly string Step29Title = Loc.Localize("HelpMainUi_Step29Title", "Using Global Chat");
-        public readonly string Step29Desc = Loc.Localize("HelpMainUi_Step29Desc", "To talk in Global Chat, you must verify your account first! This protected against anonymous Harassment.");
-        public readonly string Step29DescExtended = Loc.Localize("HelpMainUi_Step29DescExtended", " ");
+        public readonly string Step28Title = Loc.Localize("HelpMainUi_Step29Title", "Using Global Chat");
+        public readonly string Step28Desc = Loc.Localize("HelpMainUi_Step29Desc", "To talk in Global Chat, you must verify your account first! This is to prevent anonymous harassment.");
+        public readonly string Step28DescExtended = Loc.Localize("HelpMainUi_Step29DescExtended", "In order to verify your account, you will need to join the discord server, where further instructions can be found.");
 
-        public readonly string Step30Title = Loc.Localize("HelpMainUi_Step30Title", "Chat Emotes");
-        public readonly string Step30Desc = Loc.Localize("HelpMainUi_Step30Desc", "You can add expressive emotes to messages!");
-        public readonly string Step30DescExtended = Loc.Localize("HelpMainUi_Step30DescExtended", "Emotes can also be manually added to chat messages by typing out emotes like discord emotes. :catsnuggle:");
+        public readonly string Step29Title = Loc.Localize("HelpMainUi_Step30Title", "Chat Emotes");
+        public readonly string Step29Desc = Loc.Localize("HelpMainUi_Step30Desc", "You can add expressive emotes to messages!");
+        public readonly string Step29DescExtended = Loc.Localize("HelpMainUi_Step30DescExtended", "Emotes can also be manually added to chat messages by typing out emotes like discord emotes. :catsnuggle:");
 
-        public readonly string Step31Title = Loc.Localize("HelpMainUi_Step31Title", "Chat Scroll");
-        public readonly string Step31Desc = Loc.Localize("HelpMainUi_Step31Desc", "Sets if the window will always autoscroll to the last sent message.");
-        public readonly string Step31DescExtended = Loc.Localize("HelpMainUi_Step31DescExtended", "Turning Auto-Scroll off lets you scroll up freely.");
+        public readonly string Step30Title = Loc.Localize("HelpMainUi_Step31Title", "Chat Scroll");
+        public readonly string Step30Desc = Loc.Localize("HelpMainUi_Step31Desc", "Sets if the window will always auto-scroll to the last sent message.");
+        public readonly string Step30DescExtended = Loc.Localize("HelpMainUi_Step31DescExtended", "Turning Auto-Scroll off lets you scroll up freely.");
 
-        public readonly string Step32Title = Loc.Localize("HelpMainUi_Step32Title", "Chat Message Examine");
-        public readonly string Step32Desc = Loc.Localize("HelpMainUi_Step32Desc", "Hover messages to see when they were sent, the Kinkster's Light KinkPlate™, or send them a request!");
-        public readonly string Step32DescExtended = Loc.Localize("HelpMainUi_Step32DescExtended", "Additionally, you are able to choose to add a kinkster to " +
+        public readonly string Step31Title = Loc.Localize("HelpMainUi_Step32Title", "Chat Message Examine");
+        public readonly string Step31Desc = Loc.Localize("HelpMainUi_Step32Desc", "Hover messages to see when they were sent, the Kinkster's Light KinkPlate™, or send them a request!");
+        public readonly string Step31DescExtended = Loc.Localize("HelpMainUi_Step32DescExtended", "Additionally, you are able to choose to add a kinkster to " +
             "your silence list, hiding messages from them until the next plugin restart.");
 
-        public readonly string Step33Title = Loc.Localize("HelpMainUi_Step33Title", "Self Plug");
-        public readonly string Step33Desc = Loc.Localize("HelpMainUi_Step33Desc", "If you ever fancy tossing a tip or becoming a supporter as a thanks for all the hard work, or just to help support me, it would be much apperciated." +
+        public readonly string Step32Title = Loc.Localize("HelpMainUi_Step33Title", "Self Plug");
+        public readonly string Step32Desc = Loc.Localize("HelpMainUi_Step33Desc", "If you ever fancy tossing a tip or becoming a supporter as a thanks for all the hard work, or just to help support me, it would be much appreciated." +
             "\n\nBut please don't feel guilty if you don't. Only support me if you want to! I will always love and cherish you all regardless ♥");
-        public readonly string Step33DescExtended = Loc.Localize("HelpMainUi_Step33DescExtended", " ");
+        public readonly string Step32DescExtended = Loc.Localize("HelpMainUi_Step33DescExtended", " ");
     }
 
     public class HelpRemote
@@ -240,6 +243,152 @@ namespace GagSpeak.Localization
 
     public class HelpRestraints
     {
+        // -- DRAFT -- //
+        public readonly string Step1Title = Loc.Localize("HelpRestraints_Step1Title", "Searching");
+        public readonly string Step1Desc = Loc.Localize("HelpRestraints_Step1Desc", "You can search for a specific restraint set by typing its name here.");
+        public readonly string Step1DescExtended = Loc.Localize("HelpRestraints_Step1DescExtended", " ");
+
+        public readonly string Step2Title = Loc.Localize("HelpRestraints_Step2Title", "Creating a Folder");
+        public readonly string Step2Desc = Loc.Localize("HelpRestraints_Step2Desc", "Create folders to organize your restraints.");
+        public readonly string Step2DescExtended = Loc.Localize("HelpRestraints_Step2DescExtended", "We'll create a new \"Tutorial Folder\" when you click next. You can rearrange things with drag and drop.");
+
+        public readonly string Step3Title = Loc.Localize("HelpRestraints_Step3Title", "Creating a New Set");
+        public readonly string Step3Desc = Loc.Localize("HelpRestraints_Step3Desc", "Make a new restraint set here.");
+        public readonly string Step3DescExtended = Loc.Localize("HelpRestraints_Step3DescExtended", "Click next and we'll make a new \"Tutorial Restraint\" for you.");
+
+        public readonly string Step4Title = Loc.Localize("HelpRestraints_Step4Title", "The Restraints List");
+        public readonly string Step4Desc = Loc.Localize("HelpRestraints_Step4Desc", "This is the list of all restraint sets you have created.");
+        public readonly string Step4DescExtended = Loc.Localize("HelpRestraints_Step4DescExtended", "You can click the star next to an item to mark it as a favorite, or delete a set by holding shift while clicking the trash icon.");
+
+        public readonly string Step5Title = Loc.Localize("HelpRestraints_Step5Title", "The Selected Restraint");
+        public readonly string Step5Desc = Loc.Localize("HelpRestraints_Step5Desc", "You can see the details of any selected restraint.");
+        public readonly string Step5DescExtended = Loc.Localize("HelpRestraints_Step5DescExtended", "The different properties of your restraint will show up here, as well as any attached hardcore traits and moodles. You can mouse over lit up icons to see each property.");
+
+        public readonly string Step6Title = Loc.Localize("HelpRestraints_Step6Title", "Editing a Restraint");
+        public readonly string Step6Desc = Loc.Localize("HelpRestraints_Step6Desc", "Edit a restraint set by double-clicking it's name here");
+        public readonly string Step6DescExtended = Loc.Localize("HelpRestraints_Step6DescExtended", " ");
+
+        public readonly string Step7Title = Loc.Localize("HelpRestraints_Step7Title", "Renaming a Restraint");
+        public readonly string Step7Desc = Loc.Localize("HelpRestraints_Step7Desc", "If you change your mind, you can always rename a restraint.");
+        public readonly string Step7DescExtended = Loc.Localize("HelpRestraints_Step7DescExtended", "You can also rename a restraint set by right-clicking it in the main list.");
+
+        public readonly string Step8Title = Loc.Localize("HelpRestraints_Step8Title", "Meta Properties");
+        public readonly string Step8Desc = Loc.Localize("HelpRestraints_Step8Desc", "Restraint sets can also edit meta properties about you.");
+        public readonly string Step8DescExtended = Loc.Localize("HelpRestraints_Step8DescExtended", "A property set to forced show will always override one set to forced hide. Redrawing your character is necessary if animations are being changed.");
+
+        public readonly string Step9Title = Loc.Localize("HelpRestraints_Step9Title", "Hardcore Traits");
+        public readonly string Step9Desc = Loc.Localize("HelpRestraints_Step9Desc", "Each of the hardcore traits can be toggled on or off.");
+        public readonly string Step9DescExtended = Loc.Localize("HelpRestraints_Step9DescExtended", "These will always be applied if you put on a restraint yourself. " +
+            "Be careful which ones you set, as they each disable various aspects of gameplay!");
+
+        public readonly string Step10Title = Loc.Localize("HelpRestraints_Step10Title", "Arousal");
+        public readonly string Step10Desc = Loc.Localize("HelpRestraints_Step10Desc", "You can decide how arousing being in this set is.");
+        public readonly string Step10DescExtended = Loc.Localize("HelpRestraints_Step10DescExtended", "Arousal builds up slowly over time, and can do things like change your chat messages, blur your screen, increase global cooldowns, and more.");
+
+        public readonly string Step11Title = Loc.Localize("HelpRestraints_Step11Title", "Setting the Equipment");
+        public readonly string Step11Desc = Loc.Localize("HelpRestraints_Step11Desc", "This is the base of what will be applied with this restraint.");
+        public readonly string Step11DescExtended = Loc.Localize("HelpRestraints_Step11DescExtended", " ");
+
+        public readonly string Step12Title = Loc.Localize("HelpRestraints_Step12Title", "Importing");
+        public readonly string Step12Desc = Loc.Localize("HelpRestraints_Step12Desc", "You can import your current gear and accessories seperately.");
+        public readonly string Step12DescExtended = Loc.Localize("HelpRestraints_Step12DescExtended", " ");
+
+        public readonly string Step13Title = Loc.Localize("HelpRestraints_Step13Title", "Slot Types");
+        public readonly string Step13Desc = Loc.Localize("HelpRestraints_Step13Desc", "Slots can be either a gear item, or a restriction. Click to swap between the two");
+        public readonly string Step13DescExtended = Loc.Localize("HelpRestraints_Step13DescExtended", " ");
+
+        // REVIEW THIS. NOT SURE HOW IT WORKS YET.
+        public readonly string Step14Title = Loc.Localize("HelpRestraints_Step14Title", "Overlay");
+        public readonly string Step14Desc = Loc.Localize("HelpRestraints_Step14Desc", "Rows set to overlay will not be applied when \"Nothing\" is set.");
+        public readonly string Step14DescExtended = Loc.Localize("HelpRestraints_Step14DescExtended", "The open eye is overlay enabled, crossed out is disabled.");
+
+        public readonly string Step15Title = Loc.Localize("HelpRestraints_Step15Title", "Layers");
+        public readonly string Step15Desc = Loc.Localize("HelpRestraints_Step15Desc", "These are additional things you can apply on top of your base restraint.");
+        public readonly string Step15DescExtended = Loc.Localize("HelpRestraints_Step15DescExtended", "There can be up to 5 layers on any set.");
+
+        public readonly string Step16Title = Loc.Localize("HelpRestraints_Step16Title", "Adding a Layer");
+        public readonly string Step16Desc = Loc.Localize("HelpRestraints_Step16Desc", "You can add a layer by clicking this button.");
+        public readonly string Step16DescExtended = Loc.Localize("HelpRestraints_Step16DescExtended", " ");
+
+        public readonly string Step17Title = Loc.Localize("HelpRestraints_Step17Title", "Layer Types");
+        public readonly string Step17Desc = Loc.Localize("HelpRestraints_Step17Desc", "A layer can either be a restriction, or a mod preset.");
+        public readonly string Step17DescExtended = Loc.Localize("HelpRestraints_Step17DescExtended", " ");
+
+        public readonly string Step18Title = Loc.Localize("HelpRestraints_Step18Title", "Mod Presets and Moodles");
+        public readonly string Step18Desc = Loc.Localize("HelpRestraints_Step18Desc", "Set up which mods to load, and moodles to apply for the base set.");
+        public readonly string Step18DescExtended = Loc.Localize("HelpRestraints_Step18DescExtended", " ");
+
+        public readonly string Step19Title = Loc.Localize("HelpRestraints_Step19Title", "Adding a Mod Preset");
+        public readonly string Step19Desc = Loc.Localize("HelpRestraints_Step19Desc", "Use the dropdowns to pick which mod and preset to load.");
+        public readonly string Step19DescExtended = Loc.Localize("HelpRestraints_Step19DescExtended", " ");
+
+        public readonly string Step20Title = Loc.Localize("HelpRestraints_Step20Title", "Adding a Moodle");
+        public readonly string Step20Desc = Loc.Localize("HelpRestraints_Step20Desc", "You can add a moodle by clicking this button.");
+        public readonly string Step20DescExtended = Loc.Localize("HelpRestraints_Step20DescExtended", " ");
+
+        public readonly string Step21Title = Loc.Localize("HelpRestraints_Step21Title", "Moodle Presets");
+        public readonly string Step21Desc = Loc.Localize("HelpRestraints_Step21Desc", "Switch between individual moodles or moodle presets with this button.");
+        public readonly string Step21DescExtended = Loc.Localize("HelpRestraints_Step21DescExtended", "Hold shift when clicking to switch.");
+
+        public readonly string Step22Title = Loc.Localize("HelpRestraints_Step22Title", "Moodle Preview");
+        public readonly string Step22Desc = Loc.Localize("HelpRestraints_Step22Desc", "Hover over any of the moodles here to see what they will look like.");
+        public readonly string Step22DescExtended = Loc.Localize("HelpRestraints_Step22DescExtended", " ");
+
+        // REVEIW THIS. Needs more testing, closing the window doesn't revert, leaves editor open!
+        public readonly string Step23Title = Loc.Localize("HelpRestraints_Step23Title", "Cancelling Changes");
+        public readonly string Step23Desc = Loc.Localize("HelpRestraints_Step23Desc", "Made a mistake or just don't want to save a change, use the back button.");
+        public readonly string Step23DescExtended = Loc.Localize("HelpRestraints_Step23DescExtended", " ");
+
+        public readonly string Step24Title = Loc.Localize("HelpRestraints_Step24Title", "Saving Changes");
+        public readonly string Step24Desc = Loc.Localize("HelpRestraints_Step24Desc", "If you are happy with your design, you can save it by clicking this button.");
+        public readonly string Step24DescExtended = Loc.Localize("HelpRestraints_Step24DescExtended", " ");
+
+        public readonly string Step25Title = Loc.Localize("HelpRestraints_Step25Title", "Setting a Thumbnail");
+        public readonly string Step25Desc = Loc.Localize("HelpRestraints_Step25Desc", "Double-click to open the thumbnail image selector.");
+        public readonly string Step25DescExtended = Loc.Localize("HelpRestraints_Step25DescExtended", " ");
+
+        public readonly string Step26Title = Loc.Localize("HelpRestraints_Step26Title", "Refresh the Folder");
+        public readonly string Step26Desc = Loc.Localize("HelpRestraints_Step26Desc", "If you added an image to the folder, you can refresh to get it to show up here.");
+        public readonly string Step26DescExtended = Loc.Localize("HelpRestraints_Step26DescExtended", " ");
+
+        public readonly string Step27Title = Loc.Localize("HelpRestraints_Step27Title", "Changing the Scale");
+        public readonly string Step27Desc = Loc.Localize("HelpRestraints_Step27Desc", "You can always get a closer look at your images if you need to.");
+        public readonly string Step27DescExtended = Loc.Localize("HelpRestraints_Step27DescExtended", " ");
+
+        public readonly string Step28Title = Loc.Localize("HelpRestraints_Step28Title", "Import a File");
+        public readonly string Step28Desc = Loc.Localize("HelpRestraints_Step28Desc", "If you already have an image you like, you can import from a file anywhere on your computer.");
+        public readonly string Step28DescExtended = Loc.Localize("HelpRestraints_Step28DescExtended", " ");
+
+        public readonly string Step29Title = Loc.Localize("HelpRestraints_Step29Title", "Import From the Clipboard");
+        public readonly string Step29Desc = Loc.Localize("HelpRestraints_Step29Desc", "You can also grab an image from your clipboard.");
+        public readonly string Step29DescExtended = Loc.Localize("HelpRestraints_Step29DescExtended", "Make a cute snip of yourself in a restraint and use this to import it with the snipping tool."); // i say this jokingly
+
+        public readonly string Step30Title = Loc.Localize("HelpRestraints_Step30Title", "The Active Restraint");
+        public readonly string Step30Desc = Loc.Localize("HelpRestraints_Step30Desc", "You can see the active restraint right here.");
+        public readonly string Step30DescExtended = Loc.Localize("HelpRestraints_Step30DescExtended", " ");
+
+        public readonly string Step31Title = Loc.Localize("HelpRestraints_Step31Title", "Applying a Restraint");
+        public readonly string Step31Desc = Loc.Localize("HelpRestraints_Step31Desc", "Select a restraint from the dropdown to apply it to yourself.");
+        public readonly string Step31DescExtended = Loc.Localize("HelpRestraints_Step31DescExtended", "Favorited restraints will show up at the top. " +
+            "Note: Any hardcore traits enabled on a selected restraint always apply when you put it on yourself.");
+
+        public readonly string Step32Title = Loc.Localize("HelpRestraints_Step32Title", "Locking a Restraint");
+        public readonly string Step32Desc = Loc.Localize("HelpRestraints_Step32Desc", "There are several locks to choose from.");
+        public readonly string Step32DescExtended = Loc.Localize("HelpRestraints_Step32DescExtended", "A lock can only be applied or removed by someone else if you've granted them the correct permissions.");
+
+        public readonly string Step33Title = Loc.Localize("HelpRestraints_Step33Title", "The Layers");
+        public readonly string Step33Desc = Loc.Localize("HelpRestraints_Step33Desc", "You can edit the applied layers here.");
+        public readonly string Step33DescExtended = Loc.Localize("HelpRestraints_Step33DescExtended", "Make sure to click \"Update Layers\" button when you're done with changes. You cannot edit the active layers when the set has been locked by someone else.");
+
+        public readonly string Step34Title = Loc.Localize("HelpRestraints_Step34Title", "Unlocking a Restraint");
+        public readonly string Step34Desc = Loc.Localize("HelpRestraints_Step34Desc", "You can't take a restraint off unless it's unlocked.");
+        public readonly string Step34DescExtended = Loc.Localize("HelpRestraints_Step34DescExtended", "(We definitely snuck a Metal Padlock on you while you were reading earlier steps, click next and it will be unlocked for you.)"); //ehehehe i am amused
+
+        public readonly string Step35Title = Loc.Localize("HelpRestraints_Step35Title", "Removing a Restraint");
+        public readonly string Step35Desc = Loc.Localize("HelpRestraints_Step35Desc", "Right click the thumbnail to remove a restraint once it's unlocked.");
+        public readonly string Step35DescExtended = Loc.Localize("HelpRestraints_Step35DescExtended", " ");
+
+        // -- OLD CONTENT -- //
         //public readonly string Step1Title = Loc.Localize("HelpRestraints_Step1Title", "Adding a New Restraint Set");
         //public readonly string Step1Desc = Loc.Localize("HelpRestraints_Step1Desc", "Select this button to begin creating a new Restraint Set!\n(The Tutorial will do this for you)");
 
@@ -324,11 +473,273 @@ namespace GagSpeak.Localization
 
     public class HelpRestrictions
     {
+        // a lot of this tutorial is going to be similar to the restraints tutorial.
+        public readonly string Step1Title = Loc.Localize("HelpRestrictions_Step1Title", "Searching your Restrictions");
+        public readonly string Step1Desc = Loc.Localize("HelpRestrictions_Step1Desc", "You can search for any restriction here.");
+        public readonly string Step1DescExtended = Loc.Localize("HelpRestrictions_Step1DescExtended", " ");
+
+        public readonly string Step2Title = Loc.Localize("HelpRestrictions_Step2Title", "Creating a Folder");
+        public readonly string Step2Desc = Loc.Localize("HelpRestrictions_Step2Desc", "Clicking this folder icon will let you create a new folder.");
+        public readonly string Step2DescExtended = Loc.Localize("HelpRestrictions_Step2DescExtended", "You can drag and drop restrictions into folders to organize them.");
+
+        public readonly string Step3Title = Loc.Localize("HelpRestrictions_Step3Title", "Creating a Restriction");
+        public readonly string Step3Desc = Loc.Localize("HelpRestrictions_Step3Desc", "The + button creates a new Restriction");
+        public readonly string Step3DescExtended = Loc.Localize("HelpRestrictions_Step3DescExtended", " ");
+
+        public readonly string Step4Title = Loc.Localize("HelpRestrictions_Step4Title", "Restriction Types");
+        public readonly string Step4Desc = Loc.Localize("HelpRestrictions_Step4Desc", "There are a few different types of restrictions.");
+        public readonly string Step4DescExtended = Loc.Localize("HelpRestrictions_Step4DescExtended", "A normal restriction is the default, every day sort of thing, like a pair of cuffs. " +
+            "Blindfolds do the blindfold thing (PLACEHOLDER)." +
+            "Hypnosis does the pretty spirals... Don't stare too long (PLACEHOLDER).");
+
+        public readonly string Step5Title = Loc.Localize("HelpRestrictions_Step5Title", "The Restrictions List");
+        public readonly string Step5Desc = Loc.Localize("HelpRestrictions_Step5Desc", "Here's where all your restrictions live. Click on one to select it.");
+        public readonly string Step5DescExtended = Loc.Localize("HelpRestrictions_Step5DescExtended", "You can click the star next to an item to mark it as a favorite, or delete a set with by holding shift while clicking the trash icon.");
+
+        public readonly string Step6Title = Loc.Localize("HelpRestrictions_Step6Title", "The Selected Restriction");
+        public readonly string Step6Desc = Loc.Localize("HelpRestrictions_Step6Desc", "This is the currently selected restriction.");
+        public readonly string Step6DescExtended = Loc.Localize("HelpRestrictions_Step6DescExtended", " ");
+
+        public readonly string Step7Title = Loc.Localize("HelpRestrictions_Step7Title", "The Restriction Editor");
+        public readonly string Step7Desc = Loc.Localize("HelpRestrictions_Step7Desc", "You can edit the selected restriction by double-clicking its name here.");
+        public readonly string Step7DescExtended = Loc.Localize("HelpRestrictions_Step7DescExtended", " ");
+
+        public readonly string Step8Title = Loc.Localize("HelpRestrictions_Step8Title", "Renaming a Restriction");
+        public readonly string Step8Desc = Loc.Localize("HelpRestrictions_Step8Desc", "You can rename a restriction here.");
+        public readonly string Step8DescExtended = Loc.Localize("HelpRestrictions_Step8DescExtended", "You can also rename a restriction by right-clicking it in the main list.");
+
+        public readonly string Step9Title = Loc.Localize("HelpRestrictions_Step9Title", "Meta Properties");
+        public readonly string Step9Desc = Loc.Localize("HelpRestrictions_Step9Desc", "You can have the restriction force your helmet and visor to be shown.");
+        public readonly string Step9DescExtended = Loc.Localize("HelpRestrictions_Step9DescExtended", "You can also have it redraw your character if you need to update an animation.");
+
+        public readonly string Step10Title = Loc.Localize("HelpRestrictions_Step10Title", "Setting the Associated Glamour");
+        public readonly string Step10Desc = Loc.Localize("HelpRestrictions_Step10Desc", "You can set what gets applied to you with this restriction.");
+        public readonly string Step10DescExtended = Loc.Localize("HelpRestrictions_Step10DescExtended", " ");
+
+        public readonly string Step11Title = Loc.Localize("HelpRestrictions_Step11Title", "Hypnotic Restriction");
+        public readonly string Step11Desc = Loc.Localize("HelpRestrictions_Step11Desc", "These special restriction types allow you to create pretty spirals to watch (PLACEHOLDER)");
+        public readonly string Step11DescExtended = Loc.Localize("HelpRestrictions_Step11DescExtended", "You will be able to customize the image overlaid on screen, any text that's displayed, and a bunch of other effects in later steps.");
+
+        public readonly string Step12Title = Loc.Localize("HelpRestrictions_Step12Title", "First Person");
+        public readonly string Step12Desc = Loc.Localize("HelpRestrictions_Step12Desc", "You can set up a blindfold or hypnotic restriction to lock your camera to first person.");
+        public readonly string Step12DescExtended = Loc.Localize("HelpRestrictions_Step12DescExtended", " ");
+
+        public readonly string Step13Title = Loc.Localize("HelpRestrictions_Step13Title", "Selecting an Image");
+        public readonly string Step13Desc = Loc.Localize("HelpRestrictions_Step13Desc", "Clicking this will open the thumbnail viewer to pick an image for your hypnotic effect.");
+        public readonly string Step13DescExtended = Loc.Localize("HelpRestrictions_Step13DescExtended", "There's a nice spiral included by default, but you can always add your own images.");
+
+        public readonly string Step14Title = Loc.Localize("HelpRestrictions_Step14Title", "Refresh the Folder");
+        public readonly string Step14Desc = Loc.Localize("HelpRestrictions_Step14Desc", "If you added an image to the folder, you can refresh to get it to show up here.");
+        public readonly string Step14DescExtended = Loc.Localize("HelpRestrictions_Step14DescExtended", " ");
+
+        public readonly string Step15Title = Loc.Localize("HelpRestrictions_Step15Title", "Changing the Scale");
+        public readonly string Step15Desc = Loc.Localize("HelpRestrictions_Step15Desc", "You can always get a closer look at your images if you need to.");
+        public readonly string Step15DescExtended = Loc.Localize("HelpRestrictions_Step15DescExtended", " ");
+
+        public readonly string Step16Title = Loc.Localize("HelpRestrictions_Step16Title", "Import a File");
+        public readonly string Step16Desc = Loc.Localize("HelpRestrictions_Step16Desc", "If you already have an image you like, you can import from a file anywhere on your computer.");
+        public readonly string Step16DescExtended = Loc.Localize("HelpRestrictions_Step16DescExtended", " ");
+
+        public readonly string Step17Title = Loc.Localize("HelpRestrictions_Step17Title", "Import From the Clipboard");
+        public readonly string Step17Desc = Loc.Localize("HelpRestrictions_Step17Desc", "You can also grab an image from your clipboard.");
+        public readonly string Step17DescExtended = Loc.Localize("HelpRestrictions_Step17DescExtended", " ");
+
+        public readonly string Step18Title = Loc.Localize("HelpRestrictions_Step18Title", "The Effect Editor");
+        public readonly string Step18Desc = Loc.Localize("HelpRestrictions_Step18Desc", "There are a lot of things you can do with the effects on a hypnotic restraint.");
+        public readonly string Step18DescExtended = Loc.Localize("HelpRestrictions_Step18DescExtended", " ");
+
+        public readonly string Step19Title = Loc.Localize("HelpRestrictions_Step19Title", "Effect Options");
+        public readonly string Step19Desc = Loc.Localize("HelpRestrictions_Step19Desc", "You can set several different options for your hypnotic effect.");
+        public readonly string Step19DescExtended = Loc.Localize("HelpRestrictions_Step19DescExtended", "Each of the options has a tooltip explaining what it does. Hover over for more info!");
+
+        public readonly string Step20Title = Loc.Localize("HelpRestrictions_Step20Title", "The Word List");
+        public readonly string Step20Desc = Loc.Localize("HelpRestrictions_Step20Desc", "This is a list of all the words that can be shown when the effect is active.");
+        public readonly string Step20DescExtended = Loc.Localize("HelpRestrictions_Step20DescExtended", "Click the + to add a new word. You can add multiple words, " +
+            "reorder them by holding shift while left- or right-clicking. Delete any word by holding control and left-clicking." +
+            "You can see these key binds again at any time by hovering over the little ? icon in the corner.");
+
+        public readonly string Step21Title = Loc.Localize("HelpRestrictions_Step21Title", "Coloring your Effects");
+        public readonly string Step21Desc = Loc.Localize("HelpRestrictions_Step21Desc", "The three color pickers can be used to edit the text, outline (stroke), and main spiral colors separately.");
+        public readonly string Step21DescExtended = Loc.Localize("HelpRestrictions_Step21DescExtended", " ");
+
+        public readonly string Step22Title = Loc.Localize("HelpRestrictions_Step22Title", "Hardcore Traits");
+        public readonly string Step22Desc = Loc.Localize("HelpRestrictions_Step22Desc", "You can set which Hardcore Traits are applied when you use this restriction.");
+        public readonly string Step22DescExtended = Loc.Localize("HelpRestrictions_Step22DescExtended", "These traits will always apply to restrictions you've put on yourself, so be careful!");
+
+        public readonly string Step23Title = Loc.Localize("HelpRestrictions_Step23Title", "Arousal");
+        public readonly string Step23Desc = Loc.Localize("HelpRestrictions_Step23Desc", "You can decide how arousing being in this restriction is.");
+        public readonly string Step23DescExtended = Loc.Localize("HelpRestrictions_Step23DescExtended", "Arousal builds up slowly over time, and can do things like change your chat messages, blur your screen, increase global cooldowns, and more.");
+
+        public readonly string Step24Title = Loc.Localize("HelpRestrictions_Step24Title", "Moodles");
+        public readonly string Step24Desc = Loc.Localize("HelpRestrictions_Step24Desc", "Manage any moodles for this restriction here.");
+        public readonly string Step24DescExtended = Loc.Localize("HelpRestrictions_Step24DescExtended", "Moodles are custom buffs and debuffs!");
+
+        public readonly string Step25Title = Loc.Localize("HelpRestrictions_Step25Title", "Using Moodle Presets");
+        public readonly string Step25Desc = Loc.Localize("HelpRestrictions_Step25Desc", "Switch between individual moodles or moodle presets with this button.");
+        public readonly string Step25DescExtended = Loc.Localize("HelpRestrictions_Step25DescExtended", "Hold shift and click to switch.");
+
+        public readonly string Step26Title = Loc.Localize("HelpRestrictions_Step26Title", "Moodle Preview");
+        public readonly string Step26Desc = Loc.Localize("HelpRestrictions_Step26Desc", "Hover over any of the moodles here to see what they will look like.");
+        public readonly string Step26DescExtended = Loc.Localize("HelpRestrictions_Step26DescExtended", " ");
+
+        public readonly string Step27Title = Loc.Localize("HelpRestrictions_Step27Title", "Attached Mods");
+        public readonly string Step27Desc = Loc.Localize("HelpRestrictions_Step27Desc", "Which mod this restriction will load when you apply it");
+        public readonly string Step27DescExtended = Loc.Localize("HelpRestrictions_Step27DescExtended", " ");
+
+        public readonly string Step28Title = Loc.Localize("HelpRestrictions_Step28Title", "Adding a Mod");
+        public readonly string Step28Desc = Loc.Localize("HelpRestrictions_Step28Desc", "You can add a mod by selecting it from the dropdown.");
+        public readonly string Step28DescExtended = Loc.Localize("HelpRestrictions_Step28DescExtended", " ");
+
+        public readonly string Step29Title = Loc.Localize("HelpRestrictions_Step29Title", "Mod Presets");
+        public readonly string Step29Desc = Loc.Localize("HelpRestrictions_Step29Desc", "Select the mod preset to load from this dropdown.");
+        public readonly string Step29DescExtended = Loc.Localize("HelpRestrictions_Step29DescExtended", "You can create and edit these in the Mod Presets window.");
+
+        public readonly string Step30Title = Loc.Localize("HelpRestrictions_Step30Title", "Preset Preview");
+        public readonly string Step30Desc = Loc.Localize("HelpRestrictions_Step30Desc", "Hover over the preset name to see a small popup preview of the settings that will be loaded.");
+        public readonly string Step30DescExtended = Loc.Localize("HelpRestrictions_Step30DescExtended", " ");
+
+        public readonly string Step31Title = Loc.Localize("HelpRestrictions_Step31Title", "Canceling changes");
+        public readonly string Step31Desc = Loc.Localize("HelpRestrictions_Step31Desc", "If you made a mistake or just don't want to save a change, use the back button.");
+        public readonly string Step31DescExtended = Loc.Localize("HelpRestrictions_Step31DescExtended", " ");
+
+        public readonly string Step32Title = Loc.Localize("HelpRestrictions_Step32Title", "Saving Changes");
+        public readonly string Step32Desc = Loc.Localize("HelpRestrictions_Step32Desc", "If you are happy with your design, you can save it by clicking this button.");
+        public readonly string Step32DescExtended = Loc.Localize("HelpRestrictions_Step32DescExtended", " ");
+
+        public readonly string Step33Title = Loc.Localize("HelpRestrictions_Step33Title", "Setting a Thumbnail");
+        public readonly string Step33Desc = Loc.Localize("HelpRestrictions_Step33Desc", "Double-click to open the thumbnail image selector.");
+        public readonly string Step33DescExtended = Loc.Localize("HelpRestrictions_Step33DescExtended", " ");
+
+        public readonly string Step34Title = Loc.Localize("HelpRestrictions_Step34Title", "Your Active Restrictions");
+        public readonly string Step34Desc = Loc.Localize("HelpRestrictions_Step34Desc", "You can see the active restrictions right here.");
+        public readonly string Step34DescExtended = Loc.Localize("HelpRestrictions_Step34DescExtended", "You can have up to 5 restrictions active at any time." +
+            "Any with conflicting glamour slots will only show the lowest.");
+
+        public readonly string Step35Title = Loc.Localize("HelpRestrictions_Step35Title", "Applying a Restriction");
+        public readonly string Step35Desc = Loc.Localize("HelpRestrictions_Step35Desc", "Select a restriction from the dropdown to apply it to yourself.");
+        public readonly string Step35DescExtended = Loc.Localize("HelpRestrictions_Step35DescExtended", "Favorited restrictions will show up at the top. " +
+            "Note: Any hardcore traits enabled on a selected restriction always apply when you put it on yourself.");
+
+        public readonly string Step36Title = Loc.Localize("HelpRestrictions_Step36Title", "Locking a Restriction");
+        public readonly string Step36Desc = Loc.Localize("HelpRestrictions_Step36Desc", "There are several locks to choose from.");
+        public readonly string Step36DescExtended = Loc.Localize("HelpRestrictions_Step36DescExtended", "A lock can only be applied or removed by someone else if you've granted them the correct permissions.");
+
+        public readonly string Step37Title = Loc.Localize("HelpRestrictions_Step37Title", "Unlocking a Restriction");
+        public readonly string Step37Desc = Loc.Localize("HelpRestrictions_Step37Desc", "You can't take a restriction off unless it's unlocked.");
+        public readonly string Step37DescExtended = Loc.Localize("HelpRestrictions_Step37DescExtended", "(We definitely snuck a Metal Padlock on you while you were reading earlier steps, click next and it will be unlocked for you.)"); //ehehehe i am amused
+
+        public readonly string Step38Title = Loc.Localize("HelpRestrictions_Step38Title", "Removing a Restriction");
+        public readonly string Step38Desc = Loc.Localize("HelpRestrictions_Step38Desc", "Right click the thumbnail to remove a restriction once it's unlocked.");
+        public readonly string Step38DescExtended = Loc.Localize("HelpRestrictions_Step38DescExtended", " ");
 
     }
 
     public class HelpGags
     {
+        public readonly string Step1Title = Loc.Localize("HelpGags_Step1Title", "Searching Your Gags");
+        public readonly string Step1Desc = Loc.Localize("HelpGags_Step1Desc", "You can search for specific gags here.");
+        public readonly string Step1DescExtended = Loc.Localize("HelpGags_Step1DescExtended", " ");
+
+        public readonly string Step2Title = Loc.Localize("HelpGags_Step2Title", "Creating a Folder");
+        public readonly string Step2Desc = Loc.Localize("HelpGags_Step2Desc", "Clicking this will let you create a new folder.");
+        public readonly string Step2DescExtended = Loc.Localize("HelpGags_Step2DescExtended", "You can drag and drop gags into folders to organize them.");
+
+        public readonly string Step3Title = Loc.Localize("HelpGags_Step3Title", "The Gag List");
+        public readonly string Step3Desc = Loc.Localize("HelpGags_Step3Desc", "This is the list of all of the gags!");
+        public readonly string Step3DescExtended = Loc.Localize("HelpGags_Step3DescExtended", "You can click the star next to an item to mark it as a favorite, or delete a set with by holding shift while clicking the trash icon.");
+
+        public readonly string Step4Title = Loc.Localize("HelpGags_Step4Title", "The Selected Gag");
+        public readonly string Step4Desc = Loc.Localize("HelpGags_Step4Desc", "This is where you can view info about your currently selected gag.");
+        public readonly string Step4DescExtended = Loc.Localize("HelpGags_Step4DescExtended", " ");
+
+        public readonly string Step5Title = Loc.Localize("HelpGags_Step5Title", "Visual State");
+        public readonly string Step5Desc = Loc.Localize("HelpGags_Step5Desc", "A gag set to have visuals enabled will apply the configured customizations, you can click to toggle this.");
+        public readonly string Step5DescExtended = Loc.Localize("HelpGags_Step5DescExtended", "The chat garbler and other traits of the gag will still work if this is off.");
+
+        public readonly string Step6Title = Loc.Localize("HelpGags_Step6Title", "The Gag Editor");
+        public readonly string Step6Desc = Loc.Localize("HelpGags_Step6Desc", "You can edit the selected gag by double-clicking its name here.");
+        public readonly string Step6DescExtended = Loc.Localize("HelpGags_Step6DescExtended", " ");
+
+        public readonly string Step7Title = Loc.Localize("HelpGags_Step7Title", "Metadata");
+        public readonly string Step7Desc = Loc.Localize("HelpGags_Step7Desc", "You can set each gag to show or hide your helmet and visor, or force a redraw.");
+        public readonly string Step7DescExtended = Loc.Localize("HelpGags_Step7DescExtended", "The redraw option is useful if you have a mod that changes animations.");
+
+        public readonly string Step8Title = Loc.Localize("HelpGags_Step8Title", "Setting the Associated Glamour");
+        public readonly string Step8Desc = Loc.Localize("HelpGags_Step8Desc", "You can set what gets applied to you for this gag.");
+        public readonly string Step8DescExtended = Loc.Localize("HelpGags_Step8DescExtended", " ");
+
+        public readonly string Step9Title = Loc.Localize("HelpGags_Step9Title", "Hardcore Traits");
+        public readonly string Step9Desc = Loc.Localize("HelpGags_Step9Desc", "You can set which Hardcore Traits are applied when you use this gag.");
+        public readonly string Step9DescExtended = Loc.Localize("HelpGags_Step9DescExtended", "These traits will always apply to gags you've put on yourself, so be careful!");
+
+        public readonly string Step10Title = Loc.Localize("HelpGags_Step10Title", "Arousal");
+        public readonly string Step10Desc = Loc.Localize("HelpGags_Step10Desc", "You can decide how arousing being in this gag is.");
+        public readonly string Step10DescExtended = Loc.Localize("HelpGags_Step10DescExtended", "Arousal builds up slowly over time, and can do things like change your chat messages, blur your screen, increase global cooldowns, and more.");
+
+        public readonly string Step11Title = Loc.Localize("HelpGags_Step11Title", "Customize+ Preset");
+        public readonly string Step11Desc = Loc.Localize("HelpGags_Step11Desc", "You can set a Customize+ Preset to apply with this gag.");
+        public readonly string Step11DescExtended = Loc.Localize("HelpGags_Step11DescExtended", " ");
+
+        public readonly string Step12Title = Loc.Localize("HelpGags_Step12Title", "Moodles");
+        public readonly string Step12Desc = Loc.Localize("HelpGags_Step12Desc", "Manage any moodles for this gag here.");
+        public readonly string Step12DescExtended = Loc.Localize("HelpGags_Step12DescExtended", "Moodles are custom buffs and debuffs!");
+
+        public readonly string Step13Title = Loc.Localize("HelpGags_Step13Title", "Using Moodles Presets");
+        public readonly string Step13Desc = Loc.Localize("HelpGags_Step13Desc", "Switch between individual moodles or moodle presets with this button.");
+        public readonly string Step13DescExtended = Loc.Localize("HelpGags_Step13DescExtended", "Hold shift and click to switch.");
+
+        public readonly string Step14Title = Loc.Localize("HelpGags_Step14Title", "Moodle Preview");
+        public readonly string Step14Desc = Loc.Localize("HelpGags_Step14Desc", "Hover over any of the moodles here to see what they will look like.");
+        public readonly string Step14DescExtended = Loc.Localize("HelpGags_Step14DescExtended", " ");
+
+        public readonly string Step15Title = Loc.Localize("HelpGags_Step15Title", "Attached Mod");
+        public readonly string Step15Desc = Loc.Localize("HelpGags_Step15Desc", "You can set up a mod to load alongside your gag.");
+        public readonly string Step15DescExtended = Loc.Localize("HelpGags_Step15DescExtended", " ");
+
+        public readonly string Step16Title = Loc.Localize("HelpGags_Step16Title", "Selecting a Mod");
+        public readonly string Step16Desc = Loc.Localize("HelpGags_Step16Desc", "Pick which mod from this dropdown.");
+        public readonly string Step16DescExtended = Loc.Localize("HelpGags_Step16DescExtended", " ");
+
+        public readonly string Step17Title = Loc.Localize("HelpGags_Step17Title", "Mod Presets");
+        public readonly string Step17Desc = Loc.Localize("HelpGags_Step17Desc", "Select the mod preset to load from this dropdown.");
+        public readonly string Step17DescExtended = Loc.Localize("HelpGags_Step17DescExtended", "\"Current\" will save the configuration you have right now. " +
+            "You can create new presets and edit them in the Mod Presets window.");
+
+        public readonly string Step18Title = Loc.Localize("HelpGags_Step18Title", "Preset Preview");
+        public readonly string Step18Desc = Loc.Localize("HelpGags_Step18Desc", "Underneath the selection, you can preview the settings associated with the selected mod.");
+        public readonly string Step18DescExtended = Loc.Localize("HelpGags_Step18DescExtended", " ");
+
+        public readonly string Step19Title = Loc.Localize("HelpGags_Step19Title", "Canceling changes");
+        public readonly string Step19Desc = Loc.Localize("HelpGags_Step19Desc", "If you made a mistake or just don't want to save a change, use the back button.");
+        public readonly string Step19DescExtended = Loc.Localize("HelpGags_Step19DescExtended", " ");
+
+        public readonly string Step20Title = Loc.Localize("HelpGags_Step20Title", "Saving Changes");
+        public readonly string Step20Desc = Loc.Localize("HelpGags_Step20Desc", "If you are happy with your design, you can save it by clicking this button.");
+        public readonly string Step20DescExtended = Loc.Localize("HelpGags_Step20DescExtended", " ");
+
+        public readonly string Step21Title = Loc.Localize("HelpGags_Step21Title", "Active Gags List");
+        public readonly string Step21Desc = Loc.Localize("HelpGags_Step21Desc", "This is the list of gags active on you right now.");
+        public readonly string Step21DescExtended = Loc.Localize("HelpGags_Step21DescExtended", "You can have up to 3 gags active at any time." +
+            "Any with conflicting glamour slots will only show the lowest.");
+
+        public readonly string Step22Title = Loc.Localize("HelpGags_Step22Title", "Selecting a Gag");
+        public readonly string Step22Desc = Loc.Localize("HelpGags_Step22Desc", "You can select a gag from the dropdown to apply it to yourself.");
+        public readonly string Step22DescExtended = Loc.Localize("HelpGags_Step22DescExtended", "Favorited gags will show up at the top. " +
+            "Note: Any hardcore traits enabled on a selected gag always apply when you put it on yourself.");
+
+        public readonly string Step23Title = Loc.Localize("HelpGags_Step23Title", "Locking a Gag");
+        public readonly string Step23Desc = Loc.Localize("HelpGags_Step23Desc", "There are several locks to choose from.");
+        public readonly string Step23DescExtended = Loc.Localize("HelpGags_Step23DescExtended", "A lock can only be applied or removed by someone else if you've granted them the correct permissions.");
+
+        public readonly string Step24Title = Loc.Localize("HelpGags_Step24Title", "Unlocking a Gag");
+        public readonly string Step24Desc = Loc.Localize("HelpGags_Step24Desc", "You can't take a gag off unless it's unlocked.");
+        public readonly string Step24DescExtended = Loc.Localize("HelpGags_Step24DescExtended", "We snuck a Metal padlock onto this gag so you can see what it looks like. Click next to unlock the gag.");
+
+        public readonly string Step25Title = Loc.Localize("HelpGags_Step25Title", "Removing a Gag");
+        public readonly string Step25Desc = Loc.Localize("HelpGags_Step25Desc", "Right click the thumbnail to remove a gag once it's unlocked.");
+        public readonly string Step25DescExtended = Loc.Localize("HelpGags_Step25DescExtended", " ");
+
+        // --- OLD CONTENT --- //
         //public readonly string Step1Title = Loc.Localize("HelpGags_Step1Title", "What do Layers do?");
         //public readonly string Step1Desc = Loc.Localize("HelpGags_Step1Desc", "Layers define the priorities of applied gags. If Conflicts immerge, higher layers take priority.");
         //public readonly string Step1DescExtended = Loc.Localize("HelpGags_Step1DescExtended", "For Example: Glamours on the same slot will take the priority of the gag on the higher layer.");
@@ -456,7 +867,7 @@ namespace GagSpeak.Localization
 
         //public readonly string Step6Title = Loc.Localize("HelpRemote_Step6Title", "Starting your Recording!");
         //public readonly string Step6Desc = Loc.Localize("HelpRemote_Step6Desc", "Begins storing any vibrator data recorded from dragging the circle around.");
-        
+
         //public readonly string Step7Title = Loc.Localize("HelpRemote_Step7Title", "Stopping your Recording");
         //public readonly string Step7Desc = Loc.Localize("HelpRemote_Step7Desc", "When you are finished recording, press this again, and a save pattern prompt will appear.");
 
@@ -681,7 +1092,7 @@ namespace GagSpeak.Localization
         public readonly string OptionalPlugins = Loc.Localize("Settings_OptionalPlugins", "Plugins:");
         public readonly string PluginValid = Loc.Localize("Settings_PluginValid", "Plugin enabled and up to date.");
         public readonly string PluginInvalid = Loc.Localize("Settings_PluginInvalid", "Plugin is not up to date or GagSpeak has an outdated API.");
-        
+
         public readonly string AccountClaimText = Loc.Localize("Settings_AccountClaimText", "Register account:");
 
         public readonly string TabsGlobal = Loc.Localize("Settings_TabsGlobal", "General");
