@@ -3,6 +3,8 @@ using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Network;
+using GagspeakAPI.Util;
+using static FFXIVClientStructs.FFXIV.Component.GUI.AtkComponentNumericInput.Delegates;
 
 namespace GagSpeak.Kinksters;
 
@@ -67,9 +69,11 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     public void UpdatePairUpdateOtherAllGlobalPermissions(BulkChangeGlobal dto)
     {
         // update the pairs permissions.
-        if (!_allClientPairs.TryGetValue(dto.User, out var pair)) { throw new InvalidOperationException("No such pair for " + dto); }
-        pair.UserPair.Globals = dto.NewPerms;
-        Logger.LogDebug($"Updated global permissions for '{pair.GetNickname() ?? pair.UserData.AliasOrUID}'", LoggerType.PairDataTransfer);
+        if (!_allClientPairs.TryGetValue(dto.User, out var kinkster))
+            throw new InvalidOperationException($"Found no Kinkster with UID: {dto.User.UID}");
+
+        kinkster.UserPair.Globals = dto.NewPerms;
+        Logger.LogDebug($"Updated all globals for '{kinkster.GetNickname() ?? kinkster.UserData.AliasOrUID}'", LoggerType.PairDataTransfer);
     }
 
     public void UpdateKinkstersGlobalPerms(UserData target, UserData enactor, KeyValuePair<string, object> newPerm1, KeyValuePair<string, object> newPerm2)
@@ -83,33 +87,16 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     /// </summary>>
     public void UpdateKinkstersGlobalPerm(UserData target, UserData enactor, KeyValuePair<string, object> newPerm)
     {
-        if (!_allClientPairs.TryGetValue(target, out var kinkster)) 
-            throw new InvalidOperationException("No such pair for " + target);
+        if (!_allClientPairs.TryGetValue(target, out var kinkster))
+            throw new InvalidOperationException($"Found no Kinkster with UID: {target.UID}");
 
         var NewPerm = newPerm.Key;
         var ChangedValue = newPerm.Value;
-        var propertyInfo = typeof(GlobalPerms).GetProperty(NewPerm);
-        if (propertyInfo is null || !propertyInfo.CanWrite)
-            return;
 
-        // Special conversions
-        var convertedValue = propertyInfo.PropertyType switch
-        {
-            Type t when t.IsEnum =>
-                ChangedValue?.GetType() == Enum.GetUnderlyingType(t)
-                    ? Enum.ToObject(t, ChangedValue)
-                    : Convert.ChangeType(ChangedValue, t), // If newValue type matches enum underlying type, convert it directly.
-            Type t when t == typeof(TimeSpan) && ChangedValue is ulong u => TimeSpan.FromTicks((long)u),
-            Type t when t == typeof(char) && ChangedValue is byte b => Convert.ToChar(b),
-            _ => Convert.ChangeType(ChangedValue, propertyInfo.PropertyType)
-        };
+        if (!PropertyChanger.TrySetProperty(kinkster.PairGlobals, NewPerm, ChangedValue, out object? finalVal) || finalVal is null)
+            throw new InvalidOperationException($"Failed to set property '{NewPerm}' on {kinkster.GetNickAliasOrUid()} with value '{ChangedValue}'");
 
-        if (convertedValue is null)
-            return;
-
-        propertyInfo.SetValue(kinkster.PairGlobals, convertedValue);
         Logger.LogDebug($"Updated other pair global permission '{NewPerm}' to '{ChangedValue}'", LoggerType.PairDataTransfer);
-
         RecreateLazy(false);
 
         // Handle hardcore changes here. (DO THIS LATER)
@@ -120,44 +107,29 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     /// </summary>>
     public void UpdateOtherPairPermission(SingleChangeUnique dto)
     {
-        if (!_allClientPairs.TryGetValue(dto.User, out var pair)) { throw new InvalidOperationException("No such pair for " + dto); }
+        if (!_allClientPairs.TryGetValue(dto.User, out var kinkster))
+            throw new InvalidOperationException($"Found no Kinkster with UID: {dto.User.UID}");
 
         var NewPerm = dto.NewPerm.Key;
         var ChangedValue = dto.NewPerm.Value;
         var propertyInfo = typeof(PairPerms).GetProperty(NewPerm);
 
-        // has the person just paused us.
-        if (NewPerm == nameof(PairPerms.IsPaused))
-            if (pair.PairPerms.IsPaused != (bool)ChangedValue)
-                Mediator.Publish(new ClearProfileDataMessage(dto.User));
+        // Handle Pause Mediator Call.
+        if (NewPerm is nameof(PairPerms.IsPaused) && kinkster.PairPerms.IsPaused != (bool)ChangedValue)
+            Mediator.Publish(new ClearProfileDataMessage(dto.User));
 
-        if (propertyInfo is null || !propertyInfo.CanWrite)
-            return;
+        // Attempt to change the property.
+        if (!PropertyChanger.TrySetProperty(kinkster.PairPerms, NewPerm, ChangedValue, out object? convertedValue) || convertedValue is null)
+            throw new InvalidOperationException($"Failed to set property '{NewPerm}' on {kinkster.GetNickAliasOrUid()} with value '{ChangedValue}'");
 
-        // conversions
-        var convertedValue = propertyInfo.PropertyType switch
-        {
-            Type t when t.IsEnum =>
-                ChangedValue?.GetType() == Enum.GetUnderlyingType(t)
-                    ? Enum.ToObject(t, ChangedValue)
-                    : Convert.ChangeType(ChangedValue, t), // If newValue type matches enum underlying type, convert it directly.
-            Type t when t == typeof(TimeSpan) && ChangedValue is ulong u => TimeSpan.FromTicks((long)u),
-            Type t when t == typeof(char) && ChangedValue is byte b => Convert.ToChar(b),
-            _ => Convert.ChangeType(ChangedValue, propertyInfo.PropertyType)
-        };
-
-        if (convertedValue is null)
-            return;
         
-        propertyInfo.SetValue(pair.PairPerms, convertedValue);
         Logger.LogDebug($"Updated other pair permission '{NewPerm}' to '{ChangedValue}'", LoggerType.PairDataTransfer);
-        
         RecreateLazy(false);
 
-        // push notify after recreating lazy.
+        // Notify Kinkster Moodle change to Moodles via IPC Provider.
         if (NewPerm is nameof(PairPerms.MoodlePerms) || NewPerm is nameof(PairPerms.MaxMoodleTime))
-            if (GetOnlineUserDatas().Contains(pair.UserData))
-                Mediator.Publish(new MoodlesPermissionsUpdated(pair.PlayerNameWithWorld));
+            if (GetOnlineUserDatas().Contains(kinkster.UserData))
+                Mediator.Publish(new MoodlesPermissionsUpdated(kinkster.PlayerNameWithWorld));
     }
 
     /// <summary>
@@ -197,51 +169,33 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
 
 
     /// <summary>
-    /// Updates one of your unique pair permissions you have set with the paired user.
+    ///     Updates one of your unique pair permissions you have set with the paired user.
     /// </summary>>
     public void UpdateSelfPairPermission(SingleChangeUnique dto)
     {
-        if (!_allClientPairs.TryGetValue(dto.User, out var pair)) { throw new InvalidOperationException("No such pair for " + dto); }
+        if (!_allClientPairs.TryGetValue(dto.User, out var kinkster))
+            throw new InvalidOperationException($"Found no Kinkster with UID: {dto.User.UID}");
 
         var NewPerm = dto.NewPerm.Key;
         var ChangedValue = dto.NewPerm.Value;
-        var propertyInfo = typeof(PairPerms).GetProperty(NewPerm);
-
-        if (NewPerm is "IsPaused" && (pair.UserPair.OwnPerms.IsPaused != (bool)ChangedValue))
-            Mediator.Publish(new ClearProfileDataMessage(dto.User));
-        
-        var prevPerms = pair.OwnPerms.PuppetPerms;
+        var prevPerms = kinkster.OwnPerms.PuppetPerms;
         var puppetChanged = NewPerm == nameof(PairPerms.PuppetPerms);
 
-        if (propertyInfo is null || !propertyInfo.CanWrite)
-            return;
+        // Handle Pause Mediator Call.
+        if (NewPerm is nameof(PairPerms.IsPaused) && kinkster.OwnPerms.IsPaused != (bool)ChangedValue)
+            Mediator.Publish(new ClearProfileDataMessage(dto.User));
 
-        var convertedValue = propertyInfo.PropertyType switch
-        {
-            Type t when t.IsEnum =>
-                ChangedValue?.GetType() == Enum.GetUnderlyingType(t)
-                    ? Enum.ToObject(t, ChangedValue)
-                    : Convert.ChangeType(ChangedValue, t), // If newValue type matches enum underlying type, convert it directly.
-            Type t when t == typeof(TimeSpan) && ChangedValue is ulong u => TimeSpan.FromTicks((long)u),
-            Type t when t == typeof(char) && ChangedValue is byte b => Convert.ToChar(b),
-            _ => Convert.ChangeType(ChangedValue, propertyInfo.PropertyType)
-        };
+        // Attempt to change the property.
+        if (!PropertyChanger.TrySetProperty(kinkster.OwnPerms, NewPerm, ChangedValue, out object? convertedValue) || convertedValue is null)
+            throw new InvalidOperationException($"Failed to set property '{NewPerm}' on {kinkster.GetNickAliasOrUid()} with value '{ChangedValue}'");
 
-        if (convertedValue is null)
-            return;
 
-        propertyInfo.SetValue(pair.UserPair.OwnPerms, convertedValue);
-        Logger.LogDebug($"Updated self pair permission '{NewPerm}' to '{ChangedValue}'", LoggerType.PairDataTransfer);
-
-        var newEnabledPuppetPerms = (pair.OwnPerms.PuppetPerms & ~prevPerms);
-        if (newEnabledPuppetPerms is not PuppetPerms.None)
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerAccessGiven, newEnabledPuppetPerms);
-
+        Logger.LogDebug($"Updated own pair permission '{NewPerm}' to '{ChangedValue}'", LoggerType.PairDataTransfer);
         RecreateLazy(false);
 
-        // push notify after recreating lazy.
-        if (NewPerm is nameof(PairPerms.MoodlePerms) || NewPerm is nameof(PairPerms.MaxMoodleTime))
-            Mediator.Publish(new MoodlesPermissionsUpdated(pair.PlayerNameWithWorld));
+        // Notify Kinkster Moodle change to Moodles via IPC Provider.
+        if ((kinkster.OwnPerms.PuppetPerms & ~prevPerms) != 0)
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerAccessGiven, (kinkster.OwnPerms.PuppetPerms & ~prevPerms));
     }
 
     /// <summary>

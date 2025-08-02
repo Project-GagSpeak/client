@@ -142,7 +142,7 @@ public class VibeLobbiesPanel
     private RoomListing? _selectedListing = null;
     private void DrawPublicLobbies(CkHeader.DrawRegion region, float curveSize)
     {
-        using var patternResultChild = CkRaii.Child("##PublicLobbyListings", region.Size, WFlags.NoScrollbar);
+        using var patternResultChild = CkRaii.Child("##PublicLobbyListings", region.Size, wFlags: WFlags.NoScrollbar);
         // result styles.
         using var windowRounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, CkStyle.ListItemRounding());
         using var borderColor = ImRaii.PushStyle(ImGuiStyleVar.WindowBorderSize, 1f);

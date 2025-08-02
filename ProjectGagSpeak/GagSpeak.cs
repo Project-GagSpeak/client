@@ -328,7 +328,6 @@ public static class GagSpeakServiceExtensions
         .AddScoped<ActiveItemsDrawer>()
         .AddScoped<AliasItemDrawer>()
         .AddScoped<ListItemDrawer>()
-        .AddScoped<PuppeteerHelper>()
         .AddScoped<TriggerDrawer>()
         .AddScoped<ImageImportTool>()
 

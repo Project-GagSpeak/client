@@ -1,3 +1,4 @@
+using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Widgets;
 using Dalamud.Interface.Colors;
@@ -11,20 +12,18 @@ using ImGuiNET;
 using Penumbra.GameData.Enums;
 
 namespace GagSpeak.CustomCombos.Pairs;
-public sealed class PairGagCombo : CkFilterComboButton<GagType>
+public sealed class PairGagCombo : CkFilterComboButton<KinksterGag>
 {
     private Action PostButtonPress;
     private readonly MainHub _mainHub;
     private Kinkster _kinksterRef;
 
-    public PairGagCombo(ILogger log, MainHub hub, Kinkster pair, Action postButtonPress)
-        : base(() => [.. Enum.GetValues<GagType>().Skip(1)], log)
+    public PairGagCombo(ILogger log, MainHub hub, Kinkster kinkster, Action postButtonPress)
+        : base(() => [ ..kinkster.LightCache.Gags.Values.OrderBy(x => x.Gag)], log)
     {
         _mainHub = hub;
-        _kinksterRef = pair;
-
-        // update current selection to the last registered gagType from that pair on construction.
-        Current = GagType.None;
+        _kinksterRef = kinkster;
+        Current = kinkster.LightCache.Gags.GetValueOrDefault(GagType.None);
         PostButtonPress = postButtonPress;
     }
 
@@ -33,25 +32,28 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
     {
         var gagItem = Items[globalGagIdx];
         // we want to start by drawing the selectable first.
-        var ret = ImGui.Selectable(gagItem.GagName(), selected);
+        var ret = ImGui.Selectable(gagItem.Gag.GagName(), selected);
 
         // IF the GagType is present in their light gag storage dictionary, then draw the link icon.
-        if (_kinksterRef.LightCache.Gags.TryGetValue(gagItem, out var gagData))
+        if (gagItem.IsEnabled)
         {
-            ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetTextLineHeight());
-            CkGui.IconText(FAI.Link, ImGui.GetColorU32(ImGuiColors.HealerGreen));
-            DrawItemTooltip(gagData, $"View {_kinksterRef.GetNickAliasOrUid()}'s Data for this Gag.");
+            ImGui.SameLine(ImGui.GetContentRegionAvail().X - CkGui.IconSize(FAI.Link).X);
+            CkGui.IconText(FAI.Link, ImGuiColors.HealerGreen.ToUint());
+            DrawItemTooltip(gagItem);
         }
         return ret;
     }
 
     protected override bool DisableCondition()
-        => Current == GagType.None || !_kinksterRef.PairPerms.ApplyGags;
+        => Current is null || Current.Gag is GagType.None || !_kinksterRef.PairPerms.ApplyGags;
 
     protected override async Task<bool> OnButtonPress(int layerIdx)
     {
+        if (Current is null)
+            return false;
+
         // we need to go ahead and create a deep clone of our new appearanceData, and ensure it is valid.
-        if (_kinksterRef.ActiveGags.GagSlots[layerIdx].GagItem == Current)
+        if (_kinksterRef.ActiveGags.GagSlots[layerIdx].GagItem == Current.Gag)
             return false;
 
         var updateType = _kinksterRef.ActiveGags.GagSlots[layerIdx].GagItem is GagType.None
@@ -61,7 +63,7 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
         var dto = new PushKinksterActiveGagSlot(_kinksterRef.UserData, updateType)
         {
             Layer = layerIdx,
-            Gag = Current,
+            Gag = Current.Gag,
             Enabler = MainHub.UID,
         };
 
@@ -69,49 +71,29 @@ public sealed class PairGagCombo : CkFilterComboButton<GagType>
         var result = await _mainHub.UserChangeKinksterActiveGag(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
-            Log.LogDebug($"Failed to perform ApplyGag with {Current.GagName()} on {_kinksterRef.GetNickAliasOrUid()}, Reason:{result}", LoggerType.StickyUI);
+            Log.LogDebug($"Failed to perform ApplyGag with {Current.Gag.GagName()} on {_kinksterRef.GetNickAliasOrUid()}, Reason:{result}", LoggerType.StickyUI);
             return false;
         }
         else
         {
-            Log.LogDebug($"Applying Gag with {Current.GagName()} on {_kinksterRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
+            Log.LogDebug($"Applying Gag with {Current.Gag.GagName()} on {_kinksterRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
             PostButtonPress?.Invoke();
             return true;
         }
     }
 
-    private void DrawItemTooltip(KinksterGag item, string headerText)
+    private void DrawItemTooltip(KinksterGag item)
     {
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            using var padding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One * 8f);
-            using var rounding = ImRaii.PushStyle(ImGuiStyleVar.WindowRounding, 4f);
-            using var popupBorder = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1f);
-            using var frameColor = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
+            using var s = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One * 8f)
+                .Push(ImGuiStyleVar.WindowRounding, 4f)
+                .Push(ImGuiStyleVar.PopupBorderSize, 1f);
+            using var c = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
 
             // begin the tooltip interface
             ImGui.BeginTooltip();
-            // push the text wrap position to the font size times 35
-            ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35f);
-            // we will then check to see if the text contains a tooltip
-            if (headerText.Contains(CkGui.TipSep, StringComparison.Ordinal))
-            {
-                // if it does, we will split the text by the tooltip
-                var splitText = headerText.Split(CkGui.TipSep, StringSplitOptions.None);
-                // for each of the split text, we will display the text unformatted
-                for (var i = 0; i < splitText.Length; i++)
-                {
-                    ImGui.TextUnformatted(splitText[i]);
-                    if (i != splitText.Length - 1) ImGui.Separator();
-                }
-            }
-            else
-            {
-                ImGui.TextUnformatted(headerText);
-            }
-            // finally, pop the text wrap position
-            ImGui.PopTextWrapPos();
-
+            ImGui.Text($"{_kinksterRef.GetNickAliasOrUid()} has this Gag's Visuals Enabled!");
             // before we pop the text wrap position, we will draw the item's icon.
             ImGui.Separator();
             ImGui.Text(item.GlamItem.Name);

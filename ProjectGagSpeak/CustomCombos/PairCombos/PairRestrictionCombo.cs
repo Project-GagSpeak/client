@@ -1,3 +1,4 @@
+using CkCommons;
 using CkCommons.Gui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
@@ -33,17 +34,12 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<KinksterRestricti
         var ret = ImGui.Selectable(restriction.Label, selected);
         
         var iconWidth = CkGui.IconSize(FAI.InfoCircle).X;
-        var hasGlamour = restriction.GlamItem.Valid;
-        var shiftOffset = iconWidth;
-
-        // shift over to the right to draw out the icons.
-        ImGui.SameLine(ImGui.GetContentRegionAvail().X - shiftOffset);
-
-        if (hasGlamour)
+        var isEnabled = restriction.IsEnabled;
+        if (restriction.IsEnabled)
         {
-            CkGui.IconText(FAI.InfoCircle, ImGui.GetColorU32(ImGuiColors.ParsedGold));
+            ImGui.SameLine(ImGui.GetContentRegionAvail().X - CkGui.IconSize(FAI.InfoCircle).X);
+            CkGui.IconText(FAI.InfoCircle, ImGuiColors.ParsedGold.ToUint());
             DrawItemTooltip(restriction);
-            ImGui.SameLine();
         }
         return ret;
     }
@@ -82,16 +78,15 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<KinksterRestricti
         }
     }
 
+    // make this generic within an extention utility.
     private void DrawItemTooltip(KinksterRestriction setItem)
     {
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            using var padding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One * 8f);
-            using var rounding = ImRaii.PushStyle(ImGuiStyleVar.WindowRounding, 4f);
-            using var popupBorder = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1f);
-            using var frameColor = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
-
-            // begin the tooltip interface
+            using var s = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One * 8f)
+                .Push(ImGuiStyleVar.WindowRounding, 4f)
+                .Push(ImGuiStyleVar.PopupBorderSize, 1f);
+            using var c = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
             ImGui.BeginTooltip();
             ImGui.Text("Im a fancy tooltip!");
             ImGui.EndTooltip();

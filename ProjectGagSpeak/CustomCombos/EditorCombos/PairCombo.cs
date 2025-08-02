@@ -50,14 +50,14 @@ public sealed class PairCombo : CkFilterComboCache<Kinkster>
 
     /// <summary> An override to the normal draw method that forces the current item to be the item passed in. </summary>
     /// <returns> True if a new item was selected, false otherwise. </returns>
-    public bool Draw(float width, float innerScalar = 1.25f)
-        => Draw(width, innerScalar, CFlags.None);
+    public bool Draw(float width, float innerScalar = 1.25f, uint? searchBg = null)
+        => Draw(width, innerScalar, CFlags.None, searchBg);
 
-    public bool Draw(float width, float innerScalar, CFlags flags)
+    public bool Draw(float width, float innerScalar, CFlags flags, uint? searchBg = null)
     {
         InnerWidth = width * innerScalar;
         var preview = Current?.GetNickAliasOrUid() ?? "Select Pair...";
-        return Draw("##PairCombo", preview, string.Empty, width, ImGui.GetTextLineHeightWithSpacing(), flags);
+        return Draw("##PairCombo", preview, string.Empty, width, ImGui.GetTextLineHeightWithSpacing(), flags, searchBg);
     }
 
     protected override bool DrawSelectable(int globalIdx, bool selected)

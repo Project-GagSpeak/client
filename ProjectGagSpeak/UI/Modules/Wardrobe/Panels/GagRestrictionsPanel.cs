@@ -187,7 +187,7 @@ public partial class GagRestrictionsPanel
 
     private void DrawActiveItemInfo(Vector2 region)
     {
-        using var child = CkRaii.Child("ActiveItems", region, WFlags.NoScrollbar | WFlags.AlwaysUseWindowPadding);
+        using var child = CkRaii.Child("ActiveItems", region, wFlags: WFlags.NoScrollbar | WFlags.AlwaysUseWindowPadding);
 
         if (_manager.ServerGagData is not { } activeGagData)
             return;

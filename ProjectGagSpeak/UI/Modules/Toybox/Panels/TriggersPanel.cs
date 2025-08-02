@@ -172,7 +172,7 @@ public partial class TriggersPanel
 
     private void DrawSelectedBody(Trigger trigger, bool isEditorItem, uint searchBg)
     {
-        using var bodyChild = CkRaii.Child("Sel_Body", ImGui.GetContentRegionAvail(), WFlags.AlwaysUseWindowPadding);
+        using var bodyChild = CkRaii.Child("Sel_Body", ImGui.GetContentRegionAvail(), wFlags: WFlags.AlwaysUseWindowPadding);
 
         ImGui.Spacing();
 

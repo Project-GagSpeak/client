@@ -217,7 +217,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 
     protected override void DrawInternal()
     {
-        using var _ = CkRaii.Child("##KinksterInteractions", ImGui.GetContentRegionAvail(), WFlags.NoScrollbar);
+        using var _ = CkRaii.Child("##KinksterInteractions", ImGui.GetContentRegionAvail(), wFlags: WFlags.NoScrollbar);
         var width = ImGui.GetContentRegionAvail().X;
 
         // if the pair is not valid dont draw anything after this.

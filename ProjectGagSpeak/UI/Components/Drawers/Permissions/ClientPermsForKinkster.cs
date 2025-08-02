@@ -20,7 +20,7 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
         ImGui.Separator();
 
         // Child area for scrolling.
-        using var _ = CkRaii.Child("ClientPermsForKinkster", ImGui.GetContentRegionAvail(), WFlags.NoScrollbar);
+        using var _ = CkRaii.Child("ClientPermsForKinkster", ImGui.GetContentRegionAvail(), wFlags: WFlags.NoScrollbar);
         if (OwnGlobals.Perms is not { } globals)            return;
         ImGui.TextUnformatted("Global Settings");        DrawPermRow(kinkster, dispName,   width, SPPID.ChatGarblerActive,     globals.ChatGarblerActive,          kinkster.OwnPermAccess.ChatGarblerActiveAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.ChatGarblerLocked,     globals.ChatGarblerLocked,          kinkster.OwnPermAccess.ChatGarblerLockedAllowed );
         DrawPermRow(kinkster, dispName,   width, SPPID.GaggedNameplate,       globals.GaggedNameplate,              kinkster.OwnPermAccess.GaggedNameplateAllowed);

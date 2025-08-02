@@ -51,7 +51,7 @@ public sealed class ListItemDrawer
     public void DrawAchievementList(AchievementModuleKind type, Vector2 region)
     {
         // Push styles for our inner child items.
-        using var _ = CkRaii.Child("AchievementList", region, WFlags.NoScrollbar);
+        using var _ = CkRaii.Child("AchievementList", region, wFlags: WFlags.NoScrollbar);
 
         var unlocks = ClientAchievements.GetByModule(type);
         if (!unlocks.Any())

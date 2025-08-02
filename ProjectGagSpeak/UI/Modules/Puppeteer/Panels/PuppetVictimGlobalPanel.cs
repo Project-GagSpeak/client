@@ -6,17 +6,18 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
+using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Hub;
 using ImGuiNET;
+using OtterGui.Text;
 
 namespace GagSpeak.Gui.Modules.Puppeteer;
 public sealed partial class PuppetVictimGlobalPanel
@@ -124,29 +125,18 @@ public sealed partial class PuppetVictimGlobalPanel
 
     private void DrawPermissions(CkHeader.DrawRegion region)
     {
-        var spacing = ImGui.GetStyle().ItemSpacing;
-        var triggerPhrasesH = CkStyle.GetFrameRowsHeight(3); // 3 lines of buttons.
+        var padding = ImGui.GetStyle().FramePadding;
+        var spacing = ImGui.GetStyle().ItemInnerSpacing;
+        var seperators = CkGui.GetSeparatorSpacedHeight(spacing.Y);
+        var triggerPhrasesH = CkStyle.GetFrameRowsHeight(3);
         var permissionsH = CkStyle.GetFrameRowsHeight(4);
-        var childH = triggerPhrasesH.AddWinPadY() + permissionsH + CkGui.GetSeparatorSpacedHeight(spacing.Y);
-        using var c = CkRaii.ChildLabelTextFull(new Vector2(region.SizeX, childH), "Global Puppeteer Settings", ImGui.GetFrameHeight(), DFlags.RoundCornersLeft, LabelFlags.AddPaddingToHeight);
+        var size = new Vector2(region.SizeX, triggerPhrasesH.AddWinPadY() + permissionsH + seperators + ImGui.GetFrameHeightWithSpacing());
 
-        // extract the tabs by splitting the string by comma's
-        using (CkRaii.FramedChildPaddedW("Triggers", c.InnerRegion.X, triggerPhrasesH, CkColor.FancyHeaderContrast.Uint(), CkColor.FancyHeaderContrast.Uint(), DFlags.RoundCornersAll))
-        {
-            var globalPhrase = OwnGlobals.Perms?.TriggerPhrase ?? string.Empty;
-            if (GlobalTriggerTags.DrawTagsEditor("##GlobalPhrases", globalPhrase, out var updatedString) && OwnGlobals.Perms is { } globals)
-            {
-                _logger.LogTrace("The Tag Editor had an update!");
-                UiService.SetUITask(async () =>
-                {
-                    var res = await _hub.UserChangeOwnGlobalPerm(new(MainHub.PlayerUserData, new KeyValuePair<string, object>(
-                        nameof(GlobalPerms.TriggerPhrase), updatedString), UpdateDir.Own, MainHub.PlayerUserData)).ConfigureAwait(false);
-                    if (res.ErrorCode is not GagSpeakApiEc.Success)
-                        _logger.LogError($"Failed to update global trigger phrase: {res.ErrorCode}");
-                });
-            }
-        }
+        using var col = ImRaii.PushColor(ImGuiCol.FrameBg, CkColor.FancyHeaderContrast.Uint());
+        using var c = CkRaii.ChildLabelTextFull(size, "Global Puppeteer Settings", ImGui.GetFrameHeight(), DFlags.RoundCornersLeft, LabelFlags.AddPaddingToHeight);
 
+        DrawListenerNameRow(c.InnerRegion.X);
+        DrawTriggerPhrasesBox(c.InnerRegion.X, triggerPhrasesH);
         CkGui.SeparatorSpacedColored(spacing.Y, c.InnerRegion.X, CkColor.FancyHeaderContrast.Uint());
 
         // Draw out the global puppeteer image.
@@ -156,23 +146,59 @@ public sealed partial class PuppetVictimGlobalPanel
             ImGui.SetCursorPosX(pos.X + (((c.InnerRegion.X / 2) - permissionsH) / 2));
             ImGui.Image(wrap.ImGuiHandle, new Vector2(permissionsH));
         }
-
         // Draw out the permission checkboxes
-        ImGui.SameLine(c.InnerRegion.X / 2, ImGui.GetStyle().ItemInnerSpacing.X);
-        using (ImRaii.Group())
-        {
-            var categoryFilter = (uint)(OwnGlobals.Perms?.PuppetPerms ?? PuppetPerms.None);
-            foreach (var category in Enum.GetValues<PuppetPerms>().Skip(1))
-                ImGui.CheckboxFlags($"Allow {category}", ref categoryFilter, (uint)category);
+        ImGui.SameLine(c.InnerRegion.X / 2, spacing.X);
+        DrawPuppetPermsGroup();
+    }
 
-            if (OwnGlobals.Perms is { } globals && globals.PuppetPerms != (PuppetPerms)categoryFilter)
-                UiService.SetUITask(async () =>
-                {
-                    var res = await _hub.UserChangeOwnGlobalPerm(new(MainHub.PlayerUserData, new KeyValuePair<string, object>(
-                        nameof(GlobalPerms.PuppetPerms), (PuppetPerms)categoryFilter), UpdateDir.Own, MainHub.PlayerUserData)).ConfigureAwait(false);
-                    if (res.ErrorCode is not GagSpeakApiEc.Success)
-                        _logger.LogError($"Failed to update global puppet perms: {res.ErrorCode}");
-                });
+    private void DrawListenerNameRow(float width)
+    {
+        var globalPhrases = OwnGlobals.Perms?.TriggerPhrase ?? string.Empty;
+        var tooltip = $"Anyone can puppeteer you with the below phrases." +
+            $"--SEP----COL--Be careful with what you allow here!--COL--";
+
+        CkGui.FramedIconText(FAI.Eye, !string.IsNullOrEmpty(globalPhrases) ? CkColor.IconCheckOn.Uint() : uint.MaxValue);
+        CkGui.AttachToolTip(tooltip, color: ImGuiColors.DalamudRed);
+        ImUtf8.SameLineInner();
+        using (CkRaii.Child("ListenerName", new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight()), CkColor.FancyHeaderContrast.Uint(), DFlags.RoundCornersAll))
+            CkGui.CenterTextAligned("<Anyone in valid Channels>");
+        CkGui.AttachToolTip(tooltip, color: ImGuiColors.DalamudRed);
+    }
+
+    private void DrawTriggerPhrasesBox(float paddedWidth, float height)
+    {
+        using var _ = CkRaii.FramedChildPaddedW("Triggers", paddedWidth, height, CkColor.FancyHeaderContrast.Uint(), CkColor.FancyHeaderContrast.Uint(), DFlags.RoundCornersAll);
+
+        if (OwnGlobals.Perms is null)
+            return;
+
+        if (!GlobalTriggerTags.DrawTagsEditor("##GlobalPhrases", OwnGlobals.Perms.TriggerPhrase, out var updatedString))
+            return;
+
+        UiService.SetUITask(async () =>
+        {
+            var res = await _hub.UserChangeOwnGlobalPerm(nameof(GlobalPerms.TriggerPhrase), updatedString);
+            if (res.ErrorCode is not GagSpeakApiEc.Success)
+                _logger.LogError($"Failed to update global trigger phrase: {res.ErrorCode}");
+        });
+    }
+
+    private void DrawPuppetPermsGroup()
+    {
+        using var _ = ImRaii.Group();
+
+        var categoryFilter = (uint)(OwnGlobals.Perms?.PuppetPerms ?? PuppetPerms.None);
+        foreach (var category in Enum.GetValues<PuppetPerms>().Skip(1))
+            ImGui.CheckboxFlags($"Allow {category}", ref categoryFilter, (uint)category);
+
+        if (OwnGlobals.Perms is { } g && g.PuppetPerms != (PuppetPerms)categoryFilter)
+        {
+            UiService.SetUITask(async () =>
+            {
+                var res = await _hub.UserChangeOwnGlobalPerm(nameof(GlobalPerms.PuppetPerms), (PuppetPerms)categoryFilter);
+                if (res.ErrorCode is not GagSpeakApiEc.Success)
+                    _logger.LogError($"Failed to update global puppet perms: {res.ErrorCode}");
+            });
         }
     }
 

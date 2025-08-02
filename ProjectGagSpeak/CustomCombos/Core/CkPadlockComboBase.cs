@@ -89,6 +89,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
         var comboWidth = width - buttonWidth - ImGui.GetStyle().ItemInnerSpacing.X;
 
         // draw the combo box.
+        var tooltipIconSize = CkGui.IconSize(FAI.InfoCircle);
         ImGui.SetNextItemWidth(comboWidth);
         using var scrollbarWidth = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12f);
         using var disabled = ImRaii.Disabled(DisableCondition(layerIdx));
@@ -105,11 +106,19 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
             if (combo)
             {
                 foreach (var item in ComboPadlocks)
+                {
                     if (ImGui.Selectable(item.ToName(), item == SelectedLock))
                     {
                         SelectedLock = item;
                         _closePopup = true;
                     }
+                    if (item != 0)
+                    {
+                        ImGui.SameLine(comboWidth - tooltipIconSize.X);
+                        CkGui.HoverIconText(FAI.InfoCircle, ImGuiColors.TankBlue.ToUint(), ImGui.GetColorU32(ImGuiCol.TextDisabled));
+                        CkGui.AttachToolTip(item.ToTooltip(), color: ImGuiColors.ParsedGold);
+                    }
+                }
 
                 if(_closePopup)
                 {

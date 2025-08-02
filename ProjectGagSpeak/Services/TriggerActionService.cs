@@ -32,7 +32,7 @@ public class TriggerActionService
     private readonly RestraintManager _restraints;
     private readonly BuzzToyManager _toys;
     private readonly MoodleHandler _moodles;
-    private readonly DataDistributionService _distributer; // Allows us to directly execute the calls and await for them to finish.
+    private readonly DataDistributionService _distributer;
 
     // (This rate limiter is kind of busted at the moment, maybe find a better solution for this)
     private ActionRateLimiter _rateLimiter = new(TimeSpan.FromSeconds(3), 1, 3, 3, 3);

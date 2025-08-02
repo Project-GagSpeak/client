@@ -536,7 +536,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
 
     private void DrawParticipantsBox(Vector2 region)
     {
-        using var c = CkRaii.Child("###VibeRoomParticipants", region, WFlags.AlwaysUseWindowPadding);
+        using var c = CkRaii.Child("###VibeRoomParticipants", region, wFlags: WFlags.AlwaysUseWindowPadding);
 
         var participants = _lobbyManager.CurrentParticipants;
         var total = participants.Count;
@@ -605,7 +605,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
     private void DrawVibeRoomChat()
     {
         // Draw the chat log for the vibe room.
-        using var c = CkRaii.Child("###VibeRoomChat", ImGui.GetContentRegionAvail(), WFlags.AlwaysUseWindowPadding);
+        using var c = CkRaii.Child("###VibeRoomChat", ImGui.GetContentRegionAvail(), wFlags: WFlags.AlwaysUseWindowPadding);
         if (!c) return;
         // Draw the chat log.
         _lobbyChatLog.DrawChat(c.InnerRegion);

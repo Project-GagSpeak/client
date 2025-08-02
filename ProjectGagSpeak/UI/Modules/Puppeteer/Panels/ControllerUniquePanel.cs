@@ -1,72 +1,50 @@
+using CkCommons;
+using CkCommons.Gui;
+using CkCommons.Raii;
+using CkCommons.Widgets;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
 using GagSpeak.Gui.Components;
-using GagSpeak.Utils;
-using GagSpeak.WebAPI;
-using CkCommons.Raii;
-using CkCommons.Widgets;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagSpeak.Services.Textures;
-using GagSpeak.State.Managers;
-using GagspeakAPI.Hub;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
+using GagspeakAPI.Hub;
 using ImGuiNET;
-using OtterGui;
 using OtterGui.Text;
-using CkCommons;
-using CkCommons.Gui;
-using System.Drawing;
 
 namespace GagSpeak.Gui.Modules.Puppeteer;
-public partial class ControllerUniquePanel : IDisposable
+public sealed class ControllerUniquePanel
 {
     private readonly ILogger<ControllerUniquePanel> _logger;
     private readonly MainHub _hub;
-    private readonly PuppeteerHelper _helper;
     private readonly AliasItemDrawer _aliasDrawer;
-    private readonly PuppeteerManager _manager;
-    private readonly CosmeticService _cosmetics;
 
     private string _searchStr = string.Empty;
     private IReadOnlyList<AliasTrigger> _filteredItems = new List<AliasTrigger>();
-    private static TagCollection PairTriggerTags = new();
+    private TagCollection _pairTriggerTags = new();
 
-    public ControllerUniquePanel(
-        ILogger<ControllerUniquePanel> logger,
-        MainHub hub,
-        MainConfig config,
-        PuppeteerHelper helper,
-        AliasItemDrawer aliasDrawer,
-        PuppeteerManager manager,
-        FavoritesManager favorites,
-        KinksterManager pairs,
-        CosmeticService cosmetics)
+    public ControllerUniquePanel(ILogger<ControllerUniquePanel> logger, 
+        MainHub hub, MainConfig config, AliasItemDrawer aliasDrawer)
     {
-        _hub = hub;
         _logger = logger;
-        _helper = helper;
-        _manager = manager;
+        _hub = hub;
         _aliasDrawer = aliasDrawer;
-        _cosmetics = cosmetics;
 
         UpdateFilteredItems();
-        _helper.OnPairUpdated += UpdateFilteredItems;
     }
 
-    public void Dispose()
-    {
-        _helper.OnPairUpdated -= UpdateFilteredItems;
-    }
+    public Kinkster? SelectedKinkster = null;
 
     private void UpdateFilteredItems()
     {
         if (_searchStr.IsNullOrEmpty())
-            _filteredItems = _helper.PairAliasStorage?.Items ?? new List<AliasTrigger>();
+            _filteredItems = SelectedKinkster?.LastPairAliasData.Storage.Items ?? new List<AliasTrigger>();
         else
-            _filteredItems = _helper.PairAliasStorage?.Items
+            _filteredItems = SelectedKinkster?.LastPairAliasData.Storage.Items
                 .Where(x => x.Label.Contains(_searchStr, StringComparison.OrdinalIgnoreCase))
                 .ToList() ?? new List<AliasTrigger>();
     }
@@ -111,11 +89,11 @@ public partial class ControllerUniquePanel : IDisposable
         using var _ = CkRaii.Child("##PairControlAliasList", region);
         // Place these into a list, so that when we finish changing an item, the list does not throw an error.
 
-        if (_helper.SelectedPair is not { } validPair)
+        if (SelectedKinkster is null)
             return;
 
         foreach (var aliasItem in _filteredItems.ToList())
-            _aliasDrawer.DrawAliasTrigger(aliasItem, validPair.LastIpcData, false);
+            _aliasDrawer.DrawAliasTrigger(aliasItem, SelectedKinkster.LastIpcData, false);
     }
 
     private void DrawPermsAndExamples(CkHeader.DrawRegion region)
@@ -136,46 +114,22 @@ public partial class ControllerUniquePanel : IDisposable
 
     private void DrawPermissionsBox(CkHeader.DrawRegion region)
     {
-        var spacing = ImGui.GetStyle().ItemSpacing;
-        var triggerPhrasesH = CkStyle.GetFrameRowsHeight(3); // 3 lines of buttons.
+        var padding = ImGui.GetStyle().FramePadding;
+        var spacing = ImGui.GetStyle().ItemInnerSpacing;
+        var seperators = CkGui.GetSeparatorSpacedHeight(spacing.Y);
+        var triggerPhrasesH = CkStyle.GetFrameRowsHeight(3);
         var permissionsH = CkStyle.GetFrameRowsHeight(4);
-        var childH = triggerPhrasesH.AddWinPadY() + permissionsH + CkGui.GetSeparatorSpacedHeight(spacing.Y);
-        var headerText = _helper.SelectedPair is { } p ? $"{p.GetNickAliasOrUid()}'s Settings for You" : "Select a Kinkster from the 2nd panel first!";
+        var size = new Vector2(region.SizeX, triggerPhrasesH.AddWinPadY() + permissionsH + seperators + ImGui.GetFrameHeightWithSpacing());
 
-        using var c = CkRaii.ChildLabelTextFull(new Vector2(region.SizeX, childH), headerText, ImGui.GetFrameHeight(), DFlags.RoundCornersLeft, LabelFlags.AddPaddingToHeight);
+        using var col = ImRaii.PushColor(ImGuiCol.FrameBg, CkColor.FancyHeaderContrast.Uint());
+        using var c = CkRaii.ChildLabelCustomFull("PairController", size, ImGui.GetFrameHeight(), CustomHeader, DFlags.RoundCornersLeft, LabelFlags.AddPaddingToHeight);
 
-        if (_helper.SelectedPair is not { } validPair)
+        if (SelectedKinkster is null)
             return;
 
-        // extract the tabs by splitting the string by comma's
-        using (CkRaii.FramedChildPaddedW("Triggers", c.InnerRegion.X, triggerPhrasesH, CkColor.FancyHeaderContrast.Uint(), CkColor.FancyHeaderContrast.Uint(), ImDrawFlags.RoundCornersAll))
-        {
-            ImGui.TextUnformatted($"Listening to: {_helper.PairNamedStorage!.ExtractedListenerName}");
-            if (ImGui.Button("Send Name"))
-            {
-                var name = PlayerData.NameWithWorld;
-                _logger.LogInformation($"Sending name: {PlayerData.NameWithWorld}");
-                try
-                {
-                    var task = Task.Run(
-                        async () => await _hub.UserSendNameToKinkster(new(_helper.SelectedPair.UserData), name)
-                    );
-                    if (task.Result.ErrorCode is not GagSpeakApiEc.Success)
-                    {
-                        _logger.LogError($"Failed to perform UserSendNameToKinker, Task: {task.Result.ErrorCode}");
-                    }
-                    else
-                    {
-                        _logger.LogInformation($"Sending Username `{PlayerData.NameWithWorld}` to `{_helper.SelectedPair.UserData.UID}`");
-                    }
-                }
-                catch (Bagagwa e)
-                {
-                    _logger.LogError($"{e}");
-                }
-            }
-            PairTriggerTags.DrawTagsPreview("##OtherPairPhrases", validPair.PairPerms.TriggerPhrase);
-        }
+        DrawListenerNameBracketsRow(c.InnerRegion.X, SelectedKinkster);
+
+        DrawTriggerPhraseBox(c.InnerRegion.X, triggerPhrasesH, SelectedKinkster);
 
         CkGui.SeparatorSpacedColored(spacing.Y, c.InnerRegion.X, CkColor.FancyHeaderContrast.Uint());
 
@@ -190,33 +144,111 @@ public partial class ControllerUniquePanel : IDisposable
         // Draw out the permission checkboxes
         ImGui.SameLine(c.InnerRegion.X / 2, ImGui.GetStyle().ItemInnerSpacing.X);
 
-        using (ImRaii.Group())
+        DrawPuppetPermsGroup(SelectedKinkster.OwnPerms.PuppetPerms, SelectedKinkster); 
+
+        void CustomHeader()
         {
-            var categoryFilter = (uint)(validPair.PairPerms.PuppetPerms);
-            foreach (var category in Enum.GetValues<PuppetPerms>().Skip(1))
+            var headerText = SelectedKinkster is not null ? $"{SelectedKinkster.GetNickAliasOrUid()}'s Settings" : "Select a Kinkster from the 2nd panel first!";
+            var SendNameWidth = CkGui.IconTextButtonSize(FAI.CloudUploadAlt, "Send Name");
+            using (CkRaii.Child("##PairSelector", new Vector2(region.SizeX, ImGui.GetFrameHeight())))
             {
-                using (ImRaii.Disabled())
-                    ImGui.CheckboxFlags($"Allows {category}", ref categoryFilter, (uint)category);
-                CkGui.AttachToolTip(category switch
+                using var col = ImRaii.PushColor(ImGuiCol.Button, CkColor.FancyHeaderContrast.Uint());
+                ImGui.SameLine(ImGui.GetFrameHeight());
+                ImUtf8.TextFrameAligned(headerText);
+                if (SelectedKinkster is not null)
                 {
-                    PuppetPerms.All => $"{validPair.GetNickAliasOrUid() ?? "This Kinkster"} has granted you full control.--SEP--(Take Care with this)",
-                    PuppetPerms.Alias => $"{validPair.GetNickAliasOrUid() ?? "This Kinkster"} allows you to execute their alias triggers.",
-                    PuppetPerms.Emotes => $"{validPair.GetNickAliasOrUid() ?? "This Kinkster"} allows you to make them perform emotes.",
-                    PuppetPerms.Sit => $"{validPair.GetNickAliasOrUid() ?? "This Kinkster"} allows you to make them sit or cycle poses.",
-                    _ => $"NO PERMS ALLOWED."
-                });
+                    ImGui.SameLine(ImGui.GetContentRegionAvail().X - SendNameWidth - spacing.X);
+                    var wdl = ImGui.GetWindowDrawList();
+                    wdl.ChannelsSplit(2);
+                    wdl.ChannelsSetCurrent(1);
+                    if (CkGui.SmallIconTextButton(FAI.CloudUploadAlt, "Send Name"))
+                        SendNameTask(SelectedKinkster);
+                    CkGui.AttachToolTip($"Update {SelectedKinkster.GetNickAliasOrUid()} with your IGN." +
+                        $"--SEP--This allows them to react to you using their trigger phrases.");
+                    wdl.ChannelsSetCurrent(0);
+                    wdl.AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.FancyHeaderContrast.Uint(), ImGui.GetStyle().FrameRounding, ImDrawFlags.RoundCornersAll);
+                    wdl.ChannelsMerge();
+                }
             }
+        }
+    }
+
+    private void DrawListenerNameBracketsRow(float width, Kinkster kinkster)
+    {
+        var bracketsWidth = ImGui.GetTextLineHeight() * 2 + ImGui.GetStyle().ItemSpacing.X;
+        var playerStrRef = kinkster.LastPairAliasData.ExtractedListenerName;
+        var label = playerStrRef.IsNullOrEmpty() ? "<No Name@World Set!>" : playerStrRef;
+        var tooltip = $"The Character that can Puppeteer {kinkster.GetNickAliasOrUid()} using the below phrases." +
+            $"--SEP--This should be your Player's name. If it isn't, send them yours.";
+
+        CkGui.FramedIconText(FAI.Eye, !playerStrRef.IsNullOrEmpty() ? CkColor.IconCheckOn.Uint() : uint.MaxValue);
+        CkGui.AttachToolTip(tooltip);
+        ImUtf8.SameLineInner();
+        var listenerWidth = ImGui.GetContentRegionAvail().X - bracketsWidth;
+        using (CkRaii.Child("ListenerName", new Vector2(listenerWidth, ImGui.GetFrameHeight()), CkColor.FancyHeaderContrast.Uint(), dFlags: DFlags.RoundCornersAll))
+            CkGui.CenterTextAligned(label);
+        CkGui.AttachToolTip(tooltip);
+
+        ImUtf8.SameLineInner();
+        var sChar = kinkster.PairPerms.StartChar.ToString();
+        var eChar = kinkster.PairPerms.EndChar.ToString();
+        ImGui.SetNextItemWidth(ImGui.GetTextLineHeight());
+        ImGui.InputText("##BracketBegin", ref sChar, 1, ITFlags.ReadOnly);
+        CkGui.AttachToolTip($"Optional Start Bracket to scope the command after the trigger phrase in.");
+
+        ImUtf8.SameLineInner();
+        ImGui.SetNextItemWidth(ImGui.GetTextLineHeight());
+        ImGui.InputText("##BracketEnd", ref eChar, 1, ITFlags.ReadOnly);
+        CkGui.AttachToolTip($"Optional End Bracket to scope the command after the trigger phrase in.");
+    }
+
+    private void DrawTriggerPhraseBox(float paddedWidth, float height, Kinkster kinkster)
+    {
+        using var _ = CkRaii.FramedChildPaddedW("Triggers", paddedWidth, height, CkColor.FancyHeaderContrast.Uint(), CkColor.FancyHeaderContrast.Uint(), ImDrawFlags.RoundCornersAll);
+        _pairTriggerTags.DrawTagsPreview("##OtherPairPhrases", kinkster.PairPerms.TriggerPhrase);
+    }
+
+    private void DrawPuppetPermsGroup(PuppetPerms permissions, Kinkster kinkster)
+    {
+        using var _ = ImRaii.Group();
+
+        var categoryFilter = (uint)permissions;
+        foreach (var category in Enum.GetValues<PuppetPerms>().Skip(1))
+        {
+            using (ImRaii.Disabled())
+                ImGui.CheckboxFlags($"Allows {category}", ref categoryFilter, (uint)category);
+            CkGui.AttachToolTip(category switch
+            {
+                PuppetPerms.All => $"{SelectedKinkster?.GetNickAliasOrUid() ?? "This Kinkster"} has granted you full control.--SEP--(Take Care with this)",
+                PuppetPerms.Alias => $"{SelectedKinkster?.GetNickAliasOrUid() ?? "This Kinkster"} allows you to execute their alias triggers.",
+                PuppetPerms.Emotes => $"{SelectedKinkster?.GetNickAliasOrUid() ?? "This Kinkster"} allows you to make them perform emotes.",
+                PuppetPerms.Sit => $"{SelectedKinkster?.GetNickAliasOrUid() ?? "This Kinkster"} allows you to make them sit or cycle poses.",
+                _ => $"NO PERMS ALLOWED."
+            });
         }
     }
 
     private void DrawExamplesBox(Vector2 region)
     {
         var size = new Vector2(region.X, ImGui.GetFrameHeightWithSpacing() * 3);
-        using (var child = CkRaii.ChildLabelText(size, .7f, "Example Uses", ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersLeft))
+        using (var child = CkRaii.ChildLabelText(size, .7f, "Example Uses", ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersLeft, LabelFlags.ResizeHeightToAvailable))
         {
             ImGui.TextWrapped("Ex 1: /gag <trigger phrase> <message>");
             ImGui.TextWrapped("Ex 2: /gag <trigger phrase> <message> <image>");
         }
+    }
+
+    private void SendNameTask(Kinkster kinkster)
+    {
+        var nameInThread = PlayerData.NameWithWorld;
+        UiService.SetUITask(async () =>
+        {
+            var res = await _hub.UserSendNameToKinkster(new(kinkster.UserData), nameInThread);
+            if (res.ErrorCode is GagSpeakApiEc.Success)
+                _logger.LogInformation($"Updated {kinkster.GetNickAliasOrUid()} with your Name!");
+            else
+                _logger.LogError($"Failed to perform UserSendNameToKinker: {res.ErrorCode}");
+        });
     }
 
 }
