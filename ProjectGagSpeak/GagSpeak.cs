@@ -139,6 +139,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<PatternFileSelector>()
         .AddSingleton<AlarmFileSelector>()
         .AddSingleton<TriggerFileSelector>()
+        .AddSingleton<ModPresetFileSelector>()
         .AddSingleton<GagFileSystem>()
         .AddSingleton<RestrictionFileSystem>()
         .AddSingleton<RestraintSetFileSystem>()
@@ -147,6 +148,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<PatternFileSystem>()
         .AddSingleton<AlarmFileSystem>()
         .AddSingleton<TriggerFileSystem>()
+        .AddSingleton<ModPresetFileSystem>()
 
         // Game Internals
         .AddSingleton<MovementDetours>()
@@ -266,7 +268,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<CacheStateManager>()
         .AddSingleton<CursedLootManager>()
         .AddSingleton<GagRestrictionManager>()
-        .AddSingleton<ModSettingPresetManager>()
+        .AddSingleton<ModPresetManager>()
         .AddSingleton<BuzzToyManager>()
         .AddSingleton<VibeLobbyManager>()
         .AddSingleton<PatternManager>()
@@ -378,7 +380,6 @@ public static class GagSpeakServiceExtensions
 
         // Scoped UI (Mod Presets)
         .AddScoped<WindowMediatorSubscriberBase, ModPresetsUI>()
-        .AddScoped<ModPresetSelector>()
         .AddScoped<ModPresetsPanel>()
 
         // Scoped UI (Trait Allowances Presets)

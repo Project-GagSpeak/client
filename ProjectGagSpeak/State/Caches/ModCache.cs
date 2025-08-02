@@ -23,7 +23,7 @@ public class ModCache
     // This is really difficult for me, because the key is for the most part out of my control.
     // If at any point the mod name is changed in penumbra, it would damage the storage in gagspeak...
     // So unless I could resync the cache on every mod name change, this would be difficult to pull off.
-    private SortedList<(CombinedCacheKey, Guid), ModSettingsPreset> _mods = new();
+    private SortedList<(CombinedCacheKey, string), ModSettingsPreset> _mods = new();
     private HashSet<ModSettingsPreset> _finalMods = new();
     public IReadOnlySet<ModSettingsPreset> FinalMods => _finalMods;
 
@@ -44,8 +44,8 @@ public class ModCache
         foreach (var mod in mods)
         {
             if (!mod.HasData) continue;
-            added |= _mods.TryAdd((key, mod.Id), mod);
-            if(added) Logger.LogDebug($"Added ModCache ([{key}]-[{mod.Id}]) -> [{mod.Label}] from [{mod.Container.ModName}]");
+            added |= _mods.TryAdd((key, mod.CacheKey), mod);
+            if(added) Logger.LogDebug($"Added ModCache ([{key}]-[{mod.CacheKey}]) -> [{mod.Label}]");
         }
         return added;
     }

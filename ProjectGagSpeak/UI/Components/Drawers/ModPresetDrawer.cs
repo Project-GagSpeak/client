@@ -19,9 +19,9 @@ namespace GagSpeak.Gui.Components;
 public sealed class ModPresetDrawer
 {
     private readonly ILogger<ModPresetDrawer> _logger;
-    private readonly ModSettingPresetManager _manager;
+    private readonly ModPresetManager _manager;
 
-    public ModPresetDrawer(ILogger<ModPresetDrawer> logger, ModSettingPresetManager manager)
+    public ModPresetDrawer(ILogger<ModPresetDrawer> logger, ModPresetManager manager)
     {
         _logger = logger;
         _manager = manager;
@@ -123,11 +123,15 @@ public sealed class ModPresetDrawer
         DrawPresetPreviewInner(modPreset);
     }
 
-    public void DrawPresetPreview(ModSettingsPreset preset)
+    public void DrawPresetPreview(ModSettingsPreset? preset)
     {
         var region = ImGui.GetContentRegionAvail();
-        using (CkRaii.FramedChildPaddedWH("MP-Preview" + preset.Container.DirectoryPath, region, CkColor.FancyHeaderContrast.Uint(), 0))
+        var id = $"MP-Preview-{(preset?.Container.DirectoryPath ?? "INVALID")}";
+        using (CkRaii.FramedChildPaddedWH(id, region, CkColor.FancyHeaderContrast.Uint(), CkColor.FancyHeaderContrast.Uint()))
         {
+            if (preset is null)
+                return;
+
             using (UiFontService.GagspeakLabelFont.Push())
             {
                 var offset = (region.X - ImGui.CalcTextSize("Previewing").X) / 2;
@@ -178,8 +182,8 @@ public sealed class ModPresetDrawer
     public void DrawPresetEditor()
     {
         var outerRegion = ImGui.GetContentRegionAvail();
-        using (CkRaii.FramedChild("MP-EditorWindow", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint(), 0, CkStyle.ChildRounding(),
-            2 * ImGuiHelpers.GlobalScale, wFlags: WFlags.AlwaysUseWindowPadding))
+        using (CkRaii.FramedChild("MP-EditorWindow", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint(), CkColor.FancyHeaderContrast.Uint(),
+            CkStyle.ChildRounding(), CkStyle.ThinThickness(), wFlags: WFlags.AlwaysUseWindowPadding))
         {
             if (_manager.ItemInEditor is not { } activeEditor)
                 return;

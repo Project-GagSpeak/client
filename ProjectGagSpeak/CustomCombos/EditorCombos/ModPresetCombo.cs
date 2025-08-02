@@ -12,9 +12,9 @@ namespace GagSpeak.CustomCombos.Editor;
 
 public sealed class ModPresetCombo : CkFilterComboCache<ModSettingsPreset>
 {
-    private ModSettingPresetManager Manager;
+    private ModPresetManager Manager;
     private string _currentItem;
-    public ModPresetCombo(ILogger log, ModSettingPresetManager manager,
+    public ModPresetCombo(ILogger log, ModPresetManager manager,
         Func<IReadOnlyList<ModSettingsPreset>> generator) : base(generator, log)
     {
         Manager = manager;

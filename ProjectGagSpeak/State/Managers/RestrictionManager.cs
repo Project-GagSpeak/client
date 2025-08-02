@@ -19,7 +19,7 @@ public readonly record struct OccupiedRestriction(RestrictionItem Item, ManagerP
 public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybridSavable, IDisposable
 {
     private readonly FavoritesManager _favorites;
-    private readonly ModSettingPresetManager _modPresets;
+    private readonly ModPresetManager _modPresets;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
 
@@ -32,7 +32,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         ILogger<RestrictionManager> logger,
         GagspeakMediator mediator,
         FavoritesManager favorites,
-        ModSettingPresetManager modPresets, 
+        ModPresetManager modPresets, 
         ConfigFileProvider fileNames,
         HybridSaveService saver) : base(logger, mediator)
     {
