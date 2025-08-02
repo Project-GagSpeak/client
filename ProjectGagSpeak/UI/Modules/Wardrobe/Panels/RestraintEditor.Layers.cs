@@ -75,6 +75,7 @@ public class RestraintEditorLayers : IFancyTab
             foreach (var layer in setInEdit.Layers.ToList())
             {
                 DrawExistingLayer(layer, layerIdx, region.X);
+
                 layerIdx++;
             }
 
@@ -89,6 +90,7 @@ public class RestraintEditorLayers : IFancyTab
                 x.AcceptDraw();
             }
         }
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Layers, ImGui.GetWindowPos(), ImGui.GetWindowSize());
     }
 
     private void DrawExistingLayer(IRestraintLayer layer, int idx, float totalWidth) 
@@ -179,8 +181,14 @@ public class RestraintEditorLayers : IFancyTab
                 if (CkGui.IconButton(FAI.ArrowsLeftRight, inPopup: true, disabled: !KeyMonitor.ShiftPressed()))
                     _manager.ItemInEditor!.Layers[idx] = layer is RestrictionLayer ? new ModPresetLayer() : new RestrictionLayer();
                 CkGui.AttachToolTip("Swap layer type to Mod Preset Layer. (Hold Shift)");
-
-                ImUtf8.SameLineInner();
+                if (idx == 0) // this only needs to attach to the first layer item.
+                {
+                    _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.LayerTypes, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+                        () => _manager.ItemInEditor!.Layers[idx] = layer is RestrictionLayer ? new ModPresetLayer() : new RestrictionLayer());
+                    _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.LayerTypesBuffer, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+                        () => FancyTabBar.SelectTab("RS_EditBar", RestraintsPanel.EditorTabs[3], RestraintsPanel.EditorTabs));
+                }
+                    ImUtf8.SameLineInner();
                 if (CkGui.IconButton(FAI.Eraser, inPopup: true, disabled: !KeyMonitor.ShiftPressed() || idx != _manager.ItemInEditor!.Layers.Count - 1))
                     _manager.ItemInEditor!.Layers.RemoveAt(idx);
                 CkGui.AttachToolTip("Delete this layer. (Hold Shift)--SEP--Only the highest layer can be removed.");
@@ -207,6 +215,12 @@ public class RestraintEditorLayers : IFancyTab
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - buttonSize - ImGui.GetStyle().ItemSpacing.X);
             if (CkGui.IconTextButton(FAI.Plus, "New Layer", isInPopup: true))
                 _manager.ItemInEditor!.Layers.Add(new RestrictionLayer());
+            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.AddingLayers, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+                () =>
+                {
+                    _manager.ItemInEditor!.Layers.Add(new RestrictionLayer());
+                    _manager.ItemInEditor!.Layers.Add(new RestrictionLayer());
+                });
         }
         ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.ElementBG.Uint(), DragDropItemRounding, ImDrawFlags.RoundCornersRight);
     }

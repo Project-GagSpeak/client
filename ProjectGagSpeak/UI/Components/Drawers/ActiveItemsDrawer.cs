@@ -13,6 +13,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
+using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
@@ -36,7 +37,7 @@ public class ActiveItemsDrawer
     private readonly DataDistributionService _dds;
     private readonly TextureService _textures;
     private readonly CosmeticService _cosmetics;
-
+    private readonly TutorialService _guides;
     private RestrictionGagCombo[] _gagItems;
     private PadlockGagsClient[] _gagPadlocks;
 
@@ -57,7 +58,8 @@ public class ActiveItemsDrawer
         FavoritesManager favorites,
         DataDistributionService dds,
         TextureService textures,
-        CosmeticService cosmetics)
+        CosmeticService cosmetics,
+        TutorialService guides)
     {
         _logger = logger;
         _mediator = mediator;
@@ -68,6 +70,7 @@ public class ActiveItemsDrawer
         _dds = dds;
         _textures = textures;
         _cosmetics = cosmetics;
+        _guides = guides;
 
         // Initialize the GagCombos.
         _gagItems = new RestrictionGagCombo[Constants.MaxGagSlots];
@@ -261,11 +264,19 @@ public class ActiveItemsDrawer
     {
         using var group = ImRaii.Group();
         _restraintPadlocks.DrawLockCombo(ImGui.GetContentRegionAvail().X, "Lock this Padlock!");
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.LockingRestraint, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+            () =>
+            {
+                /* select metal padlock and lock the restraint set. 
+                probably easier to just tell the server to put a metal padlock on instead of trying to configure gui nonsense*/
+            });
+
         var height = ImGui.GetFrameHeightWithSpacing() * 5 + ImGui.GetFrameHeight();
         DrawRestraintImage(dispData, new Vector2(height / 1.2f, height), CkStyle.ChildRoundingLarge(), CkColor.FancyHeaderContrast.Uint());
         var drawPos = ImGui.GetItemRectMin() + new Vector2(ImGui.GetItemRectSize().X, 0);
         CkGui.AttachToolTip("--COL--Left-Click--COL-- ⇒ Select another Restraint Set." +
                       "--NL----COL--Right-Click--COL-- ⇒ Clear active Restraint Set.", color: ImGuiColors.ParsedGold);
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.RemovingRestraints, ImGui.GetWindowPos(), ImGui.GetWindowSize());
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             ImGui.OpenPopup($"##RestraintSetSelector");
@@ -291,6 +302,7 @@ public class ActiveItemsDrawer
             var options = Enum.GetValues<RestraintLayer>().Skip(1).SkipLast(1).Take(dispData.Layers.Count);
             _layerFlagsWidget.DrawLayerCheckboxes(data.ActiveLayers, options, _ => ((int)_).IsInRange(dispData.Layers) ? dispData.Layers[(int)_].Label : _.ToString());
         }
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EditingLayers, ImGui.GetWindowPos(), ImGui.GetWindowSize());
     }
 
     public void UnlockItemGroup(int slotIdx, ActiveGagSlot data)

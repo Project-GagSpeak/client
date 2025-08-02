@@ -151,11 +151,13 @@ public class TutorialService
         .AddStep(restraintsStr.Step11Title, restraintsStr.Step11Desc, restraintsStr.Step11DescExtended)
         .AddStep(restraintsStr.Step12Title, restraintsStr.Step12Desc, restraintsStr.Step12DescExtended)
         .AddStep(restraintsStr.Step13Title, restraintsStr.Step13Desc, restraintsStr.Step13DescExtended)
+        .AddStep(restraintsStr.Step13Title, restraintsStr.Step13Desc, restraintsStr.Step13DescExtended) // buffer step, uses same text as previous
         .AddStep(restraintsStr.Step14Title, restraintsStr.Step14Desc, restraintsStr.Step14DescExtended)
         .AddStep(restraintsStr.Step15Title, restraintsStr.Step15Desc, restraintsStr.Step15DescExtended)
         .AddStep(restraintsStr.Step16Title, restraintsStr.Step16Desc, restraintsStr.Step16DescExtended)
         .AddStep(restraintsStr.Step17Title, restraintsStr.Step17Desc, restraintsStr.Step17DescExtended)
-        .AddStep(restraintsStr.Step18Title, restraintsStr.Step18Desc, restraintsStr.Step18DescExtended)
+        .AddStep(restraintsStr.Step17Title, restraintsStr.Step17Desc, restraintsStr.Step17DescExtended) // buffer step, uses same text as previous
+        .AddStep(restraintsStr.Step18Title, restraintsStr.Step18Desc, restraintsStr.Step18DescExtended) 
         .AddStep(restraintsStr.Step19Title, restraintsStr.Step19Desc, restraintsStr.Step19DescExtended)
         .AddStep(restraintsStr.Step20Title, restraintsStr.Step20Desc, restraintsStr.Step20DescExtended)
         .AddStep(restraintsStr.Step21Title, restraintsStr.Step21Desc, restraintsStr.Step21DescExtended)

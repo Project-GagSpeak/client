@@ -82,9 +82,11 @@ public enum StepsRestraints
     Importing, // on click, import current equipment.
     SlotTypes, // different slot types, on click, swap helmet to advanced.
     Overlay, // what overlay is, and how it works. (move to overlay after)
+    OverlayBuffer, // duplicate previous step, so user can see changes, then switch to layers panel
     Layers, // what layers are, how they work.
     AddingLayers, // show where to add. (on click, add 2)
     LayerTypes, // on click, swap first layer to opposite type.
+    LayerTypesBuffer, // duplicate previous step, then switch to modsmoodles panel
     ModsMoodles, // overview.
     AddingMods,
     AddingMoodles,

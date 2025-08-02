@@ -26,6 +26,7 @@ public class UiFactory
     private readonly KinkPlateLight _kinkPlateLight;
     private readonly KinkPlateService _kinkPlates;
     private readonly TextureService _textures;
+    private readonly TutorialService _guides;
 
     public UiFactory(
         ILoggerFactory loggerFactory,
@@ -38,7 +39,8 @@ public class UiFactory
         CosmeticService cosmetics,
         KinkPlateLight kinkPlateLight,
         KinkPlateService kinkPlates,
-        TextureService textures)
+        TextureService textures,
+        TutorialService guides)
     {
         _loggerFactory = loggerFactory;
         _mediator = mediator;
@@ -51,6 +53,7 @@ public class UiFactory
         _kinkPlateLight = kinkPlateLight;
         _kinkPlates = kinkPlates;
         _textures = textures;
+        _guides = guides;
     }
 
     public KinkPlateUI CreateStandaloneKinkPlateUi(Kinkster pair)
@@ -70,6 +73,6 @@ public class UiFactory
     public ThumbnailUI CreateThumbnailUi(ImageMetadataGS thumbnailInfo)
     {
         return new ThumbnailUI(_loggerFactory.CreateLogger<ThumbnailUI>(), _mediator, _imageImport,
-            _config, _cosmetics, thumbnailInfo);
+            _config, _cosmetics, thumbnailInfo, _guides);
     }
 }

@@ -389,9 +389,9 @@ namespace GagSpeak.Localization
             "MIMIC => Applied by cursed loot. This lock cannot be removed by anyone, and will only unlock after the timer has expired."
             );
 
-        public readonly string Step33Title = Loc.Localize("HelpRestraints_Step33Title", "Adding and Removing Layers");
-        public readonly string Step33Desc = Loc.Localize("HelpRestraints_Step33Desc", "Add or remove additional layers without removing your restraint.");
-        public readonly string Step33DescExtended = Loc.Localize("HelpRestraints_Step33DescExtended", "Layers can be added or removed at any time. Check and uncheck layers to add or remove them, then click Update Layers to save the changes.");
+        public readonly string Step33Title = Loc.Localize("HelpRestraints_Step33Title", "The Layers");
+        public readonly string Step33Desc = Loc.Localize("HelpRestraints_Step33Desc", "You can edit the applied layers here.");
+        public readonly string Step33DescExtended = Loc.Localize("HelpRestraints_Step33DescExtended", "Make sure to click \"Update Layers\" button when you're done with changes. You cannot edit the active layers when the set has been locked by someone else.");
 
         public readonly string Step34Title = Loc.Localize("HelpRestraints_Step34Title", "Unlocking a Restraint");
         public readonly string Step34Desc = Loc.Localize("HelpRestraints_Step34Desc", "You can't take a restraint off unless it's unlocked.");

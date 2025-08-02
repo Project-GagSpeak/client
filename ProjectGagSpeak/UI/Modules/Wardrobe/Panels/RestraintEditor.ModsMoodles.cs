@@ -64,6 +64,7 @@ public class RestraintEditorModsMoodles : IFancyTab
         using (CkRaii.HeaderChild("Associated Mods", panelSize, FancyTabBar.RoundingInner, HeaderFlags.SizeIncludesHeader))
         {
             DrawModSelector();
+            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.AddingMods, ImGui.GetWindowPos(), ImGui.GetWindowSize());
             DrawModsList();
         }
 
@@ -72,11 +73,14 @@ public class RestraintEditorModsMoodles : IFancyTab
         using (CkRaii.HeaderChild("Associated Moodles", panelSize, FancyTabBar.RoundingInner, HeaderFlags.SizeIncludesHeader))
         {
             DrawMoodleSelector();
+            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.AddingMoodles, ImGui.GetWindowPos(), ImGui.GetWindowSize());
             DrawMoodlesList();
             // Draw out the moodle icon row.
             _moodleDrawer.ShowStatusIconsFramed("AssociatedMoodles", _manager.ItemInEditor!.RestraintMoodles, 
                 ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), rows: 2);
+            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.MoodlePreview, ImGui.GetWindowPos(), ImGui.GetWindowSize());
         }
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.ModsMoodles, ImGui.GetWindowPos(), ImGui.GetWindowSize());
     }
 
     public void DrawModSelector()
@@ -151,6 +155,8 @@ public class RestraintEditorModsMoodles : IFancyTab
             };
         }
         CkGui.AttachToolTip(_moodleDrawer.MoodleTypeTooltip(_selectedMoodle));
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SwapMoodleTypes, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+            () => { }/* attach a moodle here */ );
 
         ImUtf8.SameLineInner();
         var comboWidth = ImGui.GetContentRegionAvail().X - buttonWidth - ImGui.GetStyle().ItemInnerSpacing.X;

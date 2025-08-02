@@ -8,6 +8,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
+using GagSpeak.Services.Tutorial;
 using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;
 using OtterGui;
@@ -21,13 +22,16 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
 {
     private readonly ImageImportTool _imageImport;
     private readonly MainConfig _config;
+    private readonly TutorialService _guides;
+
     public ThumbnailUI(ILogger<ThumbnailUI> logger, GagspeakMediator mediator,
         ImageImportTool imageImport, MainConfig config, CosmeticService cosmetics,
-        ImageMetadataGS imageBase) 
+        ImageMetadataGS imageBase, TutorialService guides) 
         : base(logger, mediator, $"{imageBase.Kind} Thumbnails##Thumbnail_Browser_{imageBase.Kind}")
     {
         _imageImport = imageImport;
         _config = config;
+        _guides = guides;
 
         IsOpen = true;
         SizeConstraints = new WindowSizeConstraints()
@@ -93,6 +97,8 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
         {
             if (CkGui.IconButton(FAI.Sync))
                 TryRefresh(true);
+            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.UpdateContents, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+            _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.UpdateContents, ImGui.GetWindowPos(), ImGui.GetWindowSize());
         });
 
         ImGui.SameLine();
@@ -106,6 +112,8 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
         // Save changes only once we deactivate, to avoid spamming the hybrid saver.
         if (ImGui.IsItemDeactivatedAfterEdit())
             _config.Save();
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.DisplayScale, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.DisplayScale, ImGui.GetWindowPos(), ImGui.GetWindowSize());
 
         // Let them use File Dialog Manager to import images.
         ImUtf8.SameLineInner();
@@ -113,6 +121,8 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
             _imageImport.ImportFromFile(ImageBase.Kind, SizeBase, botRegionSize, KeyMonitor.ShiftPressed());
         CkGui.AttachToolTip("Add a Thumbnail Image from the file browser."
             + "--SEP-- Holding SHIFT will force the image to be re-imported.");
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.ImportByFile, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.ImportingByFile, ImGui.GetWindowPos(), ImGui.GetWindowSize());
 
         // Add a option to add new images by clipboard pasting.
         ImUtf8.SameLineInner();
@@ -120,6 +130,8 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
             _imageImport.ImportFromClipboard(ImageBase.Kind, SizeBase, botRegionSize, KeyMonitor.ShiftPressed());
         CkGui.AttachToolTip("Add a Thumbnail Image from the contents copied to clipboard."
         + "--SEP-- Holding SHIFT will force the image to be re-imported.");
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.ImportByClipboard, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => { });
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.ImportingByClipboard, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => { });
     }
 
     public void DrawFileImporter()

@@ -89,7 +89,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
     private static TriStateBoolCheckbox VisorCheckbox = new();
     private static TriStateBoolCheckbox WeaponCheckbox = new();
 
-    public IFancyTab[] EditorTabs;
+    public static IFancyTab[] EditorTabs;
 
     /// <summary> All Content in here is grouped. Can draw either editor or overview left panel. </summary>
     public void DrawEditorContents(CkHeader.DrawRegion topRegion, CkHeader.DrawRegion botRegion)
@@ -193,6 +193,8 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
                 Mediator.Publish(new OpenThumbnailBrowser(metaData));
             }
             CkGui.AttachToolTip("The Thumbnail for this Restraint Set.--SEP--Double Click to change the image.");
+            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SelectingThumbnails, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+                () => Mediator.Publish(new OpenThumbnailBrowser(new ImageMetadataGS(ImageDataType.Restraints, new Vector2(120, 120f * 1.2f), _selector.Selected!.Identifier))));
         }
 
         void BeginEdits(ImGuiMouseButton b)
@@ -252,6 +254,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         if (data.Identifier == Guid.Empty)
         {
             _activeItemDrawer.ApplyItemGroup(data);
+            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SelectingRestraint, ImGui.GetWindowPos(), ImGui.GetWindowSize());
             return;
         }
 
@@ -279,6 +282,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
 
         if (CkGui.IconButton(FAI.ArrowLeft))
             _manager.StopEditing();
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.CancelingChanges, ImGui.GetWindowPos(), ImGui.GetWindowSize());
 
         // Create a child that spans the remaining region.
         ImUtf8.SameLineInner();
@@ -351,6 +355,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         if (CkGui.IconButton(FAI.Save))
             _manager.SaveChangesAndStopEditing();
         CkGui.AttachToolTip("Save Changes to this Restraint Set.");
-
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SavingChanges, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+            () => _manager.SaveChangesAndStopEditing());
     }
 }

@@ -9,6 +9,7 @@ using Dalamud.Utility;
 using GagSpeak.State.Managers;
 using GagspeakAPI.Attributes;
 using CkCommons;
+using System.Runtime.CompilerServices;
 
 namespace GagSpeak.Gui.Wardrobe;
 
@@ -17,13 +18,13 @@ public class RestraintEditorInfo : IFancyTab
     private readonly RestraintManager _manager;
     private readonly AttributeDrawer _attributeDrawer;
     private readonly TutorialService _guides;
-    private readonly RestraintsPanel _panel;
+    private readonly IFancyTab[] _tabBar;
+
     public RestraintEditorInfo(RestraintManager manager, AttributeDrawer traitsDrawer, TutorialService guides)
     {
         _attributeDrawer = traitsDrawer;
         _manager = manager;
         _guides = guides;
-        //_panel = panel;
     }
 
     public string   Label       => "Info & Traits";
@@ -38,8 +39,10 @@ public class RestraintEditorInfo : IFancyTab
 
         DrawDescription();
         _attributeDrawer.DrawAttributesChild(item, width, 8, Traits.All);
+        // try to attach these to the relevant part of the panel later...
         _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.HardcoreTraits, ImGui.GetWindowPos(), ImGui.GetWindowSize());
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Arousal, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Arousal, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+            () => FancyTabBar.SelectTab("RS_EditBar", RestraintsPanel.EditorTabs[1], RestraintsPanel.EditorTabs));
     }
 
     private void DrawDescription()
