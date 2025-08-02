@@ -373,21 +373,8 @@ namespace GagSpeak.Localization
             "Note: Any hardcore traits enabled on a selected restraint always apply when you put it on yourself.");
 
         public readonly string Step32Title = Loc.Localize("HelpRestraints_Step32Title", "Locking a Restraint");
-        public readonly string Step32Desc = Loc.Localize("HelpRestraints_Step32Desc", "You can set a lock on the restraint from this list.");
-        public readonly string Step32DescExtended = Loc.Localize("HelpRestraints_Step32DescExtended", "There are several different kinds of locks." + Environment.NewLine +
-            "A lock can only be applied or unlocked by someone with Lock Restraint and Unlock Restraint permissions, respectively." + Environment.NewLine +
-            "METAL => Most basic. Can be locked/unlocked by anyone." + Environment.NewLine +
-            "5-MINUTES => Automatically unlocks after 5 minutes, but can be unlocked early by anyone." + Environment.NewLine +
-            "COMBINATION => Locked with a 4-digit combination. Unlocked by anyone who knows the code." + Environment.NewLine +
-            "PASSWORD => Same as Combination, but can use more complex passwords. (4-20 characters)" + Environment.NewLine +
-            "TIMER => Unlocks after the set time. Can be unlocked early by anyone." + Environment.NewLine +
-            "PREDICAMENT TIMER => Same as Timer. Can only be unlocked early by another kinkster!" + Environment.NewLine +
-            "PASSWORD TIMER => Combination of Password and normal Timer locks." + Environment.NewLine +
-            "--SEP--There are three other kinds of locks that can be applied to you, that you cannot remove yourself." + Environment.NewLine +
-            "OWNER => Requires granting \"Owner Locks\" permission. Only others with \"Owner Locks\" can remove this." + Environment.NewLine +
-            "DEVOTIONAL => Requires granting \"Devotional Locks\" permission. Only the kinkster that applied this lock can remove it." + Environment.NewLine +
-            "MIMIC => Applied by cursed loot. This lock cannot be removed by anyone, and will only unlock after the timer has expired."
-            );
+        public readonly string Step32Desc = Loc.Localize("HelpRestraints_Step32Desc", "There are several locks to choose from.");
+        public readonly string Step32DescExtended = Loc.Localize("HelpRestraints_Step32DescExtended", "A lock can only be applied or removed by someone else if you've granted them the correct permissions.");
 
         public readonly string Step33Title = Loc.Localize("HelpRestraints_Step33Title", "The Layers");
         public readonly string Step33Desc = Loc.Localize("HelpRestraints_Step33Desc", "You can edit the applied layers here.");
@@ -634,20 +621,8 @@ namespace GagSpeak.Localization
             "Note: Any hardcore traits enabled on a selected restriction always apply when you put it on yourself.");
 
         public readonly string Step36Title = Loc.Localize("HelpRestrictions_Step36Title", "Locking a Restriction");
-        public readonly string Step36Desc = Loc.Localize("HelpRestrictions_Step36Desc", "You can set a lock on the restriction from this list.");
-        public readonly string Step36DescExtended = Loc.Localize("HelpRestrictions_Step36DescExtended", "There are several different kinds of locks." + Environment.NewLine +
-            "A lock can only be applied or unlocked by someone with Lock Restriction and Unlock Restriction permissions, respectively." + Environment.NewLine +
-            "METAL => Most basic. Can be locked/unlocked by anyone." + Environment.NewLine +
-            "5-MINUTES => Automatically unlocks after 5 minutes, but can be unlocked early by anyone." + Environment.NewLine +
-            "COMBINATION => Locked with a 4-digit combination. Unlocked by anyone who knows the code." + Environment.NewLine +
-            "PASSWORD => Same as Combination, but can use more complex passwords. (4-20 characters)" + Environment.NewLine +
-            "TIMER => Unlocks after the set time. Can be unlocked early by anyone." + Environment.NewLine +
-            "PREDICAMENT TIMER => Same as Timer. Can only be unlocked early by another kinkster!" + Environment.NewLine +
-            "PASSWORD TIMER => Combination of Password and normal Timer locks." + Environment.NewLine +
-            "---SEP---There are three other kinds of locks that can be applied to you, that you cannot remove yourself." + Environment.NewLine +
-            "OWNER => Requires granting \"Owner Locks\" permission. Only others with \"Owner Locks\" can remove this." + Environment.NewLine +
-            "DEVOTIONAL => Requires granting \"Devotional Locks\" permission. Only the kinkster that applied this lock can remove it." + Environment.NewLine +
-            "MIMIC => Applied by cursed loot. This lock cannot be removed by anyone, and will only unlock after the timer has expired.");
+        public readonly string Step36Desc = Loc.Localize("HelpRestrictions_Step36Desc", "There are several locks to choose from.");
+        public readonly string Step36DescExtended = Loc.Localize("HelpRestrictions_Step36DescExtended", "A lock can only be applied or removed by someone else if you've granted them the correct permissions.");
 
         public readonly string Step37Title = Loc.Localize("HelpRestrictions_Step37Title", "Unlocking a Restriction");
         public readonly string Step37Desc = Loc.Localize("HelpRestrictions_Step37Desc", "You can't take a restriction off unless it's unlocked.");
@@ -753,21 +728,8 @@ namespace GagSpeak.Localization
             "Note: Any hardcore traits enabled on a selected gag always apply when you put it on yourself.");
 
         public readonly string Step23Title = Loc.Localize("HelpGags_Step23Title", "Locking a Gag");
-        public readonly string Step23Desc = Loc.Localize("HelpGags_Step23Desc", "You can set a lock on the gag from this list.");
-        public readonly string Step23DescExtended = Loc.Localize("HelpGags_Step23DescExtended", "There are several different kinds of locks." + Environment.NewLine +
-            "A lock can only be applied or unlocked by someone with Lock Gag and Unlock Gag permissions, respectively." + Environment.NewLine +
-            "METAL => Most basic. Can be locked/unlocked by anyone." + Environment.NewLine +
-            "5-MINUTES => Automatically unlocks after 5 minutes, but can be unlocked early by anyone." + Environment.NewLine +
-            "COMBINATION => Locked with a 4-digit combination. Unlocked by anyone who knows the code." + Environment.NewLine +
-            "PASSWORD => Same as Combination, but can use more complex passwords. (4-20 characters)" + Environment.NewLine +
-            "TIMER => Unlocks after the set time. Can be unlocked early by anyone." + Environment.NewLine +
-            "PREDICAMENT TIMER => Same as Timer. Can only be unlocked early by another kinkster!" + Environment.NewLine +
-            "PASSWORD TIMER => Combination of Password and normal Timer locks." + Environment.NewLine +
-            "---SEP---There are three other kinds of locks that can be applied to you, that you cannot remove yourself." + Environment.NewLine +
-            "OWNER => Requires granting \"Owner Locks\" permission. Only others with \"Owner Locks\" can remove this." + Environment.NewLine +
-            "DEVOTIONAL => Requires granting \"Devotional Locks\" permission. Only the kinkster that applied this lock can remove it." + Environment.NewLine +
-            "MIMIC => Applied by cursed loot. This lock cannot be removed by anyone, and will only unlock after the timer has expired."
-            );
+        public readonly string Step23Desc = Loc.Localize("HelpGags_Step23Desc", "There are several locks to choose from.");
+        public readonly string Step23DescExtended = Loc.Localize("HelpGags_Step23DescExtended", "A lock can only be applied or removed by someone else if you've granted them the correct permissions.");
 
         public readonly string Step24Title = Loc.Localize("HelpGags_Step24Title", "Unlocking a Gag");
         public readonly string Step24Desc = Loc.Localize("HelpGags_Step24Desc", "You can't take a gag off unless it's unlocked.");
