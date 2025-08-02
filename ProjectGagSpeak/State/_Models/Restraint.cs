@@ -279,7 +279,7 @@ public class ModPresetLayer : IRestraintLayer, IModPreset
         };
     }
 
-    public static ModPresetLayer FromToken(JToken? token, ModSettingPresetManager mods)
+    public static ModPresetLayer FromToken(JToken? token, ModPresetManager mods)
     {
         if (token is not JObject mLayerJson) throw new Exception("Invalid JSON Token for Layer.");
         
@@ -378,7 +378,7 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
         };
     }
 
-    public static RestraintSet FromToken(JToken token, ModSettingPresetManager mods, RestrictionManager restrictions)
+    public static RestraintSet FromToken(JToken token, ModPresetManager mods, RestrictionManager restrictions)
     {
         // if not a valid token, throw an exception
         if (token is not JObject setJObj || setJObj["RestraintSlots"] is not JObject slotsJObj)

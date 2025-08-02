@@ -12,11 +12,16 @@ namespace GagSpeak.Interop;
 
 /// <summary> Contains all information about a mod. </summary>
 /// <remarks> This should be used as a way to synchronize with storage, but not intertwined with it. </remarks>
-public record ModInfo(string DirPath, string Name, int Priority, Dictionary<string, (string[] Options, GroupType GroupType)> AllSettings)
-    : IComparable<ModInfo>
+public record ModInfo(
+    string DirPath, // where it's located on the computer, local to the root path.
+    string Name, // the name in the mod that displays on the title.
+    string FsPath, // the penumbra filesystem path the mod has, including its folder.
+    int Priority, // current priority.
+    Dictionary<string, (string[] Options, GroupType GroupType)> AllSettings // ALL available settings.
+) : IComparable<ModInfo>
 {
     public ModInfo() 
-        : this(string.Empty, string.Empty, 0, new Dictionary<string, (string[] Options, GroupType GroupType)>())
+        : this(string.Empty, string.Empty, string.Empty, 0, new Dictionary<string, (string[] Options, GroupType GroupType)>())
     { }
 
     public int CompareTo(ModInfo? other)
@@ -28,6 +33,9 @@ public record ModInfo(string DirPath, string Name, int Priority, Dictionary<stri
             ? nameComparison
             : string.Compare(DirPath, other.DirPath, StringComparison.Ordinal);
     }
+
+    public override string ToString()
+        => $"[{Name}] ({DirPath}) - Priority<{Priority}> - Path: {FsPath}";
 }
 
 public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
@@ -75,7 +83,11 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
             APIAvailable = true;
             Mediator.Publish(new PenumbraInitializedMessage());
         });
-        OnDisposed = Disposed.Subscriber(Svc.PluginInterface, () => Mediator.Publish(new PenumbraDisposedMessage()));
+        OnDisposed = Disposed.Subscriber(Svc.PluginInterface, () =>
+        {
+            APIAvailable = false;
+            Mediator.Publish(new PenumbraDisposedMessage());
+        });
 
         TooltipSubscriber = ChangedItemTooltip.Subscriber(Svc.PluginInterface);
         ItemClickedSubscriber = ChangedItemClicked.Subscriber(Svc.PluginInterface);
@@ -165,7 +177,7 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
 
     // When penumbra first initializes, we should fetch all current mod info to synchronize our current data.
     // This should return all mod info's along with their current settings.
-    public IReadOnlyList<(ModInfo ModInfo, Dictionary<string, List<string>> CurrentSettings)> GetModInfo()
+    public IReadOnlyList<(ModInfo ModInfo, Dictionary<string, List<string>> CurrentSettings)> GetModListInfo()
     {
         if (!APIAvailable)
             return Array.Empty<(ModInfo ModInfo, Dictionary<string, List<string>> CurrentSettings)>();
@@ -177,19 +189,19 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
             var collection = GetActiveCollection.Invoke(ApiCollectionType.Current);
 
             return allMods
-                // Select the mod, its current settings, and all available settings.
-                .Select(mod => (mod, GetModSettingsSelected.Invoke(collection!.Value.Id, mod.Key), GetModSettingsAll.Invoke(mod.Key)))
+                // Select the mod,      its current settings,                                       all available settings,             and FileSystemPath.
+                .Select(mod => (mod, GetModSettingsSelected.Invoke(collection!.Value.Id, mod.Key), GetModSettingsAll.Invoke(mod.Key), GetModPath.Invoke(mod.Key)))
                 // From here, create the mod info item, and the mod current settings item.
                 .Select(t =>
                 {
                     // Mods don't necessarily need to have any valid settings associated with them in a collection.
                     // If a mod does not have settings in the current collection, we give it 0 defaults and empty dictionary.
                     var priority = t.Item2.Item2.HasValue ? t.Item2.Item2!.Value.Item2 : 0;
-                    var allSettings = t.Item3 is not null && t.Item3.Count > 0 ?
-                        t.Item3!.ToDictionary(t => t.Key, (t => t.Value)) :
-                        new Dictionary<string, (string[] Options, GroupType GroupType)>();
+                    var allSettings = t.Item3 is not null && t.Item3.Count > 0 
+                        ? t.Item3!.ToDictionary(t => t.Key, t => t.Value) 
+                        : new Dictionary<string, (string[] Options, GroupType GroupType)>();
 
-                    var ModInfo = new ModInfo(t.mod.Key, t.mod.Value, priority, allSettings);
+                    var ModInfo = new ModInfo(t.mod.Key, t.mod.Value, t.Item4.FullPath, priority, allSettings);
                     var ModSettings = t.Item2.Item2.HasValue ? t.Item2.Item2!.Value.Item3 : new Dictionary<string, List<string>>();
                     return (ModInfo, ModSettings);
                 })
@@ -203,6 +215,49 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
             Logger.LogError($"Error fetching mods from Penumbra:\n{ex}");
             return Array.Empty<(ModInfo ModInfo, Dictionary<string, List<string>> CurrentSettings)>();
         }
+    }
+
+    public (ModInfo Info, Dictionary<string, List<string>> CurrentSettings) GetModInfo(string directory)
+    {
+        if (!APIAvailable)
+            return (new ModInfo(), new());
+
+        var allMods = GetModList.Invoke();
+        if (!allMods.TryGetValue(directory, out var modName))
+            return (new ModInfo(), new());
+
+        var collection = GetActiveCollection.Invoke(ApiCollectionType.Current);
+        if (collection is null)
+            return (new ModInfo(), new());
+
+        var currentSettings = GetModSettingsSelected.Invoke(collection.Value.Id, directory);
+        if (currentSettings.Item1 is not PenumbraApiEc.Success || !currentSettings.Item2.HasValue)
+            return (new ModInfo(), new());
+
+        var modPathRes = GetModPath.Invoke(directory);
+        if (modPathRes.Item1 is not PenumbraApiEc.Success)
+            return (new ModInfo(), new());
+
+        var allSettingsResult = GetModSettingsAll.Invoke(directory);
+        var allSettings = (allSettingsResult?.Count > 0)
+            ? allSettingsResult.ToDictionary(t => t.Key, t => t.Value)
+            : new();
+
+        var modInfo = new ModInfo(directory, modName, modPathRes.Item2, currentSettings.Item2.Value.Item2, allSettings);
+        return (modInfo, currentSettings.Item2.Value.Item3);
+    }
+
+
+    public (PenumbraApiEc, string FullPath, bool FullDefault, bool NameDefault) GetFileSystemModPath(string directory, string modName = "")
+    {
+        if (!APIAvailable)
+            return (PenumbraApiEc.NothingChanged, string.Empty, false, false);
+        // Get the mod path from penumbra.
+        var res = GetModPath.Invoke(directory, modName);
+        if (res.Item1 is not PenumbraApiEc.Success)
+            return (res.Item1, string.Empty, false, false);
+
+        return res;
     }
 
 

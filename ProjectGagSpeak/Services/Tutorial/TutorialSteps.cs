@@ -14,6 +14,7 @@ public enum TutorialType
     Patterns,
     Alarms,
     Triggers,
+    ModPresets,
     Achievements,
 }
 

@@ -14,13 +14,13 @@ public class ModHandler
     private readonly ILogger<ModHandler> _logger;
     private readonly IpcCallerPenumbra _ipc;
     private readonly ModCache _cache;
-    private readonly ModSettingPresetManager _manager;
+    private readonly ModPresetManager _manager;
 
     public ModHandler(
         ILogger<ModHandler> logger,
         IpcCallerPenumbra ipc,
         ModCache cache,
-        ModSettingPresetManager manager)
+        ModPresetManager manager)
     {
         _logger = logger;
         _ipc = ipc;

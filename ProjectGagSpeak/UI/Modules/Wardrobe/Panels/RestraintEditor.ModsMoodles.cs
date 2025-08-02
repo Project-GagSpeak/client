@@ -24,14 +24,14 @@ public class RestraintEditorModsMoodles : IFancyTab
     private readonly ILogger<RestraintEditorModsMoodles> _logger;
     private readonly RestraintSetFileSelector _selector;
     private readonly RestraintManager _manager;
-    private readonly ModSettingPresetManager _modPresets;
+    private readonly ModPresetManager _modPresets;
     private readonly ModPresetDrawer _modDrawer;
     private readonly MoodleDrawer _moodleDrawer;
     private readonly CosmeticService _cosmetics;
     private readonly TutorialService _guides;
     public RestraintEditorModsMoodles(ILogger<RestraintEditorModsMoodles> logger,
         RestraintSetFileSelector selector, RestraintManager manager, 
-        ModSettingPresetManager modPresets, ModPresetDrawer modPresetDrawer,
+        ModPresetManager modPresets, ModPresetDrawer modPresetDrawer,
         MoodleDrawer moodleDrawer, CosmeticService cosmetics, TutorialService guides)
     {
         _logger = logger;
