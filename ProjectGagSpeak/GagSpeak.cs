@@ -91,6 +91,7 @@ public sealed class GagSpeak : IDalamudPlugin
             .AddSingleton(new WindowSystem("GagSpeak"))
             .AddSingleton<FileDialogManager>()
             .AddSingleton<UiFileDialogService>()
+            .AddSingleton<UiThumbnailService>()
             .AddSingleton(new Dalamud.Localization("GagSpeak.Localization.", "", useEmbedded: true))
             // add the generic services for GagSpeak
             .AddGagSpeakGeneric()
@@ -337,6 +338,7 @@ public static class GagSpeakServiceExtensions
 
         // Scoped Handlers
         .AddScoped<UserPairListHandler>()
+        .AddScoped<WindowMediatorSubscriberBase, ThumbnailUI>()
         .AddScoped<WindowMediatorSubscriberBase, PopupHandler>()
         .AddScoped<IPopupHandler, VerificationPopupHandler>()
         .AddScoped<IPopupHandler, SavePatternPopupHandler>()

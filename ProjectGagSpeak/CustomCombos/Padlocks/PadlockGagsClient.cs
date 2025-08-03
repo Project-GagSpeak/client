@@ -1,13 +1,9 @@
-using Dalamud.Game.Gui.Toast;
-using GagSpeak.Kinksters;
 using GagSpeak.Services;
-using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
-using GagspeakAPI.Network;
 using GagspeakAPI.Util;
 
 namespace GagSpeak.CustomCombos.Padlock;
@@ -107,7 +103,7 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
     private bool ValidateLock(int layerIdx)
     {
         // Determine if we have access to unlock.
-        bool valid = SelectedLock switch
+        var valid = SelectedLock switch
         {
             Padlocks.Metal or Padlocks.FiveMinutes => true,
             Padlocks.Combination => PadlockValidation.IsValidCombo(Password),
@@ -151,7 +147,7 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
     private bool ValidateUnlock(int layerIdx)
     {
         // Determine if we have access to unlock.
-        bool valid = Items[layerIdx].Padlock switch
+        var valid = Items[layerIdx].Padlock switch
         {
             Padlocks.Metal or Padlocks.FiveMinutes or Padlocks.Timer => true,
             Padlocks.Combination => Items[layerIdx].Password == Password,

@@ -107,32 +107,6 @@ public sealed class UiService : DisposableMediatorSubscriberBase
                 _windowSystem.AddWindow(window);
             }
         });
-
-        Mediator.Subscribe<OpenThumbnailBrowser>(this, (msg) =>
-        {
-            if (_createdWindows.FirstOrDefault(p => p is ThumbnailUI ui && ui.ImageBase.Kind == msg.MetaData.Kind) is ThumbnailUI match)
-            {
-                _logger.LogTrace("Toggling existing thumbnail browser for type " + msg.MetaData.Kind, LoggerType.StickyUI);
-                match.Toggle();
-            }
-            else
-            {
-                // If other windows do exist, but do not match our current purpose, then we should close them, as only one should be worked on at a time.
-                _logger.LogDebug("Destroying other thumbnail browsers and recreating UI.", LoggerType.UI);
-                foreach (var window in _createdWindows.OfType<ThumbnailUI>().ToList())
-                {
-                    _windowSystem.RemoveWindow(window);
-                    _createdWindows.Remove(window);
-                    window?.Dispose();
-                }
-
-                // Create a new thumbnail browser for the type
-                _logger.LogTrace("Creating new thumbnail browser for type " + msg.MetaData.Kind, LoggerType.UI);
-                var newWindow = _uiFactory.CreateThumbnailUi(msg.MetaData);
-                _createdWindows.Add(newWindow);
-                _windowSystem.AddWindow(newWindow);
-            }
-        });
     }
 
     /// <summary>

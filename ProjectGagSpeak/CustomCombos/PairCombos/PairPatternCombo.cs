@@ -3,7 +3,6 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Kinksters;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using ImGuiNET;
@@ -65,7 +64,7 @@ public sealed class PairPatternCombo : CkFilterComboIconButton<KinksterPattern>
         var result = await _mainHub.UserChangeKinksterActivePattern(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
-            Log.LogDebug($"Failed to perform Pattern with {Current.Label} on {_kinksterRef.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
+            Log.LogDebug($"Failed to perform Pattern with {Current.Label} on {_kinksterRef.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LoggerType.StickyUI);
             PostButtonPress?.Invoke();
             return false;
         }

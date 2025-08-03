@@ -7,7 +7,6 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Services.Textures;
 using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;
 using OtterGui.Text;
@@ -21,17 +20,14 @@ public class ImageImportTool
     private readonly ILogger<ImageImportTool> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly UiFileDialogService _dialogService;
-    private readonly CosmeticService _imageService; // might be able to remove idk.
 
     private Task? FileDialogTask = null;
 
-    public ImageImportTool(ILogger<ImageImportTool> logger, GagspeakMediator mediator,
-        UiFileDialogService dialogService, CosmeticService imgService)
+    public ImageImportTool(ILogger<ImageImportTool> logger, GagspeakMediator mediator, UiFileDialogService dialogService)
     {
         _logger = logger;
         _mediator = mediator;
         _dialogService = dialogService;
-        _imageService = imgService;
     }
 
     /// <summary> Dictates which file import interface has precedence. </summary>
@@ -70,91 +66,98 @@ public class ImageImportTool
         var subChildSize = new Vector2(region.X, subChildHeight);
         var wdl = ImGui.GetWindowDrawList();
 
-        using (ImRaii.Child("ImageTool_Top_Horizontal", subChildSize))
+        try
         {
-            if (img.OriginalDisplay is { } fullDisplayImage)
+            using (ImRaii.Child("ImageTool_Top_Horizontal", subChildSize))
             {
-                // ensure image fits fully inside inner region, preserving aspect ratio
-                var widthRatio = subChildSize.X / fullDisplayImage.Width;
-                var heightRatio = subChildSize.Y / fullDisplayImage.Height;
-                var finalScale = Math.Min(widthRatio, heightRatio);
+                if (img.OriginalDisplay is { } fullDisplayImage)
+                {
+                    // ensure image fits fully inside inner region, preserving aspect ratio
+                    var widthRatio = subChildSize.X / fullDisplayImage.Width;
+                    var heightRatio = subChildSize.Y / fullDisplayImage.Height;
+                    var finalScale = Math.Min(widthRatio, heightRatio);
 
-                var adjustedSize = fullDisplayImage.Size * finalScale;
+                    var adjustedSize = fullDisplayImage.Size * finalScale;
 
-                // Center the image horizontally if there's extra space
-                var shiftX = Math.Max(0, (subChildSize.X - adjustedSize.X) / 2);
-                var shiftY = Math.Max(0, (subChildSize.Y - adjustedSize.Y) / 2);
-                ImGui.SetCursorPos(ImGui.GetCursorPos() + new Vector2(shiftX, shiftY));
+                    // Center the image horizontally if there's extra space
+                    var shiftX = Math.Max(0, (subChildSize.X - adjustedSize.X) / 2);
+                    var shiftY = Math.Max(0, (subChildSize.Y - adjustedSize.Y) / 2);
+                    ImGui.SetCursorPos(ImGui.GetCursorPos() + new Vector2(shiftX, shiftY));
 
-                // get the pos and draw the image.
-                var pos = ImGui.GetCursorScreenPos();
-                wdl.AddDalamudImageRounded(fullDisplayImage, pos, adjustedSize, 12f);
-                ImGui.Dummy(adjustedSize);
+                    // get the pos and draw the image.
+                    var pos = ImGui.GetCursorScreenPos();
+                    wdl.AddDalamudImageRounded(fullDisplayImage, pos, adjustedSize, 12f);
+                    ImGui.Dummy(adjustedSize);
+                }
+                else
+                {
+                    ImGui.Dummy(subChildSize);
+                }
             }
-            else
+            wdl.AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.VibrantPink.Uint(), FancyTabBar.Rounding, ImDrawFlags.RoundCornersAll, 1.5f);
+
+            using (ImRaii.Child("ImageTool_Bottom_Horizontal", subChildSize, false, WFlags.AlwaysUseWindowPadding))
             {
-                ImGui.Dummy(subChildSize);
-            }
-        }
-        wdl.AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.VibrantPink.Uint(), FancyTabBar.Rounding, ImDrawFlags.RoundCornersAll, 1.5f);
+                var lowerRegion = ImGui.GetContentRegionAvail();
 
-        using (ImRaii.Child("ImageTool_Bottom_Horizontal", subChildSize, false, WFlags.AlwaysUseWindowPadding))
-        {
-            var lowerRegion = ImGui.GetContentRegionAvail();
+                // we need to calculate a scaled up cropped image display that takes lowerRegion.Y, and the img.SizeConstraint.Y,
+                var scaledRatio = (lowerRegion.Y - ImGui.GetFrameHeightWithSpacing()) / img.SizeConstraint.Y;
+                var adjustedDisplaySize = img.SizeConstraint * scaledRatio;
 
-            // we need to calculate a scaled up cropped image display that takes lowerRegion.Y, and the img.SizeConstraint.Y,
-            var scaledRatio = (lowerRegion.Y - ImGui.GetFrameHeightWithSpacing()) / img.SizeConstraint.Y;
-            var adjustedDisplaySize = img.SizeConstraint * scaledRatio;
-
-            // Use a crop to encapsulate the image with its sliders.
-            using (ImRaii.Group())
-            {
-                var vertSliderSize = new Vector2(ImGui.GetFrameHeightWithSpacing(), adjustedDisplaySize.Y);
-                if (ImGui.VSliderFloat("##Height", vertSliderSize, ref PanY, img.MaxPanY, img.MinPanY, "%.1f"))
-                    UpdateCroppedImagePreview();
-
-                ImUtf8.SameLineInner();
+                // Use a crop to encapsulate the image with its sliders.
                 using (ImRaii.Group())
                 {
-                    if (img.CroppedDisplay is { } croppedImage)
-                    {
-                        var pos = ImGui.GetCursorScreenPos();
-                        ImGui.GetWindowDrawList().AddDalamudImageRounded(croppedImage, pos, adjustedDisplaySize, 12f);
-                        ImGui.GetWindowDrawList().AddRect(pos, pos + adjustedDisplaySize, 0xFFFFFFFF, 12f);
-                    }
-                    ImGui.Dummy(adjustedDisplaySize);
-                    ImGui.SetNextItemWidth(adjustedDisplaySize.X);
-                    if (ImGui.SliderFloat("##Width", ref PanX, img.MinPanX, img.MaxPanX, "%.1f"))
+                    var vertSliderSize = new Vector2(ImGui.GetFrameHeightWithSpacing(), adjustedDisplaySize.Y);
+                    if (ImGui.VSliderFloat("##Height", vertSliderSize, ref PanY, img.MaxPanY, img.MinPanY, "%.1f"))
                         UpdateCroppedImagePreview();
+
+                    ImUtf8.SameLineInner();
+                    using (ImRaii.Group())
+                    {
+                        if (img.CroppedDisplay is { } croppedImage)
+                        {
+                            var pos = ImGui.GetCursorScreenPos();
+                            ImGui.GetWindowDrawList().AddDalamudImageRounded(croppedImage, pos, adjustedDisplaySize, 12f);
+                            ImGui.GetWindowDrawList().AddRect(pos, pos + adjustedDisplaySize, 0xFFFFFFFF, 12f);
+                        }
+                        ImGui.Dummy(adjustedDisplaySize);
+                        ImGui.SetNextItemWidth(adjustedDisplaySize.X);
+                        if (ImGui.SliderFloat("##Width", ref PanX, img.MinPanX, img.MaxPanX, "%.1f"))
+                            UpdateCroppedImagePreview();
+                    }
                 }
-            }
 
-            ImGui.SameLine();
+                ImGui.SameLine();
 
-            using (ImRaii.Group())
-            {
-                ImGui.SetNextItemWidth(adjustedDisplaySize.X + ImGui.GetFrameHeightWithSpacing());
-                if (ImGui.SliderFloat("Rotation", ref Rotation, -180f, 180f))
-                    UpdateCroppedImagePreview();
-
-                ImGui.SetNextItemWidth(adjustedDisplaySize.X + ImGui.GetFrameHeightWithSpacing());
-                var zoomRef = img.ZoomFactor;
-                if (ImGui.SliderFloat("Zoom", ref zoomRef, img.MinZoom, img.MaxZoom, "%.2f"))
+                using (ImRaii.Group())
                 {
-                    // increase or decrease the panX and panY values, respective to the increase / decrease of the zoom.
-                    var zoomFactor = zoomRef / img.ZoomFactor;
-                    PanX *= zoomFactor;
-                    PanY *= zoomFactor;
+                    ImGui.SetNextItemWidth(adjustedDisplaySize.X + ImGui.GetFrameHeightWithSpacing());
+                    if (ImGui.SliderFloat("Rotation", ref Rotation, -180f, 180f))
+                        UpdateCroppedImagePreview();
 
-                    img.ZoomFactor = zoomRef;
-                    UpdateCroppedImagePreview();
+                    ImGui.SetNextItemWidth(adjustedDisplaySize.X + ImGui.GetFrameHeightWithSpacing());
+                    var zoomRef = img.ZoomFactor;
+                    if (ImGui.SliderFloat("Zoom", ref zoomRef, img.MinZoom, img.MaxZoom, "%.2f"))
+                    {
+                        // increase or decrease the panX and panY values, respective to the increase / decrease of the zoom.
+                        var zoomFactor = zoomRef / img.ZoomFactor;
+                        PanX *= zoomFactor;
+                        PanY *= zoomFactor;
+
+                        img.ZoomFactor = zoomRef;
+                        UpdateCroppedImagePreview();
+                    }
+
+                    ImGui.Separator();
+                    DrawImageInfo(img);
                 }
-
-                ImGui.Separator();
-                DrawImageInfo(img);
             }
+            ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.VibrantPink.Uint(), FancyTabBar.Rounding, ImDrawFlags.RoundCornersAll, 1.5f);
         }
-        ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.VibrantPink.Uint(), FancyTabBar.Rounding, ImDrawFlags.RoundCornersAll, 1.5f);
+        catch (Bagagwa ex)
+        {
+            _logger.LogError($"Summoned Bagagwa while drawing horizontal layout! {ex}");
+        }
     }
 
     private void DrawVerticalLayout(ImportedImage img)
@@ -164,86 +167,93 @@ public class ImageImportTool
         var subChildSize = new Vector2(subChildWidth, region.Y);
         var wdl = ImGui.GetWindowDrawList();
 
-        using (ImRaii.Child("ImageTool_Left_Vertical", subChildSize))
+        try
         {
-            if (img.OriginalDisplay is { } fullDisplayImage)
+            using (ImRaii.Child("ImageTool_Left_Vertical", subChildSize))
             {
-                // ensure image fits fully inside inner region, preserving aspect ratio
-                var widthRatio = subChildSize.X / fullDisplayImage.Width;
-                var heightRatio = subChildSize.Y / fullDisplayImage.Height;
-                var finalScale = Math.Min(widthRatio, heightRatio);
-
-                var adjustedSize = fullDisplayImage.Size * finalScale;
-
-                // Center the image horizontally if there's extra space
-                var shiftX = Math.Max(0, (subChildSize.X - adjustedSize.X) / 2);
-                var shiftY = Math.Max(0, (subChildSize.Y - adjustedSize.Y) / 2);
-                ImGui.SetCursorPos(ImGui.GetCursorPos() + new Vector2(shiftX, shiftY));
-
-                // get the pos and draw the image.
-                var pos = ImGui.GetCursorScreenPos();
-                wdl.AddDalamudImageRounded(fullDisplayImage, pos, adjustedSize, 12f);
-                ImGui.Dummy(adjustedSize);
-            }
-            else
-            {
-                ImGui.Dummy(subChildSize);
-            }
-        }
-        wdl.AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.VibrantPink.Uint(), FancyTabBar.Rounding, ImDrawFlags.RoundCornersAll, 1.5f);
-
-        ImGui.SameLine();
-
-        using (ImRaii.Child("ImageTool_Right_Vertical", subChildSize, false, WFlags.AlwaysUseWindowPadding))
-        {
-            var lowerRegion = ImGui.GetContentRegionAvail();
-            // we need to calculate a scaled up cropped image display that takes lowerRegion.Y, and the img.SizeConstraint.Y,
-            var maxVertImageHeight = lowerRegion.Y - (ImGui.GetFrameHeightWithSpacing() * 6 + ImGui.GetStyle().ItemSpacing.Y * 2);
-            var scaledRatio = maxVertImageHeight / img.SizeConstraint.Y;
-            var adjustedDisplaySize = img.SizeConstraint * scaledRatio;
-
-            // Use a crop to encapsulate the image with its sliders.
-            using (ImRaii.Group())
-            {
-                if (img.CroppedDisplay is { } croppedImage)
+                if (img.OriginalDisplay is { } fullDisplayImage)
                 {
+                    // ensure image fits fully inside inner region, preserving aspect ratio
+                    var widthRatio = subChildSize.X / fullDisplayImage.Width;
+                    var heightRatio = subChildSize.Y / fullDisplayImage.Height;
+                    var finalScale = Math.Min(widthRatio, heightRatio);
+
+                    var adjustedSize = fullDisplayImage.Size * finalScale;
+
+                    // Center the image horizontally if there's extra space
+                    var shiftX = Math.Max(0, (subChildSize.X - adjustedSize.X) / 2);
+                    var shiftY = Math.Max(0, (subChildSize.Y - adjustedSize.Y) / 2);
+                    ImGui.SetCursorPos(ImGui.GetCursorPos() + new Vector2(shiftX, shiftY));
+
+                    // get the pos and draw the image.
                     var pos = ImGui.GetCursorScreenPos();
-                    ImGui.GetWindowDrawList().AddDalamudImageRounded(croppedImage, pos, adjustedDisplaySize, 12f);
-                    ImGui.GetWindowDrawList().AddRect(pos, pos + adjustedDisplaySize, 0xFFFFFFFF, 12f);
+                    wdl.AddDalamudImageRounded(fullDisplayImage, pos, adjustedSize, 12f);
+                    ImGui.Dummy(adjustedSize);
                 }
-                ImGui.Dummy(adjustedDisplaySize);
-
-                ImUtf8.SameLineInner();
-                var vertSliderSize = new Vector2(ImGui.GetFrameHeightWithSpacing(), adjustedDisplaySize.Y);
-                if (ImGui.VSliderFloat("##Height", vertSliderSize, ref PanY, img.MaxPanY, img.MinPanY, "%.1f"))
-                    UpdateCroppedImagePreview();
-
-                // Below this, draw the width.
-                ImGui.SetNextItemWidth(adjustedDisplaySize.X);
-                if (ImGui.SliderFloat("##Width", ref PanX, img.MinPanX, img.MaxPanX, "%.1f"))
-                    UpdateCroppedImagePreview();
+                else
+                {
+                    ImGui.Dummy(subChildSize);
+                }
             }
-            ImGui.Separator();
+            wdl.AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.VibrantPink.Uint(), FancyTabBar.Rounding, ImDrawFlags.RoundCornersAll, 1.5f);
 
-            ImGui.SetNextItemWidth(adjustedDisplaySize.X);
-            if (ImGui.SliderFloat("Rotation", ref Rotation, -180f, 180f))
-                UpdateCroppedImagePreview();
+            ImGui.SameLine();
 
-            ImGui.SetNextItemWidth(adjustedDisplaySize.X);
-            var zoomRef = img.ZoomFactor;
-            if (ImGui.SliderFloat("Zoom", ref zoomRef, img.MinZoom, img.MaxZoom, "%.2f"))
+            using (ImRaii.Child("ImageTool_Right_Vertical", subChildSize, false, WFlags.AlwaysUseWindowPadding))
             {
-                // increase or decrease the panX and panY values, respective to the increase / decrease of the zoom.
+                var lowerRegion = ImGui.GetContentRegionAvail();
+                // we need to calculate a scaled up cropped image display that takes lowerRegion.Y, and the img.SizeConstraint.Y,
+                var maxVertImageHeight = lowerRegion.Y - (ImGui.GetFrameHeightWithSpacing() * 6 + ImGui.GetStyle().ItemSpacing.Y * 2);
+                var scaledRatio = maxVertImageHeight / img.SizeConstraint.Y;
+                var adjustedDisplaySize = img.SizeConstraint * scaledRatio;
 
-                img.ZoomFactor = zoomRef;
-                UpdateCroppedImagePreview();
+                // Use a crop to encapsulate the image with its sliders.
+                using (ImRaii.Group())
+                {
+                    if (img.CroppedDisplay is { } croppedImage)
+                    {
+                        var pos = ImGui.GetCursorScreenPos();
+                        ImGui.GetWindowDrawList().AddDalamudImageRounded(croppedImage, pos, adjustedDisplaySize, 12f);
+                        ImGui.GetWindowDrawList().AddRect(pos, pos + adjustedDisplaySize, 0xFFFFFFFF, 12f);
+                    }
+                    ImGui.Dummy(adjustedDisplaySize);
+
+                    ImUtf8.SameLineInner();
+                    var vertSliderSize = new Vector2(ImGui.GetFrameHeightWithSpacing(), adjustedDisplaySize.Y);
+                    if (ImGui.VSliderFloat("##Height", vertSliderSize, ref PanY, img.MaxPanY, img.MinPanY, "%.1f"))
+                        UpdateCroppedImagePreview();
+
+                    // Below this, draw the width.
+                    ImGui.SetNextItemWidth(adjustedDisplaySize.X);
+                    if (ImGui.SliderFloat("##Width", ref PanX, img.MinPanX, img.MaxPanX, "%.1f"))
+                        UpdateCroppedImagePreview();
+                }
+                ImGui.Separator();
+
+                ImGui.SetNextItemWidth(adjustedDisplaySize.X);
+                if (ImGui.SliderFloat("Rotation", ref Rotation, -180f, 180f))
+                    UpdateCroppedImagePreview();
+
+                ImGui.SetNextItemWidth(adjustedDisplaySize.X);
+                var zoomRef = img.ZoomFactor;
+                if (ImGui.SliderFloat("Zoom", ref zoomRef, img.MinZoom, img.MaxZoom, "%.2f"))
+                {
+                    // increase or decrease the panX and panY values, respective to the increase / decrease of the zoom.
+
+                    img.ZoomFactor = zoomRef;
+                    UpdateCroppedImagePreview();
+                }
+
+                ImGui.Separator();
+
+                DrawImageInfo(img);
             }
-
-            ImGui.Separator();
-
-            DrawImageInfo(img);
+            ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.VibrantPink.Uint(), FancyTabBar.Rounding, ImDrawFlags.RoundCornersAll, 1.5f);
         }
-        ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.VibrantPink.Uint(), FancyTabBar.Rounding, ImDrawFlags.RoundCornersAll, 1.5f);
+        catch (Bagagwa ex)
+        {
+            _logger.LogError($"Summoned Bagagwa while drawing vertical layout! {ex}");
+        }
     }
 
     private void DrawImageInfo(ImportedImage img)
@@ -454,87 +464,94 @@ public class ImageImportTool
         if (imageData is null)
             return;
 
-        // Update all other variables.
-        PanX = Math.Clamp(PanX, imageData.MinPanX, imageData.MaxPanX);
-        PanY = Math.Clamp(PanY, imageData.MinPanY, imageData.MaxPanY);
-        Rotation = Math.Clamp(Rotation, -180f, 180f);
-        imageData.ZoomFactor = Math.Clamp(imageData.ZoomFactor, imageData.MinZoom, imageData.MaxZoom);
-
-        var targetWidth = (int)imageData.SizeConstraint.X;
-        var targetHeight = (int)imageData.SizeConstraint.Y;
-
-        // Step 1: Calculate the scaled size based on the zoom factor
-        var scaledWidth = (int)(imageData.OriginalImage.Width * imageData.ZoomFactor);
-        var scaledHeight = (int)(imageData.OriginalImage.Height * imageData.ZoomFactor);
-        _logger.LogTrace($"Scaled Size: {scaledWidth} x {scaledHeight}", LoggerType.Textures);
-
-        // Step 2: Resize the image based on zoom
-        using var scaled = imageData.OriginalImage.Clone(ctx => ctx.Resize(scaledWidth, scaledHeight));
-
-        // Step 3: Calculate corrected pan offset so that pan moves in screen-space (not image-space)
-        var radians = -Rotation * (Math.PI / 180.0); // negative to counteract rotation
-        var cos = Math.Cos(radians);
-        var sin = Math.Sin(radians);
-        var adjustedPanX = PanX * cos - PanY * sin;
-        var adjustedPanY = PanX * sin + PanY * cos;
-        _logger.LogTrace($"Adjusted Pan: {adjustedPanX} x {adjustedPanY}", LoggerType.Textures);
-
-        // Step 4: Calculate viewport center (the center of the cropped frame in the current view)
-        var viewportCenterX = scaledWidth / 2 + (int)PanX;
-        var viewportCenterY = scaledHeight / 2 + (int)PanY;
-        _logger.LogTrace($"Viewport Center: {viewportCenterX} x {viewportCenterY}", LoggerType.Textures);
-
-        // Step 5: Create a new padded canvas large enough to avoid clipping during rotation
-        var paddedSize = (int)(Math.Sqrt(targetWidth * targetWidth + targetHeight * targetHeight) * 1.5); // extra room
-        var canvasWidth = paddedSize;
-        var canvasHeight = paddedSize;
-        _logger.LogTrace($"Canvas Size: {canvasWidth} x {canvasHeight}", LoggerType.Textures);
-
-        // Step 6: Create padded image and draw scaled image onto it, so the desired rotation center is at the canvas center
-        using var padded = new Image<Rgba32>(canvasWidth, canvasHeight);
-        var drawX = (canvasWidth / 2) - viewportCenterX;
-        var drawY = (canvasHeight / 2) - viewportCenterY;
-        padded.Mutate(ctx => ctx.DrawImage(scaled, new Point(drawX, drawY), 1f));
-        _logger.LogTrace($"Draw Position: {drawX} x {drawY}", LoggerType.Textures);
-
-        // Step 7: Calculate the crop region in the scaled image based on pan and zoom
-        var offsetX = (scaledWidth - targetWidth) / 2 + (int)PanX;
-        var offsetY = (scaledHeight - targetHeight) / 2 + (int)PanY;
-        _logger.LogTrace($"Crop Offset: {offsetX} x {offsetY}", LoggerType.Textures);
-
-        // Ensure the crop rectangle stays within the image bounds
-        offsetX = Math.Max(0, Math.Min(offsetX, scaledWidth - targetWidth));
-        offsetY = Math.Max(0, Math.Min(offsetY, scaledHeight - targetHeight));
-        _logger.LogTrace($"Adjusted Crop Offset: {offsetX} x {offsetY}", LoggerType.Textures);
-
-        var cropRect = new Rectangle(offsetX, offsetY, targetWidth, targetHeight);
-        _logger.LogTrace($"Crop Rectangle: {cropRect}", LoggerType.Textures);
-
-        // Step 8: Apply rotation around the center of the cropped region
-        var rotated = padded.Clone(ctx =>
+        try
         {
-            if (Math.Abs(Rotation) > 0.01f)
-                // Rotate around the center of the cropped area
-                ctx.Rotate(Rotation);
-        });
-        _logger.LogTrace($"Rotated Image Size: {rotated.Width} x {rotated.Height}", LoggerType.Textures);
+            // Update all other variables.
+            PanX = Math.Clamp(PanX, imageData.MinPanX, imageData.MaxPanX);
+            PanY = Math.Clamp(PanY, imageData.MinPanY, imageData.MaxPanY);
+            Rotation = Math.Clamp(Rotation, -180f, 180f);
+            imageData.ZoomFactor = Math.Clamp(imageData.ZoomFactor, imageData.MinZoom, imageData.MaxZoom);
 
-        // Step 9: Crop the final result to ensure it's centered within the target size
-        var final = rotated.Clone(ctx =>
-        {
-            var cx = (rotated.Width - targetWidth) / 2;
-            var cy = (rotated.Height - targetHeight) / 2;
-            ctx.Crop(new Rectangle(cx, cy, targetWidth, targetHeight));
-        });
-        _logger.LogTrace($"Final Image Size: {final.Width} x {final.Height}", LoggerType.Textures);
+            var targetWidth = (int)imageData.SizeConstraint.X;
+            var targetHeight = (int)imageData.SizeConstraint.Y;
 
-        // Convert the processed image to byte array
-        using (var ms = new MemoryStream())
+            // Step 1: Calculate the scaled size based on the zoom factor
+            var scaledWidth = (int)(imageData.OriginalImage.Width * imageData.ZoomFactor);
+            var scaledHeight = (int)(imageData.OriginalImage.Height * imageData.ZoomFactor);
+            _logger.LogTrace($"Scaled Size: {scaledWidth} x {scaledHeight}", LoggerType.Textures);
+
+            // Step 2: Resize the image based on zoom
+            using var scaled = imageData.OriginalImage.Clone(ctx => ctx.Resize(scaledWidth, scaledHeight));
+
+            // Step 3: Calculate corrected pan offset so that pan moves in screen-space (not image-space)
+            var radians = -Rotation * (Math.PI / 180.0); // negative to counteract rotation
+            var cos = Math.Cos(radians);
+            var sin = Math.Sin(radians);
+            var adjustedPanX = PanX * cos - PanY * sin;
+            var adjustedPanY = PanX * sin + PanY * cos;
+            _logger.LogTrace($"Adjusted Pan: {adjustedPanX} x {adjustedPanY}", LoggerType.Textures);
+
+            // Step 4: Calculate viewport center (the center of the cropped frame in the current view)
+            var viewportCenterX = scaledWidth / 2 + (int)PanX;
+            var viewportCenterY = scaledHeight / 2 + (int)PanY;
+            _logger.LogTrace($"Viewport Center: {viewportCenterX} x {viewportCenterY}", LoggerType.Textures);
+
+            // Step 5: Create a new padded canvas large enough to avoid clipping during rotation
+            var paddedSize = (int)(Math.Sqrt(targetWidth * targetWidth + targetHeight * targetHeight) * 1.5); // extra room
+            var canvasWidth = paddedSize;
+            var canvasHeight = paddedSize;
+            _logger.LogTrace($"Canvas Size: {canvasWidth} x {canvasHeight}", LoggerType.Textures);
+
+            // Step 6: Create padded image and draw scaled image onto it, so the desired rotation center is at the canvas center
+            using var padded = new Image<Rgba32>(canvasWidth, canvasHeight);
+            var drawX = (canvasWidth / 2) - viewportCenterX;
+            var drawY = (canvasHeight / 2) - viewportCenterY;
+            padded.Mutate(ctx => ctx.DrawImage(scaled, new Point(drawX, drawY), 1f));
+            _logger.LogTrace($"Draw Position: {drawX} x {drawY}", LoggerType.Textures);
+
+            // Step 7: Calculate the crop region in the scaled image based on pan and zoom
+            var offsetX = (scaledWidth - targetWidth) / 2 + (int)PanX;
+            var offsetY = (scaledHeight - targetHeight) / 2 + (int)PanY;
+            _logger.LogTrace($"Crop Offset: {offsetX} x {offsetY}", LoggerType.Textures);
+
+            // Ensure the crop rectangle stays within the image bounds
+            offsetX = Math.Max(0, Math.Min(offsetX, scaledWidth - targetWidth));
+            offsetY = Math.Max(0, Math.Min(offsetY, scaledHeight - targetHeight));
+            _logger.LogTrace($"Adjusted Crop Offset: {offsetX} x {offsetY}", LoggerType.Textures);
+
+            var cropRect = new Rectangle(offsetX, offsetY, targetWidth, targetHeight);
+            _logger.LogTrace($"Crop Rectangle: {cropRect}", LoggerType.Textures);
+
+            // Step 8: Apply rotation around the center of the cropped region
+            var rotated = padded.Clone(ctx =>
+            {
+                if (Math.Abs(Rotation) > 0.01f)
+                    // Rotate around the center of the cropped area
+                    ctx.Rotate(Rotation);
+            });
+            _logger.LogTrace($"Rotated Image Size: {rotated.Width} x {rotated.Height}", LoggerType.Textures);
+
+            // Step 9: Crop the final result to ensure it's centered within the target size
+            var final = rotated.Clone(ctx =>
+            {
+                var cx = (rotated.Width - targetWidth) / 2;
+                var cy = (rotated.Height - targetHeight) / 2;
+                ctx.Crop(new Rectangle(cx, cy, targetWidth, targetHeight));
+            });
+            _logger.LogTrace($"Final Image Size: {final.Width} x {final.Height}", LoggerType.Textures);
+
+            // Convert the processed image to byte array
+            using (var ms = new MemoryStream())
+            {
+                final.SaveAsPng(ms);
+                imageData.CroppedData = ms.ToArray();
+                imageData.SizeDataCropped = new(final.Width, final.Height, imageData.CroppedData.Length);
+                imageData.CroppedDisplay = TextureManager.GetImageFromBytes(imageData.CroppedData);
+            }
+        }
+        catch (Bagagwa ex)
         {
-            final.SaveAsPng(ms);
-            imageData.CroppedData = ms.ToArray();
-            imageData.SizeDataCropped = new(final.Width, final.Height, imageData.CroppedData.Length);
-            imageData.CroppedDisplay = TextureManager.GetImageFromBytes(imageData.CroppedData);
+            _logger.LogError($"Summoned Bagagwa while updating cropped image preview: {ex}");
         }
     }
 }

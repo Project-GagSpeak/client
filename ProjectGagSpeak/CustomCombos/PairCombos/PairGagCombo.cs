@@ -1,6 +1,5 @@
 using CkCommons;
 using CkCommons.Gui;
-using CkCommons.Widgets;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Kinksters;

@@ -7,9 +7,8 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.FileSystems;
 using GagSpeak.Gui.Components;
-using GagSpeak.Kinksters;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
@@ -19,17 +18,14 @@ using OtterGui.Text;
 namespace GagSpeak.Gui.Wardrobe;
 
 // it might be wise to move the selector draw into the panel so we have more control over the editor covering both halves.
-public partial class RestraintsPanel : DisposableMediatorSubscriberBase
+public class RestraintsPanel : DisposableMediatorSubscriberBase
 {
     private readonly RestraintSetFileSelector _selector;
     private readonly ActiveItemsDrawer _activeItemDrawer;
-    private readonly EquipmentDrawer _equipDrawer;
-    private readonly ModPresetDrawer _modDrawer;
     private readonly MoodleDrawer _moodleDrawer;
     private readonly AttributeDrawer _attributeDrawer;
     private readonly RestraintManager _manager;
-    private readonly KinksterManager _pairs;
-    private readonly CosmeticService _cosmetics;
+    private readonly UiThumbnailService _thumbnails;
     private readonly TutorialService _guides;
     public bool IsEditing => _manager.ItemInEditor != null;
     public RestraintsPanel(
@@ -37,8 +33,6 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         GagspeakMediator mediator,
         RestraintSetFileSelector selector,
         ActiveItemsDrawer activeDrawer,
-        EquipmentDrawer equipDrawer,
-        ModPresetDrawer modDrawer,
         MoodleDrawer moodleDrawer,
         AttributeDrawer attributeDrawer,
         RestraintManager manager,
@@ -46,19 +40,15 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         RestraintEditorLayers editorLayers,
         RestraintEditorEquipment editorEquipment,
         RestraintEditorModsMoodles editorModsMoodles,
-        KinksterManager pairs,
-        CosmeticService cosmetics,
+        UiThumbnailService thumbnails,
         TutorialService guides) : base(logger, mediator)
     {
         _selector = selector;
+        _thumbnails = thumbnails;
         _activeItemDrawer = activeDrawer;
-        _equipDrawer = equipDrawer;
-        _modDrawer = modDrawer;
         _moodleDrawer = moodleDrawer;
         _attributeDrawer = attributeDrawer;
         _manager = manager;
-        _pairs = pairs;
-        _cosmetics = cosmetics;
         _guides = guides;
 
         // The editor tab windows.
@@ -74,20 +64,18 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
 
         Mediator.Subscribe<ThumbnailImageSelected>(this, (msg) =>
         {
-            if (msg.MetaData.Kind is not ImageDataType.Restraints)
+            if (msg.Folder is not ImageDataType.Restraints)
                 return;
 
-            if (manager.Storage.TryGetRestraint(msg.MetaData.SourceId, out var match))
+            if (manager.Storage.TryGetRestraint(msg.SourceId, out var match))
             {
                 _selector.SelectByValue(match);
-                manager.UpdateThumbnail(match, msg.Name);
+                manager.UpdateThumbnail(match, msg.FileName);
             }
         });
     }
 
-    private static TriStateBoolCheckbox HelmetCheckbox = new();
-    private static TriStateBoolCheckbox VisorCheckbox = new();
-    private static TriStateBoolCheckbox WeaponCheckbox = new();
+    private static TriStateBoolCheckbox TriCheckbox = new();
 
     public static IFancyTab[] EditorTabs;
 
@@ -151,22 +139,16 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         var item = _selector.Selected;
         var editorItem = _manager.ItemInEditor;
 
-        bool isEditing = item is not null && item.Identifier.Equals(editorItem?.Identifier);
-        bool isActive = item is not null && item.Identifier.Equals(_manager.AppliedRestraint?.Identifier);
+        var isEditing = item is not null && item.Identifier.Equals(editorItem?.Identifier);
+        var isActive = item is not null && item.Identifier.Equals(_manager.AppliedRestraint?.Identifier);
 
-        string label = item is null ? "No Item Selected!" : item.Label;
-        string tooltip = item is null ? "No item selected!" : isActive ? "Restraint Set is Active!" : "Double Click to edit this Restraint Set.";
+        var label = item is null ? "No Item Selected!" : item.Label;
+        var tooltip = item is null ? "No item selected!" : isActive ? "Restraint Set is Active!" : "Double Click to edit this Restraint Set.";
         
         // Draw the inner label child action item.
         using var inner = CkRaii.ChildLabelButton(region, .6f, label, ImGui.GetFrameHeight(), BeginEdits, tooltip, DFlags.RoundCornersRight, LabelFlags.AddPaddingToHeight);
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EnteringEditor, ImGui.GetWindowPos(), ImGui.GetWindowSize(), 
-            () =>
-            {
-                if (_selector.Selected is not null)
-                {
-                    _manager.StartEditing(_selector.Selected);
-                }
-            });
+        if (_selector.Selected is not null)
+            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EnteringEditor, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => _manager.StartEditing(_selector.Selected));
 
         var pos = ImGui.GetItemRectMin();
         var imgSize = new Vector2(inner.InnerRegion.Y / 1.2f, inner.InnerRegion.Y);
@@ -188,13 +170,11 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
         {
             _activeItemDrawer.DrawRestraintImage(_selector.Selected!, imgSize, rounding);
             if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
-            {
-                var metaData = new ImageMetadataGS(ImageDataType.Restraints, new Vector2(120, 120f * 1.2f), _selector.Selected!.Identifier);
-                Mediator.Publish(new OpenThumbnailBrowser(metaData));
-            }
+                _thumbnails.SetThumbnailSource(_selector.Selected!.Identifier, new Vector2(120, 120f * 1.2f), ImageDataType.Restraints);
             CkGui.AttachToolTip("The Thumbnail for this Restraint Set.--SEP--Double Click to change the image.");
+
             _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SelectingThumbnails, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
-                () => Mediator.Publish(new OpenThumbnailBrowser(new ImageMetadataGS(ImageDataType.Restraints, new Vector2(120, 120f * 1.2f), _selector.Selected!.Identifier))));
+                () => _thumbnails.SetThumbnailSource(_selector.Selected!.Identifier, new Vector2(120, 120f * 1.2f), ImageDataType.Restraints));
         }
 
         void BeginEdits(ImGuiMouseButton b)
@@ -306,7 +286,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
             using (ImRaii.Child("HelmetMetaGroup", childGroupSize))
             {
                 ImGui.AlignTextToFramePadding();
-                if (HelmetCheckbox.Draw("##MetaHelmet", setInEdit.MetaStates.Headgear, out var newHelmValue))
+                if (TriCheckbox.Draw("##MetaHelmet", setInEdit.MetaStates.Headgear, out var newHelmValue))
                     setInEdit.MetaStates = setInEdit.MetaStates.WithMetaIfDifferent(MetaIndex.HatState, newHelmValue);
 
                 ImUtf8.SameLineInner();
@@ -317,7 +297,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
             ImGui.SameLine(0, itemSpacing);
             using (ImRaii.Child("VisorMetaGroup", childGroupSize))
             {
-                if (VisorCheckbox.Draw("##MetaVisor", setInEdit.MetaStates.Visor, out var newVisorValue))
+                if (TriCheckbox.Draw("##MetaVisor", setInEdit.MetaStates.Visor, out var newVisorValue))
                     setInEdit.MetaStates = setInEdit.MetaStates.WithMetaIfDifferent(MetaIndex.VisorState, newVisorValue);
 
                 ImUtf8.SameLineInner();
@@ -328,7 +308,7 @@ public partial class RestraintsPanel : DisposableMediatorSubscriberBase
             ImGui.SameLine(0, itemSpacing);
             using (ImRaii.Child("WeaponMetaGroup", childGroupSize))
             {
-                if (WeaponCheckbox.Draw("##MetaWeapon", setInEdit.MetaStates.Weapon, out var newWeaponValue))
+                if (TriCheckbox.Draw("##MetaWeapon", setInEdit.MetaStates.Weapon, out var newWeaponValue))
                     setInEdit.MetaStates = setInEdit.MetaStates.WithMetaIfDifferent(MetaIndex.WeaponState, newWeaponValue);
 
                 ImUtf8.SameLineInner();

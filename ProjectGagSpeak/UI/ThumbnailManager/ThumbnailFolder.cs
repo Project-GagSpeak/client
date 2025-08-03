@@ -6,14 +6,12 @@ namespace GagSpeak.Gui;
 public class ThumbnailFolder : IDisposable
 {
     private readonly ILogger _logger;
-    private readonly CosmeticService _cosmetics;
 
     private List<ThumbnailFile> _files = new List<ThumbnailFile>();
     private Task? _scanTask = null;
-    public ThumbnailFolder(ILogger log, CosmeticService cosmetics, ImageDataType folder)
+    public ThumbnailFolder(ILogger log, ImageDataType folder)
     {
         _logger = log;
-        _cosmetics = cosmetics;
         FolderName = folder;
         ScanFiles();
     }

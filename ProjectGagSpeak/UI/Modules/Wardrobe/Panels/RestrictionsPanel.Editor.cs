@@ -4,21 +4,17 @@ using CkCommons.Gui;
 using CkCommons.Raii;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
-using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using ImGuiNET;
-using OtterGui.Classes;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Wardrobe;
 public partial class RestrictionsPanel
 {
-    private static TriStateBoolCheckbox HelmetCheckbox = new();
-    private static TriStateBoolCheckbox VisorCheckbox = new();
-
+    private static TriStateBoolCheckbox TriCheckbox = new();
     private void DrawEditorHeaderLeft(float width)
     {
         // Dont draw anything if the editor is not active.
@@ -68,7 +64,7 @@ public partial class RestrictionsPanel
         using (ImRaii.Child("HelmetMetaGroup", childGroupSize))
         {
             ImGui.AlignTextToFramePadding();
-            if (HelmetCheckbox.Draw("##RestrictionHelmetMeta", item.HeadgearState, out var newHelmValue))
+            if (TriCheckbox.Draw("##RestrictionHelmetMeta", item.HeadgearState, out var newHelmValue))
                 item.HeadgearState = newHelmValue;
             ImUtf8.SameLineInner();
             CkGui.FramedIconText(FAI.HardHat);
@@ -78,7 +74,7 @@ public partial class RestrictionsPanel
         ImGui.SameLine(0, itemSpacing);
         using (ImRaii.Child("VisorMetaGroup", childGroupSize))
         {
-            if (VisorCheckbox.Draw("##RestrictionVisorMeta", item.VisorState, out var newVisorValue))
+            if (TriCheckbox.Draw("##RestrictionVisorMeta", item.VisorState, out var newVisorValue))
                 item.VisorState = newVisorValue;
             ImUtf8.SameLineInner();
             CkGui.FramedIconText(FAI.Glasses);
@@ -151,9 +147,9 @@ public partial class RestrictionsPanel
         var leftWidth = width.RemoveWinPadX() - rightWidth - ImGui.GetStyle().ItemInnerSpacing.X;
         var scaledPreview = displaySize * (leftWidth / ImGui.GetIO().DisplaySize.X);
         var winSize = new Vector2(width, scaledPreview.Y.AddWinPadY());
+        var headerTT = "Click me to select or import a Blindfold Image.";
 
-        using (var bfInfo = CkRaii.IconButtonHeaderChild("Blindfold Information", FAI.Edit, winSize, () => OpenEditor(ImageDataType.Blindfolds, displaySize),
-            HeaderFlags.AddPaddingToHeight, "Click me to select or import a Blindfold Image."))
+        using (CkRaii.IconButtonHeaderChild("Blindfold Information", FAI.Edit, winSize, OpenEditor, HeaderFlags.AddPaddingToHeight, headerTT))
         {
             using (CkRaii.FramedChild("Blindfold_Preview", scaledPreview, CkColor.FancyHeaderContrast.Uint(), 0))
             {
@@ -168,15 +164,12 @@ public partial class RestrictionsPanel
                 blindfoldItem.Properties.OverlayPath = string.Empty;
 
             ImUtf8.SameLineInner();
-            using (ImRaii.Group())
-            {
-                var isFirstPerson = blindfoldItem.Properties.ForceFirstPerson;
-                if (ImGui.Checkbox("1st Person", ref isFirstPerson))
-                    blindfoldItem.Properties.ForceFirstPerson = isFirstPerson;
-
-                // Maybe do a 'preview' action here or something.. idk
-            }
+            var isFirstPerson = blindfoldItem.Properties.ForceFirstPerson;
+            if (ImGui.Checkbox("1st Person", ref isFirstPerson))
+                blindfoldItem.Properties.ForceFirstPerson = isFirstPerson;
         }
+
+        void OpenEditor() => _thumbnails.SetThumbnailSource(_selector.Selected!.Identifier, displaySize, ImageDataType.Blindfolds);
     }
 
     private void DrawHypnoInfo(HypnoticRestriction hypnoticItem, float width)
@@ -191,9 +184,9 @@ public partial class RestrictionsPanel
         var leftWidth = width.RemoveWinPadX() - rightWidth - ImGui.GetStyle().ItemInnerSpacing.X;
         var scaledPreview = displaySize * (leftWidth / ImGui.GetIO().DisplaySize.X);
         var winSize = new Vector2(width, scaledPreview.Y.AddWinPadY());
+        var headerTT = "Click me to select or import a Hypnosis Image.";
 
-        using (var bfInfo = CkRaii.IconButtonHeaderChild("Hypnotic Information", FAI.Edit, winSize, () => OpenEditor(ImageDataType.Hypnosis, displaySize), 
-            HeaderFlags.AddPaddingToHeight, "Click me to select or import a Hypnosis Image."))
+        using (CkRaii.IconButtonHeaderChild("Hypnotic Information", FAI.Edit, winSize, OpenEditor, HeaderFlags.AddPaddingToHeight, headerTT))
         {
             using (CkRaii.FramedChild("Hypnotic_Preview", scaledPreview, CkColor.FancyHeaderContrast.Uint(), 0))
             {
@@ -219,6 +212,8 @@ public partial class RestrictionsPanel
                     _hypnoEditor.SetGenericEffect(hypnoticItem.Properties.Effect);
             }
         }
+
+        void OpenEditor() => _thumbnails.SetThumbnailSource(_selector.Selected!.Identifier, displaySize, ImageDataType.Hypnosis);
     }
 
     private void DrawCollarInfo(CollarRestriction collarItem, float width)
@@ -241,11 +236,5 @@ public partial class RestrictionsPanel
             if (ImGui.InputTextWithHint("##CollarWriting", "Enter Engraved Writing...", ref engravedWriting, 128))
                 collarItem.CollarWriting = engravedWriting;
         }
-    }
-
-    private void OpenEditor(ImageDataType type, Vector2 size)
-    {
-        var metaData = new ImageMetadataGS(type, size, Guid.Empty);
-        Mediator.Publish(new OpenThumbnailBrowser(metaData));
     }
 }

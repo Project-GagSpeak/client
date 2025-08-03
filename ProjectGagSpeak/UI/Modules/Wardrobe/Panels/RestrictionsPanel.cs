@@ -12,14 +12,12 @@ using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.State;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using ImGuiNET;
 using OtterGui.Extensions;
 using OtterGui.Text;
-using System.Windows.Forms;
 
 namespace GagSpeak.Gui.Wardrobe;
 public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
@@ -31,7 +29,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
     private readonly MoodleDrawer _moodleDrawer;
     private readonly AttributeDrawer _attributeDrawer;
     private readonly RestrictionManager _manager;
-    private readonly CosmeticService _textures;
+    private readonly UiThumbnailService _thumbnails;
     private readonly TutorialService _guides;
     public bool IsEditing => _manager.ItemInEditor != null;
     public RestrictionsPanel(
@@ -46,40 +44,40 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         RestrictionManager manager,
         HypnoEffectManager effectPresets,
         KinksterManager pairs,
-        CosmeticService textures,
+        UiThumbnailService thumbnails,
         TutorialService guides) : base(logger, mediator)
     {
         _selector = selector;
+        _thumbnails = thumbnails;
         _attributeDrawer = traitsDrawer;
         _equipDrawer = equipDrawer;
         _modDrawer = modDrawer;
         _moodleDrawer = moodleDrawer;
         _activeItemDrawer = activeItemDrawer;
         _manager = manager;
-        _textures = textures;
         _guides = guides;
 
         _hypnoEditor = new HypnoEffectEditor("RestrictionEditor", effectPresets);
 
         Mediator.Subscribe<ThumbnailImageSelected>(this, (msg) =>
         {
-            if (msg.MetaData.Kind is ImageDataType.Restrictions)
+            if (msg.Folder is ImageDataType.Restrictions)
             {
-                if (manager.Storage.TryGetRestriction(msg.MetaData.SourceId, out var match))
+                if (manager.Storage.TryGetRestriction(msg.SourceId, out var match))
                 {
-                    Logger.LogDebug($"Thumbnail updated for {match.Label} to {msg.Name}");
-                    manager.UpdateThumbnail(match, msg.Name);
+                    Logger.LogDebug($"Thumbnail updated for {match.Label} to {msg.FileName}");
+                    manager.UpdateThumbnail(match, msg.FileName);
                 }
             }
-            else if (msg.MetaData.Kind is ImageDataType.Blindfolds && manager.ItemInEditor is BlindfoldRestriction blindfold)
+            else if (msg.Folder is ImageDataType.Blindfolds && manager.ItemInEditor is BlindfoldRestriction blindfold)
             {
                 Logger.LogDebug($"Thumbnail updated for {blindfold.Label} to {blindfold.Properties.OverlayPath}");
-                blindfold.Properties.OverlayPath = msg.Name;
+                blindfold.Properties.OverlayPath = msg.FileName;
             }
-            else if (msg.MetaData.Kind is ImageDataType.Hypnosis && manager.ItemInEditor is HypnoticRestriction hypnoItem)
+            else if (msg.Folder is ImageDataType.Hypnosis && manager.ItemInEditor is HypnoticRestriction hypnoItem)
             {
                 Logger.LogDebug($"Thumbnail updated for {hypnoItem.Label} to {hypnoItem.Properties.OverlayPath}");
-                hypnoItem.Properties.OverlayPath = msg.Name;
+                hypnoItem.Properties.OverlayPath = msg.FileName;
             }
         });
     }
@@ -164,10 +162,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         {
             _activeItemDrawer.DrawRestrictionImage(_selector.Selected!, imgSize.Y, rounding, false);
             if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
-            {
-                var metaData = new ImageMetadataGS(ImageDataType.Restrictions, new Vector2(120, 120f), _selector.Selected!.Identifier);
-                Mediator.Publish(new OpenThumbnailBrowser(metaData));
-            }
+                _thumbnails.SetThumbnailSource(_selector.Selected!.Identifier, new Vector2(120), ImageDataType.Restrictions);
             CkGui.AttachToolTip("The Thumbnail for this item.--SEP--Double Click to change the image.");
         }
 

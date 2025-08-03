@@ -15,7 +15,7 @@ public class ModPresetsUI : WindowMediatorSubscriberBase
     private readonly ModPresetFileSelector _selector;
     private readonly ModPresetsPanel _panel;
     private readonly TutorialService _guides;
-    public ModPresetsUI(ILogger<WardrobeUI> logger, GagspeakMediator mediator, TutorialService guides,
+    public ModPresetsUI(ILogger<ModPresetsUI> logger, GagspeakMediator mediator, TutorialService guides,
         ModPresetFileSelector selector, ModPresetsPanel panel) 
         : base(logger, mediator, "Mod Presets UI")
     {

@@ -3,7 +3,6 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Kinksters;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using ImGuiNET;
@@ -56,7 +55,7 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<KinksterTrigger>
         var result = await _mainHub.UserChangeKinksterActiveTriggers(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
-            Log.LogDebug($"Failed to perform TriggerToggle on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
+            Log.LogDebug($"Failed to perform TriggerToggle on {_ref.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LoggerType.StickyUI);
             PostButtonPress?.Invoke();
             return false;
         }

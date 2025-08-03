@@ -70,12 +70,5 @@ public record ClosePatternSavePromptMessage : MessageBase;
 
 public record ReScanThumbnailFolder : MessageBase;
 
-/// <summary> Invokes that we wish to open a particular Thumbnail Browser. </summary>
-/// <remarks> Will close any other currently active Thumbnail Browser Windows. </remarks>
-public record OpenThumbnailBrowser(ImageMetadataGS MetaData) : MessageBase;
-
 /// <summary> Fired upon selecting a thumbnail image within the Thumbnail Browser. </summary>
-/// <param name="Type"> Which Thumbnail Browser this occurred within. </param>
-/// <param name="fileName"> the name of the file selected. </param>
-/// <param name="BinderId"> The binder ID of the image. </param>
-public record ThumbnailImageSelected(ImageMetadataGS MetaData, string Name) : MessageBase;
+public record ThumbnailImageSelected(Guid SourceId, Vector2 ImgSize, ImageDataType Folder, string FileName) : MessageBase;

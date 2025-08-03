@@ -15,64 +15,35 @@ public class UiFactory
     // Generic Classes
     private readonly ILoggerFactory _loggerFactory;
     private readonly GagspeakMediator _mediator;
-    private readonly MainConfig _config;
-    private readonly ImageImportTool _imageImport;
-
-    // Managers
-    private readonly KinksterManager _pairManager;
-
-    // Services
+    private readonly KinksterManager _kinksters;
     private readonly CosmeticService _cosmetics;
     private readonly KinkPlateLight _kinkPlateLight;
     private readonly KinkPlateService _kinkPlates;
     private readonly TextureService _textures;
-    private readonly TutorialService _guides;
 
-    public UiFactory(
-        ILoggerFactory loggerFactory,
-        GagspeakMediator mediator,
-        MainConfig config,
-        ImageImportTool imageImport,
-        // Managers
-        KinksterManager pairManager,
-        // Services
-        CosmeticService cosmetics,
-        KinkPlateLight kinkPlateLight,
-        KinkPlateService kinkPlates,
-        TextureService textures,
-        TutorialService guides)
+    public UiFactory(ILoggerFactory loggerFactory, GagspeakMediator mediator,
+        MainConfig config, ImageImportTool imageImport, KinksterManager kinksters,
+        CosmeticService cosmetics, KinkPlateLight lightPlate, KinkPlateService kinkPlates,
+        TextureService textures, TutorialService guides)
     {
         _loggerFactory = loggerFactory;
         _mediator = mediator;
-        _config = config;
-        _imageImport = imageImport;
-        
-        _pairManager = pairManager;
-        
+        _kinksters = kinksters;
         _cosmetics = cosmetics;
-        _kinkPlateLight = kinkPlateLight;
+        _kinkPlateLight = lightPlate;
         _kinkPlates = kinkPlates;
         _textures = textures;
-        _guides = guides;
     }
 
     public KinkPlateUI CreateStandaloneKinkPlateUi(Kinkster pair)
     {
         return new KinkPlateUI(_loggerFactory.CreateLogger<KinkPlateUI>(), _mediator,
-            _pairManager, _kinkPlates, _cosmetics, _textures, pair);
+            _kinksters, _kinkPlates, _cosmetics, _textures, pair);
     }
 
     public KinkPlateLightUI CreateStandaloneKinkPlateLightUi(UserData pairUserData)
     {
         return new KinkPlateLightUI(_loggerFactory.CreateLogger<KinkPlateLightUI>(), _mediator,
-            _kinkPlateLight, _kinkPlates, _pairManager, pairUserData);
-    }
-
-    // we only ever want one of these open at once.
-    // Change it to a scoped service instead of a factory generated item?
-    public ThumbnailUI CreateThumbnailUi(ImageMetadataGS thumbnailInfo)
-    {
-        return new ThumbnailUI(_loggerFactory.CreateLogger<ThumbnailUI>(), _mediator, _imageImport,
-            _config, _cosmetics, thumbnailInfo, _guides);
+            _kinkPlateLight, _kinkPlates, _kinksters, pairUserData);
     }
 }

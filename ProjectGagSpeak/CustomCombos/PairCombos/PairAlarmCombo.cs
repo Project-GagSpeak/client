@@ -3,7 +3,6 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Kinksters;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using ImGuiNET;
@@ -67,7 +66,7 @@ public sealed class PairAlarmCombo : CkFilterComboIconButton<KinksterAlarm>
         var result = await _mainHub.UserChangeKinksterActiveAlarms(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
-            Log.LogDebug($"Failed to perform AlarmToggled on {_kinksterRef.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
+            Log.LogDebug($"Failed to perform AlarmToggled on {_kinksterRef.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LoggerType.StickyUI);
             PostButtonPress?.Invoke();
             return false;
         }
