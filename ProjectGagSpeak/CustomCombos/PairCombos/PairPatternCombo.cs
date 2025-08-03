@@ -28,10 +28,10 @@ public sealed class PairPatternCombo : CkFilterComboIconTextButton<KinksterPatte
     }
 
     private bool ValidForExecution(ToyBrandName Device1, ToyBrandName Device2)
-        => _ref.ValidToys.Contains(Device1) && _ref.ValidToys.Contains(Device2);
+        => _ref.ValidToys.Contains(Device1) || _ref.ValidToys.Contains(Device2);
 
     protected override bool DisableCondition()
-        => Current is null || !_ref.PairPerms.ExecutePatterns || _ref.ActivePattern != Guid.Empty || !ValidForExecution(Current.Device1, Current.Device2);
+        => Current is null || !_ref.PairPerms.ExecutePatterns || !ValidForExecution(Current.Device1, Current.Device2);
     protected override string ToString(KinksterPattern obj)
         => obj.Label;
 
