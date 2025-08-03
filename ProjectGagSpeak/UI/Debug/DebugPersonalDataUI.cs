@@ -642,7 +642,12 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 
     private void DrawToybox(string uid, Guid activePattern, List<Guid> activeAlarms, List<Guid> activeTriggers)
     {
-        ImGui.Text($"Active Pattern ID: {activePattern}");
+
+        CkGui.ColorText("Active Valid Toys:", ImGuiColors.ParsedGold);
+        CkGui.TextInline(string.Join(", ", _toys.ValidToysForRemotes));
+
+        CkGui.ColorText("Active Pattern:", ImGuiColors.ParsedGold);
+        CkGui.TextInline(activePattern.ToString());
         // alarm sub-node
         using (var subnodeAlarm = ImRaii.TreeNode("Active Alarms"))
         {
