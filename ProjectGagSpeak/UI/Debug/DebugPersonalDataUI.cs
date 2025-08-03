@@ -146,7 +146,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawRestraint(pair.UserData.UID, pair);
         DrawAlias(pair.UserData.UID, "Global", pair.LastGlobalAliasData);
         DrawAlias(pair.UserData.UID, "Unique", pair.LastPairAliasData.Storage);
-        DrawToybox(pair.UserData.UID, pair.ActivePattern, pair.ActiveAlarms, pair.ActiveTriggers);
+        DrawToybox(pair.UserData.UID, pair);
         DrawKinksterCache(pair);
         ImGui.Separator();
     }
@@ -640,21 +640,22 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         }
     }
 
-    private void DrawToybox(string uid, Guid activePattern, List<Guid> activeAlarms, List<Guid> activeTriggers)
+    private void DrawToybox(string uid, Kinkster kinkster)
     {
 
         CkGui.ColorText("Active Valid Toys:", ImGuiColors.ParsedGold);
-        CkGui.TextInline(string.Join(", ", _toys.ValidToysForRemotes));
+        CkGui.TextInline(string.Join(", ", kinkster.ValidToys));
 
         CkGui.ColorText("Active Pattern:", ImGuiColors.ParsedGold);
-        CkGui.TextInline(activePattern.ToString());
+        CkGui.TextInline($"{kinkster.LightCache.Patterns.GetValueOrDefault(kinkster.ActivePattern)?.Label ?? kinkster.ActivePattern.ToString()}");
+        CkGui.TextInline(kinkster.ActivePattern.ToString());
         // alarm sub-node
         using (var subnodeAlarm = ImRaii.TreeNode("Active Alarms"))
         {
             if (subnodeAlarm)
             {
-                foreach (var alarm in activeAlarms)
-                    ImGui.TextUnformatted(alarm.ToString());
+                foreach (var alarm in kinkster.ActiveAlarms)
+                    ImGui.TextUnformatted($"{kinkster.LightCache.Alarms.GetValueOrDefault(alarm)?.Label ?? alarm.ToString()}");
             }
         }
 
@@ -663,8 +664,8 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         {
             if (subnodeTriggers)
             {
-                foreach (var trigger in activeTriggers)
-                    ImGui.TextUnformatted(trigger.ToString());
+                foreach (var trigger in kinkster.ActiveTriggers)
+                    ImGui.TextUnformatted($"{kinkster.LightCache.Triggers.GetValueOrDefault(trigger)?.Label ?? trigger.ToString()}");
             }
         }
     }
