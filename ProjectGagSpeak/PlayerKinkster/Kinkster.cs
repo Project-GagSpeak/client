@@ -15,6 +15,7 @@ using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 using Penumbra.GameData.Interop;
 using static Lumina.Data.Parsing.Layer.LayerCommon;
+using GagspeakAPI.Attributes;
 
 namespace GagSpeak.Kinksters;
 
@@ -60,6 +61,7 @@ public class Kinkster : IComparable<Kinkster>
     public CharaActiveGags ActiveGags { get; private set; } = new CharaActiveGags();
     public CharaActiveRestrictions ActiveRestrictions { get; private set; } = new CharaActiveRestrictions();
     public CharaActiveRestraint ActiveRestraint { get; private set; } = new CharaActiveRestraint();
+    public List<ToyBrandName> ValidToys { get; private set; } = new();
     public List<Guid> ActiveCursedItems { get; private set; } = new();
     public AliasStorage LastGlobalAliasData { get; private set; } = new AliasStorage();
     public NamedAliasStorage LastPairAliasData { get; private set; } = new NamedAliasStorage();
@@ -336,6 +338,12 @@ public class Kinkster : IComparable<Kinkster>
         ActiveCursedItems = newActiveLoot;
         // Update internal cache to reflect latest changes for kinkplates and such.
         UpdateCachedLockedSlots();
+    }
+
+    public void NewValidToys(List<ToyBrandName> newValidToys)
+    {
+        _logger.LogDebug($"Updating Valid Toys for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+        ValidToys = newValidToys;
     }
 
     public void NewActivePattern(UserData enactor, Guid activePattern, DataUpdateType updateType)

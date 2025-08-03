@@ -1,5 +1,6 @@
 using GagSpeak.Kinksters;
 using GagSpeak.Kinksters.Handlers;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 
 namespace GagSpeak.Services.Mediator;
@@ -21,6 +22,7 @@ public record ActiveRestrictionsChangeMessage(DataUpdateType UpdateType, int Lay
 public record ActiveRestraintSetChangeMessage(DataUpdateType UpdateType, CharaActiveRestraint NewData) : SameThreadMessage;
 public record AliasGlobalUpdateMessage(Guid AliasId, AliasTrigger? NewData) : SameThreadMessage;
 public record AliasPairUpdateMessage(UserData IntendedUser, Guid AliasId, AliasTrigger? NewData) : SameThreadMessage;
+public record ValidToysChangedMessage(List<ToyBrandName> ValidToys) : SameThreadMessage;
 public record ActivePatternChangedMessage(DataUpdateType UpdateType, Guid NewActivePattern) : SameThreadMessage;
 public record ActiveAlarmsChangedMessage(DataUpdateType UpdateType, List<Guid> ActiveAlarms, Guid ChangedItem) : SameThreadMessage;
 public record ActiveTriggersChangedMessage(DataUpdateType UpdateType, List<Guid> ActiveTriggers, Guid ChangedItem) : SameThreadMessage;

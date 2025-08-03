@@ -171,16 +171,24 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushAliasUniqueUpdate), dto).ConfigureAwait(false);
     }
 
+    public async Task<HubResponse> UserPushValidToys(PushClientValidToys dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushValidToys), dto).ConfigureAwait(false);
+    }
+
     public async Task<HubResponse> UserPushActivePattern(PushClientActivePattern dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActivePattern), dto).ConfigureAwait(false);
     }
+
     public async Task<HubResponse> UserPushActiveAlarms(PushClientActiveAlarms dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActiveAlarms), dto).ConfigureAwait(false);
     }
+
     public async Task<HubResponse> UserPushActiveTriggers(PushClientActiveTriggers dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);

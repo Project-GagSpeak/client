@@ -5,6 +5,7 @@ using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Handlers;
 using GagSpeak.State.Managers;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Dto.VibeRoom;
 using GagspeakAPI.Network;
@@ -112,6 +113,13 @@ public sealed class KinksterListener
         if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
         kinkster.NewUniqueAlias(id, newData);
+    }
+
+    public void NewValidToys(UserData targetUser, List<ToyBrandName> validToys)
+    {
+        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
+            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
+        kinkster.NewValidToys(validToys);
     }
 
     public void NewActivePattern(KinksterUpdateActivePattern dto)

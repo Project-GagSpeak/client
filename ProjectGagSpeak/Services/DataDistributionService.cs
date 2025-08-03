@@ -24,6 +24,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
     private readonly RestrictionManager _restrictionManager;
     private readonly RestraintManager _restraintManager;
     private readonly CursedLootManager _cursedManager;
+    private readonly BuzzToyManager _toyManager;
     private readonly PuppeteerManager _puppetManager;
     private readonly PatternManager _patternManager;
     private readonly AlarmManager _alarmManager;
@@ -43,6 +44,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         RestrictionManager restrictions,
         RestraintManager restraints,
         CursedLootManager cursedLoot,
+        BuzzToyManager toys,
         PuppeteerManager puppetManager,
         PatternManager patterns,
         AlarmManager alarms,
@@ -57,6 +59,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         _restrictionManager = restrictions;
         _restraintManager = restraints;
         _cursedManager = cursedLoot;
+        _toyManager = toys;
         _puppetManager = puppetManager;
         _patternManager = patterns;
         _alarmManager = alarms;
@@ -92,6 +95,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         Mediator.Subscribe<ActiveRestraintSetChangeMessage>(this, arg => PushActiveRestraintUpdate(arg).ConfigureAwait(false));
         Mediator.Subscribe<AliasGlobalUpdateMessage>(this, arg => DistributeDataGlobalAlias(arg).ConfigureAwait(false));
         Mediator.Subscribe<AliasPairUpdateMessage>(this, arg => DistributeDataUniqueAlias(arg).ConfigureAwait(false));
+        Mediator.Subscribe<ValidToysChangedMessage>(this, arg => PushValidToysUpdate(arg).ConfigureAwait(false));
         Mediator.Subscribe<ActivePatternChangedMessage>(this, arg => PushActivePatternUpdate(arg).ConfigureAwait(false));
         Mediator.Subscribe<ActiveAlarmsChangedMessage>(this, arg => PushActiveAlarmsUpdate(arg).ConfigureAwait(false));
         Mediator.Subscribe<ActiveTriggersChangedMessage>(this, arg => PushActiveTriggersUpdate(arg).ConfigureAwait(false));
@@ -316,6 +320,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
                 ActiveCursedItems = _cursedManager.Storage.ActiveItems.Select(x => x.Identifier).ToList(),
                 GlobalAliasData = _puppetManager.GlobalAliasStorage,
                 PairAliasData = _puppetManager.PairAliasStorage.ToDictionary(),
+                ValidToys = _toyManager.ValidToysForRemotes,
                 ActivePattern = _patternManager.ActivePatternId,
                 ActiveAlarms = _alarmManager.ActiveAlarms.Select(x => x.Identifier).ToList(),
                 ActiveTriggers = _triggerManager.Storage.Select(x => x.Identifier).ToList(),
@@ -481,6 +486,15 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         var dto = new PushClientAliasUniqueUpdate(msg.IntendedUser, msg.AliasId, msg.NewData);
         if (await _hub.UserPushAliasUniqueUpdate(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push AliasPairUpdate to server. [{res}]");
+    }
+
+    public async Task PushValidToysUpdate(ValidToysChangedMessage msg)
+    {
+        var onlinePlayers = _kinksters.GetOnlineUserDatas();
+        Logger.LogDebug($"Pushing ValidToysUpdate to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
+        var dto = new PushClientValidToys(onlinePlayers, msg.ValidToys);
+        if (await _hub.UserPushValidToys(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+            Logger.LogError($"Failed to push ValidToys update to server. Reason: [{res}]");
     }
 
     public async Task PushActivePatternUpdate(ActivePatternChangedMessage msg)

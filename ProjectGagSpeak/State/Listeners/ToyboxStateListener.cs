@@ -33,6 +33,8 @@ public sealed class ToyboxStateListener
         _triggers = triggers;
     }
 
+    public Guid ActivePattern => _patterns.ActivePatternId;
+
     public void KinksterJoinedRoom(RoomParticipant newKinkster)
         => _vibeLobbies.OnKinksterJoinedRoom(newKinkster);
 

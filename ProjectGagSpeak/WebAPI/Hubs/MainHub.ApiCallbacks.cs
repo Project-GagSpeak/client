@@ -467,32 +467,41 @@ public partial class MainHub
         return Task.CompletedTask;
     }
 
-    public Task Callback_KinksterUpdateActivePattern(KinksterUpdateActivePattern dto)
+    public Task Callback_KinksterUpdateValidToys(KinksterUpdateValidToys dto)
+    {
+        Logger.LogDebug($"Received a Kinkster's updated Valid Toys: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Generic.Safe(() => _kinksterListener.NewValidToys(dto.User, dto.ValidToys));
+        return Task.CompletedTask;
+    }
+
+    public async Task Callback_KinksterUpdateActivePattern(KinksterUpdateActivePattern dto)
     {
         if (dto.User.UID == UID)
         {
             // if the callback wants us to update our pattern state but we are recording or in a vibe room we should reject this?
             // patterns are fragile babies and must be handled with care.
             Logger.LogDebug($"OWN KinksterUpdateActivePattern: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-            switch (dto.Type)
+            await Generic.Safe(async () =>
             {
-                case DataUpdateType.PatternSwitched:
-                    _toyboxListener.PatternSwitched(dto.ActivePattern, dto.Enactor.UID);
-                    break;
-                case DataUpdateType.PatternExecuted:
-                    _toyboxListener.PatternStarted(dto.ActivePattern, dto.Enactor.UID);
-                    break;
-                case DataUpdateType.PatternStopped:
-                    _toyboxListener.PatternStopped(dto.ActivePattern, dto.Enactor.UID);
-                    break;
-            }
-            return Task.CompletedTask;
+                var success = dto.Type switch
+                {
+                    DataUpdateType.PatternSwitched => _toyboxListener.PatternSwitched(dto.ActivePattern, dto.Enactor.UID),
+                    DataUpdateType.PatternExecuted => _toyboxListener.PatternStarted(dto.ActivePattern, dto.Enactor.UID),
+                    DataUpdateType.PatternStopped => _toyboxListener.PatternStopped(dto.ActivePattern, dto.Enactor.UID),
+                    _ => false
+                };
+                if (!success)
+                {
+                    Logger.LogWarning($"Failed to handle KinksterUpdateActivePattern for {dto.User.AliasOrUID} with type {dto.Type}");
+                    var recallType = _toyboxListener.ActivePattern == Guid.Empty ? DataUpdateType.PatternStopped : DataUpdateType.PatternSwitched;
+                    await UserPushActivePattern(new PushClientActivePattern(_kinksters.GetOnlineUserDatas(), _toyboxListener.ActivePattern, recallType));
+                }
+            });
         }
         else
         {
             Logger.LogDebug($"OTHER KinksterUpdateActivePattern: {dto.User.AliasOrUID}", LoggerType.Callbacks);
             Generic.Safe(() => _kinksterListener.NewActivePattern(dto));
-            return Task.CompletedTask;
         }
     }
 
@@ -919,6 +928,12 @@ public partial class MainHub
     {
         if (_apiHooksInitialized) return;
         _hubConnection!.On(nameof(Callback_KinksterUpdateAliasUnique), act);
+    }
+
+    public void OnKinksterUpdateValidToys(Action<KinksterUpdateValidToys> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_KinksterUpdateValidToys), act);
     }
 
     public void OnKinksterUpdateActivePattern(Action<KinksterUpdateActivePattern> act)

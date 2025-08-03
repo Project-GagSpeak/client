@@ -45,6 +45,8 @@ public class BuzzToyManager : IDisposable, IHybridSavable
     public BuzzToyStorage Storage => _storage;
     public BuzzToy? ItemInEditor => _itemEditor.ItemInEditor;
     public IEnumerable<BuzzToy> InteractableToys => _storage.Values.Where(st => st.Interactable);
+    public List<ToyBrandName> ValidToysForRemotes =>
+        _storage.Values.Where(st => st.ValidForRemotes).Select(st => st.FactoryName).Distinct().ToList();
 
     public void Dispose()
     {
