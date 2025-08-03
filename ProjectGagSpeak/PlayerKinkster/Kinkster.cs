@@ -223,6 +223,7 @@ public class Kinkster : IComparable<Kinkster>
         ActiveRestraint = data.Restraint;
         ActiveCursedItems = data.ActiveCursedItems;
         LastGlobalAliasData = data.GlobalAliasData;
+        ValidToys = data.ValidToys;
         ActivePattern = data.ActivePattern;
         ActiveAlarms = data.ActiveAlarms;
         ActiveTriggers = data.ActiveTriggers;

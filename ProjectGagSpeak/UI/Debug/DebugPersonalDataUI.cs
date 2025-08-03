@@ -648,7 +648,6 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 
         CkGui.ColorText("Active Pattern:", ImGuiColors.ParsedGold);
         CkGui.TextInline($"{kinkster.LightCache.Patterns.GetValueOrDefault(kinkster.ActivePattern)?.Label ?? kinkster.ActivePattern.ToString()}");
-        CkGui.TextInline(kinkster.ActivePattern.ToString());
         // alarm sub-node
         using (var subnodeAlarm = ImRaii.TreeNode("Active Alarms"))
         {
