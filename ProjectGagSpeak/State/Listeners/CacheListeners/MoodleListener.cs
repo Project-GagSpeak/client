@@ -35,6 +35,11 @@ public class MoodleListener : DisposableMediatorSubscriberBase
         if (IpcCallerMoodles.APIAvailable)
             OnMoodlesReady();
 
+        // do something to prevent this from firing twice if not nessisary or already done.
+        // something with a race condition or what not, unsure?... Only happens during first startup after game launch,
+        // but never happens after since moodles is already loaded.
+        // Mediator.Subscribe<MoodlesReady>(this, _ => OnMoodlesReady());
+
         // Helps us handle preventing changes while zoning.
         Mediator.Subscribe<ZoneSwitchStartMessage>(this, (msg) => _isZoning = true);
         Mediator.Subscribe<ZoneSwitchEndMessage>(this, (msg) => _isZoning = false);

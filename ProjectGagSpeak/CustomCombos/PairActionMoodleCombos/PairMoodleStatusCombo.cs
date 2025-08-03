@@ -36,6 +36,7 @@ public sealed class PairMoodleStatusCombo : CkMoodleComboButtonBase<MoodlesStatu
 
     public bool DrawApplyStatuses(string id, float width, string buttonTT, Action? onButtonSuccess = null)
     {
+        InnerWidth = width + IconSize.X + ImGui.GetStyle().ItemInnerSpacing.X;
         var prevLabel = Current.GUID == Guid.Empty ? "Select Status.." : Current.Title.StripColorTags();
         return DrawComboButton(id, prevLabel, width, true, buttonTT, onButtonSuccess);
     }
@@ -59,10 +60,12 @@ public sealed class PairMoodleStatusCombo : CkMoodleComboButtonBase<MoodlesStatu
         DrawItemTooltip(moodleStatus);
 
         ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
-        var pos = ImGui.GetCursorPosY();
-        ImGui.SetCursorPosY(pos + (size.Y - SelectableTextHeight) * 0.5f);
+        
+        var adjust = (size.Y - SelectableTextHeight) * 0.5f;
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + adjust);
         using (UiFontService.Default150Percent.Push())
             CkRichText.Text(titleSpace, moodleStatus.Title);
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() - adjust);
         return ret;
     }
 

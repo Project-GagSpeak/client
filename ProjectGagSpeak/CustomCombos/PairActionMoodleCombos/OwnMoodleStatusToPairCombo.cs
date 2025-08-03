@@ -56,10 +56,12 @@ public sealed class OwnMoodleStatusToPairCombo : CkMoodleComboButtonBase<Moodles
         DrawItemTooltip(moodleStatus);
 
         ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
-        var pos = ImGui.GetCursorPosY();
-        ImGui.SetCursorPosY(pos + (size.Y - SelectableTextHeight) * 0.5f);
+        var adjust = (size.Y - SelectableTextHeight) * 0.5f;
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + adjust);
         using (UiFontService.Default150Percent.Push())
             CkRichText.Text(titleSpace, moodleStatus.Title);
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() - adjust);
+
         return ret;
     }
 
@@ -68,8 +70,8 @@ public sealed class OwnMoodleStatusToPairCombo : CkMoodleComboButtonBase<Moodles
 
     protected override async Task<bool> OnApplyButton(MoodlesStatusInfo item)
     {
-        var dto = new MoodlesApplierById(_kinksterRef.UserData, [item.GUID], MoodleType.Status);
-        var res = await _mainHub.UserApplyMoodlesByGuid(dto);
+        var dto = new MoodlesApplierByStatus(_kinksterRef.UserData, [item], MoodleType.Status);
+        var res = await _mainHub.UserApplyMoodlesByStatus(dto);
         if (res.ErrorCode is GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Applying moodle status {item.Title} on {_kinksterRef.GetNickAliasOrUid()}", LoggerType.StickyUI);

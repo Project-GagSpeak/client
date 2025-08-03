@@ -49,7 +49,7 @@ public abstract class CkMoodleComboButtonBase<T> : CkFilterComboCache<T>
         var comboWidth = width - ImGui.GetStyle().ItemInnerSpacing.X - CkGui.IconTextButtonSize(FAI.PersonRays, buttonText);
 
         // if we have a new item selected we need to update some conditionals.
-        var ret = Draw(label, preview, string.Empty, comboWidth, IconSize.Y);
+        var ret = Draw(label, preview, string.Empty, comboWidth, IconSize.Y, CFlags.HeightLargest);
         
         // move just beside it to draw the button.
         ImUtf8.SameLineInner();

@@ -133,7 +133,8 @@ public abstract class CkFilterComboBase<T>
     {
         var id = ImGui.GetID(label);
         ImGui.SetNextItemWidth(previewWidth);
-        using var combo = ImRaii.Combo(label, preview, flags | CFlags.HeightLarge);
+        flags |= CFlags.HeightLarge;
+        using var combo = ImRaii.Combo(label, preview, flags);
         PostCombo(previewWidth);
         using (var dis = ImRaii.Enabled())
         {
@@ -152,11 +153,11 @@ public abstract class CkFilterComboBase<T>
 
             // Draws the filter and updates the scroll to the selected items.
             DrawFilter(currentSelected, width, customSearchBg);
-            var filterHeight = ImGui.GetFrameHeight();
-            // Draws the remaining list of items.
+
+            var resHeight = ImGui.GetTextLineHeightWithSpacing() * (((flags & CFlags.HeightLargest) != 0) ? 20 : 12);
             // If any items are selected, they are stored in `NewSelection`.
             // `NewSelection` is cleared at the end of the parent DrawFunction.
-            DrawList(width, itemHeight, filterHeight);
+            DrawList(width, itemHeight, resHeight);
             // If we should close the popup (after selection), do so.
             ClosePopup(id, label);
         }
@@ -207,11 +208,11 @@ public abstract class CkFilterComboBase<T>
 
     /// <summary> Draws the list of items. </summary>
     /// <remarks> If any are selected, the respective DrawSelectedInternal will set the NewSelection to a value. </remarks>
-    protected virtual void DrawList(float width, float itemHeight, float filterHeight)
+    protected virtual void DrawList(float width, float itemHeight, float resHeight)
     {
         // A child for the items, so that the filter remains visible.
         // Height is based on default combo height minus the filter input.
-        var height = itemHeight * 11 - filterHeight - ImGui.GetStyle().WindowPadding.Y;
+        var height = resHeight - ImGui.GetFrameHeight() - ImGui.GetStyle().WindowPadding.Y;
         using var _ = ImRaii.Child("ChildL", new Vector2(width, height), false, WFlags.NoScrollbar);
         using var indent = ImRaii.PushIndent(ImGuiHelpers.GlobalScale);
         if (_setScroll)

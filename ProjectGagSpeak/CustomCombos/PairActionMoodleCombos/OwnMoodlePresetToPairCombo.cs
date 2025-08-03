@@ -17,10 +17,10 @@ namespace GagSpeak.CustomCombos.Moodles;
 public sealed class OwnMoodlePresetToPairCombo : CkMoodleComboButtonBase<MoodlePresetInfo>
 {
     private Action PostButtonPress;
-    private int _maxPresetCount => _kinksterRef.LastIpcData.Presets.Values.Max(x => x.Statuses.Count);
+    private int _maxPresetCount => MoodleCache.IpcData.PresetList.Max(x => x.Statuses.Count);
     private float _iconWithPadding => IconSize.X + ImGui.GetStyle().ItemInnerSpacing.X;
     public OwnMoodlePresetToPairCombo(ILogger log, MainHub hub, Kinkster pair, float scale, Action postButtonPress)
-        : base(log, hub, pair, scale, () => [ ..MoodleCache.IpcData.Presets.Values.OrderBy(x => x.Title) ])
+        : base(log, hub, pair, scale, () => [ ..MoodleCache.IpcData.PresetList.OrderBy(x => x.Title) ])
     {
         PostButtonPress = postButtonPress;
     }
@@ -46,31 +46,32 @@ public sealed class OwnMoodlePresetToPairCombo : CkMoodleComboButtonBase<MoodleP
         var titleSpace = size.X - iconsSpace;
         var ret = ImGui.Selectable($"##{moodlePreset.Title}", selected, ImGuiSelectableFlags.None, size);
 
-        if (moodlePreset.Statuses.Count <= 0)
-            return ret;
-
-        ImGui.SameLine(titleSpace);
-        for (int i = 0, iconsDrawn = 0; i < moodlePreset.Statuses.Count; i++)
+        if (moodlePreset.Statuses.Count > 0)
         {
-            var status = moodlePreset.Statuses[i];
-            if (!MoodleCache.IpcData.Statuses.TryGetValue(status, out var info))
+            ImGui.SameLine(titleSpace);
+            for (int i = 0, iconsDrawn = 0; i < moodlePreset.Statuses.Count; i++)
             {
-                ImGui.SameLine(0, _iconWithPadding);
-                continue;
+                var status = moodlePreset.Statuses[i];
+                if (!MoodleCache.IpcData.Statuses.TryGetValue(status, out var info))
+                {
+                    ImGui.SameLine(0, _iconWithPadding);
+                    continue;
+                }
+
+                MoodleDisplay.DrawMoodleIcon(info.IconID, info.Stacks, IconSize);
+                DrawItemTooltip(info);
+
+                if (++iconsDrawn < moodlePreset.Statuses.Count)
+                    ImUtf8.SameLineInner();
             }
-
-            MoodleDisplay.DrawMoodleIcon(info.IconID, info.Stacks, IconSize);
-            DrawItemTooltip(info);
-
-            if (++iconsDrawn < moodlePreset.Statuses.Count)
-                ImUtf8.SameLineInner();
         }
 
         ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
-        var pos = ImGui.GetCursorPosY();
-        ImGui.SetCursorPosY(pos + (size.Y - SelectableTextHeight) * 0.5f);
+        var adjust = (size.Y - SelectableTextHeight) * 0.5f;
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + adjust);
         using (UiFontService.Default150Percent.Push())
             CkRichText.Text(titleSpace, moodlePreset.Title);
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() - adjust);
         return ret;
     }
 
@@ -88,8 +89,13 @@ public sealed class OwnMoodlePresetToPairCombo : CkMoodleComboButtonBase<MoodleP
 
     protected override async Task<bool> OnApplyButton(MoodlePresetInfo item)
     {
-        var dto = new MoodlesApplierById(_kinksterRef.UserData, item.Statuses, MoodleType.Preset);
-        var res = await _mainHub.UserApplyMoodlesByGuid(dto);
+        var statuses = new List<MoodlesStatusInfo>();
+        foreach (var guid in item.Statuses)
+            if (MoodleCache.IpcData.Statuses.TryGetValue(guid, out var s))
+                statuses.Add(s);
+
+        var dto = new MoodlesApplierByStatus(_kinksterRef.UserData, statuses, MoodleType.Preset);
+        var res = await _mainHub.UserApplyMoodlesByStatus(dto);
         if (res.ErrorCode is GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Applying moodle preset {item.Title} on {_kinksterRef.GetNickAliasOrUid()}", LoggerType.StickyUI);

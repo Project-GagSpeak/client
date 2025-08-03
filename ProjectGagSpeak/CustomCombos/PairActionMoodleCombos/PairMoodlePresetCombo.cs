@@ -18,11 +18,11 @@ namespace GagSpeak.CustomCombos.Moodles;
 public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePresetInfo>
 {
     private Action PostButtonPress;
-    private int _maxPresetCount => _kinksterRef.LastIpcData.Presets.Values.Max(x => x.Statuses.Count);
+    private int _maxPresetCount => _kinksterRef.LastIpcData.Presets.Count > 0 ? _kinksterRef.LastIpcData.PresetList.Max(x => x.Statuses.Count) : 0;
     private float _iconWithPadding => IconSize.X + ImGui.GetStyle().ItemInnerSpacing.X;
 
     public PairMoodlePresetCombo(ILogger log, MainHub hub, Kinkster kinkster, float scale, Action postButtonPress)
-        : base(log, hub, kinkster, scale, () => [.. kinkster.LastIpcData.Presets.Values.OrderBy(x => x.Title)])
+        : base(log, hub, kinkster, scale, () => [.. kinkster.LastIpcData.PresetList.OrderBy(x => x.Title)])
     {
         PostButtonPress = postButtonPress;
     }
@@ -47,31 +47,32 @@ public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePreset
         var titleSpace = size.X - iconsSpace;
         var ret = ImGui.Selectable($"##{moodlePreset.Title}", selected, ImGuiSelectableFlags.None, size);
 
-        if (moodlePreset.Statuses.Count <= 0)
-            return ret;
-
-        ImGui.SameLine(titleSpace);
-        for (int i = 0, iconsDrawn = 0; i < moodlePreset.Statuses.Count; i++)
+        if (moodlePreset.Statuses.Count > 0)
         {
-            var status = moodlePreset.Statuses[i];
-            if (!MoodleCache.IpcData.Statuses.TryGetValue(status, out var info))
+            ImGui.SameLine(titleSpace);
+            for (int i = 0, iconsDrawn = 0; i < moodlePreset.Statuses.Count; i++)
             {
-                ImGui.SameLine(0, _iconWithPadding);
-                continue;
+                var status = moodlePreset.Statuses[i];
+                if (!_kinksterRef.LastIpcData.Statuses.TryGetValue(status, out var info))
+                {
+                    ImGui.SameLine(0, _iconWithPadding);
+                    continue;
+                }
+
+                MoodleDisplay.DrawMoodleIcon(info.IconID, info.Stacks, IconSize);
+                DrawItemTooltip(info);
+
+                if (++iconsDrawn < moodlePreset.Statuses.Count)
+                    ImUtf8.SameLineInner();
             }
-
-            MoodleDisplay.DrawMoodleIcon(info.IconID, info.Stacks, IconSize);
-            DrawItemTooltip(info);
-
-            if (++iconsDrawn < moodlePreset.Statuses.Count)
-                ImUtf8.SameLineInner();
         }
 
         ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
-        var pos = ImGui.GetCursorPosY();
-        ImGui.SetCursorPosY(pos + (size.Y - SelectableTextHeight) * 0.5f);
+        var adjust = (size.Y - SelectableTextHeight) * 0.5f;
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + adjust);
         using (UiFontService.Default150Percent.Push())
             CkRichText.Text(titleSpace, moodlePreset.Title);
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() - adjust);
         return ret;
     }
 
