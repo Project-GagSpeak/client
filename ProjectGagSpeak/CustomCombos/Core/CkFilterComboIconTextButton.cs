@@ -5,17 +5,17 @@ using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos;
 
-public abstract class CkFilterComboIconButton<T> : CkFilterComboCache<T>
+public abstract class CkFilterComboIconTextButton<T> : CkFilterComboCache<T>
 {
     protected FontAwesomeIcon ButtonIcon = FAI.None;
 
-    protected CkFilterComboIconButton(ILogger log, FAI icon, IEnumerable<T> items)
+    protected CkFilterComboIconTextButton(ILogger log, FAI icon, IEnumerable<T> items)
         : base(items, log)
     {
         ButtonIcon = icon;
     }
 
-    protected CkFilterComboIconButton(ILogger log, FAI icon, Func<IReadOnlyList<T>> generator)
+    protected CkFilterComboIconTextButton(ILogger log, FAI icon, Func<IReadOnlyList<T>> generator)
         : base(generator, log)
     {
         ButtonIcon = icon;
@@ -27,10 +27,10 @@ public abstract class CkFilterComboIconButton<T> : CkFilterComboCache<T>
     /// <summary> What will occur when the button is pressed. </summary>
     protected abstract Task<bool> OnButtonPress();
 
-    public bool Draw(string label, float width, string tt)
+    public bool Draw(string label, float width, string buttonText, string tt)
     {
         // we need to first extract the width of the button.
-        var comboWidth = width - CkGui.IconButtonSize(ButtonIcon).X - ImGui.GetStyle().ItemInnerSpacing.X;
+        var comboWidth = width - CkGui.IconTextButtonSize(ButtonIcon, buttonText) - ImGui.GetStyle().ItemInnerSpacing.X;
         InnerWidth = width;
 
         // if we have a new item selected we need to update some conditionals.
@@ -39,7 +39,7 @@ public abstract class CkFilterComboIconButton<T> : CkFilterComboCache<T>
         
         // move just beside it to draw the button.
         ImUtf8.SameLineInner();
-        if (CkGui.IconButton(ButtonIcon, disabled: DisableCondition(), id: label + "-Button"))
+        if (CkGui.IconTextButton(ButtonIcon, buttonText, disabled: DisableCondition(), id: label + "-Button"))
             _ = OnButtonPress();
         CkGui.AttachToolTip(tt);
 

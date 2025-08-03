@@ -748,7 +748,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         if (_selections.OpenInteraction is InteractionType.StartPattern)
         {
             using (ImRaii.Child("PatternExecute", new Vector2(width, ImGui.GetFrameHeight())))
-                _pairPatterns.DrawComboIconButton("##ExecutePattern" + k.UserData.UID, width, "Execute a Pattern");
+                _pairPatterns.Draw("##ExecutePattern" + k.UserData.UID, width, "Execute a Pattern");
             ImGui.Separator();
         }
 
@@ -788,7 +788,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         if (_selections.OpenInteraction is InteractionType.ToggleAlarm)
         {
             using (ImRaii.Child("AlarmToggle", new Vector2(width, ImGui.GetFrameHeight())))
-                _pairAlarmToggles.DrawComboIconButton($"##AlarmToggle-{k.UserData.UID}", width, "Toggle an Alarm");
+                _pairAlarmToggles.Draw($"##AlarmToggle-{k.UserData.UID}", width, "this Alarm");
             ImGui.Separator();
         }
 
@@ -805,7 +805,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         if (_selections.OpenInteraction is InteractionType.ToggleTrigger)
         {
             using (ImRaii.Child("TriggerToggle", new Vector2(width, ImGui.GetFrameHeight())))
-                _pairTriggerToggles.DrawComboIconButton("##ToggleTrigger" + k.UserData.UID, width, "Toggle a Trigger");
+                _pairTriggerToggles.Draw($"##ToggleTrigger-{k.UserData.UID}", width, "this Trigger");
         }
 
         ImGui.Separator();

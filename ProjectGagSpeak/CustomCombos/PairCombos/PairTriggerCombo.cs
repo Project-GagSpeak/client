@@ -1,3 +1,4 @@
+using CkCommons;
 using CkCommons.Gui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
@@ -10,19 +11,22 @@ using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.Pairs;
 
-public sealed class PairTriggerCombo : CkFilterComboIconButton<KinksterTrigger>
+public sealed class PairTriggerCombo : CkFilterComboIconTextButton<KinksterTrigger>
 {
     private Action PostButtonPress;
     private readonly MainHub _mainHub;
     private Kinkster _ref;
 
     public PairTriggerCombo(ILogger log, MainHub hub, Kinkster kinkster, Action postButtonPress)
-        : base(log, FAI.Bell, "Enable", () => [ .. kinkster.LightCache.Triggers.Values.OrderBy(x => x.Label)])
+        : base(log, FAI.Bell, () => [ .. kinkster.LightCache.Triggers.Values.OrderBy(x => x.Label)])
     {
         _mainHub = hub;
         _ref = kinkster;
         PostButtonPress = postButtonPress;
     }
+
+    public string TrueLabel = "Enable";
+    public string FalseLabel = "Disable";
 
     // override the method to extract items by extracting all LightTriggers.
     protected override bool DisableCondition() 
@@ -31,6 +35,25 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<KinksterTrigger>
     protected override string ToString(KinksterTrigger obj)
         => obj.Label;
 
+    public bool Draw(string label, float width, string tooltipSuffix)
+    {
+        var state = _ref.ActiveTriggers.Contains(Current?.Id ?? Guid.Empty);
+        var buttonText = state ? FalseLabel : TrueLabel;
+        var tt = $"{buttonText} {tooltipSuffix}.";
+        // determine the text based on the state of Current.
+        return Draw(label, width, buttonText, tt);
+    }
+
+    protected override void DrawList(float width, float itemHeight, float filterHeight)
+    {
+        _infoIconWidth = CkGui.IconSize(FAI.InfoCircle).X;
+        _powerIconWidth = CkGui.IconSize(FAI.PowerOff).X;
+        base.DrawList(width, itemHeight, filterHeight);
+    }
+
+    private float _infoIconWidth;
+    private float _powerIconWidth;
+
     // we need to override the drawSelectable method here for a custom draw display.
     protected override bool DrawSelectable(int globalAlarmIdx, bool selected)
     {
@@ -38,10 +61,14 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<KinksterTrigger>
         // we want to start by drawing the selectable first.
         var ret = ImGui.Selectable(trigger.Label, selected);
 
-        ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetTextLineHeight());
-        CkGui.IconText(FAI.InfoCircle, ImGuiColors.TankBlue);
-        DrawItemTooltip(trigger);
+        var isEnabled = _ref.ActiveTriggers.Contains(trigger.Id);
+        ImGui.SameLine(ImGui.GetContentRegionAvail().X - _infoIconWidth - _powerIconWidth - ImGui.GetStyle().ItemInnerSpacing.X);
+        CkGui.IconText(FAI.PowerOff, isEnabled ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey);
+        CkGui.AttachToolTip($"Trigger is currently {(isEnabled ? "Enabled" : "Disabled")}");
 
+        ImUtf8.SameLineInner();
+        CkGui.HoverIconText(FAI.InfoCircle, ImGuiColors.TankBlue.ToUint(), ImGui.GetColorU32(ImGuiCol.TextDisabled));
+        DrawItemTooltip(trigger);
         return ret;
     }
 
@@ -49,6 +76,8 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<KinksterTrigger>
     {
         if (Current is null)
             return false;
+
+        // determine
 
         // Construct the dto, and then send it off.
         var dto = new PushKinksterActiveTriggers(_ref.UserData,  _ref.ActiveTriggers, Current.Id, DataUpdateType.TriggerToggled);
@@ -71,38 +100,19 @@ public sealed class PairTriggerCombo : CkFilterComboIconButton<KinksterTrigger>
     {
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            using var padding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One * 8f);
-            using var rounding = ImRaii.PushStyle(ImGuiStyleVar.WindowRounding, 4f);
-            using var popupBorder = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1f);
-            using var frameColor = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
+            using var s = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One * 8f)
+                .Push(ImGuiStyleVar.WindowRounding, 4f)
+                .Push(ImGuiStyleVar.PopupBorderSize, 1f);
+            using var c = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
 
             ImGui.BeginTooltip();
 
-            // draw trigger description
-            if (!item.Description.IsNullOrWhitespace())
-            {
-                // push the text wrap position to the font size times 35
-                ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35f);
-                // we will then check to see if the text contains a tooltip
-                if (item.Description.Contains(CkGui.TipSep, StringComparison.Ordinal))
-                {
-                    // if it does, we will split the text by the tooltip
-                    var splitText = item.Description.Split(CkGui.TipSep, StringSplitOptions.None);
-                    // for each of the split text, we will display the text unformatted
-                    for (var i = 0; i < splitText.Length; i++)
-                    {
-                        ImGui.TextUnformatted(splitText[i]);
-                        if (i != splitText.Length - 1) ImGui.Separator();
-                    }
-                }
-                else
-                {
-                    ImGui.TextUnformatted(item.Description);
-                }
-                // finally, pop the text wrap position
-                ImGui.PopTextWrapPos();
-                ImGui.Separator();
-            }
+            CkGui.ColorText("Description:", ImGuiColors.ParsedGold);
+            ImUtf8.SameLineInner();
+            if (string.IsNullOrWhiteSpace(item.Description))
+                ImGui.TextUnformatted("<None Provided>");
+            else
+                CkGui.WrappedTooltipText(item.Description, 35f, ImGuiColors.ParsedPink);
 
             // draw trigger priority
             CkGui.ColorText("Priority:", ImGuiColors.ParsedGold);

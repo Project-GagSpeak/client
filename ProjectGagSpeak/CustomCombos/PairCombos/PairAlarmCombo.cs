@@ -1,7 +1,9 @@
+using CkCommons;
 using CkCommons.Gui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Kinksters;
+using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
@@ -11,25 +13,44 @@ using System.Globalization;
 
 namespace GagSpeak.CustomCombos.Pairs;
 
-public sealed class PairAlarmCombo : CkFilterComboIconButton<KinksterAlarm>
+public sealed class PairAlarmCombo : CkFilterComboIconTextButton<KinksterAlarm>
 {
     private Action PostButtonPress;
     private readonly MainHub _mainHub;
-    private Kinkster _kinksterRef;
+    private Kinkster _ref;
 
     public PairAlarmCombo(ILogger log, MainHub hub, Kinkster kinkster, Action postButtonPress)
-        : base(log, FAI.Bell, "Enable", () => [ ..kinkster.LightCache.Alarms.Values.OrderBy(x => x.Label) ])
+        : base(log, FAI.Bell, () => [ ..kinkster.LightCache.Alarms.Values.OrderBy(x => x.Label) ])
     {
         _mainHub = hub;
-        _kinksterRef = kinkster;
+        _ref = kinkster;
         PostButtonPress = postButtonPress;
     }
 
     protected override bool DisableCondition() 
-        => !_kinksterRef.PairPerms.ToggleAlarms;
+        => !_ref.PairPerms.ToggleAlarms;
 
     protected override string ToString(KinksterAlarm obj)
         => obj.Label;
+
+    public bool Draw(string label, float width, string tooltipSuffix)
+    {
+        var state = _ref.ActiveAlarms.Contains(Current?.Id ?? Guid.Empty);
+        var buttonText = state ? "Disable" : "Enable";
+        var tt = $"{buttonText} {tooltipSuffix}.";
+        // determine the text based on the state of Current.
+        return Draw(label, width, buttonText, tt);
+    }
+
+    protected override void DrawList(float width, float itemHeight, float filterHeight)
+    {
+        _infoIconWidth = CkGui.IconSize(FAI.InfoCircle).X;
+        _powerIconWidth = CkGui.IconSize(FAI.PowerOff).X;
+        base.DrawList(width, itemHeight, filterHeight);
+    }
+
+    private float _infoIconWidth;
+    private float _powerIconWidth;
 
     // we need to override the drawSelectable method here for a custom draw display.
     protected override bool DrawSelectable(int globalAlarmIdx, bool selected)
@@ -39,18 +60,17 @@ public sealed class PairAlarmCombo : CkFilterComboIconButton<KinksterAlarm>
         var ret = ImGui.Selectable(alarm.Label, selected);
 
         // Beside this, we should draw an alarm icon and the time it will go off.
-        ImGui.SameLine(0, 10f);
-        var localTime = alarm.SetTimeUTC.ToLocalTime().ToString("t", CultureInfo.CurrentCulture);
-        using (ImRaii.Group())
-        {
-            CkGui.IconText(FAI.Stopwatch, ImGuiColors.ParsedGold);
-            ImUtf8.SameLineInner();
-            CkGui.ColorText(localTime + "(Your Time)", ImGuiColors.ParsedGold);
-        }
+        ImGui.SameLine(0, ImGui.GetStyle().ItemSpacing.X);
+        CkGui.ColorText(alarm.SetTimeUTC.ToLocalTime().ToString("t", CultureInfo.CurrentCulture), ImGuiColors.ParsedGold);
+        CkGui.AttachToolTip("(Your Local Time)");
 
-        // shift over to draw an info button.
-        ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetTextLineHeight());
-        CkGui.IconText(FAI.WaveSquare, ImGuiColors.ParsedPink);
+        var isEnabled = _ref.ActiveAlarms.Contains(alarm.Id);
+        ImGui.SameLine(ImGui.GetContentRegionAvail().X - _infoIconWidth - _powerIconWidth - ImGui.GetStyle().ItemInnerSpacing.X);
+        CkGui.IconText(FAI.PowerOff, isEnabled ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey);
+        CkGui.AttachToolTip($"Alarm is currently {(isEnabled ? "Enabled" : "Disabled")}");
+
+        ImUtf8.SameLineInner();
+        CkGui.HoverIconText(FAI.InfoCircle, ImGuiColors.TankBlue.ToUint(), ImGui.GetColorU32(ImGuiCol.TextDisabled));
         DrawItemTooltip(alarm);
 
         return ret;
@@ -62,17 +82,17 @@ public sealed class PairAlarmCombo : CkFilterComboIconButton<KinksterAlarm>
             return false;
 
         // Construct the dto, and then send it off.
-        var dto = new PushKinksterActiveAlarms(_kinksterRef.UserData, _kinksterRef.ActiveAlarms, Current.Id, DataUpdateType.AlarmToggled);
+        var dto = new PushKinksterActiveAlarms(_ref.UserData, _ref.ActiveAlarms, Current.Id, DataUpdateType.AlarmToggled);
         var result = await _mainHub.UserChangeKinksterActiveAlarms(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
-            Log.LogDebug($"Failed to perform AlarmToggled on {_kinksterRef.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LoggerType.StickyUI);
+            Log.LogDebug($"Failed to perform AlarmToggled on {_ref.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LoggerType.StickyUI);
             PostButtonPress?.Invoke();
             return false;
         }
         else
         {
-            Log.LogDebug($"Toggling Alarm on {_kinksterRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
+            Log.LogDebug($"Toggling Alarm on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
             PostButtonPress?.Invoke();
             return true;
         }

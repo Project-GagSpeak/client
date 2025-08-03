@@ -10,13 +10,13 @@ using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.Pairs;
 
-public sealed class PairPatternCombo : CkFilterComboIconButton<KinksterPattern>
+public sealed class PairPatternCombo : CkFilterComboIconTextButton<KinksterPattern>
 {
     private Action PostButtonPress;
     private readonly MainHub _mainHub;
     private Kinkster _kinksterRef;
     public PairPatternCombo(ILogger log, MainHub hub, Kinkster pair, Action postButtonPress)
-        : base(log, FAI.PlayCircle, "Execute", () => [ ..pair.LightCache.Patterns.Values.OrderBy(x => x.Label)])
+        : base(log, FAI.PlayCircle, () => [ ..pair.LightCache.Patterns.Values.OrderBy(x => x.Label)])
     {
         _mainHub = hub;
         _kinksterRef = pair;
@@ -28,6 +28,9 @@ public sealed class PairPatternCombo : CkFilterComboIconButton<KinksterPattern>
 
     protected override string ToString(KinksterPattern obj)
         => obj.Label;
+
+    public bool Draw(string label, float width, string tt)
+        => Draw(label, width, "Execute", tt);
 
     // we need to override the drawSelectable method here for a custom draw display.
     protected override bool DrawSelectable(int globalIdx, bool selected)
