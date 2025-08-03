@@ -3,6 +3,7 @@ using CkCommons.Gui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Kinksters;
+using GagSpeak.Services;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
@@ -47,12 +48,12 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<KinksterRestricti
     protected override bool DisableCondition()
         => Current is null || !_ref.PairPerms.ApplyRestraintSets || _ref.ActiveRestraint.Identifier == Current.Id;
 
-    protected override async Task<bool> OnButtonPress(int layerIdx)
+    protected override void OnButtonPress(int layerIdx)
     {
         if (Current is null)
-            return false;
+            return;
 
-        var updateType = _ref.ActiveRestrictions.Restrictions[layerIdx].Identifier== Guid.Empty
+        var updateType = _ref.ActiveRestrictions.Restrictions[layerIdx].Identifier == Guid.Empty
             ? DataUpdateType.Applied : DataUpdateType.Swapped;
 
         // construct the dto to send.
@@ -63,18 +64,19 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<KinksterRestricti
             Enabler = MainHub.UID,
         };
 
-        var result = await _mainHub.UserChangeKinksterActiveRestriction(dto);
-        if (result.ErrorCode is not GagSpeakApiEc.Success)
+        UiService.SetUITask(async () =>
         {
-            Log.LogDebug($"Failed to perform ApplyRestraint with {Current.Label} on {_ref.GetNickAliasOrUid()}, Reason:{result}", LoggerType.StickyUI);
-            return false;
-        }
-        else
-        {
-            Log.LogDebug($"Applying Restraint with {Current.Label} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
-            PostButtonPress.Invoke();
-            return true;
-        }
+            var result = await _mainHub.UserChangeKinksterActiveRestriction(dto);
+            if (result.ErrorCode is not GagSpeakApiEc.Success)
+            {
+                Log.LogDebug($"Failed to perform ApplyRestraint with {Current.Label} on {_ref.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LoggerType.StickyUI);
+            }
+            else
+            {
+                Log.LogDebug($"Applying Restraint with {Current.Label} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
+                PostButtonPress.Invoke();
+            }
+        });
     }
 
     // make this generic within an extention utility.

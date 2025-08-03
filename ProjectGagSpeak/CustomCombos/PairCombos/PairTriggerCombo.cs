@@ -3,6 +3,7 @@ using CkCommons.Gui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Kinksters;
+using GagSpeak.Services;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
@@ -72,28 +73,31 @@ public sealed class PairTriggerCombo : CkFilterComboIconTextButton<KinksterTrigg
         return ret;
     }
 
-    protected override async Task<bool> OnButtonPress()
+    protected override void OnButtonPress()
     {
         if (Current is null)
-            return false;
+            return;
 
-        // determine
+        var triggers = new List<Guid>(_ref.ActiveTriggers);
+        if (!triggers.Remove(Current.Id))
+            triggers.Add(Current.Id);
 
-        // Construct the dto, and then send it off.
-        var dto = new PushKinksterActiveTriggers(_ref.UserData,  _ref.ActiveTriggers, Current.Id, DataUpdateType.TriggerToggled);
-        var result = await _mainHub.UserChangeKinksterActiveTriggers(dto);
-        if (result.ErrorCode is not GagSpeakApiEc.Success)
+        UiService.SetUITask(async () =>
         {
-            Log.LogDebug($"Failed to perform TriggerToggle on {_ref.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LoggerType.StickyUI);
-            PostButtonPress?.Invoke();
-            return false;
-        }
-        else
-        {
-            Log.LogDebug($"Toggling Trigger {Current.Label} on {_ref.GetNickAliasOrUid()}'s TriggerList", LoggerType.StickyUI);
-            PostButtonPress?.Invoke();
-            return true;
-        }
+            // Construct the dto, and then send it off.
+            var dto = new PushKinksterActiveTriggers(_ref.UserData, triggers, Current.Id, DataUpdateType.TriggerToggled);
+            var result = await _mainHub.UserChangeKinksterActiveTriggers(dto);
+            if (result.ErrorCode is not GagSpeakApiEc.Success)
+            {
+                Log.LogDebug($"Failed to perform TriggerToggle on {_ref.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LoggerType.StickyUI);
+                PostButtonPress?.Invoke();
+            }
+            else
+            {
+                Log.LogDebug($"Toggling Trigger {Current.Label} on {_ref.GetNickAliasOrUid()}'s TriggerList", LoggerType.StickyUI);
+                PostButtonPress?.Invoke();
+            }
+        });
     }
 
     private void DrawItemTooltip(KinksterTrigger item)

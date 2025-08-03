@@ -3,6 +3,7 @@ using CkCommons.Gui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Kinksters;
+using GagSpeak.Services;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Hub;
@@ -76,26 +77,29 @@ public sealed class PairAlarmCombo : CkFilterComboIconTextButton<KinksterAlarm>
         return ret;
     }
 
-    protected override async Task<bool> OnButtonPress()
+    protected override void OnButtonPress()
     {
         if (Current is null) 
-            return false;
+            return;
 
-        // Construct the dto, and then send it off.
-        var dto = new PushKinksterActiveAlarms(_ref.UserData, _ref.ActiveAlarms, Current.Id, DataUpdateType.AlarmToggled);
-        var result = await _mainHub.UserChangeKinksterActiveAlarms(dto);
-        if (result.ErrorCode is not GagSpeakApiEc.Success)
+        var alarms = new List<Guid>(_ref.ActiveAlarms);
+        if (!alarms.Remove(Current.Id))
+            alarms.Add(Current.Id);
+
+        UiService.SetUITask(async () =>
         {
-            Log.LogDebug($"Failed to perform AlarmToggled on {_ref.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LoggerType.StickyUI);
-            PostButtonPress?.Invoke();
-            return false;
-        }
-        else
-        {
-            Log.LogDebug($"Toggling Alarm on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
-            PostButtonPress?.Invoke();
-            return true;
-        }
+            // Construct the dto, and then send it off.
+            var dto = new PushKinksterActiveAlarms(_ref.UserData, alarms, Current.Id, DataUpdateType.AlarmToggled);
+            var result = await _mainHub.UserChangeKinksterActiveAlarms(dto);
+            if (result.ErrorCode is not GagSpeakApiEc.Success)
+            {
+                Log.LogDebug($"Failed to perform AlarmToggled on {_ref.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LoggerType.StickyUI);            }
+            else
+            {
+                Log.LogDebug($"Toggling Alarm on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
+                PostButtonPress?.Invoke();
+            }
+        });
     }
 
     private void DrawItemTooltip(KinksterAlarm item)

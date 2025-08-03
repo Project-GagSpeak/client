@@ -22,7 +22,8 @@ public abstract class CkFilterComboButton<T> : CkFilterComboCache<T>
     protected abstract bool DisableCondition();
 
     /// <summary> What will occur when the button is pressed. </summary>
-    protected virtual Task<bool> OnButtonPress(int layerIdx) => Task.FromResult(false);
+    protected virtual void OnButtonPress(int layerIdx) 
+    { }
 
     /// <summary> The virtual function for all filter combo buttons. </summary>
     /// <returns> True if anything was selected, false otherwise. </returns>
@@ -42,7 +43,7 @@ public abstract class CkFilterComboButton<T> : CkFilterComboCache<T>
 
         // disable the button if we should.
         if (ImGuiUtil.DrawDisabledButton(bText, new Vector2(), string.Empty, DisableCondition()))
-            _ = OnButtonPress(layerIdx);
+            OnButtonPress(layerIdx);
         CkGui.AttachToolTip(tt);
 
         return ret;

@@ -1,19 +1,15 @@
 using CkCommons;
 using CkCommons.Gui;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
-using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using ImGuiNET;
-using OtterGui;
-using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.Pairs;
 
@@ -61,11 +57,11 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
         return ret;
     }
 
-    protected override async Task<bool> OnButtonPress(int _)
+    protected override void OnButtonPress(int _)
     {
         // we need to go ahead and create a deep clone of our new appearanceData, and ensure it is valid.
         if (Current is null)
-            return false;
+            return;
 
         var updateType = _pairRef.ActiveRestraint.Identifier== Guid.Empty
             ? DataUpdateType.Applied : DataUpdateType.Swapped;
@@ -76,18 +72,19 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
             Enabler = MainHub.UID,
         };
 
-        var result = await _mainHub.UserChangeKinksterActiveRestraint(dto);
-        if (result.ErrorCode is not GagSpeakApiEc.Success)
+        UiService.SetUITask(async () =>
         {
-            Log.LogError($"Failed to Perform PairRestraint action to {_pairRef.GetNickAliasOrUid()} : {result}");
-            return false;
-        }
-        else
-        {
-            Log.LogDebug("Applying Restraint Set " + Current.Label + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.StickyUI);
-            PostButtonPress?.Invoke();
-            return true;
-        }
+            var result = await _mainHub.UserChangeKinksterActiveRestraint(dto);
+            if (result.ErrorCode is not GagSpeakApiEc.Success)
+            {
+                Log.LogError($"Failed to Perform PairRestraint action to {_pairRef.GetNickAliasOrUid()} : {result.ErrorCode}", LoggerType.StickyUI);
+            }
+            else
+            {
+                Log.LogDebug("Applying Restraint Set " + Current.Label + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.StickyUI);
+                PostButtonPress?.Invoke();
+            }
+        });
     }
 
     public void DrawApplyLayersComboButton(float width)
@@ -109,11 +106,12 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
         var options = Enum.GetValues<RestraintLayer>().Skip(1).SkipLast(5 - layers + 1);
         if (_layersHelper.DrawApply(width, _pairRef.ActiveRestraint.ActiveLayers, out var changes, options, GetLabel))
         {
+            // we need to ensure that we have a valid pairRef and that the changes are not empty.
+            if (_pairRef is null || changes == RestraintLayer.None)
+                return;
+
             UiService.SetUITask(async () =>
             {
-                // we need to ensure that we have a valid pairRef and that the changes are not empty.
-                if (_pairRef is null || changes == RestraintLayer.None)
-                    return;
                 // if we have changes, we will apply them.
                 var newLayers = _pairRef.ActiveRestraint.ActiveLayers | changes;
                 var dto = new PushKinksterActiveRestraint(_pairRef.UserData, DataUpdateType.LayersApplied) { ActiveLayers = newLayers };
@@ -140,7 +138,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
 
         string GetLabel(RestraintLayer layer)
         {
-            int idx = BitOperations.TrailingZeroCount((int)layer);
+            var idx = BitOperations.TrailingZeroCount((int)layer);
             return idx < layers ? cacheInfo.Layers[idx].Label : $"Layer {idx + 1} (Unknown Contents)";
         }
     }
@@ -195,7 +193,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
 
         string GetLabel(RestraintLayer layer)
         {
-            int idx = BitOperations.TrailingZeroCount((int)layer);
+            var idx = BitOperations.TrailingZeroCount((int)layer);
             return idx < layers ? cacheInfo.Layers[idx].Label : $"Layer {idx + 1} (Unknown Contents)";
         }
     }

@@ -2,6 +2,7 @@ using CkCommons.Gui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Kinksters;
+using GagSpeak.Services;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
@@ -53,30 +54,30 @@ public sealed class PairPatternCombo : CkFilterComboIconTextButton<KinksterPatte
         return ret;
     }
 
-    protected override async Task<bool> OnButtonPress()
+    protected override void OnButtonPress()
     {
         // we need to go ahead and create a deep clone of our new appearanceData, and ensure it is valid.
         if (Current is null)
-            return false;
+            return;
 
         var updateType = _kinksterRef.ActivePattern == Guid.Empty
             ? DataUpdateType.PatternExecuted : DataUpdateType.PatternSwitched;
 
-        // construct the dto to send.
-        var dto = new PushKinksterActivePattern(_kinksterRef.UserData, Current.Id, updateType);
-        var result = await _mainHub.UserChangeKinksterActivePattern(dto);
-        if (result.ErrorCode is not GagSpeakApiEc.Success)
+        UiService.SetUITask(async () =>
         {
-            Log.LogDebug($"Failed to perform Pattern with {Current.Label} on {_kinksterRef.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LoggerType.StickyUI);
-            PostButtonPress?.Invoke();
-            return false;
-        }
-        else
-        {
-            Log.LogDebug($"Executing Pattern {Current.Label} on {_kinksterRef.GetNickAliasOrUid()}'s Toy", LoggerType.StickyUI);
-            PostButtonPress?.Invoke();
-            return true;
-        }
+            var dto = new PushKinksterActivePattern(_kinksterRef.UserData, Current.Id, updateType);
+            var result = await _mainHub.UserChangeKinksterActivePattern(dto);
+            if (result.ErrorCode is not GagSpeakApiEc.Success)
+            {
+                Log.LogDebug($"Failed to perform Pattern with {Current.Label} on {_kinksterRef.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LoggerType.StickyUI);
+                PostButtonPress?.Invoke();
+            }
+            else
+            {
+                Log.LogDebug($"Executing Pattern {Current.Label} on {_kinksterRef.GetNickAliasOrUid()}'s Toy", LoggerType.StickyUI);
+                PostButtonPress?.Invoke();
+            }
+        });
     }
 
     private void DrawItemTooltip(KinksterPattern item)

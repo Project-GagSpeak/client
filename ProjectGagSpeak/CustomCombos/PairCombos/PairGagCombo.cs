@@ -3,6 +3,7 @@ using CkCommons.Gui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Kinksters;
+using GagSpeak.Services;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
@@ -46,14 +47,14 @@ public sealed class PairGagCombo : CkFilterComboButton<KinksterGag>
     protected override bool DisableCondition()
         => Current is null || Current.Gag is GagType.None || !_kinksterRef.PairPerms.ApplyGags;
 
-    protected override async Task<bool> OnButtonPress(int layerIdx)
+    protected override void OnButtonPress(int layerIdx)
     {
         if (Current is null)
-            return false;
+            return;
 
         // we need to go ahead and create a deep clone of our new appearanceData, and ensure it is valid.
         if (_kinksterRef.ActiveGags.GagSlots[layerIdx].GagItem == Current.Gag)
-            return false;
+            return;
 
         var updateType = _kinksterRef.ActiveGags.GagSlots[layerIdx].GagItem is GagType.None
             ? DataUpdateType.Applied : DataUpdateType.Swapped;
@@ -66,19 +67,20 @@ public sealed class PairGagCombo : CkFilterComboButton<KinksterGag>
             Enabler = MainHub.UID,
         };
 
-        // push to server.
-        var result = await _mainHub.UserChangeKinksterActiveGag(dto);
-        if (result.ErrorCode is not GagSpeakApiEc.Success)
+        UiService.SetUITask(async () =>
         {
-            Log.LogDebug($"Failed to perform ApplyGag with {Current.Gag.GagName()} on {_kinksterRef.GetNickAliasOrUid()}, Reason:{result}", LoggerType.StickyUI);
-            return false;
-        }
-        else
-        {
-            Log.LogDebug($"Applying Gag with {Current.Gag.GagName()} on {_kinksterRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
-            PostButtonPress?.Invoke();
-            return true;
-        }
+            var result = await _mainHub.UserChangeKinksterActiveGag(dto);
+            if (result.ErrorCode is not GagSpeakApiEc.Success)
+            {
+                Log.LogDebug($"Failed to perform ApplyGag with {Current.Gag.GagName()} on {_kinksterRef.GetNickAliasOrUid()}, Reason:{result}", LoggerType.StickyUI);
+            }
+            else
+            {
+                Log.LogDebug($"Applying Gag with {Current.Gag.GagName()} on {_kinksterRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
+                PostButtonPress?.Invoke();
+            }
+        });
+
     }
 
     private void DrawItemTooltip(KinksterGag item)

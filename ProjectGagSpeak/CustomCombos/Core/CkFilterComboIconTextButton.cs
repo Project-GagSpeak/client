@@ -25,7 +25,7 @@ public abstract class CkFilterComboIconTextButton<T> : CkFilterComboCache<T>
     protected abstract bool DisableCondition();
 
     /// <summary> What will occur when the button is pressed. </summary>
-    protected abstract Task<bool> OnButtonPress();
+    protected abstract void OnButtonPress();
 
     public bool Draw(string label, float width, string buttonText, string tt)
     {
@@ -40,7 +40,7 @@ public abstract class CkFilterComboIconTextButton<T> : CkFilterComboCache<T>
         // move just beside it to draw the button.
         ImUtf8.SameLineInner();
         if (CkGui.IconTextButton(ButtonIcon, buttonText, disabled: DisableCondition(), id: label + "-Button"))
-            _ = OnButtonPress();
+            OnButtonPress();
         CkGui.AttachToolTip(tt);
 
         return ret;
