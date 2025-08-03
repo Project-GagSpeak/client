@@ -14,16 +14,14 @@ namespace GagSpeak.CustomCombos.Pairs;
 
 public sealed class PairTriggerCombo : CkFilterComboIconTextButton<KinksterTrigger>
 {
-    private Action PostButtonPress;
     private readonly MainHub _mainHub;
     private Kinkster _ref;
 
-    public PairTriggerCombo(ILogger log, MainHub hub, Kinkster kinkster, Action postButtonPress)
+    public PairTriggerCombo(ILogger log, MainHub hub, Kinkster kinkster)
         : base(log, FAI.Bell, () => [ .. kinkster.LightCache.Triggers.Values.OrderBy(x => x.Label)])
     {
         _mainHub = hub;
         _ref = kinkster;
-        PostButtonPress = postButtonPress;
     }
 
     public string TrueLabel = "Enable";
@@ -88,15 +86,7 @@ public sealed class PairTriggerCombo : CkFilterComboIconTextButton<KinksterTrigg
             var dto = new PushKinksterActiveTriggers(_ref.UserData, triggers, Current.Id, DataUpdateType.TriggerToggled);
             var result = await _mainHub.UserChangeKinksterActiveTriggers(dto);
             if (result.ErrorCode is not GagSpeakApiEc.Success)
-            {
                 Log.LogDebug($"Failed to perform TriggerToggle on {_ref.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LoggerType.StickyUI);
-                PostButtonPress?.Invoke();
-            }
-            else
-            {
-                Log.LogDebug($"Toggling Trigger {Current.Label} on {_ref.GetNickAliasOrUid()}'s TriggerList", LoggerType.StickyUI);
-                PostButtonPress?.Invoke();
-            }
         });
     }
 

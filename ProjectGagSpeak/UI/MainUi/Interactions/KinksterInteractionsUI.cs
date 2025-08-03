@@ -174,8 +174,8 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         _pairMoodleStatuses = new PairMoodleStatusCombo(_logger, _hub, _kinkster, 1.3f, () => _selections.CloseInteraction());
         _pairMoodlePresets = new PairMoodlePresetCombo(_logger, _hub, _kinkster, 1.3f, () => _selections.CloseInteraction());
         _pairPatterns = new PairPatternCombo(_logger, _hub, _kinkster, () => _selections.CloseInteraction());
-        _pairAlarmToggles = new PairAlarmCombo(_logger, _hub, _kinkster, () => _selections.CloseInteraction());
-        _pairTriggerToggles = new PairTriggerCombo(_logger, _hub, _kinkster, () => _selections.CloseInteraction());
+        _pairAlarmToggles = new PairAlarmCombo(_logger, _hub, _kinkster);
+        _pairTriggerToggles = new PairTriggerCombo(_logger, _hub, _kinkster);
         _moodleStatuses = new OwnMoodleStatusToPairCombo(_logger, _hub, _kinkster, 1.3f, () => _selections.CloseInteraction());
         _moodlePresets = new OwnMoodlePresetToPairCombo(_logger, _hub, _kinkster, 1.3f, () => _selections.CloseInteraction());
         _activePairStatusCombo = new PairMoodleStatusCombo(_logger, _hub, _kinkster, 1.3f,

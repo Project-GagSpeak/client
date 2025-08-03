@@ -16,16 +16,14 @@ namespace GagSpeak.CustomCombos.Pairs;
 
 public sealed class PairAlarmCombo : CkFilterComboIconTextButton<KinksterAlarm>
 {
-    private Action PostButtonPress;
     private readonly MainHub _mainHub;
     private Kinkster _ref;
 
-    public PairAlarmCombo(ILogger log, MainHub hub, Kinkster kinkster, Action postButtonPress)
+    public PairAlarmCombo(ILogger log, MainHub hub, Kinkster kinkster)
         : base(log, FAI.Bell, () => [ ..kinkster.LightCache.Alarms.Values.OrderBy(x => x.Label) ])
     {
         _mainHub = hub;
         _ref = kinkster;
-        PostButtonPress = postButtonPress;
     }
 
     protected override bool DisableCondition() 
@@ -92,13 +90,7 @@ public sealed class PairAlarmCombo : CkFilterComboIconTextButton<KinksterAlarm>
             var dto = new PushKinksterActiveAlarms(_ref.UserData, alarms, Current.Id, DataUpdateType.AlarmToggled);
             var result = await _mainHub.UserChangeKinksterActiveAlarms(dto);
             if (result.ErrorCode is not GagSpeakApiEc.Success)
-            {
-                Log.LogDebug($"Failed to perform AlarmToggled on {_ref.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LoggerType.StickyUI);            }
-            else
-            {
-                Log.LogDebug($"Toggling Alarm on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
-                PostButtonPress?.Invoke();
-            }
+                Log.LogDebug($"Failed to perform AlarmToggled on {_ref.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LoggerType.StickyUI);
         });
     }
 
