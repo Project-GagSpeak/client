@@ -1,9 +1,12 @@
+using CkCommons;
 using CkCommons.Gui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
+using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using ImGuiNET;
@@ -15,41 +18,68 @@ public sealed class PairPatternCombo : CkFilterComboIconTextButton<KinksterPatte
 {
     private Action PostButtonPress;
     private readonly MainHub _mainHub;
-    private Kinkster _kinksterRef;
+    private Kinkster _ref;
     public PairPatternCombo(ILogger log, MainHub hub, Kinkster pair, Action postButtonPress)
         : base(log, FAI.PlayCircle, () => [ ..pair.LightCache.Patterns.Values.OrderBy(x => x.Label)])
     {
         _mainHub = hub;
-        _kinksterRef = pair;
+        _ref = pair;
         PostButtonPress = postButtonPress;
     }
 
-    protected override bool DisableCondition()
-        => !_kinksterRef.PairPerms.ExecutePatterns;
+    private bool ValidForExecution(ToyBrandName Device1, ToyBrandName Device2)
+        => _ref.ValidToys.Contains(Device1) && _ref.ValidToys.Contains(Device2);
 
+    protected override bool DisableCondition()
+        => Current is null || !_ref.PairPerms.ExecutePatterns || _ref.ActivePattern != Guid.Empty || !ValidForExecution(Current.Device1, Current.Device2);
     protected override string ToString(KinksterPattern obj)
         => obj.Label;
 
     public bool Draw(string label, float width, string tt)
         => Draw(label, width, "Execute", tt);
 
+    protected override void DrawList(float width, float itemHeight, float filterHeight)
+    {
+        _iconInfoWidth = CkGui.IconSize(FAI.InfoCircle).X;
+        _iconCheckWidth = CkGui.IconSize(FAI.Check).X;
+        _iconLoopWidth = CkGui.IconSize(FAI.Sync).X;
+        base.DrawList(width, itemHeight, filterHeight);
+    }
+
+    private float _iconInfoWidth;
+    private float _iconLoopWidth;
+    private float _iconCheckWidth;
+
     // we need to override the drawSelectable method here for a custom draw display.
     protected override bool DrawSelectable(int globalIdx, bool selected)
     {
         var pattern = Items[globalIdx];
-        // we want to start by drawing the selectable first.
         var ret = ImGui.Selectable(pattern.Label, selected);
 
-        // shift over and draw an info circle, and a loop circle if any.
-        ImGui.SameLine(ImGui.GetContentRegionAvail().X - 2 * ImGui.GetTextLineHeight() - ImGui.GetStyle().ItemSpacing.X);
+        // Handle the shifted draw based on the loop state.
+        var isValid = ValidForExecution(pattern.Device1, pattern.Device2);
+        if (pattern.Loops)
+        {
+            var rightW = _iconLoopWidth + _iconCheckWidth + _iconInfoWidth + ImGui.GetStyle().ItemInnerSpacing.X * 2;
+            ImGui.SameLine(ImGui.GetContentRegionAvail().X - rightW);
+            CkGui.IconText(FAI.Sync, ImGui.GetColorU32(ImGuiColors.ParsedPink));
+            CkGui.AttachToolTip("This is a Looping Pattern.");
 
-        // draw the shouldLoop icon.
-        CkGui.IconText(FAI.Sync, ImGui.GetColorU32(pattern.Loops ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey));
-        if (pattern.Loops) CkGui.AttachToolTip("This is a Looping Pattern.");
+            ImUtf8.SameLineInner();
+        }
+        else
+        {
+            var rightW = _iconInfoWidth + _iconCheckWidth + ImGui.GetStyle().ItemInnerSpacing.X;
+            ImGui.SameLine(ImGui.GetContentRegionAvail().X - rightW);
+        }
 
-        // draw the info icon.
-        ImGui.SameLine();
-        CkGui.IconText(FAI.InfoCircle, ImGuiColors.TankBlue);
+        CkGui.IconText(FAI.Check, isValid ? ImGuiColors.HealerGreen.ToUint() : ImGui.GetColorU32(ImGuiCol.TextDisabled));
+        CkGui.AttachToolTip(isValid
+            ? $"Can execute: A used device is active on {_ref.GetNickAliasOrUid()}."
+            : $"Cannot execute: No used devices are active on {_ref.GetNickAliasOrUid()}.");
+
+        ImUtf8.SameLineInner();
+        CkGui.HoverIconText(FAI.InfoCircle, ImGuiColors.TankBlue.ToUint(), ImGui.GetColorU32(ImGuiCol.TextDisabled));
         DrawItemTooltip(pattern);
         return ret;
     }
@@ -60,21 +90,28 @@ public sealed class PairPatternCombo : CkFilterComboIconTextButton<KinksterPatte
         if (Current is null)
             return;
 
-        var updateType = _kinksterRef.ActivePattern == Guid.Empty
+        // if the pattern cannot be executed to the pair, do not do so.
+        if (!ValidForExecution(Current.Device1, Current.Device2))
+        {
+            Log.LogError($"Patter not valid for execution!");
+            return;
+        }
+
+        var updateType = _ref.ActivePattern == Guid.Empty
             ? DataUpdateType.PatternExecuted : DataUpdateType.PatternSwitched;
 
         UiService.SetUITask(async () =>
         {
-            var dto = new PushKinksterActivePattern(_kinksterRef.UserData, Current.Id, updateType);
+            var dto = new PushKinksterActivePattern(_ref.UserData, Current.Id, updateType);
             var result = await _mainHub.UserChangeKinksterActivePattern(dto);
             if (result.ErrorCode is not GagSpeakApiEc.Success)
             {
-                Log.LogDebug($"Failed to perform Pattern with {Current.Label} on {_kinksterRef.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LoggerType.StickyUI);
+                Log.LogDebug($"Failed to perform Pattern with {Current.Label} on {_ref.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LoggerType.StickyUI);
                 PostButtonPress?.Invoke();
             }
             else
             {
-                Log.LogDebug($"Executing Pattern {Current.Label} on {_kinksterRef.GetNickAliasOrUid()}'s Toy", LoggerType.StickyUI);
+                Log.LogDebug($"Executing Pattern {Current.Label} on {_ref.GetNickAliasOrUid()}'s Toy", LoggerType.StickyUI);
                 PostButtonPress?.Invoke();
             }
         });
@@ -84,47 +121,41 @@ public sealed class PairPatternCombo : CkFilterComboIconTextButton<KinksterPatte
     {
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
         {
-            using var padding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One * 8f);
-            using var rounding = ImRaii.PushStyle(ImGuiStyleVar.WindowRounding, 4f);
-            using var popupBorder = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1f);
-            using var frameColor = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
+            using var s = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One * 8f)
+                .Push(ImGuiStyleVar.WindowRounding, 4f)
+                .Push(ImGuiStyleVar.PopupBorderSize, 1f);
+            using var c = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
 
             // begin the tooltip interface
             ImGui.BeginTooltip();
 
-            if (!item.Description.IsNullOrWhitespace())
-            {
-                // push the text wrap position to the font size times 35
-                ImGui.PushTextWrapPos(ImGui.GetFontSize() * 35f);
-                // we will then check to see if the text contains a tooltip
-                if (item.Description.Contains(CkGui.TipSep, StringComparison.Ordinal))
-                {
-                    // if it does, we will split the text by the tooltip
-                    var splitText = item.Description.Split(CkGui.TipSep, StringSplitOptions.None);
-                    // for each of the split text, we will display the text unformatted
-                    for (var i = 0; i < splitText.Length; i++)
-                    {
-                        ImGui.TextUnformatted(splitText[i]);
-                        if (i != splitText.Length - 1) ImGui.Separator();
-                    }
-                }
-                else
-                {
-                    ImGui.TextUnformatted(item.Description);
-                }
-                // finally, pop the text wrap position
-                ImGui.PopTextWrapPos();
-                ImGui.Separator();
-            }
-
-            CkGui.ColorText("Duration:", ImGuiColors.ParsedGold);
+            CkGui.ColorText("Description:", ImGuiColors.ParsedGold);
             ImUtf8.SameLineInner();
+            if (string.IsNullOrWhiteSpace(item.Description))
+                ImGui.TextUnformatted("<None Provided>");
+            else
+                CkGui.WrappedTooltipText(item.Description, 35f, ImGuiColors.ParsedPink);
+            
+            ImGui.Separator();
+
             var durationStr = item.Duration.Hours > 0 ? item.Duration.ToString("hh\\:mm\\:ss") : item.Duration.ToString("mm\\:ss");
-            ImGui.Text(durationStr);
+            CkGui.ColorText("Duration:", ImGuiColors.ParsedGold);
+            CkGui.TextInline(durationStr);
 
             CkGui.ColorText("Loops?:", ImGuiColors.ParsedGold);
-            ImUtf8.SameLineInner();
-            ImGui.Text(item.Loops ? "Yes" : "No");
+            CkGui.TextInline(item.Loops ? "Yes" : "No");
+
+            CkGui.ColorText("Primary Device:", ImGuiColors.ParsedGold);
+            CkGui.TextInline(item.Device1.ToName());
+
+            if (item.Device2 is not ToyBrandName.Unknown)
+            {
+                CkGui.ColorText("Secondary Device:", ImGuiColors.ParsedGold);
+                CkGui.TextInline(item.Device2.ToName());
+            }
+
+            CkGui.ColorText("Motors Used:", ImGuiColors.ParsedGold);
+            CkGui.TextInline(item.Motors.ToString());
 
             ImGui.EndTooltip();
         }

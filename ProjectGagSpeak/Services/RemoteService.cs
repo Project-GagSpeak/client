@@ -125,7 +125,8 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
 
     private void OnClientToyChange(StorageChangeType changeType, BuzzToy item)
     {
-        var validItems = _toyManager.InteractableToys.Where(t => t.ValidForRemotes).Select(t => t.FactoryName).ToHashSet();
+        var validItems = ClientData.Devices.Select(d => d.FactoryName).ToHashSet();
+        Logger.LogDebug($"Current Valid Items: {string.Join(", ", validItems)}");
         switch (changeType)
         {
             case StorageChangeType.Created:
@@ -140,7 +141,7 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
                 UpdateClientDevices();
                 break;
         }
-        var postValid = _toyManager.InteractableToys.Where(t => t.ValidForRemotes).Select(t => t.FactoryName);
+        var postValid = ClientData.Devices.Select(d => d.FactoryName);
         validItems.SymmetricExceptWith(postValid);
         if (validItems.Count > 0)
         {

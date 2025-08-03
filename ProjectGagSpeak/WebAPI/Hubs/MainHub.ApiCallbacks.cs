@@ -492,7 +492,8 @@ public partial class MainHub
                 };
                 if (!success)
                 {
-                    Logger.LogWarning($"Failed to handle KinksterUpdateActivePattern for {dto.User.AliasOrUID} with type {dto.Type}");
+                    Logger.LogError($"Failed to handle KinksterUpdateActivePattern for {dto.User.AliasOrUID} with type {dto.Type}");
+                    Logger.LogError($"Attempt to find out why this is even allowed to happen, and fix it, as it should never occur!");
                     var recallType = _toyboxListener.ActivePattern == Guid.Empty ? DataUpdateType.PatternStopped : DataUpdateType.PatternSwitched;
                     await UserPushActivePattern(new PushClientActivePattern(_kinksters.GetOnlineUserDatas(), _toyboxListener.ActivePattern, recallType));
                 }

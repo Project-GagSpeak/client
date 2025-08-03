@@ -38,6 +38,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
+    private readonly BuzzToyManager _toys;
     private readonly PatternManager _patterns;
     private readonly AlarmManager _alarms;
     private readonly TriggerManager _triggers;
@@ -50,6 +51,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
+        BuzzToyManager toys,
         PatternManager patterns,
         AlarmManager alarms,
         TriggerManager triggers)
@@ -61,6 +63,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         _gags = gags;
         _restrictions = restrictions;
         _restraints = restraints;
+        _toys = toys;
         _patterns = patterns;
         _alarms = alarms;
         _triggers = triggers;
@@ -155,6 +158,9 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawGagData("Player", _gags.ServerGagData ?? new CharaActiveGags());
         DrawRestrictions("Player", _restrictions.ServerRestrictionData ?? new CharaActiveRestrictions());
         DrawRestraint("Player", _restraints.ServerData ?? new CharaActiveRestraint());
+
+        CkGui.ColorText("Active Valid Toys:", ImGuiColors.ParsedGold);
+        CkGui.TextInline(string.Join(", ", _toys.ValidToysForRemotes));
 
         // Draw out the active pattern.
         CkGui.ColorText("Active Pattern:", ImGuiColors.ParsedGold);
