@@ -134,7 +134,7 @@ public sealed class PairPatternCombo : CkFilterComboIconTextButton<KinksterPatte
             if (string.IsNullOrWhiteSpace(item.Description))
                 ImGui.TextUnformatted("<None Provided>");
             else
-                CkGui.WrappedTooltipText(item.Description, 35f, ImGuiColors.ParsedPink);
+                CkGui.TextWrappedTooltipFormat(item.Description, 35f, ImGuiColors.ParsedPink);
             
             ImGui.Separator();
 

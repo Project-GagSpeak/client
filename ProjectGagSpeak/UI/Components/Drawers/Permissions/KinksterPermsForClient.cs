@@ -1,10 +1,9 @@
-using CkCommons.Gui;using CkCommons.Raii;using Dalamud.Interface.Colors;using Dalamud.Interface.Utility.Raii;using GagSpeak.Kinksters;using GagSpeak.Services;using GagSpeak.Utils;using GagSpeak.WebAPI;using GagspeakAPI.Extensions;using ImGuiNET;using OtterGui;using OtterGui.Text;using System.Collections.Immutable;namespace GagSpeak.Gui.Components;
+using CkCommons;using CkCommons.Gui;using CkCommons.Raii;using Dalamud.Interface.Colors;using Dalamud.Interface.Utility.Raii;using GagSpeak.Kinksters;using GagSpeak.Services;using GagSpeak.Utils;using GagSpeak.WebAPI;using GagspeakAPI.Extensions;using ImGuiNET;using OtterGui;using OtterGui.Text;using System.Collections.Immutable;namespace GagSpeak.Gui.Components;
 
 // The permissions a Kinkster has set for us (their kinkster pair)
 // from our perspective, these will be the pairs 'PairPerms' [ permissions they have set for us. ]
 public class KinksterPermsForClient{
     private readonly MainHub _hub;
-
     public KinksterPermsForClient(MainHub hub)
     {
         _hub = hub;
@@ -16,6 +15,8 @@ public class KinksterPermsForClient{
     public void DrawPermissions(Kinkster kinkster, string dispName, float width)    {
         ImGuiUtil.Center($"{dispName}'s Permissions for You");
         ImGui.Separator();
+        
+        // have to make child object below the preset selector for a scrollable interface.
         using var _ = CkRaii.Child("KinksterPerms", new Vector2(0, ImGui.GetContentRegionAvail().Y), wFlags: WFlags.NoScrollbar);
         
         ImGui.TextUnformatted("Global Settings");        DrawPermRow(kinkster, dispName, width, SPPID.ChatGarblerActive,       kinkster.PairGlobals.ChatGarblerActive,       kinkster.PairPermAccess.ChatGarblerActiveAllowed );        DrawPermRow(kinkster, dispName, width, SPPID.ChatGarblerLocked,       kinkster.PairGlobals.ChatGarblerLocked,       kinkster.PairPermAccess.ChatGarblerLockedAllowed );
@@ -68,7 +69,18 @@ public class KinksterPermsForClient{
         DrawPermRow(kinkster, dispName, width, SPPID.PatternStopping,         kinkster.PairPerms.StopPatterns,             kinkster.PairPermAccess.StopPatternsAllowed);
         DrawPermRow(kinkster, dispName, width, SPPID.AlarmToggling,           kinkster.PairPerms.ToggleAlarms,             kinkster.PairPermAccess.ToggleAlarmsAllowed);
         DrawPermRow(kinkster, dispName, width, SPPID.TriggerToggling,         kinkster.PairPerms.ToggleTriggers,           kinkster.PairPermAccess.ToggleTriggersAllowed);
-        ImGui.Separator();    }
+        ImGui.Separator();
+
+        ImGui.TextUnformatted("Hardcore State");
+        CkGui.ColorTextInline("(View-Only)", ImGuiColors.DalamudRed);
+
+        DrawHcRow(kinkster, dispName, width, SPPID.LockedFollowing, kinkster.PairGlobals.LockedFollowing, kinkster.PairPerms.AllowLockedFollowing);
+        DrawHcRow(kinkster, dispName, width, SPPID.LockedEmoteState, kinkster.PairGlobals.LockedEmoteState, kinkster.PairPerms.AllowLockedEmoting || kinkster.PairPerms.AllowLockedSitting);
+        DrawHcRow(kinkster, dispName, width, SPPID.IndoorConfinement, kinkster.PairGlobals.IndoorConfinement, kinkster.PairPerms.AllowIndoorConfinement);
+        DrawHcRow(kinkster, dispName, width, SPPID.Imprisonment, kinkster.PairGlobals.Imprisonment, kinkster.PairPerms.AllowImprisonment);
+        DrawHcRow(kinkster, dispName, width, SPPID.ChatBoxesHidden, kinkster.PairGlobals.ChatBoxesHidden, kinkster.PairPerms.AllowHidingChatBoxes);
+        DrawHcRow(kinkster, dispName, width, SPPID.ChatInputHidden, kinkster.PairGlobals.ChatInputHidden, kinkster.PairPerms.AllowHidingChatInput);
+        DrawHcRow(kinkster, dispName, width, SPPID.ChatInputBlocked, kinkster.PairGlobals.ChatInputBlocked, kinkster.PairPerms.AllowChatInputBlocking);    }
 
     private void DrawPermRow(Kinkster kinkster, string dispName, float width, SPPID perm, bool current, bool canEdit)
         => DrawPermRowCommon(kinkster, dispName, width, perm, current, canEdit, () => !current);
@@ -87,8 +99,6 @@ public class KinksterPermsForClient{
 
     private void DrawPermRow(Kinkster kinkster, string dispName, float width, SPPID perm, TimeSpan current, bool canEdit)
     {
-        using var disabled = ImRaii.Disabled(kinkster.PairPerms.InHardcore);
-
         var inputTxtWidth = width * .4f;
         var str = _timespanCache.TryGetValue(perm, out var value) ? value : current.ToGsRemainingTime();
         var data = PairPermData[perm];
@@ -159,6 +169,44 @@ public class KinksterPermsForClient{
             CkGui.AttachToolTip($"Toggle {dispName}'s permission.");
     }
 
+    private void DrawHcRow(Kinkster k, string name, float width, SPPID perm, string current, bool grantedAllowance)
+    {
+        using var butt = ImRaii.PushColor(ImGuiCol.Button, 0);
+        var data = ClientHcPermData[perm];
+        var isActive = !string.IsNullOrEmpty(current);
+        var isPairlocked = GlobalPermsEx.IsDevotional(current);
+
+        var pos = ImGui.GetCursorScreenPos();
+        ImGui.Dummy(new Vector2(width - (ImGui.GetFrameHeight() + ImGui.GetStyle().ItemInnerSpacing.X), ImGui.GetFrameHeight()));
+        if (grantedAllowance)
+        {
+            ImUtf8.SameLineInner();
+            CkGui.FramedIconText(FAI.UserLock, ImGuiColors.HealerGreen);
+            CkGui.AttachToolTip($"{name} {data.AllowedTT}");
+        }
+
+        // go back to the dummy and draw out the text stuff.
+        // go back and draw inside the dummy.
+        ImGui.SetCursorScreenPos(pos);
+        var iconCol = isPairlocked ? ImGuiColors.DalamudRed.ToUint() : uint.MaxValue;
+        CkGui.FramedIconText(isActive ? data.IconActive : data.IconInactive, iconCol);
+        if (isPairlocked)
+            CkGui.AttachToolTip("This status was Devotion Locked, and can only be changed by the assigner!");
+
+        // print the text row.
+        using var _ = ImRaii.PushStyle(ImGuiStyleVar.Alpha, .5f);
+        if (isActive)
+        {
+            CkGui.TextFrameAlignedInline($"{name}{data.ActionText}");
+            ImGui.SameLine(0, 0);
+            CkGui.ColorTextFrameAlignedInline(isActive ? GlobalPermsEx.PermEnactor(current).AsAnonKinkster() : "ANON.KINKSTER", CkColor.VibrantPink.Uint());
+        }
+        else
+        {
+            CkGui.TextFrameAlignedInline($"{name}{data.InactiveText}");
+        }
+    }
+
     private void PrintButtonRichText(PermDataPair pdp, string dispName, bool current, bool canEdit)
     {
         using var alpha = ImRaii.PushStyle(ImGuiStyleVar.Alpha, canEdit ? 1f : 0.5f);
@@ -183,6 +231,17 @@ public class KinksterPermsForClient{
         }
     }
 
+    public record HcStatusKinkster(FAI IconActive, FAI IconInactive, string PermLabel, string ActionText, string InactiveText, string AllowedTT);
+
+    private readonly ImmutableDictionary<SPPID, HcStatusKinkster> ClientHcPermData = ImmutableDictionary<SPPID, HcStatusKinkster>.Empty
+        .Add(SPPID.LockedFollowing,    new HcStatusKinkster(FAI.Walking,           FAI.Ban, "Forced Follow",         " is following",           " is not following anyone.",    "has allowed you to enact forced follow on them."))
+        .Add(SPPID.LockedEmoteState,   new HcStatusKinkster(FAI.PersonArrowDownToLine, FAI.Ban, "Forced Emote Lock", " is in emote lock for",   " is not emote locked.",        "has allowed you to lock them in an emote loop.")) // Handle this separately, it has its own call.
+        .Add(SPPID.IndoorConfinement,  new HcStatusKinkster(FAI.HouseLock,         FAI.Ban, "Indoor Confinement",    " is confined by",         " is not confined.",            "has allowed you to confine them indoors."))
+        .Add(SPPID.Imprisonment,       new HcStatusKinkster(FAI.Bars,              FAI.Ban, "Imprisonment",          " is imprisoned by",       " is not imprisoned.",          "has allowed you to imprison them at a desired location.--SEP--They must be nearby when giving a location besides your current position."))
+        .Add(SPPID.ChatBoxesHidden,    new HcStatusKinkster(FAI.CommentSlash,      FAI.Ban, "Chatbox Visibility",    "'s chatbox hidden by",    "'s chat is visible.",          "has allowed you to hide their chat--NL--Note: This will prevent them from seeing your messages, or anyone else's."))
+        .Add(SPPID.ChatInputHidden,    new HcStatusKinkster(FAI.CommentSlash,      FAI.Ban, "ChatInput Visibility",  "'s input hidden by",      "'s chat input is visible.",    "has allowed you to hide their chat input.--NL--Note: They will still be able to type, but can't see what they type."))
+        .Add(SPPID.ChatInputBlocked,   new HcStatusKinkster(FAI.CommentDots,       FAI.Ban, "ChatInput Blocking",    "'s input blocked by",     "'s chat input is accessible.", "has allowed you to block their chat input.--SEP--THEIR SAFEWORD IN THIS CASE IS --COL--CTRL + ALT + BACKSPACE (FUCK GO BACK)--COL--"));
+
     // adjust for prefixes and suffixs?
     public record PermDataPair(FAI IconYes, FAI IconNo, string CondTrue, string CondFalse, string Label, bool CondAfterLabel, string suffix = "");
 
@@ -192,56 +251,53 @@ public class KinksterPermsForClient{
         .Add(SPPID.ChatGarblerLocked,     new PermDataPair(FAI.Key,                   FAI.UnlockAlt,  "locked",        "unlocked",     "Chat Garbler",           true , "is"))
         .Add(SPPID.GaggedNameplate,       new PermDataPair(FAI.IdCard,                FAI.Ban,        "enabled",       "disabled",     "GagPlates",              true , "are"))
 
-        .Add(SPPID.PermanentLocks,        new PermDataPair(FAI.Infinity,              FAI.Ban,        "allows",        "prevents",     "Permanent Locks",        false))
-        .Add(SPPID.OwnerLocks,            new PermDataPair(FAI.UserLock,              FAI.Ban,        "allows",        "prevents",     "Owner Locks",            false))
-        .Add(SPPID.DevotionalLocks,       new PermDataPair(FAI.UserLock,              FAI.Ban,        "allows",        "prevents",     "Devotional Locks",       false))
+        .Add(SPPID.PermanentLocks,        new PermDataPair(FAI.Infinity,              FAI.Ban,        "allows",        "prevents",     "permanent locks",        false))
+        .Add(SPPID.OwnerLocks,            new PermDataPair(FAI.UserLock,              FAI.Ban,        "allows",        "prevents",     "owner locks",            false))
+        .Add(SPPID.DevotionalLocks,       new PermDataPair(FAI.UserLock,              FAI.Ban,        "allows",        "prevents",     "devotional locks",       false))
 
         .Add(SPPID.GagVisuals,            new PermDataPair(FAI.Surprise,              FAI.Ban,        "enabled",       "disabled",     "Gag Visuals",            true , "are"))
         .Add(SPPID.ApplyGags,             new PermDataPair(FAI.Mask,                  FAI.Ban,        "allows",        "prevents",     "applying Gags",          false))
         .Add(SPPID.LockGags,              new PermDataPair(FAI.Lock,                  FAI.Ban,        "allows",        "prevents",     "locking Gags",           false))
-        .Add(SPPID.MaxGagTime,            new PermDataPair(FAI.HourglassHalf,         FAI.None,       string.Empty,    string.Empty,   "Max Gag Time",           false))
+        .Add(SPPID.MaxGagTime,            new PermDataPair(FAI.HourglassHalf,         FAI.None,       string.Empty,    string.Empty,   "Max Gag time",           false))
         .Add(SPPID.UnlockGags,            new PermDataPair(FAI.Key,                   FAI.Ban,        "allows",        "prevents",     "unlocking Gags",         false))
         .Add(SPPID.RemoveGags,            new PermDataPair(FAI.Eraser,                FAI.Ban,        "allows",        "prevents",     "removing Gags",          false))
 
-        .Add(SPPID.RestrictionVisuals,    new PermDataPair(FAI.Tshirt,                FAI.Ban,        "enabled",       "disabled",     "Restriction Visuals",    true , "are"))
+        .Add(SPPID.RestrictionVisuals,    new PermDataPair(FAI.Tshirt,                FAI.Ban,        "enabled",       "disabled",     "Restriction visuals",    true , "are"))
         .Add(SPPID.ApplyRestrictions,     new PermDataPair(FAI.Handcuffs,             FAI.Ban,        "allows",        "prevents",     "applying Restrictions",  false))
         .Add(SPPID.LockRestrictions,      new PermDataPair(FAI.Lock,                  FAI.Ban,        "allows",        "prevents",     "locking Restrictions",   false))
-        .Add(SPPID.MaxRestrictionTime,    new PermDataPair(FAI.HourglassHalf,         FAI.None,       string.Empty,    string.Empty,   "Max Restriction Time",   false))
+        .Add(SPPID.MaxRestrictionTime,    new PermDataPair(FAI.HourglassHalf,         FAI.None,       string.Empty,    string.Empty,   "Max Restriction time",   false))
         .Add(SPPID.UnlockRestrictions,    new PermDataPair(FAI.Key,                   FAI.Ban,        "allows",        "prevents",     "unlocking Restrictions", false))
         .Add(SPPID.RemoveRestrictions,    new PermDataPair(FAI.Eraser,                FAI.Ban,        "allows",        "prevents",     "removing Restrictions",  false))
 
-        .Add(SPPID.RestraintSetVisuals,   new PermDataPair(FAI.Tshirt,                FAI.Ban,        "enabled",       "disabled",     "Restraint Visuals",      true , "are"))
-        .Add(SPPID.ApplyRestraintSets,    new PermDataPair(FAI.Handcuffs,             FAI.Ban,        "allows",        "prevents",     "Applying Restraints",    false))
-        .Add(SPPID.ApplyLayers,           new PermDataPair(FAI.LayerGroup,            FAI.Ban,        "allows",        "prevents",     "Applying Layers",        false))
-        .Add(SPPID.ApplyLayersWhileLocked,new PermDataPair(FAI.LayerGroup,            FAI.Ban,        "allows",        "prevents",     "Applying Layers While Locked", false))
-        .Add(SPPID.LockRestraintSets,     new PermDataPair(FAI.Lock,                  FAI.Ban,        "allows",        "prevents",     "Locking Restraints",     false))
-        .Add(SPPID.MaxRestraintTime,      new PermDataPair(FAI.HourglassHalf,         FAI.None,       string.Empty,    string.Empty,   "Max Restraint Time",     false))
-        .Add(SPPID.UnlockRestraintSets,   new PermDataPair(FAI.Key,                   FAI.Ban,        "allows",        "prevents",     "Unlocking Restraints",   false))
-        .Add(SPPID.RemoveLayers,          new PermDataPair(FAI.Eraser,                FAI.Ban,        "allows",        "prevents",     "Removing Layers",        false))
-        .Add(SPPID.RemoveLayersWhileLocked,new PermDataPair(FAI.Eraser,               FAI.Ban,        "allows",        "prevents",     "Removing Layers While Locked", false))
-        .Add(SPPID.RemoveRestraintSets,   new PermDataPair(FAI.Eraser,                FAI.Ban,        "allows",        "prevents",     "Removing Restraints",    false))
+        .Add(SPPID.RestraintSetVisuals,   new PermDataPair(FAI.Tshirt,                FAI.Ban,        "enabled",       "disabled",     "Restraint visuals",      true , "are"))
+        .Add(SPPID.ApplyRestraintSets,    new PermDataPair(FAI.Handcuffs,             FAI.Ban,        "allows",        "prevents",     "applying Restraints",    false))
+        .Add(SPPID.ApplyLayers,           new PermDataPair(FAI.LayerGroup,            FAI.Ban,        "allows",        "prevents",     "applying Layers",        false))
+        .Add(SPPID.ApplyLayersWhileLocked,new PermDataPair(FAI.LayerGroup,            FAI.Ban,        "allows",        "prevents",     "applying locked Layers", false))
+        .Add(SPPID.LockRestraintSets,     new PermDataPair(FAI.Lock,                  FAI.Ban,        "allows",        "prevents",     "locking Restraints",     false))
+        .Add(SPPID.MaxRestraintTime,      new PermDataPair(FAI.HourglassHalf,         FAI.None,       string.Empty,    string.Empty,   "Max Restraint time",     false))
+        .Add(SPPID.UnlockRestraintSets,   new PermDataPair(FAI.Key,                   FAI.Ban,        "allows",        "prevents",     "unlocking Restraints",   false))
+        .Add(SPPID.RemoveLayers,          new PermDataPair(FAI.Eraser,                FAI.Ban,        "allows",        "prevents",     "removing Layers",        false))
+        .Add(SPPID.RemoveLayersWhileLocked,new PermDataPair(FAI.Eraser,               FAI.Ban,        "allows",        "prevents",     "removing locked Layers", false))
+        .Add(SPPID.RemoveRestraintSets,   new PermDataPair(FAI.Eraser,                FAI.Ban,        "allows",        "prevents",     "removing Restraints",    false))
 
-        .Add(SPPID.PuppetPermSit,         new PermDataPair(FAI.Chair,                 FAI.Ban,        "allows",        "prevents",     "Sit Requests",           false))
-        .Add(SPPID.PuppetPermEmote,       new PermDataPair(FAI.Walking,               FAI.Ban,        "allows",        "prevents",     "Emote Requests",         false))
-        .Add(SPPID.PuppetPermAlias,       new PermDataPair(FAI.Scroll,                FAI.Ban,        "allows",        "prevents",     "Alias Requests",         false))
-        .Add(SPPID.PuppetPermAll,         new PermDataPair(FAI.CheckDouble,           FAI.Ban,        "allows",        "prevents",     "All Requests",           false))
+        .Add(SPPID.PuppetPermSit,         new PermDataPair(FAI.Chair,                 FAI.Ban,        "allows",        "prevents",     "sit Requests",           false))
+        .Add(SPPID.PuppetPermEmote,       new PermDataPair(FAI.Walking,               FAI.Ban,        "allows",        "prevents",     "emote Requests",         false))
+        .Add(SPPID.PuppetPermAlias,       new PermDataPair(FAI.Scroll,                FAI.Ban,        "allows",        "prevents",     "alias Requests",         false))
+        .Add(SPPID.PuppetPermAll,         new PermDataPair(FAI.CheckDouble,           FAI.Ban,        "allows",        "prevents",     "all Requests",           false))
 
-        .Add(SPPID.ApplyPositive,         new PermDataPair(FAI.SmileBeam,             FAI.Ban,        "allows",        "prevents",     "Positive Moodles",       false))
-        .Add(SPPID.ApplyNegative,         new PermDataPair(FAI.FrownOpen,             FAI.Ban,        "allows",        "prevents",     "Negative Moodles",       false))
-        .Add(SPPID.ApplySpecial,          new PermDataPair(FAI.WandMagicSparkles,     FAI.Ban,        "allows",        "prevents",     "Special Moodles",        false))
+        .Add(SPPID.ApplyPositive,         new PermDataPair(FAI.SmileBeam,             FAI.Ban,        "allows",        "prevents",     "positive Moodles",       false))
+        .Add(SPPID.ApplyNegative,         new PermDataPair(FAI.FrownOpen,             FAI.Ban,        "allows",        "prevents",     "negative Moodles",       false))
+        .Add(SPPID.ApplySpecial,          new PermDataPair(FAI.WandMagicSparkles,     FAI.Ban,        "allows",        "prevents",     "special Moodles",        false))
         .Add(SPPID.ApplyPairsMoodles,     new PermDataPair(FAI.PersonArrowUpFromLine, FAI.Ban,        "allows",        "prevents",     "applying your Moodles",  false))
         .Add(SPPID.ApplyOwnMoodles,       new PermDataPair(FAI.PersonArrowDownToLine, FAI.Ban,        "allows",        "prevents",     "applying their Moodles", false))
-        .Add(SPPID.MaxMoodleTime,         new PermDataPair(FAI.HourglassHalf,         FAI.None,       string.Empty,    string.Empty,   "Max Moodle Time",        false))
+        .Add(SPPID.MaxMoodleTime,         new PermDataPair(FAI.HourglassHalf,         FAI.None,       string.Empty,    string.Empty,   "Max Moodle time",        false))
         .Add(SPPID.PermanentMoodles,      new PermDataPair(FAI.Infinity,              FAI.Ban,        "allows",        "prevents",     "permanent Moodles",      false))
         .Add(SPPID.RemoveMoodles,         new PermDataPair(FAI.Eraser,                FAI.Ban,        "allows",        "prevents",     "removing Moodles",       false))
 
-        .Add(SPPID.HypnosisMaxTime,       new PermDataPair(FAI.HourglassHalf,         FAI.None,       string.Empty,    string.Empty,   "Max Hypnosis Time",      false))
-        .Add(SPPID.HypnosisEffect,        new PermDataPair(FAI.CameraRotate,          FAI.Ban,        "allows",        "prevents",     "Hypnotic Effect Sending",false))
+        .Add(SPPID.HypnosisMaxTime,       new PermDataPair(FAI.HourglassHalf,         FAI.None,       string.Empty,    string.Empty,   "Max hypnosis time",      false))
+        .Add(SPPID.HypnosisEffect,        new PermDataPair(FAI.CameraRotate,          FAI.Ban,        "allows",        "prevents",     "Hypno effect sending",   false))
 
-        .Add(SPPID.PatternStarting,       new PermDataPair(FAI.Play,                  FAI.Ban,        "allows",        "prevents",     "Pattern Starting",       false))
-        .Add(SPPID.PatternStopping,       new PermDataPair(FAI.Stop,                  FAI.Ban,        "allows",        "prevents",     "Pattern Stopping",       false))
-        .Add(SPPID.AlarmToggling,         new PermDataPair(FAI.Bell,                  FAI.Ban,        "allows",        "prevents",     "Alarm Toggling",         false))
-        .Add(SPPID.TriggerToggling,       new PermDataPair(FAI.FileMedicalAlt,        FAI.Ban,        "allows",        "prevents",     "Trigger Toggling",       false))
-
-        .Add(SPPID.HardcoreModeState,     new PermDataPair(FAI.Bolt,                  FAI.Ban,        "enabled",       "disabled",     "Hardcore Mode",          true , "is"));
-}
+        .Add(SPPID.PatternStarting,       new PermDataPair(FAI.Play,                  FAI.Ban,        "allows",        "prevents",     "Pattern starting",       false))
+        .Add(SPPID.PatternStopping,       new PermDataPair(FAI.Stop,                  FAI.Ban,        "allows",        "prevents",     "Pattern stopping",       false))
+        .Add(SPPID.AlarmToggling,         new PermDataPair(FAI.Bell,                  FAI.Ban,        "allows",        "prevents",     "Alarm toggling",         false))
+        .Add(SPPID.TriggerToggling,       new PermDataPair(FAI.FileMedicalAlt,        FAI.Ban,        "allows",        "prevents",     "Trigger toggling",       false));}

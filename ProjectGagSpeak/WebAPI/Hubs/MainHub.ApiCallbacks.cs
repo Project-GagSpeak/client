@@ -555,7 +555,6 @@ public partial class MainHub
     public Task Callback_ListenerName(UserData user, string trueNameWithWorld)
     {
         Logger.LogDebug($"Received a Kinkster {user.UID}'s updated puppeteer name", LoggerType.Callbacks);
-        Generic.Safe(() => _kinksterListener.NewListenerName(user, trueNameWithWorld));
         Generic.Safe(() => _puppetListener.UpdateListener(user.UID, trueNameWithWorld));
         return Task.CompletedTask;
     }

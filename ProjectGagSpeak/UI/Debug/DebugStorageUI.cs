@@ -1,6 +1,7 @@
 using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Helpers;
+using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.FileSystems;
 using GagSpeak.Gui.Components;
@@ -366,20 +367,24 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
             return;
         }
 
-        foreach (var (alias, idx) in _puppeteer.PairAliasStorage.WithIndex())
+        foreach (var (namedStorage, idx) in _puppeteer.PairAliasStorage.WithIndex())
+            DrawNamedAlias("client", namedStorage.Key, namedStorage.Value);
+    }
+
+    private void DrawNamedAlias(string uid, string label, NamedAliasStorage storage)
+    {
+        using var nodeMain = ImRaii.TreeNode($"{label}'s Alias Data");
+        if (!nodeMain) return;
+
+        CkGui.ColorText($"Listener Name:", ImGuiColors.ParsedGold);
+        CkGui.TextInline(storage.ExtractedListenerName);
+
+        foreach (var aliasTrigger in storage.Storage.Items)
         {
-            using var pairNode = ImRaii.TreeNode($"{alias.Key}##{idx}");
-            if (!pairNode)
+            using var node = ImRaii.TreeNode($"{aliasTrigger.Label}##{aliasTrigger.Identifier}");
+            if (!node)
                 continue;
-            var world = alias.Value.StoredNameWorld;
-            var listener = alias.Value.ExtractedListenerName;
-            foreach (var aliasTrigger in alias.Value.Storage.Items)
-            {
-                using var aliasNode = ImRaii.TreeNode($"{aliasTrigger.Label}##{idx}");
-                if (!aliasNode)
-                    continue;
-                DrawAliasTrigger(aliasTrigger);
-            }
+            DrawAliasTrigger(aliasTrigger);
         }
     }
 

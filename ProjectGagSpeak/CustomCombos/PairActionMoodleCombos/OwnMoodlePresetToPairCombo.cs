@@ -16,14 +16,11 @@ namespace GagSpeak.CustomCombos.Moodles;
 
 public sealed class OwnMoodlePresetToPairCombo : CkMoodleComboButtonBase<MoodlePresetInfo>
 {
-    private Action PostButtonPress;
     private int _maxPresetCount => MoodleCache.IpcData.PresetList.Max(x => x.Statuses.Count);
     private float _iconWithPadding => IconSize.X + ImGui.GetStyle().ItemInnerSpacing.X;
-    public OwnMoodlePresetToPairCombo(ILogger log, MainHub hub, Kinkster pair, float scale, Action postButtonPress)
+    public OwnMoodlePresetToPairCombo(ILogger log, MainHub hub, Kinkster pair, float scale)
         : base(log, hub, pair, scale, () => [ ..MoodleCache.IpcData.PresetList.OrderBy(x => x.Title) ])
-    {
-        PostButtonPress = postButtonPress;
-    }
+    { }
 
     protected override bool DisableCondition()
         => Current.GUID == Guid.Empty || !_kinksterRef.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyTheirMoodlesToYou);
@@ -31,11 +28,11 @@ public sealed class OwnMoodlePresetToPairCombo : CkMoodleComboButtonBase<MoodleP
     protected override string ToString(MoodlePresetInfo obj)
         => obj.Title.StripColorTags();
 
-    public bool DrawApplyPresets(string id, float width, string buttonTT, Action? onButtonSuccess = null)
+    public bool DrawApplyPresets(string id, float width, string buttonTT)
     {
         InnerWidth = width + _iconWithPadding * _maxPresetCount;
         var prevLabel = Current.GUID == Guid.Empty ? "Select Presets.." : Current.Title.StripColorTags();
-        return DrawComboButton(id, prevLabel, width, true, buttonTT, onButtonSuccess);
+        return DrawComboButton(id, prevLabel, width, true, buttonTT);
     }
 
     protected override bool DrawSelectable(int globalIdx, bool selected)
@@ -79,34 +76,28 @@ public sealed class OwnMoodlePresetToPairCombo : CkMoodleComboButtonBase<MoodleP
     {
         var statuses = new List<MoodlesStatusInfo>(item.Statuses.Count);
         foreach (var guid in item.Statuses)
-        {
             if (MoodleCache.IpcData.Statuses.TryGetValue(guid, out var s))
                 statuses.Add(s);
-        }
         // Check application.
         return PermissionHelper.CanApplyPairStatus(_kinksterRef.PairPerms, statuses);
     }
 
-    protected override async Task<bool> OnApplyButton(MoodlePresetInfo item)
+    protected override void OnApplyButton(MoodlePresetInfo item)
     {
-        var statuses = new List<MoodlesStatusInfo>();
-        foreach (var guid in item.Statuses)
-            if (MoodleCache.IpcData.Statuses.TryGetValue(guid, out var s))
-                statuses.Add(s);
+        if (!CanDoAction(item))
+            return;
 
-        var dto = new MoodlesApplierByStatus(_kinksterRef.UserData, statuses, MoodleType.Preset);
-        var res = await _mainHub.UserApplyMoodlesByStatus(dto);
-        if (res.ErrorCode is GagSpeakApiEc.Success)
+        UiService.SetUITask(async () =>
         {
-            Log.LogDebug($"Applying moodle preset {item.Title} on {_kinksterRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
-            PostButtonPress?.Invoke();
-            return true;
-        }
-        else
-        {
-            Log.LogDebug($"Failed to apply moodle preset {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
-            PostButtonPress?.Invoke();
-            return false;
-        }
+            var statuses = new List<MoodlesStatusInfo>();
+            foreach (var guid in item.Statuses)
+                if (MoodleCache.IpcData.Statuses.TryGetValue(guid, out var s))
+                    statuses.Add(s);
+
+            var dto = new MoodlesApplierByStatus(_kinksterRef.UserData, statuses, MoodleType.Preset);
+            var res = await _mainHub.UserApplyMoodlesByStatus(dto);
+            if (res.ErrorCode is GagSpeakApiEc.Success)
+                Log.LogDebug($"Failed to apply moodle preset {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
+        });
     }
 }

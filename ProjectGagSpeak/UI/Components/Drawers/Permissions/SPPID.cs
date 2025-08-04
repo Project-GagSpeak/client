@@ -138,14 +138,14 @@ public static class SPPIDExtensions
 
             SPPID.HardcoreModeState     => (nameof(PairPerms.InHardcore),                     PermissionType.PairPerm),
             SPPID.PairLockedStates      => (nameof(PairPerms.PairLockedStates),               PermissionType.PairPerm),
-/*          SPPID.LockedFollowing          => (nameof(GlobalPerms.LockedFollowing),                 PermissionType.Global),
+            SPPID.LockedFollowing       => (nameof(GlobalPerms.LockedFollowing),              PermissionType.Global),
             SPPID.LockedEmoteState      => (nameof(GlobalPerms.LockedEmoteState),             PermissionType.Global),
-            SPPID.IndoorConfinement            => (nameof(GlobalPerms.IndoorConfinement),                   PermissionType.Global),
+            SPPID.IndoorConfinement     => (nameof(GlobalPerms.IndoorConfinement),            PermissionType.Global),
             SPPID.ChatBoxesHidden       => (nameof(GlobalPerms.ChatBoxesHidden),              PermissionType.Global),
             SPPID.ChatInputHidden       => (nameof(GlobalPerms.ChatInputHidden),              PermissionType.Global),
             SPPID.ChatInputBlocked      => (nameof(GlobalPerms.ChatInputBlocked),             PermissionType.Global),
-            SPPID.GarbleChannelEditing  => (nameof(GlobalPerms.AllowedGarblerChannels),  PermissionType.Global),*/
-
+            
+            SPPID.GarbleChannelEditing  => (nameof(PairPerms.AllowGarbleChannelEditing),      PermissionType.PairPerm),
             SPPID.HypnoticImage         => (nameof(PairPerms.AllowHypnoImageSending),         PermissionType.PairPerm),
             SPPID.PiShockShareCode      => (nameof(PairPerms.PiShockShareCode),               PermissionType.PairPerm),
             SPPID.MaxVibrateDuration    => (nameof(PairPerms.MaxVibrateDuration),             PermissionType.PairPerm),

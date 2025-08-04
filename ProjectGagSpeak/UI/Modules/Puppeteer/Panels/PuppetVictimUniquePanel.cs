@@ -43,10 +43,10 @@ public class PuppetVictimUniquePanel : DisposableMediatorSubscriberBase
         KinksterManager kinksters, PuppeteerManager manager, ControllerUniquePanel controllerPanel)
         : base(logger, mediator)
     {
-        _hub = hub;
-        _manager = manager;
-        _aliasDrawer = aliasDrawer;
         _controllerPanel = controllerPanel;
+        _hub = hub;
+        _aliasDrawer = aliasDrawer;
+        _manager = manager;
 
         _pairCombo = new PairCombo(logger, kinksters, favorites, () => [
             ..kinksters.DirectPairs
@@ -214,34 +214,34 @@ public class PuppetVictimUniquePanel : DisposableMediatorSubscriberBase
         }
     }
 
-    private void DrawListenerNameBracketsRow(float width, Kinkster? kinkster)
+    private void DrawListenerNameBracketsRow(float width, Kinkster? k)
     {
         var bracketsWidth = ImGui.GetTextLineHeight() * 2 + ImGui.GetStyle().ItemSpacing.X;
-        var listenerName = kinkster?.LastPairAliasData.StoredNameWorld ?? string.Empty;
-        var tooltip = kinkster is null
+        var listenerName = k is null ? string.Empty : _manager.PairAliasStorage.GetValueOrDefault(k.UserData.UID)?.ExtractedListenerName ?? string.Empty;
+        var tooltip = k is null
             ? "No Kinkster selected, cannot display Listener Name."
             : $"The Player who can puppeteer you with the below phrases." +
-            $"--SEP--This should be {kinkster.GetNickAliasOrUid()}'s IGN. If it's not, they need to send you theirs.";
+            $"--SEP--This should be {k.GetNickAliasOrUid()}'s IGN. If it's not, they need to send you theirs.";
 
         CkGui.FramedIconText(FAI.Eye, !listenerName.IsNullOrEmpty() ? CkColor.IconCheckOn.Uint() : uint.MaxValue);
         CkGui.AttachToolTip(tooltip);
         ImUtf8.SameLineInner();
         var listenerWidth = ImGui.GetContentRegionAvail().X - bracketsWidth;
         using (CkRaii.Child("ListenerName", new Vector2(listenerWidth, ImGui.GetFrameHeight()), CkColor.FancyHeaderContrast.Uint(), dFlags: DFlags.RoundCornersAll))
-            CkGui.CenterTextAligned(kinkster?.LastPairAliasData.ExtractedListenerName ?? "No Kinkster Selected!");
+            CkGui.CenterTextAligned(listenerName ?? "No Name Stored!");
         CkGui.AttachToolTip(tooltip);
 
         ImUtf8.SameLineInner();
-        var sChar = kinkster?.OwnPerms.StartChar.ToString() ?? string.Empty;
-        var eChar = kinkster?.OwnPerms.EndChar.ToString() ?? string.Empty;
+        var sChar = k?.OwnPerms.StartChar.ToString() ?? string.Empty;
+        var eChar = k?.OwnPerms.EndChar.ToString() ?? string.Empty;
         ImGui.SetNextItemWidth(ImGui.GetTextLineHeight());
         ImGui.InputText("##BracketBegin", ref sChar, 1);
-        if (ImGui.IsItemDeactivated() && kinkster is not null && sChar.Length == 1)
+        if (ImGui.IsItemDeactivated() && k is not null && sChar.Length == 1)
         {
-            if (sChar != kinkster.OwnPerms.StartChar.ToString())
+            if (sChar != k.OwnPerms.StartChar.ToString())
             {
                 Logger.LogTrace($"Updating Start Bracket as it changed to: {sChar}");
-                UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, nameof(PairPerms.StartChar), sChar[0]));
+                UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.StartChar), sChar[0]));
             }
         }
         CkGui.AttachToolTip($"Optional Start Bracket to scope the text command in.");
@@ -249,12 +249,12 @@ public class PuppetVictimUniquePanel : DisposableMediatorSubscriberBase
         ImUtf8.SameLineInner();
         ImGui.SetNextItemWidth(ImGui.GetTextLineHeight());
         ImGui.InputText("##BracketEnd", ref eChar, 1);
-        if (ImGui.IsItemDeactivated() && kinkster is not null && eChar.Length == 1)
+        if (ImGui.IsItemDeactivated() && k is not null && eChar.Length == 1)
         {
-            if (eChar != kinkster.OwnPerms.EndChar.ToString())
+            if (eChar != k.OwnPerms.EndChar.ToString())
             {
                 Logger.LogTrace($"Updating End Bracket as it changed to: {eChar}");
-                UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, nameof(PairPerms.EndChar), eChar[0]));
+                UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.EndChar), eChar[0]));
             }
         }
         CkGui.AttachToolTip($"Optional End Bracket to scope the text command in.");

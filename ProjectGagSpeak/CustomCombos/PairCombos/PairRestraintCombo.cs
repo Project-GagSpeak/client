@@ -210,7 +210,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
             ImGui.BeginTooltip();
 
             if (!setItem.Description.IsNullOrWhitespace() && !setItem.Description.Contains("Enter Description Here..."))
-                CkGui.WrappedTooltipText(setItem.Description, 35f, ImGuiColors.ParsedPink);
+                CkGui.TextWrappedTooltipFormat(setItem.Description, 35f, ImGuiColors.ParsedPink);
 
             ImGui.EndTooltip();
         }

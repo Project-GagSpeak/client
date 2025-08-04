@@ -36,13 +36,14 @@ public abstract class CkMoodleComboButtonBase<T> : CkFilterComboCache<T>
     /// <summary> The condition that when met, prevents the combo from being interacted. </summary>
     protected abstract bool DisableCondition();
     protected abstract bool CanDoAction(T item);
-    protected abstract Task<bool> OnApplyButton(T item);
-    protected virtual Task<bool> OnRemoveButton(T item) => Task.FromResult(true);
+    protected abstract void OnApplyButton(T item);
+    protected virtual void OnRemoveButton(T item)
+    { }
 
     /// <summary> The virtual function for all filter combo buttons. </summary>
     /// <returns> True if anything was selected, false otherwise. </returns>
     /// <remarks> The action passed in will be invoked if the button interaction was successful. </remarks>
-    protected bool DrawComboButton(string label, string preview, float width, bool isApply, string tt, Action? onButtonSuccess = null)
+    protected bool DrawComboButton(string label, string preview, float width, bool isApply, string tt)
     {
         // we need to first extract the width of the button.
         var buttonText = isApply ? "Apply" : "Remove";
@@ -57,19 +58,10 @@ public abstract class CkMoodleComboButtonBase<T> : CkFilterComboCache<T>
         {
             if (Current is { } item)
             {
-                _ = Task.Run(async () =>
-                {
-                    if (isApply)
-                    {
-                        if (await OnApplyButton(item))
-                            onButtonSuccess?.Invoke();
-                    }
-                    else
-                    {
-                        if (await OnRemoveButton(item))
-                            onButtonSuccess?.Invoke();
-                    }
-                });
+                if (isApply)
+                    OnApplyButton(item);
+                else
+                    OnRemoveButton(item);
             }
         }
         CkGui.AttachToolTip(tt);

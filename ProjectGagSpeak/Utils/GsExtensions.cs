@@ -26,6 +26,9 @@ public static class GsExtensions
         return configuration.Authentications.Count > 0;
     }
 
+    public static string AsAnonKinkster(this string kinksterUid, bool isLegacy = true)
+        => $"Kinkster-{kinksterUid[^(isLegacy ? 4 : 3)..]}";
+
     /// <summary> Linearly interpolates between two values based on a factor t. </summary>
     /// <remarks> Think, “What number is 35% between 56 and 132?" </remarks>
     /// <param name="a"> lower bound value </param>

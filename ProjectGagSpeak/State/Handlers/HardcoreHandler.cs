@@ -1,5 +1,4 @@
 using CkCommons;
-using Dalamud.Game.ClientState.Objects;
 using GagSpeak.GameInternals;
 using GagSpeak.GameInternals.Addons;
 using GagSpeak.Interop.Helpers;
@@ -9,7 +8,6 @@ using GagSpeak.Services;
 using GagSpeak.Services.Controller;
 using GagSpeak.Utils;
 using GagspeakAPI.Data.Struct;
-using JetBrains.Annotations;
 
 namespace GagSpeak.State.Handlers;
 

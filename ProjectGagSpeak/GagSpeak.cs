@@ -157,7 +157,6 @@ public static class GagSpeakServiceExtensions
 
         // MufflerCore
         .AddSingleton<Ipa_EN_FR_JP_SP_Handler>()
-        .AddSingleton<MufflerService>()
 
         // Player Control
         .AddSingleton<HcTaskManager>()
@@ -215,6 +214,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<DataDistributionService>()
         .AddSingleton<DtrBarService>()
         .AddSingleton<EmoteService>()
+        .AddSingleton<InteractionsService>()
         .AddSingleton<MufflerService>()
         .AddSingleton<NameplateService>()
         .AddSingleton<NotificationService>()
@@ -401,6 +401,8 @@ public static class GagSpeakServiceExtensions
         .AddScoped<PresetLogicDrawer>()
         .AddScoped<ClientPermsForKinkster>()
         .AddScoped<KinksterPermsForClient>()
+        .AddScoped<KinksterHardcore>()
+        .AddScoped<KinksterShockCollar>()
 
         // Scoped Migrations
         .AddScoped<WindowMediatorSubscriberBase, MigrationsUI>()

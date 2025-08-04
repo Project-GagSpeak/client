@@ -145,7 +145,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawPairRestrictions(pair.UserData.UID, pair);
         DrawRestraint(pair.UserData.UID, pair);
         DrawAlias(pair.UserData.UID, "Global", pair.LastGlobalAliasData);
-        DrawAlias(pair.UserData.UID, "Unique", pair.LastPairAliasData.Storage);
+        DrawNamedAlias(pair.UserData.UID, "Unique", pair.LastPairAliasData);
         DrawToybox(pair.UserData.UID, pair);
         DrawKinksterCache(pair);
         ImGui.Separator();
@@ -240,6 +240,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
             DrawPermissionRowString("Chat Boxes Hidden", perms.ChatBoxesHidden);
             DrawPermissionRowString("Chat Input Hiddeen", perms.ChatInputHidden);
             DrawPermissionRowString("Chat Input Blocked", perms.ChatInputBlocked);
+            DrawPermissionRowBool("In Confinement Task", perms.InConfinementTask);
 
             ImGui.TableNextRow();
             DrawPermissionRowString("Shock Collar Code", perms.GlobalShockShareCode);
@@ -619,6 +620,29 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         foreach (var item in cursedItems)
             ImGui.TextUnformatted(item.ToString());
 
+    }
+
+    private void DrawNamedAlias(string uid, string label, NamedAliasStorage storage)
+    {
+        using var nodeMain = ImRaii.TreeNode($"{label}'s Alias Data");
+        if (!nodeMain) return;
+
+        CkGui.ColorText($"Listener Name:", ImGuiColors.ParsedGold);
+        CkGui.TextInline(storage.ExtractedListenerName);
+
+        using (ImRaii.Table("##debug-aliasdata-" + uid, 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        {
+
+            ImGui.TableSetupColumn("Alias Input");
+            ImGui.TableSetupColumn("Alias Output");
+            ImGui.TableHeadersRow();
+            foreach (var aliasData in storage.Storage.Items)
+            {
+                ImGuiUtil.DrawTableColumn(aliasData.InputCommand);
+                ImGuiUtil.DrawTableColumn("(Output sections being worked on atm?)");
+                ImGui.TableNextRow();
+            }
+        }
     }
 
     private void DrawAlias(string uid, string label, AliasStorage storage)

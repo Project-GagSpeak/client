@@ -106,7 +106,7 @@ public sealed class PairTriggerCombo : CkFilterComboIconTextButton<KinksterTrigg
             if (string.IsNullOrWhiteSpace(item.Description))
                 ImGui.TextUnformatted("<None Provided>");
             else
-                CkGui.WrappedTooltipText(item.Description, 35f, ImGuiColors.ParsedPink);
+                CkGui.TextWrappedTooltipFormat(item.Description, 35f, ImGuiColors.ParsedPink);
 
             // draw trigger priority
             CkGui.ColorText("Priority:", ImGuiColors.ParsedGold);

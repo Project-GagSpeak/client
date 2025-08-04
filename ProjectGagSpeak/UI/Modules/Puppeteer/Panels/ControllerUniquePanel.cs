@@ -10,6 +10,7 @@ using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Textures;
+using GagSpeak.State.Listeners;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
@@ -21,17 +22,19 @@ public sealed class ControllerUniquePanel
 {
     private readonly ILogger<ControllerUniquePanel> _logger;
     private readonly MainHub _hub;
+    private readonly KinksterListener _kinksterUpdater;
     private readonly AliasItemDrawer _aliasDrawer;
 
     private string _searchStr = string.Empty;
     private IReadOnlyList<AliasTrigger> _filteredItems = new List<AliasTrigger>();
     private TagCollection _pairTriggerTags = new();
 
-    public ControllerUniquePanel(ILogger<ControllerUniquePanel> logger, 
-        MainHub hub, MainConfig config, AliasItemDrawer aliasDrawer)
+    public ControllerUniquePanel(ILogger<ControllerUniquePanel> logger, MainHub hub, 
+        MainConfig config, KinksterListener kinksterUpdater, AliasItemDrawer aliasDrawer)
     {
         _logger = logger;
         _hub = hub;
+        _kinksterUpdater = kinksterUpdater;
         _aliasDrawer = aliasDrawer;
 
         UpdateFilteredItems();
@@ -244,10 +247,13 @@ public sealed class ControllerUniquePanel
         UiService.SetUITask(async () =>
         {
             var res = await _hub.UserSendNameToKinkster(new(kinkster.UserData), nameInThread);
-            if (res.ErrorCode is GagSpeakApiEc.Success)
-                _logger.LogInformation($"Updated {kinkster.GetNickAliasOrUid()} with your Name!");
-            else
+            if (res.ErrorCode is not GagSpeakApiEc.Success)
+            {
                 _logger.LogError($"Failed to perform UserSendNameToKinker: {res.ErrorCode}");
+                return;
+            }
+            // Success, update listener name on pair end (since we never get the callback).
+            _kinksterUpdater.NewListenerName(kinkster.UserData, nameInThread);
         });
     }
 

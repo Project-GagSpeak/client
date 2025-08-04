@@ -1,15 +1,17 @@
-using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.Raii;using Dalamud.Interface.Colors;using Dalamud.Interface.Utility.Raii;using GagSpeak.Kinksters;using GagSpeak.PlayerClient;using GagSpeak.Services;using GagSpeak.Utils;using GagSpeak.WebAPI;using GagspeakAPI.Data.Permissions;using GagspeakAPI.Enums;using GagspeakAPI.Extensions;using ImGuiNET;using Lumina;using OtterGui;using OtterGui.Text;using System.Collections.Immutable;namespace GagSpeak.Gui.Components;
+using Buttplug.Client;using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.Raii;using CkCommons.RichText;using Dalamud.Interface.Colors;using Dalamud.Interface.Utility;using Dalamud.Interface.Utility.Raii;using GagSpeak.Gui.MainWindow;using GagSpeak.Kinksters;using GagSpeak.PlayerClient;using GagSpeak.Services;using GagSpeak.Utils;using GagSpeak.WebAPI;using GagspeakAPI.Data.Permissions;using GagspeakAPI.Extensions;using ImGuiNET;using OtterGui;using OtterGui.Text;using OtterGui.Text.EndObjects;using System.Collections.Immutable;namespace GagSpeak.Gui.Components;
 public class ClientPermsForKinkster{
     private readonly MainHub _hub;
+    private readonly KinksterShockCollar _shockies;
     private readonly PresetLogicDrawer _presets;
-    private readonly PiShockProvider _shockies;
-    private static IconCheckboxEx EditAccessCheckbox = new(FAI.Pen, 0xFF00FF00, 0);
 
-    public ClientPermsForKinkster(MainHub hub, PresetLogicDrawer presets, PiShockProvider shockies)
+    private static IconCheckboxEx EditAccessCheckbox = new(FAI.Pen, 0xFF00FF00, 0);
+    private static IconCheckboxEx HardcoreCheckbox = new(FAI.UserLock, 0xFF00FF00, 0xFF0000FF);
+
+    public ClientPermsForKinkster(MainHub hub, PresetLogicDrawer presets, KinksterShockCollar shockies)
     {
         _hub = hub;
-        _presets = presets;
         _shockies = shockies;
+        _presets = presets;
     }
 
     // internal storage.
@@ -35,13 +37,43 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
         DrawPermRow(kinkster, dispName,   width, SPPID.HypnosisMaxTime,       kinkster.OwnPerms.MaxHypnosisTime,      kinkster.OwnPermAccess.HypnosisMaxTimeAllowed );
         DrawPermRow(kinkster, dispName,   width, SPPID.HypnosisEffect,        kinkster.OwnPerms.HypnoEffectSending,   kinkster.OwnPermAccess.HypnosisSendingAllowed );        ImGui.Separator();
         ImGui.TextUnformatted("Toybox Permissions");        DrawPermRow(kinkster, dispName,   width, SPPID.PatternStarting,       kinkster.OwnPerms.ExecutePatterns,      kinkster.OwnPermAccess.ExecutePatternsAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.PatternStopping,       kinkster.OwnPerms.StopPatterns,         kinkster.OwnPermAccess.StopPatternsAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.AlarmToggling,         kinkster.OwnPerms.ToggleAlarms,         kinkster.OwnPermAccess.ToggleAlarmsAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.TriggerToggling,       kinkster.OwnPerms.ToggleTriggers,       kinkster.OwnPermAccess.ToggleTriggersAllowed );        ImGui.Separator();
-        ImGui.TextUnformatted("Hardcore Permissions");        DrawPermRow(kinkster, dispName,   width, SPPID.HardcoreModeState,     kinkster.OwnPerms.InHardcore,                   kinkster.OwnPerms.InHardcore );        DrawPermRow(kinkster, dispName,   width, SPPID.PairLockedStates,      kinkster.OwnPerms.PairLockedStates,             true );        DrawHcPermRow(kinkster, dispName, width, SPPID.LockedFollowing,       globals.LockedFollowing,                        kinkster.OwnPerms.AllowLockedFollowing );        DrawHcPermRow(kinkster, dispName, width, SPPID.LockedEmoteState,      globals.LockedEmoteState,                       kinkster.OwnPerms.AllowLockedEmoting );        DrawHcPermRow(kinkster, dispName, width, SPPID.IndoorConfinement,     globals.IndoorConfinement,                      kinkster.OwnPerms.AllowIndoorConfinement );
-        DrawHcPermRow(kinkster, dispName, width, SPPID.Imprisonment,          globals.Imprisonment,                           kinkster.OwnPerms.AllowImprisonment );        DrawHcPermRow(kinkster, dispName, width, SPPID.ChatBoxesHidden,       globals.ChatBoxesHidden,                        kinkster.OwnPerms.AllowHidingChatBoxes );        DrawHcPermRow(kinkster, dispName, width, SPPID.ChatInputHidden,       globals.ChatInputHidden,                        kinkster.OwnPerms.AllowHidingChatInput );        DrawHcPermRow(kinkster, dispName, width, SPPID.ChatInputBlocked,      globals.ChatInputBlocked,                       kinkster.OwnPerms.AllowChatInputBlocking );
-        DrawHcPermRow(kinkster, dispName, width, SPPID.HypnoticImage,         globals.HypnosisCustomEffect,                   kinkster.OwnPerms.AllowHypnoImageSending );
-        // draw garble channel editing here.
 
+        // Probably a good idea to add a warning here on a popup or something idk.        ImGui.TextUnformatted("Hardcore Permissions");
+        ImUtf8.SameLineInner();
+        CkGui.HoverIconText(FAI.QuestionCircle, ImGuiColors.TankBlue.ToUint(), ImGui.GetColorU32(ImGuiCol.TextDisabled));
+        if(ImGui.IsItemHovered())
+        {
+            using (UiFontService.UidFont.Push())
+            {
+                CkGui.AttachToolTip($"--COL--IMPORTANT:--COL-- Once in hardcore mode, you can only change EditAccess for {dispName}." +
+                    $"--NL--{dispName} will have control over any permissions they have edit access to instead." +
+                    "--NL--Be sure you are ok with this before enabling!", color: ImGuiColors.DalamudRed);
+            }
+        }
 
-        // the "special child"        DrawPiShockPairPerms(kinkster, dispName, width, kinkster.OwnPerms, kinkster.OwnPermAccess);    }
+        // True when they wish to enter hardcore mode.
+        if (DrawHardcoreModeRow(kinkster, dispName, width))
+            ImGui.OpenPopup("Confirm Hardcore");
+
+        DrawHcBasicPerm(kinkster, dispName, width, SPPID.GarbleChannelEditing, kinkster.OwnPerms.AllowGarbleChannelEditing);
+        DrawHcBasicPerm(kinkster, dispName, width, SPPID.HypnoticImage, kinkster.OwnPerms.AllowHypnoImageSending);
+        DrawHcStatePerm(kinkster, dispName, width, SPPID.LockedFollowing, nameof(GlobalPerms.LockedFollowing), globals.LockedFollowing, kinkster.OwnPerms.AllowLockedFollowing);
+        DrawHcEmotePerm(kinkster, dispName, width, SPPID.LockedEmoteState, nameof(GlobalPerms.LockedEmoteState), globals.LockedEmoteState, kinkster.OwnPerms.AllowLockedSitting, kinkster.OwnPerms.AllowLockedEmoting);
+        DrawHcStatePerm(kinkster, dispName, width, SPPID.IndoorConfinement, nameof(GlobalPerms.IndoorConfinement), globals.IndoorConfinement, kinkster.OwnPerms.AllowIndoorConfinement);
+        DrawHcStatePerm(kinkster, dispName, width, SPPID.Imprisonment, nameof(GlobalPerms.Imprisonment), globals.Imprisonment, kinkster.OwnPerms.AllowImprisonment);
+        DrawHcStatePerm(kinkster, dispName, width, SPPID.ChatBoxesHidden, nameof(GlobalPerms.ChatBoxesHidden), globals.ChatBoxesHidden, kinkster.OwnPerms.AllowHidingChatBoxes);
+        DrawHcStatePerm(kinkster, dispName, width, SPPID.ChatInputHidden, nameof(GlobalPerms.ChatInputHidden), globals.ChatInputHidden, kinkster.OwnPerms.AllowHidingChatInput);
+        DrawHcStatePerm(kinkster, dispName, width, SPPID.ChatInputBlocked, nameof(GlobalPerms.ChatInputBlocked), globals.ChatInputBlocked, kinkster.OwnPerms.AllowChatInputBlocking);
+        ImGui.Separator();
+
+        // Hardcore confirm modal.
+        ShowConfirmHardcoreIfValid(kinkster, dispName);
+
+        ImGui.TextUnformatted("Shock Collar Permissions");
+        if (OwnGlobals.Perms is not { } p || !p.HasValidShareCode())
+            CkGui.ColorTextCentered("Must have a valid Global ShareCode first!", ImGuiColors.DalamudRed);
+        else
+            _shockies.DrawClientPermsForKinkster(width, kinkster, dispName);    }
 
     private void DrawPermRow(Kinkster kinkster, string dispName, float width, SPPID perm, bool current, bool canEdit)
         => DrawPermRowCommon(kinkster, dispName, width, perm, current, canEdit, () => !current);
@@ -89,7 +121,6 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
         if (EditAccessCheckbox.Draw($"##{perm}", canEdit, out var newVal) && canEdit != newVal)
             UiService.SetUITask(async () => await PermissionHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.OwnPermAccess, perm.ToPermAccessValue(), newVal));
         CkGui.AttachToolTip($"{dispName} {(canEdit ? "can" : "can not")} change your {data.PermLabel} setting.");
-        
     }
 
     // optimize later and stuff.
@@ -205,155 +236,249 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
         }
     }
 
-    private void DrawHcPermRow(Kinkster kinkster, string dispName, float width, SPPID perm, string current, bool canUse)
+    // True if the user wished to enter hardcore mode.
+    private bool DrawHardcoreModeRow(Kinkster k, string name, float width)
     {
-        using var s = ImRaii.PushStyle(ImGuiStyleVar.Alpha, kinkster.OwnPerms.InHardcore ? 1f : 0.5f);
-        using var c = ImRaii.PushColor(ImGuiCol.Button, new Vector4(1.0f, 1.0f, 1.0f, 0.0f));
-        
-        var data = ClientPermData[perm];
-        var buttonW = width - ImGui.GetFrameHeightWithSpacing();
+        using var _ = ImRaii.PushColor(ImGuiCol.Button, 0);
+
+        var curState = k.OwnPerms.InHardcore;
+        var devotionalState = k.OwnPerms.DevotionalLocks;
+        var buttonW = width - (ImGui.GetFrameHeight() + ImGui.GetStyle().ItemInnerSpacing.X);
+        var iconCol = devotionalState ? ImGuiColors.HealerGreen.ToUint() : ImGuiColors.DalamudRed.ToUint();
         var pos = ImGui.GetCursorScreenPos();
-        var isActive = !current.IsNullOrWhitespace();
 
-        using (ImRaii.Disabled(kinkster.OwnPerms.InHardcore))
+        // change to ckgui for disabled?
+        if (ImGui.Button($"##HardcoreToggle", new Vector2(buttonW, ImGui.GetFrameHeight())))
         {
-            // Be better corby... after all your UI work, you can make a better design for this...
-            var button = ImGui.Button("##client" + perm, new Vector2(buttonW, ImGui.GetFrameHeight()));
-            ImGui.SetCursorScreenPos(pos);
-            using (ImRaii.Group())
-            {
-                CkGui.FramedIconText(isActive ? data.IconYes : data.IconNo);
-                CkGui.TextFrameAlignedInline(data.PermLabel);
-                ImGui.SameLine();
-                CkGui.ColorTextBool(isActive ? data.AllowedStr : data.BlockedStr, isActive);
-                CkGui.TextFrameAlignedInline(".");
-            }
-            CkGui.AttachToolTip($"You have {(isActive ? data.AllowedStr : data.BlockedStr)} {dispName} {(isActive ? data.PairAllowedTT : data.PairBlockedTT)}.");
-
-            if (button)
-            {
-                var res = perm.ToPermValue();
-                if (res.name.IsNullOrEmpty())
-                    return;
-
-                UiService.SetUITask(async () =>
-                {
-                    switch (res.type)
-                    {
-                        case PermissionType.Global: await _hub.UserChangeOwnGlobalPerm(res.name, !canUse); break;
-                        case PermissionType.PairPerm: await PermissionHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.PairPerms, res.name, !canUse); break;
-                        case PermissionType.PairAccess: await PermissionHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.OwnPermAccess, res.name, !canUse); break;
-                        default: break;
-                    }
-                });
-            }
+            // return true to open the popup modal if we want to turn it on.
+            if (!k.OwnPerms.InHardcore)
+                return true;
+            // otherwise, just turn it off. (temporary until safeword is embedded)
+            Svc.Logger.Information($"Setting Hardcore mode to false for {name} ({k.UserData.AliasOrUID}).");
+            UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.InHardcore), false));
         }
-
-        ImGui.SameLine();
-        var refVar = canUse;
-        if (ImGui.Checkbox("##" + perm + "edit", ref refVar))
-            UiService.SetUITask(PermissionHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.OwnPermAccess, perm.ToPermAccessValue(), refVar));
-        CkGui.AttachToolTip(
-            $"{data.PermLabel} is {(isActive ? data.AllowedStr : data.BlockedStr)} for {dispName}." +
-            $"--SEP-- You are helpless to disable this!");
-    }
-
-    public void DrawHcPermRow(Kinkster kinkster, string dispName, float width, string current, bool canUse, bool canUseFull)
-    {
-        using var s = ImRaii.PushStyle(ImGuiStyleVar.Alpha, kinkster.OwnPerms.InHardcore ? 1f : 0.5f);
-        using var c = ImRaii.PushColor(ImGuiCol.Button, new Vector4(1.0f, 1.0f, 1.0f, 0.0f));
-
-        var data = ClientPermData[SPPID.LockedEmoteState];
-        var isActive = !current.IsNullOrWhitespace();
-        var buttonW = width - (2 * ImGui.GetFrameHeightWithSpacing());
-        using (ImRaii.Disabled(kinkster.OwnPerms.InHardcore))
-        {
-            using (ImRaii.Group())
-            {
-                CkGui.FramedIconText(isActive ? data.IconYes : data.IconNo);
-                CkGui.TextFrameAlignedInline($"{data.PermLabel} ");
-                ImGui.SameLine();
-                CkGui.ColorTextBool(isActive ? data.AllowedStr : data.BlockedStr, isActive);
-                CkGui.TextFrameAlignedInline(".");
-            }
-            CkGui.AttachToolTip($"You have {(isActive ? data.AllowedStr : data.BlockedStr)} {dispName} {(isActive ? data.PairAllowedTT : data.PairBlockedTT)}.");
-        }
-
-        ImGui.SameLine(buttonW);
-        var refVar = canUse;
-        if (ImGui.Checkbox("##" + SPPID.LockedEmoteState + "edit", ref refVar))
-        {
-            var propertyName = SPPID.LockedEmoteState.ToPermAccessValue();
-            UiService.SetUITask(PermissionHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, propertyName, refVar));
-        }
-        CkGui.AttachToolTip($"Limit {dispName} to only force GroundSit, Sit, and CyclePose.");
 
         ImUtf8.SameLineInner();
-        var refVar2 = canUseFull;
-        if (ImGui.Checkbox("##" + SPPID.LockedEmoteState + "edit2", ref refVar2))
+        if (HardcoreCheckbox.Draw($"##DevoLocks{name}", devotionalState, out var newVal) && devotionalState != newVal)
+            UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.DevotionalLocks), !devotionalState));
+        CkGui.AttachToolTip(devotionalState
+            ? $"Any Hardcore action by {name} will be --COL--pairlocked--COL----NL--This means that only {name} can disable it."
+            : $"Anyone you are in Hardcore for can undo Hardcore interactions from --COL--{name}--COL--", color: CkColor.VibrantPink.Vec4());
+
+        // draw inside of the button.
+        ImGui.SetCursorScreenPos(pos);
+        using (ImRaii.Group())
         {
-            var propertyName = SPPID.LockedEmoteState.ToPermAccessValue(true);
-            UiService.SetUITask(PermissionHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, propertyName, refVar));
+            CkGui.FramedIconText(curState ? FAI.Lock : FAI.Unlock);
+            CkGui.TextFrameAlignedInline("Hardcore is ");
+            ImGui.SameLine(0, 0);
+            CkGui.ColorTextFrameAligned(curState ? "enabled" : "disabled", curState ? ImGuiColors.HealerGreen.ToUint() : ImGuiColors.DalamudRed.ToUint());
+            ImGui.SameLine(0, 0);
+            CkGui.TextFrameAlignedInline($"for {name}.");
         }
-        CkGui.AttachToolTip($"Allow {dispName} to force you into any looped Emote.");
+        CkGui.AttachToolTip("Placeholder Tooltip");
+        return false;
     }
 
-
-    private DateTime _lastRefresh = DateTime.MinValue;
-
-    /// <summary>
-    ///     This function is messy because it is independant of everything else due to a bad conflict between pishock HTML and gagspeak signalR.
-    /// </summary>
-    public void DrawPiShockPairPerms(Kinkster kinkster, string dispName, float width, PairPerms pairPerms, PairPermAccess pairAccess)
+    private void ShowConfirmHardcoreIfValid(Kinkster k, string name)
     {
-        // First row must be drawn.
+        // prevent rendering unessisary styles or calculations if it is not open.
+        if (!ImGui.IsPopupOpen("Confirm Hardcore"))
+            return;
+        
+        // center the hardcore window.
+        ImGui.SetNextWindowPos(ImGui.GetMainViewport().GetCenter(), ImGuiCond.Always, new Vector2(0.5f));
+        // set the size of the popup.
+        var size = new Vector2(600f, 345f * ImGuiHelpers.GlobalScale);
+        ImGui.SetNextWindowSize(size);
+        using var s = ImRaii.PushStyle(ImGuiStyleVar.WindowBorderSize, 1f)
+            .Push(ImGuiStyleVar.WindowRounding, 12f);
+        using var c = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.DalamudGrey2);
+
+        using var pop = ImRaii.Popup("Confirm Hardcore", WFlags.Modal | WFlags.NoResize | WFlags.NoScrollbar | WFlags.NoMove);
+        if (!pop)
+            return;
+
         using (ImRaii.Group())
         {
-            var length = width - CkGui.IconTextButtonSize(FAI.Sync, "Refresh") + ImGui.GetFrameHeight();
-            var refCode = pairPerms.PiShockShareCode;
+            CkGui.FontTextCentered("CAUTIONARY WARNING", UiFontService.GagspeakTitleFont, ImGuiColors.DalamudRed);
 
-            // the bad way.
-            CkGui.IconInputText(FAI.ShareAlt, string.Empty, "Unique Share Code", ref refCode, 40, width, true, false);
-            if (ImGui.IsItemDeactivatedAfterEdit())
-                UiService.SetUITask(PermissionHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, SPPID.PiShockShareCode.ToPermValue().name, refCode));
+            CkGui.SeparatorColored(size.X, col: ImGuiColors.DalamudRed.ToUint());
 
-            CkGui.AttachToolTip($"Unique Share Code for {dispName}." +
-                "--SEP--This should be a separate Share Code from your Global Share Code." +
-                $"--SEP--A Unique Share Code can have permissions elevated higher than the Global Share Code that only {dispName} can use.");
+            CkGui.OutlinedFont("In Hardcore Mode:", ImGuiColors.DalamudOrange, CkColor.ElementSplit.Vec4(), 2);
+            
+            CkGui.IconText(FAI.AngleDoubleRight);
+            CkGui.TextInline("You can no longer change permissions or edit access for");
+            CkGui.ColorTextInline(name, CkColor.VibrantPink.Uint());
 
-            ImUtf8.SameLineInner();
-            if (CkGui.IconTextButton(FAI.Sync, "Refresh", disabled: DateTime.Now - _lastRefresh < TimeSpan.FromSeconds(15) || refCode.IsNullOrWhitespace()))
-            {
-                _lastRefresh = DateTime.Now;
-                UiService.SetUITask(async () =>
-                {
-                    var newPerms = await _shockies.GetPermissionsFromCode(pairPerms.PiShockShareCode);
-                    pairPerms.AllowShocks = newPerms.AllowShocks;
-                    pairPerms.AllowVibrations = newPerms.AllowVibrations;
-                    pairPerms.AllowBeeps = newPerms.AllowBeeps;
-                    pairPerms.MaxDuration = newPerms.MaxDuration;
-                    pairPerms.MaxIntensity = newPerms.MaxIntensity;
-                    await _hub.UserBulkChangeUnique(new(kinkster.UserData, pairPerms, pairAccess, UpdateDir.Own, MainHub.PlayerUserData));                        
-                });
-            }
+            CkGui.IconText(FAI.AngleDoubleRight);
+            CkGui.ColorTextInline(name, CkColor.VibrantPink.Uint());
+            CkGui.TextInline("can change non-hardcore permissions with edit access.");
+            
+            CkGui.IconText(FAI.AngleDoubleRight);
+            CkGui.TextInline("You can set which Hardcore Interactions");
+            CkGui.ColorTextInline(name, CkColor.VibrantPink.Uint());
+            CkGui.TextInline("can use.");
+            CkGui.ColorTextInline("(Only you can change this)", ImGuiColors.ParsedGrey);
+
+            CkGui.SeparatorColored(size.X - ImGui.GetStyle().WindowPadding.X, col: ImGuiColors.DalamudRed.ToUint());
+            CkGui.OutlinedFont("Recommendations:", ImGuiColors.DalamudOrange, CkColor.ElementSplit.Vec4(), 2);
+            
+            CkGui.IconText(FAI.AngleDoubleRight);
+            ImGui.SameLine();
+            CkGui.TextWrapped($"Give {name} EditAccess to perms you are OK with them controlling, " +
+                "and enable permissions without access as fit for your dynamics limits.");
+
+            CkGui.IconText(FAI.AngleDoubleRight);
+            CkGui.ColorTextInline("Power Control Adjustment", CkColor.VibrantPink.Uint());
+            ImGui.SameLine(0, 1);
+            CkGui.HoverIconText(FAI.QuestionCircle, ImGuiColors.TankBlue.ToUint(), ImGui.GetColorU32(ImGuiCol.TextDisabled));
+            CkGui.AttachToolTip($"Provides a 5 second window for you to change permissions and edit access for {name}.");
+            CkGui.TextInline($"can modify your dynamic limits while in Hardcore.");
+
+            CkGui.SeparatorColored(size.X - ImGui.GetStyle().WindowPadding.X, col: ImGuiColors.DalamudRed.ToUint());
+
+            CkGui.IconText(FAI.AngleDoubleRight);
+            CkGui.TextInline("Hardcore Safeword:");
+            CkGui.ColorTextInline("/safewordhardcore KINKSTERUID", ImGuiColors.ParsedGold);
+            CkGui.TextInline("(this has a 10minute CD).");
+
+            CkGui.IconText(FAI.AngleDoubleRight);
+            CkGui.TextInline($"If ChatInput is blocked, use:");
+            CkGui.ColorTextInline("CTRL + ALT + BACKSPACE", ImGuiColors.ParsedGold);
+            CkGui.TextInline("('Fuck, go back')");
+        }
+        string yesButton = $"Enter Hardcore for {name}";
+        string noButton = "Oh my, take me back!";
+        var yesSize = ImGuiHelpers.GetButtonSize(yesButton);
+        var noSize = ImGuiHelpers.GetButtonSize(noButton);
+        var offsetX = (size.X - (yesSize.X + noSize.X + ImGui.GetStyle().ItemSpacing.X) - ImGui.GetStyle().WindowPadding.X * 2) / 2;
+        CkGui.SeparatorSpaced();
+        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offsetX);
+        if (ImGui.Button(yesButton))
+        {
+            Svc.Logger.Information($"Entering Hardcore Mode for {name} ({k.UserData.AliasOrUID})");
+            UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.InHardcore), !k.OwnPerms.InHardcore));
+            ImGui.CloseCurrentPopup();
+        }
+        ImGui.SameLine();
+        if (ImGui.Button(noButton))
+        {
+            Svc.Logger.Information($"Cancelled Hardcore Mode for {name} ({k.UserData.AliasOrUID})");
+            ImGui.CloseCurrentPopup();
+        }
+    }
+
+    private void DrawHcBasicPerm(Kinkster k, string name, float width, SPPID perm, bool current)
+    {
+        using var _ = ImRaii.PushColor(ImGuiCol.Button, 0);
+        var data = ClientPermData[perm];
+        var editCol = current ? ImGuiColors.HealerGreen.ToUint() : ImGuiColors.DalamudRed.ToUint();
+        var pos = ImGui.GetCursorScreenPos();
+
+        // change to ckgui for disabled?
+        if (ImGui.Button($"##pair-{perm}", new Vector2(width, ImGui.GetFrameHeight())))
+        {
+            var res = perm.ToPermValue();
+            UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, res.name, !current));
+        }
+        CkGui.AttachToolTip($"You {(current ? data.AllowedStr : data.BlockedStr)} {name} {(current ? data.PairAllowedTT : data.PairBlockedTT)}");
+
+        // go back and draw inside the dummy.
+        ImGui.SetCursorScreenPos(pos);
+        CkGui.FramedIconText(current ? data.IconYes : data.IconNo);
+        CkGui.TextFrameAlignedInline("You ");
+        ImGui.SameLine(0, 0);
+        CkGui.ColorTextFrameAligned(current ? data.AllowedStr : data.BlockedStr, current ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed);
+        ImGui.SameLine(0, 0);
+        ImUtf8.TextFrameAligned($" {data.PermLabel}.");
+    }
+
+    private void DrawHcStatePerm(Kinkster k, string name, float width, SPPID perm, string permName, string current, bool allowanceState)
+    {
+        using var butt = ImRaii.PushColor(ImGuiCol.Button, 0);
+        var data = ClientHcPermData[perm];
+        var isActive = !string.IsNullOrEmpty(current);
+        var isPairlocked = GlobalPermsEx.IsDevotional(current);
+        var stateLocker = isActive ? GlobalPermsEx.PermEnactor(current) : string.Empty;
+        var editCol = isActive ? ImGuiColors.HealerGreen.ToUint() : ImGuiColors.DalamudRed.ToUint();
+        var pos = ImGui.GetCursorScreenPos();
+
+        // change to ckgui for disabled?
+        ImGui.Dummy(new Vector2(width - (ImGui.GetFrameHeight() + ImGui.GetStyle().ItemInnerSpacing.X), ImGui.GetFrameHeight()));
+
+        ImUtf8.SameLineInner();
+        using (ImRaii.Disabled(isActive))
+            if (EditAccessCheckbox.Draw($"##{permName}", allowanceState, out var newVal) && allowanceState != newVal)
+                UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, perm.ToPermAccessValue(), !allowanceState));
+        CkGui.AttachToolTip(isActive ? "You are helpless to change this while active!" : allowanceState 
+                ? $"Allowing {name} {data.ToggleTrueSuffixTT}." : $"Preventing {name} {data.ToggleFalseSuffixTT}.");
+
+        // go back and draw inside the dummy.
+        ImGui.SetCursorScreenPos(pos);
+
+        using var _ = ImRaii.PushStyle(ImGuiStyleVar.Alpha, .5f);
+        CkGui.FramedIconText(isActive ? data.IconT : data.IconF);
+        if (isActive)
+        {
+            CkGui.ColorTextFrameAligned(isActive ? stateLocker.AsAnonKinkster() : "UNK KINKSTER", editCol);
+            ImGui.SameLine(0, 0);
+            CkGui.TextFrameAlignedInline(data.EnabledPreText);
+            ImGui.SameLine(0, 0);
+            ImUtf8.TextFrameAligned(".");
+        }
+        else
+        {
+            CkGui.TextFrameAlignedInline($"{data.DisabledText}.");
         }
 
-        // special case for this.
-        using (ImRaii.Group())
+    }
+
+    public void DrawHcEmotePerm(Kinkster k, string name, float width, SPPID perm, string permName, string current, bool allowBasic, bool allowAll)
+    {
+        using var butt = ImRaii.PushColor(ImGuiCol.Button, 0);
+        var data = ClientHcPermData[perm];
+        var isActive = !string.IsNullOrEmpty(current);
+        var isPairlocked = GlobalPermsEx.IsDevotional(current);
+        var stateLocker = isActive ? GlobalPermsEx.PermEnactor(current) : string.Empty;
+        var editCol = isActive ? ImGuiColors.HealerGreen.ToUint() : ImGuiColors.DalamudRed.ToUint();
+
+
+        // change to ckgui for disabled?
+        var pos = ImGui.GetCursorScreenPos();
+        ImGui.Dummy(new Vector2(width - ((ImGui.GetFrameHeight() + ImGui.GetStyle().ItemInnerSpacing.X) * 2), ImGui.GetFrameHeight()));
+        CkGui.AttachToolTip($"{permName}'s current locked emote status.");
+
+        // draw out the checkboxessss
+        ImUtf8.SameLineInner();
+        using (ImRaii.Disabled(isActive))
+            if (EditAccessCheckbox.Draw($"##EmBasic{permName}", allowBasic, out var newVal) && allowBasic != newVal)
+                UiService.SetUITask(PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, SPPID.LockedEmoteState.ToPermAccessValue(), newVal));
+        CkGui.AttachToolTip(isActive ? "Helpless to change this while performing a locked emote!" : allowBasic
+                ? $"{name} can force you to Groundsit, Sit, or Cyclepose." : $"Preventing {name} from placing you in a locked emote state.");
+
+        ImUtf8.SameLineInner();
+        using (ImRaii.Disabled(isActive))
+            if (EditAccessCheckbox.Draw($"##EmFull{permName}", allowAll, out var newVal2) && allowAll != newVal2)
+                UiService.SetUITask(PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, SPPID.LockedEmoteState.ToPermAccessValue(true), newVal2));
+        CkGui.AttachToolTip(isActive ? "Helpless to change this while performing a locked emote!" : allowBasic
+                ? $"{name} can force you to perform any looping emote." : $"Preventing looped emotes from being forced by {name}.");
+
+        // go back and draw inside the dummy.
+        ImGui.SetCursorScreenPos(pos);
+        using var _ = ImRaii.PushStyle(ImGuiStyleVar.Alpha, .5f);
+        CkGui.FramedIconText(isActive ? data.IconT : data.IconF);
+        if (isActive)
         {
-            var seconds = (float)pairPerms.MaxVibrateDuration.TotalMilliseconds / 1000;
-            if (CkGui.IconSliderFloat("##maxVibeTime" + kinkster.UserData.UID, FAI.Stopwatch, "Max Vibe Time",
-                ref seconds, 0.1f, 15f, width * .65f, true, pairPerms.HasValidShareCode()))
-            {
-                pairPerms.MaxVibrateDuration = TimeSpan.FromSeconds(seconds);
-            }
-            if (ImGui.IsItemDeactivatedAfterEdit())
-            {
-                var timespanValue = TimeSpan.FromSeconds(seconds);
-                var ticks = (ulong)timespanValue.Ticks;
-                UiService.SetUITask(PermissionHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, SPPID.MaxVibrateDuration.ToPermValue().name, ticks));
-            }
-            CkGui.AttachToolTip("Max duration you allow this pair to vibrate your Shock Collar for");
+            CkGui.ColorTextFrameAligned(isActive ? stateLocker.AsAnonKinkster() : "UNK KINKSTER", editCol);
+            ImGui.SameLine(0, 0);
+            CkGui.TextFrameAlignedInline(data.EnabledPreText);
+            ImGui.SameLine(0, 0);
+            ImUtf8.TextFrameAligned(".");
+        }
+        else
+        {
+            CkGui.TextFrameAlignedInline($"{data.DisabledText}.");
         }
     }
 
@@ -361,9 +486,9 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
 
     /// <summary> The Cache of PermissionData for each permission in the Gear Setting Menu. </summary>
     private readonly ImmutableDictionary<SPPID, PermDataClient> ClientPermData = ImmutableDictionary<SPPID, PermDataClient>.Empty
-        .Add(SPPID.ChatGarblerActive,     new PermDataClient(true, FAI.MicrophoneSlash,       FAI.Microphone,    "active",        "inactive",        "Chat Garbler", "is",       string.Empty, string.Empty))
-        .Add(SPPID.ChatGarblerLocked,     new PermDataClient(true, FAI.Key,                   FAI.UnlockAlt,     "locked",        "unlocked",        "Chat Garbler", "is",       string.Empty, string.Empty))
-        .Add(SPPID.GaggedNameplate,       new PermDataClient(true, FAI.IdCard,                FAI.Ban,           "enabled",       "disabled",        "GagPlates", "are",         string.Empty, string.Empty))
+        .Add(SPPID.ChatGarblerActive,     new PermDataClient(true, FAI.MicrophoneSlash,       FAI.Microphone,    "active",        "inactive",    "Chat Garbler", "is",       string.Empty, string.Empty))
+        .Add(SPPID.ChatGarblerLocked,     new PermDataClient(true, FAI.Key,                   FAI.UnlockAlt,     "locked",        "unlocked",    "Chat Garbler", "is",       string.Empty, string.Empty))
+        .Add(SPPID.GaggedNameplate,       new PermDataClient(true, FAI.IdCard,                FAI.Ban,           "enabled",       "disabled",    "GagPlates", "are",         string.Empty, string.Empty))
 
         .Add(SPPID.PermanentLocks,        new PermDataClient(false, FAI.Infinity,              FAI.Ban,           "allow",       "prevent",      "Permanent Locks", "are", "to use padlocks without timers.", "from using padlocks without timers."))
         .Add(SPPID.OwnerLocks,            new PermDataClient(false, FAI.UserLock,              FAI.Ban,           "allow",       "prevent",      "Owner Locks", "are", "to use owner padlocks.", "from using owner padlocks."))
@@ -409,20 +534,25 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
         .Add(SPPID.RemoveMoodles,         new PermDataClient(false, FAI.Eraser,                FAI.Ban,           "allow",       "prevent",      "removing Moodles", "are", "to remove moodles",                "from removing moodles"))
 
         .Add(SPPID.HypnosisMaxTime,       new PermDataClient(false, FAI.HourglassHalf,         FAI.None,          string.Empty,    string.Empty, "Max Hypnosis Time", string.Empty, string.Empty,                       string.Empty))
-        .Add(SPPID.HypnosisEffect,        new PermDataClient(false, FAI.CameraRotate,          FAI.Ban,           "allow",       "prevent",      "Hypnotic Effect", "are", "to send hypnotic effects",         "from sending hypnotic effects"))
+        .Add(SPPID.HypnosisEffect,        new PermDataClient(false, FAI.CameraRotate,          FAI.Ban,           "allow",       "prevent",      "Hypnotic Effect Sending", "are", "to send hypnotic effects",         "from sending hypnotic effects"))
 
         .Add(SPPID.PatternStarting,       new PermDataClient(false, FAI.Play,                  FAI.Ban,           "allow",       "prevent",      "Pattern Starting", "is", "to start patterns",                "from starting patterns"))
         .Add(SPPID.PatternStopping,       new PermDataClient(false, FAI.Stop,                  FAI.Ban,           "allow",       "prevent",      "Pattern Stopping", "is", "to stop patterns",                 "from stopping patterns"))
         .Add(SPPID.AlarmToggling,         new PermDataClient(false, FAI.Bell,                  FAI.Ban,           "allow",       "prevent",      "Alarm Toggling", "is", "to toggle alarms",                 "from toggling alarms"))
         .Add(SPPID.TriggerToggling,       new PermDataClient(false, FAI.FileMedicalAlt,        FAI.Ban,           "allow",       "prevent",      "Trigger Toggling", "is", "to toggle triggers",               "from toggling triggers"))
 
-        .Add(SPPID.HardcoreModeState,     new PermDataClient(false, FAI.AnchorLock,            FAI.Unlock,        "enabled",       "disabled",        "Hardcore Mode",            "is",  string.Empty,                             string.Empty))
-        .Add(SPPID.PairLockedStates,      new PermDataClient(false, FAI.AnchorLock,            FAI.Unlock,        "Devotional",    "not Devotional",  "Hardcore States",          "are", string.Empty, string.Empty))
-        .Add(SPPID.LockedFollowing,       new PermDataClient(false, FAI.Walking,               FAI.Ban,           "active",        "inactive",        "Locked Follow",            "is", string.Empty, string.Empty))
-        .Add(SPPID.LockedEmoteState,      new PermDataClient(false, FAI.PersonArrowDownToLine, FAI.Ban,           "active",        "inactive",        "Locked Emote State",             "is", string.Empty, string.Empty))
-        .Add(SPPID.IndoorConfinement,     new PermDataClient(false, FAI.HouseLock,             FAI.Ban,           "active",        "inactive",        "Indoor Confinement",              "is", string.Empty, string.Empty))
-        .Add(SPPID.Imprisonment,          new PermDataClient(false, FAI.Bars,                  FAI.Ban,           "active",        "inactive",        "Imprisonment",      "is", string.Empty, string.Empty))
-        .Add(SPPID.ChatBoxesHidden,       new PermDataClient(false, FAI.CommentSlash,          FAI.Ban,           "visible",       "hidden",          "Chatboxes",                "are", string.Empty, string.Empty))
-        .Add(SPPID.ChatInputHidden,       new PermDataClient(false, FAI.CommentSlash,          FAI.Ban,           "visible",       "hidden",          "Chat Input",               "is", string.Empty, string.Empty))
-        .Add(SPPID.ChatInputBlocked,      new PermDataClient(false, FAI.CommentDots,           FAI.Ban,           "blocked",       "allow",         "Chat Input",               "is", string.Empty, string.Empty))
-        .Add(SPPID.HypnoticImage,         new PermDataClient(false, FAI.Image,                 FAI.Ban,           "allow",       "prevent",      "Hypnotic Image", "is", string.Empty, string.Empty));}
+        .Add(SPPID.HardcoreModeState,     new PermDataClient(false, FAI.AnchorLock,            FAI.Unlock,        "enabled",     "disabled",     "Hardcore Mode", "is",  string.Empty,                             string.Empty))
+        .Add(SPPID.GarbleChannelEditing,  new PermDataClient(false, FAI.CommentDots,           FAI.Ban,           "allow",       "prevent",      "garble channel editing", "is", "to change your configured garbler channels", "from changing your configured garbler channels."))
+        .Add(SPPID.HypnoticImage,         new PermDataClient(false, FAI.Images,                FAI.Ban,           "allow",       "prevent",      "hypnotic image sending", "is", "to send custom hypnosis BG's", "from sending custom hypnosis BG's"));
+
+    public record HcPermClient(FAI IconT, FAI IconF, string PermLabel, string EnabledPreText, string DisabledText, string ToggleTrueSuffixTT, string ToggleFalseSuffixTT);
+
+    private readonly ImmutableDictionary<SPPID, HcPermClient> ClientHcPermData = ImmutableDictionary<SPPID, HcPermClient>.Empty
+        .Add(SPPID.LockedFollowing, new HcPermClient(FAI.Walking, FAI.Ban, "Forced Follow", "Actively following", "Not following anyone", "to make you follow them", "from triggering --COL--Forced Follow--COL-- on you"))
+        .Add(SPPID.LockedEmoteState, new HcPermClient(FAI.PersonArrowDownToLine, FAI.Ban, "Locked Emote State", "Emote Locked for", "Not locked in an emote loop", string.Empty, string.Empty)) // Handle this seperately, it has it's own call.
+        .Add(SPPID.IndoorConfinement, new HcPermClient(FAI.HouseLock, FAI.Ban, "Indoor Confinement", "Confined by", "Not confined by anyone", "to confine you indoors --COL--via the nearest housing node--COL----NL--If --COL--Lifestream--COL-- is installed, can be confined to --COL--any address--COL--.", "from confining you indoors"))
+        .Add(SPPID.Imprisonment, new HcPermClient(FAI.Bars, FAI.Ban, "Imprisonment", "Imprisoned by", "Not imprisoned", "to imprison you at a desired location.--SEP----COL--They must be nearby when giving a location besides your current position.", "from imprisoning you at a desired location"))
+        .Add(SPPID.ChatBoxesHidden, new HcPermClient(FAI.CommentSlash, FAI.Ban, "Chatbox Visibility", "Chatbox hidden by", "Chatbox is visible", "to hide your chatbox UI", "from hiding your chatbox"))
+        .Add(SPPID.ChatInputHidden, new HcPermClient(FAI.CommentSlash, FAI.Ban, "ChatInput Visibility", "ChatInput hidden by", "ChatInput is visible", "to hide your chat input UI", "from hiding your chat input"))
+        .Add(SPPID.ChatInputBlocked, new HcPermClient(FAI.CommentDots, FAI.Ban, "ChatInput Blocking", "ChatInput blocked by", "ChatInput is accessible", "to block your chat input", "from blocking your chat input"));
+}
