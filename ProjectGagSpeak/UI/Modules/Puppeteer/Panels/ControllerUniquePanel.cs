@@ -29,7 +29,7 @@ public sealed class ControllerUniquePanel
     private IReadOnlyList<AliasTrigger> _filteredItems = new List<AliasTrigger>();
     private TagCollection _pairTriggerTags = new();
 
-    public ControllerUniquePanel(ILogger<ControllerUniquePanel> logger, MainHub hub, 
+    public ControllerUniquePanel(ILogger<ControllerUniquePanel> logger, MainHub hub,
         MainConfig config, KinksterListener kinksterUpdater, AliasItemDrawer aliasDrawer)
     {
         _logger = logger;
@@ -40,7 +40,16 @@ public sealed class ControllerUniquePanel
         UpdateFilteredItems();
     }
 
-    public Kinkster? SelectedKinkster = null;
+    private Kinkster? selectedKinkster = null;
+    public Kinkster? SelectedKinkster
+    {
+        get { return selectedKinkster; }
+        set
+        {
+            selectedKinkster = value;
+            UpdateFilteredItems();
+        }
+    }
 
     private void UpdateFilteredItems()
     {
@@ -96,7 +105,7 @@ public sealed class ControllerUniquePanel
             return;
 
         foreach (var aliasItem in _filteredItems.ToList())
-            _aliasDrawer.DrawAliasTrigger(aliasItem, SelectedKinkster.LastMoodlesData, false);
+            _aliasDrawer.DrawAliasTrigger(aliasItem, SelectedKinkster.LastIpcData, false, SelectedKinkster.UserData.UID!);
     }
 
     private void DrawPermsAndExamples(CkHeader.DrawRegion region)
@@ -147,7 +156,7 @@ public sealed class ControllerUniquePanel
         // Draw out the permission checkboxes
         ImGui.SameLine(c.InnerRegion.X / 2, ImGui.GetStyle().ItemInnerSpacing.X);
 
-        DrawPuppetPermsGroup(SelectedKinkster.OwnPerms.PuppetPerms, SelectedKinkster); 
+        DrawPuppetPermsGroup(SelectedKinkster.PairPerms.PuppetPerms, SelectedKinkster);
 
         void CustomHeader()
         {
@@ -222,10 +231,10 @@ public sealed class ControllerUniquePanel
                 ImGui.CheckboxFlags($"Allows {category}", ref categoryFilter, (uint)category);
             CkGui.AttachToolTip(category switch
             {
-                PuppetPerms.All => $"{SelectedKinkster?.GetNickAliasOrUid() ?? "This Kinkster"} has granted you full control.--SEP--(Take Care with this)",
-                PuppetPerms.Alias => $"{SelectedKinkster?.GetNickAliasOrUid() ?? "This Kinkster"} allows you to execute their alias triggers.",
-                PuppetPerms.Emotes => $"{SelectedKinkster?.GetNickAliasOrUid() ?? "This Kinkster"} allows you to make them perform emotes.",
-                PuppetPerms.Sit => $"{SelectedKinkster?.GetNickAliasOrUid() ?? "This Kinkster"} allows you to make them sit or cycle poses.",
+                PuppetPerms.All => $"{kinkster?.GetNickAliasOrUid() ?? "This Kinkster"} has granted you full control.--SEP--(Take Care with this)",
+                PuppetPerms.Alias => $"{kinkster?.GetNickAliasOrUid() ?? "This Kinkster"} allows you to execute their alias triggers.",
+                PuppetPerms.Emotes => $"{kinkster?.GetNickAliasOrUid() ?? "This Kinkster"} allows you to make them perform emotes.",
+                PuppetPerms.Sit => $"{kinkster?.GetNickAliasOrUid() ?? "This Kinkster"} allows you to make them sit or cycle poses.",
                 _ => $"NO PERMS ALLOWED."
             });
         }

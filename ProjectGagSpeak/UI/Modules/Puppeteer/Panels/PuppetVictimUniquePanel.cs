@@ -16,6 +16,7 @@ using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Hub;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using Dalamud.Bindings.ImGui;
@@ -25,6 +26,7 @@ namespace GagSpeak.Gui.Modules.Puppeteer;
 
 public class PuppetVictimUniquePanel : DisposableMediatorSubscriberBase
 {
+    private readonly ILogger<PuppetVictimUniquePanel> _logger;
     private readonly ControllerUniquePanel _controllerPanel; // for updating the selected kinkster.
     private readonly MainHub _hub;
     private readonly AliasItemDrawer _aliasDrawer;
@@ -39,16 +41,26 @@ public class PuppetVictimUniquePanel : DisposableMediatorSubscriberBase
     private TagCollection _pairTriggerTags = new();
 
     public PuppetVictimUniquePanel(ILogger<PuppetVictimUniquePanel> logger, GagspeakMediator mediator,
-        MainConfig config, MainHub hub, AliasItemDrawer aliasDrawer, FavoritesManager favorites, 
+        MainConfig config, MainHub hub, AliasItemDrawer aliasDrawer, FavoritesManager favorites,
         KinksterManager kinksters, PuppeteerManager manager, ControllerUniquePanel controllerPanel)
         : base(logger, mediator)
     {
+        _logger = logger;
         _controllerPanel = controllerPanel;
         _hub = hub;
         _aliasDrawer = aliasDrawer;
         _manager = manager;
+        _pairCombo = new PairCombo(logger, kinksters, favorites, () => [
+            ..kinksters.DirectPairs
+                .OrderByDescending(p => favorites._favoriteKinksters.Contains(p.UserData.UID))
+                .ThenByDescending(u => u.IsVisible)
+                .ThenByDescending(u => u.IsOnline)
+                .ThenBy(pair => !pair.PlayerName.IsNullOrEmpty()
+                    ? (config.Current.PreferNicknamesOverNames ? pair.GetNickAliasOrUid() : pair.PlayerName)
+                    : pair.GetNickAliasOrUid(), StringComparer.OrdinalIgnoreCase)
+        ]);
 
-        _pairCombo = new PairCombo(logger, mediator, config, kinksters, favorites);
+        Mediator.Subscribe<RefreshUiMessage>(this, _ => _pairCombo.RefreshPairList());
     }
 
     public Kinkster? Selected => _controllerPanel.SelectedKinkster;
@@ -111,12 +123,16 @@ public class PuppetVictimUniquePanel : DisposableMediatorSubscriberBase
             .Push(ImGuiStyleVar.FramePadding, new Vector2(2));
         using var _ = CkRaii.Child("##PairVictimAliasList", region);
         // Place these into a list, so that when we finish changing an item, the list does not throw an error.
+        if (_pairCombo.Current == null)
+        {
+            return;
+        }
         foreach (var aliasItem in _filteredItems.ToList())
         {
             if (aliasItem.Identifier == _manager.ItemInEditor?.Identifier)
-                _aliasDrawer.DrawAliasTriggerEditor(_actionTypes, ref _selectedType);
+                _aliasDrawer.DrawAliasTriggerEditor(_actionTypes, ref _selectedType, (newData) => PushUpdateAliasTask(_pairCombo.Current.UserData, aliasItem.Identifier, newData));
             else
-                _aliasDrawer.DrawAliasTrigger(aliasItem, MoodleCache.IpcData);
+                _aliasDrawer.DrawAliasTrigger(aliasItem, MoodleCache.IpcData, true, _pairCombo.Current.UserData.UID);
         }
     }
 
@@ -190,11 +206,13 @@ public class PuppetVictimUniquePanel : DisposableMediatorSubscriberBase
                 {
                     Logger.LogInformation($"Selected Pair: {_pairCombo.Current?.GetNickAliasOrUid() ?? "None"} ({_pairCombo.Current?.UserData.ToString()})");
                     _controllerPanel.SelectedKinkster = _pairCombo.Current;
+                    UpdateFilteredItems();
                 }
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 {
                     _pairCombo.ClearSelected();
                     _controllerPanel.SelectedKinkster = _pairCombo.Current;
+                    UpdateFilteredItems();
                 }
                 // Draw the background.
                 wdl.ChannelsSetCurrent(0);
@@ -298,5 +316,19 @@ public class PuppetVictimUniquePanel : DisposableMediatorSubscriberBase
             ImGui.TextWrapped("Ex 1: /gag <trigger phrase> <message>");
             ImGui.TextWrapped("Ex 2: /gag <trigger phrase> <message> <image>");
         }
+    }
+
+    private void PushUpdateAliasTask(UserData user, Guid id, AliasTrigger? aliasTrigger)
+    {
+        UiService.SetUITask(async () =>
+        {
+            var res = await _hub.UserPushAliasUniqueUpdate(new(user, id, aliasTrigger));
+            _logger.LogTrace($"Pushing latest alias {id} with value {aliasTrigger}");
+            if (res.ErrorCode is not GagSpeakApiEc.Success)
+            {
+                _logger.LogError($"Failed to perform Update alias {user.UID} Alias: {res.ErrorCode}");
+                return;
+            }
+        });
     }
 }
