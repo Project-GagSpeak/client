@@ -33,14 +33,15 @@ public sealed class AliasItemDrawer
     private readonly PuppeteerManager _manager;
     private readonly MoodleDrawer _moodleDrawer;
 
-    private static readonly string[] ThreeLayerNames = [ "Layer 1", "Layer 2", "Layer 3", "Any Layer" ];
-    private static readonly string[] FiveLayerNames = [ "Layer 1", "Layer 2", "Layer 3", "Layer 4", "Layer 5", "Any Layer" ];
+    private static readonly string[] ThreeLayerNames = ["Layer 1", "Layer 2", "Layer 3", "Any Layer"];
+    private static readonly string[] FiveLayerNames = ["Layer 1", "Layer 2", "Layer 3", "Layer 4", "Layer 5", "Any Layer"];
     private HashSet<Guid> ExpandedTriggers = new HashSet<Guid>();
 
     private RestrictionCombo _restrictionCombo { get; init; }
     private RestraintCombo _restraintCombo { get; init; }
     private MoodleStatusCombo _statusCombo { get; init; }
     private MoodlePresetCombo _presetCombo { get; init; }
+
     public AliasItemDrawer(
         ILogger<AliasItemDrawer> logger,
         GagspeakMediator mediator,
@@ -220,7 +221,7 @@ public sealed class AliasItemDrawer
             1);
     }
 
-    public void DrawAliasTrigger(AliasTrigger aliasItem, CharaIPCData ipc, bool canEdit = true)
+    public void DrawAliasTrigger(AliasTrigger aliasItem, CharaIPCData ipc, bool canEdit = true, string? uid = null)
     {
         var isContained = ExpandedTriggers.Contains(aliasItem.Identifier);
         var shownActions = isContained ? aliasItem.Actions.Count() : 1;
@@ -257,10 +258,10 @@ public sealed class AliasItemDrawer
             // Draw out the dropdown button.
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - rightButtonWidth);
 
-            if(canEdit)
+            if (canEdit)
             {
                 if (CkGui.IconButton(FAI.Edit, inPopup: true))
-                    _manager.StartEditing(aliasItem);
+                    _manager.StartEditing(aliasItem, uid);
 
                 ImUtf8.SameLineInner();
             }
@@ -317,7 +318,7 @@ public sealed class AliasItemDrawer
         }
     }
 
-    public void DrawAliasTriggerEditor(IEnumerable<InvokableActionType> selectableTypes, ref InvokableActionType selected)
+    public void DrawAliasTriggerEditor(IEnumerable<InvokableActionType> selectableTypes, ref InvokableActionType selected, Action<AliasTrigger?>? onClose = null)
     {
         if (_manager.ItemInEditor is not { } aliasItem)
             return;
@@ -380,12 +381,21 @@ public sealed class AliasItemDrawer
 
             ImUtf8.SameLineInner();
             if (CkGui.IconButton(FAI.Save, inPopup: true))
+            {
                 _manager.SaveChangesAndStopEditing();
+                if (onClose is Action<AliasTrigger> { } action)
+                    action.Invoke(aliasItem);
+            }
             CkGui.AttachToolTip("Click to save changes to this Alias Item.--SEP-- This will also close the editor.");
 
             ImUtf8.SameLineInner();
             if (CkGui.IconButton(FAI.Trash, inPopup: true))
+            {
+                _manager.Delete(aliasItem);
                 _manager.StopEditing();
+                if (onClose is Action<AliasTrigger> { } action)
+                    action.Invoke(null);
+            }
             CkGui.AttachToolTip("Delete this Alias Item.--SEP-- This will also close the editor.");
         }
 
@@ -584,7 +594,7 @@ public sealed class AliasItemDrawer
                     action.RestrictionId = _restrictionCombo.Current?.Identifier ?? Guid.Empty;
             }
         }
-        
+
         CkGui.TextFrameAlignedInline("on");
 
         ImGui.SameLine();
