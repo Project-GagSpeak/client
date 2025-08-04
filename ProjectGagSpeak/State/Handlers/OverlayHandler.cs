@@ -96,40 +96,34 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
         _hypnoService.DrawHypnoEffect();
     }
 
+    public bool CanApplyTimedEffect(HypnoticEffect effect, string? base64ImgString = null)
+        => _hypnoService.CanApplyTimedEffect(effect, base64ImgString);
+
     // Effect should be called by a listener that has recieved an instruction from another Kinkster to hypnotize the client.
-    public async void SetTimedHypnoticEffect(HypnoticEffect effect, TimeSpan length, string enactor, string? customImage)
+    public async void SetTimedHypnoEffectUnsafe(UserData enactor, HypnoticEffect effect, TimeSpan length, string? customImage)
     {
         var applyTime = DateTimeOffset.UtcNow;
-        // apply the effect.
-        if (!await _hypnoService.ApplyEffect(effect, enactor, (int)length.TotalSeconds, customImage))
-        {
-            Logger.LogError("Failed to apply effect, reverting and disabling!");
-            Mediator.Publish(new PushGlobalPermChange(nameof(GlobalPerms.HypnosisCustomEffect), string.Empty));
-            return;
-        }
-        // Effect applied correctly, so log it, set metadata, and begin timer!
+        // apply the effect, bagagwa should never be thrown here.
+        if (!await _hypnoService.ApplyEffect(effect, enactor.UID, (int)length.TotalSeconds, customImage))
+            throw new Bagagwa("Summoned Bagagwa while setting a timed hypnotic effect! This should never happen!");
+        
         Logger.LogInformation($"Timed Hypnosis Effect successfully applied!", LoggerType.VisualCache);
-        // FIRE ANY ACHIEVEMENTS FOR 
-        // HYPNOTIC APPLICATION
-        // IN THIS SPACE.
+        // Achievements here maybe.
 
         // Set the effect.
         _metadata.SetHypnoEffect(effect, applyTime, length, customImage);
         // update the hypnosis timer with our interval timeout.
         _sentHypnosisTimer.Interval = length.TotalMilliseconds;
         _sentHypnosisTimer.Start();
-
-
     }
 
-    public void RemoveHypnoticEffect(string enactor)
+    public void RemoveHypnoEffect(string enactor)
     {
-        // Only do things this way so that we can in the future maybe add a pairlock function to this?
-        // Regardless, forcibly expire the timer.
         Logger.LogDebug($"Timed Hypnotic Effect was forcibly cleared by {enactor}!");
         _sentHypnosisTimer.Stop();
-        // and invoke the on elapsed.
-        OnSentHypnoEffectExpire();    
+        OnSentHypnoEffectExpire();
+        // clear the metadata.
+        _metadata.ClearHypnoEffect();
     }
 
     private async void OnSentHypnoEffectExpire()

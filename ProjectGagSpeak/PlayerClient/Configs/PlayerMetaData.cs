@@ -111,7 +111,7 @@ public class PlayerMetaData : IHybridSavable
     }
 
     // Anchors the client to a spesific position.
-    public void AnchorToPosition(Vector3 Position, int CageRadius)
+    public void AnchorToPosition(Vector3 Position, float CageRadius)
     {
         // safely obtain our world and territory.
         var worldId = PlayerData.CurrentWorldIdInstanced;
@@ -166,7 +166,7 @@ public class PlayerMetaData : IHybridSavable
         public ushort AnchoredCageWorldId { get; set; } = ushort.MaxValue;
         public uint AnchoredCageTerritoryId { get; set; } = uint.MaxValue;
         public Vector3 AnchoredCagePos { get; set; } = Vector3.Zero;
-        public int AnchoredCageRadius { get; set; } = 1;
+        public float AnchoredCageRadius { get; set; } = 1;
     }
 
     public interface IReadonlyMetaData
@@ -219,6 +219,6 @@ public class PlayerMetaData : IHybridSavable
         public Vector3 AnchoredCagePos { get; }
 
         /// <summary> How much freedom the player has. </summary>
-        public int AnchoredCageRadius { get; }
+        public float AnchoredCageRadius { get; }
     }
 }

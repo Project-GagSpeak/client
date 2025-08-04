@@ -1,81 +1,39 @@
-using FFXIVClientStructs.FFXIV.Client.UI;
 using GagSpeak.Kinksters;
-using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.State;
-using GagSpeak.State.Handlers;
-using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Data.Struct;
-using GagspeakAPI.Extensions;
-using GagspeakAPI.Network;
 using GagspeakAPI.Util;
-using System.Collections.ObjectModel;
 
 namespace GagSpeak.PlayerClient;
 
 // Possibly cleanup and merge with kinkster requests once we get stuff with the hub sorted out and the rest cleaned up.
-public sealed class OwnGlobals : DisposableMediatorSubscriberBase
+public sealed class OwnGlobals : IDisposable
 {
-    private readonly PiShockProvider _shockies;
+    private readonly ILogger<OwnGlobals> _logger;
+    private readonly GagspeakMediator _mediator;
     private readonly KinksterManager _kinksters;
-    private readonly HardcoreHandler _hcHandler;
-    private readonly OverlayHandler _overlays;
-    private readonly RemoteService _remoteService;
-    private readonly NameplateService _nameplates;
 
-    // Delegate helper for handling special global permission changes.
-    private delegate void GlobalPermChangeHandler(object newVal, object? prevVal, string enactor, Kinkster? pair);
-    private Dictionary<string, GlobalPermChangeHandler> _changeHandlers = new();
+    // Static permissions for globals so it can be accessed from anywhere.
+    // However, to modify this, it must be changed via methods.
     private static GlobalPerms? _perms = null;
 
-    public OwnGlobals(ILogger<OwnGlobals> logger, GagspeakMediator mediator,
-        PiShockProvider shockies, KinksterManager pairs, HardcoreHandler hcHandler,
-        OverlayHandler overlays, RemoteService remoteService, NameplateService nameplates) 
-        : base(logger, mediator)
+    public OwnGlobals(ILogger<OwnGlobals> logger, GagspeakMediator mediator, KinksterManager kinkster) 
     {
-        _shockies = shockies;
-        _kinksters = pairs;
-        _hcHandler = hcHandler;
-        _overlays = overlays;
-        _remoteService = remoteService;
-        _nameplates = nameplates;
+        _logger = logger;
+        _mediator = mediator;
+        _kinksters = kinkster;
 
         Svc.ClientState.Logout += OnLogout;
-        // Assign delegates for handling global permission changes.
-        _changeHandlers[nameof(GlobalPerms.GaggedNameplate)] = OnGaggedNameplateChange;
-        _changeHandlers[nameof(GlobalPerms.HypnosisCustomEffect)] = OnHypnoEffectChange;
-        _changeHandlers[nameof(GlobalPerms.LockedFollowing)] = OnLockedFollowingChange;
-        _changeHandlers[nameof(GlobalPerms.LockedEmoteState)] = OnLockedEmoteChange;
-        _changeHandlers[nameof(GlobalPerms.IndoorConfinement)] = OnForcedStayChange;
-        _changeHandlers[nameof(GlobalPerms.ChatBoxesHidden)] = OnHiddenChatBoxesChange;
-        _changeHandlers[nameof(GlobalPerms.ChatInputHidden)] = OnHiddenChatInputChange;
-        _changeHandlers[nameof(GlobalPerms.ChatInputBlocked)] = OnBlockedChatInputChange;
     }
 
-    /// <summary>
-    ///     Static readonly accessor for Global Perms to prevent circular dependency hell. <para/> 
-    ///     Instance and setters are handled via the class.
-    /// </summary>
-    /// <remarks> Might be planting a bomb making an interface possibly nullable, we'll see. </remarks>
     public static IReadOnlyGlobalPerms? Perms => _perms;
     public static EmoteState LockedEmoteState => EmoteState.FromString(_perms?.LockedEmoteState ?? string.Empty);
 
-    // It is possible to come into a race condition here, so accept if the string is empty, or equal to the enactor.
-    public bool CanApplyHypnosisEffect(string enactor)
+    public void Dispose()
     {
-        if (_overlays.IsHypnotized)
-            return false;
-        // If the global perms enactor is not empty, only return true if it matches the applier.
-        if (_perms is not { } gp)
-            return false;
-        if (!string.IsNullOrEmpty(gp.HypnosisCustomEffect))
-            return gp.HypnoEnactor() == enactor;
-        else
-            return true;
+        Svc.ClientState.Logout -= OnLogout;
     }
 
     /// <summary> Create a mutable clone of the current globals, that is not readonly. </summary>
@@ -90,244 +48,54 @@ public sealed class OwnGlobals : DisposableMediatorSubscriberBase
         return copy;
     }
 
-    protected override void Dispose(bool disposing)
-    {
-        base.Dispose(disposing);
-        Svc.ClientState.Logout -= OnLogout;
-    }
-
     private void OnLogout(int type, int code)
     {
-        Logger.LogInformation("Clearing Global Permissions on Logout.");
-        // this may likely cause some issues down the line, so see if we need to bulk set it off or something.
-        ApplyBulkChange(null!, MainHub.UID);
+        _logger.LogInformation("Clearing Global Permissions on Logout.");
+        ApplyBulkChange(new GlobalPerms());
         _perms = null;
     }
 
-    public void ApplyBulkChange(GlobalPerms newGlobals, string enactor)
+    /// <summary>
+    ///     Assumes change was validated through <c>OwnGlobalsListener</c> first. <para />
+    ///     Update should only be enacted by the client. <para />
+    ///     Updates all values in <see cref="_perms"/> to their new ones.
+    /// </summary>
+    public void ApplyBulkChange(GlobalPerms newGlobals)
     {
         var prevGlobals = _perms;
         _perms = newGlobals;
-        Mediator.Publish(new EventMessage(new("Self-Update", MainHub.UID, InteractionType.BulkUpdate, "Global Permissions Updated in Bulk")));
-
-        // process the special changes that require immidiate action.
-        foreach (var kvp in _changeHandlers)
-        {
-            var prop = typeof(GlobalPerms).GetProperty(kvp.Key);
-            if (prop is null)
-                continue;
-
-            var newVal = prop.GetValue(newGlobals);
-            var prevVal = prevGlobals is not null ? prop.GetValue(prevGlobals) : null;
-            Logger.LogInformation($"[OwnGlobalsManager] Processing change for {kvp.Key}: New Value: {newVal}, Previous Value: {prevVal}, Enactor: {enactor}");
-            kvp.Value.Invoke(newVal!, prevVal, enactor, null);
-        }
+        _mediator.Publish(new EventMessage(new("Self-Update", MainHub.UID, InteractionType.BulkUpdate, "Global Permissions Updated in Bulk")));
     }
 
-    public void DoubleGlobalPermChange(DoubleChangeGlobal dto)
+    /// <summary>
+    ///     Assumes change was validated through <c>OwnGlobalsListener</c> first. <para />
+    ///     Updates both changes in <see cref="_perms"/> to their new ones.
+    /// </summary>
+    public void DoubleGlobalPermChange(UserData enactor, KeyValuePair<string, object> newPerm1, KeyValuePair<string, object> newPerm2)
     {
-        SingleGlobalPermChange(dto.Enactor, dto.NewPerm1);
-        SingleGlobalPermChange(dto.Enactor, dto.NewPerm2);
+        UpdatePermissionValue(enactor, newPerm1.Key, newPerm1.Value);
+        UpdatePermissionValue(enactor, newPerm2.Key, newPerm2.Value);
     }
 
-    public void SingleGlobalPermChange(UserData enactor, KeyValuePair<string, object> newPerm)
+    public void UpdatePermissionValue(UserData enactor, string permName, object newValue)
     {
         if (string.Equals(enactor.UID, MainHub.UID))
-            PerformPermissionChange(enactor, newPerm);
+            PerformPermissionChange(enactor, permName, newValue);
         else if (_kinksters.TryGetKinkster(enactor, out var kinkster))
-            PerformPermissionChange(enactor, newPerm, kinkster);
+            PerformPermissionChange(enactor, permName, newValue, kinkster);
         else
-            Logger.LogWarning("Change was not from self or a pair, not setting!");
+            throw new Exception($"Change not from self, and [{enactor.AliasOrUID}] is not a Kinkster Pair. Invalid change for [{permName}]!");
     }
 
-    private void PerformPermissionChange(UserData enactor, KeyValuePair<string, object> newPerm, Kinkster? pair = null)
+    private void PerformPermissionChange(UserData enactor, string permName, object newValue, Kinkster? pair = null)
     {
-        var prevValue = typeof(GlobalPerms).GetProperty(newPerm.Key)?.GetValue(_perms);
-
-        if (!PropertyChanger.TrySetProperty(_perms, newPerm.Key, newPerm.Value, out var _))
-        {
-            Logger.LogError($"Failed to apply Global Permission change for [{newPerm.Key}] to [{newPerm.Value}].");
-            return;
-        }
-
-        if (_changeHandlers.TryGetValue(newPerm.Key, out var handler))
-            handler(newPerm.Value, prevValue, enactor.UID, pair);
-
+        // Attempt to set the property. if this fails, which it never should if validated previously, throw an exception.
+        if (!PropertyChanger.TrySetProperty(_perms, permName, newValue, out var _))
+            throw new InvalidOperationException($"Failed to set property [{permName}] to [{newValue}] on Global Permissions.");
         // Then perform the log.
-        SendActionEventMessage(pair?.GetNickAliasOrUid() ?? "Self-Update", enactor.UID, $"[{newPerm.Key}] changed to [{newPerm.Value}]");
+        SendActionEventMessage(pair?.GetNickAliasOrUid() ?? "Self-Update", enactor.UID, $"[{permName}] changed to [{newValue}]");
     }
 
     private void SendActionEventMessage(string applierNick, string applierUid, string message)
-        => Mediator.Publish(new EventMessage(new(applierNick, applierUid, InteractionType.ForcedPermChange, message)));
-
-
-    private void OnGaggedNameplateChange(object newVal, object? prevVal, string _, Kinkster? __ = null)
-    {
-        var newBool = (bool)newVal;
-        var prevBool = prevVal as bool?;
-        if (!newBool.Equals(prevBool))
-            _nameplates.RefreshClientGagState();
-    }
-
-    private void OnHypnoEffectChange(object newVal, object? prevVal, string enactor, Kinkster? _)
-    {
-        var oldEffect = prevVal as string ?? string.Empty;
-        var newEffect = newVal as string ?? string.Empty;
-        Logger.LogInformation($"Hypnosis Custom Effect changed by {enactor}: {newEffect}");
-        // if the effect change made the new value a string.Empty, we should process the effect removal.
-        if (string.IsNullOrEmpty(newEffect) && !string.IsNullOrEmpty(oldEffect) && _overlays.IsHypnotized && _overlays.ActiveHypnoIsSentEffect)
-        {
-            Logger.LogTrace($"Hypnotic effect was cleared by ({enactor}). Removing effect!");
-            _overlays.RemoveHypnoticEffect(enactor);
-        }
-    }
-
-    private void OnLockedFollowingChange(object newVal, object? prevVal, string enactor, Kinkster? pair = null)
-    {
-        bool prevState = !string.IsNullOrEmpty(prevVal as string);
-        bool newState = !string.IsNullOrEmpty(newVal as string);
-
-        if (!prevState.Equals(newState))
-        {
-            if (newState) _hcHandler.EnableLockedFollowing(pair);
-            else _hcHandler.DisableLockedFollowing(enactor);
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.LockedFollowing, newState, enactor, MainHub.UID);
-        }
-    }
-
-    private void OnLockedEmoteChange(object newVal, object? prevVal, string enactor, Kinkster? _)
-    {
-        // We convert to bools to prevent switching between certain active states from causing issues.
-        var prevState = string.IsNullOrEmpty(prevVal as string);
-        var newState = string.IsNullOrEmpty(newVal as string);
-        if (!prevState.Equals(newState))
-        {
-            if (newState) _hcHandler.EnableLockedEmote(enactor);
-            else _hcHandler.DisableLockedEmote(enactor);
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.LockedEmote, newState, enactor, MainHub.UID);
-        }
-    }
-
-    private void OnForcedStayChange(object newVal, object? prevVal, string enactor, Kinkster? _ = null)
-    {
-        var prevState = string.IsNullOrEmpty(prevVal as string);
-        var newState = string.IsNullOrEmpty(newVal as string);
-        if (!prevState.Equals(newState))
-        {
-            if (newState) _hcHandler.EnableForcedStay(enactor);
-            else _hcHandler.DisableForcedStay(enactor);
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.IndoorConfinement, newState, enactor, MainHub.UID);
-        }
-    }
-
-    private void OnHiddenChatBoxesChange(object newVal, object? prevVal, string enactor, Kinkster? _ = null)
-    {
-        var prevState = string.IsNullOrEmpty(prevVal as string);
-        var newState = string.IsNullOrEmpty(newVal as string);
-        if (!prevState.Equals(newState))
-        {
-            if (newState) _hcHandler.EnableHiddenChatBoxes(enactor);
-            else _hcHandler.DisableHiddenChatBoxes(enactor);
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.ChatBoxesHidden, newState, enactor, MainHub.UID);
-        }
-    }
-
-    private void OnHiddenChatInputChange(object newVal, object? prevVal, string enactor, Kinkster? _ = null)
-    {
-        var prevState = string.IsNullOrEmpty(prevVal as string);
-        var newState = string.IsNullOrEmpty(newVal as string);
-        if (!prevState.Equals(newState))
-        {
-            if (newState) _hcHandler.EnableHiddenChatInput(enactor);
-            else _hcHandler.DisableHiddenChatInput(enactor);
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.ChatInputHidden, newState, enactor, MainHub.UID);
-        }
-    }
-
-    private void OnBlockedChatInputChange(object newVal, object? prevVal, string enactor, Kinkster? _ = null)
-    {
-        var prevState = string.IsNullOrEmpty(prevVal as string);
-        var newState = string.IsNullOrEmpty(newVal as string);
-        if (!prevState.Equals(newState))
-        {
-            if (newState) _hcHandler.EnableBlockedChatInput(enactor);
-            else _hcHandler.DisableBlockedChatInput(enactor);
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HardcoreSetting.ChatInputBlocked, newState, enactor, MainHub.UID);
-        }
-    }
-
-    public void OnPiShockInstruction(ShockCollarAction dto)
-    {
-        // figure out who sent the command, and see if we have a unique sharecode setup for them.
-        if (_kinksters.TryGetKinkster(dto.User, out var enactor))
-        {
-            var interactionType = dto.OpCode switch { 0 => "shocked", 1 => "vibrated", 2 => "beeped", _ => "unknown" };
-            var eventLogMessage = $"Pishock {interactionType}, intensity: {dto.Intensity}, duration: {dto.Duration}";
-            Logger.LogInformation($"Received Instruction for {eventLogMessage}", LoggerType.Callbacks);
-
-            if (!enactor.OwnPerms.PiShockShareCode.IsNullOrEmpty())
-            {
-                Logger.LogDebug("Executing Shock Instruction to UniquePair ShareCode", LoggerType.Callbacks);
-                Mediator.Publish(new EventMessage(new(enactor.GetNickAliasOrUid(), enactor.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
-                _shockies.ExecuteOperation(enactor.OwnPerms.PiShockShareCode, dto.OpCode, dto.Intensity, dto.Duration);
-                if (dto.OpCode is 0)
-                    GagspeakEventManager.AchievementEvent(UnlocksEvent.ShockReceived);
-            }
-            else if (_perms is { } g && !g.GlobalShockShareCode.IsNullOrEmpty())
-            {
-                Logger.LogDebug("Executing Shock Instruction to Global ShareCode", LoggerType.Callbacks);
-                Mediator.Publish(new EventMessage(new(enactor.GetNickAliasOrUid(), enactor.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
-                _shockies.ExecuteOperation(g.GlobalShockShareCode, dto.OpCode, dto.Intensity, dto.Duration);
-                if (dto.OpCode is 0)
-                    GagspeakEventManager.AchievementEvent(UnlocksEvent.ShockReceived);
-            }
-            else
-            {
-                Logger.LogWarning("Someone Attempted to execute an instruction to you, but you don't have any share codes enabled!");
-            }
-        }
-    }
-
-    public void OnHypnosisApplication(HypnoticAction dto)
-    {
-        if (_perms is not { } g)
-            throw new NullReferenceException($"Globals is Null.");
-
-        if (!_kinksters.TryGetKinkster(dto.User, out var enactingKinkster))
-            throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
-        // Secondary preventative measure.
-        if (!CanApplyHypnosisEffect(enactingKinkster.UserData.UID))
-        {
-            Logger.LogWarning($"Kinkster [{enactingKinkster.GetNickAliasOrUid()}] attempted to hypnotize while already hypnotized, discarding!");
-            Mediator.Publish(new PushGlobalPermChange(nameof(GlobalPerms.HypnosisCustomEffect), string.Empty));
-            return;
-        }
-
-        // Apply the hypnosis effect.
-        var applyDuration = TimeSpan.FromSeconds(dto.Duration);
-        _overlays.SetTimedHypnoticEffect(dto.Effect, applyDuration, enactingKinkster.UserData.UID, dto.base64Image);   
-    }
-
-    public void OnConfineByAddress(ConfineByAddress dto)
-    {
-        if (_perms is not { } g)
-            throw new NullReferenceException($"Globals is Null.");
-
-        if (!_kinksters.TryGetKinkster(dto.User, out var enactingKinkster))
-            throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
-
-        // an override for forced stay that can inject spesific addresses to go to.
-    }
-
-    public void OnImprisonByLocation(ImprisonAtPosition dto)
-    {
-        if (_perms is not { } g)
-            throw new NullReferenceException($"Globals is Null.");
-
-        if (!_kinksters.TryGetKinkster(dto.User, out var enactingKinkster))
-            throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
-
-        // kind of like forced sit, but with a little wiggle room.
-
-    }
+        => _mediator.Publish(new EventMessage(new(applierNick, applierUid, InteractionType.ForcedPermChange, message)));
 }

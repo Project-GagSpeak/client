@@ -74,9 +74,6 @@ public class HomepageTab
         // if itemGotHovered is false, reset the index.
         if (!itemGotHovered)
             HoveredItemIndex = -1;
-
-        if (CkGui.IconTextButton(FAI.Home, "Enter Nearest Housing Node"))
-            _temp.EnqueueEnterNearestHousingRoom();
     }
 
     private bool HomepageSelectable(string label, FontAwesomeIcon icon, Vector2 region, bool hovered = false)

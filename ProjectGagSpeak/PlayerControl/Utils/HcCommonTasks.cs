@@ -2,16 +2,44 @@ using CkCommons;
 using Dalamud.Game.ClientState.Objects.Types;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using GagSpeak.PlayerClient;
+using GagSpeak.PlayerControl;
 using GagSpeak.Services;
-using System;
+using GagspeakAPI.Data.Struct;
 
-namespace GagSpeak.PlayerControl;
+namespace GagSpeak;
 
 /// <summary>
 ///     Essential Task Operations used in Hardcore Actions.
 /// </summary>
 public static unsafe class HcCommonTasks
 {
+    public static HardcoreTask TargetNode(Func<IGameObject> getObj, HcTaskConfiguration? config = null)
+    {
+        return new HardcoreTask(() =>
+        {
+            // if the player is not interactable return false.
+            if (!PlayerData.Interactable)
+                return false;
+
+            // if this object is null, we should throw an exception.
+            if (getObj() is not { } objToTarget)
+                throw new InvalidOperationException($"TargetObject was null during function call!");
+
+            if (!objToTarget.IsTarget())
+            {
+                if (NodeThrottler.Throttle("HcTaskFunc.SetTarget", 200))
+                {
+                    Svc.Targets.Target = objToTarget;
+                    return false; // still have not targeted the object, so ret false.
+                }
+            }
+            // ret true, as we have successfully targeted the object.
+            return true;
+        }, $"TargetNode({getObj})", config);
+    }
+
+
     public static HardcoreTask ApproachNode(Func<IGameObject> getObj, float minDistance = 4f, HcTaskConfiguration? config = null)
     {
         var _prevPos = Vector3.Zero;
@@ -27,7 +55,7 @@ public static unsafe class HcCommonTasks
             if (AgentMap.Instance()->IsPlayerMoving)
             {
                 var minSpeedAllowed = Control.Instance()->IsWalking ? 0.015f : 0.05f;
-                Svc.Logger.Information($"Speed is {PlayerData.DistanceTo(_prevPos)} yalm/s");
+                // Svc.Logger.Information($"Speed is {PlayerData.DistanceTo(_prevPos)} yalm/s");
                 if (PlayerData.DistanceTo(obj) < minDistance && NodeThrottler.Throttle("HcTaskFunc.AutoMoveOff", 200))
                     ChatService.SendCommand("automove off");
 
@@ -107,7 +135,69 @@ public static unsafe class HcCommonTasks
         }, $"InteractWithNode({objFunc}, {checkLineOfSight})", config);
     }
 
+    // Forcibly puts you into a spesific Emote State.
+    public static HardcoreTask PerformExpectedEmote(EmoteState expected, HcTaskConfiguration? config = null)
+    {
+        return new HardcoreTask(() =>
+        {
+            if (PlayerData.IsAnimationLocked || !PlayerData.Interactable)
+                return false;
+
+            // Obtain our current emote ID.
+            var currentEmote = EmoteService.CurrentEmoteId(PlayerData.ObjectAddress);
+
+            // if the expected emoteId is 50 or 52, handle forced sitting.
+            if (expected.EmoteID is 50 or 52)
+            {
+                // RETURN TRUE IF: both current emote and current cycle byte are the same.
+                var curCyclePose = EmoteService.CurrentCyclePose(PlayerData.ObjectAddress);
+                if (currentEmote == expected.EmoteID && curCyclePose == expected.CyclePoseByte)
+                    return true;
+
+                // Otherwise, it needs to be enforced!
+                if (!EmoteService.IsSittingAny(currentEmote))
+                {
+                    Svc.Logger.Verbose($"Forcing Emote: {(expected.EmoteID is 50 ? "/SIT" : "/GROUNDSIT")}. (Current was: {currentEmote}).");
+                    EmoteService.ExecuteEmote(expected.EmoteID); // Perform the sit emote.
+                    return false; // not valid state!
+                }
+
+                // Have to validate the correct Cycle Pose.
+                if (curCyclePose != expected.CyclePoseByte)
+                {
+                    Svc.Logger.Verbose($"Your CyclePose ({curCyclePose}) isnt the expected ({expected.CyclePoseByte})");
+                    // the cycle pose emote, which will change our sitting/standing pose.
+                    EmoteService.ExecuteEmote(90);
+                }
+                // Will still be false by this point.
+                return false;
+            }
+            // Otherwise, handle generic emote state enforcement.
+            else
+            {
+                // RETURN TRUE IF: current emote is the expected emote ID.
+                if (currentEmote == expected.EmoteID)
+                    return true;
+
+                // if we are currently sitting, perform a stand.
+                if (!EmoteService.IsSittingAny(currentEmote))
+                {
+                    Svc.Logger.Verbose("Enforcing stand to perform the correct emote.");
+                    EmoteService.ExecuteEmote(51); // 51 is the stand emote.
+                    return false; // Still not in expected state.
+                }
+
+                // Otherwise, attempt to perform the desired emote.
+                if (!EmoteService.CanUseEmote(expected.EmoteID))
+                    EmoteService.ExecuteEmote(expected.EmoteID);
+
+                return false;
+            }
+        }, $"ForceEmotePerform ({expected.ToString()})");
+
+    }
+
     public static HardcoreTask WaitForPlayerLoading(HcTaskConfiguration? config = null)
-        => new HardcoreTask(() => PlayerData.Interactable && ForceStayUtils.IsScreenReady(), "Wait for screen fadeout completion", config);
+        => new HardcoreTask(() => PlayerData.Interactable && HcTaskUtils.IsScreenReady(), "Wait for screen fadeout completion", config);
 
 }

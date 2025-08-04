@@ -4,6 +4,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Textures.TextureWraps;
 using GagSpeak.Gui;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Models;
@@ -11,6 +12,7 @@ using GagSpeak.Utils;
 using GagspeakAPI.Data;
 using ImGuiNET;
 using NAudio.CoreAudioApi;
+using System.IO;
 using Timer = System.Timers.Timer;
 
 namespace GagSpeak.Services.Controller;
@@ -97,9 +99,20 @@ public class HypnoService : IDisposable
         await ExecuteWithSemaphore(EquipAnimationInternal);
     }
 
+    public bool CanApplyTimedEffect(HypnoticEffect effect, string? base64ImgString = null)
+        => !HasValidEffect && (base64ImgString is null
+            ? File.Exists(Path.Combine(ConfigFileProvider.ThumbnailDirectory, ImageDataType.Hypnosis.ToString(), Constants.DefaultHypnoPath))
+            : !string.IsNullOrEmpty(base64ImgString) && Convert.FromBase64String(base64ImgString) is { Length: > 0 });
+
     // For hypnotic effects manually applied.
     public async Task<bool> ApplyEffect(HypnoticEffect effect, string enactor, int timeInSeconds, string? base64ImgString = null)
     {
+        if (!CanApplyTimedEffect(effect, base64ImgString))
+        {
+            _logger.LogWarning($"Cannot apply Hypnotic Effect: {effect.EffectId} by {enactor}. Already has a valid effect or image is invalid.");
+            return false;
+        }
+
         // Load method: Custom Image from other Kinkster.
         if (base64ImgString is not null)
         {

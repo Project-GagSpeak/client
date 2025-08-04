@@ -23,7 +23,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     public const string MAIN_SERVER_URI = "wss://gagspeak.kinkporium.studio";
 
     private readonly ClientAchievements _achievements;
-    private readonly OwnGlobals _globalPerms;
+    private readonly OwnGlobalsListener _globals;
     private readonly KinksterRequests _requests;
     private readonly HubFactory _hubFactory;
     private readonly TokenProvider _tokenProvider;
@@ -55,7 +55,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     public MainHub(ILogger<MainHub> logger,
         GagspeakMediator mediator,
         ClientAchievements achievements,
-        OwnGlobals globalPerms,
+        OwnGlobalsListener globalPerms,
         KinksterRequests requests,
         HubFactory hubFactory,
         TokenProvider tokenProvider,
@@ -73,7 +73,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         _hubFactory = hubFactory;
         _tokenProvider = tokenProvider;
         _serverConfigs = serverConfigs;
-        _globalPerms = globalPerms;
+        _globals = globalPerms;
         _kinksters = kinksters;
         _kinksterListener = kinksterListener;
         _visualListener = visuals;
@@ -202,7 +202,6 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         OnBulkChangeGlobal(dto => _ = Callback_BulkChangeGlobal(dto));
         OnBulkChangeUnique(dto => _ = Callback_BulkChangeUnique(dto));
         OnSingleChangeGlobal(dto => _ = Callback_SingleChangeGlobal(dto));
-        OnDoubleChangeGlobal(dto => _ = Callback_DoubleChangeGlobal(dto));
         OnSingleChangeUnique(dto => _ = Callback_SingleChangeUnique(dto));
         OnSingleChangeAccess(dto => _ = Callback_SingleChangeAccess(dto));
 

@@ -2,6 +2,7 @@ using CkCommons;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Memory;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using GagSpeak.GameInternals.Detours;
@@ -12,7 +13,7 @@ using System.Runtime.CompilerServices;
 using GameObject = FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject;
 namespace GagSpeak;
 
-public static unsafe class ForceStayUtils
+public static unsafe class HcTaskUtils
 {
     public static GameObject* ToStruct(this IGameObject obj)
         => (GameObject*)obj.Address;
@@ -28,6 +29,21 @@ public static unsafe class ForceStayUtils
         if (TryGetAddonByName<AtkUnitBase>("FadeMiddle", out var b) && b->IsVisible) return false;
         if (TryGetAddonByName<AtkUnitBase>("FadeBack", out var c) && c->IsVisible) return false;
         return true;
+    }
+
+    public static bool IsOutside()
+        => HousingManager.Instance()->IsOutside();
+
+    public static bool? FollowTarget()
+    {
+        if (!PlayerData.Available)
+            return false;
+        if (Svc.Targets.Target != null && NodeThrottler.Throttle("Follow", 200))
+        {
+            ChatService.SendCommand("follow <T>");
+            return true;
+        }
+        return false;
     }
 
     public static bool? LockOnToTarget()
@@ -118,7 +134,7 @@ public static unsafe class ForceStayUtils
         var index = addonEntries.IndexOf(match);
         if (index >= 0 && throttleSelect())
         {
-            Svc.Logger.Debug($"[ForceStayUtils] SelectSpesificEntry: selecting {match}/{index} requested from [{string.Join(',', entries)}].");
+            Svc.Logger.Debug($"[HcTaskUtils] SelectSpesificEntry: selecting {match}/{index} requested from [{string.Join(',', entries)}].");
             StaticDetours.FireCallback((AtkUnitBase*)addon, true, index);
             return true;
         }

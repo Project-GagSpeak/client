@@ -240,7 +240,6 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
             DrawPermissionRowString("Chat Boxes Hidden", perms.ChatBoxesHidden);
             DrawPermissionRowString("Chat Input Hiddeen", perms.ChatInputHidden);
             DrawPermissionRowString("Chat Input Blocked", perms.ChatInputBlocked);
-            DrawPermissionRowBool("In Confinement Task", perms.InConfinementTask);
 
             ImGui.TableNextRow();
             DrawPermissionRowString("Shock Collar Code", perms.GlobalShockShareCode);

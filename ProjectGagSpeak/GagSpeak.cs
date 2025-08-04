@@ -260,6 +260,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<PlayerHpListener>()
         .AddSingleton<IntifaceListener>()
         .AddSingleton<KinksterListener>()
+        .AddSingleton<OwnGlobalsListener>()
         .AddSingleton<PuppeteerListener>()
         .AddSingleton<ToyboxStateListener>()
         .AddSingleton<VisualStateListener>()

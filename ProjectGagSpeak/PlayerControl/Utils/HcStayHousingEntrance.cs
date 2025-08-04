@@ -3,21 +3,19 @@ using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Game.ClientState.Objects.Types;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using GagSpeak.GameInternals.Addons;
-using GagSpeak.GameInternals.Detours;
 namespace GagSpeak;
 
 public static unsafe class HcStayHousingEntrance
 {
     public static bool ConfirmHouseEntranceAndEnter()
     {
-        var addon = ForceStayUtils.GetSpesificYesNo(NodeStringLang.ConfirmHouseEntrance);
+        var addon = HcTaskUtils.GetSpesificYesNo(NodeStringLang.ConfirmHouseEntrance);
         if (addon is null)
             return false;
         // Addon valid, throttle the yesno selection, if possible.
-        if (ForceStayUtils.IsAddonReady(addon) && NodeThrottler.Throttle("SelectYesNo"))
+        if (HcTaskUtils.IsAddonReady(addon) && NodeThrottler.Throttle("SelectYesNo"))
         {
-            AddonSelectYesno* yesno = (AddonSelectYesno*)addon;
+            var yesno = (AddonSelectYesno*)addon;
             // if addon is ready, check for validation to hit the yes button prior to pressing it.
             if (yesno->YesButton is not null && !yesno->YesButton->IsEnabled)
             {

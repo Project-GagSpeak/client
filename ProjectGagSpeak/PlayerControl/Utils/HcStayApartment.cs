@@ -11,12 +11,12 @@ public static unsafe class HcStayApartment
 {
     public static void EnqueueAsTask(HcTaskManager taskManager)
     {
-        taskManager.EnqueueTask(ForceStayUtils.IsScreenReady, "Wait for loading to finish");
+        taskManager.EnqueueTask(HcTaskUtils.IsScreenReady, "Wait for loading to finish");
         taskManager.EnqueueTask(TargetApartmentEntrance);
-        taskManager.EnqueueTask(ForceStayUtils.LockOnToTarget);
-        taskManager.EnqueueTask(ForceStayUtils.EnableAutoMove);
+        taskManager.EnqueueTask(HcTaskUtils.LockOnToTarget);
+        taskManager.EnqueueTask(HcTaskUtils.EnableAutoMove);
         taskManager.EnqueueTask(() => Vector3.Distance(PlayerData.Object.Position, Svc.Targets.Target?.Position ?? Vector3.Zero) < 3.5f, "Reach Apartment Entrance");
-        taskManager.EnqueueTask(ForceStayUtils.DisableAutoMove);
+        taskManager.EnqueueTask(HcTaskUtils.DisableAutoMove);
         taskManager.EnqueueTask(InteractWithApartmentEntrance);
 
     }
@@ -72,11 +72,11 @@ public static unsafe class HcStayApartment
 
     /// <summary> Select the "Go to my Apartment" option from the apartment confirmation menu. </summary>
     public static unsafe bool GoToMyApartment()
-        => ForceStayUtils.TrySelectSpesificEntry(NodeStringLang.GoToMyApartment, () => NodeThrottler.Throttle("SelectStringApartment"));
+        => HcTaskUtils.TrySelectSpesificEntry(NodeStringLang.GoToMyApartment, () => NodeThrottler.Throttle("SelectStringApartment"));
 
     /// <summary> Select the "Go to specified apartment"? option from the room confirmation menu. </summary>
     public static unsafe bool SelectGoToSpecifiedApartment()
-        => ForceStayUtils.TrySelectSpesificEntry(NodeStringLang.GoToSpecifiedApartment, () => NodeThrottler.Throttle("SelectStringApartment"));
+        => HcTaskUtils.TrySelectSpesificEntry(NodeStringLang.GoToSpecifiedApartment, () => NodeThrottler.Throttle("SelectStringApartment"));
 
 
     /// <summary> Select a spesific apartment index. </summary>
@@ -85,7 +85,7 @@ public static unsafe class HcStayApartment
         // make sure we get the apartment selection by the page entry. (15 per page)
         var desiredSection = (int)((apartmentNum) / 15);
         // if we cannot locate the addon, return false.
-        if (!ForceStayUtils.TryGetAddonByName<AtkUnitBase>("MansionSelectRoom", out var addon) || !ForceStayUtils.IsAddonReady(addon))
+        if (!HcTaskUtils.TryGetAddonByName<AtkUnitBase>("MansionSelectRoom", out var addon) || !HcTaskUtils.IsAddonReady(addon))
             return false;
 
         // obtain the mansionSelectRoom reader for easy assistance.
@@ -108,7 +108,7 @@ public static unsafe class HcStayApartment
             // if the target room is more than the maximum rooms for the section, return null and log error.
             if (targetRoom >= reader.SectionRoomsCount)
             {
-                Svc.Logger.Error($"[ForceStayUtils] Couldn't find Apartment # {apartmentNum + 1} ({targetRoom} in section {desiredSection})");
+                Svc.Logger.Error($"[HcTaskUtils] Couldn't find Apartment # {apartmentNum + 1} ({targetRoom} in section {desiredSection})");
                 return null;
             }
             // get the room info.
@@ -116,7 +116,7 @@ public static unsafe class HcStayApartment
             // if the room owner is blank, or the room access state is vacent, log error and return null.
             if (string.IsNullOrEmpty(roomInfo.RoomOwner) || roomInfo.AccessState == 1)
             {
-                Svc.Logger.Error($"[ForceStayUtils] Apartment#{apartmentNum + 1} is vacent. Cannot enter!");
+                Svc.Logger.Error($"[HcTaskUtils] Apartment#{apartmentNum + 1} is vacent. Cannot enter!");
                 return null;
             }
             // fire the callback to select the room! we did it! Yippee we made it through hell!
@@ -128,7 +128,7 @@ public static unsafe class HcStayApartment
             // we need to change the section to the one with the room we are looking for.
             if (desiredSection < 0 || desiredSection >= reader.ExistingSectionsCount)
             {
-                Svc.Logger.Error($"[ForceStayUtils] SelectApartment: Invalid section {desiredSection} for apartment {apartmentNum}.");
+                Svc.Logger.Error($"[HcTaskUtils] SelectApartment: Invalid section {desiredSection} for apartment {apartmentNum}.");
                 return null;
             }
             // if we can throttle the selection to enter the apartment, do so.

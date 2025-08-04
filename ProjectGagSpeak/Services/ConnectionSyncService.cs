@@ -105,7 +105,7 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
 
         // 3. Load in the data from the server into our storages.
         Logger.LogInformation("[SYNC PROGRESS]: Syncing Global Permissions!");
-        _globals.ApplyBulkChange(connectionInfo.GlobalPerms, MainHub.UID);
+        _globals.ApplyBulkChange(connectionInfo.GlobalPerms);
 
         // 4. Sync overlays with the global permissions & metadata.
         Logger.LogInformation("[SYNC PROGRESS]: Syncing Overlay Data");
