@@ -236,8 +236,23 @@ public class Kinkster : IComparable<Kinkster>
         _mediator.Publish(new PlayerLatestActiveItems(UserData, ActiveGags, ActiveRestrictions, ActiveRestraint));
 
         // Deterministic AliasData setting.
-        if (data.PairAliasData.TryGetValue(UserData.UID, out var match))
+        if (data.PairAliasData.TryGetValue(MainHub.UID, out var match))
+        {
+            _logger.LogTrace($"{UserData.UID} {LastPairAliasData.ExtractedListenerName} {LastPairAliasData.Storage.Items.Count} to replace withmatch.ExtractedListenerName {match.Storage.Items.Count}");
             LastPairAliasData = match;
+        }
+        else
+        {
+            _logger.LogTrace($"{UserData.UID} could not be found in LastPairAliasData");
+            foreach (var storage in data.PairAliasData)
+            {
+                _logger.LogTrace($"{storage.Key} {storage.Value.ExtractedListenerName} {storage.Value.StoredNameWorld}");
+                foreach (var item in storage.Value.Storage.Items)
+                {
+                    _logger.LogTrace($"{item.Identifier} {item.InputCommand}");
+                }
+            }
+        }
 
         // early return if safeword, but not sure why, or what this is causing at the moment.
         if (wasSafeword)

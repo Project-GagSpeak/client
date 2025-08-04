@@ -2,6 +2,7 @@ using CkCommons.Helpers;
 using CkCommons.HybridSaver;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data;
@@ -18,7 +19,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
     private StorageItemEditor<AliasTrigger> _itemEditor = new();
 
     public PuppeteerManager(ILogger<PuppeteerManager> logger, GagspeakMediator mediator,
-        KinksterManager pairs, ConfigFileProvider fileNames, HybridSaveService saver) 
+        KinksterManager pairs, ConfigFileProvider fileNames, HybridSaveService saver)
         : base(logger, mediator)
     {
         _pairs = pairs;
@@ -28,6 +29,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
     public AliasStorage GlobalAliasStorage { get; private set; } = new AliasStorage();
     public PairAliasStorage PairAliasStorage { get; private set; } = new PairAliasStorage();
     public AliasTrigger? ItemInEditor => _itemEditor.ItemInEditor;
+    private string? itemInEditorUID = null;
 
     public AliasTrigger? CreateNew(string? userUid = null)
     {
@@ -40,6 +42,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
 
         // Create a new AliasTrigger with a unique name
         var newItem = new AliasTrigger();
+        itemInEditorUID = userUid;
         storage.Items.Add(newItem);
         _saver.Save(this);
 
@@ -48,13 +51,13 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
     }
 
 
-    public AliasTrigger? CreateClone(AliasTrigger clone, string? userUid = null)
+    public AliasTrigger? CreateClone(AliasTrigger clone)
     {
-        if (userUid is not null && !ValidatePairStorage(userUid))
+        if (itemInEditorUID is not null && !ValidatePairStorage(itemInEditorUID))
             return null;
 
-        var storage = userUid is null ? GlobalAliasStorage : PairAliasStorage[userUid].Storage;
-        if (storage is null) 
+        var storage = itemInEditorUID is null ? GlobalAliasStorage : PairAliasStorage[itemInEditorUID].Storage;
+        if (storage is null)
             return null;
 
         var cloneName = RegexEx.EnsureUniqueName(clone.Label, storage.Items, at => at.Label);
@@ -66,19 +69,36 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         return newItem;
     }
 
-    public void Delete(AliasTrigger trigger, string? userUid = null)
+    public void Delete(AliasTrigger trigger)
     {
-        if (userUid is not null && !ValidatePairStorage(userUid))
+        Logger.LogDebug($"Delete {trigger.Label} for {itemInEditorUID}");
+        if (itemInEditorUID is not null && !ValidatePairStorage(itemInEditorUID))
             return;
 
-        var storage = userUid is null ? GlobalAliasStorage : PairAliasStorage[userUid].Storage;
+        var storage = itemInEditorUID is null ? GlobalAliasStorage : PairAliasStorage[itemInEditorUID].Storage;
         if (storage is null)
-            return;
-
-        if (storage.Items.Remove(trigger))
         {
+            Logger.LogDebug($"Storage Not Found");
+            return;
+        }
+
+        var triggerIndex = storage.Items.FindIndex(v => v.Identifier == trigger.Identifier);
+        if (triggerIndex >= 0)
+        {
+            storage.Items.RemoveAt(triggerIndex);
             Logger.LogDebug($"Deleted Alias Trigger in {nameof(storage)}", LoggerType.Puppeteer);
+
             _saver.Save(this);
+        }
+        else
+        {
+            var storageData = "";
+            foreach (var item in storage.Items)
+            {
+                storageData = storageData + item.Label + ",  ";
+
+            }
+            Logger.LogDebug($"{trigger.Label} not found in {storageData}");
         }
     }
 
@@ -107,10 +127,15 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
             return;
 
         _itemEditor.StartEditing(storage, trigger);
+        itemInEditorUID = userUid;
     }
 
     /// <summary> Cancel the editing process without saving anything. </summary>
-    public void StopEditing() => _itemEditor.QuitEditing();
+    public void StopEditing()
+    {
+        _itemEditor.QuitEditing();
+        itemInEditorUID = null;
+    }
 
     /// <summary> Injects all the changes made to the GagRestriction and applies them to the actual item. </summary>
     /// <remarks> All changes are saved to the config once this completes. </remarks>
@@ -121,6 +146,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
             // We need to figure out where the source was from, to know what update to send to the server.
             Logger.LogDebug("Saved changes to " + source.Label, LoggerType.Puppeteer);
             _saver.Save(this);
+            itemInEditorUID = null;
         }
     }
 
@@ -337,7 +363,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         {
             var typeValue = token["ActionType"]?.Value<int>() ?? -1;
             var executionType = (InvokableActionType)typeValue;
-            
+
             InvokableGsAction? action = executionType switch
             {
                 InvokableActionType.TextOutput => token.ToObject<TextAction>() ?? new TextAction(),
