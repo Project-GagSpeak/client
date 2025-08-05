@@ -56,6 +56,12 @@ public sealed class OwnGlobals : IDisposable
     }
 
     /// <summary>
+    ///     Obtain a value from the current permissions by name.
+    /// </summary>
+    public object? GetCurrentValue(string permName)
+        => typeof(GlobalPerms).GetProperty(permName)?.GetValue(_perms);
+
+    /// <summary>
     ///     Assumes change was validated through <c>OwnGlobalsListener</c> first. <para />
     ///     Update should only be enacted by the client. <para />
     ///     Updates all values in <see cref="_perms"/> to their new ones.

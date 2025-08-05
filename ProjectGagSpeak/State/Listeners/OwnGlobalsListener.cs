@@ -54,7 +54,7 @@ public sealed class OwnGlobalsListener
         => SpecialPermissions.ContainsKey(permName);
 
     public object? GetCurrentValue(string permName)
-        => typeof(GlobalPerms).GetProperty(permName)?.GetValue(_perms);
+        => _perms.GetCurrentValue(permName);
 
     /// <summary>
     ///     Validates if it is ok for the requested global change to occur. <para />
