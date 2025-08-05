@@ -217,31 +217,45 @@ public class Kinkster : IComparable<Kinkster>
 
     public void NewActiveCompositeData(CharaCompositeActiveData data, bool wasSafeword)
     {
-        _logger.LogDebug("Received Character Composite Data from " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
-        ActiveGags = data.Gags;
-        ActiveRestrictions = data.Restrictions;
-        ActiveRestraint = data.Restraint;
-        ActiveCursedItems = data.ActiveCursedItems;
-        LastGlobalAliasData = data.GlobalAliasData;
-        ValidToys = data.ValidToys;
-        ActivePattern = data.ActivePattern;
-        ActiveAlarms = data.ActiveAlarms;
-        ActiveTriggers = data.ActiveTriggers;
-        // Update the kinkster cache with the light storage data.
-        _logger.LogDebug($"Updating LightCache for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
-        LightCache = new KinksterCache(data.LightStorageData);
-        // Update KinkPlate display.
-        UpdateCachedLockedSlots();
-        // publish a mediator message that is listened to by the achievement manager for duration cleanup.
-        _mediator.Publish(new PlayerLatestActiveItems(UserData, ActiveGags, ActiveRestrictions, ActiveRestraint));
-
-        // Deterministic AliasData setting.
-        if (data.PairAliasData.TryGetValue(UserData.UID, out var match))
-            LastPairAliasData = match;
-
-        // early return if safeword, but not sure why, or what this is causing at the moment.
         if (wasSafeword)
-            return;
+        {
+            _logger.LogInformation($"{GetNickAliasOrUid()} used their safeword! Syncronizing their new composite data!", LoggerType.PairDataTransfer);
+            ActiveGags = data.Gags;
+            ActiveRestrictions = data.Restrictions;
+            ActiveRestraint = data.Restraint;
+            // Cursed loot the same?... (will likely add it in once i tackle cursed loot)
+            ValidToys = data.ValidToys;
+            ActivePattern = data.ActivePattern;
+            ActiveAlarms = data.ActiveAlarms;
+            ActiveTriggers = data.ActiveTriggers;
+            // Do not update the cache, nothing is in it.
+        }
+        else
+        {
+            _logger.LogDebug("Received Character Composite Data from " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
+            ActiveGags = data.Gags;
+            ActiveRestrictions = data.Restrictions;
+            ActiveRestraint = data.Restraint;
+            ActiveCursedItems = data.ActiveCursedItems;
+            LastGlobalAliasData = data.GlobalAliasData;
+            if (data.PairAliasData.TryGetValue(UserData.UID, out var match))
+                LastPairAliasData = match;
+            ValidToys = data.ValidToys;
+            ActivePattern = data.ActivePattern;
+            ActiveAlarms = data.ActiveAlarms;
+            ActiveTriggers = data.ActiveTriggers;
+
+            // Update the kinkster cache with the light storage data.
+            _logger.LogDebug($"Updating LightCache for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+            LightCache = new KinksterCache(data.LightStorageData);
+        }
+
+        // Update the cached kinkplate data (although we will likely rework this soon)
+        UpdateCachedLockedSlots();
+
+        // Regarldess of the change, we should update the kinkster's latest data to the achievement handler.
+        _logger.LogDebug($"Aligning Achievement Trackers in sync with {GetNickAliasOrUid()}'s latest composite data!", LoggerType.PairDataTransfer);
+        _mediator.Publish(new PlayerLatestActiveItems(UserData, ActiveGags, ActiveRestrictions, ActiveRestraint)); // <-- Send whole composite?
     }
 
     public void NewActiveGagData(KinksterUpdateActiveGag data)

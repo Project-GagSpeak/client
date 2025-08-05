@@ -108,9 +108,6 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         Mediator.Subscribe<PlayerLatestActiveItems>(this, (msg) => OnCharaOnlineCleanupForLatest(msg.User, msg.GagsInfo, msg.RestrictionsInfo, msg.RestraintInfo));
         Mediator.Subscribe<PairHandlerVisibleMessage>(this, _ => OnPairVisible());
         Mediator.Subscribe<CommendationsIncreasedMessage>(this, (msg) => OnCommendationsGiven(msg.amount));
-        Mediator.Subscribe<PlaybackStateToggled>(this, (msg) => (ClientAchievements.SaveData[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion());
-
-        Mediator.Subscribe<SafewordUsedMessage>(this, _ => (ClientAchievements.SaveData[Achievements.KnowsMyLimits.Id] as ProgressAchievement)?.IncrementProgress());
 
         Mediator.Subscribe<GPoseStartMessage>(this, _ => (ClientAchievements.SaveData[Achievements.SayMmmph.Id] as ConditionalProgressAchievement)?.BeginConditionalTask());
         Mediator.Subscribe<GPoseEndMessage>(this, _ => (ClientAchievements.SaveData[Achievements.SayMmmph.Id] as ConditionalProgressAchievement)?.FinishConditionalTask());
@@ -188,6 +185,12 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         Svc.DutyState.DutyCompleted -= OnDutyEnd;
 
         _isSubscribed = false;
+    }
+
+    public void SafewordUsed(string uid = "")
+    {
+        Logger.LogInformation("Safeword used, incrementing achievement progress.");
+        (ClientAchievements.SaveData[Achievements.KnowsMyLimits.Id] as ProgressAchievement)?.IncrementProgress();
     }
 
     private void OnCommendationsGiven(int amount)

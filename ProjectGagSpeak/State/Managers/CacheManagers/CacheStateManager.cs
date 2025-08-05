@@ -83,6 +83,26 @@ public class CacheStateManager : IHostedService
         _logger.LogInformation("------- All caches cleared -------");
     }
 
+    // going to need to make this not effect the collar restriction later, and maybe some other arousals!
+    public async Task ResetCachesDueToSafeword()
+    {
+        _logger.LogInformation("------- Resetting all caches due to safeword -------");
+        _gags.LoadServerData(new CharaActiveGags()); // Reset Gag Data
+        _restrictions.LoadServerData(new CharaActiveRestrictions()); // Reset Restriction Data
+        _restraints.LoadServerData(new CharaActiveRestraint()); // Reset Restraint Data
+        // Reset all caches to their default state.
+        await Task.WhenAll(
+            _glamourHandler.ClearCache(),
+            _modHandler.ClearCache(),
+            _moodleHandler.ClearCache(),
+            _cplusHandler.ClearCache(),
+            _traitsHandler.ClearCache(),
+            _overlayHandler.ClearCache(),
+            _arousalHandler.ClearArousals() // this might mess with other source handles?
+        );
+        _logger.LogInformation("------- All caches reset -------");
+    }
+
     // Keep in mind that while this looks heavy, everything uses .TryAdd, meaning duplicates will not be reapplied.
     public async Task SyncWithServerData(ConnectionResponse connectionDto)
     {

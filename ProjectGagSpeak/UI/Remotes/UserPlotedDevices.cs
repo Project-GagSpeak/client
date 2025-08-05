@@ -11,6 +11,7 @@ namespace GagSpeak.Gui.Remote;
 // The source being used to execute remote actions.
 public enum RemoteSource
 {
+    Safeword,
     External,
     PowerOn,
     UpdateTick,

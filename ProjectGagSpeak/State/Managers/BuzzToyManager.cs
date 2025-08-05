@@ -58,6 +58,18 @@ public class BuzzToyManager : IDisposable, IHybridSavable
         _batteryCTS.SafeDispose();
     }
 
+    public void SafewordUsed()
+    {
+        _logger.LogInformation("Safeword used, stopping all toys.");
+        foreach (var toy in _storage.Values)
+        {
+            toy.StopAllMotors();
+            toy.Interactable = false;
+        }
+        _saver.Save(this);
+        _mediator.Publish(new ReloadFileSystem(GagspeakModule.SexToys));
+    }
+
     public VirtualBuzzToy CreateNew(ToyBrandName deviceName)
     {
         var newItem = new VirtualBuzzToy(deviceName);

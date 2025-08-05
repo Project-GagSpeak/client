@@ -23,15 +23,16 @@ public sealed class CommandManager : IDisposable
     private const string DeathRollShortcutCommand = "/dr";
     private readonly GagspeakMediator _mediator;
     private readonly MainConfig _mainConfig;
-    private readonly KinksterManager _pairManager;
+    private readonly KinksterManager _kinksters;
     private readonly ServerConfigService _serverConfig;
     private readonly DeathRollService _deathRolls;
+    private readonly SafewordService _safeword;
     public CommandManager(GagspeakMediator mediator, MainConfig config, KinksterManager pairManager,
-        ServerConfigService server, DeathRollService dr)
+        ServerConfigService server, DeathRollService dr, SafewordService safeword)
     {
         _mediator = mediator;
         _mainConfig = config;
-        _pairManager = pairManager;
+        _kinksters = pairManager;
         _serverConfig = server;
         _deathRolls = dr;
 
@@ -116,9 +117,8 @@ public sealed class CommandManager : IDisposable
             if (splitArgs.Length > 1)
             {
                 var uid = splitArgs[1];
-                var validUserData = _pairManager.GetUserDataFromUID(uid);
-                // if the UID is valid, use it.
-                if (validUserData is not null) _mediator.Publish(new SafewordUsedMessage(uid));
+                if (_kinksters.GetUserDataFromUID(uid) is { } validUserData)
+                    UiService.SetUITask(_safeword.OnSafewordInvoked(validUserData.UID));
                 else
                 {
                     Svc.Chat.Print(new SeStringBuilder().AddYellow($"UID Provided is not in Pair List: {uid}").BuiltString);
@@ -127,8 +127,7 @@ public sealed class CommandManager : IDisposable
             }
             else
             {
-                // publish generic safeword used message.
-                _mediator.Publish(new SafewordUsedMessage());
+                UiService.SetUITask(_safeword.OnSafewordInvoked());
             }
         }
         else
@@ -146,9 +145,8 @@ public sealed class CommandManager : IDisposable
         if (splitArgs.Length > 0 && !splitArgs[0].IsNullOrWhitespace())
         {
             var uid = splitArgs[0];
-            var validUserData = _pairManager.GetUserDataFromUID(uid);
-            // if the UID is valid, use it.
-            if (validUserData is not null) _mediator.Publish(new SafewordHardcoreUsedMessage(uid));
+            if (_kinksters.GetUserDataFromUID(uid) is { } validUserData)
+                UiService.SetUITask(_safeword.OnHcSafewordUsed(validUserData.UID));
             else
             {
                 Svc.Chat.Print(new SeStringBuilder().AddYellow($"UID Provided is not in Pair List: {uid}, /safewordhardcore does not require your actual safeword.").BuiltString);
@@ -157,8 +155,7 @@ public sealed class CommandManager : IDisposable
         }
         else
         {
-            Svc.Chat.Print("Triggered Hardcore Safeword");
-            _mediator.Publish(new SafewordHardcoreUsedMessage());
+            UiService.SetUITask(_safeword.OnHcSafewordUsed());
         }
     }
 

@@ -6,7 +6,6 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.State.Handlers;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
@@ -15,7 +14,6 @@ using GagspeakAPI.Dto.VibeRoom;
 namespace GagSpeak.State.Managers;
 public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
-    private readonly RemoteHandler _handler;
     private readonly FavoritesManager _favorites;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
@@ -25,10 +23,9 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
     private StorageItemEditor<Pattern> _itemEditor = new();
 
     public PatternManager(ILogger<PatternManager> logger, GagspeakMediator mediator,
-        RemoteHandler handler, FavoritesManager favorites, ConfigFileProvider fileNames,
+        FavoritesManager favorites, ConfigFileProvider fileNames,
         HybridSaveService saver, RemoteService remotes) : base(logger, mediator)
     {
-        _handler = handler;
         _favorites = favorites;
         _fileNames = fileNames;
         _saver = saver;
@@ -174,7 +171,7 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
         return true;
     }
 
-    public bool DisablePattern(Guid patternId, string enactor)
+    public bool DisablePattern(Guid patternId, string enactor, bool fromSafeword = false)
     {
         if (!_remotes.ClientData.IsPlayingPattern)
         {
@@ -184,7 +181,7 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
 
         // This should also publish our new active pattern, IF the enactor is MainHub.UID.
         // Otherwise it is ignored.
-        _remotes.ClientData.OnPatternPlaybackEnd(enactor, RemoteSource.External);        
+        _remotes.ClientData.OnPatternPlaybackEnd(enactor, fromSafeword ? RemoteSource.Safeword : RemoteSource.External);        
         return true;
     }
 

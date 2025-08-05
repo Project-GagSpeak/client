@@ -213,7 +213,7 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
         Access = RemoteAccess.Full;
         // Server-side, any time an active pattern update is recieved, it sends that update back to us and all our paired Kinksters.
         // Thus, if only send the update if the call is not self-invoked.
-        if (enactor == MainHub.UID && callSource is not RemoteSource.PatternSwitch)
+        if (enactor == MainHub.UID && callSource is not RemoteSource.PatternSwitch or RemoteSource.Safeword)
             Mediator.Publish(new ActivePatternChangedMessage(DataUpdateType.PatternStopped, Guid.Empty));
 
         // if the call source is not from a power on or down, we must perform cleanup.

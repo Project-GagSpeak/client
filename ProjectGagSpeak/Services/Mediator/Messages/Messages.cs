@@ -56,14 +56,6 @@ public record GlobalChatMessage(ChatMessageGlobal Message, bool FromSelf) : Mess
 /// <param name="User"> The Kinkster that sent the message. </param>
 public record VibeRoomChatMessage(UserData Kinkster, string Message) : MessageBase;
 
-/// <summary> Fires once we trigger the safeword command. </summary>
-/// <param name="UID"> The UID of the user we want to safeword for. </param>
-public record SafewordUsedMessage(string UID = "") : MessageBase;
-
-/// <summary> Fires once we trigger the hardcore safeword command. </summary>
-/// <param name="UID"> The UID of the user we want to safeword for. </param>
-public record SafewordHardcoreUsedMessage(string UID = "") : MessageBase;
-
 /// <summary> Contains the message content of a Chatbox message. </summary>
 public record ChatboxMessageFromSelf(InputChannel channel, string message) : MessageBase;
 
