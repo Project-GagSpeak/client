@@ -1,8 +1,6 @@
 using CkCommons;
 using Dalamud.Game.Command;
 using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Plugin.Services;
-using Dalamud.Utility;
 using GagSpeak.Gui;
 using GagSpeak.Gui.MainWindow;
 using GagSpeak.Kinksters;
@@ -35,6 +33,7 @@ public sealed class CommandManager : IDisposable
         _kinksters = pairManager;
         _serverConfig = server;
         _deathRolls = dr;
+        _safeword = safeword;
 
         // Add handlers to the main commands
         Svc.Commands.AddHandler(MainCommand, new CommandInfo(OnGagSpeak)

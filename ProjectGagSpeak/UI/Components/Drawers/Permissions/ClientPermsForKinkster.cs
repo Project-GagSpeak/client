@@ -1,4 +1,4 @@
-using Buttplug.Client;using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.Raii;using CkCommons.RichText;using Dalamud.Interface.Colors;using Dalamud.Interface.Utility;using Dalamud.Interface.Utility.Raii;using GagSpeak.Gui.MainWindow;using GagSpeak.Kinksters;using GagSpeak.PlayerClient;using GagSpeak.Services;using GagSpeak.Utils;using GagSpeak.WebAPI;using GagspeakAPI.Data.Permissions;using GagspeakAPI.Extensions;using ImGuiNET;using OtterGui;using OtterGui.Text;using OtterGui.Text.EndObjects;using System.Collections.Immutable;namespace GagSpeak.Gui.Components;
+using Buttplug.Client;using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.Raii;using CkCommons.RichText;using Dalamud.Interface.Colors;using Dalamud.Interface.Utility;using Dalamud.Interface.Utility.Raii;using GagSpeak.Gui.MainWindow;using GagSpeak.Kinksters;using GagSpeak.PlayerClient;using GagSpeak.Services;using GagSpeak.Utils;using GagSpeak.WebAPI;using GagspeakAPI.Data.Permissions;using GagspeakAPI.Extensions;using ImGuiNET;using OtterGui;using OtterGui.Text;using OtterGui.Text.EndObjects;using System.Collections.Immutable;using static FFXIVClientStructs.FFXIV.Client.Game.InstanceContent.DynamicEvent.Delegates;namespace GagSpeak.Gui.Components;
 public class ClientPermsForKinkster{
     private readonly MainHub _hub;
     private readonly KinksterShockCollar _shockies;
@@ -24,24 +24,99 @@ using Buttplug.Client;using CkCommons;using CkCommons.Classes;using CkCommons
         // Child area for scrolling.
         using var _ = CkRaii.Child("ClientPermsForKinkster", ImGui.GetContentRegionAvail(), wFlags: WFlags.NoScrollbar);
         if (OwnGlobals.Perms is not { } globals)            return;
-        ImGui.TextUnformatted("Global Settings");        DrawPermRow(kinkster, dispName,   width, SPPID.ChatGarblerActive,     globals.ChatGarblerActive,          kinkster.OwnPermAccess.ChatGarblerActiveAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.ChatGarblerLocked,     globals.ChatGarblerLocked,          kinkster.OwnPermAccess.ChatGarblerLockedAllowed );
-        DrawPermRow(kinkster, dispName,   width, SPPID.GaggedNameplate,       globals.GaggedNameplate,              kinkster.OwnPermAccess.GaggedNameplateAllowed);
-        ImGui.Separator();        ImGui.TextUnformatted("Padlock Permissions");        DrawPermRow(kinkster, dispName,   width, SPPID.PermanentLocks,        kinkster.OwnPerms.PermanentLocks,       kinkster.OwnPermAccess.PermanentLocksAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.OwnerLocks,            kinkster.OwnPerms.OwnerLocks,           kinkster.OwnPermAccess.OwnerLocksAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.DevotionalLocks,       kinkster.OwnPerms.DevotionalLocks,      kinkster.OwnPermAccess.DevotionalLocksAllowed );        ImGui.Separator();        ImGui.TextUnformatted("Gag Permissions");        DrawPermRow(kinkster, dispName,   width, SPPID.GagVisuals,            globals.GagVisuals,                     kinkster.OwnPermAccess.GagVisualsAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.ApplyGags,             kinkster.OwnPerms.ApplyGags,            kinkster.OwnPermAccess.ApplyGagsAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.LockGags,              kinkster.OwnPerms.LockGags,             kinkster.OwnPermAccess.LockGagsAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.MaxGagTime,            kinkster.OwnPerms.MaxGagTime,           kinkster.OwnPermAccess.MaxGagTimeAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.UnlockGags,            kinkster.OwnPerms.UnlockGags,           kinkster.OwnPermAccess.UnlockGagsAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.RemoveGags,            kinkster.OwnPerms.RemoveGags,           kinkster.OwnPermAccess.RemoveGagsAllowed );        ImGui.Separator();        ImGui.TextUnformatted("Restriction Permissions");        DrawPermRow(kinkster, dispName,   width, SPPID.RestrictionVisuals,    globals.RestrictionVisuals,             kinkster.OwnPermAccess.RestrictionVisualsAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.ApplyRestrictions,     kinkster.OwnPerms.ApplyRestrictions,    kinkster.OwnPermAccess.ApplyRestrictionsAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.LockRestrictions,      kinkster.OwnPerms.LockRestrictions,     kinkster.OwnPermAccess.LockRestrictionsAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.MaxRestrictionTime,    kinkster.OwnPerms.MaxRestrictionTime,   kinkster.OwnPermAccess.MaxRestrictionTimeAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.UnlockRestrictions,    kinkster.OwnPerms.UnlockRestrictions,   kinkster.OwnPermAccess.UnlockRestrictionsAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.RemoveRestrictions,    kinkster.OwnPerms.RemoveRestrictions,   kinkster.OwnPermAccess.RemoveRestrictionsAllowed );        ImGui.Separator();        ImGui.TextUnformatted("Restraint Set Permissions");        DrawPermRow(kinkster, dispName,   width, SPPID.RestraintSetVisuals,   globals.RestraintSetVisuals,            kinkster.OwnPermAccess.RestraintSetVisualsAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.ApplyRestraintSets,    kinkster.OwnPerms.ApplyRestraintSets,   kinkster.OwnPermAccess.ApplyRestraintSetsAllowed );
-        DrawPermRow(kinkster, dispName,   width, SPPID.ApplyLayers,           kinkster.OwnPerms.ApplyLayers,          kinkster.OwnPermAccess.ApplyLayersAllowed );
-        DrawPermRow(kinkster, dispName,   width, SPPID.ApplyLayersWhileLocked,kinkster.OwnPerms.ApplyLayersWhileLocked,kinkster.OwnPermAccess.ApplyLayersWhileLockedAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.LockRestraintSets,     kinkster.OwnPerms.LockRestraintSets,    kinkster.OwnPermAccess.LockRestraintSetsAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.MaxRestraintTime,      kinkster.OwnPerms.MaxRestraintTime,     kinkster.OwnPermAccess.MaxRestraintTimeAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.UnlockRestraintSets,   kinkster.OwnPerms.UnlockRestraintSets,  kinkster.OwnPermAccess.UnlockRestraintSetsAllowed );
-        DrawPermRow(kinkster, dispName,   width, SPPID.RemoveLayers,          kinkster.OwnPerms.RemoveLayers,         kinkster.OwnPermAccess.RemoveLayersAllowed );
-        DrawPermRow(kinkster, dispName,   width, SPPID.RemoveLayersWhileLocked,kinkster.OwnPerms.RemoveLayersWhileLocked,kinkster.OwnPermAccess.RemoveLayersWhileLockedAllowed);        DrawPermRow(kinkster, dispName,   width, SPPID.RemoveRestraintSets,   kinkster.OwnPerms.RemoveRestraintSets,  kinkster.OwnPermAccess.RemoveRestraintSetsAllowed );        ImGui.Separator();        ImGui.TextUnformatted("Puppeteer Permissions");
-        DrawPermRow(kinkster, dispName,   width, SPPID.PuppetPermSit,         kinkster.OwnPerms.PuppetPerms,          kinkster.OwnPermAccess.PuppetPermsAllowed, PuppetPerms.Sit );        DrawPermRow(kinkster, dispName,   width, SPPID.PuppetPermEmote,       kinkster.OwnPerms.PuppetPerms,          kinkster.OwnPermAccess.PuppetPermsAllowed, PuppetPerms.Emotes );        DrawPermRow(kinkster, dispName,   width, SPPID.PuppetPermAlias,       kinkster.OwnPerms.PuppetPerms,          kinkster.OwnPermAccess.PuppetPermsAllowed, PuppetPerms.Alias );        DrawPermRow(kinkster, dispName,   width, SPPID.PuppetPermAll,         kinkster.OwnPerms.PuppetPerms,          kinkster.OwnPermAccess.PuppetPermsAllowed, PuppetPerms.All );        ImGui.Separator();        ImGui.TextUnformatted("Moodles Permissions");        DrawPermRow(kinkster, dispName,   width, SPPID.ApplyPositive,         kinkster.OwnPerms.MoodlePerms,          kinkster.OwnPermAccess.MoodlePermsAllowed, MoodlePerms.PositiveStatusTypes );        DrawPermRow(kinkster, dispName,   width, SPPID.ApplyNegative,         kinkster.OwnPerms.MoodlePerms,          kinkster.OwnPermAccess.MoodlePermsAllowed, MoodlePerms.NegativeStatusTypes );        DrawPermRow(kinkster, dispName,   width, SPPID.ApplySpecial,          kinkster.OwnPerms.MoodlePerms,          kinkster.OwnPermAccess.MoodlePermsAllowed, MoodlePerms.SpecialStatusTypes );        DrawPermRow(kinkster, dispName,   width, SPPID.ApplyOwnMoodles,       kinkster.OwnPerms.MoodlePerms,          kinkster.OwnPermAccess.MoodlePermsAllowed, MoodlePerms.PairCanApplyTheirMoodlesToYou );        DrawPermRow(kinkster, dispName,   width, SPPID.ApplyPairsMoodles,     kinkster.OwnPerms.MoodlePerms,          kinkster.OwnPermAccess.MoodlePermsAllowed, MoodlePerms.PairCanApplyYourMoodlesToYou );        DrawPermRow(kinkster, dispName,   width, SPPID.MaxMoodleTime,         kinkster.OwnPerms.MaxMoodleTime,        kinkster.OwnPermAccess.MaxMoodleTimeAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.PermanentMoodles,      kinkster.OwnPerms.MoodlePerms,          kinkster.OwnPermAccess.MoodlePermsAllowed, MoodlePerms.PermanentMoodles );        DrawPermRow(kinkster, dispName,   width, SPPID.RemoveMoodles,         kinkster.OwnPerms.MoodlePerms,          kinkster.OwnPermAccess.MoodlePermsAllowed, MoodlePerms.RemovingMoodles );        ImGui.Separator();
+        ImGui.TextUnformatted("Global Settings");
+        using (ImRaii.Group())
+        {
+            DrawPermRow(kinkster, dispName, width, SPPID.ChatGarblerActive, globals.ChatGarblerActive, kinkster.OwnPermAccess.ChatGarblerActiveAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.ChatGarblerLocked, globals.ChatGarblerLocked, kinkster.OwnPermAccess.ChatGarblerLockedAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.GaggedNameplate, globals.GaggedNameplate, kinkster.OwnPermAccess.GaggedNameplateAllowed);
+        }
+        CkGui.AttachToolTip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
+        ImGui.Separator();        ImGui.TextUnformatted("Padlock Permissions");
+        using (ImRaii.Group())
+        {
+            DrawPermRow(kinkster, dispName, width, SPPID.PermanentLocks, kinkster.OwnPerms.PermanentLocks, kinkster.OwnPermAccess.PermanentLocksAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.OwnerLocks, kinkster.OwnPerms.OwnerLocks, kinkster.OwnPermAccess.OwnerLocksAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.DevotionalLocks, kinkster.OwnPerms.DevotionalLocks, kinkster.OwnPermAccess.DevotionalLocksAllowed);
+        }
+        CkGui.AttachToolTip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);        ImGui.Separator();        ImGui.TextUnformatted("Gag Permissions");
+        using (ImRaii.Group())
+        {
+            DrawPermRow(kinkster, dispName, width, SPPID.GagVisuals, globals.GagVisuals, kinkster.OwnPermAccess.GagVisualsAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.ApplyGags, kinkster.OwnPerms.ApplyGags, kinkster.OwnPermAccess.ApplyGagsAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.LockGags, kinkster.OwnPerms.LockGags, kinkster.OwnPermAccess.LockGagsAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.MaxGagTime, kinkster.OwnPerms.MaxGagTime, kinkster.OwnPermAccess.MaxGagTimeAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.UnlockGags, kinkster.OwnPerms.UnlockGags, kinkster.OwnPermAccess.UnlockGagsAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.RemoveGags, kinkster.OwnPerms.RemoveGags, kinkster.OwnPermAccess.RemoveGagsAllowed);
+        }
+        CkGui.AttachToolTip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);        ImGui.Separator();        ImGui.TextUnformatted("Restriction Permissions");
+        using (ImRaii.Group())
+        {
+            DrawPermRow(kinkster, dispName, width, SPPID.RestrictionVisuals, globals.RestrictionVisuals, kinkster.OwnPermAccess.RestrictionVisualsAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.ApplyRestrictions, kinkster.OwnPerms.ApplyRestrictions, kinkster.OwnPermAccess.ApplyRestrictionsAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.LockRestrictions, kinkster.OwnPerms.LockRestrictions, kinkster.OwnPermAccess.LockRestrictionsAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.MaxRestrictionTime, kinkster.OwnPerms.MaxRestrictionTime, kinkster.OwnPermAccess.MaxRestrictionTimeAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.UnlockRestrictions, kinkster.OwnPerms.UnlockRestrictions, kinkster.OwnPermAccess.UnlockRestrictionsAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.RemoveRestrictions, kinkster.OwnPerms.RemoveRestrictions, kinkster.OwnPermAccess.RemoveRestrictionsAllowed);
+        }
+        CkGui.AttachToolTip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);        ImGui.Separator();        ImGui.TextUnformatted("Restraint Set Permissions");
+        using (ImRaii.Group())
+        {
+            DrawPermRow(kinkster, dispName, width, SPPID.RestraintSetVisuals, globals.RestraintSetVisuals, kinkster.OwnPermAccess.RestraintSetVisualsAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.ApplyRestraintSets, kinkster.OwnPerms.ApplyRestraintSets, kinkster.OwnPermAccess.ApplyRestraintSetsAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.ApplyLayers, kinkster.OwnPerms.ApplyLayers, kinkster.OwnPermAccess.ApplyLayersAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.ApplyLayersWhileLocked, kinkster.OwnPerms.ApplyLayersWhileLocked, kinkster.OwnPermAccess.ApplyLayersWhileLockedAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.LockRestraintSets, kinkster.OwnPerms.LockRestraintSets, kinkster.OwnPermAccess.LockRestraintSetsAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.MaxRestraintTime, kinkster.OwnPerms.MaxRestraintTime, kinkster.OwnPermAccess.MaxRestraintTimeAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.UnlockRestraintSets, kinkster.OwnPerms.UnlockRestraintSets, kinkster.OwnPermAccess.UnlockRestraintSetsAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.RemoveLayers, kinkster.OwnPerms.RemoveLayers, kinkster.OwnPermAccess.RemoveLayersAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.RemoveLayersWhileLocked, kinkster.OwnPerms.RemoveLayersWhileLocked, kinkster.OwnPermAccess.RemoveLayersWhileLockedAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.RemoveRestraintSets, kinkster.OwnPerms.RemoveRestraintSets, kinkster.OwnPermAccess.RemoveRestraintSetsAllowed);
+        }
+        CkGui.AttachToolTip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);        ImGui.Separator();        ImGui.TextUnformatted("Puppeteer Permissions");
+        using (ImRaii.Group())
+        {
+            DrawPermRow(kinkster, dispName, width, SPPID.PuppetPermSit, kinkster.OwnPerms.PuppetPerms, kinkster.OwnPermAccess.PuppetPermsAllowed, PuppetPerms.Sit);
+            DrawPermRow(kinkster, dispName, width, SPPID.PuppetPermEmote, kinkster.OwnPerms.PuppetPerms, kinkster.OwnPermAccess.PuppetPermsAllowed, PuppetPerms.Emotes);
+            DrawPermRow(kinkster, dispName, width, SPPID.PuppetPermAlias, kinkster.OwnPerms.PuppetPerms, kinkster.OwnPermAccess.PuppetPermsAllowed, PuppetPerms.Alias);
+            DrawPermRow(kinkster, dispName, width, SPPID.PuppetPermAll, kinkster.OwnPerms.PuppetPerms, kinkster.OwnPermAccess.PuppetPermsAllowed, PuppetPerms.All);
+        }
+        CkGui.AttachToolTip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);        ImGui.Separator();        ImGui.TextUnformatted("Moodles Permissions");
+        using (ImRaii.Group())
+        {
+            DrawPermRow(kinkster, dispName, width, SPPID.ApplyPositive, kinkster.OwnPerms.MoodlePerms, kinkster.OwnPermAccess.MoodlePermsAllowed, MoodlePerms.PositiveStatusTypes);
+            DrawPermRow(kinkster, dispName, width, SPPID.ApplyNegative, kinkster.OwnPerms.MoodlePerms, kinkster.OwnPermAccess.MoodlePermsAllowed, MoodlePerms.NegativeStatusTypes);
+            DrawPermRow(kinkster, dispName, width, SPPID.ApplySpecial, kinkster.OwnPerms.MoodlePerms, kinkster.OwnPermAccess.MoodlePermsAllowed, MoodlePerms.SpecialStatusTypes);
+            DrawPermRow(kinkster, dispName, width, SPPID.ApplyOwnMoodles, kinkster.OwnPerms.MoodlePerms, kinkster.OwnPermAccess.MoodlePermsAllowed, MoodlePerms.PairCanApplyTheirMoodlesToYou);
+            DrawPermRow(kinkster, dispName, width, SPPID.ApplyPairsMoodles, kinkster.OwnPerms.MoodlePerms, kinkster.OwnPermAccess.MoodlePermsAllowed, MoodlePerms.PairCanApplyYourMoodlesToYou);
+            DrawPermRow(kinkster, dispName, width, SPPID.MaxMoodleTime, kinkster.OwnPerms.MaxMoodleTime, kinkster.OwnPermAccess.MaxMoodleTimeAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.PermanentMoodles, kinkster.OwnPerms.MoodlePerms, kinkster.OwnPermAccess.MoodlePermsAllowed, MoodlePerms.PermanentMoodles);
+            DrawPermRow(kinkster, dispName, width, SPPID.RemoveMoodles, kinkster.OwnPerms.MoodlePerms, kinkster.OwnPermAccess.MoodlePermsAllowed, MoodlePerms.RemovingMoodles);
+        }
+        CkGui.AttachToolTip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);        ImGui.Separator();
 
         ImGui.TextUnformatted("Miscellaneous Permissions");
-        DrawPermRow(kinkster, dispName,   width, SPPID.HypnosisMaxTime,       kinkster.OwnPerms.MaxHypnosisTime,      kinkster.OwnPermAccess.HypnosisMaxTimeAllowed );
-        DrawPermRow(kinkster, dispName,   width, SPPID.HypnosisEffect,        kinkster.OwnPerms.HypnoEffectSending,   kinkster.OwnPermAccess.HypnosisSendingAllowed );        ImGui.Separator();
-        ImGui.TextUnformatted("Toybox Permissions");        DrawPermRow(kinkster, dispName,   width, SPPID.PatternStarting,       kinkster.OwnPerms.ExecutePatterns,      kinkster.OwnPermAccess.ExecutePatternsAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.PatternStopping,       kinkster.OwnPerms.StopPatterns,         kinkster.OwnPermAccess.StopPatternsAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.AlarmToggling,         kinkster.OwnPerms.ToggleAlarms,         kinkster.OwnPermAccess.ToggleAlarmsAllowed );        DrawPermRow(kinkster, dispName,   width, SPPID.TriggerToggling,       kinkster.OwnPerms.ToggleTriggers,       kinkster.OwnPermAccess.ToggleTriggersAllowed );        ImGui.Separator();
+        using (ImRaii.Group())
+        {
+            DrawPermRow(kinkster, dispName, width, SPPID.HypnosisMaxTime, kinkster.OwnPerms.MaxHypnosisTime, kinkster.OwnPermAccess.HypnosisMaxTimeAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.HypnosisEffect, kinkster.OwnPerms.HypnoEffectSending, kinkster.OwnPermAccess.HypnosisSendingAllowed);        }
+        CkGui.AttachToolTip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
+        ImGui.Separator();
+        ImGui.TextUnformatted("Toybox Permissions");
+        using (ImRaii.Group())
+        {
+            DrawPermRow(kinkster, dispName, width, SPPID.PatternStarting, kinkster.OwnPerms.ExecutePatterns, kinkster.OwnPermAccess.ExecutePatternsAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.PatternStopping, kinkster.OwnPerms.StopPatterns, kinkster.OwnPermAccess.StopPatternsAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.AlarmToggling, kinkster.OwnPerms.ToggleAlarms, kinkster.OwnPermAccess.ToggleAlarmsAllowed);
+            DrawPermRow(kinkster, dispName, width, SPPID.TriggerToggling, kinkster.OwnPerms.ToggleTriggers, kinkster.OwnPermAccess.ToggleTriggersAllowed);        }
+        CkGui.AttachToolTip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
+        ImGui.Separator();
 
-        // Probably a good idea to add a warning here on a popup or something idk.        ImGui.TextUnformatted("Hardcore Permissions");
+        // Probably a good idea to add a warning here on a popup or something idk.
+        ImGui.TextUnformatted("Hardcore Permissions");
         ImUtf8.SameLineInner();
         CkGui.HoverIconText(FAI.QuestionCircle, ImGuiColors.TankBlue.ToUint(), ImGui.GetColorU32(ImGuiCol.TextDisabled));
-        if(ImGui.IsItemHovered())
+        if (ImGui.IsItemHovered())
         {
             using (UiFontService.UidFont.Push())
             {
@@ -99,7 +174,7 @@ using Buttplug.Client;using CkCommons;using CkCommons.Classes;using CkCommons
         var data = ClientPermData[perm];
         var editCol = canEdit ? ImGuiColors.HealerGreen.ToUint() : ImGuiColors.DalamudRed.ToUint();
 
-        if (CkGui.IconInputText(data.IconYes, data.PermLabel, "0d0h0m0s", ref str, 32, inputTxtWidth, true))
+        if (CkGui.IconInputText(data.IconYes, data.PermLabel, "0d0h0m0s", ref str, 32, inputTxtWidth, true, kinkster.OwnPerms.InHardcore))
         {
             if (str != current.ToGsRemainingTime() && PadlockEx.TryParseTimeSpan(str, out var newTime))
             {
@@ -115,18 +190,19 @@ using Buttplug.Client;using CkCommons;using CkCommons.Classes;using CkCommons
             }
             _timespanCache.Remove(perm);
         }
-        CkGui.AttachToolTip($"How long of a timer {dispName} can put on your padlocks.");
+        CkGui.AttachToolTip($"How long of a timer {dispName} can put on your padlocks.", kinkster.OwnPerms.InHardcore);
 
         ImGui.SameLine(width - ImGui.GetFrameHeight());
         if (EditAccessCheckbox.Draw($"##{perm}", canEdit, out var newVal) && canEdit != newVal)
             UiService.SetUITask(async () => await PermissionHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.OwnPermAccess, perm.ToPermAccessValue(), newVal));
-        CkGui.AttachToolTip($"{dispName} {(canEdit ? "can" : "can not")} change your {data.PermLabel} setting.");
+        CkGui.AttachToolTip($"{dispName} {(canEdit ? "can" : "can not")} change your {data.PermLabel} setting.", kinkster.OwnPerms.InHardcore);
     }
 
     // optimize later and stuff.
     private void DrawPermRowCommon<T>(Kinkster kinkster, string dispName, float width, SPPID perm, bool current, bool canEdit, Func<T> newStateFunc)
     {
         using var _ = ImRaii.PushColor(ImGuiCol.Button, 0);
+        using var dis = ImRaii.Disabled(kinkster.OwnPerms.InHardcore);
         var data = ClientPermData[perm];
         var buttonW = width - (ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.X);
         var editCol = canEdit ? ImGuiColors.HealerGreen.ToUint() : ImGuiColors.DalamudRed.ToUint();
@@ -153,22 +229,24 @@ using Buttplug.Client;using CkCommons;using CkCommons.Classes;using CkCommons
                 }
             });
         }
+
         ImGui.SameLine();
         if (EditAccessCheckbox.Draw($"##{perm}", canEdit, out var newVal) && canEdit != newVal)
             UiService.SetUITask(async () => await PermissionHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.OwnPermAccess, perm.ToPermAccessValue(), newVal));
-        CkGui.AttachToolTip($"{dispName} {(canEdit ? "can" : "can not")} change your {data.PermLabel} setting.");
+        CkGui.AttachToolTip($"{dispName} {(canEdit ? "can" : "can not")} change your {data.PermLabel} setting.", kinkster.OwnPerms.InHardcore);
 
         // draw inside of the button.
         ImGui.SetCursorScreenPos(pos);
         PrintButtonRichText(data, current);
         CkGui.AttachToolTip(data.IsGlobal
             ? $"Your {data.PermLabel} {data.JoinWord} {(current ? data.AllowedStr : data.BlockedStr)}. (Globally)"
-            : $"You {(current ? data.AllowedStr : data.BlockedStr)} {dispName} {(current ? data.PairAllowedTT : data.PairBlockedTT)}");
+            : $"You {(current ? data.AllowedStr : data.BlockedStr)} {dispName} {(current ? data.PairAllowedTT : data.PairBlockedTT)}", kinkster.OwnPerms.InHardcore);
     }
 
     private void DrawPermRowCommonEnum<T>(Kinkster kinkster, string dispName, float width, SPPID perm, bool current, bool canEdit, Func<T> newStateFunc, Func<T> newEditStateFunc)
     {
         using var _ = ImRaii.PushColor(ImGuiCol.Button, 0);
+        using var dis = ImRaii.Disabled(kinkster.OwnPerms.InHardcore);
         var data = ClientPermData[perm];
         var buttonW = width - (ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.X);
         var editCol = canEdit ? ImGuiColors.HealerGreen.ToUint() : ImGuiColors.DalamudRed.ToUint();
@@ -196,20 +274,21 @@ using Buttplug.Client;using CkCommons;using CkCommons.Classes;using CkCommons
                 }
             });
         }
+
         ImGui.SameLine();
         if (EditAccessCheckbox.Draw($"##{perm}", canEdit, out var newVal) && canEdit != newVal)
         {
             var newEditVal = newEditStateFunc();
             UiService.SetUITask(async () => await PermissionHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.OwnPermAccess, perm.ToPermAccessValue(), newEditVal!));
         }
-        CkGui.AttachToolTip($"{dispName} {(canEdit ? "can" : "can not")} change your {data.PermLabel} setting.");
+        CkGui.AttachToolTip($"{dispName} {(canEdit ? "can" : "can not")} change your {data.PermLabel} setting.", kinkster.OwnPerms.InHardcore);
 
         // draw inside of the button.
         ImGui.SetCursorScreenPos(pos);
         PrintButtonRichText(data, current);
         CkGui.AttachToolTip(data.IsGlobal
             ? $"Your {data.PermLabel} {data.JoinWord} {(current ? data.AllowedStr : data.BlockedStr)}. (Globally)"
-            : $"You {(current ? data.AllowedStr : data.BlockedStr)} {dispName} {(current ? data.PairAllowedTT : data.PairBlockedTT)}");
+            : $"You {(current ? data.AllowedStr : data.BlockedStr)} {dispName} {(current ? data.PairAllowedTT : data.PairBlockedTT)}", kinkster.OwnPerms.InHardcore);
     }
 
 
@@ -245,38 +324,39 @@ using Buttplug.Client;using CkCommons;using CkCommons.Classes;using CkCommons
         var devotionalState = k.OwnPerms.DevotionalLocks;
         var buttonW = width - (ImGui.GetFrameHeight() + ImGui.GetStyle().ItemInnerSpacing.X);
         var iconCol = devotionalState ? ImGuiColors.HealerGreen.ToUint() : ImGuiColors.DalamudRed.ToUint();
-        var pos = ImGui.GetCursorScreenPos();
 
-        // change to ckgui for disabled?
-        if (ImGui.Button($"##HardcoreToggle", new Vector2(buttonW, ImGui.GetFrameHeight())))
+        var pos = ImGui.GetCursorScreenPos();
+        using (ImRaii.Disabled(k.OwnPerms.InHardcore))
         {
-            // return true to open the popup modal if we want to turn it on.
-            if (!k.OwnPerms.InHardcore)
-                return true;
-            // otherwise, just turn it off. (temporary until safeword is embedded)
-            Svc.Logger.Information($"Setting Hardcore mode to false for {name} ({k.UserData.AliasOrUID}).");
-            UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.InHardcore), false));
+            if (ImGui.Button($"##HardcoreToggle", new Vector2(buttonW, ImGui.GetFrameHeight())))
+            {
+                // return true to open the popup modal if we want to turn it on.
+                if (!k.OwnPerms.InHardcore)
+                    return true;
+                // otherwise, just turn it off. (temporary until safeword is embedded)
+                Svc.Logger.Information($"Setting Hardcore mode to false for {name} ({k.UserData.AliasOrUID}).");
+                UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.InHardcore), false));
+            }
+
+            // draw inside of the button.
+            ImGui.SetCursorScreenPos(pos);
+            using (ImRaii.Group())
+            {
+                CkGui.FramedIconText(curState ? FAI.Lock : FAI.Unlock);
+                CkGui.TextFrameAlignedInline("Hardcore is ");
+                ImGui.SameLine(0, 0);
+                CkGui.ColorTextFrameAligned(curState ? "enabled" : "disabled", curState ? ImGuiColors.HealerGreen.ToUint() : ImGuiColors.DalamudRed.ToUint());
+                ImGui.SameLine(0, 0);
+                CkGui.TextFrameAlignedInline($"for {name}.");
+            }
         }
 
-        ImUtf8.SameLineInner();
+        ImGui.SameLine(width - ImGui.GetFrameHeight());
         if (HardcoreCheckbox.Draw($"##DevoLocks{name}", devotionalState, out var newVal) && devotionalState != newVal)
             UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.DevotionalLocks), !devotionalState));
         CkGui.AttachToolTip(devotionalState
             ? $"Any Hardcore action by {name} will be --COL--pairlocked--COL----NL--This means that only {name} can disable it."
             : $"Anyone you are in Hardcore for can undo Hardcore interactions from --COL--{name}--COL--", color: CkColor.VibrantPink.Vec4());
-
-        // draw inside of the button.
-        ImGui.SetCursorScreenPos(pos);
-        using (ImRaii.Group())
-        {
-            CkGui.FramedIconText(curState ? FAI.Lock : FAI.Unlock);
-            CkGui.TextFrameAlignedInline("Hardcore is ");
-            ImGui.SameLine(0, 0);
-            CkGui.ColorTextFrameAligned(curState ? "enabled" : "disabled", curState ? ImGuiColors.HealerGreen.ToUint() : ImGuiColors.DalamudRed.ToUint());
-            ImGui.SameLine(0, 0);
-            CkGui.TextFrameAlignedInline($"for {name}.");
-        }
-        CkGui.AttachToolTip("Placeholder Tooltip");
         return false;
     }
 
@@ -404,7 +484,6 @@ using Buttplug.Client;using CkCommons;using CkCommons.Classes;using CkCommons
         var editCol = isActive ? ImGuiColors.HealerGreen.ToUint() : ImGuiColors.DalamudRed.ToUint();
         var pos = ImGui.GetCursorScreenPos();
 
-        // change to ckgui for disabled?
         ImGui.Dummy(new Vector2(width - (ImGui.GetFrameHeight() + ImGui.GetStyle().ItemInnerSpacing.X), ImGui.GetFrameHeight()));
 
         ImUtf8.SameLineInner();
