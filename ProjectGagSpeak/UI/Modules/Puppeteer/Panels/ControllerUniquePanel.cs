@@ -105,7 +105,7 @@ public sealed class ControllerUniquePanel
             return;
 
         foreach (var aliasItem in _filteredItems.ToList())
-            _aliasDrawer.DrawAliasTrigger(aliasItem, SelectedKinkster.LastIpcData, false, SelectedKinkster.UserData.UID!);
+            _aliasDrawer.DrawAliasTrigger(aliasItem, SelectedKinkster.LastIpcData, out bool _, false);
     }
 
     private void DrawPermsAndExamples(CkHeader.DrawRegion region)

@@ -130,9 +130,37 @@ public class PuppetVictimUniquePanel : DisposableMediatorSubscriberBase
         foreach (var aliasItem in _filteredItems.ToList())
         {
             if (aliasItem.Identifier == _manager.ItemInEditor?.Identifier)
-                _aliasDrawer.DrawAliasTriggerEditor(_actionTypes, ref _selectedType, (newData) => PushUpdateAliasTask(_pairCombo.Current.UserData, aliasItem.Identifier, newData));
+            {
+                {
+                    _aliasDrawer.DrawAliasTriggerEditor(_actionTypes, ref _selectedType, out var result);
+                    switch (result)
+                    {
+                        case DrawAliasTriggerButtonAction.NoAction:
+                            // No action at this time
+                            break;
+                        case DrawAliasTriggerButtonAction.Delete:
+                            _manager.Delete(aliasItem);
+                            _manager.StopEditing();
+                            PushUpdateAliasTask(_pairCombo.Current.UserData, aliasItem.Identifier, null);
+                            break;
+                        case DrawAliasTriggerButtonAction.Revert:
+                            _manager.StopEditing();
+                            break;
+                        case DrawAliasTriggerButtonAction.SaveChanges:
+                            _manager.SaveChangesAndStopEditing();
+                            PushUpdateAliasTask(_pairCombo.Current.UserData, aliasItem.Identifier, aliasItem);
+                            break;
+                    }
+                }
+            }
             else
-                _aliasDrawer.DrawAliasTrigger(aliasItem, MoodleCache.IpcData, true, _pairCombo.Current.UserData.UID);
+            {
+                _aliasDrawer.DrawAliasTrigger(aliasItem, MoodleCache.IpcData, out bool startEditing, true);
+                if (startEditing)
+                {
+                    _manager.StartEditing(aliasItem, _pairCombo.Current.UserData.UID);
+                }
+            }
         }
     }
 
@@ -184,7 +212,7 @@ public class PuppetVictimUniquePanel : DisposableMediatorSubscriberBase
 
         // Draw out the permission checkboxes
         ImGui.SameLine(c.InnerRegion.X / 2, ImGui.GetStyle().ItemInnerSpacing.X);
-        
+
         DrawPuppetPermsGroup(Selected, Selected?.OwnPerms.PuppetPerms ?? PuppetPerms.None);
 
         void PairSelector()

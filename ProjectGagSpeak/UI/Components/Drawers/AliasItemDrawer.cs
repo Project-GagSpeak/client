@@ -23,6 +23,14 @@ using OtterGui.Text;
 
 namespace GagSpeak.Gui.Components;
 
+public enum DrawAliasTriggerButtonAction
+{
+    NoAction,
+    Revert,
+    SaveChanges,
+    Delete
+}
+
 // Scoped, sealed class to draw the editor and display components of aliasItems.
 public sealed class AliasItemDrawer
 {
@@ -221,8 +229,9 @@ public sealed class AliasItemDrawer
             1);
     }
 
-    public void DrawAliasTrigger(AliasTrigger aliasItem, CharaIPCData ipc, bool canEdit = true, string? uid = null)
+    public void DrawAliasTrigger(AliasTrigger aliasItem, CharaIPCData ipc, out bool startEditing, bool canEdit = true)
     {
+        startEditing = false;
         var isContained = ExpandedTriggers.Contains(aliasItem.Identifier);
         var shownActions = isContained ? aliasItem.Actions.Count() : 1;
         var pos = ImGui.GetCursorScreenPos();
@@ -237,7 +246,7 @@ public sealed class AliasItemDrawer
                 : CkGui.IconButtonSize(FAI.Edit).X;
  
             CkGui.BooleanToColoredIcon(aliasItem.Enabled, false);
-            if (ImGui.IsItemClicked())
+            if (ImGui.IsItemClicked() && canEdit)
                 _manager.ToggleState(aliasItem);
             CkGui.AttachToolTip("Click to toggle the AliasTriggers state!--SEP--Current State is: " + (aliasItem.Enabled ? "Enabled" : "Disabled"));
 
@@ -261,7 +270,7 @@ public sealed class AliasItemDrawer
             if (canEdit)
             {
                 if (CkGui.IconButton(FAI.Edit, inPopup: true))
-                    _manager.StartEditing(aliasItem, uid);
+                    startEditing = true;
 
                 ImUtf8.SameLineInner();
             }
@@ -318,8 +327,9 @@ public sealed class AliasItemDrawer
         }
     }
 
-    public void DrawAliasTriggerEditor(IEnumerable<InvokableActionType> selectableTypes, ref InvokableActionType selected, Action<AliasTrigger?>? onClose = null)
+    public void DrawAliasTriggerEditor(IEnumerable<InvokableActionType> selectableTypes, ref InvokableActionType selected, out DrawAliasTriggerButtonAction result)
     {
+        result = DrawAliasTriggerButtonAction.NoAction;
         if (_manager.ItemInEditor is not { } aliasItem)
             return;
 
@@ -334,7 +344,7 @@ public sealed class AliasItemDrawer
         using (ImRaii.Group())
         {
             var comboWidth = 100f;
-            var rightWidth = (CkGui.IconButtonSize(FAI.Save).X + ImGui.GetStyle().ItemInnerSpacing.X) * 3 + comboWidth;
+            var rightWidth = (CkGui.IconButtonSize(FAI.Save).X + ImGui.GetStyle().ItemInnerSpacing.X) * 4 + comboWidth;
 
             // Label editor.
             var tempName = aliasItem.Label;
@@ -377,24 +387,24 @@ public sealed class AliasItemDrawer
                 if (CkGuiUtils.EnumCombo("##Types", 100f, selected, out var newVal, selectableTypes.Except(currentTypes), i => i.ToName(), "All In Use", CFlags.NoArrowButton))
                     selected = newVal;
             }
+            ImUtf8.SameLineInner();
             CkGui.AttachToolTip("Selects a new output action kind to add to this Alias Item.");
-
+            if (CkGui.IconButton(FAI.FileCircleMinus, inPopup: true))
+            {
+                result = DrawAliasTriggerButtonAction.Revert;
+            }
+            CkGui.AttachToolTip("Click to cancel changes to this Alias Item.--SEP-- This will also close the editor");
             ImUtf8.SameLineInner();
             if (CkGui.IconButton(FAI.Save, inPopup: true))
             {
-                _manager.SaveChangesAndStopEditing();
-                if (onClose is Action<AliasTrigger> { } action)
-                    action.Invoke(aliasItem);
+                result = DrawAliasTriggerButtonAction.SaveChanges;
             }
             CkGui.AttachToolTip("Click to save changes to this Alias Item.--SEP-- This will also close the editor.");
 
             ImUtf8.SameLineInner();
             if (CkGui.IconButton(FAI.Trash, inPopup: true))
             {
-                _manager.Delete(aliasItem);
-                _manager.StopEditing();
-                if (onClose is Action<AliasTrigger> { } action)
-                    action.Invoke(null);
+                result = DrawAliasTriggerButtonAction.Delete;
             }
             CkGui.AttachToolTip("Delete this Alias Item.--SEP-- This will also close the editor.");
         }
