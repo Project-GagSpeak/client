@@ -69,7 +69,7 @@ public sealed partial class PuppetVictimGlobalPanel
 
     private void DrawAliasSearch(float width)
     {
-        if(FancySearchBar.Draw("##GlobalSearch", width, "Search for an Alias", ref _searchStr, 200, ImGui.GetFrameHeight(), AddTriggerButton))
+        if (FancySearchBar.Draw("##GlobalSearch", width, "Search for an Alias", ref _searchStr, 200, ImGui.GetFrameHeight(), AddTriggerButton))
         {
             _logger.LogInformation($"Searching for Alias: {_searchStr}");
             _filteredItems = _searchStr.IsNullOrEmpty()
@@ -102,9 +102,34 @@ public sealed partial class PuppetVictimGlobalPanel
         foreach (var aliasItem in _filteredItems.ToList())
         {
             if (aliasItem.Identifier == _manager.ItemInEditor?.Identifier)
-                _aliasDrawer.DrawAliasTriggerEditor(_actionTypes, ref _selectedType);
+            {
+                _aliasDrawer.DrawAliasTriggerEditor(_actionTypes, ref _selectedType, out var result);
+                switch (result)
+                {
+                    case DrawAliasTriggerButtonAction.NoAction:
+                        // No action at this time
+                        break;
+                    case DrawAliasTriggerButtonAction.Delete:
+                        _manager.Delete(aliasItem);
+                        _manager.StopEditing();
+                        break;
+                    case DrawAliasTriggerButtonAction.Revert:
+                        _manager.StopEditing();
+                        break;
+                    case DrawAliasTriggerButtonAction.SaveChanges:
+                        _manager.SaveChangesAndStopEditing();
+                        break;
+                }
+            }
             else
-                _aliasDrawer.DrawAliasTrigger(aliasItem, MoodleCache.IpcData);
+            {
+
+                _aliasDrawer.DrawAliasTrigger(aliasItem, MoodleCache.IpcData, out bool startEditing);
+                if (startEditing)
+                {
+                    _manager.StartEditing(aliasItem);
+                }
+            }
         }
     }
     private void DrawPermsAndExamples(CkHeader.DrawRegion region)
@@ -210,5 +235,19 @@ public sealed partial class PuppetVictimGlobalPanel
             ImGui.TextWrapped("Ex 1: /gag <trigger phrase> <message>");
             ImGui.TextWrapped("Ex 2: /gag <trigger phrase> <message> <image>");
         }
+    }
+
+    private void PushUpdateAliasTask(List<UserData> users, Guid id, AliasTrigger? aliasTrigger)
+    {
+        UiService.SetUITask(async () =>
+        {
+            _logger.LogTrace($"Pushing latest alias {id} with value {aliasTrigger}");
+            var res = await _hub.UserPushAliasGlobalUpdate(new(users, id, aliasTrigger));
+            if (res.ErrorCode is not GagSpeakApiEc.Success)
+            {
+                _logger.LogError($"Failed to perform Update Global Alias: {res.ErrorCode}");
+                return;
+            }
+        });
     }
 }
