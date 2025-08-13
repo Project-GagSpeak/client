@@ -40,11 +40,12 @@ public class PublicationsManager
         _statusCombo = new MoodleStatusCombo(logger, 1.5f);
     }
 
+    private HashSet<string> _searchableTagList => _tagList.Split(',').Select(x => x.ToLower().Trim()).ToHashSet();
+
     private string _authorName = string.Empty;
     private string _tagList = string.Empty;
     private readonly PatternCombo _patternCombo;
     private readonly MoodleStatusCombo _statusCombo;
-
     private Pattern _selectedPattern = Pattern.AsEmpty();
 
     public void DrawPatternPublications()
@@ -94,13 +95,11 @@ public class PublicationsManager
             }
         });
 
-        if (CkGui.IconTextButton(FAI.CloudUploadAlt, "Publish Pattern to the Pattern ShareHub", ImGui.GetContentRegionAvail().X,
-            false, _authorName.IsNullOrEmpty() || _selectedPattern.Identifier== Guid.Empty))
-        {
-            // upload itttt
-            _shareHub.UploadPattern(_selectedPattern, _authorName, _tagList.Split(',').Select(x => x.ToLower().Trim()).ToHashSet());
-        }
+        var blockUpload = _authorName.IsNullOrEmpty() || _selectedPattern.Identifier == Guid.Empty || UiService.DisableUI;
+        if (CkGui.IconTextButton(FAI.CloudUploadAlt, "Publish Pattern to the Pattern ShareHub", ImGui.GetContentRegionAvail().X, false, blockUpload))
+            UiService.SetUITask(async () => await _shareHub.UploadPattern(_selectedPattern, _authorName, _tagList.Split(',').Select(x => x.ToLower().Trim()).ToHashSet()));
         CkGui.AttachToolTip("Must have a selected pattern and author name to upload.");
+
         ImGui.Spacing();
         ImGui.Separator();
         ImGuiUtil.Center("Your Currently Published Patterns");
@@ -116,7 +115,7 @@ public class PublicationsManager
     public void DrawMoodlesPublications()
     {
         // start by selecting the pattern.
-        if (MoodleCache.IpcData is null)
+        if (MoodleCache.IpcData.Statuses.Count <= 0)
         {
             CkGui.ColorText("No Ipc Data Available.", ImGuiColors.DalamudRed);
         }
@@ -169,15 +168,11 @@ public class PublicationsManager
             });
             CkGui.AttachToolTip("Select an existing tag on the Server.--SEP--This makes it easier for people to find your Moodles!");
 
-            if (CkGui.IconTextButton(FAI.CloudUploadAlt, "Publish Moodle to the Moodle ShareHub", ImGui.GetContentRegionAvail().X, 
-                false, _authorName.IsNullOrEmpty() || _statusCombo.Current.GUID== Guid.Empty))
-            {
-                if (_statusCombo.Current.GUID== Guid.Empty)
-                    return;
-
-                _shareHub.UploadMoodle(_authorName, _tagList.Split(',').Select(x => x.ToLower().Trim()).ToHashSet(), _statusCombo.Current);
-            }
+            var blockMoodleUpload = _authorName.IsNullOrEmpty() || _statusCombo.Current.GUID == Guid.Empty || UiService.DisableUI;
+            if (CkGui.IconTextButton(FAI.CloudUploadAlt, "Publish Moodle to the Moodle ShareHub", ImGui.GetContentRegionAvail().X, false, blockMoodleUpload))
+                UiService.SetUITask(async () => await _shareHub.UploadMoodle(_authorName, _searchableTagList, _statusCombo.Current));
             CkGui.AttachToolTip("Must have a selected Moodle and author name to upload.");
+
             ImGui.Spacing();
             ImGui.Separator();
             ImGuiUtil.Center("Your Currently Published Moodles");
@@ -244,9 +239,8 @@ public class PublicationsManager
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - unpublishButton);
                 using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink))
                     if (CkGui.IconTextButton(FAI.Globe, "Unpublish", isInPopup: true, disabled: !KeyMonitor.ShiftPressed() || UiService.DisableUI))
-                        _shareHub.RemovePattern(pattern.Identifier);
-                CkGui.AttachToolTip("Removes this pattern publication from the pattern hub." +
-                    "--SEP--Must hold SHIFT");
+                        UiService.SetUITask(async () => await _shareHub.RemovePattern(pattern.Identifier));
+                CkGui.AttachToolTip("Removes this pattern publication from the pattern hub.--SEP--Must hold SHIFT");
             }
             // next line:
             using (ImRaii.Group())
@@ -300,9 +294,8 @@ public class PublicationsManager
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - unpublishButton);
                 using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink))
                     if (CkGui.IconTextButton(FAI.Globe, "Unpublish", isInPopup: true, disabled: !KeyMonitor.ShiftPressed() || UiService.DisableUI))
-                        _shareHub.RemoveMoodle(moodle.MoodleStatus.GUID);
-                CkGui.AttachToolTip("Remove this publication from the Moodle ShareHub!" +
-                    "--SEP--Must hold SHIFT");
+                        UiService.SetUITask(async () => await _shareHub.RemoveMoodle(moodle.MoodleStatus.GUID));
+                CkGui.AttachToolTip("Remove this publication from the Moodle ShareHub!--SEP--Must hold SHIFT");
             }
             ImGui.Spacing();
             // next line:

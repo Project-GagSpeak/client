@@ -11,9 +11,7 @@ using System.Runtime.InteropServices;
 
 namespace GagSpeak.Services.Controller;
 
-/// <summary>
-///     Controls how player movement is modified, based on <see cref="PlayerControlSource"/>'s values.
-/// </summary>
+// TODO: Remove sources as control points, use other blocking methods.
 public sealed class MovementController : DisposableMediatorSubscriberBase
 {
     private readonly TraitsCache _traitCache;
@@ -25,10 +23,6 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
 
     // Dictates what is currently controlling the player's movement.
     private PlayerControlSource _sources;
-
-    // Any automatic movement task that could be occuring.
-    private Task? _movementTask;
-    private bool _forceRunDuringTask = false;
 
     public MovementController(ILogger<KeystateController> logger, GagspeakMediator mediator,
         TraitsCache traitsCache, MovementDetours moveDtor)
@@ -44,12 +38,11 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
     }
 
-    public bool IsMoveTaskRunning => _movementTask is not null && !_movementTask.IsCompleted;
     public PlayerControlSource Sources => _sources;
     public bool BanUnfollowing => _sources.HasAny(PlayerControlSource.LockedFollowing);
     public bool BanAnyMovement => _sources.HasAny(PlayerControlSource.LockedEmote);
-    public bool BanMouseAutoMove => !_forceRunDuringTask && (_sources & (PlayerControlSource.LockedEmote | PlayerControlSource.Immobile)) != 0;
-    public bool BanRunning => !_forceRunDuringTask && (_sources & (PlayerControlSource.LockedFollowing | PlayerControlSource.Weighty)) != 0;
+    public bool BanMouseAutoMove => (_sources & (PlayerControlSource.LockedEmote | PlayerControlSource.Immobile)) != 0;
+    public bool BanRunning => (_sources & (PlayerControlSource.LockedFollowing | PlayerControlSource.Weighty)) != 0;
 
     private unsafe void FrameworkUpdate()
     {
@@ -95,10 +88,10 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         _lastPos = Vector3.Zero;
     }
 
-    private unsafe bool IsWalkingMarshal() => Marshal.ReadByte((nint)Control.Instance(), 30243) == 0x1;
+    private unsafe bool IsWalkingMarshal() => Marshal.ReadByte((nint)Control.Instance(), 30259) == 0x1;
     private unsafe bool IsWalking() => Control.Instance()->IsWalking;
-    private unsafe void ForceWalking() => Marshal.WriteByte((nint)Control.Instance(), 30243, 0x1);
-    private unsafe void ForceRunning() => Marshal.WriteByte((nint)Control.Instance(), 30243, 0x0);
+    private unsafe void ForceWalking() => Marshal.WriteByte((nint)Control.Instance(), 30259, 0x1);
+    private unsafe void ForceRunning() => Marshal.WriteByte((nint)Control.Instance(), 30259, 0x0);
     
     private void HandleTimeoutTracking()
     {

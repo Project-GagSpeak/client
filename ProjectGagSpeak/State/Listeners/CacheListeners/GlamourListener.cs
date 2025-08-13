@@ -1,8 +1,5 @@
 using CkCommons;
-using Dalamud.Plugin;
 using GagSpeak.Interop;
-using GagSpeak.PlayerClient;
-using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Handlers;
 using Glamourer.Api.Enums;
@@ -13,7 +10,6 @@ namespace GagSpeak.State.Listeners;
 public class GlamourListener : IDisposable
 {
     private readonly ILogger<GlamourListener> _logger;
-    private readonly GagspeakMediator _mediator;
     private readonly IpcCallerGlamourer _ipc;
     private readonly GlamourCache _cache;
     private readonly GlamourHandler _handler;

@@ -24,7 +24,10 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
     private readonly KinksterManager _pairManager;
     private readonly OnFrameworkService _frameworkUtils;
 
+    // no longer nessisary with the new object table manager?
     private List<IPlayerCharacter> _visiblePlayers;
+
+    // maybe change up how this is shown, as there are new detailed tooltips and additional click methods for DTR entries.
     public DtrBarService(ILogger<DtrBarService> logger, GagspeakMediator mediator,
         MainConfig mainConfig, KinksterManager pairs, OnFrameworkService frameworkUtils) 
         : base(logger, mediator)
@@ -34,11 +37,11 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
         _frameworkUtils = frameworkUtils;
 
         PrivacyEntry = Svc.DtrBar.Get("GagSpeakPrivacy");
-        PrivacyEntry.OnClick += (drInteractionEvent) => Mediator.Publish(new UiToggleMessage(typeof(DtrVisibleWindow)));
+        PrivacyEntry.OnClick += _ => Mediator.Publish(new UiToggleMessage(typeof(DtrVisibleWindow)));
         PrivacyEntry.Shown = true;
 
         UpdateMessagesEntry = Svc.DtrBar.Get("GagSpeakNotifications");
-        UpdateMessagesEntry.OnClick += (drInteractionEvent) => Mediator.Publish(new UiToggleMessage(typeof(InteractionEventsUI)));
+        UpdateMessagesEntry.OnClick += _ => Mediator.Publish(new UiToggleMessage(typeof(InteractionEventsUI)));
         UpdateMessagesEntry.Shown = true;
 
         VibratorEntry = Svc.DtrBar.Get("GagSpeakVibrator");

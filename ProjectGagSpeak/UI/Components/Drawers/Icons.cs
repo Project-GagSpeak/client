@@ -33,18 +33,18 @@ public static class Icons
                     : (ImGui.GetColorU32(ImGuiCol.FrameBgActive), new Vector4(0.3f, 0.3f, 0.3f, 1f));
                 var pos = ImGui.GetCursorScreenPos();
                 ImGui.GetWindowDrawList().AddRectFilled(pos, pos + size, bgColor, rounding);
-                if (handle != null)    
-                    ImGui.GetWindowDrawList().AddImageRounded(handle.Value, pos, pos + size, Vector2.Zero, Vector2.One, ColorHelpers.RgbaVector4ToUint(tint), rounding);
+                if (!handle.IsNull)    
+                    ImGui.GetWindowDrawList().AddImageRounded(handle, pos, pos + size, Vector2.Zero, Vector2.One, ColorHelpers.RgbaVector4ToUint(tint), rounding);
             }
             else
             {
                 var pos = ImGui.GetCursorScreenPos();
-                ImGui.GetWindowDrawList().AddImageRounded(new ImTextureID(nint.Zero), pos, pos + size, Vector2.Zero, Vector2.One, 0xFFFFFFFF, rounding);
+                ImGui.GetWindowDrawList().AddImageRounded(ImTextureID.Null, pos, pos + size, Vector2.Zero, Vector2.One, 0xFFFFFFFF, rounding);
             }
 
             ImGui.Dummy(size);
             if (doHover && !empty)
-                ImGuiUtil.HoverIconTooltip(new ImTextureID(nint.Zero), size, textureSize);
+                ImGuiUtil.HoverIconTooltip(ImTextureID.Null, textureSize, size);
 
 
         }
@@ -70,14 +70,14 @@ public static class Icons
                 : (ImGui.GetColorU32(ImGuiCol.FrameBgActive), new Vector4(0.3f, 0.3f, 0.3f, 1f));
             var pos = ImGui.GetCursorScreenPos();
             ImGui.GetWindowDrawList().AddRectFilled(pos, pos + size, bgColor, 5 * ImGuiHelpers.GlobalScale);
-            if (handle != null)
-                ImGui.Image(handle.Value, size, Vector2.Zero, Vector2.One, tint);
+            if (!handle.IsNull)
+                ImGui.Image(handle, size, Vector2.Zero, Vector2.One, tint);
             else
                 ImGui.Dummy(size);
         }
         else
         {
-            ImGuiUtil.HoverIcon(new ImTextureID(nint.Zero), textureSize, size);
+            ImGuiUtil.HoverIconTooltip(ImTextureID.Null, textureSize, size);
         }
     }
 
@@ -98,8 +98,10 @@ public static class Icons
 
         var col = hovering ? ImGuiColors.DalamudGrey : isFavorite ? ImGuiColors.ParsedGold : ImGuiColors.ParsedGrey;
         
-        if (framed) CkGui.FramedIconText(FAI.Star, col);
-        else CkGui.IconText(FAI.Star, col);
+        if (framed)
+            CkGui.FramedIconText(FAI.Star, col);
+        else
+            CkGui.IconText(FAI.Star, col);
         CkGui.AttachToolTip((isFavorite ? "Remove" : "Add") + " from Favorites.");
         
         if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
@@ -119,8 +121,10 @@ public static class Icons
 
         var col = hovering ? ImGuiColors.DalamudGrey : isFavorite ? ImGuiColors.ParsedGold : ImGuiColors.ParsedGrey;
         
-        if (framed) CkGui.FramedIconText(FAI.Star, col);
-        else CkGui.IconText(FAI.Star, col);
+        if (framed)
+            CkGui.FramedIconText(FAI.Star, col);
+        else 
+            CkGui.IconText(FAI.Star, col);
         CkGui.AttachToolTip((isFavorite ? "Remove" : "Add") + " from Favorites.");
         
         if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
@@ -134,14 +138,15 @@ public static class Icons
 
     public static bool DrawFavoriteStar(FavoritesManager favorites, string kinksterUid, bool framed = true)
     {
-        var isFavorite = favorites._favoriteKinksters.Contains(kinksterUid);
-        var hovering = ImGui.IsMouseHoveringRect(
-            ImGui.GetCursorScreenPos(), ImGui.GetCursorScreenPos() + new Vector2(ImGui.GetTextLineHeight()));
-
-        var col = hovering ? ImGuiColors.DalamudGrey : isFavorite ? ImGuiColors.ParsedGold : ImGuiColors.ParsedGrey;
+        var isFavorite = favorites._favoriteKinksters.Contains(kinksterUid); 
+        var pos = ImGui.GetCursorScreenPos();
+        var hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetTextLineHeight()));
+        var col = hovering ? ImGuiColors.DalamudGrey2 : isFavorite ? ImGuiColors.ParsedGold : ImGuiColors.ParsedGrey;
         
-        if (framed) CkGui.FramedIconText(FAI.Star, col);
-        else CkGui.IconText(FAI.Star, col);
+        if (framed)
+            CkGui.FramedIconText(FAI.Star, col);
+        else 
+            CkGui.IconText(FAI.Star, col);
         CkGui.AttachToolTip((isFavorite ? "Remove" : "Add") + " from Favorites.");
         
         if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))

@@ -641,7 +641,6 @@
         "dependencies": {
           "NAudio": "[2.2.1, )",
           "OtterGui": "[1.0.0, )",
-          "PInvoke.User32": "[0.7.124, )",
           "SixLabors.ImageSharp": "[3.1.11, )"
         }
       },

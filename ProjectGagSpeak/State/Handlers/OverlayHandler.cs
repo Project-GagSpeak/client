@@ -15,7 +15,6 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
 {
     private readonly PlayerMetaData _metadata;
     private readonly OverlayCache _cache;
-    private readonly POVController _perspective;
     private readonly BlindfoldService _bfService;
     private readonly HypnoService _hypnoService;
 

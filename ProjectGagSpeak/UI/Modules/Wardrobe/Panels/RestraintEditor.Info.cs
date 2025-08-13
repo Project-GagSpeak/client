@@ -1,15 +1,13 @@
-using Dalamud.Interface.Utility.Raii;
-using CkCommons.Widgets;
-using GagSpeak.Services.Tutorial;
-using GagSpeak.Gui.Components;
-using Dalamud.Bindings.ImGui;
+using CkCommons;
 using CkCommons.Raii;
+using CkCommons.Widgets;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
-using Dalamud.Utility;
+using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Gui.Components;
+using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagspeakAPI.Attributes;
-using CkCommons;
-using System.Runtime.CompilerServices;
 
 namespace GagSpeak.Gui.Wardrobe;
 
@@ -18,8 +16,6 @@ public class RestraintEditorInfo : IFancyTab
     private readonly RestraintManager _manager;
     private readonly AttributeDrawer _attributeDrawer;
     private readonly TutorialService _guides;
-    private readonly IFancyTab[] _tabBar;
-
     public RestraintEditorInfo(RestraintManager manager, AttributeDrawer traitsDrawer, TutorialService guides)
     {
         _attributeDrawer = traitsDrawer;

@@ -1,3 +1,4 @@
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Textures.TextureWraps;
 using OtterGui.Classes;
 using Penumbra.GameData.Enums;
@@ -8,11 +9,12 @@ using Penumbra.GameData.Structs;
 // If it is possible to reconstruct this into an internal game storage cache for job actions and other things, do so.
 namespace GagSpeak.Services.Textures;
 
+// if this is equivalent to ottergui's maybe remove it, unless it depends on the Svc.Data and Svc.Texture, then use this instead. 
 public sealed class TextureService() : TextureCache(Svc.Data, Svc.Texture), IDisposable
 {
     private readonly IDalamudTextureWrap?[] _slotIcons = CreateSlotIcons();
 
-    public (Dalamud.Bindings.ImGui.ImTextureID?, Vector2, bool) GetIcon(EquipItem item, EquipSlot slot)
+    public (ImTextureID, Vector2, bool) GetIcon(EquipItem item, EquipSlot slot)
     {
         if (item.IconId.Id != 0 && TryLoadIcon(item.IconId.Id, out var ret))
             return (ret.Handle, new Vector2(ret.Width, ret.Height), false);
@@ -20,22 +22,22 @@ public sealed class TextureService() : TextureCache(Svc.Data, Svc.Texture), IDis
         var idx = slot.ToIndex();
         return idx < 12 && _slotIcons[idx] != null
             ? (_slotIcons[idx]!.Handle, new Vector2(_slotIcons[idx]!.Width, _slotIcons[idx]!.Height), true)
-            : (null, Vector2.Zero, true);
+            : (default, Vector2.Zero, true);
     }
 
-    public (Dalamud.Bindings.ImGui.ImTextureID?, Vector2, bool) GetIcon(EquipItem item, BonusItemFlag slot)
+    public (ImTextureID, Vector2, bool) GetIcon(EquipItem item, BonusItemFlag slot)
     {
         if (item.IconId.Id != 0 && TryLoadIcon(item.IconId.Id, out var ret))
             return (ret.Handle, new Vector2(ret.Width, ret.Height), false);
 
         var idx = slot.ToIndex();
         if (idx == uint.MaxValue)
-            return (null, Vector2.Zero, true);
+            return (default, Vector2.Zero, true);
 
         idx += 12;
         return idx < 13 && _slotIcons[idx] != null
             ? (_slotIcons[idx]!.Handle, new Vector2(_slotIcons[idx]!.Width, _slotIcons[idx]!.Height), true)
-            : (null, Vector2.Zero, true);
+            : (default, Vector2.Zero, true);
     }
 
     public void Dispose()
@@ -80,10 +82,10 @@ public sealed class TextureService() : TextureCache(Svc.Data, Svc.Texture), IDis
             {
                 ret[slot] = uldWrapper.LoadTexturePart("ui/uld/Character_hr1.tex", index)!;
             }
-            catch (Bagagwa)
+            catch (Bagagwa e)
             {
-/*                logger.LogError($"Could not get empty slot texture for {name}, icon will be left empty. "
-                  + $"This may be because of incompatible mods affecting your character screen interface:\n{ex}");*/
+                Svc.Logger.Error($"Could not get empty slot texture for {name}, icon will be left empty. "
+                  + $"This may be because of incompatible mods affecting your character screen interface:\n{e}");
                 ret[slot] = null;
             }
         }

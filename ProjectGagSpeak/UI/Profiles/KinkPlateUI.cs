@@ -425,7 +425,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
                     var (handle, textureSize, empty) = _textures.GetIcon(Pair.LockedSlots[equipSlot].Item1, equipSlot);
                     if (!empty)
                     {
-                        wdl.AddImageRounded(handle.Value, blockedSlotsPos, blockedSlotsPos + LockedSlotSize, Vector2.Zero, Vector2.One, 0xFFFFFFFF, 15f);
+                        wdl.AddImageRounded(handle, blockedSlotsPos, blockedSlotsPos + LockedSlotSize, Vector2.Zero, Vector2.One, 0xFFFFFFFF, 15f);
                         CkGui.AttachToolTipRect(blockedSlotsPos, LockedSlotSize, Pair.LockedSlots[equipSlot].Item2);
                     }
                 }
@@ -434,7 +434,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
                     // Draw the empty icon if the slot is not locked
                     var (ptr, textureSize, empty) = _textures.GetIcon(ItemSvc.NothingItem(equipSlot), equipSlot);
                     if (!empty)
-                        wdl.AddImageRounded(new ImTextureID(nint.Zero), blockedSlotsPos, blockedSlotsPos + LockedSlotSize, Vector2.Zero, Vector2.One, 0xFFFFFFFF, 15f);
+                        wdl.AddImageRounded(ImTextureID.Null, blockedSlotsPos, blockedSlotsPos + LockedSlotSize, Vector2.Zero, Vector2.One, 0xFFFFFFFF, 15f);
                 }
 
                 // Update the position for the next slot

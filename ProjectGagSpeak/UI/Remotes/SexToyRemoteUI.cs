@@ -116,10 +116,10 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
             ImGui.PushStyleColor(ImGuiCol.TitleBgActive, CkColor.RemoteBg.Uint());
 
             ImPlot.PushStyleVar(ImPlotStyleVar.MajorTickSize, new Vector2(1.0f));
-            ImPlot.PushStyleVar(ImPlotStyleVar.LegendPadding, Vector2.Zero);
+            ImPlot.PushStyleVar(ImPlotStyleVar.Padding, Vector2.Zero);
 
             ImPlot.PushStyleColor(ImPlotCol.Line, CkColor.LushPinkLine.Uint());
-            ImPlot.PushStyleColor(ImPlotCol.LegendBg, CkColor.RemoteBgDark.Uint());
+            ImPlot.PushStyleColor(ImPlotCol.Bg, CkColor.RemoteBgDark.Uint());
             ImPlot.PushStyleColor(ImPlotCol.FrameBg, 0x00FFFFFF);
             _themePushed = true;
         }

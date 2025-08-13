@@ -35,7 +35,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
     protected CkPadlockComboBase(IEnumerable<T> items, IEnumerable<Padlocks> padlocks, ILogger log)
     {
         Log = log;
-        Items = (ICachingList<T>)(new TemporaryList<T>(items));
+        Items = (ICachingList<T>)new TemporaryList<T>(items);
         ComboPadlocks = new TemporaryList<Padlocks>(padlocks);
     }
 
@@ -192,7 +192,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
             (ITFlags flags, int len) = SelectedLock == Padlocks.Combination ? (ITFlags.CharsDecimal, 4) : (ITFlags.None, 20);
             ImGui.SetNextItemWidth(width);
             using (ImRaii.Disabled(!lastPadlock.IsPasswordLock()))
-                ImGui.InputTextWithHint($"##Unlocker_{label}", hint, Encoding.UTF8.GetBytes(Password).AsSpan<byte>(), flags);
+                ImGui.InputTextWithHint($"##Unlocker_{label}", hint, ref Password, len, flags);
 
             using var s = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(0, ImGui.GetStyle().FramePadding.Y));
             var widthOffset = ImGui.GetFrameHeight() * (isTimer ? 2 : 1);

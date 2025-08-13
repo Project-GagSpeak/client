@@ -5,6 +5,7 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Util;
+using OtterGui.Classes;
 
 namespace GagSpeak.CustomCombos.Padlock;
 
@@ -13,7 +14,7 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
 {
     private readonly DataDistributionService _dds;
     public PadlockGagsClient(ILogger log, DataDistributionService dds, GagRestrictionManager manager)
-        : base(() => [ ..manager.ServerGagData?.GagSlots ?? [new ActiveGagSlot()] ], PadlockEx.ClientLocks, log)
+        : base(new LazyList<ActiveGagSlot>(() => [ ..manager.ServerGagData?.GagSlots ?? [new ActiveGagSlot()] ]), PadlockEx.ClientLocks, log)
     {
         _dds = dds;
     }

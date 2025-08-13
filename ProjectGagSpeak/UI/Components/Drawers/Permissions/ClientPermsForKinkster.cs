@@ -1,4 +1,4 @@
-using Buttplug.Client;using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.Raii;using CkCommons.RichText;using Dalamud.Interface.Colors;using Dalamud.Interface.Utility;using Dalamud.Interface.Utility.Raii;using GagSpeak.Gui.MainWindow;using GagSpeak.Kinksters;using GagSpeak.PlayerClient;using GagSpeak.Services;using GagSpeak.Utils;using GagSpeak.WebAPI;using GagspeakAPI.Data.Permissions;using GagspeakAPI.Extensions;using Dalamud.Bindings.ImGui;using OtterGui;using OtterGui.Text;using OtterGui.Text.EndObjects;using System.Collections.Immutable;using static FFXIVClientStructs.FFXIV.Client.Game.InstanceContent.DynamicEvent.Delegates;namespace GagSpeak.Gui.Components;
+using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.Raii;using Dalamud.Bindings.ImGui;using Dalamud.Interface.Colors;using Dalamud.Interface.Utility;using Dalamud.Interface.Utility.Raii;using GagSpeak.Gui.MainWindow;using GagSpeak.Kinksters;using GagSpeak.PlayerClient;using GagSpeak.Services;using GagSpeak.Utils;using GagSpeak.WebAPI;using GagspeakAPI.Data.Permissions;using GagspeakAPI.Extensions;using OtterGui;using OtterGui.Text;using System.Collections.Immutable;namespace GagSpeak.Gui.Components;
 public class ClientPermsForKinkster{
     private readonly MainHub _hub;
     private readonly KinksterShockCollar _shockies;
@@ -428,8 +428,8 @@ using Buttplug.Client;using CkCommons;using CkCommons.Classes;using CkCommons
             CkGui.ColorTextInline("CTRL + ALT + BACKSPACE", ImGuiColors.ParsedGold);
             CkGui.TextInline("('Fuck, go back')");
         }
-        string yesButton = $"Enter Hardcore for {name}";
-        string noButton = "Oh my, take me back!";
+        var yesButton = $"Enter Hardcore for {name}";
+        var noButton = "Oh my, take me back!";
         var yesSize = ImGuiHelpers.GetButtonSize(yesButton);
         var noSize = ImGuiHelpers.GetButtonSize(noButton);
         var offsetX = (size.X - (yesSize.X + noSize.X + ImGui.GetStyle().ItemSpacing.X) - ImGui.GetStyle().WindowPadding.X * 2) / 2;

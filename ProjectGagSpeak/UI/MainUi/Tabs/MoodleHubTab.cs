@@ -192,8 +192,7 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
 
         // Show the filter combo.
         ImUtf8.SameLineInner();
-        if (CkGuiUtils.EnumCombo("##filterType", filterTypeSize, _shareHub.SearchFilter, out var newFilterType, 
-            Enum.GetValues<HubFilter>().Skip(1).SkipLast(1), flags: CFlags.NoArrowButton));
+        if (CkGuiUtils.EnumCombo("##filterType", filterTypeSize, _shareHub.SearchFilter, out var newFilterType, [HubFilter.Likes, HubFilter.DatePosted], flags: CFlags.NoArrowButton))
             _shareHub.SearchFilter = newFilterType;
         CkGui.AttachToolTip("Sort Method--SEP--Define how results are found.");
 

@@ -5,10 +5,10 @@ namespace GagSpeak.GameInternals;
 // - ReceiveActionEffect
 // https://github.com/NightmareXIV/ECommons/blob/master/ECommons/Hooks/ActionEffect.cs
 // - OnEmote
-// https://github.com/MgAl2O4/PatMeDalamud/blob/42385a92d1a9c3f043f35128ee68dc623cfc6a20/plugin/EmoteReaderHooks.cs#L21C87-L21C130
+// https://github.com/MgAl2O4/PatMeDalamud/blob/main/plugin/EmoteReaderHooks.cs
 // - Callback Sig
-// https://github.com/NightmareXIV/ECommons/blob/6ea40a9eea2e805f2f566fe0493749c7c0639ea3/ECommons/Automation/Callback.cs#L64
-// - FireCallback Sig
+// https://github.com/NightmareXIV/ECommons/blob/master/ECommons/Automation/Callback.cs
+// - FireCallback Sig (no longer exists?)
 // https://github.com/Caraxi/SimpleTweaksPlugin/blob/02abb1c3e4a140cbccded03af1e0637c3c5665ff/Debugging/AddonDebug.cs#L127
 // - ForceDisableMovementPtr (THIS VALUE CAN BE SHARED BY OTHER PLUGINS (LIKE CAMMY) BE SURE IT IS HANDLED ACCORDINGLY)
 // https://github.com/PunishXIV/Orbwalker/blob/4d171bc7c79a492bf9159d705dafa7bc97f0c174/Orbwalker/Memory.cs#L74
@@ -34,7 +34,7 @@ namespace GagSpeak.GameInternals;
 public static class Signatures
 {
     // gip.HookFromAddress<ProcessActionEffect>(ss.ScanText(this)
-    public const string ReceiveActionEffect = "40 ?? 56 57 41 ?? 41 ?? 41 ?? 48 ?? ?? ?? ?? ?? ?? ?? 48";
+    public const string ReceiveActionEffect = "40 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24";
     
     // ScanType: Signature
     public const string OnEmote = "E8 ?? ?? ?? ?? 48 8D 8B ?? ?? ?? ?? 4C 89 74 24";
@@ -43,7 +43,7 @@ public static class Signatures
     public const string FireCallback = "E8 ?? ?? ?? ?? 0F B6 E8 8B 44 24 20";
 
     // Marshal.GetDelegateForFunctionPointer<ForcedStayCallbackDelegate>(ss.ScanText(this))
-    public const string Callback = "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 44 24 ?? 0F B7 81";
+    public const string Callback = "48 89 5C 24 ?? 48 89 6C 24 ?? 56 57 41 54 41 56 41 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 44 24 ?? BF";
 
     // ScanType.StaticAddress, Fallibility = Fallibility.Infallible. Define via SignatureAttribute.
     public const string ForceDisableMovement = "F3 0F 10 05 ?? ?? ?? ?? 0F 2E C7";
@@ -61,12 +61,8 @@ public static class Signatures
     // Sends a constructed chat message to the server. (No longer nessisary)
     // public const string SendChat = "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC 20 48 8B F2 48 8B F9 45 84 C9";
 
-    // Sanitizes string for chat. (No longer nessisary)
-    // public const string SanitizeString = "E8 ?? ?? ?? ?? EB 0A 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8D AE";
-
     // DetourName = nameof(ProcessChatInputDetour), Fallibility = Fallibility.Auto, Define via SignatureAttribute.
     public const string ProcessChatInput = "E8 ?? ?? ?? ?? FE 86 ?? ?? ?? ?? C7 86 ?? ?? ?? ?? ?? ?? ?? ??";
-
 
     // Spatial Audio Sigs from VFXEDITOR
     public const string ReadFileSig = "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 54 41 55 41 56 41 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 48 63 42";

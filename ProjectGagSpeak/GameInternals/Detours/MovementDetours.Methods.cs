@@ -17,6 +17,7 @@ public partial class MovementDetours : IDisposable
 
     /// <summary>
     ///     prevents LMB+RMB moving by processing it prior to the games update movement check.
+    ///     If this fails, check our HybridCamera's new movement detection method.
     /// </summary>
     public unsafe delegate void MoveOnMousePreventor2Delegate(MoveControllerSubMemberForMine* thisx, float wishdir_h, float wishdir_v, char arg4, byte align_with_camera, Vector3* direction);
     [Signature(Signatures.MouseAutoMove2, DetourName = nameof(MovementUpdate), Fallibility = Fallibility.Auto)]
