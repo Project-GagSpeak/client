@@ -6,7 +6,7 @@ using GagSpeak.Services.Textures;
 using GagSpeak.Gui.Components;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Models;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using CkCommons.Gui;
 
 namespace GagSpeak.Gui;

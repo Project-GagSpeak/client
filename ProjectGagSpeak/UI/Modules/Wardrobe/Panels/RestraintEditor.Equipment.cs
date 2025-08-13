@@ -5,7 +5,7 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.Gui.Components;
 using GagSpeak.FileSystems;
 using GagSpeak.State.Managers;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Penumbra.GameData.Enums;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.State.Models;

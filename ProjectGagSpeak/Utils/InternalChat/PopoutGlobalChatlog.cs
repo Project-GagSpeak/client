@@ -16,7 +16,7 @@ using GagSpeak.Services.Textures;
 using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 using System.Globalization;
 

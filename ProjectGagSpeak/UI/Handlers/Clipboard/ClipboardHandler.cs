@@ -1,5 +1,5 @@
 using CkCommons;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace GagSpeak.Gui.Components;
 

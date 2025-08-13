@@ -18,7 +18,7 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Components;
@@ -137,7 +137,7 @@ public sealed class AliasItemDrawer
         ImGui.TableNextColumn();
         // Ensure its a valid texture wrap
         if (CosmeticService.CoreTextures.Cache[CoreTexture.Icon256Bg] is { } wrap)
-            ImGui.Image(wrap.ImGuiHandle, new(96, 96));
+            ImGui.Image(wrap.Handle, new(96, 96));
     }
 
 

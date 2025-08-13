@@ -10,7 +10,7 @@ using GagSpeak.Gui.Wardrobe;
 using GagSpeak.Services;
 using GagSpeak.Services.Controller;
 using GagSpeak.Services.Mediator;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace GagSpeak.Gui.MainWindow;
 

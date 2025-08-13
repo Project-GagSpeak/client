@@ -1,6 +1,6 @@
 using Dalamud.Interface.Colors;
 using GagSpeak.Localization;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using System.Runtime.CompilerServices;
 
 // A Modified take on OtterGui.Widgets.Tutorial.

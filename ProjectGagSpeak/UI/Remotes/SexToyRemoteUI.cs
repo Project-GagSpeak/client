@@ -15,12 +15,12 @@ using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
-using ImGuiNET;
-using ImPlotNET;
+using Dalamud.Bindings.ImGui;
+using Dalamud.Bindings.ImPlot;
 using OtterGui.Text;
-using IPAFlags = ImPlotNET.ImPlotAxisFlags;
-using IPFlags = ImPlotNET.ImPlotFlags;
-using TFlags = ImGuiNET.ImGuiTableFlags;
+using IPAFlags = Dalamud.Bindings.ImPlot.ImPlotAxisFlags;
+using IPFlags = Dalamud.Bindings.ImPlot.ImPlotFlags;
+using TFlags = Dalamud.Bindings.ImGui.ImGuiTableFlags;
 
 namespace GagSpeak.Gui.Remote;
 
@@ -116,10 +116,10 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
             ImGui.PushStyleColor(ImGuiCol.TitleBgActive, CkColor.RemoteBg.Uint());
 
             ImPlot.PushStyleVar(ImPlotStyleVar.MajorTickSize, new Vector2(1.0f));
-            ImPlot.PushStyleVar(ImPlotStyleVar.PlotPadding, Vector2.Zero);
+            ImPlot.PushStyleVar(ImPlotStyleVar.LegendPadding, Vector2.Zero);
 
             ImPlot.PushStyleColor(ImPlotCol.Line, CkColor.LushPinkLine.Uint());
-            ImPlot.PushStyleColor(ImPlotCol.PlotBg, CkColor.RemoteBgDark.Uint());
+            ImPlot.PushStyleColor(ImPlotCol.LegendBg, CkColor.RemoteBgDark.Uint());
             ImPlot.PushStyleColor(ImPlotCol.FrameBg, 0x00FFFFFF);
             _themePushed = true;
         }

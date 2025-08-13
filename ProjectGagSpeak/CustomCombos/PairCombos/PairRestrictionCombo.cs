@@ -7,7 +7,7 @@ using GagSpeak.Services;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace GagSpeak.CustomCombos.Pairs;
 

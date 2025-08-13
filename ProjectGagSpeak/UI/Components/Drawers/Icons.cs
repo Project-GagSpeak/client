@@ -6,7 +6,7 @@ using Dalamud.Interface.Utility;
 using GagSpeak.Gui;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
@@ -25,7 +25,7 @@ public static class Icons
         try
         {
             var isEmpty = item.PrimaryId.Id == 0;
-            var (ptr, textureSize, empty) = texture.GetIcon(item, slot);
+            var (handle, textureSize, empty) = texture.GetIcon(item, slot);
             if (empty)
             {
                 var (bgColor, tint) = isEmpty
@@ -33,18 +33,18 @@ public static class Icons
                     : (ImGui.GetColorU32(ImGuiCol.FrameBgActive), new Vector4(0.3f, 0.3f, 0.3f, 1f));
                 var pos = ImGui.GetCursorScreenPos();
                 ImGui.GetWindowDrawList().AddRectFilled(pos, pos + size, bgColor, rounding);
-                if (ptr != nint.Zero)    
-                    ImGui.GetWindowDrawList().AddImageRounded(ptr, pos, pos + size, Vector2.Zero, Vector2.One, ColorHelpers.RgbaVector4ToUint(tint), rounding);
+                if (handle != null)    
+                    ImGui.GetWindowDrawList().AddImageRounded(handle.Value, pos, pos + size, Vector2.Zero, Vector2.One, ColorHelpers.RgbaVector4ToUint(tint), rounding);
             }
             else
             {
                 var pos = ImGui.GetCursorScreenPos();
-                ImGui.GetWindowDrawList().AddImageRounded(ptr, pos, pos + size, Vector2.Zero, Vector2.One, 0xFFFFFFFF, rounding);
+                ImGui.GetWindowDrawList().AddImageRounded(new ImTextureID(nint.Zero), pos, pos + size, Vector2.Zero, Vector2.One, 0xFFFFFFFF, rounding);
             }
 
             ImGui.Dummy(size);
             if (doHover && !empty)
-                ImGuiUtil.HoverIconTooltip(ptr, size, textureSize);
+                ImGuiUtil.HoverIconTooltip(new ImTextureID(nint.Zero), size, textureSize);
 
 
         }
@@ -62,7 +62,7 @@ public static class Icons
     public static void DrawIcon(this EquipItem item, TextureService textures, Vector2 size, BonusItemFlag slot, float rounding)
     {
         var isEmpty = item.PrimaryId.Id == 0;
-        var (ptr, textureSize, empty) = textures.GetIcon(item, slot);
+        var (handle, textureSize, empty) = textures.GetIcon(item, slot);
         if (empty)
         {
             var (bgColor, tint) = isEmpty
@@ -70,14 +70,14 @@ public static class Icons
                 : (ImGui.GetColorU32(ImGuiCol.FrameBgActive), new Vector4(0.3f, 0.3f, 0.3f, 1f));
             var pos = ImGui.GetCursorScreenPos();
             ImGui.GetWindowDrawList().AddRectFilled(pos, pos + size, bgColor, 5 * ImGuiHelpers.GlobalScale);
-            if (ptr != nint.Zero)
-                ImGui.Image(ptr, size, Vector2.Zero, Vector2.One, tint);
+            if (handle != null)
+                ImGui.Image(handle.Value, size, Vector2.Zero, Vector2.One, tint);
             else
                 ImGui.Dummy(size);
         }
         else
         {
-            ImGuiUtil.HoverIcon(ptr, textureSize, size);
+            ImGuiUtil.HoverIcon(new ImTextureID(nint.Zero), textureSize, size);
         }
     }
 

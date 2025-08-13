@@ -9,7 +9,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Managers;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Components;
@@ -118,7 +118,7 @@ public sealed class ListItemDrawer
         ImGui.TableNextColumn();
         // Ensure its a valid texture wrap
         if (CosmeticService.CoreTextures.Cache[CoreTexture.Icon256Bg] is { } wrap)
-            ImGui.Image(wrap.ImGuiHandle, new(96, 96));
+            ImGui.Image(wrap.Handle, new(96, 96));
     }
 
 

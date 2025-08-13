@@ -3,7 +3,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
-using ImGuizmoNET;
+using Dalamud.Bindings.ImGuizmo;
 using Microsoft.IdentityModel.Tokens;
 using Penumbra.Api.Enums;
 

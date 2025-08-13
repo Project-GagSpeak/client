@@ -7,7 +7,7 @@ using GagSpeak.Gui.Handlers;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using System.Collections.Immutable;
 
 namespace GagSpeak.Gui.Components;
@@ -36,7 +36,7 @@ public class KinksterSearchList
         _cosmetics = cosmetics;
     }
 
-    public virtual void DrawSearch(string id, string hint = "Search for Kinksters", uint len = 128)
+    public virtual void DrawSearch(string id, string hint = "Search for Kinksters", int len = 128)
     {
         if (FancySearchBar.Draw(id, ImGui.GetContentRegionAvail().X, hint, ref _searchValue, len))
             UpdateList();
@@ -109,7 +109,7 @@ public class KinksterSearchList
         var img = _cosmetics.GetSupporterInfo(pair.UserData);
         if (img.SupporterWrap is { } wrap)
         {
-            ImGui.Image(wrap.ImGuiHandle, new Vector2(ImGui.GetFrameHeight()));
+            ImGui.Image(wrap.Handle, new Vector2(ImGui.GetFrameHeight()));
             CkGui.AttachToolTip(img.Tooltip);
         }
     }

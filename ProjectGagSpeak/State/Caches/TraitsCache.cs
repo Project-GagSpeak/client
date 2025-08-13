@@ -2,7 +2,7 @@ using Dalamud.Interface.Utility.Raii;
 using CkCommons;
 using GagSpeak.Gui;
 using GagspeakAPI.Attributes;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui;
 using System.Collections.Immutable;
 using CkCommons.Gui;

@@ -5,7 +5,7 @@ using GagSpeak.Gui.Components;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using static GagSpeak.Gui.Components.PuppeteerTabs;
 
 namespace GagSpeak.Gui.Modules.Puppeteer;

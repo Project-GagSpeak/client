@@ -4,7 +4,7 @@ using Dalamud.Interface.Colors;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Extensions;
 using OtterGui.Raii;
 using OtterGui.Text;

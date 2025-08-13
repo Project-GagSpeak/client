@@ -34,11 +34,11 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
         _frameworkUtils = frameworkUtils;
 
         PrivacyEntry = Svc.DtrBar.Get("GagSpeakPrivacy");
-        PrivacyEntry.OnClick += () => Mediator.Publish(new UiToggleMessage(typeof(DtrVisibleWindow)));
+        PrivacyEntry.OnClick += (drInteractionEvent) => Mediator.Publish(new UiToggleMessage(typeof(DtrVisibleWindow)));
         PrivacyEntry.Shown = true;
 
         UpdateMessagesEntry = Svc.DtrBar.Get("GagSpeakNotifications");
-        UpdateMessagesEntry.OnClick += () => Mediator.Publish(new UiToggleMessage(typeof(InteractionEventsUI)));
+        UpdateMessagesEntry.OnClick += (drInteractionEvent) => Mediator.Publish(new UiToggleMessage(typeof(InteractionEventsUI)));
         UpdateMessagesEntry.Shown = true;
 
         VibratorEntry = Svc.DtrBar.Get("GagSpeakVibrator");

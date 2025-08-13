@@ -1,6 +1,6 @@
 using Dalamud.Plugin.Services;
 using GagSpeak.Services;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Lumina.Excel.Sheets;
 using OtterGui;
 using OtterGui.Classes;

@@ -108,7 +108,7 @@ public sealed class PortaitService : IDisposable
 
     private unsafe void AdventurePlatePreDraw(AddonEvent type, AddonArgs args)
     {
-        var charaCardStruct = (AgentCharaCard.Storage*)args.Addon;
+        var charaCardStruct = (AgentCharaCard.Storage*)args.Addon.Address;
         var cid = charaCardStruct->ContentId;
 
         // if the content ID is not present, return.
@@ -116,7 +116,7 @@ public sealed class PortaitService : IDisposable
             return;
 
         // /xldata -> Addon Inspector -> Depth Layer 5 -> CharaCard
-        var charaCard = (AtkUnitBase*)args.Addon;
+        var charaCard = (AtkUnitBase*)args.Addon.Address;
 
         // sample only covers ownID as a usecase for now.
         var ownId = Svc.ClientState.LocalContentId;

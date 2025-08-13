@@ -3,7 +3,7 @@ using CkCommons.Gui.Utility;
 using Dalamud.Interface.Utility;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Managers;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Extensions;
 using OtterGui.Raii;
 using Penumbra.Api.Enums;

@@ -94,7 +94,7 @@ public static unsafe class HcTaskUtils
         => addon->AtkResNode.IsVisible() && addon->Component->UldManager.LoadedState == AtkLoadState.Loaded;
 
     /// <summary> Obtain the unit base of an AddonArgs instance. </summary>
-    public static AtkUnitBase* Base(this AddonArgs args) => (AtkUnitBase*)args.Addon;
+    public static AtkUnitBase* Base(this AddonArgs args) => (AtkUnitBase*)args.Addon.Address;
 
     // locate the parent node of a child node by recursively iterating backwards in the linked list.
     public static unsafe AtkResNode* GetRootParentNode(AtkResNode* node)
@@ -194,7 +194,7 @@ public static unsafe class HcTaskUtils
         }
         else
         {
-            addonPtr = (T*)a;
+            addonPtr = (T*)a.Address;
             return true;
         }
     }

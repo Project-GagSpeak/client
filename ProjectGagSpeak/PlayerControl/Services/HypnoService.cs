@@ -10,7 +10,7 @@ using GagSpeak.State.Caches;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using NAudio.CoreAudioApi;
 using System.IO;
 using Timer = System.Timers.Timer;
@@ -280,7 +280,7 @@ public class HypnoService : IDisposable
 
         // Workaround the popup / windows cliprect and draw it at the correct dimentions.
         drawList.AddImageQuad(
-            hypnoImage.ImGuiHandle,
+            hypnoImage.Handle,
             rotatedBounds[0],
             rotatedBounds[1],
             rotatedBounds[2],
@@ -292,7 +292,7 @@ public class HypnoService : IDisposable
             imgTint);
 
         // If text is not present, or font is not valid, do not draw.
-        if (_activeState.CurrentText.IsNullOrEmpty() || !UiFontService.FullScreenFont.Available || UiFontService.FullScreenFontPtr.NativePtr is null)
+        if (_activeState.CurrentText.IsNullOrEmpty() || !UiFontService.FullScreenFont.Available || UiFontService.FullScreenFontPtr.Handle is null)
             return;
 
 

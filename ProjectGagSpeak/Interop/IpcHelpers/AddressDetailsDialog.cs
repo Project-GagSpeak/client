@@ -2,7 +2,7 @@ using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Gui.Utility;
 using GagSpeak.Services;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 using static CkCommons.GameDataHelp;
 

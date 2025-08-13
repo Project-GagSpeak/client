@@ -3,7 +3,7 @@ using GagSpeak.Gui.Components;
 using GagSpeak.Services;
 using GagSpeak.State.Caches;
 using GagSpeak.Utils;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace GagSpeak.CustomCombos;
 

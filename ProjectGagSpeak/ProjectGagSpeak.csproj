@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Dalamud.NET.Sdk/12.0.2">
+<Project Sdk="Dalamud.NET.Sdk/13.0.0">
     <!--Basic Plugin Definitions-->
     <PropertyGroup>
         <Copyright>Copyright © 2025</Copyright>
@@ -41,10 +41,7 @@
         </Reference>
         <!--For direct interaction with a users system. Useful for the hardcore 
             functionality or for key & mouse detection dalamud does not provide.-->
-        <Reference Include="PInvoke.User32">
-            <HintPath>$(DalamudLibPath)PInvoke.User32.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
+        <PackageReference Include="PInvoke.User32" Version="0.7.124" />
     </ItemGroup>
     
     <ItemGroup>

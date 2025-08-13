@@ -1,5 +1,5 @@
 using GagSpeak.Services;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Penumbra.GameData.Structs;
 
 namespace GagSpeak.CustomCombos;

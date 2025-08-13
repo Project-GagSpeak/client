@@ -1,3 +1,4 @@
+using Dalamud.Game.NativeWrapper;
 using Dalamud.Hooking;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -17,7 +18,7 @@ public unsafe partial class StaticDetours
 
 
     // Delegate for manually invoking a callback fire.
-    public delegate byte AtkUnitBase_FireCallbackDelegate(AtkUnitBase* Base, int valueCount, AtkValue* values, byte updateState);
+    public delegate bool AtkUnitBase_FireCallbackDelegate(AtkUnitBase* Base, int valueCount, AtkValue* values, byte updateState);
     [Signature(Signatures.Callback, DetourName = nameof(AtkUnitBase_FireCallbackDetour), Fallibility = Fallibility.Auto)]
     private static Hook<AtkUnitBase_FireCallbackDelegate> FireCallbackHook;
 
@@ -25,7 +26,7 @@ public unsafe partial class StaticDetours
     internal static AtkUnitBase_FireCallbackDelegate FireCallbackFunc = null!;
 
     /// <summary> Detour the callback for a unit base. This is called frequently, so minimize logic checks. </summary>
-    private static byte AtkUnitBase_FireCallbackDetour(AtkUnitBase* atkBase, int valueCount, AtkValue* atkValues, byte updateVis)
+    private static bool AtkUnitBase_FireCallbackDetour(AtkUnitBase* atkBase, int valueCount, AtkValue*  atkValues, byte updateVis)
     {
         var ret = FireCallbackHook?.Original(atkBase, valueCount, atkValues, updateVis);
         // attempt to log it, if we want to. Recommeneded to disable it though.
@@ -38,7 +39,7 @@ public unsafe partial class StaticDetours
         {
             Svc.Logger.Error($"Error in {nameof(AtkUnitBase_FireCallbackDetour)}: {ex.Message}");
         }
-        return ret ?? 0;
+        return ret ?? false;
     }
 
     public static void FireCallbackRaw(AtkUnitBase* atkUnitBase, int valueCount, AtkValue* atkValues, byte updateVisibility)

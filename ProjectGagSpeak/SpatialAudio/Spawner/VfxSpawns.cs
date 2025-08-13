@@ -5,7 +5,7 @@ using Dalamud.Plugin.Services;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.UpdateMonitoring.SpatialAudio.Structs;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Extensions;
 

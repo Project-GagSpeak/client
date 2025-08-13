@@ -10,10 +10,10 @@ global using System.Text;
 global using System.Numerics;
 global using GagspeakAPI.Enums;
 global using GagspeakAPI;
-global using ITFlags = ImGuiNET.ImGuiInputTextFlags;
-global using CFlags = ImGuiNET.ImGuiComboFlags;
-global using DFlags = ImGuiNET.ImDrawFlags;
-global using WFlags = ImGuiNET.ImGuiWindowFlags;
+global using ITFlags = Dalamud.Bindings.ImGui.ImGuiInputTextFlags;
+global using CFlags = Dalamud.Bindings.ImGui.ImGuiComboFlags;
+global using DFlags = Dalamud.Bindings.ImGui.ImDrawFlags;
+global using WFlags = Dalamud.Bindings.ImGui.ImGuiWindowFlags;
 global using FAI = Dalamud.Interface.FontAwesomeIcon;
 
 // MERV! DON'T SUMMON BAGAGWA!

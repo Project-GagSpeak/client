@@ -8,7 +8,7 @@ using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 using System.Globalization;
 

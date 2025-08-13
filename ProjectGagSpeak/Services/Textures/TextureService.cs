@@ -12,30 +12,30 @@ public sealed class TextureService() : TextureCache(Svc.Data, Svc.Texture), IDis
 {
     private readonly IDalamudTextureWrap?[] _slotIcons = CreateSlotIcons();
 
-    public (nint, Vector2, bool) GetIcon(EquipItem item, EquipSlot slot)
+    public (Dalamud.Bindings.ImGui.ImTextureID?, Vector2, bool) GetIcon(EquipItem item, EquipSlot slot)
     {
         if (item.IconId.Id != 0 && TryLoadIcon(item.IconId.Id, out var ret))
-            return (ret.ImGuiHandle, new Vector2(ret.Width, ret.Height), false);
+            return (ret.Handle, new Vector2(ret.Width, ret.Height), false);
 
         var idx = slot.ToIndex();
         return idx < 12 && _slotIcons[idx] != null
-            ? (_slotIcons[idx]!.ImGuiHandle, new Vector2(_slotIcons[idx]!.Width, _slotIcons[idx]!.Height), true)
-            : (nint.Zero, Vector2.Zero, true);
+            ? (_slotIcons[idx]!.Handle, new Vector2(_slotIcons[idx]!.Width, _slotIcons[idx]!.Height), true)
+            : (null, Vector2.Zero, true);
     }
 
-    public (nint, Vector2, bool) GetIcon(EquipItem item, BonusItemFlag slot)
+    public (Dalamud.Bindings.ImGui.ImTextureID?, Vector2, bool) GetIcon(EquipItem item, BonusItemFlag slot)
     {
         if (item.IconId.Id != 0 && TryLoadIcon(item.IconId.Id, out var ret))
-            return (ret.ImGuiHandle, new Vector2(ret.Width, ret.Height), false);
+            return (ret.Handle, new Vector2(ret.Width, ret.Height), false);
 
         var idx = slot.ToIndex();
         if (idx == uint.MaxValue)
-            return (nint.Zero, Vector2.Zero, true);
+            return (null, Vector2.Zero, true);
 
         idx += 12;
         return idx < 13 && _slotIcons[idx] != null
-            ? (_slotIcons[idx]!.ImGuiHandle, new Vector2(_slotIcons[idx]!.Width, _slotIcons[idx]!.Height), true)
-            : (nint.Zero, Vector2.Zero, true);
+            ? (_slotIcons[idx]!.Handle, new Vector2(_slotIcons[idx]!.Width, _slotIcons[idx]!.Height), true)
+            : (null, Vector2.Zero, true);
     }
 
     public void Dispose()

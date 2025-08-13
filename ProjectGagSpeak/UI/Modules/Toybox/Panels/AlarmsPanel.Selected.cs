@@ -7,7 +7,7 @@ using CkCommons.Gui.Utility;
 using CkCommons.Raii;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Models;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Text;
 using GagSpeak.Services;

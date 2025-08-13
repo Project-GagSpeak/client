@@ -13,7 +13,7 @@ using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using GagspeakAPI.Util;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Components;
@@ -248,7 +248,7 @@ public sealed partial class TriggerDrawer : IDisposable
         using (ImRaii.Group())
         {
             var img = MoodleDisplay.GetGameIconOrEmpty(SpellActionService.GetLightJob(_selectedJob).GetIconId());
-            ImGui.Image(img.ImGuiHandle, new Vector2(ImGui.GetFrameHeight()));
+            ImGui.Image(img.Handle, new Vector2(ImGui.GetFrameHeight()));
 
             ImUtf8.SameLineInner();
             var diff = _jobCombo.Draw("##JobSelector", _selectedJob, ImGui.GetContentRegionAvail().X / 2, 1.25f, searchBg, CFlags.NoArrowButton);
@@ -293,7 +293,7 @@ public sealed partial class TriggerDrawer : IDisposable
                     continue;
 
                 // Draw the icon.
-                ImGui.Image(MoodleDisplay.GetGameIconOrEmpty(iconData.IconID).ImGuiHandle, iconSize);
+                ImGui.Image(MoodleDisplay.GetGameIconOrEmpty(iconData.IconID).Handle, iconSize);
                 if(ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 {
                     // Remove the action from the list.

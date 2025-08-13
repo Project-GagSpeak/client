@@ -16,7 +16,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Hub;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Modules.Puppeteer;
@@ -144,7 +144,7 @@ public sealed partial class PuppetVictimGlobalPanel
         {
             var pos = ImGui.GetCursorPos();
             ImGui.SetCursorPosX(pos.X + (((c.InnerRegion.X / 2) - permissionsH) / 2));
-            ImGui.Image(wrap.ImGuiHandle, new Vector2(permissionsH));
+            ImGui.Image(wrap.Handle, new Vector2(permissionsH));
         }
         // Draw out the permission checkboxes
         ImGui.SameLine(c.InnerRegion.X / 2, spacing.X);

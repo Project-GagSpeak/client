@@ -8,7 +8,7 @@ using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data.Struct;
 using GagspeakAPI.Util;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Wardrobe;

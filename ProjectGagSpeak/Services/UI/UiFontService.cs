@@ -1,6 +1,6 @@
 using Dalamud.Interface;
 using Dalamud.Interface.ManagedFontAtlas;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Microsoft.Extensions.Hosting;
 
 namespace GagSpeak.Services;

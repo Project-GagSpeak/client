@@ -8,7 +8,7 @@ using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 using CkCommons.Gui;
 
@@ -115,7 +115,7 @@ public class AttributeDrawer
         for (int i = 0; i < icons.Count; i++)
         {
             if (i > 0) ImGui.SameLine(0, spacing);
-            ImGui.Image(CosmeticService.CoreTextures.Cache[icons[i].tex].ImGuiHandle, iconSize);
+            ImGui.Image(CosmeticService.CoreTextures.Cache[icons[i].tex].Handle, iconSize);
             CkGui.AttachToolTip(icons[i].tooltip);
         }
     }
@@ -130,6 +130,6 @@ public class AttributeDrawer
 
         ImUtf8.SameLineInner();
         if (image is { } wrap)
-            ImGui.Image(wrap.ImGuiHandle, new Vector2(ImGui.GetFrameHeight()));
+            ImGui.Image(wrap.Handle, new Vector2(ImGui.GetFrameHeight()));
     }
 }
