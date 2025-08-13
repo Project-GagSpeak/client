@@ -21,7 +21,7 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
 namespace GagSpeak.Gui.Components;

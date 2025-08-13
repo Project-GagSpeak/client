@@ -11,7 +11,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagspeakAPI.Util;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using CkCommons.Gui;
 
 namespace GagSpeak.FileSystems;

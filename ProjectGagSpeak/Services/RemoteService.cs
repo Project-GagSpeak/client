@@ -13,7 +13,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Dto.VibeRoom;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Services;
 using OtterGui.Text;

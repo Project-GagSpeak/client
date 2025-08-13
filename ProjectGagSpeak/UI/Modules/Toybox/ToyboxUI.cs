@@ -7,7 +7,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Utils;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace GagSpeak.Gui.Toybox;
 

@@ -6,7 +6,7 @@ using GagSpeak.Kinksters;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Components;
@@ -89,7 +89,7 @@ public class DrawUserPair
         {
             ImGui.SameLine(cursorPos);
             ImGui.SetCursorPosX(cursorPos - CkGui.IconSize(FAI.EllipsisV).X - ImGui.GetStyle().ItemSpacing.X);
-            ImGui.Image(wrap.ImGuiHandle, new Vector2(ImGui.GetFrameHeight(), ImGui.GetFrameHeight()));
+            ImGui.Image(wrap.Handle, new Vector2(ImGui.GetFrameHeight(), ImGui.GetFrameHeight()));
             CkGui.AttachToolTip(Image.Tooltip);
         }
         // return to the end of the line.

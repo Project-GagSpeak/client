@@ -13,7 +13,7 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Text;
 using static Lumina.Data.Parsing.Layer.LayerCommon;

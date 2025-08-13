@@ -1,6 +1,6 @@
 using GagSpeak.Services.Mediator;
 using GagSpeak.Gui.Handlers;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace GagSpeak.Gui.MainWindow;
 

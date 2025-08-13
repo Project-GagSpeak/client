@@ -1,6 +1,6 @@
 using CkCommons.Gui;
 using GagSpeak.Services.Mediator;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace GagSpeak.Gui.Profile;
 

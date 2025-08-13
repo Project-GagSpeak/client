@@ -4,7 +4,7 @@ using CkCommons.Textures;
 using GagSpeak.Gui.Components;
 using GagSpeak.Services;
 using GagSpeak.State.Caches;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Extensions;
 using OtterGui.Text;
 

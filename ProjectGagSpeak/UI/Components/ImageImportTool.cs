@@ -7,7 +7,7 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Microsoft.IdentityModel.Tokens;
 using OtterGui.Text;
 using SixLabors.ImageSharp;

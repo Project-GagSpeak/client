@@ -6,7 +6,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using System.Globalization;
 using GagSpeak.Kinksters;
 using CkCommons.Gui;

@@ -1,5 +1,5 @@
 using Dalamud.Interface.Utility.Raii;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using GagSpeak.Services.Events;
 using GagSpeak.Services.Mediator;
 using System.Globalization;

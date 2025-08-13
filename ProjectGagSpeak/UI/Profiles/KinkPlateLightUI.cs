@@ -7,7 +7,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace GagSpeak.Gui.Profile;
 

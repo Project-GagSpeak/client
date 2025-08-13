@@ -3,7 +3,7 @@ using CkCommons.Helpers;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagspeakAPI.Data.Struct;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Extensions;
 using OtterGui.Raii;
 

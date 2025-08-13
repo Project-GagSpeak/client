@@ -5,8 +5,8 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
-using ImGuiNET;
-using ImGuizmoNET;
+using Dalamud.Bindings.ImGui;
+using Dalamud.Bindings.ImGuizmo;
 using OtterGui.Text;
 using OtterGui.Text.Widget;
 

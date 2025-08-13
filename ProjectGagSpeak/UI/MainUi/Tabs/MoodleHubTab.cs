@@ -13,7 +13,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Text;
 

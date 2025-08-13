@@ -4,7 +4,7 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Gui.Components;
 using GagSpeak.PlayerClient;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 namespace GagSpeak.Gui;
 
 internal class ChangelogUI : WindowMediatorSubscriberBase

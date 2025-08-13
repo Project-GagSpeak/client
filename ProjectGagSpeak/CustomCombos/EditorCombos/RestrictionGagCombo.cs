@@ -5,7 +5,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.State.Models;
 using GagspeakAPI.Util;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Extensions;
 using OtterGui.Text;
 

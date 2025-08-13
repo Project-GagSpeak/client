@@ -5,7 +5,7 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Components;

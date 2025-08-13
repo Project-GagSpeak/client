@@ -8,7 +8,7 @@ using Dalamud.Plugin.Services;
 using GagSpeak.Services;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Models;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Extensions;
 using Penumbra.GameData.Enums;

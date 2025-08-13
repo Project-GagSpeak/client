@@ -11,7 +11,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagspeakAPI.Data;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using System.Collections.Immutable;
 
 namespace GagSpeak.Gui.Wardrobe;
@@ -270,7 +270,7 @@ public class TraitAllowanceSelector : DisposableMediatorSubscriberBase
         var img = _cosmetics.GetSupporterInfo(userData);
         if (img.SupporterWrap is { } wrap)
         {
-            ImGui.Image(wrap.ImGuiHandle, new Vector2(ImGui.GetFrameHeight()));
+            ImGui.Image(wrap.Handle, new Vector2(ImGui.GetFrameHeight()));
             CkGui.AttachToolTip(img.Tooltip);
         }
 

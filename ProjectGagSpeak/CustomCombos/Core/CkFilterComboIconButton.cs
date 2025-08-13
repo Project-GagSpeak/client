@@ -1,6 +1,6 @@
 using CkCommons.Gui;
 using Dalamud.Interface;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos;

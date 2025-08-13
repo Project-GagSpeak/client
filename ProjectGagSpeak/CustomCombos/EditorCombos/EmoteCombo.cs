@@ -3,7 +3,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Textures.TextureWraps;
 using GagSpeak.Services;
 using GagSpeak.Utils;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Classes;
 using OtterGui.Extensions;
 using OtterGui.Raii;
@@ -64,7 +64,7 @@ public sealed class EmoteCombo : CkFilterComboCache<ParsedEmoteRow>
             return;
 
         var image = Svc.Texture.GetFromGameIcon((uint)Current.IconId).GetWrapOrEmpty();
-        ImGui.Image(image.ImGuiHandle, new Vector2(height));
+        ImGui.Image(image.Handle, new Vector2(height));
         DrawItemTooltip(Current, image);
     }
 
@@ -83,7 +83,7 @@ public sealed class EmoteCombo : CkFilterComboCache<ParsedEmoteRow>
             // Use these positions to go back over and draw it properly this time.
             ImGui.SetCursorPos(pos);
 
-            ImGui.Image(img.ImGuiHandle, new Vector2(size.Y));
+            ImGui.Image(img.Handle, new Vector2(size.Y));
             CkGui.TextFrameAlignedInline(parsedEmote.Name);
         }
         DrawItemTooltip(parsedEmote, img);
@@ -104,7 +104,7 @@ public sealed class EmoteCombo : CkFilterComboCache<ParsedEmoteRow>
             ImGui.BeginTooltip();
             using (ImRaii.Group())
             {
-                ImGui.Image(img.ImGuiHandle, new Vector2(ImGui.GetFrameHeight() * 2));
+                ImGui.Image(img.Handle, new Vector2(ImGui.GetFrameHeight() * 2));
                 ImGui.SameLine();
                 using (ImRaii.Group())
                 {

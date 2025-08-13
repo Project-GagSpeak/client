@@ -10,7 +10,7 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Network;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Microsoft.IdentityModel.Tokens;
 using OtterGui.Text;
 
@@ -133,7 +133,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
         if (pfpWrap != null)
         {
             var currentPosition = ImGui.GetCursorPos();
-            drawList.AddImageRounded(pfpWrap.ImGuiHandle, pos, pos + Vector2.One * 232f, Vector2.Zero, Vector2.One, ImGui.GetColorU32(new Vector4(1f, 1f, 1f, 1f)), 116f);
+            drawList.AddImageRounded(pfpWrap.Handle, pos, pos + Vector2.One * 232f, Vector2.Zero, Vector2.One, ImGui.GetColorU32(new Vector4(1f, 1f, 1f, 1f)), 116f);
         }
 
         using (ImRaii.Group())

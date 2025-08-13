@@ -3,7 +3,7 @@ using CkCommons.Gui;
 using Dalamud.Interface.Colors;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Classes;
 using OtterGui.Raii;
 using OtterGui.Text;
@@ -192,7 +192,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
             (ITFlags flags, int len) = SelectedLock == Padlocks.Combination ? (ITFlags.CharsDecimal, 4) : (ITFlags.None, 20);
             ImGui.SetNextItemWidth(width);
             using (ImRaii.Disabled(!lastPadlock.IsPasswordLock()))
-                ImGui.InputTextWithHint($"##Unlocker_{label}", hint, ref Password, (uint)len, flags);
+                ImGui.InputTextWithHint($"##Unlocker_{label}", hint, Encoding.UTF8.GetBytes(Password).AsSpan<byte>(), flags);
 
             using var s = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(0, ImGui.GetStyle().FramePadding.Y));
             var widthOffset = ImGui.GetFrameHeight() * (isTimer ? 2 : 1);

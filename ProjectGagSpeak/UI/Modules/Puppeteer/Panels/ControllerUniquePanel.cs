@@ -14,7 +14,7 @@ using GagSpeak.State.Listeners;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Modules.Puppeteer;
@@ -141,7 +141,7 @@ public sealed class ControllerUniquePanel
         {
             var pos = ImGui.GetCursorPos();
             ImGui.SetCursorPosX(pos.X + (((c.InnerRegion.X / 2) - permissionsH) / 2));
-            ImGui.Image(wrap.ImGuiHandle, new Vector2(permissionsH));
+            ImGui.Image(wrap.Handle, new Vector2(permissionsH));
         }
 
         // Draw out the permission checkboxes

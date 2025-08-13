@@ -1,5 +1,6 @@
 using CkCommons.Gui;
 using CkCommons.Textures;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Utility;
 using GagSpeak.Kinksters;
@@ -11,10 +12,10 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
-using ImGuiNET;
 using Microsoft.IdentityModel.Tokens;
 using Penumbra.GameData.Enums;
 using System.Globalization;
+using System.Reflection.Metadata;
 
 namespace GagSpeak.Gui.Profile;
 public partial class KinkPlateUI : WindowMediatorSubscriberBase
@@ -421,10 +422,10 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
                 if (Pair.LockedSlots.ContainsKey(equipSlot))
                 {
                     // Get the locked item icon and tooltip
-                    var (ptr, textureSize, empty) = _textures.GetIcon(Pair.LockedSlots[equipSlot].Item1, equipSlot);
+                    var (handle, textureSize, empty) = _textures.GetIcon(Pair.LockedSlots[equipSlot].Item1, equipSlot);
                     if (!empty)
                     {
-                        wdl.AddImageRounded(ptr, blockedSlotsPos, blockedSlotsPos + LockedSlotSize, Vector2.Zero, Vector2.One, 0xFFFFFFFF, 15f);
+                        wdl.AddImageRounded(handle.Value, blockedSlotsPos, blockedSlotsPos + LockedSlotSize, Vector2.Zero, Vector2.One, 0xFFFFFFFF, 15f);
                         CkGui.AttachToolTipRect(blockedSlotsPos, LockedSlotSize, Pair.LockedSlots[equipSlot].Item2);
                     }
                 }
@@ -433,7 +434,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
                     // Draw the empty icon if the slot is not locked
                     var (ptr, textureSize, empty) = _textures.GetIcon(ItemSvc.NothingItem(equipSlot), equipSlot);
                     if (!empty)
-                        wdl.AddImageRounded(ptr, blockedSlotsPos, blockedSlotsPos + LockedSlotSize, Vector2.Zero, Vector2.One, 0xFFFFFFFF, 15f);
+                        wdl.AddImageRounded(new ImTextureID(nint.Zero), blockedSlotsPos, blockedSlotsPos + LockedSlotSize, Vector2.Zero, Vector2.One, 0xFFFFFFFF, 15f);
                 }
 
                 // Update the position for the next slot

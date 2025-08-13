@@ -12,7 +12,7 @@ using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 using CkCommons;
 using CkCommons.Gui;

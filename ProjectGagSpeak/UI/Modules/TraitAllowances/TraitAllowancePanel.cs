@@ -7,7 +7,7 @@ using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Text;
 using System.Collections.Immutable;
@@ -232,7 +232,7 @@ public class TraitAllowancePanel
         };
         if (img is { } wrap)
         {
-            ImGui.Image(wrap.ImGuiHandle, new Vector2(ImGui.GetFrameHeight()));
+            ImGui.Image(wrap.Handle, new Vector2(ImGui.GetFrameHeight()));
             ImGui.SameLine();
         }
     }
@@ -251,7 +251,7 @@ public class TraitAllowancePanel
                 var img = _cosmetics.GetSupporterInfo(pair.UserData);
                 if (img.SupporterWrap is { } wrap)
                 {
-                    ImGui.Image(wrap.ImGuiHandle, new Vector2(ImGui.GetFrameHeight()));
+                    ImGui.Image(wrap.Handle, new Vector2(ImGui.GetFrameHeight()));
                     CkGui.AttachToolTip(img.Tooltip);
                     ImGui.SameLine();
                 }

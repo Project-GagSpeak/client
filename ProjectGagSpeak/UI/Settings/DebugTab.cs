@@ -1,7 +1,7 @@
 using Dalamud.Interface.Utility.Raii;
 using CkCommons.Gui.Utility;
 using GagSpeak.PlayerClient;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using CkCommons.Gui;
 using GagSpeak.Services;
 

@@ -2,7 +2,7 @@ using CkCommons;
 using Dalamud.Plugin.Services;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Raii;
 using Penumbra.Api.Enums;
 using Penumbra.GameData.Data;

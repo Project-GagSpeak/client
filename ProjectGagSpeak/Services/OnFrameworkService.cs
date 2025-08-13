@@ -8,7 +8,7 @@ using GagSpeak.CustomCombos;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI.Utils;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Microsoft.Extensions.Hosting;
 using OtterGui.Classes;
 using Penumbra.GameData.Structs;

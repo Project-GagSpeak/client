@@ -10,7 +10,7 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Text;
 

@@ -3,7 +3,7 @@ using CkCommons.RichText;
 using CkCommons.Textures;
 using GagSpeak.Services;
 using GagSpeak.State.Caches;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Extensions;
 
 namespace GagSpeak.CustomCombos.Editor;

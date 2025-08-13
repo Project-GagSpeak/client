@@ -17,7 +17,7 @@ using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using GagspeakAPI.Util;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.MainWindow;

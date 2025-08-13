@@ -1,6 +1,6 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Classes;
 using OtterGui.Raii;

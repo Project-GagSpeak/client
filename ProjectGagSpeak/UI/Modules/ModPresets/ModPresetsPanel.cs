@@ -12,7 +12,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Wardrobe;

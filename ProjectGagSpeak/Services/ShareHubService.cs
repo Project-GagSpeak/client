@@ -11,7 +11,7 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Dto.Sharehub;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using GagspeakAPI.Attributes;
 
 namespace GagSpeak.Services;

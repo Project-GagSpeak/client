@@ -10,7 +10,7 @@ using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Network;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -92,7 +92,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
         var pfpWrap = profile.GetCurrentProfileOrDefault();
         if (pfpWrap != null)
         {
-            ImGui.Image(pfpWrap.ImGuiHandle, ImGuiHelpers.ScaledVector2(pfpWrap.Width, pfpWrap.Height));
+            ImGui.Image(pfpWrap.Handle, ImGuiHelpers.ScaledVector2(pfpWrap.Width, pfpWrap.Height));
         }
         // scoot over to the right 256px + spacing
         ImGuiHelpers.ScaledRelativeSameLine(256, spacing);
@@ -101,7 +101,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
             // then the rounded image.
             var currentPosition = ImGui.GetCursorPos();
             var pos = ImGui.GetCursorScreenPos();
-            ImGui.GetWindowDrawList().AddImageRounded(pfpWrap.ImGuiHandle, pos, pos + pfpWrap.Size, Vector2.Zero, Vector2.One, ImGui.GetColorU32(new Vector4(1f, 1f, 1f, 1f)), 128f);
+            ImGui.GetWindowDrawList().AddImageRounded(pfpWrap.Handle, pos, pos + pfpWrap.Size, Vector2.Zero, Vector2.One, ImGui.GetColorU32(new Vector4(1f, 1f, 1f, 1f)), 128f);
             ImGui.SetCursorPos(new Vector2(currentPosition.X, currentPosition.Y + pfpWrap.Height));
         }
         ImGuiHelpers.ScaledRelativeSameLine(256, spacing);
@@ -230,12 +230,12 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
                 // ensure the wrap for the data is not yet null
                 if (_croppedImageToShow != null)
                 {
-                    ImGui.Image(_croppedImageToShow.ImGuiHandle, ImGuiHelpers.ScaledVector2(_croppedImageToShow.Width, _croppedImageToShow.Height), Vector2.Zero, Vector2.One, ImGuiColors.DalamudWhite, ImGuiColors.DalamudWhite);
+                    ImGui.Image(_croppedImageToShow.Handle, ImGuiHelpers.ScaledVector2(_croppedImageToShow.Width, _croppedImageToShow.Height), Vector2.Zero, Vector2.One, ImGuiColors.DalamudWhite, ImGuiColors.DalamudWhite);
 
                     ImGuiHelpers.ScaledRelativeSameLine(256, spacing);
                     var currentPosition = ImGui.GetCursorPos();
                     var pos = ImGui.GetCursorScreenPos();
-                    ImGui.GetWindowDrawList().AddImageRounded(_croppedImageToShow.ImGuiHandle, pos, pos + _croppedImageToShow.Size, Vector2.Zero, Vector2.One, ImGui.GetColorU32(new Vector4(1f, 1f, 1f, 1f)), 128f);
+                    ImGui.GetWindowDrawList().AddImageRounded(_croppedImageToShow.Handle, pos, pos + _croppedImageToShow.Size, Vector2.Zero, Vector2.One, ImGui.GetColorU32(new Vector4(1f, 1f, 1f, 1f)), 128f);
                     ImGui.SetCursorPos(new Vector2(currentPosition.X, currentPosition.Y + _croppedImageToShow.Height));
                 }
             }

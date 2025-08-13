@@ -13,7 +13,7 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.MainWindow;
@@ -70,7 +70,7 @@ public class AccountTab
                     var currentPosition = ImGui.GetCursorPos();
 
                     var pos = ImGui.GetCursorScreenPos();
-                    ImGui.GetWindowDrawList().AddImageRounded(wrap.ImGuiHandle, pos, pos + imgSize, Vector2.Zero, Vector2.One,
+                    ImGui.GetWindowDrawList().AddImageRounded(wrap.Handle, pos, pos + imgSize, Vector2.Zero, Vector2.One,
                         ImGui.GetColorU32(new Vector4(1f, 1f, 1f, 1f)), 90f);
                     ImGuiHelpers.ScaledDummy(imgSize);
                     //_guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.UserProfilePicture, LastWinPos, LastWinSize);

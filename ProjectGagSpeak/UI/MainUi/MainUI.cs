@@ -10,7 +10,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 using System.Globalization;
 using System.Reflection;

@@ -9,7 +9,7 @@ using GagSpeak.Gui.Components;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Text;
 using System.Collections.Immutable;

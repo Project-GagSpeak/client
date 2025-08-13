@@ -5,7 +5,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Utils;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using static GagSpeak.Gui.Components.WardrobeTabs;
 
 namespace GagSpeak.Gui.Wardrobe;

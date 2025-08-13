@@ -18,7 +18,7 @@ using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Toybox;

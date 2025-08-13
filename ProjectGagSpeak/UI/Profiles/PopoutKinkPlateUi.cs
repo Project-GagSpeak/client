@@ -3,7 +3,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Gui.MainWindow;
 using GagSpeak.Kinksters;
 using GagspeakAPI.Data;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace GagSpeak.Gui.Profile;
 

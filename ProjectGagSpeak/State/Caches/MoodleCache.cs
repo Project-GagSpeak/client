@@ -2,7 +2,7 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
 using GagSpeak.Services.Textures;
 using GagspeakAPI.Data;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui;
 
 namespace GagSpeak.State.Caches;

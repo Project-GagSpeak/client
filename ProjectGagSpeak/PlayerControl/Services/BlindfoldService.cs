@@ -6,7 +6,7 @@ using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 
 namespace GagSpeak.Services.Controller;
 
@@ -137,7 +137,7 @@ public class BlindfoldService : IDisposable
 
         // Display the blindfold to the screen. (Don't worry about UV's just yet.)
         foregroundList.AddImage(
-            blindfoldImage.ImGuiHandle,
+            blindfoldImage.Handle,
             Vector2.Zero,
             screenSize,
             Vector2.Zero,

@@ -56,7 +56,7 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
     {
         _cache = cache;
 
-        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "ActionDetail", (_, args) => OnActionTooltip((AtkUnitBase*)args.Addon));
+        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "ActionDetail", (_, args) => OnActionTooltip((AtkUnitBase*)args.Addon.Address));
         Svc.ClientState.ClassJobChanged += SetBannedJobActions;
     }
 

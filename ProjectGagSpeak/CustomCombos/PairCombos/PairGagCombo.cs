@@ -8,7 +8,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using GagspeakAPI.Util;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Penumbra.GameData.Enums;
 
 namespace GagSpeak.CustomCombos.Pairs;

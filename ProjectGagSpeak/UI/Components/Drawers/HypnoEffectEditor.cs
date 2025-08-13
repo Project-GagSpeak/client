@@ -14,7 +14,7 @@ using GagSpeak.Services.Textures;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
@@ -24,7 +24,7 @@ public class HypnoEffectEditor : IDisposable
 {
     // Effect Constants
     const ImGuiColorEditFlags COLOR_FLAGS = ImGuiColorEditFlags.DisplayHex | ImGuiColorEditFlags.AlphaPreview | ImGuiColorEditFlags.AlphaBar | ImGuiColorEditFlags.NoSidePreview;
-    const ImGuiColorEditFlags KINKSTER_COLOR_FLAGS = ImGuiColorEditFlags.DisplayRGB | ImGuiColorEditFlags.AlphaPreview | ImGuiColorEditFlags.AlphaBar | ImGuiColorEditFlags.NoSidePreview;
+    const ImGuiColorEditFlags KINKSTER_COLOR_FLAGS = ImGuiColorEditFlags.DisplayRgb | ImGuiColorEditFlags.AlphaPreview | ImGuiColorEditFlags.AlphaBar | ImGuiColorEditFlags.NoSidePreview;
 
     private readonly HypnoEffectManager _presetManager;
 
@@ -581,7 +581,7 @@ public class HypnoEffectEditor : IDisposable
             // Workaround the popup / windows cliprect and draw it at the correct dimentions.
             drawList.PushClipRect(topLeft, topLeft + screenSize, true);// Display the image stretched to the bounds of the screen and stuff.
             drawList.AddImageQuad(
-                hypnoImage.ImGuiHandle,
+                hypnoImage.Handle,
                 rotatedBounds[0],
                 rotatedBounds[1],
                 rotatedBounds[2],
@@ -594,7 +594,7 @@ public class HypnoEffectEditor : IDisposable
             drawList.PopClipRect();
 
             // If text is not present, or font is not valid, do not draw.
-            if (_activeState.CurrentText.IsNullOrEmpty() || !UiFontService.FullScreenFont.Available || UiFontService.FullScreenFontPtr.NativePtr is null)
+            if (_activeState.CurrentText.IsNullOrEmpty() || !UiFontService.FullScreenFont.Available || UiFontService.FullScreenFontPtr.Handle is null)
                 return screenSize;
 
             // determine the font scalar.
