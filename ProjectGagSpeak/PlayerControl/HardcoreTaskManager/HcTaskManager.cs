@@ -133,7 +133,7 @@ public partial class HcTaskManager : IDisposable
                 {
                     // handle timeout occurances.
                     _logger.LogDebug($"Hardcore Task Timeout: {CurrentTask.Name} ({CurrentTask.Location})", LoggerType.HardcoreTasks);
-                    throw new BagagwaTimeoutException();
+                    throw new BagagwaTimeout();
                 }
                 // Perform the current task, and yield its result.
                 var taskResult = CurrentTask.Task();
@@ -155,7 +155,7 @@ public partial class HcTaskManager : IDisposable
                     AbortTasks();
                 }
             }
-            catch (BagagwaTimeoutException e)
+            catch (BagagwaTimeout e)
             {
                 // log the timeout exception.
                 _logger.LogWarning($"Hardcore Task Timeout: {CurrentTask?.Name} ({CurrentTask?.Location}), Exception: {e}", LoggerType.HardcoreTasks);

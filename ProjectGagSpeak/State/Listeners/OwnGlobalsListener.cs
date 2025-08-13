@@ -123,11 +123,20 @@ public sealed class OwnGlobalsListener
             return;
         // Remember we can use unsafe methods since this should be validated!
         var currentValue = GetCurrentValue(permName)!;
+        _logger.LogDebug($"Previous Value was: {currentValue}");
         // update it internally.
         _perms.UpdatePermissionValue(enactor, permName, newValue);
+        _logger.LogDebug($"Updated {permName} to {newValue} for {enactor.AliasOrUID}");
         // if a special permission, process the change.
         if (IsSpecialPermission(permName))
+        {
+            _logger.LogDebug($"Processing Special Permission Change for {permName} to {newValue}");
             ProcessSpecialPermissionChange(enactor, permName, currentValue, newValue);
+        }
+        else
+        {
+            _logger.LogDebug("Not a special permission, no further processing required.");
+        }
     }
 
     /// <summary>
