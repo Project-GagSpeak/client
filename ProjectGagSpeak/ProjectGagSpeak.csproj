@@ -29,19 +29,9 @@
 
     <!--As Now that we use Dalamud.SDK, most Dalamud Sources are not needed, but some must stay.-->
     <ItemGroup>
-        <!--Can test if this is needed later or not, but removing it may cause conflicts with buttplug newtonsoft.-->
-        <Reference Include="Newtonsoft.Json">
-            <HintPath>$(DalamudLibPath)Newtonsoft.Json.dll</HintPath>
-            <Private>False</Private>
-        </Reference>
-        <!--For localization and language handling.-->
-        <Reference Include="CheapLoc">
-            <HintPath>$(DalamudLibPath)CheapLoc.dll</HintPath>
-            <Private>false</Private>
-        </Reference>
-        <!--For direct interaction with a users system. Useful for the hardcore 
-            functionality or for key & mouse detection dalamud does not provide.-->
-        <PackageReference Include="PInvoke.User32" Version="0.7.124" />
+        <!--For localization and language handling. (and PInvoke replacement)-->
+        <Reference Include="TerraFX.Interop.Windows" Private="false" />
+        <Reference Include="CheapLoc" Private="false" />
     </ItemGroup>
     
     <ItemGroup>

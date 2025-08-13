@@ -44,7 +44,7 @@ public sealed class KeystateController : DisposableMediatorSubscriberBase
         Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
     }
 
-    private bool BlockKeyInput => _sources != 0 || _moveService.IsMoveTaskRunning;
+    private bool BlockKeyInput => _sources != 0;
     // this could potentially cause a race condition where the lifestream task is removed before it can reset the cancelled keys,
     // but that will only occur if the framework tick is not fast enough for the cancel.
     // an easy fix would be to just run the addition/removal of sources on the framework thread, but that would harm application time.

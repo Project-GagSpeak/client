@@ -1,10 +1,10 @@
-using PInvoke;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Utils;
 
-public static class IntifaceCentral
+public static partial class IntifaceCentral
 {
     // the path to intiface central.exe
     public static string AppPath = string.Empty;
@@ -37,8 +37,8 @@ public static class IntifaceCentral
             if (pushToForeground)
             {
                 Svc.Logger.Debug("Intiface Central found, bringing to foreground.");
-                User32.ShowWindow(windowHandle, User32.WindowShowStyle.SW_RESTORE);
-                User32.SetForegroundWindow(windowHandle);
+                TerraFX.Interop.Windows.Windows.ShowWindow(windowHandle, 0);
+                TerraFX.Interop.Windows.Windows.SetForegroundWindow(windowHandle);
             }
         }
         // otherwise, start the process to open intiface central
@@ -56,43 +56,62 @@ public static class IntifaceCentral
         }
     }
 
-    public static IntPtr FindWindowByRegex(string pattern)
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe struct ResultStruct
     {
-        var matchedWindowHandle = IntPtr.Zero;
-        var regex = new Regex(pattern, RegexOptions.IgnoreCase);
-
-        User32.EnumWindows((hWnd, lParam) =>
-        {
-            if (User32.IsWindowVisible(hWnd))
-            {
-                var sb = new StringBuilder(256);
-                GetWindowText(hWnd, sb, sb.Capacity);
-                var windowTitle = sb.ToString();
-
-                if (regex.IsMatch(windowTitle))
-                {
-                    matchedWindowHandle = hWnd;
-                    return false; // Stop enumerating windows once a match is found
-                }
-            }
-            return true; // Continue enumerating windows
-        }, IntPtr.Zero);
-
-        return matchedWindowHandle;
+        public fixed char WindowName[512];
+        public HWND FoundWindow;
+        public GCHandle RegexPtr;
     }
 
-    [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
-    private static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
-
-    private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
-
-    public static string GetActiveWindowTitle()
+    public static unsafe HWND FindWindowByRegex(string pattern)
     {
-        var hwnd = User32.GetForegroundWindow();
+        var result = new ResultStruct
+        {
+            FoundWindow = HWND.NULL,
+            RegexPtr = GCHandle.Alloc(new Regex(pattern, RegexOptions.IgnoreCase))
+        };
+
+        try
+        {
+            TerraFX.Interop.Windows.Windows.EnumWindows(&EnumWindowsCallback, (LPARAM)(&result));
+        }
+        finally
+        {
+            result.RegexPtr.Free();
+        }
+
+        return result.FoundWindow;
+    }
+
+    [UnmanagedCallersOnly]
+    private static unsafe BOOL EnumWindowsCallback(HWND handle, LPARAM lParam)
+    {
+        var data = (ResultStruct*)lParam;
+        var regex = (Regex)data->RegexPtr.Target!;
+
+        if (TerraFX.Interop.Windows.Windows.IsWindowVisible(handle))
+        {
+            int len = TerraFX.Interop.Windows.Windows.GetWindowText(handle, (ushort*)data->WindowName, 512);
+            string windowTitle = new string(data->WindowName, 0, len);
+
+            if (regex.IsMatch(windowTitle))
+            {
+                data->FoundWindow = handle;
+                return BOOL.FALSE; // stop enumeration
+            }
+        }
+        return BOOL.TRUE; // continue
+    }
+
+    public static unsafe string GetActiveWindowTitle()
+    {
+        var hwnd = TerraFX.Interop.Windows.Windows.GetForegroundWindow();
         if (hwnd == IntPtr.Zero) return "No active window";
 
-        User32.GetWindowThreadProcessId(hwnd, out var processId);
-        var process = Process.GetProcessById(processId);
+        uint processId;
+        TerraFX.Interop.Windows.Windows.GetWindowThreadProcessId(hwnd, &processId);
+        var process = Process.GetProcessById((int)processId);
 
         return process.MainWindowTitle;
     }
