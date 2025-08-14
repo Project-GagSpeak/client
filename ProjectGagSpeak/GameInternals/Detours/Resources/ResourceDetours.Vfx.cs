@@ -1,6 +1,7 @@
 using Dalamud.Hooking;
 using Dalamud.Utility.Signatures;
 using GagSpeak.GameInternals.Structs;
+using InteropGenerator.Runtime.Attributes;
 #nullable enable
 
 namespace GagSpeak.GameInternals.Detours;
@@ -23,23 +24,21 @@ public unsafe partial class ResourceDetours
     /// <summary>
     ///     Invokable function pointer to create an actorVFX.
     /// </summary>
-    [Signature(Signatures.CreateActorVfx)]
-    private static ActorVfxCreateDelegate ActorVfxCreate = null!;
+    private static ActorVfxCreateDelegate ActorVfxCreateFunc = null!;
 
     /// <summary>
     ///     Invokable function pointer to remove an actorVFX. <para />
     ///     Unfortunately we cannot use the signature attribute here, and must assign it in constructor.
     /// </summary>
-    private static ActorVfxRemoveDelegate ActorVfxRemove = null!;
+    private static ActorVfxRemoveDelegate ActorVfxRemoveFunc = null!;
 
     // detour that fires whenever an ActorVfx is created.
     private delegate IntPtr ActorVfxCreateDelegate(string path, IntPtr a2, IntPtr a3, float a4, char a5, ushort a6, char a7);
     [Signature(Signatures.CreateActorVfx, DetourName = nameof(ActorVfxCreatedDetour))]
     private readonly Hook<ActorVfxCreateDelegate> ActorVfxCreateHook = null!;
 
-    // detour that fires whenever an ActorVfx is removed.
+    // detour that fires whenever an ActorVfx is removed. (this must be initialized within the constructor)
     private delegate IntPtr ActorVfxRemoveDelegate(IntPtr vfx, char a2);
-    [Signature(Signatures.RemoveActorVfx, DetourName = nameof(ActorVfxRemovedDetour))]
     private readonly Hook<ActorVfxRemoveDelegate> ActorVfxRemoveHook = null!;
 
     private IntPtr ActorVfxCreatedDetour(string path, IntPtr a2, IntPtr a3, float a4, char a5, ushort a6, char a7)
@@ -62,7 +61,7 @@ public unsafe partial class ResourceDetours
     ///     Creates an actor vfx. This will summon Bagagwa if the path is invalid or the vfx is not found.
     /// </summary>
     public static VfxStruct* CreateActorVfx(string path, IntPtr caster, IntPtr target)
-        => (VfxStruct*)ActorVfxCreate(path, caster, target, -1, (char)0, 0, (char)0);
+        => (VfxStruct*)ActorVfxCreateFunc(path, caster, target, -1, (char)0, 0, (char)0);
 
     /// <summary>
     ///     Forcefully removes the vfx spesified at the passed in pointer.
@@ -70,6 +69,6 @@ public unsafe partial class ResourceDetours
     /// <param name="vfxPtr"> address of the vfx to remove </param>
     /// <param name="a2"> should be 1 in most cases. </param>
     public static void RemoveActorVfx(IntPtr vfxPtr, char a2)
-        => ActorVfxRemove(vfxPtr, a2);
+        => ActorVfxRemoveFunc(vfxPtr, a2);
 
 }

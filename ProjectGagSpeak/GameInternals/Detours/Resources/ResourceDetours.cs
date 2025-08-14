@@ -9,10 +9,10 @@ namespace GagSpeak.GameInternals.Detours;
 public unsafe partial class ResourceDetours : IDisposable
 {
     private readonly ILogger<ResourceDetours> _logger;
-    private readonly GagspeakConfig _config;
+    private readonly MainConfig _config;
     private readonly SpatialAudioCache _cache;
 
-    public ResourceDetours(ILogger<ResourceDetours> logger, GagspeakConfig config, SpatialAudioCache cache)
+    public ResourceDetours(ILogger<ResourceDetours> logger, MainConfig config, SpatialAudioCache cache)
     {
         _logger = logger;
         _config = config;
@@ -20,11 +20,23 @@ public unsafe partial class ResourceDetours : IDisposable
 
         _logger.LogInformation("Initializing all Resource Detours!");
         Svc.Hook.InitializeFromAttributes(this);
+        _logger.LogInformation("Initialized all Resource Detours!");
+        _logger.LogInformation("Initializing ResourceDetoursFunc's...");
 
-        // handle the special detour.
+
+
+        // handle the special detours (that are dependant on the removeactor address)
         var removeActorVfxAddrTemp = Svc.SigScanner.ScanText(Signatures.RemoveActorVfx) + 7;
         var removeActorVfxAddress = Marshal.ReadIntPtr(removeActorVfxAddrTemp + Marshal.ReadInt32(removeActorVfxAddrTemp) + 4);
-        ActorVfxRemove = Marshal.GetDelegateForFunctionPointer<ActorVfxRemoveDelegate>(removeActorVfxAddress);
+
+        // because this has a unique address offset it cannot be initialized with the Signature attribute.
+        ActorVfxRemoveHook = Svc.Hook.HookFromAddress<ActorVfxRemoveDelegate>(removeActorVfxAddress, ActorVfxRemovedDetour);
+
+        // These functioons need manual initialization as we dont have the unmanaged functions
+        ActorVfxCreateFunc = Marshal.GetDelegateForFunctionPointer<ActorVfxCreateDelegate>(Svc.SigScanner.ScanText(Signatures.CreateActorVfx));
+        ActorVfxRemoveFunc = Marshal.GetDelegateForFunctionPointer<ActorVfxRemoveDelegate>(removeActorVfxAddress);
+
+        _logger.LogInformation("Initialized ResourceDetoursFunc's!");
 
         // get the current state of our spatial audio setting,
         // which will determine how we handle the state of the hooks.
@@ -80,8 +92,8 @@ public unsafe partial class ResourceDetours : IDisposable
         ActorVfxRemoveHook.SafeDispose();
 
         // clear any func pointers for deallocation.
-        ActorVfxCreate = null!;
-        ActorVfxRemove = null!;
+        ActorVfxCreateFunc = null!;
+        ActorVfxRemoveFunc = null!;
         _logger.LogInformation("Disabled all ResourceDetour hooks.");
     }
 }

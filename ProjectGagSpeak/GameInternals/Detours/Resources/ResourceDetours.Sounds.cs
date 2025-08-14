@@ -17,7 +17,7 @@ public unsafe partial class ResourceDetours
 
     // Checks the state of a file, returning whether it is loaded or not.
     private delegate IntPtr CheckFileState(IntPtr ptr, ulong crc64);
-    [Signature(Sigs.CheckFileState, DetourName = nameof(CheckFileStateDetour), ScanType = ScanType.StaticAddress)]
+    [Signature(Sigs.CheckFileState, DetourName = nameof(CheckFileStateDetour))]
     private readonly Hook<CheckFileState> CheckFileStateHook = null!;
 
     // Loads a local SCD file.

@@ -5,6 +5,7 @@ using Dalamud.Memory;
 using Dalamud.Utility;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.System.String;
+using FFXIVClientStructs.FFXIV.Client.UI.Shell;
 using GagSpeak.GameInternals.Agents;
 using GagSpeak.PlayerClient;
 using GagspeakAPI.Attributes;

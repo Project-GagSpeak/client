@@ -175,6 +175,7 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             _runtimeServiceScope.ServiceProvider.GetRequiredService<ChatService>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<StaticDetours>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<MovementDetours>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<ResourceDetours>();
 
             // stuff that should probably be a hosted service but isn't yet.
             _runtimeServiceScope.ServiceProvider.GetRequiredService<AchievementsService>();

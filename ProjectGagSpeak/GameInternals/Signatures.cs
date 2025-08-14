@@ -16,6 +16,11 @@ namespace GagSpeak.GameInternals;
 // https://github.com/Drahsid/HybridCamera/blob/2e18760d64be14d2dc16405168d5a7a8f236ff3c/HybridCamera/MovementHook.cs#L216
 // - UnfollowTarget
 // Pray to whatever gods exist someone can still help with this.
+// - ApplyGlamourPlate
+// Given graciously by Hassel.
+// - ProcessChatInput
+// 
+
 // ================================================
 // - VFXEDITOR Signatures:
 // 
@@ -62,7 +67,7 @@ public static class Signatures
     // public const string SendChat = "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC 20 48 8B F2 48 8B F9 45 84 C9";
 
     // DetourName = nameof(ProcessChatInputDetour), Fallibility = Fallibility.Auto, Define via SignatureAttribute.
-    public const string ProcessChatInput = "E8 ?? ?? ?? ?? FE 86 ?? ?? ?? ?? C7 86 ?? ?? ?? ?? ?? ?? ?? ??";
+    public const string ProcessChatInput = "E8 ?? ?? ?? ?? FE 87 ?? ?? ?? ?? C7 87";
 
     // Spatial Audio Sigs from VFXEDITOR
     internal const string CreateStaticVfx = "E8 ?? ?? ?? ?? F3 0F 10 35 ?? ?? ?? ?? 48 89 43 08";
