@@ -44,7 +44,7 @@ public unsafe partial class ResourceDetours
     private IntPtr ActorVfxCreatedDetour(string path, IntPtr a2, IntPtr a3, float a4, char a5, ushort a6, char a7)
     {
         var vfx = ActorVfxCreateHook.Original(path, a2, a3, a4, a5, a6, a7);
-        _logger.LogTrace($"New Actor Created: {path} ({vfx:X8})");
+        //_logger.LogTrace($"New Actor Created: {path} ({vfx:X8})");
         return vfx;
     }
 
@@ -52,7 +52,7 @@ public unsafe partial class ResourceDetours
     {
         // remove from tracked cache.
         _cache.RemoveTrackedVfx(vfx);
-        _logger.LogTrace($"Removed Actor: ({vfx:X8})");
+        //_logger.LogTrace($"Removed Actor: ({vfx:X8})");
         return ActorVfxRemoveHook.Original(vfx, a2);
     }
 
