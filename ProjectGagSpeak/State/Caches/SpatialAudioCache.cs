@@ -18,8 +18,8 @@ public unsafe class SpatialAudioCache : IDisposable
         _logger = logger;
     }
 
-    private readonly ConcurrentDictionary<ActorVfx, VfxSpawnItem> _trackedVfxs = [];
-    private readonly List<VfxLoopItem> _trackedVfxsToLoop = [];
+    private readonly ConcurrentDictionary<ActorVfx, VfxSpawnItem> _trackedVfxs = new ConcurrentDictionary<ActorVfx, VfxSpawnItem>();
+    private readonly List<VfxLoopItem> _trackedVfxsToLoop = new List<VfxLoopItem>();
 
     // make absolutely sure nothing external can manipulate these.
     public IReadOnlyDictionary<ActorVfx, VfxSpawnItem> Vfxs => _trackedVfxs;
@@ -78,7 +78,7 @@ public unsafe class SpatialAudioCache : IDisposable
     }
 
     public List<string> GetCustomScdPaths()
-    => CustomScdPaths.Keys.ToList();
+        => CustomScdPaths.Keys.ToList();
     public List<string> GetCustomAvfxPaths()
         => CustomAvfxPaths.Keys.ToList();
     public List<string> GetValidAvfxPaths()
@@ -115,7 +115,6 @@ public unsafe class SpatialAudioCache : IDisposable
                 replacedPath = fullPath.Replace('\\', '/');
                 return true;
             }
-            return false;
         }
         // or locate any avfx path.
         else if (path.Contains("gagspeak/vfx/"))
@@ -132,9 +131,9 @@ public unsafe class SpatialAudioCache : IDisposable
                 replacedPath = fullPath.Replace('\\', '/');
                 return true;
             }
-            return false;
         }
         // reject if not in mappings.
+        replacedPath = null;
         return false;
     }
 

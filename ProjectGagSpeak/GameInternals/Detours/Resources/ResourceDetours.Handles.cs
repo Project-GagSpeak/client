@@ -51,43 +51,20 @@ public unsafe partial class ResourceDetours
         if (pFileDesc->ResourceHandle->GamePath(out var baseGamePath))
             return ReadSqPackHook.Original(fileHandler, pFileDesc, priority, isSync);
 
-        // declare the original gamepath.
         var originalPath = baseGamePath.ToString();
-        // determine if this is a custom path from penumbra or not.
-        var isPenumbra = ProcessPenumbraPath(originalPath, out var gameFsPath);
-        // log the game path.
-        _logger.LogDebug($"Game FS Path? {gameFsPath}");
 
-        // determine if the path is rooted or nyot.
-        var isRooted = Path.IsPathRooted(gameFsPath);
-
-        // look for any possible refreshed paths, such as |default_1|path.avfx.
-        if (gameFsPath is not null && !isRooted)
-        {
-            // resolve penumbra replacement paths.
-            if (TryGetReplacePath(gameFsPath, out var localPath) && Path.IsPathRooted(localPath) && localPath.Length < 260)
-            {
-                gameFsPath = localPath;
-                isRooted = true;
-                isPenumbra = false; // we are no longer a penumbra path.
-            }
-        }
-
-        // call the original if it's a penumbra path that doesn't need replacement as well.
-        if (gameFsPath == null || gameFsPath.Length >= 260 || !isRooted || isPenumbra)
-        {
-            _logger.LogDebug($"ORIGINAL: {gameFsPath}");
+        // Return original if not a custom gs resoruce path, as we dont care about it.
+        if (!TryGetGsResourcePath(originalPath, out var gsPath))
             return ReadSqPackHook.Original(fileHandler, pFileDesc, priority, isSync);
-        }
 
         // otherwise log the replaced path.
-        _logger.LogDebug($"REPLACED: {gameFsPath}");
+        _logger.LogDebug($"ReadSqPack -> GAGSPEAK_PATH: {gsPath}");
         // update the file descriptor path to the new path.
         pFileDesc->FileMode = FileMode.LoadUnpackedResource;
-        ByteString.FromString(gameFsPath, out var gamePath);
+        ByteString.FromString(gsPath, out var gamePath);
 
         // mandatory to be utf16 for a successful read.
-        var utfPath = Encoding.Unicode.GetBytes(gameFsPath);
+        var utfPath = Encoding.Unicode.GetBytes(gsPath);
         Marshal.Copy(utfPath, 0, new IntPtr(&pFileDesc->Utf16FileName), utfPath.Length);
         var fileDesc = stackalloc byte[0x20 + utfPath.Length + 0x16];
         // copy the file descriptor to the stack.
@@ -115,28 +92,23 @@ public unsafe partial class ResourceDetours
         // if the resource path is not from a pointer, then return the original handler.
         if (!Utf8GamePath.FromPointer(path, MetaDataComputation.CiCrc32, out var gamePath))
         {
-            _logger.LogError("Could not create GamePath from resource path.");
+            _logger.LogWarning("Could not create GamePath from resource path.");
             return CallOriginalHandler(isSync, resourceManager, categoryId, resourceType, resourceHash, path, pGetResParams, isUnk, unk8, unk9);
         }
 
         // if the game path is empty, protect it against crashes from null / empty game paths and return null.
         if (gamePath.IsEmpty)
         {
-            _logger.LogError($"Returning null, as path was an empty resource path requested with category {*categoryId}, type {*resourceType}, hash {*resourceHash}.");
+            _logger.LogWarning($"Returning null, as path was an empty resource path requested with category {*categoryId}, type {*resourceType}, hash {*resourceHash}.");
             return null; // this is safe to do here.
         }
 
-        // get the original.
-        var original = gamePath;
-        // attempt to locate the replacement path. if we fail or the path is too long, abort and spawn original.
-        if (!TryGetReplacePath(original.ToString(), out var localPath) || localPath.Length > 260)
-        {
-            var unreplaced = CallOriginalHandler(isSync, resourceManager, categoryId, resourceType, resourceHash, path, pGetResParams, isUnk, unk8, unk9);
-            _logger.LogDebug($"ORIGINAL: {original} -> " + new IntPtr(unreplaced).ToString("X8"));
-            return unreplaced;
-        }
+        var originalPath = gamePath;
+        // If not a valid Gs Resource path, return the original.
+        if (!TryGetGsResourcePath(originalPath.ToString(), out var localPath) || localPath.Length > 260)
+            return CallOriginalHandler(isSync, resourceManager, categoryId, resourceType, resourceHash, path, pGetResParams, isUnk, unk8, unk9);
 
-        // otherwise, we should resolve the transformed path.
+        _logger.LogDebug($"GAGSPEAK_PATH: {originalPath} -> (local) {localPath}");
         var resolvedPath = new FullPath(localPath);
         // add the crc64 to the path for later reference.
         if (*resourceType == ResourceType.Scd)
@@ -144,13 +116,11 @@ public unsafe partial class ResourceDetours
 
         // obtain the resource hash for the computated resource path.
         *resourceHash = ComputeHash(resolvedPath.InternalName, pGetResParams);
-        // mark the path as the resolved internal path name.
         path = resolvedPath.InternalName.Path;
 
         // mark the replaced path we the call to the original handler with the new path and resource hash containing the custom data.
-        var replaced = CallOriginalHandler(isSync, resourceManager, categoryId, resourceType, resourceHash, path, pGetResParams, isUnk, unk8, unk9);
-        _logger.LogDebug($"REPLACED: {original} -> {resolvedPath} -> " + new IntPtr(replaced).ToString("X8"));
-        return replaced;
+        _logger.LogDebug($"REPLACED: {originalPath} -> (resolved local) {resolvedPath}");
+        return CallOriginalHandler(isSync, resourceManager, categoryId, resourceType, resourceHash, path, pGetResParams, isUnk, unk8, unk9);
     }
 
     // Helper functions.
@@ -158,22 +128,23 @@ public unsafe partial class ResourceDetours
     {
         if (pGetResParams is null || !pGetResParams->IsPartialRead) return path.Crc32;
 
-        return CiByteString.Join(
-            (byte)'.',
-            path,
+        return CiByteString.Join((byte)'.', path,
             CiByteString.FromString(pGetResParams->SegmentOffset.ToString("x"), out var s1, MetaDataComputation.None) ? s1 : CiByteString.Empty,
             CiByteString.FromString(pGetResParams->SegmentLength.ToString("x"), out var s2, MetaDataComputation.None) ? s2 : CiByteString.Empty
         ).Crc32;
     }
-    private bool TryGetReplacePath(string gamePath, [NotNullWhen(true)] out string? customLocalPath)
-    {
-        customLocalPath = null;
 
-        // check for matching custom GagSpeak path. If found, ret true!
-        if (_cache.TryGetReplacedPath(gamePath, out customLocalPath))
+    /// <summary>
+    ///     We don't nessisarily need to validate the path is from the game path, but rather return original
+    ///     if the path is not one of our custom paths. This way we do not need to iterate gamedata every process.
+    /// </summary>
+    private bool TryGetGsResourcePath(string gamePath, [NotNullWhen(true)] out string? gsResourcePath)
+    {
+        if (_cache.TryGetReplacedPath(gamePath, out gsResourcePath) && gsResourcePath.Length <= 260)
             return true;
-        // return a custom backup path if none present.
-        return !GameFilePathExists(gamePath);
+        // otherwise it failed.
+        gsResourcePath = null;
+        return false;
     }
 
     private bool GameFilePathExists(string gamePath)
@@ -182,8 +153,9 @@ public unsafe partial class ResourceDetours
         {
             return Svc.Data.FileExists(gamePath);
         }
-        catch (Bagagwa)
+        catch (Bagagwa ex)
         {
+            _logger.LogInformation($"GameFilePathExists failed for path: {gamePath}. Exception: {ex.Message}");
             return false; // not valid gamepath.
         }
     }
