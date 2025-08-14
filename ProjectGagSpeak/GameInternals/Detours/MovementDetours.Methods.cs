@@ -19,17 +19,22 @@ public partial class MovementDetours : IDisposable
     ///     prevents LMB+RMB moving by processing it prior to the games update movement check.
     ///     If this fails, check our HybridCamera's new movement detection method.
     /// </summary>
-    public unsafe delegate void MoveOnMousePreventor2Delegate(MoveControllerSubMemberForMine* thisx, float wishdir_h, float wishdir_v, char arg4, byte align_with_camera, Vector3* direction);
-    [Signature(Signatures.MouseAutoMove2, DetourName = nameof(MovementUpdate), Fallibility = Fallibility.Auto)]
-    public static Hook<MoveOnMousePreventor2Delegate>? MouseAutoMove2Hook { get; set; } = null!;
+    public unsafe delegate void MovementDirectionUpdateDelegate(MoveControllerSubMemberForMine* thisx, float* wishdir_h, float* wishdir_v, float* rotatedir, byte* align_with_camera, byte* autorun, byte dont_rotate_with_camera);
+    [Signature(Signatures.MouseAutoMove2, DetourName = nameof(MovementDirectionUpdate), Fallibility = Fallibility.Auto)]
+    public static Hook<MovementDirectionUpdateDelegate>? MoveUpdateHook { get; set; } = null!;
 
     [return: MarshalAs(UnmanagedType.U1)]
-    public static unsafe void MovementUpdate(MoveControllerSubMemberForMine* thisx, float wishdir_h, float wishdir_v, char arg4, byte align_with_camera, Vector3* direction)
+    public static unsafe void MovementDirectionUpdate(MoveControllerSubMemberForMine* thisx, float* wishdir_h, float* wishdir_v, float* rotatedir, byte* align_with_camera, byte* autorun, byte dont_rotate_with_camera)
     {
         if (thisx->Unk_0x3F != 0)
-            return;
+        {
+            thisx->Unk_0x3F = 0;
+            thisx->WishdirChanged = 0;
+            *wishdir_v = 0;
+            return; // prevent original from executing to stop forcefollow from occuring.
+        }
 
-        MouseAutoMove2Hook?.Original(thisx, wishdir_h, wishdir_v, arg4, align_with_camera, direction);
+        MoveUpdateHook?.Original(thisx, wishdir_h, wishdir_v, rotatedir, align_with_camera, autorun, dont_rotate_with_camera);
     }
 
     /// <summary>
@@ -55,7 +60,7 @@ public partial class MovementDetours : IDisposable
         }
         catch (Bagagwa ex)
         {
-            _logger.LogError($"Error converting Unk_0x10 to string: {ex}", LoggerType.HardcoreMovement);
+            _logger.LogError($"Error converting Unk_0x10 to string: {ex}");
         }
         //_logger.LogDebug($"PRE:             FollowingTarget: {unk1->FollowingTarget.ToString("X")}", LoggerType.HardcoreMovement);
         //_logger.LogDebug($"PRE:                 Follow Type: {unk1->FollowType.ToString("X")}", LoggerType.HardcoreMovement);

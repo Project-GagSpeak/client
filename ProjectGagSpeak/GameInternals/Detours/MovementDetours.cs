@@ -1,4 +1,4 @@
-using Dalamud.Plugin.Services;
+using CkCommons;
 
 namespace GagSpeak.GameInternals.Detours;
 public partial class MovementDetours : IDisposable
@@ -15,18 +15,14 @@ public partial class MovementDetours : IDisposable
     /// <remarks> Useful for knowing if other plugins are tempering with this pointer. </remarks>
     public bool ForceDisableMovementIsActive => ForceDisableMovement > 0;
     public bool UnfollowHookActive => UnfollowHook?.IsEnabled ?? false;
-    public bool MouseAutoMoveHookActive => MouseAutoMove2Hook?.IsEnabled ?? false;
+    public bool MouseAutoMoveHookActive => MoveUpdateHook?.IsEnabled ?? false;
 
     public void Dispose()
     {
         _logger.LogInformation($"Disposing MovementDetours");
         DisableFullMovementLock();
-        UnfollowHook?.Disable();
-        UnfollowHook?.Dispose();
-        MouseAutoMove2Hook?.Disable();
-        MouseAutoMove2Hook?.Dispose();
-        UnfollowHook = null;
-        MouseAutoMove2Hook = null;
+        UnfollowHook.SafeDispose();
+        MoveUpdateHook.SafeDispose();
     }
 
     public void EnableFullMovementLock()
@@ -67,13 +63,13 @@ public partial class MovementDetours : IDisposable
     {
         if (MouseAutoMoveHookActive)
             return;
-        MouseAutoMove2Hook?.Enable();
+        MoveUpdateHook.SafeEnable();
     }
 
     public void DisableMouseAutoMoveHook()
     {
         if (!MouseAutoMoveHookActive)
             return;
-        MouseAutoMove2Hook?.Disable();
+        MoveUpdateHook.SafeDisable();
     }
 }

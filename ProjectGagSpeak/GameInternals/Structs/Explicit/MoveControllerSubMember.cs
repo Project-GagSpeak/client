@@ -1,3 +1,4 @@
+using Dalamud.Game.ClientState.Objects.Types;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using System.Runtime.InteropServices;
 
@@ -10,16 +11,21 @@ public unsafe struct UnkGameObjectStruct
     [FieldOffset(0x101)] public byte Unk_0x101;
     [FieldOffset(0x1C0)] public Vector3 DesiredPosition;
     [FieldOffset(0x1D0)] public float NewRotation;
+    [FieldOffset(0x1D4)] public float Unk_0x1D4;
+    [FieldOffset(0x1E4)] public float Unk_0x1E4;
+    [FieldOffset(0x1F4)] public int Unk_0x1F4; // movement mode? determines speed selected from MoveControllerSubMemberForMine->MoveSpeedMaximums
     [FieldOffset(0x1FC)] public byte Unk_0x1FC;
+    [FieldOffset(0x1FE)] public byte Unk_0x1FE;
     [FieldOffset(0x1FF)] public byte Unk_0x1FF;
     [FieldOffset(0x200)] public byte Unk_0x200;
     [FieldOffset(0x2C6)] public byte Unk_0x2C6;
     [FieldOffset(0x3D0)] public GameObject* Actor; // Points to local player
+    [FieldOffset(0x348)] public byte Unk_0x348;
     [FieldOffset(0x3E0)] public byte Unk_0x3E0;
     [FieldOffset(0x3EC)] public float Unk_0x3EC; // This, 0x3F0, 0x418, and 0x419 seem to determine the direction (and where) you turn when turning around or facing left/right
     [FieldOffset(0x3F0)] public float Unk_0x3F0;
-    [FieldOffset(0x418)] public byte Unk_0x418;
-    [FieldOffset(0x419)] public byte Unk_0x419;
+    [FieldOffset(0x418)] public byte Unk_0x418; // flags?
+    [FieldOffset(0x419)] public byte Unk_0x419; // flags?
 }
 
 [StructLayout(LayoutKind.Explicit)]
@@ -32,7 +38,7 @@ public unsafe struct MoveControllerSubMemberForMine
     [FieldOffset(0x3C)] public byte Moved;
     [FieldOffset(0x3D)] public byte Rotated; // 1 when the character has rotated
     [FieldOffset(0x3E)] public byte MovementLock; // Pretty much forced auto run when nonzero. Maybe used for scene transitions?
-    [FieldOffset(0x3F)] public byte Unk_0x3F;
+    [FieldOffset(0x3F)] public byte Unk_0x3F; // 1 when mouse-running (lmb + rmb)
     [FieldOffset(0x40)] public byte Unk_0x40;
     [FieldOffset(0x44)] public float MoveSpeed;
     [FieldOffset(0x50)] public float* MoveSpeedMaximums;

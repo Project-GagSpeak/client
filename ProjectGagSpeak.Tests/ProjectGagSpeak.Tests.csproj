@@ -8,6 +8,7 @@
         <IsPackable>false</IsPackable>
         <IsTestProject>true</IsTestProject>
         <Platforms>AnyCPU;x64</Platforms>
+        <NoWarn>$(NoWarn);MSB3270</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>
