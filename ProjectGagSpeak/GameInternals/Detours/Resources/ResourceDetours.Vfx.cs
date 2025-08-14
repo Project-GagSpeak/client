@@ -33,14 +33,14 @@ public unsafe partial class ResourceDetours
     private static ActorVfxRemoveDelegate ActorVfxRemove = null!;
 
     // detour that fires whenever an ActorVfx is created.
-    public delegate IntPtr ActorVfxCreateDelegate(string path, IntPtr a2, IntPtr a3, float a4, char a5, ushort a6, char a7);
+    private delegate IntPtr ActorVfxCreateDelegate(string path, IntPtr a2, IntPtr a3, float a4, char a5, ushort a6, char a7);
     [Signature(Signatures.CreateActorVfx, DetourName = nameof(ActorVfxCreatedDetour))]
-    public readonly Hook<ActorVfxCreateDelegate> ActorVfxCreateHook = null!;
+    private readonly Hook<ActorVfxCreateDelegate> ActorVfxCreateHook = null!;
 
     // detour that fires whenever an ActorVfx is removed.
-    public delegate IntPtr ActorVfxRemoveDelegate(IntPtr vfx, char a2);
+    private delegate IntPtr ActorVfxRemoveDelegate(IntPtr vfx, char a2);
     [Signature(Signatures.RemoveActorVfx, DetourName = nameof(ActorVfxRemovedDetour))]
-    public readonly Hook<ActorVfxRemoveDelegate> ActorVfxRemoveHook = null!;
+    private readonly Hook<ActorVfxRemoveDelegate> ActorVfxRemoveHook = null!;
 
     private IntPtr ActorVfxCreatedDetour(string path, IntPtr a2, IntPtr a3, float a4, char a5, ushort a6, char a7)
     {

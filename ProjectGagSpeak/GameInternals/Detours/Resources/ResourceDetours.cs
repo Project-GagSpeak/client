@@ -1,3 +1,4 @@
+using CkCommons;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Caches;
 using System.Runtime.InteropServices;
@@ -25,32 +26,62 @@ public unsafe partial class ResourceDetours : IDisposable
         var removeActorVfxAddress = Marshal.ReadIntPtr(removeActorVfxAddrTemp + Marshal.ReadInt32(removeActorVfxAddrTemp) + 4);
         ActorVfxRemove = Marshal.GetDelegateForFunctionPointer<ActorVfxRemoveDelegate>(removeActorVfxAddress);
 
-        // do not call this.
+        // get the current state of our spatial audio setting,
+        // which will determine how we handle the state of the hooks.
+        // This is critical as we don't want to track all resource actions while spatial audio is disabled!
         EnableHooks();
     }
 
     public void EnableHooks()
     {
         _logger.LogInformation("Enabling all ResourceDetour hooks.");
-        // enable all hooks here.
+        // resource hooks.
+        ReadSqPackHook.SafeEnable();
+        GetResourceSyncHook.SafeEnable();
+        GetResourceAsyncHook.SafeEnable();
+        // sound hooks.
+        CheckFileStateHook.SafeEnable();
+        SoundOnLoadHook.SafeEnable();
+        // vfx hooks
+        ActorVfxCreateHook.SafeEnable();
+        ActorVfxRemoveHook.SafeEnable();
         _logger.LogInformation("Enabled all ResopurceDetour hooks.");
     }
 
     public void DisableHooks()
     {
         _logger.LogInformation("Disabling all ResourceDetour hooks.");
-        // disable all hooks here.
+        // resource hooks.
+        ReadSqPackHook.SafeDisable();
+        GetResourceSyncHook.SafeDisable();
+        GetResourceAsyncHook.SafeDisable();
+        // sound hooks.
+        CheckFileStateHook.SafeDisable();
+        SoundOnLoadHook.SafeDisable();
+        // vfx hooks
+        ActorVfxCreateHook.SafeDisable();
+        ActorVfxRemoveHook.SafeDisable();
+        // clear the custom scd crc.
         _logger.LogInformation("Disabled all ResourceDetour hooks.");
     }
 
     public void Dispose()
     {
         _logger.LogInformation("Disabling all ResourceDetour hooks.");
-        DisableHooks();
-        // dispose of all hooks.
+        // dispose all hooks.
+        ReadSqPackHook.SafeDispose();
+        GetResourceSyncHook.SafeDispose();
+        GetResourceAsyncHook.SafeDispose();
+        
+        CheckFileStateHook.SafeDispose();
+        SoundOnLoadHook.SafeDispose();
+        
+        ActorVfxCreateHook.SafeDispose();
+        ActorVfxRemoveHook.SafeDispose();
 
         // clear any func pointers for deallocation.
-
+        ActorVfxCreate = null!;
+        ActorVfxRemove = null!;
         _logger.LogInformation("Disabled all ResourceDetour hooks.");
     }
 }

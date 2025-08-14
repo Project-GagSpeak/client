@@ -151,8 +151,9 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<ModPresetFileSystem>()
 
         // Game Internals
-        .AddSingleton<MovementDetours>()
         .AddSingleton<StaticDetours>()
+        .AddSingleton<MovementDetours>()
+        .AddSingleton<ResourceDetours>()
 
         // MufflerCore
         .AddSingleton<Ipa_EN_FR_JP_SP_Handler>()
