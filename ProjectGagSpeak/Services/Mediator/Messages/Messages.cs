@@ -61,8 +61,3 @@ public record ChatboxMessageFromSelf(InputChannel channel, string message) : Mes
 
 /// <summary> Contains the message content of a Chatbox message. </summary>
 public record ChatboxMessageFromKinkster(Kinkster kinkster, InputChannel channel, string message) : MessageBase;
-
-// Whenever we removed a vfx actor from the scene.
-// NOTE: This should likely be removed, and handled with a vfxManager class instead.
-public record VfxActorRemoved(IntPtr data) : MessageBase;
-

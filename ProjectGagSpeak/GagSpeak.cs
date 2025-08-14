@@ -33,7 +33,6 @@ using GagSpeak.State.Caches;
 using GagSpeak.State.Handlers;
 using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
-using GagSpeak.UpdateMonitoring.SpatialAudio;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using Microsoft.Extensions.DependencyInjection;
@@ -227,10 +226,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<VibeLobbyDistributionService>()
 
         // Spatial Audio
-        .AddSingleton<ResourceLoader>()
-        .AddSingleton<AvfxManager>()
-        .AddSingleton<ScdManager>()
-        .AddSingleton<VfxSpawns>()
+        .AddSingleton<VfxSpawnManager>()
 
         // State (Caches)
         .AddSingleton<CustomizePlusCache>()
@@ -239,6 +235,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<MoodleCache>()
         .AddSingleton<TraitsCache>()
         .AddSingleton<OverlayCache>()
+        .AddSingleton<SpatialAudioCache>()
 
         // State (Handlers)
         .AddSingleton<RemoteHandler>()
@@ -278,6 +275,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<RestraintManager>()
         .AddSingleton<RestrictionManager>()
         .AddSingleton<TriggerManager>()
+        .AddSingleton<VfxSpawnManager>()
 
         // UI (Probably mostly in Scoped)
         .AddSingleton<IdDisplayHandler>()

@@ -1,14 +1,11 @@
 using CkCommons;
-using CkCommons.Audio;
 using GagSpeak.GameInternals.Detours;
 using GagSpeak.Gui;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Services.Textures;
 using GagSpeak.State.Listeners;
-using GagSpeak.UpdateMonitoring.SpatialAudio;
 using GagSpeak.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

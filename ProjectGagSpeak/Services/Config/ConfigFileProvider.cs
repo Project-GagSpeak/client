@@ -14,6 +14,7 @@ public class ConfigFileProvider : IConfigFileProvider
     public static string AssemblyDirectoryName  => Svc.PluginInterface.AssemblyLocation.DirectoryName ?? string.Empty;
     public static string AssemblyDirectory      => Svc.PluginInterface.AssemblyLocation.Directory?.FullName ?? string.Empty;
     public static string GagSpeakDirectory      => Svc.PluginInterface.ConfigDirectory.FullName;
+    public static string SpatialDirectory   { get; private set; } = string.Empty;
     public static string EventDirectory     { get; private set; } = string.Empty;
     public static string FileSysDirectory   { get; private set; } = string.Empty;
     public static string ThumbnailDirectory { get; private set; } = string.Empty;
@@ -59,6 +60,7 @@ public class ConfigFileProvider : IConfigFileProvider
     {
         GagDataJson = Path.Combine(AssemblyDirectory, "MufflerCore", "GagData", "gag_data.json");
 
+        SpatialDirectory = Path.Combine(GagSpeakDirectory, "spatialaudio");
         EventDirectory = Path.Combine(GagSpeakDirectory, "eventlog");
         FileSysDirectory = Path.Combine(GagSpeakDirectory, "filesystem");
         ThumbnailDirectory = Path.Combine(GagSpeakDirectory, "thumbnails");

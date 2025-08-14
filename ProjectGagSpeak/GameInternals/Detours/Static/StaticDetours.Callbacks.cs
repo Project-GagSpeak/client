@@ -11,16 +11,10 @@ using ValType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 namespace GagSpeak.GameInternals.Detours;
 public unsafe partial class StaticDetours
 {
-    // Detours the fired callback to get the values from it. Useful for documenting new cases from addon interactions.
-    //private unsafe delegate void* FireCallbackDelegate(AtkUnitBase* atkUnitBase, int valueCount, AtkValue* atkValues, byte updateVisibility);
-    //[Signature(Signatures.FireCallback, DetourName = nameof(AtkUnitBase_FireCallbackDetour), Fallibility = Fallibility.Auto)]
-    //private static Hook<FireCallbackDelegate> FireCallbackHook { get; set; } = null;
-
-
     // Delegate for manually invoking a callback fire.
     public delegate bool AtkUnitBase_FireCallbackDelegate(AtkUnitBase* Base, int valueCount, AtkValue* values, byte updateState);
     [Signature(Signatures.Callback, DetourName = nameof(AtkUnitBase_FireCallbackDetour), Fallibility = Fallibility.Auto)]
-    private static Hook<AtkUnitBase_FireCallbackDelegate> FireCallbackHook;
+    private static Hook<AtkUnitBase_FireCallbackDelegate> FireCallbackHook = null!;
 
     // Used to execute things to this callback
     internal static AtkUnitBase_FireCallbackDelegate FireCallbackFunc = null!;

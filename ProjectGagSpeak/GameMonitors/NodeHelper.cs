@@ -2,6 +2,7 @@ using FFXIVClientStructs.FFXIV.Client.System.Memory;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
+
 namespace GagSpeak.Game;
 
 public static unsafe class NodeHelper

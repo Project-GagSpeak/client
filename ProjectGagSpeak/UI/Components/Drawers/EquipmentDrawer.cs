@@ -4,6 +4,7 @@ using CkCommons.Gui;
 using CkCommons.Gui.Utility;
 using CkCommons.Raii;
 using CkCommons.Widgets;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
@@ -11,16 +12,13 @@ using GagSpeak.CustomCombos.Editor;
 using GagSpeak.CustomCombos.Glamourer;
 using GagSpeak.Interop;
 using GagSpeak.PlayerClient;
-using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
-using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
-using Dalamud.Bindings.ImGui;
 using OtterGui.Extensions;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
@@ -48,33 +46,25 @@ public class EquipmentDrawer
     private readonly IpcCallerGlamourer _ipcGlamourer;
     private readonly RestrictionManager _restrictions;
     private readonly TextureService _textures;
-    private readonly CosmeticService _cosmetics;
     private readonly TutorialService _guides;
 
     public EquipmentDrawer(ILogger<EquipmentDrawer> logger, GagspeakMediator mediator,
         IpcCallerGlamourer glamourer, RestrictionManager restrictions, FavoritesManager favorites,
-        TextureService textures, CosmeticService cosmetics, TutorialService guides)
+        TextureService textures, TutorialService guides)
     {
         _logger = logger;
         _ipcGlamourer = glamourer;
         _restrictions = restrictions;
-        _cosmetics = cosmetics;
         _textures = textures;
         // Preassign these 10 itemCombo slots. They will be consistant throughout the plugins usage.
         _itemCombos = EquipSlotExtensions.EqdpSlots.Select(e => new GameItemCombo(e, logger)).ToArray();
         _bonusCombos = BonusExtensions.AllFlags.Select(f => new BonusItemCombo(f, logger)).ToArray();
         _stainCombo = new GameStainCombo(logger);
         _guides = guides;
-        _restrictionCombo = new RestrictionCombo(logger, mediator, favorites, () => 
-        [ 
+        _restrictionCombo = new RestrictionCombo(logger, mediator, favorites, () => [ 
             ..restrictions.Storage.OrderByDescending(p => favorites._favoriteRestrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
-        GameIconSize = new Vector2(2 * ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.Y);
     }
-
-    // Temporary Cached Storage holding the currently resolved item from the latest hover.
-    private CachedSlotItemData LastCachedItem;
-    public readonly Vector2 GameIconSize;
 
     // Method for Drawing the Associated Glamour Item (Singular)
     public void DrawAssociatedGlamour(string id, GlamourSlot item, float width)
@@ -147,7 +137,6 @@ public class EquipmentDrawer
     /// <returns> True if the item was swapped between a basic to advanced, or vise versa. </returns>
     /// <param name="basicSlot"></param>
     /// <param name="width"></param>
-    /// <param name="swapped"></param>
     public void DrawRestraintSlotBasic(RestraintSlotBasic basicSlot, float width)
     {
         using var group = ImRaii.Group();

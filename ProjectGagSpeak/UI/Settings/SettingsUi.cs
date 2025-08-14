@@ -1,5 +1,6 @@
 using CkCommons.GarblerCore;
 using CkCommons.Gui;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
@@ -9,13 +10,12 @@ using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.UpdateMonitoring.SpatialAudio;
+using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Hub;
-using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Text;
 
@@ -27,12 +27,12 @@ public class SettingsUi : WindowMediatorSubscriberBase
     private readonly AccountManagerTab _accountsTab;
     private readonly DebugTab _debugTab;
     private readonly PiShockProvider _shockProvider;
-    private readonly VfxSpawns _vfxSpawner;
+    private readonly VfxSpawnManager _vfxSpawner;
     private readonly MainConfig _mainConfig;
 
     public SettingsUi(ILogger<SettingsUi> logger, GagspeakMediator mediator, MainHub hub,
-        AccountManagerTab accounts, DebugTab debug, PiShockProvider shockProvider, 
-        VfxSpawns vfxSpawner, MainConfig config) : base(logger, mediator, "GagSpeak Settings")
+        AccountManagerTab accounts, DebugTab debug, PiShockProvider shockProvider,
+        VfxSpawnManager vfxSpawner, MainConfig config) : base(logger, mediator, "GagSpeak Settings")
     {
         _hub = hub;
         _accountsTab = accounts;
@@ -520,7 +520,6 @@ public class SettingsUi : WindowMediatorSubscriberBase
         ImGui.InputTextWithHint("##VfxPathFileLabel", "Vfx Path In Audio Folder", ref _currentVfxPath, 300, ITFlags.EnterReturnsTrue);
 
         _vfxSpawner.DrawVfxSpawnOptions(_currentVfxPath, false);
-        _vfxSpawner.DrawVfxRemove();
     }
     private string _currentVfxPath = string.Empty;
 

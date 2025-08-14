@@ -1,7 +1,7 @@
 using Dalamud.Game.ClientState.Objects.Types;
 using System.Runtime.InteropServices;
 
-namespace GagSpeak.UpdateMonitoring.SpatialAudio.Structs;
+namespace GagSpeak.GameInternals.Structs;
 
 [StructLayout(LayoutKind.Explicit)]
 public unsafe struct VfxStruct

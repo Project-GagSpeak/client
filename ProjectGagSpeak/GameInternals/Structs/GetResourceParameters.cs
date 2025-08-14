@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace GagSpeak.UpdateMonitoring.SpatialAudio.Structs;
+namespace GagSpeak.GameInternals.Structs;
 
 [StructLayout(LayoutKind.Explicit)]
 public struct GetResourceParameters
@@ -11,5 +11,6 @@ public struct GetResourceParameters
     [FieldOffset(20)]
     public uint SegmentLength;
 
-    public readonly bool IsPartialRead => SegmentLength != 0;
+    public readonly bool IsPartialRead 
+        => SegmentLength != 0;
 }

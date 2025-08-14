@@ -4,8 +4,6 @@ using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.Gui.NamePlate;
 using Dalamud.Interface.Textures.TextureWraps;
-using Dalamud.Plugin.Services;
-using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Kernel;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -17,8 +15,6 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
-using Lumina.Excel.Sheets;
-using NAudio.CoreAudioApi;
 
 namespace GagSpeak.Services;
 

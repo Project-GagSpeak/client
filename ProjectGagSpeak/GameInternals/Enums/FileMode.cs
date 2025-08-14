@@ -1,4 +1,4 @@
-namespace GagSpeak.UpdateMonitoring.SpatialAudio.Structs;
+namespace GagSpeak.GameInternals;
 public enum FileMode : uint
 {
     LoadUnpackedResource = 0,
