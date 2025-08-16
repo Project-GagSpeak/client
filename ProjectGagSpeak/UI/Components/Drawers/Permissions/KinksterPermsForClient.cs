@@ -74,13 +74,13 @@ public class KinksterPermsForClient{
         ImGui.TextUnformatted("Hardcore State");
         CkGui.ColorTextInline("(View-Only)", ImGuiColors.DalamudRed);
 
-        DrawHcRow(kinkster, dispName, width, SPPID.LockedFollowing, kinkster.PairGlobals.LockedFollowing, kinkster.PairPerms.AllowLockedFollowing);
-        DrawHcRow(kinkster, dispName, width, SPPID.LockedEmoteState, kinkster.PairGlobals.LockedEmoteState, kinkster.PairPerms.AllowLockedEmoting || kinkster.PairPerms.AllowLockedSitting);
-        DrawHcRow(kinkster, dispName, width, SPPID.IndoorConfinement, kinkster.PairGlobals.IndoorConfinement, kinkster.PairPerms.AllowIndoorConfinement);
-        DrawHcRow(kinkster, dispName, width, SPPID.Imprisonment, kinkster.PairGlobals.Imprisonment, kinkster.PairPerms.AllowImprisonment);
-        DrawHcRow(kinkster, dispName, width, SPPID.ChatBoxesHidden, kinkster.PairGlobals.ChatBoxesHidden, kinkster.PairPerms.AllowHidingChatBoxes);
-        DrawHcRow(kinkster, dispName, width, SPPID.ChatInputHidden, kinkster.PairGlobals.ChatInputHidden, kinkster.PairPerms.AllowHidingChatInput);
-        DrawHcRow(kinkster, dispName, width, SPPID.ChatInputBlocked, kinkster.PairGlobals.ChatInputBlocked, kinkster.PairPerms.AllowChatInputBlocking);    }
+        DrawHcRow(kinkster, dispName, width, SPPID.LockedFollowing, kinkster.PairHardcore.LockedFollowing, kinkster.PairPerms.AllowLockedFollowing);
+        DrawHcRow(kinkster, dispName, width, SPPID.LockedEmoteState, kinkster.PairHardcore.LockedEmoteState, kinkster.PairPerms.AllowLockedEmoting || kinkster.PairPerms.AllowLockedSitting);
+        DrawHcRow(kinkster, dispName, width, SPPID.IndoorConfinement, kinkster.PairHardcore.IndoorConfinement, kinkster.PairPerms.AllowIndoorConfinement);
+        DrawHcRow(kinkster, dispName, width, SPPID.Imprisonment, kinkster.PairHardcore.Imprisonment, kinkster.PairPerms.AllowImprisonment);
+        DrawHcRow(kinkster, dispName, width, SPPID.ChatBoxesHidden, kinkster.PairHardcore.ChatBoxesHidden, kinkster.PairPerms.AllowHidingChatBoxes);
+        DrawHcRow(kinkster, dispName, width, SPPID.ChatInputHidden, kinkster.PairHardcore.ChatInputHidden, kinkster.PairPerms.AllowHidingChatInput);
+        DrawHcRow(kinkster, dispName, width, SPPID.ChatInputBlocked, kinkster.PairHardcore.ChatInputBlocked, kinkster.PairPerms.AllowChatInputBlocking);    }
 
     private void DrawPermRow(Kinkster kinkster, string dispName, float width, SPPID perm, bool current, bool canEdit)
         => DrawPermRowCommon(kinkster, dispName, width, perm, current, canEdit, () => !current);
@@ -174,7 +174,7 @@ public class KinksterPermsForClient{
         using var butt = ImRaii.PushColor(ImGuiCol.Button, 0);
         var data = ClientHcPermData[perm];
         var isActive = !string.IsNullOrEmpty(current);
-        var isPairlocked = GlobalPermsEx.IsDevotional(current);
+        var isPairlocked = current.EndsWith(Constants.DevotedString);
 
         var pos = ImGui.GetCursorScreenPos();
         ImGui.Dummy(new Vector2(width - (ImGui.GetFrameHeight() + ImGui.GetStyle().ItemInnerSpacing.X), ImGui.GetFrameHeight()));
@@ -199,7 +199,7 @@ public class KinksterPermsForClient{
         {
             CkGui.TextFrameAlignedInline($"{name}{data.ActionText}");
             ImGui.SameLine(0, 0);
-            CkGui.ColorTextFrameAlignedInline(isActive ? GlobalPermsEx.PermEnactor(current).AsAnonKinkster() : "ANON.KINKSTER", CkColor.VibrantPink.Uint());
+            CkGui.ColorTextFrameAlignedInline(isActive ? current.Split('|')[0].AsAnonKinkster() : "ANON.KINKSTER", CkColor.VibrantPink.Uint());
         }
         else
         {

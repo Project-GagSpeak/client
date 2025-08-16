@@ -121,20 +121,20 @@ public partial class MainHub
         return Task.CompletedTask;
     }
 
-    public Task Callback_AddPairRequest(KinksterRequestEntry dto)
+    public Task Callback_AddPairRequest(KinksterRequest dto)
     {
         Logger.LogDebug("Callback_AddPairRequest: "+dto, LoggerType.Callbacks);
-        Generic.Safe(() => _requests.AddPairRequest(dto));
+        Generic.Safe(() => _clientData.AddPairRequest(dto));
         return Task.CompletedTask;
     }
 
     /// <summary>
     /// Only recieved as a callback from the server when a request has been rejected. Timeouts should be handled on their own.
     /// </summary>
-    public Task Callback_RemovePairRequest(KinksterRequestEntry dto)
+    public Task Callback_RemovePairRequest(KinksterRequest dto)
     {
         Logger.LogDebug("Callback_RemovePairRequest: "+dto, LoggerType.Callbacks);
-        Generic.Safe(() => _requests.RemovePairRequest(dto));
+        Generic.Safe(() => _clientData.RemovePairRequest(dto));
         return Task.CompletedTask;
     }
 
@@ -222,7 +222,7 @@ public partial class MainHub
         if (dto.User.UID == UID)
         {
             Logger.LogWarning("Called Back BulkChangeGlobal that was intended for yourself!: " + dto);
-            Generic.Safe(() => _globals.SetAllGlobalPermissions(dto.NewPerms));
+            Generic.Safe(() => _clientData.ApplyBulkGlobals(dto.NewPerms));
             // handle soon.
             return Task.CompletedTask;
         }
@@ -253,15 +253,7 @@ public partial class MainHub
         if (dto.Direction is UpdateDir.Own)
         {
             Logger.LogDebug($"OWN SingleChangeGlobal: {dto}", LoggerType.Callbacks);
-            await Generic.Safe(async () =>
-            {
-                // ensure we are able to set the permission.
-                if (!_globals.SetPermissionSafe(dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value))
-                {
-                    Logger.LogWarning($"Failed to set Global Permission {dto.NewPerm.Key} to {dto.NewPerm.Value} for {dto.Enactor.AliasOrUID}");
-                    await UserChangeOwnGlobalPerm(nameof(dto.NewPerm.Key), _globals.GetCurrentValue(dto.NewPerm.Key)!);
-                }
-            });
+            Generic.Safe(() => _clientData.PerformPermissionChange(dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value));
         }
         // One of our added Kinkster's Global Permissions should be updated.
         else
@@ -552,7 +544,7 @@ public partial class MainHub
     /// <summary> Receive a Shock Instruction from another Pair. </summary>
     public Task Callback_ShockInstruction(ShockCollarAction dto)
     {
-        Generic.Safe(() => _globals.OnPiShockInstruction(dto));
+        Generic.Safe(() => _shockies.PerformShockCollarAct(dto));
         return Task.CompletedTask;
     }
 
@@ -560,52 +552,55 @@ public partial class MainHub
     public async Task Callback_HypnoticEffect(HypnoticAction dto)
     {
         Logger.LogDebug("Callback_HypnoticEffect: " + dto, LoggerType.Callbacks);
-        await Generic.Safe(async () =>
-        {
-            if (OwnGlobals.Perms is null)
-            {
-                Logger.LogWarning("OwnGlobals.Perms is null, cannot apply hypnotic effect.");
-                return;
-            }
-            // if effect could not be applied, return original.
-            if (!_globals.ApplyHypnoEffect(dto.User, dto.Duration, dto.Effect, dto.base64Image))
-            {
-                Logger.LogWarning("Unable to apply recieved hypnotic effect. Restoring permissions to other online kinksters.");
-                await UserChangeOwnGlobalPerm(nameof(GlobalPerms.HypnosisCustomEffect), OwnGlobals.Perms.HypnosisCustomEffect);
-                return;
-            }
-        });
+        Logger.LogWarning("Method still needs to be implemented for hypnotic effects! Old one is outdated!");
+        //await Generic.Safe(async () =>
+        //{
+        //    if (ClientData.Globals is null)
+        //    {
+        //        Logger.LogWarning("ClientData.Globals is null, cannot apply hypnotic effect.");
+        //        return;
+        //    }
+        //    // if effect could not be applied, return original.
+        //    if (!_globals.ApplyHypnoEffect(dto.User, dto.Duration, dto.Effect, dto.base64Image))
+        //    {
+        //        Logger.LogWarning("Unable to apply recieved hypnotic effect. Restoring permissions to other online kinksters.");
+        //        await UserChangeOwnGlobalPerm(nameof(GlobalPerms.HypnosisCustomEffect), ClientData.Globals.HypnosisCustomEffect);
+        //        return;
+        //    }
+        //});
     }
 
     public async Task Callback_ConfineToAddress(ConfineByAddress dto)
     {
         Logger.LogDebug("Callback_ConfineToAddress: " + dto, LoggerType.Callbacks);
-        await Generic.Safe(async () =>
-        {
-            if (!_globals.ConfineIndoors(dto.User, AddressBookEntry.FromTuple(dto.SpesificAddress)))
-            {
-                if (OwnGlobals.Perms is null)
-                    return;
-                Logger.LogWarning("Unable to apply recieved hypnotic effect. Restoring permissions to other online kinksters.");
-                await UserChangeOwnGlobalPerm(nameof(GlobalPerms.IndoorConfinement), OwnGlobals.Perms.IndoorConfinement);
-                return;
-            }
-        });
+        Logger.LogWarning("Method still needs to be implemented for hypnotic effects! Old one is outdated!");
+        //await Generic.Safe(async () =>
+        //{
+        //    if (!_globals.ConfineIndoors(dto.User, AddressBookEntry.FromTuple(dto.SpesificAddress)))
+        //    {
+        //        if (ClientData.Globals is null)
+        //            return;
+        //        Logger.LogWarning("Unable to apply recieved hypnotic effect. Restoring permissions to other online kinksters.");
+        //        await UserChangeOwnGlobalPerm(nameof(GlobalPerms.IndoorConfinement), ClientData.Globals.IndoorConfinement);
+        //        return;
+        //    }
+        //});
     }
 
     public async Task Callback_ImprisonAtPosition(ImprisonAtPosition dto)
     {
         Logger.LogDebug("Callback_ImprisonAtPosition: " + dto, LoggerType.Callbacks);
-        await Generic.Safe(async () =>
-        {
-            if (!_globals.Imprison(dto.User, dto.Position, dto.MaxRadiusAllowed))
-            {
-                if (OwnGlobals.Perms is null)
-                    return;
-                Logger.LogWarning("Unable to apply recieved imprisonment. Restoring permissions to other online kinksters.");
-                await UserChangeOwnGlobalPerm(nameof(GlobalPerms.Imprisonment), OwnGlobals.Perms.Imprisonment);
-            }
-        });
+        Logger.LogWarning("Method still needs to be implemented for hypnotic effects! Old one is outdated!");
+        //await Generic.Safe(async () =>
+        //{
+        //    if (!_globals.Imprison(dto.User, dto.Position, dto.MaxRadiusAllowed))
+        //    {
+        //        if (ClientData.Globals is null)
+        //            return;
+        //        Logger.LogWarning("Unable to apply recieved imprisonment. Restoring permissions to other online kinksters.");
+        //        await UserChangeOwnGlobalPerm(nameof(GlobalPerms.Imprisonment), ClientData.Globals.Imprisonment);
+        //    }
+        //});
     }
 
     /// <summary> Recieve a Kinkster's updated GagData change. </summary>
@@ -810,13 +805,13 @@ public partial class MainHub
         _hubConnection!.On(nameof(Callback_RemoveClientPair), act);
     }
 
-    public void OnAddPairRequest(Action<KinksterRequestEntry> act)
+    public void OnAddPairRequest(Action<KinksterRequest> act)
     {
         if (_apiHooksInitialized) return;
         _hubConnection!.On(nameof(Callback_AddPairRequest), act);
     }
 
-    public void OnRemovePairRequest(Action<KinksterRequestEntry> act)
+    public void OnRemovePairRequest(Action<KinksterRequest> act)
     {
         if (_apiHooksInitialized) return;
         _hubConnection!.On(nameof(Callback_RemovePairRequest), act);

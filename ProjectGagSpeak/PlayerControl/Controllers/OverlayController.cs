@@ -12,32 +12,39 @@ namespace GagSpeak.Services.Controller;
 /// </summary>
 public sealed class POVController : DisposableMediatorSubscriberBase
 {
-    private readonly OverlayCache _cache;
-    private CameraControlMode _forcedPerspective = CameraControlMode.Unknown;
-    // MARE might require this but idk.
-    // private bool _initialRedrawMade = false;
+    private readonly PlayerControlCache _cache;
+
+    private CameraControlMode _perspective = CameraControlMode.Unknown;
 
     public POVController(ILogger<POVController> logger, GagspeakMediator mediator, 
-        OverlayCache cache) : base(logger, mediator)
+        PlayerControlCache cache) : base(logger, mediator)
     {
         _cache = cache;
-        Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => UpdatePerspective());
+
+        Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreState());
+        Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => OnUpdate());
     }
 
-    public bool ShouldControlCamera => _cache.ShouldBeFirstPerson;
+    private void UpdateHardcoreState()
+    {
+        // update local perspective to match if different.
+        var cachePerspective = _cache.GetPerspectiveToLock();
+        if (_perspective != cachePerspective)
+            _perspective = cachePerspective;
+    }
 
-    private unsafe void UpdatePerspective()
+    private unsafe void OnUpdate()
     {
         if (!Svc.ClientState.IsLoggedIn)
             return;
 
         // If the forced perspective is not set, we can skip this.
-        if (_forcedPerspective is CameraControlMode.Unknown)
+        if (_perspective is CameraControlMode.Unknown)
             return;
 
         // Set the mode if it is not equal to the perspective we need to have.
-        if (AddonCameraManager.IsActiveCameraValid && AddonCameraManager.ActiveMode != _forcedPerspective)
-            AddonCameraManager.SetMode(_forcedPerspective);
+        if (AddonCameraManager.IsActiveCameraValid && AddonCameraManager.ActiveMode != _perspective)
+            SetCameraPerspective(_perspective);
     }
 
     /// <summary>

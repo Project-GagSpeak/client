@@ -2,30 +2,47 @@ using CkCommons;
 using Dalamud.Game.ClientState.Objects.Enums;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using GagSpeak.PlayerControl;
+using GagSpeak.State;
 namespace GagSpeak;
 
-public static unsafe class HcStayMain
+public static unsafe class HcApproachNearestHousing
 {
-    public static void EnqueueAsTask(HcTaskManager taskManager)
+    public static void EnqueueAsOperation(HcTaskManager taskManager)
     {
-        taskManager.EnqueueTask(HcCommonTasks.WaitForPlayerLoading());
-        taskManager.EnqueueTask(TargetNearestHousingNode, "Target Nearest Housing Entrance");
+        taskManager.BeginStack("Approach And Enter Nearest Housing Entrance", 
+            new HcTaskConfiguration(HcTaskControl.LockThirdPerson | HcTaskControl.BlockMovementKeys));
+        AddTaskSequenceToStack(taskManager);
+        // enqueue the stack.
+        taskManager.EnqueueStack();
+    }
+
+    public static void AddTaskSequenceToStack(HcTaskManager taskManager)
+    {
+        taskManager.AddToStack(HcCommonTaskFuncs.WaitForPlayerLoading);
+        taskManager.AddToStack(TargetNearestHousingNode);
         // get the correct distance.
-        var tName = Svc.Targets.Target?.Name.ToString() ?? string.Empty;
-        var isApartment = NodeStringLang.EnterApartment.Any(n => n.Equals(tName, StringComparison.OrdinalIgnoreCase));
-        var distThreshold = isApartment ? 3.5f : 2.75f;
+        string tName = string.Empty;
+        bool isApartment = false;
+        float distThreshold = 0.0f;
+        taskManager.AddToStack(() =>
+        {
+            tName = Svc.Targets.Target?.Name.ToString() ?? string.Empty;
+            isApartment = NodeStringLang.EnterApartment.Any(n => n.Equals(tName, StringComparison.OrdinalIgnoreCase));
+            distThreshold = isApartment ? 3.5f : 2.75f;
+            return string.IsNullOrEmpty(tName);
+        });
         // approach the node.
-        taskManager.EnqueueTask(HcCommonTasks.ApproachNode(() => Svc.Targets.Target!, distThreshold));
-        
+        taskManager.AddToStack(() => HcCommonTaskFuncs.ApproachNode(() => Svc.Targets.Target!, distThreshold));
         // if an appartment, enqueue the apartment.
         if (isApartment)
         {
-            HcStayApartment.EnqueueAsTask(taskManager);
+            taskManager.AddToStack(HcStayApartment.InteractWithApartmentEntrance);
+            taskManager.AddToStack(HcStayApartment.SelectGoToSpecifiedApartment);
         }
         else
         {
-            taskManager.EnqueueTask(InteractWithHousingEntrance);
-            taskManager.EnqueueTask(HcStayHousingEntrance.ConfirmHouseEntranceAndEnter);
+            taskManager.AddToStack(InteractWithHousingEntrance);
+            taskManager.AddToStack(HcStayHousingEntrance.ConfirmHouseEntranceAndEnter);
         }
     }
 

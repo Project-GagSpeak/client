@@ -41,14 +41,14 @@ public class TriggerHandler
 
     public bool PotentialGlobalTriggerMsg(string senderName, string senderWorld, InputChannel channel, SeString msg)
     {
-        if (OwnGlobals.Perms is not { } globals)
+        if (ClientData.Globals is not { } globals)
             return false;
 
         // Check for Global Triggers first.
         var globalTriggers = globals.TriggerPhrase.Split('|').ToList();
         if (IsValidTriggerWord(globalTriggers, msg, out var globalMatch))
         {
-            ExecuteTrigger(globalMatch, msg, OwnGlobals.Perms.PuppetPerms, _aliases.GlobalAliasStorage, ActionSource.GlobalAlias, MainHub.UID);
+            ExecuteTrigger(globalMatch, msg, ClientData.Globals.PuppetPerms, _aliases.GlobalAliasStorage, ActionSource.GlobalAlias, MainHub.UID);
             return true;
         }
         return false;

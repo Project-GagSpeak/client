@@ -5,21 +5,29 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 using GagSpeak.Game.Readers;
 using GagSpeak.GameInternals.Detours;
 using GagSpeak.PlayerControl;
+using GagSpeak.State;
 namespace GagSpeak;
 
 public static unsafe class HcStayApartment
 {
-    public static void EnqueueAsTask(HcTaskManager taskManager)
+    public static void EnqueueAsOperation(HcTaskManager taskManager)
     {
-        taskManager.EnqueueTask(HcTaskUtils.IsScreenReady, "Wait for loading to finish");
-        taskManager.EnqueueTask(TargetApartmentEntrance);
-        taskManager.EnqueueTask(HcTaskUtils.LockOnToTarget);
-        taskManager.EnqueueTask(HcTaskUtils.EnableAutoMove);
-        taskManager.EnqueueTask(() => Vector3.Distance(PlayerData.Object.Position, Svc.Targets.Target?.Position ?? Vector3.Zero) < 3.5f, "Reach Apartment Entrance");
-        taskManager.EnqueueTask(HcTaskUtils.DisableAutoMove);
-        taskManager.EnqueueTask(InteractWithApartmentEntrance);
-
+        taskManager.BeginStack("HcStayApartment", new HcTaskConfiguration(HcTaskControl.LockThirdPerson | HcTaskControl.BlockMovementKeys));
+        AddTaskSequenceToStack(taskManager);
+        taskManager.EnqueueStack();
     }
+
+    public static void AddTaskSequenceToStack(HcTaskManager taskManager)
+    {
+        taskManager.AddToStack(HcTaskUtils.IsScreenReady);
+        taskManager.AddToStack(TargetApartmentEntrance);
+        taskManager.AddToStack(HcTaskUtils.LockOnToTarget);
+        taskManager.AddToStack(HcTaskUtils.EnableAutoMove);
+        taskManager.AddToStack(() => Vector3.Distance(PlayerData.Object.Position, Svc.Targets.Target?.Position ?? Vector3.Zero) < 3.5f);
+        taskManager.AddToStack(HcTaskUtils.DisableAutoMove);
+        taskManager.AddToStack(InteractWithApartmentEntrance);
+    }
+
     /// <summary> Identifies the Apartment Entrance node by ID, and targets it. </summary>
     public static bool TargetApartmentEntrance()
     {

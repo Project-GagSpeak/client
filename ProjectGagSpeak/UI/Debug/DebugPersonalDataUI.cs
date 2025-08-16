@@ -138,6 +138,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawPairPerms("Own Pair Perms for " + pair.UserData.UID, pair.OwnPerms);
         DrawPairPermAccess("Own Pair Perm Access for " + pair.UserData.UID, pair.OwnPermAccess);
         DrawGlobalPermissions(pair.UserData.UID + "'s Global Perms", pair.PairGlobals);
+        DrawHardcoreState(pair.UserData.UID + "'s Hardcore State", pair.PairHardcore);
         DrawPairPerms(pair.UserData.UID + "'s Pair Perms for you.", pair.PairPerms);
         DrawPairPermAccess(pair.UserData.UID + "'s Pair Perm Access for you", pair.PairPermAccess);
         DrawPairIpcData(pair.UserData.UID, pair.LastIpcData);
@@ -154,7 +155,8 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 
     private void DrawPlayerCharacterDebug()
     {
-        DrawGlobalPermissions("Player", OwnGlobals.Perms ?? new GlobalPerms());
+        DrawGlobalPermissions("Player", ClientData.Globals ?? new GlobalPerms());
+        DrawHardcoreState("Player", ClientData.Hardcore ?? new HardcoreState());
         DrawGagData("Player", _gags.ServerGagData ?? new CharaActiveGags());
         DrawRestrictions("Player", _restrictions.ServerRestrictionData ?? new CharaActiveRestrictions());
         DrawRestraint("Player", _restraints.ServerData ?? new CharaActiveRestraint());
@@ -231,17 +233,6 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
             DrawPermissionRowBool("Spatial Vibrator Audio", perms.SpatialAudio);
 
             ImGui.TableNextRow();
-            DrawPermissionRowString("ActiveHypnosisEffect", perms.HypnosisCustomEffect);
-
-            ImGui.TableNextRow();
-            DrawPermissionRowString("Forced Follow", perms.LockedFollowing);
-            DrawPermissionRowString("Forced Emote State", perms.LockedEmoteState);
-            DrawPermissionRowString("Forced Stay", perms.IndoorConfinement);
-            DrawPermissionRowString("Chat Boxes Hidden", perms.ChatBoxesHidden);
-            DrawPermissionRowString("Chat Input Hiddeen", perms.ChatInputHidden);
-            DrawPermissionRowString("Chat Input Blocked", perms.ChatInputBlocked);
-
-            ImGui.TableNextRow();
             DrawPermissionRowString("Shock Collar Code", perms.GlobalShockShareCode);
             DrawPermissionRowBool("Allow Shocks ", perms.AllowShocks);
             DrawPermissionRowBool("Allow Vibrations", perms.AllowVibrations);
@@ -252,6 +243,73 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         catch (Bagagwa e)
         {
             _logger.LogError($"Error while drawing global permissions for {uid}: {e.Message}");
+        }
+    }
+
+    private void DrawHardcoreState(string uid, IReadOnlyHardcoreState perms)
+    {
+        using var nodeMain = ImRaii.TreeNode(uid + " Hardcore State");
+        if (!nodeMain) return;
+
+        try
+        {
+            using var table = ImRaii.Table("##debug-hardcore" + uid, 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit);
+            if (!table) return;
+            ImGui.TableSetupColumn("Permission");
+            ImGui.TableSetupColumn("Value");
+            ImGui.TableHeadersRow();
+
+            DrawPermissionRowString("Forced Follow", perms.LockedFollowing);
+            ImGui.TableNextRow();
+
+            DrawPermissionRowString("Forced Emote State", perms.LockedEmoteState);
+            DrawPermissionRowString("Emote time left:", perms.EmoteExpireTime != DateTimeOffset.MinValue
+                ? (perms.EmoteExpireTime - DateTime.UtcNow).ToString(@"hh\:mm\:ss") : "No Timer Set!");
+            DrawPermissionRowString("Emote ID", perms.EmoteId.ToString());
+            DrawPermissionRowString("Emote Cycle Pose", perms.EmoteCyclePose.ToString());
+            ImGui.TableNextRow();
+            
+            DrawPermissionRowString("Indoor Confinement", perms.IndoorConfinement);
+            DrawPermissionRowString("Confinement time left:", perms.ConfinementTimer != DateTimeOffset.MinValue
+                ? (perms.ConfinementTimer - DateTime.UtcNow).ToString(@"hh\:mm\:ss") : "No Timer Set!");
+            DrawPermissionRowString("Confined World", perms.ConfinedWorld.ToString());
+            DrawPermissionRowString("Confined City", perms.ConfinedCity.ToString());
+            DrawPermissionRowString("Confined Ward", perms.ConfinedWard.ToString());
+            DrawPermissionRowString("Confined House ID", perms.ConfinedPlaceId.ToString());
+            DrawPermissionRowBool("Confined In Apartment", perms.ConfinedInApartment);
+            DrawPermissionRowBool("Confined In Subdivision", perms.ConfinedInSubdivision);
+            ImGui.TableNextRow(); 
+
+            DrawPermissionRowString("Imprisonment", perms.Imprisonment);
+            DrawPermissionRowString("Imprisonment time left:", perms.ImprisonmentTimer != DateTimeOffset.MinValue
+                ? (perms.ImprisonmentTimer - DateTime.UtcNow).ToString(@"hh\:mm\:ss") : "No Timer Set!");
+            DrawPermissionRowString("Imprisoned Territory ID", perms.ImprisonedTerritory.ToString());
+            DrawPermissionRowString("Imprisoned Freedom Distance", perms.ImprisonedRadius.ToString());
+            ImGui.TableNextRow();
+
+            DrawPermissionRowString("Chat Boxes Hidden", perms.ChatBoxesHidden);
+            DrawPermissionRowString("HiddenChatBox time left:", perms.ChatBoxesHiddenTimer != DateTimeOffset.MinValue
+                ? (perms.ChatBoxesHiddenTimer - DateTime.UtcNow).ToString(@"hh\:mm\:ss") : "No Timer Set!");
+            ImGui.TableNextRow(); 
+            
+            DrawPermissionRowString("Chat Input Hiddeen", perms.ChatInputHidden);
+            DrawPermissionRowString("HiddenInput time left:", perms.ChatInputHiddenTimer != DateTimeOffset.MinValue
+                ? (perms.ChatInputHiddenTimer - DateTime.UtcNow).ToString(@"hh\:mm\:ss") : "No Timer Set!");
+            ImGui.TableNextRow(); 
+            
+            DrawPermissionRowString("Chat Input Blocked", perms.ChatInputBlocked);
+            DrawPermissionRowString("BlockedInput time left:", perms.ChatInputBlockedTimer != DateTimeOffset.MinValue
+                ? (perms.ChatInputBlockedTimer - DateTime.UtcNow).ToString(@"hh\:mm\:ss") : "No Timer Set!");
+            ImGui.TableNextRow(); 
+            
+            DrawPermissionRowString("ActiveHypnosisEffect", perms.HypnoticEffect);
+            DrawPermissionRowString("Hypnosis time left:", perms.HypnoticEffectTimer != DateTimeOffset.MinValue
+                ? (perms.HypnoticEffectTimer - DateTime.UtcNow).ToString(@"hh\:mm\:ss") : "No Timer Set!");
+
+        }
+        catch (Bagagwa e)
+        {
+            _logger.LogError($"Summoned bagagwa while drawing hardcore state for {uid}: {e.Message}");
         }
     }
 

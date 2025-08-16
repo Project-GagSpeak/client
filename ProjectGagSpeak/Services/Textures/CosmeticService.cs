@@ -104,7 +104,7 @@ public class CosmeticService : IHostedService, IDisposable
         return false;
     }
 
-    public (IDalamudTextureWrap? SupporterWrap, string Tooltip) GetSupporterInfo(UserData userData)
+    public static (IDalamudTextureWrap? SupporterWrap, string Tooltip) GetSupporterInfo(UserData userData)
     {
         IDalamudTextureWrap? supporterWrap = null;
         var tooltipString = string.Empty;

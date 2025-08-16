@@ -1,9 +1,12 @@
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
+using FFXIVClientStructs.FFXIV.Client.UI;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 using GagSpeak.PlayerClient;
 using GagSpeak.PlayerControl;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State;
+using GagSpeak.State.Caches;
 namespace GagSpeak.Services.Controller;
 
 /// <summary>
@@ -14,38 +17,78 @@ namespace GagSpeak.Services.Controller;
 /// </summary>
 public sealed class AutoPromptController : DisposableMediatorSubscriberBase
 {
-    private readonly MainConfig _config;
-    private readonly KeystateController _keyController;
-    private readonly MovementController _moveController;
-    private readonly HcTaskManager _hcTaskManager;
+    private readonly PlayerControlCache _cache;
 
-    // Dictates controlling the player's AutoPrompt selecting.
-    private PlayerControlSource _sources = PlayerControlSource.None;
-
+    private bool _promptsEnabled = false;
     public AutoPromptController(ILogger<AutoPromptController> logger, GagspeakMediator mediator,
-        MainConfig mainConfig, KeystateController keyCtrl, MovementController moveCtrl, 
-        HcTaskManager hardcoreTaskManager) : base(logger, mediator)
+        PlayerControlCache cache) : base(logger, mediator)
     {
-        _config = mainConfig;
-        _keyController = keyCtrl;
-        _moveController = moveCtrl;
-        _hcTaskManager = hardcoreTaskManager;
+        _cache = cache;
+
+        EnableListeners();
+
+        Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreState());
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        DisableListeners();
+    }
+
+    private void UpdateHardcoreState()
+    {
+        // always enable right now for debug purposes.
+        return;
+
+        if (_cache.DoAutoPrompts && !_promptsEnabled)
+            EnableListeners();
+
+        else if (!_cache.DoAutoPrompts && _promptsEnabled)
+            DisableListeners();
+    }
+
+    private void EnableListeners()
+    {
+        if (_promptsEnabled)
+            return;
 
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnYesNoSetup);
-
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectString", OnStringSetup);
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "SelectString", OnStringFinalize);
-
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "HousingSelectRoom", OnRoomSetup);
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "HousingSelectRoom", OnRoomFinalize);
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "MansionSelectRoom", OnApartmentSetup);
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "MansionSelectRoom", OnApartmentFinalize);
-        Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
+        _promptsEnabled = true;
     }
 
-    private void OnYesNoSetup(AddonEvent eventType, AddonArgs addonInfo)
+    private void DisableListeners()
     {
-        Logger.LogTrace("I'm Now in the YesNo Setup!");
+        if (!_promptsEnabled)
+            return;
+        Svc.AddonLifecycle.UnregisterListener(OnYesNoSetup);
+        Svc.AddonLifecycle.UnregisterListener(OnStringSetup);
+        Svc.AddonLifecycle.UnregisterListener(OnStringFinalize);
+        Svc.AddonLifecycle.UnregisterListener(OnRoomSetup);
+        Svc.AddonLifecycle.UnregisterListener(OnRoomFinalize);
+        Svc.AddonLifecycle.UnregisterListener(OnApartmentSetup);
+        Svc.AddonLifecycle.UnregisterListener(OnApartmentFinalize);
+        _promptsEnabled = false;
+    }
+
+    private unsafe void OnYesNoSetup(AddonEvent eventType, AddonArgs addonInfo)
+    {
+        var stuff = (AddonSelectYesno*)addonInfo.Addon.Address;
+        var moreStuff = stuff->NameString;
+        var moreId = stuff->Id;
+
+        Logger.LogInformation($"YesNo Setup for {moreStuff} (ID: {moreId})");
+        Logger.LogInformation($"Text: {stuff->PromptText->NodeText}");
+        Logger.LogInformation($"Yes: {stuff->YesButton->ButtonTextNode->NodeText}");
+        Logger.LogInformation($"No: {stuff->NoButton->ButtonTextNode->NodeText}");
+        Logger.LogInformation($"Target ID: {Svc.Targets.Target?.DataId.ToString() ?? "UNK"}");
+
     }
 
     private void OnStringSetup(AddonEvent eventType, AddonArgs addonInfo)
@@ -77,29 +120,4 @@ public sealed class AutoPromptController : DisposableMediatorSubscriberBase
     {
         Logger.LogTrace("I'm Now in the Apartment Finalize!");
     }
-
-    public PlayerControlSource Sources => _sources;
-
-    protected override void Dispose(bool disposing)
-    {
-        base.Dispose(disposing);
-        Svc.AddonLifecycle.UnregisterListener(OnYesNoSetup);
-        Svc.AddonLifecycle.UnregisterListener(OnStringSetup);
-        Svc.AddonLifecycle.UnregisterListener(OnStringFinalize);
-        Svc.AddonLifecycle.UnregisterListener(OnRoomSetup);
-        Svc.AddonLifecycle.UnregisterListener(OnRoomFinalize);
-        Svc.AddonLifecycle.UnregisterListener(OnApartmentSetup);
-        Svc.AddonLifecycle.UnregisterListener(OnApartmentFinalize);
-    }
-    private unsafe void FrameworkUpdate()
-    {
-        // bagagwa
-    }
-
-    // likely not a reliable way to handle this!
-    public void AddControlSources(PlayerControlSource sources)
-        => _sources |= sources;
-
-    public void RemoveControlSources(PlayerControlSource sources)
-        => _sources &= ~sources;
 }

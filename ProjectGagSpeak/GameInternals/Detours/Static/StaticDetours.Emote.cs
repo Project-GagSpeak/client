@@ -5,6 +5,7 @@ using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 
 namespace GagSpeak.GameInternals.Detours;
@@ -58,14 +59,14 @@ public partial class StaticDetours
         Logger.LogTrace("OnExecuteEmote >> Emote [" + EmoteService.EmoteName(emoteId) + "](ID:"+emoteId+") requested to be Executed", LoggerType.EmoteMonitor);
             
         // Block all emotes if forced to follow
-        if(OwnGlobals.Perms?.HcFollowState() ?? false)
+        if(ClientData.Hardcore.IsEnabled(HcAttribute.Follow))
             return;
 
         // If we are forced to emote, then we should prevent execution unless NextEmoteAllowed is true.
-        if (OwnGlobals.Perms?.HcEmoteState() ?? false)
+        if (ClientData.Hardcore is { } hc && hc.IsEnabled(HcAttribute.EmoteState))
         {
             // if our current emote state is any sitting pose and we are attempting to perform yes or no, allow it.
-            if (OwnGlobals.LockedEmoteState.EmoteID is 50 or 52 && emoteId is 42 or 24)
+            if (hc.EmoteId is 50 or 52 && emoteId is 42 or 24)
             {
                 Logger.LogDebug($"Allowing Emote Execution for [{EmoteService.EmoteName(emoteId)} ({emoteId})]", LoggerType.EmoteMonitor);
             }

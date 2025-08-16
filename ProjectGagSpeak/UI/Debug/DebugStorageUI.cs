@@ -23,7 +23,7 @@ namespace GagSpeak.Gui;
 
 public class DebugStorageUI : WindowMediatorSubscriberBase
 {
-    private readonly KinksterRequests _kinksterRequests;
+    private readonly ClientData _clientData;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
@@ -41,7 +41,7 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
     public DebugStorageUI(
         ILogger<DebugStorageUI> logger,
         GagspeakMediator mediator,
-        KinksterRequests kinksterRequests,
+        ClientData clientData,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
@@ -58,7 +58,7 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
         ModPresetDrawer modPresetDrawer)
         : base(logger, mediator, "Debugger for Storages")
     {
-        _kinksterRequests = kinksterRequests;
+        _clientData = clientData;
         _gags = gags;
         _restrictions = restrictions;
         _restraints = restraints;
@@ -126,17 +126,17 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
     {
         if (!ImGui.CollapsingHeader("Player Global Data"))
             return;
-        using (var node = ImRaii.TreeNode("Incoming Pair Requests##0"))
+        using (var node = ImRaii.TreeNode("Incoming Kinkster Requests"))
             if (node)
             {
-                ImGui.TextUnformatted("Incoming Requests:");
+                ImGui.TextUnformatted("Incoming Kinkster Requests:");
                 using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
                 {
-                    ImGuiUtil.DrawTableColumn("User");
-                    ImGuiUtil.DrawTableColumn("RecipientUser");
+                    ImGuiUtil.DrawTableColumn("Kinkster");
+                    ImGuiUtil.DrawTableColumn("RecipientKinkster");
                     ImGuiUtil.DrawTableColumn("AttachedMessage");
                     ImGuiUtil.DrawTableColumn("CreationTime");
-                    foreach (var req in _kinksterRequests.IncomingRequests)
+                    foreach (var req in _clientData.IncomingKinksterRequests)
                     {
                         ImGui.TableNextRow();
                         ImGuiUtil.DrawTableColumn(req.User.UID.ToString());
@@ -147,17 +147,17 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
                 }
                 ImGui.Spacing();
             }
-        using (var node = ImRaii.TreeNode("Outgoing Pair Requests##1"))
+        using (var node = ImRaii.TreeNode("Outgoing Kinkster Requests"))
             if (node)
             {
-                ImGui.TextUnformatted("Outgoing Requests:");
+                ImGui.TextUnformatted("Outgoing Kinkster Requests:");
                 using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
                 {
-                    ImGuiUtil.DrawTableColumn("User");
-                    ImGuiUtil.DrawTableColumn("RecipientUser");
+                    ImGuiUtil.DrawTableColumn("Kinkster");
+                    ImGuiUtil.DrawTableColumn("RecipientKinkster");
                     ImGuiUtil.DrawTableColumn("AttachedMessage");
                     ImGuiUtil.DrawTableColumn("CreationTime");
-                    foreach (var req in _kinksterRequests.OutgoingRequests)
+                    foreach (var req in _clientData.OutgoingKinksterRequests)
                     {
                         ImGui.TableNextRow();
                         ImGuiUtil.DrawTableColumn(req.User.UID.ToString());
@@ -167,99 +167,89 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
                     }
                 }
             }
-        using (var node = ImRaii.TreeNode("Global Permissions##2"))
+        using (var node = ImRaii.TreeNode("Global Permissions"))
             if (node)
             {
-                ImGui.TextUnformatted("Global Permissions:");
-                using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+                if (ClientData.Globals is not { } g)
                 {
-                    ImGuiUtil.DrawTableColumn("AllowedGarblerChannels:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms!.AllowedGarblerChannels.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("ChatGarblerActive:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.ChatGarblerActive.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("ChatGarblerLocked:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.ChatGarblerLocked.ToString());
-                    ImGui.TableNextRow();
+                    CkGui.ColorText("Global Permissions are null!", ImGuiColors.DalamudRed);
+                }
+                else
+                {
+                    ImGui.TextUnformatted("Global Permissions:");
+                    using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+                    {
+                        ImGuiUtil.DrawTableColumn("AllowedGarblerChannels:");
+                        ImGuiUtil.DrawTableColumn(g.AllowedGarblerChannels.ToString());
+                        ImGui.TableNextRow();
+                        ImGuiUtil.DrawTableColumn("ChatGarblerActive:");
+                        ImGuiUtil.DrawTableColumn(g.ChatGarblerActive.ToString());
+                        ImGui.TableNextRow();
+                        ImGuiUtil.DrawTableColumn("ChatGarblerLocked:");
+                        ImGuiUtil.DrawTableColumn(g.ChatGarblerLocked.ToString());
+                        ImGui.TableNextRow();
+                        ImGuiUtil.DrawTableColumn("GaggedNameplate:");
+                        ImGuiUtil.DrawTableColumn(g.GaggedNameplate.ToString());
+                        ImGui.TableNextRow();
 
-                    // wardrobe global modifiable permissions
-                    ImGuiUtil.DrawTableColumn("WardrobeEnabled:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.WardrobeEnabled.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("GagVisuals:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.GagVisuals.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("RestrictionVisuals:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.RestrictionVisuals.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("RestraintSetVisuals:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.RestraintSetVisuals.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("PuppeteerEnabled:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.PuppeteerEnabled.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("TriggerPhrase:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.TriggerPhrase.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("PuppetPerms:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.PuppetPerms.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("ToyboxEnabled:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.ToyboxEnabled.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("ToysInteractable:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.ToysAreInteractable.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("InVibeRoom:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.InVibeRoom.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("SpatialAudio:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.SpatialAudio.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("LockedFollowing:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.LockedFollowing.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("LockedEmoteState:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.LockedEmoteState.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("ForcedStay:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.IndoorConfinement.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("ChatBoxesHidden:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.ChatBoxesHidden.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("ChatInputHidden:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.ChatInputHidden.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("ChatInputBlocked:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.ChatInputBlocked.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("GlobalShockShareCode:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.GlobalShockShareCode.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("AllowShocks:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.AllowShocks.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("AllowVibrations:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.AllowVibrations.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("AllowBeeps:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.AllowBeeps.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("MaxIntensity:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.MaxIntensity.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("MaxDuration:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.MaxDuration.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("ShockVibrateDuration:");
-                    ImGuiUtil.DrawTableColumn(OwnGlobals.Perms.ShockVibrateDuration.ToString());
-                    ImGui.TableNextRow();
-                    ImGuiUtil.DrawTableColumn("User");
-                    ImGuiUtil.DrawTableColumn("RecipientUser");
-                    ImGuiUtil.DrawTableColumn("AttachedMessage");
-                    ImGuiUtil.DrawTableColumn("CreationTime");
+                        ImGuiUtil.DrawTableColumn("WardrobeEnabled:");
+                        ImGuiUtil.DrawTableColumn(g.WardrobeEnabled.ToString());
+                        ImGui.TableNextRow();
+                        ImGuiUtil.DrawTableColumn("GagVisuals:");
+                        ImGuiUtil.DrawTableColumn(g.GagVisuals.ToString());
+                        ImGui.TableNextRow();
+                        ImGuiUtil.DrawTableColumn("RestrictionVisuals:");
+                        ImGuiUtil.DrawTableColumn(g.RestrictionVisuals.ToString());
+                        ImGui.TableNextRow();
+                        ImGuiUtil.DrawTableColumn("RestraintSetVisuals:");
+                        ImGuiUtil.DrawTableColumn(g.RestraintSetVisuals.ToString());
+                        ImGui.TableNextRow();
+
+                        ImGuiUtil.DrawTableColumn("PuppeteerEnabled:");
+                        ImGuiUtil.DrawTableColumn(g.PuppeteerEnabled.ToString());
+                        ImGui.TableNextRow();
+                        ImGuiUtil.DrawTableColumn("TriggerPhrase:");
+                        ImGuiUtil.DrawTableColumn(g.TriggerPhrase.ToString());
+                        ImGui.TableNextRow();
+                        ImGuiUtil.DrawTableColumn("PuppetPerms:");
+                        ImGuiUtil.DrawTableColumn(g.PuppetPerms.ToString());
+                        ImGui.TableNextRow();
+
+                        ImGuiUtil.DrawTableColumn("ToyboxEnabled:");
+                        ImGuiUtil.DrawTableColumn(g.ToyboxEnabled.ToString());
+                        ImGui.TableNextRow();
+                        ImGuiUtil.DrawTableColumn("ToysInteractable:");
+                        ImGuiUtil.DrawTableColumn(g.ToysAreInteractable.ToString());
+                        ImGui.TableNextRow();
+                        ImGuiUtil.DrawTableColumn("InVibeRoom:");
+                        ImGuiUtil.DrawTableColumn(g.InVibeRoom.ToString());
+                        ImGui.TableNextRow();
+                        ImGuiUtil.DrawTableColumn("SpatialAudio:");
+                        ImGuiUtil.DrawTableColumn(g.SpatialAudio.ToString());
+                        ImGui.TableNextRow();
+
+                        ImGuiUtil.DrawTableColumn("GlobalShockShareCode:");
+                        ImGuiUtil.DrawTableColumn(g.GlobalShockShareCode.ToString());
+                        ImGui.TableNextRow();
+                        ImGuiUtil.DrawTableColumn("AllowShocks:");
+                        ImGuiUtil.DrawTableColumn(g.AllowShocks.ToString());
+                        ImGui.TableNextRow();
+                        ImGuiUtil.DrawTableColumn("AllowVibrations:");
+                        ImGuiUtil.DrawTableColumn(g.AllowVibrations.ToString());
+                        ImGui.TableNextRow();
+                        ImGuiUtil.DrawTableColumn("AllowBeeps:");
+                        ImGuiUtil.DrawTableColumn(g.AllowBeeps.ToString());
+                        ImGui.TableNextRow();
+                        ImGuiUtil.DrawTableColumn("MaxIntensity:");
+                        ImGuiUtil.DrawTableColumn(g.MaxIntensity.ToString());
+                        ImGui.TableNextRow();
+                        ImGuiUtil.DrawTableColumn("MaxDuration:");
+                        ImGuiUtil.DrawTableColumn(g.MaxDuration.ToString());
+                        ImGui.TableNextRow();
+                        ImGuiUtil.DrawTableColumn("ShockVibrateDuration:");
+                        ImGuiUtil.DrawTableColumn(g.ShockVibrateDuration.ToString());
+                        ImGui.TableNextRow();
+                    }
                 }
             }
     }

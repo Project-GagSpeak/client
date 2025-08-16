@@ -22,12 +22,13 @@ public class VibeRoomChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscrib
     private readonly ILogger<VibeRoomChatlog> _logger;
     private readonly MainHub _hub;
     private readonly MainConfig _config;
+    private readonly ClientData _clientData;
     private readonly GagRestrictionManager _gags;
     private readonly VibeLobbyManager _lobbyManager;
     private readonly MufflerService _garbler;
 
     public VibeRoomChatlog(ILogger<VibeRoomChatlog> logger, GagspeakMediator mediator,
-        MainHub hub, MainConfig config, OwnGlobals globals, GagRestrictionManager gags,
+        MainHub hub, MainConfig config, ClientData clientData, GagRestrictionManager gags,
         VibeLobbyManager lobbyManager, MufflerService garbler) 
         : base(0, "VibeRoom Chat", 1000)
     {
@@ -35,6 +36,7 @@ public class VibeRoomChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscrib
         Mediator = mediator;
         _hub = hub;
         _config = config;
+        _clientData = clientData;
         _gags = gags;
         _lobbyManager = lobbyManager;
         _garbler = garbler;
@@ -137,8 +139,8 @@ public class VibeRoomChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscrib
         CkGui.AttachToolTip($"Toggles AutoScroll (Current: {(DoAutoScroll ? "Enabled" : "Disabled")})");
     }
 
-    // Do nuffin.
-    protected override void OnMiddleClick(GagSpeakChatMessage message) { }
+    protected override void OnMiddleClick(GagSpeakChatMessage message)
+    { }
 
     protected override void OnSendMessage(string message)
     {
@@ -147,7 +149,7 @@ public class VibeRoomChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscrib
             return;
 
         // Process message if gagged
-        if ((_gags.ServerGagData?.IsGagged() ?? true) && (OwnGlobals.Perms?.ChatGarblerActive ?? false))
+        if ((_gags.ServerGagData?.IsGagged() ?? false) && (ClientData.Globals?.ChatGarblerActive ?? false))
             previewMessage = _garbler.ProcessMessage(previewMessage);
 
         // Send message to the server

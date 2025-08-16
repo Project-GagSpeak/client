@@ -98,7 +98,7 @@ public class KinksterSearchList
         // Draw the tier icon if applicable.
         DrawTierIcon(pair);
         // Draw the name and online status.
-        _nameHandle.DrawPairText(pair.UserData.UID, pair, 0f, () => width - ImGui.GetFrameHeight() - 20f, true, true);
+        _nameHandle.DrawPairText(pair.UserData.UID, pair, 0f, () => width - ImGui.GetFrameHeight() - 20f);
     }
 
     protected void DrawTierIcon(Kinkster pair)
@@ -106,7 +106,7 @@ public class KinksterSearchList
         if (pair.UserData.Tier is CkSupporterTier.NoRole)
             return;
 
-        var img = _cosmetics.GetSupporterInfo(pair.UserData);
+        var img = CosmeticService.GetSupporterInfo(pair.UserData);
         if (img.SupporterWrap is { } wrap)
         {
             ImGui.Image(wrap.Handle, new Vector2(ImGui.GetFrameHeight()));

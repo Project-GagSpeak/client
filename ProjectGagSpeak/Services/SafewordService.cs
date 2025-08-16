@@ -20,9 +20,8 @@ namespace GagSpeak.Services;
 public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
 {
     private readonly MainHub _hub;
-    private readonly OwnGlobals _globals;
-    private readonly OwnGlobalsListener _globalsListener;
-    private readonly HardcoreHandler _hcHandler;
+    private readonly ClientData _clientData;
+    private readonly PlayerControlHandler _playerControl;
     private readonly CacheStateManager _visualCacheManager;
     private readonly KinksterManager _kinksters;
     private readonly PatternManager _patterns;
@@ -39,16 +38,15 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
     private DateTime _lastHcSafewordTime = DateTime.MinValue;
 
     public SafewordService(ILogger<SafewordService> logger, GagspeakMediator mediator,
-        MainHub hub, OwnGlobals globals, OwnGlobalsListener globalsListener,
-        HardcoreHandler hcHandler, CacheStateManager visualManager, KinksterManager kinksters, 
-        PatternManager patterns, AlarmManager alarms, TriggerManager triggers, 
-        BuzzToyManager toys, AchievementEventHandler achievements)
+        MainHub hub, ClientData clientData, PlayerControlHandler playerControl,
+        CacheStateManager visualManager, KinksterManager kinksters, PatternManager patterns, 
+        AlarmManager alarms, TriggerManager triggers, BuzzToyManager toys, 
+        AchievementEventHandler achievements)
         : base(logger, mediator)
     {
         _hub = hub;
-        _globals = globals;
-        _globalsListener = globalsListener;
-        _hcHandler = hcHandler;
+        _clientData = clientData;
+        _playerControl = playerControl;
         _visualCacheManager = visualManager;
         _kinksters = kinksters;
         _patterns = patterns;
@@ -115,46 +113,34 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
         _toys.SafewordUsed(); // might need to do something to prevent this from calling a toyschanged update or whatever.
 
         // Now we need to disable all global permissions in relation to our safeword that help prevent further abuse by others.
-        var previousGlobals = OwnGlobals.Perms;
-        var newGlobals = OwnGlobals.CurrentPermsWith((current) =>
+        if (ClientData.Globals is { } g)
         {
-            current.ChatGarblerActive = false;
-            current.ChatGarblerLocked = false;
-            current.GaggedNameplate = false;
+            var newGlobals = (GlobalPerms)g with
+            {
+                ChatGarblerActive = false,
+                ChatGarblerLocked = false,
+                GaggedNameplate = false,
+                // prevent any generic wardrobe calls.
+                WardrobeEnabled = false,
+                // prevent gag visuals.
+                GagVisuals = false,
+                // prevent restriction visuals.
+                RestrictionVisuals = false,
+                // prevent restraint visuals.
+                RestraintSetVisuals = false,
+                // prevent puppeteer from all sources.
+                PuppeteerEnabled = false,
+                // prevent toybox from all sources.
+                ToyboxEnabled = false,
+            };
 
-            // prevent any generic wardrobe calls.
-            current.WardrobeEnabled = false;
-            // prevent gag visuals.
-            current.GagVisuals = false;
-            // prevent restriction visuals.
-            current.RestrictionVisuals = false;
-            // prevent restraint visuals.
-            current.RestraintSetVisuals = false;
-            // prevent puppeteer from all sources.
-            current.PuppeteerEnabled = false;
-            // prevent toybox from all sources.
-            current.ToyboxEnabled = false;
+            // await the push for updating the global permissions in bulk.
+            Logger.LogInformation("[SAFEWORD PROGRESS]: Pushing Global updates to the server.");
+            var res = await _hub.UserBulkChangeGlobal(new(MainHub.PlayerUserData, newGlobals));
+            if (res.ErrorCode is not GagSpeakApiEc.Success)
+                Logger.LogError($"[SAFEWORD PROGRESS]: Failed to push safeword global permissions: {res.ErrorCode}.");
 
-            // Clear out any active hypnosis effects.
-            current.HypnosisCustomEffect = string.Empty;
-
-            // clear any hardcore states in their entirety.
-            current.LockedFollowing = string.Empty;
-            current.LockedEmoteState = string.Empty;
-            current.IndoorConfinement = string.Empty;
-            current.Imprisonment = string.Empty;
-            current.ChatBoxesHidden = string.Empty;
-            current.ChatInputHidden = string.Empty;
-            current.ChatInputBlocked = string.Empty;
-        });
-
-        // will need to properly handle any achievements here.
-
-        // await the push for updating the global permissions in bulk.
-        Logger.LogInformation("[SAFEWORD PROGRESS]: Pushing Global updates to the server.");
-        var res = await _hub.UserBulkChangeGlobal(new(MainHub.PlayerUserData, newGlobals));
-        if (res.ErrorCode is not GagSpeakApiEc.Success)
-            Logger.LogError($"[SAFEWORD PROGRESS]: Failed to push safeword global permissions: {res.ErrorCode}.");
+        }
 
         // IF and only if the uid passed in is not empty, do we restrict the kinksters we revert to only the kinkster with that UID.
         if (!string.IsNullOrEmpty(isolatedUID))
@@ -194,7 +180,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
 
         // assuming operation was successful, we now need to sync our overlays with our metadata.
         Logger.LogInformation("[SAFEWORD PROGRESS]: Syncing Global Permissions!");
-        _hcHandler.ProcessBulkGlobalUpdate(previousGlobals, OwnGlobals.Perms!);
+        // _hcHandler.ProcessBulkGlobalUpdate(previousGlobals, ClientData.Globals!);
         // this should automatically sync overlays and other things.
 
         // might want to remove all cursed loot and things before syncing up the visual cache manager?
@@ -222,29 +208,20 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
 
         _achievementHandler.SafewordUsed(isolatedUID);
 
-        var previousGlobals = OwnGlobals.Perms;
-        var newGlobals = OwnGlobals.CurrentPermsWith((current) =>
+        if (ClientData.Hardcore is { } hc)
         {
-            current.LockedFollowing = string.Empty;
-            current.LockedEmoteState = string.Empty;
-            current.IndoorConfinement = string.Empty;
-            current.Imprisonment = string.Empty;
-            current.ChatBoxesHidden = string.Empty;
-            current.ChatInputHidden = string.Empty;
-            current.ChatInputBlocked = string.Empty;
-        });
-
-        Logger.LogInformation("[HC-SAFEWORD PROGRESS]: Pushing Global updates to the server.");
-        var res = await _hub.UserBulkChangeGlobal(new(MainHub.PlayerUserData, newGlobals));
-        if (res.ErrorCode is GagSpeakApiEc.Success)
-            Logger.LogInformation("[HARDCORE SAFEWORD PROGRESS]: Global updates pushed to the server.");
-        else
-            Logger.LogError($"[HC-SAFEWORD PROGRESS]: Failed to push safeword global permissions: {res.ErrorCode}.");
+            //// Change to hardcore here later.
+            //Logger.LogInformation("[HC-SAFEWORD PROGRESS]: Pushing Global updates to the server.");
+            //var res = await _hub.UserBulkChangeGlobal(new(MainHub.PlayerUserData, newGlobals));
+            //if (res.ErrorCode is GagSpeakApiEc.Success)
+            //    Logger.LogInformation("[HARDCORE SAFEWORD PROGRESS]: Global updates pushed to the server.");
+            //else
+            //    Logger.LogError($"[HC-SAFEWORD PROGRESS]: Failed to push safeword global permissions: {res.ErrorCode}.");
+        }
 
         // the kinksters we reset hardcore for depend on the isolatedUID.
         var kinkstersToReset = (!string.IsNullOrEmpty(isolatedUID) && _kinksters.TryGetKinkster(new(isolatedUID), out var match))
-            ? [match]
-            : _kinksters.DirectPairs.Where(p => p.OwnPerms.InHardcore);
+            ? [match] : _kinksters.DirectPairs.Where(p => p.OwnPerms.InHardcore);
 
         foreach (var kinkster in kinkstersToReset)
         {
@@ -252,6 +229,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
             var newPairPerms = kinkster.OwnPerms with
             {
                 InHardcore = false,
+                DevotionalLocks = false,
                 AllowGarbleChannelEditing = false,
                 AllowLockedFollowing = false,
                 AllowLockedSitting = false,
@@ -263,13 +241,13 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
                 AllowChatInputBlocking = false,
                 AllowHypnoImageSending = false
             };
-            await _hub.UserBulkChangeUnique(new(kinkster.UserData, newPairPerms, kinkster.OwnPermAccess, UpdateDir.Own, MainHub.PlayerUserData));
+            await _hub.UserBulkChangeUnique(new(kinkster.UserData, newPairPerms, kinkster.OwnPermAccess, UpdateDir.Own, MainHub.PlayerUserData)).ConfigureAwait(false);
             Logger.LogInformation($"[HC-SAFEWORD PROGRESS]: Hardcore allowances reverted for ({isolatedUID})!");
         }
 
         // update the internals for the hardcore permissions to syncronize. (helpful for caches and other hardcore interactions)
-        Logger.LogInformation("[HC-SAFEWORD PROGRESS]: Syncing Global Permissions!");
-        _hcHandler.ProcessBulkGlobalUpdate(previousGlobals, OwnGlobals.Perms!);
+        Logger.LogInformation("[HC-SAFEWORD PROGRESS]: Syncing HardcoreState with player control!");
+        // _hcHandler.ProcessBulkGlobalUpdate(previousGlobals, ClientData.Globals!);
 
         Logger.LogInformation("[HC-SAFEWORD PROGRESS]: ===={ COMPLETED }====");
     }

@@ -6,8 +6,7 @@ namespace GagSpeak.Utils;
 public static class FlagEx
 {
     // we avoid doing generic types here because it actually increases the processing time in the compiler if we convert to ambiguous types.
-    public static bool HasAny(this HardcoreSetting flags, HardcoreSetting check) => (flags & check) != 0;
-    public static bool HasAny(this PlayerControlSource flags, PlayerControlSource check) => (flags & check) != 0;
+    public static bool HasAny(this HcTaskControl flags, HcTaskControl check) => (flags & check) != 0;
     public static bool HasAny(this PuppetPerms flags, PuppetPerms check) => (flags & check) != 0;
     public static bool HasAny(this MoodlePerms flags, MoodlePerms check) => (flags & check) != 0;
     public static bool HasAny(this HypnoAttributes flags, HypnoAttributes check) => (flags & check) != 0;

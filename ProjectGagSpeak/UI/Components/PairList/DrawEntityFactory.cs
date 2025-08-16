@@ -19,24 +19,25 @@ public class DrawEntityFactory
     private readonly IdDisplayHandler _nameDisplay;
     private readonly CosmeticService _cosmetics;
 
-    public DrawEntityFactory(ILoggerFactory loggerFactory, GagspeakMediator mediator, MainHub hub,
+    public DrawEntityFactory(GagspeakMediator mediator, MainHub hub,
         ServerConfigManager configs, IdDisplayHandler nameDisplay, CosmeticService cosmetics)
     {
-        _loggerFactory = loggerFactory;
         _mediator = mediator;
         _hub = hub;
         _configs = configs;
         _nameDisplay = nameDisplay;
-        _cosmetics = cosmetics;
     }
 
     public DrawFolderTag CreateDrawTagFolder(string tag, List<Kinkster> filteredPairs, IImmutableList<Kinkster> allPairs)
         => new DrawFolderTag(tag, filteredPairs.Select(u => CreateDrawPair(tag, u)).ToImmutableList(), allPairs, _configs);
 
     public DrawUserPair CreateDrawPair(string id, Kinkster kinkster)
-        => new DrawUserPair(_loggerFactory.CreateLogger<DrawUserPair>(), id + kinkster.UserData.UID,
-            kinkster, _hub, _nameDisplay, _mediator, _cosmetics);
+        => new DrawUserPair(id + kinkster.UserData.UID,
+            kinkster, _mediator, _hub, _nameDisplay);
 
-    public KinksterPairRequest CreateKinsterRequest(string id, KinksterRequestEntry request)
-        => new KinksterPairRequest(id, request, _hub, _cosmetics);
+    public KinksterRequestItem CreateDrawPairRequest(string id, KinksterRequest request)
+        => new KinksterRequestItem(id, request, _hub);
+
+    public CollarRequestItem CreateDrawCollarRequest(string id, CollarRequest request)
+        => new CollarRequestItem(id, request, _hub);
 }

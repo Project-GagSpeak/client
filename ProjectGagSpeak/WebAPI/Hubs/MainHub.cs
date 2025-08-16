@@ -23,8 +23,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     public const string MAIN_SERVER_URI = "wss://gagspeak.kinkporium.studio";
 
     private readonly ClientAchievements _achievements;
-    private readonly OwnGlobalsListener _globals;
-    private readonly KinksterRequests _requests;
+    private readonly ClientData _clientData;
     private readonly HubFactory _hubFactory;
     private readonly TokenProvider _tokenProvider;
     private readonly ServerConfigManager _serverConfigs;
@@ -33,6 +32,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     private readonly VisualStateListener _visualListener;
     private readonly PuppeteerListener _puppetListener;
     private readonly ToyboxStateListener _toyboxListener;
+    private readonly PiShockProvider _shockies;
     private readonly ConnectionSyncService _dataSync;
 
     // Static private accessors (persistant across singleton instantiations for other static accessors.)
@@ -55,8 +55,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     public MainHub(ILogger<MainHub> logger,
         GagspeakMediator mediator,
         ClientAchievements achievements,
-        OwnGlobalsListener globalPerms,
-        KinksterRequests requests,
+        ClientData clientData,
         HubFactory hubFactory,
         TokenProvider tokenProvider,
         ServerConfigManager serverConfigs,
@@ -65,20 +64,21 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         VisualStateListener visuals,
         PuppeteerListener puppeteer,
         ToyboxStateListener toybox,
+        PiShockProvider shockies,
         ConnectionSyncService dataSync)
         : base(logger, mediator)
     {
         _achievements = achievements;
-        _requests = requests;
+        _clientData = clientData;
         _hubFactory = hubFactory;
         _tokenProvider = tokenProvider;
         _serverConfigs = serverConfigs;
-        _globals = globalPerms;
         _kinksters = kinksters;
         _kinksterListener = kinksterListener;
         _visualListener = visuals;
         _puppetListener = puppeteer;
         _toyboxListener = toybox;
+        _shockies = shockies;
         _dataSync = dataSync;
 
         // Subscribe to the things.
@@ -269,8 +269,8 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     public async Task<List<KinksterPair>> UserGetPairedClients()
         => await _hubConnection!.InvokeAsync<List<KinksterPair>>(nameof(UserGetPairedClients)).ConfigureAwait(false);
 
-    public async Task<List<KinksterRequestEntry>> UserGetPairRequests()
-        => await _hubConnection!.InvokeAsync<List<KinksterRequestEntry>>(nameof(UserGetPairRequests)).ConfigureAwait(false);
+    public async Task<ActiveRequests> UserGetActiveRequests()
+        => await _hubConnection!.InvokeAsync<ActiveRequests>(nameof(UserGetActiveRequests)).ConfigureAwait(false);
 
     public async Task<KinkPlateFull> UserGetKinkPlate(KinksterBase dto)
     {
@@ -285,7 +285,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     {
         // Retrieve the pairs from the server that we have added, and add them to the pair manager.
         var kinksters = await UserGetPairedClients().ConfigureAwait(false);
-        _kinksters.AddKinksterPair(kinksters);
+        _kinksters.AddKinksterPairs(kinksters);
 
         Logger.LogDebug($"Initial Kinksters Loaded: [{string.Join(", ", kinksters.Select(x => x.User.AliasOrUID))}]", LoggerType.ApiCore);
     }
@@ -299,13 +299,13 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         Logger.LogDebug($"Online Kinksters: [{string.Join(", ", onlineKinksters.Select(x => x.User.AliasOrUID))}]", LoggerType.ApiCore);
     }
 
-    private async Task LoadKinksterRequests()
+    private async Task LoadRequests()
     {
         // retrieve any current kinkster requests.
-        var requests = await UserGetPairRequests().ConfigureAwait(false);
-        _requests.CurrentRequests = requests.ToHashSet();
-        Logger.LogDebug($"Kinkster Requests Recieved. Found [{requests.Count}]", LoggerType.ApiCore);
-        Mediator.Publish(new RefreshUiMessage());
+        var requests = await UserGetActiveRequests().ConfigureAwait(false);
+        _clientData.InitRequests(requests.KinksterRequests, requests.CollarRequests);
+        Logger.LogDebug($"Kinkster Requests Recieved. Found " +
+            $"[Kinkster: {requests.KinksterRequests.Count}][Collar: {requests.CollarRequests.Count}]", LoggerType.ApiCore);
     }
 
     /// <summary>

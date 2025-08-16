@@ -23,7 +23,7 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
 
         // Child area for scrolling.
         using var _ = CkRaii.Child("ClientPermsForKinkster", ImGui.GetContentRegionAvail(), wFlags: WFlags.NoScrollbar);
-        if (OwnGlobals.Perms is not { } globals)            return;
+        if (ClientData.Globals is not { } globals || ClientData.Hardcore is not { } hc)            return;
         ImGui.TextUnformatted("Global Settings");
         using (ImRaii.Group())
         {
@@ -132,20 +132,20 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
 
         DrawHcBasicPerm(kinkster, dispName, width, SPPID.GarbleChannelEditing, kinkster.OwnPerms.AllowGarbleChannelEditing);
         DrawHcBasicPerm(kinkster, dispName, width, SPPID.HypnoticImage, kinkster.OwnPerms.AllowHypnoImageSending);
-        DrawHcStatePerm(kinkster, dispName, width, SPPID.LockedFollowing, nameof(GlobalPerms.LockedFollowing), globals.LockedFollowing, kinkster.OwnPerms.AllowLockedFollowing);
-        DrawHcEmotePerm(kinkster, dispName, width, SPPID.LockedEmoteState, nameof(GlobalPerms.LockedEmoteState), globals.LockedEmoteState, kinkster.OwnPerms.AllowLockedSitting, kinkster.OwnPerms.AllowLockedEmoting);
-        DrawHcStatePerm(kinkster, dispName, width, SPPID.IndoorConfinement, nameof(GlobalPerms.IndoorConfinement), globals.IndoorConfinement, kinkster.OwnPerms.AllowIndoorConfinement);
-        DrawHcStatePerm(kinkster, dispName, width, SPPID.Imprisonment, nameof(GlobalPerms.Imprisonment), globals.Imprisonment, kinkster.OwnPerms.AllowImprisonment);
-        DrawHcStatePerm(kinkster, dispName, width, SPPID.ChatBoxesHidden, nameof(GlobalPerms.ChatBoxesHidden), globals.ChatBoxesHidden, kinkster.OwnPerms.AllowHidingChatBoxes);
-        DrawHcStatePerm(kinkster, dispName, width, SPPID.ChatInputHidden, nameof(GlobalPerms.ChatInputHidden), globals.ChatInputHidden, kinkster.OwnPerms.AllowHidingChatInput);
-        DrawHcStatePerm(kinkster, dispName, width, SPPID.ChatInputBlocked, nameof(GlobalPerms.ChatInputBlocked), globals.ChatInputBlocked, kinkster.OwnPerms.AllowChatInputBlocking);
+        DrawHcStatePerm(kinkster, dispName, width, SPPID.LockedFollowing, nameof(HardcoreState.LockedFollowing), hc.LockedFollowing, kinkster.OwnPerms.AllowLockedFollowing);
+        DrawHcEmotePerm(kinkster, dispName, width, SPPID.LockedEmoteState, nameof(HardcoreState.LockedEmoteState), hc.LockedEmoteState, kinkster.OwnPerms.AllowLockedSitting, kinkster.OwnPerms.AllowLockedEmoting);
+        DrawHcStatePerm(kinkster, dispName, width, SPPID.IndoorConfinement, nameof(HardcoreState.IndoorConfinement), hc.IndoorConfinement, kinkster.OwnPerms.AllowIndoorConfinement);
+        DrawHcStatePerm(kinkster, dispName, width, SPPID.Imprisonment, nameof(HardcoreState.Imprisonment), hc.Imprisonment, kinkster.OwnPerms.AllowImprisonment);
+        DrawHcStatePerm(kinkster, dispName, width, SPPID.ChatBoxesHidden, nameof(HardcoreState.ChatBoxesHidden), hc.ChatBoxesHidden, kinkster.OwnPerms.AllowHidingChatBoxes);
+        DrawHcStatePerm(kinkster, dispName, width, SPPID.ChatInputHidden, nameof(HardcoreState.ChatInputHidden), hc.ChatInputHidden, kinkster.OwnPerms.AllowHidingChatInput);
+        DrawHcStatePerm(kinkster, dispName, width, SPPID.ChatInputBlocked, nameof(HardcoreState.ChatInputBlocked), hc.ChatInputBlocked, kinkster.OwnPerms.AllowChatInputBlocking);
         ImGui.Separator();
 
         // Hardcore confirm modal.
         ShowConfirmHardcoreIfValid(kinkster, dispName);
 
         ImGui.TextUnformatted("Shock Collar Permissions");
-        if (OwnGlobals.Perms is not { } p || !p.HasValidShareCode())
+        if (ClientData.Globals is not { } p || !p.HasValidShareCode())
             CkGui.ColorTextCentered("Must have a valid Global ShareCode first!", ImGuiColors.DalamudRed);
         else
             _shockies.DrawClientPermsForKinkster(width, kinkster, dispName);    }
@@ -479,8 +479,8 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
         using var butt = ImRaii.PushColor(ImGuiCol.Button, 0);
         var data = ClientHcPermData[perm];
         var isActive = !string.IsNullOrEmpty(current);
-        var isPairlocked = GlobalPermsEx.IsDevotional(current);
-        var stateLocker = isActive ? GlobalPermsEx.PermEnactor(current) : string.Empty;
+        var isPairlocked = current.EndsWith(Constants.DevotedString);
+        var stateLocker = isActive ? current.Split('|')[0] : string.Empty;
         var editCol = isActive ? ImGuiColors.HealerGreen.ToUint() : ImGuiColors.DalamudRed.ToUint();
         var pos = ImGui.GetCursorScreenPos();
 
@@ -518,8 +518,8 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
         using var butt = ImRaii.PushColor(ImGuiCol.Button, 0);
         var data = ClientHcPermData[perm];
         var isActive = !string.IsNullOrEmpty(current);
-        var isPairlocked = GlobalPermsEx.IsDevotional(current);
-        var stateLocker = isActive ? GlobalPermsEx.PermEnactor(current) : string.Empty;
+        var isPairlocked = current.EndsWith(Constants.DevotedString);
+        var stateLocker = isActive ? current.Split('|')[0] : string.Empty;
         var editCol = isActive ? ImGuiColors.HealerGreen.ToUint() : ImGuiColors.DalamudRed.ToUint();
 
 

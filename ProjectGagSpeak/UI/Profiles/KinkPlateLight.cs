@@ -140,7 +140,7 @@ public class KinkPlateLight
             SupporterIconBorderSize.X / 2, ImGui.GetColorU32(new Vector4(0, 0, 0, 1)));
 
         // Draw out Supporter Icon.
-        var supporterInfo = _cosmetics.GetSupporterInfo(userData);
+        var supporterInfo = CosmeticService.GetSupporterInfo(userData);
         if (supporterInfo.SupporterWrap is { } wrap)
         {
             drawList.AddDalamudImageRounded(wrap, SupporterIconPos, SupporterIconSize, SupporterIconSize.Y / 2, displayName + " Is Supporting CK!");

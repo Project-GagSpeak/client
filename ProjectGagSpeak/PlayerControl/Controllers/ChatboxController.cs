@@ -1,6 +1,7 @@
 using GagSpeak.GameInternals.Addons;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State;
+using GagSpeak.State.Caches;
 
 
 namespace GagSpeak.Services.Controller;
@@ -11,24 +12,25 @@ namespace GagSpeak.Services.Controller;
 /// </summary>
 public sealed class ChatboxController : DisposableMediatorSubscriberBase
 {
-    // Dictates controlling the player's KeyState blocking.
-    private PlayerControlSource _sources = PlayerControlSource.None;
-
-    public ChatboxController(ILogger<KeystateController> logger, GagspeakMediator mediator)
-        : base(logger, mediator)
+    private readonly PlayerControlCache _cache;
+    private bool _blockInput = false;
+    public ChatboxController(ILogger<KeystateController> logger, GagspeakMediator mediator,
+        PlayerControlCache cache) : base(logger, mediator)
     {
+        _cache = cache;
+        Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreState());
         Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
     }
 
     private unsafe void FrameworkUpdate()
     {
-        if(_sources is not 0)
-            AddonChatLog.EnsureNoChatInputFocus();
+        if (!_blockInput)
+            return;
+        // assuming that this causes issues when ran outside framework thread.
+        AddonChatLog.EnsureNoChatInputFocus();
     }
 
-    public void AddControlSources(PlayerControlSource sources)
-    => _sources |= sources;
-
-    public void RemoveControlSources(PlayerControlSource sources)
-        => _sources &= ~sources;
+    // Update our local value to reflect the latest state in the cache.
+    public void UpdateHardcoreState()
+        => _blockInput = _cache.BlockChatInput;
 }

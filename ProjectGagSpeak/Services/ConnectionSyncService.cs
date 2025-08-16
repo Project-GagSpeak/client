@@ -14,10 +14,9 @@ namespace GagSpeak.Services;
 /// <remarks> Helps update config folder locations, update stored data, and update achievement data status. </remarks>
 public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
 {
-    private readonly PlayerMetaData _metaData;
-    private readonly OwnGlobals _globals;
+    private readonly ClientData _clientData;
     private readonly OverlayHandler _overlays;
-    private readonly HardcoreHandler _hcHandler;
+    private readonly PlayerControlHandler _playerControl;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
@@ -32,10 +31,9 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
     public ConnectionSyncService(
         ILogger<ConnectionSyncService> logger,
         GagspeakMediator mediator,
-        PlayerMetaData metaData,
-        OwnGlobals globals,
+        ClientData clientData,
         OverlayHandler overlays,
-        HardcoreHandler hcHandler,
+        PlayerControlHandler playerControl,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
@@ -48,10 +46,9 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
         AchievementsService achievements)
         : base(logger, mediator)
     {
-        _metaData = metaData;
-        _globals = globals;
+        _clientData = clientData;
         _overlays = overlays;
-        _hcHandler = hcHandler;
+        _playerControl = playerControl;
         _gags = gags;
         _restrictions = restrictions;
         _restraints = restraints;
@@ -94,7 +91,6 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
 
         // 2. Load in Profile-spesific Configs.
         Logger.LogInformation($"[SYNC PROGRESS]: Loading Configs for Profile!");
-        _metaData.Load();
         _gags.Load();
         _restrictions.Load();
         _restraints.Load();
@@ -105,7 +101,7 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
 
         // 3. Load in the data from the server into our storages.
         Logger.LogInformation("[SYNC PROGRESS]: Syncing Global Permissions!");
-        _globals.ApplyBulkChange(connectionInfo.GlobalPerms);
+        _clientData.InitClientData(connectionInfo);
 
         // 4. Sync overlays with the global permissions & metadata.
         Logger.LogInformation("[SYNC PROGRESS]: Syncing Overlay Data");

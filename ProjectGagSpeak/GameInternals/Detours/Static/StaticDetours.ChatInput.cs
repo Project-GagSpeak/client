@@ -32,7 +32,7 @@ public partial class StaticDetours
     {
         try
         {
-            if (OwnGlobals.Perms is not { } globals || _gags.ServerGagData is not { } gagData)
+            if (ClientData.Globals is not { } g || _gags.ServerGagData is not { } gagData)
                 return ProcessChatInputHook.Original(uiModule, message, a3);
 
             // Grab the original string.
@@ -49,14 +49,14 @@ public partial class StaticDetours
                 return ProcessChatInputHook.Original(uiModule, message, a3);
 
             // If we are not meant to garble the message, then return original.
-            if (!globals.ChatGarblerActive || !gagData.AnyGagActive())
+            if (!g.ChatGarblerActive || !gagData.AnyGagActive())
                 return ProcessChatInputHook.Original(uiModule, message, a3);
 
             /* -------------------------- MUFFLERCORE / GAGSPEAK CHAT GARBLER TRANSLATION LOGIC -------------------------- */
             // Firstly, make sure that we are setup to allow garbling in the current channel.
             var prefix = string.Empty;
             InputChannel channel = 0;
-            var muffleMessage = globals.AllowedGarblerChannels.IsActiveChannel((int)ChatLogAgent.CurrentChannel());
+            var muffleMessage = g.AllowedGarblerChannels.IsActiveChannel((int)ChatLogAgent.CurrentChannel());
 
             // It's possible to be in a channel (ex. Say) but send (/party Hello World), we must check this.
             if (messageDecoded.StartsWith("/"))
@@ -88,7 +88,7 @@ public partial class StaticDetours
                 Logger.LogTrace($"Matched Command [{prefix}] for [{channel}]", LoggerType.ChatDetours);
 
                 // Finally if we reached this point, update `muffleAllowedForChannel` to reflect the intended channel.
-                muffleMessage = globals.AllowedGarblerChannels.IsActiveChannel((int)channel);
+                muffleMessage = g.AllowedGarblerChannels.IsActiveChannel((int)channel);
             }
 
             // If it's not allowed, do not garble.

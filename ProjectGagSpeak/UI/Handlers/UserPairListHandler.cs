@@ -23,14 +23,14 @@ public class UserPairListHandler
     private List<DrawUserPair> _allUserPairDrawsDistinct; // distinct userpairs to draw
     private readonly KinksterManager _pairManager;
     private readonly DrawEntityFactory _drawEntityFactory;
-    private readonly DrawRequests _drawRequests;
+    private readonly DrawKinksterRequests _drawRequests;
     private readonly MainConfig _configService;
 
     private Kinkster? _selectedPair = null;
     private string _filter = string.Empty;
 
     public UserPairListHandler(ILogger<UserPairListHandler> logger, GagspeakMediator mediator, 
-        KinksterManager pairs, DrawEntityFactory drawEntityFactory, DrawRequests drawRequests,
+        KinksterManager pairs, DrawEntityFactory drawEntityFactory, DrawKinksterRequests drawRequests,
         MainConfig configService)
     {
         _logger = logger;
@@ -101,43 +101,6 @@ public class UserPairListHandler
                     continue;
                 // draw folder if not all tag.
                 item.Draw();
-            }
-        }
-    }
-
-    // Probably rework this later idk.
-    /// <summary> Draws all bi-directionally paired users (online or offline) without any tag header. </summary>
-    public void DrawPairListSelectable(bool showOffline, byte id)
-    {
-        var tagToUse = Constants.CustomAllTag;
-
-        var allTagFolder = _drawFolders
-            .FirstOrDefault(folder => folder is DrawFolderBase && ((DrawFolderBase)folder).ID == tagToUse);
-
-        if (allTagFolder is null)
-            return;
-
-        var folderDrawPairs = showOffline ? ((DrawFolderBase)allTagFolder).DrawPairs.ToList() : ((DrawFolderBase)allTagFolder).DrawPairs.Where(x => x.Pair.IsOnline).ToList();
-
-        using var indent = ImRaii.PushIndent(CkGui.IconSize(FAI.EllipsisV).X + ImGui.GetStyle().ItemSpacing.X, false);
-
-        if (!folderDrawPairs.Any())
-        {
-            ImGui.TextUnformatted("No Draw Pairs to Draw");
-        }
-
-        for (var i = 0; i < folderDrawPairs.Count(); i++)
-        {
-            var item = folderDrawPairs[i];
-
-            var isSelected = SelectedPair is not null && SelectedPair.UserData.UID == item.Pair.UserData.UID;
-
-            using (var color = ImRaii.PushColor(ImGuiCol.ChildBg, ImGui.GetColorU32(isSelected ? ImGuiCol.FrameBgHovered : ImGuiCol.FrameBg), isSelected))
-            {
-                if (item.DrawPairedClient(id, true, true, false, false, false, true, false))
-                {
-                    SelectedPair = item.Pair;
-                }
             }
         }
     }

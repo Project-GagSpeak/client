@@ -10,6 +10,7 @@ using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
@@ -84,7 +85,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         _events.Subscribe(UnlocksEvent.ShockSent, OnShockSent);
         _events.Subscribe(UnlocksEvent.ShockReceived, OnShockReceived);
 
-        _events.Subscribe<HardcoreSetting, bool, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
+        _events.Subscribe<HcAttribute, bool, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
 
         _events.Subscribe<PatternHubInteractionKind>(UnlocksEvent.PatternHubAction, OnPatternHubAction);
         _events.Subscribe<RemoteInteraction, Guid, string>(UnlocksEvent.RemoteAction, OnRemoteInteraction);
@@ -160,7 +161,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         _events.Unsubscribe(UnlocksEvent.ShockSent, OnShockSent);
         _events.Unsubscribe(UnlocksEvent.ShockReceived, OnShockReceived);
 
-        _events.Unsubscribe<HardcoreSetting, bool, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
+        _events.Unsubscribe<HcAttribute, bool, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
 
         _events.Unsubscribe<PatternHubInteractionKind>(UnlocksEvent.PatternHubAction, OnPatternHubAction);
         _events.Unsubscribe<RemoteInteraction, Guid, string>(UnlocksEvent.RemoteAction, OnRemoteInteraction);
@@ -1031,26 +1032,25 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
     /// <param name="state"> If the hardcore action began or ended. </param>
     /// <param name="affectedPairUID"> who the target of the action is. </param>
     /// <param name="enactorUID"> Who Called the action. </param>
-    private void OnHardcoreAction(HardcoreSetting actionKind, bool state, string enactorUID, string affectedPairUID)
+    private void OnHardcoreAction(HcAttribute actionKind, bool state, string enactorUID, string targetUID)
     {
-        Logger.LogDebug("Hardcore Action: " + actionKind + " State: " + state + " Enactor: " + enactorUID + " Affected: " + affectedPairUID, LoggerType.AchievementInfo);
+        Logger.LogDebug($"HardcoreState ({actionKind}) is now ({state}). And was enacted by [{enactorUID}] on [{targetUID}]", LoggerType.AchievementInfo);
+        var targetIsClient = targetUID == MainHub.UID;
 
-        var affectedPairIsSelf = affectedPairUID == MainHub.UID;
-
-        if (actionKind is HardcoreSetting.LockedFollowing)
+        if (actionKind is HcAttribute.Follow)
         {
-            if (affectedPairIsSelf) ClientHardcoreFollowChanged(enactorUID, state);
-            else PairHardcoreFollowChanged(enactorUID, affectedPairUID, state);
+            if (targetIsClient) ClientHardcoreFollowChanged(enactorUID, state);
+            else PairHardcoreFollowChanged(enactorUID, targetUID, state);
         }
-        else if (actionKind is HardcoreSetting.LockedEmote)
+        else if (actionKind is HcAttribute.EmoteState)
         {
-            if (affectedPairIsSelf) ClientHardcoreEmoteStateChanged(enactorUID, state);
-            else PairHardcoreEmoteChanged(enactorUID, affectedPairUID, state);
+            if (targetIsClient) ClientHardcoreEmoteStateChanged(enactorUID, state);
+            else PairHardcoreEmoteChanged(enactorUID, targetUID, state);
         }
-        else if (actionKind is HardcoreSetting.IndoorConfinement)
+        else if (actionKind is HcAttribute.Confinement)
         {
-            if (affectedPairIsSelf) ClientHardcoreStayChanged(enactorUID, state);
-            else PairHardcoreStayChanged(enactorUID, affectedPairUID, state);
+            if (targetIsClient) ClientHardcoreStayChanged(enactorUID, state);
+            else PairHardcoreStayChanged(enactorUID, targetUID, state);
         }
     }
 

@@ -46,43 +46,44 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
     /// </summary>
     public async Task SyncOverlayWithMetaData()
     {
-        Logger.LogDebug("Syncing Active Overlays with playerMetaData on connection!");
-        // if the metadatas hypno effect is null we have nothing to worry about here and can return.
-        if (_metadata.MetaData.HypnoEffectInfo is not { } info)
-            return;
+        Logger.LogWarning("This method still needs to be updated to work properly with the new hardcore state!");
+        //Logger.LogDebug("Syncing Active Overlays with playerMetaData on connection!");
+        //// if the metadatas hypno effect is null we have nothing to worry about here and can return.
+        //if (_metadata.MetaData.HypnoEffectInfo is not { } info)
+        //    return;
 
-        if (OwnGlobals.Perms is not { } gp)
-            return;
+        //if (ClientData.Globals is not { } gp)
+        //    return;
 
-        // grab the current data from the metadata.
-        var expectedExpireTime = _metadata.MetaData.AppliedTimeUTC + _metadata.MetaData.AppliedDuration;
-        var remainingTime = expectedExpireTime - DateTimeOffset.UtcNow;
-        if (remainingTime <= TimeSpan.Zero)
-        {
-            // perform a removal. (and remove from service if possible.
-            if (_hypnoService.IsSentEffect)
-            {
-                // Fire Achievements for item removal if true.
-                // do that here in
-                // this comment area!
-                await _hypnoService.RemoveEffect();
-            }
-            // remove metadata.
-            _metadata.ClearHypnoEffect();
+        //// grab the current data from the metadata.
+        //var expectedExpireTime = _metadata.MetaData.AppliedTimeUTC + _metadata.MetaData.AppliedDuration;
+        //var remainingTime = expectedExpireTime - DateTimeOffset.UtcNow;
+        //if (remainingTime <= TimeSpan.Zero)
+        //{
+        //    // perform a removal. (and remove from service if possible.
+        //    if (_hypnoService.IsSentEffect)
+        //    {
+        //        // Fire Achievements for item removal if true.
+        //        // do that here in
+        //        // this comment area!
+        //        await _hypnoService.RemoveEffect();
+        //    }
+        //    // remove metadata.
+        //    _metadata.ClearHypnoEffect();
 
-            // toggle off our applied effect.
-            Logger.LogError("Effect Expired while offline, setting effect to none.");
-            Mediator.Publish(new PushGlobalPermChange(nameof(GlobalPerms.HypnosisCustomEffect), string.Empty));
-            return;
-        }
+        //    // toggle off our applied effect.
+        //    Logger.LogError("Effect Expired while offline, setting effect to none.");
+        //    Mediator.Publish(new PushGlobalPermChange(nameof(GlobalPerms.HypnosisCustomEffect), string.Empty));
+        //    return;
+        //}
 
-        // reapply it.
-        await _hypnoService.ApplyEffect(info, gp.HypnoEnactor(), (int)remainingTime.TotalSeconds, _metadata.MetaData.Base64CustomImageData);
+        //// reapply it.
+        //await _hypnoService.ApplyEffect(info, gp.HypnoEnactor(), (int)remainingTime.TotalSeconds, _metadata.MetaData.Base64CustomImageData);
 
-        // update the timer for the new interval.
-        Logger.LogInformation($"Timed Hypnosis Effect reapplied after connection!", LoggerType.VisualCache);
-        _sentHypnosisTimer.Interval = remainingTime.TotalMilliseconds;
-        _sentHypnosisTimer.Start();
+        //// update the timer for the new interval.
+        //Logger.LogInformation($"Timed Hypnosis Effect reapplied after connection!", LoggerType.VisualCache);
+        //_sentHypnosisTimer.Interval = remainingTime.TotalMilliseconds;
+        //_sentHypnosisTimer.Start();
     }
 
     private void DrawOverlays()
@@ -139,7 +140,7 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
         // Realistically, this should never happen, but it is important to handle for achievements.
         await OnApplyHypnoEffect(_cache.ActiveEffect, _cache.PriorityEffectKey).ConfigureAwait(false);
         // ABOVE LINE MIGHT CAUSE CALCULATION DELAY, BE CAUTIOUS.
-        Mediator.Publish(new PushGlobalPermChange(nameof(GlobalPerms.HypnosisCustomEffect), _cache.PriorityEffectKey.EnactorUID));
+        // Mediator.Publish(new PushGlobalPermChange(nameof(GlobalPerms.HypnosisCustomEffect), _cache.PriorityEffectKey.EnactorUID));
     }
 
 

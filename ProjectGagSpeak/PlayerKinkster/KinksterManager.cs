@@ -89,7 +89,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Method of addUserPair that allows multiple KinksterPair to be appended, with a single log output after. </summary>
-    public void AddKinksterPair(IEnumerable<KinksterPair> dtoList)
+    public void AddKinksterPairs(IEnumerable<KinksterPair> dtoList)
     {
         var created = new List<string>();
         var refreshed = new List<string>();

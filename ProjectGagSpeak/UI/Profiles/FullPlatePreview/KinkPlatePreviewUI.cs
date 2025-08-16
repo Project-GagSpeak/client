@@ -134,7 +134,7 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
             SupporterIconBorderSize.X / 2, ImGui.GetColorU32(new Vector4(0, 0, 0, 1)));
 
         // Draw out Supporter Icon.
-        var supporterInfo = _cosmetics.GetSupporterInfo(MainHub.PlayerUserData);
+        var supporterInfo = CosmeticService.GetSupporterInfo(MainHub.PlayerUserData);
         if (supporterInfo.SupporterWrap is { } wrap)
             drawList.AddDalamudImageRounded(wrap, SupporterIconPos, SupporterIconSize, SupporterIconSize.Y / 2, supporterInfo.Tooltip);
 

@@ -135,7 +135,7 @@ public class TriggerActionService
         switch (source)
         {
             case ActionSource.GlobalAlias:
-                if(OwnGlobals.Perms is not { } globals || !globals.PuppetPerms.HasAny(PuppetPerms.Alias))
+                if(ClientData.Globals is not { } globals || !globals.PuppetPerms.HasAny(PuppetPerms.Alias))
                     return false;
 
                 break;
@@ -387,7 +387,7 @@ public class TriggerActionService
 
     private bool DoPiShockAction(PiShockAction act, string enactor)
     {
-        if (OwnGlobals.Perms is not { } perms)
+        if (ClientData.Globals is not { } perms)
             return false;
 
         if(string.IsNullOrWhiteSpace(perms.GlobalShockShareCode) || !perms.HasValidShareCode())

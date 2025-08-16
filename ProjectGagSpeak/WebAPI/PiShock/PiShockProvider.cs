@@ -1,23 +1,29 @@
+using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data.Struct;
 using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
 using System.Net;
 using System.Text.Json;
-using GagSpeak.Kinksters;
-using GagSpeak.PlayerClient;
 using SysJsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace GagSpeak.WebAPI;
 
 public sealed class PiShockProvider : DisposableMediatorSubscriberBase
 {
-    private readonly MainConfig _mainConfig;
     private readonly HttpClient _httpClient;
+    private readonly MainConfig _mainConfig;
+    private readonly KinksterManager _kinksters;
+    private readonly ClientData _clientData;
 
-    public PiShockProvider(ILogger<PiShockProvider> logger, GagspeakMediator mediator, MainConfig mainConfig)
+    public PiShockProvider(ILogger<PiShockProvider> logger, GagspeakMediator mediator, MainConfig mainConfig,
+        KinksterManager kinksters, ClientData clientData)
         : base(logger, mediator)
     {
         _mainConfig = mainConfig;
+        _kinksters = kinksters;
+        _clientData = clientData;
         _httpClient = new HttpClient();
     }
 
@@ -151,6 +157,37 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
         return new PiShockPermissions() { AllowShocks = shocks, AllowVibrations = vibrations, AllowBeeps = beeps, MaxIntensity = intensityLimit, MaxDuration = durationLimit };
     }
 
+    public void PerformShockCollarAct(ShockCollarAction dto)
+    {
+        // figure out who sent the command, and see if we have a unique sharecode setup for them.
+        if (!_kinksters.TryGetKinkster(dto.User, out var enactor))
+            throw new InvalidOperationException($"Shock Collar Action received from non-kinkster user: {dto.User.AliasOrUID}");
+
+        var interactionType = dto.OpCode switch { 0 => "shocked", 1 => "vibrated", 2 => "beeped", _ => "unknown" };
+        var eventLogMessage = $"Pishock {interactionType}, intensity: {dto.Intensity}, duration: {dto.Duration}";
+        Logger.LogDebug($"Received Instruction for {eventLogMessage}", LoggerType.Callbacks);
+
+        if (!enactor.OwnPerms.PiShockShareCode.IsNullOrEmpty())
+        {
+            Logger.LogDebug("Executing Shock Instruction to UniquePair ShareCode", LoggerType.Callbacks);
+            Mediator.Publish(new EventMessage(new(enactor.GetNickAliasOrUid(), enactor.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
+            ExecuteOperation(enactor.OwnPerms.PiShockShareCode, dto.OpCode, dto.Intensity, dto.Duration);
+            if (dto.OpCode is 0)
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.ShockReceived);
+        }
+        else if (ClientData.Globals is { } g && !g.GlobalShockShareCode.IsNullOrEmpty())
+        {
+            Logger.LogDebug("Executing Shock Instruction to Global ShareCode", LoggerType.Callbacks);
+            Mediator.Publish(new EventMessage(new(enactor.GetNickAliasOrUid(), enactor.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
+            ExecuteOperation(g.GlobalShockShareCode, dto.OpCode, dto.Intensity, dto.Duration);
+            if (dto.OpCode is 0)
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.ShockReceived);
+        }
+        else
+        {
+            Logger.LogWarning("Someone Attempted to execute an instruction to you, but you don't have any share codes enabled!");
+        }
+    }
 
     public async void ExecuteOperation(string shareCode, int opCode, int intensity, int duration)
     {

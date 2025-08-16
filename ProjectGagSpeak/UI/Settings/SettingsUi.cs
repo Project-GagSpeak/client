@@ -163,7 +163,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
     private void DrawGlobalSettings()
     {
-        if (OwnGlobals.Perms is not { } globals)
+        if (ClientData.Globals is not { } globals)
         {
             ImGui.Text("Global Perms is null! Safely returning early");
             return;
@@ -417,14 +417,14 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 {
                     var newPerms = await _shockProvider.GetPermissionsFromCode(globals.GlobalShockShareCode);
                     // set the new permissions, without affecting the original.
-                    var permsWithNewShockPerms = OwnGlobals.CurrentPermsWith(current =>
+                    var permsWithNewShockPerms = (GlobalPerms)ClientData.Globals! with 
                     {
-                        current.AllowShocks = newPerms.AllowShocks;
-                        current.AllowVibrations = newPerms.AllowVibrations;
-                        current.AllowBeeps = newPerms.AllowBeeps;
-                        current.MaxDuration = newPerms.MaxDuration;
-                        current.MaxIntensity = newPerms.MaxIntensity;
-                    });
+                        AllowShocks = newPerms.AllowShocks,
+                        AllowVibrations = newPerms.AllowVibrations,
+                        AllowBeeps = newPerms.AllowBeeps,
+                        MaxDuration = newPerms.MaxDuration,
+                        MaxIntensity = newPerms.MaxIntensity
+                    };
                     await _hub.UserBulkChangeGlobal(new(MainHub.PlayerUserData, permsWithNewShockPerms));
                 });
             }
@@ -526,7 +526,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
     private void DrawChannelPreferences()
     {
         // do not draw the preferences if the globalpermissions are null.
-        if(OwnGlobals.Perms is not { } globals)
+        if(ClientData.Globals is not { } globals)
         {
             ImGui.Text("Globals is null! Returning early");
             return;

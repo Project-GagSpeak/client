@@ -267,7 +267,7 @@ public class TraitAllowanceSelector : DisposableMediatorSubscriberBase
         if (tier is CkSupporterTier.NoRole)
             return;
 
-        var img = _cosmetics.GetSupporterInfo(userData);
+        var img = CosmeticService.GetSupporterInfo(userData);
         if (img.SupporterWrap is { } wrap)
         {
             ImGui.Image(wrap.Handle, new Vector2(ImGui.GetFrameHeight()));

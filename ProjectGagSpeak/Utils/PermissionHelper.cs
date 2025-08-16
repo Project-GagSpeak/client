@@ -26,7 +26,7 @@ public static class PermissionHelper
     /// </summary>
     public static async Task<bool> ChangeOwnGlobal(MainHub hub, GlobalPerms ownGlobals, string propertyName, object newValue)
     {
-        if (OwnGlobals.Perms is not { } perms)
+        if (ClientData.Globals is not { } perms)
         {
             Svc.Logger.Error("OwnGlobals.Permissions is null, cannot change own global permissions.");
             return false;

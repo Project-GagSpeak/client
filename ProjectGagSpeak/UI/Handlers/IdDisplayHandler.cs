@@ -27,7 +27,7 @@ public class IdDisplayHandler
         _mainConfig = gagspeakConfigService;
     }
 
-    public bool DrawPairText(string id, Kinkster pair, float textPosX, Func<float> editBoxWidth, bool canTogglePairTextDisplay, bool displayNameTT)
+    public bool DrawPairText(string id, Kinkster pair, float textPosX, Func<float> editBoxWidth)
     {
         var returnVal = false;
 
@@ -68,7 +68,7 @@ public class IdDisplayHandler
                 if (ImGui.IsItemHovered()) hovered = true;
 
 
-                if (hovered && displayNameTT)
+                if (hovered)
                 {
                     ImGui.SetTooltip("Left click to switch between UID display and nick" + Environment.NewLine
                         + "Right click to change nick for " + pair.UserData.UID + Environment.NewLine
@@ -87,31 +87,24 @@ public class IdDisplayHandler
 
             if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             {
-                if (canTogglePairTextDisplay)
-                {
-                    var prevState = textIsUid;
-                    if (_showIdForEntry.ContainsKey(pair.UserData.UID))
-                    {
-                        prevState = _showIdForEntry[pair.UserData.UID];
-                    }
-                    _showIdForEntry[pair.UserData.UID] = !prevState;
-                }
+                var prevState = textIsUid;
+                if (_showIdForEntry.ContainsKey(pair.UserData.UID))
+                    prevState = _showIdForEntry[pair.UserData.UID];
+
+                _showIdForEntry[pair.UserData.UID] = !prevState;
                 returnVal = true;
             }
 
-            if (canTogglePairTextDisplay)
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Middle))
             {
-                if (ImGui.IsItemClicked(ImGuiMouseButton.Middle))
-                {
-                    _mediator.Publish(new KinkPlateOpenStandaloneMessage(pair));
-                }
+                _mediator.Publish(new KinkPlateOpenStandaloneMessage(pair));
+            }
 
-                if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-                {
-                    _serverConfig.SetNicknameForUid(_editEntry, _editComment);
-                    _editComment = pair.GetNickname() ?? string.Empty;
-                    _editEntry = pair.UserData.UID;
-                }
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+            {
+                _serverConfig.SetNicknameForUid(_editEntry, _editComment);
+                _editComment = pair.GetNickname() ?? string.Empty;
+                _editEntry = pair.UserData.UID;
             }
         }
         else

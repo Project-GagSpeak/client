@@ -248,7 +248,7 @@ public class TraitAllowancePanel
             ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
             if(pair.UserData.Tier is { } tier && tier is not CkSupporterTier.NoRole)
             {
-                var img = _cosmetics.GetSupporterInfo(pair.UserData);
+                var img = CosmeticService.GetSupporterInfo(pair.UserData);
                 if (img.SupporterWrap is { } wrap)
                 {
                     ImGui.Image(wrap.Handle, new Vector2(ImGui.GetFrameHeight()));

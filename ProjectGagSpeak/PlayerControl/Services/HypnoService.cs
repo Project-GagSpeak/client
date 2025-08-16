@@ -99,6 +99,7 @@ public class HypnoService : IDisposable
         await ExecuteWithSemaphore(EquipAnimationInternal);
     }
 
+    // Ideally remove this overhead.
     public bool CanApplyTimedEffect(HypnoticEffect effect, string? base64ImgString = null)
         => !HasValidEffect && (base64ImgString is null
             ? File.Exists(Path.Combine(ConfigFileProvider.ThumbnailDirectory, ImageDataType.Hypnosis.ToString(), Constants.DefaultHypnoPath))
@@ -107,6 +108,7 @@ public class HypnoService : IDisposable
     // For hypnotic effects manually applied.
     public async Task<bool> ApplyEffect(HypnoticEffect effect, string enactor, int timeInSeconds, string? base64ImgString = null)
     {
+        // Idealy should apply regardless but print a warning that the fallback image does not exist.
         if (!CanApplyTimedEffect(effect, base64ImgString))
         {
             _logger.LogWarning($"Cannot apply Hypnotic Effect: {effect.EffectId} by {enactor}. Already has a valid effect or image is invalid.");

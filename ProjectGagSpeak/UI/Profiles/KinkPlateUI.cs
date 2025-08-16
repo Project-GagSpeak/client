@@ -154,7 +154,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
             SupporterIconBorderSize.X / 2, ImGui.GetColorU32(new Vector4(0, 0, 0, 1)));
 
         // Draw out Supporter Icon.
-        var supporterInfo = _cosmetics.GetSupporterInfo(Pair.UserData);
+        var supporterInfo = CosmeticService.GetSupporterInfo(Pair.UserData);
         if (supporterInfo.SupporterWrap is { } wrap)
             wdl.AddDalamudImageRounded(wrap, SupporterIconPos, SupporterIconSize, SupporterIconSize.Y / 2, supporterInfo.Tooltip);
         // Draw out the border for the icon.
@@ -193,39 +193,45 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.ShockCollar], iconOverviewPos, Vector2.One * 34, shockColor, shockTT);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
-        var forcedFollowColor = Pair.PairGlobals.HcFollowState() ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
-        var forcedFollowTT = Pair.PairGlobals.HcFollowState()
+        var isFollowing = Pair.PairHardcore.IsEnabled(HcAttribute.Follow);
+        var forcedFollowColor = isFollowing ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
+        var forcedFollowTT = isFollowing
             ? DisplayName + " is being leashed around by a Kinkster while in Hardcore Mode."
             : DisplayName + " is not following anyone.";
         wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Leash], iconOverviewPos, Vector2.One * 34, forcedFollowColor, forcedFollowTT);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
-        var forcedEmoteColor = Pair.PairGlobals.HcEmoteState() ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
-        var forcedEmoteTT = Pair.PairGlobals.HcEmoteState()
+        var isEmoting = Pair.PairHardcore.IsEnabled(HcAttribute.EmoteState);
+        var forcedEmoteColor = isEmoting ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
+        var forcedEmoteTT = isEmoting
             ? DisplayName + " is being put on display for a Kinkster while in Hardcore Mode."
             : DisplayName + " is not on display for anyone.";
         wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.LockedEmote], iconOverviewPos, Vector2.One * 34, forcedEmoteColor, forcedEmoteTT);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
-        var forcedStayColor = Pair.PairGlobals.HcConfinedState() ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
-        var forcedStayTT = Pair.PairGlobals.HcConfinedState()
-            ? DisplayName + " under indoor confinement by a Kinkster in Hardcore Mode."
-            : DisplayName + " not in indoor confinement by anyone.";
-        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.IndoorConfinement], iconOverviewPos, Vector2.One * 34, forcedStayColor, forcedStayTT);
+        var isConfined = Pair.PairHardcore.IsEnabled(HcAttribute.Confinement);
+        var confinedColor = isConfined ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
+        var confinedTT = $"{DisplayName} {(isConfined ? "was put in confinement by another Kinkster!" : "is not being confined by anyone.")}";
+        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.IndoorConfinement], iconOverviewPos, Vector2.One * 34, confinedColor, confinedTT);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
-        var chatManipulated = Pair.PairGlobals.HcChatVisState() || Pair.PairGlobals.HcChatInputVisState() || Pair.PairGlobals.HcBlockChatInputState();
-        var chatBlockedColor = chatManipulated ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
-        var chatBlockedTT = chatManipulated
-            ? DisplayName + " is having their chat access restricted by another pair while in Hardcore Mode."
-            : DisplayName + " is not under any chat restrictions.";
-        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.ChatBlocked], iconOverviewPos, Vector2.One * 34, chatBlockedColor, chatBlockedTT);
-
+        var isImprisoned = Pair.PairHardcore.IsEnabled(HcAttribute.Imprisonment);
+        var imprisonedColor = isConfined ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
+        var imprisonedTT = $"{DisplayName} {(isConfined ? "was imprisoned by another Kinkster!" : "is not being imprisoned by anyone.")}";
+        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Imprisoned], iconOverviewPos, Vector2.One * 34, imprisonedColor, imprisonedTT);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
-        var hypnotizedColor = Pair.PairGlobals.HypnoState() ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
-        var hypnotizedTT = $"{DisplayName} {(Pair.PairGlobals.HypnoState() ? "is being hypnotized." : "is not being hypnotized")}";
-        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.ChatBlocked], iconOverviewPos, Vector2.One * 34, chatBlockedColor, chatBlockedTT);
+
+        var chatManipulated = Pair.PairHardcore.IsChatManipulated();
+        var chatManipulatedColor = chatManipulated ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
+        var chatManipulatedTT = $"{DisplayName}{(isConfined ? "'s chat is manipulated by another Kinkster!" : " is not under any chat restrictions.")}";
+        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.ChatBlocked], iconOverviewPos, Vector2.One * 34, chatManipulatedColor, chatManipulatedTT);
+        iconOverviewPos.X += iconWidthPlusSpacing;
+
+        var isHypnotized = Pair.PairHardcore.IsEnabled(HcAttribute.HypnoticEffect);
+        var hypnotizedColor = isHypnotized ? ImGuiColors.ParsedGold : ImGuiColors.DalamudGrey3;
+        var hypnotizedTT = $"{DisplayName} {(isConfined ? "is being hypnotized by another Kinkster!" : "is not being hypnotized.")}";
+        wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.ChatBlocked], iconOverviewPos, Vector2.One * 34, hypnotizedColor, hypnotizedTT);
     }
 
     private void DrawDescription(ImDrawListPtr wdl, KinkPlate profile)

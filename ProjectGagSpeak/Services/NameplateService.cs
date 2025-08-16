@@ -25,8 +25,9 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
 {
     private enum DisplayMode { JobIcon, AboveName }
 
+    private readonly MainConfig _config;
+    private readonly ClientData _clientData;
     private readonly GagRestrictionManager _gags;
-    private readonly MainConfig _mainConfig;
     private readonly GagspeakEventManager _events;
     private readonly KinksterManager _kinksters;
     private readonly OnFrameworkService _frameworkUtils;
@@ -37,12 +38,13 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
     private IDalamudTextureWrap GaggedSpeakingIcon;
 
     public NameplateService(ILogger<NameplateService> logger, GagspeakMediator mediator,
-        GagRestrictionManager gags, MainConfig mainConfig, GagspeakEventManager events, 
-        KinksterManager kinksters, OnFrameworkService frameworkUtils)
+        MainConfig config, ClientData clientData, GagRestrictionManager gags, 
+        GagspeakEventManager events, KinksterManager kinksters, OnFrameworkService frameworkUtils)
         : base(logger, mediator)
     {
+        _config = config;
+        _clientData = clientData;
         _gags = gags;
-        _mainConfig = mainConfig;
         _events = events;
         _kinksters = kinksters;
         _frameworkUtils = frameworkUtils;
@@ -87,10 +89,10 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
 
     private void UpdateClientGagState(int _, GagType __, bool applied, string ___)
     {
-        if (OwnGlobals.Perms is not { } globals)
+        if (ClientData.Globals is not { } g)
             return;
 
-        if (globals.GaggedNameplate && applied)
+        if (g.GaggedNameplate && applied)
         {
             Logger.LogDebug($"Adding {PlayerData.NameWithWorldInstanced} to tracked Nameplates", LoggerType.Gags);
             TrackedKinksters.TryAdd(PlayerData.NameWithWorldInstanced, false);
@@ -146,17 +148,15 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
 
     private void OnOwnMessage(InputChannel c, string message)
     {
-        if (_gags.ServerGagData is not { } data || OwnGlobals.Perms is not { } perms)
+        if (_gags.ServerGagData is not { } data || ClientData.Globals is not { } g)
             return;
 
         // Discard if not a garbled message.
-        if (!data.IsGagged() 
-            || !perms.ChatGarblerActive 
-            || !perms.AllowedGarblerChannels.IsActiveChannel((int)c))
+        if (!data.IsGagged() || !g.ChatGarblerActive || !g.AllowedGarblerChannels.IsActiveChannel((int)c))
             return;
 
         // Fire achievement if it was longer than 5 words and stuff.
-        if (perms.ChatGarblerActive && message.Split(' ').Length > 5)
+        if (g.ChatGarblerActive && message.Split(' ').Length > 5)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.GaggedChatSent, c, message);
 
         DisplayGaggedSpeaking(PlayerData.NameWithWorldInstanced, (int)(650.0f * message.Length / 20.0f));

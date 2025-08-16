@@ -1,13 +1,14 @@
 using CkCommons;
 using CkCommons.Gui;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
-using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.MainWindow;
@@ -29,56 +30,60 @@ public class KinksterHardcore
     public void DrawHardcoreActions(float width, Kinkster k, string dispName)
     {
         ImGui.TextUnformatted("Hardcore Actions");
-        var kg = k.PairGlobals;
+        var hc = k.PairHardcore;
 
         var inRange = PlayerData.Available && k.VisiblePairGameObject is { } vo && PlayerData.DistanceTo(vo) < 3;
         var pairlockTag = k.PairPerms.PairLockedStates ? Constants.DevotedString : string.Empty;
 
-        (FAI Icon, string Text) hcLabel = kg.HcFollowState() ? (FAI.StopCircle, $"Have {dispName} stop following you.") : (FAI.PersonWalkingArrowRight, $"Make {dispName} follow you.");
-        if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !inRange || !k.PairPerms.AllowLockedFollowing || !k.IsVisible || !kg.CanChangeHcFollow(MainHub.UID), "##HcLockedFollowing"))
+        (FAI Icon, string Text) hcLabel = hc.IsEnabled(HcAttribute.Follow)
+            ? (FAI.StopCircle, $"Have {dispName} stop following you.") 
+            : (FAI.PersonWalkingArrowRight, $"Make {dispName} follow you.");
+        if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !inRange || !k.PairPerms.AllowLockedFollowing || !k.IsVisible || !hc.CanChange(HcAttribute.Follow, MainHub.UID), "##HcLockedFollowing"))
         {
-            var newStr = kg.HcFollowState() ? string.Empty : $"{MainHub.UID}{pairlockTag}";
-            UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, kg, nameof(GlobalPerms.LockedFollowing), newStr));
+            var newStr = hc.IsEnabled(HcAttribute.Follow) ? string.Empty : $"{MainHub.UID}{pairlockTag}";
+            _logger.LogWarning("Method not yet implemented for Locked Following!");
+            //UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, hc, nameof(GlobalPerms.LockedFollowing), newStr));
         }
 
         // ForceEmote is a special child...
         DrawLockedEmoteSection(k, width, dispName, pairlockTag);
 
 
-        hcLabel = kg.HcConfinedState() ? (FAI.StopCircle, $"Release {dispName}.") : (FAI.HouseLock, $"Lock {dispName} away.");
-        if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !k.PairPerms.AllowIndoorConfinement || !kg.CanChangeHcConfined(MainHub.UID), "##HcForcedStay"))
-        {
-            var newStr = kg.HcConfinedState() ? string.Empty : $"{MainHub.UID}{pairlockTag}";
-            UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, kg, nameof(GlobalPerms.IndoorConfinement), newStr));
-        }
+        //hcLabel = hc.HcConfinedState() ? (FAI.StopCircle, $"Release {dispName}.") : (FAI.HouseLock, $"Lock {dispName} away.");
+        //if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !k.PairPerms.AllowIndoorConfinement || !hc.CanChangeHcConfined(MainHub.UID), "##HcForcedStay"))
+        //{
+        //    var newStr = hc.HcConfinedState() ? string.Empty : $"{MainHub.UID}{pairlockTag}";
+        //    UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, kg, nameof(GlobalPerms.IndoorConfinement), newStr));
+        //}
 
-        // Hiding chat message history window, but still allowing typing.
-        hcLabel = kg.HcChatVisState() ? (FAI.StopCircle, $"Make {dispName}'s Chat Visible.") : (FAI.CommentSlash, $"Hide {dispName}'s Chat Window.");
-        if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !k.PairPerms.AllowHidingChatBoxes || !kg.CanChangeHcChatVis(MainHub.UID), "##HcForcedChatVis"))
-        {
-            var newStr = kg.HcChatVisState() ? string.Empty : $"{MainHub.UID}{pairlockTag}";
-            UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, kg, nameof(GlobalPerms.ChatBoxesHidden), newStr));
-        }
+        //// Hiding chat message history window, but still allowing typing.
+        //hcLabel = hc.HcChatVisState() ? (FAI.StopCircle, $"Make {dispName}'s Chat Visible.") : (FAI.CommentSlash, $"Hide {dispName}'s Chat Window.");
+        //if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !k.PairPerms.AllowHidingChatBoxes || !hc.CanChangeHcChatVis(MainHub.UID), "##HcForcedChatVis"))
+        //{
+        //    var newStr = hc.HcChatVisState() ? string.Empty : $"{MainHub.UID}{pairlockTag}";
+        //    UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, kg, nameof(GlobalPerms.ChatBoxesHidden), newStr));
+        //}
 
-        // Hiding Chat input, but still allowing typing.
-        hcLabel = kg.HcChatInputVisState() ? (FAI.StopCircle, $"Make {dispName}'s Chat Input Visible.") : (FAI.CommentSlash, $"Hide {dispName}'s Chat Input.");
-        if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !k.PairPerms.AllowHidingChatInput || !kg.CanChangeHcChatInputVis(MainHub.UID), "##HcForcedChatInputVis"))
-        {
-            var newStr = kg.HcChatInputVisState() ? string.Empty : $"{MainHub.UID}{pairlockTag}";
-            UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, kg, nameof(GlobalPerms.ChatInputHidden), newStr));
-        }
+        //// Hiding Chat input, but still allowing typing.
+        //hcLabel = hc.HcChatInputVisState() ? (FAI.StopCircle, $"Make {dispName}'s Chat Input Visible.") : (FAI.CommentSlash, $"Hide {dispName}'s Chat Input.");
+        //if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !k.PairPerms.AllowHidingChatInput || !hc.CanChangeHcChatInputVis(MainHub.UID), "##HcForcedChatInputVis"))
+        //{
+        //    var newStr = hc.HcChatInputVisState() ? string.Empty : $"{MainHub.UID}{pairlockTag}";
+        //    UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, kg, nameof(GlobalPerms.ChatInputHidden), newStr));
+        //}
 
-        // Preventing Chat Input at all.
-        hcLabel = kg.HcBlockChatInputState() ? (FAI.StopCircle, $"Reallow {dispName}'s Chat Input.") : (FAI.CommentDots, $"Block {dispName}'s Chat Input.");
-        if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !k.PairPerms.AllowChatInputBlocking || !kg.CanChangeHcBlockChatInput(MainHub.UID), "##HcForcedChatBlocking"))
-        {
-            var newStr = kg.HcBlockChatInputState() ? string.Empty : $"{MainHub.UID}{pairlockTag}";
-            UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, kg, nameof(GlobalPerms.ChatInputBlocked), newStr));
-        }
+        //// Preventing Chat Input at all.
+        //hcLabel = hc.HcBlockChatInputState() ? (FAI.StopCircle, $"Reallow {dispName}'s Chat Input.") : (FAI.CommentDots, $"Block {dispName}'s Chat Input.");
+        //if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !k.PairPerms.AllowChatInputBlocking || !hc.CanChangeHcBlockChatInput(MainHub.UID), "##HcForcedChatBlocking"))
+        //{
+        //    var newStr = hc.HcBlockChatInputState() ? string.Empty : $"{MainHub.UID}{pairlockTag}";
+        //    UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, kg, nameof(GlobalPerms.ChatInputBlocked), newStr));
+        //}
 
-        ImGui.Separator();
+        //ImGui.Separator();
     }
 
+    // USE THESE FOR CHANGES, HARDCORE ACTIONS CANNOT BE GENERALIZED, THEY ARE ALL UNIQUE.
     private void LockedFollowInternal(float width, Kinkster k, string dispName)
     {
 
@@ -109,24 +114,15 @@ public class KinksterHardcore
 
     }
 
-    // Should be relatively simple since it is just a permission toggle.
-    private void DrawHypnoImageSending(float width, Kinkster k, string dispName)
-    {
-        // Hypno Image Sending is not implemented yet.
-        ImGui.TextUnformatted("Hypnotic Image Sending is not implemented yet.");
-        ImGui.Separator();
-    }
-
-
-
     private void DrawLockedEmoteSection(Kinkster k, float width, string dispName, string pairlockTag)
     {
         // What to display if we cant do LockedEmote
-        if (!k.PairGlobals.LockedEmoteState.NullOrEmpty())
+        if (k.PairHardcore.IsEnabled(HcAttribute.EmoteState))
         {
             if (CkGui.IconTextButton(FAI.StopCircle, $"Let {dispName} move again.", width, true, id: "##HcForcedStay"))
             {
-                UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, k.PairGlobals, nameof(GlobalPerms.LockedEmoteState), string.Empty));
+                _logger.LogWarning("NEED TO REIMPLEMENT THIS STILL");
+                //UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, k.PairGlobals, nameof(H.LockedEmoteState), string.Empty));
                 _service.CloseInteraction();
             }
             CkGui.AttachToolTip($"Release {dispName} from forced emote state.");
@@ -135,7 +131,7 @@ public class KinksterHardcore
 
         // If we can do LockedEmote, display options.
         (FAI Icon, string Text) hcLabel = k.PairPerms.AllowLockedEmoting ? (FAI.PersonArrowDownToLine, $"Force {dispName} into an Emote State.") : (FAI.Chair, $"Force {dispName} to Sit.");
-        if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !k.PairPerms.AllowLockedSitting && k.PairGlobals.CanChangeHcEmote(MainHub.UID), "##HcLockedEmote"))
+        if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !k.PairPerms.AllowLockedSitting && k.PairHardcore.CanChange(HcAttribute.EmoteState, MainHub.UID), "##HcLockedEmote"))
             _service.ToggleInteraction(InteractionType.LockedEmoteState);
         CkGui.AttachToolTip($"Force {dispName} to perform any {(k.PairPerms.AllowLockedEmoting ? "looped emote state" : "sitting or cycle pose state")}.");
 
@@ -164,7 +160,9 @@ public class KinksterHardcore
             {
                 var newStr = $"{MainHub.UID}|{_service.Emotes.Current.RowId}|{_service.CyclePose}{pairlockTag}";
                 _logger.LogDebug($"Sending EmoteState update for emote: {_service.Emotes.Current.Name}");
-                UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, k.PairGlobals, nameof(GlobalPerms.LockedEmoteState), newStr));
+                // change how this is handled, should be done through hardcore, and via different operations. Handling it via a single operation is not enough!
+                _logger.LogWarning("NEED TO REIMPLEMENT THIS STILL");
+                // UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, k.PairGlobals, nameof(HardcoreState.LockedEmoteState), newStr));
                 _service.CloseInteraction();
             }
             CkGui.AttachToolTip("Apply the selected forced emote state.");

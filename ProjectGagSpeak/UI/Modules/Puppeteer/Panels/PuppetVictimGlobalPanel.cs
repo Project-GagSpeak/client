@@ -153,7 +153,7 @@ public sealed partial class PuppetVictimGlobalPanel
 
     private void DrawListenerNameRow(float width)
     {
-        var globalPhrases = OwnGlobals.Perms?.TriggerPhrase ?? string.Empty;
+        var globalPhrases = ClientData.Globals?.TriggerPhrase ?? string.Empty;
         var tooltip = $"Anyone can puppeteer you with the below phrases." +
             $"--SEP----COL--Be careful with what you allow here!--COL--";
 
@@ -169,10 +169,10 @@ public sealed partial class PuppetVictimGlobalPanel
     {
         using var _ = CkRaii.FramedChildPaddedW("Triggers", paddedWidth, height, CkColor.FancyHeaderContrast.Uint(), CkColor.FancyHeaderContrast.Uint(), DFlags.RoundCornersAll);
 
-        if (OwnGlobals.Perms is null)
+        if (ClientData.Globals is null)
             return;
 
-        if (!GlobalTriggerTags.DrawTagsEditor("##GlobalPhrases", OwnGlobals.Perms.TriggerPhrase, out var updatedString))
+        if (!GlobalTriggerTags.DrawTagsEditor("##GlobalPhrases", ClientData.Globals.TriggerPhrase, out var updatedString))
             return;
 
         UiService.SetUITask(async () =>
@@ -187,11 +187,11 @@ public sealed partial class PuppetVictimGlobalPanel
     {
         using var _ = ImRaii.Group();
 
-        var categoryFilter = (uint)(OwnGlobals.Perms?.PuppetPerms ?? PuppetPerms.None);
+        var categoryFilter = (uint)(ClientData.Globals?.PuppetPerms ?? PuppetPerms.None);
         foreach (var category in Enum.GetValues<PuppetPerms>().Skip(1))
             ImGui.CheckboxFlags($"Allow {category}", ref categoryFilter, (uint)category);
 
-        if (OwnGlobals.Perms is { } g && g.PuppetPerms != (PuppetPerms)categoryFilter)
+        if (ClientData.Globals is { } g && g.PuppetPerms != (PuppetPerms)categoryFilter)
         {
             UiService.SetUITask(async () =>
             {

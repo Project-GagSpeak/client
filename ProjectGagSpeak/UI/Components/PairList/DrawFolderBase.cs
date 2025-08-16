@@ -74,15 +74,8 @@ public abstract class DrawFolderBase : IDrawFolder
         if (_serverConfigs.NickStorage.OpenPairListFolders.Contains(_id))
         {
             using var indent = ImRaii.PushIndent(CkGui.IconSize(FAI.EllipsisV).X + ImGui.GetStyle().ItemSpacing.X, false);
-            if (DrawPairs.Any())
-            {
-                foreach (var item in DrawPairs)
-                    item.DrawPairedClient(0);
-            }
-            else
-            {
-                ImGui.TextUnformatted("No Draw Pairs to Draw");
-            }
+            foreach (var item in DrawPairs)
+                item.DrawPairedClient();
 
             ImGui.Separator();
         }

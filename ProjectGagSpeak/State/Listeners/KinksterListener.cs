@@ -1,13 +1,7 @@
-using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using GagSpeak.Kinksters;
-using GagSpeak.PlayerClient;
-using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.State.Handlers;
-using GagSpeak.State.Managers;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
-using GagspeakAPI.Dto.VibeRoom;
 using GagspeakAPI.Network;
 
 namespace GagSpeak.State.Listeners;
@@ -19,17 +13,10 @@ namespace GagSpeak.State.Listeners;
 public sealed class KinksterListener
 {
     private readonly ILogger<KinksterListener> _logger;
-    private readonly GagspeakMediator _mediator;
-    private readonly OwnGlobals _ownGlobals;
-    private readonly HardcoreHandler _hcHandler;
     private readonly KinksterManager _kinksters;
-    public KinksterListener(ILogger<KinksterListener> logger, GagspeakMediator mediator,
-        OwnGlobals ownGlobals, HardcoreHandler hcHandler, KinksterManager kinksters)
+    public KinksterListener(ILogger<KinksterListener> logger, KinksterManager kinksters)
     {
         _logger = logger;
-        _mediator = mediator;
-        _ownGlobals = ownGlobals;
-        _hcHandler = hcHandler;
         _kinksters = kinksters;
     }
 

@@ -19,7 +19,7 @@ namespace GagSpeak.Services.Controller;
 /// <summary>
 ///     Controls what hotbar actions are restricted or not, and the customized tooltips for each action.
 /// </summary>
-public sealed class HotbarActionController : DisposableMediatorSubscriberBase
+public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
 {
     private const uint TITLE_NODE_ID = 5;
     private const uint ACTION_TYPE_NODE_ID = 6;
@@ -51,7 +51,7 @@ public sealed class HotbarActionController : DisposableMediatorSubscriberBase
     
     private Traits _sources = Traits.None;
 
-    public unsafe HotbarActionController(ILogger<HotbarActionController> logger, GagspeakMediator mediator, TraitsCache cache)
+    public unsafe HotbarActionHandler(ILogger<HotbarActionHandler> logger, GagspeakMediator mediator, TraitsCache cache)
         : base(logger, mediator)
     {
         _cache = cache;

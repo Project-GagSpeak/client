@@ -218,7 +218,7 @@ public sealed class LootHandler
             var message = new SeStringBuilder().AddItalics("As the coffer opens, cursed loot spills forth, silencing your mouth with a Gag now strapped on tight!").BuiltString;
             Svc.Chat.PrintError(message);
 
-            if (OwnGlobals.Perms?.ChatGarblerActive ?? false)
+            if (ClientData.Globals?.ChatGarblerActive ?? false)
                 _mediator.Publish(new NotificationMessage("Chat Garbler", "LiveChatGarbler Is Active and you were just Gagged! Be cautious of chatting around strangers!", NotificationType.Warning));
 
             // Update the cursed items offset time.

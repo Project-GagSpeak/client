@@ -3,6 +3,7 @@ using CkCommons.Gui;
 using CkCommons.Gui.Utility;
 using CkCommons.Helpers;
 using CkCommons.Raii;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
@@ -12,12 +13,12 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using GagspeakAPI.Util;
-using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.MainWindow;
@@ -673,12 +674,12 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         ImGui.TextUnformatted("Misc Actions");
 
         // Effect Sending
-        var hasEffect = k.PairGlobals.HypnoState();
+        var hasEffect = k.PairHardcore.IsEnabled(HcAttribute.HypnoticEffect);
         var hypnoTxt = hasEffect ? $"{dispName} is being Hypnotized" : $"Hypnotize {dispName}";
         var hypnoTT = hasEffect ? $"{dispName} is currently under hypnosis state.--SEP--Cannot apply an effect until {dispName} is not hypnotized."
             : $"Configure and apply a hypnosis effect on {dispName}.";
 
-        if (CkGui.IconTextButton(FAI.Dizzy, hypnoTxt, width, true, hasEffect || !k.PairPerms.HypnoEffectSending || k.PairGlobals.HypnoState()))
+        if (CkGui.IconTextButton(FAI.Dizzy, hypnoTxt, width, true, hasEffect || !k.PairPerms.HypnoEffectSending))
             _service.ToggleHypnosisView();
         CkGui.AttachToolTip(hypnoTT);
 

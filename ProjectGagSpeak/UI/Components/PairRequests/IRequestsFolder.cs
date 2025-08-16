@@ -7,7 +7,6 @@ public interface IRequestsFolder
 {
     int TotalOutgoing { get; }
     int TotalIncoming { get; }
-    bool HasRequests { get; }
 
     /// <summary>
     ///     Draw the header section of the folder.

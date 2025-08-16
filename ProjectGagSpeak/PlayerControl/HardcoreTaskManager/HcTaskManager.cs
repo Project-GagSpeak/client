@@ -1,4 +1,6 @@
 using Dalamud.Plugin.Services;
+using GagSpeak.State;
+using GagSpeak.State.Caches;
 using System.Reflection;
 
 namespace GagSpeak.PlayerControl;
@@ -15,17 +17,18 @@ namespace GagSpeak.PlayerControl;
 public partial class HcTaskManager : IDisposable
 {
     private readonly ILogger<HcTaskManager> _logger;
+    private readonly PlayerControlCache _cache;
 
-    /// <summary> Configuration for the task manager, such as max task time and if we should abort on timeout. </summary>
-    /// <remarks> This could possible function per-task, instead of globally. </remarks>
-    private HcTaskConfiguration _taskConfig = new HcTaskConfiguration();
+    /// <summary> 
+    ///     The list of hardcore task operations managed by the HcTaskManager.
+    /// </summary>
+    private List<HcTaskOperation> _taskOperations = new List<HcTaskOperation>();
 
-    /// <summary> The list of tasks currently being managed by the Hardcore Task Manager. </summary>
-    private List<HardcoreTask> _tasks = new List<HardcoreTask>();
-    public HcTaskManager(ILogger<HcTaskManager> logger)
+    public HcTaskManager(ILogger<HcTaskManager> logger, PlayerControlCache cache)
     {
         _logger = logger;
-        // make sure our tasks run on the framework update loop so that game functions are properly handled.
+        _cache = cache;
+
         Svc.Framework.Update += OnFramework;
         _logger.LogInformation("Hardcore Task Manager Initialized.");
     }
@@ -34,16 +37,19 @@ public partial class HcTaskManager : IDisposable
     public int ObservedTasks {get; private set; } = 0;
 
     /// <summary> The total number of currently queued Tasks. </summary>
-    public int QueuedTasks => _tasks.Count + (CurrentTask != null ? 1 : 0);
+    public int QueuedTasks => _taskOperations.Count + (CurrentTask != null ? 1 : 0);
 
     /// <summary> Current progress made out of the total tasks enqueued. </summary>
     public float ManagerProgress => ObservedTasks == 0 ? 0 : (float)(ObservedTasks - QueuedTasks) / (float)ObservedTasks;
 
+    // gets the current progress of the list of tasks performed in a operation group.
+    public float OperationProgress => CurrentTask is null ? 0 : (float)CurrentTask.CurrentTaskIdx / (float)CurrentTask.Tasks.Count;
+
     /// <summary> If the Hardcore Task Manager is currently busy performing tasks. </summary>
-    public bool IsBusy => _tasks.Count > 0 || CurrentTask != null; 
+    public bool IsBusy => _taskOperations.Count > 0 || CurrentTask != null; 
 
     /// <summary> The task currently being processed by the Hardcore Task Manager. </summary>
-    public HardcoreTask? CurrentTask { get; private set; } = null;
+    public HcTaskOperation? CurrentTask { get; private set; } = null;
 
     /// <summary> The time the current task is starting. </summary>
     public static long StartTime = 0;
@@ -70,12 +76,12 @@ public partial class HcTaskManager : IDisposable
 
     public void AbortTasks()
     {
-        _tasks.Clear();
+        _taskOperations.Clear();
         AbortTime = 0;
         StartTime = 0;
         CurrentTask = null;
         // if there is an active stack, discard it.
-        if (IsStackActive)
+        if (_tempStack.Count > 0)
         {
             _logger.LogDebug("Aborting Hardcore Task Stack.", LoggerType.HardcoreTasks);
             DiscardStack();
@@ -98,81 +104,94 @@ public partial class HcTaskManager : IDisposable
     private void OnFramework(IFramework framework)
     {
         // Handle the condition in where there are no tasks currently being processed.
-        if (_tasks.Count > 0 || CurrentTask is not null)
+        if (_taskOperations.Count > 0 || CurrentTask is not null)
         {
-            // if the current task is null, begin the next task.
+            // if no current operation is being performed, begin the next operation.
             if (CurrentTask is null)
             {
-                CurrentTask = _tasks[0];
-                _tasks.RemoveAt(0);
-                AbortTime = 0;
+                CurrentTask = _taskOperations[0];
+                _taskOperations.RemoveAt(0);
+
+                // Apply the control state to the cache.
+                _cache.SetActiveTaskControl(CurrentTask.Config.ControlFlags);
                 StartTime = Environment.TickCount64;
-            }
-
-            // set the config to the individual config, or fallback to the default task config.
-            var config = CurrentTask.Config ?? _taskConfig;
-
-            // if the number of queued tasks exceeds the observed tasks, update the observed tasks count.
-            if (QueuedTasks > ObservedTasks)
-            {
+                AbortTime = 0;
                 ObservedTasks = QueuedTasks;
-                _logger.LogDebug($"Observed Tasks Updated: {ObservedTasks}", LoggerType.HardcoreTasks);
             }
 
-            // Attempt to update the task execution.
+            // set the config to the operations config.
+            var config = CurrentTask.Config;
+
+            // Get the current task delegate inside the operation
+            var curTaskIdx = CurrentTask.CurrentTaskIdx;
+            // if the task is complete, we should move onto the next one.
+            if (CurrentTask.IsComplete)
+            {
+                _logger.LogInformation($"HcTaskOperation Complete: {CurrentTask.Name}, {CurrentTask.Location}");
+                _cache.SetActiveTaskControl(HcTaskControl.None);
+                CurrentTask = null;
+                return;
+            }
+
+            // obtain the current task to perform.
+            var curTask = CurrentTask.Tasks[curTaskIdx];
             try
             {
-                // if the abort time is not set, mark the remaining time to the tasks max task time.
+                // Define timeout if not set.
                 if (AbortTime is 0)
                 {
                     RemainingTime = config.MaxTaskTime;
                     _logger.LogTrace($"Hardcore Task Begin: [{CurrentTask.Name} ({CurrentTask.Location})], with timeout of {RemainingTime}", LoggerType.HardcoreTasks);
                 }
-                // if the remaining time if below 0, we should update the tim and handle timeouts.
+                // handle timeout occurances
                 if (RemainingTime < 0)
                 {
-                    // handle timeout occurances.
                     _logger.LogDebug($"Hardcore Task Timeout: {CurrentTask.Name} ({CurrentTask.Location})", LoggerType.HardcoreTasks);
                     throw new BagagwaTimeout();
                 }
-                // Perform the current task, and yield its result.
-                var taskResult = CurrentTask.Task();
-                // if the current task is null, warn abortion.
+
+                // Execute the current task.
+                var result = curTask();
+
+                // dont think this will ever occur, but add just incase.
                 if (CurrentTask == null)
                 {
                     _logger.LogWarning($"Hardcore Task was aborted from inside!");
                     return;
                 }
                 // if the result was SUCCESSFUL (Y I P E E!), then we can iterate onto the next task!
-                if (taskResult is true)
+                if (result is true)
                 {
-                    _logger.LogTrace($"Hardcore Task Success: {CurrentTask.Name} ({CurrentTask.Location})", LoggerType.HardcoreTasks);
-                    CurrentTask = null;
+                    // the task completed, so we should move onto the next index.
+                    _logger.LogInformation($"Hardcore Task Success: {CurrentTask.Name} ({CurrentTask.Location})", LoggerType.HardcoreTasks);
+                    CurrentTask.AdvanceTaskIndex();
+                    AbortTime = 0; // reset abort time.
+
+                    // if the entire operation is complete, then remove sources and reset current.
+                    if (CurrentTask.IsComplete)
+                    {
+                        _logger.LogInformation($"Hardcore Task Operation Complete: {CurrentTask.Name} ({CurrentTask.Location})", LoggerType.HardcoreTasks);
+                        _cache.SetActiveTaskControl(HcTaskControl.None);
+                        CurrentTask = null;
+                    }
                 }
-                else if (taskResult is null)
+                // if the result was null then abort all tasks.
+                else if (result is null)
                 {
                     _logger.LogTrace($"Recieved abort request from task: {CurrentTask.Name} ({CurrentTask.Location})", LoggerType.HardcoreTasks);
                     AbortTasks();
                 }
             }
+            // handle cases where we summoned Bagagwa via timeouts or other standard Bagagwa summoning practices.
             catch (BagagwaTimeout e)
             {
-                // log the timeout exception.
-                _logger.LogWarning($"Hardcore Task Timeout: {CurrentTask?.Name} ({CurrentTask?.Location}), Exception: {e}", LoggerType.HardcoreTasks);
-                // if we should abort on timeout, abort the current task.
-                if (config.AbortOnTimeout)
-                    AbortTasks();
-                else
-                    CurrentTask = null;
+                _logger.LogWarning($"Timeout in operation [{CurrentTask?.Name}] task index {CurrentTask?.CurrentTaskIdx}: {e}", LoggerType.HardcoreTasks);
+                AbortTasks();
             }
             catch (Bagagwa ex)
             {
                 _logger.LogError($"Hardcore Task Error: {CurrentTask?.Name} ({CurrentTask?.Location}), Exception: {ex}", LoggerType.HardcoreTasks);
-                // abort the task and set the current task to null.
-                if (config.AbortOnTimeout)
-                    AbortTasks();
-                else
-                    CurrentTask = null;
+                AbortTasks();
             }
             // return early to not update the observed tasks count.
             return;

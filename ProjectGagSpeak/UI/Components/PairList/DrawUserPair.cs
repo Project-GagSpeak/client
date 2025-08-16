@@ -8,83 +8,57 @@ using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
 using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
+using CkCommons.Raii;
 
 namespace GagSpeak.Gui.Components;
-
-/// <summary>
-/// Class handling the draw function for a singular user pair that the client has. (one row)
-/// </summary>
 public class DrawUserPair
 {
-    protected readonly MainHub _hub;
-    protected readonly IdDisplayHandler _displayHandler;
     protected readonly GagspeakMediator _mediator;
+    protected readonly MainHub _hub;
+    protected readonly IdDisplayHandler _nameHandler;
+
     protected Kinkster _pair;
     private readonly string _id;
-    private readonly CosmeticService _cosmetics;
-
-    private Dictionary<byte, bool> IsHovered = new();
-    public DrawUserPair(ILogger<DrawUserPair> logger, string id, Kinkster entry, MainHub hub,
-        IdDisplayHandler uIDDisplayHandler, GagspeakMediator mediator, CosmeticService cosmetics)
+    private bool IsHovered = false;
+    public DrawUserPair(string id, Kinkster entry, GagspeakMediator mediator, MainHub hub, IdDisplayHandler nameDisp)
     {
         _id = id;
         _pair = entry;
-        _hub = hub;
-        _displayHandler = uIDDisplayHandler;
         _mediator = mediator;
-        _cosmetics = cosmetics;
+        _hub = hub;
+        _nameHandler = nameDisp;
     }
 
     public Kinkster Pair => _pair;
 
-    public bool DrawPairedClient(byte ident, bool supporterIcon = true, bool icon = true, bool iconTT = true, bool displayToggles = true, 
-        bool displayNameTT = true, bool showHovered = true, bool showRightButtons = true)
+    public bool DrawPairedClient()
     {
-        // if no key exist for the dictionary, add it with default value of false.
-        if (!IsHovered.ContainsKey(ident))
-        {
-            IsHovered.Add(ident, false);
-        }
-
         var selected = false;
         // get the current cursor pos
         var cursorPos = ImGui.GetCursorPosX();
         using var id = ImRaii.PushId(GetType() + _id);
-        using (ImRaii.PushColor(ImGuiCol.ChildBg, ImGui.GetColorU32(ImGuiCol.FrameBgHovered), showHovered && IsHovered[ident]))
+        var childSize = new Vector2(CkGui.GetWindowContentRegionWidth() - ImGui.GetCursorPosX(), ImGui.GetFrameHeight());
+        using (CkRaii.Child(GetType() + _id, childSize, IsHovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : 0))
         {
-            using (ImRaii.Child(GetType() + _id, new Vector2(CkGui.GetWindowContentRegionWidth() - ImGui.GetCursorPosX(), ImGui.GetFrameHeight())))
-            {
-                ImUtf8.SameLineInner();
-                if (icon)
-                {
-                    DrawLeftSide(iconTT);
-                }
-                ImGui.SameLine();
-                var posX = ImGui.GetCursorPosX();
-
-                var rightSide = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - CkGui.IconButtonSize(FAI.EllipsisV).X;
-
-                if (showRightButtons)
-                {
-                    rightSide = DrawRightSide();
-                }
-
-                selected = DrawName(posX, rightSide, displayToggles, displayNameTT);
-            }
-
-            IsHovered[ident] = ImGui.IsItemHovered();
+            ImUtf8.SameLineInner();
+            DrawLeftSide();
+            ImGui.SameLine();
+            var posX = ImGui.GetCursorPosX();
+            var rightSide = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - CkGui.IconButtonSize(FAI.EllipsisV).X;
+            rightSide = DrawRightSide();
+            selected = DrawName(posX, rightSide);            
+            IsHovered = ImGui.IsItemHovered();
         }
         // if they were a supporter, go back to the start and draw the image.
-        if (supporterIcon && _pair.UserData.Tier is not CkSupporterTier.NoRole)
-        {
+        if (_pair.UserData.Tier is not CkSupporterTier.NoRole)
             DrawSupporterIcon(cursorPos);
-        }
+
         return selected;
     }
 
     private void DrawSupporterIcon(float cursorPos)
     {
-        var Image = _cosmetics.GetSupporterInfo(Pair.UserData);
+        var Image = CosmeticService.GetSupporterInfo(Pair.UserData);
         if (Image.SupporterWrap is { } wrap)
         {
             ImGui.SameLine(cursorPos);
@@ -95,42 +69,36 @@ public class DrawUserPair
         // return to the end of the line.
     }
 
-    private void DrawLeftSide(bool showToolTip)
+    private void DrawLeftSide()
     {
         var userPairText = string.Empty;
-
-        ImGui.AlignTextToFramePadding();
-
         if (!_pair.IsOnline)
         {
             using var _ = ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudRed);
-            CkGui.IconText(FAI.User);
-            userPairText = _pair.UserData.AliasOrUID + " is offline";
+            CkGui.FramedIconText(FAI.User);
+            userPairText = $"{_pair.GetNickAliasOrUid()} is offline";
         }
         else if (_pair.IsVisible)
         {
-            CkGui.IconText(FAI.Eye, ImGuiColors.ParsedGreen);
-            userPairText = _pair.UserData.AliasOrUID + " is visible: " + _pair.PlayerName + Environment.NewLine + "Click to target this player";
+            CkGui.FramedIconText(FAI.Eye, ImGuiColors.ParsedGreen);
+            userPairText = $"{_pair.GetNickAliasOrUid()} is visible ({_pair.PlayerName})--SEP--Click to target this player";
             if (ImGui.IsItemClicked())
-            {
                 _mediator.Publish(new TargetPairMessage(_pair));
-            }
         }
         else
         {
             using var _ = ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.HealerGreen);
-            CkGui.IconText(FAI.User);
-            userPairText = _pair.UserData.AliasOrUID + " is online";
+            CkGui.FramedIconText(FAI.User);
+            userPairText = $"{_pair.GetNickAliasOrUid()} is online";
         }
-        if (showToolTip)
-            CkGui.AttachToolTip(userPairText);
+        CkGui.AttachToolTip(userPairText);
 
         ImGui.SameLine();
     }
 
-    private bool DrawName(float leftSide, float rightSide, bool canTogglePairTextDisplay, bool displayNameTT)
+    private bool DrawName(float leftSide, float rightSide)
     {
-        return _displayHandler.DrawPairText(_id, _pair, leftSide, () => rightSide - leftSide, canTogglePairTextDisplay, displayNameTT);
+        return _nameHandler.DrawPairText(_id, _pair, leftSide, () => rightSide - leftSide);
     }
 
     private float DrawRightSide()

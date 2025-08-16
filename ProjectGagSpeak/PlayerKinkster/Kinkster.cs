@@ -51,6 +51,7 @@ public class Kinkster : IComparable<Kinkster>
     public PairPerms OwnPerms => UserPair.OwnPerms;
     public PairPermAccess OwnPermAccess => UserPair.OwnAccess;
     public GlobalPerms PairGlobals => UserPair.Globals;
+    public HardcoreState PairHardcore => UserPair.Hardcore;
     public PairPerms PairPerms => UserPair.Perms;
     public PairPermAccess PairPermAccess => UserPair.Access;
 

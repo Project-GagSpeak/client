@@ -8,10 +8,10 @@ public class TraitsHandler
 {
     private readonly ILogger<TraitsHandler> _logger;
     private readonly TraitsCache _cache;
-    private readonly HotbarActionController _controller;
+    private readonly HotbarActionHandler _controller;
 
     public TraitsHandler(ILogger<TraitsHandler> logger, TraitsCache cache,
-        HotbarActionController controller)
+        HotbarActionHandler controller)
     {
         _logger = logger;
         _cache = cache;

@@ -1,12 +1,11 @@
+using CkCommons;
+using CkCommons.Helpers;
 using Dalamud.Game.ClientState.Keys;
 using Dalamud.Plugin.Services;
-using CkCommons;
 using GagSpeak.Services.Mediator;
-using GagSpeak.State;
-using GagSpeak.Utils;
+using GagSpeak.State.Caches;
 using System.Reflection;
 using System.Windows.Forms;
-using CkCommons.Helpers;
 
 
 namespace GagSpeak.Services.Controller;
@@ -17,86 +16,82 @@ namespace GagSpeak.Services.Controller;
 /// </summary>
 public sealed class KeystateController : DisposableMediatorSubscriberBase
 {
-    private readonly MovementController _moveService;
+    private readonly PlayerControlCache _cache;
 
     delegate ref int GetRefValue(int vkCode);
     private static GetRefValue? _getRefValue;
 
-    // Block everything but hardcore safeword keybind. (Maybe use keymonitor to handle this while logged out or something i dont know.
-    public static readonly List<VirtualKey> AllKeys = Enum.GetValues<VirtualKey>().Skip(4).Except([VirtualKey.CONTROL, VirtualKey.MENU, VirtualKey.BACK]).ToList();
-    public static readonly List<VirtualKey> MoveKeys = [VirtualKey.W, VirtualKey.A, VirtualKey.S, VirtualKey.D, VirtualKey.SPACE];
+    private List<VirtualKey> _keysToBlock = new();
 
-    // Dictates controlling the player's KeyState blocking.
-    private PlayerControlSource _sources = PlayerControlSource.None;
-    private bool _keysWereCancelled = false;
-
-    public KeystateController(ILogger<KeystateController> logger, GagspeakMediator mediator, MovementController moveService) 
+    public KeystateController(ILogger<KeystateController> logger, GagspeakMediator mediator, PlayerControlCache cache) 
         : base(logger, mediator)
     {
-        _moveService = moveService;
+        _cache = cache;
 
+        // cursed bs bagagwa summoning to obtain the various ref values of our keystates via reflection
         Generic.Safe(delegate
         {
             _getRefValue = (GetRefValue)Delegate.CreateDelegate(typeof(GetRefValue), Svc.KeyState,
                 Svc.KeyState.GetType().GetMethod("GetRefValue", BindingFlags.NonPublic | BindingFlags.Instance, null, [typeof(int)], null)!);
         });
 
+        Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreState());
         Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
     }
 
-    private bool BlockKeyInput => _sources != 0;
-    // this could potentially cause a race condition where the lifestream task is removed before it can reset the cancelled keys,
-    // but that will only occur if the framework tick is not fast enough for the cancel.
-    // an easy fix would be to just run the addition/removal of sources on the framework thread, but that would harm application time.
-    private List<VirtualKey> BlockedKeys => _sources.HasAny(PlayerControlSource.LifestreamTask) ? AllKeys : MoveKeys;
-    
-    private unsafe void FrameworkUpdate()
+    protected override void Dispose(bool disposing)
     {
-        if (BlockKeyInput)
-            CancelMoveKeys();
-        else
-            ResetCancelledMoveKeys();
+        base.Dispose(disposing);
+        // reset all cancelled keys.
+        ResetCancelledMoveKeys(PlayerControlCache.AllKeys);
+        _keysToBlock.Clear();
     }
 
-    public void AddControlSources(PlayerControlSource sources)
-        => _sources |= sources;
+    private void UpdateHardcoreState()
+    {
+        var cacheBlockedKeys = _cache.GetBlockedKeys().ToList();
 
-    public void RemoveControlSources(PlayerControlSource sources)
-        => _sources &= ~sources;
+        // if we should be blocking keys, but we not currently, then block keys.
+        var blockedKeyCount = _keysToBlock.Count();
+        var cacheBlockedKeyCount = cacheBlockedKeys.Count();
+
+        // Update the keys to block if there is a difference, but unblock all keys firstly.
+        if (cacheBlockedKeyCount != blockedKeyCount)
+        {
+            // reset all cancelled keys.
+            ResetCancelledMoveKeys(_keysToBlock);
+            // update the list.
+            _keysToBlock = cacheBlockedKeys;
+        }
+    }
+
+    private unsafe void FrameworkUpdate()
+    {
+        if (_keysToBlock.Count <= 0)
+            return;
+        CancelMoveKeys(); 
+    }
 
     /// <summary>
     ///     The keys that are used for movement, which will be cancelled if the player is not allowed to move.
     /// </summary>
     private void CancelMoveKeys()
     {
-        foreach (var x in BlockedKeys)
-        {
+        foreach (var x in _keysToBlock)
             // the action to execute for each of our moved keys
             if (Svc.KeyState.GetRawValue(x) == 0)
-            {
-                // if the value is not set to execute, set it.
                 Svc.KeyState.SetRawValue(x, 1);
-                _keysWereCancelled = true;
-            }
-        }
     }
 
     /// <summary>
     ///     Resets any keys that were cancelled.
     /// </summary>
-    private void ResetCancelledMoveKeys()
+    private void ResetCancelledMoveKeys(IEnumerable<VirtualKey> keysToRestore)
     {
-        if (!_keysWereCancelled)
-            return;
-
-        // Make sure they become false.
-        _keysWereCancelled = false;
-        // Restore the state of the virtual keys
-        foreach (var x in BlockedKeys)
-        {
+        // Restore the state of the virtual keys if they are pressed.
+        foreach (var x in keysToRestore)
             if (KeyMonitor.IsKeyPressed((int)(Keys)x))
                 SetKeyState(x, 3);
-        }
     }
 
     /// <summary>

@@ -13,10 +13,10 @@ public record TargetPairMessage(Kinkster Pair) : MessageBase; // called when pub
 public record CreateCacheForObjectMessage(GameObjectHandler ObjectToCreateFor) : MessageBase;
 public record ClearCacheForObjectMessage(GameObjectHandler ObjectToCreateFor) : MessageBase; // called when we should clear a GameObject from cache creation service.
 public record MufflerLanguageChanged : MessageBase; // called whenever the client language changes to a new language.
-
+public record HcStateCacheChanged : MessageBase; // informs all controllers to update the latest control states.
+public record PushHcStateChange(HcAttribute attribute, bool newState, int? id = null, byte? cpose = null) : SameThreadMessage; 
 
 // Kinkster Data Changes
-public record PushGlobalPermChange(string PermName, object NewValue) : MessageBase;
 public record ActiveGagsChangeMessage(DataUpdateType UpdateType, int Layer, ActiveGagSlot NewData) : SameThreadMessage;
 public record ActiveRestrictionsChangeMessage(DataUpdateType UpdateType, int Layer, ActiveRestriction NewData) : SameThreadMessage;
 public record ActiveRestraintSetChangeMessage(DataUpdateType UpdateType, CharaActiveRestraint NewData) : SameThreadMessage;

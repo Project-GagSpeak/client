@@ -9,8 +9,7 @@ public class KinkPlateFactory
     private readonly ILoggerFactory _loggerFactory;
     private readonly GagspeakMediator _mediator;
 
-    public KinkPlateFactory(ILoggerFactory loggerFactory, GagspeakMediator mediator,
-        KinksterRequests playerData, CosmeticService cosmetics)
+    public KinkPlateFactory(ILoggerFactory loggerFactory, GagspeakMediator mediator)
     {
         _loggerFactory = loggerFactory;
         _mediator = mediator;

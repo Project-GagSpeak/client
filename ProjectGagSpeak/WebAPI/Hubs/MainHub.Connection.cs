@@ -88,7 +88,7 @@ public partial class MainHub
                 // Load in our initial pairs, then the online ones.
                 await LoadInitialKinksters().ConfigureAwait(false);
                 await LoadOnlineKinksters().ConfigureAwait(false);
-                await LoadKinksterRequests().ConfigureAwait(false);
+                await LoadRequests().ConfigureAwait(false);
                 await _dataSync.SetClientDataForProfile().ConfigureAwait(false);
                 // once data is syncronized, update the serverStatus.
                 ServerStatus = ServerState.ConnectedDataSynced;

@@ -44,32 +44,4 @@ public partial class MovementDetours : IDisposable
         _logger.LogTrace("Turning off ForceDisableMovement as you are no longer in a locked state or immobile!", LoggerType.HardcoreMovement);
         ForceDisableMovement = 0;
     }
-
-    public void EnableUnfollowHook()
-    {
-        if (UnfollowHookActive)
-            return;
-        UnfollowHook?.Enable();
-    }
-
-    public void DisableUnfollowHook()
-    {
-        if (!UnfollowHookActive)
-            return;
-        UnfollowHook?.Disable();
-    }
-
-    public void EnableMouseAutoMoveHook()
-    {
-        if (MouseAutoMoveHookActive)
-            return;
-        MoveUpdateHook.SafeEnable();
-    }
-
-    public void DisableMouseAutoMoveHook()
-    {
-        if (!MouseAutoMoveHookActive)
-            return;
-        MoveUpdateHook.SafeDisable();
-    }
 }

@@ -3,62 +3,116 @@ using System.Reflection;
 namespace GagSpeak.PlayerControl;
 
 /// <summary>
-///     Indicates a singular Hardcore Task operation. <para />
-///     Tasks can have names, and provide locations they were called from. <para />
-///     The HcTaskManager will only move onto the next task if this task returns true.
+///     Represents a sequence of tasks to be performed. <para />
+///     This can also be a single task. But this 'group' of tasks are confined to the associated configuration.
 /// </summary>
-/// <remarks> The provided <see cref="Config"/> can provide customized Abort and Task Timers. </remarks>
-public class HardcoreTask
+public class HcTaskOperation
 {
     public string Name { get; init; }
     public string Location { get; init; }
-    public Func<bool?> Task { get; init; }
-    public HcTaskConfiguration? Config { get; init; }
+    public List<Func<bool?>> Tasks { get; init; }
+    public HcTaskConfiguration Config { get; init; }
 
-    public HardcoreTask(Func<bool?> task, HcTaskConfiguration? config = null)
+    private int _currentTaskIdx = 0;
+    public int CurrentTaskIdx => _currentTaskIdx;
+    public bool IsComplete => _currentTaskIdx >= Tasks.Count;
+
+    public HcTaskOperation(Func<bool?> task, HcTaskConfiguration config)
     {
-        Task = task;
+        Tasks = [task];
         Config = config;
         Name = task.GetMethodInfo().Name ?? string.Empty;
         Location = task.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
     }
 
-    public HardcoreTask(Func<bool?> task, string name, HcTaskConfiguration? config = null)
+    public HcTaskOperation(Func<bool?> task, string name, HcTaskConfiguration config)
     {
-        Task = task;
+        Tasks = [task];
         Config = config;
         Name = name;
         Location = task.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
     }
 
-    public HardcoreTask(Func<bool> task, HcTaskConfiguration? config = null)
+    public HcTaskOperation(Func<bool> task, HcTaskConfiguration config)
     {
-        Task = () => task();
+        Tasks = [() => task()];
         Config = config;
         Name = task.GetMethodInfo().Name ?? string.Empty;
         Location = task.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
     }
-    public HardcoreTask(Func<bool> task, string name, HcTaskConfiguration? config = null)
+    public HcTaskOperation(Func<bool> task, string name, HcTaskConfiguration config)
     {
-        Task = () => task();
+        Tasks = [() => task()];
         Config = config;
         Name = name;
         Location = task.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
     }
 
-    public HardcoreTask(Action action, HcTaskConfiguration? config = null)
+    public HcTaskOperation(Action action, HcTaskConfiguration config)
     {
-        Task = () => { action(); return true; };
+        Tasks = [() => { action(); return true; }];
         Config = config;
         Name = action.GetMethodInfo().Name ?? string.Empty;
         Location = action.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
     }
 
-    public HardcoreTask(Action action, string name, HcTaskConfiguration? config = null)
+    public HcTaskOperation(Action action, string name, HcTaskConfiguration config)
     {
-        Task = () => { action(); return true; };
+        Tasks = [() => { action(); return true; }];
         Config = config;
         Name = name;
         Location = action.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
     }
+
+    // constructors to support multiple tasks in a single operation.
+    public HcTaskOperation(IEnumerable<Func<bool?>> tasks, HcTaskConfiguration config)
+    {
+        Tasks = tasks.ToList();
+        Config = config;
+        Name = string.Join(", ", Tasks.Select(t => t.GetMethodInfo().Name));
+        Location = Tasks.FirstOrDefault()?.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
+    }
+
+    public HcTaskOperation(IEnumerable<Func<bool?>> tasks, string name, HcTaskConfiguration config)
+    {
+        Tasks = tasks.ToList();
+        Config = config;
+        Name = name;
+        Location = Tasks.FirstOrDefault()?.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
+    }
+
+    public HcTaskOperation(IEnumerable<Func<bool>> tasks, HcTaskConfiguration config)
+    {
+        Tasks = tasks.Select(t => (Func<bool?>)(() => t())).ToList();
+        Config = config;
+        Name = string.Join(", ", Tasks.Select(t => t.GetMethodInfo().Name));
+        Location = Tasks.FirstOrDefault()?.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
+    }
+
+    public HcTaskOperation(IEnumerable<Func<bool>> tasks, string name, HcTaskConfiguration config)
+    {
+        Tasks = tasks.Select(t => (Func<bool?>)(() => t())).ToList();
+        Config = config;
+        Name = name;
+        Location = Tasks.FirstOrDefault()?.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
+    }
+
+    public HcTaskOperation(IEnumerable<Action> actions, HcTaskConfiguration config)
+    {
+        Tasks = actions.Select(a => (Func<bool?>)(() => { a(); return true; })).ToList();
+        Config = config;
+        Name = string.Join(", ", actions.Select(a => a.GetMethodInfo().Name));
+        Location = actions.FirstOrDefault()?.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
+    }
+
+    public HcTaskOperation(IEnumerable<Action> actions, string name, HcTaskConfiguration config)
+    {
+        Tasks = actions.Select(a => (Func<bool?>)(() => { a(); return true; })).ToList();
+        Config = config;
+        Name = name;
+        Location = actions.FirstOrDefault()?.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
+    }
+
+    public void AdvanceTaskIndex() 
+        => _currentTaskIdx++;
 }
