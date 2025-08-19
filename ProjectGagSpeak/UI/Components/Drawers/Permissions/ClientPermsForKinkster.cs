@@ -223,7 +223,7 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
             {
                 switch (res.type)
                 {
-                    case PermissionType.Global: await _hub.UserChangeOwnGlobalPerm(res.name, newState); break;
+                    case PermissionType.Global: await _hub.ChangeOwnGlobalPerm(res.name, newState); break;
                     case PermissionType.PairPerm: await PermissionHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.PairPerms, res.name, newState); break;
                     default: break;
                 }
@@ -267,7 +267,7 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
             {
                 switch (res.type)
                 {
-                    case PermissionType.Global: await _hub.UserChangeOwnGlobalPerm(res.name, newState); break;
+                    case PermissionType.Global: await _hub.ChangeOwnGlobalPerm(res.name, newState); break;
                     case PermissionType.PairPerm: await PermissionHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.PairPerms, res.name, newState); break;
                     case PermissionType.PairAccess: await PermissionHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.OwnPermAccess, res.name, newState); break;
                     default: break;

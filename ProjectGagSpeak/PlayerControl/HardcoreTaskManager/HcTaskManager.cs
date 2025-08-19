@@ -178,7 +178,7 @@ public partial class HcTaskManager : IDisposable
                 // if the result was null then abort all tasks.
                 else if (result is null)
                 {
-                    _logger.LogTrace($"Recieved abort request from task: {CurrentTask.Name} ({CurrentTask.Location})", LoggerType.HardcoreTasks);
+                    _logger.LogTrace($"Received abort request from task: {CurrentTask.Name} ({CurrentTask.Location})", LoggerType.HardcoreTasks);
                     AbortTasks();
                 }
             }

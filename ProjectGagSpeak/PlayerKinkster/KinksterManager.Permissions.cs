@@ -18,33 +18,33 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     /// Updates all permissions of a client pair user.
     /// Edit access is checked server-side to prevent abuse, so these should be all accurate
     /// </summary>
-    public void UpdateOtherPairAllPermissions(BulkChangeAll dto)
-    {
-        if (!_allClientPairs.TryGetValue(dto.User, out var pair))
-            throw new InvalidOperationException("No such pair for " + dto);
+    //public void UpdateOtherPairAllPermissions(BulkChangeAll dto)
+    //{
+    //    if (!_allClientPairs.TryGetValue(dto.User, out var pair))
+    //        throw new InvalidOperationException("No such pair for " + dto);
 
-        if (pair.UserPair is null)
-            throw new InvalidOperationException("No direct pair for " + dto);
+    //    if (pair.UserPair is null)
+    //        throw new InvalidOperationException("No direct pair for " + dto);
 
-        // check to see if the user just paused themselves.
-        if (pair.PairPerms.IsPaused != dto.Unique.IsPaused)
-            Mediator.Publish(new ClearProfileDataMessage(dto.User));
+    //    // check to see if the user just paused themselves.
+    //    if (pair.PairPerms.IsPaused != dto.Unique.IsPaused)
+    //        Mediator.Publish(new ClearProfileDataMessage(dto.User));
 
-        var MoodlesChanged = (dto.Unique.MoodlePerms != pair.PairPerms.MoodlePerms) || (dto.Unique.MaxMoodleTime != pair.PairPerms.MaxMoodleTime);
+    //    var MoodlesChanged = (dto.Unique.MoodlePerms != pair.PairPerms.MoodlePerms) || (dto.Unique.MaxMoodleTime != pair.PairPerms.MaxMoodleTime);
 
-        // set the permissions.
-        pair.UserPair.Globals = dto.Globals;
-        pair.UserPair.Perms = dto.Unique;
-        pair.UserPair.Access = dto.Access;
+    //    // set the permissions.
+    //    pair.UserPair.Globals = dto.Globals;
+    //    pair.UserPair.Perms = dto.Unique;
+    //    pair.UserPair.Access = dto.Access;
 
-        Logger.LogTrace("Fresh update >> Paused: "+ pair.PairPerms.IsPaused, LoggerType.PairDataTransfer);
+    //    Logger.LogTrace("Fresh update >> Paused: "+ pair.PairPerms.IsPaused, LoggerType.PairDataTransfer);
 
-        RecreateLazy(true);
+    //    RecreateLazy(true);
 
-        // push notify after recreating lazy.
-        if (MoodlesChanged && GetOnlineUserDatas().Contains(pair.UserData))
-            Mediator.Publish(new MoodlesPermissionsUpdated(pair.PlayerNameWithWorld));
-    }
+    //    // push notify after recreating lazy.
+    //    if (MoodlesChanged && GetOnlineUserDatas().Contains(pair.UserData))
+    //        Mediator.Publish(new MoodlesPermissionsUpdated(pair.PlayerNameWithWorld));
+    //}
 
     public void UpdateAllUniqueForKinkster(UserData target, PairPerms newUniquePerms, PairPermAccess newAccessPerms)
     {
@@ -76,16 +76,11 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         Logger.LogDebug($"Updated all globals for '{kinkster.GetNickname() ?? kinkster.UserData.AliasOrUID}'", LoggerType.PairDataTransfer);
     }
 
-    public void UpdateKinkstersGlobalPerms(UserData target, UserData enactor, KeyValuePair<string, object> newPerm1, KeyValuePair<string, object> newPerm2)
-    {
-        UpdateKinkstersGlobalPerm(target, enactor, newPerm1);
-        UpdateKinkstersGlobalPerm(target, enactor, newPerm2);
-    }
     /// <summary>
-    /// Updates a global permission of a client pair user.
-    /// Edit access is checked server-side to prevent abuse, so these should be all accurate.
+    ///     Updates a global permission of a client pair user.
+    ///     Edit access is checked server-side to prevent abuse, so these should be all accurate.
     /// </summary>>
-    public void UpdateKinkstersGlobalPerm(UserData target, UserData enactor, KeyValuePair<string, object> newPerm)
+    public void UpdateGlobalPerm(UserData target, UserData enactor, KeyValuePair<string, object> newPerm)
     {
         if (!_allClientPairs.TryGetValue(target, out var kinkster))
             throw new InvalidOperationException($"Found no Kinkster with UID: {target.UID}");

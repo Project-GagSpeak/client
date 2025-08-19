@@ -47,7 +47,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
     {
         // grab the profile object from the profile service.
         var profile = _plateManager.GetKinkPlate(MainHub.PlayerUserData);
-        if (profile.KinkPlateInfo.Disabled || !MainHub.IsVerifiedUser)
+        if (profile.KinkPlateInfo.Disabled || !MainHub.IsVerified)
         {
             ImGui.Spacing();
             CkGui.ColorTextCentered("Social Features have been Restricted", ImGuiColors.DalamudRed);

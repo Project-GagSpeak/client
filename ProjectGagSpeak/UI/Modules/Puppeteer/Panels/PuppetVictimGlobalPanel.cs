@@ -177,7 +177,7 @@ public sealed partial class PuppetVictimGlobalPanel
 
         UiService.SetUITask(async () =>
         {
-            var res = await _hub.UserChangeOwnGlobalPerm(nameof(GlobalPerms.TriggerPhrase), updatedString);
+            var res = await _hub.ChangeOwnGlobalPerm(nameof(GlobalPerms.TriggerPhrase), updatedString);
             if (res.ErrorCode is not GagSpeakApiEc.Success)
                 _logger.LogError($"Failed to update global trigger phrase: {res.ErrorCode}");
         });
@@ -195,7 +195,7 @@ public sealed partial class PuppetVictimGlobalPanel
         {
             UiService.SetUITask(async () =>
             {
-                var res = await _hub.UserChangeOwnGlobalPerm(nameof(GlobalPerms.PuppetPerms), (PuppetPerms)categoryFilter);
+                var res = await _hub.ChangeOwnGlobalPerm(nameof(GlobalPerms.PuppetPerms), (PuppetPerms)categoryFilter);
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                     _logger.LogError($"Failed to update global puppet perms: {res.ErrorCode}");
             });

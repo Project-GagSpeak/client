@@ -156,7 +156,7 @@ public class TriggerHandler
         {
             var enclosedText = (enactorUid == MainHub.UID) ? "A GlobalTrigger" : enactorUid;
             _logger.LogInformation($"[{enclosedText}] made you execute a message!", LoggerType.Puppeteer);
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderRecieved);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderReceived);
             ChatService.EnqueueMessage("/" + finalMsg.TextValue);
             return;
         }
@@ -213,13 +213,13 @@ public class TriggerHandler
             if (sitEmote.RowId is 50 or 52)
             {
                 _logger.LogTrace("Message is a sit command", LoggerType.Puppeteer);
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteRecieved, sitEmote.RowId);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteReceived, sitEmote.RowId);
                 return true;
             }
             if (EmoteService.ValidLightEmoteCache.Where(e => e.RowId is 90).Any(e => message.TextValue.Contains(e.Name.Replace(" ", "").ToLower())))
             {
                 _logger.LogTrace("Message is a change pose command", LoggerType.Puppeteer);
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteRecieved, 90);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteReceived, 90);
                 return true;
             }
         }
@@ -234,7 +234,7 @@ public class TriggerHandler
 
             if (!string.IsNullOrEmpty(emote.Name))
             {
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteRecieved, emote.RowId);
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteReceived, emote.RowId);
                 return true;
             }
             return false;

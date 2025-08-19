@@ -4,16 +4,14 @@ using GagSpeak.Kinksters;
 using GagSpeak.Services.Configs;
 using Dalamud.Bindings.ImGui;
 using System.Collections.Immutable;
+using OtterGui.Text;
 
 namespace GagSpeak.Gui.Components;
 
 /// <summary> The inherited class of the draw folder which determines what folders should draw what components. </summary>
 public class DrawFolderTag : DrawFolderBase
 {
-    public DrawFolderTag(
-        string id,
-        IImmutableList<DrawUserPair> drawPairs, 
-        IImmutableList<Kinkster> allPairs,
+    public DrawFolderTag(string id, IImmutableList<DrawUserPair> drawPairs, IImmutableList<Kinkster> allPairs,
         ServerConfigManager configs) : base(id, drawPairs, allPairs, configs)
     { }
 
@@ -56,9 +54,9 @@ public class DrawFolderTag : DrawFolderBase
                 ImGui.SameLine();
                 ImGui.AlignTextToFramePadding();
 
-                ImGui.TextUnformatted("[" + OnlinePairs.ToString() + "]");
+                ImGui.TextUnformatted($"[{OnlinePairs}]");
             }
-            CkGui.AttachToolTip(OnlinePairs + " online" + Environment.NewLine + TotalPairs + " total");
+            CkGui.AttachToolTip($"{OnlinePairs} online\n{TotalPairs} total");
         }
         ImGui.SameLine();
         return ImGui.GetCursorPosX();
@@ -67,15 +65,13 @@ public class DrawFolderTag : DrawFolderBase
     /// <summary> The label for each dropdown folder in the list. </summary>
     protected override void DrawName(float width)
     {
-        ImGui.AlignTextToFramePadding();
-        var name = _id switch
+        ImUtf8.TextFrameAligned(_id switch
         {
             Constants.CustomOnlineTag => "GagSpeak Online Users",
             Constants.CustomOfflineTag => "GagSpeak Offline Users",
             Constants.CustomVisibleTag => "Visible",
             Constants.CustomAllTag => "Users",
             _ => _id
-        };
-        ImGui.TextUnformatted(name);
+        });
     }
 }

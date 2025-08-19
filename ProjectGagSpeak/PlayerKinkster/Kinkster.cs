@@ -1,21 +1,22 @@
+using CkCommons;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Gui.ContextMenu;
 using Dalamud.Game.Text.SeStringHandling;
-using GagSpeak.PlayerClient;
-using CkCommons;
 using GagSpeak.Kinksters.Factories;
 using GagSpeak.Kinksters.Handlers;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Network;
 using Penumbra.GameData.Enums;
-using Penumbra.GameData.Structs;
 using Penumbra.GameData.Interop;
+using Penumbra.GameData.Structs;
+using TerraFX.Interop.Windows;
 using static Lumina.Data.Parsing.Layer.LayerCommon;
-using GagspeakAPI.Attributes;
 
 namespace GagSpeak.Kinksters;
 
@@ -28,19 +29,17 @@ public class Kinkster : IComparable<Kinkster>
     private readonly PairHandlerFactory _cachedPlayerFactory;
     private readonly SemaphoreSlim _creationSemaphore = new(1);
     private readonly ServerConfigManager _nickConfig;
-    private readonly CosmeticService _cosmetics;
 
     private CancellationTokenSource _applicationCts = new CancellationTokenSource();
     private OnlineKinkster? _OnlineKinkster = null;
 
     public Kinkster(KinksterPair pair, ILogger<Kinkster> logger, GagspeakMediator mediator,
-        PairHandlerFactory factory, ServerConfigManager nicks, CosmeticService cosmetics)
+        PairHandlerFactory factory, ServerConfigManager nicks)
     {
         _logger = logger;
         _mediator = mediator;
         _cachedPlayerFactory = factory;
         _nickConfig = nicks;
-        _cosmetics = cosmetics;
 
         UserPair = pair;
     }
@@ -58,10 +57,12 @@ public class Kinkster : IComparable<Kinkster>
     // Latest cached data for this pair.
     private PairHandler? CachedPlayer { get; set; }
 
+    // Active States
     public CharaIPCData LastIpcData { get; private set; } = new CharaIPCData();
     public CharaActiveGags ActiveGags { get; private set; } = new CharaActiveGags();
     public CharaActiveRestrictions ActiveRestrictions { get; private set; } = new CharaActiveRestrictions();
     public CharaActiveRestraint ActiveRestraint { get; private set; } = new CharaActiveRestraint();
+    public CharaActiveCollar ActiveCollar { get; private set; } = new CharaActiveCollar();
     public List<ToyBrandName> ValidToys { get; private set; } = new();
     public List<Guid> ActiveCursedItems { get; private set; } = new();
     public AliasStorage LastGlobalAliasData { get; private set; } = new AliasStorage();
@@ -69,9 +70,11 @@ public class Kinkster : IComparable<Kinkster>
     public Guid ActivePattern { get; private set; } = Guid.Empty;
     public List<Guid> ActiveAlarms { get; private set; } = new();
     public List<Guid> ActiveTriggers { get; private set; } = new();
+    
+    // Internal Data.
     public KinksterCache LightCache { get; private set; } = new KinksterCache();
 
-    // Most of these attributes should be self explanatory, but they are public methods you can fetch from the pair manager.
+    // Helpers.
     public bool HasCachedPlayer => CachedPlayer != null && !string.IsNullOrEmpty(CachedPlayer.PlayerName) && _OnlineKinkster != null;
     public OnlineKinkster CachedPlayerOnlineDto => CachedPlayer!.OnlineUser;
     public bool IsPaused => UserPair.OwnPerms.IsPaused;
@@ -344,6 +347,38 @@ public class Kinkster : IComparable<Kinkster>
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, data.PreviousRestraint, false, data.Enactor.UID, UserData.UID);
                 // Update internal cache to reflect latest changes for kinkplates and such.
                 UpdateCachedLockedSlots();
+                break;
+        }
+    }
+
+    public void NewActiveCollarData(KinksterUpdateActiveCollar data)
+    {
+        _logger.LogDebug($"Applying updated collar data for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+        ActiveCollar = data.NewData;
+        // Achievement and internal kinkplateCache updates based on type.
+        switch (data.Type)
+        {
+            case DataUpdateType.RequestAccepted:
+                // handle an accepted request here.
+                break;
+            case DataUpdateType.OwnersUpdated:
+                // update owners and things here.
+                break;
+            case DataUpdateType.VisibilityChange:
+                // process a toggle to visibility. Change always will inflict a toggle.
+                break;
+            case DataUpdateType.DyesChange:
+                // process a change to the active collar's dyes.
+                break;
+            case DataUpdateType.CollarMoodleChange:
+                // process a change to the active collar's Moodles.
+                break;
+            case DataUpdateType.CollarWritingChange:
+                // process a change to the collar's writing,
+                // and perhaps an enforced profile refresh?
+                break;
+            case DataUpdateType.CollarRemoved:
+                // process collar removal.
                 break;
         }
     }

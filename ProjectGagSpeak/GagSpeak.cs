@@ -123,7 +123,7 @@ public static class GagSpeakServiceExtensions
     #region GenericServices
     public static IServiceCollection AddGagSpeakGeneric(this IServiceCollection services)
     => services
-        // Nessisary Services
+        // Necessary Services
         .AddSingleton<ILoggerProvider, Microsoft.Extensions.Logging.Console.ConsoleLoggerProvider>()
         .AddSingleton<GagSpeakHost>()
         .AddSingleton<EventAggregator>()
@@ -134,6 +134,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<GagRestrictionFileSelector>()
         .AddSingleton<RestrictionFileSelector>()
         .AddSingleton<RestraintSetFileSelector>()
+        .AddSingleton<CollarFileSelector>()
         .AddSingleton<CursedLootFileSelector>()
         .AddSingleton<BuzzToyFileSelector>()
         .AddSingleton<PatternFileSelector>()
@@ -143,6 +144,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<GagFileSystem>()
         .AddSingleton<RestrictionFileSystem>()
         .AddSingleton<RestraintSetFileSystem>()
+        .AddSingleton<CollarFileSystem>()
         .AddSingleton<CursedLootFileSystem>()
         .AddSingleton<BuzzToyFileSystem>()
         .AddSingleton<PatternFileSystem>()
@@ -208,6 +210,7 @@ public static class GagSpeakServiceExtensions
         // Services [Other]
         .AddSingleton<AchievementsService>()
         .AddSingleton<ArousalService>()
+        .AddSingleton<AutoUnlockService>()
         .AddSingleton<ChatService>()
         .AddSingleton<ConnectionSyncService>()
         .AddSingleton<DataDistributionService>()
@@ -267,6 +270,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<CacheStateManager>()
         .AddSingleton<CursedLootManager>()
         .AddSingleton<GagRestrictionManager>()
+        .AddSingleton<CollarManager>()
         .AddSingleton<ModPresetManager>()
         .AddSingleton<BuzzToyManager>()
         .AddSingleton<VibeLobbyManager>()
@@ -336,7 +340,6 @@ public static class GagSpeakServiceExtensions
         .AddScoped<UiFactory>()
 
         // Scoped Handlers
-        .AddScoped<UserPairListHandler>()
         .AddScoped<WindowMediatorSubscriberBase, ThumbnailUI>()
         .AddScoped<WindowMediatorSubscriberBase, PopupHandler>()
         .AddScoped<IPopupHandler, VerificationPopupHandler>()
@@ -463,6 +466,9 @@ public static class GagSpeakServiceExtensions
         .AddHostedService(p => p.GetRequiredService<MainHub>())             // Required for beyond obvious reasons.
         .AddHostedService(p => p.GetRequiredService<SafewordService>())     // Can never have too many safeguards to ensure this is active.
         .AddHostedService(p => p.GetRequiredService<AchievementsService>()) // Nessisary to begin the task that listens for 
+
+        // Monitors and update providers.
+        .AddHostedService(p => p.GetRequiredService<AutoUnlockService>()) // Syncs the client data with the server.
 
         .AddHostedService(p => p.GetRequiredService<GagSpeakHost>());       // Make this always the final hosted service, initializing the startup.
 }

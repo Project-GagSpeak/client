@@ -1,17 +1,12 @@
 using CkCommons;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.ClientState.Objects.Types;
-using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using GagSpeak.CustomCombos;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI.Utils;
-using Dalamud.Bindings.ImGui;
 using Microsoft.Extensions.Hosting;
-using OtterGui.Classes;
-using Penumbra.GameData.Structs;
 using System.Collections.Frozen;
 using PlayerState = FFXIVClientStructs.FFXIV.Client.Game.UI.PlayerState;
 

@@ -1,18 +1,16 @@
 using CkCommons.Classes;
 using GagSpeak.PlayerClient;
-using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Struct;
-using Penumbra.GameData.Enums;
 
 namespace GagSpeak.State.Models;
 
 /// <summary> Interface used by any item holding a modSettingPreset Reference </summary>
-/// <remarks> Nessisary for some interactive draw functions that directly effect these values. </remarks>
+/// <remarks> Necessary for some interactive draw functions that directly effect these values. </remarks>
 public interface IModPreset
 {
     /// <summary> Holds a reference to a mod setting preset. This object stores a ref to the mod container it resides in. </summary>
@@ -57,7 +55,7 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
 {
     public GagType GagType { get; init; }
     public bool IsEnabled { get; set; } = false;
-    public GlamourSlot Glamour { get; set; } = new GlamourSlot();
+    public GlamourSlot Glamour { get; set; } = GlamourSlot.Default;
     public ModSettingsPreset Mod { get; set; } = new ModSettingsPreset(new ModPresetContainer());
     public Moodle Moodle { get; set; } = new Moodle();
     public Traits Traits { get; set; } = Traits.None;
@@ -152,7 +150,7 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
     public bool IsEnabled { get; set; } = true;
     public string Label { get; set; } = string.Empty;
     public string ThumbnailPath { get; set; } = string.Empty;
-    public GlamourSlot Glamour { get; set; } = new GlamourSlot(EquipSlot.Head, ItemSvc.NothingItem(EquipSlot.Head));
+    public GlamourSlot Glamour { get; set; } = GlamourSlot.Default;
     public ModSettingsPreset Mod { get; set; } = new ModSettingsPreset(new ModPresetContainer());
     public TriStateBool HeadgearState { get; set; } = TriStateBool.Null;
     public TriStateBool VisorState { get; set; } = TriStateBool.Null;
@@ -385,38 +383,44 @@ public class BlindfoldRestriction : RestrictionItem
     }
 }
 
-
-public class CollarRestriction : IEditableStorageItem<CollarRestriction>, IRestriction
+/// <summary>
+///     Collar restrictions are special due to the way that they work. <para />
+///     
+///     Collar's settings that ONLY the collar's bearer can change are stored here,
+///     while properties that can be changed by either are located in the active collar state. <para />
+///     
+///     The primary purpose of the GagSpeakCollar is to serve as a foundation for glamour 
+///     and mods, while glamour dyes, moodles, writing, ownership, and visual toggles can be found
+///     inside the ActiveCollar item.
+/// </summary>
+public class GagSpeakCollar : IEditableStorageItem<GagSpeakCollar>, IModPreset
 {
     public Guid Identifier { get; internal set; } = Guid.NewGuid();
-    public string OwnerUID { get; set; } = string.Empty;
+    public string Label { get; set; } = string.Empty;
     public string ThumbnailPath { get; set; } = string.Empty;
-    public string CollarWriting { get; set; } = string.Empty;
-    public GlamourSlot Glamour { get; set; } = new GlamourSlot();
+    // maybe replace with GlamourSlot but also dont know, since it relates to dyes which we dont set.
+    // maybe figure it out when we get to caches.
+    public GlamourSlot Glamour { get; set; } = GlamourSlot.Default;
     public ModSettingsPreset Mod { get; set; } = new ModSettingsPreset(new ModPresetContainer());
-    public Moodle Moodle { get; set; } = new Moodle();
     public bool DoRedraw { get; set; } = false;
     
-    public CollarRestriction()
+    public GagSpeakCollar()
     { }
 
-    public CollarRestriction(CollarRestriction other, bool keepId = false)
+    public GagSpeakCollar(GagSpeakCollar other, bool keepId = false)
     {
         Identifier = keepId ? other.Identifier : Guid.NewGuid();
         ApplyChanges(other);
     }
 
-    public CollarRestriction Clone(bool keepId = true) => new CollarRestriction(this, keepId);
+    public GagSpeakCollar Clone(bool keepId = true) => new GagSpeakCollar(this, keepId);
 
     /// <summary> Applies updated changes to an edited item, while still maintaining the original references. <summary>
-    public void ApplyChanges(CollarRestriction other)
+    public void ApplyChanges(GagSpeakCollar other)
     {
-        OwnerUID = other.OwnerUID;
         ThumbnailPath = other.ThumbnailPath;
-        CollarWriting = other.CollarWriting;
         Glamour = other.Glamour;
         Mod = other.Mod;
-        Moodle = other.Moodle;
         DoRedraw = other.DoRedraw;
     }
 
@@ -425,43 +429,33 @@ public class CollarRestriction : IEditableStorageItem<CollarRestriction>, IRestr
         return new JObject
         {
             ["Identifier"] = Identifier.ToString(),
-            ["OwnerUID"] = OwnerUID,
+            ["Label"] = Label,
             ["ThumbnailPath"] = ThumbnailPath,
-            ["CollarWriting"] = CollarWriting,
             ["Glamour"] = Glamour.Serialize(),
             ["Mod"] = Mod.SerializeReference(),
-            ["Moodle"] = Moodle.Serialize(),
             ["DoRedraw"] = DoRedraw,
         };
     }
 
     /// <summary> Constructs the CollarItem from a JToken. </summary>
     /// <remarks> This method can throw an exception if tokens are not valid. </remarks>
-    public static CollarRestriction FromToken(JToken? token, ModPresetManager mp)
+    public static GagSpeakCollar FromToken(JToken? token, ModPresetManager mp)
     {
-        if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
+        if (token is not JObject json)
             throw new ArgumentException("Invalid JObjectToken!");
 
-        var id = jsonMoodle["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
-        // If the "StatusIds" property exists, treat this as a MoodlePreset
-        var moodle = jsonMoodle.TryGetValue("StatusIds", out var statusToken) && statusToken is JArray
-            ? new MoodlePreset(id, statusToken.Select(x => x.ToObject<Guid>()) ?? Enumerable.Empty<Guid>()) : new Moodle(id);
-
-        var profileId = json["ProfileGuid"]?.ToObject<Guid>() ?? throw new ArgumentNullException("ProfileGuid");
-        var profilePrio = json["ProfilePriority"]?.ToObject<int>() ?? throw new ArgumentNullException("ProfilePriority");
-        var profileName = json["ProfileName"]?.ToObject<string>() ?? string.Empty;
-
         // Construct the item to return.
-        return new CollarRestriction()
+        return new GagSpeakCollar()
         {
             Identifier = json["Identifier"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier"),
-            OwnerUID = json["OwnerUID"]?.ToObject<string>() ?? string.Empty,
+            Label = json["Label"]?.ToObject<string>() ?? string.Empty,
             ThumbnailPath = json["ThumbnailPath"]?.ToObject<string>() ?? string.Empty,
-            CollarWriting = json["CollarWriting"]?.ToObject<string>() ?? string.Empty,
             Glamour = ItemSvc.ParseGlamourSlot(json["Glamour"]),
             Mod = ModSettingsPreset.FromRefToken(json["Mod"], mp),
-            Moodle = moodle,
             DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
         };
     }
+
+    public LightCollar ToLightItem()
+        => new LightCollar(Identifier, Label, Glamour.ToLightSlot(), Mod.ToString());
 }

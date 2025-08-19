@@ -7,6 +7,7 @@ public enum FavoriteIdContainer
 {
     Restraint,
     Restriction,
+    Collar,
     CursedLoot,
     Pattern,
     Alarm,
@@ -31,6 +32,7 @@ public class FavoritesManager : IHybridSavable
     public readonly HashSet<Guid>    _favoriteRestraints = [];
     public readonly HashSet<Guid>    _favoriteRestrictions = [];
     public readonly HashSet<GagType> _favoriteGags         = [];
+    public readonly HashSet<Guid>    _favoriteCollars      = [];
     public readonly HashSet<Guid>    _favoriteCursedLoot   = [];
 
     public readonly HashSet<Guid>    _favoritePatterns     = [];
@@ -60,6 +62,7 @@ public class FavoritesManager : IHybridSavable
             _favoriteRestraints.UnionWith(load.Restraints);
             _favoriteRestrictions.UnionWith(load.Restrictions);
             _favoriteGags.UnionWith(load.Gags);
+            _favoriteCollars.UnionWith(load.Collars);
             _favoriteCursedLoot.UnionWith(load.CursedLoot);
             _favoritePatterns.UnionWith(load.Patterns);
             _favoriteAlarms.UnionWith(load.Alarms);
@@ -79,6 +82,7 @@ public class FavoritesManager : IHybridSavable
         {
             FavoriteIdContainer.Restriction => _favoriteRestrictions.Add(restriction),
             FavoriteIdContainer.Restraint => _favoriteRestraints.Add(restriction),
+            FavoriteIdContainer.Collar => _favoriteCollars.Add(restriction),
             FavoriteIdContainer.CursedLoot => _favoriteCursedLoot.Add(restriction),
             FavoriteIdContainer.Pattern => _favoritePatterns.Add(restriction),
             FavoriteIdContainer.Alarm => _favoriteAlarms.Add(restriction),
@@ -130,6 +134,7 @@ public class FavoritesManager : IHybridSavable
         {
             FavoriteIdContainer.Restraint => _favoriteRestraints.Remove(restriction),
             FavoriteIdContainer.Restriction => _favoriteRestrictions.Remove(restriction),
+            FavoriteIdContainer.Collar => _favoriteCollars.Remove(restriction),
             FavoriteIdContainer.CursedLoot => _favoriteCursedLoot.Remove(restriction),
             FavoriteIdContainer.Pattern => _favoritePatterns.Remove(restriction),
             FavoriteIdContainer.Alarm => _favoriteAlarms.Remove(restriction),
@@ -196,6 +201,12 @@ public class FavoritesManager : IHybridSavable
             j.WriteValue(gag);
         j.WriteEndArray();
 
+        j.WritePropertyName(nameof(LoadIntermediary.Collars));
+        j.WriteStartArray();
+        foreach (var collar in _favoriteCollars)
+            j.WriteValue(collar);
+        j.WriteEndArray();
+
         j.WritePropertyName(nameof(LoadIntermediary.CursedLoot));
         j.WriteStartArray();
         foreach (var loot in _favoriteCursedLoot)
@@ -233,10 +244,11 @@ public class FavoritesManager : IHybridSavable
     // Used to help with object based deserialization from the json loader.
     private class LoadIntermediary
     {
-        public int Version = 0;
-        public IEnumerable<Guid>    Restraints = [];
+        public int Version = 1;
+        public IEnumerable<Guid>    Restraints   = [];
         public IEnumerable<Guid>    Restrictions = [];
         public IEnumerable<GagType> Gags         = [];
+        public IEnumerable<Guid>    Collars      = [];
         public IEnumerable<Guid>    CursedLoot   = [];
         public IEnumerable<Guid>    Patterns     = [];
         public IEnumerable<Guid>    Alarms       = [];

@@ -24,7 +24,7 @@ public sealed class KinksterListener
     {
         if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-        _logger.LogDebug($"Recieved Full IPC Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
+        _logger.LogDebug($"Received Full IPC Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
         kinkster.UpdateActiveMoodles(enactor, newData.DataString, newData.DataInfoList);
         kinkster.SetNewMoodlesStatuses(enactor, newData.StatusList);
         kinkster.SetNewMoodlePresets(enactor, newData.PresetList);
@@ -40,23 +40,22 @@ public sealed class KinksterListener
     {
         if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-        _logger.LogDebug($"Recieved IPC Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
+        _logger.LogDebug($"Received IPC Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
         kinkster.SetNewMoodlesStatuses(enactor, statuses);
     }
     public void NewIpcPresets(UserData targetUser, UserData enactor, List<MoodlePresetInfo> newPresets)
     {
         if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-        _logger.LogDebug($"Recieved IPC Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
+        _logger.LogDebug($"Received IPC Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
         kinkster.SetNewMoodlePresets(enactor, newPresets);
     }
-
 
     public void NewActiveComposite(UserData targetUser, CharaCompositeActiveData data, bool safeword)
     {
         if(!_kinksters.TryGetKinkster(targetUser, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-        _logger.LogDebug($"Recieved Composite Active Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
+        _logger.LogDebug($"Received Composite Active Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
         kinkster.NewActiveCompositeData(data, safeword);
     }
 
@@ -79,6 +78,13 @@ public sealed class KinksterListener
         if (!_kinksters.TryGetKinkster(dto.User, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
         kinkster.NewActiveRestraintData(dto);
+    }
+
+    public void NewActiveCollar(KinksterUpdateActiveCollar dto)
+    {
+        if (!_kinksters.TryGetKinkster(dto.User, out var kinkster))
+            throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
+        kinkster.NewActiveCollarData(dto);
     }
 
     public void NewActiveCursedLoot(KinksterUpdateActiveCursedLoot dto)
@@ -158,6 +164,13 @@ public sealed class KinksterListener
         if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
         kinkster.LightCache.UpdateRestraintItem(itemId, newData);
+    }
+
+    public void CachedCollarDataChange(UserData targetUser, Guid itemId, LightCollar? newData)
+    {
+        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
+            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
+        kinkster.LightCache.UpdateCollarItem(itemId, newData);
     }
 
     public void CachedCursedLootDataChange(UserData targetUser, Guid itemId, LightCursedLoot? newData)

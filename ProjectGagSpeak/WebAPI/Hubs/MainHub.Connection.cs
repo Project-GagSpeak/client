@@ -99,7 +99,7 @@ public partial class MainHub
 
                 // obtain the ShareHub and LobbyInvite data post-connection, as it doesnt depend on anything else.
                 var lobbyHubInfo = await GetShareHubAndLobbyInfo().ConfigureAwait(false);
-                Mediator.Publish(new PostConnectionDataRecievedMessage(lobbyHubInfo));
+                Mediator.Publish(new PostConnectionDataReceivedMessage(lobbyHubInfo));
             }
             catch (OperationCanceledException)
             {

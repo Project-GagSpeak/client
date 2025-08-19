@@ -180,6 +180,9 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     public bool TryGetKinkster(UserData user, [NotNullWhen(true)] out Kinkster? kinkster)
         => _allClientPairs.TryGetValue(user, out kinkster);
 
+    public Kinkster? GetKinksterOrDefault(UserData user)
+        => _allClientPairs.TryGetValue(user, out var kinkster) ? kinkster : null;
+
     public (MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms) GetMoodlePermsForPairByName(string nameWithWorld)
     {
         var pair = _allClientPairs.FirstOrDefault(p => p.Value.PlayerNameWithWorld == nameWithWorld).Value;
@@ -261,7 +264,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Removes a user pair from the client's pair list.</summary>
-    public void RemoveUserPair(KinksterBase dto)
+    public void RemoveKinksterPair(KinksterBase dto)
     {
         // try and get the value from the client's pair list
         if (_allClientPairs.TryGetValue(dto.User, out var pair))
@@ -298,6 +301,6 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     {
         _directPairsInternal = DirectPairsLazy();
         if (PushUiRefresh)
-            Mediator.Publish(new RefreshUiMessage());
+            Mediator.Publish(new RefreshUiKinkstersMessage());
     }
 }

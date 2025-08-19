@@ -215,26 +215,4 @@ public partial class RestrictionsPanel
 
         void OpenEditor() => _thumbnails.SetThumbnailSource(_selector.Selected!.Identifier, displaySize, ImageDataType.Hypnosis);
     }
-
-    private void DrawCollarInfo(CollarRestriction collarItem, float width)
-    {
-        var pos = ImGui.GetCursorScreenPos();
-        var style = ImGui.GetStyle();
-        var iconH = ImGui.GetFrameHeight() * 2 + style.ItemSpacing.Y;
-        var winSize = new Vector2(width, iconH);
-        using (CkRaii.HeaderChild("Collar Information", winSize, HeaderFlags.AddPaddingToHeight))
-        {
-            var widthInner = ImGui.GetContentRegionAvail().X;
-            var collarOwner = collarItem.OwnerUID;
-            var engravedWriting = collarItem.CollarWriting;
-
-            ImGui.SetNextItemWidth(widthInner);
-            if (ImGui.InputTextWithHint("##CollarOwner", "Enter Owner Kinkster UID...", ref collarOwner, 128))
-                collarItem.OwnerUID = collarOwner;
-
-            ImGui.SetNextItemWidth(widthInner);
-            if (ImGui.InputTextWithHint("##CollarWriting", "Enter Engraved Writing...", ref engravedWriting, 128))
-                collarItem.CollarWriting = engravedWriting;
-        }
-    }
 }

@@ -1,45 +1,37 @@
 using CkCommons.Gui;
+using CkCommons.Raii;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.PlayerClient;
-using GagSpeak.Services.Textures;
-using GagSpeak.WebAPI;
-using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
-using CkCommons.Raii;
+using System.Collections.Immutable;
 
 namespace GagSpeak.Gui.Components;
-
-/// <summary>
-/// The base for the draw folder, which is a dropdown section in the list of paired users, and handles the basic draw functionality
-/// </summary>
 public class DrawKinksterRequests : IRequestsFolder
 {
-    private readonly ClientData _clientData;
-    private readonly DrawEntityFactory _requestFactory;
-
+    private IEnumerable<DrawKinksterRequest> _outgoingItems;
+    private IEnumerable<DrawKinksterRequest> _incomingItems;
+    private bool _viewingOutgoing = false;
     private bool _wasHovered = false;
-    private bool _isRequestFolderOpen = false;
-    private DrawRequestsType _viewingMode = DrawRequestsType.Outgoing;
-    public string ID => "Kinkster_Requests";
+    private bool _isExpanded = false;
 
-    // The Kinkster Requests currently present.
-    private IEnumerable<KinksterRequestItem> _allOutgoingRequests;
-    private IEnumerable<KinksterRequestItem> _allIncomingRequests;
+    public string ID { get; init; }
+    public int TotalOutgoing => _outgoingItems.Count();
+    public int TotalIncoming => _incomingItems.Count();
 
-    public int TotalOutgoing => _clientData.OutgoingKinksterRequests.Count();
-    public int TotalIncoming => _clientData.IncomingKinksterRequests.Count();
-
-    public DrawKinksterRequests(ClientData clientData, DrawEntityFactory factory)
+    public DrawKinksterRequests(string tag, IImmutableList<DrawKinksterRequest> incRequests, 
+        IImmutableList<DrawKinksterRequest> outRequests)
     {
-        _clientData = clientData;
-        _requestFactory = factory;
+        ID = tag;
+        _outgoingItems = outRequests;
+        _incomingItems = incRequests;
+        _viewingOutgoing = TotalOutgoing > 0 ? _viewingOutgoing : TotalIncoming > 0;
     }
 
     public void Draw()
     {
-        if (_clientData.HasKinksterRequests is false)
+        if (!_outgoingItems.Any() && !_incomingItems.Any())
             return;
 
         // Begin drawing out the header section for the requests folder dropdown thingy.
@@ -48,90 +40,53 @@ public class DrawKinksterRequests : IRequestsFolder
         using (CkRaii.Child("folder__" + ID, childSize, _wasHovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : 0))
         {
             CkGui.InlineSpacingInner();
-            CkGui.FramedIconText(_isRequestFolderOpen ? FAI.CaretDown : FAI.CaretRight);
+            CkGui.FramedIconText(_isExpanded ? FAI.CaretDown : FAI.CaretRight);
 
             ImGui.SameLine();
-            var folderIconEndPos = DrawFolderIcon();
+            CkGui.FramedIconText(FAI.Inbox);
             ImGui.SameLine();
+            var inboxPos = ImGui.GetCursorPosX();
             DrawViewTypeSelection();
 
-            // draw name
-            ImGui.SameLine(folderIconEndPos);
-            using (ImRaii.PushFont(UiBuilder.MonoFont)) 
-                ImUtf8.TextFrameAligned(_viewingMode is DrawRequestsType.Outgoing
-                    ? $"Outgoing Request{(TotalOutgoing > 1 ? "Requests" : "Request")}"
-                    : $"Incoming Request{(TotalIncoming > 1 ? "Requests" : "Request")}");
+            ImGui.SameLine(inboxPos);
+            using (ImRaii.PushFont(UiBuilder.MonoFont))
+                ImUtf8.TextFrameAligned($"{(_viewingOutgoing ? "Outgoing" : "Incoming")} Request{((_viewingOutgoing ? TotalOutgoing : TotalIncoming) == 1 ? "" : "s")}");
         }
         _wasHovered = ImGui.IsItemHovered();
-        if (ImGui.IsItemClicked()) 
-            _isRequestFolderOpen = !_isRequestFolderOpen;
+        if (ImGui.IsItemClicked())
+            _isExpanded = !_isExpanded;
 
         ImGui.Separator();
         // if the folder is opened, draw the relevant list.
-        if (!_isRequestFolderOpen)
+        if (!_isExpanded)
             return;
 
-        // ensure correct tabbo is opened.
-        if (_viewingMode is DrawRequestsType.Outgoing && TotalOutgoing is 0)
-            _viewingMode = DrawRequestsType.Incoming;
-        else if (_viewingMode is DrawRequestsType.Incoming && TotalIncoming is 0)
-            _viewingMode = DrawRequestsType.Outgoing;
-
-        var requests = _viewingMode is DrawRequestsType.Outgoing ? _allOutgoingRequests : _allIncomingRequests;
+        // get tab and requests.
+        _viewingOutgoing = TotalOutgoing > 0 ? _viewingOutgoing : TotalIncoming > 0;
+        var requests = _viewingOutgoing ? _outgoingItems : _incomingItems;
 
         using var indent = ImRaii.PushIndent(CkGui.IconSize(FAI.EllipsisV).X + ImGui.GetStyle().ItemSpacing.X, false);
-        foreach (var entry in _allIncomingRequests)
-            entry.DrawRequestEntry();
+        foreach (var entry in requests)
+            entry.DrawRequestEntry(_viewingOutgoing);
 
         ImGui.Separator();
     }
-
-    /// <summary>
-    /// Grabs the latest kinkster request entries on each pair list update or request update recieved.
-    /// </summary>
-    public void UpdateKinksterRequests()
-    {
-        // I think this is all i need? Idk i guess we will find out or something lol.
-        _allOutgoingRequests = _clientData.OutgoingKinksterRequests
-            .Select(request => _requestFactory.CreateDrawPairRequest($"outgoing-{request.Target.UID}", request));
-        _allIncomingRequests = _clientData.IncomingKinksterRequests
-            .Select(request => _requestFactory.CreateDrawPairRequest($"incoming-{request.User.UID}", request));
-
-        // if there are no outgoing, and we are on outgoing, switch it to incoming.
-        if (TotalOutgoing is 0 && _viewingMode is DrawRequestsType.Outgoing)
-            _viewingMode = DrawRequestsType.Incoming;
-        // if there are no incoming, and we are on incoming, switch it to outgoing.
-        else if (TotalIncoming is 0 && _viewingMode is DrawRequestsType.Incoming)
-            _viewingMode = DrawRequestsType.Outgoing;
-    }
-
-
-    private float DrawFolderIcon()
-    {
-        ImGui.AlignTextToFramePadding();
-        CkGui.IconText(FAI.Inbox);
-        ImGui.SameLine();
-        return ImGui.GetCursorPosX();
-    }
     private void DrawViewTypeSelection()
     {
-        var viewingOutgoing = _viewingMode is DrawRequestsType.Outgoing;
-        var icon = viewingOutgoing ? FAI.PersonArrowUpFromLine : FAI.PersonArrowDownToLine;
-        var text = viewingOutgoing ? "View Incoming (" + TotalIncoming + ")" : "View Outgoing (" + TotalOutgoing + ")";
-        var toolTip = viewingOutgoing ? "Switch the list to display Incoming Requests" : "Switch the list to display Outgoing Requests";
+        var icon = _viewingOutgoing ? FAI.PersonArrowUpFromLine : FAI.PersonArrowDownToLine;
+        var text = _viewingOutgoing ? $"View Incoming ({TotalIncoming})" : $"View Outgoing ({TotalOutgoing})";
+        var toolTip = $"Switch the list to display {(_viewingOutgoing ? "incoming" : "outgoing")} requests";
         var buttonSize = CkGui.IconTextButtonSize(icon, text);
         var spacingX = ImGui.GetStyle().ItemSpacing.X;
         var windowEndX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
 
-        var disabled = viewingOutgoing ? TotalIncoming is 0 : TotalOutgoing is 0;
+        var disabled = _viewingOutgoing ? TotalIncoming is 0 : TotalOutgoing is 0;
         var rightSideStart = windowEndX - (buttonSize + spacingX);
         ImGui.SameLine(windowEndX - buttonSize);
 
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudGrey))
-        {
             if (CkGui.IconTextButton(icon, text, null, true, disabled))
-                _viewingMode = viewingOutgoing ? DrawRequestsType.Incoming : DrawRequestsType.Outgoing;
-        }
+                _viewingOutgoing = !_viewingOutgoing;
         CkGui.AttachToolTip(disabled ? "There are 0 entries here!" : toolTip);
     }
 }

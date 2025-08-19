@@ -11,6 +11,8 @@ public record ConfigRestrictionChanged(StorageChangeType Type, RestrictionItem I
 
 public record ConfigRestraintSetChanged(StorageChangeType Type, RestraintSet Item, string? OldString = null) : MessageBase;
 
+public record ConfigCollarChanged(StorageChangeType Type, GagSpeakCollar Item, string? OldString = null) : MessageBase;
+
 public record ConfigCursedItemChanged(StorageChangeType Type, CursedItem Item, string? OldString = null) : MessageBase;
 
 public record ConfigSexToyChanged(StorageChangeType Type, BuzzToy Item, string? OldString = null) : MessageBase;

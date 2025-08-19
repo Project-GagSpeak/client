@@ -153,7 +153,7 @@ public class TriggerActionService
         }
 
         _logger.LogInformation("Text Action is being executed.", LoggerType.Puppeteer);
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderRecieved);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderReceived);
         ChatService.EnqueueMessage("/" + remainingMessage.TextValue);
         return true;
     }
@@ -232,13 +232,7 @@ public class TriggerActionService
         }
 
         // Call the new distribution method
-        if ((await _distributer.PushGagTriggerAction(layerIdx, gagSlot, updateType)) is not GagSpeakApiEc.Success)
-        {
-            _logger.LogWarning("The GagTriggerAction was not processed sucessfully by the server!");
-            return false;
-        }
-
-        return true;
+        return await _distributer.PushNewActiveGagSlot(layerIdx, gagSlot, updateType) is not null;
     }
 
     private async Task<bool> DoRestrictionAction(RestrictionAction act, string enactor)
@@ -304,14 +298,7 @@ public class TriggerActionService
             default:
                 return false;
         }
-
-        if ((await _distributer.PushNewActiveRestriction(layerIdx, restriction, updateType)) is not GagSpeakApiEc.Success)
-        {
-            _logger.LogWarning("The RestrictionTriggerAction was not processed successfully by the server!");
-            return false;
-        }
-
-        return true;
+        return await _distributer.PushNewActiveRestriction(layerIdx, restriction, updateType) is not null;
     }
 
     private async Task<bool> DoRestraintAction(RestraintAction act, string enactor)
@@ -363,13 +350,7 @@ public class TriggerActionService
                 return false;
         }
 
-        if (await _distributer.PushActiveRestraintUpdate(restraintData, updateType) is not GagSpeakApiEc.Success)
-        {
-            _logger.LogWarning("The RestraintTriggerAction was not processed successfully by the server!");
-            return false;
-        }
-
-        return true;
+        return await _distributer.PushActiveRestraintUpdate(restraintData, updateType) is not null;
     }
 
     private async Task<bool> DoMoodleAction(MoodleAction act, string enactor)

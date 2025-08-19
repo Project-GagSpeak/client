@@ -73,8 +73,8 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         _events.Subscribe(UnlocksEvent.AuctionedOff, () => (ClientAchievements.SaveData[Achievements.AuctionedOff.Id] as ProgressAchievement)?.IncrementProgress());
 
         _events.Subscribe<PuppeteerMsgType>(UnlocksEvent.PuppeteerOrderSent, OnPuppeteerOrderSent);
-        _events.Subscribe(UnlocksEvent.PuppeteerOrderRecieved, OnPuppeteerReceivedOrder);
-        _events.Subscribe<int>(UnlocksEvent.PuppeteerEmoteRecieved, OnPuppeteerReceivedEmoteOrder);
+        _events.Subscribe(UnlocksEvent.PuppeteerOrderReceived, OnPuppeteerReceivedOrder);
+        _events.Subscribe<int>(UnlocksEvent.PuppeteerEmoteReceived, OnPuppeteerReceivedEmoteOrder);
         _events.Subscribe<PuppetPerms>(UnlocksEvent.PuppeteerAccessGiven, OnPuppetAccessGiven);
 
 
@@ -150,8 +150,8 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         _events.Unsubscribe(UnlocksEvent.AuctionedOff, () => (ClientAchievements.SaveData[Achievements.AuctionedOff.Id] as ProgressAchievement)?.IncrementProgress());
 
         _events.Unsubscribe<PuppeteerMsgType>(UnlocksEvent.PuppeteerOrderSent, OnPuppeteerOrderSent);
-        _events.Unsubscribe(UnlocksEvent.PuppeteerOrderRecieved, OnPuppeteerReceivedOrder);
-        _events.Unsubscribe<int>(UnlocksEvent.PuppeteerEmoteRecieved, OnPuppeteerReceivedEmoteOrder);
+        _events.Unsubscribe(UnlocksEvent.PuppeteerOrderReceived, OnPuppeteerReceivedOrder);
+        _events.Unsubscribe<int>(UnlocksEvent.PuppeteerEmoteReceived, OnPuppeteerReceivedEmoteOrder);
         _events.Unsubscribe<PuppetPerms>(UnlocksEvent.PuppeteerAccessGiven, OnPuppetAccessGiven);
 
         _events.Unsubscribe(UnlocksEvent.DeviceConnected, OnDeviceConnected);
@@ -666,7 +666,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         }
     }
 
-    /// <summary> Whenever we are applying a restraint set to a pair. This is fired in our pair manager once we recieve  </summary>
+    /// <summary> Whenever we are applying a restraint set to a pair. This is fired in our pair manager once we receive  </summary>
     private void OnPairRestraintStateChange(Guid setName, bool isEnabling, string enactorUID, string affectedUID)
     {
         Logger.LogTrace(enactorUID + " is " + (isEnabling ? "applying" : "Removing") + " a set to a pair: " + setName);
@@ -1176,7 +1176,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
 
     private void OnPuppeteerReceivedOrder()
     {
-        // inc the orders recieved counters.
+        // inc the orders received counters.
         (ClientAchievements.SaveData[Achievements.WillingPuppet.Id] as ProgressAchievement)?.IncrementProgress();
         (ClientAchievements.SaveData[Achievements.AtYourCommand.Id] as ProgressAchievement)?.IncrementProgress();
         (ClientAchievements.SaveData[Achievements.YourMarionette.Id] as ProgressAchievement)?.IncrementProgress();

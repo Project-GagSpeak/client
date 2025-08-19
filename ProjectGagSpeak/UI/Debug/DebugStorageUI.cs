@@ -18,6 +18,8 @@ using Microsoft.IdentityModel.Tokens;
 using OtterGui;
 using OtterGui.Extensions;
 using Penumbra.GameData.Enums;
+using TerraFX.Interop.DirectX;
+using GagspeakAPI.Network;
 
 namespace GagSpeak.Gui;
 
@@ -27,6 +29,7 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
+    private readonly CollarManager _collars;
     private readonly CursedLootManager _cursedLoot;
     private readonly PuppeteerManager _puppeteer;
     private readonly BuzzToyManager _toys;
@@ -45,6 +48,7 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
+        CollarManager collars,
         CursedLootManager cursedLoot,
         PuppeteerManager puppeteer,
         BuzzToyManager toys,
@@ -62,6 +66,7 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
         _gags = gags;
         _restrictions = restrictions;
         _restraints = restraints;
+        _collars = collars;
         _cursedLoot = cursedLoot;
         _puppeteer = puppeteer;
         _toys = toys;
@@ -83,9 +88,11 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
         };
     }
 
-    protected override void PreDrawInternal() { }
+    protected override void PreDrawInternal()
+    { }
 
-    protected override void PostDrawInternal() { }
+    protected override void PostDrawInternal()
+    { }
 
     protected override void DrawInternal()
     {
@@ -99,6 +106,9 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
 
         ImGui.Separator();
         DrawRestraintStorage();
+
+        ImGui.Separator();
+        DrawCollarStorage();
         
         ImGui.Separator();
         DrawCursedLootStorage();
@@ -126,47 +136,13 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
     {
         if (!ImGui.CollapsingHeader("Player Global Data"))
             return;
-        using (var node = ImRaii.TreeNode("Incoming Kinkster Requests"))
-            if (node)
-            {
-                ImGui.TextUnformatted("Incoming Kinkster Requests:");
-                using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
-                {
-                    ImGuiUtil.DrawTableColumn("Kinkster");
-                    ImGuiUtil.DrawTableColumn("RecipientKinkster");
-                    ImGuiUtil.DrawTableColumn("AttachedMessage");
-                    ImGuiUtil.DrawTableColumn("CreationTime");
-                    foreach (var req in _clientData.IncomingKinksterRequests)
-                    {
-                        ImGui.TableNextRow();
-                        ImGuiUtil.DrawTableColumn(req.User.UID.ToString());
-                        ImGuiUtil.DrawTableColumn(req.Target.UID.ToString());
-                        ImGuiUtil.DrawTableColumn(req.Message.ToString());
-                        ImGuiUtil.DrawTableColumn(req.CreationTime.ToString());
-                    }
-                }
-                ImGui.Spacing();
-            }
-        using (var node = ImRaii.TreeNode("Outgoing Kinkster Requests"))
-            if (node)
-            {
-                ImGui.TextUnformatted("Outgoing Kinkster Requests:");
-                using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
-                {
-                    ImGuiUtil.DrawTableColumn("Kinkster");
-                    ImGuiUtil.DrawTableColumn("RecipientKinkster");
-                    ImGuiUtil.DrawTableColumn("AttachedMessage");
-                    ImGuiUtil.DrawTableColumn("CreationTime");
-                    foreach (var req in _clientData.OutgoingKinksterRequests)
-                    {
-                        ImGui.TableNextRow();
-                        ImGuiUtil.DrawTableColumn(req.User.UID.ToString());
-                        ImGuiUtil.DrawTableColumn(req.Target.UID.ToString());
-                        ImGuiUtil.DrawTableColumn(req.Message.ToString());
-                        ImGuiUtil.DrawTableColumn(req.CreationTime.ToString());
-                    }
-                }
-            }
+
+        DrawKinksterRequests("Incoming Kinkster Requests", _clientData.ReqPairIncoming);
+        DrawKinksterRequests("Outgoing Kinkster Requests", _clientData.ReqPairOutgoing);
+
+        DrawCollarRequests("Incoming Collar Requests", _clientData.ReqCollarIncoming);
+        DrawCollarRequests("Outgoing Collar Requests", _clientData.ReqCollarOutgoing);
+
         using (var node = ImRaii.TreeNode("Global Permissions"))
             if (node)
             {
@@ -254,6 +230,56 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
             }
     }
 
+    private void DrawKinksterRequests(string treeLabel, IEnumerable<KinksterPairRequest> requests)
+    {
+        using var node = ImRaii.TreeNode(treeLabel);
+        if (!node) return;
+
+        using (ImRaii.Table(treeLabel + "table", 4, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        {
+            ImGuiUtil.DrawTableColumn("Kinkster");
+            ImGuiUtil.DrawTableColumn("Recipient Kinkster");
+            ImGuiUtil.DrawTableColumn("Creation Time");
+            ImGuiUtil.DrawTableColumn("Attached Message");
+            foreach (var req in requests)
+            {
+                ImGui.TableNextRow();
+                ImGuiUtil.DrawTableColumn(req.User.UID.ToString());
+                ImGuiUtil.DrawTableColumn(req.Target.UID.ToString());
+                ImGuiUtil.DrawTableColumn(req.CreationTime.ToString());
+                ImGuiUtil.DrawTableColumn(req.Message.ToString());
+            }
+        }
+        ImGui.Spacing();
+    }
+
+    private void DrawCollarRequests(string treeLabel, IEnumerable<CollarOwnershipRequest> requests)
+    {
+        using var node = ImRaii.TreeNode(treeLabel);
+        if (!node) return;
+
+        using (ImRaii.Table(treeLabel + "table", 6, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        {
+            ImGuiUtil.DrawTableColumn("Kinkster");
+            ImGuiUtil.DrawTableColumn("Recipient Kinkster");
+            ImGuiUtil.DrawTableColumn("Creation Time");
+            ImGuiUtil.DrawTableColumn("Initial Writing");
+            ImGuiUtil.DrawTableColumn("Your Permissions");
+            ImGuiUtil.DrawTableColumn("Owners Permissions");
+            foreach (var req in _clientData.ReqCollarIncoming)
+            {
+                ImGui.TableNextRow();
+                ImGuiUtil.DrawTableColumn(req.User.UID.ToString());
+                ImGuiUtil.DrawTableColumn(req.Target.UID.ToString());
+                ImGuiUtil.DrawTableColumn(req.CreationTime.ToString());
+                ImGuiUtil.DrawTableColumn(req.Writing.ToString());
+                ImGuiUtil.DrawTableColumn(req.TargetAccess.ToString());
+                ImGuiUtil.DrawTableColumn(req.OwnerAccess.ToString());
+            }
+        }
+        ImGui.Spacing();
+    }
+
     public void DrawGagStorage()
     {
         if (!ImGui.CollapsingHeader("Gag Storage"))
@@ -308,6 +334,24 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
                 continue;
 
             DrawRestraintSet(restraintSet);
+        }
+    }
+
+    public void DrawCollarStorage()
+    {
+        if (!ImGui.CollapsingHeader("Collar Storage"))
+            return;
+        if (_collars.Storage.IsNullOrEmpty())
+        {
+            ImGui.TextUnformatted("Collar Storage is null or empty");
+            return;
+        }
+        foreach (var (collar, idx) in _collars.Storage.WithIndex())
+        {
+            using var node = ImRaii.TreeNode($"{collar.Label}##{idx}");
+            if (!node)
+                continue;
+            DrawCollar(collar);
         }
     }
 
@@ -650,6 +694,36 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
             ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("Arousal Strength");
             ImGuiUtil.DrawTableColumn(restriction.Arousal.ToString());
+        }
+    }
+
+    public void DrawCollar(GagSpeakCollar collar)
+    {
+        ImGui.TextUnformatted("Overview:");
+        using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        {
+            ImGuiUtil.DrawTableColumn("Name");
+            ImGuiUtil.DrawTableColumn(collar.Label);
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Identifier");
+            ImGuiUtil.DrawTableColumn(collar.Identifier.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Thumbnail Path");
+            ImGuiUtil.DrawTableColumn(collar.ThumbnailPath);
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Glamour");
+            ImGuiUtil.DrawTableColumn(collar.Glamour.GameItem.Name);
+            ImGuiUtil.DrawTableColumn(collar.Glamour.GameItem.ItemId.ToString());
+            ImGuiUtil.DrawTableColumn(collar.Glamour.Slot.ToName());
+            ImGuiUtil.DrawTableColumn(collar.Glamour.GameStain.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Mod Association");
+            ImGuiUtil.DrawTableColumn(collar.Mod.Container.ModName);
+            ImGuiUtil.DrawTableColumn(collar.Mod.Label);
+            ImGui.TableNextRow();
         }
     }
 

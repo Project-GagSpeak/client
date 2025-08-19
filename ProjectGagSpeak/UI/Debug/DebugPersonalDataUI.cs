@@ -68,7 +68,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         _alarms = alarms;
         _triggers = triggers;
         // Ensure the list updates properly.
-        Mediator.Subscribe<RefreshUiMessage>(this, _ => UpdateList());
+        Mediator.Subscribe<RefreshUiKinkstersMessage>(this, _ => UpdateList());
 
         IsOpen = true;
         this.SetBoundaries(new Vector2(625, 400), ImGui.GetIO().DisplaySize);

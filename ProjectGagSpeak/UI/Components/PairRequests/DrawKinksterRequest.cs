@@ -1,4 +1,5 @@
 using CkCommons.Gui;
+using CkCommons.Raii;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
@@ -8,64 +9,51 @@ using GagspeakAPI.Network;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Components;
-
-/// <summary>
-/// Class handling the draw function for a singular user pair that the client has. (one row)
-/// </summary>
-public class CollarRequestItem
+public class DrawKinksterRequest
 {
-    private readonly string _id;
-    private CollarRequest _entry;
     private readonly MainHub _hub;
+    private readonly string _id;
 
-    private bool IsHovered = false;
-    public CollarRequestItem(string id, CollarRequest entry, MainHub hub)
+    private KinksterPairRequest _entry;
+    private bool _hovered = false;
+    public DrawKinksterRequest(string id, KinksterPairRequest requestEntry, MainHub hub)
     {
         _id = id;
-        _entry = entry;
+        _entry = requestEntry;
         _hub = hub;
-
-        _viewingMode = _entry.User.UID.Equals(MainHub.UID) ? DrawRequestsType.Outgoing : DrawRequestsType.Incoming;
     }
 
-    private DrawRequestsType _viewingMode = DrawRequestsType.Outgoing;
-    public CollarRequest Request => _entry;
-    private TimeSpan TimeLeft => TimeSpan.FromDays(3) - (DateTime.UtcNow - _entry.CreationTime);
-    public void DrawRequestEntry()
+    public void DrawRequestEntry(bool isOutgoing)
     {
         using var id = ImRaii.PushId(GetType() + _id);
-        using (ImRaii.PushColor(ImGuiCol.ChildBg, ImGui.GetColorU32(ImGuiCol.FrameBgHovered), IsHovered))
+        var size = new Vector2(CkGui.GetWindowContentRegionWidth() - ImGui.GetCursorPosX(), ImGui.GetFrameHeight());
+        using (CkRaii.Child(GetType() + _id, size, _hovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : 0))
         {
-            // Draw the main component of the request entry
-            using (ImRaii.Child(GetType() + _id, new Vector2(CkGui.GetWindowContentRegionWidth() - ImGui.GetCursorPosX(), ImGui.GetFrameHeight())))
-            {
-                // draw here the left side icon and the name that follows it.
-                ImUtf8.SameLineInner();
-                DrawLeftSide();
-                ImGui.SameLine();
-                ImGui.AlignTextToFramePadding();
+            // draw here the left side icon and the name that follows it.
+            ImUtf8.SameLineInner();
+            DrawLeftSide();
 
-                var kinksterIdTag = _viewingMode is DrawRequestsType.Outgoing
-                    ? _entry.Target.UID.Substring(_entry.Target.UID.Length - 4)
-                    : _entry.User.UID.Substring(_entry.User.UID.Length - 4);
+            using (ImRaii.PushFont(UiBuilder.MonoFont))
+                CkGui.TextFrameAlignedInline("Kinkster-" + (isOutgoing
+                ? _entry.Target.UID.Substring(_entry.Target.UID.Length - 4)
+                : _entry.User.UID.Substring(_entry.User.UID.Length - 4)));
 
-                using (ImRaii.PushFont(UiBuilder.MonoFont)) ImGui.TextUnformatted("Kinkster-" + kinksterIdTag);
-
-                // draw the right side based on the entry type.
-                if (_viewingMode == DrawRequestsType.Outgoing)
-                    DrawPendingCancel();
-                else
-                    DrawAcceptReject();
-            }
-            // if the panel was hovered, show it as hovered.
-            IsHovered = ImGui.IsItemHovered();
+            // draw the right side based on the entry type.
+            if (isOutgoing)
+                DrawPendingCancel();
+            else
+                DrawAcceptReject();
         }
+        _hovered = ImGui.IsItemHovered();
     }
 
     private void DrawLeftSide()
     {
         CkGui.FramedIconText(FAI.QuestionCircle, ImGuiColors.DalamudYellow);
-        CkGui.AttachToolTip($"Expires in {TimeLeft.Days}d {TimeLeft.Hours}h {TimeLeft.Minutes}m.", color: ImGuiColors.TankBlue);
+        var timeLeft = _entry.TimeLeft();
+        var displayText = $"Expires in {timeLeft.Days}d {timeLeft.Hours}h {timeLeft.Minutes}m.";
+        if (_entry.Message.Length > 0) displayText += $" --SEP----COL--Message: --COL--{_entry.Message}";
+        CkGui.AttachToolTip(displayText, color: ImGuiColors.TankBlue);
         ImGui.SameLine();
     }
 
@@ -80,20 +68,16 @@ public class CollarRequestItem
         ImGui.SameLine(currentRightSide);
         ImGui.AlignTextToFramePadding();
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.HealerGreen))
-        {
             if (CkGui.IconTextButton(FAI.PersonCircleCheck, "Accept", null, true))
                 _hub.UserAcceptKinksterRequest(new(_entry.User)).ConfigureAwait(false);
-        }
         CkGui.AttachToolTip("Accept the Request");
 
         currentRightSide -= acceptButtonSize + spacingX;
         ImGui.SameLine(currentRightSide);
         ImGui.AlignTextToFramePadding();
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudRed))
-        {
             if (CkGui.IconTextButton(FAI.PersonCircleXmark, "Reject", null, true))
                 _hub.UserRejectKinksterRequest(new(_entry.User)).ConfigureAwait(false);
-        }
         CkGui.AttachToolTip("Reject the Request");
     }
 
@@ -107,10 +91,8 @@ public class CollarRequestItem
         ImGui.SameLine(currentRightSide);
         ImGui.AlignTextToFramePadding();
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudRed))
-        {
             if (CkGui.IconTextButton(FAI.PersonCircleXmark, "Cancel Request", null, true))
                 _hub.UserCancelKinksterRequest(new(_entry.Target)).ConfigureAwait(false);
-        }
         CkGui.AttachToolTip("Remove the pending request from both yourself and the pending Kinksters list.");
     }
 }

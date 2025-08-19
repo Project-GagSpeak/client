@@ -29,7 +29,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         _ipcProvider = ipcProvider;
         _patterns = patterns;
 
-        Mediator.Subscribe<PostConnectionDataRecievedMessage>(this, msg =>
+        Mediator.Subscribe<PostConnectionDataReceivedMessage>(this, msg =>
         {
             ClientPublishedPatterns = msg.Info.PublishedPatterns;
             ClientPublishedMoodles = msg.Info.PublishedMoodles;

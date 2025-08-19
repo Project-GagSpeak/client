@@ -16,8 +16,10 @@ namespace GagSpeak.State.Managers;
 
 public readonly record struct OccupiedRestriction(RestrictionItem Item, ManagerPriority Source);
 
-public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybridSavable, IDisposable
+public sealed class RestrictionManager : IHybridSavable
 {
+    private readonly ILogger<RestrictionManager> _logger;
+    private readonly GagspeakMediator _mediator;
     private readonly FavoritesManager _favorites;
     private readonly ModPresetManager _modPresets;
     private readonly ConfigFileProvider _fileNames;
@@ -34,14 +36,14 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         FavoritesManager favorites,
         ModPresetManager modPresets, 
         ConfigFileProvider fileNames,
-        HybridSaveService saver) : base(logger, mediator)
+        HybridSaveService saver)
     {
+        _logger = logger;
+        _mediator = mediator;
         _favorites = favorites;
         _modPresets = modPresets;
         _fileNames = fileNames;
         _saver = saver;
-
-        Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, _ => CheckForExpiredLocks());
     }
 
     // ----------- STORAGE --------------
@@ -66,7 +68,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
                 _activeItems.TryAdd(idx, item);
                 _activeItemsAll.TryAdd(slot.Identifier, GagspeakModule.Restriction);
             }
-        Logger.LogInformation("Syncronized all Active Restrictions with Client-Side Manager.");
+        _logger.LogInformation("Synchronized all Active Restrictions with Client-Side Manager.");
     }
 
     public RestrictionItem CreateNew(string name, RestrictionType type)
@@ -80,8 +82,8 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         };
         Storage.Add(restriction);
         _saver.Save(this);
-        Logger.LogDebug($"Created New [{type}] Restriction ({restriction.Label}) with ID: {restriction.Identifier}.");
-        Mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Created, restriction, null));
+        _logger.LogDebug($"Created New [{type}] Restriction ({restriction.Label}) with ID: {restriction.Identifier}.");
+        _mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Created, restriction, null));
         return restriction;
     }
 
@@ -98,8 +100,8 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         Storage.Add(clonedItem);
         _saver.Save(this);
 
-        Logger.LogDebug($"Cloned restriction {clonedItem.Identifier}.");
-        Mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Created, clonedItem, null));
+        _logger.LogDebug($"Cloned restriction {clonedItem.Identifier}.");
+        _mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Created, clonedItem, null));
         return clonedItem;
     }
 
@@ -108,8 +110,8 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         // should never be able to remove active restrictions, but if that happens to occur, add checks here.
         if (Storage.Remove(restriction))
         {
-            Logger.LogDebug($"Deleted restriction {restriction.Identifier}.");
-            Mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Deleted, restriction, null));
+            _logger.LogDebug($"Deleted restriction {restriction.Identifier}.");
+            _mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Deleted, restriction, null));
             _saver.Save(this);
         }
     }
@@ -122,8 +124,8 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
 
         restriction.Label = newName;
         _saver.Save(this);
-        Logger.LogDebug($"Renamed restriction {restriction.Identifier}.");
-        Mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Renamed, restriction, oldName));
+        _logger.LogDebug($"Renamed restriction {restriction.Identifier}.");
+        _mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Renamed, restriction, oldName));
     }
 
     public void UpdateThumbnail(RestrictionItem restriction, string newPath)
@@ -131,10 +133,10 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         // This could have changed by the time this is called, so get it again.
         if (Storage.Contains(restriction))
         {
-            Logger.LogDebug($"Thumbnail updated for {restriction.Label} to {restriction.ThumbnailPath}");
+            _logger.LogDebug($"Thumbnail updated for {restriction.Label} to {restriction.ThumbnailPath}");
             restriction.ThumbnailPath = newPath;
             _saver.Save(this);
-            Mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Modified, restriction, null));
+            _mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Modified, restriction, null));
         }
     }
 
@@ -153,8 +155,8 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
             // _managerCache.UpdateCache(AppliedRestrictions);
             _saver.Save(this);
 
-            Logger.LogTrace("Saved changes to Edited RestrictionItem.");
-            Mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Modified, sourceItem, null));
+            _logger.LogTrace("Saved changes to Edited RestrictionItem.");
+            _mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Modified, sourceItem, null));
         }
     }
 
@@ -276,7 +278,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
         var restrictionItems = new JArray();
         foreach (var item in Storage)
         {
-            Logger.LogInformation("Serializing item: " + item.ToString());
+            _logger.LogInformation("Serializing item: " + item.ToString());
             restrictionItems.Add(item.Serialize());
         }
 
@@ -291,11 +293,11 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
     public void Load()
     {
         var file = _fileNames.Restrictions;
-        Logger.LogInformation("Loading in Restrictions Config for file: " + file);
+        _logger.LogInformation("Loading in Restrictions Config for file: " + file);
         Storage.Clear();
         if (!File.Exists(file))
         {
-            Logger.LogWarning("No Restrictions file found at {0}", file);
+            _logger.LogWarning("No Restrictions file found at {0}", file);
             // create a new file with default values.
             _saver.Save(this);
             return;
@@ -313,11 +315,11 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
                 LoadV0(jObject["RestrictionItems"]);
                 break;
             default:
-                Logger.LogError("Invalid Version!");
+                _logger.LogError("Invalid Version!");
                 return;
         }
         _saver.Save(this);
-        Mediator.Publish(new ReloadFileSystem(GagspeakModule.Restriction));
+        _mediator.Publish(new ReloadFileSystem(GagspeakModule.Restriction));
     }
 
     private void LoadV0(JToken? data)
@@ -335,7 +337,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
             var typeString = itemJson["Type"]?.ToObject<string>();
             if (!Enum.TryParse<RestrictionType>(typeString, out var restrictionType))
             {
-                Logger.LogError($"Unknown RestrictionType: {typeString}");
+                _logger.LogError($"Unknown RestrictionType: {typeString}");
                 continue;
             }
 
@@ -352,7 +354,7 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
             }
             catch (Bagagwa ex)
             {
-                Logger.LogError(ex, "Failed to load restriction item from JSON: {0}", itemJson);
+                _logger.LogError(ex, "Failed to load restriction item from JSON: {0}", itemJson);
             }
         }
     }
@@ -364,27 +366,4 @@ public sealed class RestrictionManager : DisposableMediatorSubscriberBase, IHybr
     }
 
     #endregion HybridSavable
-
-    private void CheckForExpiredLocks()
-    {
-        if (!MainHub.IsConnected)
-            return;
-
-        if (_serverRestrictionData is null || !_serverRestrictionData.Restrictions.Any(i => i.IsLocked()))
-            return;
-
-        foreach (var (restriction, index) in _serverRestrictionData.Restrictions.Select((slot, index) => (slot, index)))
-            if (restriction.Padlock.IsTimerLock() && restriction.HasTimerExpired())
-            {
-                Logger.LogTrace("Sending off Lock Removed Event to server!", LoggerType.Restrictions);
-                // only set data relevant to the new change.
-                var newData = new ActiveRestriction()
-                {
-                    Padlock = restriction.Padlock, // match the padlock
-                    Password = restriction.Password, // use the same password.
-                    PadlockAssigner = restriction.PadlockAssigner // use the same assigner. (To remove devotional timers)
-                };
-                Mediator.Publish(new ActiveRestrictionsChangeMessage(DataUpdateType.Unlocked, index, newData));
-            }
-    }
 }

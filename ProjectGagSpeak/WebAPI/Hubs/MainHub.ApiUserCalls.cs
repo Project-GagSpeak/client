@@ -1,4 +1,5 @@
 using GagspeakAPI.Data;
+using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Dto.Sharehub;
 using GagspeakAPI.Dto.VibeRoom;
 using GagspeakAPI.Hub;
@@ -135,28 +136,34 @@ public partial class MainHub
 
     }
 
-    public async Task<HubResponse> UserPushActiveGags(PushClientActiveGagSlot dto)
+    public async Task<HubResponse<ActiveGagSlot>> UserPushActiveGags(PushClientActiveGagSlot dto)
     {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActiveGags), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new ActiveGagSlot());
+        return await _hubConnection!.InvokeAsync<HubResponse<ActiveGagSlot>>(nameof(UserPushActiveGags), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserPushActiveRestrictions(PushClientActiveRestriction dto)
+    public async Task<HubResponse<ActiveRestriction>> UserPushActiveRestrictions(PushClientActiveRestriction dto)
     {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActiveRestrictions), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new ActiveRestriction());
+        return await _hubConnection!.InvokeAsync<HubResponse<ActiveRestriction>>(nameof(UserPushActiveRestrictions), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserPushActiveRestraint(PushClientActiveRestraint dto)
+    public async Task<HubResponse<CharaActiveRestraint>> UserPushActiveRestraint(PushClientActiveRestraint dto)
     {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActiveRestraint), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new CharaActiveRestraint());
+        return await _hubConnection!.InvokeAsync<HubResponse<CharaActiveRestraint>>(nameof(UserPushActiveRestraint), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserPushActiveLoot(PushClientActiveLoot dto)
+    public async Task<HubResponse> UserPushActiveCollar(PushClientActiveCollar dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActiveLoot), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActiveCollar), dto).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse<Guid>> UserPushActiveLoot(PushClientActiveLoot dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, Guid.Empty);
+        return await _hubConnection!.InvokeAsync<HubResponse<Guid>>(nameof(UserPushActiveLoot), dto).ConfigureAwait(false);
     }
 
     public async Task<HubResponse> UserPushAliasGlobalUpdate(PushClientAliasGlobalUpdate dto)
@@ -213,6 +220,12 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushNewRestraintData), dto).ConfigureAwait(false);
     }
 
+    public async Task<HubResponse> UserPushNewCollarData(PushClientDataChangeCollar dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushNewCollarData), dto).ConfigureAwait(false);
+    }
+
     public async Task<HubResponse> UserPushNewLootData(PushClientDataChangeLoot dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
@@ -255,8 +268,8 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserBulkChangeUnique), allUniquePermsForPair);
     }
 
-    public async Task<HubResponse> UserChangeOwnGlobalPerm(string propertyName, object newValue)
-        => await UserChangeOwnGlobalPerm(new(PlayerUserData, new KeyValuePair<string, object>(propertyName, newValue), UpdateDir.Own, PlayerUserData));
+    public async Task<HubResponse> ChangeOwnGlobalPerm(string propertyName, object newValue)
+        => await UserChangeOwnGlobalPerm(new(PlayerUserData, new KeyValuePair<string, object>(propertyName, newValue), PlayerUserData));
 
 
     public async Task<HubResponse> UserChangeOwnGlobalPerm(SingleChangeGlobal userPermissions)
@@ -275,6 +288,12 @@ public partial class MainHub
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeOwnPairPermAccess), userPermissions);
+    }
+
+    public async Task<HubResponse<HardcoreState>> UserHardcoreAttributeExpired(HardcoreAttributeExpired change)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new HardcoreState());
+        return await _hubConnection!.InvokeAsync<HubResponse<HardcoreState>>(nameof(UserHardcoreAttributeExpired), change).ConfigureAwait(false);
     }
 
     public async Task<HubResponse> UserDelete()
@@ -310,6 +329,30 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserRejectKinksterRequest), user).ConfigureAwait(false); // wait for request to send.
     }
 
+    public async Task<HubResponse> UserSendCollarRequest(CreateCollarRequest request)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserSendCollarRequest), request).ConfigureAwait(false); // wait for request to send.
+    }
+
+    public async Task<HubResponse> UserCancelCollarRequest(KinksterBase user)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserCancelCollarRequest), user).ConfigureAwait(false); // wait for request to send.
+    }
+
+    public async Task<HubResponse> UserAcceptCollarRequest(AcceptCollarRequest acceptedRequest)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserAcceptCollarRequest), acceptedRequest).ConfigureAwait(false); // wait for request to send.
+    }
+
+    public async Task<HubResponse> UserRejectCollarRequest(KinksterBase user)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserRejectCollarRequest), user).ConfigureAwait(false); // wait for request to send.
+    }
+
     public async Task<HubResponse> UserRemoveKinkster(KinksterBase KinksterBase)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
@@ -332,6 +375,12 @@ public partial class MainHub
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeKinksterActiveRestraint), dto);
+    }
+
+    public async Task<HubResponse> UserChangeKinksterActiveCollar(PushKinksterActiveCollar dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeKinksterActiveCollar), dto).ConfigureAwait(false);
     }
 
     public async Task<HubResponse> UserChangeKinksterActivePattern(PushKinksterActivePattern dto)
@@ -364,10 +413,19 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeOtherGlobalPerm), userPermissions);
     }
 
+    public async Task<HubResponse> ChangeOtherGlobalPerm(UserData target, string propertyName, object newValue)
+        => await UserChangeOtherGlobalPerm(new(target, new KeyValuePair<string, object>(propertyName, newValue), target));
+
     public async Task<HubResponse> UserChangeOtherPairPerm(SingleChangeUnique userPermissions)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeOtherPairPerm), userPermissions);
+    }
+
+    public async Task<HubResponse> UserChangeOtherHardcoreState(HardcoreStateChange newState)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeOtherHardcoreState), newState);
     }
     #endregion Kinkster Interactions
 
@@ -430,18 +488,6 @@ public partial class MainHub
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserHypnotizeKinkster), dto).ConfigureAwait(false);
-    }
-
-    public async Task<HubResponse> UserConfineKinksterByAddress(ConfineByAddress dto)
-    {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserConfineKinksterByAddress), dto).ConfigureAwait(false);
-    }
-
-    public async Task<HubResponse> UserImprisonKinkster(ImprisonAtPosition dto)
-    {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserImprisonKinkster), dto).ConfigureAwait(false);
     }
     #endregion IPC Interactions
 

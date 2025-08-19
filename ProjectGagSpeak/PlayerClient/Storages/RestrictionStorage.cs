@@ -89,14 +89,33 @@ public class GagRestrictionStorage : SortedList<GagType, GarblerRestriction>, IE
 
     /// <summary> Gets if the respective gag is enabled, if it exists. </summary>
     /// <returns> True if it exists and is enabled, false otherwise. </returns>
-    public bool IsEnabled(GagType gag) => ContainsKey(gag) && this[gag].IsEnabled;
+    public bool IsEnabled(GagType gag) 
+        => ContainsKey(gag) && this[gag].IsEnabled;
 
-    
     public IEnumerable<LightGag> ToLightStorage()
         => this.Values.Select(x => x.ToLightItem());
 
     // Interface Requirements:
     public bool TryApplyChanges(GarblerRestriction oldItem, GarblerRestriction changedItem)
+    {
+        if (changedItem is null)
+            return false;
+        oldItem.ApplyChanges(changedItem);
+        return true;
+    }
+}
+
+public class CollarStorage : List<GagSpeakCollar>, IEditableStorage<GagSpeakCollar>
+{
+    public bool TryGetCollar(Guid id, [NotNullWhen(true)] out GagSpeakCollar? collar)
+    {
+        collar = this.FirstOrDefault(x => x.Identifier == id);
+        return collar != null;
+    }
+    /// <summary> Informs us if the item is in the storage. </summary>
+    public bool Contains(Guid id)
+        => this.Any(x => x.Identifier == id);
+    public bool TryApplyChanges(GagSpeakCollar oldItem, GagSpeakCollar changedItem)
     {
         if (changedItem is null)
             return false;

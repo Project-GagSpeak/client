@@ -5,6 +5,7 @@ using GagSpeak.Services.Configs;
 using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 using System.Collections.Immutable;
+using CkCommons.Raii;
 
 namespace GagSpeak.Gui.Components;
 
@@ -38,17 +39,14 @@ public abstract class DrawFolderBase : IDrawFolder
     {
         if (!RenderIfEmpty && !DrawPairs.Any())
             return;
+
         using var id = ImRaii.PushId("folder_" + _id);
-        var color = ImRaii.PushColor(ImGuiCol.ChildBg, ImGui.GetColorU32(ImGuiCol.FrameBgHovered), _wasHovered);
-        using (ImRaii.Child("folder__" + _id, new Vector2(
-            CkGui.GetWindowContentRegionWidth() - ImGui.GetCursorPosX(), ImGui.GetFrameHeight())))
+        var size = new Vector2(CkGui.GetWindowContentRegionWidth() - ImGui.GetCursorPosX(), ImGui.GetFrameHeight());
+        using (CkRaii.Child("folder__" + _id, size, _wasHovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : 0, 0f))
         {
-            // draw opener
             var icon = _serverConfigs.NickStorage.OpenPairListFolders.Contains(_id) ? FAI.CaretDown : FAI.CaretRight;
 
-            ImUtf8.SameLineInner();
-            ImGui.AlignTextToFramePadding();
-            CkGui.IconText(icon);
+            CkGui.FramedIconText(icon);
 
             ImGui.SameLine();
             var leftSideEnd = DrawIcon();
@@ -67,7 +65,6 @@ public abstract class DrawFolderBase : IDrawFolder
             _serverConfigs.SaveNicknames();
         }
 
-        color.Dispose();
         ImGui.Separator();
 
         // if opened draw content

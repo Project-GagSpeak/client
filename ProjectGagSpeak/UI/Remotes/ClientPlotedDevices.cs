@@ -195,7 +195,7 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
         Log.LogInformation($"User {enactor} started playback data for {Owner.DisplayName} with pattern ID {ActivePattern}.");
         GagspeakEventManager.AchievementEvent(UnlocksEvent.RemoteAction, RemoteInteraction.PatternPlaybackStart, ActivePattern, enactor);
         Access = enactor == MainHub.UID ? RemoteAccess.Playback : RemoteAccess.ForcedPlayback;
-        // Server-side, any time an active pattern update is recieved, it sends that update back to us and all our paired Kinksters.
+        // Server-side, any time an active pattern update is received, it sends that update back to us and all our paired Kinksters.
         // Thus, if only send the update if the call is not self-invoked.
         if (enactor == MainHub.UID)
             Mediator.Publish(new ActivePatternChangedMessage(DataUpdateType.PatternExecuted, ActivePattern));
@@ -211,7 +211,7 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
         GagspeakEventManager.AchievementEvent(UnlocksEvent.RemoteAction, RemoteInteraction.PatternPlaybackEnd, ActivePattern, enactor);
         _patternInfo.Reset();
         Access = RemoteAccess.Full;
-        // Server-side, any time an active pattern update is recieved, it sends that update back to us and all our paired Kinksters.
+        // Server-side, any time an active pattern update is received, it sends that update back to us and all our paired Kinksters.
         // Thus, if only send the update if the call is not self-invoked.
         if (enactor == MainHub.UID && callSource is not RemoteSource.PatternSwitch or RemoteSource.Safeword)
             Mediator.Publish(new ActivePatternChangedMessage(DataUpdateType.PatternStopped, Guid.Empty));

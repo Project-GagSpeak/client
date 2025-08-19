@@ -14,7 +14,7 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     private readonly MovementDetours _detours;
 
     // Fields useful for forced-follow behavior.
-    private Stopwatch _timeoutTracker = new Stopwatch();
+    private static Stopwatch _timeoutTracker = new Stopwatch();
     private Vector3 _lastPos = Vector3.Zero;
     private bool _runningBanned = false;
     private bool _freezePlayer = false;
@@ -27,6 +27,9 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreState());
         Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
     }
+
+    // reference for Auto-Unlock timer.
+    public static TimeSpan TimeIdleDuringFollow => _timeoutTracker.Elapsed;
 
     private void UpdateHardcoreState()
     {
@@ -66,9 +69,9 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
 
     private unsafe void FrameworkUpdate()
     {
-        // ForceFollow Spesific Logic.
-        if (_timeoutTracker.IsRunning)
-            HandleTimeoutTracking();
+        // ForceFollow Specific Logic.
+        if (_timeoutTracker.IsRunning && PlayerData.Object!.Position != _lastPos)
+            RestartTimeoutTracker();
 
         // Ensure full movement lock if we should.
         if (_freezePlayer && !_detours.ForceDisableMovementIsActive)
@@ -94,23 +97,4 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     private unsafe bool IsWalking() => Control.Instance()->IsWalking;
     private unsafe void ForceWalking() => Marshal.WriteByte((nint)Control.Instance(), 30259, 0x1);
     private unsafe void ForceRunning() => Marshal.WriteByte((nint)Control.Instance(), 30259, 0x0);
-    
-    private void HandleTimeoutTracking()
-    {
-        if (PlayerData.Object!.Position != _lastPos)
-            RestartTimeoutTracker();
-        if (_timeoutTracker.Elapsed > TimeSpan.FromSeconds(6))
-            HandleNaturalExpiration();
-    }
-    
-    /// <summary>
-    ///     Case where the ForceFollow timer has someone remaining in place for 6+ seconds.
-    ///     Triggering a automatic disable.
-    /// </summary>
-    private void HandleNaturalExpiration()
-    {
-        // reset the timer, the position, and update the hardcore state value.
-        ResetTimeoutTracker();
-        Mediator.Publish(new PushHcStateChange(HcAttribute.Follow, false));
-    }
 }

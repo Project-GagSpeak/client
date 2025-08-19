@@ -2,6 +2,7 @@ using GagSpeak.Kinksters;
 using GagSpeak.Kinksters.Handlers;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
+using GagspeakAPI.Data.Permissions;
 
 namespace GagSpeak.Services.Mediator;
 
@@ -13,13 +14,17 @@ public record TargetPairMessage(Kinkster Pair) : MessageBase; // called when pub
 public record CreateCacheForObjectMessage(GameObjectHandler ObjectToCreateFor) : MessageBase;
 public record ClearCacheForObjectMessage(GameObjectHandler ObjectToCreateFor) : MessageBase; // called when we should clear a GameObject from cache creation service.
 public record MufflerLanguageChanged : MessageBase; // called whenever the client language changes to a new language.
-public record HcStateCacheChanged : MessageBase; // informs all controllers to update the latest control states.
-public record PushHcStateChange(HcAttribute attribute, bool newState, int? id = null, byte? cpose = null) : SameThreadMessage; 
+public record HcStateCacheChanged : MessageBase;
+
+// technically not needed since we can monitor this externally as a background service!
+public record HardcoreStateExpired(HcAttribute Attribute) : SameThreadMessage;
+
 
 // Kinkster Data Changes
 public record ActiveGagsChangeMessage(DataUpdateType UpdateType, int Layer, ActiveGagSlot NewData) : SameThreadMessage;
 public record ActiveRestrictionsChangeMessage(DataUpdateType UpdateType, int Layer, ActiveRestriction NewData) : SameThreadMessage;
-public record ActiveRestraintSetChangeMessage(DataUpdateType UpdateType, CharaActiveRestraint NewData) : SameThreadMessage;
+public record ActiveRestraintChangedMessage(DataUpdateType UpdateType, CharaActiveRestraint NewData) : SameThreadMessage;
+public record ActiveCollarChangedMessage(DataUpdateType UpdateType, CharaActiveCollar NewData) : SameThreadMessage;
 public record AliasGlobalUpdateMessage(Guid AliasId, AliasTrigger? NewData) : SameThreadMessage;
 public record AliasPairUpdateMessage(UserData IntendedUser, Guid AliasId, AliasTrigger? NewData) : SameThreadMessage;
 public record ValidToysChangedMessage(List<ToyBrandName> ValidToys) : SameThreadMessage;

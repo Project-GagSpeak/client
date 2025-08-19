@@ -20,8 +20,11 @@ public record UserPairSelected(Kinkster? Pair) : MessageBase; // This likely can
 /// <summary> Fires once we wish to open the popout permissions menu for a Kinkster pair. </summary>
 public record KinksterInteractionUiChangeMessage(Kinkster Kinkster, InteractionsTab Type) : MessageBase;
 
-/// <summary> Fires whenever we need to refresh the UI. </summary>
-public record RefreshUiMessage : MessageBase;
+/// <summary> Fires whenever we need to refresh the created DrawUserPair / immutable KinksterList. </summary>
+public record RefreshUiKinkstersMessage : MessageBase;
+
+/// <summary> Fires whenever we need to refresh the created DrawRequests. </summary>
+public record RefreshUiRequestsMessage : MessageBase;
 
 /// <summary> Fires whenever we need to toggle the UI. </summary>
 public record UiToggleMessage(Type UiType, ToggleType ToggleType = ToggleType.Toggle) : MessageBase;

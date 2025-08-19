@@ -49,8 +49,8 @@ public static class PermissionHelper
             if (finalVal is null)
                 throw new InvalidOperationException($"Property {propertyName} in GlobalPerms, has the finalValue was null, which is not allowed.");
 
-            // Now that it is updated clientside, attempt to make the change on the server, and get the hub responce.
-            HubResponse response = await hub.UserChangeOwnGlobalPerm(propertyName, newValue);
+            // Now that it is updated client-side, attempt to make the change on the server, and get the hub response.
+            HubResponse response = await hub.ChangeOwnGlobalPerm(propertyName, newValue);
 
             if (response.ErrorCode is not GagSpeakApiEc.Success)
                 throw new InvalidOperationException($"Failed to change {propertyName} to {finalVal} for self. Reason: {response.ErrorCode}");
@@ -172,9 +172,8 @@ public static class PermissionHelper
             if (finalVal is null)
                 throw new InvalidOperationException($"Property {propertyName} in GlobalPerms, has the finalValue was null, which is not allowed.");
 
-            // Now that it is updated clientside, attempt to make the change on the server, and get the hub responce.
-            HubResponse response = await hub.UserChangeOtherGlobalPerm(
-                new(target, new KeyValuePair<string, object>(propertyName, finalVal), UpdateDir.Other, MainHub.PlayerUserData));
+            // Now that it is updated client-side, attempt to make the change on the server, and get the hub responce.
+            HubResponse response = await hub.ChangeOtherGlobalPerm(target, propertyName, finalVal);
 
             if (response.ErrorCode is not GagSpeakApiEc.Success)
                 throw new InvalidOperationException($"Failed to change {propertyName} to {finalVal} for {target.AliasOrUID}, Reason: {response.ErrorCode}");

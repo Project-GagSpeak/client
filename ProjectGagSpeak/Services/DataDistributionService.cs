@@ -10,7 +10,6 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
-using System.Xml.Linq;
 
 namespace GagSpeak.Services;
 
@@ -81,10 +80,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             _newOnlineKinksters.Add(arg.UserData);
         });
         Mediator.Subscribe<PairHandlerVisibleMessage>(this, msg => _newVisibleKinksters.Add(msg.Player.OnlineUser.User));
-
-        // Generic Updaters
-        //Mediator.Subscribe<PushHcStateChange>(this, arg => _hub.UserChangeOwnGlobalPerm(arg.PermName, arg.NewValue).ConfigureAwait(false));
-        
+       
         // Visible Data Updaters
         Mediator.Subscribe<MoodlesApplyStatusToPair>(this, msg => _hub.UserApplyMoodlesByStatus(msg.StatusDto).ConfigureAwait(false));
 
@@ -92,7 +88,8 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         Mediator.Subscribe<MainHubConnectedMessage>(this, _ => PushCompositeData(_kinksters.GetOnlineUserDatas()).ConfigureAwait(false));
         Mediator.Subscribe<ActiveGagsChangeMessage>(this, arg => PushActiveGagSlotUpdate(arg).ConfigureAwait(false));
         Mediator.Subscribe<ActiveRestrictionsChangeMessage>(this, arg => PushActiveRestrictionUpdate(arg).ConfigureAwait(false));
-        Mediator.Subscribe<ActiveRestraintSetChangeMessage>(this, arg => PushActiveRestraintUpdate(arg).ConfigureAwait(false));
+        Mediator.Subscribe<ActiveRestraintChangedMessage>(this, arg => PushActiveRestraintUpdate(arg).ConfigureAwait(false));
+        Mediator.Subscribe<ActiveCollarChangedMessage>(this, arg => PushActiveCollarUpdate(arg).ConfigureAwait(false));
         Mediator.Subscribe<AliasGlobalUpdateMessage>(this, arg => DistributeDataGlobalAlias(arg).ConfigureAwait(false));
         Mediator.Subscribe<AliasPairUpdateMessage>(this, arg => DistributeDataUniqueAlias(arg).ConfigureAwait(false));
         Mediator.Subscribe<ValidToysChangedMessage>(this, arg => PushValidToysUpdate(arg).ConfigureAwait(false));
@@ -103,6 +100,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         Mediator.Subscribe<ConfigGagRestrictionChanged>(this, msg => DistributeGagUpdate(msg.Item, msg.Type).ConfigureAwait(false));
         Mediator.Subscribe<ConfigRestrictionChanged>(this, msg => DistributeRestrictionUpdate(msg.Item, msg.Type).ConfigureAwait(false));
         Mediator.Subscribe<ConfigRestraintSetChanged>(this, msg => DistributeRestraintSetUpdate(msg.Item, msg.Type).ConfigureAwait(false));
+        Mediator.Subscribe<ConfigCollarChanged>(this, msg => DistributeCollarUpdate(msg.Item, msg.Type).ConfigureAwait(false));
         Mediator.Subscribe<ConfigCursedItemChanged>(this, msg => DistributeCursedItemUpdate(msg.Item, msg.Type).ConfigureAwait(false));
         Mediator.Subscribe<ConfigPatternChanged>(this, msg => DistributePatternUpdate(msg.Item, msg.Type).ConfigureAwait(false));
         Mediator.Subscribe<ConfigAlarmChanged>(this, msg => DistributeAlarmUpdate(msg.Item, msg.Type).ConfigureAwait(false));
@@ -114,6 +112,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
     private ActiveGagSlot? _prevGagData;
     private ActiveRestriction? _prevRestrictionData;
     private CharaActiveRestraint? _prevRestraintData;
+    private CharaActiveCollar? _prevCollarData;
 
     private void DelayedFrameworkOnUpdate()
     {
@@ -124,9 +123,9 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         // Handle Online Players.
         if (_newOnlineKinksters.Count > 0)
         {
-            var newOnlinekinksters = _newOnlineKinksters.ToList();
+            var newOnlineKinksters = _newOnlineKinksters.ToList();
             _newOnlineKinksters.Clear();
-            PushCompositeData(newOnlinekinksters).ConfigureAwait(false);
+            PushCompositeData(newOnlineKinksters).ConfigureAwait(false);
         }
 
         // Handle Visible Players.
@@ -346,26 +345,18 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         }
     }
 
-    /// <summary>
-    ///     A publically accessible variant that is not mediator dependant.
-    /// </summary>
-    /// <remarks> Useful for handlers and services that must await the callback. </remarks>
-    /// <returns> True if the operation returned successfully, false if it failed. </returns>
-    public async Task<GagSpeakApiEc> PushGagTriggerAction(int layerIdx, ActiveGagSlot newData, DataUpdateType type)
-        => await PushNewActiveGagSlot(_kinksters.GetOnlineUserDatas(), layerIdx, newData, type);
-
     /// <summary> Pushes the new GagData to the server. </summary>
     /// <remarks> If this call fails, the previous data will not be updated. </remarks>
-    private async Task<GagSpeakApiEc> PushActiveGagSlotUpdate(ActiveGagsChangeMessage msg)
+    private async Task PushActiveGagSlotUpdate(ActiveGagsChangeMessage msg)
         => await PushNewActiveGagSlot(_kinksters.GetOnlineUserDatas(), msg.Layer, msg.NewData, msg.UpdateType);
 
-    public async Task<GagSpeakApiEc> PushNewActiveGagSlot(int layer, ActiveGagSlot slot, DataUpdateType type)
+    public async Task<ActiveGagSlot?> PushNewActiveGagSlot(int layer, ActiveGagSlot slot, DataUpdateType type)
         => await PushNewActiveGagSlot(_kinksters.GetOnlineUserDatas(), layer, slot, type);
 
-    public async Task<GagSpeakApiEc> PushNewActiveGagSlot(List<UserData> onlinePlayers, int layer, ActiveGagSlot slot, DataUpdateType type)
+    public async Task<ActiveGagSlot?> PushNewActiveGagSlot(List<UserData> onlinePlayers, int layer, ActiveGagSlot slot, DataUpdateType type)
     {
         if (DataIsDifferent(_prevGagData, slot) is false)
-            return GagSpeakApiEc.DuplicateEntry;
+            return null;
 
         _prevGagData = slot;
         Logger.LogDebug($"Pushing GagChange [{type}] to: {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
@@ -380,30 +371,27 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             Timer = slot.Timer,
             Assigner = slot.PadlockAssigner
         };
-
-        if (await _hub.UserPushActiveGags(dto) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+        var res = await _hub.UserPushActiveGags(dto).ConfigureAwait(false);
+        if (res.ErrorCode is not GagSpeakApiEc.Success)
         {
             Logger.LogError($"Failed to push GagData to server [{res}]");
-            return res.ErrorCode;
+            return null;
         }
-        else
-        {
-            return GagSpeakApiEc.Success;
-        }
+        return res.Value;
     }
 
     /// <summary> Pushes the new RestrictionData to the server. </summary>
     /// <remarks> If this call fails, the previous data will not be updated. </remarks>
-    private async Task<GagSpeakApiEc> PushActiveRestrictionUpdate(ActiveRestrictionsChangeMessage msg)
+    private async Task PushActiveRestrictionUpdate(ActiveRestrictionsChangeMessage msg)
         => await PushNewActiveRestriction(_kinksters.GetOnlineUserDatas(), msg.Layer, msg.NewData, msg.UpdateType);
 
-    public async Task<GagSpeakApiEc> PushNewActiveRestriction(int layerIdx, ActiveRestriction newData, DataUpdateType type)
+    public async Task<ActiveRestriction?> PushNewActiveRestriction(int layerIdx, ActiveRestriction newData, DataUpdateType type)
         => await PushNewActiveRestriction(_kinksters.GetOnlineUserDatas(), layerIdx, newData, type);
 
-    public async Task<GagSpeakApiEc> PushNewActiveRestriction(List<UserData> onlinePlayers, int layerIdx, ActiveRestriction newData, DataUpdateType type)
+    public async Task<ActiveRestriction?> PushNewActiveRestriction(List<UserData> onlinePlayers, int layerIdx, ActiveRestriction newData, DataUpdateType type)
     {
         if (DataIsDifferent(_prevRestrictionData, newData) is false)
-            return GagSpeakApiEc.DuplicateEntry;
+            return null;
 
         _prevRestrictionData = newData;
         Logger.LogDebug($"Pushing RestrictionChange [{type}] to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
@@ -418,29 +406,27 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             Timer = newData.Timer,
             Assigner = newData.PadlockAssigner
         };
-
-        if (await _hub.UserPushActiveRestrictions(dto) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+        var res = await _hub.UserPushActiveRestrictions(dto).ConfigureAwait(false);
+        if (res.ErrorCode is not GagSpeakApiEc.Success)
         {
             Logger.LogError($"Failed to push RestrictionData to server [{res}]");
-            return res.ErrorCode;
+            return null;
         }
-
-        return GagSpeakApiEc.Success;
+        return res.Value;
     }
 
     /// <summary> Pushes the new RestraintData to the server. </summary>
     /// <remarks> If this call fails, the previous data will not be updated. </remarks>
-    private async Task<GagSpeakApiEc> PushActiveRestraintUpdate(ActiveRestraintSetChangeMessage msg)
+    private async Task PushActiveRestraintUpdate(ActiveRestraintChangedMessage msg)
         => await PushActiveRestraintUpdate(_kinksters.GetOnlineUserDatas(), msg.NewData, msg.UpdateType);
 
-    public async Task<GagSpeakApiEc> PushActiveRestraintUpdate(CharaActiveRestraint newData, DataUpdateType type)
+    public async Task<CharaActiveRestraint?> PushActiveRestraintUpdate(CharaActiveRestraint newData, DataUpdateType type)
         => await PushActiveRestraintUpdate(_kinksters.GetOnlineUserDatas(), newData, type);
 
-    public async Task<GagSpeakApiEc> PushActiveRestraintUpdate(List<UserData> onlinePlayers, CharaActiveRestraint newData, DataUpdateType type)
-
+    public async Task<CharaActiveRestraint?> PushActiveRestraintUpdate(List<UserData> onlinePlayers, CharaActiveRestraint newData, DataUpdateType type)
     {
         if (DataIsDifferent(_prevRestraintData, newData) is false)
-            return GagSpeakApiEc.DuplicateEntry;
+            return null;
 
         _prevRestraintData = newData;
         Logger.LogDebug($"Pushing RestraintData to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))} [{type}]", LoggerType.OnlinePairs);
@@ -455,13 +441,43 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             Timer = newData.Timer,
             Assigner = newData.PadlockAssigner
         };
-
-        if (await _hub.UserPushActiveRestraint(dto) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+        var res = await _hub.UserPushActiveRestraint(dto).ConfigureAwait(false);
+        if (res.ErrorCode is not GagSpeakApiEc.Success)
         {
             Logger.LogError($"Failed to push RestraintData to server [{res}]");
+            return null;
+        }
+        return res.Value;
+    }
+
+    private async Task<GagSpeakApiEc> PushActiveCollarUpdate(ActiveCollarChangedMessage msg)
+        => await PushNewActiveCollar(_kinksters.GetOnlineUserDatas(), msg.NewData, msg.UpdateType);
+
+    public async Task<GagSpeakApiEc> PushNewActiveCollar(List<UserData> onlinePlayers, CharaActiveCollar newData, DataUpdateType type)
+    {
+        if (DataIsDifferent(_prevCollarData, newData) is false)
+            return GagSpeakApiEc.DuplicateEntry;
+
+        _prevCollarData = newData;
+        Logger.LogDebug($"Pushing CollarChange [{type}] to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
+        // Visuals DataTypeUpdate covers toggling the visual state.
+        var dto = new PushClientActiveCollar(onlinePlayers, type)
+        {
+            CollarId = newData.Identifier,
+            OwnerUIDs = newData.OwnerUIDs,
+            Dye1 = newData.Dye1,
+            Dye2 = newData.Dye2,
+            Moodle = newData.Moodle,
+            Writing = newData.Writing,
+            EditAccess = newData.CollaredAccess,
+            OwnerEditAccess = newData.OwnerAccess
+        };
+
+        if (await _hub.UserPushActiveCollar(dto) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+        {
+            Logger.LogError($"Failed to push CollarData to server [{res}]");
             return res.ErrorCode;
         }
-
         return GagSpeakApiEc.Success;
     }
 
@@ -558,6 +574,17 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
             Logger.LogError($"Failed to push RestraintSetData to paired Kinksters. [{res}]");
         else
             Logger.LogDebug("Successfully pushed RestraintSetData to server", LoggerType.OnlinePairs);
+    }
+
+    private async Task DistributeCollarUpdate(GagSpeakCollar collar, StorageChangeType kind)
+    {
+        var onlinePlayers = _kinksters.GetOnlineUserDatas();
+        Logger.LogDebug($"Pushing CollarChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
+        var dto = new PushClientDataChangeCollar(onlinePlayers, collar.Identifier, collar.ToLightItem());
+        if (await _hub.UserPushNewCollarData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+            Logger.LogError($"Failed to push CollarData to paired Kinksters. [{res}]");
+        else
+            Logger.LogDebug("Successfully pushed CollarData to server", LoggerType.OnlinePairs);
     }
 
     private async Task DistributeCursedItemUpdate(CursedItem item, StorageChangeType kind)

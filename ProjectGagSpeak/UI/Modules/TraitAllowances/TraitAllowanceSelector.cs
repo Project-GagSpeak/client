@@ -36,7 +36,7 @@ public class TraitAllowanceSelector : DisposableMediatorSubscriberBase
         _favorites = favorites;
         _cosmetics = cosmetics;
 
-        Mediator.Subscribe<RefreshUiMessage>(this, _ => UpdatePairList());
+        Mediator.Subscribe<RefreshUiKinkstersMessage>(this, _ => UpdatePairList());
     }
 
     private ImmutableList<Kinkster>  _immutablePairs = ImmutableList<Kinkster>.Empty;

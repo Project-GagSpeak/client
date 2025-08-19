@@ -19,7 +19,7 @@ public class DrawUserPair
 
     protected Kinkster _pair;
     private readonly string _id;
-    private bool IsHovered = false;
+    private bool _hovered = false;
     public DrawUserPair(string id, Kinkster entry, GagspeakMediator mediator, MainHub hub, IdDisplayHandler nameDisp)
     {
         _id = id;
@@ -38,7 +38,7 @@ public class DrawUserPair
         var cursorPos = ImGui.GetCursorPosX();
         using var id = ImRaii.PushId(GetType() + _id);
         var childSize = new Vector2(CkGui.GetWindowContentRegionWidth() - ImGui.GetCursorPosX(), ImGui.GetFrameHeight());
-        using (CkRaii.Child(GetType() + _id, childSize, IsHovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : 0))
+        using (CkRaii.Child(GetType() + _id, childSize, _hovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : 0, 0f))
         {
             ImUtf8.SameLineInner();
             DrawLeftSide();
@@ -47,8 +47,8 @@ public class DrawUserPair
             var rightSide = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - CkGui.IconButtonSize(FAI.EllipsisV).X;
             rightSide = DrawRightSide();
             selected = DrawName(posX, rightSide);            
-            IsHovered = ImGui.IsItemHovered();
         }
+        _hovered = ImGui.IsItemHovered();
         // if they were a supporter, go back to the start and draw the image.
         if (_pair.UserData.Tier is not CkSupporterTier.NoRole)
             DrawSupporterIcon(cursorPos);
@@ -72,15 +72,16 @@ public class DrawUserPair
     private void DrawLeftSide()
     {
         var userPairText = string.Empty;
+        ImGui.AlignTextToFramePadding();
         if (!_pair.IsOnline)
         {
             using var _ = ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudRed);
-            CkGui.FramedIconText(FAI.User);
+            CkGui.IconText(FAI.User);
             userPairText = $"{_pair.GetNickAliasOrUid()} is offline";
         }
         else if (_pair.IsVisible)
         {
-            CkGui.FramedIconText(FAI.Eye, ImGuiColors.ParsedGreen);
+            CkGui.IconText(FAI.Eye, ImGuiColors.ParsedGreen);
             userPairText = $"{_pair.GetNickAliasOrUid()} is visible ({_pair.PlayerName})--SEP--Click to target this player";
             if (ImGui.IsItemClicked())
                 _mediator.Publish(new TargetPairMessage(_pair));
@@ -88,7 +89,7 @@ public class DrawUserPair
         else
         {
             using var _ = ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.HealerGreen);
-            CkGui.FramedIconText(FAI.User);
+            CkGui.IconText(FAI.User);
             userPairText = $"{_pair.GetNickAliasOrUid()} is online";
         }
         CkGui.AttachToolTip(userPairText);
@@ -97,9 +98,7 @@ public class DrawUserPair
     }
 
     private bool DrawName(float leftSide, float rightSide)
-    {
-        return _nameHandler.DrawPairText(_id, _pair, leftSide, () => rightSide - leftSide);
-    }
+        => _nameHandler.DrawPairText(_id, _pair, leftSide, () => rightSide - leftSide);
 
     private float DrawRightSide()
     {
@@ -112,26 +111,18 @@ public class DrawUserPair
         ImGui.SameLine(currentRightSide);
         ImGui.AlignTextToFramePadding();
         if (CkGui.IconButton(FAI.EllipsisV))
-        {
-            // open the permission setting window
             _mediator.Publish(new KinksterInteractionUiChangeMessage(_pair, InteractionsTab.Interactions));
-        }
 
         currentRightSide -= permissionsButtonSize.X + spacingX;
         ImGui.SameLine(currentRightSide);
         if (CkGui.IconButton(FAI.Cog))
-        {
             _mediator.Publish(new KinksterInteractionUiChangeMessage(_pair, InteractionsTab.PermsForKinkster));
-        }
         CkGui.AttachToolTip($"Set your Permissions for {_pair.UserData.AliasOrUID}");
 
         currentRightSide -= permissionsButtonSize.X + spacingX;
         ImGui.SameLine(currentRightSide);
         if (CkGui.IconButton(FAI.Search))
-        {
-            // if we press the cog, we should modify its appearance, and set that we are drawing for this pair to true
             _mediator.Publish(new KinksterInteractionUiChangeMessage(_pair, InteractionsTab.KinkstersPerms));
-        }
         CkGui.AttachToolTip($"Inspect {_pair.UserData.AliasOrUID}'s permissions");
 
         return currentRightSide;

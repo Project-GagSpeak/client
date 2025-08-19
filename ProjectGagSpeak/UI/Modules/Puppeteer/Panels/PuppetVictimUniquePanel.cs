@@ -58,7 +58,7 @@ public class PuppetVictimUniquePanel : DisposableMediatorSubscriberBase
                     : pair.GetNickAliasOrUid(), StringComparer.OrdinalIgnoreCase)
         ]);
 
-        Mediator.Subscribe<RefreshUiMessage>(this, _ => _pairCombo.RefreshPairList());
+        Mediator.Subscribe<RefreshUiKinkstersMessage>(this, _ => _pairCombo.RefreshPairList());
     }
 
     public Kinkster? Selected => _pairCombo.Current;

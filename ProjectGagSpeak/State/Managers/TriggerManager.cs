@@ -11,8 +11,6 @@ namespace GagSpeak.State.Managers;
 
 public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
-    private readonly PatternManager _patterns;
-    private readonly AlarmManager _alarms;
     private readonly FavoritesManager _favorites;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
@@ -20,11 +18,9 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
     private StorageItemEditor<Trigger> _itemEditor = new();
 
     public TriggerManager(ILogger<TriggerManager> logger, GagspeakMediator mediator,
-        PatternManager patterns, AlarmManager alarms, FavoritesManager favorites,
-        ConfigFileProvider fileNames, HybridSaveService saver) : base(logger, mediator)
+        FavoritesManager favorites, ConfigFileProvider fileNames, HybridSaveService saver) 
+        : base(logger, mediator)
     {
-        _patterns = patterns;
-        _alarms = alarms;
         _favorites = favorites;
         _fileNames = fileNames;
         _saver = saver;

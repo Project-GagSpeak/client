@@ -40,8 +40,8 @@ public record MainHubClosedMessage(Exception? Exception) : SameThreadMessage;
 /// <summary> Fires whenever the client has connected to the GagSpeak Hub. </summary>
 public record MainHubConnectedMessage : MessageBase;
 
-/// <summary> Fired once all personal data related to sharehubs and invites are recieved after connection. </summary>
-public record PostConnectionDataRecievedMessage(LobbyAndHubInfoResponce Info) : MessageBase;
+/// <summary> Fired once all personal data related to sharehubs and invites are received after connection. </summary>
+public record PostConnectionDataReceivedMessage(LobbyAndHubInfoResponse Info) : MessageBase;
 
 /// <summary> When we want to send off our current Achievement Data. </summary>
 public record SendAchievementData : MessageBase;

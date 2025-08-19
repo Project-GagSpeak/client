@@ -14,8 +14,10 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.State.Managers;
 
-public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IHybridSavable
+public sealed class GagRestrictionManager : IHybridSavable
 {
+    private readonly ILogger<GagRestrictionManager> _logger;
+    private readonly GagspeakMediator _mediator;
     private readonly FavoritesManager _favorites;
     private readonly ModPresetManager _modPresets;
     private readonly ConfigFileProvider _fileNames;
@@ -33,15 +35,15 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
         ModPresetManager modPresets,
         ConfigFileProvider fileNames,
         MufflerService muffler,
-        HybridSaveService saver) : base(logger, mediator)
+        HybridSaveService saver)
     {
+        _logger = logger;
+        _mediator = mediator;
         _favorites = favorites;
         _modPresets = modPresets;
         _fileNames = fileNames;
         _muffler = muffler;
         _saver = saver;
-
-        Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, _ => CheckForExpiredLocks());
     }
 
     // ----------- STORAGE --------------
@@ -64,7 +66,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
                 _activeItems.TryAdd(idx, item);
         // resync the active chat garbler data if any were set.
         _muffler.UpdateGarblerLogic(serverData.CurrentGagNames());
-        Logger.LogInformation("Syncronized all Active GagSlots with Client-Side Manager.");
+        _logger.LogInformation("Synchronized all Active GagSlots with Client-Side Manager.");
     }
 
     /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
@@ -79,9 +81,9 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
     {
         if (_itemEditor.SaveAndQuitEditing(out var sourceItem))
         {
-            Logger.LogTrace("Saved changes to Edited GagRestriction.");
+            _logger.LogTrace("Saved changes to Edited GagRestriction.");
             // update the cache somehow here, idk how, my brain is fried.
-            Mediator.Publish(new ConfigGagRestrictionChanged(StorageChangeType.Modified, sourceItem));
+            _mediator.Publish(new ConfigGagRestrictionChanged(StorageChangeType.Modified, sourceItem));
             _saver.Save(this);
         }
     }
@@ -91,7 +93,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
         if (Storage.TryGetGag(gagItem, out var item))
         {
             item.IsEnabled = !item.IsEnabled;
-            Mediator.Publish(new ConfigGagRestrictionChanged(StorageChangeType.Modified, item));
+            _mediator.Publish(new ConfigGagRestrictionChanged(StorageChangeType.Modified, item));
             _saver.Save(this);
         }
     }
@@ -121,19 +123,19 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
             return false;
 
         // update values & Garbler, then fire achievement ping.
-        Logger.LogTrace($"Applying Gag {newGag.GagName()} to layer {layer} by {enactor}");
+        _logger.LogTrace($"Applying Gag {newGag.GagName()} to layer {layer} by {enactor}");
         data.GagSlots[layer].GagItem = newGag;
         data.GagSlots[layer].Enabler = enactor;
 
-        Logger.LogTrace($"Updating Garbler Logic for gag {newGag.GagName()} to layer {layer} by {enactor}");
+        _logger.LogTrace($"Updating Garbler Logic for gag {newGag.GagName()} to layer {layer} by {enactor}");
         _muffler.UpdateGarblerLogic(data.CurrentGagNames());
         GagspeakEventManager.AchievementEvent(UnlocksEvent.GagStateChange, layer, newGag, true, enactor);
 
         // Mark what parts of this item will end up having effective changes.
-        Logger.LogTrace($"Attempting to fetch gag from storage if visuals are enabled.");
+        _logger.LogTrace($"Attempting to fetch gag from storage if visuals are enabled.");
         if (Storage.TryGetGag(newGag, out item))
         {
-            Logger.LogTrace($"Found GagRestriction for {newGag.GagName()} in Storage.");
+            _logger.LogTrace($"Found GagRestriction for {newGag.GagName()} in Storage.");
             _activeItems[layer] = item;
             return item.IsEnabled;
         }
@@ -226,7 +228,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
         var file = _fileNames.GagRestrictions;
         Storage = new GagRestrictionStorage();
         // Migrate to the new filetype if necessary.
-        Logger.LogInformation("Loading GagRestrictions Config from {0}", file);
+        _logger.LogInformation("Loading GagRestrictions Config from {0}", file);
 
         var jsonText = "";
         JObject jObject = new();
@@ -239,7 +241,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
         }
         else
         {
-            Logger.LogWarning("Gag Restrictions Config not found. Attempting to find old config.");
+            _logger.LogWarning("Gag Restrictions Config not found. Attempting to find old config.");
             var oldFormatFile = Path.Combine(_fileNames.CurrentPlayerDirectory, "gag-storage.json");
             if (File.Exists(oldFormatFile))
             {
@@ -249,7 +251,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
             }
             else
             {
-                Svc.Logger.Warning("No Config file found for: " + oldFormatFile);
+                _logger.LogWarning("No Config file found for: " + oldFormatFile);
                 _saver.Save(this);
                 return;
             }
@@ -265,11 +267,11 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
                 LoadV0(jObject["GagRestrictions"]);
                 break;
             default:
-                Logger.LogError("Invalid Version!");
+                _logger.LogError("Invalid Version!");
                 return;
         }
         _saver.Save(this);
-        Mediator.Publish(new ReloadFileSystem(GagspeakModule.Gag));
+        _mediator.Publish(new ReloadFileSystem(GagspeakModule.Gag));
     }
 
     private void LoadV0(JToken? data)
@@ -285,7 +287,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
                 var gagType = gagName.ToGagType();
                 if (gagType is GagType.None)
                 {
-                    Logger.LogWarning("Invalid GagType: {0}", gagName);
+                    _logger.LogWarning("Invalid GagType: {0}", gagName);
                     continue;
                 }
 
@@ -295,7 +297,7 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
         }
         catch (Bagagwa e)
         {
-            Logger.LogError("Failed to load Gag Restrictions: {0}", e);
+            _logger.LogError("Failed to load Gag Restrictions: {0}", e);
             return;
         }
     }
@@ -306,27 +308,4 @@ public sealed class GagRestrictionManager : DisposableMediatorSubscriberBase, IH
         oldConfigJson["Version"] = 1;
     }
     #endregion HybridSavable
-    
-    private void CheckForExpiredLocks()
-    {
-        if (!MainHub.IsConnected)
-            return;
-
-        if (ServerGagData is null || !ServerGagData.AnyGagLocked())
-            return;
-
-        foreach(var (gagSlot, index) in ServerGagData.GagSlots.Select((slot, index) => (slot, index)))
-            if (gagSlot.Padlock.IsTimerLock() && gagSlot.HasTimerExpired())
-            {
-                Logger.LogTrace("Sending off Lock Removed Event to server!", LoggerType.Gags);
-                // only set data relevant to the new change.
-                var newData = new ActiveGagSlot()
-                {
-                    Padlock = gagSlot.Padlock, // match the padlock
-                    Password = gagSlot.Password, // use the same password.
-                    PadlockAssigner = gagSlot.PadlockAssigner // use the same assigner. (To remove devotional timers)
-                };
-                Mediator.Publish(new ActiveGagsChangeMessage(DataUpdateType.Unlocked, index, newData));
-            }
-    }
 }

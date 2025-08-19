@@ -153,7 +153,7 @@ public class ActiveItemsDrawer
             Identifier = _restraintItem.Current.Identifier,
             Enabler = MainHub.UID,
         };
-        _mediator.Publish(new ActiveRestraintSetChangeMessage(updateType, newSlotData));
+        _mediator.Publish(new ActiveRestraintChangedMessage(updateType, newSlotData));
         _logger.LogTrace($"Requesting Server to change Restraint Set to {_restraintItem.Current.Identifier} from {curr}");
     }
 
@@ -283,7 +283,7 @@ public class ActiveItemsDrawer
         else if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _restraints.CanRemove())
         {
             _logger.LogTrace($"Active Restraint Set (and all active layers on it) was cleared.");
-            _mediator.Publish(new ActiveRestraintSetChangeMessage(DataUpdateType.Removed, new CharaActiveRestraint()));
+            _mediator.Publish(new ActiveRestraintChangedMessage(DataUpdateType.Removed, new CharaActiveRestraint()));
         }
 
         ImUtf8.SameLineInner();

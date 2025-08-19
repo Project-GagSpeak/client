@@ -228,7 +228,7 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
         // compose the DTO to send.
         UiService.SetUITask(async () =>
         {
-            var dto = new HypnoticAction(Kinkster!.UserData, (int)newTime.TotalSeconds, effect);
+            var dto = new HypnoticAction(Kinkster!.UserData, DateTimeOffset.UtcNow.AddSeconds(newTime.TotalSeconds), effect);
             if (await _hub.UserHypnotizeKinkster(dto) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             {
                 switch (res.ErrorCode)

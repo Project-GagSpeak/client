@@ -18,8 +18,10 @@ using Penumbra.GameData.Enums;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.State.Managers;
-public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybridSavable
+public sealed class RestraintManager : IHybridSavable
 {
+    private readonly ILogger<RestraintManager> _logger;
+    private readonly GagspeakMediator _mediator;
     private readonly RestrictionManager _restrictions;
     private readonly ModPresetManager _modPresets;
     private readonly FavoritesManager _favorites;
@@ -31,15 +33,15 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
 
     public RestraintManager(ILogger<RestraintManager> logger, GagspeakMediator mediator,
         RestrictionManager restrictions, ModPresetManager mods, FavoritesManager favorites, 
-        ConfigFileProvider fileNames, HybridSaveService saver) : base(logger, mediator)
+        ConfigFileProvider fileNames, HybridSaveService saver)
     {
+        _logger = logger;
+        _mediator = mediator;
         _restrictions = restrictions;
         _modPresets = mods;
         _favorites = favorites;
         _fileNames = fileNames;
         _saver = saver;
-
-        Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, _ => CheckForExpiredLocks());
     }
 
     // ----------- STORAGE --------------
@@ -57,7 +59,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         _serverRestraintData = serverData;
         // iterate through each of the server's gag data.
         AppliedRestraint = Storage.FirstOrDefault(rs => Guid.Equals(rs.Identifier, serverData.Identifier));
-        Logger.LogInformation("Syncronized Active RestraintSet with Client-Side Manager.");
+        _logger.LogInformation("Synchronized Active RestraintSet with Client-Side Manager.");
     }
 
     public RestraintSet CreateNew(string restraintName)
@@ -67,8 +69,8 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         var restraint = new RestraintSet { Label = restraintName };
         Storage.Add(restraint);
         _saver.Save(this);
-        Logger.LogDebug($"Created new restraint {restraint.Identifier}.");
-        Mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Created, restraint, null));
+        _logger.LogDebug($"Created new restraint {restraint.Identifier}.");
+        _mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Created, restraint, null));
         return restraint;
     }
 
@@ -79,8 +81,8 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         var clonedItem = new RestraintSet(clone, false) { Label = newName };
         Storage.Add(clonedItem);
         _saver.Save(this);
-        Logger.LogDebug($"Cloned restraint {clonedItem.Identifier}.");
-        Mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Created, clonedItem, null));
+        _logger.LogDebug($"Cloned restraint {clonedItem.Identifier}.");
+        _mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Created, clonedItem, null));
         return clonedItem;
     }
 
@@ -90,8 +92,8 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         // should never be able to remove active restraints, but if that happens to occur, add checks here.
         if (Storage.Remove(restraint))
         {
-            Logger.LogDebug($"Deleted restraint {restraint.Identifier}.");
-            Mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Deleted, restraint, null));
+            _logger.LogDebug($"Deleted restraint {restraint.Identifier}.");
+            _mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Deleted, restraint, null));
             _saver.Save(this);
         }
     }
@@ -104,8 +106,8 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
 
         restraint.Label = newName;
         _saver.Save(this);
-        Logger.LogDebug($"Renamed restraint {restraint.Identifier}.");
-        Mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Renamed, restraint, oldName));
+        _logger.LogDebug($"Renamed restraint {restraint.Identifier}.");
+        _mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Renamed, restraint, oldName));
     }
 
     public void UpdateThumbnail(RestraintSet restraint, string newPath)
@@ -113,10 +115,10 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         // This could have changed by the time this is called, so get it again.
         if(Storage.Contains(restraint))
         {
-            Logger.LogDebug($"Thumbnail updated for {restraint.Label} to {restraint.ThumbnailPath}");
+            _logger.LogDebug($"Thumbnail updated for {restraint.Label} to {restraint.ThumbnailPath}");
             restraint.ThumbnailPath = newPath;
             _saver.Save(this);
-            Mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Modified, restraint, null));
+            _mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Modified, restraint, null));
         }
     }
 
@@ -132,9 +134,9 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     {
         if (_itemEditor.SaveAndQuitEditing(out var sourceItem))
         {
-            Logger.LogDebug($"Saved changes to restraint {sourceItem.Identifier}.");
+            _logger.LogDebug($"Saved changes to restraint {sourceItem.Identifier}.");
             // _managerCache.UpdateCache(AppliedRestraint);
-            Mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Modified, sourceItem));
+            _mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Modified, sourceItem));
             _saver.Save(this);
         }
     }
@@ -314,7 +316,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
             }
             catch (Bagagwa e)
             {
-                Logger.LogError($"Failed to serialize RestraintSet: {e}");
+                _logger.LogError($"Failed to serialize RestraintSet: {e}");
             }
         }
 
@@ -329,14 +331,14 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
     public void Load()
     {
         var file = _fileNames.RestraintSets;
-        Logger.LogInformation($"Loading in Restraints Config for file: {file}");
+        _logger.LogInformation($"Loading in Restraints Config for file: {file}");
 
         Storage.Clear();
         JObject jObject;
         // Read the json from the file.
         if (!File.Exists(file))
         {
-            Logger.LogWarning($"No Restraints Config file found at {file}");
+            _logger.LogWarning($"No Restraints Config file found at {file}");
             // create a new file with default values.
 
             var oldFormatFile = Path.Combine(_fileNames.CurrentPlayerDirectory, "wardrobe.json");
@@ -348,7 +350,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
             }
             else
             {
-                Svc.Logger.Warning("No Config file found for: " + oldFormatFile);
+                _logger.LogWarning("No Config file found for: " + oldFormatFile);
                 _saver.Save(this);
                 return;
                 // create a new file with default values.
@@ -368,11 +370,11 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
                 LoadV0(jObject["RestraintSets"]);
                 break;
             default:
-                Logger.LogError("Invalid Version!");
+                _logger.LogError("Invalid Version!");
                 return;
         }
         _saver.Save(this);
-        Mediator.Publish(new ReloadFileSystem(GagspeakModule.Restraint));
+        _mediator.Publish(new ReloadFileSystem(GagspeakModule.Restraint));
     }
 
     private void LoadV0(JToken? data)
@@ -388,11 +390,11 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
                 // probably the single line of code that i fear the most out of this entire plugin.
                 var loadedSet = RestraintSet.FromToken(setToken, _modPresets, _restrictions);
                 Storage.Add(loadedSet);
-                Logger.LogInformation($"LOADED IN RETRAINTSET: {loadedSet.Label}");
+                _logger.LogInformation($"LOADED IN RETRAINTSET: {loadedSet.Label}");
             }
             catch (Bagagwa ex)
             {
-                Logger.LogError($"Failed to load Restraint Set.\nError {ex}\nFrom JSON: {setToken}");
+                _logger.LogError($"Failed to load Restraint Set.\nError {ex}\nFrom JSON: {setToken}");
                 // Do not allow this to continue loading, just fucking crash the game i dont care. We need to see why it didnt load.
                 AllowSaving = false;
             }
@@ -415,9 +417,9 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
         if (_serverRestraintData is null || !_serverRestraintData.IsLocked())
             return;
 
-        if (PadlockEx.IsTimerLock(_serverRestraintData.Padlock) && _serverRestraintData.HasTimerExpired())
+        if (_serverRestraintData.Padlock.IsTimerLock() && _serverRestraintData.HasTimerExpired())
         {
-            Logger.LogTrace("Sending off Lock Removed Event to server!", LoggerType.Restraints);
+            _logger.LogTrace("Sending off Lock Removed Event to server!", LoggerType.Restraints);
             // only set data relevant to the new change.
             var newData = new CharaActiveRestraint()
             {
@@ -426,7 +428,7 @@ public sealed class RestraintManager : DisposableMediatorSubscriberBase, IHybrid
                 PadlockAssigner = _serverRestraintData.PadlockAssigner // use the same assigner. (To remove devotional timers)
             };
 
-            Mediator.Publish(new ActiveRestraintSetChangeMessage(DataUpdateType.Unlocked, newData));
+            _mediator.Publish(new ActiveRestraintChangedMessage(DataUpdateType.Unlocked, newData));
         }
     }
 }

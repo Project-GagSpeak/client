@@ -22,19 +22,14 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
 {
     private readonly MainConfig _mainConfig;
     private readonly KinksterManager _pairManager;
-    private readonly OnFrameworkService _frameworkUtils;
-
-    // no longer nessisary with the new object table manager?
-    private List<IPlayerCharacter> _visiblePlayers;
 
     // maybe change up how this is shown, as there are new detailed tooltips and additional click methods for DTR entries.
     public DtrBarService(ILogger<DtrBarService> logger, GagspeakMediator mediator,
-        MainConfig mainConfig, KinksterManager pairs, OnFrameworkService frameworkUtils) 
+        MainConfig mainConfig, KinksterManager pairs) 
         : base(logger, mediator)
     {
         _mainConfig = mainConfig;
         _pairManager = pairs;
-        _frameworkUtils = frameworkUtils;
 
         PrivacyEntry = Svc.DtrBar.Get("GagSpeakPrivacy");
         PrivacyEntry.OnClick += _ => Mediator.Publish(new UiToggleMessage(typeof(DtrVisibleWindow)));
@@ -58,6 +53,7 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
             PrivacyEntry.Shown = false;
             UpdateMessagesEntry.Shown = false;
         });
+
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => UpdateDtrBar());
     }
 
@@ -69,7 +65,7 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
         base.Dispose(disposing);
     }
 
-    public IReadOnlyList<IPlayerCharacter> VisiblePlayers => _visiblePlayers;
+    public List<IPlayerCharacter> VisiblePlayers { get; private set; }
 
     public IDtrBarEntry PrivacyEntry { get; private set; }
     public IDtrBarEntry UpdateMessagesEntry { get; private set; }
@@ -89,13 +85,13 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
             // update the privacy dtr bar
             var visiblePairGameObjects = _pairManager.GetVisiblePairGameObjects();
             // get players not included in our gagspeak pairs.
-            var playersNotInPairs = _frameworkUtils.GetObjectTablePlayers()
+            var playersNotInPairs = Svc.Objects.OfType<IPlayerCharacter>()
                 .Where(player => player != PlayerData.Object && !visiblePairGameObjects.Contains(player))
                 .Where(o => o.ObjectIndex < 200)
                 .ToList();
 
             // Store the list of visible players
-            _visiblePlayers = playersNotInPairs;
+            VisiblePlayers = playersNotInPairs;
 
             var displayedPlayers = playersNotInPairs.Take(10).ToList();
             var remainingCount = playersNotInPairs.Count - displayedPlayers.Count;

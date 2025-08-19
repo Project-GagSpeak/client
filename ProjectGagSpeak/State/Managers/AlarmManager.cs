@@ -2,35 +2,33 @@ using CkCommons.Helpers;
 using CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
 using GagSpeak.PlayerClient;
-using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
-using GagSpeak.Utils;
-using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 
 namespace GagSpeak.State.Managers;
 
-public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSavable
+public sealed class AlarmManager : IHybridSavable
 {
+    private readonly ILogger<AlarmManager> _logger;
+    private readonly GagspeakMediator _mediator;
     private readonly PatternManager _patterns;
     private readonly FavoritesManager _favorites;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
 
     private StorageItemEditor<Alarm> _itemEditor = new();
-    private DateTime _lastAlarmCheck = DateTime.MinValue;
     public AlarmManager(ILogger<AlarmManager> logger, GagspeakMediator mediator,
         PatternManager patterns, FavoritesManager favorites, ConfigFileProvider files, 
-        HybridSaveService saver) : base(logger, mediator)
+        HybridSaveService saver)
     {
+        _logger = logger;
+        _mediator = mediator;
         _patterns = patterns;
         _favorites = favorites;
         _fileNames = files;
         _saver = saver;
-
-        Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => MinutelyAlarmCheck());
     }
 
     public AlarmStorage Storage { get; private set; } = new AlarmStorage();
@@ -44,7 +42,7 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
         Storage.Add(newAlarm);
         _saver.Save(this);
 
-        Mediator.Publish(new ConfigAlarmChanged(StorageChangeType.Created, newAlarm, null));
+        _mediator.Publish(new ConfigAlarmChanged(StorageChangeType.Created, newAlarm, null));
         return newAlarm;
     }
 
@@ -55,8 +53,8 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
         Storage.Add(clonedItem);
         _saver.Save(this);
 
-        Logger.LogDebug($"Cloned alarm {other.Label} to {newName}.");
-        Mediator.Publish(new ConfigAlarmChanged(StorageChangeType.Created, clonedItem, null));
+        _logger.LogDebug($"Cloned alarm {other.Label} to {newName}.");
+        _mediator.Publish(new ConfigAlarmChanged(StorageChangeType.Created, clonedItem, null));
         return clonedItem;
     }
 
@@ -65,12 +63,12 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
         if (Storage.Contains(alarm))
         {
             var prevName = alarm.Label;
-            Logger.LogDebug($"Storage contained alarm, renaming {alarm.Label} to {newName}.");
+            _logger.LogDebug($"Storage contained alarm, renaming {alarm.Label} to {newName}.");
             newName = RegexEx.EnsureUniqueName(newName, Storage, (t) => t.Label);
             alarm.Label = newName;
             _saver.Save(this);
 
-            Mediator.Publish(new ConfigAlarmChanged(StorageChangeType.Renamed, alarm, prevName));
+            _mediator.Publish(new ConfigAlarmChanged(StorageChangeType.Renamed, alarm, prevName));
         }
     }
 
@@ -78,8 +76,8 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
     {
         if (Storage.Remove(alarm))
         {
-            Logger.LogDebug($"Deleted alarm {alarm.Label}.");
-            Mediator.Publish(new ConfigAlarmChanged(StorageChangeType.Deleted, alarm, null));
+            _logger.LogDebug($"Deleted alarm {alarm.Label}.");
+            _mediator.Publish(new ConfigAlarmChanged(StorageChangeType.Deleted, alarm, null));
             _saver.Save(this);
         }
 
@@ -97,8 +95,8 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
     {
         if (_itemEditor.SaveAndQuitEditing(out var sourceItem))
         {
-            Logger.LogDebug($"Storage updated changes to alarm {sourceItem.Label}.");
-            Mediator.Publish(new ConfigAlarmChanged(StorageChangeType.Modified, sourceItem, null));
+            _logger.LogDebug($"Storage updated changes to alarm {sourceItem.Label}.");
+            _mediator.Publish(new ConfigAlarmChanged(StorageChangeType.Modified, sourceItem, null));
             _saver.Save(this);
         }
     }
@@ -113,7 +111,7 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
     {
         if (!Storage.TryGetAlarm(alarmId, out var alarm))
         {
-            Logger.LogWarning("Tried to toggle an alarm that does not exist: {0}", alarmId);
+            _logger.LogWarning("Tried to toggle an alarm that does not exist: {0}", alarmId);
             return false;
         }
         // change enabled state of alarm and invoke save & achievement event.
@@ -148,8 +146,6 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
         }
     }
 
-    #region HybridSavable
-    public void Save() => _saver.Save(this);
     public int ConfigVersion => 0;
     public HybridSaveType SaveType => HybridSaveType.Json;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
@@ -170,12 +166,12 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
     public void Load()
     {
         var file = _fileNames.Alarms;
-        Logger.LogInformation("Loading in Alarms Config for file: " + file);
+        _logger.LogInformation("Loading in Alarms Config for file: " + file);
 
         Storage.Clear();
         if (!File.Exists(file))
         {
-            Logger.LogWarning("No Alarms Config file found at {0}", file);
+            _logger.LogWarning("No Alarms Config file found at {0}", file);
             // create a new file with default values.
             _saver.Save(this);
             return;
@@ -198,11 +194,11 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
                 LoadV0(jObject["Alarms"]);
                 break;
             default:
-                Logger.LogError("Invalid Version!");
+                _logger.LogError("Invalid Version!");
                 return;
         }
         _saver.Save(this);
-        Mediator.Publish(new ReloadFileSystem(GagspeakModule.Alarm));
+        _mediator.Publish(new ReloadFileSystem(GagspeakModule.Alarm));
     }
 
     private void LoadV0(JToken? data)
@@ -215,12 +211,12 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
             try
             {
                 var newAlarm = Alarm.FromToken(alarmToken, _patterns);
-                Logger.LogDebug("Loaded Alarm: " + newAlarm.ToString());
+                _logger.LogDebug("Loaded Alarm: " + newAlarm.ToString());
                 Storage.Add(newAlarm);
             }
             catch (Bagagwa ex)
             {
-                Logger.LogError("Error deserializing alarm: " + ex);
+                _logger.LogError("Error deserializing alarm: " + ex);
             }
         }
     }
@@ -229,36 +225,5 @@ public sealed class AlarmManager : DisposableMediatorSubscriberBase, IHybridSava
     {
         // update only the version value to 1, then return it.
         oldConfigJson["Version"] = 1;
-    }
-
-    #endregion HybridSavable
-
-    public void MinutelyAlarmCheck()
-    {
-        if ((DateTime.Now - _lastAlarmCheck).TotalMinutes < 1)
-            return;
-
-        _lastAlarmCheck = DateTime.Now; // Update the last execution time
-        Logger.LogTrace("Checking Alarms", LoggerType.Alarms);
-
-        // Iterate through each stored alarm
-        foreach (var alarm in Storage)
-        {
-            if (!alarm.Enabled)
-                continue;
-
-            // check if the alarm is set to repeat on this day
-            if(!alarm.DaysToFire.HasAny(DateTime.Now.DayOfWeek.ToFlagVariant()))
-            {
-                var alarmTime = alarm.SetTimeUTC.ToLocalTime();
-                // check if current time matches execution time and if so play
-                if (DateTime.Now.TimeOfDay.Hours == alarmTime.TimeOfDay.Hours 
-                 && DateTime.Now.TimeOfDay.Minutes == alarmTime.TimeOfDay.Minutes)
-                {
-                    Logger.LogInformation($"Playing Alarm: {alarm.PatternRef.Label} ({alarm.PatternRef.Identifier})", LoggerType.Alarms);
-                    _patterns.SwitchPattern(alarm.PatternRef, alarm.PatternStartPoint, alarm.PatternDuration, MainHub.UID);
-                }
-            }
-        }
     }
 }

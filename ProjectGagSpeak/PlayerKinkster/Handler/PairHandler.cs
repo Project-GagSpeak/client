@@ -60,7 +60,7 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
             {
                 _isVisible = value;
                 Logger.LogTrace("User Visibility Changed, now: " + (_isVisible ? "Is Visible" : "Is not Visible"), LoggerType.PairHandlers);
-                Mediator.Publish(new RefreshUiMessage());
+                Mediator.Publish(new RefreshUiKinkstersMessage());
                 Mediator.Publish(new VisibleKinkstersChanged());
             }
         }

@@ -116,7 +116,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     public static UserData PlayerUserData => ConnectionResponse!.User;
     public static string DisplayName => ConnectionResponse?.User.AliasOrUID ?? string.Empty;
     public static string UID => ConnectionResponse?.User.UID ?? string.Empty;
-    public static bool IsVerifiedUser => ConnectionResponse?.Verified ?? false;
+    public static bool IsVerified => ConnectionResponse?.User.Verified ?? false;
     public static ServerState ServerStatus
     {
         get => _serverStatus;
@@ -188,6 +188,8 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         OnRemoveClientPair(dto => _ = Callback_RemoveClientPair(dto));
         OnAddPairRequest(dto => _ = Callback_AddPairRequest(dto));
         OnRemovePairRequest(dto => _ = Callback_RemovePairRequest(dto));
+        OnAddCollarRequest(dto => _ = Callback_AddCollarRequest(dto));
+        OnRemoveCollarRequest(dto => _ = Callback_RemoveCollarRequest(dto));
 
         OnSetKinksterIpcFull(dto => _ = Callback_SetKinksterIpcFull(dto));
         OnSetKinksterIpcStatusManager(dto => _ = Callback_SetKinksterIpcStatusManager(dto));
@@ -198,17 +200,18 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         OnRemoveMoodles(dto => _ = Callback_RemoveMoodles(dto));
         OnClearMoodles(dto => _ = Callback_ClearMoodles(dto));
 
-        OnBulkChangeAll(dto => _ = Callback_BulkChangeAll(dto));
         OnBulkChangeGlobal(dto => _ = Callback_BulkChangeGlobal(dto));
         OnBulkChangeUnique(dto => _ = Callback_BulkChangeUnique(dto));
         OnSingleChangeGlobal(dto => _ = Callback_SingleChangeGlobal(dto));
         OnSingleChangeUnique(dto => _ = Callback_SingleChangeUnique(dto));
         OnSingleChangeAccess(dto => _ = Callback_SingleChangeAccess(dto));
+        OnStateChangeHardcore(dto => _ = Callback_StateChangeHardcore(dto));
 
         OnKinksterUpdateComposite(dto => _ = Callback_KinksterUpdateComposite(dto));
         OnKinksterUpdateActiveGag(dto => _ = Callback_KinksterUpdateActiveGag(dto));
         OnKinksterUpdateActiveRestriction(dto => _ = Callback_KinksterUpdateActiveRestriction(dto));
         OnKinksterUpdateActiveRestraint(dto => _ = Callback_KinksterUpdateActiveRestraint(dto));
+        OnKinksterUpdateActiveCollar(dto => _ = Callback_KinksterUpdateActiveCollar(dto));
         OnKinksterUpdateActiveCursedLoot(dto => _ = Callback_KinksterUpdateActiveCursedLoot(dto));
         OnKinksterUpdateAliasGlobal(dto => _ = Callback_KinksterUpdateAliasGlobal(dto));
         OnKinksterUpdateAliasUnique(dto => _ = Callback_KinksterUpdateAliasUnique(dto));
@@ -219,12 +222,11 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         OnListenerName((user, name) => _ = Callback_ListenerName(user, name));
         OnShockInstruction(dto => _ = Callback_ShockInstruction(dto));
         OnHypnoticEffect(dto => _ = Callback_HypnoticEffect(dto));
-        OnConfineToAddress(dto => _ = Callback_ConfineToAddress(dto));
-        OnImprisonAtPosition(dto => _ = Callback_ImprisonAtPosition(dto));
 
         OnKinksterNewGagData(dto => _ = Callback_KinksterNewGagData(dto));
         OnKinksterNewRestrictionData(dto => _ = Callback_KinksterNewRestrictionData(dto));
         OnKinksterNewRestraintData(dto => _ = Callback_KinksterNewRestraintData(dto));
+        OnKinksterNewCollarData(dto => _ = Callback_KinksterNewCollarData(dto));
         OnKinksterNewLootData(dto => _ = Callback_KinksterNewLootData(dto));
         OnKinksterNewPatternData(dto => _ = Callback_KinksterNewPatternData(dto));
         OnKinksterNewAlarmData(dto => _ = Callback_KinksterNewAlarmData(dto));
@@ -260,8 +262,8 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     public async Task<ConnectionResponse> GetConnectionResponse() 
         => await _hubConnection!.InvokeAsync<ConnectionResponse>(nameof(GetConnectionResponse)).ConfigureAwait(false);
 
-    public async Task<LobbyAndHubInfoResponce> GetShareHubAndLobbyInfo()
-        => await _hubConnection!.InvokeAsync<LobbyAndHubInfoResponce>(nameof(GetShareHubAndLobbyInfo)).ConfigureAwait(false);
+    public async Task<LobbyAndHubInfoResponse> GetShareHubAndLobbyInfo()
+        => await _hubConnection!.InvokeAsync<LobbyAndHubInfoResponse>(nameof(GetShareHubAndLobbyInfo)).ConfigureAwait(false);
 
     public async Task<List<OnlineKinkster>> UserGetOnlinePairs()
         => await _hubConnection!.InvokeAsync<List<OnlineKinkster>>(nameof(UserGetOnlinePairs)).ConfigureAwait(false);
@@ -304,7 +306,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         // retrieve any current kinkster requests.
         var requests = await UserGetActiveRequests().ConfigureAwait(false);
         _clientData.InitRequests(requests.KinksterRequests, requests.CollarRequests);
-        Logger.LogDebug($"Kinkster Requests Recieved. Found " +
+        Logger.LogDebug($"Kinkster Requests Received. Found " +
             $"[Kinkster: {requests.KinksterRequests.Count}][Collar: {requests.CollarRequests.Count}]", LoggerType.ApiCore);
     }
 

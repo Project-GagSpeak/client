@@ -321,7 +321,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     {
         if (_pairs.DirectPairs.FirstOrDefault(p => p.UserData.UID == dto.User.UID) is not { } pair)
         {
-            Logger.LogWarning($"Recieved ApplyStatusesToSelf for an unpaired user: {dto.User.AliasOrUID}");
+            Logger.LogWarning($"Received ApplyStatusesToSelf for an unpaired user: {dto.User.AliasOrUID}");
             return;
         }
 

@@ -33,12 +33,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
     private readonly NotificationService _notifier;
     private readonly RemoteService _remoteService;
     private readonly OnFrameworkService _frameworkUtils;
-
-    private DateTime _lastCheck = DateTime.MinValue;
-    private DateTime _lastPlayerCheck = DateTime.MinValue;
-    private bool _clientWasDead = false;
-    private int _lastPlayerCount = 0;
-
+    
     private Task? _updateLoopTask = null;
     private CancellationTokenSource? _updateLoopCTS = new();
 
@@ -78,7 +73,6 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         _remoteService = remoteService;
         _frameworkUtils = frameworkUtils;
 
-        Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, _ => OnFrameworkCheck());
         Mediator.Subscribe<MainHubDisconnectedMessage>(this, _ =>
         {
             _updateLoopCTS.SafeCancel();
@@ -157,50 +151,6 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
 
         Mediator.Publish(new UpdateCompletedAchievements());
         return Task.CompletedTask;
-    }
-    private unsafe void OnFrameworkCheck()
-    {
-        // Throttle to once every 5 seconds.
-        var now = DateTime.UtcNow;
-        if ((now - _lastCheck).TotalSeconds < 5)
-            return;
-
-        _lastCheck = now;
-
-        var isCurrentlyDead = PlayerData.Health is 0;
-
-        if (isCurrentlyDead && !_clientWasDead)
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.ClientSlain);
-
-        _clientWasDead = isCurrentlyDead;
-
-
-        // check if in gold saucer (maybe do something better for this later.
-        if (PlayerContent.TerritoryID is 144 && PlayerData.IsChocoboRacing)
-        {
-            var resultMenu = (AtkUnitBase*)Svc.GameGui.GetAddonByName("RaceChocoboResult").Address;
-            if (resultMenu != null && resultMenu->RootNode->IsVisible())
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.ChocoboRaceFinished);
-        }
-
-        // if 15 seconds has passed since the last player check, check the player.
-        if ((now - _lastPlayerCheck).TotalSeconds < 15)
-            return;
-
-        // update player count
-        _lastPlayerCheck = now;
-
-        // we should get the current player object count that is within the range required for crowd pleaser.
-        var playersInRange = _frameworkUtils.GetObjectTablePlayers()
-            .Where(player => PlayerData.DistanceTo(player.Position) < 30f)
-            .Count();
-
-        if (playersInRange != _lastPlayerCount)
-        {
-            Logger.LogTrace("(New Update) There are " + playersInRange + " Players nearby", LoggerType.AchievementInfo);
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.PlayersInProximity, playersInRange);
-            _lastPlayerCount = playersInRange;
-        }
     }
 
     private async Task RunPeriodicUpdate(CancellationToken ct)
@@ -427,7 +377,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
 
         #region PUPPETEER MODULE
         // (can work both ways)
-        _saveData.AddProgress(AchievementModuleKind.Puppeteer, Achievements.AnObedientPet, 1, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Recieved", suffix: "Sit Orders");
+        _saveData.AddProgress(AchievementModuleKind.Puppeteer, Achievements.AnObedientPet, 1, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Received", suffix: "Sit Orders");
 
         _saveData.AddProgress(AchievementModuleKind.Puppeteer, Achievements.ControlMyBody, 1, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Granted", suffix: "Pairs Access");
         _saveData.AddProgress(AchievementModuleKind.Puppeteer, Achievements.CompleteDevotion, 1, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Granted", suffix: "Pairs Access");

@@ -99,7 +99,7 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
     public bool CanApplyTimedEffect(HypnoticEffect effect, string? base64ImgString = null)
         => _hypnoService.CanApplyTimedEffect(effect, base64ImgString);
 
-    // Effect should be called by a listener that has recieved an instruction from another Kinkster to hypnotize the client.
+    // Effect should be called by a listener that has received an instruction from another Kinkster to hypnotize the client.
     public async void SetTimedHypnoEffectUnsafe(UserData enactor, HypnoticEffect effect, TimeSpan length, string? customImage)
     {
         var applyTime = DateTimeOffset.UtcNow;

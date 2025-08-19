@@ -30,7 +30,7 @@ public class VibeLobbyManager : DisposableMediatorSubscriberBase
         _clientToys = clientToys;
 
         // Update the latest invites upon connection.
-        Mediator.Subscribe<PostConnectionDataRecievedMessage>(this, _ =>
+        Mediator.Subscribe<PostConnectionDataReceivedMessage>(this, _ =>
         {
             _currentInvites = _.Info.RoomInvites;
             // Reconnect to room if possible.
@@ -70,7 +70,7 @@ public class VibeLobbyManager : DisposableMediatorSubscriberBase
 
     }
 
-    internal void OnInviteRecieved(RoomInvite invite)
+    internal void OnInviteReceived(RoomInvite invite)
     {
         // Add the invite to the current invites list, and notify the user of the new invite.
         _currentInvites.Add(invite);
@@ -90,11 +90,11 @@ public class VibeLobbyManager : DisposableMediatorSubscriberBase
 
     }
 
-    internal void OnRecievedBuzzToyDataStream(ToyDataStreamResponse dataStreamChunk)
+    internal void OnReceivedBuzzToyDataStream(ToyDataStreamResponse dataStreamChunk)
     {
         // Inject this period of data into the playback stream of the client's devices, switching it from update to playback mode.
 
-        // As long as the client has any queued recieved data streams, it should prevent access to the remote.
+        // As long as the client has any queued received data streams, it should prevent access to the remote.
 
     }
 

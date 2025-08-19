@@ -1,5 +1,6 @@
 using Dalamud.Plugin;
 using CkCommons.HybridSaver;
+using GagSpeak.PlayerClient;
 
 namespace GagSpeak.Services.Configs;
 
@@ -23,6 +24,7 @@ public class ConfigFileProvider : IConfigFileProvider
     public readonly string GagDataJson;
 
     public readonly string MainConfig;
+    public readonly string Collars;
     public readonly string Patterns;
     public readonly string RecentGlobalChat;
     public readonly string CustomModSettings;
@@ -33,6 +35,7 @@ public class ConfigFileProvider : IConfigFileProvider
     public string CKFS_GagRestrictions => Path.Combine(FileSysDirectory, "fs-gagrestrictions.json");
     public string CKFS_Restrictions => Path.Combine(FileSysDirectory, "fs-restrictions.json");
     public string CKFS_RestraintSets => Path.Combine(FileSysDirectory, "fs-restraintsets.json");
+    public string CKFS_Collars => Path.Combine(FileSysDirectory, "fs-collars.json");
     public string CKFS_CursedLoot => Path.Combine(FileSysDirectory, "fs-cursedloot.json");
     public string CKFS_BuzzToys => Path.Combine(FileSysDirectory, "fs-buzzdevices.json");
     public string CKFS_Patterns => Path.Combine(FileSysDirectory, "fs-patterns.json");
@@ -66,7 +69,9 @@ public class ConfigFileProvider : IConfigFileProvider
         ThumbnailDirectory = Path.Combine(GagSpeakDirectory, "thumbnails");
 
         MainConfig = Path.Combine(GagSpeakDirectory, "config.json");
+        Collars = Path.Combine(GagSpeakDirectory, "collars.json");
         Patterns = Path.Combine(GagSpeakDirectory, "patterns.json");
+
         RecentGlobalChat = Path.Combine(GagSpeakDirectory, "global-chat-recent.json");
         CustomModSettings = Path.Combine(GagSpeakDirectory, "custom-mod-settings.json");
         TraitAllowances = Path.Combine(GagSpeakDirectory, "trait-allowances.json");

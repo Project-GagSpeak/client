@@ -30,11 +30,13 @@ public class PlayerControlHandler
     // Stores the players's movement mode, useful for when we change it.
     private MovementMode _cachedPlayerMoveMode = MovementMode.NotSet;
     public PlayerControlHandler(ILogger<PlayerControlHandler> logger, MainConfig config,
-        IpcCallerLifestream ipc, OverlayHandler overlay, HcTaskManager hcTasks, KinksterManager kinksters)
+        IpcCallerLifestream ipc, MovementController movement, OverlayHandler overlay, 
+        HcTaskManager hcTasks, KinksterManager kinksters)
     {
         _logger = logger;
         _config = config;
         _ipc = ipc;
+        _movement = movement;
         _overlay = overlay;
         _hcTasks = hcTasks;
         _kinksters = kinksters;

@@ -155,7 +155,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
     {
         UiService.SetUITask(async () =>
         {
-            var res = await _hub.UserChangeOwnGlobalPerm(new(MainHub.PlayerUserData, new KeyValuePair<string, object>(globalKey, newValue), UpdateDir.Own, MainHub.PlayerUserData));
+            var res = await _hub.ChangeOwnGlobalPerm(globalKey, newValue);
             if (res.ErrorCode is not GagSpeakApiEc.Success)
                 _logger.LogError($"Failed to change global permission {globalKey} to {newValue}. Error: {res.ErrorCode}", LoggerType.UI);
         });
@@ -222,8 +222,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         {
             UiService.SetUITask(async () =>
             {
-                var res = await _hub.UserChangeOwnGlobalPerm(new(MainHub.PlayerUserData, new KeyValuePair<string, object>(
-                    nameof(GlobalPerms.WardrobeEnabled), wardrobeEnabled), UpdateDir.Own, MainHub.PlayerUserData));
+                var res = await _hub.ChangeOwnGlobalPerm(nameof(GlobalPerms.WardrobeEnabled), wardrobeEnabled);
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                 {
                     _logger.LogError($"Failed to change [WardrobeEnabled] to {wardrobeEnabled}. Error: {res.ErrorCode}", LoggerType.UI);
@@ -234,15 +233,13 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 if (!wardrobeEnabled)
                 {
                     // If wardrobe is disabled, we should also disable the visuals.
-                    var restrictionVisualsOff = await _hub.UserChangeOwnGlobalPerm(new(MainHub.PlayerUserData, new KeyValuePair<string, object>(
-                        nameof(GlobalPerms.RestrictionVisuals), false), UpdateDir.Own, MainHub.PlayerUserData));
+                    var restrictionVisualsOff = await _hub.ChangeOwnGlobalPerm(nameof(GlobalPerms.RestrictionVisuals), false);
                     if (restrictionVisualsOff.ErrorCode is not GagSpeakApiEc.Success)
                     {
                         _logger.LogError($"Failed to change [RestrictionVisuals] to false. Error: {restrictionVisualsOff.ErrorCode}", LoggerType.UI);
                         return;
                     }
-                    var restraintVisualsOff = await _hub.UserChangeOwnGlobalPerm(new(MainHub.PlayerUserData, new KeyValuePair<string, object>(
-                        nameof(GlobalPerms.RestraintSetVisuals), false), UpdateDir.Own, MainHub.PlayerUserData));
+                    var restraintVisualsOff = await _hub.ChangeOwnGlobalPerm(nameof(GlobalPerms.RestraintSetVisuals), false);
                     if (restraintVisualsOff.ErrorCode is not GagSpeakApiEc.Success)
                     {
                         _logger.LogError($"Failed to change [RestraintSetVisuals] to false. Error: {restraintVisualsOff.ErrorCode}", LoggerType.UI);
@@ -415,17 +412,19 @@ public class SettingsUi : WindowMediatorSubscriberBase
             {
                 UiService.SetUITask(async () =>
                 {
-                    var newPerms = await _shockProvider.GetPermissionsFromCode(globals.GlobalShockShareCode);
-                    // set the new permissions, without affecting the original.
-                    var permsWithNewShockPerms = (GlobalPerms)ClientData.Globals! with 
+                    if (ClientData.IsNull)
+                        return;
+
+                    var shareCodePerms = await _shockProvider.GetPermissionsFromCode(globals.GlobalShockShareCode);
+                    var WithShockPerms = (GlobalPerms)ClientData.Globals! with 
                     {
-                        AllowShocks = newPerms.AllowShocks,
-                        AllowVibrations = newPerms.AllowVibrations,
-                        AllowBeeps = newPerms.AllowBeeps,
-                        MaxDuration = newPerms.MaxDuration,
-                        MaxIntensity = newPerms.MaxIntensity
+                        AllowShocks = shareCodePerms.AllowShocks,
+                        AllowVibrations = shareCodePerms.AllowVibrations,
+                        AllowBeeps = shareCodePerms.AllowBeeps,
+                        MaxDuration = shareCodePerms.MaxDuration,
+                        MaxIntensity = shareCodePerms.MaxIntensity
                     };
-                    await _hub.UserBulkChangeGlobal(new(MainHub.PlayerUserData, permsWithNewShockPerms));
+                    await _hub.UserBulkChangeGlobal(new(MainHub.PlayerUserData, WithShockPerms, (HardcoreState)ClientData.Hardcore!));
                 });
             }
             CkGui.AttachToolTip(GSLoc.Settings.MainOptions.PiShockShareCodeRefreshTT);
@@ -690,7 +689,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         {
             _mainConfig.Current.ShowVisibleUsersSeparately = showVisibleSeparate;
             _mainConfig.Save();
-            Mediator.Publish(new RefreshUiMessage());
+            Mediator.Publish(new RefreshUiKinkstersMessage());
         }
         CkGui.HelpText(GSLoc.Settings.Preferences.ShowVisibleSeparateTT);
 
@@ -698,7 +697,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         {
             _mainConfig.Current.ShowOfflineUsersSeparately = showOfflineSeparate;
             _mainConfig.Save();
-            Mediator.Publish(new RefreshUiMessage());
+            Mediator.Publish(new RefreshUiKinkstersMessage());
         }
         CkGui.HelpText(GSLoc.Settings.Preferences.ShowOfflineSeparateTT);
 
@@ -713,7 +712,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         {
             _mainConfig.Current.PreferNicknamesOverNames = preferNicknamesInsteadOfName;
             _mainConfig.Save();
-            Mediator.Publish(new RefreshUiMessage());
+            Mediator.Publish(new RefreshUiKinkstersMessage());
         }
         CkGui.HelpText(GSLoc.Settings.Preferences.PreferNicknamesTT);
 

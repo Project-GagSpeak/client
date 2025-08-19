@@ -92,7 +92,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
         // (aka the calls invoked from the server callbacks) to update our states!
 
         // We don't need to include anything directly impacted by the safeword, as
-        // that information will not be processed by those that recieve your data.
+        // that information will not be processed by those that receive your data.
         var newActiveData = new CharaCompositeActiveData()
         {
             GlobalAliasData = null!,
@@ -113,7 +113,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
         _toys.SafewordUsed(); // might need to do something to prevent this from calling a toyschanged update or whatever.
 
         // Now we need to disable all global permissions in relation to our safeword that help prevent further abuse by others.
-        if (ClientData.Globals is { } g)
+        if (ClientData.Globals is { } g && ClientData.Hardcore is { } hc)
         {
             var newGlobals = (GlobalPerms)g with
             {
@@ -136,7 +136,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
 
             // await the push for updating the global permissions in bulk.
             Logger.LogInformation("[SAFEWORD PROGRESS]: Pushing Global updates to the server.");
-            var res = await _hub.UserBulkChangeGlobal(new(MainHub.PlayerUserData, newGlobals));
+            var res = await _hub.UserBulkChangeGlobal(new(MainHub.PlayerUserData, newGlobals, (HardcoreState)hc));
             if (res.ErrorCode is not GagSpeakApiEc.Success)
                 Logger.LogError($"[SAFEWORD PROGRESS]: Failed to push safeword global permissions: {res.ErrorCode}.");
 
@@ -145,7 +145,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
         // IF and only if the uid passed in is not empty, do we restrict the kinksters we revert to only the kinkster with that UID.
         if (!string.IsNullOrEmpty(isolatedUID))
         {
-            Logger.LogInformation($"[SAFEWORD PROGRESS]: Safeword Invoked spesifically for: {isolatedUID}. Reverting hardcore!");
+            Logger.LogInformation($"[SAFEWORD PROGRESS]: Safeword Invoked specifically for: {isolatedUID}. Reverting hardcore!");
             if (_kinksters.TryGetKinkster(new(isolatedUID), out var kinkster))
                 await _hub.UserChangeOwnPairPerm(new(kinkster.UserData, new KeyValuePair<string, object>(nameof(PairPerms.InHardcore) , false), UpdateDir.Own, MainHub.PlayerUserData));
             else

@@ -53,9 +53,9 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
             PadlockAssigner = MainHub.UID
         };
 
-        if (await _dds.PushActiveRestraintUpdate(newData, DataUpdateType.Locked) is { } res && res is not GagSpeakApiEc.Success)
+        if (await _dds.PushActiveRestraintUpdate(newData, DataUpdateType.Locked) is null)
         {
-            Log.LogDebug($"Failed to perform LockRestraint with {SelectedLock.ToName()} on self. Reason:{res}", LoggerType.StickyUI);
+            Log.LogInformation($"Failed to perform LockRestraint with {SelectedLock.ToName()} on self", LoggerType.StickyUI);
             ResetSelection();
             ResetInputs();
             return false;
@@ -83,9 +83,9 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
             PadlockAssigner = MainHub.UID,
         };
 
-        if (await _dds.PushActiveRestraintUpdate(newData, DataUpdateType.Unlocked) is { } res && res is not GagSpeakApiEc.Success)
+        if (await _dds.PushActiveRestraintUpdate(newData, DataUpdateType.Unlocked) is null)
         {
-            Log.LogDebug($"Failed to perform UnlockRestraint with {Items[0].Padlock.ToName()} on self. Reason:{res}", LoggerType.StickyUI);
+            Log.LogDebug($"Failed to perform UnlockRestraint with {Items[0].Padlock.ToName()} on self", LoggerType.StickyUI);
             ResetSelection();
             ResetInputs();
             return false;

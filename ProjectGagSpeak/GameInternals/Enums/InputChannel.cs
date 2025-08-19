@@ -24,7 +24,7 @@ public enum InputChannel
     CWL7 = 15,
     CWL8 = 16,
 
-    Tell = 17, // Special channel for recieved tells and such
+    Tell = 17, // Special channel for received tells and such
 
     LS1 = 19,
     LS2 = 20,

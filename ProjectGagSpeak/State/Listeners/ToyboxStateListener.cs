@@ -41,8 +41,8 @@ public sealed class ToyboxStateListener
     public void KinksterLeftRoom(UserData kinkster)
         => _vibeLobbies.OnKinksterLeftRoom(kinkster);
 
-    public void VibeRoomInviteRecieved(RoomInvite invite)
-        => _vibeLobbies.OnInviteRecieved(invite);
+    public void VibeRoomInviteReceived(RoomInvite invite)
+        => _vibeLobbies.OnInviteReceived(invite);
 
     public void VibeRoomHostChanged(UserData newHost)
         => _vibeLobbies.OnHostChanged(newHost);
@@ -50,8 +50,8 @@ public sealed class ToyboxStateListener
     public void KinksterUpdatedDevice(UserData kinkster, ToyInfo newDeviceInfo)
         => _vibeLobbies.OnKinksterUpdatedDevice(kinkster, newDeviceInfo);
 
-    public void RecievedBuzzToyDataStream(ToyDataStreamResponse dataStreamChunk)
-        => _vibeLobbies.OnRecievedBuzzToyDataStream(dataStreamChunk);
+    public void ReceivedBuzzToyDataStream(ToyDataStreamResponse dataStreamChunk)
+        => _vibeLobbies.OnReceivedBuzzToyDataStream(dataStreamChunk);
 
     public void KinksterGrantedAccess(UserData participantWhoGranted)
         => _vibeLobbies.OnKinksterGrantedAccess(participantWhoGranted);
