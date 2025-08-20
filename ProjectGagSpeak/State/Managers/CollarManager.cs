@@ -39,15 +39,16 @@ public sealed class CollarManager : IHybridSavable
     public GagSpeakCollar? ItemInEditor => _itemEditor.ItemInEditor;
 
     // ----------- ACTIVE DATA --------------
-    public CharaActiveCollar? ServerData => _serverCollarData;
-    public GagSpeakCollar? AppliedCollar { get; private set; } = new();
+    public CharaActiveCollar? ServerCollarData => _serverCollarData;
+    public GagSpeakCollar? ActiveCollarData { get; private set; } = new();
+    public bool CollarWithVisualsActive => ServerCollarData != null && ActiveCollarData != null;
 
     /// <summary> Updates the manager with the latest data from the server. </summary>
     /// <remarks> The CacheStateManager must be handled separately here. </remarks>
     public void LoadServerData(CharaActiveCollar serverData)
     {
         _serverCollarData = serverData;
-        AppliedCollar = Storage.FirstOrDefault(rs => rs.Identifier.Equals(serverData.Identifier));
+        ActiveCollarData = Storage.FirstOrDefault(rs => rs.Identifier.Equals(serverData.Identifier));
         _logger.LogInformation("Synchronized Active GagSpeakCollar with Client-Side Manager.");
     }
      
@@ -152,7 +153,7 @@ public sealed class CollarManager : IHybridSavable
 
         // If we obtain the set here, it means we should apply the visual aspect of this change, otherwise return.
         if (Storage.TryGetCollar(data.Identifier, out var collarItem) && data.Visuals)
-            AppliedCollar = collarItem;
+            ActiveCollarData = collarItem;
     }
 
     // there might be an issue server-side where updates can occur while a collar isn't applied maybe? idk.
@@ -170,6 +171,7 @@ public sealed class CollarManager : IHybridSavable
                 break;
             case DataUpdateType.VisibilityChange:
                 data.Visuals = !data.Visuals;
+                // Still keep the active collar data, just have visuals off.
                 break;
             case DataUpdateType.DyesChange:
                 data.Dye1 = dto.NewData.Dye1;
@@ -202,7 +204,7 @@ public sealed class CollarManager : IHybridSavable
 
         // reset collar to defaults.
         data = new CharaActiveCollar();
-        AppliedCollar = null;
+        ActiveCollarData = null;
 
         // trigger achievement.
         GagspeakEventManager.AchievementEvent(UnlocksEvent.CollarStateChange, dto.PreviousCollar, false, dto.Enactor);

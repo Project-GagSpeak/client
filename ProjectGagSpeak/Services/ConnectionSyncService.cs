@@ -14,7 +14,6 @@ namespace GagSpeak.Services;
 /// <remarks> Helps update config folder locations, update stored data, and update achievement data status. </remarks>
 public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
 {
-    private readonly ClientData _clientData;
     private readonly OverlayHandler _overlays;
     private readonly PlayerControlHandler _playerControl;
     private readonly GagRestrictionManager _gags;
@@ -24,6 +23,7 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
     private readonly PuppeteerManager _puppeteer;
     private readonly AlarmManager _alarms;
     private readonly TriggerManager _triggers;
+    private readonly ClientDataListener _clientDatListener;
     private readonly VisualStateListener _visuals;
     private readonly ConfigFileProvider _fileNames;
     private readonly AchievementsService _achievements;
@@ -31,7 +31,6 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
     public ConnectionSyncService(
         ILogger<ConnectionSyncService> logger,
         GagspeakMediator mediator,
-        ClientData clientData,
         OverlayHandler overlays,
         PlayerControlHandler playerControl,
         GagRestrictionManager gags,
@@ -41,12 +40,12 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
         PuppeteerManager puppeteer,
         AlarmManager alarms,
         TriggerManager triggers,
+        ClientDataListener clientDatListener,
         VisualStateListener visuals,
         ConfigFileProvider fileNames,
         AchievementsService achievements)
         : base(logger, mediator)
     {
-        _clientData = clientData;
         _overlays = overlays;
         _playerControl = playerControl;
         _gags = gags;
@@ -56,6 +55,7 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
         _puppeteer = puppeteer;
         _alarms = alarms;
         _triggers = triggers;
+        _clientDatListener = clientDatListener;
         _visuals = visuals;
         _fileNames = fileNames;
         _achievements = achievements;
@@ -89,7 +89,7 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
         Logger.LogInformation($"[SYNC PROGRESS]: Updating FileProvider for Profile ({MainHub.UID})");
         _fileNames.UpdateConfigs(MainHub.UID);
 
-        // 2. Load in Profile-spesific Configs.
+        // 2. Load in Profile-specific Configs.
         Logger.LogInformation($"[SYNC PROGRESS]: Loading Configs for Profile!");
         _gags.Load();
         _restrictions.Load();
@@ -100,11 +100,11 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
         _triggers.Load();
 
         // 3. Load in the data from the server into our storages.
-        Logger.LogInformation("[SYNC PROGRESS]: Syncing Global Permissions!");
-        _clientData.InitClientData(connectionInfo);
+        Logger.LogInformation("[SYNC PROGRESS]: Syncing ClientData GlobalPerms & HardcoreState!");
+        _clientDatListener.ChangeAllClientGlobals(connectionInfo.User, connectionInfo.GlobalPerms, connectionInfo.HardcoreState);
 
         // 4. Sync overlays with the global permissions & metadata.
-        Logger.LogInformation("[SYNC PROGRESS]: Syncing Overlay Data");
+        Logger.LogInformation("[SYNC PROGRESS]: Applying Custom Hypnosis Data if Any!");
         await _overlays.SyncOverlayWithMetaData();
 
         // 5. Sync Visual Cache with active state.

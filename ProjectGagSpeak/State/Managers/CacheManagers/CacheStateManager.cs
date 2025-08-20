@@ -4,6 +4,7 @@ using GagSpeak.Services;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Handlers;
 using GagSpeak.State.Models;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Struct;
@@ -11,6 +12,9 @@ using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
 using GagspeakAPI.Util;
 using Microsoft.Extensions.Hosting;
+using Penumbra.GameData.Enums;
+using Penumbra.GameData.Structs;
+using TerraFX.Interop.DirectX;
 
 namespace GagSpeak.State.Managers;
 
@@ -458,6 +462,50 @@ public class CacheStateManager : IHostedService
         );
     }
 
+    // Always use MainHub.UID for the applier so that we can track the updates easier.
+    public async Task AddCollar(CharaActiveCollar synced, GagSpeakCollar data, UserData enactor)
+    {
+        _logger.LogDebug($"Applying Collar [{data.Label}] Enacted by: {enactor.AliasOrUID} ({enactor.UID})");
+        var key = new CombinedCacheKey(ManagerPriority.Collar, 0, MainHub.UID, data.Label);
+        // compose the actual glamour item.
+        var glamour = new GlamourSlot(data.Glamour.Slot, data.Glamour.GameItem, new StainIds([synced.Dye1, synced.Dye2]));
+        await TimedWhenAll($"[{key}]'s Visual Attributes added to caches",
+            AddGlamourMeta(key, glamour, MetaDataStruct.Empty),
+            AddModPreset(key, data.Mod),
+            AddMoodle(key, new MoodleTuple(synced.Moodle))
+        );
+        // Handle Redraw afterwards
+        if (data.DoRedraw)
+            _redrawAssist.RedrawObject();
+    }
+
+    public async Task UpdateCollar(CharaActiveCollar synced, GagSpeakCollar data, DataUpdateType type, UserData enactor)
+    {
+        // Ignore if not valid update type.
+        if (type is not DataUpdateType.DyesChange and not DataUpdateType.CollarMoodleChange)
+            return;
+
+        var key = new CombinedCacheKey(ManagerPriority.Collar, 0, MainHub.UID, data.Label);
+
+        await TimedWhenAll($"[{key}]'s Collar Visuals updated in caches", type is DataUpdateType.DyesChange
+            ? UpdateGlamour(key, data.Glamour.Slot, new StainIds([synced.Dye1, synced.Dye2]))
+            : UpdateMoodle(key, new MoodleTuple(synced.Moodle)));
+    }
+
+    public async Task RemoveCollar(GagSpeakCollar data, UserData enactor)
+    {
+        _logger.LogDebug($"Removing Collar [{data.Label}] Enacted by: {enactor.AliasOrUID} ({enactor.UID})");
+        var key = new CombinedCacheKey(ManagerPriority.Collar, 0, string.Empty, data.Label);
+        // Remove and update in parallel.
+        await TimedWhenAll($"[{key}] removed from cache and base states restored",
+            RemoveGlamourMeta(key),
+            RemoveModPreset(key),
+            RemoveMoodle(key)
+        );
+        // Handle Redraw afterwards
+        if (data.DoRedraw)
+            _redrawAssist.RedrawObject();
+    }
 
     private async Task TimedWhenAll(string label, IEnumerable<Task> tasks)
     {
@@ -477,10 +525,21 @@ public class CacheStateManager : IHostedService
 
 
     #region Cache Update Helpers
+    private async Task AddGlamour(CombinedCacheKey key, GlamourSlot glamSlot)
+    {
+        _glamourHandler.TryAddGlamourToCache(key, glamSlot);
+        await _glamourHandler.UpdateCaches();
+    }
     private async Task AddGlamourMeta(CombinedCacheKey key, GlamourSlot glamSlot, MetaDataStruct meta)
     {
         _glamourHandler.TryAddGlamourToCache(key, glamSlot);
         _glamourHandler.TryAddMetaToCache(key, meta);
+        await _glamourHandler.UpdateCaches();
+    }
+
+    private async Task UpdateGlamour(CombinedCacheKey key, EquipSlot slot, StainIds newDyes)
+    {
+        _glamourHandler.TryUpdateGlamourDyes(key, slot, newDyes);
         await _glamourHandler.UpdateCaches();
     }
 
@@ -525,6 +584,12 @@ public class CacheStateManager : IHostedService
     private async Task AddMoodle(CombinedCacheKey key, IEnumerable<Moodle> moodles)
     {
         _moodleHandler.TryAddMoodleToCache(key, moodles);
+        await _moodleHandler.UpdateMoodleCache();
+    }
+
+    private async Task UpdateMoodle(CombinedCacheKey key, Moodle newMoodle)
+    {
+        _moodleHandler.TryUpdateMoodleInCache(key, newMoodle);
         await _moodleHandler.UpdateMoodleCache();
     }
 

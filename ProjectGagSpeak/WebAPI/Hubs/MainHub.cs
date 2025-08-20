@@ -23,11 +23,11 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     public const string MAIN_SERVER_URI = "wss://gagspeak.kinkporium.studio";
 
     private readonly ClientAchievements _achievements;
-    private readonly ClientData _clientData;
     private readonly HubFactory _hubFactory;
     private readonly TokenProvider _tokenProvider;
     private readonly ServerConfigManager _serverConfigs;
     private readonly KinksterManager _kinksters;
+    private readonly ClientDataListener _clientDatListener;
     private readonly KinksterListener _kinksterListener;
     private readonly VisualStateListener _visualListener;
     private readonly PuppeteerListener _puppetListener;
@@ -50,16 +50,16 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     private CancellationTokenSource? _hubHealthCTS = new();
     private HubConnection? _hubConnection = null;
     private string? _latestToken = null;
-    private bool _suppresssNextNotification = false;
+    private bool _suppressNextNotification = false;
 
     public MainHub(ILogger<MainHub> logger,
         GagspeakMediator mediator,
         ClientAchievements achievements,
-        ClientData clientData,
         HubFactory hubFactory,
         TokenProvider tokenProvider,
         ServerConfigManager serverConfigs,
         KinksterManager kinksters,
+        ClientDataListener clientDatListener,
         KinksterListener kinksterListener,
         VisualStateListener visuals,
         PuppeteerListener puppeteer,
@@ -69,11 +69,11 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         : base(logger, mediator)
     {
         _achievements = achievements;
-        _clientData = clientData;
         _hubFactory = hubFactory;
         _tokenProvider = tokenProvider;
         _serverConfigs = serverConfigs;
         _kinksters = kinksters;
+        _clientDatListener = clientDatListener;
         _kinksterListener = kinksterListener;
         _visualListener = visuals;
         _puppetListener = puppeteer;
@@ -305,9 +305,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     {
         // retrieve any current kinkster requests.
         var requests = await UserGetActiveRequests().ConfigureAwait(false);
-        _clientData.InitRequests(requests.KinksterRequests, requests.CollarRequests);
-        Logger.LogDebug($"Kinkster Requests Received. Found " +
-            $"[Kinkster: {requests.KinksterRequests.Count}][Collar: {requests.CollarRequests.Count}]", LoggerType.ApiCore);
+        _clientDatListener.InitRequests(requests);
     }
 
     /// <summary>

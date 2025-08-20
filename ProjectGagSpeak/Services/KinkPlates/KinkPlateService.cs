@@ -63,7 +63,7 @@ public class KinkPlateService : MediatorSubscriberBase
         // Locate the profile data for the pair.
         if (!_kinkPlates.TryGetValue(userData, out var kinkPlate))
         {
-            Logger.LogTrace("KinkPlate™ for " + userData.UID+ " not found, creating loading KinkPlate™.", LoggerType.Kinkplates);
+            Logger.LogTrace("KinkPlate™ for " + userData.UID+ " not found, creating loading KinkPlate™.", LoggerType.KinkPlates);
             // If not found, create a loading profile template for the user,
             AssignLoadingProfile(userData);
             // then run a call to the GetKinkPlate API call to fetch it.
@@ -81,12 +81,12 @@ public class KinkPlateService : MediatorSubscriberBase
     {
         // add the user & profile data to the concurrent dictionary.
         _kinkPlates[data] = _factory.CreateProfileData(new KinkPlateContent(), string.Empty);
-        Logger.LogTrace("Assigned new KinkPlate™ for " + data.UID, LoggerType.Kinkplates);
+        Logger.LogTrace("Assigned new KinkPlate™ for " + data.UID, LoggerType.KinkPlates);
     }
 
     public void RemoveKinkPlate(UserData userData)
     {
-        Logger.LogDebug("Removing KinkPlate™ for " + userData.UID+" if it exists.", LoggerType.Kinkplates);
+        Logger.LogDebug("Removing KinkPlate™ for " + userData.UID+" if it exists.", LoggerType.KinkPlates);
         // Check if the profile exists before attempting to dispose and remove it
         if (_kinkPlates.TryGetValue(userData, out var profile))
         {
@@ -99,7 +99,7 @@ public class KinkPlateService : MediatorSubscriberBase
 
     public void ClearAllKinkPlates()
     {
-        Logger.LogInformation("Clearing all KinkPlates™", LoggerType.Kinkplates);
+        Logger.LogInformation("Clearing all KinkPlates™", LoggerType.KinkPlates);
         // dispose of all the profile data.
         foreach (var kinkPlate in _kinkPlates.Values)
         {
@@ -114,14 +114,14 @@ public class KinkPlateService : MediatorSubscriberBase
     {
         try
         {
-            Logger.LogTrace("Fetching profile for "+data.UID, LoggerType.Kinkplates);
+            Logger.LogTrace("Fetching profile for "+data.UID, LoggerType.KinkPlates);
             // Fetch userData profile info from server
             var profile = await _hub.UserGetKinkPlate(new KinksterBase(data)).ConfigureAwait(false);
 
             // apply the retrieved profile data to the profile object.
             _kinkPlates[data].KinkPlateInfo = profile.Info;
             _kinkPlates[data].Base64ProfilePicture = profile.ImageBase64 ?? string.Empty;
-            Logger.LogDebug("KinkPlate™ for "+data.UID+" loaded.", LoggerType.Kinkplates);
+            Logger.LogDebug("KinkPlate™ for "+data.UID+" loaded.", LoggerType.KinkPlates);
         }
         catch (Bagagwa ex)
         {

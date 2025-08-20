@@ -16,21 +16,22 @@ public class DebugTab
         ("Hardcore", [ LoggerType.HardcoreActions, LoggerType.HardcoreMovement, LoggerType.HardcorePrompt, LoggerType.HardcoreTasks ]),
         ("Interop / IPC", [ 
             LoggerType.IpcGagSpeak, LoggerType.IpcMare, LoggerType.IpcPenumbra, LoggerType.IpcGlamourer, 
-            LoggerType.IpcCustomize, LoggerType.IpcMoodles, LoggerType.IpcLifestream,
+            LoggerType.IpcCustomize, LoggerType.IpcMoodles, LoggerType.IpcLifeStream,
             ]),
         ("MufflerCore", [ LoggerType.GarblerCore, LoggerType.ChatDetours ]),
         ("PlayerClientState", [ 
             LoggerType.Listeners, LoggerType.VisualCache, LoggerType.Gags, LoggerType.Restrictions,
-            LoggerType.Restraints, LoggerType.CursedItems, LoggerType.Puppeteer, LoggerType.Toys,
-            LoggerType.VibeLobbies, LoggerType.Patterns, LoggerType.Alarms, LoggerType.Triggers
+            LoggerType.Restraints, LoggerType.Collars, LoggerType.CursedItems, LoggerType.Puppeteer, 
+            LoggerType.Toys, LoggerType.VibeLobbies, LoggerType.Patterns, LoggerType.Alarms, 
+            LoggerType.Triggers
             ]),
         ("Kinkster Data", [
             LoggerType.PairManagement, LoggerType.PairInfo, LoggerType.PairDataTransfer, LoggerType.PairHandlers,
-            LoggerType.OnlinePairs, LoggerType.VisiblePairs, LoggerType.GameObjects
+            LoggerType.KinksterCache, LoggerType.OnlinePairs, LoggerType.VisiblePairs, LoggerType.GameObjects
             ]),
         ("Services", [
-            LoggerType.ActionsNotifier, LoggerType.Textures, LoggerType.ContextDtr, LoggerType.GlobalChat,
-            LoggerType.Kinkplates, LoggerType.Mediator, LoggerType.ShareHub
+            LoggerType.AutoUnlocks, LoggerType.ActionsNotifier, LoggerType.Textures, LoggerType.ContextDtr, 
+            LoggerType.GlobalChat, LoggerType.KinkPlates, LoggerType.Mediator, LoggerType.ShareHub
             ]),
         ("UI", [ LoggerType.UI, LoggerType.StickyUI, LoggerType.Combos, LoggerType.FileSystems ]),
         ("Update Monitoring", [ LoggerType.ActionEffects, LoggerType.EmoteMonitor, LoggerType.SpatialAudio, LoggerType.Arousal ]),

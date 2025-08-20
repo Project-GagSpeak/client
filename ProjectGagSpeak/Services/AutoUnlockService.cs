@@ -17,6 +17,7 @@ using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
 using GagspeakAPI.Util;
 using Microsoft.Extensions.Hosting;
+using Penumbra.GameData.Data;
 using System.Threading.Tasks;
 using TerraFX.Interop.Windows;
 
@@ -78,7 +79,7 @@ public sealed class AutoUnlockService : BackgroundService
         _dds = dds;
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("Auto-Unlock Service Started.");
         // Start all interval tasks
@@ -88,7 +89,7 @@ public sealed class AutoUnlockService : BackgroundService
         _intervalTasks.Add(CheckOnInterval(60000, OnMinute, stoppingToken));
 
         // Wait for all tasks to complete (which will be when stoppingToken is cancelled)
-        await Task.WhenAll(_intervalTasks);
+        return Task.CompletedTask;
     }
 
     private async Task CheckOnInterval(int msDelay, Action checkFunc, CancellationToken stoppingToken)
@@ -105,22 +106,31 @@ public sealed class AutoUnlockService : BackgroundService
     {
         if (!MainHub.IsConnected)
             return;
-
-        await CheckGags().ConfigureAwait(false);
-        await CheckRestrictions().ConfigureAwait(false);
-        await CheckRestraint().ConfigureAwait(false);
-        await CheckCursedLoot().ConfigureAwait(false);
+        // remove the stopwatch if it becomes excessive.
+        var sw = Stopwatch.StartNew();
+        await Task.WhenAll(
+            CheckGags(),
+            CheckRestrictions(),
+            CheckRestraint(),
+            CheckCursedLoot(),
+            CheckHardcoreTimers()
+        ).ConfigureAwait(false);
+        sw.Stop();
+        if (sw.ElapsedMilliseconds > 1)
+            _logger.LogDebug($"Checked Padlock & Hardcore Timers in {sw.ElapsedMilliseconds}ms", LoggerType.AutoUnlocks);
     }
 
     private unsafe void OnFiveSeconds()
     {
+        if (!MainHub.IsConnected)
+            return;
+
         // Don't rely on IsDead.
-        var isDead = PlayerData.Health is 0;
+        var isDead = PlayerData.HealthInstanced is 0;
         if (isDead && !_clientWasDead)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.ClientSlain);
         // update death state.
         _clientWasDead = isDead;
-
         // Detect chocobo race victory.
         if (PlayerContent.TerritoryID is 144 && PlayerData.IsChocoboRacing)
         {
@@ -132,14 +142,15 @@ public sealed class AutoUnlockService : BackgroundService
 
     private void OnQuarterMinute()
     {
+        if (!MainHub.IsConnected)
+            return;
         // update tracked players.
-        // we should get the current player object count that is within the range required for crowd pleaser.
         Svc.Framework.RunOnFrameworkThread(() =>
         {
             var playersInRange = Svc.Objects.OfType<IPlayerCharacter>().Where(player => PlayerData.DistanceTo(player.Position) < 30f).Count();
             if (playersInRange != _lastPlayerCount)
             {
-                _logger.LogTrace("(New Update) There are " + playersInRange + " Players nearby", LoggerType.AchievementInfo);
+                _logger.LogTrace("(New Update) There are " + playersInRange + " Players nearby", LoggerType.AchievementInfo, LoggerType.AutoUnlocks);
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.PlayersInProximity, playersInRange);
                 _lastPlayerCount = playersInRange;
             }
@@ -297,33 +308,110 @@ public sealed class AutoUnlockService : BackgroundService
             return;
 
         // forced follow is special in a sense.
-        if (!string.IsNullOrEmpty(hcState.LockedFollowing) && MovementController.TimeIdleDuringFollow > TimeSpan.FromSeconds(6))
+        if (hcState.LockedFollowing.Length > 0 && MovementController.TimeIdleDuringFollow > TimeSpan.FromSeconds(6))
         {
             _logger.LogInformation("Standing Still for over 6 seconds during LockedFollow. Auto-Disabling!", LoggerType.HardcoreMovement);
-            var enactor = hcState.LockedFollowing;
-            // locally make the change first. (This includes the control reverts, must be careful!)
+            var enactor = hcState.LockedFollowing.Split('|')[0];
+            // locally change first.
             _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.Follow);
             _moveControl.ResetTimeoutTracker();
-
-            // Attempt the server-side call.
-            if (await _hub.UserHardcoreAttributeExpired(new(HcAttribute.Follow, new(hcState.LockedFollowing))).ConfigureAwait(false) is { } newData)
-            {
-                // Call was a success, so perform the hardcore handler change.
-                // DO THAT HERE.
-            }
+            // then server-side.
+            bool success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.Follow, new(enactor))).ConfigureAwait(false) is not null;
+            if (success)
+                _mediator.Publish(new EventMessage(new("Self-Update", MainHub.UID, InteractionType.HardcoreStateChange, $"LockedFollow Timer Expired!")));
+            // Perform manipulations regardless. If the achievements fire depends on if it was successful.
+            _hcHandler.DisableLockedFollow(new(enactor), success);
         }
 
         // Check Emote Timer.
+        if (hcState.LockedEmoteState.Length > 0 && hcState.EmoteExpireTime < DateTimeOffset.UtcNow)
+        {
+            _logger.LogInformation("LockedEmote Timer Expired!", LoggerType.HardcoreMovement);
+            var enactor = hcState.LockedEmoteState.Split('|')[0];
+            // locally change first.
+            _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.EmoteState);
+            // then server-side.
+            bool success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.EmoteState, new(enactor))).ConfigureAwait(false) is not null;
+            if (success)
+                _mediator.Publish(new EventMessage(new("Self-Update", MainHub.UID, InteractionType.HardcoreStateChange, $"LockedEmote Timer Expired!")));
+            // Perform manipulations regardless. If the achievements fire depends on if it was successful.
+            _hcHandler.DisableLockedEmote(new(enactor), success);
+        }
 
         // Check Confinement Timer.
+        if (hcState.IndoorConfinement.Length > 0 && hcState.ConfinementTimer < DateTimeOffset.UtcNow)
+        {
+            _logger.LogInformation("Confinement Timer Expired!", LoggerType.HardcoreMovement);
+            var enactor = hcState.IndoorConfinement.Split('|')[0];
+            // locally change first.
+            _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.Confinement);
+            // then server-side.
+            bool success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.Confinement, new(enactor))).ConfigureAwait(false) is not null;
+            if (success)
+                _mediator.Publish(new EventMessage(new("Self-Update", MainHub.UID, InteractionType.HardcoreStateChange, $"Confinement Timer Expired!")));
+            // Perform manipulations regardless. If the achievements fire depends on if it was successful.
+            _hcHandler.DisableConfinement(new(enactor), success);
+        }
 
         // Check Imprisonment Timer.
+        if (hcState.Imprisonment.Length > 0 && hcState.ImprisonmentTimer < DateTimeOffset.UtcNow)
+        {
+            _logger.LogInformation("Imprisonment Timer Expired!", LoggerType.HardcoreMovement);
+            var enactor = hcState.Imprisonment.Split('|')[0];
+            // locally change first.
+            _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.Imprisonment);
+            // Attempt the server-side call.
+            bool success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.Imprisonment, new(enactor))).ConfigureAwait(false) is not null;
+            if (success)
+                _mediator.Publish(new EventMessage(new("Self-Update", MainHub.UID, InteractionType.HardcoreStateChange, $"Imprisonment Timer Expired!")));
+            // Perform manipulations regardless. If the achievements fire depends on if it was successful.
+            _hcHandler.DisableImprisonment(new(enactor), success);
+        }
 
         // Check Chat Boxes Hidden Timer.
+        if (hcState.ChatBoxesHidden.Length > 0 && hcState.ChatBoxesHiddenTimer < DateTimeOffset.UtcNow)
+        {
+            _logger.LogInformation("Hidden ChatBoxes Expired!", LoggerType.HardcoreMovement);
+            var enactor = hcState.ChatBoxesHidden.Split('|')[0];
+            // locally change first.
+            _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.HiddenChatBox);
+            // Attempt the server-side call.
+            bool success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.HiddenChatBox, new(enactor))).ConfigureAwait(false) is not null;
+            if (success)
+                _mediator.Publish(new EventMessage(new("Self-Update", MainHub.UID, InteractionType.HardcoreStateChange, $"Hidden ChatBoxes Expired!")));
+            // Perform manipulations regardless. If the achievements fire depends on if it was successful.
+            _hcHandler.DisableHiddenChatBoxes(new(enactor), success);
+        }
 
         // Check Chat Input Hidden Timer.
+        if (hcState.ChatInputHidden.Length > 0 && hcState.ChatInputHiddenTimer < DateTimeOffset.UtcNow)
+        {
+            _logger.LogInformation("Hidden ChatInput Expired!", LoggerType.HardcoreMovement);
+            var enactor = hcState.ChatInputBlocked.Split('|')[0];
+            // locally change first.
+            _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.HiddenChatInput);
+            // Attempt the server-side call.
+            bool success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.HiddenChatInput, new(enactor))).ConfigureAwait(false) is not null;
+            if (success)
+                _mediator.Publish(new EventMessage(new("Self-Update", MainHub.UID, InteractionType.HardcoreStateChange, $"Hidden ChatInput Expired!")));
+            // Perform manipulations regardless. If the achievements fire depends on if it was successful.
+            _hcHandler.RestoreChatInputVisibility(new(enactor), success);
+        }
 
         // Check Chat Input Blocked Timer.
+        if (hcState.ChatInputBlocked.Length > 0 && hcState.ChatInputBlockedTimer < DateTimeOffset.UtcNow)
+        {
+            _logger.LogInformation("Blocked ChatInput Expired!", LoggerType.HardcoreMovement);
+            var enactor = hcState.ChatInputBlocked.Split('|')[0];
+            // locally change first.
+            _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.BlockedChatInput);
+            // Attempt the server-side call.
+            bool success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.BlockedChatInput, new(enactor))).ConfigureAwait(false) is not null;
+            if (success)
+                _mediator.Publish(new EventMessage(new("Self-Update", MainHub.UID, InteractionType.HardcoreStateChange, $"Blocked ChatInput Expired!")));
+            // Perform manipulations regardless. If the achievements fire depends on if it was successful.
+            _hcHandler.UnblockChatInput(new(enactor), success);
+        }
 
         // Check Hypnotic Effect Timer. (I think this already auto-disables?)
     }

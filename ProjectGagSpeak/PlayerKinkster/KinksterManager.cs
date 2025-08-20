@@ -297,7 +297,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Recreates the lazy list of direct pairs.</summary>
-    private void RecreateLazy(bool PushUiRefresh = true)
+    public void RecreateLazy(bool PushUiRefresh = true)
     {
         _directPairsInternal = DirectPairsLazy();
         if (PushUiRefresh)

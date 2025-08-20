@@ -39,7 +39,8 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
     /// <summary>
     /// Create an action event that can send off a MoodleStatusInfo tuple to other plugins and inform them that our information is updated.
     /// </summary>
-    private static ICallGateProvider<MoodlesStatusInfo, object?>? GagSpeakTryMoodleStatus; // ACTION
+    private static ICallGateProvider<MoodlesStatusInfo, object?>? GagSpeakApplyMoodleStatus; // ACTION
+    private static ICallGateProvider<List<MoodlesStatusInfo>, object?>? GagSpeakApplyMoodleStatusList; // ACTION
 
     private static ICallGateProvider<int>? GagSpeakApiVersion; // FUNC 
     private static ICallGateProvider<object>? GagSpeakListUpdated; // ACTION
@@ -106,8 +107,8 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
 
         // This is an action that we send off whenever our pairs update.
         GagSpeakListUpdated = Svc.PluginInterface.GetIpcProvider<object>("GagSpeak.VisiblePairsUpdated");
-        GagSpeakTryMoodleStatus = Svc.PluginInterface.GetIpcProvider<MoodlesStatusInfo, object?>("GagSpeak.TryOnMoodleStatus");
-
+        GagSpeakApplyMoodleStatus = Svc.PluginInterface.GetIpcProvider<MoodlesStatusInfo, object?>("GagSpeak.ApplyMoodleStatus");
+        GagSpeakApplyMoodleStatusList = Svc.PluginInterface.GetIpcProvider<List<MoodlesStatusInfo>, object?>("GagSpeak.ApplyMoodleStatusList");
         _logger.LogInformation("Started IpcProviderService");
         NotifyReady();
 
@@ -126,7 +127,8 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
         _handledVisiblePairs?.UnregisterFunc();
         _applyStatusesToPairRequest?.UnregisterAction();
         GagSpeakListUpdated?.UnregisterAction();
-        GagSpeakTryMoodleStatus?.UnregisterAction();
+        GagSpeakApplyMoodleStatus?.UnregisterAction();
+        GagSpeakApplyMoodleStatusList?.UnregisterAction();
 
         Mediator.UnsubscribeAll(this);
 
@@ -176,9 +178,18 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
     }
 
     /// <summary>
-    /// Used to call upon Moodles to try on a MoodleStatusInfo to the client player.
-    /// Called directly from GagSpeak's provider to prevent missuse of bypassing permissions.
+    ///     Applies a <see cref="MoodlesStatusInfo"/> tuple to the CLIENT ONLY via Moodles. <para />
+    ///     This helps account for trying on Moodle Presets, or applying the preset's StatusTuples. <para />
+    ///     Method is invoked via GagSpeak's IpcProvider to prevent miss-use of bypassing permissions.
     /// </summary>
-    public void TryOnStatus(MoodlesStatusInfo status) => GagSpeakTryMoodleStatus?.SendMessage(status);
+    public void ApplyStatusTuple(MoodlesStatusInfo status) => GagSpeakApplyMoodleStatus?.SendMessage(status);
+
+    /// <summary>
+    ///     Applies a group of <see cref="MoodlesStatusInfo"/> tuples to the CLIENT ONLY via Moodles. <para />
+    ///     This helps account for trying on Moodle Presets, or applying the preset's StatusTuples. <para />
+    ///     Method is invoked via GagSpeak's IpcProvider to prevent miss-use of bypassing permissions.
+    /// </summary>
+    public void ApplyStatusTuples(IEnumerable<MoodlesStatusInfo> statuses) => GagSpeakApplyMoodleStatusList?.SendMessage(statuses.ToList());
+
 }
 

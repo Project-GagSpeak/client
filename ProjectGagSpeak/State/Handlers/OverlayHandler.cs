@@ -31,7 +31,7 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
         _bfService = bfService;
         _hypnoService = hypnoService;
 
-        _sentHypnosisTimer.Elapsed += (_, _) => OnSentHypnoEffectExpire();
+        _sentHypnosisTimer.Elapsed += (_, _) => OnSentHypnoEffectExpire(true);
         Svc.PluginInterface.UiBuilder.Draw += DrawOverlays;
     }
 
@@ -117,16 +117,16 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
         _sentHypnosisTimer.Start();
     }
 
-    public void RemoveHypnoEffect(string enactor)
+    public void RemoveHypnoEffect(string enactor, bool giveAchievements)
     {
         Logger.LogDebug($"Timed Hypnotic Effect was forcibly cleared by {enactor}!");
         _sentHypnosisTimer.Stop();
-        OnSentHypnoEffectExpire();
+        OnSentHypnoEffectExpire(giveAchievements);
         // clear the metadata.
         _metadata.ClearHypnoEffect();
     }
 
-    private async void OnSentHypnoEffectExpire()
+    private async void OnSentHypnoEffectExpire(bool giveAchievements)
     {
         // The sent hypnosis effect has met its expiration time, and should be removed.
         Logger.LogDebug("Sent Hypnosis Effect has expired, removing it from the applied effect.");

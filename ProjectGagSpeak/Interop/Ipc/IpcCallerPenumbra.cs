@@ -171,7 +171,7 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
     /// <remarks> This can also trick mare into receiving updated animations & immediately redrawing, so others see it first time. </remarks>
     public void RedrawObject()
     {
-        Logger.LogInformation("Manually redrawing the client!", LoggerType.IpcPenumbra);
+        Logger.LogWarning("Manually redrawing the client!", LoggerType.IpcPenumbra);
         RedrawClient.Invoke(0, RedrawType.Redraw);
     }
 

@@ -33,9 +33,9 @@ public partial class MainHub
                 break;
 
             case MessageSeverity.Information:
-                if (_suppresssNextNotification)
+                if (_suppressNextNotification)
                 {
-                    _suppresssNextNotification = false;
+                    _suppressNextNotification = false;
                     break;
                 }
                 Mediator.Publish(new NotificationMessage("Info from " +
@@ -62,9 +62,9 @@ public partial class MainHub
                 break;
 
             case MessageSeverity.Information:
-                if (_suppresssNextNotification)
+                if (_suppressNextNotification)
                 {
-                    _suppresssNextNotification = false;
+                    _suppressNextNotification = false;
                     break;
                 }
                 Mediator.Publish(new NotificationMessage("Info from " +
@@ -79,7 +79,7 @@ public partial class MainHub
                 // pause the server state
                 _serverConfigs.ServerStorage.FullPause = true;
                 _serverConfigs.Save();
-                _suppresssNextNotification = true;
+                _suppressNextNotification = true;
                 // create a new connection to force the disconnect.
                 await Disconnect(ServerState.Disconnected).ConfigureAwait(false);
 
@@ -89,7 +89,7 @@ public partial class MainHub
                 // after it stops, switch the connection pause back to false and create a new connection.
                 _serverConfigs.ServerStorage.FullPause = false;
                 _serverConfigs.Save();
-                _suppresssNextNotification = true;
+                _suppressNextNotification = true;
                 await Connect().ConfigureAwait(false);
             });
         }
@@ -120,28 +120,28 @@ public partial class MainHub
     public Task Callback_AddPairRequest(KinksterPairRequest dto)
     {
         Logger.LogDebug($"Callback_AddPairRequest: {dto}", LoggerType.Callbacks);
-        Generic.Safe(() => _clientData.AddPairRequest(dto));
+        Generic.Safe(() => _clientDatListener.AddPairRequest(dto));
         return Task.CompletedTask;
     }
 
     public Task Callback_RemovePairRequest(KinksterPairRequest dto)
     {
         Logger.LogDebug($"Callback_RemovePairRequest: {dto}", LoggerType.Callbacks);
-        Generic.Safe(() => _clientData.RemovePairRequest(dto));
+        Generic.Safe(() => _clientDatListener.RemovePairRequest(dto));
         return Task.CompletedTask;
     }
 
     public Task Callback_AddCollarRequest(CollarOwnershipRequest dto)
     {
-        Logger.LogDebug($"Callback_AddPairRequest: {dto}", LoggerType.Callbacks);
-        Generic.Safe(() => _clientData.AddCollarRequest(dto));
+        Logger.LogDebug($"Callback_AddCollarRequest: {dto}", LoggerType.Callbacks);
+        Generic.Safe(() => _clientDatListener.AddCollarRequest(dto));
         return Task.CompletedTask;
     }
 
     public Task Callback_RemoveCollarRequest(CollarOwnershipRequest dto)
     {
-        Logger.LogDebug($"Callback_RemovePairRequest: {dto}", LoggerType.Callbacks);
-        Generic.Safe(() => _clientData.RemoveCollarRequest(dto));
+        Logger.LogDebug($"Callback_RemoveCollarRequest: {dto}", LoggerType.Callbacks);
+        Generic.Safe(() => _clientDatListener.RemoveCollarRequest(dto));
         return Task.CompletedTask;
     }
 
@@ -150,25 +150,25 @@ public partial class MainHub
     #region Moodles
     public Task Callback_SetKinksterIpcFull(KinksterIpcDataFull dto)
     {
-        Logger.LogDebug($"Received full IPC Update from Kinkster!: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Logger.LogDebug($"Callback_SetKinksterIpcFull: {dto.User.AliasOrUID}", LoggerType.Callbacks);
         _kinksterListener.NewIpcData(dto.User, dto.Enactor, dto.NewData);
         return Task.CompletedTask;
     }
     public Task Callback_SetKinksterIpcStatusManager(KinksterIpcStatusManager dto)
     {
-        Logger.LogDebug($"Received StatusManager update for Kinkster: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Logger.LogDebug($"Callback_SetKinksterIpcStatusManager: {dto.User.AliasOrUID}", LoggerType.Callbacks);
         _kinksterListener.NewIpcStatusManager(dto.User, dto.Enactor, dto.DataString, dto.DataInfo);
         return Task.CompletedTask;
     }
     public Task Callback_SetKinksterIpcStatuses(KinksterIpcStatuses dto)
     {
-        Logger.LogDebug($"Received full IPC Update from Kinkster!: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Logger.LogDebug($"Callback_SetKinksterIpcStatuses: {dto.User.AliasOrUID}", LoggerType.Callbacks);
         _kinksterListener.NewIpcStatuses(dto.User, dto.Enactor, dto.Statuses);
         return Task.CompletedTask;
     }
     public Task Callback_SetKinksterIpcPresets(KinksterIpcPresets dto)
     {
-        Logger.LogDebug($"Received full IPC Update from Kinkster!: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Logger.LogDebug($"Callback_SetKinksterIpcPresets: {dto.User.AliasOrUID}", LoggerType.Callbacks);
         _kinksterListener.NewIpcPresets(dto.User, dto.Enactor, dto.Presets);
         return Task.CompletedTask;
     }
@@ -214,14 +214,14 @@ public partial class MainHub
         if (dto.User.UID == UID)
         {
             Logger.LogDebug($"[OWN-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
-            Generic.Safe(() => _clientData.ChangeGlobalsBulk(dto.NewPerms));
+            Generic.Safe(() => _clientDatListener.ChangeAllClientGlobals(dto.User, dto.NewPerms, dto.NewState));
             // handle soon.
             return Task.CompletedTask;
         }
         else
         {
             Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksters.UpdatePairUpdateOtherAllGlobalPermissions(dto));
+            Generic.Safe(() => _kinksterListener.PermBulkChangeGlobal(dto));
             return Task.CompletedTask;
         }
     }
@@ -230,11 +230,11 @@ public partial class MainHub
     {
         Generic.Safe(() =>
         {
-            if (dto.User.UID == UID)
+            if (dto.User.UID == UID || dto.Direction is UpdateDir.Own)
                 throw new Exception("Should never be calling a permission update for yourself in bulk, use BulkChangeAll for these!");
 
             Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
-            _kinksters.UpdateAllUniqueForKinkster(dto.User, dto.NewPerms, dto.NewAccess);
+            _kinksterListener.PermBulkChangeUniqueOther(dto.User, dto.NewPerms, dto.NewAccess);
         });
         return Task.CompletedTask;
     }
@@ -244,12 +244,12 @@ public partial class MainHub
         if (dto.User.UID == UID)
         {
             Logger.LogDebug($"[OWN-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
-            Generic.Safe(() => _clientData.ChangeGlobalPerm(dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value, _kinksters.GetKinksterOrDefault(dto.Enactor)));
+            Generic.Safe(() => _clientDatListener.ChangeGlobalPerm(dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value));
         }
         else
         {
             Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksters.UpdateGlobalPerm(dto.Target, dto.Enactor, dto.NewPerm));
+            Generic.Safe(() => _kinksterListener.PermChangeGlobal(dto.Target, dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value));
         }
         return Task.CompletedTask;
     }
@@ -259,13 +259,13 @@ public partial class MainHub
         if (dto.Direction is UpdateDir.Own)
         {
             Logger.LogDebug($"[OWN-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksters.UpdateSelfPairPermission(dto));
+            Generic.Safe(() => _kinksterListener.PermChangeUnique(dto.Target, dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value));
             return Task.CompletedTask;
         }
         else
         {
             Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksters.UpdateOtherPairPermission(dto));
+            Generic.Safe(() => _kinksterListener.PermChangeUniqueOther(dto.Target, dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value));
             return Task.CompletedTask;
         }
     }
@@ -275,13 +275,13 @@ public partial class MainHub
         if (dto.Direction is UpdateDir.Own)
         {
             Logger.LogDebug($"[OWN-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksters.UpdateSelfPairAccessPermission(dto));
+            Generic.Safe(() => _kinksterListener.PermChangeAccess(dto.Target, dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value));
             return Task.CompletedTask;
         }
         else
         {
             Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksters.UpdateOtherPairAccessPermission(dto));
+            Generic.Safe(() => _kinksterListener.PermChangeAccessOther(dto.Target, dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value));
             return Task.CompletedTask;
         }
     }
@@ -291,11 +291,12 @@ public partial class MainHub
         if (dto.Target.UID == UID)
         {
             Logger.LogDebug($"[OWN-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
+            Generic.Safe(() => _clientDatListener.ChangeHardcoreState(dto.Enactor, dto.Changed, dto.NewData));
         }
         else
         {
             Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
-            //Generic.Safe(() => _kinksters.UpdateKinksterHardcoreState(dto));
+            Generic.Safe(() => _kinksterListener.StateChangeHardcore(dto.Target, dto.Enactor, dto.Changed, dto.NewData));
         }
         return Task.CompletedTask;
 
@@ -451,6 +452,7 @@ public partial class MainHub
                 case DataUpdateType.CollarRemoved:
                     // process collar removal.
                     break;
+
             }
             return Task.CompletedTask;
         }

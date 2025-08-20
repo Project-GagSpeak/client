@@ -6,6 +6,7 @@ using GagSpeak.State.Caches;
 using GagSpeak.State.Models;
 using Glamourer.Api.Enums;
 using Penumbra.GameData.Enums;
+using Penumbra.GameData.Structs;
 
 namespace GagSpeak.State.Handlers;
 public class GlamourHandler
@@ -63,6 +64,12 @@ public class GlamourHandler
             return false;
         return _cache.AddGlamour(key, glamours);
     }
+
+    public bool TryUpdateGlamourDyes(CombinedCacheKey key, EquipSlot slot, byte dye1, byte dye2)
+        => _cache.UpdateGlamourDyes(key, slot, new(dye1, dye2));
+
+    public bool TryUpdateGlamourDyes(CombinedCacheKey key, EquipSlot slot, StainIds newDyes)
+        => _cache.UpdateGlamourDyes(key, slot, newDyes);
 
     /// <summary> Remove a single key from the GlamourCache. </summary>
     public bool TryRemGlamourFromCache(CombinedCacheKey key)

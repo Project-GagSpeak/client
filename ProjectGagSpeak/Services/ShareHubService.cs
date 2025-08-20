@@ -76,7 +76,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
 
         var moodleTupleToTry = match.MoodleStatus;
         Logger.LogInformation("Trying on moodle from server. Sending request to Moodles!");
-        _ipcProvider.TryOnStatus(moodleTupleToTry);
+        _ipcProvider.ApplyStatusTuple(moodleTupleToTry);
     }
 
     #region PatternHub Tasks

@@ -53,12 +53,12 @@ public class KinkPlate : DisposableMediatorSubscriberBase
             if (_base64ProfilePicture != value)
             {
                 _base64ProfilePicture = value;
-                Logger.LogDebug("Profile picture updated.", LoggerType.Kinkplates);
+                Logger.LogDebug("Profile picture updated.", LoggerType.KinkPlates);
                 if(!string.IsNullOrEmpty(_base64ProfilePicture))
                 {
-                    Logger.LogTrace("Refreshing profile image data!", LoggerType.Kinkplates);
+                    Logger.LogTrace("Refreshing profile image data!", LoggerType.KinkPlates);
                     _imageData = new Lazy<byte[]>(() => ConvertBase64ToByteArray(Base64ProfilePicture));
-                    Logger.LogTrace("Refreshed profile image data!", LoggerType.Kinkplates);
+                    Logger.LogTrace("Refreshed profile image data!", LoggerType.KinkPlates);
                 }
             }
         }

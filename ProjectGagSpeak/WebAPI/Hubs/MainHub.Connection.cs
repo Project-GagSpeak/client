@@ -372,7 +372,7 @@ public partial class MainHub
             if (!string.Equals(token, _latestToken, StringComparison.Ordinal))
             {
                 // The token was different due to changing secret keys between checks. 
-                _suppresssNextNotification = true;
+                _suppressNextNotification = true;
                 requireReconnect = true;
             }
         }
@@ -385,7 +385,7 @@ public partial class MainHub
         catch (Bagagwa ex) // Other generic exception, force a reconnect.
         {
             Logger.LogWarning(ex, "Could not refresh token, forcing reconnect");
-            _suppresssNextNotification = true;
+            _suppressNextNotification = true;
             requireReconnect = true;
         }
         // return if it was required or not at the end of this logic.
@@ -466,7 +466,7 @@ public partial class MainHub
     private void HubInstanceOnReconnecting(Exception? arg)
     {
         // Cancel our _hubHealthCTS, set status to reconnecting, and suppress the next sent notification.
-        _suppresssNextNotification = true;
+        _suppressNextNotification = true;
         _hubHealthCTS?.Cancel();
         ServerStatus = ServerState.Reconnecting;
 

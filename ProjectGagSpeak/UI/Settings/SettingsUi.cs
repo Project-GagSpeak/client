@@ -10,6 +10,7 @@ using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
@@ -24,22 +25,24 @@ namespace GagSpeak.Gui;
 public class SettingsUi : WindowMediatorSubscriberBase
 {
     private readonly MainHub _hub;
+    private readonly MainConfig _mainConfig;
     private readonly AccountManagerTab _accountsTab;
     private readonly DebugTab _debugTab;
     private readonly PiShockProvider _shockProvider;
     private readonly VfxSpawnManager _vfxSpawner;
-    private readonly MainConfig _mainConfig;
+    private readonly ClientDataListener _clientDatListener;
 
     public SettingsUi(ILogger<SettingsUi> logger, GagspeakMediator mediator, MainHub hub,
-        AccountManagerTab accounts, DebugTab debug, PiShockProvider shockProvider,
-        VfxSpawnManager vfxSpawner, MainConfig config) : base(logger, mediator, "GagSpeak Settings")
+        MainConfig config, AccountManagerTab accounts, DebugTab debug, PiShockProvider shockProvider,
+        VfxSpawnManager vfxSpawner, ClientDataListener listener) : base(logger, mediator, "GagSpeak Settings")
     {
         _hub = hub;
+        _mainConfig = config;
         _accountsTab = accounts;
         _debugTab = debug;
         _shockProvider = shockProvider;
         _vfxSpawner = vfxSpawner;
-        _mainConfig = config;
+        _clientDatListener = listener;
 
         Flags = WFlags.NoScrollbar;
         this.PinningClickthroughFalse();
@@ -416,15 +419,11 @@ public class SettingsUi : WindowMediatorSubscriberBase
                         return;
 
                     var shareCodePerms = await _shockProvider.GetPermissionsFromCode(globals.GlobalShockShareCode);
-                    var WithShockPerms = (GlobalPerms)ClientData.Globals! with 
-                    {
-                        AllowShocks = shareCodePerms.AllowShocks,
-                        AllowVibrations = shareCodePerms.AllowVibrations,
-                        AllowBeeps = shareCodePerms.AllowBeeps,
-                        MaxDuration = shareCodePerms.MaxDuration,
-                        MaxIntensity = shareCodePerms.MaxIntensity
-                    };
-                    await _hub.UserBulkChangeGlobal(new(MainHub.PlayerUserData, WithShockPerms, (HardcoreState)ClientData.Hardcore!));
+                    var newPerms = ClientData.GlobalsWithNewShockPermissions(shareCodePerms);
+                    var res = await _hub.UserBulkChangeGlobal(new(MainHub.PlayerUserData, newPerms, (HardcoreState)ClientData.Hardcore!));
+                    // be sure to invoke the changes manually when performed by self.
+                    if (res.ErrorCode is GagSpeakApiEc.Success)
+                        _clientDatListener.ChangeAllGlobalPerms(newPerms);
                 });
             }
             CkGui.AttachToolTip(GSLoc.Settings.MainOptions.PiShockShareCodeRefreshTT);

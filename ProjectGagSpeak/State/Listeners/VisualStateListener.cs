@@ -1,9 +1,11 @@
 using GagSpeak.Interop;
 using GagSpeak.Kinksters;
+using GagSpeak.MufflerCore.Handler;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
+using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
@@ -24,6 +26,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     private readonly RestraintManager       _restraints;
     private readonly RestrictionManager     _restrictions;
     private readonly GagRestrictionManager  _gags;
+    private readonly CollarManager          _collars;
     private readonly CursedLootManager      _cursedLoot;
     private readonly CacheStateManager      _cacheManager;
 
@@ -36,6 +39,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         RestraintManager restraints,
         RestrictionManager restrictions,
         GagRestrictionManager gags,
+        CollarManager collars,
         CursedLootManager cursedLoot,
         CacheStateManager cacheManager,
         OnFrameworkService frameworkUtils)
@@ -46,6 +50,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         _restraints = restraints;
         _restrictions = restrictions;
         _gags = gags;
+        _collars = collars;
         _cursedLoot = cursedLoot;
         _cacheManager = cacheManager;
     }
@@ -134,7 +139,6 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     #endregion Gag Manipulation
 
     #region Restrictions Manipulation
-
     public async Task SwapOrApplyRestriction(KinksterUpdateActiveRestriction itemData)
     {
         if (itemData.PreviousRestriction== Guid.Empty)
@@ -221,7 +225,6 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Applies a Restraint set to the client. </summary>
-    /// <remarks> It is assumed, since this is a callback, that this change is valid and allowed. </remarks>
     public async Task ApplyRestraint(KinksterUpdateActiveRestraint itemData)
     {
         if (!MainHub.IsConnectionDataSynced)
@@ -235,7 +238,6 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Updates the active Restraint Set's layers with a new configuration. Triggering removal and application of certain layers. </summary>
-    /// <remarks> It is assumed, since this is a callback, that this change is valid and allowed. </remarks>
     public async Task SwapRestraintLayers(KinksterUpdateActiveRestraint itemData)
     {
         if (!MainHub.IsConnectionDataSynced)
@@ -249,7 +251,6 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Applies a Restraint set layer(s) to the client. </summary>
-    /// <remarks> It is assumed, since this is a callback, that this change is valid and allowed. </remarks>
     public async Task ApplyRestraintLayers(KinksterUpdateActiveRestraint itemData)
     {
         if (!MainHub.IsConnectionDataSynced)
@@ -262,7 +263,6 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Locks the active restraint set. </summary>
-    /// <remarks> It is assumed, since this is a callback, that this change is valid and allowed. </remarks>
     public void LockRestraint(KinksterUpdateActiveRestraint itemData)
     {
         if (!MainHub.IsConnectionDataSynced)
@@ -273,7 +273,6 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Unlocks the active restraint set </summary>
-    /// <remarks> It is assumed, since this is a callback, that this change is valid and allowed. </remarks>
     public void UnlockRestraint(KinksterUpdateActiveRestraint itemData)
     {
         if (!MainHub.IsConnectionDataSynced)
@@ -284,7 +283,6 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Removes restraint layer(s) from the active restraint set. </summary>
-    /// <remarks> It is assumed, since this is a callback, that this change is valid and allowed. </remarks>
     public async Task RemoveRestraintLayers(KinksterUpdateActiveRestraint itemData)
     {
         if (!MainHub.IsConnectionDataSynced)
@@ -297,7 +295,6 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     /// <summary> Removes the active restraint. </summary>
-    /// <remarks> It is assumed, since this is a callback, that this change is valid and allowed. </remarks>
     public async Task RemoveRestraint(KinksterUpdateActiveRestraint itemData, bool updateVisuals = true)
     {
         if (!MainHub.IsConnectionDataSynced)
@@ -310,6 +307,56 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     }
 
     #endregion RestraintSet Manipulation
+
+    #region Collar Manipulation
+    public async Task ApplyCollar(KinksterUpdateActiveCollar collarData)
+    {
+        if (!MainHub.IsConnectionDataSynced)
+            return;
+
+        Logger.LogTrace("Received ApplyCollar instruction from server!", LoggerType.Collars);
+        // Apply the collar.
+        _collars.Apply(collarData);
+        // If the collar has visuals on, add it to the cache.
+        if (_collars.CollarWithVisualsActive && _collars.ServerCollarData!.Visuals)
+            await _cacheManager.AddCollar(_collars.ServerCollarData, _collars.ActiveCollarData!, collarData.Enactor);
+
+        PostActionMsg(collarData.Enactor.UID, InteractionType.ApplyCollar, "A Collar was applied to you!");
+    }
+
+    public async Task UpdateActiveCollar(KinksterUpdateActiveCollar collarData)
+    {
+        if (!MainHub.IsConnectionDataSynced || _collars.ServerCollarData is not { } syncedCollar)
+            return;
+        Logger.LogTrace($"Received {collarData.Type} instruction from server!", LoggerType.Collars);
+        var prevVisuals = syncedCollar.Visuals;
+        _collars.UpdateActive(collarData);
+        // if the visuals were turned on, add the collar item
+        if (!prevVisuals && syncedCollar.Visuals)
+            await _cacheManager.AddCollar(_collars.ServerCollarData, _collars.ActiveCollarData!, collarData.Enactor);
+        // if the visuals were turned off, remove the collar item
+        else if (prevVisuals && !syncedCollar.Visuals)
+            await _cacheManager.RemoveCollar(_collars.ActiveCollarData!, collarData.Enactor);
+        // if they were on after the update, update the visuals
+        else if (syncedCollar.Visuals)
+            await _cacheManager.UpdateCollar(_collars.ServerCollarData, _collars.ActiveCollarData!, collarData.Type, collarData.Enactor);
+
+        PostActionMsg(collarData.Enactor.UID, InteractionType.UpdateCollar, $"Active Collar had its SyncedData updated by {collarData.Enactor.AliasOrUID}");
+    }
+
+    public async Task RemoveCollar(KinksterUpdateActiveCollar collarData)
+    {
+        if (!MainHub.IsConnectionDataSynced)
+            return;
+        Logger.LogTrace("Received RemoveCollar instruction from server!", LoggerType.Collars);
+        GagSpeakCollar itemBeingRemoved =  _collars.ActiveCollarData!;
+        _collars.Remove(collarData);
+        // Try and remove it regardless. If the keys dont exist they will just be skipped anyways.
+        await _cacheManager.RemoveCollar(itemBeingRemoved, collarData.Enactor);
+
+        PostActionMsg(collarData.Enactor.UID, InteractionType.RemoveRestriction, "A Restriction item was removed from you!");
+    }
+    #endregion Collar Manipulation
 
     public async void ApplyStatusesByGuid(MoodlesApplierById dto)
     {

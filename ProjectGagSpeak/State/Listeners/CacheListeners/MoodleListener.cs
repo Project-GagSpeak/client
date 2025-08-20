@@ -7,22 +7,25 @@ using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Data;
 
 namespace GagSpeak.State.Listeners;
 
 public class MoodleListener : DisposableMediatorSubscriberBase
 {
     private readonly MoodleCache _cache;
+    private readonly IpcProvider _ipcProvider;
     private readonly IpcCallerMoodles _ipc;
     private readonly DataDistributionService _dds;
 
     private bool _isZoning = false;
 
     public MoodleListener(ILogger<MoodleListener> logger, GagspeakMediator mediator,
-        MoodleCache cache, IpcCallerMoodles ipc, DataDistributionService dds)
+        MoodleCache cache, IpcProvider ipcProvider, IpcCallerMoodles ipc, DataDistributionService dds)
         : base(logger, mediator)
     {
         _cache = cache;
+        _ipcProvider = ipcProvider;
         _ipc = ipc;
         _dds = dds;
 
@@ -125,18 +128,31 @@ public class MoodleListener : DisposableMediatorSubscriberBase
         Logger.LogTrace("NewData: " + string.Join("\n", MoodleCache.IpcData.DataInfo.Values.Select(x => $"{x.Title} | {x.Stacks} | {x.GUID}")), LoggerType.IpcMoodles);
 
         // Get the subset of moodles that are marked as restricted, but no longer in the latestManagerData.
-        var missingRequired = _cache.FinalStatusIds.Except(MoodleCache.IpcData.DataInfo.Keys);
-        if (missingRequired.Any())
+        var missingIds = _cache.FinalStatusIds.Except(MoodleCache.IpcData.DataInfo.Keys);
+        // Now locate which of these ids are tuples that need tuple reapplication.
+        var missingTuples = _cache.FinalMoodleItems.OfType<MoodleTuple>().Where(t => missingIds.Contains(t.Id)).Select(t => t.Tuple);
+        // remove those tuple id's from the missing ids.
+        missingIds = missingIds.Except(missingTuples.Select(t => t.GUID));
+        // Reapply the missing moodles by their GUID.
+        if (missingIds.Any())
         {
             Logger.LogInformation("Detected Bratty restrained user trying to click off locked Moodles. Reapplying!", LoggerType.IpcMoodles);
-            Logger.LogDebug("Reapplying Missing Required Moodles: " + string.Join(", ", missingRequired), LoggerType.IpcMoodles);
+            Logger.LogDebug("Reapplying Missing Required Moodles by ID: " + string.Join(", ", missingIds), LoggerType.IpcMoodles);
             // obtain the moodles that we need to reapply to the player from the expected moodles.
-            await _ipc.ApplyOwnStatusByGUID(missingRequired);
+            await _ipc.ApplyOwnStatusByGUID(missingIds);
             return;
 
             // MAINTAINERS NOTE:
             // You can effectively make use of the TryOnMoodleStatus event from GagSpeaks providers if you want to keep stacks.
             // For now im not doing this for the sake of keeping it made for its intended purpose. If that desire ever builds I can append it.
+        }
+        // reapply missing tuples.
+        if (missingTuples.Any())
+        {
+            Logger.LogInformation("Detected Bratty restrained user trying to click off locked Tuples. Reapplying!", LoggerType.IpcMoodles);
+            Logger.LogDebug("Reapplying Missing Required Tuples: " + string.Join(", ", missingTuples.Select(t => t.GUID)), LoggerType.IpcMoodles);
+            // obtain the tuples that we need to reapply to the player from the expected moodles.
+            _ipcProvider.ApplyStatusTuples(missingTuples);
         }
 
         Logger.LogTrace("Pushing IPC update to CacheCreation for processing", LoggerType.IpcMoodles);

@@ -1,3 +1,4 @@
+using GagSpeak.PlayerClient;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Dto.Sharehub;
@@ -256,10 +257,10 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushNewAllowances), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserBulkChangeGlobal(BulkChangeGlobal allGlobalPerms)
+    public async Task<HubResponse<ClientGlobals>> UserBulkChangeGlobal(BulkChangeGlobal allGlobalPerms)
     {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserBulkChangeGlobal), allGlobalPerms);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new ClientGlobals(new GlobalPerms(), new HardcoreState()));
+        return await _hubConnection!.InvokeAsync<HubResponse<ClientGlobals>>(nameof(UserBulkChangeGlobal), allGlobalPerms);
     }
 
     public async Task<HubResponse> UserBulkChangeUnique(BulkChangeUnique allUniquePermsForPair)

@@ -19,6 +19,23 @@ namespace GagSpeak.Utils;
 /// </summary>
 public static class PermissionHelper
 {
+    public static PairPerms WithSafewordApplied(this PairPerms perms)
+        => perms with
+        {
+            InHardcore = false,
+            DevotionalLocks = false,
+            AllowGarbleChannelEditing = false,
+            AllowLockedFollowing = false,
+            AllowLockedSitting = false,
+            AllowLockedEmoting = false,
+            AllowIndoorConfinement = false,
+            AllowImprisonment = false,
+            AllowHidingChatBoxes = false,
+            AllowHidingChatInput = false,
+            AllowChatInputBlocking = false,
+            AllowHypnoImageSending = false
+        };
+
     /// <summary>
     ///     Updates a client's own global permission client-side.
     ///     After the client-side change is made, it requests the change serverside.

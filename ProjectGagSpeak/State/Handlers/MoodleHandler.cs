@@ -38,6 +38,13 @@ public class MoodleHandler
         return _cache.AddMoodle(key, moodles);
     }
 
+    public bool TryUpdateMoodleInCache(CombinedCacheKey key, Moodle moodle)
+    {
+        if (moodle is null)
+            return false;
+        return _cache.UpdateMoodle(key, moodle);
+    }
+
     /// <summary> Remove a single key from the GlamourCache. </summary>
     public bool TryRemMoodleFromCache(CombinedCacheKey key)
         => _cache.RemoveMoodle(key);

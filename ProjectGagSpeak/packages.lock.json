@@ -116,6 +116,19 @@
           "Microsoft.IdentityModel.Tokens": "7.5.2"
         }
       },
+      "FlatSharp.Compiler": {
+        "type": "Transitive",
+        "resolved": "7.9.0",
+        "contentHash": "MU6808xvdbWJ3Ev+5PKalqQuzvVbn1DzzQH8txRDHGFUNDvHjd+ejqpvnYc9BSJ8Qp8VjkkpJD8OzRYilbPp3A=="
+      },
+      "FlatSharp.Runtime": {
+        "type": "Transitive",
+        "resolved": "7.9.0",
+        "contentHash": "Bm8+WqzEsWNpxqrD5x4x+zQ8dyINlToCreM5FI2oNSfUVc9U9ZB+qztX/jd8rlJb3r0vBSlPwVLpw0xBtPa3Vw==",
+        "dependencies": {
+          "System.Memory": "4.5.5"
+        }
+      },
       "JetBrains.Annotations": {
         "type": "Transitive",
         "resolved": "2024.3.0",
@@ -613,6 +626,8 @@
       "penumbra.gamedata": {
         "type": "Project",
         "dependencies": {
+          "FlatSharp.Compiler": "[7.9.0, )",
+          "FlatSharp.Runtime": "[7.9.0, )",
           "OtterGui": "[1.0.0, )",
           "Penumbra.Api": "[5.10.0, )",
           "Penumbra.String": "[1.0.6, )"

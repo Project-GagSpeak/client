@@ -64,6 +64,23 @@ public class MoodleCache
         return added;
     }
 
+    public bool UpdateMoodle(CombinedCacheKey key, Moodle newMoodle)
+    {
+        var originalKey = _moodles.Keys.FirstOrDefault(k => k.Item1.Equals(key));
+        if (!_moodles.ContainsKey(originalKey))
+        {
+            _logger.LogWarning($"Cannot update Moodle with Key [{key}], it does not exist in the Cache!");
+            return false;
+        }
+        // Remove the old entry
+        _moodles.Remove(originalKey);
+        // Add the new entry with the same CombinedCacheKey and new moodle's Id
+        _moodles.Add((originalKey.Item1, newMoodle.Id), newMoodle);
+
+        _logger.LogDebug($"Updated Moodle with Key [{key}] to new Moodle Id [{newMoodle.Id}]");
+        return true;
+    }
+
     /// <summary> Removes the <paramref name="key"/> from the Moodles Cache. </summary>
     public bool RemoveMoodle(CombinedCacheKey key)
         => RemoveMoodle([key]);

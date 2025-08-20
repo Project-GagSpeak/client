@@ -1,15 +1,14 @@
+using CkCommons.Gui;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
-using Dalamud.Utility;
+using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using Dalamud.Bindings.ImGui;
 using System.Globalization;
-using GagSpeak.Kinksters;
-using CkCommons.Gui;
 
 namespace GagSpeak.Gui.Profile;
 public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
@@ -18,7 +17,6 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
     private readonly KinkPlateService _profiles;
     private readonly CosmeticService _cosmetics;
     private readonly TextureService _textures;
-
 
     private bool ThemePushed = false;
     public KinkPlatePreviewUI(ILogger<KinkPlatePreviewUI> logger, GagspeakMediator mediator,
@@ -159,14 +157,8 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
 
     private void DrawIconSummary(ImDrawListPtr drawList, KinkPlate profile)
     {
-        int iconWidthPlusSpacing = 38;
+        var iconWidthPlusSpacing = 38;
         var iconOverviewPos = IconOverviewListPos;
-
-        drawList.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Vibrator], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
-        iconOverviewPos.X += iconWidthPlusSpacing;
-
-        drawList.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.ShockCollar], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
-        iconOverviewPos.X += iconWidthPlusSpacing;
 
         drawList.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Leash], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
         iconOverviewPos.X += iconWidthPlusSpacing;
@@ -174,10 +166,16 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
         drawList.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.LockedEmote], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
-        drawList.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.IndoorConfinement], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
+        drawList.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Confinement], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
+        iconOverviewPos.X += iconWidthPlusSpacing;
+
+        drawList.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Imprisonment], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
         iconOverviewPos.X += iconWidthPlusSpacing;
 
         drawList.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.ChatBlocked], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
+        iconOverviewPos.X += iconWidthPlusSpacing;
+
+        drawList.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.HypnoSpiral], iconOverviewPos, Vector2.One * 34, ImGuiColors.DalamudGrey3);
     }
 
     private void DrawDescription(ImDrawListPtr drawList, KinkPlate profile)
@@ -278,7 +276,7 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
 
         ImGui.SetCursorScreenPos(statsPos);
         var formattedDate = MainHub.PlayerUserData.CreatedOn ?? DateTime.MinValue;
-        string createdDate = formattedDate != DateTime.MinValue ? formattedDate.ToString("d", CultureInfo.CurrentCulture) : "MM-DD-YYYY";
+        var createdDate = formattedDate != DateTime.MinValue ? formattedDate.ToString("d", CultureInfo.CurrentCulture) : "MM-DD-YYYY";
 
         CkGui.ColorText(createdDate, ImGuiColors.ParsedGold);
         var textWidth = ImGui.CalcTextSize($"MM-DD-YYYY").X;

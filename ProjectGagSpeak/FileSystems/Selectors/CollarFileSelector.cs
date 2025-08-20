@@ -102,7 +102,7 @@ public sealed class CollarFileSelector : CkFileSystemSelector<GagSpeakCollar, Co
         Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Collar, leaf.Value.Identifier);
         CkGui.TextFrameAlignedInline(leaf.Value.Label);
         // Only draw the deletion if the item is not active or occupied.
-        if(!leaf.Value.Identifier.Equals(_manager.AppliedCollar?.Identifier))
+        if(!leaf.Value.Identifier.Equals(_manager.ServerCollarData?.Identifier))
         {
             ImGui.SameLine((rectMax.X - rectMin.X) - ImGui.GetFrameHeightWithSpacing());
             var pos = ImGui.GetCursorScreenPos();
@@ -125,21 +125,13 @@ public sealed class CollarFileSelector : CkFileSystemSelector<GagSpeakCollar, Co
 
     /// <summary> Add the state filter combo-button to the right of the filter box. </summary>
     protected override float CustomFiltersWidth(float width)
-    {
-        return width
-            - CkGui.IconButtonSize(FAI.Plus).X
-            - CkGui.IconButtonSize(FAI.FolderPlus).X
-            - ImGui.GetStyle().ItemInnerSpacing.X;
-    }
+        => width - CkGui.IconButtonSize(FAI.Plus).X - ImGui.GetStyle().ItemInnerSpacing.X;
 
     protected override void DrawCustomFilters()
     {
         if (CkGui.IconButton(FAI.Plus, inPopup: true))
             ImGui.OpenPopup("##NewCollar");
         CkGui.AttachToolTip("Create a new Collar Item.");
-
-        ImGui.SameLine(0, 1);
-        DrawFolderButton();
     }
 
     public override void DrawPopups()

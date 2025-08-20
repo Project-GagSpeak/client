@@ -1,210 +1,236 @@
-//using GagSpeak.Kinksters;
-//using GagSpeak.Services.Mediator;
-//using GagspeakAPI.Attributes;
-//using GagspeakAPI.Data;
-//using GagspeakAPI.Network;
+using Dalamud.Bindings.ImGui;
+using GagSpeak.Interop.Helpers;
+using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
+using GagSpeak.Services;
+using GagSpeak.Services.Mediator;
+using GagSpeak.State.Handlers;
+using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
+using GagspeakAPI.Data;
+using GagspeakAPI.Data.Permissions;
+using GagspeakAPI.Extensions;
+using GagspeakAPI.Network;
+using GagspeakAPI.Util;
 
-//namespace GagSpeak.State.Listeners;
+namespace GagSpeak.State.Listeners;
 
-///// <summary>
-/////     Listens for all incoming updates to the kinkster's data, navigating to the pair to edit, and applying changes. <para />
-/////     This will additionally listen for spesific actions performed by other kinksters, intended for you. (ex. Shocks, Hypnosis)
-///// </summary>
-//public sealed class GlobalsListener
-//{
-//    private readonly ILogger<GlobalsListener> _logger;
-//    private readonly KinksterManager _kinksters;
-//    public GlobalsListener(ILogger<GlobalsListener> logger, KinksterManager kinksters)
-//    {
-//        _logger = logger;
-//        _kinksters = kinksters;
-//    }
+/// <summary>
+///     Processes all changes to ClientData Globals and HardcoreState <para />
+///     Helps process Handler updates in addition to this.
+/// </summary>
+public sealed class ClientDataListener
+{
+    private readonly ILogger<ClientDataListener> _logger;
+    private readonly GagspeakMediator _mediator;
+    private readonly ClientData _data;
+    private readonly KinksterManager _kinksters;
+    private readonly PlayerControlHandler _handler;
+    private readonly NameplateService _nameplates;
+    public ClientDataListener(ILogger<ClientDataListener> logger, GagspeakMediator mediator,
+        ClientData data, KinksterManager kinksters, PlayerControlHandler handler,
+        NameplateService nameplate)
+    {
+        _logger = logger;
+        _mediator = mediator;
+        _data = data;
+        _handler = handler;
+        _kinksters = kinksters;
+        _nameplates = nameplate;
+    }
 
-//    public void NewIpcData(UserData targetUser, UserData enactor, CharaIPCData newData)
-//    {
-//        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-//        _logger.LogDebug($"Received Full IPC Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
-//        kinkster.UpdateActiveMoodles(enactor, newData.DataString, newData.DataInfoList);
-//        kinkster.SetNewMoodlesStatuses(enactor, newData.StatusList);
-//        kinkster.SetNewMoodlePresets(enactor, newData.PresetList);
-//    }
-//    public void NewIpcStatusManager(UserData targetUser, UserData enactor, string dataString, List<MoodlesStatusInfo> dataInfo)
-//    {
-//        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-//        _logger.LogTrace($"{kinkster.GetNickAliasOrUid()}'s Moodle StatusManager updated!", LoggerType.Callbacks);
-//        kinkster.UpdateActiveMoodles(enactor, dataString, dataInfo);
-//    }
-//    public void NewIpcStatuses(UserData targetUser, UserData enactor, List<MoodlesStatusInfo> statuses)
-//    {
-//        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-//        _logger.LogDebug($"Received IPC Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
-//        kinkster.SetNewMoodlesStatuses(enactor, statuses);
-//    }
-//    public void NewIpcPresets(UserData targetUser, UserData enactor, List<MoodlePresetInfo> newPresets)
-//    {
-//        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-//        _logger.LogDebug($"Received IPC Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
-//        kinkster.SetNewMoodlePresets(enactor, newPresets);
-//    }
+    public void ChangeAllClientGlobals(UserData enactor, GlobalPerms globals, HardcoreState hardcore)
+    {
+        var prevGlobals = ClientData.Globals;
+        var prevHardcore = ClientData.Hardcore;
+        _data.SetGlobals(globals, hardcore);
+        HandleGlobalPermChanges(enactor, prevGlobals, globals);
+        HandleHardcoreStateFullChange(enactor, prevHardcore, hardcore);
+    }
 
-//    public void NewActiveComposite(UserData targetUser, CharaCompositeActiveData data, bool safeword)
-//    {
-//        if(!_kinksters.TryGetKinkster(targetUser, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-//        _logger.LogDebug($"Received Composite Active Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
-//        kinkster.NewActiveCompositeData(data, safeword);
-//    }
+    // Could only ever be performed by the client.
+    public void ChangeAllGlobalPerms(GlobalPerms newGlobals)
+    {
+        var prevGlobals = ClientData.Globals;
+        _data.ChangeGlobalsBulkInternal(newGlobals);
+        HandleGlobalPermChanges(MainHub.PlayerUserData, prevGlobals, ClientData.Globals);
 
-//    public void NewActiveGags(KinksterUpdateActiveGag dto)
-//    {
-//        if (!_kinksters.TryGetKinkster(dto.User, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
-//        kinkster.NewActiveGagData(dto);
-//    }
+        _mediator.Publish(new EventMessage(new("Self-Update", MainHub.UID, InteractionType.BulkUpdate, "BULK UPDATE -> Global Permissions")));
+    }
 
-//    public void NewActiveRestriction(KinksterUpdateActiveRestriction dto)
-//    {
-//        if (!_kinksters.TryGetKinkster(dto.User, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
-//        kinkster.NewActiveRestrictionData(dto);
-//    }
+    public void ChangeGlobalPerm(UserData enactor, string permName, object newValue)
+    {
+        var prevGlobals = ClientData.Globals;
 
-//    public void NewActiveRestraint(KinksterUpdateActiveRestraint dto)
-//    {
-//        if (!_kinksters.TryGetKinkster(dto.User, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
-//        kinkster.NewActiveRestraintData(dto);
-//    }
+        // Find the nickname of the person enacting this change.
+        var kinkster = _kinksters.TryGetKinkster(enactor, out var k) ? k : null;
+        _data.ChangeGlobalPermInternal(enactor, permName, newValue, kinkster);
+        // Process global permission updates.
+        HandleGlobalPermChanges(enactor, prevGlobals, ClientData.Globals);
 
-//    public void NewActiveCollar(KinksterUpdateActiveCollar dto)
-//    {
-//        if (!_kinksters.TryGetKinkster(dto.User, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
-//        kinkster.NewActiveCollarData(dto);
-//    }
+        _mediator.Publish(new EventMessage(new(kinkster?.GetNickAliasOrUid() ?? "Self-Update", enactor.UID, InteractionType.ForcedPermChange, $"[{permName}] changed to [{newValue}]")));
+    }
 
-//    public void NewActiveCursedLoot(KinksterUpdateActiveCursedLoot dto)
-//    {
-//        if (!_kinksters.TryGetKinkster(dto.User, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
-//        kinkster.NewActiveCursedLoot(dto.ActiveItems, dto.ChangedItem);
-//    }
+    /// <summary>
+    ///     Either enables or disables a hardcore attribute within the hardcore state, making use of the newData object. <para />
+    ///     If enabling a hardcore state, <paramref name="newData"/> <b> MUST BE NON-NULL.</b>
+    /// </summary>
+    public void ChangeHardcoreState(UserData enactor, HcAttribute attribute, HardcoreState newData)
+    {
+        // if the attribute was hypno with a new state of active, fail. This MUST be handled separately.
+        if (attribute is HcAttribute.HypnoticEffect && newData.HypnoticEffect.Length > 0)
+            throw new InvalidOperationException("Cannot Enable Hypno effects via this method, must use HypnotizeKinkster!");
 
-//    public void NewAliasGlobal(UserData targetUser, Guid id, AliasTrigger? newData)
-//    {
-//        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-//        kinkster.NewGlobalAlias(id, newData);
-//    }
+        var prevState = ClientData.Hardcore;
+        // Find the kinkster for this change.
+        if (_kinksters.GetKinksterOrDefault(enactor) is not { } kinkster)
+            throw new InvalidOperationException($"Kinkster [{enactor.AliasOrUID}] not found.");
+        // Make the change.
+        _data.SetHardcoreState(enactor, attribute, newData, kinkster);
+        HandleHardcoreStateChange(enactor, attribute, prevState.IsEnabled(attribute), ClientData.Hardcore.IsEnabled(attribute));
 
-//    public void NewAliasUnique(UserData targetUser, Guid id, AliasTrigger? newData)
-//    {
-//        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-//        kinkster.NewUniqueAlias(id, newData);
-//    }
+        _mediator.Publish(new EventMessage(new(kinkster.GetNickAliasOrUid(), enactor.UID, InteractionType.HardcoreStateChange, $"[{attribute}] changed to [{newData.IsEnabled(attribute)}]")));
+    }
 
-//    public void NewValidToys(UserData targetUser, List<ToyBrandName> validToys)
-//    {
-//        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-//        kinkster.NewValidToys(validToys);
-//    }
+    public void InitRequests(ActiveRequests requests)
+    {
+        _data.InitRequests(requests.KinksterRequests, requests.CollarRequests);
+        _logger.LogInformation($"Init: [{requests.KinksterRequests.Count} PairRequests][{requests.CollarRequests.Count} CollarRequests]", LoggerType.ApiCore);
+        _mediator.Publish(new RefreshUiRequestsMessage());
+    }
 
-//    public void NewActivePattern(KinksterUpdateActivePattern dto)
-//    {
-//        if (!_kinksters.TryGetKinkster(dto.User, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
-//        kinkster.NewActivePattern(dto.Enactor, dto.ActivePattern, dto.Type);
-//    }
+    public void AddPairRequest(KinksterPairRequest dto)
+    {
+        _data.AddPairRequest(dto);
+        _logger.LogInformation("New pair request added!", LoggerType.PairManagement);
+        _mediator.Publish(new RefreshUiRequestsMessage());
+    }
 
-//    public void NewActiveAlarms(KinksterUpdateActiveAlarms dto)
-//    {
-//        if (!_kinksters.TryGetKinkster(dto.User, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
-//        kinkster.NewActiveAlarms(dto.Enactor, dto.ActiveAlarms, dto.Type);
-//    }
+    public void RemovePairRequest(KinksterPairRequest dto)
+    {
+        var res = _data.RemovePairRequest(dto);
+        _logger.LogInformation($"Removed [{res}] pair request.", LoggerType.PairManagement);
+        _mediator.Publish(new RefreshUiRequestsMessage());
+    }
 
-//    public void NewActiveTriggers(KinksterUpdateActiveTriggers dto)
-//    {
-//        if (!_kinksters.TryGetKinkster(dto.User, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
-//        kinkster.NewActiveTriggers(dto.Enactor, dto.ActiveTriggers, dto.Type);
-//    }
+    public void AddCollarRequest(CollarOwnershipRequest dto)
+    {
+        _data.AddCollarRequest(dto);
+        _logger.LogInformation("New collar request added!", LoggerType.PairManagement);
+        _mediator.Publish(new RefreshUiRequestsMessage());
+    }
 
-//    public void NewListenerName(UserData targetUser, string newName)
-//    {
-//        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
+    public void RemoveCollarRequest(CollarOwnershipRequest dto)
+    {
+        var res = _data.RemoveCollarRequest(dto);
+        _logger.LogInformation($"Removed [{res}] collar request.", LoggerType.PairManagement);
+        _mediator.Publish(new RefreshUiRequestsMessage());
+    }
 
-//        _logger.LogDebug($"Updating Listener name to [{newName}]", LoggerType.PairDataTransfer);
-//        kinkster.LastPairAliasData.StoredNameWorld = newName;
-//    }
+    // Bulk Change Handler.
+    private void HandleHardcoreStateFullChange(UserData enactor, IReadOnlyHardcoreState? prev, IReadOnlyHardcoreState? current)
+    {
+        HandleHardcoreStateChange(enactor, HcAttribute.Follow, prev.IsEnabled(HcAttribute.Follow), current.IsEnabled(HcAttribute.Follow));
+        HandleHardcoreStateChange(enactor, HcAttribute.EmoteState, prev.IsEnabled(HcAttribute.EmoteState), current.IsEnabled(HcAttribute.EmoteState));
+        HandleHardcoreStateChange(enactor, HcAttribute.Confinement, prev.IsEnabled(HcAttribute.Confinement), current.IsEnabled(HcAttribute.Confinement));
+        HandleHardcoreStateChange(enactor, HcAttribute.Imprisonment, prev.IsEnabled(HcAttribute.Imprisonment), current.IsEnabled(HcAttribute.Imprisonment));
+        HandleHardcoreStateChange(enactor, HcAttribute.HiddenChatBox, prev.IsEnabled(HcAttribute.HiddenChatBox), current.IsEnabled(HcAttribute.HiddenChatBox));
+        HandleHardcoreStateChange(enactor, HcAttribute.HiddenChatInput, prev.IsEnabled(HcAttribute.HiddenChatInput), current.IsEnabled(HcAttribute.HiddenChatInput));
+        HandleHardcoreStateChange(enactor, HcAttribute.BlockedChatInput, prev.IsEnabled(HcAttribute.BlockedChatInput), current.IsEnabled(HcAttribute.BlockedChatInput));
+        // only handle hypno if being disabled.
+        if (prev.IsEnabled(HcAttribute.HypnoticEffect) && !current.IsEnabled(HcAttribute.HypnoticEffect))
+            HandleHardcoreStateChange(enactor, HcAttribute.HypnoticEffect, true, false);
+    }
 
-//    public void CachedGagDataChange(UserData targetUser, GagType gagItem, LightGag? newData)
-//    {
-//        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-//        kinkster.LightCache.UpdateGagItem(gagItem, newData);
-//    }
+    // All Single Change handles for GlobalPermissions so far are just bools, which makes this easier for us.
+    public void HandleGlobalPermChanges(UserData enactor, IReadOnlyGlobalPerms? prev, IReadOnlyGlobalPerms? current)
+    {
+        bool garblerChanged = prev?.ChatGarblerActive != current?.ChatGarblerActive;
+        bool nameplateChanged = prev?.GaggedNameplate != current?.GaggedNameplate;
+        if (!garblerChanged && !nameplateChanged)
+            return;
+        // a change occurred, so update the nameplates.
+        _nameplates.RefreshClientGagState();
+    }
+    // Single Change Handler.
+    private void HandleHardcoreStateChange(UserData enactor, HcAttribute changed, bool prevState, bool newState)
+    {
+        // if from false to false nothing happened so just return.
+        if (!prevState && !newState)
+            return;
 
-//    public void CachedRestrictionDataChange(UserData targetUser, Guid itemId, LightRestriction? newData)
-//    {
-//        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-//        kinkster.LightCache.UpdateRestrictionItem(itemId, newData);
-//    }
+        switch (changed)
+        {
+            case HcAttribute.Follow when (!prevState && newState):
+                _handler.EnableLockedFollow(enactor);
+                break;
+            
+            case HcAttribute.Follow when (prevState && !newState):
+                _handler.DisableLockedFollow(enactor, true);
+                break;
+                
+            case HcAttribute.EmoteState when (!prevState && newState):
+                _handler.EnableLockedEmote(enactor);
+                break;
+            // Remember we can go from true to true here, and switch the emote being performed.
+            case HcAttribute.EmoteState when (prevState && newState):
+                _handler.UpdateLockedEmote(enactor);
+                break;
 
-//    public void CachedRestraintDataChange(UserData targetUser, Guid itemId, LightRestraint? newData)
-//    {
-//        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-//        kinkster.LightCache.UpdateRestraintItem(itemId, newData);
-//    }
+            case HcAttribute.EmoteState when (prevState && !newState):
+                _handler.DisableLockedEmote(enactor, true);
+                break;
 
-//    public void CachedCollarDataChange(UserData targetUser, Guid itemId, LightCollar? newData)
-//    {
-//        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-//        kinkster.LightCache.UpdateCollarItem(itemId, newData);
-//    }
+            case HcAttribute.Confinement when (!prevState && newState):
+                _handler.EnableConfinement(enactor, AddressBookEntry.FromHardcoreState(ClientData.Hardcore!));
+                break;
 
-//    public void CachedCursedLootDataChange(UserData targetUser, Guid itemId, LightCursedLoot? newData)
-//    {
-//        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-//        kinkster.LightCache.UpdateLootItem(itemId, newData);
-//    }
+            case HcAttribute.Confinement when (prevState && !newState):
+                _handler.DisableConfinement(enactor, true);
+                break;
 
-//    public void CachedPatternDataChange(UserData targetUser, Guid itemId, LightPattern? newData)
-//    {
-//        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-//        kinkster.LightCache.UpdatePatternItem(itemId, newData);
-//    }
+            case HcAttribute.Imprisonment when (!prevState && newState):
+                _handler.EnableImprisonment(enactor, ClientData.GetImprisonmentPos(), ClientData.Hardcore!.ImprisonedRadius);
+                break;
+            // Remember we can go from true to true here, and switch the imprisonment position.
+            case HcAttribute.Imprisonment when (prevState && newState):
+                _handler.UpdateImprisonment(enactor, ClientData.GetImprisonmentPos(), ClientData.Hardcore!.ImprisonedRadius);
+                break;
+            
+            case HcAttribute.Imprisonment when (prevState && !newState):
+                _handler.DisableImprisonment(enactor, true);
+                break;
 
-//    public void CachedAlarmDataChange(UserData targetUser, Guid itemId, LightAlarm? newData)
-//    {
-//        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-//        kinkster.LightCache.UpdateAlarmItem(itemId, newData);
-//    }
+            case HcAttribute.HiddenChatBox when (!prevState && newState):
+                _handler.EnableHiddenChatBoxes(enactor);
+                break;
 
-//    public void CachedTriggerDataChange(UserData targetUser, Guid itemId, LightTrigger? newData)
-//    {
-//        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-//        kinkster.LightCache.UpdateTriggerItem(itemId, newData);
-//    }
+            case HcAttribute.HiddenChatBox when (prevState && !newState):
+                _handler.DisableHiddenChatBoxes(enactor, true);
+                break;
 
-//    public void CachedAllowancesChange(UserData targetUser, GagspeakModule module, List<string> newAllowances)
-//    {
-//        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
-//            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-//        kinkster.LightCache.UpdateAllowances(module, newAllowances);
-//    }
-//}
+            case HcAttribute.HiddenChatInput when (!prevState && newState):
+                _handler.HideChatInputVisibility(enactor);
+                break;
+
+            case HcAttribute.HiddenChatInput when (prevState && !newState):
+                _handler.RestoreChatInputVisibility(enactor, true);
+                break;
+
+            case HcAttribute.BlockedChatInput when (!prevState && newState):
+                _handler.BlockChatInput(enactor);
+                break;
+
+            case HcAttribute.BlockedChatInput when (prevState && !newState):
+                _handler.UnblockChatInput(enactor, true);
+                break;
+
+            case HcAttribute.HypnoticEffect when (prevState && !newState):
+                _handler.RemoveHypnoEffect(enactor, true);
+                break;
+            // Throw an exception in ALL other cases.
+            default:
+                throw new NotImplementedException($"HcStateChange for [{changed}] from ({prevState}) to ({newState}) is not implemented!");
+        }
+    }
+}

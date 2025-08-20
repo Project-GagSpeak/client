@@ -2,16 +2,17 @@ using CkCommons;
 using CkCommons.Classes;
 using CkCommons.Gui;
 using CkCommons.Widgets;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using GagSpeak.Services;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Models;
-using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Extensions;
 using Penumbra.GameData.Enums;
+using Penumbra.GameData.Structs;
 
 namespace GagSpeak.State.Caches;
 
@@ -73,6 +74,20 @@ public class GlamourCache
             _glamours.TryAdd((combinedKey, item.Slot), item);
         }
 
+        return true;
+    }
+
+    public bool UpdateGlamourDyes(CombinedCacheKey combinedKey, EquipSlot slot, StainIds newDyes)
+    {
+        // if the key is not present, fail it.
+        if (!_glamours.TryGetValue((combinedKey, slot), out var glamItem))
+        {
+            _logger.LogWarning($"Cannot update GlamourSlot dyes at key [{combinedKey}] for slot [{slot}], it does not exist!");
+            return false;
+        }
+        // Update the dyes.
+        glamItem.GameStain = newDyes;
+        _logger.LogDebug($"GlamourCache ([{combinedKey}] - [{slot}]) updated dyes to [{newDyes.Stain1}, {newDyes.Stain2}]");
         return true;
     }
 

@@ -90,34 +90,50 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
         }
 
         if (_service.CurrentTab is InteractionsTab.KinkstersPerms)
-        {
             _kinksterPerms.DrawPermissions(Kinkster, DispName, width);
-        }
+
         else if (_service.CurrentTab is InteractionsTab.PermsForKinkster)
-        {
             _permsForKinkster.DrawPermissions(Kinkster, DispName, width);
-        }
+
         else if (_service.CurrentTab is InteractionsTab.Interactions)
-        {
             DrawInteractions(Kinkster, DispName, width);
-            _hcInteractions.DrawHardcoreActions(width, Kinkster, DispName);
-            _shockInteractions.DrawShockActions(width, Kinkster, DispName);
-        }
     }
 
     private void DrawInteractions(Kinkster k, string dispName, float width)
     {
         /* ----------- GLOBAL SETTINGS ----------- */
         DrawCommon(k, width, dispName);
+        ImGui.Separator();
 
         if (k.IsOnline)
         {
-            DrawGagActions(k, width, dispName); // done
-            DrawRestrictionActions(k, width, dispName); // done
-            DrawRestraintActions(k, width, dispName); // done
+            DrawGagActions(k, width, dispName);
+            ImGui.Separator();
+
+            DrawRestrictionActions(k, width, dispName);
+            ImGui.Separator();
+
+            DrawRestraintActions(k, width, dispName);
+            ImGui.Separator();
+
             DrawMoodlesActions(k, width, dispName);
+            ImGui.Separator();
+
             DrawToyboxActions(k, width, dispName);
-            DrawMiscActions(k, width, dispName); // done
+            ImGui.Separator();
+
+            DrawMiscActions(k, width, dispName);
+            ImGui.Separator();
+        }
+        if (k.PairPerms.InHardcore)
+        {
+            _hcInteractions.DrawHardcoreActions(width, k, dispName);
+            ImGui.Separator();
+        }
+        if (k.PairPerms.HasValidShareCode() || k.PairGlobals.HasValidShareCode())
+        {
+            _shockInteractions.DrawShockActions(width, k, dispName);
+            ImGui.Separator();
         }
 
         ImGui.TextUnformatted("Individual Pair Functions");
@@ -154,8 +170,6 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
                 Kinkster.ApplyLatestMoodles(forced: true);
             CkGui.AttachToolTip("This reapplies the latest data from Customize+ and Moodles");
         }
-
-        ImGui.Separator();
     }
 
     #region Gags
@@ -258,8 +272,6 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
                 });
             }
         }
-
-        ImGui.Separator();
     }
     #endregion Gags
 
@@ -357,7 +369,6 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
                 });
             }
         }
-        ImGui.Separator();
     }
     #endregion Restrictions
 
@@ -489,7 +500,6 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
                 });
             }
         }
-        ImGui.Separator();
     }
     #endregion Restraints
 
@@ -585,7 +595,6 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
             using (ImRaii.Child("RemoveMoodles", new Vector2(width, ImGui.GetFrameHeight())))
                 _service.ActiveStatuses.DrawRemoveStatuses("##ActivePairStatuses" + dispName, width, $"Removes Selected Status to {dispName}");
         }
-        ImGui.Separator();
     }
     #endregion Moodles
 
@@ -663,8 +672,6 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
             using (ImRaii.Child("TriggerToggle", new Vector2(width, ImGui.GetFrameHeight())))
                 _service.Triggers.Draw($"##ToggleTrigger-{k.UserData.UID}", width, "this Trigger");
         }
-
-        ImGui.Separator();
     }
     #endregion Toybox
 
@@ -695,8 +702,6 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 
             _service.DrawHypnosisEditor(width);
         }
-
-        ImGui.Separator();
     }
     #endregion Misc
 }

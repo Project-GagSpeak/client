@@ -5,6 +5,7 @@ using GagSpeak.Services;
 using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 using static CkCommons.GameDataHelp;
+using GagspeakAPI.Data.Permissions;
 
 namespace GagSpeak.Interop.Helpers;
 
@@ -39,6 +40,19 @@ public class AddressBookEntry
             ApartmentSubdivision = tuple.ApartmentSubdivision
         };
     }
+
+    public static AddressBookEntry FromHardcoreState(IReadOnlyHardcoreState hcState)
+        => new AddressBookEntry
+        {
+            Name = "HardcoreState-Assigned-Address",
+            World = hcState.ConfinedWorld,
+            City = (ResidentialAetheryteKind)hcState.ConfinedCity,
+            Ward = hcState.ConfinedWard,
+            PropertyType = hcState.ConfinedInApartment ? PropertyType.Apartment : PropertyType.House,
+            Plot = hcState.ConfinedInApartment ? 0 : hcState.ConfinedPlaceId,
+            Apartment = hcState.ConfinedInApartment ? hcState.ConfinedPlaceId : 0,
+            ApartmentSubdivision = hcState.ConfinedInSubdivision
+        };
 }
 
 // Allows us to decide where to lock a kinkster away at

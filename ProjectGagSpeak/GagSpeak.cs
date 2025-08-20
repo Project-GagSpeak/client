@@ -258,6 +258,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<GlamourListener>()
         .AddSingleton<ModListener>()
         .AddSingleton<MoodleListener>()
+        .AddSingleton<ClientDataListener>()
         .AddSingleton<PlayerHpListener>()
         .AddSingleton<IntifaceListener>()
         .AddSingleton<KinksterListener>()
