@@ -41,8 +41,8 @@ public sealed class ClientDataListener
 
     public void ChangeAllClientGlobals(UserData enactor, GlobalPerms globals, HardcoreState hardcore)
     {
-        var prevGlobals = ClientData.Globals;
-        var prevHardcore = ClientData.Hardcore;
+        var prevGlobals = ClientData.GlobalPermClone();
+        var prevHardcore = ClientData.HardcoreClone();
         _data.SetGlobals(globals, hardcore);
         HandleGlobalPermChanges(enactor, prevGlobals, globals);
         HandleHardcoreStateFullChange(enactor, prevHardcore, hardcore);
@@ -51,7 +51,7 @@ public sealed class ClientDataListener
     // Could only ever be performed by the client.
     public void ChangeAllGlobalPerms(GlobalPerms newGlobals)
     {
-        var prevGlobals = ClientData.Globals;
+        var prevGlobals = ClientData.GlobalPermClone();
         _data.ChangeGlobalsBulkInternal(newGlobals);
         HandleGlobalPermChanges(MainHub.PlayerUserData, prevGlobals, ClientData.Globals);
 
@@ -60,8 +60,7 @@ public sealed class ClientDataListener
 
     public void ChangeGlobalPerm(UserData enactor, string permName, object newValue)
     {
-        var prevGlobals = ClientData.Globals;
-
+        var prevGlobals = ClientData.GlobalPermClone();
         // Find the nickname of the person enacting this change.
         var kinkster = _kinksters.TryGetKinkster(enactor, out var k) ? k : null;
         _data.ChangeGlobalPermInternal(enactor, permName, newValue, kinkster);
@@ -81,13 +80,13 @@ public sealed class ClientDataListener
         if (attribute is HcAttribute.HypnoticEffect && newData.HypnoticEffect.Length > 0)
             throw new InvalidOperationException("Cannot Enable Hypno effects via this method, must use HypnotizeKinkster!");
 
-        var prevState = ClientData.Hardcore;
+        var prevState = ClientData.Hardcore.IsEnabled(attribute);
         // Find the kinkster for this change.
         if (_kinksters.GetKinksterOrDefault(enactor) is not { } kinkster)
             throw new InvalidOperationException($"Kinkster [{enactor.AliasOrUID}] not found.");
         // Make the change.
         _data.SetHardcoreState(enactor, attribute, newData, kinkster);
-        HandleHardcoreStateChange(enactor, attribute, prevState.IsEnabled(attribute), ClientData.Hardcore.IsEnabled(attribute));
+        HandleHardcoreStateChange(enactor, attribute, prevState, ClientData.Hardcore.IsEnabled(attribute));
 
         _mediator.Publish(new EventMessage(new(kinkster.GetNickAliasOrUid(), enactor.UID, InteractionType.HardcoreStateChange, $"[{attribute}] changed to [{newData.IsEnabled(attribute)}]")));
     }

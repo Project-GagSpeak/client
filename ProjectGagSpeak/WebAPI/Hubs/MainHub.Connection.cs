@@ -90,7 +90,7 @@ public partial class MainHub
                 await LoadOnlineKinksters().ConfigureAwait(false);
                 await LoadRequests().ConfigureAwait(false);
                 await _dataSync.SetClientDataForProfile().ConfigureAwait(false);
-                // once data is syncronized, update the serverStatus.
+                // once data is synchronized, update the serverStatus.
                 ServerStatus = ServerState.ConnectedDataSynced;
                 Mediator.Publish(new MainHubConnectedMessage());
 

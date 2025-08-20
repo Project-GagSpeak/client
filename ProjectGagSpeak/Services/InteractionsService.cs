@@ -279,15 +279,21 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
             _ => string.Empty
         };
 
-        if (!PadlockEx.TryParseTimeSpan(timerStr, out var newTime))
+        // Default to infinite.
+        var expireTimer = DateTimeOffset.MaxValue;
+        // if the timer is not null or whitespace try to parse it.
+        if (!string.IsNullOrWhiteSpace(timerStr))
         {
-            Logger.LogTrace($"Failed to parse time for {attribute} with value: {timerStr}");
-            return;
+            if (!PadlockEx.TryParseTimeSpan(timerStr, out var newTime))
+            {
+                Svc.Toasts.ShowError($"Failed to parse time for {attribute} with: [{timerStr}]");
+                return;
+            }
+            // Otherwise it is valid, so update expire timer.
+            expireTimer = DateTimeOffset.UtcNow.Add(newTime);
         }
 
         var enactingString = Kinkster!.PairPerms.DevotionalLocks ? $"{MainHub.UID}{Constants.DevotedString}" : MainHub.UID;
-        // create the new hardcore state based on the attribute.
-        var expireTimer = DateTimeOffset.UtcNow.Add(newTime);
         var newHcData = attribute switch
         {
             HcAttribute.Follow => Kinkster.PairHardcore with { LockedFollowing = enactingString },
@@ -340,7 +346,7 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
             }
             else
             {
-                Logger.LogDebug($"Changed {DispName}'s Hardcore State ({attribute}) to enabled for: {newTime.ToString()}", LoggerType.StickyUI);
+                Logger.LogDebug($"Changed {DispName}'s Hardcore State ({attribute}) to enabled [For {(expireTimer - DateTimeOffset.UtcNow)}]", LoggerType.StickyUI);
                 CloseInteraction();
             }
         });

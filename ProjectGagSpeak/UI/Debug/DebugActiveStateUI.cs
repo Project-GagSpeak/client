@@ -1,17 +1,23 @@
 using CkCommons.Classes;
 using CkCommons.Gui;
+using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
 using GagSpeak.Interop;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
 using GagSpeak.Utils;
-using Dalamud.Bindings.ImGui;
+using GagspeakAPI.Attributes;
+using GagspeakAPI.Extensions;
+using OtterGui;
 using OtterGui.Text;
+using System.Windows.Forms;
 
 namespace GagSpeak.Gui;
 
@@ -21,6 +27,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
     private static TriStateBoolCheckbox VisorCheckbox = new();
     private static TriStateBoolCheckbox WeaponCheckbox = new();
 
+    private readonly ClientData _clientData;
     private readonly EquipmentDrawer _equipDrawer;
     private readonly ModPresetDrawer _modDrawer;
     private readonly MoodleDrawer _moodleDrawer;
@@ -40,8 +47,9 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
     private readonly RemoteService _remotes;
     private readonly TextureService _iconTextures;
 
-    public DebugActiveStateUI(ILogger<DebugActiveStateUI> logger, 
+    public DebugActiveStateUI(ILogger<DebugActiveStateUI> logger,
         GagspeakMediator mediator,
+        ClientData clientData,
         EquipmentDrawer equipDrawer,
         ModPresetDrawer modDrawer,
         MoodleDrawer moodleDrawer,
@@ -62,6 +70,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         TextureService iconTextures)
         : base(logger, mediator, "Active State Debugger")
     {
+        _clientData = clientData;
         _equipDrawer = equipDrawer;
         _modDrawer = modDrawer;
         _moodleDrawer = moodleDrawer;
@@ -93,6 +102,9 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
     {
         if (ImGui.CollapsingHeader("Moodles IPC Status"))
             DrawMoodlesIpc();
+
+        if (ImGui.CollapsingHeader("Hardcore State"))
+            _clientData.DrawHardcoreState();
 
         ImGui.Separator();
         if (ImGui.CollapsingHeader("Glamour Cache"))
