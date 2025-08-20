@@ -31,6 +31,21 @@ public sealed class ClientData : IDisposable
         Svc.ClientState.Logout += OnLogout;
     }
 
+    public void Dispose()
+    {
+        OnLogout(0, 0);
+        Svc.ClientState.Logout -= OnLogout;
+    }
+
+    // Clear data contents on logout to ensure consistency between profiles.
+    private void OnLogout(int type, int code)
+    {
+        _logger.LogInformation("Clearing Global Permissions on Logout.");
+        SetGlobals(null, null);
+        _pairingRequests.Clear();
+        _collarRequests.Clear();
+    }
+
     private static GlobalPerms? _clientGlobals;
     private static HardcoreState? _clientHardcore;
     private HashSet<KinksterPairRequest> _pairingRequests = new();
@@ -47,28 +62,13 @@ public sealed class ClientData : IDisposable
     public IEnumerable<CollarOwnershipRequest> ReqCollarOutgoing => _collarRequests.Where(x => x.User.UID == MainHub.UID);
     public IEnumerable<CollarOwnershipRequest> ReqCollarIncoming => _collarRequests.Where(x => x.Target.UID == MainHub.UID);
 
-    public void Dispose()
-    {
-        OnLogout(0, 0);
-        Svc.ClientState.Logout -= OnLogout;
-    }
-
-    private void OnLogout(int type, int code)
-    {
-        _logger.LogInformation("Clearing Global Permissions on Logout.");
-        SetGlobals(null, null);
-        _pairingRequests.Clear();
-        _collarRequests.Clear();
-    }
-
     public static Vector3 GetImprisonmentPos()
         => _clientHardcore?.ImprisonedPos ?? Vector3.Zero;
 
-    public static GlobalPerms GlobalPermClone()
-        => (_clientGlobals ?? new GlobalPerms()) with { };
-
-    public static HardcoreState HardcoreClone()
-        => (_clientHardcore ?? new HardcoreState()) with { };
+    public static GlobalPerms? GlobalPermClone()
+        => _clientGlobals != null ? _clientGlobals with { } : null;
+    public static HardcoreState? HardcoreClone()
+        => _clientHardcore != null ? _clientHardcore with { } : null;
 
     public static GlobalPerms GlobalsWithNewShockPermissions(PiShockPermissions newPerms)
         => (_clientGlobals ?? new GlobalPerms()) with

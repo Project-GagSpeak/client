@@ -420,7 +420,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
                     var shareCodePerms = await _shockProvider.GetPermissionsFromCode(globals.GlobalShockShareCode);
                     var newPerms = ClientData.GlobalsWithNewShockPermissions(shareCodePerms);
-                    var res = await _hub.UserBulkChangeGlobal(new(MainHub.PlayerUserData, newPerms, (HardcoreState)ClientData.Hardcore!));
+                    var res = await _hub.UserBulkChangeGlobal(new(MainHub.PlayerUserData, newPerms, ClientData.HardcoreClone() ?? new HardcoreState()));
                     // be sure to invoke the changes manually when performed by self.
                     if (res.ErrorCode is GagSpeakApiEc.Success)
                         _clientDatListener.ChangeAllGlobalPerms(newPerms);

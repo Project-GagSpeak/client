@@ -12,6 +12,7 @@ using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
 using GagspeakAPI.Util;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak.State.Listeners;
 
@@ -19,7 +20,7 @@ namespace GagSpeak.State.Listeners;
 ///     Processes all changes to ClientData Globals and HardcoreState <para />
 ///     Helps process Handler updates in addition to this.
 /// </summary>
-public sealed class ClientDataListener
+public sealed class ClientDataListener : IDisposable
 {
     private readonly ILogger<ClientDataListener> _logger;
     private readonly GagspeakMediator _mediator;
@@ -37,15 +38,40 @@ public sealed class ClientDataListener
         _handler = handler;
         _kinksters = kinksters;
         _nameplates = nameplate;
+        Svc.ClientState.Logout += OnLogout;
     }
 
+    public void Dispose()
+    {
+        OnLogout(0, 0);
+        Svc.ClientState.Logout -= OnLogout;
+    }
+
+    // Disable all ClientGlobals handlers upon logout to ensure
+    // consistency between profiles. (Do not fire achievements)
+    private void OnLogout(int type, int code)
+    {
+        _logger.LogInformation("Disabling all ClientGlobals handlers on logout.");
+        _handler.DisableLockedFollow(MainHub.PlayerUserData, false);
+        _handler.DisableLockedEmote(MainHub.PlayerUserData, false);
+        _handler.DisableConfinement(MainHub.PlayerUserData, false);
+        _handler.DisableImprisonment(MainHub.PlayerUserData, false);
+        _handler.DisableHiddenChatBoxes(MainHub.PlayerUserData, false);
+        _handler.RestoreChatInputVisibility(MainHub.PlayerUserData, false);
+        _handler.UnblockChatInput(MainHub.PlayerUserData, false);
+        _handler.RemoveHypnoEffect(MainHub.PlayerUserData, false);
+    }
+
+    // Only ever self-invoked, all handlers should process their own strings.
     public void ChangeAllClientGlobals(UserData enactor, GlobalPerms globals, HardcoreState hardcore)
     {
         var prevGlobals = ClientData.GlobalPermClone();
         var prevHardcore = ClientData.HardcoreClone();
         _data.SetGlobals(globals, hardcore);
         HandleGlobalPermChanges(enactor, prevGlobals, globals);
-        HandleHardcoreStateFullChange(enactor, prevHardcore, hardcore);
+        // Resync Hardcore State Changes. (Skip UNKNOWN and HYPNO-EFFECT)
+        foreach (var attr in Enum.GetValues<HcAttribute>().Skip(1).SkipLast(1))
+            HandleHardcoreStateChange(new(hardcore.Enactor(attr)), attr, prevHardcore.IsEnabled(attr), hardcore.IsEnabled(attr));
     }
 
     // Could only ever be performed by the client.
@@ -126,20 +152,6 @@ public sealed class ClientDataListener
         _mediator.Publish(new RefreshUiRequestsMessage());
     }
 
-    // Bulk Change Handler.
-    private void HandleHardcoreStateFullChange(UserData enactor, IReadOnlyHardcoreState? prev, IReadOnlyHardcoreState? current)
-    {
-        HandleHardcoreStateChange(enactor, HcAttribute.Follow, prev.IsEnabled(HcAttribute.Follow), current.IsEnabled(HcAttribute.Follow));
-        HandleHardcoreStateChange(enactor, HcAttribute.EmoteState, prev.IsEnabled(HcAttribute.EmoteState), current.IsEnabled(HcAttribute.EmoteState));
-        HandleHardcoreStateChange(enactor, HcAttribute.Confinement, prev.IsEnabled(HcAttribute.Confinement), current.IsEnabled(HcAttribute.Confinement));
-        HandleHardcoreStateChange(enactor, HcAttribute.Imprisonment, prev.IsEnabled(HcAttribute.Imprisonment), current.IsEnabled(HcAttribute.Imprisonment));
-        HandleHardcoreStateChange(enactor, HcAttribute.HiddenChatBox, prev.IsEnabled(HcAttribute.HiddenChatBox), current.IsEnabled(HcAttribute.HiddenChatBox));
-        HandleHardcoreStateChange(enactor, HcAttribute.HiddenChatInput, prev.IsEnabled(HcAttribute.HiddenChatInput), current.IsEnabled(HcAttribute.HiddenChatInput));
-        HandleHardcoreStateChange(enactor, HcAttribute.BlockedChatInput, prev.IsEnabled(HcAttribute.BlockedChatInput), current.IsEnabled(HcAttribute.BlockedChatInput));
-        // only handle hypno if being disabled.
-        if (prev.IsEnabled(HcAttribute.HypnoticEffect) && !current.IsEnabled(HcAttribute.HypnoticEffect))
-            HandleHardcoreStateChange(enactor, HcAttribute.HypnoticEffect, true, false);
-    }
 
     // All Single Change handles for GlobalPermissions so far are just bools, which makes this easier for us.
     public void HandleGlobalPermChanges(UserData enactor, IReadOnlyGlobalPerms? prev, IReadOnlyGlobalPerms? current)
@@ -227,6 +239,11 @@ public sealed class ClientDataListener
             case HcAttribute.HypnoticEffect when (prevState && !newState):
                 _handler.RemoveHypnoEffect(enactor, true);
                 break;
+
+            case HcAttribute.HypnoticEffect:
+                // do nothing here, but keep it for the bulk change application.
+                break;
+
             // Throw an exception in ALL other cases.
             default:
                 throw new NotImplementedException($"HcStateChange for [{changed}] from ({prevState}) to ({newState}) is not implemented!");
