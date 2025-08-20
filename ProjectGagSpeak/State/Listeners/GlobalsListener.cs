@@ -1,4 +1,3 @@
-using Dalamud.Bindings.ImGui;
 using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
@@ -11,8 +10,6 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
-using GagspeakAPI.Util;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.State.Listeners;
 
@@ -20,7 +17,7 @@ namespace GagSpeak.State.Listeners;
 ///     Processes all changes to ClientData Globals and HardcoreState <para />
 ///     Helps process Handler updates in addition to this.
 /// </summary>
-public sealed class ClientDataListener : IDisposable
+public sealed class ClientDataListener
 {
     private readonly ILogger<ClientDataListener> _logger;
     private readonly GagspeakMediator _mediator;
@@ -38,18 +35,13 @@ public sealed class ClientDataListener : IDisposable
         _handler = handler;
         _kinksters = kinksters;
         _nameplates = nameplate;
-        Svc.ClientState.Logout += OnLogout;
     }
 
-    public void Dispose()
-    {
-        OnLogout(0, 0);
-        Svc.ClientState.Logout -= OnLogout;
-    }
-
-    // Disable all ClientGlobals handlers upon logout to ensure
-    // consistency between profiles. (Do not fire achievements)
-    private void OnLogout(int type, int code)
+    /// <summary>
+    ///     Indented to be called by <see cref="MainHub"/> during its <see cref="OnLogout"/> method. <para />
+    ///     Ensures <seealso cref="MainHub.PlayerUserData"/> is valid during call.
+    /// </summary>
+    public void OnLogout()
     {
         _logger.LogInformation("Disabling all ClientGlobals handlers on logout.");
         _handler.DisableLockedFollow(MainHub.PlayerUserData, false);
@@ -156,8 +148,8 @@ public sealed class ClientDataListener : IDisposable
     // All Single Change handles for GlobalPermissions so far are just bools, which makes this easier for us.
     public void HandleGlobalPermChanges(UserData enactor, IReadOnlyGlobalPerms? prev, IReadOnlyGlobalPerms? current)
     {
-        bool garblerChanged = prev?.ChatGarblerActive != current?.ChatGarblerActive;
-        bool nameplateChanged = prev?.GaggedNameplate != current?.GaggedNameplate;
+        var garblerChanged = prev?.ChatGarblerActive != current?.ChatGarblerActive;
+        var nameplateChanged = prev?.GaggedNameplate != current?.GaggedNameplate;
         if (!garblerChanged && !nameplateChanged)
             return;
         // a change occurred, so update the nameplates.

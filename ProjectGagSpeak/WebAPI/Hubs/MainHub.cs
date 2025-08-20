@@ -168,6 +168,8 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     private async void OnLogout()
     {
         Logger.LogInformation("Stopping connection on logout", LoggerType.ApiCore);
+        // disable all hardcore related states.
+        _clientDatListener.OnLogout();
         await Disconnect(ServerState.Disconnected).ConfigureAwait(false);
         // switch the server state to offline.
         ServerStatus = ServerState.Offline;
