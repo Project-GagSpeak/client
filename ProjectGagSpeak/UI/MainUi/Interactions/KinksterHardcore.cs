@@ -1,172 +1,203 @@
 using CkCommons;
 using CkCommons.Gui;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
-using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
+using OtterGui;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.MainWindow;
 
 // Helper methods for drawing out the hardcore actions.
-public class KinksterHardcore
+public class KinksterHardcore(InteractionsService service)
 {
-    private readonly ILogger<KinksterHardcore> _logger;
-    private readonly MainHub _hub;
-    private readonly InteractionsService _service;
-
-    public KinksterHardcore(ILogger<KinksterHardcore> logger, MainHub hub, InteractionsService service)
-    {
-        _logger = logger;
-        _hub = hub;
-        _service = service;
-    }
-
     public void DrawHardcoreActions(float width, Kinkster k, string dispName)
     {
         ImGui.TextUnformatted("Hardcore Actions");
         var hc = k.PairHardcore;
+        var enactingString = k.PairPerms.DevotionalLocks ? $"{MainHub.UID}{Constants.DevotedString}" : MainHub.UID;
 
-        var inRange = PlayerData.Available && k.VisiblePairGameObject is { } vo && PlayerData.DistanceTo(vo) < 3;
-        var pairlockTag = k.PairPerms.PairLockedStates ? Constants.DevotedString : string.Empty;
-
-        (FAI Icon, string Text) hcLabel = hc.IsEnabled(HcAttribute.Follow)
-            ? (FAI.StopCircle, $"Have {dispName} stop following you.") 
-            : (FAI.PersonWalkingArrowRight, $"Make {dispName} follow you.");
-        if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !inRange || !k.PairPerms.AllowLockedFollowing || !k.IsVisible || !hc.CanChange(HcAttribute.Follow, MainHub.UID), "##HcLockedFollowing"))
+        // ------ Locked Following ------
+        var followEnabled = hc.LockedFollowing.Length > 0;
+        var followIcon = followEnabled ? FAI.StopCircle : FAI.PersonWalkingArrowRight;
+        var followText = followEnabled ? $"Have {dispName} stop following you." : $"Make {dispName} follow you.";
+        var inRange = PlayerData.Available && k.VisiblePairGameObject is { } vo && PlayerData.DistanceTo(vo) < 5;
+        var followDis = !inRange || !k.PairPerms.AllowLockedFollowing || !k.IsVisible || !hc.CanChange(HcAttribute.Follow, MainHub.UID);
+        var followTT = followEnabled ? $"Allow {dispName} to stop following you." : $"Force {dispName} to follow you.--NL----COL--Effect expires when idle for over 6 seconds.--COL--";
+        DrawColoredExpander(InteractionType.LockedFollow, followIcon, followText, followEnabled, followDis, followTT);
+        if (service.OpenItem is InteractionType.LockedFollow)
         {
-            var newStr = hc.IsEnabled(HcAttribute.Follow) ? string.Empty : $"{MainHub.UID}{pairlockTag}";
-            _logger.LogWarning("Method not yet implemented for Locked Following!");
-            //UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, hc, nameof(GlobalPerms.LockedFollowing), newStr));
+            if (ImGuiUtil.DrawDisabledButton("Enable Locked Follow", new Vector2(width, ImGui.GetFrameHeight()), string.Empty, followDis))
+                service.TryEnableHardcoreAction(HcAttribute.Follow);
+            CkGui.AttachToolTip($"Force {dispName} to follow you! (--COL--{dispName} must be within 5 yalms--COL--)", ImGuiColors.ParsedPink);
+            ImGui.Separator();
         }
 
-        // ForceEmote is a special child...
-        DrawLockedEmoteSection(k, width, dispName, pairlockTag);
-
-
-        //hcLabel = hc.HcConfinedState() ? (FAI.StopCircle, $"Release {dispName}.") : (FAI.HouseLock, $"Lock {dispName} away.");
-        //if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !k.PairPerms.AllowIndoorConfinement || !hc.CanChangeHcConfined(MainHub.UID), "##HcForcedStay"))
-        //{
-        //    var newStr = hc.HcConfinedState() ? string.Empty : $"{MainHub.UID}{pairlockTag}";
-        //    UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, kg, nameof(GlobalPerms.IndoorConfinement), newStr));
-        //}
-
-        //// Hiding chat message history window, but still allowing typing.
-        //hcLabel = hc.HcChatVisState() ? (FAI.StopCircle, $"Make {dispName}'s Chat Visible.") : (FAI.CommentSlash, $"Hide {dispName}'s Chat Window.");
-        //if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !k.PairPerms.AllowHidingChatBoxes || !hc.CanChangeHcChatVis(MainHub.UID), "##HcForcedChatVis"))
-        //{
-        //    var newStr = hc.HcChatVisState() ? string.Empty : $"{MainHub.UID}{pairlockTag}";
-        //    UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, kg, nameof(GlobalPerms.ChatBoxesHidden), newStr));
-        //}
-
-        //// Hiding Chat input, but still allowing typing.
-        //hcLabel = hc.HcChatInputVisState() ? (FAI.StopCircle, $"Make {dispName}'s Chat Input Visible.") : (FAI.CommentSlash, $"Hide {dispName}'s Chat Input.");
-        //if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !k.PairPerms.AllowHidingChatInput || !hc.CanChangeHcChatInputVis(MainHub.UID), "##HcForcedChatInputVis"))
-        //{
-        //    var newStr = hc.HcChatInputVisState() ? string.Empty : $"{MainHub.UID}{pairlockTag}";
-        //    UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, kg, nameof(GlobalPerms.ChatInputHidden), newStr));
-        //}
-
-        //// Preventing Chat Input at all.
-        //hcLabel = hc.HcBlockChatInputState() ? (FAI.StopCircle, $"Reallow {dispName}'s Chat Input.") : (FAI.CommentDots, $"Block {dispName}'s Chat Input.");
-        //if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !k.PairPerms.AllowChatInputBlocking || !hc.CanChangeHcBlockChatInput(MainHub.UID), "##HcForcedChatBlocking"))
-        //{
-        //    var newStr = hc.HcBlockChatInputState() ? string.Empty : $"{MainHub.UID}{pairlockTag}";
-        //    UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, kg, nameof(GlobalPerms.ChatInputBlocked), newStr));
-        //}
-
-        //ImGui.Separator();
-    }
-
-    // USE THESE FOR CHANGES, HARDCORE ACTIONS CANNOT BE GENERALIZED, THEY ARE ALL UNIQUE.
-    private void LockedFollowInternal(float width, Kinkster k, string dispName)
-    {
-
-    }
-
-    private void IndoorConfinementInternal(float width, Kinkster k, string dispName)
-    {
-
-    }
-
-    private void ImprisonmentInternal(float width, Kinkster k, string dispName)
-    {
-
-    }
-
-    private void ChatboxHidingInternal(float width, Kinkster k, string dispName)
-    {
-
-    }
-
-    private void ChatInputHidingInternal(float width, Kinkster k, string dispName)
-    {
-
-    }
-
-    private void ChatInputBlockingInternal(float width, Kinkster k, string dispName)
-    {
-
-    }
-
-    private void DrawLockedEmoteSection(Kinkster k, float width, string dispName, string pairlockTag)
-    {
-        // What to display if we cant do LockedEmote
-        if (k.PairHardcore.IsEnabled(HcAttribute.EmoteState))
+        // ------ Locked Emote State ------
+        var emoteActive = hc.ChatBoxesHidden.Length > 0;
+        var emoteInfo = emoteActive ? (FAI.StopCircle, $"Free {dispName}'s Locked Emote State.") : k.PairPerms.AllowLockedEmoting 
+            ? (FAI.PersonArrowDownToLine, $"Force {dispName} into an Emote State.") : (FAI.Chair, $"Force {dispName} to Sit.");
+        var emoteDis = (!k.PairPerms.AllowLockedSitting && !k.PairPerms.AllowLockedEmoting) || !hc.CanChange(HcAttribute.EmoteState, MainHub.UID);
+        DrawColoredExpander(InteractionType.LockedEmoteState, emoteInfo.Item1, emoteInfo.Item2, emoteActive, emoteDis, emoteInfo.Item2);
+        if (service.OpenItem is InteractionType.LockedEmoteState)
         {
-            if (CkGui.IconTextButton(FAI.StopCircle, $"Let {dispName} move again.", width, true, id: "##HcForcedStay"))
-            {
-                _logger.LogWarning("NEED TO REIMPLEMENT THIS STILL");
-                //UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, k.PairGlobals, nameof(H.LockedEmoteState), string.Empty));
-                _service.CloseInteraction();
-            }
-            CkGui.AttachToolTip($"Release {dispName} from forced emote state.");
-            return;
+            DrawEmoteChild(width, k, dispName, emoteDis);
+            ImGui.Separator();
         }
 
-        // If we can do LockedEmote, display options.
-        (FAI Icon, string Text) hcLabel = k.PairPerms.AllowLockedEmoting ? (FAI.PersonArrowDownToLine, $"Force {dispName} into an Emote State.") : (FAI.Chair, $"Force {dispName} to Sit.");
-        if (CkGui.IconTextButton(hcLabel.Icon, hcLabel.Text, width, true, !k.PairPerms.AllowLockedSitting && k.PairHardcore.CanChange(HcAttribute.EmoteState, MainHub.UID), "##HcLockedEmote"))
-            _service.ToggleInteraction(InteractionType.LockedEmoteState);
-        CkGui.AttachToolTip($"Force {dispName} to perform any {(k.PairPerms.AllowLockedEmoting ? "looped emote state" : "sitting or cycle pose state")}.");
-
-        if (_service.OpenItem is not InteractionType.LockedEmoteState)
-            return;
-
-        using (ImRaii.Child("LockedEmoteState", new Vector2(width, ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y)))
+        // ------ Locked Confinement ------
+        var confinementActive = hc.IndoorConfinement.Length > 0;
+        var confinementInfo = confinementActive ? (FAI.StopCircle, $"Release {dispName} from Confinement.") : (FAI.HouseLock, $"Lock {dispName} away indoors.");
+        var confinementDis = !k.PairPerms.AllowIndoorConfinement || !hc.CanChange(HcAttribute.Confinement, MainHub.UID);
+        var confinementTT = confinementActive ? $"Allow {dispName} to leave their indoor confinement." : $"Confinement {dispName} indoors.";
+        DrawColoredExpander(InteractionType.Confinement, confinementInfo.Item1, confinementInfo.Item2, confinementActive, confinementDis, confinementTT);
+        if (service.OpenItem is InteractionType.Confinement)
         {
-            var comboWidth = width - CkGui.IconTextButtonSize(FAI.PersonRays, "Force State") - ImGui.GetStyle().ItemInnerSpacing.X;
-            // Handle Emote Stuff.
-            var emoteList = k.PairPerms.AllowLockedEmoting ? EmoteExtensions.LoopedEmotes() : EmoteExtensions.SittingEmotes();
-            _service.Emotes.Draw("##LockedEmoteCombo", _service.EmoteId, comboWidth, 1.3f);
-            // Handle Cycle Poses
-            var canSetCyclePose = EmoteService.IsAnyPoseWithCyclePose((ushort)_service.Emotes.Current.RowId);
-            var maxCycles = canSetCyclePose ? EmoteService.CyclePoseCount((ushort)_service.Emotes.Current.RowId) : 0;
-            if (!canSetCyclePose) _service.CyclePose = 0;
-            using (ImRaii.Disabled(!canSetCyclePose))
+            using (ImRaii.Child("ConfinementChild", new Vector2(width, ImGui.GetFrameHeight())))
+                DrawTimerButtonRow(InteractionType.Confinement, ref service.ConfinementTimer, confinementDis);
+            ImGui.Separator();
+        }
+
+        // ------ Locked Imprisonment ------
+        var imprisonmentActive = hc.Imprisonment.Length > 0;
+        var imprisonmentInfo = imprisonmentActive ? (FAI.StopCircle, $"Release {dispName} from Imprisonment.") : (FAI.HouseLock, $"Imprison {dispName} indoors.");
+        var imprisonmentDis = !k.PairPerms.AllowImprisonment || !hc.CanChange(HcAttribute.Imprisonment, MainHub.UID);
+        var imprisonmentTT = imprisonmentActive ? $"Allow {dispName} to leave their imprisonment." : $"Imprison {dispName} indoors.";
+        DrawColoredExpander(InteractionType.Imprisonment, imprisonmentInfo.Item1, imprisonmentInfo.Item2, imprisonmentActive, imprisonmentDis, imprisonmentTT);
+        if (service.OpenItem is InteractionType.Imprisonment)
+        {
+            using (ImRaii.Child("ImprisonmentChild", new Vector2(width, ImGui.GetFrameHeight())))
+                DrawTimerButtonRow(InteractionType.Imprisonment, ref service.ImprisonTimer, imprisonmentDis);
+            ImGui.Separator();
+        }
+
+        // ------ Chat Box Hiding ------
+        var chatHideActive = hc.ChatBoxesHidden.Length > 0;
+        var chatHideInfo = chatHideActive ? (FAI.StopCircle, $"Make {dispName}'s Chat Visible.") : (FAI.CommentSlash, $"Hide {dispName}'s Chat Window.");
+        var chatHideDis = !k.PairPerms.AllowHidingChatBoxes || !hc.CanChange(HcAttribute.HiddenChatBox, MainHub.UID);
+        var chatHideTT = chatHideActive ? $"Restore {dispName}'s chatbox visibility." : $"Conceal {dispName}'s ChatBox from their UI.";
+        DrawColoredExpander(InteractionType.ChatBoxHiding, chatHideInfo.Item1, chatHideInfo.Item2, chatHideActive, chatHideDis, chatHideTT);
+        if (service.OpenItem is InteractionType.ChatBoxHiding)
+        {
+            using (ImRaii.Child("HiddenChatBoxesChild", new Vector2(width, ImGui.GetFrameHeight())))
+                DrawTimerButtonRow(InteractionType.ChatBoxHiding, ref service.ChatBoxHideTimer, chatHideDis);
+            ImGui.Separator();
+        }
+
+        // ------ Chat Input Hiding ------
+        var chatIptHideActive = hc.ChatInputHidden.Length > 0;
+        var chatIptHideInfo = chatIptHideActive ? (FAI.StopCircle, $"Make {dispName}'s Chat Input Visible.") : (FAI.CommentSlash, $"Hide {dispName}'s Chat Input.");
+        var chatIptHideDis = !k.PairPerms.AllowHidingChatInput || !hc.CanChange(HcAttribute.HiddenChatInput, MainHub.UID);
+        var chatIptHideTT = chatIptHideActive ? $"Restore {dispName}'s chat input visibility." : $"Conceal {dispName}'s chat input." +
+            $"--NL----COL--NOTE:--COL-- {dispName} can still type, just can't see it~";
+        DrawColoredExpander(InteractionType.ChatInputHiding, chatIptHideInfo.Item1, chatIptHideInfo.Item2, chatIptHideActive, chatIptHideDis, chatIptHideTT);
+        if (service.OpenItem is InteractionType.ChatInputHiding)
+        {
+            using (ImRaii.Child("HiddenChatInputChild", new Vector2(width, ImGui.GetFrameHeight())))
+                DrawTimerButtonRow(InteractionType.ChatInputHiding, ref service.ChatInputHideTimer, chatIptHideDis);
+            ImGui.Separator();
+        }
+
+        // ------ Chat Input Blocking ------
+        var chatIptBlockActive = hc.ChatInputHidden.Length > 0;
+        var chatIptBlockInfo = chatIptBlockActive ? (FAI.StopCircle, $"Reallow {dispName}'s Chat Input.") : (FAI.CommentDots, $"Block {dispName}'s Chat Input.");
+        var chatIptBlockDis = !k.PairPerms.AllowHidingChatInput || !hc.CanChange(HcAttribute.BlockedChatInput, MainHub.UID);
+        var chatIptBlockTT = chatIptBlockActive ? $"Unblock {dispName}'s chat access." : $"Block {dispName}'s chat access." +
+            $"--NL----COL--WARNING:--COL-- This prevents ANY TYPING." +
+            $"--SEP----COL--CTRL+ALT+BACKSPACE--COL-- is the emergency safeword!";
+        DrawColoredExpander(InteractionType.ChatInputBlocking, chatIptBlockInfo.Item1, chatIptBlockInfo.Item2, chatIptBlockActive, chatIptBlockDis, chatIptBlockTT);
+        if (service.OpenItem is InteractionType.ChatInputBlocking)
+        {
+            using (ImRaii.Child("ChatInputBlockChild", new Vector2(width, ImGui.GetFrameHeight())))
+                DrawTimerButtonRow(InteractionType.ChatInputBlocking, ref service.ChatInputBlockTimer, chatIptBlockDis);
+            ImGui.Separator();
+        }
+
+
+        // >> Helpers Below 
+        void DrawColoredExpander(InteractionType type, FAI icon, string text, bool showCol, bool disabled, string tooltip)
+        {
+            using (ImRaii.PushColor(ImGuiCol.Text, showCol ? ImGuiColors.DalamudYellow : ImGuiColors.DalamudWhite))
+                if (CkGui.IconTextButton(icon, text, width, true, disabled))
+                    service.ToggleInteraction(type);
+            CkGui.AttachToolTip(tooltip, color: ImGuiColors.ParsedPink);
+        }
+
+        void DrawTimerButtonRow(InteractionType type, ref string timerStr, bool disabled)
+        {
+            var buttonW = CkGui.IconTextButtonSize(FAI.Upload, "Enable State");
+            var txtWidth = width - buttonW - ImGui.GetStyle().ItemInnerSpacing.X;
+            CkGui.IconInputText($"##Timer{type}{k.UserData.UID}", txtWidth, FAI.Clock, "Ex: 2h8m43s..", ref timerStr, 12);
+            CkGui.AttachToolTip("Define a time to enable this state for (or blank to make permanent)" +
+                "--NL--When the timer expires, the state is automatically disabled." +
+                "--NL--You can also disable this early manually.");
+
+            ImUtf8.SameLineInner();
+            if (CkGui.IconTextButton(FAI.Upload, "Enable State", buttonW, disabled: disabled))
+                service.TryEnableHardcoreAction(FromInteractionType(type));
+            CkGui.AttachToolTip($"Enable Hardcore State for {dispName}.");
+        }
+    }
+
+    private void DrawEmoteChild(float width, Kinkster k, string dispName, bool disable)
+    {
+        using (ImRaii.Child("LockedEmoteChild", new Vector2(width, CkStyle.TwoRowHeight())))
+        {
+            // Timer & Button Row.
+            var buttonW = CkGui.IconTextButtonSize(FAI.PersonRays, "Force State");
+            var txtWidth = width - buttonW - ImGui.GetStyle().ItemInnerSpacing.X;
+            CkGui.IconInputText($"##EmoteTimer-{k.UserData.UID}", txtWidth, FAI.Clock, "Ex: 2h8m43s..", ref service.EmoteTimer, 12);
+            CkGui.AttachToolTip($"Define how long {dispName} will be locked in the selected looping emote state for." +
+                "--SEP--LockedEmoteState automatically disables when the timer expires. (leave blank for permanent)" +
+                "--NL--You can also disable this early manually.");
+
+            ImUtf8.SameLineInner();
+            if (CkGui.IconTextButton(FAI.Upload, "Force State", buttonW, disabled: disable))
+                service.TryEnableHardcoreAction(HcAttribute.EmoteState);
+            CkGui.AttachToolTip($"Force {dispName} to perform any {(k.PairPerms.AllowLockedEmoting ? "looped emote state" : "sitting or cycle pose state")}." +
+            $"--SEP--If providing a timer, {dispName} can move once it expires.");
+
+            // Draw the combo and slider row.
+            if (EmoteService.IsAnyPoseWithCyclePose((ushort)service.Emotes.Current.RowId))
             {
-                ImGui.SetNextItemWidth(comboWidth);
-                ImGui.SliderInt("##EnforceCyclePose", ref _service.CyclePose, 0, maxCycles);
+                var sliderW = ImGui.GetFrameHeight() * 2;
+                var comboW = width - sliderW - ImGui.GetStyle().ItemInnerSpacing.X;
+                if(service.Emotes.Draw("##LockedEmoteCombo", service.EmoteId, comboW, 1.3f))
+                    service.EmoteId = service.Emotes.Current.RowId;
+                if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+                    service.EmoteId = service.Emotes.Items.FirstOrDefault().RowId;
+                ImUtf8.SameLineInner();
+                ImGui.SetNextItemWidth(sliderW);
+                ImGui.SliderInt("##EnforceCyclePose", ref service.CyclePose, 0, EmoteService.CyclePoseCount((ushort)service.Emotes.Current.RowId));
                 CkGui.AttachToolTip("Select the cycle pose for the forced emote.");
             }
-            // the application button thing.
-            ImUtf8.SameLineInner();
-            if (CkGui.IconTextButton(FAI.PersonRays, "Force State"))
+            else
             {
-                var newStr = $"{MainHub.UID}|{_service.Emotes.Current.RowId}|{_service.CyclePose}{pairlockTag}";
-                _logger.LogDebug($"Sending EmoteState update for emote: {_service.Emotes.Current.Name}");
-                // change how this is handled, should be done through hardcore, and via different operations. Handling it via a single operation is not enough!
-                _logger.LogWarning("NEED TO REIMPLEMENT THIS STILL");
-                // UiService.SetUITask(PermissionHelper.ChangeOtherGlobal(_hub, k.UserData, k.PairGlobals, nameof(HardcoreState.LockedEmoteState), newStr));
-                _service.CloseInteraction();
+                // reset cycle pose back to 0 if the emote doesn't have it.
+                service.CyclePose = 0;
+                service.Emotes.Draw("##LockedLoopEmoteCombo", service.EmoteId, width, 1.3f);
+                if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+                    service.EmoteId = service.Emotes.Items.FirstOrDefault().RowId;
             }
-            CkGui.AttachToolTip("Apply the selected forced emote state.");
         }
-        ImGui.Separator();
     }
+
+    private HcAttribute FromInteractionType(InteractionType type)
+        => type switch
+        {
+            InteractionType.LockedFollow => HcAttribute.Follow,
+            InteractionType.LockedEmoteState => HcAttribute.EmoteState,
+            InteractionType.Confinement => HcAttribute.Confinement,
+            InteractionType.Imprisonment => HcAttribute.Imprisonment,
+            InteractionType.ChatBoxHiding => HcAttribute.HiddenChatBox,
+            InteractionType.ChatInputHiding => HcAttribute.HiddenChatInput,
+            InteractionType.ChatInputBlocking => HcAttribute.BlockedChatInput,
+            InteractionType.HypnosisEffect => HcAttribute.HypnoticEffect,
+            _ => throw new ArgumentOutOfRangeException("not a hardcore interaction!")
+        };
 }

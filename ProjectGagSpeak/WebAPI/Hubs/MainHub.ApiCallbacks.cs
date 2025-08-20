@@ -230,11 +230,14 @@ public partial class MainHub
     {
         Generic.Safe(() =>
         {
-            if (dto.User.UID == UID || dto.Direction is UpdateDir.Own)
+            if (dto.User.UID == UID)
                 throw new Exception("Should never be calling a permission update for yourself in bulk, use BulkChangeAll for these!");
 
             Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
-            _kinksterListener.PermBulkChangeUniqueOther(dto.User, dto.NewPerms, dto.NewAccess);
+            if (dto.Direction is UpdateDir.Own)
+                _kinksterListener.PermBulkChangeUniqueOwn(dto.User, dto.NewPerms, dto.NewAccess);
+            else
+                _kinksterListener.PermBulkChangeUniqueOther(dto.User, dto.NewPerms, dto.NewAccess);
         });
         return Task.CompletedTask;
     }

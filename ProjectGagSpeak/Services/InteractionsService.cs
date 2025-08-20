@@ -1,3 +1,7 @@
+using CkCommons;
+using Dalamud.Bindings.ImGui;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.CustomCombos.Moodles;
 using GagSpeak.CustomCombos.Padlock;
@@ -9,10 +13,11 @@ using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
-using Dalamud.Bindings.ImGui;
+using static CkCommons.GameDataHelp;
 
 
 namespace GagSpeak.Services;
@@ -70,12 +75,24 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
     public int GagLayer = 0;
     public int RestrictionLayer = 0;
     public int RestraintLayer = 0;
+    
     public string HypnoTimer = string.Empty;
+
+    public string EmoteTimer = string.Empty;
     public uint EmoteId = 0;
     public int CyclePose = 0;
+    
+    public string ConfinementTimer = string.Empty;
     public AddressBookEntry ConfinementLoc = new();
+
+    public string ImprisonTimer = string.Empty;
     public Vector3 ImprisonPos = Vector3.Zero;
     public float ImprisonRadius = 0f;
+
+    public string ChatBoxHideTimer = string.Empty;
+    public string ChatInputHideTimer = string.Empty;
+    public string ChatInputBlockTimer = string.Empty;
+
     public int ApplyIntensity = 0;
     public int ApplyVibeIntensity = 0;
     public float ApplyDuration = 0;
@@ -131,7 +148,7 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
             Mediator.Publish(new UiToggleMessage(typeof(KinksterInteractionsUI)));
             return;
         }
-        else if (CurrentTab == tab && kinkster != Kinkster)
+        else if (CurrentTab == tab && Kinkster != null && kinkster != Kinkster)
         {
             Logger.LogDebug($"Silently cleaning up interactions, but keeping window open!");
             OpenItem = InteractionType.None;
@@ -244,5 +261,95 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
                 Logger.LogDebug($"Sent Hypnosis Effect to {DispName} with duration: {newTime} (seconds)", LoggerType.StickyUI);
             }
         });
+    }
+
+    public void TryEnableHardcoreAction(HcAttribute attribute)
+    {
+        if (attribute is HcAttribute.HypnoticEffect)
+            return;
+
+        var timerStr = attribute switch
+        {
+            HcAttribute.EmoteState => EmoteTimer,
+            HcAttribute.Confinement => ConfinementTimer,
+            HcAttribute.Imprisonment => ImprisonTimer,
+            HcAttribute.HiddenChatBox => ChatBoxHideTimer,
+            HcAttribute.HiddenChatInput => ChatInputHideTimer,
+            HcAttribute.BlockedChatInput => ChatInputBlockTimer,
+            _ => string.Empty
+        };
+
+        if (!PadlockEx.TryParseTimeSpan(timerStr, out var newTime))
+        {
+            Logger.LogTrace($"Failed to parse time for {attribute} with value: {timerStr}");
+            return;
+        }
+
+        var enactingString = Kinkster!.PairPerms.DevotionalLocks ? $"{MainHub.UID}{Constants.DevotedString}" : MainHub.UID;
+        // create the new hardcore state based on the attribute.
+        var expireTimer = DateTimeOffset.UtcNow.Add(newTime);
+        var newHcData = attribute switch
+        {
+            HcAttribute.Follow => Kinkster.PairHardcore with { LockedFollowing = enactingString },
+            HcAttribute.EmoteState => Kinkster.PairHardcore with 
+            {
+                LockedEmoteState = enactingString, 
+                EmoteExpireTime = expireTimer,
+                EmoteId = (ushort)EmoteId,
+                EmoteCyclePose = (byte)CyclePose
+            },
+            HcAttribute.Confinement => Kinkster.PairHardcore with
+            {
+                IndoorConfinement = enactingString,
+                ConfinementTimer = expireTimer,
+                ConfinedWorld = ConfinementLoc.World,
+                ConfinedCity = (int)ConfinementLoc.City,
+                ConfinedWard = ConfinementLoc.Ward,
+                ConfinedPlaceId = ConfinementLoc.PropertyType is PropertyType.House ? ConfinementLoc.Plot : ConfinementLoc.Apartment,
+                ConfinedInApartment = ConfinementLoc.PropertyType is PropertyType.Apartment,
+                ConfinedInSubdivision = ConfinementLoc.ApartmentSubdivision
+            },
+            HcAttribute.Imprisonment => Kinkster.PairHardcore with
+            {
+                Imprisonment = enactingString,
+                ImprisonmentTimer = expireTimer,
+                ImprisonedTerritory = (short)PlayerContent.TerritoryIdInstanced,
+                ImprisonedPos = ImprisonPos,
+                ImprisonedRadius = ImprisonRadius
+            },
+            HcAttribute.HiddenChatBox => Kinkster.PairHardcore with { ChatBoxesHidden = enactingString, ChatBoxesHiddenTimer = expireTimer },
+            HcAttribute.HiddenChatInput => Kinkster.PairHardcore with { ChatInputHidden = enactingString, ChatInputHiddenTimer = expireTimer },
+            HcAttribute.BlockedChatInput => Kinkster.PairHardcore with { ChatInputBlocked = enactingString, ChatInputBlockedTimer = expireTimer },
+            _ => Kinkster!.PairHardcore
+        };
+
+        // Process the task.
+        UiService.SetUITask(async () =>
+        {
+            var dto = new HardcoreStateChange(Kinkster.UserData, newHcData, attribute, MainHub.PlayerUserData);
+            if (await _hub.UserChangeOtherHardcoreState(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+            {
+                switch (res.ErrorCode)
+                {
+                    case GagSpeakApiEc.BadUpdateKind: Svc.Toasts.ShowError("Invalid Update Kind. Please try again."); break;
+                    case GagSpeakApiEc.InvalidDataState: Svc.Toasts.ShowError("Tried to switch to Invalid Data State!"); break;
+                    case GagSpeakApiEc.InvalidTime: Svc.Toasts.ShowError("Invalid Timer Syntax. Must be a valid time format (Ex: 1h2m7s)."); break;
+                    case GagSpeakApiEc.LackingPermissions: Svc.Toasts.ShowError("You do not have permission to perform this action."); break;
+                    default: Svc.Logger.Debug($"Failed to send HardcoreStateChange to {DispName}: {res.ErrorCode}."); break;
+                }
+            }
+            else
+            {
+                Logger.LogDebug($"Changed {DispName}'s Hardcore State ({attribute}) to enabled for: {newTime.ToString()}", LoggerType.StickyUI);
+                CloseInteraction();
+            }
+        });
+
+
+
+
+
+
+
     }
 }

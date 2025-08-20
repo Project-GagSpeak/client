@@ -308,7 +308,7 @@ public class ModPresetManager : DisposableMediatorSubscriberBase, IHybridSavable
                     container.ModPresets.Add(preset);
                 }
 
-                Logger.LogInformation($"Loaded {container.ModPresets.Count} ModSettingPresets for {container.ModName}");
+                // Logger.LogInformation($"Loaded {container.ModPresets.Count} ModSettingPresets for {container.ModName}");
             }
         }
         catch (Bagagwa ex)

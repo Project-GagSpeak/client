@@ -435,7 +435,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 
         // Expander for LockRestraint
         var disableLockExpand = k.ActiveRestraint.Identifier == Guid.Empty || k.ActiveRestraint.Padlock is not Padlocks.None || !k.PairPerms.LockRestraintSets;
-        using (ImRaii.PushColor(ImGuiCol.Text, (k.ActiveRestraint.Padlock is Padlocks.None ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudYellow)))
+        using (ImRaii.PushColor(ImGuiCol.Text, hasPadlock ? ImGuiColors.DalamudYellow : ImGuiColors.DalamudWhite))
         {
             if (CkGui.IconTextButton(FAI.Lock, lockTxt, width, true, disableLockExpand))
                 _service.ToggleInteraction(InteractionType.LockRestraint);
