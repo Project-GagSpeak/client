@@ -43,7 +43,7 @@ public class KinksterHardcore(InteractionsService service)
             ? (FAI.PersonArrowDownToLine, $"Force {dispName}'s Emote State.") : (FAI.Chair, $"Force {dispName} to Sit.");
         var emoteDis = (!k.PairPerms.AllowLockedSitting && !k.PairPerms.AllowLockedEmoting) || !hc.CanChange(HcAttribute.EmoteState, MainHub.UID);
         DrawColoredExpander(InteractionType.LockedEmoteState, emoteInfo.Item1, emoteInfo.Item2, emoteActive, emoteDis, emoteInfo.Item2);
-        UniqueHcChild(InteractionType.LockedEmoteState, followEnabled, CkStyle.TwoRowHeight(), () => DrawEmoteChild(width, k, dispName, emoteDis));
+        UniqueHcChild(InteractionType.LockedEmoteState, emoteActive, CkStyle.TwoRowHeight(), () => DrawEmoteChild(width, k, dispName, emoteDis));
 
         // ------ Locked Confinement ------
         var confinementActive = hc.IndoorConfinement.Length > 0;
