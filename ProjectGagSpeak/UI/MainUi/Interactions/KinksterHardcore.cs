@@ -130,9 +130,9 @@ public class KinksterHardcore(InteractionsService service)
             using (ImRaii.Child($"{type}Child", new Vector2(width, ImGui.GetFrameHeight())))
             {
                 if (curState)
-                    DrawTimerButtonRow(type, ref timerStr, blockEnable);
-                else
                     DrawDisableRow(type);
+                else
+                    DrawTimerButtonRow(type, ref timerStr, blockEnable);
             }
             ImGui.Separator();
         }

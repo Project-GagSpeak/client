@@ -33,6 +33,7 @@ namespace GagSpeak.Gui;
 public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 {
     private readonly MainConfig _config;
+    private readonly ClientData _clientData;
     private readonly MoodleDrawer _moodleDrawer;
     private readonly KinksterManager _pairs;
     private readonly GagRestrictionManager _gags;
@@ -46,6 +47,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         ILogger<DebugPersonalDataUI> logger,
         GagspeakMediator mediator,
         MainConfig config,
+        ClientData clientData,
         MoodleDrawer moodleDrawer,
         KinksterManager pairs,
         GagRestrictionManager gags,
@@ -58,6 +60,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         : base(logger, mediator, "Kinkster Data Debugger")
     {
         _config = config;
+        _clientData = clientData;
         _moodleDrawer = moodleDrawer;
         _pairs = pairs;
         _gags = gags;
@@ -156,7 +159,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
     private void DrawPlayerCharacterDebug()
     {
         DrawGlobalPermissions("Player", ClientData.Globals ?? new GlobalPerms());
-        DrawHardcoreState("Player", ClientData.Hardcore ?? new HardcoreState());
+        _clientData.DrawHardcoreState();
         DrawGagData("Player", _gags.ServerGagData ?? new CharaActiveGags());
         DrawRestrictions("Player", _restrictions.ServerRestrictionData ?? new CharaActiveRestrictions());
         DrawRestraint("Player", _restraints.ServerData ?? new CharaActiveRestraint());
@@ -246,71 +249,12 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         }
     }
 
-    private void DrawHardcoreState(string uid, IReadOnlyHardcoreState perms)
+    private void DrawHardcoreState(string uid, HardcoreState perms)
     {
         using var nodeMain = ImRaii.TreeNode(uid + " Hardcore State");
         if (!nodeMain) return;
 
-        try
-        {
-            using var table = ImRaii.Table("##debug-hardcore" + uid, 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit);
-            if (!table) return;
-            ImGui.TableSetupColumn("Permission");
-            ImGui.TableSetupColumn("Value");
-            ImGui.TableHeadersRow();
-
-            DrawPermissionRowString("Forced Follow", perms.LockedFollowing);
-            ImGui.TableNextRow();
-
-            DrawPermissionRowString("Forced Emote State", perms.LockedEmoteState);
-            DrawPermissionRowString("Emote time left:", perms.EmoteExpireTime != DateTimeOffset.MinValue
-                ? (perms.EmoteExpireTime - DateTime.UtcNow).ToString(@"hh\:mm\:ss") : "No Timer Set!");
-            DrawPermissionRowString("Emote ID", perms.EmoteId.ToString());
-            DrawPermissionRowString("Emote Cycle Pose", perms.EmoteCyclePose.ToString());
-            ImGui.TableNextRow();
-            
-            DrawPermissionRowString("Indoor Confinement", perms.IndoorConfinement);
-            DrawPermissionRowString("Confinement time left:", perms.ConfinementTimer != DateTimeOffset.MinValue
-                ? (perms.ConfinementTimer - DateTime.UtcNow).ToString(@"hh\:mm\:ss") : "No Timer Set!");
-            DrawPermissionRowString("Confined World", perms.ConfinedWorld.ToString());
-            DrawPermissionRowString("Confined City", perms.ConfinedCity.ToString());
-            DrawPermissionRowString("Confined Ward", perms.ConfinedWard.ToString());
-            DrawPermissionRowString("Confined House ID", perms.ConfinedPlaceId.ToString());
-            DrawPermissionRowBool("Confined In Apartment", perms.ConfinedInApartment);
-            DrawPermissionRowBool("Confined In Subdivision", perms.ConfinedInSubdivision);
-            ImGui.TableNextRow(); 
-
-            DrawPermissionRowString("Imprisonment", perms.Imprisonment);
-            DrawPermissionRowString("Imprisonment time left:", perms.ImprisonmentTimer != DateTimeOffset.MinValue
-                ? (perms.ImprisonmentTimer - DateTime.UtcNow).ToString(@"hh\:mm\:ss") : "No Timer Set!");
-            DrawPermissionRowString("Imprisoned Territory ID", perms.ImprisonedTerritory.ToString());
-            DrawPermissionRowString("Imprisoned Freedom Distance", perms.ImprisonedRadius.ToString());
-            ImGui.TableNextRow();
-
-            DrawPermissionRowString("Chat Boxes Hidden", perms.ChatBoxesHidden);
-            DrawPermissionRowString("HiddenChatBox time left:", perms.ChatBoxesHiddenTimer != DateTimeOffset.MinValue
-                ? (perms.ChatBoxesHiddenTimer - DateTime.UtcNow).ToString(@"hh\:mm\:ss") : "No Timer Set!");
-            ImGui.TableNextRow(); 
-            
-            DrawPermissionRowString("Chat Input Hiddeen", perms.ChatInputHidden);
-            DrawPermissionRowString("HiddenInput time left:", perms.ChatInputHiddenTimer != DateTimeOffset.MinValue
-                ? (perms.ChatInputHiddenTimer - DateTime.UtcNow).ToString(@"hh\:mm\:ss") : "No Timer Set!");
-            ImGui.TableNextRow(); 
-            
-            DrawPermissionRowString("Chat Input Blocked", perms.ChatInputBlocked);
-            DrawPermissionRowString("BlockedInput time left:", perms.ChatInputBlockedTimer != DateTimeOffset.MinValue
-                ? (perms.ChatInputBlockedTimer - DateTime.UtcNow).ToString(@"hh\:mm\:ss") : "No Timer Set!");
-            ImGui.TableNextRow(); 
-            
-            DrawPermissionRowString("ActiveHypnosisEffect", perms.HypnoticEffect);
-            DrawPermissionRowString("Hypnosis time left:", perms.HypnoticEffectTimer != DateTimeOffset.MinValue
-                ? (perms.HypnoticEffectTimer - DateTime.UtcNow).ToString(@"hh\:mm\:ss") : "No Timer Set!");
-
-        }
-        catch (Bagagwa e)
-        {
-            _logger.LogError($"Summoned bagagwa while drawing hardcore state for {uid}: {e.Message}");
-        }
+        PermissionHelper.DrawHardcoreState(perms);
     }
 
     private void DrawPairPerms(string uid, PairPerms perms)
