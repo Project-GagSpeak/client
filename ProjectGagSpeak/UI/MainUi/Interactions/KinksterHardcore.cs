@@ -14,7 +14,7 @@ using OtterGui.Text;
 namespace GagSpeak.Gui.MainWindow;
 
 // Helper methods for drawing out the hardcore actions.
-public class KinksterHardcore(MainHub mainHub, InteractionsService service)
+public class KinksterHardcore(InteractionsService service)
 {
     public void DrawHardcoreActions(float width, Kinkster k, string dispName)
     {
@@ -40,10 +40,10 @@ public class KinksterHardcore(MainHub mainHub, InteractionsService service)
         // ------ Locked Emote State ------
         var emoteActive = hc.LockedEmoteState.Length > 0;
         var emoteInfo = emoteActive ? (FAI.StopCircle, $"Free {dispName}'s Locked Emote State.") : k.PairPerms.AllowLockedEmoting 
-            ? (FAI.PersonArrowDownToLine, $"Force {dispName} into an Emote State.") : (FAI.Chair, $"Force {dispName} to Sit.");
+            ? (FAI.PersonArrowDownToLine, $"Force {dispName}'s Emote State.") : (FAI.Chair, $"Force {dispName} to Sit.");
         var emoteDis = (!k.PairPerms.AllowLockedSitting && !k.PairPerms.AllowLockedEmoting) || !hc.CanChange(HcAttribute.EmoteState, MainHub.UID);
         DrawColoredExpander(InteractionType.LockedEmoteState, emoteInfo.Item1, emoteInfo.Item2, emoteActive, emoteDis, emoteInfo.Item2);
-        UniqueHcChild(InteractionType.LockedFollow, followEnabled, ImGui.GetFrameHeight(), () => DrawEmoteChild(width, k, dispName, emoteDis));
+        UniqueHcChild(InteractionType.LockedEmoteState, followEnabled, ImGui.GetFrameHeight(), () => DrawEmoteChild(width, k, dispName, emoteDis));
 
         // ------ Locked Confinement ------
         var confinementActive = hc.IndoorConfinement.Length > 0;
@@ -87,9 +87,9 @@ public class KinksterHardcore(MainHub mainHub, InteractionsService service)
         GenericHcChild(InteractionType.ChatInputHiding, ref service.ChatInputHideTimer, chatIptHideActive, chatIptHideDis);
 
         // ------ Chat Input Blocking ------
-        var chatIptBlockActive = hc.ChatInputHidden.Length > 0;
+        var chatIptBlockActive = hc.ChatInputBlocked.Length > 0;
         var chatIptBlockInfo = chatIptBlockActive ? (FAI.StopCircle, $"Reallow {dispName}'s Chat Input.") : (FAI.CommentDots, $"Block {dispName}'s Chat Input.");
-        var chatIptBlockDis = !k.PairPerms.AllowHidingChatInput || !hc.CanChange(HcAttribute.BlockedChatInput, MainHub.UID);
+        var chatIptBlockDis = !k.PairPerms.AllowChatInputBlocking || !hc.CanChange(HcAttribute.BlockedChatInput, MainHub.UID);
         var chatIptBlockTT = chatIptBlockActive ? $"Unblock {dispName}'s chat access." : $"Block {dispName}'s chat access." +
             $"--NL----COL--WARNING:--COL-- This prevents ANY TYPING." +
             $"--SEP----COL--CTRL+ALT+BACKSPACE--COL-- is the emergency safeword!";

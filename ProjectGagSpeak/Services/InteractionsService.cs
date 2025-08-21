@@ -14,11 +14,13 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
+using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using static CkCommons.GameDataHelp;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 
 namespace GagSpeak.Services;
@@ -31,15 +33,17 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _hub;
     private readonly MainMenuTabs _mainMenu;
+    private readonly KinksterManager _kinksters;
 
     private HypnoEffectEditor _hypnosisEditor;
 
     public InteractionsService(ILogger<InteractionsService> logger, GagspeakMediator mediator,
-        MainHub hub, MainMenuTabs mainMenu, HypnoEffectManager effectManager)
+        MainHub hub, MainMenuTabs mainMenu, KinksterManager kinksters, HypnoEffectManager effectManager)
         : base(logger, mediator)
     {
         _hub = hub;
         _mainMenu = mainMenu;
+        _kinksters = kinksters;
 
         _hypnosisEditor = new HypnoEffectEditor("KinksterEffectEditor", effectManager);
 
@@ -47,8 +51,27 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
         Mediator.Subscribe<PairWasRemovedMessage>(this, _ => CloseInteractionsUI());
         Mediator.Subscribe<ClosedMainUiMessage>(this, _ => CloseInteractionsUI());
         Mediator.Subscribe<MainWindowTabChangeMessage>(this, _ => CloseIfNotWhitelist(_.NewTab));
-    }
+        Mediator.Subscribe<MainHubDisconnectedMessage>(this, _ =>
+        {
+            if (Kinkster is not null && CurrentTab is not InteractionsTab.None)
+                KinksterUserDataFromLastDC = Kinkster.UserData with { }; // clone.
+            Kinkster = null;
+            CloseInteractionsUI();
+        });
+        Mediator.Subscribe<MainHubConnectedMessage>(this, _ =>
+        {
+            if (KinksterUserDataFromLastDC is null || _mainMenu.TabSelection != MainMenuTabs.SelectedTab.Whitelist)
+                return;
 
+            if (_kinksters.TryGetKinkster(KinksterUserDataFromLastDC, out var kinkster))
+            {
+                Logger.LogInformation($"Re-Syncing data for {kinkster.GetNickAliasOrUid()} from last DC", LoggerType.StickyUI);
+                SyncDataForKinkster(kinkster, false);
+                Mediator.Publish(new UiToggleMessage(typeof(KinksterInteractionsUI), ToggleType.Show));
+            }
+        });
+    }
+    public UserData? KinksterUserDataFromLastDC { get; private set; } = null;
     public PairGagCombo Gags { get; private set; } = null!;
     public PairGagPadlockCombo GagLocks { get; private set; } = null!;
     public PairRestrictionCombo Restrictions { get; private set; } = null!;
@@ -160,8 +183,12 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
         Logger.LogInformation($"Updating Sticky UI for {kinkster.GetNickAliasOrUid()} on tab {tab}", LoggerType.StickyUI);
         // if the result of this is not 0 it means the kinkster changed and we should update our data.
         if (kinkster.CompareTo(Kinkster) != 0 || CurrentTab is InteractionsTab.None)
+        {
+            Logger.LogDebug($"Syncing data for {kinkster.GetNickAliasOrUid()} on tab {tab}", LoggerType.StickyUI);
             SyncDataForKinkster(kinkster);
-
+        }
+        Logger.LogDebug($"Syncing data for {kinkster.GetNickAliasOrUid()} on tab {tab}", LoggerType.StickyUI);
+        SyncDataForKinkster(kinkster);
         // forcibly put us in the whitelist tab.
         Mediator.Publish(new UiToggleMessage(typeof(MainUI), ToggleType.Show));
         _mainMenu.TabSelection = MainMenuTabs.SelectedTab.Whitelist;
@@ -170,7 +197,7 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
 
     }
 
-    private void SyncDataForKinkster(Kinkster kinkster)
+    private void SyncDataForKinkster(Kinkster kinkster, bool resetVariables = true)
     {
         Kinkster = kinkster;
 
@@ -195,7 +222,8 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
         ]);
 
         DispName = kinkster.GetNickAliasOrUid();
-        ResetModifiableVariables();
+        if (resetVariables)
+            ResetModifiableVariables();
     }
 
     public void UpdateDispName()

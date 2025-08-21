@@ -22,6 +22,7 @@ public sealed class DataDistributor : DisposableMediatorSubscriberBase
     private readonly GagRestrictionManager _gagManager;
     private readonly RestrictionManager _restrictionManager;
     private readonly RestraintManager _restraintManager;
+    private readonly CollarManager _collars;
     private readonly CursedLootManager _cursedManager;
     private readonly BuzzToyManager _toyManager;
     private readonly PuppeteerManager _puppetManager;
@@ -42,6 +43,7 @@ public sealed class DataDistributor : DisposableMediatorSubscriberBase
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
+        CollarManager collars,
         CursedLootManager cursedLoot,
         BuzzToyManager toys,
         PuppeteerManager puppetManager,
@@ -57,6 +59,7 @@ public sealed class DataDistributor : DisposableMediatorSubscriberBase
         _gagManager = gags;
         _restrictionManager = restrictions;
         _restraintManager = restraints;
+        _collars = collars;
         _cursedManager = cursedLoot;
         _toyManager = toys;
         _puppetManager = puppetManager;
@@ -222,6 +225,7 @@ public sealed class DataDistributor : DisposableMediatorSubscriberBase
             GagItems = _gagManager.Storage.ToLightStorage().ToArray(),
             Restrictions = _restrictionManager.Storage.Select(r => r.ToLightItem()).ToArray(),
             Restraints = _restraintManager.Storage.Select(r => r.ToLightItem()).ToArray(),
+            Collars = _collars.Storage.Select(c => c.ToLightItem()).ToArray(),
             CursedItems = _cursedManager.Storage.ActiveItems.Select(x => x.ToLightItem()).ToArray(),
             Patterns = _patternManager.Storage.Select(p => p.ToLightItem()).ToArray(),
             Alarms = _alarmManager.Storage.Select(a => a.ToLightItem()).ToArray(),
@@ -313,6 +317,7 @@ public sealed class DataDistributor : DisposableMediatorSubscriberBase
                 Gags = _gagManager.ServerGagData ?? throw new Exception("ActiveGagData was null!"),
                 Restrictions = _restrictionManager.ServerRestrictionData ?? throw new Exception("ActiveRestrictionsData was null!"),
                 Restraint = _restraintManager.ServerData ?? throw new Exception("ActiveRestraintData was null!"),
+                Collar = _collars.ServerCollarData ?? throw new Exception("ActiveCollarData was null!"),
                 ActiveCursedItems = _cursedManager.Storage.ActiveItems.Select(x => x.Identifier).ToList(),
                 GlobalAliasData = _puppetManager.GlobalAliasStorage,
                 PairAliasData = _puppetManager.PairAliasStorage.ToDictionary(),
