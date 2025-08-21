@@ -29,7 +29,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
     private readonly AlarmManager _alarms;
     private readonly TriggerManager _triggers;
     private readonly BuzzToyManager _toys;
-    private readonly PlayerControlHandler _hcHandler;
+    private readonly PlayerCtrlHandler _hcHandler;
     private readonly ClientDataListener _clientDatListener;
     private readonly AchievementEventHandler _achievementHandler;
 
@@ -49,7 +49,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
         AlarmManager alarms,
         TriggerManager triggers,
         BuzzToyManager toys,
-        PlayerControlHandler hcHandler,
+        PlayerCtrlHandler hcHandler,
         ClientDataListener clientDataListener,
         AchievementEventHandler achievements)
         : base(logger, mediator)

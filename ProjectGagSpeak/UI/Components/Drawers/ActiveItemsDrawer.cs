@@ -2,6 +2,7 @@ using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Raii;
 using CkCommons.Widgets;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility;
@@ -14,15 +15,17 @@ using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
+using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
-using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
+using OtterGui.Text.EndObjects;
 using Penumbra.GameData.Enums;
 namespace GagSpeak.Gui.Components;
 
@@ -34,7 +37,8 @@ public class ActiveItemsDrawer
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
     private readonly FavoritesManager _favorites;
-    private readonly DataDistributionService _dds;
+    private readonly VisualStateListener _visuals;
+    private readonly DataDistributor _dds;
     private readonly TextureService _textures;
     private readonly CosmeticService _cosmetics;
     private readonly TutorialService _guides;
@@ -56,7 +60,8 @@ public class ActiveItemsDrawer
         RestrictionManager restrictions,
         RestraintManager restraints,
         FavoritesManager favorites,
-        DataDistributionService dds,
+        VisualStateListener visuals,
+        DataDistributor dds,
         TextureService textures,
         CosmeticService cosmetics,
         TutorialService guides)
@@ -67,6 +72,7 @@ public class ActiveItemsDrawer
         _restrictions = restrictions;
         _restraints = restraints;
         _favorites = favorites;
+        _visuals = visuals;
         _dds = dds;
         _textures = textures;
         _cosmetics = cosmetics;
@@ -82,7 +88,7 @@ public class ActiveItemsDrawer
         // Init Gag Padlocks.
         _gagPadlocks = new PadlockGagsClient[Constants.MaxGagSlots];
         for (var i = 0; i < _gagPadlocks.Length; i++)
-            _gagPadlocks[i] = new PadlockGagsClient(logger, dds, gags);
+            _gagPadlocks[i] = new PadlockGagsClient(logger, dds, visuals, gags);
 
         // Init Restriction Combos.
         _restrictionItems = new RestrictionCombo[Constants.MaxRestrictionSlots];
@@ -94,13 +100,13 @@ public class ActiveItemsDrawer
         // Init Restriction Padlocks.
         _restrictionPadlocks = new PadlockRestrictionsClient[Constants.MaxRestrictionSlots];
         for (var i = 0; i < _restrictionPadlocks.Length; i++)
-            _restrictionPadlocks[i] = new PadlockRestrictionsClient(logger, dds, restrictions);
+            _restrictionPadlocks[i] = new PadlockRestrictionsClient(logger, dds, visuals, restrictions);
 
         // Init Restraint Combo & Padlock.
         _restraintItem = new RestraintCombo(logger, mediator, favorites, () => [
             ..restraints.Storage.OrderByDescending(p => favorites._favoriteRestraints.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
-        _restraintPadlocks = new PadlockRestraintsClient(logger, dds, restraints);
+        _restraintPadlocks = new PadlockRestraintsClient(logger, dds, visuals, restraints);
 
         // Init Layer Editor Client.
         _layerFlagsWidget = new(FAI.LayerGroup, "ClientRestraintLayers", string.Empty);
@@ -113,14 +119,9 @@ public class ActiveItemsDrawer
         if (!_gags.CanApply(slotIdx))
             return;
 
-        var updateType = (curr is GagType.None) ? DataUpdateType.Applied : DataUpdateType.Swapped;
-        var newSlotData = new ActiveGagSlot()
-        {
-            GagItem = combo.Current.GagType,
-            Enabler = MainHub.UID,
-        };
-        _mediator.Publish(new ActiveGagsChangeMessage(updateType, slotIdx, newSlotData));
-        _logger.LogTrace($"Requesting Server to update layer {slotIdx}'s Gag to {combo.Current.GagType} from {curr}");
+        var type = (curr is GagType.None) ? DataUpdateType.Applied : DataUpdateType.Swapped;
+        var newDat = _gags.ServerGagData!.GagSlots[slotIdx] with { GagItem = combo.Current.GagType, Enabler = MainHub.UID };
+        SelfBondageHelper.GagUpdateTask(slotIdx, newDat, type, _dds, _visuals);
     }
 
     private void RestrictionComboChanged(RestrictionCombo combo, int slotIdx, Guid curr)
@@ -130,14 +131,13 @@ public class ActiveItemsDrawer
         if (!_restrictions.CanApply(slotIdx))
             return;
 
-        var updateType = combo.Current.Identifier == Guid.Empty ? DataUpdateType.Applied : DataUpdateType.Swapped;
-        var newSlotData = new ActiveRestriction()
+        var updateType = (curr == Guid.Empty) ? DataUpdateType.Applied : DataUpdateType.Swapped;
+        var newData = _restrictions.ServerRestrictionData!.Restrictions[slotIdx] with
         {
             Identifier = combo.Current.Identifier,
             Enabler = MainHub.UID,
         };
-        _mediator.Publish(new ActiveRestrictionsChangeMessage(updateType, slotIdx, newSlotData));
-        _logger.LogTrace($"Requesting Server to change restriction layer {slotIdx} to {combo.Current.Identifier} from {curr}");
+        SelfBondageHelper.RestrictionUpdateTask(slotIdx, newData, updateType, _dds, _visuals);
     }
 
     private void RestraintComboChanged(Guid curr)
@@ -147,14 +147,13 @@ public class ActiveItemsDrawer
         if (!_restraints.CanApply())
             return;
 
-        var updateType = curr == Guid.Empty ? DataUpdateType.Applied : DataUpdateType.Swapped;
-        var newSlotData = new CharaActiveRestraint()
+        var updateType = (curr == Guid.Empty) ? DataUpdateType.Applied : DataUpdateType.Swapped;
+        var newData = _restraints.ServerData! with
         {
             Identifier = _restraintItem.Current.Identifier,
             Enabler = MainHub.UID,
         };
-        _mediator.Publish(new ActiveRestraintChangedMessage(updateType, newSlotData));
-        _logger.LogTrace($"Requesting Server to change Restraint Set to {_restraintItem.Current.Identifier} from {curr}");
+        SelfBondageHelper.RestraintUpdateTask(newData, updateType, _dds, _visuals);
     }
 
     public void ApplyItemGroup(int slotIdx, ActiveGagSlot data)
@@ -215,10 +214,7 @@ public class ActiveItemsDrawer
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             ImGui.OpenPopup($"##GagSelector-{slotIdx}");
         else if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _gags.CanRemove(slotIdx))
-        {
-            _logger.LogTrace($"Gag Layer {slotIdx} was cleared. and is now Empty");
-            _mediator.Publish(new ActiveGagsChangeMessage(DataUpdateType.Removed, slotIdx, new ActiveGagSlot()));
-        }
+            SelfBondageHelper.GagUpdateTask(slotIdx, new ActiveGagSlot(), DataUpdateType.Removed, _dds, _visuals);
 
         // Draw out padlocks selections.
         ImUtf8.SameLineInner();
@@ -245,10 +241,7 @@ public class ActiveItemsDrawer
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             ImGui.OpenPopup($"##Restrictions-{slotIdx}");
         else if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _restrictions.CanRemove(slotIdx))
-        {
-            _logger.LogTrace($"Restriction Layer {slotIdx} was cleared. and is now Empty");
-            _mediator.Publish(new ActiveRestrictionsChangeMessage(DataUpdateType.Removed, slotIdx, new ActiveRestriction()));
-        }
+            SelfBondageHelper.RestrictionUpdateTask(slotIdx, new ActiveRestriction(), DataUpdateType.Removed, _dds, _visuals);
 
         ImUtf8.SameLineInner();
         var rightWidth = ImGui.GetContentRegionAvail().X;
@@ -281,10 +274,7 @@ public class ActiveItemsDrawer
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             ImGui.OpenPopup($"##RestraintSetSelector");
         else if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _restraints.CanRemove())
-        {
-            _logger.LogTrace($"Active Restraint Set (and all active layers on it) was cleared.");
-            _mediator.Publish(new ActiveRestraintChangedMessage(DataUpdateType.Removed, new CharaActiveRestraint()));
-        }
+            SelfBondageHelper.RestraintUpdateTask(new CharaActiveRestraint(), DataUpdateType.Removed, _dds, _visuals);
 
         ImUtf8.SameLineInner();
         using var s = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, CkStyle.ChildRoundingLarge());
@@ -293,9 +283,8 @@ public class ActiveItemsDrawer
             // draw sync button, and call layer update if pressed.
             if(_layerFlagsWidget.DrawUpdateButton(FAI.Sync, "Update Layers", out var added, out var removed, ImGui.GetContentRegionAvail().X))
             {
-                // calculate the new layers by blending the current with the applied and removed layers.
-                var newLayers = (data.ActiveLayers | added) & ~removed;
-                UiService.SetUITask(async () => await _dds.PushActiveRestraintUpdate(new CharaActiveRestraint() { ActiveLayers = newLayers }, DataUpdateType.LayersChanged));
+                var newData = new CharaActiveRestraint() { ActiveLayers = (data.ActiveLayers | added) & ~removed };
+                SelfBondageHelper.RestraintUpdateTask(newData, DataUpdateType.LayersChanged, _dds, _visuals);
             }
 
             // Below draw out the layers.
@@ -388,10 +377,10 @@ public class ActiveItemsDrawer
             if (_layerFlagsWidget.DrawUpdateButton(FAI.Sync, "Update Layers", out var added, out var removed, ImGui.GetContentRegionAvail().X))
             {
                 // calculate the new layers by blending the current with the applied and removed layers.
-                var newLayers = (data.ActiveLayers | added) & ~removed;
-                UiService.SetUITask(async () => await _dds.PushActiveRestraintUpdate(new CharaActiveRestraint() { ActiveLayers = newLayers }, DataUpdateType.LayersChanged));
+                var newData = new CharaActiveRestraint() { ActiveLayers = (data.ActiveLayers | added) & ~removed };
+                SelfBondageHelper.RestraintUpdateTask(newData, DataUpdateType.LayersChanged, _dds, _visuals);
             }
-            // dont draw if dispdata is null.
+            // dont draw if display data is null.
             if (dispData is null)
                 return;
             // Below draw out the layers.

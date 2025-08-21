@@ -17,9 +17,9 @@ namespace GagSpeak.State.Handlers;
 /// <summary>
 ///     Handles the enabling and disabling of various hardcore changes.
 /// </summary>
-public class PlayerControlHandler
+public class PlayerCtrlHandler
 {
-    private readonly ILogger<PlayerControlHandler> _logger;
+    private readonly ILogger<PlayerCtrlHandler> _logger;
     private readonly MainConfig _config;
     private readonly IpcCallerLifestream _ipc;
     private readonly MovementController _movement;
@@ -29,7 +29,7 @@ public class PlayerControlHandler
 
     // Stores the players's movement mode, useful for when we change it.
     private MovementMode _cachedPlayerMoveMode = MovementMode.NotSet;
-    public PlayerControlHandler(ILogger<PlayerControlHandler> logger, MainConfig config,
+    public PlayerCtrlHandler(ILogger<PlayerCtrlHandler> logger, MainConfig config,
         IpcCallerLifestream ipc, MovementController movement, OverlayHandler overlay, 
         HcTaskManager hcTasks, KinksterManager kinksters)
     {
@@ -42,12 +42,12 @@ public class PlayerControlHandler
         _kinksters = kinksters;
     }
 
-    public void ApplyHypnoEffect(UserData enactor, HypnoticEffect effect, TimeSpan length, string? image)
+    public async void ApplyHypnoEffect(UserData enactor, HypnoticEffect effect, TimeSpan length, string? image)
     {
         if (!_kinksters.TryGetKinkster(enactor, out var kinkster))
             throw new Bagagwa($"Failed to get Kinkster for UID: {enactor.UID} for Hypnosis!");
         
-        _overlay.SetTimedHypnoEffectUnsafe(enactor, effect, length, image);
+        await _overlay.SetTimedHypnoEffect(enactor, effect, length, image);
         _logger.LogInformation($"[{kinkster.GetNickAliasOrUid()}] Enabled your Hypnotic Effect!");
     }
 
@@ -61,9 +61,9 @@ public class PlayerControlHandler
     ///     they will get the achievement then. It also ensures they are not 'stuck' in restricted controls, so
     ///     a safeword is still effective.
     /// </summary>
-    public void RemoveHypnoEffect(UserData enactor, bool giveAchievements)
+    public void RemoveHypnoEffect(UserData enactor, bool giveAchievements, bool fromPluginDisposal = false)
     {
-        _overlay.RemoveHypnoEffect(enactor.UID, giveAchievements);
+        _overlay.RemoveHypnoEffect(enactor.UID, giveAchievements, fromPluginDisposal);
         _logger.LogInformation($"[{enactor.AliasOrUID}] Removed your Hypnotic Effect!");
     }
 

@@ -1,6 +1,7 @@
 using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
+using GagSpeak.PlayerControl;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Handlers;
@@ -17,16 +18,16 @@ namespace GagSpeak.State.Listeners;
 ///     Processes all changes to ClientData Globals and HardcoreState <para />
 ///     Helps process Handler updates in addition to this.
 /// </summary>
-public sealed class ClientDataListener
+public sealed class ClientDataListener : IDisposable
 {
     private readonly ILogger<ClientDataListener> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly ClientData _data;
     private readonly KinksterManager _kinksters;
-    private readonly PlayerControlHandler _handler;
+    private readonly PlayerCtrlHandler _handler;
     private readonly NameplateService _nameplates;
     public ClientDataListener(ILogger<ClientDataListener> logger, GagspeakMediator mediator,
-        ClientData data, KinksterManager kinksters, PlayerControlHandler handler,
+        ClientData data, KinksterManager kinksters, PlayerCtrlHandler handler,
         NameplateService nameplate)
     {
         _logger = logger;
@@ -35,23 +36,32 @@ public sealed class ClientDataListener
         _handler = handler;
         _kinksters = kinksters;
         _nameplates = nameplate;
+        Svc.ClientState.Logout += OnLogout;
     }
 
-    /// <summary>
-    ///     Indented to be called by <see cref="MainHub"/> during its <see cref="OnLogout"/> method. <para />
-    ///     Ensures <seealso cref="MainHub.PlayerUserData"/> is valid during call.
-    /// </summary>
-    public void OnLogout()
+    public void Dispose()
     {
-        _logger.LogInformation("Disabling all ClientGlobals handlers on logout.");
-        _handler.DisableLockedFollow(MainHub.PlayerUserData, false);
-        _handler.DisableLockedEmote(MainHub.PlayerUserData, false);
-        _handler.DisableConfinement(MainHub.PlayerUserData, false);
-        _handler.DisableImprisonment(MainHub.PlayerUserData, false);
-        _handler.DisableHiddenChatBoxes(MainHub.PlayerUserData, false);
-        _handler.RestoreChatInputVisibility(MainHub.PlayerUserData, false);
-        _handler.UnblockChatInput(MainHub.PlayerUserData, false);
-        _handler.RemoveHypnoEffect(MainHub.PlayerUserData, false);
+        Svc.ClientState.Logout -= OnLogout;
+        OnLogout(69, 69);
+    }
+    private void OnLogout(int type, int code)
+    {
+        try
+        {
+            _logger.LogInformation("Disabling all ClientGlobals handlers on logout.");
+            _handler.DisableLockedFollow(new("Logout/Disposal"), false);
+            _handler.DisableLockedEmote(new("Logout/Disposal"), false);
+            _handler.DisableConfinement(new("Logout/Disposal"), false);
+            _handler.DisableImprisonment(new("Logout/Disposal"), false);
+            _handler.DisableHiddenChatBoxes(new("Logout/Disposal"), false);
+            _handler.RestoreChatInputVisibility(new("Logout/Disposal"), false);
+            _handler.UnblockChatInput(new("Logout/Disposal"), false);
+            _handler.RemoveHypnoEffect(new("Logout/Disposal"), false, true);
+        }
+        catch (Exception e)
+        {
+            _logger.LogError("Error while disabling ClientGlobals handlers on logout." + e);
+        }
     }
 
     // Only ever self-invoked, all handlers should process their own strings.
@@ -158,82 +168,53 @@ public sealed class ClientDataListener
     // Single Change Handler.
     private void HandleHardcoreStateChange(UserData enactor, HcAttribute changed, bool prevState, bool newState)
     {
-        // if from false to false nothing happened so just return.
+        // If both states are false, nothing happened.
         if (!prevState && !newState)
             return;
 
+        // If states are different, handle them.
         switch (changed)
         {
-            case HcAttribute.Follow when (!prevState && newState):
-                _handler.EnableLockedFollow(enactor);
-                break;
-            
-            case HcAttribute.Follow when (prevState && !newState):
-                _handler.DisableLockedFollow(enactor, true);
-                break;
-                
-            case HcAttribute.EmoteState when (!prevState && newState):
-                _handler.EnableLockedEmote(enactor);
-                break;
-            // Remember we can go from true to true here, and switch the emote being performed.
-            case HcAttribute.EmoteState when (prevState && newState):
-                _handler.UpdateLockedEmote(enactor);
+            case HcAttribute.Follow:
+                if (!prevState && newState) _handler.EnableLockedFollow(enactor);
+                else if (prevState && !newState) _handler.DisableLockedFollow(enactor, true);
                 break;
 
-            case HcAttribute.EmoteState when (prevState && !newState):
-                _handler.DisableLockedEmote(enactor, true);
+            case HcAttribute.EmoteState:
+                if (!prevState && newState) _handler.EnableLockedEmote(enactor);
+                else if (prevState && !newState) _handler.DisableLockedEmote(enactor, true);
+                else if (prevState && newState) _handler.UpdateLockedEmote(enactor);
                 break;
 
-            case HcAttribute.Confinement when (!prevState && newState):
-                _handler.EnableConfinement(enactor, AddressBookEntry.FromHardcoreState(ClientData.Hardcore!));
+            case HcAttribute.Confinement:
+                if (!prevState && newState) _handler.EnableConfinement(enactor, AddressBookEntry.FromHardcoreState(ClientData.Hardcore!));
+                else if (prevState && !newState) _handler.DisableConfinement(enactor, true);
                 break;
 
-            case HcAttribute.Confinement when (prevState && !newState):
-                _handler.DisableConfinement(enactor, true);
+            case HcAttribute.Imprisonment:
+                if (!prevState && newState) _handler.EnableImprisonment(enactor, ClientData.GetImprisonmentPos(), ClientData.Hardcore!.ImprisonedRadius);
+                else if (prevState && !newState) _handler.DisableImprisonment(enactor, true);
+                else if (prevState && newState) _handler.UpdateImprisonment(enactor, ClientData.GetImprisonmentPos(), ClientData.Hardcore!.ImprisonedRadius);
                 break;
 
-            case HcAttribute.Imprisonment when (!prevState && newState):
-                _handler.EnableImprisonment(enactor, ClientData.GetImprisonmentPos(), ClientData.Hardcore!.ImprisonedRadius);
-                break;
-            // Remember we can go from true to true here, and switch the imprisonment position.
-            case HcAttribute.Imprisonment when (prevState && newState):
-                _handler.UpdateImprisonment(enactor, ClientData.GetImprisonmentPos(), ClientData.Hardcore!.ImprisonedRadius);
-                break;
-            
-            case HcAttribute.Imprisonment when (prevState && !newState):
-                _handler.DisableImprisonment(enactor, true);
+            case HcAttribute.HiddenChatBox:
+                if (!prevState && newState) _handler.EnableHiddenChatBoxes(enactor);
+                else if (prevState && !newState) _handler.DisableHiddenChatBoxes(enactor, true);
                 break;
 
-            case HcAttribute.HiddenChatBox when (!prevState && newState):
-                _handler.EnableHiddenChatBoxes(enactor);
+            case HcAttribute.HiddenChatInput:
+                if (!prevState && newState) _handler.HideChatInputVisibility(enactor);
+                else if (prevState && !newState) _handler.RestoreChatInputVisibility(enactor, true);
                 break;
 
-            case HcAttribute.HiddenChatBox when (prevState && !newState):
-                _handler.DisableHiddenChatBoxes(enactor, true);
-                break;
-
-            case HcAttribute.HiddenChatInput when (!prevState && newState):
-                _handler.HideChatInputVisibility(enactor);
-                break;
-
-            case HcAttribute.HiddenChatInput when (prevState && !newState):
-                _handler.RestoreChatInputVisibility(enactor, true);
-                break;
-
-            case HcAttribute.BlockedChatInput when (!prevState && newState):
-                _handler.BlockChatInput(enactor);
-                break;
-
-            case HcAttribute.BlockedChatInput when (prevState && !newState):
-                _handler.UnblockChatInput(enactor, true);
-                break;
-
-            case HcAttribute.HypnoticEffect when (prevState && !newState):
-                _handler.RemoveHypnoEffect(enactor, true);
+            case HcAttribute.BlockedChatInput:
+                if (!prevState && newState) _handler.BlockChatInput(enactor);
+                else if (prevState && !newState) _handler.UnblockChatInput(enactor, true);
                 break;
 
             case HcAttribute.HypnoticEffect:
-                // do nothing here, but keep it for the bulk change application.
+                if (prevState && !newState) _handler.RemoveHypnoEffect(enactor, true);
+                // enable and reapply intentionally ignored, handled in bulk
                 break;
 
             // Throw an exception in ALL other cases.

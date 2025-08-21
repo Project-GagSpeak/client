@@ -1,5 +1,6 @@
 using GagSpeak.Interop;
 using GagSpeak.Kinksters;
+using GagSpeak.MufflerCore;
 using GagSpeak.MufflerCore.Handler;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
@@ -7,6 +8,8 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
+using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
 using GagspeakAPI.Util;
@@ -68,242 +71,227 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 
 
     #region Gag Manipulation
-    public async Task SwapOrApplyGag(KinksterUpdateActiveGag gagData)
+    public async Task SwapGag(int layer, ActiveGagSlot newData, UserData enactor)
     {
-        if(gagData.PreviousGag is GagType.None)
-            await ApplyGag(gagData);
-        else
-            await SwapGag(gagData);
-    }
-
-    /// <summary> We have received the instruction to swap our gag as a callback from the server. </summary>
-    /// <remarks> We can skip all validation checks for this, but don't update if not connected. </remarks>
-    public async Task SwapGag(KinksterUpdateActiveGag gagData)
-    {
-        if (!MainHub.IsConnectionDataSynced) 
+        if (!MainHub.IsConnectionDataSynced || _gags.ServerGagData is not { } gagData)
             return;
-        Logger.LogTrace("Received SwapGag instruction from server!", LoggerType.Gags);
-        await RemoveGag(gagData, false);
-        await ApplyGag(gagData);
 
-        PostActionMsg(gagData.Enactor.UID, InteractionType.SwappedGag, gagData.PreviousGag.GagName() + " swapped to " + gagData.NewData.GagItem + " on layer " + gagData.AffectedLayer);
+        Logger.LogTrace("Received SwapGag instruction from server!", LoggerType.Gags);
+        var prevGag = gagData.GagSlots[layer].GagItem.GagName();
+        PostActionMsg(enactor.UID, InteractionType.SwappedGag, $"Swapped Gag: [{prevGag} >> {newData.GagItem.GagName()}] on layer <{layer}>");
+
+        // Remove it.
+        if (_gags.RemoveGag(layer, enactor.UID, out var visualItem))
+            await _cacheManager.RemoveGagItem(visualItem, layer);
+        // Now apply it.
+        if (_gags.ApplyGag(layer, newData.GagItem, enactor.UID, out var gagItem))
+            await _cacheManager.AddGagItem(gagItem, layer, enactor.UID);
     }
 
-    /// <summary> Applies a Gag to a spesified layer. </summary>
-    public async Task ApplyGag(KinksterUpdateActiveGag gagData)
+    public async Task ApplyGag(int layer, ActiveGagSlot newData, UserData enactor)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
 
         Logger.LogTrace("Received ApplyGag instruction from server!", LoggerType.Gags);
-        if (_gags.ApplyGag(gagData.AffectedLayer, gagData.NewData.GagItem, gagData.Enactor.UID, out var gagItem))
-            await _cacheManager.AddGagItem(gagItem, gagData.AffectedLayer, gagData.Enactor.UID);
+        PostActionMsg(enactor.UID, InteractionType.ApplyGag, $"A {newData.GagItem.GagName()} was applied on layer <{layer}>");
 
-        PostActionMsg(gagData.Enactor.UID, InteractionType.ApplyGag, gagData.NewData.GagItem + " was applied on layer " + gagData.AffectedLayer);
+        if (_gags.ApplyGag(layer, newData.GagItem, enactor.UID, out var gagItem))
+            await _cacheManager.AddGagItem(gagItem, layer, enactor.UID);
     }
 
-    /// <summary> Locks the gag with a padlock on a specified layer. </summary>
-    public void LockGag(KinksterUpdateActiveGag gagData)
+    public Task LockGag(int layer, ActiveGagSlot newData, UserData enactor)
     {
         if (!MainHub.IsConnectionDataSynced)
-            return;
+            return Task.CompletedTask;
 
         Logger.LogTrace("Received LockGag instruction from server!", LoggerType.Gags);
-        _gags.LockGag(gagData.AffectedLayer, gagData.NewData.Padlock, gagData.NewData.Password, gagData.NewData.Timer, gagData.Enactor.UID);
-        PostActionMsg(gagData.Enactor.UID, InteractionType.LockGag, $"{gagData.NewData.Padlock.ToName()} was set on layer {gagData.AffectedLayer}'s Gag");
+        PostActionMsg(enactor.UID, InteractionType.LockGag, $"A {newData.Padlock.ToName()} was locked onto layer <{layer}>'s Gag");
+        _gags.LockGag(layer, newData, enactor.UID);
+        return Task.CompletedTask;
     }
 
-    /// <summary> Unlocks the gag's padlock on a spesified layer. </summary>
-    public void UnlockGag(KinksterUpdateActiveGag gagData)
+    public Task UnlockGag(int layer, UserData enactor)
     {
-        if (!MainHub.IsConnectionDataSynced)
-            return;
+        if (!MainHub.IsConnectionDataSynced || _gags.ServerGagData is not { } gagData)
+            return Task.CompletedTask;
 
         Logger.LogTrace("Received UnlockGag instruction from server!", LoggerType.Gags);
-        _gags.UnlockGag(gagData.AffectedLayer, gagData.Enactor.UID);
-        PostActionMsg(gagData.Enactor.UID, InteractionType.UnlockGag, $"{gagData.PreviousPadlock.ToName()} was removed from layer {gagData.AffectedLayer}'s Gag");
+        PostActionMsg(enactor.UID, InteractionType.UnlockGag, $"A {gagData.GagSlots[layer].Padlock.ToName()} was removed from layer <{layer}>'s Gag");
+        _gags.UnlockGag(layer, enactor.UID);
+        return Task.CompletedTask;
     }
 
-    /// <summary> Removes the gag from a defined layer. </summary>
-    public async Task RemoveGag(KinksterUpdateActiveGag gagData, bool updateVisuals = true)
+    public async Task RemoveGag(int layer, UserData enactor)
     {
-        if (!MainHub.IsConnectionDataSynced)
+        if (!MainHub.IsConnectionDataSynced || _gags.ServerGagData is not { } curData)
             return;
+
+        PostActionMsg(enactor.UID, InteractionType.RemoveGag, $"The {curData.GagSlots[layer].GagItem.GagName()} on layer <{layer}> was removed!");
         Logger.LogTrace("Received RemoveGag instruction from server!", LoggerType.Gags);
-        if(_gags.RemoveGag(gagData.AffectedLayer, gagData.Enactor.UID, out var visualItem))
-            await _cacheManager.RemoveGagItem(visualItem, gagData.AffectedLayer);
-        
-        PostActionMsg(gagData.Enactor.UID, InteractionType.RemoveGag, $"{gagData.PreviousGag.GagName()} was removed from layer {gagData.AffectedLayer}");
+        if(_gags.RemoveGag(layer, enactor.UID, out var visualItem))
+            await _cacheManager.RemoveGagItem(visualItem, layer);
     }
 
     #endregion Gag Manipulation
 
     #region Restrictions Manipulation
-    public async Task SwapOrApplyRestriction(KinksterUpdateActiveRestriction itemData)
+    public async Task SwapRestriction(int layer, ActiveRestriction newData, UserData enactor)
     {
-        if (itemData.PreviousRestriction== Guid.Empty)
-            await ApplyRestriction(itemData);
-        else
-            await SwapRestriction(itemData);
-    }
-
-    public async Task SwapRestriction(KinksterUpdateActiveRestriction itemData)
-    {
-        if (!MainHub.IsConnectionDataSynced)
+        if (!MainHub.IsConnectionDataSynced || _restrictions.ServerRestrictionData is not { } curData)
             return;
-        Logger.LogTrace("Received SwapGag instruction from server!", LoggerType.Gags);
-        await RemoveRestriction(itemData, false);
-        await ApplyRestriction(itemData);
 
-        PostActionMsg(itemData.Enactor.UID, InteractionType.SwappedRestriction, itemData.PreviousRestriction + " swapped to " + 
-            itemData.NewData.Identifier + " on layer " + itemData.AffectedLayer);
+        Logger.LogTrace("Received SwapRestriction instruction from server!", LoggerType.Gags);
+        var prevRestriction = curData.Restrictions[layer].Identifier;
+        PostActionMsg(enactor.UID, InteractionType.SwappedRestriction, $"Swapped Layer <{layer}> Restriction: [{prevRestriction} >> {newData.Identifier}]");
+        // Remove it.
+        if (_restrictions.RemoveRestriction(layer, enactor.UID, out var visualRemItem))
+            await _cacheManager.RemoveRestrictionItem(visualRemItem, layer);
+        // Now apply it.
+        if (_restrictions.ApplyRestriction(layer, newData, enactor.UID, out var visualAddItem))
+            await _cacheManager.AddRestrictionItem(visualAddItem, layer, enactor.UID);
     }
 
-    /// <summary> Applies a Restriction to the client at a defined index. </summary>
-    public async Task ApplyRestriction(KinksterUpdateActiveRestriction itemData)
+    public async Task ApplyRestriction(int layer, ActiveRestriction newData, UserData enactor)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
 
         Logger.LogTrace("Received ApplyRestriction instruction from server!", LoggerType.Restrictions);
-        if(_restrictions.ApplyRestriction(itemData.AffectedLayer, itemData.NewData.Identifier, itemData.Enactor.UID, out var visualItem))
-            await _cacheManager.AddRestrictionItem(visualItem, itemData.AffectedLayer, itemData.Enactor.UID);
+        PostActionMsg(enactor.UID, InteractionType.ApplyRestriction, "A Restriction item was applied to you!");
 
-        PostActionMsg(itemData.Enactor.UID, InteractionType.ApplyRestriction, "A Restriction item was applied to you!");
+        if (_restrictions.ApplyRestriction(layer, newData, enactor.UID, out var visualItem))
+            await _cacheManager.AddRestrictionItem(visualItem, layer, enactor.UID);
     }
 
-    /// <summary> Locks a padlock from a restriction at a defined index. </summary>
-    public void LockRestriction(KinksterUpdateActiveRestriction itemData)
+    public Task LockRestriction(int layer, ActiveRestriction newData, UserData enactor)
+    {
+        if (!MainHub.IsConnectionDataSynced)
+            return Task.CompletedTask;
+        Logger.LogTrace("Received LockRestriction instruction from server!", LoggerType.Restrictions);
+        PostActionMsg(enactor.UID, InteractionType.LockRestriction, $"Locked a {newData.Padlock.ToName()} to layer <{layer}>'s Restriction");
+        _restrictions.LockRestriction(layer, newData, enactor.UID);
+        return Task.CompletedTask;
+    }
+
+    public Task UnlockRestriction(int layer, UserData enactor)
+    {
+        if (!MainHub.IsConnectionDataSynced || _restrictions.ServerRestrictionData is not { } curData)
+            return Task.CompletedTask;
+        Logger.LogTrace("Received UnlockRestriction instruction from server!", LoggerType.Restrictions);
+        PostActionMsg(enactor.UID, InteractionType.UnlockRestriction, $"Removed {curData.Restrictions[layer].Padlock.ToName()} from layer <{layer}>'s Restriction");
+        _restrictions.UnlockRestriction(layer, enactor.UID);
+        return Task.CompletedTask;
+    }
+
+    public async Task RemoveRestriction(int layer, UserData enactor)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
-        Logger.LogTrace("Received LockRestriction instruction from server!", LoggerType.Gags);
-        _restrictions.LockRestriction(itemData.AffectedLayer, itemData.NewData.Padlock, itemData.NewData.Password, itemData.NewData.Timer, itemData.Enactor.UID);
-        PostActionMsg(itemData.Enactor.UID, InteractionType.LockRestriction, itemData.NewData.Padlock + " was applied to the restriction in layer " + itemData.AffectedLayer);
-    }
+        Logger.LogTrace("Received RemoveRestriction instruction from server!", LoggerType.Restrictions);
+        PostActionMsg(enactor.UID, InteractionType.RemoveRestriction, "A Restriction item was removed from you!");
 
-    /// <summary> Unlocks a padlock from a restriction at a defined index. </summary>
-    public void UnlockRestriction(KinksterUpdateActiveRestriction itemData)
-    {
-        if (!MainHub.IsConnectionDataSynced)
-            return;
-        Logger.LogTrace("Received UnlockRestriction instruction from server!", LoggerType.Gags);
-        _restrictions.UnlockRestriction(itemData.AffectedLayer, itemData.Enactor.UID);
-        PostActionMsg(itemData.Enactor.UID, InteractionType.UnlockRestriction, itemData.PreviousPadlock + " was removed from layer " + itemData.AffectedLayer + "'s Restriction");
-    }
-
-    /// <summary> Removes a restraint item from a defined index. </summary>
-    public async Task RemoveRestriction(KinksterUpdateActiveRestriction itemData, bool updateVisuals = true)
-    {
-        if (!MainHub.IsConnectionDataSynced)
-            return;
-        Logger.LogTrace("Received RemoveRestriction instruction from server!", LoggerType.Gags);
-        if(_restrictions.RemoveRestriction(itemData.AffectedLayer, itemData.Enactor.UID, out var visualItem))
-            await _cacheManager.RemoveRestrictionItem(visualItem, itemData.AffectedLayer);
-        
-        PostActionMsg(itemData.Enactor.UID, InteractionType.RemoveRestriction, "A Restriction item was removed from you!");
+        if (_restrictions.RemoveRestriction(layer, enactor.UID, out var visualItem))
+            await _cacheManager.RemoveRestrictionItem(visualItem, layer);
     }
 
     #endregion Restrictions Manipulation
 
     #region RestraintSet Manipulation
-    public async Task SwapOrApplyRestraint(KinksterUpdateActiveRestraint itemData)
+    public async Task SwapRestraint(CharaActiveRestraint newData, UserData enactor)
     {
-        if (itemData.PreviousRestraint == Guid.Empty)
-            await ApplyRestraint(itemData);
-        else
-            await SwapRestraint(itemData);
+        if (!MainHub.IsConnectionDataSynced || _restraints.ServerData is not { } itemData)
+            return;
+
+        Logger.LogTrace("Received SwapRestraintSet instruction from server!", LoggerType.Restraints);
+        PostActionMsg(enactor.UID, InteractionType.SwappedRestraint, $"Swapped RestraintSet: [{itemData.Identifier} >> {newData.Identifier}]");
+        // Remove it.
+        if (_restraints.Remove(enactor.UID, out var visualRemItem, out var remLayers))
+            await _cacheManager.RemoveRestraintSet(visualRemItem, remLayers);
+        // Now apply it.
+        if (_restraints.Apply(newData, enactor.UID, out var visualAddItem))
+            await _cacheManager.AddRestraintSet(visualAddItem, enactor.UID);
     }
 
-    /// <summary> Swapped a Restraint set to the client. </summary>
-    public async Task SwapRestraint(KinksterUpdateActiveRestraint itemData)
-    {
-        Logger.LogTrace("Received SwapGag instruction from server!", LoggerType.Gags);
-        await RemoveRestraint(itemData, false);
-        await ApplyRestraint(itemData);
-        PostActionMsg(itemData.Enactor.UID, InteractionType.SwappedRestraint, itemData.PreviousRestraint + " swapped to " + itemData.NewData.Identifier);
-    }
-
-    /// <summary> Applies a Restraint set to the client. </summary>
-    public async Task ApplyRestraint(KinksterUpdateActiveRestraint itemData)
+    public async Task ApplyRestraint(CharaActiveRestraint newData, UserData enactor)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
 
-        Logger.LogTrace("Received ApplyRestraint instruction from server!", LoggerType.Gags);
-        if(_restraints.Apply(itemData, out var restraintSet))
-            await _cacheManager.AddRestraintSet(restraintSet, itemData.Enactor.UID);
+        Logger.LogTrace("Received ApplyRestraint instruction from server!", LoggerType.Restraints);
+        PostActionMsg(enactor.UID, InteractionType.ApplyRestraint, $"A RestraintSet was applied to you! ({newData.Identifier})");
 
-        PostActionMsg(itemData.Enactor.UID, InteractionType.ApplyRestraint, itemData.NewData.Identifier + " was applied to you!");
+        if (_restraints.Apply(newData, enactor.UID, out var restraintSet))
+            await _cacheManager.AddRestraintSet(restraintSet, enactor.UID);
     }
 
-    /// <summary> Updates the active Restraint Set's layers with a new configuration. Triggering removal and application of certain layers. </summary>
-    public async Task SwapRestraintLayers(KinksterUpdateActiveRestraint itemData)
+    public async Task SwapRestraintLayers(CharaActiveRestraint newData, UserData enactor)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
 
-        Logger.LogTrace("Received SwapRestraintLayer instruction from server!", LoggerType.Gags);
-        if (_restraints.SwapLayers(itemData, out var restraintSet, out var removedLayers, out var addedLayers))
-            await _cacheManager.SwapRestraintSetLayers(restraintSet, removedLayers, addedLayers, itemData.Enactor.UID);
-        PostActionMsg(itemData.Enactor.UID, InteractionType.SwappedRestraintLayers, "Restraint Layers were swapped to a new configuration!");
+        Logger.LogTrace("Received SwapRestraintLayer instruction from server!", LoggerType.Restraints);
+        PostActionMsg(enactor.UID, InteractionType.SwappedRestraintLayers, $"RestraintSet Layers were swapped! ({newData.ActiveLayers})");
+
+        if (_restraints.SwapLayers(newData, enactor.UID, out var restraintSet, out var removedLayers, out var addedLayers))
+            await _cacheManager.SwapRestraintSetLayers(restraintSet, removedLayers, addedLayers, enactor.UID);
 
     }
 
-    /// <summary> Applies a Restraint set layer(s) to the client. </summary>
-    public async Task ApplyRestraintLayers(KinksterUpdateActiveRestraint itemData)
+    public async Task ApplyRestraintLayers(CharaActiveRestraint newData, UserData enactor)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
-        Logger.LogTrace("Received ApplyRestraintLayer instruction from server!", LoggerType.Gags);
-        if (_restraints.ApplyLayers(itemData, out var restraintSet, out var addedLayers))
-            await _cacheManager.AddRestraintSetLayers(restraintSet, addedLayers, itemData.Enactor.UID);
+        Logger.LogTrace("Received ApplyRestraintLayer instruction from server!", LoggerType.Restraints);
+        PostActionMsg(enactor.UID, InteractionType.ApplyRestraintLayers, $"New RestraintSet Layers were applied! ({newData.ActiveLayers})");
 
-        PostActionMsg(itemData.Enactor.UID, InteractionType.ApplyRestraintLayers, itemData.NewData.Identifier + " was applied to you!");
+        if (_restraints.ApplyLayers(newData.ActiveLayers, enactor.UID, out var restraintSet, out var addedLayers))
+            await _cacheManager.AddRestraintSetLayers(restraintSet, addedLayers, enactor.UID);
     }
 
-    /// <summary> Locks the active restraint set. </summary>
-    public void LockRestraint(KinksterUpdateActiveRestraint itemData)
+    public Task LockRestraint(CharaActiveRestraint newData, UserData enactor)
     {
         if (!MainHub.IsConnectionDataSynced)
-            return;
-        Logger.LogTrace("Received LockRestraint instruction from server!", LoggerType.Gags);
-        _restraints.Lock(itemData.NewData.Identifier, itemData.NewData.Padlock, itemData.NewData.Password, itemData.NewData.Timer, itemData.Enactor.UID);
-        PostActionMsg(itemData.Enactor.UID, InteractionType.LockRestraint, itemData.NewData.Padlock + " was applied to the restraint");
+            return Task.CompletedTask;
+        Logger.LogTrace("Received LockRestraint instruction from server!", LoggerType.Restraints);
+        PostActionMsg(enactor.UID, InteractionType.LockRestraint, $"A {newData.Padlock.ToName()} was locked onto your Restraint Set");
+        _restraints.Lock(newData, enactor.UID);
+        return Task.CompletedTask;
     }
 
-    /// <summary> Unlocks the active restraint set </summary>
-    public void UnlockRestraint(KinksterUpdateActiveRestraint itemData)
+    public Task UnlockRestraint(UserData enactor)
     {
-        if (!MainHub.IsConnectionDataSynced)
-            return;
-        Logger.LogTrace("Received UnlockRestraint instruction from server!", LoggerType.Gags);
-        _restraints.Unlock(itemData.NewData.Identifier, itemData.Enactor.UID);
-        PostActionMsg(itemData.Enactor.UID, InteractionType.UnlockRestraint, itemData.PreviousPadlock + " was removed from the restraint");
+        if (!MainHub.IsConnectionDataSynced || _restraints.ServerData is not { } itemData)
+            return Task.CompletedTask;
+
+        Logger.LogTrace("Received UnlockRestraint instruction from server!", LoggerType.Restraints);
+        PostActionMsg(enactor.UID, InteractionType.UnlockRestraint, $"The {itemData.Padlock.ToName()} was removed from your Restraint Set");
+        _restraints.Unlock(enactor.UID);
+        return Task.CompletedTask;
     }
 
-    /// <summary> Removes restraint layer(s) from the active restraint set. </summary>
-    public async Task RemoveRestraintLayers(KinksterUpdateActiveRestraint itemData)
+    public async Task RemoveRestraintLayers(CharaActiveRestraint newData, UserData enactor)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
-        Logger.LogTrace("Received RemoveRestraintLayer instruction from server!", LoggerType.Gags);
-        if (_restraints.RemoveLayers(itemData, out var restraintSet, out var removedLayers))
+
+        Logger.LogTrace("Received RemoveRestraintLayer instruction from server!", LoggerType.Restraints);
+        PostActionMsg(enactor.UID, InteractionType.RemoveRestraintLayers, "RestraintSet Layers were removed from you!");
+
+        if (_restraints.RemoveLayers(newData.ActiveLayers, enactor.UID, out var restraintSet, out var removedLayers))
             await _cacheManager.RemoveRestraintSetLayers(restraintSet, removedLayers);
-
-        PostActionMsg(itemData.Enactor.UID, InteractionType.RemoveRestraintLayers, "A Restraint Layer was removed from you!");
     }
 
-    /// <summary> Removes the active restraint. </summary>
-    public async Task RemoveRestraint(KinksterUpdateActiveRestraint itemData, bool updateVisuals = true)
+    public async Task RemoveRestraint(UserData enactor)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
-        Logger.LogTrace("Received RemoveRestraint instruction from server!", LoggerType.Gags);
-        if (_restraints.Remove(itemData.Enactor.UID, out var restraintSet, out var removedLayers))
-            await _cacheManager.RemoveRestraintSet(restraintSet, removedLayers);
 
-        PostActionMsg(itemData.Enactor.UID, InteractionType.RemoveRestraint, "A Restriction item was removed from you!");
+        Logger.LogTrace("Received RemoveRestraint instruction from server!", LoggerType.Restraints);
+        PostActionMsg(enactor.UID, InteractionType.RemoveRestraint, "Your RestraintSet was removed!");
+
+        if (_restraints.Remove(enactor.UID, out var restraintSet, out var removedLayers))
+            await _cacheManager.RemoveRestraintSet(restraintSet, removedLayers);
     }
 
     #endregion RestraintSet Manipulation

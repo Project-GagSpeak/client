@@ -350,12 +350,5 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
                 CloseInteraction();
             }
         });
-
-
-
-
-
-
-
     }
 }

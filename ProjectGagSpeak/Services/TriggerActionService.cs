@@ -32,7 +32,7 @@ public class TriggerActionService
     private readonly RestraintManager _restraints;
     private readonly BuzzToyManager _toys;
     private readonly MoodleHandler _moodles;
-    private readonly DataDistributionService _distributer;
+    private readonly DataDistributor _distributer;
 
     // (This rate limiter is kind of busted at the moment, maybe find a better solution for this)
     private ActionRateLimiter _rateLimiter = new(TimeSpan.FromSeconds(3), 1, 3, 3, 3);
@@ -46,7 +46,7 @@ public class TriggerActionService
         RestraintManager restraints,
         BuzzToyManager toys,
         MoodleHandler moodles,
-        DataDistributionService distributer)
+        DataDistributor distributer)
     {
         _logger = logger;
         _shockies = shockies;
@@ -350,7 +350,7 @@ public class TriggerActionService
                 return false;
         }
 
-        return await _distributer.PushActiveRestraintUpdate(restraintData, updateType) is not null;
+        return await _distributer.PushNewActiveRestraint(restraintData, updateType) is not null;
     }
 
     private async Task<bool> DoMoodleAction(MoodleAction act, string enactor)

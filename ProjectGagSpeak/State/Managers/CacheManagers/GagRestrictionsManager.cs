@@ -113,7 +113,7 @@ public sealed class GagRestrictionManager : IHybridSavable
     #endregion Validators
 
     #region Performers
-    /// <summary> Applies the gag to the spesified layer if possible, and updates the active items. </summary>
+    /// <summary> Applies the gag to the specified layer if possible, and updates the active items. </summary>
     /// <returns> true if it contained visual changes, false otherwise. </returns>
     public bool ApplyGag(int layer, GagType newGag, string enactor, [NotNullWhen(true)] out GarblerRestriction? item)
     {
@@ -123,7 +123,7 @@ public sealed class GagRestrictionManager : IHybridSavable
             return false;
 
         // update values & Garbler, then fire achievement ping.
-        _logger.LogTrace($"Applying Gag {newGag.GagName()} to layer {layer} by {enactor}");
+        _logger.LogTrace($"Applying {newGag.GagName()} to layer <{layer}> (By: {enactor}");
         data.GagSlots[layer].GagItem = newGag;
         data.GagSlots[layer].Enabler = enactor;
 
@@ -143,18 +143,18 @@ public sealed class GagRestrictionManager : IHybridSavable
         return false;
     }
 
-    public void LockGag(int layer, Padlocks padlock, string pass, DateTimeOffset timer, string enactor)
+    public void LockGag(int layer, ActiveGagSlot newData, string enactor)
     {
         // Server validated padlock alteration, so simply assign them here and invoke the achievements.
         if (ServerGagData is not { } data)
             return;
 
-        data.GagSlots[layer].Padlock = padlock;
-        data.GagSlots[layer].Password = pass;
-        data.GagSlots[layer].Timer = timer;
-        data.GagSlots[layer].PadlockAssigner = enactor;
+        data.GagSlots[layer].Padlock = newData.Padlock;
+        data.GagSlots[layer].Password = newData.Password;
+        data.GagSlots[layer].Timer = newData.Timer;
+        data.GagSlots[layer].PadlockAssigner = newData.PadlockAssigner;
         // Fire that the gag was locked for this layer.
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.GagLockStateChange, true, layer, padlock, enactor);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.GagLockStateChange, true, layer, newData.Padlock, enactor);
     }
 
     public void UnlockGag(int layer, string enactor)

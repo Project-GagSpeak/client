@@ -21,9 +21,6 @@ public record HardcoreStateExpired(HcAttribute Attribute) : SameThreadMessage;
 
 
 // Kinkster Data Changes
-public record ActiveGagsChangeMessage(DataUpdateType UpdateType, int Layer, ActiveGagSlot NewData) : SameThreadMessage;
-public record ActiveRestrictionsChangeMessage(DataUpdateType UpdateType, int Layer, ActiveRestriction NewData) : SameThreadMessage;
-public record ActiveRestraintChangedMessage(DataUpdateType UpdateType, CharaActiveRestraint NewData) : SameThreadMessage;
 public record ActiveCollarChangedMessage(DataUpdateType UpdateType, CharaActiveCollar NewData) : SameThreadMessage;
 public record AliasGlobalUpdateMessage(Guid AliasId, AliasTrigger? NewData) : SameThreadMessage;
 public record AliasPairUpdateMessage(UserData IntendedUser, Guid AliasId, AliasTrigger? NewData) : SameThreadMessage;

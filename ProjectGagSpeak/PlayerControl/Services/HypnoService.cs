@@ -1,8 +1,8 @@
 using CkCommons;
 using CkCommons.Gui;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Textures.TextureWraps;
-using GagSpeak.Gui;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Textures;
@@ -10,10 +10,6 @@ using GagSpeak.State.Caches;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
-using Dalamud.Bindings.ImGui;
-using NAudio.CoreAudioApi;
-using System.IO;
-using Timer = System.Timers.Timer;
 
 namespace GagSpeak.Services.Controller;
 
@@ -44,7 +40,7 @@ public class HypnoService : IDisposable
     private HypnosisState   _activeState = new();
 
     // Active Display Item.
-    private bool                    _metaDataEffect = false;
+    private bool                    _hcStateEffect = false;
     private CombinedCacheKey        _activeSourceKey = CombinedCacheKey.Empty;
     private HypnoticEffect?         _activeEffect = null;       
     private string                  _applierUid   = string.Empty;
@@ -67,7 +63,7 @@ public class HypnoService : IDisposable
     /// <summary>
     ///     Indicates if this spiral came from a sent hypnosis effect, over a personal restraint. 
     /// </summary>
-    public bool IsSentEffect => _metaDataEffect;
+    public bool IsSentEffect => _hcStateEffect;
     public CombinedCacheKey ActiveSourceKey => _activeSourceKey;
     public string EffectEnactor => _applierUid;
     public bool HasValidEffect => _activeEffect is not null;
@@ -147,8 +143,8 @@ public class HypnoService : IDisposable
     public async Task RemoveSentEffectOnExpire()
     {
         // clear the sent effect after removing the effect.
-        await RemoveEffect();
-        _metaDataEffect = false;
+        await RemoveEffect().ConfigureAwait(false);
+        _hcStateEffect = false;
     }
 
     /// <summary> 
@@ -158,7 +154,7 @@ public class HypnoService : IDisposable
     {
         if (!HasValidEffect)
             return;
-        // Run the Removeal Internal 
+        // Run the Removal Internal 
         await ExecuteWithSemaphore(RemoveAnimationInternal);
         // Reset the state.
         _tasksCTS = _tasksCTS.SafeCancelRecreate();

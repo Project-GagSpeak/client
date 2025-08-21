@@ -16,15 +16,22 @@ using System.Runtime.InteropServices;
 namespace GagSpeak.Utils;
 public static class GsExtensions
 {
-    public static bool HasValidSetup(this GagspeakConfig configuration)
+    /// <summary>
+    ///     A reliable Player.Interactable, that also waits on the loading screen to finish. <para />
+    ///     Useful when waiting on player loading for UI manipulation and interactions.
+    /// </summary>
+    public static async Task WaitForPlayerLoading()
     {
-        return configuration.AcknowledgementUnderstood;
+        while (!await Svc.Framework.RunOnFrameworkThread(HcCommonTaskFuncs.WaitForPlayerLoading).ConfigureAwait(false))
+        {
+            await Task.Delay(100).ConfigureAwait(false);
+        }
     }
 
+    public static bool HasValidSetup(this GagspeakConfig configuration)
+        => configuration.AcknowledgementUnderstood;
     public static bool HasValidSetup(this ServerStorage configuration)
-    {
-        return configuration.Authentications.Count > 0;
-    }
+        => configuration.Authentications.Count > 0;
 
     public static string AsAnonKinkster(this string kinksterUid, bool isLegacy = true)
         => $"Kinkster-{kinksterUid[^(isLegacy ? 4 : 3)..]}";

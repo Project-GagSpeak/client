@@ -51,7 +51,6 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - CkGui.IconSize(FAI.InfoCircle).X);
             CkGui.IconText(FAI.InfoCircle, ImGuiColors.ParsedGold.ToUint());
             DrawItemTooltip(restraintSet);
-            ImGui.SameLine();
         }
 
         return ret;

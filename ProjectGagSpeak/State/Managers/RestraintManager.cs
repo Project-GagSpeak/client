@@ -152,7 +152,7 @@ public sealed class RestraintManager : IHybridSavable
     #region Active Set Updates
     /// <summary> Applies the restraint set for the defined GUID in the DTO. </summary>
     /// <returns> True if visuals should be applied and were set, false otherwise. </returns>
-    public bool Apply(KinksterUpdateActiveRestraint updateDto, [NotNullWhen(true)] out RestraintSet? visualSet)
+    public bool Apply(CharaActiveRestraint newData, string enactor, [NotNullWhen(true)] out RestraintSet? visualSet)
     {
         visualSet = null;
 
@@ -160,8 +160,8 @@ public sealed class RestraintManager : IHybridSavable
             return false;
 
         // update values & ping achievement.
-        data.Identifier = updateDto.NewData.Identifier;
-        data.Enabler = updateDto.Enactor.UID;
+        data.Identifier = newData.Identifier;
+        data.Enabler = enactor;
         GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintStateChange, data.Identifier, true, data.Enabler);
 
         // If we obtain the set here, it means we should apply the visual aspect of this change, otherwise return.
@@ -174,7 +174,7 @@ public sealed class RestraintManager : IHybridSavable
 
     /// <summary> Sets a new active layer configuration, both applying and removing some layers. </summary>
     /// <returns> True if visuals should be applied and were set, false otherwise. </returns>
-    public bool SwapLayers(KinksterUpdateActiveRestraint updateDto, [NotNullWhen(true)] out RestraintSet? visualSet, out RestraintLayer added, out RestraintLayer removed)
+    public bool SwapLayers(CharaActiveRestraint newData, string enactor, [NotNullWhen(true)] out RestraintSet? visualSet, out RestraintLayer added, out RestraintLayer removed)
     {
         visualSet = null;
         added = RestraintLayer.None;
@@ -184,11 +184,11 @@ public sealed class RestraintManager : IHybridSavable
             return false;
 
         // set what layers were added and new.
-        added = updateDto.NewData.ActiveLayers & ~data.ActiveLayers;
-        removed = data.ActiveLayers & ~updateDto.NewData.ActiveLayers;
+        added = newData.ActiveLayers & ~data.ActiveLayers;
+        removed = data.ActiveLayers & ~newData.ActiveLayers;
         // update the active layers.
-        data.ActiveLayers = updateDto.NewData.ActiveLayers;
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintLayerChange, data.Identifier, added, removed, updateDto.Enactor.UID);
+        data.ActiveLayers = newData.ActiveLayers;
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintLayerChange, data.Identifier, added, removed, enactor);
 
         // If we obtain the visualSet here, it means we should apply the visual aspect of this change, otherwise return.
         return Storage.TryGetRestraint(data.Identifier, out visualSet);
@@ -197,7 +197,7 @@ public sealed class RestraintManager : IHybridSavable
 
     /// <summary> Applies the restraint set layer(s) for the current equipped restraint set. </summary>
     /// <returns> True if visuals should be applied and were set, false otherwise. </returns>
-    public bool ApplyLayers(KinksterUpdateActiveRestraint updateDto, [NotNullWhen(true)] out RestraintSet? visualSet, out RestraintLayer added)
+    public bool ApplyLayers(RestraintLayer newLayers, string enactor, [NotNullWhen(true)] out RestraintSet? visualSet, out RestraintLayer added)
     {
         visualSet = null;
         added = RestraintLayer.None;
@@ -206,28 +206,28 @@ public sealed class RestraintManager : IHybridSavable
             return false;
 
         // set what layers were added and new.
-        added = updateDto.NewData.ActiveLayers & ~data.ActiveLayers;
+        added = newLayers & ~data.ActiveLayers;
         // update the active layers.
         data.ActiveLayers |= added;
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintLayerChange, data.Identifier, added, true, updateDto.Enactor.UID);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintLayerChange, data.Identifier, added, true, enactor);
 
         // If we obtain the visualSet here, it means we should apply the visual aspect of this change, otherwise return.
         return Storage.TryGetRestraint(data.Identifier, out visualSet);
     }
 
-    public void Lock(Guid restraintId, Padlocks padlock, string pass, DateTimeOffset timer, string enactor)
+    public void Lock(CharaActiveRestraint newData, string enactor)
     {
         if (_serverRestraintData is not { } data)
             return;
 
-        data.Padlock = padlock;
-        data.Password = pass;
-        data.Timer = timer;
-        data.PadlockAssigner = enactor;
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintLockChange, restraintId, padlock, true, enactor);
+        data.Padlock = newData.Padlock;
+        data.Password = newData.Password;
+        data.Timer = newData.Timer;
+        data.PadlockAssigner = newData.PadlockAssigner;
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintLockChange, data.Identifier, newData.Padlock, true, enactor);
     }
 
-    public void Unlock(Guid restraintId, string enactor)
+    public void Unlock(string enactor)
     {
         // Server validated padlock alteration, so simply assign them here and invoke the achievements.
         if (_serverRestraintData is not { } data)
@@ -239,23 +239,23 @@ public sealed class RestraintManager : IHybridSavable
         data.Password = string.Empty;
         data.Timer = DateTimeOffset.MinValue;
         data.PadlockAssigner = string.Empty;
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintLockChange, restraintId, prevLock, false, enactor);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintLockChange, data.Identifier, prevLock, false, enactor);
 
         if ((prevAssigner != MainHub.UID) && (enactor != MainHub.UID) && (enactor != prevAssigner))
             GagspeakEventManager.AchievementEvent(UnlocksEvent.SoldSlave);
     }
 
-    public bool RemoveLayers(KinksterUpdateActiveRestraint updateDto, [NotNullWhen(true)] out RestraintSet? visualSet, out RestraintLayer removed)
+    public bool RemoveLayers(RestraintLayer remLayers, string enactor, [NotNullWhen(true)] out RestraintSet? visualSet, out RestraintLayer removed)
     {
         visualSet = null;
         removed = RestraintLayer.None;
         if (_serverRestraintData is not { } data)
             return false;
         // Determine which layers are being removed (were present but not anymore)
-        removed = data.ActiveLayers & ~updateDto.NewData.ActiveLayers;
+        removed = data.ActiveLayers & ~remLayers;
         // Remove those layers
         data.ActiveLayers &= ~removed;
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintLayerChange, data.Identifier, removed, false, updateDto.Enactor.UID);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintLayerChange, data.Identifier, removed, false, enactor);
         // If we obtain the visualSet here, it means we should apply the visual aspect of this change, otherwise return.
         return Storage.TryGetRestraint(data.Identifier, out visualSet);
     }
@@ -408,27 +408,4 @@ public sealed class RestraintManager : IHybridSavable
         oldConfigJson["Version"] = 1;
     }
     #endregion HybridSaver
-
-    private void CheckForExpiredLocks()
-    {
-        if (!MainHub.IsConnected)
-            return;
-
-        if (_serverRestraintData is null || !_serverRestraintData.IsLocked())
-            return;
-
-        if (_serverRestraintData.Padlock.IsTimerLock() && _serverRestraintData.HasTimerExpired())
-        {
-            _logger.LogTrace("Sending off Lock Removed Event to server!", LoggerType.Restraints);
-            // only set data relevant to the new change.
-            var newData = new CharaActiveRestraint()
-            {
-                Padlock = _serverRestraintData.Padlock, // match the padlock
-                Password = _serverRestraintData.Password, // use the same password.
-                PadlockAssigner = _serverRestraintData.PadlockAssigner // use the same assigner. (To remove devotional timers)
-            };
-
-            _mediator.Publish(new ActiveRestraintChangedMessage(DataUpdateType.Unlocked, newData));
-        }
-    }
 }

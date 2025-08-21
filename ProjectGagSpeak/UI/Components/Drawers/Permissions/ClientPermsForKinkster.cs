@@ -500,9 +500,8 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
         CkGui.FramedIconText(isActive ? data.IconT : data.IconF);
         if (isActive)
         {
-            CkGui.ColorTextFrameAligned(isActive ? stateLocker.AsAnonKinkster() : "UNK KINKSTER", editCol);
-            ImGui.SameLine(0, 0);
             CkGui.TextFrameAlignedInline(data.EnabledPreText);
+            CkGui.ColorTextFrameAlignedInline(isActive ? stateLocker.AsAnonKinkster() : "UNK KINKSTER", editCol);
             ImGui.SameLine(0, 0);
             ImUtf8.TextFrameAligned(".");
         }
@@ -628,10 +627,10 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
 
     private readonly ImmutableDictionary<SPPID, HcPermClient> ClientHcPermData = ImmutableDictionary<SPPID, HcPermClient>.Empty
         .Add(SPPID.LockedFollowing, new HcPermClient(FAI.Walking, FAI.Ban, "Forced Follow", "Actively following", "Not following anyone", "to make you follow them", "from triggering --COL--Forced Follow--COL-- on you"))
-        .Add(SPPID.LockedEmoteState, new HcPermClient(FAI.PersonArrowDownToLine, FAI.Ban, "Locked Emote State", "Emote Locked for", "Not locked in an emote loop", string.Empty, string.Empty)) // Handle this seperately, it has it's own call.
+        .Add(SPPID.LockedEmoteState, new HcPermClient(FAI.PersonArrowDownToLine, FAI.Ban, "Locked Emote State", "In emote lock for", "Not locked in an emote loop", string.Empty, string.Empty)) // Handle this seperately, it has it's own call.
         .Add(SPPID.IndoorConfinement, new HcPermClient(FAI.HouseLock, FAI.Ban, "Indoor Confinement", "Confined by", "Not confined by anyone", "to confine you indoors --COL--via the nearest housing node--COL----NL--If --COL--Lifestream--COL-- is installed, can be confined to --COL--any address--COL--.", "from confining you indoors"))
         .Add(SPPID.Imprisonment, new HcPermClient(FAI.Bars, FAI.Ban, "Imprisonment", "Imprisoned by", "Not imprisoned", "to imprison you at a desired location.--SEP----COL--They must be nearby when giving a location besides your current position.", "from imprisoning you at a desired location"))
-        .Add(SPPID.ChatBoxesHidden, new HcPermClient(FAI.CommentSlash, FAI.Ban, "Chatbox Visibility", "Chatbox hidden by", "Chatbox is visible", "to hide your chatbox UI", "from hiding your chatbox"))
-        .Add(SPPID.ChatInputHidden, new HcPermClient(FAI.CommentSlash, FAI.Ban, "ChatInput Visibility", "ChatInput hidden by", "ChatInput is visible", "to hide your chat input UI", "from hiding your chat input"))
-        .Add(SPPID.ChatInputBlocked, new HcPermClient(FAI.CommentDots, FAI.Ban, "ChatInput Blocking", "ChatInput blocked by", "ChatInput is accessible", "to block your chat input", "from blocking your chat input"));
+        .Add(SPPID.ChatBoxesHidden, new HcPermClient(FAI.CommentSlash, FAI.Ban, "ChatBox Visibility", "Chat box hidden by", "Chatbox is visible", "to hide your Chatbox UI", "from hiding your chatbox"))
+        .Add(SPPID.ChatInputHidden, new HcPermClient(FAI.CommentSlash, FAI.Ban, "ChatInput Visibility", "Chat input hidden by", "ChatInput is visible", "to hide your chat input UI", "from hiding your chat input"))
+        .Add(SPPID.ChatInputBlocked, new HcPermClient(FAI.CommentDots, FAI.Ban, "ChatInput Blocking", "Chat input blocked by", "ChatInput is accessible", "to block your chat input", "from blocking your chat input"));
 }

@@ -1,10 +1,13 @@
 using GagSpeak.PlayerClient;
+using GagSpeak.PlayerControl;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Handlers;
 using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Services;
 
@@ -15,7 +18,7 @@ namespace GagSpeak.Services;
 public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
 {
     private readonly OverlayHandler _overlays;
-    private readonly PlayerControlHandler _playerControl;
+    private readonly PlayerCtrlHandler _playerControl;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
@@ -31,8 +34,6 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
     public ConnectionSyncService(
         ILogger<ConnectionSyncService> logger,
         GagspeakMediator mediator,
-        OverlayHandler overlays,
-        PlayerControlHandler playerControl,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
@@ -40,6 +41,8 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
         PuppeteerManager puppeteer,
         AlarmManager alarms,
         TriggerManager triggers,
+        OverlayHandler overlays,
+        PlayerCtrlHandler playerControl,
         ClientDataListener clientDatListener,
         VisualStateListener visuals,
         ConfigFileProvider fileNames,

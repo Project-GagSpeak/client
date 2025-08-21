@@ -26,15 +26,21 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<KinksterRestricti
         Current = default;
     }
 
-    // we need to override the drawSelectable method here for a custom draw display.
+    protected override bool DisableCondition()
+        => Current is null || !_ref.PairPerms.ApplyRestraintSets || _ref.ActiveRestraint.Identifier == Current.Id;
+
+    protected override string ToString(KinksterRestriction obj)
+        => obj.Label.IsNullOrWhitespace() ? $"UNK ITEM NAME" : obj.Label;
+
+    public bool DrawComboButton(string label, float width, int layer, string buttonTT)
+        => DrawComboButton(label, width, layer, "Apply", buttonTT);
+
     protected override bool DrawSelectable(int globalIdx, bool selected)
     {
         var restriction = Items[globalIdx];
         // we want to start by drawing the selectable first.
         var ret = ImGui.Selectable(restriction.Label, selected);
-        
-        var iconWidth = CkGui.IconSize(FAI.InfoCircle).X;
-        var isEnabled = restriction.IsEnabled;
+
         if (restriction.IsEnabled)
         {
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - CkGui.IconSize(FAI.InfoCircle).X);
@@ -44,9 +50,6 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<KinksterRestricti
         return ret;
     }
 
-
-    protected override bool DisableCondition()
-        => Current is null || !_ref.PairPerms.ApplyRestraintSets || _ref.ActiveRestraint.Identifier == Current.Id;
 
     protected override void OnButtonPress(int layerIdx)
     {
@@ -79,7 +82,6 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<KinksterRestricti
         });
     }
 
-    // make this generic within an extention utility.
     private void DrawItemTooltip(KinksterRestriction setItem)
     {
         if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))

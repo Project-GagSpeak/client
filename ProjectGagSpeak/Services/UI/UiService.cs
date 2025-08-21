@@ -141,6 +141,25 @@ public sealed class UiService : DisposableMediatorSubscriberBase
         Svc.Logger.Verbose("Assigned new UI blocking task.", LoggerType.UI);
     }
 
+    /// <summary>
+    ///     Offloads a UI Task to the thread pool so ImGui is not halted. It
+    ///     contains an inner task function that can return <typeparamref name="T"/>.
+    /// </summary>
+    /// <returns> A task that can be awaited, returning a value of type <typeparamref name="T"/>. </returns>
+    public static async Task<T> SetUITaskWithReturn<T>(Func<Task<T>> asyncTask)
+    {
+        if (DisableUI)
+        {
+            Svc.Logger.Warning("Attempted to assign a new UI blocking task while one is already running.", LoggerType.UI);
+            return default(T)!;
+        }
+
+        var taskToRun = Task.Run(asyncTask);
+        UiTask = taskToRun;
+        Svc.Logger.Verbose("Assigned new UI blocking task.", LoggerType.UI);
+        return await taskToRun.ConfigureAwait(false);
+    }
+
     public static bool IsRemoteUIOpen() => _createdWindows.OfType<BuzzToyRemoteUI>().FirstOrDefault() is { } m && m.IsOpen;
 
 

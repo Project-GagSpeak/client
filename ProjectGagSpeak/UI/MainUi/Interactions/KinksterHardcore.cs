@@ -30,25 +30,20 @@ public class KinksterHardcore(InteractionsService service)
         var followDis = !inRange || !k.PairPerms.AllowLockedFollowing || !k.IsVisible || !hc.CanChange(HcAttribute.Follow, MainHub.UID);
         var followTT = followEnabled ? $"Allow {dispName} to stop following you." : $"Force {dispName} to follow you.--NL----COL--Effect expires when idle for over 6 seconds.--COL--";
         DrawColoredExpander(InteractionType.LockedFollow, followIcon, followText, followEnabled, followDis, followTT);
-        if (service.OpenItem is InteractionType.LockedFollow)
+        UniqueHcChild(InteractionType.LockedFollow, followEnabled, ImGui.GetFrameHeight(), () =>
         {
             if (ImGuiUtil.DrawDisabledButton("Enable Locked Follow", new Vector2(width, ImGui.GetFrameHeight()), string.Empty, followDis))
                 service.TryEnableHardcoreAction(HcAttribute.Follow);
             CkGui.AttachToolTip($"Force {dispName} to follow you! (--COL--{dispName} must be within 5 yalms--COL--)", ImGuiColors.ParsedPink);
-            ImGui.Separator();
-        }
+        });
 
         // ------ Locked Emote State ------
-        var emoteActive = hc.ChatBoxesHidden.Length > 0;
+        var emoteActive = hc.LockedEmoteState.Length > 0;
         var emoteInfo = emoteActive ? (FAI.StopCircle, $"Free {dispName}'s Locked Emote State.") : k.PairPerms.AllowLockedEmoting 
             ? (FAI.PersonArrowDownToLine, $"Force {dispName} into an Emote State.") : (FAI.Chair, $"Force {dispName} to Sit.");
         var emoteDis = (!k.PairPerms.AllowLockedSitting && !k.PairPerms.AllowLockedEmoting) || !hc.CanChange(HcAttribute.EmoteState, MainHub.UID);
         DrawColoredExpander(InteractionType.LockedEmoteState, emoteInfo.Item1, emoteInfo.Item2, emoteActive, emoteDis, emoteInfo.Item2);
-        if (service.OpenItem is InteractionType.LockedEmoteState)
-        {
-            DrawEmoteChild(width, k, dispName, emoteDis);
-            ImGui.Separator();
-        }
+        UniqueHcChild(InteractionType.LockedFollow, followEnabled, ImGui.GetFrameHeight(), () => DrawEmoteChild(width, k, dispName, emoteDis));
 
         // ------ Locked Confinement ------
         var confinementActive = hc.IndoorConfinement.Length > 0;
@@ -56,12 +51,11 @@ public class KinksterHardcore(InteractionsService service)
         var confinementDis = !k.PairPerms.AllowIndoorConfinement || !hc.CanChange(HcAttribute.Confinement, MainHub.UID);
         var confinementTT = confinementActive ? $"Allow {dispName} to leave their indoor confinement." : $"Confinement {dispName} indoors.";
         DrawColoredExpander(InteractionType.Confinement, confinementInfo.Item1, confinementInfo.Item2, confinementActive, confinementDis, confinementTT);
-        if (service.OpenItem is InteractionType.Confinement)
+        UniqueHcChild(InteractionType.Confinement, confinementActive, CkStyle.TwoRowHeight(), () =>
         {
-            using (ImRaii.Child("ConfinementChild", new Vector2(width, ImGui.GetFrameHeight())))
-                DrawTimerButtonRow(InteractionType.Confinement, ref service.ConfinementTimer, confinementDis);
-            ImGui.Separator();
-        }
+            DrawTimerButtonRow(InteractionType.Confinement, ref service.ConfinementTimer, confinementDis);
+            CkGui.CenterColorTextAligned("LifeStream Address Setup or Nearest Node.", ImGuiColors.DalamudRed);
+        });
 
         // ------ Locked Imprisonment ------
         var imprisonmentActive = hc.Imprisonment.Length > 0;
@@ -69,12 +63,11 @@ public class KinksterHardcore(InteractionsService service)
         var imprisonmentDis = !k.PairPerms.AllowImprisonment || !hc.CanChange(HcAttribute.Imprisonment, MainHub.UID);
         var imprisonmentTT = imprisonmentActive ? $"Allow {dispName} to leave their imprisonment." : $"Imprison {dispName} indoors.";
         DrawColoredExpander(InteractionType.Imprisonment, imprisonmentInfo.Item1, imprisonmentInfo.Item2, imprisonmentActive, imprisonmentDis, imprisonmentTT);
-        if (service.OpenItem is InteractionType.Imprisonment)
+        UniqueHcChild(InteractionType.Imprisonment, imprisonmentActive, CkStyle.TwoRowHeight(), () =>
         {
-            using (ImRaii.Child("ImprisonmentChild", new Vector2(width, ImGui.GetFrameHeight())))
-                DrawTimerButtonRow(InteractionType.Imprisonment, ref service.ImprisonTimer, imprisonmentDis);
-            ImGui.Separator();
-        }
+            DrawTimerButtonRow(InteractionType.Imprisonment, ref service.ImprisonTimer, imprisonmentDis);
+            CkGui.CenterColorTextAligned("Position & Radius elements are TODO.", ImGuiColors.DalamudRed);
+        });
 
         // ------ Chat Box Hiding ------
         var chatHideActive = hc.ChatBoxesHidden.Length > 0;
@@ -82,12 +75,7 @@ public class KinksterHardcore(InteractionsService service)
         var chatHideDis = !k.PairPerms.AllowHidingChatBoxes || !hc.CanChange(HcAttribute.HiddenChatBox, MainHub.UID);
         var chatHideTT = chatHideActive ? $"Restore {dispName}'s chatbox visibility." : $"Conceal {dispName}'s ChatBox from their UI.";
         DrawColoredExpander(InteractionType.ChatBoxHiding, chatHideInfo.Item1, chatHideInfo.Item2, chatHideActive, chatHideDis, chatHideTT);
-        if (service.OpenItem is InteractionType.ChatBoxHiding)
-        {
-            using (ImRaii.Child("HiddenChatBoxesChild", new Vector2(width, ImGui.GetFrameHeight())))
-                DrawTimerButtonRow(InteractionType.ChatBoxHiding, ref service.ChatBoxHideTimer, chatHideDis);
-            ImGui.Separator();
-        }
+        GenericHcChild(InteractionType.ChatBoxHiding, ref service.ChatBoxHideTimer, chatHideActive, chatHideDis);
 
         // ------ Chat Input Hiding ------
         var chatIptHideActive = hc.ChatInputHidden.Length > 0;
@@ -96,12 +84,7 @@ public class KinksterHardcore(InteractionsService service)
         var chatIptHideTT = chatIptHideActive ? $"Restore {dispName}'s chat input visibility." : $"Conceal {dispName}'s chat input." +
             $"--NL----COL--NOTE:--COL-- {dispName} can still type, just can't see it~";
         DrawColoredExpander(InteractionType.ChatInputHiding, chatIptHideInfo.Item1, chatIptHideInfo.Item2, chatIptHideActive, chatIptHideDis, chatIptHideTT);
-        if (service.OpenItem is InteractionType.ChatInputHiding)
-        {
-            using (ImRaii.Child("HiddenChatInputChild", new Vector2(width, ImGui.GetFrameHeight())))
-                DrawTimerButtonRow(InteractionType.ChatInputHiding, ref service.ChatInputHideTimer, chatIptHideDis);
-            ImGui.Separator();
-        }
+        GenericHcChild(InteractionType.ChatInputHiding, ref service.ChatInputHideTimer, chatIptHideActive, chatIptHideDis);
 
         // ------ Chat Input Blocking ------
         var chatIptBlockActive = hc.ChatInputHidden.Length > 0;
@@ -111,12 +94,7 @@ public class KinksterHardcore(InteractionsService service)
             $"--NL----COL--WARNING:--COL-- This prevents ANY TYPING." +
             $"--SEP----COL--CTRL+ALT+BACKSPACE--COL-- is the emergency safeword!";
         DrawColoredExpander(InteractionType.ChatInputBlocking, chatIptBlockInfo.Item1, chatIptBlockInfo.Item2, chatIptBlockActive, chatIptBlockDis, chatIptBlockTT);
-        if (service.OpenItem is InteractionType.ChatInputBlocking)
-        {
-            using (ImRaii.Child("ChatInputBlockChild", new Vector2(width, ImGui.GetFrameHeight())))
-                DrawTimerButtonRow(InteractionType.ChatInputBlocking, ref service.ChatInputBlockTimer, chatIptBlockDis);
-            ImGui.Separator();
-        }
+        GenericHcChild(InteractionType.ChatInputBlocking, ref service.ChatInputBlockTimer, chatIptBlockActive, chatIptBlockDis);
 
 
         // >> Helpers Below 
@@ -126,6 +104,37 @@ public class KinksterHardcore(InteractionsService service)
                 if (CkGui.IconTextButton(icon, text, width, true, disabled))
                     service.ToggleInteraction(type);
             CkGui.AttachToolTip(tooltip, color: ImGuiColors.ParsedPink);
+        }
+
+        void UniqueHcChild(InteractionType type, bool curState, float enableChildH, Action enabledDraw)
+        {
+            if (service.OpenItem != type)
+                return;
+
+            using (ImRaii.Child($"{type}Child", new Vector2(width, curState ? enableChildH : ImGui.GetFrameHeight())))
+            {
+                if (curState)
+                    enabledDraw();
+                else
+                    DrawDisableRow(type);
+            }
+            ImGui.Separator();
+        }
+
+        // can make variant of this with custom input height and custom enabled draw action.
+        void GenericHcChild(InteractionType type, ref string timerStr, bool curState, bool blockEnable)
+        {
+            if (service.OpenItem != type)
+                return;
+            
+            using (ImRaii.Child($"{type}Child", new Vector2(width, ImGui.GetFrameHeight())))
+            {
+                if (curState)
+                    DrawTimerButtonRow(type, ref timerStr, blockEnable);
+                else
+                    DrawDisableRow(type);
+            }
+            ImGui.Separator();
         }
 
         void DrawTimerButtonRow(InteractionType type, ref string timerStr, bool disabled)
@@ -139,8 +148,15 @@ public class KinksterHardcore(InteractionsService service)
 
             ImUtf8.SameLineInner();
             if (CkGui.IconTextButton(FAI.Upload, "Enable State", buttonW, disabled: disabled))
-                service.TryEnableHardcoreAction(FromInteractionType(type));
+                service.TryEnableHardcoreAction(type.ToHcAttribute());
             CkGui.AttachToolTip($"Enable Hardcore State for {dispName}.");
+        }
+
+        void DrawDisableRow(InteractionType type)
+        {
+            if (ImGuiUtil.DrawDisabledButton($"Disable {type.ToName()}", new Vector2(width, ImGui.GetFrameHeight()), string.Empty, false))
+                service.TryEnableHardcoreAction(type.ToHcAttribute());
+            CkGui.AttachToolTip($"Force {dispName} to follow you! (--COL--{dispName} must be within 5 yalms--COL--)", ImGuiColors.ParsedPink);
         }
     }
 
@@ -186,18 +202,4 @@ public class KinksterHardcore(InteractionsService service)
             }
         }
     }
-
-    private HcAttribute FromInteractionType(InteractionType type)
-        => type switch
-        {
-            InteractionType.LockedFollow => HcAttribute.Follow,
-            InteractionType.LockedEmoteState => HcAttribute.EmoteState,
-            InteractionType.Confinement => HcAttribute.Confinement,
-            InteractionType.Imprisonment => HcAttribute.Imprisonment,
-            InteractionType.ChatBoxHiding => HcAttribute.HiddenChatBox,
-            InteractionType.ChatInputHiding => HcAttribute.HiddenChatInput,
-            InteractionType.ChatInputBlocking => HcAttribute.BlockedChatInput,
-            InteractionType.HypnosisEffect => HcAttribute.HypnoticEffect,
-            _ => throw new ArgumentOutOfRangeException("not a hardcore interaction!")
-        };
 }

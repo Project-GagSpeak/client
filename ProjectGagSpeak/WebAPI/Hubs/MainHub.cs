@@ -5,6 +5,7 @@ using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Listeners;
+using GagSpeak.Utils;
 using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
@@ -160,7 +161,9 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
 
     private async void OnLogin()
     {
-        Logger.LogInformation("Starting connection on login");
+        Logger.LogInformation("Starting connection on login after fully loaded...");
+        await GsExtensions.WaitForPlayerLoading();
+        Logger.LogInformation("Client fully loaded in, Connecting.");
         // Run the call to attempt a connection to the server.
         await Connect().ConfigureAwait(false);
     }
@@ -168,8 +171,6 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     private async void OnLogout()
     {
         Logger.LogInformation("Stopping connection on logout", LoggerType.ApiCore);
-        // disable all hardcore related states.
-        _clientDatListener.OnLogout();
         await Disconnect(ServerState.Disconnected).ConfigureAwait(false);
         // switch the server state to offline.
         ServerStatus = ServerState.Offline;

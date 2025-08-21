@@ -13,7 +13,7 @@ namespace GagSpeak.State.Handlers;
 // could maybe merge this with the OverlayController down the line, see how things go.
 public class OverlayHandler : DisposableMediatorSubscriberBase
 {
-    private readonly PlayerMetaData _metadata;
+    private readonly MainConfig _config;
     private readonly OverlayCache _cache;
     private readonly BlindfoldService _bfService;
     private readonly HypnoService _hypnoService;
@@ -22,11 +22,11 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
     private System.Timers.Timer _sentHypnosisTimer = new(int.MaxValue) { AutoReset = false };
 
     public OverlayHandler(ILogger<OverlayHandler> logger, GagspeakMediator mediator,
-        PlayerMetaData metaData, OverlayCache cache, BlindfoldService bfService,
+        MainConfig config, OverlayCache cache, BlindfoldService bfService,
         HypnoService hypnoService)
         : base(logger, mediator)
     {
-        _metadata = metaData;
+        _config = config;
         _cache = cache;
         _bfService = bfService;
         _hypnoService = hypnoService;
@@ -100,7 +100,7 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
         => _hypnoService.CanApplyTimedEffect(effect, base64ImgString);
 
     // Effect should be called by a listener that has received an instruction from another Kinkster to hypnotize the client.
-    public async void SetTimedHypnoEffectUnsafe(UserData enactor, HypnoticEffect effect, TimeSpan length, string? customImage)
+    public async Task SetTimedHypnoEffect(UserData enactor, HypnoticEffect effect, TimeSpan length, string? customImage)
     {
         var applyTime = DateTimeOffset.UtcNow;
         // apply the effect, bagagwa should never be thrown here.
@@ -111,19 +111,29 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
         // Achievements here maybe.
 
         // Set the effect.
-        _metadata.SetHypnoEffect(effect, applyTime, length, customImage);
+        _config.Current.HypnoEffectInfo = effect;
+        _config.Current.Base64CustomImageData = customImage;
+        _config.Save();
+
         // update the hypnosis timer with our interval timeout.
         _sentHypnosisTimer.Interval = length.TotalMilliseconds;
         _sentHypnosisTimer.Start();
     }
 
-    public void RemoveHypnoEffect(string enactor, bool giveAchievements)
+    public async void RemoveHypnoEffect(string enactor, bool giveAchievements, bool fromDispose = false)
     {
-        Logger.LogDebug($"Timed Hypnotic Effect was forcibly cleared by {enactor}!");
-        _sentHypnosisTimer.Stop();
-        OnSentHypnoEffectExpire(giveAchievements);
-        // clear the metadata.
-        _metadata.ClearHypnoEffect();
+        Logger.LogDebug($"HardcoreState Hypnotic Effect cleared by ({enactor})!");
+        // remove the effect from the hypno service.
+        await _hypnoService.RemoveSentEffectOnExpire().ConfigureAwait(false);
+        // Once removed, try to reapply any from our equipped cache. (helps for achievements)
+        await OnApplyHypnoEffect(_cache.ActiveEffect, _cache.PriorityEffectKey).ConfigureAwait(false);
+        // Remove the stored HardcoreState effect & image from the config if not ran by plugin disposal.
+        if (!fromDispose)
+        {
+            _config.Current.HypnoEffectInfo = null;
+            _config.Current.Base64CustomImageData = null;
+            _config.Save();
+        }
     }
 
     private async void OnSentHypnoEffectExpire(bool giveAchievements)
@@ -139,8 +149,6 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
         // Once removed, check if there is anything in the cache to apply in its place.
         // Realistically, this should never happen, but it is important to handle for achievements.
         await OnApplyHypnoEffect(_cache.ActiveEffect, _cache.PriorityEffectKey).ConfigureAwait(false);
-        // ABOVE LINE MIGHT CAUSE CALCULATION DELAY, BE CAUTIOUS.
-        // Mediator.Publish(new PushGlobalPermChange(nameof(GlobalPerms.HypnosisCustomEffect), _cache.PriorityEffectKey.EnactorUID));
     }
 
 

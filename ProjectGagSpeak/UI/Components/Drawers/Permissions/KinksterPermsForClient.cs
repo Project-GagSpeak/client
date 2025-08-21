@@ -197,7 +197,7 @@ public class KinksterPermsForClient{
         using var _ = ImRaii.PushStyle(ImGuiStyleVar.Alpha, .5f);
         if (isActive)
         {
-            CkGui.TextFrameAlignedInline($"{name}{data.ActionText}");
+            CkGui.TextFrameAlignedInline(data.ActionText);
             ImGui.SameLine(0, 0);
             CkGui.ColorTextFrameAlignedInline(isActive ? current.Split('|')[0].AsAnonKinkster() : "ANON.KINKSTER", CkColor.VibrantPink.Uint());
         }
@@ -234,13 +234,13 @@ public class KinksterPermsForClient{
     public record HcStatusKinkster(FAI IconActive, FAI IconInactive, string PermLabel, string ActionText, string InactiveText, string AllowedTT);
 
     private readonly ImmutableDictionary<SPPID, HcStatusKinkster> ClientHcPermData = ImmutableDictionary<SPPID, HcStatusKinkster>.Empty
-        .Add(SPPID.LockedFollowing,    new HcStatusKinkster(FAI.Walking,           FAI.Ban, "Forced Follow",         " is following",           " is not following anyone.",    "has allowed you to enact forced follow on them."))
-        .Add(SPPID.LockedEmoteState,   new HcStatusKinkster(FAI.PersonArrowDownToLine, FAI.Ban, "Forced Emote Lock", " is in emote lock for",   " is not emote locked.",        "has allowed you to lock them in an emote loop.")) // Handle this separately, it has its own call.
-        .Add(SPPID.IndoorConfinement,  new HcStatusKinkster(FAI.HouseLock,         FAI.Ban, "Indoor Confinement",    " is confined by",         " is not confined.",            "has allowed you to confine them indoors."))
-        .Add(SPPID.Imprisonment,       new HcStatusKinkster(FAI.Bars,              FAI.Ban, "Imprisonment",          " is imprisoned by",       " is not imprisoned.",          "has allowed you to imprison them at a desired location.--SEP--They must be nearby when giving a location besides your current position."))
-        .Add(SPPID.ChatBoxesHidden,    new HcStatusKinkster(FAI.CommentSlash,      FAI.Ban, "Chatbox Visibility",    "'s chatbox hidden by",    "'s chat is visible.",          "has allowed you to hide their chat--NL--Note: This will prevent them from seeing your messages, or anyone else's."))
-        .Add(SPPID.ChatInputHidden,    new HcStatusKinkster(FAI.CommentSlash,      FAI.Ban, "ChatInput Visibility",  "'s input hidden by",      "'s chat input is visible.",    "has allowed you to hide their chat input.--NL--Note: They will still be able to type, but can't see what they type."))
-        .Add(SPPID.ChatInputBlocked,   new HcStatusKinkster(FAI.CommentDots,       FAI.Ban, "ChatInput Blocking",    "'s input blocked by",     "'s chat input is accessible.", "has allowed you to block their chat input.--SEP--THEIR SAFEWORD IN THIS CASE IS --COL--CTRL + ALT + BACKSPACE (FUCK GO BACK)--COL--"));
+        .Add(SPPID.LockedFollowing,    new HcStatusKinkster(FAI.Walking,           FAI.Ban, "Forced Follow",         "Actively following",      " is not following anyone.",    "has allowed you to enact forced follow on them."))
+        .Add(SPPID.LockedEmoteState,   new HcStatusKinkster(FAI.PersonArrowDownToLine, FAI.Ban, "Forced Emote Lock", "In emote lock for",       " is not emote locked.",        "has allowed you to lock them in an emote loop.")) // Handle this separately, it has its own call.
+        .Add(SPPID.IndoorConfinement,  new HcStatusKinkster(FAI.HouseLock,         FAI.Ban, "Indoor Confinement",    "Confined by",             " is not confined.",            "has allowed you to confine them indoors."))
+        .Add(SPPID.Imprisonment,       new HcStatusKinkster(FAI.Bars,              FAI.Ban, "Imprisonment",          "Imprisoned by",           " is not imprisoned.",          "has allowed you to imprison them at a desired location.--SEP--They must be nearby when giving a location besides your current position."))
+        .Add(SPPID.ChatBoxesHidden,    new HcStatusKinkster(FAI.CommentSlash,      FAI.Ban, "ChatBox Visibility",    "Chatbox hidden by",       "'s chatbox is visible.",       "has allowed you to hide their chat--NL--Note: This will prevent them from seeing your messages, or anyone else's."))
+        .Add(SPPID.ChatInputHidden,    new HcStatusKinkster(FAI.CommentSlash,      FAI.Ban, "ChatInput Visibility",  "Chat input hidden by",    "'s chat input is visible.",    "has allowed you to hide their chat input.--NL--Note: They will still be able to type, but can't see what they type."))
+        .Add(SPPID.ChatInputBlocked,   new HcStatusKinkster(FAI.CommentDots,       FAI.Ban, "ChatInput Blocking",    "Chat input blocked by",   "'s chat input is accessible.", "has allowed you to block their chat input.--SEP--THEIR SAFEWORD IN THIS CASE IS --COL--CTRL + ALT + BACKSPACE (FUCK GO BACK)--COL--"));
 
     // adjust for prefixes and suffixs?
     public record PermDataPair(FAI IconYes, FAI IconNo, string CondTrue, string CondFalse, string Label, bool CondAfterLabel, string suffix = "");

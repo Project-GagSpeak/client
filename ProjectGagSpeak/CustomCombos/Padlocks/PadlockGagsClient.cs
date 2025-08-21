@@ -1,9 +1,10 @@
 using GagSpeak.Services;
+using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
-using GagspeakAPI.Hub;
 using GagspeakAPI.Util;
 using OtterGui.Classes;
 
@@ -12,11 +13,13 @@ namespace GagSpeak.CustomCombos.Padlock;
 // These are displayed seperately so dont use a layer updater.
 public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
 {
-    private readonly DataDistributionService _dds;
-    public PadlockGagsClient(ILogger log, DataDistributionService dds, GagRestrictionManager manager)
+    private readonly DataDistributor _dds;
+    private readonly VisualStateListener _visuals;
+    public PadlockGagsClient(ILogger log, DataDistributor dds, VisualStateListener visuals, GagRestrictionManager manager)
         : base(new LazyList<ActiveGagSlot>(() => [ ..manager.ServerGagData?.GagSlots ?? [new ActiveGagSlot()] ]), PadlockEx.ClientLocks, log)
     {
         _dds = dds;
+        _visuals = visuals;
     }
 
     protected override string ItemName(ActiveGagSlot item)
@@ -33,7 +36,6 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
 
     protected override async Task<bool> OnLockButtonPress(string label, int layerIdx)
     {
-        // return if we cannot lock.
         if (!Items[layerIdx].CanLock())
             return false;
 
@@ -41,63 +43,45 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
             return false;
 
         // we know it was valid, so begin assigning the new data to send off.
-        var finalTime = SelectedLock == Padlocks.FiveMinutes
-            ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
-
-        var newData = new ActiveGagSlot()
-        {
-            Padlock = SelectedLock,
-            Password = Password,
-            Timer = finalTime,
-            PadlockAssigner = MainHub.UID
-        };
-
-        if (await _dds.PushNewActiveGagSlot(layerIdx, newData, DataUpdateType.Locked) is null)
-        {
-            Log.LogDebug($"Failed to perform LockGag with {SelectedLock.ToName()} on self.", LoggerType.StickyUI);
-            ResetSelection();
-            ResetInputs();
-            return false;
-        }
-        else
+        var time = SelectedLock is Padlocks.FiveMinutes ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
+        var newData = Items[layerIdx] with { Padlock = SelectedLock, Password = Password, Timer = time, PadlockAssigner = MainHub.UID };
+        if (await SelfBondageHelper.GagUpdateRetTask(layerIdx, newData, DataUpdateType.Locked, _dds, _visuals))
         {
             ResetSelection();
             ResetInputs();
             RefreshStorage(label);
             return true;
         }
+        else
+        {
+            ResetSelection();
+            ResetInputs();
+            return false;
+        }
     }
 
     protected override async Task<bool> OnUnlockButtonPress(string label, int layerIdx)
     {
-        // make a general common sense assumption logic check here, the rest can be handled across the server.
         if (!Items[layerIdx].CanUnlock())
             return false;
 
         if(!ValidateUnlock(layerIdx))
             return false;
 
-        var newData = new ActiveGagSlot()
-        {
-            Padlock = Items[layerIdx].Padlock,
-            Password = Items[layerIdx].Password,
-            PadlockAssigner = MainHub.UID
-        };
-
-        if (await _dds.PushNewActiveGagSlot(layerIdx, newData, DataUpdateType.Unlocked) is null)
-        {
-            Log.LogDebug($"Failed to perform UnlockGag with {Items[layerIdx].Padlock.ToName()} on self.", LoggerType.StickyUI);
-            ResetSelection();
-            ResetInputs();
-            return false;
-        }
-        else
+        var newData = Items[layerIdx] with { Padlock = Items[layerIdx].Padlock, Password = Items[layerIdx].Password, PadlockAssigner = MainHub.UID };
+        if (await SelfBondageHelper.GagUpdateRetTask(layerIdx, newData, DataUpdateType.Unlocked, _dds, _visuals))
         {
             ResetSelection();
             ResetInputs();
             RefreshStorage(label);
             SelectedLock = Padlocks.None;
             return true;
+        }
+        else
+        {
+            ResetSelection();
+            ResetInputs();
+            return false;
         }
     }
 

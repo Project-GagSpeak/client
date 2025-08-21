@@ -1,7 +1,9 @@
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
@@ -12,18 +14,19 @@ namespace GagSpeak.CustomCombos.Padlock;
 
 public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
 {
-    private readonly DataDistributionService _dds;
+    private readonly DataDistributor _dds;
+    private readonly VisualStateListener _visuals;
     private readonly RestrictionManager _manager;
-    public PadlockRestrictionsClient(ILogger log, DataDistributionService dds, RestrictionManager manager)
+    public PadlockRestrictionsClient(ILogger log, DataDistributor dds, VisualStateListener visuals, RestrictionManager manager)
         : base(() => manager.ServerRestrictionData?.Restrictions ?? [], PadlockEx.ClientLocks, log)
     {
         _dds = dds;
+        _visuals = visuals;
         _manager = manager;
     }
 
     protected override string ItemName(ActiveRestriction item)
         => _manager.Storage.TryGetRestriction(item.Identifier, out var restriction) ? restriction.Label : "None";
-
 
     protected override bool DisableCondition(int layerIdx)
         => Items[layerIdx].Identifier == Guid.Empty;
@@ -44,31 +47,21 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
         if (!ValidateLock(layerIdx))
             return false;
 
-        // we know it was valid, so begin assigning the new data to send off.
-        var finalTime = SelectedLock == Padlocks.FiveMinutes
-            ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
-
-        var newData = new ActiveRestriction()
-        {
-            Padlock = SelectedLock,
-            Password = Password,
-            Timer = finalTime,
-            PadlockAssigner = MainHub.UID
-        };
-
+        var time = SelectedLock is Padlocks.FiveMinutes ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
+        var newData = Items[layerIdx] with { Padlock = SelectedLock, Password = Password, Timer = time, PadlockAssigner = MainHub.UID };
         if (await _dds.PushNewActiveRestriction(layerIdx, newData, DataUpdateType.Locked) is null)
-        {
-            Log.LogDebug($"Failed to perform LockRestriction with {SelectedLock.ToName()} on self.", LoggerType.StickyUI);
-            ResetSelection();
-            ResetInputs();
-            return false;
-        }
-        else
         {
             ResetSelection();
             ResetInputs();
             RefreshStorage(label);
             return true;
+        }
+        else
+        {
+            Log.LogDebug($"Failed to perform LockRestriction with {SelectedLock.ToName()} on self.", LoggerType.StickyUI);
+            ResetSelection();
+            ResetInputs();
+            return false;
         }
     }
 
@@ -81,27 +74,19 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
         if (!ValidateUnlock(layerIdx))
             return false;
 
-        var newData = new ActiveRestriction()
+        var newData = Items[layerIdx] with { Padlock = Items[layerIdx].Padlock, Password = Items[layerIdx].Password, PadlockAssigner = MainHub.UID };
+        if (await SelfBondageHelper.RestrictionUpdateRetTask(layerIdx, newData, DataUpdateType.Unlocked, _dds, _visuals))
         {
-            Padlock = Items[layerIdx].Padlock,
-            Password = Items[layerIdx].Password,
-            PadlockAssigner = MainHub.UID
-        };
-
-        if (await _dds.PushNewActiveRestriction(layerIdx, newData, DataUpdateType.Unlocked) is null)
-        {
-            Log.LogDebug($"Failed to perform UnlockRestriction with {Items[layerIdx].Padlock.ToName()} on self", LoggerType.StickyUI);
             ResetSelection();
             ResetInputs();
-            return false;
+            RefreshStorage(label);
+            return true;
         }
         else
         {
             ResetSelection();
             ResetInputs();
-            RefreshStorage(label);
-            SelectedLock = Padlocks.None;
-            return true;
+            return false;
         }
     }
 

@@ -324,19 +324,20 @@ public partial class MainHub
             switch (dataDto.Type)
             {
                 case DataUpdateType.Swapped:
-                    _visualListener.SwapOrApplyGag(dataDto).ConfigureAwait(false);
-                    break;
                 case DataUpdateType.Applied:
-                    _visualListener.ApplyGag(dataDto).ConfigureAwait(false);
+                    if (dataDto.PreviousGag is GagType.None)
+                        _visualListener.ApplyGag(dataDto.AffectedLayer, dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
+                    else
+                        _visualListener.SwapGag(dataDto.AffectedLayer, dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
                     break;
                 case DataUpdateType.Locked:
-                    _visualListener.LockGag(dataDto);
+                    _visualListener.LockGag(dataDto.AffectedLayer, dataDto.NewData, dataDto.Enactor);
                     break;
                 case DataUpdateType.Unlocked:
-                    _visualListener.UnlockGag(dataDto);
+                    _visualListener.UnlockGag(dataDto.AffectedLayer, dataDto.Enactor);
                     break;
                 case DataUpdateType.Removed:
-                    _visualListener.RemoveGag(dataDto).ConfigureAwait(false);
+                    _visualListener.RemoveGag(dataDto.AffectedLayer, dataDto.Enactor).ConfigureAwait(false);
                     break;
             }
             return Task.CompletedTask;
@@ -357,19 +358,20 @@ public partial class MainHub
             switch (dataDto.Type)
             {
                 case DataUpdateType.Swapped:
-                    _visualListener.SwapRestriction(dataDto).ConfigureAwait(false);
-                    break;
                 case DataUpdateType.Applied:
-                    _visualListener.ApplyRestriction(dataDto).ConfigureAwait(false);
+                    if (dataDto.PreviousRestriction == Guid.Empty)
+                        _visualListener.ApplyRestriction(dataDto.AffectedLayer, dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
+                    else
+                        _visualListener.SwapRestriction(dataDto.AffectedLayer, dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
                     break;
                 case DataUpdateType.Locked:
-                    _visualListener.LockRestriction(dataDto);
+                    _visualListener.LockRestriction(dataDto.AffectedLayer, dataDto.NewData, dataDto.Enactor);
                     break;
                 case DataUpdateType.Unlocked:
-                    _visualListener.UnlockRestriction(dataDto);
+                    _visualListener.UnlockRestriction(dataDto.AffectedLayer, dataDto.Enactor);
                     break;
                 case DataUpdateType.Removed:
-                    _visualListener.RemoveRestriction(dataDto).ConfigureAwait(false);
+                    _visualListener.RemoveRestriction(dataDto.AffectedLayer, dataDto.Enactor).ConfigureAwait(false);
                     break;
             }
            return Task.CompletedTask;
@@ -391,28 +393,29 @@ public partial class MainHub
             switch (dataDto.Type)
             {
                 case DataUpdateType.Swapped:
-                    _visualListener.SwapOrApplyRestraint(dataDto).ConfigureAwait(false);
-                    break;
                 case DataUpdateType.Applied:
-                    _visualListener.ApplyRestraint(dataDto).ConfigureAwait(false);
+                    if (dataDto.PreviousRestraint == Guid.Empty)
+                        _visualListener.ApplyRestraint(dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
+                    else
+                        _visualListener.SwapRestraint(dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
                     break;
                 case DataUpdateType.LayersChanged:
-                    _visualListener.SwapRestraintLayers(dataDto).ConfigureAwait(false);
+                    _visualListener.SwapRestraintLayers(dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
                     break;
                 case DataUpdateType.LayersApplied:
-                    _visualListener.ApplyRestraintLayers(dataDto).ConfigureAwait(false);
+                    _visualListener.ApplyRestraintLayers(dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
                     break;
                 case DataUpdateType.Locked:
-                    _visualListener.LockRestraint(dataDto);
+                    _visualListener.LockRestraint(dataDto.NewData, dataDto.Enactor);
                     break;
                 case DataUpdateType.Unlocked:
-                    _visualListener.UnlockRestraint(dataDto);
+                    _visualListener.UnlockRestraint(dataDto.Enactor);
                     break;
                 case DataUpdateType.LayersRemoved:
-                    _visualListener.RemoveRestraintLayers(dataDto).ConfigureAwait(false);
+                    _visualListener.RemoveRestraintLayers(dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
                     break;
                 case DataUpdateType.Removed:
-                    _visualListener.RemoveRestraint(dataDto).ConfigureAwait(false);
+                    _visualListener.RemoveRestraint(dataDto.Enactor).ConfigureAwait(false);
                     break;
             }
             return Task.CompletedTask;

@@ -1,24 +1,23 @@
-using GagSpeak.Kinksters;
 using GagSpeak.Services;
-using GagSpeak.Services.Mediator;
+using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
-using GagspeakAPI.Hub;
-using GagspeakAPI.Network;
-using Dalamud.Bindings.ImGui;
 
 namespace GagSpeak.CustomCombos.Padlock;
 
 public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
 {
-    private readonly DataDistributionService _dds;
+    private readonly DataDistributor _dds;
+    private readonly VisualStateListener _visuals;
     private readonly RestraintManager _manager;
-    public PadlockRestraintsClient(ILogger log, DataDistributionService dds, RestraintManager manager)
+    public PadlockRestraintsClient(ILogger log, DataDistributor dds, VisualStateListener visuals, RestraintManager manager)
         : base(() => [ manager.ServerData ?? new CharaActiveRestraint() ], PadlockEx.ClientLocks, log)
     {
         _dds = dds;
+        _visuals = visuals;
         _manager = manager;
     }
 
@@ -42,31 +41,20 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
         if (!ValidateLock())
             return false;
 
-        var finalTime = SelectedLock == Padlocks.FiveMinutes
-            ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
-
-        var newData = new CharaActiveRestraint()
-        {
-            Padlock = SelectedLock,
-            Password = Password,
-            Timer = finalTime,
-            PadlockAssigner = MainHub.UID
-        };
-
-        if (await _dds.PushActiveRestraintUpdate(newData, DataUpdateType.Locked) is null)
-        {
-            Log.LogInformation($"Failed to perform LockRestraint with {SelectedLock.ToName()} on self", LoggerType.StickyUI);
-            ResetSelection();
-            ResetInputs();
-            return false;
-        }
-        else
+        // get new data.
+        var time = SelectedLock is Padlocks.FiveMinutes ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
+        var newData = new CharaActiveRestraint() { Padlock = SelectedLock, Password = Password, Timer = time, PadlockAssigner = MainHub.UID };
+        if (await SelfBondageHelper.RestraintUpdateRetTask(newData, DataUpdateType.Locked, _dds, _visuals))
         {
             ResetSelection();
             ResetInputs();
             RefreshStorage(label);
             return true;
         }
+        Log.LogDebug($"Failed to perform LockRestraint with {SelectedLock.ToName()} on self", LoggerType.StickyUI);
+        ResetSelection();
+        ResetInputs();
+        return false;
     }
     protected override async Task<bool> OnUnlockButtonPress(string label, int _)
     {
@@ -76,21 +64,8 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
         if (!ValidateUnlock())
             return false;
 
-        var newData = new CharaActiveRestraint()
-        {
-            Padlock = Items[0].Padlock,
-            Password = Items[0].Password,
-            PadlockAssigner = MainHub.UID,
-        };
-
-        if (await _dds.PushActiveRestraintUpdate(newData, DataUpdateType.Unlocked) is null)
-        {
-            Log.LogDebug($"Failed to perform UnlockRestraint with {Items[0].Padlock.ToName()} on self", LoggerType.StickyUI);
-            ResetSelection();
-            ResetInputs();
-            return false;
-        }
-        else
+        var newData = Items[0] with { Padlock = Items[0].Padlock, Password = Items[0].Password, PadlockAssigner = MainHub.UID };
+        if (await SelfBondageHelper.RestraintUpdateRetTask(newData, DataUpdateType.Unlocked, _dds, _visuals))
         {
             ResetSelection();
             ResetInputs();
@@ -98,12 +73,18 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
             SelectedLock = Padlocks.None;
             return true;
         }
+        else
+        {
+            ResetSelection();
+            ResetInputs();
+            return false;
+        }
     }
 
     private bool ValidateLock()
     {
         // Determine if we have access to unlock.
-        bool valid = SelectedLock switch
+        var valid = SelectedLock switch
         {
             Padlocks.Metal or Padlocks.FiveMinutes => true,
             Padlocks.Combination => PadlockValidation.IsValidCombo(Password),
@@ -147,7 +128,7 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
     private bool ValidateUnlock()
     {
         // Determine if we have access to unlock.
-        bool valid = Items[0].Padlock switch
+        var valid = Items[0].Padlock switch
         {
             Padlocks.Metal or Padlocks.FiveMinutes or Padlocks.Timer => true,
             Padlocks.Combination => Items[0].Password == Password,

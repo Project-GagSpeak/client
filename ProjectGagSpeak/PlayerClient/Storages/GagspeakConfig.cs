@@ -2,6 +2,7 @@ using CkCommons.Audio;
 using CkCommons.GarblerCore;
 using GagSpeak.Services;
 using GagspeakAPI.Attributes;
+using GagspeakAPI.Data;
 
 namespace GagSpeak.PlayerClient;
 public class GagspeakConfig
@@ -68,7 +69,10 @@ public class GagspeakConfig
     // GLOBAL HARDCORE SETTINGS. (maybe make it its own file if it gets too rediculous but yeah.
     public string PiShockApiKey { get; set; } = ""; // PiShock Settings.
     public string PiShockUsername { get; set; } = ""; // PiShock Settings.
-    public float OverlayMaxOpacity { get; set; } = 1.0f; // Blindfold Opacity
     public bool MoveToChambersInEstates { get; set; } = false; // Move to Chambers in Estates during ForcedStay
+
+    public float OverlayMaxOpacity { get; set; } = 1.0f; // Blindfold Opacity
+    public HypnoticEffect? HypnoEffectInfo { get; set; } = null;
+    public string? Base64CustomImageData { get; set; } = null;
 }
 

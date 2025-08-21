@@ -1,13 +1,15 @@
-using Dalamud.Interface.Colors;
 using CkCommons.Widgets;
+using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Colors;
+using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
-using Dalamud.Bindings.ImGui;
+using GagspeakAPI.Data;
 using OtterGui;
+using OtterGui.Extensions;
 using OtterGui.Raii;
 using OtterGui.Text;
-using OtterGui.Extensions;
 
 namespace GagSpeak.CustomCombos.Editor;
 
@@ -79,21 +81,4 @@ public sealed class RestrictionCombo : CkFilterComboCache<RestrictionItem>, IMed
         var ret = ImGui.Selectable(restriction.Label, selected);
         return ret;
     }
-
-    private void DrawItemTooltip(RestrictionItem item)
-    {
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-        {
-            using var padding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One * 8f);
-            using var rounding = ImRaii.PushStyle(ImGuiStyleVar.WindowRounding, 4f);
-            using var popupBorder = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 1f);
-            using var frameColor = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
-
-            // begin the tooltip interface
-            ImGui.BeginTooltip();
-            ImGui.TextUnformatted(item.Label);
-            ImGui.EndTooltip();
-        }
-    }
-
 }

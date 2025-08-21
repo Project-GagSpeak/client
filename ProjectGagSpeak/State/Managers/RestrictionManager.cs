@@ -190,7 +190,7 @@ public sealed class RestrictionManager : IHybridSavable
     public bool CanRemove(int layer) => _serverRestrictionData is { } d && d.Restrictions[layer].CanRemove();
 
     #region Active Restriction Updates
-    public bool ApplyRestriction(int layerIdx, Guid id, string enactor, [NotNullWhen(true)] out RestrictionItem? item)
+    public bool ApplyRestriction(int layer, ActiveRestriction newData, string enactor, [NotNullWhen(true)] out RestrictionItem? item)
     {
         item = null;
 
@@ -198,14 +198,14 @@ public sealed class RestrictionManager : IHybridSavable
             return false;
 
         // update the values and fire achievement ping. ( None yet )
-        data.Restrictions[layerIdx].Identifier = id;
-        data.Restrictions[layerIdx].Enabler = enactor;
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestrictionStateChange, true, layerIdx, id, enactor);
+        data.Restrictions[layer].Identifier = newData.Identifier;
+        data.Restrictions[layer].Enabler = newData.Enabler;
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestrictionStateChange, true, layer, newData.Identifier, enactor);
 
         // assign the information if present.
-        if (Storage.TryGetRestriction(id, out item))
+        if (Storage.TryGetRestriction(newData.Identifier, out item))
         {
-            _activeItems[layerIdx] = item;
+            _activeItems[layer] = item;
             _activeItemsAll[item.Identifier] = GagspeakModule.Restriction;
             return true;
         }
@@ -213,34 +213,34 @@ public sealed class RestrictionManager : IHybridSavable
         return false;
     }
 
-    public void LockRestriction(int layerIdx, Padlocks padlock, string pass, DateTimeOffset timer, string enactor)
+    public void LockRestriction(int layer, ActiveRestriction newData, string enactor)
     {
         if (_serverRestrictionData is not { } data)
             return;
 
-        data.Restrictions[layerIdx].Padlock = padlock;
-        data.Restrictions[layerIdx].Password = pass;
-        data.Restrictions[layerIdx].Timer = timer;
-        data.Restrictions[layerIdx].PadlockAssigner = enactor;
+        data.Restrictions[layer].Padlock = newData.Padlock;
+        data.Restrictions[layer].Password = newData.Password;
+        data.Restrictions[layer].Timer = newData.Timer;
+        data.Restrictions[layer].PadlockAssigner = newData.PadlockAssigner;
         // Fire that the gag was locked for this layer.
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestrictionLockStateChange, true, layerIdx, padlock, enactor);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestrictionLockStateChange, true, layer, newData.Padlock, enactor);
     }
 
-    public void UnlockRestriction(int layerIdx, string enactor)
+    public void UnlockRestriction(int layer, string enactor)
     {
         if (_serverRestrictionData is not { } data)
             return;
 
-        var prevLock = data.Restrictions[layerIdx].Padlock;
+        var prevLock = data.Restrictions[layer].Padlock;
 
-        data.Restrictions[layerIdx].Padlock = Padlocks.None;
-        data.Restrictions[layerIdx].Password = string.Empty;
-        data.Restrictions[layerIdx].Timer = DateTimeOffset.MinValue;
-        data.Restrictions[layerIdx].PadlockAssigner = string.Empty;
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestrictionLockStateChange, false, layerIdx, prevLock, enactor);
+        data.Restrictions[layer].Padlock = Padlocks.None;
+        data.Restrictions[layer].Password = string.Empty;
+        data.Restrictions[layer].Timer = DateTimeOffset.MinValue;
+        data.Restrictions[layer].PadlockAssigner = string.Empty;
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestrictionLockStateChange, false, layer, prevLock, enactor);
     }
 
-    public bool RemoveRestriction(int layerIdx, string enactor, [NotNullWhen(true)] out RestrictionItem? item)
+    public bool RemoveRestriction(int layer, string enactor, [NotNullWhen(true)] out RestrictionItem? item)
     {
         item = null;
 
@@ -248,15 +248,15 @@ public sealed class RestrictionManager : IHybridSavable
             return false;
 
         // store the new data, then fire the achievement.
-        var removedRestriction = data.Restrictions[layerIdx].Identifier;
-        data.Restrictions[layerIdx].Identifier = Guid.Empty;
-        data.Restrictions[layerIdx].Enabler = string.Empty;
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestrictionStateChange, false, layerIdx, removedRestriction, enactor);
+        var removedItem = data.Restrictions[layer].Identifier;
+        data.Restrictions[layer].Identifier = Guid.Empty;
+        data.Restrictions[layer].Enabler = string.Empty;
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestrictionStateChange, false, layer, removedItem, enactor);
 
         // Update the affected visual states, if item is enabled.
-        if (Storage.TryGetRestriction(removedRestriction, out item))
+        if (Storage.TryGetRestriction(removedItem, out item))
         {
-            _activeItems.Remove(layerIdx);
+            _activeItems.Remove(layer);
             _activeItemsAll.Remove(item.Identifier);
             return true;
         }

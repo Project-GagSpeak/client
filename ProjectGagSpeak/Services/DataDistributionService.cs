@@ -14,7 +14,7 @@ using GagspeakAPI.Network;
 namespace GagSpeak.Services;
 
 /// <summary> Creates various calls to the server based on invoked events. </summary>
-public sealed class DataDistributionService : DisposableMediatorSubscriberBase
+public sealed class DataDistributor : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _hub;
     private readonly ClientAchievements _achievements;
@@ -34,7 +34,7 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
     private readonly HashSet<UserData> _newVisibleKinksters = [];
     private readonly HashSet<UserData> _newOnlineKinksters = [];
 
-    public DataDistributionService(ILogger<DataDistributionService> logger,
+    public DataDistributor(ILogger<DataDistributor> logger,
         GagspeakMediator mediator,
         MainHub hub,
         ClientAchievements achievements,
@@ -86,9 +86,6 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
 
         // Online Data Updaters
         Mediator.Subscribe<MainHubConnectedMessage>(this, _ => PushCompositeData(_kinksters.GetOnlineUserDatas()).ConfigureAwait(false));
-        Mediator.Subscribe<ActiveGagsChangeMessage>(this, arg => PushActiveGagSlotUpdate(arg).ConfigureAwait(false));
-        Mediator.Subscribe<ActiveRestrictionsChangeMessage>(this, arg => PushActiveRestrictionUpdate(arg).ConfigureAwait(false));
-        Mediator.Subscribe<ActiveRestraintChangedMessage>(this, arg => PushActiveRestraintUpdate(arg).ConfigureAwait(false));
         Mediator.Subscribe<ActiveCollarChangedMessage>(this, arg => PushActiveCollarUpdate(arg).ConfigureAwait(false));
         Mediator.Subscribe<AliasGlobalUpdateMessage>(this, arg => DistributeDataGlobalAlias(arg).ConfigureAwait(false));
         Mediator.Subscribe<AliasPairUpdateMessage>(this, arg => DistributeDataUniqueAlias(arg).ConfigureAwait(false));
@@ -345,11 +342,6 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         }
     }
 
-    /// <summary> Pushes the new GagData to the server. </summary>
-    /// <remarks> If this call fails, the previous data will not be updated. </remarks>
-    private async Task PushActiveGagSlotUpdate(ActiveGagsChangeMessage msg)
-        => await PushNewActiveGagSlot(_kinksters.GetOnlineUserDatas(), msg.Layer, msg.NewData, msg.UpdateType);
-
     public async Task<ActiveGagSlot?> PushNewActiveGagSlot(int layer, ActiveGagSlot slot, DataUpdateType type)
         => await PushNewActiveGagSlot(_kinksters.GetOnlineUserDatas(), layer, slot, type);
 
@@ -379,11 +371,6 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         }
         return res.Value;
     }
-
-    /// <summary> Pushes the new RestrictionData to the server. </summary>
-    /// <remarks> If this call fails, the previous data will not be updated. </remarks>
-    private async Task PushActiveRestrictionUpdate(ActiveRestrictionsChangeMessage msg)
-        => await PushNewActiveRestriction(_kinksters.GetOnlineUserDatas(), msg.Layer, msg.NewData, msg.UpdateType);
 
     public async Task<ActiveRestriction?> PushNewActiveRestriction(int layerIdx, ActiveRestriction newData, DataUpdateType type)
         => await PushNewActiveRestriction(_kinksters.GetOnlineUserDatas(), layerIdx, newData, type);
@@ -415,15 +402,10 @@ public sealed class DataDistributionService : DisposableMediatorSubscriberBase
         return res.Value;
     }
 
-    /// <summary> Pushes the new RestraintData to the server. </summary>
-    /// <remarks> If this call fails, the previous data will not be updated. </remarks>
-    private async Task PushActiveRestraintUpdate(ActiveRestraintChangedMessage msg)
-        => await PushActiveRestraintUpdate(_kinksters.GetOnlineUserDatas(), msg.NewData, msg.UpdateType);
+    public async Task<CharaActiveRestraint?> PushNewActiveRestraint(CharaActiveRestraint newData, DataUpdateType type)
+        => await PushNewActiveRestraint(_kinksters.GetOnlineUserDatas(), newData, type);
 
-    public async Task<CharaActiveRestraint?> PushActiveRestraintUpdate(CharaActiveRestraint newData, DataUpdateType type)
-        => await PushActiveRestraintUpdate(_kinksters.GetOnlineUserDatas(), newData, type);
-
-    public async Task<CharaActiveRestraint?> PushActiveRestraintUpdate(List<UserData> onlinePlayers, CharaActiveRestraint newData, DataUpdateType type)
+    public async Task<CharaActiveRestraint?> PushNewActiveRestraint(List<UserData> onlinePlayers, CharaActiveRestraint newData, DataUpdateType type)
     {
         if (DataIsDifferent(_prevRestraintData, newData) is false)
             return null;

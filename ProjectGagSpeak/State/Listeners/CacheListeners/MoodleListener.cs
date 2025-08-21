@@ -16,12 +16,12 @@ public class MoodleListener : DisposableMediatorSubscriberBase
     private readonly MoodleCache _cache;
     private readonly IpcProvider _ipcProvider;
     private readonly IpcCallerMoodles _ipc;
-    private readonly DataDistributionService _dds;
+    private readonly DataDistributor _dds;
 
     private bool _isZoning = false;
 
     public MoodleListener(ILogger<MoodleListener> logger, GagspeakMediator mediator,
-        MoodleCache cache, IpcProvider ipcProvider, IpcCallerMoodles ipc, DataDistributionService dds)
+        MoodleCache cache, IpcProvider ipcProvider, IpcCallerMoodles ipc, DataDistributor dds)
         : base(logger, mediator)
     {
         _cache = cache;
