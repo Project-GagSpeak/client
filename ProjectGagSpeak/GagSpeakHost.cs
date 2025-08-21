@@ -4,6 +4,7 @@ using GagSpeak.Gui;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
+using GagSpeak.Services.Controller;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Listeners;
 using GagSpeak.Utils;
@@ -182,8 +183,12 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             _runtimeServiceScope.ServiceProvider.GetRequiredService<DtrBarService>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<NameplateService>();
 
-            // Try and make these not required to initialize:
-            //_runtimeServiceScope.ServiceProvider.GetRequiredService<DiscoverService>();
+            // Init Player Controllers.
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<AutoPromptController>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<ChatboxController>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<KeystateController>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<MovementController>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<POVController>();
         }
         catch (Bagagwa ex)
         {

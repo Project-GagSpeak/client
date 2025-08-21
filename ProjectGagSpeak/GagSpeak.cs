@@ -169,6 +169,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<HypnoService>()
         .AddSingleton<KeystateController>()
         .AddSingleton<MovementController>()
+        .AddSingleton<POVController>()
 
         // Player Client
         .AddSingleton<ClientAchievements>()

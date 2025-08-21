@@ -57,6 +57,7 @@ public sealed class ClientDataListener : IDisposable
             _handler.RestoreChatInputVisibility(new("Logout/Disposal"), false);
             _handler.UnblockChatInput(new("Logout/Disposal"), false);
             _handler.RemoveHypnoEffect(new("Logout/Disposal"), false, true);
+            _mediator.Publish(new HcStateCacheChanged());
         }
         catch (Exception e)
         {
@@ -74,6 +75,8 @@ public sealed class ClientDataListener : IDisposable
         // Resync Hardcore State Changes. (Skip UNKNOWN and HYPNO-EFFECT)
         foreach (var attr in Enum.GetValues<HcAttribute>().Skip(1).SkipLast(1))
             HandleHardcoreStateChange(new(hardcore.Enactor(attr)), attr, prevHardcore.IsEnabled(attr), hardcore.IsEnabled(attr));
+        // Inform that the hcStateCache changed so we can update our detours.
+        _mediator.Publish(new HcStateCacheChanged());
     }
 
     // Could only ever be performed by the client.
@@ -117,6 +120,7 @@ public sealed class ClientDataListener : IDisposable
         HandleHardcoreStateChange(enactor, attribute, prevState, ClientData.Hardcore.IsEnabled(attribute));
 
         _mediator.Publish(new EventMessage(new(kinkster.GetNickAliasOrUid(), enactor.UID, InteractionType.HardcoreStateChange, $"[{attribute}] changed to [{newData.IsEnabled(attribute)}]")));
+        _mediator.Publish(new HcStateCacheChanged());
     }
 
     public void InitRequests(ActiveRequests requests)
