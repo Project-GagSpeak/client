@@ -43,7 +43,7 @@ public class KinksterHardcore(InteractionsService service)
             ? (FAI.PersonArrowDownToLine, $"Force {dispName}'s Emote State.") : (FAI.Chair, $"Force {dispName} to Sit.");
         var emoteDis = (!k.PairPerms.AllowLockedSitting && !k.PairPerms.AllowLockedEmoting) || !hc.CanChange(HcAttribute.EmoteState, MainHub.UID);
         DrawColoredExpander(InteractionType.LockedEmoteState, emoteInfo.Item1, emoteInfo.Item2, emoteActive, emoteDis, emoteInfo.Item2);
-        UniqueHcChild(InteractionType.LockedEmoteState, followEnabled, ImGui.GetFrameHeight(), () => DrawEmoteChild(width, k, dispName, emoteDis));
+        UniqueHcChild(InteractionType.LockedEmoteState, followEnabled, CkStyle.TwoRowHeight(), () => DrawEmoteChild(width, k, dispName, emoteDis));
 
         // ------ Locked Confinement ------
         var confinementActive = hc.IndoorConfinement.Length > 0;
@@ -111,7 +111,7 @@ public class KinksterHardcore(InteractionsService service)
             if (service.OpenItem != type)
                 return;
 
-            using (ImRaii.Child($"{type}Child", new Vector2(width, curState ? enableChildH : ImGui.GetFrameHeight())))
+            using (ImRaii.Child($"{type}Child", new Vector2(width, curState ? ImGui.GetFrameHeight() : enableChildH)))
             {
                 if (curState)
                     DrawDisableRow(type);

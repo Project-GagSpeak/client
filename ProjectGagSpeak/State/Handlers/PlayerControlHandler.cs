@@ -7,6 +7,7 @@ using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.PlayerControl;
 using GagSpeak.Services.Controller;
+using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
@@ -20,6 +21,7 @@ namespace GagSpeak.State.Handlers;
 public class PlayerCtrlHandler
 {
     private readonly ILogger<PlayerCtrlHandler> _logger;
+    private readonly GagspeakMediator _mediator;
     private readonly MainConfig _config;
     private readonly IpcCallerLifestream _ipc;
     private readonly MovementController _movement;
@@ -29,11 +31,12 @@ public class PlayerCtrlHandler
 
     // Stores the players's movement mode, useful for when we change it.
     private MovementMode _cachedPlayerMoveMode = MovementMode.NotSet;
-    public PlayerCtrlHandler(ILogger<PlayerCtrlHandler> logger, MainConfig config,
-        IpcCallerLifestream ipc, MovementController movement, OverlayHandler overlay, 
-        HcTaskManager hcTasks, KinksterManager kinksters)
+    public PlayerCtrlHandler(ILogger<PlayerCtrlHandler> logger, GagspeakMediator mediator,
+        MainConfig config, IpcCallerLifestream ipc, MovementController movement, 
+        OverlayHandler overlay, HcTaskManager hcTasks, KinksterManager kinksters)
     {
         _logger = logger;
+        _mediator = mediator;
         _config = config;
         _ipc = ipc;
         _movement = movement;
@@ -88,6 +91,7 @@ public class PlayerCtrlHandler
         _hcTasks.EnqueueTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.VisiblePairGameObject!), new(HcTaskControl.MustFollow | HcTaskControl.BlockAllKeys));
         _hcTasks.EnqueueTask(HcTaskUtils.FollowTarget, new(HcTaskControl.MustFollow | HcTaskControl.BlockAllKeys));
 
+        _mediator.Publish(new HcStateCacheChanged());
         GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.Follow, true, enactor, MainHub.UID);
     }
 
@@ -111,6 +115,7 @@ public class PlayerCtrlHandler
         _cachedPlayerMoveMode = MovementMode.NotSet;
         _logger.LogDebug($"Restored Player Movement Mode: {_cachedPlayerMoveMode}", LoggerType.HardcoreMovement);
 
+        _mediator.Publish(new HcStateCacheChanged());
         if (giveAchievements)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.Follow, false, enactor, MainHub.UID);
     }
@@ -133,7 +138,8 @@ public class PlayerCtrlHandler
         // perform the emote operation.
         _hcTasks.AddToStack(() => HcCommonTaskFuncs.PerformExpectedEmote(ClientData.Hardcore!.EmoteId, ClientData.Hardcore.EmoteCyclePose));
         _hcTasks.InsertStack();
-        
+
+        _mediator.Publish(new HcStateCacheChanged());
         GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.EmoteState, true, enactor, MainHub.UID);
     }
 
@@ -155,8 +161,8 @@ public class PlayerCtrlHandler
         // perform the emote operation.
         _hcTasks.AddToStack(() => HcCommonTaskFuncs.PerformExpectedEmote(ClientData.Hardcore!.EmoteId, ClientData.Hardcore.EmoteCyclePose));
         _hcTasks.InsertStack();
-        
-        // No need to trigger achievement, as we only updated the emote we were performing. So we never 'stopped'.
+
+        _mediator.Publish(new HcStateCacheChanged());
     }
 
     /// <summary>
@@ -173,6 +179,7 @@ public class PlayerCtrlHandler
     {
         _logger.LogInformation($"[{enactor.AliasOrUID}] Disabled your LockedFollowing state!", LoggerType.HardcoreMovement);
 
+        _mediator.Publish(new HcStateCacheChanged());
         if (giveAchievements)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.EmoteState, false, enactor, MainHub.UID);
     }
@@ -203,6 +210,7 @@ public class PlayerCtrlHandler
         _hcTasks.InsertStack();
 
         _logger.LogDebug($"Enqueued Hardcore Task Stack for Indoor Confinement!", LoggerType.HardcoreMovement);
+        _mediator.Publish(new HcStateCacheChanged());
         GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.Confinement, true, enactor, MainHub.UID);
     }
 
@@ -220,6 +228,7 @@ public class PlayerCtrlHandler
     {
         _logger.LogInformation($"[{enactor.AliasOrUID}] Disabled your Indoor Confinement state!", LoggerType.HardcoreMovement);
 
+        _mediator.Publish(new HcStateCacheChanged());
         if (giveAchievements)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.Confinement, false, enactor, MainHub.UID);
     }
@@ -234,6 +243,7 @@ public class PlayerCtrlHandler
         // Can handle this later!
 
         _logger.LogDebug($"Enqueued Hardcore Task Stack for Imprisonment!", LoggerType.HardcoreMovement);
+        _mediator.Publish(new HcStateCacheChanged());
         GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.Imprisonment, true, enactor, MainHub.UID);
     }
 
@@ -264,6 +274,7 @@ public class PlayerCtrlHandler
     {
         _logger.LogInformation($"[{enactor.AliasOrUID}] Disabled your Imprisonment state!", LoggerType.HardcoreMovement);
 
+        _mediator.Publish(new HcStateCacheChanged());
         if (giveAchievements)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.Imprisonment, false, enactor, MainHub.UID);
     }
@@ -275,7 +286,8 @@ public class PlayerCtrlHandler
 
         AddonChatLog.SetChatPanelVisibility(false);
         _logger.LogInformation($"[{kinkster.GetNickAliasOrUid()}] Enabled your HiddenChatBoxes state!", LoggerType.HardcoreActions);
-
+        
+        _mediator.Publish(new HcStateCacheChanged());
         GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.HiddenChatBox, true, enactor, MainHub.UID);
     }
 
@@ -294,6 +306,7 @@ public class PlayerCtrlHandler
         _logger.LogInformation($"[{enactor.AliasOrUID}] Disabled your HiddenChatBoxes state!", LoggerType.HardcoreActions);
         AddonChatLog.SetChatPanelVisibility(true);
 
+        _mediator.Publish(new HcStateCacheChanged());
         if (giveAchievements)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.HiddenChatBox, false, enactor, MainHub.UID);
     }
@@ -306,6 +319,7 @@ public class PlayerCtrlHandler
         AddonChatLog.SetChatInputVisibility(false);
         _logger.LogInformation($"[{kinkster.GetNickAliasOrUid()}] concealed your ChatInput visibility!", LoggerType.HardcoreActions);
 
+        _mediator.Publish(new HcStateCacheChanged());
         GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.HiddenChatInput, true, enactor, MainHub.UID);
     }
 
@@ -335,6 +349,7 @@ public class PlayerCtrlHandler
         
         _logger.LogInformation($"[{kinkster.GetNickAliasOrUid()}] Enabled your BlockedChatInput state!", LoggerType.HardcoreActions);
         
+        _mediator.Publish(new HcStateCacheChanged());
         GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.BlockedChatInput, true, enactor, MainHub.UID);
     }
 
@@ -351,7 +366,8 @@ public class PlayerCtrlHandler
     public void UnblockChatInput(UserData enactor, bool giveAchievements)
     {
         _logger.LogInformation($"[{enactor.AliasOrUID}] Disabled your BlockedChatInput state!", LoggerType.HardcoreActions);
-        
+
+        _mediator.Publish(new HcStateCacheChanged());
         if (giveAchievements)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.BlockedChatInput, false, enactor, MainHub.UID);
     }

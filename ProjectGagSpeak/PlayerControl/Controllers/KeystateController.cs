@@ -78,9 +78,8 @@ public sealed class KeystateController : DisposableMediatorSubscriberBase
     private void CancelMoveKeys()
     {
         foreach (var x in _keysToBlock)
-            // the action to execute for each of our moved keys
-            if (Svc.KeyState.GetRawValue(x) == 0)
-                Svc.KeyState.SetRawValue(x, 1);
+            if (Svc.KeyState.GetRawValue(x) != 0)
+                Svc.KeyState.SetRawValue(x, 0);
     }
 
     /// <summary>

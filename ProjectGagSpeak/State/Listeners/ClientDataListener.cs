@@ -57,7 +57,6 @@ public sealed class ClientDataListener : IDisposable
             _handler.RestoreChatInputVisibility(new("Logout/Disposal"), false);
             _handler.UnblockChatInput(new("Logout/Disposal"), false);
             _handler.RemoveHypnoEffect(new("Logout/Disposal"), false, true);
-            _mediator.Publish(new HcStateCacheChanged());
         }
         catch (Exception e)
         {
