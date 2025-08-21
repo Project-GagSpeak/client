@@ -14,6 +14,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
+using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
@@ -346,7 +347,31 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
             }
             else
             {
-                Logger.LogDebug($"Changed {DispName}'s Hardcore State ({attribute}) to enabled [For {(expireTimer - DateTimeOffset.UtcNow)}]", LoggerType.StickyUI);
+                Logger.LogDebug($"Changed {DispName}'s Hardcore State ({attribute}) to enabled [For {(expireTimer - DateTimeOffset.UtcNow)}]", LoggerType.HardcoreActions);
+                CloseInteraction();
+            }
+        });
+    }
+
+    public void TryDisableHardcoreAction(HcAttribute attribute)
+    {
+        UiService.SetUITask(async () =>
+        {
+            var dto = new HardcoreStateChange(Kinkster!.UserData, new HardcoreState(), attribute, MainHub.PlayerUserData);
+            if (await _hub.UserChangeOtherHardcoreState(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+            {
+                switch (res.ErrorCode)
+                {
+                    case GagSpeakApiEc.BadUpdateKind: Svc.Toasts.ShowError("Invalid Update Kind. Please try again."); break;
+                    case GagSpeakApiEc.InvalidDataState: Svc.Toasts.ShowError("Tried to switch to Invalid Data State!"); break;
+                    case GagSpeakApiEc.InvalidTime: Svc.Toasts.ShowError("Invalid Timer Syntax. Must be a valid time format (Ex: 1h2m7s)."); break;
+                    case GagSpeakApiEc.LackingPermissions: Svc.Toasts.ShowError("You do not have permission to perform this action."); break;
+                    default: Svc.Logger.Debug($"Failed to send HardcoreStateChange to {DispName}: {res.ErrorCode}."); break;
+                }
+            }
+            else
+            {
+                Logger.LogDebug($"Changed {DispName}'s Hardcore State ({attribute}) to disabled", LoggerType.HardcoreActions);
                 CloseInteraction();
             }
         });

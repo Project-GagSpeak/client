@@ -14,7 +14,7 @@ using OtterGui.Text;
 namespace GagSpeak.Gui.MainWindow;
 
 // Helper methods for drawing out the hardcore actions.
-public class KinksterHardcore(InteractionsService service)
+public class KinksterHardcore(MainHub mainHub, InteractionsService service)
 {
     public void DrawHardcoreActions(float width, Kinkster k, string dispName)
     {
@@ -155,8 +155,7 @@ public class KinksterHardcore(InteractionsService service)
         void DrawDisableRow(InteractionType type)
         {
             if (ImGuiUtil.DrawDisabledButton($"Disable {type.ToName()}", new Vector2(width, ImGui.GetFrameHeight()), string.Empty, false))
-                service.TryEnableHardcoreAction(type.ToHcAttribute());
-            CkGui.AttachToolTip($"Force {dispName} to follow you! (--COL--{dispName} must be within 5 yalms--COL--)", ImGuiColors.ParsedPink);
+                service.TryDisableHardcoreAction(type.ToHcAttribute());
         }
     }
 
