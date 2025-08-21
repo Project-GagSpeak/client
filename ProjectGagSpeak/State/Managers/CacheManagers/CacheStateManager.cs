@@ -30,6 +30,7 @@ public class CacheStateManager : IHostedService
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
+    private readonly CollarManager _collars;
     private readonly CustomizePlusHandler _cplusHandler;
     private readonly GlamourHandler _glamourHandler;
     private readonly ModHandler _modHandler;
@@ -39,15 +40,16 @@ public class CacheStateManager : IHostedService
     private readonly ArousalService _arousalHandler;
 
     public CacheStateManager(ILogger<CacheStateManager> logger, IpcCallerPenumbra redrawAssist,
-        GagRestrictionManager gags, RestrictionManager restrictions, RestraintManager restraints, 
-        CustomizePlusHandler profiles, GlamourHandler glamours, ModHandler mods, MoodleHandler moodles, 
-        TraitsHandler traits, OverlayHandler overlays, ArousalService arousals) 
+        GagRestrictionManager gags, RestrictionManager restrictions, RestraintManager restraints,
+        CollarManager collar, CustomizePlusHandler profiles, GlamourHandler glamours, ModHandler mods, 
+        MoodleHandler moodles, TraitsHandler traits, OverlayHandler overlays, ArousalService arousals) 
     {
         _logger = logger;
         _redrawAssist = redrawAssist;
         _gags = gags;
         _restrictions = restrictions;
         _restraints = restraints;
+        _collars = collar;
         _cplusHandler = profiles;
         _glamourHandler = glamours;
         _modHandler = mods;
@@ -94,6 +96,7 @@ public class CacheStateManager : IHostedService
         _gags.LoadServerData(new CharaActiveGags()); // Reset Gag Data
         _restrictions.LoadServerData(new CharaActiveRestrictions()); // Reset Restriction Data
         _restraints.LoadServerData(new CharaActiveRestraint()); // Reset Restraint Data
+        _collars.LoadServerData(new CharaActiveCollar()); // Reset Collar Data
         // Reset all caches to their default state.
         await Task.WhenAll(
             _glamourHandler.ClearCache(),
@@ -199,6 +202,20 @@ public class CacheStateManager : IHostedService
             _logger.LogInformation("------ Restraint Data synced to Cache ------ ");
         }
 
+        // Sync collar data with the CollarManager.
+        _collars.LoadServerData(connectionDto.SyncedCollarData);
+        _logger.LogInformation("------ Syncing Collar Data to Cache ------");
+        if (_collars.ActiveCollarData is { } collarData && _collars.ServerCollarData is { } serverData)
+        {
+            _logger.LogDebug($"Adding Collar [{collarData.Label}) to you, under Ownership of {string.Join(',', serverData.OwnerUIDs)}.");
+            var key = new CombinedCacheKey(ManagerPriority.Collar, 0, MainHub.UID, collarData.Label);
+            var glamour = new GlamourSlot(collarData.Glamour.Slot, collarData.Glamour.GameItem, new StainIds([serverData.Dye1, serverData.Dye2]));
+            _glamourHandler.TryAddGlamourToCache(key, glamour);
+            _modHandler.TryAddModToCache(key, collarData.Mod);
+            _moodleHandler.TryAddMoodleToCache(key, new MoodleTuple(serverData.Moodle));
+            anyRequestedRedraw |= collarData.DoRedraw;
+        }
+        _logger.LogInformation("------ Collar Data synced to Cache ------ ");
 
         // Now perform all updates in parallel.
         _logger.LogInformation("------ Applying all Cache Updates In Parallel ------");
@@ -218,7 +235,7 @@ public class CacheStateManager : IHostedService
     }
 
     /// <summary> Adds a GagItem's visual properties to the cache at the defined layer. </summary>
-    /// <remarks> Changes are immidiately reflected and updated to the player. </remarks>
+    /// <remarks> Changes are immediately reflected and updated to the player. </remarks>
     public async Task AddGagItem(GarblerRestriction item, int layerIdx, string enabler)
     {
         _logger.LogDebug($"Adding ({item.GagType.GagName()}) at layer {layerIdx}, enabled by ({enabler}).");
