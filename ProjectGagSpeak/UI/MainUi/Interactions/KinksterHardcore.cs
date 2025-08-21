@@ -114,9 +114,9 @@ public class KinksterHardcore(InteractionsService service)
             using (ImRaii.Child($"{type}Child", new Vector2(width, curState ? enableChildH : ImGui.GetFrameHeight())))
             {
                 if (curState)
-                    enabledDraw();
-                else
                     DrawDisableRow(type);
+                else
+                    enabledDraw();
             }
             ImGui.Separator();
         }
