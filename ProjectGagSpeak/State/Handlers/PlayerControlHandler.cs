@@ -51,6 +51,7 @@ public class PlayerCtrlHandler
             throw new Bagagwa($"Failed to get Kinkster for UID: {enactor.UID} for Hypnosis!");
         
         await _overlay.SetTimedHypnoEffect(enactor, effect, length, image);
+        _mediator.Publish(new HcStateCacheChanged());
         _logger.LogInformation($"[{kinkster.GetNickAliasOrUid()}] Enabled your Hypnotic Effect!");
     }
 
@@ -67,6 +68,7 @@ public class PlayerCtrlHandler
     public void RemoveHypnoEffect(UserData enactor, bool giveAchievements, bool fromPluginDisposal = false)
     {
         _overlay.RemoveHypnoEffect(enactor.UID, giveAchievements, fromPluginDisposal);
+        _mediator.Publish(new HcStateCacheChanged());
         _logger.LogInformation($"[{enactor.AliasOrUID}] Removed your Hypnotic Effect!");
     }
 
@@ -256,8 +258,7 @@ public class PlayerCtrlHandler
         // will need to override player movement for this to work.
         // Can handle this later!
         _logger.LogDebug($"Enqueued Hardcore Task Stack for Imprisonment Update!", LoggerType.HardcoreMovement);
-
-        // No need to trigger achievement, as we only updated the imprisonment position and radius.
+        _mediator.Publish(new HcStateCacheChanged());
     }
 
     /// <summary>
@@ -338,6 +339,7 @@ public class PlayerCtrlHandler
         AddonChatLog.SetChatInputVisibility(true);
         _logger.LogInformation($"[{enactor.AliasOrUID}] restored your ChatInput Visibility!", LoggerType.HardcoreActions);
 
+        _mediator.Publish(new HcStateCacheChanged());
         if (giveAchievements)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.HiddenChatInput, false, enactor, MainHub.UID);
     }
