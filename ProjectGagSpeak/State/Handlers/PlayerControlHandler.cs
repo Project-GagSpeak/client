@@ -128,19 +128,13 @@ public class PlayerCtrlHandler
             throw new Exception($"Failed to get Kinkster for UID: {enactor.UID} for Locked Emote!");
 
         _logger.LogInformation($"[{enactor.AliasOrUID}] Enabled your LockedFollowing state!", LoggerType.HardcoreMovement);
-        
         // Enqueue to the hardcore task manager our emote operation so that we block all movement during it.
-        _hcTasks.BeginStack("PrepareEmotePerformance", new(HcTaskControl.FreezePlayer));
-        _hcTasks.AddToStack(HcCommonTaskFuncs.WaitForPlayerLoading);
-        
+        _hcTasks.EnqueueTask(HcCommonTaskFuncs.WaitForPlayerLoading, HcTaskConfiguration.Default);
         // OPTIONAL STEP: If the kinkster is present, attempt to target them.
         if (kinkster.VisiblePairGameObject is not null && kinkster.VisiblePairGameObject.IsTargetable)
-            _hcTasks.AddToStack(() => HcCommonTaskFuncs.TargetNode(() => kinkster.VisiblePairGameObject));
-        
-        // perform the emote operation.
-        _hcTasks.AddToStack(() => HcCommonTaskFuncs.PerformExpectedEmote(ClientData.Hardcore!.EmoteId, ClientData.Hardcore.EmoteCyclePose));
-        _hcTasks.InsertStack();
+            _hcTasks.EnqueueTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.VisiblePairGameObject), new(HcTaskControl.BlockAllKeys));
 
+        _hcTasks.EnqueueTask(() => HcCommonTaskFuncs.PerformExpectedEmote(ClientData.Hardcore!.EmoteId, ClientData.Hardcore.EmoteCyclePose), "PerformEmote", new(HcTaskControl.BlockAllKeys));
         _mediator.Publish(new HcStateCacheChanged());
         GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.EmoteState, true, enactor, MainHub.UID);
     }
@@ -153,16 +147,12 @@ public class PlayerCtrlHandler
         _logger.LogInformation($"[{kinkster.GetNickAliasOrUid()}] Updated your LockedFollowing state!", LoggerType.HardcoreMovement);
         
         // Enqueue to the hardcore task manager our emote operation so that we block all movement during it.
-        _hcTasks.BeginStack("PrepareEmotePerformance", new(HcTaskControl.FreezePlayer));
-        _hcTasks.AddToStack(HcCommonTaskFuncs.WaitForPlayerLoading);
-        
+        _hcTasks.EnqueueTask(HcCommonTaskFuncs.WaitForPlayerLoading, HcTaskConfiguration.Default);
         // OPTIONAL STEP: If the kinkster is present, attempt to target them.
         if (kinkster.VisiblePairGameObject is not null && kinkster.VisiblePairGameObject.IsTargetable)
-            _hcTasks.AddToStack(() => HcCommonTaskFuncs.TargetNode(() => kinkster.VisiblePairGameObject));
-        
-        // perform the emote operation.
-        _hcTasks.AddToStack(() => HcCommonTaskFuncs.PerformExpectedEmote(ClientData.Hardcore!.EmoteId, ClientData.Hardcore.EmoteCyclePose));
-        _hcTasks.InsertStack();
+            _hcTasks.EnqueueTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.VisiblePairGameObject), new(HcTaskControl.BlockAllKeys));
+
+        _hcTasks.EnqueueTask(() => HcCommonTaskFuncs.PerformExpectedEmote(ClientData.Hardcore!.EmoteId, ClientData.Hardcore.EmoteCyclePose), "PerformEmote", new(HcTaskControl.BlockAllKeys));
 
         _mediator.Publish(new HcStateCacheChanged());
     }
@@ -179,7 +169,7 @@ public class PlayerCtrlHandler
     /// </summary>
     public void DisableLockedEmote(UserData enactor, bool giveAchievements)
     {
-        _logger.LogInformation($"[{enactor.AliasOrUID}] Disabled your LockedFollowing state!", LoggerType.HardcoreMovement);
+        _logger.LogInformation($"[{enactor.AliasOrUID}] Disabled your LockedEmote state!", LoggerType.HardcoreMovement);
 
         _mediator.Publish(new HcStateCacheChanged());
         if (giveAchievements)

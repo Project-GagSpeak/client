@@ -40,7 +40,7 @@ public static unsafe class HcTaskUtils
             return false;
         if (Svc.Targets.Target != null && NodeThrottler.Throttle("Follow", 200))
         {
-            ChatService.SendCommand("follow <T>");
+            ChatService.SendCommand("follow <t>");
             return true;
         }
         return false;

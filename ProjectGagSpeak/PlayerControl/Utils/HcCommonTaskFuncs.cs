@@ -1,5 +1,6 @@
 using CkCommons;
 using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using GagSpeak.PlayerControl;
@@ -167,7 +168,7 @@ public static unsafe class HcCommonTaskFuncs
                 return true;
 
             // if we are currently sitting, perform a stand.
-            if (!EmoteService.IsSittingAny(currentEmote))
+            if (EmoteService.IsSittingAny(currentEmote))
             {
                 Svc.Logger.Verbose("Enforcing stand to perform the correct emote.");
                 EmoteService.ExecuteEmote(51); // 51 is the stand emote.
@@ -175,7 +176,7 @@ public static unsafe class HcCommonTaskFuncs
             }
 
             // Otherwise, attempt to perform the desired emote.
-            if (!EmoteService.CanUseEmote(expectedEmoteId))
+            if (EmoteService.CanUseEmote(expectedEmoteId))
                 EmoteService.ExecuteEmote(expectedEmoteId);
 
             return false;

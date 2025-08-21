@@ -69,6 +69,7 @@ public partial class HcTaskManager : IDisposable
     public void Dispose()
     {
         // dispose of this hardcore task manager singleton.
+        _cache.SetActiveTaskControl(HcTaskControl.None);
         Svc.Framework.Update -= OnFramework;
         _logger.LogInformation("Hardcore Task Manager Disposed.");
         GC.SuppressFinalize(this);
@@ -86,6 +87,7 @@ public partial class HcTaskManager : IDisposable
             _logger.LogDebug("Aborting Hardcore Task Stack.", LoggerType.HardcoreTasks);
             DiscardStack();
         }
+        _cache.SetActiveTaskControl(HcTaskControl.None);
     }
 
     public void AbortCurrentTask()
@@ -98,6 +100,7 @@ public partial class HcTaskManager : IDisposable
             AbortTime = 0;
             StartTime = 0;
         }
+        _cache.SetActiveTaskControl(HcTaskControl.None);
     }
 
     // Task update loop.
@@ -143,7 +146,7 @@ public partial class HcTaskManager : IDisposable
                     RemainingTime = config.MaxTaskTime;
                     _logger.LogTrace($"Hardcore Task Begin: [{CurrentTask.Name} ({CurrentTask.Location})], with timeout of {RemainingTime}", LoggerType.HardcoreTasks);
                 }
-                // handle timeout occurances
+                // handle timeout occurrences
                 if (RemainingTime < 0)
                 {
                     _logger.LogDebug($"Hardcore Task Timeout: {CurrentTask.Name} ({CurrentTask.Location})", LoggerType.HardcoreTasks);
@@ -179,19 +182,19 @@ public partial class HcTaskManager : IDisposable
                 else if (result is null)
                 {
                     _logger.LogTrace($"Received abort request from task: {CurrentTask.Name} ({CurrentTask.Location})", LoggerType.HardcoreTasks);
-                    AbortTasks();
+                    AbortCurrentTask();
                 }
             }
             // handle cases where we summoned Bagagwa via timeouts or other standard Bagagwa summoning practices.
             catch (BagagwaTimeout e)
             {
                 _logger.LogWarning($"Timeout in operation [{CurrentTask?.Name}] task index {CurrentTask?.CurrentTaskIdx}: {e}", LoggerType.HardcoreTasks);
-                AbortTasks();
+                AbortCurrentTask();
             }
             catch (Bagagwa ex)
             {
                 _logger.LogError($"Hardcore Task Error: {CurrentTask?.Name} ({CurrentTask?.Location}), Exception: {ex}", LoggerType.HardcoreTasks);
-                AbortTasks();
+                AbortCurrentTask();
             }
             // return early to not update the observed tasks count.
             return;

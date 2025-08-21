@@ -34,6 +34,13 @@ public sealed class EmoteCombo : CkFilterComboCache<ParsedEmoteRow>
     protected override bool IsVisible(int globalIndex, LowerString filter)
         => base.IsVisible(globalIndex, filter) && !Items[globalIndex].EmoteCommands.IsDefaultOrEmpty;
 
+    protected override void DrawList(float width, float itemHeight, float filterHeight)
+    {
+        base.DrawList(width, itemHeight, filterHeight);
+        if (NewSelection != null && Items.Count > NewSelection.Value)
+            Current = Items[NewSelection.Value];
+    }
+
     protected override int UpdateCurrentSelected(int currentSelected)
     {
         if (Current.RowId == _currentEmoteId)
@@ -54,7 +61,7 @@ public sealed class EmoteCombo : CkFilterComboCache<ParsedEmoteRow>
     {
         InnerWidth = width * innerWidthScaler;
         _currentEmoteId = current;
-        var preview = Items.FirstOrDefault(i => i.RowId == current).Name ?? "Select Emote...";
+        var preview = Items.FirstOrDefault(i => i.RowId == _currentEmoteId).Name ?? "Select Emote...";
         return Draw(id, preview, string.Empty, width, ImGui.GetFrameHeight() * _iconScale, flags, searchBg);
     }
 

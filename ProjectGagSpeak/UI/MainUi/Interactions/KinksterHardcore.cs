@@ -182,8 +182,11 @@ public class KinksterHardcore(InteractionsService service)
             {
                 var sliderW = ImGui.GetFrameHeight() * 2;
                 var comboW = width - sliderW - ImGui.GetStyle().ItemInnerSpacing.X;
-                if(service.Emotes.Draw("##LockedEmoteCombo", service.EmoteId, comboW, 1.3f))
+                if (service.Emotes.Draw("##LockedEmoteCombo", service.EmoteId, comboW, 1.3f))
+                {
                     service.EmoteId = service.Emotes.Current.RowId;
+                    Svc.Logger.Information($"Changed EmoteID to {service.EmoteId} for {dispName}.");
+                }
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                     service.EmoteId = service.Emotes.Items.FirstOrDefault().RowId;
                 ImUtf8.SameLineInner();
@@ -195,7 +198,11 @@ public class KinksterHardcore(InteractionsService service)
             {
                 // reset cycle pose back to 0 if the emote doesn't have it.
                 service.CyclePose = 0;
-                service.Emotes.Draw("##LockedLoopEmoteCombo", service.EmoteId, width, 1.3f);
+                if(service.Emotes.Draw("##LockedLoopEmoteCombo", service.EmoteId, width, 1.3f))
+                {
+                    service.EmoteId = service.Emotes.Current.RowId;
+                    Svc.Logger.Information($"Changed EmoteID to {service.EmoteId} for {dispName}.");
+                }
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                     service.EmoteId = service.Emotes.Items.FirstOrDefault().RowId;
             }

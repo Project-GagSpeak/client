@@ -5,10 +5,8 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
-using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
-using GagspeakAPI.Extensions;
 using OtterGui.Extensions;
 using System.Diagnostics.CodeAnalysis;
 
@@ -344,7 +342,7 @@ public sealed class RestrictionManager : IHybridSavable
             try
             {
                 // Create an instance of the correct type
-                RestrictionItem restrictionItem = restrictionType switch
+                var restrictionItem = restrictionType switch
                 {
                     RestrictionType.Hypnotic => HypnoticRestriction.FromToken(itemJson, _modPresets),
                     RestrictionType.Blindfold => BlindfoldRestriction.FromToken(itemJson, _modPresets),
