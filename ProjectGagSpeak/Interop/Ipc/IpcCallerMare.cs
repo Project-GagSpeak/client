@@ -2,6 +2,8 @@ using Dalamud.Plugin.Ipc;
 
 namespace GagSpeak.Interop;
 
+// TODO::
+// Remove August 22nd, 2025
 public sealed class IpcCallerMare : IIpcCaller
 {
     // Mare has no API Version attribute, so just pray i guess.

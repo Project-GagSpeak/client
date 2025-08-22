@@ -24,6 +24,7 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     {
         _cache = cache;
         _detours = detours;
+        _timeoutTracker.Stop();
         Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreState());
         Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
     }
@@ -71,7 +72,10 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     {
         // ForceFollow Specific Logic.
         if (_timeoutTracker.IsRunning && PlayerData.Object!.Position != _lastPos)
+        {
             RestartTimeoutTracker();
+            _lastPos = PlayerData.Object!.Position;
+        }
 
         // Ensure full movement lock if we should.
         if (_freezePlayer && !_detours.ForceDisableMovementIsActive)
@@ -83,7 +87,10 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     }
 
     public void RestartTimeoutTracker()
-        => _timeoutTracker.Restart();
+    {
+        Logger.LogTrace("Restarting timeout tracker for forced-follow behavior.", LoggerType.HardcoreMovement);
+        _timeoutTracker.Restart();
+    }
 
     public void ResetTimeoutTracker()
     {

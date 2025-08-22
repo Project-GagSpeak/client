@@ -10,8 +10,10 @@ public record PenumbraDisposedMessage : MessageBase;
 public record MoodlesReady : MessageBase;
 public record GlamourerReady : MessageBase;
 public record CustomizeReady : MessageBase;
+public record CustomizeProfileChange(IntPtr address, Guid id) : MessageBase;
 public record CustomizeProfileListRequest : MessageBase;
 public record CustomizeDispose : MessageBase;
+public record HeelsOffsetChanged : MessageBase; // Whenever the client's Heel offset changes.
 public record TooltipSetItemToEditorMessage(EquipSlot Slot, EquipItem Item) : MessageBase;
 public record MoodlesStatusManagerUpdate : MessageBase;
 public record MoodlesStatusModified(Guid Guid) : MessageBase; // when we change one of our moodles settings.

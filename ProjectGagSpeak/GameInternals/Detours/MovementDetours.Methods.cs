@@ -1,5 +1,6 @@
 using Dalamud.Hooking;
 using Dalamud.Utility.Signatures;
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using GagSpeak.GameInternals.Structs;
 using System.Runtime.InteropServices;
  
@@ -50,63 +51,63 @@ public partial class MovementDetours : IDisposable
     {
         var temp = unk1;
         var targetFollowVar = unk1;
-        //_logger.LogDebug($"PRE:       UnkTargetFollowStruct: {((IntPtr)unk1).ToString("X")}", LoggerType.HardcoreMovement);
-        //_logger.LogDebug($"---------------------------------", LoggerType.HardcoreMovement);
-        //_logger.LogDebug($"PRE: Unk_0x450.Unk_GameObjectID0: {unk1->Unk_0x450.Unk_GameObjectID0.ToString("X")};", LoggerType.HardcoreMovement);
+        _logger.LogDebug($"PRE:       UnkTargetFollowStruct: {((IntPtr)unk1).ToString("X")}", LoggerType.HardcoreMovement);
+        _logger.LogDebug($"---------------------------------", LoggerType.HardcoreMovement);
+        _logger.LogDebug($"PRE: Unk_0x450.Unk_GameObjectID0: {unk1->Unk_0x450.Unk_GameObjectID0.ToString("X")};", LoggerType.HardcoreMovement);
         try
         {
-            //_logger.LogDebug($"PRE      Struct target4 Unk_0x10: {unk1->Unk_0x450.Unk_0x10};", LoggerType.HardcoreMovement);
-            //_logger.LogDebug($"PRE      Struct target4 Unk_0x54: {unk1->Unk_0x450.Unk_0x54};", LoggerType.HardcoreMovement);
+            _logger.LogDebug($"PRE      Struct target4 Unk_0x10: {unk1->Unk_0x450.Unk_0x10};", LoggerType.HardcoreMovement);
+            _logger.LogDebug($"PRE      Struct target4 Unk_0x54: {unk1->Unk_0x450.Unk_0x54};", LoggerType.HardcoreMovement);
         }
         catch (Bagagwa ex)
         {
             _logger.LogError($"Error converting Unk_0x10 to string: {ex}");
         }
-        //_logger.LogDebug($"PRE:             FollowingTarget: {unk1->FollowingTarget.ToString("X")}", LoggerType.HardcoreMovement);
-        //_logger.LogDebug($"PRE:                 Follow Type: {unk1->FollowType.ToString("X")}", LoggerType.HardcoreMovement);
+        _logger.LogDebug($"PRE:             FollowingTarget: {unk1->FollowingTarget.ToString("X")}", LoggerType.HardcoreMovement);
+        _logger.LogDebug($"PRE:                 Follow Type: {unk1->FollowType.ToString("X")}", LoggerType.HardcoreMovement);
 
-        //foreach (var obj in _objectTable)
-        //{
-        //    if (obj.GameObjectId == unk1->GameObjectIDToFollow)
-        //    {
-        //        _logger.LogDebug($"Game Object To Follow: {unk1->GameObjectIDToFollow.ToString("X")}: {obj.Name.TextValue}", LoggerType.HardcoreMovement);
-        //        break;
-        //    }
-        //}
-        // if this condition it true, it means that the function is attempting to call a cancelation 
+        foreach (var obj in Svc.Objects.PlayerObjects)
+        {
+            if (obj.GameObjectId == unk1->GameObjectIDToFollow)
+            {
+                _logger.LogDebug($"Game Object To Follow: {unk1->GameObjectIDToFollow.ToString("X")}: {obj.Name.TextValue}", LoggerType.HardcoreMovement);
+                break;
+            }
+        }
+        // if this condition it true, it means that the function is attempting to call a cancelation
         if (unk1->Unk_0x450.Unk_0x54 == 256)
         {
-            //_logger.LogDebug($"Unfollow Hook was valid, performing Early escaping to prevent canceling follow!", LoggerType.HardcoreMovement);
+            _logger.LogDebug($"Unfollow Hook was valid, performing Early escaping to prevent canceling follow!", LoggerType.HardcoreMovement);
             return; // do an early return to prevent processing
         }
         else
         {
-            //_logger.LogDebug($"Unk_0x450.Unk_0x54 was {unk1->Unk_0x450.Unk_0x54}. Performing early return of original.", LoggerType.HardcoreMovement);
+            _logger.LogDebug($"Unk_0x450.Unk_0x54 was {unk1->Unk_0x450.Unk_0x54}. Performing early return of original.", LoggerType.HardcoreMovement);
             // output the original
             UnfollowHook?.Original(unk1);
         }
 
         try
         {
-            //_logger.LogDebug($"POST       UnkTargetFollowStruct: {((IntPtr)unk1).ToString("X")}", LoggerType.HardcoreMovement);
-            //_logger.LogDebug($"---------------------------------", LoggerType.HardcoreMovement);
-            //_logger.LogDebug($"POST Unk_0x450.Unk_GameObjectID0: {unk1->Unk_0x450.Unk_GameObjectID0.ToString("X")};", LoggerType.HardcoreMovement);
-            //_logger.LogDebug($"POST     Struct target4 Unk_0x54: {unk1->Unk_0x450.Unk_0x54};", LoggerType.HardcoreMovement);
-            //_logger.LogDebug($"POST             FollowingTarget: {unk1->FollowingTarget.ToString("X")}", LoggerType.HardcoreMovement);
-            //_logger.LogDebug($"POST                 Follow Type: {unk1->FollowType.ToString("X")}", LoggerType.HardcoreMovement);
+            _logger.LogDebug($"POST       UnkTargetFollowStruct: {((IntPtr)unk1).ToString("X")}", LoggerType.HardcoreMovement);
+            _logger.LogDebug($"---------------------------------", LoggerType.HardcoreMovement);
+            _logger.LogDebug($"POST Unk_0x450.Unk_GameObjectID0: {unk1->Unk_0x450.Unk_GameObjectID0.ToString("X")};", LoggerType.HardcoreMovement);
+            _logger.LogDebug($"POST     Struct target4 Unk_0x54: {unk1->Unk_0x450.Unk_0x54};", LoggerType.HardcoreMovement);
+            _logger.LogDebug($"POST             FollowingTarget: {unk1->FollowingTarget.ToString("X")}", LoggerType.HardcoreMovement);
+            _logger.LogDebug($"POST                 Follow Type: {unk1->FollowType.ToString("X")}", LoggerType.HardcoreMovement);
         }
         catch (Bagagwa ex)
         {
             _logger.LogError($"Error {ex}", LoggerType.HardcoreMovement);
         }
 
-        //foreach (var obj in _objectTable)
-        //{
-        //    if (obj.GameObjectId == unk1->GameObjectIDToFollow)
-        //    {
-        //        _logger.LogDebug($"POST ObjectIDtoFollow: {unk1->GameObjectIDToFollow.ToString("X")}: {obj.Name.TextValue}", LoggerType.HardcoreMovement);
-        //        break;
-        //    }
-        //}
+        foreach (var obj in Svc.Objects.PlayerObjects)
+        {
+            if (obj.GameObjectId == unk1->GameObjectIDToFollow)
+            {
+                _logger.LogDebug($"POST ObjectIDtoFollow: {unk1->GameObjectIDToFollow.ToString("X")}: {obj.Name.TextValue}", LoggerType.HardcoreMovement);
+                break;
+            }
+        }
     }
 }

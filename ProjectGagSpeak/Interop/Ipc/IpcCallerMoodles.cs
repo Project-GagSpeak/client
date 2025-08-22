@@ -1,7 +1,6 @@
 using CkCommons;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Plugin.Ipc;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 
