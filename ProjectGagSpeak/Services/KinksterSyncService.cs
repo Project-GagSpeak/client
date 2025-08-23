@@ -6,6 +6,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Services;
 
@@ -35,7 +36,7 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
         {
             if (PlayerData.IsZoning)
                 return;
-            Logger.LogDebug("Client GlamourState was updated, syncing with Kinksters!");
+            Logger.LogInformation("Client GlamourState was updated, syncing with Kinksters!");
             AddPendingSync(DataSyncKind.Glamourer);
         });
 
@@ -43,7 +44,7 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
         {
             if (PlayerData.IsZoning || msg.Address == IntPtr.Zero)
                 return;
-            Logger.LogDebug($"Your C+ profile changed to {msg.Id}, syncing to Kinksters!");
+            Logger.LogInformation($"Your C+ profile changed to {msg.Id}, syncing to Kinksters!");
             AddPendingSync(DataSyncKind.CPlus);
         });
 
@@ -51,7 +52,7 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
         {
             if (PlayerData.IsZoning)
                 return;
-            Logger.LogDebug("Your heels offset changed, syncing with Kinksters!");
+            Logger.LogInformation("Your heels offset changed, syncing with Kinksters!");
             AddPendingSync(DataSyncKind.Heels);
         });
 
@@ -62,7 +63,7 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
             // maybe some comparison here, but also could move it elsewhere.
             if (!_lastHonorific.Equals(msg.NewTitle, StringComparison.Ordinal))
                 return;
-            Logger.LogDebug("Client HonorificTitle was updated, syncing with Kinksters!");
+            Logger.LogInformation("Client HonorificTitle was updated, syncing with Kinksters!");
             AddPendingSync(DataSyncKind.Honorific);
         });
 
@@ -73,7 +74,7 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
             // maybe some comparison here, but also could move it elsewhere.
             if (!_lastPetNames.Equals(msg.NicknamesData, StringComparison.Ordinal))
                 return;
-            Logger.LogDebug("Client PetNames was updated, syncing with Kinksters!");
+            Logger.LogInformation("Client PetNames was updated, syncing with Kinksters!");
             AddPendingSync(DataSyncKind.PetNames);
         });
 
@@ -156,10 +157,13 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
 
     private async Task SyncModManipsToKinksters(List<UserData> visibleKinksters)
     {
+        if (!IpcCallerPenumbra.APIAvailable)
+            return;
+
         var newManips = _ipc.Penumbra.GetModManipulations();
         if (_lastModManips.Equals(newManips, StringComparison.Ordinal))
             return;
-        // update and send.
+
         Logger.LogTrace($"ModManips changed!", LoggerType.VisiblePairs);
         _lastModManips = newManips;
 
@@ -169,110 +173,114 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
 
     private async Task SyncGlamourStateToKinksters(List<UserData> visibleKinksters)
     {
-        var newGlamStr = await _ipc.Glamourer.GetActorString().ConfigureAwait(false);
-        if (_lastGlamourer.Equals(newGlamStr, StringComparison.Ordinal))
+        if (!IpcCallerGlamourer.APIAvailable)
             return;
-        Logger.LogTrace($"Glamourer changed!", LoggerType.VisiblePairs);
-        _lastGlamourer = newGlamStr;
+        
+        var latestGlamStr = await _ipc.Glamourer.GetActorString().ConfigureAwait(false);
+        if (_lastGlamourer.Equals(latestGlamStr, StringComparison.Ordinal))
+            return;
 
+        Logger.LogTrace("Glamourer changed!", LoggerType.VisiblePairs);
+        _lastGlamourer = latestGlamStr;
+        
         Logger.LogDebug("Syncing GlamourState to Kinksters");
-        await _hub.UserPushIpcGlamourer(new(visibleKinksters, newGlamStr)).ConfigureAwait(false);
+        await _hub.UserPushIpcGlamourer(new(visibleKinksters, _lastGlamourer)).ConfigureAwait(false);
     }
 
     private async Task SyncLightDataToKinksters(List<UserData> visibleKinksters)
     {
-        var lightData = new CharaIpcLight();
-
+        var toSend = new CharaIpcLight();
         // if the data is not different, so not apply it, but otherwise, do so.
-        var newCPlus = await _ipc.CustomizePlus.GetClientProfile().ConfigureAwait(false) ?? string.Empty;
-        if (!_lastCPlus.Equals(newCPlus, StringComparison.Ordinal))
+        if (IpcCallerCustomize.APIAvailable)
         {
-            Logger.LogTrace($"CPlus changed active profiles!", LoggerType.VisiblePairs);
-            _lastCPlus = newCPlus;
-            lightData.CustomizeProfile = newCPlus;
+            var latestCPlus = await _ipc.CustomizePlus.GetClientProfile().ConfigureAwait(false);
+            if (_lastCPlus.Equals(latestCPlus, StringComparison.Ordinal))
+                return;
+            Logger.LogTrace("CPlus changed profiles!", LoggerType.VisiblePairs);
+            toSend.CustomizeProfile = latestCPlus;
+            _lastCPlus = toSend.CustomizeProfile;
         }
-
-        var newHeels = await _ipc.Heels.GetClientOffset().ConfigureAwait(false);
-        if (!_lastHeels.Equals(newHeels, StringComparison.Ordinal))
+        if (IpcCallerHeels.APIAvailable)
         {
-            Logger.LogTrace($"Heels offset changed!", LoggerType.VisiblePairs);
-            _lastHeels = newHeels;
-            lightData.HeelsOffset = newHeels;
+            var latestHeels = await _ipc.Heels.GetClientOffset().ConfigureAwait(false);
+            if (_lastHeels.Equals(latestHeels, StringComparison.Ordinal))
+                return;
+            Logger.LogTrace("Heels offset changed!", LoggerType.VisiblePairs);
+            toSend.HeelsOffset = latestHeels;
+            _lastHeels = toSend.HeelsOffset;
         }
-
-        var newTitle = await _ipc.Honorific.GetTitle().ConfigureAwait(false);
-        if (!_lastHonorific.Equals(newTitle, StringComparison.Ordinal))
+        if (IpcCallerHonorific.APIAvailable)
         {
-            Logger.LogTrace($"Honorific title changed!", LoggerType.VisiblePairs);
-            _lastHonorific = newTitle;
-            lightData.HonorificTitle = newTitle;
+            var latestTitle = await _ipc.Honorific.GetTitle().ConfigureAwait(false);
+            if (_lastHonorific.Equals(latestTitle, StringComparison.Ordinal))
+                return;
+            Logger.LogTrace("Honorific title changed!", LoggerType.VisiblePairs);
+            toSend.HonorificTitle = latestTitle;
+            _lastHonorific = toSend.HonorificTitle;
         }
-
-        var newNicks = _ipc.PetNames.GetPetNicknames();
-        if (!_lastPetNames.Equals(newNicks, StringComparison.Ordinal))
+        if (IpcCallerPetNames.APIAvailable)
         {
-            Logger.LogTrace($"Pet nicknames changed!", LoggerType.VisiblePairs);
-            _lastPetNames = newNicks;
-            lightData.PetNicknames = newNicks;
+            var latestNicks = _ipc.PetNames.GetPetNicknames();
+            if (_lastPetNames.Equals(latestNicks, StringComparison.Ordinal))
+                return;
+            Logger.LogTrace("Pet nicknames changed!", LoggerType.VisiblePairs);
+            toSend.PetNicknames = latestNicks;
+            _lastPetNames = toSend.PetNicknames;
         }
 
         Logger.LogDebug("Syncing Light Data to Kinksters");
-        await _hub.UserPushIpcDataLight(new(visibleKinksters, lightData)).ConfigureAwait(false);
+        await _hub.UserPushIpcDataLight(new(visibleKinksters, toSend)).ConfigureAwait(false);
     }
 
     private async Task SyncNewDataToKinksters(List<UserData> visibleKinksters)
     {
         var toSend = new CharaIpcDataFull();
-
-        var newGlamStr = await _ipc.Glamourer.GetActorString().ConfigureAwait(false);
-        if (!_lastGlamourer.Equals(newGlamStr, StringComparison.Ordinal))
+        // gather all the data.
+        if (IpcCallerGlamourer.APIAvailable)
         {
-            Logger.LogTrace($"Glamourer changed!", LoggerType.VisiblePairs);
-            _lastGlamourer = newGlamStr;
-            toSend.GlamourerBase64 = newGlamStr;
+            var latestGlamStr = await _ipc.Glamourer.GetActorString().ConfigureAwait(false);
+            if (_lastGlamourer.Equals(latestGlamStr, StringComparison.Ordinal))
+                return;
+            Logger.LogTrace("Glamourer changed!", LoggerType.VisiblePairs);
+            toSend.GlamourerBase64 = latestGlamStr;
+            _lastGlamourer = toSend.GlamourerBase64;
         }
-
-        //var newManips = _ipc.Penumbra.GetModManipulations();
-        //if (!_lastModManips.Equals(newManips, StringComparison.Ordinal))
-        //{
-        //    Logger.LogTrace($"ModManips changed!", LoggerType.VisiblePairs);
-        //    _lastModManips = newManips;
-        //    toSend.ModManips = newManips;
-        //}
-
-        // if the data is not different, so not apply it, but otherwise, do so.
-        var newCPlus = await _ipc.CustomizePlus.GetClientProfile().ConfigureAwait(false) ?? string.Empty;
-        if (!_lastCPlus.Equals(newCPlus, StringComparison.Ordinal))
+        if (IpcCallerCustomize.APIAvailable)
         {
-            Logger.LogTrace($"CPlus changed active profiles!", LoggerType.VisiblePairs);
-            _lastCPlus = newCPlus;
-            toSend.CustomizeProfile = newCPlus;
+            var latestCPlus = await _ipc.CustomizePlus.GetClientProfile().ConfigureAwait(false);
+            if (_lastCPlus.Equals(latestCPlus, StringComparison.Ordinal))
+                return;
+            Logger.LogTrace("CPlus changed profiles!", LoggerType.VisiblePairs);
+            toSend.CustomizeProfile = latestCPlus;
+            _lastCPlus = toSend.CustomizeProfile;
         }
-
-        var newHeels = await _ipc.Heels.GetClientOffset().ConfigureAwait(false);
-        if (!_lastHeels.Equals(newHeels, StringComparison.Ordinal))
+        if (IpcCallerHeels.APIAvailable)
         {
-            Logger.LogTrace($"Heels offset changed!", LoggerType.VisiblePairs);
-            _lastHeels = newHeels;
-            toSend.HeelsOffset = newHeels;
+            var latestHeels = await _ipc.Heels.GetClientOffset().ConfigureAwait(false);
+            if (_lastHeels.Equals(latestHeels, StringComparison.Ordinal))
+                return;
+            Logger.LogTrace("Heels offset changed!", LoggerType.VisiblePairs);
+            toSend.HeelsOffset = latestHeels;
+            _lastHeels = toSend.HeelsOffset;
         }
-
-        var newTitle = await _ipc.Honorific.GetTitle().ConfigureAwait(false);
-        if (!_lastHonorific.Equals(newTitle, StringComparison.Ordinal))
+        if (IpcCallerHonorific.APIAvailable)
         {
-            Logger.LogTrace($"Honorific title changed!", LoggerType.VisiblePairs);
-            _lastHonorific = newTitle;
-            toSend.HonorificTitle = newTitle;
+            var latestTitle = await _ipc.Honorific.GetTitle().ConfigureAwait(false);
+            if (_lastHonorific.Equals(latestTitle, StringComparison.Ordinal))
+                return;
+            Logger.LogTrace("Honorific title changed!", LoggerType.VisiblePairs);
+            toSend.HonorificTitle = latestTitle;
+            _lastHonorific = toSend.HonorificTitle;
         }
-
-        var newNicks = _ipc.PetNames.GetPetNicknames();
-        if (!_lastPetNames.Equals(newNicks, StringComparison.Ordinal))
+        if (IpcCallerPetNames.APIAvailable)
         {
-            Logger.LogTrace($"Pet nicknames changed!", LoggerType.VisiblePairs);
-            _lastPetNames = newNicks;
-            toSend.PetNicknames = newNicks;
+            var latestNicks = _ipc.PetNames.GetPetNicknames();
+            if (_lastPetNames.Equals(latestNicks, StringComparison.Ordinal))
+                return;
+            Logger.LogTrace("Pet nicknames changed!", LoggerType.VisiblePairs);
+            toSend.PetNicknames = latestNicks;
+            _lastPetNames = toSend.PetNicknames;
         }
-
         // push it out.
         Logger.LogDebug("Compiling Full Data to Kinksters");
         await _hub.UserPushIpcData(new(visibleKinksters, toSend)).ConfigureAwait(false);
