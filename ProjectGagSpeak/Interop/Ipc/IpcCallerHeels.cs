@@ -1,4 +1,5 @@
 using Dalamud.Plugin.Ipc;
+using GagSpeak.Kinksters.Handlers;
 using GagSpeak.Services.Mediator;
 
 namespace GagSpeak.Interop;
@@ -6,7 +7,7 @@ namespace GagSpeak.Interop;
 public sealed class IpcCallerHeels : IIpcCaller
 {   
     // Remember, all these are called only when OUR client changes. Not other pairs.
-    private readonly ICallGateSubscriber<(int, int)> _heelsApiVersion;
+    private readonly ICallGateSubscriber<(int, int)> ApiVersion;
 
     // API EVENTS.
     public readonly ICallGateSubscriber<string, object?>      OnOffsetUpdate; // Heels offset updated for a registered player.
@@ -22,7 +23,7 @@ public sealed class IpcCallerHeels : IIpcCaller
     public IpcCallerHeels(GagspeakMediator mediator)
     {
         _mediator = mediator;
-        _heelsApiVersion = Svc.PluginInterface.GetIpcSubscriber<(int, int)>("SimpleHeels.ApiVersion");
+        ApiVersion = Svc.PluginInterface.GetIpcSubscriber<(int, int)>("SimpleHeels.ApiVersion");
 
         // API Getter
         GetOffset = Svc.PluginInterface.GetIpcSubscriber<string>("SimpleHeels.GetLocalPlayer");
@@ -43,7 +44,7 @@ public sealed class IpcCallerHeels : IIpcCaller
     {
         try
         {
-            APIAvailable = _heelsApiVersion.InvokeFunc() is { Item1: 2, Item2: >= 1 };
+            APIAvailable = ApiVersion.InvokeFunc() is { Item1: 2, Item2: >= 1 };
         }
         catch
         {
@@ -58,7 +59,7 @@ public sealed class IpcCallerHeels : IIpcCaller
         => _mediator.Publish(new HeelsOffsetChanged());
 
     // Requests the local offset of the client from SimpleHeels.
-    public async Task<string> GetOffsetAsync()
+    public async Task<string> GetClientOffset()
     {
         if (!APIAvailable) return string.Empty;
         return await Svc.Framework.RunOnFrameworkThread(GetOffset.InvokeFunc).ConfigureAwait(false);
@@ -67,28 +68,18 @@ public sealed class IpcCallerHeels : IIpcCaller
     /// <summary>
     ///     Return the offsets of a target player pointer to their original state.
     /// </summary>
-    /// <param name="character"> the pairHandler pointer to revert. </param>
-    public async Task RestoreOffsetOfPlayer(IntPtr charaPtr)
+    public async Task RestoreKinksterOffset(PairHandler kinkster)
     {
-        if (!APIAvailable) return;
-        
-        await Svc.Framework.RunOnFrameworkThread(() =>
-        {
-            if (Svc.Objects.CreateObjectReference(charaPtr) is { } obj)
-                UnregisterPlayer.InvokeAction(obj.ObjectIndex);
-        }).ConfigureAwait(false);
+        if (!APIAvailable || kinkster.PairObject is not { } visibleObj) return;
+        await Svc.Framework.RunOnFrameworkThread(() => UnregisterPlayer.InvokeAction(visibleObj.ObjectIndex)).ConfigureAwait(false);
     }
 
     /// <summary>
     ///     Sets the offset for the player by their pointer address to the provided data.
     /// </summary>
-    public async Task SetOffsetForPlayer(IntPtr charaPtr, string offsetData)
+    public async Task SetKinksterOffset(PairHandler kinkster, string offsetData)
     {
-        if (!APIAvailable) return;
-        await Svc.Framework.RunOnFrameworkThread(() =>
-        {
-            if (Svc.Objects.CreateObjectReference(charaPtr) is { } obj)
-                RegisterPlayer.InvokeAction(obj.ObjectIndex, offsetData);
-        }).ConfigureAwait(false);
+        if (!APIAvailable || kinkster.PairObject is not { } visibleObj) return;
+        await Svc.Framework.RunOnFrameworkThread(() => RegisterPlayer.InvokeAction(visibleObj.ObjectIndex, offsetData)).ConfigureAwait(false);
     }
 }

@@ -12,17 +12,17 @@ public class PairHandlerFactory
     private readonly ILoggerFactory _loggerFactory;
     private readonly GagspeakMediator _mediator;
     private readonly OnFrameworkService _frameworkUtils;
-    private readonly GameObjectHandlerFactory _gameObjectHandlerFactory;
+    private readonly KinksterGameObjFactory _gameObjectHandlerFactory;
     private readonly IHostApplicationLifetime _hostApplicationLifetime;
-    private readonly IpcManager _ipcManager;
+    private readonly IpcManager _ipc;
     public PairHandlerFactory(ILoggerFactory loggerFactory, GagspeakMediator mediator,
-        GameObjectHandlerFactory objFactory, IpcManager ipcManager,
+        KinksterGameObjFactory objFactory, IpcManager ipcManager,
         OnFrameworkService frameworkUtils, IHostApplicationLifetime appLife)
     {
         _loggerFactory = loggerFactory;
         _mediator = mediator;
         _gameObjectHandlerFactory = objFactory;
-        _ipcManager = ipcManager;
+        _ipc = ipcManager;
         _frameworkUtils = frameworkUtils;
         _hostApplicationLifetime = appLife;
     }
@@ -33,6 +33,6 @@ public class PairHandlerFactory
     public PairHandler Create(OnlineKinkster OnlineKinkster)
     {
         return new PairHandler(OnlineKinkster, _loggerFactory.CreateLogger<PairHandler>(), _mediator,
-            _gameObjectHandlerFactory, _ipcManager, _frameworkUtils, _hostApplicationLifetime);
+            _gameObjectHandlerFactory, _ipc, _frameworkUtils, _hostApplicationLifetime);
     }
 }

@@ -288,7 +288,7 @@ public class GlamourHandler
     public void CacheActorEquip()
     {
         _logger.LogTrace("Caching latest Equip from Glamourer IPC.", LoggerType.IpcGlamourer);
-        var latestState = _ipc.GetClientGlamourerState();
+        var latestState = _ipc.GetActorState();
         if (latestState != null)
         {
             // create a clone of our latest unbound state to avoid modifying the original.
@@ -314,7 +314,7 @@ public class GlamourHandler
     public void CacheActorMeta(bool flagFromLatest)
     {
         _logger.LogTrace("Caching latest state from Glamourer IPC.", LoggerType.IpcGlamourer);
-        var latestState = _ipc.GetClientGlamourerState();
+        var latestState = _ipc.GetActorState();
         if (latestState != null)
         {
             // must clone since the struct contains an internal dictionary.
@@ -335,7 +335,7 @@ public class GlamourHandler
     public void CacheActorFromLatest()
     {
         _logger.LogTrace("Caching Actor from Latest State from Glamourer IPC.", LoggerType.IpcGlamourer);
-        var latestState = _ipc.GetClientGlamourerState();
+        var latestState = _ipc.GetActorState();
         if (latestState != null)
         {
             // must clone since the struct contains an internal dictionary.

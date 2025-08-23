@@ -17,11 +17,11 @@ namespace GagSpeak.CustomCombos.Moodles;
 
 public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePresetInfo>
 {
-    private int _maxPresetCount => _kinksterRef.LastIpcData.Presets.Count > 0 ? _kinksterRef.LastIpcData.PresetList.Max(x => x.Statuses.Count) : 0;
+    private int _maxPresetCount => _kinksterRef.LastMoodlesData.Presets.Count > 0 ? _kinksterRef.LastMoodlesData.PresetList.Max(x => x.Statuses.Count) : 0;
     private float _iconWithPadding => IconSize.X + ImGui.GetStyle().ItemInnerSpacing.X;
 
     public PairMoodlePresetCombo(ILogger log, MainHub hub, Kinkster kinkster, float scale)
-        : base(log, hub, kinkster, scale, () => [.. kinkster.LastIpcData.PresetList.OrderBy(x => x.Title)])
+        : base(log, hub, kinkster, scale, () => [.. kinkster.LastMoodlesData.PresetList.OrderBy(x => x.Title)])
     { }
 
     protected override bool DisableCondition()
@@ -50,7 +50,7 @@ public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePreset
             for (int i = 0, iconsDrawn = 0; i < moodlePreset.Statuses.Count; i++)
             {
                 var status = moodlePreset.Statuses[i];
-                if (!_kinksterRef.LastIpcData.Statuses.TryGetValue(status, out var info))
+                if (!_kinksterRef.LastMoodlesData.Statuses.TryGetValue(status, out var info))
                 {
                     ImGui.SameLine(0, _iconWithPadding);
                     continue;
@@ -78,7 +78,7 @@ public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePreset
         var statusesToCheck = new List<MoodlesStatusInfo>(item.Statuses.Count);
         foreach (var guid in item.Statuses)
         {
-            if (_kinksterRef.LastIpcData.Statuses.TryGetValue(guid, out var info))
+            if (_kinksterRef.LastMoodlesData.Statuses.TryGetValue(guid, out var info))
                 statusesToCheck.Add(info);
         }
 

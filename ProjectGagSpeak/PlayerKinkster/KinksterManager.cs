@@ -75,14 +75,14 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         // if the user is not in the client's pair list, create a new pair for them.
         if (!_allClientPairs.ContainsKey(dto.User))
         {
-            Logger.LogDebug("User "+dto.User.UID+" not found in client pairs, creating new pair", LoggerType.PairManagement);
+            Logger.LogDebug($"Kinkster ({dto.User.UID}) not found. Creating new pair", LoggerType.PairManagement);
             _allClientPairs[dto.User] = _pairFactory.Create(dto);
         }
         // if the user is in the client's pair list, apply the last received data to the pair.
         else
         {
-            Logger.LogDebug("User " + dto.User.UID + " found in client pairs, applying last received data instead.", LoggerType.PairManagement);
-            _allClientPairs[dto.User].ApplyLatestMoodles();
+            Logger.LogDebug($"Kinkster ({dto.User.UID}) found in pairs, applying latest data!", LoggerType.PairManagement);
+            _allClientPairs[dto.User].ReapplyLatestData();
         }
         // recreate the lazy list of direct pairs.
         RecreateLazy();
@@ -103,7 +103,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
             }
             else
             {
-                _allClientPairs[dto.User].ApplyLatestMoodles();
+                _allClientPairs[dto.User].ReapplyLatestData();
                 refreshed.Add(dto.User.UID);
             }
         }
@@ -117,29 +117,29 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
             Logger.LogDebug($"Refreshed Pairs: {string.Join(", ", refreshed)}", LoggerType.PairManagement);
     }
 
-    /// <summary> Appends a new pair to our pair list after a two-way contact has been established. </summary>
-    /// <remarks> Fired by a server callback upon someone accepting your pair request, or after you accept theirs. </remarks>
+    /// <summary> 
+    ///     Add a Kinkster to our pair list upon a sent request being accepted.
+    /// </summary>
     public void AddNewKinksterPair(KinksterPair dto)
     {
         if (!_allClientPairs.ContainsKey(dto.User))
             _allClientPairs[dto.User] = _pairFactory.Create(dto);
 
         // finally, be sure to apply the last received data to this user's Pair object.
-        _allClientPairs[dto.User].ApplyLatestMoodles();
+        _allClientPairs[dto.User].ReapplyLatestData();
         RecreateLazy();
         // we just added a pair, so ping the achievement manager that a pair was added!
         GagspeakEventManager.AchievementEvent(UnlocksEvent.PairAdded);
     }
 
-    /// <summary> Clears all pairs from the client's pair list.</summary>
+    /// <summary> 
+    ///     Clears all pairs from the client's pair list.
+    /// </summary>
     public void ClearKinksters()
     {
         Logger.LogDebug("Clearing all Pairs", LoggerType.PairManagement);
-        // dispose of all our pairs
         DisposePairs();
-        // clear the client's pair list
         _allClientPairs.Clear();
-        // recreate the lazy list of direct pairs
         RecreateLazy();
     }
 
@@ -293,7 +293,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     private void ReapplyPairData()
     {
         foreach (var pair in _allClientPairs.Select(k => k.Value))
-            pair.ApplyLatestMoodles(forced: true);
+            pair.ReapplyLatestData();
     }
 
     /// <summary> Recreates the lazy list of direct pairs.</summary>

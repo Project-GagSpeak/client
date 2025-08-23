@@ -146,7 +146,7 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
 
     /// <summary> Gets the player characters ID of the world they are currently in.</summary>
     /// <returns> a <c>uint</c> type for the ID of the current world.</returns>
-    public nint GetIPlayerCharacterFromCachedTableByIdent(string characterName)
+    public nint GetKinksterAddrFromCache(string characterName)
     {
         if (_playerCharas.TryGetValue(characterName, out var pchar)) return pchar.Address;
         return nint.Zero;

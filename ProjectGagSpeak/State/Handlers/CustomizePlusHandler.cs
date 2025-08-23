@@ -67,7 +67,7 @@ public class CustomizePlusHandler
         if (active.ProfileGuid != FinalProfile.ProfileGuid)
         {
             _logger.LogTrace($"C+ Profile [{FinalProfile.ProfileName}] found in Cache! Reapplying to enforce helplessness!", LoggerType.IpcCustomize);
-            _ipc.SetProfileEnable(FinalProfile.ProfileGuid);
+            _ipc.EnableClientProfile(FinalProfile.ProfileGuid);
         }
     }
 
@@ -76,7 +76,7 @@ public class CustomizePlusHandler
         if (FinalProfile.Equals(CustomizeProfile.Empty))
         {
             if (_ipc.CurrentActiveProfile() is { } activeProfile && activeProfile.ProfileGuid != Guid.Empty)
-                _ipc.SetProfileDisable(activeProfile.ProfileGuid);
+                _ipc.DisableClientProfile(activeProfile.ProfileGuid);
             return Task.CompletedTask;
         }
         else

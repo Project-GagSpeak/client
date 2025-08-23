@@ -25,30 +25,62 @@ public sealed class KinksterListener
     }
 
     #region DataUpdates
-    public void NewIpcData(UserData targetUser, UserData enactor, CharaIPCData newData)
+    public void NewAppearanceData(UserData target, CharaIpcDataFull newData)
+    {
+        if (!_kinksters.TryGetKinkster(target, out var kinkster))
+            throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
+        _logger.LogDebug($"Received Full IPC Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
+        kinkster.ApplyLatestAppearance(newData);
+    }
+
+    public void NewAppearanceData(UserData target, CharaIpcLight newData)
+    {
+        if (!_kinksters.TryGetKinkster(target, out var kinkster))
+            throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
+        _logger.LogTrace($"Received Light IPC Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
+        kinkster.ApplyLatestAppearance(newData);
+    }
+
+    public void NewGlamourerData(UserData target, string actorBase64)
+    {
+        if (!_kinksters.TryGetKinkster(target, out var kinkster))
+            throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
+        _logger.LogTrace($"Received Glamourer IPC Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
+        kinkster.ApplyLatestActorState(actorBase64);
+    }
+
+    public void NewManipulations(UserData target, string modManipBase64)
+    {
+        if (!_kinksters.TryGetKinkster(target, out var kinkster))
+            throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
+        _logger.LogTrace($"Received ModManipulations IPC Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
+        kinkster.ApplyLatestModManips(modManipBase64);
+    }
+
+    public void NewMoodlesData(UserData targetUser, UserData enactor, CharaMoodleData newData)
     {
         if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
         _logger.LogDebug($"Received Full IPC Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
-        kinkster.UpdateActiveMoodles(enactor, newData.DataString, newData.DataInfoList);
+        kinkster.ApplyLatestMoodles(enactor, newData.DataString, newData.DataInfoList);
         kinkster.SetNewMoodlesStatuses(enactor, newData.StatusList);
         kinkster.SetNewMoodlePresets(enactor, newData.PresetList);
     }
-    public void NewIpcStatusManager(UserData targetUser, UserData enactor, string dataString, List<MoodlesStatusInfo> dataInfo)
+    public void NewStatusManager(UserData targetUser, UserData enactor, string dataString, List<MoodlesStatusInfo> dataInfo)
     {
         if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
         _logger.LogTrace($"{kinkster.GetNickAliasOrUid()}'s Moodle StatusManager updated!", LoggerType.Callbacks);
-        kinkster.UpdateActiveMoodles(enactor, dataString, dataInfo);
+        kinkster.ApplyLatestMoodles(enactor, dataString, dataInfo);
     }
-    public void NewIpcStatuses(UserData targetUser, UserData enactor, List<MoodlesStatusInfo> statuses)
+    public void NewStatuses(UserData targetUser, UserData enactor, List<MoodlesStatusInfo> statuses)
     {
         if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
         _logger.LogDebug($"Received IPC Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
         kinkster.SetNewMoodlesStatuses(enactor, statuses);
     }
-    public void NewIpcPresets(UserData targetUser, UserData enactor, List<MoodlePresetInfo> newPresets)
+    public void NewPresets(UserData targetUser, UserData enactor, List<MoodlePresetInfo> newPresets)
     {
         if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");

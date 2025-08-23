@@ -30,7 +30,8 @@ public class Kinkster : IComparable<Kinkster>
     private readonly SemaphoreSlim _creationSemaphore = new(1);
     private readonly ServerConfigManager _nickConfig;
 
-    private CancellationTokenSource _applicationCts = new CancellationTokenSource();
+    private CancellationTokenSource _appearanceCTS = new CancellationTokenSource();
+    private CancellationTokenSource _moodlesCTS = new CancellationTokenSource();
     private OnlineKinkster? _OnlineKinkster = null;
 
     public Kinkster(KinksterPair pair, ILogger<Kinkster> logger, GagspeakMediator mediator,
@@ -58,7 +59,8 @@ public class Kinkster : IComparable<Kinkster>
     private PairHandler? CachedPlayer { get; set; }
 
     // Active States
-    public CharaIPCData LastIpcData { get; private set; } = new CharaIPCData();
+    public CharaIpcDataFull LastAppearanceData { get; private set; } = new CharaIpcDataFull();
+    public CharaMoodleData LastMoodlesData { get; private set; } = new CharaMoodleData();
     public CharaActiveGags ActiveGags { get; private set; } = new CharaActiveGags();
     public CharaActiveRestrictions ActiveRestrictions { get; private set; } = new CharaActiveRestrictions();
     public CharaActiveRestraint ActiveRestraint { get; private set; } = new CharaActiveRestraint();
@@ -129,94 +131,113 @@ public class Kinkster : IComparable<Kinkster>
         });
     }
 
-    // If we ever add more buttons, we should probably make a sub-menu.
-    //private static unsafe void OpenSubMenuTest(IMenuItemClickedArgs args, ILogger logger)
-    //{
-    //    // create some dummy test items.
-    //    var menuItems = new List<MenuItem>();
-
-    //    // dummy item 1
-    //    var menuItem = new MenuItem();
-    //    menuItem.Name = "SubMenu Test Item 1";
-    //    menuItem.PrefixChar = 'G';
-    //    menuItem.PrefixColor = 706;
-    //    menuItem.OnClicked += clickedArgs => logger.LogInformation("Submenu Item 1 Clicked!", LoggerType.ContextDtr);
-
-    //    menuItems.Add(menuItem);
-
-
-    //    var menuItem2 = new MenuItem();
-    //    menuItem2.Name = "SubMenu Test Item 2";
-    //    menuItem2.PrefixChar = 'G';
-    //    menuItem2.PrefixColor = 706;
-    //    menuItem2.OnClicked += clickedArgs => logger.LogInformation("Submenu Item 2 Clicked!", LoggerType.ContextDtr);
-
-    //    menuItems.Add(menuItem2);
-
-    //    if (menuItems.Count > 0)
-    //        args.OpenSubmenu(menuItems);
-    //}
-
-    public void ApplyLatestMoodles(bool forced = false)
+    #region Kinkster Appearance
+    public void ApplyLatestAppearance(CharaIpcDataFull newAppearance)
     {
-        if (CachedPlayer is null || LastIpcData is null)
-            return;
-        // If player is valid & visible, apply their moodles to them.
-        CachedPlayer.ApplyMoodlesToPlayer(Guid.NewGuid(), LastIpcData.DataString);
+        _appearanceCTS = _appearanceCTS.SafeCancelRecreate();
+        LastAppearanceData.UpdateNonNull(newAppearance);
+        ApplyLatestInternal(_appearanceCTS, ApplyLastReceivedAppearance);
     }
 
-    /// <summary>
-    ///     Updates the kinksters moodle status manager, and applies the updated display.
-    /// </summary>
-    public void UpdateActiveMoodles(UserData enactor, string dataString, IEnumerable<MoodlesStatusInfo> dataInfo)
+    public void ApplyLatestAppearance(CharaIpcLight newAppearance)
     {
-        _applicationCts = _applicationCts.SafeCancelRecreate();
-        // update the data information to the last IPC data.
-        LastIpcData.UpdateDataInfo(dataString, dataInfo);
-
-        // if the cached player is null
+        _appearanceCTS = _appearanceCTS.SafeCancelRecreate();
+        LastAppearanceData.UpdateNonNull(newAppearance);
+        ApplyLatestInternal(_appearanceCTS, ApplyLastReceivedAppearance);
+    }
+    public void ApplyLatestActorState(string actorBase64)
+    {
+        LastAppearanceData.GlamourerBase64 = actorBase64;
+        // if the cached player is null, do the wait, otherwise, do the direct.
         if (CachedPlayer is null)
         {
-            // Wait for the player to become valid, and then apply their Moodles dataInfo to the player. (should be faster than mare, since no awaiter.
-            _logger.LogDebug($"Received IpcData change for {GetNickAliasOrUid()}, and a CachedPlayer does not exist, waiting", LoggerType.PairDataTransfer);
-            _ = Task.Run(async () =>
-            {
-                using var timeoutCts = new CancellationTokenSource();
-                timeoutCts.CancelAfter(TimeSpan.FromSeconds(120));
-
-                // create a new cancellation token source for the application token
-                var appToken = _applicationCts.Token;
-                using var combined = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, appToken);
-
-                // while the cached player is still null and the combined token is not cancelled
-                while (CachedPlayer is null && !combined.Token.IsCancellationRequested)
-                    await Task.Delay(250, combined.Token).ConfigureAwait(false);
-
-                // if the combined token is not cancelled STILL
-                if (!combined.IsCancellationRequested)
-                {
-                    _logger.LogDebug($"Applying delayed data for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
-                    ApplyLatestMoodles(); // in essence, this means apply the character data send in the Dto
-                }
-            });
+            _appearanceCTS = _appearanceCTS.SafeCancelRecreate();
+            ApplyLatestInternal(_appearanceCTS, ApplyLastReceivedAppearance);
         }
         else
         {
-            // Apply immidiately if they are present.
-            ApplyLatestMoodles();
+            CachedPlayer.UpdateGlamour(actorBase64);
         }
     }
+    public void ApplyLatestModManips(string modManipsBase64)
+    {
+        // do nothing yet.
+    }
+
+    public void ApplyLatestMoodles(UserData enactor, string dataString, IEnumerable<MoodlesStatusInfo> dataInfo)
+    {
+        _moodlesCTS = _moodlesCTS.SafeCancelRecreate();
+        LastMoodlesData.UpdateDataInfo(dataString, dataInfo);
+        ApplyLatestInternal(_moodlesCTS, ApplyLastReceivedMoodles);
+    }
+
+    private void ApplyLatestInternal(CancellationTokenSource cts, Action applyAction)
+    {
+        if (CachedPlayer is null)
+        {
+            _logger.LogDebug($"Waiting for ({GetNickAliasOrUid()}) to have a valid cache before applying!", LoggerType.PairDataTransfer);
+            _ = WaitForValidCacheAndApply(cts, applyAction).ConfigureAwait(false);
+        }
+        else
+        {
+            applyAction();
+        }
+    }
+
+    private async Task WaitForValidCacheAndApply(CancellationTokenSource cts, Action applyAction)
+    {
+        using var timeoutCts = new CancellationTokenSource();
+        timeoutCts.CancelAfter(TimeSpan.FromSeconds(120));
+
+        // create a new cancellation token source for the application token
+        var appToken = cts.Token;
+        using var combined = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, appToken);
+
+        // while the cached player is still null and the combined token is not cancelled
+        while (CachedPlayer is null && !combined.Token.IsCancellationRequested)
+            await Task.Delay(250, combined.Token).ConfigureAwait(false);
+
+        // if the combined token is not cancelled STILL
+        if (!combined.IsCancellationRequested)
+        {
+            _logger.LogDebug($"Applying delayed data for {GetNickAliasOrUid()}.", LoggerType.PairDataTransfer);
+            applyAction();
+        }
+    }
+
+    public void ReapplyLatestData()
+    {
+        ApplyLastReceivedAppearance();
+        ApplyLastReceivedMoodles();
+    }
+
+    private void ApplyLastReceivedAppearance()
+    {
+        if (CachedPlayer is null) return;
+        if (LastAppearanceData is null) return;
+        _logger.LogDebug($"Applying Appearance for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+        CachedPlayer.ApplyAppearanceData(LastAppearanceData).ConfigureAwait(false);
+    }
+
+    private void ApplyLastReceivedMoodles()
+    {
+        if (CachedPlayer is null) return;
+        if (LastMoodlesData is null) return;
+        _logger.LogDebug($"Applying Moodles for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+        CachedPlayer.UpdateMoodles(LastMoodlesData.DataString);
+    }
+    #endregion Kinkster Appearance
 
     public void SetNewMoodlesStatuses(UserData enactor, IEnumerable<MoodlesStatusInfo> statuses)
     {
         _logger.LogDebug($"{GetNickAliasOrUid()}'s moodle Statuses updated!", LoggerType.PairDataTransfer);
-        LastIpcData.SetStatuses(statuses);
+        LastMoodlesData.SetStatuses(statuses);
     }
 
     public void SetNewMoodlePresets(UserData enactor, IEnumerable<MoodlePresetInfo> newPresets)
     {
         _logger.LogDebug($"{GetNickAliasOrUid()}'s moodle Presets updated!", LoggerType.PairDataTransfer);
-        LastIpcData.SetPresets(newPresets);
+        LastMoodlesData.SetPresets(newPresets);
     }
 
     public void NewActiveCompositeData(CharaCompositeActiveData data, bool wasSafeword)
@@ -551,7 +572,7 @@ public class Kinkster : IComparable<Kinkster>
         {
             _creationSemaphore.Wait();
             _OnlineKinkster = null;
-            LastIpcData = new CharaIPCData();
+            LastMoodlesData = new CharaMoodleData();
             // set the pair handler player to the cached player, to safely null the CachedPlayer object.
             var player = CachedPlayer;
             CachedPlayer = null;

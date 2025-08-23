@@ -220,7 +220,7 @@ public sealed class AliasItemDrawer
             1);
     }
 
-    public void DrawAliasTrigger(AliasTrigger aliasItem, CharaIPCData ipc, bool canEdit = true)
+    public void DrawAliasTrigger(AliasTrigger aliasItem, CharaMoodleData ipc, bool canEdit = true)
     {
         var isContained = ExpandedTriggers.Contains(aliasItem.Identifier);
         var shownActions = isContained ? aliasItem.Actions.Count() : 1;
@@ -662,7 +662,7 @@ public sealed class AliasItemDrawer
         }
     }
 
-    public void DrawMoodleAction(MoodleAction action, CharaIPCData ipc)
+    public void DrawMoodleAction(MoodleAction action, CharaMoodleData ipc)
     {
         using var _ = ImRaii.Group();
 
@@ -697,7 +697,7 @@ public sealed class AliasItemDrawer
         }
     }
 
-    public void DrawMoodleActionEdit(MoodleAction action, CharaIPCData ipc)
+    public void DrawMoodleActionEdit(MoodleAction action, CharaMoodleData ipc)
     {
         using var _ = ImRaii.Group();
 

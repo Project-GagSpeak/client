@@ -144,7 +144,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawHardcoreState(pair.UserData.UID + "'s Hardcore State", pair.PairHardcore);
         DrawPairPerms(pair.UserData.UID + "'s Pair Perms for you.", pair.PairPerms);
         DrawPairPermAccess(pair.UserData.UID + "'s Pair Perm Access for you", pair.PairPermAccess);
-        DrawPairIpcData(pair.UserData.UID, pair.LastIpcData);
+        DrawPairIpcData(pair.UserData.UID, pair.LastMoodlesData);
         DrawGagData(pair.UserData.UID, pair.ActiveGags);
         DrawPairRestrictions(pair.UserData.UID, pair);
         DrawRestraint(pair.UserData.UID, pair);
@@ -418,7 +418,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawPermissionRowBool("Can Toggle Triggers", perms.ToggleTriggersAllowed);
     }
 
-    private void DrawPairIpcData(string uid, CharaIPCData ipcData)
+    private void DrawPairIpcData(string uid, CharaMoodleData ipcData)
     {
         using var nodeMain = ImRaii.TreeNode(uid + " IPC Data");
         if (!nodeMain) return;

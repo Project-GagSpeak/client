@@ -54,11 +54,12 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
 
     private bool _shownPenumbraUnavailable = false; // safety net to prevent notification spam.
 
-    private readonly EventSubscriber                                     OnInitialized;
-    private readonly EventSubscriber                                     OnDisposed;
-    private readonly EventSubscriber<ChangedItemType, uint>              TooltipSubscriber;
-    private readonly EventSubscriber<MouseButton, ChangedItemType, uint> ItemClickedSubscriber;
-    private readonly EventSubscriber<nint, int>                          OnRedrawFinished;
+    private readonly EventSubscriber                                        OnInitialized;
+    private readonly EventSubscriber                                        OnDisposed;
+    private readonly EventSubscriber<ChangedItemType, uint>                 TooltipSubscriber;
+    private readonly EventSubscriber<MouseButton, ChangedItemType, uint>    ItemClickedSubscriber;
+    // private readonly EventSubscriber<ModSettingChange, Guid, string, bool>  OnModSettingsChanged;
+    private readonly EventSubscriber<nint, int>                             OnRedrawFinished;
 
     public EventSubscriber<string>                                       OnModAdded;
     public EventSubscriber<string>                                       OnModDeleted;
@@ -69,6 +70,7 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
     private GetModPath                          GetModPath;            // Retrieves the path of the mod with its directory and name, allowing for folder sorting.
     private GetModList                          GetModList;            // Retrieves the client's mod list. (DirectoryName, ModName)
     private GetCollection                       GetActiveCollection;   // Obtains the client's currently active collection. (may not need this)
+    private GetPlayerMetaManipulations          GetMetaManipulations;  // Obtains the client's mod metadata manipulations.
     private GetAvailableModSettings             GetModSettingsAll;     // Obtains _ALL_ the options for a given mod.
     private GetCurrentModSettings               GetModSettingsSelected; // Obtains the currently chosen options for a mod.
     private SetTemporaryModSettingsPlayer       SetOrUpdateTempMod;    // Temporarily sets and locks a Mod with defined settings. Can be updated.
@@ -81,12 +83,12 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
         OnInitialized = Initialized.Subscriber(Svc.PluginInterface, () => 
         {
             APIAvailable = true;
-            Mediator.Publish(new PenumbraInitializedMessage());
+            Mediator.Publish(new PenumbraInitialized());
         });
         OnDisposed = Disposed.Subscriber(Svc.PluginInterface, () =>
         {
             APIAvailable = false;
-            Mediator.Publish(new PenumbraDisposedMessage());
+            Mediator.Publish(new PenumbraDisposed());
         });
 
         TooltipSubscriber = ChangedItemTooltip.Subscriber(Svc.PluginInterface);
@@ -98,6 +100,7 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
         GetModPath = new GetModPath(Svc.PluginInterface);
         GetModList = new GetModList(Svc.PluginInterface);
         GetActiveCollection = new GetCollection(Svc.PluginInterface);
+        GetMetaManipulations = new GetPlayerMetaManipulations(Svc.PluginInterface);
         GetModSettingsAll = new GetAvailableModSettings(Svc.PluginInterface);
         GetModSettingsSelected = new GetCurrentModSettings(Svc.PluginInterface);
         SetOrUpdateTempMod = new SetTemporaryModSettingsPlayer(Svc.PluginInterface);
@@ -174,6 +177,9 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
         Logger.LogWarning("Manually redrawing the client!", LoggerType.IpcPenumbra);
         RedrawClient.Invoke(0, RedrawType.Redraw);
     }
+
+    public string GetModManipulations()
+        => APIAvailable ? GetMetaManipulations.Invoke() : string.Empty;
 
     // When penumbra first initializes, we should fetch all current mod info to synchronize our current data.
     // This should return all mod info's along with their current settings.

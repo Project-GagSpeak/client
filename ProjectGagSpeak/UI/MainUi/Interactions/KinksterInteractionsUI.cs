@@ -166,8 +166,8 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
 
         if (Kinkster.IsVisible)
         {
-            if (CkGui.IconTextButton(FAI.Sync, "Reload IPC data", width, true))
-                Kinkster.ApplyLatestMoodles(forced: true);
+            if (CkGui.IconTextButton(FAI.Sync, "Reload Appearance data", width, true))
+                Kinkster.ReapplyLatestData();
             CkGui.AttachToolTip("This reapplies the latest data from Customize+ and Moodles");
         }
     }
@@ -511,7 +511,7 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
             CkGui.ColorTextInline("( Not Visible! )", ImGuiColors.DalamudRed);
 
         var clientIpcValid = MoodleCache.IpcData.Statuses.Count > 0 && k.IsVisible;
-        var kinksterIpcValid = k.LastIpcData.Statuses.Count > 0 && k.IsVisible;
+        var kinksterIpcValid = k.LastMoodlesData.Statuses.Count > 0 && k.IsVisible;
 
         ////////// APPLY MOODLES FROM PAIR's LIST //////////
         var canApplyOther = k.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou) && kinksterIpcValid;

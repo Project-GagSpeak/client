@@ -1,3 +1,4 @@
+using CkCommons;
 using GagSpeak.Services.Mediator;
 
 namespace GagSpeak.Interop;
@@ -7,49 +8,54 @@ namespace GagSpeak.Interop;
 /// </summary>
 public sealed partial class IpcManager : DisposableMediatorSubscriberBase
 {
-    public IpcCallerCustomize CustomizePlus { get; }
-    public IpcCallerGlamourer Glamourer { get; }
-    public IpcCallerPenumbra Penumbra { get; }
-    public IpcCallerMoodles Moodles { get; }
-    public IpcCallerMare Mare { get; }
-    public IpcCallerLifestream Lifestream { get; }
-    public IpcCallerIntiface Intiface { get; }
+    public IpcCallerCustomize   CustomizePlus { get; }
+    public IpcCallerGlamourer   Glamourer { get; }
+    public IpcCallerHeels       Heels { get; }
+    public IpcCallerHonorific   Honorific { get; }
+    public IpcCallerIntiface    Intiface { get; }
+    public IpcCallerLifestream  Lifestream { get; }
+    public IpcCallerMoodles     Moodles { get; }
+    public IpcCallerPenumbra    Penumbra { get; }
+    public IpcCallerPetNames    PetNames { get; }
 
     public IpcManager(ILogger<IpcManager> logger, GagspeakMediator mediator,
-        IpcCallerCustomize ipcCustomize, IpcCallerGlamourer ipcGlamourer,
-        IpcCallerPenumbra ipcPenumbra, IpcCallerMoodles moodlesIpc,
-        IpcCallerMare mareIpc, IpcCallerLifestream lifestreamIpc,
-        IpcCallerIntiface intifaceIpc) : base(logger, mediator)
+        IpcCallerCustomize customizePlus,
+        IpcCallerGlamourer glamourer,
+        IpcCallerHeels heels,
+        IpcCallerHonorific honorific,
+        IpcCallerIntiface intiface,
+        IpcCallerLifestream lifestream,
+        IpcCallerMoodles moodles,
+        IpcCallerPenumbra penumbra,
+        IpcCallerPetNames petNames
+        ) : base(logger, mediator)
     {
-        CustomizePlus = ipcCustomize;
-        Glamourer = ipcGlamourer;
-        Penumbra = ipcPenumbra;
-        Moodles = moodlesIpc;
-        Mare = mareIpc;
-        Lifestream = lifestreamIpc;
-        Intiface = intifaceIpc;
+        CustomizePlus = customizePlus;
+        Glamourer = glamourer;
+        Heels = heels;
+        Honorific = honorific;
+        Intiface = intiface;
+        Lifestream = lifestream;
+        Moodles = moodles;
+        Penumbra = penumbra;
+        PetNames = petNames;
 
         // subscribe to the delayed framework update message, which will call upon the periodic API state check.
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => PeriodicApiStateCheck());
 
-        try // do an initial check
-        {
-            PeriodicApiStateCheck();
-        }
-        catch (Bagagwa ex)
-        {
-            logger.LogWarning(ex, "Failed to check for some IPC, plugin not installed?");
-        }
+        Generic.Safe(PeriodicApiStateCheck);
     }
 
     private void PeriodicApiStateCheck()
     {
-        Penumbra.CheckAPI();
-        Glamourer.CheckAPI();
         CustomizePlus.CheckAPI();
-        Moodles.CheckAPI();
-        Mare.CheckAPI();
-        Lifestream.CheckAPI();
+        Glamourer.CheckAPI();
+        Heels.CheckAPI();
+        Honorific.CheckAPI();
         Intiface.CheckAPI();
+        Lifestream.CheckAPI();
+        Moodles.CheckAPI();
+        Penumbra.CheckAPI();
+        PetNames.CheckAPI();
     }
 }

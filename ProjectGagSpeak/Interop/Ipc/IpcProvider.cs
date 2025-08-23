@@ -23,7 +23,7 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
 
     /// <summary> The list of visible game objects (of our pairs) and their associated moodles permissions. </summary>
     /// <remarks> This is not accessible by other plugins. </remarks>
-    private readonly List<(GameObjectHandler, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)> VisiblePairObjects = [];
+    private readonly List<(KinksterGameObj, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)> VisiblePairObjects = [];
 
     /// <summary> The shared list of handles players from the GagSpeakPlugin. Format provides the player name and moodles permissions. </summary>
     /// <remarks> String Stored is in format [Player Name@World] </remarks>
@@ -73,17 +73,17 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
 
         Mediator.Subscribe<VisibleKinkstersChanged>(this, (_) => NotifyListChanged());
 
-        Mediator.Subscribe<GameObjectHandlerCreatedMessage>(this, (msg) =>
+        Mediator.Subscribe<KinksterGameObjCreatedMessage>(this, (msg) =>
         {
-            _logger.LogInformation("Created Moodles provider for [" + msg.GameObjectHandler.NameWithWorld + "]", LoggerType.IpcGagSpeak);
-            var moodlePerms = _pairManager.GetMoodlePermsForPairByName(msg.GameObjectHandler.NameWithWorld);
-            VisiblePairObjects.Add((msg.GameObjectHandler, moodlePerms.Item1, moodlePerms.Item2));
+            _logger.LogInformation("Created Moodles provider for [" + msg.KinksterGameObj.NameWithWorld + "]", LoggerType.IpcGagSpeak);
+            var moodlePerms = _pairManager.GetMoodlePermsForPairByName(msg.KinksterGameObj.NameWithWorld);
+            VisiblePairObjects.Add((msg.KinksterGameObj, moodlePerms.Item1, moodlePerms.Item2));
             NotifyListChanged();
         });
-        Mediator.Subscribe<GameObjectHandlerDestroyedMessage>(this, (msg) =>
+        Mediator.Subscribe<KinksterGameObjDestroyedMessage>(this, (msg) =>
         {
-            _logger.LogInformation("Removing PairGameObject for [" + msg.GameObjectHandler.NameWithWorld + "]", LoggerType.IpcGagSpeak);
-            VisiblePairObjects.RemoveAll(pair => pair.Item1.NameWithWorld == msg.GameObjectHandler.NameWithWorld);
+            _logger.LogInformation("Removing PairGameObject for [" + msg.KinksterGameObj.NameWithWorld + "]", LoggerType.IpcGagSpeak);
+            VisiblePairObjects.RemoveAll(pair => pair.Item1.NameWithWorld == msg.KinksterGameObj.NameWithWorld);
             NotifyListChanged();
         });
     }
@@ -91,24 +91,27 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
     public Task StartAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("Starting IpcProviderService");
-
+        // init API
         GagSpeakApiVersion = Svc.PluginInterface.GetIpcProvider<int>("GagSpeak.GetApiVersion");
-        GagSpeakApiVersion.RegisterFunc(() => GagspeakApiVersion);
-
+        // init Events
         GagSpeakReady = Svc.PluginInterface.GetIpcProvider<object>("GagSpeak.Ready");
         GagSpeakDisposing = Svc.PluginInterface.GetIpcProvider<object>("GagSpeak.Disposing");
-
+        // init Getters
         _handledVisiblePairs = Svc.PluginInterface.GetIpcProvider<List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)>>("GagSpeak.GetHandledVisiblePairs");
-        _handledVisiblePairs.RegisterFunc(GetVisiblePairs);
-
-        // Register our action.
+        // init appliers
         _applyStatusesToPairRequest = Svc.PluginInterface.GetIpcProvider<string, string, List<MoodlesStatusInfo>, bool, object?>("GagSpeak.ApplyStatusesToPairRequest");
-        _applyStatusesToPairRequest.RegisterAction(HandleApplyStatusesToPairRequest);
-
-        // This is an action that we send off whenever our pairs update.
+        // init enactors
         GagSpeakListUpdated = Svc.PluginInterface.GetIpcProvider<object>("GagSpeak.VisiblePairsUpdated");
         GagSpeakApplyMoodleStatus = Svc.PluginInterface.GetIpcProvider<MoodlesStatusInfo, object?>("GagSpeak.ApplyMoodleStatus");
         GagSpeakApplyMoodleStatusList = Svc.PluginInterface.GetIpcProvider<List<MoodlesStatusInfo>, object?>("GagSpeak.ApplyMoodleStatusList");
+
+        // register api
+        GagSpeakApiVersion.RegisterFunc(() => GagspeakApiVersion);
+        // register getters
+        _handledVisiblePairs.RegisterFunc(GetVisiblePairs);
+        // register appliers
+        _applyStatusesToPairRequest.RegisterAction(HandleApplyStatusesToPairRequest);
+
         _logger.LogInformation("Started IpcProviderService");
         NotifyReady();
 
@@ -126,6 +129,7 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
 
         _handledVisiblePairs?.UnregisterFunc();
         _applyStatusesToPairRequest?.UnregisterAction();
+
         GagSpeakListUpdated?.UnregisterAction();
         GagSpeakApplyMoodleStatus?.UnregisterAction();
         GagSpeakApplyMoodleStatusList?.UnregisterAction();
@@ -190,6 +194,5 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
     ///     Method is invoked via GagSpeak's IpcProvider to prevent miss-use of bypassing permissions.
     /// </summary>
     public void ApplyStatusTuples(IEnumerable<MoodlesStatusInfo> statuses) => GagSpeakApplyMoodleStatusList?.SendMessage(statuses.ToList());
-
 }
 

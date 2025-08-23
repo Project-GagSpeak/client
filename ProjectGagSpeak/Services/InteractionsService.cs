@@ -215,7 +215,7 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
         OwnStatuses = new OwnMoodleStatusToPairCombo(Logger, _hub, Kinkster, 1.3f);
         OwnPresets = new OwnMoodlePresetToPairCombo(Logger, _hub, Kinkster, 1.3f);
         ActiveStatuses = new PairMoodleStatusCombo(Logger, _hub, Kinkster, 1.3f, 
-            () => [ .. Kinkster.LastIpcData.DataInfo.Values.OrderBy(x => x.Title) ]);
+            () => [ .. Kinkster.LastMoodlesData.DataInfo.Values.OrderBy(x => x.Title) ]);
 
         Emotes = new EmoteCombo(Logger, 1.3f, () => [
             ..Kinkster.PairPerms.AllowLockedEmoting ? EmoteExtensions.LoopedEmotes() : EmoteExtensions.SittingEmotes()

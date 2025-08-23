@@ -147,29 +147,60 @@ public partial class MainHub
 
     #endregion Pairing & Messages
 
+    #region KinksterSync
+    public Task Callback_SetKinksterIpcData(KinksterIpcData dto)
+    {
+        Logger.LogDebug($"Callback_SetKinksterIpcData: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        _kinksterListener.NewAppearanceData(dto.User, dto.NewData);
+        return Task.CompletedTask;
+    }
+
+    public Task Callback_SetKinksterIpcLight(KinksterIpcDataLight dto)
+    {
+        Logger.LogDebug($"Callback_SetKinksterIpcLight: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        _kinksterListener.NewAppearanceData(dto.User, dto.NewData);
+        return Task.CompletedTask;
+    }
+
+    // This should never be called atm.
+    public Task Callback_SetKinksterIpcManipulations(KinksterIpcManipulations dto)
+    {
+        Logger.LogDebug($"Callback_SetKinksterIpcManipulations: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        _kinksterListener.NewManipulations(dto.User, dto.ModManipulations);
+        return Task.CompletedTask;
+    }
+
+    public Task Callback_SetKinksterIpcGlamourer(KinksterIpcGlamourer dto)
+    {
+        Logger.LogDebug($"Callback_SetKinksterIpcGlamourer: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        _kinksterListener.NewGlamourerData(dto.User, dto.ActorBase64);
+        return Task.CompletedTask;
+    }
+    #endregion KinksterSync
+
     #region Moodles
-    public Task Callback_SetKinksterIpcFull(KinksterIpcDataFull dto)
+    public Task Callback_SetKinksterMoodlesFull(KinksterMoodlesDataFull dto)
     {
-        Logger.LogDebug($"Callback_SetKinksterIpcFull: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        _kinksterListener.NewIpcData(dto.User, dto.Enactor, dto.NewData);
+        Logger.LogDebug($"Callback_SetKinksterMoodlesFull: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        _kinksterListener.NewMoodlesData(dto.User, dto.Enactor, dto.NewData);
         return Task.CompletedTask;
     }
-    public Task Callback_SetKinksterIpcStatusManager(KinksterIpcStatusManager dto)
+    public Task Callback_SetKinksterMoodlesSM(KinksterMoodlesSM dto)
     {
-        Logger.LogDebug($"Callback_SetKinksterIpcStatusManager: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        _kinksterListener.NewIpcStatusManager(dto.User, dto.Enactor, dto.DataString, dto.DataInfo);
+        Logger.LogDebug($"Callback_SetKinksterMoodlesSM: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        _kinksterListener.NewStatusManager(dto.User, dto.Enactor, dto.DataString, dto.DataInfo);
         return Task.CompletedTask;
     }
-    public Task Callback_SetKinksterIpcStatuses(KinksterIpcStatuses dto)
+    public Task Callback_SetKinksterMoodlesStatuses(KinksterMoodlesStatuses dto)
     {
-        Logger.LogDebug($"Callback_SetKinksterIpcStatuses: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        _kinksterListener.NewIpcStatuses(dto.User, dto.Enactor, dto.Statuses);
+        Logger.LogDebug($"Callback_SetKinksterMoodlesStatuses: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        _kinksterListener.NewStatuses(dto.User, dto.Enactor, dto.Statuses);
         return Task.CompletedTask;
     }
-    public Task Callback_SetKinksterIpcPresets(KinksterIpcPresets dto)
+    public Task Callback_SetKinksterMoodlesPresets(KinksterMoodlesPresets dto)
     {
-        Logger.LogDebug($"Callback_SetKinksterIpcPresets: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        _kinksterListener.NewIpcPresets(dto.User, dto.Enactor, dto.Presets);
+        Logger.LogDebug($"Callback_SetKinksterMoodlesPresets: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        _kinksterListener.NewPresets(dto.User, dto.Enactor, dto.Presets);
         return Task.CompletedTask;
     }
 
@@ -847,28 +878,52 @@ public partial class MainHub
         _hubConnection!.On(nameof(Callback_RemoveCollarRequest), act);
     }
 
-    public void OnSetKinksterIpcFull(Action<KinksterIpcDataFull> act)
+    public void OnSetKinksterIpcData(Action<KinksterIpcData> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_SetKinksterIpcFull), act);
+        _hubConnection!.On(nameof(Callback_SetKinksterIpcData), act);
     }
 
-    public void OnSetKinksterIpcStatusManager(Action<KinksterIpcStatusManager> act)
+    public void OnSetKinksterIpcLight(Action<KinksterIpcDataLight> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_SetKinksterIpcStatusManager), act);
+        _hubConnection!.On(nameof(Callback_SetKinksterIpcData), act);
     }
 
-    public void OnSetKinksterIpcStatuses(Action<KinksterIpcStatuses> act)
+    public void OnSetKinksterIpcManipulations(Action<KinksterIpcManipulations> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_SetKinksterIpcStatuses), act);
+        _hubConnection!.On(nameof(Callback_SetKinksterIpcManipulations), act);
     }
 
-    public void OnSetKinksterIpcPresets(Action<KinksterIpcPresets> act)
+    public void OnSetKinksterIpcGlamourer(Action<KinksterIpcGlamourer> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_SetKinksterIpcPresets), act);
+        _hubConnection!.On(nameof(Callback_SetKinksterIpcGlamourer), act);
+    }
+
+    public void OnSetKinksterMoodlesFull(Action<KinksterMoodlesDataFull> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_SetKinksterMoodlesFull), act);
+    }
+
+    public void OnSetKinksterMoodlesSM(Action<KinksterMoodlesSM> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_SetKinksterMoodlesSM), act);
+    }
+
+    public void OnSetKinksterMoodlesStatuses(Action<KinksterMoodlesStatuses> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_SetKinksterMoodlesStatuses), act);
+    }
+
+    public void OnSetKinksterMoodlesPresets(Action<KinksterMoodlesPresets> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_SetKinksterMoodlesPresets), act);
     }
 
     public void OnApplyMoodlesByGuid(Action<MoodlesApplierById> act)

@@ -180,7 +180,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<TraitAllowanceManager>()
 
         // Player Kinkster
-        .AddSingleton<GameObjectHandlerFactory>()
+        .AddSingleton<KinksterGameObjFactory>()
         .AddSingleton<PairFactory>()
         .AddSingleton<PairHandlerFactory>()
         .AddSingleton<KinksterManager>()
@@ -301,13 +301,15 @@ public static class GagSpeakServiceExtensions
 
     public static IServiceCollection AddGagSpeakIPC(this IServiceCollection services)
     => services
-        .AddSingleton<IpcCallerMare>()
+        .AddSingleton<IpcCallerCustomize>()
+        .AddSingleton<IpcCallerGlamourer>()
+        .AddSingleton<IpcCallerHeels>()
+        .AddSingleton<IpcCallerHonorific>()
+        .AddSingleton<IpcCallerIntiface>()
+        .AddSingleton<IpcCallerLifestream>()
         .AddSingleton<IpcCallerMoodles>()
         .AddSingleton<IpcCallerPenumbra>()
-        .AddSingleton<IpcCallerGlamourer>()
-        .AddSingleton<IpcCallerCustomize>()
-        .AddSingleton<IpcCallerLifestream>()
-        .AddSingleton<IpcCallerIntiface>()
+        .AddSingleton<IpcCallerPetNames>()
         .AddSingleton<IpcManager>()
         .AddSingleton<IpcProvider>()
         .AddSingleton<PenumbraChangedItemTooltip>();

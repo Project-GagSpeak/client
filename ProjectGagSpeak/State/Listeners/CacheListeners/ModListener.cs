@@ -31,7 +31,7 @@ public class ModListener : DisposableMediatorSubscriberBase
         if (IpcCallerPenumbra.APIAvailable)
             OnPenumbraInitialized();
 
-        Mediator.Subscribe<PenumbraInitializedMessage>(this, (msg) => OnPenumbraInitialized());
+        Mediator.Subscribe<PenumbraInitialized>(this, (msg) => OnPenumbraInitialized());
     }
 
     protected override void Dispose(bool disposing)

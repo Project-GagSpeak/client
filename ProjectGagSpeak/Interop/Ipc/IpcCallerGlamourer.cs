@@ -95,8 +95,11 @@ public sealed class IpcCallerGlamourer : IIpcCaller
     /// <summary>
     ///     Obtains the Base64String of the client's current Actor State
     /// </summary>
-    public string? GetActorString() 
-        => GetBase64.Invoke(0).Item2;
+    public async Task<string> GetActorString()
+    {
+        if (!APIAvailable) return string.Empty;
+        return await Svc.Framework.RunOnFrameworkThread(() => GetBase64.Invoke(0).Item2 ?? string.Empty).ConfigureAwait(false);
+    }
 
     /// <summary>
     ///     Enforces the Clients EquipSlot data to reflect their bondage state.
@@ -186,17 +189,20 @@ public sealed class IpcCallerGlamourer : IIpcCaller
         });
     }
 
-    public void ReleaseKinksterByName(string kinksterName)
+    public async Task ReleaseKinksterByName(string kinksterName)
     {
         if (!APIAvailable || PlayerData.IsZoning)
             return;
 
-        Generic.Safe(() =>
+        await Generic.Safe(async () =>
         {
-            _logger.LogDebug($"Unlocking Kinkster {kinksterName}'s Glamourer data!", LoggerType.IpcGlamourer);
-            UnlockKinksterByName.Invoke(kinksterName, GAGSPEAK_LOCK);
-            _logger.LogDebug($"Reverting Kinkster {kinksterName}'s Glamourer data!", LoggerType.IpcGlamourer);
-            RevertKinksterByName.Invoke(kinksterName, GAGSPEAK_LOCK);
+            await Svc.Framework.RunOnFrameworkThread(() =>
+            {
+                _logger.LogDebug($"Unlocking Kinkster {kinksterName}'s Glamourer data!", LoggerType.IpcGlamourer);
+                UnlockKinksterByName.Invoke(kinksterName, GAGSPEAK_LOCK);
+                _logger.LogDebug($"Reverting Kinkster {kinksterName}'s Glamourer data!", LoggerType.IpcGlamourer);
+                RevertKinksterByName.Invoke(kinksterName, GAGSPEAK_LOCK);
+            }).ConfigureAwait(false);
         });
     }
 

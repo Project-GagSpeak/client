@@ -1,8 +1,10 @@
 using CkCommons;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Plugin.Ipc;
+using GagSpeak.Kinksters.Handlers;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data.Struct;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Interop;
 
@@ -95,6 +97,26 @@ public sealed class IpcCallerCustomize : IIpcCaller
         return new(result.Item2.Value, result.Item1);
     }
 
+    public async Task<string> GetClientProfile()
+    {
+        if (!APIAvailable) return string.Empty;
+        
+        var profileStr = await Svc.Framework.RunOnFrameworkThread(() =>
+        {
+            var res = GetActiveProfile.InvokeFunc(0);
+            _logger.LogTrace($"Received active profile for Client with EC: [{res.Item1}]", LoggerType.IpcCustomize);
+            if (res.Item1 != 0 || res.Item2 is null)
+                return string.Empty;
+            // get the valid str.
+            return GetProfileById.InvokeFunc(res.Item2.Value).Item2 ?? string.Empty;
+        }).ConfigureAwait(false);
+
+        if (string.IsNullOrEmpty(profileStr))
+            return string.Empty;
+        // return the valid profile string.
+        return Convert.ToBase64String(Encoding.UTF8.GetBytes(profileStr));
+    }
+
     public async Task<string?> GetKinksterProfile(nint kinksterPtr)
     {
         if (!APIAvailable) return null;
@@ -122,31 +144,25 @@ public sealed class IpcCallerCustomize : IIpcCaller
         return Convert.ToBase64String(Encoding.UTF8.GetBytes(profileStr));
     }
 
-    public async Task<Guid?> SetKinksterProfile(nint kinksterPtr, string profileData)
+    public async Task<Guid?> SetKinksterProfile(PairHandler kinkster, string profileData)
     {
-        if (!APIAvailable) return null;
+        if (!APIAvailable || kinkster.PairObject is not { } visibleObj) return null;
 
         return await Svc.Framework.RunOnFrameworkThread(() =>
         {
-            // Only accept new data requests for players.
-            if (Svc.Objects.CreateObjectReference(kinksterPtr) is { } obj && obj is IPlayerCharacter)
+            var decodedScale = Encoding.UTF8.GetString(Convert.FromBase64String(profileData));
+            _logger.LogTrace($"Applying Profile to {visibleObj.Name}");
+            // revert the character if the new data to set was empty.
+            if (string.IsNullOrEmpty(profileData))
             {
-                var decodedScale = Encoding.UTF8.GetString(Convert.FromBase64String(profileData));
-                _logger.LogTrace($"Applying CustomizePlus profile to {obj.Address.ToString("X")}", LoggerType.IpcCustomize);
-                // revert the character if the new data to set was empty.
-                if (string.IsNullOrEmpty(profileData))
-                {
-                    RevertKinkster.InvokeFunc(obj.ObjectIndex);
-                    return null;
-                }
-                // Otherwise set the new profile data.
-                else
-                {
-                    return SetTempProfile.InvokeFunc(obj.ObjectIndex, decodedScale).Item2;
-                }
+                RevertKinkster.InvokeFunc(visibleObj.ObjectIndex);
+                return null;
             }
-            // fail everything else.
-            return null;
+            // Otherwise set the new profile data.
+            else
+            {
+                return SetTempProfile.InvokeFunc(visibleObj.ObjectIndex, decodedScale).Item2;
+            }
         }).ConfigureAwait(false);
     }
 

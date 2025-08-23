@@ -6,13 +6,13 @@ namespace GagSpeak.Kinksters.Factories;
 /// <summary>
 /// Class to help with the creation of game object handlers. Helps make the pair handler creation more modular.
 /// </summary>
-public class GameObjectHandlerFactory
+public class KinksterGameObjFactory
 {
     private readonly OnFrameworkService _frameworkUtils;
     private readonly ILoggerFactory _loggerFactory;
     private readonly GagspeakMediator _gagspeakMediator;
 
-    public GameObjectHandlerFactory(ILoggerFactory loggerFactory, GagspeakMediator gagspeakMediator,
+    public KinksterGameObjFactory(ILoggerFactory loggerFactory, GagspeakMediator gagspeakMediator,
         OnFrameworkService frameworkUtils)
     {
         _loggerFactory = loggerFactory;
@@ -20,10 +20,10 @@ public class GameObjectHandlerFactory
         _frameworkUtils = frameworkUtils;
     }
 
-    /// <summary> Responsible for creating a new GameObjectHandler object.</summary>
-    public async Task<GameObjectHandler> Create(Func<nint> getAddressFunc, bool isWatched = false)
+    /// <summary> Responsible for creating a new KinksterGameObj object.</summary>
+    public async Task<KinksterGameObj> Create(Func<nint> getAddressFunc)
     {
-        return await _frameworkUtils.RunOnFrameworkThread(() => new GameObjectHandler(_loggerFactory.CreateLogger<GameObjectHandler>(),
-            _gagspeakMediator, _frameworkUtils, getAddressFunc, isWatched)).ConfigureAwait(false);
+        return await _frameworkUtils.RunOnFrameworkThread(() => new KinksterGameObj(_loggerFactory.CreateLogger<KinksterGameObj>(),
+            _gagspeakMediator, _frameworkUtils, getAddressFunc)).ConfigureAwait(false);
     }
 }

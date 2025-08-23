@@ -166,7 +166,7 @@ public sealed class DataDistributor : DisposableMediatorSubscriberBase
 
         // Distribute the full IPC Data to the list of visible characters passed in.
         Logger.LogDebug($"Pushing Full IPCData to ({string.Join(", ", visibleCharas.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
-        await _hub.UserPushIpcFull(new(visibleCharas, MoodleCache.IpcData));
+        await _hub.UserPushMoodlesFull(new(visibleCharas, MoodleCache.IpcData));
     }
 
     /// <summary>
@@ -183,7 +183,7 @@ public sealed class DataDistributor : DisposableMediatorSubscriberBase
         var visChara = _kinksters.GetVisibleUsers();
         Logger.LogDebug($"Pushing updated StatusManager to visible Kinksters: ({string.Join(", ", visChara.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
         // this will never fail, so no point in scanning the return.
-        await _hub.UserPushIpcStatusManager(new(visChara, MoodleCache.IpcData.DataString, MoodleCache.IpcData.DataInfoList.ToList()));
+        await _hub.UserPushMoodlesSM(new(visChara, MoodleCache.IpcData.DataString, MoodleCache.IpcData.DataInfoList.ToList()));
     }
 
     /// <summary>
@@ -199,7 +199,7 @@ public sealed class DataDistributor : DisposableMediatorSubscriberBase
         var visChara = _kinksters.GetVisibleUsers();
         Logger.LogDebug($"Pushing updated StatusListInfo to visible Kinksters: ({string.Join(", ", visChara.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
         // this will never fail, so no point in scanning the return.
-        await _hub.UserPushIpcStatusManager(new(visChara, MoodleCache.IpcData.DataString, MoodleCache.IpcData.DataInfoList.ToList()));
+        await _hub.UserPushMoodlesSM(new(visChara, MoodleCache.IpcData.DataString, MoodleCache.IpcData.DataInfoList.ToList()));
     }
 
     /// <summary>
@@ -215,7 +215,7 @@ public sealed class DataDistributor : DisposableMediatorSubscriberBase
         var visChara = _kinksters.GetVisibleUsers();
         Logger.LogDebug($"Pushing updated PresetListInfo to visible Kinksters: ({string.Join(", ", visChara.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
         // this will never fail, so no point in scanning the return.
-        await _hub.UserPushIpcPresets(new(visChara, MoodleCache.IpcData.PresetList.ToList()));
+        await _hub.UserPushMoodlesPresets(new(visChara, MoodleCache.IpcData.PresetList.ToList()));
     }
 
     private CharaLightStorageData GetLatestLightStorage()

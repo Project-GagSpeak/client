@@ -70,5 +70,5 @@ public abstract class CkMoodleComboButtonBase<T> : CkFilterComboCache<T>
     }
 
     protected void DrawItemTooltip(MoodlesStatusInfo item)
-        => GsExtensions.DrawMoodleStatusTooltip(item, _kinksterRef.LastIpcData.StatusList);
+        => GsExtensions.DrawMoodleStatusTooltip(item, _kinksterRef.LastMoodlesData.StatusList);
 }

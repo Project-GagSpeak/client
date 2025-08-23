@@ -41,7 +41,7 @@ public class CustomizePlusListener : DisposableMediatorSubscriberBase
     /// <remarks> This will fire every time that Moodles Plugin initializes. </remarks>
     private void FetchProfileList()
     {
-        _cache.UpdateIpcProfileList(_ipc.GetAllProfiles());
+        _cache.UpdateIpcProfileList(_ipc.GetClientProfiles());
         Logger.LogInformation("All CustomizePlus Profiles Retrieved!", LoggerType.IpcCustomize);
     }
 

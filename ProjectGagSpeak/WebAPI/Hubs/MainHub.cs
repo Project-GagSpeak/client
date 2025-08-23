@@ -194,10 +194,10 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         OnAddCollarRequest(dto => _ = Callback_AddCollarRequest(dto));
         OnRemoveCollarRequest(dto => _ = Callback_RemoveCollarRequest(dto));
 
-        OnSetKinksterIpcFull(dto => _ = Callback_SetKinksterIpcFull(dto));
-        OnSetKinksterIpcStatusManager(dto => _ = Callback_SetKinksterIpcStatusManager(dto));
-        OnSetKinksterIpcStatuses(dto => _ = Callback_SetKinksterIpcStatuses(dto));
-        OnSetKinksterIpcPresets(dto => _ = Callback_SetKinksterIpcPresets(dto));
+        OnSetKinksterMoodlesFull(dto => _ = Callback_SetKinksterMoodlesFull(dto));
+        OnSetKinksterMoodlesSM(dto => _ = Callback_SetKinksterMoodlesSM(dto));
+        OnSetKinksterMoodlesStatuses(dto => _ = Callback_SetKinksterMoodlesStatuses(dto));
+        OnSetKinksterMoodlesPresets(dto => _ = Callback_SetKinksterMoodlesPresets(dto));
         OnApplyMoodlesByGuid(dto => _ = Callback_ApplyMoodlesByGuid(dto));
         OnApplyMoodlesByStatus(dto => _ = Callback_ApplyMoodlesByStatus(dto));
         OnRemoveMoodles(dto => _ = Callback_RemoveMoodles(dto));

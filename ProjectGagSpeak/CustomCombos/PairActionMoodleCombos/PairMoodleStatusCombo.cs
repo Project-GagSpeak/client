@@ -16,7 +16,7 @@ namespace GagSpeak.CustomCombos.Moodles;
 public sealed class PairMoodleStatusCombo : CkMoodleComboButtonBase<MoodlesStatusInfo>
 {
     public PairMoodleStatusCombo(ILogger log, MainHub hub, Kinkster kinkster, float scale)
-        : base(log, hub, kinkster, scale, () => [ .. kinkster.LastIpcData.Statuses.Values.OrderBy(x => x.Title)])
+        : base(log, hub, kinkster, scale, () => [ .. kinkster.LastMoodlesData.Statuses.Values.OrderBy(x => x.Title)])
     { }
 
     public PairMoodleStatusCombo(ILogger log, MainHub hub, Kinkster kinkster, float scale, Func<IReadOnlyList<MoodlesStatusInfo>> generator)
