@@ -134,6 +134,7 @@ public class Kinkster : IComparable<Kinkster>
     #region Kinkster Appearance
     public void ApplyLatestAppearance(CharaIpcDataFull newAppearance)
     {
+        _logger.LogDebug($"Received new full appearance data for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
         _appearanceCTS = _appearanceCTS.SafeCancelRecreate();
         LastAppearanceData.UpdateNonNull(newAppearance);
         ApplyLatestInternal(_appearanceCTS, ApplyLastReceivedAppearance);
@@ -141,12 +142,14 @@ public class Kinkster : IComparable<Kinkster>
 
     public void ApplyLatestAppearance(CharaIpcLight newAppearance)
     {
+        _logger.LogDebug($"Received new light appearance data for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
         _appearanceCTS = _appearanceCTS.SafeCancelRecreate();
         LastAppearanceData.UpdateNonNull(newAppearance);
         ApplyLatestInternal(_appearanceCTS, ApplyLastReceivedAppearance);
     }
     public void ApplyLatestActorState(string actorBase64)
     {
+        _logger.LogDebug($"Received new actor state data for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
         LastAppearanceData.GlamourerBase64 = actorBase64;
         // if the cached player is null, do the wait, otherwise, do the direct.
         if (CachedPlayer is null)
@@ -166,6 +169,7 @@ public class Kinkster : IComparable<Kinkster>
 
     public void ApplyLatestMoodles(UserData enactor, string dataString, IEnumerable<MoodlesStatusInfo> dataInfo)
     {
+        _logger.LogDebug($"Received new moodle data for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
         _moodlesCTS = _moodlesCTS.SafeCancelRecreate();
         LastMoodlesData.UpdateDataInfo(dataString, dataInfo);
         ApplyLatestInternal(_moodlesCTS, ApplyLastReceivedMoodles);
@@ -213,9 +217,17 @@ public class Kinkster : IComparable<Kinkster>
 
     private void ApplyLastReceivedAppearance()
     {
-        if (CachedPlayer is null) return;
-        if (LastAppearanceData is null) return;
-        _logger.LogDebug($"Applying Appearance for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+        if (CachedPlayer is null)
+        {
+            _logger.LogWarning($"Tried to apply appearance data for {GetNickAliasOrUid()}, but CachedPlayer is null!", LoggerType.PairDataTransfer);
+            return;
+        }
+        if (LastAppearanceData is null)
+        {
+            _logger.LogWarning($"Tried to apply appearance data for {GetNickAliasOrUid()}, but LastAppearanceData is null!", LoggerType.PairDataTransfer);
+            return;
+        }
+        _logger.LogDebug($"APPLYING NEW APPEARNACE DATA for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
         CachedPlayer.ApplyAppearanceData(LastAppearanceData).ConfigureAwait(false);
     }
 

@@ -291,6 +291,7 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
         // reset the pending types / changes along with any pending sync task.
         _pendingTypes = DataSyncKind.None;
         _syncUpdateCTS = _syncUpdateCTS.SafeCancelRecreate();
+        Logger.LogInformation($"Syncing Full Appearance to Kinksters: ({string.Join(",", visibleKinksters.Select(k => k.AliasOrUID))})");
 
         // create the full thing to send to all visible kinksters.
         var appearance = new CharaIpcDataFull();
@@ -298,26 +299,31 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
         if (IpcCallerGlamourer.APIAvailable)
         {
             appearance.GlamourerBase64 = await _ipc.Glamourer.GetActorString().ConfigureAwait(false);
+            Logger.LogDebug($"GlamourerAPI was valid, and obtained actor string: {appearance.GlamourerBase64.ToString()}");
             _lastGlamourer = appearance.GlamourerBase64;
         }
         if (IpcCallerCustomize.APIAvailable)
         {
             appearance.CustomizeProfile = await _ipc.CustomizePlus.GetClientProfile().ConfigureAwait(false);
+            Logger.LogDebug($"CustomizePlusAPI was valid, and obtained profile string: {appearance.CustomizeProfile.ToString()}");
             _lastCPlus = appearance.CustomizeProfile ?? string.Empty;
         }
         if (IpcCallerHeels.APIAvailable)
         {
             appearance.HeelsOffset = await _ipc.Heels.GetClientOffset().ConfigureAwait(false);
+            Logger.LogDebug($"HeelsAPI was valid, and obtained offset string: {appearance.HeelsOffset.ToString()}");
             _lastHeels = appearance.HeelsOffset;
         }
         if (IpcCallerHonorific.APIAvailable)
         {
             appearance.HonorificTitle = await _ipc.Honorific.GetTitle().ConfigureAwait(false);
+            Logger.LogDebug($"HonorificAPI was valid, and obtained title string: {appearance.HonorificTitle.ToString()}");
             _lastHonorific = appearance.HonorificTitle;
         }
         if (IpcCallerPetNames.APIAvailable)
         {
             appearance.PetNicknames = _ipc.PetNames.GetPetNicknames();
+            Logger.LogDebug($"PetNamesAPI was valid, and obtained nicknames string: {appearance.PetNicknames.ToString()}");
             _lastPetNames = appearance.PetNicknames;
         }
         // push it out.
