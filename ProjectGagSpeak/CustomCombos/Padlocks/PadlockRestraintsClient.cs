@@ -10,10 +10,10 @@ namespace GagSpeak.CustomCombos.Padlock;
 
 public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
 {
-    private readonly DataDistributor _dds;
+    private readonly DistributorService _dds;
     private readonly VisualStateListener _visuals;
     private readonly RestraintManager _manager;
-    public PadlockRestraintsClient(ILogger log, DataDistributor dds, VisualStateListener visuals, RestraintManager manager)
+    public PadlockRestraintsClient(ILogger log, DistributorService dds, VisualStateListener visuals, RestraintManager manager)
         : base(() => [ manager.ServerData ?? new CharaActiveRestraint() ], PadlockEx.ClientLocks, log)
     {
         _dds = dds;

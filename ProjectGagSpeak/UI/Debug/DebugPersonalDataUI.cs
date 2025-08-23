@@ -144,7 +144,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawHardcoreState(pair.UserData.UID + "'s Hardcore State", pair.PairHardcore);
         DrawPairPerms(pair.UserData.UID + "'s Pair Perms for you.", pair.PairPerms);
         DrawPairPermAccess(pair.UserData.UID + "'s Pair Perm Access for you", pair.PairPermAccess);
-        DrawPairIpcData(pair.UserData.UID, pair.LastMoodlesData);
+        DrawKinksterIpcData(pair);
         DrawGagData(pair.UserData.UID, pair.ActiveGags);
         DrawPairRestrictions(pair.UserData.UID, pair);
         DrawRestraint(pair.UserData.UID, pair);
@@ -418,45 +418,106 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawPermissionRowBool("Can Toggle Triggers", perms.ToggleTriggersAllowed);
     }
 
-    private void DrawPairIpcData(string uid, CharaMoodleData ipcData)
+    private void DrawKinksterIpcData(Kinkster kinkster)
     {
-        using var nodeMain = ImRaii.TreeNode(uid + " IPC Data");
+        var dispName = kinkster.GetNickAliasOrUid();
+        using var nodeMain = ImRaii.TreeNode($"{dispName}'s IPC Data");
         if (!nodeMain) return;
 
-        CkGui.ColorTextCentered($"Active Statuses: {ipcData.DataInfo.Count()}", ImGuiColors.ParsedGold);
-        _moodleDrawer.ShowStatusInfosFramed($"DataInfo-{uid}", ipcData.DataInfoList, ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), MoodleDrawer.IconSizeFramed);
+        CkGui.ColorTextCentered($"Active Statuses: {kinkster.LastMoodlesData.DataInfo.Count()}", ImGuiColors.ParsedGold);
+        _moodleDrawer.ShowStatusInfosFramed($"DataInfo-{dispName}", kinkster.LastMoodlesData.DataInfoList, ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), MoodleDrawer.IconSizeFramed);
 
-        CkGui.ColorTextCentered($"Stored Statuses: {ipcData.StatusList.Count()}", ImGuiColors.ParsedGold);
-        _moodleDrawer.ShowStatusInfosFramed($"StatusList-{uid}", ipcData.StatusList, ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), MoodleDrawer.IconSizeFramed, 2);
 
-        CkGui.ColorTextCentered($"Stored Presets: {ipcData.PresetList.Count()}", ImGuiColors.ParsedGold);
+        CkGui.ColorTextCentered($"Stored Statuses: {kinkster.LastMoodlesData.StatusList.Count()}", ImGuiColors.ParsedGold);
+        _moodleDrawer.ShowStatusInfosFramed($"StatusList-{dispName}", kinkster.LastMoodlesData.StatusList, ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), MoodleDrawer.IconSizeFramed, 2);
+        
+        DrawMoodlePresetTable(dispName, kinkster.LastMoodlesData);
+
+        // draw out the Appearance Cache.
+        DrawAppearanceCache(kinkster, dispName);
+    }
+
+    private void DrawMoodlePresetTable(string uid, CharaMoodleData data)
+    {
+        using var nodeMain = ImRaii.TreeNode($"{uid}'s Stored Preset Data");
+        if (!nodeMain) return;
+
         using (var t = ImRaii.Table($"PresetTable-{uid}", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.SizingFixedFit))
         {
-            if (!t)
-                return;
-
+            if (!t) return;
             ImGui.TableSetupColumn("Preset Title");
             ImGui.TableSetupColumn("Statuses");
             ImGui.TableHeadersRow();
-            foreach (var preset in ipcData.PresetList)
+            foreach (var preset in data.PresetList)
             {
                 ImGui.TableNextColumn();
                 ImGui.Text(preset.Title);
                 ImGui.TableNextColumn();
-                var statuses = preset.Statuses.Select(s => ipcData.Statuses.GetValueOrDefault(s)).Where(x => x.GUID != Guid.Empty);
+                var statuses = preset.Statuses.Select(s => data.Statuses.GetValueOrDefault(s)).Where(x => x.GUID != Guid.Empty);
                 _moodleDrawer.DrawStatusInfos(statuses, MoodleDrawer.IconSizeFramed);
             }
 
         }
     }
 
+    private void DrawAppearanceCache(Kinkster kinkster, string dispName)
+    {
+        using var node = ImRaii.TreeNode($"{dispName}'s Latest Appearance");
+        if (!node) return;
+
+        // Draw out the cache Values.
+        using (var t = ImRaii.Table($"AppearanceCache-{dispName}", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.SizingFixedFit))
+        {
+            if (!t) return;
+            ImGui.TableSetupColumn("Source");
+            ImGui.TableSetupColumn("Content");
+            ImGui.TableHeadersRow();
+
+            ImGui.TableNextColumn();
+            CkGui.ColorTextBool("Actor Glamour", kinkster.LastAppearanceData.GlamourerBase64 is not null);
+            ImGui.TableNextColumn();
+            CkGui.BooleanToColoredIcon(kinkster.LastAppearanceData.GlamourerBase64 != null, false);
+            if (ImGui.IsItemHovered())
+                CkGui.AttachToolTip(kinkster.LastAppearanceData.GlamourerBase64 ?? "No Actor Glamour Data");
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("C+ Profile");
+            ImGui.TableNextColumn();
+            CkGui.BooleanToColoredIcon(kinkster.LastAppearanceData.CustomizeProfile != null, false);
+            if (ImGui.IsItemHovered())
+                CkGui.AttachToolTip(kinkster.LastAppearanceData.CustomizeProfile ?? "No C+ Profile Data");
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Heels Offset");
+            ImGui.TableNextColumn();
+            CkGui.BooleanToColoredIcon(kinkster.LastAppearanceData.HeelsOffset != null, false);
+            if (ImGui.IsItemHovered())
+                CkGui.AttachToolTip(kinkster.LastAppearanceData.HeelsOffset?.ToString() ?? "No Heels Offset Data");
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Title Info");
+            ImGui.TableNextColumn();
+            CkGui.BooleanToColoredIcon(kinkster.LastAppearanceData.HonorificTitle != null, false);
+            if (ImGui.IsItemHovered())
+                CkGui.AttachToolTip(kinkster.LastAppearanceData.HonorificTitle?.ToString() ?? "No Honorific Title!");
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Pet Nicknames");
+            ImGui.TableNextColumn();
+            CkGui.BooleanToColoredIcon(kinkster.LastAppearanceData.PetNicknames != null, false);
+            if (ImGui.IsItemHovered())
+                CkGui.AttachToolTip(kinkster.LastAppearanceData.PetNicknames?.ToString() ?? "No Pet Nicknames!");
+            ImGui.TableNextRow();
+        }
+    }
+
     private void DrawGagData(string uid, CharaActiveGags appearance)
     {
-        using var nodeMain = ImRaii.TreeNode("Appearance Data");
+        using var nodeMain = ImRaii.TreeNode("Gag Data");
         if (!nodeMain)
             return;
 
-        using (ImRaii.Table("##debug-appearance" + uid, 4, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        using (ImRaii.Table("##debug-gag" + uid, 4, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
             ImGui.TableSetupColumn("##EmptyHeader");
             ImGui.TableSetupColumn("Layer 1");

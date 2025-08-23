@@ -38,7 +38,7 @@ public class ActiveItemsDrawer
     private readonly RestraintManager _restraints;
     private readonly FavoritesManager _favorites;
     private readonly VisualStateListener _visuals;
-    private readonly DataDistributor _dds;
+    private readonly DistributorService _dds;
     private readonly TextureService _textures;
     private readonly CosmeticService _cosmetics;
     private readonly TutorialService _guides;
@@ -61,7 +61,7 @@ public class ActiveItemsDrawer
         RestraintManager restraints,
         FavoritesManager favorites,
         VisualStateListener visuals,
-        DataDistributor dds,
+        DistributorService dds,
         TextureService textures,
         CosmeticService cosmetics,
         TutorialService guides)

@@ -16,17 +16,20 @@ public class MoodleListener : DisposableMediatorSubscriberBase
     private readonly MoodleCache _cache;
     private readonly IpcProvider _ipcProvider;
     private readonly IpcCallerMoodles _ipc;
-    private readonly DataDistributor _dds;
+    private readonly KinksterManager _kinksters;
+    private readonly DistributorService _dds;
 
     private bool _isZoning = false;
 
     public MoodleListener(ILogger<MoodleListener> logger, GagspeakMediator mediator,
-        MoodleCache cache, IpcProvider ipcProvider, IpcCallerMoodles ipc, DataDistributor dds)
+        MoodleCache cache, IpcProvider ipcProvider, IpcCallerMoodles ipc, 
+        KinksterManager kinksters, DistributorService dds)
         : base(logger, mediator)
     {
         _cache = cache;
         _ipcProvider = ipcProvider;
         _ipc = ipc;
+        _kinksters = kinksters;
         _dds = dds;
 
         _ipc.OnStatusManagerModified.Subscribe(OnStatusManagerModified);
@@ -68,7 +71,7 @@ public class MoodleListener : DisposableMediatorSubscriberBase
         MoodleCache.IpcData.SetStatuses(statuses);
         MoodleCache.IpcData.SetPresets(presets);
         Logger.LogDebug("Moodles is now ready, pushing to all visible pairs", LoggerType.IpcMoodles);
-        await _dds.UpdateAllVisibleWithMoodles();
+        await _dds.DistributeFullMoodlesData(_kinksters.GetVisibleUsers());
     }
 
     /// <summary> Handles the Moodles Status Manager being modified. </summary>

@@ -149,6 +149,8 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
         if (_appearance is null)
             _appearance = new CharaIpcDataFull();
 
+        // may need to process a cancellation token here if overlap occurs, but it shouldnt due to updates being 1s apart.
+
         // Process the application of all non-null data.
         Logger.LogDebug($"Updating appearance for Kinkster: {PlayerName} ({OnlineUser.User.AliasOrUID})", LoggerType.GameObjects);
         // maybe wait for redraw finish? idk..

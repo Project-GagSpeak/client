@@ -13,9 +13,9 @@ namespace GagSpeak.CustomCombos.Padlock;
 // These are displayed seperately so dont use a layer updater.
 public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
 {
-    private readonly DataDistributor _dds;
+    private readonly DistributorService _dds;
     private readonly VisualStateListener _visuals;
-    public PadlockGagsClient(ILogger log, DataDistributor dds, VisualStateListener visuals, GagRestrictionManager manager)
+    public PadlockGagsClient(ILogger log, DistributorService dds, VisualStateListener visuals, GagRestrictionManager manager)
         : base(new LazyList<ActiveGagSlot>(() => [ ..manager.ServerGagData?.GagSlots ?? [new ActiveGagSlot()] ]), PadlockEx.ClientLocks, log)
     {
         _dds = dds;

@@ -94,7 +94,7 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
     {
         // Halt the current update task delay and recreate for the new type.
         _pendingTypes |= syncType;
-        _syncUpdateCTS.SafeCancelRecreate();
+        _syncUpdateCTS = _syncUpdateCTS.SafeCancelRecreate();
     }
 
     private int GetDebounceTime() => _pendingTypes.HasAny(DataSyncKind.Heels) 
@@ -137,7 +137,7 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
                     await SyncLightDataToKinksters(toUpdate).ConfigureAwait(false);
                 // Full Data.
                 else
-                    await SyncDataToKinksters(toUpdate).ConfigureAwait(false);
+                    await SyncNewDataToKinksters(toUpdate).ConfigureAwait(false);
             }
             catch (OperationCanceledException)
             {
@@ -220,7 +220,7 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
         await _hub.UserPushIpcDataLight(new(visibleKinksters, lightData)).ConfigureAwait(false);
     }
 
-    private async Task SyncDataToKinksters(List<UserData> visibleKinksters)
+    private async Task SyncNewDataToKinksters(List<UserData> visibleKinksters)
     {
         var toSend = new CharaIpcDataFull();
 
@@ -276,5 +276,44 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
         // push it out.
         Logger.LogDebug("Compiling Full Data to Kinksters");
         await _hub.UserPushIpcData(new(visibleKinksters, toSend)).ConfigureAwait(false);
+    }
+
+    public async Task SyncAppearanceToKinksters(List<UserData> visibleKinksters)
+    {
+        // reset the pending types / changes along with any pending sync task.
+        _pendingTypes = DataSyncKind.None;
+        _syncUpdateCTS = _syncUpdateCTS.SafeCancelRecreate();
+
+        // create the full thing to send to all visible kinksters.
+        var appearance = new CharaIpcDataFull();
+        // gather all the data.
+        if (IpcCallerGlamourer.APIAvailable)
+        {
+            appearance.GlamourerBase64 = await _ipc.Glamourer.GetActorString().ConfigureAwait(false);
+            _lastGlamourer = appearance.GlamourerBase64;
+        }
+        if (IpcCallerCustomize.APIAvailable)
+        {
+            appearance.CustomizeProfile = await _ipc.CustomizePlus.GetClientProfile().ConfigureAwait(false);
+            _lastCPlus = appearance.CustomizeProfile ?? string.Empty;
+        }
+        if (IpcCallerHeels.APIAvailable)
+        {
+            appearance.HeelsOffset = await _ipc.Heels.GetClientOffset().ConfigureAwait(false);
+            _lastHeels = appearance.HeelsOffset;
+        }
+        if (IpcCallerHonorific.APIAvailable)
+        {
+            appearance.HonorificTitle = await _ipc.Honorific.GetTitle().ConfigureAwait(false);
+            _lastHonorific = appearance.HonorificTitle;
+        }
+        if (IpcCallerPetNames.APIAvailable)
+        {
+            appearance.PetNicknames = _ipc.PetNames.GetPetNicknames();
+            _lastPetNames = appearance.PetNicknames;
+        }
+        // push it out.
+        Logger.LogDebug("Compiling Full Data to Kinksters");
+        await _hub.UserPushIpcData(new(visibleKinksters, appearance)).ConfigureAwait(false);
     }
 }

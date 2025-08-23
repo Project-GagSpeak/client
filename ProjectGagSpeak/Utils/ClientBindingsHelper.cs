@@ -23,7 +23,7 @@ namespace GagSpeak.Utils;
 /// </summary>
 public static class SelfBondageHelper
 {
-    public static void GagUpdateTask(int layer, ActiveGagSlot newData, DataUpdateType type, DataDistributor dds, VisualStateListener visuals)
+    public static void GagUpdateTask(int layer, ActiveGagSlot newData, DataUpdateType type, DistributorService dds, VisualStateListener visuals)
     {
         UiService.SetUITask(async () =>
         {
@@ -43,7 +43,7 @@ public static class SelfBondageHelper
         });
     }
 
-    public static async Task<bool> GagUpdateRetTask(int layer, ActiveGagSlot newData, DataUpdateType type, DataDistributor dds, VisualStateListener visuals)
+    public static async Task<bool> GagUpdateRetTask(int layer, ActiveGagSlot newData, DataUpdateType type, DistributorService dds, VisualStateListener visuals)
     {
         return await UiService.SetUITaskWithReturn(async () =>
         {
@@ -65,7 +65,7 @@ public static class SelfBondageHelper
         });
     }
 
-    public static void RestrictionUpdateTask(int layer, ActiveRestriction newData, DataUpdateType type, DataDistributor dds, VisualStateListener visuals)
+    public static void RestrictionUpdateTask(int layer, ActiveRestriction newData, DataUpdateType type, DistributorService dds, VisualStateListener visuals)
     {
         UiService.SetUITask(async () =>
         {
@@ -85,7 +85,7 @@ public static class SelfBondageHelper
         });
     }
 
-    public static async Task<bool> RestrictionUpdateRetTask(int layer, ActiveRestriction newData, DataUpdateType type, DataDistributor dds, VisualStateListener visuals)
+    public static async Task<bool> RestrictionUpdateRetTask(int layer, ActiveRestriction newData, DataUpdateType type, DistributorService dds, VisualStateListener visuals)
     {
         return await UiService.SetUITaskWithReturn(async () =>
         {
@@ -107,7 +107,7 @@ public static class SelfBondageHelper
         });
     }
 
-    public static void RestraintUpdateTask(CharaActiveRestraint newData, DataUpdateType type, DataDistributor dds, VisualStateListener visuals)
+    public static void RestraintUpdateTask(CharaActiveRestraint newData, DataUpdateType type, DistributorService dds, VisualStateListener visuals)
     {
         UiService.SetUITask(async () =>
         {
@@ -130,7 +130,7 @@ public static class SelfBondageHelper
         });
     }
 
-    public static async Task<bool> RestraintUpdateRetTask(CharaActiveRestraint newData, DataUpdateType type, DataDistributor dds, VisualStateListener visuals)
+    public static async Task<bool> RestraintUpdateRetTask(CharaActiveRestraint newData, DataUpdateType type, DistributorService dds, VisualStateListener visuals)
     {
         return await UiService.SetUITaskWithReturn(async () =>
         {

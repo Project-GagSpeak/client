@@ -14,7 +14,7 @@ using GagspeakAPI.Network;
 namespace GagSpeak.Services;
 
 /// <summary> Creates various calls to the server based on invoked events. </summary>
-public sealed class DataDistributor : DisposableMediatorSubscriberBase
+public sealed class DistributorService : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _hub;
     private readonly ClientAchievements _achievements;
@@ -30,12 +30,13 @@ public sealed class DataDistributor : DisposableMediatorSubscriberBase
     private readonly AlarmManager _alarmManager;
     private readonly TriggerManager _triggerManager;
     private readonly TraitAllowanceManager _traitManager;
+    private readonly KinksterSyncService _kinksterSync;
 
     private SemaphoreSlim _updateSlim = new SemaphoreSlim(1, 1);
     private readonly HashSet<UserData> _newVisibleKinksters = [];
     private readonly HashSet<UserData> _newOnlineKinksters = [];
 
-    public DataDistributor(ILogger<DataDistributor> logger,
+    public DistributorService(ILogger<DistributorService> logger,
         GagspeakMediator mediator,
         MainHub hub,
         ClientAchievements achievements,
@@ -50,7 +51,8 @@ public sealed class DataDistributor : DisposableMediatorSubscriberBase
         PatternManager patterns,
         AlarmManager alarms,
         TriggerManager triggers,
-        TraitAllowanceManager traitAllowances)
+        TraitAllowanceManager traits,
+        KinksterSyncService kinksterSync)
         : base(logger, mediator)
     {
         _hub = hub;
@@ -66,7 +68,8 @@ public sealed class DataDistributor : DisposableMediatorSubscriberBase
         _patternManager = patterns;
         _alarmManager = alarms;
         _triggerManager = triggers;
-        _traitManager = traitAllowances;
+        _traitManager = traits;
+        _kinksterSync = kinksterSync;
 
         // Achievement Handling
         Mediator.Subscribe<SendAchievementData>(this, (_) => UpdateAchievementData().ConfigureAwait(false));
@@ -133,7 +136,7 @@ public sealed class DataDistributor : DisposableMediatorSubscriberBase
         {
             var newVisiblePlayers = _newVisibleKinksters.ToList();
             _newVisibleKinksters.Clear();
-            DistributeFullMoodlesData(newVisiblePlayers).ConfigureAwait(false);
+            UpdateVisibleFull(newVisiblePlayers).ConfigureAwait(false);
         }
     }
 
@@ -148,8 +151,23 @@ public sealed class DataDistributor : DisposableMediatorSubscriberBase
         return false;
     }
 
-    public async Task UpdateAllVisibleWithMoodles()
-        => await DistributeFullMoodlesData(_kinksters.GetVisibleUsers());
+    /// <summary>
+    ///     Method used for updating all provided visible kinkster's with our moodles and appearance data. <para />
+    ///     Called whenever a new visible pair enters our render range.
+    /// </summary>
+    private async Task UpdateVisibleFull(List<UserData> visibleCharas)
+    {
+        if (!MainHub.IsConnectionDataSynced)
+        {
+            Logger.LogDebug("Not pushing Visible Full Data, not connected to server or data not synced.", LoggerType.ApiCore);
+            _newVisibleKinksters.UnionWith(visibleCharas);
+            return;
+        }
+
+        Logger.LogDebug($"Pushing Appearance and Moodles data to ({string.Join(", ", visibleCharas.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
+        await DistributeFullMoodlesData(visibleCharas);
+        await _kinksterSync.SyncAppearanceToKinksters(visibleCharas);
+    }
 
     /// <summary>
     ///     This IPC Method should ONLY be sent to the newly visible kinksters, as it is the heaviest weight IPC call. <para />

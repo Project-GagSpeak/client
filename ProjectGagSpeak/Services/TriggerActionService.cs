@@ -32,7 +32,7 @@ public class TriggerActionService
     private readonly RestraintManager _restraints;
     private readonly BuzzToyManager _toys;
     private readonly MoodleHandler _moodles;
-    private readonly DataDistributor _distributer;
+    private readonly DistributorService _distributer;
 
     // (This rate limiter is kind of busted at the moment, maybe find a better solution for this)
     private ActionRateLimiter _rateLimiter = new(TimeSpan.FromSeconds(3), 1, 3, 3, 3);
@@ -46,7 +46,7 @@ public class TriggerActionService
         RestraintManager restraints,
         BuzzToyManager toys,
         MoodleHandler moodles,
-        DataDistributor distributer)
+        DistributorService distributer)
     {
         _logger = logger;
         _shockies = shockies;

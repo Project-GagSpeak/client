@@ -33,7 +33,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
     private readonly ClientDataListener _clientDatListener;
     private readonly AchievementEventHandler _achievementHandler;
 
-    private CancellationTokenSource _ctrlAltBackspaceSafewordTaskCTS = new();
+    private CancellationTokenSource _emergencySafewordCTS = new();
     private Task? _ctrlAltBackspaceSafewordTask = null;
 
     // The last times each of these Safeword's were used.
@@ -73,9 +73,9 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-        _ctrlAltBackspaceSafewordTaskCTS.SafeCancel();
+        _emergencySafewordCTS.SafeCancel();
         Generic.Safe(() => _ctrlAltBackspaceSafewordTask?.Wait());
-        _ctrlAltBackspaceSafewordTaskCTS?.SafeDispose();
+        _emergencySafewordCTS?.SafeDispose();
     }
 
     public async Task OnSafewordInvoked(string isolatedUID = "")
@@ -269,18 +269,18 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
     {
         Logger.LogInformation("Starting Safeword Monitor.");
         // Start the safeword monitor when the service starts.
-        _ctrlAltBackspaceSafewordTaskCTS.SafeCancelRecreate();
+        _emergencySafewordCTS = _emergencySafewordCTS.SafeCancelRecreate();
         _ctrlAltBackspaceSafewordTask = Task.Run(async () =>
         {
             try
             {
-                while (!_ctrlAltBackspaceSafewordTaskCTS.IsCancellationRequested)
+                while (!_emergencySafewordCTS.IsCancellationRequested)
                 {
                     if (KeyMonitor.CtrlPressed() && KeyMonitor.AltPressed() && KeyMonitor.BackPressed())
                         UiService.SetUITask(async () => await OnHcSafewordUsed());
 
                     // Adjust delay time if there is issues with recognition.
-                    await Task.Delay(100, _ctrlAltBackspaceSafewordTaskCTS.Token);
+                    await Task.Delay(100, _emergencySafewordCTS.Token);
                 }
             }
             catch (TaskCanceledException) { }

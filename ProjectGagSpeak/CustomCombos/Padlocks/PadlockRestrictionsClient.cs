@@ -14,10 +14,10 @@ namespace GagSpeak.CustomCombos.Padlock;
 
 public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
 {
-    private readonly DataDistributor _dds;
+    private readonly DistributorService _dds;
     private readonly VisualStateListener _visuals;
     private readonly RestrictionManager _manager;
-    public PadlockRestrictionsClient(ILogger log, DataDistributor dds, VisualStateListener visuals, RestrictionManager manager)
+    public PadlockRestrictionsClient(ILogger log, DistributorService dds, VisualStateListener visuals, RestrictionManager manager)
         : base(() => manager.ServerRestrictionData?.Restrictions ?? [], PadlockEx.ClientLocks, log)
     {
         _dds = dds;

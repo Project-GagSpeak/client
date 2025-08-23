@@ -87,7 +87,6 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
             // get players not included in our gagspeak pairs.
             var playersNotInPairs = Svc.Objects.OfType<IPlayerCharacter>()
                 .Where(player => player != PlayerData.Object && !visiblePairGameObjects.Contains(player))
-                .Where(o => o.ObjectIndex < 200)
                 .ToList();
 
             // Store the list of visible players

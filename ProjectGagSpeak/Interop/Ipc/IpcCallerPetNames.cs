@@ -47,7 +47,7 @@ public sealed class IpcCallerPetNames : IIpcCaller
         CheckAPI();
     }
 
-    public bool APIAvailable { get; private set; } = false;
+    public static bool APIAvailable { get; private set; } = false;
 
     public void CheckAPI()
     {

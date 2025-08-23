@@ -48,7 +48,7 @@ public sealed class IpcCallerHonorific : IIpcCaller
         CheckAPI();
     }
 
-    public bool APIAvailable { get; private set; } = false;
+    public static bool APIAvailable { get; private set; } = false;
 
     public void CheckAPI()
     {
