@@ -111,48 +111,56 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
         if (PlayerData.IsZoning || !PlayerData.Available)
             return;
         // if the task is already being processed, return.
-        if (_kinksterSyncTask is null || !_kinksterSyncTask.IsCompleted)
-            return;
-
-        // create the task to run with a cancelation token.
-        _kinksterSyncTask = Task.Run(async () =>
+        if (_kinksterSyncTask?.IsCompleted ?? true)
         {
-            // await for the processed debounce time, or until cancelled.
-            await Task.Delay(GetDebounceTime(), _syncUpdateCTS.Token).ConfigureAwait(false);
-            // after the delay is finished, process the update, if there is anyone to send it to.
-            var toUpdate = _kinksters.GetVisibleUsers();
-            if (toUpdate.Count == 0)
-                return;
+            // create the task to run with a cancelation token.
+            _kinksterSyncTask = Task.Run(async () =>
+            {
+                // await for the processed debounce time, or until cancelled.
+                await Task.Delay(GetDebounceTime(), _syncUpdateCTS.Token).ConfigureAwait(false);
 
-            try
-            {
-                var byteVal = (byte)_pendingTypes;
-                // Only Glamourer.
-                if (byteVal == 1)
-                    await SyncGlamourStateToKinksters(toUpdate).ConfigureAwait(false);
-                // Only ModManips.
-                else if (byteVal == 2)
-                    await SyncModManipsToKinksters(toUpdate).ConfigureAwait(false);
-                // Only light data.
-                else if (!_pendingTypes.HasAny(DataSyncKind.Glamourer | DataSyncKind.ModManips))
-                    await SyncLightDataToKinksters(toUpdate).ConfigureAwait(false);
-                // Full Data.
-                else
-                    await SyncNewDataToKinksters(toUpdate).ConfigureAwait(false);
-            }
-            catch (OperationCanceledException)
-            {
-                Logger.LogDebug("KinksterSync cancelled");
-            }
-            catch (Exception ex)
-            {
-                Logger.LogCritical(ex, "Error during KinksterSync Processing");
-            }
-            finally
-            {
-                Logger.LogDebug("KinksterSync complete!");
-            }
-        }, _syncUpdateCTS.Token);
+                Logger.LogInformation($"Processing KinksterSync for changes: {_pendingTypes}");
+                // after the delay is finished, process the update, if there is anyone to send it to.
+                var toUpdate = _kinksters.GetVisibleUsers();
+                if (toUpdate.Count == 0)
+                {
+                    Logger.LogDebug("No visible Kinksters to update.");
+                    _pendingTypes = DataSyncKind.None;
+                    return;
+                }
+
+                try
+                {
+                    Logger.LogDebug($"Found {toUpdate.Count} visible Kinksters to update.");
+                    var byteVal = (byte)_pendingTypes;
+                    // Only Glamourer.
+                    if (byteVal == 1)
+                        await SyncGlamourStateToKinksters(toUpdate).ConfigureAwait(false);
+                    // Only ModManips.
+                    else if (byteVal == 2)
+                        await SyncModManipsToKinksters(toUpdate).ConfigureAwait(false);
+                    // Only light data.
+                    else if (!_pendingTypes.HasAny(DataSyncKind.Glamourer | DataSyncKind.ModManips))
+                        await SyncLightDataToKinksters(toUpdate).ConfigureAwait(false);
+                    // Full Data.
+                    else
+                        await SyncNewDataToKinksters(toUpdate).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException)
+                {
+                    Logger.LogDebug("KinksterSync cancelled");
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogCritical(ex, "Error during KinksterSync Processing");
+                }
+                finally
+                {
+                    _pendingTypes = DataSyncKind.None;
+                    Logger.LogDebug("KinksterSync complete!");
+                }
+            }, _syncUpdateCTS.Token);
+        }
     }
 
     private async Task SyncModManipsToKinksters(List<UserData> visibleKinksters)
@@ -178,7 +186,10 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
         
         var latestGlamStr = await _ipc.Glamourer.GetActorString().ConfigureAwait(false);
         if (_lastGlamourer.Equals(latestGlamStr, StringComparison.Ordinal))
+        {
+            Logger.LogTrace("Glamourer string unchanged, not syncing.", LoggerType.VisiblePairs);
             return;
+        }
 
         Logger.LogTrace("Glamourer changed!", LoggerType.VisiblePairs);
         _lastGlamourer = latestGlamStr;

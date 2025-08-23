@@ -887,7 +887,7 @@ public partial class MainHub
     public void OnSetKinksterIpcLight(Action<KinksterIpcDataLight> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_SetKinksterIpcData), act);
+        _hubConnection!.On(nameof(OnSetKinksterIpcLight), act);
     }
 
     public void OnSetKinksterIpcManipulations(Action<KinksterIpcManipulations> act)

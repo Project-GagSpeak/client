@@ -157,12 +157,9 @@ public class KinksterInteractionsUI : WindowMediatorSubscriberBase
             CkGui.AttachToolTip($"Snapshot {dispName}'s KinkPlate and make a report with its state.");
         }
 
-        if (Kinkster.IsOnline)
-        {
-            if (CkGui.IconTextButton(isPaused ? FAI.Play : FAI.Pause, isPaused ? "Unpause " : "Pause " + dispName, width, true))
-                UiService.SetUITask(PermissionHelper.ChangeOwnUnique(_hub, Kinkster.UserData, Kinkster.PairPerms, nameof(PairPerms.IsPaused), !isPaused));
-            CkGui.AttachToolTip(!isPaused ? "Pause" : "Resume" + $"pairing with {dispName}.");
-        }
+        if (CkGui.IconTextButton(isPaused ? FAI.Play : FAI.Pause, isPaused ? "Unpause " : "Pause " + dispName, width, true))
+            UiService.SetUITask(PermissionHelper.ChangeOwnUnique(_hub, Kinkster.UserData, Kinkster.PairPerms, nameof(PairPerms.IsPaused), !isPaused));
+        CkGui.AttachToolTip(!isPaused ? "Pause" : "Resume" + $"pairing with {dispName}.");
 
         if (Kinkster.IsVisible)
         {

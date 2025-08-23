@@ -110,12 +110,12 @@ public class WhitelistTab : DisposableMediatorSubscriberBase
                     : u.GetNickname() ?? u.UserData.AliasOrUID;
         // filter based on who is online (or paused but that shouldnt exist yet unless i decide to add it later here)
         bool FilterOnlineOrPausedSelf(Kinkster u)
-            => u.IsOnline || !u.IsOnline && !_config.Current.ShowOfflineUsersSeparately || u.UserPair.OwnPerms.IsPaused;
+            => u.IsOnline || (!u.IsOnline && !_config.Current.ShowOfflineUsersSeparately) || u.UserPair.OwnPerms.IsPaused;
         // filter based on who is online or paused, but also allow paused users to be shown if they are self.
         bool FilterPairedOrPausedSelf(Kinkster u)
              => u.IsOnline || !u.IsOnline || u.UserPair.OwnPerms.IsPaused;
         bool FilterOfflineUsers(Kinkster u) 
-            => !u.IsOnline && !u.UserPair.OwnPerms.IsPaused;
+            => !u.IsOnline || u.UserPair.OwnPerms.IsPaused;
         // collect the sorted list
         List<Kinkster> BasicSortedList(IEnumerable<Kinkster> u)
             => u.OrderByDescending(u => u.IsVisible)

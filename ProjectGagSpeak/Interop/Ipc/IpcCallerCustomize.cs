@@ -104,7 +104,6 @@ public sealed class IpcCallerCustomize : IIpcCaller
         var profileStr = await Svc.Framework.RunOnFrameworkThread(() =>
         {
             var res = GetActiveProfile.InvokeFunc(0);
-            _logger.LogTrace($"Received active profile for Client with EC: [{res.Item1}]", LoggerType.IpcCustomize);
             if (res.Item1 != 0 || res.Item2 is null)
                 return string.Empty;
             // get the valid str.
