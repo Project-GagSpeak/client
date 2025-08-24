@@ -33,28 +33,12 @@ public sealed class KinksterListener
         kinkster.ApplyLatestAppearance(newData);
     }
 
-    public void NewAppearanceData(UserData target, CharaIpcLight newData)
+    public void NewAppearanceData(UserData target, DataSyncKind type, string newDataString)
     {
         if (!_kinksters.TryGetKinkster(target, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
-        _logger.LogTrace($"Received Light IPC Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
-        kinkster.ApplyLatestAppearance(newData);
-    }
-
-    public void NewGlamourerData(UserData target, string actorBase64)
-    {
-        if (!_kinksters.TryGetKinkster(target, out var kinkster))
-            throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
-        _logger.LogTrace($"Received Glamourer IPC Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
-        kinkster.ApplyLatestActorState(actorBase64);
-    }
-
-    public void NewManipulations(UserData target, string modManipBase64)
-    {
-        if (!_kinksters.TryGetKinkster(target, out var kinkster))
-            throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
-        _logger.LogTrace($"Received ModManipulations IPC Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
-        kinkster.ApplyLatestModManips(modManipBase64);
+        _logger.LogTrace($"Received {type} IPC Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
+        kinkster.ApplyLatestAppearance(type, newDataString);
     }
 
     public void NewMoodlesData(UserData targetUser, UserData enactor, CharaMoodleData newData)

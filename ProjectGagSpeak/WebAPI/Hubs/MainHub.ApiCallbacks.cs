@@ -155,25 +155,10 @@ public partial class MainHub
         return Task.CompletedTask;
     }
 
-    public Task Callback_SetKinksterIpcLight(KinksterIpcDataLight dto)
+    public Task Callback_SetKinksterIpcSingle(KinksterIpcSingle dto)
     {
-        Logger.LogDebug($"Callback_SetKinksterIpcLight: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        _kinksterListener.NewAppearanceData(dto.User, dto.NewData);
-        return Task.CompletedTask;
-    }
-
-    // This should never be called atm.
-    public Task Callback_SetKinksterIpcManipulations(KinksterIpcManipulations dto)
-    {
-        Logger.LogDebug($"Callback_SetKinksterIpcManipulations: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        _kinksterListener.NewManipulations(dto.User, dto.ModManipulations);
-        return Task.CompletedTask;
-    }
-
-    public Task Callback_SetKinksterIpcGlamourer(KinksterIpcGlamourer dto)
-    {
-        Logger.LogDebug($"Callback_SetKinksterIpcGlamourer: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        _kinksterListener.NewGlamourerData(dto.User, dto.ActorBase64);
+        Logger.LogDebug($"Callback_SetKinksterIpcSingle: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        _kinksterListener.NewAppearanceData(dto.User, dto.Type, dto.NewData);
         return Task.CompletedTask;
     }
     #endregion KinksterSync
@@ -884,22 +869,10 @@ public partial class MainHub
         _hubConnection!.On(nameof(Callback_SetKinksterIpcData), act);
     }
 
-    public void OnSetKinksterIpcLight(Action<KinksterIpcDataLight> act)
+    public void OnSetKinksterIpcSingle(Action<KinksterIpcSingle> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(OnSetKinksterIpcLight), act);
-    }
-
-    public void OnSetKinksterIpcManipulations(Action<KinksterIpcManipulations> act)
-    {
-        if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_SetKinksterIpcManipulations), act);
-    }
-
-    public void OnSetKinksterIpcGlamourer(Action<KinksterIpcGlamourer> act)
-    {
-        if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_SetKinksterIpcGlamourer), act);
+        _hubConnection!.On(nameof(Callback_SetKinksterIpcSingle), act);
     }
 
     public void OnSetKinksterMoodlesFull(Action<KinksterMoodlesDataFull> act)

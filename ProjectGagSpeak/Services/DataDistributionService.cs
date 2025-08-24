@@ -166,7 +166,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
 
         Logger.LogDebug($"Pushing Appearance and Moodles data to ({string.Join(", ", visibleCharas.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
         await DistributeFullMoodlesData(visibleCharas);
-        await _kinksterSync.SyncAppearanceToKinksters(visibleCharas);
+        await _kinksterSync.SyncAppearanceToNewKinksters(visibleCharas);
     }
 
     /// <summary>

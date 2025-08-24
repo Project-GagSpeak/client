@@ -437,22 +437,10 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushIpcData), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserPushIpcDataLight(PushIpcLight dto)
+    public async Task<HubResponse> UserPushIpcDataSingle(PushIpcSingle dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushIpcDataLight), dto).ConfigureAwait(false);
-    }
-
-    public async Task<HubResponse> UserPushIpcModManips(PushIpcModManips dto)
-    {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushIpcModManips), dto).ConfigureAwait(false);
-    }
-
-    public async Task<HubResponse> UserPushIpcGlamourer(PushIpcGlamourer dto)
-    {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushIpcGlamourer), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushIpcDataSingle), dto).ConfigureAwait(false);
     }
 
     public async Task<HubResponse> UserPushMoodlesFull(PushMoodlesFull dto)

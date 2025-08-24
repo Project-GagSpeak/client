@@ -5,6 +5,7 @@ using GagSpeak.Kinksters.Factories;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Network;
 using Microsoft.Extensions.Hosting;
@@ -143,11 +144,9 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
     public async Task ApplyAppearanceData(CharaIpcDataFull newData)
     {
         // if the player is not visible or has a non-valid address, return.
-        if (PairAddress == nint.Zero)
-            return;
+        if (PairAddress == nint.Zero) return;
         // if the ipc data is null, create a new object for it.
-        if (_appearance is null)
-            _appearance = new CharaIpcDataFull();
+        if (_appearance is null) _appearance = new CharaIpcDataFull();
 
         // may need to process a cancellation token here if overlap occurs, but it shouldnt due to updates being 1s apart.
 
@@ -163,15 +162,34 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
         Logger.LogInformation($"Updated appearance for Kinkster: {PlayerName} ({OnlineUser.User.AliasOrUID})", LoggerType.GameObjects);
     }
 
-    public void UpdateGlamour(string newActorState)
+    public async Task ApplyAppearanceSingle(DataSyncKind type, string newDataString)
     {
-        if (PairAddress == nint.Zero || PlayerNameWithWorld.Length == 0)
-            return;
-        Logger.LogDebug($"Updating glamour for Kinkster: {PlayerName} ({OnlineUser.User.AliasOrUID})", LoggerType.PairHandlers);
-        _ipc.Glamourer.ApplyKinksterGlamour(this, newActorState).ConfigureAwait(false);
-        // Create the ipc data cache if null (this should never happen)
-        if (_appearance is null) _appearance = new CharaIpcDataFull();
-        _appearance.GlamourerBase64 = newActorState;
+        if (PairAddress == nint.Zero) return;
+        if (_appearance is null) return;
+        // apply the new data.
+        switch (type)
+        {
+            case DataSyncKind.Glamourer when !newDataString.Equals(_appearance.GlamourerBase64):
+                await _ipc.Glamourer.ApplyKinksterGlamour(this, newDataString).ConfigureAwait(false);
+                break;
+            case DataSyncKind.CPlus when !newDataString.Equals(_appearance.CustomizeProfile):
+                _activeCustomize = await _ipc.CustomizePlus.SetKinksterProfile(this, newDataString).ConfigureAwait(false);
+                break;
+            case DataSyncKind.Heels when !newDataString.Equals(_appearance.HeelsOffset):
+                await _ipc.Heels.SetKinksterOffset(this, newDataString).ConfigureAwait(false);
+                break;
+            case DataSyncKind.Honorific when !newDataString.Equals(_appearance.HonorificTitle):
+                await _ipc.Honorific.SetTitleAsync(this, newDataString).ConfigureAwait(false);
+                break;
+            case DataSyncKind.PetNames when !newDataString.Equals(_appearance.PetNicknames):
+                await _ipc.PetNames.SetKinksterPetNames(this, newDataString).ConfigureAwait(false);
+                break;
+            default:
+                return;
+        }
+        // update the appearance data.
+        Logger.LogDebug($"Updated {type} for Kinkster: {PlayerName} ({OnlineUser.User.AliasOrUID})", LoggerType.PairHandlers);
+        _appearance.UpdateNewData(type, newDataString);
     }
 
     public void UpdateMoodles(string newDataString)
@@ -182,16 +200,6 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
         _ipc.Moodles.SetStatus(PlayerNameWithWorld, newDataString).ConfigureAwait(false);
         // update the string.
         _statusManagerStr = newDataString;
-    }
-
-    // WIP:
-    public void UpdateModManips(string modManipsString)
-    {
-        if (PairAddress == nint.Zero || PlayerNameWithWorld.Length == 0)
-            return;
-        Logger.LogDebug($"Updating modmanips for Kinkster: {PlayerName} ({OnlineUser.User.AliasOrUID})", LoggerType.PairHandlers);
-        // _ipc.ModManips.ApplyModManips(this, modManipsString).ConfigureAwait(false);
-        // update the string.
     }
 
     private async Task ApplyUpdatedAppearance(CharaIpcDataFull newData, bool force = false)
