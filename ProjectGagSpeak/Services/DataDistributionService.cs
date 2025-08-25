@@ -80,19 +80,23 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => DelayedFrameworkOnUpdate());
 
         // Kinkster Pair management.
-        Mediator.Subscribe<PairWentOnlineMessage>(this, arg => 
+        Mediator.Subscribe<PairWentOnlineMessage>(this, arg =>
         {
             if (!MainHub.IsConnectionDataSynced)
                 return;
             _newOnlineKinksters.Add(arg.UserData);
         });
         Mediator.Subscribe<PairHandlerVisibleMessage>(this, msg => _newVisibleKinksters.Add(msg.Player.OnlineUser.User));
-       
+
         // Visible Data Updaters
         Mediator.Subscribe<MoodlesApplyStatusToPair>(this, msg => ApplyMoodleToKinkster(msg.StatusDto).ConfigureAwait(false));
 
         // Online Data Updaters
-        Mediator.Subscribe<MainHubConnectedMessage>(this, _ => PushCompositeData(_kinksters.GetOnlineUserDatas()).ConfigureAwait(false));
+        Mediator.Subscribe<MainHubConnectedMessage>(this, _ =>
+        {
+            _newVisibleKinksters.UnionWith(_kinksters.GetVisibleUsers());
+            PushCompositeData(_kinksters.GetOnlineUserDatas()).ConfigureAwait(false);
+        });
         Mediator.Subscribe<ActiveCollarChangedMessage>(this, arg => PushActiveCollarUpdate(arg).ConfigureAwait(false));
         Mediator.Subscribe<AliasGlobalUpdateMessage>(this, arg => DistributeDataGlobalAlias(arg).ConfigureAwait(false));
         Mediator.Subscribe<AliasPairUpdateMessage>(this, arg => DistributeDataUniqueAlias(arg).ConfigureAwait(false));
@@ -237,6 +241,15 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         await _hub.UserPushMoodlesPresets(new(visChara, MoodleCache.IpcData.PresetList.ToList()));
     }
 
+    private async Task ApplyMoodleToKinkster(MoodlesApplierByStatus dto)
+    {
+        Logger.LogDebug($"Pushing ApplyMoodlesByStatus to: {dto.Target.AliasOrUID}", LoggerType.ApiCore);
+        if (await _hub.UserApplyMoodlesByStatus(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+            Logger.LogError($"Failed to push ApplyMoodlesByStatus to server. [{res.ErrorCode}]");
+        else
+            Logger.LogDebug($"Successfully pushed ApplyMoodlesByStatus to the server", LoggerType.ApiCore);
+    }
+
     private CharaLightStorageData GetLatestLightStorage()
     {
         return new CharaLightStorageData()
@@ -312,15 +325,6 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         {
             _updateSlim.Release();
         }
-    }
-
-    private async Task ApplyMoodleToKinkster(MoodlesApplierByStatus dto)
-    {
-        Logger.LogDebug($"Pushing ApplyMoodlesByStatus to: {dto.Target.AliasOrUID}", LoggerType.ApiCore);
-        if (await _hub.UserApplyMoodlesByStatus(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
-            Logger.LogError($"Failed to push ApplyMoodlesByStatus to server. [{res.ErrorCode}]");
-        else
-            Logger.LogDebug($"Successfully pushed ApplyMoodlesByStatus to the server", LoggerType.ApiCore);
     }
 
     private async Task PushCompositeData(List<UserData> newOnlinekinksters)
