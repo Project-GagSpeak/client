@@ -100,17 +100,16 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
             // safely cancel any running vsual application tasks.
             _appCTS.SafeCancelDispose();
             _appCTS = null;
-            // safely dispose of the kinkster game object.
-            _gameObject?.Dispose();
-            _gameObject = null;
-
             // if the pair was a visible kinkster, publish their disposal.
             if (!string.IsNullOrEmpty(name))
                 Mediator.Publish(new EventMessage(new(name, OnlineUser.User.UID, InteractionType.VisibilityChange, "Disposing Kinkster Handler")));
 
             // if the hosted service lifetime is ending, return
             if (_lifetime.ApplicationStopping.IsCancellationRequested)
+            {
+                _ipc.Glamourer.ReleaseKinkster(this).ConfigureAwait(false);
                 return;
+            }
 
             // If not zoning, and the player is being disposed, this kinkster has left the zone, and we need to invalidate them.
             if (!PlayerData.IsZoning && !string.IsNullOrEmpty(name))
@@ -121,13 +120,11 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
                 {
                     // Glamourer is special as it will not revert the data if they are not present.
                     Logger.LogDebug($"Reverting Glamour to Vanilla state for Kinkster: {name}", LoggerType.PairHandlers);
-                    _ipc.Glamourer.ReleaseKinksterByName(name).GetAwaiter().GetResult();
+                    _ipc.Glamourer.ReleaseKinksterByName(name).ConfigureAwait(false);
                 }
                 // otherwise, revert ALL data if they are visible!
                 else
                 {
-                    using var cts = new CancellationTokenSource();
-                    cts.CancelAfter(TimeSpan.FromSeconds(30));
                     Logger.LogInformation($"Is Kinkster IPCData null? {_appearance is null}", LoggerType.PairHandlers);
                     // catch inside inner exception just incase.
                     RevertAppearanceData(name).GetAwaiter().GetResult();
@@ -136,6 +133,9 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
         });
 
         // Once over, null the data.
+        // safely dispose of the kinkster game object.
+        _gameObject?.Dispose();
+        _gameObject = null;
         PlayerName = null;
         _appearance = null;
         Logger.LogDebug($"Disposal complete for Kinkster: {name} ({OnlineUser})", LoggerType.PairHandlers);

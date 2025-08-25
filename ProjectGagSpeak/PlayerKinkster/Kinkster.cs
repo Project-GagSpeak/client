@@ -554,24 +554,26 @@ public class Kinkster : IComparable<Kinkster>
     }
 
     /// <summary> Marks the pair as offline. </summary>
-    public void MarkOffline(bool showLog = true)
+    public void MarkOffline(bool wait = true, bool showLog = true)
     {
         try
         {
-            _creationSemaphore.Wait();
-            _OnlineKinkster = null;
+            if (wait)
+                _creationSemaphore.Wait();
+            LastAppearanceData = new CharaIpcDataFull();
             LastMoodlesData = new CharaMoodleData();
-            // set the pair handler player to the cached player, to safely null the CachedPlayer object.
             var player = CachedPlayer;
             CachedPlayer = null;
             player?.Dispose();
+            _OnlineKinkster = null;
 
             if(showLog)
                 _logger.LogTrace($"Marked {UserData.UID} as offline", LoggerType.PairManagement);
         }
         finally
         {
-            _creationSemaphore.Release();
+            if (wait)
+                _creationSemaphore.Release();
         }
     }
 }

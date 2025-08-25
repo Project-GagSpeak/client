@@ -23,7 +23,8 @@ public sealed class RestrictionGagCombo : CkFilterComboCache<GarblerRestriction>
         SearchByParts = true;
     }
 
-    protected override string ToString(GarblerRestriction obj) => obj.GagType.GagName();
+    protected override string ToString(GarblerRestriction obj) 
+        => obj.GagType.GagName();
 
     protected override int UpdateCurrentSelected(int currentSelected)
     {

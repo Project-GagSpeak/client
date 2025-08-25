@@ -180,10 +180,10 @@ public sealed class IpcCallerGlamourer : IIpcCaller
         {
             await Svc.Framework.RunOnFrameworkThread(() =>
             {
-                _logger.LogDebug($"Unlocking Kinkster {kinkster.PlayerName}'s Glamourer data!", LoggerType.IpcGlamourer);
-                UnlockKinkster.Invoke(visibleObj.ObjectIndex, GAGSPEAK_LOCK);
                 _logger.LogDebug($"Reverting Kinkster {kinkster.PlayerName}'s Glamourer data!", LoggerType.IpcGlamourer);
                 RevertKinkster.Invoke(visibleObj.ObjectIndex, GAGSPEAK_LOCK);
+                _logger.LogDebug($"Unlocking Kinkster {kinkster.PlayerName}'s Glamourer data!", LoggerType.IpcGlamourer);
+                UnlockKinkster.Invoke(visibleObj.ObjectIndex, GAGSPEAK_LOCK);
                 // maybe some redraw or refresh i dont know.
             });
         });
@@ -198,10 +198,10 @@ public sealed class IpcCallerGlamourer : IIpcCaller
         {
             await Svc.Framework.RunOnFrameworkThread(() =>
             {
-                _logger.LogDebug($"Unlocking Kinkster {kinksterName}'s Glamourer data!", LoggerType.IpcGlamourer);
-                UnlockKinksterByName.Invoke(kinksterName, GAGSPEAK_LOCK);
                 _logger.LogDebug($"Reverting Kinkster {kinksterName}'s Glamourer data!", LoggerType.IpcGlamourer);
                 RevertKinksterByName.Invoke(kinksterName, GAGSPEAK_LOCK);
+                _logger.LogDebug($"Unlocking Kinkster {kinksterName}'s Glamourer data!", LoggerType.IpcGlamourer);
+                UnlockKinksterByName.Invoke(kinksterName, GAGSPEAK_LOCK);
             }).ConfigureAwait(false);
         });
     }

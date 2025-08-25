@@ -77,12 +77,14 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
     private GetCollection                       GetActiveCollection;   // Obtains the client's currently active collection. (may not need this)
     private GetPlayerMetaManipulations          GetMetaManipulations;  // Obtains the client's mod metadata manipulations.
     private GetAvailableModSettings             GetModSettingsAll;     // Obtains _ALL_ the options for a given mod.
-    private GetCurrentModSettings               GetModSettingsSelected; // Obtains the currently chosen options for a mod.
+    private GetCurrentModSettings               GetModSettingsSelected;// Obtains the currently chosen options for a mod.
+    private GetGameObjectResourcePaths          GetResourcePaths;      // Gets the resource paths for a game object.
+
+    private SetCollectionForObject              SetCollectionForObject;// Defines a collection placed on a spesific object.
     private SetTemporaryModSettingsPlayer       SetOrUpdateTempMod;    // Temporarily sets and locks a Mod with defined settings. Can be updated.
     private RemoveTemporaryModSettingsPlayer    RemoveTempMod;         // Removes a temporary mod we set. Used for cleanup.
     private RemoveAllTemporaryModSettingsPlayer RemoveAllTempMod;      // Removes all temporary mods we set. Used for cleanup.
     private ResolvePlayerPathsAsync             ResolvedClientModPaths;// Resolves the mod paths for the given player.
-    private GetGameObjectResourcePaths          GetResourcePaths;      // Gets the resource paths for a game object.
     public IpcCallerPenumbra(ILogger<IpcCallerPenumbra> logger, GagspeakMediator mediator, OnFrameworkService frameworkUtils)
         : base(logger, mediator)
     {
@@ -111,11 +113,13 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
         GetMetaManipulations = new GetPlayerMetaManipulations(Svc.PluginInterface);
         GetModSettingsAll = new GetAvailableModSettings(Svc.PluginInterface);
         GetModSettingsSelected = new GetCurrentModSettings(Svc.PluginInterface);
+        GetResourcePaths = new GetGameObjectResourcePaths(Svc.PluginInterface);
+
+        SetCollectionForObject = new SetCollectionForObject(Svc.PluginInterface);
         SetOrUpdateTempMod = new SetTemporaryModSettingsPlayer(Svc.PluginInterface);
         RemoveTempMod = new RemoveTemporaryModSettingsPlayer(Svc.PluginInterface);
         RemoveAllTempMod = new RemoveAllTemporaryModSettingsPlayer(Svc.PluginInterface);
         ResolvedClientModPaths = new ResolvePlayerPathsAsync(Svc.PluginInterface);
-        GetResourcePaths = new GetGameObjectResourcePaths(Svc.PluginInterface);
 
         CheckAPI();
         CheckModDirectory();
@@ -189,6 +193,21 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
         TooltipSubscriber.Dispose();
         ItemClickedSubscriber.Dispose();
         OnRedrawFinished.Dispose();
+    }
+
+    public void AssignTargetTheClientCollection(ushort objectIdx)
+    {
+        // grab the current collection.
+        var currentCollection = GetActiveCollection.Invoke(ApiCollectionType.Current);
+        if (!currentCollection.HasValue)
+            return;
+        // assign that collection to the object index.
+        var result = SetCollectionForObject.Invoke(objectIdx, currentCollection.Value.Id, true, false);
+        if (result.Item1 is not PenumbraApiEc.Success)
+            Logger.LogError($"Failed to assign collection {currentCollection.Value.Name} to object {objectIdx}, Penumbra returned {result.Item1}");
+
+        Logger.LogInformation($"Assigned collection {currentCollection.Value.Name} to object {objectIdx}.");
+        Logger.LogDebug($"Old Collection was: {(result.OldCollection.HasValue ? result.OldCollection.Value.Name : "")}");
     }
 
     /// <summary> Attempts to perform a manual redraw on the client. </summary>

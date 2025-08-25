@@ -38,7 +38,7 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
         {
             if (PlayerData.IsZoning)
                 return;
-            Logger.LogInformation("Client GlamourState was updated, syncing with Kinksters!");
+            Logger.LogInformation("Client GlamourState was updated!");
             AddPendingSync(DataSyncKind.Glamourer);
         });
 
@@ -46,7 +46,7 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
         {
             if (PlayerData.IsZoning || msg.Address == IntPtr.Zero)
                 return;
-            Logger.LogInformation($"Your C+ profile changed to {msg.Id}, syncing to Kinksters!");
+            Logger.LogInformation($"Your C+ profile changed to {msg.Id}!");
             AddPendingSync(DataSyncKind.CPlus);
         });
 
@@ -54,7 +54,7 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
         {
             if (PlayerData.IsZoning)
                 return;
-            Logger.LogInformation("Your heels offset changed, syncing with Kinksters!");
+            Logger.LogInformation("Your heels offset changed!");
             AddPendingSync(DataSyncKind.Heels);
         });
 
@@ -65,7 +65,7 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
             // maybe some comparison here, but also could move it elsewhere.
             if (!_lastHonorific.Equals(msg.NewTitle, StringComparison.Ordinal))
                 return;
-            Logger.LogInformation("Client HonorificTitle was updated, syncing with Kinksters!");
+            Logger.LogInformation("Client HonorificTitle was updated!");
             AddPendingSync(DataSyncKind.Honorific);
         });
 
@@ -76,7 +76,7 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
             // maybe some comparison here, but also could move it elsewhere.
             if (!_lastPetNames.Equals(msg.NicknamesData, StringComparison.Ordinal))
                 return;
-            Logger.LogInformation("Client PetNames was updated, syncing with Kinksters!");
+            Logger.LogInformation("Client PetNames was updated!");
             AddPendingSync(DataSyncKind.PetNames);
         });
 
@@ -120,20 +120,17 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
             {
                 // await for the processed debounce time, or until cancelled.
                 await Task.Delay(GetDebounceTime(), _syncUpdateCTS.Token).ConfigureAwait(false);
-
-                Logger.LogInformation($"Processing KinksterSync for changes: {_pendingTypes}");
                 // after the delay is finished, process the update, if there is anyone to send it to.
                 var toUpdate = _kinksters.GetVisibleUsers();
                 if (toUpdate.Count == 0)
                 {
-                    Logger.LogDebug("No visible Kinksters to update.");
                     _pendingTypes = DataSyncKind.None;
                     return;
                 }
 
+                Logger.LogInformation($"KinksterSync for changes: {_pendingTypes}");
                 try
                 {
-                    Logger.LogDebug($"Found {toUpdate.Count} visible Kinksters to update.");
                     // Only one update type occured.
                     if (FlagEx.IsSingleFlagSet((byte)_pendingTypes))
                         await SyncSingleToKinksters(toUpdate, _pendingTypes).ConfigureAwait(false);
@@ -152,13 +149,12 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
                 finally
                 {
                     _pendingTypes = DataSyncKind.None;
-                    Logger.LogDebug("KinksterSync complete!");
                 }
             }, _syncUpdateCTS.Token);
         }
     }
 
-    private async Task SyncSingleToKinksters(List<UserData> visibleKinksters, DataSyncKind type)
+    private async Task SyncSingleToKinksters(List<UserData> toUpdate, DataSyncKind type)
     {
         string? newData = type switch
         {
@@ -171,12 +167,15 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
         };
         // do not update if the same data.
         if (newData is null)
-            return;      
-        Logger.LogDebug($"Syncing {type} to visible kinksters");
-        await _hub.UserPushIpcDataSingle(new(visibleKinksters, type, newData)).ConfigureAwait(false);
+        {
+            Logger.LogDebug($"Aborting send for {type} (no different).");
+            return;
+        }
+        Logger.LogDebug($"Syncing {type} to {toUpdate.Count} kinksters");
+        await _hub.UserPushIpcDataSingle(new(toUpdate, type, newData)).ConfigureAwait(false);
     }
 
-    private async Task SyncNewDataToKinksters(List<UserData> visibleKinksters)
+    private async Task SyncNewDataToKinksters(List<UserData> toUpdate)
     {
         // gather all the data at once.
         var result = await Task.WhenAll(GetNewGlamourData(), GetNewCPlusData(), GetNewHeelsData(), GetNewHonorificData()).ConfigureAwait(false);
@@ -192,10 +191,13 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
         };
         // if nothing changed, return.
         if (toSend.IsEmpty())
+        {
+            Logger.LogDebug($"Aborting send for (no different).");
             return;
+        }
         // push it out.
-        Logger.LogDebug("Compiling Full Data to Kinksters");
-        await _hub.UserPushIpcData(new(visibleKinksters, toSend)).ConfigureAwait(false);
+        Logger.LogDebug($"Sending Appearance update to {toUpdate.Count} Kinksters");
+        await _hub.UserPushIpcData(new(toUpdate, toSend)).ConfigureAwait(false);
     }
 
     // forced update call.

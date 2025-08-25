@@ -44,6 +44,10 @@ public sealed class PairGagCombo : CkFilterComboButton<KinksterGag>
         return ret;
     }
 
+
+    protected override string ToString(KinksterGag obj)
+        => obj.Gag.GagName();
+
     protected override bool DisableCondition()
         => Current is null || Current.Gag is GagType.None || !_kinksterRef.PairPerms.ApplyGags;
 

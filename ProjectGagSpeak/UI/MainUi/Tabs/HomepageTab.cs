@@ -23,14 +23,16 @@ public class HomepageTab
 {
     private readonly ILogger<HomepageTab> _logger;
     private readonly GagspeakMediator _mediator;
+    private readonly IpcManager _ipc;
 
     private int HoveredItemIndex = -1;
     private readonly List<(string Label, FontAwesomeIcon Icon, Action OnClick)> Modules;
 
-    public HomepageTab(ILogger<HomepageTab> logger, GagspeakMediator mediator)
+    public HomepageTab(ILogger<HomepageTab> logger, GagspeakMediator mediator, IpcManager ipc)
     {
         _logger = logger;
         _mediator = mediator;
+        _ipc = ipc;
 
         // Define all module information in a single place
         Modules = new List<(string, FontAwesomeIcon, Action)>
@@ -76,6 +78,18 @@ public class HomepageTab
         // if itemGotHovered is false, reset the index.
         if (!itemGotHovered)
             HoveredItemIndex = -1;
+
+        if (ImGui.Button("Print Resolved Paths"))
+            PrintPaths();
+    }
+
+    private void PrintPaths()
+    {
+        if (Svc.Targets.Target is not { } target)
+            return;
+
+        // if target is valid get their game object and assign it.
+        _ipc.Penumbra.AssignTargetTheClientCollection(target.ObjectIndex);
     }
 
     private bool HomepageSelectable(string label, FontAwesomeIcon icon, Vector2 region, bool hovered = false)

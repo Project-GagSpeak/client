@@ -284,7 +284,10 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     {
         Logger.LogDebug("Disposing all Pairs", LoggerType.PairManagement);
         var pairCount = _allClientPairs.Count;
-        Parallel.ForEach(_allClientPairs, item => { item.Value.MarkOffline(false); });
+        Parallel.ForEach(_allClientPairs, item => 
+        {
+            item.Value.MarkOffline(false, false);
+        });
         Logger.LogDebug($"Marked {pairCount} kinksters as offline", LoggerType.PairManagement);
         RecreateLazy();
     }

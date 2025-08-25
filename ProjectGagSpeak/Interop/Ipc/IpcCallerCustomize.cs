@@ -63,9 +63,9 @@ public sealed class IpcCallerCustomize : IIpcCaller
     {
         if (!APIAvailable) return;
         // get obj ref for address and publish change.
-        Svc.Framework.RunOnFrameworkThread(() =>
+        Generic.Safe(() =>
         {
-            if (Svc.Objects.CreateObjectReference(objIdx) is { } obj)
+            if (Svc.Objects[objIdx] is { } obj)
                 _mediator.Publish(new CustomizeProfileChange(obj.Address, id));
         });
     }
