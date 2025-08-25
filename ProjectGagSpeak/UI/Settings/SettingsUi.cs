@@ -80,42 +80,45 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
     protected override void DrawInternal()
     {
-        var check = FAI.Check;
-        var cross = FAI.SquareXmark;
-        CkGui.ColorText(GSLoc.Settings.OptionalPlugins, ImGuiColors.ParsedGold);
+        ImGui.Text(GSLoc.Settings.OptionalPlugins);
 
-        CkGui.TextInline("Penumbra");
         ImGui.SameLine();
-        CkGui.IconText(IpcCallerPenumbra.APIAvailable ? check : cross, CkGui.GetBoolColor(IpcCallerPenumbra.APIAvailable));
+        CkGui.ColorTextBool("Penumbra", IpcCallerPenumbra.APIAvailable);
         CkGui.AttachToolTip(IpcCallerPenumbra.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
 
-        CkGui.TextInline("Glamourer", false);
         ImGui.SameLine();
-        CkGui.IconText(IpcCallerGlamourer.APIAvailable ? check : cross, CkGui.GetBoolColor(IpcCallerGlamourer.APIAvailable));
+        CkGui.ColorTextBool("Glamourer", IpcCallerGlamourer.APIAvailable);
         CkGui.AttachToolTip(IpcCallerGlamourer.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
 
-        CkGui.TextInline("Customize +", false);
         ImGui.SameLine();
-        CkGui.IconText(IpcCallerCustomize.APIAvailable ? check : cross, CkGui.GetBoolColor(IpcCallerCustomize.APIAvailable));
+        CkGui.ColorTextBool("Customize+", IpcCallerCustomize.APIAvailable);
         CkGui.AttachToolTip(IpcCallerCustomize.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
 
-        CkGui.TextInline("Moodles", false);
         ImGui.SameLine();
-        CkGui.IconText(IpcCallerMoodles.APIAvailable ? check : cross, CkGui.GetBoolColor(IpcCallerMoodles.APIAvailable));
+        CkGui.ColorTextBool("Moodles", IpcCallerMoodles.APIAvailable);
         CkGui.AttachToolTip(IpcCallerMoodles.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
 
-        CkGui.TextInline("Lifestream", false);
         ImGui.SameLine();
-        CkGui.IconText(IpcCallerLifestream.APIAvailable ? check : cross, CkGui.GetBoolColor(IpcCallerLifestream.APIAvailable));
+        CkGui.ColorTextBool("Heels", IpcCallerHeels.APIAvailable);
+        CkGui.AttachToolTip(IpcCallerHeels.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
+
+        ImGui.SameLine();
+        CkGui.ColorTextBool("Lifestream", IpcCallerLifestream.APIAvailable);
         CkGui.AttachToolTip(IpcCallerLifestream.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
 
-        CkGui.TextInline("Intiface", false);
         ImGui.SameLine();
-        CkGui.IconText(IpcCallerIntiface.APIAvailable ? check : cross, CkGui.GetBoolColor(IpcCallerIntiface.APIAvailable));
+        CkGui.ColorTextBool("Honorific", IpcCallerHonorific.APIAvailable);
+        CkGui.AttachToolTip(IpcCallerHonorific.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
+
+        ImGui.SameLine();
+        CkGui.ColorTextBool("PetNames", IpcCallerPetNames.APIAvailable);
+        CkGui.AttachToolTip(IpcCallerPetNames.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
+
+        ImGui.SameLine();
+        CkGui.ColorTextBool("Intiface", IpcCallerIntiface.APIAvailable);
         CkGui.AttachToolTip(IpcCallerIntiface.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
 
-
-        CkGui.ColorText(GSLoc.Settings.AccountClaimText, ImGuiColors.ParsedGold);
+        ImGui.Text(GSLoc.Settings.AccountClaimText);
 
         ImGui.SameLine();
         if (ImUtf8.SmallButton("CK Discord"))

@@ -39,6 +39,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
     private readonly CursedLootManager _cursedLoot;
     private readonly CacheStateManager _cacheManager;
     private readonly GlamourCache _glamourCache;
+    private readonly CustomizePlusCache _profileCache;
     private readonly ModCache _modCache;
     private readonly MoodleCache _moodleCache;
     private readonly TraitsCache _traitsCache;
@@ -61,6 +62,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         CursedLootManager cursedLoot,
         CacheStateManager cacheManager,
         GlamourCache glamourCache,
+        CustomizePlusCache profileCache,
         ModCache modCache,
         MoodleCache moodleCache,
         TraitsCache traitsCache,
@@ -82,6 +84,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         _cursedLoot = cursedLoot;
         _cacheManager = cacheManager;
         _glamourCache = glamourCache;
+        _profileCache = profileCache;
         _modCache = modCache;
         _moodleCache = moodleCache;
         _traitsCache = traitsCache;
@@ -112,6 +115,9 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
 
         if (ImGui.CollapsingHeader("Unbound Cache Queue"))
             _glamourCache.DrawUnboundCacheStates(_iconTextures);
+
+        if (ImGui.CollapsingHeader("CPlus State"))
+            _profileCache.DrawCacheTable();
 
         ImGui.Separator();
         if (ImGui.CollapsingHeader("Mods Cache"))

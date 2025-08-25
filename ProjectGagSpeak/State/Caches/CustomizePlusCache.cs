@@ -1,4 +1,10 @@
+using CkCommons.Gui;
+using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility.Raii;
+using FFXIVClientStructs.FFXIV.Common.Lua;
 using GagspeakAPI.Data.Struct;
+using OtterGui;
 
 namespace GagSpeak.State.Caches;
 
@@ -37,6 +43,12 @@ public sealed class CustomizePlusCache
     {
         if (profile.Equals(CustomizeProfile.Empty))
             return false;
+
+        // try and grab the profile from the profile list first, and if not present, add the stored one.
+        var toAdd = _cPlusProfileList.FirstOrDefault(x => x.ProfileGuid == profile.ProfileGuid);
+        if (!toAdd.Equals(CustomizeProfile.Empty))
+            profile = toAdd;
+
 
         if (!_profiles.TryAdd(combinedKey, profile))
         {
@@ -88,6 +100,57 @@ public sealed class CustomizePlusCache
 
     #region DebugHelper
     public void DrawCacheTable()
-    { }
+    {
+        using var display = ImRaii.Group();
+
+        var iconSize = new Vector2(ImGui.GetFrameHeight());
+        using (var node = ImRaii.TreeNode("Individual C+ Listings"))
+        {
+            if (node)
+            {
+                using (var table = ImRaii.Table("CPlusCache", 4, ImGuiTableFlags.BordersInner | ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.RowBg))
+                {
+                    if (!table)
+                        return;
+
+                    ImGui.TableSetupColumn("Combined Key");
+                    ImGui.TableSetupColumn("Name");
+                    ImGui.TableSetupColumn("Priority");
+                    ImGui.TableSetupColumn("ID");
+                    ImGui.TableHeadersRow();
+
+                    foreach (var (key, value) in _profiles)
+                    {
+                        ImGuiUtil.DrawFrameColumn($"{key.Manager} / {key.LayerIndex}");
+                        ImGuiUtil.DrawFrameColumn(string.IsNullOrEmpty(value.ProfileName) ? "<No Label Set>" : value.ProfileName);
+                        ImGuiUtil.DrawFrameColumn(value.Priority.ToString());
+                        ImGuiUtil.DrawFrameColumn(value.ProfileGuid.ToString());
+                    }
+                }
+            }
+        }
+
+        CkGui.ColorText("Final Profile Cache", ImGuiColors.DalamudRed);
+        ImGui.Separator();
+        using (var table = ImRaii.Table("FinalProfileCache", 4, ImGuiTableFlags.BordersInner | ImGuiTableFlags.RowBg))
+        {
+            if (!table)
+                return;
+
+            ImGui.TableSetupColumn("Name");
+            ImGui.TableSetupColumn("Priority");
+            ImGui.TableSetupColumn("ID");
+            ImGui.TableHeadersRow();
+
+            var final = _finalProfile;
+
+            if (final.ProfileGuid != Guid.Empty)
+            {
+                ImGuiUtil.DrawFrameColumn(string.IsNullOrEmpty(final.ProfileName) ? "<No Label Set>" : final.ProfileName);
+                ImGuiUtil.DrawFrameColumn(final.Priority.ToString());
+                ImGuiUtil.DrawFrameColumn(final.ProfileGuid.ToString());
+            }
+        }
+    }
     #endregion Debug Helper
 }

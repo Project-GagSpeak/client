@@ -97,6 +97,11 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
             Logger.LogDebug($"Adding {PlayerData.NameWithWorldInstanced} to tracked Nameplates", LoggerType.Gags);
             TrackedKinksters.TryAdd(PlayerData.NameWithWorldInstanced, false);
         }
+        else if (_gags.ServerGagData is { } data && data.IsGagged())
+        {
+            // do nothing, they are still gagged.
+            return;
+        }
         else
         {
             Logger.LogDebug($"Removing {PlayerData.NameWithWorldInstanced} to tracked Nameplates", LoggerType.Gags);
@@ -115,6 +120,11 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         {
             Logger.LogDebug($"Adding {k.PlayerNameWithWorld} to tracked Nameplates", LoggerType.Gags);
             TrackedKinksters.TryAdd(k.PlayerNameWithWorld, false);
+        }
+        else if (k.ActiveGags.IsGagged())
+        {
+            // do nothing, they are still gagged.
+            return;
         }
         else
         {

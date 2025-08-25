@@ -123,8 +123,6 @@ public sealed class ListItemDrawer
 
 
     // Referenced draw-list structure for progress bar from DevUI Bar's and Mare's Progress bar.
-    // https://github.com/Penumbra-Sync/client/blob/e35ed1b5297437cbcaa3dca5f5a089033c996020/MareSynchronos/UI/DownloadUi.cs#L138
-
     private const int Transparency = 100;
     private const int ProgressBarBorder = 1;
     private void DrawProgressForAchievement(AchievementBase achievement)
