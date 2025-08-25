@@ -1,4 +1,5 @@
 using CkCommons.Gui;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
@@ -7,10 +8,13 @@ using GagSpeak.Gui.Publications;
 using GagSpeak.Gui.Remote;
 using GagSpeak.Gui.Toybox;
 using GagSpeak.Gui.Wardrobe;
+using GagSpeak.Interop;
 using GagSpeak.Services;
 using GagSpeak.Services.Controller;
 using GagSpeak.Services.Mediator;
-using Dalamud.Bindings.ImGui;
+using System.Drawing.Printing;
+using System.IO;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -19,16 +23,14 @@ public class HomepageTab
 {
     private readonly ILogger<HomepageTab> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly AutoPromptController _temp;
 
     private int HoveredItemIndex = -1;
     private readonly List<(string Label, FontAwesomeIcon Icon, Action OnClick)> Modules;
 
-    public HomepageTab(ILogger<HomepageTab> logger, GagspeakMediator mediator, AutoPromptController temp)
+    public HomepageTab(ILogger<HomepageTab> logger, GagspeakMediator mediator)
     {
         _logger = logger;
         _mediator = mediator;
-        _temp = temp;
 
         // Define all module information in a single place
         Modules = new List<(string, FontAwesomeIcon, Action)>

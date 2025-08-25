@@ -212,7 +212,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
             if (!TrackedKinksters.TryGetValue(pnww, out var isSpeaking))
                 continue;
 
-            Logger.LogTrace($"Nameplate for {pnww} is {(isSpeaking ? "speaking" : "not speaking")}");
+            // Logger.LogTrace($"Nameplate for {pnww} is {(isSpeaking ? "speaking" : "not speaking")}");
             LoadTextureToAsset(nameIcon, nameContainer, isSpeaking);
             nameIcon->ToggleVisibility(true);
         }

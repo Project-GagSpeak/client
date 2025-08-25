@@ -180,13 +180,9 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
             {
                 var ticks = (ulong)newTime.Ticks;
                 var res = perm.ToPermValue();
-
                 // Assign the blocking task if allowed.
                 if (!res.name.IsNullOrEmpty() && res.type is PermissionType.PairPerm)
-                {
-                    Svc.Logger.Information($"Setting {dispName} {data.PermLabel} to {ticks} ticks for {kinkster.UserData.AliasOrUID}.");
                     UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, res.name, ticks));
-                }
             }
             _timespanCache.Remove(perm);
         }
@@ -211,20 +207,16 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
         // change to ckgui for disabled?
         if (ImGui.Button("##pair" + perm, new Vector2(buttonW, ImGui.GetFrameHeight())))
         {
-            Svc.Logger.Information($"Setting {dispName} {data.PermLabel} to {(current ? "false" : "true")} for {kinkster.UserData.AliasOrUID}.");
             var res = perm.ToPermValue();
             var newState = newStateFunc();
             if (newState is null || res.name.IsNullOrEmpty())
                 return;
-
-            Svc.Logger.Information($"Setting {dispName} {res.name} to {newState} for {kinkster.UserData.AliasOrUID}.");
-
             UiService.SetUITask(async () =>
             {
                 switch (res.type)
                 {
                     case PermissionType.Global: await _hub.ChangeOwnGlobalPerm(res.name, newState); break;
-                    case PermissionType.PairPerm: await PermissionHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.PairPerms, res.name, newState); break;
+                    case PermissionType.PairPerm: await PermissionHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, res.name, newState); break;
                     default: break;
                 }
             });
@@ -255,20 +247,16 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
         // change to ckgui for disabled?
         if (ImGui.Button("##pair" + perm, new Vector2(buttonW, ImGui.GetFrameHeight())))
         {
-            Svc.Logger.Information($"Setting {dispName} {data.PermLabel} to {(current ? "false" : "true")} for {kinkster.UserData.AliasOrUID}.");
             var res = perm.ToPermValue();
             var newState = newStateFunc();
             if (newState is null || res.name.IsNullOrEmpty())
                 return;
-
-            Svc.Logger.Information($"Setting {dispName} {res.name} to {newState} for {kinkster.UserData.AliasOrUID}.");
-
             UiService.SetUITask(async () =>
             {
                 switch (res.type)
                 {
                     case PermissionType.Global: await _hub.ChangeOwnGlobalPerm(res.name, newState); break;
-                    case PermissionType.PairPerm: await PermissionHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.PairPerms, res.name, newState); break;
+                    case PermissionType.PairPerm: await PermissionHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, res.name, newState); break;
                     case PermissionType.PairAccess: await PermissionHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.OwnPermAccess, res.name, newState); break;
                     default: break;
                 }
@@ -334,7 +322,6 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
                 if (!k.OwnPerms.InHardcore)
                     return true;
                 // otherwise, just turn it off. (temporary until safeword is embedded)
-                Svc.Logger.Information($"Setting Hardcore mode to false for {name} ({k.UserData.AliasOrUID}).");
                 UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.InHardcore), false));
             }
 
@@ -437,16 +424,12 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offsetX);
         if (ImGui.Button(yesButton))
         {
-            Svc.Logger.Information($"Entering Hardcore Mode for {name} ({k.UserData.AliasOrUID})");
             UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.InHardcore), !k.OwnPerms.InHardcore));
             ImGui.CloseCurrentPopup();
         }
         ImGui.SameLine();
         if (ImGui.Button(noButton))
-        {
-            Svc.Logger.Information($"Cancelled Hardcore Mode for {name} ({k.UserData.AliasOrUID})");
             ImGui.CloseCurrentPopup();
-        }
     }
 
     private void DrawHcBasicPerm(Kinkster k, string name, float width, SPPID perm, bool current)

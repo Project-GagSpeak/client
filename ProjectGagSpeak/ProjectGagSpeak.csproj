@@ -81,4 +81,7 @@
         <EmbeddedResource Include="Localization\jp.json" />
         <EmbeddedResource Include="Localization\fr.json" />
     </ItemGroup>
+    <ItemGroup>
+      <Folder Include="PlayerClient\ModData\" />
+    </ItemGroup>
 </Project>

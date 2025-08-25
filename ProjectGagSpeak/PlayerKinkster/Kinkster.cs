@@ -134,7 +134,6 @@ public class Kinkster : IComparable<Kinkster>
     #region Kinkster Appearance
     public void ApplyLatestAppearance(CharaIpcDataFull newAppearance)
     {
-        _logger.LogDebug($"Received new full appearance data for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
         _appearanceCTS = _appearanceCTS.SafeCancelRecreate();
         LastAppearanceData.UpdateNonNull(newAppearance);
         ApplyLatestInternal(_appearanceCTS, ApplyLastReceivedAppearance);
@@ -142,7 +141,6 @@ public class Kinkster : IComparable<Kinkster>
 
     public void ApplyLatestAppearance(DataSyncKind type, string newDataString)
     {
-        _logger.LogDebug($"Received new actor state data for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
         LastAppearanceData.UpdateNewData(type, newDataString);
         // if the cached player is null, do the wait, otherwise, do the direct.
         if (CachedPlayer is null)
@@ -158,7 +156,6 @@ public class Kinkster : IComparable<Kinkster>
 
     public void ApplyLatestMoodles(UserData enactor, string dataString, IEnumerable<MoodlesStatusInfo> dataInfo)
     {
-        _logger.LogDebug($"Received new moodle data for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
         _moodlesCTS = _moodlesCTS.SafeCancelRecreate();
         LastMoodlesData.UpdateDataInfo(dataString, dataInfo);
         ApplyLatestInternal(_moodlesCTS, ApplyLastReceivedMoodles);
@@ -208,7 +205,6 @@ public class Kinkster : IComparable<Kinkster>
     {
         if (CachedPlayer is null) return;
         if (LastAppearanceData is null) return;
-        _logger.LogDebug($"APPLYING NEW APPEARNACE DATA for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
         CachedPlayer.ApplyAppearanceData(LastAppearanceData).ConfigureAwait(false);
     }
 
@@ -216,7 +212,6 @@ public class Kinkster : IComparable<Kinkster>
     {
         if (CachedPlayer is null) return;
         if (LastMoodlesData is null) return;
-        _logger.LogDebug($"Applying Moodles for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
         CachedPlayer.UpdateMoodles(LastMoodlesData.DataString);
     }
     #endregion Kinkster Appearance

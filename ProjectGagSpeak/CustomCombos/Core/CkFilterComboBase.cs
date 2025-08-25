@@ -1,6 +1,6 @@
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
-using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Classes;
 using OtterGui.Raii;
@@ -110,12 +110,11 @@ public abstract class CkFilterComboBase<T>
             // Draws the filter and updates the scroll to the selected items.
             DrawFilter(currentSelected, width, customSearchBg);
             // grab the filter height for reference incase the list uses custom height.
-            var filterHeight = ImGui.GetFrameHeight();
 
-            // Draws the remaining list of items.
+            var resHeight = ImGui.GetTextLineHeightWithSpacing() * 12;
             // If any items are selected, they are stored in `NewSelection`.
             // `NewSelection` is cleared at the end of the parent DrawFunction.
-            DrawList(width, itemHeight, filterHeight);
+            DrawList(width, itemHeight, resHeight);
             // If we should close the popup (after selection), do so.
             ClosePopup(id, label);
         }

@@ -232,7 +232,7 @@ public class TriggerActionService
         }
 
         // Call the new distribution method
-        return await _distributer.PushNewActiveGagSlot(layerIdx, gagSlot, updateType) is not null;
+        return await _distributer.PushNewActiveGagSlot(layerIdx, gagSlot, updateType).ConfigureAwait(false) is not null;
     }
 
     private async Task<bool> DoRestrictionAction(RestrictionAction act, string enactor)

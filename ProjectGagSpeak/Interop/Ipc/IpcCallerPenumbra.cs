@@ -1,5 +1,7 @@
 using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Plugin;
+using FFXIVClientStructs.FFXIV.Common.Lua;
+using GagSpeak.Kinksters.Handlers;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
@@ -7,6 +9,7 @@ using Penumbra.Api.Enums;
 using Penumbra.Api.Helpers;
 using Penumbra.Api.IpcSubscribers;
 using System.Diagnostics.CodeAnalysis;
+using TerraFX.Interop.WinRT;
 
 namespace GagSpeak.Interop;
 
@@ -53,6 +56,7 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
     private const int PLAYER_OBJECT_IDX = 0;
 
     private bool _shownPenumbraUnavailable = false; // safety net to prevent notification spam.
+    public static string? ModDirectory { get; private set; } = null;
 
     private readonly EventSubscriber                                        OnInitialized;
     private readonly EventSubscriber                                        OnDisposed;
@@ -67,6 +71,7 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
 
     private ApiVersion                          Version;               // Obtains the current version of Penumbra's API.
     private RedrawObject                        RedrawClient;          // Can force the client to Redraw.
+    private GetModDirectory                     GetModDirectory;       // Retrieves the root mod directory path.
     private GetModPath                          GetModPath;            // Retrieves the path of the mod with its directory and name, allowing for folder sorting.
     private GetModList                          GetModList;            // Retrieves the client's mod list. (DirectoryName, ModName)
     private GetCollection                       GetActiveCollection;   // Obtains the client's currently active collection. (may not need this)
@@ -76,13 +81,15 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
     private SetTemporaryModSettingsPlayer       SetOrUpdateTempMod;    // Temporarily sets and locks a Mod with defined settings. Can be updated.
     private RemoveTemporaryModSettingsPlayer    RemoveTempMod;         // Removes a temporary mod we set. Used for cleanup.
     private RemoveAllTemporaryModSettingsPlayer RemoveAllTempMod;      // Removes all temporary mods we set. Used for cleanup.
-
+    private ResolvePlayerPathsAsync             ResolvedClientModPaths;// Resolves the mod paths for the given player.
+    private GetGameObjectResourcePaths          GetResourcePaths;      // Gets the resource paths for a game object.
     public IpcCallerPenumbra(ILogger<IpcCallerPenumbra> logger, GagspeakMediator mediator, OnFrameworkService frameworkUtils)
         : base(logger, mediator)
     {
         OnInitialized = Initialized.Subscriber(Svc.PluginInterface, () => 
         {
             APIAvailable = true;
+            CheckModDirectory();
             Mediator.Publish(new PenumbraInitialized());
         });
         OnDisposed = Disposed.Subscriber(Svc.PluginInterface, () =>
@@ -97,6 +104,7 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
 
         Version = new ApiVersion(Svc.PluginInterface);
         RedrawClient = new RedrawObject(Svc.PluginInterface);
+        GetModDirectory = new GetModDirectory(Svc.PluginInterface);
         GetModPath = new GetModPath(Svc.PluginInterface);
         GetModList = new GetModList(Svc.PluginInterface);
         GetActiveCollection = new GetCollection(Svc.PluginInterface);
@@ -106,8 +114,11 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
         SetOrUpdateTempMod = new SetTemporaryModSettingsPlayer(Svc.PluginInterface);
         RemoveTempMod = new RemoveTemporaryModSettingsPlayer(Svc.PluginInterface);
         RemoveAllTempMod = new RemoveAllTemporaryModSettingsPlayer(Svc.PluginInterface);
+        ResolvedClientModPaths = new ResolvePlayerPathsAsync(Svc.PluginInterface);
+        GetResourcePaths = new GetGameObjectResourcePaths(Svc.PluginInterface);
 
         CheckAPI();
+        CheckModDirectory();
     }
 
     public static bool APIAvailable { get; private set; } = false;
@@ -135,6 +146,16 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
             Logger.LogError($"Invalid Version {API_CurrentMajor}.{API_CurrentMinor:D4}, required major " +
                 $"Version {RequiredBreakingVersion} with feature greater or equal to {RequiredFeatureVersion}.");
             Mediator.Publish(new NotificationMessage("Penumbra inactive", "Features using Penumbra will not function properly.", NotificationType.Error));
+        }
+    }
+
+    public void CheckModDirectory()
+    {
+        var value = !APIAvailable ? string.Empty : GetModDirectory!.Invoke().ToLowerInvariant();
+        if (!string.Equals(ModDirectory, value, StringComparison.Ordinal))
+        {
+            ModDirectory = value;
+            Mediator.Publish(new PenumbraDirectoryChanged(ModDirectory));
         }
     }
 
@@ -177,6 +198,22 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
         Logger.LogWarning("Manually redrawing the client!", LoggerType.IpcPenumbra);
         RedrawClient.Invoke(0, RedrawType.Redraw);
     }
+
+    // to get the list of on-screen mod data from a kinkster.
+    public async Task<Dictionary<string, HashSet<string>>?> GetKinksterModData(ushort objIdx)
+    {
+        if (!APIAvailable) return null;
+
+        return await Svc.Framework.RunOnFrameworkThread(() =>
+        {
+            Logger.LogTrace("Calling On IPC: GetGameObjectResourcePaths");
+            return GetResourcePaths.Invoke(objIdx)[0];
+        }).ConfigureAwait(false);
+    }
+
+    // not sure when we will need these but keep for now.
+    public async Task<(string[] forward, string[][] reverse)> ResolveModPathsAsync(string[] forward, string[] reverse)
+        => await ResolvedClientModPaths.Invoke(forward, reverse).ConfigureAwait(false);
 
     public string GetModManipulations()
         => APIAvailable ? GetMetaManipulations.Invoke() : string.Empty;

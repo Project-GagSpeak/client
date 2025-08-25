@@ -2,9 +2,11 @@ using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Raii;
 using CkCommons.Widgets;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
+using FFXIVClientStructs.FFXIV.Common.Lua;
 using GagSpeak.Gui.Components;
 using GagSpeak.Gui.Handlers;
 using GagSpeak.Interop;
@@ -21,7 +23,6 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
-using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Extensions;
 using OtterGui.Text;
@@ -135,15 +136,14 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 
     private void DrawPairData(Kinkster pair, float width)
     {
-        using var node = ImRaii.TreeNode(pair.GetNickAliasOrUid() + "'s Pair Info");
+        var nick = pair.GetNickAliasOrUid();
+        using var node = ImRaii.TreeNode($"{nick}'s Pair Info");
         if (!node) return;
 
-        DrawPairPerms("Own Pair Perms for " + pair.UserData.UID, pair.OwnPerms);
-        DrawPairPermAccess("Own Pair Perm Access for " + pair.UserData.UID, pair.OwnPermAccess);
+        DrawPairPerms(nick, pair);
+        DrawPairAccess(nick, pair);
         DrawGlobalPermissions(pair.UserData.UID + "'s Global Perms", pair.PairGlobals);
         DrawHardcoreState(pair.UserData.UID + "'s Hardcore State", pair.PairHardcore);
-        DrawPairPerms(pair.UserData.UID + "'s Pair Perms for you.", pair.PairPerms);
-        DrawPairPermAccess(pair.UserData.UID + "'s Pair Perm Access for you", pair.PairPermAccess);
         DrawKinksterIpcData(pair);
         DrawGagData(pair.UserData.UID, pair.ActiveGags);
         DrawPairRestrictions(pair.UserData.UID, pair);
@@ -159,7 +159,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
     private void DrawPlayerCharacterDebug()
     {
         DrawGlobalPermissions("Player", ClientData.Globals ?? new GlobalPerms());
-        _clientData.DrawHardcoreState();
+        DrawPlayerHardcore();
         DrawGagData("Player", _gags.ServerGagData ?? new CharaActiveGags());
         DrawRestrictions("Player", _restrictions.ServerRestrictionData ?? new CharaActiveRestrictions());
         DrawRestraint("Player", _restraints.ServerData ?? new CharaActiveRestraint());
@@ -178,7 +178,14 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         // Triggers.
         CkGui.ColorText("Active Triggers:", ImGuiColors.ParsedGold);
         CkGui.TextInline(string.Join(", ", _triggers.ActiveTriggers.Select(t => t.Label)));
+    }
 
+    private void DrawPlayerHardcore()
+    {
+        using var node = ImRaii.TreeNode($"Player Hardcore State");
+        if (!node) return;
+
+        _clientData.DrawHardcoreState();
     }
 
     private void DrawPermissionRowBool(string name, bool value)
@@ -194,6 +201,24 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         ImGuiUtil.DrawTableColumn(name);
         ImGui.TableNextColumn();
         ImGui.Text(value);
+        ImGui.TableNextRow();
+    }
+
+    private void DrawKinksterPermRowBool(string name, bool valueOwn, bool valueOther)
+    {
+        ImGuiUtil.DrawTableColumn(name);
+        ImGui.TableNextColumn();
+        CkGui.IconText(valueOwn ? FAI.Check : FAI.Times, valueOwn ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed);
+        ImGui.TableNextColumn();
+        CkGui.IconText(valueOther ? FAI.Check : FAI.Times, valueOther ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed);
+        ImGui.TableNextRow();
+    }
+
+    private void DrawKinksterPermRowString(string name, string valueOwn, string valueOther)
+    {
+        ImGuiUtil.DrawTableColumn(name);
+        ImGuiUtil.DrawTableColumn(valueOwn);
+        ImGuiUtil.DrawTableColumn(valueOther);
         ImGui.TableNextRow();
     }
 
@@ -257,167 +282,185 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         PermissionHelper.DrawHardcoreState(perms);
     }
 
-    private void DrawPairPerms(string uid, PairPerms perms)
+    private void DrawPairPerms(string label, Kinkster k)
     {
-        using var nodeMain = ImRaii.TreeNode(uid + " Pair Perms");
+        using var nodeMain = ImRaii.TreeNode($"{label}'s Pair Permissions");
         if (!nodeMain) return;
 
-        using var table = ImRaii.Table("##debug-pair" + uid, 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit);
+        using var table = ImRaii.Table("##debug-pair" + k.UserData.UID, 3, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit);
         ImGui.TableSetupColumn("Permission");
-        ImGui.TableSetupColumn("Value");
+        ImGui.TableSetupColumn("Own Setting");
+        ImGui.TableSetupColumn($"{label}'s Setting");
         ImGui.TableHeadersRow();
 
-        DrawPermissionRowBool("Is Paused", perms.IsPaused);
+        DrawKinksterPermRowBool("Is Paused", k.OwnPerms.IsPaused, k.PairPerms.IsPaused);
         ImGui.TableNextRow();
-        DrawPermissionRowBool("Allows Permanent Locks", perms.PermanentLocks);
-        DrawPermissionRowBool("Allows Owner Locks", perms.OwnerLocks);
-        DrawPermissionRowBool("Allows Devotional Locks", perms.DevotionalLocks);
+
+        DrawKinksterPermRowBool("Allows Permanent Locks", k.OwnPerms.PermanentLocks, k.PairPerms.PermanentLocks);
+        DrawKinksterPermRowBool("Allows Owner Locks", k.OwnPerms.OwnerLocks, k.PairPerms.OwnerLocks);
+        DrawKinksterPermRowBool("Allows Devotional Locks", k.OwnPerms.DevotionalLocks, k.PairPerms.DevotionalLocks);
         ImGui.TableNextRow();
-        DrawPermissionRowBool("Apply Gags", perms.ApplyGags);
-        DrawPermissionRowBool("Lock Gags", perms.LockGags);
-        DrawPermissionRowString("Max Gag Time", perms.MaxGagTime.ToString());
-        DrawPermissionRowBool("Unlock Gags", perms.UnlockGags);
-        DrawPermissionRowBool("Remove Gags", perms.RemoveGags);
+
+        DrawKinksterPermRowBool("Apply Gags", k.OwnPerms.ApplyGags, k.PairPerms.ApplyGags);
+        DrawKinksterPermRowBool("Lock Gags", k.OwnPerms.LockGags, k.PairPerms.LockGags);
+        DrawKinksterPermRowString("Max Gag Time", k.OwnPerms.MaxGagTime.ToString(), k.PairPerms.MaxGagTime.ToString());
+        DrawKinksterPermRowBool("Unlock Gags", k.OwnPerms.UnlockGags, k.PairPerms.UnlockGags);
+        DrawKinksterPermRowBool("Remove Gags", k.OwnPerms.RemoveGags, k.PairPerms.RemoveGags);
         ImGui.TableNextRow();
-        DrawPermissionRowBool("Apply Restrictions", perms.ApplyRestrictions);
-        DrawPermissionRowBool("Lock Restrictions", perms.LockRestrictions);
-        DrawPermissionRowString("Max Restriction Lock Time", perms.MaxRestrictionTime.ToString());
-        DrawPermissionRowBool("Unlock Restrictions", perms.UnlockRestrictions);
-        DrawPermissionRowBool("Remove Restrictions", perms.RemoveRestrictions);
+
+        DrawKinksterPermRowBool("Apply Restrictions", k.OwnPerms.ApplyRestrictions, k.PairPerms.ApplyRestrictions);
+        DrawKinksterPermRowBool("Lock Restrictions", k.OwnPerms.LockRestrictions, k.PairPerms.LockRestrictions);
+        DrawKinksterPermRowString("Max Restriction Lock Time", k.OwnPerms.MaxRestrictionTime.ToString(), k.PairPerms.MaxRestrictionTime.ToString());
+        DrawKinksterPermRowBool("Unlock Restrictions", k.OwnPerms.UnlockRestrictions, k.PairPerms.UnlockRestrictions);
+        DrawKinksterPermRowBool("Remove Restrictions", k.OwnPerms.RemoveRestrictions, k.PairPerms.RemoveRestrictions);
         ImGui.TableNextRow();
-        DrawPermissionRowBool("Apply Restraint Sets", perms.ApplyRestraintSets);
-        DrawPermissionRowBool("Apply Restraint Layers", perms.ApplyLayers);
-        DrawPermissionRowBool("Apply Layers while locked", perms.ApplyLayersWhileLocked);
-        DrawPermissionRowBool("Lock Restraint Sets", perms.LockRestraintSets);
-        DrawPermissionRowString("Max Restraint Set Lock Time", perms.MaxRestraintTime.ToString());
-        DrawPermissionRowBool("Unlock Restraint Sets", perms.UnlockRestraintSets);
-        DrawPermissionRowBool("Remove Restraint Layers", perms.RemoveLayers);
-        DrawPermissionRowBool("Remove Layers while locked", perms.RemoveLayersWhileLocked);
-        DrawPermissionRowBool("Remove Restraint Sets", perms.RemoveRestraintSets);
+
+        DrawKinksterPermRowBool("Apply Restraint Sets", k.OwnPerms.ApplyRestraintSets, k.PairPerms.ApplyRestraintSets);
+        DrawKinksterPermRowBool("Apply Restraint Layers", k.OwnPerms.ApplyLayers, k.PairPerms.ApplyLayers);
+        DrawKinksterPermRowBool("Add Locked Layers", k.OwnPerms.ApplyLayersWhileLocked, k.PairPerms.ApplyLayersWhileLocked);
+        DrawKinksterPermRowBool("Lock Restraint Sets", k.OwnPerms.LockRestraintSets, k.PairPerms.LockRestraintSets);
+        DrawKinksterPermRowString("Max Restraint Lock Time", k.OwnPerms.MaxRestraintTime.ToString(), k.PairPerms.MaxRestraintTime.ToString());
+        DrawKinksterPermRowBool("Unlock Restraint Sets", k.OwnPerms.UnlockRestraintSets, k.PairPerms.UnlockRestraintSets);
+        DrawKinksterPermRowBool("Remove Restraint Layers", k.OwnPerms.RemoveLayers, k.PairPerms.RemoveLayers);
+        DrawKinksterPermRowBool("Remove Locked Layers", k.OwnPerms.RemoveLayersWhileLocked, k.PairPerms.RemoveLayersWhileLocked);
+        DrawKinksterPermRowBool("Remove Restraint Sets", k.OwnPerms.RemoveRestraintSets, k.PairPerms.RemoveRestraintSets);
         ImGui.TableNextRow();
-        DrawPermissionRowString("Trigger Phrase", perms.TriggerPhrase);
-        DrawPermissionRowString("Start Char", perms.StartChar.ToString());
-        DrawPermissionRowString("End Char", perms.EndChar.ToString());
-        DrawPermissionRowBool("Allow Sit Requests", perms.PuppetPerms.HasFlag(PuppetPerms.Sit));
-        DrawPermissionRowBool("Allow Motion Requests", perms.PuppetPerms.HasFlag(PuppetPerms.Emotes));
-        DrawPermissionRowBool("Allow Alias Requests", perms.PuppetPerms.HasFlag(PuppetPerms.Alias));
-        DrawPermissionRowBool("Allow All Requests", perms.PuppetPerms.HasFlag(PuppetPerms.All));
+
+        DrawKinksterPermRowString("Trigger Phrase", k.OwnPerms.TriggerPhrase, k.PairPerms.TriggerPhrase);
+        DrawKinksterPermRowString("Start Char", k.OwnPerms.StartChar.ToString(), k.PairPerms.StartChar.ToString());
+        DrawKinksterPermRowString("End Char", k.OwnPerms.EndChar.ToString(), k.PairPerms.EndChar.ToString());
+        DrawKinksterPermRowBool("Sit Requests", k.OwnPerms.PuppetPerms.HasAny(PuppetPerms.Sit), k.PairPerms.PuppetPerms.HasAny(PuppetPerms.Sit));
+        DrawKinksterPermRowBool("Motion Requests", k.OwnPerms.PuppetPerms.HasAny(PuppetPerms.Emotes), k.PairPerms.PuppetPerms.HasAny(PuppetPerms.Emotes));
+        DrawKinksterPermRowBool("Alias Requests", k.OwnPerms.PuppetPerms.HasAny(PuppetPerms.Alias), k.PairPerms.PuppetPerms.HasAny(PuppetPerms.Alias));
+        DrawKinksterPermRowBool("All Requests", k.OwnPerms.PuppetPerms.HasAny(PuppetPerms.All), k.PairPerms.PuppetPerms.HasAny(PuppetPerms.All));
         ImGui.TableNextRow();
-        DrawPermissionRowBool("Allow Positive Moodles", perms.MoodlePerms.HasFlag(MoodlePerms.PositiveStatusTypes));
-        DrawPermissionRowBool("Allow Negative Moodles", perms.MoodlePerms.HasFlag(MoodlePerms.NegativeStatusTypes));
-        DrawPermissionRowBool("Allow Special Moodles", perms.MoodlePerms.HasFlag(MoodlePerms.SpecialStatusTypes));
-        DrawPermissionRowBool("Apply Own Moodles", perms.MoodlePerms.HasFlag(MoodlePerms.PairCanApplyTheirMoodlesToYou));
-        DrawPermissionRowBool("Apply Your Moodles", perms.MoodlePerms.HasFlag(MoodlePerms.PairCanApplyYourMoodlesToYou));
-        DrawPermissionRowString("Max Moodle Time", perms.MaxMoodleTime.ToString());
-        DrawPermissionRowBool("Allow Permanent Moodles", perms.MoodlePerms.HasFlag(MoodlePerms.PositiveStatusTypes));
-        DrawPermissionRowBool("Allow Removing Moodles", perms.MoodlePerms.HasFlag(MoodlePerms.PositiveStatusTypes));
+
+        DrawKinksterPermRowBool("Positive Moodles", k.OwnPerms.MoodlePerms.HasAny(MoodlePerms.PositiveStatusTypes), k.PairPerms.MoodlePerms.HasAny(MoodlePerms.PositiveStatusTypes));
+        DrawKinksterPermRowBool("Negative Moodles", k.OwnPerms.MoodlePerms.HasAny(MoodlePerms.NegativeStatusTypes), k.PairPerms.MoodlePerms.HasAny(MoodlePerms.NegativeStatusTypes));
+        DrawKinksterPermRowBool("Special Moodles", k.OwnPerms.MoodlePerms.HasAny(MoodlePerms.SpecialStatusTypes), k.PairPerms.MoodlePerms.HasAny(MoodlePerms.SpecialStatusTypes));
+        DrawKinksterPermRowBool("Apply Own Moodles", k.OwnPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyTheirMoodlesToYou), k.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyTheirMoodlesToYou));
+        DrawKinksterPermRowBool("Apply Your Moodles", k.OwnPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou), k.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou));
+        DrawKinksterPermRowString("Max Moodle Time", k.OwnPerms.MaxMoodleTime.ToString(), k.PairPerms.MaxMoodleTime.ToString());
+        DrawKinksterPermRowBool("Permanent Moodles", k.OwnPerms.MoodlePerms.HasAny(MoodlePerms.PermanentMoodles), k.PairPerms.MoodlePerms.HasAny(MoodlePerms.PermanentMoodles));
+        DrawKinksterPermRowBool("Removing Moodles", k.OwnPerms.MoodlePerms.HasAny(MoodlePerms.RemovingMoodles), k.PairPerms.MoodlePerms.HasAny(MoodlePerms.RemovingMoodles));
         ImGui.TableNextRow();
-        DrawPermissionRowBool("Can Execute Patterns", perms.ExecutePatterns);
-        DrawPermissionRowBool("Can Stop Patterns", perms.StopPatterns);
-        DrawPermissionRowBool("Can Toggle Alarms", perms.ToggleAlarms);
-        DrawPermissionRowBool("Can Send Alarms", perms.ToggleAlarms);
-        DrawPermissionRowBool("Can Toggle Triggers", perms.ToggleTriggers);
+
+        DrawKinksterPermRowBool("Can Execute Patterns", k.OwnPerms.ExecutePatterns, k.PairPerms.ExecutePatterns);
+        DrawKinksterPermRowBool("Can Stop Patterns", k.OwnPerms.StopPatterns, k.PairPerms.StopPatterns);
+        DrawKinksterPermRowBool("Can Toggle Alarms", k.OwnPerms.ToggleAlarms, k.PairPerms.ToggleAlarms);
+        DrawKinksterPermRowBool("Can Toggle Triggers", k.OwnPerms.ToggleTriggers, k.PairPerms.ToggleTriggers);
         ImGui.TableNextRow();
-        DrawPermissionRowBool("Allow Hypnosis Effect Sending", perms.HypnoEffectSending);
+
+        DrawKinksterPermRowBool("Hypno Effects", k.OwnPerms.HypnoEffectSending, k.PairPerms.HypnoEffectSending);
         ImGui.TableNextRow();
-        DrawPermissionRowBool("In Hardcore Mode", perms.InHardcore);
-        DrawPermissionRowBool("Devotional States For Pair", perms.PairLockedStates);
-        DrawPermissionRowBool("Allow Forced Follow", perms.AllowLockedFollowing);
-        DrawPermissionRowBool("Allow Forced Sit", perms.AllowLockedSitting);
-        DrawPermissionRowBool("Allow Forced Emote", perms.AllowLockedEmoting);
-        DrawPermissionRowBool("Allow Indoor Confinement", perms.AllowIndoorConfinement);
-        DrawPermissionRowBool("Allow Imprisonment", perms.AllowImprisonment);
-        DrawPermissionRowBool("Allow GarbleChannelEditing", perms.AllowGarbleChannelEditing);
-        DrawPermissionRowBool("Allow Hiding Chat Boxes", perms.AllowHidingChatBoxes);
-        DrawPermissionRowBool("Allow Hiding Chat Input", perms.AllowHidingChatInput);
-        DrawPermissionRowBool("Allow Chat Input Blocking", perms.AllowChatInputBlocking);
-        DrawPermissionRowBool("Allow Hypnosis Image Sending", perms.AllowHypnoImageSending);
+
+        DrawKinksterPermRowBool("In Hardcore Mode", k.OwnPerms.InHardcore, k.PairPerms.InHardcore);
+        DrawKinksterPermRowBool("Devotional States For Pair", k.OwnPerms.PairLockedStates, k.PairPerms.PairLockedStates);
+        DrawKinksterPermRowBool("Allow Forced Follow", k.OwnPerms.AllowLockedFollowing, k.PairPerms.AllowLockedFollowing);
+        DrawKinksterPermRowBool("Allow Forced Sit", k.OwnPerms.AllowLockedSitting, k.PairPerms.AllowLockedSitting);
+        DrawKinksterPermRowBool("Allow Forced Emote", k.OwnPerms.AllowLockedEmoting, k.PairPerms.AllowLockedEmoting);
+        DrawKinksterPermRowBool("Allow Indoor Confinement", k.OwnPerms.AllowIndoorConfinement, k.PairPerms.AllowIndoorConfinement);
+        DrawKinksterPermRowBool("Allow Imprisonment", k.OwnPerms.AllowImprisonment, k.PairPerms.AllowImprisonment);
+        DrawKinksterPermRowBool("Allow GarbleChannelEditing", k.OwnPerms.AllowGarbleChannelEditing, k.PairPerms.AllowGarbleChannelEditing);
+        DrawKinksterPermRowBool("Allow Hiding Chat Boxes", k.OwnPerms.AllowHidingChatBoxes, k.PairPerms.AllowHidingChatBoxes);
+        DrawKinksterPermRowBool("Allow Hiding Chat Input", k.OwnPerms.AllowHidingChatInput, k.PairPerms.AllowHidingChatInput);
+        DrawKinksterPermRowBool("Allow Chat Input Blocking", k.OwnPerms.AllowChatInputBlocking, k.PairPerms.AllowChatInputBlocking);
+        DrawKinksterPermRowBool("Allow Hypnosis Image Sending", k.OwnPerms.AllowHypnoImageSending, k.PairPerms.AllowHypnoImageSending);
         ImGui.TableNextRow();
-        DrawPermissionRowString("Shock Collar Share Code", perms.PiShockShareCode);
-        DrawPermissionRowBool("Allow Shocks", perms.AllowShocks);
-        DrawPermissionRowBool("Allow Vibrations", perms.AllowVibrations);
-        DrawPermissionRowBool("Allow Beeps", perms.AllowBeeps);
-        DrawPermissionRowString("Max Intensity", perms.MaxIntensity.ToString());
-        DrawPermissionRowString("Max Duration", perms.MaxDuration.ToString());
+
+        DrawKinksterPermRowString("Shock Collar Share Code", k.OwnPerms.PiShockShareCode, k.PairPerms.PiShockShareCode);
+        DrawKinksterPermRowBool("Allow Shocks", k.OwnPerms.AllowShocks, k.PairPerms.AllowShocks);
+        DrawKinksterPermRowBool("Allow Vibrations", k.OwnPerms.AllowVibrations, k.PairPerms.AllowVibrations);
+        DrawKinksterPermRowBool("Allow Beeps", k.OwnPerms.AllowBeeps, k.PairPerms.AllowBeeps);
+        DrawKinksterPermRowString("Max Intensity", k.OwnPerms.MaxIntensity.ToString(), k.PairPerms.MaxIntensity.ToString());
+        DrawKinksterPermRowString("Max Duration", k.OwnPerms.MaxDuration.ToString(), k.PairPerms.MaxDuration.ToString());
     }
 
-    private void DrawPairPermAccess(string uid, PairPermAccess perms)
+    private void DrawPairAccess(string label, Kinkster k)
     {
-        using var nodeMain = ImRaii.TreeNode(uid + " Perm Edit Access");
+        using var nodeMain = ImRaii.TreeNode($"{label}'s Edit Access");
         if (!nodeMain) return;
 
-        using var table = ImRaii.Table("##debug-access-pair" + uid, 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit);
+        using var table = ImRaii.Table("##debug-access-" + k.UserData.UID, 3, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit);
         ImGui.TableSetupColumn("Permission");
-        ImGui.TableSetupColumn("Value");
+        ImGui.TableSetupColumn("Own Setting");
+        ImGui.TableSetupColumn($"{label}'s Setting");
         ImGui.TableHeadersRow();
 
         // Live Chat Permissions
-        DrawPermissionRowBool("Live Chat Garbler Active", perms.ChatGarblerActiveAllowed);
-        DrawPermissionRowBool("Live Chat Garbler Locked", perms.ChatGarblerLockedAllowed);
+        DrawKinksterPermRowBool("Chat Garbler State", k.OwnPermAccess.ChatGarblerActiveAllowed, k.PairPermAccess.ChatGarblerActiveAllowed);
+        DrawKinksterPermRowBool("Chat Garbler Lock", k.OwnPermAccess.ChatGarblerLockedAllowed, k.OwnPermAccess.ChatGarblerLockedAllowed);
+        DrawKinksterPermRowBool("Gagged Nameplates", k.OwnPermAccess.GaggedNameplateAllowed, k.PairPermAccess.GaggedNameplateAllowed);
         ImGui.TableNextRow();
 
-        // Padlock permissions
-        DrawPermissionRowBool("Allows Permanent Locks", perms.PermanentLocksAllowed);
-        DrawPermissionRowBool("Allows Owner Locks", perms.OwnerLocksAllowed);
-        DrawPermissionRowBool("Allows Devotional Locks", perms.DevotionalLocksAllowed);
+        // Visuals
+        DrawKinksterPermRowBool("Wardrobe", k.OwnPermAccess.WardrobeEnabledAllowed, k.PairPermAccess.WardrobeEnabledAllowed);
+        DrawKinksterPermRowBool("Gag Visuals", k.OwnPermAccess.GagVisualsAllowed, k.PairPermAccess.GagVisualsAllowed);
+        DrawKinksterPermRowBool("Restriction Visuals", k.OwnPermAccess.RestrictionVisualsAllowed, k.PairPermAccess.RestrictionVisualsAllowed);
+        DrawKinksterPermRowBool("Restraint Visuals", k.OwnPermAccess.RestraintSetVisualsAllowed, k.PairPermAccess.RestraintSetVisualsAllowed);
         ImGui.TableNextRow();
 
-        // Gag permissions
-        DrawPermissionRowBool("Gag Visuals Active", perms.GagVisualsAllowed);
-        DrawPermissionRowBool("Allows Applying Gags", perms.ApplyGagsAllowed);
-        DrawPermissionRowBool("Allows Locking Gags", perms.LockGagsAllowed);
-        DrawPermissionRowBool("Max Gag Time", perms.MaxGagTimeAllowed);
-        DrawPermissionRowBool("Allows Unlocking Gags", perms.UnlockGagsAllowed);
-        DrawPermissionRowBool("Allows Removing Gags", perms.RemoveGagsAllowed);
+        // Padlocks
+        DrawKinksterPermRowBool("Permanent Locks", k.OwnPermAccess.PermanentLocksAllowed, k.PairPermAccess.PermanentLocksAllowed);
+        DrawKinksterPermRowBool("Owner Locks", k.OwnPermAccess.OwnerLocksAllowed, k.PairPermAccess.OwnerLocksAllowed);
+        DrawKinksterPermRowBool("Devotional Locks", k.OwnPermAccess.DevotionalLocksAllowed, k.PairPermAccess.DevotionalLocksAllowed);
         ImGui.TableNextRow();
 
-        DrawPermissionRowBool("Wardrobe Enabled", perms.WardrobeEnabledAllowed);
-        // Restriction permissions
-        DrawPermissionRowBool("Restriction Visuals Active", perms.RestrictionVisualsAllowed);
-        DrawPermissionRowBool("Allows Applying Restrictions", perms.ApplyRestrictionsAllowed);
-        DrawPermissionRowBool("Allows Locking Restrictions", perms.LockRestrictionsAllowed);
-        DrawPermissionRowBool("Max Restriction Lock Time", perms.MaxRestrictionTimeAllowed);
-        DrawPermissionRowBool("Allows Unlocking Restrictions", perms.UnlockRestrictionsAllowed);
-        DrawPermissionRowBool("Allows Removing Restrictions", perms.RemoveRestrictionsAllowed);
+        // Gags
+        DrawKinksterPermRowBool("Apply Gags", k.OwnPermAccess.ApplyGagsAllowed, k.PairPermAccess.ApplyGagsAllowed);
+        DrawKinksterPermRowBool("Lock Gags", k.OwnPermAccess.LockGagsAllowed, k.PairPermAccess.LockGagsAllowed);
+        DrawKinksterPermRowString("Max Gag Time", k.OwnPermAccess.MaxGagTimeAllowed.ToString(), k.PairPermAccess.MaxGagTimeAllowed.ToString());
+        DrawKinksterPermRowBool("Unlock Gags", k.OwnPermAccess.UnlockGagsAllowed, k.PairPermAccess.UnlockGagsAllowed);
+        DrawKinksterPermRowBool("Remove Gags", k.OwnPermAccess.RemoveGagsAllowed, k.PairPermAccess.RemoveGagsAllowed);
         ImGui.TableNextRow();
 
-        // Restraint permissions
-        DrawPermissionRowBool("Restraint Visuals Active", perms.RestraintSetVisualsAllowed);
-        DrawPermissionRowBool("Allows Applying Restraints", perms.ApplyRestraintSetsAllowed);
-        DrawPermissionRowBool("Allows Locking Restraints", perms.LockRestraintSetsAllowed);
-        DrawPermissionRowBool("Max Restraint Lock Time", perms.MaxRestraintTimeAllowed);
-        DrawPermissionRowBool("Allows Unlocking Restraints", perms.UnlockRestraintSetsAllowed);
-        DrawPermissionRowBool("Allows Removing Restraints", perms.RemoveRestraintSetsAllowed);
+        // Restrictions
+        DrawKinksterPermRowBool("Apply Restrictions", k.OwnPermAccess.ApplyRestrictionsAllowed, k.PairPermAccess.ApplyRestrictionsAllowed);
+        DrawKinksterPermRowBool("Lock Restrictions", k.OwnPermAccess.LockRestrictionsAllowed, k.PairPermAccess.LockRestrictionsAllowed);
+        DrawKinksterPermRowString("Max Restriction Lock Time", k.OwnPermAccess.MaxRestrictionTimeAllowed.ToString(), k.PairPermAccess.MaxRestrictionTimeAllowed.ToString());
+        DrawKinksterPermRowBool("Unlock Restrictions", k.OwnPermAccess.UnlockRestrictionsAllowed, k.PairPermAccess.UnlockRestrictionsAllowed);
+        DrawKinksterPermRowBool("Remove Restrictions", k.OwnPermAccess.RemoveRestrictionsAllowed, k.PairPermAccess.RemoveRestrictionsAllowed);
         ImGui.TableNextRow();
 
-        // Puppeteer Permissions
-        DrawPermissionRowBool("Puppeteer Enabled", perms.PuppeteerEnabledAllowed);
-        DrawPermissionRowBool("Allow Sit Requests", perms.PuppetPermsAllowed.HasAny(PuppetPerms.Sit));
-        DrawPermissionRowBool("Allow Motion Requests", perms.PuppetPermsAllowed.HasAny(PuppetPerms.Emotes));
-        DrawPermissionRowBool("Allow Alias Requests", perms.PuppetPermsAllowed.HasAny(PuppetPerms.Alias));
-        DrawPermissionRowBool("Allow All Requests", perms.PuppetPermsAllowed.HasAny(PuppetPerms.All));
+        // Restraints
+        DrawKinksterPermRowBool("Apply Restraint Sets", k.OwnPermAccess.ApplyRestraintSetsAllowed, k.PairPermAccess.ApplyRestraintSetsAllowed);
+        DrawKinksterPermRowBool("Add Restraint Layers", k.OwnPermAccess.ApplyLayersAllowed, k.PairPermAccess.ApplyLayersAllowed);
+        DrawKinksterPermRowBool("Apply Locked Layers", k.OwnPermAccess.ApplyLayersWhileLockedAllowed, k.PairPermAccess.ApplyLayersWhileLockedAllowed);
+        DrawKinksterPermRowBool("Lock Restraint Sets", k.OwnPermAccess.LockRestraintSetsAllowed, k.PairPermAccess.LockRestraintSetsAllowed);
+        DrawKinksterPermRowString("Max Restraint Set Lock Time", k.OwnPermAccess.MaxRestraintTimeAllowed.ToString(), k.PairPermAccess.MaxRestraintTimeAllowed.ToString());
+        DrawKinksterPermRowBool("Unlock Restraint Sets", k.OwnPermAccess.UnlockRestraintSetsAllowed, k.PairPermAccess.UnlockRestraintSetsAllowed);
+        DrawKinksterPermRowBool("Remove Restraint Layers", k.OwnPermAccess.RemoveLayersAllowed, k.PairPermAccess.RemoveLayersAllowed);
+        DrawKinksterPermRowBool("Remove Locked Layers", k.OwnPermAccess.RemoveLayersWhileLockedAllowed, k.PairPermAccess.RemoveLayersWhileLockedAllowed);
+        DrawKinksterPermRowBool("Remove Restraint Sets", k.OwnPermAccess.RemoveRestraintSetsAllowed, k.PairPermAccess.RemoveRestraintSetsAllowed);
         ImGui.TableNextRow();
 
-        // Moodle Permissions
-        DrawPermissionRowBool("Moodles Enabled", perms.MoodlesEnabledAllowed);
-        DrawPermissionRowBool("Allow Positive Moodles", perms.MoodlePermsAllowed.HasAny(MoodlePerms.PositiveStatusTypes));
-        DrawPermissionRowBool("Allow Negative Moodles", perms.MoodlePermsAllowed.HasAny(MoodlePerms.NegativeStatusTypes));
-        DrawPermissionRowBool("Allow Special Moodles", perms.MoodlePermsAllowed.HasAny(MoodlePerms.SpecialStatusTypes));
-        DrawPermissionRowBool("Apply Own Moodles", perms.MoodlePermsAllowed.HasAny(MoodlePerms.PairCanApplyTheirMoodlesToYou));
-        DrawPermissionRowBool("Apply Your Moodles", perms.MoodlePermsAllowed.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou));
-        DrawPermissionRowBool("Max Moodle Time", perms.MaxMoodleTimeAllowed);
-        DrawPermissionRowBool("Allow Permanent Moodles", perms.MoodlePermsAllowed.HasAny(MoodlePerms.PermanentMoodles));
-        DrawPermissionRowBool("Allow Removing Moodles", perms.MoodlePermsAllowed.HasAny(MoodlePerms.RemovingMoodles));
+        // Puppeteer
+        DrawKinksterPermRowBool("Puppeteer", k.OwnPermAccess.PuppeteerEnabledAllowed, k.PairPermAccess.PuppeteerEnabledAllowed);
+        DrawKinksterPermRowBool("Allow Sit Requests", k.OwnPermAccess.PuppetPermsAllowed.HasAny(PuppetPerms.Sit), k.PairPermAccess.PuppetPermsAllowed.HasAny(PuppetPerms.Sit));
+        DrawKinksterPermRowBool("Allow Motion Requests", k.OwnPermAccess.PuppetPermsAllowed.HasAny(PuppetPerms.Emotes), k.PairPermAccess.PuppetPermsAllowed.HasAny(PuppetPerms.Emotes));
+        DrawKinksterPermRowBool("Allow Alias Requests", k.OwnPermAccess.PuppetPermsAllowed.HasAny(PuppetPerms.Alias), k.PairPermAccess.PuppetPermsAllowed.HasAny(PuppetPerms.Alias));
+        DrawKinksterPermRowBool("Allow All Requests", k.OwnPermAccess.PuppetPermsAllowed.HasAny(PuppetPerms.All), k.PairPermAccess.PuppetPermsAllowed.HasAny(PuppetPerms.All));
         ImGui.TableNextRow();
 
-        // Toybox Permissions
-        DrawPermissionRowBool("Spatial Vibrator Audio", perms.SpatialAudioAllowed);
-        DrawPermissionRowBool("Can Execute Patterns", perms.ExecutePatternsAllowed);
-        DrawPermissionRowBool("Can Stop Patterns", perms.StopPatternsAllowed);
-        DrawPermissionRowBool("Can Toggle Alarms", perms.ToggleAlarmsAllowed);
-        DrawPermissionRowBool("Can Toggle Triggers", perms.ToggleTriggersAllowed);
+        // Moodles
+        DrawKinksterPermRowBool("Moodles", k.OwnPermAccess.MoodlesEnabledAllowed, k.PairPermAccess.MoodlesEnabledAllowed);
+        DrawKinksterPermRowBool("Allow Positive Moodles", k.OwnPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.PositiveStatusTypes), k.PairPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.PositiveStatusTypes));
+        DrawKinksterPermRowBool("Allow Negative Moodles", k.OwnPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.NegativeStatusTypes), k.PairPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.NegativeStatusTypes));
+        DrawKinksterPermRowBool("Allow Special Moodles", k.OwnPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.SpecialStatusTypes), k.PairPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.SpecialStatusTypes));
+        DrawKinksterPermRowBool("Apply Own Moodles", k.OwnPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.PairCanApplyTheirMoodlesToYou), k.PairPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.PairCanApplyTheirMoodlesToYou));
+        DrawKinksterPermRowBool("Apply Your Moodles", k.OwnPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou), k.PairPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou));
+        DrawKinksterPermRowString("Max Moodle Time", k.OwnPermAccess.MaxMoodleTimeAllowed.ToString(), k.PairPermAccess.MaxMoodleTimeAllowed.ToString());
+        DrawKinksterPermRowBool("Allow Permanent Moodles", k.OwnPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.PermanentMoodles), k.PairPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.PermanentMoodles));
+        DrawKinksterPermRowBool("Allow Removing Moodles", k.OwnPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.RemovingMoodles), k.PairPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.RemovingMoodles));
+        ImGui.TableNextRow();
+
+        // Toybox
+        DrawKinksterPermRowBool("Spatial Vibrator Audio", k.OwnPermAccess.SpatialAudioAllowed, k.PairPermAccess.SpatialAudioAllowed);
+        DrawKinksterPermRowBool("Can Execute Patterns", k.OwnPermAccess.ExecutePatternsAllowed, k.PairPermAccess.ExecutePatternsAllowed);
+        DrawKinksterPermRowBool("Can Stop Patterns", k.OwnPermAccess.StopPatternsAllowed, k.PairPermAccess.StopPatternsAllowed);
+        DrawKinksterPermRowBool("Can Toggle Alarms", k.OwnPermAccess.ToggleAlarmsAllowed, k.PairPermAccess.ToggleAlarmsAllowed);
+        DrawKinksterPermRowBool("Can Toggle Triggers", k.OwnPermAccess.ToggleTriggersAllowed, k.PairPermAccess.ToggleTriggersAllowed);
     }
-
     private void DrawKinksterIpcData(Kinkster kinkster)
     {
         var dispName = kinkster.GetNickAliasOrUid();
@@ -507,7 +550,6 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
             CkGui.BooleanToColoredIcon(kinkster.LastAppearanceData.PetNicknames != null, false);
             if (ImGui.IsItemHovered())
                 CkGui.AttachToolTip(kinkster.LastAppearanceData.PetNicknames?.ToString() ?? "No Pet Nicknames!");
-            ImGui.TableNextRow();
         }
     }
 

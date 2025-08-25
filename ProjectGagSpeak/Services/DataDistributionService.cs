@@ -10,6 +10,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Services;
 
@@ -88,7 +89,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         Mediator.Subscribe<PairHandlerVisibleMessage>(this, msg => _newVisibleKinksters.Add(msg.Player.OnlineUser.User));
        
         // Visible Data Updaters
-        Mediator.Subscribe<MoodlesApplyStatusToPair>(this, msg => _hub.UserApplyMoodlesByStatus(msg.StatusDto).ConfigureAwait(false));
+        Mediator.Subscribe<MoodlesApplyStatusToPair>(this, msg => ApplyMoodleToKinkster(msg.StatusDto).ConfigureAwait(false));
 
         // Online Data Updaters
         Mediator.Subscribe<MainHubConnectedMessage>(this, _ => PushCompositeData(_kinksters.GetOnlineUserDatas()).ConfigureAwait(false));
@@ -313,6 +314,15 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         }
     }
 
+    private async Task ApplyMoodleToKinkster(MoodlesApplierByStatus dto)
+    {
+        Logger.LogDebug($"Pushing ApplyMoodlesByStatus to: {dto.Target.AliasOrUID}", LoggerType.ApiCore);
+        if (await _hub.UserApplyMoodlesByStatus(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+            Logger.LogError($"Failed to push ApplyMoodlesByStatus to server. [{res.ErrorCode}]");
+        else
+            Logger.LogDebug($"Successfully pushed ApplyMoodlesByStatus to the server", LoggerType.ApiCore);
+    }
+
     private async Task PushCompositeData(List<UserData> newOnlinekinksters)
     {
         // if not connected and data synced just add the kinksters to the list. (Extra safety net)
@@ -370,10 +380,9 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
 
     public async Task<ActiveGagSlot?> PushNewActiveGagSlot(List<UserData> onlinePlayers, int layer, ActiveGagSlot slot, DataUpdateType type)
     {
-        if (DataIsDifferent(_prevGagData, slot) is false)
+        if (type is not DataUpdateType.Unlocked && !DataIsDifferent(_prevGagData, slot))
             return null;
 
-        _prevGagData = slot;
         Logger.LogDebug($"Pushing GagChange [{type}] to: {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
 
         var dto = new PushClientActiveGagSlot(onlinePlayers, type)
@@ -392,6 +401,8 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
             Logger.LogError($"Failed to push GagData to server [{res}]");
             return null;
         }
+
+        _prevGagData = res.Value;
         return res.Value;
     }
 
@@ -400,10 +411,9 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
 
     public async Task<ActiveRestriction?> PushNewActiveRestriction(List<UserData> onlinePlayers, int layerIdx, ActiveRestriction newData, DataUpdateType type)
     {
-        if (DataIsDifferent(_prevRestrictionData, newData) is false)
+        if (type is not DataUpdateType.Unlocked && !DataIsDifferent(_prevRestrictionData, newData))
             return null;
 
-        _prevRestrictionData = newData;
         Logger.LogDebug($"Pushing RestrictionChange [{type}] to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
 
         var dto = new PushClientActiveRestriction(onlinePlayers, type)
@@ -422,6 +432,8 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
             Logger.LogError($"Failed to push RestrictionData to server [{res}]");
             return null;
         }
+
+        _prevRestrictionData = res.Value;
         return res.Value;
     }
 
@@ -430,10 +442,9 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
 
     public async Task<CharaActiveRestraint?> PushNewActiveRestraint(List<UserData> onlinePlayers, CharaActiveRestraint newData, DataUpdateType type)
     {
-        if (DataIsDifferent(_prevRestraintData, newData) is false)
+        if (type is not DataUpdateType.Unlocked && !DataIsDifferent(_prevRestraintData, newData))
             return null;
 
-        _prevRestraintData = newData;
         Logger.LogDebug($"Pushing RestraintData to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))} [{type}]", LoggerType.OnlinePairs);
 
         var dto = new PushClientActiveRestraint(onlinePlayers, type)
@@ -452,6 +463,8 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
             Logger.LogError($"Failed to push RestraintData to server [{res}]");
             return null;
         }
+
+        _prevRestraintData = res.Value;
         return res.Value;
     }
 

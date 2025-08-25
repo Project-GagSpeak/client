@@ -143,9 +143,7 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
 
     public async Task ApplyAppearanceData(CharaIpcDataFull newData)
     {
-        // if the player is not visible or has a non-valid address, return.
         if (PairAddress == nint.Zero) return;
-        // if the ipc data is null, create a new object for it.
         if (_appearance is null) _appearance = new CharaIpcDataFull();
 
         // may need to process a cancellation token here if overlap occurs, but it shouldnt due to updates being 1s apart.
@@ -308,7 +306,7 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
         {
             IsVisible = false;
             _gameObject.Invalidate();
-            Logger.LogTrace($"Visibility changed for Kinkster: {PlayerName} ({OnlineUser.User.AliasOrUID}). Now: {IsVisible}", LoggerType.PairHandlers);
+            Logger.LogTrace($"Invalidating as Visibility changed for Kinkster: {PlayerName} ({OnlineUser.User.AliasOrUID}). Now: {IsVisible}", LoggerType.PairHandlers);
         }
     }
 

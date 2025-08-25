@@ -34,10 +34,12 @@ public sealed class KinksterGameObj : DisposableMediatorSubscriberBase
         };
 
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => FrameworkUpdate());
-        Mediator.Publish(new KinksterGameObjCreatedMessage(this));
-
         // maybe replace with Svc.Framework.RunOnFrameworkThread?
         _frameworkUtil.RunOnFrameworkThread(CheckAndUpdateObject).GetAwaiter().GetResult();
+        
+        // Mark as created with the name @ world now present.
+        Mediator.Publish(new KinksterGameObjCreatedMessage(this));
+
     }
 
     public string NameWithWorld { get; private set; } // the name of the character

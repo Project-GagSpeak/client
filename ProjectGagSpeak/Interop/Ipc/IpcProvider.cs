@@ -59,14 +59,13 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
         Mediator.Subscribe<MoodlesPermissionsUpdated>(this, (msg) =>
         {
             // update the visible pair objects with their latest permissions.
-            var idxOfPair = VisiblePairObjects.FindIndex(p => p.Item1.NameWithWorld == msg.NameWithWorld);
-            if (idxOfPair != -1)
+            if (VisiblePairObjects.FirstOrDefault(vpo => vpo.Item1.NameWithWorld == msg.Kinkster.PlayerNameWithWorld) is { } match)
             {
-                var newPerms = _pairManager.GetMoodlePermsForPairByName(msg.NameWithWorld);
-                // replace the item 2 and 3 of the index where the pair is.
-                VisiblePairObjects[idxOfPair] = (VisiblePairObjects[idxOfPair].Item1, newPerms.Item1, newPerms.Item2);
-
-                // notify the update
+                // found a match, so update their permission values within the list.
+                var newPerms = _pairManager.GetMoodlePermsForPairByName(msg.Kinkster.PlayerNameWithWorld);
+                match.Item2 = newPerms.Item1;
+                match.Item3 = newPerms.Item2;
+                // inform list change.
                 NotifyListChanged();
             }
         });
@@ -163,7 +162,7 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
         var recipientObject = VisiblePairObjects.FirstOrDefault(g => g.Item1.NameWithWorld == recipient);
         if (recipientObject.Item1 == null)
         {
-            _logger.LogWarning("Received ApplyStatusesToPairRequest for {recipient} but could not find the recipient", recipient);
+            _logger.LogWarning($"ApplyStatusesToPairRequest for {recipient} recieved, but they were not visible.");
             return;
         }
 
@@ -171,12 +170,12 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
         var pairUser = _pairManager.DirectPairs.FirstOrDefault(p => p.PlayerNameWithWorld == recipient)!.UserData;
         if (pairUser == null)
         {
-            _logger.LogWarning("Received ApplyStatusesToPairRequest for {recipient} but could not find the UID for the pair", recipient);
+            _logger.LogWarning($"ApplyStatusesToPairRequest for {recipient} received, but couldn't find their UID.");
             return;
         }
 
         // fetch the UID for the pair to apply for.
-        _logger.LogInformation($"Received ApplyStatusesToPairRequest for {recipient} from {requester}, applying statuses");
+        _logger.LogInformation($"ApplyStatusesToPairRequest for {recipient} from {requester}, applying statuses");
         var dto = new MoodlesApplierByStatus(pairUser, statuses, (isPreset ? MoodleType.Preset : MoodleType.Status));
         Mediator.Publish(new MoodlesApplyStatusToPair(dto));
     }

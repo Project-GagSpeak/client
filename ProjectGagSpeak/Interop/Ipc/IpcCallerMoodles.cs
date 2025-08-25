@@ -175,6 +175,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     /// <summary> This method applies the statuses from a pair to the client </summary>
     public async Task ApplyStatusesFromPairToSelf(string applierNameWithWorld, string recipientNameWithWorld, IEnumerable<MoodlesStatusInfo> statuses)
     {
+        _logger.LogDebug($"Applying {statuses.Count()} statuses from {applierNameWithWorld} to {recipientNameWithWorld}");
         await ExecuteIpcOnThread(() => _applyStatusesFromPair.InvokeAction(applierNameWithWorld, recipientNameWithWorld, [.. statuses]));
     }
 

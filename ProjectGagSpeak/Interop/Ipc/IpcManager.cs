@@ -57,5 +57,7 @@ public sealed partial class IpcManager : DisposableMediatorSubscriberBase
         Moodles.CheckAPI();
         Penumbra.CheckAPI();
         PetNames.CheckAPI();
+
+        Penumbra.CheckModDirectory();
     }
 }

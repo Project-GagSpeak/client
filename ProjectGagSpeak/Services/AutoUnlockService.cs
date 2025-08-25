@@ -14,6 +14,7 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using GagspeakAPI.Util;
 using Microsoft.Extensions.Hosting;
@@ -185,7 +186,8 @@ public sealed class AutoUnlockService : BackgroundService
             gag.Password = string.Empty;
             gag.Timer = DateTimeOffset.MinValue;
             gag.PadlockAssigner = string.Empty;
-            if (await _dds.PushNewActiveGagSlot(index, dat, DataUpdateType.Unlocked).ConfigureAwait(false) is { } newData)
+            // push update.
+            if (await _dds.PushNewActiveGagSlot(index, dat, DataUpdateType.Unlocked).ConfigureAwait(false) is not null)
             {
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.GagLockStateChange, false, index, backup.Padlock, MainHub.UID);
                 _mediator.Publish(new EventMessage(new("Auto-Unlock", MainHub.UID, InteractionType.UnlockGag, $"{gag.GagItem.GagName()}'s Timed Padlock Expired!")));
@@ -219,7 +221,7 @@ public sealed class AutoUnlockService : BackgroundService
             item.Password = string.Empty;
             item.Timer = DateTimeOffset.MinValue;
             item.PadlockAssigner = string.Empty;
-            if (await _dds.PushNewActiveRestriction(index, dat, DataUpdateType.Unlocked).ConfigureAwait(false) is { } newData)
+            if (await _dds.PushNewActiveRestriction(index, dat, DataUpdateType.Unlocked).ConfigureAwait(false) is not null)
             {
                 // update was valid, so do whatever we would normally do in the manager.
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.RestrictionLockStateChange, false, index, backup.Padlock, MainHub.UID);
@@ -256,7 +258,7 @@ public sealed class AutoUnlockService : BackgroundService
         data.Password = string.Empty;
         data.Timer = DateTimeOffset.MinValue;
         data.PadlockAssigner = string.Empty;
-        if (await _dds.PushNewActiveRestraint(dat, DataUpdateType.Unlocked).ConfigureAwait(false) is { } newData)
+        if (await _dds.PushNewActiveRestraint(dat, DataUpdateType.Unlocked).ConfigureAwait(false) is not null)
         {
             GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintLockChange, data.Identifier, backup.Padlock, false, MainHub.UID);
             // Sold slave is never valid here.            

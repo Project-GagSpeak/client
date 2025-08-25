@@ -49,7 +49,7 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
 
         var time = SelectedLock is Padlocks.FiveMinutes ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
         var newData = Items[layerIdx] with { Padlock = SelectedLock, Password = Password, Timer = time, PadlockAssigner = MainHub.UID };
-        if (await _dds.PushNewActiveRestriction(layerIdx, newData, DataUpdateType.Locked) is null)
+        if (await SelfBondageHelper.RestrictionUpdateRetTask(layerIdx, newData, DataUpdateType.Locked, _dds, _visuals))
         {
             ResetSelection();
             ResetInputs();

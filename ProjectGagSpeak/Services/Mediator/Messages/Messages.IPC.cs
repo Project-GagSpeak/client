@@ -1,4 +1,5 @@
 using Buttplug.Client;
+using GagSpeak.Kinksters;
 using GagspeakAPI.Network;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
@@ -6,6 +7,7 @@ using Penumbra.GameData.Structs;
 namespace GagSpeak.Services.Mediator;
 
 public record PenumbraInitialized : MessageBase;
+public record PenumbraDirectoryChanged(string? NewDirectory) : MessageBase;
 public record PenumbraDisposed : MessageBase;
 public record MoodlesReady : MessageBase;
 public record GlamourerReady : MessageBase;
@@ -25,7 +27,7 @@ public record MoodlesStatusModified(Guid Guid) : MessageBase; // when we change 
 public record MoodlesPresetModified(Guid Guid) : MessageBase; // when we change one of our moodles presets.
 public record MoodlesApplyStatusToPair(MoodlesApplierByStatus StatusDto) : MessageBase;
 public record VisibleKinkstersChanged : MessageBase; // for pinging the moodles.
-public record MoodlesPermissionsUpdated(string NameWithWorld) : MessageBase;
+public record MoodlesPermissionsUpdated(Kinkster Kinkster) : MessageBase;
 // Intiface IPC
 public record BuzzToyAdded(ButtplugClientDevice Device) : MessageBase;
 public record BuzzToyRemoved(ButtplugClientDevice Device) : MessageBase;
