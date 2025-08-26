@@ -75,14 +75,14 @@ public class KinksterHardcore(InteractionsService service)
 
             ImUtf8.SameLineInner();
             var playerIsTarget = k.VisiblePairGameObject is not null && k.VisiblePairGameObject.Equals(Svc.Targets.Target);
-            var inRange = playerIsTarget && PlayerData.DistanceTo(k.VisiblePairGameObject) < 20;
+            var inRange = playerIsTarget && PlayerData.DistanceTo(k.VisiblePairGameObject) < 12;
             if (CkGui.IconButton(FAI.Bullseye, disabled: !inRange))
                 service.ImprisonPos = k.VisiblePairGameObject!.Position;
             CkGui.AttachToolTip("Anchor Cage to the targeted Kinkster's position.");
 
             ImUtf8.SameLineInner();
             ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - rightW - ImGui.GetStyle().ItemInnerSpacing.X);
-            ImGui.InputFloat("##FreedomRadius", ref service.ImprisonRadius, 1);
+            ImGui.SliderFloat("##FreedomRadius", ref service.ImprisonRadius, 1f, 10f);
             CkGui.AttachToolTip($"Set the radius {dispName} can move within their cage. Be careful of pathing!");
 
             ImUtf8.SameLineInner();
