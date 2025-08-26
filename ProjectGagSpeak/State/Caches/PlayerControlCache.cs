@@ -32,6 +32,11 @@ public sealed class PlayerControlCache
 
     private HcTaskControl _activeTaskControl = HcTaskControl.None;
 
+    public Traits FinalTraits => _traits.FinalTraits;
+
+    public string GetTraitSourceName(Traits trait)
+        => _traits.GetSourceName(trait);
+
     // Accessors that retrieve under what conditions the respective hardcore attributes should be enabled with.
     public bool BlockChatInput
         => ClientData.Hardcore.IsEnabled(HcAttribute.BlockedChatInput) 

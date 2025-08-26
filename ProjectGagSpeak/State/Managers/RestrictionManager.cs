@@ -158,6 +158,16 @@ public sealed class RestrictionManager : IHybridSavable
         }
     }
 
+    public void ToggleVisibility(Guid restrictionItem)
+    {
+        if (Storage.TryGetRestriction(restrictionItem, out var item))
+        {
+            item.IsEnabled = !item.IsEnabled;
+            _mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Modified, item));
+            _saver.Save(this);
+        }
+    }
+
     /// <summary> Attempts to add the gag restriction as a favorite. </summary>
     public bool AddFavorite(GarblerRestriction restriction) => _favorites.TryAddGag(restriction.GagType);
 

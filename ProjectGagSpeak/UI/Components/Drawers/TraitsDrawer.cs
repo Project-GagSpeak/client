@@ -114,7 +114,7 @@ public class AttributeDrawer
 
         for (int i = 0; i < icons.Count; i++)
         {
-            if (i > 0) ImGui.SameLine(0, spacing);
+            if (i > 0) ImUtf8.SameLineInner();
             ImGui.Image(CosmeticService.CoreTextures.Cache[icons[i].tex].Handle, iconSize);
             CkGui.AttachToolTip(icons[i].tooltip);
         }

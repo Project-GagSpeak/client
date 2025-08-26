@@ -60,25 +60,28 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
 
         Mediator.Subscribe<HonorificTitleChanged>(this, (msg) =>
         {
-            if (PlayerData.IsZoning)
-                return;
-            // maybe some comparison here, but also could move it elsewhere.
-            if (!_lastHonorific.Equals(msg.NewTitle, StringComparison.Ordinal))
-                return;
+            if (PlayerData.IsZoning) return;
+            if (LastHonorific.Equals(msg.NewTitle, StringComparison.Ordinal)) return;
+
             Logger.LogInformation("Client HonorificTitle was updated!");
             AddPendingSync(DataSyncKind.Honorific);
         });
 
         Mediator.Subscribe<PetNamesDataChanged>(this, (msg) =>
         {
-            if (PlayerData.IsZoning)
-                return;
-            // maybe some comparison here, but also could move it elsewhere.
-            if (!_lastPetNames.Equals(msg.NicknamesData, StringComparison.Ordinal))
-                return;
+            if (PlayerData.IsZoning) return;
+            if (LastPetNames.Equals(msg.NicknamesData, StringComparison.Ordinal)) return;
+
             Logger.LogInformation("Client PetNames was updated!");
             AddPendingSync(DataSyncKind.PetNames);
         });
+
+        //Mediator.Subscribe<PenumbraSettingsChanged>(this, (msg) =>
+        //{
+        //    if (PlayerData.IsZoning) return;
+        //    Logger.LogInformation("Client Penumbra ModManips were updated!");
+        //    AddPendingSync(DataSyncKind.ModManips);
+        //});
 
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (msg) => ProcessKinksterSync());
     }
@@ -86,12 +89,12 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
     // internal references to the last sent clientString states.
     private DataSyncKind _pendingTypes = DataSyncKind.None;
     // If we could create associated meta manips to link to pcp's it might be helpful but otherwise is bloated space.
-    private string _lastModManips = string.Empty;
-    private string _lastGlamourer = string.Empty;
-    private string _lastCPlus = string.Empty;
-    private string _lastHeels = string.Empty;
-    private string _lastHonorific = string.Empty;
-    private string _lastPetNames = string.Empty;
+    public static string LastModManips { get; private set; } = string.Empty;
+    public static string LastGlamourer { get; private set; } = string.Empty;
+    public static string LastCPlus { get; private set; } = string.Empty;
+    public static string LastHeels { get; private set; } = string.Empty;
+    public static string LastHonorific { get; private set; } = string.Empty;
+    public static string LastPetNames { get; private set; } = string.Empty;
 
     private void AddPendingSync(DataSyncKind syncType)
     {
@@ -100,8 +103,17 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
         _syncUpdateCTS = _syncUpdateCTS.SafeCancelRecreate();
     }
 
-    private int GetDebounceTime() => _pendingTypes.HasAny(DataSyncKind.Glamourer) 
-        ? 1000 : _pendingTypes.HasAny(DataSyncKind.Heels | DataSyncKind.CPlus) ? 750 : 500;
+    private int GetDebounceTime()
+        => _pendingTypes switch
+        {
+            DataSyncKind.ModManips => 1000,
+            DataSyncKind.Glamourer => 1000,
+            DataSyncKind.Heels => 750,
+            DataSyncKind.CPlus => 750,
+            DataSyncKind.Honorific => 250,
+            DataSyncKind.PetNames => 150,
+            _ => 1500,
+        };
 
     // Occurs every framework tick. If there is nothing to process, simply return.
     private void ProcessKinksterSync()
@@ -158,6 +170,7 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
     {
         string? newData = type switch
         {
+            // DataSyncKind.ModManips => GetNewModManips(),
             DataSyncKind.Glamourer => await GetNewGlamourData().ConfigureAwait(false),
             DataSyncKind.CPlus => await GetNewCPlusData().ConfigureAwait(false),
             DataSyncKind.Heels => await GetNewHeelsData().ConfigureAwait(false),
@@ -214,19 +227,22 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
             _ipc.Heels.GetClientOffset(),
             _ipc.Honorific.GetTitle()
         ).ConfigureAwait(false);
+        // var ipcManips = _ipc.Penumbra.GetClientManipulations();
         var ipcNicks = GetNewPetNamesData();
-        _lastGlamourer = ipcCalls[0] ?? string.Empty;
-        _lastCPlus = ipcCalls[1] ?? string.Empty;
-        _lastHeels = ipcCalls[2] ?? string.Empty;
-        _lastHonorific = ipcCalls[3] ?? string.Empty;
-        _lastPetNames = ipcNicks ?? string.Empty;
+        // LastModManips = ipcManips;
+        LastGlamourer = ipcCalls[0] ?? string.Empty;
+        LastCPlus = ipcCalls[1] ?? string.Empty;
+        LastHeels = ipcCalls[2] ?? string.Empty;
+        LastHonorific = ipcCalls[3] ?? string.Empty;
+        LastPetNames = ipcNicks ?? string.Empty;
         var appearance = new CharaIpcDataFull()
         {
+            // ModManips = IpcCallerPenumbra.APIAvailable ? ipcManips : null,
             GlamourerBase64 = ipcCalls[0],
             CustomizeProfile = ipcCalls[1],
             HeelsOffset = ipcCalls[2],
             HonorificTitle = ipcCalls[3],
-            PetNicknames = ipcNicks,
+            PetNicknames = IpcCallerPetNames.APIAvailable ? ipcNicks : null
         };
         // push it out.
         Logger.LogDebug("Pushing full appearnace update to Kinksters");
@@ -234,16 +250,28 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
     }
 
     // Helpers.
+    private string? GetNewModManips()
+    {
+        if (!IpcCallerPenumbra.APIAvailable)
+            return null;
+        var newManipStr = _ipc.Penumbra.GetClientManipulations();
+        if (LastModManips.Equals(newManipStr, StringComparison.Ordinal))
+            return null;
+        // it was different, so update and return it.
+        Logger.LogTrace($"New Penumbra Manipulations String: {newManipStr.ToString()}");
+        LastModManips = newManipStr;
+        return newManipStr;
+    }
     private async Task<string?> GetNewGlamourData()
     {
         if (!IpcCallerGlamourer.APIAvailable)
             return null;
         var newGlamStr = await _ipc.Glamourer.GetActorString().ConfigureAwait(false);
-        if (_lastGlamourer.Equals(newGlamStr, StringComparison.Ordinal))
+        if (LastGlamourer.Equals(newGlamStr, StringComparison.Ordinal))
             return null;
         // it was different, so update and return it.
         Logger.LogTrace($"New GlamourAPI Actor String: {newGlamStr.ToString()}");
-        _lastGlamourer = newGlamStr;
+        LastGlamourer = newGlamStr;
         return newGlamStr;
     }
 
@@ -252,11 +280,11 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
         if (!IpcCallerCustomize.APIAvailable)
             return null;
         var newCPlusStr = await _ipc.CustomizePlus.GetClientProfile().ConfigureAwait(false);
-        if (_lastCPlus.Equals(newCPlusStr, StringComparison.Ordinal))
+        if (LastCPlus.Equals(newCPlusStr, StringComparison.Ordinal))
             return null;
         // it was different, so update and return it.
         Logger.LogTrace($"New CPlus Profile String: {newCPlusStr.ToString()}");
-        _lastCPlus = newCPlusStr;
+        LastCPlus = newCPlusStr;
         return newCPlusStr;
     }
 
@@ -265,11 +293,11 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
         if (!IpcCallerHeels.APIAvailable)
             return null;
         var newHeelsStr = await _ipc.Heels.GetClientOffset().ConfigureAwait(false);
-        if (_lastHeels.Equals(newHeelsStr, StringComparison.Ordinal))
+        if (LastHeels.Equals(newHeelsStr, StringComparison.Ordinal))
             return null;
         // it was different, so update and return it.
         Logger.LogTrace($"New Heels Offset String: {newHeelsStr.ToString()}");
-        _lastHeels = newHeelsStr;
+        LastHeels = newHeelsStr;
         return newHeelsStr;
     }
 
@@ -278,11 +306,11 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
         if (!IpcCallerHonorific.APIAvailable)
             return null;
         var newTitleStr = await _ipc.Honorific.GetTitle().ConfigureAwait(false);
-        if (_lastHonorific.Equals(newTitleStr, StringComparison.Ordinal))
+        if (LastHonorific.Equals(newTitleStr, StringComparison.Ordinal))
             return null;
         // it was different, so update and return it.
         Logger.LogTrace($"New Honorific Title String: {newTitleStr.ToString()}");
-        _lastHonorific = newTitleStr;
+        LastHonorific = newTitleStr;
         return newTitleStr;
     }
 
@@ -291,11 +319,11 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
         if (!IpcCallerPetNames.APIAvailable)
             return null;
         var newNicksStr = _ipc.PetNames.GetPetNicknames();
-        if (_lastPetNames.Equals(newNicksStr, StringComparison.Ordinal))
+        if (LastPetNames.Equals(newNicksStr, StringComparison.Ordinal))
             return null;
         // it was different, so update and return it.
         Logger.LogTrace($"New PetNames Nicknames String: {newNicksStr.ToString()}");
-        _lastPetNames = newNicksStr;
+        LastPetNames = newNicksStr;
         return newNicksStr;
     }
 }

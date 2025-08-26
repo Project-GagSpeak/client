@@ -141,6 +141,16 @@ public sealed class RestraintManager : IHybridSavable
         }
     }
 
+    public void ToggleVisibility(Guid restraintItem)
+    {
+        if (Storage.TryGetRestraint(restraintItem, out var item))
+        {
+            item.IsEnabled = !item.IsEnabled;
+            _mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Modified, item));
+            _saver.Save(this);
+        }
+    }
+
     public void AddFavorite(RestraintSet rs) => _favorites.TryAddRestriction(FavoriteIdContainer.Restraint, rs.Identifier);
     public void RemoveFavorite(RestraintSet rs) => _favorites.RemoveRestriction(FavoriteIdContainer.Restraint, rs.Identifier);
 

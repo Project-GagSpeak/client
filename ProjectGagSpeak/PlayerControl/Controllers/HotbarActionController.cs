@@ -28,13 +28,11 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
     private const uint CAST_RECAST_CONTAINER_ID = 13;
     private const uint DESCRIPTION_NODE_ID = 19;
 
-    private readonly TraitsCache _cache;
+    private readonly PlayerControlCache _cache;
 
     // Stores the pointer that we most recently interacted with. Useful for resetting the height.
-    // NOTE: Have not yet tested
     private unsafe AtkUnitBase* _lastModifiedTooltip;
-
-
+    
     /// <summary> The currently banned actions determined by the <see cref="_cache"/>'s _finalTrait's </summary>
     private ImmutableDictionary<uint, Traits> _bannedActions = ImmutableDictionary<uint, Traits>.Empty;
 
@@ -48,20 +46,19 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
         (55, Traits.BoundLegs),
         (68, Traits.BoundArms)
     ];
-    
-    private Traits _sources = Traits.None;
 
-    public unsafe HotbarActionHandler(ILogger<HotbarActionHandler> logger, GagspeakMediator mediator, TraitsCache cache)
+    private Traits _latestSources = Traits.None;
+
+    public unsafe HotbarActionHandler(ILogger<HotbarActionHandler> logger, GagspeakMediator mediator, PlayerControlCache cache)
         : base(logger, mediator)
     {
         _cache = cache;
 
+        Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreState());
+
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "ActionDetail", (_, args) => OnActionTooltip((AtkUnitBase*)args.Addon.Address));
         Svc.ClientState.ClassJobChanged += SetBannedJobActions;
     }
-
-    /// <summary> The currently active traits that are blocking your actions. </summary>
-    public Traits Sources => _sources;
 
     protected override void Dispose(bool disposing)
     {
@@ -72,13 +69,14 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
         RestoreSavedSlots();
     }
 
-    public void UpdateSources(Traits newSources)
+    public void UpdateHardcoreState()
     {
+        var sources = _cache.FinalTraits;
         // If the traits changed, update the slots.
-        if (newSources != _sources)
+        if (sources != _latestSources)
         {
-            Logger.LogDebug($"Updating sources from [{_sources}] to [{newSources}].", LoggerType.HardcoreActions);
-            _sources = newSources;
+            Logger.LogDebug($"Updating sources from [{_latestSources}] to [{sources}].", LoggerType.HardcoreActions);
+            _latestSources = sources;
             // recalculate the banned slots for this job.
             SetBannedJobActions(PlayerData.JobIdThreadSafe);
         }
@@ -90,7 +88,7 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
         RestoreSavedSlots();
 
         // If there are no more controlling traits, restore and return.
-        if (_sources is Traits.None)
+        if (_latestSources is Traits.None)
         {
             Logger.LogDebug("No controlling traits, restoring saved slots.", LoggerType.HardcoreActions);
             return;
@@ -138,7 +136,7 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
                 foreach (var (actionId, trait) in _traitActionIds)
                 {
                     // If the property exists and we have that trait enabled, set the slot to the restricted item.
-                    if (props.HasAny(trait) && _sources.HasAny(trait))
+                    if (props.HasAny(trait) && _latestSources.HasAny(trait))
                     {
                         slot->Set(hotbarModule->UIModule, RaptureHotbarModule.HotbarSlotType.Action, actionId);
                         break;
@@ -279,7 +277,7 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
         // Replace title and description based on the trait.
         var trait = _traitActionIds.FirstOrDefault(x => x.Id == hoveredAct.ActionID).Traits;
         var title = ActionTooltipEx.GetTitle(trait);
-        var desc  = ActionTooltipEx.GetDescription(trait, _cache.GetSourceName(trait));
+        var desc  = ActionTooltipEx.GetDescription(trait, _cache.GetTraitSourceName(trait));
         ActionTooltipEx.ReplaceTextNodeText(addon, TITLE_NODE_ID, title);
         ActionTooltipEx.ReplaceTextNodeText(addon, DESCRIPTION_NODE_ID, desc);
 

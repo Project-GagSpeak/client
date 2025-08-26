@@ -18,7 +18,8 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
     private Dictionary<SPPID, string> _timespanCache = new();
     public void DrawPermissions(Kinkster kinkster, string dispName, float width)    {
         ImGuiUtil.Center($"Your Permissions for {dispName}");
-        _presets.DrawPresetList(kinkster, width);
+        using (ImRaii.Disabled(kinkster.OwnPerms.InHardcore))
+            _presets.DrawPresetList(kinkster, width);
         ImGui.Separator();
 
         // Child area for scrolling.

@@ -1,4 +1,5 @@
 using GagSpeak.Services.Controller;
+using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagspeakAPI.Attributes;
 
@@ -7,13 +8,15 @@ namespace GagSpeak.State.Handlers;
 public class TraitsHandler
 {
     private readonly ILogger<TraitsHandler> _logger;
+    private readonly GagspeakMediator _mediator;
     private readonly TraitsCache _cache;
     private readonly HotbarActionHandler _controller;
 
-    public TraitsHandler(ILogger<TraitsHandler> logger, TraitsCache cache,
-        HotbarActionHandler controller)
+    public TraitsHandler(ILogger<TraitsHandler> logger, GagspeakMediator mediator,
+        TraitsCache cache, HotbarActionHandler controller)
     {
         _logger = logger;
+        _mediator = mediator;
         _cache = cache;
         _controller = controller;
     }
@@ -50,7 +53,8 @@ public class TraitsHandler
         if (_cache.UpdateFinalCache())
         {
             _logger.LogDebug("Final Traits updated.", LoggerType.VisualCache);
-            _controller.UpdateSources(FinalTraits);
+            _controller.UpdateHardcoreState();
+            _mediator.Publish(new HcStateCacheChanged());
         }
         else
             _logger.LogTrace("No change in Final Traits.", LoggerType.VisualCache);

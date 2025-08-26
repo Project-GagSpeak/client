@@ -1,7 +1,9 @@
 using CkCommons;
 using CkCommons.Gui;
+using CkCommons.Raii;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
@@ -66,7 +68,27 @@ public class KinksterHardcore(InteractionsService service)
         UniqueHcChild(InteractionType.Imprisonment, imprisonmentActive, CkStyle.TwoRowHeight(), () =>
         {
             DrawTimerButtonRow(InteractionType.Imprisonment, ref service.ImprisonTimer, imprisonmentDis);
-            CkGui.CenterColorTextAligned("Position & Radius elements are TODO.", ImGuiColors.DalamudRed);
+            var rightW = CkGui.IconTextButtonSize(FAI.Upload, "Enable State");
+            if (CkGui.IconButton(FAI.MapPin, disabled: !PlayerData.Available))
+                service.ImprisonPos = PlayerData.Position;
+            CkGui.AttachToolTip("Anchor Cage to your current position.");
+
+            ImUtf8.SameLineInner();
+            var playerIsTarget = k.VisiblePairGameObject is not null && k.VisiblePairGameObject.Equals(Svc.Targets.Target);
+            var inRange = playerIsTarget && PlayerData.DistanceTo(k.VisiblePairGameObject) < 20;
+            if (CkGui.IconButton(FAI.Bullseye, disabled: !inRange))
+                service.ImprisonPos = k.VisiblePairGameObject!.Position;
+            CkGui.AttachToolTip("Anchor Cage to the targeted Kinkster's position.");
+
+            ImUtf8.SameLineInner();
+            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - rightW - ImGui.GetStyle().ItemInnerSpacing.X);
+            ImGui.InputFloat("##FreedomRadius", ref service.ImprisonRadius, 1);
+            CkGui.AttachToolTip($"Set the radius {dispName} can move within their cage. Be careful of pathing!");
+
+            ImUtf8.SameLineInner();
+            using (CkRaii.FramedChild("CageAnchor", new Vector2(rightW, ImGui.GetFrameHeight()), 0, CkColor.VibrantPink.Uint(), CkStyle.ListItemRounding(), CkStyle.ThinThickness()))
+                CkGui.CenterTextAligned($"{service.ImprisonPos:F1}");
+            CkGui.AttachToolTip("The current cage anchor position.");
         });
 
         // ------ Chat Box Hiding ------

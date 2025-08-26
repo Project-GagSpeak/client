@@ -3,6 +3,7 @@ using CkCommons.Classes;
 using CkCommons.Gui;
 using CkCommons.Raii;
 using CkCommons.Widgets;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.FileSystems;
@@ -12,8 +13,8 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
-using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
+using static FFXIVClientStructs.FFXIV.Client.Game.InstanceContent.DynamicEvent.Delegates;
 
 namespace GagSpeak.Gui.Wardrobe;
 
@@ -136,16 +137,11 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
     {
         var height = ImGui.GetFrameHeightWithSpacing() * 2 + MoodleDrawer.IconSize.Y;
         var region = new Vector2(drawRegion.Size.X, height);
-        var item = _selector.Selected;
-        var editorItem = _manager.ItemInEditor;
+        var notSelected = _selector.Selected is null;
+        var isActive = !notSelected && _selector.Selected!.Equals(_manager.AppliedRestraint!);
+        var tooltip = notSelected ? "No item selected!" : isActive ? "Restraint Set is Active!" : "Double Click to edit this Restraint Set.";
 
-        var isEditing = item is not null && item.Identifier.Equals(editorItem?.Identifier);
-        var isActive = item is not null && item.Identifier.Equals(_manager.AppliedRestraint?.Identifier);
-
-        var label = item is null ? "No Item Selected!" : item.Label;
-        var tooltip = item is null ? "No item selected!" : isActive ? "Restraint Set is Active!" : "Double Click to edit this Restraint Set.";
-        
-        // Draw the inner label child action item.
+        var label = notSelected ? "Nothing Selected!" : _selector.Selected!.Label;
         using var inner = CkRaii.ChildLabelButton(region, .6f, label, ImGui.GetFrameHeight(), BeginEdits, tooltip, DFlags.RoundCornersRight, LabelFlags.AddPaddingToHeight);
         if (_selector.Selected is not null)
             _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EnteringEditor, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => _manager.StartEditing(_selector.Selected));
@@ -155,11 +151,27 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
         var imgDrawPos = pos with { X = pos.X + inner.InnerRegion.X - imgSize.X };
 
         // Left side content
-        if (item is not null)
+        if (_selector.Selected is not null)
         {
-            var maxWidth = drawRegion.Size.X - imgSize.X - ImGui.GetStyle().WindowPadding.X * 2;
+            // 1st row.
+            using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
+            {
+                CkGui.BooleanToColoredIcon(_selector.Selected!.IsEnabled, false);
+                CkGui.TextFrameAlignedInline($"Visuals  ");
+            }
+            if (!isActive && ImGui.IsItemHovered() && ImGui.IsItemClicked())
+                _manager.ToggleVisibility(_selector.Selected!.Identifier);
+            CkGui.AttachToolTip($"Visuals {(_selector.Selected!.IsEnabled ? "will" : "will not")} be applied.");
+
+            if (_selector.Selected!.Traits > 0)
+            {
+                ImUtf8.SameLineInner();
+                _attributeDrawer.DrawTraitPreview(_selector.Selected!.Traits);
+            }
+            // 2nd row
             DrawAttributeRow();
-            _attributeDrawer.DrawTraitPreview(_selector.Selected!.Traits);
+            // 3rd row
+            var maxWidth = drawRegion.Size.X - imgSize.X - ImGui.GetStyle().WindowPadding.X * 2;
             _moodleDrawer.ShowStatusIcons(_selector.Selected!.GetAllMoodles(), maxWidth, MoodleDrawer.IconSize, 1);
         }
 
@@ -169,7 +181,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
         if (_selector.Selected is not null)
         {
             _activeItemDrawer.DrawRestraintImage(_selector.Selected!, imgSize, rounding);
-            if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+            if (!isActive && ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
                 _thumbnails.SetThumbnailSource(_selector.Selected!.Identifier, new Vector2(120, 120f * 1.2f), ImageDataType.Restraints);
             CkGui.AttachToolTip("The Thumbnail for this Restraint Set.--SEP--Double Click to change the image.");
 
@@ -179,11 +191,8 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
 
         void BeginEdits(ImGuiMouseButton b)
         {
-            if (b is not ImGuiMouseButton.Left || editorItem is not null)
-                return;
-
-            if (_selector.Selected is not null)
-                _manager.StartEditing(_selector.Selected);
+            if (b is ImGuiMouseButton.Left && !notSelected && !isActive)
+                _manager.StartEditing(_selector.Selected!);
         }
     }
 

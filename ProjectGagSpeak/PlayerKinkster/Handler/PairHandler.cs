@@ -23,7 +23,7 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
     private CancellationTokenSource? _appCTS = new();
 
     // Penumbra collection (for when we manage pcp's)
-    // private Guid _penumbraCollectionId;
+    private Guid _penumbraCollectionId = Guid.Empty;
     private Guid? _activeCustomize = null;
 
     // Cached, nullable data.
@@ -47,8 +47,17 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
 
         // Can easily create a temporary collection here to manage pcp's for if need be,
         // or even manage them with helper functions.
-        // _penumbraCollectionId = _ipc.Penumbra.CreateTemporaryCollection(OnlineUser.User.UID).ConfigureAwait(false).GetAwaiter().GetResult();
-
+        //_penumbraCollectionId = _ipc.Penumbra.CreateKinksterCollection(OnlineUser.User.UID).ConfigureAwait(false).GetAwaiter().GetResult();
+        //Mediator.Subscribe<PenumbraInitialized>(this, _ =>
+        //{
+        //    _penumbraCollectionId = _ipc.Penumbra.CreateKinksterCollection(OnlineUser.User.UID).ConfigureAwait(false).GetAwaiter().GetResult();
+        //    if (!IsVisible && _gameObject != null)
+        //    {
+        //        PlayerName = string.Empty;
+        //        _gameObject.Dispose();
+        //        _gameObject = null;
+        //    }
+        //});
         // subscribe to the framework update Message 
         Mediator.Subscribe<FrameworkUpdateMessage>(this, (_) => FrameworkUpdate());
         // Invalidate our kinkster pairs whenever we begin changing zones.
@@ -107,7 +116,15 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
             // if the hosted service lifetime is ending, return
             if (_lifetime.ApplicationStopping.IsCancellationRequested)
             {
+                // try and remove regardless and prevent a deadlock if on shutdown?
+                // (Dunno why this is nessisary but whatever i guess)
+                // _ipc.Penumbra.RemoveKinksterCollection(_penumbraCollectionId).ConfigureAwait(false);
                 _ipc.Glamourer.ReleaseKinkster(this).ConfigureAwait(false);
+                _ipc.CustomizePlus.RevertKinksterProfile(_activeCustomize).ConfigureAwait(false);
+                _ipc.Heels.RestoreKinksterOffset(this).ConfigureAwait(false);
+                _ipc.Honorific.ClearTitleAsync(this).ConfigureAwait(false);
+                _ipc.PetNames.ClearKinksterPetNames(this).ConfigureAwait(false);
+                _ipc.Moodles.ClearStatus(name).ConfigureAwait(false);
                 return;
             }
 
@@ -132,7 +149,6 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
             }
         });
 
-        // Once over, null the data.
         // safely dispose of the kinkster game object.
         _gameObject?.Dispose();
         _gameObject = null;
@@ -167,6 +183,9 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
         // apply the new data.
         switch (type)
         {
+            //case DataSyncKind.ModManips when !newDataString.Equals(_appearance.ModManips) && _penumbraCollectionId != Guid.Empty:
+            //    await _ipc.Penumbra.SetKinksterManipulations(_penumbraCollectionId, newDataString).ConfigureAwait(false);
+            //    break;
             case DataSyncKind.Glamourer when !newDataString.Equals(_appearance.GlamourerBase64):
                 await _ipc.Glamourer.ApplyKinksterGlamour(this, newDataString).ConfigureAwait(false);
                 break;
@@ -202,6 +221,13 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
 
     private async Task ApplyUpdatedAppearance(CharaIpcDataFull newData, bool force = false)
     {
+        // Apply ModManips if different.
+        if (_penumbraCollectionId != Guid.Empty)
+        {
+            if (newData.ModManips != null && (force || !newData.ModManips.Equals(_appearance!.ModManips)))
+                await _ipc.Penumbra.SetKinksterManipulations(_penumbraCollectionId, newData.ModManips).ConfigureAwait(false);
+        }
+
         // Apply Glamour if different.
         if (newData.GlamourerBase64 != null && (force || !newData.GlamourerBase64.Equals(_appearance!.GlamourerBase64)))
             await _ipc.Glamourer.ApplyKinksterGlamour(this, newData.GlamourerBase64).ConfigureAwait(false);
@@ -338,5 +364,7 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
             Logger.LogTrace($"Reapplying Pet Nicknames for {PlayerName}");
             await _ipc.PetNames.SetKinksterPetNames(this, _appearance.PetNicknames).ConfigureAwait(false);
         });
+
+        // _ipc.Penumbra.AssignKinksterCollection(_penumbraCollectionId, _gameObject.PlayerCharacterObjRef!.ObjectIndex).GetAwaiter().GetResult();
     }
 }

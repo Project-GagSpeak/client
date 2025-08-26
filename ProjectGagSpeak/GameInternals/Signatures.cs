@@ -16,6 +16,9 @@ namespace GagSpeak.GameInternals;
 // https://github.com/Drahsid/HybridCamera/blob/2e18760d64be14d2dc16405168d5a7a8f236ff3c/HybridCamera/MovementHook.cs#L216
 // - UnfollowTarget
 // Pray to whatever gods exist someone can still help with this.
+// - Movement & Camera Control (Imprisonment)
+// https://github.com/NightmareXIV/Lifestream/blob/main/Lifestream/Movement/OverrideMovement.cs
+// https://github.com/NightmareXIV/Lifestream/blob/main/Lifestream/Movement/OverrideCamera.cs
 // - ApplyGlamourPlate
 // Given graciously by Hassel.
 // - ProcessChatInput
@@ -54,10 +57,19 @@ public static class Signatures
     public const string ForceDisableMovement = "F3 0F 10 05 ?? ?? ?? ?? 0F 2E C7";
 
     // DetourName = nameof(MovementUpdate), Fallibility = Fallibility.Auto, Define via SignatureAttribute.
-    public const string MouseAutoMove2 = "48 8b c4 48 89 70 ?? 48 89 78 ?? 55 41 56 41 57";
+    public const string MouseAutoMove2 = "48 8b c4 4c 89 48 ?? 53 55 57 41 54 48 81 ec ?? 00 00 00";
 
     // DetourName = nameof(TestUpdate), Fallibility = Fallibility.Auto, Define via SignatureAttribute.
     public const string UnfollowTarget = "48 89 5c 24 ?? 48 89 74 24 ?? 57 48 83 ec ?? 48 8b d9 48 8b fa 0f b6 89 ?? ?? 00 00 be 00 00 00 e0";
+
+    // Signatures for Imprisonment
+    public const string RMICamera = "48 8B C4 53 48 81 EC ?? ?? ?? ?? 44 0F 29 50 ??";
+
+    public const string RMIWalk = "E8 ?? ?? ?? ?? 80 7B 3E 00 48 8D 3D";
+
+    public const string RMIWalkIsInputEnabled1 = "E8 ?? ?? ?? ?? 84 C0 75 10 38 43 3C";
+
+    public const string RMIWalkIsInputEnabled2 = "E8 ?? ?? ?? ?? 84 C0 75 03 88 47 3F";
 
     // DetourName = nameof(ApplyGlamourPlateDetour), Fallibility = Fallibility.Auto, Define via SignatureAttribute.
     public const string ApplyGlamourPlate = "E8 ?? ?? ?? ?? 41 C6 44 24 ?? ?? E9 ?? ?? ?? ?? 0F B6 83";

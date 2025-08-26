@@ -88,7 +88,7 @@ public sealed class GagRestrictionManager : IHybridSavable
         }
     }
 
-    public void ToggleEnabledState(GagType gagItem)
+    public void ToggleVisibility(GagType gagItem)
     {
         if (Storage.TryGetGag(gagItem, out var item))
         {

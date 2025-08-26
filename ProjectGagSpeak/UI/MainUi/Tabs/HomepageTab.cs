@@ -78,18 +78,6 @@ public class HomepageTab
         // if itemGotHovered is false, reset the index.
         if (!itemGotHovered)
             HoveredItemIndex = -1;
-
-        if (ImGui.Button("Print Resolved Paths"))
-            PrintPaths();
-    }
-
-    private void PrintPaths()
-    {
-        if (Svc.Targets.Target is not { } target)
-            return;
-
-        // if target is valid get their game object and assign it.
-        _ipc.Penumbra.AssignTargetTheClientCollection(target.ObjectIndex);
     }
 
     private bool HomepageSelectable(string label, FontAwesomeIcon icon, Vector2 region, bool hovered = false)

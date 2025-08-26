@@ -8,6 +8,9 @@ namespace GagSpeak.Services.Mediator;
 
 public record PenumbraInitialized : MessageBase;
 public record PenumbraDirectoryChanged(string? NewDirectory) : MessageBase;
+public record PenumbraSettingsChanged : MessageBase;
+public record HaltFileScan(string Source) : MessageBase;
+public record ResumeFileScan(string Source) : MessageBase;
 public record PenumbraDisposed : MessageBase;
 public record MoodlesReady : MessageBase;
 public record GlamourerReady : MessageBase;

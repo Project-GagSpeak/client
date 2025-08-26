@@ -142,9 +142,9 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         var wdl = ImGui.GetWindowDrawList();
         var height = ImGui.GetFrameHeightWithSpacing() + MoodleDrawer.IconSize.Y;
         var region = new Vector2(drawRegion.Size.X, height);
-        var nothingSelected = _selector.Selected is null;
-        var isActive = _manager.ActiveItemsAll.ContainsKey(_selector.Selected?.Identifier ?? Guid.Empty);
-        var tooltip = nothingSelected ? "No item selected!" : isActive ? "Cannot edit Active Item!" : "Double Click to begin editing!";
+        var notSelected = _selector.Selected is null;
+        var isActive = _manager.ActiveItems.Values.Any(r => r.Identifier.Equals(_selector.Selected));
+        var tooltip = notSelected ? "No item selected!" : isActive ? "Item is Active!" : "Double Click to begin editing!";
 
         using var c = CkRaii.ChildLabelCustomButton("SelItem", region, ImGui.GetFrameHeight(), LabelButton, BeginEdits, tooltip, DFlags.RoundCornersRight, LabelFlags.AddPaddingToHeight);
 
@@ -152,8 +152,8 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         var imgSize = new Vector2(c.InnerRegion.Y);
         var imgDrawPos = pos with { X = pos.X + c.InnerRegion.X - imgSize.X };
         // Draw the left items.
-        if (_selector.Selected is not null) 
-            DrawSelectedInner(imgSize.X);
+        if (_selector.Selected is not null)
+            DrawSelectedInner(imgSize.X, isActive);
         
         // Draw the right image item.
         ImGui.GetWindowDrawList().AddRectFilled(imgDrawPos, imgDrawPos + imgSize, CkColor.FancyHeaderContrast.Uint(), rounding);
@@ -161,7 +161,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         if (_selector.Selected is not null)
         {
             _activeItemDrawer.DrawRestrictionImage(_selector.Selected!, imgSize.Y, rounding, false);
-            if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+            if (!isActive && ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
                 _thumbnails.SetThumbnailSource(_selector.Selected!.Identifier, new Vector2(120), ImageDataType.Restrictions);
             CkGui.AttachToolTip("The Thumbnail for this item.--SEP--Double Click to change the image.");
         }
@@ -189,34 +189,44 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
 
         void BeginEdits(ImGuiMouseButton b)
         {
-            if (b is not ImGuiMouseButton.Left || nothingSelected)
-                return;
-            
-            if(_selector.Selected is not null)
-                _manager.StartEditing(_selector.Selected);
+            if (b is ImGuiMouseButton.Left && !notSelected && !isActive)
+                _manager.StartEditing(_selector.Selected!);
         }
     }
 
-    private void DrawSelectedInner(float rightOffset)
+    private void DrawSelectedInner(float rightOffset, bool isActive)
     {
         using var innerGroup = ImRaii.Group();
+
+        using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
+        {
+            CkGui.BooleanToColoredIcon(_selector.Selected!.IsEnabled, false);
+            CkGui.TextFrameAlignedInline($"Visuals  ");
+        }
+        if (!isActive && ImGui.IsItemHovered() && ImGui.IsItemClicked())
+            _manager.ToggleVisibility(_selector.Selected!.Identifier);
+        CkGui.AttachToolTip($"Visuals {(_selector.Selected!.IsEnabled ? "will" : "will not")} be applied.");
+
         // Next row we need to draw the Glamour Icon, Mod Icon, and hardcore Traits.
-        var hasGlamour = ItemSvc.NothingItem(_selector.Selected!.Glamour.Slot).Id != _selector.Selected!.Glamour.GameItem.Id;
-        CkGui.FramedIconText(FAI.Vest);
-        CkGui.AttachToolTip(hasGlamour
-            ? $"A --COL--{_selector.Selected!.Glamour.GameItem.Name}--COL-- is attached to the --COL--{_selector.Selected!.Label}--COL--."
-            : $"There is no Glamour Item attached to the {_selector.Selected!.Label}.", color: ImGuiColors.ParsedGold);
-
-        ImUtf8.SameLineInner();
-        var hasMod = !(_selector.Selected!.Mod.Label.IsNullOrEmpty());
-        CkGui.FramedIconText(FAI.FileDownload);
-        CkGui.AttachToolTip(hasMod
-            ? "Using Preset for Mod: " + _selector.Selected!.Mod.Label
-            : "This Restriction Item has no associated Mod Preset.");
-
-        ImUtf8.SameLineInner();
-        _attributeDrawer.DrawTraitPreview(_selector.Selected!.Traits);
-
+        if (ItemSvc.NothingItem(_selector.Selected!.Glamour.Slot).Id != _selector.Selected!.Glamour.GameItem.Id)
+        {
+            ImUtf8.SameLineInner();
+            CkGui.FramedIconText(FAI.Vest);
+            CkGui.AttachToolTip($"A --COL--{_selector.Selected!.Glamour.GameItem.Name}--COL-- is attached to the " +
+                $"--COL--{_selector.Selected!.Label}--COL--.", color: ImGuiColors.ParsedGold);
+        }
+        if (_selector.Selected!.Mod.HasData)
+        {
+            ImUtf8.SameLineInner();
+            CkGui.FramedIconText(FAI.FileDownload);
+            CkGui.AttachToolTip($"Mod Preset ({_selector.Selected.Mod.Label}) is applied." +
+                $"--SEP--Source Mod: {_selector.Selected!.Mod.Container.ModName}");
+        }
+        if (_selector.Selected!.Traits > 0)
+        {
+            ImUtf8.SameLineInner();
+            _attributeDrawer.DrawTraitPreview(_selector.Selected!.Traits);
+        }
         _moodleDrawer.ShowStatusIcons(_selector.Selected!.Moodle, ImGui.GetContentRegionAvail().X);
     }
 

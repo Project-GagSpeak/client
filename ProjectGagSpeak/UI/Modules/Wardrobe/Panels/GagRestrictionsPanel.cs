@@ -123,7 +123,7 @@ public partial class GagRestrictionsPanel
         var imgDrawPos = pos with { X = pos.X + c.InnerRegion.X - imgSize.X };
         // Draw the left items.
         if (_selector.Selected is not null)
-            DrawSelectedInner(imgSize.X);
+            DrawSelectedInner(imgSize.X, isActive);
 
         // Draw the right image item.
         ImGui.GetWindowDrawList().AddRectFilled(imgDrawPos, imgDrawPos + imgSize, CkColor.FancyHeaderContrast.Uint(), rounding);
@@ -147,12 +147,12 @@ public partial class GagRestrictionsPanel
 
         void BeginEdits(ImGuiMouseButton b)
         {
-            if (b is ImGuiMouseButton.Left && !notSelected)
+            if (b is ImGuiMouseButton.Left && !notSelected && !isActive)
                 _manager.StartEditing(_selector.Selected!);
         }
     }
 
-    private void DrawSelectedInner(float rightOffset)
+    private void DrawSelectedInner(float rightOffset, bool isActive)
     {
         using var innerGroup = ImRaii.Group();
 
@@ -161,26 +161,29 @@ public partial class GagRestrictionsPanel
             CkGui.BooleanToColoredIcon(_selector.Selected!.IsEnabled, false);
             CkGui.TextFrameAlignedInline($"Visuals  ");
         }
-        if (ImGui.IsItemHovered() && ImGui.IsItemClicked())
-            _manager.ToggleEnabledState(_selector.Selected!.GagType);
-        CkGui.AttachToolTip("Visual Alterations " + (_selector.Selected!.IsEnabled ? "will" : "will not") + " be applied with this Gag.");
+        if (!isActive && ImGui.IsItemHovered() && ImGui.IsItemClicked())
+            _manager.ToggleVisibility(_selector.Selected!.GagType);
+        CkGui.AttachToolTip($"Visuals {(_selector.Selected!.IsEnabled ? "will" : "will not")} be applied.");
 
-        ImUtf8.SameLineInner();
-        var hasGlamour = ItemSvc.NothingItem(_selector.Selected!.Glamour.Slot).Id != _selector.Selected!.Glamour.GameItem.Id;
-        CkGui.FramedIconText(FAI.Vest);
-        CkGui.AttachToolTip(hasGlamour
-            ? $"A --COL--{_selector.Selected!.Glamour.GameItem.Name}--COL-- is attached to the --COL--{_selector.Selected!.GagType.GagName()}--COL--."
-            : $"There is no Glamour Item attached to the {_selector.Selected!.GagType.GagName()}.", color: ImGuiColors.ParsedGold);
-
-        ImUtf8.SameLineInner();
-        var hasMod = !(_selector.Selected!.Mod.Label.IsNullOrEmpty());
-        CkGui.FramedIconText(FAI.FileDownload);
-        CkGui.AttachToolTip(hasMod
-            ? "Using Preset for Mod: " + _selector.Selected!.Mod.Label
-            : "This Restriction Item has no associated Mod Preset.");
-
-        ImUtf8.SameLineInner();
-        _attributeDrawer.DrawTraitPreview(_selector.Selected!.Traits);
+        if (ItemSvc.NothingItem(_selector.Selected!.Glamour.Slot).Id != _selector.Selected!.Glamour.GameItem.Id)
+        {
+            ImUtf8.SameLineInner();
+            CkGui.FramedIconText(FAI.Vest);
+            CkGui.AttachToolTip($"A --COL--{_selector.Selected!.Glamour.GameItem.Name}--COL-- is attached to the " +
+                $"--COL--{_selector.Selected!.GagType.GagName()}--COL--.", color: ImGuiColors.ParsedGold);
+        }
+        if (_selector.Selected!.Mod.HasData)
+        {
+            ImUtf8.SameLineInner();
+            CkGui.FramedIconText(FAI.FileDownload);
+            CkGui.AttachToolTip($"Mod Preset ({_selector.Selected.Mod.Label}) is applied." +
+                $"--SEP--Source Mod: {_selector.Selected!.Mod.Container.ModName}");
+        }
+        if (_selector.Selected!.Traits > 0)
+        {
+            ImUtf8.SameLineInner();
+            _attributeDrawer.DrawTraitPreview(_selector.Selected!.Traits);
+        }
 
         _moodleDrawer.ShowStatusIcons(_selector.Selected!.Moodle, ImGui.GetContentRegionAvail().X);
     }
