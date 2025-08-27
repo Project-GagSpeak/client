@@ -195,9 +195,9 @@ public sealed class ClientDataListener : IDisposable
                 break;
 
             case HcAttribute.Imprisonment:
-                if (!prevState && newState) _handler.EnableImprisonment(enactor, ClientData.GetImprisonmentPos(), ClientData.Hardcore!.ImprisonedRadius);
+                if (!prevState && newState) _handler.EnableImprisonment(enactor);
                 else if (prevState && !newState) _handler.DisableImprisonment(enactor, true);
-                else if (prevState && newState) _handler.UpdateImprisonment(enactor, ClientData.GetImprisonmentPos(), ClientData.Hardcore!.ImprisonedRadius);
+                else if (prevState && newState) _handler.UpdateImprisonment(enactor);
                 break;
 
             case HcAttribute.HiddenChatBox:

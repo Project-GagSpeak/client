@@ -78,46 +78,32 @@ public class PlayerCtrlHandler
             throw new Exception($"Failed to get Kinkster for UID: {enactor.UID} for Locked Follow!");
 
         _logger.LogInformation($"[{kinkster.GetNickAliasOrUid()}] Enabled your LockedFollowing state!", LoggerType.HardcoreMovement);
-
         // Cache the movement mode.
         _cachedPlayerMoveMode = GameConfig.UiControl.GetBool("MoveMode") ? MovementMode.Legacy : MovementMode.Standard;
         _logger.LogDebug($"Cached Player Movement Mode: {_cachedPlayerMoveMode}", LoggerType.HardcoreMovement);
-
-        // Update type to legacy controls.
-        GameConfig.UiControl.Set("MoveMode", (int)MovementMode.Legacy);
-
-        // Reset the movement tracker and position values.
-        _movement.RestartTimeoutTracker();
-        
-        // Inject the hardcore task operation.
-        _hcTasks.EnqueueTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.VisiblePairGameObject!), new(HcTaskControl.MustFollow | HcTaskControl.BlockAllKeys));
-        _hcTasks.EnqueueTask(HcTaskUtils.FollowTarget, new(HcTaskControl.MustFollow | HcTaskControl.BlockAllKeys));
-
-        _mediator.Publish(new HcStateCacheChanged());
+        // perform the task collection for initialization.
+        _hcTasks.CreateCollection("Locked Follow Startup", new(HcTaskControl.MustFollow | HcTaskControl.BlockAllKeys))
+            .Add(new HardcoreTask(() => GameConfig.UiControl.Set("MoveMode", (int)MovementMode.Legacy)))
+            .Add(new HardcoreTask(_movement.RestartTimeoutTracker))
+            .Add(new HardcoreTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.VisiblePairGameObject!)))
+            .Add(new HardcoreTask(HcTaskUtils.FollowTarget))
+            .Add(new HardcoreTask(() => _mediator.Publish(new HcStateCacheChanged())))
+            .Enqueue();
         GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.Follow, true, enactor, MainHub.UID);
     }
 
-    /// <summary>
-    ///     It is possible that the removal effect is triggered on a safeword or natural timer falloff. <para />
-    /// 
-    ///     If the server it down or the change cannot be processed, we want to still remove the player controls 
-    ///     client-side, but not invoke the achievements for the change. <para />
-    ///     
-    ///     This way, on reconnection, the hardcore state will be reapplied, timer will immediately expire, and
-    ///     they will get the achievement then. It also ensures they are not 'stuck' in restricted controls, so
-    ///     a safeword is still effective.
-    /// </summary>
     public void DisableLockedFollow(UserData enactor, bool giveAchievements)
     {
         _logger.LogInformation($"[{enactor.AliasOrUID}] Disabled your LockedFollowing state.", LoggerType.HardcoreMovement);
-        _movement.ResetTimeoutTracker();
 
-        // Restore the movement mode of the player.
+        // Reset movement mode and timeout trackers, and update the cache.
+        _hcTasks.RemoveIfPresent("Locked Follow Startup");
+        _movement.ResetTimeoutTracker();
         GameConfig.UiControl.Set("MoveMode", (uint)_cachedPlayerMoveMode);
         _cachedPlayerMoveMode = MovementMode.NotSet;
+        _mediator.Publish(new HcStateCacheChanged());
         _logger.LogDebug($"Restored Player Movement Mode: {_cachedPlayerMoveMode}", LoggerType.HardcoreMovement);
 
-        _mediator.Publish(new HcStateCacheChanged());
         if (giveAchievements)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.Follow, false, enactor, MainHub.UID);
     }
@@ -128,14 +114,15 @@ public class PlayerCtrlHandler
             throw new Exception($"Failed to get Kinkster for UID: {enactor.UID} for Locked Emote!");
 
         _logger.LogInformation($"[{enactor.AliasOrUID}] Enabled your LockedFollowing state!", LoggerType.HardcoreMovement);
-        // Enqueue to the hardcore task manager our emote operation so that we block all movement during it.
-        _hcTasks.EnqueueTask(HcCommonTaskFuncs.WaitForPlayerLoading, HcTaskConfiguration.Default);
-        // OPTIONAL STEP: If the kinkster is present, attempt to target them.
-        if (kinkster.VisiblePairGameObject is not null && kinkster.VisiblePairGameObject.IsTargetable)
-            _hcTasks.EnqueueTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.VisiblePairGameObject), new(HcTaskControl.BlockAllKeys));
+        _hcTasks.CreateCollection("Perform LockedEmote", new(HcTaskControl.BlockAllKeys))
+            .Add(new HardcoreTask(HcCommonTaskFuncs.WaitForPlayerLoading))
+            .Add(_hcTasks.CreateBranch(() => (kinkster.VisiblePairGameObject != null && kinkster.VisiblePairGameObject.IsTargetable), "TargetIfVisible")
+                .SetTrueTask(new HardcoreTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.VisiblePairGameObject!)))
+                .AsBranch())
+            .Add(new HardcoreTask(() => HcCommonTaskFuncs.PerformExpectedEmote(ClientData.Hardcore!.EmoteId, ClientData.Hardcore.EmoteCyclePose)))
+            .Add(new HardcoreTask(() => _mediator.Publish(new HcStateCacheChanged())))
+            .Enqueue();
 
-        _hcTasks.EnqueueTask(() => HcCommonTaskFuncs.PerformExpectedEmote(ClientData.Hardcore!.EmoteId, ClientData.Hardcore.EmoteCyclePose), "PerformEmote", new(HcTaskControl.BlockAllKeys));
-        _mediator.Publish(new HcStateCacheChanged());
         GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.EmoteState, true, enactor, MainHub.UID);
     }
 
@@ -145,33 +132,23 @@ public class PlayerCtrlHandler
             throw new Exception($"Failed to get Kinkster for UID: {enactor.UID} for Locked Emote Update!");
 
         _logger.LogInformation($"[{kinkster.GetNickAliasOrUid()}] Updated your LockedFollowing state!", LoggerType.HardcoreMovement);
-        
-        // Enqueue to the hardcore task manager our emote operation so that we block all movement during it.
-        _hcTasks.EnqueueTask(HcCommonTaskFuncs.WaitForPlayerLoading, HcTaskConfiguration.Default);
-        // OPTIONAL STEP: If the kinkster is present, attempt to target them.
-        if (kinkster.VisiblePairGameObject is not null && kinkster.VisiblePairGameObject.IsTargetable)
-            _hcTasks.EnqueueTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.VisiblePairGameObject), new(HcTaskControl.BlockAllKeys));
-
-        _hcTasks.EnqueueTask(() => HcCommonTaskFuncs.PerformExpectedEmote(ClientData.Hardcore!.EmoteId, ClientData.Hardcore.EmoteCyclePose), "PerformEmote", new(HcTaskControl.BlockAllKeys));
-
-        _mediator.Publish(new HcStateCacheChanged());
+        _hcTasks.CreateCollection("ForcePerformInitialEmote", new(HcTaskControl.BlockAllKeys))
+            .Add(new HardcoreTask(HcCommonTaskFuncs.WaitForPlayerLoading))
+            .Add(_hcTasks.CreateBranch(() => (kinkster.VisiblePairGameObject != null && kinkster.VisiblePairGameObject.IsTargetable), "TargetIfVisible")
+                .SetTrueTask(new HardcoreTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.VisiblePairGameObject!)))
+                .AsBranch())
+            .Add(new HardcoreTask(() => HcCommonTaskFuncs.PerformExpectedEmote(ClientData.Hardcore!.EmoteId, ClientData.Hardcore.EmoteCyclePose)))
+            .Add(new HardcoreTask(() => _mediator.Publish(new HcStateCacheChanged())))
+            .Enqueue();
     }
 
-    /// <summary>
-    ///     It is possible that the removal effect is triggered on a safeword or natural timer falloff. <para />
-    /// 
-    ///     If the server it down or the change cannot be processed, we want to still remove the player controls 
-    ///     client-side, but not invoke the achievements for the change. <para />
-    ///     
-    ///     This way, on reconnection, the hardcore state will be reapplied, timer will immediately expire, and
-    ///     they will get the achievement then. It also ensures they are not 'stuck' in restricted controls, so
-    ///     a safeword is still effective.
-    /// </summary>
     public void DisableLockedEmote(UserData enactor, bool giveAchievements)
     {
         _logger.LogInformation($"[{enactor.AliasOrUID}] Disabled your LockedEmote state!", LoggerType.HardcoreMovement);
-
+        // abort the task if running still, or remove it from the queue.
+        _hcTasks.RemoveIfPresent("Perform LockedEmote");
         _mediator.Publish(new HcStateCacheChanged());
+
         if (giveAchievements)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.EmoteState, false, enactor, MainHub.UID);
     }
@@ -181,90 +158,63 @@ public class PlayerCtrlHandler
         // if the address is null, fallback to nearestNode behavior.
         _logger.LogInformation($"[{enactor.AliasOrUID}] Enabled your IndoorConfinement!", LoggerType.HardcoreMovement);
         // Standard await for player to load.
-        _hcTasks.EnqueueTask(HcCommonTaskFuncs.WaitForPlayerLoading, HcTaskConfiguration.Default);
-
-        // we should PROBABLY run a check to see if the player is close enough to the address that we can run manual override,
-        // as lifeStream will tend to re-teleport you to your ward's dock even if you are right next to the plot.
-
-        // perform lifeStream operation with a custom timeout wait.
-        if (address is not null && IpcCallerLifestream.APIAvailable)
-        {
-            _logger.LogInformation($"LifeStream IPC was valid and forced confinement had an address!", LoggerType.HardcoreMovement);
-            _hcTasks.BeginStack("LifeStream Confinement Execution", new(HcTaskControl.InLifestreamTask, 60000));
-            _hcTasks.AddToStack(() => _ipc.GoToAddress(address.AsTuple()));
-            // entrust a task to wait for this operation to complete.
-            _hcTasks.AddToStack(() => !_ipc.IsCurrentlyBusy());
-        }
-        // Afterwards, if we are outside, then we need to target the nearest housing node and enter it.
-        if (HcTaskUtils.IsOutside())
-            HcApproachNearestHousing.AddTaskSequenceToStack(_hcTasks);
-        // Insert this all as a stack.
-        _hcTasks.InsertStack();
+        var doLifestreamMethod = address is not null && IpcCallerLifestream.APIAvailable;
+        var taskCtrlFlags = doLifestreamMethod 
+            ? HcTaskControl.InLifestreamTask | HcTaskControl.LockThirdPerson | HcTaskControl.BlockAllKeys | HcTaskControl.DoConfinementPrompts
+            : HcTaskControl.LockThirdPerson | HcTaskControl.BlockAllKeys | HcTaskControl.DoConfinementPrompts;
+        var timeout = doLifestreamMethod ? 120000 : 30000;
+        // enqueue the task collection based on if we are doing lifestream of not.
+        _hcTasks.CreateCollection("Travel To Location", new(taskCtrlFlags, timeout))
+            .Add(_hcTasks.CreateBranch(() => doLifestreamMethod, "LifestreamTravelTask")
+                .SetTrueTask(_hcTasks.CreateGroup("TravelTaskGroup")
+                    .Add(HcCommonTaskFuncs.WaitForPlayerLoading)
+                    .Add(() => _ipc.GoToAddress(address!.AsTuple()))
+                    .Add(() => !_ipc.IsCurrentlyBusy())
+                    .AsGroup())
+                .AsBranch())
+            .Add(_hcTasks.CreateBranch(HcTaskUtils.IsOutside, "AppraochNearestNode")
+                .SetTrueTask(HcApproachNearestHousing.GetTaskCollection(_hcTasks))
+                .AsBranch())
+            .Add(new HardcoreTask(() => _mediator.Publish(new HcStateCacheChanged())))
+            .Enqueue();
 
         _logger.LogDebug($"Enqueued Hardcore Task Stack for Indoor Confinement!", LoggerType.HardcoreMovement);
-        _mediator.Publish(new HcStateCacheChanged());
         GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.Confinement, true, enactor, MainHub.UID);
     }
 
-    /// <summary>
-    ///     It is possible that the removal effect is triggered on a safeword or natural timer falloff. <para />
-    /// 
-    ///     If the server it down or the change cannot be processed, we want to still remove the player controls 
-    ///     client-side, but not invoke the achievements for the change. <para />
-    ///     
-    ///     This way, on reconnection, the hardcore state will be reapplied, timer will immediately expire, and
-    ///     they will get the achievement then. It also ensures they are not 'stuck' in restricted controls, so
-    ///     a safeword is still effective.
-    /// </summary>
     public void DisableConfinement(UserData enactor, bool giveAchievements)
     {
         _logger.LogInformation($"[{enactor.AliasOrUID}] Disabled your Indoor Confinement state!", LoggerType.HardcoreMovement);
 
+        _hcTasks.RemoveIfPresent("Travel To Confinement");
         _mediator.Publish(new HcStateCacheChanged());
+
         if (giveAchievements)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.Confinement, false, enactor, MainHub.UID);
     }
 
-    public void EnableImprisonment(UserData enactor, Vector3 position, float freedomRadius)
+    public void EnableImprisonment(UserData enactor)
     {
         // if the address is null, fallback to nearestNode behavior.
         _logger.LogInformation($"[{enactor.AliasOrUID}] Enabled your Imprisonment!", LoggerType.HardcoreMovement);
-        var anchoredPos = (position == Vector3.Zero) ? PlayerData.Object.Position : position;
-        // set up some task for auto moving here.
-        // will need to override player movement for this to work.
-        // Can handle this later!
-
-        _logger.LogDebug($"Enqueued Hardcore Task Stack for Imprisonment!", LoggerType.HardcoreMovement);
+        // Calling this will begin the imprisonment process.
         _mediator.Publish(new HcStateCacheChanged());
+
         GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.Imprisonment, true, enactor, MainHub.UID);
     }
 
-    public void UpdateImprisonment(UserData enactor, Vector3 position, float freedomRadius)
+    public void UpdateImprisonment(UserData enactor)
     {
         // if the address is null, fallback to nearestNode behavior.
         _logger.LogInformation($"[{enactor.AliasOrUID}] Updated your Imprisonment!", LoggerType.HardcoreMovement);
-        var anchoredPos = (position == Vector3.Zero) ? PlayerData.Object.Position : position;
-        // set up some task for auto moving here.
-        // will need to override player movement for this to work.
-        // Can handle this later!
-        _logger.LogDebug($"Enqueued Hardcore Task Stack for Imprisonment Update!", LoggerType.HardcoreMovement);
+        // Calling this will begin the imprisonment process.
         _mediator.Publish(new HcStateCacheChanged());
     }
 
-    /// <summary>
-    ///     It is possible that the removal effect is triggered on a safeword or natural timer falloff. <para />
-    /// 
-    ///     If the server it down or the change cannot be processed, we want to still remove the player controls 
-    ///     client-side, but not invoke the achievements for the change. <para />
-    ///     
-    ///     This way, on reconnection, the hardcore state will be reapplied, timer will immediately expire, and
-    ///     they will get the achievement then. It also ensures they are not 'stuck' in restricted controls, so
-    ///     a safeword is still effective.
-    /// </summary>
     public void DisableImprisonment(UserData enactor, bool giveAchievements)
     {
         _logger.LogInformation($"[{enactor.AliasOrUID}] Disabled your Imprisonment state!", LoggerType.HardcoreMovement);
-
+        // nothing was really pushed out to the hardcore task manager, so nothing to disable.
         _mediator.Publish(new HcStateCacheChanged());
         if (giveAchievements)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.Imprisonment, false, enactor, MainHub.UID);

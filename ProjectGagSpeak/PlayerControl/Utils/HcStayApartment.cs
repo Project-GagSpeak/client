@@ -10,22 +10,17 @@ namespace GagSpeak;
 
 public static unsafe class HcStayApartment
 {
-    public static void EnqueueAsOperation(HcTaskManager taskManager)
+    public static HardcoreTaskGroup GetTaskGroup(HcTaskManager hcTasks)
     {
-        taskManager.BeginStack("HcStayApartment", new HcTaskConfiguration(HcTaskControl.LockThirdPerson | HcTaskControl.BlockMovementKeys));
-        AddTaskSequenceToStack(taskManager);
-        taskManager.EnqueueStack();
-    }
-
-    public static void AddTaskSequenceToStack(HcTaskManager taskManager)
-    {
-        taskManager.AddToStack(HcTaskUtils.IsScreenReady);
-        taskManager.AddToStack(TargetApartmentEntrance);
-        taskManager.AddToStack(HcTaskUtils.LockOnToTarget);
-        taskManager.AddToStack(HcTaskUtils.EnableAutoMove);
-        taskManager.AddToStack(() => Vector3.Distance(PlayerData.Object.Position, Svc.Targets.Target?.Position ?? Vector3.Zero) < 3.5f);
-        taskManager.AddToStack(HcTaskUtils.DisableAutoMove);
-        taskManager.AddToStack(InteractWithApartmentEntrance);
+        return hcTasks.CreateGroup("WalkToAndOpenApartmentMenu", new(HcTaskControl.LockThirdPerson | HcTaskControl.BlockAllKeys | HcTaskControl.DoConfinementPrompts))
+            .Add(HcTaskUtils.IsScreenReady)
+            .Add(TargetApartmentEntrance)
+            .Add(HcTaskUtils.LockOnToTarget)
+            .Add(HcTaskUtils.EnableAutoMove)
+            .Add(() => Vector3.Distance(PlayerData.Object.Position, Svc.Targets.Target?.Position ?? Vector3.Zero) < 3.5f)
+            .Add(HcTaskUtils.DisableAutoMove)
+            .Add(InteractWithApartmentEntrance)
+            .AsGroup();
     }
 
     /// <summary> Identifies the Apartment Entrance node by ID, and targets it. </summary>

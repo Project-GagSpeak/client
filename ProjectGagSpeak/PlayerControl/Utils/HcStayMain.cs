@@ -7,43 +7,30 @@ namespace GagSpeak;
 
 public static unsafe class HcApproachNearestHousing
 {
-    public static void EnqueueAsOperation(HcTaskManager taskManager)
+    public static bool IsTargetApartment()
     {
-        taskManager.BeginStack("Approach And Enter Nearest Housing Entrance", 
-            new HcTaskConfiguration(HcTaskControl.LockThirdPerson | HcTaskControl.BlockMovementKeys));
-        AddTaskSequenceToStack(taskManager);
-        // enqueue the stack.
-        taskManager.EnqueueStack();
+        var tName = Svc.Targets.Target?.Name.ToString() ?? string.Empty;
+        return NodeStringLang.EnterApartment.Any(n => n.Equals(tName, StringComparison.OrdinalIgnoreCase));
     }
 
-    public static void AddTaskSequenceToStack(HcTaskManager taskManager)
+    public static HardcoreTaskCollection GetTaskCollection(HcTaskManager hcTasks)
     {
-        taskManager.AddToStack(HcCommonTaskFuncs.WaitForPlayerLoading);
-        taskManager.AddToStack(TargetNearestHousingNode);
-        // get the correct distance.
-        string tName = string.Empty;
-        bool isApartment = false;
-        float distThreshold = 0.0f;
-        taskManager.AddToStack(() =>
-        {
-            tName = Svc.Targets.Target?.Name.ToString() ?? string.Empty;
-            isApartment = NodeStringLang.EnterApartment.Any(n => n.Equals(tName, StringComparison.OrdinalIgnoreCase));
-            distThreshold = isApartment ? 3.5f : 2.75f;
-            return string.IsNullOrEmpty(tName);
-        });
-        // approach the node.
-        taskManager.AddToStack(() => HcCommonTaskFuncs.ApproachNode(() => Svc.Targets.Target!, distThreshold));
-        // if an appartment, enqueue the apartment.
-        if (isApartment)
-        {
-            taskManager.AddToStack(HcStayApartment.InteractWithApartmentEntrance);
-            taskManager.AddToStack(HcStayApartment.SelectGoToSpecifiedApartment);
-        }
-        else
-        {
-            taskManager.AddToStack(InteractWithHousingEntrance);
-            taskManager.AddToStack(HcStayHousingEntrance.ConfirmHouseEntranceAndEnter);
-        }
+        return hcTasks.CreateCollection("AppraochNearestHousing", new(HcTaskControl.LockThirdPerson | HcTaskControl.BlockAllKeys | HcTaskControl.DoConfinementPrompts))
+            .Add(new HardcoreTask(HcCommonTaskFuncs.WaitForPlayerLoading))
+            .Add(new HardcoreTask(TargetNearestHousingNode))
+            .Add(hcTasks.CreateBranch(IsTargetApartment, "ApproachAndEnterNode")
+                .SetTrueTask(hcTasks.CreateGroup("ApproachNodeTrue")
+                    .Add(() => HcCommonTaskFuncs.ApproachNode(() => Svc.Targets.Target!, 3.5f))
+                    .Add(HcStayApartment.InteractWithApartmentEntrance)
+                    .Add(HcStayApartment.SelectGoToSpecifiedApartment)
+                    .AsGroup())
+                .SetFalseTask(hcTasks.CreateGroup("ApproachNodeFalse")
+                    .Add(() => HcCommonTaskFuncs.ApproachNode(() => Svc.Targets.Target!, 2.75f))
+                    .Add(InteractWithHousingEntrance)
+                    .Add(HcStayHousingEntrance.ConfirmHouseEntranceAndEnter)
+                    .AsGroup())
+                .AsBranch())
+            .AsCollection();
     }
 
     // Attempts to locate the nearest housing entrance within range.

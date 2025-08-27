@@ -167,6 +167,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<ChatboxController>()
         .AddSingleton<HotbarActionHandler>()
         .AddSingleton<HypnoService>()
+        .AddSingleton<ImprisonmentController>()
         .AddSingleton<KeystateController>()
         .AddSingleton<MovementController>()
         .AddSingleton<POVController>()

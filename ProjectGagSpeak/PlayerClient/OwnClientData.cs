@@ -1,3 +1,4 @@
+using CkCommons;
 using CkCommons.Gui;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
@@ -179,7 +180,10 @@ public sealed class ClientData : IDisposable
                 hcState.Imprisonment = newData.Imprisonment;
                 hcState.ImprisonmentTimer = newData.ImprisonmentTimer;
                 hcState.ImprisonedTerritory = newData.ImprisonedTerritory;
-                hcState.ImprisonedPos = newData.ImprisonedPos;
+                // this is set to the client position if anything but 0 (enabling/disabling)
+                hcState.ImprisonedPos = newData.Imprisonment.Length > 0
+                    ? (newData.ImprisonedPos == Vector3.Zero ? PlayerData.PositionInstanced : newData.ImprisonedPos)
+                    : Vector3.Zero;
                 hcState.ImprisonedRadius = newData.ImprisonedRadius;
                 break;
 
@@ -254,7 +258,7 @@ public sealed class ClientData : IDisposable
                 hcState.ImprisonmentTimer = DateTimeOffset.MinValue;
                 hcState.ImprisonedTerritory = 0;
                 hcState.ImprisonedPos = Vector3.Zero;
-                hcState.ImprisonedRadius = 0;
+                hcState.ImprisonedRadius = 1;
                 break;
 
             case HcAttribute.HiddenChatBox:

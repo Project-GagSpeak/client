@@ -12,15 +12,9 @@ using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
-using GagspeakAPI.Hub;
-using GagspeakAPI.Network;
 using GagspeakAPI.Util;
 using Microsoft.Extensions.Hosting;
-using Penumbra.GameData.Data;
-using System.Threading.Tasks;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Services;
 
@@ -42,6 +36,7 @@ public sealed class AutoUnlockService : BackgroundService
     private readonly GagspeakMediator _mediator;
     private readonly MainHub _hub;
     private readonly ClientData _clientData;
+    private readonly ImprisonmentController _cageControl;
     private readonly MovementController _moveControl;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
@@ -60,15 +55,16 @@ public sealed class AutoUnlockService : BackgroundService
     private int _lastPlayerCount = 0;
 
     public AutoUnlockService(ILogger<AutoUnlockService> logger, GagspeakMediator mediator, MainHub hub,
-        ClientData clientData, MovementController moveControl, KinksterManager kinksters, 
-        GagRestrictionManager gags, RestrictionManager restrictions, RestraintManager restraints, 
-        CursedLootManager cursedLoot, PatternManager patterns, AlarmManager alarms,
-        PlayerCtrlHandler hcHandler, DistributorService dds)
+        ClientData clientData, ImprisonmentController cageControl, MovementController moveControl, 
+        KinksterManager kinksters, GagRestrictionManager gags, RestrictionManager restrictions, 
+        RestraintManager restraints, CursedLootManager cursedLoot, PatternManager patterns, 
+        AlarmManager alarms, PlayerCtrlHandler hcHandler, DistributorService dds)
     {
         _logger = logger;
         _mediator = mediator;
         _hub = hub;
         _clientData = clientData;
+        _cageControl = cageControl;
         _moveControl = moveControl;
         _gags = gags;
         _restrictions = restrictions;
@@ -318,7 +314,7 @@ public sealed class AutoUnlockService : BackgroundService
             _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.Follow);
             _moveControl.ResetTimeoutTracker();
             // then server-side.
-            bool success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.Follow, new(enactor))).ConfigureAwait(false) is not null;
+            var success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.Follow, new(enactor))).ConfigureAwait(false) is not null;
             if (success)
                 _mediator.Publish(new EventMessage(new("Self-Update", MainHub.UID, InteractionType.HardcoreStateChange, $"LockedFollow Timer Expired!")));
             // Perform manipulations regardless. If the achievements fire depends on if it was successful.
@@ -333,7 +329,7 @@ public sealed class AutoUnlockService : BackgroundService
             // locally change first.
             _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.EmoteState);
             // then server-side.
-            bool success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.EmoteState, new(enactor))).ConfigureAwait(false) is not null;
+            var success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.EmoteState, new(enactor))).ConfigureAwait(false) is not null;
             if (success)
                 _mediator.Publish(new EventMessage(new("Self-Update", MainHub.UID, InteractionType.HardcoreStateChange, $"LockedEmote Timer Expired!")));
             // Perform manipulations regardless. If the achievements fire depends on if it was successful.
@@ -348,7 +344,7 @@ public sealed class AutoUnlockService : BackgroundService
             // locally change first.
             _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.Confinement);
             // then server-side.
-            bool success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.Confinement, new(enactor))).ConfigureAwait(false) is not null;
+            var success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.Confinement, new(enactor))).ConfigureAwait(false) is not null;
             if (success)
                 _mediator.Publish(new EventMessage(new("Self-Update", MainHub.UID, InteractionType.HardcoreStateChange, $"Confinement Timer Expired!")));
             // Perform manipulations regardless. If the achievements fire depends on if it was successful.
@@ -356,18 +352,22 @@ public sealed class AutoUnlockService : BackgroundService
         }
 
         // Check Imprisonment Timer.
-        if (hcState.Imprisonment.Length > 0 && hcState.ImprisonmentTimer < DateTimeOffset.UtcNow)
+        if (hcState.Imprisonment.Length > 0)
         {
-            _logger.LogInformation("Imprisonment Timer Expired!", LoggerType.AutoUnlocks);
-            var enactor = hcState.Imprisonment.Split('|')[0];
-            // locally change first.
-            _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.Imprisonment);
-            // Attempt the server-side call.
-            bool success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.Imprisonment, new(enactor))).ConfigureAwait(false) is not null;
-            if (success)
-                _mediator.Publish(new EventMessage(new("Self-Update", MainHub.UID, InteractionType.HardcoreStateChange, $"Imprisonment Timer Expired!")));
-            // Perform manipulations regardless. If the achievements fire depends on if it was successful.
-            _hcHandler.DisableImprisonment(new(enactor), success);
+            // if we should be imprisoned but are not (due to failed application)
+            if ((_cageControl.ShouldBeImprisoned && !_cageControl.IsImprisoned) || hcState.ImprisonmentTimer < DateTimeOffset.UtcNow)
+            {
+                _logger.LogInformation("Imprisonment Timer Expired (or state was invalid!)", LoggerType.AutoUnlocks);
+                var enactor = hcState.Imprisonment.Split('|')[0];
+                // locally change first.
+                _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.Imprisonment);
+                // Attempt the server-side call.
+                var success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.Imprisonment, new(enactor))).ConfigureAwait(false) is not null;
+                if (success)
+                    _mediator.Publish(new EventMessage(new("Self-Update", MainHub.UID, InteractionType.HardcoreStateChange, $"Imprisonment Timer Expired!")));
+                // Perform manipulations regardless. If the achievements fire depends on if it was successful.
+                _hcHandler.DisableImprisonment(new(enactor), success);
+            }
         }
 
         // Check Chat Boxes Hidden Timer.
@@ -378,7 +378,7 @@ public sealed class AutoUnlockService : BackgroundService
             // locally change first.
             _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.HiddenChatBox);
             // Attempt the server-side call.
-            bool success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.HiddenChatBox, new(enactor))).ConfigureAwait(false) is not null;
+            var success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.HiddenChatBox, new(enactor))).ConfigureAwait(false) is not null;
             if (success)
                 _mediator.Publish(new EventMessage(new("Self-Update", MainHub.UID, InteractionType.HardcoreStateChange, $"Hidden ChatBoxes Expired!")));
             // Perform manipulations regardless. If the achievements fire depends on if it was successful.
@@ -393,7 +393,7 @@ public sealed class AutoUnlockService : BackgroundService
             // locally change first.
             _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.HiddenChatInput);
             // Attempt the server-side call.
-            bool success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.HiddenChatInput, new(enactor))).ConfigureAwait(false) is not null;
+            var success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.HiddenChatInput, new(enactor))).ConfigureAwait(false) is not null;
             if (success)
                 _mediator.Publish(new EventMessage(new("Self-Update", MainHub.UID, InteractionType.HardcoreStateChange, $"Hidden ChatInput Expired!")));
             // Perform manipulations regardless. If the achievements fire depends on if it was successful.
@@ -408,7 +408,7 @@ public sealed class AutoUnlockService : BackgroundService
             // locally change first.
             _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.BlockedChatInput);
             // Attempt the server-side call.
-            bool success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.BlockedChatInput, new(enactor))).ConfigureAwait(false) is not null;
+            var success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.BlockedChatInput, new(enactor))).ConfigureAwait(false) is not null;
             if (success)
                 _mediator.Publish(new EventMessage(new("Self-Update", MainHub.UID, InteractionType.HardcoreStateChange, $"Blocked ChatInput Expired!")));
             // Perform manipulations regardless. If the achievements fire depends on if it was successful.
@@ -423,7 +423,7 @@ public sealed class AutoUnlockService : BackgroundService
             // locally change first.
             _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.HypnoticEffect);
             // Attempt the server-side call.
-            bool success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.HypnoticEffect, new(enactor))).ConfigureAwait(false) is not null;
+            var success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.HypnoticEffect, new(enactor))).ConfigureAwait(false) is not null;
             if (success)
                 _mediator.Publish(new EventMessage(new("Self-Update", MainHub.UID, InteractionType.HardcoreStateChange, $"Hypnotic Effect Timer Expired!")));
             // Perform manipulations regardless. If the achievements fire depends on if it was successful.
