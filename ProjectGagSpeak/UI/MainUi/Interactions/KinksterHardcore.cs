@@ -25,18 +25,20 @@ public class KinksterHardcore(InteractionsService service)
         ImGui.TextUnformatted("Hardcore Actions");
         var hc = k.PairHardcore;
         var enactingString = k.PairPerms.DevotionalLocks ? $"{MainHub.UID}{Constants.DevotedString}" : MainHub.UID;
+        var isTarget = k.IsVisible && k.VisiblePairGameObject!.Equals(Svc.Targets.Target);
+        var inFollowRange = isTarget && PlayerData.DistanceTo(k.VisiblePairGameObject) < 5;
+        var inImprisonRange = PlayerData.DistanceTo(k.VisiblePairGameObject) < 12;
 
         // ------ Locked Following ------
         var followEnabled = hc.LockedFollowing.Length > 0;
         var followIcon = followEnabled ? FAI.StopCircle : FAI.PersonWalkingArrowRight;
         var followText = followEnabled ? $"Have {dispName} stop following you." : $"Make {dispName} follow you.";
-        var inRange = PlayerData.Available && k.VisiblePairGameObject is { } vo && PlayerData.DistanceTo(vo) < 5;
-        var followDis = !inRange || !k.PairPerms.AllowLockedFollowing || !k.IsVisible || !hc.CanChange(HcAttribute.Follow, MainHub.UID);
+        var followAllowed = k.PairPerms.AllowLockedFollowing && k.IsVisible && hc.CanChange(HcAttribute.Follow, MainHub.UID) && inFollowRange;
         var followTT = followEnabled ? $"Allow {dispName} to stop following you." : $"Force {dispName} to follow you.--NL----COL--Effect expires when idle for over 6 seconds.--COL--";
-        DrawColoredExpander(InteractionType.LockedFollow, followIcon, followText, followEnabled, followDis, followTT);
+        DrawColoredExpander(InteractionType.LockedFollow, followIcon, followText, followEnabled, !followAllowed, followTT);
         UniqueHcChild(InteractionType.LockedFollow, followEnabled, ImGui.GetFrameHeight(), () =>
         {
-            if (ImGuiUtil.DrawDisabledButton("Enable Locked Follow", new Vector2(width, ImGui.GetFrameHeight()), string.Empty, followDis))
+            if (ImGuiUtil.DrawDisabledButton("Enable Locked Follow", new Vector2(width, ImGui.GetFrameHeight()), string.Empty, !followAllowed))
                 service.TryEnableHardcoreAction(HcAttribute.Follow);
             CkGui.AttachToolTip($"Force {dispName} to follow you! (--COL--{dispName} must be within 5 yalms--COL--)", ImGuiColors.ParsedPink);
         });
@@ -52,33 +54,31 @@ public class KinksterHardcore(InteractionsService service)
         // ------ Locked Confinement ------
         var confinementActive = hc.IndoorConfinement.Length > 0;
         var confinementInfo = confinementActive ? (FAI.StopCircle, $"Release {dispName} from Confinement.") : (FAI.HouseLock, $"Lock {dispName} away indoors.");
-        var confinementDis = !k.PairPerms.AllowIndoorConfinement || !hc.CanChange(HcAttribute.Confinement, MainHub.UID);
+        var confinementAllowed = k.PairPerms.AllowIndoorConfinement && hc.CanChange(HcAttribute.Confinement, MainHub.UID) && inImprisonRange;
         var confinementTT = confinementActive ? $"End {dispName}'s confinement period." : $"Confine {dispName} indoors.";
-        DrawColoredExpander(InteractionType.Confinement, confinementInfo.Item1, confinementInfo.Item2, confinementActive, confinementDis, confinementTT);
+        DrawColoredExpander(InteractionType.Confinement, confinementInfo.Item1, confinementInfo.Item2, confinementActive, !confinementAllowed, confinementTT);
         UniqueHcChild(InteractionType.Confinement, confinementActive, CkStyle.GetFrameRowsHeight(4).AddWinPadY(), () =>
         {
-            DrawTimerButtonRow(InteractionType.Confinement, ref service.ConfinementTimer, "Confine", confinementDis);
+            DrawTimerButtonRow(InteractionType.Confinement, ref service.ConfinementTimer, "Confine", !confinementAllowed);
             DrawAddressConfig(width, k, dispName);
         });
 
         // ------ Locked Imprisonment ------
         var imprisonmentActive = hc.Imprisonment.Length > 0;
         var imprisonmentInfo = imprisonmentActive ? (FAI.StopCircle, $"Release {dispName} from Imprisonment.") : (FAI.HouseLock, $"Imprison {dispName} indoors.");
-        var imprisonmentDis = !k.PairPerms.AllowImprisonment || !hc.CanChange(HcAttribute.Imprisonment, MainHub.UID);
+        var imprisonmentAllowed = k.PairPerms.AllowImprisonment && hc.CanChange(HcAttribute.Imprisonment, MainHub.UID) && inImprisonRange;
         var imprisonmentTT = imprisonmentActive ? $"Allow {dispName} to leave their imprisonment." : $"Imprison {dispName} indoors.";
-        DrawColoredExpander(InteractionType.Imprisonment, imprisonmentInfo.Item1, imprisonmentInfo.Item2, imprisonmentActive, imprisonmentDis, imprisonmentTT);
+        DrawColoredExpander(InteractionType.Imprisonment, imprisonmentInfo.Item1, imprisonmentInfo.Item2, imprisonmentActive, !imprisonmentAllowed, imprisonmentTT);
         UniqueHcChild(InteractionType.Imprisonment, imprisonmentActive, CkStyle.TwoRowHeight(), () =>
         {
-            DrawTimerButtonRow(InteractionType.Imprisonment, ref service.ImprisonTimer, "Imprison", imprisonmentDis);
+            DrawTimerButtonRow(InteractionType.Imprisonment, ref service.ImprisonTimer, "Imprison", !imprisonmentAllowed);
             var rightW = CkGui.IconTextButtonSize(FAI.Upload, "Enable State");
             if (CkGui.IconButton(FAI.MapPin, disabled: !PlayerData.Available))
                 service.ImprisonPos = PlayerData.Position;
             CkGui.AttachToolTip("Anchor Cage to your current position.");
 
             ImUtf8.SameLineInner();
-            var playerIsTarget = k.VisiblePairGameObject is not null && k.VisiblePairGameObject.Equals(Svc.Targets.Target);
-            var inRange = playerIsTarget && PlayerData.DistanceTo(k.VisiblePairGameObject) < 12;
-            if (CkGui.IconButton(FAI.Bullseye, disabled: !inRange))
+            if (CkGui.IconButton(FAI.Bullseye, disabled: !isTarget))
                 service.ImprisonPos = k.VisiblePairGameObject!.Position;
             CkGui.AttachToolTip("Anchor Cage to the targeted Kinkster's position.");
 
