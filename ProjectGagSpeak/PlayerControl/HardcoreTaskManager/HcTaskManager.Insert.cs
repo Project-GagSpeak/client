@@ -6,24 +6,24 @@ namespace GagSpeak.PlayerControl;
 public partial class HcTaskManager
 {
     public void InsertTask(Func<bool?> func, string name, HcTaskConfiguration config)
-        => InsertTaskOperation(new(func, name, config));
+        => InsertHcTask(new HardcoreTask(func, name, config));
 
     public void InsertTask(Func<bool?> func, HcTaskConfiguration config)
-        => InsertTaskOperation(new(func, config));
+        => InsertHcTask(new HardcoreTask(func, config));
 
     public void InsertTask(Func<bool> func, string name, HcTaskConfiguration config)
-        => InsertTaskOperation(new(func, name, config));
+        => InsertHcTask(new HardcoreTask(func, name, config));
 
     public void InsertTask(Func<bool> func, HcTaskConfiguration config)
-        => InsertTaskOperation(new(func, config));
+        => InsertHcTask(new HardcoreTask(func, config));
 
     public void InsertTask(Action action, string name, HcTaskConfiguration config)
-        => InsertTaskOperation(new(action, name, config));
+        => InsertHcTask(new HardcoreTask(action, name, config));
 
     public void InsertTask(Action action, HcTaskConfiguration config)
-        => InsertTaskOperation(new(action, config));
+        => InsertHcTask(new HardcoreTask(action, config));
 
-    public void InsertTaskOperation(HcTaskOperation task)
+    public void InsertHcTask(HardcoreTaskBase task)
     {
         if (task is null)
             return;
