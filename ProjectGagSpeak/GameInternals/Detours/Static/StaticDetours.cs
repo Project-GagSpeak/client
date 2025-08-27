@@ -26,7 +26,7 @@ namespace GagSpeak.GameInternals.Detours;
 public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
 {
     private readonly ClientData _clientData;
-    private readonly TraitsCache _traitCache;
+    private readonly PlayerControlCache _controlCache;
     private readonly GagRestrictionManager _gags;
     private readonly LootHandler _lootHandler;
     private readonly GlamourHandler _glamourHandler;
@@ -35,13 +35,13 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
     private readonly OnFrameworkService _frameworkUtils;
 
     public StaticDetours(ILogger<StaticDetours> logger, GagspeakMediator mediator,
-        ClientData clientData, TraitsCache traitCache, GagRestrictionManager gags, 
+        ClientData clientData, PlayerControlCache controlCache, GagRestrictionManager gags, 
         GlamourHandler glamour, LootHandler loot, TriggerHandler trigger, MufflerService muffler, 
         OnFrameworkService frameworkUtils)
         : base(logger, mediator)
     {
         _clientData = clientData;
-        _traitCache = traitCache;
+        _controlCache = controlCache;
         _gags = gags;
         _lootHandler = loot;
         _glamourHandler = glamour;

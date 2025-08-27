@@ -38,6 +38,11 @@ public sealed class PlayerControlCache
         => _traits.GetSourceName(trait);
 
     // Accessors that retrieve under what conditions the respective hardcore attributes should be enabled with.
+    public bool BlockActions
+        => ClientData.Hardcore.IsEnabled(HcAttribute.Confinement)
+        || ClientData.Hardcore.IsEnabled(HcAttribute.Imprisonment)
+        || _traits.FinalTraits.HasAny(Traits.Immobile);
+
     public bool BlockChatInput
         => ClientData.Hardcore.IsEnabled(HcAttribute.BlockedChatInput) 
         || _activeTaskControl.HasAny(HcTaskControl.NoChatInputAccess);

@@ -5,7 +5,6 @@ using CkCommons.Raii;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.CustomCombos;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.WebAPI;
@@ -13,6 +12,7 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using OtterGui;
 using OtterGui.Text;
+using System.Runtime.CompilerServices;
 using static CkCommons.GameDataHelp;
 
 namespace GagSpeak.Gui.MainWindow;
@@ -88,7 +88,9 @@ public class KinksterHardcore(InteractionsService service)
             CkGui.AttachToolTip($"Set the radius {dispName} can move within their cage. Be careful of pathing!");
 
             ImUtf8.SameLineInner();
-            using (CkRaii.FramedChild("CageAnchor", new Vector2(rightW, ImGui.GetFrameHeight()), 0, CkColor.VibrantPink.Uint(), CkStyle.ListItemRounding(), CkStyle.ThinThickness()))
+            var clientInAnchorRange = PlayerData.DistanceTo(service.ImprisonPos) <= service.ImprisonRadius;
+            var frameCol = clientInAnchorRange ? CkColor.TriStateCheck.Vec4().ToUint() : CkColor.TriStateCross.Vec4().ToUint();
+            using (CkRaii.FramedChild("CageAnchor", new Vector2(rightW, ImGui.GetFrameHeight()), 0, frameCol, CkStyle.ListItemRounding(), CkStyle.ThinThickness()))
                 CkGui.CenterTextAligned($"{service.ImprisonPos:F1}");
             CkGui.AttachToolTip("The current cage anchor position." +
                 "--SEP----COL--Note:--COL--0,0,0 Anchor uses the Kinkster's position.", ImGuiColors.ParsedPink);
