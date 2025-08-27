@@ -64,6 +64,7 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
         if (hc.ImprisonedTerritory != currentTerritory)
         {
             StopDetoursAndControl();
+            IsImprisoned = false;
             Logger.LogInformation($"Updated: IsImprisoned={IsImprisoned}, CageTerritoryId={CageTerritoryId}, CageOrigin={CageOrigin}, CageRadius={CageRadius}");
             return;
         }
@@ -76,6 +77,7 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
             if (PlayerData.DistanceToInstanced(newPos) > 15)
             {
                 StopDetoursAndControl();
+                IsImprisoned = false;
                 Logger.LogInformation($"Updated: IsImprisoned={IsImprisoned}, CageTerritoryId={CageTerritoryId}, CageOrigin={CageOrigin}, CageRadius={CageRadius}");
                 return;
             }
@@ -113,12 +115,12 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
         _camera.Enabled = false;
         _camera.SpeedH = _camera.SpeedV = default;
         _movement.DesiredPosition = Vector3.Zero;
-        IsImprisoned = false;
     }
 
     public void FullStopImprisonment()
     {
         ShouldBeImprisoned = false;
+        IsImprisoned = false;
         CageTerritoryId = 0;
         CageOrigin = Vector3.Zero;
         CageRadius = 1f;
@@ -127,7 +129,7 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
 
     private void EnqueueCageReturnTask()
     {
-        _hcTasks.CreateGroup(ReturnToCageName, new(State.HcTaskControl.BlockMovementKeys, 3000))
+        _hcTasks.CreateGroup(ReturnToCageName, new(State.HcTaskControl.BlockMovementKeys, 10000))
             .Add(() =>
             {
                 if (!PlayerData.Available)
@@ -141,7 +143,6 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
                 if (toNext.LengthSquared() <= 0.25f)
                 {
                     StopDetoursAndControl();
-                    IsImprisoned = true; // still imprisoned, just back in cage.
                     return true; // task complete: player is within radius
                 }
 
