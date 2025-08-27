@@ -4,26 +4,32 @@ namespace GagSpeak.Interop;
 
 public sealed class IpcCallerLifestream : IIpcCaller
 {
-    // IPC Function Callers (We want to know what lifestream is doing
-    private readonly ICallGateSubscriber<AddressBookEntryTuple, bool> _isHere;
-    private readonly ICallGateSubscriber<bool> _isBusy;
+    // API Version
 
+    // API Events
+    private readonly ICallGateSubscriber<object> OnHouseEnterError;
+
+    // API Getters
+    private readonly ICallGateSubscriber<AddressBookEntryTuple, bool> GetIsAtAddress;
+    private readonly ICallGateSubscriber<bool>                        GetIsBusy;
+
+    // API Enactors
     // IPC Function Delegates (calls that instruct Lifestream to do something)
-    private readonly ICallGateSubscriber<AddressBookEntryTuple, object> _goToAddress;
-    private readonly ICallGateSubscriber<object> _abortTask;
-
-    // Events (Calls Lifestream invokes when things happen.
-    private readonly ICallGateSubscriber<object>  OnHouseEnterError;
+    private readonly ICallGateSubscriber<AddressBookEntryTuple, object> TravelToAddress;
+    private readonly ICallGateSubscriber<object>                        AbortTask;
 
     public IpcCallerLifestream()
     {
-        _isHere = Svc.PluginInterface.GetIpcSubscriber<AddressBookEntryTuple, bool>("Lifestream.IsHere");
-        _isBusy = Svc.PluginInterface.GetIpcSubscriber<bool>("Lifestream.IsBusy");
-
-        _goToAddress = Svc.PluginInterface.GetIpcSubscriber<AddressBookEntryTuple, object>("Lifestream.GoToAddress");
-        _abortTask = Svc.PluginInterface.GetIpcSubscriber<object>("Lifestream.Abort");
-
         OnHouseEnterError = Svc.PluginInterface.GetIpcSubscriber<object>("Lifestream.OnHouseEnterError");
+
+        GetIsBusy = Svc.PluginInterface.GetIpcSubscriber<bool>("Lifestream.IsBusy");
+        GetIsAtAddress = Svc.PluginInterface.GetIpcSubscriber<AddressBookEntryTuple, bool>("Lifestream.IsHere");
+
+        TravelToAddress = Svc.PluginInterface.GetIpcSubscriber<AddressBookEntryTuple, object>("Lifestream.GoToHousingAddress");
+        AbortTask = Svc.PluginInterface.GetIpcSubscriber<object>("Lifestream.Abort");
+
+        // subscribe to event.
+        OnHouseEnterError.Subscribe(OnErrorEnteringHouse);
 
         CheckAPI();
     }
@@ -46,13 +52,18 @@ public sealed class IpcCallerLifestream : IIpcCaller
     public void Dispose() 
     { }
 
+    private void OnErrorEnteringHouse()
+    {
+        Svc.Logger.Warning("Lifestream reported an error entering the house. You may be stuck outside your house.");
+    }
+
     /// <summary> Checks if we are at the desired address. </summary>
     public bool IsAtAddress(AddressBookEntryTuple address)
     {
         if (!APIAvailable)
             return false;
 
-        return _isHere.InvokeFunc(address);
+        return GetIsAtAddress.InvokeFunc(address);
     }
 
     /// <summary> Checks if we are busy with a task. </summary>
@@ -61,7 +72,7 @@ public sealed class IpcCallerLifestream : IIpcCaller
         if (!APIAvailable)
             return false;
 
-        return _isBusy.InvokeFunc();
+        return GetIsBusy.InvokeFunc();
     }
 
     /// <summary> Aborts the current task. </summary>
@@ -70,7 +81,7 @@ public sealed class IpcCallerLifestream : IIpcCaller
         if (!APIAvailable)
             return;
 
-        _abortTask.InvokeAction();
+        AbortTask.InvokeAction();
     }
 
     /// <summary> Attempts to go to the specified address. </summary>
@@ -80,6 +91,6 @@ public sealed class IpcCallerLifestream : IIpcCaller
             return;
 
         // invoke the action for the address.
-        _goToAddress.InvokeAction(address);
+        TravelToAddress.InvokeAction(address);
     }
 }
