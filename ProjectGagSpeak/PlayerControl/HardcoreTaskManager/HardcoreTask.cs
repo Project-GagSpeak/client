@@ -19,11 +19,7 @@ public abstract class HardcoreTaskBase
         var res = Tasks[CurrentTaskIdx]();
         // if the result is true, advance the current task index.
         if (res is true)
-        {
-            // for debugging only.
-            Svc.Logger.Information($"HcTask Success: {Name} ({Location})", "HardcoreTasks");
             CurrentTaskIdx++;
-        }
         return res;
     }
     public virtual void Begin() => IsExecuting = true;
@@ -37,7 +33,6 @@ public abstract class HardcoreTaskBase
     {
         IsExecuting = false;
         CurrentTaskIdx = Tasks.Count;
-        Svc.Logger.Warning($"HcTask Aborted: {Name} ({Location})", "HardcoreTasks");
     }
 }
 

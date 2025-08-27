@@ -27,7 +27,7 @@ public class KinksterHardcore(InteractionsService service)
         var enactingString = k.PairPerms.DevotionalLocks ? $"{MainHub.UID}{Constants.DevotedString}" : MainHub.UID;
         var isTarget = k.IsVisible && k.VisiblePairGameObject!.Equals(Svc.Targets.Target);
         var inFollowRange = isTarget && PlayerData.DistanceTo(k.VisiblePairGameObject) < 5;
-        var inImprisonRange = PlayerData.DistanceTo(k.VisiblePairGameObject) < 12;
+        var inImprisonRange = k.IsVisible && PlayerData.DistanceTo(k.VisiblePairGameObject) < 12;
 
         // ------ Locked Following ------
         var followEnabled = hc.LockedFollowing.Length > 0;
@@ -90,7 +90,8 @@ public class KinksterHardcore(InteractionsService service)
             ImUtf8.SameLineInner();
             using (CkRaii.FramedChild("CageAnchor", new Vector2(rightW, ImGui.GetFrameHeight()), 0, CkColor.VibrantPink.Uint(), CkStyle.ListItemRounding(), CkStyle.ThinThickness()))
                 CkGui.CenterTextAligned($"{service.ImprisonPos:F1}");
-            CkGui.AttachToolTip("The current cage anchor position.");
+            CkGui.AttachToolTip("The current cage anchor position." +
+                "--SEP----COL--Note:--COL--0,0,0 Anchor uses the Kinkster's position.", ImGuiColors.ParsedPink);
         });
 
         // ------ Chat Box Hiding ------

@@ -1,6 +1,7 @@
 using Dalamud.Plugin.Services;
 using GagSpeak.State;
 using GagSpeak.State.Caches;
+using Penumbra.GameData.Files.ShaderStructs;
 using System.Reflection;
 
 namespace GagSpeak.PlayerControl;
@@ -107,6 +108,8 @@ public partial class HcTaskManager : IDisposable
         if (_taskOperations.Count > 0)
         {
             _logger.LogDebug($"Aborting Task: {_taskOperations[0].Name} ({_taskOperations[0].Location})", LoggerType.HardcoreTasks);
+            _taskOperations[0].End();
+            _taskOperations.RemoveAt(0);
             AbortTime = 0;
             StartTime = 0;
         }
@@ -156,12 +159,12 @@ public partial class HcTaskManager : IDisposable
             if (AbortTime is 0)
             {
                 RemainingTime = config.MaxTaskTime;
-                _logger.LogTrace($"Hardcore Task Begin: [{currentHcTask.Name} ({currentHcTask.Location})], with timeout of {RemainingTime}", LoggerType.HardcoreTasks);
+                _logger.LogTrace($"HcTask Begin: [{currentHcTask.CurrentTaskIdx}] ({currentHcTask.Name}), with timeout of {RemainingTime}", LoggerType.HardcoreTasks);
             }
             // if it timed out, handle that.
             if (RemainingTime < 0)
             {
-                _logger.LogDebug($"Hardcore Task Timeout: {currentHcTask.Name} ({currentHcTask.Location})", LoggerType.HardcoreTasks);
+                _logger.LogDebug($"HcTask Timeout: [{currentHcTask.CurrentTaskIdx}] ({currentHcTask.Name})", LoggerType.HardcoreTasks);
                 throw new BagagwaTimeout();
             }
 
@@ -170,12 +173,12 @@ public partial class HcTaskManager : IDisposable
             // handle the task result.
             if (taskRes is true)
             {
-                _logger.LogInformation($"Hardcore Task Success: {currentHcTask.Name} ({currentHcTask.Location})", LoggerType.HardcoreTasks);
+                Svc.Logger.Information($"HcTask [{currentHcTask.CurrentTaskIdx}] Success: ({currentHcTask.Name})");
                 AbortTime = 0;
             }
             else if (taskRes is null)
             {
-                _logger.LogTrace($"Received abort request from task: {currentHcTask.Name} ({currentHcTask.Location})", LoggerType.HardcoreTasks);
+                _logger.LogTrace($"Abort Request: HcTask [{currentHcTask.CurrentTaskIdx}] ({currentHcTask.Name})", LoggerType.HardcoreTasks);
                 throw new Bagagwa("Task requested abort.");
             }
 
@@ -183,21 +186,21 @@ public partial class HcTaskManager : IDisposable
             if (currentHcTask.IsComplete)
             {
                 // end the task, log its completion, and remove the hcTaskControl.
-                _logger.LogInformation($"Hardcore Task Operation Complete: {currentHcTask.Name} ({currentHcTask.Location})", LoggerType.HardcoreTasks);
+                _logger.LogInformation($"HcTask Complete: [{currentHcTask.CurrentTaskIdx} ({currentHcTask.Name})", LoggerType.HardcoreTasks);
                 currentHcTask.End();
                 _cache.SetActiveTaskControl(HcTaskControl.None);
             }
 
         }
         // handle cases where we summoned Bagagwa via timeouts or other standard Bagagwa summoning practices.
-        catch (BagagwaTimeout e)
+        catch (BagagwaTimeout)
         {
-            _logger.LogWarning($"Timeout in operation [{currentHcTask.Name}] task index {currentHcTask.CurrentTaskIdx}: {e}", LoggerType.HardcoreTasks);
+            _logger.LogWarning($"Timeout: [{currentHcTask.CurrentTaskIdx}] from ({currentHcTask.Name})", LoggerType.HardcoreTasks);
             AbortCurrentTask();
         }
         catch (Bagagwa ex)
         {
-            _logger.LogError($"Hardcore Task Error: {currentHcTask.Name} ({currentHcTask.Location}), Exception: {ex}", LoggerType.HardcoreTasks);
+            _logger.LogError($"HcTask Error: {currentHcTask.Name} ({currentHcTask.Location}), Exception: {ex}", LoggerType.HardcoreTasks);
             AbortCurrentTask();
         }
         // return early to not update the observed tasks count.

@@ -44,13 +44,18 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
         // if clientData.Hardcore is not valid, should turn off imprisonment.
         if (ClientData.Hardcore is not { } hc)
         {
-            StopDetoursAndControl();
+            FullStopImprisonment();
+            Logger.LogInformation($"Updated: IsImprisoned={IsImprisoned}, CageTerritoryId={CageTerritoryId}, CageOrigin={CageOrigin}, CageRadius={CageRadius}");
             return;
         }
+
+        ShouldBeImprisoned = hc.Imprisonment.Length > 0;
+
         // if disabled, disable imprisonment.
         if (hc.Imprisonment.Length is 0)
         {
             FullStopImprisonment();
+            Logger.LogInformation($"Updated: IsImprisoned={IsImprisoned}, CageTerritoryId={CageTerritoryId}, CageOrigin={CageOrigin}, CageRadius={CageRadius}");
             return;
         }
 
@@ -59,20 +64,19 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
         if (hc.ImprisonedTerritory != currentTerritory)
         {
             StopDetoursAndControl();
+            Logger.LogInformation($"Updated: IsImprisoned={IsImprisoned}, CageTerritoryId={CageTerritoryId}, CageOrigin={CageOrigin}, CageRadius={CageRadius}");
             return;
         }
 
         // if we are meant to be imprisoned, but are not, assign imprisonment.
         if (hc.Imprisonment.Length > 0)
         {
-            // Always process ShouldBeImprisoned regardless.
-            ShouldBeImprisoned = true;
-
             var newPos = ClientData.GetImprisonmentPos();
             // invalidate if we are too far from current position.
-            if (PlayerData.DistanceTo(newPos) > 15)
+            if (PlayerData.DistanceToInstanced(newPos) > 15)
             {
                 StopDetoursAndControl();
+                Logger.LogInformation($"Updated: IsImprisoned={IsImprisoned}, CageTerritoryId={CageTerritoryId}, CageOrigin={CageOrigin}, CageRadius={CageRadius}");
                 return;
             }
             // update our imprisonment data if we have any.
@@ -123,7 +127,7 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
 
     private void EnqueueCageReturnTask()
     {
-        _hcTasks.CreateGroup(ReturnToCageName, new(State.HcTaskControl.BlockMovementKeys | State.HcTaskControl.Weighted, 3000))
+        _hcTasks.CreateGroup(ReturnToCageName, new(State.HcTaskControl.BlockMovementKeys, 3000))
             .Add(() =>
             {
                 if (!PlayerData.Available)
@@ -134,7 +138,7 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
                 toNext.Y = 0;
 
                 // if we are within the cage origin, stop and return complete.
-                if (toNext.LengthSquared() <= CageRadius * CageRadius)
+                if (toNext.LengthSquared() <= 0.25f)
                 {
                     StopDetoursAndControl();
                     IsImprisoned = true; // still imprisoned, just back in cage.
@@ -150,7 +154,7 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
                 _camera.DesiredAltitude = -30.Degrees();
                 return false;
             })
-            .Add(() => _returningToCage = false)
+            .Add(() => { _returningToCage = false; })
             .Insert(); // force it to have priority and run immediately.
     }
 }

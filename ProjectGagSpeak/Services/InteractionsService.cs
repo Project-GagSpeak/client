@@ -110,7 +110,7 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
 
     public string ImprisonTimer = string.Empty;
     public Vector3 ImprisonPos = Vector3.Zero;
-    public float ImprisonRadius = 0f;
+    public float ImprisonRadius = 1f;
 
     public string ChatBoxHideTimer = string.Empty;
     public string ChatInputHideTimer = string.Empty;
@@ -150,7 +150,7 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
         CyclePose = 0;
         Address = new AddressBookEntry();
         ImprisonPos = Vector3.Zero;
-        ImprisonRadius = 0f;
+        ImprisonRadius = 1f;
         ApplyIntensity = 0;
         ApplyVibeIntensity = 0;
         ApplyDuration = 0.1f;
