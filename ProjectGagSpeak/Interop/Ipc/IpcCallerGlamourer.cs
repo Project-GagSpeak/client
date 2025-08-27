@@ -70,7 +70,7 @@ public sealed class IpcCallerGlamourer : IIpcCaller
             if (ApiVersion.Invoke() is { Major: 1, Minor: >= 3 })
                 apiAvailable = true;
             _shownGlamourerUnavailable = _shownGlamourerUnavailable && !apiAvailable;
-        });
+        }, true);
         // update available state.
         APIAvailable = apiAvailable;
         if (!apiAvailable && !_shownGlamourerUnavailable)

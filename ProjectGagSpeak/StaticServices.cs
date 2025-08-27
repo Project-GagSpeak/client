@@ -70,6 +70,7 @@ public static class ItemSvc
     public const string SmallClothesNpc = "Smallclothes (NPC)";
     public const ushort SmallClothesNpcModel = 9903;
 
+    public static DictWorld WorldData { get; private set; } = null!;
     public static DictBonusItems BonusData { get; private set; } = null!;
     public static DictStain Stains { get; private set; } = null!;
     public static ItemData ItemData { get; private set; } = null!;
@@ -87,6 +88,7 @@ public static class ItemSvc
 
         var logger = new Logger();
 
+        WorldData = new DictWorld(pi, logger, Svc.Data);
         BonusData = new DictBonusItems(pi, logger, Svc.Data);
         Stains = new DictStain(pi, logger, Svc.Data);
         // init the precursors to itemData.

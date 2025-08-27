@@ -116,7 +116,7 @@ public class AccountManagerTab
             ImGui.AlignTextToFramePadding();
             CkGui.IconText(FAI.Globe);
             ImUtf8.SameLineInner();
-            CkGui.ColorText(OnFrameworkService.WorldData[account.WorldId], isPrimary ? ImGuiColors.ParsedGold : ImGuiColors.ParsedPink);
+            CkGui.ColorText(ItemSvc.WorldData.TryGetValue(account.WorldId, out var name) ? name : "UNKNOWN WORLD", isPrimary ? ImGuiColors.ParsedGold : ImGuiColors.ParsedPink);
             CkGui.AttachToolTip(GSLoc.Settings.Accounts.CharaWorldLabel);
 
             var isOnUserSize = CkGui.IconSize(FAI.Fingerprint);

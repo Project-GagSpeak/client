@@ -1,9 +1,11 @@
 using CkCommons;
 using CkCommons.Gui;
+using CkCommons.Gui.Utility;
 using CkCommons.Raii;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CustomCombos;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.WebAPI;
@@ -11,6 +13,7 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using OtterGui;
 using OtterGui.Text;
+using static CkCommons.GameDataHelp;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -50,12 +53,12 @@ public class KinksterHardcore(InteractionsService service)
         var confinementActive = hc.IndoorConfinement.Length > 0;
         var confinementInfo = confinementActive ? (FAI.StopCircle, $"Release {dispName} from Confinement.") : (FAI.HouseLock, $"Lock {dispName} away indoors.");
         var confinementDis = !k.PairPerms.AllowIndoorConfinement || !hc.CanChange(HcAttribute.Confinement, MainHub.UID);
-        var confinementTT = confinementActive ? $"Allow {dispName} to leave their indoor confinement." : $"Confinement {dispName} indoors.";
+        var confinementTT = confinementActive ? $"End {dispName}'s confinement period." : $"Confine {dispName} indoors.";
         DrawColoredExpander(InteractionType.Confinement, confinementInfo.Item1, confinementInfo.Item2, confinementActive, confinementDis, confinementTT);
-        UniqueHcChild(InteractionType.Confinement, confinementActive, CkStyle.TwoRowHeight(), () =>
+        UniqueHcChild(InteractionType.Confinement, confinementActive, CkStyle.GetFrameRowsHeight(4).AddWinPadY(), () =>
         {
-            DrawTimerButtonRow(InteractionType.Confinement, ref service.ConfinementTimer, confinementDis);
-            CkGui.CenterColorTextAligned("LifeStream Address Setup or Nearest Node.", ImGuiColors.DalamudRed);
+            DrawTimerButtonRow(InteractionType.Confinement, ref service.ConfinementTimer, "Confine", confinementDis);
+            DrawAddressConfig(width, k, dispName);
         });
 
         // ------ Locked Imprisonment ------
@@ -66,7 +69,7 @@ public class KinksterHardcore(InteractionsService service)
         DrawColoredExpander(InteractionType.Imprisonment, imprisonmentInfo.Item1, imprisonmentInfo.Item2, imprisonmentActive, imprisonmentDis, imprisonmentTT);
         UniqueHcChild(InteractionType.Imprisonment, imprisonmentActive, CkStyle.TwoRowHeight(), () =>
         {
-            DrawTimerButtonRow(InteractionType.Imprisonment, ref service.ImprisonTimer, imprisonmentDis);
+            DrawTimerButtonRow(InteractionType.Imprisonment, ref service.ImprisonTimer, "Imprison", imprisonmentDis);
             var rightW = CkGui.IconTextButtonSize(FAI.Upload, "Enable State");
             if (CkGui.IconButton(FAI.MapPin, disabled: !PlayerData.Available))
                 service.ImprisonPos = PlayerData.Position;
@@ -96,7 +99,7 @@ public class KinksterHardcore(InteractionsService service)
         var chatHideDis = !k.PairPerms.AllowHidingChatBoxes || !hc.CanChange(HcAttribute.HiddenChatBox, MainHub.UID);
         var chatHideTT = chatHideActive ? $"Restore {dispName}'s chatbox visibility." : $"Conceal {dispName}'s ChatBox from their UI.";
         DrawColoredExpander(InteractionType.ChatBoxHiding, chatHideInfo.Item1, chatHideInfo.Item2, chatHideActive, chatHideDis, chatHideTT);
-        GenericHcChild(InteractionType.ChatBoxHiding, ref service.ChatBoxHideTimer, chatHideActive, chatHideDis);
+        GenericHcChild(InteractionType.ChatBoxHiding, ref service.ChatBoxHideTimer, "Hide Chat", chatHideActive, chatHideDis);
 
         // ------ Chat Input Hiding ------
         var chatIptHideActive = hc.ChatInputHidden.Length > 0;
@@ -105,7 +108,7 @@ public class KinksterHardcore(InteractionsService service)
         var chatIptHideTT = chatIptHideActive ? $"Restore {dispName}'s chat input visibility." : $"Conceal {dispName}'s chat input." +
             $"--NL----COL--NOTE:--COL-- {dispName} can still type, just can't see it~";
         DrawColoredExpander(InteractionType.ChatInputHiding, chatIptHideInfo.Item1, chatIptHideInfo.Item2, chatIptHideActive, chatIptHideDis, chatIptHideTT);
-        GenericHcChild(InteractionType.ChatInputHiding, ref service.ChatInputHideTimer, chatIptHideActive, chatIptHideDis);
+        GenericHcChild(InteractionType.ChatInputHiding, ref service.ChatInputHideTimer, "Hide Input", chatIptHideActive, chatIptHideDis);
 
         // ------ Chat Input Blocking ------
         var chatIptBlockActive = hc.ChatInputBlocked.Length > 0;
@@ -115,7 +118,7 @@ public class KinksterHardcore(InteractionsService service)
             $"--NL----COL--WARNING:--COL-- This prevents ANY TYPING." +
             $"--SEP----COL--CTRL+ALT+BACKSPACE--COL-- is the emergency safeword!";
         DrawColoredExpander(InteractionType.ChatInputBlocking, chatIptBlockInfo.Item1, chatIptBlockInfo.Item2, chatIptBlockActive, chatIptBlockDis, chatIptBlockTT);
-        GenericHcChild(InteractionType.ChatInputBlocking, ref service.ChatInputBlockTimer, chatIptBlockActive, chatIptBlockDis);
+        GenericHcChild(InteractionType.ChatInputBlocking, ref service.ChatInputBlockTimer, "Block Input", chatIptBlockActive, chatIptBlockDis);
 
 
         // >> Helpers Below 
@@ -143,7 +146,7 @@ public class KinksterHardcore(InteractionsService service)
         }
 
         // can make variant of this with custom input height and custom enabled draw action.
-        void GenericHcChild(InteractionType type, ref string timerStr, bool curState, bool blockEnable)
+        void GenericHcChild(InteractionType type, ref string timerStr, string enableText, bool curState, bool blockEnable)
         {
             if (service.OpenItem != type)
                 return;
@@ -153,14 +156,14 @@ public class KinksterHardcore(InteractionsService service)
                 if (curState)
                     DrawDisableRow(type);
                 else
-                    DrawTimerButtonRow(type, ref timerStr, blockEnable);
+                    DrawTimerButtonRow(type, ref timerStr, enableText, blockEnable);
             }
             ImGui.Separator();
         }
 
-        void DrawTimerButtonRow(InteractionType type, ref string timerStr, bool disabled)
+        void DrawTimerButtonRow(InteractionType type, ref string timerStr, string enableText, bool disabled)
         {
-            var buttonW = CkGui.IconTextButtonSize(FAI.Upload, "Enable State");
+            var buttonW = CkGui.IconTextButtonSize(FAI.Upload, enableText);
             var txtWidth = width - buttonW - ImGui.GetStyle().ItemInnerSpacing.X;
             CkGui.IconInputText($"##Timer{type}{k.UserData.UID}", txtWidth, FAI.Clock, "Ex: 2h8m43s..", ref timerStr, 12);
             CkGui.AttachToolTip("Define a time to enable this state for (or blank to make permanent)" +
@@ -168,7 +171,7 @@ public class KinksterHardcore(InteractionsService service)
                 "--NL--You can also disable this early manually.");
 
             ImUtf8.SameLineInner();
-            if (CkGui.IconTextButton(FAI.Upload, "Enable State", buttonW, disabled: disabled))
+            if (CkGui.IconTextButton(FAI.Upload, enableText, buttonW, disabled: disabled))
                 service.TryEnableHardcoreAction(type.ToHcAttribute());
             CkGui.AttachToolTip($"Enable Hardcore State for {dispName}.");
         }
@@ -227,6 +230,92 @@ public class KinksterHardcore(InteractionsService service)
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                     service.EmoteId = service.Emotes.Items.FirstOrDefault().RowId;
             }
+        }
+    }
+
+    private void DrawAddressConfig(float width, Kinkster k, string dispName)
+    {
+        using var c = CkRaii.FramedChildPaddedWH("##AddressConfig", new(width, CkStyle.GetFrameRowsHeight(3).AddWinPadY()), 0, CkColor.VibrantPink.Uint());
+
+        CkGui.FramedIconText(FAI.Home);
+        ImUtf8.SameLineInner();
+        var widthMinusFrame = ImGui.GetContentRegionAvail().X;
+        var triItemWidth = (widthMinusFrame - ImGui.GetStyle().ItemInnerSpacing.X * 2) / 3f;
+
+        // over the next line, have 3 buttons for the various property type states.
+        using (ImRaii.Disabled(service.Address.PropertyType is PropertyType.House))
+            if (ImGui.Button("House", new Vector2(triItemWidth, ImGui.GetFrameHeight())))
+            {
+                service.Address.PropertyType = PropertyType.House;
+                service.Address.ApartmentSubdivision = false;
+            }
+        CkGui.AttachToolTip($"Confining {dispName} in a house.");
+
+        ImUtf8.SameLineInner();
+        using (ImRaii.Disabled(service.Address.PropertyType is PropertyType.Apartment))
+            if (ImGui.Button("Apartment", new Vector2(triItemWidth, ImGui.GetFrameHeight())))
+                service.Address.PropertyType = PropertyType.Apartment;
+        CkGui.AttachToolTip($"Confining {dispName} to an apartment room.");
+
+        ImUtf8.SameLineInner();
+        using (ImRaii.Disabled(service.Address.PropertyType is PropertyType.PrivateChambers))
+            if (ImGui.Button("Chambers", new Vector2(triItemWidth, ImGui.GetFrameHeight())))
+            {
+                service.Address.PropertyType = PropertyType.PrivateChambers;
+                service.Address.ApartmentSubdivision = false;
+            }
+        CkGui.AttachToolTip($"Confining {dispName} the private chambers of an FC.");
+
+        CkGui.FramedIconText(FAI.MapMarkedAlt);
+        ImUtf8.SameLineInner();
+
+        if (service.Worlds.Draw(service.Address.World, triItemWidth, CFlags.NoArrowButton))
+            service.Address.World = service.Worlds.Current.Key.Id;
+        CkGui.AttachToolTip($"The World {dispName} will be confined to.");
+
+        ImUtf8.SameLineInner();
+        CkGuiUtils.ResidentialAetheryteCombo($"##resdis", triItemWidth, ref service.Address.City);
+        CkGui.AttachToolTip($"The District {dispName} will be confined to.");
+
+        ImUtf8.SameLineInner();
+        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+        ImGui.DragInt($"##ward", ref service.Address.Ward, .5f, 1, 30, "Ward %d");
+        CkGui.AttachToolTip($"The Ward {dispName} will be confined to.");
+
+        var propType = service.Address.PropertyType;
+        using (ImRaii.Disabled(propType is not PropertyType.Apartment))
+            ImGui.Checkbox("##SubdivisionCheck", ref service.Address.ApartmentSubdivision);
+        CkGui.AttachToolTip("If the apartment is in the ward's subdivision.");
+
+        // draw out the sliders based on the property type.
+        ImUtf8.SameLineInner();
+        var sliderW = propType is not PropertyType.PrivateChambers 
+            ? ImGui.GetContentRegionAvail().X : (ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemInnerSpacing.X) / 2;
+        switch (propType)
+        {
+            case PropertyType.House:
+                ImGui.SetNextItemWidth(sliderW);
+                ImGui.SliderInt("##plot", ref service.Address.Plot, 1, 60, "Plot %d");
+                CkGui.AttachToolTip($"The plot # of the home {dispName} will be confined to.");
+                break;
+            case PropertyType.Apartment:
+                ImGui.SetNextItemWidth(sliderW);
+                ImGui.SliderInt("##room", ref service.Address.Apartment, 1, 100, "Room %d");
+                CkGui.AttachToolTip($"The apartment room # {dispName} will be confined to.");
+                break;
+            case PropertyType.PrivateChambers:
+                ImGui.SetNextItemWidth(sliderW);
+                ImGui.SliderInt("##plot", ref service.Address.Plot, 1, 60, "Plot %d");
+                CkGui.AttachToolTip($"The plot # of the home {dispName} will be confined to.");
+
+                ImUtf8.SameLineInner();
+                ImGui.SetNextItemWidth(sliderW);
+                ImGui.SliderInt("##chambers", ref service.Address.Apartment, 1, 100, "Chamber %d");
+                CkGui.AttachToolTip($"The private chambers # {dispName} will be confined to.");
+                break;
+            default:
+                CkGui.ColorTextCentered("UNKNOWN PLOT TYPE", ImGuiColors.DalamudRed);
+                break;
         }
     }
 }

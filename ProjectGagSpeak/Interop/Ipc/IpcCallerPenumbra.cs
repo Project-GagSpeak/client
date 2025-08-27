@@ -206,7 +206,7 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
         // clear all temporary mods.
         ClearAllTemporaryMods();
 
-        OnModSettingsChanged.Dispose();
+        // OnModSettingsChanged.Dispose();
         OnDisposed.Dispose();
         OnInitialized.Dispose();
         TooltipSubscriber.Dispose();

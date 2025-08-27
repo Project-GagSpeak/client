@@ -32,7 +32,6 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
 
     // Find a better place for this later i guess.
     public static FrozenDictionary<ushort, string> WorldData = FrozenDictionary<ushort, string>.Empty;
-    public static WorldCombo WorldCombo;
     public OnFrameworkService(ILogger<OnFrameworkService> logger, GagspeakMediator mediator) 
         : base(logger, mediator)
     {
@@ -42,9 +41,6 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
             .Where(w => w.IsPublic && !w.Name.IsEmpty)
             .OrderBy(w => w.Name.ToString())
             .ToFrozenDictionary(w => (ushort)w.RowId, w => w.Name.ToString());
-
-        WorldCombo = new(logger);
-
         // This should probably be moved somewhere else idealy but whatever for now.
         mediator.Subscribe<TargetPairMessage>(this, (msg) =>
         {

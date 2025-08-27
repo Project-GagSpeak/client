@@ -2,6 +2,7 @@ using CkCommons;
 using CkCommons.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
+using GagSpeak.PlayerControl;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Handlers;
 using GagSpeak.State.Listeners;
@@ -29,6 +30,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
     private readonly AlarmManager _alarms;
     private readonly TriggerManager _triggers;
     private readonly BuzzToyManager _toys;
+    private readonly HcTaskManager _hcTasks;
     private readonly PlayerCtrlHandler _hcHandler;
     private readonly ClientDataListener _clientDatListener;
     private readonly AchievementEventHandler _achievementHandler;
@@ -49,6 +51,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
         AlarmManager alarms,
         TriggerManager triggers,
         BuzzToyManager toys,
+        HcTaskManager hcTasks,
         PlayerCtrlHandler hcHandler,
         ClientDataListener clientDataListener,
         AchievementEventHandler achievements)
@@ -62,6 +65,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
         _alarms = alarms;
         _triggers = triggers;
         _toys = toys;
+        _hcTasks = hcTasks;
         _hcHandler = hcHandler;
         _clientDatListener = clientDataListener;
         _achievementHandler = achievements;
@@ -216,6 +220,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
         _lastHcSafewordTime = DateTime.Now;
         Logger.LogInformation("[HC-SAFEWORD PROGRESS]: Hardcore Safeword used!");
 
+        // stop ALL hardcore tasks being run.
         _achievementHandler.SafewordUsed(isolatedUID);
 
         // Reset the permissions on all associated Kinksters.
@@ -262,6 +267,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
             Logger.LogInformation("[HC-SAFEWORD PROGRESS]: Client HardcoreState Handlers Synced.");
         }
 
+        _hcTasks.AbortTasks();
         Logger.LogInformation("[HC-SAFEWORD PROGRESS]: ===={ COMPLETED }====");
     }
 

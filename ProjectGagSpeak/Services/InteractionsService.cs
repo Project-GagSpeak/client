@@ -1,7 +1,6 @@
 using CkCommons;
 using Dalamud.Bindings.ImGui;
-using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using GagSpeak.CustomCombos;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.CustomCombos.Moodles;
 using GagSpeak.CustomCombos.Padlock;
@@ -20,8 +19,6 @@ using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using static CkCommons.GameDataHelp;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement;
-
 
 namespace GagSpeak.Services;
 
@@ -87,6 +84,8 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
     public OwnMoodlePresetToPairCombo OwnPresets { get; private set; } = null!;
     public EmoteCombo Emotes { get; private set; } = null!;
     public PairMoodleStatusCombo ActiveStatuses { get; private set; } = null!;
+    public WorldCombo Worlds { get; private set; } = null!;
+
 
     public Kinkster? Kinkster { get; private set; } = null;
     public InteractionsTab CurrentTab { get; private set; } = InteractionsTab.None;
@@ -107,7 +106,7 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
     public int CyclePose = 0;
     
     public string ConfinementTimer = string.Empty;
-    public AddressBookEntry ConfinementLoc = new();
+    public AddressBookEntry Address = new();
 
     public string ImprisonTimer = string.Empty;
     public Vector3 ImprisonPos = Vector3.Zero;
@@ -149,7 +148,7 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
         HypnoTimer = string.Empty;
         EmoteId = 0;
         CyclePose = 0;
-        ConfinementLoc = new AddressBookEntry();
+        Address = new AddressBookEntry();
         ImprisonPos = Vector3.Zero;
         ImprisonRadius = 0f;
         ApplyIntensity = 0;
@@ -220,6 +219,8 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
         Emotes = new EmoteCombo(Logger, 1.3f, () => [
             ..Kinkster.PairPerms.AllowLockedEmoting ? EmoteExtensions.LoopedEmotes() : EmoteExtensions.SittingEmotes()
         ]);
+
+        Worlds = new WorldCombo(Logger);
 
         DispName = kinkster.GetNickAliasOrUid();
         if (resetVariables)
@@ -337,12 +338,12 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
             {
                 IndoorConfinement = enactingString,
                 ConfinementTimer = expireTimer,
-                ConfinedWorld = ConfinementLoc.World,
-                ConfinedCity = (int)ConfinementLoc.City,
-                ConfinedWard = ConfinementLoc.Ward,
-                ConfinedPlaceId = ConfinementLoc.PropertyType is PropertyType.House ? ConfinementLoc.Plot : ConfinementLoc.Apartment,
-                ConfinedInApartment = ConfinementLoc.PropertyType is PropertyType.Apartment,
-                ConfinedInSubdivision = ConfinementLoc.ApartmentSubdivision
+                ConfinedWorld = Address.World,
+                ConfinedCity = (int)Address.City,
+                ConfinedWard = Address.Ward,
+                ConfinedPlaceId = Address.PropertyType is PropertyType.House ? Address.Plot : Address.Apartment,
+                ConfinedInApartment = Address.PropertyType is PropertyType.Apartment,
+                ConfinedInSubdivision = Address.ApartmentSubdivision
             },
             HcAttribute.Imprisonment => Kinkster.PairHardcore with
             {
