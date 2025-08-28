@@ -60,8 +60,11 @@ public static class Signatures
     public const string MouseMoveBlock = "48 8b c4 4c 89 48 ?? 53 55 57 41 54 48 81 ec ?? 00 00 00";
 
     // DetourName = nameof(TestUpdate), Fallibility = Fallibility.Auto, Define via SignatureAttribute.
-    // public const string UnfollowTargetOLD = "48 89 5c 24 ?? 48 89 74 24 ?? 57 48 83 ec ?? 48 8b d9 48 8b fa 0f b6 89 ?? ?? 00 00 be 00 00 00 e0";
-    public const string UnfollowTarget = "48 89 5C 24 ?? 57 48 83 EC 20 48 8B D9 BF ?? ?? ?? ?? 0F B6 89";
+    public const string UnfollowTarget = "48 89 5c 24 ?? 48 89 74 24 ?? 57 48 83 ec ?? 48 8b d9 48 8b fa 0f b6 89 ?? ?? 00 00 be 00 00 00 e0";
+    
+    // Inner, single paramater that is a post-confirmation of an unfollowing. Works for mouse turning but does not prevent LMB+RMB unfollowing.
+    public const string UnfollowTargetPost = "48 89 5C 24 ?? 57 48 83 EC 20 48 8B D9 BF ?? ?? ?? ?? 0F B6 89";
+    
     // Signatures for Imprisonment
     public const string RMICamera = "48 8B C4 53 48 81 EC ?? ?? ?? ?? 44 0F 29 50 ??";
 
@@ -73,7 +76,6 @@ public static class Signatures
 
     // DetourName = nameof(ApplyGlamourPlateDetour), Fallibility = Fallibility.Auto, Define via SignatureAttribute.
     public const string ApplyGlamourPlate = "E8 ?? ?? ?? ?? 41 C6 44 24 ?? ?? E9 ?? ?? ?? ?? 0F B6 83";
-
 
     // Sends a constructed chat message to the server. (No longer nessisary)
     // public const string SendChat = "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC 20 48 8B F2 48 8B F9 45 84 C9";

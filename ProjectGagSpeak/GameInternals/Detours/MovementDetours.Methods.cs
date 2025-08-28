@@ -57,38 +57,15 @@ public partial class MovementDetours : IDisposable
     ///     Prevents the player from unfollowing a target, which is used to prevent the player from canceling follow.
     /// </summary>
     /// <remarks> This fires the entire duration you are following someone, so it is best not to log everything. </remarks>
-    public unsafe delegate void UnfollowTargetDelegate(UnkTargetFollowStruct* unk1);
-    [Signature(Signatures.UnfollowTarget, DetourName = nameof(UnfollowTargetDetour), Fallibility = Fallibility.Auto)]
+    public unsafe delegate void UnfollowTargetDelegate(UnkTargetFollowStruct* unk1, IntPtr unk2);
+    [Signature(Signatures.UnfollowTargetOLD, DetourName = nameof(UnfollowTargetDetour), Fallibility = Fallibility.Auto)]
     private Hook<UnfollowTargetDelegate> UnfollowHook = null!;
     [return: MarshalAs(UnmanagedType.U1)]
-    private unsafe void UnfollowTargetDetour(UnkTargetFollowStruct* unk1)
+    private unsafe void UnfollowTargetDetour(UnkTargetFollowStruct* targetStruct, IntPtr unk2)
     {
-        try
-        {
-            //_logger.LogDebug($"PRE: Unk_0x470.Unk_GameObjectID0: {unk1->Unk_0x470.Unk_GameObjectID0.ToString("X")};", LoggerType.HardcoreMovement);
-            //_logger.LogDebug($"PRE      Struct target4 Unk_0x10: {unk1->Unk_0x470.Unk_0x50};", LoggerType.HardcoreMovement);
-            //_logger.LogDebug($"PRE      Struct target4 Unk_0x54: {unk1->Unk_0x470.Unk_0x54};", LoggerType.HardcoreMovement);
-            //_logger.LogDebug($"PRE:             FollowingTarget: {unk1->FollowingTarget.ToString("X")}", LoggerType.HardcoreMovement);
-            //_logger.LogDebug($"PRE:                 Follow Type: {unk1->FollowType.ToString("X")}", LoggerType.HardcoreMovement);
-            
-            // Just before an early return happens, Unk_054 becomes 256, and followType will be 4, while FollowingTarget is 1.
-            // After returning original, all those values are set to 0, so we must perform an early return.
-            // At the moment this doesnt seem to stop movement keys from canceling unfollow, but stops mouse movement from making an unfollow occur
-            // Should perform an early return here if an unfollow request was made by this detour.
-            if (unk1->Unk_0x470.Unk_0x54 == 256)
-                return;
-
-            //_logger.LogDebug($"---------------------------------", LoggerType.HardcoreMovement);
-            //_logger.LogDebug($"POST Unk_0x470.Unk_GameObjectID0: {unk1->Unk_0x470.Unk_GameObjectID0.ToString("X")};", LoggerType.HardcoreMovement);
-            //_logger.LogDebug($"POST     Struct target4 Unk_0x54: {unk1->Unk_0x470.Unk_0x54};", LoggerType.HardcoreMovement);
-            //_logger.LogDebug($"POST             FollowingTarget: {unk1->FollowingTarget.ToString("X")}", LoggerType.HardcoreMovement);
-            //_logger.LogDebug($"POST                 Follow Type: {unk1->FollowType.ToString("X")}", LoggerType.HardcoreMovement);
-        }
-        catch (Bagagwa ex)
-        {
-            _logger.LogError($"Error in UnfollowTargetDetour: {ex}");
-        }
-        // ret original.
-        UnfollowHook?.Original(unk1);
+        if (targetStruct->FollowType4Data.FollowingTarget == 0x100) // 256, it's max value.
+            return;
+        // ret original otherwise.
+        UnfollowHook?.Original(targetStruct, unk2);
     }
 }
