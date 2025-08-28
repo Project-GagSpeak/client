@@ -7,6 +7,7 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
 using GagSpeak.Interop;
 using GagSpeak.PlayerClient;
+using GagSpeak.PlayerControl;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
@@ -23,21 +24,10 @@ namespace GagSpeak.Gui;
 
 public class DebugActiveStateUI : WindowMediatorSubscriberBase
 {
-    private static TriStateBoolCheckbox HelmetCheckbox = new();
-    private static TriStateBoolCheckbox VisorCheckbox = new();
-    private static TriStateBoolCheckbox WeaponCheckbox = new();
-
     private readonly ClientData _clientData;
-    private readonly EquipmentDrawer _equipDrawer;
     private readonly ModPresetDrawer _modDrawer;
     private readonly MoodleDrawer _moodleDrawer;
-    private readonly AttributeDrawer _attributeDrawer;
-    private readonly IpcCallerMoodles _moodlesIpc;
-    private readonly GagRestrictionManager _gags;
-    private readonly RestrictionManager _restrictions;
-    private readonly RestraintManager _restraints;
-    private readonly CursedLootManager _cursedLoot;
-    private readonly CacheStateManager _cacheManager;
+    private readonly HcTaskManager _hcTasks;
     private readonly GlamourCache _glamourCache;
     private readonly CustomizePlusCache _profileCache;
     private readonly ModCache _modCache;
@@ -51,16 +41,9 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
     public DebugActiveStateUI(ILogger<DebugActiveStateUI> logger,
         GagspeakMediator mediator,
         ClientData clientData,
-        EquipmentDrawer equipDrawer,
         ModPresetDrawer modDrawer,
         MoodleDrawer moodleDrawer,
-        AttributeDrawer traitsDrawer,
-        IpcCallerMoodles moodlesIpc,
-        GagRestrictionManager gags,
-        RestrictionManager restrictions,
-        RestraintManager restraints,
-        CursedLootManager cursedLoot,
-        CacheStateManager cacheManager,
+        HcTaskManager hcTasks,
         GlamourCache glamourCache,
         CustomizePlusCache profileCache,
         ModCache modCache,
@@ -73,16 +56,9 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         : base(logger, mediator, "Active State Debugger")
     {
         _clientData = clientData;
-        _equipDrawer = equipDrawer;
         _modDrawer = modDrawer;
         _moodleDrawer = moodleDrawer;
-        _attributeDrawer = traitsDrawer;
-        _moodlesIpc = moodlesIpc;
-        _gags = gags;
-        _restrictions = restrictions;
-        _restraints = restraints;
-        _cursedLoot = cursedLoot;
-        _cacheManager = cacheManager;
+        _hcTasks = hcTasks;
         _glamourCache = glamourCache;
         _profileCache = profileCache;
         _modCache = modCache;
@@ -108,6 +84,9 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
 
         if (ImGui.CollapsingHeader("Hardcore State"))
             _clientData.DrawHardcoreState();
+
+        if (ImGui.CollapsingHeader("HcTaskManager State"))
+            _hcTasks.DrawCacheState();
 
         ImGui.Separator();
         if (ImGui.CollapsingHeader("Glamour Cache"))

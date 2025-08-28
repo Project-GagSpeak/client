@@ -238,7 +238,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
         if (!ClientData.IsNull)
         {
             Logger.LogInformation("[HC-SAFEWORD PROGRESS]: Syncing HardcoreState with player control!");
-            var prevHc = ClientData.Hardcore!;
+            var prevHc = ClientData.HardcoreClone()!;
             var newHardcore = new HardcoreState();
             // REGARDLESS of the change, we should update things locally!
             _clientData.SetGlobals((GlobalPerms)ClientData.Globals!, newHardcore);

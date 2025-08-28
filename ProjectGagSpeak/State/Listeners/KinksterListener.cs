@@ -240,6 +240,7 @@ public sealed class KinksterListener
 
         // update them.
         kinkster.UserPair.Globals = dto.NewPerms;
+        kinkster.UserPair.Hardcore = dto.NewState;
 
         _logger.LogDebug($"BulkChangeGlobal for [{kinkster.GetNickAliasOrUid()}]", LoggerType.PairDataTransfer);
         _kinksters.RecreateLazy(false);

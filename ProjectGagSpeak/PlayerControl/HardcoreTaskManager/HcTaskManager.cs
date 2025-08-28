@@ -1,6 +1,14 @@
+using CkCommons;
+using CkCommons.Gui;
+using CkCommons.Raii;
+using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
 using GagSpeak.State;
 using GagSpeak.State.Caches;
+using OtterGui;
+using OtterGui.Text;
 using Penumbra.GameData.Files.ShaderStructs;
 using System.Reflection;
 
@@ -30,7 +38,7 @@ public partial class HcTaskManager : IDisposable
         _logger = logger;
         _cache = cache;
 
-        Svc.Framework.Update += OnFramework;
+        //Svc.Framework.Update += OnFramework;
         _logger.LogInformation("Hardcore Task Manager Initialized.");
     }
 
@@ -68,7 +76,7 @@ public partial class HcTaskManager : IDisposable
     {
         // dispose of this hardcore task manager singleton.
         _cache.SetActiveTaskControl(HcTaskControl.None);
-        Svc.Framework.Update -= OnFramework;
+        // Svc.Framework.Update -= OnFramework;
         _logger.LogInformation("Hardcore Task Manager Disposed.");
         GC.SuppressFinalize(this);
     }
@@ -117,8 +125,14 @@ public partial class HcTaskManager : IDisposable
         _cache.SetActiveTaskControl(HcTaskControl.None);
     }
 
+    public void DoTaskBreakpoint()
+        => Svc.Framework.RunOnFrameworkThread(ProcessTask);
+
     // Task update loop.
-    private void OnFramework(IFramework framework)
+    private void OnFramework(IFramework _)
+        => ProcessTask();
+
+    private void ProcessTask()
     {
         // Handle the condition in where there are no tasks currently being processed.
         if (_taskOperations.Count == 0)
@@ -205,5 +219,184 @@ public partial class HcTaskManager : IDisposable
         }
         // return early to not update the observed tasks count.
         return;
+    }
+
+    public void DrawCacheState()
+    {
+        CkGui.ColorText($"HcTaskManager Tasks: {QueuedTasks}", ImGuiColors.ParsedGold);
+        ImGui.Separator();
+        if (_taskOperations.Count is 0)
+        {
+            ImGui.Text("No Active Tasks.");
+            return;
+        }
+
+        using (var active = ImRaii.TreeNode("Active Task"))
+        {
+            if (active)
+            {
+                using (ImRaii.Group())
+                {
+                    DrawTask(_taskOperations[0]);
+                }
+                ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), ImGuiColors.ParsedGold.ToUint());
+            }
+        }
+        using (var tasksNode = ImRaii.TreeNode("Task Operations"))
+        {
+            if (tasksNode)
+            {
+                using (ImRaii.Group())
+                {
+                    foreach (var task in _taskOperations)
+                        DrawTask(task);
+                }
+                ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), ImGuiColors.ParsedGold.ToUint());
+            }
+        }
+    }
+
+    private void DrawTask(HardcoreTaskBase task)
+    {
+        using var _ = ImRaii.PushIndent();
+        switch (task)
+        {
+            case HardcoreTaskCollection collection:
+                DrawCollectionTask(collection);
+                break;
+            case BranchingHardcoreTask branch:
+                DrawBranchTask(branch);
+                break;
+            case HardcoreTaskGroup group:
+                DrawGroupTask(group);
+                break;
+            case HardcoreTask single:
+                DrawSingleTask(single);
+                break;
+            default:
+                ImGui.Text($"Unknown Task Type: {task.GetType().Name}");
+                break;
+        }
+    }
+
+    private void DrawCollectionTask(HardcoreTaskCollection collection)
+    {
+        using var _ = ImRaii.TreeNode($"{collection.Name}##collectionTask-{collection.Name}");
+        if (!_) return;
+
+        using (var t = ImRaii.Table("Collection-" + collection.Name, 7, ImGuiTableFlags.Borders | ImGuiTableFlags.SizingFixedFit))
+        {
+            if (!t) return;
+            ImGui.TableSetupColumn("Collection");
+            ImGui.TableSetupColumn("Executing");
+            ImGui.TableSetupColumn("Current Idx");
+            ImGui.TableSetupColumn("Completed");
+            ImGui.TableSetupColumn("Total Tasks");
+            ImGui.TableSetupColumn("Timeout");
+            ImGui.TableSetupColumn("Flags");
+
+            ImGuiUtil.DrawFrameColumn(collection.Name);
+            ImGuiUtil.DrawFrameColumn(collection.IsExecuting.ToString());
+            ImGuiUtil.DrawFrameColumn(collection.CurrentTaskIdx.ToString());
+            ImGuiUtil.DrawFrameColumn(collection.IsComplete.ToString());
+            ImGuiUtil.DrawFrameColumn(collection.Tasks.Count.ToString());
+            ImGuiUtil.DrawFrameColumn(collection.Config.MaxTaskTime.ToString());
+            ImGuiUtil.DrawFrameColumn(collection.Config.ControlFlags.ToString());
+        }
+        using (ImRaii.Group())
+        {
+            foreach (var task in collection.StoredTasks)
+                DrawTask(task);
+        }
+        ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), ImGui.GetColorU32(ImGuiCol.Border));
+    }
+
+    private void DrawBranchTask(BranchingHardcoreTask branch)
+    {
+        using var _ = ImRaii.TreeNode($"{branch.Name}##branchTask-{branch.Name}");
+        if (!_) return;
+
+        using (var t = ImRaii.Table("Branch-" + branch.Name, 8, ImGuiTableFlags.Borders | ImGuiTableFlags.SizingFixedFit))
+        {
+            if (!t) return;
+            ImGui.TableSetupColumn("Branch Name");
+            ImGui.TableSetupColumn("Executing");
+            ImGui.TableSetupColumn("Predicate");
+            ImGui.TableSetupColumn("Completed");
+            ImGui.TableSetupColumn("Current Idx");
+            ImGui.TableSetupColumn("Total Tasks");
+            ImGui.TableSetupColumn("Timeout");
+            ImGui.TableSetupColumn("Flags");
+
+            ImGuiUtil.DrawFrameColumn(branch.Name);
+            ImGuiUtil.DrawFrameColumn(branch.IsExecuting.ToString());
+            ImGuiUtil.DrawFrameColumn((branch.Predicate()).ToString());
+            ImGuiUtil.DrawFrameColumn(branch.IsComplete.ToString());
+            ImGuiUtil.DrawFrameColumn(branch.CurrentTaskIdx.ToString());
+            ImGuiUtil.DrawFrameColumn(branch.Tasks.Count.ToString());
+            ImGuiUtil.DrawFrameColumn(branch.Config.MaxTaskTime.ToString());
+            ImGuiUtil.DrawFrameColumn(branch.Config.ControlFlags.ToString());
+        }
+        using (ImRaii.Group())
+        {
+            CkGui.ColorText("True Branch:", ImGuiColors.ParsedGreen);
+            DrawTask(branch.TrueTask);
+        }
+        ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), ImGuiColors.ParsedGreen.ToUint());
+
+        using (ImRaii.Group())
+        {
+            CkGui.ColorText("False Branch:", ImGuiColors.DalamudRed);
+            DrawTask(branch.FalseTask);
+        }
+        ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), ImGuiColors.DalamudRed.ToUint());
+    }
+
+    private void DrawGroupTask(HardcoreTaskGroup group)
+    {
+        using var _ = ImRaii.TreeNode($"{group.Name}##groupTask-{group.Name}");
+        if (!_) return;
+
+        using (var t = ImRaii.Table("Group-" + group.Name, 6, ImGuiTableFlags.Borders | ImGuiTableFlags.SizingFixedFit))
+        {
+            if (!t) return;
+            ImGui.TableSetupColumn("Name");
+            ImGui.TableSetupColumn("Executing");
+            ImGui.TableSetupColumn("Current Idx");
+            ImGui.TableSetupColumn("Completed");
+            ImGui.TableSetupColumn("Timeout");
+            ImGui.TableSetupColumn("Flags");
+
+            ImGuiUtil.DrawFrameColumn(group.Name);
+            ImGuiUtil.DrawFrameColumn(group.IsExecuting.ToString());
+            ImGuiUtil.DrawFrameColumn(group.CurrentTaskIdx.ToString());
+            ImGuiUtil.DrawFrameColumn(group.IsComplete.ToString());
+            ImGuiUtil.DrawFrameColumn(group.Config.MaxTaskTime.ToString());
+            ImGuiUtil.DrawFrameColumn(group.Config.ControlFlags.ToString());
+        }
+    }
+
+    private void DrawSingleTask(HardcoreTask task)
+    {
+        using var _ = ImRaii.TreeNode($"{task.Name}##singleTask-{task.Name}");
+        if (!_) return;
+
+        using (var t = ImRaii.Table("Task-" + task.Name, 6, ImGuiTableFlags.Borders | ImGuiTableFlags.SizingFixedFit))
+        {
+            if (!t) return;
+            ImGui.TableSetupColumn("Name");
+            ImGui.TableSetupColumn("Executing");
+            ImGui.TableSetupColumn("Current Idx");
+            ImGui.TableSetupColumn("Completed");
+            ImGui.TableSetupColumn("Timeout");
+            ImGui.TableSetupColumn("Flags");
+
+            ImGuiUtil.DrawFrameColumn(task.Name);
+            ImGuiUtil.DrawFrameColumn(task.IsExecuting.ToString());
+            ImGuiUtil.DrawFrameColumn(task.CurrentTaskIdx.ToString());
+            ImGuiUtil.DrawFrameColumn(task.IsComplete.ToString());
+            ImGuiUtil.DrawFrameColumn(task.Config.MaxTaskTime.ToString());
+            ImGuiUtil.DrawFrameColumn(task.Config.ControlFlags.ToString());
+        }
     }
 }

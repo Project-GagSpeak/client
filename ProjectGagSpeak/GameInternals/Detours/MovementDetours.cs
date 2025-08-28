@@ -9,9 +9,6 @@ public partial class MovementDetours : IDisposable
         _logger = logger;
         Svc.Hook.InitializeFromAttributes(this);
         _logger.LogInformation("MovementDetours initialized successfully.");
-
-        AutoMoveUpdateHook.SafeEnable();
-        UnfollowHook.SafeEnable();
     }
 
     /// <summary> Returns if all Movement is currently disabled </summary>

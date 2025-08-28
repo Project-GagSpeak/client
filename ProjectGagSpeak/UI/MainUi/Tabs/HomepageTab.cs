@@ -9,6 +9,7 @@ using GagSpeak.Gui.Remote;
 using GagSpeak.Gui.Toybox;
 using GagSpeak.Gui.Wardrobe;
 using GagSpeak.Interop;
+using GagSpeak.PlayerControl;
 using GagSpeak.Services;
 using GagSpeak.Services.Controller;
 using GagSpeak.Services.Mediator;
@@ -23,16 +24,16 @@ public class HomepageTab
 {
     private readonly ILogger<HomepageTab> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly IpcManager _ipc;
+    private readonly HcTaskManager _temp;
 
     private int HoveredItemIndex = -1;
     private readonly List<(string Label, FontAwesomeIcon Icon, Action OnClick)> Modules;
 
-    public HomepageTab(ILogger<HomepageTab> logger, GagspeakMediator mediator, IpcManager ipc)
+    public HomepageTab(ILogger<HomepageTab> logger, GagspeakMediator mediator, HcTaskManager temp)
     {
         _logger = logger;
         _mediator = mediator;
-        _ipc = ipc;
+        _temp = temp;
 
         // Define all module information in a single place
         Modules = new List<(string, FontAwesomeIcon, Action)>
@@ -78,6 +79,9 @@ public class HomepageTab
         // if itemGotHovered is false, reset the index.
         if (!itemGotHovered)
             HoveredItemIndex = -1;
+
+        if (ImGui.Button("Process Single Step Task"))
+            _temp.DoTaskBreakpoint();
     }
 
     private bool HomepageSelectable(string label, FontAwesomeIcon icon, Vector2 region, bool hovered = false)
