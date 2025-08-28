@@ -6,198 +6,97 @@ namespace GagSpeak.PlayerControl;
 public abstract class HardcoreTaskBase
 {
     public string Name { get; init; }
-    public string Location { get; init; }
     public HcTaskConfiguration Config { get; init; }
-    public abstract List<Func<bool?>> Tasks { get; }
-    public int CurrentTaskIdx { get; private set; } = 0;
-    public bool IsExecuting { get; protected set; } = false;
-    public virtual bool IsComplete => CurrentTaskIdx >= Tasks.Count;
-    // internally execute the current task index.
-    public virtual bool? PerformTask()
-    {
-        // perform the current task and retrieve the result.
-        var res = Tasks[CurrentTaskIdx]();
-        // if the result is true, advance the current task index.
-        if (res is true)
-            CurrentTaskIdx++;
-        return res;
-    }
-    public virtual void Begin() => IsExecuting = true;
-    public virtual void End() 
-    {
-        IsExecuting = false;
-        CurrentTaskIdx = Tasks.Count;
-    }
-    
-    public virtual void Abort()
-    {
-        IsExecuting = false;
-        CurrentTaskIdx = Tasks.Count;
-    }
-}
+    public int CurrentTaskIdx { get; protected set; } = 0;
 
-// this might get a little trippy / recursive, but hey, if it works it works.
-public class HardcoreTaskCollection : HardcoreTaskBase
-{
-    public readonly List<HardcoreTaskBase> StoredTasks;
-    private int _currentSubTaskIdx = 0;
-    private HardcoreTaskBase _currentTask => StoredTasks[_currentSubTaskIdx]; // the focused one.
-    public override List<Func<bool?>> Tasks => _currentTask.Tasks; // reflects the focused task.
-    public override bool IsComplete => _currentSubTaskIdx >= StoredTasks.Count;
+    // Timing the Task internally.
+    public long StartTime { get; protected set; } = 0;
 
-    public HardcoreTaskCollection(IEnumerable<HardcoreTaskBase> tasks, HcTaskConfiguration config)
-    {
-        Name = tasks.FirstOrDefault()?.Name ?? string.Empty;
-        Location = tasks.FirstOrDefault()?.Location ?? string.Empty;
-        Config = config;
-        StoredTasks = tasks.ToList();
-    }
-    public HardcoreTaskCollection(IEnumerable<HardcoreTaskBase> tasks, string name, HcTaskConfiguration config)
-    {
-        StoredTasks = tasks.ToList();
-        Config = config;
-        Name = name;
-        Location = StoredTasks.FirstOrDefault()?.Location ?? string.Empty;
-    }
-    public override void Begin()
-    {
-        if (IsComplete)
-        {
-            Svc.Logger.Debug($"HcCollection: Cannot begin, already complete! {Name}");
-            return;
-        }
+    public void ResetTimeout() => StartTime = Environment.TickCount64;
 
-        if (_currentTask.Tasks.Count is 0)
-        {
-            Svc.Logger.Warning($"HcCollection: Cannot begin, current subtask has no tasks! {Name} ({Location})");
-            Abort();
-            return;
-        }
+    // virtual to be overriden by parent methods that need to access the individual timers.
+    public virtual bool IsRunning => StartTime is not 0;
+    public virtual long ElapsedTime => Environment.TickCount64 - StartTime;
+    public virtual bool HasTimedOut => Config.TimeoutAt > 0 && (Environment.TickCount64 - StartTime) > Config.TimeoutAt;
 
-        // initiate the subtask.
-        StoredTasks[_currentSubTaskIdx].Begin();
-        
-        // if the external task has not yet begun, begin it.
-        if (!IsExecuting)
-            base.Begin();
-    }
-
-    public override bool? PerformTask()
-    {
-        // compute the result.
-        Svc.Logger.Information($"HcCollection: Performing subtask IDX {_currentSubTaskIdx} of {StoredTasks.Count}." +
-            $"\nPerforming task at idx {_currentTask.CurrentTaskIdx} for subtask ({_currentTask.Name})");
-        var res = _currentTask.PerformTask();
-        // if the result is null we should move onto the next task and abort the current one.
-        if (res is null)
-        {
-            Svc.Logger.Warning($"HcCollection subtask IDX {_currentSubTaskIdx} of {StoredTasks.Count} failed." +
-                $"\nAborting subtask: ({_currentTask.Name})");
-            _currentTask.Abort();
-            Svc.Logger.Warning($"HcCollection: Aborted subtask: ({_currentTask.Name})");
-            Svc.Logger.Warning($"HcCollection: CurrentTask IsComplete: {_currentTask.IsComplete}");
-            Svc.Logger.Warning("Increasing _currentSubTaskIdx++.");
-            _currentSubTaskIdx++;
-            return res;
-        }
-        
-        if (res is true)
-        {
-            Svc.Logger.Information($"HcSubTask Success for Collection: {Name}.");
-            // the internal _currentTask.PerformTask() increased its index on success, so check for completion.
-            // if the subtask is complete, end and move to the next one.
-            if (_currentTask.IsComplete)
-            {
-                Svc.Logger.Information($"HcCollection: {Name} completed subtask at IDX: {_currentSubTaskIdx} ({_currentTask.Name})");
-                _currentTask.End();
-                _currentSubTaskIdx++;
-            }
-        }
-        // begin the next task immidiately if not complete.
-        if (!IsComplete)
-        {
-            Svc.Logger.Information($"HcCollection: Beginning next subtask at IDX: {_currentSubTaskIdx} of {StoredTasks.Count}." +
-                $"\nBeginning subtask: ({_currentTask.Name})");
-            StoredTasks[_currentSubTaskIdx].Begin();
-        }
-        // return the result.
-        return res;
-    }
-
-    public override void Abort()
-    {
-        // abort the current internal task and move onto the next. If completed, mark it.
-        if (!IsComplete)
-        {
-            Svc.Logger.Warning($"HcCollection: Outer not complete. At Task IDX {_currentSubTaskIdx} of {StoredTasks.Count}." +
-                $"\nAborting current subtask: ({_currentTask.Name})");
-            _currentTask.Abort();
-            Svc.Logger.Warning($"HcCollection: Aborted current subtask: ({_currentTask.Name})");
-            Svc.Logger.Warning($"HcCollection: CurrentTask IsComplete: {_currentTask.IsComplete}");
-            Svc.Logger.Warning("Increasing _currentSubTaskIdx++.");
-            _currentSubTaskIdx++;
-            // if completed now, abort base.
-            if (IsComplete)
-            {
-                Svc.Logger.Warning($"HcCollection: Now complete after aborting subtask. Aborting outer task: {Name} ({Location})");
-                base.Abort();
-            }
-            return;
-        }
-        // otherwise abort.
-        base.Abort();
-    }
+    // abstract vars that must be implemented.
+    public abstract int TotalTasks { get; }
+    public abstract bool Finished { get; }
+    public abstract bool? PerformTask();
+    public abstract void Begin();
+    public abstract void End();
 }
 
 public class HardcoreTask : HardcoreTaskBase
 {
     private readonly Func<bool?> _task;
-    public override List<Func<bool?>> Tasks => new() { _task };
+    public override int TotalTasks => 1;
+    public override bool Finished => CurrentTaskIdx >= 1;
     public HardcoreTask(Func<bool?> task, HcTaskConfiguration? config = null)
     {
-        _task = task;
-        Config = config ?? HcTaskConfiguration.Default;
         Name = task.GetMethodInfo().Name ?? string.Empty;
-        Location = task.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
+        Config = config ?? HcTaskConfiguration.Default;
+        _task = task;
     }
-
     public HardcoreTask(Func<bool?> task, string name, HcTaskConfiguration? config = null)
     {
-        _task = task;
-        Config = config ?? HcTaskConfiguration.Default;
         Name = name;
-        Location = task.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
+        Config = config ?? HcTaskConfiguration.Default;
+        _task = task;
     }
-
     public HardcoreTask(Func<bool> task, HcTaskConfiguration? config = null)
     {
-        _task = () => task();
-        Config = config ?? HcTaskConfiguration.Default;
         Name = task.GetMethodInfo().Name ?? string.Empty;
-        Location = task.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
+        Config = config ?? HcTaskConfiguration.Default;
+        _task = () => task();
     }
     public HardcoreTask(Func<bool> task, string name, HcTaskConfiguration? config = null)
     {
-        _task = () => task();
-        Config = config ?? HcTaskConfiguration.Default;
         Name = name;
-        Location = task.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
+        Config = config ?? HcTaskConfiguration.Default;
+        _task = () => task();
     }
-
     public HardcoreTask(Action action, HcTaskConfiguration? config = null)
     {
-        _task = () => { action(); return true; };
-        Config = config ?? HcTaskConfiguration.Default;
         Name = action.GetMethodInfo().Name ?? string.Empty;
-        Location = action.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
+        Config = config ?? HcTaskConfiguration.Default;
+        _task = () => { action(); return true; };
     }
-
     public HardcoreTask(Action action, string name, HcTaskConfiguration? config = null)
     {
-        _task = () => { action(); return true; };
-        Config = config ?? HcTaskConfiguration.Default;
         Name = name;
-        Location = action.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
+        Config = config ?? HcTaskConfiguration.Default;
+        _task = () => { action(); return true; };
+    }
+
+    // move outside HardcoreTask to an extention method when possible.
+    public override void Begin() => ResetTimeout();
+    public override bool? PerformTask()
+    {
+        //if (HasTimedOut)
+        //{
+        //    Svc.Logger.Warning($"HcGroup: Task group timed out! (Scope -> {Name})");
+        //    End();
+        //    return false;
+        //}
+
+        var res = _task();
+        if (res is true)
+        {
+            Svc.Logger.Information($"HcTask: Success! (Scope -> {Name})");
+            CurrentTaskIdx++;
+        }
+        else if (res is null)
+        {
+            Svc.Logger.Warning($"HcTask: Failed! (Scope -> {Name})");
+            End();
+        }
+        return res;
+    }
+    public override void End()
+    {
+        StartTime = 0;
+        CurrentTaskIdx = 1;
     }
 }
 
@@ -208,151 +107,328 @@ public class HardcoreTask : HardcoreTaskBase
 public class HardcoreTaskGroup : HardcoreTaskBase
 {
     private List<Func<bool?>> _tasks;
-    public override List<Func<bool?>> Tasks => _tasks;
+    public override int TotalTasks => _tasks.Count;
+    public override bool Finished => CurrentTaskIdx >= _tasks.Count;
     public HardcoreTaskGroup(IEnumerable<Func<bool?>> tasks, HcTaskConfiguration config)
     {
         _tasks = tasks.ToList();
         Config = config;
-        Name = string.Join(", ", Tasks.Select(t => t.GetMethodInfo().Name));
-        Location = Tasks.FirstOrDefault()?.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
+        Name = string.Join(", ", _tasks.Select(t => t.GetMethodInfo().Name));
     }
-
     public HardcoreTaskGroup(IEnumerable<Func<bool?>> tasks, string name, HcTaskConfiguration config)
     {
         _tasks = tasks.ToList();
         Config = config;
         Name = name;
-        Location = Tasks.FirstOrDefault()?.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
     }
-
     public HardcoreTaskGroup(IEnumerable<Func<bool>> tasks, HcTaskConfiguration config)
     {
         _tasks = tasks.Select(t => (Func<bool?>)(() => t())).ToList();
         Config = config;
-        Name = string.Join(", ", Tasks.Select(t => t.GetMethodInfo().Name));
-        Location = Tasks.FirstOrDefault()?.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
+        Name = string.Join(", ", _tasks.Select(t => t.GetMethodInfo().Name));
     }
-
     public HardcoreTaskGroup(IEnumerable<Func<bool>> tasks, string name, HcTaskConfiguration config)
     {
         _tasks = tasks.Select(t => (Func<bool?>)(() => t())).ToList();
         Config = config;
         Name = name;
-        Location = Tasks.FirstOrDefault()?.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
     }
-
     public HardcoreTaskGroup(IEnumerable<Action> actions, HcTaskConfiguration config)
     {
         _tasks = actions.Select(a => (Func<bool?>)(() => { a(); return true; })).ToList();
         Config = config;
         Name = string.Join(", ", actions.Select(a => a.GetMethodInfo().Name));
-        Location = actions.FirstOrDefault()?.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
     }
-
     public HardcoreTaskGroup(IEnumerable<Action> actions, string name, HcTaskConfiguration config)
     {
         _tasks = actions.Select(a => (Func<bool?>)(() => { a(); return true; })).ToList();
         Config = config;
         Name = name;
-        Location = actions.FirstOrDefault()?.GetMethodInfo().DeclaringType?.FullName ?? string.Empty;
+    }
+
+    public override void Begin() => ResetTimeout();
+    public override bool? PerformTask()
+    {
+        // if we are timed out, end the task scope.
+        //if (HasTimedOut)
+        //{
+        //    Svc.Logger.Warning($"HcGroup: Task group timed out! (Scope -> {Name})");
+        //    End();
+        //    return false;
+        //}
+
+        var res = _tasks[CurrentTaskIdx]();
+        if (res is true)
+        {
+            Svc.Logger.Information($"HcGroup: Success! (Scope -> {Name}) (Idx completed -> {CurrentTaskIdx})");
+            CurrentTaskIdx++;
+        }
+        else if (res is null)
+        {
+            Svc.Logger.Warning($"HcGroup: Failed! (Scope -> {Name}) (Idx failed -> {CurrentTaskIdx})");
+            End();
+        }
+        return res;
+    }
+    public override void End()
+    {
+        StartTime = 0;
+        CurrentTaskIdx = TotalTasks;
     }
 }
 
 // Branching variant, which executes one of two sets of tasks based on a predicate.
 public class BranchingHardcoreTask : HardcoreTaskBase
 {
+    // change to private when done debugging.
     public readonly Func<bool> Predicate;
-    public readonly HardcoreTaskBase TrueTask = new HardcoreTask(() => true);
-    public readonly HardcoreTaskBase FalseTask = new HardcoreTask(() => true);
+    public readonly HardcoreTaskBase TrueTask;
+    public readonly HardcoreTaskBase FalseTask;
+    private HardcoreTaskBase _activeTask;
 
-    private HardcoreTaskBase _activeTask = new HardcoreTask(() => true);
-    public override List<Func<bool?>> Tasks => _activeTask.Tasks;
-     
-    public override bool IsComplete => _activeTask.IsComplete;
+    public override int TotalTasks => _activeTask.TotalTasks;
+    public override bool Finished => CurrentTaskIdx >= TotalTasks;
+    public override bool IsRunning => Config.InnerTimouts ? _activeTask.IsRunning : base.IsRunning;
+    public override long ElapsedTime => Config.InnerTimouts ? _activeTask.ElapsedTime : base.ElapsedTime;
+    public override bool HasTimedOut => Config.InnerTimouts ? _activeTask.HasTimedOut : base.HasTimedOut;
     public BranchingHardcoreTask(Func<bool> branch, HardcoreTaskBase? trueTask, HardcoreTaskBase? falseTask, HcTaskConfiguration? config = null)
     {
-        Predicate = branch;
-        TrueTask = trueTask ?? new HardcoreTask(() => true);
-        FalseTask = falseTask ?? new HardcoreTask(() => true);
+        Name = $"Branch-{branch.GetMethodInfo().Name}";
         Config = config ?? HcTaskConfiguration.Default;
-        Name = string.Join(", ", Tasks.Select(t => t.GetMethodInfo().Name));
-        Location = string.Empty;
+        Predicate = branch;
+        TrueTask = trueTask ?? new HardcoreTask(() => { }, $"DummyAct-{Name}");
+        FalseTask = falseTask ?? new HardcoreTask(() => { }, $"DummyAct-{Name}");
+        // dummy set the task until it is assigned.
+        _activeTask = new HardcoreTask(() => { }, $"UNK_ACTIVE-{Name}");
     }
-
     public BranchingHardcoreTask(Func<bool> branch, HardcoreTaskBase? trueTask, HardcoreTaskBase? falseTask, string name, HcTaskConfiguration? config = null)
     {
-        Predicate = branch;
-        TrueTask = trueTask ?? new HardcoreTask(() => true);
-        FalseTask = falseTask ?? new HardcoreTask(() => true);
-        Config = config ?? HcTaskConfiguration.Default;
         Name = name;
-        Location = string.Empty;
+        Config = config ?? HcTaskConfiguration.Default;
+        Predicate = branch;
+        TrueTask = trueTask ?? new HardcoreTask(() => { }, $"DummyAct-{Name}");
+        FalseTask = falseTask ?? new HardcoreTask(() => { }, $"DummyAct-{Name}");
+        // dummy set the task until it is assigned.
+        _activeTask = new HardcoreTask(() => { }, $"UNK_ACTIVE-{Name}");
     }
     public override void Begin()
     {
-        if (IsComplete || IsExecuting)
+        if (IsRunning || Finished)
         {
-            Svc.Logger.Warning($"HcBranch: Beginning task {Name}.");
+            Svc.Logger.Warning($"HcBranch: Already Began! (Scope -> {Name})");
             return;
         }
 
-        // initialize
-        Svc.Logger.Information("HcBranch: Beginning task.");
-        base.Begin();
-        // set the active task.
+        Svc.Logger.Information($"HcBranch: Beginning! (Scope -> {Name})");
+        ResetTimeout();
+
         var res = Predicate();
-        Svc.Logger.Information($"HcBranch: Predicate result: {res}. Choosing " +
-            $"{(res ? "trueTask" : "falseTask")}.");
+        Svc.Logger.Information($"HcBranch: Predicate result: {res}. Assigning {(res ? "trueTask" : "falseTask")} " +
+            $"with {(res ? TrueTask.TotalTasks : FalseTask.TotalTasks)} Tasks.");
         _activeTask = (res ? TrueTask : FalseTask);
 
-        if (_activeTask.Tasks.Count is 0)
-        {
-            Svc.Logger.Warning($"HcBranch: Cannot begin, active task has no tasks! {Name}");
-            Abort();
-        }
-
-        // begin internal.
-        Svc.Logger.Information($"HcBranch: Beginning active task: {_activeTask.Name}.");
+        // regardless of how valid it is, still begin it.
         _activeTask.Begin();
+        if (_activeTask.TotalTasks is 0)
+        {
+            Svc.Logger.Warning($"HcBranch: Has no tasks, ending early! (Scope -> {Name})");
+            End();
+        }
     }
 
     public override bool? PerformTask()
     {
-        // compute the result.
-        Svc.Logger.Information($"HcBranch: Performing task at idx {_activeTask.CurrentTaskIdx} for active task ({_activeTask.Name})");
-        var res = _activeTask.PerformTask();
+        //if (HasTimedOut) // This references either the outer of inner scope based on what is defined.
+        //{
+        //    Svc.Logger.Warning($"HcBranch: Timed out! (Scope -> {Name}) (Inner Scope -> {_activeTask.Name}) [InnerTimeout? {Config.InnerTimouts}]");
+        //    End();
+        //    return false;
+        //}
 
+        // run the perform task call on the active task.
+        // Keep in mind this 'perform task' also will update its index upon success,
+        // so we want to be checking for completion afterwards if true.
+        var res = _activeTask.PerformTask();
+        // If the active task was true, and also reached it's end, then end the branching task.
         if (res is true)
         {
-            Svc.Logger.Information($"HcBranch: Active task idx {_activeTask.CurrentTaskIdx} ({_activeTask.Name}) reported success.");
-            if (_activeTask.IsComplete)
+            Svc.Logger.Information($"HcBranch: Active SubTask Success! (Scope -> {Name}) (ActiveTask Scope -> {_activeTask.Name})");
+            // if we are using innerTimeouts, we should reset the startTime.
+            if (Config.InnerTimouts)
+                _activeTask.ResetTimeout();
+
+            if (_activeTask.Finished)
             {
-                Svc.Logger.Information($"HcBranch: Active task ({_activeTask.Name}) is complete. Ending.");
-                _activeTask.End();
-                Svc.Logger.Information($"HcBranch: Ending Branching Task.");
-                End();
+                // See if active task scope completed, then the branch is also complete by proxy.
+                Svc.Logger.Information($"HcBranch: Active SubTask Completed! (Scope -> {Name}) (ActiveTask Scope -> {_activeTask.Name})");
+                CurrentTaskIdx++;
             }
-            return res;
+            return true;
+        }
+        // if returning null, we should end the active scope (which completes this branch as well).
+        else if (res is null)
+        {
+            Svc.Logger.Warning($"HcBranch: Active SubTask Failed! (Scope -> {Name}) (ActiveTask Scope -> {_activeTask.Name})");
+            _activeTask.End();
+            return null;
         }
 
-        if (res is null)
+        // otherwise it was false, so we can just return false.
+        return false;
+    }
+
+    // maybe force this to be a full end regardless? idk.
+    public override void End()
+    {
+        // check outer scope.
+        if (Finished && IsRunning)
         {
-            Svc.Logger.Warning($"HcBranch: Active task idx {_activeTask.CurrentTaskIdx} ({_activeTask.Name}) reported failure. Aborting.");
-            _activeTask.Abort();
-            Svc.Logger.Warning("HcBranch: Aborted inner task, checking completion.");
-            Svc.Logger.Warning($"HcBranch: ActiveTask IsComplete: {_activeTask.IsComplete}");
+            Svc.Logger.Information($"HcBranch: Ending Outer Task! (Scope -> {Name})");
+            StartTime = 0;
+            CurrentTaskIdx = TotalTasks;
+            return;
         }
-            Abort();
-        // return the result.
+
+        if (!_activeTask.Finished)
+        {
+            Svc.Logger.Information($"HcBranch: Ending Active SubTask! (Scope -> {Name}) (ActiveTask Scope -> {_activeTask.Name})");
+            _activeTask.End();
+            CurrentTaskIdx++;
+        }
+    }
+}
+
+// this might get a little trippy / recursive, but hey, if it works it works.
+public class HardcoreTaskCollection : HardcoreTaskBase
+{
+    // make private after debugging.
+    public readonly List<HardcoreTaskBase> StoredTasks;
+    private HardcoreTaskBase _currentTask => StoredTasks[CurrentTaskIdx];
+    public override int TotalTasks => StoredTasks.Count;
+    public override bool Finished => CurrentTaskIdx >= StoredTasks.Count;
+    public override bool IsRunning => Config.InnerTimouts ? _currentTask.IsRunning : base.IsRunning;
+    public override long ElapsedTime => Config.InnerTimouts ? _currentTask.ElapsedTime : base.ElapsedTime;
+    public override bool HasTimedOut => Config.InnerTimouts ? _currentTask.HasTimedOut : base.HasTimedOut;
+    public HardcoreTaskCollection(IEnumerable<HardcoreTaskBase> tasks, HcTaskConfiguration config)
+    {
+        Name = tasks.FirstOrDefault()?.Name ?? string.Empty;
+        Config = config;
+        StoredTasks = tasks.ToList();
+    }
+    public HardcoreTaskCollection(IEnumerable<HardcoreTaskBase> tasks, string name, HcTaskConfiguration config)
+    {
+        Name = name;
+        Config = config;
+        StoredTasks = tasks.ToList();
+    }
+
+    public override void Begin()
+    {
+        if (IsRunning || Finished)
+        {
+            Svc.Logger.Warning($"HcCollection: Already Began! (Scope -> {Name})");
+            return;
+        }
+
+        // If the collection has 0 tasks, end immediately.
+        if (StoredTasks.Count is 0)
+        {
+            Svc.Logger.Warning($"HcCollection: No tasks to begin! Ending immediately. (Scope -> {Name})");
+            End();
+            return;
+        }
+
+        // Begin.
+        Svc.Logger.Information($"HcCollection: Beginning! (Scope -> {Name})");
+        StartTime = Environment.TickCount64;
+
+        // Begin inner at first index.
+        _currentTask.Begin();
+        // MIGHT have an issue where something with only a single task ends and doesnt start the next one immidiately.
+    }
+
+    public override bool? PerformTask()
+    {
+        // if the task has timed out, then we should end the CURRENT SCOPED TASK.
+        //if (HasTimedOut)
+        //{
+        //    Svc.Logger.Warning($"HcCollection: Timed out! (Scope -> {Name}) (Inner Scope -> {_currentTask.Name}) [InnerTimeout? {Config.InnerTimouts}]");
+        //    if (Config.InnerTimouts)
+        //    {
+        //        // end inner scope.
+        //        Svc.Logger.Warning($"InnerScope Timeouts were used, so beginning next task in collection. (Scope -> {Name}) (Inner Scope -> {_currentTask.Name})");
+        //        _currentTask.End();
+        //        CurrentTaskIdx++;
+        //        if (!Finished)
+        //            _currentTask.Begin();
+        //        return false;
+        //    }
+        //    // end current scope.
+        //    End();
+        //    return false;
+        //}
+
+        var res = _currentTask.PerformTask();
+        // If the active task was true, and also reached it's end, then end the branching task.
+        if (res is true)
+        {
+            Svc.Logger.Information($"HcCollection: Active SubTask Success! (Scope -> {Name}) (ActiveTask Scope -> {_currentTask.Name})");
+            // if we are using inner timeouts, we should reset it.
+            if (Config.InnerTimouts)
+                _currentTask.ResetTimeout();
+
+            if (_currentTask.Finished)
+            {
+                // See if active task scope completed, then the branch is also complete by proxy.
+                Svc.Logger.Information($"HcCollection: Active SubTask Completed! (Scope -> {Name}) (ActiveTask Scope -> {_currentTask.Name})");
+                CurrentTaskIdx++;
+                ResetTimeout();
+                // begin the next task if there is one.
+                if (!Finished)
+                    _currentTask.Begin();
+            }
+        }
+        // if returning null, we should end the active scope (which completes this branch as well).
+        else if (res is null)
+        {
+            Svc.Logger.Warning($"HcCollection: Active SubTask Failed! (Scope -> {Name}) (ActiveTask Scope -> {_currentTask.Name})");
+            // calls the inner scope end.
+            _currentTask.End();
+            // if after this is called it is marked as finished, we should move the index forward, but only if it is.
+            if (_currentTask.Finished)
+            {
+                CurrentTaskIdx++;
+                ResetTimeout();
+                // begin the next task if there is one.
+                if (!Finished)
+                    _currentTask.Begin();
+            }
+        }
         return res;
     }
 
-    public override void Abort()
+    // maybe force this to be a full end regardless? idk.
+    public override void End()
     {
-        // abort the current internal task and move onto the next. If completed, mark it.
-        if (!IsComplete)
-            _activeTask.Abort();
-        base.Abort();
+        // if the current collection scope is finished and still running, end that.
+        if (Finished && IsRunning)
+        {
+            Svc.Logger.Information($"HcCollection: Ending Outer Task! (Scope -> {Name})");
+            StartTime = 0;
+            CurrentTaskIdx = TotalTasks;
+            return;
+        }
+        // if the current task is not yet finished, finish it instead of the whole collection.
+        if (!_currentTask.Finished)
+        {
+            Svc.Logger.Information($"HcCollection: Ending Current SubTask! (Scope -> {Name}) (CurrentTask Scope -> {_currentTask.Name})");
+            _currentTask.End();
+            CurrentTaskIdx++;
+            ResetTimeout();
+            // begin the next task if there is one.
+            if (!Finished)
+                _currentTask.Begin();
+        }
     }
 }
 

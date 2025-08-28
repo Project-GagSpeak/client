@@ -120,7 +120,7 @@ public class PlayerCtrlHandler
             throw new Exception($"Failed to get Kinkster for UID: {enactor.UID} for Locked Emote!");
 
         _logger.LogInformation($"[{enactor.AliasOrUID}] Enabled your LockedFollowing state!", LoggerType.HardcoreMovement);
-        _hcTasks.CreateCollection("Perform LockedEmote", new(HcTaskControl.BlockAllKeys))
+        _hcTasks.CreateCollection("Perform LockedEmote", new(HcTaskControl.BlockAllKeys | HcTaskControl.InRequiredTurnTask))
             .Add(new HardcoreTask(HcCommonTaskFuncs.WaitForPlayerLoading))
             .Add(_hcTasks.CreateBranch(() => (kinkster.VisiblePairGameObject != null && kinkster.VisiblePairGameObject.IsTargetable), "TargetIfVisible")
                 .SetTrueTask(new HardcoreTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.VisiblePairGameObject!)))
@@ -138,7 +138,7 @@ public class PlayerCtrlHandler
             throw new Exception($"Failed to get Kinkster for UID: {enactor.UID} for Locked Emote Update!");
 
         _logger.LogInformation($"[{kinkster.GetNickAliasOrUid()}] Updated your LockedFollowing state!", LoggerType.HardcoreMovement);
-        _hcTasks.CreateCollection("ForcePerformInitialEmote", new(HcTaskControl.BlockAllKeys))
+        _hcTasks.CreateCollection("ForcePerformInitialEmote", new(HcTaskControl.BlockAllKeys | HcTaskControl.InRequiredTurnTask))
             .Add(new HardcoreTask(HcCommonTaskFuncs.WaitForPlayerLoading))
             .Add(_hcTasks.CreateBranch(() => (kinkster.VisiblePairGameObject != null && kinkster.VisiblePairGameObject.IsTargetable), "TargetIfVisible")
                 .SetTrueTask(new HardcoreTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.VisiblePairGameObject!)))

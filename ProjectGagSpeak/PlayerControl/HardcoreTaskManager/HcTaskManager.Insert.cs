@@ -28,7 +28,7 @@ public partial class HcTaskManager
         if (task is null)
             return;
         
-        _logger.LogInformation($"Inserted Hardcore Task: {task.Name} ({task.Location})");
+        _logger.LogInformation($"Inserted Hardcore Task: {task.Name}");
         _taskOperations.Insert(0, task);
     }
 }

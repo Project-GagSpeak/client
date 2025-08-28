@@ -85,11 +85,11 @@ public sealed class PlayerControlCache
         || ClientData.Hardcore.IsEnabled(HcAttribute.EmoteState)
         || _activeTaskControl.HasAny(HcTaskControl.BlockMovementKeys)
         || _traits.FinalTraits.HasAny(Traits.Immobile);
-    
+
     // if the player should be entirely in lock.
     public bool FreezePlayer
-        => ClientData.Hardcore.IsEnabled(HcAttribute.EmoteState)
-        || _activeTaskControl.HasAny(HcTaskControl.FreezePlayer);
+        => (ClientData.Hardcore.IsEnabled(HcAttribute.EmoteState) || _activeTaskControl.HasAny(HcTaskControl.FreezePlayer))
+        && !_activeTaskControl.HasAny(HcTaskControl.InRequiredTurnTask);
 
     public bool BlockAutoMove
         => ClientData.Hardcore.IsEnabled(HcAttribute.Follow)

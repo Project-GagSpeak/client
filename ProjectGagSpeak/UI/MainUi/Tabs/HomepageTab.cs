@@ -3,6 +3,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using GagSpeak.Gui.Modules.Puppeteer;
 using GagSpeak.Gui.Publications;
 using GagSpeak.Gui.Remote;
@@ -82,6 +83,11 @@ public class HomepageTab
 
         if (ImGui.Button("Process Single Step Task"))
             _temp.DoTaskBreakpoint();
+
+        unsafe
+        {
+            ImGui.Text($"{HousingManager.Instance()->IsOutside()}");
+        }
     }
 
     private bool HomepageSelectable(string label, FontAwesomeIcon icon, Vector2 region, bool hovered = false)

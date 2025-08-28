@@ -31,7 +31,7 @@ public partial class HcTaskManager : IDisposable
     /// <summary> 
     ///     The list of hardcore task operations managed by the HcTaskManager.
     /// </summary>
-    private List<HardcoreTaskBase> _taskOperations = new List<HardcoreTaskBase>();
+    private static List<HardcoreTaskBase> _taskOperations = new List<HardcoreTaskBase>();
 
     public HcTaskManager(ILogger<HcTaskManager> logger, PlayerControlCache cache)
     {
@@ -43,38 +43,16 @@ public partial class HcTaskManager : IDisposable
     }
 
     /// <summary> # of tasks observed by the HcTaskManager. </summary>
-    public int ObservedTasks {get; private set; } = 0;
+    public static int ObservedTasks {get; private set; } = 0;
 
     /// <summary> The total number of currently queued Tasks. </summary>
-    public int QueuedTasks => _taskOperations.Count;
-
-    /// <summary> Current progress made out of the total tasks enqueued. </summary>
-    public float ManagerProgress => ObservedTasks is 0 ? 0 : (float)(ObservedTasks - QueuedTasks) / (float)ObservedTasks;
-
-    // gets the current progress of the list of tasks performed in a operation group.
-    public float OperationProgress => QueuedTasks is 0 ? 0 : (float)_taskOperations[0].CurrentTaskIdx / (float)_taskOperations[0].Tasks.Count;
+    public static int QueuedTasks => _taskOperations.Count;
 
     /// <summary> If the Hardcore Task Manager is currently busy performing tasks. </summary>
-    public bool IsBusy => QueuedTasks > 0; 
-
-    /// <summary> The time the current task is starting. </summary>
-    public static long StartTime = 0;
-
-    /// <summary> How much longer the task has to execute. </summary>
-    public long RemainingTime
-    {
-        get => AbortTime - Environment.TickCount64;
-        set => AbortTime = Environment.TickCount64 + value;
-    }
-
-    public static long ElapsedTime => Environment.TickCount64 - StartTime;
-
-    /// <summary> The time in milliseconds when the Task Manager should abort. </summary>
-    public long AbortTime = 0;
-
+    public static bool IsBusy => QueuedTasks > 0;
+    public static long ElapsedTime => IsBusy ? _taskOperations[0].ElapsedTime : 0;
     public void Dispose()
     {
-        // dispose of this hardcore task manager singleton.
         _cache.SetActiveTaskControl(HcTaskControl.None);
         // Svc.Framework.Update -= OnFramework;
         _logger.LogInformation("Hardcore Task Manager Disposed.");
@@ -89,7 +67,6 @@ public partial class HcTaskManager : IDisposable
         if (taskName.Equals(_taskOperations[0].Name, StringComparison.OrdinalIgnoreCase))
             AbortCurrentTask();
     }
-
     public void RemoveIfPresent(string taskName)
     {
         if (_taskOperations.Count is 0)
@@ -105,9 +82,6 @@ public partial class HcTaskManager : IDisposable
     public void AbortTasks()
     {
         _taskOperations.Clear();
-        AbortTime = 0;
-        StartTime = 0;
-        // set regardless.
         _cache.SetActiveTaskControl(HcTaskControl.None);
     }
 
@@ -115,13 +89,10 @@ public partial class HcTaskManager : IDisposable
     {
         if (_taskOperations.Count > 0)
         {
-            _logger.LogDebug($"Aborting Task: {_taskOperations[0].Name} ({_taskOperations[0].Location})", LoggerType.HardcoreTasks);
+            _logger.LogDebug($"Aborting Task: {_taskOperations[0].Name}", LoggerType.HardcoreTasks);
             _taskOperations[0].End();
             _taskOperations.RemoveAt(0);
-            AbortTime = 0;
-            StartTime = 0;
         }
-        // set regardless.
         _cache.SetActiveTaskControl(HcTaskControl.None);
     }
 
@@ -135,16 +106,13 @@ public partial class HcTaskManager : IDisposable
     private void ProcessTask()
     {
         // Handle the condition in where there are no tasks currently being processed.
-        if (_taskOperations.Count == 0)
+        if (_taskOperations.Count is 0)
             return;
-
         // if the task is complete before executing, it was aborted, so end and remove the item from the list.
-        if (_taskOperations[0].IsComplete)
+        if (_taskOperations[0].Finished)
         {
-            _taskOperations[0].End();
+            _logger.LogInformation($"HardcoreTask OuterScope Finished Early! (Scope -> {_taskOperations[0].Name})", LoggerType.HardcoreTasks);
             _cache.SetActiveTaskControl(HcTaskControl.None);
-            AbortTime = 0;
-            StartTime = 0;
             _taskOperations.RemoveAt(0);
             // return early if there are no more tasks to process.
             if (_taskOperations.Count is 0)
@@ -155,12 +123,11 @@ public partial class HcTaskManager : IDisposable
         var currentHcTask = _taskOperations[0];
 
         // if the current task has not yet begin, we should begin it.
-        if (!currentHcTask.IsExecuting)
+        if (!currentHcTask.IsRunning)
         {
             currentHcTask.Begin();
-            _cache.SetActiveTaskControl(currentHcTask.Config.ControlFlags);
-            StartTime = Environment.TickCount64;
-            AbortTime = 0;
+            Svc.Logger.Warning($"Setting HCFlags to: {currentHcTask.Config.Flags}");
+            _cache.SetActiveTaskControl(currentHcTask.Config.Flags);
             ObservedTasks = QueuedTasks;
         }
 
@@ -169,52 +136,22 @@ public partial class HcTaskManager : IDisposable
 
         try
         {
-            // if the abort time is 0, set the remaining time and log it's beginning.
-            if (AbortTime is 0)
-            {
-                RemainingTime = config.MaxTaskTime;
-                _logger.LogTrace($"HcTask Begin: [{currentHcTask.CurrentTaskIdx}] ({currentHcTask.Name}), with timeout of {RemainingTime}", LoggerType.HardcoreTasks);
-            }
-            // if it timed out, handle that.
-            if (RemainingTime < 0)
-            {
-                _logger.LogDebug($"HcTask Timeout: [{currentHcTask.CurrentTaskIdx}] ({currentHcTask.Name})", LoggerType.HardcoreTasks);
-                throw new BagagwaTimeout();
-            }
+            // Timeouts are handled internally now!
 
             // process the task, and return the result.
             var taskRes = currentHcTask.PerformTask();
-            // handle the task result.
-            if (taskRes is true)
-            {
-                Svc.Logger.Information($"HcTask [{currentHcTask.CurrentTaskIdx}] Success: ({currentHcTask.Name})");
-                AbortTime = 0;
-            }
-            else if (taskRes is null)
-            {
-                _logger.LogTrace($"Abort Request: HcTask [{currentHcTask.CurrentTaskIdx}] ({currentHcTask.Name})", LoggerType.HardcoreTasks);
-                throw new Bagagwa("Task requested abort.");
-            }
-
             // At this point, it is possible for the hardcore task to be complete, if it is, we should end.
-            if (currentHcTask.IsComplete)
+            if (currentHcTask.Finished)
             {
                 // end the task, log its completion, and remove the hcTaskControl.
-                _logger.LogInformation($"HcTask Complete: [{currentHcTask.CurrentTaskIdx} ({currentHcTask.Name})", LoggerType.HardcoreTasks);
+                _logger.LogInformation($"HardcoreTask OuterScope Finished! (Scope -> {currentHcTask.Name})", LoggerType.HardcoreTasks);
                 currentHcTask.End();
                 _cache.SetActiveTaskControl(HcTaskControl.None);
             }
-
-        }
-        // handle cases where we summoned Bagagwa via timeouts or other standard Bagagwa summoning practices.
-        catch (BagagwaTimeout)
-        {
-            _logger.LogWarning($"Timeout: [{currentHcTask.CurrentTaskIdx}] from ({currentHcTask.Name})", LoggerType.HardcoreTasks);
-            AbortCurrentTask();
         }
         catch (Bagagwa ex)
         {
-            _logger.LogError($"HcTask Error: {currentHcTask.Name} ({currentHcTask.Location}), Exception: {ex}", LoggerType.HardcoreTasks);
+            _logger.LogError($"HardcoreTask Error: {currentHcTask.Name}, Exception: {ex}");
             AbortCurrentTask();
         }
         // return early to not update the observed tasks count.
@@ -284,24 +221,25 @@ public partial class HcTaskManager : IDisposable
         using var _ = ImRaii.TreeNode($"{collection.Name}##collectionTask-{collection.Name}");
         if (!_) return;
 
-        using (var t = ImRaii.Table("Collection-" + collection.Name, 7, ImGuiTableFlags.Borders | ImGuiTableFlags.SizingFixedFit))
+        using (var t = ImRaii.Table("Collection-" + collection.Name, 7, ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.SizingFixedFit))
         {
             if (!t) return;
             ImGui.TableSetupColumn("Collection");
             ImGui.TableSetupColumn("Executing");
             ImGui.TableSetupColumn("Current Idx");
-            ImGui.TableSetupColumn("Completed");
             ImGui.TableSetupColumn("Total Tasks");
+            ImGui.TableSetupColumn("Completed");
             ImGui.TableSetupColumn("Timeout");
             ImGui.TableSetupColumn("Flags");
+            ImGui.TableHeadersRow();
 
             ImGuiUtil.DrawFrameColumn(collection.Name);
-            ImGuiUtil.DrawFrameColumn(collection.IsExecuting.ToString());
+            ImGuiUtil.DrawFrameColumn(collection.IsRunning.ToString());
             ImGuiUtil.DrawFrameColumn(collection.CurrentTaskIdx.ToString());
-            ImGuiUtil.DrawFrameColumn(collection.IsComplete.ToString());
-            ImGuiUtil.DrawFrameColumn(collection.Tasks.Count.ToString());
-            ImGuiUtil.DrawFrameColumn(collection.Config.MaxTaskTime.ToString());
-            ImGuiUtil.DrawFrameColumn(collection.Config.ControlFlags.ToString());
+            ImGuiUtil.DrawFrameColumn(collection.TotalTasks.ToString());
+            ImGuiUtil.DrawFrameColumn(collection.Finished.ToString());
+            ImGuiUtil.DrawFrameColumn(collection.Config.TimeoutAt.ToString());
+            ImGuiUtil.DrawFrameColumn(collection.Config.Flags.ToString());
         }
         using (ImRaii.Group())
         {
@@ -316,26 +254,27 @@ public partial class HcTaskManager : IDisposable
         using var _ = ImRaii.TreeNode($"{branch.Name}##branchTask-{branch.Name}");
         if (!_) return;
 
-        using (var t = ImRaii.Table("Branch-" + branch.Name, 8, ImGuiTableFlags.Borders | ImGuiTableFlags.SizingFixedFit))
+        using (var t = ImRaii.Table("Branch-" + branch.Name, 8, ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.SizingFixedFit))
         {
             if (!t) return;
             ImGui.TableSetupColumn("Branch Name");
-            ImGui.TableSetupColumn("Executing");
             ImGui.TableSetupColumn("Predicate");
-            ImGui.TableSetupColumn("Completed");
+            ImGui.TableSetupColumn("Executing");
             ImGui.TableSetupColumn("Current Idx");
             ImGui.TableSetupColumn("Total Tasks");
+            ImGui.TableSetupColumn("Completed");
             ImGui.TableSetupColumn("Timeout");
             ImGui.TableSetupColumn("Flags");
+            ImGui.TableHeadersRow();
 
             ImGuiUtil.DrawFrameColumn(branch.Name);
-            ImGuiUtil.DrawFrameColumn(branch.IsExecuting.ToString());
             ImGuiUtil.DrawFrameColumn((branch.Predicate()).ToString());
-            ImGuiUtil.DrawFrameColumn(branch.IsComplete.ToString());
+            ImGuiUtil.DrawFrameColumn(branch.IsRunning.ToString());
             ImGuiUtil.DrawFrameColumn(branch.CurrentTaskIdx.ToString());
-            ImGuiUtil.DrawFrameColumn(branch.Tasks.Count.ToString());
-            ImGuiUtil.DrawFrameColumn(branch.Config.MaxTaskTime.ToString());
-            ImGuiUtil.DrawFrameColumn(branch.Config.ControlFlags.ToString());
+            ImGuiUtil.DrawFrameColumn(branch.TotalTasks.ToString());
+            ImGuiUtil.DrawFrameColumn(branch.Finished.ToString());
+            ImGuiUtil.DrawFrameColumn(branch.Config.TimeoutAt.ToString());
+            ImGuiUtil.DrawFrameColumn(branch.Config.Flags.ToString());
         }
         using (ImRaii.Group())
         {
@@ -357,22 +296,25 @@ public partial class HcTaskManager : IDisposable
         using var _ = ImRaii.TreeNode($"{group.Name}##groupTask-{group.Name}");
         if (!_) return;
 
-        using (var t = ImRaii.Table("Group-" + group.Name, 6, ImGuiTableFlags.Borders | ImGuiTableFlags.SizingFixedFit))
+        using (var t = ImRaii.Table("Group-" + group.Name, 7, ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.SizingFixedFit))
         {
             if (!t) return;
             ImGui.TableSetupColumn("Name");
             ImGui.TableSetupColumn("Executing");
             ImGui.TableSetupColumn("Current Idx");
+            ImGui.TableSetupColumn("Total Tasks");
             ImGui.TableSetupColumn("Completed");
             ImGui.TableSetupColumn("Timeout");
             ImGui.TableSetupColumn("Flags");
+            ImGui.TableHeadersRow();
 
             ImGuiUtil.DrawFrameColumn(group.Name);
-            ImGuiUtil.DrawFrameColumn(group.IsExecuting.ToString());
+            ImGuiUtil.DrawFrameColumn(group.IsRunning.ToString());
             ImGuiUtil.DrawFrameColumn(group.CurrentTaskIdx.ToString());
-            ImGuiUtil.DrawFrameColumn(group.IsComplete.ToString());
-            ImGuiUtil.DrawFrameColumn(group.Config.MaxTaskTime.ToString());
-            ImGuiUtil.DrawFrameColumn(group.Config.ControlFlags.ToString());
+            ImGuiUtil.DrawFrameColumn(group.TotalTasks.ToString());
+            ImGuiUtil.DrawFrameColumn(group.Finished.ToString());
+            ImGuiUtil.DrawFrameColumn(group.Config.TimeoutAt.ToString());
+            ImGuiUtil.DrawFrameColumn(group.Config.Flags.ToString());
         }
     }
 
@@ -381,22 +323,25 @@ public partial class HcTaskManager : IDisposable
         using var _ = ImRaii.TreeNode($"{task.Name}##singleTask-{task.Name}");
         if (!_) return;
 
-        using (var t = ImRaii.Table("Task-" + task.Name, 6, ImGuiTableFlags.Borders | ImGuiTableFlags.SizingFixedFit))
+        using (var t = ImRaii.Table("Task-" + task.Name, 7, ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.SizingFixedFit))
         {
             if (!t) return;
             ImGui.TableSetupColumn("Name");
             ImGui.TableSetupColumn("Executing");
             ImGui.TableSetupColumn("Current Idx");
+            ImGui.TableSetupColumn("Total Tasks");
             ImGui.TableSetupColumn("Completed");
             ImGui.TableSetupColumn("Timeout");
             ImGui.TableSetupColumn("Flags");
+            ImGui.TableHeadersRow();
 
             ImGuiUtil.DrawFrameColumn(task.Name);
-            ImGuiUtil.DrawFrameColumn(task.IsExecuting.ToString());
+            ImGuiUtil.DrawFrameColumn(task.IsRunning.ToString());
             ImGuiUtil.DrawFrameColumn(task.CurrentTaskIdx.ToString());
-            ImGuiUtil.DrawFrameColumn(task.IsComplete.ToString());
-            ImGuiUtil.DrawFrameColumn(task.Config.MaxTaskTime.ToString());
-            ImGuiUtil.DrawFrameColumn(task.Config.ControlFlags.ToString());
+            ImGuiUtil.DrawFrameColumn(task.TotalTasks.ToString());
+            ImGuiUtil.DrawFrameColumn(task.Finished.ToString());
+            ImGuiUtil.DrawFrameColumn(task.Config.TimeoutAt.ToString());
+            ImGuiUtil.DrawFrameColumn(task.Config.Flags.ToString());
         }
     }
 }

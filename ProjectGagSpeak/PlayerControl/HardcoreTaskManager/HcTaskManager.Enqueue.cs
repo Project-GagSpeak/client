@@ -25,7 +25,7 @@ public partial class HcTaskManager
         if (task is null)
             return;
         
-        _logger.LogDebug($"Enqueued Hardcore Task: {task.Name} ({task.Location})", LoggerType.HardcoreTasks);
+        _logger.LogDebug($"Enqueued Hardcore Task: {task.Name}", LoggerType.HardcoreTasks);
         _taskOperations.Add(task);
     }
 }

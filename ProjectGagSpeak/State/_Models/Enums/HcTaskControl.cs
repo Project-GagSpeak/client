@@ -25,4 +25,6 @@ public enum HcTaskControl
     DoConfinementPrompts = 1 << 10, // enforces scripted prompt answers for confinement blocking.
 
     InLifestreamTask = 1 << 11, // if processing a lifestream task, other paramaters are temporarily altared.
+
+    InRequiredTurnTask = 1 << 12,
 }

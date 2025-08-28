@@ -60,7 +60,10 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         // *(note that we don't update the pointer value because other plugins like cammy change this,
         // * so we must update it every frame)
         if (_cache.FreezePlayer && !_freezePlayer)
+        {
+            Svc.Logger.Warning("Freeze Player was true!");
             _freezePlayer = true;
+        }
         // If the player should not be immobilized, but the local value does match, update it!
         else if (!_cache.FreezePlayer && _freezePlayer)
         {

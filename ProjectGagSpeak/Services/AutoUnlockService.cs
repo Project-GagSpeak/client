@@ -122,19 +122,21 @@ public sealed class AutoUnlockService : BackgroundService
         if (!MainHub.IsConnected)
             return;
 
-        // Don't rely on IsDead.
-        var isDead = PlayerData.HealthInstanced is 0;
-        if (isDead && !_clientWasDead)
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.ClientSlain);
-        // update death state.
-        _clientWasDead = isDead;
-        // Detect chocobo race victory.
-        if (PlayerContent.TerritoryID is 144 && PlayerData.IsChocoboRacing)
+        Svc.Framework.RunOnFrameworkThread(() =>
         {
-            var resultMenu = (AtkUnitBase*)Svc.GameGui.GetAddonByName("RaceChocoboResult").Address;
-            if (resultMenu != null && resultMenu->RootNode->IsVisible())
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.ChocoboRaceFinished);
-        }
+            var isDead = PlayerData.Health is 0;
+            if (isDead && !_clientWasDead)
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.ClientSlain);
+            // update death state.
+            _clientWasDead = isDead;
+            // Detect chocobo race victory.
+            if (PlayerContent.TerritoryID is 144 && PlayerData.IsChocoboRacing)
+            {
+                var resultMenu = (AtkUnitBase*)Svc.GameGui.GetAddonByName("RaceChocoboResult").Address;
+                if (resultMenu != null && resultMenu->RootNode->IsVisible())
+                    GagspeakEventManager.AchievementEvent(UnlocksEvent.ChocoboRaceFinished);
+            }
+        });
     }
 
     private void OnQuarterMinute()
