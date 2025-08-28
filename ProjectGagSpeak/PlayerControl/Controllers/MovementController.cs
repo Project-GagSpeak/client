@@ -1,4 +1,5 @@
 using CkCommons;
+using Dalamud.Game.ClientState.Objects;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using GagSpeak.GameInternals.Detours;
 using GagSpeak.Services.Mediator;
@@ -95,21 +96,26 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         }
 
         // we need to do the following because other plugins can share this pointer control (Cammy)
-
-        // Ensure full movement lock if we should.
         if (_freezePlayer && !_detours.ForceDisableMovementIsActive)
             _detours.EnableFullMovementLock();
 
+        var isWalking = IsWalking();
+
+        // If we are following someone and too far away we should catch up to them.
+        if (_timeoutTracker.IsRunning && PlayerData.DistanceTo(Svc.Targets.Target) > 11f)
+        {
+            if (isWalking && NodeThrottler.Throttle("MoveController.RunToggle", 500))
+                ForceRunning();
+            return;
+        }
+
         // Enforce walking if running is banned.
-        if (_moveState.MustWalk && !IsWalking())
+        if (_moveState.MustWalk && !isWalking)
             ForceWalking();
     }
 
     public void RestartTimeoutTracker()
-    {
-        Logger.LogTrace("Restarting timeout tracker for forced-follow behavior.", LoggerType.HardcoreMovement);
-        _timeoutTracker.Restart();
-    }
+        => _timeoutTracker.Restart();
 
     public void ResetTimeoutTracker()
     {
@@ -119,7 +125,7 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
 
     // Direct marshal byte manipulation for walking state
     // (because the control access wont read you the right values apparently?)
-    private unsafe bool IsWalkingMarshal() => Marshal.ReadByte((nint)Control.Instance(), 30259) == 0x1;
+    // private unsafe bool IsWalkingMarshal() => Marshal.ReadByte((nint)Control.Instance(), 30259) == 0x1;
     private unsafe bool IsWalking() => Control.Instance()->IsWalking;
     private unsafe void ForceWalking() => Marshal.WriteByte((nint)Control.Instance(), 30259, 0x1);
     private unsafe void ForceRunning() => Marshal.WriteByte((nint)Control.Instance(), 30259, 0x0);

@@ -11,6 +11,7 @@ using GagSpeak.State.Handlers;
 using System.Runtime.InteropServices;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Caches;
+using CkCommons;
 
 // We can seperate these into their own classes down the line
 // if possible and have an overall manager. Once it needs more control.
@@ -53,18 +54,14 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
         Svc.Hook.InitializeFromAttributes(this);
 
         ActionEffectHook = Svc.Hook.HookFromAddress<ProcessActionEffect>(Svc.SigScanner.ScanText(Signatures.ReceiveActionEffect), ActionEffectDetour);
-
         OnExecuteEmoteHook = Svc.Hook.HookFromAddress<AgentEmote.Delegates.ExecuteEmote>((nint)AgentEmote.MemberFunctionPointers.ExecuteEmote, OnExecuteEmote);
         ProcessEmoteHook = Svc.Hook.HookFromSignature<OnEmoteFuncDelegate>(Signatures.OnEmote, ProcessEmoteDetour);
-        
         UseActionHook = Svc.Hook.HookFromAddress<ActionManager.Delegates.UseAction>((nint)ActionManager.MemberFunctionPointers.UseAction, UseActionDetour);
-        
         FireCallbackFunc = Marshal.GetDelegateForFunctionPointer<AtkUnitBase_FireCallbackDelegate>(Svc.SigScanner.ScanText(Signatures.Callback));
-
         ItemInteractedHook = Svc.Hook.HookFromAddress<TargetSystem.Delegates.InteractWithObject>((nint)TargetSystem.MemberFunctionPointers.InteractWithObject, ItemInteractedDetour);
-
         GearsetInternalHook = Svc.Hook.HookFromAddress<RaptureGearsetModule.Delegates.EquipGearsetInternal>((nint)RaptureGearsetModule.MemberFunctionPointers.EquipGearsetInternal, GearsetInternalDetour);
-
+        SetHardTargetHook = Svc.Hook.HookFromAddress<TargetSystem.Delegates.SetHardTarget>((nint)TargetSystem.MemberFunctionPointers.SetHardTarget, SetHardTargetDetour);
+        
         EnableHooks();
     }
 
@@ -90,20 +87,15 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
     {
         Logger.LogInformation("Enabling all StaticDetours and their hooks.");
 
-        ActionEffectHook?.Enable();
-
-        ProcessEmoteHook?.Enable();
-        OnExecuteEmoteHook?.Enable();
-        
-        UseActionHook?.Enable();
-                
-        ItemInteractedHook?.Enable();
-        
-        ProcessChatInputHook?.Enable();
-
-        ApplyGlamourPlateHook?.Enable();
-
-        GearsetInternalHook?.Enable();
+        ActionEffectHook.SafeEnable();
+        ProcessEmoteHook.SafeEnable();
+        OnExecuteEmoteHook.SafeEnable();
+        UseActionHook.SafeEnable();
+        ItemInteractedHook.SafeEnable();
+        ProcessChatInputHook.SafeEnable();
+        ApplyGlamourPlateHook.SafeEnable();
+        GearsetInternalHook.SafeEnable();
+        SetHardTargetHook.SafeEnable();
 
         Logger.LogInformation("Enabled all StaticDetours and their hooks.");
     }
@@ -114,35 +106,19 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
 
         Logger.LogInformation("Disabling all StaticDetours and their hooks.");
 
-        ActionEffectHook?.Disable();
-        ActionEffectHook?.Dispose();
-
-        ProcessEmoteHook?.Disable();
-        ProcessEmoteHook?.Dispose();
-        OnExecuteEmoteHook?.Disable();
-        OnExecuteEmoteHook?.Dispose();
-        
-        UseActionHook?.Disable();
-        UseActionHook?.Dispose();
-                
-        ItemInteractedHook?.Disable();
-        ItemInteractedHook?.Dispose();
-        
-        ProcessChatInputHook?.Disable();
-        ProcessChatInputHook?.Dispose();
-
-        ApplyGlamourPlateHook?.Disable();
-        ApplyGlamourPlateHook?.Dispose();
-
-
-        GearsetInternalHook?.Disable();
-        GearsetInternalHook?.Dispose();
+        ActionEffectHook.SafeDispose();
+        ProcessEmoteHook.SafeDispose();
+        OnExecuteEmoteHook.SafeDispose();
+        UseActionHook.SafeDispose();
+        ItemInteractedHook.SafeDispose();
+        ProcessChatInputHook.SafeDispose();
+        ApplyGlamourPlateHook.SafeDispose();
+        GearsetInternalHook.SafeDispose();
+        SetHardTargetHook.SafeDispose();
 
         // Only dispose if enabled.
         if (FireCallbackHook?.IsEnabled ?? false)
-        {
             FireCallbackHook?.Disable();
-        }
 
         FireCallbackHook?.Dispose();
 
