@@ -27,4 +27,7 @@ public enum HcTaskControl
     InLifestreamTask = 1 << 11, // if processing a lifestream task, other paramaters are temporarily altared.
 
     InRequiredTurnTask = 1 << 12,
+
+    NoActions = 1 << 13, // blocks all action usage.
+    NoTeleport = 1 << 14, // blocks all teleportation actions.
 }

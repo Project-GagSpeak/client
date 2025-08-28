@@ -1,6 +1,5 @@
 using CkCommons;
 using CkCommons.Gui;
-using CkCommons.Raii;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
@@ -8,9 +7,6 @@ using Dalamud.Plugin.Services;
 using GagSpeak.State;
 using GagSpeak.State.Caches;
 using OtterGui;
-using OtterGui.Text;
-using Penumbra.GameData.Files.ShaderStructs;
-using System.Reflection;
 
 namespace GagSpeak.PlayerControl;
 

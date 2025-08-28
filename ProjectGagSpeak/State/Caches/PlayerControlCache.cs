@@ -39,9 +39,19 @@ public sealed class PlayerControlCache
 
     // Accessors that retrieve under what conditions the respective hardcore attributes should be enabled with.
     public bool BlockActions
-        => ClientData.Hardcore.IsEnabled(HcAttribute.Confinement)
+        => ClientData.Hardcore.IsEnabled(HcAttribute.Follow)
+        || ClientData.Hardcore.IsEnabled(HcAttribute.EmoteState)
         || ClientData.Hardcore.IsEnabled(HcAttribute.Imprisonment)
-        || _traits.FinalTraits.HasAny(Traits.Immobile);
+        || _traits.FinalTraits.HasAny(Traits.Immobile)
+        || _activeTaskControl.HasAny(HcTaskControl.NoActions);
+
+    public bool BlockTeleportActions
+        => ClientData.Hardcore.IsEnabled(HcAttribute.Follow)
+        || ClientData.Hardcore.IsEnabled(HcAttribute.EmoteState)
+        || ClientData.Hardcore.IsEnabled(HcAttribute.Confinement)
+        || ClientData.Hardcore.IsEnabled(HcAttribute.Imprisonment)
+        || _traits.FinalTraits.HasAny(Traits.Immobile)
+        || _activeTaskControl.HasAny(HcTaskControl.NoTeleport);
 
     public bool BlockChatInput
         => ClientData.Hardcore.IsEnabled(HcAttribute.BlockedChatInput) 
@@ -61,7 +71,7 @@ public sealed class PlayerControlCache
 
     // dont want to enforce this during lifestream tasks.
     public bool BlockRunning
-        => !_activeTaskControl.HasAny(HcTaskControl.InLifestreamTask)
+        => !_activeTaskControl.HasAny(HcTaskControl.InLifestreamTask) 
         && ClientData.Hardcore.IsEnabled(HcAttribute.Follow)
         || _activeTaskControl.HasAny(HcTaskControl.Weighted)
         || _traits.FinalTraits.HasAny(Traits.Weighty);

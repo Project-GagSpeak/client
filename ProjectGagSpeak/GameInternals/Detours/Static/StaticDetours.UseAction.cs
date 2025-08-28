@@ -30,10 +30,10 @@ public unsafe partial class StaticDetours
     private unsafe bool UseActionDetour(ActionManager* am, ActionType type, uint acId, ulong targetId, uint extraParam, UseActionMode mode, uint comboRouteId, bool* outOptAreaTargeted)
     {
         // Prevent actions if the player is immobile.
-        if (_controlCache.FinalTraits.HasAny(Traits.Immobile))
+        if (_controlCache.BlockActions)
             return false;
 
-        if (_controlCache.BlockActions)
+        if (_controlCache.BlockTeleportActions)
         {
             // check if we are trying to hit teleport or return from hotbars /  menus
             if (type is ActionType.GeneralAction && acId is 7 or 8)
