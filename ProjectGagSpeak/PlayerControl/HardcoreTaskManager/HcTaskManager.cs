@@ -38,7 +38,7 @@ public partial class HcTaskManager : IDisposable
         _logger = logger;
         _cache = cache;
 
-        //Svc.Framework.Update += OnFramework;
+        Svc.Framework.Update += ProcessTask;
         _logger.LogInformation("Hardcore Task Manager Initialized.");
     }
 
@@ -54,7 +54,7 @@ public partial class HcTaskManager : IDisposable
     public void Dispose()
     {
         _cache.SetActiveTaskControl(HcTaskControl.None);
-        // Svc.Framework.Update -= OnFramework;
+        Svc.Framework.Update -= ProcessTask;
         _logger.LogInformation("Hardcore Task Manager Disposed.");
         GC.SuppressFinalize(this);
     }
@@ -96,55 +96,36 @@ public partial class HcTaskManager : IDisposable
         _cache.SetActiveTaskControl(HcTaskControl.None);
     }
 
-    public void DoTaskBreakpoint()
-        => Svc.Framework.RunOnFrameworkThread(ProcessTask);
-
-    // Task update loop.
-    private void OnFramework(IFramework _)
-        => ProcessTask();
-
-    private void ProcessTask()
+    private void ProcessTask(IFramework _)
     {
-        // Handle the condition in where there are no tasks currently being processed.
         if (_taskOperations.Count is 0)
             return;
+
         // if the task is complete before executing, it was aborted, so end and remove the item from the list.
         if (_taskOperations[0].Finished)
         {
-            _logger.LogInformation($"HardcoreTask OuterScope Finished Early! (Scope -> {_taskOperations[0].Name})", LoggerType.HardcoreTasks);
             _cache.SetActiveTaskControl(HcTaskControl.None);
             _taskOperations.RemoveAt(0);
-            // return early if there are no more tasks to process.
             if (_taskOperations.Count is 0)
                 return;
         }
 
         // Assuming we have tasks present, we should process the first in the list.
         var currentHcTask = _taskOperations[0];
-
         // if the current task has not yet begin, we should begin it.
         if (!currentHcTask.IsRunning)
         {
             currentHcTask.Begin();
-            Svc.Logger.Warning($"Setting HCFlags to: {currentHcTask.Config.Flags}");
             _cache.SetActiveTaskControl(currentHcTask.Config.Flags);
             ObservedTasks = QueuedTasks;
         }
 
-        // now that the task has begun executing, or is currently executing, perform the task.
-        var config = currentHcTask.Config;
-
         try
         {
-            // Timeouts are handled internally now!
-
-            // process the task, and return the result.
             var taskRes = currentHcTask.PerformTask();
-            // At this point, it is possible for the hardcore task to be complete, if it is, we should end.
             if (currentHcTask.Finished)
             {
-                // end the task, log its completion, and remove the hcTaskControl.
-                _logger.LogInformation($"HardcoreTask OuterScope Finished! (Scope -> {currentHcTask.Name})", LoggerType.HardcoreTasks);
+                _logger.LogDebug($"OutermostScope Finished! (Scope -> {currentHcTask.Name})", LoggerType.HardcoreTasks);
                 currentHcTask.End();
                 _cache.SetActiveTaskControl(HcTaskControl.None);
             }
@@ -154,8 +135,6 @@ public partial class HcTaskManager : IDisposable
             _logger.LogError($"HardcoreTask Error: {currentHcTask.Name}, Exception: {ex}");
             AbortCurrentTask();
         }
-        // return early to not update the observed tasks count.
-        return;
     }
 
     public void DrawCacheState()

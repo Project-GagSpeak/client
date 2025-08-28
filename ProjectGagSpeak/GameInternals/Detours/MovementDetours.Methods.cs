@@ -58,7 +58,7 @@ public partial class MovementDetours : IDisposable
     /// </summary>
     /// <remarks> This fires the entire duration you are following someone, so it is best not to log everything. </remarks>
     public unsafe delegate void UnfollowTargetDelegate(UnkTargetFollowStruct* unk1, IntPtr unk2);
-    [Signature(Signatures.UnfollowTargetOLD, DetourName = nameof(UnfollowTargetDetour), Fallibility = Fallibility.Auto)]
+    [Signature(Signatures.UnfollowTarget, DetourName = nameof(UnfollowTargetDetour), Fallibility = Fallibility.Auto)]
     private Hook<UnfollowTargetDelegate> UnfollowHook = null!;
     [return: MarshalAs(UnmanagedType.U1)]
     private unsafe void UnfollowTargetDetour(UnkTargetFollowStruct* targetStruct, IntPtr unk2)

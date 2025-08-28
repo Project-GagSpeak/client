@@ -3,20 +3,14 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using FFXIVClientStructs.FFXIV.Client.Game;
 using GagSpeak.Gui.Modules.Puppeteer;
 using GagSpeak.Gui.Publications;
 using GagSpeak.Gui.Remote;
 using GagSpeak.Gui.Toybox;
 using GagSpeak.Gui.Wardrobe;
-using GagSpeak.Interop;
 using GagSpeak.PlayerControl;
 using GagSpeak.Services;
-using GagSpeak.Services.Controller;
 using GagSpeak.Services.Mediator;
-using System.Drawing.Printing;
-using System.IO;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -80,14 +74,6 @@ public class HomepageTab
         // if itemGotHovered is false, reset the index.
         if (!itemGotHovered)
             HoveredItemIndex = -1;
-
-        if (ImGui.Button("Process Single Step Task"))
-            _temp.DoTaskBreakpoint();
-
-        unsafe
-        {
-            ImGui.Text($"{HousingManager.Instance()->IsOutside()}");
-        }
     }
 
     private bool HomepageSelectable(string label, FontAwesomeIcon icon, Vector2 region, bool hovered = false)
