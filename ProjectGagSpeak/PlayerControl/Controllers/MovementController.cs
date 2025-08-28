@@ -102,7 +102,7 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         var isWalking = IsWalking();
 
         // If we are following someone and too far away we should catch up to them.
-        if (_timeoutTracker.IsRunning && PlayerData.DistanceTo(Svc.Targets.Target) > 11f)
+        if (_timeoutTracker.IsRunning && PlayerData.DistanceTo(Svc.Targets.Target) > 8f)
         {
             if (isWalking && NodeThrottler.Throttle("MoveController.RunToggle", 500))
                 ForceRunning();
