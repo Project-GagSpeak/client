@@ -31,7 +31,7 @@ public class AttributeDrawer
         (Traits.BoundLegs, CoreTexture.Restrained, LegsToolTip, ImGuiColors.DalamudYellow),
         (Traits.Gagged, CoreTexture.Gagged, GaggedToolTip, ImGuiColors.DalamudYellow),
         (Traits.Blindfolded, CoreTexture.Blindfolded, BlindfoldedToolTip, ImGuiColors.DalamudYellow),
-        (Traits.Immobile, CoreTexture.ShockCollar, ImmobileToolTip, ImGuiColors.DalamudRed),
+        (Traits.Immobile, CoreTexture.Immobilize, ImmobileToolTip, ImGuiColors.DalamudRed),
         (Traits.Weighty, CoreTexture.Weighty, WeightyToolTip, ImGuiColors.DalamudRed),
     ];
 

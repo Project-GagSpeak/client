@@ -45,13 +45,19 @@ public class PlayerCtrlHandler
         _kinksters = kinksters;
     }
 
-    public async void ApplyHypnoEffect(UserData enactor, HypnoticEffect effect, TimeSpan length, string? image)
+    public async void ApplyHypnoEffect(UserData enactor, HypnoticEffect effect, DateTimeOffset expireTimeUTC, string? image)
     {
         if (!_kinksters.TryGetKinkster(enactor, out var kinkster))
             throw new Bagagwa($"Failed to get Kinkster for UID: {enactor.UID} for Hypnosis!");
         
-        await _overlay.SetTimedHypnoEffect(enactor, effect, length, image);
-        _mediator.Publish(new HcStateCacheChanged());
+        try
+        {
+            await _overlay.ApplyKinkstersHypnoEffect(enactor, effect, expireTimeUTC, image);
+        }
+        catch (Bagagwa)
+        {
+            _logger.LogWarning($"Error while attempting to apply hypnotic effect! Flagging ValidEffect was flagged as false.");
+        }
         _logger.LogInformation($"[{kinkster.GetNickAliasOrUid()}] Enabled your Hypnotic Effect!");
     }
 

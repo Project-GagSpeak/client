@@ -4,6 +4,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
@@ -19,7 +20,6 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
     private readonly HypnoService _hypnoService;
 
     private SemaphoreSlim _applySlim = new(1, 1);
-    private System.Timers.Timer _sentHypnosisTimer = new(int.MaxValue) { AutoReset = false };
 
     public OverlayHandler(ILogger<OverlayHandler> logger, GagspeakMediator mediator,
         MainConfig config, OverlayCache cache, BlindfoldService bfService,
@@ -30,60 +30,44 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
         _cache = cache;
         _bfService = bfService;
         _hypnoService = hypnoService;
-
-        _sentHypnosisTimer.Elapsed += (_, _) => OnSentHypnoEffectExpire(true);
         Svc.PluginInterface.UiBuilder.Draw += DrawOverlays;
     }
 
-    public bool IsHypnotized => _hypnoService.HasValidEffect;
-    public bool ActiveHypnoIsSentEffect => _hypnoService.IsSentEffect;
-
-    /// <summary>
-    ///     Only call this from the Connection Sync Service! <para />
-    ///     This is able to reapply the active effect without messing up achievements. <para />
-    ///     If possible by merging this with the visualCache sync we could only perform one global 
-    ///     perm callback, but only do if optimization is nessisary)
-    /// </summary>
-    public async Task SyncOverlayWithMetaData()
+    public static bool SentEffectValid { get; private set; } = false;
+    
+    // when we need to reapply an effect after a login on a character with an active one.
+    public async Task ReapplySavedActiveEffect()
     {
-        Logger.LogWarning("This method still needs to be updated to work properly with the new hardcore state!");
-        //Logger.LogDebug("Syncing Active Overlays with playerMetaData on connection!");
-        //// if the metadatas hypno effect is null we have nothing to worry about here and can return.
-        //if (_metadata.MetaData.HypnoEffectInfo is not { } info)
-        //    return;
+        // Method should only be called once we have verified that we have an effect that should be applied and active,
+        // and the timer is still running.
+        Logger.LogDebug("Reapplying set hypnotic effect after reconnection!");
+        
+        // if any part of this load is invalid, we should invalidate the sent effect, and return.
+        if (ClientData.Hardcore is not { } hs)
+            return;
 
-        //if (ClientData.Globals is not { } gp)
-        //    return;
+        if (hs.HypnoticEffect.Length is 0 || hs.HypnoticEffectTimer - DateTimeOffset.UtcNow <= TimeSpan.Zero)
+        {
+            SentEffectValid = false;
+            return;
+        }
 
-        //// grab the current data from the metadata.
-        //var expectedExpireTime = _metadata.MetaData.AppliedTimeUTC + _metadata.MetaData.AppliedDuration;
-        //var remainingTime = expectedExpireTime - DateTimeOffset.UtcNow;
-        //if (remainingTime <= TimeSpan.Zero)
-        //{
-        //    // perform a removal. (and remove from service if possible.
-        //    if (_hypnoService.IsSentEffect)
-        //    {
-        //        // Fire Achievements for item removal if true.
-        //        // do that here in
-        //        // this comment area!
-        //        await _hypnoService.RemoveEffect();
-        //    }
-        //    // remove metadata.
-        //    _metadata.ClearHypnoEffect();
+        // if the cached data no longer exists, it failed.
+        if (_config.Current.HypnoEffectInfo is null)
+        {
+            SentEffectValid = false;
+            return;
+        }
 
-        //    // toggle off our applied effect.
-        //    Logger.LogError("Effect Expired while offline, setting effect to none.");
-        //    Mediator.Publish(new PushGlobalPermChange(nameof(GlobalPerms.HypnosisCustomEffect), string.Empty));
-        //    return;
-        //}
+        // if we cannot apply it, fail this too.
+        if (!_hypnoService.CanApplyTimedEffect(_config.Current.HypnoEffectInfo, _config.Current.Base64CustomImageData))
+        {
+            SentEffectValid = false;
+            return;
+        }
 
-        //// reapply it.
-        //await _hypnoService.ApplyEffect(info, gp.HypnoEnactor(), (int)remainingTime.TotalSeconds, _metadata.MetaData.Base64CustomImageData);
-
-        //// update the timer for the new interval.
-        //Logger.LogInformation($"Timed Hypnosis Effect reapplied after connection!", LoggerType.VisualCache);
-        //_sentHypnosisTimer.Interval = remainingTime.TotalMilliseconds;
-        //_sentHypnosisTimer.Start();
+        // reapply it.
+        await _hypnoService.ApplyEffect(_config.Current.HypnoEffectInfo, hs.Enactor(HcAttribute.HypnoticEffect), _config.Current.Base64CustomImageData);
     }
 
     private void DrawOverlays()
@@ -96,15 +80,19 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
         _hypnoService.DrawHypnoEffect();
     }
 
-    public bool CanApplyTimedEffect(HypnoticEffect effect, string? base64ImgString = null)
-        => _hypnoService.CanApplyTimedEffect(effect, base64ImgString);
-
     // Effect should be called by a listener that has received an instruction from another Kinkster to hypnotize the client.
-    public async Task SetTimedHypnoEffect(UserData enactor, HypnoticEffect effect, TimeSpan length, string? customImage)
+    public async Task ApplyKinkstersHypnoEffect(UserData enactor, HypnoticEffect effect, DateTimeOffset expireTimeUTC, string? customImage)
     {
-        var applyTime = DateTimeOffset.UtcNow;
-        // apply the effect, bagagwa should never be thrown here.
-        if (!await _hypnoService.ApplyEffect(effect, enactor.UID, (int)length.TotalSeconds, customImage))
+        // if we are unable to apply this effect, we should set that the sent effect was invalid, so that the auto unlock service can remove it.
+        if (!_hypnoService.CanApplyTimedEffect(effect, customImage))
+        {
+            Logger.LogWarning("A Received hypnotic effect could not be applied!");
+            SentEffectValid = false;
+            throw new Bagagwa("Unable to apply hypnotic effect!");
+        }
+
+        // otherwise it is valid so set the time.
+        if (!await _hypnoService.ApplyEffect(effect, enactor.UID, customImage))
             throw new Bagagwa("Summoned Bagagwa while setting a timed hypnotic effect! This should never happen!");
         
         Logger.LogInformation($"Timed Hypnosis Effect successfully applied!", LoggerType.VisualCache);
@@ -114,10 +102,8 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
         _config.Current.HypnoEffectInfo = effect;
         _config.Current.Base64CustomImageData = customImage;
         _config.Save();
-
-        // update the hypnosis timer with our interval timeout.
-        _sentHypnosisTimer.Interval = length.TotalMilliseconds;
-        _sentHypnosisTimer.Start();
+        // becuz it's kind of a hcStateCacheChange!
+        Mediator.Publish(new HcStateCacheChanged());
     }
 
     public async void RemoveHypnoEffect(string enactor, bool giveAchievements, bool fromDispose = false)
@@ -125,8 +111,6 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
         Logger.LogDebug($"HardcoreState Hypnotic Effect cleared by ({enactor})!");
         // remove the effect from the hypno service.
         await _hypnoService.RemoveSentEffectOnExpire().ConfigureAwait(false);
-        // Once removed, try to reapply any from our equipped cache. (helps for achievements)
-        await OnApplyHypnoEffect(_cache.ActiveEffect, _cache.PriorityEffectKey).ConfigureAwait(false);
         // Remove the stored HardcoreState effect & image from the config if not ran by plugin disposal.
         if (!fromDispose)
         {
@@ -134,23 +118,14 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
             _config.Current.Base64CustomImageData = null;
             _config.Save();
         }
-    }
+        // becuz it's kind of a hcStateCacheChange!
+        Mediator.Publish(new HcStateCacheChanged());
 
-    private async void OnSentHypnoEffectExpire(bool giveAchievements)
-    {
-        // The sent hypnosis effect has met its expiration time, and should be removed.
-        Logger.LogDebug("Sent Hypnosis Effect has expired, removing it from the applied effect.");
-        // Fire any achievements related to sent effect removal here.
 
-        // Remove the effect from the hypno service.
-        await _hypnoService.RemoveSentEffectOnExpire().ConfigureAwait(false);
-        // ABOVE LINE MIGHT CAUSE CALCULATION DELAY, BE CAUTIOUS.
-
-        // Once removed, check if there is anything in the cache to apply in its place.
-        // Realistically, this should never happen, but it is important to handle for achievements.
+        // Once removed, try to reapply any from our equipped cache. (helps for achievements)
         await OnApplyHypnoEffect(_cache.ActiveEffect, _cache.PriorityEffectKey).ConfigureAwait(false);
-    }
 
+    }
 
     /// <summary> Add a single BlindfoldOverlay to the Blindfold Cache for the key. </summary>
     public bool TryAddBlindfoldToCache(CombinedCacheKey key, BlindfoldOverlay? overlay)

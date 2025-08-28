@@ -616,22 +616,7 @@ public partial class MainHub
     public Task Callback_HypnoticEffect(HypnoticAction dto)
     {
         Logger.LogDebug("Callback_HypnoticEffect: " + dto, LoggerType.Callbacks);
-        Logger.LogWarning("Method still needs to be implemented for hypnotic effects! Old one is outdated!");
-        //await Generic.Safe(async () =>
-        //{
-        //    if (ClientData.Globals is null)
-        //    {
-        //        Logger.LogWarning("ClientData.Globals is null, cannot apply hypnotic effect.");
-        //        return;
-        //    }
-        //    // if effect could not be applied, return original.
-        //    if (!_globals.ApplyHypnoEffect(dto.User, dto.Duration, dto.Effect, dto.base64Image))
-        //    {
-        //        Logger.LogWarning("Unable to apply received hypnotic effect. Restoring permissions to other online kinksters.");
-        //        await UserChangeOwnGlobalPerm(nameof(GlobalPerms.HypnosisCustomEffect), ClientData.Globals.HypnosisCustomEffect);
-        //        return;
-        //    }
-        //});
+        Generic.Safe(() => _clientDatListener.Hypnotize(dto.User, dto.Effect, dto.ExpireTime, dto.base64Image));
         return Task.CompletedTask;
     }
 

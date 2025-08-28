@@ -9,18 +9,51 @@ public partial class MovementDetours : IDisposable
         _logger = logger;
         Svc.Hook.InitializeFromAttributes(this);
         _logger.LogInformation("MovementDetours initialized successfully.");
+
+        AutoMoveUpdateHook.SafeEnable();
+        UnfollowHook.SafeEnable();
     }
 
     /// <summary> Returns if all Movement is currently disabled </summary>
     /// <remarks> Useful for knowing if other plugins are tempering with this pointer. </remarks>
     public bool ForceDisableMovementIsActive => ForceDisableMovement > 0;
-    public bool UnfollowHookActive => UnfollowHook?.IsEnabled ?? false;
-    public bool MouseAutoMoveHookActive => MoveUpdateHook?.IsEnabled ?? false;
+
+    public bool NoAutoMoveActive
+    {
+        get => AutoMoveUpdateHook.IsEnabled;
+        set
+        {
+            if (value) AutoMoveUpdateHook.Enable();
+            else AutoMoveUpdateHook.Disable();
+        }
+    }
+
+    public bool NoUnfollowingActive
+    {
+        get => UnfollowHook.IsEnabled;
+        set
+        {
+            if (value) UnfollowHook.Enable();
+            else UnfollowHook.Disable();
+        }
+    }
+
+    public bool NoMouseMovementActive
+    {
+        get => MoveUpdateHook.IsEnabled;
+        set
+        {
+            if (value) MoveUpdateHook.Enable();
+            else MoveUpdateHook.Disable();
+        }
+    }
 
     public void Dispose()
     {
         _logger.LogInformation($"Disposing MovementDetours");
         DisableFullMovementLock();
+
+        AutoMoveUpdateHook.SafeDispose();
         UnfollowHook.SafeDispose();
         MoveUpdateHook.SafeDispose();
     }

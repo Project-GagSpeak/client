@@ -275,6 +275,12 @@ public sealed class ClientData : IDisposable
                 hcState.ChatInputBlocked = string.Empty;
                 hcState.ChatInputBlockedTimer = DateTimeOffset.MinValue;
                 break;
+
+            case HcAttribute.HypnoticEffect:
+                hcState.HypnoticEffect = string.Empty;
+                hcState.HypnoticEffectTimer = DateTimeOffset.MinValue;
+                break;
+
             default:
                 throw new ArgumentOutOfRangeException(nameof(attribute), attribute, "Invalid Hardcore State attribute to Disable.");
         }

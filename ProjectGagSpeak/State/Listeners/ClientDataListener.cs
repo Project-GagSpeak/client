@@ -64,6 +64,25 @@ public sealed class ClientDataListener : IDisposable
         }
     }
 
+    public void Hypnotize(UserData enactor, HypnoticEffect effect, DateTimeOffset expireTime, string? customImage)
+    {
+        // Find the kinkster for this change.
+        if (_kinksters.GetKinksterOrDefault(enactor) is not { } kinkster)
+            throw new InvalidOperationException($"Kinkster [{enactor.AliasOrUID}] not found, this will throw your data out of sync!");
+        // get a dummy HcPerms.
+        var newData = new HardcoreState()
+        {
+            HypnoticEffect = kinkster.OwnPerms.InHardcore && kinkster.OwnPerms.DevotionalLocks ? enactor.UID + Constants.DevotedString : enactor.UID,
+            HypnoticEffectTimer = expireTime,
+        };
+        // Make the change
+        _data.SetHardcoreState(enactor, HcAttribute.HypnoticEffect, newData, kinkster);
+        _handler.ApplyHypnoEffect(enactor, effect, expireTime, customImage);
+
+        _mediator.Publish(new EventMessage(new(kinkster.GetNickAliasOrUid(), enactor.UID, InteractionType.HypnosisEffect, $"{kinkster.GetNickAliasOrUid()} hypnotized you!")));
+
+    }
+
     // Only ever self-invoked, all handlers should process their own strings.
     public void ChangeAllClientGlobals(UserData enactor, GlobalPerms globals, HardcoreState hardcore)
     {
@@ -74,8 +93,6 @@ public sealed class ClientDataListener : IDisposable
         // Resync Hardcore State Changes. (Skip UNKNOWN and HYPNO-EFFECT)
         foreach (var attr in Enum.GetValues<HcAttribute>().Skip(1).SkipLast(1))
             HandleHardcoreStateChange(new(hardcore.Enactor(attr)), attr, prevHardcore.IsEnabled(attr), hardcore.IsEnabled(attr));
-        // Inform that the hcStateCache changed so we can update our detours.
-        _mediator.Publish(new HcStateCacheChanged());
     }
 
     // Could only ever be performed by the client.

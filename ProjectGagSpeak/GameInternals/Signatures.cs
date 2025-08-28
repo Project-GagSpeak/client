@@ -57,11 +57,11 @@ public static class Signatures
     public const string ForceDisableMovement = "F3 0F 10 05 ?? ?? ?? ?? 0F 2E C7";
 
     // DetourName = nameof(MovementUpdate), Fallibility = Fallibility.Auto, Define via SignatureAttribute.
-    public const string MouseAutoMove2 = "48 8b c4 4c 89 48 ?? 53 55 57 41 54 48 81 ec ?? 00 00 00";
+    public const string MouseMoveBlock = "48 8b c4 4c 89 48 ?? 53 55 57 41 54 48 81 ec ?? 00 00 00";
 
     // DetourName = nameof(TestUpdate), Fallibility = Fallibility.Auto, Define via SignatureAttribute.
-    public const string UnfollowTarget = "48 89 5c 24 ?? 48 89 74 24 ?? 57 48 83 ec ?? 48 8b d9 48 8b fa 0f b6 89 ?? ?? 00 00 be 00 00 00 e0";
-
+    // public const string UnfollowTargetOLD = "48 89 5c 24 ?? 48 89 74 24 ?? 57 48 83 ec ?? 48 8b d9 48 8b fa 0f b6 89 ?? ?? 00 00 be 00 00 00 e0";
+    public const string UnfollowTarget = "48 89 5C 24 ?? 57 48 83 EC 20 48 8B D9 BF ?? ?? ?? ?? 0F B6 89";
     // Signatures for Imprisonment
     public const string RMICamera = "48 8B C4 53 48 81 EC ?? ?? ?? ?? 44 0F 29 50 ??";
 
@@ -88,4 +88,12 @@ public static class Signatures
 
     internal const string CreateActorVfx = "40 53 55 56 57 48 81 EC ?? ?? ?? ?? 0F 29 B4 24 ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 0F B6 AC 24 ?? ?? ?? ?? 0F 28 F3 49 8B F8";
     internal const string RemoveActorVfx = "0F 11 48 10 48 8D 05"; // the weird one
+
+
+
+    // CORBY'S EXPERIMENTAL VOODOO BLACK MAGIC SIGNATURES..
+
+    // related to a condition that changes automove
+    // sub_1417229C0(nint a1, nint a2)
+    public const string UnkAutoMoveUpdate = "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 56 41 57 48 83 EC 20 44 0F B6 7A ?? 48 8B D9";
 }

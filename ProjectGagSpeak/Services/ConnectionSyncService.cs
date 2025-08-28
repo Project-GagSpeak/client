@@ -108,7 +108,7 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
 
         // 4. Sync overlays with the global permissions & metadata.
         Logger.LogInformation("[SYNC PROGRESS]: Applying Custom Hypnosis Data if Any!");
-        await _overlays.SyncOverlayWithMetaData();
+        await _overlays.ReapplySavedActiveEffect();
 
         // 5. Sync Visual Cache with active state.
         Logger.LogInformation("[SYNC PROGRESS]: Syncing Visual Cache With Display");

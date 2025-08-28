@@ -53,7 +53,7 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
         Svc.Hook.InitializeFromAttributes(this);
 
         ActionEffectHook = Svc.Hook.HookFromAddress<ProcessActionEffect>(Svc.SigScanner.ScanText(Signatures.ReceiveActionEffect), ActionEffectDetour);
-        
+
         OnExecuteEmoteHook = Svc.Hook.HookFromAddress<AgentEmote.Delegates.ExecuteEmote>((nint)AgentEmote.MemberFunctionPointers.ExecuteEmote, OnExecuteEmote);
         ProcessEmoteHook = Svc.Hook.HookFromSignature<OnEmoteFuncDelegate>(Signatures.OnEmote, ProcessEmoteDetour);
         
@@ -91,7 +91,7 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
         Logger.LogInformation("Enabling all StaticDetours and their hooks.");
 
         ActionEffectHook?.Enable();
-        
+
         ProcessEmoteHook?.Enable();
         OnExecuteEmoteHook?.Enable();
         
@@ -116,7 +116,7 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
 
         ActionEffectHook?.Disable();
         ActionEffectHook?.Dispose();
-        
+
         ProcessEmoteHook?.Disable();
         ProcessEmoteHook?.Dispose();
         OnExecuteEmoteHook?.Disable();

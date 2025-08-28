@@ -54,7 +54,7 @@ public class KinksterHardcore(InteractionsService service)
         // ------ Locked Confinement ------
         var confinementActive = hc.IndoorConfinement.Length > 0;
         var confinementInfo = confinementActive ? (FAI.StopCircle, $"Release {dispName} from Confinement.") : (FAI.HouseLock, $"Lock {dispName} away indoors.");
-        var confinementAllowed = k.PairPerms.AllowIndoorConfinement && hc.CanChange(HcAttribute.Confinement, MainHub.UID) && inImprisonRange;
+        var confinementAllowed = k.PairPerms.AllowIndoorConfinement && hc.CanChange(HcAttribute.Confinement, MainHub.UID);
         var confinementTT = confinementActive ? $"End {dispName}'s confinement period." : $"Confine {dispName} indoors.";
         DrawColoredExpander(InteractionType.Confinement, confinementInfo.Item1, confinementInfo.Item2, confinementActive, !confinementAllowed, confinementTT);
         UniqueHcChild(InteractionType.Confinement, confinementActive, CkStyle.GetFrameRowsHeight(4).AddWinPadY(), () =>
@@ -71,7 +71,7 @@ public class KinksterHardcore(InteractionsService service)
         DrawColoredExpander(InteractionType.Imprisonment, imprisonmentInfo.Item1, imprisonmentInfo.Item2, imprisonmentActive, !imprisonmentAllowed, imprisonmentTT);
         UniqueHcChild(InteractionType.Imprisonment, imprisonmentActive, CkStyle.TwoRowHeight(), () =>
         {
-            DrawTimerButtonRow(InteractionType.Imprisonment, ref service.ImprisonTimer, "Imprison", !imprisonmentAllowed);
+            DrawTimerButtonRow(InteractionType.Imprisonment, ref service.ImprisonTimer, "Imprison", !imprisonmentAllowed || !inImprisonRange);
             var rightW = CkGui.IconTextButtonSize(FAI.Upload, "Enable State");
             if (CkGui.IconButton(FAI.MapPin, disabled: !PlayerData.Available))
                 service.ImprisonPos = PlayerData.Position;

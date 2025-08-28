@@ -102,7 +102,7 @@ public class HypnoService : IDisposable
             : !string.IsNullOrEmpty(base64ImgString) && Convert.FromBase64String(base64ImgString) is { Length: > 0 });
 
     // For hypnotic effects manually applied.
-    public async Task<bool> ApplyEffect(HypnoticEffect effect, string enactor, int timeInSeconds, string? base64ImgString = null)
+    public async Task<bool> ApplyEffect(HypnoticEffect effect, string enactor, string? base64ImgString = null)
     {
         // Idealy should apply regardless but print a warning that the fallback image does not exist.
         if (!CanApplyTimedEffect(effect, base64ImgString))
