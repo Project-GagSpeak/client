@@ -10,15 +10,12 @@ public class TraitsHandler
     private readonly ILogger<TraitsHandler> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly TraitsCache _cache;
-    private readonly HotbarActionHandler _controller;
 
-    public TraitsHandler(ILogger<TraitsHandler> logger, GagspeakMediator mediator,
-        TraitsCache cache, HotbarActionHandler controller)
+    public TraitsHandler(ILogger<TraitsHandler> logger, GagspeakMediator mediator, TraitsCache cache)
     {
         _logger = logger;
         _mediator = mediator;
         _cache = cache;
-        _controller = controller;
     }
 
     public Traits FinalTraits => _cache.FinalTraits;
@@ -53,7 +50,6 @@ public class TraitsHandler
         if (_cache.UpdateFinalCache())
         {
             _logger.LogDebug("Final Traits updated.", LoggerType.VisualCache);
-            _controller.UpdateHardcoreState();
             _mediator.Publish(new HcStateCacheChanged());
         }
         else

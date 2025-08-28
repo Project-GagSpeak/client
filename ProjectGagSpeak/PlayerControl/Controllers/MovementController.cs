@@ -37,11 +37,11 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     private void UpdateHardcoreState()
     {
         // if our states to have an unfollow hook are met, but it isnt active, activate it.
-        // if (_cache.PreventUnfollowing && !_detours.UnfollowHookActive)
-        //    MovementDetours.UnfollowHook.SafeEnable();
-        // if our states to have an unfollow hook are not met and it is active, disable it.
-        // if (!_cache.PreventUnfollowing && _detours.UnfollowHookActive)
-        //    MovementDetours.UnfollowHook.SafeDisable();
+        if (_cache.PreventUnfollowing && !_detours.NoUnfollowingActive)
+            _detours.NoUnfollowingActive = true;
+        //if our states to have an unfollow hook are not met and it is active, disable it.
+        else if (!_cache.PreventUnfollowing && _detours.NoUnfollowingActive)
+            _detours.NoUnfollowingActive = false;
 
         // if we were not set to require walking, but should be walking, enforce it.
         if (_cache.BlockRunning && !_moveState.MustWalk)
@@ -69,16 +69,16 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         }
 
         // if we should ban mouse movement, but it is not active, activate it.
-        if (_cache.BlockMovementKeys && (!_detours.NoAutoMoveActive || !_detours.NoAutoMoveActive))
+        if (_cache.BlockMovementKeys && !(_detours.NoAutoMoveActive && _detours.NoMouseMovementActive))
         {
             _detours.NoAutoMoveActive = true;
             _detours.NoMouseMovementActive = true;
         }
         // if we should not ban mouse movement, but it is active, disable it.
-        else if (!_cache.BlockMovementKeys && (!_detours.NoAutoMoveActive || !_detours.NoAutoMoveActive))
+        else if (!_cache.BlockMovementKeys && !(!_detours.NoAutoMoveActive && !_detours.NoMouseMovementActive))
         {
-            _detours.NoAutoMoveActive = true;
-            _detours.NoMouseMovementActive = true;
+            _detours.NoAutoMoveActive = false;
+            _detours.NoMouseMovementActive = false;
         }
     }
 
