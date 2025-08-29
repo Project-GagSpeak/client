@@ -16,8 +16,9 @@ namespace GagSpeak.State.Caches;
 /// </summary>
 public sealed class PlayerControlCache
 {
+    private static readonly IEnumerable<VirtualKey> ALWAYS_ALLOW = [VirtualKey.LBUTTON, VirtualKey.RBUTTON, VirtualKey.CANCEL, VirtualKey.CONTROL, VirtualKey.MENU, VirtualKey.BACK];
     // Block everything but hardcore safeword keybind. (Maybe use keymonitor to handle this while logged out or something i dont know.
-    public static readonly IEnumerable<VirtualKey> AllKeys = Enum.GetValues<VirtualKey>().Skip(4).Except([VirtualKey.CONTROL, VirtualKey.MENU, VirtualKey.BACK]).ToList();
+    public static readonly IEnumerable<VirtualKey> AllKeys = Svc.KeyState.GetValidVirtualKeys().Except(ALWAYS_ALLOW);
     public static readonly IEnumerable<VirtualKey> MoveKeys = [VirtualKey.W, VirtualKey.A, VirtualKey.S, VirtualKey.D, VirtualKey.SPACE];
 
     private readonly GagspeakMediator _mediator;
@@ -46,12 +47,13 @@ public sealed class PlayerControlCache
         || _activeTaskControl.HasAny(HcTaskControl.NoActions);
 
     public bool BlockTeleportActions
-        => ClientData.Hardcore.IsEnabled(HcAttribute.Follow)
+        => !_activeTaskControl.HasAny(HcTaskControl.InLifestreamTask) 
+        && (ClientData.Hardcore.IsEnabled(HcAttribute.Follow)
         || ClientData.Hardcore.IsEnabled(HcAttribute.EmoteState)
         || ClientData.Hardcore.IsEnabled(HcAttribute.Confinement)
         || ClientData.Hardcore.IsEnabled(HcAttribute.Imprisonment)
         || _traits.FinalTraits.HasAny(Traits.Immobile)
-        || _activeTaskControl.HasAny(HcTaskControl.NoTeleport);
+        || _activeTaskControl.HasAny(HcTaskControl.NoTeleport));
 
     public bool BlockChatInput
         => ClientData.Hardcore.IsEnabled(HcAttribute.BlockedChatInput) 
@@ -87,7 +89,7 @@ public sealed class PlayerControlCache
         || _activeTaskControl.HasAny(HcTaskControl.LockThirdPerson);
 
     // keystate blocking.
-    public bool BlockAllKeys
+    public bool InLifestreamTask
         => _activeTaskControl.HasAny(HcTaskControl.InLifestreamTask);
 
     public bool BlockMovementKeys
@@ -117,7 +119,7 @@ public sealed class PlayerControlCache
             ShouldLockThirdPerson ? CameraControlMode.ThirdPerson : CameraControlMode.Unknown;
     
     public IEnumerable<VirtualKey> GetBlockedKeys()
-        => BlockAllKeys ? AllKeys : BlockMovementKeys ? MoveKeys : Enumerable.Empty<VirtualKey>();
+        => InLifestreamTask ? AllKeys : BlockMovementKeys ? MoveKeys : Enumerable.Empty<VirtualKey>();
 
 
     // Update the hardcore task manager control state and refresh the controllers with the latest cache information.

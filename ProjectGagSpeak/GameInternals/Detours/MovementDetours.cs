@@ -1,12 +1,15 @@
 using CkCommons;
+using GagSpeak.State.Caches;
 
 namespace GagSpeak.GameInternals.Detours;
 public partial class MovementDetours : IDisposable
 {
     private readonly ILogger<MovementDetours> _logger;
-    public unsafe MovementDetours(ILogger<MovementDetours> logger)
+    private readonly PlayerControlCache _cache;
+    public unsafe MovementDetours(ILogger<MovementDetours> logger, PlayerControlCache cache)
     {
         _logger = logger;
+        _cache = cache;
         Svc.Hook.InitializeFromAttributes(this);
         _logger.LogInformation("MovementDetours initialized successfully.");
     }

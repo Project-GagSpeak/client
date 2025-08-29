@@ -1,3 +1,4 @@
+using Newtonsoft.Json.Bson;
 using System.Reflection;
 
 namespace GagSpeak.PlayerControl;
@@ -101,6 +102,7 @@ public class HardcoreTask : HardcoreTaskBase
     {
         StartTime = 0;
         CurrentTaskIdx = 1;
+        Config.OnEnd?.Invoke();
     }
 }
 
@@ -177,6 +179,7 @@ public class HardcoreTaskGroup : HardcoreTaskBase
     {
         StartTime = 0;
         CurrentTaskIdx = TotalTasks;
+        Config.OnEnd?.Invoke();
     }
 }
 
@@ -189,7 +192,7 @@ public class BranchingHardcoreTask : HardcoreTaskBase
     public readonly HardcoreTaskBase FalseTask;
     private HardcoreTaskBase _activeTask;
 
-    public override int TotalTasks => _activeTask.TotalTasks;
+    public override int TotalTasks => 1;
     public override bool Finished => CurrentTaskIdx >= TotalTasks;
     public override bool IsRunning => Config.InnerTimouts ? _activeTask.IsRunning : base.IsRunning;
     public override long ElapsedTime => Config.InnerTimouts ? _activeTask.ElapsedTime : base.ElapsedTime;
@@ -244,6 +247,8 @@ public class BranchingHardcoreTask : HardcoreTaskBase
         if (HasTimedOut) // This references either the outer of inner scope based on what is defined.
         {
             Svc.Logger.Warning($"HcBranch: Timed out! (Scope -> {Name}) (Inner Scope -> {_activeTask.Name}) [InnerTimeout? {Config.InnerTimouts}]");
+            if (Config.InnerTimouts)
+                _activeTask.End();
             End();
             return false;
         }
@@ -259,45 +264,32 @@ public class BranchingHardcoreTask : HardcoreTaskBase
             // if we are using innerTimeouts, we should reset the startTime.
             if (Config.InnerTimouts)
                 _activeTask.ResetTimeout();
-
-            if (_activeTask.Finished)
-            {
-                // See if active task scope completed, then the branch is also complete by proxy.
-                Svc.Logger.Verbose($"HcBranch: Active SubTask Completed! (Scope -> {Name}) (ActiveTask Scope -> {_activeTask.Name})");
-                CurrentTaskIdx++;
-            }
-            return true;
         }
         // if returning null, we should end the active scope (which completes this branch as well).
         else if (res is null)
         {
             Svc.Logger.Warning($"HcBranch: Active SubTask Failed! (Scope -> {Name}) (ActiveTask Scope -> {_activeTask.Name})");
             _activeTask.End();
-            return null;
         }
 
-        // otherwise it was false, so we can just return false.
-        return false;
-    }
-
-    // maybe force this to be a full end regardless? idk.
-    public override void End()
-    {
-        // check outer scope.
-        if (Finished && IsRunning)
+        // Safety net any timeouts or failures that resulted in completion to assure movement..
+        if (_activeTask.Finished)
         {
-            Svc.Logger.Debug($"HcBranch: Ending Outer Task! (Scope -> {Name})");
-            StartTime = 0;
-            CurrentTaskIdx = TotalTasks;
-            return;
-        }
-
-        if (!_activeTask.Finished)
-        {
-            Svc.Logger.Debug($"HcBranch: Ending Active SubTask! (Scope -> {Name}) (ActiveTask Scope -> {_activeTask.Name})");
-            _activeTask.End();
+            // See if active task scope completed, then the branch is also complete by proxy.
+            Svc.Logger.Verbose($"HcBranch: Active SubTask Completed! (Scope -> {Name}) (ActiveTask Scope -> {_activeTask.Name})");
             CurrentTaskIdx++;
         }
+
+        return res;
+    }
+    public override void End()
+    {
+        Svc.Logger.Debug($"HcBranch: Ending called, ending subtasks and current scope: (Scope -> {Name}) (Inner Scope -> {_activeTask.Name})");
+        if (!_activeTask.Finished)
+            _activeTask.End();
+        StartTime = 0;
+        CurrentTaskIdx = TotalTasks;
+        Config.OnEnd?.Invoke();
     }
 }
 
@@ -312,16 +304,16 @@ public class HardcoreTaskCollection : HardcoreTaskBase
     public override bool IsRunning => Config.InnerTimouts ? _currentTask.IsRunning : base.IsRunning;
     public override long ElapsedTime => Config.InnerTimouts ? _currentTask.ElapsedTime : base.ElapsedTime;
     public override bool HasTimedOut => Config.InnerTimouts ? _currentTask.HasTimedOut : base.HasTimedOut;
-    public HardcoreTaskCollection(IEnumerable<HardcoreTaskBase> tasks, HcTaskConfiguration config)
+    public HardcoreTaskCollection(IEnumerable<HardcoreTaskBase> tasks, HcTaskConfiguration? config = null)
     {
         Name = tasks.FirstOrDefault()?.Name ?? string.Empty;
-        Config = config;
+        Config = config ?? HcTaskConfiguration.Default;
         StoredTasks = tasks.ToList();
     }
-    public HardcoreTaskCollection(IEnumerable<HardcoreTaskBase> tasks, string name, HcTaskConfiguration config)
+    public HardcoreTaskCollection(IEnumerable<HardcoreTaskBase> tasks, string name, HcTaskConfiguration? config = null)
     {
         Name = name;
-        Config = config;
+        Config = config ?? HcTaskConfiguration.Default;
         StoredTasks = tasks.ToList();
     }
 
@@ -356,11 +348,21 @@ public class HardcoreTaskCollection : HardcoreTaskBase
             if (Config.InnerTimouts)
             {
                 // end inner scope.
-                Svc.Logger.Debug($"InnerScope Timeouts were used, so beginning next task in collection. (Scope -> {Name}) (Inner Scope -> {_currentTask.Name})");
-                _currentTask.End();
-                CurrentTaskIdx++;
-                if (!Finished)
+                Svc.Logger.Debug($"HcCollection: InnerTimeout used, ending innerscope: (Inner Scope -> {_currentTask.Name}) [IDX: {CurrentTaskIdx}]");
+                // if we are on our last task, wrap things up and end.
+                if (CurrentTaskIdx + 1 == TotalTasks)
+                {
+                    Svc.Logger.Debug($"HcCollection: Last task in collection timed out: (Scope -> {Name})");
+                    End();
+                }
+                else
+                {
+                    _currentTask.End();
+                    CurrentTaskIdx++;
+                    Svc.Logger.Debug($"HcCollection: Moving to next inner scope: (Inner Scope -> {_currentTask.Name}) [IDX: {CurrentTaskIdx}]");
+                    ResetTimeout();
                     _currentTask.Begin();
+                }
                 return false;
             }
             // end current scope.
@@ -369,66 +371,46 @@ public class HardcoreTaskCollection : HardcoreTaskBase
         }
 
         var res = _currentTask.PerformTask();
-        // If the active task was true, and also reached it's end, then end the branching task.
         if (res is true)
         {
-            Svc.Logger.Verbose($"HcCollection: Active SubTask Success! (Scope -> {Name}) (ActiveTask Scope -> {_currentTask.Name})");
-            // if we are using inner timeouts, we should reset it.
-            if (Config.InnerTimouts)
-                _currentTask.ResetTimeout();
-
-            if (_currentTask.Finished)
-            {
-                // See if active task scope completed, then the branch is also complete by proxy.
-                Svc.Logger.Verbose($"HcCollection: Active SubTask Completed! (Scope -> {Name}) (ActiveTask Scope -> {_currentTask.Name})");
-                CurrentTaskIdx++;
-                ResetTimeout();
-                // begin the next task if there is one.
-                if (!Finished)
-                    _currentTask.Begin();
-            }
+            Svc.Logger.Verbose($"HcCollection: Active SubTask Success! (Scope -> {Name}) (Inner Scope -> {_currentTask.Name})");
         }
-        // if returning null, we should end the active scope (which completes this branch as well).
         else if (res is null)
         {
-            Svc.Logger.Warning($"HcCollection: Active SubTask Failed! (Scope -> {Name}) (ActiveTask Scope -> {_currentTask.Name})");
-            // calls the inner scope end.
+            Svc.Logger.Warning($"HcCollection: Active SubTask Failed! (Scope -> {Name}) (Inner Scope -> {_currentTask.Name})");
             _currentTask.End();
-            // if after this is called it is marked as finished, we should move the index forward, but only if it is.
-            if (_currentTask.Finished)
+        }
+
+        if (_currentTask.Finished)
+        {
+            Svc.Logger.Verbose($"HcCollection: Active SubTask Completed after performed task! (Scope -> {Name}) (Inner Scope -> {_currentTask.Name})");
+            if (CurrentTaskIdx + 1 == TotalTasks)
+                End();
+            else
             {
+                Svc.Logger.Debug($"HcCollection: Moving to next inner scope: (Inner Scope -> {_currentTask.Name}) [IDX: {CurrentTaskIdx}]");
                 CurrentTaskIdx++;
                 ResetTimeout();
-                // begin the next task if there is one.
-                if (!Finished)
-                    _currentTask.Begin();
+                _currentTask.Begin();
             }
         }
+
         return res;
     }
 
-    // maybe force this to be a full end regardless? idk.
     public override void End()
     {
-        // if the current collection scope is finished and still running, end that.
-        if (Finished && IsRunning)
+        // if we are not yet finished, bump the idx so that we are.
+        if (!Finished)
         {
-            Svc.Logger.Verbose($"HcCollection: Ending Outer Task! (Scope -> {Name})");
-            StartTime = 0;
-            CurrentTaskIdx = TotalTasks;
-            return;
-        }
-        // if the current task is not yet finished, finish it instead of the whole collection.
-        if (!_currentTask.Finished)
-        {
-            Svc.Logger.Verbose($"HcCollection: Ending Current SubTask! (Scope -> {Name}) (CurrentTask Scope -> {_currentTask.Name})");
+            Svc.Logger.Verbose($"HcCollection: End() requested, but not finished, forcing finish! (Scope -> {Name}) [Idx: {CurrentTaskIdx}]");
             _currentTask.End();
-            CurrentTaskIdx++;
-            ResetTimeout();
-            // begin the next task if there is one.
-            if (!Finished)
-                _currentTask.Begin();
+            CurrentTaskIdx = TotalTasks;
         }
+
+        Svc.Logger.Verbose($"HcCollection: Ending Task Scope! (Scope -> {Name})");
+        StartTime = 0;
+        Config.OnEnd?.Invoke();
     }
 }
 

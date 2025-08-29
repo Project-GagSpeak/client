@@ -1,6 +1,7 @@
 using CkCommons;
 using Dalamud.Game.ClientState.Objects.Enums;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using GagSpeak.GameInternals.Detours;
 using GagSpeak.PlayerControl;
 using GagSpeak.State;
 namespace GagSpeak;
@@ -32,6 +33,39 @@ public static unsafe class HcApproachNearestHousing
                 .AsBranch())
             .AsCollection();
     }
+
+    public static unsafe bool AtHouseButMustBeCloser()
+    {
+        var node = HcStayHousingEntrance.GetNearestHousingEntrance(out var distance);
+        return node is not null && distance < 35f && distance >= 16f;
+    }
+
+    /// <summary>
+    ///     You are expected to know how to handle restoring overrides if 
+    ///     this aborts, throws, or fails.
+    /// </summary>
+    public static unsafe bool MoveToAcceptableRange()
+    {
+        var node = HcStayHousingEntrance.GetNearestHousingEntrance(out var distance);
+        if (node is null)
+            return false;
+
+        if (distance >= 35 || distance < 16f)
+        {
+            StaticDetours.MoveOverrides.Disable();
+            return true;
+        }
+
+        if (StaticDetours.MoveOverrides.MoveToPoint(node.Position, distance / 2))
+        {
+            StaticDetours.MoveOverrides.Disable();
+            return true;
+        }
+
+        // we are not yet there, ret false.
+        return false;
+    }
+
 
     // Attempts to locate the nearest housing entrance within range.
     public static unsafe bool TargetNearestHousingNode()

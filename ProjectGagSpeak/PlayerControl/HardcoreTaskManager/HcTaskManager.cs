@@ -4,6 +4,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Plugin.Services;
+using GagSpeak.Services.Mediator;
 using GagSpeak.State;
 using GagSpeak.State.Caches;
 using OtterGui;
@@ -22,6 +23,7 @@ namespace GagSpeak.PlayerControl;
 public partial class HcTaskManager : IDisposable
 {
     private readonly ILogger<HcTaskManager> _logger;
+    private readonly GagspeakMediator _mediator;
     private readonly PlayerControlCache _cache;
 
     /// <summary> 
@@ -29,9 +31,10 @@ public partial class HcTaskManager : IDisposable
     /// </summary>
     private static List<HardcoreTaskBase> _taskOperations = new List<HardcoreTaskBase>();
 
-    public HcTaskManager(ILogger<HcTaskManager> logger, PlayerControlCache cache)
+    public HcTaskManager(ILogger<HcTaskManager> logger, GagspeakMediator mediator, PlayerControlCache cache)
     {
         _logger = logger;
+        _mediator = mediator;
         _cache = cache;
 
         Svc.Framework.Update += ProcessTask;
@@ -86,15 +89,18 @@ public partial class HcTaskManager : IDisposable
         if (_taskOperations.Count > 0)
         {
             _logger.LogDebug($"Aborting Task: {_taskOperations[0].Name}", LoggerType.HardcoreTasks);
-            _taskOperations[0].End();
+            if (!_taskOperations[0].Finished)
+                _taskOperations[0].End();
             _taskOperations.RemoveAt(0);
         }
         _cache.SetActiveTaskControl(HcTaskControl.None);
     }
 
+    private bool _pauseTasks = false;
+
     private void ProcessTask(IFramework _)
     {
-        if (_taskOperations.Count is 0)
+        if (_taskOperations.Count is 0 || _pauseTasks)
             return;
 
         // if the task is complete before executing, it was aborted, so end and remove the item from the list.
@@ -118,7 +124,7 @@ public partial class HcTaskManager : IDisposable
 
         try
         {
-            var taskRes = currentHcTask.PerformTask();
+            currentHcTask.PerformTask();
             if (currentHcTask.Finished)
             {
                 _logger.LogDebug($"OutermostScope Finished! (Scope -> {currentHcTask.Name})", LoggerType.HardcoreTasks);
@@ -129,7 +135,8 @@ public partial class HcTaskManager : IDisposable
         catch (Bagagwa ex)
         {
             _logger.LogError($"HardcoreTask Error: {currentHcTask.Name}, Exception: {ex}");
-            AbortCurrentTask();
+            _pauseTasks = true;
+            // AbortCurrentTask();
         }
     }
 

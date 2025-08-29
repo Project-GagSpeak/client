@@ -3,14 +3,18 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using FFXIVClientStructs.FFXIV.Client.Game;
+using GagSpeak.GameInternals.Detours;
 using GagSpeak.Gui.Modules.Puppeteer;
 using GagSpeak.Gui.Publications;
 using GagSpeak.Gui.Remote;
 using GagSpeak.Gui.Toybox;
 using GagSpeak.Gui.Wardrobe;
+using GagSpeak.MufflerCore.Handler;
 using GagSpeak.PlayerControl;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Caches;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -20,15 +24,20 @@ public class HomepageTab
     private readonly ILogger<HomepageTab> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly HcTaskManager _temp;
+    private readonly PlayerControlCache _cache;
+    private readonly MovementDetours _detours;
 
     private int HoveredItemIndex = -1;
     private readonly List<(string Label, FontAwesomeIcon Icon, Action OnClick)> Modules;
 
-    public HomepageTab(ILogger<HomepageTab> logger, GagspeakMediator mediator, HcTaskManager temp)
+    public HomepageTab(ILogger<HomepageTab> logger, GagspeakMediator mediator, HcTaskManager temp, 
+        PlayerControlCache cache, MovementDetours detours)
     {
         _logger = logger;
         _mediator = mediator;
         _temp = temp;
+        _cache = cache;
+        _detours = detours;
 
         // Define all module information in a single place
         Modules = new List<(string, FontAwesomeIcon, Action)>
@@ -74,6 +83,43 @@ public class HomepageTab
         // if itemGotHovered is false, reset the index.
         if (!itemGotHovered)
             HoveredItemIndex = -1;
+
+        ImGui.Text("Block Move Keys:" + _cache.BlockMovementKeys);
+        ImGui.Text("In LifestreamTask:" + _cache.InLifestreamTask);
+
+        ImGui.Text("NoAutoMoveOn:" + _detours.NoAutoMoveActive);
+        ImGui.Text("NoMouseMoveOn:" + _detours.NoMouseMovementActive);
+
+        unsafe
+        {
+            if (ImGui.Button("Home Locator"))
+            {
+                var node = HcStayHousingEntrance.GetNearestHousingEntrance(out var distance);
+                Svc.Logger.Warning($"Distance to node: {distance}");
+                if (node is not null)
+                    Svc.Logger.Warning($"Node DataID: {node.DataId} Name: {node.Name}");
+            }
+
+
+            if (HcTaskUtils.IsOutside())
+                return;
+
+
+            var hausInfo = HousingManager.Instance()->IndoorTerritory->HouseId;
+            ImGui.Text($"HouseId: {hausInfo.Id}");
+            ImGui.Text($"Territory: {hausInfo.TerritoryTypeId}");
+            ImGui.Text($"WorldId: {hausInfo.WorldId}");
+            ImGui.Text($"WardIdx: {hausInfo.WardIndex}");
+            ImGui.Text($"PlotIdx: {hausInfo.PlotIndex}");
+            ImGui.Text($"RoomNumber: {hausInfo.RoomNumber}");
+            ImGui.Text($"IsApartment: {hausInfo.IsApartment}");
+            if (hausInfo.IsApartment)
+            {
+                ImGui.Text($"ApartmentDivision: {hausInfo.ApartmentDivision}");
+            }
+            ImGui.Text($"IsWorkshop: {hausInfo.IsWorkshop}");
+
+        }
     }
 
     private bool HomepageSelectable(string label, FontAwesomeIcon icon, Vector2 region, bool hovered = false)

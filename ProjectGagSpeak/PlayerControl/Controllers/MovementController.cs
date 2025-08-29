@@ -72,14 +72,14 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
             _detours.DisableFullMovementLock();
         }
 
-        // if we should ban mouse movement, but it is not active, activate it.
-        if (_cache.BlockMovementKeys && !(_detours.NoAutoMoveActive && _detours.NoMouseMovementActive))
+        var shouldBlock = _cache.BlockMovementKeys || _cache.InLifestreamTask;
+        var areBlocksActive = _detours.NoAutoMoveActive && _detours.NoMouseMovementActive;
+        if (shouldBlock && !areBlocksActive)
         {
             _detours.NoAutoMoveActive = true;
             _detours.NoMouseMovementActive = true;
         }
-        // if we should not ban mouse movement, but it is active, disable it.
-        else if (!_cache.BlockMovementKeys && !(!_detours.NoAutoMoveActive && !_detours.NoMouseMovementActive))
+        else if (!shouldBlock && areBlocksActive)
         {
             _detours.NoAutoMoveActive = false;
             _detours.NoMouseMovementActive = false;

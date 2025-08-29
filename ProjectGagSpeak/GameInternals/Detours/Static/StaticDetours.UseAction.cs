@@ -29,10 +29,6 @@ public unsafe partial class StaticDetours
     /// <returns> True if the action should execute, false if it should not.</returns>
     private unsafe bool UseActionDetour(ActionManager* am, ActionType type, uint acId, ulong targetId, uint extraParam, UseActionMode mode, uint comboRouteId, bool* outOptAreaTargeted)
     {
-        // Prevent actions if the player is immobile.
-        if (_controlCache.BlockActions)
-            return false;
-
         if (_controlCache.BlockTeleportActions)
         {
             // check if we are trying to hit teleport or return from hotbars /  menus
@@ -42,6 +38,9 @@ public unsafe partial class StaticDetours
             if (type is ActionType.Action && acId is 5 or 6 or 11408)
                 return false;
         }
+
+        if (_controlCache.BlockActions)
+            return false;
 
         // Return original if not an action we can put arousal delay on.
         if (type is not ActionType.Action || acId <= 7)

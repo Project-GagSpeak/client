@@ -13,6 +13,7 @@ namespace GagSpeak;
 /// </summary>
 public static unsafe class HcCommonTaskFuncs
 {
+    private static Vector3 _prevPlayerPos = Vector3.Zero;
     public static bool TargetNode(Func<IGameObject> getObj)
     {
         // if the player is not interactable return false.
@@ -38,7 +39,6 @@ public static unsafe class HcCommonTaskFuncs
 
     public static bool ApproachNode(Func<IGameObject> getObj, float minDistance = 4f)
     {
-        var _prevPos = Vector3.Zero;
         // obtain the object from the function caller.
         var obj = getObj();
         // if the object is null, or the player is not interactable, return false.
@@ -49,7 +49,7 @@ public static unsafe class HcCommonTaskFuncs
         if (AgentMap.Instance()->IsPlayerMoving)
         {
             var minSpeedAllowed = Control.Instance()->IsWalking ? 0.015f : 0.05f;
-            // Svc.Logger.Information($"Speed is {PlayerData.DistanceTo(_prevPos)} yalm/s");
+            // Svc.Logger.Information($"Speed is {PlayerData.DistanceTo(_prevPlayerPos)} yalm/s");
             if (PlayerData.DistanceTo(obj) < minDistance && NodeThrottler.Throttle("HcTaskFunc.AutoMoveOff", 200))
                 ChatService.SendCommand("automove off");
 
@@ -57,14 +57,14 @@ public static unsafe class HcCommonTaskFuncs
             else if (HcTaskManager.ElapsedTime > 500 && !PlayerData.IsJumping)
             {
                 // try to jump if our speed is slow enough.
-                if (PlayerData.DistanceTo(_prevPos) < minSpeedAllowed && NodeThrottler.Throttle("HcTaskFunc.Jump", 1250))
+                if (PlayerData.DistanceTo(_prevPlayerPos) < minSpeedAllowed && NodeThrottler.Throttle("HcTaskFunc.Jump", 1250))
                 {
                     ChatService.SendGeneralActionCommand(2); // Jumping!
                     Svc.Logger.Verbose("Jumping to try and get unstuck.");
                 }
             }
 
-            _prevPos = PlayerData.Object.Position;
+            _prevPlayerPos = PlayerData.Object.Position;
             // return false, as we are still moving.
             return false;
         }

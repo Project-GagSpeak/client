@@ -35,6 +35,16 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
     private readonly MufflerService _muffler;
     private readonly OnFrameworkService _frameworkUtils;
 
+    private static MoveOverrides _moveOverrides = null!;
+    public static MoveOverrides MoveOverrides
+    {
+        get
+        {
+            _moveOverrides ??= new MoveOverrides();
+            return _moveOverrides;
+        }
+    }
+
     public StaticDetours(ILogger<StaticDetours> logger, GagspeakMediator mediator,
         ClientData clientData, PlayerControlCache controlCache, GagRestrictionManager gags, 
         GlamourHandler glamour, LootHandler loot, TriggerHandler trigger, MufflerService muffler, 
@@ -61,7 +71,7 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
         ItemInteractedHook = Svc.Hook.HookFromAddress<TargetSystem.Delegates.InteractWithObject>((nint)TargetSystem.MemberFunctionPointers.InteractWithObject, ItemInteractedDetour);
         GearsetInternalHook = Svc.Hook.HookFromAddress<RaptureGearsetModule.Delegates.EquipGearsetInternal>((nint)RaptureGearsetModule.MemberFunctionPointers.EquipGearsetInternal, GearsetInternalDetour);
         SetHardTargetHook = Svc.Hook.HookFromAddress<TargetSystem.Delegates.SetHardTarget>((nint)TargetSystem.MemberFunctionPointers.SetHardTarget, SetHardTargetDetour);
-        
+
         EnableHooks();
     }
 
@@ -103,8 +113,9 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-
         Logger.LogInformation("Disabling all StaticDetours and their hooks.");
+
+        _moveOverrides?.Dispose();
 
         ActionEffectHook.SafeDispose();
         ProcessEmoteHook.SafeDispose();

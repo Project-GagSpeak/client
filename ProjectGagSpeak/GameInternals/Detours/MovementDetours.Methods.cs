@@ -11,17 +11,25 @@ namespace GagSpeak.GameInternals.Detours;
 #pragma warning disable CS0649 // Missing XML comment for publicly visible type or member
 public partial class MovementDetours : IDisposable
 {
-    public unsafe delegate void AutoMoveUpdateDelegate(IntPtr unk1, IntPtr unk2);
+    public unsafe delegate void AutoMoveUpdateDelegate(UnkTargetFollowStruct* unk1, IntPtr unk2);
     [Signature(Signatures.UnkAutoMoveUpdate, DetourName = nameof(AutoMoveUpdateDetour), Fallibility = Fallibility.Auto)]
     private Hook<AutoMoveUpdateDelegate> AutoMoveUpdateHook = null!;
-    public unsafe void AutoMoveUpdateDetour(IntPtr unk1, IntPtr unk2)
+    public unsafe void AutoMoveUpdateDetour(UnkTargetFollowStruct* unk1, IntPtr unk2)
     {
-        // Svc.Logger.Warning($"Detouring [A1: ({unk1.ToString("X")}) && A2: ({unk2.ToString("X")})");
+        // Svc.Logger.Warning($"Detouring [A1: ({((IntPtr)unk1).ToString("X")}) && A2: ({unk2.ToString("X")})");
+        // allow auto run if we are not casting and in a lifestream task.
+        if (_cache.InLifestreamTask && !Control.Instance()->LocalPlayer->IsCasting)
+        {
+            AutoMoveUpdateHook?.Original(unk1, unk2);
+            return;
+        }
+
         if (*(byte*)(unk2 + 8) == 3)
         {
             Svc.Logger.Information("Attempted to request AutoMove!");
             return;
         }
+
         AutoMoveUpdateHook?.Original(unk1, unk2);
     }
 
@@ -43,7 +51,6 @@ public partial class MovementDetours : IDisposable
     private unsafe void MovementDirectionUpdate(MoveControllerSubMemberForMine* thisx, float* wishdir_h, float* wishdir_v, float* rotatedir, byte* align_with_camera, byte* autorun, byte dont_rotate_with_camera)
     {
         MoveUpdateHook?.Original(thisx, wishdir_h, wishdir_v, rotatedir, align_with_camera, autorun, dont_rotate_with_camera);
-
         if (thisx->Unk_0x3F != 0)
         {
             thisx->Unk_0x3F = 0;

@@ -1,6 +1,7 @@
 using CkCommons;
 using GagSpeak.GameInternals;
 using GagSpeak.GameInternals.Addons;
+using GagSpeak.GameInternals.Detours;
 using GagSpeak.Interop;
 using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
@@ -12,6 +13,7 @@ using GagSpeak.State.Caches;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak.State.Handlers;
 
@@ -43,6 +45,7 @@ public class PlayerCtrlHandler
         _overlay = overlay;
         _hcTasks = hcTasks;
         _kinksters = kinksters;
+        _cachedPlayerMoveMode = Svc.GameConfig.UiControl.TryGetUInt("MoveMode", out var mode) && mode == 1 ? MovementMode.Legacy : MovementMode.Standard;
     }
 
     public async void ApplyHypnoEffect(UserData enactor, HypnoticEffect effect, DateTimeOffset expireTimeUTC, string? image)
@@ -165,25 +168,29 @@ public class PlayerCtrlHandler
         _logger.LogInformation($"[{enactor.AliasOrUID}] Enabled your IndoorConfinement!", LoggerType.HardcoreMovement);
         // Standard await for player to load.
         var doLifestreamMethod = address is not null && IpcCallerLifestream.APIAvailable;
-        var taskCtrlFlags = doLifestreamMethod 
-            ? HcTaskControl.InLifestreamTask | HcTaskControl.LockThirdPerson | HcTaskControl.BlockAllKeys | HcTaskControl.DoConfinementPrompts
-            : HcTaskControl.LockThirdPerson | HcTaskControl.BlockAllKeys | HcTaskControl.DoConfinementPrompts;
-        var timeout = doLifestreamMethod ? 120000 : 30000;
-        // enqueue the task collection based on if we are doing lifestream of not.
-        _hcTasks.CreateCollection("Travel To Location", new(taskCtrlFlags, timeout))
-            .Add(_hcTasks.CreateBranch(() => doLifestreamMethod, "LifestreamTravelTask")
-                .SetTrueTask(_hcTasks.CreateGroup("TravelTaskGroup")
-                    .Add(HcCommonTaskFuncs.WaitForPlayerLoading)
-                    .Add(() => _ipc.GoToAddress(address!.AsTuple()))
-                    .Add(() => !_ipc.IsCurrentlyBusy())
-                    .AsGroup())
-                .AsBranch())
-            .Add(_hcTasks.CreateBranch(HcTaskUtils.IsOutside, "AppraochNearestNode")
-                .SetTrueTask(HcApproachNearestHousing.GetTaskCollection(_hcTasks))
-                .AsBranch())
-            .Add(new HardcoreTask(() => _mediator.Publish(new HcStateCacheChanged())))
-            .Enqueue();
+        var taskCtrlFlags = HcTaskControl.LockThirdPerson | HcTaskControl.BlockAllKeys | HcTaskControl.DoConfinementPrompts;
+        if (doLifestreamMethod) taskCtrlFlags |= HcTaskControl.InLifestreamTask;
 
+        // enqueue the task collection based on if we are doing lifestream of not.
+        Svc.Framework.RunOnFrameworkThread(() =>
+        {
+            _hcTasks.CreateCollection("Travel To Location", HcTaskConfiguration.Branch with { Flags = taskCtrlFlags })
+                .Add(_hcTasks.CreateBranch(() => doLifestreamMethod, "LifestreamTravelTask", HcTaskConfiguration.Branch)
+                    .SetTrueTask(_hcTasks.CreateGroup("TravelTaskGroup", HcTaskConfiguration.Default with { TimeoutAt = 120000 })
+                        .Add(HcCommonTaskFuncs.WaitForPlayerLoading)
+                        .Add(() => _ipc.GoToAddress(address!.AsTuple()))
+                        .Add(() => !_ipc.IsCurrentlyBusy())
+                        .AsGroup())
+                    .AsBranch())
+                .Add(_hcTasks.CreateBranch(() => doLifestreamMethod && HcApproachNearestHousing.AtHouseButMustBeCloser(), "Close Gap For Arrival")
+                    .SetTrueTask(new HardcoreTask(HcApproachNearestHousing.MoveToAcceptableRange, HcTaskConfiguration.Rapid with { OnEnd = () => StaticDetours.MoveOverrides.Disable() }))
+                    .AsBranch())
+                .Add(_hcTasks.CreateBranch(HcTaskUtils.IsOutside, "AppraochNearestNode", HcTaskConfiguration.Short)
+                    .SetTrueTask(HcApproachNearestHousing.GetTaskCollection(_hcTasks))
+                    .AsBranch())
+                .Add(new HardcoreTask(() => _mediator.Publish(new HcStateCacheChanged()), HcTaskConfiguration.Quick))
+                .Enqueue();
+        });
         _logger.LogDebug($"Enqueued Hardcore Task Stack for Indoor Confinement!", LoggerType.HardcoreMovement);
         GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.Confinement, true, enactor, MainHub.UID);
     }
