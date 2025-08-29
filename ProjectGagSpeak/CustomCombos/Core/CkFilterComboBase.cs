@@ -10,6 +10,8 @@ namespace GagSpeak.CustomCombos;
 
 public abstract class CkFilterComboBase<T>
 {
+    private const CFlags heightMask = CFlags.HeightSmall | CFlags.HeightRegular | CFlags.HeightLarge | CFlags.HeightLargest;
+
     private readonly HashSet<uint> _popupState = [];
 
     public readonly IReadOnlyList<T> Items;
@@ -130,9 +132,11 @@ public abstract class CkFilterComboBase<T>
     private void DrawCombo(string label, string preview, string tooltip, int currentSelected, float previewWidth, float itemHeight,
         CFlags flags, uint? customSearchBg = null)
     {
+        if ((flags & heightMask) == 0)
+            flags |= CFlags.HeightLarge;
+
         var id = ImGui.GetID(label);
         ImGui.SetNextItemWidth(previewWidth);
-        flags |= CFlags.HeightLarge;
         using var combo = ImRaii.Combo(label, preview, flags);
         PostCombo(previewWidth);
         using (var dis = ImRaii.Enabled())

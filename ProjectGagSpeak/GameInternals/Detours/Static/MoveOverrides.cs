@@ -10,6 +10,7 @@ using GagSpeak.PlayerControl;
 using GagSpeak.Services;
 
 namespace GagSpeak.GameInternals.Detours;
+// made static in StaticDetours for multi-access, but idealy we should place it into movement detours, so they can be manually toggled.
 public unsafe class MoveOverrides : IDisposable
 { 
     public bool InMoveTask => OverrideCamera || OverrideMoveInput;

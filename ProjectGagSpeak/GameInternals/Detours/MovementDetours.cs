@@ -45,6 +45,7 @@ public partial class MovementDetours : IDisposable
         {
             if (value) MoveUpdateHook.Enable();
             else MoveUpdateHook.Disable();
+            MoveUpdateHook.Enable(); 
         }
     }
 
@@ -56,6 +57,9 @@ public partial class MovementDetours : IDisposable
         AutoMoveUpdateHook.SafeDispose();
         UnfollowHook.SafeDispose();
         MoveUpdateHook.SafeDispose();
+
+        //UNK_sub_141719E40Hook.SafeDispose();
+        // UNK_sub_14171A220Hook.SafeDispose();
     }
 
     public void EnableFullMovementLock()

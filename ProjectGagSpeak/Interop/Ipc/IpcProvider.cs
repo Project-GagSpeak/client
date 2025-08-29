@@ -1,3 +1,4 @@
+using CkCommons;
 using Dalamud.Plugin.Ipc;
 using GagSpeak.Kinksters;
 using GagSpeak.Kinksters.Handlers;
@@ -28,24 +29,35 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
     /// <summary> The shared list of handles players from the GagSpeakPlugin. Format provides the player name and moodles permissions. </summary>
     /// <remarks> String Stored is in format [Player Name@World] </remarks>
     /// </summary>
-    private ICallGateProvider<List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)>>? _handledVisiblePairs;
+    private ICallGateProvider<List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)>>? HandledVisiblePairs;
 
     /// <summary>
     /// Obtains an ApplyStatusToPair message from Moodles, and invokes the update to the player if permissions allow it.
     /// <para> THIS WILL NOT WORK IF THE PAIR HAS NOT GIVEN YOU PERMISSION TO APPLY </para>
     /// </summary>
-    private ICallGateProvider<string, string, List<MoodlesStatusInfo>, bool, object?>? _applyStatusesToPairRequest;
+    private ICallGateProvider<string, string, List<MoodlesStatusInfo>, bool, object?>? ApplyStatusesToPairRequest;
 
     /// <summary>
     /// Create an action event that can send off a MoodleStatusInfo tuple to other plugins and inform them that our information is updated.
     /// </summary>
-    private static ICallGateProvider<MoodlesStatusInfo, object?>? GagSpeakApplyMoodleStatus; // ACTION
-    private static ICallGateProvider<List<MoodlesStatusInfo>, object?>? GagSpeakApplyMoodleStatusList; // ACTION
+    private static ICallGateProvider<MoodlesStatusInfo, object?>?       ApplyMoodleStatus;      // ACTION
+    private static ICallGateProvider<List<MoodlesStatusInfo>, object?>? ApplyMoodleStatusList;  // ACTION
 
-    private static ICallGateProvider<int>? GagSpeakApiVersion; // FUNC 
-    private static ICallGateProvider<object>? GagSpeakListUpdated; // ACTION
-    private static ICallGateProvider<object>? GagSpeakReady; // FUNC
-    private static ICallGateProvider<object>? GagSpeakDisposing; // FUNC
+    private static ICallGateProvider<int>?    ApiVersion; // FUNC 
+    private static ICallGateProvider<object>? ListUpdated; // ACTION
+    private static ICallGateProvider<object>? Ready; // FUNC
+    private static ICallGateProvider<object>? Disposing; // FUNC
+    private static ICallGateProvider<string, List<MoodlesStatusInfo>, object?>? StatusesAppliedByPair; // ACTION
+
+    /// <summary>
+    ///     The following exists for Glyceri's desired memes.
+    /// </summary>
+    private static ICallGateProvider<Guid, string, object?>? AddOrUpdateStatusByName;
+    private static ICallGateProvider<Guid, string, object?>? ApplyPresetByName;
+    private static ICallGateProvider<List<Guid>, string, object?>? RemoveMoodlesByName;
+    private static ICallGateProvider<string, string, object?>? SetStatusManagerByName;
+    private static ICallGateProvider<string, object?>? ClearStatusManagerByName;
+
 
     public IpcProvider(ILogger<IpcProvider> logger, GagspeakMediator mediator,
         KinksterManager pairManager, OnFrameworkService frameworkUtils)
@@ -91,25 +103,31 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
     {
         _logger.LogInformation("Starting IpcProviderService");
         // init API
-        GagSpeakApiVersion = Svc.PluginInterface.GetIpcProvider<int>("GagSpeak.GetApiVersion");
+        ApiVersion = Svc.PluginInterface.GetIpcProvider<int>("GagSpeak.GetApiVersion");
         // init Events
-        GagSpeakReady = Svc.PluginInterface.GetIpcProvider<object>("GagSpeak.Ready");
-        GagSpeakDisposing = Svc.PluginInterface.GetIpcProvider<object>("GagSpeak.Disposing");
+        Ready = Svc.PluginInterface.GetIpcProvider<object>("GagSpeak.Ready");
+        Disposing = Svc.PluginInterface.GetIpcProvider<object>("GagSpeak.Disposing");
         // init Getters
-        _handledVisiblePairs = Svc.PluginInterface.GetIpcProvider<List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)>>("GagSpeak.GetHandledVisiblePairs");
+        HandledVisiblePairs = Svc.PluginInterface.GetIpcProvider<List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)>>("GagSpeak.GetHandledVisiblePairs");
         // init appliers
-        _applyStatusesToPairRequest = Svc.PluginInterface.GetIpcProvider<string, string, List<MoodlesStatusInfo>, bool, object?>("GagSpeak.ApplyStatusesToPairRequest");
-        // init enactors
-        GagSpeakListUpdated = Svc.PluginInterface.GetIpcProvider<object>("GagSpeak.VisiblePairsUpdated");
-        GagSpeakApplyMoodleStatus = Svc.PluginInterface.GetIpcProvider<MoodlesStatusInfo, object?>("GagSpeak.ApplyMoodleStatus");
-        GagSpeakApplyMoodleStatusList = Svc.PluginInterface.GetIpcProvider<List<MoodlesStatusInfo>, object?>("GagSpeak.ApplyMoodleStatusList");
+        ApplyStatusesToPairRequest = Svc.PluginInterface.GetIpcProvider<string, string, List<MoodlesStatusInfo>, bool, object?>("GagSpeak.ApplyStatusesToPairRequest");
+        ListUpdated = Svc.PluginInterface.GetIpcProvider<object>("GagSpeak.VisiblePairsUpdated");
+        ApplyMoodleStatus = Svc.PluginInterface.GetIpcProvider<MoodlesStatusInfo, object?>("GagSpeak.ApplyMoodleStatus");
+        ApplyMoodleStatusList = Svc.PluginInterface.GetIpcProvider<List<MoodlesStatusInfo>, object?>("GagSpeak.ApplyMoodleStatusList");
+        StatusesAppliedByPair = Svc.PluginInterface.GetIpcProvider<string, List<MoodlesStatusInfo>, object?>("GagSpeak.StatusesAppliedByPair");
+
+        AddOrUpdateStatusByName = Svc.PluginInterface.GetIpcProvider<Guid, string, object?>("GagSpeak.AddOrUpdateMoodleByName");
+        ApplyPresetByName = Svc.PluginInterface.GetIpcProvider<Guid, string, object?>("GagSpeak.ApplyPresetByName");
+        RemoveMoodlesByName = Svc.PluginInterface.GetIpcProvider<List<Guid>, string, object?>("GagSpeak.RemoveMoodlesByName");
+        SetStatusManagerByName = Svc.PluginInterface.GetIpcProvider<string, string, object?>("GagSpeak.SetStatusManagerByName");
+        ClearStatusManagerByName = Svc.PluginInterface.GetIpcProvider<string, object?>("GagSpeak.ClearStatusManagerByName");
 
         // register api
-        GagSpeakApiVersion.RegisterFunc(() => GagspeakApiVersion);
+        ApiVersion.RegisterFunc(() => GagspeakApiVersion);
         // register getters
-        _handledVisiblePairs.RegisterFunc(GetVisiblePairs);
+        HandledVisiblePairs.RegisterFunc(GetVisiblePairs);
         // register appliers
-        _applyStatusesToPairRequest.RegisterAction(HandleApplyStatusesToPairRequest);
+        ApplyStatusesToPairRequest.RegisterAction(HandleApplyStatusesToPairRequest);
 
         _logger.LogInformation("Started IpcProviderService");
         NotifyReady();
@@ -122,25 +140,31 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
         _logger.LogDebug("Stopping IpcProvider Service");
         NotifyDisposing();
 
-        GagSpeakApiVersion?.UnregisterFunc();
-        GagSpeakReady?.UnregisterFunc();
-        GagSpeakDisposing?.UnregisterFunc();
+        ApiVersion?.UnregisterFunc();
+        Ready?.UnregisterFunc();
+        Disposing?.UnregisterFunc();
 
-        _handledVisiblePairs?.UnregisterFunc();
-        _applyStatusesToPairRequest?.UnregisterAction();
+        HandledVisiblePairs?.UnregisterFunc();
+        ApplyStatusesToPairRequest?.UnregisterAction();
+        ListUpdated?.UnregisterAction();
+        ApplyMoodleStatus?.UnregisterAction();
+        ApplyMoodleStatusList?.UnregisterAction();
+        StatusesAppliedByPair?.UnregisterAction();
 
-        GagSpeakListUpdated?.UnregisterAction();
-        GagSpeakApplyMoodleStatus?.UnregisterAction();
-        GagSpeakApplyMoodleStatusList?.UnregisterAction();
+        AddOrUpdateStatusByName?.UnregisterAction();
+        ApplyPresetByName?.UnregisterAction();
+        RemoveMoodlesByName?.UnregisterAction();
+        SetStatusManagerByName?.UnregisterAction();
+        ClearStatusManagerByName?.UnregisterAction();
 
         Mediator.UnsubscribeAll(this);
 
         return Task.CompletedTask;
     }
 
-    private static void NotifyReady() => GagSpeakReady?.SendMessage();
-    private static void NotifyDisposing() => GagSpeakDisposing?.SendMessage();
-    private static void NotifyListChanged() => GagSpeakListUpdated?.SendMessage();
+    private static void NotifyReady() => Ready?.SendMessage();
+    private static void NotifyDisposing() => Disposing?.SendMessage();
+    private static void NotifyListChanged() => ListUpdated?.SendMessage();
 
     private List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)> GetVisiblePairs()
     {
@@ -185,13 +209,37 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
     ///     This helps account for trying on Moodle Presets, or applying the preset's StatusTuples. <para />
     ///     Method is invoked via GagSpeak's IpcProvider to prevent miss-use of bypassing permissions.
     /// </summary>
-    public void ApplyStatusTuple(MoodlesStatusInfo status) => GagSpeakApplyMoodleStatus?.SendMessage(status);
+    public void ApplyStatusTuple(MoodlesStatusInfo status) => ApplyMoodleStatus?.SendMessage(status);
 
     /// <summary>
     ///     Applies a group of <see cref="MoodlesStatusInfo"/> tuples to the CLIENT ONLY via Moodles. <para />
     ///     This helps account for trying on Moodle Presets, or applying the preset's StatusTuples. <para />
     ///     Method is invoked via GagSpeak's IpcProvider to prevent miss-use of bypassing permissions.
     /// </summary>
-    public void ApplyStatusTuples(IEnumerable<MoodlesStatusInfo> statuses) => GagSpeakApplyMoodleStatusList?.SendMessage(statuses.ToList());
+    public void ApplyStatusTuples(IEnumerable<MoodlesStatusInfo> statuses) => ApplyMoodleStatusList?.SendMessage(statuses.ToList());
+
+    // Applied statuses sent by another kinkster, intended to be applied onto us.
+    public void ApplyKinkstersStatusesToClient(string kinksterName, IEnumerable<MoodlesStatusInfo> statuses)
+        => StatusesAppliedByPair?.SendMessage(kinksterName, statuses.ToList());
+
+    // AddOrUpdateStatusByName
+    public void AddOrUpdateStatus(Guid statusGuid, string playerNameWithWorld)
+        => AddOrUpdateStatusByName?.SendMessage(statusGuid, playerNameWithWorld);
+
+    // ApplyPresetByName
+    public void ApplyPreset(Guid presetGuid, string playerNameWithWorld)
+        => ApplyPresetByName?.SendMessage(presetGuid, playerNameWithWorld);
+
+    // RemoveMoodlesByName
+    public void RemoveMoodles(List<Guid> statusGuids)
+        => RemoveMoodlesByName?.SendMessage(statusGuids, PlayerData.NameWithWorld);
+
+    // SetStatusManagerByName
+    public void SetStatusManager(string statusManagerString, string playerNameWithWorld)
+        => SetStatusManagerByName?.SendMessage(statusManagerString, playerNameWithWorld);
+
+    // ClearStatusManagerByName
+    public void ClearStatusManager(string playerNameWithWorld)
+        => ClearStatusManagerByName?.SendMessage(playerNameWithWorld);
 }
 
