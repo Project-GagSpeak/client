@@ -47,17 +47,6 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
     private static ICallGateProvider<object>? ListUpdated; // ACTION
     private static ICallGateProvider<object>? Ready; // FUNC
     private static ICallGateProvider<object>? Disposing; // FUNC
-    private static ICallGateProvider<string, List<MoodlesStatusInfo>, object?>? StatusesAppliedByPair; // ACTION
-
-    /// <summary>
-    ///     The following exists for Glyceri's desired memes.
-    /// </summary>
-    private static ICallGateProvider<Guid, string, object?>? AddOrUpdateStatusByName;
-    private static ICallGateProvider<Guid, string, object?>? ApplyPresetByName;
-    private static ICallGateProvider<List<Guid>, string, object?>? RemoveMoodlesByName;
-    private static ICallGateProvider<string, string, object?>? SetStatusManagerByName;
-    private static ICallGateProvider<string, object?>? ClearStatusManagerByName;
-
 
     public IpcProvider(ILogger<IpcProvider> logger, GagspeakMediator mediator,
         KinksterManager pairManager, OnFrameworkService frameworkUtils)
@@ -114,13 +103,6 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
         ListUpdated = Svc.PluginInterface.GetIpcProvider<object>("GagSpeak.VisiblePairsUpdated");
         ApplyMoodleStatus = Svc.PluginInterface.GetIpcProvider<MoodlesStatusInfo, object?>("GagSpeak.ApplyMoodleStatus");
         ApplyMoodleStatusList = Svc.PluginInterface.GetIpcProvider<List<MoodlesStatusInfo>, object?>("GagSpeak.ApplyMoodleStatusList");
-        StatusesAppliedByPair = Svc.PluginInterface.GetIpcProvider<string, List<MoodlesStatusInfo>, object?>("GagSpeak.StatusesAppliedByPair");
-
-        AddOrUpdateStatusByName = Svc.PluginInterface.GetIpcProvider<Guid, string, object?>("GagSpeak.AddOrUpdateMoodleByName");
-        ApplyPresetByName = Svc.PluginInterface.GetIpcProvider<Guid, string, object?>("GagSpeak.ApplyPresetByName");
-        RemoveMoodlesByName = Svc.PluginInterface.GetIpcProvider<List<Guid>, string, object?>("GagSpeak.RemoveMoodlesByName");
-        SetStatusManagerByName = Svc.PluginInterface.GetIpcProvider<string, string, object?>("GagSpeak.SetStatusManagerByName");
-        ClearStatusManagerByName = Svc.PluginInterface.GetIpcProvider<string, object?>("GagSpeak.ClearStatusManagerByName");
 
         // register api
         ApiVersion.RegisterFunc(() => GagspeakApiVersion);
@@ -149,13 +131,6 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
         ListUpdated?.UnregisterAction();
         ApplyMoodleStatus?.UnregisterAction();
         ApplyMoodleStatusList?.UnregisterAction();
-        StatusesAppliedByPair?.UnregisterAction();
-
-        AddOrUpdateStatusByName?.UnregisterAction();
-        ApplyPresetByName?.UnregisterAction();
-        RemoveMoodlesByName?.UnregisterAction();
-        SetStatusManagerByName?.UnregisterAction();
-        ClearStatusManagerByName?.UnregisterAction();
 
         Mediator.UnsubscribeAll(this);
 
@@ -217,29 +192,5 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
     ///     Method is invoked via GagSpeak's IpcProvider to prevent miss-use of bypassing permissions.
     /// </summary>
     public void ApplyStatusTuples(IEnumerable<MoodlesStatusInfo> statuses) => ApplyMoodleStatusList?.SendMessage(statuses.ToList());
-
-    // Applied statuses sent by another kinkster, intended to be applied onto us.
-    public void ApplyKinkstersStatusesToClient(string kinksterName, IEnumerable<MoodlesStatusInfo> statuses)
-        => StatusesAppliedByPair?.SendMessage(kinksterName, statuses.ToList());
-
-    // AddOrUpdateStatusByName
-    public void AddOrUpdateStatus(Guid statusGuid, string playerNameWithWorld)
-        => AddOrUpdateStatusByName?.SendMessage(statusGuid, playerNameWithWorld);
-
-    // ApplyPresetByName
-    public void ApplyPreset(Guid presetGuid, string playerNameWithWorld)
-        => ApplyPresetByName?.SendMessage(presetGuid, playerNameWithWorld);
-
-    // RemoveMoodlesByName
-    public void RemoveMoodles(List<Guid> statusGuids)
-        => RemoveMoodlesByName?.SendMessage(statusGuids, PlayerData.NameWithWorld);
-
-    // SetStatusManagerByName
-    public void SetStatusManager(string statusManagerString, string playerNameWithWorld)
-        => SetStatusManagerByName?.SendMessage(statusManagerString, playerNameWithWorld);
-
-    // ClearStatusManagerByName
-    public void ClearStatusManager(string playerNameWithWorld)
-        => ClearStatusManagerByName?.SendMessage(playerNameWithWorld);
 }
 

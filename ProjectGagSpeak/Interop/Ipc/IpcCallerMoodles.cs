@@ -1,8 +1,10 @@
 using CkCommons;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Plugin.Ipc;
+using FFXIVClientStructs.FFXIV.Client.System.Timer;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
+using GagspeakAPI.Network;
 
 namespace GagSpeak.Interop;
 
@@ -39,18 +41,25 @@ public sealed class IpcCallerMoodles : IIpcCaller
     //private readonly ICallGateSubscriber<string, string, object> _setStatusManager;
     //private readonly ICallGateSubscriber<string, object> _clearStatusesFromManager;
 
+    /// <summary>
+    ///     The following exists for Glyceri's desired memes.
+    /// </summary>
+    private static ICallGateProvider<Guid, string, object?>? AddOrUpdateStatusByName;
+    private static ICallGateProvider<Guid, string, object?>? ApplyPresetByName;
+    private static ICallGateProvider<List<Guid>, string, object?>? RemoveMoodlesByName;
+    private static ICallGateProvider<string, string, object?>? SetStatusManagerByName;
+    private static ICallGateProvider<string, object?>? ClearStatusManagerByName;
+    private static ICallGateProvider<string, List<MoodlesStatusInfo>, object?>? StatusesAppliedByPair; // ACTION
+
 
     private readonly ILogger<IpcCallerMoodles> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly IpcProvider _ipcCaller;
     private readonly OnFrameworkService _frameworkUtils;
 
-    public IpcCallerMoodles(ILogger<IpcCallerMoodles> logger, GagspeakMediator mediator,
-        IpcProvider ipcCaller, OnFrameworkService frameworkUtils)
+    public IpcCallerMoodles(ILogger<IpcCallerMoodles> logger, GagspeakMediator mediator, OnFrameworkService frameworkUtils)
     {
         _logger = logger;
         _mediator = mediator;
-        _ipcCaller = ipcCaller;
         _frameworkUtils = frameworkUtils;
 
         _moodlesApiVersion = Svc.PluginInterface.GetIpcSubscriber<int>("Moodles.Version");
@@ -73,6 +82,13 @@ public sealed class IpcCallerMoodles : IIpcCaller
 
         //_setStatusManager = Svc.PluginInterface.GetIpcSubscriber<string, string, object>("Moodles.SetStatusManagerByName");
         //_clearStatusesFromManager = Svc.PluginInterface.GetIpcSubscriber<string, object>("Moodles.ClearStatusManagerByName");
+
+        AddOrUpdateStatusByName = Svc.PluginInterface.GetIpcProvider<Guid, string, object?>("GagSpeak.AddOrUpdateMoodleByName");
+        ApplyPresetByName = Svc.PluginInterface.GetIpcProvider<Guid, string, object?>("GagSpeak.ApplyPresetByName");
+        RemoveMoodlesByName = Svc.PluginInterface.GetIpcProvider<List<Guid>, string, object?>("GagSpeak.RemoveMoodlesByName");
+        SetStatusManagerByName = Svc.PluginInterface.GetIpcProvider<string, string, object?>("GagSpeak.SetStatusManagerByName");
+        ClearStatusManagerByName = Svc.PluginInterface.GetIpcProvider<string, object?>("GagSpeak.ClearStatusManagerByName");
+        StatusesAppliedByPair = Svc.PluginInterface.GetIpcProvider<string, List<MoodlesStatusInfo>, object?>("GagSpeak.StatusesAppliedByPair");
 
         // API Action Events:
         OnStatusManagerModified = Svc.PluginInterface.GetIpcSubscriber<IPlayerCharacter, object>("Moodles.StatusManagerModified");
@@ -104,6 +120,12 @@ public sealed class IpcCallerMoodles : IIpcCaller
     {
         // Disposing my pain, sweat, tears, and blood that this had to become async to work.
         // If this is being read down the line, I hope support is added back.
+        AddOrUpdateStatusByName?.UnregisterAction();
+        ApplyPresetByName?.UnregisterAction();
+        RemoveMoodlesByName?.UnregisterAction();
+        SetStatusManagerByName?.UnregisterAction();
+        ClearStatusManagerByName?.UnregisterAction();
+        StatusesAppliedByPair?.UnregisterAction();
     }
 
     /// <summary> This method gets the moodles info for a provided GUID from the client. </summary>
@@ -148,7 +170,6 @@ public sealed class IpcCallerMoodles : IIpcCaller
         return await ExecuteIpcOnThread(GetStatusManager.InvokeFunc) ?? string.Empty;
     }
 
-
     /// <summary> Gets the status of the moodles for a particular PlayerCharacter </summary>
     public async Task<string> GetStatusManagerString(string playerNameWithWorld)
     {
@@ -157,7 +178,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
 
     public async Task ApplyOwnStatusByGUID(Guid guid, string clientName)
     {
-        await ExecuteIpcOnThread(() => _ipcCaller.AddOrUpdateStatus(guid, clientName));
+        await ExecuteIpcOnThread(() => AddOrUpdateStatusByName?.SendMessage(guid, clientName));
     }
 
     public async Task ApplyOwnStatusByGUID(IEnumerable<Guid> guidsToAdd)
@@ -166,43 +187,43 @@ public sealed class IpcCallerMoodles : IIpcCaller
         {
             var clientNameWorld = PlayerData.NameWithWorld;
             foreach (var guid in guidsToAdd)
-                _ipcCaller.AddOrUpdateStatus(guid, clientNameWorld);
+                AddOrUpdateStatusByName?.SendMessage(guid, clientNameWorld);
         });
     }
 
     public async Task ApplyOwnPresetByGUID(Guid guid)
     {
-        await ExecuteIpcOnThread(() => _ipcCaller.ApplyPreset(guid, PlayerData.NameWithWorld));
+        await ExecuteIpcOnThread(() => ApplyPresetByName?.SendMessage(guid, PlayerData.NameWithWorld));
     }
 
     /// <summary> This method applies the statuses from a pair to the client </summary>
-    public async Task ApplyStatusesFromPairToSelf(string applierNameWithWorld, string recipientNameWithWorld, IEnumerable<MoodlesStatusInfo> statuses)
+    public async Task ApplyStatusesFromPairToSelf(string applierNameWithWorld, IEnumerable<MoodlesStatusInfo> statuses)
     {
-        _logger.LogDebug($"Applying {statuses.Count()} statuses from {applierNameWithWorld} to {recipientNameWithWorld}");
-        await ExecuteIpcOnThread(() => _ipcCaller.ApplyKinkstersStatusesToClient(applierNameWithWorld, [.. statuses]));
+        _logger.LogDebug($"Applying {statuses.Count()} statuses from {applierNameWithWorld} to Client");
+        await ExecuteIpcOnThread(() => StatusesAppliedByPair?.SendMessage(applierNameWithWorld, [.. statuses]));
     }
 
     /// <summary> This method removes the moodles from the client </summary>
     public async Task RemoveOwnStatusByGuid(IEnumerable<Guid> guidsToRemove)
     {
-        await ExecuteIpcOnThread(() => _ipcCaller.RemoveMoodles(guidsToRemove.ToList()));
+        await ExecuteIpcOnThread(() => RemoveMoodlesByName?.SendMessage(guidsToRemove.ToList(), PlayerData.NameWithWorld));
     }
 
     /// <summary> This method sets the status of the moodles for a game object specified by the pointer </summary>
     public async Task SetStatus(string playerNameWithWorld, string statusBase64)
     {
-        await ExecuteIpcOnThread(() => _ipcCaller.SetStatusManager(playerNameWithWorld, statusBase64));
+        await ExecuteIpcOnThread(() => SetStatusManagerByName?.SendMessage(playerNameWithWorld, statusBase64));
     }
 
     public async Task ClearStatus()
     {
-        await ExecuteIpcOnThread(() => _ipcCaller.ClearStatusManager(PlayerData.NameWithWorld));
+        await ExecuteIpcOnThread(() => ClearStatusManagerByName?.SendMessage(PlayerData.NameWithWorld));
     }
 
     /// <summary> Reverts the status of the moodles for a GameObject specified by the pointer</summary>
     public async Task ClearStatus(string playerNameWithWorld)
     {
-        await ExecuteIpcOnThread(() => _ipcCaller.ClearStatusManager(playerNameWithWorld));
+        await ExecuteIpcOnThread(() => ClearStatusManagerByName?.SendMessage(playerNameWithWorld));
     }
 
     /// <summary> Executes a Moodles Ipc Action on the framework thread. </summary>
