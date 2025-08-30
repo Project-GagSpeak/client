@@ -265,8 +265,8 @@ public sealed class KinksterListener
         if (!_kinksters.TryGetKinkster(target, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
         // cache prev state.
-        var prevPerms = kinkster.OwnPerms;
-        var prevAccess = kinkster.OwnPermAccess;
+        var prevPerms = kinkster.OwnPerms with { };
+        var prevAccess = kinkster.OwnPermAccess with { };
 
         // Update.
         kinkster.UserPair.OwnPerms = newPerms;
@@ -274,6 +274,10 @@ public sealed class KinksterListener
 
         _logger.LogDebug($"OWN BulkChangeUnique for [{kinkster.GetNickAliasOrUid()}]", LoggerType.PairDataTransfer);
         _kinksters.RecreateLazy(false);
+
+        var MoodlesChanged = (prevPerms.MoodlePerms != newPerms.MoodlePerms) || (prevPerms.MaxMoodleTime != newPerms.MaxMoodleTime);
+        if (kinkster.IsVisible && MoodlesChanged)
+            _mediator.Publish(new MoodlesPermissionsUpdated(kinkster));
 
         // Handle achievements with changes here.
     }
@@ -283,8 +287,8 @@ public sealed class KinksterListener
         if (!_kinksters.TryGetKinkster(target, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
         // cache prev state.
-        var prevPerms = kinkster.PairPerms;
-        var prevAccess = kinkster.PairPermAccess;
+        var prevPerms = kinkster.PairPerms with { };
+        var prevAccess = kinkster.PairPermAccess with { };
 
         // Update.
         kinkster.UserPair.Perms = newPerms;
@@ -294,7 +298,7 @@ public sealed class KinksterListener
         _kinksters.RecreateLazy(false);
 
         // Handle informing moodles of permission changes.
-        var MoodlesChanged = (prevPerms.MoodlePerms != prevPerms.MoodlePerms) || (kinkster.PairPerms.MaxMoodleTime != kinkster.PairPerms.MaxMoodleTime);
+        var MoodlesChanged = (prevPerms.MoodlePerms != newPerms.MoodlePerms) || (prevPerms.MaxMoodleTime != newPerms.MaxMoodleTime);
         if (kinkster.IsVisible && MoodlesChanged)
             _mediator.Publish(new MoodlesPermissionsUpdated(kinkster));
 
@@ -320,7 +324,7 @@ public sealed class KinksterListener
         if (permName.Equals(nameof(PairPerms.IsPaused)) && prevPauseState != (bool)finalVal)
             _mediator.Publish(new ClearProfileDataMessage(target));
 
-        if (kinkster.IsVisible && permName.Equals(nameof(PairPerms.MoodlePerms)) || permName.Equals(nameof(PairPerms.MaxMoodleTime)))
+        if (permName.Equals(nameof(PairPerms.MoodlePerms)) || permName.Equals(nameof(PairPerms.MaxMoodleTime)))
             _mediator.Publish(new MoodlesPermissionsUpdated(kinkster));
 
         // Achievement if permissions were granted.
@@ -348,8 +352,7 @@ public sealed class KinksterListener
 
         // If moodle permissions updated, notify IpcProvider (Moodles) that we have a change.
         if (permName.Equals(nameof(PairPerms.MoodlePerms)) || permName.Equals(nameof(PairPerms.MaxMoodleTime)))
-            if (_kinksters.GetOnlineUserDatas().Contains(kinkster.UserData))
-                _mediator.Publish(new MoodlesPermissionsUpdated(kinkster));
+            _mediator.Publish(new MoodlesPermissionsUpdated(kinkster));
     }
 
     public void PermChangeAccess(UserData target, UserData enactor, string permName, object newValue)

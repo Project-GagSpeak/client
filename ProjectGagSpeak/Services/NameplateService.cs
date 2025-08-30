@@ -26,7 +26,6 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
     private enum DisplayMode { JobIcon, AboveName }
 
     private readonly MainConfig _config;
-    private readonly ClientData _clientData;
     private readonly GagRestrictionManager _gags;
     private readonly GagspeakEventManager _events;
     private readonly KinksterManager _kinksters;
@@ -38,12 +37,11 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
     private IDalamudTextureWrap GaggedSpeakingIcon;
 
     public NameplateService(ILogger<NameplateService> logger, GagspeakMediator mediator,
-        MainConfig config, ClientData clientData, GagRestrictionManager gags, 
-        GagspeakEventManager events, KinksterManager kinksters, OnFrameworkService frameworkUtils)
+        MainConfig config, GagRestrictionManager gags,  GagspeakEventManager events, KinksterManager kinksters, 
+        OnFrameworkService frameworkUtils)
         : base(logger, mediator)
     {
         _config = config;
-        _clientData = clientData;
         _gags = gags;
         _events = events;
         _kinksters = kinksters;

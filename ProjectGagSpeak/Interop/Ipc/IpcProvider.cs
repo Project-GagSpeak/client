@@ -59,13 +59,13 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
 
         Mediator.Subscribe<MoodlesPermissionsUpdated>(this, (msg) =>
         {
-            // update the visible pair objects with their latest permissions.
-            if (VisiblePairObjects.FirstOrDefault(vpo => vpo.Item1.NameWithWorld == msg.Kinkster.PlayerNameWithWorld) is { } match)
+            // get the idx to update.
+            var idx = VisiblePairObjects.FindIndex(vpo => vpo.Item1.NameWithWorld == msg.Kinkster.PlayerNameWithWorld);
+            if (idx >= 0)
             {
-                // found a match, so update their permission values within the list.
+                _logger.LogInformation($"MoodlesPermissionsUpdated for [{msg.Kinkster.PlayerNameWithWorld}]", LoggerType.IpcGagSpeak);
                 var newPerms = _pairManager.GetMoodlePermsForPairByName(msg.Kinkster.PlayerNameWithWorld);
-                match.Item2 = newPerms.Item1;
-                match.Item3 = newPerms.Item2;
+                VisiblePairObjects[idx] = (VisiblePairObjects[idx].Item1, newPerms.Item1, newPerms.Item2);
                 // inform list change.
                 NotifyListChanged();
             }
@@ -75,14 +75,14 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
 
         Mediator.Subscribe<KinksterGameObjCreatedMessage>(this, (msg) =>
         {
-            _logger.LogInformation("Created Moodles provider for [" + msg.KinksterGameObj.NameWithWorld + "]", LoggerType.IpcGagSpeak);
+            _logger.LogInformation($"MoodlesPermissionsUpdated for [{msg.KinksterGameObj.NameWithWorld}]", LoggerType.IpcGagSpeak);
             var moodlePerms = _pairManager.GetMoodlePermsForPairByName(msg.KinksterGameObj.NameWithWorld);
             VisiblePairObjects.Add((msg.KinksterGameObj, moodlePerms.Item1, moodlePerms.Item2));
             NotifyListChanged();
         });
         Mediator.Subscribe<KinksterGameObjDestroyedMessage>(this, (msg) =>
         {
-            _logger.LogInformation("Removing PairGameObject for [" + msg.KinksterGameObj.NameWithWorld + "]", LoggerType.IpcGagSpeak);
+            _logger.LogInformation($"MoodlesPermissionsUpdated for [{msg.KinksterGameObj.NameWithWorld}]", LoggerType.IpcGagSpeak);
             VisiblePairObjects.RemoveAll(pair => pair.Item1.NameWithWorld == msg.KinksterGameObj.NameWithWorld);
             NotifyListChanged();
         });

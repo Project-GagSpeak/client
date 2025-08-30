@@ -229,12 +229,6 @@ public class SettingsUi : WindowMediatorSubscriberBase
             UiService.SetUITask(async () =>
             {
                 var res = await _hub.ChangeOwnGlobalPerm(nameof(GlobalPerms.WardrobeEnabled), wardrobeEnabled);
-                if (res.ErrorCode is not GagSpeakApiEc.Success)
-                {
-                    _logger.LogError($"Failed to change [WardrobeEnabled] to {wardrobeEnabled}. Error: {res.ErrorCode}", LoggerType.UI);
-                    return;
-                }
-
                 // Otherwise, process the remaining permissions we should forcibly change if the new state is now false.
                 if (!wardrobeEnabled)
                 {

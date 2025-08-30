@@ -13,6 +13,7 @@ public record PairWasRemovedMessage(UserData UserData) : MessageBase; // a messa
 public record TargetPairMessage(Kinkster Pair) : MessageBase; // called when publishing a targeted pair connection (see UI)
 public record MufflerLanguageChanged : MessageBase; // called whenever the client language changes to a new language.
 public record HcStateCacheChanged : MessageBase;
+public record NameplateClientChanged : MessageBase;
 
 
 
