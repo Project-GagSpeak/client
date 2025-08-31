@@ -172,6 +172,22 @@ public class CursedLootStorage : List<CursedItem>, IEditableStorage<CursedItem>
         .ToList();
 
     // Interface Requirements:
+    public CursedItem? ReplaceSource(CursedItem oldItem, CursedItem newItem)
+    {
+        if (oldItem is null || newItem is null)
+            return null;
+
+        int index = IndexOf(oldItem);
+        if (index is -1)
+            return null;
+
+        // Update the object directly. (This will void any references to the old item)
+        this[index] = newItem;
+
+        // return the new item that is set.
+        return this[index];
+    }
+
     public bool TryApplyChanges(CursedItem oldItem, CursedItem changedItem)
     {
         if (changedItem is null)

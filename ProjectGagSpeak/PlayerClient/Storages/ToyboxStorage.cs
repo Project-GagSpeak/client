@@ -80,14 +80,6 @@ public class TriggerStorage : List<Trigger>, IEditableStorage<Trigger>
     public bool TryGetTrigger(Guid id, [NotNullWhen(true)] out Trigger? item)
         => (item = this.FirstOrDefault(x => x.Identifier == id)) != null;
 
-    /// <summary> A mix of FindIndex() and TryGetValue() through the item GUID </summary>
-    /// <param name="id"> the RestraintSet GUID to find the index of in storage. </param>
-    /// <param name="index"> the index of the item in the list (if found). </param>
-    /// <returns> True if the index was found, false if it was not. </returns>
-    /// <remarks> This should be used when updating the full object, and not just its properties. </remarks>
-    public bool TryFindIndexById(Guid id, out int index)
-        => (index = this.FindIndex(x => x.Identifier == id)) != -1;
-
     /// <summary> Informs us if the item is in the storage. </summary>
     public bool Contains(Guid id)
         => this.Any(x => x.Identifier == id);

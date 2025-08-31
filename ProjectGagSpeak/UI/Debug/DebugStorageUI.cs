@@ -858,16 +858,18 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
             ImGuiUtil.DrawTableColumn("Precedence");
             ImGuiUtil.DrawTableColumn(cursedLoot.Precedence.ToString());
             ImGui.TableNextRow();
-            var restrictionRef = cursedLoot.RestrictionRef as RestrictionItem;
-            if (restrictionRef == null)
+            if(cursedLoot is CursedRestrictionItem cursedBindItem)
             {
-                ImGuiUtil.DrawTableColumn("Restriction");
-                ImGuiUtil.DrawTableColumn("null");
-                ImGui.TableNextRow();
-            }
-            else
-            {
-                DrawRestriction(restrictionRef!);
+                if (cursedBindItem.RefItem is null)
+                {
+                    ImGuiUtil.DrawTableColumn("Restriction");
+                    ImGuiUtil.DrawTableColumn("null");
+                    ImGui.TableNextRow();
+                }
+                else
+                {
+                    DrawRestriction(cursedBindItem.RefItem);
+                }
             }
         }
     }

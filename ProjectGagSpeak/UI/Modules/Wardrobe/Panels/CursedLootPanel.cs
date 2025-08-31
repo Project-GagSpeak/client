@@ -123,12 +123,10 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
         ImGui.SetCursorScreenPos(imgDrawPos);
         if (_selector.Selected is not null)
         {
-            if (_selector.Selected!.RestrictionRef is GarblerRestriction gagItem)
-                _activeItemDrawer.DrawFramedImage(gagItem.GagType, imgSize.Y, rounding, 0);
-            else if (_selector.Selected!.RestrictionRef is BlindfoldRestriction blindfoldRestrictItem)
-                _activeItemDrawer.DrawRestrictionImage(blindfoldRestrictItem, imgSize.Y, rounding, false);
-            else if (_selector.Selected!.RestrictionRef is RestrictionItem normalRestrictItem)
-                _activeItemDrawer.DrawRestrictionImage(normalRestrictItem, imgSize.Y, rounding, false);
+            if (_selector.Selected is CursedGagItem gagItem)
+                _activeItemDrawer.DrawFramedImage(gagItem.RefItem.GagType, imgSize.Y, rounding, 0);
+            else if (_selector.Selected is CursedRestrictionItem restriction)
+                _activeItemDrawer.DrawRestrictionImage(restriction.RefItem, imgSize.Y, rounding, false);
         }
 
         void BeginEdits(ImGuiMouseButton b)

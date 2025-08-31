@@ -1,7 +1,6 @@
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Network;
-using System.Runtime.Serialization;
 
 namespace GagSpeak.State.Models;
 

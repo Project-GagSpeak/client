@@ -4,6 +4,7 @@ using GagSpeak.FileSystems;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Caches;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
@@ -45,54 +46,71 @@ public sealed class CursedLootManager : IHybridSavable
     #region Generic Methods
     public CursedItem CreateNew(string lootName)
     {
-        var newItem = new CursedItem()
-        {
+        lootName = RegexEx.EnsureUniqueName(lootName, Storage, (t) => t.Label);
+        var newItem = new CursedGagItem() 
+        { 
             Label = lootName,
-            RestrictionRef = _gags.Storage.Values.First() // Default to BallGag.
+            RefItem = _gags.Storage.Values.First() // Default to BallGag.
         };
-        // Append the item to the storage.
-        Storage.Add(newItem);
         _logger.LogInformation("Created new cursed item: " + lootName, LoggerType.CursedItems);
+        Storage.Add(newItem);
         _saver.Save(this);
         _mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Created, newItem, null));
         return newItem;
     }
 
-    public CursedItem CreateClone(CursedItem clone, string newName)
+    public CursedItem CreateClone(CursedItem other, string newName)
     {
         newName = RegexEx.EnsureUniqueName(newName, Storage, x => x.Label);
-        var newItem = new CursedItem(clone, false) { Label = newName };
-        Storage.Add(newItem);
+        CursedItem clonedItem = other switch
+        {
+            CursedGagItem cgi => new CursedGagItem(cgi, false) { Label = newName },
+            CursedRestrictionItem cri => new CursedRestrictionItem(cri, false) { Label = newName },
+            _ => throw new NotImplementedException("Unknown Cursted Item type."),
+        };
+        Storage.Add(clonedItem);
         _saver.Save(this);
 
-        _logger.LogDebug("Created new cursed item: " + newName, LoggerType.CursedItems);
-        _mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Created, newItem, null));
-        return newItem;
+        _logger.LogInformation("Created new cursed item: " + newName, LoggerType.CursedItems);
+        _mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Created, clonedItem, null));
+        return clonedItem;
+    }
+
+    public void ChangeCursedLootType(CursedItem oldCursedItem, CursedLootKind newType)
+    {
+        if (ItemInEditor is null || (newType is CursedLootKind.Restriction && _restrictions.Storage.Count is 0))
+            return;
+
+        CursedItem convertedLoot = newType switch
+        {
+            CursedLootKind.Gag => new CursedGagItem(oldCursedItem, true) { RefItem = _gags.Storage.Values.First() },
+            CursedLootKind.Restriction => new CursedRestrictionItem(oldCursedItem, true) { RefItem = _restrictions.Storage.First() },
+            _ => throw new NotImplementedException("Unknown cursed loot type."),
+        };
+
+        // Update the editor item to reflect that of the new type.
+        _itemEditor.ItemInEditor = convertedLoot;
+    }
+
+    public void Rename(CursedItem lootItem, string newName)
+    {
+        var prevName = lootItem.Label;
+        newName = RegexEx.EnsureUniqueName(newName, Storage, x => x.Label);
+        lootItem.Label = newName;
+        _saver.Save(this);
+
+        _logger.LogInformation($"Renamed cursed item: {prevName} to {newName}", LoggerType.CursedItems);
+        _mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Renamed, lootItem, prevName));
     }
 
     public void Delete(CursedItem lootItem)
     {
-        // should never be able to remove active restrictions, but if that happens to occur, add checks here.
         if (Storage.Remove(lootItem))
         {
             _logger.LogDebug($"Deleted cursed item: {lootItem.Label}.", LoggerType.CursedItems);
             _mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Deleted, lootItem, null));
             _saver.Save(this);
         }
-    }
-
-    public void Rename(CursedItem lootItem, string newName)
-    {
-        newName = RegexEx.EnsureUniqueName(newName, Storage, x => x.Label);
-
-        var oldName = lootItem.Label;
-        if (oldName == newName || string.IsNullOrWhiteSpace(newName))
-            return;
-
-        lootItem.Label = newName;
-        _logger.LogInformation("Renamed cursed item: " + oldName + " to " + newName, LoggerType.CursedItems);
-        _saver.Save(this);
-        _mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Renamed, lootItem, oldName));
     }
 
     /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
@@ -107,13 +125,17 @@ public sealed class CursedLootManager : IHybridSavable
     {
         if (_itemEditor.SaveAndQuitEditing(out var sourceItem))
         {
-            // _managerCache.UpdateCache(AppliedCursedItems, _mainConfig.Current.CursedItemsApplyTraits);
-            _saver.Save(this);
-
             _logger.LogTrace("Saved changes to Edited CursedItem.");
             _mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Modified, sourceItem, null));
+            _saver.Save(this);
         }
     }
+
+    public void AddFavorite(CursedItem loot) => _favorites.TryAddRestriction(FavoriteIdContainer.CursedLoot, loot.Identifier);
+    public void RemoveFavorite(CursedItem loot) => _favorites.RemoveRestriction(FavoriteIdContainer.CursedLoot, loot.Identifier);
+    #endregion Generic Methods
+
+    public void ForceSave() => _saver.Save(this);
 
     public void TogglePoolState(CursedItem item)
     {
@@ -121,12 +143,6 @@ public sealed class CursedLootManager : IHybridSavable
         _saver.Save(this);
         _mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Modified, item, null));
     }
-
-    public void AddFavorite(CursedItem loot) => _favorites.TryAddRestriction(FavoriteIdContainer.CursedLoot, loot.Identifier);
-    public void RemoveFavorite(CursedItem loot) => _favorites.RemoveRestriction(FavoriteIdContainer.CursedLoot, loot.Identifier);
-    
-    public void ForceSave() => _saver.Save(this);
-    #endregion Generic Methods
 
     // does not relate to the cached item, handle this seperately in the visual listener.
     public void ActivateItem(CursedItem item, DateTimeOffset endTimeUtc)
@@ -136,10 +152,6 @@ public sealed class CursedLootManager : IHybridSavable
         _saver.Save(this);
     }
 
-    /// <summary>
-    ///     Removes the cursed item from its active state, making it inactive once more.
-    /// </summary>
-    /// <returns> the Stored layer, if any. -1 otherwise. </returns>
     public void SetInactive(Guid lootId)
     {
         if (!Storage.TryGetLoot(lootId, out var item))
@@ -189,10 +201,10 @@ public sealed class CursedLootManager : IHybridSavable
         return new JObject()
         {
             ["Version"] = ConfigVersion,
-            ["CursedItems"] = cursedItems,
             ["LockRangeLower"] = LockRangeLower.ToString(),
             ["LockRangeUpper"] = LockRangeUpper.ToString(),
-            ["LockChance"] = LockChance
+            ["LockChance"] = LockChance,
+            ["CursedItems"] = cursedItems,
         }.ToString(Formatting.Indented);
     }
 
@@ -200,11 +212,11 @@ public sealed class CursedLootManager : IHybridSavable
     {
         var file = _fileNames.CursedLoot;
         _logger.LogInformation("Loading in CursedLoot Config for file: " + file);
+        
         Storage.Clear();
 
         var jsonText = "";
         JObject jObject = new();
-
         // if the main file does not exist, attempt to load the text from the backup.
         if (File.Exists(file))
         {
@@ -262,12 +274,27 @@ public sealed class CursedLootManager : IHybridSavable
             return;
 
         // load in all the items.
-        foreach (var cursedItem in lootItemsList)
+        foreach (var lootItemToken in lootItemsList)
         {
-            var readCursedItem = new CursedItem();
-            if (TryLoadLootItem(cursedItem, out var item))
+            try
             {
-                Storage.Add(item);
+                if (!Enum.TryParse(lootItemToken["Type"]?.ToString(), out CursedLootKind lootType))
+                    continue;
+
+                // Otherwise, try and parse it out.
+                CursedItem? lootAbstract = lootType switch
+                {
+                    CursedLootKind.Gag => LoadCursedGag(lootItemToken),
+                    CursedLootKind.Restriction => LoadCursedRestriction(lootItemToken),
+                    _ => throw new NotImplementedException("Unknown Cursed Loot Type found during load."),
+                };
+                // if valid, add it.
+                if (lootAbstract is not null)
+                    Storage.Add(lootAbstract);
+            }
+            catch (Bagagwa ex)
+            {
+                _logger.LogError($"Failed to load in a cursed loot item. removing item!: {ex}");
             }
         }
     }
@@ -279,60 +306,76 @@ public sealed class CursedLootManager : IHybridSavable
     }
 
     // Move this into the cursed loot manager.
-    public bool TryLoadLootItem(JToken? lootObject, [NotNullWhen(true)] out CursedItem? item)
+    public CursedGagItem? LoadCursedGag(JToken? lootObject)
     {
-        item = null;
-        if (lootObject is not JObject jsonObject)
-            return false;
+        if (lootObject is not JObject token)
+            return null;
 
         try
         {
-            var applyTime = jsonObject["AppliedTime"]?.Value<DateTime>() ?? DateTime.MinValue;
-            var releaseTime = jsonObject["ReleaseTime"]?.Value<DateTime>() ?? DateTime.MinValue;
+            var applyTime = token["AppliedTime"]?.Value<DateTime>() ?? DateTime.MinValue;
+            var releaseTime = token["ReleaseTime"]?.Value<DateTime>() ?? DateTime.MinValue;
+            // get the gag by the gagtype.
+            if (token["GagRef"] is not JValue gagRefValue)
+                return null;
 
-            // Attempt to deserialize RestrictionRef
-            IRestriction? restrictionRef = null;
-            if (jsonObject["RestrictionRef"] is JValue restrictionValue)
-            {
-                var restrictionString = restrictionValue.Value<string>();
-                if (Guid.TryParse(restrictionString, out var refGuid))
-                {
-                    if(_restrictions.Storage.TryGetRestriction(refGuid, out var match))
-                        restrictionRef = match;
-                }
-                else if (Enum.TryParse<GagType>(restrictionString, out var gagType))
-                {
-                    // Assign it as a ref to the gag type.
-                    restrictionRef = _gags.Storage[gagType];
-                }
-                else
-                {
-                    throw new Exception("Invalid Restriction Reference!");
-                }
-            }
-            else
-            {
-                throw new Exception("No Restriction Reference was stored here!");
-            }
+            if (!Enum.TryParse<GagType>(gagRefValue.Value<string>(), out var gagType))
+                throw new Exception("Invalid Gag Reference!");
 
+            var gagRef = _gags.Storage[gagType];
             // Initialize CursedItem
-            item = new CursedItem()
+            var item = new CursedGagItem()
             {
-                Identifier = jsonObject["Identifier"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier"),
-                Label = jsonObject["Label"]?.Value<string>() ?? string.Empty,
-                InPool = jsonObject["InPool"]?.Value<bool>() ?? false,
+                Identifier = token["Identifier"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier"),
+                Label = token["Label"]?.Value<string>() ?? string.Empty,
+                InPool = token["InPool"]?.Value<bool>() ?? false,
                 AppliedTime = new DateTimeOffset(applyTime, TimeSpan.Zero),
                 ReleaseTime = new DateTimeOffset(releaseTime, TimeSpan.Zero),
-                Precedence = Enum.TryParse<Precedence>(jsonObject["Precedence"]?.Value<string>(), out var precedence) ? precedence : Precedence.Default,
-                RestrictionRef = restrictionRef ?? throw new ArgumentNullException("RestrictionRef")
+                Precedence = Enum.TryParse<Precedence>(token["Precedence"]?.Value<string>(), out var precedence) ? precedence : Precedence.Default,
+                RefItem = gagRef
             };
-
-            return true;
+            return item;
         }
         catch (Bagagwa ex)
         {
             _logger.LogError($"Failed to deserialize loot item: {ex}");
-            return false;
+            return null;
+        }
+    }
+
+    public CursedRestrictionItem? LoadCursedRestriction(JToken? lootObject)
+    {
+        if (lootObject is not JObject token)
+            return null;
+        try
+        {
+            var applyTime = token["AppliedTime"]?.Value<DateTime>() ?? DateTime.MinValue;
+            var releaseTime = token["ReleaseTime"]?.Value<DateTime>() ?? DateTime.MinValue;
+            // get the restriction by the GUID.
+            if (token["RestrictionRef"] is not JValue restRefValue)
+                return null;
+
+            if (!Guid.TryParse(restRefValue.Value<string>(), out var restGuid))
+                throw new Exception("Invalid Restriction Reference!");
+            if (!_restrictions.Storage.TryGetRestriction(restGuid, out var restRef))
+                throw new Exception("Failed to find Restriction Reference!");
+            // Initialize CursedItem
+            var item = new CursedRestrictionItem()
+            {
+                Identifier = token["Identifier"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier"),
+                Label = token["Label"]?.Value<string>() ?? string.Empty,
+                InPool = token["InPool"]?.Value<bool>() ?? false,
+                AppliedTime = new DateTimeOffset(applyTime, TimeSpan.Zero),
+                ReleaseTime = new DateTimeOffset(releaseTime, TimeSpan.Zero),
+                Precedence = Enum.TryParse<Precedence>(token["Precedence"]?.Value<string>(), out var precedence) ? precedence : Precedence.Default,
+                RefItem = restRef
+            };
+            return item;
+        }
+        catch (Bagagwa ex)
+        {
+            _logger.LogError($"Failed to deserialize loot item: {ex}");
+            return null;
         }
     }
 

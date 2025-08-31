@@ -32,54 +32,55 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
         var item = _manager.ItemInEditor!;
         var comboWidthMax = (ImGui.GetContentRegionAvail().X - rightOffset) * .6f;
         // Draw the item selector.
-        if (item.RestrictionRef is GarblerRestriction gagItem)
+        if (item is CursedGagItem gagItem)
         {
-            var change = _gagItemCombo.Draw("##CursedItemGagSelector", gagItem.GagType, comboWidthMax);
-            if (change && !gagItem.GagType.Equals(_gagItemCombo.Current?.GagType))
+            var change = _gagItemCombo.Draw("##CursedItemGagSelector", gagItem.RefItem.GagType, comboWidthMax);
+            if (change && !gagItem.RefItem.GagType.Equals(_gagItemCombo.Current?.GagType))
             {
                 Logger.LogTrace($"Item changed to {_gagItemCombo.Current?.GagType} " +
-                    $"[{_gagItemCombo.Current?.GagType.GagName()}] from {gagItem.GagType} [{gagItem.GagType.GagName()}]");
-                item.RestrictionRef = _gagItemCombo.Current ?? _gags.Storage.Values.First();
+                    $"[{_gagItemCombo.Current?.GagType.GagName()}] from {gagItem.RefItem.GagType} [{gagItem.RefItem.GagType.GagName()}]");
+                gagItem.RefItem = _gagItemCombo.Current ?? _gags.Storage.Values.First();
             }
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
             {
-                Logger.LogTrace($"Item Cleared and set to the First Item. (BallGag) from {gagItem.GagType} [{gagItem.GagType.GagName()}]");
-                item.RestrictionRef = _gags.Storage.Values.First();
+                Logger.LogTrace($"Item Cleared and set to the First Item. (BallGag) from {gagItem.RefItem.GagType} [{gagItem.RefItem.GagType.GagName()}]");
+                gagItem.RefItem = _gags.Storage.Values.First();
             }
             CkGui.AttachToolTip("Change the cursed Gag item.--SEP--Can also Right-Click to clear.");
         }
-        else if (item.RestrictionRef is RestrictionItem restriction)
+        else if (item is CursedRestrictionItem bindItem)
         {
-            var change = _restrictionItemCombo.Draw("##CursedItemSelector", restriction.Identifier, comboWidthMax);
-            if (change && !restriction.Identifier.Equals(_restrictionItemCombo.Current?.Identifier))
+            var change = _restrictionItemCombo.Draw("##CursedItemSelector", bindItem.RefItem.Identifier, comboWidthMax);
+            if (change && !bindItem.RefItem.Identifier.Equals(_restrictionItemCombo.Current?.Identifier))
             {
                 Logger.LogTrace($"Item changed to {_restrictionItemCombo.Current?.Identifier} " +
-                    $"[{_restrictionItemCombo.Current?.Label}] from {restriction.Identifier} [{restriction.Label}]");
-                item.RestrictionRef = _restrictionItemCombo.Current ?? _restrictions.Storage.First();
+                    $"[{_restrictionItemCombo.Current?.Label}] from {bindItem.RefItem.Identifier} [{bindItem.RefItem.Label}]");
+                bindItem.RefItem = _restrictionItemCombo.Current ?? _restrictions.Storage.First();
             }
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
             {
-                Logger.LogTrace($"Item Cleared and set to the First Item. [{restriction.Label}]");
-                item.RestrictionRef = _restrictions.Storage.First();
+                Logger.LogTrace($"Item Cleared and set to the First Item. [{bindItem.RefItem.Label}]");
+                bindItem.RefItem = _restrictions.Storage.First();
             }
             CkGui.AttachToolTip("Change the cursed Restriction item.--SEP--Can also Right-Click to clear.");
         }
         ImUtf8.SameLineInner();
         // Draw the type toggle switch button, that will switch the items kind.
-        if (CkGui.IconButton(FAI.ArrowsLeftRight, disabled: !KeyMonitor.ShiftPressed() || _restrictions.Storage.Count <= 0))
+        if (CkGui.IconButton(FAI.ArrowsLeftRight, disabled: !KeyMonitor.ShiftPressed() || _restrictions.Storage.Count is 0))
         {
-            try
+            Generic.Safe(() =>
             {
-                if (item.RestrictionRef is GarblerRestriction)
-                    item.RestrictionRef = _restrictions.Storage.First();
+                if (item is CursedGagItem)
+                {
+                    Logger.LogInformation($"Item type changed: CursedGagItem -> CursedRestrictionItem");
+                    _manager.ChangeCursedLootType(item, CursedLootKind.Restriction);
+                }
                 else
-                    item.RestrictionRef = _gags.Storage.Values.First();
-            }
-            catch
-            {
-                Logger.LogError("Could not resolve the switch between types!");
-            }
-            // Perform early return.
+                {
+                    Logger.LogInformation($"Item type changed: CursedRestrictionItem -> CursedGagItem");
+                    _manager.ChangeCursedLootType(item, CursedLootKind.Gag);
+                }
+            });
             return;
         }
         CkGui.AttachToolTip("Switch between GagType and RestrictionItem types.--SEP--Must Hold Shift to Use.");
@@ -102,7 +103,7 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
         ImGui.AlignTextToFramePadding();
         var pos = ImGui.GetCursorScreenPos() + ImGui.GetStyle().FramePadding;
         var imgSize = CkGui.IconSize(FAI.LayerGroup);
-        if (item.RestrictionRef is GarblerRestriction gagItem)
+        if (item is CursedGagItem gagItem)
         {
             using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
             {
@@ -110,9 +111,9 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
                 ImGui.Dummy(new Vector2(ImGui.GetFrameHeight()));
                 CkGui.TextFrameAlignedInline("Cursed Mimic Gag  ");
             }
-            CkGui.AttachToolTip($"Item applies a --COL--{gagItem.GagType.GagName()}--COL--.", color: ImGuiColors.ParsedGold);
+            CkGui.AttachToolTip($"Item applies a --COL--{gagItem.RefItem.GagType.GagName()}--COL--.", color: ImGuiColors.ParsedGold);
         }
-        else if (item.RestrictionRef is RestrictionItem restriction)
+        else if (item is CursedRestrictionItem bindItem)
         {
             using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
             {
@@ -120,7 +121,7 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
                 ImGui.Dummy(new Vector2(ImGui.GetFrameHeight()));
                 CkGui.TextFrameAlignedInline("Cursed Bondage Loot  ");
             }
-            CkGui.AttachToolTip($"Item applies a --COL--{restriction.Label}--COL--.", color: ImGuiColors.ParsedGold);
+            CkGui.AttachToolTip($"Item applies a --COL--{bindItem.RefItem.Label}--COL--.", color: ImGuiColors.ParsedGold);
         }
 
         // next line, draw out the priority

@@ -241,26 +241,28 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         var groupH = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
         var groupSpacing = (height - 5 * groupH) / 7;
 
-        for (var index = 0; index < activeSlots.Restrictions.Length; index++)
+
+        foreach (var (data, index) in activeSlots.Restrictions.WithIndex())
         {
             // Spacing.
-            if(index > 0) ImGui.SetCursorPosY(ImGui.GetCursorPosY() + groupSpacing);
+            if (index > 0) ImGui.SetCursorPosY(ImGui.GetCursorPosY() + groupSpacing);
 
-            if (activeSlots.Restrictions[index].Identifier == Guid.Empty)
+            // if no item is selected, display the unique 'Applier' group.
+            if (data.Identifier == Guid.Empty)
             {
-                _activeItemDrawer.ApplyItemGroup(index, activeSlots.Restrictions[index]);
+                _activeItemDrawer.ApplyItemGroup(index, data);
                 continue;
             }
 
             // Otherwise, if the item is sucessfully applied, display the locked states, based on what is active.
-            if (_manager.ActiveItems.TryGetValue(activeSlots.Restrictions[index].Identifier, out var item))
+            if (_manager.ActiveItems.TryGetValue(index, out var item))
             {
                 // If the padlock is currently locked, show the 'Unlocking' group.
-                if (activeSlots.Restrictions[index].IsLocked())
-                    _activeItemDrawer.UnlockItemGroup(index, activeSlots.Restrictions[index], item);
+                if (data.IsLocked())
+                    _activeItemDrawer.UnlockItemGroup(index, data, item);
                 // Otherwise, show the 'Locking' group. Locking group can still change applied items.
                 else
-                    _activeItemDrawer.LockItemGroup(index, activeSlots.Restrictions[index], item);
+                    _activeItemDrawer.LockItemGroup(index, data, item);
             }
         }
     }
