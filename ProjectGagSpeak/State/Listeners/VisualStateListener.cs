@@ -360,15 +360,24 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         item.AppliedTime = DateTimeOffset.UtcNow;
         item.ReleaseTime = endTime;
         _cursedLoot.ForceSave();
-        // can update the equivalent visual data by updating the respective layer and such.
-        await ApplyGag(layer, new ActiveGagSlot
+
+        // new data for cursed item. (this is the same as what was sent over the server, so it syncs)
+        var newData = new ActiveGagSlot
         {
             GagItem = item.RefItem.GagType,
+            Enabler = "Mimic",
             Padlock = Padlocks.Mimic,
             Password = string.Empty,
             Timer = endTime,
             PadlockAssigner = "Mimic"
-        }, new("Mimic"));
+        };
+
+        // apply the gag, and it's visual updates.
+        if (_gags.ApplyGag(layer, newData.GagItem, "Mimic", out var gagItem))
+            await _cacheManager.AddGagItem(gagItem, layer, "Mimic");
+
+        // Lock it immediately.
+        _gags.LockGag(layer, newData, "Mimic");
         // the apply gag function already handled all of the visual cache application for us, so we can return here.
 
         Logger.LogInformation($"Cursed Loot Applied & Locked!", LoggerType.CursedItems);

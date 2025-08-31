@@ -100,6 +100,7 @@ public class CacheStateManager : IHostedService
         _restrictions.LoadInternalData(new CharaActiveRestrictions(), new List<CursedRestrictionItem>());
         _restraints.LoadServerData(new CharaActiveRestraint());
         _collars.LoadServerData(new CharaActiveCollar());
+        _cursedItems.InvalidateAllActive();
         // Reset all caches to their default state.
         await Task.WhenAll(
             _glamourHandler.ClearCache(),

@@ -134,6 +134,16 @@ public sealed class CursedLootManager : IHybridSavable
     public void AddFavorite(CursedItem loot) => _favorites.TryAddRestriction(FavoriteIdContainer.CursedLoot, loot.Identifier);
     public void RemoveFavorite(CursedItem loot) => _favorites.RemoveRestriction(FavoriteIdContainer.CursedLoot, loot.Identifier);
     #endregion Generic Methods
+    // Called from safeword service, deactivates all items.
+    public void InvalidateAllActive()
+    {
+        foreach (var item in Storage.ActiveItems.ToArray())
+        {
+            item.AppliedTime = DateTimeOffset.MinValue;
+            item.ReleaseTime = DateTimeOffset.MinValue;
+        }
+        _saver.Save(this);
+    }
 
     public void ForceSave() => _saver.Save(this);
 
