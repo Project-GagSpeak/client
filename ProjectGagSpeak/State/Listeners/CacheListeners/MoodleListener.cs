@@ -156,9 +156,9 @@ public class MoodleListener : DisposableMediatorSubscriberBase
             Logger.LogDebug("Reapplying Missing Required Tuples: " + string.Join(", ", missingTuples.Select(t => t.GUID)), LoggerType.IpcMoodles);
             // obtain the tuples that we need to reapply to the player from the expected moodles.
             _ipcProvider.ApplyStatusTuples(missingTuples);
+            return;
         }
 
-        Logger.LogTrace("Pushing IPC update to CacheCreation for processing", LoggerType.IpcMoodles);
         await _dds.PushMoodleStatusManager();
     }
 }

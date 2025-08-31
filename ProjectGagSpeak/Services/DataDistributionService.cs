@@ -117,6 +117,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
     }
 
     // Idk why we need this really, anymore, but whatever i guess. If it helps it helps.
+    private string _lastMoodlesDataString = string.Empty;
     private ActiveGagSlot? _prevGagData;
     private ActiveRestriction? _prevRestrictionData;
     private CharaActiveRestraint? _prevRestraintData;
@@ -187,6 +188,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
             return;
         }
 
+        _lastMoodlesDataString = MoodleCache.IpcData.DataString;
         // Distribute the full IPC Data to the list of visible characters passed in.
         Logger.LogDebug($"Pushing Full IPCData to ({string.Join(", ", visibleCharas.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
         await _hub.UserPushMoodlesFull(new(visibleCharas, MoodleCache.IpcData));
@@ -203,6 +205,10 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnectionDataSynced)
             return;
 
+        if (_lastMoodlesDataString.Equals(MoodleCache.IpcData.DataString))
+            return;
+
+        _lastMoodlesDataString = MoodleCache.IpcData.DataString;
         var visChara = _kinksters.GetVisibleUsers();
         Logger.LogDebug($"Pushing updated StatusManager to visible Kinksters: ({string.Join(", ", visChara.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
         // this will never fail, so no point in scanning the return.

@@ -104,6 +104,8 @@ public class HomepageTab
             if (HcTaskUtils.IsOutside())
                 return;
 
+            if (HousingManager.Instance()->GetCurrentHousingTerritoryType() is HousingTerritoryType.None)
+                return;
 
             var hausInfo = HousingManager.Instance()->IndoorTerritory->HouseId;
             ImGui.Text($"HouseId: {hausInfo.Id}");
