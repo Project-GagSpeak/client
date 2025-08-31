@@ -92,12 +92,6 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
             "Higher precedence items will override lower precedence items in the same slot.");
         ImUtf8.SameLineInner();
         ImGui.TextUnformatted("Priority");
-
-        var curVal = item.CanOverride;
-        ImGui.SameLine();
-        if (ImGui.Checkbox("Override", ref curVal))
-            item.CanOverride = curVal;
-
     }
 
     private void DrawPreviewView(float rightOffset)
@@ -136,15 +130,5 @@ public partial class CursedLootPanel : DisposableMediatorSubscriberBase
             CkGui.TextFrameAlignedInline("Priority  ");
         }
         CkGui.AttachToolTip($"Item has --COL--{item.Precedence.ToName()}--COL-- precedence.", color: ImGuiColors.ParsedGold);
-
-        ImGui.SameLine();
-        using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
-        {
-            CkGui.BooleanToColoredIcon(item.CanOverride);
-            CkGui.TextFrameAlignedInline("Overrides  ");
-        }
-        CkGui.AttachToolTip(item.CanOverride
-            ? "Can apply over items in the same slot with the same precedence level."
-            : "Cannot override items in the same slot with the same precedence level.");
     }
 }

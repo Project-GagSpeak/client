@@ -1,3 +1,5 @@
+using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Interface.ImGuiNotification;
 using GagSpeak.Interop;
 using GagSpeak.Kinksters;
 using GagSpeak.MufflerCore;
@@ -13,8 +15,10 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
 using GagspeakAPI.Util;
+using Lumina.Excel.Sheets;
 using Penumbra.GameData.Interop;
 using System.Windows.Forms;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak.State.Listeners;
 
@@ -345,6 +349,79 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         PostActionMsg(collarData.Enactor.UID, InteractionType.RemoveRestriction, "A Restriction item was removed from you!");
     }
     #endregion Collar Manipulation
+
+    #region CursedLoot Manipulation
+    public async Task CursedGagApplied(CursedGagItem item, int layer, DateTimeOffset endTime)
+    {
+        if (!MainHub.IsConnectionDataSynced)
+            return;
+
+        // Update the release time inside of the cursed loot manager. 
+        item.AppliedTime = DateTimeOffset.UtcNow;
+        item.ReleaseTime = endTime;
+        _cursedLoot.ForceSave();
+        // can update the equivalent visual data by updating the respective layer and such.
+        await ApplyGag(layer, new ActiveGagSlot
+        {
+            GagItem = item.RefItem.GagType,
+            Padlock = Padlocks.Mimic,
+            Password = string.Empty,
+            Timer = endTime,
+            PadlockAssigner = "Mimic"
+        }, new("Mimic"));
+        // the apply gag function already handled all of the visual cache application for us, so we can return here.
+
+        Logger.LogInformation($"Cursed Loot Applied & Locked!", LoggerType.CursedItems);
+        Svc.Chat.PrintError(new SeStringBuilder()
+            .AddItalics("As the coffer opens, cursed loot spills forth, silencing your mouth with a Gag now strapped on tight!")
+            .BuiltString);
+
+        // if we should warn the user, do so!.
+        if (ClientData.Globals?.ChatGarblerActive ?? false)
+            Mediator.Publish(new NotificationMessage("Chat Garbler", "Your garbler is still active! Be careful chatting around strangers!", NotificationType.Warning));
+
+        // Signal achievement event.
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.CursedDungeonLootFound);
+    }
+
+    public async Task CursedItemApplied(CursedRestrictionItem item, DateTimeOffset endTime)
+    {
+        if (!MainHub.IsConnectionDataSynced)
+            return;
+
+        _cursedLoot.ActivateItem(item, endTime);
+        // now we need to update the equivalent visual data.
+        if (_restrictions.ApplyCursedItem(item, out var layer))
+            await _cacheManager.AddCursedItem(item, layer);
+
+        Logger.LogInformation($"Cursed Loot Applied!", LoggerType.CursedItems);
+        Svc.Chat.PrintError(new SeStringBuilder().AddItalics("As the coffer opens, cursed loot spills forth, binding you in an inescapable restraint!").BuiltString);
+        // Signal achievement event.
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.CursedDungeonLootFound);
+    }
+
+    public async Task CursedItemRemoved(Guid removedId)
+    {
+        if (!MainHub.IsConnectionDataSynced)
+            return;
+        // if the item doesnt exist, return.
+        if (!_cursedLoot.Storage.TryGetLoot(removedId, out var item))
+            return;
+
+        // take the loot item out of the active item pool.
+        _cursedLoot.SetInactive(removedId);
+        if (item is CursedRestrictionItem restriction)
+        {
+            // remove it, and then remove it from the visuals if valid.
+            if (_restrictions.RemoveCursedItem(restriction, out int layer))
+                await _cacheManager.RemoveCursedItem(restriction, layer);
+        }
+
+        Logger.LogInformation($"Cursed Loot Removed!", LoggerType.CursedItems);
+        Svc.Chat.PrintError(new SeStringBuilder().AddItalics("The curse lifts, and the item vanishes in a puff of smoke!").BuiltString);
+    }
+    #endregion CursedLoot Manipulation
+
 
     public async void ApplyStatusesByGuid(MoodlesApplierById dto)
     {

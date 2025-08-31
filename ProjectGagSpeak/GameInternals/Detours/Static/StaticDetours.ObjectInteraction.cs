@@ -19,7 +19,10 @@ public partial class StaticDetours
 
             // Return if we cannot apply loot anyways.
             if (!_lootHandler.CanApplyAnyLoot)
+            {
+                Logger.LogTrace("Cannot apply loot currently.", LoggerType.CursedItems);
                 return ItemInteractedHook.Original(thisPtr, obj, checkLineOfSight);
+            }
 
             if (!_lootHandler.IsAnyTreasure(obj))
             {
@@ -32,9 +35,6 @@ public partial class StaticDetours
                 Logger.LogTrace("Interacted with GameObject that was the last opened chest.", LoggerType.CursedItems);
                 return ItemInteractedHook.Original(thisPtr, obj, checkLineOfSight);
             }
-
-            if (_lootHandler.LootTaskRunning)
-                return ItemInteractedHook.Original(thisPtr, obj, checkLineOfSight);
 
             // Open the Loot Item
             _lootHandler.OpenLootItem(obj);

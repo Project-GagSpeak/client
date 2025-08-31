@@ -855,9 +855,6 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
             ImGuiUtil.DrawTableColumn("ReleaseTime");
             ImGuiUtil.DrawTableColumn(cursedLoot.ReleaseTime.ToString());
             ImGui.TableNextRow();
-            ImGuiUtil.DrawTableColumn("CanOverride");
-            ImGuiUtil.DrawTableColumn(cursedLoot.CanOverride.ToString());
-            ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("Precedence");
             ImGuiUtil.DrawTableColumn(cursedLoot.Precedence.ToString());
             ImGui.TableNextRow();

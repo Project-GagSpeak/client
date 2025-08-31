@@ -31,6 +31,7 @@ public class CacheStateManager : IHostedService
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
     private readonly CollarManager _collars;
+    private readonly CursedLootManager _cursedItems;
     private readonly CustomizePlusHandler _cplusHandler;
     private readonly GlamourHandler _glamourHandler;
     private readonly ModHandler _modHandler;
@@ -41,8 +42,9 @@ public class CacheStateManager : IHostedService
 
     public CacheStateManager(ILogger<CacheStateManager> logger, IpcCallerPenumbra redrawAssist,
         GagRestrictionManager gags, RestrictionManager restrictions, RestraintManager restraints,
-        CollarManager collar, CustomizePlusHandler profiles, GlamourHandler glamours, ModHandler mods, 
-        MoodleHandler moodles, TraitsHandler traits, OverlayHandler overlays, ArousalService arousals) 
+        CollarManager collar, CursedLootManager cursedItems, CustomizePlusHandler profiles, 
+        GlamourHandler glamours, ModHandler mods, MoodleHandler moodles, TraitsHandler traits, 
+        OverlayHandler overlays, ArousalService arousals) 
     {
         _logger = logger;
         _redrawAssist = redrawAssist;
@@ -50,6 +52,7 @@ public class CacheStateManager : IHostedService
         _restrictions = restrictions;
         _restraints = restraints;
         _collars = collar;
+        _cursedItems = cursedItems;
         _cplusHandler = profiles;
         _glamourHandler = glamours;
         _modHandler = mods;
@@ -93,10 +96,10 @@ public class CacheStateManager : IHostedService
     public async Task ResetCachesDueToSafeword()
     {
         _logger.LogInformation("------- Resetting all caches due to safeword -------");
-        _gags.LoadServerData(new CharaActiveGags()); // Reset Gag Data
-        _restrictions.LoadServerData(new CharaActiveRestrictions()); // Reset Restriction Data
-        _restraints.LoadServerData(new CharaActiveRestraint()); // Reset Restraint Data
-        _collars.LoadServerData(new CharaActiveCollar()); // Reset Collar Data
+        _gags.LoadServerData(new CharaActiveGags());
+        _restrictions.LoadInternalData(new CharaActiveRestrictions(), new List<CursedRestrictionItem>());
+        _restraints.LoadServerData(new CharaActiveRestraint());
+        _collars.LoadServerData(new CharaActiveCollar());
         // Reset all caches to their default state.
         await Task.WhenAll(
             _glamourHandler.ClearCache(),
@@ -137,13 +140,13 @@ public class CacheStateManager : IHostedService
         _logger.LogInformation("------ Gag Data synced to Cache ------ ");
 
         // Sync all server restriction data with the RestrictionManager.
-        _restrictions.LoadServerData(connectionDto.SyncedRestrictionsData);
+        var validCursedItems = _cursedItems.Storage.ActiveItems.OfType<CursedRestrictionItem>().Where(i => i.RefItem != null).ToList();
+        _restrictions.LoadInternalData(connectionDto.SyncedRestrictionsData, validCursedItems);
         _logger.LogInformation("------ Syncing Restriction Data to Cache ------");
         foreach (var (layer, item) in _restrictions.ActiveItems)
         {
             var serverItem = _restrictions.ServerRestrictionData!.Restrictions[layer];
             _logger.LogDebug($"Adding Restriction [{item.Label}] at layer {layer}, which was enabled by {serverItem.Enabler}.");
-            
             var key = new CombinedCacheKey(ManagerPriority.Restrictions, layer, serverItem.Enabler, item.Label);
             var metaStruct = item switch
             {
@@ -201,6 +204,40 @@ public class CacheStateManager : IHostedService
             anyRequestedRedraw |= restraintSet.DoRedraw;
             _logger.LogInformation("------ Restraint Data synced to Cache ------ ");
         }
+
+        // maybe sync cursed items here, OR we can just do it in conjunction with the other restriction items, i dont freaking know anymore.
+        _logger.LogInformation("------ Syncing Cursed Item Restrictions to Cache ------");
+        foreach (var item in _restrictions.LootItems.Values)
+        {
+            if (!_restrictions.IdToLayerMap.TryGetValue(item.Identifier, out int layer))
+            {
+                _logger.LogCritical("Layer was not valid for a loot item that was valid! THIS SHOULD NEVER HAPPEN!");
+                continue;
+            }
+
+            _logger.LogDebug($"Adding CursedItem [{item.Label}] at layer {layer}.");
+            var key = new CombinedCacheKey(ManagerPriority.CursedLoot, layer, "Mimic", $"Cursed {item.Label}");
+            var metaStruct = item switch
+            {
+                BlindfoldRestriction c => new MetaDataStruct(c.HeadgearState, c.VisorState),
+                HypnoticRestriction h => new MetaDataStruct(h.HeadgearState, h.VisorState),
+                _ => MetaDataStruct.Empty
+            };
+            _glamourHandler.TryAddGlamourToCache(key, item.Glamour);
+            _glamourHandler.TryAddMetaToCache(key, metaStruct);
+            _modHandler.TryAddModToCache(key, item.Mod);
+            _moodleHandler.TryAddMoodleToCache(key, item.Moodle);
+            _traitsHandler.TryAddTraitsToCache(key, item.Traits & ~(Traits.Immobile | Traits.Weighty));
+            _arousalHandler.TryAddArousalToCache(key, item.Arousal);
+            // Conditional Additions.
+            if (item is BlindfoldRestriction bfr) _overlayHandler.TryAddBlindfoldToCache(key, bfr.Properties);
+            if (item is HypnoticRestriction hr) _overlayHandler.TryAddEffectToCache(key, hr.Properties);
+
+            anyRequestedRedraw |= item.DoRedraw;
+        }
+
+
+        _logger.LogInformation("------ Cursed Item Data synced to Cache ------ ");
 
         // Sync collar data with the CollarManager.
         _collars.LoadServerData(connectionDto.SyncedCollarData);
@@ -477,6 +514,55 @@ public class CacheStateManager : IHostedService
             _arousalHandler.UpdateFinalCache(),
             _overlayHandler.UpdateCaches()
         );
+    }
+
+    // For CURSED ITEMS.
+    public async Task AddCursedItem(CursedRestrictionItem item, int layer)
+    {
+        _logger.LogDebug($"Adding CursedItem [{item.Label}] with ({item.Precedence}) precedence to layer {layer}.");
+        var key = new CombinedCacheKey(ManagerPriority.CursedLoot, layer, "Mimic", $"Cursed {item.RefItem.Label}");
+        var metaStruct = item.RefItem switch
+        {
+            BlindfoldRestriction c => new MetaDataStruct(c.HeadgearState, c.VisorState),
+            HypnoticRestriction h => new MetaDataStruct(h.HeadgearState, h.VisorState),
+            _ => MetaDataStruct.Empty
+        };
+        var tasks = new List<Task>
+        {
+            AddGlamourMeta(key, item.RefItem.Glamour, metaStruct),
+            AddModPreset(key, item.RefItem.Mod),
+            AddMoodle(key, item.RefItem.Moodle),
+            AddTraits(key, item.RefItem.Traits &~ (Traits.Immobile | Traits.Weighty)),
+            AddArousalStrength(key, item.RefItem.Arousal)
+        };
+        // Conditional additions
+        if (item.RefItem is BlindfoldRestriction bfr) tasks.Add(AddBlindfold(key, bfr.Properties));
+        if (item.RefItem is HypnoticRestriction hr) tasks.Add(AddHypnoEffect(key, hr.Properties));
+
+        // Run in parallel.
+        await TimedWhenAll($"[{key}]'s Visual Attributes added to caches", tasks);
+        // Handle Redraw afterwards
+        if (item.RefItem.DoRedraw)
+            _redrawAssist.RedrawObject();
+    }
+
+    public async Task RemoveCursedItem(CursedRestrictionItem item, int layer)
+    {
+        _logger.LogInformation($"Removing Cursed Item [{item.Label}] from layer {layer}");
+        var key = new CombinedCacheKey(ManagerPriority.CursedLoot, layer, "Mimic", string.Empty);
+        // Remove and update in parallel.
+        await TimedWhenAll($"[{key}] removed from cache and base states restored",
+            RemoveGlamourMeta(key),
+            RemoveModPreset(key),
+            RemoveMoodle(key),
+            RemoveTraits(key),
+            RemoveArousalStrength(key),
+            RemoveBlindfold(key),
+            RemoveHypnoEffect(key)
+        );
+        // Handle Redraw afterwards
+        if (item.RefItem.DoRedraw)
+            _redrawAssist.RedrawObject();
     }
 
     // Always use MainHub.UID for the applier so that we can track the updates easier.

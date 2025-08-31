@@ -1,3 +1,6 @@
+using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
+using GagspeakAPI.Attributes;
+
 namespace GagSpeak.State.Caches;
 
 /// <summary>
@@ -42,4 +45,34 @@ public readonly struct CombinedCacheKey : IComparable<CombinedCacheKey>, IEquata
 
     public override int GetHashCode() => HashCode.Combine(Manager, LayerIndex);
     public override bool Equals(object? obj) => obj is CombinedCacheKey other && Equals(other);
+}
+
+// a struct that can have a key representing both cursed loot identifiers and restriction identifiers.
+public readonly struct RestrictionKey : IComparable<RestrictionKey>
+{
+    public Guid Identifier { get; }
+    public int Priority { get; }
+
+    public RestrictionKey(Guid id, Precedence precedence, int index)
+    {
+        Identifier = id;
+        Priority = ((int)precedence * 1000) + index;
+    }
+
+    // Dictionary equality by LootId only
+    public override bool Equals(object? obj) =>
+        obj is RestrictionKey rk && rk.Identifier == Identifier;
+
+    public override int GetHashCode() => Identifier.GetHashCode();
+
+    // Sorting by Precedence, then Index, then GUID
+    public int CompareTo(RestrictionKey other)
+    {
+        int cmp = Priority.CompareTo(other.Priority);
+        if (cmp != 0) return cmp;
+        return Identifier.CompareTo(other.Identifier);
+    }
+
+    public static implicit operator RestrictionKey(Guid lootId) =>
+        new RestrictionKey(lootId, 0, 0);
 }

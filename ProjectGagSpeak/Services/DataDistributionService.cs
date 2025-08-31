@@ -503,6 +503,30 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         return GagSpeakApiEc.Success;
     }
 
+    public async Task<AppliedCursedItem?> PushActiveCursedLoot(List<Guid> activeItems, Guid changeItem, AppliedItem? lootItem)
+        => await PushActiveCursedLoot(_kinksters.GetOnlineUserDatas(), activeItems, changeItem, lootItem);
+
+    public async Task<AppliedCursedItem?> PushActiveCursedLoot(List<UserData> onlinePlayers, List<Guid> activeItems, Guid changeItem, AppliedItem? lootItem)
+    {
+        Logger.LogDebug($"Pushing ActiveCursedLoot to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
+        var dto = new PushClientActiveLoot(onlinePlayers, activeItems, changeItem, lootItem);
+
+        // push out the result and get the data.
+        var res = await _hub.UserPushActiveLoot(dto).ConfigureAwait(false);
+        // if not successful, log and return null.
+        if (res.ErrorCode is not GagSpeakApiEc.Success)
+        {
+            Logger.LogError($"Failed to push ActiveCursedLoot to server [{res}]");
+            return null;
+        }
+        // otherwise return the value.
+        return res.Value;
+    }
+
+
+
+
+
     /// <summary> Pushes the new Global AliasTrigger update to the server. </summary>
     /// <remarks> If this call fails, the previous data will not be updated. </remarks>
     private async Task DistributeDataGlobalAlias(AliasGlobalUpdateMessage msg)

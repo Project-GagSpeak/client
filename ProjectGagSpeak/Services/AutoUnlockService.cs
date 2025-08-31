@@ -6,6 +6,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Controller;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Handlers;
+using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
@@ -15,6 +16,7 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using Microsoft.Extensions.Hosting;
+using System;
 
 namespace GagSpeak.Services;
 
@@ -44,6 +46,7 @@ public sealed class AutoUnlockService : BackgroundService
     private readonly CursedLootManager _cursedLoot;
     private readonly PatternManager _patterns;
     private readonly AlarmManager _alarms;
+    private readonly VisualStateListener _visuals;
     private readonly PlayerCtrlHandler _hcHandler;
     private readonly DistributorService _dds;
     
@@ -58,7 +61,8 @@ public sealed class AutoUnlockService : BackgroundService
         ClientData clientData, ImprisonmentController cageControl, MovementController moveControl, 
         KinksterManager kinksters, GagRestrictionManager gags, RestrictionManager restrictions, 
         RestraintManager restraints, CursedLootManager cursedLoot, PatternManager patterns, 
-        AlarmManager alarms, PlayerCtrlHandler hcHandler, DistributorService dds)
+        AlarmManager alarms, VisualStateListener visuals, PlayerCtrlHandler hcHandler, 
+        DistributorService dds)
     {
         _logger = logger;
         _mediator = mediator;
@@ -72,6 +76,7 @@ public sealed class AutoUnlockService : BackgroundService
         _cursedLoot = cursedLoot;
         _patterns = patterns;
         _alarms = alarms;
+        _visuals = visuals;
         _hcHandler = hcHandler;
         _dds = dds;
     }
@@ -273,29 +278,38 @@ public sealed class AutoUnlockService : BackgroundService
     }
 
     // Subject to change!
-    private Task CheckCursedLoot()
+    private async Task CheckCursedLoot()
     {
         if (_cursedLoot.Storage.ActiveItems.Count is 0)
-            return Task.CompletedTask;
+            return;
 
         // Otherwise iterate the items for unlocks.
         foreach (var item in _cursedLoot.Storage.ActiveItems)
         {
-            if (item.ReleaseTime - DateTimeOffset.UtcNow > TimeSpan.Zero)
-                continue;
-            
-            // Item should be unlocked.
+            if (item.ReleaseTime >= DateTimeOffset.UtcNow) continue;
+
+            _logger.LogInformation($"CursedLoot Item [{item.Label}] Timer Expired!", LoggerType.AutoUnlocks);
+
+            // store backup state.
+            var backup = item;
+            // Temporarily update the changes locally, to prevent excess Auto-unlock calls.
             item.AppliedTime = DateTimeOffset.MinValue;
             item.ReleaseTime = DateTimeOffset.MinValue;
             _cursedLoot.ForceSave();
-            
-            // if it was a restriction manager, be sure to remove its item.
-            if (item.RestrictionRef is RestrictionItem nonGagRestriction)
-                _restrictions.TryRemoveRemoveOccupied(nonGagRestriction);
-            
-            // _managerCache.UpdateCache(AppliedCursedItems, _mainConfig.Current.CursedItemsApplyTraits);
+            // Attempt to push the update.
+            if (await _dds.PushActiveCursedLoot(_cursedLoot.Storage.ActiveIds.ToList(), item.Identifier, null).ConfigureAwait(false) is null)
+            {
+                // Revert the values to prevent the update and trigger it again later. This helps to prevent false achievement triggering.
+                item.AppliedTime = backup.AppliedTime;
+                item.ReleaseTime = backup.ReleaseTime;
+                _cursedLoot.ForceSave();
+            }
+            else
+            {
+                // was successful, so make sure to remove it from viausals and cache manager.
+                await _visuals.CursedItemRemoved(item.Identifier);
+            }
         }
-        return Task.CompletedTask;
     }
 
     // Check the hardcore timers and perform a hardcore change when a timer expires.

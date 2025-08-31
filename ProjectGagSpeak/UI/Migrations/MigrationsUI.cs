@@ -317,10 +317,6 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
             }
             else
             {
-                // display equip stuff.
-                CkGui.ColorText("Can Override: ", ImGuiColors.ParsedGold);
-                CkGui.BooleanToColoredIcon(SelectedCursedItem.CanOverride, true);
-
                 CkGui.ColorText("Override Precedence: ", ImGuiColors.ParsedGold);
                 ImGui.SameLine();
                 ImGui.Text(SelectedCursedItem.OverridePrecedence.ToString());

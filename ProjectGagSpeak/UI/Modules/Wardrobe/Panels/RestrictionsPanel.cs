@@ -143,7 +143,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         var height = ImGui.GetFrameHeightWithSpacing() + MoodleDrawer.IconSize.Y;
         var region = new Vector2(drawRegion.Size.X, height);
         var notSelected = _selector.Selected is null;
-        var isActive = _manager.ActiveItems.Values.Any(r => r.Identifier.Equals(_selector.Selected));
+        var isActive = !notSelected && _manager.IsItemApplied(_selector.Selected!.Identifier);
         var tooltip = notSelected ? "No item selected!" : isActive ? "Item is Active!" : "Double Click to begin editing!";
 
         using var c = CkRaii.ChildLabelCustomButton("SelItem", region, ImGui.GetFrameHeight(), LabelButton, BeginEdits, tooltip, DFlags.RoundCornersRight, LabelFlags.AddPaddingToHeight);
@@ -241,27 +241,26 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         var groupH = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
         var groupSpacing = (height - 5 * groupH) / 7;
 
-        foreach (var (data, index) in activeSlots.Restrictions.WithIndex())
+        for (var index = 0; index < activeSlots.Restrictions.Length; index++)
         {
             // Spacing.
             if(index > 0) ImGui.SetCursorPosY(ImGui.GetCursorPosY() + groupSpacing);
 
-            // if no item is selected, display the unique 'Applier' group.
-            if (data.Identifier == Guid.Empty)
+            if (activeSlots.Restrictions[index].Identifier == Guid.Empty)
             {
-                _activeItemDrawer.ApplyItemGroup(index, data);
+                _activeItemDrawer.ApplyItemGroup(index, activeSlots.Restrictions[index]);
                 continue;
             }
 
             // Otherwise, if the item is sucessfully applied, display the locked states, based on what is active.
-            if (_manager.ActiveItems.TryGetValue(index, out var item))
+            if (_manager.ActiveItems.TryGetValue(activeSlots.Restrictions[index].Identifier, out var item))
             {
                 // If the padlock is currently locked, show the 'Unlocking' group.
-                if (data.IsLocked())
-                    _activeItemDrawer.UnlockItemGroup(index, data, item);
+                if (activeSlots.Restrictions[index].IsLocked())
+                    _activeItemDrawer.UnlockItemGroup(index, activeSlots.Restrictions[index], item);
                 // Otherwise, show the 'Locking' group. Locking group can still change applied items.
                 else
-                    _activeItemDrawer.LockItemGroup(index, data, item);
+                    _activeItemDrawer.LockItemGroup(index, activeSlots.Restrictions[index], item);
             }
         }
     }

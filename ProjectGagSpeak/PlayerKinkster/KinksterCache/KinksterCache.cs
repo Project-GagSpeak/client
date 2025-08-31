@@ -194,14 +194,12 @@ public class KinksterCursedLoot
 {
     public Guid Id { get; private set; } = Guid.Empty;
     public string Label { get; private set; } = string.Empty;
-    public bool Overrides { get; private set; } = false;
     public Precedence Precedence { get; private set; } = Precedence.VeryLow;
 
-    public KinksterCursedLoot(Guid id, string label, bool overrides, Precedence precedence, RestrictionBase? ItemRef)
+    public KinksterCursedLoot(Guid id, string label, Precedence precedence, RestrictionBase? ItemRef)
     {
         Id = id;
         Label = label;
-        Overrides = overrides;
         Precedence = precedence;
         ItemReference = ItemRef;
     }
@@ -212,7 +210,6 @@ public class KinksterCursedLoot
     {
         Id = item.Id;
         Label = item.Label;
-        Overrides = item.CanOverride;
         Precedence = item.Precedence;
         ItemReference = newRef;
     }
@@ -320,7 +317,7 @@ public class KinksterCache
                 CursedLootType.Gag => Gags.GetValueOrDefault(lightItem.Gag!.Value),
                 _ => null
             };
-            CursedItems.TryAdd(lightItem.Id, new KinksterCursedLoot(lightItem.Id, lightItem.Label, lightItem.CanOverride, lightItem.Precedence, itemRef));
+            CursedItems.TryAdd(lightItem.Id, new KinksterCursedLoot(lightItem.Id, lightItem.Label, lightItem.Precedence, itemRef));
         }
 
         // patterns.
@@ -425,7 +422,7 @@ public class KinksterCache
         if (CursedItems.TryGetValue(id, out var existingCursedItem))
             existingCursedItem.UpdateFrom(apiItem, itemRef);
         else
-            CursedItems[id] = new KinksterCursedLoot(apiItem.Id, apiItem.Label, apiItem.CanOverride, apiItem.Precedence, itemRef);
+            CursedItems[id] = new KinksterCursedLoot(apiItem.Id, apiItem.Label, apiItem.Precedence, itemRef);
     }
 
     public void UpdatePatternItem(Guid id, LightPattern? apiItem)

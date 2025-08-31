@@ -22,10 +22,6 @@ public interface ICursedItem
     /// <remarks> While inactive, value is DateTimeOffset.MinValue </remarks>
     DateTimeOffset ReleaseTime { get; }
 
-    /// <summary> If this cursed item can override other cursed items in the same slot. </summary>
-    /// <remarks> Requires precedence. </remarks>
-    bool CanOverride { get; }
-
     /// <summary> Level of precedence an item has when marking comparison for overriding. </summary>
     /// <remarks> We use this to sort our cursed item list with higher precedence first, so we can efficiently recalculate our list. </remarks>
     Precedence Precedence { get; }

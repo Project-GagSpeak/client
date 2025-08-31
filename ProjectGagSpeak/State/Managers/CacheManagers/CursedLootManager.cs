@@ -128,35 +128,25 @@ public sealed class CursedLootManager : IHybridSavable
     public void ForceSave() => _saver.Save(this);
     #endregion Generic Methods
 
-    public void ActivateCursedItem(CursedItem item, DateTimeOffset endTimeUtc)
+    // does not relate to the cached item, handle this seperately in the visual listener.
+    public void ActivateItem(CursedItem item, DateTimeOffset endTimeUtc)
     {
         item.AppliedTime = DateTimeOffset.UtcNow;
         item.ReleaseTime = endTimeUtc;
         _saver.Save(this);
-
-        // if it was a restriction manager, be sure to apply its item.
-        if (item.RestrictionRef is RestrictionItem nonGagRestriction)
-            _restrictions.TryAddOccupied(nonGagRestriction, GagspeakModule.CursedLoot);
-
-        // Update the cache regardless.
-        // _managerCache.UpdateCache(AppliedCursedItems, _mainConfig.Current.CursedItemsApplyTraits);
     }
 
-    // Scan by id so we dont spam deactivation.
-    public void DeactivateCursedItem(Guid lootId)
+    /// <summary>
+    ///     Removes the cursed item from its active state, making it inactive once more.
+    /// </summary>
+    /// <returns> the Stored layer, if any. -1 otherwise. </returns>
+    public void SetInactive(Guid lootId)
     {
-        if(!Storage.TryGetLoot(lootId, out var item))
+        if (!Storage.TryGetLoot(lootId, out var item))
             return;
-
         item.AppliedTime = DateTimeOffset.MinValue;
         item.ReleaseTime = DateTimeOffset.MinValue;
         _saver.Save(this);
-
-        // if it was a restriction manager, be sure to remove its item.
-        if (item.RestrictionRef is RestrictionItem nonGagRestriction)
-            _restrictions.TryRemoveRemoveOccupied(nonGagRestriction);
-
-        // _managerCache.UpdateCache(AppliedCursedItems, _mainConfig.Current.CursedItemsApplyTraits);
     }
 
     public void SetLowerLimit(TimeSpan time)
@@ -333,7 +323,6 @@ public sealed class CursedLootManager : IHybridSavable
                 InPool = jsonObject["InPool"]?.Value<bool>() ?? false,
                 AppliedTime = new DateTimeOffset(applyTime, TimeSpan.Zero),
                 ReleaseTime = new DateTimeOffset(releaseTime, TimeSpan.Zero),
-                CanOverride = jsonObject["CanOverride"]?.Value<bool>() ?? false,
                 Precedence = Enum.TryParse<Precedence>(jsonObject["Precedence"]?.Value<string>(), out var precedence) ? precedence : Precedence.Default,
                 RestrictionRef = restrictionRef ?? throw new ArgumentNullException("RestrictionRef")
             };

@@ -25,9 +25,13 @@ public sealed class RestrictionManager : IHybridSavable
 
     private StorageItemEditor<RestrictionItem> _itemEditor = new();
     private CharaActiveRestrictions? _serverRestrictionData = null;
+
     private Dictionary<int, RestrictionItem> _activeItems = new();
-    // Maybe change this to a restriction item if we need to for later? idk.
-    private SortedList<Guid, GagspeakModule> _activeItemsAll = new();
+    private Dictionary<Guid, RestrictionItem> _lootItems = new();
+    // a map that serves a duel purpose of both locating all used restriction GUID's, and fetching their layers.
+    private Dictionary<Guid, int> _idToLayerMap = new();
+    private int _cursedKeyIdCounter = 0;
+
     public RestrictionManager(
         ILogger<RestrictionManager> logger,
         GagspeakMediator mediator,
@@ -51,22 +55,43 @@ public sealed class RestrictionManager : IHybridSavable
     // ----------- ACTIVE DATA --------------
     public CharaActiveRestrictions? ServerRestrictionData => _serverRestrictionData;
     public IReadOnlyDictionary<int, RestrictionItem> ActiveItems => _activeItems;
-    public IReadOnlyDictionary<Guid, GagspeakModule> ActiveItemsAll => _activeItemsAll;
+    public IReadOnlyDictionary<Guid, RestrictionItem> LootItems => _lootItems;
+    public IReadOnlyDictionary<Guid, int> IdToLayerMap => _idToLayerMap;
+
+    public bool IsItemApplied(Guid id) => _idToLayerMap.ContainsKey(id);
+    private int GenCursedKeyId(Precedence priority) => (int)priority * 1000 + 1000 + _cursedKeyIdCounter++;
 
     /// <summary> Updates the manager with the latest data from the server. </summary>
     /// <remarks> The CacheStateManager must be handled seperately here. </remarks>
-    public void LoadServerData(CharaActiveRestrictions serverData)
+    public void LoadInternalData(CharaActiveRestrictions serverData, List<CursedRestrictionItem> cursedItems)
     {
         _serverRestrictionData = serverData;
-        // iterate through each of the server's restriction data. If the identifer is not empty, add it.
         _activeItems.Clear();
+        _lootItems.Clear();
+        _idToLayerMap.Clear();
+        _cursedKeyIdCounter = 0;
+
+        // iterate through each of the server's restriction data. If the identifer is not empty, add it.
         foreach (var (slot, idx) in serverData.Restrictions.WithIndex())
-            if (slot.Identifier != Guid.Empty && Storage.TryGetRestriction(slot.Identifier, out var item))
+        {
+            if (slot.Identifier == Guid.Empty)
+                continue;
+
+            if (Storage.TryGetRestriction(slot.Identifier, out var item))
             {
                 _activeItems.TryAdd(idx, item);
-                _activeItemsAll.TryAdd(slot.Identifier, GagspeakModule.Restriction);
+                _idToLayerMap.TryAdd(slot.Identifier, idx);
             }
-        _logger.LogInformation("Synchronized all Active Restrictions with Client-Side Manager.");
+        }
+        _logger.LogInformation("Synchronized all Active Server Restrictions with Client-Side Manager.");
+
+        // iterate through each of the cursed items, and add them to the loot items if they are valid.
+        foreach (var item in cursedItems.Where(i => i.RefItem is not null))
+        {
+            _lootItems.TryAdd(item.Identifier, item.RefItem);
+            _idToLayerMap.TryAdd(item.RefItem.Identifier, GenCursedKeyId(item.Precedence));
+        }
+        _logger.LogInformation("Synchronized all Active Cursed Restrictions with Client-Side Manager.");
     }
 
     public RestrictionItem CreateNew(string name, RestrictionType type)
@@ -174,22 +199,34 @@ public sealed class RestrictionManager : IHybridSavable
     /// <summary> Attempts to remove the gag restriction as a favorite. </summary>
     public bool RemoveFavorite(GarblerRestriction restriction) => _favorites.RemoveGag(restriction.GagType);
 
-    /// <summary> Attempts to add a now occupied restriction. Intended for other sources only. </summary>
-    public bool TryAddOccupied(RestrictionItem item, GagspeakModule source)
+    /// <summary> 
+    ///     Applies a cursed items restriction ref to the active restrictions cache. <para />
+    ///     If successful, the stored layer is placed inside <paramref name="item"/>.
+    /// </summary>
+    public bool ApplyCursedItem(CursedRestrictionItem item, out int layer)
     {
-        if (source is GagspeakModule.Restriction)
+        layer = -1;
+        if (IsItemApplied(item.Identifier))
             return false;
 
-        return _activeItemsAll.TryAdd(item.Identifier, source);
+        _lootItems.TryAdd(item.Identifier, item.RefItem);
+        layer = GenCursedKeyId(item.Precedence);
+        _idToLayerMap.TryAdd(item.RefItem.Identifier, layer);
+        _logger.LogInformation($"Added {item.Label}'s Restriction ({item.RefItem.Label}) to idx [{layer}]");
+        return true;
     }
 
-    /// <summary> Do not allow this if it exists in the active state. </summary>
-    public bool TryRemoveRemoveOccupied(RestrictionItem item)
+    /// <summary> Not the most pretty way to handle this, but it works, and it's functional. </summary>
+    public bool RemoveCursedItem(CursedRestrictionItem item, out int remLayer)
     {
-        if (_activeItemsAll.TryGetValue(item.Identifier, out var s) && s == GagspeakModule.Restriction)
+        remLayer = -1;
+        if (!_lootItems.ContainsKey(item.Identifier))
             return false;
 
-        return _activeItemsAll.Remove(item.Identifier);
+        _lootItems.Remove(item.Identifier);
+        _idToLayerMap.Remove(item.RefItem.Identifier, out remLayer);
+        _logger.LogInformation($"Removed {item.Label}'s Restriction ({item.RefItem.Label}) from idx [{remLayer}]");
+        return true;
     }
 
     public bool CanApply(int layer) => _serverRestrictionData is { } d && d.Restrictions[layer].CanApply();
@@ -214,7 +251,6 @@ public sealed class RestrictionManager : IHybridSavable
         if (Storage.TryGetRestriction(newData.Identifier, out item))
         {
             _activeItems[layer] = item;
-            _activeItemsAll[item.Identifier] = GagspeakModule.Restriction;
             return true;
         }
 
@@ -265,7 +301,6 @@ public sealed class RestrictionManager : IHybridSavable
         if (Storage.TryGetRestriction(removedItem, out item))
         {
             _activeItems.Remove(layer);
-            _activeItemsAll.Remove(item.Identifier);
             return true;
         }
 

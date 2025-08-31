@@ -161,10 +161,10 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActiveCollar), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse<Guid>> UserPushActiveLoot(PushClientActiveLoot dto)
+    public async Task<HubResponse<AppliedCursedItem>> UserPushActiveLoot(PushClientActiveLoot dto)
     {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, Guid.Empty);
-        return await _hubConnection!.InvokeAsync<HubResponse<Guid>>(nameof(UserPushActiveLoot), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new AppliedCursedItem(Guid.Empty));
+        return await _hubConnection!.InvokeAsync<HubResponse<AppliedCursedItem>>(nameof(UserPushActiveLoot), dto).ConfigureAwait(false);
     }
 
     public async Task<HubResponse> UserPushAliasGlobalUpdate(PushClientAliasGlobalUpdate dto)

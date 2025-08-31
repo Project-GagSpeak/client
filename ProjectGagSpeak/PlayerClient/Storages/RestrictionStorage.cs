@@ -152,10 +152,6 @@ public class CursedLootStorage : List<CursedItem>, IEditableStorage<CursedItem>
         return false;
     }
 
-    public List<LightCursedLoot> GetLightStorage() => this
-        .Select(x => x.ToLightItem())
-        .ToList();
-
     public IEnumerable<Guid> ActiveIds => this
         .Where(x => x.AppliedTime != DateTimeOffset.MinValue)
         .Select(x => x.Identifier);

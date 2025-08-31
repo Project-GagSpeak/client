@@ -490,11 +490,15 @@ public partial class MainHub
     /// <summary> The only condition that we receive this, is if it's for another pair. </summary>
     public Task Callback_KinksterUpdateActiveCursedLoot(KinksterUpdateActiveCursedLoot dataDto)
     {
-        if(dataDto.User.UID != UID)
+        if (dataDto.User.UID != UID)
         {
             Logger.LogDebug($"[OTHER-CURSEDLOOT-ACTIVE]: {dataDto.User} ({dataDto.ChangedItem})", LoggerType.Callbacks);
             Generic.Safe(() => _kinksterListener.NewActiveCursedLoot(dataDto));
             return Task.CompletedTask;
+        }
+        else
+        {
+            Logger.LogWarning("Received a Cursed Loot update for ourselves, this should never happen!", LoggerType.Callbacks);
         }
         return Task.CompletedTask;
     }

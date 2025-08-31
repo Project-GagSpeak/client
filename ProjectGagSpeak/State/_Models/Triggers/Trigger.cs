@@ -21,21 +21,7 @@ public abstract class Trigger : IEditableStorageItem<Trigger>
     public Trigger(Trigger other, bool keepId)
     {
         Identifier = keepId ? other.Identifier : Guid.NewGuid();
-        Enabled = other.Enabled;
-        Priority = other.Priority;
-        Label = other.Label;
-        Description = other.Description;
-        InvokableAction = other.InvokableAction switch
-        {
-            SexToyAction sta     => new SexToyAction(sta),
-            PiShockAction ps     => new PiShockAction(ps),
-            MoodleAction ma      => new MoodleAction(ma),
-            RestraintAction ra   => new RestraintAction(ra),
-            RestrictionAction ra => new RestrictionAction(ra),
-            GagAction ga         => new GagAction(ga),
-            TextAction ta        => new TextAction(ta),
-            _ => throw new NotImplementedException()
-        };
+        ApplyChanges(other);
     }
 
     public abstract Trigger Clone(bool keepId);

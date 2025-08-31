@@ -1,82 +1,140 @@
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Network;
+using System.Runtime.Serialization;
 
 namespace GagSpeak.State.Models;
 
-[Serializable]
-public class CursedItem : IEditableStorageItem<CursedItem>, ICursedItem
+public abstract class CursedItem : IEditableStorageItem<CursedItem>
 {
-    public Guid             Identifier     { get; init; }          = Guid.NewGuid();
-    public string           Label          { get; internal set; }  = string.Empty;
-    public bool             InPool         { get; internal set; }  = false;
-    public DateTimeOffset   AppliedTime    { get; internal set; }  = DateTimeOffset.MinValue;
-    public DateTimeOffset   ReleaseTime    { get; internal set; }  = DateTimeOffset.MinValue;
-    public bool             CanOverride    { get; internal set; }  = false;
-    public Precedence       Precedence     { get; internal set; }  = Precedence.Default;
-    public IRestriction     RestrictionRef { get; internal set; } // Can reference a gag or a restriction type.
+    public abstract CursedLootKind Type { get; }
+
+    public Guid Identifier { get; set; } = Guid.NewGuid();
+    public bool InPool { get; set; } = false; // the "enabled" state.
+    public string Label { get; set; } = string.Empty;
+    public DateTimeOffset AppliedTime { get; set; } = DateTimeOffset.MinValue;
+    public DateTimeOffset ReleaseTime { get; set; } = DateTimeOffset.MinValue;
+    public Precedence Precedence { get; set; } = Precedence.Default; // the priority system.
 
     public CursedItem()
     { }
 
-    public CursedItem(CursedItem other, bool keepIdentifier)
+    public CursedItem(CursedItem other, bool keepId)
     {
-        Identifier = keepIdentifier ? other.Identifier : Guid.NewGuid();
+        Identifier = keepId ? other.Identifier : Guid.NewGuid();
         ApplyChanges(other);
     }
 
-    public CursedItem Clone(bool keepId = false) => new CursedItem(this, keepId);
+    public abstract CursedItem Clone(bool keepId = false);
 
-    public void ApplyChanges(CursedItem changedItem)
+    public virtual void ApplyChanges(CursedItem other)
     {
-        Label = changedItem.Label;
-        InPool = changedItem.InPool;
-        AppliedTime = changedItem.AppliedTime;
-        ReleaseTime = changedItem.ReleaseTime;
-        CanOverride = changedItem.CanOverride;
-        Precedence = changedItem.Precedence;
-        RestrictionRef = changedItem.RestrictionRef;
+        Label = other.Label;
+        InPool = other.InPool;
+        AppliedTime = other.AppliedTime;
+        ReleaseTime = other.ReleaseTime;
+        Precedence = other.Precedence;
     }
 
     // May need to be moved up or something. Not sure though. Look into later.
-    public LightCursedLoot ToLightItem()
-        => RestrictionRef switch
-        {
-            GarblerRestriction gag => new LightCursedLoot(Identifier, Label, CanOverride, Precedence, CursedLootType.Gag, null, gag.GagType),
-            IRestrictionItem restriction => new LightCursedLoot(Identifier, Label, CanOverride, Precedence, CursedLootType.Restriction, restriction.Identifier),
-            _ => new LightCursedLoot(Identifier, Label, CanOverride, Precedence, CursedLootType.None)
-        };
+    public virtual LightCursedLoot ToLightItem()
+        => new LightCursedLoot(Identifier, Label, Precedence, CursedLootType.None);
 
-    public AppliedItem ToAppliedItem()
-        => RestrictionRef switch
-        {
-            GarblerRestriction gag => new AppliedItem(ReleaseTime, CursedLootType.Gag, null, gag.GagType),
-            IRestrictionItem restriction => new AppliedItem(ReleaseTime, CursedLootType.Restriction, restriction.Identifier),
-            _ => new AppliedItem(ReleaseTime, CursedLootType.None)
-        };
+    public virtual AppliedItem ToAppliedItem()
+        => new AppliedItem(ReleaseTime, CursedLootType.None);
 
-    // parameterless constructor for serialization
-    public JObject Serialize()
+    public abstract JObject Serialize();
+}
+
+[Serializable]
+public class CursedGagItem : CursedItem
+{
+    public override CursedLootKind Type => CursedLootKind.Gag;
+    public GarblerRestriction RefItem { get; set; }
+
+    public CursedGagItem()
+    { }
+
+    public CursedGagItem(CursedItem other, bool keepId)
+        : base(other, keepId)
+    { }
+
+    public CursedGagItem(CursedGagItem other, bool keepId)
+        : base(other, keepId)
     {
-        var jsonObject = new JObject()
+        RefItem = other.RefItem;
+    }
+
+    public override CursedGagItem Clone(bool keepId)
+        => new CursedGagItem(this, keepId);
+    
+    public void ApplyChanges(CursedGagItem other)
+    {
+        RefItem = other.RefItem;
+        base.ApplyChanges(other);
+    }
+    
+    public override LightCursedLoot ToLightItem()
+        => new LightCursedLoot(Identifier, Label, Precedence, CursedLootType.Gag, null, RefItem.GagType);
+    public override AppliedItem ToAppliedItem()
+        => new AppliedItem(ReleaseTime, CursedLootType.Gag, null, RefItem.GagType);
+
+    public override JObject Serialize()
+        => new JObject()
         {
+            ["Type"] = Type.ToString(),
             ["Identifier"] = Identifier.ToString(),
-            ["Label"] = Label,
             ["InPool"] = InPool,
+            ["Label"] = Label,
             ["AppliedTime"] = AppliedTime.UtcDateTime.ToString("o"),
             ["ReleaseTime"] = ReleaseTime.UtcDateTime.ToString("o"),
-            ["CanOverride"] = CanOverride,
             ["Precedence"] = Precedence.ToString(),
+            ["GagRef"] = RefItem.GagType.ToString()
         };
+}
 
-        if (RestrictionRef is GarblerRestriction gag)
-        {
-            jsonObject["RestrictionRef"] = gag.GagType.ToString();
-        }
-        else if (RestrictionRef is IRestrictionItem restriction)
-        {
-            jsonObject["RestrictionRef"] = restriction.Identifier.ToString();
-        }
-        return jsonObject;
+[Serializable]
+public class CursedRestrictionItem : CursedItem
+{
+    public override CursedLootKind Type => CursedLootKind.Restriction;
+    public RestrictionItem RefItem { get; set; }
+    public CursedRestrictionItem()
+    { }
+
+    public CursedRestrictionItem(CursedItem other, bool keepId)
+        : base(other, keepId)
+    { }
+
+    public CursedRestrictionItem(CursedRestrictionItem other, bool keepId)
+        : base(other, keepId)
+    {
+        RefItem = other.RefItem;
     }
+
+    public override CursedRestrictionItem Clone(bool keepId)
+        => new CursedRestrictionItem(this, keepId);
+    
+    public void ApplyChanges(CursedRestrictionItem other)
+    {
+        RefItem = other.RefItem;
+        base.ApplyChanges(other);
+    }
+    
+    public override LightCursedLoot ToLightItem()
+        => new LightCursedLoot(Identifier, Label, Precedence, CursedLootType.Restriction, RefItem.Identifier);
+    public override AppliedItem ToAppliedItem()
+        => new AppliedItem(ReleaseTime, CursedLootType.Restriction, RefItem.Identifier);
+
+    public override JObject Serialize()
+        => new JObject()
+        {
+            ["Type"] = Type.ToString(),
+            ["Identifier"] = Identifier.ToString(),
+            ["InPool"] = InPool,
+            ["Label"] = Label,
+            ["AppliedTime"] = AppliedTime.UtcDateTime.ToString("o"),
+            ["ReleaseTime"] = ReleaseTime.UtcDateTime.ToString("o"),
+            ["Precedence"] = Precedence.ToString(),
+            ["RestrictionRef"] = RefItem.Identifier.ToString()
+        };
 }
