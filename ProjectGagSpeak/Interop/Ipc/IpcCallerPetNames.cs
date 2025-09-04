@@ -30,11 +30,11 @@ public sealed class IpcCallerPetNames : IIpcCaller
         // API Version.
         ApiVersion = Svc.PluginInterface.GetIpcSubscriber<(uint, uint)>("PetRenamer.ApiVersion");
         // Events
-        OnReady = Svc.PluginInterface.GetIpcSubscriber<object>("PetRenamer.Ready");
-        OnDisposed = Svc.PluginInterface.GetIpcSubscriber<object>("PetRenamer.Disposing");
-        OnNicknamesChanged = Svc.PluginInterface.GetIpcSubscriber<string, object>("PetRenamer.PlayerDataChanged");
+        OnReady = Svc.PluginInterface.GetIpcSubscriber<object>("PetRenamer.OnReady");
+        OnDisposed = Svc.PluginInterface.GetIpcSubscriber<object>("PetRenamer.OnDisposing");
+        OnNicknamesChanged = Svc.PluginInterface.GetIpcSubscriber<string, object>("PetRenamer.OnPlayerDataChanged");
         // Getters
-        GetIsEnabled = Svc.PluginInterface.GetIpcSubscriber<bool>("PetRenamer.Enabled");
+        GetIsEnabled = Svc.PluginInterface.GetIpcSubscriber<bool>("PetRenamer.IsEnabled");
         GetNicknameData = Svc.PluginInterface.GetIpcSubscriber<string>("PetRenamer.GetPlayerData");
         // Enactors
         SetNicknameData = Svc.PluginInterface.GetIpcSubscriber<string, object>("PetRenamer.SetPlayerData");
@@ -55,7 +55,7 @@ public sealed class IpcCallerPetNames : IIpcCaller
         {
             APIAvailable = GetIsEnabled?.InvokeFunc() ?? false;
             if (APIAvailable)
-                APIAvailable = ApiVersion?.InvokeFunc() is { Item1: 3, Item2: >= 1 };
+                APIAvailable = ApiVersion?.InvokeFunc() is { Item1: 4, Item2: >= 0 };
         }
         catch
         {
