@@ -302,7 +302,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         _saveData.AddDuration(AchievementModuleKind.Wardrobe, Achievements.YourRubberSlut, TimeSpan.FromDays(14), DurationTimeUnit.Days, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Days locked up", "Spent");
         _saveData.AddDuration(AchievementModuleKind.Wardrobe, Achievements.ATrueBondageSlave, TimeSpan.FromDays(30), DurationTimeUnit.Days, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Days locked up", "Spent");
 
-        _saveData.AddConditional(AchievementModuleKind.Wardrobe, Achievements.KinkyExplorer, () => _config.Current.CursedLootPanel, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Cursed Runs Started");
+        _saveData.AddConditional(AchievementModuleKind.Wardrobe, Achievements.KinkyExplorer, () => _config.Current.CursedLootUI, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Cursed Runs Started");
         _saveData.AddProgress(AchievementModuleKind.Wardrobe, Achievements.TemptingFatesTreasure, 1, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Cursed Loot Discovered");
         _saveData.AddConditionalProgress(AchievementModuleKind.Wardrobe, Achievements.BadEndSeeker, 25,
             () => _cursedLoot.LockChance <= 25, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Cursed Loot Discovered", reqBeginAndFinish: false);

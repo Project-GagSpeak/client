@@ -32,28 +32,28 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
     private ICallGateProvider<List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)>>? HandledVisiblePairs;
 
     /// <summary>
-    /// Obtains an ApplyStatusToPair message from Moodles, and invokes the update to the player if permissions allow it.
-    /// <para> THIS WILL NOT WORK IF THE PAIR HAS NOT GIVEN YOU PERMISSION TO APPLY </para>
+    ///     Obtains the request to apply Moodles onto another Pair. <para />
+    ///     This request comes from the Moodles Plugin, and it sent to the Kinkster Pair. <para />
+    ///     If lacking permissions, operation will not complete.
     /// </summary>
     private ICallGateProvider<string, string, List<MoodlesStatusInfo>, bool, object?>? ApplyStatusesToPairRequest;
 
-    /// <summary>
-    /// Create an action event that can send off a MoodleStatusInfo tuple to other plugins and inform them that our information is updated.
-    /// </summary>
-    private static ICallGateProvider<MoodlesStatusInfo, object?>?       ApplyMoodleStatus;      // ACTION
-    private static ICallGateProvider<List<MoodlesStatusInfo>, object?>? ApplyMoodleStatusList;  // ACTION
+    // IPC Event Actions intended to be sent over to Moodles.
+    private static ICallGateProvider<MoodlesStatusInfo, object?>?               ApplyStatusInfo;      // applies a moodle tuple to the client.
+    private static ICallGateProvider<List<MoodlesStatusInfo>, object?>?         ApplyStatusInfoList;  // applies a list of moodle tuples to the client.
+    private static ICallGateProvider<string, List<MoodlesStatusInfo>, object?>? StatusInfoAppliedByPair;// Tells Moodles to apply the moodles to the client.
 
+    // GagSpeak's Personal IPC Events.
     private static ICallGateProvider<int>?    ApiVersion; // FUNC 
     private static ICallGateProvider<object>? ListUpdated; // ACTION
     private static ICallGateProvider<object>? Ready; // FUNC
     private static ICallGateProvider<object>? Disposing; // FUNC
 
-    public IpcProvider(ILogger<IpcProvider> logger, GagspeakMediator mediator,
-        KinksterManager pairManager, OnFrameworkService frameworkUtils)
+    public IpcProvider(ILogger<IpcProvider> logger, GagspeakMediator mediator, KinksterManager pairManager)
     {
         _logger = logger;
-        _pairManager = pairManager;
         Mediator = mediator;
+        _pairManager = pairManager;
 
         Mediator.Subscribe<MoodlesReady>(this, (_) => NotifyListChanged());
 
@@ -101,8 +101,9 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
         // init appliers
         ApplyStatusesToPairRequest = Svc.PluginInterface.GetIpcProvider<string, string, List<MoodlesStatusInfo>, bool, object?>("GagSpeak.ApplyStatusesToPairRequest");
         ListUpdated = Svc.PluginInterface.GetIpcProvider<object>("GagSpeak.VisiblePairsUpdated");
-        ApplyMoodleStatus = Svc.PluginInterface.GetIpcProvider<MoodlesStatusInfo, object?>("GagSpeak.ApplyMoodleStatus");
-        ApplyMoodleStatusList = Svc.PluginInterface.GetIpcProvider<List<MoodlesStatusInfo>, object?>("GagSpeak.ApplyMoodleStatusList");
+        ApplyStatusInfo = Svc.PluginInterface.GetIpcProvider<MoodlesStatusInfo, object?>("GagSpeak.ApplyStatusInfo");
+        ApplyStatusInfoList = Svc.PluginInterface.GetIpcProvider<List<MoodlesStatusInfo>, object?>("GagSpeak.ApplyStatusInfoList");
+        StatusInfoAppliedByPair = Svc.PluginInterface.GetIpcProvider<string, List<MoodlesStatusInfo>, object?>("GagSpeak.StatusInfoAppliedByPair");
 
         // register api
         ApiVersion.RegisterFunc(() => GagspeakApiVersion);
@@ -129,8 +130,8 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
         HandledVisiblePairs?.UnregisterFunc();
         ApplyStatusesToPairRequest?.UnregisterAction();
         ListUpdated?.UnregisterAction();
-        ApplyMoodleStatus?.UnregisterAction();
-        ApplyMoodleStatusList?.UnregisterAction();
+        ApplyStatusInfo?.UnregisterAction();
+        ApplyStatusInfoList?.UnregisterAction();
 
         Mediator.UnsubscribeAll(this);
 
@@ -184,13 +185,18 @@ public class IpcProvider : IHostedService, IMediatorSubscriber
     ///     This helps account for trying on Moodle Presets, or applying the preset's StatusTuples. <para />
     ///     Method is invoked via GagSpeak's IpcProvider to prevent miss-use of bypassing permissions.
     /// </summary>
-    public void ApplyStatusTuple(MoodlesStatusInfo status) => ApplyMoodleStatus?.SendMessage(status);
+    public void ApplyStatusTuple(MoodlesStatusInfo status) => ApplyStatusInfo?.SendMessage(status);
 
     /// <summary>
     ///     Applies a group of <see cref="MoodlesStatusInfo"/> tuples to the CLIENT ONLY via Moodles. <para />
     ///     This helps account for trying on Moodle Presets, or applying the preset's StatusTuples. <para />
     ///     Method is invoked via GagSpeak's IpcProvider to prevent miss-use of bypassing permissions.
     /// </summary>
-    public void ApplyStatusTuples(IEnumerable<MoodlesStatusInfo> statuses) => ApplyMoodleStatusList?.SendMessage(statuses.ToList());
+    public void ApplyStatusTuples(IEnumerable<MoodlesStatusInfo> statuses) => ApplyStatusInfoList?.SendMessage(statuses.ToList());
+
+    /// <summary>
+    ///     Applies the list of <see cref="MoodlesStatusInfo"/> tuples to the client, that was sent by another Kinkster.
+    /// </summary>
+    public void ApplyMoodlesSentByKinkster(string kinksterNameWorld, List<MoodlesStatusInfo> statuses) => StatusInfoAppliedByPair?.SendMessage(kinksterNameWorld, statuses);
 }
 

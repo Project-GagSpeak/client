@@ -107,11 +107,14 @@ public sealed class IpcCallerGlamourer : IIpcCaller
     public async Task SetClientItemSlot(ApiEquipSlot slot, ulong item, IReadOnlyList<byte> dye, uint variant)
     {
         if (!APIAvailable || PlayerData.IsZoning) return;
-
-        await Generic.Safe(async () =>
+        try
         {
             await Svc.Framework.RunOnFrameworkThread(() => SetItem.Invoke(0, slot, item, dye, GAGSPEAK_LOCK)).ConfigureAwait(false);
-        });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Failed to set Glamourer Item Slot {slot} to ItemID {item}!", LoggerType.IpcGlamourer);
+        }
     }
 
     /// <summary>

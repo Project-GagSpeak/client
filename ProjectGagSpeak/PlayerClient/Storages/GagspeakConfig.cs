@@ -50,7 +50,7 @@ public class GagspeakConfig
     public GarbleCoreLang Language { get; set; } = GarbleCoreLang.English; // MuffleCore
     public GarbleCoreDialect LanguageDialect { get; set; } = GarbleCoreDialect.US; // MuffleCore
     
-    public bool CursedLootPanel { get; set; } = false; // CursedLootPanel
+    public bool CursedLootUI { get; set; } = false; // CursedLootUI
     public bool CursedItemsApplyTraits { get; set; } = false; // If Mimics can apply restriction traits to you.
     public bool RemoveRestrictionOnTimerExpire { get; set; } = false; // Auto-Remove Items when timer falloff occurs.
 

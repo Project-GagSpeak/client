@@ -10,7 +10,7 @@ public class WardrobeTabs : ImageTabBar<WardrobeTabs.SelectedTab>
         MyRestraints,
         MyRestrictions,
         MyGags,
-        MyCursedLoot,
+        MyCollar,
     }
 
     public WardrobeTabs()
@@ -21,7 +21,7 @@ public class WardrobeTabs : ImageTabBar<WardrobeTabs.SelectedTab>
             "Restrictions--SEP--Apply, Lock, Unlock, Remove, or Configure your various Restrictions");
         AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged], SelectedTab.MyGags,
             "Gags--SEP--Apply, Lock, Unlock, Remove, or Configure your various Gags");
-        AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.CursedLoot], SelectedTab.MyCursedLoot,
-            "Cursed Loot--SEP--Configure your Cursed Items, or manage the active Loot Pool.");
+        AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Collar], SelectedTab.MyCollar,
+            "My Collar--SEP--Setup your Collar, and manage incoming and outgoing collar requests.");
     }
 }

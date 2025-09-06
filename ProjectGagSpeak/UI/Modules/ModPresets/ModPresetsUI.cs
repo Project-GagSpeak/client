@@ -55,7 +55,6 @@ public class ModPresetsUI : WindowMediatorSubscriberBase
 
     protected override void DrawInternal()
     {
-        var winPadding = ImGui.GetStyle().WindowPadding;
         var headerInnder = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
         var splitterSize = ImGui.GetFrameHeight() / 4;
 

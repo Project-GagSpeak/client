@@ -81,19 +81,19 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
     public static IFancyTab[] EditorTabs;
 
     /// <summary> All Content in here is grouped. Can draw either editor or overview left panel. </summary>
-    public void DrawEditorContents(CkHeader.DrawRegion topRegion, CkHeader.DrawRegion botRegion)
+    public void DrawEditorContents(CkHeader.QuadDrawRegions regions)
     {
-        ImGui.SetCursorScreenPos(topRegion.Pos);
-        using (ImRaii.Child("RestraintEditorTop", topRegion.Size))
+        ImGui.SetCursorScreenPos(regions.TopLeft.Pos);
+        using (ImRaii.Child("RestraintEditTop", regions.TopSize))
             DrawEditorHeader();
 
-        ImGui.SetCursorScreenPos(botRegion.Pos);
-        using (ImRaii.Child("RestraintEditorBot", botRegion.Size, false, WFlags.AlwaysUseWindowPadding))
+        ImGui.SetCursorScreenPos(regions.BotLeft.Pos);
+        using (ImRaii.Child("RestraintEditBot", regions.BotSize, false, WFlags.AlwaysUseWindowPadding))
         {
             // Draw out the tab bar, and the items respective contents.
-            using (CkRaii.TabBarChild("RS_EditBar", CkColor.VibrantPink.Uint(), CkColor.VibrantPinkHovered.Uint(), CkColor.FancyHeader.Uint(),
+            using (var _ = CkRaii.TabBarChild("RS_EditBar", CkColor.VibrantPink.Uint(), CkColor.VibrantPinkHovered.Uint(), CkColor.FancyHeader.Uint(),
                 LabelFlags.PadInnerChild | LabelFlags.SizeIncludesHeader, out var selected, EditorTabs))
-                selected?.DrawContents(ImGui.GetContentRegionAvail().X);
+                selected?.DrawContents(_.InnerRegion.X);
         }
     }
 

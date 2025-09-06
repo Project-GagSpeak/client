@@ -2,23 +2,16 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.ImGuiNotification;
 using GagSpeak.Interop;
 using GagSpeak.Kinksters;
-using GagSpeak.MufflerCore;
-using GagSpeak.MufflerCore.Handler;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
 using GagspeakAPI.Util;
-using Lumina.Excel.Sheets;
-using Penumbra.GameData.Interop;
-using System.Windows.Forms;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.State.Listeners;
 
@@ -28,12 +21,13 @@ namespace GagSpeak.State.Listeners;
 /// </summary>
 public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 {
+    private readonly IpcProvider            _provider;
     private readonly IpcManager             _interop;
     private readonly KinksterManager        _pairs;
     private readonly RestraintManager       _restraints;
     private readonly RestrictionManager     _restrictions;
     private readonly GagRestrictionManager  _gags;
-    private readonly CollarManager          _collars;
+    private readonly CollarManager          _collar;
     private readonly CursedLootManager      _cursedLoot;
     private readonly CacheStateManager      _cacheManager;
 
@@ -46,7 +40,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         RestraintManager restraints,
         RestrictionManager restrictions,
         GagRestrictionManager gags,
-        CollarManager collars,
+        CollarManager collar,
         CursedLootManager cursedLoot,
         CacheStateManager cacheManager,
         OnFrameworkService frameworkUtils)
@@ -57,7 +51,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         _restraints = restraints;
         _restrictions = restrictions;
         _gags = gags;
-        _collars = collars;
+        _collar = collar;
         _cursedLoot = cursedLoot;
         _cacheManager = cacheManager;
     }
@@ -308,32 +302,32 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 
         Logger.LogTrace("Received ApplyCollar instruction from server!", LoggerType.Collars);
         // Apply the collar.
-        _collars.Apply(collarData);
-        // If the collar has visuals on, add it to the cache.
-        if (_collars.CollarWithVisualsActive && _collars.ServerCollarData!.Visuals)
-            await _cacheManager.AddCollar(_collars.ServerCollarData, _collars.ActiveCollarData!, collarData.Enactor);
+        _collar.Apply(collarData);
+        await _cacheManager.AddCollar(collarData.Enactor);
 
-        PostActionMsg(collarData.Enactor.UID, InteractionType.ApplyCollar, "A Collar was applied to you!");
+        PostActionMsg(collarData.Enactor.UID, InteractionType.ApplyCollar, "Your collar was applied!");
     }
 
-    public async Task UpdateActiveCollar(KinksterUpdateActiveCollar collarData)
+    public async Task UpdateActiveCollar(KinksterUpdateActiveCollar newData)
     {
-        if (!MainHub.IsConnectionDataSynced || _collars.ServerCollarData is not { } syncedCollar)
+        if (!MainHub.IsConnectionDataSynced || _collar.SyncedData is not { } synced)
             return;
-        Logger.LogTrace($"Received {collarData.Type} instruction from server!", LoggerType.Collars);
-        var prevVisuals = syncedCollar.Visuals;
-        _collars.UpdateActive(collarData);
-        // if the visuals were turned on, add the collar item
-        if (!prevVisuals && syncedCollar.Visuals)
-            await _cacheManager.AddCollar(_collars.ServerCollarData, _collars.ActiveCollarData!, collarData.Enactor);
-        // if the visuals were turned off, remove the collar item
-        else if (prevVisuals && !syncedCollar.Visuals)
-            await _cacheManager.RemoveCollar(_collars.ActiveCollarData!, collarData.Enactor);
-        // if they were on after the update, update the visuals
-        else if (syncedCollar.Visuals)
-            await _cacheManager.UpdateCollar(_collars.ServerCollarData, _collars.ActiveCollarData!, collarData.Type, collarData.Enactor);
 
-        PostActionMsg(collarData.Enactor.UID, InteractionType.UpdateCollar, $"Active Collar had its SyncedData updated by {collarData.Enactor.AliasOrUID}");
+        Logger.LogTrace($"Received {newData.Type} instruction from server!", LoggerType.Collars);
+        var prevVisuals = synced.Visuals;
+        _collar.UpdateActive(newData);
+
+        // if the visuals were turned on, add the collar item
+        if (!prevVisuals && synced.Visuals)
+            await _cacheManager.AddCollar(newData.Enactor);
+        // if the visuals were turned off, remove the collar item
+        else if (prevVisuals && !synced.Visuals)
+            await _cacheManager.RemoveCollar(newData.Enactor);
+        // if they were on after the update, update the visuals
+        else if (synced.Visuals)
+            await _cacheManager.UpdateCollar(newData.Type, newData.Enactor);
+
+        PostActionMsg(newData.Enactor.UID, InteractionType.UpdateCollar, $"Your Collar's SyncedData was updated by {newData.Enactor.AliasOrUID}");
     }
 
     public async Task RemoveCollar(KinksterUpdateActiveCollar collarData)
@@ -341,10 +335,9 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnectionDataSynced)
             return;
         Logger.LogTrace("Received RemoveCollar instruction from server!", LoggerType.Collars);
-        GagSpeakCollar itemBeingRemoved =  _collars.ActiveCollarData!;
-        _collars.Remove(collarData);
-        // Try and remove it regardless. If the keys dont exist they will just be skipped anyways.
-        await _cacheManager.RemoveCollar(itemBeingRemoved, collarData.Enactor);
+        
+        _collar.Remove(collarData);
+        await _cacheManager.RemoveCollar(collarData.Enactor);
 
         PostActionMsg(collarData.Enactor.UID, InteractionType.RemoveRestriction, "A Restriction item was removed from you!");
     }
@@ -422,7 +415,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         if (item is CursedRestrictionItem restriction)
         {
             // remove it, and then remove it from the visuals if valid.
-            if (_restrictions.RemoveCursedItem(restriction, out int layer))
+            if (_restrictions.RemoveCursedItem(restriction, out var layer))
                 await _cacheManager.RemoveCursedItem(restriction, layer);
         }
 
@@ -438,7 +431,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
             await _interop.Moodles.ApplyOwnStatusByGUID(dto.Ids);
     }
 
-    public async void ApplyStatusesToSelf(MoodlesApplierByStatus dto)
+    public void ApplyStatusesToSelf(MoodlesApplierByStatus dto)
     {
         if (_pairs.DirectPairs.FirstOrDefault(p => p.UserData.UID == dto.User.UID) is not { } pair)
         {
@@ -453,8 +446,8 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
             return;
         }
 
-        Mediator.Publish(new EventMessage(new(pair.GetNickAliasOrUid(), pair.UserData.UID, InteractionType.ApplyPairMoodle, "Pair's Moodle Status(s) Applied")));
-        await _interop.Moodles.ApplyStatusesFromPairToSelf(pair.PlayerNameWithWorld, dto.Statuses);
+        Mediator.Publish(new EventMessage(new(pair.GetNickAliasOrUid(), pair.UserData.UID, InteractionType.ApplyPairMoodle, "Pair's Moodle Status(s) Applied to self!")));
+        _provider.ApplyMoodlesSentByKinkster(pair.PlayerNameWithWorld, dto.Statuses.ToList());
     }
 
     public async void RemoveStatusesFromSelf(MoodlesRemoval dto)

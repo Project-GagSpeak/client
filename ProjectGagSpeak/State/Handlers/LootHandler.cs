@@ -61,7 +61,7 @@ public sealed class LootHandler
 
     /// <summary> If any cursed loot can even be applied at the moment. </summary>
     public bool CanApplyAnyLoot 
-        => _config.Current.CursedLootPanel && MainHub.IsServerAlive && _manager.Storage.InactiveItemsInPool.Any();
+        => _config.Current.CursedLootUI && MainHub.IsServerAlive && _manager.Storage.InactiveItemsInPool.Any();
 
     /// <summary> If the GameObject is a deep dungeon coffer or a treasure chest. </summary>
     public unsafe bool IsAnyTreasure(GameObject* obj)

@@ -23,7 +23,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
     private readonly GagRestrictionManager _gagManager;
     private readonly RestrictionManager _restrictionManager;
     private readonly RestraintManager _restraintManager;
-    private readonly CollarManager _collars;
+    private readonly CollarManager _collar;
     private readonly CursedLootManager _cursedManager;
     private readonly BuzzToyManager _toyManager;
     private readonly PuppeteerManager _puppetManager;
@@ -62,7 +62,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         _gagManager = gags;
         _restrictionManager = restrictions;
         _restraintManager = restraints;
-        _collars = collars;
+        _collar = collars;
         _cursedManager = cursedLoot;
         _toyManager = toys;
         _puppetManager = puppetManager;
@@ -263,7 +263,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
             GagItems = _gagManager.Storage.ToLightStorage().ToArray(),
             Restrictions = _restrictionManager.Storage.Select(r => r.ToLightItem()).ToArray(),
             Restraints = _restraintManager.Storage.Select(r => r.ToLightItem()).ToArray(),
-            Collars = _collars.Storage.Select(c => c.ToLightItem()).ToArray(),
+            Collar = _collar.ClientCollar.ToLightItem(),
             CursedItems = _cursedManager.Storage.ActiveItems.Select(x => x.ToLightItem()).ToArray(),
             Patterns = _patternManager.Storage.Select(p => p.ToLightItem()).ToArray(),
             Alarms = _alarmManager.Storage.Select(a => a.ToLightItem()).ToArray(),
@@ -355,7 +355,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
                 Gags = _gagManager.ServerGagData ?? throw new Exception("ActiveGagData was null!"),
                 Restrictions = _restrictionManager.ServerRestrictionData ?? throw new Exception("ActiveRestrictionsData was null!"),
                 Restraint = _restraintManager.ServerData ?? throw new Exception("ActiveRestraintData was null!"),
-                Collar = _collars.ServerCollarData ?? throw new Exception("ActiveCollarData was null!"),
+                Collar = _collar.SyncedData ?? throw new Exception("ActiveCollarData was null!"),
                 ActiveCursedItems = _cursedManager.Storage.ActiveItems.Select(x => x.Identifier).ToList(),
                 GlobalAliasData = _puppetManager.GlobalAliasStorage,
                 PairAliasData = _puppetManager.PairAliasStorage.ToDictionary(),
@@ -491,8 +491,9 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         // Visuals DataTypeUpdate covers toggling the visual state.
         var dto = new PushClientActiveCollar(onlinePlayers, type)
         {
-            CollarId = newData.Identifier,
+            Applied = newData.Applied,
             OwnerUIDs = newData.OwnerUIDs,
+            Visuals = newData.Visuals,
             Dye1 = newData.Dye1,
             Dye2 = newData.Dye2,
             Moodle = newData.Moodle,
@@ -632,7 +633,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
     {
         var onlinePlayers = _kinksters.GetOnlineUserDatas();
         Logger.LogDebug($"Pushing CollarChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
-        var dto = new PushClientDataChangeCollar(onlinePlayers, collar.Identifier, collar.ToLightItem());
+        var dto = new PushClientDataChangeCollar(onlinePlayers, collar.ToLightItem());
         if (await _hub.UserPushNewCollarData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push CollarData to paired Kinksters. [{res}]");
         else

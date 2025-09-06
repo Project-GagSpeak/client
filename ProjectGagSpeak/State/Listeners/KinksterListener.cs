@@ -187,11 +187,11 @@ public sealed class KinksterListener
         kinkster.LightCache.UpdateRestraintItem(itemId, newData);
     }
 
-    public void CachedCollarDataChange(UserData targetUser, Guid itemId, LightCollar? newData)
+    public void CachedCollarDataChange(UserData targetUser, LightCollar? newData)
     {
         if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-        kinkster.LightCache.UpdateCollarItem(itemId, newData);
+        kinkster.LightCache.UpdateCollarItem(newData);
     }
 
     public void CachedCursedLootDataChange(UserData targetUser, Guid itemId, LightCursedLoot? newData)

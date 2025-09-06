@@ -61,8 +61,9 @@ public sealed class ClientData : IDisposable
     internal static IReadOnlyHardcoreState? Hardcore => _clientHardcore;
     public IEnumerable<KinksterPairRequest> ReqPairOutgoing => _pairingRequests.Where(x => x.User.UID == MainHub.UID);
     public IEnumerable<KinksterPairRequest> ReqPairIncoming => _pairingRequests.Where(x => x.Target.UID == MainHub.UID);
-    public IEnumerable<CollarOwnershipRequest> ReqCollarOutgoing => _collarRequests.Where(x => x.User.UID == MainHub.UID);
-    public IEnumerable<CollarOwnershipRequest> ReqCollarIncoming => _collarRequests.Where(x => x.Target.UID == MainHub.UID);
+    // make these independant maybe. Idk, would be more convient for the UI.
+    public List<CollarOwnershipRequest> ReqCollarOutgoing => _collarRequests.Where(x => x.User.UID == MainHub.UID).ToList();
+    public List<CollarOwnershipRequest> ReqCollarIncoming => _collarRequests.Where(x => x.Target.UID == MainHub.UID).ToList();
 
     public static Vector3 GetImprisonmentPos()
         => _clientHardcore?.ImprisonedPos ?? Vector3.Zero;

@@ -105,25 +105,6 @@ public class GagRestrictionStorage : SortedList<GagType, GarblerRestriction>, IE
     }
 }
 
-public class CollarStorage : List<GagSpeakCollar>, IEditableStorage<GagSpeakCollar>
-{
-    public bool TryGetCollar(Guid id, [NotNullWhen(true)] out GagSpeakCollar? collar)
-    {
-        collar = this.FirstOrDefault(x => x.Identifier == id);
-        return collar != null;
-    }
-    /// <summary> Informs us if the item is in the storage. </summary>
-    public bool Contains(Guid id)
-        => this.Any(x => x.Identifier == id);
-    public bool TryApplyChanges(GagSpeakCollar oldItem, GagSpeakCollar changedItem)
-    {
-        if (changedItem is null)
-            return false;
-        oldItem.ApplyChanges(changedItem);
-        return true;
-    }
-}
-
 public class CursedLootStorage : List<CursedItem>, IEditableStorage<CursedItem>
 {
     /// <summary> C# Quirk Dev Note here: Modifying any properties from the fetched object WILL update them directly.

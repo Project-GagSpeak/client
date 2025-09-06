@@ -1,6 +1,4 @@
-using Dalamud.Plugin;
 using CkCommons.HybridSaver;
-using GagSpeak.PlayerClient;
 
 namespace GagSpeak.Services.Configs;
 
@@ -20,11 +18,11 @@ public class ConfigFileProvider : IConfigFileProvider
     public static string FileSysDirectory   { get; private set; } = string.Empty;
     public static string ThumbnailDirectory { get; private set; } = string.Empty;
 
-    // Shared Client Configs
+    // GarblerCore Data
     public readonly string GagDataJson;
-
+    
+    // Shared Client Configs
     public readonly string MainConfig;
-    public readonly string Collars;
     public readonly string Patterns;
     public readonly string RecentGlobalChat;
     public readonly string CustomModSettings;
@@ -32,10 +30,9 @@ public class ConfigFileProvider : IConfigFileProvider
     public readonly string Favorites;
     public readonly string HypnoEffects;
     public readonly string BuzzToys;
-    public string CKFS_GagRestrictions => Path.Combine(FileSysDirectory, "fs-gagrestrictions.json");
-    public string CKFS_Restrictions => Path.Combine(FileSysDirectory, "fs-restrictions.json");
     public string CKFS_RestraintSets => Path.Combine(FileSysDirectory, "fs-restraintsets.json");
-    public string CKFS_Collars => Path.Combine(FileSysDirectory, "fs-collars.json");
+    public string CKFS_Restrictions => Path.Combine(FileSysDirectory, "fs-restrictions.json");
+    public string CKFS_GagRestrictions => Path.Combine(FileSysDirectory, "fs-gagrestrictions.json");
     public string CKFS_CursedLoot => Path.Combine(FileSysDirectory, "fs-cursedloot.json");
     public string CKFS_BuzzToys => Path.Combine(FileSysDirectory, "fs-buzzdevices.json");
     public string CKFS_Patterns => Path.Combine(FileSysDirectory, "fs-patterns.json");
@@ -47,14 +44,14 @@ public class ConfigFileProvider : IConfigFileProvider
     public readonly string ServerConfig;
 
     // Unique Client Configs Per Account.
-    public string GagRestrictions => Path.Combine(CurrentPlayerDirectory, "gag-restrictions.json");
-    public string Restrictions => Path.Combine(CurrentPlayerDirectory, "restrictions.json");
     public string RestraintSets => Path.Combine(CurrentPlayerDirectory, "restraint-sets.json");
+    public string Restrictions => Path.Combine(CurrentPlayerDirectory, "restrictions.json");
+    public string GagRestrictions => Path.Combine(CurrentPlayerDirectory, "gag-restrictions.json");
+    public string CollarData => Path.Combine(CurrentPlayerDirectory, "collar.json");
     public string CursedLoot => Path.Combine(CurrentPlayerDirectory, "cursed-loot.json");
     public string Puppeteer => Path.Combine(CurrentPlayerDirectory, "puppeteer.json");
     public string Alarms => Path.Combine(CurrentPlayerDirectory, "alarms.json");
     public string Triggers => Path.Combine(CurrentPlayerDirectory, "triggers.json");
-    public string MetaData => Path.Combine(CurrentPlayerDirectory, "metadata.json");
 
     public string CurrentPlayerDirectory => Path.Combine(GagSpeakDirectory, CurrentUserUID ?? "InvalidFiles");
     public string? CurrentUserUID { get; private set; } = null;
@@ -69,7 +66,6 @@ public class ConfigFileProvider : IConfigFileProvider
         ThumbnailDirectory = Path.Combine(GagSpeakDirectory, "thumbnails");
 
         MainConfig = Path.Combine(GagSpeakDirectory, "config.json");
-        Collars = Path.Combine(GagSpeakDirectory, "collars.json");
         Patterns = Path.Combine(GagSpeakDirectory, "patterns.json");
 
         RecentGlobalChat = Path.Combine(GagSpeakDirectory, "global-chat-recent.json");

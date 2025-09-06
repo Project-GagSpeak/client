@@ -46,16 +46,17 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
 
     protected override void DrawInternal()
     {
-        var drawSpaces = CkHeader.FlatWithBends(CkColor.FancyHeader.Uint(), ImGui.GetFrameHeight(), ImGui.GetFrameHeight());
+        var frameH = ImGui.GetFrameHeight();
+        var drawSpaces = CkHeader.FlatWithBends(CkColor.FancyHeader.Uint(), frameH, 0, frameH);
 
-        ImGui.SetCursorScreenPos(drawSpaces.Top.Pos);
-        using (ImRaii.Child("Thumbnail_UI_Header", drawSpaces.Top.Size))
+        ImGui.SetCursorScreenPos(drawSpaces.TopLeft.Pos);
+        using (ImRaii.Child("Thumbnail_UI_Header", drawSpaces.TopSize))
             // Let the header buttons know for import, how large the draw region is.
-            DrawHeaderItems(drawSpaces.Bottom.Size);
+            DrawHeaderItems(drawSpaces.BotSize);
 
 
-        ImGui.SetCursorScreenPos(drawSpaces.Bottom.Pos);
-        using (ImRaii.Child("Thumbnail_UI_Footer", drawSpaces.Bottom.Size))
+        ImGui.SetCursorScreenPos(drawSpaces.BotLeft.Pos);
+        using (ImRaii.Child("Thumbnail_UI_Footer", drawSpaces.BotSize))
         {
             if (_imageImport.ShouldDrawImportContent(_service.Kind))
                 DrawFileImporter();

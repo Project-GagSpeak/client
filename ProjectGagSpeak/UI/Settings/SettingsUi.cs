@@ -219,7 +219,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         var wardrobeEnabled = globals.WardrobeEnabled;
         var restrictionVisuals = globals.RestrictionVisuals;
         var restraintSetVisuals = globals.RestraintSetVisuals;
-        var cursedDungeonLoot = _mainConfig.Current.CursedLootPanel;
+        var cursedDungeonLoot = _mainConfig.Current.CursedLootUI;
         var mimicsApplyTraits = _mainConfig.Current.CursedItemsApplyTraits;
 
         ImGui.Separator();
@@ -262,7 +262,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.CursedLootActive, ref cursedDungeonLoot))
             {
-                _mainConfig.Current.CursedLootPanel = cursedDungeonLoot;
+                _mainConfig.Current.CursedLootUI = cursedDungeonLoot;
                 _mainConfig.Save();
             }
             CkGui.HelpText(GSLoc.Settings.MainOptions.CursedLootActiveTT);

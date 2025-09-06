@@ -50,7 +50,7 @@ public class MainConfig
 //                                 "Safeword": "",
 //                                 "Language": "English",
 //                                 "LanguageDialect": "IPA_US",
-//                                 "CursedLootPanel": false,
+//                                 "CursedLootUI": false,
 //                                 "RemoveGagUponLockExpiration": false,
 //                                 "RevertStyle": 1,
 //                                 "DisableSetUponUnlock": false,

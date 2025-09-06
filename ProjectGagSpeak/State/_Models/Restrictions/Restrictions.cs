@@ -395,7 +395,6 @@ public class BlindfoldRestriction : RestrictionItem
 /// </summary>
 public class GagSpeakCollar : IEditableStorageItem<GagSpeakCollar>, IModPreset
 {
-    public Guid Identifier { get; internal set; } = Guid.NewGuid();
     public string Label { get; set; } = string.Empty;
     public string ThumbnailPath { get; set; } = string.Empty;
     // maybe replace with GlamourSlot but also dont know, since it relates to dyes which we dont set.
@@ -407,13 +406,10 @@ public class GagSpeakCollar : IEditableStorageItem<GagSpeakCollar>, IModPreset
     public GagSpeakCollar()
     { }
 
-    public GagSpeakCollar(GagSpeakCollar other, bool keepId = false)
-    {
-        Identifier = keepId ? other.Identifier : Guid.NewGuid();
-        ApplyChanges(other);
-    }
+    public GagSpeakCollar(GagSpeakCollar other, bool _)
+        => ApplyChanges(other);
 
-    public GagSpeakCollar Clone(bool keepId = true) => new GagSpeakCollar(this, keepId);
+    public GagSpeakCollar Clone(bool _) => new GagSpeakCollar(this, _);
 
     /// <summary> Applies updated changes to an edited item, while still maintaining the original references. <summary>
     public void ApplyChanges(GagSpeakCollar other)
@@ -428,7 +424,6 @@ public class GagSpeakCollar : IEditableStorageItem<GagSpeakCollar>, IModPreset
     {
         return new JObject
         {
-            ["Identifier"] = Identifier.ToString(),
             ["Label"] = Label,
             ["ThumbnailPath"] = ThumbnailPath,
             ["Glamour"] = Glamour.Serialize(),
@@ -447,7 +442,6 @@ public class GagSpeakCollar : IEditableStorageItem<GagSpeakCollar>, IModPreset
         // Construct the item to return.
         return new GagSpeakCollar()
         {
-            Identifier = json["Identifier"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier"),
             Label = json["Label"]?.ToObject<string>() ?? string.Empty,
             ThumbnailPath = json["ThumbnailPath"]?.ToObject<string>() ?? string.Empty,
             Glamour = ItemSvc.ParseGlamourSlot(json["Glamour"]),
@@ -457,5 +451,5 @@ public class GagSpeakCollar : IEditableStorageItem<GagSpeakCollar>, IModPreset
     }
 
     public LightCollar ToLightItem()
-        => new LightCollar(Identifier, Label, Glamour.ToLightSlot(), Mod.ToString());
+        => new LightCollar(Label, Glamour.ToLightSlot(), Mod.ToString());
 }

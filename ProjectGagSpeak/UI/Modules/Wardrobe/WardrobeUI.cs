@@ -1,11 +1,11 @@
 using CkCommons;
 using CkCommons.Widgets;
+using Dalamud.Bindings.ImGui;
 using GagSpeak.Gui.Components;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Utils;
-using Dalamud.Bindings.ImGui;
 using static GagSpeak.Gui.Components.WardrobeTabs;
 
 namespace GagSpeak.Gui.Wardrobe;
@@ -15,7 +15,7 @@ public class WardrobeUI : WindowMediatorSubscriberBase
     private readonly RestraintsPanel _restraintPanel;
     private readonly RestrictionsPanel _restrictionsPanel;
     private readonly GagRestrictionsPanel _gagRestrictionsPanel;
-    private readonly CursedLootPanel _cursedLootPanel;
+    private readonly CollarPanel _collarPanel;
     private readonly CosmeticService _cosmetics;
     private readonly TutorialService _guides;
     public WardrobeUI(
@@ -24,14 +24,14 @@ public class WardrobeUI : WindowMediatorSubscriberBase
         RestraintsPanel restraintPanel,
         RestrictionsPanel restrictionsPanel,
         GagRestrictionsPanel gagRestrictionsPanel,
-        CursedLootPanel cursedLootPanel,
+        CollarPanel collarPanel,
         CosmeticService cosmetics,
         TutorialService guides) : base(logger, mediator, "Wardrobe UI")
     {
         _restraintPanel = restraintPanel;
         _restrictionsPanel = restrictionsPanel;
         _gagRestrictionsPanel = gagRestrictionsPanel;
-        _cursedLootPanel = cursedLootPanel;
+        _collarPanel = collarPanel;
         _cosmetics = cosmetics;
         _guides = guides;
 
@@ -44,8 +44,6 @@ public class WardrobeUI : WindowMediatorSubscriberBase
             .Add(FAI.CloudDownloadAlt, "Wardrobe Migrations", () => Mediator.Publish(new UiToggleMessage(typeof(MigrationsUI))))
             .AddTutorial(_guides, TutorialFromTab())
             .Build();
-
-        RespectCloseHotkey = false;
     }
 
     private WardrobeTabs _tabMenu { get; init; }
@@ -79,51 +77,58 @@ public class WardrobeUI : WindowMediatorSubscriberBase
 
     protected override void DrawInternal()
     {
-        var isEditing = IsEditing(_tabMenu.TabSelection);
+        // Collar layout follows different rules in that it does not have different headers or editing modes.
+        // If we are on the collar tab, avoid unessisary calculations by drawing it directly.
+        if (_tabMenu.TabSelection is SelectedTab.MyCollar)
+            DrawCollarLayout();
+        else
+            DrawNormalLayout();
+    }
 
-        // Restraints Module is Special <3
-        if (_tabMenu.TabSelection is SelectedTab.MyRestraints && isEditing)
-        {
-            // if we are editing draw the editor header, otherwise, draw the normal header.
-            var rsEditorRegions = CkHeader.FlatWithBends(CkColor.FancyHeader.Uint(), ImGui.GetFrameHeight(), ImGui.GetFrameHeight());
-            _restraintPanel.DrawEditorContents(rsEditorRegions.Top, rsEditorRegions.Bottom);
-            return;
-        }
+    private void DrawCollarLayout()
+    {
+        var frameH = ImGui.GetFrameHeight();
+        var drawSpaces = CkHeader.FlatWithBends(CkColor.FancyHeader.Uint(), 2 * frameH, frameH * 0.5f, frameH);
+        _collarPanel.DrawContents(drawSpaces, RightLength(), _tabMenu);
+    }
 
-        // Otherwise, perform the normal logic for these.
-        var drawRegions = CkHeader.FancyCurve(CkColor.FancyHeader.Uint(), ImGui.GetFrameHeight(), ImGui.GetFrameHeight(), RightLength(), !isEditing);
-        
+    private void DrawNormalLayout()
+    {
+        var frameH = ImGui.GetFrameHeight();
+        var isEditing = IsEditing();
+        // If we are editing, draw out the flat with bends, otherwise, draw the fancy curve.
+        var drawRegions = isEditing
+            ? CkHeader.FlatWithBends(CkColor.FancyHeader.Uint(), frameH, frameH, frameH)
+            : CkHeader.FancyCurve(CkColor.FancyHeader.Uint(), frameH, frameH * .5f, RightLength(), frameH);
 
+        // Then draw out the contents.
         switch (_tabMenu.TabSelection)
         {
             case SelectedTab.MyRestraints:
-                _restraintPanel.DrawContents(drawRegions, ImGui.GetFrameHeight(), _tabMenu);
+                if (isEditing) _restraintPanel.DrawEditorContents(drawRegions);
+                else _restraintPanel.DrawContents(drawRegions, frameH, _tabMenu);
                 break;
 
             case SelectedTab.MyRestrictions:
-                if (isEditing) _restrictionsPanel.DrawEditorContents(drawRegions, ImGui.GetFrameHeight());
-                else _restrictionsPanel.DrawContents(drawRegions, ImGui.GetFrameHeight(), _tabMenu);
+                if (isEditing) _restrictionsPanel.DrawEditorContents(drawRegions, frameH);
+                else _restrictionsPanel.DrawContents(drawRegions, frameH, _tabMenu);
                 break;
 
             case SelectedTab.MyGags:
-                if (isEditing) _gagRestrictionsPanel.DrawEditorContents(drawRegions, ImGui.GetFrameHeight());
-                else _gagRestrictionsPanel.DrawContents(drawRegions, ImGui.GetFrameHeight(), _tabMenu);
-                break;
-
-            case SelectedTab.MyCursedLoot:
-                _cursedLootPanel.DrawContents(drawRegions, ImGui.GetFrameHeight(), _tabMenu);
+                if (isEditing) _gagRestrictionsPanel.DrawEditorContents(drawRegions, frameH);
+                else _gagRestrictionsPanel.DrawContents(drawRegions, frameH, _tabMenu);
                 break;
         }
     }
 
-    private bool IsEditing(SelectedTab tab)
-    => tab switch
-    {
-        SelectedTab.MyRestraints => _restraintPanel.IsEditing,
-        SelectedTab.MyRestrictions => _restrictionsPanel.IsEditing,
-        SelectedTab.MyGags => _gagRestrictionsPanel.IsEditing,
-        _ => false,
-    };
+    private bool IsEditing()
+        => _tabMenu.TabSelection switch
+        {
+            SelectedTab.MyRestraints => _restraintPanel.IsEditing,
+            SelectedTab.MyRestrictions => _restrictionsPanel.IsEditing,
+            SelectedTab.MyGags => _gagRestrictionsPanel.IsEditing,
+            _ => false,
+        };
 
     private TutorialType TutorialFromTab()
         => _tabMenu.TabSelection switch
@@ -131,6 +136,6 @@ public class WardrobeUI : WindowMediatorSubscriberBase
             SelectedTab.MyRestraints => TutorialType.Restraints,
             SelectedTab.MyRestrictions => TutorialType.Restraints,
             SelectedTab.MyGags => TutorialType.Gags,
-            _ => TutorialType.CursedLoot,
+            _ => TutorialType.Collar,
         };
 }

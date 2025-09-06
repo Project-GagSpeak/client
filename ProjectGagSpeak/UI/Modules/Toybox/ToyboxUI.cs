@@ -77,7 +77,7 @@ public class ToyboxUI : WindowMediatorSubscriberBase
     protected override void DrawInternal()
     {
         var frameH = ImGui.GetFrameHeight();
-        var drawRegions = CkHeader.FancyCurve(CkColor.FancyHeader.Uint(), frameH, frameH, RightLength(), true);
+        var drawRegions = CkHeader.FancyCurve(CkColor.FancyHeader.Uint(), frameH, frameH * 0.5f, RightLength(), frameH);
 
         switch (_tabMenu.TabSelection)
         {

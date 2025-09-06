@@ -170,7 +170,6 @@ public class KinksterRestraint
 
 public class KinksterCollar
 {
-    public Guid Id { get; private set; } = Guid.Empty;
     public string Label { get; private set; }
     public EquipSlot Slot { get; private set; }
     public EquipItem GlamItem { get; private set; }
@@ -179,9 +178,10 @@ public class KinksterCollar
     public KinksterCollar(LightCollar lightItem)
         => UpdateFrom(lightItem);
 
+    public static readonly KinksterCollar Empty = new(new(string.Empty, new LightSlot(), string.Empty));
+
     public void UpdateFrom(LightCollar item)
     {
-        Id = item.Id;
         Label = item.Label;
         Slot = (EquipSlot)item.Glamour.Slot;
         GlamItem = ItemSvc.Resolve(Slot, new(item.Glamour.CItemId));
@@ -275,7 +275,7 @@ public class KinksterCache
     public Dictionary<GagType, KinksterGag> Gags { get; private set; } = new();
     public Dictionary<Guid, KinksterRestriction> Restrictions { get; private set; } = new();
     public Dictionary<Guid, KinksterRestraint> Restraints { get; private set; } = new();
-    public Dictionary<Guid, KinksterCollar> Collars { get; private set; } = new();
+    public KinksterCollar Collar { get; private set; } = KinksterCollar.Empty;
     public Dictionary<Guid, KinksterCursedLoot> CursedItems { get; private set; } = new();
     public Dictionary<Guid, KinksterPattern> Patterns { get; private set; } = new();
     public Dictionary<Guid, KinksterAlarm> Alarms { get; private set; } = new();
@@ -389,18 +389,12 @@ public class KinksterCache
         }
     }
 
-    public void UpdateCollarItem(Guid id, LightCollar? apiItem)
+    public void UpdateCollarItem(LightCollar? apiItem)
     {
         if (apiItem is null)
-        {
-            Collars.Remove(id);
-            return;
-        }
-
-        if (Collars.TryGetValue(id, out var existing))
-            existing.UpdateFrom(apiItem);
+            Collar = KinksterCollar.Empty;
         else
-            Collars[id] = new KinksterCollar(apiItem);
+            Collar.UpdateFrom(apiItem);
     }
 
     public void UpdateLootItem(Guid id, LightCursedLoot? apiItem)

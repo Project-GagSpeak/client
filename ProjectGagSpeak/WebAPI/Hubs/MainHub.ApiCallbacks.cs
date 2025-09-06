@@ -644,7 +644,7 @@ public partial class MainHub
 
     public Task Callback_KinksterNewCollarData(KinksterNewCollarData dto)
     {
-        Generic.Safe(() => _kinksterListener.CachedCollarDataChange(dto.User, dto.ItemId, dto.LightItem));
+        Generic.Safe(() => _kinksterListener.CachedCollarDataChange(dto.User, dto.LightItem));
         return Task.CompletedTask;
     }
 

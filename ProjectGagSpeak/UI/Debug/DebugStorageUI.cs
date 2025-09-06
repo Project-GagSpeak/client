@@ -29,7 +29,7 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
-    private readonly CollarManager _collars;
+    private readonly CollarManager _collar;
     private readonly CursedLootManager _cursedLoot;
     private readonly PuppeteerManager _puppeteer;
     private readonly BuzzToyManager _toys;
@@ -66,7 +66,7 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
         _gags = gags;
         _restrictions = restrictions;
         _restraints = restraints;
-        _collars = collars;
+        _collar = collars;
         _cursedLoot = cursedLoot;
         _puppeteer = puppeteer;
         _toys = toys;
@@ -339,20 +339,10 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
 
     public void DrawCollarStorage()
     {
-        if (!ImGui.CollapsingHeader("Collar Storage"))
+        if (!ImGui.CollapsingHeader("Client Collar"))
             return;
-        if (_collars.Storage.IsNullOrEmpty())
-        {
-            ImGui.TextUnformatted("Collar Storage is null or empty");
-            return;
-        }
-        foreach (var (collar, idx) in _collars.Storage.WithIndex())
-        {
-            using var node = ImRaii.TreeNode($"{collar.Label}##{idx}");
-            if (!node)
-                continue;
-            DrawCollar(collar);
-        }
+        
+        DrawCollar(_collar.ClientCollar);
     }
 
     public void DrawCursedLootStorage()
@@ -704,9 +694,6 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
         {
             ImGuiUtil.DrawTableColumn("Name");
             ImGuiUtil.DrawTableColumn(collar.Label);
-            ImGui.TableNextRow();
-            ImGuiUtil.DrawTableColumn("Identifier");
-            ImGuiUtil.DrawTableColumn(collar.Identifier.ToString());
             ImGui.TableNextRow();
 
             ImGuiUtil.DrawTableColumn("Thumbnail Path");

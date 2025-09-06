@@ -44,6 +44,7 @@ public class HomepageTab
         {
             ("Sex Toy Remote", FAI.WaveSquare, () => _mediator.Publish(new UiToggleMessage(typeof(BuzzToyRemoteUI)))),
             ("Wardrobe", FAI.ToiletPortable, () => _mediator.Publish(new UiToggleMessage(typeof(WardrobeUI)))),
+            ("Cursed Loot", FAI.BoxOpen, () => _mediator.Publish(new UiToggleMessage(typeof(CursedLootUI)))),
             ("Puppeteer", FAI.PersonHarassing, () => _mediator.Publish(new UiToggleMessage(typeof(PuppeteerUI)))),
             ("Toybox", FAI.BoxOpen, () => _mediator.Publish(new UiToggleMessage(typeof(ToyboxUI)))),
             ("Mod Presets", FAI.FileAlt, () => _mediator.Publish(new UiToggleMessage(typeof(ModPresetsUI)))),

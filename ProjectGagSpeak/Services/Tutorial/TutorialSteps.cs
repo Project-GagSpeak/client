@@ -7,6 +7,7 @@ public enum TutorialType
     Restraints,
     Restrictions,
     Gags,
+    Collar,
     CursedLoot,
     Puppeteer,
     Toys,
@@ -179,6 +180,16 @@ public enum StepsGags
     Locking, // lock system overview. (lock on click)
     Unlocking, // how 2 unlocky (if possible, unlock on next)
     Removing, // remove restriction on click if tutorial one is present.
+}
+
+public enum StepsCollar
+{
+    Step1,
+    Step2,
+    Step3,
+    Step4,
+    Step5,
+    Step6,
 }
 
 public enum StepsCursedLoot

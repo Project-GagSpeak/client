@@ -30,7 +30,7 @@ public class CacheStateManager : IHostedService
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
-    private readonly CollarManager _collars;
+    private readonly CollarManager _collar;
     private readonly CursedLootManager _cursedItems;
     private readonly CustomizePlusHandler _cplusHandler;
     private readonly GlamourHandler _glamourHandler;
@@ -51,7 +51,7 @@ public class CacheStateManager : IHostedService
         _gags = gags;
         _restrictions = restrictions;
         _restraints = restraints;
-        _collars = collar;
+        _collar = collar;
         _cursedItems = cursedItems;
         _cplusHandler = profiles;
         _glamourHandler = glamours;
@@ -99,7 +99,7 @@ public class CacheStateManager : IHostedService
         _gags.LoadServerData(new CharaActiveGags());
         _restrictions.LoadInternalData(new CharaActiveRestrictions(), new List<CursedRestrictionItem>());
         _restraints.LoadServerData(new CharaActiveRestraint());
-        _collars.LoadServerData(new CharaActiveCollar());
+        _collar.LoadServerData(new CharaActiveCollar());
         _cursedItems.InvalidateAllActive();
         // Reset all caches to their default state.
         await Task.WhenAll(
@@ -241,17 +241,19 @@ public class CacheStateManager : IHostedService
         _logger.LogInformation("------ Cursed Item Data synced to Cache ------ ");
 
         // Sync collar data with the CollarManager.
-        _collars.LoadServerData(connectionDto.SyncedCollarData);
+        _collar.LoadServerData(connectionDto.SyncedCollarData);
         _logger.LogInformation("------ Syncing Collar Data to Cache ------");
-        if (_collars.ActiveCollarData is { } collarData && _collars.ServerCollarData is { } serverData)
+        if (_collar.IsActive && _collar.ShowVisuals)
         {
-            _logger.LogDebug($"Adding Collar [{collarData.Label}) to you, under Ownership of {string.Join(',', serverData.OwnerUIDs)}.");
-            var key = new CombinedCacheKey(ManagerPriority.Collar, 0, MainHub.UID, collarData.Label);
-            var glamour = new GlamourSlot(collarData.Glamour.Slot, collarData.Glamour.GameItem, new StainIds([serverData.Dye1, serverData.Dye2]));
+            var data = _collar.ClientCollar;
+            var syncData = _collar.SyncedData!;
+            _logger.LogDebug($"Adding Collar [{data.Label}) to you, under Ownership of {string.Join(',', syncData.OwnerUIDs)}.");
+            var key = new CombinedCacheKey(ManagerPriority.Collar, 0, MainHub.UID, data.Label);
+            var glamour = new GlamourSlot(data.Glamour.Slot, data.Glamour.GameItem, new StainIds([syncData.Dye1, syncData.Dye2]));
             _glamourHandler.TryAddGlamourToCache(key, glamour);
-            _modHandler.TryAddModToCache(key, collarData.Mod);
-            _moodleHandler.TryAddMoodleToCache(key, new MoodleTuple(serverData.Moodle));
-            anyRequestedRedraw |= collarData.DoRedraw;
+            _modHandler.TryAddModToCache(key, data.Mod);
+            _moodleHandler.TryAddMoodleToCache(key, new MoodleTuple(syncData.Moodle));
+            anyRequestedRedraw |= data.DoRedraw;
         }
         _logger.LogInformation("------ Collar Data synced to Cache ------ ");
 
@@ -567,10 +569,17 @@ public class CacheStateManager : IHostedService
     }
 
     // Always use MainHub.UID for the applier so that we can track the updates easier.
-    public async Task AddCollar(CharaActiveCollar synced, GagSpeakCollar data, UserData enactor)
+    // Assumed SyncedData is valid.
+    public async Task AddCollar(UserData enactor)
     {
-        _logger.LogDebug($"Applying Collar [{data.Label}] Enacted by: {enactor.AliasOrUID} ({enactor.UID})");
+        if (!_collar.IsActive || !_collar.ShowVisuals)
+            return;
+        
+        var synced = _collar.SyncedData!;
+        var data = _collar.ClientCollar;
         var key = new CombinedCacheKey(ManagerPriority.Collar, 0, MainHub.UID, data.Label);
+
+        _logger.LogDebug($"Applying Collar [{data.Label}] Enacted by: {enactor.AliasOrUID} ({enactor.UID})");
         // compose the actual glamour item.
         var glamour = new GlamourSlot(data.Glamour.Slot, data.Glamour.GameItem, new StainIds([synced.Dye1, synced.Dye2]));
         await TimedWhenAll($"[{key}]'s Visual Attributes added to caches",
@@ -583,12 +592,16 @@ public class CacheStateManager : IHostedService
             _redrawAssist.RedrawObject();
     }
 
-    public async Task UpdateCollar(CharaActiveCollar synced, GagSpeakCollar data, DataUpdateType type, UserData enactor)
+    public async Task UpdateCollar(DataUpdateType type, UserData enactor)
     {
+        if (_collar.SyncedData is not { } synced)
+            return;
+
         // Ignore if not valid update type.
         if (type is not DataUpdateType.DyesChange and not DataUpdateType.CollarMoodleChange)
             return;
 
+        var data = _collar.ClientCollar;
         var key = new CombinedCacheKey(ManagerPriority.Collar, 0, MainHub.UID, data.Label);
 
         await TimedWhenAll($"[{key}]'s Collar Visuals updated in caches", type is DataUpdateType.DyesChange
@@ -596,10 +609,10 @@ public class CacheStateManager : IHostedService
             : UpdateMoodle(key, new MoodleTuple(synced.Moodle)));
     }
 
-    public async Task RemoveCollar(GagSpeakCollar data, UserData enactor)
+    public async Task RemoveCollar(UserData enactor)
     {
-        _logger.LogDebug($"Removing Collar [{data.Label}] Enacted by: {enactor.AliasOrUID} ({enactor.UID})");
-        var key = new CombinedCacheKey(ManagerPriority.Collar, 0, string.Empty, data.Label);
+        _logger.LogDebug($"Removing Collar [{_collar.ClientCollar.Label}] Enacted by: {enactor.AliasOrUID} ({enactor.UID})");
+        var key = new CombinedCacheKey(ManagerPriority.Collar, 0, string.Empty, _collar.ClientCollar.Label);
         // Remove and update in parallel.
         await TimedWhenAll($"[{key}] removed from cache and base states restored",
             RemoveGlamourMeta(key),
@@ -607,7 +620,7 @@ public class CacheStateManager : IHostedService
             RemoveMoodle(key)
         );
         // Handle Redraw afterwards
-        if (data.DoRedraw)
+        if (_collar.ClientCollar.DoRedraw)
             _redrawAssist.RedrawObject();
     }
 

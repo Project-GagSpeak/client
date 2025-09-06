@@ -81,7 +81,7 @@ public static class ConfigMigrator
 
 
 
-        config["CursedLootPanel"] = mainConfig["CursedDungeonLoot"];
+        config["CursedLootUI"] = mainConfig["CursedDungeonLoot"];
         config["RemoveRestrictionOnTimerExpire"] = mainConfig["RemoveGagUponLockExpiration"];
         config["VibratorMode"] = mainConfig["VibratorMode"];
         config["VibeSimAudio"] = mainConfig["VibeSimAudio"];
