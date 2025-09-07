@@ -67,7 +67,7 @@ public sealed class AlarmFileSelector : CkFileSystemSelector<Alarm, AlarmFileSel
         Mediator.UnsubscribeAll(this);
     }
 
-    protected override void DrawLeafInner(CkFileSystem<Alarm>.Leaf leaf, in AlarmState state, bool selected)
+    protected override bool DrawLeafInner(CkFileSystem<Alarm>.Leaf leaf, in AlarmState state, bool selected)
     {
         // must be a valid drag-drop source, so use invisible button
         var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
@@ -109,6 +109,7 @@ public sealed class AlarmFileSelector : CkFileSystemSelector<Alarm, AlarmFileSel
             }
             CkGui.AttachToolTip("Delete this alarm. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
         }
+        return hovered && ImGui.IsMouseReleased(ImGuiMouseButton.Left);
     }
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>

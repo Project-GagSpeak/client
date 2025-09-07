@@ -1,8 +1,11 @@
+using CkCommons;
 using CkCommons.FileSystem;
 using CkCommons.FileSystem.Selector;
 using CkCommons.Gui;
 using CkCommons.Helpers;
+using CkCommons.Raii;
 using CkCommons.Widgets;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
@@ -10,10 +13,11 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
-using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Text;
 using OtterGuiInternal.Structs;
+using TerraFX.Interop.Windows;
+using static FFXIVClientStructs.FFXIV.Client.UI.Agent.AgentMiragePrismMiragePlateData;
 
 namespace GagSpeak.FileSystems;
 
@@ -71,73 +75,126 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
         Mediator.UnsubscribeAll(this);
     }
 
-    protected override void DrawLeafInner(CkFileSystem<CursedItem>.Leaf leaf, in CursedItemState state, bool selected)
+    protected override bool DrawLeafInner(CkFileSystem<CursedItem>.Leaf leaf, in CursedItemState state, bool selected)
     {
-        var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
-        ImGui.InvisibleButton("##leaf", leafSize);
+        var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetTextLineHeight() * 2);
+        ImGui.Dummy(leafSize);
         var rectMin = ImGui.GetItemRectMin();
         var rectMax = ImGui.GetItemRectMax();
+        var hoveringRegion = ImGui.IsItemHovered();
 
-        var iconSize = CkGui.IconSize(FAI.Trash).X;
+        var iconSize = CkGui.IconSize(FAI.Trash);
         var spacing = ImGui.GetStyle().ItemSpacing.X;
-        var iconSpacing = iconSize + spacing;
+        var iconSpacing = iconSize.X + spacing;
 
         ImRect leftOfFav = new(rectMin, rectMin + new Vector2(spacing, leafSize.Y));
         ImRect rightOfFav = new(rectMin + new Vector2(iconSpacing, 0), rectMin + leafSize - new Vector2(iconSpacing * 2, 0));
 
         var wasHovered = ImGui.IsMouseHoveringRect(leftOfFav.Min, leftOfFav.Max) || ImGui.IsMouseHoveringRect(rightOfFav.Min, rightOfFav.Max);
-        // Draw the base frame, colored.
         var bgColor = wasHovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
-        ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), bgColor, 5);
+        var wdl = ImGui.GetWindowDrawList();
+        wdl.AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), bgColor, 5);
 
         if (selected)
         {
-            ImGui.GetWindowDrawList().AddRectFilledMultiColor(
-                rectMin,
-                rectMin + leafSize,
-                CkGui.Color(new Vector4(0.886f, 0.407f, 0.658f, .3f)), 0, 0, CkGui.Color(new Vector4(0.886f, 0.407f, 0.658f, .3f)));
-
-            ImGui.GetWindowDrawList().AddRectFilled(
-                rectMin,
-                new Vector2(rectMin.X + ImGuiHelpers.GlobalScale * 3, rectMax.Y),
-                CkGui.Color(ImGuiColors.ParsedPink), 5);
+            wdl.AddRectFilledMultiColor(rectMin, rectMin + leafSize, CkGui.Color(new Vector4(0.886f, 0.407f, 0.658f, .3f)), 0, 0, CkGui.Color(new Vector4(0.886f, 0.407f, 0.658f, .3f)));
+            wdl.AddRectFilled(rectMin, new Vector2(rectMin.X + ImGuiHelpers.GlobalScale * 3, rectMax.Y), CkGui.Color(ImGuiColors.ParsedPink), 5);
         }
 
-        // Contents.
         ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
-        Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.CursedLoot, leaf.Value.Identifier);
-        CkGui.TextFrameAlignedInline(leaf.Value.Label);
-        // Only draw the deletion if the item is not active or occupied.
-        var isInPool = leaf.Value.InPool;
-        var shiftPressed = KeyMonitor.ShiftPressed();
-        var mouseReleased = ImGui.IsMouseReleased(ImGuiMouseButton.Left);
+        using (ImRaii.Group())
+        {
+            Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.CursedLoot, leaf.Value.Identifier);
+            CkGui.ColorTextInline(leaf.Value.Label, ImGuiColors.DalamudGrey);
+            CkGui.ColorTextInline($"[{leaf.Value.Type}]", ImGuiColors.DalamudYellow);
+            CkGui.ColorText(leaf.Value.RefLabel, ImGuiColors.DalamudGrey3);
+        }
 
-        var currentX = leafSize.X - iconSpacing;
-        ImGui.SameLine(currentX);
-        var pos = ImGui.GetCursorScreenPos();
-        var hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
-        var col = (!isInPool && hovering && shiftPressed) ? ImGuiCol.Text : ImGuiCol.TextDisabled;
-        CkGui.FramedIconText(FAI.Trash, ImGui.GetColorU32(col));
-        if (hovering && shiftPressed && mouseReleased)
+        ImGui.SameLine(leafSize.X - iconSpacing);
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (leafSize.Y - iconSize.Y) / 2);
+        var shiftPressed = KeyMonitor.ShiftPressed();
+        var col = (leaf.Value.InPool || !shiftPressed) ? ImGuiCol.TextDisabled : ImGuiCol.Text;
+        CkGui.FramedIconText(FAI.Eraser, ImGui.GetColorU32(col));
+        if (ImGui.IsItemHovered() && shiftPressed && ImGui.IsItemClicked())
         {
             Log.Debug($"Deleting {leaf.Value.Label} with SHIFT pressed.");
             _manager.Delete(leaf.Value);
         }
         CkGui.AttachToolTip("Delete this cursed Item. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
 
-        currentX -= iconSpacing;
-        ImGui.SameLine(currentX);
-        pos = ImGui.GetCursorScreenPos();
-        hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
-        col = (!isInPool && hovering) ? ImGuiCol.Text : ImGuiCol.TextDisabled;
-        CkGui.FramedIconText(FAI.ArrowRight, ImGui.GetColorU32(col));
-        if (hovering && !isInPool && mouseReleased)
-        {
-            Log.Debug($"Adding {leaf.Value.Label} to the Cursed Loot Pool.");
-            _manager.TogglePoolState(leaf.Value);
-        }
-        CkGui.AttachToolTip("Put this Item in the Cursed Loot Pool.");
+        return wasHovered && ImGui.IsMouseReleased(ImGuiMouseButton.Left);
     }
+
+
+
+    //protected override bool DrawLeafInner(CkFileSystem<CursedItem>.Leaf leaf, in CursedItemState state, bool selected)
+    //{
+    //    var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
+    //    ImGui.InvisibleButton("##leaf", leafSize);
+    //    var rectMin = ImGui.GetItemRectMin();
+    //    var rectMax = ImGui.GetItemRectMax();
+
+    //    var iconSize = CkGui.IconSize(FAI.Trash).X;
+    //    var spacing = ImGui.GetStyle().ItemSpacing.X;
+    //    var iconSpacing = iconSize + spacing;
+
+    //    ImRect leftOfFav = new(rectMin, rectMin + new Vector2(spacing, leafSize.Y));
+    //    ImRect rightOfFav = new(rectMin + new Vector2(iconSpacing, 0), rectMin + leafSize - new Vector2(iconSpacing * 2, 0));
+
+    //    var wasHovered = ImGui.IsMouseHoveringRect(leftOfFav.Min, leftOfFav.Max) || ImGui.IsMouseHoveringRect(rightOfFav.Min, rightOfFav.Max);
+    //    // Draw the base frame, colored.
+    //    var bgColor = wasHovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
+    //    ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), bgColor, 5);
+
+    //    if (selected)
+    //    {
+    //        ImGui.GetWindowDrawList().AddRectFilledMultiColor(
+    //            rectMin,
+    //            rectMin + leafSize,
+    //            CkGui.Color(new Vector4(0.886f, 0.407f, 0.658f, .3f)), 0, 0, CkGui.Color(new Vector4(0.886f, 0.407f, 0.658f, .3f)));
+
+    //        ImGui.GetWindowDrawList().AddRectFilled(
+    //            rectMin,
+    //            new Vector2(rectMin.X + ImGuiHelpers.GlobalScale * 3, rectMax.Y),
+    //            CkGui.Color(ImGuiColors.ParsedPink), 5);
+    //    }
+
+    //    // Contents.
+    //    ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
+    //    Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.CursedLoot, leaf.Value.Identifier);
+    //    CkGui.TextFrameAlignedInline(leaf.Value.Label);
+    //    // Only draw the deletion if the item is not active or occupied.
+    //    var isInPool = leaf.Value.InPool;
+    //    var shiftPressed = KeyMonitor.ShiftPressed();
+    //    var mouseReleased = ImGui.IsMouseReleased(ImGuiMouseButton.Left);
+
+    //    var currentX = leafSize.X - iconSpacing;
+    //    ImGui.SameLine(currentX);
+    //    var pos = ImGui.GetCursorScreenPos();
+    //    var hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
+    //    var col = (!isInPool && hovering && shiftPressed) ? ImGuiCol.Text : ImGuiCol.TextDisabled;
+    //    CkGui.FramedIconText(FAI.Trash, ImGui.GetColorU32(col));
+    //    if (hovering && shiftPressed && mouseReleased)
+    //    {
+    //        Log.Debug($"Deleting {leaf.Value.Label} with SHIFT pressed.");
+    //        _manager.Delete(leaf.Value);
+    //    }
+    //    CkGui.AttachToolTip("Delete this cursed Item. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
+
+    //    currentX -= iconSpacing;
+    //    ImGui.SameLine(currentX);
+    //    pos = ImGui.GetCursorScreenPos();
+    //    hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
+    //    col = (!isInPool && hovering) ? ImGuiCol.Text : ImGuiCol.TextDisabled;
+    //    CkGui.FramedIconText(FAI.ArrowRight, ImGui.GetColorU32(col));
+    //    if (hovering && !isInPool && mouseReleased)
+    //    {
+    //        Log.Debug($"Adding {leaf.Value.Label} to the Cursed Loot Pool.");
+    //        _manager.TogglePoolState(leaf.Value);
+    //    }
+    //    CkGui.AttachToolTip("Put this Item in the Cursed Loot Pool.");
+    //    return wasHovered && mouseReleased;
+    //}
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>
     private void OnCursedItemChange(StorageChangeType type, CursedItem cursedItem, string? oldString)

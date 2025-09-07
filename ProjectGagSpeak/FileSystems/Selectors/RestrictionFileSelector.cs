@@ -77,7 +77,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
         Mediator.UnsubscribeAll(this);
     }
 
-    protected override void DrawLeafInner(CkFileSystem<RestrictionItem>.Leaf leaf, in RestrictionState state, bool selected)
+    protected override bool DrawLeafInner(CkFileSystem<RestrictionItem>.Leaf leaf, in RestrictionState state, bool selected)
     {
         var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
         ImGui.InvisibleButton("leaf", leafSize);
@@ -119,6 +119,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
             }
             CkGui.AttachToolTip("Delete this restriction item. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
         }
+        return hovered && ImGui.IsMouseReleased(ImGuiMouseButton.Left);
     }
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>

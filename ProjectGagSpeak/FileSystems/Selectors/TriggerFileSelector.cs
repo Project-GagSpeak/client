@@ -67,10 +67,10 @@ public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerF
         Mediator.UnsubscribeAll(this);
     }
 
-    protected override void DrawLeafInner(CkFileSystem<Trigger>.Leaf leaf, in TriggerState state, bool selected)
+    protected override bool DrawLeafInner(CkFileSystem<Trigger>.Leaf leaf, in TriggerState state, bool selected)
     {
         var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
-        ImGui.InvisibleButton("leaf", leafSize);
+        ImGui.Dummy(leafSize);
         var hovered = ImGui.IsItemHovered();
         var rectMin = ImGui.GetItemRectMin();
         var rectMax = ImGui.GetItemRectMax();
@@ -109,6 +109,8 @@ public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerF
             }
             CkGui.AttachToolTip("Delete this trigger set. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
         }
+
+        return hovered && ImGui.IsMouseReleased(ImGuiMouseButton.Left);
     }
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>

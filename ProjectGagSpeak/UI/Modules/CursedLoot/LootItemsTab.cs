@@ -1,5 +1,6 @@
 using CkCommons;
 using CkCommons.Gui;
+using CkCommons.Raii;
 using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
 using GagSpeak.CustomCombos.Editor;
@@ -13,6 +14,7 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using OtterGui.Text.Widget.Editors;
 using static CkCommons.Widgets.CkHeader;
+using static FFXIVClientStructs.FFXIV.Client.UI.Misc.GroupPoseModule;
 
 namespace GagSpeak.Gui.Wardrobe;
 
@@ -57,13 +59,24 @@ public class LootItemsTab : IFancyTab
     public void DrawContents(float width)
     {
         // if we are editing any item, we should draw out the editor at the top. Otherwise, we draw out the File System.
+        if (_manager.ItemInEditor is not null)
+            DrawItemEditor(width);
 
-        // some future conditional here.
+        // Draw out the remaining items here.
+        DrawLootItemList(width);
+    }
 
-        // draw out the rest of the items here and things.
+    private void DrawItemEditor(float width)
+    {
+
+
+    }
+
+    private void DrawLootItemList(float width)
+    {
+        using var c = CkRaii.FramedChildPaddedW("LootItems", width, ImGui.GetContentRegionAvail().Y, 0, CkColor.VibrantPink.Uint(), DFlags.RoundCornersAll);
+
         _selector.DrawList(width);
-        // Calculate the size of the left and right windows by the region - spacing of window padding for equal distribution.
-        var subWindowSize = new Vector2((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / 2, ImGui.GetContentRegionAvail().Y);
     }
 
     public void DrawSearchFilter(float width)

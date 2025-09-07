@@ -15,6 +15,8 @@ public abstract class CursedItem : IEditableStorageItem<CursedItem>
     public DateTimeOffset ReleaseTime { get; set; } = DateTimeOffset.MinValue;
     public Precedence Precedence { get; set; } = Precedence.Default; // the priority system.
 
+    public abstract string RefLabel { get; }
+
     public CursedItem()
     { }
 
@@ -50,6 +52,8 @@ public class CursedGagItem : CursedItem
 {
     public override CursedLootKind Type => CursedLootKind.Gag;
     public GarblerRestriction RefItem { get; set; }
+
+    public override string RefLabel => RefItem?.GagType.ToString() ?? "UNK TYPE";
 
     public CursedGagItem()
     { }
@@ -97,6 +101,8 @@ public class CursedRestrictionItem : CursedItem
 {
     public override CursedLootKind Type => CursedLootKind.Restriction;
     public RestrictionItem RefItem { get; set; }
+
+    public override string RefLabel => RefItem?.Label.ToString() ?? "UNK";
     public CursedRestrictionItem()
     { }
 

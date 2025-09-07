@@ -55,7 +55,7 @@ public sealed class GagRestrictionFileSelector : CkFileSystemSelector<GarblerRes
     }
 
     // can override the selector here to mark the last selected set in the config or something somewhere.
-    protected override void DrawLeafInner(CkFileSystem<GarblerRestriction>.Leaf leaf, in GagRestrictionState state, bool selected)
+    protected override bool DrawLeafInner(CkFileSystem<GarblerRestriction>.Leaf leaf, in GagRestrictionState state, bool selected)
     {
         // must be a valid drag-drop source, so use invisible button.
         var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
@@ -92,6 +92,7 @@ public sealed class GagRestrictionFileSelector : CkFileSystemSelector<GarblerRes
             ImGui.SameLine();
             ImGui.Text(leaf.Value.GagType.GagName());
         }
+        return hovered && ImGui.IsMouseReleased(ImGuiMouseButton.Left);
     }
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>

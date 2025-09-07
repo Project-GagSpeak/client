@@ -23,7 +23,7 @@ public sealed class CursedLootFileSystem : CkFileSystem<CursedItem>, IMediatorSu
         _manager = manager;
         _hybridSaver = saver;
 
-        Mediator.Subscribe<ConfigCursedItemChanged>(this, (msg) => OnRestrictionChange(msg.Type, msg.Item, msg.OldString));
+        Mediator.Subscribe<ConfigCursedItemChanged>(this, (msg) => OnLootChange(msg.Type, msg.Item, msg.OldString));
         Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is GagspeakModule.CursedLoot) Reload(); });
         Changed += OnChange;
         Reload();
@@ -31,7 +31,7 @@ public sealed class CursedLootFileSystem : CkFileSystem<CursedItem>, IMediatorSu
 
     private void Reload()
     {
-        if (Load(new FileInfo(_hybridSaver.FileNames.CKFS_CursedLoot), _manager.Storage, RestrictionToIdentifier, RestrictionToName))
+        if (Load(new FileInfo(_hybridSaver.FileNames.CKFS_CursedLoot), _manager.Storage, LootToIdentifier, LootToName))
             _hybridSaver.Save(this);
 
         _logger.LogDebug("Reloaded cursed items filesystem with " + _manager.Storage.Count + " cursed items.");
@@ -39,7 +39,7 @@ public sealed class CursedLootFileSystem : CkFileSystem<CursedItem>, IMediatorSu
 
     public void Dispose()
     {
-        Mediator.Unsubscribe<ConfigRestrictionChanged>(this);
+        Mediator.Unsubscribe<ConfigCursedItemChanged>(this);
         Changed -= OnChange;
     }
 
@@ -49,15 +49,15 @@ public sealed class CursedLootFileSystem : CkFileSystem<CursedItem>, IMediatorSu
             _hybridSaver.Save(this);
     }
 
-    public bool FindLeaf(CursedItem restriction, [NotNullWhen(true)] out Leaf? leaf)
+    public bool FindLeaf(CursedItem loot, [NotNullWhen(true)] out Leaf? leaf)
     {
         leaf = Root.GetAllDescendants(ISortMode<CursedItem>.Lexicographical)
             .OfType<Leaf>()
-            .FirstOrDefault(l => l.Value == restriction);
+            .FirstOrDefault(l => l.Value == loot);
         return leaf != null;
     }
 
-    private void OnRestrictionChange(StorageChangeType type, CursedItem restriction, string? oldString)
+    private void OnLootChange(StorageChangeType type, CursedItem loot, string? oldString)
     {
         switch (type)
         {
@@ -65,46 +65,46 @@ public sealed class CursedLootFileSystem : CkFileSystem<CursedItem>, IMediatorSu
                 var parent = Root;
                 if(oldString != null)
                     try { parent = FindOrCreateAllFolders(oldString); }
-                    catch (Bagagwa ex) { _logger.LogWarning(ex, $"Could not move restriction because the folder could not be created."); }
+                    catch (Bagagwa ex) { _logger.LogWarning(ex, $"Could not move loot because the folder could not be created."); }
 
-                CreateDuplicateLeaf(parent, restriction.Label, restriction);
+                CreateDuplicateLeaf(parent, loot.Label, loot);
                 return;
             case StorageChangeType.Deleted:
-                if (FindLeaf(restriction, out var leaf1))
+                if (FindLeaf(loot, out var leaf1))
                     Delete(leaf1);
                 return;
             case StorageChangeType.Modified:
                 Reload();
                 return;
             case StorageChangeType.Renamed when oldString != null:
-                if (!FindLeaf(restriction, out var leaf2))
+                if (!FindLeaf(loot, out var leaf2))
                     return;
 
                 var old = oldString.FixName();
                 if (old == leaf2.Name || leaf2.Name.IsDuplicateName(out var baseName, out _) && baseName == old)
-                    RenameWithDuplicates(leaf2, restriction.Label);
+                    RenameWithDuplicates(leaf2, loot.Label);
                 return;
         }
     }
 
     // Used for saving and loading.
-    private static string RestrictionToIdentifier(CursedItem restriction)
-        => restriction.Identifier.ToString();
+    private static string LootToIdentifier(CursedItem loot)
+        => loot.Identifier.ToString();
 
-    private static string RestrictionToName(CursedItem restriction)
-        => restriction.Label.FixName();
+    private static string LootToName(CursedItem loot)
+        => loot.Label.FixName();
 
-    private static bool RestrictionHasDefaultPath(CursedItem restriction, string fullPath)
+    private static bool LootHasDefaultPath(CursedItem loot, string fullPath)
     {
-        var regex = new Regex($@"^{Regex.Escape(RestrictionToName(restriction))}( \(\d+\))?$");
+        var regex = new Regex($@"^{Regex.Escape(LootToName(loot))}( \(\d+\))?$");
         return regex.IsMatch(fullPath);
     }
 
-    private static (string, bool) SaveRestriction(CursedItem restriction, string fullPath)
+    private static (string, bool) SaveLoot(CursedItem loot, string fullPath)
         // Only save pairs with non-default paths.
-        => RestrictionHasDefaultPath(restriction, fullPath)
+        => LootHasDefaultPath(loot, fullPath)
             ? (string.Empty, false)
-            : (RestrictionToIdentifier(restriction), true);
+            : (LootToIdentifier(loot), true);
 
     // HybridSavable
     public int ConfigVersion => 0;
@@ -117,6 +117,6 @@ public sealed class CursedLootFileSystem : CkFileSystem<CursedItem>, IMediatorSu
         => throw new NotImplementedException();
 
     public void WriteToStream(StreamWriter writer) 
-        => SaveToFile(writer, SaveRestriction, true);
+        => SaveToFile(writer, SaveLoot, true);
 }
 

@@ -51,7 +51,7 @@ public sealed class ModPresetFileSelector : CkFileSystemSelector<ModPresetContai
     private void OnSelectionChanged(ModPresetContainer? oldContainer, ModPresetContainer? newContainer, in PresetState state)
         => Mediator.Publish(new SelectedModContainerChanged());
 
-    protected override void DrawLeafInner(CkFileSystem<ModPresetContainer>.Leaf leaf, in PresetState state, bool selected)
+    protected override bool DrawLeafInner(CkFileSystem<ModPresetContainer>.Leaf leaf, in PresetState state, bool selected)
     {
         // must be a valid drag-drop source, so use invisible button.
         var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
@@ -87,7 +87,8 @@ public sealed class ModPresetFileSelector : CkFileSystemSelector<ModPresetContai
             using var style = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 2 * ImGuiHelpers.GlobalScale);
             using var tt = ImRaii.Tooltip();
             ImGui.Text(leaf.Value.DirectoryPath);
-        } 
+        }
+        return hovered && ImGui.IsMouseReleased(ImGuiMouseButton.Left);
     }
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>

@@ -80,7 +80,7 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
         Mediator.UnsubscribeAll(this);
     }
 
-    protected override void DrawLeafInner(CkFileSystem<Pattern>.Leaf leaf, in PatternState state, bool selected)
+    protected override bool DrawLeafInner(CkFileSystem<Pattern>.Leaf leaf, in PatternState state, bool selected)
     {
         // must be a valid drag-drop source, so use invisible button.
         var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
@@ -137,7 +137,7 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
         if (!isActiveItem && hovering && shiftPressed && mouseReleased)
         {
             if (leaf.Value.Identifier.Equals(_manager.ItemInEditor?.Identifier))
-                return;
+                return false;
 
             Log.Debug($"Deleting {leaf.Value.Label} with SHIFT pressed.");
             _manager.Delete(leaf.Value);
@@ -152,6 +152,7 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
         CkGui.AttachToolTip($"Total Length: --COL--{leaf.Value.Duration.ToString("mm\\:ss")}--COL--" +
             $"--NL--Start Time: --COL--{leaf.Value.StartPoint.ToString("mm\\:ss")}--COL--" +
             $"--NL--Playback Time: --COL--{leaf.Value.PlaybackDuration.ToString("mm\\:ss")}--COL--", color: CkColor.VibrantPink.Vec4());
+        return wasHovered && ImGui.IsMouseReleased(ImGuiMouseButton.Left);
     }
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>

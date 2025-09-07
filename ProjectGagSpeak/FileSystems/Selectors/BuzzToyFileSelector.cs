@@ -75,7 +75,7 @@ public sealed class BuzzToyFileSelector : CkFileSystemSelector<BuzzToy, BuzzToyF
         Mediator.UnsubscribeAll(this);
     }
 
-    protected override void DrawLeafInner(CkFileSystem<BuzzToy>.Leaf leaf, in ToyState state, bool selected)
+    protected override bool DrawLeafInner(CkFileSystem<BuzzToy>.Leaf leaf, in ToyState state, bool selected)
     {
         // must be a valid drag-drop source, so use invisible button
         var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
@@ -151,6 +151,7 @@ public sealed class BuzzToyFileSelector : CkFileSystemSelector<BuzzToy, BuzzToyF
                 ? "This device is online and connected to Intiface."
                 : "This device is offline or not connected to Intiface.");
         }
+        return wasHovered && mouseReleased;
     }
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>

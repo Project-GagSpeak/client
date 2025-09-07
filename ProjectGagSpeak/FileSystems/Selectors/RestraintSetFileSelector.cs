@@ -89,7 +89,7 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
         Mediator.Unsubscribe<ConfigRestraintSetChanged>(this);
     }
 
-    protected override void DrawLeafInner(CkFileSystem<RestraintSet>.Leaf leaf, in RestraintSetState state, bool selected)
+    protected override bool DrawLeafInner(CkFileSystem<RestraintSet>.Leaf leaf, in RestraintSetState state, bool selected)
     {
         // must be a valid drag-drop source, so use invisible button.
         var leafSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight() * 2);
@@ -156,6 +156,8 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
             }
             CkGui.AttachToolTip("Delete this restraint set. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
         }
+
+        return wasHovered && ImGui.IsMouseReleased(ImGuiMouseButton.Left);
     }
 
     /// <summary> Just set the filter to dirty regardless of what happened. </summary>

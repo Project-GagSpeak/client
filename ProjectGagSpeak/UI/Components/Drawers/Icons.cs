@@ -105,7 +105,7 @@ public static class Icons
             CkGui.IconText(FAI.Star, col);
         CkGui.AttachToolTip((isFavorite ? "Remove" : "Add") + " from Favorites.");
         
-        if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+        if (hovering && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
         {
             if (isFavorite) favorites.RemoveRestriction(type, id);
             else favorites.TryAddRestriction(type, id);
@@ -128,7 +128,7 @@ public static class Icons
             CkGui.IconText(FAI.Star, col);
         CkGui.AttachToolTip((isFavorite ? "Remove" : "Add") + " from Favorites.");
         
-        if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+        if (hovering && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
         {
             if (isFavorite) favorites.RemoveGag(gag);
             else favorites.TryAddGag(gag);
@@ -150,7 +150,7 @@ public static class Icons
             CkGui.IconText(FAI.Star, col);
         CkGui.AttachToolTip((isFavorite ? "Remove" : "Add") + " from Favorites.");
         
-        if (ImGui.IsItemHovered() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+        if (hovering && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
         {
             if (isFavorite) favorites.RemoveKinkster(kinksterUid);
             else favorites.TryAddKinkster(kinksterUid);
