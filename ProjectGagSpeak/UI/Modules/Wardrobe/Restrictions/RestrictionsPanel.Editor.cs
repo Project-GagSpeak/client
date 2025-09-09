@@ -143,7 +143,7 @@ public partial class RestrictionsPanel
     {
         var pos = ImGui.GetCursorScreenPos();
         var displaySize = ImGui.GetIO().DisplaySize;
-        var rightWidth = CkGui.CalcCheckboxWidth("1st Person");
+        var rightWidth = CkGui.IconTextButtonSize(FAI.BookOpen, "Effect Editor");
         var leftWidth = width.RemoveWinPadX() - rightWidth - ImGui.GetStyle().ItemInnerSpacing.X;
         var scaledPreview = displaySize * (leftWidth / ImGui.GetIO().DisplaySize.X);
         var winSize = new Vector2(width, scaledPreview.Y.AddWinPadY());

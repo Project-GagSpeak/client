@@ -46,8 +46,7 @@ public class CollarPanel : DisposableMediatorSubscriberBase
         Mediator.Subscribe<ThumbnailImageSelected>(this, (msg) =>
         {
             if (msg.Folder is not ImageDataType.Collar)
-                return;
-            
+                return;            
             manager.UpdateThumbnail(msg.FileName);
         });
     }

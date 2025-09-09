@@ -425,9 +425,21 @@ public class ActiveItemsDrawer
             ImGui.GetWindowDrawList().AddDalamudImageRounded(frameWrap, ImGui.GetItemRectMin(), new Vector2(size), rounding);
     }
 
+    // maybe condense these into a shared method at some point or something.
     public void DrawRestraintImage(RestraintSet? rs, Vector2 size, float rounding, uint thumbnailBg = 0, bool doFrame = true)
     {
         if (rs != null && TextureManagerEx.GetMetadataPath(ImageDataType.Restraints, rs.ThumbnailPath) is { } imageWrap)
+            DrawImageInternal(imageWrap, null, size, rounding, 0, thumbnailBg);
+        else
+        {
+            ImGui.Dummy(size);
+            ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), thumbnailBg, rounding);
+        }
+    }
+
+    public void DrawCollarImage(GagSpeakCollar collar, Vector2 size, float rounding, uint thumbnailBg = 0, bool doFrame = true)
+    {
+        if (TextureManagerEx.GetMetadataPath(ImageDataType.Collar, collar.ThumbnailPath) is { } imageWrap)
             DrawImageInternal(imageWrap, null, size, rounding, 0, thumbnailBg);
         else
         {

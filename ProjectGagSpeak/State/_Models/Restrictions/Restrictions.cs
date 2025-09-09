@@ -400,9 +400,7 @@ public class GagSpeakCollar : IEditableStorageItem<GagSpeakCollar>, IModPreset
     // maybe replace with GlamourSlot but also dont know, since it relates to dyes which we dont set.
     // maybe figure it out when we get to caches.
     public GlamourSlot Glamour { get; set; } = GlamourSlot.Default;
-    public ModSettingsPreset Mod { get; set; } = new ModSettingsPreset(new ModPresetContainer());
-    public bool DoRedraw { get; set; } = false;
-    
+    public ModSettingsPreset Mod { get; set; } = new ModSettingsPreset(new ModPresetContainer());    
     public GagSpeakCollar()
     { }
 
@@ -417,7 +415,6 @@ public class GagSpeakCollar : IEditableStorageItem<GagSpeakCollar>, IModPreset
         ThumbnailPath = other.ThumbnailPath;
         Glamour = other.Glamour;
         Mod = other.Mod;
-        DoRedraw = other.DoRedraw;
     }
 
     public JObject Serialize()
@@ -428,7 +425,6 @@ public class GagSpeakCollar : IEditableStorageItem<GagSpeakCollar>, IModPreset
             ["ThumbnailPath"] = ThumbnailPath,
             ["Glamour"] = Glamour.Serialize(),
             ["Mod"] = Mod.SerializeReference(),
-            ["DoRedraw"] = DoRedraw,
         };
     }
 
@@ -446,7 +442,6 @@ public class GagSpeakCollar : IEditableStorageItem<GagSpeakCollar>, IModPreset
             ThumbnailPath = json["ThumbnailPath"]?.ToObject<string>() ?? string.Empty,
             Glamour = ItemSvc.ParseGlamourSlot(json["Glamour"]),
             Mod = ModSettingsPreset.FromRefToken(json["Mod"], mp),
-            DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
         };
     }
 

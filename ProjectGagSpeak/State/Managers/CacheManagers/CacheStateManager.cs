@@ -253,7 +253,6 @@ public class CacheStateManager : IHostedService
             _glamourHandler.TryAddGlamourToCache(key, glamour);
             _modHandler.TryAddModToCache(key, data.Mod);
             _moodleHandler.TryAddMoodleToCache(key, new MoodleTuple(syncData.Moodle));
-            anyRequestedRedraw |= data.DoRedraw;
         }
         _logger.LogInformation("------ Collar Data synced to Cache ------ ");
 
@@ -587,9 +586,6 @@ public class CacheStateManager : IHostedService
             AddModPreset(key, data.Mod),
             AddMoodle(key, new MoodleTuple(synced.Moodle))
         );
-        // Handle Redraw afterwards
-        if (data.DoRedraw)
-            _redrawAssist.RedrawObject();
     }
 
     public async Task UpdateCollar(DataUpdateType type, UserData enactor)
@@ -619,9 +615,6 @@ public class CacheStateManager : IHostedService
             RemoveModPreset(key),
             RemoveMoodle(key)
         );
-        // Handle Redraw afterwards
-        if (_collar.ClientCollar.DoRedraw)
-            _redrawAssist.RedrawObject();
     }
 
     private async Task TimedWhenAll(string label, IEnumerable<Task> tasks)

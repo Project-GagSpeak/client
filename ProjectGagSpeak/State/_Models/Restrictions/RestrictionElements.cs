@@ -47,6 +47,9 @@ public class GlamourSlot : IEquatable<GlamourSlot>
 
     public static readonly GlamourSlot Default = new(EquipSlot.Head, ItemSvc.NothingItem(EquipSlot.Head));
 
+    public bool IsDefault()
+        => GameItem.Equals(ItemSvc.NothingItem(Slot));
+
     public JObject Serialize()
         => new JObject
         {

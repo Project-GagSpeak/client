@@ -39,6 +39,7 @@ public sealed class CollarManager : IHybridSavable
     public GagSpeakCollar? ItemInEditor => _itemEditor.ItemInEditor;
 
     // ----------- ACTIVE INFO --------------
+    public bool IsEditing => ItemInEditor is not null;
     public bool IsActive => _serverData?.Applied ?? false;
     public bool ShowVisuals => _serverData?.Visuals ?? false;
     public CharaActiveCollar? SyncedData => _serverData;
@@ -75,8 +76,8 @@ public sealed class CollarManager : IHybridSavable
     }
 
     /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
-    public void StartEditing(GagSpeakCollar item) 
-        => _itemEditor.StartEditing(item);
+    public void StartEditing() 
+        => _itemEditor.StartEditing(ClientCollar);
 
     /// <summary> Cancel the editing process without saving anything. </summary>
     public void StopEditing() 
