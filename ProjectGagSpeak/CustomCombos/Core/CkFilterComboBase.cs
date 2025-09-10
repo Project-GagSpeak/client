@@ -270,9 +270,13 @@ public abstract class CkFilterComboBase<T>
         DrawCombo(label, preview, tooltip, currentSelection, previewWidth, itemHeight, flags, customSearchBg);
         if (NewSelection is null)
             return false;
+        // if the selection is the same, do not return true. (maybe revert, experimental)
+        var changed = (currentSelection != NewSelection.Value);
+        // Update these regardless.
         currentSelection = NewSelection.Value;
         NewSelection = null;
-        return true;
+        // Return if the new  selection changed.
+        return changed;
     }
 
     public virtual bool DrawPopup(string label, Vector2 openPos, ref int currentSelection, float itemHeight, uint? customSearchBg = null)
@@ -283,9 +287,13 @@ public abstract class CkFilterComboBase<T>
         DrawComboPopup(label, openPos, currentSelection, itemHeight, customSearchBg);
         if (NewSelection is null)
             return false;
+        // if the selection is the same, do not return true. (maybe revert, experimental)
+        var changed = (currentSelection != NewSelection.Value);
+        // Update these regardless.
         currentSelection = NewSelection.Value;
         NewSelection = null;
-        return true;
+        // Return if the new  selection changed.
+        return changed;
     }
 
 

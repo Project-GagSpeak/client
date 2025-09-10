@@ -96,14 +96,6 @@ public sealed class CollarManager : IHybridSavable
         }
     }
 
-    /// <summary> 
-    ///     Applies the collar for the defined GUID. Assumes no collar is on. <para />
-    /// 
-    ///     Unlike other visual managers, this does not need to pass out the storage item, 
-    ///     as it is set to <see cref="AppliedCollar"/> if visuals are enabled. <para />
-    ///     
-    ///     This is how we know when to make changes. (but may need to revisit if we find caveats).
-    /// </summary>
     public void Apply(KinksterUpdateActiveCollar dto)
     {
         if (_serverData is not { } data)
@@ -124,38 +116,38 @@ public sealed class CollarManager : IHybridSavable
         GagspeakEventManager.AchievementEvent(UnlocksEvent.CollarStateChange, data, true, dto.Enactor);
     }
 
+    // NOTE: Idk if this is true anymore.
     // there might be an issue server-side where updates can occur while a collar isn't applied maybe? idk.
     // should also have a way to know if the visuals got toggled or whatever but that is a future issue.
-    public void UpdateActive(KinksterUpdateActiveCollar dto)
+    public void UpdateActive(CharaActiveCollar newData, UserData enactor, DataUpdateType type)
     {
         if (_serverData is not { } data)
             return;
 
         // Update the collar data based on the state.
-        switch (dto.Type)
+        switch (type)
         {
             case DataUpdateType.OwnersUpdated:
-                data.OwnerUIDs = dto.NewData.OwnerUIDs;
+                data.OwnerUIDs = newData.OwnerUIDs;
                 break;
             case DataUpdateType.VisibilityChange:
-                data.Visuals = !data.Visuals;
-                // Still keep the active collar data, just have visuals off.
+                data.Visuals = newData.Visuals;
                 break;
             case DataUpdateType.DyesChange:
-                data.Dye1 = dto.NewData.Dye1;
-                data.Dye2 = dto.NewData.Dye2;
+                data.Dye1 = newData.Dye1;
+                data.Dye2 = newData.Dye2;
                 break;
             case DataUpdateType.CollarMoodleChange:
-                data.Moodle = dto.NewData.Moodle;
+                data.Moodle = newData.Moodle;
                 break;
             case DataUpdateType.CollarWritingChange:
-                data.Writing = dto.NewData.Writing;
+                data.Writing = newData.Writing;
                 break;
             case DataUpdateType.CollarPermChange:
-                data.CollaredAccess = dto.NewData.CollaredAccess;
+                data.CollaredAccess = newData.CollaredAccess;
                 break;
             case DataUpdateType.CollarOwnerPermChange:
-                data.OwnerAccess = dto.NewData.OwnerAccess;
+                data.OwnerAccess = newData.OwnerAccess;
                 break;
 
             default: // prevent other cases from triggering achievement.
@@ -163,19 +155,18 @@ public sealed class CollarManager : IHybridSavable
         }
 
         // could maybe pass previous and new into here for achievement update types.
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.CollarUpdated, data, dto.Type, dto.Enactor);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.CollarUpdated, data, type, enactor);
     }
 
-    public void Remove(KinksterUpdateActiveCollar dto)
+    public void Remove(UserData enactor)
     {
         if (_serverData is not { } data)
             return;
 
-        // reset collar to defaults. (Should be the same as the dto.NewData but always play it safe here)
         data = new CharaActiveCollar();
 
         // trigger achievement.
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.CollarStateChange, data, false, dto.Enactor);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.CollarStateChange, data, false, enactor);
 
     }
 

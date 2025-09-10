@@ -19,9 +19,10 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
 {
     private readonly OverlayHandler _overlays;
     private readonly PlayerCtrlHandler _playerControl;
-    private readonly GagRestrictionManager _gags;
-    private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
+    private readonly RestrictionManager _restrictions;
+    private readonly GagRestrictionManager _gags;
+    private readonly CollarManager _collar;
     private readonly CursedLootManager _cursedLoot;
     private readonly PuppeteerManager _puppeteer;
     private readonly AlarmManager _alarms;
@@ -34,9 +35,10 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
     public ConnectionSyncService(
         ILogger<ConnectionSyncService> logger,
         GagspeakMediator mediator,
-        GagRestrictionManager gags,
-        RestrictionManager restrictions,
         RestraintManager restraints,
+        RestrictionManager restrictions,
+        GagRestrictionManager gags,
+        CollarManager collar,
         CursedLootManager cursedLoot,
         PuppeteerManager puppeteer,
         AlarmManager alarms,
@@ -51,9 +53,10 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
     {
         _overlays = overlays;
         _playerControl = playerControl;
-        _gags = gags;
-        _restrictions = restrictions;
         _restraints = restraints;
+        _restrictions = restrictions;
+        _gags = gags;
+        _collar = collar;
         _cursedLoot = cursedLoot;
         _puppeteer = puppeteer;
         _alarms = alarms;
@@ -97,6 +100,7 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
         _gags.Load();
         _restrictions.Load();
         _restraints.Load();
+        _collar.Load();
         _cursedLoot.Load();
         _puppeteer.Load();
         _alarms.Load();

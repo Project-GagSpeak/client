@@ -1,25 +1,18 @@
-using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.State.Listeners;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data.Permissions;
-using GagspeakAPI.Hub;
-using GagspeakAPI.Util;
-using OtterGui.Text.EndObjects;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Utils;
 
 /// <summary>
-///     WARNING: This class can bypass any special permissions that need to happen on value change, 
-///     be sure to account for these, or else it will become problematic.
+///     Used for any calls performed by the client themselves, and not other Kinksters,
+///     to their own active data. <para />
 ///     
-///     This classes primary purpose is for the UI to display updated values before recieving the callback, and processing the callback after it gets it
-///     to handle any achievement tracking or handlers.
+///     This includes Gags, Restrictions, Restraints, and Collars. <para />
 ///     
-///     Either find a way to handle the callbacks automatically based on their changed state, or setup callbacks to never callback to the caller 
-///     that made the change and process internally. Either way, do this AFTER the update, as it mostly saves on server cost for interactions.
+///     These updates return the new state of the data in the return call, 
+///     which are passed into the visual listener.
 /// </summary>
 public static class SelfBondageHelper
 {
@@ -29,7 +22,7 @@ public static class SelfBondageHelper
         {
             if (await dds.PushNewActiveGagSlot(layer, newData, type).ConfigureAwait(false) is { } retData)
             {
-                Task applierTask = type switch
+                var applierTask = type switch
                 {
                     DataUpdateType.Swapped => visuals.SwapGag(layer, retData, MainHub.PlayerUserData),
                     DataUpdateType.Applied => visuals.ApplyGag(layer, retData, MainHub.PlayerUserData),
@@ -49,7 +42,7 @@ public static class SelfBondageHelper
         {
             if (await dds.PushNewActiveGagSlot(layer, newData, type).ConfigureAwait(false) is { } retData)
             {
-                Task applierTask = type switch
+                var applierTask = type switch
                 {
                     DataUpdateType.Swapped => visuals.SwapGag(layer, retData, MainHub.PlayerUserData),
                     DataUpdateType.Applied => visuals.ApplyGag(layer, retData, MainHub.PlayerUserData),
@@ -71,7 +64,7 @@ public static class SelfBondageHelper
         {
             if (await dds.PushNewActiveRestriction(layer, newData, type).ConfigureAwait(false) is { } retData)
             {
-                Task applierTask = type switch
+                var applierTask = type switch
                 {
                     DataUpdateType.Swapped => visuals.SwapRestriction(layer, retData, MainHub.PlayerUserData),
                     DataUpdateType.Applied => visuals.ApplyRestriction(layer, retData, MainHub.PlayerUserData),
@@ -91,7 +84,7 @@ public static class SelfBondageHelper
         {
             if (await dds.PushNewActiveRestriction(layer, newData, type).ConfigureAwait(false) is { } retData)
             {
-                Task applierTask = type switch
+                var applierTask = type switch
                 {
                     DataUpdateType.Swapped => visuals.SwapRestriction(layer, retData, MainHub.PlayerUserData),
                     DataUpdateType.Applied => visuals.ApplyRestriction(layer, retData, MainHub.PlayerUserData),
@@ -113,7 +106,7 @@ public static class SelfBondageHelper
         {
             if (await dds.PushNewActiveRestraint(newData, type).ConfigureAwait(false) is { } retData)
             {
-                Task applierTask = type switch
+                var applierTask = type switch
                 {
                     DataUpdateType.Swapped => visuals.SwapRestraint(retData, MainHub.PlayerUserData),
                     DataUpdateType.Applied => visuals.ApplyRestraint(retData, MainHub.PlayerUserData),
@@ -136,7 +129,7 @@ public static class SelfBondageHelper
         {
             if (await dds.PushNewActiveRestraint(newData, type).ConfigureAwait(false) is { } retData)
             {
-                Task applierTask = type switch
+                var applierTask = type switch
                 {
                     DataUpdateType.Swapped => visuals.SwapRestraint(retData, MainHub.PlayerUserData),
                     DataUpdateType.Applied => visuals.ApplyRestraint(retData, MainHub.PlayerUserData),
@@ -152,6 +145,28 @@ public static class SelfBondageHelper
                 return true;
             }
             return false;
+        });
+    }
+
+    // Only for updates and removals that we do ourselves.
+    public static void CollarUpdateTask(CharaActiveCollar newData, DataUpdateType type, DistributorService dds, VisualStateListener visuals)
+    {
+        // Do not allow accepted requests here.
+        if (type is DataUpdateType.RequestAccepted)
+            return;
+
+        UiService.SetUITask(async () =>
+        {
+            if (await dds.PushNewActiveCollar(newData, type).ConfigureAwait(false) is { } retData)
+            {
+                var applierTask = type switch
+                {
+                    DataUpdateType.CollarRemoved => visuals.RemoveCollar(MainHub.PlayerUserData),
+                    // everything else is an update.
+                    _ => visuals.UpdateActiveCollar(retData, MainHub.PlayerUserData, type)
+                };
+                await applierTask.ConfigureAwait(false);
+            }
         });
     }
 }

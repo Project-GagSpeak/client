@@ -180,7 +180,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
         ImGui.SetCursorScreenPos(imgDrawPos);
         if (_selector.Selected is not null)
         {
-            _activeItemDrawer.DrawRestraintImage(_selector.Selected!, imgSize, rounding);
+            ActiveItemsDrawer.DrawRestraintImage(_selector.Selected!, imgSize, rounding);
             if (!isActive && ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
                 _thumbnails.SetThumbnailSource(_selector.Selected!.Identifier, new Vector2(120, 120f * 1.2f), ImageDataType.Restraints);
             CkGui.AttachToolTip("The Thumbnail for this Restraint Set.--SEP--Double Click to change the image.");

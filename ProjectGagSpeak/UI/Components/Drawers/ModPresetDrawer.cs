@@ -1,18 +1,19 @@
+using CkCommons;
+using CkCommons.Gui;
+using CkCommons.Gui.Utility;
+using CkCommons.Raii;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using CkCommons.Gui.Utility;
-using CkCommons.Raii;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
-using Dalamud.Bindings.ImGui;
+using NAudio.SoundFont;
 using OtterGui.Text;
 using OtterGui.Widgets;
 using Penumbra.Api.Enums;
-using CkCommons;
-using CkCommons.Gui;
 
 namespace GagSpeak.Gui.Components;
 // This class will automate the drawing of checkboxes, buttons, sliders and more used across the various UI elements through a modular approach.
@@ -27,6 +28,7 @@ public sealed class ModPresetDrawer
         _manager = manager;
     }
 
+    // this needs a refactor as it sucks at properly updating currently when we have everything refernecing the same 2 combos.
     public void DrawModPresetCombos(string id, IModPreset modItem, float width)
     {
         using var _ = ImRaii.Group();
@@ -115,12 +117,19 @@ public sealed class ModPresetDrawer
 
     public void DrawPresetTooltip(ModSettingsPreset modPreset)
     {
-        using var disabled = ImRaii.Disabled(true);
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 2 * ImGuiHelpers.GlobalScale)
-            .Push(ImGuiStyleVar.Alpha, .95f);
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 2 * ImGuiHelpers.GlobalScale);
         using var tt = ImRaii.Tooltip();
-
-        DrawPresetPreviewInner(modPreset);
+        
+        var allSettings = _manager.GetModInfo(modPreset.Container.DirectoryPath)?.AllSettings;
+        if (allSettings is null)
+            ImGui.Text("Mod is Null!");
+        else
+        {
+            if (allSettings.Keys.Count is 0)
+                ImGui.Text("No options in selected Mod.");
+            else
+                DrawPresetPreviewInner(modPreset, allSettings);
+        }
     }
 
     public void DrawPresetPreview(ModSettingsPreset? preset)
@@ -139,20 +148,20 @@ public sealed class ModPresetDrawer
                 CkGui.OutlinedFont("Previewing", CkGui.Color(ImGuiColors.DalamudRed), 0xFF000000, 2);
             }
 
-            DrawPresetPreviewInner(preset);
+            var allSettings = _manager.GetModInfo(preset.Container.DirectoryPath)?.AllSettings;
+            if (allSettings is null)
+                CkGui.ColorTextCentered("No Options", ImGuiColors.DalamudRed);
+            else
+                DrawPresetPreviewInner(preset, allSettings);
         }
     }
 
-    public void DrawPresetPreviewInner(ModSettingsPreset preset)
+    public void DrawPresetPreviewInner(ModSettingsPreset preset, Dictionary<string, (string[] Options, GroupType GroupType)> settings)
     {
-        var allSettings = _manager.GetModInfo(preset.Container.DirectoryPath)?.AllSettings;
-        if (allSettings is null)
-            return;
-
         using var disabled = ImRaii.Disabled(true);
         using var style = ImRaii.PushStyle(ImGuiStyleVar.Alpha, .95f);
 
-        foreach (var (groupName, groupInfo) in allSettings)
+        foreach (var (groupName, groupInfo) in settings)
         {
             if (string.IsNullOrEmpty(groupName))
                 continue;

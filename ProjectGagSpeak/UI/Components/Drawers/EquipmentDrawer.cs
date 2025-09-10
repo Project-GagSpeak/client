@@ -23,6 +23,7 @@ using OtterGui.Extensions;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
+using System;
 
 namespace GagSpeak.Gui.Components;
 
@@ -283,7 +284,7 @@ public class EquipmentDrawer
         ImGui.GetWindowDrawList().AddRect(min, max, CkColor.FancyHeaderContrast.Uint(), rounding);
     }
 
-    private void DrawItem(GlamourSlot item, float width)
+    public void DrawItem(GlamourSlot item, float width)
         => DrawItem(item, width, 1.25f);
 
     private void DrawItem(GlamourSlot item, float width, float innerWidthScaler)
@@ -332,7 +333,7 @@ public class EquipmentDrawer
         }
     }
 
-    private void DrawStains(GlamourSlot item, float width)
+    public void DrawStains(GlamourSlot item, float width)
         => DrawStains(item, width, 1.75f);
 
     private void DrawStains(GlamourSlot item, float width, float innerWidthScaler)
@@ -370,6 +371,67 @@ public class EquipmentDrawer
             }
         }
     }
+
+    public bool DrawStains(string id, ref byte dye1, ref byte dye2, float width)
+        => DrawStains(id, ref dye1, ref dye2, width, 1.75f);
+
+
+    public bool DrawStains(string id, ref byte dye1, ref byte dye2, float width, float innerWidthScaler)
+    {
+        // fetch the correct stain from the stain data
+        bool changed = false;
+        var widthStains = (width - ImUtf8.ItemInnerSpacing.X) / 2;
+        using (ImUtf8.PushId(1))
+        {
+            var found = ItemSvc.Stains.TryGetValue(dye1, out var stain);
+            // draw the stain itemCombo.
+            if (_stainCombo.Draw($"##byteStain{id}", widthStains * innerWidthScaler, widthStains, stain.RgbaColor, stain.Name, found, stain.Gloss))
+            {
+                if (ItemSvc.Stains.TryGetValue(_stainCombo.Current.Key, out stain))
+                {
+                    dye1 = stain.RowIndex.Id;
+                    changed = true;
+                }
+                else if (_stainCombo.Current.Key == Stain.None.RowIndex)
+                {
+                    dye1 = Stain.None.RowIndex.Id;
+                    changed = true;
+                }
+            }
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+            {
+                dye1 = Stain.None.RowIndex.Id;
+                changed = true;
+            }
+        }
+
+        ImUtf8.SameLineInner();
+        using (ImUtf8.PushId(2))
+        {
+            var found = ItemSvc.Stains.TryGetValue(dye2, out var stain);
+            // draw the stain itemCombo.
+            if (_stainCombo.Draw($"##byteStain{id}", widthStains * innerWidthScaler, widthStains, stain.RgbaColor, stain.Name, found, stain.Gloss))
+            {
+                if (ItemSvc.Stains.TryGetValue(_stainCombo.Current.Key, out stain))
+                {
+                    dye2 = stain.RowIndex.Id;
+                    changed = true;
+                }
+                else if (_stainCombo.Current.Key == Stain.None.RowIndex)
+                {
+                    dye2 = Stain.None.RowIndex.Id;
+                    changed = true;
+                }
+            }
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+            {
+                dye2 = Stain.None.RowIndex.Id;
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
 
     private void DrawCustomStains<T>(T item, string id, float width) where T : IRestrictionRef
     {

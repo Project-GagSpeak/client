@@ -426,7 +426,7 @@ public class ActiveItemsDrawer
     }
 
     // maybe condense these into a shared method at some point or something.
-    public void DrawRestraintImage(RestraintSet? rs, Vector2 size, float rounding, uint thumbnailBg = 0, bool doFrame = true)
+    public static void DrawRestraintImage(RestraintSet? rs, Vector2 size, float rounding, uint thumbnailBg = 0, bool doFrame = true)
     {
         if (rs != null && TextureManagerEx.GetMetadataPath(ImageDataType.Restraints, rs.ThumbnailPath) is { } imageWrap)
             DrawImageInternal(imageWrap, null, size, rounding, 0, thumbnailBg);
@@ -437,7 +437,8 @@ public class ActiveItemsDrawer
         }
     }
 
-    public void DrawCollarImage(GagSpeakCollar collar, Vector2 size, float rounding, uint thumbnailBg = 0, bool doFrame = true)
+    // These should be moved to static...
+    public static void DrawCollarImage(GagSpeakCollar collar, Vector2 size, float rounding, uint thumbnailBg = 0, bool doFrame = true)
     {
         if (TextureManagerEx.GetMetadataPath(ImageDataType.Collar, collar.ThumbnailPath) is { } imageWrap)
             DrawImageInternal(imageWrap, null, size, rounding, 0, thumbnailBg);
@@ -448,10 +449,10 @@ public class ActiveItemsDrawer
         }
     }
 
-    public void DrawImageInternal(IDalamudTextureWrap? img, IDalamudTextureWrap? frame, float size, float rounding, uint frameTint = 0, uint bgCol = 0, float padding = 0)
+    public static void DrawImageInternal(IDalamudTextureWrap? img, IDalamudTextureWrap? frame, float size, float rounding, uint frameTint = 0, uint bgCol = 0, float padding = 0)
         => DrawImageInternal(img, frame, new Vector2(size), rounding, frameTint, bgCol, padding);
 
-    public void DrawImageInternal(IDalamudTextureWrap? img, IDalamudTextureWrap? frame, Vector2 size, float rounding, uint frameTint = 0, uint bgCol = 0, float padding = 0)
+    public static void DrawImageInternal(IDalamudTextureWrap? img, IDalamudTextureWrap? frame, Vector2 size, float rounding, uint frameTint = 0, uint bgCol = 0, float padding = 0)
     {
         // Fill the area with the dummy region.
         ImGui.Dummy(size);

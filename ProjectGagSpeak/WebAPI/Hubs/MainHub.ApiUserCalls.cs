@@ -155,10 +155,10 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse<CharaActiveRestraint>>(nameof(UserPushActiveRestraint), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserPushActiveCollar(PushClientActiveCollar dto)
+    public async Task<HubResponse<CharaActiveCollar>> UserPushActiveCollar(PushClientActiveCollar dto)
     {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActiveCollar), dto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new CharaActiveCollar());
+        return await _hubConnection!.InvokeAsync<HubResponse<CharaActiveCollar>>(nameof(UserPushActiveCollar), dto).ConfigureAwait(false);
     }
 
     public async Task<HubResponse<AppliedCursedItem>> UserPushActiveLoot(PushClientActiveLoot dto)

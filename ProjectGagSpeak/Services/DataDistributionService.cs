@@ -97,7 +97,6 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
             _newVisibleKinksters.UnionWith(_kinksters.GetVisibleUsers());
             PushCompositeData(_kinksters.GetOnlineUserDatas()).ConfigureAwait(false);
         });
-        Mediator.Subscribe<ActiveCollarChangedMessage>(this, arg => PushActiveCollarUpdate(arg).ConfigureAwait(false));
         Mediator.Subscribe<AliasGlobalUpdateMessage>(this, arg => DistributeDataGlobalAlias(arg).ConfigureAwait(false));
         Mediator.Subscribe<AliasPairUpdateMessage>(this, arg => DistributeDataUniqueAlias(arg).ConfigureAwait(false));
         Mediator.Subscribe<ValidToysChangedMessage>(this, arg => PushValidToysUpdate(arg).ConfigureAwait(false));
@@ -304,7 +303,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         }
     }
 
-    // An updater slim is nessisary for this.
+    // An updater slim is nessisary for this, or else it can cause some conflicts in where multiple achievements are completed simotaniously.
     private async Task UpdateTotalEarned()
     {
         await _updateSlim.WaitAsync();
@@ -478,13 +477,13 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         return res.Value;
     }
 
-    private async Task<GagSpeakApiEc> PushActiveCollarUpdate(ActiveCollarChangedMessage msg)
-        => await PushNewActiveCollar(_kinksters.GetOnlineUserDatas(), msg.NewData, msg.UpdateType);
+    public async Task<CharaActiveCollar?> PushNewActiveCollar(CharaActiveCollar newData, DataUpdateType type)
+        => await PushNewActiveCollar(_kinksters.GetOnlineUserDatas(), newData, type);
 
-    public async Task<GagSpeakApiEc> PushNewActiveCollar(List<UserData> onlinePlayers, CharaActiveCollar newData, DataUpdateType type)
+    public async Task<CharaActiveCollar?> PushNewActiveCollar(List<UserData> onlinePlayers, CharaActiveCollar newData, DataUpdateType type)
     {
         if (DataIsDifferent(_prevCollarData, newData) is false)
-            return GagSpeakApiEc.DuplicateEntry;
+            return null;
 
         _prevCollarData = newData;
         Logger.LogDebug($"Pushing CollarChange [{type}] to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
@@ -502,12 +501,15 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
             OwnerEditAccess = newData.OwnerAccess
         };
 
-        if (await _hub.UserPushActiveCollar(dto) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+        var res = await _hub.UserPushActiveCollar(dto).ConfigureAwait(false);
+        if (res.ErrorCode is not GagSpeakApiEc.Success)
         {
             Logger.LogError($"Failed to push CollarData to server [{res}]");
-            return res.ErrorCode;
+            return null;
         }
-        return GagSpeakApiEc.Success;
+
+        _prevCollarData = res.Value;
+        return res.Value;
     }
 
     public async Task<AppliedCursedItem?> PushActiveCursedLoot(List<Guid> activeItems, Guid changeItem, AppliedItem? lootItem)

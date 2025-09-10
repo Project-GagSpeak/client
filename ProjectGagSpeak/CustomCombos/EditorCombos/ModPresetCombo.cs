@@ -76,9 +76,7 @@ public sealed class ModPresetCombo : CkFilterComboCache<ModSettingsPreset>
         // draws a fancy box when the mod is hovered giving you the details about the mod.
         if (ImGui.IsItemHovered() && Manager.GetModInfo(preset.Container.DirectoryPath)?.AllSettings is { } allSettings)
         {
-            using var disabled = ImRaii.Disabled(true);
-            using var style = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 2 * ImGuiHelpers.GlobalScale)
-                .Push(ImGuiStyleVar.Alpha, .95f);
+            using var style = ImRaii.PushStyle(ImGuiStyleVar.PopupBorderSize, 2 * ImGuiHelpers.GlobalScale);
             using var tt = ImRaii.Tooltip();
 
             foreach (var (groupName, groupInfo) in allSettings)
@@ -106,7 +104,6 @@ public sealed class ModPresetCombo : CkFilterComboCache<ModSettingsPreset>
                         break;
                 }
             }
-            return ret;
         }
         return ret;
     }

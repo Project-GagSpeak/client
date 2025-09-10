@@ -295,6 +295,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     #endregion RestraintSet Manipulation
 
     #region Collar Manipulation
+    // Should occur upon a collar request being accepted.
     public async Task ApplyCollar(KinksterUpdateActiveCollar collarData)
     {
         if (!MainHub.IsConnectionDataSynced)
@@ -308,38 +309,38 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         PostActionMsg(collarData.Enactor.UID, InteractionType.ApplyCollar, "Your collar was applied!");
     }
 
-    public async Task UpdateActiveCollar(KinksterUpdateActiveCollar newData)
+    public async Task UpdateActiveCollar(CharaActiveCollar newData, UserData enactor, DataUpdateType type)
     {
         if (!MainHub.IsConnectionDataSynced || _collar.SyncedData is not { } synced)
             return;
 
-        Logger.LogTrace($"Received {newData.Type} instruction from server!", LoggerType.Collars);
+        Logger.LogTrace($"Received {type} instruction from server!", LoggerType.Collars);
         var prevVisuals = synced.Visuals;
-        _collar.UpdateActive(newData);
+        _collar.UpdateActive(newData, enactor, type);
 
         // if the visuals were turned on, add the collar item
         if (!prevVisuals && synced.Visuals)
-            await _cacheManager.AddCollar(newData.Enactor);
+            await _cacheManager.AddCollar(enactor);
         // if the visuals were turned off, remove the collar item
         else if (prevVisuals && !synced.Visuals)
-            await _cacheManager.RemoveCollar(newData.Enactor);
+            await _cacheManager.RemoveCollar(enactor);
         // if they were on after the update, update the visuals
         else if (synced.Visuals)
-            await _cacheManager.UpdateCollar(newData.Type, newData.Enactor);
+            await _cacheManager.UpdateCollar(type, enactor);
 
-        PostActionMsg(newData.Enactor.UID, InteractionType.UpdateCollar, $"Your Collar's SyncedData was updated by {newData.Enactor.AliasOrUID}");
+        PostActionMsg(enactor.UID, InteractionType.UpdateCollar, $"Your Collar's SyncedData was updated by {enactor.AliasOrUID}");
     }
 
-    public async Task RemoveCollar(KinksterUpdateActiveCollar collarData)
+    public async Task RemoveCollar(UserData enactor)
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
         Logger.LogTrace("Received RemoveCollar instruction from server!", LoggerType.Collars);
         
-        _collar.Remove(collarData);
-        await _cacheManager.RemoveCollar(collarData.Enactor);
+        _collar.Remove(enactor);
+        await _cacheManager.RemoveCollar(enactor);
 
-        PostActionMsg(collarData.Enactor.UID, InteractionType.RemoveRestriction, "A Restriction item was removed from you!");
+        PostActionMsg(enactor.UID, InteractionType.RemoveRestriction, "Your Collar was removed from you!");
     }
     #endregion Collar Manipulation
 

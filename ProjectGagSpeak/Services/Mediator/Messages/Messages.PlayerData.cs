@@ -18,7 +18,6 @@ public record NameplateClientChanged : MessageBase;
 
 
 // Kinkster Data Changes
-public record ActiveCollarChangedMessage(DataUpdateType UpdateType, CharaActiveCollar NewData) : SameThreadMessage;
 public record AliasGlobalUpdateMessage(Guid AliasId, AliasTrigger? NewData) : SameThreadMessage;
 public record AliasPairUpdateMessage(UserData IntendedUser, Guid AliasId, AliasTrigger? NewData) : SameThreadMessage;
 public record ValidToysChangedMessage(List<ToyBrandName> ValidToys) : SameThreadMessage;
