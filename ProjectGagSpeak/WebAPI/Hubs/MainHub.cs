@@ -5,6 +5,7 @@ using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Listeners;
+using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
@@ -28,6 +29,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     private readonly TokenProvider _tokenProvider;
     private readonly ServerConfigManager _serverConfigs;
     private readonly KinksterManager _kinksters;
+    private readonly CollarManager _collarManager;
     private readonly ClientDataListener _clientDatListener;
     private readonly KinksterListener _kinksterListener;
     private readonly VisualStateListener _visualListener;
@@ -60,6 +62,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         TokenProvider tokenProvider,
         ServerConfigManager serverConfigs,
         KinksterManager kinksters,
+        CollarManager collarManager,
         ClientDataListener clientDatListener,
         KinksterListener kinksterListener,
         VisualStateListener visuals,
@@ -74,6 +77,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         _tokenProvider = tokenProvider;
         _serverConfigs = serverConfigs;
         _kinksters = kinksters;
+        _collarManager = collarManager;
         _clientDatListener = clientDatListener;
         _kinksterListener = kinksterListener;
         _visualListener = visuals;
@@ -310,7 +314,8 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     {
         // retrieve any current kinkster requests.
         var requests = await UserGetActiveRequests().ConfigureAwait(false);
-        _clientDatListener.InitRequests(requests);
+        _clientDatListener.InitRequests(requests.KinksterRequests);
+        _collarManager.LoadServerRequests(requests.CollarRequests);
     }
 
     /// <summary>

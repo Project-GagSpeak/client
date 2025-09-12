@@ -51,7 +51,7 @@ public sealed class ClientData : IDisposable
     private static GlobalPerms? _clientGlobals;
     private static HardcoreState? _clientHardcore;
     private HashSet<KinksterPairRequest> _pairingRequests = new();
-    private HashSet<CollarOwnershipRequest> _collarRequests = new();
+    private HashSet<CollarRequest> _collarRequests = new();
 
     /// <summary>
     ///     When true, <see cref="GlobalPerms"/> or <see cref="HardcoreState"/> are not initialized.
@@ -61,10 +61,6 @@ public sealed class ClientData : IDisposable
     internal static IReadOnlyHardcoreState? Hardcore => _clientHardcore;
     public IEnumerable<KinksterPairRequest> ReqPairOutgoing => _pairingRequests.Where(x => x.User.UID == MainHub.UID);
     public IEnumerable<KinksterPairRequest> ReqPairIncoming => _pairingRequests.Where(x => x.Target.UID == MainHub.UID);
-    // make these independant maybe. Idk, would be more convient for the UI.
-    public List<CollarOwnershipRequest> ReqCollarOutgoing => _collarRequests.Where(x => x.User.UID == MainHub.UID).ToList();
-    public List<CollarOwnershipRequest> ReqCollarIncoming => _collarRequests.Where(x => x.Target.UID == MainHub.UID).ToList();
-
     public static Vector3 GetImprisonmentPos()
         => _clientHardcore?.ImprisonedPos ?? Vector3.Zero;
 
@@ -111,23 +107,14 @@ public sealed class ClientData : IDisposable
         IsNull = globals is null || hardcore is null;
     }
 
-    public void InitRequests(List<KinksterPairRequest> kinksterRequests, List<CollarOwnershipRequest> collarRequests)
-    {
-        _pairingRequests = kinksterRequests.ToHashSet();
-        _collarRequests = collarRequests.ToHashSet();
-    }
+    public void InitRequests(List<KinksterPairRequest> requests)
+        => _pairingRequests = requests.ToHashSet();
 
-    public void AddPairRequest(KinksterPairRequest dto)
+    public void AddRequest(KinksterPairRequest dto)
         => _pairingRequests.Add(dto);
 
-    public int RemovePairRequest(KinksterPairRequest dto)
+    public int RemoveRequest(KinksterPairRequest dto)
         => _pairingRequests.RemoveWhere(x => x.User.UID == dto.User.UID && x.Target.UID == dto.Target.UID);
-
-    public void AddCollarRequest(CollarOwnershipRequest dto)
-        => _collarRequests.Add(dto);
-        
-    public int RemoveCollarRequest(CollarOwnershipRequest dto)
-        => _collarRequests.RemoveWhere(x => x.User.UID == dto.User.UID && x.Target.UID == dto.Target.UID);
 
     public void ChangeGlobalsBulkInternal(GlobalPerms newGlobals)
         => _clientGlobals = newGlobals;

@@ -262,7 +262,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
         // if at least one device was valid, we can draw the motor selections.
         if (DrawDeviceSelections(SelRemoteUser!.Devices, imgSize) > 0)
         {
-            CkGui.VerticalSeparator(2);
+            CkGui.SeparatorV(2);
             DrawMotorSelections(imgSize);
         }
 

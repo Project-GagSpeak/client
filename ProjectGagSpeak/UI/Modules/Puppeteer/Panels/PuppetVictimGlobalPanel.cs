@@ -137,7 +137,7 @@ public sealed partial class PuppetVictimGlobalPanel
 
         DrawListenerNameRow(c.InnerRegion.X);
         DrawTriggerPhrasesBox(c.InnerRegion.X, triggerPhrasesH);
-        CkGui.SeparatorSpacedColored(spacing.Y, c.InnerRegion.X, CkColor.FancyHeaderContrast.Uint());
+        CkGui.SeparatorSpaced(CkColor.FancyHeaderContrast.Uint(), spacing.Y, c.InnerRegion.X);
 
         // Draw out the global puppeteer image.
         if (CosmeticService.CoreTextures.Cache[CoreTexture.PuppetVictimGlobal] is { } wrap)

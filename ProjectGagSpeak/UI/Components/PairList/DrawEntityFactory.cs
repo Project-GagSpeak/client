@@ -37,17 +37,9 @@ public class DrawEntityFactory
             _clientData.ReqPairIncoming.Select(r => CreateDrawPairRequest(tag, r)).ToImmutableList(),
             _clientData.ReqPairOutgoing.Select(r => CreateDrawPairRequest(tag, r)).ToImmutableList());
 
-    public DrawCollarRequests CreateCollarRequestFolder(string tag)
-        => new DrawCollarRequests(tag,
-            _clientData.ReqCollarIncoming.Select(r => CreateDrawCollarRequest(tag, r)).ToImmutableList(),
-            _clientData.ReqCollarOutgoing.Select(r => CreateDrawCollarRequest(tag, r)).ToImmutableList());
-
     public DrawUserPair CreateDrawPair(string id, Kinkster kinkster)
         => new DrawUserPair(id + kinkster.UserData.UID, kinkster, _mediator, _hub, _nameDisplay);
 
     public DrawKinksterRequest CreateDrawPairRequest(string id, KinksterPairRequest request)
         => new DrawKinksterRequest(id, request, _hub);
-
-    public DrawCollarRequest CreateDrawCollarRequest(string id, CollarOwnershipRequest request)
-        => new DrawCollarRequest(id, request, _hub);
 }

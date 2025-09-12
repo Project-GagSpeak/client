@@ -1,13 +1,14 @@
-using CkCommons;
-using CkCommons.Helpers;
 using CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
+using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
+using GagspeakAPI.Data.Comparer;
 using GagspeakAPI.Network;
+using System.Collections.Immutable;
 
 namespace GagSpeak.State.Managers;
 
@@ -23,7 +24,6 @@ public sealed class CollarManager : IHybridSavable
 
     private SingleItemEditor<GagSpeakCollar> _itemEditor = new();
     private CharaActiveCollar? _serverData = null;
-
     public CollarManager(ILogger<CollarManager> logger, GagspeakMediator mediator,
         ModPresetManager mods, ConfigFileProvider fileNames, HybridSaveService saver)
     {
@@ -38,6 +38,10 @@ public sealed class CollarManager : IHybridSavable
     public GagSpeakCollar ClientCollar { get; private set; } = new();
     public GagSpeakCollar? ItemInEditor => _itemEditor.ItemInEditor;
 
+    // ----------- Requests --------------
+    public HashSet<CollarRequest> RequestsOutgoing { get; private set; } = new(CollarRequestComparer.Instance);
+    public HashSet<CollarRequest> RequestsIncoming { get; private set; } = new(CollarRequestComparer.Instance);
+
     // ----------- ACTIVE INFO --------------
     public bool IsEditing => ItemInEditor is not null;
     public bool IsActive => _serverData?.Applied ?? false;
@@ -50,6 +54,19 @@ public sealed class CollarManager : IHybridSavable
     {
         _serverData = serverData;
         _logger.LogInformation("Synchronized Active GagSpeakCollar with Client-Side Manager.");
+    }
+
+    public void LoadServerRequests(List<CollarRequest> requests)
+    {
+        var incoming = requests.Where(x => x.Target.UID == MainHub.UID);
+        var outgoing = requests.Where(x => x.User.UID == MainHub.UID);
+        RequestsIncoming = incoming.ToHashSet(CollarRequestComparer.Instance);
+        RequestsOutgoing = outgoing.ToHashSet(CollarRequestComparer.Instance);
+
+        RequestsOutgoing.Add(new CollarRequest(MainHub.PlayerUserData, new("Dummy"), "Dummy Writing", DateTime.UtcNow, CollarAccess.AllButWriting, CollarAccess.Dyes));
+        RequestsIncoming.Add(new CollarRequest(new("Dummy"), MainHub.PlayerUserData, "Dummy Writing Boogaloo", DateTime.UtcNow, CollarAccess.All, CollarAccess.AllButWriting));
+
+        _logger.LogInformation("Synchronized Collar Ownership Requests with Client-Side Manager.");
     }
 
     // For simple renaming without using the item editor.
@@ -94,6 +111,22 @@ public sealed class CollarManager : IHybridSavable
             _mediator.Publish(new ConfigCollarChanged(StorageChangeType.Modified, sourceItem));
             _saver.Save(this);
         }
+    }
+
+    public void AddRequest(CollarRequest dto)
+    {
+        if (dto.User.UID == MainHub.UID)
+            RequestsOutgoing.Add(dto);
+        else if (dto.Target.UID == MainHub.UID)
+            RequestsIncoming.Add(dto);
+    }
+
+    public void RemoveRequest(CollarRequest dto)
+    {
+        if (dto.User.UID == MainHub.UID)
+            RequestsOutgoing.Remove(dto);
+        else if (dto.Target.UID == MainHub.UID)
+            RequestsIncoming.Remove(dto);
     }
 
     public void Apply(KinksterUpdateActiveCollar dto)

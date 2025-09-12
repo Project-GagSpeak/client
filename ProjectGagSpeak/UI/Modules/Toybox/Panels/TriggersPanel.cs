@@ -196,7 +196,7 @@ public partial class TriggersPanel
                 }
             });
 
-            CkGui.SeparatorSpacedColored(col: CkColor.FancyHeaderContrast.Uint());
+            CkGui.SeparatorSpaced(CkColor.FancyHeaderContrast.Uint());
             
             // re-aquire the trigger item.
             var triggerItem = _manager.ItemInEditor is { } editorItem ? editorItem : _selector.Selected!;
@@ -225,7 +225,7 @@ public partial class TriggersPanel
                 }
             });
 
-            CkGui.SeparatorSpacedColored(col: CkColor.FancyHeaderContrast.Uint());
+            CkGui.SeparatorSpaced(CkColor.FancyHeaderContrast.Uint());
 
             _drawer.DrawActionInfo(trigger, isEditorItem, searchBg);
             DrawFooter(trigger);

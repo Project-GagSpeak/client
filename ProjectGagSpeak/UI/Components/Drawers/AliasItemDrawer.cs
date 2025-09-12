@@ -82,7 +82,7 @@ public sealed class AliasItemDrawer
             var rightButtonWidth = canEdit
                 ? CkGui.IconButtonSize(FAI.Edit).X * 2 + ImGui.GetStyle().ItemInnerSpacing.X
                 : CkGui.IconButtonSize(FAI.Edit).X;
-
+ 
             CkGui.BooleanToColoredIcon(aliasItem.Enabled, false);
             if (ImGui.IsItemClicked())
                 _manager.ToggleState(aliasItem);

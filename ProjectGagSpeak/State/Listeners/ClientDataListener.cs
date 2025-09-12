@@ -139,41 +139,26 @@ public sealed class ClientDataListener : IDisposable
         _mediator.Publish(new HcStateCacheChanged());
     }
 
-    public void InitRequests(ActiveRequests requests)
+    public void InitRequests(List<KinksterPairRequest> requests)
     {
-        _data.InitRequests(requests.KinksterRequests, requests.CollarRequests);
-        _logger.LogInformation($"Init: [{requests.KinksterRequests.Count} PairRequests][{requests.CollarRequests.Count} CollarRequests]", LoggerType.ApiCore);
+        _data.InitRequests(requests);
+        _logger.LogInformation($"Init: [{requests.Count} PairRequests]", LoggerType.ApiCore);
         _mediator.Publish(new RefreshUiRequestsMessage());
     }
 
-    public void AddPairRequest(KinksterPairRequest dto)
+    public void AddRequest(KinksterPairRequest dto)
     {
-        _data.AddPairRequest(dto);
+        _data.AddRequest(dto);
         _logger.LogInformation("New pair request added!", LoggerType.PairManagement);
         _mediator.Publish(new RefreshUiRequestsMessage());
     }
 
-    public void RemovePairRequest(KinksterPairRequest dto)
+    public void RemoveRequest(KinksterPairRequest dto)
     {
-        var res = _data.RemovePairRequest(dto);
+        var res = _data.RemoveRequest(dto);
         _logger.LogInformation($"Removed [{res}] pair request.", LoggerType.PairManagement);
         _mediator.Publish(new RefreshUiRequestsMessage());
     }
-
-    public void AddCollarRequest(CollarOwnershipRequest dto)
-    {
-        _data.AddCollarRequest(dto);
-        _logger.LogInformation("New collar request added!", LoggerType.PairManagement);
-        _mediator.Publish(new RefreshUiRequestsMessage());
-    }
-
-    public void RemoveCollarRequest(CollarOwnershipRequest dto)
-    {
-        var res = _data.RemoveCollarRequest(dto);
-        _logger.LogInformation($"Removed [{res}] collar request.", LoggerType.PairManagement);
-        _mediator.Publish(new RefreshUiRequestsMessage());
-    }
-
 
     // All Single Change handles for GlobalPermissions so far are just bools, which makes this easier for us.
     public void HandleGlobalPermChanges(UserData enactor, IReadOnlyGlobalPerms? prev, IReadOnlyGlobalPerms? current)

@@ -1,13 +1,9 @@
-using FFXIVClientStructs;
 using GagSpeak.PlayerClient;
-using GagSpeak.Services;
 using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using Penumbra.GameData.Enums;
-using System.Diagnostics.CodeAnalysis;
-using static Lumina.Data.Parsing.Layer.LayerCommon;
 
 namespace GagSpeak.State.Models;
 
@@ -93,7 +89,7 @@ public static class RestraintExtentions
     private static IEnumerable<GlamourSlot> IterateLayerGlamours(List<IRestraintLayer> layers, HashSet<EquipSlot> seen, RestraintLayer active = RestraintLayer.All)
     {
         var applied = new List<GlamourSlot>();
-        foreach (int i in active.GetLayerIndices().OrderByDescending(i => i))
+        foreach (var i in active.GetLayerIndices().OrderByDescending(i => i))
         {
             if (i < 0 || i >= layers.Count)
                 continue;
@@ -173,7 +169,7 @@ public static class RestraintExtentions
     private static IEnumerable<ModSettingsPreset> IterateLayerMods(List<IRestraintLayer> layers, HashSet<ModSettingsPreset> seen, RestraintLayer active = RestraintLayer.All)
     {
         var applied = new List<ModSettingsPreset>();
-        foreach (int i in active.GetLayerIndices().OrderByDescending(i => i))
+        foreach (var i in active.GetLayerIndices().OrderByDescending(i => i))
         {
             if (i < 0 || i >= layers.Count)
                 continue;
@@ -251,7 +247,7 @@ public static class RestraintExtentions
     private static IEnumerable<Moodle> IterateLayerMoodles(List<IRestraintLayer> layers, HashSet<Moodle> seen, RestraintLayer active = RestraintLayer.All)
     {
         var applied = new List<Moodle>();
-        foreach (int i in active.GetLayerIndices().OrderByDescending(i => i))
+        foreach (var i in active.GetLayerIndices().OrderByDescending(i => i))
         {
             if (i < 0 || i >= layers.Count)
                 continue;
@@ -295,7 +291,7 @@ public static class RestraintExtentions
     /// <summary> Collect all traits from the base slots and base set flags. </summary>
     private static Traits CollectBaseTraits(RestraintSet set)
     {
-        Traits result = set.Traits;
+        var result = set.Traits;
         foreach (var slot in set.RestraintSlots.Values.OfType<RestraintSlotAdvanced>())
         {
             if (!slot.IsValid() || !slot.ApplyFlags.HasAny(RestraintFlags.Trait))
@@ -310,9 +306,9 @@ public static class RestraintExtentions
     /// <summary> Collect all traits from layers. </summary>
     private static Traits CollectLayerTraits(List<IRestraintLayer> layers, RestraintLayer active = RestraintLayer.All)
     {
-        Traits result = Traits.None;
+        var result = Traits.None;
 
-        foreach (int i in active.GetLayerIndices().OrderByDescending(i => i))
+        foreach (var i in active.GetLayerIndices().OrderByDescending(i => i))
         {
             if (i < 0 || i >= layers.Count)
                 continue;
@@ -379,7 +375,7 @@ public static class RestraintExtentions
     private static IEnumerable<Arousal> IterateLayerArousal(List<IRestraintLayer> layers, RestraintLayer active = RestraintLayer.All)
     {
         var arousals = new List<Arousal>();
-        foreach (int i in active.GetLayerIndices().OrderByDescending(i => i))
+        foreach (var i in active.GetLayerIndices().OrderByDescending(i => i))
         {
             if (i < 0 || i >= layers.Count)
                 continue;
@@ -398,7 +394,7 @@ public static class RestraintExtentions
     /// <summary> Retrieves the priority Blindfold Overlay if one exists from active layers (Layer 5 → 1) followed by base slots. </summary>
     public static BlindfoldOverlay? GetPriorityBlindfold(this RestraintSet set, RestraintLayer active)
     {
-        foreach (int i in active.GetLayerIndices().OrderByDescending(i => i))
+        foreach (var i in active.GetLayerIndices().OrderByDescending(i => i))
         {
             if (i < 0 || i >= set.Layers.Count)
                 continue;
@@ -445,7 +441,7 @@ public static class RestraintExtentions
     public static HypnoticOverlay? GetPriorityHypnoEffect(this RestraintSet set, RestraintLayer active)
     {
         // return the first found effect in the layers.
-        foreach (int i in active.GetLayerIndices().OrderByDescending(i => i))
+        foreach (var i in active.GetLayerIndices().OrderByDescending(i => i))
         {
             if (i < 0 || i >= set.Layers.Count)
                 continue;

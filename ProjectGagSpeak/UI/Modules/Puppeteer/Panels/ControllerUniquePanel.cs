@@ -134,7 +134,7 @@ public sealed class ControllerUniquePanel
 
         DrawTriggerPhraseBox(c.InnerRegion.X, triggerPhrasesH, SelectedKinkster);
 
-        CkGui.SeparatorSpacedColored(spacing.Y, c.InnerRegion.X, CkColor.FancyHeaderContrast.Uint());
+        CkGui.SeparatorSpaced(CkColor.FancyHeaderContrast.Uint(), spacing.Y, c.InnerRegion.X);
 
         // Draw out the global puppeteer image.
         if (CosmeticService.CoreTextures.Cache[CoreTexture.PuppetMaster] is { } wrap)

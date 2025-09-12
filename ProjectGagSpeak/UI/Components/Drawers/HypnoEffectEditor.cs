@@ -213,7 +213,7 @@ public class HypnoEffectEditor : IDisposable
                 DrawColorSections(size.X);
             }
 
-            CkGui.SeparatorSpacedColored(col: CkColor.LushPinkLine.Uint());
+            CkGui.SeparatorSpaced(CkColor.LushPinkLine.Uint());
 
             CkGui.SetCursorXtoCenter(CkGui.IconTextButtonSize(FAI.Save, "Save and Close"));
             if (CkGui.IconTextButton(FAI.Save, "Save and Close"))

@@ -371,7 +371,7 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
         {
             CkGui.FontTextCentered("CAUTIONARY WARNING", UiFontService.GagspeakTitleFont, ImGuiColors.DalamudRed);
 
-            CkGui.SeparatorColored(size.X, col: ImGuiColors.DalamudRed.ToUint());
+            CkGui.Separator(ImGuiColors.DalamudRed.ToUint(), size.X);
 
             CkGui.OutlinedFont("In Hardcore Mode:", ImGuiColors.DalamudOrange, CkColor.ElementSplit.Vec4(), 2);
             
@@ -389,7 +389,7 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
             CkGui.TextInline("can use.");
             CkGui.ColorTextInline("(Only you can change this)", ImGuiColors.ParsedGrey);
 
-            CkGui.SeparatorColored(size.X - ImGui.GetStyle().WindowPadding.X, col: ImGuiColors.DalamudRed.ToUint());
+            CkGui.Separator(ImGuiColors.DalamudRed.ToUint(), size.X - ImGui.GetStyle().WindowPadding.X);
             CkGui.OutlinedFont("Recommendations:", ImGuiColors.DalamudOrange, CkColor.ElementSplit.Vec4(), 2);
             
             CkGui.IconText(FAI.AngleDoubleRight);
@@ -404,7 +404,7 @@ using CkCommons;using CkCommons.Classes;using CkCommons.Gui;using CkCommons.R
             CkGui.AttachToolTip($"Provides a 5 second window for you to change permissions and edit access for {name}.");
             CkGui.TextInline($"can modify your dynamic limits while in Hardcore.");
 
-            CkGui.SeparatorColored(size.X - ImGui.GetStyle().WindowPadding.X, col: ImGuiColors.DalamudRed.ToUint());
+            CkGui.Separator(ImGuiColors.DalamudRed.ToUint(), size.X - ImGui.GetStyle().WindowPadding.X);
 
             CkGui.IconText(FAI.AngleDoubleRight);
             CkGui.TextInline("Hardcore Safeword:");

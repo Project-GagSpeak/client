@@ -23,7 +23,7 @@ public class WhitelistTab : DisposableMediatorSubscriberBase
     private readonly KinksterManager _kinksters;
     private readonly DrawEntityFactory _factory;
 
-    private List<IRequestsFolder> _requestFolders;
+    private IRequestsFolder _kinksterRequests;
     private List<IDrawFolder> _drawFolders;
     private string _filter = string.Empty;
     public WhitelistTab(ILogger<WhitelistTab> logger, GagspeakMediator mediator,
@@ -34,10 +34,10 @@ public class WhitelistTab : DisposableMediatorSubscriberBase
         _kinksters = kinksters;
         _factory = factory;
 
-        Mediator.Subscribe<RefreshUiRequestsMessage>(this, _ => _requestFolders = GetRequestFolders());
+        Mediator.Subscribe<RefreshUiRequestsMessage>(this, _ => _kinksterRequests = GetRequests());
         Mediator.Subscribe<RefreshUiKinkstersMessage>(this, _ => _drawFolders = GetDrawFolders());
 
-        _requestFolders = GetRequestFolders();
+        _kinksterRequests = GetRequests();
         _drawFolders = GetDrawFolders();
     }
 
@@ -47,10 +47,11 @@ public class WhitelistTab : DisposableMediatorSubscriberBase
         ImGui.Separator();
 
         using var _ = CkRaii.Child("content", ImGui.GetContentRegionAvail(), wFlags: WFlags.NoScrollbar);
+
+        // Draw requests.
+        _kinksterRequests.Draw();
         
-        foreach (var item in _requestFolders)
-            item.Draw();
-        
+        // Draw whitelist.
         foreach (var item in _drawFolders)
             item.Draw();
     }
@@ -75,14 +76,8 @@ public class WhitelistTab : DisposableMediatorSubscriberBase
         CkGui.AttachToolTip("Clears the filter");
     }
 
-    public List<IRequestsFolder> GetRequestFolders()
-    {
-        // Create a list of request folders to display in the UI.
-        List<IRequestsFolder> requestFolders = [];
-        requestFolders.Add(_factory.CreatePairRequestFolder("Kinkster Requests"));
-        requestFolders.Add(_factory.CreateCollarRequestFolder("Collar Requests"));
-        return requestFolders;
-    }
+    public IRequestsFolder GetRequests()
+        => _factory.CreatePairRequestFolder("Kinkster Requests");
 
     /// <summary> Fetches the folders to draw in the user pair list (whitelist) </summary>
     /// <returns> List of IDrawFolders to display in the UI </returns>

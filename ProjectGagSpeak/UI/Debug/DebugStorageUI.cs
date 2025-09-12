@@ -140,8 +140,8 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
         DrawKinksterRequests("Incoming Kinkster Requests", _clientData.ReqPairIncoming);
         DrawKinksterRequests("Outgoing Kinkster Requests", _clientData.ReqPairOutgoing);
 
-        DrawCollarRequests("Incoming Collar Requests", _clientData.ReqCollarIncoming);
-        DrawCollarRequests("Outgoing Collar Requests", _clientData.ReqCollarOutgoing);
+        DrawCollarRequests("Incoming Collar Requests", _collar.RequestsIncoming);
+        DrawCollarRequests("Outgoing Collar Requests", _collar.RequestsOutgoing);
 
         using (var node = ImRaii.TreeNode("Global Permissions"))
             if (node)
@@ -253,24 +253,23 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
         ImGui.Spacing();
     }
 
-    private void DrawCollarRequests(string treeLabel, IEnumerable<CollarOwnershipRequest> requests)
+    private void DrawCollarRequests(string treeLabel, IEnumerable<CollarRequest> requests)
     {
         using var node = ImRaii.TreeNode(treeLabel);
         if (!node) return;
 
-        using (ImRaii.Table(treeLabel + "table", 6, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        ImGui.Text("Incoming Requests:");
+        using (ImRaii.Table(treeLabel + "inc-table", 5, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
             ImGuiUtil.DrawTableColumn("Kinkster");
-            ImGuiUtil.DrawTableColumn("Recipient Kinkster");
             ImGuiUtil.DrawTableColumn("Creation Time");
             ImGuiUtil.DrawTableColumn("Initial Writing");
             ImGuiUtil.DrawTableColumn("Your Permissions");
             ImGuiUtil.DrawTableColumn("Owners Permissions");
-            foreach (var req in _clientData.ReqCollarIncoming)
+            foreach (var req in _collar.RequestsIncoming)
             {
                 ImGui.TableNextRow();
                 ImGuiUtil.DrawTableColumn(req.User.UID.ToString());
-                ImGuiUtil.DrawTableColumn(req.Target.UID.ToString());
                 ImGuiUtil.DrawTableColumn(req.CreationTime.ToString());
                 ImGuiUtil.DrawTableColumn(req.Writing.ToString());
                 ImGuiUtil.DrawTableColumn(req.TargetAccess.ToString());
@@ -278,6 +277,24 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
             }
         }
         ImGui.Spacing();
+        ImGui.Text("Outgoing Requests:");
+        using (ImRaii.Table(treeLabel + "out-table", 5, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        {
+            ImGuiUtil.DrawTableColumn("Recipient");
+            ImGuiUtil.DrawTableColumn("Creation Time");
+            ImGuiUtil.DrawTableColumn("Initial Writing");
+            ImGuiUtil.DrawTableColumn("Your Permissions");
+            ImGuiUtil.DrawTableColumn("Owners Permissions");
+            foreach (var req in _collar.RequestsOutgoing)
+            {
+                ImGui.TableNextRow();
+                ImGuiUtil.DrawTableColumn(req.Target.UID.ToString());
+                ImGuiUtil.DrawTableColumn(req.CreationTime.ToString());
+                ImGuiUtil.DrawTableColumn(req.Writing.ToString());
+                ImGuiUtil.DrawTableColumn(req.TargetAccess.ToString());
+                ImGuiUtil.DrawTableColumn(req.OwnerAccess.ToString());
+            }
+        }
     }
 
     public void DrawGagStorage()

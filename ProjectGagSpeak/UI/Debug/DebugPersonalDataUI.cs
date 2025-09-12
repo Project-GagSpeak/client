@@ -1,10 +1,12 @@
 using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Raii;
+using CkCommons.Textures;
 using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
 using FFXIVClientStructs.FFXIV.Common.Lua;
 using GagSpeak.Gui.Components;
@@ -37,9 +39,10 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
     private readonly ClientData _clientData;
     private readonly MoodleDrawer _moodleDrawer;
     private readonly KinksterManager _pairs;
-    private readonly GagRestrictionManager _gags;
-    private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
+    private readonly RestrictionManager _restrictions;
+    private readonly GagRestrictionManager _gags;
+    private readonly CollarManager _collar;
     private readonly BuzzToyManager _toys;
     private readonly PatternManager _patterns;
     private readonly AlarmManager _alarms;
@@ -51,9 +54,10 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         ClientData clientData,
         MoodleDrawer moodleDrawer,
         KinksterManager pairs,
-        GagRestrictionManager gags,
-        RestrictionManager restrictions,
         RestraintManager restraints,
+        RestrictionManager restrictions,
+        GagRestrictionManager gags,
+        CollarManager collar,
         BuzzToyManager toys,
         PatternManager patterns,
         AlarmManager alarms,
@@ -64,9 +68,10 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         _clientData = clientData;
         _moodleDrawer = moodleDrawer;
         _pairs = pairs;
-        _gags = gags;
-        _restrictions = restrictions;
         _restraints = restraints;
+        _restrictions = restrictions;
+        _gags = gags;
+        _collar = collar;
         _toys = toys;
         _patterns = patterns;
         _alarms = alarms;
@@ -126,7 +131,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
             if (FancySearchBar.Draw("##PairDebugSearch", ImGui.GetContentRegionAvail().X, "Search for Pair..", ref _searchValue, 40))
                 UpdateList();
 
-            // Seperator, then the results.
+            // Separator, then the results.
             ImGui.Separator();
             var width = ImGui.GetContentRegionAvail().X;
             foreach (var pair in _immutablePairs)
@@ -163,6 +168,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawGagData("Player", _gags.ServerGagData ?? new CharaActiveGags());
         DrawRestrictions("Player", _restrictions.ServerRestrictionData ?? new CharaActiveRestrictions());
         DrawRestraint("Player", _restraints.ServerData ?? new CharaActiveRestraint());
+        DrawCollar("Player", _collar.SyncedData ?? new CharaActiveCollar());
 
         CkGui.ColorText("Active Valid Toys:", ImGuiColors.ParsedGold);
         CkGui.TextInline(string.Join(", ", _toys.ValidToysForRemotes));
@@ -559,40 +565,29 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         if (!nodeMain)
             return;
 
-        using (ImRaii.Table("##debug-gag" + uid, 4, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        using (ImRaii.Table("##debug-gag" + uid, 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
-            ImGui.TableSetupColumn("##EmptyHeader");
-            ImGui.TableSetupColumn("Layer 1");
-            ImGui.TableSetupColumn("Layer 2");
-            ImGui.TableSetupColumn("Layer 3");
+            ImGui.TableSetupColumn("Layer");
+            ImGui.TableSetupColumn("Type");
+            ImGui.TableSetupColumn("Enabler");
+            ImGui.TableSetupColumn("Padlock");
+            ImGui.TableSetupColumn("Password");
+            ImGui.TableSetupColumn("TimeLeft");
+            ImGui.TableSetupColumn("Assigner");
             ImGui.TableHeadersRow();
 
-            ImGuiUtil.DrawTableColumn("GagType:");
-            for (var i = 0; i < 3; i++)
-                ImGuiUtil.DrawTableColumn(appearance.GagSlots[i].GagItem.GagName());
-            ImGui.TableNextRow();
-
-            ImGuiUtil.DrawTableColumn("Padlock:");
-            for (var i = 0; i < 3; i++)
-                ImGuiUtil.DrawTableColumn(appearance.GagSlots[i].Padlock.ToName());
-            ImGui.TableNextRow();
-
-            ImGuiUtil.DrawTableColumn("Password:");
-            for (var i = 0; i < 3; i++)
-                ImGuiUtil.DrawTableColumn(appearance.GagSlots[i].Password);
-            ImGui.TableNextRow();
-
-            ImGuiUtil.DrawTableColumn("Time Remaining:");
-            for (var i = 0; i < 3; i++)
+            foreach (var (gag, idx) in appearance.GagSlots.WithIndex())
             {
+                ImGuiUtil.DrawTableColumn($"{idx + 1}");
+                ImGuiUtil.DrawTableColumn(gag.GagItem.GagName());
+                ImGuiUtil.DrawTableColumn(gag.Enabler);
+                ImGuiUtil.DrawTableColumn(gag.Padlock.ToName());
+                ImGuiUtil.DrawTableColumn(gag.Password);
                 ImGui.TableNextColumn();
-                CkGui.ColorText(appearance.GagSlots[i].Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
+                CkGui.ColorText(gag.Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
+                ImGuiUtil.DrawTableColumn(gag.PadlockAssigner);
+                ImGui.TableNextRow();
             }
-            ImGui.TableNextRow();
-
-            ImGuiUtil.DrawTableColumn("Assigner:");
-            for (var i = 0; i < 3; i++)
-                ImGuiUtil.DrawTableColumn(appearance.GagSlots[i].PadlockAssigner);
         }
     }
 
@@ -601,8 +596,9 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         using var nodeMain = ImRaii.TreeNode("Restrictions Data");
         if (!nodeMain) return;
 
-        using (ImRaii.Table("##debug-restrictions" + uid, 6, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        using (ImRaii.Table("##debug-restrictions" + uid, 7, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
+            ImGui.TableSetupColumn("Layer");
             ImGui.TableSetupColumn("Name");
             ImGui.TableSetupColumn("Enabler");
             ImGui.TableSetupColumn("Padlock");
@@ -611,8 +607,9 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
             ImGui.TableSetupColumn("Assigner");
             ImGui.TableHeadersRow();
 
-            foreach (var restriction in restrictions.Restrictions)
+            foreach (var (restriction, idx) in restrictions.Restrictions.WithIndex())
             {
+                ImGuiUtil.DrawTableColumn($"{idx + 1}");
                 ImGuiUtil.DrawTableColumn(restriction.Identifier.ToString());
                 ImGuiUtil.DrawTableColumn(restriction.Enabler);
                 ImGuiUtil.DrawTableColumn(restriction.Padlock.ToName());
@@ -680,6 +677,87 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
             ImGui.TableNextColumn();
             CkGui.ColorText(restraint.Timer.ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
             ImGuiUtil.DrawFrameColumn(restraint.PadlockAssigner);
+            ImGui.TableNextRow();
+        }
+    }
+
+    private void DrawCollar(string uid, CharaActiveCollar collar)
+    {
+        using var node = ImRaii.TreeNode("Collar Data");
+        if (!node) return;
+
+        using (ImRaii.Table("##debug-collar" + uid, 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        {
+            ImGui.TableSetupColumn("Property");
+            ImGui.TableSetupColumn("Value");
+            ImGui.TableHeadersRow();
+
+            DrawPermissionRowBool("Applied", collar.Applied);
+
+            ImGuiUtil.DrawTableColumn("Owners");
+            ImGuiUtil.DrawTableColumn(string.Join(", ", collar.OwnerUIDs));
+            ImGui.TableNextRow();
+
+            DrawPermissionRowBool("Visuals", collar.Visuals);
+
+            ImGuiUtil.DrawTableColumn("Dye1");
+            ImGuiUtil.DrawTableColumn(collar.Dye1.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Dye2");
+            ImGuiUtil.DrawTableColumn(collar.Dye2.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Moodle");
+            ImGui.TableNextColumn();
+            if (collar.Moodle.GUID == Guid.Empty)
+                ImGui.TextUnformatted("None");
+            else
+            {
+                MoodleDisplay.DrawMoodleIcon(collar.Moodle.IconID, collar.Moodle.Stacks, MoodleDrawer.IconSizeFramed);
+                GsExtensions.DrawMoodleStatusTooltip(collar.Moodle, Enumerable.Empty<MoodlesStatusInfo>());
+            }
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Writing");
+            ImGuiUtil.DrawTableColumn(collar.Writing ?? "None");
+            ImGui.TableNextRow();
+        }
+
+        using (ImRaii.Table("##debug-collar-perms" + uid, 7, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        {
+            ImGui.TableSetupColumn("Permission-Relation");
+            ImGui.TableSetupColumn("Visuals");
+            ImGui.TableSetupColumn("Dye Control");
+            ImGui.TableSetupColumn("Moodle Control");
+            ImGui.TableSetupColumn("Collar Writing");
+            ImGui.TableSetupColumn("Glamour/Mod Control");
+            ImGui.TableHeadersRow();
+
+            ImGuiUtil.DrawTableColumn(uid);
+            ImGui.TableNextColumn();
+            CkGui.BooleanToColoredIcon(collar.CollaredAccess.HasAny(CollarAccess.Visuals), false);
+            ImGui.TableNextColumn();
+            CkGui.BooleanToColoredIcon(collar.CollaredAccess.HasAny(CollarAccess.Dyes), false);
+            ImGui.TableNextColumn();
+            CkGui.BooleanToColoredIcon(collar.CollaredAccess.HasAny(CollarAccess.Moodle), false);
+            ImGui.TableNextColumn();
+            CkGui.BooleanToColoredIcon(collar.CollaredAccess.HasAny(CollarAccess.Writing), false);
+            ImGui.TableNextColumn();
+            CkGui.BooleanToColoredIcon(collar.CollaredAccess.HasAny(CollarAccess.GlamMod), false);
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Owners");
+            ImGui.TableNextColumn();
+            CkGui.BooleanToColoredIcon(collar.OwnerAccess.HasAny(CollarAccess.Visuals), false);
+            ImGui.TableNextColumn();
+            CkGui.BooleanToColoredIcon(collar.OwnerAccess.HasAny(CollarAccess.Dyes), false);
+            ImGui.TableNextColumn();
+            CkGui.BooleanToColoredIcon(collar.OwnerAccess.HasAny(CollarAccess.Moodle), false);
+            ImGui.TableNextColumn();
+            CkGui.BooleanToColoredIcon(collar.OwnerAccess.HasAny(CollarAccess.Writing), false);
+            ImGui.TableNextColumn();
+            CkGui.BooleanToColoredIcon(collar.OwnerAccess.HasAny(CollarAccess.GlamMod), false);
             ImGui.TableNextRow();
         }
     }

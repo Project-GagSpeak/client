@@ -114,7 +114,7 @@ public class CollarOverviewTab : IFancyTab
             _manager.SaveChangesAndStopEditing();
         CkGui.AttachToolTip("Save Changes and Exit Editing.");
 
-        CkGui.SeparatorColored(col: CkColor.VibrantPink.Uint());
+        CkGui.Separator(CkColor.VibrantPink.Uint());
 
         // If not in edit mode, something went bad, we should abort.
         if (_manager.ItemInEditor is not { } collar)
@@ -207,7 +207,7 @@ public class CollarOverviewTab : IFancyTab
             if (CkGui.IconButton(FAI.Edit, inPopup: true))
                 _manager.StartEditing();
 
-            CkGui.SeparatorColored(topleftWidth, col: CkColor.VibrantPink.Uint());
+            CkGui.Separator(CkColor.VibrantPink.Uint(), topleftWidth);
 
             ImGui.Spacing();
             CkGui.FramedIconText(FAI.Font);
@@ -296,7 +296,7 @@ public class CollarOverviewTab : IFancyTab
         ImGui.GetWindowDrawList().AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Collar], pos, new(textH));
         CkGui.FontText("Active State", UiFontService.UidFont);
 
-        CkGui.SeparatorColored(col: CkColor.VibrantPink.Uint());
+        CkGui.Separator(CkColor.VibrantPink.Uint());
         
         if (_manager.SyncedData is not { } curState)
         {

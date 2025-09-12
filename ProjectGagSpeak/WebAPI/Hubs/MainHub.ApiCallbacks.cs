@@ -120,28 +120,28 @@ public partial class MainHub
     public Task Callback_AddPairRequest(KinksterPairRequest dto)
     {
         Logger.LogDebug($"Callback_AddPairRequest: {dto}", LoggerType.Callbacks);
-        Generic.Safe(() => _clientDatListener.AddPairRequest(dto));
+        Generic.Safe(() => _clientDatListener.AddRequest(dto));
         return Task.CompletedTask;
     }
 
     public Task Callback_RemovePairRequest(KinksterPairRequest dto)
     {
         Logger.LogDebug($"Callback_RemovePairRequest: {dto}", LoggerType.Callbacks);
-        Generic.Safe(() => _clientDatListener.RemovePairRequest(dto));
+        Generic.Safe(() => _clientDatListener.RemoveRequest(dto));
         return Task.CompletedTask;
     }
 
-    public Task Callback_AddCollarRequest(CollarOwnershipRequest dto)
+    public Task Callback_AddCollarRequest(CollarRequest dto)
     {
         Logger.LogDebug($"Callback_AddCollarRequest: {dto}", LoggerType.Callbacks);
-        Generic.Safe(() => _clientDatListener.AddCollarRequest(dto));
+        Generic.Safe(() => _collarManager.AddRequest(dto));
         return Task.CompletedTask;
     }
 
-    public Task Callback_RemoveCollarRequest(CollarOwnershipRequest dto)
+    public Task Callback_RemoveCollarRequest(CollarRequest dto)
     {
         Logger.LogDebug($"Callback_RemoveCollarRequest: {dto}", LoggerType.Callbacks);
-        Generic.Safe(() => _clientDatListener.RemoveCollarRequest(dto));
+        Generic.Safe(() => _collarManager.RemoveRequest(dto));
         return Task.CompletedTask;
     }
 
@@ -840,13 +840,13 @@ public partial class MainHub
         _hubConnection!.On(nameof(Callback_RemovePairRequest), act);
     }
 
-    public void OnAddCollarRequest(Action<CollarOwnershipRequest> act)
+    public void OnAddCollarRequest(Action<CollarRequest> act)
     {
         if (_apiHooksInitialized) return;
         _hubConnection!.On(nameof(Callback_AddCollarRequest), act);
     }
 
-    public void OnRemoveCollarRequest(Action<CollarOwnershipRequest> act)
+    public void OnRemoveCollarRequest(Action<CollarRequest> act)
     {
         if (_apiHooksInitialized) return;
         _hubConnection!.On(nameof(Callback_RemoveCollarRequest), act);

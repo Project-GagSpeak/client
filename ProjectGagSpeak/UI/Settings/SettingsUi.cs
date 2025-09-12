@@ -444,12 +444,12 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 ImGui.SameLine();
                 CkGui.ColorTextBool(GSLoc.Settings.MainOptions.PiShockAllowBeeps, allowBeep);
 
-                CkGui.FrameVerticalSeparator(2);
+                CkGui.FrameSeparatorV(2);
 
                 ImUtf8.TextFrameAligned(GSLoc.Settings.MainOptions.PiShockMaxShockIntensity);
                 CkGui.ColorTextFrameAlignedInline(maxShockIntensity.ToString() + "%", ImGuiColors.ParsedGold);
 
-                CkGui.FrameVerticalSeparator(2);
+                CkGui.FrameSeparatorV(2);
 
                 ImUtf8.TextFrameAligned(GSLoc.Settings.MainOptions.PiShockMaxShockDuration);
                 var maxGlobalShockDuration = globals.GetTimespanFromDuration();

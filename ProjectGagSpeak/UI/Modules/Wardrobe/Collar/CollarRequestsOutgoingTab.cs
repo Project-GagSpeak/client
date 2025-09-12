@@ -24,7 +24,7 @@ public class CollarRequestsOutgoingTab : IFancyTab
 
     public string   Label       => "Outgoing Requests";
     public string   Tooltip     => string.Empty;
-    public bool     Disabled    => _requests.ReqCollarOutgoing.Count is 0;
+    public bool     Disabled    => false; //_requests.ReqCollarOutgoing.Count is 0;
 
 
     public void DrawContents(float width)
