@@ -1,11 +1,12 @@
 using CkCommons.FileSystem;
 using CkCommons.HybridSaver;
+using GagSpeak.Localization;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using System.Diagnostics.CodeAnalysis;
-using System.Text.RegularExpressions;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
+using System.Diagnostics.CodeAnalysis;
+using System.Text.RegularExpressions;
 
 namespace GagSpeak.FileSystems;
 
@@ -69,20 +70,23 @@ public sealed class RestrictionFileSystem : CkFileSystem<RestrictionItem>, IMedi
 
                 CreateDuplicateLeaf(parent, restriction.Label, restriction);
                 return;
-
             case StorageChangeType.Deleted:
                 if (FindLeaf(restriction, out var leaf1))
                     Delete(leaf1);
                 return;
 
             case StorageChangeType.Modified:
-                Reload();
+                // need to run checks for type changes and modifications.
+                if (!FindLeaf(restriction, out var existingLeaf))
+                    return;
+                // Detect potential renames.
+                if (existingLeaf.Name != restriction.Label)
+                    RenameWithDuplicates(existingLeaf, restriction.Label);
                 return;
 
             case StorageChangeType.Renamed when oldString != null:
                 if (!FindLeaf(restriction, out var leaf2))
                     return;
-
                 var old = oldString.FixName();
                 if (old == leaf2.Name || leaf2.Name.IsDuplicateName(out var baseName, out _) && baseName == old)
                     RenameWithDuplicates(leaf2, restriction.Label);

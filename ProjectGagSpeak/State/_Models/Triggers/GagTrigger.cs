@@ -27,10 +27,13 @@ public class GagTrigger : Trigger
 
     public override GagTrigger Clone(bool keepId) => new GagTrigger(this, keepId);
 
-    public void ApplyChanges(GagTrigger other)
+    public override void ApplyChanges(Trigger other)
     {
-        Gag = other.Gag;
-        GagState = other.GagState;
         base.ApplyChanges(other);
+        if (other is not GagTrigger gt)
+            return;
+
+        Gag = gt.Gag;
+        GagState = gt.GagState;
     }
 }

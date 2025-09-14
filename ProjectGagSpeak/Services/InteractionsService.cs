@@ -33,6 +33,7 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
     private readonly KinksterManager _kinksters;
 
     private HypnoEffectEditor _hypnosisEditor;
+    private string _openedUidOnDisconnect = string.Empty;
 
     public InteractionsService(ILogger<InteractionsService> logger, GagspeakMediator mediator,
         MainHub hub, MainMenuTabs mainMenu, KinksterManager kinksters, HypnoEffectManager effectManager)
@@ -50,22 +51,37 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
         Mediator.Subscribe<MainWindowTabChangeMessage>(this, _ => CloseIfNotWhitelist(_.NewTab));
         Mediator.Subscribe<MainHubDisconnectedMessage>(this, _ =>
         {
-            if (Kinkster is not null && CurrentTab is not InteractionsTab.None)
-                KinksterUserDataFromLastDC = Kinkster.UserData with { }; // clone.
+            // if a kinksters display is open upon DC, save the UID of the kinkster to reopen on reconnect.
+            if (_mainMenu.TabSelection is MainMenuTabs.SelectedTab.Whitelist && CurrentTab != InteractionsTab.None && Kinkster != null)
+                _openedUidOnDisconnect = Kinkster.UserData.UID;
+            // null the kinkster and close the interactions UI.
             Kinkster = null;
             CloseInteractionsUI();
         });
         Mediator.Subscribe<MainHubConnectedMessage>(this, _ =>
         {
-            if (KinksterUserDataFromLastDC is null || _mainMenu.TabSelection != MainMenuTabs.SelectedTab.Whitelist)
+            // Upon reconnecting, if our Kinkster UID is not string.Empty, we should try and reopen it.
+            if (string.IsNullOrEmpty(_openedUidOnDisconnect))
                 return;
-
-            if (_kinksters.TryGetKinkster(KinksterUserDataFromLastDC, out var kinkster))
+            // The UID is valid, see if they are in our kinkster list upon reconnection.
+            if (!_kinksters.TryGetKinkster(new(_openedUidOnDisconnect), out var kinkster))
             {
-                Logger.LogInformation($"Re-Syncing data for {kinkster.GetNickAliasOrUid()} from last DC", LoggerType.StickyUI);
-                SyncDataForKinkster(kinkster, false);
-                Mediator.Publish(new UiToggleMessage(typeof(KinksterInteractionsUI), ToggleType.Show));
+                Logger.LogInformation($"Reconnected with no Kinkster Pair matching the last opened UID. [{_openedUidOnDisconnect}]");
+                _openedUidOnDisconnect = string.Empty;
+                return;
             }
+
+            // If we are not on the whitelist page, then dont re-sync, and clear the opened UID.
+            if (_mainMenu.TabSelection != MainMenuTabs.SelectedTab.Whitelist || CurrentTab == InteractionsTab.None)
+            {
+                _openedUidOnDisconnect = string.Empty;
+                return;
+            }
+
+            // Opened UID was a kinkster that was valid, so re-sync it.
+            Logger.LogInformation($"Re-Syncing data for {kinkster.GetNickAliasOrUid()} from last DC", LoggerType.StickyUI);
+            SyncDataForKinkster(kinkster, false);
+            Mediator.Publish(new UiToggleMessage(typeof(KinksterInteractionsUI), ToggleType.Show));
         });
     }
     public UserData? KinksterUserDataFromLastDC { get; private set; } = null;
@@ -85,7 +101,6 @@ public sealed class InteractionsService : DisposableMediatorSubscriberBase
     public EmoteCombo Emotes { get; private set; } = null!;
     public PairMoodleStatusCombo ActiveStatuses { get; private set; } = null!;
     public WorldCombo Worlds { get; private set; } = null!;
-
 
     public Kinkster? Kinkster { get; private set; } = null;
     public InteractionsTab CurrentTab { get; private set; } = InteractionsTab.None;

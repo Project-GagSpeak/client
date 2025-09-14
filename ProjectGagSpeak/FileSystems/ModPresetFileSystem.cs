@@ -77,20 +77,23 @@ public sealed class ModPresetFileSystem : CkFileSystem<ModPresetContainer>, IMed
 
                 CreateDuplicateLeaf(parent, modPreset.ModName, modPreset);
                 return;
-
             case StorageChangeType.Deleted:
                 if (FindLeaf(modPreset, out var leaf1))
                     Delete(leaf1);
                 return;
 
             case StorageChangeType.Modified:
-                Reload();
+                // need to run checks for type changes and modifications.
+                if (!FindLeaf(modPreset, out var existingLeaf))
+                    return;
+                // Detect potential renames.
+                if (existingLeaf.Name != modPreset.ModName)
+                    RenameWithDuplicates(existingLeaf, modPreset.ModName);
                 return;
 
             case StorageChangeType.Renamed when oldString != null:
                 if (!FindLeaf(modPreset, out var leaf2))
                     return;
-
                 var old = oldString.FixName();
                 if (old == leaf2.Name || leaf2.Name.IsDuplicateName(out var baseName, out _) && baseName == old)
                     RenameWithDuplicates(leaf2, modPreset.ModName);

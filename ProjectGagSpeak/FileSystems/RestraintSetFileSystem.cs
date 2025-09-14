@@ -74,9 +74,16 @@ public sealed class RestraintSetFileSystem : CkFileSystem<RestraintSet>, IMediat
                 if (FindLeaf(restraintSet, out var leaf1))
                     Delete(leaf1);
                 return;
+
             case StorageChangeType.Modified:
-                Reload();
+                // need to run checks for type changes and modifications.
+                if (!FindLeaf(restraintSet, out var existingLeaf))
+                    return;
+                // Detect potential renames.
+                if (existingLeaf.Name != restraintSet.Label)
+                    RenameWithDuplicates(existingLeaf, restraintSet.Label);
                 return;
+
             case StorageChangeType.Renamed when oldString != null:
                 if (!FindLeaf(restraintSet, out var leaf2))
                     return;

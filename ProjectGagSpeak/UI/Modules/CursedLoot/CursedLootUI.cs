@@ -1,10 +1,12 @@
 using CkCommons;
 using CkCommons.Classes;
 using CkCommons.Gui;
+using CkCommons.Helpers;
 using CkCommons.Raii;
 using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.FileSystems;
 using GagSpeak.Services.Mediator;
@@ -13,6 +15,7 @@ using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using GagspeakAPI.Extensions;
+using OtterGui.Text;
 
 namespace GagSpeak.Gui.Wardrobe;
 public class CursedLootUI : WindowMediatorSubscriberBase
@@ -25,13 +28,12 @@ public class CursedLootUI : WindowMediatorSubscriberBase
 
     public CursedLootUI(ILogger<CursedLootUI> logger, GagspeakMediator mediator,
         CursedLootFileSelector selector, CursedLootManager manager, TutorialService guides, 
-        LootItemsTab itemsTab, LootPoolTab itemPoolTab, LootAppliedTab appliedTab) 
+        LootItemsTab itemsTab, LootPoolTab itemPoolTab, LootAppliedTab appliedTab)
         : base(logger, mediator, "Cursed Loot UI")
     {
         _selector = selector;
         _manager = manager;
         _guides = guides;
-
 
         CursedLootTabs = [itemsTab, itemPoolTab, appliedTab];
 
@@ -44,9 +46,9 @@ public class CursedLootUI : WindowMediatorSubscriberBase
 
     public static IFancyTab[] CursedLootTabs;
 
-    private InputTextTimeSpan? LowerBound;
-    private InputTextTimeSpan? UpperBound;
-    private int Chance = -1;
+    private string? _lowerBoundStr = null;
+    private string? _upperBoundStr = null;
+    private int? _chance = null;
 
     protected override void PreDrawInternal()
     {
@@ -72,7 +74,7 @@ public class CursedLootUI : WindowMediatorSubscriberBase
     protected override void DrawInternal()
     {
         var frameH = ImGui.GetFrameHeight();
-        var regions = CkHeader.FlatWithBends(CkColor.FancyHeader.Uint(), frameH, frameH, frameH);
+        var regions = CkHeader.FlatWithBends(CkColor.FancyHeader.Uint(), frameH, ImUtf8.ItemSpacing.X, frameH);
         // draw out the header information, and then the tab contents.
 
         ImGui.SetCursorScreenPos(regions.TopLeft.Pos);
@@ -97,7 +99,69 @@ public class CursedLootUI : WindowMediatorSubscriberBase
 
     private void DrawTopRight(Vector2 region)
     {
-        ImGui.Text("Min and Max Time, with Percent Changes");
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 9f);
+        using var col = ImRaii.PushColor(ImGuiCol.FrameBg, CkColor.FancyHeaderContrast.Uint());
+        var frameH = ImUtf8.FrameHeight;
+        var spacing = ImUtf8.ItemSpacing.X;
+        var innerSpacing = ImUtf8.ItemInnerSpacing.X;
+        var changeLength = frameH * 3 + innerSpacing;
+        var inputTimeWidth = region.X - changeLength - spacing;
+
+        using (ImRaii.Child("Timers", new Vector2(inputTimeWidth, region.Y)))
+        {
+            // now that we have the inner area for this, we can determine the midpoint and our input text lengths.
+            var inputTextLength = (inputTimeWidth - ImUtf8.FrameHeight) / 2f;
+
+            // Set the bounds and chance if null.
+            _lowerBoundStr ??= _manager.LockRangeLower.ToGsRemainingTime();
+            _upperBoundStr ??= _manager.LockRangeUpper.ToGsRemainingTime();
+            _chance ??= _manager.LockChance;
+
+            ImGui.SetNextItemWidth(inputTextLength);
+            ImGui.InputTextWithHint("##MinTime", "Ex: 5m20s", ref _lowerBoundStr, 32);
+            if (ImGui.IsItemDeactivatedAfterEdit())
+            {
+                // Ensure that it has a valid parsed time. Only update value if it passed.
+                if (RegexEx.TryParseTimeSpan(_lowerBoundStr, out var newSpan))
+                    _manager.SetLowerLimit(newSpan);
+                // Revert to null so we can update it with the latest value in the manager.
+                _lowerBoundStr = null;
+            }
+            CkGui.AttachToolTip("The lower Mimic Lock Time.");
+
+            ImGui.SameLine(0, 0);
+            CkGui.FramedIconText(FAI.HourglassHalf);
+
+            ImGui.SameLine(0, 0);
+            ImGui.SetNextItemWidth(inputTextLength);
+            ImGui.InputTextWithHint("##MaxTime", "Ex: 1h10m", ref _upperBoundStr, 32);
+            if (ImGui.IsItemDeactivatedAfterEdit())
+            {
+                // Ensure that it has a valid parsed time. Only update value if it passed.
+                if (RegexEx.TryParseTimeSpan(_upperBoundStr, out var newSpan))
+                    _manager.SetUpperLimit(newSpan);
+                // Revert to null so we can update it with the latest value in the manager.
+                _upperBoundStr = null;
+            }
+            CkGui.AttachToolTip("The upper Mimic Lock Time.");
+        }
+
+        ImGui.SameLine();
+        using (CkRaii.Child("Chance", new Vector2(changeLength, region.Y), CkColor.FancyHeaderContrast.Uint(), 9f * ImGuiHelpers.GlobalScale))
+        {
+            ImGui.SetNextItemWidth(changeLength - frameH - innerSpacing);
+            var chance = _chance ?? _manager.LockChance;
+            if (ImGui.DragInt("##ChanceSel", ref chance, 0.1f, 0, 100, "%d%%"))
+                _chance = chance;
+            if (ImGui.IsItemDeactivatedAfterEdit())
+            {
+                _manager.SetLockChance(chance);
+                _chance = null;
+            }
+            ImUtf8.SameLineInner();
+            CkGui.IconText(FAI.Percentage);
+        }
+        CkGui.AttachToolTip("How likely you are to encounter cursed loot.");
     }
 
     private void DrawTabBarContent()
@@ -106,57 +170,5 @@ public class CursedLootUI : WindowMediatorSubscriberBase
                 LabelFlags.PadInnerChild | LabelFlags.SizeIncludesHeader, out var selected, CursedLootTabs);
         // Draw the selected tab's contents.
         selected?.DrawContents(_.InnerRegion.X);
-    }
-
-    private void DrawActiveItem(CursedItem item)
-    {
-        var itemSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
-        using var group = ImRaii.Group();
-
-        ImGui.AlignTextToFramePadding();
-        ImGui.TextUnformatted(item.Label);
-        ImGui.SameLine();
-        CkGui.ColorText(item.ReleaseTime.ToGsRemainingTimeFancy(), ImGuiColors.HealerGreen);
-    }
-
-    // migrate to new header format stuff
-    private void DrawCursedLootTimeChance(float width)
-    {
-        using var group = ImRaii.Group();
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 8f);
-        var sliderWidth = ImGui.CalcTextSize("100.9%").X;
-        var widthForInputs = width - CkGui.IconSize(FAI.HourglassHalf).X - 2;
-        var widthForStrInputs = widthForInputs - sliderWidth;
-        var inputWidth = widthForStrInputs / 2;
-
-        // Ensure persistent references
-        LowerBound ??= new InputTextTimeSpan(() => _manager.LockRangeLower, _manager.SetLowerLimit);
-        UpperBound ??= new InputTextTimeSpan(() => _manager.LockRangeUpper, _manager.SetUpperLimit);
-        var chance = Chance != -1 ? Chance : _manager.LockChance;
-
-        // Draw UI
-        LowerBound.DrawInputTimer("##TimerInputLower", inputWidth, "Ex: 0h2m7s");
-        CkGui.AttachToolTip("Min Cursed Lock Time.");
-        // _guides.OpenTutorial(TutorialType.CursedLoot, StepsCursedLoot.LowerLockTimer, ImGui.GetItemRectMin(), ImGui.GetItemRectSize());
-
-        ImGui.SameLine(0, 1);
-        CkGui.IconText(FAI.HourglassHalf, ImGuiColors.ParsedGold);
-        ImGui.SameLine(0, 1);
-
-        UpperBound.DrawInputTimer("##TimerInputUpper", inputWidth, "Ex: 0h2m7s");
-        CkGui.AttachToolTip("Max Cursed Lock Time.");
-        // _guides.OpenTutorial(TutorialType.CursedLoot, StepsCursedLoot.UpperLockTimer, ImGui.GetItemRectMin(), ImGui.GetItemRectSize());
-
-        ImGui.SameLine(0, 1);
-        ImGui.SetNextItemWidth(sliderWidth);
-        if (ImGui.DragInt("##PercentageSlider", ref chance, 0.1f, 0, 100, "%d%%"))
-            Chance = chance;
-        if (ImGui.IsItemDeactivatedAfterEdit())
-        {
-            _manager.SetLockChance(Chance);
-            Chance = -1;
-        }
-        CkGui.AttachToolTip("% Chance of finding Cursed Bondage Loot.");
-        // _guides.OpenTutorial(TutorialType.CursedLoot, StepsCursedLoot.RollChance, ImGui.GetItemRectMin(), ImGui.GetItemRectSize());
     }
 }

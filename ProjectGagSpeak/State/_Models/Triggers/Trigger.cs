@@ -47,6 +47,22 @@ public abstract class Trigger : IEditableStorageItem<Trigger>
 
     public LightTrigger ToLightItem()
         => new LightTrigger(Identifier, Priority, Label, Description, Type, ActionType);
+
+    public override bool Equals(object? obj)
+        => base.Equals(obj);
+    public override int GetHashCode()
+        => Identifier.GetHashCode();
+
+    public static bool operator ==(Trigger? left, Trigger? right)
+    {
+        if (left is null || right is null)
+            return false;
+        return left.Identifier.Equals(right.Identifier);
+    }
+
+    public static bool operator !=(Trigger? left, Trigger? right)
+        => !(left == right);
+
 }
 
 

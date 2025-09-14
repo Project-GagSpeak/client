@@ -39,14 +39,17 @@ public sealed class CursedLootFileSystem : CkFileSystem<CursedItem>, IMediatorSu
 
     public void Dispose()
     {
-        Mediator.Unsubscribe<ConfigCursedItemChanged>(this);
+        Mediator.UnsubscribeAll(this);
         Changed -= OnChange;
     }
 
     private void OnChange(FileSystemChangeType type, IPath _1, IPath? _2, IPath? _3)
     {
         if (type != FileSystemChangeType.Reload)
+        {
+            // _logger.LogDebug($"CursedLootFileSystem changed [{type}], saving...");
             _hybridSaver.Save(this);
+        }
     }
 
     public bool FindLeaf(CursedItem loot, [NotNullWhen(true)] out Leaf? leaf)
@@ -63,7 +66,7 @@ public sealed class CursedLootFileSystem : CkFileSystem<CursedItem>, IMediatorSu
         {
             case StorageChangeType.Created:
                 var parent = Root;
-                if(oldString != null)
+                if (oldString != null)
                     try { parent = FindOrCreateAllFolders(oldString); }
                     catch (Bagagwa ex) { _logger.LogWarning(ex, $"Could not move loot because the folder could not be created."); }
 
@@ -73,9 +76,19 @@ public sealed class CursedLootFileSystem : CkFileSystem<CursedItem>, IMediatorSu
                 if (FindLeaf(loot, out var leaf1))
                     Delete(leaf1);
                 return;
+
             case StorageChangeType.Modified:
-                Reload();
+                // need to run checks for type changes and modifications.
+                if (!FindLeaf(loot, out var existingLeaf))
+                    return;
+                // Check for type changes.
+                if (existingLeaf.Value.GetType() != loot.GetType())
+                    UpdateLeafValue(existingLeaf, loot);
+                // Detect potential renames.
+                if (existingLeaf.Name != loot.Label)
+                    RenameWithDuplicates(existingLeaf, loot.Label);
                 return;
+
             case StorageChangeType.Renamed when oldString != null:
                 if (!FindLeaf(loot, out var leaf2))
                     return;

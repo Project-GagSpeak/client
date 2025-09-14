@@ -73,9 +73,16 @@ public sealed class PatternFileSystem : CkFileSystem<Pattern>, IMediatorSubscrib
                 if (FindLeaf(pattern, out var leaf1))
                     Delete(leaf1);
                 return;
+
             case StorageChangeType.Modified:
-                Reload();
+                // need to run checks for type changes and modifications.
+                if (!FindLeaf(pattern, out var existingLeaf))
+                    return;
+                // Detect potential renames.
+                if (existingLeaf.Name != pattern.Label)
+                    RenameWithDuplicates(existingLeaf, pattern.Label);
                 return;
+
             case StorageChangeType.Renamed when oldString != null:
                 if (!FindLeaf(pattern, out var leaf2))
                     return;

@@ -14,6 +14,7 @@ public abstract class CursedItem : IEditableStorageItem<CursedItem>
     public DateTimeOffset AppliedTime { get; set; } = DateTimeOffset.MinValue;
     public DateTimeOffset ReleaseTime { get; set; } = DateTimeOffset.MinValue;
     public Precedence Precedence { get; set; } = Precedence.Default; // the priority system.
+    public bool ApplyTraits { get; set; } = true; // For Hardcore Traits.
 
     public abstract string RefLabel { get; }
 
@@ -44,7 +45,26 @@ public abstract class CursedItem : IEditableStorageItem<CursedItem>
     public virtual AppliedItem ToAppliedItem()
         => new AppliedItem(ReleaseTime, CursedLootType.None);
 
+    public bool IsActive()
+        => AppliedTime != DateTimeOffset.MinValue;
+
     public abstract JObject Serialize();
+
+    public override bool Equals(object? obj)
+        => base.Equals(obj);
+    public override int GetHashCode()
+        => Identifier.GetHashCode();
+
+    public static bool operator ==(CursedItem? left, CursedItem? right)
+    {
+        if (left is null || right is null)
+            return false;
+        return left.Identifier.Equals(right.Identifier);
+    }
+
+    public static bool operator !=(CursedItem? left, CursedItem? right)
+        => !(left == right);
+
 }
 
 [Serializable]
@@ -70,11 +90,14 @@ public class CursedGagItem : CursedItem
 
     public override CursedGagItem Clone(bool keepId)
         => new CursedGagItem(this, keepId);
-    
-    public void ApplyChanges(CursedGagItem other)
+
+    public override void ApplyChanges(CursedItem other)
     {
-        RefItem = other.RefItem;
         base.ApplyChanges(other);
+        if (other is not CursedGagItem cgl)
+            return;
+
+        RefItem = cgl.RefItem;
     }
     
     public override LightCursedLoot ToLightItem()
@@ -118,11 +141,14 @@ public class CursedRestrictionItem : CursedItem
 
     public override CursedRestrictionItem Clone(bool keepId)
         => new CursedRestrictionItem(this, keepId);
-    
-    public void ApplyChanges(CursedRestrictionItem other)
+
+    public override void ApplyChanges(CursedItem other)
     {
-        RefItem = other.RefItem;
         base.ApplyChanges(other);
+        if (other is not CursedRestrictionItem crl)
+            return;
+
+        RefItem = crl.RefItem;
     }
     
     public override LightCursedLoot ToLightItem()

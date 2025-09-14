@@ -23,10 +23,14 @@ public class RestrictionTrigger : Trigger
 
     public override RestrictionTrigger Clone(bool keepId) => new RestrictionTrigger(this, keepId);
 
-    public void ApplyChanges(RestrictionTrigger other)
+    public override void ApplyChanges(Trigger other)
     {
-        RestrictionId = other.RestrictionId;
-        RestrictionState = other.RestrictionState;
+        base.ApplyChanges(other);
+        if (other is not RestrictionTrigger rt)
+            return;
+
+        RestrictionId = rt.RestrictionId;
+        RestrictionState = rt.RestrictionState;
         base.ApplyChanges(other);
     }
 }

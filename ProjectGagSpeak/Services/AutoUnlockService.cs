@@ -280,11 +280,11 @@ public sealed class AutoUnlockService : BackgroundService
     // Subject to change!
     private async Task CheckCursedLoot()
     {
-        if (_cursedLoot.Storage.ActiveItems.Count is 0)
+        if (!_cursedLoot.Storage.AppliedLootUnsorted.Any())
             return;
 
         // Otherwise iterate the items for unlocks.
-        foreach (var item in _cursedLoot.Storage.ActiveItems)
+        foreach (var item in _cursedLoot.Storage.AppliedLootUnsorted)
         {
             if (item.ReleaseTime >= DateTimeOffset.UtcNow) continue;
 
@@ -297,7 +297,7 @@ public sealed class AutoUnlockService : BackgroundService
             item.ReleaseTime = DateTimeOffset.MinValue;
             _cursedLoot.ForceSave();
             // Attempt to push the update.
-            if (await _dds.PushActiveCursedLoot(_cursedLoot.Storage.ActiveIds.ToList(), item.Identifier, null).ConfigureAwait(false) is null)
+            if (await _dds.PushActiveCursedLoot(_cursedLoot.Storage.AppliedLootIds.ToList(), item.Identifier, null).ConfigureAwait(false) is null)
             {
                 // Revert the values to prevent the update and trigger it again later. This helps to prevent false achievement triggering.
                 item.AppliedTime = backup.AppliedTime;

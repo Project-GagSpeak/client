@@ -48,20 +48,10 @@ public class PuppetVictimUniquePanel : DisposableMediatorSubscriberBase
         _aliasDrawer = aliasDrawer;
         _manager = manager;
 
-        _pairCombo = new PairCombo(logger, kinksters, favorites, () => [
-            ..kinksters.DirectPairs
-                .OrderByDescending(p => favorites._favoriteKinksters.Contains(p.UserData.UID))
-                .ThenByDescending(u => u.IsVisible)
-                .ThenByDescending(u => u.IsOnline)
-                .ThenBy(pair => !pair.PlayerName.IsNullOrEmpty()
-                    ? (config.Current.PreferNicknamesOverNames ? pair.GetNickAliasOrUid() : pair.PlayerName)
-                    : pair.GetNickAliasOrUid(), StringComparer.OrdinalIgnoreCase)
-        ]);
-
-        Mediator.Subscribe<RefreshUiKinkstersMessage>(this, _ => _pairCombo.RefreshPairList());
+        _pairCombo = new PairCombo(logger, mediator, config, kinksters, favorites);
     }
 
-    public Kinkster? Selected => _pairCombo.Current;
+    public Kinkster? Selected => _controllerPanel.SelectedKinkster;
 
     private void UpdateFilteredItems()
     {
@@ -196,7 +186,7 @@ public class PuppetVictimUniquePanel : DisposableMediatorSubscriberBase
                 var wdl = ImGui.GetWindowDrawList();
                 wdl.ChannelsSplit(2);
                 wdl.ChannelsSetCurrent(1);
-                if (_pairCombo.Draw(selectorW, 1.25f, frameBgCol))
+                if (_pairCombo.Draw(Selected, selectorW, 1.25f, frameBgCol))
                 {
                     Logger.LogInformation($"Selected Pair: {_pairCombo.Current?.GetNickAliasOrUid() ?? "None"} ({_pairCombo.Current?.UserData.ToString()})");
                     _controllerPanel.SelectedKinkster = _pairCombo.Current;

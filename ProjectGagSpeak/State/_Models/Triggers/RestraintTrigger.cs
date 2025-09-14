@@ -26,10 +26,13 @@ public class RestraintTrigger : Trigger
 
     public override RestraintTrigger Clone(bool keepId) => new RestraintTrigger(this, keepId);
 
-    public void ApplyChanges(RestraintTrigger other)
+    public override void ApplyChanges(Trigger other)
     {
-        RestraintSetId = other.RestraintSetId;
-        RestraintState = other.RestraintState;
         base.ApplyChanges(other);
+        if (other is not RestraintTrigger rst)
+            return;
+
+        RestraintSetId = rst.RestraintSetId;
+        RestraintState = rst.RestraintState;
     }
 }

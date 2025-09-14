@@ -1,11 +1,12 @@
 using CkCommons.FileSystem;
 using CkCommons.HybridSaver;
-using GagSpeak.State.Models;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Managers;
+using GagSpeak.State.Models;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
-using GagSpeak.State.Managers;
+using static FFXIVClientStructs.FFXIV.Client.UI.Agent.AgentAlarm;
 
 namespace GagSpeak.FileSystems;
 
@@ -73,9 +74,16 @@ public sealed class BuzzToyFileSystem : CkFileSystem<BuzzToy>, IMediatorSubscrib
                 if (FindLeaf(device, out var leaf1))
                     Delete(leaf1);
                 return;
+
             case StorageChangeType.Modified:
-                Reload();
+                // need to run checks for type changes and modifications.
+                if (!FindLeaf(device, out var existingLeaf))
+                    return;
+                // Detect potential renames.
+                if (existingLeaf.Name != device.LabelName)
+                    RenameWithDuplicates(existingLeaf, device.LabelName);
                 return;
+
             case StorageChangeType.Renamed when oldString != null:
                 if (!FindLeaf(device, out var leaf2))
                     return;

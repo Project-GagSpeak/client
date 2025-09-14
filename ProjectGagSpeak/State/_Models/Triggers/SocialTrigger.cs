@@ -1,3 +1,6 @@
+using OtterGuiInternal.Enums;
+using System.Reflection.Metadata.Ecma335;
+
 namespace GagSpeak.State.Models;
 
 [Serializable]
@@ -22,9 +25,12 @@ public class SocialTrigger : Trigger
 
     public override SocialTrigger Clone(bool keepId) => new SocialTrigger(this, keepId);
 
-    public void ApplyChanges(SocialTrigger other)
+    public override void ApplyChanges(Trigger other)
     {
-        SocialType = other.SocialType;
         base.ApplyChanges(other);
+        if (other is not SocialTrigger st)
+            return;
+
+        SocialType = st.SocialType;
     }
 }

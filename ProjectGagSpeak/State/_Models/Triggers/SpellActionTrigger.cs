@@ -54,16 +54,19 @@ public class SpellActionTrigger : Trigger, IThresholdContainer
     // This can either get very optimial or very cancerous with no inbetween, try to find a better approach to this.
     public IEnumerable<uint> GetStoredIds() => StoredActions.Values.SelectMany(_ => _);
 
-    public void ApplyChanges(SpellActionTrigger other)
+    public override void ApplyChanges(Trigger other)
     {
-        Direction = other.Direction;
-        PlayerNameWorld = other.PlayerNameWorld;
-        IsGenericDetection = other.IsGenericDetection;
-        ActionKind = other.ActionKind;
-        StoredActions = new Dictionary<JobType, List<uint>>(other.StoredActions);
-        ThresholdMinValue = other.ThresholdMinValue;
-        ThresholdMaxValue = other.ThresholdMaxValue;
         base.ApplyChanges(other);
+        if (other is not SpellActionTrigger sat)
+            return;
+
+        Direction = sat.Direction;
+        PlayerNameWorld = sat.PlayerNameWorld;
+        IsGenericDetection = sat.IsGenericDetection;
+        ActionKind = sat.ActionKind;
+        StoredActions = new Dictionary<JobType, List<uint>>(sat.StoredActions);
+        ThresholdMinValue = sat.ThresholdMinValue;
+        ThresholdMaxValue = sat.ThresholdMaxValue;
     }
 }
 

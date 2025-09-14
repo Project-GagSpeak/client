@@ -3,22 +3,16 @@ using CkCommons.FileSystem.Selector;
 using CkCommons.Gui;
 using CkCommons.Helpers;
 using CkCommons.Widgets;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Plugin.Services;
-using Dalamud.Utility;
-using GagSpeak.Gui;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
-using GagSpeak.Utils;
-using Dalamud.Bindings.ImGui;
-using Lumina.Excel.Sheets;
 using OtterGui;
-using OtterGuiInternal.Structs;
 
 namespace GagSpeak.FileSystems;
 

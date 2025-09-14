@@ -86,13 +86,13 @@ public class CollarOverviewTab : IFancyTab
 
     private void DrawSetup(Vector2 region)
     {
-        if (_manager.IsEditing)
-            DrawSetupEditor(region);
+        if (_manager.ItemInEditor is { } collar)
+            DrawSetupEditor(region, collar);
         else
             DrawSetupOverview(region);
     }
 
-    private void DrawSetupEditor(Vector2 size)
+    private void DrawSetupEditor(Vector2 size, GagSpeakCollar collar)
     {
         using var child = CkRaii.FramedChildPaddedWH("Setup", size, 0, CkColor.VibrantPink.Uint(), FancyTabBar.RoundingInner);
         // Precalculate essential variable sizes.
@@ -116,17 +116,12 @@ public class CollarOverviewTab : IFancyTab
 
         CkGui.Separator(CkColor.VibrantPink.Uint());
 
-        // If not in edit mode, something went bad, we should abort.
-        if (_manager.ItemInEditor is not { } collar)
-        {
-            CkGui.ColorText("Item is not being edited!", ImGuiColors.DalamudRed);
-            return;
-        }
-
         // Collar Label edit.
         ImGui.Spacing();
         CkGui.FramedIconText(FAI.Font);
-        ImGui.SameLine();
+        CkGui.AttachToolTip("The Label for this Collar.");
+
+        ImUtf8.SameLineInner();
         var label = collar.Label;
         ImGui.InputTextWithHint("##CollarLabel", "Collar Name..", ref label, 40);
         if (ImGui.IsItemDeactivatedAfterEdit())
@@ -136,7 +131,8 @@ public class CollarOverviewTab : IFancyTab
         ImGui.Spacing();
         CkGui.FramedIconText(FAI.Vest);
         CkGui.AttachToolTip("The attached Glamourer item.");
-        ImGui.SameLine();
+
+        ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo($"##CollarES", 100f, collar.Glamour.Slot, out var nSlot, EquipSlotExtensions.EqdpSlots, _ => _.ToName(), flags: CFlags.NoArrowButton))
         {
             collar.Glamour.Slot = nSlot;
@@ -148,8 +144,9 @@ public class CollarOverviewTab : IFancyTab
         // Mod Field.
         ImGui.Spacing();
         CkGui.FramedIconText(FAI.FileDownload);
-        ImGui.SameLine();
-        // draw the preset selection.
+        CkGui.AttachToolTip("The Mod Preset applied to this Collar.");
+
+        ImUtf8.SameLineInner();
         if (_modPresets.PresetCombo.Draw("##CollarMPS", collar.Mod.Label, ImGui.GetContentRegionAvail().X * .4f, 1f, CFlags.NoArrowButton))
         {
             _logger.LogInformation("Requesting Collar ModPreset change to " + _modPresets.PresetCombo.Current?.Label);
@@ -263,21 +260,19 @@ public class CollarOverviewTab : IFancyTab
             var refVar3 = true;
             var refVar4 = false;
             var refVar5 = false;
-            ImGui.Checkbox("Glam/Mod Editing", ref refVar1);
             ImGui.Checkbox("Toggle Visibility", ref refVar2);
             ImGui.Checkbox("Glamour Dyes", ref refVar3);
             ImGui.Checkbox("Moodle", ref refVar4);
             ImGui.Checkbox("Collar Writing", ref refVar5);
+            ImGui.Checkbox("Glam/Mod Editing", ref refVar1);
         }
         ImUtf8.SameLineInner();
         using (CkRaii.HeaderChild("Owners Access", permBoxSize, FancyTabBar.RoundingInner, HeaderFlags.AddPaddingToHeight))
         {
-            var refVar1 = true;
             var refVar2 = false;
             var refVar3 = true;
             var refVar4 = false;
             var refVar5 = false;
-            ImGui.Checkbox("Glam/Mod Access", ref refVar1);
             ImGui.Checkbox("Toggle Visibility", ref refVar2);
             ImGui.Checkbox("Glamour Dyes", ref refVar3);
             ImGui.Checkbox("Moodle", ref refVar4);
@@ -340,7 +335,7 @@ public class CollarOverviewTab : IFancyTab
     {
         ImGui.Spacing();
         CkGui.FramedIconText(FAI.PencilAlt);
-        ImGui.SameLine();
+        ImUtf8.SameLineInner();
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
         using (ImRaii.Disabled(UiService.DisableUI || !ownPerms.HasAny(CollarAccess.Writing)))
         {
@@ -360,7 +355,7 @@ public class CollarOverviewTab : IFancyTab
 
         ImGui.Spacing();
         CkGui.FramedIconText(FAI.FillDrip);
-        ImGui.SameLine();
+        ImUtf8.SameLineInner();
         using (ImRaii.Disabled(UiService.DisableUI || !ownPerms.HasAny(CollarAccess.Dyes)))
         {
             var dye1 = _manager.SyncedData!.Dye1;
@@ -378,8 +373,7 @@ public class CollarOverviewTab : IFancyTab
     {
         ImGui.Spacing();
         CkGui.FramedIconText(FAI.TheaterMasks);
-        ImGui.SameLine();
-
+        ImUtf8.SameLineInner();
         var moodle = _manager.SyncedData!.Moodle;
         if (moodle.GUID == Guid.Empty)
         {

@@ -133,23 +133,28 @@ public class CursedLootStorage : List<CursedItem>, IEditableStorage<CursedItem>
         return false;
     }
 
-    public IEnumerable<Guid> ActiveIds => this
-        .Where(x => x.AppliedTime != DateTimeOffset.MinValue)
+    public IEnumerable<Guid> AppliedLootIds => this
+        .Where(x => x.InPool && x.AppliedTime != DateTimeOffset.MinValue)
         .Select(x => x.Identifier);
 
-    public IReadOnlyList<CursedItem> ActiveItems => this
-        .Where(x => x.AppliedTime != DateTimeOffset.MinValue)
-        .OrderBy(x => x.AppliedTime)
-        .ToList();
+    // The below should eventually be replaced with updated
+    // immutable lists for better drawframe performance.
+    public IEnumerable<CursedItem> AppliedLootUnsorted => this
+        .Where(x => x.AppliedTime != DateTimeOffset.MinValue);
 
-    public IReadOnlyList<CursedItem> AllItemsInPoolByActive => this
-        .Where(x => x.InPool)
+    public IReadOnlyList<CursedItem> ActiveAppliedLoot => this
+        .Where(x => x.InPool && x.AppliedTime != DateTimeOffset.MinValue)
         .OrderByDescending(x => x.AppliedTime)
+        .ThenBy(x => x.Precedence)
         .ThenBy(x => x.Label)
         .ToList();
 
-    public IReadOnlyList<CursedItem> InactiveItemsInPool => this
+    public IReadOnlyList<CursedItem> ActiveUnappliedLoot => this
         .Where(x => x.InPool && x.AppliedTime == DateTimeOffset.MinValue)
+        .ToList();
+
+    public IReadOnlyList<CursedItem> InactiveLoot => this
+        .Where(x => !x.InPool)
         .ToList();
 
     // Interface Requirements:

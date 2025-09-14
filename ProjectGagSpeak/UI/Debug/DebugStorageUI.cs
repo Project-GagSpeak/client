@@ -847,6 +847,8 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
             ImGuiUtil.DrawTableColumn("Identifier");
             ImGuiUtil.DrawTableColumn(cursedLoot.Identifier.ToString());
             ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Type");
+            ImGuiUtil.DrawTableColumn(cursedLoot.Type.ToString());
             ImGuiUtil.DrawTableColumn("Label");
             ImGuiUtil.DrawTableColumn(cursedLoot.Label.ToString());
             ImGui.TableNextRow();
@@ -1008,6 +1010,9 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
     {
         using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
+            ImGuiUtil.DrawTableColumn("Type");
+            ImGuiUtil.DrawTableColumn(trigger.Type.ToString());
+            ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("Identifier");
             ImGuiUtil.DrawTableColumn(trigger.Identifier.ToString());
             ImGui.TableNextRow();
@@ -1025,9 +1030,6 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
             ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("Action Type");
             ImGuiUtil.DrawTableColumn(trigger.ActionType.ToString());
-            ImGui.TableNextRow();
-            ImGuiUtil.DrawTableColumn("Invokable Action");
-            ImGuiUtil.DrawTableColumn(trigger.InvokableAction.ToString());
         }
     }
 

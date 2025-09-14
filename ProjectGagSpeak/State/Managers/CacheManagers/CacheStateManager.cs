@@ -141,7 +141,7 @@ public class CacheStateManager : IHostedService
         _logger.LogInformation("------ Gag Data synced to Cache ------ ");
 
         // Sync all server restriction data with the RestrictionManager.
-        var validCursedItems = _cursedItems.Storage.ActiveItems.OfType<CursedRestrictionItem>().Where(i => i.RefItem != null).ToList();
+        var validCursedItems = _cursedItems.Storage.ActiveAppliedLoot.OfType<CursedRestrictionItem>().Where(i => i.RefItem != null).ToList();
         _restrictions.LoadInternalData(connectionDto.SyncedRestrictionsData, validCursedItems);
         _logger.LogInformation("------ Syncing Restriction Data to Cache ------");
         foreach (var (layer, item) in _restrictions.ActiveItems)

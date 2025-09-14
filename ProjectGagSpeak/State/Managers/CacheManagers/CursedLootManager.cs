@@ -4,11 +4,9 @@ using GagSpeak.FileSystems;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.State.Caches;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
-using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.State.Managers;
 
@@ -41,7 +39,6 @@ public sealed class CursedLootManager : IHybridSavable
 
     public CursedLootStorage Storage { get; private set; } = new CursedLootStorage();
     public CursedItem? ItemInEditor => _itemEditor.ItemInEditor;
-    public IEnumerable<CursedItem> AppliedCursedItems => Storage.ActiveItems;
 
     #region Generic Methods
     public CursedItem CreateNew(string lootName)
@@ -76,19 +73,22 @@ public sealed class CursedLootManager : IHybridSavable
         return clonedItem;
     }
 
-    public void ChangeCursedLootType(CursedItem oldCursedItem, CursedLootKind newType)
+    public void ChangeCursedLootType(CursedLootKind newType)
     {
-        if (ItemInEditor is null || (newType is CursedLootKind.Restriction && _restrictions.Storage.Count is 0))
+        var oldItem = ItemInEditor;
+
+        if (oldItem is null || (newType is CursedLootKind.Restriction && _restrictions.Storage.Count is 0))
             return;
 
         CursedItem convertedLoot = newType switch
         {
-            CursedLootKind.Gag => new CursedGagItem(oldCursedItem, true) { RefItem = _gags.Storage.Values.First() },
-            CursedLootKind.Restriction => new CursedRestrictionItem(oldCursedItem, true) { RefItem = _restrictions.Storage.First() },
+            CursedLootKind.Gag => new CursedGagItem(oldItem, true) { RefItem = _gags.Storage.Values.First() },
+            CursedLootKind.Restriction => new CursedRestrictionItem(oldItem, true) { RefItem = _restrictions.Storage.First() },
             _ => throw new NotImplementedException("Unknown cursed loot type."),
         };
 
         // Update the editor item to reflect that of the new type.
+        _logger.LogInformation($"Converted Cursed Item: {oldItem.Label} from {oldItem.Type} to {convertedLoot.Type}", LoggerType.CursedItems);
         _itemEditor.ItemInEditor = convertedLoot;
     }
 
@@ -137,7 +137,7 @@ public sealed class CursedLootManager : IHybridSavable
     // Called from safeword service, deactivates all items.
     public void InvalidateAllActive()
     {
-        foreach (var item in Storage.ActiveItems.ToArray())
+        foreach (var item in Storage.ActiveAppliedLoot.ToArray())
         {
             item.AppliedTime = DateTimeOffset.MinValue;
             item.ReleaseTime = DateTimeOffset.MinValue;
@@ -193,6 +193,15 @@ public sealed class CursedLootManager : IHybridSavable
     public TimeSpan LockRangeLower { get; private set; } = TimeSpan.Zero;
     public TimeSpan LockRangeUpper { get; private set; } = TimeSpan.FromMinutes(1);
     public int LockChance { get; private set; } = 0;
+    // Some fun cursed loot stats.
+    public int TotalEncounters { get; set; } = 0;
+    public int GagEncounters { get; set; } = 0;
+    public int BindEncounters { get; set; } = 0;
+    public int MimicsEvaded { get; set; } = 0;
+    public TimeSpan TimeInCursedLoot { get; set; } = TimeSpan.Zero;
+    public TimeSpan LongestLockTime { get; set; } = TimeSpan.Zero;
+    public int MaxLootActiveAtOnce { get; set; } = 0;
+
 
     public int ConfigVersion => 0;
     public HybridSaveType SaveType => HybridSaveType.Json;
@@ -214,6 +223,13 @@ public sealed class CursedLootManager : IHybridSavable
             ["LockRangeLower"] = LockRangeLower.ToString(),
             ["LockRangeUpper"] = LockRangeUpper.ToString(),
             ["LockChance"] = LockChance,
+            ["TotalEncounters"] = TotalEncounters,
+            ["GagEncounters"] = GagEncounters,
+            ["BindEncounters"] = BindEncounters,
+            ["MimicsEvaded"] = MimicsEvaded,
+            ["TimeInCursedLoot"] = TimeInCursedLoot.ToString(),
+            ["LongestLockTime"] = LongestLockTime.ToString(),
+            ["MaxLootActiveAtOnce"] = MaxLootActiveAtOnce,
             ["CursedItems"] = cursedItems,
         }.ToString(Formatting.Indented);
     }
@@ -278,6 +294,13 @@ public sealed class CursedLootManager : IHybridSavable
         LockRangeLower = TimeSpan.TryParse(cursedLootData["LockRangeLower"]?.Value<string>(), out var lower) ? lower : TimeSpan.Zero;
         LockRangeUpper = TimeSpan.TryParse(cursedLootData["LockRangeUpper"]?.Value<string>(), out var upper) ? upper : TimeSpan.FromMinutes(1);
         LockChance = cursedLootData["LockChance"]?.Value<int>() ?? 0;
+        TotalEncounters = cursedLootData["TotalEncounters"]?.Value<int>() ?? 0;
+        GagEncounters = cursedLootData["GagEncounters"]?.Value<int>() ?? 0;
+        BindEncounters = cursedLootData["BindEncounters"]?.Value<int>() ?? 0;
+        MimicsEvaded = cursedLootData["MimicsEvaded"]?.Value<int>() ?? 0;
+        TimeInCursedLoot = TimeSpan.TryParse(cursedLootData["TimeInCursedLoot"]?.Value<string>(), out var timeInLoot) ? timeInLoot : TimeSpan.Zero;
+        LongestLockTime = TimeSpan.TryParse(cursedLootData["LongestLockTime"]?.Value<string>(), out var longestLock) ? longestLock : TimeSpan.Zero;
+        MaxLootActiveAtOnce = cursedLootData["MaxLootActiveAtOnce"]?.Value<int>() ?? 0;
 
         // get the array of cursed loot items from the token
         if (cursedLootData["CursedItems"] is not JArray lootItemsList)
@@ -342,6 +365,7 @@ public sealed class CursedLootManager : IHybridSavable
                 AppliedTime = new DateTimeOffset(applyTime, TimeSpan.Zero),
                 ReleaseTime = new DateTimeOffset(releaseTime, TimeSpan.Zero),
                 Precedence = Enum.TryParse<Precedence>(token["Precedence"]?.Value<string>(), out var precedence) ? precedence : Precedence.Default,
+                ApplyTraits = token["ApplyTraits"]?.Value<bool>() ?? true,
                 RefItem = gagRef
             };
             return item;
@@ -378,6 +402,7 @@ public sealed class CursedLootManager : IHybridSavable
                 AppliedTime = new DateTimeOffset(applyTime, TimeSpan.Zero),
                 ReleaseTime = new DateTimeOffset(releaseTime, TimeSpan.Zero),
                 Precedence = Enum.TryParse<Precedence>(token["Precedence"]?.Value<string>(), out var precedence) ? precedence : Precedence.Default,
+                ApplyTraits = token["ApplyTraits"]?.Value<bool>() ?? true,
                 RefItem = restRef
             };
             return item;

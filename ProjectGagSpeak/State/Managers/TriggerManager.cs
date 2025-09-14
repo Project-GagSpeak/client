@@ -66,7 +66,10 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
     public void ChangeTriggerType(Trigger oldTrigger, TriggerKind newType)
     {
         if (ItemInEditor is null)
+        {
+            Svc.Logger.Warning("Not item in editor!");
             return;
+        }
 
         Trigger convertedTrigger = newType switch
         {
@@ -118,8 +121,8 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
     {
         if (_itemEditor.SaveAndQuitEditing(out var sourceItem))
         {
-            Logger.LogDebug($"Saved changes to Trigger {sourceItem.Label}.");
-            Mediator.Publish(new ConfigTriggerChanged(StorageChangeType.Modified, sourceItem));
+            Logger.LogDebug($"Saved changes to Trigger {sourceItem.Label} [{sourceItem.Type}].");
+            Mediator.Publish(new ConfigTriggerChanged(StorageChangeType.Modified, sourceItem, null));
             _saver.Save(this);
         }
     }

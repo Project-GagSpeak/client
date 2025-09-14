@@ -1,14 +1,15 @@
 using CkCommons;
 using CkCommons.Gui;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
+using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerClient;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
-using Dalamud.Bindings.ImGui;
 using OtterGui.Classes;
 using Penumbra.GameData.Structs;
 using System.Runtime.InteropServices;
@@ -92,8 +93,18 @@ public static class GsExtensions
         }
     }
 
-    /// <summary> Retrieves the various UID text color based on the current server state. </summary>
-    /// <returns> The color of the UID text in Vector4 format .</returns>
+    public static Vector4 ToColor(this Precedence precedence)
+        => precedence switch
+        {
+            Precedence.VeryLow => ImGuiColors.ParsedPurple,
+            Precedence.Low => ImGuiColors.TankBlue,
+            Precedence.Default => ImGuiColors.ParsedGold.Darken(.15f),
+            Precedence.High => ImGuiColors.DalamudOrange,
+            Precedence.VeryHigh => ImGuiColors.DalamudRed,
+            Precedence.Highest => ImGuiColors.DPSRed,
+            _ => ImGuiColors.DalamudGrey,
+        };
+
     public static Vector4 UidColor()
     {
         return MainHub.ServerStatus switch

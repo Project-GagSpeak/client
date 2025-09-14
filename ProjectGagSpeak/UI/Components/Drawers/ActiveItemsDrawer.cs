@@ -474,4 +474,12 @@ public class ActiveItemsDrawer
         if (frameTint > 0 && frame is { } frameWrap)
             ImGui.GetWindowDrawList().AddDalamudImageRounded(frameWrap, pos, size, rounding, frameTint);
     }
+
+    public static void DrawImagePadded(IDalamudTextureWrap? img, Vector2 size, float rounding, float padding)
+    {
+        ImGui.Dummy(size);
+        var pos = ImGui.GetItemRectMin();
+        if (img is { } imageWrap)
+            ImGui.GetWindowDrawList().AddDalamudImageRounded(imageWrap, pos + new Vector2(padding), size - new Vector2(padding * 2), rounding);
+    }
 }

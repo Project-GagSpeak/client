@@ -61,7 +61,7 @@ public sealed class LootHandler
 
     /// <summary> If any cursed loot can even be applied at the moment. </summary>
     public bool CanApplyAnyLoot 
-        => _config.Current.CursedLootUI && MainHub.IsServerAlive && _manager.Storage.InactiveItemsInPool.Any();
+        => _config.Current.CursedLootUI && MainHub.IsServerAlive && _manager.Storage.InactiveLoot.Any();
 
     /// <summary> If the GameObject is a deep dungeon coffer or a treasure chest. </summary>
     public unsafe bool IsAnyTreasure(GameObject* obj)
@@ -138,7 +138,7 @@ public sealed class LootHandler
             return;
 
         // Return if there is nothing to apply.to.
-        var validItems = _manager.Storage.InactiveItemsInPool;
+        var validItems = _manager.Storage.InactiveLoot;
         if (validItems.Count <= 0)
             return;
 
@@ -180,7 +180,7 @@ public sealed class LootHandler
     private async Task<bool> ApplyCursedGag(CursedGagItem item, TimeSpan lockTime)
     {
         _logger.LogInformation($"Applying a cursed Gag to an open gagslot!", LoggerType.CursedItems);
-        if (await _dds.PushActiveCursedLoot(_manager.Storage.ActiveIds.ToList(), item.Identifier, FromGag(item.RefItem, lockTime)) is not { } res)
+        if (await _dds.PushActiveCursedLoot(_manager.Storage.AppliedLootIds.ToList(), item.Identifier, FromGag(item.RefItem, lockTime)) is not { } res)
             return false;
 
         // It was successful, so we can now update our visuals and inform the player.
@@ -191,7 +191,7 @@ public sealed class LootHandler
     private async Task<bool> ApplyCursedRestriction(CursedRestrictionItem item, TimeSpan lockTime)
     {
         _logger.LogInformation($"Applying a cursed Item [{item.Label}] to you!", LoggerType.CursedItems);
-        if (await _dds.PushActiveCursedLoot(_manager.Storage.ActiveIds.ToList(), item.Identifier, FromRestriction(item.RefItem, lockTime)) is not { } res)
+        if (await _dds.PushActiveCursedLoot(_manager.Storage.AppliedLootIds.ToList(), item.Identifier, FromRestriction(item.RefItem, lockTime)) is not { } res)
             return false;
 
         // Apply the item!

@@ -33,7 +33,7 @@ public class CollarRequestsIncomingTab : IFancyTab
 
     public string   Label       => "Incoming Requests";
     public string   Tooltip     => string.Empty;
-    public bool     Disabled    => false; //_requests.ReqCollarIncoming.Count is 0;
+    public bool     Disabled    => _manager.RequestsIncoming.Count is 0;
 
     public void DrawContents(float width)
     {
@@ -129,12 +129,10 @@ public class CollarRequestsIncomingTab : IFancyTab
             CkGui.AttachToolTip("Reject this collar request.");
         }
 
-
         void AccessPerm(FAI icon, bool state, string tooltipTrue, string tooltipFalse)
         {
             CkGui.BooleanToColoredIcon(state, false, icon, icon, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
             CkGui.AttachToolTip(state ? tooltipTrue : tooltipFalse);
         }      
-
     }
 }

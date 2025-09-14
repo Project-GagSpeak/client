@@ -41,13 +41,16 @@ public class HealthPercentTrigger : Trigger, IThresholdContainer
 
     public override HealthPercentTrigger Clone(bool keepId) => new HealthPercentTrigger(this, keepId);
 
-    public void ApplyChanges(HealthPercentTrigger other)
+    public override void ApplyChanges(Trigger other)
     {
-        PlayerNameWorld = other.PlayerNameWorld;
-        UsePercentageHealth = other.UsePercentageHealth;
-        PassKind = other.PassKind;
-        ThresholdMinValue = other.ThresholdMinValue;
-        ThresholdMaxValue = other.ThresholdMaxValue;
         base.ApplyChanges(other);
+        if (other is not HealthPercentTrigger hpt)
+            return;
+
+        PlayerNameWorld = hpt.PlayerNameWorld;
+        UsePercentageHealth = hpt.UsePercentageHealth;
+        PassKind = hpt.PassKind;
+        ThresholdMinValue = hpt.ThresholdMinValue;
+        ThresholdMaxValue = hpt.ThresholdMaxValue;
     }
 }

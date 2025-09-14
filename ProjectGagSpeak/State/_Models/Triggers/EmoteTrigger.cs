@@ -31,11 +31,14 @@ public class EmoteTrigger : Trigger
 
     public override EmoteTrigger Clone(bool keepId) => new EmoteTrigger(this, keepId);
 
-    public void ApplyChanges(EmoteTrigger other)
+    public override void ApplyChanges(Trigger other)
     {
-        EmoteID = other.EmoteID;
-        EmoteDirection = other.EmoteDirection;
-        PlayerNameWorld = other.PlayerNameWorld;
         base.ApplyChanges(other);
+        if (other is not EmoteTrigger et)
+            return;
+
+        EmoteID = et.EmoteID;
+        EmoteDirection = et.EmoteDirection;
+        PlayerNameWorld = et.PlayerNameWorld;
     }
 }

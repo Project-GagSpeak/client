@@ -199,9 +199,8 @@ public partial class TriggersPanel
             CkGui.SeparatorSpaced(CkColor.FancyHeaderContrast.Uint());
             
             // re-aquire the trigger item.
-            var triggerItem = _manager.ItemInEditor is { } editorItem ? editorItem : _selector.Selected!;
-            _drawer.DrawDetectionInfo(triggerItem, isEditorItem, searchBg);
-            DrawFooter(triggerItem);
+            _drawer.DrawDetectionInfo(trigger, isEditorItem, searchBg);
+            DrawFooter(trigger);
         }
         else
         {
