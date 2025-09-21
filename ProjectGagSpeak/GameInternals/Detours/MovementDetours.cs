@@ -44,8 +44,7 @@ public partial class MovementDetours : IDisposable
         set
         {
             if (value) MoveUpdateHook.Enable();
-            else MoveUpdateHook.Disable();
-            MoveUpdateHook.Enable(); 
+            else MoveUpdateHook.Disable(); 
         }
     }
 
