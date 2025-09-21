@@ -66,6 +66,7 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
     private readonly EventSubscriber<ChangedItemType, uint>                 TooltipSubscriber;
     private readonly EventSubscriber<MouseButton, ChangedItemType, uint>    ItemClickedSubscriber;
     private readonly EventSubscriber<ModSettingChange, Guid, string, bool>  OnModSettingsChanged;
+    private readonly EventSubscriber<nint, string, string>                  OnGameObjectResourcePathResolved;
     private readonly EventSubscriber<nint, int>                             OnRedrawFinished;
     // API Public Events
     public EventSubscriber<string>         OnModAdded;
@@ -113,7 +114,8 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
         });
         TooltipSubscriber = ChangedItemTooltip.Subscriber(Svc.PluginInterface);
         ItemClickedSubscriber = ChangedItemClicked.Subscriber(Svc.PluginInterface);
-        // OnModSettingsChanged = ModSettingChanged.Subscriber(Svc.PluginInterface, (c, id, modDir, temp) => Mediator.Publish(new PenumbraSettingsChanged()));
+        OnModSettingsChanged = ModSettingChanged.Subscriber(Svc.PluginInterface, ModSettingsChanged);
+        OnGameObjectResourcePathResolved = GameObjectResourcePathResolved.Subscriber(Svc.PluginInterface, GameObjectResourceLoaded);
         OnRedrawFinished = GameObjectRedrawn.Subscriber(Svc.PluginInterface, ObjectRedrawnEvent);
         // Getters
         GetModDirectory = new GetModDirectory(Svc.PluginInterface);
@@ -193,6 +195,30 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
         remove => TooltipSubscriber.Event -= value;
     }
 
+    // Notifies us whenever anything is changed with our mods inside penumbra. Can be the mod itself, collection inheritance, pretty much whatever makes appearance change.
+    private void ModSettingsChanged(ModSettingChange change, Guid collectionId, string modDir, bool inherited)
+    {
+        Logger.LogInformation($"OnModSettingChange: [Change: {change}] [Collection: {collectionId}] [ModDir: {modDir}] [Inherited: {inherited}]");
+        Mediator.Publish(new PenumbraSettingsChanged());
+    }
+
+    /// <summary>
+    ///     An event firing every time an objects resource path is resolved. <para />
+    ///     We use this to fetch the changes in data that <see cref="GetKinksterModData"/> fails to obtain. <para />
+    /// </summary>
+    /// <remarks>
+    ///     Maybe if one day this is fixed by penumbra a lot of overhead could be reduced, if they made it 
+    ///     so before firing a resource loaded, they updated the paths shown on screen to the client with it.
+    /// </remarks>
+    private unsafe void GameObjectResourceLoaded(IntPtr address, string gamePath, string resolvedPath)
+    {
+        // this wont work because its called outside the framework thread, which creates even more problems for us lol.
+        if (((IntPtr)PlayerData.ObjectThreadSafe) != address)
+            return;
+        // Logger.LogTrace($"ResourcePathLoaded: [GamePath: {gamePath}] [ResolvedPath: {resolvedPath}]");
+        // Dont do anything with this at the moment, use it for tracking, and debugging.
+    }
+
     private void ObjectRedrawnEvent(IntPtr objectAddress, int objectTableIndex)
     {
         // We can do something here when the object is the client player (0), but unknown yet.
@@ -206,7 +232,8 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
         // clear all temporary mods.
         ClearAllTemporaryMods();
 
-        // OnModSettingsChanged.Dispose();
+        OnGameObjectResourcePathResolved.Dispose();
+        OnModSettingsChanged.Dispose();
         OnDisposed.Dispose();
         OnInitialized.Dispose();
         TooltipSubscriber.Dispose();

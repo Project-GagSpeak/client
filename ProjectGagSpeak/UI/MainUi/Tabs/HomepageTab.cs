@@ -10,6 +10,7 @@ using GagSpeak.Gui.Publications;
 using GagSpeak.Gui.Remote;
 using GagSpeak.Gui.Toybox;
 using GagSpeak.Gui.Wardrobe;
+using GagSpeak.Interop;
 using GagSpeak.MufflerCore.Handler;
 using GagSpeak.PlayerControl;
 using GagSpeak.Services;
@@ -23,6 +24,7 @@ public class HomepageTab
 {
     private readonly ILogger<HomepageTab> _logger;
     private readonly GagspeakMediator _mediator;
+    private readonly IpcCallerPenumbra _ipc;
     private readonly HcTaskManager _temp;
     private readonly PlayerControlCache _cache;
     private readonly MovementDetours _detours;
@@ -30,11 +32,12 @@ public class HomepageTab
     private int HoveredItemIndex = -1;
     private readonly List<(string Label, FontAwesomeIcon Icon, Action OnClick)> Modules;
 
-    public HomepageTab(ILogger<HomepageTab> logger, GagspeakMediator mediator, HcTaskManager temp, 
+    public HomepageTab(ILogger<HomepageTab> logger, GagspeakMediator mediator, IpcCallerPenumbra ipc, HcTaskManager temp, 
         PlayerControlCache cache, MovementDetours detours)
     {
         _logger = logger;
         _mediator = mediator;
+        _ipc = ipc;
         _temp = temp;
         _cache = cache;
         _detours = detours;
@@ -85,44 +88,54 @@ public class HomepageTab
         if (!itemGotHovered)
             HoveredItemIndex = -1;
 
-        ImGui.Text("Block Move Keys:" + _cache.BlockMovementKeys);
-        ImGui.Text("In LifestreamTask:" + _cache.InLifestreamTask);
 
-        ImGui.Text("NoAutoMoveOn:" + _detours.NoAutoMoveActive);
-        ImGui.Text("NoMouseMoveOn:" + _detours.NoMouseMovementActive);
+        // Logger for Penumbra debugging.
+        if (ImGui.Button("PenumbraDebugger"))
+            PrintPenumbraDebugger();
+        // Use for further debugging if nessisary.
+        //unsafe
+        //{
+        //    if (ImGui.Button("Home Locator"))
+        //    {
+        //        var node = HcStayHousingEntrance.GetNearestHousingEntrance(out var distance);
+        //        Svc.Logger.Warning($"Distance to node: {distance}");
+        //        if (node is not null)
+        //            Svc.Logger.Warning($"Node DataID: {node.DataId} Name: {node.Name}");
+        //    }
 
-        unsafe
-        {
-            if (ImGui.Button("Home Locator"))
-            {
-                var node = HcStayHousingEntrance.GetNearestHousingEntrance(out var distance);
-                Svc.Logger.Warning($"Distance to node: {distance}");
-                if (node is not null)
-                    Svc.Logger.Warning($"Node DataID: {node.DataId} Name: {node.Name}");
-            }
 
+        //    if (HcTaskUtils.IsOutside())
+        //        return;
 
-            if (HcTaskUtils.IsOutside())
-                return;
+        //    if (HousingManager.Instance()->GetCurrentHousingTerritoryType() is HousingTerritoryType.None)
+        //        return;
 
-            if (HousingManager.Instance()->GetCurrentHousingTerritoryType() is HousingTerritoryType.None)
-                return;
+        //    var hausInfo = HousingManager.Instance()->IndoorTerritory->HouseId;
+        //    ImGui.Text($"HouseId: {hausInfo.Id}");
+        //    ImGui.Text($"Territory: {hausInfo.TerritoryTypeId}");
+        //    ImGui.Text($"WorldId: {hausInfo.WorldId}");
+        //    ImGui.Text($"WardIdx: {hausInfo.WardIndex}");
+        //    ImGui.Text($"PlotIdx: {hausInfo.PlotIndex}");
+        //    ImGui.Text($"RoomNumber: {hausInfo.RoomNumber}");
+        //    ImGui.Text($"IsApartment: {hausInfo.IsApartment}");
+        //    if (hausInfo.IsApartment)
+        //    {
+        //        ImGui.Text($"ApartmentDivision: {hausInfo.ApartmentDivision}");
+        //    }
+        //    ImGui.Text($"IsWorkshop: {hausInfo.IsWorkshop}");
 
-            var hausInfo = HousingManager.Instance()->IndoorTerritory->HouseId;
-            ImGui.Text($"HouseId: {hausInfo.Id}");
-            ImGui.Text($"Territory: {hausInfo.TerritoryTypeId}");
-            ImGui.Text($"WorldId: {hausInfo.WorldId}");
-            ImGui.Text($"WardIdx: {hausInfo.WardIndex}");
-            ImGui.Text($"PlotIdx: {hausInfo.PlotIndex}");
-            ImGui.Text($"RoomNumber: {hausInfo.RoomNumber}");
-            ImGui.Text($"IsApartment: {hausInfo.IsApartment}");
-            if (hausInfo.IsApartment)
-            {
-                ImGui.Text($"ApartmentDivision: {hausInfo.ApartmentDivision}");
-            }
-            ImGui.Text($"IsWorkshop: {hausInfo.IsWorkshop}");
+        //}
+    }
 
-        }
+    private async void PrintPenumbraDebugger()
+    {
+        var paths = await _ipc.GetKinksterModData(0);
+        if (paths is null)
+            return;
+
+        _logger.LogInformation("---- Penumbra Debugger ----");
+        foreach (var (local, replacements) in paths)
+            _logger.LogInformation($"Game: [{local}] => Replacements: [{string.Join(',', replacements)}]");
     }
 
     private bool HomepageSelectable(string label, FontAwesomeIcon icon, Vector2 region, bool hovered = false)
