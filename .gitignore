@@ -15,3 +15,6 @@ OutputZip/
 
 # Ignore Visual Studio Code
 bash.exe.*
+
+# Ignore GitExtensions Config
+/GitExtensions.settings
