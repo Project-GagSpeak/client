@@ -52,8 +52,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         PatternManager patterns,
         AlarmManager alarms,
         TriggerManager triggers,
-        TraitAllowanceManager traits,
-        KinksterSyncService kinksterSync)
+        TraitAllowanceManager traits)
         : base(logger, mediator)
     {
         _hub = hub;
@@ -70,7 +69,6 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         _alarmManager = alarms;
         _triggerManager = triggers;
         _traitManager = traits;
-        _kinksterSync = kinksterSync;
 
         // Achievement Handling
         Mediator.Subscribe<SendAchievementData>(this, (_) => UpdateAchievementData().ConfigureAwait(false));
@@ -171,7 +169,6 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
 
         Logger.LogDebug($"Pushing Appearance and Moodles data to ({string.Join(", ", visibleCharas.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
         await DistributeFullMoodlesData(visibleCharas);
-        await _kinksterSync.SyncAppearanceToNewKinksters(visibleCharas);
     }
 
     /// <summary>

@@ -33,48 +33,48 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
         _ipc = ipc;
         _kinksters = kinksters;
 
-        // IPC Data Updaters
-        Mediator.Subscribe<GlamourerChanged>(this, (msg) =>
-        {
-            if (PlayerData.IsZoning)
-                return;
-            Logger.LogInformation("Client GlamourState was updated!");
-            AddPendingSync(DataSyncKind.Glamourer);
-        });
+        //// IPC Data Updaters
+        //Mediator.Subscribe<GlamourerChanged>(this, (msg) =>
+        //{
+        //    if (PlayerData.IsZoning)
+        //        return;
+        //    Logger.LogInformation("Client GlamourState was updated!");
+        //    AddPendingSync(DataSyncKind.Glamourer);
+        //});
 
-        Mediator.Subscribe<CustomizeProfileChange>(this, (msg) =>
-        {
-            if (PlayerData.IsZoning || msg.Address == IntPtr.Zero)
-                return;
-            Logger.LogInformation($"Your C+ profile changed to {msg.Id}!");
-            AddPendingSync(DataSyncKind.CPlus);
-        });
+        //Mediator.Subscribe<CustomizeProfileChange>(this, (msg) =>
+        //{
+        //    if (PlayerData.IsZoning || msg.Address == IntPtr.Zero)
+        //        return;
+        //    Logger.LogInformation($"Your C+ profile changed to {msg.Id}!");
+        //    AddPendingSync(DataSyncKind.CPlus);
+        //});
 
-        Mediator.Subscribe<HeelsOffsetChanged>(this, (msg) =>
-        {
-            if (PlayerData.IsZoning)
-                return;
-            Logger.LogInformation("Your heels offset changed!");
-            AddPendingSync(DataSyncKind.Heels);
-        });
+        //Mediator.Subscribe<HeelsOffsetChanged>(this, (msg) =>
+        //{
+        //    if (PlayerData.IsZoning)
+        //        return;
+        //    Logger.LogInformation("Your heels offset changed!");
+        //    AddPendingSync(DataSyncKind.Heels);
+        //});
 
-        Mediator.Subscribe<HonorificTitleChanged>(this, (msg) =>
-        {
-            if (PlayerData.IsZoning) return;
-            if (LastHonorific.Equals(msg.NewTitle, StringComparison.Ordinal)) return;
+        //Mediator.Subscribe<HonorificTitleChanged>(this, (msg) =>
+        //{
+        //    if (PlayerData.IsZoning) return;
+        //    if (LastHonorific.Equals(msg.NewTitle, StringComparison.Ordinal)) return;
 
-            Logger.LogInformation("Client HonorificTitle was updated!");
-            AddPendingSync(DataSyncKind.Honorific);
-        });
+        //    Logger.LogInformation("Client HonorificTitle was updated!");
+        //    AddPendingSync(DataSyncKind.Honorific);
+        //});
 
-        Mediator.Subscribe<PetNamesDataChanged>(this, (msg) =>
-        {
-            if (PlayerData.IsZoning) return;
-            if (LastPetNames.Equals(msg.NicknamesData, StringComparison.Ordinal)) return;
+        //Mediator.Subscribe<PetNamesDataChanged>(this, (msg) =>
+        //{
+        //    if (PlayerData.IsZoning) return;
+        //    if (LastPetNames.Equals(msg.NicknamesData, StringComparison.Ordinal)) return;
 
-            Logger.LogInformation("Client PetNames was updated!");
-            AddPendingSync(DataSyncKind.PetNames);
-        });
+        //    Logger.LogInformation("Client PetNames was updated!");
+        //    AddPendingSync(DataSyncKind.PetNames);
+        //});
 
         //Mediator.Subscribe<PenumbraSettingsChanged>(this, (msg) =>
         //{
@@ -83,7 +83,7 @@ public sealed class KinksterSyncService : DisposableMediatorSubscriberBase
         //    AddPendingSync(DataSyncKind.ModManips);
         //});
 
-        Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (msg) => ProcessKinksterSync());
+        // Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (msg) => ProcessKinksterSync());
     }
 
     // internal references to the last sent clientString states.

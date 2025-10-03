@@ -30,7 +30,7 @@ public class Svc
     [PluginService] public static IAddonEventManager AddonEventManager { get; private set; }
     [PluginService] public static IAetheryteList AetheryteList { get; private set; }
     //[PluginService] public static ITitleScreenMenu TitleScreenMenu { get; private set; } = null!;
-    //[PluginService] public static IBuddyList Buddies { get; private set; } = null!;
+    [PluginService] public static IBuddyList Buddies { get; private set; } = null!;
     [PluginService] public static IChatGui Chat { get; set; } = null!;
     [PluginService] public static IClientState ClientState { get; set; } = null!;
     [PluginService] public static ICommandManager Commands { get; private set; }

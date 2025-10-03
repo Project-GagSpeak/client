@@ -108,7 +108,11 @@ public sealed class ClientData : IDisposable
     }
 
     public void InitRequests(List<KinksterPairRequest> requests)
-        => _pairingRequests = requests.ToHashSet();
+    {
+        _pairingRequests = requests.ToHashSet();
+        _pairingRequests.Add(new KinksterPairRequest(MainHub.PlayerUserData, new("Dummy"), "Dummy Writing", DateTime.UtcNow));
+        _pairingRequests.Add(new KinksterPairRequest(new("Dummy"), MainHub.PlayerUserData, "Dummy Writing Boogaloo", DateTime.UtcNow));
+    }
 
     public void AddRequest(KinksterPairRequest dto)
         => _pairingRequests.Add(dto);

@@ -4,6 +4,9 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using GagSpeak.GameInternals.Detours;
 using GagSpeak.Gui.Modules.Puppeteer;
 using GagSpeak.Gui.Publications;
@@ -125,6 +128,38 @@ public class HomepageTab
         //    ImGui.Text($"IsWorkshop: {hausInfo.IsWorkshop}");
 
         //}
+        unsafe
+        {
+            try
+            {
+                var playerChara = CharacterManager.Instance()->BattleCharas[0].Value;
+                ImGui.Text("Player Address: " + ((nint)playerChara).ToString("X"));
+                ImGui.Text("Minion/Mount Address: " + ((nint)GameObjectManager.Instance()->Objects.IndexSorted[1].Value).ToString("X"));
+
+                ImGui.Text("Pet Address: " + ((nint)CharacterManager.Instance()->LookupPetByOwnerObject(playerChara)).ToString("X"));
+                ImGui.Text("Companion Address: " + ((nint)CharacterManager.Instance()->LookupBuddyByOwnerObject(playerChara)).ToString("X"));
+                ImGui.Separator();
+                BattleChara* PlayerBattleChara = CharacterManager.Instance()->BattleCharas[0].Value;
+                GameObject* PlayerObject = GameObjectManager.Instance()->Objects.IndexSorted[0].Value;
+                IntPtr PlayerAddress = (IntPtr)PlayerObject;
+                GameObject* MinionOrMountObject = GameObjectManager.Instance()->Objects.IndexSorted[1].Value;
+                IntPtr MinionOrMountAddress = (IntPtr)MinionOrMountObject;
+                Buddy* Buddy = &UIState.Instance()->Buddy;
+                IntPtr PetAddress = (nint)Buddy->PetInfo.Pet;
+                IntPtr CompanionAddress = (nint)Buddy->CompanionInfo.Companion;
+                ImGui.Text($"Player BattleChara: {PlayerBattleChara->NameString}");
+                ImGui.Text($"Player GameObject: {PlayerObject->NameString}");
+                ImGui.Text($"Player Address: {PlayerAddress:X}");
+                ImGui.Text($"Minion/Mount GameObject: {MinionOrMountObject->NameString}");
+                ImGui.Text($"Minion/Mount Address: {MinionOrMountAddress:X}");
+                ImGui.Text($"Pet Address: {PetAddress:X}");
+                ImGui.Text($"Companion Address: {CompanionAddress:X}");
+            }
+            catch (Exception ex)
+            {
+                ImGui.Text("Error retrieving character information: " + ex.Message);
+            }
+        }
     }
 
     private async void PrintPenumbraDebugger()
@@ -133,9 +168,12 @@ public class HomepageTab
         if (paths is null)
             return;
 
+        // remove all paths where the key and value match.
+        // var modifiedPaths = paths.Where(kvp => kvp.Key != kvp.Value.FirstOrDefault()).ToList();
+
         _logger.LogInformation("---- Penumbra Debugger ----");
         foreach (var (local, replacements) in paths)
-            _logger.LogInformation($"Game: [{local}] => Replacements: [{string.Join(',', replacements)}]");
+            _logger.LogInformation($"Game Paths: [{string.Join(',', replacements)}] => Actual: [{local}]");
     }
 
     private bool HomepageSelectable(string label, FontAwesomeIcon icon, Vector2 region, bool hovered = false)
