@@ -45,7 +45,6 @@ public class PlayerCtrlHandler
         _overlay = overlay;
         _hcTasks = hcTasks;
         _kinksters = kinksters;
-        _cachedPlayerMoveMode = Svc.GameConfig.UiControl.TryGetUInt("MoveMode", out var mode) && mode == 1 ? MovementMode.Legacy : MovementMode.Standard;
     }
 
     public async void ApplyHypnoEffect(UserData enactor, HypnoticEffect effect, DateTimeOffset expireTimeUTC, string? image)
@@ -108,16 +107,21 @@ public class PlayerCtrlHandler
         // Reset movement mode and timeout trackers, and update the cache.
         _hcTasks.RemoveIfPresent("Locked Follow Startup");
         _movement.ResetTimeoutTracker();
-        GameConfig.UiControl.Set("MoveMode", (uint)_cachedPlayerMoveMode);
+
+        // Check if we have a movement setting cached and set it back, ignore if not.
+        if (_cachedPlayerMoveMode != MovementMode.NotSet)
+        {
+            GameConfig.UiControl.Set("MoveMode", (uint)_cachedPlayerMoveMode);
+            _logger.LogDebug($"Restored Player Movement Mode: {_cachedPlayerMoveMode}", LoggerType.HardcoreMovement);
+        }
         _cachedPlayerMoveMode = MovementMode.NotSet;
         _mediator.Publish(new HcStateCacheChanged());
-        _logger.LogDebug($"Restored Player Movement Mode: {_cachedPlayerMoveMode}", LoggerType.HardcoreMovement);
 
         if (giveAchievements)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.Follow, false, enactor, MainHub.UID);
     }
 
-    public void EnableLockedEmote(UserData enactor)
+    public void EnableLockedEmote(UserData enactor) 
     {
         if (!_kinksters.TryGetKinkster(enactor, out var kinkster))
             throw new Exception($"Failed to get Kinkster for UID: {enactor.UID} for Locked Emote!");
