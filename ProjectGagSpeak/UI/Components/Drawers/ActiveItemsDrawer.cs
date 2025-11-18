@@ -27,6 +27,7 @@ using GagspeakAPI.Network;
 using OtterGui.Text;
 using OtterGui.Text.EndObjects;
 using Penumbra.GameData.Enums;
+using static Lumina.Data.Parsing.Layer.LayerCommon;
 namespace GagSpeak.Gui.Components;
 
 public class ActiveItemsDrawer
@@ -288,8 +289,9 @@ public class ActiveItemsDrawer
             }
 
             // Below draw out the layers.
-            var options = Enum.GetValues<RestraintLayer>().Skip(1).SkipLast(1).Take(dispData.Layers.Count);
-            _layerFlagsWidget.DrawLayerCheckboxes(data.ActiveLayers, options, _ => ((int)_).IsInRange(dispData.Layers) ? dispData.Layers[(int)_].Label : _.ToString());
+            var options = Enum.GetValues<RestraintLayer>().Skip(1).SkipLast(5 - dispData.Layers.Count + 1);
+            _layerFlagsWidget.DrawLayerCheckboxes(data.ActiveLayers, options, _ => { var idx = BitOperations.TrailingZeroCount((int)_); return idx < dispData.Layers.Count ? dispData.Layers[idx].Label : $"Layer {idx + 1}"; });
+            //((int)_).IsInRange(dispData.Layers) ? dispData.Layers[(int)_].Label : _.ToString());
         }
         _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EditingLayers, ImGui.GetWindowPos(), ImGui.GetWindowSize());
     }
