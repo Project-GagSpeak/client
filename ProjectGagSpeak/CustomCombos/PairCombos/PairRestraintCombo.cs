@@ -138,7 +138,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
         string GetLabel(RestraintLayer layer)
         {
             var idx = BitOperations.TrailingZeroCount((int)layer);
-            return idx < layers ? cacheInfo.Layers[idx].Label : $"Layer {idx + 1} (Unknown Contents)";
+            return (idx < layers) && (!cacheInfo.Layers[idx].Label.IsNullOrWhitespace()) ? cacheInfo.Layers[idx].Label : $"Layer {idx + 1}";
         }
     }
 
@@ -209,7 +209,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
             ImGui.BeginTooltip();
 
             if (!setItem.Description.IsNullOrWhitespace() && !setItem.Description.Contains("Enter Description Here..."))
-                CkGui.TextWrappedTooltipFormat(setItem.Description, 35f, ImGuiColors.ParsedPink);
+                CkGui.TextWrappedTooltipFormat(setItem.Description, 215f, ImGuiColors.ParsedPink);
 
             ImGui.EndTooltip();
         }
