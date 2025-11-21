@@ -45,7 +45,7 @@ public class PlayerCtrlHandler
         _overlay = overlay;
         _hcTasks = hcTasks;
         _kinksters = kinksters;
-        _cachedPlayerMoveMode = Svc.GameConfig.UiControl.TryGetUInt("MoveMode", out var mode) && mode == 1 ? MovementMode.Legacy : MovementMode.Standard;
+        //_cachedPlayerMoveMode = Svc.GameConfig.UiControl.TryGetUInt("MoveMode", out var mode) && mode == 1 ? MovementMode.Legacy : MovementMode.Standard;
     }
 
     public async void ApplyHypnoEffect(UserData enactor, HypnoticEffect effect, DateTimeOffset expireTimeUTC, string? image)
@@ -92,7 +92,7 @@ public class PlayerCtrlHandler
         _logger.LogDebug($"Cached Player Movement Mode: {_cachedPlayerMoveMode}", LoggerType.HardcoreMovement);
         // perform the task collection for initialization.
         _hcTasks.CreateCollection("Locked Follow Startup", new(HcTaskControl.MustFollow | HcTaskControl.BlockAllKeys))
-            .Add(new HardcoreTask(() => GameConfig.UiControl.Set("MoveMode", (int)MovementMode.Legacy)))
+            .Add(new HardcoreTask(() => GameConfig.UiControl.Set("MoveMode", (uint)MovementMode.Legacy)))
             .Add(new HardcoreTask(_movement.RestartTimeoutTracker))
             .Add(new HardcoreTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.VisiblePairGameObject!)))
             .Add(new HardcoreTask(HcTaskUtils.FollowTarget))
@@ -108,10 +108,13 @@ public class PlayerCtrlHandler
         // Reset movement mode and timeout trackers, and update the cache.
         _hcTasks.RemoveIfPresent("Locked Follow Startup");
         _movement.ResetTimeoutTracker();
-        GameConfig.UiControl.Set("MoveMode", (uint)_cachedPlayerMoveMode);
+        if (_cachedPlayerMoveMode != MovementMode.NotSet)
+        {
+            GameConfig.UiControl.Set("MoveMode", (uint)_cachedPlayerMoveMode); // BUG: This will revert control mode to standard if it ever gets MovementMode.NotSet.
+            _logger.LogDebug($"Restored Player Movement Mode: {_cachedPlayerMoveMode}", LoggerType.HardcoreMovement);
+        }
         _cachedPlayerMoveMode = MovementMode.NotSet;
         _mediator.Publish(new HcStateCacheChanged());
-        _logger.LogDebug($"Restored Player Movement Mode: {_cachedPlayerMoveMode}", LoggerType.HardcoreMovement);
 
         if (giveAchievements)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, HcAttribute.Follow, false, enactor, MainHub.UID);
