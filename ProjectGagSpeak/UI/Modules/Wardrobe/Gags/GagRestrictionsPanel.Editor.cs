@@ -57,13 +57,13 @@ public partial class GagRestrictionsPanel
             .Push(ImGuiStyleVar.ChildRounding, 10f);
         using var col = ImRaii.PushColor(ImGuiCol.Button, CkColor.FancyHeaderContrast.Uint())
             .Push(ImGuiCol.ChildBg, CkColor.FancyHeaderContrast.Uint());
-        ImGui.SetWindowFontScale(1.25f);
+        //ImGui.SetWindowFontScale(1.25f);
         var styler = ImGui.GetStyle();
         var childGroupSize = new Vector2(ImGui.GetFrameHeight() * 2 + styler.ItemInnerSpacing.X, ImGui.GetFrameHeight());
-        var itemSpacing = (region.X - CkGui.IconButtonSize(FAI.Save).X - (childGroupSize.X * 3)) / 4;
+        var itemSpacing = (region.X - CkGui.IconButtonSize(FAI.Save).X - (childGroupSize.X * 3)) / 5;
 
         // Shift this grouped set down so it is centered on Y axis.
-        ImGui.Dummy(new Vector2(region.X, ((region.Y - ImGui.GetFrameHeight()) / 2) - styler.ItemSpacing.Y));
+        //ImGui.Dummy(new Vector2(region.X, ((region.Y - ImGui.GetFrameHeight()) / 2) - styler.ItemSpacing.Y));
         
         // Cast a child group for the drawer.
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + itemSpacing);
