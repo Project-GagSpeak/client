@@ -1,3 +1,4 @@
+using System.Reflection;
 using CkCommons;
 using GagSpeak.GameInternals.Detours;
 using GagSpeak.Gui;
@@ -10,7 +11,6 @@ using GagSpeak.State.Listeners;
 using GagSpeak.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.Reflection;
 
 namespace GagSpeak;
 
@@ -170,7 +170,6 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
 
             // get the required service for the online player manager (and notification service if we add it)
             _runtimeServiceScope.ServiceProvider.GetRequiredService<DistributorService>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<KinksterSyncService>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<ConnectionSyncService>();
 
             // boot up our chat services. (this don't work as hosted services because they are unsafe)

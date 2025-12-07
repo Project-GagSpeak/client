@@ -22,16 +22,11 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
 
     private CancellationTokenSource? _appCTS = new();
 
-    // Penumbra collection (for when we manage pcp's)
-    private Guid _penumbraCollectionId = Guid.Empty;
-    private Guid? _activeCustomize = null;
-
     // Cached, nullable data.
-    private CharaIpcDataFull? _appearance = null;
     private string? _statusManagerStr = null;
 
     private KinksterGameObj? _gameObject;
-    
+
     // if this kinkster is currently visible.
     private bool _isVisible;
 
@@ -116,36 +111,8 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
             // if the hosted service lifetime is ending, return
             if (_lifetime.ApplicationStopping.IsCancellationRequested)
             {
-                // try and remove regardless and prevent a deadlock if on shutdown?
-                // (Dunno why this is nessisary but whatever i guess)
-                // _ipc.Penumbra.RemoveKinksterCollection(_penumbraCollectionId).ConfigureAwait(false);
-                _ipc.Glamourer.ReleaseKinkster(this).ConfigureAwait(false);
-                _ipc.CustomizePlus.RevertKinksterProfile(_activeCustomize).ConfigureAwait(false);
-                _ipc.Heels.RestoreKinksterOffset(this).ConfigureAwait(false);
-                _ipc.Honorific.ClearTitleAsync(this).ConfigureAwait(false);
-                _ipc.PetNames.ClearKinksterPetNames(this).ConfigureAwait(false);
                 _ipc.Moodles.ClearStatus(name).ConfigureAwait(false);
                 return;
-            }
-
-            // If not zoning, and the player is being disposed, this kinkster has left the zone, and we need to invalidate them.
-            if (!PlayerData.IsZoning && !string.IsNullOrEmpty(name))
-            {
-                Logger.LogTrace($"Restoring Vanilla state for Kinkster: {name} ({OnlineUser})", LoggerType.PairHandlers);
-                // if they are not not visible (have no valid pointer) we need to revert them by name.
-                if (!IsVisible)
-                {
-                    // Glamourer is special as it will not revert the data if they are not present.
-                    Logger.LogDebug($"Reverting Glamour to Vanilla state for Kinkster: {name}", LoggerType.PairHandlers);
-                    _ipc.Glamourer.ReleaseKinksterByName(name).ConfigureAwait(false);
-                }
-                // otherwise, revert ALL data if they are visible!
-                else
-                {
-                    Logger.LogInformation($"Is Kinkster IPCData null? {_appearance is null}", LoggerType.PairHandlers);
-                    // catch inside inner exception just incase.
-                    RevertAppearanceData(name).GetAwaiter().GetResult();
-                }
             }
         });
 
@@ -153,60 +120,7 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
         _gameObject?.Dispose();
         _gameObject = null;
         PlayerName = null;
-        _appearance = null;
         Logger.LogDebug($"Disposal complete for Kinkster: {name} ({OnlineUser})", LoggerType.PairHandlers);
-    }
-
-    public async Task ApplyAppearanceData(CharaIpcDataFull newData)
-    {
-        if (PairAddress == nint.Zero) return;
-        if (_appearance is null) _appearance = new CharaIpcDataFull();
-
-        // may need to process a cancellation token here if overlap occurs, but it shouldnt due to updates being 1s apart.
-
-        // Process the application of all non-null data.
-        Logger.LogDebug($"Updating appearance for Kinkster: {PlayerName} ({OnlineUser.User.AliasOrUID})", LoggerType.GameObjects);
-        // maybe wait for redraw finish? idk..
-        await ApplyUpdatedAppearance(newData).ConfigureAwait(false);
-
-        // maybe some redraw logic here, maybe not, we'll see.
-
-        // Mark as updated.
-        _appearance.UpdateNonNull(newData);
-        Logger.LogInformation($"Updated appearance for Kinkster: {PlayerName} ({OnlineUser.User.AliasOrUID})", LoggerType.GameObjects);
-    }
-
-    public async Task ApplyAppearanceSingle(DataSyncKind type, string newDataString)
-    {
-        if (PairAddress == nint.Zero) return;
-        if (_appearance is null) return;
-        // apply the new data.
-        switch (type)
-        {
-            //case DataSyncKind.ModManips when !newDataString.Equals(_appearance.ModManips) && _penumbraCollectionId != Guid.Empty:
-            //    await _ipc.Penumbra.SetKinksterManipulations(_penumbraCollectionId, newDataString).ConfigureAwait(false);
-            //    break;
-            case DataSyncKind.Glamourer when !newDataString.Equals(_appearance.GlamourerBase64):
-                await _ipc.Glamourer.ApplyKinksterGlamour(this, newDataString).ConfigureAwait(false);
-                break;
-            case DataSyncKind.CPlus when !newDataString.Equals(_appearance.CustomizeProfile):
-                _activeCustomize = await _ipc.CustomizePlus.SetKinksterProfile(this, newDataString).ConfigureAwait(false);
-                break;
-            case DataSyncKind.Heels when !newDataString.Equals(_appearance.HeelsOffset):
-                await _ipc.Heels.SetKinksterOffset(this, newDataString).ConfigureAwait(false);
-                break;
-            case DataSyncKind.Honorific when !newDataString.Equals(_appearance.HonorificTitle):
-                await _ipc.Honorific.SetTitleAsync(this, newDataString).ConfigureAwait(false);
-                break;
-            case DataSyncKind.PetNames when !newDataString.Equals(_appearance.PetNicknames):
-                await _ipc.PetNames.SetKinksterPetNames(this, newDataString).ConfigureAwait(false);
-                break;
-            default:
-                return;
-        }
-        // update the appearance data.
-        Logger.LogDebug($"Updated {type} for Kinkster: {PlayerName} ({OnlineUser.User.AliasOrUID})", LoggerType.PairHandlers);
-        _appearance.UpdateNewData(type, newDataString);
     }
 
     public void UpdateMoodles(string newDataString)
@@ -219,77 +133,13 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
         _statusManagerStr = newDataString;
     }
 
-    private async Task ApplyUpdatedAppearance(CharaIpcDataFull newData, bool force = false)
-    {
-        // Apply ModManips if different.
-        if (_penumbraCollectionId != Guid.Empty)
-        {
-            if (newData.ModManips != null && (force || !newData.ModManips.Equals(_appearance!.ModManips)))
-                await _ipc.Penumbra.SetKinksterManipulations(_penumbraCollectionId, newData.ModManips).ConfigureAwait(false);
-        }
-
-        // Apply Glamour if different.
-        if (newData.GlamourerBase64 != null && (force || !newData.GlamourerBase64.Equals(_appearance!.GlamourerBase64)))
-            await _ipc.Glamourer.ApplyKinksterGlamour(this, newData.GlamourerBase64).ConfigureAwait(false);
-        
-        // Apply Customize+ if different.
-        if (newData.CustomizeProfile != null && (force || !newData.CustomizeProfile.Equals(_appearance!.CustomizeProfile)))
-        {
-            // update the active profile to what we set, we should do this if there is a difference in what profile to enforce.
-            // this should also revert if the new string is empty.
-            _activeCustomize = await _ipc.CustomizePlus.SetKinksterProfile(this, newData.CustomizeProfile).ConfigureAwait(false);
-        }
-        // might need to do an else if or something here as C+ works wierd with how it does reverts.
-
-        // Apply Heels if different.
-        if (newData.HeelsOffset != null && (force || !newData.HeelsOffset.Equals(_appearance!.HeelsOffset)))
-            await _ipc.Heels.SetKinksterOffset(this, newData.HeelsOffset).ConfigureAwait(false);
-
-        // Apply Honorific if different. (will clear title if string.empty)
-        if (newData.HonorificTitle != null && (force || !newData.HonorificTitle.Equals(_appearance!.HonorificTitle)))
-            await _ipc.Honorific.SetTitleAsync(this, newData.HonorificTitle).ConfigureAwait(false);
-
-        // Apply Pet Nicknames if different. (will clear nicks if string.empty)
-        if (newData.PetNicknames != null && (force || !newData.PetNicknames.Equals(_appearance!.PetNicknames)))
-            await _ipc.PetNames.SetKinksterPetNames(this, newData.PetNicknames).ConfigureAwait(false);
-    }
-
     private async Task RevertAppearanceData(string name)
     {
         // ensure the correct address is obtained (to cover this being called in disposal)
         nint addr = _frameworkUtil.GetKinksterAddrFromCache(OnlineUser.Ident);
         // ret if the address is zero/null;
         if (addr == nint.Zero) return;
-        // if our cached data is null, nothing is set, so we have nothing to revert.
-        if (_appearance is null) return;
 
-        // Begin the Kinkster revert process.
-        Logger.LogDebug($"Reverting ALL appearance data for Kinkster: {name} ({OnlineUser.User.AliasOrUID})", LoggerType.PairHandlers);
-        if (_appearance.GlamourerBase64 is not null)
-        {
-            Logger.LogTrace($"Reverting Glamourer state for Kinkster: {name} ({OnlineUser.User.AliasOrUID})", LoggerType.GameObjects);
-            await _ipc.Glamourer.ReleaseKinkster(this).ConfigureAwait(false);
-        }
-        if (_appearance.HeelsOffset is not null)
-        {
-            Logger.LogTrace($"Reverting Heels state for Kinkster: {name} ({OnlineUser.User.AliasOrUID})", LoggerType.GameObjects);
-            await _ipc.Heels.RestoreKinksterOffset(this).ConfigureAwait(false);
-        }
-        if (_activeCustomize is not null)
-        {
-            Logger.LogTrace($"Reverting Customize+ Data for Kinkster: {name} ({OnlineUser.User.AliasOrUID})", LoggerType.GameObjects);
-            await _ipc.CustomizePlus.RevertKinksterProfile(_activeCustomize).ConfigureAwait(false);
-        }
-        if (_appearance.HonorificTitle is not null)
-        {
-            Logger.LogTrace($"Reverting Honorific Title for Kinkster: {name} ({OnlineUser.User.AliasOrUID})", LoggerType.GameObjects);
-            await _ipc.Honorific.ClearTitleAsync(this).ConfigureAwait(false);
-        }
-        if (_appearance.PetNicknames is not null)
-        {
-            Logger.LogTrace($"Reverting Pet Nicknames for Kinkster: {name} ({OnlineUser.User.AliasOrUID})", LoggerType.GameObjects);
-            await _ipc.PetNames.ClearKinksterPetNames(this).ConfigureAwait(false);
-        }
         if (_statusManagerStr is not null)
         {
             Logger.LogTrace($"Reverting Moodles Data for Kinkster: {name} ({OnlineUser.User.AliasOrUID})", LoggerType.GameObjects);
@@ -322,8 +172,6 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
             Mediator.Publish(new PairHandlerVisibleMessage(this));
             // if they have non-null cached data, reapply it to them.
             Logger.LogTrace($"Visibility changed for Kinkster: {PlayerName} ({OnlineUser.User.AliasOrUID}). Now: {IsVisible}", LoggerType.PairHandlers);
-            if (_appearance is not null)
-                _ = Task.Run(() => ApplyUpdatedAppearance(_appearance, true));
             if (_statusManagerStr is not null)
                 _ = Task.Run(() => UpdateMoodles(_statusManagerStr));
         }
@@ -348,22 +196,6 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
         Logger.LogTrace("Creating CharaHandler for " + this, LoggerType.PairHandlers);
         _gameObject = _factory.Create(() => _frameworkUtil.GetKinksterAddrFromCache(OnlineUser.Ident)).GetAwaiter().GetResult();
         // GetAwaiter().GetResult() ensures that _gameObject is fully created before proceeding.
-
-        Mediator.Subscribe<HonorificReady>(this, async _ =>
-        {
-            if (string.IsNullOrEmpty(_appearance?.HonorificTitle)) 
-                return;
-            Logger.LogTrace($"Reapplying Honorific Title for {PlayerName}");
-            await _ipc.Honorific.SetTitleAsync(this, _appearance.HonorificTitle).ConfigureAwait(false);
-        });
-
-        Mediator.Subscribe<PetNamesReady>(this, async _ =>
-        {
-            if (string.IsNullOrEmpty(_appearance?.PetNicknames))
-                return;
-            Logger.LogTrace($"Reapplying Pet Nicknames for {PlayerName}");
-            await _ipc.PetNames.SetKinksterPetNames(this, _appearance.PetNicknames).ConfigureAwait(false);
-        });
 
         // _ipc.Penumbra.AssignKinksterCollection(_penumbraCollectionId, _gameObject.PlayerCharacterObjRef!.ObjectIndex).GetAwaiter().GetResult();
     }

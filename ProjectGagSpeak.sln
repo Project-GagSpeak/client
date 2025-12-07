@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.10.35004.147
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProjectGagSpeakAPI", "GagspeakAPI\ProjectGagSpeakAPI.csproj", "{ADE16015-A637-C298-BE45-140AA59624B5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProjectGagSpeakAPI", "GagspeakAPI\ProjectGagspeakAPI.csproj", "{ADE16015-A637-C298-BE45-140AA59624B5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CkCommons", "CkCommons\CkCommons.csproj", "{73A10A32-1037-45B2-8BF4-8A962C141E22}"
 EndProject

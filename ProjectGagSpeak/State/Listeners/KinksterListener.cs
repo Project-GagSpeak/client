@@ -25,20 +25,20 @@ public sealed class KinksterListener
     }
 
     #region DataUpdates
+    // TODO: remove
     public void NewAppearanceData(UserData target, CharaIpcDataFull newData)
     {
         if (!_kinksters.TryGetKinkster(target, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
         _logger.LogTrace($"{kinkster.GetNickAliasOrUid()}'s Full Appearance changed!", LoggerType.Callbacks);
-        kinkster.ApplyLatestAppearance(newData);
     }
 
+    // TODO: remove
     public void NewAppearanceData(UserData target, DataSyncKind type, string newDataString)
     {
         if (!_kinksters.TryGetKinkster(target, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
         _logger.LogTrace($"{kinkster.GetNickAliasOrUid()}'s Appearance changed for {type}!", LoggerType.Callbacks);
-        kinkster.ApplyLatestAppearance(type, newDataString);
     }
 
     public void NewMoodlesData(UserData targetUser, UserData enactor, CharaMoodleData newData)
@@ -74,7 +74,7 @@ public sealed class KinksterListener
 
     public void NewActiveComposite(UserData targetUser, CharaCompositeActiveData data, bool safeword)
     {
-        if(!_kinksters.TryGetKinkster(targetUser, out var kinkster))
+        if (!_kinksters.TryGetKinkster(targetUser, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
         _logger.LogDebug($"Received Composite Active Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
         kinkster.NewActiveCompositeData(data, safeword);

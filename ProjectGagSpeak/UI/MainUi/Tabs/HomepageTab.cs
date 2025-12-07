@@ -35,7 +35,7 @@ public class HomepageTab
     private int HoveredItemIndex = -1;
     private readonly List<(string Label, FontAwesomeIcon Icon, Action OnClick)> Modules;
 
-    public HomepageTab(ILogger<HomepageTab> logger, GagspeakMediator mediator, IpcCallerPenumbra ipc, HcTaskManager temp, 
+    public HomepageTab(ILogger<HomepageTab> logger, GagspeakMediator mediator, IpcCallerPenumbra ipc, HcTaskManager temp,
         PlayerControlCache cache, MovementDetours detours)
     {
         _logger = logger;
@@ -91,10 +91,6 @@ public class HomepageTab
         if (!itemGotHovered)
             HoveredItemIndex = -1;
 
-
-        // Logger for Penumbra debugging.
-        if (ImGui.Button("PenumbraDebugger"))
-            PrintPenumbraDebugger();
         // Use for further debugging if nessisary.
         //unsafe
         //{
@@ -160,20 +156,6 @@ public class HomepageTab
                 ImGui.Text("Error retrieving character information: " + ex.Message);
             }
         }
-    }
-
-    private async void PrintPenumbraDebugger()
-    {
-        var paths = await _ipc.GetKinksterModData(0);
-        if (paths is null)
-            return;
-
-        // remove all paths where the key and value match.
-        // var modifiedPaths = paths.Where(kvp => kvp.Key != kvp.Value.FirstOrDefault()).ToList();
-
-        _logger.LogInformation("---- Penumbra Debugger ----");
-        foreach (var (local, replacements) in paths)
-            _logger.LogInformation($"Game Paths: [{string.Join(',', replacements)}] => Actual: [{local}]");
     }
 
     private bool HomepageSelectable(string label, FontAwesomeIcon icon, Vector2 region, bool hovered = false)
