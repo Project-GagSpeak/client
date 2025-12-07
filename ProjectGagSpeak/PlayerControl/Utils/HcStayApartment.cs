@@ -30,7 +30,7 @@ public static unsafe class HcStayApartment
         foreach (var o in Svc.Objects.OrderBy(x => Vector3.Distance(x.Position, PlayerData.Object.Position)))
         {
             // continue if not the data ID.
-            if (o.DataId != 2007402)
+            if (o.BaseId != 2007402)
                 continue;
 
             // if the object is not the current target, make it the target.
@@ -56,7 +56,7 @@ public static unsafe class HcStayApartment
         if (PlayerData.IsAnimationLocked)
             return false;
         // if the target is not an event object and it's ID is not 2007402, then return false.
-        if (Svc.Targets.Target?.ObjectKind != ObjectKind.EventObj || Svc.Targets.Target?.DataId != 2007402)
+        if (Svc.Targets.Target?.ObjectKind != ObjectKind.EventObj || Svc.Targets.Target?.BaseId != 2007402)
             return false;
 
         // target was valid, so perform a throttled interaction with the apartment entrance.

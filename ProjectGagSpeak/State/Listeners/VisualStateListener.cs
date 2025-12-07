@@ -21,15 +21,15 @@ namespace GagSpeak.State.Listeners;
 /// </summary>
 public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 {
-    private readonly IpcProvider            _provider;
-    private readonly IpcManager             _interop;
-    private readonly KinksterManager        _pairs;
-    private readonly RestraintManager       _restraints;
-    private readonly RestrictionManager     _restrictions;
-    private readonly GagRestrictionManager  _gags;
-    private readonly CollarManager          _collar;
-    private readonly CursedLootManager      _cursedLoot;
-    private readonly CacheStateManager      _cacheManager;
+    private readonly IpcProvider _provider;
+    private readonly IpcManager _interop;
+    private readonly KinksterManager _pairs;
+    private readonly RestraintManager _restraints;
+    private readonly RestrictionManager _restrictions;
+    private readonly GagRestrictionManager _gags;
+    private readonly CollarManager _collar;
+    private readonly CursedLootManager _cursedLoot;
+    private readonly CacheStateManager _cacheManager;
 
     public VisualStateListener(
         ILogger<VisualStateListener> logger,
@@ -43,7 +43,8 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         CollarManager collar,
         CursedLootManager cursedLoot,
         CacheStateManager cacheManager,
-        OnFrameworkService frameworkUtils)
+        OnFrameworkService frameworkUtils,
+        IpcProvider provider)
         : base(logger, mediator)
     {
         _interop = interop;
@@ -54,6 +55,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         _collar = collar;
         _cursedLoot = cursedLoot;
         _cacheManager = cacheManager;
+        _provider = provider;
     }
 
     private bool PostActionMsg(string enactor, InteractionType type, string message)
@@ -127,7 +129,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 
         PostActionMsg(enactor.UID, InteractionType.RemoveGag, $"The {curData.GagSlots[layer].GagItem.GagName()} on layer <{layer}> was removed!");
         Logger.LogTrace("Received RemoveGag instruction from server!", LoggerType.Gags);
-        if(_gags.RemoveGag(layer, enactor.UID, out var visualItem))
+        if (_gags.RemoveGag(layer, enactor.UID, out var visualItem))
             await _cacheManager.RemoveGagItem(visualItem, layer);
     }
 
@@ -336,7 +338,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnectionDataSynced)
             return;
         Logger.LogTrace("Received RemoveCollar instruction from server!", LoggerType.Collars);
-        
+
         _collar.Remove(enactor);
         await _cacheManager.RemoveCollar(enactor);
 
@@ -428,7 +430,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 
     public async void ApplyStatusesByGuid(MoodlesApplierById dto)
     {
-        if(PostActionMsg(dto.User.UID, InteractionType.ApplyOwnMoodle, "Moodle Status(s) Applied"))
+        if (PostActionMsg(dto.User.UID, InteractionType.ApplyOwnMoodle, "Moodle Status(s) Applied"))
             await _interop.Moodles.ApplyOwnStatusByGUID(dto.Ids);
     }
 
@@ -453,13 +455,13 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
 
     public async void RemoveStatusesFromSelf(MoodlesRemoval dto)
     {
-        if(PostActionMsg(dto.User.UID, InteractionType.RemoveMoodle, "Moodle Status Removed"))
+        if (PostActionMsg(dto.User.UID, InteractionType.RemoveMoodle, "Moodle Status Removed"))
             await _interop.Moodles.RemoveOwnStatusByGuid(dto.StatusIds);
     }
 
     public async void ClearStatusesFromSelf(KinksterBase dto)
     {
-        if(PostActionMsg(dto.User.UID, InteractionType.ClearMoodle, "Moodles Cleared"))
+        if (PostActionMsg(dto.User.UID, InteractionType.ClearMoodle, "Moodles Cleared"))
             await _interop.Moodles.ClearStatus();
     }
 }

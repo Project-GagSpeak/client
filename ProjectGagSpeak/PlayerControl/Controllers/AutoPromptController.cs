@@ -88,7 +88,7 @@ public sealed class AutoPromptController : DisposableMediatorSubscriberBase
         Logger.LogInformation($"Text: {stuff->PromptText->NodeText}");
         Logger.LogInformation($"Yes: {stuff->YesButton->ButtonTextNode->NodeText}");
         Logger.LogInformation($"No: {stuff->NoButton->ButtonTextNode->NodeText}");
-        Logger.LogInformation($"Target ID: {Svc.Targets.Target?.DataId.ToString() ?? "UNK"}");
+        Logger.LogInformation($"Target ID: {Svc.Targets.Target?.BaseId.ToString() ?? "UNK"}");
 
     }
 

@@ -12,7 +12,7 @@ using GagSpeak.Services;
 namespace GagSpeak.GameInternals.Detours;
 // made static in StaticDetours for multi-access, but idealy we should place it into movement detours, so they can be manually toggled.
 public unsafe class MoveOverrides : IDisposable
-{ 
+{
     public bool InMoveTask => OverrideCamera || OverrideMoveInput;
     public bool OverrideCamera
     {
@@ -80,7 +80,7 @@ public unsafe class MoveOverrides : IDisposable
 
     private (Angle h, Angle v)? DirectionToDestination(bool allowVertical)
     {
-        var player = Svc.ClientState.LocalPlayer;
+        var player = Svc.Objects.LocalPlayer;
         if (player == null)
             return null;
 
