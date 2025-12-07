@@ -27,6 +27,7 @@ using GagspeakAPI.Network;
 using OtterGui.Text;
 using OtterGui.Text.EndObjects;
 using Penumbra.GameData.Enums;
+using Penumbra.GameData.Structs;
 using static Lumina.Data.Parsing.Layer.LayerCommon;
 namespace GagSpeak.Gui.Components;
 
@@ -290,7 +291,9 @@ public class ActiveItemsDrawer
 
             // Below draw out the layers.
             var options = Enum.GetValues<RestraintLayer>().Skip(1).SkipLast(5 - dispData.Layers.Count + 1);
-            _layerFlagsWidget.DrawLayerCheckboxes(data.ActiveLayers, options, _ => { var idx = BitOperations.TrailingZeroCount((int)_); return (idx < dispData.Layers.Count) && (!dispData.Layers[idx].Label.IsNullOrWhitespace()) ? dispData.Layers[idx].Label : $"Layer {idx + 1}"; } );
+            _layerFlagsWidget.DrawLayerCheckboxes(data.ActiveLayers, options, _ => {
+                var idx = BitOperations.TrailingZeroCount((int)_); return (idx < dispData.Layers.Count) && (!dispData.Layers[idx].Label.IsNullOrWhitespace()) ? dispData.Layers[idx].Label : $"Layer {idx + 1}";
+            });
             //((int)_).IsInRange(dispData.Layers) ? dispData.Layers[(int)_].Label : _.ToString());
         }
         _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EditingLayers, ImGui.GetWindowPos(), ImGui.GetWindowSize());
@@ -370,7 +373,9 @@ public class ActiveItemsDrawer
 
         var height = ImGui.GetFrameHeightWithSpacing() * 5 + ImGui.GetFrameHeight();
         DrawRestraintImage(dispData, new Vector2(height / 1.2f, height), CkStyle.HeaderRounding(), CkColor.FancyHeaderContrast.Uint());
-        ImGui.SameLine(0,0);
+
+        ImUtf8.SameLineInner();
+        //ImGui.SameLine(0,0);
         using var s = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, CkStyle.ChildRoundingLarge());
         using var _ = ImRaii.Disabled(data.PadlockAssigner != MainHub.UID);
         using (ImRaii.Group())
@@ -387,7 +392,9 @@ public class ActiveItemsDrawer
                 return;
             // Below draw out the layers.
             var options = Enum.GetValues<RestraintLayer>().Skip(1).SkipLast(1).Take(dispData.Layers.Count);
-            _layerFlagsWidget.DrawLayerCheckboxes(data.ActiveLayers, options, _ => ((int)_).IsInRange(dispData.Layers) ? dispData.Layers[(int)_].Label : _.ToString());
+            _layerFlagsWidget.DrawLayerCheckboxes(data.ActiveLayers, options, _ => {
+                var idx = BitOperations.TrailingZeroCount((int)_); return (idx < dispData.Layers.Count) && (!dispData.Layers[idx].Label.IsNullOrWhitespace()) ? dispData.Layers[idx].Label : $"Layer {idx + 1}";
+            });
         }
     }
 
