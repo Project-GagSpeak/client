@@ -587,7 +587,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 {
                     var channel = channels[i];
                     var enabled = _mainConfig.Current.PuppeteerChannelsBitfield.IsActiveChannel((int)channel);
-                    var checkboxLabel = channel.ToString();
+                    var checkboxLabel = channel.ToString() + " "; // space for unique name in ImGui to avoid conflict with garble channels
 
                     if (ImGui.Checkbox(checkboxLabel, ref enabled))
                     {
