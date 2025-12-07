@@ -1,3 +1,5 @@
+using System.Buffers;
+using System.Collections.Immutable;
 using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Raii;
@@ -28,8 +30,6 @@ using GagspeakAPI.Util;
 using OtterGui;
 using OtterGui.Extensions;
 using OtterGui.Text;
-using System.Buffers;
-using System.Collections.Immutable;
 
 namespace GagSpeak.Gui;
 
@@ -479,11 +479,8 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 
         CkGui.ColorTextCentered($"Stored Statuses: {kinkster.LastMoodlesData.StatusList.Count()}", ImGuiColors.ParsedGold);
         _moodleDrawer.ShowStatusInfosFramed($"StatusList-{dispName}", kinkster.LastMoodlesData.StatusList, ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), MoodleDrawer.IconSizeFramed, 2);
-        
-        DrawMoodlePresetTable(dispName, kinkster.LastMoodlesData);
 
-        // draw out the Appearance Cache.
-        DrawAppearanceCache(kinkster, dispName);
+        DrawMoodlePresetTable(dispName, kinkster.LastMoodlesData);
     }
 
     private void DrawMoodlePresetTable(string uid, CharaMoodleData data)
@@ -506,56 +503,6 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
                 _moodleDrawer.DrawStatusInfos(statuses, MoodleDrawer.IconSizeFramed);
             }
 
-        }
-    }
-
-    private void DrawAppearanceCache(Kinkster kinkster, string dispName)
-    {
-        using var node = ImRaii.TreeNode($"{dispName}'s Latest Appearance");
-        if (!node) return;
-
-        // Draw out the cache Values.
-        using (var t = ImRaii.Table($"AppearanceCache-{dispName}", 2, ImGuiTableFlags.Borders | ImGuiTableFlags.SizingFixedFit))
-        {
-            if (!t) return;
-            ImGui.TableSetupColumn("Source");
-            ImGui.TableSetupColumn("Content");
-            ImGui.TableHeadersRow();
-
-            ImGui.TableNextColumn();
-            CkGui.ColorTextBool("Actor Glamour", kinkster.LastAppearanceData.GlamourerBase64 is not null);
-            ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(kinkster.LastAppearanceData.GlamourerBase64 != null, false);
-            if (ImGui.IsItemHovered())
-                CkGui.AttachToolTip(kinkster.LastAppearanceData.GlamourerBase64 ?? "No Actor Glamour Data");
-            ImGui.TableNextRow();
-
-            ImGuiUtil.DrawTableColumn("C+ Profile");
-            ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(kinkster.LastAppearanceData.CustomizeProfile != null, false);
-            if (ImGui.IsItemHovered())
-                CkGui.AttachToolTip(kinkster.LastAppearanceData.CustomizeProfile ?? "No C+ Profile Data");
-            ImGui.TableNextRow();
-
-            ImGuiUtil.DrawTableColumn("Heels Offset");
-            ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(kinkster.LastAppearanceData.HeelsOffset != null, false);
-            if (ImGui.IsItemHovered())
-                CkGui.AttachToolTip(kinkster.LastAppearanceData.HeelsOffset?.ToString() ?? "No Heels Offset Data");
-            ImGui.TableNextRow();
-
-            ImGuiUtil.DrawTableColumn("Title Info");
-            ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(kinkster.LastAppearanceData.HonorificTitle != null, false);
-            if (ImGui.IsItemHovered())
-                CkGui.AttachToolTip(kinkster.LastAppearanceData.HonorificTitle?.ToString() ?? "No Honorific Title!");
-            ImGui.TableNextRow();
-
-            ImGuiUtil.DrawTableColumn("Pet Nicknames");
-            ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(kinkster.LastAppearanceData.PetNicknames != null, false);
-            if (ImGui.IsItemHovered())
-                CkGui.AttachToolTip(kinkster.LastAppearanceData.PetNicknames?.ToString() ?? "No Pet Nicknames!");
         }
     }
 
@@ -669,7 +616,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
             ImGui.TableSetupColumn("TimeLeft");
             ImGui.TableSetupColumn("Assigner");
             ImGui.TableHeadersRow();
-           
+
             ImGuiUtil.DrawFrameColumn(restraint.Identifier.ToString());
             ImGuiUtil.DrawFrameColumn(restraint.Enabler);
             ImGuiUtil.DrawFrameColumn(restraint.Padlock.ToName());

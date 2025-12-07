@@ -111,6 +111,7 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
             // if the hosted service lifetime is ending, return
             if (_lifetime.ApplicationStopping.IsCancellationRequested)
             {
+                // TODO: check if sundouleia is already handling this kinkster's moodle sync
                 _ipc.Moodles.ClearStatus(name).ConfigureAwait(false);
                 return;
             }
@@ -131,22 +132,6 @@ public sealed class PairHandler : DisposableMediatorSubscriberBase
         _ipc.Moodles.SetStatus(PlayerNameWithWorld, newDataString).ConfigureAwait(false);
         // update the string.
         _statusManagerStr = newDataString;
-    }
-
-    private async Task RevertAppearanceData(string name)
-    {
-        // ensure the correct address is obtained (to cover this being called in disposal)
-        nint addr = _frameworkUtil.GetKinksterAddrFromCache(OnlineUser.Ident);
-        // ret if the address is zero/null;
-        if (addr == nint.Zero) return;
-
-        if (_statusManagerStr is not null)
-        {
-            Logger.LogTrace($"Reverting Moodles Data for Kinkster: {name} ({OnlineUser.User.AliasOrUID})", LoggerType.GameObjects);
-            await _ipc.Moodles.ClearStatus(name).ConfigureAwait(false);
-        }
-
-        Logger.LogInformation($"Reverted ALL appearance data for Kinkster: {name} ({OnlineUser.User.AliasOrUID})", LoggerType.PairHandlers);
     }
 
     private void FrameworkUpdate()

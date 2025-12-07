@@ -12,24 +12,19 @@ using Penumbra.GameData.Structs;
 
 namespace GagSpeak.Interop;
 
-public sealed class IpcCallerGlamourer : IIpcCaller
+public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcCaller
 {
     // API Version
     private readonly ApiVersion ApiVersion;
     // API EVENTS
-    public EventSubscriber<nint, StateChangeType>       OnStateChanged;   // Informs us when ANY Glamour Change has occurred.
+    public EventSubscriber<nint, StateChangeType> OnStateChanged;   // Informs us when ANY Glamour Change has occurred.
     public EventSubscriber<nint, StateFinalizationType> OnStateFinalized; // Informs us when any Glamourer operation has FINISHED.
     // API GETTERS
-    private readonly GetState       GetState;  // Get the JSONObject of the client's current state.
-    private readonly GetStateBase64 GetBase64; // Get the Base64string of the client's current state.
+    private readonly GetState GetState;  // Get the JSONObject of the client's current state.
     // API ENACTORS
-    private readonly ApplyState      ApplyState;           // Applies a JSONObject of an actors state to a player.
-    private readonly SetItem         SetItem;              // Useful for enforcing bondage.
-    private readonly SetMetaState    SetMetaState;         // Useful for enforcing bondage.
-    private readonly UnlockState     UnlockKinkster;       // Unlocks a Kinkster's glamour state for modification.
-    private readonly UnlockStateName UnlockKinksterByName; // Unlock a Kinkster's glamour state by name. (try to avoid?)
-    private readonly RevertState     RevertKinkster;       // Revert a Kinkster to their game state.
-    private readonly RevertStateName RevertKinksterByName; // Revert a kinkster to their game state by their name. (try to avoid?)
+    private readonly ApplyState ApplyState;           // Applies a JSONObject of an actors state to a player.
+    private readonly SetItem SetItem;              // Useful for enforcing bondage.
+    private readonly SetMetaState SetMetaState;         // Useful for enforcing bondage.
 
     private readonly ILogger<IpcCallerGlamourer> _logger;
     private readonly GagspeakMediator _mediator;
@@ -37,7 +32,7 @@ public sealed class IpcCallerGlamourer : IIpcCaller
     private const uint GAGSPEAK_LOCK = 0x05723478;
     private bool _shownGlamourerUnavailable = false;
 
-    public IpcCallerGlamourer(ILogger<IpcCallerGlamourer> logger, GagspeakMediator mediator) 
+    public IpcCallerGlamourer(ILogger<IpcCallerGlamourer> logger, GagspeakMediator mediator) : base(logger, mediator)
     {
         _logger = logger;
         _mediator = mediator;
@@ -45,21 +40,13 @@ public sealed class IpcCallerGlamourer : IIpcCaller
         ApiVersion = new ApiVersion(Svc.PluginInterface);
 
         GetState = new GetState(Svc.PluginInterface);
-        GetBase64 = new GetStateBase64(Svc.PluginInterface);
 
         ApplyState = new ApplyState(Svc.PluginInterface);
         SetItem = new SetItem(Svc.PluginInterface);
         SetMetaState = new SetMetaState(Svc.PluginInterface);
-        UnlockKinkster = new UnlockState(Svc.PluginInterface);
-        UnlockKinksterByName = new UnlockStateName(Svc.PluginInterface);
-        RevertKinkster = new RevertState(Svc.PluginInterface);
-        RevertKinksterByName = new RevertStateName(Svc.PluginInterface);
 
         CheckAPI();
     }
-
-    public void Dispose() 
-    { }
 
     public static bool APIAvailable { get; private set; } = false;
     public void CheckAPI()
@@ -89,17 +76,8 @@ public sealed class IpcCallerGlamourer : IIpcCaller
     /// <summary>
     ///     Obtains the JObject of the client's current Actor State
     /// </summary>
-    public JObject? GetActorState() 
+    public JObject? GetActorState()
         => GetState.Invoke(0).Item2;
-
-    /// <summary>
-    ///     Obtains the Base64String of the client's current Actor State
-    /// </summary>
-    public async Task<string> GetActorString()
-    {
-        if (!APIAvailable) return string.Empty;
-        return await Svc.Framework.RunOnFrameworkThread(() => GetBase64.Invoke(0).Item2 ?? string.Empty).ConfigureAwait(false);
-    }
 
     /// <summary>
     ///     Enforces the Clients EquipSlot data to reflect their bondage state.
@@ -148,68 +126,6 @@ public sealed class IpcCallerGlamourer : IIpcCaller
             }).ConfigureAwait(false);
         });
     }
-
-    #region Kinkster Glamour Sync
-    /// <summary>
-    ///     Applies another Kinkster's Glamourer state with their actor data.
-    /// </summary>
-    public async Task ApplyKinksterGlamour(PairHandler kinkster, string? actorData)
-    {
-        if (!APIAvailable || PlayerData.IsZoning || string.IsNullOrEmpty(actorData))
-            return;
-        // do not apply if not visible.
-        if (kinkster.PairObject is not { } visibleObj)
-            return;
-
-        await Generic.Safe(async () =>
-        {
-            await Svc.Framework.RunOnFrameworkThread(() =>
-            {
-                _logger.LogDebug($"Updating ({kinkster.PlayerName}'s) glamourer data.", LoggerType.IpcGlamourer);
-                ApplyState.Invoke(actorData, kinkster.PairObject.ObjectIndex, GAGSPEAK_LOCK);
-            }).ConfigureAwait(false);
-        });
-    }
-
-    public async Task ReleaseKinkster(PairHandler kinkster)
-    {
-        if (!APIAvailable || PlayerData.IsZoning)
-            return;
-        // do not apply if not visible.
-        if (kinkster.PairObject is not { } visibleObj)
-            return;
-
-        await Generic.Safe(async () =>
-        {
-            await Svc.Framework.RunOnFrameworkThread(() =>
-            {
-                _logger.LogDebug($"Reverting Kinkster {kinkster.PlayerName}'s Glamourer data!", LoggerType.IpcGlamourer);
-                RevertKinkster.Invoke(visibleObj.ObjectIndex, GAGSPEAK_LOCK);
-                _logger.LogDebug($"Unlocking Kinkster {kinkster.PlayerName}'s Glamourer data!", LoggerType.IpcGlamourer);
-                UnlockKinkster.Invoke(visibleObj.ObjectIndex, GAGSPEAK_LOCK);
-                // maybe some redraw or refresh i dont know.
-            });
-        });
-    }
-
-    public async Task ReleaseKinksterByName(string kinksterName)
-    {
-        if (!APIAvailable || PlayerData.IsZoning)
-            return;
-
-        await Generic.Safe(async () =>
-        {
-            await Svc.Framework.RunOnFrameworkThread(() =>
-            {
-                _logger.LogDebug($"Reverting Kinkster {kinksterName}'s Glamourer data!", LoggerType.IpcGlamourer);
-                RevertKinksterByName.Invoke(kinksterName, GAGSPEAK_LOCK);
-                _logger.LogDebug($"Unlocking Kinkster {kinksterName}'s Glamourer data!", LoggerType.IpcGlamourer);
-                UnlockKinksterByName.Invoke(kinksterName, GAGSPEAK_LOCK);
-            }).ConfigureAwait(false);
-        });
-    }
-
-    #endregion Kinkster Glamour Sync
 
     #region Glamour Enforcement Helpers
     // Map between the slot strings and their EquipSlot enum values.

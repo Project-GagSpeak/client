@@ -1,3 +1,4 @@
+using System.Reflection;
 using CkCommons;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
@@ -12,7 +13,6 @@ using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Hosting;
-using System.Reflection;
 
 namespace GagSpeak.WebAPI;
 /// <summary>
@@ -198,8 +198,6 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         OnAddCollarRequest(dto => _ = Callback_AddCollarRequest(dto));
         OnRemoveCollarRequest(dto => _ = Callback_RemoveCollarRequest(dto));
 
-        OnSetKinksterIpcData(dto => _ = Callback_SetKinksterIpcData(dto));
-        OnSetKinksterIpcSingle(dto => _ = Callback_SetKinksterIpcSingle(dto));
         OnSetKinksterMoodlesFull(dto => _ = Callback_SetKinksterMoodlesFull(dto));
         OnSetKinksterMoodlesSM(dto => _ = Callback_SetKinksterMoodlesSM(dto));
         OnSetKinksterMoodlesStatuses(dto => _ = Callback_SetKinksterMoodlesStatuses(dto));
@@ -266,9 +264,9 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         _apiHooksInitialized = true;
     }
 
-    public async Task<bool> CheckMainClientHealth() 
+    public async Task<bool> CheckMainClientHealth()
         => await _hubConnection!.InvokeAsync<bool>(nameof(CheckMainClientHealth)).ConfigureAwait(false);
-    public async Task<ConnectionResponse> GetConnectionResponse() 
+    public async Task<ConnectionResponse> GetConnectionResponse()
         => await _hubConnection!.InvokeAsync<ConnectionResponse>(nameof(GetConnectionResponse)).ConfigureAwait(false);
 
     public async Task<LobbyAndHubInfoResponse> GetShareHubAndLobbyInfo()

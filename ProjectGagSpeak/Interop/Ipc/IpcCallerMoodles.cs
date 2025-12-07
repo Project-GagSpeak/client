@@ -15,34 +15,34 @@ public sealed class IpcCallerMoodles : IIpcCaller
     // StatusManager == The manager handling the current active statuses on you.
     // Status == The individual "Moodle" in your Moodles tab under the Moodles UI.
     // Preset == The collection of Statuses to apply at once. Stored in a preset.
-    
+
     // Remember, all these are called only when OUR client changes. Not other pairs.
     private readonly ICallGateSubscriber<int> _moodlesApiVersion;
 
     public readonly ICallGateSubscriber<IPlayerCharacter, object> OnStatusManagerModified;  // The status manager of a player has changed.
-    public readonly ICallGateSubscriber<Guid, object>             OnStatusSettingsModified; // Client changed a status's settings.
-    public readonly ICallGateSubscriber<Guid, object>             OnPresetModified;         // Client changed a preset's settings.
+    public readonly ICallGateSubscriber<Guid, object> OnStatusSettingsModified; // Client changed a status's settings.
+    public readonly ICallGateSubscriber<Guid, object> OnPresetModified;         // Client changed a preset's settings.
 
     // API Getters
-    private readonly ICallGateSubscriber<Guid, MoodlesStatusInfo>         GetStatusInfo;
-    private readonly ICallGateSubscriber<List<MoodlesStatusInfo>>         GetStatusInfoList;
-    private readonly ICallGateSubscriber<Guid, MoodlePresetInfo>          GetPresetInfo;
-    private readonly ICallGateSubscriber<List<MoodlePresetInfo>>          GetPresetsInfoList;
+    private readonly ICallGateSubscriber<Guid, MoodlesStatusInfo> GetStatusInfo;
+    private readonly ICallGateSubscriber<List<MoodlesStatusInfo>> GetStatusInfoList;
+    private readonly ICallGateSubscriber<Guid, MoodlePresetInfo> GetPresetInfo;
+    private readonly ICallGateSubscriber<List<MoodlePresetInfo>> GetPresetsInfoList;
 
-    private readonly ICallGateSubscriber<string>                          GetOwnStatusManager;
-    private readonly ICallGateSubscriber<List<MoodlesStatusInfo>>         GetOwnStatusManagerInfo;
-    private readonly ICallGateSubscriber<string, string>                  GetOtherStatusManager;
+    private readonly ICallGateSubscriber<string> GetOwnStatusManager;
+    private readonly ICallGateSubscriber<List<MoodlesStatusInfo>> GetOwnStatusManagerInfo;
+    private readonly ICallGateSubscriber<string, string> GetOtherStatusManager;
     private readonly ICallGateSubscriber<string, List<MoodlesStatusInfo>> GetOtherStatusManagerInfo;
 
     // I honestly forgot where this is used.
     private readonly ICallGateSubscriber<string, string, List<MoodlesStatusInfo>, object> ApplyStatusFromPair;
 
     // API Enactors
-    private readonly ICallGateSubscriber<Guid, string, object>       ApplyStatus;
-    private readonly ICallGateSubscriber<Guid, string, object>       ApplyPreset;
+    private readonly ICallGateSubscriber<Guid, string, object> ApplyStatus;
+    private readonly ICallGateSubscriber<Guid, string, object> ApplyPreset;
     private readonly ICallGateSubscriber<List<Guid>, string, object> RemoveStatuses;
-    private readonly ICallGateSubscriber<string, string, object>     SetStatusManager;
-    private readonly ICallGateSubscriber<string, object>             ClearStatusManager;
+    private readonly ICallGateSubscriber<string, string, object> SetStatusManager;
+    private readonly ICallGateSubscriber<string, object> ClearStatusManager;
 
     private readonly ILogger<IpcCallerMoodles> _logger;
     private readonly GagspeakMediator _mediator;
@@ -70,6 +70,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
         RemoveStatuses = Svc.PluginInterface.GetIpcSubscriber<List<Guid>, string, object>("Moodles.RemoveMoodlesByNameV2");
         SetStatusManager = Svc.PluginInterface.GetIpcSubscriber<string, string, object>("Moodles.SetStatusManagerByNameV2");
         ClearStatusManager = Svc.PluginInterface.GetIpcSubscriber<string, object>("Moodles.ClearStatusManagerByNameV2");
+        ApplyStatusFromPair = Svc.PluginInterface.GetIpcSubscriber<string, string, List<MoodlesStatusInfo>, object>("Moodles.ApplyStatusesFromGSpeakPair");
 
         // API Action Events:
         OnStatusManagerModified = Svc.PluginInterface.GetIpcSubscriber<IPlayerCharacter, object>("Moodles.StatusManagerModified");
@@ -86,7 +87,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
         try
         {
             var result = _moodlesApiVersion.InvokeFunc() >= 3;
-            if(!APIAvailable && result)
+            if (!APIAvailable && result)
                 _mediator.Publish(new MoodlesReady());
             APIAvailable = result;
         }
@@ -169,6 +170,12 @@ public sealed class IpcCallerMoodles : IIpcCaller
     public async Task ApplyOwnPresetByGUID(Guid guid)
     {
         await ExecuteIpcOnThread(() => ApplyPreset.InvokeAction(guid, PlayerData.NameWithWorld));
+    }
+
+    /// <summary> This method applies the statuses from a pair to the client </summary>
+    public async Task ApplyStatusesFromPairToSelf(string applierNameWithWorld, string recipientNameWithWorld, IEnumerable<MoodlesStatusInfo> statuses)
+    {
+        await ExecuteIpcOnThread(() => ApplyStatusFromPair.InvokeAction(applierNameWithWorld, recipientNameWithWorld, [.. statuses]));
     }
 
     /// <summary> This method removes the moodles from the client </summary>

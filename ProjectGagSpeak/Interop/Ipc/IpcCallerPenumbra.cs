@@ -77,12 +77,10 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
     private GetModPath GetModPath;            // Retrieves the path of the mod with its directory and name, allowing for folder sorting.
     private GetModList GetModList;            // Retrieves the client's mod list. (DirectoryName, ModName)
     private GetCollection GetActiveCollection;   // Obtains the client's currently active collection. (may not need this)
-    private GetPlayerMetaManipulations GetMetaManipulations;  // Obtains the client's mod metadata manipulations.
     private GetAvailableModSettings GetModSettingsAll;     // Obtains _ALL_ the options for a given mod.
     private GetCurrentModSettings GetModSettingsSelected;// Obtains the currently chosen options for a mod.
     // API Enactors
     private RedrawObject RedrawClient;               // Can force the client to Redraw.
-    private SetCollectionForObject SetCollectionForObject;     // Defines a collection placed on a spesific object.
     private SetTemporaryModSettingsPlayer SetOrUpdateTempModSettings; // Temporarily sets and locks a Mod with defined settings. Can be updated.
     private RemoveTemporaryModSettingsPlayer RemoveTempModSettings;      // Removes a temporary mod we set. Used for cleanup.
     private RemoveAllTemporaryModSettingsPlayer RemoveAllTempModSettings;   // Removes all temporary mods we set. Used for cleanup.
@@ -113,12 +111,10 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
         GetModPath = new GetModPath(Svc.PluginInterface);
         GetModList = new GetModList(Svc.PluginInterface);
         GetActiveCollection = new GetCollection(Svc.PluginInterface);
-        GetMetaManipulations = new GetPlayerMetaManipulations(Svc.PluginInterface);
         GetModSettingsAll = new GetAvailableModSettings(Svc.PluginInterface);
         GetModSettingsSelected = new GetCurrentModSettings(Svc.PluginInterface);
         // Enactors
         RedrawClient = new RedrawObject(Svc.PluginInterface);
-        SetCollectionForObject = new SetCollectionForObject(Svc.PluginInterface);
         SetOrUpdateTempModSettings = new SetTemporaryModSettingsPlayer(Svc.PluginInterface);
         RemoveTempModSettings = new RemoveTemporaryModSettingsPlayer(Svc.PluginInterface);
         RemoveAllTempModSettings = new RemoveAllTemporaryModSettingsPlayer(Svc.PluginInterface);
@@ -229,9 +225,6 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
         Logger.LogWarning("Manually redrawing the client!", LoggerType.IpcPenumbra);
         RedrawClient.Invoke(0, RedrawType.Redraw);
     }
-
-    public string GetClientManipulations()
-        => APIAvailable ? GetMetaManipulations.Invoke() : string.Empty;
 
     #region Mod Information
     // When penumbra first initializes, we should fetch all current mod info to synchronize our current data.

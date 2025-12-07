@@ -428,13 +428,13 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     #endregion CursedLoot Manipulation
 
 
-    public async void ApplyStatusesByGuid(MoodlesApplierById dto)
+    public async Task ApplyStatusesByGuid(MoodlesApplierById dto)
     {
         if (PostActionMsg(dto.User.UID, InteractionType.ApplyOwnMoodle, "Moodle Status(s) Applied"))
             await _interop.Moodles.ApplyOwnStatusByGUID(dto.Ids);
     }
 
-    public void ApplyStatusesToSelf(MoodlesApplierByStatus dto)
+    public async Task ApplyStatusesToSelf(MoodlesApplierByStatus dto, string clientPlayerNameWithWorld)
     {
         if (_pairs.DirectPairs.FirstOrDefault(p => p.UserData.UID == dto.User.UID) is not { } pair)
         {
@@ -450,16 +450,16 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         }
 
         Mediator.Publish(new EventMessage(new(pair.GetNickAliasOrUid(), pair.UserData.UID, InteractionType.ApplyPairMoodle, "Pair's Moodle Status(s) Applied to self!")));
-        _provider.ApplyMoodlesSentByKinkster(pair.PlayerNameWithWorld, dto.Statuses.ToList());
+        await _interop.Moodles.ApplyStatusesFromPairToSelf(pair.PlayerNameWithWorld, clientPlayerNameWithWorld, dto.Statuses);
     }
 
-    public async void RemoveStatusesFromSelf(MoodlesRemoval dto)
+    public async Task RemoveStatusesFromSelf(MoodlesRemoval dto)
     {
         if (PostActionMsg(dto.User.UID, InteractionType.RemoveMoodle, "Moodle Status Removed"))
             await _interop.Moodles.RemoveOwnStatusByGuid(dto.StatusIds);
     }
 
-    public async void ClearStatusesFromSelf(KinksterBase dto)
+    public async Task ClearStatusesFromSelf(KinksterBase dto)
     {
         if (PostActionMsg(dto.User.UID, InteractionType.ClearMoodle, "Moodles Cleared"))
             await _interop.Moodles.ClearStatus();

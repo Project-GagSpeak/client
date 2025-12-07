@@ -30,7 +30,6 @@ public class Kinkster : IComparable<Kinkster>
     private readonly SemaphoreSlim _creationSemaphore = new(1);
     private readonly ServerConfigManager _nickConfig;
 
-    private CancellationTokenSource _appearanceCTS = new CancellationTokenSource();
     private CancellationTokenSource _moodlesCTS = new CancellationTokenSource();
     private OnlineKinkster? _OnlineKinkster = null;
 
@@ -59,7 +58,6 @@ public class Kinkster : IComparable<Kinkster>
     private PairHandler? CachedPlayer { get; set; }
 
     // Active States
-    public CharaIpcDataFull LastAppearanceData { get; private set; } = new CharaIpcDataFull();
     public CharaMoodleData LastMoodlesData { get; private set; } = new CharaMoodleData();
     public CharaActiveGags ActiveGags { get; private set; } = new CharaActiveGags();
     public CharaActiveRestrictions ActiveRestrictions { get; private set; } = new CharaActiveRestrictions();
@@ -131,7 +129,6 @@ public class Kinkster : IComparable<Kinkster>
         });
     }
 
-    #region Kinkster Appearance
 
     public void ApplyLatestMoodles(UserData enactor, string dataString, IEnumerable<MoodlesStatusInfo> dataInfo)
     {
@@ -185,7 +182,6 @@ public class Kinkster : IComparable<Kinkster>
         if (LastMoodlesData is null) return;
         CachedPlayer.UpdateMoodles(LastMoodlesData.DataString);
     }
-    #endregion Kinkster Appearance
 
     public void SetNewMoodlesStatuses(UserData enactor, IEnumerable<MoodlesStatusInfo> statuses)
     {
@@ -547,7 +543,6 @@ public class Kinkster : IComparable<Kinkster>
         {
             if (wait)
                 _creationSemaphore.Wait();
-            LastAppearanceData = new CharaIpcDataFull();
             LastMoodlesData = new CharaMoodleData();
             var player = CachedPlayer;
             CachedPlayer = null;

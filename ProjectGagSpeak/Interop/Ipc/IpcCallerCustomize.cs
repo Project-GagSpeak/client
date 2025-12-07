@@ -8,30 +8,27 @@ using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Interop;
 
-public sealed class IpcCallerCustomize : IIpcCaller
+public sealed class IpcCallerCustomize : DisposableMediatorSubscriberBase, IIpcCaller
 {
     // Version Checks.
     private readonly ICallGateSubscriber<(int, int)> ApiVersion;
 
     // Event Calls.
-    public readonly ICallGateSubscriber<ushort, Guid, object>   OnProfileUpdate;
+    public readonly ICallGateSubscriber<ushort, Guid, object> OnProfileUpdate;
 
     // API Getters
-    private readonly ICallGateSubscriber<ushort, (int, Guid?)>       GetActiveProfile; // get the active profile of a Kinkster via object index.
-    private readonly ICallGateSubscriber<Guid, (int, string?)>       GetProfileById; // obtain that active profiles dataString by GUID.
+    private readonly ICallGateSubscriber<ushort, (int, Guid?)> GetActiveProfile; // get the active profile of a Kinkster via object index.
+    private readonly ICallGateSubscriber<Guid, (int, string?)> GetProfileById; // obtain that active profiles dataString by GUID.
     private readonly ICallGateSubscriber<IList<IPCProfileDataTuple>> GetProfileList; // grab the list of all client profile ids.
 
     // API Enactors
-    private readonly ICallGateSubscriber<Guid, int>                     EnableProfile;
-    private readonly ICallGateSubscriber<Guid, int>                     DisableProfile;
-    private readonly ICallGateSubscriber<ushort, string, (int, Guid?)>  SetTempProfile; // set a temp profile for a character using their json and object idx. Returns the GUID.
-    private readonly ICallGateSubscriber<Guid, int>                     DeleteTempProfile; // remove the generated temporary profile ID for the player.
-    private readonly ICallGateSubscriber<ushort, int>                   RevertKinkster; // revert via object index.
+    private readonly ICallGateSubscriber<Guid, int> EnableProfile;
+    private readonly ICallGateSubscriber<Guid, int> DisableProfile;
 
     private readonly ILogger<IpcCallerCustomize> _logger;
     private readonly GagspeakMediator _mediator;
 
-    public IpcCallerCustomize(ILogger<IpcCallerCustomize> logger, GagspeakMediator mediator)
+    public IpcCallerCustomize(ILogger<IpcCallerCustomize> logger, GagspeakMediator mediator) : base(logger, mediator)
     {
         _logger = logger;
         _mediator = mediator;
@@ -45,30 +42,12 @@ public sealed class IpcCallerCustomize : IIpcCaller
         GetProfileList = Svc.PluginInterface.GetIpcSubscriber<IList<IPCProfileDataTuple>>("CustomizePlus.Profile.GetList");
         // API Enactor Functions
         EnableProfile = Svc.PluginInterface.GetIpcSubscriber<Guid, int>("CustomizePlus.Profile.EnableByUniqueId");
-        SetTempProfile = Svc.PluginInterface.GetIpcSubscriber<ushort, string, (int, Guid?)>("CustomizePlus.Profile.SetTemporaryProfileOnCharacter");
         DisableProfile = Svc.PluginInterface.GetIpcSubscriber<Guid, int>("CustomizePlus.Profile.DisableByUniqueId");
-        DeleteTempProfile = Svc.PluginInterface.GetIpcSubscriber<Guid, int>("CustomizePlus.Profile.DeleteTemporaryProfileByUniqueId");
-        RevertKinkster = Svc.PluginInterface.GetIpcSubscriber<ushort, int>("CustomizePlus.Profile.DeleteTemporaryProfileOnCharacter");
 
-        OnProfileUpdate.Subscribe(ProfileUpdated);
         CheckAPI();
     }
 
     public static bool APIAvailable { get; private set; } = false;
-
-    public void Dispose()
-        => OnProfileUpdate.Unsubscribe(ProfileUpdated);
-    
-    private void ProfileUpdated(ushort objIdx, Guid id)
-    {
-        if (!APIAvailable) return;
-        // get obj ref for address and publish change.
-        Generic.Safe(() =>
-        {
-            if (Svc.Objects[objIdx] is { } obj)
-                _mediator.Publish(new CustomizeProfileChange(obj.Address, id));
-        });
-    }
 
     public void CheckAPI()
     {
@@ -76,7 +55,7 @@ public sealed class IpcCallerCustomize : IIpcCaller
         {
             var version = ApiVersion.InvokeFunc();
             var success = version.Item1 == 6 && version.Item2 >= 0;
-            if(!APIAvailable && success)
+            if (!APIAvailable && success)
                 _mediator.Publish(new CustomizeReady());
             APIAvailable = success;
         }
@@ -100,7 +79,7 @@ public sealed class IpcCallerCustomize : IIpcCaller
     public async Task<string> GetClientProfile()
     {
         if (!APIAvailable) return string.Empty;
-        
+
         var profileStr = await Svc.Framework.RunOnFrameworkThread(() =>
         {
             var res = GetActiveProfile.InvokeFunc(0);
@@ -114,64 +93,6 @@ public sealed class IpcCallerCustomize : IIpcCaller
             return string.Empty;
         // return the valid profile string.
         return Convert.ToBase64String(Encoding.UTF8.GetBytes(profileStr));
-    }
-
-    public async Task<string?> GetKinksterProfile(nint kinksterPtr)
-    {
-        if (!APIAvailable) return null;
-        var profileStr = await Svc.Framework.RunOnFrameworkThread(() =>
-        {
-            // Only accept requests to obtain profiles for players.
-            if (Svc.Objects.CreateObjectReference(kinksterPtr) is { } obj && obj is IPlayerCharacter)
-            {
-                var res = GetActiveProfile.InvokeFunc(obj.ObjectIndex);
-                _logger.LogTrace($"Received active profile for player [{obj.Name}] with EC: [{res.Item1}]", LoggerType.IpcCustomize);
-                
-                if (res.Item1 != 0 || res.Item2 is null) 
-                    return string.Empty;
-        
-                // get the valid data by ID.
-                return GetProfileById.InvokeFunc(res.Item2.Value).Item2;
-            }
-            // default return.
-            return string.Empty;
-        }).ConfigureAwait(false);
-
-        if (string.IsNullOrEmpty(profileStr))
-            return string.Empty;
-        // return the valid profile string.
-        return Convert.ToBase64String(Encoding.UTF8.GetBytes(profileStr));
-    }
-
-    public async Task<Guid?> SetKinksterProfile(PairHandler kinkster, string profileData)
-    {
-        if (!APIAvailable || kinkster.PairObject is not { } visibleObj) return null;
-
-        return await Svc.Framework.RunOnFrameworkThread(() =>
-        {
-            var decodedScale = Encoding.UTF8.GetString(Convert.FromBase64String(profileData));
-            _logger.LogTrace($"Applying Profile to {visibleObj.Name}");
-            // revert the character if the new data to set was empty.
-            if (string.IsNullOrEmpty(profileData))
-            {
-                RevertKinkster.InvokeFunc(visibleObj.ObjectIndex);
-                return null;
-            }
-            // Otherwise set the new profile data.
-            else
-            {
-                return SetTempProfile.InvokeFunc(visibleObj.ObjectIndex, decodedScale).Item2;
-            }
-        }).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    ///     Deletes another Kinkster's Temporary profile, reverting them to their original state.
-    /// </summary>
-    public async Task RevertKinksterProfile(Guid? profileId)
-    {
-        if (!APIAvailable || profileId is null) return;
-        await Svc.Framework.RunOnFrameworkThread(() => DeleteTempProfile.InvokeFunc(profileId.Value)).ConfigureAwait(false);
     }
 
     public List<CustomizeProfile> GetClientProfiles()
@@ -190,7 +111,7 @@ public sealed class IpcCallerCustomize : IIpcCaller
     {
         if (!APIAvailable) return;
 
-        _logger.LogTrace("IPC-Customize is enabling profile "+ profileIdentifier, LoggerType.IpcCustomize);
+        _logger.LogTrace("IPC-Customize is enabling profile " + profileIdentifier, LoggerType.IpcCustomize);
         Generic.Safe(() => EnableProfile.InvokeFunc(profileIdentifier));
     }
 
@@ -200,7 +121,7 @@ public sealed class IpcCallerCustomize : IIpcCaller
     public void DisableClientProfile(Guid profileIdentifier)
     {
         if (!APIAvailable) return;
-        _logger.LogTrace("IPC-Customize is disabling profile ["+profileIdentifier+"]", LoggerType.IpcCustomize);
+        _logger.LogTrace("IPC-Customize is disabling profile [" + profileIdentifier + "]", LoggerType.IpcCustomize);
         Generic.Safe(() => DisableProfile!.InvokeFunc(profileIdentifier));
     }
 }

@@ -301,9 +301,9 @@ public static class GagSpeakServiceExtensions
 
     public static IServiceCollection AddGagSpeakIPC(this IServiceCollection services)
     => services
+        // TODO: sundouleia?
         .AddSingleton<IpcCallerCustomize>()
         .AddSingleton<IpcCallerGlamourer>()
-        .AddSingleton<IpcCallerHonorific>()
         .AddSingleton<IpcCallerIntiface>()
         .AddSingleton<IpcCallerLifestream>()
         .AddSingleton<IpcCallerMoodles>()
