@@ -29,20 +29,15 @@ public class GlamourCache
     }
 
     private readonly SortedList<(CombinedCacheKey, EquipSlot), GlamourSlot> _glamours = new();
-    private readonly Dictionary<MetaIndex, SortedList<CombinedCacheKey, TriStateBool>> _metaStates = new()
-    {
-        { MetaIndex.HatState, new SortedList<CombinedCacheKey, TriStateBool>() },
-        { MetaIndex.VisorState, new SortedList<CombinedCacheKey, TriStateBool>() },
-        { MetaIndex.WeaponState, new SortedList<CombinedCacheKey, TriStateBool>() },
-    };
-    private Dictionary<EquipSlot, GlamourSlot> _finalGlamour       = new();
-    private MetaDataStruct                     _finalMeta          = MetaDataStruct.Empty;
-    private GlamourActorState                  _latestUnboundState = GlamourActorState.Empty;
+    private readonly Dictionary<MetaIndex, SortedList<CombinedCacheKey, TriStateBool>> _metaStates = defaultMetaStates();
+    private Dictionary<EquipSlot, GlamourSlot> _finalGlamour = new();
+    private MetaDataStruct _finalMeta = MetaDataStruct.Empty;
+    private GlamourActorState _latestUnboundState = GlamourActorState.Empty;
 
     public IReadOnlyDictionary<EquipSlot, GlamourSlot> FinalGlamour => _finalGlamour;
     public MetaDataStruct FinalMeta => _finalMeta;
     public bool AnyHatMeta => _metaStates.TryGetValue(MetaIndex.HatState, out var sl) && sl.Count > 0;
-    public bool AnyVisorMeta => _metaStates.TryGetValue(MetaIndex.VisorState, out var sl) && sl.Count > 0;
+    public bool AnyVisorMeta => _metaStates.TryGetValue(MetaIndex.VisorState, out SortedList<CombinedCacheKey, TriStateBool>? sl) && sl.Count > 0;
     public bool AnyWeaponMeta => _metaStates.TryGetValue(MetaIndex.WeaponState, out var sl) && sl.Count > 0;
     public GlamourActorState LastUnboundState => _latestUnboundState;
     public void CacheUnboundState(GlamourActorState state)
@@ -187,6 +182,9 @@ public class GlamourCache
     {
         _glamours.Clear();
         _metaStates.Clear();
+        // Re-initialize the meta states to ensure when the player logs back in its ready to go.
+        foreach (var (metaIdx, _) in defaultMetaStates())
+            _metaStates[metaIdx] = new SortedList<CombinedCacheKey, TriStateBool>();
     }
 
     public bool UpdateFinalGlamourCache(out List<EquipSlot> removedSlots)
@@ -274,6 +272,17 @@ public class GlamourCache
     }
 
 
+    private static Dictionary<MetaIndex, SortedList<CombinedCacheKey, TriStateBool>> defaultMetaStates()
+    {
+        return new()
+        {
+            { MetaIndex.HatState, new SortedList<CombinedCacheKey, TriStateBool>() },
+            { MetaIndex.VisorState, new SortedList<CombinedCacheKey, TriStateBool>() },
+            { MetaIndex.WeaponState, new SortedList<CombinedCacheKey, TriStateBool>() },
+        };
+    }
+
+
     #region DebugHelper
     public void DrawCacheTable(TextureService textures)
     {
@@ -357,7 +366,7 @@ public class GlamourCache
         // split into 3 columns.
         ImGui.Separator();
         using (var node = ImRaii.TreeNode($"Cached MetaData Rows"))
-            if(node)
+            if (node)
             {
                 var columnWidth = ImGui.GetContentRegionAvail().X / 3f;
                 ImGui.Columns(3, "MetaDataColumns", true);
@@ -425,7 +434,7 @@ public class GlamourCache
     private void DrawMetaTableRows(MetaIndex idx)
     {
         using var table = ImRaii.Table($"{idx.ToString()} RowsTable", 2, ImGuiTableFlags.BordersInner | ImGuiTableFlags.RowBg);
-        
+
         if (!table)
             return;
 

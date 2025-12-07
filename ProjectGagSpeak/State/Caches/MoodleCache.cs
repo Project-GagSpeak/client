@@ -1,8 +1,8 @@
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
 using GagSpeak.Services.Textures;
 using GagspeakAPI.Data;
-using Dalamud.Bindings.ImGui;
 using OtterGui;
 
 namespace GagSpeak.State.Caches;
@@ -51,7 +51,7 @@ public class MoodleCache
     {
         if (_moodles.Keys.Any(keys => keys.Item1.Equals(key)))
         {
-            _logger.LogWarning($"Cannot add [{key}] to Cache, the Key already exists!");
+            _logger.LogWarning($"Cannot add [{key}] to Cache, the Key already exists!", LoggerType.VisualCache);
             return false;
         }
 
@@ -59,7 +59,7 @@ public class MoodleCache
         foreach (var item in moodles)
         {
             added |= _moodles.TryAdd((key, item.Id), item);
-            if(added) _logger.LogDebug($"Added KeyValuePair ([{key}] - [{item.Id}]) to Cache.");
+            if (added) _logger.LogDebug($"Added KeyValuePair ([{key}] - [{item.Id}]) to Cache.", LoggerType.VisualCache);
         }
         return added;
     }
@@ -69,7 +69,7 @@ public class MoodleCache
         var originalKey = _moodles.Keys.FirstOrDefault(k => k.Item1.Equals(key));
         if (!_moodles.ContainsKey(originalKey))
         {
-            _logger.LogWarning($"Cannot update Moodle with Key [{key}], it does not exist in the Cache!");
+            _logger.LogWarning($"Cannot update Moodle with Key [{key}], it does not exist in the Cache!", LoggerType.VisualCache);
             return false;
         }
         // Remove the old entry
@@ -77,7 +77,7 @@ public class MoodleCache
         // Add the new entry with the same CombinedCacheKey and new moodle's Id
         _moodles.Add((originalKey.Item1, newMoodle.Id), newMoodle);
 
-        _logger.LogDebug($"Updated Moodle with Key [{key}] to new Moodle Id [{newMoodle.Id}]");
+        _logger.LogDebug($"Updated Moodle with Key [{key}] to new Moodle Id [{newMoodle.Id}]", LoggerType.VisualCache);
         return true;
     }
 
@@ -91,7 +91,7 @@ public class MoodleCache
         var allKeys = _moodles.Keys.Where(k => keys.Contains(k.Item1)).ToList();
         if (!allKeys.Any())
         {
-            _logger.LogWarning($"None of the CombinedKeys were found in the MoodleCache!");
+            _logger.LogWarning($"None of the CombinedKeys were found in the MoodleCache!", LoggerType.VisualCache);
             return false;
         }
 
@@ -99,7 +99,7 @@ public class MoodleCache
         bool anyRemoved = false;
         foreach (var key in allKeys)
         {
-            _logger.LogDebug($"Removing Cache key ([{key.Item1}] - [{key.Item2}])");
+            _logger.LogDebug($"Removing Cache key ([{key.Item1}] - [{key.Item2}])", LoggerType.VisualCache);
             anyRemoved |= _moodles.Remove(key);
         }
         return anyRemoved;
@@ -187,6 +187,6 @@ public class MoodleCache
         ImGui.SameLine();
         drawer.DrawIconsOrEmpty(_finalStatusIds, ImGui.GetContentRegionAvail().X, rows: 2);
     }
-    
+
     #endregion DebugHelper
 }

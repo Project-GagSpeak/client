@@ -22,7 +22,7 @@ public class MoodleListener : DisposableMediatorSubscriberBase
     private bool _isZoning = false;
 
     public MoodleListener(ILogger<MoodleListener> logger, GagspeakMediator mediator,
-        MoodleCache cache, IpcProvider ipcProvider, IpcCallerMoodles ipc, 
+        MoodleCache cache, IpcProvider ipcProvider, IpcCallerMoodles ipc,
         KinksterManager kinksters, DistributorService dds)
         : base(logger, mediator)
     {
@@ -49,6 +49,9 @@ public class MoodleListener : DisposableMediatorSubscriberBase
         // Helps us handle preventing changes while zoning.
         Mediator.Subscribe<ZoneSwitchStartMessage>(this, (msg) => _isZoning = true);
         Mediator.Subscribe<ZoneSwitchEndMessage>(this, (msg) => _isZoning = false);
+
+        // Ensure we re-sync moodles when we connect to the main hub.
+        Mediator.Subscribe<MainHubConnectedMessage>(this, async _ => await CheckAndUpdateClientMoodles());
     }
 
     protected override void Dispose(bool disposing)
