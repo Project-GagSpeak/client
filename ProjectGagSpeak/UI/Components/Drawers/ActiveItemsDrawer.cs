@@ -294,7 +294,6 @@ public class ActiveItemsDrawer
             _layerFlagsWidget.DrawLayerCheckboxes(data.ActiveLayers, options, _ => {
                 var idx = BitOperations.TrailingZeroCount((int)_); return (idx < dispData.Layers.Count) && (!dispData.Layers[idx].Label.IsNullOrWhitespace()) ? dispData.Layers[idx].Label : $"Layer {idx + 1}";
             });
-            //((int)_).IsInRange(dispData.Layers) ? dispData.Layers[(int)_].Label : _.ToString());
         }
         _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EditingLayers, ImGui.GetWindowPos(), ImGui.GetWindowSize());
     }

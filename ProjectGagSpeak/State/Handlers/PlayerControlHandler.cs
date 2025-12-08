@@ -45,7 +45,6 @@ public class PlayerCtrlHandler
         _overlay = overlay;
         _hcTasks = hcTasks;
         _kinksters = kinksters;
-        //_cachedPlayerMoveMode = Svc.GameConfig.UiControl.TryGetUInt("MoveMode", out var mode) && mode == 1 ? MovementMode.Legacy : MovementMode.Standard;
     }
 
     public async void ApplyHypnoEffect(UserData enactor, HypnoticEffect effect, DateTimeOffset expireTimeUTC, string? image)
@@ -110,7 +109,7 @@ public class PlayerCtrlHandler
         _movement.ResetTimeoutTracker();
         if (_cachedPlayerMoveMode != MovementMode.NotSet)
         {
-            GameConfig.UiControl.Set("MoveMode", (uint)_cachedPlayerMoveMode); // BUG: This will revert control mode to standard if it ever gets MovementMode.NotSet.
+            GameConfig.UiControl.Set("MoveMode", (uint)_cachedPlayerMoveMode); //This will revert control mode to standard if it ever gets MovementMode.NotSet.
             _logger.LogDebug($"Restored Player Movement Mode: {_cachedPlayerMoveMode}", LoggerType.HardcoreMovement);
         }
         _cachedPlayerMoveMode = MovementMode.NotSet;

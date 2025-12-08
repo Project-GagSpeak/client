@@ -127,7 +127,7 @@ public sealed class LootHandler
         // run our first roll, return if not in range.
         var roll = new Random().Next(1, 101); // 0,101 will return 0 to 100 inclusive, so 1,101 is what you want for 1-100 inclusive (and for a config value of 5% to not actually be 5.9%[6/101] chance)
         _logger.LogDebug($"Cursed Loot Roll: {roll} vs Chance: {_manager.LockChance}", LoggerType.CursedItems);
-        if (roll > _manager.LockChance) // This should have been an OR, but the zero check is redundant with the chance being between 1-100, 0 will never be rolled.
+        if (roll > _manager.LockChance)
             return;
 
         // Return if there is nothing to apply.to.
@@ -149,7 +149,6 @@ public sealed class LootHandler
             if (await ApplyCursedGag(cg, lockTime))
                 return;
         }
-        // why is this checked twice? why can't it just assume it's a restriction item?
         else if (chosen is CursedRestrictionItem cri)
         {
             if (await ApplyCursedRestriction(cri, lockTime))
@@ -157,24 +156,9 @@ public sealed class LootHandler
         }
         else
         {
-            _logger.LogError("What how did we get here. Chosen cursed item was neither gag nor restriction???", LoggerType.CursedItems);
+            _logger.LogError("Chosen cursed item was neither gag nor restriction", LoggerType.CursedItems);
             return;
         }
-
-        //// Give restrictions a chance at redemption.
-        //var validRestrictions = validItems.OfType<CursedRestrictionItem>().ToList();
-
-        //// Abort if 0 items remaining.
-        //if (validRestrictions.Count is 0)
-            //return;
-
-        //// Roll again for the valid item
-        //chosenIdx = new Random().Next(0, validRestrictions.Count);
-        //var newChosen = validRestrictions[chosenIdx];
-
-        //// Otherwise, we can try to apply a restriction item.
-        //if (_restrictions.ServerRestrictionData is { } cri && !cri.Restrictions.Any(x => x.Identifier == chosen.Identifier))
-            //await ApplyCursedRestriction(newChosen, lockTime);
     }
 
     private AppliedItem FromGag(GarblerRestriction gag, TimeSpan lockTime)
