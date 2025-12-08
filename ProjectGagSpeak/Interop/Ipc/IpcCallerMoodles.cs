@@ -34,8 +34,8 @@ public sealed class IpcCallerMoodles : IIpcCaller
     private readonly ICallGateSubscriber<string, string> GetOtherStatusManager;
     private readonly ICallGateSubscriber<string, List<MoodlesStatusInfo>> GetOtherStatusManagerInfo;
 
-    // I honestly forgot where this is used.
-    private readonly ICallGateSubscriber<string, string, List<MoodlesStatusInfo>, object> ApplyStatusFromPair;
+    // Used when a pair applies their statuses to us.
+    private readonly ICallGateSubscriber<string, List<MoodlesStatusInfo>, object> ApplyStatusFromPair;
 
     // API Enactors
     private readonly ICallGateSubscriber<Guid, string, object> ApplyStatus;
@@ -70,7 +70,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
         RemoveStatuses = Svc.PluginInterface.GetIpcSubscriber<List<Guid>, string, object>("Moodles.RemoveMoodlesByNameV2");
         SetStatusManager = Svc.PluginInterface.GetIpcSubscriber<string, string, object>("Moodles.SetStatusManagerByNameV2");
         ClearStatusManager = Svc.PluginInterface.GetIpcSubscriber<string, object>("Moodles.ClearStatusManagerByNameV2");
-        ApplyStatusFromPair = Svc.PluginInterface.GetIpcSubscriber<string, string, List<MoodlesStatusInfo>, object>("Moodles.ApplyStatusesFromGSpeakPair");
+        ApplyStatusFromPair = Svc.PluginInterface.GetIpcSubscriber<string, List<MoodlesStatusInfo>, object>("Moodles.GagSpeak.StatusInfoAppliedByPair");
 
         // API Action Events:
         OnStatusManagerModified = Svc.PluginInterface.GetIpcSubscriber<IPlayerCharacter, object>("Moodles.StatusManagerModified");

@@ -450,7 +450,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         }
 
         Mediator.Publish(new EventMessage(new(pair.GetNickAliasOrUid(), pair.UserData.UID, InteractionType.ApplyPairMoodle, "Pair's Moodle Status(s) Applied to self!")));
-        await _interop.Moodles.ApplyStatusesFromPairToSelf(pair.PlayerNameWithWorld, clientPlayerNameWithWorld, dto.Statuses);
+        await _interop.Moodles.ApplyStatusesFromPairToSelf(pair.PlayerNameWithWorld, dto.Statuses);
     }
 
     public async Task RemoveStatusesFromSelf(MoodlesRemoval dto)
