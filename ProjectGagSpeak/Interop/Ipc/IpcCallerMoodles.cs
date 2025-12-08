@@ -35,7 +35,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     private readonly ICallGateSubscriber<string, List<MoodlesStatusInfo>> GetOtherStatusManagerInfo;
 
     // Used when a pair applies their statuses to us.
-    private readonly ICallGateSubscriber<string, List<MoodlesStatusInfo>, object> ApplyStatusFromPair;
+    // private readonly ICallGateSubscriber<string, List<MoodlesStatusInfo>, object> ApplyStatusFromPair;
 
     // API Enactors
     private readonly ICallGateSubscriber<Guid, string, object> ApplyStatus;
@@ -70,7 +70,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
         RemoveStatuses = Svc.PluginInterface.GetIpcSubscriber<List<Guid>, string, object>("Moodles.RemoveMoodlesByNameV2");
         SetStatusManager = Svc.PluginInterface.GetIpcSubscriber<string, string, object>("Moodles.SetStatusManagerByNameV2");
         ClearStatusManager = Svc.PluginInterface.GetIpcSubscriber<string, object>("Moodles.ClearStatusManagerByNameV2");
-        ApplyStatusFromPair = Svc.PluginInterface.GetIpcSubscriber<string, List<MoodlesStatusInfo>, object>("Moodles.GagSpeak.StatusInfoAppliedByPair");
+        // ApplyStatusFromPair = Svc.PluginInterface.GetIpcSubscriber<string, List<MoodlesStatusInfo>, object>("GagSpeak.StatusInfoAppliedByPair");
 
         // API Action Events:
         OnStatusManagerModified = Svc.PluginInterface.GetIpcSubscriber<IPlayerCharacter, object>("Moodles.StatusManagerModified");
@@ -173,9 +173,10 @@ public sealed class IpcCallerMoodles : IIpcCaller
     }
 
     /// <summary> This method applies the statuses from a pair to the client </summary>
-    public async Task ApplyStatusesFromPairToSelf(string applierNameWithWorld, string recipientNameWithWorld, IEnumerable<MoodlesStatusInfo> statuses)
+    public async Task ApplyStatusesFromPairToSelf(string applierNameWithWorld, IEnumerable<MoodlesStatusInfo> statuses)
     {
-        await ExecuteIpcOnThread(() => ApplyStatusFromPair.InvokeAction(applierNameWithWorld, recipientNameWithWorld, [.. statuses]));
+        // TODO: figure out relationship with sundeouleia
+        // await ExecuteIpcOnThread(() => ApplyStatusFromPair.InvokeAction(applierNameWithWorld, [.. statuses]));
     }
 
     /// <summary> This method removes the moodles from the client </summary>
