@@ -229,7 +229,7 @@ public class ActiveItemsDrawer
             GagComboChanged(applyCombo, slotIdx, data.GagItem);
     }
 
-    public void LockItemGroup(int slotIdx, ActiveRestriction data, RestrictionItem dispData)
+    public void LockItemGroup(int slotIdx, ActiveRestriction data, RestrictionItem? dispData)
     {
         using var group = ImRaii.Group();
 
@@ -329,7 +329,7 @@ public class ActiveItemsDrawer
         DrawFramedImage(data.Padlock, padlockSize.X, padlockSize.X / 2);
     }
 
-    public void UnlockItemGroup(int slotIdx, ActiveRestriction data, RestrictionItem dispData)
+    public void UnlockItemGroup(int slotIdx, ActiveRestriction data, RestrictionItem? dispData)
     {
         using var group = ImRaii.Group();
 

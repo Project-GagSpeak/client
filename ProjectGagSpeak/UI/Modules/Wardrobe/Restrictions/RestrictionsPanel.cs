@@ -2,6 +2,7 @@ using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Raii;
 using CkCommons.Widgets;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.FileSystems;
@@ -15,7 +16,6 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
-using Dalamud.Bindings.ImGui;
 using OtterGui.Extensions;
 using OtterGui.Text;
 
@@ -154,7 +154,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         // Draw the left items.
         if (_selector.Selected is not null)
             DrawSelectedInner(imgSize.X, isActive);
-        
+
         // Draw the right image item.
         ImGui.GetWindowDrawList().AddRectFilled(imgDrawPos, imgDrawPos + imgSize, CkColor.FancyHeaderContrast.Uint(), rounding);
         ImGui.SetCursorScreenPos(imgDrawPos);
@@ -239,13 +239,13 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
 
         var height = ImGui.GetContentRegionAvail().Y;
         var groupH = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
-        var groupSpacing = (height - 5 * groupH) / 7;
+        var groupSpacing = (height - 5 * groupH) / 6;
 
 
         foreach (var (data, index) in activeSlots.Restrictions.WithIndex())
         {
             // Spacing.
-            if (index > 0) ImGui.SetCursorPosY(ImGui.GetCursorPosY() + groupSpacing);
+            ImGui.SetCursorPosY((groupH + groupSpacing) * index);
 
             // if no item is selected, display the unique 'Applier' group.
             if (data.Identifier == Guid.Empty)
@@ -254,16 +254,15 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
                 continue;
             }
 
-            // Otherwise, if the item is sucessfully applied, display the locked states, based on what is active.
-            if (_manager.ActiveItems.TryGetValue(index, out var item))
-            {
-                // If the padlock is currently locked, show the 'Unlocking' group.
-                if (data.IsLocked())
-                    _activeItemDrawer.UnlockItemGroup(index, data, item);
-                // Otherwise, show the 'Locking' group. Locking group can still change applied items.
-                else
-                    _activeItemDrawer.LockItemGroup(index, data, item);
-            }
+            // Get the item if it exists, otherwise, null. (this is fine, it's only used to display the image, which has null checks.)
+            _manager.ActiveItems.TryGetValue(index, out var item);
+
+            // If the padlock is currently locked, show the 'Unlocking' group.
+            if (data.IsLocked())
+                _activeItemDrawer.UnlockItemGroup(index, data, item);
+            // Otherwise, show the 'Locking' group. Locking group can still change applied items.
+            else
+                _activeItemDrawer.LockItemGroup(index, data, item);
         }
     }
 }
