@@ -263,8 +263,24 @@ public class Kinkster : IComparable<Kinkster>
             LightCache = new KinksterCache(data.LightStorageData);
         }
 
-        // Update the cached kinkplate data (although we will likely rework this soon)
-        UpdateCachedLockedSlots();
+        // Deterministic AliasData setting.
+        if (data.PairAliasData.TryGetValue(MainHub.UID, out var match))
+        {
+            _logger.LogTrace($"{UserData.UID} {LastPairAliasData.ExtractedListenerName} {LastPairAliasData.Storage.Items.Count} to replace withmatch.ExtractedListenerName {match.Storage.Items.Count}");
+            LastPairAliasData = match;
+        }
+        else
+        {
+            _logger.LogTrace($"{UserData.UID} could not be found in LastPairAliasData");
+            foreach (var storage in data.PairAliasData)
+            {
+                _logger.LogTrace($"{storage.Key} {storage.Value.ExtractedListenerName} {storage.Value.StoredNameWorld}");
+                foreach (var item in storage.Value.Storage.Items)
+                {
+                    _logger.LogTrace($"{item.Identifier} {item.InputCommand}");
+                }
+            }
+        }
 
         // Regarldess of the change, we should update the kinkster's latest data to the achievement handler.
         _logger.LogDebug($"Aligning Achievement Trackers in sync with {GetNickAliasOrUid()}'s latest composite data!", LoggerType.PairDataTransfer);
