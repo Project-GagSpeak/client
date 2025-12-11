@@ -1,12 +1,8 @@
 using CkCommons;
 using CkCommons.Helpers;
-using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Interface.ImGuiNotification;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using GagSpeak.Kinksters;
-using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
@@ -15,12 +11,8 @@ using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
-using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
-using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
-using System.Xml;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.State.Handlers;
 
@@ -43,7 +35,7 @@ public sealed class LootHandler
     private uint _prevOpenedLootObjectId = 0;
     private Task? _openLootTask = null;
 
-    public LootHandler(ILogger<LootHandler> logger, GagspeakMediator mediator, GagRestrictionManager gags, 
+    public LootHandler(ILogger<LootHandler> logger, GagspeakMediator mediator, GagRestrictionManager gags,
         RestrictionManager restrictions, CursedLootManager manager, VisualStateListener visuals,
         MainConfig config, DistributorService dds)
     {
@@ -60,8 +52,8 @@ public sealed class LootHandler
     public bool LootTaskRunning => _openLootTask is not null && !_openLootTask.IsCompleted;
 
     /// <summary> If any cursed loot can even be applied at the moment. </summary>
-    public bool CanApplyAnyLoot 
-        => _config.Current.CursedLootUI && MainHub.IsServerAlive && _manager.Storage.InactiveLoot.Any();
+    public bool CanApplyAnyLoot
+        => _config.Current.CursedLootUI && MainHub.IsServerAlive && _manager.Storage.ActiveUnappliedLoot.Any();
 
     /// <summary> If the GameObject is a deep dungeon coffer or a treasure chest. </summary>
     public unsafe bool IsAnyTreasure(GameObject* obj)
@@ -71,7 +63,7 @@ public sealed class LootHandler
         => obj->GetGameObjectId().ObjectId == _prevOpenedLootObjectId;
 
     public unsafe bool ObjectInLootInstance(uint gameObjId)
-        => PlayerData.InSoloParty ? true : Loot.Instance()->Items.ToArray().Any(x => x.ChestObjectId == gameObjId);
+        => PlayerData.InSoloParty || Loot.Instance()->Items.ToArray().Any(x => x.ChestObjectId == gameObjId);
 
 
     /// <summary>
@@ -85,7 +77,7 @@ public sealed class LootHandler
         && obj->EventHandler->Info.EventId.EntryId is 560
         && obj->EventHandler->Info.EventId.ContentId is EventHandlerContent.GimmickAccessor
         && NodeStringLang.DeepDungeonCoffer.Any(n => n.Equals(obj->NameString.ToString()));
-    
+
     /// <summary> 
     ///     Handles opening a loot item to apply cursed loot!. <para />
     ///     Expects that all of the above helper's returned true (where nessisary).
@@ -112,7 +104,7 @@ public sealed class LootHandler
             var objId = obj->GetGameObjectId().ObjectId;
             // If in a party with other players, make sure we are the first to open it.
             if (ObjectInLootInstance(objId))
-            { 
+            {
                 _logger.LogTrace("Chest was already opened by someone else! Skipping.", LoggerType.CursedItems);
                 return;
             }
@@ -133,42 +125,40 @@ public sealed class LootHandler
     private async Task ApplyCursedLoot()
     {
         // run our first roll, return if not in range.
-        var roll = new Random().Next(0, 101);
-        if (_manager.LockChance == 0 && roll > _manager.LockChance)
+        var roll = new Random().Next(1, 101); // 0,101 will return 0 to 100 inclusive, so 1,101 is what you want for 1-100 inclusive (and for a config value of 5% to not actually be 5.9%[6/101] chance)
+        _logger.LogDebug($"Cursed Loot Roll: {roll} vs Chance: {_manager.LockChance}", LoggerType.CursedItems);
+        if (roll > _manager.LockChance)
             return;
 
         // Return if there is nothing to apply.to.
-        var validItems = _manager.Storage.InactiveLoot;
+        var validItems = _manager.Storage.ActiveUnappliedLoot;
         if (validItems.Count <= 0)
             return;
 
         // Select a random item index to apply.
         var chosenIdx = new Random().Next(0, validItems.Count);
         var chosen = validItems[chosenIdx];
-        
+
         // Calculate the timespan to apply the lock for.
         var lockTime = Generators.GetRandomTimeSpan(_manager.LockRangeLower, _manager.LockRangeUpper);
 
         // If the chosen item is a gag, and there is space to apply one, apply the gag item.
         // (This will fail if it is a restriction item that was selected).
         if (chosen is CursedGagItem cg && _gags.ServerGagData?.FindFirstUnused() != -1)
+        {
             if (await ApplyCursedGag(cg, lockTime))
                 return;
-
-        // Give restrictions a chance at redemption.
-        var validRestrictions = validItems.OfType<CursedRestrictionItem>().ToList();
-
-        // Abort if 0 items remaining.
-        if (validRestrictions.Count is 0)
+        }
+        else if (chosen is CursedRestrictionItem cri)
+        {
+            if (await ApplyCursedRestriction(cri, lockTime))
+                return;
+        }
+        else
+        {
+            _logger.LogError("Chosen cursed item was neither gag nor restriction", LoggerType.CursedItems);
             return;
-
-        // Roll again for the valid item
-        chosenIdx = new Random().Next(0, validRestrictions.Count);
-        var newChosen = validRestrictions[chosenIdx];
-
-        // Otherwise, we can try to apply a restriction item.
-        if (_restrictions.ServerRestrictionData is { } cri && !cri.Restrictions.Any(x => x.Identifier == chosen.Identifier))
-            await ApplyCursedRestriction(newChosen, lockTime);
+        }
     }
 
     private AppliedItem FromGag(GarblerRestriction gag, TimeSpan lockTime)

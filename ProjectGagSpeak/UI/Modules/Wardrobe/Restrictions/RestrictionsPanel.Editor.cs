@@ -50,14 +50,10 @@ public partial class RestrictionsPanel
             .Push(ImGuiCol.FrameBg, CkColor.FancyHeaderContrast.Uint())
             .Push(ImGuiCol.ChildBg, CkColor.FancyHeaderContrast.Uint());
 
-        ImGui.SetWindowFontScale(1.25f);
         var styler = ImGui.GetStyle();
         var childGroupSize = new Vector2(ImGui.GetFrameHeight() * 2 + styler.ItemInnerSpacing.X, ImGui.GetFrameHeight());
         var itemSpacing = (contentRegionAvail.X - CkGui.IconButtonSize(FAI.Save).X - (childGroupSize.X * 3)) / 5;
 
-
-        // Shift this grouped set down so it is centered on Y axis.
-        ImGui.Dummy(new Vector2(contentRegionAvail.X, ((contentRegionAvail.Y - ImGui.GetFrameHeight()) / 2) - styler.ItemSpacing.Y));
 
         // Handle the Meta ONLY if they are a blindfold restriction.
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + itemSpacing);
