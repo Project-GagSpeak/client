@@ -3,6 +3,7 @@ using CkCommons.Gui;
 using CkCommons.Gui.Utility;
 using CkCommons.Helpers;
 using CkCommons.Raii;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
@@ -18,7 +19,6 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
-using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Components;
@@ -146,7 +146,7 @@ public sealed class AliasItemDrawer
         ImGui.TableNextColumn();
         // Ensure its a valid texture wrap
         if (CosmeticService.CoreTextures.Cache[CoreTexture.Icon256Bg] is { } wrap)
-            ImGui.Image(wrap.ImGuiHandle, new(96, 96));
+            ImGui.Image(wrap.Handle, new(96, 96));
     }
 
 
@@ -229,7 +229,7 @@ public sealed class AliasItemDrawer
             1);
     }
 
-    public void DrawAliasTrigger(AliasTrigger aliasItem, CharaIPCData ipc, out bool startEditing, bool canEdit = true)
+    public void DrawAliasTrigger(AliasTrigger aliasItem, CharaMoodleData ipc, out bool startEditing, bool canEdit = true)
     {
         startEditing = false;
         var isContained = ExpandedTriggers.Contains(aliasItem.Identifier);
@@ -244,7 +244,7 @@ public sealed class AliasItemDrawer
             var rightButtonWidth = canEdit
                 ? CkGui.IconButtonSize(FAI.Edit).X * 2 + ImGui.GetStyle().ItemInnerSpacing.X
                 : CkGui.IconButtonSize(FAI.Edit).X;
- 
+
             CkGui.BooleanToColoredIcon(aliasItem.Enabled, false);
             if (ImGui.IsItemClicked() && canEdit)
                 _manager.ToggleState(aliasItem);

@@ -218,8 +218,8 @@ public class Kinkster : IComparable<Kinkster>
             ActiveRestraint = data.Restraint;
             ActiveCursedItems = data.ActiveCursedItems;
             LastGlobalAliasData = data.GlobalAliasData;
-            if (data.PairAliasData.TryGetValue(UserData.UID, out var match))
-                LastPairAliasData = match;
+            if (data.PairAliasData.TryGetValue(UserData.UID, out var m))
+                LastPairAliasData = m;
             ValidToys = data.ValidToys;
             ActivePattern = data.ActivePattern;
             ActiveAlarms = data.ActiveAlarms;
@@ -231,7 +231,7 @@ public class Kinkster : IComparable<Kinkster>
         }
 
         // Deterministic AliasData setting.
-        if (data.PairAliasData.TryGetValue(MainHub.UID, out var match))
+        if (data.PairAliasData.TryGetValue(UserData.UID, out var match))
         {
             _logger.LogTrace($"{UserData.UID} {LastPairAliasData.ExtractedListenerName} {LastPairAliasData.Storage.Items.Count} to replace withmatch.ExtractedListenerName {match.Storage.Items.Count}");
             LastPairAliasData = match;
