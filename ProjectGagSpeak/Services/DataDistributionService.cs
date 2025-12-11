@@ -31,7 +31,6 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
     private readonly AlarmManager _alarmManager;
     private readonly TriggerManager _triggerManager;
     private readonly TraitAllowanceManager _traitManager;
-    private readonly KinksterSyncService _kinksterSync;
 
     private SemaphoreSlim _updateSlim = new SemaphoreSlim(1, 1);
     private readonly HashSet<UserData> _newVisibleKinksters = [];

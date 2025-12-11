@@ -2,6 +2,7 @@ using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Raii;
 using CkCommons.Widgets;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
@@ -16,10 +17,9 @@ using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Hub;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
-using Dalamud.Bindings.ImGui;
+using GagspeakAPI.Hub;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Modules.Puppeteer;
@@ -50,17 +50,7 @@ public class PuppetVictimUniquePanel : DisposableMediatorSubscriberBase
         _hub = hub;
         _aliasDrawer = aliasDrawer;
         _manager = manager;
-        _pairCombo = new PairCombo(logger, kinksters, favorites, () => [
-            ..kinksters.DirectPairs
-                .OrderByDescending(p => favorites._favoriteKinksters.Contains(p.UserData.UID))
-                .ThenByDescending(u => u.IsVisible)
-                .ThenByDescending(u => u.IsOnline)
-                .ThenBy(pair => !pair.PlayerName.IsNullOrEmpty()
-                    ? (config.Current.PreferNicknamesOverNames ? pair.GetNickAliasOrUid() : pair.PlayerName)
-                    : pair.GetNickAliasOrUid(), StringComparer.OrdinalIgnoreCase)
-        ]);
-
-        Mediator.Subscribe<RefreshUiMessage>(this, _ => _pairCombo.RefreshPairList());
+        _pairCombo = new PairCombo(logger, mediator, config, kinksters, favorites);
     }
 
     public Kinkster? Selected => _controllerPanel.SelectedKinkster;

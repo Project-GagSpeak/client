@@ -30,7 +30,6 @@ public class Kinkster : IComparable<Kinkster>
     private readonly SemaphoreSlim _creationSemaphore = new(1);
     private readonly ServerConfigManager _nickConfig;
 
-    private CancellationTokenSource _appearanceCTS = new CancellationTokenSource();
     private CancellationTokenSource _moodlesCTS = new CancellationTokenSource();
     private OnlineKinkster? _OnlineKinkster = null;
 
@@ -59,7 +58,6 @@ public class Kinkster : IComparable<Kinkster>
     private PairHandler? CachedPlayer { get; set; }
 
     // Active States
-    public CharaIpcDataFull LastAppearanceData { get; private set; } = new CharaIpcDataFull();
     public CharaMoodleData LastMoodlesData { get; private set; } = new CharaMoodleData();
     public CharaActiveGags ActiveGags { get; private set; } = new CharaActiveGags();
     public CharaActiveRestrictions ActiveRestrictions { get; private set; } = new CharaActiveRestrictions();
@@ -72,7 +70,7 @@ public class Kinkster : IComparable<Kinkster>
     public Guid ActivePattern { get; private set; } = Guid.Empty;
     public List<Guid> ActiveAlarms { get; private set; } = new();
     public List<Guid> ActiveTriggers { get; private set; } = new();
-    
+
     // Internal Data.
     public KinksterCache LightCache { get; private set; } = new KinksterCache();
 
@@ -131,28 +129,6 @@ public class Kinkster : IComparable<Kinkster>
         });
     }
 
-    #region Kinkster Appearance
-    public void ApplyLatestAppearance(CharaIpcDataFull newAppearance)
-    {
-        _appearanceCTS = _appearanceCTS.SafeCancelRecreate();
-        LastAppearanceData.UpdateNonNull(newAppearance);
-        ApplyLatestInternal(_appearanceCTS, ApplyLastReceivedAppearance);
-    }
-
-    public void ApplyLatestAppearance(DataSyncKind type, string newDataString)
-    {
-        LastAppearanceData.UpdateNewData(type, newDataString);
-        // if the cached player is null, do the wait, otherwise, do the direct.
-        if (CachedPlayer is null)
-        {
-            _appearanceCTS = _appearanceCTS.SafeCancelRecreate();
-            ApplyLatestInternal(_appearanceCTS, ApplyLastReceivedAppearance);
-        }
-        else
-        {
-            CachedPlayer.ApplyAppearanceSingle(type, newDataString).ConfigureAwait(false);
-        }
-    }
 
     public void ApplyLatestMoodles(UserData enactor, string dataString, IEnumerable<MoodlesStatusInfo> dataInfo)
     {
@@ -197,15 +173,7 @@ public class Kinkster : IComparable<Kinkster>
 
     public void ReapplyLatestData()
     {
-        ApplyLastReceivedAppearance();
         ApplyLastReceivedMoodles();
-    }
-
-    private void ApplyLastReceivedAppearance()
-    {
-        if (CachedPlayer is null) return;
-        if (LastAppearanceData is null) return;
-        CachedPlayer.ApplyAppearanceData(LastAppearanceData).ConfigureAwait(false);
     }
 
     private void ApplyLastReceivedMoodles()
@@ -214,7 +182,6 @@ public class Kinkster : IComparable<Kinkster>
         if (LastMoodlesData is null) return;
         CachedPlayer.UpdateMoodles(LastMoodlesData.DataString);
     }
-    #endregion Kinkster Appearance
 
     public void SetNewMoodlesStatuses(UserData enactor, IEnumerable<MoodlesStatusInfo> statuses)
     {
@@ -251,8 +218,8 @@ public class Kinkster : IComparable<Kinkster>
             ActiveRestraint = data.Restraint;
             ActiveCursedItems = data.ActiveCursedItems;
             LastGlobalAliasData = data.GlobalAliasData;
-            if (data.PairAliasData.TryGetValue(UserData.UID, out var match))
-                LastPairAliasData = match;
+            if (data.PairAliasData.TryGetValue(UserData.UID, out var m))
+                LastPairAliasData = m;
             ValidToys = data.ValidToys;
             ActivePattern = data.ActivePattern;
             ActiveAlarms = data.ActiveAlarms;
@@ -264,7 +231,7 @@ public class Kinkster : IComparable<Kinkster>
         }
 
         // Deterministic AliasData setting.
-        if (data.PairAliasData.TryGetValue(MainHub.UID, out var match))
+        if (data.PairAliasData.TryGetValue(UserData.UID, out var match))
         {
             _logger.LogTrace($"{UserData.UID} {LastPairAliasData.ExtractedListenerName} {LastPairAliasData.Storage.Items.Count} to replace withmatch.ExtractedListenerName {match.Storage.Items.Count}");
             LastPairAliasData = match;
@@ -447,7 +414,7 @@ public class Kinkster : IComparable<Kinkster>
     }
 
     public void NewGlobalAlias(Guid id, AliasTrigger? newData)
-    { 
+    {
         // Try and find the existing alias data by its ID.
         if (LastGlobalAliasData.Items.FirstOrDefault(a => a.Identifier == id) is { } match)
         {
@@ -458,7 +425,7 @@ public class Kinkster : IComparable<Kinkster>
                 LastGlobalAliasData.Items.Remove(match);
                 return; // exit early since we removed it.
             }
-            
+
             // Update it.
             _logger.LogDebug($"Updating Global Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
             match = newData;
@@ -576,14 +543,13 @@ public class Kinkster : IComparable<Kinkster>
         {
             if (wait)
                 _creationSemaphore.Wait();
-            LastAppearanceData = new CharaIpcDataFull();
             LastMoodlesData = new CharaMoodleData();
             var player = CachedPlayer;
             CachedPlayer = null;
             player?.Dispose();
             _OnlineKinkster = null;
 
-            if(showLog)
+            if (showLog)
                 _logger.LogTrace($"Marked {UserData.UID} as offline", LoggerType.PairManagement);
         }
         finally

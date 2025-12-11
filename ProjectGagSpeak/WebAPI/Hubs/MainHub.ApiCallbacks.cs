@@ -96,7 +96,7 @@ public partial class MainHub
         // return completed
         return Task.CompletedTask;
     }
-    
+
     public Task Callback_ServerInfo(ServerInfoResponse serverInfo)
     {
         _serverInfo = serverInfo;
@@ -150,15 +150,13 @@ public partial class MainHub
     #region KinksterSync
     public Task Callback_SetKinksterIpcData(KinksterIpcData dto)
     {
-        Logger.LogDebug($"Callback_SetKinksterIpcData: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        _kinksterListener.NewAppearanceData(dto.User, dto.NewData);
+        // TODO: remove
         return Task.CompletedTask;
     }
 
     public Task Callback_SetKinksterIpcSingle(KinksterIpcSingle dto)
     {
-        Logger.LogDebug($"Callback_SetKinksterIpcSingle: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        _kinksterListener.NewAppearanceData(dto.User, dto.Type, dto.NewData);
+        // TODO: remove
         return Task.CompletedTask;
     }
     #endregion KinksterSync
@@ -189,38 +187,34 @@ public partial class MainHub
         return Task.CompletedTask;
     }
 
-    public Task Callback_ApplyMoodlesByGuid(MoodlesApplierById dto)
+    public async Task Callback_ApplyMoodlesByGuid(MoodlesApplierById dto)
     {
-        Logger.LogDebug("Callback_ApplyMoodlesByGuid: "+dto, LoggerType.Callbacks);
-        _visualListener.ApplyStatusesByGuid(dto);
-        return Task.CompletedTask;
+        Logger.LogDebug("Callback_ApplyMoodlesByGuid: " + dto, LoggerType.Callbacks);
+        await _visualListener.ApplyStatusesByGuid(dto);
     }
 
-    public Task Callback_ApplyMoodlesByStatus(MoodlesApplierByStatus dto)
+    public async Task Callback_ApplyMoodlesByStatus(MoodlesApplierByStatus dto)
     {
-        Logger.LogDebug("Callback_ApplyMoodlesByStatus: "+dto, LoggerType.Callbacks);
+        Logger.LogDebug("Callback_ApplyMoodlesByStatus: " + dto, LoggerType.Callbacks);
         // obtain the local player name and world
-        _visualListener.ApplyStatusesToSelf(dto);
+        await _visualListener.ApplyStatusesToSelf(dto, PlayerData.NameWithWorldInstanced);
         Logger.LogDebug("Applied Moodles to Self: " + dto, LoggerType.Callbacks);
-        return Task.CompletedTask;
     }
 
     /// <summary> Intended to clear all moodles from OUR client player. </summary>
     /// <remarks> Should make a call to our moodles IPC to remove the statuses listed by their GUID's </remarks>
-    public Task Callback_RemoveMoodles(MoodlesRemoval dto)
+    public async Task Callback_RemoveMoodles(MoodlesRemoval dto)
     {
-        Logger.LogDebug("Callback_RemoveMoodles: "+dto, LoggerType.Callbacks);
-        _visualListener.RemoveStatusesFromSelf(dto);
-        return Task.CompletedTask;
+        Logger.LogDebug("Callback_RemoveMoodles: " + dto, LoggerType.Callbacks);
+        await _visualListener.RemoveStatusesFromSelf(dto);
     }
 
     /// <summary> Intended to clear all moodles from OUR client player. </summary>
     /// <remarks> Should make a call to our moodles IPC to clear all statuses. </remarks>
-    public Task Callback_ClearMoodles(KinksterBase dto)
+    public async Task Callback_ClearMoodles(KinksterBase dto)
     {
-        Logger.LogDebug("Callback_ClearMoodles: "+dto, LoggerType.Callbacks);
-        _visualListener.ClearStatusesFromSelf(dto);
-        return Task.CompletedTask;
+        Logger.LogDebug("Callback_ClearMoodles: " + dto, LoggerType.Callbacks);
+        await _visualListener.ClearStatusesFromSelf(dto);
     }
     #endregion Moodles
 
@@ -390,7 +384,7 @@ public partial class MainHub
                     _visualListener.RemoveRestriction(dataDto.AffectedLayer, dataDto.Enactor).ConfigureAwait(false);
                     break;
             }
-           return Task.CompletedTask;
+            return Task.CompletedTask;
         }
         else
         {
@@ -678,7 +672,7 @@ public partial class MainHub
     /// <summary> Receive a Kinkster's updated TriggerData change. </summary>
     public Task Callback_KinksterNewAllowances(KinksterNewAllowances dto)
     {
-        Generic.Safe(() => _kinksterListener.CachedAllowancesChange(dto.User, dto.Module, [ ..dto.AllowedUids ]));
+        Generic.Safe(() => _kinksterListener.CachedAllowancesChange(dto.User, dto.Module, [.. dto.AllowedUids]));
         return Task.CompletedTask;
     }
 
@@ -693,7 +687,7 @@ public partial class MainHub
     /// <remarks> Use this info to update the KinksterBase in our pair manager so they are marked as offline. </remarks>
     public Task Callback_KinksterOffline(KinksterBase dto)
     {
-        Logger.LogDebug("Callback_SendOffline: "+dto, LoggerType.Callbacks);
+        Logger.LogDebug("Callback_SendOffline: " + dto, LoggerType.Callbacks);
         Generic.Safe(() => _kinksters.MarkKinksterOffline(dto.User));
         return Task.CompletedTask;
     }
@@ -702,7 +696,7 @@ public partial class MainHub
     /// <remarks> Use this info to update the KinksterBase in our pair manager so they are marked as online. </remarks>
     public Task Callback_KinksterOnline(OnlineKinkster dto)
     {
-        Logger.LogDebug("Callback_SendOnline: "+dto, LoggerType.Callbacks);
+        Logger.LogDebug("Callback_SendOnline: " + dto, LoggerType.Callbacks);
         Generic.Safe(() => _kinksters.MarkKinksterOnline(dto));
         return Task.CompletedTask;
     }
@@ -710,7 +704,7 @@ public partial class MainHub
     /// <summary> Received whenever we need to update the profile data of anyone, including ourselves. </summary>
     public Task Callback_ProfileUpdated(KinksterBase dto)
     {
-        Logger.LogDebug("Callback_UpdateProfile: "+dto, LoggerType.Callbacks);
+        Logger.LogDebug("Callback_UpdateProfile: " + dto, LoggerType.Callbacks);
         Mediator.Publish(new ClearProfileDataMessage(dto.User));
         return Task.CompletedTask;
     }
@@ -768,7 +762,7 @@ public partial class MainHub
     /// <summary> Receive a Data Stream from a Room. </summary>
     public Task Callback_RoomIncDataStream(ToyDataStreamResponse dto)
     {
-        Logger.LogDebug("Callback_RoomIncDataStream: " + dto, LoggerType.Callbacks); 
+        Logger.LogDebug("Callback_RoomIncDataStream: " + dto, LoggerType.Callbacks);
         _toyboxListener.ReceivedBuzzToyDataStream(dto);
         return Task.CompletedTask;
     }

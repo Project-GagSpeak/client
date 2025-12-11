@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using Dalamud.Game;
 using Dalamud.Game.ClientState.Objects;
 using Dalamud.IoC;
@@ -10,8 +12,6 @@ using Penumbra.GameData.Data;
 using Penumbra.GameData.DataContainers;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 
 namespace GagSpeak;
 
@@ -33,6 +33,7 @@ public class Svc
     [PluginService] public static IBuddyList Buddies { get; private set; } = null!;
     [PluginService] public static IChatGui Chat { get; set; } = null!;
     [PluginService] public static IClientState ClientState { get; set; } = null!;
+    [PluginService] public static IPlayerState PlayerState { get; set; } = null!;
     [PluginService] public static ICommandManager Commands { get; private set; }
     [PluginService] public static ICondition Condition { get; private set; }
     [PluginService] public static IContextMenu ContextMenu { get; private set; }

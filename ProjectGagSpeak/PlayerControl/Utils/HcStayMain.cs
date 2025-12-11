@@ -99,7 +99,7 @@ public static unsafe class HcApproachNearestHousing
         if (PlayerData.IsAnimationLocked)
             return false;
         // if the target is not an event object and it's ID is not 2007402, then return false.
-        if (Svc.Targets.Target?.ObjectKind != ObjectKind.EventObj || Svc.Targets.Target?.DataId != 2002737)
+        if (Svc.Targets.Target?.ObjectKind != ObjectKind.EventObj || Svc.Targets.Target?.BaseId != 2002737)
             return false;
 
         // target was valid, so perform a throttled interaction with the apartment entrance.

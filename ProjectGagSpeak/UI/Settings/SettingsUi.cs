@@ -99,20 +99,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
         CkGui.AttachToolTip(IpcCallerMoodles.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
 
         ImGui.SameLine();
-        CkGui.ColorTextBool("Heels", IpcCallerHeels.APIAvailable);
-        CkGui.AttachToolTip(IpcCallerHeels.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
-
-        ImGui.SameLine();
         CkGui.ColorTextBool("Lifestream", IpcCallerLifestream.APIAvailable);
         CkGui.AttachToolTip(IpcCallerLifestream.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
-
-        ImGui.SameLine();
-        CkGui.ColorTextBool("Honorific", IpcCallerHonorific.APIAvailable);
-        CkGui.AttachToolTip(IpcCallerHonorific.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
-
-        ImGui.SameLine();
-        CkGui.ColorTextBool("PetNames", IpcCallerPetNames.APIAvailable);
-        CkGui.AttachToolTip(IpcCallerPetNames.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
 
         ImGui.SameLine();
         CkGui.ColorTextBool("Intiface", IpcCallerIntiface.APIAvailable);
@@ -521,7 +509,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
     private void DrawChannelPreferences()
     {
         // do not draw the preferences if the globalpermissions are null.
-        if(ClientData.Globals is not { } globals)
+        if (ClientData.Globals is not { } globals)
         {
             ImGui.Text("Globals is null! Returning early");
             return;
@@ -563,9 +551,9 @@ public class SettingsUi : WindowMediatorSubscriberBase
             ImGui.SameLine();
 
             // voodoo magic from old code i cant be asked to polish.
-            if(ImGuiUtil.GenericEnumCombo("##Language", 65, _mainConfig.Current.Language, out var newLang, i => i.ToName()))
+            if (ImGuiUtil.GenericEnumCombo("##Language", 65, _mainConfig.Current.Language, out var newLang, i => i.ToName()))
             {
-                if(newLang != _mainConfig.Current.Language)
+                if (newLang != _mainConfig.Current.Language)
                     _mainConfig.Current.LanguageDialect = newLang.GetDialects().First();
 
                 _mainConfig.Current.Language = newLang;
@@ -574,7 +562,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             CkGui.AttachToolTip(GSLoc.Settings.Preferences.LangTT);
 
             ImGui.SameLine();
-            if(ImGuiUtil.GenericEnumCombo("##Dialect", 55, _mainConfig.Current.LanguageDialect, out var newDialect,
+            if (ImGuiUtil.GenericEnumCombo("##Dialect", 55, _mainConfig.Current.LanguageDialect, out var newDialect,
                 _mainConfig.Current.Language.GetDialects(), i => i.ToName()))
             {
                 _mainConfig.Current.LanguageDialect = newDialect;
@@ -599,7 +587,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 {
                     var channel = channels[i];
                     var enabled = _mainConfig.Current.PuppeteerChannelsBitfield.IsActiveChannel((int)channel);
-                    var checkboxLabel = channel.ToString();
+                    var checkboxLabel = channel.ToString() + " "; // space for unique name in ImGui to avoid conflict with garble channels
 
                     if (ImGui.Checkbox(checkboxLabel, ref enabled))
                     {
@@ -781,7 +769,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             CkGui.HelpText(GSLoc.Settings.Preferences.LimitForNicksTT);
         }
 
-        if(ImGuiUtil.GenericEnumCombo("Info Location##notifInfo", 125f, _mainConfig.Current.InfoNotification, out var newInfo, i => i.ToString()))
+        if (ImGuiUtil.GenericEnumCombo("Info Location##notifInfo", 125f, _mainConfig.Current.InfoNotification, out var newInfo, i => i.ToString()))
         {
             _mainConfig.Current.InfoNotification = newInfo;
             _mainConfig.Save();

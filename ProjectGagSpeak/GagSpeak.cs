@@ -39,6 +39,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 namespace GagSpeak;
+
 public sealed class GagSpeak : IDalamudPlugin
 {
     private readonly IHost _host;  // the host builder for the plugin instance. (What makes everything work)
@@ -68,7 +69,7 @@ public sealed class GagSpeak : IDalamudPlugin
             {
                 var services = GetPluginServices(serviceCollection);
                 //services.ValidateDependancyInjector();
-            }) 
+            })
             .Build();
 
     }
@@ -214,7 +215,6 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<ChatService>()
         .AddSingleton<ConnectionSyncService>()
         .AddSingleton<DistributorService>()
-        .AddSingleton<KinksterSyncService>()
         .AddSingleton<DtrBarService>()
         .AddSingleton<EmoteService>()
         .AddSingleton<InteractionsService>()
@@ -301,15 +301,13 @@ public static class GagSpeakServiceExtensions
 
     public static IServiceCollection AddGagSpeakIPC(this IServiceCollection services)
     => services
+        // TODO: sundouleia?
         .AddSingleton<IpcCallerCustomize>()
         .AddSingleton<IpcCallerGlamourer>()
-        .AddSingleton<IpcCallerHeels>()
-        .AddSingleton<IpcCallerHonorific>()
         .AddSingleton<IpcCallerIntiface>()
         .AddSingleton<IpcCallerLifestream>()
         .AddSingleton<IpcCallerMoodles>()
         .AddSingleton<IpcCallerPenumbra>()
-        .AddSingleton<IpcCallerPetNames>()
         .AddSingleton<IpcManager>()
         .AddSingleton<IpcProvider>()
         .AddSingleton<PenumbraChangedItemTooltip>();
@@ -502,8 +500,8 @@ public static class ValidateDependencyInjectorEx
                 var serviceType = service.ServiceType;
 
                 // Skip interfaces and abstract classes
-/*                if (serviceType.IsInterface || serviceType.IsAbstract)
-                    continue;*/
+                /*                if (serviceType.IsInterface || serviceType.IsAbstract)
+                                    continue;*/
 
                 var constructor = serviceType.GetConstructors().MaxBy(c => c.GetParameters().Length);
                 if (constructor == null)

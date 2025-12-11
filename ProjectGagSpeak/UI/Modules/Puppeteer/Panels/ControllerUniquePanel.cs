@@ -2,6 +2,7 @@ using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Raii;
 using CkCommons.Widgets;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
@@ -14,10 +15,10 @@ using GagSpeak.State.Listeners;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
-using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Modules.Puppeteer;
+
 public sealed class ControllerUniquePanel
 {
     private readonly ILogger<ControllerUniquePanel> _logger;
@@ -105,7 +106,7 @@ public sealed class ControllerUniquePanel
             return;
 
         foreach (var aliasItem in _filteredItems.ToList())
-            _aliasDrawer.DrawAliasTrigger(aliasItem, SelectedKinkster.LastIpcData, out bool _, false);
+            _aliasDrawer.DrawAliasTrigger(aliasItem, SelectedKinkster.LastMoodlesData, out bool _, false);
     }
 
     private void DrawPermsAndExamples(CkHeader.DrawRegion region)

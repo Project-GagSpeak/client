@@ -158,7 +158,7 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
     public Traits Traits { get; set; } = Traits.None;
     public Arousal Arousal { get; set; } = Arousal.None;
     public bool DoRedraw { get; set; } = false;
- 
+
     public RestrictionItem()
     { }
 
@@ -166,6 +166,9 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
     {
         Identifier = keepIdentifier ? other.Identifier : Guid.NewGuid();
         ApplyChanges(other);
+        // deep copy glamour
+        Glamour = new GlamourSlot(other.Glamour);
+        Mod = new ModSettingsPreset(other.Mod);
     }
 
     public virtual RestrictionItem Clone(bool keepId = false) => new RestrictionItem(this, keepId);
@@ -252,7 +255,7 @@ public class HypnoticRestriction : RestrictionItem
     public override RestrictionType Type { get; } = RestrictionType.Hypnotic;
     public HypnoticOverlay Properties { get; set; } = new();
 
-    public HypnoticRestriction() 
+    public HypnoticRestriction()
     { }
 
     public HypnoticRestriction(HypnoticRestriction other, bool keepIdentifier)
@@ -264,7 +267,7 @@ public class HypnoticRestriction : RestrictionItem
     public bool HasValidPath() => !string.IsNullOrEmpty(Properties.OverlayPath)
         && File.Exists(Path.Combine(ConfigFileProvider.ThumbnailDirectory, ImageDataType.Hypnosis.ToString(), Properties.OverlayPath));
 
-    public override HypnoticRestriction Clone(bool keepId = false) 
+    public override HypnoticRestriction Clone(bool keepId = false)
         => new HypnoticRestriction(this, keepId);
 
     /// <summary> Applies updated changes to an edited item, while still maintaining the original references. <summary>
@@ -329,7 +332,7 @@ public class BlindfoldRestriction : RestrictionItem
         Properties = other.Properties;
     }
 
-    public bool HasValidPath() => !string.IsNullOrEmpty(Properties.OverlayPath) 
+    public bool HasValidPath() => !string.IsNullOrEmpty(Properties.OverlayPath)
         && File.Exists(Path.Combine(ConfigFileProvider.ThumbnailDirectory, ImageDataType.Blindfolds.ToString(), Properties.OverlayPath));
 
     public override BlindfoldRestriction Clone(bool keepId = false)
@@ -362,7 +365,7 @@ public class BlindfoldRestriction : RestrictionItem
         // If the "StatusIds" property exists, treat this as a MoodlePreset
         var moodle = jsonMoodle.TryGetValue("StatusIds", out var statusToken) && statusToken is JArray
             ? new MoodlePreset(id, statusToken.Select(x => x.ToObject<Guid>()) ?? Enumerable.Empty<Guid>()) : new Moodle(id);
-        
+
         // Construct the item to return.
         return new BlindfoldRestriction()
         {
@@ -400,7 +403,7 @@ public class GagSpeakCollar : IEditableStorageItem<GagSpeakCollar>, IModPreset
     // maybe replace with GlamourSlot but also dont know, since it relates to dyes which we dont set.
     // maybe figure it out when we get to caches.
     public GlamourSlot Glamour { get; set; } = GlamourSlot.Default;
-    public ModSettingsPreset Mod { get; set; } = new ModSettingsPreset(new ModPresetContainer());    
+    public ModSettingsPreset Mod { get; set; } = new ModSettingsPreset(new ModPresetContainer());
     public GagSpeakCollar()
     { }
 

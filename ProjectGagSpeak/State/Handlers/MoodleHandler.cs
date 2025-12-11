@@ -1,9 +1,10 @@
+using System.Threading.Tasks;
 using GagSpeak.Interop;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Caches;
 using GagspeakAPI.Data;
 using Microsoft.IdentityModel.Tokens;
-using System.Threading.Tasks;
+using Serilog;
 
 namespace GagSpeak.State.Handlers;
 
@@ -56,7 +57,7 @@ public class MoodleHandler
     /// <summary> Clears the Caches contents and updates the visuals after. </summary>
     public async Task ClearCache()
     {
-        _logger.LogDebug("Clearing Moodles Cache.");
+        _logger.LogDebug("Clearing Moodles Cache.", LoggerType.VisualCache);
         _cache.ClearCache();
         await UpdateMoodleCache();
     }

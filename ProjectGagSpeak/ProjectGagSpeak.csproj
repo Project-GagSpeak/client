@@ -13,6 +13,7 @@
         <CopyLocalLockfileAssemblies>true</CopyLocalLockfileAssemblies>
         <ImplicitUsings>enable</ImplicitUsings>
         <NoWarn>$(NoWarn);IDE1006,CS8618,MSB3270</NoWarn>
+        <EnableWindowsTargeting>true</EnableWindowsTargeting>
     </PropertyGroup>
     
     <ItemGroup>

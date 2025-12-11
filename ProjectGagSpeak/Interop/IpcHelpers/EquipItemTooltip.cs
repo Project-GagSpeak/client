@@ -1,8 +1,8 @@
 using CkCommons;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Plugin.Services;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
-using Dalamud.Bindings.ImGui;
 using OtterGui.Raii;
 using Penumbra.Api.Enums;
 using Penumbra.GameData.Data;
@@ -38,7 +38,7 @@ public sealed class PenumbraChangedItemTooltip : DisposableMediatorSubscriberBas
 
     public void CreateTooltip(EquipItem item, string prefix, bool openTooltip)
     {
-        if (!Svc.ClientState.IsLoggedIn || Svc.ClientState.LocalContentId == 0)
+        if (!Svc.ClientState.IsLoggedIn || Svc.PlayerState.ContentId == 0)
         {
             return;
         }
