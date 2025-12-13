@@ -203,7 +203,7 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
             ["VisorState"] = VisorState.ToString(),
             ["Traits"] = Traits.ToString(),
             ["Arousal"] = Arousal.ToString(),
-            ["Redraw"] = DoRedraw,
+            ["DoRedraw"] = DoRedraw,
         };
 
     public LightRestriction ToLightItem()
