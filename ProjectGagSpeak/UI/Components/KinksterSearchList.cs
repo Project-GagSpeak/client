@@ -38,7 +38,7 @@ public class KinksterSearchList
 
     public virtual void DrawSearch(string id, string hint = "Search for Kinksters", int len = 128)
     {
-        if (FancySearchBar.Draw(id, ImGui.GetContentRegionAvail().X, hint, ref _searchValue, len))
+        if (FancySearchBar.Draw(id, ImGui.GetContentRegionAvail().X, ref _searchValue, hint, len))
             UpdateList();
     }
     

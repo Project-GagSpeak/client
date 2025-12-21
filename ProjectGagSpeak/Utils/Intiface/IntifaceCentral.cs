@@ -92,7 +92,7 @@ public static partial class IntifaceCentral
 
         if (TerraFX.Interop.Windows.Windows.IsWindowVisible(handle))
         {
-            int len = TerraFX.Interop.Windows.Windows.GetWindowText(handle, (ushort*)data->WindowName, 512);
+            int len = TerraFX.Interop.Windows.Windows.GetWindowText(handle, data->WindowName, 512);
             string windowTitle = new string(data->WindowName, 0, len);
 
             if (regex.IsMatch(windowTitle))

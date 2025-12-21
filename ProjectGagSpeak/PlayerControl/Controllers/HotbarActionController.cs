@@ -78,7 +78,7 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
             Logger.LogDebug($"Updating sources from [{_latestSources}] to [{sources}].", LoggerType.HardcoreActions);
             _latestSources = sources;
             // recalculate the banned slots for this job.
-            SetBannedJobActions(PlayerData.JobIdThreadSafe);
+            SetBannedJobActions(PlayerData.JobIdInstanced);
         }
     }
 
@@ -162,7 +162,7 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
             var hotbarRow = baseSpan.GetPointer(i);
             // if the hotbar is not null, we can get the slots data
             if (hotbarRow is not null)
-                hotbarModule->LoadSavedHotbar(PlayerData.JobIdThreadSafe, (uint)i);
+                hotbarModule->LoadSavedHotbar(PlayerData.JobIdInstanced, (uint)i);
         }
 
         // Reset the last modified tooltip to null, as we no longer need it.

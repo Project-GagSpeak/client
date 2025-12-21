@@ -127,9 +127,9 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
         if (newMsg.Tier is CkSupporterTier.KinkporiumMistress)
         {
             // Force set the uid color to her favorite color.
-            UserColors[newMsg.UID] = CkColor.CkMistressColor.Vec4();
+            UserColors[newMsg.UID] = CkColor.ShopKeeperColor.Vec4();
             // allow any rich text tags, as she is a special case.
-            var prefix = $"[img=RequiredImages\\Tier4Icon][rawcolor={CkColor.CkMistressColor.Uint()}]{newMsg.Name}[/rawcolor]: ";
+            var prefix = $"[img=RequiredImages\\Tier4Icon][rawcolor={CkColor.ShopKeeperColor.Uint()}]{newMsg.Name}[/rawcolor]: ";
             Messages.PushBack(newMsg with { Message = prefix + newMsg.Message });
             unreadSinceScroll++;
             _newMsgFromDev = true;
@@ -167,7 +167,7 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
         if (newMsg.Tier is CkSupporterTier.KinkporiumMistress)
         {
             // Force set the uid color to her favorite color.
-            UserColors[newMsg.UID] = CkColor.CkMistressColor.Vec4();
+            UserColors[newMsg.UID] = CkColor.ShopKeeperColor.Vec4();
             Messages.PushBack(newMsg);
             unreadSinceScroll++;
         }

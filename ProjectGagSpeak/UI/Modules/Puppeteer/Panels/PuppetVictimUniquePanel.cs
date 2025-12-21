@@ -88,7 +88,7 @@ public class PuppetVictimUniquePanel : DisposableMediatorSubscriberBase
 
     private void DrawAliasSearch(float width)
     {
-        if (FancySearchBar.Draw("##PairVictimSearch", width, "Search for an Alias", ref _searchStr, 200, ImGui.GetFrameHeight(), AddTriggerButton))
+        if (FancySearchBar.Draw("##PairVictimSearch", width, ref _searchStr, "Search for an Alias", 200, ImGui.GetFrameHeight(), AddTriggerButton))
         {
             Logger.LogInformation($"Searching for Alias: {_searchStr}");
             UpdateFilteredItems();
