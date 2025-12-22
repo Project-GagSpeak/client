@@ -69,7 +69,7 @@ public sealed partial class PuppetVictimGlobalPanel
 
     private void DrawAliasSearch(float width)
     {
-        if (FancySearchBar.Draw("##GlobalSearch", width, "Search for an Alias", ref _searchStr, 200, ImGui.GetFrameHeight(), AddTriggerButton))
+        if (FancySearchBar.Draw("##GlobalSearch", width, ref _searchStr, "Search for an Alias", 200, ImGui.GetFrameHeight(), AddTriggerButton))
         {
             _logger.LogInformation($"Searching for Alias: {_searchStr}");
             _filteredItems = _searchStr.IsNullOrEmpty()

@@ -148,17 +148,17 @@ public partial class MainHub
     #endregion Pairing & Messages
 
     #region KinksterSync
-    public Task Callback_SetKinksterIpcData(KinksterIpcData dto)
-    {
-        // TODO: remove
-        return Task.CompletedTask;
-    }
+    //public Task Callback_SetKinksterIpcData(KinksterIpcData dto)
+    //{
+    //    // TODO: remove
+    //    return Task.CompletedTask;
+    //}
 
-    public Task Callback_SetKinksterIpcSingle(KinksterIpcSingle dto)
-    {
-        // TODO: remove
-        return Task.CompletedTask;
-    }
+    //public Task Callback_SetKinksterIpcSingle(KinksterIpcSingle dto)
+    //{
+    //    // TODO: remove
+    //    return Task.CompletedTask;
+    //}
     #endregion KinksterSync
 
     #region Moodles
@@ -846,17 +846,17 @@ public partial class MainHub
         _hubConnection!.On(nameof(Callback_RemoveCollarRequest), act);
     }
 
-    public void OnSetKinksterIpcData(Action<KinksterIpcData> act)
-    {
-        if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_SetKinksterIpcData), act);
-    }
+    //public void OnSetKinksterIpcData(Action<KinksterIpcData> act)
+    //{
+    //    if (_apiHooksInitialized) return;
+    //    _hubConnection!.On(nameof(Callback_SetKinksterIpcData), act);
+    //}
 
-    public void OnSetKinksterIpcSingle(Action<KinksterIpcSingle> act)
-    {
-        if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_SetKinksterIpcSingle), act);
-    }
+    //public void OnSetKinksterIpcSingle(Action<KinksterIpcSingle> act)
+    //{
+    //    if (_apiHooksInitialized) return;
+    //    _hubConnection!.On(nameof(Callback_SetKinksterIpcSingle), act);
+    //}
 
     public void OnSetKinksterMoodlesFull(Action<KinksterMoodlesDataFull> act)
     {

@@ -25,21 +25,21 @@ public sealed class KinksterListener
     }
 
     #region DataUpdates
-    // TODO: remove
-    public void NewAppearanceData(UserData target, CharaIpcDataFull newData)
-    {
-        if (!_kinksters.TryGetKinkster(target, out var kinkster))
-            throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
-        _logger.LogTrace($"{kinkster.GetNickAliasOrUid()}'s Full Appearance changed!", LoggerType.Callbacks);
-    }
+    //// TODO: remove
+    //public void NewAppearanceData(UserData target, CharaIpcDataFull newData)
+    //{
+    //    if (!_kinksters.TryGetKinkster(target, out var kinkster))
+    //        throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
+    //    _logger.LogTrace($"{kinkster.GetNickAliasOrUid()}'s Full Appearance changed!", LoggerType.Callbacks);
+    //}
 
-    // TODO: remove
-    public void NewAppearanceData(UserData target, DataSyncKind type, string newDataString)
-    {
-        if (!_kinksters.TryGetKinkster(target, out var kinkster))
-            throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
-        _logger.LogTrace($"{kinkster.GetNickAliasOrUid()}'s Appearance changed for {type}!", LoggerType.Callbacks);
-    }
+    //// TODO: remove
+    //public void NewAppearanceData(UserData target, DataSyncKind type, string newDataString)
+    //{
+    //    if (!_kinksters.TryGetKinkster(target, out var kinkster))
+    //        throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
+    //    _logger.LogTrace($"{kinkster.GetNickAliasOrUid()}'s Appearance changed for {type}!", LoggerType.Callbacks);
+    //}
 
     public void NewMoodlesData(UserData targetUser, UserData enactor, CharaMoodleData newData)
     {

@@ -431,17 +431,17 @@ public partial class MainHub
     #endregion Kinkster Interactions
 
     #region IPC Interactions
-    public async Task<HubResponse> UserPushIpcData(PushIpcFull dto)
-    {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushIpcData), dto).ConfigureAwait(false);
-    }
+    //public async Task<HubResponse> UserPushIpcData(PushIpcFull dto)
+    //{
+    //    if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+    //    return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushIpcData), dto).ConfigureAwait(false);
+    //}
 
-    public async Task<HubResponse> UserPushIpcDataSingle(PushIpcSingle dto)
-    {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushIpcDataSingle), dto).ConfigureAwait(false);
-    }
+    //public async Task<HubResponse> UserPushIpcDataSingle(PushIpcSingle dto)
+    //{
+    //    if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+    //    return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushIpcDataSingle), dto).ConfigureAwait(false);
+    //}
 
     public async Task<HubResponse> UserPushMoodlesFull(PushMoodlesFull dto)
     {

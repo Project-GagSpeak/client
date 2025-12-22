@@ -86,7 +86,7 @@ public sealed class ControllerUniquePanel
 
     private void DrawAliasSearch(float width)
     {
-        if (FancySearchBar.Draw("##PairControllerSearch", width, "Search for an Alias", ref _searchStr, 200))
+        if (FancySearchBar.Draw("##PairControllerSearch", width,  ref _searchStr, "Search for an Alias", 200))
         {
             _logger.LogInformation($"Searching for Alias: {_searchStr}");
             UpdateFilteredItems();

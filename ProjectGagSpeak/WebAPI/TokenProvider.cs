@@ -249,7 +249,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
     /// <returns>the JWT identifier object for the token</returns>
     private JwtIdentifier? GetIdentifier()
     {
-        var tempLocalContentID = PlayerData.ContendIdInstanced;
+        var tempLocalContentID = PlayerData.ContentIdInstanced;
         try
         {
             var secretKey = string.Empty;

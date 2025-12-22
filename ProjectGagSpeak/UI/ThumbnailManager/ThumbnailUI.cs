@@ -72,7 +72,7 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
         var fileImportW = CkGui.IconTextButtonSize(FAI.FileImport, "From File");
 
         var searchWidth = ImGui.GetContentRegionAvail().X / 3;
-        FancySearchBar.Draw("Filter", searchWidth, "Browse for a thumbnail to use.", ref _service.SearchString, 128, buttonW, () =>
+        FancySearchBar.Draw("Filter", searchWidth, ref _service.SearchString, "Browse for a thumbnail to use.", 128, buttonW, () =>
         {
             if (CkGui.IconButton(FAI.Sync))
                 TryRefresh(true);

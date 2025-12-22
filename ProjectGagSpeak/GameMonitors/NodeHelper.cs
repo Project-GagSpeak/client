@@ -255,7 +255,7 @@ public static unsafe class NodeHelper
         return false;
     }
 
-    public static bool TryMakeImageNode(uint id, NodeFlags resNodeFlags, uint resNodeDrawFlags, byte wrapMode, byte imageNodeFlags, [NotNullWhen(true)] out AtkImageNode* imageNode)
+    public static bool TryMakeImageNode(uint id, NodeFlags resNodeFlags, uint resNodeDrawFlags, byte wrapMode, ImageNodeFlags imageNodeFlags, [NotNullWhen(true)] out AtkImageNode* imageNode)
     {
         imageNode = IMemorySpace.GetUISpace()->Create<AtkImageNode>();
 
