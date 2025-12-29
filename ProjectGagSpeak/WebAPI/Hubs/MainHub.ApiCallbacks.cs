@@ -147,20 +147,6 @@ public partial class MainHub
 
     #endregion Pairing & Messages
 
-    #region KinksterSync
-    //public Task Callback_SetKinksterIpcData(KinksterIpcData dto)
-    //{
-    //    // TODO: remove
-    //    return Task.CompletedTask;
-    //}
-
-    //public Task Callback_SetKinksterIpcSingle(KinksterIpcSingle dto)
-    //{
-    //    // TODO: remove
-    //    return Task.CompletedTask;
-    //}
-    #endregion KinksterSync
-
     #region Moodles
     public Task Callback_SetKinksterMoodlesFull(KinksterMoodlesDataFull dto)
     {
