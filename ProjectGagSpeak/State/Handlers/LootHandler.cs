@@ -62,8 +62,18 @@ public sealed class LootHandler
     public unsafe bool IsObjectLastOpenedLoot(GameObject* obj)
         => obj->GetGameObjectId().ObjectId == _prevOpenedLootObjectId;
 
+    /// <summary>
+    ///     Checks if any items being rolled for loot belong to the given game object id, which indicates
+    ///     that the object has already been opened by another player.
+    /// </summary>
     public unsafe bool ObjectInLootInstance(uint gameObjId)
-        => PlayerData.InSoloParty || Loot.Instance()->Items.ToArray().Any(x => x.ChestObjectId == gameObjId);
+        => Loot.Instance()->Items.ToArray().Any(x => x.ChestObjectId == gameObjId);
+
+    /// <summary>
+    ///     Checks if a coffer has already been opened by another player in the party. False if in solo party.
+    /// </summary>
+    public bool CofferAlreadyOpened(uint gameObjId)
+        => !PlayerData.InSoloParty && ObjectInLootInstance(gameObjId);
 
 
     /// <summary>
@@ -103,7 +113,7 @@ public sealed class LootHandler
             _logger.LogTrace("Attempting to open treasure chest.", LoggerType.CursedItems);
             var objId = obj->GetGameObjectId().ObjectId;
             // If in a party with other players, make sure we are the first to open it.
-            if (ObjectInLootInstance(objId))
+            if (CofferAlreadyOpened(objId))
             {
                 _logger.LogTrace("Chest was already opened by someone else! Skipping.", LoggerType.CursedItems);
                 return;
