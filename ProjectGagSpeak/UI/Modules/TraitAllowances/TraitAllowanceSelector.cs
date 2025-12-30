@@ -51,7 +51,7 @@ public class TraitAllowanceSelector : DisposableMediatorSubscriberBase
 
     public void DrawSearch()
     {
-        if (FancySearchBar.Draw("Pair Search", ImGui.GetContentRegionAvail().X, "Search for Pairs", ref _searchValue, 128, ImGui.GetFrameHeight(), FavoritesFilter))
+        if (FancySearchBar.Draw("Pair Search", ImGui.GetContentRegionAvail().X, ref _searchValue, "Search for Pairs", 128, ImGui.GetFrameHeight(), FavoritesFilter))
         {
             UpdatePairList();
         }

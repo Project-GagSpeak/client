@@ -110,7 +110,7 @@ public class ServerConfigManager
         // generates a new auth object for the list of authentications with no secret key.
         var auth = new Authentication
         {
-            CharacterPlayerContentId = PlayerData.ContendIdInstanced,
+            CharacterPlayerContentId = PlayerData.ContentIdInstanced,
             CharacterName = PlayerData.NameInstanced,
             WorldId = PlayerData.HomeWorldIdInstanced,
             IsPrimary = !ServerStorage.Authentications.Any(),
