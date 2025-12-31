@@ -11,9 +11,9 @@
     <PropertyGroup>
         <Deterministic>true</Deterministic>
         <CopyLocalLockfileAssemblies>true</CopyLocalLockfileAssemblies>
+        <EnableWindowsTargeting>true</EnableWindowsTargeting>
         <ImplicitUsings>enable</ImplicitUsings>
         <NoWarn>$(NoWarn);IDE1006,CS8618,MSB3270</NoWarn>
-        <EnableWindowsTargeting>true</EnableWindowsTargeting>
     </PropertyGroup>
     
     <ItemGroup>
@@ -54,8 +54,8 @@
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.5.2" />
         
         <!--For SignalR server connectivity, helpful for server connectivity processing-->
-        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.11" />
-        <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="8.0.11" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.1" />
+        <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="10.0.1" />
         
         <!--Handles our own plugin hosting methods for dependency injection and service management-->
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
@@ -68,9 +68,6 @@
         
         <!-- Toybox Lovense Compatibility. (According to docs possibly estim too) -->
         <PackageReference Include="Buttplug" Version="4.0.0" />
-        
-        <!--For image processing and manipulation beyond dalamuds textureprovider capabilities..-->
-        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.11" />
     </ItemGroup>
     
     <!-- If i could use projectgagspeak.json i would, but sadly dalamud prevents this lol.-->
