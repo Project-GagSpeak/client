@@ -71,12 +71,28 @@ public sealed class PlayerControlCache
         => ClientData.Hardcore.IsEnabled(HcAttribute.Follow) 
         || _activeTaskControl.HasAny(HcTaskControl.MustFollow);
 
-    // dont want to enforce this during lifestream tasks.
     public bool BlockRunning
-        => !_activeTaskControl.HasAny(HcTaskControl.InLifestreamTask) 
-        && ClientData.Hardcore.IsEnabled(HcAttribute.Follow)
-        || _activeTaskControl.HasAny(HcTaskControl.Weighted)
-        || _traits.FinalTraits.HasAny(Traits.Weighty);
+    {
+        get
+        {
+            // Don't enforce during lifestream tasks to avoid interfering with it.
+            if (_activeTaskControl.HasAny(HcTaskControl.InLifestreamTask))
+                return false;
+
+            // Force while following.
+            if (ClientData.Hardcore.IsEnabled(HcAttribute.Follow))
+                return true;
+
+            // Enforce if weighted or weighty.
+            if (_activeTaskControl.HasAny(HcTaskControl.Weighted)
+                || _traits.FinalTraits.HasAny(Traits.Weighty))
+            {
+                // only enforce if not mounted, as mounts wouldn't be weighed down by our restraints
+                return !Svc.Condition.AsReadOnlySet().Contains(Dalamud.Game.ClientState.Conditions.ConditionFlag.Mounted);
+            }
+            return false;
+        }
+    }
 
     // handled by higher, public accessor. (do not enfore during lifestream tasks)
     public bool ShouldLockFirstPerson
