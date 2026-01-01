@@ -91,7 +91,11 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<KinksterRestricti
                 .Push(ImGuiStyleVar.PopupBorderSize, 1f);
             using var c = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
             ImGui.BeginTooltip();
-            ImGui.Text("Im a fancy tooltip!");
+            CkGui.TextWrappedTooltipFormat($"Visuals: --COL--{setItem.IsEnabled}--COL--, Slot: --COL--{setItem.Slot}--COL--" +
+                $"--NL--Using --COL--{setItem.GlamItem}--COL--" +
+                $"--NL--Applies --COL--{setItem.ModName}--COL--" +
+                $"--NL--Hardcore Traits: --COL--{setItem.Traits.ToString()}--COL--" +
+                $"--NL--Arousal: --COL--{setItem.Arousal}--COL--", 320, ImGuiColors.ParsedGold);
             ImGui.EndTooltip();
         }
     }
