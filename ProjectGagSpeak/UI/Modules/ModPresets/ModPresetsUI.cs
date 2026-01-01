@@ -55,11 +55,11 @@ public class ModPresetsUI : WindowMediatorSubscriberBase
 
     protected override void DrawInternal()
     {
-        var headerInnder = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
+        var headerInner = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
         var splitterSize = ImGui.GetFrameHeight() / 4;
 
         // Draw a flat header.
-        var drawRegions = CkHeader.Flat(CkColor.FancyHeader.Uint(), headerInnder, ModListLength, splitterSize);
+        var drawRegions = CkHeader.Flat(CkColor.FancyHeader.Uint(), headerInner, ModListLength, splitterSize);
 
         // Create a child for each region, drawn to the size.
         ImGui.SetCursorScreenPos(drawRegions.TopLeft.Pos);
