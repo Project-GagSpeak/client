@@ -1,14 +1,18 @@
+using System.Runtime.InteropServices;
 using CkCommons;
+using Dalamud.Game.ClientState.Conditions;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using GagSpeak.GameInternals.Detours;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
-using System.Runtime.InteropServices;
 
 namespace GagSpeak.Services.Controller;
 
 public sealed class MovementController : DisposableMediatorSubscriberBase
 {
+    private const int CONTROL_WALKING_OFFSET_NORMAL = 30259; // Applies when not automoving
+    private const int CONTROL_WALKING_OFFSET_AUTOMOVE = 29976; // Applies when automoving
+
     private readonly record struct MoveState(bool MustWalk, bool WasWalking);
 
     private readonly PlayerControlCache _cache;
@@ -28,6 +32,19 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         _timeoutTracker.Stop();
         Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreStatus());
         Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
+        Svc.Condition.ConditionChange += OnConditionChange;
+    }
+
+    public new void Dispose()
+    {
+        Svc.Condition.ConditionChange -= OnConditionChange;
+        base.Dispose();
+    }
+
+    private void OnConditionChange(ConditionFlag flag, bool value)
+    {
+        if (flag == ConditionFlag.Mounted)
+            UpdateHardcoreStatus();
     }
 
     // reference for Auto-Unlock timer.
@@ -49,7 +66,7 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         else if (!_cache.BlockRunning && _moveState.MustWalk)
         {
             // restore the state only if we were running before.
-            if (!_moveState.WasWalking) 
+            if (!_moveState.WasWalking)
                 ForceRunning();
             // reset movestate.
             _moveState = new MoveState(false, false);
@@ -125,6 +142,14 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     // (because the control access wont read you the right values apparently?)
     // private unsafe bool IsWalkingMarshal() => Marshal.ReadByte((nint)Control.Instance(), 30259) == 0x1;
     private unsafe bool IsWalking() => Control.Instance()->IsWalking;
-    private unsafe void ForceWalking() => Marshal.WriteByte((nint)Control.Instance(), 30259, 0x1);
-    private unsafe void ForceRunning() => Marshal.WriteByte((nint)Control.Instance(), 30259, 0x0);
+    private unsafe void ForceWalking()
+    {
+        Marshal.WriteByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_NORMAL, 0x1);
+        Marshal.WriteByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_AUTOMOVE, 0x1);
+    }
+    private unsafe void ForceRunning()
+    {
+        Marshal.WriteByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_NORMAL, 0x0);
+        Marshal.WriteByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_AUTOMOVE, 0x0);
+    }
 }
