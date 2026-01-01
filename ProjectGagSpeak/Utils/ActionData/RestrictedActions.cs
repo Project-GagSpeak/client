@@ -840,16 +840,16 @@ public static class RestrictedActions
         .Add(4,      Traits.Weighty)                                             // Sprint
         .Add(7,      Traits.None)                                                // Teleport
         .Add(8,      Traits.None)                                                // Return
-        .Add(7568,   Traits.Immobile | Traits.BoundArms)                         // Esuna
+        .Add(7568,   Traits.Immobile)                                            // Esuna
         .Add(7561,   Traits.Immobile | Traits.BoundArms)                         // Swiftcast
         .Add(7559,   Traits.Immobile | Traits.BoundArms)                         // Surecast
         .Add(7571,   Traits.Immobile | Traits.BoundArms)                         // Rescue
         .Add(16560,  Traits.Immobile | Traits.BoundArms)                         // Repose
         .Add(24318,  Traits.Immobile | Traits.BoundArms)                         // Pneuma
         .Add(24317,  Traits.Blindfolded)                                         // Krasis
-        .Add(24283,  Traits.Immobile | Traits.BoundArms)                         // Dosis
+        .Add(24283,  Traits.Immobile)                                            // Dosis
         .Add(24284,  Traits.None)                                                // Diagnosis
-        .Add(24285,  Traits.Blindfolded | Traits.Immobile | Traits.BoundArms)    // Kardia
+        .Add(24285,  Traits.Blindfolded | Traits.Immobile)                       // Kardia
         .Add(24286,  Traits.None)                                                // Prognosis
         .Add(24287,  Traits.None)                                                // Egeiro
         .Add(24288,  Traits.Blindfolded)                                         // Physis
