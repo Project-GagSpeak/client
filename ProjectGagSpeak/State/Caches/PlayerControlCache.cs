@@ -47,7 +47,7 @@ public sealed class PlayerControlCache
         || _activeTaskControl.HasAny(HcTaskControl.NoActions);
 
     public bool BlockTeleportActions
-        => !_activeTaskControl.HasAny(HcTaskControl.InLifestreamTask) 
+        => !_activeTaskControl.HasAny(HcTaskControl.InLifestreamTask)
         && (ClientData.Hardcore.IsEnabled(HcAttribute.Follow)
         || ClientData.Hardcore.IsEnabled(HcAttribute.EmoteState)
         || ClientData.Hardcore.IsEnabled(HcAttribute.Confinement)
@@ -56,19 +56,19 @@ public sealed class PlayerControlCache
         || _activeTaskControl.HasAny(HcTaskControl.NoTeleport));
 
     public bool BlockChatInput
-        => ClientData.Hardcore.IsEnabled(HcAttribute.BlockedChatInput) 
+        => ClientData.Hardcore.IsEnabled(HcAttribute.BlockedChatInput)
         || _activeTaskControl.HasAny(HcTaskControl.NoChatInputAccess);
 
     public bool HideChatInput
-        => ClientData.Hardcore.IsEnabled(HcAttribute.HiddenChatInput) 
+        => ClientData.Hardcore.IsEnabled(HcAttribute.HiddenChatInput)
         || _activeTaskControl.HasAny(HcTaskControl.NoChatInputView);
 
     public bool HideChatBoxes
-        => ClientData.Hardcore.IsEnabled(HcAttribute.HiddenChatBox) 
+        => ClientData.Hardcore.IsEnabled(HcAttribute.HiddenChatBox)
         || _activeTaskControl.HasAny(HcTaskControl.NoChatBoxView);
 
     public bool PreventUnfollowing
-        => ClientData.Hardcore.IsEnabled(HcAttribute.Follow) 
+        => ClientData.Hardcore.IsEnabled(HcAttribute.Follow)
         || _activeTaskControl.HasAny(HcTaskControl.MustFollow);
 
     public bool BlockRunning
@@ -125,17 +125,17 @@ public sealed class PlayerControlCache
         || _activeTaskControl.HasAny(HcTaskControl.MustFollow | HcTaskControl.BlockMovementKeys)
         || _traits.FinalTraits.HasAny(Traits.Immobile);
 
-    public bool DoAutoPrompts 
-        => ClientData.Hardcore.IsEnabled(HcAttribute.Confinement) 
-        || ClientData.Hardcore.IsEnabled(HcAttribute.Imprisonment) 
+    public bool DoAutoPrompts
+        => ClientData.Hardcore.IsEnabled(HcAttribute.Confinement)
+        || ClientData.Hardcore.IsEnabled(HcAttribute.Imprisonment)
         || _activeTaskControl.HasAny(HcTaskControl.DoConfinementPrompts);
 
     public CameraControlMode GetPerspectiveToLock()
         => ShouldLockFirstPerson ? CameraControlMode.FirstPerson :
             ShouldLockThirdPerson ? CameraControlMode.ThirdPerson : CameraControlMode.Unknown;
-    
+
     public IEnumerable<VirtualKey> GetBlockedKeys()
-        => InLifestreamTask ? AllKeys : BlockMovementKeys ? MoveKeys : Enumerable.Empty<VirtualKey>();
+        => InLifestreamTask ? AllKeys : Enumerable.Empty<VirtualKey>();
 
 
     // Update the hardcore task manager control state and refresh the controllers with the latest cache information.

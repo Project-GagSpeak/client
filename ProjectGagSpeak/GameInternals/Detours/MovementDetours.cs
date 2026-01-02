@@ -1,9 +1,14 @@
 using CkCommons;
+using FFXIVClientStructs.FFXIV.Client.System.Input;
 using GagSpeak.State.Caches;
 
 namespace GagSpeak.GameInternals.Detours;
+
 public partial class MovementDetours : IDisposable
 {
+    private readonly InputId[] movementInputs = [ InputId.MOVE_AND_STEER, InputId.MOVE_ANGLE_DESCENT, InputId.MOVE_ANGLE_RISING,
+            InputId.MOVE_LEFT, InputId.MOVE_RIGHT, InputId.MOVE_DESCENT, InputId.MOVE_RETENTION, InputId.MOVE_STRIFE_L, InputId.MOVE_STRIFE_R, InputId.MOVE_FORE, InputId.MOVE_BACK ];
+
     private readonly ILogger<MovementDetours> _logger;
     private readonly PlayerControlCache _cache;
     public unsafe MovementDetours(ILogger<MovementDetours> logger, PlayerControlCache cache)
@@ -11,6 +16,10 @@ public partial class MovementDetours : IDisposable
         _logger = logger;
         _cache = cache;
         Svc.Hook.InitializeFromAttributes(this);
+        IsInputIdPressedHook.Enable();
+        IsInputIdDownHook.Enable();
+        IsInputIdHeldHook.Enable();
+        IsInputIdUnknownHook.Enable();
         _logger.LogInformation("MovementDetours initialized successfully.");
     }
 
@@ -44,7 +53,7 @@ public partial class MovementDetours : IDisposable
         set
         {
             if (value) MoveUpdateHook.Enable();
-            else MoveUpdateHook.Disable(); 
+            else MoveUpdateHook.Disable();
         }
     }
 
@@ -54,6 +63,10 @@ public partial class MovementDetours : IDisposable
         DisableFullMovementLock();
 
         AutoMoveUpdateHook.SafeDispose();
+        IsInputIdPressedHook.SafeDispose();
+        IsInputIdDownHook.SafeDispose();
+        IsInputIdHeldHook.SafeDispose();
+        IsInputIdUnknownHook.SafeDispose();
         UnfollowHook.SafeDispose();
         MoveUpdateHook.SafeDispose();
 
