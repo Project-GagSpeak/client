@@ -52,7 +52,7 @@ public static class Signatures
 {
     // gip.HookFromAddress<ProcessActionEffect>(ss.ScanText(this)
     public const string ReceiveActionEffect = "40 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24";
-    
+
     // ScanType: Signature
     public const string OnEmote = "E8 ?? ?? ?? ?? 48 8D 8B ?? ?? ?? ?? 4C 89 74 24";
 
@@ -70,10 +70,10 @@ public static class Signatures
 
     // DetourName = nameof(TestUpdate), Fallibility = Fallibility.Auto, Define via SignatureAttribute.
     public const string UnfollowTarget = "48 89 5c 24 ?? 48 89 74 24 ?? 57 48 83 ec ?? 48 8b d9 48 8b fa 0f b6 89 ?? ?? 00 00 be 00 00 00 e0";
-    
+
     // Inner, single paramater that is a post-confirmation of an unfollowing. Works for mouse turning but does not prevent LMB+RMB unfollowing.
     public const string UnfollowTargetPost = "48 89 5C 24 ?? 57 48 83 EC 20 48 8B D9 BF ?? ?? ?? ?? 0F B6 89";
-    
+
     // Signatures for Imprisonment
     public const string RMICamera = "48 8B C4 53 48 81 EC ?? ?? ?? ?? 44 0F 29 50 ??";
 
@@ -108,4 +108,9 @@ public static class Signatures
     // related to a condition that changes automove
     // sub_1417229C0(nint a1, nint a2)
     public const string UnkAutoMoveUpdate = "48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 41 56 41 57 48 83 EC 20 44 0F B6 7A ?? 48 8B D9";
+
+    public const string IsInputIdPressed = "E8 ?? ?? ?? ?? 84 C0 74 ?? 8D 93";
+    public const string IsInputIdDown = "E8 ?? ?? ?? ?? 48 8B 75 ?? BB";
+    public const string IsInputIdHeld = "E8 ?? ?? ?? ?? 84 C0 74 ?? EB ?? BE";
+    public const string IsInputIdUnknown = "E8 ?? ?? ?? ?? 84 C0 8B EF";
 }
