@@ -5,13 +5,14 @@ using GagSpeak.PlayerControl;
 using GagSpeak.Services.Mediator;
 
 namespace GagSpeak.Services.Controller;
+
 public class ImprisonmentController : DisposableMediatorSubscriberBase
 {
     private const string ReturnToCageName = "RETURN_TO_CAGE";
     private readonly HcTaskManager _hcTasks;
 
     private bool _returningToCage => StaticDetours.MoveOverrides.InMoveTask;
-    public ImprisonmentController(ILogger<ImprisonmentController> logger, GagspeakMediator mediator, 
+    public ImprisonmentController(ILogger<ImprisonmentController> logger, GagspeakMediator mediator,
         HcTaskManager hcTasks) : base(logger, mediator)
     {
         _hcTasks = hcTasks;
@@ -88,7 +89,7 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
         {
             // if the distance is larger than the cage radius, begin returning to cage.
             if (PlayerData.DistanceTo(CageOrigin) > CageRadius)
-                _hcTasks.InsertTask(() => StaticDetours.MoveOverrides.MoveToPoint(CageOrigin, CageRadius), ReturnToCageName, HcTaskConfiguration.Default with { OnEnd = () => StaticDetours.MoveOverrides.Disable() });
+                _hcTasks.InsertTask(() => StaticDetours.MoveOverrides.MoveToPoint(CageOrigin, CageRadius), ReturnToCageName, HcTaskConfiguration.Default with { OnEnd = () => StaticDetours.MoveOverrides.Disable(), Flags = State.HcTaskControl.BlockMovementKeys });
         }
     }
 
