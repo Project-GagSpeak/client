@@ -94,7 +94,7 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<KinksterRestricti
             CkGui.TextWrappedTooltipFormat($"Visuals: --COL--{setItem.IsEnabled}--COL--, Slot: --COL--{setItem.Slot}--COL--" +
                 $"--NL--Using --COL--{setItem.GlamItem}--COL--" +
                 $"--NL--Applies --COL--{setItem.ModName}--COL--" +
-                $"--NL--Hardcore Traits: --COL--{setItem.Traits.ToString()}--COL--" +
+                $"--NL--Hardcore Traits: --COL--{setItem.Traits}--COL--" +
                 $"--NL--Arousal: --COL--{setItem.Arousal}--COL--", 320, ImGuiColors.ParsedGold);
             ImGui.EndTooltip();
         }
