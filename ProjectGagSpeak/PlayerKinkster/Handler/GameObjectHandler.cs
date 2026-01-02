@@ -3,18 +3,12 @@ using CkCommons;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 
 namespace GagSpeak.Kinksters.Handlers;
 
 /// <summary>
-///     <b> SHOULD ONLY BE CREATED FOR KINKSTERS, NOT THE CLIENT</b><para />
-///     Handles the state of the visible game objects. Can refer 
-///     to player character or another visible pair. <para />
-///     
-///     Helps with detecting when they are valid in the object 
-///     table or not, and what to do with them. <para />
-///     
-///     Could definitely use some cleanup!
+///     Definitely revise this to mimic sundouleia later lol. Will clean it up a LOT.
 /// </summary>
 public sealed class KinksterGameObj : DisposableMediatorSubscriberBase
 {
@@ -39,7 +33,6 @@ public sealed class KinksterGameObj : DisposableMediatorSubscriberBase
         
         // Mark as created with the name @ world now present.
         Mediator.Publish(new KinksterGameObjCreatedMessage(this));
-
     }
 
     public string NameWithWorld { get; private set; } // the name of the character
@@ -119,11 +112,11 @@ public sealed class KinksterGameObj : DisposableMediatorSubscriberBase
         }
     }
 
-    public void UpdatePlayerCharacterRef()
+    public unsafe void UpdatePlayerCharacterRef()
     {
         if (Address == IntPtr.Zero)
             return;
         PlayerCharacterObjRef = _frameworkUtil.GetIPlayerCharacterFromObjectTableAsync(Address).GetAwaiter().GetResult();
-        NameWithWorld = PlayerCharacterObjRef?.GetNameWithWorld() ?? string.Empty;
+        NameWithWorld = ((Character*)Address)->GetNameWithWorld() ?? string.Empty;
     }
 }

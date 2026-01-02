@@ -63,7 +63,7 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
         {
             var newPos = ClientData.GetImprisonmentPos();
             // invalidate if we are too far from current position.
-            if (PlayerData.DistanceToInstanced(newPos) > 15)
+            if (PlayerData.DistanceTo(newPos) > 15)
             {
                 _hcTasks.RemoveIfPresent("MoveToPoint");
                 IsImprisoned = false;

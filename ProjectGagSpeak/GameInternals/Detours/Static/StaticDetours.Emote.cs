@@ -1,7 +1,9 @@
 using CkCommons;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Hooking;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
@@ -27,26 +29,29 @@ public partial class StaticDetours
     ///     Processes who did what emote for achievement and trigger purposes.
     ///     Provides the source and target along with the emote ID.
     /// </summary>
-    private async void ProcessEmoteDetour(ulong unk, ulong emoteCallerAddr, ushort emoteId, ulong targetId, ulong unk2)
+    private unsafe void ProcessEmoteDetour(ulong unk, ulong emoteCallerAddr, ushort emoteId, ulong targetId, ulong unk2)
     {
         try
         {
-            await _frameworkUtils.RunOnFrameworkThread(() =>
-            {
-                var emoteCaller = _frameworkUtils.CreateGameObject((nint)emoteCallerAddr);
-                var emoteCallerName = PlayerData.GetNameWithWorld(emoteCaller as IPlayerCharacter) ?? "No Player Was Emote Caller";
-                var emoteName = EmoteService.EmoteName(emoteId);
-                var targetObj = (_frameworkUtils.SearchObjectTableById((uint)targetId));
-                var targetName = (targetObj as IPlayerCharacter)?.GetNameWithWorld() ?? "No Player Was Target";
-                Logger.LogTrace("OnEmote >> [" + emoteCallerName + "] used Emote [" + emoteName + "](ID:"+emoteId+") on Target: [" + targetName+"]", LoggerType.EmoteMonitor);
+            // Cast it to a gameobject and validate it.
+            GameObject* emoteCaller = (GameObject*)emoteCallerAddr;
+            if (emoteCaller == null)
+                throw new Bagagwa("Emote Caller GameObject is null in EmoteDetour.");
 
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.EmoteExecuted, emoteCaller, emoteId, targetObj);
-            });
+            var emoteCallerName = (emoteCaller->IsCharacter()) ? ((Character*)emoteCaller)->GetNameWithWorld() : "No Player Was Emote Caller";
+            var emoteName = EmoteService.EmoteName(emoteId);
+            var tgtObj = GameObjectManager.Instance()->Objects.GetObjectByGameObjectId(targetId);
+            var targetName = (tgtObj != null && tgtObj->IsCharacter()) ? ((Character*)tgtObj)->GetNameWithWorld() : "No Player Was Target";
+            Logger.LogTrace($"OnEmote >> [{emoteCallerName}] used Emote [{emoteName}](ID:{emoteId}) on Target: [{targetName}]", LoggerType.EmoteMonitor);
+
+            // Could keep as nint or do snapshotting.
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.EmoteExecuted, (nint)emoteCaller, emoteId, (nint)tgtObj);
         }
         catch (Bagagwa e)
         {
             Logger.LogError(e, "Error in EmoteDetour");
         }
+
         ProcessEmoteHook.Original(unk, emoteCallerAddr, emoteId, targetId, unk2);
     }
 

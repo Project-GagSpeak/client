@@ -84,7 +84,7 @@ public class MoodleListener : DisposableMediatorSubscriberBase
         if (_isZoning || !PlayerData.Available)
             return;
 
-        if (chara.Address != PlayerData.ObjectAddress)
+        if (chara.Address != PlayerData.Address)
             return;
 
         // Check and Update the clients Moodles. Reapply if the moodle removed was restricted.

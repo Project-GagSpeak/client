@@ -51,7 +51,7 @@ public class GlamourListener : IDisposable
     /// </summary>
     private async void OnStateChanged(nint address, StateChangeType changeType)
     {
-        if (address != PlayerData.ObjectAddress)
+        if (address != PlayerData.Address)
             return;
 
         if (changeType is not (StateChangeType.Equip or StateChangeType.Stains or StateChangeType.Other))
@@ -114,7 +114,7 @@ public class GlamourListener : IDisposable
     /// <remarks> This is primarily used to cache the state of the player after a glamour operation has completed. </remarks>
     private async void OnStateFinalized(nint address, StateFinalizationType finalizationType)
     {
-        if (address != PlayerData.ObjectAddress)
+        if (address != PlayerData.Address)
             return;
 
         _logger.LogDebug($"[OnStateFinalized] Type: ({finalizationType})", LoggerType.IpcGlamourer);

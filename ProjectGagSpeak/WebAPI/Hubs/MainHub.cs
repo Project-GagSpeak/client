@@ -323,7 +323,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     /// <param name="token"> token that when canceled will stop the while loop from occurring, preventing infinite reloads/waits </param>
     private async Task WaitForWhenPlayerIsPresent(CancellationToken token)
     {
-        while (!PlayerData.AvailableThreadSafe && !token.IsCancellationRequested)
+        while (!PlayerData.Available && !token.IsCancellationRequested)
         {
             Logger.LogDebug("Player not loaded in yet, waiting", LoggerType.ApiCore);
             await Task.Delay(TimeSpan.FromSeconds(1), token).ConfigureAwait(false);

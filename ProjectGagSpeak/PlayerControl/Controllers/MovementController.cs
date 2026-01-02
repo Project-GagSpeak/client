@@ -89,10 +89,10 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     private unsafe void FrameworkUpdate()
     {
         // ForceFollow Specific Logic.
-        if (_timeoutTracker.IsRunning && PlayerData.Object!.Position != _lastPos)
+        if (_timeoutTracker.IsRunning && PlayerData.Position != _lastPos)
         {
             RestartTimeoutTracker();
-            _lastPos = PlayerData.Object!.Position;
+            _lastPos = PlayerData.Position;
         }
 
         // we need to do the following because other plugins can share this pointer control (Cammy)

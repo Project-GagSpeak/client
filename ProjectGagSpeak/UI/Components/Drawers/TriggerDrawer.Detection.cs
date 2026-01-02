@@ -247,7 +247,7 @@ public sealed partial class TriggerDrawer : IDisposable
         // Combo Row.
         using (ImRaii.Group())
         {
-            var img = MoodleDisplay.GetGameIconOrEmpty(SpellActionService.GetLightJob(_selectedJob).GetIconId());
+            var img = MoodleIcon.GetGameIconOrEmpty(SpellActionService.GetLightJob(_selectedJob).GetIconId());
             ImGui.Image(img.Handle, new Vector2(ImGui.GetFrameHeight()));
 
             ImUtf8.SameLineInner();
@@ -293,7 +293,7 @@ public sealed partial class TriggerDrawer : IDisposable
                     continue;
 
                 // Draw the icon.
-                ImGui.Image(MoodleDisplay.GetGameIconOrEmpty(iconData.IconID).Handle, iconSize);
+                ImGui.Image(MoodleIcon.GetGameIconOrEmpty(iconData.IconID).Handle, iconSize);
                 if(ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 {
                     // Remove the action from the list.

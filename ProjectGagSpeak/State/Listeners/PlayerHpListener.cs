@@ -1,5 +1,6 @@
 using CkCommons;
 using Dalamud.Game.ClientState.Objects.SubKinds;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
@@ -41,7 +42,7 @@ public sealed class PlayerHpListener : DisposableMediatorSubscriberBase
         public uint LastMaxHp { get; set; }
     };
 
-    private void UpdateTriggerMonitors()
+    private unsafe void UpdateTriggerMonitors()
     {
         if (_manager.Storage.HealthPercent.Any())
         {
@@ -56,7 +57,7 @@ public sealed class PlayerHpListener : DisposableMediatorSubscriberBase
 
         // Get the visible characters.
         var visiblePlayerCharacters = _frameworkUtils.GetObjectTablePlayers()
-            .Where(player => playerTriggers.Keys.Contains(player.GetNameWithWorld()));
+            .Where(player => playerTriggers.Keys.Contains(((Character*)player.Address)->GetNameWithWorld()));
 
         // Remove players from MonitoredPlayers who are no longer visible.
         var playersToRemove = MonitoredPlayers.Keys.Except(visiblePlayerCharacters);
@@ -70,7 +71,7 @@ public sealed class PlayerHpListener : DisposableMediatorSubscriberBase
 
         // add all the visible players
         foreach (var player in playersToAdd)
-            if (playerTriggers.TryGetValue(player.GetNameWithWorld(), out var triggers))
+            if (playerTriggers.TryGetValue(((Character*)player.Address)->GetNameWithWorld(), out var triggers))
                 MonitoredPlayers.Add(player, triggers);
     }
 

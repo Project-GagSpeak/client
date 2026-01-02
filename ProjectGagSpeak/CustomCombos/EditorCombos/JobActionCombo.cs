@@ -73,7 +73,7 @@ public sealed class JobActionCombo : CkFilterComboCache<ParsedActionRow>
             ImGui.SetCursorPos(pos);
             using (ImRaii.Group())
             {
-                ImGui.Image(MoodleDisplay.GetGameIconOrEmpty(parsedJobAction.IconID).Handle, new Vector2(size.Y));
+                ImGui.Image(MoodleIcon.GetGameIconOrEmpty(parsedJobAction.IconID).Handle, new Vector2(size.Y));
                 CkGui.TextFrameAlignedInline(parsedJobAction.Name);
                 CkGui.ColorTextFrameAlignedInline($"({parsedJobAction.ActionID})", CkColor.ElementBG.Uint(), false);
             }

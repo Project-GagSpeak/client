@@ -64,7 +64,7 @@ public static unsafe class HcCommonTaskFuncs
                 }
             }
 
-            _prevPlayerPos = PlayerData.Object.Position;
+            _prevPlayerPos = PlayerData.Position;
             // return false, as we are still moving.
             return false;
         }
@@ -132,13 +132,13 @@ public static unsafe class HcCommonTaskFuncs
             return false;
 
         // Obtain our current emote ID.
-        var currentEmote = EmoteService.CurrentEmoteId(PlayerData.ObjectAddress);
+        var currentEmote = EmoteService.CurrentEmoteId(PlayerData.Address);
 
         // if the expected emoteId is 50 or 52, handle forced sitting.
         if (expectedEmoteId is 50 or 52)
         {
             // RETURN TRUE IF: both current emote and current cycle byte are the same.
-            var curCyclePose = EmoteService.CurrentCyclePose(PlayerData.ObjectAddress);
+            var curCyclePose = EmoteService.CurrentCyclePose(PlayerData.Address);
             if (currentEmote == expectedEmoteId && curCyclePose == expectedCPose)
                 return true;
 

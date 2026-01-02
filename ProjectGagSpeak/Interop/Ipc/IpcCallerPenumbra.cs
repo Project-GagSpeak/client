@@ -191,7 +191,7 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
     private unsafe void GameObjectResourceLoaded(IntPtr address, string gamePath, string resolvedPath)
     {
         // this wont work because its called outside the framework thread, which creates even more problems for us lol.
-        if (((IntPtr)PlayerData.ObjectThreadSafe) != address)
+        if (PlayerData.Address != address)
             return;
         // Logger.LogTrace($"ResourcePathLoaded: [GamePath: {gamePath}] [ResolvedPath: {resolvedPath}]");
         // Dont do anything with this at the moment, use it for tracking, and debugging.

@@ -383,7 +383,7 @@ public class CollarOverviewTab : IFancyTab
 
         CkRichText.Text(ImGui.GetContentRegionAvail().X - MoodleDrawer.IconSizeFramed.X, _manager.SyncedData!.Moodle.Title);
         ImGui.SameLine();
-        MoodleDisplay.DrawMoodleIcon(moodle.IconID, moodle.Stacks, MoodleDrawer.IconSizeFramed);
+        MoodleIcon.DrawMoodleIcon(moodle.IconID, moodle.Stacks, MoodleDrawer.IconSizeFramed);
         GsExtensions.DrawMoodleStatusTooltip(moodle, MoodleCache.IpcData.StatusList);
     }
 }

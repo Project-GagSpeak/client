@@ -661,7 +661,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
                 ImGui.TextUnformatted("None");
             else
             {
-                MoodleDisplay.DrawMoodleIcon(collar.Moodle.IconID, collar.Moodle.Stacks, MoodleDrawer.IconSizeFramed);
+                MoodleIcon.DrawMoodleIcon(collar.Moodle.IconID, collar.Moodle.Stacks, MoodleDrawer.IconSizeFramed);
                 GsExtensions.DrawMoodleStatusTooltip(collar.Moodle, Enumerable.Empty<MoodlesStatusInfo>());
             }
             ImGui.TableNextRow();

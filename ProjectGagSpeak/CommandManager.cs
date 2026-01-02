@@ -177,7 +177,7 @@ public sealed class CommandManager : IDisposable
 
         if (string.Equals(splitArgs[0], "r", StringComparison.OrdinalIgnoreCase))
         {
-            if (PlayerData.Object is null) 
+            if (!PlayerData.Available) 
                 return;
 
             // get the last interacted with DeathRoll session.

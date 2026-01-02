@@ -595,21 +595,21 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
             return targetIsImmobile;
         }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Helpless Kinksters", "Pet", false);
 
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.EscapedPatient, 10, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.EscapedPatient, 10, () => PlayerData.InPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundToKill, 25, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundToKill, 25, () => PlayerData.InPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.TheShackledSlayer, 50, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.TheShackledSlayer, 50, () => PlayerData.InPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.DangerousConvict, 100, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.DangerousConvict, 100, () => PlayerData.InPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.OfUnyieldingForce, 200, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.OfUnyieldingForce, 200, () => PlayerData.InPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.StimulationOverdrive, 300, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.StimulationOverdrive, 300, () => PlayerData.InPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundYetUnbroken, 400, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.BoundYetUnbroken, 400, () => PlayerData.InPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
-        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.ChainsCantHoldMe, 500, () => PlayerData.IsInPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
+        _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.ChainsCantHoldMe, 500, () => PlayerData.InPvP && (_restraints.AppliedRestraint is not null || _remoteService.IsClientBeingBuzzed),
             (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Frontline Players Slain", "", false);
         #endregion GENERIC MODULE
 

@@ -2,6 +2,9 @@ using CkCommons;
 using CkCommons.Helpers;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Text.SeStringHandling;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
+using FFXIVClientStructs.FFXIV.Client.System.Scheduler.Object;
 using GagSpeak.GameInternals;
 using GagSpeak.GameInternals.Agents;
 using GagSpeak.GameInternals.Structs;
@@ -74,31 +77,28 @@ public class TriggerHandler
     /// <summary>
     ///     Called upon by the ActionEffectDetour
     /// </summary>
-    public async void OnActionEffectEvent(List<ActionEffectEntry> actionEffects)
+    public unsafe void OnActionEffectEvent(List<ActionEffectEntry> actionEffects)
     {
         if (!PlayerData.Available || !_triggers.Storage.SpellAction.Any())
             return;
 
-        // maybe run this in async but idk it could also be a very bad idea.
-        // Only do if we know what we are doing and have performance issues.
-        await _frameworkUtils.RunOnFrameworkThread(() =>
+        foreach (var actionEffect in actionEffects)
         {
-            foreach (var actionEffect in actionEffects)
+            if ((LoggerFilter.FilteredLogTypes & LoggerType.ActionEffects) != 0)
             {
-                if ((LoggerFilter.FilteredLogTypes & LoggerType.ActionEffects) != 0)
-                {
-                    // Perform logging and action processing for each effect
-                    var sourceCharaStr = (_frameworkUtils.SearchObjectTableById(actionEffect.SourceID) as IPlayerCharacter)?.GetNameWithWorld() ?? "UNKN OBJ";
-                    var targetCharaStr = (_frameworkUtils.SearchObjectTableById(actionEffect.TargetID) as IPlayerCharacter)?.GetNameWithWorld() ?? "UNKN OBJ";
+                // Perform logging and action processing for each effect
+                var srcChara = GameObjectManager.Instance()->Objects.GetObjectByGameObjectId(actionEffect.SourceID);
+                var tgtChara = GameObjectManager.Instance()->Objects.GetObjectByGameObjectId(actionEffect.TargetID);
+                var srcCharaStr = (srcChara != null && srcChara->IsCharacter()) ? ((Character*)srcChara)->GetNameWithWorld() : "UNKN OBJ";
+                var tgtCharaStr = (tgtChara != null && tgtChara->IsCharacter()) ? ((Character*)tgtChara)->GetNameWithWorld() : "UNKN OBJ";
 
-                    var actionStr = SpellActionService.AllActionsLookup.TryGetValue(actionEffect.ActionID, out var match) ? match.Name.ToString() : "UNKN ACT";
+                var actionStr = SpellActionService.AllActionsLookup.TryGetValue(actionEffect.ActionID, out var match) ? match.Name.ToString() : "UNKN ACT";
+                _logger.LogTrace($"Source:{srcCharaStr}, Target: {tgtCharaStr}, Action: {actionStr}, Action ID:{actionEffect.ActionID}, " +
+                    $"Type: {actionEffect.Type.ToString()} Amount: {actionEffect.Damage}", LoggerType.ActionEffects);
+            }
 
-                    _logger.LogTrace($"Source:{sourceCharaStr}, Target: {targetCharaStr}, Action: {actionStr}, Action ID:{actionEffect.ActionID}, " +
-                        $"Type: {actionEffect.Type.ToString()} Amount: {actionEffect.Damage}", LoggerType.ActionEffects);
-                }
-                CheckSpellActionTriggers(actionEffect).ConfigureAwait(false);
-            };
-        });
+            CheckSpellActionTriggers(actionEffect).ConfigureAwait(false);
+        };
     }
 
 
@@ -259,7 +259,7 @@ public class TriggerHandler
         foreach (var trigger in relevantTriggers)
         {
             _logger.LogTrace("Checking Trigger: " + trigger.Label, LoggerType.Triggers);
-            if (!IsDirectionMatch(trigger.Direction, PlayerData.Object?.GameObjectId ?? 0, actionEffect.SourceID, actionEffect.TargetID))
+            if (!IsDirectionMatch(trigger.Direction, PlayerData.GameObjectId, actionEffect.SourceID, actionEffect.TargetID))
             {
                 _logger.LogDebug("Direction didn't match", LoggerType.Triggers);
                 continue;

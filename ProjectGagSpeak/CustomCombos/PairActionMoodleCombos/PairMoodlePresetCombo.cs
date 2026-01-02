@@ -56,7 +56,7 @@ public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePreset
                     continue;
                 }
 
-                MoodleDisplay.DrawMoodleIcon(info.IconID, info.Stacks, IconSize);
+                MoodleIcon.DrawMoodleIcon(info.IconID, info.Stacks, IconSize);
                 DrawItemTooltip(info);
 
                 if (++iconsDrawn < moodlePreset.Statuses.Count)

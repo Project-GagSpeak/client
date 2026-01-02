@@ -40,7 +40,7 @@ public class AccountManagerTab
     public void DrawManager()
     {
         CkGui.FontText(GSLoc.Settings.Accounts.PrimaryLabel, UiFontService.UidFont);
-        var localContentId = PlayerData.ContentId;
+        var localContentId = PlayerData.CID;
 
         // obtain the primary account auth.
         var primaryAuth = _serverConfigs.ServerStorage.Authentications.FirstOrDefault(c => c.IsPrimary);

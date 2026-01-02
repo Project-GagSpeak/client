@@ -86,7 +86,7 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
             var visiblePairGameObjects = _pairManager.GetVisiblePairGameObjects();
             // get players not included in our gagspeak pairs.
             var playersNotInPairs = Svc.Objects.OfType<IPlayerCharacter>()
-                .Where(player => player != PlayerData.Object && !visiblePairGameObjects.Contains(player))
+                .Where(player => player != PlayerData.PlayerChara && !visiblePairGameObjects.Contains(player))
                 .ToList();
 
             // Store the list of visible players
@@ -141,7 +141,7 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
     private (float, float) GenerateMapLinkMessageForObject(IGameObject playerObject)
     {
         var place = Svc.Data
-            .GetExcelSheet<Map>(PlayerData.Language)?
+            .GetExcelSheet<Map>(Svc.ClientState.ClientLanguage)?
             .FirstOrDefault(m => m.TerritoryType.RowId == PlayerContent.TerritoryID);
         var placeName = place?.PlaceName.RowId;
         var scale = place?.SizeFactor ?? 100f;

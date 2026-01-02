@@ -51,7 +51,7 @@ public sealed class PairMoodleStatusCombo : CkMoodleComboButtonBase<MoodlesStatu
         var ret = ImGui.Selectable("##" + moodleStatus.Title, selected, ImGuiSelectableFlags.None, size);
 
         ImGui.SameLine(titleSpace);
-        MoodleDisplay.DrawMoodleIcon(moodleStatus.IconID, moodleStatus.Stacks, IconSize);
+        MoodleIcon.DrawMoodleIcon(moodleStatus.IconID, moodleStatus.Stacks, IconSize);
         DrawItemTooltip(moodleStatus);
 
         ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);

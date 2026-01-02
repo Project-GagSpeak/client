@@ -344,7 +344,7 @@ public class PublicationsManager
             }
 
             if (moodle.MoodleStatus.IconID != 0 && imagePos != Vector2.Zero)
-                MoodleDisplay.DrawMoodleIcon(moodle.MoodleStatus.IconID, moodle.MoodleStatus.Stacks, MoodleDrawer.IconSize);
+                MoodleIcon.DrawMoodleIcon(moodle.MoodleStatus.IconID, moodle.MoodleStatus.Stacks, MoodleDrawer.IconSize);
         }
     }
 

@@ -86,7 +86,7 @@ public class ChatService : DisposableMediatorSubscriberBase
     /// </summary>
     private void OnChatboxMessage(XivChatType type, int ts, ref SeString sender, ref SeString msg, ref bool showInChatbox)
     {
-        if (PlayerData.Object is null || MainHub.IsConnected is false)
+        if (!MainHub.IsConnected || !PlayerData.Available)
             return; // Process as normal.
 
         // Check for things we dont need the player payload for.
@@ -96,7 +96,7 @@ public class ChatService : DisposableMediatorSubscriberBase
         // Extract the sender name & world from the sender payload, defaulting to the client player if not available.
         var senderPayload = sender.Payloads.OfType<PlayerPayload>().FirstOrDefault();
         var senderName = senderPayload?.PlayerName ?? PlayerData.Name;
-        var senderWorld = senderPayload?.World.Value.Name.ToString() ?? PlayerData.HomeWorld;
+        var senderWorld = senderPayload?.World.Value.Name.ToString() ?? PlayerData.HomeWorldName;
 
         // If the chat is not a GsChatChannel, don't process anything more.
         if(ChatLogAgent.FromXivChatType(type) is not { } channel)
@@ -129,7 +129,7 @@ public class ChatService : DisposableMediatorSubscriberBase
     /// </summary>
     private void CheckForPvpActivity(XivChatType type, SeString msg)
     {
-        if (!PlayerData.IsInPvP || type is not (XivChatType)2874)
+        if (!PlayerData.InPvP || type is not (XivChatType)2874)
             return;
 
         // If we got a kill, fore achievement.

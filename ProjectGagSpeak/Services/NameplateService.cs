@@ -2,6 +2,7 @@ using CkCommons;
 using CkCommons.Textures;
 using Dalamud.Game.Gui.NamePlate;
 using Dalamud.Interface.Textures.TextureWraps;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Kernel;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -92,8 +93,8 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
 
         if (g.GaggedNameplate && applied)
         {
-            Logger.LogDebug($"Adding {PlayerData.NameWithWorldInstanced} to tracked Nameplates", LoggerType.Gags);
-            TrackedKinksters.TryAdd(PlayerData.NameWithWorldInstanced, false);
+            Logger.LogDebug($"Adding {PlayerData.NameWithWorld} to tracked Nameplates", LoggerType.Gags);
+            TrackedKinksters.TryAdd(PlayerData.NameWithWorld, false);
         }
         else if (_gags.ServerGagData is { } data && data.IsGagged())
         {
@@ -102,8 +103,8 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         }
         else
         {
-            Logger.LogDebug($"Removing {PlayerData.NameWithWorldInstanced} to tracked Nameplates", LoggerType.Gags);
-            TrackedKinksters.Remove(PlayerData.NameWithWorldInstanced, out var ____);
+            Logger.LogDebug($"Removing {PlayerData.NameWithWorld} to tracked Nameplates", LoggerType.Gags);
+            TrackedKinksters.Remove(PlayerData.NameWithWorld, out var ____);
         }
         Svc.NamePlate.RequestRedraw();
     }
@@ -167,7 +168,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         if (g.ChatGarblerActive && message.Split(' ').Length > 5)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.GaggedChatSent, c, message);
 
-        DisplayGaggedSpeaking(PlayerData.NameWithWorldInstanced, (int)(650.0f * message.Length / 20.0f));
+        DisplayGaggedSpeaking(PlayerData.NameWithWorld, (int)(650.0f * message.Length / 20.0f));
     }
 
     private void OnKinksterMessage(Kinkster k, InputChannel c, string message)
@@ -203,8 +204,13 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         foreach (var h in handlers)
         {
             // Skip if not player character, if if the player character is null.
-            if (h.NamePlateKind is not NamePlateKind.PlayerCharacter || h.PlayerCharacter is not { } pc)
+            if (h.NamePlateKind is not NamePlateKind.PlayerCharacter)
                 continue;
+            
+            if (h.PlayerCharacter is not { } pc)
+                continue;
+
+            Character* handlerChara = (Character*)pc.Address;
 
             // Force the icon to be visible.
             var nmo = (AddonNamePlate.NamePlateObject*)h.NamePlateObjectAddress;
@@ -216,7 +222,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
             var nameIcon = nmo->NameIcon;
 
             // If they aint tracked, dont do nothin.
-            var pnww = PlayerData.GetNameWithWorld(pc);
+            var pnww = handlerChara->GetNameWithWorld();
             if (!TrackedKinksters.TryGetValue(pnww, out var isSpeaking))
                 continue;
 

@@ -17,7 +17,7 @@ public static unsafe class HcStayApartment
             .Add(TargetApartmentEntrance)
             .Add(HcTaskUtils.LockOnToTarget)
             .Add(HcTaskUtils.EnableAutoMove)
-            .Add(() => Vector3.Distance(PlayerData.Object.Position, Svc.Targets.Target?.Position ?? Vector3.Zero) < 3.5f)
+            .Add(() => Vector3.Distance(PlayerData.Position, Svc.Targets.Target?.Position ?? Vector3.Zero) < 3.5f)
             .Add(HcTaskUtils.DisableAutoMove)
             .Add(InteractWithApartmentEntrance)
             .AsGroup();
@@ -27,7 +27,7 @@ public static unsafe class HcStayApartment
     public static bool TargetApartmentEntrance()
     {
         // 2007402 is dataId apartment building entrance 0   apartment building entrances 0   1   1   0   0
-        foreach (var o in Svc.Objects.OrderBy(x => Vector3.Distance(x.Position, PlayerData.Object.Position)))
+        foreach (var o in Svc.Objects.OrderBy(x => Vector3.Distance(x.Position, PlayerData.Position)))
         {
             // continue if not the data ID.
             if (o.BaseId != 2007402)

@@ -92,7 +92,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
         // If for some god awful reason we have horrible timing and our character happens to be zoning during this 6 hourly interval, wait.
         try
         {
-            while (!PlayerData.AvailableThreadSafe && !token.IsCancellationRequested)
+            while (!PlayerData.Available && !token.IsCancellationRequested)
             {
                 Logger.LogDebug("Player not loaded in yet, waiting", LoggerType.ApiCore);
                 await Task.Delay(TimeSpan.FromSeconds(1), token).ConfigureAwait(false);
@@ -249,7 +249,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
     /// <returns>the JWT identifier object for the token</returns>
     private JwtIdentifier? GetIdentifier()
     {
-        var tempLocalContentID = PlayerData.ContentIdInstanced;
+        var tempLocalContentID = PlayerData.CID;
         try
         {
             var secretKey = string.Empty;
@@ -331,7 +331,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
         // await for the player to be present to get the JWT token
         try
         {
-            while (!PlayerData.AvailableThreadSafe && !linkedCTS.Token.IsCancellationRequested)
+            while (!PlayerData.Available && !linkedCTS.Token.IsCancellationRequested)
             {
                 Logger.LogDebug("Player not loaded in yet, waiting", LoggerType.ApiCore);
                 await Task.Delay(TimeSpan.FromSeconds(1), linkedCTS.Token).ConfigureAwait(false);

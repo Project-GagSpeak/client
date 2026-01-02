@@ -141,7 +141,7 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
         if (info.MoodleStatus.IconID != 0)
         {
             ImGui.SetCursorPos(imagePos);
-            MoodleDisplay.DrawMoodleIcon(info.MoodleStatus.IconID, info.MoodleStatus.Stacks, MoodleDrawer.IconSize);
+            MoodleIcon.DrawMoodleIcon(info.MoodleStatus.IconID, info.MoodleStatus.Stacks, MoodleDrawer.IconSize);
         }
 
         void DrawMoodleEffects()

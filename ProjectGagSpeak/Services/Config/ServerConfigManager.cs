@@ -39,7 +39,7 @@ public class ServerConfigManager
     public bool TryGetAuthForCharacter([NotNullWhen(true)] out Authentication auth)
     {
         // fetch the players local content ID (matches regardless of name or world change) and the name & worldId.
-        var LocalContentID = Svc.Framework.RunOnFrameworkThread(() => PlayerData.ContentId).Result;
+        var LocalContentID = Svc.Framework.RunOnFrameworkThread(() => PlayerData.CID).Result;
         // Once we have obtained the information, check to see if the currently logged in character has a matching authentication with the same local content ID.
         auth = ServerStorage.Authentications.FirstOrDefault(f => f.CharacterPlayerContentId == LocalContentID)!;
         if (auth is null)
@@ -78,8 +78,8 @@ public class ServerConfigManager
         if (auth == null) return;
 
         // fetch the players name and world ID.
-        var charaName = PlayerData.NameInstanced;
-        var worldId = PlayerData.HomeWorldIdInstanced;
+        var charaName = PlayerData.Name;
+        var worldId = PlayerData.HomeWorldId;
 
         // update the name if it has changed.
         if (auth.CharacterName != charaName)
@@ -96,12 +96,12 @@ public class ServerConfigManager
 
     public bool CharacterHasSecretKey()
     {
-        return ServerStorage.Authentications.Any(a => a.CharacterPlayerContentId == PlayerData.ContentId && !string.IsNullOrEmpty(a.SecretKey.Key));
+        return ServerStorage.Authentications.Any(a => a.CharacterPlayerContentId == PlayerData.CID && !string.IsNullOrEmpty(a.SecretKey.Key));
     }
 
     public bool AuthExistsForCurrentLocalContentId()
     {
-        return ServerStorage.Authentications.Any(a => a.CharacterPlayerContentId == PlayerData.ContentId);
+        return ServerStorage.Authentications.Any(a => a.CharacterPlayerContentId == PlayerData.CID);
     }
 
     public void GenerateAuthForCurrentCharacter()
@@ -110,9 +110,9 @@ public class ServerConfigManager
         // generates a new auth object for the list of authentications with no secret key.
         var auth = new Authentication
         {
-            CharacterPlayerContentId = PlayerData.ContentIdInstanced,
-            CharacterName = PlayerData.NameInstanced,
-            WorldId = PlayerData.HomeWorldIdInstanced,
+            CharacterPlayerContentId = PlayerData.CID,
+            CharacterName = PlayerData.Name,
+            WorldId = PlayerData.HomeWorldId,
             IsPrimary = !ServerStorage.Authentications.Any(),
             SecretKey = new SecretKey()
         };

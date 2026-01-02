@@ -183,7 +183,7 @@ public partial class MainHub
     {
         Logger.LogDebug("Callback_ApplyMoodlesByStatus: " + dto, LoggerType.Callbacks);
         // obtain the local player name and world
-        await _visualListener.ApplyStatusesToSelf(dto, PlayerData.NameWithWorldInstanced);
+        await _visualListener.ApplyStatusesToSelf(dto, PlayerData.NameWithWorld);
         Logger.LogDebug("Applied Moodles to Self: " + dto, LoggerType.Callbacks);
     }
 

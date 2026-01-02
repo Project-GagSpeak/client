@@ -114,7 +114,7 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
     private async Task WaitForPlayerAndLaunchCharacterManager()
     {
         // wait for the player to be present
-        while (PlayerData.AvailableThreadSafe is false)
+        while (!PlayerData.Available)
         {
             Svc.Logger.Debug("Waiting for player to be present");
             await Task.Delay(100).ConfigureAwait(false);

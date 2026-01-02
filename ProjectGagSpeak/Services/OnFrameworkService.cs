@@ -44,7 +44,7 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
         // This should probably be moved somewhere else idealy but whatever for now.
         mediator.Subscribe<TargetPairMessage>(this, (msg) =>
         {
-            if (PlayerData.IsInPvP) return;
+            if (PlayerData.InPvP) return;
             var name = msg.Pair.PlayerName;
             if (string.IsNullOrEmpty(name)) return;
             var addr = _playerCharas.FirstOrDefault(f => string.Equals(f.Value.Name, name, StringComparison.Ordinal)).Value.Address;
@@ -264,13 +264,13 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
             Mediator.Publish(new CutsceneEndMessage());
         }
 
-        if (PlayerData.IsInGPose && !_isInGpose)
+        if (PlayerData.InGPose && !_isInGpose)
         {
             Logger.LogDebug("Gpose start");
             _isInGpose = true;
             Mediator.Publish(new GPoseStartMessage());
         }
-        else if (!PlayerData.IsInGPose && _isInGpose)
+        else if (!PlayerData.InGPose && _isInGpose)
         {
             Logger.LogDebug("Gpose end");
             _isInGpose = false;
@@ -327,10 +327,8 @@ public class OnFrameworkService : DisposableMediatorSubscriberBase, IHostedServi
         if (isNormalFrameworkUpdate)
             return;
 
-        var localPlayer = PlayerData.Object;
-
         // check if we are at 1 hp, if so, grant the boundgee jumping achievement.
-        if (localPlayer?.CurrentHp is 1)
+        if (PlayerData.CurrentHp is 1)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.ClientOneHp);
 
         // push the delayed framework update message to the mediator for things like the UI and the online player manager

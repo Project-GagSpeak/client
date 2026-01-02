@@ -223,7 +223,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         var territory = PlayerContent.TerritoryID;
 
         // if present in diadem (for diamdem achievement) (Accounts for going into diadem while a vibe is running)
-        if (territory is 939 && !PlayerData.IsInPvP)
+        if (territory is 939 && !PlayerData.InPvP)
             (ClientAchievements.SaveData[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.StartTask();
         else
             (ClientAchievements.SaveData[Achievements.MotivationForRestoration.Id] as TimeRequiredConditionalAchievement)?.CheckCompletion();
@@ -305,7 +305,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
     private void OnDutyStart(object? sender, ushort e)
     {
         Logger.LogInformation("Duty Started", LoggerType.AchievementEvents);
-        if (PlayerData.IsInPvP)
+        if (PlayerData.InPvP)
             return;
 
         (ClientAchievements.SaveData[Achievements.KinkyExplorer.Id] as ConditionalAchievement)?.CheckCompletion();
@@ -330,7 +330,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
 
     private void OnDutyEnd(object? sender, ushort e)
     {
-        if (PlayerData.IsInPvP)
+        if (PlayerData.InPvP)
             return;
         Logger.LogInformation("Duty Ended", LoggerType.AchievementEvents);
         if ((ClientAchievements.SaveData[Achievements.UCanTieThis.Id] as ConditionalProgressAchievement)?.ConditionalTaskBegun ?? false)

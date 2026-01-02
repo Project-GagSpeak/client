@@ -303,7 +303,7 @@ public class IntroUi : WindowMediatorSubscriberBase
                     };
 
                     // set the secret key for the character
-                    _serverConfigs.SetSecretKeyForCharacter(PlayerData.ContentId, newKey);
+                    _serverConfigs.SetSecretKeyForCharacter(PlayerData.CID, newKey);
 
                     // run the create connections and set our account created to true
                     _initialAccountCreationTask = PerformFirstLoginAsync();
@@ -376,7 +376,7 @@ public class IntroUi : WindowMediatorSubscriberBase
             };
 
             // set the secret key for the character
-            _serverConfigs.SetSecretKeyForCharacter(PlayerData.ContentId, newKey);
+            _serverConfigs.SetSecretKeyForCharacter(PlayerData.CID, newKey);
             _configService.Save();
             // Log the details.
             _logger.LogInformation("UID: " + accountDetails.Item1);
