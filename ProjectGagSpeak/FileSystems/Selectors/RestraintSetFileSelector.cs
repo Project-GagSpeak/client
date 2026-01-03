@@ -136,19 +136,22 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
                 }
             }
             // Optimize later.
-            ImGui.SameLine((rectMax.X - rectMin.X) - iconSpacing);
-            var centerHeight = (ImGui.GetItemRectSize().Y - CkGui.IconSize(FAI.Trash).Y) / 2;
-            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + centerHeight);
-            var pos = ImGui.GetCursorScreenPos();
-            var hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
-            var col = (hovering && KeyMonitor.ShiftPressed()) ? ImGuiCol.Text : ImGuiCol.TextDisabled;
-            CkGui.FramedIconText(FAI.Trash, ImGui.GetColorU32(col));
-            if (hovering && KeyMonitor.ShiftPressed() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+            if (_manager.AppliedRestraint?.Identifier != leaf.Value.Identifier)
             {
-                Log.Debug($"Deleting {leaf.Value.Label} with SHIFT pressed.");
-                _manager.Delete(leaf.Value);
+                ImGui.SameLine((rectMax.X - rectMin.X) - iconSpacing);
+                var centerHeight = (ImGui.GetItemRectSize().Y - CkGui.IconSize(FAI.Trash).Y) / 2;
+                ImGui.SetCursorPosY(ImGui.GetCursorPosY() + centerHeight);
+                var pos = ImGui.GetCursorScreenPos();
+                var hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
+                var col = (hovering && KeyMonitor.ShiftPressed()) ? ImGuiCol.Text : ImGuiCol.TextDisabled;
+                CkGui.FramedIconText(FAI.Trash, ImGui.GetColorU32(col));
+                if (hovering && KeyMonitor.ShiftPressed() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+                {
+                    Log.Debug($"Deleting {leaf.Value.Label} with SHIFT pressed.");
+                    _manager.Delete(leaf.Value);
+                }
+                CkGui.AttachToolTip("Delete this restraint set. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
             }
-            CkGui.AttachToolTip("Delete this restraint set. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
         }
 
         return wasHovered && ImGui.IsMouseReleased(ImGuiMouseButton.Left);
