@@ -217,9 +217,7 @@ public class ActiveItemsDrawer
         var height = CkStyle.ThreeRowHeight();
         DrawFramedImage(data.GagItem, height, 10f, uint.MaxValue);
         var drawPos = ImGui.GetItemRectMin() + new Vector2(ImGui.GetItemRectSize().X, 0);
-        CkGui.AttachToolTip($"{data.GagItem.GagName()}--SEP--" +
-            "--NL----COL--Left-Click--COL-- ⇒ Select another Gag." +
-            "--NL----COL--Right-Click--COL-- ⇒ Clear active Gag.", color: ImGuiColors.ParsedGold);
+        CkGui.AttachToolTip(LockTooltip(data.GagItem.GagName(), data.Enabler, "Gag"), color: ImGuiColors.ParsedGold);
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             ImGui.OpenPopup($"##GagSelector-{slotIdx}");
@@ -245,10 +243,7 @@ public class ActiveItemsDrawer
         // Draw out the framed image first.
         DrawRestrictionImage(dispData, height, 10f);
         var drawPos = ImGui.GetItemRectMin() + new Vector2(ImGui.GetItemRectSize().X, 0);
-        string? nickEnabler; _kinksters.TryGetNickAliasOrUid(data.Enabler, out nickEnabler);
-        CkGui.AttachToolTip($"{StripFormattingCodes(dispData?.Label) ?? "Unknown Restriction"} applied by {nickEnabler}" +
-            "--SEP----COL--Left-Click--COL-- ⇒ Select another Restriction Item." +
-            "--NL----COL--Right-Click--COL-- ⇒ Clear active Restriction Item.", color: ImGuiColors.ParsedGold);
+        CkGui.AttachToolTip(LockTooltip(dispData?.Label, data.Enabler, "Restriction"), color: ImGuiColors.ParsedGold);
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             ImGui.OpenPopup($"##Restrictions-{slotIdx}");
@@ -279,8 +274,7 @@ public class ActiveItemsDrawer
         var height = ImGui.GetFrameHeightWithSpacing() * 5 + ImGui.GetFrameHeight();
         DrawRestraintImage(dispData, new Vector2(height / 1.2f, height), CkStyle.ChildRoundingLarge(), CkColor.FancyHeaderContrast.Uint());
         var drawPos = ImGui.GetItemRectMin() + new Vector2(ImGui.GetItemRectSize().X, 0);
-        CkGui.AttachToolTip("--NL----COL--Left-Click--COL-- ⇒ Select another Restraint Set." +
-                      "--NL----COL--Right-Click--COL-- ⇒ Clear active Restraint Set.", color: ImGuiColors.ParsedGold);
+        CkGui.AttachToolTip(LockTooltip(dispData?.Label, data.Enabler, "Restraint"), color: ImGuiColors.ParsedGold);
         _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.RemovingRestraints, ImGui.GetWindowPos(), ImGui.GetWindowSize());
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
@@ -327,9 +321,7 @@ public class ActiveItemsDrawer
             ImGui.SetCursorScreenPos(gagDispPos + new Vector2(size.X * .75f, offsetV));
             DrawFramedImage(data.Padlock, padlockSize.X, padlockSize.X / 2);
         }
-        CkGui.AttachToolTip($"{data.GagItem.GagName()} applied by {data.Enabler}" +
-            $"--NL--Locked with {(data.Padlock == Padlocks.Owner || data.Padlock == Padlocks.OwnerTimer ? "an " : "a ")}--COL--{data.Padlock.ToName()}--COL-- by {data.PadlockAssigner}",
-            color: ImGuiColors.ParsedPink);
+        CkGui.AttachToolTip(UnlockTooltip(data.GagItem.GagName(), data.Enabler, data.Padlock, data.PadlockAssigner), color: ImGuiColors.ParsedPink);
 
         // Move over the distance of the framed image.
         ImGui.SameLine();
@@ -354,9 +346,6 @@ public class ActiveItemsDrawer
         var size = new Vector2(CkStyle.TwoRowHeight());
         var offsetV = ImGui.GetFrameHeight() * 0.5f;
         var padlockSize = new Vector2(size.Y - offsetV);
-        _kinksters.TryGetNickAliasOrUid(data.Enabler, out var nickEnabler);
-        _kinksters.TryGetNickAliasOrUid(data.PadlockAssigner, out var lockEnabler);
-        
 
         using (ImRaii.Group())
         {
@@ -367,12 +356,10 @@ public class ActiveItemsDrawer
             ImGui.SetCursorScreenPos(gagDispPos + new Vector2(size.X * .75f, offsetV * .5f));
             DrawFramedImage(data.Padlock, padlockSize.X, padlockSize.X / 2);
         }
-        // TODO: See if we can't find a way to properly cache the kinkster nicks speed up display
-        CkGui.AttachToolTip($"{StripFormattingCodes(dispData?.Label) ?? "--COL----COL--Unknown Restriction"} applied by {nickEnabler ?? "yourself"}" +
-            $"--NL--Locked with {(data.Padlock == Padlocks.Owner || data.Padlock == Padlocks.OwnerTimer ? "an " : "a ")}--COL--{data.Padlock.ToName()}--COL-- by {lockEnabler ?? "yourself"}",
-            color: ImGuiColors.ParsedPink);
+        CkGui.AttachToolTip(UnlockTooltip(dispData?.Label, data.Enabler, data.Padlock, data.PadlockAssigner), color: ImGuiColors.ParsedPink);
         if (dispData is null)
-            CkGui.AttachToolTip("--SEP----COL--The item that was here couldn't be found.--NL--It may have been deleted or the data is corrupted.--COL--", color: ImGuiColors.DalamudRed);
+            CkGui.AttachToolTip("--SEP----COL--The item that was here couldn't be found." +
+                "--NL--It may have been deleted or the data is corrupted.--COL--", color: ImGuiColors.DalamudRed);
 
         // Move over the distance of the framed image.
         ImGui.SameLine();
@@ -389,8 +376,10 @@ public class ActiveItemsDrawer
 
         // Go back and show the image.
         DrawFramedImage(data.Padlock, size.X, size.X / 2);
-        CkGui.AttachToolTip($"Applied by {data.Enabler}" +
-            $"--NL--Locked with {(data.Padlock == Padlocks.Owner || data.Padlock == Padlocks.OwnerTimer ? "an " : "a ")}--COL--{data.Padlock.ToName()}--COL-- by {data.PadlockAssigner}", color: ImGuiColors.ParsedPink);
+        CkGui.AttachToolTip(UnlockTooltip(dispData?.Label, data.Enabler, data.Padlock, data.PadlockAssigner), ImGuiColors.ParsedPink);
+        if (dispData is null)
+            CkGui.AttachToolTip("--SEP----COL--The item that was here couldn't be found." +
+                "--NL--It may have been deleted or the data is corrupted.--COL--", color: ImGuiColors.DalamudRed);
 
         // Move over the distance of the framed image.
         ImGui.SameLine();
@@ -427,11 +416,29 @@ public class ActiveItemsDrawer
             });
         }
     }
+
     private readonly Regex FormattingCodesRegex = new($"({CkGui.TipSep}|{CkGui.TipNL}|{CkGui.TipCol})", RegexOptions.Compiled | RegexOptions.CultureInvariant);
     private string? StripFormattingCodes(string? input)
     {
         if (input is null) return null; // don't process null input, just pass it back.
         return FormattingCodesRegex.Replace(input, string.Empty);
+    }
+
+    private string UnlockTooltip(string? label, string enabler, Padlocks padlock, string padlockAssigner)
+    {
+        _kinksters.TryGetNickAliasOrUid(enabler, out var nickEnabler);
+        _kinksters.TryGetNickAliasOrUid(padlockAssigner, out var lockEnabler);
+        return $"{StripFormattingCodes(label) ?? "--COL----COL--Unknown Item"} applied by {nickEnabler ?? "yourself"}" +
+            $"--NL--Locked with {(padlock == Padlocks.Owner || padlock == Padlocks.OwnerTimer ? "an " : "a ")}--COL--{padlock.ToName()}--COL--" +
+            $" by {lockEnabler ?? "yourself"}";
+    }
+
+    private string LockTooltip(string? label, string enabler, string itemType)
+    {
+        _kinksters.TryGetNickAliasOrUid(enabler, out var nickEnabler);
+        return $"{StripFormattingCodes(label) ?? "Unknown item"} applied by {nickEnabler ?? "yourself"}" +
+            $"--SEP----COL--Left-Click--COL-- ⇒ Select another {itemType} Item." +
+            $"--NL----COL--Right-Click--COL-- ⇒ Clear active {itemType} Item.";
     }
 
     public void DrawFramedImage(GagType gag, float size, float rounding, uint frameTint = uint.MaxValue)
