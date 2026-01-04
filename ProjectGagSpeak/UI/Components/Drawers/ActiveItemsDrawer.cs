@@ -255,15 +255,14 @@ public class ActiveItemsDrawer
             RestrictionComboChanged(applyCombo, slotIdx, data.Identifier);
     }
 
-    public void LockItemGroup(CharaActiveRestraint data, RestraintSet dispData)
+    public void LockItemGroup(CharaActiveRestraint data, RestraintSet? dispData)
     {
         using var group = ImRaii.Group();
         _restraintPadlocks.DrawLockCombo(ImGui.GetContentRegionAvail().X, "Lock this Padlock!");
         _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.LockingRestraint, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
             () =>
             {
-                /* select metal padlock and lock the restraint set. 
-                probably easier to just tell the server to put a metal padlock on instead of trying to configure gui nonsense*/
+                // TODO: Actually implement this step.
             });
 
         var height = ImGui.GetFrameHeightWithSpacing() * 5 + ImGui.GetFrameHeight();
@@ -289,13 +288,17 @@ public class ActiveItemsDrawer
                 SelfBondageHelper.RestraintUpdateTask(newData, DataUpdateType.LayersChanged, _dds, _visuals);
             }
 
-            // Below draw out the layers.
-            var options = Enum.GetValues<RestraintLayer>().Skip(1).SkipLast(5 - dispData.Layers.Count + 1);
-            _layerFlagsWidget.DrawLayerCheckboxes(data.ActiveLayers, options, _ => {
-                var idx = BitOperations.TrailingZeroCount((int)_); return (idx < dispData.Layers.Count) && (!dispData.Layers[idx].Label.IsNullOrWhitespace()) ? dispData.Layers[idx].Label : $"Layer {idx + 1}";
-            });
+            if (dispData != null) // no layers if no valid set, don't draw this.
+            {
+                // Below draw out the layers.
+                var options = Enum.GetValues<RestraintLayer>().Skip(1).SkipLast(1).Take(dispData.Layers.Count);
+                _layerFlagsWidget.DrawLayerCheckboxes(data.ActiveLayers, options, _ =>
+                {
+                    var idx = BitOperations.TrailingZeroCount((int)_); return (idx < dispData.Layers.Count) && (!dispData.Layers[idx].Label.IsNullOrWhitespace()) ? dispData.Layers[idx].Label : $"Layer {idx + 1}";
+                });
+                _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EditingLayers, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+            }
         }
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EditingLayers, ImGui.GetWindowPos(), ImGui.GetWindowSize());
     }
 
     public void UnlockItemGroup(int slotIdx, ActiveGagSlot data)
@@ -386,14 +389,16 @@ public class ActiveItemsDrawer
                 var newData = new CharaActiveRestraint() { ActiveLayers = (data.ActiveLayers | added) & ~removed };
                 SelfBondageHelper.RestraintUpdateTask(newData, DataUpdateType.LayersChanged, _dds, _visuals);
             }
-            // dont draw if display data is null.
-            if (dispData is null)
-                return;
-            // Below draw out the layers.
-            var options = Enum.GetValues<RestraintLayer>().Skip(1).SkipLast(1).Take(dispData.Layers.Count);
-            _layerFlagsWidget.DrawLayerCheckboxes(data.ActiveLayers, options, _ => {
-                var idx = BitOperations.TrailingZeroCount((int)_); return (idx < dispData.Layers.Count) && (!dispData.Layers[idx].Label.IsNullOrWhitespace()) ? dispData.Layers[idx].Label : $"Layer {idx + 1}";
-            });
+            
+            if (dispData != null) // dont draw if display data is null.
+            {
+                // Below draw out the layers.
+                var options = Enum.GetValues<RestraintLayer>().Skip(1).SkipLast(1).Take(dispData.Layers.Count);
+                _layerFlagsWidget.DrawLayerCheckboxes(data.ActiveLayers, options, _ =>
+                {
+                    var idx = BitOperations.TrailingZeroCount((int)_); return (idx < dispData.Layers.Count) && (!dispData.Layers[idx].Label.IsNullOrWhitespace()) ? dispData.Layers[idx].Label : $"Layer {idx + 1}";
+                });
+            }
         }
     }
 
