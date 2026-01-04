@@ -230,6 +230,9 @@ public class Kinkster : IComparable<Kinkster>
             LightCache = new KinksterCache(data.LightStorageData);
         }
 
+        // Notify nameplates of visible kinkster gag changes.
+        _mediator.Publish(new KinksterActiveGagsChanged(this));
+
         // Deterministic AliasData setting.
         if (data.PairAliasData.TryGetValue(UserData.UID, out var match))
         {
@@ -280,6 +283,9 @@ public class Kinkster : IComparable<Kinkster>
                 UpdateCachedLockedSlots();
                 return;
         }
+
+        // Notify nameplates of visible kinkster gag changes.
+        _mediator.Publish(new KinksterActiveGagsChanged(this));
     }
 
     public void NewActiveRestrictionData(KinksterUpdateActiveRestriction data)
