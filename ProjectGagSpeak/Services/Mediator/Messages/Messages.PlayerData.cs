@@ -9,6 +9,7 @@ public record KinksterOnline(Kinkster Kinkster) : MessageBase; // Revise
 public record KinksterOffline(Kinkster Kinkster) : MessageBase;
 public record KinksterPlayerRendered(KinksterHandler Handler, Kinkster Kinkster) : SameThreadMessage; // Effectively "becoming visible"
 public record KinksterPlayerUnrendered(IntPtr Address) : SameThreadMessage; // Effectively "becoming invisible"
+public record KinksterActiveGagsChanged(Kinkster Kinkster) : SameThreadMessage; // when the active gags of a kinkster change.
 
 public record KinksterRemovedMessage(UserData UserData) : MessageBase; // a message indicating a pair has been removed.
 public record TargetKinksterMessage(Kinkster Kinkster) : MessageBase; // called when publishing a targeted pair connection (see UI)
