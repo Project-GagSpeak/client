@@ -38,7 +38,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
     private IDalamudTextureWrap GaggedSpeakingIcon;
 
     public NameplateService(ILogger<NameplateService> logger, GagspeakMediator mediator,
-        MainConfig config, GagRestrictionManager gags,  GagspeakEventManager events, KinksterManager kinksters, 
+        MainConfig config, GagRestrictionManager gags, GagspeakEventManager events, KinksterManager kinksters,
         OnFrameworkService frameworkUtils)
         : base(logger, mediator)
     {
@@ -59,6 +59,8 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         _events.Subscribe<int, GagType, bool, string, Kinkster>(UnlocksEvent.PairGagStateChange, UpdateKinkster);
 
         Mediator.Subscribe<VisibleKinkstersChanged>(this, _ => UpdateGaggedKinksters());
+        Mediator.Subscribe<KinksterActiveGagsChanged>(this, m =>
+            UpdateKinkster(0, 0, m.Kinkster.VisiblePairGameObject is not null && m.Kinkster.ActiveGags.IsGagged() && m.Kinkster.PairGlobals.ChatGarblerActive, string.Empty, m.Kinkster));
         Mediator.Subscribe<ChatboxMessageFromSelf>(this, m => OnOwnMessage(m.channel, m.message));
         Mediator.Subscribe<ChatboxMessageFromKinkster>(this, m => OnKinksterMessage(m.kinkster, m.channel, m.message));
         Mediator.Subscribe<MainHubConnectedMessage>(this, _ => RefreshClientGagState());
@@ -206,7 +208,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
             // Skip if not player character, if if the player character is null.
             if (h.NamePlateKind is not NamePlateKind.PlayerCharacter)
                 continue;
-            
+
             if (h.PlayerCharacter is not { } pc)
                 continue;
 
@@ -234,7 +236,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
 
     private unsafe void LoadTextureToAsset(AtkImageNode* node, AtkResNode* parentNode, bool isSpeaking)
     {
-        var texturePointer = (Texture*)Svc.Texture.ConvertToKernelTexture(isSpeaking ? GaggedSpeakingIcon: GaggedIcon, true);
+        var texturePointer = (Texture*)Svc.Texture.ConvertToKernelTexture(isSpeaking ? GaggedSpeakingIcon : GaggedIcon, true);
         // Update the actual width to be reflected in resolution
         texturePointer->ActualWidth = 32;
         texturePointer->ActualHeight = 32;
