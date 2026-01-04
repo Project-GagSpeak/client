@@ -5,10 +5,13 @@ using FFXIVClientStructs.FFXIV.Client.Game.Control;
 // taken from hybrid camera as a means to gain control over the camera object
 namespace GagSpeak.GameInternals.Structs;
 
+// TODO: Check if this is necessary. This is currently a nearly identical match to 
+// FFXIVClientStructs.FFXIV.Client.Game.Control.CameraManager 
+// https://github.com/aers/FFXIVClientStructs/blob/main/FFXIVClientStructs/FFXIV/Client/Game/Control/CameraManager.cs
 /// <summary>
 ///     FFXIVClientStructs.FFXIV.Client.Game.Control.GameCameraManager with some additional fields
 /// </summary>
-[StructLayout(LayoutKind.Explicit, Size = 0x180)]
+[StructLayout(LayoutKind.Explicit, Size = 0x190)]
 public unsafe partial struct GameCameraManager {
     public static GameCameraManager* Instance() => (GameCameraManager*)Control.Instance();
 

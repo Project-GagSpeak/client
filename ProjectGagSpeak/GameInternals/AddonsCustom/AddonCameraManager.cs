@@ -1,6 +1,8 @@
 using GagSpeak.GameInternals.Structs;
 using Dalamud.Bindings.ImGui;
 using static FFXIVClientStructs.FFXIV.Client.Game.Control.CameraManager.Delegates;
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using FFXIVClientStructs.FFXIV.Client.Game;
 
 namespace GagSpeak.GameInternals.Addons;
 
@@ -13,7 +15,7 @@ public static unsafe class AddonCameraManager
     /// <summary>
     ///     Provides access to the <see cref="GameCameraManager"/> instance.
     /// </summary>
-    public static GameCameraManager* CameraManager => GameCameraManager.Instance();
+    public static CameraManager* CameraManager => (CameraManager*)Control.Instance();
 
     /// <summary>
     ///    Checks if the <see cref="GameCameraManager"/> is valid and initialized.
@@ -25,11 +27,10 @@ public static unsafe class AddonCameraManager
     /// </summary>
     public static bool IsActiveCameraValid => CameraManager->Camera is not null;
 
-    public static GameCamera* ActiveCamera => CameraManager->Camera;
-
+    public static GameCamera* ActiveCamera => (GameCamera*)CameraManager->GetActiveCamera();
 
     // Additional Cameras that are probably not that useful.
-    public static GameCamera3* SpectatorCamera => CameraManager->Camera3;
+    public static Camera3* SpectatorCamera => CameraManager->Camera3;
 
     /// <summary>
     ///     Gets the mode of the active camera in integer form.
@@ -85,10 +86,10 @@ public static unsafe class AddonCameraManager
                 ImGui.Text($"Camera FoV: {ActiveCamera->FoV}");
                 ImGui.Text($"Camera Min FoV: {ActiveCamera->MinFoV}");
                 ImGui.Text($"Camera Max FoV: {ActiveCamera->MaxFoV}");
-                ImGui.Text($"Camera Added FoV: {ActiveCamera->AddedFoV}");
+                //ImGui.Text($"Camera Added FoV: {ActiveCamera->AddedFoV}");
 
-                ImGui.Text($"Camera Mode: {ActiveCamera->Mode}");
-                ImGui.Text($"Camera ControlType: {ActiveCamera->ControlType}");
+                //ImGui.Text($"Camera Mode: {ActiveCamera->Mode}");
+                //ImGui.Text($"Camera ControlType: {ActiveCamera->ControlType}");
             }
         }
     }
