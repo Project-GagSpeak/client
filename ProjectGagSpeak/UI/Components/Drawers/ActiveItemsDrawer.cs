@@ -244,6 +244,9 @@ public class ActiveItemsDrawer
         DrawRestrictionImage(dispData, height, 10f);
         var drawPos = ImGui.GetItemRectMin() + new Vector2(ImGui.GetItemRectSize().X, 0);
         CkGui.AttachToolTip(LockTooltip(dispData?.Label, data.Enabler, "Restriction"), color: ImGuiColors.ParsedGold);
+        if (dispData is null)
+            CkGui.AttachToolTip("--SEP----COL--The item that was here couldn't be found." +
+                "--NL--It may have been deleted or the data is corrupted.--COL--", color: ImGuiColors.DalamudRed);
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             ImGui.OpenPopup($"##Restrictions-{slotIdx}");
@@ -275,6 +278,9 @@ public class ActiveItemsDrawer
         DrawRestraintImage(dispData, new Vector2(height / 1.2f, height), CkStyle.ChildRoundingLarge(), CkColor.FancyHeaderContrast.Uint());
         var drawPos = ImGui.GetItemRectMin() + new Vector2(ImGui.GetItemRectSize().X, 0);
         CkGui.AttachToolTip(LockTooltip(dispData?.Label, data.Enabler, "Restraint"), color: ImGuiColors.ParsedGold);
+        if (dispData is null)
+            CkGui.AttachToolTip("--SEP----COL--The item that was here couldn't be found." +
+                "--NL--It may have been deleted or the data is corrupted.--COL--", color: ImGuiColors.DalamudRed);
         _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.RemovingRestraints, ImGui.GetWindowPos(), ImGui.GetWindowSize());
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
