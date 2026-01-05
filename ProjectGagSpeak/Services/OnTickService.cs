@@ -117,6 +117,8 @@ public class OnTickService : IHostedService
             _mediator.Publish(new GPoseEndMessage());
         }
 
+        _mediator.Publish(new FrameworkUpdateMessage());
+
         if (isNormal)
             return;
 

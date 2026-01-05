@@ -15,6 +15,10 @@ OutputZip/
 
 # Ignore Visual Studio Code
 bash.exe.*
+.vscode/
 
 # Ignore GitExtensions Config
 /GitExtensions.settings
+
+# Ignore Rider
+.idea/
