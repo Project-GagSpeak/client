@@ -251,6 +251,7 @@ public sealed class RestrictionManager : IHybridSavable
         if (Storage.TryGetRestriction(newData.Identifier, out item))
         {
             _activeItems[layer] = item;
+            _idToLayerMap[newData.Identifier] = layer;
             return true;
         }
 
@@ -301,6 +302,7 @@ public sealed class RestrictionManager : IHybridSavable
         if (Storage.TryGetRestriction(removedItem, out item))
         {
             _activeItems.Remove(layer);
+            _idToLayerMap.Remove(removedItem);
             return true;
         }
 
