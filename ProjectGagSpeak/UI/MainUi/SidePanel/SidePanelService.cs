@@ -52,16 +52,20 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
     // Stored internally for regenerators.
     private readonly ILogger _log;
     private readonly MainHub _hub;
+    private readonly SidePanelTabs _tabs;
     
     private HypnoEffectEditor _hypnoEditor;
     private InteractionType _curOpened = InteractionType.None;
-    public KinksterInfoCache(ILogger log, MainHub hub, Kinkster kinkster, HypnoEffectManager hypno)
+    public KinksterInfoCache(ILogger log, MainHub hub, Kinkster kinkster, HypnoEffectManager hypno, SidePanelTabs tabs)
     {
         _log = log;
         _hub = hub;
+        _tabs = tabs;
         _hypnoEditor = new HypnoEffectEditor("KinksterEffectEditor", hypno);
 
         UpdateKinkster(kinkster);
+
+        _tabs.TabSelectionChanged += TabSelectionChanged;
     }
 
     // Variables that are freely changable and used for the various opened windows.
@@ -95,19 +99,14 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
     // Readonly Publics
     public string DisplayName => Kinkster.GetNickAliasOrUid();
     public bool   IsValid     => Kinkster is not null;
-    public float  DispWidth   => CurrentTab switch
-    {
-        InteractionsTab.KinkstersPerms => (ImGui.CalcTextSize($"{DisplayName} prevents removing locked layers ").X + ImGui.GetFrameHeightWithSpacing() * 2).AddWinPadX(),
-        InteractionsTab.PermsForKinkster => 300f,
-        _ => 280f
-    };
+    public float  DispWidth   => Math.Max(300f, ImGui.CalcTextSize($"{DisplayName} prevents removing locked layers ").X + ImGui.GetFrameHeightWithSpacing() * 2).AddWinPadX();
 
     // Instance get-private setters.
-    public string           LastUID     { get; private set; }
-    public Kinkster         Kinkster    { get; private set; }
-    public InteractionsTab  CurrentTab  { get; private set; } = InteractionsTab.PermsForKinkster;
-    public InteractionType  OpenItem    { get; private set; } = InteractionType.None;
-    public PresetName       CurPreset   { get; set; }         = PresetName.NoneSelected;
+    public string                        LastUID     { get; private set; }
+    public Kinkster                      Kinkster    { get; private set; }
+    public SidePanelTabs.InteractionTab  CurrentTab  { get; private set; } = SidePanelTabs.InteractionTab.PermsForKinkster;
+    public InteractionType               OpenItem    { get; private set; } = InteractionType.None;
+    public PresetName                    CurPreset   { get; set; }         = PresetName.NoneSelected;
 
     // Custom Combos
     public PairGagCombo                 Gags { get; private set; } = null!;
@@ -128,7 +127,10 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
     public WorldCombo                   Worlds { get; private set; } = null!;
 
     public void Dispose()
-        => _hypnoEditor.Dispose();
+    {
+        _tabs.TabSelectionChanged -= TabSelectionChanged;
+        _hypnoEditor.Dispose();
+    }
 
     public void ToggleInteraction(InteractionType act)
         => _curOpened = (_curOpened == act) ? InteractionType.None : act;
@@ -363,6 +365,12 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
             }
         });
     }
+
+    private void TabSelectionChanged(SidePanelTabs.InteractionTab oldTab, SidePanelTabs.InteractionTab newTab)
+    {
+        CurrentTab = newTab;
+        _log.LogDebug($"Switched Side Panel Tab from {oldTab} to {newTab}", LoggerType.UI);
+    }
 }
 
 public class ResponseCache : ISidePanelCache
@@ -385,13 +393,15 @@ public class ResponseCache : ISidePanelCache
 public sealed class SidePanelService : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _hub;
+    private readonly SidePanelTabs _tabs;
     private readonly HypnoEffectManager _hypnoManager;
     public SidePanelService(ILogger<SidePanelService> logger, GagspeakMediator mediator, 
-        MainHub hub, HypnoEffectManager hypnoManager)
+        MainHub hub, HypnoEffectManager hypnoManager, SidePanelTabs tabs)
         : base(logger, mediator)
     {
         _hub = hub;
         _hypnoManager = hypnoManager;
+        _tabs = tabs;
 
         // Dont clear display entirely if on Interactions.
         Mediator.Subscribe<DisconnectedMessage>(this, _ => ClearDisplay());
@@ -465,7 +475,7 @@ public sealed class SidePanelService : DisposableMediatorSubscriberBase
         else
         {
             Logger.LogInformation($"Opening Side Panel Interactions for {kinkster.GetNickAliasOrUid()}");
-            DisplayCache = new KinksterInfoCache(Logger, _hub, kinkster, _hypnoManager);
+            DisplayCache = new KinksterInfoCache(Logger, _hub, kinkster, _hypnoManager, _tabs);
         }
     }
 

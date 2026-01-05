@@ -38,7 +38,7 @@
     <ItemGroup>
         <!--Submodules-->
         <ProjectReference Include="..\CkCommons\CkCommons.csproj" />
-        <ProjectReference Include="..\GagspeakAPI\ProjectGagspeakAPI.csproj" />
+        <ProjectReference Include="..\GagspeakAPI\ProjectGagspeakAPI.csproj" GlobalPropertiesToRemove="Platform" />
         <ProjectReference Include="..\OtterGui\OtterGui.csproj" />
         <ProjectReference Include="..\Penumbra.Api\Penumbra.Api.csproj" />
         <ProjectReference Include="..\Penumbra.String\Penumbra.String.csproj" />

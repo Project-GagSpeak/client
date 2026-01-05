@@ -1,7 +1,6 @@
 using CkCommons.Gui;
 using CkCommons.Raii;
 using Dalamud.Bindings.ImGui;
-using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
@@ -15,13 +14,15 @@ public class SidePanelUI : WindowMediatorSubscriberBase
 {
     private readonly SidePanelPair _kinksterInfoPanel;
     private readonly SidePanelService _service;
+    private readonly SidePanelTabs _tabs;
 
     public SidePanelUI(ILogger<SidePanelUI> logger, GagspeakMediator mediator,
-        SidePanelPair kinksterInfoPanel, SidePanelService service)
+        SidePanelPair kinksterInfoPanel, SidePanelService service, SidePanelTabs tabs)
         : base(logger, mediator, "##GSInteractionsUI")
     {
         _kinksterInfoPanel = kinksterInfoPanel;
         _service = service;
+        _tabs = tabs;
 
         Flags = WFlags.NoCollapse | WFlags.NoTitleBar | WFlags.NoScrollbar | WFlags.NoResize;
     }
@@ -83,12 +84,15 @@ public class SidePanelUI : WindowMediatorSubscriberBase
         if (ic.Kinkster is not { } kinkster)
             return;
 
+        // Draw tabs
+        _tabs.Draw(width);
+
         // Draw the contents based on the type of tab we are on currently.
         switch (ic.CurrentTab)
         {
-            case InteractionsTab.PermsForKinkster: _kinksterInfoPanel.DrawClientPermissions(ic, kinkster, dispName, width); break;
-            case InteractionsTab.KinkstersPerms: _kinksterInfoPanel.DrawKinksterPermissions(ic, kinkster, dispName, width); break;
-            case InteractionsTab.Interactions: _kinksterInfoPanel.DrawInteractions(ic, kinkster, dispName, width);          break;
+            case SidePanelTabs.InteractionTab.PermsForKinkster: _kinksterInfoPanel.DrawClientPermissions(ic, kinkster, dispName, width); break;
+            case SidePanelTabs.InteractionTab.KinkstersPerms: _kinksterInfoPanel.DrawKinksterPermissions(ic, kinkster, dispName, width); break;
+            case SidePanelTabs.InteractionTab.Interactions: _kinksterInfoPanel.DrawInteractions(ic, kinkster, dispName, width);          break;
         }
     }
 
