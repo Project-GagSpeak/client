@@ -1,4 +1,5 @@
 using GagSpeak.Gui.Components;
+using GagSpeak.Gui.MainWindow;
 using GagSpeak.Kinksters;
 using GagSpeak.State.Models;
 using GagspeakAPI.Data;
@@ -16,7 +17,7 @@ public enum ToggleType
 public record UserPairSelected(Kinkster? Pair) : MessageBase; // This likely can be removed.
 
 /// <summary> Fires once we wish to open the popout permissions menu for a Kinkster pair. </summary>
-public record KinksterInteractionUiChangeMessage(Kinkster Kinkster, InteractionsTab Type) : MessageBase;
+public record KinksterInteractionUiChangeMessage(Kinkster Kinkster, SidePanelTabs.InteractionTab Type) : MessageBase;
 
 public record FolderUpdateKinkster : MessageBase;
 public record FolderUpdateRequests : MessageBase;
