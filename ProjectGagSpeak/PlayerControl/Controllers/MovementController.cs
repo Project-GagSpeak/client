@@ -23,7 +23,7 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     private Vector3 _lastPos = Vector3.Zero;
     private MoveState _moveState;
     private bool _freezePlayer = false;
-    public MovementController(ILogger<KeystateController> logger, GagspeakMediator mediator,
+    public MovementController(ILogger<MovementController> logger, GagspeakMediator mediator,
         PlayerControlCache cache, MovementDetours detours)
         : base(logger, mediator)
     {
@@ -54,17 +54,27 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     {
         // if our states to have an unfollow hook are met, but it isnt active, activate it.
         if (_cache.PreventUnfollowing && !_detours.NoUnfollowingActive)
+        {
             _detours.NoUnfollowingActive = true;
+            Logger.LogInformation("Activating Unfollow prevention due to hardcore status.", LoggerType.HardcoreMovement);
+        }
         //if our states to have an unfollow hook are not met and it is active, disable it.
         else if (!_cache.PreventUnfollowing && _detours.NoUnfollowingActive)
+        {
             _detours.NoUnfollowingActive = false;
+            Logger.LogInformation("Deactivating Unfollow prevention due to change in hardcore status.", LoggerType.HardcoreMovement);
+        }
 
         // if we were not set to require walking, but should be walking, enforce it.
         if (_cache.BlockRunning && !_moveState.MustWalk)
+        {
             _moveState = new MoveState(true, IsWalking());
+            Logger.LogInformation("Enforcing walking due to hardcore status.", LoggerType.HardcoreMovement);
+        }
         // if there is no need to ban running, but we are forced to walk, revert it, along with the state.
         else if (!_cache.BlockRunning && _moveState.MustWalk)
         {
+            Logger.LogInformation("Releasing walking restriction due to change in hardcore status.", LoggerType.HardcoreMovement);
             // restore the state only if we were running before.
             if (!_moveState.WasWalking)
                 ForceRunning();
@@ -77,12 +87,13 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         // * so we must update it every frame)
         if (_cache.FreezePlayer && !_freezePlayer)
         {
-            Svc.Logger.Warning("Freeze Player was true!");
+            Logger.LogInformation("Freezing player due to hardcore status.", LoggerType.HardcoreMovement);
             _freezePlayer = true;
         }
         // If the player should not be immobilized, but the local value does match, update it!
         else if (!_cache.FreezePlayer && _freezePlayer)
         {
+            Logger.LogInformation("Unfreezing player due to change in hardcore status.", LoggerType.HardcoreMovement);
             _freezePlayer = false;
             _detours.DisableFullMovementLock();
         }
@@ -91,11 +102,13 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         var areBlocksActive = _detours.NoAutoMoveActive && _detours.NoMouseMovementActive;
         if (shouldBlock && !areBlocksActive)
         {
+            Logger.LogInformation("Activating movement key blocking due to hardcore status.", LoggerType.HardcoreMovement);
             _detours.NoAutoMoveActive = true;
             _detours.NoMouseMovementActive = true;
         }
         else if (!shouldBlock && areBlocksActive)
         {
+            Logger.LogInformation("Deactivating movement key blocking due to change in hardcore status.", LoggerType.HardcoreMovement);
             _detours.NoAutoMoveActive = false;
             _detours.NoMouseMovementActive = false;
         }
