@@ -67,7 +67,7 @@ public class MoodleHandler
         // Update the final cache. `removedSlots` contains slots that are no longer restricted after the change.
         if (_cache.UpdateFinalCache(out var removedMoodles))
         {
-            _logger.LogDebug($"FinalMoodles Cache was updated!", LoggerType.VisualCache);
+            _logger.LogDebug($"FinalMoodles Cache was updated! RemovedMoodles: {removedMoodles.Count()}", LoggerType.VisualCache);
             if (removedMoodles.Any())
                 await RestoreAndReapplyCache(removedMoodles);
             else
@@ -75,6 +75,7 @@ public class MoodleHandler
         }
         else
             _logger.LogTrace("No change in FinalMoodles Cache.", LoggerType.VisualCache);
+        _logger.LogDebug("Finished Updating Moodle Caches.", LoggerType.VisualCache);
     }
 
     /// <summary>

@@ -58,6 +58,7 @@ public class TraitsHandler
         }
         else
             _logger.LogTrace("No change in Final Traits.", LoggerType.VisualCache);
+        _logger.LogDebug("Finished Updating Traits Caches.", LoggerType.VisualCache);
 
         return Task.CompletedTask;
     }

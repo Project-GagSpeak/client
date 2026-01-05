@@ -7,6 +7,7 @@ using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 
 namespace GagSpeak.State.Handlers;
+
 public class GlamourHandler
 {
     private readonly ILogger<GlamourHandler> _logger;
@@ -118,6 +119,7 @@ public class GlamourHandler
             );
             _logger.LogInformation($"Processed Cache Updates Successfully!");
         });
+        _logger.LogDebug("Finished Updating Glamourer Caches.");
     }
 
 
