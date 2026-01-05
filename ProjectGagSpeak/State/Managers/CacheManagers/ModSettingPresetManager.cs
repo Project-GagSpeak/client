@@ -6,9 +6,7 @@ using GagSpeak.Interop;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.State.Models;
 using GagspeakAPI.Data;
-using Lumina.Excel.Sheets;
 
 namespace GagSpeak.State.Managers;
 
@@ -159,7 +157,7 @@ public class ModPresetManager : DisposableMediatorSubscriberBase, IHybridSavable
             ModPresetStorage.Remove(mod);
         // Save changes.
         _saver.Save(this);
-        Mediator.Publish(new ReloadFileSystem(GagspeakModule.ModPreset));
+        Mediator.Publish(new ReloadFileSystem(GSModule.ModPreset));
     }
 
     public void OnModDirChanged(string oldPath, ModInfo newInfo, Dictionary<string, List<string>> latestCurrentOptions)

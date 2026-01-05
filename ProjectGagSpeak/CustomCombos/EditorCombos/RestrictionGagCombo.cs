@@ -2,7 +2,6 @@ using CkCommons.Gui;
 using CkCommons.Widgets;
 using Dalamud.Interface.Colors;
 using GagSpeak.PlayerClient;
-using GagSpeak.Services;
 using GagSpeak.State.Models;
 using GagspeakAPI.Util;
 using Dalamud.Bindings.ImGui;
@@ -13,9 +12,9 @@ namespace GagSpeak.CustomCombos.Editor;
 
 public sealed class RestrictionGagCombo : CkFilterComboCache<GarblerRestriction>
 {
-    private readonly FavoritesManager _favorites;
+    private readonly FavoritesConfig _favorites;
     private GagType _currentGag;
-    public RestrictionGagCombo(ILogger log, FavoritesManager favorites, Func<IReadOnlyList<GarblerRestriction>> generator)
+    public RestrictionGagCombo(ILogger log, FavoritesConfig favorites, Func<IReadOnlyList<GarblerRestriction>> generator)
     : base(generator, log)
     {
         _favorites = favorites;

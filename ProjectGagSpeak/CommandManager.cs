@@ -21,11 +21,11 @@ public sealed class CommandManager : IDisposable
     private readonly GagspeakMediator _mediator;
     private readonly MainConfig _mainConfig;
     private readonly KinksterManager _kinksters;
-    private readonly ServerConfigService _serverConfig;
+    private readonly AccountConfig _serverConfig;
     private readonly DeathRollService _deathRolls;
     private readonly SafewordService _safeword;
     public CommandManager(GagspeakMediator mediator, MainConfig config, KinksterManager pairManager,
-        ServerConfigService server, DeathRollService dr, SafewordService safeword)
+        AccountConfig server, DeathRollService dr, SafewordService safeword)
     {
         _mediator = mediator;
         _mainConfig = config;
@@ -73,7 +73,7 @@ public sealed class CommandManager : IDisposable
         if (splitArgs.Length == 0)
         {
             // Interpret this as toggling the UI
-            if (_mainConfig.Current.HasValidSetup() && _serverConfig.Storage.HasValidSetup())
+            if (_mainConfig.Current.HasValidSetup() && _serverConfig.Current.HasValidSetup())
                 _mediator.Publish(new UiToggleMessage(typeof(MainUI)));
             else
                 _mediator.Publish(new UiToggleMessage(typeof(IntroUi)));
@@ -177,7 +177,7 @@ public sealed class CommandManager : IDisposable
 
         if (string.Equals(splitArgs[0], "r", StringComparison.OrdinalIgnoreCase))
         {
-            if (PlayerData.Object is null) 
+            if (!PlayerData.Available) 
                 return;
 
             // get the last interacted with DeathRoll session.

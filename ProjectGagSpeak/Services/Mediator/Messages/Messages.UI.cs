@@ -1,8 +1,7 @@
-using GagSpeak.Gui;
 using GagSpeak.Gui.Components;
+using GagSpeak.Gui.MainWindow;
 using GagSpeak.Kinksters;
 using GagSpeak.State.Models;
-using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Network;
 
@@ -18,13 +17,14 @@ public enum ToggleType
 public record UserPairSelected(Kinkster? Pair) : MessageBase; // This likely can be removed.
 
 /// <summary> Fires once we wish to open the popout permissions menu for a Kinkster pair. </summary>
-public record KinksterInteractionUiChangeMessage(Kinkster Kinkster, InteractionsTab Type) : MessageBase;
+public record KinksterInteractionUiChangeMessage(Kinkster Kinkster, SidePanelTabs.InteractionTab Type) : MessageBase;
 
-/// <summary> Fires whenever we need to refresh the created DrawUserPair / immutable KinksterList. </summary>
-public record RefreshUiKinkstersMessage : MessageBase;
+public record FolderUpdateKinkster : MessageBase;
+public record FolderUpdateRequests : MessageBase;
+public record FolderUpdateCollars : MessageBase;
 
-/// <summary> Fires whenever we need to refresh the created DrawRequests. </summary>
-public record RefreshUiRequestsMessage : MessageBase;
+
+
 
 /// <summary> Fires whenever we need to toggle the UI. </summary>
 public record UiToggleMessage(Type UiType, ToggleType ToggleType = ToggleType.Toggle) : MessageBase;
@@ -42,21 +42,24 @@ public record MainWindowTabChangeMessage(MainMenuTabs.SelectedTab NewTab) : Mess
 public record ClosedMainUiMessage : MessageBase;
 
 /// <summary> Fired when we want to remove a specific window from the UI service. </summary>
-/// <param name="Window"> The window we are removing. </param>
 public record RemoveWindowMessage(WindowMediatorSubscriberBase Window) : MessageBase;
 
-/// <summary> Fires every time a standalone KinkPlate™ is opened. </summary>
-public record KinkPlateOpenStandaloneMessage(Kinkster Pair) : MessageBase;
+public record OpenKinksterSidePanel(Kinkster Kinkster, bool ForceOpen = false) : MessageBase;
 
-/// <summary> Fires every time a standalone Light KinkPlate™ is opened. </summary>
-public record KinkPlateOpenStandaloneLightMessage(UserData UserData) : MessageBase;
+/// <summary> Creates and opens a standalone KinkPlate™ UI. </summary>
+public record KinkPlateCreateOpenMessage(Kinkster Kinkster) : MessageBase;
 
-/// <summary> Whenever the whitelist has a Kinkster hovered long enough and displays a profile, this is fired. </summary>
-/// <param name="PairUserData"> The Kinkster UserData belonging to the KinkPlate. </param>
-public record ProfilePopoutToggle(UserData? PairUserData) : MessageBase;
+/// <summary> Creates and opens a standalone light KinkPlate™ UI. </summary>
+public record KinkPlateLightCreateOpenMessage(UserData UserData) : MessageBase;
+
+/// <summary> When the whitelist has a User hovered long enough and displays a KinkPlate™, this is fired. </summary>
+public record OpenKinkPlatePopout(UserData UserData) : MessageBase;
+
+/// <summary> When the KinkPlate™ popout is closed or needs to be toggled. </summary>
+public record CloseKinkPlatePopout : MessageBase;
 
 /// <summary> Notifies us that the profile data for a specific Kinkster needs to be cleared from the KinkPlate service. </summary>
-public record ClearProfileDataMessage(UserData? UserData = null) : MessageBase;
+public record ClearKinkPlateDataMessage(UserData? UserData = null) : MessageBase;
 
 /// <summary> When we wish to create a report on a defined Kinkster's profile. </summary>
 public record ReportKinkPlateMessage(UserData KinksterToReport) : MessageBase;

@@ -44,9 +44,9 @@ public sealed class ModPresetFileSystem : CkFileSystem<ModPresetContainer>, IMed
         Changed -= OnChange;
     }
 
-    private void OnFileSystemReload(GagspeakModule module)
+    private void OnFileSystemReload(GSModule module)
     {
-        if (module is GagspeakModule.ModPreset) 
+        if (module is GSModule.ModPreset) 
             Reload();
     }
 

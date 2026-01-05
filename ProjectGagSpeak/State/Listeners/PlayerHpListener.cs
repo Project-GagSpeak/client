@@ -1,13 +1,21 @@
 using CkCommons;
 using Dalamud.Game.ClientState.Objects.SubKinds;
-using GagSpeak.PlayerClient;
+using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
+using GagSpeak.Watchers;
 using GagSpeak.WebAPI;
 
 namespace GagSpeak.State.Listeners;
+
+internal record PlayerHealth(IEnumerable<HealthPercentTrigger> triggers)
+{
+    public uint LastHp { get; set; }
+    public uint LastMaxHp { get; set; }
+};
 
 /// <summary>
 ///     Tracks the player health of the characters we want to modify, 
@@ -16,82 +24,91 @@ namespace GagSpeak.State.Listeners;
 public sealed class PlayerHpListener : DisposableMediatorSubscriberBase
 {
     private readonly TriggerManager _manager;
-    private readonly TriggerActionService _actionService;
-    private readonly OnFrameworkService _frameworkUtils;
-    public PlayerHpListener(
-        ILogger<PlayerHpListener> logger,
-        GagspeakMediator mediator,
-        TriggerManager manager,
-        TriggerActionService actionService,
-        OnFrameworkService frameworkUtils)
+    private readonly TriggerActionService _service;
+    private readonly CharaObjectWatcher _watcher;
+
+    public PlayerHpListener(ILogger<PlayerHpListener> logger, GagspeakMediator mediator,
+        TriggerManager manager, TriggerActionService service, CharaObjectWatcher watcher)
         : base(logger, mediator)
     {
         _manager = manager;
-        _actionService = actionService;
-        _frameworkUtils = frameworkUtils;
+        _service = service;
+        _watcher = watcher;
 
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => UpdateTriggerMonitors());
-        Mediator.Subscribe<FrameworkUpdateMessage>(this, (_) => UpdateTrackedPlayerHealth());
+
+        Mediator.Subscribe<WatchedObjectCreated>(this, _ => { });
+        // Bomb them from the monitors when they leave the area.
+        Mediator.Subscribe<WatchedObjectDestroyed>(this, _ => Monitored.Remove(_.Address));
+
+        Svc.Framework.Update += OnTick;
     }
 
-    private readonly Dictionary<IPlayerCharacter, PlayerHealth> MonitoredPlayers = [];
-    private record PlayerHealth(IEnumerable<HealthPercentTrigger> triggers)
-    {
-        public uint LastHp { get; set; }
-        public uint LastMaxHp { get; set; }
-    };
+    private readonly Dictionary<nint, PlayerHealth> Monitored = [];
 
-    private void UpdateTriggerMonitors()
+    protected override void Dispose(bool disposing)
+    {
+        base.Dispose(disposing);
+        Svc.Framework.Update -= OnTick;
+    }
+
+    // Change this eventually to only ever update when the triggers modify in the trigger manager, and on
+    // character created / deleted events.
+    private unsafe void UpdateTriggerMonitors()
     {
         if (_manager.Storage.HealthPercent.Any())
         {
-            MonitoredPlayers.Clear();
+            Monitored.Clear();
             return;
         }
 
-        // Group triggers by the player being monitored.
-        var playerTriggers = _manager.Storage.HealthPercent
-            .GroupBy(trigger => trigger.PlayerNameWorld)
-            .ToDictionary(group => group.Key, group => new PlayerHealth(group.AsEnumerable()));
+        // Grab all health triggers of the category health percent, grouped by their monitored name.
+        var triggers = _manager.Storage.HealthPercent
+            .GroupBy(t => t.PlayerNameWorld)
+            .ToDictionary(g => g.Key, g => new PlayerHealth(g.AsEnumerable()));
 
-        // Get the visible characters.
-        var visiblePlayerCharacters = _frameworkUtils.GetObjectTablePlayers()
-            .Where(player => playerTriggers.Keys.Contains(player.GetNameWithWorld()));
+        // Iterate over the current rendered characters tracked by the watcher.
+        // Take each as a character model and add them to the list of visible characters.
+        List<nint> visibleMatches = CharaObjectWatcher.Rendered
+            .Where(chara => triggers.ContainsKey(((Character*)chara)->GetNameWithWorld()))
+            .ToList();
 
-        // Remove players from MonitoredPlayers who are no longer visible.
-        var playersToRemove = MonitoredPlayers.Keys.Except(visiblePlayerCharacters);
+        // Get the addresses to remove. (Again, we wont need to do this if we bind it to the manager / watcher)
+        var toRemove = Monitored.Keys.Except(visibleMatches);
 
-        // Add Players that should be tracked that are now visible.
-        var playersToAdd = visiblePlayerCharacters.Except(MonitoredPlayers.Keys);
+        // Add those who are not yet monitored.
+        var toAdd = visibleMatches.Except(Monitored.Keys);
 
-        // remove all the non-visible players
-        foreach (var player in playersToRemove)
-            MonitoredPlayers.Remove(player);
+        foreach (var addr in toRemove)
+            Monitored.Remove(addr);
 
-        // add all the visible players
-        foreach (var player in playersToAdd)
-            if (playerTriggers.TryGetValue(player.GetNameWithWorld(), out var triggers))
-                MonitoredPlayers.Add(player, triggers);
+        foreach (var player in toAdd)
+            if (triggers.TryGetValue(((Character*)player)->GetNameWithWorld(), out var item))
+                Monitored.Add(player, item);
     }
 
-    private void UpdateTrackedPlayerHealth()
+    private unsafe  void OnTick(IFramework _)
     {
-        if (!MonitoredPlayers.Any())
+        if (!Monitored.Any())
             return;
 
         // Handle updating the monitored players.
-        foreach (var player in MonitoredPlayers)
+        foreach (var (addr, pHealth) in Monitored)
         {
+            Character* chara = (Character*)addr;
+            var curHp = chara->CharacterData.Health;
+            var curMaxHp = chara->CharacterData.MaxHealth;
+
             // if no hp changed, continue.
-            if (player.Key.CurrentHp == player.Value.LastHp || player.Key.MaxHp == player.Value.LastMaxHp)
+            if (curHp == pHealth.LastHp || curMaxHp == pHealth.LastMaxHp)
                 continue;
 
             // Calculate health percentages once per player to avoid redundancies.
-            var percentageHP = player.Key.CurrentHp * 100f / player.Key.MaxHp;
-            var previousPercentageHP = player.Value.LastHp * 100f / player.Value.LastMaxHp;
+            var percentageHP = curHp * 100f / curMaxHp;
+            var previousPercentageHP = pHealth.LastHp * 100f / pHealth.LastMaxHp;
 
             // scan the playerHealth values for trigger change conditions.
-            foreach (var trigger in player.Value.triggers)
+            foreach (var trigger in pHealth.triggers)
             {
                 var isValid = false;
 
@@ -101,16 +118,16 @@ public sealed class PlayerHpListener : DisposableMediatorSubscriberBase
                     isValid = trigger.UsePercentageHealth
                         ? (previousPercentageHP > trigger.ThresholdMinValue && percentageHP <= trigger.ThresholdMinValue) ||
                             (previousPercentageHP > trigger.ThresholdMaxValue && percentageHP <= trigger.ThresholdMaxValue)
-                        : (player.Value.LastHp > trigger.ThresholdMinValue && player.Key.CurrentHp <= trigger.ThresholdMinValue) ||
-                            (player.Value.LastHp > trigger.ThresholdMaxValue && player.Key.CurrentHp <= trigger.ThresholdMaxValue);
+                        : (pHealth.LastHp > trigger.ThresholdMinValue && curHp <= trigger.ThresholdMinValue) ||
+                            (pHealth.LastHp > trigger.ThresholdMaxValue && curHp <= trigger.ThresholdMaxValue);
                 }
                 else if (trigger.PassKind == ThresholdPassType.Over)
                 {
                     isValid = trigger.UsePercentageHealth
                         ? (previousPercentageHP < trigger.ThresholdMinValue && percentageHP >= trigger.ThresholdMinValue) ||
                             (previousPercentageHP < trigger.ThresholdMaxValue && percentageHP >= trigger.ThresholdMaxValue)
-                        : (player.Value.LastHp < trigger.ThresholdMinValue && player.Key.CurrentHp >= trigger.ThresholdMinValue) ||
-                            (player.Value.LastHp < trigger.ThresholdMaxValue && player.Key.CurrentHp >= trigger.ThresholdMaxValue);
+                        : (pHealth.LastHp < trigger.ThresholdMinValue && curHp >= trigger.ThresholdMinValue) ||
+                            (pHealth.LastHp < trigger.ThresholdMaxValue && curHp >= trigger.ThresholdMaxValue);
                 }
 
                 if (isValid)
@@ -124,7 +141,7 @@ public sealed class PlayerHpListener : DisposableMediatorSubscriberBase
         Logger.LogInformation("Your Trigger With Name " + trigger.Label + " and priority " + trigger.Priority + " triggering action "
             + trigger.InvokableAction.ActionType.ToName(), LoggerType.Triggers);
 
-        if (await _actionService.HandleActionAsync(trigger.InvokableAction, MainHub.UID, ActionSource.TriggerAction))
+        if (await _service.HandleActionAsync(trigger.InvokableAction, MainHub.UID, ActionSource.TriggerAction))
             GagspeakEventManager.AchievementEvent(UnlocksEvent.TriggerFired);
     }
 }

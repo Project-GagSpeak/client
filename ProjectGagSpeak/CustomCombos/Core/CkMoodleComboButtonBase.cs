@@ -1,11 +1,7 @@
 using CkCommons.Gui;
-using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Gui;
 using GagSpeak.Gui.Components;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
-using GagSpeak.State.Caches;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using Dalamud.Bindings.ImGui;
@@ -70,5 +66,5 @@ public abstract class CkMoodleComboButtonBase<T> : CkFilterComboCache<T>
     }
 
     protected void DrawItemTooltip(MoodlesStatusInfo item)
-        => GsExtensions.DrawMoodleStatusTooltip(item, _kinksterRef.LastMoodlesData.StatusList);
+        => GsExtensions.DrawMoodleStatusTooltip(item, _kinksterRef.MoodleData.StatusList);
 }

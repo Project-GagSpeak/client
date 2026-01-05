@@ -1,10 +1,6 @@
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services;
-using GagSpeak.State.Handlers;
-using GagspeakAPI.Attributes;
-using GagspeakAPI.Extensions;
 using static FFXIVClientStructs.FFXIV.Client.Game.ActionManager;
 
 namespace GagSpeak.GameInternals.Detours;

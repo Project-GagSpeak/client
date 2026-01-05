@@ -14,7 +14,6 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using OtterGui.Text;
-using static FFXIVClientStructs.FFXIV.Client.Game.InstanceContent.DynamicEvent.Delegates;
 
 namespace GagSpeak.Gui.Wardrobe;
 
@@ -247,14 +246,12 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
             return;
         }
 
+        var item = _manager.AppliedRestraint; // careful, this can be null if the user deleted an applied item when the plugin wasn't running
         // Otherwise, if the item is sucessfully applied, display the locked states, based on what is active.
-        if (_manager.AppliedRestraint is { } item)
-        {
-            if (data.IsLocked())
-                _activeItemDrawer.UnlockItemGroup(data, item);
-            else
-                _activeItemDrawer.LockItemGroup(data, item);
-        }
+        if (data.IsLocked())
+            _activeItemDrawer.UnlockItemGroup(data, item);
+        else
+            _activeItemDrawer.LockItemGroup(data, item);
     }
 
     private void DrawEditorHeader()

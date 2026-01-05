@@ -154,7 +154,7 @@ public class VibeRoomChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscrib
 
         // Send message to the server
         _logger.LogTrace($"Sending Message: {previewMessage}", LoggerType.GlobalChat);
-        _hub.RoomSendChat(new(MainHub.PlayerUserData, _config.Current.NicknameInVibeRooms, previewMessage)).ConfigureAwait(false);
+        _hub.RoomSendChat(new(MainHub.OwnUserData, _config.Current.NicknameInVibeRooms, previewMessage)).ConfigureAwait(false);
 
         // Clear message and trigger achievement event
         previewMessage = string.Empty;

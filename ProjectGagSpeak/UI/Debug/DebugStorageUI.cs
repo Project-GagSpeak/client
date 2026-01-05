@@ -18,7 +18,6 @@ using Microsoft.IdentityModel.Tokens;
 using OtterGui;
 using OtterGui.Extensions;
 using Penumbra.GameData.Enums;
-using TerraFX.Interop.DirectX;
 using GagspeakAPI.Network;
 
 namespace GagSpeak.Gui;
@@ -26,6 +25,7 @@ namespace GagSpeak.Gui;
 public class DebugStorageUI : WindowMediatorSubscriberBase
 {
     private readonly ClientData _clientData;
+    private readonly RequestsManager _requests;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
@@ -45,6 +45,7 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
         ILogger<DebugStorageUI> logger,
         GagspeakMediator mediator,
         ClientData clientData,
+        RequestsManager requests,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
@@ -63,6 +64,7 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
         : base(logger, mediator, "Debugger for Storages")
     {
         _clientData = clientData;
+        _requests = requests;
         _gags = gags;
         _restrictions = restrictions;
         _restraints = restraints;
@@ -137,8 +139,8 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
         if (!ImGui.CollapsingHeader("Player Global Data"))
             return;
 
-        DrawKinksterRequests("Incoming Kinkster Requests", _clientData.ReqPairIncoming);
-        DrawKinksterRequests("Outgoing Kinkster Requests", _clientData.ReqPairOutgoing);
+        DrawKinksterRequests("Incoming Kinkster Requests", _requests.Incoming);
+        DrawKinksterRequests("Outgoing Kinkster Requests", _requests.Outgoing);
 
         DrawCollarRequests("Incoming Collar Requests", _collar.RequestsIncoming);
         DrawCollarRequests("Outgoing Collar Requests", _collar.RequestsOutgoing);
@@ -230,7 +232,7 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
             }
     }
 
-    private void DrawKinksterRequests(string treeLabel, IEnumerable<KinksterPairRequest> requests)
+    private void DrawKinksterRequests(string treeLabel, IEnumerable<RequestEntry> requests)
     {
         using var node = ImRaii.TreeNode(treeLabel);
         if (!node) return;
@@ -244,10 +246,10 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
             foreach (var req in requests)
             {
                 ImGui.TableNextRow();
-                ImGuiUtil.DrawTableColumn(req.User.UID.ToString());
-                ImGuiUtil.DrawTableColumn(req.Target.UID.ToString());
-                ImGuiUtil.DrawTableColumn(req.CreationTime.ToString());
-                ImGuiUtil.DrawTableColumn(req.Message.ToString());
+                ImGuiUtil.DrawTableColumn(req.SenderUID.ToString());
+                ImGuiUtil.DrawTableColumn(req.RecipientUID.ToString());
+                ImGuiUtil.DrawTableColumn(req.SentTime.ToString());
+                ImGuiUtil.DrawTableColumn(req.AttachedMessage.ToString());
             }
         }
         ImGui.Spacing();

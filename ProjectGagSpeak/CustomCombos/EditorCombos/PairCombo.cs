@@ -12,26 +12,24 @@ namespace GagSpeak.CustomCombos.Editor;
 // A special combo for pairs, that must maintain its distinctness and update accordingly based on changes.
 public sealed class PairCombo : CkFilterComboCache<Kinkster>, IMediatorSubscriber, IDisposable
 {
-    private readonly FavoritesManager _favorites;
+    private readonly FavoritesConfig _favorites;
 
     private Kinkster? _currentKinkster;
     private bool _needsRefresh = false;
-    public PairCombo(ILogger log, GagspeakMediator mediator, MainConfig config, KinksterManager pairs, FavoritesManager favorites)
+    public PairCombo(ILogger log, GagspeakMediator mediator, MainConfig config, KinksterManager pairs, FavoritesConfig favorites)
         : base(() => [
             ..pairs.DirectPairs
-                .OrderByDescending(p => favorites._favoriteKinksters.Contains(p.UserData.UID))
-                .ThenByDescending(u => u.IsVisible)
+                .OrderByDescending(p => favorites.Kinksters.Contains(p.UserData.UID))
+                .ThenByDescending(u => u.IsRendered)
                 .ThenByDescending(u => u.IsOnline)
-                .ThenBy(pair => !pair.PlayerName.IsNullOrEmpty()
-                    ? (config.Current.PreferNicknamesOverNames ? pair.GetNickAliasOrUid() : pair.PlayerName)
-                    : pair.GetNickAliasOrUid(), StringComparer.OrdinalIgnoreCase)
+                .ThenBy(pair => pair.GetDisplayName(), StringComparer.OrdinalIgnoreCase)
         ], log)
     {
         Mediator = mediator;
         _favorites = favorites;
         SearchByParts = true;
 
-        Mediator.Subscribe<RefreshUiKinkstersMessage>(this, _ => _needsRefresh = true);
+        Mediator.Subscribe<FolderUpdateKinkster>(this, _ => _needsRefresh = true);
     }
 
     public GagspeakMediator Mediator { get; }

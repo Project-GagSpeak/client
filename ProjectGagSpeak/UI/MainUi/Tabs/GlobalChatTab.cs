@@ -1,20 +1,13 @@
-using CkCommons;
 using CkCommons.Gui;
-using CkCommons.Helpers;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Extensions;
 using Dalamud.Bindings.ImGui;
 using OtterGui;
-using OtterGui.Text;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -46,8 +39,8 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
     public void DrawGlobalChatlog(string windowId)
     {
         // grab the profile object from the profile service.
-        var profile = _plateManager.GetKinkPlate(MainHub.PlayerUserData);
-        if (profile.KinkPlateInfo.Disabled || !MainHub.IsVerified)
+        var profile = _plateManager.GetKinkPlate(MainHub.OwnUserData);
+        if (profile.Info.Disabled || !MainHub.IsVerified)
         {
             ImGui.Spacing();
             CkGui.ColorTextCentered("Social Features have been Restricted", ImGuiColors.DalamudRed);
@@ -59,7 +52,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
         _globalChat.DrawChat(ImGui.GetContentRegionAvail());
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.UsingGlobalChat, ImGui.GetWindowPos(), ImGui.GetWindowSize());
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatMessageExamine, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
-            () => _tabmenu.TabSelection = MainMenuTabs.SelectedTab.MySettings);
+            () => _tabmenu.TabSelection = MainMenuTabs.SelectedTab.Homepage);
     }
 }
 

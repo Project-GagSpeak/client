@@ -1,202 +1,224 @@
-using CkCommons;
 using Dalamud.Plugin.Ipc;
 using GagSpeak.Kinksters;
-using GagSpeak.Kinksters.Handlers;
-using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagspeakAPI.Attributes;
-using GagspeakAPI.Network;
+using GagSpeak.Utils;
+using GagspeakAPI.Extensions;
 using Microsoft.Extensions.Hosting;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.Interop;
 
 /// <summary>
 /// The IPC Provider for GagSpeak to interact with other plugins by sharing information about visible players.
 /// </summary>
-public class IpcProvider : IHostedService, IMediatorSubscriber
+public class IpcProvider : DisposableMediatorSubscriberBase, IHostedService
 {
-    private const int GagspeakApiVersion = 1;
+    private const int GagSpeakApiVersion = 2;
 
-    private readonly ILogger<IpcProvider> _logger;
-    private readonly KinksterManager _pairManager;
+    private readonly KinksterManager _kinksters;
 
-    public GagspeakMediator Mediator { get; init; }
+    private readonly Dictionary<nint, ProviderMoodleAccessTuple> _handledKinksters = [];
 
-    /// <summary> The list of visible game objects (of our pairs) and their associated moodles permissions. </summary>
-    /// <remarks> This is not accessible by other plugins. </remarks>
-    private readonly List<(KinksterGameObj, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)> VisiblePairObjects = [];
+    // Plugin State events.
+    private ICallGateProvider<int>    ApiVersion;
+    private ICallGateProvider<object> Ready;
+    private ICallGateProvider<object> Disposing;
 
-    /// <summary> The shared list of handles players from the GagSpeakPlugin. Format provides the player name and moodles permissions. </summary>
-    /// <remarks> String Stored is in format [Player Name@World] </remarks>
-    /// </summary>
-    private ICallGateProvider<List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)>>? HandledVisiblePairs;
+    // IPC Events
+    private ICallGateProvider<nint, object> PairRendered;   // When a kinkster becomes rendered.
+    private ICallGateProvider<nint, object> PairUnrendered; // When a kinkster is no longer rendered.
+    private ICallGateProvider<nint, object> AccessUpdated;  // A rendered pair's access permissions changed.
 
+    // IPC Getters
+    private ICallGateProvider<List<nint>>                                  GetAllRendered;     // Get rendered kinksters pointers.
+    private ICallGateProvider<Dictionary<nint, ProviderMoodleAccessTuple>> GetAllRenderedInfo; // Get rendered kinksters & their access info) (could make list)
+    private ICallGateProvider<nint, ProviderMoodleAccessTuple>             GetAccessInfo;      // Get a kinkster's access info.
+
+    // IPC Event Actions (for Moodles)
+    private static ICallGateProvider<MoodlesStatusInfo, bool, object?>        ApplyStatusInfo;    // Apply a moodle tuple to the client actor.
+    private static ICallGateProvider<List<MoodlesStatusInfo>, bool, object?>  ApplyStatusInfoList;// Apply moodle tuples to the client actor.
+    private static ICallGateProvider<List<Guid>, object>                      LockIds;            // Locks statuses by their GUID on the Client.
+    private static ICallGateProvider<List<Guid>, object>                      UnlockIds;          // Unlocks statuses by their GUID on the Client.
+    private static ICallGateProvider<object>                                  ClearLocks;         // Removes all locks from the Client StatusManager.
+    
     /// <summary>
-    ///     Obtains the request to apply Moodles onto another Pair. <para />
-    ///     This request comes from the Moodles Plugin, and it sent to the Kinkster Pair. <para />
-    ///     If lacking permissions, operation will not complete.
+    ///     --<br/>(From Moodles) a request to apply Moodles to another Kinkster. <para/>
+    ///     <b>You send this message from your own Moodles Client.</b><br/>
+    ///     This request is processed by GagSpeak and sent to that kinkster if allowed. <br/>
+    ///     When the Kinkster receives it, they simply apply it to themselves.
     /// </summary>
-    private ICallGateProvider<string, string, List<MoodlesStatusInfo>, bool, object?>? ApplyStatusesToPairRequest;
+    private ICallGateProvider<nint, List<MoodlesStatusInfo>, bool, object?>? ApplyToPairRequest;
 
-    // IPC Event Actions intended to be sent over to Moodles.
-    private static ICallGateProvider<MoodlesStatusInfo, object?>?               ApplyStatusInfo;      // applies a moodle tuple to the client.
-    private static ICallGateProvider<List<MoodlesStatusInfo>, object?>?         ApplyStatusInfoList;  // applies a list of moodle tuples to the client.
-    private static ICallGateProvider<string, List<MoodlesStatusInfo>, object?>? StatusInfoAppliedByPair;// Tells Moodles to apply the moodles to the client.
-
-    // GagSpeak's Personal IPC Events.
-    private static ICallGateProvider<int>?    ApiVersion; // FUNC 
-    private static ICallGateProvider<object>? ListUpdated; // ACTION
-    private static ICallGateProvider<object>? Ready; // FUNC
-    private static ICallGateProvider<object>? Disposing; // FUNC
-
-    public IpcProvider(ILogger<IpcProvider> logger, GagspeakMediator mediator, KinksterManager pairManager)
+    public IpcProvider(ILogger<IpcProvider> logger, GagspeakMediator mediator, KinksterManager kinksters)
+        : base(logger, mediator)
     {
-        _logger = logger;
-        Mediator = mediator;
-        _pairManager = pairManager;
+        _kinksters = kinksters;
 
-        Mediator.Subscribe<MoodlesReady>(this, (_) => NotifyListChanged());
-
-        Mediator.Subscribe<MoodlesPermissionsUpdated>(this, (msg) =>
+        // Should subscribe to characterActorCreated or rendered / unrendered events.
+        Mediator.Subscribe<KinksterPlayerRendered>(this, _ =>
         {
-            // get the idx to update.
-            var idx = VisiblePairObjects.FindIndex(vpo => vpo.Item1.NameWithWorld == msg.Kinkster.PlayerNameWithWorld);
-            if (idx >= 0)
-            {
-                _logger.LogInformation($"MoodlesPermissionsUpdated for [{msg.Kinkster.PlayerNameWithWorld}]", LoggerType.IpcGagSpeak);
-                var newPerms = _pairManager.GetMoodlePermsForPairByName(msg.Kinkster.PlayerNameWithWorld);
-                VisiblePairObjects[idx] = (VisiblePairObjects[idx].Item1, newPerms.Item1, newPerms.Item2);
-                // inform list change.
-                NotifyListChanged();
-            }
+            // Add to handled kinksters.
+            _handledKinksters.TryAdd(_.Handler.Address, _.Kinkster.ToAccessTuple().ToCallGate());
+            NotifyPairRendered(_.Handler.Address);
         });
 
-        Mediator.Subscribe<VisibleKinkstersChanged>(this, (_) => NotifyListChanged());
-
-        Mediator.Subscribe<KinksterGameObjCreatedMessage>(this, (msg) =>
+        Mediator.Subscribe<KinksterPlayerUnrendered>(this, _ =>
         {
-            _logger.LogInformation($"MoodlesPermissionsUpdated for [{msg.KinksterGameObj.NameWithWorld}]", LoggerType.IpcGagSpeak);
-            var moodlePerms = _pairManager.GetMoodlePermsForPairByName(msg.KinksterGameObj.NameWithWorld);
-            VisiblePairObjects.Add((msg.KinksterGameObj, moodlePerms.Item1, moodlePerms.Item2));
-            NotifyListChanged();
+            // Remove from handled kinksters.
+            _handledKinksters.Remove(_.Address, out var removed);
+            NotifyPairUnrendered(_.Address);
         });
-        Mediator.Subscribe<KinksterGameObjDestroyedMessage>(this, (msg) =>
+
+        Mediator.Subscribe<MoodleAccessPermsChanged>(this, _ =>
         {
-            _logger.LogInformation($"MoodlesPermissionsUpdated for [{msg.KinksterGameObj.NameWithWorld}]", LoggerType.IpcGagSpeak);
-            VisiblePairObjects.RemoveAll(pair => pair.Item1.NameWithWorld == msg.KinksterGameObj.NameWithWorld);
-            NotifyListChanged();
+            // Update the permission if they are rendered.
+            if (!_.Kinkster.IsRendered)
+                return;
+            // Update the access permissions.
+            _handledKinksters[_.Kinkster.PlayerAddress] = _.Kinkster.ToAccessTuple().ToCallGate();
+            NotifyAccessUpdated(_.Kinkster.PlayerAddress);
         });
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Starting IpcProviderService");
-        // init API
+        Logger.LogInformation("Starting IpcProvider");
+        // ===========================
+        // ---- IPC REGISTRATIONS ----
+        // ===========================
+        // Init API
         ApiVersion = Svc.PluginInterface.GetIpcProvider<int>("GagSpeak.GetApiVersion");
-        // init Events
+        // Init Events
         Ready = Svc.PluginInterface.GetIpcProvider<object>("GagSpeak.Ready");
         Disposing = Svc.PluginInterface.GetIpcProvider<object>("GagSpeak.Disposing");
-        // init Getters
-        HandledVisiblePairs = Svc.PluginInterface.GetIpcProvider<List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)>>("GagSpeak.GetHandledVisiblePairs");
-        // init appliers
-        ApplyStatusesToPairRequest = Svc.PluginInterface.GetIpcProvider<string, string, List<MoodlesStatusInfo>, bool, object?>("GagSpeak.ApplyStatusesToPairRequest");
-        ListUpdated = Svc.PluginInterface.GetIpcProvider<object>("GagSpeak.VisiblePairsUpdated");
-        ApplyStatusInfo = Svc.PluginInterface.GetIpcProvider<MoodlesStatusInfo, object?>("GagSpeak.ApplyStatusInfo");
-        ApplyStatusInfoList = Svc.PluginInterface.GetIpcProvider<List<MoodlesStatusInfo>, object?>("GagSpeak.ApplyStatusInfoList");
-        StatusInfoAppliedByPair = Svc.PluginInterface.GetIpcProvider<string, List<MoodlesStatusInfo>, object?>("GagSpeak.StatusInfoAppliedByPair");
+        // Init renderedList events.
+        PairRendered = Svc.PluginInterface.GetIpcProvider<nint, object>("GagSpeak.PairRendered");
+        PairUnrendered = Svc.PluginInterface.GetIpcProvider<nint, object>("GagSpeak.PairUnrendered");
+        AccessUpdated = Svc.PluginInterface.GetIpcProvider<nint, object>("GagSpeak.AccessUpdated");
+        // Init Getters
+        GetAllRendered = Svc.PluginInterface.GetIpcProvider<List<nint>>("GagSpeak.GetAllRendered");
+        GetAllRenderedInfo = Svc.PluginInterface.GetIpcProvider<Dictionary<nint, ProviderMoodleAccessTuple>>("GagSpeak.GetAllRenderedInfo");
+        GetAccessInfo = Svc.PluginInterface.GetIpcProvider<nint, ProviderMoodleAccessTuple>("GagSpeak.GetAccessInfo");
+        // Init appliers
+        ApplyStatusInfo = Svc.PluginInterface.GetIpcProvider<MoodlesStatusInfo, bool, object?>("GagSpeak.ApplyStatusInfo");
+        ApplyStatusInfoList = Svc.PluginInterface.GetIpcProvider<List<MoodlesStatusInfo>, bool, object?>("GagSpeak.ApplyStatusInfoList");
+        LockIds = Svc.PluginInterface.GetIpcProvider<List<Guid>, object>("GagSpeak.LockMoodleStatusIds");
+        UnlockIds = Svc.PluginInterface.GetIpcProvider<List<Guid>, object>("GagSpeak.UnlockMoodleStatusIds");
+        ClearLocks = Svc.PluginInterface.GetIpcProvider<object>("GagSpeak.ClearMoodleStatusLocks");
+        // Init Moodles-Invokable applier.
+        ApplyToPairRequest = Svc.PluginInterface.GetIpcProvider<nint, List<MoodlesStatusInfo>, bool, object?>("GagSpeak.ApplyToPairRequest");
+        
+        // =====================================
+        // ---- FUNC & ACTION REGISTRATIONS ----
+        // =====================================
+        // By Registering a func, or action, we declare that this IPC Provider when called returns a value.
+        // This distguishes it from being invokable by us, versus invokable by other plugins.
+        ApiVersion.RegisterFunc(() => GagSpeakApiVersion);
+        GetAllRendered.RegisterFunc(() => _handledKinksters.Keys.ToList());
+        GetAllRenderedInfo.RegisterFunc(() => new Dictionary<nint, ProviderMoodleAccessTuple>(_handledKinksters));
+        GetAccessInfo.RegisterFunc((address) => _handledKinksters.TryGetValue(address, out var access) ? access : (0, 0, 0, 0));
+        // Register the action that moodles can call upon.
+        ApplyToPairRequest.RegisterAction(ProcessApplyToPairRequest);
 
-        // register api
-        ApiVersion.RegisterFunc(() => GagspeakApiVersion);
-        // register getters
-        HandledVisiblePairs.RegisterFunc(GetVisiblePairs);
-        // register appliers
-        ApplyStatusesToPairRequest.RegisterAction(HandleApplyStatusesToPairRequest);
-
-        _logger.LogInformation("Started IpcProviderService");
+        Logger.LogInformation("Started IpcProviderService");
         NotifyReady();
-
         return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        _logger.LogDebug("Stopping IpcProvider Service");
+        Logger.LogDebug("Stopping IpcProvider Service");
         NotifyDisposing();
 
         ApiVersion?.UnregisterFunc();
         Ready?.UnregisterFunc();
         Disposing?.UnregisterFunc();
-
-        HandledVisiblePairs?.UnregisterFunc();
-        ApplyStatusesToPairRequest?.UnregisterAction();
-        ListUpdated?.UnregisterAction();
-        ApplyStatusInfo?.UnregisterAction();
-        ApplyStatusInfoList?.UnregisterAction();
+        // unregister the event actions.
+        PairRendered?.UnregisterAction();
+        PairUnrendered?.UnregisterAction();
+        AccessUpdated?.UnregisterAction();
+        // unregister the functions for getters.
+        GetAllRendered?.UnregisterFunc();
+        GetAllRenderedInfo?.UnregisterFunc();
+        GetAccessInfo?.UnregisterFunc();
+        ApplyToPairRequest?.UnregisterAction();
 
         Mediator.UnsubscribeAll(this);
-
         return Task.CompletedTask;
     }
 
-    private static void NotifyReady() => Ready?.SendMessage();
-    private static void NotifyDisposing() => Disposing?.SendMessage();
-    private static void NotifyListChanged() => ListUpdated?.SendMessage();
-
-    private List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)> GetVisiblePairs()
-    {
-        var ret = new List<(string, MoodlesGSpeakPairPerms, MoodlesGSpeakPairPerms)>();
-
-        return VisiblePairObjects.Where(g => g.Item1.NameWithWorld != string.Empty && g.Item1.Address != nint.Zero)
-            .Select(g => ((g.Item1.NameWithWorld), (g.Item2), (g.Item3)))
-            .Distinct()
-            .ToList();
-    }
-
-    /// <summary> Handles the request from our clients moodles plugin to update another one of our pairs status. </summary>
-    /// <param name="requester">The name of the player requesting the apply (SHOULD ALWAYS BE OUR CLIENT PLAYER) </param>
-    /// <param name="recipient">The name of the player to apply the status to. (SHOULD ALWAYS BE A PAIR) </param>
-    /// <param name="statuses">The list of statuses to apply to the recipient. </param>
-    private void HandleApplyStatusesToPairRequest(string requester, string recipient, List<MoodlesStatusInfo> statuses, bool isPreset)
-    {
-        // we should throw a warning and return if the requester is not a visible pair.
-        var recipientObject = VisiblePairObjects.FirstOrDefault(g => g.Item1.NameWithWorld == recipient);
-        if (recipientObject.Item1 == null)
-        {
-            _logger.LogWarning($"ApplyStatusesToPairRequest for {recipient} recieved, but they were not visible.");
-            return;
-        }
-
-        // the moodle and permissions are valid.
-        var pairUser = _pairManager.DirectPairs.FirstOrDefault(p => p.PlayerNameWithWorld == recipient)!.UserData;
-        if (pairUser == null)
-        {
-            _logger.LogWarning($"ApplyStatusesToPairRequest for {recipient} received, but couldn't find their UID.");
-            return;
-        }
-
-        // fetch the UID for the pair to apply for.
-        _logger.LogInformation($"ApplyStatusesToPairRequest for {recipient} from {requester}, applying statuses");
-        var dto = new MoodlesApplierByStatus(pairUser, statuses, (isPreset ? MoodleType.Preset : MoodleType.Status));
-        Mediator.Publish(new MoodlesApplyStatusToPair(dto));
-    }
+    private void NotifyReady() => Ready?.SendMessage();
+    private void NotifyDisposing() => Disposing?.SendMessage();
+    private void NotifyPairRendered(nint pairPtr) => PairRendered?.SendMessage(pairPtr);
+    private void NotifyPairUnrendered(nint pairPtr) => PairUnrendered?.SendMessage(pairPtr);
+    private void NotifyAccessUpdated(nint pairPtr) => AccessUpdated?.SendMessage(pairPtr);
 
     /// <summary>
     ///     Applies a <see cref="MoodlesStatusInfo"/> tuple to the CLIENT ONLY via Moodles. <para />
     ///     This helps account for trying on Moodle Presets, or applying the preset's StatusTuples. <para />
     ///     Method is invoked via GagSpeak's IpcProvider to prevent miss-use of bypassing permissions.
     /// </summary>
-    public void ApplyStatusTuple(MoodlesStatusInfo status) => ApplyStatusInfo?.SendMessage(status);
+    internal static void ApplyStatusTuple(MoodlesStatusInfo status, bool lockStatus) => ApplyStatusInfo?.SendMessage(status, lockStatus);
 
     /// <summary>
     ///     Applies a group of <see cref="MoodlesStatusInfo"/> tuples to the CLIENT ONLY via Moodles. <para />
     ///     This helps account for trying on Moodle Presets, or applying the preset's StatusTuples. <para />
     ///     Method is invoked via GagSpeak's IpcProvider to prevent miss-use of bypassing permissions.
     /// </summary>
-    public void ApplyStatusTuples(IEnumerable<MoodlesStatusInfo> statuses) => ApplyStatusInfoList?.SendMessage(statuses.ToList());
+    internal static void ApplyStatusTuples(IEnumerable<MoodlesStatusInfo> statuses, bool lockStatuses) => ApplyStatusInfoList?.SendMessage(statuses.ToList(), lockStatuses);
 
     /// <summary>
-    ///     Applies the list of <see cref="MoodlesStatusInfo"/> tuples to the client, that was sent by another Kinkster.
+    ///     Locks the select GUID's, if currently present in the Client's StatusManager. <para/>
+    ///     Locked ID's cannot be right clicked off, and can only be removed via Unlock or Clear 
+    ///     methods, or on plugin shutdown.
     /// </summary>
-    public void ApplyMoodlesSentByKinkster(string kinksterNameWorld, List<MoodlesStatusInfo> statuses) => StatusInfoAppliedByPair?.SendMessage(kinksterNameWorld, statuses);
+    internal static void LockClientStatuses(List<Guid> ids) => LockIds?.SendMessage(ids);
+
+    /// <summary>
+    ///     Unlocks Statuses from the Client's StatusManager by their GUID's, if they are currently locked.
+    /// </summary>
+    internal static void UnlockClientStatuses(List<Guid> ids) => UnlockIds?.SendMessage(ids);
+
+    /// <summary>
+    ///     Clears all locks from the Client's StatusManager.
+    /// </summary>
+    internal static void ClearClientLocks() => ClearLocks?.SendMessage();
+
+
+    // Used to ensure integrity before pushing update to the server.
+    private void ProcessApplyToPairRequest(nint recipientAddr, List<MoodlesStatusInfo> toApply, bool isPreset)
+    {
+        if (_kinksters.DirectPairs.FirstOrDefault(p => p.IsRendered && p.PlayerAddress == recipientAddr) is not { } pair)
+            return;
+
+        // Validate.
+        foreach (var status in toApply)
+            if (!IsStatusValid(status, out var errorMsg))
+            {
+                Logger.LogWarning(errorMsg);
+                return;
+            }
+
+        // If valid, publish
+        Mediator.Publish(new MoodlesApplyStatusToPair(new(pair.UserData, toApply, false)));
+
+        bool IsStatusValid(MoodlesStatusInfo status, [NotNullWhen(false)] out string? error)
+        {
+            if (!pair.PairPerms.MoodleAccess.HasAny(MoodleAccess.AllowOther))
+                return (error = "Attempted to apply to a pair without 'AllowOther' active.") is null;
+            else if (!pair.PairPerms.MoodleAccess.HasAny(MoodleAccess.Positive))
+                return (error = "Pair does not allow application of Moodles with positive status types.") is null;
+            else if (!pair.PairPerms.MoodleAccess.HasAny(MoodleAccess.Negative))
+                return (error = "Pair does not allow application of Moodles with negative status types.") is null;
+            else if (!pair.PairPerms.MoodleAccess.HasAny(MoodleAccess.Special))
+                return (error = "Pair does not allow application of Moodles with special status types.") is null;
+            else if (!pair.PairPerms.MoodleAccess.HasAny(MoodleAccess.Permanent) && status.ExpireTicks == -1)
+                return (error = "Pair does not allow application of permanent Moodles.") is null;
+            else if (pair.PairPerms.MaxMoodleTime < TimeSpan.FromMilliseconds(status.ExpireTicks))
+                return (error = "Moodle duration of requested Moodle was longer than the pair allows!") is null;
+
+            return (error = null) is null;
+        }
+    }
 }
 

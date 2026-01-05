@@ -1,6 +1,5 @@
 using Dalamud.Interface.Utility.Raii;
 using Dalamud.Bindings.ImGui;
-using Penumbra.GameData.DataContainers;
 using Penumbra.GameData.Structs;
 
 namespace GagSpeak.CustomCombos.Glamourer;

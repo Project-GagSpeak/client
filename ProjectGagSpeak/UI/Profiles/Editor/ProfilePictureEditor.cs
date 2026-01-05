@@ -43,7 +43,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
         _cosmetics = cosmetics;
 
 
-        Mediator.Subscribe<MainHubDisconnectedMessage>(this, (_) => IsOpen = false);
+        Mediator.Subscribe<DisconnectedMessage>(this, (_) => IsOpen = false);
     }
 
     private bool _showFileDialogError = false;
@@ -82,14 +82,14 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
         var profile = _KinkPlateManager.GetKinkPlate(new UserData(MainHub.UID));
 
         // check if flagged
-        if (profile.KinkPlateInfo.Flagged)
+        if (profile.Info.Flagged)
         {
-            CkGui.ColorTextWrapped(profile.KinkPlateInfo.Description, ImGuiColors.DalamudRed);
+            CkGui.ColorTextWrapped(profile.Info.Description, ImGuiColors.DalamudRed);
             return;
         }
 
         // grab our profile image and draw the baseline.
-        var pfpWrap = profile.GetCurrentProfileOrDefault();
+        var pfpWrap = profile.GetProfileOrDefault();
         if (pfpWrap != null)
         {
             ImGui.Image(pfpWrap.Handle, ImGuiHelpers.ScaledVector2(pfpWrap.Width, pfpWrap.Height));
@@ -325,7 +325,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
         }
         try
         {
-            await _hub.UserSetKinkPlatePicture(new(MainHub.PlayerUserData, Convert.ToBase64String(_croppedImageData))).ConfigureAwait(false);
+            await _hub.UserSetKinkPlatePicture(new(MainHub.OwnUserData, Convert.ToBase64String(_croppedImageData))).ConfigureAwait(false);
             _logger.LogInformation("Image Sent to server successfully.");
         }
         catch (Bagagwa ex)

@@ -66,7 +66,7 @@ public static unsafe class HcStayHousingEntrance
                 continue;
 
             // If the name is valid, and it is targetable, consider it a valid entrance and calculate its distance.
-            var objDist = Vector3.Distance(PlayerData.Object.Position, o.Position);
+            var objDist = Vector3.Distance(PlayerData.Position, o.Position);
             if (objDist < nearestDist)
             {
                 nearestDist = objDist;

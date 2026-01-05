@@ -1,10 +1,7 @@
-using GagSpeak.Gui;
 using Dalamud.Bindings.ImGui;
 using OtterGui.Classes;
-using OtterGui;
 using OtterGui.Raii;
 using CkCommons;
-using GagSpeak.Services.Textures;
 using GagSpeak.Utils;
 using CkCommons.Gui;
 using OtterGui.Extensions;
@@ -73,7 +70,7 @@ public sealed class JobActionCombo : CkFilterComboCache<ParsedActionRow>
             ImGui.SetCursorPos(pos);
             using (ImRaii.Group())
             {
-                ImGui.Image(MoodleDisplay.GetGameIconOrEmpty(parsedJobAction.IconID).Handle, new Vector2(size.Y));
+                ImGui.Image(MoodleIcon.GetGameIconOrEmpty(parsedJobAction.IconID).Handle, new Vector2(size.Y));
                 CkGui.TextFrameAlignedInline(parsedJobAction.Name);
                 CkGui.ColorTextFrameAlignedInline($"({parsedJobAction.ActionID})", CkColor.ElementBG.Uint(), false);
             }

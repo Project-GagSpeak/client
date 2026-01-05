@@ -1,6 +1,4 @@
 using CheapLoc;
-using GagSpeak.Gui.Publications;
-using Lumina.Excel.Sheets;
 
 namespace GagSpeak.Localization
 {
@@ -1100,9 +1098,29 @@ namespace GagSpeak.Localization
         public readonly string TabsPreferences = Loc.Localize("Settings_TabsPreferences", "Chat & UI");
         public readonly string TabsAccounts = Loc.Localize("Settings_TabsAccounts", "Account Management");
 
+        public DDSPrefs DDSPrefs { get; set; } = new();
         public MainOptions MainOptions { get; set; } = new();
         public Preferences Preferences { get; set; } = new();
         public Accounts Accounts { get; set; } = new();
+    }
+
+    public class DDSPrefs
+    {
+        public readonly string FavoritesFirstLabel = Loc.Localize("Preferences_FavoritesFirstLabel", "By Favorites First");
+        public readonly string FavoritesFirstTT = Loc.Localize("Preferences_FavoritesFirstTT", "Sort Favorite-First Render for main folders.");
+
+        public readonly string ShowVisibleSeparateLabel = Loc.Localize("Preferences_ShowVisibleSeparateLabel", "Visible Folder");
+        public readonly string ShowVisibleSeparateTT = Loc.Localize("Preferences_ShowVisibleSeparateTT", "Lists rendered online kinksters in a separate folder.");
+
+        public readonly string ShowOfflineSeparateLabel = Loc.Localize("Preferences_ShowOfflineSeparateLabel", "Offline Folder");
+        public readonly string ShowOfflineSeparateTT = Loc.Localize("Preferences_ShowOfflineSeparateTT", "Lists offline kinksters in a separate group.");
+
+        public readonly string PreferNicknamesLabel = Loc.Localize("Preferences_PreferNicknamesLabel", "Prefer Nicknames");
+        public readonly string PreferNicknamesTT = Loc.Localize("Preferences_PreferNicknamesTT", "Still use a kinksters nickname, even while visible.");
+
+        public readonly string FocusTargetLabel = Loc.Localize("Preferences_FocusTargetLabel", "Prefer FocusTarget");
+        public readonly string FocusTargetTT = Loc.Localize("Preferences_FocusTargetTT", "Uses the FocusTarget instead of the Target for identifying kinksters." +
+            "--SEP--Used when clicking the eye icon in the whitelist.");
     }
 
     public class MainOptions
@@ -1237,18 +1255,9 @@ namespace GagSpeak.Localization
         public readonly string VibeStatusLabel = Loc.Localize("Preferences_VibeStatusLabel", "Vibe Status DTR Entry");
         public readonly string VibeStatusTT = Loc.Localize("Preferences_VibeStatusTT", "Displays a vibe icon when you have an actively vibrating sex toy.");
 
-        public readonly string ShowVisibleSeparateLabel = Loc.Localize("Preferences_ShowVisibleSeparateLabel", "Show separate Visible group");
-        public readonly string ShowVisibleSeparateTT = Loc.Localize("Preferences_ShowVisibleSeparateTT", "Lists paired players within render range in a separate group.");
-
-        public readonly string ShowOfflineSeparateLabel = Loc.Localize("Preferences_ShowOfflineSeparateLabel", "Show separate Offline group");
-        public readonly string ShowOfflineSeparateTT = Loc.Localize("Preferences_ShowOfflineSeparateTT", "Lists offline paired players in a separate group.");
-
         public readonly string PrefThreeCharaAnonName = Loc.Localize("Preferences_ThreeCharaAnonName", "Display [Kinkster-###] over [Kinkster-####] in Global Chat");
         public readonly string PrefThreeCharaAnonNameTT = Loc.Localize("Preferences_ThreeCharaAnonNameTT", "Displays the first three characters of a player's name instead of 4." +
             "--SEP--Primary intended for legacy users attached to their 3 character names.");
-
-        public readonly string PreferNicknamesLabel = Loc.Localize("Preferences_PreferNicknamesLabel", "Prefer nicknames for visible pairs");
-        public readonly string PreferNicknamesTT = Loc.Localize("Preferences_PreferNicknamesTT", "Displays nicknames instead of character names for paired players within render range.");
 
         public readonly string ShowProfilesLabel = Loc.Localize("Preferences_ShowProfilesLabel", "Show GagSpeak profiles on hover");
         public readonly string ShowProfilesTT = Loc.Localize("Preferences_ShowProfilesTT", "Displays the configured user profile after hovering over the player.");

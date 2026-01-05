@@ -1,4 +1,5 @@
 using CkCommons.HybridSaver;
+using FFXIVClientStructs.FFXIV.Common.Lua;
 using GagSpeak.Services.Configs;
 
 namespace GagSpeak.PlayerClient;
@@ -18,7 +19,8 @@ public class MainConfig : IHybridSavable
             ["Version"] = ConfigVersion,
             ["Config"] = JObject.FromObject(Current),
             ["LogLevel"] = LogLevel.ToString(),
-            ["LoggerFilters"] = JToken.FromObject(LoggerFilters)
+            ["LoggerFilters"] = JToken.FromObject(LoggerFilters),
+            ["ServerPaused"] = ServerPaused
         }.ToString(Formatting.Indented);
     }
 
@@ -65,25 +67,10 @@ public class MainConfig : IHybridSavable
             var version = jObject["Version"]?.Value<int>() ?? 0;
 
             // Load instance configuration
-            Current = jObject["Config"]?.ToObject<GagspeakConfig>() ?? new GagspeakConfig();
-
-            // Load static fields safely
-            if (Enum.TryParse(jObject["LogLevel"]?.Value<string>(), out LogLevel logLevel))
-                LogLevel = logLevel;
-            else
-                LogLevel = LogLevel.Trace;  // Default fallback
-
-            // Handle outdated hashset format, and new format for log filters.
-            var token = jObject["LoggerFilters"];
-            if(token is JArray array)
-            {
-                var list = array.ToObject<List<LoggerType>>() ?? new List<LoggerType>();
-                LoggerFilters = list.Aggregate(LoggerType.None, (acc, val) => acc | val);
-            }
-            else
-            {
-                LoggerFilters = token?.ToObject<LoggerType>() ?? LoggerType.Recommended;
-            }
+            Current       = jObject["Config"]?.ToObject<GagspeakConfig>() ?? new GagspeakConfig();
+            LogLevel      = Enum.TryParse(jObject["LogLevel"]?.Value<string>(), out LogLevel logLevel) ? logLevel : LogLevel.Debug;
+            LoggerFilters = GetLoggerFilters(jObject["LoggerFilters"]);
+            ServerPaused  = jObject["ServerPaused"]?.Value<bool>() ?? false;
 
             Svc.Logger.Information("Config loaded.");
             Save();
@@ -92,6 +79,32 @@ public class MainConfig : IHybridSavable
     }
 
     public GagspeakConfig Current { get; private set; } = new();
+
+    /// <summary>
+    ///     Updates the paused state of the server. <para />
+    ///     When set to a value, the config is automatically saved.
+    /// </summary>
+    public bool ServerPaused { get; set; } = false;
+
     public static LogLevel LogLevel = LogLevel.Trace;
     public static LoggerType LoggerFilters = LoggerType.Recommended;
+
+    public void SetPauseState(bool newValue)
+    {
+        ServerPaused = newValue;
+        Save();
+    }
+
+    private LoggerType GetLoggerFilters(JToken? filtersToken)
+    {
+        if (filtersToken is JArray array)
+        {
+            var list = array.ToObject<List<LoggerType>>() ?? new List<LoggerType>();
+            return list.Aggregate(LoggerType.None, (acc, val) => acc | val);
+        }
+        else
+        {
+            return filtersToken?.ToObject<LoggerType>() ?? LoggerType.Recommended;
+        }
+    }
 }

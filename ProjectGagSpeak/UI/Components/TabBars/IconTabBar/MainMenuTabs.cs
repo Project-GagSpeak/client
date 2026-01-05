@@ -1,14 +1,15 @@
 using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Widgets;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Utils;
-using Dalamud.Bindings.ImGui;
 
 namespace GagSpeak.Gui.Components;
 
@@ -17,21 +18,38 @@ public class MainMenuTabs : IconTabBar<MainMenuTabs.SelectedTab>
     public enum SelectedTab
     {
         Homepage,
+        Requests,
         Whitelist,
         PatternHub,
         MoodlesHub,
         GlobalChat,
-        MySettings
     }
 
-    private readonly GagspeakMediator _mediator;
-    private readonly TutorialService _guides;
-    public MainMenuTabs(GagspeakMediator mediator, TutorialService guides)
+    public override SelectedTab TabSelection
     {
+        get => base.TabSelection;
+        set
+        {
+            _config.Current.MainUiTab = value;
+            _config.Save();
+            base.TabSelection = value;
+        }
+    }
+
+    private readonly MainConfig _config;
+    private readonly GagspeakMediator _mediator;
+    private readonly RequestsManager _requests;
+
+    public MainMenuTabs(GagspeakMediator mediator, MainConfig config, RequestsManager requests, TutorialService guides)
+    {
+        _config = config;
         _mediator = mediator;
-        _guides = guides;
+        _requests = requests;
 
         AddDrawButton(FontAwesomeIcon.Home, SelectedTab.Homepage, "Homepage",
+            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Homepage, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => TabSelection = SelectedTab.Requests));
+
+        AddDrawButton(FontAwesomeIcon.Inbox, SelectedTab.Requests, "Kinkster Requests",
             () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Homepage, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => TabSelection = SelectedTab.Whitelist));
 
         AddDrawButton(FontAwesomeIcon.PeopleArrows, SelectedTab.Whitelist, "Kinkster Whitelist", 
@@ -45,9 +63,6 @@ public class MainMenuTabs : IconTabBar<MainMenuTabs.SelectedTab>
 
         AddDrawButton(FontAwesomeIcon.Comments, SelectedTab.GlobalChat, "Meet & Chat with others in a cross-region chat!",
             () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.GlobalChat, ImGui.GetWindowPos(), ImGui.GetWindowSize()));
-
-        AddDrawButton(FontAwesomeIcon.UserCircle, SelectedTab.MySettings, "Account User Settings",
-            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AccountPage, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => TabSelection = SelectedTab.MySettings));
 
         TabSelectionChanged += (oldTab, newTab) => _mediator.Publish(new MainWindowTabChangeMessage(newTab));
     }
@@ -103,7 +118,16 @@ public class MainMenuTabs : IconTabBar<MainMenuTabs.SelectedTab>
                     ImGui.GetColorU32(ImGuiCol.Separator), 2f);
             }
 
-            if (tab.TargetTab is SelectedTab.GlobalChat)
+            if (tab.TargetTab is SelectedTab.Requests)
+            {
+                if (_requests.Incoming.Count > 0)
+                {
+                    var newMsgTxtPos = new Vector2(x.X + buttonSize.X / 2, x.Y - spacing.Y);
+                    var newMsgTxt = _requests.Incoming.Count > 99 ? "99+" : _requests.Incoming.Count.ToString();
+                    drawList.OutlinedFont(newMsgTxt, newMsgTxtPos, ImGuiColors.ParsedPink.ToUint(), 0xFF000000, 1);
+                }
+            }
+            else if (tab.TargetTab is SelectedTab.GlobalChat)
             {
                 if (GlobalChatLog.NewMsgCount > 0)
                 {

@@ -19,7 +19,7 @@ namespace GagSpeak.FileSystems;
 // Continue reworking this to integrate a combined approach if we can figure out a better file management system.
 public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet, RestraintSetFileSelector.RestraintSetState>, IMediatorSubscriber, IDisposable
 {
-    private readonly FavoritesManager _favorites;
+    private readonly FavoritesConfig _favorites;
     private readonly RestraintManager _manager;
     private readonly TutorialService _guides;
 
@@ -45,7 +45,7 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
     public RestraintSet tutorialSet { get; private set; }
 
     public RestraintSetFileSelector(ILogger<RestraintSetFileSelector> log, GagspeakMediator mediator,
-        FavoritesManager favorites, RestraintManager manager, RestraintSetFileSystem fileSystem, TutorialService guides)
+        FavoritesConfig favorites, RestraintManager manager, RestraintSetFileSystem fileSystem, TutorialService guides)
         : base(fileSystem, Svc.Logger.Logger, Svc.KeyState, "##RestraintSetFS")
     {
         Mediator = mediator;
@@ -136,19 +136,22 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
                 }
             }
             // Optimize later.
-            ImGui.SameLine((rectMax.X - rectMin.X) - iconSpacing);
-            var centerHeight = (ImGui.GetItemRectSize().Y - CkGui.IconSize(FAI.Trash).Y) / 2;
-            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + centerHeight);
-            var pos = ImGui.GetCursorScreenPos();
-            var hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
-            var col = (hovering && KeyMonitor.ShiftPressed()) ? ImGuiCol.Text : ImGuiCol.TextDisabled;
-            CkGui.FramedIconText(FAI.Trash, ImGui.GetColorU32(col));
-            if (hovering && KeyMonitor.ShiftPressed() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+            if (_manager.AppliedRestraint?.Identifier != leaf.Value.Identifier)
             {
-                Log.Debug($"Deleting {leaf.Value.Label} with SHIFT pressed.");
-                _manager.Delete(leaf.Value);
+                ImGui.SameLine((rectMax.X - rectMin.X) - iconSpacing);
+                var centerHeight = (ImGui.GetItemRectSize().Y - CkGui.IconSize(FAI.Trash).Y) / 2;
+                ImGui.SetCursorPosY(ImGui.GetCursorPosY() + centerHeight);
+                var pos = ImGui.GetCursorScreenPos();
+                var hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
+                var col = (hovering && KeyMonitor.ShiftPressed()) ? ImGuiCol.Text : ImGuiCol.TextDisabled;
+                CkGui.FramedIconText(FAI.Trash, ImGui.GetColorU32(col));
+                if (hovering && KeyMonitor.ShiftPressed() && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+                {
+                    Log.Debug($"Deleting {leaf.Value.Label} with SHIFT pressed.");
+                    _manager.Delete(leaf.Value);
+                }
+                CkGui.AttachToolTip("Delete this restraint set. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
             }
-            CkGui.AttachToolTip("Delete this restraint set. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
         }
 
         return wasHovered && ImGui.IsMouseReleased(ImGuiMouseButton.Left);

@@ -1,4 +1,3 @@
-using GagSpeak.Services;
 using GagspeakAPI.Data;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;

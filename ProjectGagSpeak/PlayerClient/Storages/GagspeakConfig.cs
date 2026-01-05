@@ -1,5 +1,5 @@
-using CkCommons.Audio;
 using CkCommons.GarblerCore;
+using GagSpeak.Gui.Components;
 using GagSpeak.Services;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
@@ -23,20 +23,24 @@ public class GagspeakConfig
 
     // pair listing preferences
     public bool PreferThreeCharaAnonName { get; set; } = false;
-    public bool PreferNicknamesOverNames { get; set; } = false;
-    public bool ShowVisibleUsersSeparately { get; set; } = true;
-    public bool ShowOfflineUsersSeparately { get; set; } = true;
+    public bool FavoritesFirst { get; set; } = true;
+    public bool NickOverPlayerName { get; set; } = false;
+    public bool VisibleFolder { get; set; } = true;
+    public bool OfflineFolder { get; set; } = true;
+    public bool TargetWithFocus { get; set; } = false;
+    public bool ViewingIncoming { get; set; } = true;
 
     public bool OpenMainUiOnStartup { get; set; } = true;
+    public MainMenuTabs.SelectedTab MainUiTab { get; set; } = MainMenuTabs.SelectedTab.Whitelist;
     public bool ShowProfiles { get; set; } = true;
     public float ProfileDelay { get; set; } = 1.5f;
     public bool ShowContextMenus { get; set; } = true;
     public InptChannel PuppeteerChannelsBitfield { get; set; } = InptChannel.None;
 
-    // logging (debug)
+    // Preferences - Notifier
     public bool LiveGarblerZoneChangeWarn { get; set; } = true;
-    public bool NotifyForServerConnections { get; set; } = true;
-    public bool NotifyForOnlinePairs { get; set; } = true;
+    public bool ConnectionNotifications { get; set; } = true;
+    public bool OnlineNotifications { get; set; } = true;
     public bool NotifyLimitToNickedPairs { get; set; } = false;
 
     public NotificationLocation InfoNotification { get; set; } = NotificationLocation.Both;

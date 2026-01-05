@@ -20,7 +20,6 @@ using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
-using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
@@ -383,7 +382,7 @@ public class CollarOverviewTab : IFancyTab
 
         CkRichText.Text(ImGui.GetContentRegionAvail().X - MoodleDrawer.IconSizeFramed.X, _manager.SyncedData!.Moodle.Title);
         ImGui.SameLine();
-        MoodleDisplay.DrawMoodleIcon(moodle.IconID, moodle.Stacks, MoodleDrawer.IconSizeFramed);
+        MoodleIcon.DrawMoodleIcon(moodle.IconID, moodle.Stacks, MoodleDrawer.IconSizeFramed);
         GsExtensions.DrawMoodleStatusTooltip(moodle, MoodleCache.IpcData.StatusList);
     }
 }

@@ -5,7 +5,6 @@ using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using FFXIVClientStructs.Interop;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagSpeak.Utils;
@@ -54,7 +53,7 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
     {
         _cache = cache;
 
-        Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreState());
+        Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreStatus());
 
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRequestedUpdate, "ActionDetail", (_, args) => OnActionTooltip((AtkUnitBase*)args.Addon.Address));
         Svc.ClientState.ClassJobChanged += SetBannedJobActions;
@@ -69,7 +68,7 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
         RestoreSavedSlots();
     }
 
-    public void UpdateHardcoreState()
+    public void UpdateHardcoreStatus()
     {
         var sources = _cache.FinalTraits;
         // If the traits changed, update the slots.
@@ -78,7 +77,7 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
             Logger.LogDebug($"Updating sources from [{_latestSources}] to [{sources}].", LoggerType.HardcoreActions);
             _latestSources = sources;
             // recalculate the banned slots for this job.
-            SetBannedJobActions(PlayerData.JobIdInstanced);
+            SetBannedJobActions(PlayerData.JobId);
         }
     }
 
@@ -162,7 +161,7 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
             var hotbarRow = baseSpan.GetPointer(i);
             // if the hotbar is not null, we can get the slots data
             if (hotbarRow is not null)
-                hotbarModule->LoadSavedHotbar(PlayerData.JobIdInstanced, (uint)i);
+                hotbarModule->LoadSavedHotbar(PlayerData.JobId, (uint)i);
         }
 
         // Reset the last modified tooltip to null, as we no longer need it.

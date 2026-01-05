@@ -1,6 +1,4 @@
-using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using AtkValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 

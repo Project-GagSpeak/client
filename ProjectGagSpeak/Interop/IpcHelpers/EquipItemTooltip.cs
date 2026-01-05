@@ -1,7 +1,5 @@
 using CkCommons;
 using Dalamud.Bindings.ImGui;
-using Dalamud.Plugin.Services;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using OtterGui.Raii;
 using Penumbra.Api.Enums;
@@ -90,7 +88,7 @@ public sealed class PenumbraChangedItemTooltip : DisposableMediatorSubscriberBas
     private void OnPenumbraTooltip(ChangedItemType type, uint id)
     {
         LastTooltip = DateTime.UtcNow;
-        if (!PlayerData.IsLoggedIn || PlayerData.ContentId is 0)
+        if (!PlayerData.IsLoggedIn || PlayerData.CID is 0)
         {
             return;
         }
@@ -112,7 +110,7 @@ public sealed class PenumbraChangedItemTooltip : DisposableMediatorSubscriberBas
         if (button is not MouseButton.Middle)
             return;
 
-        if (!PlayerData.IsLoggedIn || PlayerData.ContentId is 0)
+        if (!PlayerData.IsLoggedIn || PlayerData.CID is 0)
             return;
 
         if (type is ChangedItemType.Item)

@@ -20,7 +20,7 @@ public interface IAchievementItem
     /// <summary>
     /// The Cosmetic's related Component that this unlocks.
     /// </summary>
-    ProfileComponent RewardComponent { get; }
+    PlateElement RewardComponent { get; }
     /// <summary>
     /// The cosmetics related style type it unlocks (background, border, overlay)
     /// </summary>

@@ -3,12 +3,12 @@ using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Memory;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using GagSpeak.GameInternals.Detours;
 using GagSpeak.Services;
 using GagSpeak.Utils;
-using Lumina.Excel.Sheets;
 using System.Runtime.CompilerServices;
 using GameObject = FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject;
 namespace GagSpeak;
@@ -18,8 +18,11 @@ public static unsafe class HcTaskUtils
     public static GameObject* ToStruct(this IGameObject obj)
         => (GameObject*)obj.Address;
 
-    public static bool IsTarget(this IGameObject obj)
-        => Svc.Targets.Target != null && Svc.Targets.Target.Address == obj.Address;
+    internal static bool IsTarget(GameObject* obj)
+        => TargetSystem.Instance()->Target == obj;
+
+    internal static bool IsTarget(nint addr)
+        => (nint)TargetSystem.Instance()->Target == addr;
 
 
     // Make sure that our screen is read to interact with. Can be a tad expensive, so use sparingly.

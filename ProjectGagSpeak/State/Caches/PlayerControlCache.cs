@@ -47,7 +47,7 @@ public sealed class PlayerControlCache
         || _activeTaskControl.HasAny(HcTaskControl.NoActions);
 
     public bool BlockTeleportActions
-        => !_activeTaskControl.HasAny(HcTaskControl.InLifestreamTask) 
+        => !_activeTaskControl.HasAny(HcTaskControl.InLifestreamTask)
         && (ClientData.Hardcore.IsEnabled(HcAttribute.Follow)
         || ClientData.Hardcore.IsEnabled(HcAttribute.EmoteState)
         || ClientData.Hardcore.IsEnabled(HcAttribute.Confinement)
@@ -56,27 +56,42 @@ public sealed class PlayerControlCache
         || _activeTaskControl.HasAny(HcTaskControl.NoTeleport));
 
     public bool BlockChatInput
-        => ClientData.Hardcore.IsEnabled(HcAttribute.BlockedChatInput) 
+        => ClientData.Hardcore.IsEnabled(HcAttribute.BlockedChatInput)
         || _activeTaskControl.HasAny(HcTaskControl.NoChatInputAccess);
 
     public bool HideChatInput
-        => ClientData.Hardcore.IsEnabled(HcAttribute.HiddenChatInput) 
+        => ClientData.Hardcore.IsEnabled(HcAttribute.HiddenChatInput)
         || _activeTaskControl.HasAny(HcTaskControl.NoChatInputView);
 
     public bool HideChatBoxes
-        => ClientData.Hardcore.IsEnabled(HcAttribute.HiddenChatBox) 
+        => ClientData.Hardcore.IsEnabled(HcAttribute.HiddenChatBox)
         || _activeTaskControl.HasAny(HcTaskControl.NoChatBoxView);
 
     public bool PreventUnfollowing
-        => ClientData.Hardcore.IsEnabled(HcAttribute.Follow) 
+        => ClientData.Hardcore.IsEnabled(HcAttribute.Follow)
         || _activeTaskControl.HasAny(HcTaskControl.MustFollow);
 
-    // dont want to enforce this during lifestream tasks.
     public bool BlockRunning
-        => !_activeTaskControl.HasAny(HcTaskControl.InLifestreamTask) 
-        && ClientData.Hardcore.IsEnabled(HcAttribute.Follow)
-        || _activeTaskControl.HasAny(HcTaskControl.Weighted)
-        || _traits.FinalTraits.HasAny(Traits.Weighty);
+    {
+        get
+        {
+            // Don't mess with lifestream tasks.
+            if (_activeTaskControl.HasAny(HcTaskControl.InLifestreamTask))
+                return false;
+
+            // Force while following.
+            if (ClientData.Hardcore.IsEnabled(HcAttribute.Follow))
+                return true;
+
+            // Force while hc task control says so.
+            if (_activeTaskControl.HasAny(HcTaskControl.Weighted))
+                return true;
+
+            // Force if weighted or weighty by restraints, but only if not mounted, as mounts wouldn't be weighed down by our restraints
+            return _traits.FinalTraits.HasAny(Traits.Weighty)
+                && !Svc.Condition.AsReadOnlySet().Contains(Dalamud.Game.ClientState.Conditions.ConditionFlag.Mounted);
+        }
+    }
 
     // handled by higher, public accessor. (do not enfore during lifestream tasks)
     public bool ShouldLockFirstPerson
@@ -109,17 +124,17 @@ public sealed class PlayerControlCache
         || _activeTaskControl.HasAny(HcTaskControl.MustFollow | HcTaskControl.BlockMovementKeys)
         || _traits.FinalTraits.HasAny(Traits.Immobile);
 
-    public bool DoAutoPrompts 
-        => ClientData.Hardcore.IsEnabled(HcAttribute.Confinement) 
-        || ClientData.Hardcore.IsEnabled(HcAttribute.Imprisonment) 
+    public bool DoAutoPrompts
+        => ClientData.Hardcore.IsEnabled(HcAttribute.Confinement)
+        || ClientData.Hardcore.IsEnabled(HcAttribute.Imprisonment)
         || _activeTaskControl.HasAny(HcTaskControl.DoConfinementPrompts);
 
     public CameraControlMode GetPerspectiveToLock()
         => ShouldLockFirstPerson ? CameraControlMode.FirstPerson :
             ShouldLockThirdPerson ? CameraControlMode.ThirdPerson : CameraControlMode.Unknown;
-    
+
     public IEnumerable<VirtualKey> GetBlockedKeys()
-        => InLifestreamTask ? AllKeys : BlockMovementKeys ? MoveKeys : Enumerable.Empty<VirtualKey>();
+        => InLifestreamTask ? AllKeys : Enumerable.Empty<VirtualKey>();
 
 
     // Update the hardcore task manager control state and refresh the controllers with the latest cache information.

@@ -1,11 +1,16 @@
 using CkCommons.Gui;
+using Dalamud.Bindings.ImGui;
+using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using Dalamud.Bindings.ImGui;
+using CkCommons;
 
 namespace GagSpeak.Gui.Components;
+
+// So sloppy right now lol.
 internal class DtrVisibleWindow : WindowMediatorSubscriberBase
 {
     private readonly DtrBarService _service;
@@ -18,19 +23,19 @@ internal class DtrVisibleWindow : WindowMediatorSubscriberBase
         Flags = WFlags.NoCollapse | WFlags.NoTitleBar | WFlags.NoResize | WFlags.NoScrollbar;
     }
 
-    private int SelectedIndex = -1;
-    private Vector2 LastRecordedPos = Vector2.Zero;
-    public override void OnOpen() => LastRecordedPos = ImGui.GetMousePos();
+    private nint _selectedAddr = nint.Zero;
+    private Vector2 _lastPos = Vector2.Zero;
+    public override void OnOpen() => _lastPos = ImGui.GetMousePos();
 
     protected override void PreDrawInternal() 
     {
-        var posX = LastRecordedPos.X - 100;
-        var posY = LastRecordedPos.Y + ImGui.GetFrameHeight();
+        var posX = _lastPos.X - 100;
+        var posY = _lastPos.Y + ImGui.GetFrameHeight();
         ImGui.SetNextWindowPos(new Vector2(posX, posY));
 
         Flags |= WFlags.NoMove;
 
-        var cnt = _service.VisiblePlayers.Count > 10 ? 10+2 : _service.VisiblePlayers.Count+2;
+        var cnt = DtrBarService.NonKinksters.Count > 10 ? 10+2 : DtrBarService.NonKinksters.Count+2;
         var size = new Vector2(200f, (ImGui.GetTextLineHeightWithSpacing() * cnt) - ImGui.GetFrameHeight() - ImGui.GetStyle().WindowPadding.Y + ImGuiHelpers.GlobalScale);
 
         ImGui.SetNextWindowSize(size);
@@ -47,27 +52,34 @@ internal class DtrVisibleWindow : WindowMediatorSubscriberBase
     }
     protected override void DrawInternal()
     {
-        // draw a list of tree nodes, for each player. When they are selected, display the map coordinates of them.
-        var displayedPlayers = _service.VisiblePlayers.Take(10).ToList();
-        var remainingCount = _service.VisiblePlayers.Count - displayedPlayers.Count;
-
-        for(var i=0; i<displayedPlayers.Count; i++)
-        {
-            var text = displayedPlayers[i].Name.TextValue + "  " + displayedPlayers[i].HomeWorld.Value.Name.ToString();
-            if(ImGui.Selectable(text, SelectedIndex == i))
-            {
-                SelectedIndex = i;
-                _service.LocatePlayer(displayedPlayers[i]);
-            }
-        }
-        if (remainingCount > 0)
-        {
-            CkGui.ColorTextCentered($"And {remainingCount} more...", ImGuiColors.ParsedPink);
-        }
-
         // close window if its not focused.
         if (!ImGui.IsWindowFocused())
             IsOpen = false;
+
+        if (DtrBarService.NonKinksters.Count is 0)
+            return;
+
+        // draw a list of tree nodes, for each player. When they are selected, display the map coordinates of them.
+        var displayed = DtrBarService.NonKinksters.Take(10).ToList();
+        var remaining = DtrBarService.NonKinksters.Count - displayed.Count;
+        bool anyNonKinksters = DtrBarService.NonKinksters.Count is not 0;
+        unsafe
+        {
+            foreach (var addr in displayed)
+            {
+                var character = (Character*)addr;
+                var text = $"{character->NameString}  {character->GetWorld()}";
+                if (ImGui.Selectable(text, _selectedAddr == addr))
+                {
+                    _selectedAddr = addr;
+                    _service.LocatePlayer(character);
+                }
+            }
+        }
+        if (remaining > 0)
+        {
+            CkGui.ColorTextCentered($"And {remaining} more...", ImGuiColors.ParsedPink);
+        }
     }
     protected override void PostDrawInternal()
     {

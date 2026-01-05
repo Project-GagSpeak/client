@@ -1,6 +1,5 @@
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
-using GagspeakAPI.Dto.VibeRoom;
 using GagspeakAPI.Network;
 
 namespace GagSpeak.Gui.Remote;

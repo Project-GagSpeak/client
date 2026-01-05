@@ -68,7 +68,7 @@ public sealed class VibeLobbyDistributionService : DisposableMediatorSubscriberB
         }
 
         Logger.LogDebug($"Creating Room: {name}", LoggerType.VibeLobbies);
-        var hostInfo = new RoomParticipant(MainHub.PlayerUserData, _config.Current.NicknameInVibeRooms)
+        var hostInfo = new RoomParticipant(MainHub.OwnUserData, _config.Current.NicknameInVibeRooms)
         {
             AllowedUids = new List<string>(),
             Devices = _clientToys.InteractableToys.Select(toy => toy.ToToyInfo()).ToList()
@@ -105,7 +105,7 @@ public sealed class VibeLobbyDistributionService : DisposableMediatorSubscriberB
         }
 
         Logger.LogDebug($"Joining room: {name}", LoggerType.VibeLobbies);
-        var hostParticipantData = new RoomParticipant(MainHub.PlayerUserData, _config.Current.NicknameInVibeRooms)
+        var hostParticipantData = new RoomParticipant(MainHub.OwnUserData, _config.Current.NicknameInVibeRooms)
         {
             AllowedUids = new List<string>(),
             Devices = _clientToys.InteractableToys.Select(toy => toy.ToToyInfo()).ToList()

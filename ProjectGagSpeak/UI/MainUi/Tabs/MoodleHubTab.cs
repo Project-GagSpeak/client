@@ -84,7 +84,7 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
 
     private void DrawMoodleResultBox(ServerMoodleInfo info, Vector2 size)
     {
-        using var _ = ImRaii.Child($"Moodle-{info.MoodleStatus.GUID}", size, true, WFlags.ChildWindow);
+        using var _ = ImRaii.Child($"Moodle-{info.Status.GUID}", size, true, WFlags.ChildWindow);
 
         var tryOnButtonSize = CkGui.IconTextButtonSize(FAI.PersonCircleQuestion, "Try");
         var LikeButtonSize = CkGui.IconTextButtonSize(FAI.Heart, info.Likes.ToString());
@@ -94,26 +94,26 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
         var style = ImGui.GetStyle();
 
         ImGui.Dummy(iconSize);
-        GsExtensions.DrawMoodleStatusTooltip(info.MoodleStatus, Enumerable.Empty<MoodlesStatusInfo>());
-        CkGui.TextFrameAlignedInline(info.MoodleStatus.Title.StripColorTags());
+        GsExtensions.DrawMoodleStatusTooltip(info.Status, Enumerable.Empty<MoodlesStatusInfo>());
+        CkGui.TextFrameAlignedInline(info.Status.Title.StripColorTags());
 
         var buttonW = tryOnButtonSize + LikeButtonSize + iconSize.X + style.ItemInnerSpacing.X * 2;
         ImGui.SameLine(windowEndX - buttonW);
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudGrey))
             if (CkGui.IconTextButton(FAI.PersonCircleQuestion, "Try", isInPopup: true))
-                _shareHub.TryOnMoodle(info.MoodleStatus.GUID);
+                _shareHub.TryOnMoodle(info.Status.GUID);
         CkGui.AttachToolTip("Try this Moodle on your character to see a preview of it.");
         
         ImUtf8.SameLineInner();
         using (ImRaii.PushColor(ImGuiCol.Text, info.HasLikedMoodle ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey))
             if (CkGui.IconTextButton(FAI.Heart, info.Likes.ToString(), null, true, UiService.DisableUI))
-                UiService.SetUITask(_shareHub.LikeMoodle(info.MoodleStatus.GUID));
+                UiService.SetUITask(_shareHub.LikeMoodle(info.Status.GUID));
         CkGui.AttachToolTip(info.HasLikedMoodle ? "Remove Like from this pattern." : "Like this pattern!");
 
         ImUtf8.SameLineInner();
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudGrey))
             if (CkGui.IconButton(FAI.Copy, inPopup: true))
-                _shareHub.CopyMoodleToClipboard(info.MoodleStatus.GUID);
+                _shareHub.CopyMoodleToClipboard(info.Status.GUID);
         CkGui.AttachToolTip("Copy this Status for simple Moodles Import!");
 
         // Middle Row.
@@ -138,10 +138,10 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
         CkGui.AttachToolTip("Associated Tags");
 
         // if the moodle image is valid, display it at the starting pos.
-        if (info.MoodleStatus.IconID != 0)
+        if (info.Status.IconID != 0)
         {
             ImGui.SetCursorPos(imagePos);
-            MoodleDisplay.DrawMoodleIcon(info.MoodleStatus.IconID, info.MoodleStatus.Stacks, MoodleDrawer.IconSize);
+            MoodleIcon.DrawMoodleIcon(info.Status.IconID, info.Status.Stacks, MoodleDrawer.IconSize);
         }
 
         void DrawMoodleEffects()
@@ -149,17 +149,18 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
             var width = iconSize.X * 6 + style.ItemInnerSpacing.X * 5;
             ImGui.SameLine(windowEndX - width);
             // Draw out each color icon frame aligned.
-            MoodleEffect(FAI.LayerGroup, info.MoodleStatus.Stacks > 1, "Effect Stacks", "Not a stackable Moodle");
+            MoodleEffect(FAI.LayerGroup, info.Status.Stacks > 1, "Effect Stacks", "Not a stackable Moodle");
             ImUtf8.SameLineInner();
-            MoodleEffect(FAI.Eraser, info.MoodleStatus.Dispelable, "Can be dispelled", "Cannot be dispelled");
+            MoodleEffect(FAI.Eraser, info.Status.Modifiers.Has(Modifiers.CanDispel), "Can be dispelled", "Cannot be dispelled");
             ImUtf8.SameLineInner(); 
-            MoodleEffect(FAI.Infinity, info.MoodleStatus.AsPermanent, "Permanent Moodle", "Temporary Moodle");
+            MoodleEffect(FAI.Infinity, info.Status.ExpireTicks < 0, "Permanent Moodle", "Temporary Moodle");
             ImUtf8.SameLineInner(); 
-            MoodleEffect(FAI.MapPin, info.MoodleStatus.Persistent, "Is Sticky", "Not Sticky");
+            MoodleEffect(FAI.MapPin, info.Status.Permanent, "Is Sticky", "Not Sticky");
             ImUtf8.SameLineInner();
-            MoodleEffect(FAI.Magic, !string.IsNullOrEmpty(info.MoodleStatus.CustomVFXPath), "Has custom VFX", "No custom VFX");
+            MoodleEffect(FAI.Magic, !string.IsNullOrEmpty(info.Status.CustomVFXPath), "Has custom VFX", "No custom VFX");
             ImUtf8.SameLineInner();
-            MoodleEffect(FAI.SortNumericUpAlt, info.MoodleStatus.StackOnReapply, $"Adds {info.MoodleStatus.StacksIncOnReapply} stacks each application", "Stacks remain as is.");
+            MoodleEffect(FAI.SortNumericUpAlt, info.Status.Modifiers.Has(Modifiers.StacksIncrease), 
+                $"Adds {info.Status.Modifiers.Has(Modifiers.StacksIncrease)} stacks each application", "Stacks remain as is.");
         }
 
         void MoodleEffect(FAI icon, bool state, string tooltipTrue, string tooltipFalse)

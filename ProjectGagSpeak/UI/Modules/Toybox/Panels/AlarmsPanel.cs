@@ -1,4 +1,3 @@
-using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Raii;
 using CkCommons.Widgets;
@@ -28,7 +27,7 @@ public partial class AlarmsPanel
     private PatternCombo _patternCombo;
     public AlarmsPanel(ILogger<AlarmsPanel> logger, GagspeakMediator mediator,
         AlarmFileSelector selector, PatternManager patterns, AlarmManager manager,
-        FavoritesManager favorites, TutorialService guides)
+        FavoritesConfig favorites, TutorialService guides)
     {
         _logger = logger;
         _selector = selector;
@@ -37,7 +36,7 @@ public partial class AlarmsPanel
         _guides = guides;
 
         _patternCombo = new PatternCombo(logger, mediator, favorites, () => [
-            ..patterns.Storage.OrderByDescending(p => favorites._favoritePatterns.Contains(p.Identifier)).ThenBy(p => p.Label)
+            ..patterns.Storage.OrderByDescending(p => favorites.Patterns.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
     }
 

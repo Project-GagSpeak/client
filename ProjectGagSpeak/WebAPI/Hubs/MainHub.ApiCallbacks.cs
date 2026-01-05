@@ -1,12 +1,10 @@
 using CkCommons;
 using Dalamud.Interface.ImGuiNotification;
-using GagSpeak.Interop.Helpers;
-using GagSpeak.PlayerClient;
+using GagSpeak.Interop;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Caches;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Dto.VibeRoom;
-using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
 using Microsoft.AspNetCore.SignalR.Client;
 
@@ -17,79 +15,64 @@ namespace GagSpeak.WebAPI;
 public partial class MainHub
 {
     #region Pairing & Messages
-    /// <summary> Called when the server sends a message to the client. </summary>
+    /// <summary> 
+    ///     Called when the server sends a message to the client.
+    /// </summary>
     public Task Callback_ServerMessage(MessageSeverity messageSeverity, string message)
     {
-        switch (messageSeverity)
+        if (messageSeverity == MessageSeverity.Information && _suppressNextNotification)
         {
-            case MessageSeverity.Error:
-                Mediator.Publish(new NotificationMessage("Error from " +
-                    _serverConfigs.ServerStorage.ServerName, message, NotificationType.Error, TimeSpan.FromSeconds(7.5)));
-                break;
-
-            case MessageSeverity.Warning:
-                Mediator.Publish(new NotificationMessage("Warning from " +
-                    _serverConfigs.ServerStorage.ServerName, message, NotificationType.Warning, TimeSpan.FromSeconds(7.5)));
-                break;
-
-            case MessageSeverity.Information:
-                if (_suppressNextNotification)
-                {
-                    _suppressNextNotification = false;
-                    break;
-                }
-                Mediator.Publish(new NotificationMessage("Info from " +
-                    _serverConfigs.ServerStorage.ServerName, message, NotificationType.Info, TimeSpan.FromSeconds(7.5)));
-                break;
+            _suppressNextNotification = false;
+            return Task.CompletedTask;
         }
-        // return it as a completed task.
+
+        var (title, type) = messageSeverity switch
+        {
+            MessageSeverity.Error => ($"Error from {MAIN_SERVER_NAME}", NotificationType.Error),
+            MessageSeverity.Warning => ($"Warning from {MAIN_SERVER_NAME}", NotificationType.Warning),
+            _ => ($"Info from {MAIN_SERVER_NAME}", NotificationType.Info),
+        };
+
+        Mediator.Publish(new NotificationMessage(title, message, type, TimeSpan.FromSeconds(7.5)));
         return Task.CompletedTask;
     }
 
-    // Sometimes Corby just wants to do a little bullying.
+    /// <summary>
+    ///     Sometimes Corby just wants to do a little bullying.
+    /// </summary>
     public Task Callback_HardReconnectMessage(MessageSeverity messageSeverity, string message, ServerState newServerState)
     {
-        switch (messageSeverity)
+        if (messageSeverity == MessageSeverity.Information && _suppressNextNotification)
+            _suppressNextNotification = false;
+        else
         {
-            case MessageSeverity.Error:
-                Mediator.Publish(new NotificationMessage("Error from " +
-                    _serverConfigs.ServerStorage.ServerName, message, NotificationType.Error, TimeSpan.FromSeconds(7.5)));
-                break;
-
-            case MessageSeverity.Warning:
-                Mediator.Publish(new NotificationMessage("Warning from " +
-                    _serverConfigs.ServerStorage.ServerName, message, NotificationType.Warning, TimeSpan.FromSeconds(7.5)));
-                break;
-
-            case MessageSeverity.Information:
-                if (_suppressNextNotification)
-                {
-                    _suppressNextNotification = false;
-                    break;
-                }
-                Mediator.Publish(new NotificationMessage("Info from " +
-                    _serverConfigs.ServerStorage.ServerName, message, NotificationType.Info, TimeSpan.FromSeconds(5)));
-                break;
+            var (title, type, duration) = messageSeverity switch
+            {
+                MessageSeverity.Error => ($"Error from {MAIN_SERVER_NAME}", NotificationType.Error, 7.5),
+                MessageSeverity.Warning => ($"Warning from {MAIN_SERVER_NAME}", NotificationType.Warning, 7.5),
+                _ => ($"Info from {MAIN_SERVER_NAME}", NotificationType.Info, 5.0),
+            };
+            Mediator.Publish(new NotificationMessage(title, message, type, TimeSpan.FromSeconds(duration)));
         }
+
         // we need to update the api server state to be stopped if connected
         if (IsConnected)
         {
             _ = Task.Run(async () =>
             {
                 // pause the server state
-                _serverConfigs.ServerStorage.FullPause = true;
-                _serverConfigs.Save();
+                _config.SetPauseState(true);
                 _suppressNextNotification = true;
-                // create a new connection to force the disconnect.
-                await Disconnect(ServerState.Disconnected).ConfigureAwait(false);
-
-                // because this is a forced reconnection, clear our token cache between, incase we were banned.
+                // If forcing a hard reconnect, fully unload the client & their kinksters.
+                await Disconnect(ServerState.Disconnected, DisconnectIntent.Reload).ConfigureAwait(false);
+                // Clear our token cache between, incase we were banned.
                 _tokenProvider.ResetTokenCache();
-
-                // after it stops, switch the connection pause back to false and create a new connection.
-                _serverConfigs.ServerStorage.FullPause = false;
-                _serverConfigs.Save();
+                // Revert full pause status and create a new connection.
+                _config.SetPauseState(false);
                 _suppressNextNotification = true;
+
+                await Task.Delay(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
+
                 await Connect().ConfigureAwait(false);
             });
         }
@@ -106,28 +89,33 @@ public partial class MainHub
     public Task Callback_AddClientPair(KinksterPair dto)
     {
         Logger.LogDebug($"Callback_AddClientPair: {dto}", LoggerType.Callbacks);
-        Generic.Safe(() => _kinksters.AddNewKinksterPair(dto));
+        Generic.Safe(() =>
+        {
+            _kinksters.AddKinkster(dto);
+            // we just added a pair, so ping the achievement manager that a pair was added!
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.PairAdded);
+        });
         return Task.CompletedTask;
     }
 
     public Task Callback_RemoveClientPair(KinksterBase dto)
     {
         Logger.LogDebug($"Callback_AddClientPair: {dto}", LoggerType.Callbacks);
-        Generic.Safe(() => _kinksters.RemoveKinksterPair(dto));
+        Generic.Safe(() => _kinksters.RemoveKinkster(dto));
         return Task.CompletedTask;
     }
 
-    public Task Callback_AddPairRequest(KinksterPairRequest dto)
+    public Task Callback_AddPairRequest(KinksterRequest dto)
     {
         Logger.LogDebug($"Callback_AddPairRequest: {dto}", LoggerType.Callbacks);
-        Generic.Safe(() => _clientDatListener.AddRequest(dto));
+        Generic.Safe(() => _requests.AddNewRequest(dto));
         return Task.CompletedTask;
     }
 
-    public Task Callback_RemovePairRequest(KinksterPairRequest dto)
+    public Task Callback_RemovePairRequest(KinksterRequest dto)
     {
         Logger.LogDebug($"Callback_RemovePairRequest: {dto}", LoggerType.Callbacks);
-        Generic.Safe(() => _clientDatListener.RemoveRequest(dto));
+        Generic.Safe(() => _requests.RemoveRequest(dto));
         return Task.CompletedTask;
     }
 
@@ -148,59 +136,103 @@ public partial class MainHub
     #endregion Pairing & Messages
 
     #region Moodles
-    public Task Callback_SetKinksterMoodlesFull(KinksterMoodlesDataFull dto)
+    public Task Callback_MoodleDataUpdated(MoodlesDataUpdate dto)
     {
-        Logger.LogDebug($"Callback_SetKinksterMoodlesFull: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        _kinksterListener.NewMoodlesData(dto.User, dto.Enactor, dto.NewData);
+        Logger.LogDebug($"Callback_MoodleDataUpdated: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Generic.Safe(() => _kinksters.ReceiveMoodleData(dto.User, dto.NewData));
         return Task.CompletedTask;
     }
-    public Task Callback_SetKinksterMoodlesSM(KinksterMoodlesSM dto)
+    public Task Callback_MoodleSMUpdated(MoodlesSMUpdate dto)
     {
-        Logger.LogDebug($"Callback_SetKinksterMoodlesSM: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        _kinksterListener.NewStatusManager(dto.User, dto.Enactor, dto.DataString, dto.DataInfo);
+        Logger.LogDebug($"Callback_MoodleSMUpdated: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Generic.Safe(() => _kinksters.ReceiveSMUpdate(dto.User, dto.DataString, dto.DataInfo));
         return Task.CompletedTask;
     }
-    public Task Callback_SetKinksterMoodlesStatuses(KinksterMoodlesStatuses dto)
+    public Task Callback_MoodleStatusesUpdate(MoodlesStatusesUpdate dto)
     {
-        Logger.LogDebug($"Callback_SetKinksterMoodlesStatuses: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        _kinksterListener.NewStatuses(dto.User, dto.Enactor, dto.Statuses);
+        Logger.LogDebug($"Callback_MoodleStatusesUpdate: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Generic.Safe(() => _kinksters.ReceiveMoodleStatuses(dto.User, dto.Statuses));
         return Task.CompletedTask;
     }
-    public Task Callback_SetKinksterMoodlesPresets(KinksterMoodlesPresets dto)
+    public Task Callback_MoodlePresetsUpdate(MoodlesPresetsUpdate dto)
     {
         Logger.LogDebug($"Callback_SetKinksterMoodlesPresets: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        _kinksterListener.NewPresets(dto.User, dto.Enactor, dto.Presets);
+        Generic.Safe(() => _kinksters.ReceiveMoodlePresets(dto.User, dto.Presets));
         return Task.CompletedTask;
     }
 
-    public async Task Callback_ApplyMoodlesByGuid(MoodlesApplierById dto)
+    public Task Callback_MoodleStatusModified(MoodlesStatusModified dto)
     {
-        Logger.LogDebug("Callback_ApplyMoodlesByGuid: " + dto, LoggerType.Callbacks);
-        await _visualListener.ApplyStatusesByGuid(dto);
+        Logger.LogDebug($"Callback_MoodleStatusesUpdate: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Generic.Safe(() => _kinksters.ReceiveMoodleStatusUpdate(dto.User, dto.Status, dto.Deleted));
+        return Task.CompletedTask;
+    }
+    public Task Callback_MoodlePresetModified(MoodlesPresetModified dto)
+    {
+        Logger.LogDebug($"Callback_SetKinksterMoodlesPresets: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Generic.Safe(() => _kinksters.ReceiveMoodlePresetUpdate(dto.User, dto.Preset, dto.Deleted));
+        return Task.CompletedTask;
     }
 
-    public async Task Callback_ApplyMoodlesByStatus(MoodlesApplierByStatus dto)
+    public async Task Callback_ApplyMoodlesByGuid(ApplyMoodleId dto)
+    {
+        Logger.LogDebug($"Callback_ApplyMoodlesById: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        // Fail if not a valid pair or not rendered.
+        if (_kinksters.GetUserOrDefault(dto.User) is not { } pair)
+            Logger.LogWarning($"Received ApplyMoodlesById from an unpaired user: {dto.User.AliasOrUID}");
+        else if (!pair.IsRendered)
+            Logger.LogWarning($"Received ApplyMoodlesById from an unrendered kinkster: {dto.User.AliasOrUID}");
+        else
+        {
+            // Could maybe make the dto send if they want them to be locked or not? Idk, but its possible if we want.
+            await _moodles.ApplyOwnStatus(dto.Ids, false).ConfigureAwait(false);
+        }
+    }
+
+    public async Task Callback_ApplyMoodlesByStatus(ApplyMoodleStatus dto)
     {
         Logger.LogDebug("Callback_ApplyMoodlesByStatus: " + dto, LoggerType.Callbacks);
-        // obtain the local player name and world
-        await _visualListener.ApplyStatusesToSelf(dto, PlayerData.NameWithWorldInstanced);
-        Logger.LogDebug("Applied Moodles to Self: " + dto, LoggerType.Callbacks);
+        // Fail if not a valid pair.
+        if (_kinksters.GetUserOrDefault(dto.User) is not { } pair)
+            Logger.LogWarning($"Received ApplyMoodleTuples from an unpaired user: {dto.User.AliasOrUID}");
+        else if (!pair.IsRendered)
+            Logger.LogWarning($"Received ApplyMoodleTuples from an unrendered kinkster: {dto.User.AliasOrUID}");
+        else
+        {
+            Mediator.Publish(new EventMessage(new(pair.GetNickAliasOrUid(), pair.UserData.UID, InteractionType.ApplyPairMoodle, "Applied by Pair.")));
+            // Could maybe make the dto send if they want them to be locked or not? Idk, but its possible if we want.
+            IpcProvider.ApplyStatusTuples(dto.Statuses, false);
+        }
     }
 
-    /// <summary> Intended to clear all moodles from OUR client player. </summary>
-    /// <remarks> Should make a call to our moodles IPC to remove the statuses listed by their GUID's </remarks>
-    public async Task Callback_RemoveMoodles(MoodlesRemoval dto)
+    public async Task Callback_RemoveMoodles(RemoveMoodleId dto)
     {
-        Logger.LogDebug("Callback_RemoveMoodles: " + dto, LoggerType.Callbacks);
-        await _visualListener.RemoveStatusesFromSelf(dto);
+        Logger.LogDebug($"Callback_RemoveMoodles: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        // Fail if not a valid pair or not rendered.
+        if (_kinksters.GetUserOrDefault(dto.User) is not { } pair)
+            Logger.LogWarning($"Received RemoveMoodles from an unpaired user: {dto.User.AliasOrUID}");
+        else if (!pair.IsRendered)
+            Logger.LogWarning($"Received RemoveMoodles from an unrendered kinkster: {pair.GetNickAliasOrUid()}");
+        else
+        {
+            // Could maybe make the dto send if they want them to be locked or not? Idk, but its possible if we want.
+            await _moodles.RemoveOwnStatuses(dto.Ids, false).ConfigureAwait(false);
+        }
     }
 
-    /// <summary> Intended to clear all moodles from OUR client player. </summary>
-    /// <remarks> Should make a call to our moodles IPC to clear all statuses. </remarks>
     public async Task Callback_ClearMoodles(KinksterBase dto)
     {
-        Logger.LogDebug("Callback_ClearMoodles: " + dto, LoggerType.Callbacks);
-        await _visualListener.ClearStatusesFromSelf(dto);
+        Logger.LogInformation($"Callback_ClearMoodles: {dto.User.AliasOrUID}");
+        // Fail if not a valid pair or not rendered.
+        if (_kinksters.GetUserOrDefault(dto.User) is not { } pair)
+            Logger.LogWarning($"Received ClearMoodles from an unpaired user: {dto.User.AliasOrUID}");
+        else if (!pair.IsRendered)
+            Logger.LogWarning($"Received ClearMoodles from an unrendered kinkster: {pair.GetNickAliasOrUid()}");
+        else
+        {
+            // Could maybe make the dto send if they want them to be locked or not? Idk, but its possible if we want.
+            await _moodles.RemoveOwnStatuses(MoodleCache.IpcData.DataInfo.Keys, false).ConfigureAwait(false);
+        }
     }
     #endregion Moodles
 
@@ -217,7 +249,7 @@ public partial class MainHub
         else
         {
             Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksterListener.PermBulkChangeGlobal(dto));
+            Generic.Safe(() => _kinksters.PermBulkChangeGlobal(dto));
             return Task.CompletedTask;
         }
     }
@@ -231,9 +263,9 @@ public partial class MainHub
 
             Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
             if (dto.Direction is UpdateDir.Own)
-                _kinksterListener.PermBulkChangeUniqueOwn(dto.User, dto.NewPerms, dto.NewAccess);
+                _kinksters.PermBulkChangeUniqueOwn(dto.User, dto.NewPerms, dto.NewAccess);
             else
-                _kinksterListener.PermBulkChangeUniqueOther(dto.User, dto.NewPerms, dto.NewAccess);
+                _kinksters.PermBulkChangeUniqueOther(dto.User, dto.NewPerms, dto.NewAccess);
         });
         return Task.CompletedTask;
     }
@@ -248,7 +280,7 @@ public partial class MainHub
         else
         {
             Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksterListener.PermChangeGlobal(dto.Target, dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value));
+            Generic.Safe(() => _kinksters.PermChangeGlobal(dto.Target, dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value));
         }
         return Task.CompletedTask;
     }
@@ -258,13 +290,13 @@ public partial class MainHub
         if (dto.Direction is UpdateDir.Own)
         {
             Logger.LogDebug($"[OWN-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksterListener.PermChangeUnique(dto.Target, dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value));
+            Generic.Safe(() => _kinksters.PermChangeUnique(dto.Target, dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value));
             return Task.CompletedTask;
         }
         else
         {
             Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksterListener.PermChangeUniqueOther(dto.Target, dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value));
+            Generic.Safe(() => _kinksters.PermChangeUniqueOther(dto.Target, dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value));
             return Task.CompletedTask;
         }
     }
@@ -274,13 +306,13 @@ public partial class MainHub
         if (dto.Direction is UpdateDir.Own)
         {
             Logger.LogDebug($"[OWN-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksterListener.PermChangeAccess(dto.Target, dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value));
+            Generic.Safe(() => _kinksters.PermChangeAccess(dto.Target, dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value));
             return Task.CompletedTask;
         }
         else
         {
             Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksterListener.PermChangeAccessOther(dto.Target, dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value));
+            Generic.Safe(() => _kinksters.PermChangeAccessOther(dto.Target, dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value));
             return Task.CompletedTask;
         }
     }
@@ -290,12 +322,12 @@ public partial class MainHub
         if (dto.Target.UID == UID)
         {
             Logger.LogDebug($"[OWN-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
-            Generic.Safe(() => _clientDatListener.ChangeHardcoreState(dto.Enactor, dto.Changed, dto.NewData));
+            Generic.Safe(() => _clientDatListener.ChangeHardcoreStatus(dto.Enactor, dto.Changed, dto.NewData));
         }
         else
         {
             Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksterListener.StateChangeHardcore(dto.Target, dto.Enactor, dto.Changed, dto.NewData));
+            Generic.Safe(() => _kinksters.StateChangeHardcore(dto.Target, dto.Enactor, dto.Changed, dto.NewData));
         }
         return Task.CompletedTask;
 
@@ -306,7 +338,7 @@ public partial class MainHub
     public Task Callback_KinksterUpdateComposite(KinksterUpdateComposite dto)
     {
         if (dto.User.UID != UID)
-            Generic.Safe(() => _kinksterListener.NewActiveComposite(dto.User, dto.Data, dto.WasSafeword));
+            Generic.Safe(() => _kinksters.NewActiveComposite(dto.User, dto.Data, dto.WasSafeword));
 
         return Task.CompletedTask;
     }
@@ -341,7 +373,7 @@ public partial class MainHub
         else
         {
             Logger.LogDebug($"[OTHER-GAGS-ACTIVE]: {dataDto.User} ({dataDto.Type})", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksterListener.NewActiveGags(dataDto));
+            Generic.Safe(() => _kinksters.NewActiveGags(dataDto));
             return Task.CompletedTask;
         }
     }
@@ -375,7 +407,7 @@ public partial class MainHub
         else
         {
             Logger.LogDebug($"[OTHER-RESTRICTIONS-ACTIVE]: {dataDto.User} ({dataDto.Type})", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksterListener.NewActiveRestriction(dataDto));
+            Generic.Safe(() => _kinksters.NewActiveRestriction(dataDto));
             return Task.CompletedTask;
         }
     }
@@ -419,7 +451,7 @@ public partial class MainHub
         else
         {
             Logger.LogDebug($"[OTHER-RESTRAINT-ACTIVE]: {dataDto.User} ({dataDto.Type})", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksterListener.NewActiveRestraint(dataDto));
+            Generic.Safe(() => _kinksters.NewActiveRestraint(dataDto));
             return Task.CompletedTask;
         }
     }
@@ -461,7 +493,7 @@ public partial class MainHub
         else
         {
             Logger.LogDebug($"[OTHER-COLLAR-ACTIVE]: {dataDto.User} ({dataDto.Type})", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksterListener.NewActiveCollar(dataDto));
+            Generic.Safe(() => _kinksters.NewActiveCollar(dataDto));
             return Task.CompletedTask;
         }
     }
@@ -473,7 +505,7 @@ public partial class MainHub
         if (dataDto.User.UID != UID)
         {
             Logger.LogDebug($"[OTHER-CURSEDLOOT-ACTIVE]: {dataDto.User} ({dataDto.ChangedItem})", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksterListener.NewActiveCursedLoot(dataDto));
+            Generic.Safe(() => _kinksters.NewActiveCursedLoot(dataDto));
             return Task.CompletedTask;
         }
         else
@@ -486,21 +518,21 @@ public partial class MainHub
     public Task Callback_KinksterUpdateAliasGlobal(KinksterUpdateAliasGlobal dto)
     {
         Logger.LogDebug($"Received a Kinksters updated Global AliasTrigger {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        Generic.Safe(() => _kinksterListener.NewAliasGlobal(dto.User, dto.AliasId, dto.NewData));
+        Generic.Safe(() => _kinksters.NewAliasGlobal(dto.User, dto.AliasId, dto.NewData));
         return Task.CompletedTask;
     }
 
     public Task Callback_KinksterUpdateAliasUnique(KinksterUpdateAliasUnique dto)
     {
         Logger.LogDebug($"Received a Kinksters updated Global AliasTrigger {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        Generic.Safe(() => _kinksterListener.NewAliasUnique(dto.User, dto.AliasId, dto.NewData));
+        Generic.Safe(() => _kinksters.NewAliasUnique(dto.User, dto.AliasId, dto.NewData));
         return Task.CompletedTask;
     }
 
     public Task Callback_KinksterUpdateValidToys(KinksterUpdateValidToys dto)
     {
         Logger.LogDebug($"Received a Kinkster's updated Valid Toys: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        Generic.Safe(() => _kinksterListener.NewValidToys(dto.User, dto.ValidToys));
+        Generic.Safe(() => _kinksters.NewValidToys(dto.User, dto.ValidToys));
         return Task.CompletedTask;
     }
 
@@ -532,7 +564,7 @@ public partial class MainHub
         else
         {
             Logger.LogDebug($"OTHER KinksterUpdateActivePattern: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksterListener.NewActivePattern(dto));
+            Generic.Safe(() => _kinksters.NewActivePattern(dto));
         }
     }
 
@@ -554,7 +586,7 @@ public partial class MainHub
         else
         {
             Logger.LogDebug($"OTHER Callback_ReceiveDataToybox: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksterListener.NewActiveAlarms(dto));
+            Generic.Safe(() => _kinksters.NewActiveAlarms(dto));
             return Task.CompletedTask;
         }
     }
@@ -577,7 +609,7 @@ public partial class MainHub
         else
         {
             Logger.LogDebug($"OTHER Callback_ReceiveDataToybox: {dto.Enactor.AliasOrUID}", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksterListener.NewActiveTriggers(dto));
+            Generic.Safe(() => _kinksters.NewActiveTriggers(dto));
             return Task.CompletedTask;
         }
     }
@@ -606,59 +638,59 @@ public partial class MainHub
 
     public Task Callback_KinksterNewGagData(KinksterNewGagData dto)
     {
-        Generic.Safe(() => _kinksterListener.CachedGagDataChange(dto.User, dto.GagType, dto.Item));
+        Generic.Safe(() => _kinksters.CachedGagDataChange(dto.User, dto.GagType, dto.Item));
         return Task.CompletedTask;
     }
 
     public Task Callback_KinksterNewRestrictionData(KinksterNewRestrictionData dto)
     {
-        Generic.Safe(() => _kinksterListener.CachedRestrictionDataChange(dto.User, dto.ItemId, dto.LightItem));
+        Generic.Safe(() => _kinksters.CachedRestrictionDataChange(dto.User, dto.ItemId, dto.LightItem));
         return Task.CompletedTask;
     }
 
     public Task Callback_KinksterNewRestraintData(KinksterNewRestraintData dto)
     {
-        Generic.Safe(() => _kinksterListener.CachedRestraintDataChange(dto.User, dto.ItemId, dto.LightItem));
+        Generic.Safe(() => _kinksters.CachedRestraintDataChange(dto.User, dto.ItemId, dto.LightItem));
         return Task.CompletedTask;
     }
 
     public Task Callback_KinksterNewCollarData(KinksterNewCollarData dto)
     {
-        Generic.Safe(() => _kinksterListener.CachedCollarDataChange(dto.User, dto.LightItem));
+        Generic.Safe(() => _kinksters.CachedCollarDataChange(dto.User, dto.LightItem));
         return Task.CompletedTask;
     }
 
     public Task Callback_KinksterNewLootData(KinksterNewLootData dto)
     {
-        Generic.Safe(() => _kinksterListener.CachedCursedLootDataChange(dto.User, dto.ItemId, dto.LightItem));
+        Generic.Safe(() => _kinksters.CachedCursedLootDataChange(dto.User, dto.ItemId, dto.LightItem));
         return Task.CompletedTask;
     }
 
     /// <summary> Receive a Kinkster's updated PatternData change. </summary>
     public Task Callback_KinksterNewPatternData(KinksterNewPatternData dto)
     {
-        Generic.Safe(() => _kinksterListener.CachedPatternDataChange(dto.User, dto.ItemId, dto.LightItem));
+        Generic.Safe(() => _kinksters.CachedPatternDataChange(dto.User, dto.ItemId, dto.LightItem));
         return Task.CompletedTask;
     }
 
     /// <summary> Receive a Kinkster's updated AlarmData change. </summary>
     public Task Callback_KinksterNewAlarmData(KinksterNewAlarmData dto)
     {
-        Generic.Safe(() => _kinksterListener.CachedAlarmDataChange(dto.User, dto.ItemId, dto.LightItem));
+        Generic.Safe(() => _kinksters.CachedAlarmDataChange(dto.User, dto.ItemId, dto.LightItem));
         return Task.CompletedTask;
     }
 
     /// <summary> Receive a Kinkster's updated TriggerData change. </summary>
     public Task Callback_KinksterNewTriggerData(KinksterNewTriggerData dto)
     {
-        Generic.Safe(() => _kinksterListener.CachedTriggerDataChange(dto.User, dto.ItemId, dto.LightItem));
+        Generic.Safe(() => _kinksters.CachedTriggerDataChange(dto.User, dto.ItemId, dto.LightItem));
         return Task.CompletedTask;
     }
 
     /// <summary> Receive a Kinkster's updated TriggerData change. </summary>
     public Task Callback_KinksterNewAllowances(KinksterNewAllowances dto)
     {
-        Generic.Safe(() => _kinksterListener.CachedAllowancesChange(dto.User, dto.Module, [.. dto.AllowedUids]));
+        Generic.Safe(() => _kinksters.CachedAllowancesChange(dto.User, dto.Module, [.. dto.AllowedUids]));
         return Task.CompletedTask;
     }
 
@@ -691,7 +723,7 @@ public partial class MainHub
     public Task Callback_ProfileUpdated(KinksterBase dto)
     {
         Logger.LogDebug("Callback_UpdateProfile: " + dto, LoggerType.Callbacks);
-        Mediator.Publish(new ClearProfileDataMessage(dto.User));
+        Mediator.Publish(new ClearKinkPlateDataMessage(dto.User));
         return Task.CompletedTask;
     }
 
@@ -808,13 +840,13 @@ public partial class MainHub
         _hubConnection!.On(nameof(Callback_RemoveClientPair), act);
     }
 
-    public void OnAddPairRequest(Action<KinksterPairRequest> act)
+    public void OnAddPairRequest(Action<KinksterRequest> act)
     {
         if (_apiHooksInitialized) return;
         _hubConnection!.On(nameof(Callback_AddPairRequest), act);
     }
 
-    public void OnRemovePairRequest(Action<KinksterPairRequest> act)
+    public void OnRemovePairRequest(Action<KinksterRequest> act)
     {
         if (_apiHooksInitialized) return;
         _hubConnection!.On(nameof(Callback_RemovePairRequest), act);
@@ -832,55 +864,55 @@ public partial class MainHub
         _hubConnection!.On(nameof(Callback_RemoveCollarRequest), act);
     }
 
-    //public void OnSetKinksterIpcData(Action<KinksterIpcData> act)
-    //{
-    //    if (_apiHooksInitialized) return;
-    //    _hubConnection!.On(nameof(Callback_SetKinksterIpcData), act);
-    //}
-
-    //public void OnSetKinksterIpcSingle(Action<KinksterIpcSingle> act)
-    //{
-    //    if (_apiHooksInitialized) return;
-    //    _hubConnection!.On(nameof(Callback_SetKinksterIpcSingle), act);
-    //}
-
-    public void OnSetKinksterMoodlesFull(Action<KinksterMoodlesDataFull> act)
+    public void OnMoodleDataUpdated(Action<MoodlesDataUpdate> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_SetKinksterMoodlesFull), act);
+        _hubConnection!.On(nameof(Callback_MoodleDataUpdated), act);
     }
 
-    public void OnSetKinksterMoodlesSM(Action<KinksterMoodlesSM> act)
+    public void OnMoodleSMUpdated(Action<MoodlesSMUpdate> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_SetKinksterMoodlesSM), act);
+        _hubConnection!.On(nameof(Callback_MoodleSMUpdated), act);
     }
 
-    public void OnSetKinksterMoodlesStatuses(Action<KinksterMoodlesStatuses> act)
+    public void OnMoodleStatusesUpdate(Action<MoodlesStatusesUpdate> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_SetKinksterMoodlesStatuses), act);
+        _hubConnection!.On(nameof(Callback_MoodleStatusesUpdate), act);
     }
 
-    public void OnSetKinksterMoodlesPresets(Action<KinksterMoodlesPresets> act)
+    public void OnMoodlePresetsUpdate(Action<MoodlesPresetsUpdate> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_SetKinksterMoodlesPresets), act);
+        _hubConnection!.On(nameof(Callback_MoodlePresetsUpdate), act);
     }
 
-    public void OnApplyMoodlesByGuid(Action<MoodlesApplierById> act)
+    public void OnMoodleStatusModified(Action<MoodlesStatusModified> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_MoodleStatusModified), act);
+    }
+
+    public void OnMoodlePresetModified(Action<MoodlesPresetModified> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_MoodlePresetModified), act);
+    }
+
+    public void OnApplyMoodlesByGuid(Action<ApplyMoodleId> act)
     {
         if (_apiHooksInitialized) return;
         _hubConnection!.On(nameof(Callback_ApplyMoodlesByGuid), act);
     }
 
-    public void OnApplyMoodlesByStatus(Action<MoodlesApplierByStatus> act)
+    public void OnApplyMoodlesByStatus(Action<ApplyMoodleStatus> act)
     {
         if (_apiHooksInitialized) return;
         _hubConnection!.On(nameof(Callback_ApplyMoodlesByStatus), act);
     }
 
-    public void OnRemoveMoodles(Action<MoodlesRemoval> act)
+    public void OnRemoveMoodles(Action<RemoveMoodleId> act)
     {
         if (_apiHooksInitialized) return;
         _hubConnection!.On(nameof(Callback_RemoveMoodles), act);

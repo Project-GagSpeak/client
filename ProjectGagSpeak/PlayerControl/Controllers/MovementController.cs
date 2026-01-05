@@ -1,16 +1,18 @@
+using System.Runtime.InteropServices;
 using CkCommons;
-using Dalamud.Game.ClientState.Objects;
+using Dalamud.Game.ClientState.Conditions;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using GagSpeak.GameInternals.Detours;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
-using GagspeakAPI.Attributes;
-using System.Runtime.InteropServices;
 
 namespace GagSpeak.Services.Controller;
 
 public sealed class MovementController : DisposableMediatorSubscriberBase
 {
+    private const int CONTROL_WALKING_OFFSET_NORMAL = 30259; // Applies when not automoving
+    private const int CONTROL_WALKING_OFFSET_AUTOMOVE = 29976; // Applies when automoving
+
     private readonly record struct MoveState(bool MustWalk, bool WasWalking);
 
     private readonly PlayerControlCache _cache;
@@ -21,37 +23,60 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     private Vector3 _lastPos = Vector3.Zero;
     private MoveState _moveState;
     private bool _freezePlayer = false;
-    public MovementController(ILogger<KeystateController> logger, GagspeakMediator mediator,
+    public MovementController(ILogger<MovementController> logger, GagspeakMediator mediator,
         PlayerControlCache cache, MovementDetours detours)
         : base(logger, mediator)
     {
         _cache = cache;
         _detours = detours;
         _timeoutTracker.Stop();
-        Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreState());
+        Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreStatus());
         Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
+        Svc.Condition.ConditionChange += OnConditionChange;
+    }
+
+    public new void Dispose()
+    {
+        Svc.Condition.ConditionChange -= OnConditionChange;
+        base.Dispose();
+    }
+
+    private void OnConditionChange(ConditionFlag flag, bool value)
+    {
+        if (flag == ConditionFlag.Mounted)
+            UpdateHardcoreStatus();
     }
 
     // reference for Auto-Unlock timer.
     public static TimeSpan TimeIdleDuringFollow => _timeoutTracker.Elapsed;
 
-    private void UpdateHardcoreState()
+    private void UpdateHardcoreStatus()
     {
         // if our states to have an unfollow hook are met, but it isnt active, activate it.
         if (_cache.PreventUnfollowing && !_detours.NoUnfollowingActive)
+        {
             _detours.NoUnfollowingActive = true;
+            Logger.LogInformation("Activating Unfollow prevention due to hardcore status.", LoggerType.HardcoreMovement);
+        }
         //if our states to have an unfollow hook are not met and it is active, disable it.
         else if (!_cache.PreventUnfollowing && _detours.NoUnfollowingActive)
+        {
             _detours.NoUnfollowingActive = false;
+            Logger.LogInformation("Deactivating Unfollow prevention due to change in hardcore status.", LoggerType.HardcoreMovement);
+        }
 
         // if we were not set to require walking, but should be walking, enforce it.
         if (_cache.BlockRunning && !_moveState.MustWalk)
+        {
             _moveState = new MoveState(true, IsWalking());
+            Logger.LogInformation("Enforcing walking due to hardcore status.", LoggerType.HardcoreMovement);
+        }
         // if there is no need to ban running, but we are forced to walk, revert it, along with the state.
         else if (!_cache.BlockRunning && _moveState.MustWalk)
         {
+            Logger.LogInformation("Releasing walking restriction due to change in hardcore status.", LoggerType.HardcoreMovement);
             // restore the state only if we were running before.
-            if (!_moveState.WasWalking) 
+            if (!_moveState.WasWalking)
                 ForceRunning();
             // reset movestate.
             _moveState = new MoveState(false, false);
@@ -62,12 +87,13 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         // * so we must update it every frame)
         if (_cache.FreezePlayer && !_freezePlayer)
         {
-            Svc.Logger.Warning("Freeze Player was true!");
+            Logger.LogInformation("Freezing player due to hardcore status.", LoggerType.HardcoreMovement);
             _freezePlayer = true;
         }
         // If the player should not be immobilized, but the local value does match, update it!
         else if (!_cache.FreezePlayer && _freezePlayer)
         {
+            Logger.LogInformation("Unfreezing player due to change in hardcore status.", LoggerType.HardcoreMovement);
             _freezePlayer = false;
             _detours.DisableFullMovementLock();
         }
@@ -76,11 +102,13 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         var areBlocksActive = _detours.NoAutoMoveActive && _detours.NoMouseMovementActive;
         if (shouldBlock && !areBlocksActive)
         {
+            Logger.LogInformation("Activating movement key blocking due to hardcore status.", LoggerType.HardcoreMovement);
             _detours.NoAutoMoveActive = true;
             _detours.NoMouseMovementActive = true;
         }
         else if (!shouldBlock && areBlocksActive)
         {
+            Logger.LogInformation("Deactivating movement key blocking due to change in hardcore status.", LoggerType.HardcoreMovement);
             _detours.NoAutoMoveActive = false;
             _detours.NoMouseMovementActive = false;
         }
@@ -89,10 +117,10 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     private unsafe void FrameworkUpdate()
     {
         // ForceFollow Specific Logic.
-        if (_timeoutTracker.IsRunning && PlayerData.Object!.Position != _lastPos)
+        if (_timeoutTracker.IsRunning && PlayerData.Position != _lastPos)
         {
             RestartTimeoutTracker();
-            _lastPos = PlayerData.Object!.Position;
+            _lastPos = PlayerData.Position;
         }
 
         // we need to do the following because other plugins can share this pointer control (Cammy)
@@ -127,6 +155,14 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     // (because the control access wont read you the right values apparently?)
     // private unsafe bool IsWalkingMarshal() => Marshal.ReadByte((nint)Control.Instance(), 30259) == 0x1;
     private unsafe bool IsWalking() => Control.Instance()->IsWalking;
-    private unsafe void ForceWalking() => Marshal.WriteByte((nint)Control.Instance(), 30259, 0x1);
-    private unsafe void ForceRunning() => Marshal.WriteByte((nint)Control.Instance(), 30259, 0x0);
+    private unsafe void ForceWalking()
+    {
+        Marshal.WriteByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_NORMAL, 0x1);
+        Marshal.WriteByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_AUTOMOVE, 0x1);
+    }
+    private unsafe void ForceRunning()
+    {
+        Marshal.WriteByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_NORMAL, 0x0);
+        Marshal.WriteByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_AUTOMOVE, 0x0);
+    }
 }

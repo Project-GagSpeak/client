@@ -20,7 +20,7 @@ public sealed class IntifaceListener : DisposableMediatorSubscriberBase
         _ipc = ipc;
         _manager = manager;
 
-        Mediator.Subscribe<MainHubConnectedMessage>(this, _ => _ipc.OpenAndConnect());
+        Mediator.Subscribe<ConnectedMessage>(this, _ => _ipc.OpenAndConnect());
 
         Mediator.Subscribe<BuzzToyAdded>(this, msg => OnDeviceAdded(msg.Device));
         Mediator.Subscribe<BuzzToyRemoved>(this, msg => OnDeviceRemoved(msg.Device));

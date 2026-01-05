@@ -1,25 +1,20 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
 using CkCommons.Helpers;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.Services;
 using GagSpeak.Gui.Components;
-using GagSpeak.Utils;
 using GagspeakAPI.Data;
-using GagspeakAPI.Extensions;
 using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Text;
 using System.Collections.Immutable;
 using System.Globalization;
 using GagSpeak.PlayerClient;
-using GagSpeak.Services.Textures;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.State.Caches;
-using OtterGui.Text.Widget.Editors;
 using GagSpeak.Services.Mediator;
 using CkCommons.Gui;
 using CkCommons.Textures;
@@ -29,12 +24,12 @@ public class PublicationsManager
 {
     private readonly ShareHubService _shareHub;
     public PublicationsManager(ILogger<PublicationsManager> logger, GagspeakMediator mediator,
-        FavoritesManager favorites, PatternManager patterns, ShareHubService shareHub)
+        FavoritesConfig favorites, PatternManager patterns, ShareHubService shareHub)
     {
         _shareHub = shareHub;
 
         _patternCombo = new PatternCombo(logger, mediator, favorites, () => [
-            ..patterns.Storage.OrderByDescending(p => favorites._favoritePatterns.Contains(p.Identifier)).ThenBy(p => p.Label)
+            ..patterns.Storage.OrderByDescending(p => favorites.Patterns.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
 
         _statusCombo = new MoodleStatusCombo(logger, 1.5f);
@@ -273,7 +268,7 @@ public class PublicationsManager
     {
         var unpublishButton = CkGui.IconTextButtonSize(FAI.Globe, "Unpublish");
         var height = ImGui.GetFrameHeight() * 2.25f + ImGui.GetStyle().ItemSpacing.Y + ImGui.GetStyle().WindowPadding.Y * 2;
-        using (ImRaii.Child($"##MoodleResult_{moodle.MoodleStatus.GUID}", new Vector2(ImGui.GetContentRegionAvail().X, height), true, WFlags.ChildWindow))
+        using (ImRaii.Child($"##MoodleResult_{moodle.Status.GUID}", new Vector2(ImGui.GetContentRegionAvail().X, height), true, WFlags.ChildWindow))
         {
             var imagePos = Vector2.Zero;
             using (ImRaii.Group())
@@ -284,17 +279,17 @@ public class PublicationsManager
                 // if the scaled dummy is hovered, display the description, if any.
                 if(ImGui.IsItemHovered())
                 {
-                    if(!moodle.MoodleStatus.Description.IsNullOrEmpty()) 
-                        CkGui.AttachToolTip(moodle.MoodleStatus.Description.StripColorTags());
+                    if(!moodle.Status.Description.IsNullOrEmpty()) 
+                        CkGui.AttachToolTip(moodle.Status.Description.StripColorTags());
                 }
                 ImGui.SameLine();
                 ImGui.AlignTextToFramePadding();
-                CkGui.ColorText(moodle.MoodleStatus.Title.StripColorTags(), ImGuiColors.DalamudWhite);
+                CkGui.ColorText(moodle.Status.Title.StripColorTags(), ImGuiColors.DalamudWhite);
 
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - unpublishButton);
                 using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink))
                     if (CkGui.IconTextButton(FAI.Globe, "Unpublish", isInPopup: true, disabled: !KeyMonitor.ShiftPressed() || UiService.DisableUI))
-                        UiService.SetUITask(async () => await _shareHub.RemoveMoodle(moodle.MoodleStatus.GUID));
+                        UiService.SetUITask(async () => await _shareHub.RemoveMoodle(moodle.Status.GUID));
                 CkGui.AttachToolTip("Remove this publication from the Moodle ShareHub!--SEP--Must hold SHIFT");
             }
             ImGui.Spacing();
@@ -319,32 +314,32 @@ public class PublicationsManager
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemInnerSpacing.X * 5
                     - stacksSize - dispellableSize - permanentSize - stickySize - customVfxPath - stackOnReapply);
                 ImGui.AlignTextToFramePadding();
-                CkGui.BooleanToColoredIcon(moodle.MoodleStatus.Stacks > 1, false, FAI.LayerGroup, FAI.LayerGroup, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(moodle.MoodleStatus.Stacks > 1 ? "Has " + moodle.MoodleStatus.Stacks + "Stacks." : "Not a stackable Moodle.");
+                CkGui.BooleanToColoredIcon(moodle.Status.Stacks > 1, false, FAI.LayerGroup, FAI.LayerGroup, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.AttachToolTip(moodle.Status.Stacks > 1 ? "Has " + moodle.Status.Stacks + "Stacks." : "Not a stackable Moodle.");
 
                 ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(moodle.MoodleStatus.Dispelable, false, FAI.Eraser, FAI.Eraser, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(moodle.MoodleStatus.Dispelable ? "Can be dispelled." : "Cannot be dispelled.");
+                CkGui.BooleanToColoredIcon(moodle.Status.Modifiers.Has(Modifiers.CanDispel), false, FAI.Eraser, FAI.Eraser, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.AttachToolTip(moodle.Status.Modifiers.Has(Modifiers.CanDispel) ? "Can be dispelled." : "Cannot be dispelled.");
 
                 ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(moodle.MoodleStatus.AsPermanent, false, FAI.Infinity, FAI.Infinity, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(moodle.MoodleStatus.AsPermanent ? "Permanent Moodle." : "Temporary Moodle.");
+                CkGui.BooleanToColoredIcon(moodle.Status.ExpireTicks < 0, false, FAI.Infinity, FAI.Infinity, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.AttachToolTip(moodle.Status.ExpireTicks < 0 ? "Permanent Moodle." : "Temporary Moodle.");
 
                 ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(moodle.MoodleStatus.Persistent, false, FAI.MapPin, FAI.MapPin, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(moodle.MoodleStatus.Persistent ? "Marked as a Sticky Moodle." : "Not Sticky.");
+                CkGui.BooleanToColoredIcon(moodle.Status.Permanent, false, FAI.MapPin, FAI.MapPin, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.AttachToolTip(moodle.Status.Permanent ? "Marked as a Sticky Moodle." : "Not Sticky.");
 
                 ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(!string.IsNullOrEmpty(moodle.MoodleStatus.CustomVFXPath), false, FAI.Magic, FAI.Magic, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(!string.IsNullOrEmpty(moodle.MoodleStatus.CustomVFXPath) ? "Has a custom VFX path." : "No custom VFX path.");
+                CkGui.BooleanToColoredIcon(!string.IsNullOrEmpty(moodle.Status.CustomVFXPath), false, FAI.Magic, FAI.Magic, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.AttachToolTip(!string.IsNullOrEmpty(moodle.Status.CustomVFXPath) ? "Has a custom VFX path." : "No custom VFX path.");
 
                 ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(moodle.MoodleStatus.StackOnReapply, false, FAI.PersonCirclePlus, FAI.PersonCirclePlus, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(moodle.MoodleStatus.StackOnReapply ? "Stacks " + moodle.MoodleStatus.StacksIncOnReapply + " times on Reapplication." : "Doesn't stack on reapplication.");
+                CkGui.BooleanToColoredIcon(moodle.Status.Modifiers.Has(Modifiers.StacksIncrease), false, FAI.PersonCirclePlus, FAI.PersonCirclePlus, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.AttachToolTip(moodle.Status.Modifiers.Has(Modifiers.StacksIncrease) ? "Stacks " + moodle.Status.StackSteps + " times on Reapplication." : "Doesn't stack on reapplication.");
             }
 
-            if (moodle.MoodleStatus.IconID != 0 && imagePos != Vector2.Zero)
-                MoodleDisplay.DrawMoodleIcon(moodle.MoodleStatus.IconID, moodle.MoodleStatus.Stacks, MoodleDrawer.IconSize);
+            if (moodle.Status.IconID != 0 && imagePos != Vector2.Zero)
+                MoodleIcon.DrawMoodleIcon(moodle.Status.IconID, moodle.Status.Stacks, MoodleDrawer.IconSize);
         }
     }
 

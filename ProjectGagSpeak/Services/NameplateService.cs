@@ -2,6 +2,7 @@ using CkCommons;
 using CkCommons.Textures;
 using Dalamud.Game.Gui.NamePlate;
 using Dalamud.Interface.Textures.TextureWraps;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Kernel;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -29,23 +30,20 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
     private readonly GagRestrictionManager _gags;
     private readonly GagspeakEventManager _events;
     private readonly KinksterManager _kinksters;
-    private readonly OnFrameworkService _frameworkUtils;
 
     // The value is if the kinkster is currently speaking or not, this can be accessed asyncronously by async void timeouts for speech.
     private ConcurrentDictionary<string, bool> TrackedKinksters = new();
     private IDalamudTextureWrap GaggedIcon;
     private IDalamudTextureWrap GaggedSpeakingIcon;
 
-    public NameplateService(ILogger<NameplateService> logger, GagspeakMediator mediator,
-        MainConfig config, GagRestrictionManager gags,  GagspeakEventManager events, KinksterManager kinksters, 
-        OnFrameworkService frameworkUtils)
+    public NameplateService(ILogger<NameplateService> logger, GagspeakMediator mediator, MainConfig config,
+        GagRestrictionManager gags, GagspeakEventManager events, KinksterManager kinksters)
         : base(logger, mediator)
     {
         _config = config;
         _gags = gags;
         _events = events;
         _kinksters = kinksters;
-        _frameworkUtils = frameworkUtils;
 
         // Texture Aquisition.
         var gaggedPath = Path.Combine(TextureManager.AssetFolderPath, "RequiredImages", "status_gagged.png");
@@ -57,10 +55,13 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         _events.Subscribe<int, GagType, bool, string>(UnlocksEvent.GagStateChange, UpdateClientGagState);
         _events.Subscribe<int, GagType, bool, string, Kinkster>(UnlocksEvent.PairGagStateChange, UpdateKinkster);
 
-        Mediator.Subscribe<VisibleKinkstersChanged>(this, _ => UpdateGaggedKinksters());
+        Mediator.Subscribe<KinksterPlayerRendered>(this, _ => UpdateGaggedKinksters());
+        Mediator.Subscribe<KinksterPlayerUnrendered>(this, _ => UpdateGaggedKinksters());
+        Mediator.Subscribe<KinksterActiveGagsChanged>(this, m =>
+            UpdateKinkster(0, 0, m.Kinkster.IsRendered && m.Kinkster.ActiveGags.IsGagged() && m.Kinkster.PairGlobals.ChatGarblerActive, string.Empty, m.Kinkster));
         Mediator.Subscribe<ChatboxMessageFromSelf>(this, m => OnOwnMessage(m.channel, m.message));
         Mediator.Subscribe<ChatboxMessageFromKinkster>(this, m => OnKinksterMessage(m.kinkster, m.channel, m.message));
-        Mediator.Subscribe<MainHubConnectedMessage>(this, _ => RefreshClientGagState());
+        Mediator.Subscribe<ConnectedMessage>(this, _ => RefreshClientGagState());
 
         Svc.NamePlate.OnPostNamePlateUpdate += NamePlateOnPostUpdate;
         Logger.LogInformation("NameplateService initialized.");
@@ -92,8 +93,8 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
 
         if (g.GaggedNameplate && applied)
         {
-            Logger.LogDebug($"Adding {PlayerData.NameWithWorldInstanced} to tracked Nameplates", LoggerType.Gags);
-            TrackedKinksters.TryAdd(PlayerData.NameWithWorldInstanced, false);
+            Logger.LogDebug($"Adding {PlayerData.NameWithWorld} to tracked Nameplates", LoggerType.Gags);
+            TrackedKinksters.TryAdd(PlayerData.NameWithWorld, false);
         }
         else if (_gags.ServerGagData is { } data && data.IsGagged())
         {
@@ -102,8 +103,8 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         }
         else
         {
-            Logger.LogDebug($"Removing {PlayerData.NameWithWorldInstanced} to tracked Nameplates", LoggerType.Gags);
-            TrackedKinksters.Remove(PlayerData.NameWithWorldInstanced, out var ____);
+            Logger.LogDebug($"Removing {PlayerData.NameWithWorld} to tracked Nameplates", LoggerType.Gags);
+            TrackedKinksters.Remove(PlayerData.NameWithWorld, out var ____);
         }
         Svc.NamePlate.RequestRedraw();
     }
@@ -113,11 +114,11 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         if (!k.PairGlobals.GaggedNameplate)
             return;
 
-        Logger.LogDebug($"Updating kinkster gag state for {k.PlayerNameWithWorld} to {applied}", LoggerType.Gags);
+        Logger.LogDebug($"Updating kinkster gag state for {k.PlayerNameWorld} to {applied}", LoggerType.Gags);
         if (applied)
         {
-            Logger.LogDebug($"Adding {k.PlayerNameWithWorld} to tracked Nameplates", LoggerType.Gags);
-            TrackedKinksters.TryAdd(k.PlayerNameWithWorld, false);
+            Logger.LogDebug($"Adding {k.PlayerNameWorld} to tracked Nameplates", LoggerType.Gags);
+            TrackedKinksters.TryAdd(k.PlayerNameWorld, false);
         }
         else if (k.ActiveGags.IsGagged())
         {
@@ -126,28 +127,28 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         }
         else
         {
-            Logger.LogDebug($"Removing {k.PlayerNameWithWorld} to tracked Nameplates", LoggerType.Gags);
-            TrackedKinksters.Remove(k.PlayerNameWithWorld, out var ____);
+            Logger.LogDebug($"Removing {k.PlayerNameWorld} to tracked Nameplates", LoggerType.Gags);
+            TrackedKinksters.Remove(k.PlayerNameWorld, out var ____);
         }
         Svc.NamePlate.RequestRedraw();
     }
 
+    // Do this by pointer now since we are cool like that. (TODO)
     private void UpdateGaggedKinksters()
     {
         // assume a local copy of the kinksters, in which the remaining kinksters are gagged with an active chat garbler.
-        var visibleKinksters = _kinksters.DirectPairs
-            .Where(k => k.VisiblePairGameObject is not null)
-            .Where(k => k.ActiveGags.IsGagged() && k.PairGlobals.ChatGarblerActive);
+        var visibleGaggedKinksters = _kinksters.DirectPairs
+            .Where(k => k.IsRendered && k.ActiveGags.IsGagged() && k.PairGlobals.ChatGarblerActive);
 
         // assign them to the dictionary.
         var newTrackedKinksters = new ConcurrentDictionary<string, bool>();
-        foreach (var kinkster in visibleKinksters)
+        foreach (var kinkster in visibleGaggedKinksters)
         {
             // Make sure if they are still speaking that we keep the value the same.
-            if (TrackedKinksters.TryGetValue(kinkster.PlayerNameWithWorld, out var isSpeaking))
-                newTrackedKinksters.AddOrUpdate(kinkster.PlayerNameWithWorld, isSpeaking, (key, oldValue) => isSpeaking);
+            if (TrackedKinksters.TryGetValue(kinkster.PlayerNameWorld, out var isSpeaking))
+                newTrackedKinksters.AddOrUpdate(kinkster.PlayerNameWorld, isSpeaking, (key, oldValue) => isSpeaking);
             else
-                newTrackedKinksters.TryAdd(kinkster.PlayerNameWithWorld, false);
+                newTrackedKinksters.TryAdd(kinkster.PlayerNameWorld, false);
         }
         // Update the Tracked Kinksters here (we dont do it during recalculation because of concurrent access)
         TrackedKinksters = newTrackedKinksters;
@@ -167,7 +168,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         if (g.ChatGarblerActive && message.Split(' ').Length > 5)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.GaggedChatSent, c, message);
 
-        DisplayGaggedSpeaking(PlayerData.NameWithWorldInstanced, (int)(650.0f * message.Length / 20.0f));
+        DisplayGaggedSpeaking(PlayerData.NameWithWorld, (int)(650.0f * message.Length / 20.0f));
     }
 
     private void OnKinksterMessage(Kinkster k, InputChannel c, string message)
@@ -180,7 +181,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         if (k.PairGlobals.ChatGarblerActive && message.Split(' ').Length > 5)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.KinksterGaggedChatSent, k, c, message);
 
-        DisplayGaggedSpeaking(k.PlayerNameWithWorld, (int)(650.0f * message.Length / 20.0f));
+        DisplayGaggedSpeaking(k.PlayerNameWorld, (int)(650.0f * message.Length / 20.0f));
     }
 
     private async void DisplayGaggedSpeaking(string playerNameWorld, int milliseconds)
@@ -203,8 +204,13 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         foreach (var h in handlers)
         {
             // Skip if not player character, if if the player character is null.
-            if (h.NamePlateKind is not NamePlateKind.PlayerCharacter || h.PlayerCharacter is not { } pc)
+            if (h.NamePlateKind is not NamePlateKind.PlayerCharacter)
                 continue;
+
+            if (h.PlayerCharacter is not { } pc)
+                continue;
+
+            Character* handlerChara = (Character*)pc.Address;
 
             // Force the icon to be visible.
             var nmo = (AddonNamePlate.NamePlateObject*)h.NamePlateObjectAddress;
@@ -216,7 +222,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
             var nameIcon = nmo->NameIcon;
 
             // If they aint tracked, dont do nothin.
-            var pnww = PlayerData.GetNameWithWorld(pc);
+            var pnww = handlerChara->GetNameWithWorld();
             if (!TrackedKinksters.TryGetValue(pnww, out var isSpeaking))
                 continue;
 
@@ -228,7 +234,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
 
     private unsafe void LoadTextureToAsset(AtkImageNode* node, AtkResNode* parentNode, bool isSpeaking)
     {
-        var texturePointer = (Texture*)Svc.Texture.ConvertToKernelTexture(isSpeaking ? GaggedSpeakingIcon: GaggedIcon, true);
+        var texturePointer = (Texture*)Svc.Texture.ConvertToKernelTexture(isSpeaking ? GaggedSpeakingIcon : GaggedIcon, true);
         // Update the actual width to be reflected in resolution
         texturePointer->ActualWidth = 32;
         texturePointer->ActualHeight = 32;

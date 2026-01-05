@@ -1,6 +1,4 @@
 using Dalamud.Interface.ImGuiNotification;
-using Dalamud.Utility;
-using GagSpeak.PlayerClient;
 using CkCommons;
 using GagSpeak.Interop;
 using GagSpeak.State.Models;
@@ -29,7 +27,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         _ipcProvider = ipcProvider;
         _patterns = patterns;
 
-        Mediator.Subscribe<PostConnectionDataReceivedMessage>(this, msg =>
+        Mediator.Subscribe<ConnectedDataSyncedMessage>(this, msg =>
         {
             ClientPublishedPatterns = msg.Info.PublishedPatterns;
             ClientPublishedMoodles = msg.Info.PublishedMoodles;
@@ -71,12 +69,12 @@ public class ShareHubService : DisposableMediatorSubscriberBase
     public void TryOnMoodle(Guid moodleId)
     {
         // apply the moodle to yourself via moodleStatusInfo.
-        var match = LatestMoodleResults.FirstOrDefault(x => x.MoodleStatus.GUID == moodleId);
+        var match = LatestMoodleResults.FirstOrDefault(x => x.Status.GUID == moodleId);
         if (match is null) return;
 
-        var moodleTupleToTry = match.MoodleStatus;
+        var moodleTupleToTry = match.Status;
         Logger.LogInformation("Trying on moodle from server. Sending request to Moodles!");
-        _ipcProvider.ApplyStatusTuple(moodleTupleToTry);
+        IpcProvider.ApplyStatusTuple(moodleTupleToTry, false);
     }
 
     #region PatternHub Tasks
@@ -301,7 +299,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         Logger.LogInformation("Like interaction successful.", LoggerType.ShareHub);
             
         // fetch the appropriate Moodle
-        if (LatestMoodleResults.FirstOrDefault(x => x.MoodleStatus.GUID == moodleId) is not { } moodle)
+        if (LatestMoodleResults.FirstOrDefault(x => x.Status.GUID == moodleId) is not { } moodle)
             return;
 
         moodle.Likes += moodle.HasLikedMoodle ? -1 : 1;
@@ -322,7 +320,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
 
             // if the upload was successful, then we can notify the user.
             Mediator.Publish(new NotificationMessage("Moodle Upload", "uploaded successful!", NotificationType.Info));
-            ClientPublishedMoodles.Add(new PublishedMoodle() { AuthorName = authorName, MoodleStatus = moodleInfo });
+            ClientPublishedMoodles.Add(new PublishedMoodle() { AuthorName = authorName, Status = moodleInfo });
             GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternHubAction, PatternHubInteractionKind.Published);
         }
         catch (Bagagwa e)
@@ -334,7 +332,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
 
     public async Task RemoveMoodle(Guid moodleId)
     {
-        if (moodleId == Guid.Empty || !ClientPublishedMoodles.Any(m => m.MoodleStatus.GUID == moodleId))
+        if (moodleId == Guid.Empty || !ClientPublishedMoodles.Any(m => m.Status.GUID == moodleId))
             return;
 
         try
@@ -346,7 +344,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
 
             // if successful, notify the user.
             Logger.LogInformation("RemovePatternTask completed.", LoggerType.ShareHub);
-            ClientPublishedMoodles.RemoveAll(m => m.MoodleStatus.GUID == moodleId);
+            ClientPublishedMoodles.RemoveAll(m => m.Status.GUID == moodleId);
         }
         catch (Bagagwa e)
         {
@@ -359,32 +357,41 @@ public class ShareHubService : DisposableMediatorSubscriberBase
     public void CopyMoodleToClipboard(Guid moodleId)
     {
         // Grab the moodle status of the moodle id we want to copy.
-        if (!LatestMoodleResults.Any(moodleInfo => moodleInfo.MoodleStatus.GUID == moodleId))
+        if (!LatestMoodleResults.Any(moodleInfo => moodleInfo.Status.GUID == moodleId))
             return;
 
         // grab it.
-        var moodleStatus = LatestMoodleResults.First(moodleInfo => moodleInfo.MoodleStatus.GUID == moodleId).MoodleStatus;
+        var status = LatestMoodleResults.First(moodleInfo => moodleInfo.Status.GUID == moodleId).Status;
+
+        var totalTime = status.ExpireTicks == -1 ? TimeSpan.Zero : TimeSpan.FromMilliseconds(status.ExpireTicks);
 
         // convert the moodle status to a copiable json clipboard.
         var jsonObject = new
         {
-            moodleStatus.IconID,
-            moodleStatus.Title,
-            moodleStatus.Description,
-            Type = (int)moodleStatus.Type,
-            moodleStatus.Applier,
-            moodleStatus.Dispelable,
-            moodleStatus.Stacks,
-            moodleStatus.StatusOnDispell,
-            CustomFXPath = moodleStatus.CustomVFXPath,
-            moodleStatus.StackOnReapply,
-            moodleStatus.StacksIncOnReapply,
-            moodleStatus.Days,
-            moodleStatus.Hours,
-            moodleStatus.Minutes,
-            moodleStatus.Seconds,
-            moodleStatus.NoExpire,
-            moodleStatus.AsPermanent
+            IconID          = status.IconID,
+            Title           = status.Title,
+            Description     = status.Description,
+            CustomFXPath    = status.CustomVFXPath,
+            
+            Type            = (int)status.Type,
+            Modifiers       = (uint)status.Modifiers,
+
+            Stacks          = status.Stacks,
+            StackSteps      = status.StackSteps,
+
+            ChainedStatus   = status.ChainedStatus,
+            ChainTrigger    = status.ChainTrigger,
+
+            Applier         = status.Applier,
+            Dispeller       = status.Dispeller,
+
+            Days            = totalTime.Days,
+            Hours           = totalTime.Hours,
+            Minutes         = totalTime.Minutes,
+            Seconds         = totalTime.Seconds,
+
+            NoExpire        = status.ExpireTicks == -1,
+            AsPermanent     = status.Permanent
         };
         var stringToCopy = JsonConvert.SerializeObject(jsonObject, Formatting.None);
         ImGui.SetClipboardText(stringToCopy);

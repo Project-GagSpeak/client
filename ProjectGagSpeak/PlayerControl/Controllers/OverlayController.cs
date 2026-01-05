@@ -1,9 +1,7 @@
 using GagSpeak.GameInternals;
 using GagSpeak.GameInternals.Addons;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
-using GagSpeak.State.Models;
 
 namespace GagSpeak.Services.Controller;
 
@@ -21,11 +19,11 @@ public sealed class POVController : DisposableMediatorSubscriberBase
     {
         _cache = cache;
 
-        Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreState());
+        Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreStatus());
         Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => OnUpdate());
     }
 
-    private void UpdateHardcoreState()
+    private void UpdateHardcoreStatus()
     {
         // update local perspective to match if different.
         var cachePerspective = _cache.GetPerspectiveToLock();

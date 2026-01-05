@@ -1,11 +1,10 @@
-using CkCommons;
+using System.Runtime.InteropServices;
 using Dalamud.Hooking;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Client.System.Input;
 using GagSpeak.GameInternals.Structs;
-using System.Runtime.InteropServices;
- 
+
 namespace GagSpeak.GameInternals.Detours;
 #nullable enable
 #pragma warning disable CS0649 // Missing XML comment for publicly visible type or member
@@ -31,6 +30,55 @@ public partial class MovementDetours : IDisposable
         }
 
         AutoMoveUpdateHook?.Original(unk1, unk2);
+    }
+
+    public unsafe delegate byte IsInputIdPressedDelegate(void* unk, InputId inputId);
+    [Signature(Signatures.IsInputIdPressed, DetourName = nameof(IsInputIdPressedDetour), Fallibility = Fallibility.Auto)]
+    private readonly Hook<IsInputIdPressedDelegate> IsInputIdPressedHook = null!;
+    private unsafe byte IsInputIdPressedDetour(void* unk, InputId inputId)
+    {
+        if (_cache.BlockMovementKeys && movementInputs.Contains(inputId))
+        {
+            return 0x00;
+        }
+        return IsInputIdPressedHook.Original(unk, inputId);
+    }
+
+    public unsafe delegate byte IsInputIdDownDelegate(void* unk, InputId inputId);
+    [Signature(Signatures.IsInputIdDown, DetourName = nameof(IsInputIdDownDetour), Fallibility = Fallibility.Auto)]
+    private readonly Hook<IsInputIdDownDelegate> IsInputIdDownHook = null!;
+    private unsafe byte IsInputIdDownDetour(void* unk, InputId inputId)
+    {
+        if (_cache.BlockMovementKeys && movementInputs.Contains(inputId))
+        {
+            return 0x00;
+        }
+        return IsInputIdDownHook.Original(unk, inputId);
+    }
+
+    public unsafe delegate byte IsInputIdHeldDelegate(void* unk, InputId inputId);
+    [Signature(Signatures.IsInputIdHeld, DetourName = nameof(IsInputIdHeldDetour), Fallibility = Fallibility.Auto)]
+    private readonly Hook<IsInputIdHeldDelegate> IsInputIdHeldHook = null!;
+    private unsafe byte IsInputIdHeldDetour(void* unk, InputId inputId)
+    {
+        if (_cache.BlockMovementKeys && movementInputs.Contains(inputId))
+        {
+            return 0x00;
+        }
+        return IsInputIdHeldHook.Original(unk, inputId);
+    }
+
+    // The most important one to make immobilization work.
+    public unsafe delegate byte IsInputIdUnknownDelegate(void* unk, InputId inputId);
+    [Signature(Signatures.IsInputIdUnknown, DetourName = nameof(IsInputIdUnknownDetour), Fallibility = Fallibility.Auto)]
+    private readonly Hook<IsInputIdUnknownDelegate> IsInputIdUnknownHook = null!;
+    private unsafe byte IsInputIdUnknownDetour(void* unk, InputId inputId)
+    {
+        if (_cache.BlockMovementKeys && movementInputs.Contains(inputId))
+        {
+            return 0x00;
+        }
+        return IsInputIdUnknownHook.Original(unk, inputId);
     }
 
     /// <summary>

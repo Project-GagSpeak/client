@@ -16,13 +16,12 @@ using GagspeakAPI.Extensions;
 using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Text;
-using OtterGuiInternal.Structs;
 
 namespace GagSpeak.FileSystems;
 
 public sealed class BuzzToyFileSelector : CkFileSystemSelector<BuzzToy, BuzzToyFileSelector.ToyState>, IMediatorSubscriber, IDisposable
 {
-    private readonly FavoritesManager _favorites;
+    private readonly FavoritesConfig _favorites;
     private readonly BuzzToyManager _manager;
     public GagspeakMediator Mediator { get; init; }
 
@@ -40,7 +39,7 @@ public sealed class BuzzToyFileSelector : CkFileSystemSelector<BuzzToy, BuzzToyF
     public new BuzzToyFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
-    public BuzzToyFileSelector(GagspeakMediator mediator, FavoritesManager favorites, BuzzToyManager manager,
+    public BuzzToyFileSelector(GagspeakMediator mediator, FavoritesConfig favorites, BuzzToyManager manager,
         BuzzToyFileSystem fileSystem) : base(fileSystem, Svc.Logger.Logger, Svc.KeyState, "##SexToyFS")
     {
         Mediator = mediator;

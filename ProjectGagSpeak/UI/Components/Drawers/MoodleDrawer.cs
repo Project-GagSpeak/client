@@ -3,12 +3,10 @@ using Dalamud.Interface.Utility.Raii;
 using CkCommons;
 using CkCommons.Raii;
 using GagSpeak.CustomCombos.Editor;
-using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
-using GagspeakAPI.Extensions;
 using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 using CkCommons.Gui;
@@ -178,7 +176,7 @@ public class MoodleDrawer
             if (status.IconID is 0)
                 continue;
 
-            MoodleDisplay.DrawMoodleIcon(status.IconID, status.Stacks, iconSize);
+            MoodleIcon.DrawMoodleIcon(status.IconID, status.Stacks, iconSize);
             GsExtensions.DrawMoodleStatusTooltip(status, MoodleCache.IpcData.StatusList);
 
             if (++col >= iconsPerRow)
@@ -206,7 +204,7 @@ public class MoodleDrawer
             if (status.IconID is 0)
                 continue;
 
-            MoodleDisplay.DrawMoodleIcon(status.IconID, status.Stacks, size);
+            MoodleIcon.DrawMoodleIcon(status.IconID, status.Stacks, size);
             GsExtensions.DrawMoodleStatusTooltip(status, MoodleCache.IpcData.StatusList);
 
             if (++col >= iconsPerRow)
@@ -232,7 +230,7 @@ public class MoodleDrawer
             if(status.IconID is 0)
                 continue;
 
-            MoodleDisplay.DrawMoodleIcon(status.IconID, status.Stacks, iconSize);
+            MoodleIcon.DrawMoodleIcon(status.IconID, status.Stacks, iconSize);
             if (ImGui.IsItemHovered())
                 GsExtensions.DrawMoodleStatusTooltip(status, MoodleCache.IpcData.StatusList);
             ImGui.SameLine();

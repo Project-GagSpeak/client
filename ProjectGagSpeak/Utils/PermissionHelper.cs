@@ -115,7 +115,7 @@ public static class PermissionHelper
 
             // Now that it is updated clientside, attempt to make the change on the server, and get the hub responce.
             HubResponse response = await hub.UserChangeOwnPairPerm(
-                new(target, new KeyValuePair<string, object>(propertyName, newValue), UpdateDir.Own, MainHub.PlayerUserData));
+                new(target, new KeyValuePair<string, object>(propertyName, newValue), UpdateDir.Own, MainHub.OwnUserData));
 
             if (response.ErrorCode is not GagSpeakApiEc.Success)
                 throw new InvalidOperationException($"Failed to change {propertyName} to {finalVal} for self. Reason: {response.ErrorCode}");
@@ -156,7 +156,7 @@ public static class PermissionHelper
 
             // Now that it is updated clientside, attempt to make the change on the server, and get the hub responce.
             HubResponse response = await hub.UserChangeOwnPairPermAccess(
-                new(target, new KeyValuePair<string, object>(propertyName, newValue), UpdateDir.Own, MainHub.PlayerUserData));
+                new(target, new KeyValuePair<string, object>(propertyName, newValue), UpdateDir.Own, MainHub.OwnUserData));
 
             if (response.ErrorCode is not GagSpeakApiEc.Success)
                 throw new InvalidOperationException($"Failed to change {propertyName} to {finalVal} for self. Reason: {response.ErrorCode}");
@@ -239,7 +239,7 @@ public static class PermissionHelper
 
             // Now that it is updated clientside, attempt to make the change on the server, and get the hub responce.
             HubResponse response = await hub.UserChangeOtherPairPerm(
-                new(target, new KeyValuePair<string, object>(propertyName, finalVal), UpdateDir.Other, MainHub.PlayerUserData));
+                new(target, new KeyValuePair<string, object>(propertyName, finalVal), UpdateDir.Other, MainHub.OwnUserData));
 
             if (response.ErrorCode is not GagSpeakApiEc.Success)
                 throw new InvalidOperationException($"Failed to change {propertyName} to {finalVal} for {target.AliasOrUID}, Reason: {response.ErrorCode}");
@@ -260,31 +260,30 @@ public static class PermissionHelper
     /// <returns> True if the statuses can be applied.
     public static bool CanApplyPairStatus(PairPerms pairPerms, IEnumerable<MoodlesStatusInfo> statuses)
     {
-        if (!pairPerms.MoodlePerms.HasAny(MoodlePerms.PositiveStatusTypes) && statuses.Any(statuses => statuses.Type == StatusType.Positive))
+        if (!pairPerms.MoodleAccess.HasAny(MoodleAccess.Positive) && statuses.Any(statuses => statuses.Type == StatusType.Positive))
         {
             Svc.Logger.Warning("Client Attempted to apply status(s) with at least one containing a positive status, but they are not allowed to.");
             return false;
         }
-        if (!pairPerms.MoodlePerms.HasAny(MoodlePerms.NegativeStatusTypes) && statuses.Any(statuses => statuses.Type == StatusType.Negative))
+        if (!pairPerms.MoodleAccess.HasAny(MoodleAccess.Negative) && statuses.Any(statuses => statuses.Type == StatusType.Negative))
         {
             Svc.Logger.Warning("Client Attempted to apply status(s) with at least one containing a negative status, but they are not allowed to.");
             return false;
         }
-        if (!pairPerms.MoodlePerms.HasAny(MoodlePerms.SpecialStatusTypes) && statuses.Any(statuses => statuses.Type == StatusType.Special))
+        if (!pairPerms.MoodleAccess.HasAny(MoodleAccess.Special) && statuses.Any(statuses => statuses.Type == StatusType.Special))
         {
             Svc.Logger.Warning("Client Attempted to apply status(s) with at least one containing a special status, but they are not allowed to.");
             return false;
         }
 
-        if (!pairPerms.MoodlePerms.HasAny(MoodlePerms.PermanentMoodles) && statuses.Any(statuses => statuses.NoExpire))
+        if (!pairPerms.MoodleAccess.HasAny(MoodleAccess.Permanent) && statuses.Any(statuses => statuses.ExpireTicks < 0))
         {
             Svc.Logger.Warning("Client Attempted to apply status(s) with at least one containing a permanent status, but they are not allowed to.");
             return false;
         }
 
         // check the max moodle time exceeding
-        if (statuses.Any(status => status.NoExpire == false && // if the status is not permanent, and the time its set for is longer than max allowed time.
-            new TimeSpan(status.Days, status.Hours, status.Minutes, status.Seconds) > pairPerms.MaxMoodleTime))
+        if (statuses.Any(status => pairPerms.MaxMoodleTime < TimeSpan.FromMilliseconds(status.ExpireTicks)))
         {
             Svc.Logger.Warning("Client Attempted to apply status(s) with at least one containing a time exceeding the max allowed time.");
             return false;
@@ -293,7 +292,7 @@ public static class PermissionHelper
         return true;
     }
 
-    public static void DrawHardcoreState(HardcoreState? hardcoreState)
+    public static void DrawHardcoreStatus(HardcoreStatus? hardcoreState)
     {
         if (hardcoreState is not { } hc)
         {
@@ -302,7 +301,7 @@ public static class PermissionHelper
         }
 
         // Display Hardcore State.
-        using (var t = ImRaii.Table("HardcoreStateTable", 6, ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.SizingFixedFit))
+        using (var t = ImRaii.Table("HardcoreStatusTable", 6, ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.SizingFixedFit))
         {
             if (!t)
                 return;

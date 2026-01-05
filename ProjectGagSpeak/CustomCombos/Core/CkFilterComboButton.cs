@@ -1,9 +1,7 @@
 using CkCommons.Gui;
 using Dalamud.Interface.Utility;
-using GagSpeak.Gui;
 using Dalamud.Bindings.ImGui;
 using OtterGui;
-using OtterGui.Raii;
 using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos;

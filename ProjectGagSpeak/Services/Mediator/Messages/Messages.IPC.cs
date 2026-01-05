@@ -6,24 +6,28 @@ using Penumbra.GameData.Structs;
 
 namespace GagSpeak.Services.Mediator;
 
+public record TooltipSetItemToEditorMessage(EquipSlot Slot, EquipItem Item) : MessageBase;
+
 public record PenumbraInitialized : MessageBase;
 public record PenumbraDirectoryChanged(string? NewDirectory) : MessageBase;
 public record PenumbraSettingsChanged : MessageBase;
-public record HaltFileScan(string Source) : MessageBase;
-public record ResumeFileScan(string Source) : MessageBase;
 public record PenumbraDisposed : MessageBase;
+
+public record SundouleiaReady : MessageBase;
+public record SundouleiaDisposed : MessageBase;
+
 public record MoodlesReady : MessageBase;
+public record MoodlesChanged(IntPtr Address) : MessageBase;
+public record MoodleAccessPermsChanged(Kinkster Kinkster) : MessageBase;
+public record MoodlesApplyStatusToPair(ApplyMoodleStatus ApplyStatusTupleDto) : MessageBase;
+
 public record GlamourerReady : MessageBase;
-public record GlamourerChanged : MessageBase; // Only sent for CLIENT Glamourer changes
+public record GlamourerChanged : MessageBase;
+
 public record CustomizeReady : MessageBase;
 public record CustomizeProfileListRequest : MessageBase;
-public record TooltipSetItemToEditorMessage(EquipSlot Slot, EquipItem Item) : MessageBase;
-public record MoodlesStatusManagerUpdate : MessageBase;
-public record MoodlesStatusModified(Guid Guid) : MessageBase; // when we change one of our moodles settings.
-public record MoodlesPresetModified(Guid Guid) : MessageBase; // when we change one of our moodles presets.
-public record MoodlesApplyStatusToPair(MoodlesApplierByStatus StatusDto) : MessageBase;
-public record VisibleKinkstersChanged : MessageBase; // for pinging the moodles.
-public record MoodlesPermissionsUpdated(Kinkster Kinkster) : MessageBase;
+
+
 // Intiface IPC
 public record BuzzToyAdded(ButtplugClientDevice Device) : MessageBase;
 public record BuzzToyRemoved(ButtplugClientDevice Device) : MessageBase;

@@ -1,9 +1,9 @@
 using CkCommons;
 using CkCommons.Helpers;
-using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Text.SeStringHandling;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using GagSpeak.GameInternals;
-using GagSpeak.GameInternals.Agents;
 using GagSpeak.GameInternals.Structs;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
@@ -11,7 +11,6 @@ using GagSpeak.Services;
 using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using System.Diagnostics.CodeAnalysis;
 
@@ -20,23 +19,23 @@ namespace GagSpeak.State.Handlers;
 /// <summary>
 ///     Handles incoming invokations for various triggers to in turn execute them
 /// </summary>
-/// <remarks> May or may not have future integration weaved into this listener for the vibe server lobby system. </remarks>
+/// <remarks>
+///     May or may not have future integration weaved into this listener for the vibe server lobby system.
+/// </remarks>
 public class TriggerHandler
 {
     private readonly ILogger<TriggerHandler> _logger;
     private readonly PuppeteerManager _aliases;
     private readonly TriggerManager _triggers;
     private readonly TriggerActionService _triggerService;
-    private readonly OnFrameworkService _frameworkUtils;
 
     public TriggerHandler(ILogger<TriggerHandler> logger, PuppeteerManager aliases, 
-        TriggerManager triggers, TriggerActionService service, OnFrameworkService onFramework)
+        TriggerManager triggers, TriggerActionService service)
     {
         _logger = logger;
         _aliases = aliases;
         _triggers = triggers;
         _triggerService = service;
-        _frameworkUtils = onFramework;
     }
 
     public bool PotentialGlobalTriggerMsg(string senderName, string senderWorld, InputChannel channel, SeString msg)
@@ -74,31 +73,28 @@ public class TriggerHandler
     /// <summary>
     ///     Called upon by the ActionEffectDetour
     /// </summary>
-    public async void OnActionEffectEvent(List<ActionEffectEntry> actionEffects)
+    public unsafe void OnActionEffectEvent(List<ActionEffectEntry> actionEffects)
     {
         if (!PlayerData.Available || !_triggers.Storage.SpellAction.Any())
             return;
 
-        // maybe run this in async but idk it could also be a very bad idea.
-        // Only do if we know what we are doing and have performance issues.
-        await _frameworkUtils.RunOnFrameworkThread(() =>
+        foreach (var actionEffect in actionEffects)
         {
-            foreach (var actionEffect in actionEffects)
+            if ((LoggerFilter.FilteredLogTypes & LoggerType.ActionEffects) != 0)
             {
-                if ((LoggerFilter.FilteredLogTypes & LoggerType.ActionEffects) != 0)
-                {
-                    // Perform logging and action processing for each effect
-                    var sourceCharaStr = (_frameworkUtils.SearchObjectTableById(actionEffect.SourceID) as IPlayerCharacter)?.GetNameWithWorld() ?? "UNKN OBJ";
-                    var targetCharaStr = (_frameworkUtils.SearchObjectTableById(actionEffect.TargetID) as IPlayerCharacter)?.GetNameWithWorld() ?? "UNKN OBJ";
+                // Perform logging and action processing for each effect
+                var srcChara = GameObjectManager.Instance()->Objects.GetObjectByGameObjectId(actionEffect.SourceID);
+                var tgtChara = GameObjectManager.Instance()->Objects.GetObjectByGameObjectId(actionEffect.TargetID);
+                var srcCharaStr = (srcChara != null && srcChara->IsCharacter()) ? ((Character*)srcChara)->GetNameWithWorld() : "UNKN OBJ";
+                var tgtCharaStr = (tgtChara != null && tgtChara->IsCharacter()) ? ((Character*)tgtChara)->GetNameWithWorld() : "UNKN OBJ";
 
-                    var actionStr = SpellActionService.AllActionsLookup.TryGetValue(actionEffect.ActionID, out var match) ? match.Name.ToString() : "UNKN ACT";
+                var actionStr = SpellActionService.AllActionsLookup.TryGetValue(actionEffect.ActionID, out var match) ? match.Name.ToString() : "UNKN ACT";
+                _logger.LogTrace($"Source:{srcCharaStr}, Target: {tgtCharaStr}, Action: {actionStr}, Action ID:{actionEffect.ActionID}, " +
+                    $"Type: {actionEffect.Type.ToString()} Amount: {actionEffect.Damage}", LoggerType.ActionEffects);
+            }
 
-                    _logger.LogTrace($"Source:{sourceCharaStr}, Target: {targetCharaStr}, Action: {actionStr}, Action ID:{actionEffect.ActionID}, " +
-                        $"Type: {actionEffect.Type.ToString()} Amount: {actionEffect.Damage}", LoggerType.ActionEffects);
-                }
-                CheckSpellActionTriggers(actionEffect).ConfigureAwait(false);
-            };
-        });
+            CheckSpellActionTriggers(actionEffect).ConfigureAwait(false);
+        };
     }
 
 
@@ -209,7 +205,7 @@ public class TriggerHandler
         if (perms.HasFlag(PuppetPerms.Sit))
         {
             _logger.LogTrace("Checking if message is a sit command", LoggerType.Puppeteer);
-            var sitEmote = EmoteExtensions.SittingEmotes().FirstOrDefault(e => message.TextValue.Contains(e.Name.ToString().Replace(" ", "").ToLower()));
+            var sitEmote = EmoteEx.SittingEmotes().FirstOrDefault(e => message.TextValue.Contains(e.Name.ToString().Replace(" ", "").ToLower()));
             if (sitEmote.RowId is 50 or 52)
             {
                 _logger.LogTrace("Message is a sit command", LoggerType.Puppeteer);
@@ -259,7 +255,7 @@ public class TriggerHandler
         foreach (var trigger in relevantTriggers)
         {
             _logger.LogTrace("Checking Trigger: " + trigger.Label, LoggerType.Triggers);
-            if (!IsDirectionMatch(trigger.Direction, PlayerData.Object?.GameObjectId ?? 0, actionEffect.SourceID, actionEffect.TargetID))
+            if (!IsDirectionMatch(trigger.Direction, PlayerData.GameObjectId, actionEffect.SourceID, actionEffect.TargetID))
             {
                 _logger.LogDebug("Direction didn't match", LoggerType.Triggers);
                 continue;

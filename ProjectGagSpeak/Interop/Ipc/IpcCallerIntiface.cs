@@ -1,12 +1,9 @@
 using Buttplug.Client;
 using Buttplug.Core;
-using Buttplug.Core.Messages;
 using CkCommons;
-using Dalamud.Plugin.Ipc;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
-using GagspeakAPI.Data.Struct;
 using System.Net.WebSockets;
 
 namespace GagSpeak.Interop;

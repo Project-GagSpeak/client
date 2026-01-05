@@ -1,11 +1,7 @@
-using CkCommons;
-using CkCommons.Gui;
-using CkCommons.Raii;
 using CkCommons.Widgets;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
-using GagspeakAPI.Data;
 using Dalamud.Bindings.ImGui;
 using OtterGui.Extensions;
 using OtterGui.Text;
@@ -14,9 +10,9 @@ namespace GagSpeak.CustomCombos.Editor;
 
 public sealed class RestraintCombo : CkFilterComboCache<RestraintSet>, IMediatorSubscriber, IDisposable
 {
-    private readonly FavoritesManager _favorites;
+    private readonly FavoritesConfig _favorites;
     public Guid _currentRestraint { get; private set; }
-    public RestraintCombo(ILogger log, GagspeakMediator mediator, FavoritesManager favorites, 
+    public RestraintCombo(ILogger log, GagspeakMediator mediator, FavoritesConfig favorites, 
         Func<IReadOnlyList<RestraintSet>> generator) : base(generator, log)
     {
         _favorites = favorites;

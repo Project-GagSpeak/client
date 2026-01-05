@@ -11,14 +11,14 @@ namespace GagSpeak.State.Managers;
 
 public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
-    private readonly FavoritesManager _favorites;
+    private readonly FavoritesConfig _favorites;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
 
     private StorageItemEditor<Trigger> _itemEditor = new();
 
     public TriggerManager(ILogger<TriggerManager> logger, GagspeakMediator mediator,
-        FavoritesManager favorites, ConfigFileProvider fileNames, HybridSaveService saver) 
+        FavoritesConfig favorites, ConfigFileProvider fileNames, HybridSaveService saver) 
         : base(logger, mediator)
     {
         _favorites = favorites;
@@ -217,7 +217,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
                 return;
         }
         _saver.Save(this);
-        Mediator.Publish(new ReloadFileSystem(GagspeakModule.Trigger));
+        Mediator.Publish(new ReloadFileSystem(GSModule.Trigger));
     }
 
     private void LoadV0(JToken? data)

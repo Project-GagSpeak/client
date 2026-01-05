@@ -6,21 +6,14 @@ using CkCommons.Helpers;
 using CkCommons.Widgets;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
-using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Gui.Remote;
 using GagSpeak.PlayerClient;
-using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Attributes;
-using GagspeakAPI.Data.Permissions;
-using GagspeakAPI.Hub;
 using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Text;
-using OtterGuiInternal.Structs;
 
 namespace GagSpeak.FileSystems;
 
@@ -28,7 +21,7 @@ namespace GagSpeak.FileSystems;
 public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternFileSelector.PatternState>, IMediatorSubscriber, IDisposable
 {
     private readonly MainHub _hub;
-    private readonly FavoritesManager _favorites;
+    private readonly FavoritesConfig _favorites;
     private readonly PatternManager _manager;
     public GagspeakMediator Mediator { get; init; }
 
@@ -45,7 +38,7 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
     => base.SelectedLeaf;
 
     public PatternFileSelector(ILogger<PatternFileSelector> log, GagspeakMediator mediator, MainHub hub,
-        FavoritesManager favorites, PatternManager manager, PatternFileSystem fileSystem) 
+        FavoritesConfig favorites, PatternManager manager, PatternFileSystem fileSystem) 
         : base(fileSystem, Svc.Logger.Logger, Svc.KeyState, "##PatternsFS")
     {
         Mediator = mediator;

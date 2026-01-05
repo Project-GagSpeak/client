@@ -1,7 +1,6 @@
 using Dalamud.Hooking;
 using Dalamud.Utility.Signatures;
 using GagSpeak.GameInternals.Structs;
-using InteropGenerator.Runtime.Attributes;
 #nullable enable
 
 namespace GagSpeak.GameInternals.Detours;

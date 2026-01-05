@@ -42,7 +42,7 @@ public unsafe class VfxSpawnManager : DisposableMediatorSubscriberBase
                 throw new Bagagwa("Invalid Path");
 
             // construct the actorVfx from the given objects and paths.
-            var created = ResourceDetours.CreateActorVfx(path, PlayerData.Object!.Address, PlayerData.Object!.Address);
+            var created = ResourceDetours.CreateActorVfx(path, PlayerData.Address, PlayerData.Address);
             _cache.AddTrackedVfx(created, path, SpawnType.Self, canLoop);
         }
         catch (Bagagwa ex)

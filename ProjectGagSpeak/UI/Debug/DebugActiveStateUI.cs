@@ -1,7 +1,5 @@
-using CkCommons.Classes;
 using CkCommons.Gui;
 using Dalamud.Bindings.ImGui;
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
@@ -12,13 +10,8 @@ using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
-using GagSpeak.State.Managers;
 using GagSpeak.Utils;
-using GagspeakAPI.Attributes;
-using GagspeakAPI.Extensions;
-using OtterGui;
 using OtterGui.Text;
-using System.Windows.Forms;
 
 namespace GagSpeak.Gui;
 
@@ -83,7 +76,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
             DrawMoodlesIpc();
 
         if (ImGui.CollapsingHeader("Hardcore State"))
-            _clientData.DrawHardcoreState();
+            _clientData.DrawHardcoreStatus();
 
         if (ImGui.CollapsingHeader("HcTaskManager State"))
             _hcTasks.DrawCacheState();

@@ -1,5 +1,4 @@
 using GagSpeak.Services.Configs;
-using System.IO;
 
 namespace GagSpeak.State.Models;
 public class BlindfoldOverlay : IOverlayEffect

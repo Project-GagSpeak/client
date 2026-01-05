@@ -35,7 +35,7 @@ public sealed class KeystateController : DisposableMediatorSubscriberBase
                 Svc.KeyState.GetType().GetMethod("GetRefValue", BindingFlags.NonPublic | BindingFlags.Instance, null, [typeof(int)], null)!);
         });
 
-        Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreState());
+        Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreStatus());
         Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
     }
 
@@ -47,7 +47,7 @@ public sealed class KeystateController : DisposableMediatorSubscriberBase
         _keysToBlock.Clear();
     }
 
-    private void UpdateHardcoreState()
+    private void UpdateHardcoreStatus()
     {
         var cacheBlockedKeys = _cache.GetBlockedKeys().ToList();
 

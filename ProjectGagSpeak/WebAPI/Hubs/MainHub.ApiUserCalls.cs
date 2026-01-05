@@ -1,4 +1,3 @@
-using GagSpeak.PlayerClient;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Dto.Sharehub;
@@ -259,7 +258,7 @@ public partial class MainHub
 
     public async Task<HubResponse<ClientGlobals>> UserBulkChangeGlobal(BulkChangeGlobal allGlobalPerms)
     {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new ClientGlobals(new GlobalPerms(), new HardcoreState()));
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new ClientGlobals(new GlobalPerms(), new HardcoreStatus()));
         return await _hubConnection!.InvokeAsync<HubResponse<ClientGlobals>>(nameof(UserBulkChangeGlobal), allGlobalPerms);
     }
 
@@ -270,7 +269,7 @@ public partial class MainHub
     }
 
     public async Task<HubResponse> ChangeOwnGlobalPerm(string propertyName, object newValue)
-        => await UserChangeOwnGlobalPerm(new(PlayerUserData, new KeyValuePair<string, object>(propertyName, newValue), PlayerUserData));
+        => await UserChangeOwnGlobalPerm(new(OwnUserData, new KeyValuePair<string, object>(propertyName, newValue), OwnUserData));
 
 
     public async Task<HubResponse> UserChangeOwnGlobalPerm(SingleChangeGlobal userPermissions)
@@ -291,10 +290,10 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeOwnPairPermAccess), userPermissions);
     }
 
-    public async Task<HubResponse<HardcoreState>> UserHardcoreAttributeExpired(HardcoreAttributeExpired change)
+    public async Task<HubResponse<HardcoreStatus>> UserHardcoreAttributeExpired(HardcoreAttributeExpired change)
     {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new HardcoreState());
-        return await _hubConnection!.InvokeAsync<HubResponse<HardcoreState>>(nameof(UserHardcoreAttributeExpired), change).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new HardcoreStatus());
+        return await _hubConnection!.InvokeAsync<HubResponse<HardcoreStatus>>(nameof(UserHardcoreAttributeExpired), change).ConfigureAwait(false);
     }
 
     public async Task<HubResponse> UserDelete()
@@ -306,10 +305,10 @@ public partial class MainHub
     #endregion Personal Interactions
 
     #region Kinkster Interactions
-    public async Task<HubResponse> UserSendKinksterRequest(CreateKinksterRequest request)
+    public async Task<HubResponse<KinksterRequest>> UserSendKinksterRequest(CreateKinksterRequest request)
     {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserSendKinksterRequest), request).ConfigureAwait(false); // wait for request to send.
+        if (!IsConnected) return HubResponseBuilder.AwDangIt<KinksterRequest>(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse<KinksterRequest>>(nameof(UserSendKinksterRequest), request).ConfigureAwait(false); // wait for request to send.
     }
 
     public async Task<HubResponse> UserCancelKinksterRequest(KinksterBase user)
@@ -318,10 +317,10 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserCancelKinksterRequest), user).ConfigureAwait(false); // wait for request to send.
     }
 
-    public async Task<HubResponse> UserAcceptKinksterRequest(KinksterBase user)
+    public async Task<HubResponse<AddedKinksterPair>> UserAcceptKinksterRequest(KinksterBase user)
     {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserAcceptKinksterRequest), user).ConfigureAwait(false); // wait for request to send.
+        if (!IsConnected) return HubResponseBuilder.AwDangIt<AddedKinksterPair>(GagSpeakApiEc.NetworkError); ;
+        return await _hubConnection!.InvokeAsync<HubResponse<AddedKinksterPair>>(nameof(UserAcceptKinksterRequest), user).ConfigureAwait(false); // wait for request to send.
     }
 
     public async Task<HubResponse> UserRejectKinksterRequest(KinksterBase user)
@@ -455,19 +454,31 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushMoodlesPresets), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserApplyMoodlesByGuid(MoodlesApplierById dto)
+    public async Task<HubResponse> UserPushStatusModified(PushStatusModified dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushStatusModified), dto).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> UserPushPresetModified(PushPresetModified dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushPresetModified), dto).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> UserApplyMoodlesByGuid(ApplyMoodleId dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserApplyMoodlesByGuid), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserApplyMoodlesByStatus(MoodlesApplierByStatus dto)
+    public async Task<HubResponse> UserApplyMoodlesByStatus(ApplyMoodleStatus dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserApplyMoodlesByStatus), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserRemoveMoodles(MoodlesRemoval dto)
+    public async Task<HubResponse> UserRemoveMoodles(RemoveMoodleId dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserRemoveMoodles), dto).ConfigureAwait(false);

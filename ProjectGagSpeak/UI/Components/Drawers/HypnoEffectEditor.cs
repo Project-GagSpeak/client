@@ -4,7 +4,6 @@ using CkCommons.Helpers;
 using CkCommons.Raii;
 using CkCommons.Widgets;
 using Dalamud.Interface;
-using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerClient;
@@ -17,7 +16,6 @@ using GagspeakAPI.Data;
 using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 
 namespace GagSpeak.Gui.Components;
 public class HypnoEffectEditor : IDisposable

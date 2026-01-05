@@ -32,7 +32,7 @@ public class LootItemsTab : IFancyTab
     private readonly TutorialService _guides;
     public LootItemsTab(ILogger<LootItemsTab> logger, GagspeakMediator mediator,
         CursedLootFileSelector selector, ActiveItemsDrawer drawer, GagRestrictionManager gags, 
-        RestrictionManager restrictions, CursedLootManager manager, FavoritesManager favorites,
+        RestrictionManager restrictions, CursedLootManager manager, FavoritesConfig favorites,
         TutorialService guides)
     {
         _logger = logger;
@@ -44,10 +44,10 @@ public class LootItemsTab : IFancyTab
         _guides = guides;
 
         _gagCombo = new RestrictionGagCombo(logger, favorites, () => [
-        ..gags.Storage.Values.OrderByDescending(p => favorites._favoriteGags.Contains(p.GagType)).ThenBy(p => p.GagType)
+        ..gags.Storage.Values.OrderByDescending(p => favorites.Gags.Contains(p.GagType)).ThenBy(p => p.GagType)
         ]);
         _bindCombo = new RestrictionCombo(logger, mediator, favorites, () => [
-            ..restrictions.Storage.OrderByDescending(p => favorites._favoriteRestrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
+            ..restrictions.Storage.OrderByDescending(p => favorites.Restrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
             ]);
     }
 

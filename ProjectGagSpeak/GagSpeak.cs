@@ -2,11 +2,11 @@ using CkCommons;
 using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
+using GagSpeak.DrawSystem;
 using GagSpeak.FileSystems;
 using GagSpeak.GameInternals.Detours;
 using GagSpeak.Gui;
 using GagSpeak.Gui.Components;
-using GagSpeak.Gui.Handlers;
 using GagSpeak.Gui.MainWindow;
 using GagSpeak.Gui.Modules.Puppeteer;
 using GagSpeak.Gui.Profile;
@@ -18,7 +18,6 @@ using GagSpeak.Gui.Wardrobe;
 using GagSpeak.Interop;
 using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
-using GagSpeak.Kinksters.Factories;
 using GagSpeak.MufflerCore.Handler;
 using GagSpeak.PlayerClient;
 using GagSpeak.PlayerControl;
@@ -34,6 +33,7 @@ using GagSpeak.State.Handlers;
 using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
 using GagSpeak.Utils;
+using GagSpeak.Watchers;
 using GagSpeak.WebAPI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -131,6 +131,14 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<GagSpeakLoc>()
         .AddSingleton<GagspeakEventManager>()
 
+        // Draw System
+        .AddSingleton<AllowancesDrawer>()
+        .AddSingleton<RequestsInDrawer>()
+        .AddSingleton<RequestsOutDrawer>()
+        .AddSingleton<WhitelistDrawer>()
+        .AddSingleton<RequestsDrawSystem>()
+        .AddSingleton<WhitelistDrawSystem>()
+
         // File System
         .AddSingleton<GagRestrictionFileSelector>()
         .AddSingleton<RestrictionFileSelector>()
@@ -174,21 +182,16 @@ public static class GagSpeakServiceExtensions
         // Player Client
         .AddSingleton<ClientAchievements>()
         .AddSingleton<AchievementEventHandler>()
-        .AddSingleton<FavoritesManager>()
         .AddSingleton<HypnoEffectManager>()
+        .AddSingleton<RequestsManager>()
         .AddSingleton<ClientData>()
-        .AddSingleton<TraitAllowanceManager>()
 
         // Player Kinkster
-        .AddSingleton<KinksterGameObjFactory>()
-        .AddSingleton<PairFactory>()
-        .AddSingleton<PairHandlerFactory>()
+        .AddSingleton<KinksterFactory>()
         .AddSingleton<KinksterManager>()
 
         // Services (Deathroll)
         .AddSingleton<DeathRollService>()
-
-        // Services (Mediator)
         .AddSingleton<GagspeakMediator>()
 
         // Services (KinkPlates)
@@ -199,34 +202,30 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<BlindfoldService>()
         .AddSingleton<HypnoService>()
 
-        // Services (Textures)
-        .AddSingleton<CosmeticService>()
-
-        // Services (Tutorial)
-        .AddSingleton<TutorialService>()
-
-        // Services (UI)
-        .AddSingleton<UiFontService>()
-
         // Services [Other]
         .AddSingleton<AchievementsService>()
         .AddSingleton<ArousalService>()
         .AddSingleton<AutoUnlockService>()
+        .AddSingleton<CharaObjectWatcher>()
         .AddSingleton<ChatService>()
+        .AddSingleton<CosmeticService>()
         .AddSingleton<ConnectionSyncService>()
         .AddSingleton<DistributorService>()
         .AddSingleton<DtrBarService>()
         .AddSingleton<EmoteService>()
-        .AddSingleton<InteractionsService>()
+        .AddSingleton<GagspeakMediator>()
         .AddSingleton<MufflerService>()
         .AddSingleton<NameplateService>()
         .AddSingleton<NotificationService>()
-        .AddSingleton<OnFrameworkService>()
+        .AddSingleton<OnTickService>()
         .AddSingleton<RemoteService>()
         .AddSingleton<SafewordService>()
+        .AddSingleton<SidePanelService>()
         .AddSingleton<ShareHubService>()
         .AddSingleton<SpellActionService>()
         .AddSingleton<TriggerActionService>()
+        .AddSingleton<TutorialService>()
+        .AddSingleton<UiFontService>()
         .AddSingleton<VibeLobbyDistributionService>()
 
         // Spatial Audio
@@ -262,7 +261,6 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<ClientDataListener>()
         .AddSingleton<PlayerHpListener>()
         .AddSingleton<IntifaceListener>()
-        .AddSingleton<KinksterListener>()
         .AddSingleton<PuppeteerListener>()
         .AddSingleton<ToyboxStateListener>()
         .AddSingleton<VisualStateListener>()
@@ -284,12 +282,12 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<VfxSpawnManager>()
 
         // UI (Probably mostly in Scoped)
-        .AddSingleton<IdDisplayHandler>()
         .AddSingleton<AccountInfoExchanger>()
         .AddSingleton<GlobalChatLog>()
         .AddSingleton<PopoutGlobalChatlog>()
         .AddSingleton<VibeRoomChatlog>()
         .AddSingleton<MainMenuTabs>()
+        .AddSingleton<SidePanelTabs>()
 
 
         // WebAPI (Server stuff)
@@ -301,7 +299,7 @@ public static class GagSpeakServiceExtensions
 
     public static IServiceCollection AddGagSpeakIPC(this IServiceCollection services)
     => services
-        // TODO: sundouleia?
+        .AddSingleton<IpcCallerSundouleia>()
         .AddSingleton<IpcCallerCustomize>()
         .AddSingleton<IpcCallerGlamourer>()
         .AddSingleton<IpcCallerIntiface>()
@@ -316,28 +314,28 @@ public static class GagSpeakServiceExtensions
     => services
         .AddSingleton<ConfigFileProvider>()
         .AddSingleton<MainConfig>()
-        .AddSingleton<ServerConfigService>()
-        .AddSingleton<NicknamesConfigService>()
-        .AddSingleton<ServerConfigManager>()
+        .AddSingleton<NicksConfig>()
+        .AddSingleton<FavoritesConfig>()
+        .AddSingleton<AllowancesConfig>()
+        .AddSingleton<AccountConfig>()
+        .AddSingleton<AccountManager>()
         .AddSingleton<HybridSaveService>();
 
     #region ScopedServices
     public static IServiceCollection AddGagSpeakScoped(this IServiceCollection services)
     => services
         // Scoped Components
-        .AddScoped<DrawKinksterRequests>()
         .AddScoped<EquipmentDrawer>()
         .AddScoped<AttributeDrawer>()
         .AddScoped<ModPresetDrawer>()
         .AddScoped<MoodleDrawer>()
         .AddScoped<ActiveItemsDrawer>()
         .AddScoped<AliasItemDrawer>()
-        .AddScoped<ListItemDrawer>()
         .AddScoped<TriggerDrawer>()
         .AddScoped<ImageImportTool>()
+        .AddScoped<SidePanelPair>()
 
         // Scoped Factories
-        .AddScoped<DrawEntityFactory>()
         .AddScoped<UiFactory>()
 
         // Scoped Handlers
@@ -350,12 +348,13 @@ public static class GagSpeakServiceExtensions
         // Scoped MainUI (Home)
         .AddScoped<WindowMediatorSubscriberBase, IntroUi>()
         .AddScoped<WindowMediatorSubscriberBase, MainUI>()
-        .AddScoped<HomepageTab>()
+        .AddScoped<HomeTab>()
         .AddScoped<WhitelistTab>()
         .AddScoped<PatternHubTab>()
         .AddScoped<MoodleHubTab>()
         .AddScoped<GlobalChatTab>()
         .AddScoped<AccountTab>()
+        .AddScoped<WindowMediatorSubscriberBase, SidePanelUI>()
 
         // Scoped UI (Wardrobe)
         .AddScoped<WindowMediatorSubscriberBase, WardrobeUI>()
@@ -396,9 +395,7 @@ public static class GagSpeakServiceExtensions
         .AddScoped<ModPresetsPanel>()
 
         // Scoped UI (Trait Allowances Presets)
-        .AddScoped<WindowMediatorSubscriberBase, TraitAllowanceUI>()
-        .AddScoped<TraitAllowanceSelector>()
-        .AddScoped<TraitAllowancePanel>()
+        .AddScoped<WindowMediatorSubscriberBase, AllowancesUI>()
 
         // Scoped UI (Publications)
         .AddScoped<WindowMediatorSubscriberBase, PublicationsUI>()
@@ -407,14 +404,6 @@ public static class GagSpeakServiceExtensions
         // Scoped UI (Achievements)
         .AddScoped<WindowMediatorSubscriberBase, AchievementsUI>()
         .AddScoped<AchievementTabs>()
-
-        // StickyWindow
-        .AddScoped<WindowMediatorSubscriberBase, KinksterInteractionsUI>()
-        .AddScoped<PresetLogicDrawer>()
-        .AddScoped<ClientPermsForKinkster>()
-        .AddScoped<KinksterPermsForClient>()
-        .AddScoped<KinksterHardcore>()
-        .AddScoped<KinksterShockCollar>()
 
         // Scoped Migrations
         .AddScoped<WindowMediatorSubscriberBase, MigrationsUI>()
@@ -460,7 +449,7 @@ public static class GagSpeakServiceExtensions
         .AddHostedService(p => p.GetRequiredService<CosmeticService>())     // Initializes our required textures so methods can work.
         .AddHostedService(p => p.GetRequiredService<GagspeakMediator>())    // Runs the task for monitoring mediator events.
         .AddHostedService(p => p.GetRequiredService<NotificationService>()) // Important Background Monitor.
-        .AddHostedService(p => p.GetRequiredService<OnFrameworkService>())  // Starts & monitors the framework update cycle.
+        .AddHostedService(p => p.GetRequiredService<OnTickService>())  // Starts & monitors the framework update cycle.
 
         // Cached Data That MUST be initialized before anything else for validity.
         .AddHostedService(p => p.GetRequiredService<CosmeticService>())     // Provides all Textures nessisary for the plugin.

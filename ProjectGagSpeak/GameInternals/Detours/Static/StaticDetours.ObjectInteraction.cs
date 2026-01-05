@@ -1,4 +1,3 @@
-using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;

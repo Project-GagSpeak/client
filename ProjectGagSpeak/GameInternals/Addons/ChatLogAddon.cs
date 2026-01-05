@@ -1,6 +1,5 @@
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using InteropGenerator.Runtime;
 
 // Attributions & References:
 // --------------------------

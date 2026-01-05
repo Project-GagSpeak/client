@@ -3,8 +3,6 @@ using CkCommons.RichText;
 using CkCommons.Textures;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
-using GagSpeak.Services.Textures;
-using GagSpeak.State.Caches;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
@@ -12,20 +10,21 @@ using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
+using GagspeakAPI.Extensions;
 
 namespace GagSpeak.CustomCombos.Moodles;
 
 public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePresetInfo>
 {
-    private int _maxPresetCount => _kinksterRef.LastMoodlesData.Presets.Count > 0 ? _kinksterRef.LastMoodlesData.PresetList.Max(x => x.Statuses.Count) : 0;
+    private int _maxPresetCount => _kinksterRef.MoodleData.Presets.Count > 0 ? _kinksterRef.MoodleData.PresetList.Max(x => x.Statuses.Count) : 0;
     private float _iconWithPadding => IconSize.X + ImGui.GetStyle().ItemInnerSpacing.X;
 
     public PairMoodlePresetCombo(ILogger log, MainHub hub, Kinkster kinkster, float scale)
-        : base(log, hub, kinkster, scale, () => [.. kinkster.LastMoodlesData.PresetList.OrderBy(x => x.Title)])
+        : base(log, hub, kinkster, scale, () => [.. kinkster.MoodleData.PresetList.OrderBy(x => x.Title)])
     { }
 
     protected override bool DisableCondition()
-        => Current.GUID == Guid.Empty || !_kinksterRef.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou);
+        => Current.GUID == Guid.Empty || !_kinksterRef.PairPerms.MoodleAccess.HasAny(MoodleAccess.AllowOwn);
     protected override string ToString(MoodlePresetInfo obj)
         => obj.Title.StripColorTags();
 
@@ -50,13 +49,13 @@ public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePreset
             for (int i = 0, iconsDrawn = 0; i < moodlePreset.Statuses.Count; i++)
             {
                 var status = moodlePreset.Statuses[i];
-                if (!_kinksterRef.LastMoodlesData.Statuses.TryGetValue(status, out var info))
+                if (!_kinksterRef.MoodleData.Statuses.TryGetValue(status, out var info))
                 {
                     ImGui.SameLine(0, _iconWithPadding);
                     continue;
                 }
 
-                MoodleDisplay.DrawMoodleIcon(info.IconID, info.Stacks, IconSize);
+                MoodleIcon.DrawMoodleIcon(info.IconID, info.Stacks, IconSize);
                 DrawItemTooltip(info);
 
                 if (++iconsDrawn < moodlePreset.Statuses.Count)
@@ -78,7 +77,7 @@ public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePreset
         var statusesToCheck = new List<MoodlesStatusInfo>(item.Statuses.Count);
         foreach (var guid in item.Statuses)
         {
-            if (_kinksterRef.LastMoodlesData.Statuses.TryGetValue(guid, out var info))
+            if (_kinksterRef.MoodleData.Statuses.TryGetValue(guid, out var info))
                 statusesToCheck.Add(info);
         }
 
@@ -89,8 +88,7 @@ public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePreset
     {
         UiService.SetUITask(async () =>
         {
-            var dto = new MoodlesApplierById(_kinksterRef.UserData, item.Statuses, MoodleType.Preset);
-            HubResponse res = await _mainHub.UserApplyMoodlesByGuid(dto);
+            var res = await _mainHub.UserApplyMoodlesByGuid(new(_kinksterRef.UserData, item.Statuses, true, false));
             if (res.ErrorCode is not GagSpeakApiEc.Success)
                 Log.LogDebug($"Failed to apply moodle preset {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
         });

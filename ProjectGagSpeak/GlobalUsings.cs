@@ -21,46 +21,43 @@ global using Bagagwa = System.Exception;
 
 /// Global Tuple
 global using MoodlesStatusInfo = (
+    int Version,
     System.Guid GUID,
     int IconID,
     string Title,
     string Description,
-    GagspeakAPI.Enums.StatusType Type,
-    string Applier,
-    bool Dispelable,
-    int Stacks,
-    bool Persistent,
-    int Days,
-    int Hours,
-    int Minutes,
-    int Seconds,
-    bool NoExpire,
-    bool AsPermanent,
-    System.Guid StatusOnDispell,
-    string CustomVFXPath,
-    bool StackOnReapply,
-    int StacksIncOnReapply
-    );
+    string CustomVFXPath,               // What VFX to show on application.
+    long ExpireTicks,                   // Permanent if -1, referred to as 'NoExpire' in MoodleStatus
+    GagspeakAPI.StatusType Type,        // Moodles StatusType enum.
+    int Stacks,                         // Usually 1 when no stacks are used.
+    int StackSteps,                     // How many stacks to add per reapplication.
+    GagspeakAPI.Modifiers Modifiers,    // What can be customized, casted to uint from Modifiers (Dalamud IPC Rules)
+    System.Guid ChainedStatus,          // What status is chained to this one.
+    GagspeakAPI.ChainTrigger ChainTrigger, // What triggers the chained status.
+    string Applier,                     // Who applied the moodle.
+    string Dispeller,                   // When set, only this person can dispel your moodle.
+    bool Permanent                      // Referred to as 'Sticky' in the Moodles UI
+);
+
 
 global using MoodlePresetInfo = (
     System.Guid GUID,
     System.Collections.Generic.List<System.Guid> Statuses,
-    GagspeakAPI.Enums.PresetApplicationType ApplicationType,
+    GagspeakAPI.PresetApplicationType ApplicationType,
     string Title
 );
 
-global using MoodlesGSpeakPairPerms = (
-    bool AllowPositive,
-    bool AllowNegative,
-    bool AllowSpecial,
-    bool AllowApplyingOwnMoodles,
-    bool AllowApplyingPairsMoodles,
-    System.TimeSpan MaxDuration,
-    bool AllowPermanent,
-    bool AllowRemoval
-    );
+// The IPC Tuple used to define MoodleAccess permission between recipient and client.
+global using IPCMoodleAccessTuple = (
+    GagspeakAPI.Enums.MoodleAccess OtherAccess, long OtherMaxTime,
+    GagspeakAPI.Enums.MoodleAccess CallerAccess, long CallerMaxTime
+);
 
-global using IPCCharacterDataTuple = (string Name, ushort WorldId, byte CharacterType, ushort CharacterSubType);
+// Dalamud's Newtonsoft-based converter for objects does not play nice with nested [Flag] Enums in tuples, inside dictionaries.
+global using ProviderMoodleAccessTuple = (
+    short OtherAccessFlags, long OtherMaxTime, 
+    short CallerAccessFlags, long CallerMaxTime
+);
 
 global using IPCProfileDataTuple = (
     System.Guid UniqueId,
@@ -68,7 +65,8 @@ global using IPCProfileDataTuple = (
     string VirtualPath,
     System.Collections.Generic.List<(string Name, ushort WorldId, byte CharacterType, ushort CharacterSubType)> Characters,
     int Priority,
-    bool IsEnabled);
+    bool IsEnabled
+);
 
 global using AddressBookEntryTuple = (
     string Name, 
@@ -81,4 +79,4 @@ global using AddressBookEntryTuple = (
     bool ApartmentSubdivision, 
     bool AliasEnabled, 
     string Alias
-    );
+);

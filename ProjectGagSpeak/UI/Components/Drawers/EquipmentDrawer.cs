@@ -23,7 +23,6 @@ using OtterGui.Extensions;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
-using System;
 
 namespace GagSpeak.Gui.Components;
 
@@ -50,7 +49,7 @@ public class EquipmentDrawer
     private readonly TutorialService _guides;
 
     public EquipmentDrawer(ILogger<EquipmentDrawer> logger, GagspeakMediator mediator,
-        IpcCallerGlamourer glamourer, RestrictionManager restrictions, FavoritesManager favorites,
+        IpcCallerGlamourer glamourer, RestrictionManager restrictions, FavoritesConfig favorites,
         TextureService textures, TutorialService guides)
     {
         _logger = logger;
@@ -63,7 +62,7 @@ public class EquipmentDrawer
         _stainCombo = new GameStainCombo(logger);
         _guides = guides;
         _restrictionCombo = new RestrictionCombo(logger, mediator, favorites, () => [ 
-            ..restrictions.Storage.OrderByDescending(p => favorites._favoriteRestrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
+            ..restrictions.Storage.OrderByDescending(p => favorites.Restrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
     }
 

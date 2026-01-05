@@ -82,16 +82,16 @@ public static class Icons
             ImGuiUtil.HoverIconTooltip(ptr, textureSize, size);
     }
 
-    public static bool DrawFavoriteStar(FavoritesManager favorites, FavoriteIdContainer type, Guid id, bool framed = true)
+    public static bool DrawFavoriteStar(FavoritesConfig favorites, FavoriteIdContainer type, Guid id, bool framed = true)
     {
         var isFavorite = type switch
         {
-            FavoriteIdContainer.Restraint => favorites._favoriteRestraints.Contains(id),
-            FavoriteIdContainer.Restriction => favorites._favoriteRestrictions.Contains(id),
-            FavoriteIdContainer.CursedLoot => favorites._favoriteCursedLoot.Contains(id),
-            FavoriteIdContainer.Pattern => favorites._favoritePatterns.Contains(id),
-            FavoriteIdContainer.Alarm => favorites._favoriteAlarms.Contains(id),
-            FavoriteIdContainer.Trigger => favorites._favoriteTriggers.Contains(id),
+            FavoriteIdContainer.Restraint => favorites.Restraints.Contains(id),
+            FavoriteIdContainer.Restriction => favorites.Restrictions.Contains(id),
+            FavoriteIdContainer.CursedLoot => favorites.CursedLoot.Contains(id),
+            FavoriteIdContainer.Pattern => favorites.Patterns.Contains(id),
+            FavoriteIdContainer.Alarm => favorites.Alarms.Contains(id),
+            FavoriteIdContainer.Trigger => favorites.Triggers.Contains(id),
             _ => false
         };
         var hovering = ImGui.IsMouseHoveringRect(
@@ -114,9 +114,9 @@ public static class Icons
         return false;
     }
 
-    public static bool DrawFavoriteStar(FavoritesManager favorites, GagType gag, bool framed = true)
+    public static bool DrawFavoriteStar(FavoritesConfig favorites, GagType gag, bool framed = true)
     {
-        var isFavorite = favorites._favoriteGags.Contains(gag);
+        var isFavorite = favorites.Gags.Contains(gag);
         var hovering = ImGui.IsMouseHoveringRect(
             ImGui.GetCursorScreenPos(), ImGui.GetCursorScreenPos() + new Vector2(ImGui.GetTextLineHeight()));
 
@@ -137,9 +137,9 @@ public static class Icons
         return false;
     }
 
-    public static bool DrawFavoriteStar(FavoritesManager favorites, string kinksterUid, bool framed = true)
+    public static bool DrawFavoriteStar(FavoritesConfig favorites, string kinksterUid, bool framed = true)
     {
-        var isFavorite = favorites._favoriteKinksters.Contains(kinksterUid); 
+        var isFavorite = favorites.Kinksters.Contains(kinksterUid); 
         var pos = ImGui.GetCursorScreenPos();
         var hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetTextLineHeight()));
         var col = hovering ? ImGuiColors.DalamudGrey2 : isFavorite ? ImGuiColors.ParsedGold : ImGuiColors.ParsedGrey;

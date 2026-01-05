@@ -1,8 +1,5 @@
 using GagSpeak.PlayerClient;
-using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.State.Handlers;
-using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Dto.VibeRoom;
@@ -30,7 +27,7 @@ public class VibeLobbyManager : DisposableMediatorSubscriberBase
         _clientToys = clientToys;
 
         // Update the latest invites upon connection.
-        Mediator.Subscribe<PostConnectionDataReceivedMessage>(this, _ =>
+        Mediator.Subscribe<ConnectedDataSyncedMessage>(this, _ =>
         {
             _currentInvites = _.Info.RoomInvites;
             // Reconnect to room if possible.
@@ -40,7 +37,7 @@ public class VibeLobbyManager : DisposableMediatorSubscriberBase
             }
         });
 
-        Mediator.Subscribe<MainHubDisconnectedMessage>(this, (msg) =>
+        Mediator.Subscribe<DisconnectedMessage>(this, (msg) =>
         {
             Logger.LogInformation("Disconnected from MainHub, clearing Vibe Room data.");
 
@@ -160,7 +157,7 @@ public class VibeLobbyManager : DisposableMediatorSubscriberBase
 
     public RoomParticipant GetOwnParticipantInfo()
     {
-        return new RoomParticipant(MainHub.PlayerUserData, _config.Current.NicknameInVibeRooms)
+        return new RoomParticipant(MainHub.OwnUserData, _config.Current.NicknameInVibeRooms)
         {
             AllowedUids = new List<string>(),
             Devices = _clientToys.InteractableToys.Select(toy => toy.ToToyInfo()).ToList()
