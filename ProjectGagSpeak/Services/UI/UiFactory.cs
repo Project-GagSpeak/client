@@ -1,4 +1,3 @@
-using GagSpeak.Gui;
 using GagSpeak.Gui.Components;
 using GagSpeak.Gui.Profile;
 using GagSpeak.Kinksters;

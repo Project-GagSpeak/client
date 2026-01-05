@@ -1,4 +1,5 @@
 using CkCommons.Gui;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
@@ -10,7 +11,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using Dalamud.Bindings.ImGui;
+using GagspeakAPI.Hub;
 using OtterGui.Text;
 using System.Globalization;
 using System.Reflection;
@@ -20,52 +21,55 @@ namespace GagSpeak.Gui.MainWindow;
 // this can easily become the "contact list" tab of the "main UI" window.
 public class MainUI : WindowMediatorSubscriberBase
 {
+    public const float MAIN_UI_WIDTH = 380f;
+
+    private readonly MainConfig _config;
+    private readonly AccountManager _account;
     private readonly MainHub _hub;
-    private readonly MainConfig _configService;
-    private readonly KinksterManager _pairManager;
-    private readonly ServerConfigManager _serverConfigs;
     private readonly MainMenuTabs _tabMenu;
-    private readonly HomepageTab _homepage;
+    private readonly RequestsManager _requests;
+    private readonly KinksterManager _kinksters;
+    private readonly TutorialService _guides;
+    private readonly HomeTab _homepage;
     private readonly WhitelistTab _whitelist;
     private readonly PatternHubTab _patternHub;
     private readonly MoodleHubTab _moodlesHub;
     private readonly GlobalChatTab _globalChat;
-    private readonly AccountTab _account;
-    private readonly TutorialService _guides;
     private float _windowContentWidth;
-    private bool _addingNewUser = false;
-    public string _pairToAdd = string.Empty; // the pair to add
-    public string _pairToAddMessage = string.Empty; // the message attached to the pair to add
-    
+
+    private bool _creatingRequest = false;
+    public string _uidToSentTo = string.Empty;
+    public string _preferredNick = string.Empty;
+    public string _requestMessage = string.Empty;
+
     private bool ThemePushed = false;
 
-    public MainUI(ILogger<MainUI> logger, GagspeakMediator mediator, MainHub hub,
-        MainConfig config, KinksterManager pairs, ServerConfigManager serverConfigs,
-        HomepageTab home, WhitelistTab whitelist, PatternHubTab patternHub, 
-        MoodleHubTab moodlesHub, GlobalChatTab globalChat, AccountTab account, 
-        MainMenuTabs tabMenu, TutorialService guides) 
+    public MainUI(ILogger<MainUI> logger, GagspeakMediator mediator, MainConfig config,
+        AccountManager account, MainHub hub, MainMenuTabs tabMenu, RequestsManager requests, 
+        KinksterManager kinksters, TutorialService guides, HomeTab home, WhitelistTab whitelist, 
+        PatternHubTab patternHub, MoodleHubTab moodlesHub, GlobalChatTab globalChat)         
         : base(logger, mediator, "###GagSpeakMainUI")
     {
+        _config = config;
+        _account = account;
         _hub = hub;
-        _configService = config;
-        _pairManager = pairs;
-        _serverConfigs = serverConfigs;
+        _tabMenu = tabMenu;
+        _requests = requests;
+        _kinksters = kinksters;
+        _guides = guides;
         _homepage = home;
         _whitelist = whitelist;
         _patternHub = patternHub;
         _moodlesHub = moodlesHub;
         _globalChat = globalChat;
-        _account = account;
-        _tabMenu = tabMenu;
-        _guides = guides;
 
         // display info about the folders
         var ver = Assembly.GetExecutingAssembly().GetName().Version!;
-        WindowName = $"GagSpeak Open Beta ({ver.Major}.{ver.Minor}.{ver.Build}.{ver.Revision})###GagSpeakMainUI";
+        WindowName = $"GagSpeak Closed Beta ({ver.Major}.{ver.Minor}.{ver.Build}.{ver.Revision})###GagSpeakMainUI";
         Flags |= WFlags.NoDocking;
 
         this.PinningClickthroughFalse();
-        this.SetBoundaries(new Vector2(380, 500), new Vector2(380, 2000));
+        this.SetBoundaries(new Vector2(MAIN_UI_WIDTH, 500), new Vector2(MAIN_UI_WIDTH, 2000));
         TitleBarButtons = new TitleBarButtonBuilder()
             .Add(FAI.Book, "Changelog", () => Mediator.Publish(new UiToggleMessage(typeof(ChangelogUI))))
             .Add(FAI.Cog, "Settings", () => Mediator.Publish(new UiToggleMessage(typeof(SettingsUi))))
@@ -73,8 +77,10 @@ public class MainUI : WindowMediatorSubscriberBase
             .Build();
         
         // Default to open if the user desires for it to be open.
-        if(_configService.Current.OpenMainUiOnStartup)
+        if(_config.Current.OpenMainUiOnStartup)
             Toggle();
+        // Update the tab menu selection.
+        _tabMenu.TabSelection = _config.Current.MainUiTab;
 
         Mediator.Subscribe<SwitchToMainUiMessage>(this, (_) => IsOpen = true);
         Mediator.Subscribe<SwitchToIntroUiMessage>(this, (_) => IsOpen = false);
@@ -149,10 +155,9 @@ public class MainUI : WindowMediatorSubscriberBase
         // if we are connected, draw out our menus based on the tab selection.
         if (MainHub.IsConnected)
         {
-            if (_addingNewUser)
-            {
-                DrawAddPair(_windowContentWidth, ImGui.GetStyle().ItemInnerSpacing.X);
-            }
+            if (_creatingRequest)
+                DrawRequestCreator(_windowContentWidth, ImUtf8.ItemInnerSpacing.X);
+
             // draw the bottom tab bar
             using (ImRaii.PushId("MainMenuTabBar")) _tabMenu.Draw(_windowContentWidth);
 
@@ -160,27 +165,24 @@ public class MainUI : WindowMediatorSubscriberBase
             switch (_tabMenu.TabSelection)
             {
                 case MainMenuTabs.SelectedTab.Homepage:
-                    using (ImRaii.PushId("homepageComponent")) _homepage.DrawHomepageSection();
+                    _homepage.DrawSection();
+                    break;
+                case MainMenuTabs.SelectedTab.Requests:
+                    ImGui.Text("Hello!");
                     break;
                 case MainMenuTabs.SelectedTab.Whitelist:
-                    _whitelist.DrawWhitelistSection();
+                    _whitelist.DrawSection();
                     break;
                 case MainMenuTabs.SelectedTab.PatternHub:
-                    using (ImRaii.PushId("patternHubComponent"))
-                    {
-                        _patternHub.DrawPatternHub();
-                        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternResults, ImGui.GetWindowPos(), ImGui.GetWindowSize(), 
-                            () => { _tabMenu.TabSelection = MainMenuTabs.SelectedTab.MoodlesHub; });
-                    }
+                    _patternHub.DrawPatternHub();
+                    _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternResults, ImGui.GetWindowPos(), ImGui.GetWindowSize(), 
+                        () => { _tabMenu.TabSelection = MainMenuTabs.SelectedTab.MoodlesHub; });
                     break;
                 case MainMenuTabs.SelectedTab.MoodlesHub:
-                    using (ImRaii.PushId("moodlesHubComponent")) _moodlesHub.DrawMoodlesHub();
+                    _moodlesHub.DrawMoodlesHub();
                     break;
                 case MainMenuTabs.SelectedTab.GlobalChat:
-                    using (ImRaii.PushId("globalChatComponent")) _globalChat.DrawDiscoverySection();
-                    break;
-                case MainMenuTabs.SelectedTab.MySettings:
-                    using (ImRaii.PushId("accountSettingsComponent")) _account.DrawAccountSection();
+                    _globalChat.DrawDiscoverySection();
                     break;
             }
         }
@@ -189,33 +191,43 @@ public class MainUI : WindowMediatorSubscriberBase
         LastSize = ImGui.GetWindowSize();
     }
 
-    public void DrawAddPair(float availableXWidth, float spacingX)
+    public void DrawRequestCreator(float availableXWidth, float spacingX)
     {
-        var buttonSize = CkGui.IconTextButtonSize(FAI.Ban, "Clear");
+        var buttonSize = CkGui.IconTextButtonSize(FAI.Upload, "Send Pair Request");
         ImGui.SetNextItemWidth(availableXWidth - buttonSize - spacingX);
-        ImGui.InputTextWithHint("##otherUid", "Other players UID/Alias", ref _pairToAdd, 20);
+        // Let the client say who they want the request to go to.
+        ImGui.InputTextWithHint("##otherUid", "Other players UID/Alias", ref _uidToSentTo, 20);
         ImUtf8.SameLineInner();
-        var existingUser = _pairManager.DirectPairs.Exists(p => string.Equals(p.UserData.UID, _pairToAdd, StringComparison.Ordinal) || string.Equals(p.UserData.Alias, _pairToAdd, StringComparison.Ordinal));
-        using (ImRaii.Disabled(existingUser || string.IsNullOrEmpty(_pairToAdd)))
+
+        // Disable the add button if they are already added or nothing is in the field. (might need to also account for alias here)
+        var allowSend = !string.IsNullOrEmpty(_uidToSentTo) && !_kinksters.ContainsKinkster(_uidToSentTo);
+        if (CkGui.IconTextButton(FAI.Upload, "Send", buttonSize, false, !allowSend))
         {
-            if (CkGui.IconTextButton(FAI.UserPlus, "Add", buttonSize, false, _pairToAdd.IsNullOrEmpty()))
+            UiService.SetUITask(async () =>
             {
-                // call the UserAddPair function on the server with the user data transfer object
-                _hub.UserSendKinksterRequest(new(new(_pairToAdd), _pairToAddMessage)).ConfigureAwait(false);
-                _pairToAdd = string.Empty;
-                _pairToAddMessage = string.Empty;
-                _addingNewUser = false;
-            }
+                var res = await _hub.UserSendKinksterRequest(new(new(_uidToSentTo), false, _preferredNick, _requestMessage));
+                _uidToSentTo = string.Empty;
+                _requestMessage = string.Empty;
+                _creatingRequest = false;
+                // Add the request if it was successful!
+                if (res.ErrorCode is GagSpeakApiEc.Success)
+                    _requests.AddNewRequest(res.Value!);
+            });
         }
-        CkGui.AttachToolTip("Pair with " + (_pairToAdd.IsNullOrEmpty() ? "other user" : _pairToAdd));
+        if (!string.IsNullOrEmpty(_uidToSentTo))
+            CkGui.AttachToolTip($"Send Pair Request to {_uidToSentTo}");
+
         // draw a attached message field as well if they want.
         ImGui.SetNextItemWidth(availableXWidth);
-        ImGui.InputTextWithHint("##pairAddOptionalMessage", "Attach Msg to Request (Optional)", ref _pairToAddMessage, 100);
+        ImGui.InputTextWithHint("##pairAddOptionalMessage", "Attach Msg to Request (Optional)", ref _requestMessage, 100);
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AttachingMessages, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () =>
         {
-            _addingNewUser = !_addingNewUser;
-            _tabMenu.TabSelection = MainMenuTabs.SelectedTab.MySettings;
+            _creatingRequest = !_creatingRequest;
+            _tabMenu.TabSelection = MainMenuTabs.SelectedTab.Homepage;
         });
+        // Preferred nick area.
+        ImGui.SetNextItemWidth(availableXWidth);
+        ImGui.InputTextWithHint("##preferredNick", "Preferred Nickname (Optional)", ref _preferredNick, 20);
         ImGui.Separator();
     }
 
@@ -252,7 +264,7 @@ public class MainUI : WindowMediatorSubscriberBase
         var connectionButtonSize = CkGui.IconButtonSize(FAI.Link);
         var addUserButtonSize = CkGui.IconButtonSize(addUserIcon);
 
-        var userCount = MainHub.MainOnlineUsers.ToString(CultureInfo.InvariantCulture);
+        var userCount = MainHub.OnlineUsers.ToString(CultureInfo.InvariantCulture);
         var userSize = ImGui.CalcTextSize(userCount);
         var textSize = ImGui.CalcTextSize("Kinksters Online");
         var serverText = "Main GagSpeak Server";
@@ -272,9 +284,9 @@ public class MainUI : WindowMediatorSubscriberBase
             ImGui.TableNextColumn();
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (totalHeight - addUserButtonSize.Y) / 2);
             if (CkGui.IconButton(addUserIcon, disabled: !MainHub.IsConnected))
-                _addingNewUser = !_addingNewUser;
+                _creatingRequest = !_creatingRequest;
             CkGui.AttachToolTip("Add New User to Whitelist");
-            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AddingKinksters, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => _addingNewUser = !_addingNewUser);
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AddingKinksters, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => _creatingRequest = !_creatingRequest);
 
             // in the next column, draw the centered status.
             ImGui.TableNextColumn();
@@ -324,24 +336,20 @@ public class MainUI : WindowMediatorSubscriberBase
                         // If its true, make sure our ServerStatus is Connected, or if its false, make sure our ServerStatus is Disconnected or offline.
                         if (MainHub.IsConnected)
                         {
-                            // If we are connected, we want to disconnect.
-                            _serverConfigs.ServerStorage.FullPause = true;
-                            _serverConfigs.Save();
-                            _ = _hub.Disconnect(ServerState.Disconnected);
+                            _config.SetPauseState(true);
+                            UiService.SetUITask(_hub.Disconnect(ServerState.Disconnected, DisconnectIntent.Normal));
                         }
                         else if (MainHub.ServerStatus is (ServerState.Disconnected or ServerState.Offline))
                         {
-                            // If we are disconnected, we want to connect.
-                            _serverConfigs.ServerStorage.FullPause = false;
-                            _serverConfigs.Save();
-                            _ = _hub.Connect();
+                            _config.SetPauseState(false);
+                            UiService.SetUITask(_hub.Connect());
                         }
                     }
                 }
                 // attach the tooltip for the connection / disconnection button)
                 CkGui.AttachToolTip(MainHub.IsConnected
-                    ? "Disconnect from " + _serverConfigs.ServerStorage.ServerName + "--SEP--Current Status: " + MainHub.ServerStatus
-                    : "Connect to " + _serverConfigs.ServerStorage.ServerName + "--SEP--Current Status: " + MainHub.ServerStatus);
+                    ? $"Disconnect from {MainHub.MAIN_SERVER_NAME}--SEP--Current Status: {MainHub.ServerStatus}"
+                    : $"Connect to {MainHub.MAIN_SERVER_NAME}--SEP--Current Status: {MainHub.ServerStatus}");
             }
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ConnectionState, WindowPos, WindowSize, () => _tabMenu.TabSelection = MainMenuTabs.SelectedTab.Homepage);
         }

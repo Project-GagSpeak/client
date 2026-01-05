@@ -2,7 +2,6 @@ using CkCommons.Gui;
 using CkCommons.Textures;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
-using Dalamud.Utility;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
@@ -15,7 +14,6 @@ using GagspeakAPI.Util;
 using Microsoft.IdentityModel.Tokens;
 using Penumbra.GameData.Enums;
 using System.Globalization;
-using System.Reflection.Metadata;
 
 namespace GagSpeak.Gui.Profile;
 public partial class KinkPlateUI : WindowMediatorSubscriberBase
@@ -86,7 +84,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
     // Size = 750 by 450
     private void DrawKinkPlatePair(ImDrawListPtr wdl, KinkPlate profile)
     {
-        DrawPlate(wdl, profile.KinkPlateInfo);
+        DrawPlate(wdl, profile.Info);
 
         DrawProfilePic(wdl, profile);
 
@@ -97,7 +95,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         // Now let's draw out the chosen achievement Name..
         using (UiFontService.GagspeakTitleFont.Push())
         {
-            var titleName = ClientAchievements.GetTitleById(profile.KinkPlateInfo.ChosenTitleId);
+            var titleName = ClientAchievements.GetTitleById(profile.Info.ChosenTitleId);
             var titleHeightGap = TitleLineStartPos.Y - (RectMin.Y + 4f);
             var chosenTitleSize = ImGui.CalcTextSize(titleName);
             // calculate the Y height it should be drawn on by taking the gap height and dividing it by 2 and subtracting the text height.
@@ -110,21 +108,21 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         // move over to the top area to draw out the achievement title line wrap.
         wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.AchievementLineSplit], TitleLineStartPos, TitleLineSize);
 
-        DrawGagInfo(wdl, profile.KinkPlateInfo);
+        DrawGagInfo(wdl, profile.Info);
 
-        DrawStats(wdl, profile.KinkPlateInfo);
+        DrawStats(wdl, profile.Info);
 
-        DrawBlockedSlots(wdl, profile.KinkPlateInfo);
+        DrawBlockedSlots(wdl, profile.Info);
     }
 
     private void DrawPlate(ImDrawListPtr wdl, KinkPlateContent info)
     {
         // draw out the background for the window.
-        if (_cosmetics.TryGetBackground(ProfileComponent.Plate, info.PlateBackground, out var plateBG))
+        if (CosmeticService.TryGetBackground(PlateElement.Plate, info.PlateBG, out var plateBG))
             wdl.AddDalamudImageRounded(plateBG, RectMin, PlateSize, 25f);
 
         // draw out the border on top of that.
-        if (_cosmetics.TryGetBorder(ProfileComponent.Plate, info.PlateBorder, out var plateBorder))
+        if (CosmeticService.TryGetBorder(PlateElement.Plate, info.PlateBorder, out var plateBorder))
             wdl.AddDalamudImageRounded(plateBorder, RectMin, PlateSize, 20f);
 
         // Draw the close button.
@@ -141,12 +139,12 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         }
         else // But otherwise can draw normal image.
         {
-            var pfpWrap = profile.GetCurrentProfileOrDefault();
+            var pfpWrap = profile.GetProfileOrDefault();
             wdl.AddDalamudImageRounded(pfpWrap, ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
         }
 
         // draw out the border for the profile picture
-        if (_cosmetics.TryGetBorder(ProfileComponent.ProfilePicture, profile.KinkPlateInfo.ProfilePictureBorder, out var pfpBorder))
+        if (CosmeticService.TryGetBorder(PlateElement.Avatar, profile.Info.AvatarBorder, out var pfpBorder))
             wdl.AddDalamudImageRounded(pfpBorder, ProfilePictureBorderPos, ProfilePictureBorderSize, ProfilePictureSize.Y / 2);
 
         // Draw out Supporter Icon Black BG base.
@@ -230,24 +228,24 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
     private void DrawDescription(ImDrawListPtr wdl, KinkPlate profile)
     {
         // draw out the description background.
-        if (_cosmetics.TryGetBackground(ProfileComponent.Description, profile.KinkPlateInfo.DescriptionBackground, out var descBG))
+        if (CosmeticService.TryGetBackground(PlateElement.Description, profile.Info.DescriptionBG, out var descBG))
             wdl.AddDalamudImageRounded(descBG, DescriptionBorderPos, DescriptionBorderSize, 2f);
 
         // description border
-        if (_cosmetics.TryGetBorder(ProfileComponent.Description, profile.KinkPlateInfo.DescriptionBorder, out var descBorder))
+        if (CosmeticService.TryGetBorder(PlateElement.Description, profile.Info.DescriptionBorder, out var descBorder))
             wdl.AddDalamudImageRounded(descBorder, DescriptionBorderPos, DescriptionBorderSize, 2f);
 
         // description overlay.
-        if (_cosmetics.TryGetOverlay(ProfileComponent.Description, profile.KinkPlateInfo.DescriptionOverlay, out var descOverlay))
+        if (CosmeticService.TryGetOverlay(PlateElement.Description, profile.Info.DescriptionOverlay, out var descOverlay))
             wdl.AddDalamudImageRounded(descOverlay, DescriptionBorderPos, DescriptionBorderSize, 2f);
 
         // draw out the description text here. What displays is affected by if it is flagged or not.
         ImGui.SetCursorScreenPos(DescriptionBorderPos + Vector2.One * 10f);
         // shadowban them by displaying the default text if flagged or disabled.
         var description = profile.TempDisabled ? "Profile is currently disabled."
-            : profile.KinkPlateInfo.Description.IsNullOrEmpty()
-            ? "No Description Was Set.." : profile.KinkPlateInfo.Description;
-        var color = (profile.KinkPlateInfo.Description.IsNullOrEmpty() || profile.TempDisabled) 
+            : profile.Info.Description.IsNullOrEmpty()
+            ? "No Description Was Set.." : profile.Info.Description;
+        var color = (profile.Info.Description.IsNullOrEmpty() || profile.TempDisabled) 
             ? ImGuiColors.DalamudGrey2 : ImGuiColors.DalamudWhite;
         DrawLimitedDescription(description, color, DescriptionBorderSize - Vector2.One * 12f);
     }
@@ -255,7 +253,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
     private void DrawGagInfo(ImDrawListPtr wdl, KinkPlateContent info)
     {
         // Draw out the background for the gag layer one item.
-        if (_cosmetics.TryGetBackground(ProfileComponent.GagSlot, info.GagSlotBackground, out var gagSlotBG))
+        if (CosmeticService.TryGetBackground(PlateElement.GagSlot, info.GagSlotBG, out var gagSlotBG))
         {
             wdl.AddDalamudImageRounded(gagSlotBG, GagSlotOneBorderPos, GagSlotBorderSize, 10f);
             wdl.AddDalamudImageRounded(gagSlotBG, GagSlotTwoBorderPos, GagSlotBorderSize, 10f);
@@ -269,7 +267,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         }
 
         // draw out the borders.
-        if (_cosmetics.TryGetBorder(ProfileComponent.GagSlot, info.GagSlotBorder, out var gagSlotBorder))
+        if (CosmeticService.TryGetBorder(PlateElement.GagSlot, info.GagSlotBorder, out var gagSlotBorder))
         {
             wdl.AddDalamudImageRounded(gagSlotBorder, GagSlotOneBorderPos, GagSlotBorderSize, 10f);
             wdl.AddDalamudImageRounded(gagSlotBorder, GagSlotTwoBorderPos, GagSlotBorderSize, 10f);
@@ -297,7 +295,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         }
 
         // draw out the overlays.
-        if (_cosmetics.TryGetOverlay(ProfileComponent.GagSlot, info.GagSlotOverlay, out var gagSlotOverlay))
+        if (CosmeticService.TryGetOverlay(PlateElement.GagSlot, info.GagSlotOverlay, out var gagSlotOverlay))
         {
             wdl.AddDalamudImageRounded(gagSlotOverlay, GagSlotOneBorderPos, GagSlotBorderSize, 10f);
             wdl.AddDalamudImageRounded(gagSlotOverlay, GagSlotTwoBorderPos, GagSlotBorderSize, 10f);
@@ -305,7 +303,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         }
 
         // draw out the padlock backgrounds.
-        if (_cosmetics.TryGetBackground(ProfileComponent.Padlock, info.PadlockBackground, out var padlockBG))
+        if (CosmeticService.TryGetBackground(PlateElement.Padlock, info.PadlockBG, out var padlockBG))
         {
             wdl.AddDalamudImageRounded(padlockBG, GagLockOneBorderPos, GagLockBorderSize, 10f);
             wdl.AddDalamudImageRounded(padlockBG, GagLockTwoBorderPos, GagLockBorderSize, 10f);
@@ -339,7 +337,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         }
 
         // draw out the padlock borders.
-        if (_cosmetics.TryGetBorder(ProfileComponent.Padlock, info.PadlockBorder, out var padlockBorder))
+        if (CosmeticService.TryGetBorder(PlateElement.Padlock, info.PadlockBorder, out var padlockBorder))
         {
             wdl.AddDalamudImageRounded(padlockBorder, GagLockOneBorderPos, GagLockBorderSize, 10f);
             wdl.AddDalamudImageRounded(padlockBorder, GagLockTwoBorderPos, GagLockBorderSize, 10f);
@@ -347,7 +345,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         }
 
         // draw out the padlock overlays.
-        if (_cosmetics.TryGetOverlay(ProfileComponent.Padlock, info.PadlockOverlay, out var padlockOverlay))
+        if (CosmeticService.TryGetOverlay(PlateElement.Padlock, info.PadlockOverlay, out var padlockOverlay))
         {
             wdl.AddDalamudImageRounded(padlockOverlay, GagLockOneBorderPos, GagLockBorderSize, 10f);
             wdl.AddDalamudImageRounded(padlockOverlay, GagLockTwoBorderPos, GagLockBorderSize, 10f);
@@ -375,22 +373,22 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         // to the right of this, draw the players total earned achievements scoring.
         statsPos += new Vector2(24, 0);
         ImGui.SetCursorScreenPos(statsPos);
-        CkGui.ColorText(info.CompletedAchievementsTotal + "/" + ClientAchievements.Total, ImGuiColors.ParsedGold);
-        CkGui.AttachToolTip("The total achievements " + DisplayName + " has earned.");
+        CkGui.ColorText($"{info.CompletedTotal}/{ClientAchievements.Total}", ImGuiColors.ParsedGold);
+        CkGui.AttachToolTip($"The total achievements {DisplayName} has earned.");
     }
 
     private void DrawBlockedSlots(ImDrawListPtr wdl, KinkPlateContent info)
     {
         // draw out the background for the window.
-        if (_cosmetics.TryGetBackground(ProfileComponent.BlockedSlots, info.BlockedSlotsBackground, out var lockedSlotsPanelBG))
+        if (CosmeticService.TryGetBackground(PlateElement.BlockedSlots, info.BlockedSlotsBG, out var lockedSlotsPanelBG))
             wdl.AddDalamudImageRounded(lockedSlotsPanelBG, LockedSlotsPanelBorderPos, LockedSlotsPanelBorderSize, 10f);
 
         // draw out the border on top of that.
-        if (_cosmetics.TryGetBorder(ProfileComponent.BlockedSlots, info.BlockedSlotsBorder, out var lockedSlotsPanelBorder))
+        if (CosmeticService.TryGetBorder(PlateElement.BlockedSlots, info.BlockedSlotsBorder, out var lockedSlotsPanelBorder))
             wdl.AddDalamudImageRounded(lockedSlotsPanelBorder, LockedSlotsPanelBorderPos, LockedSlotsPanelBorderSize, 10f);
 
         // draw out the overlay on top of that.
-        if (_cosmetics.TryGetOverlay(ProfileComponent.BlockedSlots, info.BlockedSlotsOverlay, out var lockedSlotsPanelOverlay))
+        if (CosmeticService.TryGetOverlay(PlateElement.BlockedSlots, info.BlockedSlotsOverlay, out var lockedSlotsPanelOverlay))
             wdl.AddDalamudImageRounded(lockedSlotsPanelOverlay, LockedSlotsPanelBorderPos, LockedSlotsPanelBorderSize, 10f);
 
         // draw out the blocked causes icon row.
@@ -447,7 +445,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         }
 
         // draw out the background for the head slot.
-        if (_cosmetics.TryGetBorder(ProfileComponent.BlockedSlot, info.BlockedSlotBorder, out var blockedSlotBG))
+        if (CosmeticService.TryGetBorder(PlateElement.BlockedSlot, info.BlockedSlotBorder, out var blockedSlotBG))
         {
             // obtain the start position, then start drawing all of the borders at once.
             var blockedSlotBorderPos = LockedSlotsGroupPos;
@@ -472,7 +470,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         }
 
         // draw out the background for the head slot.
-        if (_cosmetics.TryGetOverlay(ProfileComponent.BlockedSlot, info.BlockedSlotOverlay, out var blockedSlotOverlay))
+        if (CosmeticService.TryGetOverlay(PlateElement.BlockedSlot, info.BlockedSlotOverlay, out var blockedSlotOverlay))
         {
             // obtain the start position, then start drawing all of the overlays at once.
             var blockedSlotOverlayPos = LockedSlotsGroupPos;

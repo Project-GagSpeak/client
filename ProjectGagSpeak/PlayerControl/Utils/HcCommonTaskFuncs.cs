@@ -1,10 +1,11 @@
 using CkCommons;
 using Dalamud.Game.ClientState.Objects.Types;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using GagSpeak.PlayerControl;
 using GagSpeak.Services;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak;
 
@@ -14,21 +15,24 @@ namespace GagSpeak;
 public static unsafe class HcCommonTaskFuncs
 {
     private static Vector3 _prevPlayerPos = Vector3.Zero;
-    public static bool TargetNode(Func<IGameObject> getObj)
+    public static bool TargetNode(Func<nint> getAddr)
     {
         // if the player is not interactable return false.
         if (!PlayerData.Interactable)
             return false;
 
+        GameObject* obj = (GameObject*)getAddr();
+
         // if this object is null, we should throw an exception.
-        if (getObj() is not { } objToTarget)
+        if (obj == null)
             throw new InvalidOperationException($"TargetObject was null during function call!");
 
-        if (!objToTarget.IsTarget())
+        if (!HcTaskUtils.IsTarget(obj))
         {
+            
             if (NodeThrottler.Throttle("HcTaskFunc.SetTarget", 200))
             {
-                Svc.Targets.Target = objToTarget;
+                TargetSystem.Instance()->SetHardTarget(obj);
                 return false; // still have not targeted the object, so ret false.
             }
         }
@@ -37,10 +41,10 @@ public static unsafe class HcCommonTaskFuncs
     }
 
 
-    public static bool ApproachNode(Func<IGameObject> getObj, float minDistance = 4f)
+    public static bool ApproachNode(Func<nint> getAddr, float minDistance = 4f)
     {
         // obtain the object from the function caller.
-        var obj = getObj();
+        GameObject* obj = (GameObject*)getAddr();
         // if the object is null, or the player is not interactable, return false.
         if (obj is null || !PlayerData.Interactable)
             return false;
@@ -71,7 +75,7 @@ public static unsafe class HcCommonTaskFuncs
         else
         {
             // if the object is our target, perform a lock on and begin automove.
-            if (obj.IsTarget())
+            if (HcTaskUtils.IsTarget(obj))
             {
                 // otherwise, check if the distance is less than the minimum distance.
                 if (PlayerData.DistanceTo(obj) < minDistance)
@@ -88,9 +92,9 @@ public static unsafe class HcCommonTaskFuncs
             else
             {
                 // the object is not targeted, so set the target!.
-                if (obj.IsTargetable && NodeThrottler.Throttle("HcTaskFunc.SetTarget"))
+                if (obj->GetIsTargetable() && NodeThrottler.Throttle("HcTaskFunc.SetTarget"))
                 {
-                    Svc.Targets.Target = obj;
+                    TargetSystem.Instance()->SetHardTarget(obj);
                     return false;
                 }
             }
@@ -98,18 +102,18 @@ public static unsafe class HcCommonTaskFuncs
         return false;
     }
 
-    public static bool InteractWithNode(Func<IGameObject> objFunc, bool checkLineOfSight)
+    public static bool InteractWithNode(Func<nint> getAddr, bool checkLineOfSight)
     {
-        var obj = objFunc();
+        GameObject* obj = (GameObject*)getAddr();
         if (obj is null || PlayerData.IsAnimationLocked || !PlayerData.Interactable)
             return false;
 
         // object and player was valid, so ensure it is the target, and if not, set the target.
-        if (!obj.IsTarget())
+        if (!HcTaskUtils.IsTarget(obj))
         {
             if (NodeThrottler.Throttle("HcTaskFunc.SetTarget", 200))
             {
-                Svc.Targets.Target = obj;
+                TargetSystem.Instance()->SetHardTarget(obj);
                 return false;
             }
         }
@@ -117,7 +121,7 @@ public static unsafe class HcCommonTaskFuncs
         {
             if (NodeThrottler.Throttle("HcTaskFunc.Interact"))
             {
-                TargetSystem.Instance()->InteractWithObject(obj.ToStruct(), checkLineOfSight);
+                TargetSystem.Instance()->InteractWithObject(obj, checkLineOfSight);
                 return true;
             }
         }

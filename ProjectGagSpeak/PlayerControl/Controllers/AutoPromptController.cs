@@ -1,11 +1,7 @@
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using FFXIVClientStructs.FFXIV.Client.UI;
-using FFXIVClientStructs.FFXIV.Component.GUI;
-using GagSpeak.PlayerClient;
-using GagSpeak.PlayerControl;
 using GagSpeak.Services.Mediator;
-using GagSpeak.State;
 using GagSpeak.State.Caches;
 
 namespace GagSpeak.Services.Controller;
@@ -28,7 +24,7 @@ public sealed class AutoPromptController : DisposableMediatorSubscriberBase
 
         EnableListeners();
 
-        Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreState());
+        Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreStatus());
     }
 
     protected override void Dispose(bool disposing)
@@ -37,7 +33,7 @@ public sealed class AutoPromptController : DisposableMediatorSubscriberBase
         DisableListeners();
     }
 
-    private void UpdateHardcoreState()
+    private void UpdateHardcoreStatus()
     {
         // always enable right now for debug purposes.
         return;

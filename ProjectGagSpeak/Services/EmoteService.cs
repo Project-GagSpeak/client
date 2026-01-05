@@ -1,5 +1,3 @@
-using Dalamud.Plugin.Services;
-using Dalamud.Utility;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.Sheets;
@@ -161,7 +159,7 @@ public sealed class EmoteService : IHostedService
     }
 }
 
-public static class EmoteExtensions
+public static class EmoteEx
 {
     /// <summary> The ParsedEmoteRow collection for all emotes that have looping animations. </summary>
     public static IEnumerable<ParsedEmoteRow> LoopedEmotes()

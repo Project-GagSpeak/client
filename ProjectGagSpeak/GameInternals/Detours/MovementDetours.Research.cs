@@ -1,12 +1,4 @@
-using CkCommons;
-using Dalamud.Hooking;
-using Dalamud.Utility.Signatures;
-using FFXIVClientStructs.FFXIV.Client.Game.Control;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using GagSpeak.GameInternals.Structs;
-using MessagePack.Formatters;
-using System.Runtime.InteropServices;
- 
+
 namespace GagSpeak.GameInternals.Detours;
 #nullable enable
 #pragma warning disable CS0649 // Missing XML comment for publicly visible type or member

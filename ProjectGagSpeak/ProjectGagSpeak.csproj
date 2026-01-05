@@ -3,7 +3,7 @@
     <!--Basic Plugin Definitions-->
     <PropertyGroup>
         <Copyright>Copyright © 2025</Copyright>
-        <Version>2.0.0.0</Version>
+        <Version>2.0.1.0</Version>
         <WarningLevel>4</WarningLevel>
         <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
     </PropertyGroup>
@@ -49,16 +49,14 @@
         JObject types, despite being the same, are coming from different assemblies, so we must exclude 
         all assets to only reference the dalamud Newtonsoft.-->
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" ExcludeAssets="all" />
-
-        <!--For JWT token handling, helpful for server connectivity processing-->
-        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.5.2" />
         
         <!--For SignalR server connectivity, helpful for server connectivity processing-->
         <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.1" />
         <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="10.0.1" />
-        
-        <!--Handles our own plugin hosting methods for dependency injection and service management-->
         <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.1" />
+
+        <!--For JWT token handling, helpful for server connectivity processing-->
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.5.2" />
         
         <!--Adds support for our simulated vibrator (potentially replace with better audio option for more sound quality.-->
         <PackageReference Include="NAudio" Version="2.2.1" />
@@ -78,5 +76,8 @@
         <EmbeddedResource Include="Localization\de.json" />
         <EmbeddedResource Include="Localization\jp.json" />
         <EmbeddedResource Include="Localization\fr.json" />
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="UI\MainUi\SidePanel\SidePanelRequests\" />
     </ItemGroup>
 </Project>

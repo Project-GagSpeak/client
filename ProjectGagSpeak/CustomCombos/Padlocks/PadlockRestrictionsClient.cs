@@ -1,14 +1,10 @@
-using GagSpeak.Kinksters;
 using GagSpeak.Services;
-using GagSpeak.Services.Mediator;
 using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
-using GagspeakAPI.Hub;
-using GagspeakAPI.Network;
 
 namespace GagSpeak.CustomCombos.Padlock;
 

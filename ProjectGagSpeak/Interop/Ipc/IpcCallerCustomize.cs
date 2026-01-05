@@ -1,10 +1,7 @@
 using CkCommons;
-using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Plugin.Ipc;
-using GagSpeak.Kinksters.Handlers;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data.Struct;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Interop;
 

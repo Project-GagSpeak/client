@@ -405,7 +405,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
                     var shareCodePerms = await _shockProvider.GetPermissionsFromCode(globals.GlobalShockShareCode);
                     var newPerms = ClientData.GlobalsWithNewShockPermissions(shareCodePerms);
-                    var res = await _hub.UserBulkChangeGlobal(new(MainHub.PlayerUserData, newPerms, ClientData.HardcoreClone() ?? new HardcoreState()));
+                    var res = await _hub.UserBulkChangeGlobal(new(MainHub.OwnUserData, newPerms, ClientData.HardcoreClone() ?? new HardcoreStatus()));
                     // be sure to invoke the changes manually when performed by self.
                     if (res.ErrorCode is GagSpeakApiEc.Success)
                         _clientDatListener.ChangeAllGlobalPerms(newPerms);
@@ -615,9 +615,6 @@ public class SettingsUi : WindowMediatorSubscriberBase
         var dtrVibeStatus = _mainConfig.Current.ShowVibeStatus;
 
         var preferThreeCharaAnonName = _mainConfig.Current.PreferThreeCharaAnonName;
-        var preferNicknamesInsteadOfName = _mainConfig.Current.PreferNicknamesOverNames;
-        var showVisibleSeparate = _mainConfig.Current.ShowVisibleUsersSeparately;
-        var showOfflineSeparate = _mainConfig.Current.ShowOfflineUsersSeparately;
 
         var showProfiles = _mainConfig.Current.ShowProfiles;
         var profileDelay = _mainConfig.Current.ProfileDelay;
@@ -669,22 +666,6 @@ public class SettingsUi : WindowMediatorSubscriberBase
             ImGui.Unindent();
         }
 
-        if (ImGui.Checkbox(GSLoc.Settings.Preferences.ShowVisibleSeparateLabel, ref showVisibleSeparate))
-        {
-            _mainConfig.Current.ShowVisibleUsersSeparately = showVisibleSeparate;
-            _mainConfig.Save();
-            Mediator.Publish(new RefreshUiKinkstersMessage());
-        }
-        CkGui.HelpText(GSLoc.Settings.Preferences.ShowVisibleSeparateTT);
-
-        if (ImGui.Checkbox(GSLoc.Settings.Preferences.ShowOfflineSeparateLabel, ref showOfflineSeparate))
-        {
-            _mainConfig.Current.ShowOfflineUsersSeparately = showOfflineSeparate;
-            _mainConfig.Save();
-            Mediator.Publish(new RefreshUiKinkstersMessage());
-        }
-        CkGui.HelpText(GSLoc.Settings.Preferences.ShowOfflineSeparateTT);
-
         if (ImGui.Checkbox(GSLoc.Settings.Preferences.PrefThreeCharaAnonName, ref preferThreeCharaAnonName))
         {
             _mainConfig.Current.PreferThreeCharaAnonName = preferThreeCharaAnonName;
@@ -692,17 +673,9 @@ public class SettingsUi : WindowMediatorSubscriberBase
         }
         CkGui.HelpText(GSLoc.Settings.Preferences.PrefThreeCharaAnonNameTT);
 
-        if (ImGui.Checkbox(GSLoc.Settings.Preferences.PreferNicknamesLabel, ref preferNicknamesInsteadOfName))
-        {
-            _mainConfig.Current.PreferNicknamesOverNames = preferNicknamesInsteadOfName;
-            _mainConfig.Save();
-            Mediator.Publish(new RefreshUiKinkstersMessage());
-        }
-        CkGui.HelpText(GSLoc.Settings.Preferences.PreferNicknamesTT);
-
         if (ImGui.Checkbox(GSLoc.Settings.Preferences.ShowProfilesLabel, ref showProfiles))
         {
-            Mediator.Publish(new ClearProfileDataMessage());
+            Mediator.Publish(new ClearKinkPlateDataMessage());
             _mainConfig.Current.ShowProfiles = showProfiles;
             _mainConfig.Save();
         }
@@ -733,8 +706,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
         CkGui.FontText(GSLoc.Settings.Preferences.HeaderNotifications, UiFontService.UidFont);
 
         var liveGarblerZoneChangeWarn = _mainConfig.Current.LiveGarblerZoneChangeWarn;
-        var serverConnectionNotifs = _mainConfig.Current.NotifyForServerConnections;
-        var onlineNotifs = _mainConfig.Current.NotifyForOnlinePairs;
+        var serverConnectionNotifs = _mainConfig.Current.ConnectionNotifications;
+        var onlineNotifs = _mainConfig.Current.OnlineNotifications;
         var onlineNotifsNickLimited = _mainConfig.Current.NotifyLimitToNickedPairs;
 
         if (ImGui.Checkbox(GSLoc.Settings.Preferences.ZoneChangeWarnLabel, ref liveGarblerZoneChangeWarn))
@@ -746,14 +719,14 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
         if (ImGui.Checkbox(GSLoc.Settings.Preferences.ConnectedNotifLabel, ref serverConnectionNotifs))
         {
-            _mainConfig.Current.NotifyForServerConnections = serverConnectionNotifs;
+            _mainConfig.Current.ConnectionNotifications = serverConnectionNotifs;
             _mainConfig.Save();
         }
         CkGui.HelpText(GSLoc.Settings.Preferences.ConnectedNotifTT);
 
         if (ImGui.Checkbox(GSLoc.Settings.Preferences.OnlineNotifLabel, ref onlineNotifs))
         {
-            _mainConfig.Current.NotifyForOnlinePairs = onlineNotifs;
+            _mainConfig.Current.OnlineNotifications = onlineNotifs;
             if (!onlineNotifs) _mainConfig.Current.NotifyLimitToNickedPairs = false;
             _mainConfig.Save();
         }

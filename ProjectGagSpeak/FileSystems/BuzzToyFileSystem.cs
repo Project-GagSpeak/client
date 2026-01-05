@@ -6,7 +6,6 @@ using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.RegularExpressions;
-using static FFXIVClientStructs.FFXIV.Client.UI.Agent.AgentAlarm;
 
 namespace GagSpeak.FileSystems;
 
@@ -25,7 +24,7 @@ public sealed class BuzzToyFileSystem : CkFileSystem<BuzzToy>, IMediatorSubscrib
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigSexToyChanged>(this, (msg) => OnSexToyChange(msg.Type, msg.Item, msg.OldString));
-        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is GagspeakModule.SexToys) Reload(); });
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is GSModule.SexToys) Reload(); });
         Changed += OnChange;
         Reload();
     }

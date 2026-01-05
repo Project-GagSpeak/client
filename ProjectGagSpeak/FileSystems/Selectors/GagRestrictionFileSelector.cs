@@ -1,10 +1,8 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Plugin.Services;
 using CkCommons.FileSystem;
 using CkCommons.FileSystem.Selector;
-using GagSpeak.Gui;
 using CkCommons.Widgets;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
@@ -19,7 +17,7 @@ namespace GagSpeak.FileSystems;
 // Continue reworking this to integrate a combined approach if we can figure out a better file management system.
 public sealed class GagRestrictionFileSelector : CkFileSystemSelector<GarblerRestriction, GagRestrictionFileSelector.GagRestrictionState>, IMediatorSubscriber, IDisposable
 {
-    private readonly FavoritesManager _favorites;
+    private readonly FavoritesConfig _favorites;
     private readonly GagRestrictionManager _manager;
     public GagspeakMediator Mediator { get; init; }
 
@@ -35,7 +33,7 @@ public sealed class GagRestrictionFileSelector : CkFileSystemSelector<GarblerRes
     public new GagFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
-    public GagRestrictionFileSelector(GagspeakMediator mediator, FavoritesManager favorites, GagRestrictionManager manager, 
+    public GagRestrictionFileSelector(GagspeakMediator mediator, FavoritesConfig favorites, GagRestrictionManager manager, 
         GagFileSystem fileSystem) : base(fileSystem, Svc.Logger.Logger, Svc.KeyState, "##GagsFS")
     {
         Mediator = mediator;

@@ -4,7 +4,6 @@ using GagSpeak.GameInternals.Detours;
 using GagSpeak.Gui;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Controller;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Listeners;
@@ -17,21 +16,18 @@ namespace GagSpeak;
 /// <summary> The main class for the GagSpeak plugin. </summary>
 public class GagSpeakHost : MediatorSubscriberBase, IHostedService
 {
-    private readonly OnFrameworkService _frameworkUtils;
     private readonly MainConfig _mainConfig;
-    private readonly ServerConfigManager _serverConfigs;
+    private readonly AccountConfig _serverConfig;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private IServiceScope? _runtimeServiceScope;
     private Task? _launchTask;
     public GagSpeakHost(ILogger<GagSpeakHost> logger, GagspeakMediator mediator,
-        OnFrameworkService frameworkUtils, MainConfig mainConfig,
-        ServerConfigManager serverConfigs, IServiceScopeFactory scopeFactory)
+        MainConfig mainConfig, AccountConfig serverConfig, IServiceScopeFactory scopeFactory)
         : base(logger, mediator)
     {
         // set the services
-        _frameworkUtils = frameworkUtils;
         _mainConfig = mainConfig;
-        _serverConfigs = serverConfigs;
+        _serverConfig = serverConfig;
         _serviceScopeFactory = scopeFactory;
     }
     /// <summary> 
@@ -146,9 +142,9 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             }
 
             // if the client does not have a valid setup or config, switch to the intro ui
-            if (!_mainConfig.Current.HasValidSetup() || !_serverConfigs.ServerStorage.HasValidSetup())
+            if (!_mainConfig.Current.HasValidSetup() || !_serverConfig.Current.HasValidSetup())
             {
-                Logger?.LogDebug("Has Valid Setup: {setup} Has Valid Config: {config}", _mainConfig.Current.HasValidSetup(), _serverConfigs.HasValidConfig());
+                Logger?.LogDebug($"Has Valid Setup: {_mainConfig.Current.HasValidSetup()} | Valid Server Setup: {!_serverConfig.Current.HasValidSetup()}");
                 // publish the switch to intro ui message to the mediator
                 _mainConfig.Current.ButtonUsed = false;
 

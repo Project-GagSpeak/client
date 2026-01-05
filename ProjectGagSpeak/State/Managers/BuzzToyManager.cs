@@ -1,6 +1,5 @@
 using Buttplug.Client;
 using CkCommons;
-using CkCommons.Helpers;
 using CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
 using GagSpeak.Interop;
@@ -8,7 +7,6 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
-using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
@@ -67,7 +65,7 @@ public class BuzzToyManager : IDisposable, IHybridSavable
             toy.Interactable = false;
         }
         _saver.Save(this);
-        _mediator.Publish(new ReloadFileSystem(GagspeakModule.SexToys));
+        _mediator.Publish(new ReloadFileSystem(GSModule.SexToys));
     }
 
     public VirtualBuzzToy CreateNew(ToyBrandName deviceName)
@@ -278,7 +276,7 @@ public class BuzzToyManager : IDisposable, IHybridSavable
                 return;
         }
         _saver.Save(this);
-        _mediator.Publish(new ReloadFileSystem(GagspeakModule.SexToys));
+        _mediator.Publish(new ReloadFileSystem(GSModule.SexToys));
     }
 
     private void LoadV0(JToken? data)

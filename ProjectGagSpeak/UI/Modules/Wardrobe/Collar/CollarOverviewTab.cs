@@ -20,7 +20,6 @@ using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
-using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;

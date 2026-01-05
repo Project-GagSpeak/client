@@ -49,21 +49,21 @@ internal class ReportPopupHandler : IPopupHandler
 
         // grab our profile image and draw the baseline.
         var KinkPlate = _kinkPlates.GetKinkPlate(_reportedKinkster);
-        var pfpWrap = KinkPlate.GetCurrentProfileOrDefault();
+        var pfpWrap = KinkPlate.GetProfileOrDefault();
 
         // draw out the background for the window.
-        if (_cosmetics.TryGetBackground(ProfileComponent.Plate, ProfileStyleBG.Default, out var plateBG))
+        if (CosmeticService.TryGetBackground(PlateElement.Plate, KinkPlateBG.Default, out var plateBG))
             drawList.AddDalamudImageRounded(plateBG, rectMin, PlateSize, 30f);
 
         // draw out the border on top of that.
-        if (_cosmetics.TryGetBorder(ProfileComponent.Plate, ProfileStyleBorder.Default, out var plateBorder))
+        if (CosmeticService.TryGetBorder(PlateElement.Plate, KinkPlateBorder.Default, out var plateBorder))
             drawList.AddDalamudImageRounded(plateBorder, rectMin, PlateSize, 20f);
 
         var pfpPos = rectMin + Vector2.One * 16f;
         drawList.AddDalamudImageRounded(pfpWrap, pfpPos, Vector2.One * 192, 96f, "The Image being Reported");
 
         // draw out the border for the profile picture
-        if (_cosmetics.TryGetBorder(ProfileComponent.ProfilePicture, ProfileStyleBorder.Default, out var pfpBorder))
+        if (CosmeticService.TryGetBorder(PlateElement.Avatar, KinkPlateBorder.Default, out var pfpBorder))
             drawList.AddDalamudImageRounded(pfpBorder, rectMin + Vector2.One* 12f, Vector2.One * 200, 96f);
 
 
@@ -82,11 +82,11 @@ internal class ReportPopupHandler : IPopupHandler
         CloseHovered = ImGui.IsItemHovered();
 
         // Description Border
-        if (_cosmetics.TryGetBorder(ProfileComponent.DescriptionLight, ProfileStyleBorder.Default, out var descBorder))
+        if (CosmeticService.TryGetBorder(PlateElement.DescriptionLight, KinkPlateBorder.Default, out var descBorder))
             drawList.AddDalamudImageRounded(descBorder, rectMin + new Vector2(220, 12), new Vector2(250, 200), 2f);
 
         ImGui.SetCursorScreenPos(rectMin + new Vector2(235, 24));
-        var desc = KinkPlate.KinkPlateInfo.Description;
+        var desc = KinkPlate.Info.Description;
         DrawLimitedDescription(desc, ImGuiColors.DalamudWhite, new Vector2(230, 185));
         CkGui.AttachToolTip("The Description being Reported");
 

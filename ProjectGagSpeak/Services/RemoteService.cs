@@ -1,23 +1,18 @@
 using CkCommons;
 using CkCommons.Gui;
 using Dalamud.Interface.Utility.Raii;
-using FFXIVClientStructs.FFXIV.Client.Graphics.Kernel;
 using GagSpeak.FileSystems;
-using GagSpeak.GameInternals.Detours;
 using GagSpeak.Gui.Remote;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Dto.VibeRoom;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
 using Dalamud.Bindings.ImGui;
 using OtterGui;
-using OtterGui.Services;
 using OtterGui.Text;
-using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.Services;
 
@@ -53,12 +48,12 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
         Mediator.Subscribe<ConfigSexToyChanged>(this, (msg) => OnClientToyChange(msg.Type, msg.Item));
         Mediator.Subscribe<ReloadFileSystem>(this, (msg) =>
         {
-            if (msg.Module is GagspeakModule.SexToys)
+            if (msg.Module is GSModule.SexToys)
                 UpdateClientDevices();
         });
 
         // whenever we connect, we should do a full cleanup of the client devices, then append the current toys.
-        Mediator.Subscribe<MainHubConnectedMessage>(this, _ =>
+        Mediator.Subscribe<ConnectedMessage>(this, _ =>
         {
             Logger.LogInformation("Reconnected to GagSpeak. Setting Client Devices.");
             ClientData = new ClientPlotedDevices(Logger, mediator, new(new(MainHub.UID), _config.Current.NicknameInVibeRooms), RemoteAccess.Full);

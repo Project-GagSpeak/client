@@ -1,7 +1,5 @@
 using CkCommons;
 using Dalamud.Bindings.ImGui;
-using Dalamud.Plugin.Services;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using OtterGui.Raii;
 using Penumbra.Api.Enums;

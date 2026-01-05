@@ -1,5 +1,5 @@
+using CkCommons;
 using GagspeakAPI.Data.Permissions;
-using static CkCommons.GameDataHelp;
 
 namespace GagSpeak.Interop.Helpers;
 
@@ -35,10 +35,10 @@ public class AddressBookEntry
         };
     }
 
-    public static AddressBookEntry FromHardcoreState(IReadOnlyHardcoreState hcState)
+    public static AddressBookEntry FromHardcoreStatus(IReadOnlyHardcoreState hcState)
         => new AddressBookEntry
         {
-            Name = "HardcoreState-Assigned-Address",
+            Name = "HardcoreStatus-Assigned-Address",
             World = (ushort)hcState.ConfinedWorld,
             City = (ResidentialAetheryteKind)hcState.ConfinedCity,
             Ward = hcState.ConfinedWard,

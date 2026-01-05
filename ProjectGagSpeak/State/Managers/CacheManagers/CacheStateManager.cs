@@ -14,7 +14,6 @@ using GagspeakAPI.Util;
 using Microsoft.Extensions.Hosting;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
-using TerraFX.Interop.DirectX;
 
 namespace GagSpeak.State.Managers;
 
@@ -120,7 +119,7 @@ public class CacheStateManager : IHostedService
         var sw = Stopwatch.StartNew();
         // Sync all server gag data with the GagRestrictionManager.
         bool anyRequestedRedraw = false;
-        _gags.LoadServerData(connectionDto.SyncedGagData);
+        _gags.LoadServerData(connectionDto.GagData);
         _logger.LogInformation("------ Syncing Gag Data to Cache ------");
         foreach (var (layer, gagItem) in _gags.ActiveItems)
         {
@@ -142,7 +141,7 @@ public class CacheStateManager : IHostedService
 
         // Sync all server restriction data with the RestrictionManager.
         var validCursedItems = _cursedItems.Storage.ActiveAppliedLoot.OfType<CursedRestrictionItem>().Where(i => i.RefItem != null).ToList();
-        _restrictions.LoadInternalData(connectionDto.SyncedRestrictionsData, validCursedItems);
+        _restrictions.LoadInternalData(connectionDto.RestrictionsData, validCursedItems);
         _logger.LogInformation("------ Syncing Restriction Data to Cache ------");
         foreach (var (layer, item) in _restrictions.ActiveItems)
         {
@@ -171,7 +170,7 @@ public class CacheStateManager : IHostedService
 
 
         // Sync all server restraint data with the RestraintManager.
-        _restraints.LoadServerData(connectionDto.SyncedRestraintSetData);
+        _restraints.LoadServerData(connectionDto.RestraintSetData);
         _logger.LogInformation("------ Syncing Restraint Data to Cache ------");
         if (_restraints.AppliedRestraint is { } restraintSet)
         {
@@ -241,7 +240,7 @@ public class CacheStateManager : IHostedService
         _logger.LogInformation("------ Cursed Item Data synced to Cache ------ ");
 
         // Sync collar data with the CollarManager.
-        _collar.LoadServerData(connectionDto.SyncedCollarData);
+        _collar.LoadServerData(connectionDto.CollarData);
         _logger.LogInformation("------ Syncing Collar Data to Cache ------");
         if (_collar.IsActive && _collar.ShowVisuals)
         {

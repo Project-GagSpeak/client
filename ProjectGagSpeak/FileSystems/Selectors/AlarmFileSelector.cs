@@ -16,7 +16,7 @@ namespace GagSpeak.FileSystems;
 
 public sealed class AlarmFileSelector : CkFileSystemSelector<Alarm, AlarmFileSelector.AlarmState>, IMediatorSubscriber, IDisposable
 {
-    private readonly FavoritesManager _favorites;
+    private readonly FavoritesConfig _favorites;
     private readonly AlarmManager _manager;
     public GagspeakMediator Mediator { get; init; }
 
@@ -32,7 +32,7 @@ public sealed class AlarmFileSelector : CkFileSystemSelector<Alarm, AlarmFileSel
     public new AlarmFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
-    public AlarmFileSelector(GagspeakMediator mediator, FavoritesManager favorites, AlarmManager manager,
+    public AlarmFileSelector(GagspeakMediator mediator, FavoritesConfig favorites, AlarmManager manager,
         AlarmFileSystem fileSystem) : base(fileSystem, Svc.Logger.Logger, Svc.KeyState, "##AlarmFS")
     {
         Mediator = mediator;

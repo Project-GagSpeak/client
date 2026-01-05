@@ -1,66 +1,93 @@
 using CkCommons;
 using CkCommons.Gui;
+using CkCommons.Raii;
+using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Utility;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using Dalamud.Bindings.ImGui;
 using OtterGui;
+using OtterGui.Text;
 
 namespace GagSpeak.Gui;
 
 /// <summary> The introduction UI that will be shown the first time that the user starts the plugin. </summary>
 public class IntroUi : WindowMediatorSubscriberBase
 {
+    private bool ThemePushed = false;
+
+    private enum IntroUiPage : byte
+    {
+        Welcome = 0,
+        AttributionsAbout = 1,
+        UsageAgreement = 2,
+        AccountSetup = 4,
+        Initialized = 5
+    }
+
     private readonly MainHub _hub;
-    private readonly MainConfig _configService;
-    private readonly ServerConfigManager _serverConfigs;
+    private readonly MainConfig _config;
+    private readonly AccountManager _account;
     private readonly TutorialService _guides;
 
-    private bool ThemePushed = false;
-    private bool _readFirstPage = false; // mark as false so nobody sneaks into official release early.
-    private Task? _fetchAccountDetailsTask = null;
-    private Task? _initialAccountCreationTask = null;
+    private IntroUiPage _currentPage = IntroUiPage.Welcome;
+    private IntroUiPage _furthestPage = IntroUiPage.Welcome;
     private string _secretKey = string.Empty;
 
     public IntroUi(ILogger<IntroUi> logger, GagspeakMediator mediator, MainHub mainHub,
-        MainConfig config, ServerConfigManager serverConfigs, TutorialService guides)
+        MainConfig config, AccountManager serverConfigs, TutorialService guides)
         : base(logger, mediator, "Welcome to GagSpeak! ♥")
     {
         _hub = mainHub;
-        _configService = config;
-        _serverConfigs = serverConfigs;
+        _config = config;
+        _account = serverConfigs;
         _guides = guides;
 
-        IsOpen = false;
+        this.PinningClickthroughFalse();
+        this.SetBoundaries(new(630, 800));
+
         ShowCloseButton = false;
         RespectCloseHotkey = false;
-        AllowPinning = false;
-        AllowClickthrough = false;
-
-        SizeConstraints = new WindowSizeConstraints()
-        {
-            MinimumSize = new Vector2(600, 500),
-            MaximumSize = new Vector2(600, 1000),
-        };
-        Flags = WFlags.NoScrollbar;
+        Flags = WFlags.NoScrollbar | WFlags.NoResize;
 
         Mediator.Subscribe<SwitchToMainUiMessage>(this, (_) => IsOpen = false);
         Mediator.Subscribe<SwitchToIntroUiMessage>(this, (_) => IsOpen = true);
+
+        // Make initial page assumptions.
+        if (!_config.Current.AcknowledgementUnderstood)
+        {
+            _currentPage = IntroUiPage.Welcome;
+            _furthestPage = IntroUiPage.Welcome;
+        }
+        else if (!MainHub.IsServerAlive || !_account.HasValidMainProfile())
+        {
+            _currentPage = IntroUiPage.AccountSetup;
+            _furthestPage = IntroUiPage.AccountSetup;
+        }
+        else
+        {
+            _currentPage = IntroUiPage.Initialized;
+            _furthestPage = IntroUiPage.Initialized;
+        }
+
     }
 
     protected override void PreDrawInternal()
     {
         if (!ThemePushed)
         {
-            ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(ImGui.GetStyle().WindowPadding.X, 0));
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 12f);
             ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .803f));
-            ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.579f, 0.170f, 0.359f, 0.828f));
+            ImGui.PushStyleColor(ImGuiCol.TitleBgCollapsed, ImGui.GetColorU32(ImGuiCol.TitleBg));
+            ImGui.PushStyleColor(ImGuiCol.TitleBgActive, ImGui.GetColorU32(ImGuiCol.TitleBg));
 
             ThemePushed = true;
         }
@@ -71,261 +98,520 @@ public class IntroUi : WindowMediatorSubscriberBase
         if (ThemePushed)
         {
             ImGui.PopStyleVar();
-            ImGui.PopStyleColor(2);
+            ImGui.PopStyleColor(3);
             ThemePushed = false;
         }
     }
 
     protected override void DrawInternal()
     {
-        // 
-
-        // if the user has not accepted the agreement and they have not read the first page,
-        // Then show the first page (everything in this if statement)
-        if (!_configService.Current.AcknowledgementUnderstood && !_readFirstPage)
-        {
-            DrawWelcomePage();
-        }
-        // if they have read the first page but not yet created an account, we will need to present the account setup page for them.
-        else if (!_configService.Current.AcknowledgementUnderstood && _readFirstPage)
-        {
-            DrawAcknowledgement();
-        }
-        // if the user has read the acknowledgements and the server is not alive, display the account creation window.
-        else if (!MainHub.IsServerAlive || !_serverConfigs.HasValidConfig())
-        {
-            DrawAccountSetup();
-        }
-        // otherwise, if the server is alive, meaning we are validated, then boot up the main UI.
-        else
+        if (_furthestPage is IntroUiPage.Initialized)
         {
             _logger.LogDebug("Switching to main UI");
-            // call the main UI event via the mediator
             Mediator.Publish(new SwitchToMainUiMessage());
-            // toggle this intro UI window off.
             IsOpen = false;
+            return;
+        }
+
+
+        // Obtain the image wrap for the introduction screen header to draw it based on the current position via scaled ratio.
+        var pos = ImGui.GetCursorScreenPos();
+        var wdl = ImGui.GetWindowDrawList();
+        var winClipX = ImGui.GetWindowContentRegionMin().X / 2;
+        // push clip rect.
+        var winPadding = ImGui.GetStyle().WindowPadding;
+        var minPos = wdl.GetClipRectMin();
+        var maxPos = wdl.GetClipRectMax();
+
+        // Push padding.
+        var expandedMin = minPos - new Vector2(winClipX, 0); // Extend the min boundary to include the padding
+        var expandedMax = maxPos + new Vector2(winClipX, 0); // Extend the max boundary to include the padding
+        wdl.PushClipRect(expandedMin, expandedMax, false);
+        var availX = expandedMax.X - expandedMin.X;
+
+        // Grab image & get ratio.
+        var headerImg = CosmeticService.CoreTextures.Cache[CoreTexture.WelcomeOverlay];
+
+        // Scale the headerImage size to fit within the window size while maintaining aspect ratio.
+        var scaledRatio = availX / headerImg.Size.X;
+        var scaledSize = headerImg.Size * scaledRatio;
+        // Draw out the welcome image over this area.
+        wdl.AddDalamudImage(headerImg, expandedMin, scaledSize);
+
+        // Validate the button.
+        ImGui.SetCursorScreenPos(expandedMin);
+        if (_furthestPage is IntroUiPage.Welcome)
+        {
+            if (ImGui.InvisibleButton("readingSkillCheck", scaledSize) && _currentPage == IntroUiPage.Welcome)
+            {
+                _currentPage = IntroUiPage.AttributionsAbout;
+                _furthestPage = IntroUiPage.AttributionsAbout;
+            }
+        }
+        else
+        {
+            ImGui.Dummy(scaledSize);
+        }
+
+        // Below this we can draw out the progress display, with a gradient multicolor.
+        var progressH = ImUtf8.FrameHeight * 1.5f;
+        var progressPos = expandedMin + new Vector2(0, scaledSize.Y - (ImUtf8.FrameHeight * 2).AddWinPadY());
+
+        ImGui.SetCursorScreenPos(progressPos);
+        using (CkRaii.ChildPaddedW("progress display", availX, ImUtf8.FrameHeight * 1.5f))
+            DrawProgressDisplay();
+
+        // Add a final gradient lining to the bottom of the progress display.
+        var contentPos = expandedMin + new Vector2(0, scaledSize.Y);
+        wdl.AddRectFilledMultiColor(contentPos, expandedMax, CkColor.FancyHeaderContrast.Uint(), CkColor.FancyHeaderContrast.Uint(), 0, 0);
+        wdl.AddLine(contentPos, contentPos + new Vector2(scaledSize.X, 0), 0xFF000000, 1f);
+        wdl.PopClipRect();
+
+        // Draw the contents based on the page.
+        ImGui.SetCursorScreenPos(contentPos);
+        ImGui.Spacing();
+        var contentArea = ImGui.GetContentRegionAvail() - new Vector2(0, (ImUtf8.FrameHeight + ImUtf8.ItemSpacing.Y * 3) + ImGui.GetStyle().WindowPadding.Y);
+
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 10f).Push(ImGuiStyleVar.ScrollbarRounding, 2f);
+        using (var _ = CkRaii.Child("IntroPageContents", contentArea))
+        {
+            switch (_currentPage)
+            {
+                case IntroUiPage.Welcome:
+                    PageContentsWelcome(_.InnerRegion);
+                    break;
+                case IntroUiPage.AttributionsAbout:
+                    PageContentsAbout(_.InnerRegion);
+                    break;
+                case IntroUiPage.UsageAgreement:
+                    PageContentsUsage(_.InnerRegion);
+                    break;
+                case IntroUiPage.AccountSetup:
+                    PageContentsAccountSetup(_.InnerRegion);
+                    break;
+            }
+        }
+
+        ImGui.Separator();
+        // If on welcome page, do not show button.
+        if (_currentPage is IntroUiPage.Welcome || _currentPage >= IntroUiPage.AccountSetup)
+            return;
+
+        var text = GetNextButtonText();
+        var buttonSize = CkGui.IconTextButtonSize(FAI.ArrowRight, text);
+        CkGui.SetCursorXtoCenter(buttonSize);
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ImGui.GetStyle().WindowPadding.Y);
+        if (CkGui.IconTextButton(FAI.ArrowRight, text, disabled: DisableButton(_currentPage)))
+            DoButtonAdvancement();
+    }
+
+    private void DoButtonAdvancement()
+    {
+        // Perform update & action based on _currentPage condition.
+        if (_currentPage != _furthestPage)
+        {
+            _currentPage = (IntroUiPage)(byte)_currentPage + 1;
+            return;
+        }
+
+        switch (_furthestPage)
+        {
+            case IntroUiPage.Welcome:
+                _furthestPage = IntroUiPage.AttributionsAbout;
+                _currentPage = IntroUiPage.AttributionsAbout;
+                break;
+
+            case IntroUiPage.AttributionsAbout:
+                _furthestPage = IntroUiPage.UsageAgreement;
+                _currentPage = IntroUiPage.UsageAgreement;
+                break;
+
+            case IntroUiPage.UsageAgreement:
+                _config.Current.AcknowledgementUnderstood = true;
+                _config.Save();
+                _furthestPage = IntroUiPage.AccountSetup;
+                _currentPage = IntroUiPage.AccountSetup;
+                break;
+
+            case IntroUiPage.AccountSetup:
+                // Attempt to generate an account. If this is successful, advance the page to initialized.
+                if (_account.HasValidMainProfile())
+                {
+                    _furthestPage = IntroUiPage.Initialized;
+                    _currentPage = IntroUiPage.Initialized;
+                }
+                break;
         }
     }
 
-    private void DrawWelcomePage()
+    private bool DisableButton(IntroUiPage page)
+    => page switch
     {
-        CkGui.FontText("Welcome to Project GagSpeak!", UiFontService.GagspeakTitleFont);
+        IntroUiPage.AccountSetup => !_account.HasValidMainProfile(),
+        _ => false
+    };
 
-        ImGui.Separator();
-        ImGui.TextWrapped("Project GagSpeak is a highly ambitious project that has been devloped over the course of a year in closed Beta, " +
-            "aiming to provide kinksters with an all-in-one BDSM plugin free of charge to enjoy.");
-        ImGui.Spacing();
-        using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink))
-            CkGui.FontText("The Plugin Contains a variety of Modules, such as:", UiFontService.GagspeakLabelFont);
+    private string GetNextButtonText()
+        => _currentPage switch
+        {
+            IntroUiPage.AttributionsAbout => "To Usage Agreement",
+            IntroUiPage.UsageAgreement => "I Understand BDSM & GagSpeak's Importance On Privacy",
+            IntroUiPage.AccountSetup => "Login to Sundouleia!",
+            _ => string.Empty
+        };
 
-        // if the title text is pressed, proceed.
-        if (ImGui.IsItemClicked()) _readFirstPage = true;
+    private void DrawProgressDisplay()
+    {
+        var frameH = ImUtf8.FrameHeight;
+        var buttonSize = new Vector2((ImGui.GetContentRegionAvail().X - (frameH * 4)) / 4, frameH * 1.5f);
+        var offsetY = (buttonSize.Y - frameH) / 2;
 
-        CkGui.ColorText("- KinkPlates™", ImGuiColors.ParsedGold);
-        ImGui.SameLine();
-        ImGui.Text(" Customizable GagSpeak AdventurePlate to present yourself and/or predicament!");
+        // Draw out the buttons.
+        DrawSetupButton("Welcome", buttonSize, IntroUiPage.Welcome, null);
+        ImGui.SameLine(0, 0);
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + offsetY);
+        CkGui.FramedIconText(FAI.ChevronRight);
 
-        CkGui.ColorText("- Puppeteer", ImGuiColors.ParsedGold);
-        ImGui.SameLine();
-        ImGui.Text(" A PuppetMaster Variant with Alias Lists, Per-Player triggers, and more!");
+        ImGui.SameLine(0, 0);
+        DrawSetupButton("About", buttonSize, IntroUiPage.AttributionsAbout, null);
+        ImGui.SameLine(0, 0);
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + offsetY);
+        CkGui.FramedIconText(FAI.ChevronRight);
 
-        CkGui.ColorText("- Triggers & Patterns", ImGuiColors.ParsedGold);
-        ImGui.SameLine();
-        ImGui.Text(" Improved FFXIV-VibePlugin Variant with *all* functionalities");
+        ImGui.SameLine(0, 0);
+        DrawSetupButton("Usage", buttonSize, IntroUiPage.UsageAgreement, null);
+        ImGui.SameLine(0, 0);
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + offsetY);
+        CkGui.FramedIconText(FAI.ChevronRight);
 
-        CkGui.ColorText("- Alarms", ImGuiColors.ParsedGold);
-        ImGui.SameLine();
-        ImGui.Text(" Behaves just like Lovense Alarms");
-
-        CkGui.ColorText("- GagSpeak Vibe Remotes", ImGuiColors.ParsedGold);
-        ImGui.SameLine();
-        ImGui.Text(" Mimiced Replica of Lovense Remote with Keybinds");
-
-        CkGui.ColorText("- Realistic Gag Garble Speech", ImGuiColors.ParsedGold);
-        ImGui.SameLine();
-        ImGui.Text(" Can account for up to 3 gags!");
-
-        CkGui.ColorText("- Restriction Sets", ImGuiColors.ParsedGold);
-        ImGui.SameLine();
-        ImGui.Text(" Lockable Glamour's on your Character.");
-
-        CkGui.ColorText("- Cursed Loot", ImGuiColors.ParsedGold);
-        ImGui.SameLine();
-        ImGui.Text(" Brings Bondage Mimic Chests to FFXIV duties!");
-
-        CkGui.ColorText("- Hardcore Control", ImGuiColors.ParsedGold);
-        ImGui.SameLine();
-        ImGui.Text(" Maximize Immersion and Helplessness with others (at your own risk!)");
-
-        ImGui.Spacing();
-        ImGui.TextWrapped("Clicking The large pink text above will advance you to the acknowledgements page. " +
-            "I Hope you enjoy all the features that this plugin has to offer, and have a great time using it. ♥");
+        ImGui.SameLine(0, 0);
+        DrawSetupButton("Create Account", buttonSize, IntroUiPage.AccountSetup, null);
     }
 
-    private void DrawAcknowledgement()
+    private void DrawSetupButton(string label, Vector2 region, IntroUiPage page, Action? onClick)
     {
-        using (UiFontService.GagspeakTitleFont.Push())
-        {
-            ImGuiUtil.Center("Acknowledgement Of Usage & Privacy");
-        }
-        ImGui.Separator();
-        using (UiFontService.UidFont.Push())
-        {
-            CkGui.ColorTextCentered("YOU WILL ONLY SEE THIS PAGE ONCE.", ImGuiColors.DalamudRed);
-            CkGui.ColorTextCentered("PLEASE READ CAREFULLY BEFORE PROCEEDING.", ImGuiColors.DalamudRed);
-        }
-        ImGui.Separator();
+        using var dis = ImRaii.Disabled(page > _furthestPage);
+        using var alpha = ImRaii.PushStyle(ImGuiStyleVar.Alpha, 1f);
+        var color = _currentPage == page ? CkColor.VibrantPink.Vec4() : ImGuiColors.ParsedGrey.Darken(.15f).WithAlpha(.5f);
+        using var col = ImRaii.PushColor(ImGuiCol.Button, color).Push(ImGuiCol.ButtonHovered, color).Push(ImGuiCol.ButtonActive, color);
 
-        ImGui.TextWrapped("Being a Server-Side Plugin, and a plugin full of kinky individuals, we all know there will always be some of *those* people " +
-            "who will try to ruin the fun for everyone.");
+        if (ImGui.Button(label, region))
+            _currentPage = page;
+    }
+
+    private void PageContentsWelcome(Vector2 region)
+    {
+        CkGui.FontText("Welcome to Project GagSpeak!", UiFontService.UidFont);
+
+        CkGui.ColorTextWrapped("Project GagSpeak is a highly ambitious project devloped for over a year in closed Beta, " +
+            "aiming to provide kinksters with an all-in-one BDSM plugin free of charge to enjoy.", CkColor.VibrantPinkHovered.Uint());
+
+
+        CkGui.FontText("Features:", UiFontService.Default150Percent);
+        using (CkRaii.Child("FeaturesListScrollable", ImGui.GetContentRegionAvail()))
+        {
+            CkGui.BulletText("KinkPlates™");
+            using (ImRaii.PushIndent())
+            {
+                CkGui.BulletText("Formatted in an AdventurePlate-Like style", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Allows avatar image imports of any size", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Pan, Rotate, Zoom, and Crop imported images", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("See your current predicament reflected in your KinkPlate!", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Customize Titles and Element backgrounds, borders, or overlays!", ImGuiColors.DalamudGrey2);
+            }
+
+            ImGui.Spacing();
+            CkGui.BulletText("Pair Requests");
+            using (ImRaii.PushIndent())
+            {
+                CkGui.BulletText("Only need one code to pair", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Attach messages, and nickname preferences", ImGuiColors.DalamudGrey2);
+            }
+
+            ImGui.Spacing();
+            CkGui.BulletText("Realistic Chat Garbler");
+            using (ImRaii.PushIndent())
+            {
+                CkGui.BulletText("Uses a self-designed algorithm that accurately garbles messages in any language.", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Garbler can process up to 3 gags simotaniously", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Modify output with various Arousal effects (studder, cut-off, and more)", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Display current Gagged status beside your NamePlate, shown to other Kinksters in view!", ImGuiColors.DalamudGrey2);
+            }
+
+            ImGui.Spacing();
+            CkGui.BulletText("Restraint Sets");
+            using (ImRaii.PushIndent())
+            {
+                CkGui.BulletText("Restrictions that can be applied to your Character.", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Lock your Glamour, C+, Penumbra Mods, Moodles, Hardcore Traits, and more!", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Adjust variants of your Restraint Sets using Layers, granting dynamic control.", ImGuiColors.DalamudGrey2);
+            }
+
+
+            ImGui.Spacing();
+            CkGui.BulletText("Mod Preset Control");
+            using (ImRaii.PushIndent())
+            {
+                CkGui.BulletText("For those who use different outfits that use the same mod, with different settings for each.", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Store a 'Preset' of a Penumbra Mods settings to GagSpeak, and bind it to any attached Gag or Restriction.", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Works with Restraint Set Layers, allowing for more dynamic control of Bondage Mod variants.", ImGuiColors.DalamudGrey2);
+            }
+
+            ImGui.Spacing();
+            CkGui.BulletText("Collars");
+            using (ImRaii.PushIndent())
+            {
+                CkGui.BulletText("Assign a Moodle, Glamour item & Dyes, Penumbra Mod to your Collar.", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Manage who owns your Collar, and who's Collars you own.", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Set allowances for owner control over Collar contents.", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Add Collar writing, which is displayable on KinkPlates!", ImGuiColors.DalamudGrey2);
+            }
+
+            ImGui.Spacing();
+            CkGui.BulletText("Cursed Loot");
+            using (ImRaii.PushIndent())
+            {
+                CkGui.BulletText("Make Restriction items discoverable in Treasure Coffers throughout the game!", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Brings Bondage Mimic Chests to FFXIV duties!", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Customize discovery chance, and lock time range.", ImGuiColors.DalamudGrey2);
+            }
+
+            ImGui.Spacing();
+            CkGui.BulletText("Puppeteer");
+            using (ImRaii.PushIndent())
+            {
+                CkGui.BulletText("A Vastly modular form of PuppetMaster, with full integration to all of GagSpeak's Modules.", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Command triggers can be set for individual pairs, or globally.", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Alias Lists allow for complex commands to be executed with ease.", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Bind Aliases to HP changes, Actions, Restriction Changes, Emotes, and more! ", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Respond with multiple, simotanious actions for maximum dynamic control!", ImGuiColors.DalamudGrey2);
+            }
+
+            ImGui.Spacing();
+            CkGui.BulletText("Triggers & Patterns");
+            using (ImRaii.PushIndent())
+            {
+                CkGui.BulletText("An Improved FFXIV-VibePlugin Variant with full access.", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Create complex trigger patterns based on actions, emotes, status effects, and more!", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Bind Patterns to multiple devices, down to their individual motors.", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Reassign Devices and motors on existing patterns where compatible.", ImGuiColors.DalamudGrey2);
+            }
+
+            ImGui.Spacing();
+            CkGui.BulletText("GagSpeak Vibrator Remote");
+            using (ImRaii.PushIndent())
+            {
+                CkGui.BulletText("A handcrafted reflection of the mobile Lovense Remote.", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Control your devices with keybinds, or let others control you!", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Supports Motor float, and Motor looping during control.", ImGuiColors.DalamudGrey2);
+            }
+
+            ImGui.Spacing();
+            CkGui.BulletText("Alarms");
+            using (ImRaii.PushIndent())
+            {
+                CkGui.BulletText("Set Alarms to notify you with device vibrations at specific times!", ImGuiColors.DalamudGrey2);
+            }
+
+            ImGui.Spacing();
+            CkGui.BulletText("Hardcore Control");
+            using (ImRaii.PushIndent())
+            {
+                CkGui.BulletText("Maximize Immersion and Helplessness with others (at your own risk!)", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Force others to follow you, perform Emotes, stay locked away, and more.", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("An area of control that requires mutual trust and respect between both parties.", ImGuiColors.DalamudGrey2);
+            }
+        }
+    }
+    // Attributions, Acknowledgements, and 'What helped get GagSpeak to this point.'
+    private void PageContentsAbout(Vector2 region)
+    {
+        using var _ = CkRaii.Child("innerAbout", region, wFlags: WFlags.AlwaysVerticalScrollbar);
+        CkGui.FontText("Dedications", UiFontService.Default150Percent);
+
+        CkGui.BulletText("TBD", CkColor.VibrantPink.Uint());
+    }
+
+    // Understanding Sundouleia Privacy & Usage Transparency
+    private void PageContentsUsage(Vector2 region)
+    {
+        CkGui.FontTextCentered("READ CAREFULLY, YOU WILL ONLY SEE THIS ONCE", UiFontService.Default150Percent, ImGuiColors.DalamudRed);
         ImGui.Spacing();
-        CkGui.ColorTextWrapped("As Such, by joining GagSpeak, you must acknowledge & accept the following:", ImGuiColors.DalamudRed);
-
-        using var borderColor = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.DalamudRed);
-        using var scrollbarSize = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12f);
-
-        using (ImRaii.Child("AgreementWindow", new Vector2(ImGui.GetContentRegionAvail().X, 300f), true))
+        CkGui.CenterText("Acknowledgement Of Usage & Privacy");
+        using (CkRaii.FramedChildPaddedWH("UsageAndPrivacy", ImGui.GetContentRegionAvail(), 0, CkColor.RemoteBgDark.Uint(), wFlags: WFlags.AlwaysVerticalScrollbar))
         {
-            ImGui.Spacing();
-            CkGui.ColorText("Consent:", ImGuiColors.ParsedGold);
-            ImGui.TextWrapped("BDSM, at its foundation, highly values the aspest of consent. By using GagSpeak, you understand that you must abide by boundaries " +
-                "others set for you, and the limits that they define. If you push these limits against their will or pressure them to give you more than they are comfortable with, it will not be tolerated.");
-            ImGui.Spacing();
-            ImGui.Spacing();
+            ImGui.TextWrapped("Being a Server-Side Plugin, and a plugin full of kinky individuals, we all know there " +
+                "will always be some of *those* people who will try to ruin the fun for everyone.");
+            CkGui.ColorTextWrapped("As Such, by joining GagSpeak, you must acknowledge & accept the following:", ImGuiColors.DalamudRed);
 
+            // Consent Reminder.
+            ImGui.Spacing();
+            CkGui.FontText("Consent", UiFontService.Default150Percent, ImGuiColors.ParsedGold);
+            ImGui.TextWrapped("BDSM, at its foundation, highly values the aspect of consent.");
+            CkGui.BulletText("By using GagSpeak you MUST abide by the boundaries & limits others set for you.");
+            CkGui.BulletText("If you push these limits against their will or pressure them to give you more than they " +
+                "are comfortable with, it will not be tolerated.");
 
-            CkGui.ColorText("Privacy:", ImGuiColors.ParsedGold);
-            ImGui.TextWrapped("You Acknowledge that when using GagSpeak, your personal information such as Character Name and Homeworld are censored and replaced with " +
-                "an anonymous identity. If you give up this information about you and it is used against you, that is of your own fault. Be responsible about how you go about meeting up with others.");
+            // Privacy 
             ImGui.Spacing();
-            ImGui.Spacing();
+            CkGui.FontText("Privacy", UiFontService.Default150Percent, ImGuiColors.ParsedGold);
+            ImGui.TextWrapped("By using GagSpeak, you understand and acknowledge the following about data sharing:");
+            CkGui.BulletText("Personal information (Character Name & Homeworld) are censored with an anonymous identity.");
+            CkGui.BulletText("If you give up this information about you and it is used against you, that is of your own fault.");
+            CkGui.BulletText("Be responsible about how you go about meeting up with others.");
+            CkGui.BulletText("Your paired Kinksters will be able to see your active bondage state");
+            CkGui.BulletText("Your paired Kinksters can control any aspect of GagSpeak you gave them permission to control.");
+            CkGui.BulletText("If GagPlates are enabled, other pairs visible to you will see your Gagged Icon.");
 
-            CkGui.ColorText("Hardcore Control:", ImGuiColors.ParsedGold);
-            ImGui.TextWrapped("Hardcore Functionality in GagSpeak directly affects your game at a core level, such as preventing you from typing, blocking your sight, restricting you from movement, " +
-                "forcing you to perform emotes, blocking out certain actions from being used, and controling the GCD's of your actions.");
+            // Account Rep.
             ImGui.Spacing();
-            ImGui.TextWrapped("While these are all safe to use, be careful who you give these permissions access to. I have granted you with a great degree of control towards others, you are expected to " +
-                "take care of these individuals if granted access over them, and to not be wreckless.");
-            ImGui.Spacing();
-            ImGui.Spacing();
+            CkGui.FontText("Account Reputation", UiFontService.Default150Percent, ImGuiColors.ParsedGold);
+            CkGui.TextWrapped("Reputation is shared across all profiles (all Characters) to prevent abuse of social features. " +
+                "Valid reports may result in strikes. 3 in any category restrict access to that category, and too many total " +
+                "strikes lead to a ban.");
+            CkGui.BulletText("Verification / Ban Status");
+            CkGui.BulletText("KinkPlate™ Viewing");
+            using (ImRaii.PushIndent())
+            {
+                CkGui.BulletText("Controls your access to viewing other KinkPlates™.", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Used for preventing Stalker behavior.", ImGuiColors.DalamudGrey2);
+            }
+            CkGui.BulletText("KinkPlate™ Editing");
+            using (ImRaii.PushIndent())
+            {
+                CkGui.BulletText("Controls your access to modify your Profile.", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Used to prevent unwanted displays or behaviors in public profiles.", ImGuiColors.DalamudGrey2);
+            }
+            CkGui.BulletText("Global Chat Usage");
+            using (ImRaii.PushIndent())
+            {
+                CkGui.BulletText("Controls your access to send / receive radar chat messages.", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("A moderation utility for others breaking chat rules or displaying undesirable behaviors.", ImGuiColors.DalamudGrey2);
+            }
 
-            CkGui.ColorText("Predatory Behavior:", ImGuiColors.DalamudRed);
-            ImGui.TextWrapped("The Main Dev of GagSpeak has endured years of manipulative predatory abuse, and as such with firsthand experience, is familiar with what kinds of reports and behaviors to " +
-                "identify as 'bait reports' or 'actual reports'. Reports are handled very carefully by our team, and taken very seriously.");
             ImGui.Spacing();
-            ImGui.TextWrapped("If you notice any such behavior occuring, report it in detail. We have intentionally designed our flagged Kinksters to remain unaffected on their s end, so they wont be " +
+            CkGui.FontText("Hardcore Control", UiFontService.Default150Percent, ImGuiColors.ParsedGold);
+            CkGui.ColorTextWrapped("Hardcore Functionality in GagSpeak directly affects your game at a core level, such as preventing " +
+                "you from typing, blocking your sight, restricting your movement, forcing you to perform emotes, blocking " +
+                "out actions from being used, and controling the GCD's of your actions, and more.", new Vector4(1,0,0,1));
+            CkGui.BulletText("While these are all safe to use, be careful who you give these permissions access to.");
+            CkGui.BulletText("I have granted you with a great degree of control towards others, you are expected to take care of these " +
+                "individuals if granted access over them, and to not be wreckless.");
+
+            ImGui.Spacing();
+            CkGui.FontText("Predatory Behavior", UiFontService.Default150Percent, ImGuiColors.DalamudRed);
+            ImGui.TextWrapped("The Main Dev of GagSpeak has endured years of manipulative predatory abuse, and will ensure that any report made" +
+                "is resolved thoughtfully and with consideration in a manner that will not cause the reported to go after the reporter.");
+            CkGui.BulletText("This experience will help distiguish between 'bait reports' and 'actual reports'.");
+            CkGui.BulletText("If you notice any reportable behavior, report it in detail.");
+            CkGui.BulletText("Our report system is designed to leave flagged Kinksters unaffected on their end, so they wont be " +
                 "able to deduce who reported them until it is too late.");
+
             ImGui.Spacing();
         }
+
 
         ImGui.Spacing();
         CkGui.ColorTextCentered("Click this Button below once you have read and understood the above.", ImGuiColors.DalamudRed);
         if(ImGui.Button("Proceed To Account Creation.", new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeightWithSpacing())))
         {
-            _configService.Current.AcknowledgementUnderstood = true;
-            _configService.Save();
+            _config.Current.AcknowledgementUnderstood = true;
+            _config.Save();
         }
         ImGui.Spacing();
     }
 
-    private void DrawAccountSetup()
+    // For Generating an Account.
+    private void PageContentsAccountSetup(Vector2 region)
     {
-        using (UiFontService.GagspeakTitleFont.Push())
-        {
-            ImGuiUtil.Center("Primary Account Creation");
-        }
-        ImGui.Separator();
+        CkGui.FontText("Account Generation", UiFontService.UidFont);
+
+        ImGui.Text("You are not required to join the discord to login. Instead, it is generated for you below.");
+
         ImGui.Spacing();
+        CkGui.IconText(FAI.ExclamationTriangle, ImGuiColors.DalamudYellow);
+        ImUtf8.SameLineInner();
+        CkGui.ColorTextWrapped("NOTE: An unclaimed account can't access profiles, chats, or radars until claimed via the bot.", ImGuiColors.DalamudYellow);
 
-        CkGui.ColorText("Generating your Primary Account", ImGuiColors.ParsedGold);
-        ImGui.TextWrapped("You can ONLY PRESS THE BUTTON BELOW ONCE.");
-        CkGui.ColorTextWrapped("The Primary Account IS LINKED TO YOUR CURRENTLY LOGGED IN CHARACTER.", ImGuiColors.DalamudRed);
-        ImGui.TextWrapped("If you wish have your primary account on another character, log into them first!");
-        ImGui.Spacing();
+        CkGui.ColorTextFrameAligned("You can claim your account after a successful login in settings", ImGuiColors.DalamudGrey2);
 
-        ImGui.AlignTextToFramePadding();
-        CkGui.ColorText("Generate Primary Account: ", ImGuiColors.ParsedGold);
-
-        // Under the condition that we are not recovering an account, display the primary account generator:
-        if (_secretKey.IsNullOrWhitespace())
-        {
-            // generate a secret key for the user and attempt initial connection when pressed.
-            if (CkGui.IconTextButton(FAI.UserPlus, "Primary Account Generator (One-Time Use!)", disabled: _configService.Current.ButtonUsed))
-            {
-                _configService.Current.ButtonUsed = true;
-                _configService.Save();
-                _fetchAccountDetailsTask = FetchAccountDetailsAsync();
-            }
-            // while we are awaiting to fetch the details and connect display a please wait text.
-            if (_fetchAccountDetailsTask != null && !_fetchAccountDetailsTask.IsCompleted)
-            {
-                CkGui.ColorTextWrapped("Fetching details, please wait...", ImGuiColors.DalamudYellow);
-            }
-        }
-
-        // here we will draw out a seperator line.
+        // Account Generation Area.
         ImGui.Spacing();
         ImGui.Separator();
-        ImGui.Spacing();
-
-        // Below this we will provide the user with a space to insert an existing UID & Key to
-        // log back into a account they already have if they needed to reset for any reason.
-        CkGui.FontText("Does your Character already have a Primary Account?", UiFontService.UidFont);
-        CkGui.ColorText("Retreive the key from where you saved it, or the discord bot, and insert it below.", ImGuiColors.ParsedGold);
-        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X * .85f);
-        ImGui.InputText("Key##RefNewKey", ref _secretKey, 64);
+        DrawNewAccountGeneration();
+        // Account Recovery / Existing Account Setting here.
 
         ImGui.Spacing();
-        CkGui.ColorText("ServerState (For Debug Purposes): " + MainHub.ServerStatus, ImGuiColors.DalamudGrey);
-        CkGui.ColorText("Auth Exists for character (Debug): " + _serverConfigs.AuthExistsForCurrentLocalContentId(), ImGuiColors.DalamudGrey);
-        if(_secretKey.Length == 64)
+        ImGui.Separator();
+        DrawExistingAccountRecovery();
+    }
+
+    private void DrawNewAccountGeneration()
+    {
+        var generateWidth = CkGui.IconTextButtonSize(FAI.IdCardAlt, "Create Account (One-Time Use!)");
+        var recoveryKeyInUse = !string.IsNullOrWhiteSpace(_secretKey);
+
+        CkGui.FontText("Generate New Account", UiFontService.Default150Percent);
+        var blockButton = _account.HasAnyProfile || recoveryKeyInUse || _config.Current.ButtonUsed || UiService.DisableUI;
+
+        CkGui.FramedIconText(FAI.UserPlus);
+        CkGui.TextFrameAlignedInline("Generate:");
+        ImGui.SameLine();
+        if (CkGui.SmallIconTextButton(FAI.IdCardAlt, "Create Account (One-Time Use!)", disabled: blockButton))
+            FetchAccountDetailsAsync();
+
+        // Next line to display the account UID.
+        var uid = string.Empty;
+        var key = string.Empty;
+        if (_account.TryGetMainProfile(out var profile))
         {
-            CkGui.ColorText("Connect with existing Key?", ImGuiColors.ParsedGold);
+            uid = profile.ProfileUID;
+            key = profile.SecretKey;
+        }
+        CkGui.FramedIconText(FAI.IdBadge);
+        ImUtf8.SameLineInner();
+        ImGui.SetNextItemWidth(300 * ImGuiHelpers.GlobalScale);
+        ImGui.InputTextWithHint("UID##AccountUID", "Generated Account UID..", ref uid, 10, ImGuiInputTextFlags.ReadOnly);
+
+        // Next Line to display account key.
+        CkGui.FramedIconText(FAI.Key);
+        ImUtf8.SameLineInner();
+        ImGui.SetNextItemWidth(300 * ImGuiHelpers.GlobalScale);
+        ImGui.InputTextWithHint("Key##AccountKey", "Generated Account Secret Key..", ref key, 64, ImGuiInputTextFlags.ReadOnly);
+        CkGui.HelpText("SAVE THIS KEY SOMEWHERE SAFE!--NL--" +
+            "--COL--THIS IS THE ONLY WAY TO RECOVER YOUR ACCOUNT IF YOU LOSE ACCESS TO IT!--COL--", ImGuiColors.DalamudRed, true);
+
+        // if we have valid profile details but failed to connect, allow the user to attempt connection again.
+        if (_account.HasAnyProfile && !MainHub.IsConnected && _config.Current.ButtonUsed)
+        {
+            CkGui.FramedIconText(FAI.SatelliteDish);
+            CkGui.TextFrameAlignedInline("Attempt Reconnection with Account Login:");
             ImGui.SameLine();
-            if (CkGui.IconTextButton(FAI.Signal, "Yes! Log me in!", disabled: _initialAccountCreationTask is not null))
-            {
-                _logger.LogInformation("Creating Authentication for current character.");
-                try
-                {
-                    if (_serverConfigs.AuthExistsForCurrentLocalContentId())
-                    {
-                        throw new InvalidOperationException("Auth already exists for current character, cannot create new Primary auth if one already exists!");
-                    }
-
-                    // if the auth does not exist for the current character, we can create a new one.
-                    _serverConfigs.GenerateAuthForCurrentCharacter();
-
-                    // set the key to that newly added authentication
-                    SecretKey newKey = new()
-                    {
-                        Label = $"GagSpeak Main Account Secret Key - ({DateTime.Now:yyyy-MM-dd})",
-                        Key = _secretKey,
-                    };
-
-                    // set the secret key for the character
-                    _serverConfigs.SetSecretKeyForCharacter(PlayerData.CID, newKey);
-
-                    // run the create connections and set our account created to true
-                    _initialAccountCreationTask = PerformFirstLoginAsync();
-
-
-
-                }
-                catch (Bagagwa ex)
-                {
-                    _logger.LogError(ex, "Failed to create authentication for current character.");
-                }
-            }
-            CkGui.AttachToolTip("THIS WILL CREATE YOUR PRIMARY ACCOUNT. ENSURE YOUR KEY IS CORRECT.");
-        }
-
-        if (_initialAccountCreationTask is not null && !_initialAccountCreationTask.IsCompleted)
-        {
-            CkGui.ColorTextWrapped("Attempting to connect for First Login, please wait...", ImGuiColors.DalamudYellow);
+            if (CkGui.SmallIconTextButton(FAI.Wifi, "Connect with Login", disabled: UiService.DisableUI))
+                UiService.SetUITask(TryConnectForInitialization);
         }
     }
 
-    private async Task PerformFirstLoginAsync()
+    private void DrawExistingAccountRecovery()
+    {
+        CkGui.FontText("Use Existing Account / Recover Account", UiFontService.Default150Percent);
+        // Warning Notice.
+        CkGui.FramedIconText(FAI.ExclamationTriangle, ImGuiColors.DalamudYellow);
+        CkGui.ColorTextInline("To use an existing account / login with a recovered key from the discord bot, use it here and connect.", ImGuiColors.DalamudYellow);
+
+        CkGui.FramedIconText(FAI.ShieldHeart);
+        ImUtf8.SameLineInner();
+        ImGui.SetNextItemWidth(300 * ImGuiHelpers.GlobalScale);
+        ImGui.InputTextWithHint("##RefRecoveryKey", "Existing Account Key / Recovered Account Key..", ref _secretKey, 64);
+        ImUtf8.SameLineInner();
+
+        var blockButton = string.IsNullOrWhiteSpace(_secretKey) || _secretKey.Length != 64 || _account.HasValidMainProfile() || UiService.DisableUI;
+        if (CkGui.IconTextButton(FAI.Wrench, "Login with Key", disabled: blockButton))
+            TryLoginWithExistingKeyAsync();
+        CkGui.AttachToolTip("--COL--THIS WILL CREATE YOUR PRIMARY ACCOUNT. ENSURE YOUR KEY IS CORRECT.--COL--", ImGuiColors.DalamudRed);
+    }
+
+    private async Task TryConnectForInitialization()
     {
         try
         {
@@ -334,85 +620,87 @@ public class IntroUi : WindowMediatorSubscriberBase
             _logger.LogInformation("Connection Attempt finished, marking account as created.");
             if (MainHub.IsConnected)
             {
+                _furthestPage = IntroUiPage.Initialized;
                 _guides.StartTutorial(TutorialType.MainUi);
             }
-            _configService.Save(); // save the configuration
         }
         catch (Bagagwa ex)
         {
-            _logger.LogError(ex, "Failed to connect to the server for the first time.");
-            _configService.Save();
-        }
-        finally
-        {
-            _initialAccountCreationTask = null;
+            _logger.LogError($"Failed to connect to the server for the first time: {ex}");
         }
     }
 
-    private async Task FetchAccountDetailsAsync()
+    private void TryLoginWithExistingKeyAsync()
     {
-        try
+        UiService.SetUITask(async () =>
         {
-            // Begin by fetching the account details for the player. If this fails we will throw to the catch statement and perform an early return.
-            var accountDetails = await _hub.FetchFreshAccountDetails();
-
-            // if we are still in the try statement by this point we have successfully retrieved our new account details.
-            // This means that we can not create the new authentication and validate our account as created.
-
-            // However, if an auth already exists for the current content ID, and we are trying to create a new primary account, this should not be possible, so early throw.
-            if (_serverConfigs.AuthExistsForCurrentLocalContentId())
+            try
             {
-                throw new InvalidOperationException("Auth already exists for current character, cannot create new Primary auth if one already exists!");
+                if (_account.HasValidMainProfile())
+                    throw new InvalidOperationException("Cannot recover account when a valid profile already exists!");
+
+                if (!_account.TryGetMainProfile(out var profile))
+                    throw new InvalidOperationException("No Main Account existed!");
+
+                // Assign the secret key to the profile.
+                if (!_account.TryUpdateSecretKey(profile, _secretKey))
+                    throw new Bagagwa("Failed to update secret key for main profile, key may already exist.");
+
+                _logger.LogInformation("Updated Secret Key Successfully.");
+                await TryConnectForInitialization();
+            }
+            catch (Bagagwa ex)
+            {
+                _logger.LogError($"Failed to recover account for current character: {ex}");
+            }
+        });
+    }
+
+    private void FetchAccountDetailsAsync()
+    {
+        UiService.SetUITask(async () =>
+        {
+            _config.Current.ButtonUsed = true;
+            _config.Save();
+            try
+            {
+                // Ensure existance.
+                if (!_account.ProfileExistsForChara())
+                    _account.CreateProfileForChara();
+
+                // Begin by fetching the account details. If this fails we will throw to the catch statement and perform an early return.
+                var accountDetails = await _hub.FetchFreshAccountDetails();
+
+                // if we are still in the try statement by this point we have successfully retrieved our new account details.
+                // This means that we can not create the new authentication and validate our account as created.
+                _logger.LogInformation("Fetched Account Details, proceeding to create Primary Account authentication.");
+
+                // This will throw if it failed to set.
+                _account.AssignFreshAccountProfile(accountDetails.Item1, accountDetails.Item2);
+
+                _logger.LogInformation("Profile for Login Auth set successfully.");
+                // Log the details.
+                _logger.LogInformation($"UID: [{accountDetails.Item1}]");
+                _logger.LogInformation($"Secret Key: [{accountDetails.Item2}]");
+                _logger.LogInformation("Fetched Account Details Successfully and finished creating Primary Account.");
+            }
+            catch (Bagagwa ex)
+            {
+                _logger.LogError(ex, "Failed to fetch account details and create the primary authentication. Performing early return.");
+                _config.Current.ButtonUsed = false;
+                _config.Save();
+                return;
             }
 
-            // if the auth does not exist for the current character, we can create a new one.
-            _serverConfigs.GenerateAuthForCurrentCharacter();
-
-            // set the key to that newly added authentication
-            SecretKey newKey = new()
+            // Next, attempt an initialization connection test.
+            try
             {
-                Label = $"GagSpeak Main Account Secret Key - ({DateTime.Now:yyyy-MM-dd})",
-                Key = accountDetails.Item2,
-            };
-
-            // set the secret key for the character
-            _serverConfigs.SetSecretKeyForCharacter(PlayerData.CID, newKey);
-            _configService.Save();
-            // Log the details.
-            _logger.LogInformation("UID: " + accountDetails.Item1);
-            _logger.LogInformation("Secret Key: " + accountDetails.Item2);
-            _logger.LogInformation("Fetched Account Details Successfully and finished creating Primary Account.");
-
-        }
-        catch (Bagagwa)
-        {
-            // Log the error
-            _logger.LogError("Failed to fetch account details and create the primary authentication. Performing early return.");
-            _configService.Current.ButtonUsed = false;
-            _configService.Save();
-
-            // set the task back to null and return.
-            _fetchAccountDetailsTask = null;
-            return;
-        }
-
-        // Next step is to attempt a initial connection to the server with this now primary authentication.
-        // If it suceeds then it will mark the initialConnectionSuccessful flag to true (This is done in the connection function itself)
-        try
-        {
-            _logger.LogInformation("Attempting to connect to the server for the first time.");
-            await _hub.Connect();
-            _logger.LogInformation("Connection Attempt finished.");
-
-            if (MainHub.IsConnected) _guides.StartTutorial(TutorialType.MainUi);
-        }
-        catch (Bagagwa ex)
-        {
-            _logger.LogError(ex, "Failed to connect to the server for the first time.");
-        }
-        finally
-        {
-            _fetchAccountDetailsTask = null;
-        }
+                await TryConnectForInitialization();
+            }
+            catch (Bagagwa ex)
+            {
+                _logger.LogError($"Failed to fetch account details and create the primary authentication. Performing early return: {ex}");
+            }
+        });
     }
 }

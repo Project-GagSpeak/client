@@ -1,6 +1,7 @@
-using System.Reflection;
 using CkCommons;
+using GagSpeak.Interop;
 using GagSpeak.Kinksters;
+using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Configs;
@@ -13,6 +14,7 @@ using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Hosting;
+using System.Reflection;
 
 namespace GagSpeak.WebAPI;
 /// <summary>
@@ -27,11 +29,17 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     private readonly ClientAchievements _achievements;
     private readonly HubFactory _hubFactory;
     private readonly TokenProvider _tokenProvider;
-    private readonly ServerConfigManager _serverConfigs;
+    private readonly MainConfig _config;
+    private readonly AccountManager _accounts;
+
     private readonly KinksterManager _kinksters;
+    private readonly RequestsManager _requests;
     private readonly CollarManager _collarManager;
+
+    private readonly IpcCallerMoodles _moodles;
+    private readonly IpcProvider _ipcProvider;
+
     private readonly ClientDataListener _clientDatListener;
-    private readonly KinksterListener _kinksterListener;
     private readonly VisualStateListener _visualListener;
     private readonly PuppeteerListener _puppetListener;
     private readonly ToyboxStateListener _toyboxListener;
@@ -60,11 +68,14 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         ClientAchievements achievements,
         HubFactory hubFactory,
         TokenProvider tokenProvider,
-        ServerConfigManager serverConfigs,
+        MainConfig config,
+        AccountManager accounts,
         KinksterManager kinksters,
+        RequestsManager requests,
         CollarManager collarManager,
+        IpcCallerMoodles moodles,
+        IpcProvider ipcProvider,
         ClientDataListener clientDatListener,
-        KinksterListener kinksterListener,
         VisualStateListener visuals,
         PuppeteerListener puppeteer,
         ToyboxStateListener toybox,
@@ -75,11 +86,15 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         _achievements = achievements;
         _hubFactory = hubFactory;
         _tokenProvider = tokenProvider;
-        _serverConfigs = serverConfigs;
+        _config = config;
+        _accounts = accounts;
         _kinksters = kinksters;
+        _requests = requests;
         _collarManager = collarManager;
+        _moodles = moodles;
+        _ipcProvider = ipcProvider;
+
         _clientDatListener = clientDatListener;
-        _kinksterListener = kinksterListener;
         _visualListener = visuals;
         _puppetListener = puppeteer;
         _toyboxListener = toybox;
@@ -87,9 +102,10 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         _dataSync = dataSync;
 
         // Subscribe to the things.
-        Mediator.Subscribe<MainHubClosedMessage>(this, (msg) => HubInstanceOnClosed(msg.Exception));
-        Mediator.Subscribe<MainHubReconnectedMessage>(this, (msg) => _ = HubInstanceOnReconnected());
-        Mediator.Subscribe<MainHubReconnectingMessage>(this, (msg) => HubInstanceOnReconnecting(msg.Exception));
+        Mediator.Subscribe<HubClosedMessage>(this, (msg) => HubInstanceOnClosed(msg.Exception));
+        Mediator.Subscribe<ReconnectedMessage>(this, (msg) => _ = HubInstanceOnReconnected());
+        Mediator.Subscribe<ReconnectingMessage>(this, (msg) => HubInstanceOnReconnecting(msg.Exception));
+        // Mediator.Subscribe<SendTempRequestMessage>(this, _ => OnSendTempRequest(_.TargetUser)); // Temp Request Placeholder.
 
         Svc.ClientState.Login += OnLogin;
         Svc.ClientState.Logout += (_, _) => OnLogout();
@@ -117,11 +133,11 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     }
 
     public static string AuthFailureMessage { get; private set; } = string.Empty;
-    public static int MainOnlineUsers => _serverInfo?.OnlineUsers ?? 0;
-    public static UserData PlayerUserData => ConnectionResponse!.User;
+    public static int OnlineUsers => _serverInfo?.OnlineUsers ?? 0;
+    public static UserData OwnUserData => ConnectionResponse!.User;
     public static string DisplayName => ConnectionResponse?.User.AliasOrUID ?? string.Empty;
     public static string UID => ConnectionResponse?.User.UID ?? string.Empty;
-    public static bool IsVerified => ConnectionResponse?.User.Verified ?? false;
+    public static bool IsVerified => ConnectionResponse?.Reputation.IsVerified ?? false; // Maybe update to account reputation stuff idk.
     public static ServerState ServerStatus
     {
         get => _serverStatus;
@@ -138,7 +154,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     public static bool IsConnectionDataSynced => _serverStatus is ServerState.ConnectedDataSynced;
     public static bool IsConnected => _serverStatus is ServerState.Connected or ServerState.ConnectedDataSynced;
     public static bool IsServerAlive => _serverStatus is ServerState.ConnectedDataSynced or ServerState.Connected or ServerState.Unauthorized or ServerState.Disconnected;
-    public bool ClientHasConnectionPaused => _serverConfigs.ServerStorage.FullPause;
+    public bool ClientHasConnectionPaused => _config.ServerPaused;
 
     protected override void Dispose(bool disposing)
     {
@@ -157,10 +173,25 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     {
         Logger.LogInformation("MainHub is stopping. Closing down GagSpeakHub-Main!", LoggerType.ApiCore);
         _hubHealthCTS?.Cancel();
-        await Disconnect(ServerState.Disconnected).ConfigureAwait(false);
+        await Disconnect(ServerState.Disconnected, DisconnectIntent.Shutdown).ConfigureAwait(false);
         _hubConnectionCTS?.Cancel();
         return;
     }
+
+    //private async void OnSendTempRequest(UserData user)
+    //{
+    //    var msg = $"Temporary Request from {OwnUserData.AnonName}";
+    //    var ret = await UserSendRequest(new(new(user.UID), true, msg)).ConfigureAwait(false);
+    //    if (ret.ErrorCode is SundouleiaApiEc.Success && ret.Value is { } request)
+    //    {
+    //        Logger.LogInformation($"Temporary request sent to {user.AnonName}.", LoggerType.RadarData);
+    //        // Add to our requests, updating the requests manager.
+    //        _requests.AddNewRequest(request);
+    //        return;
+    //    }
+
+    //    Logger.LogWarning($"Failed to send temporary pair request to {user.AnonName} [{ret.ErrorCode}]", LoggerType.RadarData);
+    //}
 
 
     private async void OnLogin()
@@ -175,7 +206,8 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     private async void OnLogout()
     {
         Logger.LogInformation("Stopping connection on logout", LoggerType.ApiCore);
-        await Disconnect(ServerState.Disconnected).ConfigureAwait(false);
+        // as we are changing characters, we should fully unload any kinksters from the manager, and other chara spesific data.
+        await Disconnect(ServerState.Disconnected, DisconnectIntent.Logout).ConfigureAwait(false);
         // switch the server state to offline.
         ServerStatus = ServerState.Offline;
     }
@@ -198,10 +230,12 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         OnAddCollarRequest(dto => _ = Callback_AddCollarRequest(dto));
         OnRemoveCollarRequest(dto => _ = Callback_RemoveCollarRequest(dto));
 
-        OnSetKinksterMoodlesFull(dto => _ = Callback_SetKinksterMoodlesFull(dto));
-        OnSetKinksterMoodlesSM(dto => _ = Callback_SetKinksterMoodlesSM(dto));
-        OnSetKinksterMoodlesStatuses(dto => _ = Callback_SetKinksterMoodlesStatuses(dto));
-        OnSetKinksterMoodlesPresets(dto => _ = Callback_SetKinksterMoodlesPresets(dto));
+        OnMoodleDataUpdated(dto => _ = Callback_MoodleDataUpdated(dto));
+        OnMoodleSMUpdated(dto => _ = Callback_MoodleSMUpdated(dto));
+        OnMoodleStatusesUpdate(dto => _ = Callback_MoodleStatusesUpdate(dto));
+        OnMoodlePresetsUpdate(dto => _ = Callback_MoodlePresetsUpdate(dto));
+        OnMoodleStatusModified(dto => _ = Callback_MoodleStatusModified(dto));
+        OnMoodlePresetModified(dto => _ = Callback_MoodlePresetModified(dto));
         OnApplyMoodlesByGuid(dto => _ = Callback_ApplyMoodlesByGuid(dto));
         OnApplyMoodlesByStatus(dto => _ = Callback_ApplyMoodlesByStatus(dto));
         OnRemoveMoodles(dto => _ = Callback_RemoveMoodles(dto));
@@ -264,8 +298,8 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         _apiHooksInitialized = true;
     }
 
-    public async Task<bool> CheckMainClientHealth()
-        => await _hubConnection!.InvokeAsync<bool>(nameof(CheckMainClientHealth)).ConfigureAwait(false);
+    public async Task<bool> HealthCheck()
+        => await _hubConnection!.InvokeAsync<bool>(nameof(HealthCheck)).ConfigureAwait(false);
     public async Task<ConnectionResponse> GetConnectionResponse()
         => await _hubConnection!.InvokeAsync<ConnectionResponse>(nameof(GetConnectionResponse)).ConfigureAwait(false);
 
@@ -282,20 +316,12 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         => await _hubConnection!.InvokeAsync<ActiveRequests>(nameof(UserGetActiveRequests)).ConfigureAwait(false);
 
     public async Task<KinkPlateFull> UserGetKinkPlate(KinksterBase dto)
-    {
-        // if we are not connected, return a new user profile dto with the user data and disabled set to false
-        if (!IsConnected)
-            return new KinkPlateFull(dto.User, Info: new KinkPlateContent(), ImageBase64: string.Empty);
-
-        return await _hubConnection!.InvokeAsync<KinkPlateFull>(nameof(UserGetKinkPlate), dto).ConfigureAwait(false);
-    }
+        => await _hubConnection!.InvokeAsync<KinkPlateFull>(nameof(UserGetKinkPlate), dto).ConfigureAwait(false);
 
     private async Task LoadInitialKinksters()
     {
-        // Retrieve the pairs from the server that we have added, and add them to the pair manager.
         var kinksters = await UserGetPairedClients().ConfigureAwait(false);
-        _kinksters.AddKinksterPairs(kinksters);
-
+        _kinksters.AddKinksters(kinksters);
         Logger.LogDebug($"Initial Kinksters Loaded: [{string.Join(", ", kinksters.Select(x => x.User.AliasOrUID))}]", LoggerType.ApiCore);
     }
 
@@ -303,8 +329,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     {
         var onlineKinksters = await UserGetOnlinePairs().ConfigureAwait(false);
         foreach (var entry in onlineKinksters)
-            _kinksters.MarkKinksterOnline(entry, sendNotification: false);
-
+            _kinksters.MarkKinksterOnline(entry, false);
         Logger.LogDebug($"Online Kinksters: [{string.Join(", ", onlineKinksters.Select(x => x.User.AliasOrUID))}]", LoggerType.ApiCore);
     }
 
@@ -312,15 +337,27 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     {
         // retrieve any current kinkster requests.
         var requests = await UserGetActiveRequests().ConfigureAwait(false);
-        _clientDatListener.InitRequests(requests.KinksterRequests);
+#if DEBUG
+        // Generate some dummy entries.
+        var dummyRequests = new List<KinksterRequest>();
+        for (int i = 0; i < 5; i++)
+        {
+            dummyRequests.Add(new KinksterRequest(new($"Dummy Sender {i}"), OwnUserData, new(false, "Wawa", "Blah Blah"), DateTime.Now));
+            dummyRequests.Add(new KinksterRequest(OwnUserData, new($"Dummy Recipient {i}"), new(false, "Wawa", "Blah Blah"), DateTime.Now));
+        }
+        requests.KinksterRequests.AddRange(dummyRequests);
+#endif
+        _requests.AddNewRequest(requests.KinksterRequests);
         _collarManager.LoadServerRequests(requests.CollarRequests);
     }
 
     /// <summary>
-    /// Awaits for the player to be present, ensuring that they are logged in before this fires.
-    /// There is a possibility we wont need this anymore with the new system, so attempt it without it once this works!
+    ///     Awaits for the player to be present, ensuring that they are 
+    ///     logged in before this fires. <para/>
+    ///     
+    ///     There is a possibility we wont need this anymore with the new system,
+    ///     so attempt it without it once this works!
     /// </summary>
-    /// <param name="token"> token that when canceled will stop the while loop from occurring, preventing infinite reloads/waits </param>
     private async Task WaitForWhenPlayerIsPresent(CancellationToken token)
     {
         while (!PlayerData.Available && !token.IsCancellationRequested)

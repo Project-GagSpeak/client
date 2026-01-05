@@ -13,9 +13,9 @@ namespace GagSpeak.CustomCombos.Editor;
 
 public sealed class PatternCombo : CkFilterComboCache<Pattern>, IMediatorSubscriber, IDisposable
 {
-    private readonly FavoritesManager _favorites;
+    private readonly FavoritesConfig _favorites;
     public Guid _current { get; private set; }
-    public PatternCombo(ILogger log, GagspeakMediator mediator, FavoritesManager favorites,
+    public PatternCombo(ILogger log, GagspeakMediator mediator, FavoritesConfig favorites,
         Func<IReadOnlyList<Pattern>> generator) : base(generator, log)
     {
         _favorites = favorites;

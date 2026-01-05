@@ -8,7 +8,6 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Plugin.Services;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
@@ -58,7 +57,7 @@ public sealed class AliasItemDrawer
         RestrictionManager restrictions,
         RestraintManager restraints,
         PuppeteerManager manager,
-        FavoritesManager favorites)
+        FavoritesConfig favorites)
     {
         _logger = logger;
         _gags = gags;
@@ -68,10 +67,10 @@ public sealed class AliasItemDrawer
         _moodleDrawer = moodleDrawer;
 
         _restrictionCombo = new RestrictionCombo(logger, mediator, favorites, () => [
-            ..restrictions.Storage.OrderByDescending(p => favorites._favoriteRestrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
+            ..restrictions.Storage.OrderByDescending(p => favorites.Restrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
         _restraintCombo = new RestraintCombo(logger, mediator, favorites, () => [
-            ..restraints.Storage.OrderByDescending(p => favorites._favoriteRestraints.Contains(p.Identifier)).ThenBy(p => p.Label)
+            ..restraints.Storage.OrderByDescending(p => favorites.Restraints.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
         _statusCombo = new MoodleStatusCombo(logger, 1.15f);
         _presetCombo = new MoodlePresetCombo(logger, 1.15f);
@@ -229,7 +228,7 @@ public sealed class AliasItemDrawer
             1);
     }
 
-    public void DrawAliasTrigger(AliasTrigger aliasItem, CharaMoodleData ipc, out bool startEditing, bool canEdit = true)
+    public void DrawAliasTrigger(AliasTrigger aliasItem, MoodleData ipc, out bool startEditing, bool canEdit = true)
     {
         startEditing = false;
         var isContained = ExpandedTriggers.Contains(aliasItem.Identifier);
@@ -682,7 +681,7 @@ public sealed class AliasItemDrawer
         }
     }
 
-    public void DrawMoodleAction(MoodleAction action, CharaMoodleData ipc)
+    public void DrawMoodleAction(MoodleAction action, MoodleData ipc)
     {
         using var _ = ImRaii.Group();
 
@@ -717,7 +716,7 @@ public sealed class AliasItemDrawer
         }
     }
 
-    public void DrawMoodleActionEdit(MoodleAction action, CharaMoodleData ipc)
+    public void DrawMoodleActionEdit(MoodleAction action, MoodleData ipc)
     {
         using var _ = ImRaii.Group();
 

@@ -1,9 +1,8 @@
 using CkCommons;
 using Dalamud.Interface.ImGuiNotification;
-using GagSpeak.PlayerClient;
-using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Utils;
 using GagspeakAPI.Hub;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
@@ -14,18 +13,16 @@ namespace GagSpeak.WebAPI;
 public sealed class TokenProvider : DisposableMediatorSubscriberBase
 {
     private readonly HttpClient _httpClient;
-    private readonly OnFrameworkService _frameworkUtil;
-    private readonly ServerConfigManager _serverManager;
+    private readonly AccountManager _account;
     private readonly ConcurrentDictionary<JwtIdentifier, string> _tokenCache;
 
     private JwtIdentifier? _lastJwtIdentifier;
 
     public TokenProvider(ILogger<TokenProvider> logger, GagspeakMediator mediator,
-        ServerConfigManager serverManager, OnFrameworkService frameworkUtils) 
+        AccountManager serverManager) 
         : base(logger, mediator)
     {
-        _serverManager = serverManager;
-        _frameworkUtil = frameworkUtils;
+        _account = serverManager;
         _httpClient = new HttpClient();
         _tokenCache = new ConcurrentDictionary<JwtIdentifier, string>();
         var ver = Assembly.GetExecutingAssembly().GetName().Version;
@@ -125,14 +122,14 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
                     // var auth = secretKey.GetHash256(); // leaving out this because i took out double encryption to just single for now
 
                     // Set the token URI to the appropriate endpoint for secret key authentication
-                    tokenUri = GagspeakAuth.AuthFullPath(new Uri(_serverManager.CurrentApiUrl
+                    tokenUri = GagspeakAuth.AuthFullPath(new Uri(MainHub.MAIN_SERVER_URI
                         .Replace("wss://", "https://", StringComparison.OrdinalIgnoreCase)
                         .Replace("ws://", "http://", StringComparison.OrdinalIgnoreCase)));
 
                     Logger.LogTrace("Token URI: "+tokenUri, LoggerType.JwtTokens);
                     result = await _httpClient.PostAsync(tokenUri, new FormUrlEncodedContent(new[]
                     {
-                        new KeyValuePair<string, string>("charaIdent", await _frameworkUtil.GetPlayerNameHashedAsync().ConfigureAwait(false)),
+                        new KeyValuePair<string, string>("charaIdent", await GagSpeakSecurity.GetClientIdentHash().ConfigureAwait(false)),
                         new KeyValuePair<string, string>("authKey", secretKey),
                         new KeyValuePair<string, string>("forceMain", forceMain),
                     }), token).ConfigureAwait(false);
@@ -144,14 +141,14 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
                     var localContentID = localContentIDIdentifier.LocalContentID;
 
                     // Set the token URI to the appropriate endpoint for local content ID authentication
-                    tokenUri = GagspeakAuth.TempTokenFullPath(new Uri(_serverManager.CurrentApiUrl
+                    tokenUri = GagspeakAuth.TempTokenFullPath(new Uri(MainHub.MAIN_SERVER_URI
                         .Replace("wss://", "https://", StringComparison.OrdinalIgnoreCase)
                         .Replace("ws://", "http://", StringComparison.OrdinalIgnoreCase)));
 
                     Logger.LogTrace("Token URI: "+tokenUri, LoggerType.JwtTokens);
                     result = await _httpClient.PostAsync(tokenUri, new FormUrlEncodedContent(new[]
                     {
-                        new KeyValuePair<string, string>("charaIdent", await _frameworkUtil.GetPlayerNameHashedAsync().ConfigureAwait(false)),
+                        new KeyValuePair<string, string>("charaIdent", await GagSpeakSecurity.GetClientIdentHash().ConfigureAwait(false)),
                         new KeyValuePair<string, string>("localContentID", localContentID),
                     }), token).ConfigureAwait(false);
                 }
@@ -167,7 +164,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
                 // set the token URI to GagspeakAuth's full path, with the base URI being the
                 // server's current API URL, with https:// replaced with wss://
                 // (calling RenewTokenFullPath is different from AuthFullPath
-                tokenUri = GagspeakAuth.RenewTokenFullPath(new Uri(_serverManager.CurrentApiUrl
+                tokenUri = GagspeakAuth.RenewTokenFullPath(new Uri(MainHub.MAIN_SERVER_URI
                     .Replace("wss://", "https://", StringComparison.OrdinalIgnoreCase)
                     .Replace("ws://", "http://", StringComparison.OrdinalIgnoreCase)));
 
@@ -207,7 +204,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
                         "Check GagSpeak's main UI to see the error message.", NotificationType.Error));
 
                 // publish a disconnected message and throw an exception.
-                Mediator.Publish(new MainHubDisconnectedMessage());
+                Mediator.Publish(new DisconnectedMessage(DisconnectIntent.Unexpected));
                 throw new GagspeakAuthFailureException(response);
             }
 
@@ -255,15 +252,15 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
             var secretKey = string.Empty;
             var expectingPrimary = false;
             // Attempt to get the secret key and isPrimary attributes as well.
-            if (_serverManager.TryGetAuthForCharacter(out var auth))
+            if (_account.GetProfileForChara() is { } profile)
             {
-                secretKey = auth.SecretKey.Key;
-                expectingPrimary = auth.IsPrimary;
+                secretKey = profile.SecretKey;
+                expectingPrimary = profile.IsMainProfile;
             }
 
             // get the remaining attributes.
-            var apiUrl = _serverManager.CurrentApiUrl;
-            var charaHash = _frameworkUtil.GetPlayerNameHashedAsync().GetAwaiter().GetResult();
+            var apiUrl = MainHub.MAIN_SERVER_URI;
+            var charaHash = GagSpeakSecurity.GetClientIdentHash().GetAwaiter().GetResult();
             // Example logic to decide which identifier to use.
             if (!string.IsNullOrEmpty(secretKey))
             {

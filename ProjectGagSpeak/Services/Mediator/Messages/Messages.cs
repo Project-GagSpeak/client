@@ -1,4 +1,3 @@
-using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.ImGuiNotification;
 using GagSpeak.GameInternals;
 using GagSpeak.Kinksters;
@@ -25,23 +24,26 @@ public record NotificationMessage(string Title, string Message, NotificationType
 /// <param name="Event"> The event that was triggered. </param>
 public record EventMessage(InteractionEvent Event) : MessageBase;
 
+
+
 /// <summary> Fires whenever the client is disconnected from the GagSpeak Hub. </summary>
-public record MainHubDisconnectedMessage : SameThreadMessage;
+public record DisconnectedMessage(DisconnectIntent Intent) : SameThreadMessage;
 
 /// <summary> Fires whenever the client is attempting to reconnect to the GagSpeak Hub. </summary>
-public record MainHubReconnectingMessage(Exception? Exception) : SameThreadMessage;
+public record ReconnectingMessage(Exception? Exception) : SameThreadMessage;
 
 /// <summary> Fires whenever the client has reconnected to the GagSpeak Hub. </summary>
-public record MainHubReconnectedMessage(string? Arg) : SameThreadMessage;
+public record ReconnectedMessage(string? Arg) : SameThreadMessage;
 
 /// <summary> Fires whenever the GagSpeak Hub closes. </summary>
-public record MainHubClosedMessage(Exception? Exception) : SameThreadMessage;
+public record HubClosedMessage(Exception? Exception) : SameThreadMessage;
 
 /// <summary> Fires whenever the client has connected to the GagSpeak Hub. </summary>
-public record MainHubConnectedMessage : MessageBase;
+public record ConnectedMessage : MessageBase;
 
 /// <summary> Fired once all personal data related to sharehubs and invites are received after connection. </summary>
-public record PostConnectionDataReceivedMessage(LobbyAndHubInfoResponse Info) : MessageBase;
+public record ConnectedDataSyncedMessage(LobbyAndHubInfoResponse Info) : MessageBase;
+
 
 /// <summary> When we want to send off our current Achievement Data. </summary>
 public record SendAchievementData : MessageBase;

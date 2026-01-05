@@ -1,6 +1,5 @@
 using GagSpeak.GameInternals.Addons;
 using GagSpeak.Services.Mediator;
-using GagSpeak.State;
 using GagSpeak.State.Caches;
 
 
@@ -18,7 +17,7 @@ public sealed class ChatboxController : DisposableMediatorSubscriberBase
         PlayerControlCache cache) : base(logger, mediator)
     {
         _cache = cache;
-        Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreState());
+        Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreStatus());
         Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
     }
 
@@ -31,6 +30,6 @@ public sealed class ChatboxController : DisposableMediatorSubscriberBase
     }
 
     // Update our local value to reflect the latest state in the cache.
-    public void UpdateHardcoreState()
+    public void UpdateHardcoreStatus()
         => _blockInput = _cache.BlockChatInput;
 }

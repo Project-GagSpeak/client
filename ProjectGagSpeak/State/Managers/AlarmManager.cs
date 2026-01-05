@@ -14,13 +14,13 @@ public sealed class AlarmManager : IHybridSavable
     private readonly ILogger<AlarmManager> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly PatternManager _patterns;
-    private readonly FavoritesManager _favorites;
+    private readonly FavoritesConfig _favorites;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
 
     private StorageItemEditor<Alarm> _itemEditor = new();
     public AlarmManager(ILogger<AlarmManager> logger, GagspeakMediator mediator,
-        PatternManager patterns, FavoritesManager favorites, ConfigFileProvider files, 
+        PatternManager patterns, FavoritesConfig favorites, ConfigFileProvider files, 
         HybridSaveService saver)
     {
         _logger = logger;
@@ -198,7 +198,7 @@ public sealed class AlarmManager : IHybridSavable
                 return;
         }
         _saver.Save(this);
-        _mediator.Publish(new ReloadFileSystem(GagspeakModule.Alarm));
+        _mediator.Publish(new ReloadFileSystem(GSModule.Alarm));
     }
 
     private void LoadV0(JToken? data)

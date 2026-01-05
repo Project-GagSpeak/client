@@ -20,7 +20,7 @@ namespace GagSpeak.FileSystems;
 // Continue reworking this to integrate a combined approach if we can figure out a better file management system.
 public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionItem, RestrictionFileSelector.RestrictionState>, IMediatorSubscriber, IDisposable
 {
-    private readonly FavoritesManager _favorites;
+    private readonly FavoritesConfig _favorites;
     private readonly RestrictionManager _manager;
     public GagspeakMediator Mediator { get; init; }
 
@@ -40,7 +40,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
     public new RestrictionFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
-    public RestrictionFileSelector(GagspeakMediator mediator, FavoritesManager favorites, RestrictionManager manager, 
+    public RestrictionFileSelector(GagspeakMediator mediator, FavoritesConfig favorites, RestrictionManager manager, 
         RestrictionFileSystem fileSystem) : base(fileSystem, Svc.Logger.Logger, Svc.KeyState, "##RestrictionFS")
     {
         Mediator = mediator;

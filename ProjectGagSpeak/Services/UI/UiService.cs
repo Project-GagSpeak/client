@@ -18,7 +18,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
 
     private readonly ILogger<UiService> _logger;
     private readonly MainConfig _mainConfig;
-    private readonly ServerConfigService _serverConfig;
+    private readonly AccountConfig _serverConfig;
     private readonly UiFactory _uiFactory;
     private readonly WindowSystem _windowSystem;
     private readonly UiFileDialogService _fileService;
@@ -28,7 +28,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     public static bool DisableUI => UiTask is not null && !UiTask.IsCompleted;
 
     public UiService(ILogger<UiService> logger, GagspeakMediator mediator,
-        MainConfig mainConfig, ServerConfigService serverConfig,
+        MainConfig mainConfig, AccountConfig serverConfig,
         WindowSystem windowSystem, IEnumerable<WindowMediatorSubscriberBase> windows,
         UiFactory uiFactory, MainMenuTabs menuTabs, UiFileDialogService fileDialog)
         : base(logger, mediator)
@@ -57,18 +57,6 @@ public sealed class UiService : DisposableMediatorSubscriberBase
             _windowSystem.AddWindow(window);
         }
 
-        Mediator.Subscribe<MainHubDisconnectedMessage>(this, (msg) =>
-        {
-            var pairPermissionWindows = _createdWindows.OfType<KinksterInteractionsUI>().ToList();
-            foreach (var window in pairPermissionWindows)
-            {
-                _logger.LogTrace("Closing KinksterInteractions window.", LoggerType.StickyUI);
-                _windowSystem.RemoveWindow(window);
-                _createdWindows.Remove(window);
-                window.Dispose();
-            }
-        });
-
         // subscribe to the event message for removing a window
         Mediator.Subscribe<RemoveWindowMessage>(this, (msg) =>
         {
@@ -83,18 +71,18 @@ public sealed class UiService : DisposableMediatorSubscriberBase
         });
 
         /* ---------- The following subscribers are for factory made windows, meant to be unique to each pair ---------- */
-        Mediator.Subscribe<KinkPlateOpenStandaloneMessage>(this, (msg) =>
+        Mediator.Subscribe<KinkPlateCreateOpenMessage>(this, (msg) =>
         {
             if (!_createdWindows.Exists(p => p is KinkPlateUI ui
-                && string.Equals(ui.Pair.UserData.UID, msg.Pair.UserData.UID, StringComparison.Ordinal)))
+                && string.Equals(ui.Pair.UserData.UID, msg.Kinkster.UserData.UID, StringComparison.Ordinal)))
             {
-                var window = _uiFactory.CreateStandaloneKinkPlateUi(msg.Pair);
+                var window = _uiFactory.CreateStandaloneKinkPlateUi(msg.Kinkster);
                 _createdWindows.Add(window);
                 _windowSystem.AddWindow(window);
             }
         });
 
-        Mediator.Subscribe<KinkPlateOpenStandaloneLightMessage>(this, (msg) =>
+        Mediator.Subscribe<KinkPlateLightCreateOpenMessage>(this, (msg) =>
         {
             if (_createdWindows.FirstOrDefault(p => p is KinkPlateLightUI ui && ui.UserDataToDisplay.UID == msg.UserData.UID) is { } match)
             {
@@ -167,7 +155,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     /// <remarks> Checks if user has valid setup, and opens introUI or MainUI </remarks>
     public void ToggleMainUi()
     {
-        if (_mainConfig.Current.HasValidSetup() && _serverConfig.Storage.HasValidSetup())
+        if (_mainConfig.Current.HasValidSetup() && _serverConfig.Current.HasValidSetup())
         {
             Mediator.Publish(new UiToggleMessage(typeof(MainUI)));
         }
@@ -187,7 +175,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     /// </summary>
     public void ToggleUi()
     {
-        if (_mainConfig.Current.HasValidSetup() && _serverConfig.Storage.HasValidSetup())
+        if (_mainConfig.Current.HasValidSetup() && _serverConfig.Current.HasValidSetup())
             Mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
         else
             Mediator.Publish(new UiToggleMessage(typeof(IntroUi)));

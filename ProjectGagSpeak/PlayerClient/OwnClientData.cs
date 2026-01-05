@@ -1,29 +1,19 @@
 using CkCommons;
-using CkCommons.Gui;
-using Dalamud.Bindings.ImGui;
-using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Kinksters;
-using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Data.Struct;
-using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
 using GagspeakAPI.Util;
-using OtterGui;
 
 namespace GagSpeak.PlayerClient;
 
-/// <summary> 
-///     Holds all personal information about the client's Kinkster information. <para />
-///     This includes GlobalPerms, HardcoreState, and Pair Requests. <para />
-///     GlobalPerms and HardcoreState can be accessed statically, as this is singleton, 
-///     and makes readonly access less of a hassle considering how frequently they are accessed.
-/// </summary>
+// Revise this later to flow through a different pipeline,
+// we shouldnt be overcomplicating how to protect access form ourselves.
+// Just make things internal where needed instead.
 public sealed class ClientData : IDisposable
 {
     private readonly ILogger<ClientData> _logger;
@@ -44,29 +34,25 @@ public sealed class ClientData : IDisposable
     {
         _logger.LogInformation("Clearing Global Permissions on Logout.");
         SetGlobals(null, null);
-        _pairingRequests.Clear();
         _collarRequests.Clear();
     }
 
     private static GlobalPerms? _clientGlobals;
-    private static HardcoreState? _clientHardcore;
-    private HashSet<KinksterPairRequest> _pairingRequests = new();
+    private static HardcoreStatus? _clientHardcore;
     private HashSet<CollarRequest> _collarRequests = new();
 
     /// <summary>
-    ///     When true, <see cref="GlobalPerms"/> or <see cref="HardcoreState"/> are not initialized.
+    ///     When true, <see cref="GlobalPerms"/> or <see cref="HardcoreStatus"/> are not initialized.
     /// </summary>
     public static bool IsNull { get; private set; } = false;
     internal static IReadOnlyGlobalPerms? Globals => _clientGlobals;
     internal static IReadOnlyHardcoreState? Hardcore => _clientHardcore;
-    public IEnumerable<KinksterPairRequest> ReqPairOutgoing => _pairingRequests.Where(x => x.User.UID == MainHub.UID);
-    public IEnumerable<KinksterPairRequest> ReqPairIncoming => _pairingRequests.Where(x => x.Target.UID == MainHub.UID);
     public static Vector3 GetImprisonmentPos()
         => _clientHardcore?.ImprisonedPos ?? Vector3.Zero;
 
     public static GlobalPerms? GlobalPermClone()
         => _clientGlobals != null ? _clientGlobals with { } : null;
-    public static HardcoreState? HardcoreClone()
+    public static HardcoreStatus? HardcoreClone()
         => _clientHardcore != null ? _clientHardcore with { } : null;
 
     public static GlobalPerms GlobalsWithNewShockPermissions(PiShockPermissions newPerms)
@@ -100,25 +86,12 @@ public sealed class ClientData : IDisposable
             MaxDuration = -1
         };
 
-    public void SetGlobals(GlobalPerms? globals, HardcoreState? hardcore)
+    public void SetGlobals(GlobalPerms? globals, HardcoreStatus? hardcore)
     {
         _clientGlobals = globals;
         _clientHardcore = hardcore;
         IsNull = globals is null || hardcore is null;
     }
-
-    public void InitRequests(List<KinksterPairRequest> requests)
-    {
-        _pairingRequests = requests.ToHashSet();
-        _pairingRequests.Add(new KinksterPairRequest(MainHub.PlayerUserData, new("Dummy"), "Dummy Writing", DateTime.UtcNow));
-        _pairingRequests.Add(new KinksterPairRequest(new("Dummy"), MainHub.PlayerUserData, "Dummy Writing Boogaloo", DateTime.UtcNow));
-    }
-
-    public void AddRequest(KinksterPairRequest dto)
-        => _pairingRequests.Add(dto);
-
-    public int RemoveRequest(KinksterPairRequest dto)
-        => _pairingRequests.RemoveWhere(x => x.User.UID == dto.User.UID && x.Target.UID == dto.Target.UID);
 
     public void ChangeGlobalsBulkInternal(GlobalPerms newGlobals)
         => _clientGlobals = newGlobals;
@@ -138,7 +111,7 @@ public sealed class ClientData : IDisposable
     ///     This method cannot, and should be enabled by the client, and must only be enacted by a kinkster pair.
     ///     <b> THIS WILL NOT HANDLE ANY PLAYER CONTROL LOGIC AND MUST BE HANDLED SEPERATELY. </b>
     /// </summary>
-    public void SetHardcoreState(UserData enactor, HcAttribute attribute, HardcoreState newData, Kinkster pair)
+    public void SetHardcoreStatus(UserData enactor, HcAttribute attribute, HardcoreStatus newData, Kinkster pair)
     {
         if (_clientHardcore is not { } hcState)
             throw new InvalidOperationException("Hardcore State is not initialized. Cannot change Hardcore State.");
@@ -208,7 +181,7 @@ public sealed class ClientData : IDisposable
     ///     Assumes server has already validated this operation. If called locally, implies a natural falloff has occurred. <para />
     ///     <b> THIS WILL NOT HANDLE ANY PLAYER CONTROL LOGIC OR ACHIEVEMENTS AND MUST BE HANDLED SEPERATELY. </b>
     /// </summary>
-    public void DisableHardcoreState(UserData enactor, HcAttribute attribute, Kinkster? pair = null)
+    public void DisableHardcoreStatus(UserData enactor, HcAttribute attribute, Kinkster? pair = null)
     {
         if (_clientHardcore is not { } hcState)
             throw new InvalidOperationException("Hardcore State is not initialized. Cannot change Hardcore State.");
@@ -218,7 +191,7 @@ public sealed class ClientData : IDisposable
 
         // Warn that this is a self-invoked auto-timeout change if pair is null and it was from ourselves.
         if (pair is null && enactor.UID.Equals(MainHub.UID))
-            _logger.LogInformation($"HardcoreStateChange for attribute [{attribute}] was self-invoked due to natural timer expiration!");
+            _logger.LogInformation($"HardcoreStatusChange for attribute [{attribute}] was self-invoked due to natural timer expiration!");
 
         // No harm in turning something off twice, since nothing would happen regardless, so we can be ok with that.
         switch (attribute)
@@ -278,6 +251,6 @@ public sealed class ClientData : IDisposable
         }
     }
 
-    public void DrawHardcoreState()
-        => PermissionHelper.DrawHardcoreState(_clientHardcore);
+    public void DrawHardcoreStatus()
+        => PermissionHelper.DrawHardcoreStatus(_clientHardcore);
 }

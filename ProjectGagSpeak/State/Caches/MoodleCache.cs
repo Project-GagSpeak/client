@@ -18,7 +18,7 @@ public class MoodleCache
         _logger = logger;
     }
 
-    private static CharaMoodleData _ipcData = new CharaMoodleData();
+    private static MoodleData _ipcData = new MoodleData();
 
     private SortedList<(CombinedCacheKey, Guid), Moodle> _moodles = new();
     private HashSet<Moodle> _finalMoodleItems = new();
@@ -27,7 +27,7 @@ public class MoodleCache
     /// <summary>
     ///     The current stored IPCData for the clients Moodles Data.
     /// </summary>
-    public static CharaMoodleData IpcData => _ipcData;
+    public static MoodleData IpcData => _ipcData;
 
 
     /// <summary>

@@ -16,7 +16,6 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using Microsoft.Extensions.Hosting;
-using System;
 
 namespace GagSpeak.Services;
 
@@ -327,7 +326,7 @@ public sealed class AutoUnlockService : BackgroundService
             _logger.LogInformation("Standing Still for over 6 seconds during LockedFollow. Auto-Disabling!", LoggerType.AutoUnlocks);
             var enactor = hcState.LockedFollowing.Split('|')[0];
             // locally change first.
-            _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.Follow);
+            _clientData.DisableHardcoreStatus(MainHub.OwnUserData, HcAttribute.Follow);
             _moveControl.ResetTimeoutTracker();
             // then server-side.
             var success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.Follow, new(enactor))).ConfigureAwait(false) is not null;
@@ -343,7 +342,7 @@ public sealed class AutoUnlockService : BackgroundService
             _logger.LogInformation("LockedEmote Timer Expired!", LoggerType.AutoUnlocks);
             var enactor = hcState.LockedEmoteState.Split('|')[0];
             // locally change first.
-            _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.EmoteState);
+            _clientData.DisableHardcoreStatus(MainHub.OwnUserData, HcAttribute.EmoteState);
             // then server-side.
             var success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.EmoteState, new(enactor))).ConfigureAwait(false) is not null;
             if (success)
@@ -358,7 +357,7 @@ public sealed class AutoUnlockService : BackgroundService
             _logger.LogInformation("Confinement Timer Expired!", LoggerType.AutoUnlocks);
             var enactor = hcState.IndoorConfinement.Split('|')[0];
             // locally change first.
-            _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.Confinement);
+            _clientData.DisableHardcoreStatus(MainHub.OwnUserData, HcAttribute.Confinement);
             // then server-side.
             var success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.Confinement, new(enactor))).ConfigureAwait(false) is not null;
             if (success)
@@ -376,7 +375,7 @@ public sealed class AutoUnlockService : BackgroundService
                 _logger.LogInformation("Imprisonment Timer Expired (or state was invalid!)", LoggerType.AutoUnlocks);
                 var enactor = hcState.Imprisonment.Split('|')[0];
                 // locally change first.
-                _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.Imprisonment);
+                _clientData.DisableHardcoreStatus(MainHub.OwnUserData, HcAttribute.Imprisonment);
                 // Attempt the server-side call.
                 var success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.Imprisonment, new(enactor))).ConfigureAwait(false) is not null;
                 if (success)
@@ -392,7 +391,7 @@ public sealed class AutoUnlockService : BackgroundService
             _logger.LogInformation("Hidden ChatBoxes Expired!", LoggerType.AutoUnlocks);
             var enactor = hcState.ChatBoxesHidden.Split('|')[0];
             // locally change first.
-            _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.HiddenChatBox);
+            _clientData.DisableHardcoreStatus(MainHub.OwnUserData, HcAttribute.HiddenChatBox);
             // Attempt the server-side call.
             var success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.HiddenChatBox, new(enactor))).ConfigureAwait(false) is not null;
             if (success)
@@ -407,7 +406,7 @@ public sealed class AutoUnlockService : BackgroundService
             _logger.LogInformation("Hidden ChatInput Expired!", LoggerType.AutoUnlocks);
             var enactor = hcState.ChatInputBlocked.Split('|')[0];
             // locally change first.
-            _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.HiddenChatInput);
+            _clientData.DisableHardcoreStatus(MainHub.OwnUserData, HcAttribute.HiddenChatInput);
             // Attempt the server-side call.
             var success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.HiddenChatInput, new(enactor))).ConfigureAwait(false) is not null;
             if (success)
@@ -422,7 +421,7 @@ public sealed class AutoUnlockService : BackgroundService
             _logger.LogInformation("Blocked ChatInput Expired!", LoggerType.AutoUnlocks);
             var enactor = hcState.ChatInputBlocked.Split('|')[0];
             // locally change first.
-            _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.BlockedChatInput);
+            _clientData.DisableHardcoreStatus(MainHub.OwnUserData, HcAttribute.BlockedChatInput);
             // Attempt the server-side call.
             var success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.BlockedChatInput, new(enactor))).ConfigureAwait(false) is not null;
             if (success)
@@ -437,7 +436,7 @@ public sealed class AutoUnlockService : BackgroundService
             _logger.LogInformation("Hypnotic Effect Timer Expired!", LoggerType.AutoUnlocks);
             var enactor = hcState.HypnoticEffect.Split('|')[0];
             // locally change first.
-            _clientData.DisableHardcoreState(MainHub.PlayerUserData, HcAttribute.HypnoticEffect);
+            _clientData.DisableHardcoreStatus(MainHub.OwnUserData, HcAttribute.HypnoticEffect);
             // Attempt the server-side call.
             var success = await _hub.UserHardcoreAttributeExpired(new(HcAttribute.HypnoticEffect, new(enactor))).ConfigureAwait(false) is not null;
             if (success)

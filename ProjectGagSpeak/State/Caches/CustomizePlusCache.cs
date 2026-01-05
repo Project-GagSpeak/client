@@ -2,7 +2,6 @@ using CkCommons.Gui;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using FFXIVClientStructs.FFXIV.Common.Lua;
 using GagspeakAPI.Data.Struct;
 using OtterGui;
 

@@ -41,7 +41,7 @@ public class PuppetVictimUniquePanel : DisposableMediatorSubscriberBase
     private TagCollection _pairTriggerTags = new();
 
     public PuppetVictimUniquePanel(ILogger<PuppetVictimUniquePanel> logger, GagspeakMediator mediator,
-        MainConfig config, MainHub hub, AliasItemDrawer aliasDrawer, FavoritesManager favorites,
+        MainConfig config, MainHub hub, AliasItemDrawer aliasDrawer, FavoritesConfig favorites,
         KinksterManager kinksters, PuppeteerManager manager, ControllerUniquePanel controllerPanel)
         : base(logger, mediator)
     {

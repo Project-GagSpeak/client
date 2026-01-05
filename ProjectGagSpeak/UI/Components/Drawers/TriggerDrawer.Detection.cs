@@ -46,22 +46,22 @@ public sealed partial class TriggerDrawer : IDisposable
         RestraintManager restraints,
         PatternManager patterns,
         TriggerManager manager,
-        FavoritesManager favorites)
+        FavoritesConfig favorites)
     {
         _logger = logger;
         _manager = manager;
         _moodleDrawer = moodleDrawer;
 
         _restrictionCombo = new RestrictionCombo(logger, mediator, favorites, () => [
-            ..restrictions.Storage.OrderByDescending(p => favorites._favoriteRestrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
+            ..restrictions.Storage.OrderByDescending(p => favorites.Restrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
 
         _restraintCombo = new RestraintCombo(logger, mediator, favorites, () => [
-            ..restraints.Storage.OrderByDescending(p => favorites._favoriteRestraints.Contains(p.Identifier)).ThenBy(p => p.Label)
+            ..restraints.Storage.OrderByDescending(p => favorites.Restraints.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
 
         _patternCombo = new PatternCombo(logger, mediator, favorites, () => [
-            ..patterns.Storage.OrderByDescending(p => favorites._favoritePatterns.Contains(p.Identifier)).ThenBy(p => p.Label)
+            ..patterns.Storage.OrderByDescending(p => favorites.Patterns.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
 
         _statusCombo = new MoodleStatusCombo(logger, 1.15f);

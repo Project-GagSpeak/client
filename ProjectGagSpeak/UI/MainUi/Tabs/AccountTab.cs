@@ -59,7 +59,7 @@ public class AccountTab
             {
                 var profileData = _profileManager.GetKinkPlate(new UserData(MainHub.UID));
 
-                var pfpWrap = profileData.GetCurrentProfileOrDefault();
+                var pfpWrap = profileData.GetProfileOrDefault();
                 if (pfpWrap is { } wrap)
                 {
                     var region = ImGui.GetContentRegionAvail();

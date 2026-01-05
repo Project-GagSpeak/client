@@ -1,4 +1,3 @@
-using Dalamud.Plugin;
 using GagSpeak.Interop;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;

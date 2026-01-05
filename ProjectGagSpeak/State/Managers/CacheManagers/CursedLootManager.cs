@@ -17,7 +17,7 @@ public sealed class CursedLootManager : IHybridSavable
     private readonly MainConfig _mainConfig;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
-    private readonly FavoritesManager _favorites;
+    private readonly FavoritesConfig _favorites;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
 
@@ -25,7 +25,7 @@ public sealed class CursedLootManager : IHybridSavable
 
     public CursedLootManager(ILogger<CursedLootManager> logger, GagspeakMediator mediator,
         MainConfig config, GagRestrictionManager gags, RestrictionManager restrictions,
-        FavoritesManager favorites, ConfigFileProvider fileNames, HybridSaveService saver)
+        FavoritesConfig favorites, ConfigFileProvider fileNames, HybridSaveService saver)
     {
         _logger = logger;
         _mediator = mediator;
@@ -282,7 +282,7 @@ public sealed class CursedLootManager : IHybridSavable
         }
         // run a save after the load.
         _saver.Save(this);
-        _mediator.Publish(new ReloadFileSystem(GagspeakModule.CursedLoot));
+        _mediator.Publish(new ReloadFileSystem(GSModule.CursedLoot));
     }
 
     private void LoadV0(JToken? data)

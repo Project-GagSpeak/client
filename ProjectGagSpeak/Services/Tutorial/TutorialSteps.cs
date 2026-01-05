@@ -23,11 +23,10 @@ public enum StepsMainUi
 {
     InitialWelcome, // welcome message, warn user to follow tutorial for basic overview, and how to access them at any time (the ? buttons)
     ConnectionState, // Connection Button
-    Homepage, // Overview, then Direct to whitelist on next button click.
     Whitelist, // Overview whitelist.
     AddingKinksters, // How to Add Pairs, Select dropdown button.
     AttachingMessages, // optional message attachment to requests, close menu on next, and move to account page.
-    AccountPage, // overview of account page.
+    Homepage, // overview of account page.
     ClientUID, // indicate the client's UID, and how this is what others give you to pair.
     Safewords, // Importance of safeword.
     SettingSafeword, // How to set safeword, highlight edit button.
@@ -41,7 +40,6 @@ public enum StepsMainUi
     ProfileEditImage, // On click, close image editor.
     ProfileSaving, // Emphasis on saving changes, and how editing without saving reverts changes.
     ConfigSettings1, // the menu way to access settings
-    //ConfigSettings2, // title bar way to access settings (to patternhub on click)
     PatternHub, // overview of pattern hub.
     PatternSearch, // how searches are filtered.
     PatternResults, // up to 50 results, ext ext, liking and downloading.

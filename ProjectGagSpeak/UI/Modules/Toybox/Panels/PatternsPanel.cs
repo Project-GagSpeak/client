@@ -12,7 +12,6 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Attributes;
 using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 

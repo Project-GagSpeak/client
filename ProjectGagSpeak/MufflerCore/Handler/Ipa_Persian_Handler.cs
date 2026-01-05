@@ -1,4 +1,3 @@
-using Dalamud.Plugin;
 using CkCommons.GarblerCore;
 using System.Text.RegularExpressions;
 using GagSpeak.PlayerClient;

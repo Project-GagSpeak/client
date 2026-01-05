@@ -1,6 +1,5 @@
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.ImGuiNotification;
-using Dalamud.Plugin.Services;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -31,7 +30,7 @@ public class NotificationService : DisposableMediatorSubscriberBase, IHostedServ
         Mediator.Subscribe<NotificationMessage>(this, ShowNotification);
 
         // notify about live chat garbler on zone switch.
-        Mediator.Subscribe<ZoneSwitchStartMessage>(this, (_) =>
+        Mediator.Subscribe<TerritoryChanged>(this, (_) =>
         {
             if(_gags.ServerGagData is not { } gags || ClientData.Globals is not { } perms)
                 return;

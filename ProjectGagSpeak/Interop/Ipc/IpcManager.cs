@@ -8,6 +8,7 @@ namespace GagSpeak.Interop;
 /// </summary>
 public sealed partial class IpcManager : DisposableMediatorSubscriberBase
 {
+    public IpcCallerSundouleia Sundouleia { get; }
     public IpcCallerCustomize CustomizePlus { get; }
     public IpcCallerGlamourer Glamourer { get; }
     public IpcCallerIntiface Intiface { get; }
@@ -16,6 +17,7 @@ public sealed partial class IpcManager : DisposableMediatorSubscriberBase
     public IpcCallerPenumbra Penumbra { get; }
 
     public IpcManager(ILogger<IpcManager> logger, GagspeakMediator mediator,
+        IpcCallerSundouleia sundouleia,
         IpcCallerCustomize customizePlus,
         IpcCallerGlamourer glamourer,
         IpcCallerIntiface intiface,
@@ -24,6 +26,7 @@ public sealed partial class IpcManager : DisposableMediatorSubscriberBase
         IpcCallerPenumbra penumbra
         ) : base(logger, mediator)
     {
+        Sundouleia = sundouleia;
         CustomizePlus = customizePlus;
         Glamourer = glamourer;
         Intiface = intiface;
@@ -39,13 +42,13 @@ public sealed partial class IpcManager : DisposableMediatorSubscriberBase
 
     private void PeriodicApiStateCheck()
     {
+        Sundouleia.CheckAPI();
         CustomizePlus.CheckAPI();
         Glamourer.CheckAPI();
         Intiface.CheckAPI();
         Lifestream.CheckAPI();
         Moodles.CheckAPI();
         Penumbra.CheckAPI();
-
         Penumbra.CheckModDirectory();
     }
 }

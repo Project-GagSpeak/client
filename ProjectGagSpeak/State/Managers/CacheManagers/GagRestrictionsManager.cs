@@ -5,7 +5,6 @@ using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
-using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
@@ -18,7 +17,7 @@ public sealed class GagRestrictionManager : IHybridSavable
 {
     private readonly ILogger<GagRestrictionManager> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly FavoritesManager _favorites;
+    private readonly FavoritesConfig _favorites;
     private readonly ModPresetManager _modPresets;
     private readonly ConfigFileProvider _fileNames;
     private readonly MufflerService _muffler;
@@ -31,7 +30,7 @@ public sealed class GagRestrictionManager : IHybridSavable
     public GagRestrictionManager(
         ILogger<GagRestrictionManager> logger,
         GagspeakMediator mediator,
-        FavoritesManager favorites,
+        FavoritesConfig favorites,
         ModPresetManager modPresets,
         ConfigFileProvider fileNames,
         MufflerService muffler,
@@ -271,7 +270,7 @@ public sealed class GagRestrictionManager : IHybridSavable
                 return;
         }
         _saver.Save(this);
-        _mediator.Publish(new ReloadFileSystem(GagspeakModule.Gag));
+        _mediator.Publish(new ReloadFileSystem(GSModule.Gag));
     }
 
     private void LoadV0(JToken? data)

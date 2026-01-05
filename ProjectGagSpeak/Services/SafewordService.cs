@@ -13,7 +13,6 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Hub;
 using Microsoft.Extensions.Hosting;
-using TerraFX.Interop.WinRT;
 
 namespace GagSpeak.Services;
 
@@ -130,25 +129,25 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
         // Now we need to disable all global permissions in relation to our safeword that help prevent further abuse by others.
         // We need to make sure that we disable these locally, even if we cannot process them server-side.
         // It is critical we do things this way so we ensure the Safeword effectiveness and prevent achievement miss-matches.
-        Logger.LogInformation("[SAFEWORD PROGRESS]: Pushing Client GlobalPerm & HardcoreStates for Safeword Changes");
+        Logger.LogInformation("[SAFEWORD PROGRESS]: Pushing Client GlobalPerm & HardcoreStatuss for Safeword Changes");
         if (!ClientData.IsNull)
         {
             var prevGlobals = ClientData.Globals!;
             var prevHc = ClientData.Hardcore!;
             // get updated versions.
             var newGlobals = ClientData.GlobalsWithSafewordApplied();
-            var newHardcore = new HardcoreState();
+            var newHardcore = new HardcoreStatus();
             // REGARDLESS of the change, we should update things locally!
             _clientData.SetGlobals(newGlobals, newHardcore);
             // Then perform the server call.
-            var result = await _hub.UserBulkChangeGlobal(new(MainHub.PlayerUserData, newGlobals, newHardcore)).ConfigureAwait(false);
+            var result = await _hub.UserBulkChangeGlobal(new(MainHub.OwnUserData, newGlobals, newHardcore)).ConfigureAwait(false);
             bool wasSuccessful = result.ErrorCode is GagSpeakApiEc.Success;
             Logger.LogInformation($"[SAFEWORD PROGRESS]: {(wasSuccessful 
                 ? "ClientGlobals updated successfully." 
                 : $"Failed to push ClientGlobals changes: {result.ErrorCode}.")}");
 
             // Handle all disabled special globals. ONLY TRIGGER ACHIEVEMENTS IF SERVER CALL WAS SUCCESSFUL.
-            _clientDatListener.HandleGlobalPermChanges(MainHub.PlayerUserData, prevGlobals, newGlobals);
+            _clientDatListener.HandleGlobalPermChanges(MainHub.OwnUserData, prevGlobals, newGlobals);
 
             // Handle all disabled hardcore states.
             if (prevHc.LockedFollowing.Length > 0)
@@ -168,7 +167,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
             if (prevHc.HypnoticEffect.Length > 0)
                 _hcHandler.RemoveHypnoEffect(new(prevHc.HypnoticEffect.Split('|')[0]), wasSuccessful);
 
-            Logger.LogInformation("[SAFEWORD PROGRESS]: Client GlobalPerms & HardcoreState Handlers processed.");
+            Logger.LogInformation("[SAFEWORD PROGRESS]: Client GlobalPerms & HardcoreStatus Handlers processed.");
         }
 
         // IF and only if the uid passed in is not empty, do we restrict the kinksters we revert to only the kinkster with that UID.
@@ -176,7 +175,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
         {
             Logger.LogInformation($"[SAFEWORD PROGRESS]: Safeword Invoked specifically for: {isolatedUID}. Reverting hardcore!");
             if (_kinksters.TryGetKinkster(new(isolatedUID), out var kinkster))
-                await _hub.UserChangeOwnPairPerm(new(kinkster.UserData, new KeyValuePair<string, object>(nameof(PairPerms.InHardcore) , false), UpdateDir.Own, MainHub.PlayerUserData)).ConfigureAwait(false);
+                await _hub.UserChangeOwnPairPerm(new(kinkster.UserData, new KeyValuePair<string, object>(nameof(PairPerms.InHardcore) , false), UpdateDir.Own, MainHub.OwnUserData)).ConfigureAwait(false);
             else
                 Logger.LogWarning($"[SAFEWORD PROGRESS]: Kinkster with UID {isolatedUID} not found for safeword revert.");
         }
@@ -186,7 +185,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
             foreach (var pair in _kinksters.DirectPairs.Where(p => p.OwnPerms.InHardcore))
             {
                 Logger.LogInformation($"[SAFEWORD PROGRESS]: Reverting hardcore for Kinkster {pair.UserData.UID}.");
-                await _hub.UserChangeOwnPairPerm(new(pair.UserData, new KeyValuePair<string, object>(nameof(PairPerms.InHardcore), false), UpdateDir.Own, MainHub.PlayerUserData)).ConfigureAwait(false);
+                await _hub.UserChangeOwnPairPerm(new(pair.UserData, new KeyValuePair<string, object>(nameof(PairPerms.InHardcore), false), UpdateDir.Own, MainHub.OwnUserData)).ConfigureAwait(false);
             }
         }
 
@@ -231,18 +230,18 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
         {
             Logger.LogInformation($"[HC-SAFEWORD PROGRESS]: Changing Perms for: {isolatedUID}");
             var newPairPerms = kinkster.OwnPerms.WithSafewordApplied();
-            await _hub.UserBulkChangeUnique(new(kinkster.UserData, newPairPerms, kinkster.OwnPermAccess, UpdateDir.Own, MainHub.PlayerUserData)).ConfigureAwait(false);
+            await _hub.UserBulkChangeUnique(new(kinkster.UserData, newPairPerms, kinkster.OwnPermAccess, UpdateDir.Own, MainHub.OwnUserData)).ConfigureAwait(false);
             Logger.LogInformation($"[HC-SAFEWORD PROGRESS]: Hardcore allowances reverted for ({isolatedUID})!");
         }
 
         if (!ClientData.IsNull)
         {
-            Logger.LogInformation("[HC-SAFEWORD PROGRESS]: Syncing HardcoreState with player control!");
+            Logger.LogInformation("[HC-SAFEWORD PROGRESS]: Syncing HardcoreStatus with player control!");
             var prevHc = ClientData.HardcoreClone()!;
-            var newHardcore = new HardcoreState();
+            var newHardcore = new HardcoreStatus();
             // REGARDLESS of the change, we should update things locally!
             _clientData.SetGlobals((GlobalPerms)ClientData.Globals!, newHardcore);
-            var result = await _hub.UserBulkChangeGlobal(new(MainHub.PlayerUserData, (GlobalPerms)ClientData.Globals!, newHardcore)).ConfigureAwait(false);
+            var result = await _hub.UserBulkChangeGlobal(new(MainHub.OwnUserData, (GlobalPerms)ClientData.Globals!, newHardcore)).ConfigureAwait(false);
             bool success = result.ErrorCode is GagSpeakApiEc.Success;
             
             Logger.LogInformation($"[HC-SAFEWORD PROGRESS]: {(success ? "ClientGlobals updated." : $"Failed to push ClientGlobals changes: {result.ErrorCode}.")}");
@@ -264,7 +263,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
             if (prevHc.HypnoticEffect.Length > 0)
                 _hcHandler.RemoveHypnoEffect(new(prevHc.HypnoticEffect.Split('|')[0]), success);
 
-            Logger.LogInformation("[HC-SAFEWORD PROGRESS]: Client HardcoreState Handlers Synced.");
+            Logger.LogInformation("[HC-SAFEWORD PROGRESS]: Client HardcoreStatus Handlers Synced.");
         }
 
         _hcTasks.AbortTasks();

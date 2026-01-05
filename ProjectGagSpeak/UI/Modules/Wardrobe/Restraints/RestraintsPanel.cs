@@ -14,7 +14,6 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using OtterGui.Text;
-using static FFXIVClientStructs.FFXIV.Client.Game.InstanceContent.DynamicEvent.Delegates;
 
 namespace GagSpeak.Gui.Wardrobe;
 

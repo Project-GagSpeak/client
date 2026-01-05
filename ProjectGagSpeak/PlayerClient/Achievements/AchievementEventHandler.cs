@@ -1,11 +1,8 @@
 using CkCommons;
 using Dalamud.Game.ClientState.Objects.Types;
-using FFXIVClientStructs.FFXIV.Client.Game;
 using GagSpeak.GameInternals;
 using GagSpeak.Kinksters;
-using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.State;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
@@ -35,8 +32,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
 
     public AchievementEventHandler(ILogger<AchievementEventHandler> logger, GagspeakMediator mediator,
         ClientAchievements saveData, KinksterManager pairs, GagspeakEventManager events,
-        GagRestrictionManager gags, RestrictionManager restrictions, RestraintManager restraints,
-        OnFrameworkService frameworkUtils) : base(logger, mediator)
+        GagRestrictionManager gags, RestrictionManager restrictions, RestraintManager restraints) : base(logger, mediator)
     {
         _pairs = pairs;
         _events = events;
@@ -107,7 +103,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         _events.Subscribe(UnlocksEvent.CutsceneInturrupted, () => (ClientAchievements.SaveData[Achievements.WarriorOfLewd.Id] as ConditionalProgressAchievement)?.StartOverDueToInturrupt());
 
         Mediator.Subscribe<PlayerLatestActiveItems>(this, (msg) => OnCharaOnlineCleanupForLatest(msg.User, msg.GagsInfo, msg.RestrictionsInfo, msg.RestraintInfo));
-        Mediator.Subscribe<PairHandlerVisibleMessage>(this, _ => OnPairVisible());
+        Mediator.Subscribe<KinksterPlayerRendered>(this, _ => OnPairVisible());
         Mediator.Subscribe<CommendationsIncreasedMessage>(this, (msg) => OnCommendationsGiven(msg.amount));
 
         Mediator.Subscribe<GPoseStartMessage>(this, _ => (ClientAchievements.SaveData[Achievements.SayMmmph.Id] as ConditionalProgressAchievement)?.BeginConditionalTask());
@@ -115,8 +111,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         Mediator.Subscribe<CutsceneBeginMessage>(this, _ => (ClientAchievements.SaveData[Achievements.WarriorOfLewd.Id] as ConditionalProgressAchievement)?.BeginConditionalTask()); // starts Timer
         Mediator.Subscribe<CutsceneEndMessage>(this, _ => (ClientAchievements.SaveData[Achievements.WarriorOfLewd.Id] as ConditionalProgressAchievement)?.FinishConditionalTask()); // ends/completes progress.
 
-        Mediator.Subscribe<ZoneSwitchStartMessage>(this, (msg) => CheckOnZoneSwitchStart(msg.prevZone));
-        Mediator.Subscribe<ZoneSwitchEndMessage>(this, _ => CheckOnZoneSwitchEnd());
+        Mediator.Subscribe<TerritoryChanged>(this, _ => OnTerritoryChanged(_.PrevTerritory, _.NewTerritory));
 
         Svc.ClientState.ClassJobChanged += OnJobChange;
         Svc.DutyState.DutyStarted += OnDutyStart;
@@ -185,6 +180,8 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         Svc.DutyState.DutyStarted -= OnDutyStart;
         Svc.DutyState.DutyCompleted -= OnDutyEnd;
 
+        Mediator.UnsubscribeAll(this);
+
         _isSubscribed = false;
     }
 
@@ -204,17 +201,12 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
     private void OnPairVisible()
     {
         // We need to obtain the total visible user count, then update the respective achievements.
-        var visiblePairs = _pairs.GetVisibleUserCount();
+        var visiblePairs = _pairs.GetVisibleCount();
         (ClientAchievements.SaveData[Achievements.BondageClub.Id] as ThresholdAchievement)?.UpdateThreshold(visiblePairs);
         (ClientAchievements.SaveData[Achievements.Humiliation.Id] as ConditionalThresholdAchievement)?.UpdateThreshold(visiblePairs);
     }
 
-    private void CheckOnZoneSwitchStart(uint prevZone)
-    {
-        // Nothing yet.
-    }
-
-    private void CheckOnZoneSwitchEnd()
+    private void OnTerritoryChanged(ushort prevZone, ushort newZone)
     {
         Logger.LogTrace("Current Territory Id: " + PlayerContent.TerritoryID, LoggerType.AchievementEvents);
         if (PlayerContent.InMainCity)
@@ -1034,7 +1026,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
     /// <param name="enactorUID"> Who Called the action. </param>
     private void OnHardcoreAction(HcAttribute actionKind, bool state, string enactorUID, string targetUID)
     {
-        Logger.LogDebug($"HardcoreState ({actionKind}) is now ({state}). And was enacted by [{enactorUID}] on [{targetUID}]", LoggerType.AchievementInfo);
+        Logger.LogDebug($"HardcoreStatus ({actionKind}) is now ({state}). And was enacted by [{enactorUID}] on [{targetUID}]", LoggerType.AchievementInfo);
         var targetIsClient = targetUID == MainHub.UID;
 
         if (actionKind is HcAttribute.Follow)

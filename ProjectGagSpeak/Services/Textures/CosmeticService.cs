@@ -65,7 +65,7 @@ public class CosmeticService : IHostedService, IDisposable
 
     /// <summary> Grabs the texture from GagSpeak Cosmetic Cache Service, if it exists. </summary>
     /// <returns>True if the texture is valid, false otherwise. If returning false, the wrap WILL BE NULL. </returns>
-    public bool TryGetBackground(ProfileComponent section, ProfileStyleBG style, out IDalamudTextureWrap value)
+    public static bool TryGetBackground(PlateElement section, KinkPlateBG style, out IDalamudTextureWrap value)
     {
         // See if the item exists in our GagSpeak Cache Service.
         if(InternalCosmeticCache.TryGetValue(section.ToString() + "_Background_" + style.ToString(), out var texture))
@@ -80,7 +80,7 @@ public class CosmeticService : IHostedService, IDisposable
 
     /// <summary> Grabs the texture from GagSpeak Cosmetic Cache Service, if it exists. </summary>
     /// <returns>True if the texture is valid, false otherwise. If returning false, the wrap WILL BE NULL. </returns>
-    public bool TryGetBorder(ProfileComponent section, ProfileStyleBorder style, out IDalamudTextureWrap value)
+    public static bool TryGetBorder(PlateElement section, KinkPlateBorder style, out IDalamudTextureWrap value)
     {
         if(InternalCosmeticCache.TryGetValue(section.ToString() + "_Border_" + style.ToString(), out var texture))
         {
@@ -93,7 +93,7 @@ public class CosmeticService : IHostedService, IDisposable
 
     /// <summary> Grabs the texture from GagSpeak Cosmetic Cache Service, if it exists. </summary>
     /// <returns>True if the texture is valid, false otherwise. If returning false, the wrap WILL BE NULL. </returns>
-    public bool TryGetOverlay(ProfileComponent section, ProfileStyleOverlay style, out IDalamudTextureWrap value)
+    public static bool TryGetOverlay(PlateElement section, KinkPlateOverlay style, out IDalamudTextureWrap value)
     {
         if(InternalCosmeticCache.TryGetValue(section.ToString() + "_Overlay_" + style.ToString(), out var texture))
         {

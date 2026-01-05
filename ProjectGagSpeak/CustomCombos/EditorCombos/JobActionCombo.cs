@@ -1,10 +1,7 @@
-using GagSpeak.Gui;
 using Dalamud.Bindings.ImGui;
 using OtterGui.Classes;
-using OtterGui;
 using OtterGui.Raii;
 using CkCommons;
-using GagSpeak.Services.Textures;
 using GagSpeak.Utils;
 using CkCommons.Gui;
 using OtterGui.Extensions;

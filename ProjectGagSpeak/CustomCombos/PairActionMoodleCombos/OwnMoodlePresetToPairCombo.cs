@@ -8,9 +8,9 @@ using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Hub;
-using GagspeakAPI.Network;
 using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
+using GagspeakAPI.Extensions;
 
 namespace GagSpeak.CustomCombos.Moodles;
 
@@ -23,7 +23,7 @@ public sealed class OwnMoodlePresetToPairCombo : CkMoodleComboButtonBase<MoodleP
     { }
 
     protected override bool DisableCondition()
-        => Current.GUID == Guid.Empty || !_kinksterRef.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyTheirMoodlesToYou);
+        => Current.GUID == Guid.Empty || !_kinksterRef.PairPerms.MoodleAccess.HasAny(MoodleAccess.AllowOther);
 
     protected override string ToString(MoodlePresetInfo obj)
         => obj.Title.StripColorTags();
@@ -94,8 +94,7 @@ public sealed class OwnMoodlePresetToPairCombo : CkMoodleComboButtonBase<MoodleP
                 if (MoodleCache.IpcData.Statuses.TryGetValue(guid, out var s))
                     statuses.Add(s);
 
-            var dto = new MoodlesApplierByStatus(_kinksterRef.UserData, statuses, MoodleType.Preset);
-            var res = await _mainHub.UserApplyMoodlesByStatus(dto);
+            var res = await _mainHub.UserApplyMoodlesByStatus(new(_kinksterRef.UserData, statuses, false));
             if (res.ErrorCode is GagSpeakApiEc.Success)
                 Log.LogDebug($"Failed to apply moodle preset {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
         });

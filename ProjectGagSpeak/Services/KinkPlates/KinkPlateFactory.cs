@@ -1,6 +1,4 @@
-using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Services.Textures;
 using GagspeakAPI.Data;
 
 namespace GagSpeak.Services;

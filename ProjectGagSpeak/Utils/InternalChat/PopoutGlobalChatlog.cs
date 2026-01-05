@@ -32,7 +32,9 @@ public class PopoutGlobalChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubs
     private readonly KinksterManager _kinksters;
     private readonly MufflerService _garbler;
 
+    private string _requestNickPref = string.Empty;
     private string _requestMessage = string.Empty;
+
     private bool _showEmotes = false;
     public PopoutGlobalChatlog(GagspeakMediator mediator, MainHub hub, MainConfig config, 
         GagRestrictionManager gags, KinksterManager kinksters,  MufflerService garbler) 
@@ -250,7 +252,7 @@ public class PopoutGlobalChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubs
     }
 
     protected override void OnMiddleClick(GagSpeakChatMessage message)
-        => Mediator.Publish(new KinkPlateOpenStandaloneLightMessage(message.UserData));
+        => Mediator.Publish(new KinkPlateLightCreateOpenMessage(message.UserData));
 
     protected override void OnSendMessage(string message)
     {
@@ -263,7 +265,7 @@ public class PopoutGlobalChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubs
             previewMessage = _garbler.ProcessMessage(previewMessage);
 
         // Send message to the server
-        _hub.UserSendGlobalChat(new(MainHub.PlayerUserData, previewMessage, _config.Current.PreferThreeCharaAnonName)).ConfigureAwait(false);
+        _hub.UserSendGlobalChat(new(MainHub.OwnUserData, previewMessage, _config.Current.PreferThreeCharaAnonName)).ConfigureAwait(false);
 
         // Clear message and trigger achievement event
         previewMessage = string.Empty;
@@ -282,7 +284,7 @@ public class PopoutGlobalChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubs
         ImGui.Separator();
         if (ImGui.Selectable("View Light KinkPlate") && LastInteractedMsg.UID != "System")
         {
-            Mediator.Publish(new KinkPlateOpenStandaloneLightMessage(LastInteractedMsg.UserData));
+            Mediator.Publish(new KinkPlateLightCreateOpenMessage(LastInteractedMsg.UserData));
             ClosePopupAndResetMsg();
         }
         CkGui.AttachToolTip($"Opens {LastInteractedMsg.Name}'s Light KinkPlate.");
@@ -291,7 +293,7 @@ public class PopoutGlobalChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubs
         using (ImRaii.Disabled(!shiftHeld || string.IsNullOrWhiteSpace(_requestMessage)))
             if (ImGui.Selectable("Send Kinkster Request"))
             {
-                _hub.UserSendKinksterRequest(new(new(LastInteractedMsg.UID), _requestMessage)).ConfigureAwait(false);
+                _hub.UserSendKinksterRequest(new(new(LastInteractedMsg.UID), false, _requestNickPref, _requestMessage)).ConfigureAwait(false);
                 ClosePopupAndResetMsg();
             }
         CkGui.AttachToolTip(!shiftHeld ? "Must be holding SHIFT to select."
@@ -317,6 +319,8 @@ public class PopoutGlobalChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubs
     private void ClosePopupAndResetMsg()
     {
         LastInteractedMsg = new(new("System"), string.Empty, string.Empty);
+        _requestMessage = string.Empty;
+        _requestNickPref = string.Empty;
         ImGui.CloseCurrentPopup();
     }
 

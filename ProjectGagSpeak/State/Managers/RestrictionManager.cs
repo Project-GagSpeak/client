@@ -18,7 +18,7 @@ public sealed class RestrictionManager : IHybridSavable
 {
     private readonly ILogger<RestrictionManager> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly FavoritesManager _favorites;
+    private readonly FavoritesConfig _favorites;
     private readonly ModPresetManager _modPresets;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
@@ -35,7 +35,7 @@ public sealed class RestrictionManager : IHybridSavable
     public RestrictionManager(
         ILogger<RestrictionManager> logger,
         GagspeakMediator mediator,
-        FavoritesManager favorites,
+        FavoritesConfig favorites,
         ModPresetManager modPresets, 
         ConfigFileProvider fileNames,
         HybridSaveService saver)
@@ -362,7 +362,7 @@ public sealed class RestrictionManager : IHybridSavable
                 return;
         }
         _saver.Save(this);
-        _mediator.Publish(new ReloadFileSystem(GagspeakModule.Restriction));
+        _mediator.Publish(new ReloadFileSystem(GSModule.Restriction));
     }
 
     private void LoadV0(JToken? data)

@@ -1,4 +1,3 @@
-using Dalamud.Plugin;
 using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Tutorial;

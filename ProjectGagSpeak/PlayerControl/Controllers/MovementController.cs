@@ -1,10 +1,8 @@
 using CkCommons;
-using Dalamud.Game.ClientState.Objects;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using GagSpeak.GameInternals.Detours;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
-using GagspeakAPI.Attributes;
 using System.Runtime.InteropServices;
 
 namespace GagSpeak.Services.Controller;
@@ -28,14 +26,14 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         _cache = cache;
         _detours = detours;
         _timeoutTracker.Stop();
-        Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreState());
+        Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreStatus());
         Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
     }
 
     // reference for Auto-Unlock timer.
     public static TimeSpan TimeIdleDuringFollow => _timeoutTracker.Elapsed;
 
-    private void UpdateHardcoreState()
+    private void UpdateHardcoreStatus()
     {
         // if our states to have an unfollow hook are met, but it isnt active, activate it.
         if (_cache.PreventUnfollowing && !_detours.NoUnfollowingActive)

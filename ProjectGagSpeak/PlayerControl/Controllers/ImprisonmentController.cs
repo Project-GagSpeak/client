@@ -1,6 +1,5 @@
 using CkCommons;
 using GagSpeak.GameInternals.Detours;
-using GagSpeak.GameInternals.Structs;
 using GagSpeak.PlayerClient;
 using GagSpeak.PlayerControl;
 using GagSpeak.Services.Mediator;

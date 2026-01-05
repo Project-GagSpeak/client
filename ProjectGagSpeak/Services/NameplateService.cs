@@ -30,23 +30,20 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
     private readonly GagRestrictionManager _gags;
     private readonly GagspeakEventManager _events;
     private readonly KinksterManager _kinksters;
-    private readonly OnFrameworkService _frameworkUtils;
 
     // The value is if the kinkster is currently speaking or not, this can be accessed asyncronously by async void timeouts for speech.
     private ConcurrentDictionary<string, bool> TrackedKinksters = new();
     private IDalamudTextureWrap GaggedIcon;
     private IDalamudTextureWrap GaggedSpeakingIcon;
 
-    public NameplateService(ILogger<NameplateService> logger, GagspeakMediator mediator,
-        MainConfig config, GagRestrictionManager gags,  GagspeakEventManager events, KinksterManager kinksters, 
-        OnFrameworkService frameworkUtils)
+    public NameplateService(ILogger<NameplateService> logger, GagspeakMediator mediator, MainConfig config, 
+        GagRestrictionManager gags,  GagspeakEventManager events, KinksterManager kinksters)
         : base(logger, mediator)
     {
         _config = config;
         _gags = gags;
         _events = events;
         _kinksters = kinksters;
-        _frameworkUtils = frameworkUtils;
 
         // Texture Aquisition.
         var gaggedPath = Path.Combine(TextureManager.AssetFolderPath, "RequiredImages", "status_gagged.png");
@@ -58,10 +55,11 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         _events.Subscribe<int, GagType, bool, string>(UnlocksEvent.GagStateChange, UpdateClientGagState);
         _events.Subscribe<int, GagType, bool, string, Kinkster>(UnlocksEvent.PairGagStateChange, UpdateKinkster);
 
-        Mediator.Subscribe<VisibleKinkstersChanged>(this, _ => UpdateGaggedKinksters());
+        Mediator.Subscribe<KinksterPlayerRendered>(this, _ => UpdateGaggedKinksters());
+        Mediator.Subscribe<KinksterPlayerUnrendered>(this, _ => UpdateGaggedKinksters());
         Mediator.Subscribe<ChatboxMessageFromSelf>(this, m => OnOwnMessage(m.channel, m.message));
         Mediator.Subscribe<ChatboxMessageFromKinkster>(this, m => OnKinksterMessage(m.kinkster, m.channel, m.message));
-        Mediator.Subscribe<MainHubConnectedMessage>(this, _ => RefreshClientGagState());
+        Mediator.Subscribe<ConnectedMessage>(this, _ => RefreshClientGagState());
 
         Svc.NamePlate.OnPostNamePlateUpdate += NamePlateOnPostUpdate;
         Logger.LogInformation("NameplateService initialized.");
@@ -114,11 +112,11 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         if (!k.PairGlobals.GaggedNameplate)
             return;
 
-        Logger.LogDebug($"Updating kinkster gag state for {k.PlayerNameWithWorld} to {applied}", LoggerType.Gags);
+        Logger.LogDebug($"Updating kinkster gag state for {k.PlayerNameWorld} to {applied}", LoggerType.Gags);
         if (applied)
         {
-            Logger.LogDebug($"Adding {k.PlayerNameWithWorld} to tracked Nameplates", LoggerType.Gags);
-            TrackedKinksters.TryAdd(k.PlayerNameWithWorld, false);
+            Logger.LogDebug($"Adding {k.PlayerNameWorld} to tracked Nameplates", LoggerType.Gags);
+            TrackedKinksters.TryAdd(k.PlayerNameWorld, false);
         }
         else if (k.ActiveGags.IsGagged())
         {
@@ -127,28 +125,28 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         }
         else
         {
-            Logger.LogDebug($"Removing {k.PlayerNameWithWorld} to tracked Nameplates", LoggerType.Gags);
-            TrackedKinksters.Remove(k.PlayerNameWithWorld, out var ____);
+            Logger.LogDebug($"Removing {k.PlayerNameWorld} to tracked Nameplates", LoggerType.Gags);
+            TrackedKinksters.Remove(k.PlayerNameWorld, out var ____);
         }
         Svc.NamePlate.RequestRedraw();
     }
 
+    // Do this by pointer now since we are cool like that. (TODO)
     private void UpdateGaggedKinksters()
     {
         // assume a local copy of the kinksters, in which the remaining kinksters are gagged with an active chat garbler.
-        var visibleKinksters = _kinksters.DirectPairs
-            .Where(k => k.VisiblePairGameObject is not null)
-            .Where(k => k.ActiveGags.IsGagged() && k.PairGlobals.ChatGarblerActive);
+        var visibleGaggedKinksters = _kinksters.DirectPairs
+            .Where(k => k.IsRendered && k.ActiveGags.IsGagged() && k.PairGlobals.ChatGarblerActive);
 
         // assign them to the dictionary.
         var newTrackedKinksters = new ConcurrentDictionary<string, bool>();
-        foreach (var kinkster in visibleKinksters)
+        foreach (var kinkster in visibleGaggedKinksters)
         {
             // Make sure if they are still speaking that we keep the value the same.
-            if (TrackedKinksters.TryGetValue(kinkster.PlayerNameWithWorld, out var isSpeaking))
-                newTrackedKinksters.AddOrUpdate(kinkster.PlayerNameWithWorld, isSpeaking, (key, oldValue) => isSpeaking);
+            if (TrackedKinksters.TryGetValue(kinkster.PlayerNameWorld, out var isSpeaking))
+                newTrackedKinksters.AddOrUpdate(kinkster.PlayerNameWorld, isSpeaking, (key, oldValue) => isSpeaking);
             else
-                newTrackedKinksters.TryAdd(kinkster.PlayerNameWithWorld, false);
+                newTrackedKinksters.TryAdd(kinkster.PlayerNameWorld, false);
         }
         // Update the Tracked Kinksters here (we dont do it during recalculation because of concurrent access)
         TrackedKinksters = newTrackedKinksters;
@@ -181,7 +179,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         if (k.PairGlobals.ChatGarblerActive && message.Split(' ').Length > 5)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.KinksterGaggedChatSent, k, c, message);
 
-        DisplayGaggedSpeaking(k.PlayerNameWithWorld, (int)(650.0f * message.Length / 20.0f));
+        DisplayGaggedSpeaking(k.PlayerNameWorld, (int)(650.0f * message.Length / 20.0f));
     }
 
     private async void DisplayGaggedSpeaking(string playerNameWorld, int milliseconds)

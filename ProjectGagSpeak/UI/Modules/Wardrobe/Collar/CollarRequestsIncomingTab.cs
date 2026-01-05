@@ -4,20 +4,14 @@ using CkCommons.Raii;
 using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Plugin.Services;
-using GagSpeak.PlayerClient;
-using GagSpeak.Services;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
-using OtterGui;
 using OtterGui.Extensions;
 using OtterGui.Text;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Gui.Wardrobe;
 

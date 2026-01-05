@@ -8,7 +8,6 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Comparer;
 using GagspeakAPI.Network;
-using System.Collections.Immutable;
 
 namespace GagSpeak.State.Managers;
 
@@ -63,8 +62,8 @@ public sealed class CollarManager : IHybridSavable
         RequestsIncoming = incoming.ToHashSet(CollarRequestComparer.Instance);
         RequestsOutgoing = outgoing.ToHashSet(CollarRequestComparer.Instance);
 
-        RequestsOutgoing.Add(new CollarRequest(MainHub.PlayerUserData, new("Dummy"), "Dummy Writing", DateTime.UtcNow, CollarAccess.AllButWriting, CollarAccess.Dyes));
-        RequestsIncoming.Add(new CollarRequest(new("Dummy"), MainHub.PlayerUserData, "Dummy Writing Boogaloo", DateTime.UtcNow, CollarAccess.All, CollarAccess.AllButWriting));
+        RequestsOutgoing.Add(new CollarRequest(MainHub.OwnUserData, new("Dummy"), "Dummy Writing", DateTime.UtcNow, CollarAccess.AllButWriting, CollarAccess.Dyes));
+        RequestsIncoming.Add(new CollarRequest(new("Dummy"), MainHub.OwnUserData, "Dummy Writing Boogaloo", DateTime.UtcNow, CollarAccess.All, CollarAccess.AllButWriting));
 
         _logger.LogInformation("Synchronized Collar Ownership Requests with Client-Side Manager.");
     }
@@ -258,7 +257,7 @@ public sealed class CollarManager : IHybridSavable
 
             _logger.LogInformation("Successfully loaded CollarData config.");
             _saver.Save(this);
-            _mediator.Publish(new ReloadFileSystem(GagspeakModule.Collar));
+            _mediator.Publish(new ReloadFileSystem(GSModule.Collar));
         }
         catch (Bagagwa ex) { _logger.LogError("Failed to load config." + ex); }
     }

@@ -1,4 +1,3 @@
-using CkCommons;
 using GagSpeak.GameInternals;
 using GagSpeak.GameInternals.Addons;
 using GagSpeak.GameInternals.Detours;
@@ -9,11 +8,9 @@ using GagSpeak.PlayerClient;
 using GagSpeak.PlayerControl;
 using GagSpeak.Services.Controller;
 using GagSpeak.Services.Mediator;
-using GagSpeak.State.Caches;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.State.Handlers;
 
@@ -93,7 +90,7 @@ public class PlayerCtrlHandler
         _hcTasks.CreateCollection("Locked Follow Startup", new(HcTaskControl.MustFollow | HcTaskControl.BlockAllKeys))
             .Add(new HardcoreTask(() => GameConfig.UiControl.Set("MoveMode", (uint)MovementMode.Legacy)))
             .Add(new HardcoreTask(_movement.RestartTimeoutTracker))
-            .Add(new HardcoreTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.VisiblePairGameObject!)))
+            .Add(new HardcoreTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.PlayerAddress)))
             .Add(new HardcoreTask(HcTaskUtils.FollowTarget))
             .Add(new HardcoreTask(() => _mediator.Publish(new HcStateCacheChanged())))
             .Enqueue();
@@ -127,8 +124,8 @@ public class PlayerCtrlHandler
         _logger.LogInformation($"[{enactor.AliasOrUID}] Enabled your LockedFollowing state!", LoggerType.HardcoreMovement);
         _hcTasks.CreateCollection("Perform LockedEmote", new(HcTaskControl.BlockAllKeys | HcTaskControl.InRequiredTurnTask))
             .Add(new HardcoreTask(HcCommonTaskFuncs.WaitForPlayerLoading))
-            .Add(_hcTasks.CreateBranch(() => (kinkster.VisiblePairGameObject != null && kinkster.VisiblePairGameObject.IsTargetable), "TargetIfVisible")
-                .SetTrueTask(new HardcoreTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.VisiblePairGameObject!)))
+            .Add(_hcTasks.CreateBranch(() => kinkster.IsTargetable, "TargetIfVisible")
+                .SetTrueTask(new HardcoreTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.PlayerAddress)))
                 .AsBranch())
             .Add(new HardcoreTask(() => HcCommonTaskFuncs.PerformExpectedEmote(ClientData.Hardcore!.EmoteId, ClientData.Hardcore.EmoteCyclePose)))
             .Add(new HardcoreTask(() => _mediator.Publish(new HcStateCacheChanged())))
@@ -145,8 +142,8 @@ public class PlayerCtrlHandler
         _logger.LogInformation($"[{kinkster.GetNickAliasOrUid()}] Updated your LockedFollowing state!", LoggerType.HardcoreMovement);
         _hcTasks.CreateCollection("ForcePerformInitialEmote", new(HcTaskControl.BlockAllKeys | HcTaskControl.InRequiredTurnTask))
             .Add(new HardcoreTask(HcCommonTaskFuncs.WaitForPlayerLoading))
-            .Add(_hcTasks.CreateBranch(() => (kinkster.VisiblePairGameObject != null && kinkster.VisiblePairGameObject.IsTargetable), "TargetIfVisible")
-                .SetTrueTask(new HardcoreTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.VisiblePairGameObject!)))
+            .Add(_hcTasks.CreateBranch(() => kinkster.IsTargetable, "TargetIfVisible")
+                .SetTrueTask(new HardcoreTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.PlayerAddress)))
                 .AsBranch())
             .Add(new HardcoreTask(() => HcCommonTaskFuncs.PerformExpectedEmote(ClientData.Hardcore!.EmoteId, ClientData.Hardcore.EmoteCyclePose)))
             .Add(new HardcoreTask(() => _mediator.Publish(new HcStateCacheChanged())))

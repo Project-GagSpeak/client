@@ -1,5 +1,4 @@
 using Dalamud.Interface.Textures.TextureWraps;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
@@ -19,7 +18,7 @@ public class KinkPlate : DisposableMediatorSubscriberBase
         KinkPlateContent plateContent, string base64ProfilePicture) : base(logger, mediator)
     {
         // Set the KinkPlate Data
-        KinkPlateInfo = plateContent;
+        Info = plateContent;
         Base64ProfilePicture = base64ProfilePicture;
         // set the image data if the profilePicture is not empty.
         if (!string.IsNullOrEmpty(Base64ProfilePicture))
@@ -31,7 +30,7 @@ public class KinkPlate : DisposableMediatorSubscriberBase
             _imageData = new Lazy<byte[]>(() => Array.Empty<byte>());
         }
 
-        Mediator.Subscribe<ClearProfileDataMessage>(this, (msg) =>
+        Mediator.Subscribe<ClearKinkPlateDataMessage>(this, (msg) =>
         {
             if (msg.UserData == null || string.Equals(msg.UserData.UID, MainHub.UID, StringComparison.Ordinal))
             {
@@ -41,9 +40,9 @@ public class KinkPlate : DisposableMediatorSubscriberBase
         });
     }
 
-    public KinkPlateContent KinkPlateInfo;
+    public KinkPlateContent Info;
 
-    public bool TempDisabled => KinkPlateInfo.Disabled || KinkPlateInfo.Flagged;
+    public bool TempDisabled => Info.Disabled || Info.Flagged;
 
     public string Base64ProfilePicture
     {
@@ -75,7 +74,7 @@ public class KinkPlate : DisposableMediatorSubscriberBase
         base.Dispose(disposing);
     }
 
-    public IDalamudTextureWrap? GetCurrentProfileOrDefault()
+    public IDalamudTextureWrap? GetProfileOrDefault()
     {
         // If the user does not have a profile set, return the default logo.
         if(string.IsNullOrEmpty(Base64ProfilePicture) || _imageData.Value.IsNullOrEmpty())
@@ -98,121 +97,121 @@ public class KinkPlate : DisposableMediatorSubscriberBase
         return _storedProfileImage;
     }
 
-    public ProfileStyleBG GetBackground(ProfileComponent component)
+    public KinkPlateBG GetBackground(PlateElement component)
         => component switch
         {
-            ProfileComponent.Plate => KinkPlateInfo.PlateBackground,
-            ProfileComponent.PlateLight => KinkPlateInfo.PlateLightBackground,
-            ProfileComponent.Description => KinkPlateInfo.DescriptionBackground,
-            ProfileComponent.GagSlot => KinkPlateInfo.GagSlotBackground,
-            ProfileComponent.Padlock => KinkPlateInfo.PadlockBackground,
-            ProfileComponent.BlockedSlots => KinkPlateInfo.BlockedSlotsBackground,
-            _ => ProfileStyleBG.Default
+            PlateElement.Plate => Info.PlateBG,
+            PlateElement.PlateLight => Info.PlateLightBG,
+            PlateElement.Description => Info.DescriptionBG,
+            PlateElement.GagSlot => Info.GagSlotBG,
+            PlateElement.Padlock => Info.PadlockBG,
+            PlateElement.BlockedSlots => Info.BlockedSlotsBG,
+            _ => KinkPlateBG.Default
         };
 
-    public void SetBackground(ProfileComponent component, ProfileStyleBG bg)
+    public void SetBackground(PlateElement component, KinkPlateBG bg)
     {
         switch (component)
         {
-            case ProfileComponent.Plate:
-                KinkPlateInfo.PlateBackground = bg;
+            case PlateElement.Plate:
+                Info.PlateBG = bg;
                 break;
-            case ProfileComponent.PlateLight:
-                KinkPlateInfo.PlateLightBackground = bg;
+            case PlateElement.PlateLight:
+                Info.PlateLightBG = bg;
                 break;
-            case ProfileComponent.Description:
-                KinkPlateInfo.DescriptionBackground = bg;
+            case PlateElement.Description:
+                Info.DescriptionBG = bg;
                 break;
-            case ProfileComponent.GagSlot:
-                KinkPlateInfo.GagSlotBackground = bg;
+            case PlateElement.GagSlot:
+                Info.GagSlotBG = bg;
                 break;
-            case ProfileComponent.Padlock:
-                KinkPlateInfo.PadlockBackground = bg;
+            case PlateElement.Padlock:
+                Info.PadlockBG = bg;
                 break;
-            case ProfileComponent.BlockedSlots:
-                KinkPlateInfo.BlockedSlotsBackground = bg;
+            case PlateElement.BlockedSlots:
+                Info.BlockedSlotsBG = bg;
                 break;
         }
     }
 
-    public ProfileStyleBorder GetBorder(ProfileComponent component)
+    public KinkPlateBorder GetBorder(PlateElement component)
         => component switch
         {
-            ProfileComponent.Plate => KinkPlateInfo.PlateBorder,
-            ProfileComponent.PlateLight => KinkPlateInfo.PlateLightBorder,
-            ProfileComponent.ProfilePicture => KinkPlateInfo.ProfilePictureBorder,
-            ProfileComponent.Description => KinkPlateInfo.DescriptionBorder,
-            ProfileComponent.GagSlot => KinkPlateInfo.GagSlotBorder,
-            ProfileComponent.Padlock => KinkPlateInfo.PadlockBorder,
-            ProfileComponent.BlockedSlots => KinkPlateInfo.BlockedSlotsBorder,
-            ProfileComponent.BlockedSlot => KinkPlateInfo.BlockedSlotBorder,
-            _ => ProfileStyleBorder.Default
+            PlateElement.Plate => Info.PlateBorder,
+            PlateElement.PlateLight => Info.PlateLightBorder,
+            PlateElement.Avatar => Info.AvatarBorder,
+            PlateElement.Description => Info.DescriptionBorder,
+            PlateElement.GagSlot => Info.GagSlotBorder,
+            PlateElement.Padlock => Info.PadlockBorder,
+            PlateElement.BlockedSlots => Info.BlockedSlotsBorder,
+            PlateElement.BlockedSlot => Info.BlockedSlotBorder,
+            _ => KinkPlateBorder.Default
         };
 
-    public void SetBorder(ProfileComponent component, ProfileStyleBorder border)
+    public void SetBorder(PlateElement component, KinkPlateBorder border)
     {
         switch (component)
         {
-            case ProfileComponent.Plate:
-                KinkPlateInfo.PlateBorder = border;
+            case PlateElement.Plate:
+                Info.PlateBorder = border;
                 break;
-            case ProfileComponent.PlateLight:
-                KinkPlateInfo.PlateLightBorder = border;
+            case PlateElement.PlateLight:
+                Info.PlateLightBorder = border;
                 break;
-            case ProfileComponent.ProfilePicture:
-                KinkPlateInfo.ProfilePictureBorder = border;
+            case PlateElement.Avatar:
+                Info.AvatarBorder = border;
                 break;
-            case ProfileComponent.Description:
-                KinkPlateInfo.DescriptionBorder = border;
+            case PlateElement.Description:
+                Info.DescriptionBorder = border;
                 break;
-            case ProfileComponent.GagSlot:
-                KinkPlateInfo.GagSlotBorder = border;
+            case PlateElement.GagSlot:
+                Info.GagSlotBorder = border;
                 break;
-            case ProfileComponent.Padlock:
-                KinkPlateInfo.PadlockBorder = border;
+            case PlateElement.Padlock:
+                Info.PadlockBorder = border;
                 break;
-            case ProfileComponent.BlockedSlots:
-                KinkPlateInfo.BlockedSlotsBorder = border;
+            case PlateElement.BlockedSlots:
+                Info.BlockedSlotsBorder = border;
                 break;
-            case ProfileComponent.BlockedSlot:
-                KinkPlateInfo.BlockedSlotBorder = border;
+            case PlateElement.BlockedSlot:
+                Info.BlockedSlotBorder = border;
                 break;
         }
     }
 
-    public ProfileStyleOverlay GetOverlay(ProfileComponent component)
+    public KinkPlateOverlay GetOverlay(PlateElement component)
         => component switch
         {
-            ProfileComponent.ProfilePicture => KinkPlateInfo.ProfilePictureOverlay,
-            ProfileComponent.Description => KinkPlateInfo.DescriptionOverlay,
-            ProfileComponent.GagSlot => KinkPlateInfo.GagSlotOverlay,
-            ProfileComponent.Padlock => KinkPlateInfo.PadlockOverlay,
-            ProfileComponent.BlockedSlots => KinkPlateInfo.BlockedSlotsOverlay,
-            ProfileComponent.BlockedSlot => KinkPlateInfo.BlockedSlotOverlay,
-            _ => ProfileStyleOverlay.Default
+            PlateElement.Avatar => Info.AvatarOverlay,
+            PlateElement.Description => Info.DescriptionOverlay,
+            PlateElement.GagSlot => Info.GagSlotOverlay,
+            PlateElement.Padlock => Info.PadlockOverlay,
+            PlateElement.BlockedSlots => Info.BlockedSlotsOverlay,
+            PlateElement.BlockedSlot => Info.BlockedSlotOverlay,
+            _ => KinkPlateOverlay.Default
         };
 
-    public void SetOverlay(ProfileComponent component, ProfileStyleOverlay overlay)
+    public void SetOverlay(PlateElement component, KinkPlateOverlay overlay)
     {
         switch (component)
         {
-            case ProfileComponent.ProfilePicture:
-                KinkPlateInfo.ProfilePictureOverlay = overlay;
+            case PlateElement.Avatar:
+                Info.AvatarOverlay = overlay;
                 break;
-            case ProfileComponent.Description:
-                KinkPlateInfo.DescriptionOverlay = overlay;
+            case PlateElement.Description:
+                Info.DescriptionOverlay = overlay;
                 break;
-            case ProfileComponent.GagSlot:
-                KinkPlateInfo.GagSlotOverlay = overlay;
+            case PlateElement.GagSlot:
+                Info.GagSlotOverlay = overlay;
                 break;
-            case ProfileComponent.Padlock:
-                KinkPlateInfo.PadlockOverlay = overlay;
+            case PlateElement.Padlock:
+                Info.PadlockOverlay = overlay;
                 break;
-            case ProfileComponent.BlockedSlots:
-                KinkPlateInfo.BlockedSlotsOverlay = overlay;
+            case PlateElement.BlockedSlots:
+                Info.BlockedSlotsOverlay = overlay;
                 break;
-            case ProfileComponent.BlockedSlot:
-                KinkPlateInfo.BlockedSlotOverlay = overlay;
+            case PlateElement.BlockedSlot:
+                Info.BlockedSlotOverlay = overlay;
                 break;
         }
     }

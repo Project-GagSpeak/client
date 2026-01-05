@@ -26,7 +26,7 @@ public class KinkPlateService : MediatorSubscriberBase
         _factory = factory;
 
         // Clear profiles when called.
-        Mediator.Subscribe<ClearProfileDataMessage>(this, (msg) =>
+        Mediator.Subscribe<ClearKinkPlateDataMessage>(this, (msg) =>
         {
             // if UserData exists, clear the profile, otherwise, clear whole cache and reload things again.
             if (msg.UserData != null)
@@ -40,7 +40,7 @@ public class KinkPlateService : MediatorSubscriberBase
         });
 
         // Clear all profiles on disconnect
-        Mediator.Subscribe<MainHubDisconnectedMessage>(this, (_) => ClearAllKinkPlates());
+        Mediator.Subscribe<DisconnectedMessage>(this, (_) => ClearAllKinkPlates());
     }
 
     public static IReadOnlyDictionary<UserData, KinkPlate> KinkPlates => _kinkPlates;
@@ -48,9 +48,9 @@ public class KinkPlateService : MediatorSubscriberBase
     // Obtain the clients kink plate information if valid.
     public bool TryGetClientKinkPlateContent([NotNullWhen(true)] out KinkPlateContent? clientPlateContent)
     {
-        if (_kinkPlates.TryGetValue(MainHub.PlayerUserData, out var plate))
+        if (_kinkPlates.TryGetValue(MainHub.OwnUserData, out var plate))
         {
-            clientPlateContent = plate.KinkPlateInfo;
+            clientPlateContent = plate.Info;
             return true;
         }
         clientPlateContent = null;
@@ -119,7 +119,7 @@ public class KinkPlateService : MediatorSubscriberBase
             var profile = await _hub.UserGetKinkPlate(new KinksterBase(data)).ConfigureAwait(false);
 
             // apply the retrieved profile data to the profile object.
-            _kinkPlates[data].KinkPlateInfo = profile.Info;
+            _kinkPlates[data].Info = profile.Info;
             _kinkPlates[data].Base64ProfilePicture = profile.ImageBase64 ?? string.Empty;
             Logger.LogDebug("KinkPlate™ for "+data.UID+" loaded.", LoggerType.KinkPlates);
         }
@@ -127,7 +127,7 @@ public class KinkPlateService : MediatorSubscriberBase
         {
             // log the failure and set default data.
             Logger.LogWarning(ex, "Failed to get KinkPlate™ from service for user " + data.UID);
-            _kinkPlates[data].KinkPlateInfo = new KinkPlateContent();
+            _kinkPlates[data].Info = new KinkPlateContent();
             _kinkPlates[data].Base64ProfilePicture = string.Empty;
         }
     }

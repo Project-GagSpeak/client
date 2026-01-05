@@ -1,12 +1,7 @@
 using CkCommons.Gui;
-using Dalamud.Interface;
 using Dalamud.Interface.Windowing;
 using GagSpeak.Services.Tutorial;
-using GagspeakAPI.Extensions;
-using Dalamud.Bindings.ImGui;
-using System.Drawing;
 using static Dalamud.Interface.Windowing.Window;
-using static FFXIVClientStructs.FFXIV.Component.GUI.AtkTooltipManager.Delegates;
 
 namespace GagSpeak.Utils;
 

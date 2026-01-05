@@ -10,7 +10,6 @@ using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
-using GagSpeak.Utils;
 using GagspeakAPI.Data;
 using Dalamud.Bindings.ImGui;
 using OtterGui.Text;

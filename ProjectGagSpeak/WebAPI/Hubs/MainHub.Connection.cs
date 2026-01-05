@@ -3,17 +3,15 @@ using Dalamud.Interface.ImGuiNotification;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Hub;
-using GagspeakAPI.Network;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
 using System.Net.WebSockets;
 
 namespace GagSpeak.WebAPI;
 /// <summary>
-///     Facilitates interactions with the GagSpeak Hub connection. <para />
-///     
-///     To ensure that interactions with vibe lobbies function correctly, <see cref="_hubConnection"/> will be static. <para />
-///     
+///     Facilitates interactions with the GagSpeak Hub connection. <para/>
+///     To ensure that interactions with vibe lobbies function correctly, 
+///     <see cref="_hubConnection"/> will be static. <para />
 /// </summary>
 public partial class MainHub
 {
@@ -30,13 +28,13 @@ public partial class MainHub
             return;
         }
 
-        Logger.LogInformation("Connection Validation Approved, Creating Connection with [" + _serverConfigs.ServerStorage.ServerName + "]", LoggerType.ApiCore);
+        Logger.LogInformation($"SecretKey Fetched, Creating Connection to [{MAIN_SERVER_NAME}]", LoggerType.ApiCore);
         // if the current state was offline, change it to disconnected.
         if (ServerStatus is ServerState.Offline)
             ServerStatus = ServerState.Disconnected;
 
         // Debug the current state here encase shit hits the fan.
-        Logger.LogDebug("Current ServerState during this Connection Attempt: " + ServerStatus, LoggerType.ApiCore);
+        Logger.LogDebug($"Current ServerState on Connection: {ServerStatus}", LoggerType.ApiCore);
         // Recreate the ConnectionCTS.
         _hubConnectionCTS = _hubConnectionCTS.SafeCancelRecreate();
         var connectionToken = _hubConnectionCTS.Token;
@@ -92,14 +90,14 @@ public partial class MainHub
                 await _dataSync.SetClientDataForProfile().ConfigureAwait(false);
                 // once data is synchronized, update the serverStatus.
                 ServerStatus = ServerState.ConnectedDataSynced;
-                Mediator.Publish(new MainHubConnectedMessage());
+                Mediator.Publish(new ConnectedMessage());
 
                 // Update our current authentication to reflect the information provided.
-                _serverConfigs.UpdateAuthentication(secretKey, ConnectionResponse!);
+                _accounts.UpdateFromValidConnection(secretKey, ConnectionResponse!);
 
                 // obtain the ShareHub and LobbyInvite data post-connection, as it doesnt depend on anything else.
                 var lobbyHubInfo = await GetShareHubAndLobbyInfo().ConfigureAwait(false);
-                Mediator.Publish(new PostConnectionDataReceivedMessage(lobbyHubInfo));
+                Mediator.Publish(new ConnectedDataSyncedMessage(lobbyHubInfo));
             }
             catch (OperationCanceledException)
             {
@@ -112,7 +110,7 @@ public partial class MainHub
                 if (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
                     Logger.LogWarning("This HTTP Exception was caused by GagSpeakAuthFailure. Message was: " + AuthFailureMessage, LoggerType.ApiCore);
-                    await Disconnect(ServerState.Unauthorized).ConfigureAwait(false);
+                    await Disconnect(ServerState.Unauthorized, DisconnectIntent.Normal).ConfigureAwait(false);
                     return; // (Prevent further reconnections)
                 }
 
@@ -120,7 +118,7 @@ public partial class MainHub
                 {
                     // Another HTTP Exception type, so disconnect, then attempt reconnection.
                     Logger.LogWarning("Failed to establish connection, retrying");
-                    await Disconnect(ServerState.Disconnected).ConfigureAwait(false);
+                    await Disconnect(ServerState.Disconnected, DisconnectIntent.Normal).ConfigureAwait(false);
                     // Reconnect in 5-20 seconds. (prevents server overload)
                     ServerStatus = ServerState.Reconnecting;
                     await Task.Delay(TimeSpan.FromSeconds(new Random().Next(5, 20)), connectionToken).ConfigureAwait(false);
@@ -134,7 +132,7 @@ public partial class MainHub
             catch (InvalidOperationException ex)
             {
                 Logger.LogWarning("InvalidOperationException on connection: " + ex.Message);
-                await Disconnect(ServerState.Disconnected).ConfigureAwait(false);
+                await Disconnect(ServerState.Disconnected, DisconnectIntent.Unexpected).ConfigureAwait(false);
                 return; // (Prevent further reconnections)
             }
             catch (Bagagwa ex)
@@ -154,18 +152,23 @@ public partial class MainHub
     }
 
     /// <summary>
-    ///     Primary method for disconnecting from the GagSpeak Hub.
+    ///     Primary method for disconnecting from the GagSpeakHub. <para />
     /// </summary>
-    public async Task Disconnect(ServerState disconnectionReason, bool saveAchievements = true)
+    /// <param name="dcReason"> The reason we are disconnecting. </param>
+    /// <param name="intent">
+    ///     Why the disconnection occurred, allowing subscribers to handle logic after a 
+    ///     disconnect according to what kind of disconnect it was.
+    /// </param>
+    public async Task Disconnect(ServerState dcReason, DisconnectIntent intent, bool saveAchievements = true)
     {
-        // If our current state was Connected, be sure to fire, or at least attempt to fire, a final achievement save prior to disconnection.
+        // Ensure we save our achievements prior to performing the disconnection.
         if (IsConnected && saveAchievements)
         {
             // only perform the following if SaveData is in a valid state for uploading on Disconnect.
             if(ClientAchievements.HasValidData && !ClientAchievements.HadUnhandledDC)
             {
                 Logger.LogDebug("Sending Final Achievement SaveData Update before Hub Instance Disposal.", LoggerType.Achievements);
-                await UserUpdateAchievementData(new(PlayerUserData, _achievements.SerializeData()));
+                await UserUpdateAchievementData(new(OwnUserData, _achievements.SerializeData()));
             }
             else
             {
@@ -173,11 +176,20 @@ public partial class MainHub
             }
         }
 
+        // If we ever care enough to run a IsUnloading() through GagSpeak too, we can add this in.
+        //if (IsConnected && ((int)intent > 1))
+        //{
+        //    // Notify all online kinksters that we are unloading upon our disconnect.
+        //    Logger.LogInformation("Disconnecting due to a hard-reconnect or plugin unload. Notifying online Kinksters!");
+        //    await UserNotifyIsUnloading();
+        //    // Now we can actually disconnect with this taken care of.
+        //}
+
         // Set new state to Disconnecting.
         ServerStatus = ServerState.Disconnecting;
         Logger.LogInformation("Disposing of GagSpeakHub-Main's Hub Instance", LoggerType.ApiCore);
 
-        // Obliterate the GagSpeakHub-Main into the ground, erase it out of existence .
+        // Obliterate the GagSpeakHub-Main into the ground, erase it out of existence.
         await _hubFactory.DisposeHubAsync().ConfigureAwait(false);
 
         // If our hub was already initialized by the time we call this, reset all values monitoring it.
@@ -185,35 +197,41 @@ public partial class MainHub
         if (_hubConnection is not null)
         {
             Logger.LogInformation("Instance disposed of in '_hubFactory', but still exists in MainHub.cs, " +
-                "clearing all other variables for [" + _serverConfigs.ServerStorage.ServerName + "]", LoggerType.ApiCore);
+                $"clearing all data for [{MAIN_SERVER_NAME}]", LoggerType.ApiCore);
             // Clear the Health check so we stop pinging the server, set Initialized to false, publish a disconnect.
             _apiHooksInitialized = false;
             _hubHealthCTS?.Cancel();
-            Mediator.Publish(new MainHubDisconnectedMessage());
+            Mediator.Publish(new DisconnectedMessage(intent));
             // set the ConnectionResponse and hub to null.
             _hubConnection = null;
             ConnectionResponse = null;
         }
 
         // Update our server state to the necessary reason
-        Logger.LogInformation("GagSpeakHub-Main disconnected due to: [" + disconnectionReason + "]", LoggerType.ApiCore);
-        ServerStatus = disconnectionReason;
+        Logger.LogInformation($"GagSpeakHub-Main disconnected: [{dcReason}({intent})]", LoggerType.ApiCore);
+        ServerStatus = dcReason;
     }
 
     /// <summary>
     ///     Reconnection method to use when we want to force a disconnect followed by a new Connection.
     /// </summary>
-    public async Task Reconnect(bool saveAchievements = true)
+    public async Task Reconnect(DisconnectIntent intent = DisconnectIntent.Normal, bool saveAchievements = true)
     {
+        if (intent is DisconnectIntent.Logout || intent is DisconnectIntent.Shutdown)
+        {
+            Logger.LogWarning("Cannot call reconnect with intent [Logout/Shutdown], aborting Reconnect.");
+            return;
+        }
+
         // Disconnect, wait 3 seconds, then connect.
-        await Disconnect(ServerState.Disconnected, saveAchievements).ConfigureAwait(false);
+        await Disconnect(ServerState.Disconnected, intent, saveAchievements).ConfigureAwait(false);
         await Task.Delay(TimeSpan.FromSeconds(5));
         await Connect().ConfigureAwait(false);
     }
 
     /// <summary>
-    /// A Temporary connection established without the Authorized Claim, but rather TemporaryAccess claim.
-    /// This allows us to generate a fresh UID & SecretKey for our account upon its first creation.
+    ///     A Temporary connection established without the Authorized Claim, but rather TemporaryAccess claim. <para />
+    ///     This allows us to generate a fresh UID & SecretKey for our account upon its first creation.
     /// </summary>
     /// <returns> ([new UID for character],[new secretKey]) </returns>
     public async Task<(string, string)> FetchFreshAccountDetails()
@@ -266,7 +284,8 @@ public partial class MainHub
         {
             Logger.LogInformation("Disposing of GagSpeakHub-Main after obtaining account details.", LoggerType.ApiCore);
             if (_hubConnection is not null && _hubConnection.State is HubConnectionState.Connected)
-                await Disconnect(ServerState.Disconnected).ConfigureAwait(false);
+                await Disconnect(ServerState.Disconnected, DisconnectIntent.Normal).ConfigureAwait(false);
+            Logger.LogInformation("Disposed of GagSpeakHub-Main after obtaining account details.");
         }
     }
 
@@ -282,17 +301,17 @@ public partial class MainHub
         }
 
         // if we have not yet made an account, abort this connection.
-        if (_serverConfigs.AuthCount() <= 0)
+        if (!_accounts.HasAnyProfile)
         {
             Logger.LogDebug("No Authentications created. No Primary Account or Alt Account to connect with. Aborting!", LoggerType.ApiCore);
             return false;
         }
 
         // ensure we have a proper template for the active character.
-        if (_serverConfigs.CharacterHasSecretKey() is false && _serverConfigs.AuthExistsForCurrentLocalContentId() is false)
+        if (!_accounts.ProfileExistsForChara())
         {
             // Generate a new auth entry for the current character if the primary one has already been made (this is for an alt basically)
-            _serverConfigs.GenerateAuthForCurrentCharacter();
+            _accounts.CreateProfileForChara();
         }
 
         // If the client wishes to not be connected to the server, return.
@@ -302,23 +321,20 @@ public partial class MainHub
             return false;
         }
 
-        // Obtain stored ServerKey for the current Character we are logged into.
-        fetchedSecretKey = _serverConfigs.GetSecretKeyForCharacter() ?? string.Empty;
-        if (fetchedSecretKey.IsNullOrEmpty())
+        if (_accounts.GetProfileForChara() is not { } profile)
+        {
+            Logger.LogWarning($"AccountProfile existed but no SecretKey was present.", LoggerType.ApiCore);
+            return false;
+        }
+
+        if (profile.SecretKey.IsNullOrEmpty())
         {
             // log a warning that no secret key is set for the current character
             Logger.LogWarning("No secret key set for current character, aborting Connection with [NoSecretKey]", LoggerType.ApiCore);
-
-            // If for WHATEVER reason the ConnectionResponse is not null here, log it.
-            if (ConnectionResponse is not null)
-                Logger.LogWarning("Connection DTO is somehow not null, but no secret key is set for the" +
-                    " current character. This is a problem.", LoggerType.ApiCore);
-
-            ConnectionResponse = null; // This shouldnt even not be null?
-
+            ConnectionResponse = null;
             // Set our new ServerState to NoSecretKey and reject connection.
             ServerStatus = ServerState.NoSecretKey;
-            _hubConnectionCTS?.Cancel();
+            _hubConnectionCTS.SafeCancel();
             return false;
         }
         else // Log the successful fetch.
@@ -337,20 +353,20 @@ public partial class MainHub
         // Validate case where it's null.
         if (ConnectionResponse is null)
         {
-            Logger.LogError("Your SecretKey is likely no longer valid for this character and it failed to properly connect." + Environment.NewLine
-                + "This likely means the key no longer exists in the database, you have been banned, or need to make a new one." + Environment.NewLine
+            Logger.LogError("Your SecretKey is likely no longer valid for this character and it failed to properly connect.\n"
+                + "This likely means the key no longer exists in the database, you have been banned, or need to make a new one.\n"
                 + "If this key happened to be your primary key and you cannot recover it, contact cordy.");
-            await Disconnect(ServerState.Unauthorized).ConfigureAwait(false);
+            await Disconnect(ServerState.Unauthorized, DisconnectIntent.Normal).ConfigureAwait(false);
             return false;
         }
 
         Logger.LogTrace("Checking if Client Connection is Outdated", LoggerType.ApiCore);
-        Logger.LogInformation(ClientVerString + " - " + ExpectedVerString, LoggerType.ApiCore);
+        Logger.LogInformation($"{ClientVerString} - {ExpectedVerString}", LoggerType.ApiCore);
         if (_expectedApiVersion != IGagspeakHub.ApiVersion || _expectedVersion > _clientVersion)
         {
-            Mediator.Publish(new NotificationMessage("Client outdated", "Outdated: " + ClientVerString + " - " + ExpectedVerString + "Please keep Gagspeak up-to-date.", NotificationType.Warning));
+            Mediator.Publish(new NotificationMessage("Client outdated", $"Outdated: ({ClientVerString} - {ExpectedVerString})\nPlease keep Gagspeak up-to-date.", NotificationType.Warning));
             Logger.LogInformation("Client Was Outdated in either its API or its Version, Disconnecting.", LoggerType.ApiCore);
-            await Disconnect(ServerState.VersionMisMatch).ConfigureAwait(false);
+            await Disconnect(ServerState.VersionMisMatch, DisconnectIntent.Normal).ConfigureAwait(false);
             return false;
         }
 
@@ -428,7 +444,7 @@ public partial class MainHub
                 // (we don't need to know the return value, as long as its a valid call we keep our connection maintained)
                 if (_hubConnection is not null)
                 {
-                    await CheckMainClientHealth().ConfigureAwait(false);
+                    await HealthCheck().ConfigureAwait(false);
                 }
                 else
                 {
@@ -456,7 +472,7 @@ public partial class MainHub
         // Log the closure, cancel the health token, and publish that we have been disconnected.
         Logger.LogWarning("GagSpeakHub-Main was Closed by its Hub-Instance");
         _hubHealthCTS?.Cancel();
-        Mediator.Publish(new MainHubDisconnectedMessage());
+        Mediator.Publish(new DisconnectedMessage(DisconnectIntent.Normal));
         ServerStatus = ServerState.Offline;
         // if an argument for this was passed in, we should provide the reason.
         if (arg is not null)
@@ -477,7 +493,7 @@ public partial class MainHub
             _achievements.HadUnhandledDisconnect(webException);
         }
 
-        Logger.LogWarning("Connection to " + _serverConfigs.ServerStorage.ServerName + " Closed... Reconnecting. (Reason: " + arg);
+        Logger.LogWarning($"Connection to [{MAIN_SERVER_NAME}] Closed... Reconnecting. (Reason: {arg}");
     }
 
     private async Task HubInstanceOnReconnected()
@@ -494,10 +510,13 @@ public partial class MainHub
                 ServerStatus = ServerState.Connected;
                 await LoadInitialKinksters().ConfigureAwait(false);
                 await LoadOnlineKinksters().ConfigureAwait(false);
+
+                // Re-Sync data for the current character profile.
                 await _dataSync.SetClientDataForProfile().ConfigureAwait(false);
+                
                 // once data is syncronized, update the serverStatus.
                 ServerStatus = ServerState.ConnectedDataSynced;
-                Mediator.Publish(new MainHubConnectedMessage());
+                Mediator.Publish(new ConnectedMessage());
             }
         }
         catch (Bagagwa ex) // Failed to connect, to stop connection.
@@ -505,14 +524,14 @@ public partial class MainHub
             Logger.LogError("Failure to obtain Data after reconnection to GagSpeakHub-Main. Reason: " + ex);
             // disconnect if a non-websocket related issue, otherwise, reconnect.
             if (ex is not WebSocketException || ex is not TimeoutException)
-                {
+            {
                 Logger.LogWarning("Disconnecting from GagSpeakHub-Main after failed reconnection in HubInstanceOnReconnected(). Websocket/Timeout Reason: " + ex);
-                await Disconnect(ServerState.Disconnected).ConfigureAwait(false);
+                await Disconnect(ServerState.Disconnected, DisconnectIntent.Unexpected).ConfigureAwait(false);
             }
             else
             {
                 Logger.LogWarning("Reconnecting to GagSpeakHub-Main after failed reconnection in HubInstanceOnReconnected(). Websocket/Timeout Reason: " + ex);
-                await Reconnect().ConfigureAwait(false);
+                await Reconnect(DisconnectIntent.Unexpected).ConfigureAwait(false);
             }
         }
     }
