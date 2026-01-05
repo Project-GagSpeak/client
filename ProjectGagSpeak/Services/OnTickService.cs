@@ -117,6 +117,9 @@ public class OnTickService : IHostedService
             _mediator.Publish(new GPoseEndMessage());
         }
 
+        // Placeholder while we figure out hardcore handling further after 2.0 launch.
+        _mediator.Publish(new FrameworkUpdateMessage());
+
         if (isNormal)
             return;
 
