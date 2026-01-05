@@ -75,7 +75,7 @@ public sealed class PlayerControlCache
     {
         get
         {
-            // Don't enforce during lifestream tasks to avoid interfering with it.
+            // Don't mess with lifestream tasks.
             if (_activeTaskControl.HasAny(HcTaskControl.InLifestreamTask))
                 return false;
 
@@ -83,14 +83,13 @@ public sealed class PlayerControlCache
             if (ClientData.Hardcore.IsEnabled(HcAttribute.Follow))
                 return true;
 
-            // Enforce if weighted or weighty.
-            if (_activeTaskControl.HasAny(HcTaskControl.Weighted)
-                || _traits.FinalTraits.HasAny(Traits.Weighty))
-            {
-                // only enforce if not mounted, as mounts wouldn't be weighed down by our restraints
-                return !Svc.Condition.AsReadOnlySet().Contains(Dalamud.Game.ClientState.Conditions.ConditionFlag.Mounted);
-            }
-            return false;
+            // Force while hc task control says so.
+            if (_activeTaskControl.HasAny(HcTaskControl.Weighted))
+                return true;
+
+            // Force if weighted or weighty by restraints, but only if not mounted, as mounts wouldn't be weighed down by our restraints
+            return _traits.FinalTraits.HasAny(Traits.Weighty)
+                && !Svc.Condition.AsReadOnlySet().Contains(Dalamud.Game.ClientState.Conditions.ConditionFlag.Mounted);
         }
     }
 
