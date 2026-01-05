@@ -83,7 +83,8 @@ public partial class AlarmsPanel
             if(editorItem is { } itemInEditor)
                 DrawSelectedInner(itemInEditor, true);
             else
-                DrawSelectedInner(item!, false);
+                if (item is not null)
+                    DrawSelectedInner(item!, false);
         }
 
         void DrawLabel()
