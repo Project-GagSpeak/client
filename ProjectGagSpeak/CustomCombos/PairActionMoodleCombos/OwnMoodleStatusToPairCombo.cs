@@ -3,14 +3,12 @@ using CkCommons.RichText;
 using CkCommons.Textures;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
-using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
-using GagspeakAPI.Network;
 using Dalamud.Bindings.ImGui;
 
 namespace GagSpeak.CustomCombos.Moodles;
@@ -22,7 +20,7 @@ public sealed class OwnMoodleStatusToPairCombo : CkMoodleComboButtonBase<Moodles
     { }
 
     protected override bool DisableCondition()
-        => Current.GUID == Guid.Empty || !_kinksterRef.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyTheirMoodlesToYou);
+        => Current.GUID == Guid.Empty || !_kinksterRef.PairPerms.MoodleAccess.HasAny(MoodleAccess.AllowOther);
 
     protected override string ToString(MoodlesStatusInfo obj)
         => obj.Title.StripColorTags();
@@ -69,8 +67,7 @@ public sealed class OwnMoodleStatusToPairCombo : CkMoodleComboButtonBase<Moodles
     {
         UiService.SetUITask(async () =>
         {
-            var dto = new MoodlesApplierByStatus(_kinksterRef.UserData, [item], MoodleType.Status);
-            var res = await _mainHub.UserApplyMoodlesByStatus(dto);
+            var res = await _mainHub.UserApplyMoodlesByStatus(new(_kinksterRef.UserData, [item], false));
             if (res.ErrorCode is not GagSpeakApiEc.Success)
                 Log.LogDebug($"Failed to apply moodle status {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
         });

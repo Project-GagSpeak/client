@@ -3,7 +3,6 @@ using Dalamud.Interface.ImGuiNotification;
 using GagSpeak.Interop;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
-using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
@@ -43,7 +42,6 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         CollarManager collar,
         CursedLootManager cursedLoot,
         CacheStateManager cacheManager,
-        OnFrameworkService frameworkUtils,
         IpcProvider provider)
         : base(logger, mediator)
     {
@@ -426,42 +424,4 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         Svc.Chat.PrintError(new SeStringBuilder().AddItalics("The curse lifts, and the item vanishes in a puff of smoke!").BuiltString);
     }
     #endregion CursedLoot Manipulation
-
-
-    public async Task ApplyStatusesByGuid(MoodlesApplierById dto)
-    {
-        if (PostActionMsg(dto.User.UID, InteractionType.ApplyOwnMoodle, "Moodle Status(s) Applied"))
-            await _interop.Moodles.ApplyOwnStatusByGUID(dto.Ids);
-    }
-
-    public async Task ApplyStatusesToSelf(MoodlesApplierByStatus dto, string clientPlayerNameWithWorld)
-    {
-        if (_pairs.DirectPairs.FirstOrDefault(p => p.UserData.UID == dto.User.UID) is not { } pair)
-        {
-            Logger.LogWarning($"Received ApplyStatusesToSelf for an unpaired user: {dto.User.AliasOrUID}");
-            return;
-        }
-
-        // Pair is valid, make sure are visible.
-        if (!pair.IsVisible)
-        {
-            Logger.LogWarning($"Refusing to apply moodles. The sender is not visible: {dto.User.AliasOrUID}");
-            return;
-        }
-
-        Mediator.Publish(new EventMessage(new(pair.GetNickAliasOrUid(), pair.UserData.UID, InteractionType.ApplyPairMoodle, "Pair's Moodle Status(s) Applied to self!")));
-        await _interop.Moodles.ApplyStatusesFromPairToSelf(pair.PlayerNameWithWorld, dto.Statuses);
-    }
-
-    public async Task RemoveStatusesFromSelf(MoodlesRemoval dto)
-    {
-        if (PostActionMsg(dto.User.UID, InteractionType.RemoveMoodle, "Moodle Status Removed"))
-            await _interop.Moodles.RemoveOwnStatusByGuid(dto.StatusIds);
-    }
-
-    public async Task ClearStatusesFromSelf(KinksterBase dto)
-    {
-        if (PostActionMsg(dto.User.UID, InteractionType.ClearMoodle, "Moodles Cleared"))
-            await _interop.Moodles.ClearStatus();
-    }
 }

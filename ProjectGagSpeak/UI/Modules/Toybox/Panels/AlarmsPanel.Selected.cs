@@ -5,7 +5,6 @@ using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Gui.Utility;
 using CkCommons.Raii;
-using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Models;
 using Dalamud.Bindings.ImGui;
 using OtterGui;

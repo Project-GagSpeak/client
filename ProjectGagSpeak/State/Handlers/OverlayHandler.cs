@@ -2,11 +2,9 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Controller;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
-using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
-using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 
 namespace GagSpeak.State.Handlers;
@@ -108,10 +106,10 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
 
     public async void RemoveHypnoEffect(string enactor, bool giveAchievements, bool fromDispose = false)
     {
-        Logger.LogDebug($"HardcoreState Hypnotic Effect cleared by ({enactor})!");
+        Logger.LogDebug($"HardcoreStatus Hypnotic Effect cleared by ({enactor})!");
         // remove the effect from the hypno service.
         await _hypnoService.RemoveSentEffectOnExpire().ConfigureAwait(false);
-        // Remove the stored HardcoreState effect & image from the config if not ran by plugin disposal.
+        // Remove the stored HardcoreStatus effect & image from the config if not ran by plugin disposal.
         if (!fromDispose)
         {
             _config.Current.HypnoEffectInfo = null;

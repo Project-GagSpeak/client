@@ -1,4 +1,3 @@
-using GagSpeak.Services;
 using Dalamud.Bindings.ImGui;
 using Penumbra.GameData.Structs;
 

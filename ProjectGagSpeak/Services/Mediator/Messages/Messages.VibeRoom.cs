@@ -1,4 +1,3 @@
-using GagspeakAPI.Data;
 using GagspeakAPI.Dto.VibeRoom;
 
 namespace GagSpeak.Services.Mediator;

@@ -1,7 +1,5 @@
 using CkCommons.Classes;
-using FFXIVClientStructs.FFXIV.Client.Game;
 using GagSpeak.Interop;
-using GagSpeak.Services;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Models;
 using Glamourer.Api.Enums;
@@ -14,18 +12,15 @@ public class GlamourHandler
     private readonly ILogger<GlamourHandler> _logger;
     private readonly IpcCallerGlamourer _ipc;
     private readonly GlamourCache _cache;
-    private readonly OnFrameworkService _frameworkUtils;
 
     private SemaphoreSlim _applySlim = new SemaphoreSlim(1, 1);
     private IpcBlockReason _ipcBlocker = IpcBlockReason.None;
 
-    public GlamourHandler(ILogger<GlamourHandler> logger, IpcCallerGlamourer ipc,
-        GlamourCache cache, OnFrameworkService frameworkUtils)
+    public GlamourHandler(ILogger<GlamourHandler> logger, IpcCallerGlamourer ipc, GlamourCache cache)
     {
         _logger = logger;
         _ipc = ipc;
         _cache = cache;
-        _frameworkUtils = frameworkUtils;
     }
 
     public IpcBlockReason BlockIpcCalls => _ipcBlocker;
@@ -375,12 +370,17 @@ public class GlamourHandler
         }
         finally
         {
-            // Schedule the re-enabling of glamour change events using RunOnFrameworkTickDelayed to offset Glamourer.
-            await _frameworkUtils.RunOnFrameworkTickDelayed(() =>
+            // Schedule the re-enabling of glamour change events using RunOnFrameworkTickDelayed to offset Glamourer.)
+            try
             {
-                _ipcBlocker &= ~IpcBlockReason.SemaphoreTask;
-                _logger.LogDebug($"Releasing Semaphore Wait, Remaining Blockers: {_ipcBlocker.ToString()}", LoggerType.IpcGlamourer);
-            }, 1);
+                await Svc.Framework.RunOnTick(() =>
+                {
+                    _ipcBlocker &= ~IpcBlockReason.SemaphoreTask;
+                    _logger.LogDebug($"Releasing Semaphore Wait, Remaining Blockers: {_ipcBlocker.ToString()}", LoggerType.IpcGlamourer);
+                }, delayTicks: 1);
+            }
+            catch (TaskCanceledException) { /* CONSUME */ }
+
             // Release the slim, allowing further execution.
             _applySlim.Release();
         }

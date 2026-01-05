@@ -1,5 +1,3 @@
-using Dalamud.Game;
-using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -33,7 +31,6 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
     private readonly GlamourHandler _glamourHandler;
     private readonly TriggerHandler _triggerHandler;
     private readonly MufflerService _muffler;
-    private readonly OnFrameworkService _frameworkUtils;
 
     private static MoveOverrides _moveOverrides = null!;
     public static MoveOverrides MoveOverrides
@@ -47,8 +44,7 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
 
     public StaticDetours(ILogger<StaticDetours> logger, GagspeakMediator mediator,
         ClientData clientData, PlayerControlCache controlCache, GagRestrictionManager gags, 
-        GlamourHandler glamour, LootHandler loot, TriggerHandler trigger, MufflerService muffler, 
-        OnFrameworkService frameworkUtils)
+        GlamourHandler glamour, LootHandler loot, TriggerHandler trigger, MufflerService muffler)
         : base(logger, mediator)
     {
         _clientData = clientData;
@@ -58,7 +54,6 @@ public unsafe partial class StaticDetours : DisposableMediatorSubscriberBase
         _glamourHandler = glamour;
         _triggerHandler = trigger;
         _muffler = muffler;
-        _frameworkUtils = frameworkUtils;
 
         Logger.LogInformation("Initializing all StaticDetours!");
         Svc.Hook.InitializeFromAttributes(this);

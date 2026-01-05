@@ -17,7 +17,7 @@ namespace GagSpeak.FileSystems;
 // Continue reworking this to integrate a combined approach if we can figure out a better file management system.
 public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerFileSelector.TriggerState>, IMediatorSubscriber, IDisposable
 {
-    private readonly FavoritesManager _favorites;
+    private readonly FavoritesConfig _favorites;
     private readonly TriggerManager _manager;
     public GagspeakMediator Mediator { get; init; }
 
@@ -33,7 +33,7 @@ public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerF
     public new TriggerFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
-    public TriggerFileSelector(GagspeakMediator mediator, FavoritesManager favorites, TriggerManager manager,
+    public TriggerFileSelector(GagspeakMediator mediator, FavoritesConfig favorites, TriggerManager manager,
         TriggerFileSystem fileSystem) : base(fileSystem, Svc.Logger.Logger, Svc.KeyState, "##TriggerFS")
     {
         Mediator = mediator;

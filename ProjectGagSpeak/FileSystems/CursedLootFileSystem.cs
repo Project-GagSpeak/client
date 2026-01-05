@@ -24,7 +24,7 @@ public sealed class CursedLootFileSystem : CkFileSystem<CursedItem>, IMediatorSu
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigCursedItemChanged>(this, (msg) => OnLootChange(msg.Type, msg.Item, msg.OldString));
-        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is GagspeakModule.CursedLoot) Reload(); });
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is GSModule.CursedLoot) Reload(); });
         Changed += OnChange;
         Reload();
     }

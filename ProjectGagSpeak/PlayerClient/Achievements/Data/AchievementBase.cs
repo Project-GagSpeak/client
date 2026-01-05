@@ -5,7 +5,7 @@ public abstract class AchievementBase : IAchievementItem
     public int AchievementId => BaseInfo.Id;
     public string Title => BaseInfo.Title;
     public string Description => BaseInfo.Description;
-    public ProfileComponent RewardComponent => BaseInfo.UnlockReward.Component;
+    public PlateElement RewardComponent => BaseInfo.UnlockReward.Component;
     public StyleKind RewardStyleType => BaseInfo.UnlockReward.Type;
     public int RewardStyleIndex => BaseInfo.UnlockReward.Value;
     

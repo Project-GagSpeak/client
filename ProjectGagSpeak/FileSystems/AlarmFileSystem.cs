@@ -1,6 +1,5 @@
 using CkCommons.FileSystem;
 using CkCommons.HybridSaver;
-using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
@@ -25,7 +24,7 @@ public sealed class AlarmFileSystem : CkFileSystem<Alarm>, IMediatorSubscriber, 
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigAlarmChanged>(this, (msg) => OnAlarmChange(msg.Type, msg.Item, msg.OldString));
-        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is GagspeakModule.Alarm) Reload(); });
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is GSModule.Alarm) Reload(); });
         Changed += OnChange;
         Reload();
     }

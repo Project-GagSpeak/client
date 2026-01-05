@@ -5,12 +5,9 @@ using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Plugin.Services;
-using GagSpeak.Services;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Models;
 using OtterGui;
-using OtterGui.Extensions;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 

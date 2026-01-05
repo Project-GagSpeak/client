@@ -11,7 +11,6 @@ using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Textures;
-using GagSpeak.State.Listeners;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
@@ -23,20 +22,20 @@ public sealed class ControllerUniquePanel
 {
     private readonly ILogger<ControllerUniquePanel> _logger;
     private readonly MainHub _hub;
-    private readonly KinksterListener _kinksterUpdater;
     private readonly AliasItemDrawer _aliasDrawer;
+    private readonly KinksterManager _kinksters;
 
     private string _searchStr = string.Empty;
     private IReadOnlyList<AliasTrigger> _filteredItems = new List<AliasTrigger>();
     private TagCollection _pairTriggerTags = new();
 
-    public ControllerUniquePanel(ILogger<ControllerUniquePanel> logger, MainHub hub,
-        MainConfig config, KinksterListener kinksterUpdater, AliasItemDrawer aliasDrawer)
+    public ControllerUniquePanel(ILogger<ControllerUniquePanel> logger, MainHub hub, 
+        MainConfig config, AliasItemDrawer aliasDrawer, KinksterManager kinksters)
     {
         _logger = logger;
         _hub = hub;
-        _kinksterUpdater = kinksterUpdater;
         _aliasDrawer = aliasDrawer;
+        _kinksters = kinksters;
 
         UpdateFilteredItems();
     }
@@ -106,7 +105,7 @@ public sealed class ControllerUniquePanel
             return;
 
         foreach (var aliasItem in _filteredItems.ToList())
-            _aliasDrawer.DrawAliasTrigger(aliasItem, SelectedKinkster.LastMoodlesData, out bool _, false);
+            _aliasDrawer.DrawAliasTrigger(aliasItem, SelectedKinkster.MoodleData, out bool _, false);
     }
 
     private void DrawPermsAndExamples(CkHeader.DrawRegion region)
@@ -263,7 +262,7 @@ public sealed class ControllerUniquePanel
                 return;
             }
             // Success, update listener name on pair end (since we never get the callback).
-            _kinksterUpdater.NewListenerName(kinkster.UserData, nameInThread);
+            _kinksters.NewListenerName(kinkster.UserData, nameInThread);
         });
     }
 

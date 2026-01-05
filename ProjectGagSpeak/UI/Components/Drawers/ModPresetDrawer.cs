@@ -10,7 +10,6 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
-using NAudio.SoundFont;
 using OtterGui.Text;
 using OtterGui.Widgets;
 using Penumbra.Api.Enums;

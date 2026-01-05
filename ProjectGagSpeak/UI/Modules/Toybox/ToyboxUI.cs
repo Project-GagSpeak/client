@@ -4,7 +4,6 @@ using Dalamud.Interface.Utility;
 using GagSpeak.Gui.Components;
 using GagSpeak.Gui.UiToybox;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Utils;
 using Dalamud.Bindings.ImGui;

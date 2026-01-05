@@ -1,10 +1,7 @@
-using System.Threading.Tasks;
 using GagSpeak.Interop;
-using GagSpeak.PlayerClient;
 using GagSpeak.State.Caches;
 using GagspeakAPI.Data;
 using Microsoft.IdentityModel.Tokens;
-using Serilog;
 
 namespace GagSpeak.State.Handlers;
 
@@ -92,7 +89,7 @@ public class MoodleHandler
         var idsToApply = MoodleCache.IpcData.DataInfo.Any()
             ? _cache.FinalStatusIds.Except(MoodleCache.IpcData.DataInfo.Keys)
             : _cache.FinalStatusIds;
-        await _ipc.ApplyOwnStatusByGUID(idsToApply);
+        await _ipc.ApplyOwnStatus(idsToApply, true);
         _logger.LogDebug("Applied all cached moodles to the client.", LoggerType.IpcMoodles);
     }
 
@@ -101,7 +98,7 @@ public class MoodleHandler
     /// </summary>
     private async Task RestoreAndReapplyCache(IEnumerable<Guid> moodlesToRemove)
     {
-        await _ipc.RemoveOwnStatusByGuid(moodlesToRemove);
+        await _ipc.RemoveOwnStatuses(moodlesToRemove, true);
         _logger.LogDebug($"Removed Moodles: {string.Join(", ", moodlesToRemove)}", LoggerType.IpcMoodles);
         // Reapply restricted.
         await ApplyMoodleCache();
@@ -113,7 +110,7 @@ public class MoodleHandler
     /// <remarks> If this moodle is not present in the client's Moodle Status List, it will not work. </remarks>
     public async Task ApplyMoodle(Moodle moodle)
     {
-        await _ipc.ApplyOwnStatusByGUID(moodle is MoodlePreset p ? p.StatusIds : [moodle.Id]);
+        await _ipc.ApplyOwnStatus(moodle is MoodlePreset p ? p.StatusIds : [moodle.Id], false);
     }
 
     // Hopefully never use this.
@@ -127,7 +124,7 @@ public class MoodleHandler
     /// </summary>
     private async Task RemoveMoodle(Moodle moodle)
     {
-        await _ipc.RemoveOwnStatusByGuid((moodle is MoodlePreset p ? p.StatusIds : [moodle.Id]).Except(_cache.FinalStatusIds));
+        await _ipc.RemoveOwnStatuses((moodle is MoodlePreset p ? p.StatusIds : [moodle.Id]).Except(_cache.FinalStatusIds), true);
     }
 
     // Hopefully never use this.

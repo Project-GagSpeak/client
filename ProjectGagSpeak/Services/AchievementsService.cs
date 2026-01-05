@@ -32,7 +32,6 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
     private readonly AchievementEventHandler _handler;
     private readonly NotificationService _notifier;
     private readonly RemoteService _remoteService;
-    private readonly OnFrameworkService _frameworkUtils;
     
     private Task? _updateLoopTask = null;
     private CancellationTokenSource? _updateLoopCTS = new();
@@ -53,8 +52,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         TriggerManager triggers,
         AchievementEventHandler handler, 
         NotificationService notifier,
-        RemoteService remoteService,
-        OnFrameworkService frameworkUtils)
+        RemoteService remoteService)
         : base(logger, mediator)
     {
         _saveData = saveData;
@@ -71,9 +69,8 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         _handler = handler;
         _notifier = notifier;
         _remoteService = remoteService;
-        _frameworkUtils = frameworkUtils;
 
-        Mediator.Subscribe<MainHubDisconnectedMessage>(this, _ =>
+        Mediator.Subscribe<DisconnectedMessage>(this, _ =>
         {
             _updateLoopCTS.SafeCancel();
             // if the lastUnhandled disconnect is MinValue, then we should reset the cache entirely.
@@ -247,16 +244,17 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         _saveData.AddConditional(AchievementModuleKind.Gags, Achievements.QuietNowDear, () =>
         {
             var targetIsGagged = false;
-            if (_pairs.GetVisiblePairGameObjects().Any(x => x.GameObjectId == Svc.Targets.Target?.GameObjectId))
-            {
-                Logger.LogTrace("Target is visible in the pair manager, checking if they are gagged.", LoggerType.Achievements);
-                var targetPair = _pairs.DirectPairs.FirstOrDefault(x => x.VisiblePairGameObject?.GameObjectId == Svc.Targets.Target?.GameObjectId);
-                if (targetPair is not null)
-                {
-                    Logger.LogTrace("Target is in the direct pairs, checking if they are gagged.", LoggerType.Achievements);
-                    targetIsGagged = targetPair.ActiveGags.GagSlots.Any(x => x.GagItem is not GagType.None);
-                }
-            }
+            // We can get this in a way easier way now, but fix later.
+            //if (_pairs.GetV().Any(x => x.GameObjectId == Svc.Targets.Target?.GameObjectId))
+            //{
+            //    Logger.LogTrace("Target is visible in the pair manager, checking if they are gagged.", LoggerType.Achievements);
+            //    var targetPair = _pairs.DirectPairs.FirstOrDefault(x => x.VisiblePairGameObject?.GameObjectId == Svc.Targets.Target?.GameObjectId);
+            //    if (targetPair is not null)
+            //    {
+            //        Logger.LogTrace("Target is in the direct pairs, checking if they are gagged.", LoggerType.Achievements);
+            //        targetIsGagged = targetPair.ActiveGags.GagSlots.Any(x => x.GagItem is not GagType.None);
+            //    }
+            //}
             return targetIsGagged;
         }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Kinkster Hushed");
 
@@ -562,36 +560,38 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         _saveData.AddConditional(AchievementModuleKind.Generic, Achievements.WithAKissGoodbye, () =>
         {
             var targetIsImmobile = false;
-            if (_pairs.GetVisiblePairGameObjects().Any(x => x.GameObjectId == Svc.Targets.Target?.GameObjectId))
-            {
-                Logger.LogTrace("Target is visible in the pair manager, checking if they are gagged.", LoggerType.Achievements);
-                var targetPair = _pairs.DirectPairs.FirstOrDefault(x => x.VisiblePairGameObject?.GameObjectId == Svc.Targets.Target?.GameObjectId);
-                if (targetPair is not null)
-                {
-                    Logger.LogTrace("Target is in the direct pairs, checking if they are gagged.", LoggerType.Achievements);
-                    // store if they are stuck emoting.
-                    targetIsImmobile = targetPair.PairHardcore.IsEnabled(HcAttribute.EmoteState);
-                    // TODO:
-                    // we can add restraint trait alternatives later, but wait until later when we restructure how we manage pair information.
-                }
-            }
+            // We can get this in a way easier way now, but fix later.
+            //if (_pairs.GetVisiblePairGameObjects().Any(x => x.GameObjectId == Svc.Targets.Target?.GameObjectId))
+            //{
+            //    Logger.LogTrace("Target is visible in the pair manager, checking if they are gagged.", LoggerType.Achievements);
+            //    var targetPair = _pairs.DirectPairs.FirstOrDefault(x => x.VisiblePairGameObject?.GameObjectId == Svc.Targets.Target?.GameObjectId);
+            //    if (targetPair is not null)
+            //    {
+            //        Logger.LogTrace("Target is in the direct pairs, checking if they are gagged.", LoggerType.Achievements);
+            //        // store if they are stuck emoting.
+            //        targetIsImmobile = targetPair.PairHardcore.IsEnabled(HcAttribute.EmoteState);
+            //        // TODO:
+            //        // we can add restraint trait alternatives later, but wait until later when we restructure how we manage pair information.
+            //    }
+            //}
             return targetIsImmobile;
         }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Dotes to Helpless Kinksters", "Gave");
 
         _saveData.AddConditionalProgress(AchievementModuleKind.Generic, Achievements.ProlificPetter, 10, () =>
         {
             var targetIsImmobile = false;
-            if (_pairs.GetVisiblePairGameObjects().Any(x => x.GameObjectId == Svc.Targets.Target?.GameObjectId))
-            {
-                var targetPair = _pairs.DirectPairs.FirstOrDefault(x => x.VisiblePairGameObject?.GameObjectId == Svc.Targets.Target?.GameObjectId);
-                if (targetPair is not null)
-                {
-                    // store if they are stuck emoting.
-                    targetIsImmobile = targetPair.PairHardcore.IsEnabled(HcAttribute.EmoteState);
-                    // TODO:
-                    // we can add restraint trait alternatives later, but wait until later when we restructure how we manage pair information.
-                }
-            }
+            // We can get this in a way easier way now, but fix later.
+            //if (_pairs.GetVisiblePairGameObjects().Any(x => x.GameObjectId == Svc.Targets.Target?.GameObjectId))
+            //{
+            //    var targetPair = _pairs.DirectPairs.FirstOrDefault(x => x.VisiblePairGameObject?.GameObjectId == Svc.Targets.Target?.GameObjectId);
+            //    if (targetPair is not null)
+            //    {
+            //        // store if they are stuck emoting.
+            //        targetIsImmobile = targetPair.PairHardcore.IsEnabled(HcAttribute.EmoteState);
+            //        // TODO:
+            //        // we can add restraint trait alternatives later, but wait until later when we restructure how we manage pair information.
+            //    }
+            //}
             return targetIsImmobile;
         }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Helpless Kinksters", "Pet", false);
 

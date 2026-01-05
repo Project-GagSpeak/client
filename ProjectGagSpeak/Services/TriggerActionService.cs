@@ -3,14 +3,12 @@ using Dalamud.Game.Text.SeStringHandling;
 using GagSpeak.Interop;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
-using GagSpeak.Services.Mediator;
 using GagSpeak.State.Handlers;
 using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
-using GagspeakAPI.Hub;
 using OtterGui.Extensions;
 
 namespace GagSpeak.Services;

@@ -1,13 +1,6 @@
-using CkCommons;
-using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Hooking;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using GagSpeak.PlayerClient;
-using GagSpeak.Services;
-using GagspeakAPI.Attributes;
-using GagspeakAPI.Extensions;
 
 namespace GagSpeak.GameInternals.Detours;
 public partial class StaticDetours

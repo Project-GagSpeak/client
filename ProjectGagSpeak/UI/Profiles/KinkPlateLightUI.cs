@@ -4,7 +4,6 @@ using Dalamud.Interface.Utility;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Services.Tutorial;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using Dalamud.Bindings.ImGui;
@@ -112,7 +111,7 @@ public class KinkPlateLightUI : WindowMediatorSubscriberBase
     {
         // remove profile on close if not in our direct pairs.
         if (_showFullUID is false)
-            Mediator.Publish(new ClearProfileDataMessage(UserDataToDisplay));
+            Mediator.Publish(new ClearKinkPlateDataMessage(UserDataToDisplay));
         // destroy the window.        
         Mediator.Publish(new RemoveWindowMessage(this));
     }

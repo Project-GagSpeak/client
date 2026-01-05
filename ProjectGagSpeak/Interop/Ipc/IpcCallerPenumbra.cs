@@ -1,16 +1,11 @@
-using System.Diagnostics.CodeAnalysis;
 using CkCommons;
 using Dalamud.Interface.ImGuiNotification;
-using Dalamud.Plugin;
-using FFXIVClientStructs.FFXIV.Common.Lua;
-using GagSpeak.Kinksters.Handlers;
 using GagSpeak.PlayerClient;
-using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using Penumbra.Api.Enums;
 using Penumbra.Api.Helpers;
 using Penumbra.Api.IpcSubscribers;
-using TerraFX.Interop.WinRT;
+using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.Interop;
 
@@ -60,31 +55,34 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
 
     // API Version
     private ApiVersion Version;
-    // API Events
     private readonly EventSubscriber OnInitialized;
     private readonly EventSubscriber OnDisposed;
-    private readonly EventSubscriber<ChangedItemType, uint> TooltipSubscriber;
-    private readonly EventSubscriber<MouseButton, ChangedItemType, uint> ItemClickedSubscriber;
-    private readonly EventSubscriber<ModSettingChange, Guid, string, bool> OnModSettingsChanged;
-    private readonly EventSubscriber<nint, string, string> OnGameObjectResourcePathResolved;
-    private readonly EventSubscriber<nint, int> OnRedrawFinished;
+
+    // API Events
+    private readonly EventSubscriber<ChangedItemType, uint>                 TooltipSubscriber;
+    private readonly EventSubscriber<MouseButton, ChangedItemType, uint>    ItemClickedSubscriber;
+    private readonly EventSubscriber<ModSettingChange, Guid, string, bool>  OnModSettingsChanged;
+    private readonly EventSubscriber<nint, string, string>                  OnGameObjectResourcePathResolved;
+    private readonly EventSubscriber<nint, int>                             OnRedrawFinished;
     // API Public Events
-    public EventSubscriber<string> OnModAdded;
-    public EventSubscriber<string> OnModDeleted;
-    public EventSubscriber<string, string> OnModMoved;
+    public EventSubscriber<string>          OnModAdded;
+    public EventSubscriber<string>          OnModDeleted;
+    public EventSubscriber<string, string>  OnModMoved;
     // API Getters
-    private GetModDirectory GetModDirectory;       // Retrieves the root mod directory path.
-    private GetModPath GetModPath;            // Retrieves the path of the mod with its directory and name, allowing for folder sorting.
-    private GetModList GetModList;            // Retrieves the client's mod list. (DirectoryName, ModName)
-    private GetCollection GetActiveCollection;   // Obtains the client's currently active collection. (may not need this)
+    private GetModDirectory         GetModDirectory;       // Retrieves the root mod directory path.
+    private GetModPath              GetModPath;            // Retrieves the path of the mod with its directory and name, allowing for folder sorting.
+    private GetModList              GetModList;            // Retrieves the client's mod list. (DirectoryName, ModName)
+    private GetCollection           GetActiveCollection;   // Obtains the client's currently active collection. (may not need this)
     private GetAvailableModSettings GetModSettingsAll;     // Obtains _ALL_ the options for a given mod.
-    private GetCurrentModSettings GetModSettingsSelected;// Obtains the currently chosen options for a mod.
+    private GetCurrentModSettings   GetModSettingsSelected;// Obtains the currently chosen options for a mod.
     // API Enactors
-    private RedrawObject RedrawClient;               // Can force the client to Redraw.
-    private SetTemporaryModSettingsPlayer SetOrUpdateTempModSettings; // Temporarily sets and locks a Mod with defined settings. Can be updated.
-    private RemoveTemporaryModSettingsPlayer RemoveTempModSettings;      // Removes a temporary mod we set. Used for cleanup.
+    private SetTemporaryModSettingsPlayer       SetOrUpdateTempModSettings; // Temporarily sets and locks a Mod with defined settings. Can be updated.
+    private RemoveTemporaryModSettingsPlayer    RemoveTempModSettings;      // Removes a temporary mod we set. Used for cleanup.
     private RemoveAllTemporaryModSettingsPlayer RemoveAllTempModSettings;   // Removes all temporary mods we set. Used for cleanup.
-    public IpcCallerPenumbra(ILogger<IpcCallerPenumbra> logger, GagspeakMediator mediator, OnFrameworkService frameworkUtils)
+    // REDRAWER
+    private RedrawObject RedrawClient;
+
+    public IpcCallerPenumbra(ILogger<IpcCallerPenumbra> logger, GagspeakMediator mediator)
         : base(logger, mediator)
     {
         // API Version.
@@ -176,7 +174,7 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
     // Notifies us whenever anything is changed with our mods inside penumbra. Can be the mod itself, collection inheritance, pretty much whatever makes appearance change.
     private void ModSettingsChanged(ModSettingChange change, Guid collectionId, string modDir, bool inherited)
     {
-        Logger.LogInformation($"OnModSettingChange: [Change: {change}] [Collection: {collectionId}] [ModDir: {modDir}] [Inherited: {inherited}]");
+        // Logger.LogTrace($"OnModSettingChange: [Change: {change}] [Collection: {collectionId}] [ModDir: {modDir}] [Inherited: {inherited}]");
         Mediator.Publish(new PenumbraSettingsChanged());
     }
 

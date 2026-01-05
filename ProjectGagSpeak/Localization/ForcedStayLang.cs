@@ -1,4 +1,3 @@
-using Dalamud.Interface;
 using GagSpeak.Utils;
 using Lumina.Excel.Sheets;
 using System.Text.RegularExpressions;

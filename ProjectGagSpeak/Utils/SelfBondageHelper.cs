@@ -24,11 +24,11 @@ public static class SelfBondageHelper
             {
                 var applierTask = type switch
                 {
-                    DataUpdateType.Swapped => visuals.SwapGag(layer, retData, MainHub.PlayerUserData),
-                    DataUpdateType.Applied => visuals.ApplyGag(layer, retData, MainHub.PlayerUserData),
-                    DataUpdateType.Locked => visuals.LockGag(layer, retData, MainHub.PlayerUserData),
-                    DataUpdateType.Unlocked => visuals.UnlockGag(layer, MainHub.PlayerUserData),
-                    DataUpdateType.Removed => visuals.RemoveGag(layer, MainHub.PlayerUserData),
+                    DataUpdateType.Swapped => visuals.SwapGag(layer, retData, MainHub.OwnUserData),
+                    DataUpdateType.Applied => visuals.ApplyGag(layer, retData, MainHub.OwnUserData),
+                    DataUpdateType.Locked => visuals.LockGag(layer, retData, MainHub.OwnUserData),
+                    DataUpdateType.Unlocked => visuals.UnlockGag(layer, MainHub.OwnUserData),
+                    DataUpdateType.Removed => visuals.RemoveGag(layer, MainHub.OwnUserData),
                     _ => Task.CompletedTask
                 };
                 await applierTask.ConfigureAwait(false);
@@ -44,11 +44,11 @@ public static class SelfBondageHelper
             {
                 var applierTask = type switch
                 {
-                    DataUpdateType.Swapped => visuals.SwapGag(layer, retData, MainHub.PlayerUserData),
-                    DataUpdateType.Applied => visuals.ApplyGag(layer, retData, MainHub.PlayerUserData),
-                    DataUpdateType.Locked => visuals.LockGag(layer, retData, MainHub.PlayerUserData),
-                    DataUpdateType.Unlocked => visuals.UnlockGag(layer, MainHub.PlayerUserData),
-                    DataUpdateType.Removed => visuals.RemoveGag(layer, MainHub.PlayerUserData),
+                    DataUpdateType.Swapped => visuals.SwapGag(layer, retData, MainHub.OwnUserData),
+                    DataUpdateType.Applied => visuals.ApplyGag(layer, retData, MainHub.OwnUserData),
+                    DataUpdateType.Locked => visuals.LockGag(layer, retData, MainHub.OwnUserData),
+                    DataUpdateType.Unlocked => visuals.UnlockGag(layer, MainHub.OwnUserData),
+                    DataUpdateType.Removed => visuals.RemoveGag(layer, MainHub.OwnUserData),
                     _ => Task.CompletedTask
                 };
                 await applierTask.ConfigureAwait(false);
@@ -66,11 +66,11 @@ public static class SelfBondageHelper
             {
                 var applierTask = type switch
                 {
-                    DataUpdateType.Swapped => visuals.SwapRestriction(layer, retData, MainHub.PlayerUserData),
-                    DataUpdateType.Applied => visuals.ApplyRestriction(layer, retData, MainHub.PlayerUserData),
-                    DataUpdateType.Locked => visuals.LockRestriction(layer, retData, MainHub.PlayerUserData),
-                    DataUpdateType.Unlocked => visuals.UnlockRestriction(layer, MainHub.PlayerUserData),
-                    DataUpdateType.Removed => visuals.RemoveRestriction(layer, MainHub.PlayerUserData),
+                    DataUpdateType.Swapped => visuals.SwapRestriction(layer, retData, MainHub.OwnUserData),
+                    DataUpdateType.Applied => visuals.ApplyRestriction(layer, retData, MainHub.OwnUserData),
+                    DataUpdateType.Locked => visuals.LockRestriction(layer, retData, MainHub.OwnUserData),
+                    DataUpdateType.Unlocked => visuals.UnlockRestriction(layer, MainHub.OwnUserData),
+                    DataUpdateType.Removed => visuals.RemoveRestriction(layer, MainHub.OwnUserData),
                     _ => Task.CompletedTask
                 };
                 await applierTask.ConfigureAwait(false);
@@ -86,11 +86,11 @@ public static class SelfBondageHelper
             {
                 var applierTask = type switch
                 {
-                    DataUpdateType.Swapped => visuals.SwapRestriction(layer, retData, MainHub.PlayerUserData),
-                    DataUpdateType.Applied => visuals.ApplyRestriction(layer, retData, MainHub.PlayerUserData),
-                    DataUpdateType.Locked => visuals.LockRestriction(layer, retData, MainHub.PlayerUserData),
-                    DataUpdateType.Unlocked => visuals.UnlockRestriction(layer, MainHub.PlayerUserData),
-                    DataUpdateType.Removed => visuals.RemoveRestriction(layer, MainHub.PlayerUserData),
+                    DataUpdateType.Swapped => visuals.SwapRestriction(layer, retData, MainHub.OwnUserData),
+                    DataUpdateType.Applied => visuals.ApplyRestriction(layer, retData, MainHub.OwnUserData),
+                    DataUpdateType.Locked => visuals.LockRestriction(layer, retData, MainHub.OwnUserData),
+                    DataUpdateType.Unlocked => visuals.UnlockRestriction(layer, MainHub.OwnUserData),
+                    DataUpdateType.Removed => visuals.RemoveRestriction(layer, MainHub.OwnUserData),
                     _ => Task.CompletedTask
                 };
                 await applierTask.ConfigureAwait(false);
@@ -108,14 +108,14 @@ public static class SelfBondageHelper
             {
                 var applierTask = type switch
                 {
-                    DataUpdateType.Swapped => visuals.SwapRestraint(retData, MainHub.PlayerUserData),
-                    DataUpdateType.Applied => visuals.ApplyRestraint(retData, MainHub.PlayerUserData),
-                    DataUpdateType.LayersChanged => visuals.SwapRestraintLayers(retData, MainHub.PlayerUserData),
-                    DataUpdateType.LayersApplied => visuals.ApplyRestraintLayers(retData, MainHub.PlayerUserData),
-                    DataUpdateType.Locked => visuals.LockRestraint(retData, MainHub.PlayerUserData),
-                    DataUpdateType.Unlocked => visuals.UnlockRestraint(MainHub.PlayerUserData),
-                    DataUpdateType.LayersRemoved => visuals.RemoveRestraintLayers(retData, MainHub.PlayerUserData),
-                    DataUpdateType.Removed => visuals.RemoveRestraint(MainHub.PlayerUserData),
+                    DataUpdateType.Swapped => visuals.SwapRestraint(retData, MainHub.OwnUserData),
+                    DataUpdateType.Applied => visuals.ApplyRestraint(retData, MainHub.OwnUserData),
+                    DataUpdateType.LayersChanged => visuals.SwapRestraintLayers(retData, MainHub.OwnUserData),
+                    DataUpdateType.LayersApplied => visuals.ApplyRestraintLayers(retData, MainHub.OwnUserData),
+                    DataUpdateType.Locked => visuals.LockRestraint(retData, MainHub.OwnUserData),
+                    DataUpdateType.Unlocked => visuals.UnlockRestraint(MainHub.OwnUserData),
+                    DataUpdateType.LayersRemoved => visuals.RemoveRestraintLayers(retData, MainHub.OwnUserData),
+                    DataUpdateType.Removed => visuals.RemoveRestraint(MainHub.OwnUserData),
                     _ => Task.CompletedTask
                 };
                 await applierTask.ConfigureAwait(false);
@@ -131,14 +131,14 @@ public static class SelfBondageHelper
             {
                 var applierTask = type switch
                 {
-                    DataUpdateType.Swapped => visuals.SwapRestraint(retData, MainHub.PlayerUserData),
-                    DataUpdateType.Applied => visuals.ApplyRestraint(retData, MainHub.PlayerUserData),
-                    DataUpdateType.LayersChanged => visuals.SwapRestraintLayers(retData, MainHub.PlayerUserData),
-                    DataUpdateType.LayersApplied => visuals.ApplyRestraintLayers(retData, MainHub.PlayerUserData),
-                    DataUpdateType.Locked => visuals.LockRestraint(retData, MainHub.PlayerUserData),
-                    DataUpdateType.Unlocked => visuals.UnlockRestraint(MainHub.PlayerUserData),
-                    DataUpdateType.LayersRemoved => visuals.RemoveRestraintLayers(retData, MainHub.PlayerUserData),
-                    DataUpdateType.Removed => visuals.RemoveRestraint(MainHub.PlayerUserData),
+                    DataUpdateType.Swapped => visuals.SwapRestraint(retData, MainHub.OwnUserData),
+                    DataUpdateType.Applied => visuals.ApplyRestraint(retData, MainHub.OwnUserData),
+                    DataUpdateType.LayersChanged => visuals.SwapRestraintLayers(retData, MainHub.OwnUserData),
+                    DataUpdateType.LayersApplied => visuals.ApplyRestraintLayers(retData, MainHub.OwnUserData),
+                    DataUpdateType.Locked => visuals.LockRestraint(retData, MainHub.OwnUserData),
+                    DataUpdateType.Unlocked => visuals.UnlockRestraint(MainHub.OwnUserData),
+                    DataUpdateType.LayersRemoved => visuals.RemoveRestraintLayers(retData, MainHub.OwnUserData),
+                    DataUpdateType.Removed => visuals.RemoveRestraint(MainHub.OwnUserData),
                     _ => Task.CompletedTask
                 };
                 await applierTask.ConfigureAwait(false);
@@ -161,9 +161,9 @@ public static class SelfBondageHelper
             {
                 var applierTask = type switch
                 {
-                    DataUpdateType.CollarRemoved => visuals.RemoveCollar(MainHub.PlayerUserData),
+                    DataUpdateType.CollarRemoved => visuals.RemoveCollar(MainHub.OwnUserData),
                     // everything else is an update.
-                    _ => visuals.UpdateActiveCollar(retData, MainHub.PlayerUserData, type)
+                    _ => visuals.UpdateActiveCollar(retData, MainHub.OwnUserData, type)
                 };
                 await applierTask.ConfigureAwait(false);
             }

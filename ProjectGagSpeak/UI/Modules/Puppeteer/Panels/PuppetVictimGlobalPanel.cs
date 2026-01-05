@@ -6,7 +6,6 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
-using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Textures;
@@ -35,7 +34,7 @@ public sealed partial class PuppetVictimGlobalPanel
     private static TagCollection GlobalTriggerTags = new();
 
     public PuppetVictimGlobalPanel(ILogger<PuppetVictimGlobalPanel> logger, MainHub hub,
-        AliasItemDrawer aliasDrawer, PuppeteerManager manager, FavoritesManager favorites)
+        AliasItemDrawer aliasDrawer, PuppeteerManager manager, FavoritesConfig favorites)
     {
         _logger = logger;
         _hub = hub;

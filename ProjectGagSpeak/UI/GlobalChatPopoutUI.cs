@@ -2,10 +2,8 @@ using CkCommons;
 using CkCommons.Gui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Gui.MainWindow;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Services.Textures;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using Dalamud.Bindings.ImGui;
@@ -56,8 +54,8 @@ public class GlobalChatPopoutUI : WindowMediatorSubscriberBase
             .Push(ImGuiCol.ScrollbarGrab, CkColor.VibrantPink.Uint())
             .Push(ImGuiCol.ScrollbarGrabHovered, CkColor.VibrantPinkHovered.Uint());
         // grab the profile object from the profile service.
-        var profile = _plateService.GetKinkPlate(MainHub.PlayerUserData);
-        if (profile.KinkPlateInfo.Disabled || !MainHub.IsVerified)
+        var profile = _plateService.GetKinkPlate(MainHub.OwnUserData);
+        if (profile.Info.Disabled || !MainHub.IsVerified)
         {
             ImGui.Spacing();
             CkGui.ColorTextCentered("Social Features have been Restricted", ImGuiColors.DalamudRed);

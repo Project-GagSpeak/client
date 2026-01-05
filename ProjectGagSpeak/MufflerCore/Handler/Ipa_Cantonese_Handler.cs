@@ -1,4 +1,3 @@
-using Dalamud.Plugin;
 using System.Text.RegularExpressions;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;

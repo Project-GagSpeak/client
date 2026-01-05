@@ -30,6 +30,9 @@ public class ConfigFileProvider : IConfigFileProvider
     public readonly string Favorites;
     public readonly string HypnoEffects;
     public readonly string BuzzToys;
+
+    public string DDS_Requests => Path.Combine(FileSysDirectory, "dds-requests.json");
+    public string DDS_Whitelist => Path.Combine(FileSysDirectory, "dds-whitelist.json");
     public string CKFS_RestraintSets => Path.Combine(FileSysDirectory, "fs-restraintsets.json");
     public string CKFS_Restrictions => Path.Combine(FileSysDirectory, "fs-restrictions.json");
     public string CKFS_GagRestrictions => Path.Combine(FileSysDirectory, "fs-gagrestrictions.json");

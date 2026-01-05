@@ -3,7 +3,7 @@ namespace GagSpeak.PlayerClient;
 public struct UnlockReward
 {
     /// <summary> The Component Associated with the unlock. </summary>
-    public ProfileComponent Component { get; set; } = ProfileComponent.Plate;
+    public PlateElement Component { get; set; } = PlateElement.Plate;
 
     /// <summary> If the Unlock is a Background, Border, or Overlay. </summary>
     public StyleKind Type { get; set; } = StyleKind.Background;
@@ -11,7 +11,7 @@ public struct UnlockReward
     /// <summary> The Value within that defined enum that is unlocked by this. </summary>
     public int Value { get; set; } = 0;
 
-    public UnlockReward(ProfileComponent component, StyleKind type, int value)
+    public UnlockReward(PlateElement component, StyleKind type, int value)
     {
         Component = component;
         Type = type;

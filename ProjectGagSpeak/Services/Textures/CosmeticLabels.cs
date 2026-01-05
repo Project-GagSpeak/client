@@ -64,6 +64,7 @@ public static class CosmeticLabels
         { CoreTexture.Collar, "RequiredImages\\collar.png" },
         { CoreTexture.Confinement, "RequiredImages\\confinement.png" },
         { CoreTexture.CursedLoot, "RequiredImages\\cursedloot.png" },
+        { CoreTexture.Edit, "RequiredImages\\edit.png" },
         { CoreTexture.Gagged, "RequiredImages\\gagged.png" },
         { CoreTexture.HypnoSpiral, "RequiredImages\\hypnospiral.png" },
         { CoreTexture.Icon256, "RequiredImages\\icon256.png" },
@@ -93,6 +94,7 @@ public static class CosmeticLabels
         { CoreTexture.VibeLobby, "RequiredImages\\vibelobby.png" },
         { CoreTexture.Vibrator, "RequiredImages\\vibrator.png" },
         { CoreTexture.Weighty, "RequiredImages\\weighty.png" },
+        { CoreTexture.WelcomeOverlay, "RequiredImages\\welcomeoverlay.png" },
     };
 
     public static readonly Dictionary<CoreIntifaceElement, string> IntifaceImages = new()
@@ -153,24 +155,24 @@ public static class CosmeticLabels
 
         };
 
-        AddEntriesForComponent(dictionary, ProfileComponent.Plate, hasBackground: true, hasBorder: true, hasOverlay: false);
-        AddEntriesForComponent(dictionary, ProfileComponent.PlateLight, hasBackground: true, hasBorder: true, hasOverlay: false);
-        AddEntriesForComponent(dictionary, ProfileComponent.ProfilePicture, hasBackground: false, hasBorder: true, hasOverlay: true);
-        AddEntriesForComponent(dictionary, ProfileComponent.Description, hasBackground: true, hasBorder: true, hasOverlay: true);
-        AddEntriesForComponent(dictionary, ProfileComponent.DescriptionLight, hasBackground: true, hasBorder: true, hasOverlay: true);
-        AddEntriesForComponent(dictionary, ProfileComponent.GagSlot, hasBackground: true, hasBorder: true, hasOverlay: true);
-        AddEntriesForComponent(dictionary, ProfileComponent.Padlock, hasBackground: true, hasBorder: true, hasOverlay: true);
-        AddEntriesForComponent(dictionary, ProfileComponent.BlockedSlots, hasBackground: true, hasBorder: true, hasOverlay: true);
-        AddEntriesForComponent(dictionary, ProfileComponent.BlockedSlot, hasBackground: false, hasBorder: true, hasOverlay: true);
+        AddEntriesForComponent(dictionary, PlateElement.Plate, hasBackground: true, hasBorder: true, hasOverlay: false);
+        AddEntriesForComponent(dictionary, PlateElement.PlateLight, hasBackground: true, hasBorder: true, hasOverlay: false);
+        AddEntriesForComponent(dictionary, PlateElement.Avatar, hasBackground: false, hasBorder: true, hasOverlay: true);
+        AddEntriesForComponent(dictionary, PlateElement.Description, hasBackground: true, hasBorder: true, hasOverlay: true);
+        AddEntriesForComponent(dictionary, PlateElement.DescriptionLight, hasBackground: true, hasBorder: true, hasOverlay: true);
+        AddEntriesForComponent(dictionary, PlateElement.GagSlot, hasBackground: true, hasBorder: true, hasOverlay: true);
+        AddEntriesForComponent(dictionary, PlateElement.Padlock, hasBackground: true, hasBorder: true, hasOverlay: true);
+        AddEntriesForComponent(dictionary, PlateElement.BlockedSlots, hasBackground: true, hasBorder: true, hasOverlay: true);
+        AddEntriesForComponent(dictionary, PlateElement.BlockedSlot, hasBackground: false, hasBorder: true, hasOverlay: true);
 
         return dictionary;
     }
 
-    private static void AddEntriesForComponent(Dictionary<string, string> dictionary, ProfileComponent component, bool hasBackground, bool hasBorder, bool hasOverlay)
+    private static void AddEntriesForComponent(Dictionary<string, string> dictionary, PlateElement component, bool hasBackground, bool hasBorder, bool hasOverlay)
     {
         if (hasBackground)
         {
-            foreach (var styleBG in Enum.GetValues<ProfileStyleBG>())
+            foreach (var styleBG in Enum.GetValues<KinkPlateBG>())
             {
                 var key = component.ToString() + "_Background_" + styleBG.ToString();
                 var value = $"CosmeticImages\\{component}\\Background_{styleBG}.png";
@@ -180,7 +182,7 @@ public static class CosmeticLabels
 
         if (hasBorder)
         {
-            foreach (var styleBorder in Enum.GetValues<ProfileStyleBorder>())
+            foreach (var styleBorder in Enum.GetValues<KinkPlateBorder>())
             {
                 var key = component.ToString() + "_Border_" + styleBorder.ToString();
                 var value = $"CosmeticImages\\{component}\\Border_{styleBorder}.png";
@@ -190,7 +192,7 @@ public static class CosmeticLabels
 
         if (hasOverlay)
         {
-            foreach (var styleOverlay in Enum.GetValues<ProfileStyleOverlay>())
+            foreach (var styleOverlay in Enum.GetValues<KinkPlateOverlay>())
             {
                 var key = component.ToString() + "_Overlay_" + styleOverlay.ToString();
                 var value = $"CosmeticImages\\{component}\\Overlay_{styleOverlay}.png";

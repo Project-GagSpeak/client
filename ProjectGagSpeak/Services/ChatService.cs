@@ -13,8 +13,6 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Handlers;
 using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Attributes;
-using GagspeakAPI.Extensions;
 using Lumina.Excel.Sheets;
 using System.Text.RegularExpressions;
 

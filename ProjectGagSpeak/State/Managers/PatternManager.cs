@@ -14,7 +14,7 @@ using GagspeakAPI.Dto.VibeRoom;
 namespace GagSpeak.State.Managers;
 public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
-    private readonly FavoritesManager _favorites;
+    private readonly FavoritesConfig _favorites;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
     private readonly RemoteService _remotes;
@@ -23,7 +23,7 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
     private StorageItemEditor<Pattern> _itemEditor = new();
 
     public PatternManager(ILogger<PatternManager> logger, GagspeakMediator mediator,
-        FavoritesManager favorites, ConfigFileProvider fileNames,
+        FavoritesConfig favorites, ConfigFileProvider fileNames,
         HybridSaveService saver, RemoteService remotes) : base(logger, mediator)
     {
         _favorites = favorites;
@@ -236,7 +236,7 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
         LoadV1(jObject["Patterns"]);
 
         _saver.Save(this);
-        Mediator.Publish(new ReloadFileSystem(GagspeakModule.Pattern));
+        Mediator.Publish(new ReloadFileSystem(GSModule.Pattern));
     }
 
     private void LoadV1(JToken? data)

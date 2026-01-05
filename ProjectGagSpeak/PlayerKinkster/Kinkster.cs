@@ -1,64 +1,64 @@
 using CkCommons;
-using Dalamud.Game.ClientState.Objects.Types;
-using Dalamud.Game.Gui.ContextMenu;
-using Dalamud.Game.Text.SeStringHandling;
-using GagSpeak.Kinksters.Factories;
-using GagSpeak.Kinksters.Handlers;
+using CkCommons.Gui;
+using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerClient;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Services.Textures;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Network;
+using OtterGui;
 using Penumbra.GameData.Enums;
-using Penumbra.GameData.Interop;
 using Penumbra.GameData.Structs;
-using TerraFX.Interop.Windows;
-using static Lumina.Data.Parsing.Layer.LayerCommon;
 
 namespace GagSpeak.Kinksters;
 
-/// <summary> Stores information about a paired Kinkster. Managed by PairManager. </summary>
-/// <remarks> Created by the PairFactory. PairHandler keeps tabs on the cachedPlayer. </remarks>
+/// <summary>
+///     Stores information about a pairing between 2 Kinksters. <para />
+///     The handlers associated with the kinkster must be disposed of when removing.
+/// </summary>
 public class Kinkster : IComparable<Kinkster>
 {
     private readonly ILogger<Kinkster> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly PairHandlerFactory _cachedPlayerFactory;
-    private readonly SemaphoreSlim _creationSemaphore = new(1);
-    private readonly ServerConfigManager _nickConfig;
+    private readonly MainConfig _config;
+    private readonly FavoritesConfig _favorites;
+    private readonly NicksConfig _nicks;
 
-    private CancellationTokenSource _moodlesCTS = new CancellationTokenSource();
-    private OnlineKinkster? _OnlineKinkster = null;
+    private OnlineKinkster? _onlineUser;
+
+    // Tracks information about the Kinkster's Visible state.
+    private KinksterHandler _player;
 
     public Kinkster(KinksterPair pair, ILogger<Kinkster> logger, GagspeakMediator mediator,
-        PairHandlerFactory factory, ServerConfigManager nicks)
+        MainConfig config, FavoritesConfig favorites, NicksConfig nicks, KinksterFactory factory)
     {
         _logger = logger;
         _mediator = mediator;
-        _cachedPlayerFactory = factory;
-        _nickConfig = nicks;
+        _config = config;
+        _favorites = favorites;
+        _nicks = nicks;
 
         UserPair = pair;
+        // Initialize all handlers for the kinkster, holding their lifetime until disposal.
+        // Create handlers for each of the objects.
+        _player = factory.Create(this);
+        _logger.LogDebug($"Initialized Kinkster for ({GetNickAliasOrUid()}).", LoggerType.PairManagement);
     }
 
     // Permissions
-    public KinksterPair UserPair { get; set; }
-    public UserData UserData => UserPair.User;
-    public PairPerms OwnPerms => UserPair.OwnPerms;
-    public PairPermAccess OwnPermAccess => UserPair.OwnAccess;
-    public GlobalPerms PairGlobals => UserPair.Globals;
-    public HardcoreState PairHardcore => UserPair.Hardcore;
-    public PairPerms PairPerms => UserPair.Perms;
-    public PairPermAccess PairPermAccess => UserPair.Access;
+    public KinksterPair     UserPair { get; private set; }
+    public UserData         UserData        => UserPair.User;
+    public PairPerms        OwnPerms        => UserPair.OwnPerms;
+    public PairPermAccess   OwnPermAccess   => UserPair.OwnAccess;
+    public GlobalPerms      PairGlobals     => UserPair.Globals;
+    public HardcoreStatus   PairHardcore    => UserPair.Hardcore;
+    public PairPerms        PairPerms       => UserPair.Perms;
+    public PairPermAccess   PairPermAccess  => UserPair.Access;
 
-    // Latest cached data for this pair.
-    private PairHandler? CachedPlayer { get; set; }
-
-    // Active States
-    public CharaMoodleData LastMoodlesData { get; private set; } = new CharaMoodleData();
+    // Active States (We can know this information regardless of visibility).
     public CharaActiveGags ActiveGags { get; private set; } = new CharaActiveGags();
     public CharaActiveRestrictions ActiveRestrictions { get; private set; } = new CharaActiveRestrictions();
     public CharaActiveRestraint ActiveRestraint { get; private set; } = new CharaActiveRestraint();
@@ -71,129 +71,168 @@ public class Kinkster : IComparable<Kinkster>
     public List<Guid> ActiveAlarms { get; private set; } = new();
     public List<Guid> ActiveTriggers { get; private set; } = new();
 
-    // Internal Data.
+    // Internal Data. (Useful for tooltip information and KinkPlates™
     public KinksterCache LightCache { get; private set; } = new KinksterCache();
 
-    // Helpers.
-    public bool HasCachedPlayer => CachedPlayer != null && !string.IsNullOrEmpty(CachedPlayer.PlayerName) && _OnlineKinkster != null;
-    public OnlineKinkster CachedPlayerOnlineDto => CachedPlayer!.OnlineUser;
-    public bool IsPaused => UserPair.OwnPerms.IsPaused;
-    public bool IsOnline => CachedPlayer != null;
-    public bool IsVisible => CachedPlayer?.IsVisible ?? false;
-    public bool HasShockCollar => PairGlobals.HasValidShareCode() || PairPerms.HasValidShareCode();
-    public IGameObject? VisiblePairGameObject => IsVisible ? (CachedPlayer?.PairObject ?? null) : null;
-    public string PlayerName => CachedPlayer?.PlayerName ?? UserData.AliasOrUID ?? string.Empty;  // Name of pair player. If empty, (pair handler) CachedData is not initialized yet.
-    public string PlayerNameWithWorld => CachedPlayer?.PlayerNameWithWorld ?? string.Empty;
+    // Internal Helpers.
+    // public bool IsTemporary => UserPair.IsTemporary; (Can implement this later maybe, idk)
+    public bool IsRendered => _player.IsRendered;
+    public bool IsOnline => _onlineUser != null;
+    public bool IsFavorite => _favorites.Kinksters.Contains(UserData.UID);
+    public string Ident => _onlineUser?.Ident ?? string.Empty;
+    public string PlayerName => _player.NameString;
+    public string PlayerNameWorld => _player.NameWithWorld;
+    public IntPtr PlayerAddress => IsRendered ? _player.Address : IntPtr.Zero;
+    public ulong PlayerEntityId => IsRendered ? _player.EntityId : ulong.MaxValue;
+    public ulong PlayerObjectId => IsRendered ? _player.GameObjectId : ulong.MaxValue;
+    public Vector3 PlayerPosition => IsRendered ? _player.DataState.Position : Vector3.Zero;
+    public bool IsTargetable => IsRendered ? _player.DataState.GetIsTargetable() : false;
 
-    // maybe remove this later or something i dunno.
+    // Additional Information.
+    public MoodleData MoodleData => _player.MoodlesData; // Phase to a readonly or explicit getters maybe.
+    public bool HasShockCollar => PairGlobals.HasValidShareCode() || PairPerms.HasValidShareCode();
+
+    // Definitely change how this information is stored, possibly do so within some internal kinkplate cache or whatever.
+    // It would need to hold an updated mini-cache of what we hold for the client themselves whenever a change to
+    // bondage data occurs.
     public Dictionary<EquipSlot, (EquipItem, string)> LockedSlots { get; private set; } = new(); // the locked slots of the pair. Used for quick reference in profile viewer.
 
     // IComparable satisfier
     public int CompareTo(Kinkster? other)
     {
-        if (other is null)
-            return 1;
+        if (other is null) return 1;
         return string.Compare(UserData.UID, other.UserData.UID, StringComparison.Ordinal);
     }
 
-    public void AddContextMenu(IMenuOpenedArgs args)
+    public string? AlphabeticalSortKey()
+        => (IsRendered && !string.IsNullOrEmpty(PlayerName)
+        ? (_config.Current.NickOverPlayerName ? GetNickAliasOrUid() : PlayerName) : GetNickAliasOrUid());
+
+    public string GetDisplayName()
     {
-        // if the visible player is not cached, not our target, or not a valid object, or paused, don't display.
-        if (CachedPlayer == null || (args.Target is not MenuTargetDefault target) || target.TargetObjectId != VisiblePairGameObject?.GameObjectId || IsPaused) return;
-
-        _logger.LogDebug("Adding Context Menu for " + UserData.UID, LoggerType.ContextDtr);
-
-        // This only works when you create it prior to adding it to the args,
-        // otherwise the += has trouble calling. (it would fall out of scope)
-        //var subMenu = new MenuItem();
-        //subMenu.IsSubmenu = true;
-        //subMenu.Name = "SubMenu Test Item";
-        //subMenu.PrefixChar = 'G';
-        //subMenu.PrefixColor = 561;
-        //subMenu.OnClicked += args => OpenSubMenuTest(args, _logger);
-        //args.AddMenuItem(subMenu);
-        args.AddMenuItem(new MenuItem()
-        {
-            Name = new SeStringBuilder().AddText("Open KinkPlate").Build(),
-            PrefixChar = 'G',
-            PrefixColor = 561,
-            OnClicked = (a) => { _mediator.Publish(new KinkPlateOpenStandaloneMessage(this)); },
-        });
-
-        args.AddMenuItem(new MenuItem()
-        {
-            Name = new SeStringBuilder().AddText("Pair Actions").Build(),
-            PrefixChar = 'G',
-            PrefixColor = 561,
-            OnClicked = (a) => { _mediator.Publish(new KinksterInteractionUiChangeMessage(this, InteractionsTab.Interactions)); },
-        });
+        var condition = IsRendered && !_config.Current.NickOverPlayerName && !string.IsNullOrEmpty(PlayerName);
+        return condition ? PlayerName : GetNickAliasOrUid();
     }
 
+    public string? GetNickname() 
+        => _nicks.GetNicknameForUid(UserData.UID);
 
-    public void ApplyLatestMoodles(UserData enactor, string dataString, IEnumerable<MoodlesStatusInfo> dataInfo)
+    public string GetNickAliasOrUid() 
+        => _nicks.TryGetNickname(UserData.UID, out var n) ? n : UserData.AliasOrUID;
+
+    public IPCMoodleAccessTuple ToAccessTuple()
+        => new IPCMoodleAccessTuple(
+            OwnPerms.MoodleAccess, (long)OwnPerms.MaxMoodleTime.TotalMilliseconds,
+            PairPerms.MoodleAccess, (long)PairPerms.MaxMoodleTime.TotalMilliseconds);
+
+    public float DistanceToPlayer() 
+        => IsRendered ? PlayerData.DistanceTo(_player.DataState.Position) : float.MaxValue;
+
+
+
+    #region Handler Updates
+    public void SetMoodlesData(MoodleData newData)
+        => _player.UpdateAndApplyMoodles(newData);
+
+    public void SetMoodlesData(string dataString, IEnumerable<MoodlesStatusInfo> dataInfo)
+        => _player.UpdateAndApplyMoodles(dataString, dataInfo);
+
+    public void SetMoodleStatusData(List<MoodlesStatusInfo> statuses)
+        => _player.MoodlesData.SetStatuses(statuses);
+    
+    public void SetMoodlePresetData(List<MoodlePresetInfo> presets)
+        => _player.MoodlesData.SetPresets(presets);
+
+    public void UpdateMoodleStatusData(MoodlesStatusInfo status, bool deleted)
     {
-        _moodlesCTS = _moodlesCTS.SafeCancelRecreate();
-        LastMoodlesData.UpdateDataInfo(dataString, dataInfo);
-        ApplyLatestInternal(_moodlesCTS, ApplyLastReceivedMoodles);
+        if (deleted) _player.MoodlesData.Statuses.Remove(status.GUID);
+        else _player.MoodlesData.AddOrUpdateStatus(status);
     }
 
-    private void ApplyLatestInternal(CancellationTokenSource cts, Action applyAction)
+    public void UpdateMoodlePresetData(MoodlePresetInfo preset, bool deleted)
     {
-        if (CachedPlayer is null)
+        if (deleted) _player.MoodlesData.Presets.Remove(preset.GUID);
+        else _player.MoodlesData.AddOrUpdatePreset(preset);
+    }
+
+    #endregion Handler Updates
+
+    /// <summary>
+    ///     After a Kinkster is initialized / created, it will then be marked as
+    ///     Online, if they are online. (Or after a reconnection, after being created)
+    /// </summary>
+    public void MarkOnline(OnlineKinkster dto)
+    {
+        _onlineUser = dto;
+        // Inform mediator of Online update.
+        _mediator.Publish(new KinksterOnline(this));
+        // Check to see if they are visible, and if so, reapply alterations.
+        _player.SetVisibleIfRendered().ConfigureAwait(false);
+    }
+
+    /// <summary>
+    ///     Convert a temporary Kinkster to a permanent one. (Once we add this at least)
+    /// </summary>
+    public void MarkAsPermanent()
+    {
+        //if (!UserPair.IsTemporary)
+        //{
+        //    _logger.LogWarning($"Attempted to set a tmp kinkster ({GetNickAliasOrUid()}) to permanent, but they already are!", LoggerType.PairManagement);
+        //    return;
+        //}
+        // Update the status to non-temporary.
+        //UserPair = UserPair with { TempAccepterUID = string.Empty };
+        _logger.LogInformation($"Kinkster [{PlayerName}] ({GetNickAliasOrUid()}) updated to a permanent pair.", LoggerType.PairManagement);
+    }
+
+    /// <summary> 
+    ///     Mark a Kinkster as offline, reverting any visible state if applied.
+    /// </summary>
+    public void MarkOffline()
+    {
+        _onlineUser = null;
+        _mediator.Publish(new KinksterOffline(this));
+        // Revert any visible state alterations.
+        _player.RevertAlterations().ConfigureAwait(false);
+        _logger.LogTrace($"[{PlayerName}] ({GetNickAliasOrUid()}) went offline, reverting alterations.", LoggerType.PairManagement);
+    }
+
+    /// <summary>
+    ///     Reapply cached Alterations to all visible OwnedObjects.
+    /// </summary>
+    public void ReapplyAlterations()
+        => _player.RevertAlterations().ConfigureAwait(false);
+
+    /// <summary>
+    ///     Revert the visual alterations of the Kinkster, if rendered. <para/>
+    ///     <b>This will clear the internal data.</b> (Maybe dont do this to support pausing or something idk)
+    /// </summary>
+    public async Task RevertRenderedAlterations()
+    {
+        _logger.LogDebug($"Reverting alterations for [{PlayerName}] ({GetNickAliasOrUid()}).", UserData.AliasOrUID);
+        await _player.RevertAlterations().ConfigureAwait(false);
+    }
+
+    /// <summary>
+    ///     Disposes of the Kinkster's Handlers, and all internal data. <para/>
+    ///     <b>Should be called when intending to dispose a Kinkster ONLY.</b>
+    /// </summary>
+    public void DisposeData()
+    {
+        _logger.LogDebug($"Disposing data for [{PlayerName}] ({GetNickAliasOrUid()})", LoggerType.PairManagement);
+        // If online, just simply mark offline.
+        if (IsOnline)
         {
-            _logger.LogDebug($"Waiting for ({GetNickAliasOrUid()}) to have a valid cache before applying!", LoggerType.PairDataTransfer);
-            _ = WaitForValidCacheAndApply(cts, applyAction).ConfigureAwait(false);
+            _onlineUser = null;
+            _mediator.Publish(new KinksterOffline(this));
         }
-        else
-        {
-            applyAction();
-        }
+
+        // The handler disposal methods effective perform a revert + data clear + final disposal state.
+        // Because of this calling mark offline prior is not necessary.
+        _player.Dispose();
     }
 
-    private async Task WaitForValidCacheAndApply(CancellationTokenSource cts, Action applyAction)
-    {
-        using var timeoutCts = new CancellationTokenSource();
-        timeoutCts.CancelAfter(TimeSpan.FromSeconds(120));
-
-        // create a new cancellation token source for the application token
-        var appToken = cts.Token;
-        using var combined = CancellationTokenSource.CreateLinkedTokenSource(timeoutCts.Token, appToken);
-
-        // while the cached player is still null and the combined token is not cancelled
-        while (CachedPlayer is null && !combined.Token.IsCancellationRequested)
-            await Task.Delay(250, combined.Token).ConfigureAwait(false);
-
-        // if the combined token is not cancelled STILL
-        if (!combined.IsCancellationRequested)
-        {
-            _logger.LogDebug($"Applying delayed data for {GetNickAliasOrUid()}.", LoggerType.PairDataTransfer);
-            applyAction();
-        }
-    }
-
-    public void ReapplyLatestData()
-    {
-        ApplyLastReceivedMoodles();
-    }
-
-    private void ApplyLastReceivedMoodles()
-    {
-        if (CachedPlayer is null) return;
-        if (LastMoodlesData is null) return;
-        CachedPlayer.UpdateMoodles(LastMoodlesData.DataString);
-    }
-
-    public void SetNewMoodlesStatuses(UserData enactor, IEnumerable<MoodlesStatusInfo> statuses)
-    {
-        _logger.LogDebug($"{GetNickAliasOrUid()}'s moodle Statuses updated!", LoggerType.PairDataTransfer);
-        LastMoodlesData.SetStatuses(statuses);
-    }
-
-    public void SetNewMoodlePresets(UserData enactor, IEnumerable<MoodlePresetInfo> newPresets)
-    {
-        _logger.LogDebug($"{GetNickAliasOrUid()}'s moodle Presets updated!", LoggerType.PairDataTransfer);
-        LastMoodlesData.SetPresets(newPresets);
-    }
+    #region Data Updates
 
     public void NewActiveCompositeData(CharaCompositeActiveData data, bool wasSafeword)
     {
@@ -469,49 +508,7 @@ public class Kinkster : IComparable<Kinkster>
         LastPairAliasData.StoredNameWorld = nameWithWorld;
     }
 
-    /// <summary> 
-    ///     Method that creates the cached player (PairHandler) object for the client pair. <para />
-    ///     This method is ONLY EVER CALLED BY THE PAIR MANAGER under the <c>MarkKinksterOnline</c> method! 
-    /// </summary>
-    /// <remarks> Until the CachedPlayer object is made, the client will not apply any data sent from this paired user. </remarks>
-    public void CreateCachedPlayer(OnlineKinkster? dto = null)
-    {
-        try
-        {
-            _creationSemaphore.Wait();
-            // If the cachedPlayer is already stored for this pair, we do not need to create it again, so return.
-            if (CachedPlayer != null)
-            {
-                _logger.LogDebug("CachedPlayer already exists for " + UserData.UID, LoggerType.PairInfo);
-                return;
-            }
-
-            // if the Dto sent to us by the server is null, and the pairs OnlineKinkster is null, dispose of the cached player and return.
-            if (dto is null && _OnlineKinkster is null)
-            {
-                // dispose of the cached player and set it to null before returning
-                _logger.LogDebug("No DTO provided for {uid}, and OnlineKinkster object in Pair class is null. Disposing of CachedPlayer", UserData.UID);
-                CachedPlayer?.Dispose();
-                CachedPlayer = null;
-                return;
-            }
-
-            // if the OnlineKinkster contains information, we should update our pairs _OnlineKinkster to the dto
-            if (dto != null)
-            {
-                _logger.LogDebug("Updating OnlineKinkster for " + UserData.UID, LoggerType.PairInfo);
-                _OnlineKinkster = dto;
-            }
-
-            _logger.LogTrace("Disposing of existing CachedPlayer to create a new one for " + UserData.UID, LoggerType.PairInfo);
-            CachedPlayer?.Dispose();
-            CachedPlayer = _cachedPlayerFactory.Create(new(UserData, _OnlineKinkster!.Ident));
-        }
-        finally
-        {
-            _creationSemaphore.Release();
-        }
-    }
+    #endregion Data Updates
 
     // Update this method to be obtained by the Kinkster Cache.
     public void UpdateCachedLockedSlots()
@@ -522,40 +519,62 @@ public class Kinkster : IComparable<Kinkster>
         LockedSlots = result;
     }
 
-    /// <summary> Get the nicknames for the user. </summary>
-    public string? GetNickname()
+    #region Debug
+    // ----- Debuggers -----
+    public void DrawRenderDebug()
     {
-        return _nickConfig.GetNicknameForUid(UserData.UID);
-    }
+        using var node = ImRaii.TreeNode($"Player Info##{UserData.UID}-visible");
+        if (!node) return;
 
-    public string GetNickAliasOrUid() => GetNickname() ?? UserData.AliasOrUID;
-
-    /// <summary> Get the player name hash. </summary>
-    public string GetPlayerNameHash()
-    {
-        return CachedPlayer?.PlayerNameHash ?? string.Empty;
-    }
-
-    /// <summary> Marks the pair as offline. </summary>
-    public void MarkOffline(bool wait = true, bool showLog = true)
-    {
-        try
+        using (var t = ImRaii.Table($"##debug-visible{UserData.UID}", 12, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
-            if (wait)
-                _creationSemaphore.Wait();
-            LastMoodlesData = new CharaMoodleData();
-            var player = CachedPlayer;
-            CachedPlayer = null;
-            player?.Dispose();
-            _OnlineKinkster = null;
+            if (!t) return;
+            ImGui.TableSetupColumn("OwnedObject");
+            ImGui.TableSetupColumn("Rendered?");
+            ImGui.TableSetupColumn("Name");
+            ImGui.TableSetupColumn("Address");
+            ImGui.TableSetupColumn("ObjectIdx");
+            ImGui.TableSetupColumn("EntityId");
+            ImGui.TableSetupColumn("ObjectId");
+            ImGui.TableSetupColumn("ParentId");
+            ImGui.TableSetupColumn("DrawObjValid");
+            ImGui.TableSetupColumn("RenderFlags");
+            ImGui.TableSetupColumn("MdlInSlot");
+            ImGui.TableSetupColumn("MdlFilesInSlot");
+            ImGui.TableHeadersRow();
+            // Handle Player.
+            ImGuiUtil.DrawFrameColumn("Player");
+            ImGui.TableNextColumn();
+            CkGui.IconText(IsRendered ? FAI.Check : FAI.Times, IsRendered ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed);
+            ImGuiUtil.DrawFrameColumn(PlayerName);
+            if (IsRendered)
+            {
+                ImGui.TableNextColumn();
+                CkGui.ColorText($"{PlayerAddress:X}", ImGuiColors.TankBlue);
+                ImGuiUtil.DrawFrameColumn(_player.ObjIndex.ToString());
+                ImGuiUtil.DrawFrameColumn(PlayerEntityId.ToString());
+                ImGuiUtil.DrawFrameColumn(PlayerObjectId.ToString());
+                ImGuiUtil.DrawFrameColumn("N/A");
 
-            if (showLog)
-                _logger.LogTrace($"Marked {UserData.UID} as offline", LoggerType.PairManagement);
+                ImGui.TableNextColumn();
+                var drawObjValid = _player.DrawObjAddress != IntPtr.Zero;
+                CkGui.IconText(drawObjValid ? FAI.Check : FAI.Times, drawObjValid ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed);
+
+                ImGui.TableNextColumn();
+                CkGui.ColorText(_player.RenderFlags.ToString(), ImGuiColors.DalamudGrey2);
+
+                if (drawObjValid)
+                {
+                    ImGui.TableNextColumn();
+                    CkGui.IconText(_player.HasModelInSlotLoaded ? FAI.Check : FAI.Times, _player.HasModelInSlotLoaded ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed);
+                    ImGui.TableNextColumn();
+                    CkGui.IconText(_player.HasModelFilesInSlotLoaded ? FAI.Check : FAI.Times, _player.HasModelFilesInSlotLoaded ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed);
+                }
+            }
+            ImGui.TableNextRow();
         }
-        finally
-        {
-            if (wait)
-                _creationSemaphore.Release();
-        }
+
+        _player.DrawDebugInfo();
     }
+    #endregion Debug
 }

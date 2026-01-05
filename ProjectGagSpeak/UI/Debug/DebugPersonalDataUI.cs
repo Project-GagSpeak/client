@@ -1,25 +1,14 @@
-using System.Buffers;
-using System.Collections.Immutable;
 using CkCommons;
 using CkCommons.Gui;
-using CkCommons.Raii;
 using CkCommons.Textures;
 using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Plugin.Services;
-using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
-using FFXIVClientStructs.FFXIV.Common.Lua;
 using GagSpeak.Gui.Components;
-using GagSpeak.Gui.Handlers;
-using GagSpeak.Interop;
 using GagSpeak.Kinksters;
-using GagSpeak.MufflerCore;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Services.Textures;
-using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
@@ -29,13 +18,12 @@ using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using OtterGui;
 using OtterGui.Extensions;
-using OtterGui.Text;
+using System.Collections.Immutable;
 
 namespace GagSpeak.Gui;
 
 public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 {
-    private readonly MainConfig _config;
     private readonly ClientData _clientData;
     private readonly MoodleDrawer _moodleDrawer;
     private readonly KinksterManager _pairs;
@@ -50,7 +38,6 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
     public DebugPersonalDataUI(
         ILogger<DebugPersonalDataUI> logger,
         GagspeakMediator mediator,
-        MainConfig config,
         ClientData clientData,
         MoodleDrawer moodleDrawer,
         KinksterManager pairs,
@@ -64,7 +51,6 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         TriggerManager triggers)
         : base(logger, mediator, "Kinkster Data Debugger")
     {
-        _config = config;
         _clientData = clientData;
         _moodleDrawer = moodleDrawer;
         _pairs = pairs;
@@ -77,7 +63,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         _alarms = alarms;
         _triggers = triggers;
         // Ensure the list updates properly.
-        Mediator.Subscribe<RefreshUiKinkstersMessage>(this, _ => UpdateList());
+        Mediator.Subscribe<FolderUpdateKinkster>(this, _ => UpdateList());
 
         IsOpen = true;
         this.SetBoundaries(new Vector2(625, 400), ImGui.GetIO().DisplaySize);
@@ -108,11 +94,9 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 
         // Take the remaining filtered list, and sort it.
         _immutablePairs = filteredPairs
-            .OrderByDescending(u => u.IsVisible)
+            .OrderByDescending(u => u.IsRendered)
             .ThenByDescending(u => u.IsOnline)
-            .ThenBy(pair => !pair.PlayerName.IsNullOrEmpty()
-                ? (_config.Current.PreferNicknamesOverNames ? pair.GetNickAliasOrUid() : pair.PlayerName)
-                : pair.GetNickAliasOrUid(), StringComparer.OrdinalIgnoreCase)
+            .ThenBy(pair => pair.GetDisplayName(), StringComparer.OrdinalIgnoreCase)
             .ToImmutableList();
     }
 
@@ -125,7 +109,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         if (ImGui.CollapsingHeader("Pair Data"))
         {
             ImGui.Text($"Total Pairs: {_pairs.DirectPairs.Count}");
-            ImGui.Text($"Visible Users: {_pairs.GetVisibleUserCount()}");
+            ImGui.Text($"Visible Users: {_pairs.GetVisibleCount()}");
 
             // The search.
             if (FancySearchBar.Draw("##PairDebugSearch", ImGui.GetContentRegionAvail().X, ref _searchValue, "Search for Pair..", 40))
@@ -148,7 +132,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawPairPerms(nick, pair);
         DrawPairAccess(nick, pair);
         DrawGlobalPermissions(pair.UserData.UID + "'s Global Perms", pair.PairGlobals);
-        DrawHardcoreState(pair.UserData.UID + "'s Hardcore State", pair.PairHardcore);
+        DrawHardcoreStatus(pair.UserData.UID + "'s Hardcore State", pair.PairHardcore);
         DrawKinksterIpcData(pair);
         DrawGagData(pair.UserData.UID, pair.ActiveGags);
         DrawPairRestrictions(pair.UserData.UID, pair);
@@ -191,7 +175,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         using var node = ImRaii.TreeNode($"Player Hardcore State");
         if (!node) return;
 
-        _clientData.DrawHardcoreState();
+        _clientData.DrawHardcoreStatus();
     }
 
     private void DrawPermissionRowBool(string name, bool value)
@@ -280,12 +264,12 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         }
     }
 
-    private void DrawHardcoreState(string uid, HardcoreState perms)
+    private void DrawHardcoreStatus(string uid, HardcoreStatus perms)
     {
         using var nodeMain = ImRaii.TreeNode(uid + " Hardcore State");
         if (!nodeMain) return;
 
-        PermissionHelper.DrawHardcoreState(perms);
+        PermissionHelper.DrawHardcoreStatus(perms);
     }
 
     private void DrawPairPerms(string label, Kinkster k)
@@ -298,9 +282,6 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         ImGui.TableSetupColumn("Own Setting");
         ImGui.TableSetupColumn($"{label}'s Setting");
         ImGui.TableHeadersRow();
-
-        DrawKinksterPermRowBool("Is Paused", k.OwnPerms.IsPaused, k.PairPerms.IsPaused);
-        ImGui.TableNextRow();
 
         DrawKinksterPermRowBool("Allows Permanent Locks", k.OwnPerms.PermanentLocks, k.PairPerms.PermanentLocks);
         DrawKinksterPermRowBool("Allows Owner Locks", k.OwnPerms.OwnerLocks, k.PairPerms.OwnerLocks);
@@ -341,14 +322,15 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawKinksterPermRowBool("All Requests", k.OwnPerms.PuppetPerms.HasAny(PuppetPerms.All), k.PairPerms.PuppetPerms.HasAny(PuppetPerms.All));
         ImGui.TableNextRow();
 
-        DrawKinksterPermRowBool("Positive Moodles", k.OwnPerms.MoodlePerms.HasAny(MoodlePerms.PositiveStatusTypes), k.PairPerms.MoodlePerms.HasAny(MoodlePerms.PositiveStatusTypes));
-        DrawKinksterPermRowBool("Negative Moodles", k.OwnPerms.MoodlePerms.HasAny(MoodlePerms.NegativeStatusTypes), k.PairPerms.MoodlePerms.HasAny(MoodlePerms.NegativeStatusTypes));
-        DrawKinksterPermRowBool("Special Moodles", k.OwnPerms.MoodlePerms.HasAny(MoodlePerms.SpecialStatusTypes), k.PairPerms.MoodlePerms.HasAny(MoodlePerms.SpecialStatusTypes));
-        DrawKinksterPermRowBool("Apply Own Moodles", k.OwnPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyTheirMoodlesToYou), k.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyTheirMoodlesToYou));
-        DrawKinksterPermRowBool("Apply Your Moodles", k.OwnPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou), k.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou));
+        DrawKinksterPermRowBool("Positive Moodles", k.OwnPerms.MoodleAccess.HasAny(MoodleAccess.Positive), k.PairPerms.MoodleAccess.HasAny(MoodleAccess.Positive));
+        DrawKinksterPermRowBool("Negative Moodles", k.OwnPerms.MoodleAccess.HasAny(MoodleAccess.Negative), k.PairPerms.MoodleAccess.HasAny(MoodleAccess.Negative));
+        DrawKinksterPermRowBool("Special Moodles", k.OwnPerms.MoodleAccess.HasAny(MoodleAccess.Special), k.PairPerms.MoodleAccess.HasAny(MoodleAccess.Special));
+        DrawKinksterPermRowBool("Apply Own Moodles", k.OwnPerms.MoodleAccess.HasAny(MoodleAccess.AllowOther), k.PairPerms.MoodleAccess.HasAny(MoodleAccess.AllowOther));
+        DrawKinksterPermRowBool("Apply Your Moodles", k.OwnPerms.MoodleAccess.HasAny(MoodleAccess.AllowOwn), k.PairPerms.MoodleAccess.HasAny(MoodleAccess.AllowOwn));
         DrawKinksterPermRowString("Max Moodle Time", k.OwnPerms.MaxMoodleTime.ToString(), k.PairPerms.MaxMoodleTime.ToString());
-        DrawKinksterPermRowBool("Permanent Moodles", k.OwnPerms.MoodlePerms.HasAny(MoodlePerms.PermanentMoodles), k.PairPerms.MoodlePerms.HasAny(MoodlePerms.PermanentMoodles));
-        DrawKinksterPermRowBool("Removing Moodles", k.OwnPerms.MoodlePerms.HasAny(MoodlePerms.RemovingMoodles), k.PairPerms.MoodlePerms.HasAny(MoodlePerms.RemovingMoodles));
+        DrawKinksterPermRowBool("Permanent Moodles", k.OwnPerms.MoodleAccess.HasAny(MoodleAccess.Permanent), k.PairPerms.MoodleAccess.HasAny(MoodleAccess.Permanent));
+        DrawKinksterPermRowBool("Removing Applied Moodles", k.OwnPerms.MoodleAccess.HasAny(MoodleAccess.RemoveApplied), k.PairPerms.MoodleAccess.HasAny(MoodleAccess.RemoveApplied));
+        DrawKinksterPermRowBool("Removing Any Moodles", k.OwnPerms.MoodleAccess.HasAny(MoodleAccess.RemoveAny), k.PairPerms.MoodleAccess.HasAny(MoodleAccess.RemoveAny));
         ImGui.TableNextRow();
 
         DrawKinksterPermRowBool("Can Execute Patterns", k.OwnPerms.ExecutePatterns, k.PairPerms.ExecutePatterns);
@@ -450,14 +432,15 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 
         // Moodles
         DrawKinksterPermRowBool("Moodles", k.OwnPermAccess.MoodlesEnabledAllowed, k.PairPermAccess.MoodlesEnabledAllowed);
-        DrawKinksterPermRowBool("Allow Positive Moodles", k.OwnPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.PositiveStatusTypes), k.PairPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.PositiveStatusTypes));
-        DrawKinksterPermRowBool("Allow Negative Moodles", k.OwnPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.NegativeStatusTypes), k.PairPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.NegativeStatusTypes));
-        DrawKinksterPermRowBool("Allow Special Moodles", k.OwnPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.SpecialStatusTypes), k.PairPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.SpecialStatusTypes));
-        DrawKinksterPermRowBool("Apply Own Moodles", k.OwnPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.PairCanApplyTheirMoodlesToYou), k.PairPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.PairCanApplyTheirMoodlesToYou));
-        DrawKinksterPermRowBool("Apply Your Moodles", k.OwnPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou), k.PairPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou));
+        DrawKinksterPermRowBool("Allow Positive Moodles", k.OwnPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.Positive), k.PairPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.Positive));
+        DrawKinksterPermRowBool("Allow Negative Moodles", k.OwnPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.Negative), k.PairPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.Negative));
+        DrawKinksterPermRowBool("Allow Special Moodles", k.OwnPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.Special), k.PairPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.Special));
+        DrawKinksterPermRowBool("Apply Own Moodles", k.OwnPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.AllowOther), k.PairPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.AllowOther));
+        DrawKinksterPermRowBool("Apply Your Moodles", k.OwnPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.AllowOwn), k.PairPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.AllowOwn));
         DrawKinksterPermRowString("Max Moodle Time", k.OwnPermAccess.MaxMoodleTimeAllowed.ToString(), k.PairPermAccess.MaxMoodleTimeAllowed.ToString());
-        DrawKinksterPermRowBool("Allow Permanent Moodles", k.OwnPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.PermanentMoodles), k.PairPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.PermanentMoodles));
-        DrawKinksterPermRowBool("Allow Removing Moodles", k.OwnPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.RemovingMoodles), k.PairPermAccess.MoodlePermsAllowed.HasAny(MoodlePerms.RemovingMoodles));
+        DrawKinksterPermRowBool("Allow Permanent Moodles", k.OwnPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.Permanent), k.PairPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.Permanent));
+        DrawKinksterPermRowBool("Allow Removing Applied Moodles", k.OwnPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.RemoveApplied), k.PairPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.RemoveApplied));
+        DrawKinksterPermRowBool("Allow Removing Any Moodles", k.OwnPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.RemoveAny), k.PairPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.RemoveAny));
         ImGui.TableNextRow();
 
         // Toybox
@@ -473,17 +456,17 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         using var nodeMain = ImRaii.TreeNode($"{dispName}'s IPC Data");
         if (!nodeMain) return;
 
-        CkGui.ColorTextCentered($"Active Statuses: {kinkster.LastMoodlesData.DataInfo.Count()}", ImGuiColors.ParsedGold);
-        _moodleDrawer.ShowStatusInfosFramed($"DataInfo-{dispName}", kinkster.LastMoodlesData.DataInfoList, ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), MoodleDrawer.IconSizeFramed);
+        CkGui.ColorTextCentered($"Active Statuses: {kinkster.MoodleData.DataInfo.Count()}", ImGuiColors.ParsedGold);
+        _moodleDrawer.ShowStatusInfosFramed($"DataInfo-{dispName}", kinkster.MoodleData.DataInfoList, ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), MoodleDrawer.IconSizeFramed);
 
 
-        CkGui.ColorTextCentered($"Stored Statuses: {kinkster.LastMoodlesData.StatusList.Count()}", ImGuiColors.ParsedGold);
-        _moodleDrawer.ShowStatusInfosFramed($"StatusList-{dispName}", kinkster.LastMoodlesData.StatusList, ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), MoodleDrawer.IconSizeFramed, 2);
+        CkGui.ColorTextCentered($"Stored Statuses: {kinkster.MoodleData.StatusList.Count()}", ImGuiColors.ParsedGold);
+        _moodleDrawer.ShowStatusInfosFramed($"StatusList-{dispName}", kinkster.MoodleData.StatusList, ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), MoodleDrawer.IconSizeFramed, 2);
 
-        DrawMoodlePresetTable(dispName, kinkster.LastMoodlesData);
+        DrawMoodlePresetTable(dispName, kinkster.MoodleData);
     }
 
-    private void DrawMoodlePresetTable(string uid, CharaMoodleData data)
+    private void DrawMoodlePresetTable(string uid, MoodleData data)
     {
         using var nodeMain = ImRaii.TreeNode($"{uid}'s Stored Preset Data");
         if (!nodeMain) return;

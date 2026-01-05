@@ -1,7 +1,6 @@
 using Dalamud.Game.Text;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using Lumina.Data;
 using System.Collections.Immutable;
 
 namespace GagSpeak.GameInternals.Agents;

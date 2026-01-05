@@ -1,20 +1,13 @@
-using CkCommons;
-using CkCommons.Classes;
 using CkCommons.Helpers;
 using CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
 using GagSpeak.PlayerClient;
-using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
-using GagspeakAPI.Extensions;
-using GagspeakAPI.Network;
-using Penumbra.GameData.Enums;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.State.Managers;
@@ -24,7 +17,7 @@ public sealed class RestraintManager : IHybridSavable
     private readonly GagspeakMediator _mediator;
     private readonly RestrictionManager _restrictions;
     private readonly ModPresetManager _modPresets;
-    private readonly FavoritesManager _favorites;
+    private readonly FavoritesConfig _favorites;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
 
@@ -32,7 +25,7 @@ public sealed class RestraintManager : IHybridSavable
     private CharaActiveRestraint? _serverRestraintData = null;
 
     public RestraintManager(ILogger<RestraintManager> logger, GagspeakMediator mediator,
-        RestrictionManager restrictions, ModPresetManager mods, FavoritesManager favorites, 
+        RestrictionManager restrictions, ModPresetManager mods, FavoritesConfig favorites, 
         ConfigFileProvider fileNames, HybridSaveService saver)
     {
         _logger = logger;
@@ -384,7 +377,7 @@ public sealed class RestraintManager : IHybridSavable
                 return;
         }
         _saver.Save(this);
-        _mediator.Publish(new ReloadFileSystem(GagspeakModule.Restraint));
+        _mediator.Publish(new ReloadFileSystem(GSModule.Restraint));
     }
 
     private void LoadV0(JToken? data)

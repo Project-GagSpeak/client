@@ -10,11 +10,11 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Services;
 
-/// <summary> Creates various calls to the server based on invoked events. </summary>
+// Orchistrates server calls to distribute data off to the server.
+// This should not be included by any serices that should not be interacting with MainHub circular dependancy.
 public sealed class DistributorService : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _hub;
@@ -30,7 +30,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
     private readonly PatternManager _patternManager;
     private readonly AlarmManager _alarmManager;
     private readonly TriggerManager _triggerManager;
-    private readonly TraitAllowanceManager _traitManager;
+    private readonly AllowancesConfig _traitManager;
 
     private SemaphoreSlim _updateSlim = new SemaphoreSlim(1, 1);
     private readonly HashSet<UserData> _newVisibleKinksters = [];
@@ -51,7 +51,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         PatternManager patterns,
         AlarmManager alarms,
         TriggerManager triggers,
-        TraitAllowanceManager traits)
+        AllowancesConfig traits)
         : base(logger, mediator)
     {
         _hub = hub;
@@ -77,23 +77,24 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => DelayedFrameworkOnUpdate());
 
         // Kinkster Pair management.
-        Mediator.Subscribe<PairWentOnlineMessage>(this, arg =>
+        Mediator.Subscribe<KinksterOnline>(this, arg =>
         {
             if (!MainHub.IsConnectionDataSynced)
                 return;
-            _newOnlineKinksters.Add(arg.UserData);
+            _newOnlineKinksters.Add(arg.Kinkster.UserData);
         });
-        Mediator.Subscribe<PairHandlerVisibleMessage>(this, msg => _newVisibleKinksters.Add(msg.Player.OnlineUser.User));
+        Mediator.Subscribe<KinksterPlayerRendered>(this, msg => _newVisibleKinksters.Add(msg.Kinkster.UserData));
 
         // Visible Data Updaters
-        Mediator.Subscribe<MoodlesApplyStatusToPair>(this, msg => ApplyMoodleToKinkster(msg.StatusDto).ConfigureAwait(false));
+        Mediator.Subscribe<MoodlesApplyStatusToPair>(this, msg => ApplyMoodleToKinkster(msg.ApplyStatusTupleDto).ConfigureAwait(false));
 
         // Online Data Updaters
-        Mediator.Subscribe<MainHubConnectedMessage>(this, _ =>
+        Mediator.Subscribe<ConnectedMessage>(this, _ =>
         {
-            _newVisibleKinksters.UnionWith(_kinksters.GetVisibleUsers());
+            _newVisibleKinksters.UnionWith(_kinksters.GetVisibleConnected());
             PushCompositeData(_kinksters.GetOnlineUserDatas()).ConfigureAwait(false);
         });
+
         Mediator.Subscribe<AliasGlobalUpdateMessage>(this, arg => DistributeDataGlobalAlias(arg).ConfigureAwait(false));
         Mediator.Subscribe<AliasPairUpdateMessage>(this, arg => DistributeDataUniqueAlias(arg).ConfigureAwait(false));
         Mediator.Subscribe<ValidToysChangedMessage>(this, arg => PushValidToysUpdate(arg).ConfigureAwait(false));
@@ -112,8 +113,10 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         Mediator.Subscribe<AllowancesChanged>(this, msg => DistributeAllowancesUpdate(msg.Module, msg.AllowedUids).ConfigureAwait(false));
     }
 
+    // Do this for now, later, migrate the newly visible kinksters into an update service that multiple different distribution services could pull from.
+    internal static string LastMoodlesDataString = string.Empty;
+
     // Idk why we need this really, anymore, but whatever i guess. If it helps it helps.
-    private string _lastMoodlesDataString = string.Empty;
     private ActiveGagSlot? _prevGagData;
     private ActiveRestriction? _prevRestrictionData;
     private CharaActiveRestraint? _prevRestraintData;
@@ -172,7 +175,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
 
     /// <summary>
     ///     This IPC Method should ONLY be sent to the newly visible kinksters, as it is the heaviest weight IPC call. <para />
-    ///     Never generate for _kinksters.GetVisibleUsers() as this will cause a lot of unnecessary data to be sent.
+    ///     Never generate for _kinksters.GetVisibleConnected() as this will cause a lot of unnecessary data to be sent.
     /// </summary>
     public async Task DistributeFullMoodlesData(List<UserData> visibleCharas)
     {
@@ -183,68 +186,15 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
             return;
         }
 
-        _lastMoodlesDataString = MoodleCache.IpcData.DataString;
+        LastMoodlesDataString = MoodleCache.IpcData.DataString;
         // Distribute the full IPC Data to the list of visible characters passed in.
         Logger.LogDebug($"Pushing Full IPCData to ({string.Join(", ", visibleCharas.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
         await _hub.UserPushMoodlesFull(new(visibleCharas, MoodleCache.IpcData));
     }
 
-    /// <summary>
-    ///     Update all currently visible Kinksters with latest status manager info. <para />
-    ///     This is fairly lightweight, but should only be used for updates, not on VisiblePairsChanged. <para />
-    ///     Intent is to send out to all visible pairs whenever our status manager is changed.
-    /// </summary>
-    public async Task PushMoodleStatusManager()
+    private async Task ApplyMoodleToKinkster(ApplyMoodleStatus dto)
     {
-        // Reject when not data synced.
-        if (!MainHub.IsConnectionDataSynced)
-            return;
-
-        if (_lastMoodlesDataString.Equals(MoodleCache.IpcData.DataString))
-            return;
-
-        _lastMoodlesDataString = MoodleCache.IpcData.DataString;
-        var visChara = _kinksters.GetVisibleUsers();
-        Logger.LogDebug($"Pushing updated StatusManager to visible Kinksters: ({string.Join(", ", visChara.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
-        // this will never fail, so no point in scanning the return.
-        await _hub.UserPushMoodlesSM(new(visChara, MoodleCache.IpcData.DataString, MoodleCache.IpcData.DataInfoList.ToList()));
-    }
-
-    /// <summary>
-    ///     Update all visible Kinksters with your latest status list whenever you make a change to a status in moodles. <para />
-    ///     Slightly heavier weight, but called less frequently, and seperately.
-    /// </summary>
-    public async Task PushMoodleStatusList()
-    {
-        // Reject when not data synced.
-        if (!MainHub.IsConnectionDataSynced)
-            return;
-
-        var visChara = _kinksters.GetVisibleUsers();
-        Logger.LogDebug($"Pushing updated StatusListInfo to visible Kinksters: ({string.Join(", ", visChara.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
-        // this will never fail, so no point in scanning the return.
-        await _hub.UserPushMoodlesSM(new(visChara, MoodleCache.IpcData.DataString, MoodleCache.IpcData.DataInfoList.ToList()));
-    }
-
-    /// <summary>
-    ///     Update all visible Kinksters with your latest moodle presets whenever you make a change to a preset in moodles. <para />
-    ///     Slightly heavier weight, but called less frequently, and seperately.
-    /// </summary>
-    public async Task PushMoodlePresetList()
-    {
-        // Reject when not data synced.
-        if (!MainHub.IsConnectionDataSynced)
-            return;
-
-        var visChara = _kinksters.GetVisibleUsers();
-        Logger.LogDebug($"Pushing updated PresetListInfo to visible Kinksters: ({string.Join(", ", visChara.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
-        // this will never fail, so no point in scanning the return.
-        await _hub.UserPushMoodlesPresets(new(visChara, MoodleCache.IpcData.PresetList.ToList()));
-    }
-
-    private async Task ApplyMoodleToKinkster(MoodlesApplierByStatus dto)
-    {
-        Logger.LogDebug($"Pushing ApplyMoodlesByStatus to: {dto.Target.AliasOrUID}", LoggerType.ApiCore);
+        Logger.LogDebug($"Pushing ApplyMoodlesByStatus to: {dto.User.AliasOrUID}", LoggerType.ApiCore);
         if (await _hub.UserApplyMoodlesByStatus(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push ApplyMoodlesByStatus to server. [{res.ErrorCode}]");
         else
@@ -287,7 +237,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         Logger.LogInformation("Sending updated achievement data to the server", LoggerType.Achievements);
         var dataString = _achievements.SerializeData();
         Logger.LogInformation("Connected with AchievementData String:\n" + dataString);
-        var result = await _hub.UserUpdateAchievementData(new(MainHub.PlayerUserData, dataString)).ConfigureAwait(false);
+        var result = await _hub.UserUpdateAchievementData(new(MainHub.OwnUserData, dataString)).ConfigureAwait(false);
         if (result.ErrorCode is GagSpeakApiEc.Success)
         {
             Logger.LogDebug("Successfully pushed latest Achievement Data to server", LoggerType.Achievements);
@@ -306,17 +256,17 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         try
         {
             KinkPlateContent currentContent;
-            if (KinkPlateService.KinkPlates.TryGetValue(MainHub.PlayerUserData, out var existing))
-                currentContent = existing.KinkPlateInfo;
+            if (KinkPlateService.KinkPlates.TryGetValue(MainHub.OwnUserData, out var existing))
+                currentContent = existing.Info;
             else
             {
-                var response = await _hub.UserGetKinkPlate(new KinksterBase(MainHub.PlayerUserData));
+                var response = await _hub.UserGetKinkPlate(new KinksterBase(MainHub.OwnUserData));
                 currentContent = response.Info;
             }
 
             Logger.LogDebug($"Updating KinkPlate™ with {ClientAchievements.Completed} Completions.", LoggerType.Achievements);
-            currentContent.CompletedAchievementsTotal = ClientAchievements.Completed;
-            await _hub.UserSetKinkPlateContent(new(MainHub.PlayerUserData, currentContent));
+            currentContent.CompletedTotal = ClientAchievements.Completed;
+            await _hub.UserSetKinkPlateContent(new(MainHub.OwnUserData, currentContent));
         }
         catch (Bagagwa ex)
         {
@@ -682,7 +632,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
             Logger.LogDebug("Successfully pushed TriggerData to server", LoggerType.OnlinePairs);
     }
 
-    private async Task DistributeAllowancesUpdate(GagspeakModule module, IEnumerable<string> allowedUids)
+    private async Task DistributeAllowancesUpdate(GSModule module, IEnumerable<string> allowedUids)
     {
         var onlinePlayers = _kinksters.GetOnlineUserDatas();
         Logger.LogDebug($"Pushing AllowancesUpdate for GagspeakModule [{module}] to online pairs.", LoggerType.OnlinePairs);

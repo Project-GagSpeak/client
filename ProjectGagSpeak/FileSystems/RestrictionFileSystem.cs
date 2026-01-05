@@ -1,6 +1,5 @@
 using CkCommons.FileSystem;
 using CkCommons.HybridSaver;
-using GagSpeak.Localization;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
@@ -25,7 +24,7 @@ public sealed class RestrictionFileSystem : CkFileSystem<RestrictionItem>, IMedi
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigRestrictionChanged>(this, (msg) => OnRestrictionChange(msg.Type, msg.Item, msg.OldString));
-        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is GagspeakModule.Restriction) Reload(); });
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is GSModule.Restriction) Reload(); });
         Changed += OnChange;
         Reload();
     }

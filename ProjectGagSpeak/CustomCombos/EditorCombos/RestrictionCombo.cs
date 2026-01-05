@@ -1,23 +1,18 @@
 using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
-using Dalamud.Interface.Colors;
-using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
-using GagspeakAPI.Data;
-using OtterGui;
 using OtterGui.Extensions;
-using OtterGui.Raii;
 using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.Editor;
 
 public sealed class RestrictionCombo : CkFilterComboCache<RestrictionItem>, IMediatorSubscriber, IDisposable
 {
-    private readonly FavoritesManager _favorites;
+    private readonly FavoritesConfig _favorites;
     public Guid _currentRestriction;
-    public RestrictionCombo(ILogger log, GagspeakMediator mediator, FavoritesManager favorites, 
+    public RestrictionCombo(ILogger log, GagspeakMediator mediator, FavoritesConfig favorites, 
         Func<IReadOnlyList<RestrictionItem>> generator) : base(generator, log)
     {
         Mediator = mediator;

@@ -1,5 +1,4 @@
 using GagSpeak.Kinksters;
-using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagspeakAPI.Data;
@@ -23,7 +22,7 @@ public sealed class ToyboxStateListener
     private readonly TriggerManager _triggers;
     public ToyboxStateListener(GagspeakMediator mediator, KinksterManager pairs,
         VibeLobbyManager vibeLobbies, PatternManager patterns, AlarmManager alarms,
-        TriggerManager triggers, OnFrameworkService frameworkUtils)
+        TriggerManager triggers)
     {
         _mediator = mediator;
         _pairs = pairs;

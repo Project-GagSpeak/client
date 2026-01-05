@@ -9,7 +9,6 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.CustomCombos.Padlock;
-using GagSpeak.Gui.Wardrobe;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
@@ -23,12 +22,8 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
-using GagspeakAPI.Network;
 using OtterGui.Text;
-using OtterGui.Text.EndObjects;
 using Penumbra.GameData.Enums;
-using Penumbra.GameData.Structs;
-using static Lumina.Data.Parsing.Layer.LayerCommon;
 namespace GagSpeak.Gui.Components;
 
 public class ActiveItemsDrawer
@@ -38,7 +33,7 @@ public class ActiveItemsDrawer
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
-    private readonly FavoritesManager _favorites;
+    private readonly FavoritesConfig _favorites;
     private readonly VisualStateListener _visuals;
     private readonly DistributorService _dds;
     private readonly TextureService _textures;
@@ -61,7 +56,7 @@ public class ActiveItemsDrawer
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
-        FavoritesManager favorites,
+        FavoritesConfig favorites,
         VisualStateListener visuals,
         DistributorService dds,
         TextureService textures,
@@ -84,7 +79,7 @@ public class ActiveItemsDrawer
         _gagItems = new RestrictionGagCombo[Constants.MaxGagSlots];
         for (var i = 0; i < _gagItems.Length; i++)
             _gagItems[i] = new RestrictionGagCombo(logger, favorites, () => [
-                ..gags.Storage.Values.OrderByDescending(p => favorites._favoriteGags.Contains(p.GagType)).ThenBy(p => p.GagType)
+                ..gags.Storage.Values.OrderByDescending(p => favorites.Gags.Contains(p.GagType)).ThenBy(p => p.GagType)
             ]);
 
         // Init Gag Padlocks.
@@ -96,7 +91,7 @@ public class ActiveItemsDrawer
         _restrictionItems = new RestrictionCombo[Constants.MaxRestrictionSlots];
         for (var i = 0; i < _restrictionItems.Length; i++)
             _restrictionItems[i] = new RestrictionCombo(logger, mediator, favorites, () => [
-                ..restrictions.Storage.OrderByDescending(p => favorites._favoriteRestrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
+                ..restrictions.Storage.OrderByDescending(p => favorites.Restrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
             ]);
 
         // Init Restriction Padlocks.
@@ -106,7 +101,7 @@ public class ActiveItemsDrawer
 
         // Init Restraint Combo & Padlock.
         _restraintItem = new RestraintCombo(logger, mediator, favorites, () => [
-            ..restraints.Storage.OrderByDescending(p => favorites._favoriteRestraints.Contains(p.Identifier)).ThenBy(p => p.Label)
+            ..restraints.Storage.OrderByDescending(p => favorites.Restraints.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
         _restraintPadlocks = new PadlockRestraintsClient(logger, dds, visuals, restraints);
 
@@ -400,14 +395,14 @@ public class ActiveItemsDrawer
     public void DrawFramedImage(GagType gag, float size, float rounding, uint frameTint = uint.MaxValue)
     {
         var gagImage = gag is GagType.None ? null : TextureManagerEx.GagImage(gag);
-        var gagFrame = _cosmetics.TryGetBorder(ProfileComponent.GagSlot, ProfileStyleBorder.Default, out var frameImg) ? frameImg : null;
+        var gagFrame = CosmeticService.TryGetBorder(PlateElement.GagSlot, KinkPlateBorder.Default, out var frameImg) ? frameImg : null;
         DrawImageInternal(gagImage, gagFrame, size, rounding, frameTint);
     }
 
     public void DrawFramedImage(Padlocks padlock, float size, float rounding, uint frameTint = uint.MaxValue, uint bgCol = 0xFF000000)
     {
         var padlockImage = padlock is Padlocks.None ? null : TextureManagerEx.PadlockImage(padlock);
-        var padlockFrame = _cosmetics.TryGetBorder(ProfileComponent.Padlock, ProfileStyleBorder.Default, out var frameImg) ? frameImg : null;
+        var padlockFrame = CosmeticService.TryGetBorder(PlateElement.Padlock, KinkPlateBorder.Default, out var frameImg) ? frameImg : null;
         DrawImageInternal(padlockImage, padlockFrame, size, rounding, frameTint, bgCol, size / 6);
     }
 
@@ -429,7 +424,7 @@ public class ActiveItemsDrawer
         }
 
         // Fill out the frame.
-        if (_cosmetics.TryGetBorder(ProfileComponent.GagSlot, ProfileStyleBorder.Default, out var frameWrap) && doFrame)
+        if (CosmeticService.TryGetBorder(PlateElement.GagSlot, KinkPlateBorder.Default, out var frameWrap) && doFrame)
             ImGui.GetWindowDrawList().AddDalamudImageRounded(frameWrap, ImGui.GetItemRectMin(), new Vector2(size), rounding);
     }
 

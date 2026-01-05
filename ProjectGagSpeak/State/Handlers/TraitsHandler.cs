@@ -53,7 +53,7 @@ public class TraitsHandler
         if (_cache.UpdateFinalCache())
         {
             _logger.LogDebug("Final Traits updated.", LoggerType.VisualCache);
-            _controller.UpdateHardcoreState();
+            _controller.UpdateHardcoreStatus();
             _mediator.Publish(new HcStateCacheChanged());
         }
         else

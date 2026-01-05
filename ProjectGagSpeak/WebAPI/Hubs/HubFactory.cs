@@ -1,6 +1,6 @@
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.WebAPI.Utils;
+using GagSpeak.Utils;
 using GagspeakAPI.Hub;
 using MessagePack;
 using MessagePack.Resolvers;
@@ -13,13 +13,13 @@ namespace GagSpeak.WebAPI;
 public class HubFactory : MediatorSubscriberBase
 {
     private readonly ILoggerProvider _loggingProvider;
-    private readonly ServerConfigManager _serverConfigs;
+    private readonly AccountManager _serverConfigs;
     private readonly TokenProvider _tokenProvider;
     private HubConnection? _instance;
     private bool _isDisposed = false;
 
     public HubFactory(ILogger<HubFactory> logger, GagspeakMediator gagspeakMediator,
-        ServerConfigManager serverConfigManager, TokenProvider tokenProvider, 
+        AccountManager serverConfigManager, TokenProvider tokenProvider, 
         ILoggerProvider pluginLog) : base(logger, gagspeakMediator)
     {
         _serverConfigs = serverConfigManager;
@@ -65,7 +65,7 @@ public class HubFactory : MediatorSubscriberBase
     private HubConnection BuildHubConnection(CancellationToken ct, string token = "")
     {
         Logger.LogDebug("Building new HubConnection", LoggerType.HubFactory);
-        var connectionURI = _serverConfigs.CurrentApiUrl + IGagspeakHub.Path;
+        var connectionURI = MainHub.MAIN_SERVER_URI + IGagspeakHub.Path;
 
         Logger.LogDebug($"Attempting to connect to URI: {connectionURI}", LoggerType.HubFactory);
         // create the instance, based on the hub type.
@@ -122,19 +122,19 @@ public class HubFactory : MediatorSubscriberBase
     /* ------------- Main Hub Connection Methods ------------- */
     private Task HubOnClosed(Exception? arg)
     {
-        Mediator.Publish(new MainHubClosedMessage(arg));
+        Mediator.Publish(new HubClosedMessage(arg));
         return Task.CompletedTask;
     }
 
     private Task HubOnReconnecting(Exception? arg)
     {
-        Mediator.Publish(new MainHubReconnectingMessage(arg));
+        Mediator.Publish(new ReconnectingMessage(arg));
         return Task.CompletedTask;
     }
 
     private Task HubOnReconnected(string? arg)
     {
-        Mediator.Publish(new MainHubReconnectedMessage(arg));
+        Mediator.Publish(new ReconnectedMessage(arg));
         return Task.CompletedTask;
     }
 }

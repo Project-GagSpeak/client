@@ -23,7 +23,7 @@ namespace GagSpeak.FileSystems;
 public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, CursedLootFileSelector.CursedItemState>, IMediatorSubscriber, IDisposable
 {
     private readonly ActiveItemsDrawer _drawer;
-    private readonly FavoritesManager _favorites;
+    private readonly FavoritesConfig _favorites;
     private readonly CursedLootManager _manager;
     public GagspeakMediator Mediator { get; init; }
 
@@ -39,7 +39,7 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
     public new CursedLootFileSystem.Leaf? SelectedLeaf
         => base.SelectedLeaf;
 
-    public CursedLootFileSelector(GagspeakMediator mediator, ActiveItemsDrawer drawer, FavoritesManager favorites, 
+    public CursedLootFileSelector(GagspeakMediator mediator, ActiveItemsDrawer drawer, FavoritesConfig favorites, 
         CursedLootManager manager, CursedLootFileSystem fileSystem) 
         : base(fileSystem, Svc.Logger.Logger, Svc.KeyState, "##CursedLootFS", true)
     {

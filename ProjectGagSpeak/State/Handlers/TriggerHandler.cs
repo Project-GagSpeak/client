@@ -1,12 +1,9 @@
 using CkCommons;
 using CkCommons.Helpers;
-using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Text.SeStringHandling;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
-using FFXIVClientStructs.FFXIV.Client.System.Scheduler.Object;
 using GagSpeak.GameInternals;
-using GagSpeak.GameInternals.Agents;
 using GagSpeak.GameInternals.Structs;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
@@ -14,7 +11,6 @@ using GagSpeak.Services;
 using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using System.Diagnostics.CodeAnalysis;
 
@@ -23,23 +19,23 @@ namespace GagSpeak.State.Handlers;
 /// <summary>
 ///     Handles incoming invokations for various triggers to in turn execute them
 /// </summary>
-/// <remarks> May or may not have future integration weaved into this listener for the vibe server lobby system. </remarks>
+/// <remarks>
+///     May or may not have future integration weaved into this listener for the vibe server lobby system.
+/// </remarks>
 public class TriggerHandler
 {
     private readonly ILogger<TriggerHandler> _logger;
     private readonly PuppeteerManager _aliases;
     private readonly TriggerManager _triggers;
     private readonly TriggerActionService _triggerService;
-    private readonly OnFrameworkService _frameworkUtils;
 
     public TriggerHandler(ILogger<TriggerHandler> logger, PuppeteerManager aliases, 
-        TriggerManager triggers, TriggerActionService service, OnFrameworkService onFramework)
+        TriggerManager triggers, TriggerActionService service)
     {
         _logger = logger;
         _aliases = aliases;
         _triggers = triggers;
         _triggerService = service;
-        _frameworkUtils = onFramework;
     }
 
     public bool PotentialGlobalTriggerMsg(string senderName, string senderWorld, InputChannel channel, SeString msg)
@@ -209,7 +205,7 @@ public class TriggerHandler
         if (perms.HasFlag(PuppetPerms.Sit))
         {
             _logger.LogTrace("Checking if message is a sit command", LoggerType.Puppeteer);
-            var sitEmote = EmoteExtensions.SittingEmotes().FirstOrDefault(e => message.TextValue.Contains(e.Name.ToString().Replace(" ", "").ToLower()));
+            var sitEmote = EmoteEx.SittingEmotes().FirstOrDefault(e => message.TextValue.Contains(e.Name.ToString().Replace(" ", "").ToLower()));
             if (sitEmote.RowId is 50 or 52)
             {
                 _logger.LogTrace("Message is a sit command", LoggerType.Puppeteer);

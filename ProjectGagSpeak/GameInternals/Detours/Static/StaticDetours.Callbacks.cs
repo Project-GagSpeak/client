@@ -1,4 +1,3 @@
-using Dalamud.Game.NativeWrapper;
 using Dalamud.Hooking;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Component.GUI;

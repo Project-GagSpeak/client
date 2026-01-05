@@ -4,25 +4,34 @@ namespace GagSpeak.GameInternals;
 // ========================
 // - ReceiveActionEffect
 // https://github.com/NightmareXIV/ECommons/blob/master/ECommons/Hooks/ActionEffect.cs
+
 // - OnEmote
 // https://github.com/MgAl2O4/PatMeDalamud/blob/main/plugin/EmoteReaderHooks.cs
+
 // - Callback Sig
 // https://github.com/NightmareXIV/ECommons/blob/master/ECommons/Automation/Callback.cs
+
 // - FireCallback Sig (no longer exists?)
 // https://github.com/Caraxi/SimpleTweaksPlugin/blob/02abb1c3e4a140cbccded03af1e0637c3c5665ff/Debugging/AddonDebug.cs#L127
+
 // - ForceDisableMovementPtr (THIS VALUE CAN BE SHARED BY OTHER PLUGINS (LIKE CAMMY) BE SURE IT IS HANDLED ACCORDINGLY)
 // https://github.com/PunishXIV/Orbwalker/blob/4d171bc7c79a492bf9159d705dafa7bc97f0c174/Orbwalker/Memory.cs#L74
+
 // - LMB+RMB MousePreventor2
 // https://github.com/Drahsid/HybridCamera/blob/2e18760d64be14d2dc16405168d5a7a8f236ff3c/HybridCamera/MovementHook.cs#L216
+
 // - UnfollowTarget
 // Pray to whatever gods exist someone can still help with this.
+
 // - Movement & Camera Control (Imprisonment)
 // https://github.com/NightmareXIV/Lifestream/blob/main/Lifestream/Movement/OverrideMovement.cs
 // https://github.com/NightmareXIV/Lifestream/blob/main/Lifestream/Movement/OverrideCamera.cs
+
 // - ApplyGlamourPlate
 // Given graciously by Hassel.
+
 // - ProcessChatInput
-// 
+// Voodoo i guess.
 
 // ================================================
 // - VFXEDITOR Signatures:
@@ -83,11 +92,12 @@ public static class Signatures
     // DetourName = nameof(ProcessChatInputDetour), Fallibility = Fallibility.Auto, Define via SignatureAttribute.
     public const string ProcessChatInput = "E8 ?? ?? ?? ?? FE 87 ?? ?? ?? ?? C7 87";
 
-    // Spatial Audio Sigs from VFXEDITOR
+    // Spatial Audio Sigs from VFXEDITOR (As of 7.4*)
     internal const string CreateStaticVfx = "E8 ?? ?? ?? ?? F3 0F 10 35 ?? ?? ?? ?? 48 89 43 08";
-    internal const string RunStaticVfx = "E8 ?? ?? ?? ?? ?? ?? ?? 8B 4A ?? 85 C9";
+    internal const string RunStaticVfx = "E8 ?? ?? ?? ?? B0 02 EB 02";
     internal const string RemoveStaticVfx = "40 53 48 83 EC 20 48 8B D9 48 8B 89 ?? ?? ?? ?? 48 85 C9 74 28 33 D2 E8 ?? ?? ?? ?? 48 8B 8B ?? ?? ?? ?? 48 85 C9";
 
+    // (As of 7.4*)
     internal const string CreateActorVfx = "40 53 55 56 57 48 81 EC ?? ?? ?? ?? 0F 29 B4 24 ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 0F B6 AC 24 ?? ?? ?? ?? 0F 28 F3 49 8B F8";
     internal const string RemoveActorVfx = "0F 11 48 10 48 8D 05"; // the weird one
 

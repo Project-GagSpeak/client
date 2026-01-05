@@ -21,12 +21,12 @@ public static unsafe class HcApproachNearestHousing
             .Add(new HardcoreTask(TargetNearestHousingNode))
             .Add(hcTasks.CreateBranch(IsTargetApartment, "Approach Housing Node")
                 .SetTrueTask(hcTasks.CreateGroup("Approach Apartment")
-                    .Add(() => HcCommonTaskFuncs.ApproachNode(() => Svc.Targets.Target!, 3.5f))
+                    .Add(() => HcCommonTaskFuncs.ApproachNode(() => Svc.Targets.Target?.Address ?? nint.Zero, 3.5f))
                     .Add(HcStayApartment.InteractWithApartmentEntrance)
                     .Add(HcStayApartment.SelectGoToSpecifiedApartment)
                     .AsGroup())
                 .SetFalseTask(hcTasks.CreateGroup("Approach Home")
-                    .Add(() => HcCommonTaskFuncs.ApproachNode(() => Svc.Targets.Target!, 2.75f))
+                    .Add(() => HcCommonTaskFuncs.ApproachNode(() => Svc.Targets.Target?.Address ?? nint.Zero, 2.75f))
                     .Add(InteractWithHousingEntrance)
                     .Add(HcStayHousingEntrance.ConfirmHouseEntranceAndEnter)
                     .AsGroup())
@@ -71,16 +71,17 @@ public static unsafe class HcApproachNearestHousing
     public static unsafe bool TargetNearestHousingNode()
     {
         var node = HcStayHousingEntrance.GetNearestHousingEntrance(out var distance);
+        var nodeObj = node.ToStruct();
         // if the node is too far away, or the node further than the maximum yalm distance, return false.
-        if (node is null || distance >= 20f)
+        if (nodeObj is null || distance >= 20f)
             return false;
 
         // We know that we have a valid node. If we are not yet targetting it, we should target it.
-        if (!node.IsTarget())
+        if (!HcTaskUtils.IsTarget(nodeObj))
         {
             if (node.IsTargetable && NodeThrottler.Throttle("HousingEntrance.Target", 200))
             {
-                Svc.Targets.Target = node;
+                TargetSystem.Instance()->SetHardTarget(nodeObj);
                 return false;
             }
         }

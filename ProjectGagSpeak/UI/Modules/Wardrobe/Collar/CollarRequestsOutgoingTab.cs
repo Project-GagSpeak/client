@@ -4,7 +4,6 @@ using CkCommons.Raii;
 using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.Kinksters;
@@ -18,8 +17,6 @@ using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
 using OtterGui.Extensions;
 using OtterGui.Text;
-using OtterGui.Text.EndObjects;
-using System.Drawing;
 
 namespace GagSpeak.Gui.Wardrobe;
 
@@ -33,7 +30,7 @@ public class CollarRequestsOutgoingTab : IFancyTab
     private Kinkster? _selectedKinkster;
     private string _desiredWriting;
     public CollarRequestsOutgoingTab(ILogger<CollarRequestsOutgoingTab> log, GagspeakMediator mediator,
-        MainConfig config, KinksterManager kinksters, FavoritesManager favorites, CollarManager manager, 
+        MainConfig config, KinksterManager kinksters, FavoritesConfig favorites, CollarManager manager, 
         TutorialService guides)
     {
         _logger = log;

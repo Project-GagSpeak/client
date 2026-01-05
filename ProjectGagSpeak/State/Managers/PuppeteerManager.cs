@@ -1,8 +1,6 @@
 using CkCommons.Helpers;
 using CkCommons.HybridSaver;
 using GagSpeak.Kinksters;
-using GagSpeak.PlayerClient;
-using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data;
@@ -273,7 +271,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
                 return;
         }
         _saver.Save(this);
-        Mediator.Publish(new ReloadFileSystem(GagspeakModule.Puppeteer));
+        Mediator.Publish(new ReloadFileSystem(GSModule.Puppeteer));
     }
 
     private void LoadV0(JToken? data)

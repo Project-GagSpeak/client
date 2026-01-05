@@ -34,7 +34,7 @@ public static unsafe class HcStayApartment
                 continue;
 
             // if the object is not the current target, make it the target.
-            if (!o.IsTarget())
+            if (Svc.Targets.Target != o)
             {
                 // target on throttle cooldown.
                 if (NodeThrottler.Throttle("TargetApartment"))

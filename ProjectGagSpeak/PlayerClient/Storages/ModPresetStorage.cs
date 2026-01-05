@@ -1,9 +1,6 @@
-using Dalamud.Utility;
 using GagSpeak.Interop;
 using GagSpeak.State.Managers;
-using GagSpeak.State.Models;
 using GagspeakAPI.Data;
-using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.PlayerClient;
@@ -173,12 +170,14 @@ public sealed class ModSettingsPreset : IEditableStorageItem<ModSettingsPreset>,
         {
             // if the directory path is not in the mod preset storage, then we should throw an exception.
             var container = mp.ModPresetStorage.FirstOrDefault(x => x.DirectoryPath == dirPath)
-                ?? throw new Exception($"ModSettingsPreset: No container found for directory path {dirPath}" +
-                $"\nCurrent Containers are: {string.Join("\n", mp.ModPresetStorage.Select(x => x.DirectoryPath))}");
+                ?? throw new Exception($"ModSettingsPreset: No container found for directory path {dirPath}");
+            //?? throw new Exception($"ModSettingsPreset: No container found for directory path {dirPath}" +
+            //$"\nCurrent Containers are: {string.Join("\n", mp.ModPresetStorage.Select(x => x.DirectoryPath))}");
 
             var preset = container.ModPresets.FirstOrDefault(x => x.Label == presetName)
-                ?? throw new Exception($"ModSettingsPreset: No preset found for directory path {dirPath} with name {presetName}" +
-                $"\nCurrent Presets are: {string.Join("\n", container.ModPresets.Select(x => x.Label))}");
+                ?? throw new Exception($"ModSettingsPreset: No preset found for directory path {dirPath} with name {presetName}");
+                //?? throw new Exception($"ModSettingsPreset: No preset found for directory path {dirPath} with name {presetName}" +
+                //$"\nCurrent Presets are: {string.Join("\n", container.ModPresets.Select(x => x.Label))}");
 
             return preset;
         }

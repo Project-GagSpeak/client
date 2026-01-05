@@ -1,11 +1,3 @@
-using GagSpeak.PlayerClient;
-using GagSpeak.Services;
-using GagSpeak.Services.Mediator;
-using GagSpeak.State.Models;
-using GagSpeak.WebAPI;
-using GagspeakAPI.Dto.VibeRoom;
-using GagspeakAPI.Network;
-
 namespace GagSpeak.Gui.Remote;
 
 // maybe convert to class, not sure.

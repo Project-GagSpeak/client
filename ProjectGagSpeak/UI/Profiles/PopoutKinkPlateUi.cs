@@ -1,36 +1,39 @@
+using Dalamud.Bindings.ImGui;
+using GagSpeak.Gui.MainWindow;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Gui.MainWindow;
-using GagSpeak.Kinksters;
 using GagspeakAPI.Data;
-using Dalamud.Bindings.ImGui;
 
 namespace GagSpeak.Gui.Profile;
 
 public class PopoutKinkPlateUi : WindowMediatorSubscriberBase
 {
-    private readonly KinkPlateLight _lightUI;
-    private readonly KinkPlateService _KinkPlateManager;
-    private readonly KinksterManager _pairManager;
-    private UserData? _userDataToDisplay;
     private bool ThemePushed = false;
 
+    private readonly KinkPlateLight _lightUI;
+    private readonly KinkPlateService _service;
+
+    private UserData? User = null;
+
     public PopoutKinkPlateUi(ILogger<PopoutKinkPlateUi> logger, GagspeakMediator mediator,
-        KinkPlateLight plateLightUi, KinkPlateService manager, KinksterManager pairs) 
-        : base(logger, mediator, "###GagSpeakPopoutProfileUI")
+        KinkPlateLight plateLightUi, KinkPlateService service) 
+        : base(logger, mediator, "###GSPopoutProfileUI")
     {
         _lightUI = plateLightUi;
-        _KinkPlateManager = manager;
-        _pairManager = pairs;
+        _service = service;
+
         Flags = WFlags.NoDecoration;
 
-        Mediator.Subscribe<ProfilePopoutToggle>(this, (msg) =>
+        Mediator.Subscribe<OpenKinkPlatePopout>(this, (msg) =>
         {
-            IsOpen = msg.PairUserData != null; // only open if the pair sent is not null
-            _userDataToDisplay = msg.PairUserData; // set the pair to display the popout profile for.
+            IsOpen = true;
+            User = msg.UserData;
         });
-
-        IsOpen = false;
+        Mediator.Subscribe<CloseKinkPlatePopout>(this, (msg) =>
+        {
+            IsOpen = false;
+            User = null;
+        });
     }
 
     protected override void PreDrawInternal()
@@ -64,18 +67,15 @@ public class PopoutKinkPlateUi : WindowMediatorSubscriberBase
 
     protected override void DrawInternal()
     {
-        // do not display if pair is null.
-        if (_userDataToDisplay is null)
+        if (User is null)
             return;
-
         // obtain the profile for this userPair.
-        var KinkPlate = _KinkPlateManager.GetKinkPlate(_userDataToDisplay);
+        var toDraw = _service.GetKinkPlate(User);
+        var dispName = User.AliasOrUID;
 
-        var DisplayName = _userDataToDisplay.AliasOrUID;
-
-        var drawList = ImGui.GetWindowDrawList();
-        _lightUI.RectMin = drawList.GetClipRectMin();
-        _lightUI.RectMax = drawList.GetClipRectMax();
-        _lightUI.DrawKinkPlateLight(drawList, KinkPlate, DisplayName, _userDataToDisplay, true, false);
+        var wdl = ImGui.GetWindowDrawList();
+        _lightUI.RectMin = wdl.GetClipRectMin();
+        _lightUI.RectMax = wdl.GetClipRectMax();
+        _lightUI.DrawKinkPlateLight(wdl, toDraw, dispName, User, true, false);
     }
 }

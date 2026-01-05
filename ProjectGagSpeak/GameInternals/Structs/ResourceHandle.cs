@@ -3,7 +3,6 @@ using Penumbra.Api.Enums;
 using Penumbra.String;
 using Penumbra.String.Classes;
 using System.Runtime.InteropServices;
-using TerraFX.Interop.Windows;
 using CsHandle = FFXIVClientStructs.FFXIV.Client.System.Resource.Handle;
 
 namespace GagSpeak.GameInternals.Structs;

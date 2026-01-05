@@ -534,18 +534,6 @@ public static class ConfigMigrator
         return newFormat;
     }
 
-    public static JObject MigrateServerConfig(JObject serverConfig, ConfigFileProvider fileNames)
-    {
-        Svc.Logger.Warning("Outdated ServerConfig detected, migrating to new format!");
-        // we should search the directory to see if the servertags.json file exists, and if so remove it.
-        var serverTagsPath = Path.Combine(ConfigFileProvider.AssemblyLocation, "servertags.json");
-        if (File.Exists(serverTagsPath))
-            File.Delete(serverTagsPath);
-
-        // nothing else needed that i can see.
-        return serverConfig;
-    }
-
     public static JObject MigrateNicknamesConfig(JObject nicknamesConfig)
     {
         Svc.Logger.Warning("Outdated NicknamesConfig detected, migrating to new format!");

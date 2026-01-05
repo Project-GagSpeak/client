@@ -1,13 +1,9 @@
-using GagSpeak.PlayerClient;
-using GagSpeak.PlayerControl;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Handlers;
 using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Services;
 
@@ -107,7 +103,7 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
         _triggers.Load();
 
         // 3. Load in the data from the server into our storages.
-        Logger.LogInformation("[SYNC PROGRESS]: Syncing ClientData GlobalPerms & HardcoreState!");
+        Logger.LogInformation("[SYNC PROGRESS]: Syncing ClientData GlobalPerms & HardcoreStatus!");
         _clientDatListener.ChangeAllClientGlobals(connectionInfo.User, connectionInfo.GlobalPerms, connectionInfo.HardcoreState);
 
         // 4. Sync overlays with the global permissions & metadata.

@@ -16,7 +16,7 @@ namespace GagSpeak.CustomCombos.Moodles;
 public sealed class PairMoodleStatusCombo : CkMoodleComboButtonBase<MoodlesStatusInfo>
 {
     public PairMoodleStatusCombo(ILogger log, MainHub hub, Kinkster kinkster, float scale)
-        : base(log, hub, kinkster, scale, () => [ .. kinkster.LastMoodlesData.Statuses.Values.OrderBy(x => x.Title)])
+        : base(log, hub, kinkster, scale, () => [ .. kinkster.MoodleData.Statuses.Values.OrderBy(x => x.Title)])
     { }
 
     public PairMoodleStatusCombo(ILogger log, MainHub hub, Kinkster kinkster, float scale, Func<IReadOnlyList<MoodlesStatusInfo>> generator)
@@ -24,7 +24,7 @@ public sealed class PairMoodleStatusCombo : CkMoodleComboButtonBase<MoodlesStatu
     { }
 
     protected override bool DisableCondition()
-        => Current.GUID == Guid.Empty || !_kinksterRef.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou);
+        => Current.GUID == Guid.Empty || !_kinksterRef.PairPerms.MoodleAccess.HasAny(MoodleAccess.AllowOwn);
 
     protected override string ToString(MoodlesStatusInfo obj)
         => obj.Title.StripColorTags();
@@ -71,8 +71,7 @@ public sealed class PairMoodleStatusCombo : CkMoodleComboButtonBase<MoodlesStatu
     {
         UiService.SetUITask(async () =>
         {
-            var dto = new MoodlesApplierById(_kinksterRef.UserData, [item.GUID], MoodleType.Status);
-            var res = await _mainHub.UserApplyMoodlesByGuid(dto);
+            var res = await _mainHub.UserApplyMoodlesByGuid(new(_kinksterRef.UserData, [item.GUID], false, false));
             if (res.ErrorCode is not GagSpeakApiEc.Success)
                 Log.LogDebug($"Failed to apply moodle status {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
         });
@@ -82,8 +81,7 @@ public sealed class PairMoodleStatusCombo : CkMoodleComboButtonBase<MoodlesStatu
     {
         UiService.SetUITask(async () =>
         {
-            var dto = new MoodlesRemoval(_kinksterRef.UserData, [item.GUID]);
-            var res = await _mainHub.UserRemoveMoodles(dto);
+            var res = await _mainHub.UserRemoveMoodles(new(_kinksterRef.UserData, [item.GUID]));
             if (res.ErrorCode is not GagSpeakApiEc.Success)
                 Log.LogDebug($"Failed to remove moodle status {item.Title} from {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
         });
