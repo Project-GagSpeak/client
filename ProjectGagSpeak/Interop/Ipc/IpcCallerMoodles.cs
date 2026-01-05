@@ -57,9 +57,9 @@ public sealed class IpcCallerMoodles : IIpcCaller
         // API Enactors
         SetStatusManagerByPtr = Svc.PluginInterface.GetIpcSubscriber<nint, string, object>("Moodles.SetStatusManagerByPtrV2");
         ClearStatusMangerByPtr = Svc.PluginInterface.GetIpcSubscriber<nint, object>("Moodles.ClearStatusManagerByPtrV2");
-        ApplyStatusByPtr = Svc.PluginInterface.GetIpcSubscriber<Guid, nint, object>("Moodles.AddOrUpdateStatusByPtrV2");
+        ApplyStatusByPtr = Svc.PluginInterface.GetIpcSubscriber<Guid, nint, object>("Moodles.AddOrUpdateMoodleByPtrV2");
         ApplyPresetByPtr = Svc.PluginInterface.GetIpcSubscriber<Guid, nint, object>("Moodles.ApplyPresetByPtrV2");
-        RemoveStatusesByPtr = Svc.PluginInterface.GetIpcSubscriber<List<Guid>, nint, object>("Moodles.RemoveStatusesByPtrV2");
+        RemoveStatusesByPtr = Svc.PluginInterface.GetIpcSubscriber<List<Guid>, nint, object>("Moodles.RemoveMoodlesByPtrV2");
 
         // API Action Events:
         OnStatusManagerModified = Svc.PluginInterface.GetIpcSubscriber<nint, object>("Moodles.StatusManagerModified");

@@ -74,6 +74,7 @@ public class ModHandler
         }
         else
             _logger.LogTrace("No change in FinalMods Cache.", LoggerType.VisualCache);
+        _logger.LogDebug("Finished Updating Mod Caches.", LoggerType.VisualCache);
     }
 
     /// <summary>
@@ -126,7 +127,7 @@ public class ModHandler
             _logger.LogWarning($"Failed to remove ModPreset [{modPreset.Label}] for mod [{modPreset.Container.ModName}].");
         else
             _logger.LogDebug($"Removed ModPreset [{modPreset.Label}] for mod [{modPreset.Container.ModName}].");
-     }
+    }
 
     /// <summary> Removes multiple temporary mods with a lock, or updates the existing locked mods temporary settings. </summary>
     /// <returns> If the operation was successful for all <paramref name="modPresets"/></returns>
@@ -140,7 +141,7 @@ public class ModHandler
     /// <returns> If the operation was successful. </returns>
     private void RemoveAllTempMods(bool redraw = false)
     {
-        if(_ipc.ClearAllTemporaryMods() is PenumbraApiEc.Success)
+        if (_ipc.ClearAllTemporaryMods() is PenumbraApiEc.Success)
             _logger.LogDebug("Successfully cleared all temporary mods.");
         else
             _logger.LogWarning("Failed to clear all temporary mods.");

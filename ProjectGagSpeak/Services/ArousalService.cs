@@ -1,12 +1,12 @@
 using CkCommons;
+using CkCommons.Gui;
+using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility.Raii;
 using GagSpeak.State.Caches;
 using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
-using Dalamud.Bindings.ImGui;
 using OtterGui;
-using Dalamud.Interface.Utility.Raii;
-using Dalamud.Interface.Colors;
-using CkCommons.Gui;
 
 namespace GagSpeak.Services;
 
@@ -145,6 +145,8 @@ public sealed class ArousalService : IDisposable
         // Decay: usually a fraction of generation
         _degenerationRate = _generationRate * 0.5f;
 
+        _logger.LogDebug("Finished Updating Arousal Caches.", LoggerType.Arousal);
+
         return Task.CompletedTask;
     }
     #endregion Public Methods
@@ -216,19 +218,19 @@ public sealed class ArousalService : IDisposable
         ImGui.TextUnformatted($"Degeneration Rate: {_degenerationRate}");
         ImGui.Separator();
         ImGui.TextUnformatted("Arousal Effects:");
-        
+
         ImGui.Text("Blur:");
         CkGui.ColorTextInline(DoScreenBlur.ToString(), DoScreenBlur ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGreen);
         CkGui.TextInline($"| Intensity: {BlurIntensity:P2}");
-        
+
         ImGui.Text("Blush:");
         CkGui.ColorTextInline(DoBlush.ToString(), DoBlush ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGreen);
         CkGui.TextInline($"| Opacity: {BlushOpacity:P2}");
-        
+
         ImGui.Text("Stutter:");
         CkGui.ColorTextInline(DoStutter.ToString(), DoStutter ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGreen);
         CkGui.TextInline($"| Frequency: {StutterFrequency:P2}");
-        
+
         ImGui.Text("Pulse:");
         CkGui.ColorTextInline(DoPulse.ToString(), DoPulse ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGreen);
         CkGui.TextInline($"| Rate: {PulseRate:P2}");

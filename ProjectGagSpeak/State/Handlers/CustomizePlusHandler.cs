@@ -50,6 +50,7 @@ public class CustomizePlusHandler
             _logger.LogDebug("Ensuring C+ is locked in the correct state.", LoggerType.VisualCache);
             await ApplyProfileCache();
         }
+        _logger.LogDebug("Finished Updating C+ Caches.", LoggerType.VisualCache);
     }
 
     public void EnsureRestrictedProfile()

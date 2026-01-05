@@ -32,14 +32,14 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
     }
 
     public static bool SentEffectValid { get; private set; } = false;
-    
+
     // when we need to reapply an effect after a login on a character with an active one.
     public async Task ReapplySavedActiveEffect()
     {
         // Method should only be called once we have verified that we have an effect that should be applied and active,
         // and the timer is still running.
         Logger.LogDebug("Reapplying set hypnotic effect after reconnection!");
-        
+
         // if any part of this load is invalid, we should invalidate the sent effect, and return.
         if (ClientData.Hardcore is not { } hs)
             return;
@@ -92,7 +92,7 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
         // otherwise it is valid so set the time.
         if (!await _hypnoService.ApplyEffect(effect, enactor.UID, customImage))
             throw new Bagagwa("Summoned Bagagwa while setting a timed hypnotic effect! This should never happen!");
-        
+
         Logger.LogInformation($"Timed Hypnosis Effect successfully applied!", LoggerType.VisualCache);
         // Achievements here maybe.
 
@@ -173,6 +173,7 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
             );
             Logger.LogInformation($"Processed Cache Updates Successfully!");
         });
+        Logger.LogDebug("Finished Updating Overlay Caches.", LoggerType.VisualCache);
     }
 
 
