@@ -109,8 +109,7 @@ public class RequestsOutDrawer : DynamicDrawer<RequestEntry>
     {
         // No interactions, keep open.
         ImUtf8.SameLineInner();
-        ImGui.AlignTextToFramePadding();
-        CkGui.IconText(folder.Icon, folder.IconColor);
+        CkGui.IconTextAligned(folder.Icon, folder.IconColor);
         CkGui.ColorTextFrameAlignedInline(folder.Name, folder.NameColor);
         CkGui.ColorTextFrameAlignedInline($"[{folder.TotalChildren}]", ImGuiColors.DalamudGrey2);
         // Draw the right side buttons.

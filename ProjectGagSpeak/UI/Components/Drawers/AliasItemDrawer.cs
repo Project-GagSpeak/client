@@ -115,19 +115,16 @@ public sealed class AliasItemDrawer
             var icon = achievementItem.IsCompleted ? FAI.Trophy : (progress != 0 ? FAI.Stopwatch : FAI.Trophy);
             var color = achievementItem.IsCompleted ? ImGuiColors.ParsedGold : (progress != 0 ? ImGuiColors.DalamudGrey : ImGuiColors.DalamudGrey3);
             var tooltip = achievementItem.IsCompleted ? "Achievement Completed!" : (progress != 0 ? "Achievement in Progress" : "Achievement Not Started");
-            ImGui.AlignTextToFramePadding();
-            CkGui.IconText(icon, color);
+            CkGui.IconTextAligned(icon, color);
             CkGui.AttachToolTip(tooltip);
 
             // beside it, draw out the achievement's Title in white text.
-            ImUtf8.SameLineInner();
-            ImGui.AlignTextToFramePadding();
-            using (ImRaii.PushFont(UiBuilder.MonoFont)) CkGui.ColorText(achievementItem.Title, ImGuiColors.ParsedGold);
+            using (ImRaii.PushFont(UiBuilder.MonoFont))
+                CkGui.ColorTextFrameAlignedInline(achievementItem.Title, ImGuiColors.ParsedGold);
             // Split between the title and description
             ImGui.Separator();
 
-            ImGui.AlignTextToFramePadding();
-            CkGui.IconText(FAI.InfoCircle, ImGuiColors.TankBlue);
+            CkGui.IconTextAligned(FAI.InfoCircle, ImGuiColors.TankBlue);
 
             ImUtf8.SameLineInner();
             ImGui.AlignTextToFramePadding();

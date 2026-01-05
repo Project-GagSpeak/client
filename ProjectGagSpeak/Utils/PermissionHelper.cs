@@ -11,6 +11,7 @@ using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Util;
 using OtterGui;
+using OtterGui.Text;
 
 namespace GagSpeak.Utils;
 

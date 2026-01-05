@@ -66,6 +66,12 @@ public class PopoutGlobalChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubs
         GC.SuppressFinalize(this);
     }
 
+    public void SetDisabledStates(bool content, bool input)
+    {
+        disableContent = content;
+        disableInput = input;
+    }
+
     public void SetAutoScroll (bool newState)
         => DoAutoScroll = newState;
 

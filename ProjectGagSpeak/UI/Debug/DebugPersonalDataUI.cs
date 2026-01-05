@@ -11,6 +11,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.Utils;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
@@ -147,6 +148,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 
     private void DrawPlayerCharacterDebug()
     {
+        DrawAccountReputation();
         DrawGlobalPermissions("Player", ClientData.Globals ?? new GlobalPerms());
         DrawPlayerHardcore();
         DrawGagData("Player", _gags.ServerGagData ?? new CharaActiveGags());
@@ -169,6 +171,53 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         CkGui.ColorText("Active Triggers:", ImGuiColors.ParsedGold);
         CkGui.TextInline(string.Join(", ", _triggers.ActiveTriggers.Select(t => t.Label)));
     }
+
+    public static void DrawAccountReputation()
+    {
+        if (MainHub.ConnectionResponse is not { } responce)
+            return;
+
+        using var node = ImRaii.TreeNode("Account Reputation");
+        if (!node) return;
+
+        CkGui.TextFrameAligned("IsVerified:");
+        CkGui.BooleanToColoredIcon(responce.Reputation.IsVerified);
+
+        CkGui.TextFrameAligned("IsBanned:");
+        CkGui.BooleanToColoredIcon(responce.Reputation.IsBanned);
+
+        CkGui.FramedIconText(FAI.ExclamationTriangle, ImGuiColors.DalamudYellow);
+        CkGui.TextFrameAlignedInline("WarningStrikes:");
+        CkGui.ColorTextInline($"{responce.Reputation.WarningStrikes}", ImGuiColors.DalamudOrange);
+
+        // Display Hardcore State.
+        using var t = ImRaii.Table("ReputationStatus", 3, ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.SizingFixedFit);
+        if (!t) return;
+
+        ImGui.TableSetupColumn("Social Component");
+        ImGui.TableSetupColumn("Allowed");
+        ImGui.TableSetupColumn("Current Strikes");
+        ImGui.TableHeadersRow();
+
+        ImGuiUtil.DrawTableColumn("Profile Viewing");
+        ImGui.TableNextColumn();
+        CkGui.BooleanToColoredIcon(responce.Reputation.ProfileViewing, false);
+        ImGuiUtil.DrawTableColumn(responce.Reputation.ProfileViewStrikes.ToString());
+        ImGui.TableNextRow();
+
+        ImGuiUtil.DrawTableColumn("Profile Editing");
+        ImGui.TableNextColumn();
+        CkGui.BooleanToColoredIcon(responce.Reputation.ProfileEditing, false);
+        ImGuiUtil.DrawTableColumn(responce.Reputation.ProfileEditStrikes.ToString());
+        ImGui.TableNextRow();
+
+        ImGuiUtil.DrawTableColumn("Chat Usage");
+        ImGui.TableNextColumn();
+        CkGui.BooleanToColoredIcon(responce.Reputation.ChatUsage, false);
+        ImGuiUtil.DrawTableColumn(responce.Reputation.ChatStrikes.ToString());
+    }
+
+
 
     private void DrawPlayerHardcore()
     {

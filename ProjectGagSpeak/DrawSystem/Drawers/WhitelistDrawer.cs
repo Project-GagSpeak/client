@@ -135,8 +135,7 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
         ImGui.SameLine(pos.X);
         CkGui.FramedIconText(folder.IsOpen ? FAI.CaretDown : FAI.CaretRight);
         ImGui.SameLine();
-        ImGui.AlignTextToFramePadding();
-        CkGui.IconText(folder.Icon, folder.IconColor);
+        CkGui.IconTextAligned(folder.Icon, folder.IconColor);
         CkGui.ColorTextFrameAlignedInline(folder.Name, folder.NameColor);
         // Total Context.
         CkGui.ColorTextFrameAlignedInline(folder.BracketText, ImGuiColors.DalamudGrey2);
@@ -191,8 +190,7 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
     {
         var icon = s.IsRendered ? FAI.Eye : FAI.User;
         var color = s.IsOnline ? ImGuiColors.ParsedGreen : ImGuiColors.DalamudRed;
-        ImGui.AlignTextToFramePadding();
-        CkGui.IconText(icon, color);
+        CkGui.IconTextAligned(icon, color);
         CkGui.AttachToolTip(TooltipText(s));
         if (!flags.HasAny(DynamicFlags.DragDropLeaves) && s.IsRendered && ImGui.IsItemClicked())
             _mediator.Publish(new TargetKinksterMessage(s));
@@ -207,7 +205,6 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
         ImGui.SameLine(currentRightSide);
         if (!flags.HasAny(DynamicFlags.DragDrop))
         {
-            ImGui.AlignTextToFramePadding();
             if (CkGui.IconButton(FAI.ChevronRight, inPopup: true))
                 _stickyService.ForInteractions(leaf.Data);
 

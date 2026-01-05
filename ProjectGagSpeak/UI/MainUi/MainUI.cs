@@ -72,6 +72,7 @@ public class MainUI : WindowMediatorSubscriberBase
         this.SetBoundaries(new Vector2(MAIN_UI_WIDTH, 500), new Vector2(MAIN_UI_WIDTH, 2000));
         TitleBarButtons = new TitleBarButtonBuilder()
             .Add(FAI.Book, "Changelog", () => Mediator.Publish(new UiToggleMessage(typeof(ChangelogUI))))
+            .Add(FAI.Bell, "Actions Notifier", () => Mediator.Publish(new UiToggleMessage(typeof(InteractionEventsUI))))
             .Add(FAI.Cog, "Settings", () => Mediator.Publish(new UiToggleMessage(typeof(SettingsUi))))
             .AddTutorial(_guides, TutorialType.MainUi)
             .Build();
@@ -136,8 +137,7 @@ public class MainUI : WindowMediatorSubscriberBase
             {
                 var uidTextSize = ImGui.CalcTextSize(errorTitle);
                 ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X + ImGui.GetWindowContentRegionMin().X) / 2 - uidTextSize.X / 2);
-                ImGui.AlignTextToFramePadding();
-                ImGui.TextColored(ImGuiColors.ParsedPink, errorTitle);
+                CkGui.ColorTextFrameAligned(errorTitle, ImGuiColors.ParsedPink);
             }
             // the wrapped text explanation based on the error.
             CkGui.ColorTextWrapped(errorText, ImGuiColors.DalamudWhite);
@@ -182,7 +182,7 @@ public class MainUI : WindowMediatorSubscriberBase
                     _moodlesHub.DrawMoodlesHub();
                     break;
                 case MainMenuTabs.SelectedTab.GlobalChat:
-                    _globalChat.DrawDiscoverySection();
+                    _globalChat.DrawSection();
                     break;
             }
         }

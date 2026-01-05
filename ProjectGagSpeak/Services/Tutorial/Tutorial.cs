@@ -166,9 +166,7 @@ public class Tutorial
                 nextValue = nextStepVal;
             ImGuiUtil.HoverTooltip("Go to the next Step.");
 
-            ImUtf8.SameLineInner();
-            ImGui.AlignTextToFramePadding();
-            ImGui.TextColored(ImGuiColors.ParsedPink, PopupLabel + " ("+(CurrentStep+1)+"/"+EndStep+")");
+            CkGui.ColorTextFrameAlignedInline(PopupLabel + " ("+(CurrentStep+1)+"/"+EndStep+")", ImGuiColors.ParsedPink);
         }
 
         var buttonPos = windowPos + new Vector2(windowSize.X - _buttonCloseSize.X - ImGui.GetStyle().ItemInnerSpacing.X, ImGui.GetStyle().ItemSpacing.Y);

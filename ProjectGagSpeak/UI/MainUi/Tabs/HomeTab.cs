@@ -91,7 +91,7 @@ public class HomeTab
 
             ProfileInfoRow(FAI.IdBadge, MainHub.UID, string.Empty);
             CkGui.AttachToolTip("Your Profile's UID.");
-            CkGui.CopyableDisplayText(MainHub.DisplayName);
+            CkGui.CopyableDisplayText(MainHub.UID);
 
             ProfileInfoRow(FAI.UserSecret, MainHub.OwnUserData.AnonName, "Your Anonymous name used in Requests / Chats.");
 
@@ -139,8 +139,7 @@ public class HomeTab
         ImGui.Spacing();
         using (ImRaii.Group())
         {
-            ImGui.AlignTextToFramePadding();
-            CkGui.IconText(icon);
+            CkGui.IconTextAligned(icon);
             CkGui.TextFrameAlignedInline(text);
         }
         CkGui.AttachToolTip(tooltip);
@@ -182,8 +181,6 @@ public class HomeTab
         using (ImRaii.Group())
         {
             AchievementsButton(buttonWidth);
-            SettingsButton(buttonWidth);
-            ActionsNotifierButton(buttonWidth);
             KoFiButton(buttonWidth);
             PatreonButton(buttonWidth);
             FeedbackButton(buttonWidth);
@@ -205,8 +202,6 @@ public class HomeTab
             AllowancesButton(buttonWidth);
             PublicationsButton(buttonWidth);
             AchievementsButton(buttonWidth);
-            SettingsButton(buttonWidth);
-            ActionsNotifierButton(buttonWidth);
             KoFiButton(buttonWidth);
             PatreonButton(buttonWidth);
             FeedbackButton(buttonWidth);
@@ -278,20 +273,6 @@ public class HomeTab
         CkGui.AttachToolTip("View Achievement Progress & Rewards.");
     }
 
-    private void SettingsButton(float width)
-    {
-        if (CkGui.FancyButton(FAI.Cog, "Open Settings", width, false))
-            _mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
-        CkGui.AttachToolTip("Opens the Settings UI.");
-    }
-
-    private void ActionsNotifierButton(float width)
-    {
-        if (CkGui.FancyButton(FAI.Bell, "Actions Notifier", width, false))
-            _mediator.Publish(new UiToggleMessage(typeof(InteractionEventsUI)));
-        CkGui.AttachToolTip("See who did what actions on you!");
-    }
-
     private void KoFiButton(float buttonWidth)
     {
         if (CkGui.FancyButton(FAI.Coffee, "Tip GagSpeak", buttonWidth, false))
@@ -327,7 +308,7 @@ public class HomeTab
 
     private void ConfigFolderButton(float buttonWidth)
     {
-        if (CkGui.FancyButton(FAI.Wrench, "Open Config", buttonWidth, false))
+        if (CkGui.FancyButton(FAI.Folder, "Plugin Config", buttonWidth, false))
         {
             try { Process.Start(new ProcessStartInfo { FileName = ConfigFileProvider.GagSpeakDirectory, UseShellExecute = true }); }
             catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the config directory. {e.Message}"); }

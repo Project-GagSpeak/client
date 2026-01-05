@@ -19,6 +19,7 @@ using OtterGui;
 using OtterGui.Extensions;
 using Penumbra.GameData.Enums;
 using GagspeakAPI.Network;
+using GagSpeak.WebAPI;
 
 namespace GagSpeak.Gui;
 

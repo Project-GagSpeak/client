@@ -24,6 +24,8 @@ using OtterGui.Text;
 using System.Globalization;
 
 namespace GagSpeak.Utils;
+
+// Revise later to make more instanced or common chatlog sources to draw from.
 public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber, IDisposable
 {
     private static string RecentFile => Path.Combine(ConfigFileProvider.GagSpeakDirectory, "global-chat-recent.log");
@@ -77,6 +79,10 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
     }
 
     public GagspeakMediator Mediator { get; }
+
+    public static bool AccessBlocked => ChatBlocked || NotVerified;
+    public static bool ChatBlocked => !MainHub.Reputation.ChatUsage;
+    public static bool NotVerified => !MainHub.Reputation.IsVerified;
     public static int NewMsgCount => _newMsgCount;
     public static bool NewMsgFromDev => _newMsgFromDev;
 
@@ -87,6 +93,12 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
         SaveChatLog();
 
         GC.SuppressFinalize(this);
+    }
+
+    public void SetDisabledStates(bool content, bool input)
+    {
+        disableContent = content;
+        disableInput = input;
     }
 
     public void SetAutoScroll (bool newState)

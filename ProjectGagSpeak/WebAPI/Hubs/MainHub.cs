@@ -137,7 +137,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     public static UserData OwnUserData => ConnectionResponse!.User;
     public static string DisplayName => ConnectionResponse?.User.AliasOrUID ?? string.Empty;
     public static string UID => ConnectionResponse?.User.UID ?? string.Empty;
-    public static bool IsVerified => ConnectionResponse?.Reputation.IsVerified ?? false; // Maybe update to account reputation stuff idk.
+    public static UserReputation Reputation => ConnectionResponse?.Reputation ?? new();
     public static ServerState ServerStatus
     {
         get => _serverStatus;
