@@ -70,6 +70,7 @@ public partial class StaticDetours
                     // Using /gag command on yourself sends /tell which should be caught by this
                     // Depends on the message to start like :"/tell {targetPlayer} *{playerPayload.PlayerName}"
                     // Since only outgoing tells are affected, {targetPlayer} and {playerPayload.PlayerName} will be the same
+                    // TODO: (/t <1> /t <0> and /t <me> are self-tells, maybe adjust this to include those?)
                     var selfTellRegex = @"(?<=^|\s)/t(?:ell)?\s{1}(?<name>\S+\s{1}\S+)@\S+\s{1}\*\k<name>(?=\s|$)";
 
                     // If the condition is not matched here, it means we are performing a self-tell (someone is messaging us), so return original.
@@ -79,8 +80,10 @@ public partial class StaticDetours
                         return ProcessChatInputHook.Original(uiModule, message, a3);
                     }
 
-                    // Match any other outgoing tell to preserve target name
-                    var tellRegex = @"(?<=^|\s)/t(?:ell)?\s{1}(?:\S+\s{1}\S+@\S+|\<r\>)\s?(?=\S|\s|$)";
+                    // Match any other outgoing tell to preserve target name including all valid placeholders that
+                    // target another player: t, tell, r, reply, f, focus, tt, t2t and party members 2-8.
+                    var tellRegex = @"(?<=^|\s)/t(?:ell)?\s{1}(?:\S+\s{1}\S+@\S+|\<(?:[trf2-8]|tell|reply|focus|tt|t2t)\>)\s?(?=\S|\s|$)";
+
                     prefix = Regex.Match(messageDecoded, tellRegex).Value;
                 }
                 Logger.LogTrace($"Matched Command [{prefix}] for [{channel}]", LoggerType.ChatDetours);
