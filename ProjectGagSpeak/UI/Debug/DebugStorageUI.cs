@@ -1,8 +1,10 @@
 using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Helpers;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.DrawSystem;
 using GagSpeak.FileSystems;
 using GagSpeak.Gui.Components;
 using GagSpeak.PlayerClient;
@@ -10,20 +12,20 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
+using GagSpeak.Utils;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.Network;
 using GagspeakAPI.Util;
-using Dalamud.Bindings.ImGui;
 using Microsoft.IdentityModel.Tokens;
 using OtterGui;
 using OtterGui.Extensions;
 using Penumbra.GameData.Enums;
-using GagspeakAPI.Network;
-using GagSpeak.WebAPI;
 
 namespace GagSpeak.Gui;
 
-public class DebugStorageUI : WindowMediatorSubscriberBase
+public partial class DebugStorageUI : WindowMediatorSubscriberBase
 {
     private readonly ClientData _clientData;
     private readonly RequestsManager _requests;
@@ -42,6 +44,10 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
     private readonly RestraintSetFileSystem _restraintsFS;
     private readonly MoodleDrawer _moodleDrawer;
     private readonly ModPresetDrawer _modPresetDrawer;
+
+    private readonly WhitelistDrawSystem _mainDDS;
+    private readonly RequestsDrawSystem _requestsDDS;
+
     public DebugStorageUI(
         ILogger<DebugStorageUI> logger,
         GagspeakMediator mediator,
@@ -61,7 +67,9 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
         RestrictionFileSystem restrictionsFS,
         RestraintSetFileSystem restraintsFS,
         MoodleDrawer moodleDrawer,
-        ModPresetDrawer modPresetDrawer)
+        ModPresetDrawer modPresetDrawer,
+        WhitelistDrawSystem kinksterDDS,
+        RequestsDrawSystem requestsDDS)
         : base(logger, mediator, "Debugger for Storages")
     {
         _clientData = clientData;
@@ -81,14 +89,12 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
         _restraintsFS = restraintsFS;
         _moodleDrawer = moodleDrawer;
         _modPresetDrawer = modPresetDrawer;
+        _mainDDS = kinksterDDS;
+        _requestsDDS = requestsDDS;
 
         IsOpen = false;
 
-        SizeConstraints = new WindowSizeConstraints()
-        {
-            MinimumSize = new Vector2(380, 400),
-            MaximumSize = ImGui.GetIO().DisplaySize,
-        };
+        this.SetBoundaries(new(380, 400), ImGui.GetIO().DisplaySize);
     }
 
     protected override void PreDrawInternal()
@@ -100,6 +106,9 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
     protected override void DrawInternal()
     {
         DrawGlobalData();
+
+        ImGui.Separator();
+        DrawDDSDebug();
 
         ImGui.Separator();
         DrawGagStorage();
@@ -250,7 +259,7 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
                 ImGuiUtil.DrawTableColumn(req.SenderUID.ToString());
                 ImGuiUtil.DrawTableColumn(req.RecipientUID.ToString());
                 ImGuiUtil.DrawTableColumn(req.SentTime.ToString());
-                ImGuiUtil.DrawTableColumn(req.AttachedMessage.ToString());
+                ImGuiUtil.DrawTableColumn(req.Message.ToString());
             }
         }
         ImGui.Spacing();
@@ -298,6 +307,15 @@ public class DebugStorageUI : WindowMediatorSubscriberBase
                 ImGuiUtil.DrawTableColumn(req.OwnerAccess.ToString());
             }
         }
+    }
+
+    public void DrawDDSDebug()
+    {
+        if (!ImGui.CollapsingHeader("Dynamic Draw Systems"))
+            return;
+
+        DrawDDSDebug("Kinkster DDS", _mainDDS);
+        DrawDDSDebug("Requests DDS", _requestsDDS);
     }
 
     public void DrawGagStorage()

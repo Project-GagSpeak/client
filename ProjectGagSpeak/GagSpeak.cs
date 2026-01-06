@@ -349,6 +349,7 @@ public static class GagSpeakServiceExtensions
         .AddScoped<WindowMediatorSubscriberBase, IntroUi>()
         .AddScoped<WindowMediatorSubscriberBase, MainUI>()
         .AddScoped<HomeTab>()
+        .AddScoped<RequestsTab>()
         .AddScoped<WhitelistTab>()
         .AddScoped<PatternHubTab>()
         .AddScoped<MoodleHubTab>()

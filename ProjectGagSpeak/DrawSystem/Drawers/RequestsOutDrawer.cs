@@ -167,7 +167,7 @@ public class RequestsOutDrawer : DynamicDrawer<RequestEntry>
         ImGui.SameLine(rightX);
         CkGui.FramedHoverIconText(FAI.InfoCircle, ImGuiColors.TankBlue.ToUint());
         CkGui.AttachToolTip($"--COL--[Requested Nick]:--COL-- <UNKNOWN>" +
-            $"--NL----COL--[Message]:--COL----NL--{leaf.Data.AttachedMessage}", ImGuiColors.DalamudOrange);
+            $"--NL----COL--[Message]:--COL----NL--{leaf.Data.Message}", ImGuiColors.DalamudOrange);
         
         rightX -= ImGui.CalcTextSize(timeLeftText).X;
         ImGui.SameLine(rightX);

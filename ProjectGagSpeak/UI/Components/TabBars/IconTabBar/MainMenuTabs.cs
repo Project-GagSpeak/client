@@ -122,7 +122,7 @@ public class MainMenuTabs : IconTabBar<MainMenuTabs.SelectedTab>
             {
                 if (_requests.Incoming.Count > 0)
                 {
-                    var newMsgTxtPos = new Vector2(x.X + buttonSize.X / 2, x.Y - spacing.Y);
+                    var newMsgTxtPos = new Vector2(x.X + buttonSize.X * .65f, x.Y - spacing.Y);
                     var newMsgTxt = _requests.Incoming.Count > 99 ? "99+" : _requests.Incoming.Count.ToString();
                     drawList.OutlinedFont(newMsgTxt, newMsgTxtPos, ImGuiColors.ParsedPink.ToUint(), 0xFF000000, 1);
                 }

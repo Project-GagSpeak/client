@@ -11,6 +11,7 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Utils;
+using Lumina.Excel.Sheets;
 using OtterGui.Text;
 using System.Collections.Immutable;
 
@@ -140,7 +141,7 @@ public sealed class AllowancesDrawer : DynamicDrawer<Kinkster>
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One)
             .Push(ImGuiStyleVar.IndentSpacing, 14f * ImGuiHelpers.GlobalScale);
         // Draw out the node, for folders only.
-        DrawClippedCacheNode(cachedNode, flags);
+        DrawClippedCacheNode(cachedNode, 0, ImUtf8.FrameHeight + ImUtf8.ItemInnerSpacing.X, flags);
         PostDraw();
     }
 

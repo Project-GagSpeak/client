@@ -7,25 +7,7 @@ namespace GagSpeak.DrawSystem;
 // RequesterCache used by RequestInDrawer and RequestOutDrawer.
 public class RequestCache(DynamicDrawSystem<RequestEntry> parent) : DynamicFilterCache<RequestEntry>(parent)
 {
-    /// <summary>
-    ///     If the config options under the filter bar should show.
-    /// </summary>
-    public bool FilterConfigOpen = false;
-
-    /// <summary>
-    ///     The groups that the accepted selection of requests will go towards.
-    /// </summary>
-    public List<string> AssignedGroups { get; set; } = [];
-
-    /// <summary>
-    ///     The nickname applied to an accepted request. (Unused on bulk accepting)
-    /// </summary>
-    public string AppliedNick { get; set; } = string.Empty;
-
-    /// <summary>
-    ///     If the nickname requested by the requester should be applied or not.
-    /// </summary>
-    public bool AcceptRequestedNick { get; set; } = true;
+    public bool FilterConfigOpen { get; set; } = false;
 
     protected override bool IsVisible(IDynamicNode<RequestEntry> node)
     {

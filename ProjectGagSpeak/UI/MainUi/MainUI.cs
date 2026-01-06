@@ -27,10 +27,11 @@ public class MainUI : WindowMediatorSubscriberBase
     private readonly AccountManager _account;
     private readonly MainHub _hub;
     private readonly MainMenuTabs _tabMenu;
-    private readonly RequestsManager _requests;
+    private readonly RequestsManager _requestManager;
     private readonly KinksterManager _kinksters;
     private readonly TutorialService _guides;
     private readonly HomeTab _homepage;
+    private readonly RequestsTab _requests;
     private readonly WhitelistTab _whitelist;
     private readonly PatternHubTab _patternHub;
     private readonly MoodleHubTab _moodlesHub;
@@ -39,25 +40,25 @@ public class MainUI : WindowMediatorSubscriberBase
 
     private bool _creatingRequest = false;
     public string _uidToSentTo = string.Empty;
-    public string _preferredNick = string.Empty;
     public string _requestMessage = string.Empty;
 
     private bool ThemePushed = false;
 
     public MainUI(ILogger<MainUI> logger, GagspeakMediator mediator, MainConfig config,
-        AccountManager account, MainHub hub, MainMenuTabs tabMenu, RequestsManager requests, 
-        KinksterManager kinksters, TutorialService guides, HomeTab home, WhitelistTab whitelist, 
-        PatternHubTab patternHub, MoodleHubTab moodlesHub, GlobalChatTab globalChat)         
+        AccountManager account, MainHub hub, MainMenuTabs tabMenu, RequestsManager requestmanager, 
+        KinksterManager kinksters, TutorialService guides, HomeTab home, RequestsTab requests,
+        WhitelistTab whitelist, PatternHubTab patternHub, MoodleHubTab moodlesHub, GlobalChatTab globalChat)         
         : base(logger, mediator, "###GagSpeakMainUI")
     {
         _config = config;
         _account = account;
         _hub = hub;
         _tabMenu = tabMenu;
-        _requests = requests;
+        _requestManager = requestmanager;
         _kinksters = kinksters;
         _guides = guides;
         _homepage = home;
+        _requests = requests;
         _whitelist = whitelist;
         _patternHub = patternHub;
         _moodlesHub = moodlesHub;
@@ -168,7 +169,7 @@ public class MainUI : WindowMediatorSubscriberBase
                     _homepage.DrawSection();
                     break;
                 case MainMenuTabs.SelectedTab.Requests:
-                    ImGui.Text("Hello!");
+                    _requests.DrawSection();
                     break;
                 case MainMenuTabs.SelectedTab.Whitelist:
                     _whitelist.DrawSection();
@@ -205,13 +206,13 @@ public class MainUI : WindowMediatorSubscriberBase
         {
             UiService.SetUITask(async () =>
             {
-                var res = await _hub.UserSendKinksterRequest(new(new(_uidToSentTo), false, _preferredNick, _requestMessage));
+                var res = await _hub.UserSendKinksterRequest(new(new(_uidToSentTo), false, string.Empty, _requestMessage));
                 _uidToSentTo = string.Empty;
                 _requestMessage = string.Empty;
                 _creatingRequest = false;
                 // Add the request if it was successful!
                 if (res.ErrorCode is GagSpeakApiEc.Success)
-                    _requests.AddNewRequest(res.Value!);
+                    _requestManager.AddNewRequest(res.Value!);
             });
         }
         if (!string.IsNullOrEmpty(_uidToSentTo))
@@ -225,9 +226,6 @@ public class MainUI : WindowMediatorSubscriberBase
             _creatingRequest = !_creatingRequest;
             _tabMenu.TabSelection = MainMenuTabs.SelectedTab.Homepage;
         });
-        // Preferred nick area.
-        ImGui.SetNextItemWidth(availableXWidth);
-        ImGui.InputTextWithHint("##preferredNick", "Preferred Nickname (Optional)", ref _preferredNick, 20);
         ImGui.Separator();
     }
 
