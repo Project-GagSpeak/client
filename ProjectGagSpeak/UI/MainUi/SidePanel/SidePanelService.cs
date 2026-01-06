@@ -103,7 +103,7 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
     // Instance get-private setters.
     public string                        LastUID     { get; private set; }
     public Kinkster                      Kinkster    { get; private set; }
-    public SidePanelTabs.InteractionTab  CurrentTab  { get; private set; } = SidePanelTabs.InteractionTab.PermsForKinkster;
+    public SidePanelTabs.InteractionTab  CurrentTab  { get; private set; } = SidePanelTabs.InteractionTab.Interactions;
     public InteractionType               OpenItem    { get; private set; } = InteractionType.None;
     public PresetName                    CurPreset   { get; set; }         = PresetName.NoneSelected;
 
