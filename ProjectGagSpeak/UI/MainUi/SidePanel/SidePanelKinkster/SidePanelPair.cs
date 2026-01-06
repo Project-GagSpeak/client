@@ -1,6 +1,8 @@
 using CkCommons;
 using CkCommons.Classes;
 using CkCommons.Gui;
+using CkCommons.Gui.Utility;
+using CkCommons.Helpers;
 using CkCommons.Raii;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
@@ -42,7 +44,7 @@ public partial class SidePanelPair
         // Child area for scrolling.
         using var _ = CkRaii.Child("ClientPermsForKinkster", ImGui.GetContentRegionAvail(), wFlags: WFlags.NoScrollbar);
         // Change this later to reside in an internal accessor, that is not static. (Or maybe make static but more centralized.)
-        if (ClientData.Globals is not { } globals || ClientData.Hardcore is not { } hc) 
+        if (ClientData.Globals is not { } globals || ClientData.Hardcore is not { } hc)
             return;
 
         ImGui.TextUnformatted("Global Settings");
@@ -199,10 +201,10 @@ public partial class SidePanelPair
     {
         ImGuiUtil.Center($"{dispName}'s Permissions for You");
         ImGui.Separator();
-        
+
         // have to make child object below the preset selector for a scrollable interface.
         using var _ = CkRaii.Child("KinksterPerms", new Vector2(0, ImGui.GetContentRegionAvail().Y), wFlags: WFlags.NoScrollbar);
-        
+
         ImGui.TextUnformatted("Global Settings");
         KinksterPermRow(kinkster, dispName, width, KPID.ChatGarblerActive,       kinkster.PairGlobals.ChatGarblerActive,       kinkster.PairPermAccess.ChatGarblerActiveAllowed );
         KinksterPermRow(kinkster, dispName, width, KPID.ChatGarblerLocked,       kinkster.PairGlobals.ChatGarblerLocked,       kinkster.PairPermAccess.ChatGarblerLockedAllowed );
@@ -292,6 +294,45 @@ public partial class SidePanelPair
 
     public void DrawInteractions(KinksterInfoCache cache, Kinkster kinkster, string dispName, float width)
     {
-        // TODO: Implement interaction drawing.
+        /* ----------- GLOBAL SETTINGS ----------- */
+        ImGuiUtil.Center($"Interactions with {dispName}");
+        ImGui.Separator();
+
+        if (kinkster.IsOnline)
+        {
+            DrawGagActions(cache, kinkster, width, dispName);
+            ImGui.Separator();
+
+            DrawRestrictionActions(cache, kinkster, width, dispName);
+            ImGui.Separator();
+
+            DrawRestraintActions(cache, kinkster, width, dispName);
+            ImGui.Separator();
+
+            DrawMoodlesActions(cache, kinkster, width, dispName);
+            ImGui.Separator();
+
+            DrawToyboxActions(cache, kinkster, width, dispName);
+            ImGui.Separator();
+
+            DrawMiscActions(cache, kinkster, width, dispName);
+            ImGui.Separator();
+        }
+        if (kinkster.PairPerms.InHardcore)
+        {
+            DrawHardcoreActions(cache, kinkster, dispName, width);
+            ImGui.Separator();
+        }
+        // if (kinster.PairPerms.HasValidShareCode() || kinster.PairGlobals.HasValidShareCode())
+        // {
+        //     DrawShockActions(width, kinster, dispName);
+        //     ImGui.Separator();
+        // }
+
+        ImGui.TextUnformatted("Individual Pair Functions");
+        if (CkGui.IconTextButton(FAI.Trash, "Unpair Permanently", width, true, !KeyMonitor.CtrlPressed() || !KeyMonitor.ShiftPressed()))
+            _hub.UserRemoveKinkster(new(kinkster.UserData)).ConfigureAwait(false);
+        CkGui.AttachToolTip($"--COL--CTRL + SHIFT + L-Click--COL-- to remove {dispName}", color: ImGuiColors.DalamudRed);
     }
+
 }

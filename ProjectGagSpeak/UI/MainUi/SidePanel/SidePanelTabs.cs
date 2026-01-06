@@ -19,12 +19,11 @@ public class SidePanelTabs : IconTabBar<SidePanelTabs.InteractionTab>
 
     public SidePanelTabs()
     {
-        // TODO: choose icons
-        AddDrawButton(FontAwesomeIcon.Home, InteractionTab.KinkstersPerms, "Permissions granted to you by the Kinkster");
+        AddDrawButton(FontAwesomeIcon.Key, InteractionTab.Interactions, "Interact with the Kinkster");
+        AddDrawButton(FontAwesomeIcon.Binoculars, InteractionTab.KinkstersPerms, "Permissions granted to you by the Kinkster");
+        AddDrawButton(FontAwesomeIcon.UserShield, InteractionTab.PermsForKinkster, "Your permissions for the Kinkster");
 
-        AddDrawButton(FontAwesomeIcon.Inbox, InteractionTab.PermsForKinkster, "Your permissions for the Kinkster");
-
-        AddDrawButton(FontAwesomeIcon.PeopleArrows, InteractionTab.Interactions, "Interact with the Kinkster");
+        TabSelection = InteractionTab.Interactions;
     }
 
     public override void Draw(float availableWidth)
