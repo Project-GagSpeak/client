@@ -55,7 +55,6 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
     private readonly SidePanelTabs _tabs;
     
     private HypnoEffectEditor _hypnoEditor;
-    private InteractionType _curOpened = InteractionType.None;
     public KinksterInfoCache(ILogger log, MainHub hub, Kinkster kinkster, HypnoEffectManager hypno, SidePanelTabs tabs)
     {
         _log = log;
@@ -133,10 +132,10 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
     }
 
     public void ToggleInteraction(InteractionType act)
-        => _curOpened = (_curOpened == act) ? InteractionType.None : act;
+        => OpenItem = (OpenItem == act) ? InteractionType.None : act;
 
     public void ClearInteraction()
-        => _curOpened = InteractionType.None;
+        => OpenItem = InteractionType.None;
 
     public void ToggleHypnosisView()
     {
