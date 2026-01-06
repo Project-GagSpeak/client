@@ -298,6 +298,9 @@ public partial class SidePanelPair
         ImGuiUtil.Center($"Interactions with {dispName}");
         ImGui.Separator();
 
+        // have to make child object below the preset selector for a scrollable interface.
+        using var _ = CkRaii.Child("KinksterInteractions", new Vector2(0, ImGui.GetContentRegionAvail().Y), wFlags: WFlags.NoScrollbar);
+
         if (kinkster.IsOnline)
         {
             DrawGagActions(cache, kinkster, width, dispName);
