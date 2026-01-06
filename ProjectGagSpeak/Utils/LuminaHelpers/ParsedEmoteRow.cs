@@ -10,7 +10,7 @@ namespace GagSpeak.Utils;
 public readonly record struct ParsedEmoteRow : IEquatable<ParsedEmoteRow>
 {
     public readonly uint RowId;
-    public readonly ushort IconId;
+    public readonly uint IconId;
     public readonly string Name;
     public readonly byte EmoteConditionMode;
 
@@ -32,7 +32,7 @@ public readonly record struct ParsedEmoteRow : IEquatable<ParsedEmoteRow>
     public ParsedEmoteRow(Emote emote)
     {
         RowId = emote.RowId;
-        IconId = (ushort)(emote.Icon == 64350 ? 405 : emote.Icon);
+        IconId = (emote.Icon == 64350 ? 405 : emote.Icon);
         Name = emote.Name.ToString();
         EmoteConditionMode = emote.EmoteMode.Value.ConditionMode;
 
