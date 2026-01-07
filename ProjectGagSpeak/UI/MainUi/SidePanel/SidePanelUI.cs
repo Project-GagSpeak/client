@@ -60,18 +60,11 @@ public class SidePanelUI : WindowMediatorSubscriberBase
         if (_service.DisplayMode is SidePanelMode.None)
             return;
 
-        // Display the correct mode.
-        switch (_service.DisplayCache)
+        // Otherwise for now we dont need a switch statement since we only have one other tab,
+        // so just draw out the interactions.
+        if (_service.DisplayCache is KinksterInfoCache kic)
         {
-            case KinksterInfoCache ic:
-                DrawInteractions(ic);
-                return;
-            case ResponseCache irc when irc.Mode is SidePanelMode.IncomingRequests:
-                DrawIncomingRequests(irc);
-                return;
-            case ResponseCache prc when prc.Mode is SidePanelMode.PendingRequests:
-                DrawPendingRequests(prc);
-                return;
+            DrawInteractions(kic);
         }
     }
 
@@ -88,36 +81,19 @@ public class SidePanelUI : WindowMediatorSubscriberBase
         _tabs.Draw(width);
 
         // Draw the contents based on the type of tab we are on currently.
-        switch (ic.CurrentTab)
+        switch (_tabs.TabSelection)
         {
-            case SidePanelTabs.InteractionTab.PermsForKinkster: _kinksterInfoPanel.DrawClientPermissions(ic, kinkster, dispName, width); break;
-            case SidePanelTabs.InteractionTab.KinkstersPerms: _kinksterInfoPanel.DrawKinksterPermissions(ic, kinkster, dispName, width); break;
-            case SidePanelTabs.InteractionTab.Interactions: _kinksterInfoPanel.DrawInteractions(ic, kinkster, dispName, width);          break;
-        }
-    }
+            case SidePanelTabs.SelectedTab.Interactions:
+                _kinksterInfoPanel.DrawInteractions(ic, kinkster, dispName, width);
+                break;
 
+            case SidePanelTabs.SelectedTab.KinkstersPerms:
+                _kinksterInfoPanel.DrawKinksterPermissions(ic, kinkster, dispName, width);
+                break;
 
-    private void DrawIncomingRequests(ResponseCache irc)
-    {
-        using var _ = CkRaii.Child("RequestResponder", ImGui.GetContentRegionAvail(), wFlags: WFlags.NoScrollbar);
-        var width = _.InnerRegion.X;
-
-        CkGui.FontTextCentered("Request Responder", UiFontService.Default150Percent);
-
-        CkGui.FramedIconText(FAI.ObjectGroup);
-        CkGui.TextFrameAlignedInline("Bulk Selector Area");
-        CkGui.TextFrameAligned($"There are currently: {irc.Selected.Count} selected requests.");
-    }
-
-    private void DrawPendingRequests(ResponseCache prc)
-    {
-        using var _ = CkRaii.Child("PendingRequests", ImGui.GetContentRegionAvail(), wFlags: WFlags.NoScrollbar);
-        var width = _.InnerRegion.X;
-
-        CkGui.FontTextCentered("Pending Requests", UiFontService.Default150Percent);
-
-        CkGui.FramedIconText(FAI.ObjectGroup);
-        CkGui.TextFrameAlignedInline("Bulk Selector Area");
-        CkGui.TextFrameAligned($"There are currently: {prc.Selected.Count} selected requests.");
+            case SidePanelTabs.SelectedTab.PermsForKinkster:
+                _kinksterInfoPanel.DrawClientPermissions(ic, kinkster, dispName, width);
+                break;
+        } 
     }
 }

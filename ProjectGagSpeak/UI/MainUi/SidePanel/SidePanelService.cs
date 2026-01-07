@@ -1,14 +1,11 @@
 using CkCommons;
 using CkCommons.DrawSystem;
-using CkCommons.DrawSystem.Selector;
 using Dalamud.Bindings.ImGui;
-using Dalamud.Interface.Utility;
 using GagSpeak.CustomCombos;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.CustomCombos.Moodles;
 using GagSpeak.CustomCombos.Padlock;
 using GagSpeak.CustomCombos.Pairs;
-using GagSpeak.DrawSystem;
 using GagSpeak.Gui.Components;
 using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
@@ -29,8 +26,7 @@ public enum SidePanelMode
 {
     None,
     Interactions,
-    IncomingRequests,
-    PendingRequests,
+    // can add more as nescessary.
 }
 
 public interface ISidePanelCache
@@ -52,19 +48,15 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
     // Stored internally for regenerators.
     private readonly ILogger _log;
     private readonly MainHub _hub;
-    private readonly SidePanelTabs _tabs;
-    
+   
     private HypnoEffectEditor _hypnoEditor;
-    public KinksterInfoCache(ILogger log, MainHub hub, Kinkster kinkster, HypnoEffectManager hypno, SidePanelTabs tabs)
+    public KinksterInfoCache(ILogger log, MainHub hub, Kinkster kinkster, HypnoEffectManager hypno)
     {
         _log = log;
         _hub = hub;
-        _tabs = tabs;
         _hypnoEditor = new HypnoEffectEditor("KinksterEffectEditor", hypno);
 
         UpdateKinkster(kinkster);
-
-        _tabs.TabSelectionChanged += TabSelectionChanged;
     }
 
     // Variables that are freely changable and used for the various opened windows.
@@ -103,7 +95,6 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
     // Instance get-private setters.
     public string                        LastUID     { get; private set; }
     public Kinkster                      Kinkster    { get; private set; }
-    public SidePanelTabs.InteractionTab  CurrentTab  { get; private set; } = SidePanelTabs.InteractionTab.Interactions;
     public InteractionType               OpenItem    { get; private set; } = InteractionType.None;
     public PresetName                    CurPreset   { get; set; }         = PresetName.NoneSelected;
 
@@ -127,7 +118,6 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
 
     public void Dispose()
     {
-        _tabs.TabSelectionChanged -= TabSelectionChanged;
         _hypnoEditor.Dispose();
     }
 
@@ -364,30 +354,7 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
             }
         });
     }
-
-    private void TabSelectionChanged(SidePanelTabs.InteractionTab oldTab, SidePanelTabs.InteractionTab newTab)
-    {
-        CurrentTab = newTab;
-        _log.LogDebug($"Switched Side Panel Tab from {oldTab} to {newTab}", LoggerType.UI);
-    }
 }
-
-public class ResponseCache : ISidePanelCache
-{
-    private RequestCache? _cache;
-    private DynamicSelections<RequestEntry>? _selections;
-    public ResponseCache(SidePanelMode mode, RequestCache cache, DynamicSelections<RequestEntry> selections)
-    {
-        Mode = mode;
-        _cache = cache;
-        _selections = selections;
-    }
-
-    public SidePanelMode Mode { get; init; }
-    public IReadOnlyList<DynamicLeaf<RequestEntry>> Selected => _selections?.Leaves ?? [];
-    public float DispWidth => 300 * ImGuiHelpers.GlobalScale;
-    public bool IsValid => _selections is not null && Selected.Count > 1;
-} 
 
 public sealed class SidePanelService : DisposableMediatorSubscriberBase
 {
@@ -416,18 +383,13 @@ public sealed class SidePanelService : DisposableMediatorSubscriberBase
 
     private void UpdateForNewTab(MainMenuTabs.SelectedTab newTab)
     {
-        switch (DisplayMode)
+        if (DisplayMode is SidePanelMode.Interactions)
         {
-            case SidePanelMode.PendingRequests:
-            case SidePanelMode.IncomingRequests:
-                if (newTab is not MainMenuTabs.SelectedTab.Requests)
-                    ClearDisplay();
+            // If we are switching to whitelist, keep it open.
+            if (newTab is MainMenuTabs.SelectedTab.Whitelist)
                 return;
-
-            case SidePanelMode.Interactions:
-                if (newTab is not MainMenuTabs.SelectedTab.Whitelist)
-                    ClearDisplay();
-                return;
+            // Otherwise clear it.
+            ClearDisplay();
         }
     }
 
@@ -474,7 +436,7 @@ public sealed class SidePanelService : DisposableMediatorSubscriberBase
         else
         {
             Logger.LogInformation($"Opening Side Panel Interactions for {kinkster.GetNickAliasOrUid()}");
-            DisplayCache = new KinksterInfoCache(Logger, _hub, kinkster, _hypnoManager, _tabs);
+            DisplayCache = new KinksterInfoCache(Logger, _hub, kinkster, _hypnoManager);
         }
     }
 
@@ -482,20 +444,5 @@ public sealed class SidePanelService : DisposableMediatorSubscriberBase
     {
         // Change this later!
         ClearDisplay();
-    }
-
-    /// <summary>
-    ///     Set the side panel to display pending request selections.
-    /// </summary>
-    public void ForRequests(SidePanelMode requestKind, RequestCache cache, DynamicSelections<RequestEntry> selections)
-    {
-        if (requestKind == DisplayMode)
-            return;
-
-        if (requestKind is not (SidePanelMode.IncomingRequests or SidePanelMode.PendingRequests))
-            throw new ArgumentException("Request kind must be IncomingRequests or PendingRequests.", nameof(requestKind));
-
-        // Update the display cache.
-        DisplayCache = new ResponseCache(requestKind, cache, selections);
     }
 }

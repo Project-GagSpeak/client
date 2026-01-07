@@ -17,7 +17,7 @@ public enum ToggleType
 public record UserPairSelected(Kinkster? Pair) : MessageBase; // This likely can be removed.
 
 /// <summary> Fires once we wish to open the popout permissions menu for a Kinkster pair. </summary>
-public record KinksterInteractionUiChangeMessage(Kinkster Kinkster, SidePanelTabs.InteractionTab Type) : MessageBase;
+public record OpenKinksterSidePanel(Kinkster Kinkster, bool ForceOpen = false) : MessageBase;
 
 public record FolderUpdateKinkster : MessageBase;
 public record FolderUpdateRequests : MessageBase;
@@ -43,8 +43,6 @@ public record ClosedMainUiMessage : MessageBase;
 
 /// <summary> Fired when we want to remove a specific window from the UI service. </summary>
 public record RemoveWindowMessage(WindowMediatorSubscriberBase Window) : MessageBase;
-
-public record OpenKinksterSidePanel(Kinkster Kinkster, bool ForceOpen = false) : MessageBase;
 
 /// <summary> Creates and opens a standalone KinkPlate™ UI. </summary>
 public record KinkPlateCreateOpenMessage(Kinkster Kinkster) : MessageBase;

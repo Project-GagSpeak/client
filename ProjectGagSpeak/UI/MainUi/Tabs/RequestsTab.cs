@@ -29,7 +29,7 @@ public class RequestsTab
         else
         {
             _outgoing.DrawFilterRow(width, 100);
-            _outgoing.DrawPendingRequests(width, DynamicFlags.Selectable);
+            _outgoing.DrawRequests(width, DynamicFlags.Selectable);
         }
     }
 }

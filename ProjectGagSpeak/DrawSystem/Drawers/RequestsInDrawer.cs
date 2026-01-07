@@ -1,5 +1,4 @@
 using CkCommons;
-using CkCommons.Classes;
 using CkCommons.DrawSystem;
 using CkCommons.DrawSystem.Selector;
 using CkCommons.Gui;
@@ -17,9 +16,6 @@ using GagSpeak.Services;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Hub;
 using OtterGui.Text;
-using TerraFX.Interop.Windows;
-using static FFXIVClientStructs.FFXIV.Client.UI.Misc.GroupPoseModule;
-using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace GagSpeak.DrawSystem;
 
@@ -56,52 +52,26 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
         _sidePanel = sidePanel;
     }
 
-    public IReadOnlyList<DynamicLeaf<RequestEntry>> SelectedRequests => Selector.Leaves;
-    public bool MultiSelecting => SelectedRequests.Count > 1;
-
-    #region Search
     // Special top area here due to how it displays either essential config or bulk selection options.
     protected override void DrawSearchBar(float width, int length)
     {
         var tmp = FilterCache.Filter;
-        var buttonsWidth = CkGui.IconButtonSize(FAI.Wrench).X + CkGui.IconTextButtonSize(FAI.Envelope, "Incoming");
         // Update the search bar if things change, like normal.
-        if (FancySearchBar.Draw("Filter", width, ref tmp, "filter..", length, buttonsWidth, DrawButtons))
+        if (FancySearchBar.Draw("Filter", width, ref tmp, "filter..", length, CkGui.IconTextButtonSize(FAI.Envelope, "Incoming"), DrawButtons))
             FilterCache.Filter = tmp;
         
-        // Update the side panel if currently set to none, but drawing incoming.
-        if (_sidePanel.DisplayMode is not SidePanelMode.IncomingRequests)
-            _sidePanel.ForRequests(SidePanelMode.IncomingRequests, _cache, Selector);
-        // Draw the config if it is opened.
-        if (_cache.FilterConfigOpen)
-            DrawConfig(width);
-
         void DrawButtons()
         {
             // For swapping which drawer is displayed. (Should also swap what is present in the service if multi-selecting.
-            if (CkGui.IconTextButton(FAI.Envelope, "Incoming", null, true, MultiSelecting || _cache.FilterConfigOpen))
+            if (CkGui.IconTextButton(FAI.Envelope, "Incoming", null, true))
             {
                 _config.Current.ViewingIncoming = !_config.Current.ViewingIncoming;
                 _config.Save();
-                // Update the side panel service.
-                _sidePanel.ForRequests(SidePanelMode.PendingRequests, _cache, Selector);
+                Selector.ClearSelected();
             }
             CkGui.AttachToolTip($"Switch to outgoing requests.");
-
-            ImGui.SameLine(0, 0);
-            if (CkGui.IconButton(FAI.Wrench, disabled: MultiSelecting, inPopup: !_cache.FilterConfigOpen))
-                _cache.FilterConfigOpen = !_cache.FilterConfigOpen;
-            CkGui.AttachToolTip("Configure preferences for requests handling.");
         }
     }
-
-    // Draws the grey line around the filtered content when expanded and stuff.
-    protected override void PostSearchBar()
-    {
-        if (_cache.FilterConfigOpen)
-            ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), ImGui.GetColorU32(ImGuiCol.Button), 5f);
-    }
-    #endregion Search
 
     protected override void UpdateHoverNode()
     {
@@ -217,7 +187,6 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
 
         // Store the pos at the point we draw out the name area.
         var posX = ImGui.GetCursorPosX();
-
         // Draw out the responce area, and get where it ends.
         var rightSide = DrawRightSide(leaf, region.Y, flags);
 
@@ -301,18 +270,6 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
         return endX;
     }
 
-    #region Utility
-    private void DrawConfig(float width)
-    {
-        var bgCol = ColorHelpers.Fade(ImGui.GetColorU32(ImGuiCol.FrameBg), 0.4f);
-        ImGui.SetCursorPosY(ImGui.GetCursorPosY() - ImUtf8.ItemSpacing.Y);
-        using var child = CkRaii.ChildPaddedW("IncReqConfig", width, CkStyle.TwoRowHeight(), bgCol, 5f);
-
-        // Maybe move the vars into a config so we can store them between plugin states.
-        CkGui.FramedIconText(FAI.PeopleGroup);
-        CkGui.TextFrameAlignedInline("Dummy Text");
-    }
-
     // Accepts a single request.
     private void AcceptRequest(RequestEntry request)
     {
@@ -367,6 +324,5 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
         // Process the TO BE ADDED Bulk reject server call, then handle responses accordingly.
         // For now, do nothing.
     }
-    #endregion Utility
 }
 

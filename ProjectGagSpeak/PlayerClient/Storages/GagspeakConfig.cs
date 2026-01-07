@@ -1,5 +1,6 @@
 using CkCommons.GarblerCore;
 using GagSpeak.Gui.Components;
+using GagSpeak.Gui.MainWindow;
 using GagSpeak.Services;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
@@ -32,6 +33,7 @@ public class GagspeakConfig
 
     public bool OpenMainUiOnStartup { get; set; } = true;
     public MainMenuTabs.SelectedTab MainUiTab { get; set; } = MainMenuTabs.SelectedTab.Whitelist;
+    public SidePanelTabs.SelectedTab PairPanelTab { get; set; } = SidePanelTabs.SelectedTab.Interactions;
     public bool ShowProfiles { get; set; } = true;
     public float ProfileDelay { get; set; } = 1.5f;
     public bool ShowContextMenus { get; set; } = true;

@@ -4,26 +4,39 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.PlayerClient;
+using GagspeakAPI.Enums;
 
 namespace GagSpeak.Gui.MainWindow;
 
-public class SidePanelTabs : IconTabBar<SidePanelTabs.InteractionTab>
+public class SidePanelTabs : IconTabBar<SidePanelTabs.SelectedTab>
 {
-    public enum InteractionTab
+    public enum SelectedTab
     {
-        None,
+        Interactions,
         KinkstersPerms,
         PermsForKinkster,
-        Interactions,
     }
 
-    public SidePanelTabs()
+    public override SelectedTab TabSelection
     {
-        AddDrawButton(FontAwesomeIcon.Key, InteractionTab.Interactions, "Interact with the Kinkster");
-        AddDrawButton(FontAwesomeIcon.Binoculars, InteractionTab.KinkstersPerms, "Permissions granted to you by the Kinkster");
-        AddDrawButton(FontAwesomeIcon.UserShield, InteractionTab.PermsForKinkster, "Your permissions for the Kinkster");
+        get => base.TabSelection;
+        set
+        {
+            _config.Current.PairPanelTab = value;
+            _config.Save();
+            base.TabSelection = value;
+        }
+    }
 
-        TabSelection = InteractionTab.Interactions;
+    private readonly MainConfig _config;
+    public SidePanelTabs(MainConfig config)
+    {
+        _config = config;
+
+        AddDrawButton(FontAwesomeIcon.Key, SelectedTab.Interactions, "Interact with the Kinkster");
+        AddDrawButton(FontAwesomeIcon.Binoculars, SelectedTab.KinkstersPerms, "Permissions granted to you by the Kinkster");
+        AddDrawButton(FontAwesomeIcon.UserShield, SelectedTab.PermsForKinkster, "Your permissions for the Kinkster");
     }
 
     public override void Draw(float availableWidth)
@@ -69,7 +82,7 @@ public class SidePanelTabs : IconTabBar<SidePanelTabs.InteractionTab>
             ImGui.SameLine();
             var xPost = ImGui.GetCursorScreenPos();
 
-            if (EqualityComparer<InteractionTab>.Default.Equals(TabSelection, tab.TargetTab))
+            if (EqualityComparer<SelectedTab>.Default.Equals(TabSelection, tab.TargetTab))
             {
                 drawList.AddLine(
                     x with { Y = x.Y + buttonSize.Y + spacing.Y },
@@ -78,8 +91,5 @@ public class SidePanelTabs : IconTabBar<SidePanelTabs.InteractionTab>
             }
         }
         CkGui.AttachToolTip(tab.Tooltip);
-
-        // invoke action if we should.
-        tab.CustomAction?.Invoke();
     }
 }
