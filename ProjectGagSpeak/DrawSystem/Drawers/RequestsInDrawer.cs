@@ -223,13 +223,13 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
         // Grab the end of the selectable region.
         var endX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
         var timeTxt = leaf.Data.GetRemainingTimeString();
-        var buttonSize = CkGui.IconButtonSize(FAI.Times);
+        var buttonSize = CkGui.IconButtonSize(FAI.Times).X;
         var timeTxtWidth = ImGui.CalcTextSize(timeTxt).X;
         var spacing = ImUtf8.ItemInnerSpacing.X;
 
         var childWidth = replying 
-            ? ImUtf8.FrameHeight + (buttonSize.X + spacing) * 2
-            : ImUtf8.FrameHeight;
+            ? buttonSize + (buttonSize + spacing) * 2
+            : buttonSize;
 
         endX -= childWidth;
         ImGui.SameLine(endX);
