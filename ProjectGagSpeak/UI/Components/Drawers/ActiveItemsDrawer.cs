@@ -420,18 +420,11 @@ public class ActiveItemsDrawer
         }
     }
 
-    private readonly Regex FormattingCodesRegex = new($"({CkGui.TipSep}|{CkGui.TipNL}|{CkGui.TipCol})", RegexOptions.Compiled | RegexOptions.CultureInvariant);
-    private string? StripFormattingCodes(string? input)
-    {
-        if (input is null) return null; // don't process null input, just pass it back.
-        return FormattingCodesRegex.Replace(input, string.Empty);
-    }
-
     private string UnlockTooltip(string? label, string enabler, Padlocks padlock, string padlockAssigner)
     {
         _kinksters.TryGetNickAliasOrUid(enabler, out var nickEnabler);
         _kinksters.TryGetNickAliasOrUid(padlockAssigner, out var lockEnabler);
-        return $"{StripFormattingCodes(label) ?? "--COL----COL--Unknown Item"} applied by {nickEnabler ?? "yourself"}" +
+        return $"{label ?? "--COL----COL--Unknown Item"} applied by {nickEnabler ?? "yourself"}" +
             $"--NL--Locked with {(padlock == Padlocks.Owner || padlock == Padlocks.OwnerTimer ? "an " : "a ")}--COL--{padlock.ToName()}--COL--" +
             $" by {lockEnabler ?? "yourself"}";
     }
@@ -439,7 +432,7 @@ public class ActiveItemsDrawer
     private string LockTooltip(string? label, string enabler, string itemType)
     {
         _kinksters.TryGetNickAliasOrUid(enabler, out var nickEnabler);
-        return $"{StripFormattingCodes(label) ?? "Unknown item"} applied by {nickEnabler ?? "yourself"}" +
+        return $"{label ?? "Unknown item"} applied by {nickEnabler ?? "yourself"}" +
             $"--SEP----COL--Left-Click--COL-- ⇒ Select another {itemType} Item." +
             $"--NL----COL--Right-Click--COL-- ⇒ Clear active {itemType} Item.";
     }

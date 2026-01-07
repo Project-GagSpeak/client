@@ -282,7 +282,7 @@ public class ModPresetLayer : IRestraintLayer, IModPreset
     public static ModPresetLayer FromToken(JToken? token, ModPresetManager mods)
     {
         if (token is not JObject mLayerJson) throw new Exception("Invalid JSON Token for Layer.");
-        
+
         // get the values from this token.
         var id = Guid.TryParse(mLayerJson["ID"]?.Value<string>(), out var guid) ? guid : throw new Exception("InvalidGUID");
         var label = mLayerJson["Label"]?.Value<string>() ?? string.Empty;
