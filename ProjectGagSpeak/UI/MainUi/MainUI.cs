@@ -27,6 +27,7 @@ public class MainUI : WindowMediatorSubscriberBase
     private readonly AccountManager _account;
     private readonly MainHub _hub;
     private readonly MainMenuTabs _tabMenu;
+    private readonly SidePanelService _sidePanelService;
     private readonly RequestsManager _requestManager;
     private readonly KinksterManager _kinksters;
     private readonly TutorialService _guides;
@@ -45,7 +46,7 @@ public class MainUI : WindowMediatorSubscriberBase
     private bool ThemePushed = false;
 
     public MainUI(ILogger<MainUI> logger, GagspeakMediator mediator, MainConfig config,
-        AccountManager account, MainHub hub, MainMenuTabs tabMenu, RequestsManager requestmanager, 
+        AccountManager account, MainHub hub, MainMenuTabs tabMenu, SidePanelService sidePanel, RequestsManager requestmanager, 
         KinksterManager kinksters, TutorialService guides, HomeTab home, RequestsTab requests,
         WhitelistTab whitelist, PatternHubTab patternHub, MoodleHubTab moodlesHub, GlobalChatTab globalChat)         
         : base(logger, mediator, "###GagSpeakMainUI")
@@ -54,6 +55,7 @@ public class MainUI : WindowMediatorSubscriberBase
         _account = account;
         _hub = hub;
         _tabMenu = tabMenu;
+        _sidePanelService = sidePanel;
         _requestManager = requestmanager;
         _kinksters = kinksters;
         _guides = guides;
@@ -384,6 +386,7 @@ public class MainUI : WindowMediatorSubscriberBase
     public override void OnClose()
     {
         Mediator.Publish(new ClosedMainUiMessage());
+        _sidePanelService.ClearDisplay();
         base.OnClose();
     }
 }

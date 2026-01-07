@@ -9,6 +9,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.CustomCombos.Padlock;
+using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
@@ -22,8 +23,10 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.Util;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
+using System.Text.RegularExpressions;
 namespace GagSpeak.Gui.Components;
 
 public class ActiveItemsDrawer
@@ -39,6 +42,7 @@ public class ActiveItemsDrawer
     private readonly TextureService _textures;
     private readonly CosmeticService _cosmetics;
     private readonly TutorialService _guides;
+    private readonly KinksterManager _kinksters;
     private RestrictionGagCombo[] _gagItems;
     private PadlockGagsClient[] _gagPadlocks;
 
@@ -61,6 +65,7 @@ public class ActiveItemsDrawer
         DistributorService dds,
         TextureService textures,
         CosmeticService cosmetics,
+        KinksterManager kinksters,
         TutorialService guides)
     {
         _logger = logger;
@@ -74,6 +79,7 @@ public class ActiveItemsDrawer
         _textures = textures;
         _cosmetics = cosmetics;
         _guides = guides;
+        _kinksters = kinksters;
 
         // Initialize the GagCombos.
         _gagItems = new RestrictionGagCombo[Constants.MaxGagSlots];
@@ -167,7 +173,7 @@ public class ActiveItemsDrawer
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ((height - ImGui.GetFrameHeight()) / 2));
             var width = ImGui.GetContentRegionAvail().X;
             var combo = _gagItems[slotIdx];
-            if(combo.Draw($"##GagSelector-{slotIdx}", data.GagItem, width))
+            if (combo.Draw($"##GagSelector-{slotIdx}", data.GagItem, width))
                 GagComboChanged(combo, slotIdx, data.GagItem);
         }
     }
@@ -185,7 +191,7 @@ public class ActiveItemsDrawer
             // Center vertically the combo.
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ((height - ImGui.GetFrameHeight()) / 2));
             var combo = _restrictionItems[slotIdx];
-            if(combo.Draw($"##Restrictions-{slotIdx}", data.Identifier, ImGui.GetContentRegionAvail().X))
+            if (combo.Draw($"##Restrictions-{slotIdx}", data.Identifier, ImGui.GetContentRegionAvail().X))
                 RestrictionComboChanged(combo, slotIdx, data.Identifier);
         }
     }
@@ -205,8 +211,7 @@ public class ActiveItemsDrawer
         var height = CkStyle.ThreeRowHeight();
         DrawFramedImage(data.GagItem, height, 10f, uint.MaxValue);
         var drawPos = ImGui.GetItemRectMin() + new Vector2(ImGui.GetItemRectSize().X, 0);
-        CkGui.AttachToolTip("--COL--Left-Click--COL-- ⇒ Select another Gag." +
-            "--NL----COL--Right-Click--COL-- ⇒ Clear active Gag.", color: ImGuiColors.ParsedGold);
+        CkGui.AttachToolTip(LockTooltip(data.GagItem.GagName(), data.Enabler, "Gag"), color: ImGuiColors.ParsedGold);
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             ImGui.OpenPopup($"##GagSelector-{slotIdx}");
@@ -220,7 +225,7 @@ public class ActiveItemsDrawer
 
         // Draw out the potential popup if we should.
         var applyCombo = _gagItems[slotIdx];
-        if(_gagItems[slotIdx].DrawPopup($"##GagSelector-{slotIdx}", data.GagItem, rightWidth * .9f, drawPos))
+        if (_gagItems[slotIdx].DrawPopup($"##GagSelector-{slotIdx}", data.GagItem, rightWidth * .9f, drawPos))
             GagComboChanged(applyCombo, slotIdx, data.GagItem);
     }
 
@@ -232,8 +237,10 @@ public class ActiveItemsDrawer
         // Draw out the framed image first.
         DrawRestrictionImage(dispData, height, 10f);
         var drawPos = ImGui.GetItemRectMin() + new Vector2(ImGui.GetItemRectSize().X, 0);
-        CkGui.AttachToolTip("--COL--Left-Click--COL-- ⇒ Select another Restriction Item." +
-            "--NL----COL--Right-Click--COL-- ⇒ Clear active Restriction Item.", color: ImGuiColors.ParsedGold);
+        CkGui.AttachToolTip(LockTooltip(dispData?.Label, data.Enabler, "Restriction"), color: ImGuiColors.ParsedGold);
+        if (dispData is null)
+            CkGui.AttachToolTip("--SEP----COL--The item that was here couldn't be found." +
+                "--NL--It may have been deleted or the data is corrupted.--COL--", color: ImGuiColors.DalamudRed);
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             ImGui.OpenPopup($"##Restrictions-{slotIdx}");
@@ -263,8 +270,10 @@ public class ActiveItemsDrawer
         var height = ImGui.GetFrameHeightWithSpacing() * 5 + ImGui.GetFrameHeight();
         DrawRestraintImage(dispData, new Vector2(height / 1.2f, height), CkStyle.ChildRoundingLarge(), CkColor.FancyHeaderContrast.Uint());
         var drawPos = ImGui.GetItemRectMin() + new Vector2(ImGui.GetItemRectSize().X, 0);
-        CkGui.AttachToolTip("--COL--Left-Click--COL-- ⇒ Select another Restraint Set." +
-                      "--NL----COL--Right-Click--COL-- ⇒ Clear active Restraint Set.", color: ImGuiColors.ParsedGold);
+        CkGui.AttachToolTip(LockTooltip(dispData?.Label, data.Enabler, "Restraint"), color: ImGuiColors.ParsedGold);
+        if (dispData is null)
+            CkGui.AttachToolTip("--SEP----COL--The item that was here couldn't be found." +
+                "--NL--It may have been deleted or the data is corrupted.--COL--", color: ImGuiColors.DalamudRed);
         _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.RemovingRestraints, ImGui.GetWindowPos(), ImGui.GetWindowSize());
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
@@ -277,7 +286,7 @@ public class ActiveItemsDrawer
         using (ImRaii.Group())
         {
             // draw sync button, and call layer update if pressed.
-            if(_layerFlagsWidget.DrawUpdateButton(FAI.Sync, "Update Layers", out var added, out var removed, ImGui.GetContentRegionAvail().X))
+            if (_layerFlagsWidget.DrawUpdateButton(FAI.Sync, "Update Layers", out var added, out var removed, ImGui.GetContentRegionAvail().X))
             {
                 var newData = new CharaActiveRestraint() { ActiveLayers = (data.ActiveLayers | added) & ~removed };
                 SelfBondageHelper.RestraintUpdateTask(newData, DataUpdateType.LayersChanged, _dds, _visuals);
@@ -304,12 +313,20 @@ public class ActiveItemsDrawer
         var size = new Vector2(CkStyle.ThreeRowHeight());
         var padlockSize = new Vector2(CkStyle.TwoRowHeight());
         var offsetV = ImGui.GetFrameHeight() / 2;
-        // Draw out the framed image first.
-        DrawFramedImage(data.GagItem, size.X, 10f);
-        var gagDispPos = ImGui.GetItemRectMin();
+
+        using (ImRaii.Group())
+        {
+            // Draw out the framed image first.
+            DrawFramedImage(data.GagItem, size.X, 10f);
+            var gagDispPos = ImGui.GetItemRectMin();
+            // Go back and show the image.
+            ImGui.SetCursorScreenPos(gagDispPos + new Vector2(size.X * .75f, offsetV));
+            DrawFramedImage(data.Padlock, padlockSize.X, padlockSize.X / 2);
+        }
+        CkGui.AttachToolTip(UnlockTooltip(data.GagItem.GagName(), data.Enabler, data.Padlock, data.PadlockAssigner), color: ImGuiColors.ParsedPink);
 
         // Move over the distance of the framed image.
-        ImGui.SameLine(0, padlockSize.X - (size.X * .2f));
+        ImGui.SameLine();
         using (var c = CkRaii.Child($"UnlockGroup-{slotIdx}", new Vector2(ImGui.GetContentRegionAvail().X, CkStyle.TwoRowHeight())))
         {
             var centerWidth = c.InnerRegion.X - ImGui.GetFrameHeight();
@@ -321,10 +338,6 @@ public class ActiveItemsDrawer
             // Display the unlock row.
             _gagPadlocks[slotIdx].DrawUnlockCombo(c.InnerRegion.X, slotIdx, "Attempt to unlock this Padlock!");
         }
-
-        // Go back and show the image.
-        ImGui.SetCursorScreenPos(gagDispPos + new Vector2(size.X * .75f, offsetV));
-        DrawFramedImage(data.Padlock, padlockSize.X, padlockSize.X / 2);
     }
 
     public void UnlockItemGroup(int slotIdx, ActiveRestriction data, RestrictionItem? dispData)
@@ -336,18 +349,24 @@ public class ActiveItemsDrawer
         var offsetV = ImGui.GetFrameHeight() * 0.5f;
         var padlockSize = new Vector2(size.Y - offsetV);
 
-        // Draw out the framed image first.
-        DrawRestrictionImage(dispData, size.X, 10f);
-        var gagDispPos = ImGui.GetItemRectMin();
+        using (ImRaii.Group())
+        {
+            // Draw out the framed image first.
+            DrawRestrictionImage(dispData, size.X, 10f);
+            var gagDispPos = ImGui.GetItemRectMin();
+            // Go back and show the image.
+            ImGui.SetCursorScreenPos(gagDispPos + new Vector2(size.X * .75f, offsetV * .5f));
+            DrawFramedImage(data.Padlock, padlockSize.X, padlockSize.X / 2);
+        }
+        CkGui.AttachToolTip(UnlockTooltip(dispData?.Label, data.Enabler, data.Padlock, data.PadlockAssigner), color: ImGuiColors.ParsedPink);
+        if (dispData is null)
+            CkGui.AttachToolTip("--SEP----COL--The item that was here couldn't be found." +
+                "--NL--It may have been deleted or the data is corrupted.--COL--", color: ImGuiColors.DalamudRed);
 
         // Move over the distance of the framed image.
-        ImGui.SameLine(0, padlockSize.X - (size.X * .2f));
-        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ImGui.GetFrameHeight()/2);
+        ImGui.SameLine();
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ImGui.GetFrameHeight() / 2);
         _restrictionPadlocks[slotIdx].DrawUnlockCombo(ImGui.GetContentRegionAvail().X, slotIdx, "Attempt to unlock this Padlock!");
-
-        // Go back and show the image.
-        ImGui.SetCursorScreenPos(gagDispPos + new Vector2(size.X * .75f, offsetV * .5f));
-        DrawFramedImage(data.Padlock, padlockSize.X, padlockSize.X / 2);
     }
 
     public void UnlockItemGroup(CharaActiveRestraint data, RestraintSet? dispData)
@@ -359,6 +378,10 @@ public class ActiveItemsDrawer
 
         // Go back and show the image.
         DrawFramedImage(data.Padlock, size.X, size.X / 2);
+        CkGui.AttachToolTip(UnlockTooltip(dispData?.Label, data.Enabler, data.Padlock, data.PadlockAssigner), ImGuiColors.ParsedPink);
+        if (dispData is null)
+            CkGui.AttachToolTip("--SEP----COL--The item that was here couldn't be found." +
+                "--NL--It may have been deleted or the data is corrupted.--COL--", color: ImGuiColors.DalamudRed);
 
         // Move over the distance of the framed image.
         ImGui.SameLine();
@@ -395,6 +418,23 @@ public class ActiveItemsDrawer
                 });
             }
         }
+    }
+
+    private string UnlockTooltip(string? label, string enabler, Padlocks padlock, string padlockAssigner)
+    {
+        _kinksters.TryGetNickAliasOrUid(enabler, out var nickEnabler);
+        _kinksters.TryGetNickAliasOrUid(padlockAssigner, out var lockEnabler);
+        return $"{label ?? "--COL----COL--Unknown Item"} applied by {nickEnabler ?? "yourself"}" +
+            $"--NL--Locked with {(padlock == Padlocks.Owner || padlock == Padlocks.OwnerTimer ? "an " : "a ")}--COL--{padlock.ToName()}--COL--" +
+            $" by {lockEnabler ?? "yourself"}";
+    }
+
+    private string LockTooltip(string? label, string enabler, string itemType)
+    {
+        _kinksters.TryGetNickAliasOrUid(enabler, out var nickEnabler);
+        return $"{label ?? "Unknown item"} applied by {nickEnabler ?? "yourself"}" +
+            $"--SEP----COL--Left-Click--COL-- ⇒ Select another {itemType} Item." +
+            $"--NL----COL--Right-Click--COL-- ⇒ Clear active {itemType} Item.";
     }
 
     public void DrawFramedImage(GagType gag, float size, float rounding, uint frameTint = uint.MaxValue)

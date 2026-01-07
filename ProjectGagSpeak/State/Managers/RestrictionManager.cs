@@ -1,3 +1,4 @@
+using CkCommons.Gui;
 using CkCommons.Helpers;
 using CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
@@ -36,7 +37,7 @@ public sealed class RestrictionManager : IHybridSavable
         ILogger<RestrictionManager> logger,
         GagspeakMediator mediator,
         FavoritesConfig favorites,
-        ModPresetManager modPresets, 
+        ModPresetManager modPresets,
         ConfigFileProvider fileNames,
         HybridSaveService saver)
     {
@@ -96,6 +97,7 @@ public sealed class RestrictionManager : IHybridSavable
 
     public RestrictionItem CreateNew(string name, RestrictionType type)
     {
+        name = CkGui.TooltipTokenRegex().Replace(name, string.Empty);
         name = RegexEx.EnsureUniqueName(name, Storage, x => x.Label);
         var restriction = type switch
         {
@@ -112,6 +114,7 @@ public sealed class RestrictionManager : IHybridSavable
 
     public RestrictionItem CreateClone(RestrictionItem clone, string newName)
     {
+        newName = CkGui.TooltipTokenRegex().Replace(newName, string.Empty);
         newName = RegexEx.EnsureUniqueName(newName, Storage, x => x.Label);
         var clonedItem = clone switch
         {
@@ -145,6 +148,8 @@ public sealed class RestrictionManager : IHybridSavable
         if (oldName == newName || string.IsNullOrWhiteSpace(newName))
             return;
 
+        newName = CkGui.TooltipTokenRegex().Replace(newName, string.Empty);
+        newName = RegexEx.EnsureUniqueName(newName, Storage, x => x.Label);
         restriction.Label = newName;
         _saver.Save(this);
         _logger.LogDebug($"Renamed restriction {restriction.Identifier}.");

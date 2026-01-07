@@ -1,3 +1,4 @@
+using CkCommons.Gui;
 using CkCommons.Helpers;
 using CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
@@ -11,6 +12,7 @@ using GagspeakAPI.Data;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.State.Managers;
+
 public sealed class RestraintManager : IHybridSavable
 {
     private readonly ILogger<RestraintManager> _logger;
@@ -25,7 +27,7 @@ public sealed class RestraintManager : IHybridSavable
     private CharaActiveRestraint? _serverRestraintData = null;
 
     public RestraintManager(ILogger<RestraintManager> logger, GagspeakMediator mediator,
-        RestrictionManager restrictions, ModPresetManager mods, FavoritesConfig favorites, 
+        RestrictionManager restrictions, ModPresetManager mods, FavoritesConfig favorites,
         ConfigFileProvider fileNames, HybridSaveService saver)
     {
         _logger = logger;
@@ -57,6 +59,10 @@ public sealed class RestraintManager : IHybridSavable
 
     public RestraintSet CreateNew(string restraintName)
     {
+        // NOTE: This is definitely a task that is better handled by the setter, but for now, this is fine.
+        // Setter ensures all* cases are handled, instead of the ones we remember
+        // Strip private formatting codes.
+        restraintName = CkGui.TooltipTokenRegex().Replace(restraintName, string.Empty);
         // Ensure that the new name is unique.
         restraintName = RegexEx.EnsureUniqueName(restraintName, Storage, rs => rs.Label);
         var restraint = new RestraintSet { Label = restraintName };
@@ -69,6 +75,8 @@ public sealed class RestraintManager : IHybridSavable
 
     public RestraintSet CreateClone(RestraintSet clone, string newName)
     {
+        // Strip private formatting codes.
+        newName = CkGui.TooltipTokenRegex().Replace(newName, string.Empty);
         // Ensure that the new name is unique.
         newName = RegexEx.EnsureUniqueName(newName, Storage, rs => rs.Label);
         var clonedItem = new RestraintSet(clone, false) { Label = newName };
@@ -97,6 +105,10 @@ public sealed class RestraintManager : IHybridSavable
         if (oldName == newName)
             return;
 
+        // strip special formatting codes
+        newName = CkGui.TooltipTokenRegex().Replace(newName, string.Empty);
+        // ensure the new name is unique.
+        newName = RegexEx.EnsureUniqueName(newName, Storage, rs => rs.Label);
         restraint.Label = newName;
         _saver.Save(this);
         _logger.LogDebug($"Renamed restraint {restraint.Identifier}.");
@@ -106,7 +118,7 @@ public sealed class RestraintManager : IHybridSavable
     public void UpdateThumbnail(RestraintSet restraint, string newPath)
     {
         // This could have changed by the time this is called, so get it again.
-        if(Storage.Contains(restraint))
+        if (Storage.Contains(restraint))
         {
             _logger.LogDebug($"Thumbnail updated for {restraint.Label} to {restraint.ThumbnailPath}");
             restraint.ThumbnailPath = newPath;
@@ -287,7 +299,7 @@ public sealed class RestraintManager : IHybridSavable
         // Update the affected visual states, if item is enabled.
         if (!Storage.TryGetRestraint(removedRestraint, out visualSet))
             return false;
-        
+
         AppliedRestraint = null;
         return true;
     }
@@ -307,7 +319,7 @@ public sealed class RestraintManager : IHybridSavable
 
     public string JsonSerialize()
     {
-        if(!AllowSaving)
+        if (!AllowSaving)
             throw new Exception("Attempted to serialize RestraintManager while saving is disabled.");
 
         var restraintSets = new JArray();
