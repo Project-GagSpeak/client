@@ -21,6 +21,7 @@ namespace GagSpeak.Gui.MainWindow;
 // this can easily become the "contact list" tab of the "main UI" window.
 public class MainUI : WindowMediatorSubscriberBase
 {
+    public const float AVATAR_SIZE = 190f;
     public const float MAIN_UI_WIDTH = 380f;
 
     private readonly MainConfig _config;
@@ -72,11 +73,11 @@ public class MainUI : WindowMediatorSubscriberBase
         Flags |= WFlags.NoDocking;
 
         this.PinningClickthroughFalse();
-        this.SetBoundaries(new Vector2(MAIN_UI_WIDTH, 500), new Vector2(MAIN_UI_WIDTH, 2000));
+        this.SetBoundaries(new Vector2(MAIN_UI_WIDTH, 548), new Vector2(MAIN_UI_WIDTH, 2000));
         TitleBarButtons = new TitleBarButtonBuilder()
             .Add(FAI.Book, "Changelog", () => Mediator.Publish(new UiToggleMessage(typeof(ChangelogUI))))
-            .Add(FAI.Bell, "Actions Notifier", () => Mediator.Publish(new UiToggleMessage(typeof(InteractionEventsUI))))
             .Add(FAI.Cog, "Settings", () => Mediator.Publish(new UiToggleMessage(typeof(SettingsUi))))
+            .Add(FAI.Bell, "Actions Notifier", () => Mediator.Publish(new UiToggleMessage(typeof(InteractionEventsUI))))
             .AddTutorial(_guides, TutorialType.MainUi)
             .Build();
         

@@ -74,31 +74,27 @@ namespace GagSpeak.Localization
         public readonly string Step2Desc = Loc.Localize("HelpMainUi_Step2Desc", "Your current connection status.");
         public readonly string Step2DescExtended = Loc.Localize("HelpMainUi_Step2DescExtended", "You can hover over this button for more details.");
 
-        public readonly string Step3Title = Loc.Localize("HelpMainUi_Step3Title", "Homepage");
-        public readonly string Step3Desc = Loc.Localize("HelpMainUi_Step3Desc", "Access GagSpeak's many modules here.");
-        public readonly string Step3DescExtended = Loc.Localize("HelpMainUi_Step3DescExtended", " ");
-
-        public readonly string Step4Title = Loc.Localize("HelpMainUi_Step4Title", "Whitelist");
-        public readonly string Step4Desc = Loc.Localize("HelpMainUi_Step4Desc", "Where your added Kinksters appear.");
-        public readonly string Step4DescExtended = Loc.Localize("HelpMainUi_Step4DescExtended",
+        public readonly string Step3Title = Loc.Localize("HelpMainUi_Step3Title", "Whitelist");
+        public readonly string Step3Desc = Loc.Localize("HelpMainUi_Step3Desc", "Where your added Kinksters appear.");
+        public readonly string Step3DescExtended = Loc.Localize("HelpMainUi_Step3DescExtended",
             "MIDDLE-CLICK => Open this Kinkster's KinkPlate.\n" +
             "RIGHT-CLICK => Set a nickname for this Kinkster.\n" +
             "Magnify Glass => View the permissions set for you by this Kinkster.\n" +
             "Gear => Set your permissions for this Kinkster here.\n" +
             "Triple Dots => Interact with this Kinkster.");
 
-        public readonly string Step5Title = Loc.Localize("HelpMainUi_Step5Title", "Adding Kinksters");
-        public readonly string Step5Desc = Loc.Localize("HelpMainUi_Step5Desc", "Send out Kinkster requests here.");
-        public readonly string Step5DescExtended = Loc.Localize("HelpMainUi_Step5DescExtended", "Sent requests expire automatically within " +
+        public readonly string Step4Title = Loc.Localize("HelpMainUi_Step4Title", "Adding Kinksters");
+        public readonly string Step4Desc = Loc.Localize("HelpMainUi_Step4Desc", "Send out Kinkster requests here.");
+        public readonly string Step4DescExtended = Loc.Localize("HelpMainUi_Step4DescExtended", "Sent requests expire automatically within " +
             "3 days if not responded to, and can also be canceled at anytime.");
 
-        public readonly string Step6Title = Loc.Localize("HelpMainUi_Step6Title", "Attaching Messages");
-        public readonly string Step6Desc = Loc.Localize("HelpMainUi_Step6Desc", "Messages can be attached to sent Kinkster Requests, if desired.");
-        public readonly string Step6DescExtended = Loc.Localize("HelpMainUi_Step6DescExtended", "These can provide context for who's sending the request, helping inform the recipient who you are!");
+        public readonly string Step5Title = Loc.Localize("HelpMainUi_Step5Title", "Attaching Messages");
+        public readonly string Step5Desc = Loc.Localize("HelpMainUi_Step5Desc", "Messages can be attached to sent Kinkster Requests, if desired.");
+        public readonly string Step5DescExtended = Loc.Localize("HelpMainUi_Step5DescExtended", "These can provide context for who's sending the request, helping inform the recipient who you are!");
 
-        public readonly string Step7Title = Loc.Localize("HelpMainUi_Step7Title", "Account Page");
-        public readonly string Step7Desc = Loc.Localize("HelpMainUi_Step7Desc", "Manage account settings here.");
-        public readonly string Step7DescExtended = Loc.Localize("HelpMainUi_Step7DescExtended", "This page contains important information about you, and access to profile setup, configs, and support links!");
+        public readonly string Step6Title = Loc.Localize("HelpMainUi_Step6Title", "Homepage");
+        public readonly string Step6Desc = Loc.Localize("HelpMainUi_Step6Desc", "Access GagSpeak's modules, or manage your profile here.");
+        public readonly string Step6DescExtended = Loc.Localize("HelpMainUi_Step6DescExtended", "his page contains important information about you, and access to profile setup, configs, and support links!");
 
         public readonly string Step8Title = Loc.Localize("HelpMainUi_Step8Title", "Client UID");
         public readonly string Step8Desc = Loc.Localize("HelpMainUi_Step8Desc", "Your UID for pairing.");
@@ -150,14 +146,6 @@ namespace GagSpeak.Localization
         public readonly string Step19Title = Loc.Localize("HelpMainUi_Step19Title", "Saving Profile Changes");
         public readonly string Step19Desc = Loc.Localize("HelpMainUi_Step19Desc", "Make sure you save changes, or edits will be lost!");
         public readonly string Step19DescExtended = Loc.Localize("HelpMainUi_Step19DescExtended", " ");
-
-        public readonly string Step20Title = Loc.Localize("HelpMainUi_Step20Title", "GagSpeak Settings Menu");
-        public readonly string Step20Desc = Loc.Localize("HelpMainUi_Step20Desc", "You can access the Settings window by clicking this button.");
-        public readonly string Step20DescExtended = Loc.Localize("HelpMainUi_Step20DescExtended", "You can also access it from any of the tabs by pressing the cog in the top bar.");
-
-        // public readonly string Step21Title = Loc.Localize("HelpMainUi_Step21Title", "Title Bar GagSpeak Settings");
-        // public readonly string Step21Desc = Loc.Localize("HelpMainUi_Step21Desc", "You can also access them from the title bar.");
-        // public readonly string Step21DescExtended = Loc.Localize("HelpMainUi_Step21DescExtended", " ");
 
         public readonly string Step21Title = Loc.Localize("HelpMainUi_Step22Title", "Pattern Hub");
         public readonly string Step21Desc = Loc.Localize("HelpMainUi_Step22Desc", "Browse and explore patterns uploaded by others.");

@@ -354,7 +354,6 @@ public static class GagSpeakServiceExtensions
         .AddScoped<PatternHubTab>()
         .AddScoped<MoodleHubTab>()
         .AddScoped<GlobalChatTab>()
-        .AddScoped<AccountTab>()
         .AddScoped<WindowMediatorSubscriberBase, SidePanelUI>()
 
         // Scoped UI (Wardrobe)
