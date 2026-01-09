@@ -61,10 +61,11 @@ public sealed class GagRestrictionFileSelector : CkFileSystemSelector<GarblerRes
         var hovered = ImGui.IsItemHovered();
         var rectMin = ImGui.GetItemRectMin();
         var rectMax = ImGui.GetItemRectMax();
+        var isActive = _manager.ActiveItems.Values.Any(gi => gi.GagType == leaf.Value.GagType);
         var bgColor = hovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkGui.Color(new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
 
         // If it was double clicked, open it in the editor.
-        if (hovered && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
+        if (hovered && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left) && !isActive)
             _manager.StartEditing(leaf.Value);
 
         ImGui.GetWindowDrawList().AddRectFilled(rectMin, rectMax, bgColor, 5);
