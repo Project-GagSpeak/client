@@ -36,6 +36,7 @@ public abstract class CursedItem : IEditableStorageItem<CursedItem>
         AppliedTime = other.AppliedTime;
         ReleaseTime = other.ReleaseTime;
         Precedence = other.Precedence;
+        ApplyTraits = other.ApplyTraits;
     }
 
     // May need to be moved up or something. Not sure though. Look into later.
@@ -115,7 +116,8 @@ public class CursedGagItem : CursedItem
             ["AppliedTime"] = AppliedTime.UtcDateTime.ToString("o"),
             ["ReleaseTime"] = ReleaseTime.UtcDateTime.ToString("o"),
             ["Precedence"] = Precedence.ToString(),
-            ["GagRef"] = RefItem.GagType.ToString()
+            ["GagRef"] = RefItem.GagType.ToString(),
+            ["ApplyTraits"] = ApplyTraits
         };
 }
 
@@ -166,6 +168,7 @@ public class CursedRestrictionItem : CursedItem
             ["AppliedTime"] = AppliedTime.UtcDateTime.ToString("o"),
             ["ReleaseTime"] = ReleaseTime.UtcDateTime.ToString("o"),
             ["Precedence"] = Precedence.ToString(),
-            ["RestrictionRef"] = RefItem.Identifier.ToString()
+            ["RestrictionRef"] = RefItem.Identifier.ToString(),
+            ["ApplyTraits"] = ApplyTraits
         };
 }
