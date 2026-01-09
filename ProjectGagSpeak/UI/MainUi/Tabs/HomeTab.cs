@@ -108,7 +108,7 @@ public class HomeTab
 
             var formattedDate = MainHub.OwnUserData.CreatedOn ?? DateTime.MinValue;
             string createdDate = formattedDate != DateTime.MinValue ? formattedDate.ToString("d", CultureInfo.CurrentCulture) : "MM-DD-YYYY";
-            ProfileInfoRow(FAI.Calendar, createdDate, "Date your Sundouleia account was made.");
+            ProfileInfoRow(FAI.Calendar, createdDate, "Date your GagSpeak account was made.");
 
             ProfileInfoRow(FAI.Award, $"{ClientAchievements.Completed}/{ClientAchievements.Total}", "Current Achievement Progress.");
 
