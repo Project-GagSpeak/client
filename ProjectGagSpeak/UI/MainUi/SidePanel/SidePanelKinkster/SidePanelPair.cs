@@ -50,8 +50,8 @@ public partial class SidePanelPair
         ImGui.TextUnformatted("Global Settings");
         using (ImRaii.Group())
         {
-            ClientPermRow(kinkster, dispName, width, KPID.ChatGarblerActive, globals.ChatGarblerActive, kinkster.OwnPermAccess.ChatGarblerActiveAllowed);
-            ClientPermRow(kinkster, dispName, width, KPID.ChatGarblerLocked, globals.ChatGarblerLocked, kinkster.OwnPermAccess.ChatGarblerLockedAllowed);
+            ClientPermRow(kinkster, dispName, width, KPID.ChatGarblerActive, globals.ChatGarblerActive, kinkster.OwnPermAccess.ChatGarblerActiveAllowed, globals.ChatGarblerLocked);
+            ClientPermRow(kinkster, dispName, width, KPID.ChatGarblerLocked, globals.ChatGarblerLocked, kinkster.OwnPermAccess.ChatGarblerLockedAllowed, globals.ChatGarblerLocked);
             ClientPermRow(kinkster, dispName, width, KPID.GaggedNameplate, globals.GaggedNameplate, kinkster.OwnPermAccess.GaggedNameplateAllowed);
         }
         CkGui.AttachToolTip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);

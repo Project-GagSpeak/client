@@ -19,8 +19,8 @@ public partial class SidePanelPair
 
     #region Client Permissions
     // Common Bool
-    private void ClientPermRow(Kinkster kinkster, string dispName, float width, KPID perm, bool current, bool canEdit)
-        => ClientRowCommon(kinkster, dispName, width, perm, current, canEdit, () => !current);
+    private void ClientPermRow(Kinkster kinkster, string dispName, float width, KPID perm, bool current, bool canEdit, bool disabled = false)
+        => ClientRowCommon(kinkster, dispName, width, perm, current, canEdit, () => !current, disabled);
 
     // Puppeteer Variant
     private void ClientPermRow(Kinkster kinkster, string dispName, float width, KPID perm, PuppetPerms current, PuppetPerms canEdit, PuppetPerms editFlag)
@@ -67,10 +67,10 @@ public partial class SidePanelPair
     }
 
     // optimize later and stuff.
-    private void ClientRowCommon<T>(Kinkster kinkster, string dispName, float width, KPID perm, bool current, bool canEdit, Func<T> newStateFunc)
+    private void ClientRowCommon<T>(Kinkster kinkster, string dispName, float width, KPID perm, bool current, bool canEdit, Func<T> newStateFunc, bool disabled)
     {
         using var _ = ImRaii.PushColor(ImGuiCol.Button, 0);
-        using var dis = ImRaii.Disabled(kinkster.OwnPerms.InHardcore);
+        using var dis = ImRaii.Disabled(kinkster.OwnPerms.InHardcore || disabled);
         var data = PanelPairEx.OwnRowInfo[perm];
         var buttonW = width - (ImGui.GetFrameHeight() + ImGui.GetStyle().ItemSpacing.X);
         var editCol = canEdit ? ImGuiColors.HealerGreen.ToUint() : ImGuiColors.DalamudRed.ToUint();
