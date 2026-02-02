@@ -30,11 +30,13 @@ public class MufflerService : DisposableMediatorSubscriberBase
     /// </summary>
     private static List<GagData> _activeGags;
 
+    private static GagMuffleType _activeMuffleType = GagMuffleType.None;
+
     public MufflerService(
         ILogger<MufflerService> logger,
         GagspeakMediator mediator,
         MainConfig mainConfig,
-        Ipa_EN_FR_JP_SP_Handler ipaParser, 
+        Ipa_EN_FR_JP_SP_Handler ipaParser,
         ConfigFileProvider fileprovider)
         : base(logger, mediator)
     {
@@ -45,7 +47,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
         try
         {
             var json = File.ReadAllText(fileprovider.GagDataJson);
-            _gagData = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, PhonemeProperties>>>(json) 
+            _gagData = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, PhonemeProperties>>>(json)
                 ?? new Dictionary<string, Dictionary<string, PhonemeProperties>>();
         }
         catch (FileNotFoundException)
@@ -90,14 +92,16 @@ public class MufflerService : DisposableMediatorSubscriberBase
     }
 
     public void UpdateGarblerLogic(GagType gagOne, GagType gagTwo, GagType gagThree)
-        => UpdateGarblerLogic([gagOne.GagName(), gagTwo.GagName(), gagThree.GagName()]);
+        => UpdateGarblerLogic([gagOne.GagName(), gagTwo.GagName(), gagThree.GagName()], MuffleType(gagOne) | MuffleType(gagTwo) | MuffleType(gagThree));
 
-    public void UpdateGarblerLogic(List<string> newGagListNames)
+    public void UpdateGarblerLogic(List<string> newGagListNames, GagMuffleType newMuffleType)
     {
         _activeGags = newGagListNames
             .Where(gagType => _allGarblerData.Any(gag => gag.Name == gagType))
             .Select(gagType => _allGarblerData.First(gag => gag.Name == gagType))
             .ToList();
+
+        _activeMuffleType = newMuffleType;
     }
 
     /// <summary> Processes the input message by converting it to GagSpeak format </summary> 
@@ -137,9 +141,10 @@ public class MufflerService : DisposableMediatorSubscriberBase
             // Convert the message to a list of phonetics for each word
             var wordsAndPhonetics = _ipaParser.ToIPAList(inputMessage);
             // Iterate over each word and its phonetics
-            foreach (var entry in wordsAndPhonetics)
+            foreach (var (word, phonetics) in wordsAndPhonetics)
             {
-                var word = entry.Item1; // create a variable to store the word (which includes its puncuation)
+                // word includes its puncuation
+
                 // If the word is "*", then toggle skip translations
                 if (word == "*")
                 {
@@ -170,7 +175,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
                     // Remove leading and trailing punctuation from the word
                     var wordWithoutPunctuation = word.Substring(leadingPunctuation.Length, word.Length - leadingPunctuation.Length - trailingPunctuation.Length);
                     // Convert the phonetics to GagSpeak if the list is not empty, otherwise use the original word
-                    var gaggedSpeak = entry.Item2.Any() ? ConvertPhoneticsToGagSpeak(entry.Item2, isAllCaps, isFirstLetterCaps) : wordWithoutPunctuation;
+                    var gaggedSpeak = phonetics.Any() ? ConvertPhoneticsToGagSpeak(phonetics, isAllCaps, isFirstLetterCaps) : ConvertNonWordsToGagSpeak(wordWithoutPunctuation, isAllCaps, isFirstLetterCaps);
                     // Add the GagSpeak to the final message
 
                     /* ---- THE BELOW LINE WILL CAUSE LOTS OF SPAM, ONLY FOR USE WHEN DEVELOPER DEBUGGING ---- */
@@ -196,13 +201,49 @@ public class MufflerService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
+    ///    Handles conversion of speech that does not contain recognized words (e.g. misspellings, names, etc.)
+    /// </summary>
+    /// <returns>garbled version of the input word</returns>
+    private string ConvertNonWordsToGagSpeak(string word, bool isAllCaps, bool isFirstLetterCapitalized)
+    {
+        string phoneticKey;
+        if (_activeMuffleType.HasFlag(GagMuffleType.MouthFull))
+        {
+            phoneticKey = StaticGarbleData.MouthFullKey;
+        }
+        else if (_activeMuffleType.HasFlag(GagMuffleType.MouthClosed))
+        {
+            phoneticKey = StaticGarbleData.MouthClosedKey;
+        }
+        else if (_activeMuffleType.HasFlag(GagMuffleType.MouthOpen))
+        {
+            phoneticKey = StaticGarbleData.MouthOpenKey;
+        }
+        else
+        {
+            return word;
+        }
+        List<string> phonetics = new(word.Length);
+        foreach (var character in word)
+        {
+            phonetics.Add(phoneticKey);
+        }
+        return ConvertPhoneticsToGagSpeak(phonetics, isAllCaps, isFirstLetterCapitalized);
+    }
+
+    /// <summary>
     ///     Phonetic IPA -> Garbled sound equivalent in selected language
     /// </summary>
-    private static string ConvertPhoneticsToGagSpeak(List<string> phonetics, bool isAllCaps, bool isFirstLetterCapitalized)
+    private string ConvertPhoneticsToGagSpeak(List<string> phonetics, bool isAllCaps, bool isFirstLetterCapitalized)
     {
         var outputString = new StringBuilder();
         foreach (var phonetic in phonetics)
         {
+            if (StaticGarbleData.GagDataMap.ContainsKey(phonetic))
+            {
+                outputString.Append(StaticGarbleData.GagDataMap[phonetic][Random.Shared.Next(StaticGarbleData.GagDataMap[phonetic].Count)]);
+                continue;
+            }
             try
             {
                 var gagWithMaxMuffle = _activeGags
@@ -213,6 +254,10 @@ public class MufflerService : DisposableMediatorSubscriberBase
                 {
                     var translationSound = gagWithMaxMuffle.Phonemes[phonetic].Sound;
                     outputString.Append(translationSound);
+                }
+                else
+                {
+                    outputString.Append(ConvertNonWordsToGagSpeak(phonetic, isAllCaps, isFirstLetterCapitalized));
                 }
             }
             catch (Bagagwa e)
@@ -227,5 +272,82 @@ public class MufflerService : DisposableMediatorSubscriberBase
             result = char.ToUpper(result[0]) + result.Substring(1);
         }
         return result;
+    }
+
+    public static GagMuffleType MuffleType(IEnumerable<GagType> gagTypes)
+    {
+        var combinedMuffleType = GagMuffleType.None;
+        foreach (var gagType in gagTypes)
+        {
+            combinedMuffleType |= MuffleType(gagType);
+        }
+        return combinedMuffleType;
+    }
+
+    public static GagMuffleType MuffleType(GagType gagType)
+    {
+        return gagType switch
+        {
+            GagType.None => GagMuffleType.None,
+            GagType.BallGag => GagMuffleType.MouthFull,
+            GagType.BallGagMask => GagMuffleType.MouthFull,
+            GagType.BambooGag => GagMuffleType.MouthFull,
+            GagType.BeltStrapGag => GagMuffleType.MouthClosed,
+            GagType.BitGag => GagMuffleType.MouthFull,
+            GagType.BitGagPadded => GagMuffleType.MouthFull,
+            GagType.BoneGag => GagMuffleType.MouthFull,
+            GagType.BoneGagXL => GagMuffleType.MouthFull,
+            GagType.CandleGag => GagMuffleType.MouthFull,
+            GagType.CageMuzzle => GagMuffleType.None,
+            GagType.CleaveGag => GagMuffleType.MouthClosed,
+            GagType.ChloroformGag => GagMuffleType.MouthClosed,
+            GagType.ChopStickGag => GagMuffleType.MouthOpen,
+            GagType.ClothWrapGag => GagMuffleType.MouthClosed,
+            GagType.ClothStuffingGag => GagMuffleType.MouthFull,
+            GagType.CropGag => GagMuffleType.MouthClosed,
+            GagType.CupHolderGag => GagMuffleType.MouthClosed,
+            GagType.DeepthroatPenisGag => GagMuffleType.MouthFull,
+            GagType.DentalGag => GagMuffleType.MouthOpen,
+            GagType.DildoGag => GagMuffleType.MouthFull,
+            GagType.DuctTapeGag => GagMuffleType.MouthClosed,
+            GagType.DusterGag => GagMuffleType.MouthClosed,
+            GagType.FunnelGag => GagMuffleType.MouthOpen,
+            GagType.FuturisticHarnessBallGag => GagMuffleType.MouthFull,
+            GagType.FuturisticHarnessPanelGag => GagMuffleType.MouthFull,
+            GagType.GasMask => GagMuffleType.None,
+            GagType.HarnessBallGag => GagMuffleType.MouthFull,
+            GagType.HarnessBallGagXL => GagMuffleType.MouthFull,
+            GagType.HarnessPanelGag => GagMuffleType.MouthFull,
+            GagType.HookGagMask => GagMuffleType.MouthOpen,
+            GagType.InflatableHood => GagMuffleType.MouthFull,
+            GagType.LargeDildoGag => GagMuffleType.MouthFull,
+            GagType.LatexHood => GagMuffleType.MouthClosed,
+            GagType.LatexBallMuzzleGag => GagMuffleType.MouthFull,
+            GagType.LatexPostureCollarGag => GagMuffleType.MouthClosed,
+            GagType.LeatherCorsetCollarGag => GagMuffleType.MouthClosed,
+            GagType.LeatherHood => GagMuffleType.MouthClosed,
+            GagType.LipGag => GagMuffleType.MouthOpen,
+            GagType.MedicalMask => GagMuffleType.None,
+            GagType.MuzzleGag => GagMuffleType.MouthClosed,
+            GagType.PantyStuffingGag => GagMuffleType.MouthFull,
+            GagType.PlasticWrapGag => GagMuffleType.MouthClosed,
+            GagType.PlugGag => GagMuffleType.MouthOpen,
+            GagType.PonyGag => GagMuffleType.MouthOpen,
+            GagType.PumpGaglv1 => GagMuffleType.MouthFull,
+            GagType.PumpGaglv2 => GagMuffleType.MouthFull,
+            GagType.PumpGaglv3 => GagMuffleType.MouthFull,
+            GagType.PumpGaglv4 => GagMuffleType.MouthFull,
+            GagType.RibbonGag => GagMuffleType.MouthFull,
+            GagType.RingGag => GagMuffleType.MouthOpen,
+            GagType.RopeGag => GagMuffleType.MouthClosed,
+            GagType.ScarfGag => GagMuffleType.MouthClosed,
+            GagType.SensoryDeprivationHood => GagMuffleType.MouthFull,
+            GagType.SockStuffingGag => GagMuffleType.MouthFull,
+            GagType.SpiderGag => GagMuffleType.MouthOpen,
+            GagType.TentacleGag => GagMuffleType.MouthFull,
+            GagType.WebGag => GagMuffleType.MouthClosed,
+            GagType.WhiffleGag => GagMuffleType.MouthFull,
+            _ => throw new ArgumentOutOfRangeException(),
+        };
     }
 }
