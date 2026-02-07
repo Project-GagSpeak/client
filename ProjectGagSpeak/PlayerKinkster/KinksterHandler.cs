@@ -171,7 +171,7 @@ public sealed class KinksterHandler : DisposableMediatorSubscriberBase
         try
         {
             // At the moment the only alteration we do is moodles, and we should not do that if sundouleia is active.
-            if (IsRendered && !IpcCallerSundouleia.CurrentKinksters.Contains(Address))
+            if (IsRendered && !IpcCallerSundouleia.Sundesmos.Contains(Address))
                 await _ipc.Moodles.ClearByPtr(Address).ConfigureAwait(false);
 
             // Clear the data up
@@ -193,7 +193,7 @@ public sealed class KinksterHandler : DisposableMediatorSubscriberBase
         {
             // At the moment the only alteration we do is moodles,
             // and we should not do that if they are still a sundouleia user.
-            if (IsRendered && !IpcCallerSundouleia.CurrentKinksters.Contains(address))
+            if (IsRendered && !IpcCallerSundouleia.Sundesmos.Contains(address))
                 await _ipc.Moodles.ClearByPtr(address).ConfigureAwait(false);
 
             // Clear the data up

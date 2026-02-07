@@ -32,24 +32,19 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
     private readonly MainConfig _config;
     private readonly RequestsManager _manager;
     private readonly KinksterManager _kinksters;
-    private readonly SidePanelService _sidePanel;
-
-    private RequestCache _cache => (RequestCache)FilterCache;
 
     private IDynamicNode? _hoveredReplyNode;     // From last frame.
     private IDynamicNode? _newHoveredReplyNode;  // Tracked each frame.
     private DateTime? _hoverExpiry;            // time until we should hide the hovered reply node.
 
     public RequestsInDrawer(ILogger<RequestsInDrawer> logger, MainHub hub, MainConfig config, 
-        RequestsManager manager, KinksterManager kinksters, SidePanelService sidePanel,
-        RequestsDrawSystem ds) 
+        RequestsManager manager, KinksterManager kinksters, RequestsDrawSystem ds) 
         : base("##GSRequestsInDrawer", Svc.Logger.Logger, ds, new RequestCache(ds))
     {
         _hub = hub;
         _config = config;
         _manager = manager;
         _kinksters = kinksters;
-        _sidePanel = sidePanel;
     }
 
     // Special top area here due to how it displays either essential config or bulk selection options.
@@ -108,7 +103,7 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
         if (!_) return;
 
         // Handle any main context interactions such as right-click menus and the like.
-        HandleMainContextActions();
+        HandleMainContext();
         // Update the cache to its latest state.
         FilterCache.UpdateCache();
 
@@ -194,7 +189,7 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
         ImGui.SameLine(posX);
         // Draw out the invisible button over the area to draw in.
         if (ImGui.InvisibleButton($"{leaf.FullPath}-hoverspace", new Vector2(rightSide - posX, region.Y)))
-            HandleClick(leaf, flags);
+            HandleLeftClick(leaf, flags);
         HandleDetections(leaf, flags);
         CkGui.AttachToolTip(ToolTip, ImGuiColors.DalamudOrange);
 

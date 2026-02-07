@@ -184,7 +184,6 @@ public class HypnoEffectEditor : IDisposable
                 DrawEditorArea(cellWidth);
                 var editorHeight = ImGui.GetItemRectSize().Y;
 
-
                 ImGui.TableNextColumn();
                 var size = DisplayPreviewHeightConstrained(editorHeight, overlay.OverlayPath);
                 ImGui.Dummy(size);
@@ -241,7 +240,7 @@ public class HypnoEffectEditor : IDisposable
 
     public void DrawCompactEditorTabs(float width)
     {
-        using (CkRaii.TabBarChild("EffectEdit", width, CkStyle.GetFrameRowsHeight((uint)GetCompactHeightRowCount()), FancyTabBar.Rounding, CkColor.VibrantPink.Uint(), CkColor.VibrantPinkHovered.Uint(), CkColor.FancyHeader.Uint(), 
+        using (CkRaii.TabBarChild("EffectEdit", width, CkStyle.GetFrameRowsHeight(GetCompactHeightRowCount()), FancyTabBar.Rounding, CkColor.VibrantPink.Uint(), CkColor.VibrantPinkHovered.Uint(), CkColor.FancyHeader.Uint(), 
             LabelFlags.PadInnerChild | LabelFlags.AddPaddingToHeight, out var selected, EditorTabs))
                 selected?.DrawContents(ImGui.GetContentRegionAvail().X);
     }

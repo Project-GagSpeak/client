@@ -128,7 +128,7 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
     {
         var pos = ImGui.GetCursorPos();
         if (ImGui.InvisibleButton($"{Label}_node_{folder.ID}", region))
-            HandleClick(folder, flags);
+            HandleLeftClick(folder, flags);
         HandleDetections(folder, flags);
 
         // Back to the start, then draw.
@@ -238,7 +238,7 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
         var isDragDrop = flags.HasAny(DynamicFlags.DragDropLeaves);
         var pos = ImGui.GetCursorPos();
         if (ImGui.InvisibleButton($"{leaf.FullPath}-name-area", region))
-            HandleClick(leaf, flags);
+            HandleLeftClick(leaf, flags);
         HandleDetections(leaf, flags);
 
         // Then return to the start position and draw out the text.

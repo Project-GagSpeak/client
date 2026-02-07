@@ -2,6 +2,8 @@ using CkCommons.Gui;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using GagSpeak.Gui.Components;
 using GagSpeak.Interop;
 using GagSpeak.PlayerClient;
@@ -12,6 +14,7 @@ using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
 using GagSpeak.Utils;
 using OtterGui.Text;
+using static Lumina.Data.Parsing.Layer.LayerCommon;
 
 namespace GagSpeak.Gui;
 
@@ -75,6 +78,9 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         if (ImGui.CollapsingHeader("Moodles IPC Status"))
             DrawMoodlesIpc();
 
+        if (ImGui.CollapsingHeader("Sundouleia IPC"))
+            DrawSundouleiaIpc();
+
         if (ImGui.CollapsingHeader("Hardcore State"))
             _clientData.DrawHardcoreStatus();
 
@@ -129,5 +135,44 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
 
         ImGui.Text($"Total Moodles: {MoodleCache.IpcData.StatusList.Count()}");
         ImGui.Text($"Total Presets: {MoodleCache.IpcData.PresetList.Count()}");
+    }
+
+    private unsafe void DrawSundouleiaIpc()
+    {
+        ImGui.Text("Sundouleia IPC Status:");
+        CkGui.ColorTextInline(IpcCallerSundouleia.APIAvailable ? "Available" : "Unavailable", ImGuiColors.ParsedOrange);
+        if (!IpcCallerSundouleia.Sundesmos.Any()) return;
+        using var _ = ImRaii.PushIndent();
+        try
+        {
+            using (var t = ImRaii.Table($"##sundouleiaPlayers", 5, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerV))
+            {
+                if (!t) return;
+                ImGui.TableSetupColumn("Address");
+                ImGui.TableSetupColumn("Name");
+                ImGui.TableSetupColumn("ObjIdx");
+                ImGui.TableSetupColumn("ObjKind");
+                ImGui.TableSetupColumn("EntityId");
+                ImGui.TableHeadersRow();
+
+                foreach (Character* chara in IpcCallerSundouleia.Sundesmos)
+                {
+                    ImGui.TableNextColumn();
+                    ImGui.Text($"{(nint)chara:X}");
+                    ImGui.TableNextColumn();
+                    ImGui.Text(chara->NameString.ToString());
+                    ImGui.TableNextColumn();
+                    ImGui.Text(chara->ObjectIndex.ToString());
+                    ImGui.TableNextColumn();
+                    ImGui.Text(chara->ObjectKind.ToString());
+                    ImGui.TableNextColumn();
+                    ImGui.Text(chara->EntityId.ToString());
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error drawing rendered charas: {ex}");
+        }
     }
 }

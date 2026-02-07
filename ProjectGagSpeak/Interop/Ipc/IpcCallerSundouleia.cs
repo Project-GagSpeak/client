@@ -21,7 +21,7 @@ public sealed class IpcCallerSundouleia : IIpcCaller
     private readonly ILogger<IpcCallerSundouleia> _logger;
     private readonly GagspeakMediator _mediator;
 
-    private static HashSet<nint> _renderedKinksters = new();
+    private static HashSet<nint> _renderedSundesmos = new();
 
     public IpcCallerSundouleia(ILogger<IpcCallerSundouleia> logger, GagspeakMediator mediator)
     {
@@ -47,7 +47,7 @@ public sealed class IpcCallerSundouleia : IIpcCaller
     }
 
     public static bool APIAvailable { get; private set; } = false;
-    public static IReadOnlyCollection<nint> CurrentKinksters => _renderedKinksters;
+    public static IReadOnlyCollection<nint> Sundesmos => _renderedSundesmos;
 
     public void Dispose()
     {
@@ -63,8 +63,9 @@ public sealed class IpcCallerSundouleia : IIpcCaller
         {
             var result = ApiVersion.InvokeFunc() is 1;
             if (!APIAvailable && result)
-                _mediator.Publish(new SundouleiaReady());
-            APIAvailable = result;
+                OnSundouleiaReady();
+            else
+                APIAvailable = result;
         }
         catch
         {
@@ -74,25 +75,25 @@ public sealed class IpcCallerSundouleia : IIpcCaller
 
     private void OnSundouleiaReady()
     {
-        CheckAPI();
-        _renderedKinksters = GetAllKinksters().ToHashSet();
+        APIAvailable = true;
+        _renderedSundesmos = GetAllSundesmos().ToHashSet();
         _mediator.Publish(new SundouleiaReady());
     }
 
     private void OnSundouleiaDisposing()
     {
-        _renderedKinksters.Clear();
+        _renderedSundesmos.Clear();
         _mediator.Publish(new SundouleiaDisposed());
     }
 
     // Maybe inform mediator of change?
     private void OnKinksterRendered(nint ptr)
-        => _renderedKinksters.Add(ptr);
+        => _renderedSundesmos.Add(ptr);
 
     private void OnKinksterUnrendered(nint ptr)
-        => _renderedKinksters.Remove(ptr);
+        => _renderedSundesmos.Remove(ptr);
 
-    public List<nint> GetAllKinksters()
+    public List<nint> GetAllSundesmos()
     {
         if (!APIAvailable)
             return new List<nint>();
@@ -100,7 +101,7 @@ public sealed class IpcCallerSundouleia : IIpcCaller
         var result = GetAllRendered.InvokeFunc();
         _logger.LogDebug($"Retrieved {result.Count} kinksters.", LoggerType.IpcGagSpeak);
         // Update the internal list too.
-        _renderedKinksters = result.ToHashSet();
+        _renderedSundesmos = result.ToHashSet();
         return result;
     }
 }

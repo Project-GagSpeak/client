@@ -129,7 +129,7 @@ public sealed class AllowancesDrawer : DynamicDrawer<Kinkster>
         if (!_) return;
 
         // Handle any main context interactions such as right-click menus and the like.
-        HandleMainContextActions();
+        HandleMainContext();
         // Update the cache to its latest state.
         FilterCache.UpdateCache();
 
@@ -163,7 +163,7 @@ public sealed class AllowancesDrawer : DynamicDrawer<Kinkster>
     {
         var pos = ImGui.GetCursorPos();
         if (ImGui.InvisibleButton($"{Label}_node_{folder.ID}", region))
-            HandleClick(folder, flags);
+            HandleLeftClick(folder, flags);
         HandleDetections(folder, flags);
 
         // Back to the start, then draw.
@@ -215,7 +215,7 @@ public sealed class AllowancesDrawer : DynamicDrawer<Kinkster>
         var isDragDrop = flags.HasAny(DynamicFlags.DragDropLeaves);
         var pos = ImGui.GetCursorPos();
         if (ImGui.InvisibleButton($"{leaf.FullPath}-name-area", region))
-            HandleClick(leaf, flags);
+            HandleLeftClick(leaf, flags);
         HandleDetections(leaf, flags);
 
         // Then return to the start position and draw out the text.
