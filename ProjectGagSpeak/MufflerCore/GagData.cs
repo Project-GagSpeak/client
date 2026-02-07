@@ -12,6 +12,20 @@ public class GagData
     }
 }
 
+public static class StaticGarbleData
+{
+    public const string MouthOpenKey = "MOUTH_OPEN";
+    public const string MouthClosedKey = "MOUTH_CLOSED";
+    public const string MouthFullKey = "MOUTH_FULL";
+
+    public static readonly IReadOnlyDictionary<string, List<string>> GagDataMap = new Dictionary<string, List<string>>
+    {
+        { MouthOpenKey, new List<string> { "a", "e", "ae", "h", "hh" } },
+        { MouthClosedKey, new List<string> { "h", "m", "mh", "n", "ng", "mgh" } },
+        { MouthFullKey, new List<string> { "m", "mh", "mmh" } }
+    };
+}
+
 
 public class PhonemeProperties
 {
@@ -21,3 +35,13 @@ public class PhonemeProperties
     [JsonProperty("SOUND")]
     public string Sound { get; set; }
 }
+
+[Flags]
+public enum GagMuffleType
+{
+    None = 0,
+    MouthOpen = 1 << 0,
+    MouthClosed = 1 << 1,
+    MouthFull = 1 << 2,
+}
+

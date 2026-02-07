@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
 using GagSpeak.PlayerClient;
@@ -9,7 +10,6 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using OtterGui.Extensions;
-using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.State.Managers;
 
@@ -64,7 +64,7 @@ public sealed class GagRestrictionManager : IHybridSavable
             if (slot.GagItem is not GagType.None && Storage.TryGetGag(slot.GagItem, out var item))
                 _activeItems.TryAdd(idx, item);
         // resync the active chat garbler data if any were set.
-        _muffler.UpdateGarblerLogic(serverData.CurrentGagNames());
+        _muffler.UpdateGarblerLogic(serverData.CurrentGagNames(), MufflerService.MuffleType(serverData.GagSlots.Select(g => g.GagItem)));
         _logger.LogInformation("Synchronized all Active GagSlots with Client-Side Manager.");
     }
 
@@ -127,7 +127,7 @@ public sealed class GagRestrictionManager : IHybridSavable
         data.GagSlots[layer].Enabler = enactor;
 
         _logger.LogTrace($"Updating Garbler Logic for gag {newGag.GagName()} to layer {layer} by {enactor}");
-        _muffler.UpdateGarblerLogic(data.CurrentGagNames());
+        _muffler.UpdateGarblerLogic(data.CurrentGagNames(), MufflerService.MuffleType(data.GagSlots.Select(g => g.GagItem)));
         GagspeakEventManager.AchievementEvent(UnlocksEvent.GagStateChange, layer, newGag, true, enactor);
 
         // Mark what parts of this item will end up having effective changes.
@@ -185,7 +185,7 @@ public sealed class GagRestrictionManager : IHybridSavable
         var removedGag = data.GagSlots[layer].GagItem;
         data.GagSlots[layer].GagItem = GagType.None;
         data.GagSlots[layer].Enabler = string.Empty;
-        _muffler.UpdateGarblerLogic(data.CurrentGagNames());
+        _muffler.UpdateGarblerLogic(data.CurrentGagNames(), MufflerService.MuffleType(data.GagSlots.Select(g => g.GagItem)));
         GagspeakEventManager.AchievementEvent(UnlocksEvent.GagStateChange, layer, removedGag, false, enactor);
 
         // Update the affected visual states, if item is enabled.
@@ -275,7 +275,7 @@ public sealed class GagRestrictionManager : IHybridSavable
 
     private void LoadV0(JToken? data)
     {
-        if(data is not JObject sortedListData)
+        if (data is not JObject sortedListData)
             return;
 
         try
