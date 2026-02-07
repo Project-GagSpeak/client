@@ -13,6 +13,9 @@ public sealed class ChatboxController : DisposableMediatorSubscriberBase
 {
     private readonly PlayerControlCache _cache;
     private bool _blockInput = false;
+    private bool _hideChatBoxes = false;
+    private bool _hideChatInput = false;
+
     public ChatboxController(ILogger<KeystateController> logger, GagspeakMediator mediator,
         PlayerControlCache cache) : base(logger, mediator)
     {
@@ -23,13 +26,21 @@ public sealed class ChatboxController : DisposableMediatorSubscriberBase
 
     private unsafe void FrameworkUpdate()
     {
-        if (!_blockInput)
-            return;
-        // assuming that this causes issues when ran outside framework thread.
-        AddonChatLog.EnsureNoChatInputFocus();
+        // assuming that this causes issues when ran outside framework 
+        // todo: move this to addon.lifecycle events when we figure out how
+        if (_blockInput)
+            AddonChatLog.EnsureNoChatInputFocus();
+        if (_hideChatBoxes)
+            AddonChatLog.SetChatPanelVisibility(false);
+        if (_hideChatInput)
+            AddonChatLog.SetChatInputVisibility(false);
     }
 
     // Update our local value to reflect the latest state in the cache.
     public void UpdateHardcoreStatus()
-        => _blockInput = _cache.BlockChatInput;
+    {
+        _blockInput = _cache.BlockChatInput;
+        _hideChatBoxes = _cache.HideChatBoxes;
+        _hideChatInput = _cache.HideChatInput;
+    }
 }
