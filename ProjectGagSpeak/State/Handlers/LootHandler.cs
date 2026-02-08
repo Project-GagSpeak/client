@@ -159,7 +159,7 @@ public sealed class LootHandler
             if (await ApplyCursedGag(cg, lockTime))
                 return;
         }
-        else if (chosen is CursedRestrictionItem cri)
+        else if (chosen is CursedRestrictionItem cri && _restrictions.ServerRestrictionData?.FindFirstUnused() != -1)
         {
             if (await ApplyCursedRestriction(cri, lockTime))
                 return;
