@@ -1,5 +1,6 @@
 using CkCommons;
 using Dalamud.Interface.ImGuiNotification;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
@@ -252,10 +253,10 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
             var secretKey = string.Empty;
             var expectingPrimary = false;
             // Attempt to get the secret key and isPrimary attributes as well.
-            if (_account.GetProfileForChara() is { } profile)
+            if (_account.GetTrackedCharaOrDefault() is { } profile)
             {
-                secretKey = profile.SecretKey;
-                expectingPrimary = profile.IsMainProfile;
+                secretKey = profile.Key;
+                expectingPrimary = profile.IsPrimary;
             }
 
             // get the remaining attributes.

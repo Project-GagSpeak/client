@@ -1,3 +1,161 @@
+
+using CkCommons;
+using GagSpeak.Services.Configs;
+using GagSpeak.Services.Mediator;
+using GagspeakAPI.Network;
+
+namespace GagSpeak.PlayerClient;
+
+/// <summary> 
+///     Config Management for all Server related configs in one, including
+///     helper methods to make interfacing with config data easier.
+/// </summary>
+public class AccountManager
+{
+    private readonly ILogger<AccountManager> _logger;
+    private readonly GagspeakMediator _mediator;
+    private readonly AccountConfig _config;
+    private readonly ConfigFileProvider _fileProvider;
+
+    public AccountManager(ILogger<AccountManager> logger, GagspeakMediator mediator,
+        AccountConfig config, ConfigFileProvider files)
+    {
+        _logger = logger;
+        _mediator = mediator;
+        _config = config;
+        _fileProvider = files;
+    }
+
+    public List<AccountProfile> Profiles => _config.Current.Profiles.Values.ToList();
+
+    // Avoid calling this wherever possible maybe?
+    public void Save()
+        => _config.Save();
+
+    public void UpdateFileProviderForConnection(ConnectionResponse response)
+    {
+        _logger.LogDebug($"Setting FileProvider ProfileUID to {response.User.UID}");
+        var isProfileDifferent = _fileProvider.CurrentUserUID != response.User.UID;
+        _fileProvider.UpdateConfigs(response.User.UID);
+    }
+
+    // If any profile exists and has successfully connected at least once
+    public bool HasValidProfile()
+        => Profiles.Count is not 0 && Profiles.Any(p => p.HadValidConnection);
+
+    public bool CharaHasValidProfile()
+        => Profiles.Exists(p => p.ContentId == PlayerData.CID && p.HadValidConnection);
+
+    public AccountProfile? GetMainProfile()
+        => Profiles.FirstOrDefault(p => p.IsPrimary);
+
+    public AccountProfile? GetCharaProfile()
+        => Profiles.FirstOrDefault(p => p.ContentId == PlayerData.CID);
+
+    // Might need to run on framework thread? Not sure.
+    // Does a Name & World update on connection.
+    /// <summary>
+    /// Gets the currently logged in player's profile, and updates name and world association if necessary
+    /// </summary>
+    /// <returns>The <c>AccountProfile</c> for the current player, or null if no account exists</returns>
+    public AccountProfile? GetTrackedCharaOrDefault()
+    {
+        var auth = _config.Current.Profiles[PlayerData.CID]; // don't want a default here?
+        if (auth is null)
+        {
+            _logger.LogDebug("No profile found for current character.");
+            return null;
+        }
+
+        var curName = PlayerData.Name;
+        var curWorld = PlayerData.HomeWorldId;
+        // If no name/world change, return.
+        if (auth.PlayerName == curName && auth.WorldId == curWorld)
+            return auth;
+
+        // Otherwise update and save.
+        auth.PlayerName = curName;
+        auth.WorldId = curWorld;
+        _config.Save();
+        return auth;
+    }
+
+    /// <summary>
+    ///     Adds a blank new profile to the service, checking to make sure a duplicate doesn't exist first.
+    /// </summary>
+    /// <returns>The created <c>AccountProfile</c> item, or null if a duplicate account exists.</returns>
+    public AccountProfile? AddNewProfile()
+    {
+        var name = PlayerData.Name;
+        var world = PlayerData.HomeWorldId;
+        var cid = PlayerData.CID;
+
+        if (CharaHasValidProfile())
+        {
+            _logger.LogError("An entry with this Player's ID already exists!");
+            return null;
+        }
+
+        // Generate it.
+        _config.Current.Profiles[cid] = new AccountProfile
+        {
+            ContentId = cid,
+            PlayerName = name,
+            WorldId = world,
+        };
+        _config.Save();
+        return _config.Current.Profiles[cid];
+    }
+
+    public bool TryUpdateSecretKey(AccountProfile profile, string newKey)
+    {
+        if (profile.HadValidConnection)
+            return false;
+
+        // Update the key and save.
+        profile.Key = newKey;
+        _config.Save();
+        return true;
+    }
+
+    /// <summary> 
+    ///     Updates the authentication.
+    /// </summary>
+    public void UpdateAuthentication(string secretKey, ConnectionResponse response)
+    {
+        // If no profile exists with this key, this is a big red flag.
+        if (Profiles.FirstOrDefault(p => p.Key == secretKey) is not { } profile)
+        {
+            _logger.LogError("Somehow connected with a SecretKey not stored, you should NEVER see this!");
+            return;
+        }
+
+        profile.UserUID = response.User.UID;
+        profile.HadValidConnection = true;
+
+        // now we should iterate through the rest of our profiles, and check the UID's.
+        // Any UID's listed in the profiles that are not in the associated profiles from the response are outdated.
+        HashSet<string> accountProfileUids = [..response.AccountProfileUids, response.User.UID];
+
+        foreach (var checkedProfile in Profiles)
+        {
+            if (string.IsNullOrWhiteSpace(checkedProfile.UserUID) || !checkedProfile.HadValidConnection)
+                continue;
+
+            // If the account UID list no longer has the profile UserUID, it was deleted via discord or a cleanup service.
+            if (!accountProfileUids.Contains(checkedProfile.UserUID, StringComparer.OrdinalIgnoreCase))
+            {
+                _logger.LogWarning($"Removing outdated profile {checkedProfile.PlayerName} with UID {checkedProfile.UserUID}");
+                Profiles.Remove(checkedProfile);
+                _config.Save();
+            }
+        }
+    }
+}
+
+/* old acctmanager
+
+
 using CkCommons;
 using GagSpeak.PlayerClient;
 using GagspeakAPI.Network;
@@ -176,4 +334,4 @@ public class AccountManager
         AccountData.Profiles.Clear();
         _config.Save();
     }
-}
+}*/

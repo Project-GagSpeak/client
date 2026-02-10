@@ -93,7 +93,7 @@ public partial class MainHub
                 Mediator.Publish(new ConnectedMessage());
 
                 // Update our current authentication to reflect the information provided.
-                _accounts.UpdateFromValidConnection(secretKey, ConnectionResponse!);
+                _accounts.UpdateAuthentication(secretKey, ConnectionResponse!);
 
                 // obtain the ShareHub and LobbyInvite data post-connection, as it doesnt depend on anything else.
                 var lobbyHubInfo = await GetShareHubAndLobbyInfo().ConfigureAwait(false);
@@ -301,17 +301,21 @@ public partial class MainHub
         }
 
         // if we have not yet made an account, abort this connection.
-        if (!_accounts.HasAnyProfile)
+        if (!_accounts.HasValidProfile())
         {
             Logger.LogDebug("No Authentications created. No Primary Account or Alt Account to connect with. Aborting!", LoggerType.ApiCore);
             return false;
         }
 
         // ensure we have a proper template for the active character.
-        if (!_accounts.ProfileExistsForChara())
+        if (!_accounts.CharaHasValidProfile())
         {
             // Generate a new auth entry for the current character if the primary one has already been made (this is for an alt basically)
-            _accounts.CreateProfileForChara();
+            if (_accounts.AddNewProfile() is { } newProfile)
+            {
+                newProfile.IsPrimary = !_accounts.Profiles.Any(p => p.IsPrimary == true);
+                _accounts.Save();
+            }
         }
 
         // If the client wishes to not be connected to the server, return.
@@ -321,13 +325,13 @@ public partial class MainHub
             return false;
         }
 
-        if (_accounts.GetProfileForChara() is not { } profile)
+        if (_accounts.GetCharaProfile() is not { } profile)
         {
             Logger.LogWarning($"AccountProfile existed but no SecretKey was present.", LoggerType.ApiCore);
             return false;
         }
 
-        if (profile.SecretKey.IsNullOrEmpty())
+        if (profile.Key.IsNullOrEmpty())
         {
             // log a warning that no secret key is set for the current character
             Logger.LogWarning("No secret key set for current character, aborting Connection with [NoSecretKey]", LoggerType.ApiCore);
