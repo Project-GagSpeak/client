@@ -679,8 +679,6 @@ public class IntroUi : WindowMediatorSubscriberBase
                     newProfile.IsPrimary = true;
                     newProfile.HadValidConnection = true;
                 }
-                else
-                    throw new InvalidOperationException("New profile creation failed. This character already has a valid account.");
                 
                 // Save profile data changes.
                 _account.Save();

@@ -3,6 +3,7 @@ using CkCommons;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Network;
+using System.CodeDom;
 
 namespace GagSpeak.PlayerClient;
 
@@ -39,25 +40,52 @@ public class AccountManager
         _fileProvider.UpdateConfigs(response.User.UID);
     }
 
-    // If any profile exists and has successfully connected at least once
-    public bool HasValidProfile()
-        => Profiles.Count is not 0 && Profiles.Any(p => p.HadValidConnection);
+    /// <summary>
+    /// Determines whether any profiles are currently available.
+    /// </summary>
+    /// <returns>true if at least one profile exists; otherwise, false.</returns>
+    internal bool HasAnyProfile()
+        => Profiles.Count != 0;
 
+    /// <summary>
+    /// Determines whether the current instance has at least one profile with a valid connection.
+    /// </summary>
+    /// <returns>true if there is at least one profile with a valid connection; otherwise, false.</returns>
+    public bool HasValidProfile()
+        => HasAnyProfile() && Profiles.Any(p => p.HadValidConnection);
+
+    /// <summary>
+    /// Determines whether the current player has a valid profile with a successful connection.
+    /// </summary>
+    /// <returns>true if the player has a profile matching their content ID and the profile indicates a valid connection;
+    /// otherwise, false.</returns>
     public bool CharaHasValidProfile()
         => Profiles.Exists(p => p.ContentId == PlayerData.CID && p.HadValidConnection);
 
+    /// <summary>
+    /// Retrieves the primary account profile associated with this account, if one exists.
+    /// </summary>
+    /// <returns>The primary <see cref="AccountProfile"/> if available; otherwise, <see langword="null"/>.</returns>
     public AccountProfile? GetMainProfile()
         => Profiles.FirstOrDefault(p => p.IsPrimary);
 
+    /// <summary>
+    /// Retrieves the account profile associated with the current player's content ID.
+    /// </summary>
+    /// <returns>The account profile for the current player if found; otherwise, <see langword="null"/>.</returns>
     public AccountProfile? GetCharaProfile()
         => Profiles.FirstOrDefault(p => p.ContentId == PlayerData.CID);
 
     // Might need to run on framework thread? Not sure.
     // Does a Name & World update on connection.
     /// <summary>
-    /// Gets the currently logged in player's profile, and updates name and world association if necessary
+    /// Gets the tracked account profile for the current character, or returns null if no profile is found.
     /// </summary>
-    /// <returns>The <c>AccountProfile</c> for the current player, or null if no account exists</returns>
+    /// <remarks>If a profile is found, the method updates the profile's name and world to match the current
+    /// character before returning it. The changes are saved automatically. This method does not create a new profile if
+    /// one does not exist.</remarks>
+    /// <returns>The <see cref="AccountProfile"/> associated with the current character, or <see langword="null"/> if no profile
+    /// exists.</returns>
     public AccountProfile? GetTrackedCharaOrDefault()
     {
         _config.Current.Profiles.TryGetValue(PlayerData.CID, out var auth); // don't want a default here?
@@ -81,20 +109,21 @@ public class AccountManager
     }
 
     /// <summary>
-    ///     Adds a blank new profile to the service, checking to make sure a duplicate doesn't exist first.
+    /// Creates and adds a new account profile for the current player.
     /// </summary>
-    /// <returns>The created <c>AccountProfile</c> item, or null if a duplicate account exists.</returns>
-    public AccountProfile? AddNewProfile()
+    /// <remarks>This method generates a new profile using the current player's name, home world, and
+    /// content ID. If a profile with the same content ID already exists, the method does not overwrite it and
+    /// instead throws an exception.</remarks>
+    /// <returns>The newly created <see cref="AccountProfile"/> instance associated with the current player.</returns>
+    /// <exception cref="InvalidOperationException">Thrown if a profile for the current player's content ID already exists.</exception>
+    public AccountProfile AddNewProfile()
     {
         var name = PlayerData.Name;
         var world = PlayerData.HomeWorldId;
         var cid = PlayerData.CID;
 
         if (CharaHasValidProfile())
-        {
-            _logger.LogError("An entry with this Player's ID already exists!");
-            return null;
-        }
+            throw new InvalidOperationException($"Cannot create duplicate profile, key {cid} already exists.");
 
         // Generate it.
         _config.Current.Profiles[cid] = new AccountProfile
