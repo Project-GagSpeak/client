@@ -60,7 +60,7 @@ public class AccountManager
     /// <returns>The <c>AccountProfile</c> for the current player, or null if no account exists</returns>
     public AccountProfile? GetTrackedCharaOrDefault()
     {
-        var auth = _config.Current.Profiles[PlayerData.CID]; // don't want a default here?
+        _config.Current.Profiles.TryGetValue(PlayerData.CID, out var auth); // don't want a default here?
         if (auth is null)
         {
             _logger.LogDebug("No profile found for current character.");

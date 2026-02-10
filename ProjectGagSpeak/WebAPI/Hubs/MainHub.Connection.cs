@@ -327,7 +327,7 @@ public partial class MainHub
 
         if (_accounts.GetCharaProfile() is not { } profile)
         {
-            Logger.LogWarning($"AccountProfile existed but no SecretKey was present.", LoggerType.ApiCore);
+            Logger.LogWarning($"GetCharaProfile failed!", LoggerType.ApiCore);
             return false;
         }
 
@@ -343,6 +343,7 @@ public partial class MainHub
         }
         else // Log the successful fetch.
         {
+            fetchedSecretKey = profile.Key;
             Logger.LogInformation("Secret Key fetched for current character", LoggerType.ApiCore);
             return true;
         }
