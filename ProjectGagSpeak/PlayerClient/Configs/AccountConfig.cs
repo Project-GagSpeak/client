@@ -45,6 +45,7 @@ public class AccountConfig : IHybridSavable
         var version = jObject["Version"]?.Value<int>() ?? 0;
 
         // execute based on version.
+        // Old config formats are stored at the bottom of this file for reference.
         switch (version)
         {
             case 0:
@@ -207,45 +208,65 @@ public record AccountProfile
 
 }
 
-/*
-/// <summary>
-///     True if this is the main account. Alts are removed if main is removed.
-/// </summary>
-public bool IsMainProfile { get; set; } = false;
-
-/// <summary>
-///     True if the UID and SecretKey are set (a valid connection was made.).
-/// </summary>
-public bool HadValidConnection => !string.IsNullOrEmpty(SecretKey) && !string.IsNullOrEmpty(ProfileUID);
-
-/// <summary>
-///     Unique identifier for this profile within the database. <para/>
-///     Assigned on the first connection or when linking to an existing profile if no matching UID is found.
-/// </summary>
-public string ProfileUID { get; set; } = string.Empty;
-
-/// <summary>
-///     Secret key used to identify and validate this profile with the server. <para />
-///     Generated upon MainAccount One-Time fetch, or after manual insertion.
-/// </summary>
-public string SecretKey { get; set; } = string.Empty;
-
-/// <summary>
-///     Name of the character associated with this profile. <para />
-///     Stored once a valid connection has been made and the character is recognized.
-/// </summary>
-public string PlayerName { get; set; } = string.Empty;
-
-/// <summary>
-///     World ID of the character associated with this profile. <para />
-///     Used together with PlayerName to track the character across sessions.
-/// </summary>
-public ushort WorldId { get; set; } = 0;
-
-/// <summary>
-///     Persistent Content ID of the character. <para />
-///     Unique across all registered XIV characters and used to detect name/world changes.
-/// </summary>
-public ulong ContentId { get; set; } = 0;
+/* FOR FUTURE REFERENCE - DO NOT DELETE
+ * 
+ * == V0 CONFIG FORMAT ==
+{
+  "Version": 0,
+  "ServerStorage": {
+    "Authentications": [ 
+      {
+        "CharacterPlayerContentId": 0,
+        "CharacterName": "",
+        "WorldId": 0,
+        "IsPrimary": true,
+        "SecretKey": {
+          "Label": "",
+          "Key": "",
+          "HasHadSuccessfulConnection": true,
+          "LinkedProfileUID": ""
+        }
+      }
+    ]
+    "FullPause": false,
+    "ServerName": "GagSpeak Main",
+    "ServiceUri": "wss://gagspeak.kinkporium.studio"
+  }
 }
-*/
+
+== V1 CONFIG FORMAT ==
+{
+  "Version": 1,
+  "AccountInfo": {
+    "Profiles": [
+      {
+        "IsMainProfile": false,
+        "HadValidConnection": false,
+        "ProfileUID": "",
+        "SecretKey": "",
+        "PlayerName": "",
+        "WorldId": 75,
+        "ContentId": 0
+      }
+    ]
+  }
+}
+
+== V2 CONFIG FORMAT ==
+{
+  "Version": 2,
+  "AccountInfo": {
+    "Profiles": {
+      "99999999999": {
+        "ContentId": 99999999999,
+        "PlayerName": "",
+        "WorldId": 0,
+        "UserUID": "",
+        "Key": "",
+        "IsPrimary": true,
+        "HadValidConnection": true
+      }
+    }
+  }
+}
+ */
