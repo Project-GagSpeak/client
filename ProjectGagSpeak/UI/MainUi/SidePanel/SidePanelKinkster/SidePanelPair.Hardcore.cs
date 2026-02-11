@@ -88,7 +88,7 @@ public partial class SidePanelPair
 
             ImUtf8.SameLineInner();
             var clientInAnchorRange = PlayerData.DistanceTo(cache.ImprisonPos) <= cache.ImprisonRadius;
-            var frameCol = clientInAnchorRange ? CkColor.TriStateCheck.Vec4().ToUint() : CkColor.TriStateCross.Vec4().ToUint();
+            var frameCol = clientInAnchorRange ? CkCol.TriStateCheck.Vec4().ToUint() : CkCol.TriStateCross.Vec4().ToUint();
             using (CkRaii.FramedChild("CageAnchor", new Vector2(rightW, ImGui.GetFrameHeight()), 0, frameCol, CkStyle.ListItemRounding(), CkStyle.ThinThickness()))
                 CkGui.CenterTextAligned($"{cache.ImprisonPos:F1}");
             CkGui.AttachToolTip("The current cage anchor position." +
@@ -237,7 +237,7 @@ public partial class SidePanelPair
 
     private void DrawAddressConfig(KinksterInfoCache cache, Kinkster k, string dispName, float width)
     {
-        using var c = CkRaii.FramedChildPaddedWH("##AddressConfig", new(width, CkStyle.GetFrameRowsHeight(3).AddWinPadY()), 0, CkColor.VibrantPink.Uint());
+        using var c = CkRaii.FramedChildPaddedWH("##AddressConfig", new(width, CkStyle.GetFrameRowsHeight(3).AddWinPadY()), 0, GsCol.VibrantPink.Uint());
 
         CkGui.FramedIconText(FAI.Home);
         ImUtf8.SameLineInner();

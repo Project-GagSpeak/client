@@ -156,7 +156,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             DrawSelectedInner(imgSize.X, isActive);
 
         // Draw the right image item.
-        ImGui.GetWindowDrawList().AddRectFilled(imgDrawPos, imgDrawPos + imgSize, CkColor.FancyHeaderContrast.Uint(), rounding);
+        ImGui.GetWindowDrawList().AddRectFilled(imgDrawPos, imgDrawPos + imgSize, CkCol.CurvedHeaderFade.Uint(), rounding);
         ImGui.SetCursorScreenPos(imgDrawPos);
         if (_selector.Selected is not null)
         {
@@ -198,7 +198,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
     {
         using var innerGroup = ImRaii.Group();
 
-        using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
+        using (CkRaii.Group(CkCol.CurvedHeaderFade.Uint()))
         {
             CkGui.BooleanToColoredIcon(_selector.Selected!.IsEnabled, false);
             CkGui.TextFrameAlignedInline($"Visuals  ");

@@ -37,7 +37,7 @@ public class CollarRequestsOutgoingTab : IFancyTab
         _manager = manager;
         _guides = guides;
 
-        _combo = new PairCombo(log, mediator, config, kinksters, favorites);
+        _combo = new PairCombo(log, mediator, kinksters, favorites);
         _desiredWriting = string.Empty;
     }
 
@@ -57,7 +57,7 @@ public class CollarRequestsOutgoingTab : IFancyTab
     private void DrawRequestCreator(float width)
     {
         var createorH = CkStyle.HeaderHeight() + CkStyle.GetFrameRowsHeight(5);
-        using var _ = CkRaii.FramedChildPaddedW("Creator", width, createorH.AddWinPadY(), 0, CkColor.VibrantPink.Uint(), FancyTabBar.RoundingInner);
+        using var _ = CkRaii.FramedChildPaddedW("Creator", width, createorH.AddWinPadY(), 0, GsCol.VibrantPink.Uint(), FancyTabBar.RoundingInner);
 
         var spacing = ImUtf8.ItemInnerSpacing.X;
         var titleSize = CkGui.CalcFontTextSize("Create Request", UiFontService.UidFont);
@@ -68,7 +68,7 @@ public class CollarRequestsOutgoingTab : IFancyTab
         {
 
             CkGui.FontText("Create Request", UiFontService.UidFont);
-            CkGui.Separator(CkColor.VibrantPink.Uint(), lineSize);
+            CkGui.Separator(GsCol.VibrantPink.Uint(), lineSize);
 
             // the Kinkster Selection.
             CkGui.FramedIconText(FAI.UserCircle);
@@ -137,7 +137,7 @@ public class CollarRequestsOutgoingTab : IFancyTab
     private void DrawSentRequests(float width)
     {
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(6));
-        using var _ = CkRaii.FramedChildPaddedWH("List", ImGui.GetContentRegionAvail(), 0, CkColor.VibrantPink.Uint(), FancyTabBar.RoundingInner);
+        using var _ = CkRaii.FramedChildPaddedWH("List", ImGui.GetContentRegionAvail(), 0, GsCol.VibrantPink.Uint(), FancyTabBar.RoundingInner);
 
         using var s = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 8f);
 

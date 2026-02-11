@@ -3,6 +3,7 @@ using Dalamud.Bindings.ImGui;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
+using GagSpeak.Utils;
 using OtterGui.Extensions;
 using OtterGui.Text;
 

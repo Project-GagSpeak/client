@@ -9,6 +9,7 @@ using GagSpeak.Interop;
 using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
+using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
@@ -80,37 +81,41 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
     protected override void DrawInternal()
     {
-        ImGui.Text(GSLoc.Settings.OptionalPlugins);
+        var minPos = ImGui.GetCursorPos();
+        var buttonPos = minPos + new Vector2(ImGui.GetContentRegionAvail().X - 150f, 0);
+        using (ImRaii.Group())
+        {
+            ImGui.Text(GSLoc.Settings.OptionalPlugins);
 
-        ImGui.SameLine();
-        CkGui.ColorTextBool("Penumbra", IpcCallerPenumbra.APIAvailable);
-        CkGui.AttachToolTip(IpcCallerPenumbra.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
+            ImGui.SameLine();
+            CkGui.ColorTextBool("Penumbra", IpcCallerPenumbra.APIAvailable);
+            CkGui.AttachToolTip(IpcCallerPenumbra.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
 
-        ImGui.SameLine();
-        CkGui.ColorTextBool("Glamourer", IpcCallerGlamourer.APIAvailable);
-        CkGui.AttachToolTip(IpcCallerGlamourer.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
+            ImGui.SameLine();
+            CkGui.ColorTextBool("Glamourer", IpcCallerGlamourer.APIAvailable);
+            CkGui.AttachToolTip(IpcCallerGlamourer.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
 
-        ImGui.SameLine();
-        CkGui.ColorTextBool("Customize+", IpcCallerCustomize.APIAvailable);
-        CkGui.AttachToolTip(IpcCallerCustomize.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
+            ImGui.SameLine();
+            CkGui.ColorTextBool("Customize+", IpcCallerCustomize.APIAvailable);
+            CkGui.AttachToolTip(IpcCallerCustomize.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
 
-        ImGui.SameLine();
-        CkGui.ColorTextBool("Moodles", IpcCallerMoodles.APIAvailable);
-        CkGui.AttachToolTip(IpcCallerMoodles.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
+            ImGui.SameLine();
+            CkGui.ColorTextBool("Moodles", IpcCallerMoodles.APIAvailable);
+            CkGui.AttachToolTip(IpcCallerMoodles.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
 
-        ImGui.SameLine();
-        CkGui.ColorTextBool("Lifestream", IpcCallerLifestream.APIAvailable);
-        CkGui.AttachToolTip(IpcCallerLifestream.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
+            ImGui.SameLine();
+            CkGui.ColorTextBool("Lifestream", IpcCallerLifestream.APIAvailable);
+            CkGui.AttachToolTip(IpcCallerLifestream.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
 
-        ImGui.SameLine();
-        CkGui.ColorTextBool("Intiface", IpcCallerIntiface.APIAvailable);
-        CkGui.AttachToolTip(IpcCallerIntiface.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
+            ImGui.SameLine();
+            CkGui.ColorTextBool("Intiface", IpcCallerIntiface.APIAvailable);
+            CkGui.AttachToolTip(IpcCallerIntiface.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
 
-        ImGui.Text(GSLoc.Settings.AccountClaimText);
-
-        ImGui.SameLine();
-        if (ImUtf8.SmallButton("CK Discord"))
-            Util.OpenLink("https://discord.gg/kinkporium");
+            ImGui.Text(GSLoc.Settings.AccountClaimText);
+            ImGui.SameLine();
+            if (ImUtf8.SmallButton("CK Discord"))
+                Util.OpenLink("https://discord.gg/kinkporium");
+        }
 
         // draw out the tab bar for us.
         if (ImGui.BeginTabBar("mainTabBar"))
@@ -142,6 +147,21 @@ public class SettingsUi : WindowMediatorSubscriberBase
             }
 
             ImGui.EndTabBar();
+        }
+
+        ImGui.SetCursorPos(buttonPos);
+        using (ImRaii.Group())
+        {
+            if (CkGui.FancyButton(FAI.Palette, "Style Editor", 150f, false))
+                Mediator.Publish(new UiToggleMessage(typeof(StyleEditorUI)));
+            CkGui.AttachToolTip("Edit GagSpeak Style, Create Themes, and Import them for editor styles!");
+
+            if (CkGui.FancyButton(FAI.Folder, "Plugin Config", 150f, false))
+            {
+                try { Process.Start(new ProcessStartInfo { FileName = ConfigFileProvider.GagSpeakDirectory, UseShellExecute = true }); }
+                catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the config directory. {e.Message}"); }
+            }
+            CkGui.AttachToolTip("Opens the Config Folder.--NL--(Useful for debugging)");
         }
     }
 

@@ -66,7 +66,7 @@ public sealed class JobCombo : CkFilterComboCache<LightJob>
             {
                 ImGui.Image(MoodleIcon.GetGameIconOrEmpty(parsedJob.GetIconId()).Handle, new Vector2(size.Y));
                 CkGui.TextFrameAlignedInline(parsedJob.Name);
-                CkGui.ColorTextFrameAlignedInline($"({parsedJob.Abbreviation})", CkColor.ElementBG.Uint(), false);
+                CkGui.ColorTextFrameAlignedInline($"({parsedJob.Abbreviation})", CkCol.LChildBg.Uint(), false);
             }
         }
         return ret;

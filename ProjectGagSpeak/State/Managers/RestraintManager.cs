@@ -59,8 +59,6 @@ public sealed class RestraintManager : IHybridSavable
 
     public RestraintSet CreateNew(string restraintName)
     {
-        // NOTE: This is definitely a task that is better handled by the setter, but for now, this is fine.
-        // Setter ensures all* cases are handled, instead of the ones we remember
         // Strip private formatting codes.
         restraintName = CkGui.TooltipTokenRegex().Replace(restraintName, string.Empty);
         // Ensure that the new name is unique.
@@ -128,10 +126,12 @@ public sealed class RestraintManager : IHybridSavable
     }
 
     /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
-    public void StartEditing(RestraintSet item) => _itemEditor.StartEditing(Storage, item);
+    public void StartEditing(RestraintSet item)
+        => _itemEditor.StartEditing(Storage, item);
 
     /// <summary> Cancel the editing process without saving anything. </summary>
-    public void StopEditing() => _itemEditor.QuitEditing();
+    public void StopEditing()
+        => _itemEditor.QuitEditing();
 
     /// <summary> Injects all the changes made to the GagRestriction and applies them to the actual item. </summary>
     /// <remarks> All changes are saved to the config once this completes. </remarks>

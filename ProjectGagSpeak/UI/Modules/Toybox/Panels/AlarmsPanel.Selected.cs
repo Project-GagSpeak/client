@@ -25,7 +25,7 @@ public partial class AlarmsPanel
         var width = Math.Max(textlength, timeLengthDisp);
         var height = CkGuiUtils.GetTimeDisplayHeight(UiFontService.UidFont) + ImGui.GetFrameHeightWithSpacing();
         // create a group with a background and some rounding.
-        using (var c = CkRaii.ChildPadded("C_AlarmTime", new Vector2(width, height), CkColor.FancyHeaderContrast.Uint(), CkStyle.ChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
+        using (var c = CkRaii.ChildPadded("C_AlarmTime", new Vector2(width, height), CkCol.CurvedHeaderFade.Uint(), CkStyle.ChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
         {
             // Draw out the local timezone this alarm is relative too.
             ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (c.InnerRegion.X - textlength) / 2);
@@ -59,7 +59,7 @@ public partial class AlarmsPanel
 
         var comboW = (ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) * .5f;
         CkGui.ColorTextFrameAligned("Alarm Pattern to Play", ImGuiColors.ParsedGold);
-        using (CkRaii.Child("AlarmPattern", new Vector2(comboW, ImGui.GetFrameHeight()), CkColor.FancyHeaderContrast.Uint(), CkStyle.ChildRounding(), ImDrawFlags.RoundCornersAll))
+        using (CkRaii.Child("AlarmPattern", new Vector2(comboW, ImGui.GetFrameHeight()), CkCol.CurvedHeaderFade.Uint(), CkStyle.ChildRounding(), ImDrawFlags.RoundCornersAll))
         {
             // Draw the pattern selection combo box.
             if (isEditing)
@@ -101,7 +101,7 @@ public partial class AlarmsPanel
         using (ImRaii.Group())
         {
             var refStartPoint = alarm.PatternStartPoint;
-            using (var c = CkRaii.ChildPaddedW("AlarmStartPnt", columnWidth, height, CkColor.FancyHeaderContrast.Uint(),
+            using (var c = CkRaii.ChildPaddedW("AlarmStartPnt", columnWidth, height, CkCol.CurvedHeaderFade.Uint(),
                 CkStyle.ChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
             {
                 ImGuiUtil.Center("Start Point");
@@ -134,7 +134,7 @@ public partial class AlarmsPanel
         using (ImRaii.Group())
         {
             var refPlaybackDuration = alarm.PatternDuration;
-            using (var c = CkRaii.ChildPaddedW("AlarmPlaybackDur", columnWidth, height, CkColor.FancyHeaderContrast.Uint(),
+            using (var c = CkRaii.ChildPaddedW("AlarmPlaybackDur", columnWidth, height, CkCol.CurvedHeaderFade.Uint(),
                 CkStyle.ChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
             {
                 ImGuiUtil.Center("Playback Duration");
@@ -155,7 +155,7 @@ public partial class AlarmsPanel
     private void DrawAlarmFrequency(Alarm alarm, bool isEditing)
     {
         using var _ = ImRaii.Group();
-        using var col = ImRaii.PushColor(ImGuiCol.FrameBg, CkColor.FancyHeaderContrast.Uint());
+        using var col = ImRaii.PushColor(ImGuiCol.FrameBg, CkCol.CurvedHeaderFade.Uint());
         
         // Frequency of occurrence
         CkGui.ColorText("Alarm Frequency Per Week", ImGuiColors.ParsedGold);

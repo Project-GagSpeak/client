@@ -57,11 +57,11 @@ public class LootPoolTab : IFancyTab
 
     private void DrawInactiveList(Vector2 region)
     {
-        using var c = CkRaii.HeaderChild("Inactive Loot", region, CkRaii.HeaderChildColors.Default, FancyTabBar.RoundingInner, HeaderFlags.SizeIncludesHeader);
+        using var c = CkRaii.HeaderChild("Inactive Loot", region, FancyTabBar.RoundingInner, HeaderFlags.SizeIncludesHeader);
 
         var itemsOutOfPool = _manager.Storage.InactiveLoot;
         using var rounding = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 7f);
-        using (var _ = CkRaii.FramedChildPaddedWH("InactiveItems", c.InnerRegion, CkColor.FancyHeaderContrast.Uint(), CkColor.FancyHeaderContrast.Uint()))
+        using (var _ = CkRaii.FramedChildPaddedWH("InactiveItems", c.InnerRegion, CkCol.CurvedHeaderFade.Uint(), CkCol.CurvedHeaderFade.Uint()))
         {
             if (itemsOutOfPool.Count is 0)
                 return;
@@ -74,11 +74,11 @@ public class LootPoolTab : IFancyTab
 
     private void DrawActiveList(Vector2 region)
     {
-        using var c = CkRaii.HeaderChild("Active Loot Pool", region, CkRaii.HeaderChildColors.Default, FancyTabBar.RoundingInner, HeaderFlags.SizeIncludesHeader);
+        using var c = CkRaii.HeaderChild("Active Loot Pool", region, FancyTabBar.RoundingInner, HeaderFlags.SizeIncludesHeader);
 
         var itemsInPool = _manager.Storage.ActiveUnappliedLoot;
         using var rounding = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 7f);
-        using (var _ = CkRaii.FramedChildPaddedWH("ActiveItems", c.InnerRegion, CkColor.FancyHeaderContrast.Uint(), CkColor.FancyHeaderContrast.Uint()))
+        using (var _ = CkRaii.FramedChildPaddedWH("ActiveItems", c.InnerRegion, CkCol.CurvedHeaderFade.Uint(), CkCol.CurvedHeaderFade.Uint()))
         {
             if (itemsInPool.Count is 0)
                 return;
@@ -91,7 +91,7 @@ public class LootPoolTab : IFancyTab
 
     private void DrawLootItem(CursedItem item, float width)
     {
-        using var _ = CkRaii.ChildPaddedW(item.Identifier.ToString(), width, ImUtf8.FrameHeight, CkColor.FancyHeaderContrast.Uint());
+        using var _ = CkRaii.ChildPaddedW(item.Identifier.ToString(), width, ImUtf8.FrameHeight, CkCol.CurvedHeaderFade.Uint());
 
         var iconSize = new Vector2(_.InnerRegion.Y);
         var imgPadding = iconSize.Y * .1f;

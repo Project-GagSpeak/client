@@ -24,7 +24,6 @@ public class Kinkster : IComparable<Kinkster>
     private readonly ILogger<Kinkster> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly MainConfig _config;
-    private readonly FavoritesConfig _favorites;
     private readonly NicksConfig _nicks;
 
     private OnlineKinkster? _onlineUser;
@@ -33,19 +32,18 @@ public class Kinkster : IComparable<Kinkster>
     private KinksterHandler _player;
 
     public Kinkster(KinksterPair pair, ILogger<Kinkster> logger, GagspeakMediator mediator,
-        MainConfig config, FavoritesConfig favorites, NicksConfig nicks, KinksterFactory factory)
+        MainConfig config, NicksConfig nicks, KinksterFactory factory)
     {
         _logger = logger;
         _mediator = mediator;
         _config = config;
-        _favorites = favorites;
         _nicks = nicks;
 
         UserPair = pair;
         // Initialize all handlers for the kinkster, holding their lifetime until disposal.
         // Create handlers for each of the objects.
         _player = factory.Create(this);
-        _logger.LogDebug($"Initialized Kinkster for ({GetNickAliasOrUid()}).", LoggerType.PairManagement);
+        _logger.LogTrace($"Initialized Kinkster for ({GetNickAliasOrUid()}).", LoggerType.PairManagement);
     }
 
     // Permissions
@@ -65,8 +63,7 @@ public class Kinkster : IComparable<Kinkster>
     public CharaActiveCollar ActiveCollar { get; private set; } = new CharaActiveCollar();
     public List<ToyBrandName> ValidToys { get; private set; } = new();
     public List<Guid> ActiveCursedItems { get; private set; } = new();
-    public AliasStorage LastGlobalAliasData { get; private set; } = new AliasStorage();
-    public NamedAliasStorage LastPairAliasData { get; private set; } = new NamedAliasStorage();
+    public AliasStorage SharedAliases { get; private set; } = new AliasStorage();
     public Guid ActivePattern { get; private set; } = Guid.Empty;
     public List<Guid> ActiveAlarms { get; private set; } = new();
     public List<Guid> ActiveTriggers { get; private set; } = new();
@@ -78,7 +75,7 @@ public class Kinkster : IComparable<Kinkster>
     // public bool IsTemporary => UserPair.IsTemporary; (Can implement this later maybe, idk)
     public bool IsRendered => _player.IsRendered;
     public bool IsOnline => _onlineUser != null;
-    public bool IsFavorite => _favorites.Kinksters.Contains(UserData.UID);
+    public bool IsFavorite => FavoritesConfig.Kinksters.Contains(UserData.UID);
     public string Ident => _onlineUser?.Ident ?? string.Empty;
     public string PlayerName => _player.NameString;
     public string PlayerNameWorld => _player.NameWithWorld;
@@ -219,7 +216,7 @@ public class Kinkster : IComparable<Kinkster>
     /// </summary>
     public void DisposeData()
     {
-        _logger.LogDebug($"Disposing data for [{PlayerName}] ({GetNickAliasOrUid()})", LoggerType.PairManagement);
+        _logger.LogTrace($"Disposing data for {PlayerName}({GetNickAliasOrUid()})", LoggerType.PairManagement);
         // If online, just simply mark offline.
         if (IsOnline)
         {
@@ -256,9 +253,7 @@ public class Kinkster : IComparable<Kinkster>
             ActiveRestrictions = data.Restrictions;
             ActiveRestraint = data.Restraint;
             ActiveCursedItems = data.ActiveCursedItems;
-            LastGlobalAliasData = data.GlobalAliasData;
-            if (data.PairAliasData.TryGetValue(UserData.UID, out var m))
-                LastPairAliasData = m;
+            SharedAliases = data.AliasData; // Update later.
             ValidToys = data.ValidToys;
             ActivePattern = data.ActivePattern;
             ActiveAlarms = data.ActiveAlarms;
@@ -271,25 +266,6 @@ public class Kinkster : IComparable<Kinkster>
 
         // Notify nameplates of visible kinkster gag changes.
         _mediator.Publish(new KinksterActiveGagsChanged(this));
-
-        // Deterministic AliasData setting.
-        if (data.PairAliasData.TryGetValue(UserData.UID, out var match))
-        {
-            _logger.LogTrace($"{UserData.UID} {LastPairAliasData.ExtractedListenerName} {LastPairAliasData.Storage.Items.Count} to replace withmatch.ExtractedListenerName {match.Storage.Items.Count}");
-            LastPairAliasData = match;
-        }
-        else
-        {
-            _logger.LogTrace($"{UserData.UID} could not be found in LastPairAliasData");
-            foreach (var storage in data.PairAliasData)
-            {
-                _logger.LogTrace($"{storage.Key} {storage.Value.ExtractedListenerName} {storage.Value.StoredNameWorld}");
-                foreach (var item in storage.Value.Storage.Items)
-                {
-                    _logger.LogTrace($"{item.Identifier} {item.InputCommand}");
-                }
-            }
-        }
 
         // Regarldess of the change, we should update the kinkster's latest data to the achievement handler.
         _logger.LogDebug($"Aligning Achievement Trackers in sync with {GetNickAliasOrUid()}'s latest composite data!", LoggerType.PairDataTransfer);
@@ -458,16 +434,17 @@ public class Kinkster : IComparable<Kinkster>
         // and added Triggers ext. [FOR FUTURE IMPLEMENTATION]
     }
 
-    public void NewGlobalAlias(Guid id, AliasTrigger? newData)
+    // Revise
+    public void NewAlias(Guid id, AliasTrigger? newData)
     {
         // Try and find the existing alias data by its ID.
-        if (LastGlobalAliasData.Items.FirstOrDefault(a => a.Identifier == id) is { } match)
+        if (SharedAliases.Items.FirstOrDefault(a => a.Identifier == id) is { } match)
         {
             // If found, and the newData is null, remove it.
             if (newData is null)
             {
                 _logger.LogDebug($"Removing Global Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
-                LastGlobalAliasData.Items.Remove(match);
+                SharedAliases.Items.Remove(match);
                 return; // exit early since we removed it.
             }
 
@@ -479,39 +456,8 @@ public class Kinkster : IComparable<Kinkster>
         else if (newData != null)
         {
             _logger.LogDebug($"Adding Global Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
-            LastGlobalAliasData.Items.Add(newData);
+            SharedAliases.Items.Add(newData);
         }
-    }
-
-    public void NewUniqueAlias(Guid id, AliasTrigger? newData)
-    {
-        // Try and find the existing alias data by its ID.
-        if (LastPairAliasData.Storage.Items.FirstOrDefault(a => a.Identifier == id) is { } match)
-        {
-            // If found, and the newData is null, remove it.
-            if (newData is null)
-            {
-                _logger.LogDebug($"Removing Unique Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
-                LastPairAliasData.Storage.Items.Remove(match);
-                return; // exit early since we removed it.
-            }
-
-            // Update it.
-            _logger.LogDebug($"Updating Unique Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
-            match = newData;
-        }
-        // Otherwise, if the ID was not found, the new data is not null, and we should add it.
-        else if (newData != null)
-        {
-            _logger.LogDebug($"Adding Unique Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
-            LastPairAliasData.Storage.Items.Add(newData);
-        }
-    }
-
-    public void UpdateListenerName(string nameWithWorld)
-    {
-        _logger.LogDebug($"Updating Listener name to {nameWithWorld}", LoggerType.PairDataTransfer);
-        LastPairAliasData.StoredNameWorld = nameWithWorld;
     }
 
     #endregion Data Updates

@@ -59,7 +59,7 @@ public record GlobalChatMessage(ChatMessageGlobal Message, bool FromSelf) : Mess
 public record VibeRoomChatMessage(UserData Kinkster, string Message) : MessageBase;
 
 /// <summary> Contains the message content of a Chatbox message. </summary>
-public record ChatboxMessageFromSelf(InputChannel channel, string message) : MessageBase;
+public record ChatMsgFromSelf(InputChannel channel, string message) : MessageBase;
 
 /// <summary> Contains the message content of a Chatbox message. </summary>
-public record ChatboxMessageFromKinkster(Kinkster kinkster, InputChannel channel, string message) : MessageBase;
+public record ChatMsgFromOther(string name, string world, InputChannel channel, string message) : MessageBase;

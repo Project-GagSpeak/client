@@ -515,17 +515,10 @@ public partial class MainHub
         return Task.CompletedTask;
     }
 
-    public Task Callback_KinksterUpdateAliasGlobal(KinksterUpdateAliasGlobal dto)
+    public Task Callback_KinksterUpdateAlias(KinksterUpdateAlias dto)
     {
-        Logger.LogDebug($"Received a Kinksters updated Global AliasTrigger {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        Generic.Safe(() => _kinksters.NewAliasGlobal(dto.User, dto.AliasId, dto.NewData));
-        return Task.CompletedTask;
-    }
-
-    public Task Callback_KinksterUpdateAliasUnique(KinksterUpdateAliasUnique dto)
-    {
-        Logger.LogDebug($"Received a Kinksters updated Global AliasTrigger {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        Generic.Safe(() => _kinksters.NewAliasUnique(dto.User, dto.AliasId, dto.NewData));
+        Logger.LogDebug($"Callback_KinksterUpdateAlias for {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Generic.Safe(() => _kinksters.UpdateAlias(dto.User, dto.AliasId, dto.NewData));
         return Task.CompletedTask;
     }
 
@@ -995,16 +988,10 @@ public partial class MainHub
         _hubConnection!.On(nameof(Callback_KinksterUpdateActiveCursedLoot), act);
     }
 
-    public void OnKinksterUpdateAliasGlobal(Action<KinksterUpdateAliasGlobal> act)
+    public void OnKinksterUpdateAlias(Action<KinksterUpdateAlias> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_KinksterUpdateAliasGlobal), act);
-    }
-
-    public void OnKinksterUpdateAliasUnique(Action<KinksterUpdateAliasUnique> act)
-    {
-        if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_KinksterUpdateAliasUnique), act);
+        _hubConnection!.On(nameof(Callback_KinksterUpdateAlias), act);
     }
 
     public void OnKinksterUpdateValidToys(Action<KinksterUpdateValidToys> act)

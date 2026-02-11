@@ -17,6 +17,7 @@ using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
+using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using OtterGui.Extensions;
@@ -32,10 +33,10 @@ public class EquipmentDrawer
 {
     internal readonly record struct CachedSlotItemData(EquipItem Item);
     
-    private static IconCheckboxEx GlamourFlagCheckbox = new(FAI.Vest, CkColor.IconCheckOn.Uint(), CkColor.IconCheckOff.Uint());
-    private static IconCheckboxEx ModFlagCheckbox = new(FAI.FileArchive, CkColor.IconCheckOn.Uint(), CkColor.IconCheckOff.Uint());
-    private static IconCheckboxEx MoodleFlagCheckbox = new(FAI.TheaterMasks, CkColor.IconCheckOn.Uint(), CkColor.IconCheckOff.Uint());
-    private static IconCheckboxEx HardcoreTraitsCheckbox = new(FAI.Handcuffs, CkColor.IconCheckOn.Uint(), CkColor.IconCheckOff.Uint());
+    private static IconCheckboxEx GlamourFlagCheckbox = new(FAI.Vest, CkCol.IconOn.Uint(), CkCol.IconOff.Uint());
+    private static IconCheckboxEx ModFlagCheckbox = new(FAI.FileArchive, CkCol.IconOn.Uint(), CkCol.IconOff.Uint());
+    private static IconCheckboxEx MoodleFlagCheckbox = new(FAI.TheaterMasks, CkCol.IconOn.Uint(), CkCol.IconOff.Uint());
+    private static IconCheckboxEx HardcoreTraitsCheckbox = new(FAI.Handcuffs, CkCol.IconOn.Uint(), CkCol.IconOff.Uint());
     
     private readonly GameItemCombo[] _itemCombos;
     private readonly BonusItemCombo[] _bonusCombos;
@@ -62,7 +63,7 @@ public class EquipmentDrawer
         _stainCombo = new GameStainCombo(logger);
         _guides = guides;
         _restrictionCombo = new RestrictionCombo(logger, mediator, favorites, () => [ 
-            ..restrictions.Storage.OrderByDescending(p => favorites.Restrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
+            ..restrictions.Storage.OrderByDescending(p => FavoritesConfig.Restrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
     }
 
@@ -155,7 +156,7 @@ public class EquipmentDrawer
 
         ImUtf8.SameLineInner();
         var overlayState = basicSlot.ApplyFlags.HasAny(RestraintFlags.IsOverlay);
-        using (ImRaii.PushColor(ImGuiCol.Button, CkColor.FancyHeaderContrast.Uint()))
+        using (ImRaii.PushColor(ImGuiCol.Button, CkCol.CurvedHeaderFade.Uint()))
             if (CkGui.IconButton(overlayState ? FAI.Eye : FAI.EyeSlash, CkStyle.TwoRowHeight(), basicSlot.EquipSlot + "Overlay"))
                 basicSlot.ApplyFlags ^= RestraintFlags.IsOverlay;
         if (basicSlot.EquipSlot == EquipSlot.Body)
@@ -166,7 +167,7 @@ public class EquipmentDrawer
                 () => FancyTabBar.SelectTab("RS_EditBar", Wardrobe.RestraintsPanel.EditorTabs[2], Wardrobe.RestraintsPanel.EditorTabs));
         }
 
-        ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.FancyHeaderContrast.Uint(), ImGui.GetStyle().FrameRounding);
+        ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkCol.CurvedHeaderFade.Uint(), ImGui.GetStyle().FrameRounding);
     }
 
     public void DrawRestrictionRef<T>(T restriction, string id, float width) where T : IRestrictionRef
@@ -279,8 +280,8 @@ public class EquipmentDrawer
         // Draw a bordered rect around this.
         var min = ImGui.GetItemRectMin() - spacing;
         var max = ImGui.GetItemRectMax() + spacing;
-        ImGui.GetWindowDrawList().AddRectFilled(min, max, CkColor.FancyHeaderContrast.Uint(), rounding);
-        ImGui.GetWindowDrawList().AddRect(min, max, CkColor.FancyHeaderContrast.Uint(), rounding);
+        ImGui.GetWindowDrawList().AddRectFilled(min, max, CkCol.CurvedHeaderFade.Uint(), rounding);
+        ImGui.GetWindowDrawList().AddRect(min, max, CkCol.CurvedHeaderFade.Uint(), rounding);
     }
 
     public void DrawItem(GlamourSlot item, float width)

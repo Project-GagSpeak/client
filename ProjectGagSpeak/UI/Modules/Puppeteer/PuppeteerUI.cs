@@ -1,101 +1,94 @@
 using CkCommons;
+using CkCommons.Raii;
 using CkCommons.Widgets;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
+using GagSpeak.FileSystems;
 using GagSpeak.Gui.Components;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using Dalamud.Bindings.ImGui;
-using static GagSpeak.Gui.Components.PuppeteerTabs;
+using GagSpeak.State.Managers;
+using GagSpeak.Utils;
+using OtterGui.Text;
 
-namespace GagSpeak.Gui.Modules.Puppeteer;
+namespace GagSpeak.Gui.Wardrobe;
 
 public class PuppeteerUI : WindowMediatorSubscriberBase
 {
-    private readonly PuppetVictimGlobalPanel _victimGlobalPanel;
-    private readonly PuppetVictimUniquePanel _victimUniquePanel;
-    private readonly ControllerUniquePanel _controllerUniquePanel;
-    private readonly CosmeticService _cosmetics;
+    // Revamp this later.
+    private static bool THEME_PUSHED = false;
+    
+    private readonly PuppeteerManager _manager;
     private readonly TutorialService _guides;
 
-    private PuppeteerTabs _tabMenu;
-
-    public PuppeteerUI(
-        ILogger<PuppeteerUI> logger,
-        GagspeakMediator mediator,
-        PuppetVictimGlobalPanel globalPanel,
-        PuppetVictimUniquePanel victimUniquePanel,
-        ControllerUniquePanel controllerUniquePanel,
-        CosmeticService cosmetics,
-        TutorialService guides) : base(logger, mediator, "Puppeteer UI")
+    public PuppeteerUI(ILogger<PuppeteerUI> logger, GagspeakMediator mediator,
+        PuppeteerManager manager, TutorialService guides, AliasesTab aliases, 
+        PuppeteersTab puppeteers, MarionettesTab marionettes)
+        : base(logger, mediator, "Puppeteer Interface")
     {
-        _victimGlobalPanel = globalPanel;
-        _victimUniquePanel = victimUniquePanel;
-        _controllerUniquePanel = controllerUniquePanel;
-        _cosmetics = cosmetics;
+        _manager = manager;
         _guides = guides;
 
-        _tabMenu = new PuppeteerTabs();
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.PuppetVictimGlobal], SelectedTab.VictimGlobal,
-            "Configure how others can control you like a puppet, Globally!");
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.PuppetVictimUnique], SelectedTab.VictimUnique,
-            "Configure how others can control you, with unique configurations for every kinkster!");
-        _tabMenu.AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.PuppetMaster], SelectedTab.ControllerUnique,
-            "View what another Kinkster allows you control over, and any aliases they made.");
+        PuppeteerTabs = [ aliases, puppeteers, marionettes ];
 
-        AllowPinning = false;
-        AllowClickthrough = false;
-
-        SizeConstraints = new WindowSizeConstraints
-        {
-            MinimumSize = new Vector2(600, 490),
-            MaximumSize = ImGui.GetIO().DisplaySize,
-        };
-        RespectCloseHotkey = false;
+        this.PinningClickthroughFalse();
+        this.SetBoundaries(new(600, 490), ImGui.GetIO().DisplaySize);
+        TitleBarButtons = new TitleBarButtonBuilder()
+            .Add(FAI.CloudDownloadAlt, "Alias Migrations", () => Mediator.Publish(new UiToggleMessage(typeof(MigrationsUI))))
+            .AddTutorial(_guides, TutorialType.Puppeteer)
+            .Build();
     }
 
-    private bool ThemePushed = false;
-    private static float LeftLength() => 275f * ImGuiHelpers.GlobalScale;
+    public static IFancyTab[] PuppeteerTabs;
 
     protected override void PreDrawInternal()
     {
-        if (!ThemePushed)
+        if (!THEME_PUSHED)
         {
             ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(4));
             ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .403f));
             ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.579f, 0.170f, 0.359f, 0.428f));
-            ThemePushed = true;
+            THEME_PUSHED = true;
         }
     }
 
     protected override void PostDrawInternal()
     {
-        if (ThemePushed)
+        if (THEME_PUSHED)
         {
             ImGui.PopStyleVar();
             ImGui.PopStyleColor(2);
-            ThemePushed = false;
+            THEME_PUSHED = false;
         }
     }
 
-    // THE FOLLOWING IS A TEMPORARY PLACEHOLDER UI DESIGN MADE TO SIMPLY VERIFY THINGS ACTUALLY CAN BUILD. DESIGN LATER.
     protected override void DrawInternal()
     {
-        var res = CkHeader.FancyCurveFlipped(CkColor.FancyHeader.Uint(), LeftLength(), ImGui.GetFrameHeight(), ImGui.GetFrameHeight());
+        var frameH = ImGui.GetFrameHeight();
+        var regions = CkHeader.FlatWithBends(CkCol.CurvedHeader.Uint(), frameH, ImUtf8.ItemSpacing.X, frameH);
 
-        switch (_tabMenu.TabSelection)
-        {
-            case SelectedTab.VictimGlobal:
-                _victimGlobalPanel.DrawContents(res, ImGui.GetFrameHeight(), _tabMenu);
-                break;
+        ImGui.SetCursorScreenPos(regions.TopLeft.Pos);
+        using (ImRaii.Child("PuppeteerTopBar", regions.TopRight.Size))
+            DrawHeader(regions.TopSize);
 
-            case SelectedTab.VictimUnique:
-                _victimUniquePanel.DrawContents(res, ImGui.GetFrameHeight(), _tabMenu);
-                break;
+        ImGui.SetCursorScreenPos(regions.BotLeft.Pos);
+        using (ImRaii.Child("PuppeteerContent", regions.BotSize, false, WFlags.AlwaysUseWindowPadding))
+            DrawTabBarContent();
+    }
 
-            case SelectedTab.ControllerUnique:
-                _controllerUniquePanel.DrawContents(res, ImGui.GetFrameHeight(), _tabMenu);
-                break;
-        }
+    private void DrawHeader(Vector2 region)
+    {
+        // should be dependant on the tab selected.
+        ImGui.Text("Yeah I dont really like this header area either. Idk what to furnish it with.");
+    }
+
+    private void DrawTabBarContent()
+    {
+        using var _ = CkRaii.TabBarChild("PuppeteerTabs", GsCol.VibrantPink.Uint(), GsCol.VibrantPinkHovered.Uint(), CkCol.CurvedHeader.Uint(),
+                LabelFlags.PadInnerChild | LabelFlags.SizeIncludesHeader, out var selected, PuppeteerTabs);
+        // Draw the selected tab's contents.
+        selected?.DrawContents(_.InnerRegion.X);
     }
 }

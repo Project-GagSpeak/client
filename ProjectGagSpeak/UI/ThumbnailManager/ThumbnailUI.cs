@@ -47,7 +47,7 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
     protected override void DrawInternal()
     {
         var frameH = ImGui.GetFrameHeight();
-        var drawSpaces = CkHeader.FlatWithBends(CkColor.FancyHeader.Uint(), frameH, 0, frameH);
+        var drawSpaces = CkHeader.FlatWithBends(CkCol.CurvedHeader.Uint(), frameH, 0, frameH);
 
         ImGui.SetCursorScreenPos(drawSpaces.TopLeft.Pos);
         using (ImRaii.Child("Thumbnail_UI_Header", drawSpaces.TopSize))

@@ -85,7 +85,7 @@ public class ActiveItemsDrawer
         _gagItems = new RestrictionGagCombo[Constants.MaxGagSlots];
         for (var i = 0; i < _gagItems.Length; i++)
             _gagItems[i] = new RestrictionGagCombo(logger, favorites, () => [
-                ..gags.Storage.Values.OrderByDescending(p => favorites.Gags.Contains(p.GagType)).ThenBy(p => p.GagType)
+                ..gags.Storage.Values.OrderByDescending(p => FavoritesConfig.Gags.Contains(p.GagType)).ThenBy(p => p.GagType)
             ]);
 
         // Init Gag Padlocks.
@@ -97,7 +97,7 @@ public class ActiveItemsDrawer
         _restrictionItems = new RestrictionCombo[Constants.MaxRestrictionSlots];
         for (var i = 0; i < _restrictionItems.Length; i++)
             _restrictionItems[i] = new RestrictionCombo(logger, mediator, favorites, () => [
-                ..restrictions.Storage.OrderByDescending(p => favorites.Restrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
+                ..restrictions.Storage.OrderByDescending(p => FavoritesConfig.Restrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
             ]);
 
         // Init Restriction Padlocks.
@@ -107,7 +107,7 @@ public class ActiveItemsDrawer
 
         // Init Restraint Combo & Padlock.
         _restraintItem = new RestraintCombo(logger, mediator, favorites, () => [
-            ..restraints.Storage.OrderByDescending(p => favorites.Restraints.Contains(p.Identifier)).ThenBy(p => p.Label)
+            ..restraints.Storage.OrderByDescending(p => FavoritesConfig.Restraints.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
         _restraintPadlocks = new PadlockRestraintsClient(logger, dds, visuals, restraints);
 
@@ -268,7 +268,7 @@ public class ActiveItemsDrawer
             });
 
         var height = ImGui.GetFrameHeightWithSpacing() * 5 + ImGui.GetFrameHeight();
-        DrawRestraintImage(dispData, new Vector2(height / 1.2f, height), CkStyle.ChildRoundingLarge(), CkColor.FancyHeaderContrast.Uint());
+        DrawRestraintImage(dispData, new Vector2(height / 1.2f, height), CkStyle.ChildRoundingLarge(), CkCol.CurvedHeaderFade.Uint());
         var drawPos = ImGui.GetItemRectMin() + new Vector2(ImGui.GetItemRectSize().X, 0);
         CkGui.AttachToolTip(LockTooltip(dispData?.Label, data.Enabler, "Restraint"), color: ImGuiColors.ParsedGold);
         if (dispData is null)
@@ -392,7 +392,7 @@ public class ActiveItemsDrawer
         }
 
         var height = ImGui.GetFrameHeightWithSpacing() * 5 + ImGui.GetFrameHeight();
-        DrawRestraintImage(dispData, new Vector2(height / 1.2f, height), CkStyle.HeaderRounding(), CkColor.FancyHeaderContrast.Uint());
+        DrawRestraintImage(dispData, new Vector2(height / 1.2f, height), CkStyle.HeaderRounding(), CkCol.CurvedHeaderFade.Uint());
 
         ImUtf8.SameLineInner();
         //ImGui.SameLine(0,0);

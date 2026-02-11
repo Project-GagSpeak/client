@@ -1,139 +1,107 @@
+using CkCommons.Gui;
 using CkCommons.Helpers;
 using CkCommons.HybridSaver;
+using GagSpeak.FileSystems;
 using GagSpeak.Kinksters;
+using GagSpeak.Localization;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Models;
 using GagspeakAPI.Data;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.State.Managers;
 
+public sealed class PuppeteerPlayer
+{
+    public string NameWithWorld { get; set; } = string.Empty;
+    public int OrdersRecieved { get; set; } = 0;
+    public int SitOrders { get; set; } = 0;
+    public int EmoteOrders { get; set; } = 0;
+    public int AliasOrders { get; set; } = 0;
+    public int OtherOrders { get; set; } = 0;
+}
+
 public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
-    private readonly KinksterManager _pairs;
     private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
 
     private StorageItemEditor<AliasTrigger> _itemEditor = new();
 
-    public PuppeteerManager(ILogger<PuppeteerManager> logger, GagspeakMediator mediator,
-        KinksterManager pairs, ConfigFileProvider fileNames, HybridSaveService saver)
+    public PuppeteerManager(ILogger<PuppeteerManager> logger, GagspeakMediator mediator, ConfigFileProvider fileNames, HybridSaveService saver)
         : base(logger, mediator)
     {
-        _pairs = pairs;
         _fileNames = fileNames;
         _saver = saver;
     }
-    public AliasStorage GlobalAliasStorage { get; private set; } = new AliasStorage();
-    public PairAliasStorage PairAliasStorage { get; private set; } = new PairAliasStorage();
+
+    public AliasStorage Storage { get; private set; } = new AliasStorage();
+    // UID -> PlayerName & Respective Statistics
+    public Dictionary<string, PuppeteerPlayer> Puppeteers { get; private set; } = [];
+
     public AliasTrigger? ItemInEditor => _itemEditor.ItemInEditor;
-    private string? itemInEditorUID = null;
 
-    public AliasTrigger? CreateNew(string? userUid = null)
+    public AliasTrigger CreateNew(string aliasLabel)
     {
-        if (userUid is not null && !ValidatePairStorage(userUid))
-            return null;
-
-        var storage = userUid is null ? GlobalAliasStorage : PairAliasStorage[userUid].Storage;
-        if (storage is null)
-            return null;
-
-        // Create a new AliasTrigger with a unique name
-        var newItem = new AliasTrigger();
-        itemInEditorUID = userUid;
-        storage.Items.Add(newItem);
+        // Strip private formatting codes.
+        aliasLabel = CkGui.TooltipTokenRegex().Replace(aliasLabel, string.Empty);
+        // Ensure that the new name is unique.
+        aliasLabel = RegexEx.EnsureUniqueName(aliasLabel, Storage.Items, rs => rs.Label);
+        var alias = new AliasTrigger { Label = aliasLabel};
+        Storage.Items.Add(alias);
         _saver.Save(this);
-
-        Logger.LogDebug("Added new Alias Trigger to " + nameof(storage), LoggerType.Puppeteer);
-        return newItem;
+        Logger.LogDebug($"Created new Alias {alias.Label} ({alias.Identifier}).", LoggerType.Puppeteer);
+        Mediator.Publish(new ConfigAliasItemChanged(StorageChangeType.Created, alias, null));
+        return alias;
+    }
+    public AliasTrigger CreateClone(AliasTrigger clone, string newName)
+    {
+        // Strip private formatting codes.
+        newName = CkGui.TooltipTokenRegex().Replace(newName, string.Empty);
+        // Ensure that the new name is unique.
+        newName = RegexEx.EnsureUniqueName(newName, Storage.Items, rs => rs.Label);
+        var clonedItem = new AliasTrigger(clone, false) { Label = newName };
+        Storage.Items.Add(clonedItem);
+        _saver.Save(this);
+        Logger.LogDebug($"Cloned Alias {clonedItem.Identifier}.", LoggerType.Puppeteer);
+        Mediator.Publish(new ConfigAliasItemChanged(StorageChangeType.Created, clonedItem, null));
+        return clonedItem;
     }
 
-
-    public AliasTrigger? CreateClone(AliasTrigger clone)
+    public void Delete(AliasTrigger alias)
     {
-        if (itemInEditorUID is not null && !ValidatePairStorage(itemInEditorUID))
-            return null;
-
-        var storage = itemInEditorUID is null ? GlobalAliasStorage : PairAliasStorage[itemInEditorUID].Storage;
-        if (storage is null)
-            return null;
-
-        var cloneName = RegexEx.EnsureUniqueName(clone.Label, storage.Items, at => at.Label);
-        var newItem = new AliasTrigger(clone, false) { Label = cloneName };
-        storage.Items.Add(newItem);
-        _saver.Save(this);
-
-        Logger.LogDebug("Cloned Alias Trigger to " + nameof(storage), LoggerType.Puppeteer);
-        return newItem;
-    }
-
-    public void Delete(AliasTrigger trigger)
-    {
-        Logger.LogDebug($"Delete {trigger.Label} for {itemInEditorUID}");
-        if (itemInEditorUID is not null && !ValidatePairStorage(itemInEditorUID))
-            return;
-
-        var storage = itemInEditorUID is null ? GlobalAliasStorage : PairAliasStorage[itemInEditorUID].Storage;
-        if (storage is null)
+        // should never be able to remove active restraints, but if that happens to occur, add checks here.
+        if (Storage.Items.Remove(alias))
         {
-            Logger.LogDebug($"Storage Not Found");
-            return;
-        }
-
-        var triggerIndex = storage.Items.FindIndex(v => v.Identifier == trigger.Identifier);
-        if (triggerIndex >= 0)
-        {
-            storage.Items.RemoveAt(triggerIndex);
-            Logger.LogDebug($"Deleted Alias Trigger in {nameof(storage)}", LoggerType.Puppeteer);
-
+            Logger.LogDebug($"Deleted AliasTrigger {alias.Label} ({alias.Identifier})", LoggerType.Puppeteer);
+            Mediator.Publish(new ConfigAliasItemChanged(StorageChangeType.Deleted, alias, null));
             _saver.Save(this);
         }
-        else
-        {
-            var storageData = "";
-            foreach (var item in storage.Items)
-            {
-                storageData = storageData + item.Label + ",  ";
-
-            }
-            Logger.LogDebug($"{trigger.Label} not found in {storageData}");
-        }
     }
 
-    public void ToggleState(AliasTrigger trigger, string? userUid = null)
+    public void Rename(AliasTrigger alias, string newName)
     {
-        if (userUid is not null && !ValidatePairStorage(userUid))
+        var oldName = alias.Label;
+        if (oldName == newName)
             return;
-
-        var storage = userUid is null ? GlobalAliasStorage : PairAliasStorage[userUid].Storage;
-        if (storage is null)
-            return;
-
-        trigger.Enabled = !trigger.Enabled;
-        Logger.LogDebug($"Toggled Alias Trigger in {nameof(storage)}", LoggerType.Puppeteer);
+        // strip special formatting codes
+        newName = CkGui.TooltipTokenRegex().Replace(newName, string.Empty);
+        // ensure the new name is unique.
+        newName = RegexEx.EnsureUniqueName(newName, Storage.Items, rs => rs.Label);
+        alias.Label = newName;
         _saver.Save(this);
+        Logger.LogDebug($"Renamed restraint {alias.Label} ({alias.Identifier}).", LoggerType.Puppeteer);
+        Mediator.Publish(new ConfigAliasItemChanged(StorageChangeType.Renamed, alias, oldName));
     }
 
     /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
-    public void StartEditing(AliasTrigger trigger, string? userUid = null)
-    {
-        if (userUid is not null && !ValidatePairStorage(userUid))
-            return;
-
-        var storage = userUid is null ? GlobalAliasStorage : PairAliasStorage[userUid].Storage;
-        if (storage is null)
-            return;
-
-        _itemEditor.StartEditing(storage, trigger);
-        itemInEditorUID = userUid;
-    }
+    public void StartEditing(AliasTrigger trigger)
+        => _itemEditor.StartEditing(Storage, trigger);
 
     /// <summary> Cancel the editing process without saving anything. </summary>
     public void StopEditing()
-    {
-        _itemEditor.QuitEditing();
-        itemInEditorUID = null;
-    }
+        => _itemEditor.QuitEditing();
 
     /// <summary> Injects all the changes made to the GagRestriction and applies them to the actual item. </summary>
     /// <remarks> All changes are saved to the config once this completes. </remarks>
@@ -141,59 +109,46 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
     {
         if (_itemEditor.SaveAndQuitEditing(out var source))
         {
-            // We need to figure out where the source was from, to know what update to send to the server.
-            Logger.LogDebug("Saved changes to " + source.Label, LoggerType.Puppeteer);
-            _saver.Save(this);
-            itemInEditorUID = null;
-        }
-    }
-
-    public bool TryGetListenerPairPerms(string name, string world, [NotNullWhen(true)] out Kinkster matchedPair)
-    {
-        matchedPair = null!;
-        var nameWithWorld = name + "@" + world;
-        // go through the pair alias storage and find the pair that matches the name.
-        if (PairAliasStorage.FirstOrDefault(x => x.Value.StoredNameWorld == nameWithWorld).Key is not { } match)
-            return false;
-
-        // we have the UID, so get its permissions.
-        if (_pairs.DirectPairs.FirstOrDefault(p => p.UserData.UID == match) is not { } pair)
-            return false;
-
-        matchedPair = pair;
-        return true;
-    }
-
-    public void UpdateStoredAliasName(string pairUid, string listenerName)
-    {
-        if (ValidatePairStorage(pairUid))
-        {
-            // set the name.
-            PairAliasStorage[pairUid].StoredNameWorld = listenerName;
+            Logger.LogDebug($"Saved changes to {source.Label} ({source.Identifier}).", LoggerType.Puppeteer);
+            // _managerCache.UpdateCache(AppliedRestraint);
+            Mediator.Publish(new ConfigAliasItemChanged(StorageChangeType.Modified, source));
             _saver.Save(this);
         }
     }
 
-    /// <summary> Validates the puppeteer storage for a user UID </summary>
-    /// <returns> True if valid, false otherwise. </returns>
-    private bool ValidatePairStorage(string userUid)
+    public void Save()
+        => _saver.Save(this);
+
+    public void ToggleState(AliasTrigger alias)
+        => ToggleState([alias]);
+
+    public void ToggleState(IEnumerable<AliasTrigger> aliases)
     {
-        // If the storage does not yet exist.
-        if (!PairAliasStorage.ContainsKey(userUid))
-        {
-            // Add it only if the pair itself exists.
-            if (_pairs.GetUserDataFromUID(userUid) is { } userData)
-            {
-                PairAliasStorage[userUid] = new NamedAliasStorage();
-                return true;
-            }
-            return false;
-        }
-        return true;
+        foreach (var a in aliases)
+            a.Enabled = !a.Enabled;
+        Logger.LogDebug($"Toggled AliasTriggers ({string.Join(", ", aliases.Select(a => a.Label))})", LoggerType.Puppeteer);
+        _saver.Save(this);
+    }
+
+    public string? GetPuppeteerUid(string name, string world)
+    {
+        var nameWorld = $"{name}@{world}";
+        foreach (var (uid, puppeteer) in Puppeteers)
+            if (puppeteer.NameWithWorld == nameWorld)
+                return uid;
+        return null;
+    }
+
+    public IEnumerable<AliasTrigger> GetAliasesForPuppeteer(string puppeteerUid)
+    {
+        if (!Puppeteers.ContainsKey(puppeteerUid))
+            return Enumerable.Empty<AliasTrigger>();
+        // Return all aliases containing this UID that are enabled.
+        return Storage.Items.Where(alias => alias.Enabled && alias.WhitelistedUIDs.Contains(puppeteerUid));
     }
 
     #region HybridSavable
-    public int ConfigVersion => 0;
+    public int ConfigVersion => 1;
     public HybridSaveType SaveType => HybridSaveType.Json;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
@@ -205,36 +160,23 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         var configObject = new JObject()
         {
             ["Version"] = ConfigVersion,
-            // Serialize GlobalAliasStorage (AliasStorage contains a List<AliasTrigger>)
-            ["GlobalStorage"] = JArray.FromObject(GlobalAliasStorage.Items),
-            // Serialize PairAliasStorage (a dictionary of string -> NamedAliasStorage)
-            ["PairStorage"] = JObject.FromObject(
-                PairAliasStorage.ToDictionary(
-                    pair => pair.Key,
-                    pair => new JObject
-                    {
-                        ["StoredNameWorld"] = pair.Value.StoredNameWorld,
-                        ["Storage"] = JArray.FromObject(pair.Value.Storage.Items),
-                    })
-                )
+            ["AliasList"] = JArray.FromObject(Storage.Items),
+            ["Puppeteers"] = JObject.FromObject(Puppeteers)
         };
-
-        // Convert JObject to string
         return configObject.ToString(Formatting.Indented);
     }
     public void Load()
     {
         var file = _fileNames.Puppeteer;
-        Logger.LogInformation("Loading in Puppeteer Config for file: " + file);
-
-        GlobalAliasStorage.Items.Clear();
-        PairAliasStorage.Clear();
+        Logger.LogInformation($"Loading in Puppeteer Config for file: {file}");
+        Storage.Items.Clear();
+        Puppeteers.Clear();
 
         JObject jObject;
         // Read the json from the file.
         if (!File.Exists(file))
         {
-            Logger.LogWarning($"No Restraints Config file found at {file}");
+            Logger.LogWarning($"No Puppeteer file found at {file}");
             // create a new file with default values.
 
             var oldFormatFile = Path.Combine(_fileNames.CurrentPlayerDirectory, "alias-lists.json");
@@ -246,7 +188,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
             }
             else
             {
-                Svc.Logger.Warning("No Config file found for: " + oldFormatFile);
+                Logger.LogWarning($"No Config file found for: " + oldFormatFile);
                 _saver.Save(this);
                 return;
                 // create a new file with default values.
@@ -258,14 +200,19 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
             jObject = JObject.Parse(jsonText);
         }
         // Read the json from the file.
-        var version = jObject["Version"]?.Value<int>() ?? 0;
+        var version = jObject["Version"]?.Value<int>() ?? 1;
 
         // Perform Migrations if any, and then load the data.
         switch (version)
         {
             case 0:
-                LoadV0(jObject);
+                jObject = MigrateV0ToV1(jObject);
+                goto case 1;
+
+            case 1:
+                LoadV1(jObject);
                 break;
+
             default:
                 Logger.LogError("Invalid Version!");
                 return;
@@ -274,68 +221,62 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         Mediator.Publish(new ReloadFileSystem(GSModule.Puppeteer));
     }
 
-    private void LoadV0(JToken? data)
+    private static JObject MigrateV0ToV1(JObject v0)
     {
-        if (data is not JObject storage)
-            return;
-
-
-        // Deserialize GlobalAliasStorage (AliasStorage, which is a List<AliasTrigger>)
-        if (storage["GlobalStorage"] is JArray globalStorageArray)
+        var v1 = new JObject
         {
-            foreach (var item in globalStorageArray)
+            ["Version"] = 1
+        };
+
+        // Migrate Global Alias Storage to our AliasList
+        if (v0["GlobalStorage"] is JArray globalStorage)
+            v1["AliasList"] = new JArray(globalStorage);
+        // Otherwise make a new one.
+        else
+            v1["AliasList"] = new JArray();
+
+        // Then initialize the puppeteers as a new object.
+        v1["Puppeteers"] = new JObject();
+
+        // NOTE:
+        // - PairStorage is intentionally ignored
+        // - StoredNameWorld is dropped
+        // - Per-pair aliases are not migrated
+        return v1;
+    }
+
+    private void LoadV1(JObject data)
+    {
+        if (data["AliasList"] is JArray aliasArray)
+        {
+            foreach (var item in aliasArray)
             {
                 try
                 {
                     if (item is JObject aliasObject)
                     {
-                        var aliasTrigger = ParseAliasTrigger(aliasObject);
-                        GlobalAliasStorage.Items.Add(aliasTrigger);
+                        var trigger = ParseAliasTrigger(aliasObject);
+                        Storage.Items.Add(trigger);
                     }
                 }
                 catch (Bagagwa ex)
                 {
-                    Logger.LogError("A GlobalAliasStorage Item failed to parse or had an empty GUID. Skipping.: " + ex.Message, LoggerType.Puppeteer);
-                    continue;
+                    Logger.LogError($"Alias failed to parse, skipping: {ex.Message}");
                 }
             }
         }
 
-        // Deserialize PairAliasStorage (Dictionary<string, NamedAliasStorage>)
-        if (storage["PairStorage"] is not JObject pairStorageObj)
-            return;
-
-        foreach (var property in pairStorageObj.Properties())
+        // Puppeteers
+        if (data["Puppeteers"] is JObject puppeteersObj)
         {
-            if (property.Value is not JObject pairStorageValue)
-                continue;
-
-            var aliasStorage = ParseNamedAliasStorage(pairStorageValue);
-            if (aliasStorage is not null)
-                PairAliasStorage[property.Name] = aliasStorage;
-        }
-    }
-
-    private NamedAliasStorage ParseNamedAliasStorage(JObject obj)
-    {
-        var aliasStorage = new NamedAliasStorage
-        {
-            StoredNameWorld = obj["StoredNameWorld"]?.Value<string>() ?? string.Empty,
-            Storage = new AliasStorage()
-        };
-
-        // Parse AliasList
-        if (obj["Storage"] is not JArray aliasListArray)
-            return aliasStorage;
-
-        foreach (var item in aliasListArray)
-            if (item is JObject aliasObject)
+            foreach (var (uid, puppeteer) in puppeteersObj)
             {
-                var aliasTrigger = ParseAliasTrigger(aliasObject);
-                aliasStorage.Storage.Items.Add(aliasTrigger);
+                if (puppeteer is not JObject puppeteerObj)
+                    continue;
+                // Append the puppeteer
+                Puppeteers[uid] = puppeteerObj.ToObject<PuppeteerPlayer>() ?? new PuppeteerPlayer();
             }
-
-        return aliasStorage;
+        }
     }
 
     private AliasTrigger ParseAliasTrigger(JObject obj)
@@ -346,7 +287,8 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
             Enabled = obj["Enabled"]?.Value<bool>() ?? false,
             Label = obj["Label"]?.Value<string>() ?? string.Empty,
             InputCommand = obj["InputCommand"]?.Value<string>() ?? string.Empty,
-            Actions = ParseExecutions(obj["Actions"] as JArray)
+            Actions = ParseExecutions(obj["Actions"] as JArray),
+            WhitelistedUIDs = obj["WhitelistedUIDs"] is JArray arr ? arr.Select(uid => uid.Value<string>() ?? string.Empty).ToHashSet() : new HashSet<string>()
         };
     }
 

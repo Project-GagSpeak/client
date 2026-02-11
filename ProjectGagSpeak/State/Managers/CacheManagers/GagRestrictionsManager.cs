@@ -69,10 +69,12 @@ public sealed class GagRestrictionManager : IHybridSavable
     }
 
     /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
-    public void StartEditing(GarblerRestriction restriction) => _itemEditor.StartEditing(Storage, restriction);
+    public void StartEditing(GarblerRestriction restriction)
+        => _itemEditor.StartEditing(Storage, restriction);
 
     /// <summary> Cancel the editing process without saving anything. </summary>
-    public void StopEditing() => _itemEditor.QuitEditing();
+    public void StopEditing()
+        => _itemEditor.QuitEditing();
 
     /// <summary> Injects all the changes made to the GagRestriction and applies them to the actual item. </summary>
     /// <remarks> All changes are saved to the config once this completes. </remarks>
@@ -98,16 +100,22 @@ public sealed class GagRestrictionManager : IHybridSavable
     }
 
     /// <summary> Attempts to add the gag restriction as a favorite. </summary>
-    public bool AddFavorite(GarblerRestriction restriction) => _favorites.TryAddGag(restriction.GagType);
+    public bool AddFavorite(GarblerRestriction restriction)
+        => _favorites.TryAddGag(restriction.GagType);
 
     /// <summary> Attempts to remove the gag restriction as a favorite. </summary>
-    public bool RemoveFavorite(GarblerRestriction restriction) => _favorites.RemoveGag(restriction.GagType);
+    public bool RemoveFavorite(GarblerRestriction restriction)
+        => _favorites.RemoveGag(restriction.GagType);
 
     #region Validators
-    public bool CanApply(int layer) => ServerGagData is { } data && data.GagSlots[layer].CanApply();
-    public bool CanLock(int layer) => ServerGagData is { } data && data.GagSlots[layer].CanLock();
-    public bool CanUnlock(int layer) => ServerGagData is { } data && data.GagSlots[layer].CanUnlock();
-    public bool CanRemove(int layer) => ServerGagData is { } data && data.GagSlots[layer].CanRemove();
+    public bool CanApply(int layer)
+        => ServerGagData is { } data && data.GagSlots[layer].CanApply();
+    public bool CanLock(int layer)
+        => ServerGagData is { } data && data.GagSlots[layer].CanLock();
+    public bool CanUnlock(int layer)
+        => ServerGagData is { } data && data.GagSlots[layer].CanUnlock();
+    public bool CanRemove(int layer)
+        => ServerGagData is { } data && data.GagSlots[layer].CanRemove();
 
     #endregion Validators
 

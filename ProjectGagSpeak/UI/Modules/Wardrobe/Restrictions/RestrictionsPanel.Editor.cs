@@ -23,8 +23,8 @@ public partial class RestrictionsPanel
 
         using var s = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 12f)
             .Push(ImGuiStyleVar.ChildRounding, 10f);
-        using var c = ImRaii.PushColor(ImGuiCol.Button, CkColor.FancyHeaderContrast.Uint())
-            .Push(ImGuiCol.ChildBg, CkColor.FancyHeaderContrast.Uint());
+        using var c = ImRaii.PushColor(ImGuiCol.Button, CkCol.CurvedHeaderFade.Uint())
+            .Push(ImGuiCol.ChildBg, CkCol.CurvedHeaderFade.Uint());
 
         if (CkGui.IconButton(FAI.ArrowLeft))
             _manager.StopEditing();
@@ -46,9 +46,9 @@ public partial class RestrictionsPanel
         using var group = ImRaii.Group();
         using var style = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 10f)
             .Push(ImGuiStyleVar.ChildRounding, 10f);
-        using var col = ImRaii.PushColor(ImGuiCol.Button, CkColor.FancyHeaderContrast.Uint())
-            .Push(ImGuiCol.FrameBg, CkColor.FancyHeaderContrast.Uint())
-            .Push(ImGuiCol.ChildBg, CkColor.FancyHeaderContrast.Uint());
+        using var col = ImRaii.PushColor(ImGuiCol.Button, CkCol.CurvedHeaderFade.Uint())
+            .Push(ImGuiCol.FrameBg, CkCol.CurvedHeaderFade.Uint())
+            .Push(ImGuiCol.ChildBg, CkCol.CurvedHeaderFade.Uint());
 
         var styler = ImGui.GetStyle();
         var childGroupSize = new Vector2(ImGui.GetFrameHeight() * 2 + styler.ItemInnerSpacing.X, ImGui.GetFrameHeight());
@@ -147,7 +147,7 @@ public partial class RestrictionsPanel
 
         using (CkRaii.IconButtonHeaderChild("Blindfold Information", FAI.Edit, winSize, OpenEditor, HeaderFlags.AddPaddingToHeight, headerTT))
         {
-            using (CkRaii.FramedChild("Blindfold_Preview", scaledPreview, CkColor.FancyHeaderContrast.Uint(), 0))
+            using (CkRaii.FramedChild("Blindfold_Preview", scaledPreview, CkCol.CurvedHeaderFade.Uint(), 0))
             {
                 if (TextureManagerEx.GetMetadataPath(ImageDataType.Blindfolds, blindfoldItem.Properties.OverlayPath) is { } validImage)
                 {
@@ -184,7 +184,7 @@ public partial class RestrictionsPanel
 
         using (CkRaii.IconButtonHeaderChild("Hypnotic Information", FAI.Edit, winSize, OpenEditor, HeaderFlags.AddPaddingToHeight, headerTT))
         {
-            using (CkRaii.FramedChild("Hypnotic_Preview", scaledPreview, CkColor.FancyHeaderContrast.Uint(), 0))
+            using (CkRaii.FramedChild("Hypnotic_Preview", scaledPreview, CkCol.CurvedHeaderFade.Uint(), 0))
             {
                 if (TextureManagerEx.GetMetadataPath(ImageDataType.Hypnosis, hypnoticItem.Properties.OverlayPath) is { } validImage)
                 {

@@ -26,9 +26,9 @@ namespace GagSpeak.Services;
 public class ChatService : DisposableMediatorSubscriberBase
 {
     private readonly MainConfig _config;
-    private readonly KinksterManager _pairs;
+    private readonly KinksterManager _kinksters;
     private readonly GagRestrictionManager _gags;
-    private readonly PuppeteerManager _puppetManager;
+    private readonly PuppeteerManager _puppeteer;
     private readonly TriggerHandler _triggerHandler;
     private readonly DeathRollService _deathRolls;
 
@@ -43,8 +43,8 @@ public class ChatService : DisposableMediatorSubscriberBase
     {
         _config = config;
         _gags = gags;
-        _pairs = pairs;
-        _puppetManager = puppetManager;
+        _kinksters = pairs;
+        _puppeteer = puppetManager;
         _triggerHandler = triggerHandler;
         _deathRolls = dr;
 
@@ -106,20 +106,19 @@ public class ChatService : DisposableMediatorSubscriberBase
         if (senderName + "@" + senderWorld == PlayerData.NameWithWorld)
         {
             CheckOwnChatMessage(channel, msg.TextValue);
-            Mediator.Publish(new ChatboxMessageFromSelf(channel, msg.TextValue));
+            Mediator.Publish(new ChatMsgFromSelf(channel, msg.TextValue));
             return;
         }
 
-        // check for global puppeteer triggers
-        if (_triggerHandler.PotentialGlobalTriggerMsg(senderName, senderWorld, channel, msg))
-            return;
+        // Inform that someone spoke in the chat. (Can maybe shift this to the kinkster one or something idk?)
+        Mediator.Publish(new ChatMsgFromOther(senderName, senderWorld, channel, msg.TextValue));
 
-        // Check for local puppeteer triggers.
-        if (_triggerHandler.PotentialPairTriggerMsg(senderName, senderWorld, channel, msg, out var kinkster))
-        {
-            // Let our mediator know a Kinkster sent a message.
-            Mediator.Publish(new ChatboxMessageFromKinkster(kinkster, channel, msg.TextValue)); 
-        }
+        // See if this is someone who can puppeteer us
+        if (_puppeteer.GetPuppeteerUid(senderName, senderWorld) is { } puppeteerUid)
+            // See if they are a paired Kinkster.
+            if (_kinksters.TryGetKinkster(new(puppeteerUid), out var kinkster))
+                // If they are check for puppeteer message
+                _triggerHandler.CheckForPuppeteerMsg(kinkster, channel, msg);
     }
 
     /// <summary>
@@ -159,7 +158,7 @@ public class ChatService : DisposableMediatorSubscriberBase
     public void CheckOwnChatMessage(InputChannel channel, string msg)
     {
         // check if the message we sent contains any of our pairs triggers.
-        foreach (var pair in _pairs.DirectPairs)
+        foreach (var pair in _kinksters.DirectPairs)
         {
             var triggers = pair.PairPerms.TriggerPhrase.Split("|").Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
             // This ensures it is a full word.

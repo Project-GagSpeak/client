@@ -75,7 +75,7 @@ public class CollarPanel : DisposableMediatorSubscriberBase
 
     private void DrawTabBarContent()
     {
-        using var _ = CkRaii.TabBarChild("CollarContents", CkColor.VibrantPink.Uint(), CkColor.VibrantPinkHovered.Uint(), CkColor.FancyHeader.Uint(),
+        using var _ = CkRaii.TabBarChild("CollarContents", GsCol.VibrantPink.Uint(), GsCol.VibrantPinkHovered.Uint(), CkCol.CurvedHeader.Uint(),
                 LabelFlags.PadInnerChild | LabelFlags.SizeIncludesHeader, out var selected, EditorTabs);
         // Draw the selected tab's contents.
         selected?.DrawContents(_.InnerRegion.X);

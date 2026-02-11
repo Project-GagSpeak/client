@@ -17,18 +17,17 @@ using OtterGui.Text;
 namespace GagSpeak.Gui.Wardrobe;
 public class CursedLootUI : WindowMediatorSubscriberBase
 {
-    private readonly CursedLootFileSelector _selector;
+    // Revamp this later.
+    private static bool THEME_PUSHED = false;
+
     private readonly CursedLootManager _manager;
     private readonly TutorialService _guides;
-    
-    private bool ThemePushed = false;
-
+   
     public CursedLootUI(ILogger<CursedLootUI> logger, GagspeakMediator mediator,
-        CursedLootFileSelector selector, CursedLootManager manager, TutorialService guides, 
+        CursedLootManager manager, TutorialService guides, 
         LootItemsTab itemsTab, LootPoolTab itemPoolTab, LootAppliedTab appliedTab)
         : base(logger, mediator, "Cursed Loot UI")
     {
-        _selector = selector;
         _manager = manager;
         _guides = guides;
 
@@ -49,29 +48,29 @@ public class CursedLootUI : WindowMediatorSubscriberBase
 
     protected override void PreDrawInternal()
     {
-        if (!ThemePushed)
+        if (!THEME_PUSHED)
         {
             ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(4));
             ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .403f));
             ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.579f, 0.170f, 0.359f, 0.428f));
-            ThemePushed = true;
+            THEME_PUSHED = true;
         }
     }
 
     protected override void PostDrawInternal()
     {
-        if (ThemePushed)
+        if (THEME_PUSHED)
         {
             ImGui.PopStyleVar();
             ImGui.PopStyleColor(2);
-            ThemePushed = false;
+            THEME_PUSHED = false;
         }
     }
 
     protected override void DrawInternal()
     {
         var frameH = ImGui.GetFrameHeight();
-        var regions = CkHeader.FlatWithBends(CkColor.FancyHeader.Uint(), frameH, ImUtf8.ItemSpacing.X, frameH);
+        var regions = CkHeader.FlatWithBends(CkCol.CurvedHeader.Uint(), frameH, ImUtf8.ItemSpacing.X, frameH);
         // draw out the header information, and then the tab contents.
 
         ImGui.SetCursorScreenPos(regions.TopLeft.Pos);
@@ -91,13 +90,13 @@ public class CursedLootUI : WindowMediatorSubscriberBase
     private void DrawTopLeft(Vector2 region)
     {
         // should be dependant on the tab selected.
-        _selector.DrawFilterRow(region.X);
+        ImGui.Text("awawawawawa");
     }
 
     private void DrawTopRight(Vector2 region)
     {
         using var style = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 9f);
-        using var col = ImRaii.PushColor(ImGuiCol.FrameBg, CkColor.FancyHeaderContrast.Uint());
+        using var col = ImRaii.PushColor(ImGuiCol.FrameBg, CkCol.CurvedHeaderFade.Uint());
         var frameH = ImUtf8.FrameHeight;
         var spacing = ImUtf8.ItemSpacing.X;
         var innerSpacing = ImUtf8.ItemInnerSpacing.X;
@@ -144,7 +143,7 @@ public class CursedLootUI : WindowMediatorSubscriberBase
         }
 
         ImGui.SameLine();
-        using (CkRaii.Child("Chance", new Vector2(changeLength, region.Y), CkColor.FancyHeaderContrast.Uint(), 9f * ImGuiHelpers.GlobalScale))
+        using (CkRaii.Child("Chance", new Vector2(changeLength, region.Y), CkCol.CurvedHeaderFade.Uint(), 9f * ImGuiHelpers.GlobalScale))
         {
             ImGui.SetNextItemWidth(changeLength - frameH - innerSpacing);
             var chance = _chance ?? _manager.LockChance;
@@ -163,7 +162,7 @@ public class CursedLootUI : WindowMediatorSubscriberBase
 
     private void DrawTabBarContent()
     {
-        using var _ = CkRaii.TabBarChild("LootContents", CkColor.VibrantPink.Uint(), CkColor.VibrantPinkHovered.Uint(), CkColor.FancyHeader.Uint(),
+        using var _ = CkRaii.TabBarChild("LootContents", GsCol.VibrantPink.Uint(), GsCol.VibrantPinkHovered.Uint(), CkCol.CurvedHeader.Uint(),
                 LabelFlags.PadInnerChild | LabelFlags.SizeIncludesHeader, out var selected, CursedLootTabs);
         // Draw the selected tab's contents.
         selected?.DrawContents(_.InnerRegion.X);

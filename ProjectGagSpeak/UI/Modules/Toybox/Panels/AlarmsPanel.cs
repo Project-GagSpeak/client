@@ -36,7 +36,7 @@ public partial class AlarmsPanel
         _guides = guides;
 
         _patternCombo = new PatternCombo(logger, mediator, favorites, () => [
-            ..patterns.Storage.OrderByDescending(p => favorites.Patterns.Contains(p.Identifier)).ThenBy(p => p.Label)
+            ..patterns.Storage.OrderByDescending(p => FavoritesConfig.Patterns.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
     }
 

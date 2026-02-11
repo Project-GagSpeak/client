@@ -8,7 +8,6 @@ using GagSpeak.GameInternals.Detours;
 using GagSpeak.Gui;
 using GagSpeak.Gui.Components;
 using GagSpeak.Gui.MainWindow;
-using GagSpeak.Gui.Modules.Puppeteer;
 using GagSpeak.Gui.Profile;
 using GagSpeak.Gui.Publications;
 using GagSpeak.Gui.Remote;
@@ -138,25 +137,31 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<WhitelistDrawer>()
         .AddSingleton<RequestsDrawSystem>()
         .AddSingleton<WhitelistDrawSystem>()
+        .AddSingleton<PuppeteersDrawer>()
+        .AddSingleton<PuppeteersDrawSystem>()
+        .AddSingleton<MarionetteDrawer>()
+        .AddSingleton<MarionetteDrawSystem>()
 
         // File System
         .AddSingleton<GagRestrictionFileSelector>()
-        .AddSingleton<RestrictionFileSelector>()
-        .AddSingleton<RestraintSetFileSelector>()
-        .AddSingleton<CursedLootFileSelector>()
-        .AddSingleton<BuzzToyFileSelector>()
-        .AddSingleton<PatternFileSelector>()
-        .AddSingleton<AlarmFileSelector>()
-        .AddSingleton<TriggerFileSelector>()
-        .AddSingleton<ModPresetFileSelector>()
         .AddSingleton<GagFileSystem>()
+        .AddSingleton<RestrictionFileSelector>()
         .AddSingleton<RestrictionFileSystem>()
+        .AddSingleton<RestraintSetFileSelector>()
         .AddSingleton<RestraintSetFileSystem>()
+        .AddSingleton<CursedLootFileSelector>()
         .AddSingleton<CursedLootFileSystem>()
+        .AddSingleton<AliasesFileSelector>()
+        .AddSingleton<AliasesFileSystem>()
+        .AddSingleton<BuzzToyFileSelector>()
         .AddSingleton<BuzzToyFileSystem>()
+        .AddSingleton<PatternFileSelector>()
         .AddSingleton<PatternFileSystem>()
+        .AddSingleton<AlarmFileSelector>()
         .AddSingleton<AlarmFileSystem>()
+        .AddSingleton<TriggerFileSelector>()
         .AddSingleton<TriggerFileSystem>()
+        .AddSingleton<ModPresetFileSelector>()
         .AddSingleton<ModPresetFileSystem>()
 
         // Game Internals
@@ -378,9 +383,9 @@ public static class GagSpeakServiceExtensions
 
         // Scoped UI (Puppeteer)
         .AddScoped<WindowMediatorSubscriberBase, PuppeteerUI>()
-        .AddScoped<PuppetVictimGlobalPanel>()
-        .AddScoped<PuppetVictimUniquePanel>()
-        .AddScoped<ControllerUniquePanel>()
+        .AddScoped<AliasesTab>()
+        .AddScoped<PuppeteersTab>()
+        .AddScoped<MarionettesTab>()
 
         // Scoped UI (Toybox)
         .AddScoped<WindowMediatorSubscriberBase, ToyboxUI>()
@@ -431,6 +436,7 @@ public static class GagSpeakServiceExtensions
         .AddScoped<WindowMediatorSubscriberBase, DebugStorageUI>()
         .AddScoped<WindowMediatorSubscriberBase, DebugPersonalDataUI>()
         .AddScoped<WindowMediatorSubscriberBase, DebugActiveStateUI>()
+        .AddScoped<WindowMediatorSubscriberBase, StyleEditorUI>()
 
         // Scoped Services
         .AddScoped<CommandManager>()

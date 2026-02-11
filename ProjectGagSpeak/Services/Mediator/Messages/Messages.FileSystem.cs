@@ -1,6 +1,7 @@
 using GagSpeak.FileSystems;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Models;
+using GagspeakAPI.Data;
 
 namespace GagSpeak.Services.Mediator;
 
@@ -14,6 +15,8 @@ public record ConfigRestraintSetChanged(StorageChangeType Type, RestraintSet Ite
 public record ConfigCollarChanged(StorageChangeType Type, GagSpeakCollar Item, string? OldString = null) : MessageBase;
 
 public record ConfigCursedItemChanged(StorageChangeType Type, CursedItem Item, string? OldString = null) : MessageBase;
+
+public record ConfigAliasItemChanged(StorageChangeType Type, AliasTrigger Item, string? OldString = null) : MessageBase;
 
 public record ConfigSexToyChanged(StorageChangeType Type, BuzzToy Item, string? OldString = null) : MessageBase;
 

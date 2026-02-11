@@ -26,8 +26,8 @@ public partial class GagRestrictionsPanel
         using var group = ImRaii.Group();
         using var s = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 10f)
             .Push(ImGuiStyleVar.ChildRounding, 10f);
-        using var c = ImRaii.PushColor(ImGuiCol.Button, CkColor.FancyHeaderContrast.Uint())
-            .Push(ImGuiCol.ChildBg, CkColor.FancyHeaderContrast.Uint());
+        using var c = ImRaii.PushColor(ImGuiCol.Button, CkCol.CurvedHeaderFade.Uint())
+            .Push(ImGuiCol.ChildBg, CkCol.CurvedHeaderFade.Uint());
 
         // precalc sizes to make remaining drawing easier.
         var spacing = ImGui.GetStyle().ItemSpacing.X;
@@ -55,8 +55,8 @@ public partial class GagRestrictionsPanel
         using var group = ImRaii.Group();
         using var style = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 10f)
             .Push(ImGuiStyleVar.ChildRounding, 10f);
-        using var col = ImRaii.PushColor(ImGuiCol.Button, CkColor.FancyHeaderContrast.Uint())
-            .Push(ImGuiCol.ChildBg, CkColor.FancyHeaderContrast.Uint());
+        using var col = ImRaii.PushColor(ImGuiCol.Button, CkCol.CurvedHeaderFade.Uint())
+            .Push(ImGuiCol.ChildBg, CkCol.CurvedHeaderFade.Uint());
         var styler = ImGui.GetStyle();
         var childGroupSize = new Vector2(ImGui.GetFrameHeight() * 2 + styler.ItemInnerSpacing.X, ImGui.GetFrameHeight());
         var itemSpacing = (region.X - CkGui.IconButtonSize(FAI.Save).X - (childGroupSize.X * 3)) / 5;

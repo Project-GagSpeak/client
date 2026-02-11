@@ -29,7 +29,7 @@ public class PublicationsManager
         _shareHub = shareHub;
 
         _patternCombo = new PatternCombo(logger, mediator, favorites, () => [
-            ..patterns.Storage.OrderByDescending(p => favorites.Patterns.Contains(p.Identifier)).ThenBy(p => p.Label)
+            ..patterns.Storage.OrderByDescending(p => FavoritesConfig.Patterns.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
 
         _statusCombo = new MoodleStatusCombo(logger, 1.5f);

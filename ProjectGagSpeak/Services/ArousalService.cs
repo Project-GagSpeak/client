@@ -204,7 +204,7 @@ public sealed class ArousalService : IDisposable
                     {
                         ImGuiUtil.DrawFrameColumn($"{combinedKey.Manager} / {combinedKey.LayerIndex}");
                         ImGui.TableNextColumn();
-                        CkGui.ColorText(strength.ToString(), CkColor.LushPinkButton.Uint());
+                        CkGui.ColorText(strength.ToString(), GsCol.LushPinkButton.Uint());
                     }
                 }
             }

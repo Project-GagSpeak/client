@@ -132,7 +132,7 @@ public sealed class BuzzToyFileSelector : CkFileSystemSelector<BuzzToy, BuzzToyF
         pos = ImGui.GetCursorScreenPos();
         hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
         var interactIcon = leaf.Value.Interactable ? FAI.Handshake : FAI.HandshakeSlash;
-        var interactCol = leaf.Value.Interactable ? CkColor.TriStateCheck.Vec4() : CkColor.TriStateCross.Vec4();
+        var interactCol = leaf.Value.Interactable ? CkCol.TriStateCheck.Vec4() : CkCol.TriStateCross.Vec4();
         CkGui.FramedIconText(interactIcon, interactCol);
         CkGui.AttachToolTip(leaf.Value.Interactable
             ? "Device interactions are active, and can be used by GagSpeak's Remote."
@@ -144,7 +144,7 @@ public sealed class BuzzToyFileSelector : CkFileSystemSelector<BuzzToy, BuzzToyF
             ImGui.SameLine(currentX);
             pos = ImGui.GetCursorScreenPos();
             hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
-            var onlineCol = ibt.DeviceConnected ? CkColor.TriStateCheck.Vec4() : CkColor.TriStateCross.Vec4();
+            var onlineCol = ibt.DeviceConnected ? CkCol.TriStateCheck.Vec4() : CkCol.TriStateCross.Vec4();
             CkGui.FramedIconText(FAI.Globe, onlineCol);
             CkGui.AttachToolTip(ibt.DeviceConnected
                 ? "This device is online and connected to Intiface."

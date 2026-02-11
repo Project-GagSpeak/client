@@ -254,8 +254,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         OnKinksterUpdateActiveRestraint(dto => _ = Callback_KinksterUpdateActiveRestraint(dto));
         OnKinksterUpdateActiveCollar(dto => _ = Callback_KinksterUpdateActiveCollar(dto));
         OnKinksterUpdateActiveCursedLoot(dto => _ = Callback_KinksterUpdateActiveCursedLoot(dto));
-        OnKinksterUpdateAliasGlobal(dto => _ = Callback_KinksterUpdateAliasGlobal(dto));
-        OnKinksterUpdateAliasUnique(dto => _ = Callback_KinksterUpdateAliasUnique(dto));
+        OnKinksterUpdateAlias(dto => _ = Callback_KinksterUpdateAlias(dto));
         OnKinksterUpdateValidToys(dto => _ = Callback_KinksterUpdateValidToys(dto));
         OnKinksterUpdateActivePattern(dto => _ = Callback_KinksterUpdateActivePattern(dto));
         OnKinksterUpdateActiveAlarms(dto => _ = Callback_KinksterUpdateActiveAlarms(dto));

@@ -194,13 +194,13 @@ public class HypnoEffectEditor : IDisposable
                 var height = size == Vector2.Zero ? CkStyle.GetFrameRowsHeight(5) : (size.X / 3) - ImGui.GetFrameHeight() * 2;
                 using (var c = CkRaii.HeaderChild("Display Text Phrases", new Vector2(cellWidth, height.AddWinPadY()), HeaderFlags.AddPaddingToHeight))
                 {
-                    using (var _ = CkRaii.FramedChildPaddedW($"##DisplayPhrases_{PopupLabel}", c.InnerRegion.X, height, CkColor.FancyHeaderContrast.Uint(), CkColor.FancyHeaderContrast.Uint(), DFlags.RoundCornersAll))
+                    using (var _ = CkRaii.FramedChildPaddedW($"##DisplayPhrases_{PopupLabel}", c.InnerRegion.X, height, CkCol.CurvedHeaderFade.Uint(), CkCol.CurvedHeaderFade.Uint(), DFlags.RoundCornersAll))
                     {
                         var pos = ImGui.GetCursorScreenPos();
-                        if (_displayTextEditor.DrawTagsEditor($"##EffectPhrases_{PopupLabel}", eff.DisplayMessages, out var newDisplayWords))
+                        if (_displayTextEditor.DrawTagsEditor($"##EffectPhrases_{PopupLabel}", eff.DisplayMessages, out var newDisplayWords, GsCol.VibrantPink.Vec4()))
                             UpdateEffect(() => eff.DisplayMessages = newDisplayWords.ToArray());
 
-                        if (_displayTextEditor.DrawHelpButtons(eff.DisplayMessages, out var newWords, true))
+                        if (_displayTextEditor.DrawHelpButtons(eff.DisplayMessages, out var newWords, true, GsCol.VibrantPink.Vec4()))
                             UpdateEffect(() => eff.DisplayMessages = newWords.ToArray());
                     }
                 }
@@ -210,7 +210,7 @@ public class HypnoEffectEditor : IDisposable
                 DrawColorSections(size.X);
             }
 
-            CkGui.SeparatorSpaced(CkColor.LushPinkLine.Uint());
+            CkGui.SeparatorSpaced(GsCol.LushPinkLine.Uint());
 
             CkGui.SetCursorXtoCenter(CkGui.IconTextButtonSize(FAI.Save, "Save and Close"));
             if (CkGui.IconTextButton(FAI.Save, "Save and Close"))
@@ -240,7 +240,7 @@ public class HypnoEffectEditor : IDisposable
 
     public void DrawCompactEditorTabs(float width)
     {
-        using (CkRaii.TabBarChild("EffectEdit", width, CkStyle.GetFrameRowsHeight(GetCompactHeightRowCount()), FancyTabBar.Rounding, CkColor.VibrantPink.Uint(), CkColor.VibrantPinkHovered.Uint(), CkColor.FancyHeader.Uint(), 
+        using (CkRaii.TabBarChild("EffectEdit", width, CkStyle.GetFrameRowsHeight(GetCompactHeightRowCount()), FancyTabBar.Rounding, GsCol.VibrantPink.Uint(), GsCol.VibrantPinkHovered.Uint(), CkCol.CurvedHeader.Uint(), 
             LabelFlags.PadInnerChild | LabelFlags.AddPaddingToHeight, out var selected, EditorTabs))
                 selected?.DrawContents(ImGui.GetContentRegionAvail().X);
     }
@@ -791,12 +791,12 @@ public class HypnoEffectEditor : IDisposable
             var activeState = _editorRef._activeState;
             if (effect is null) return;
             var height = CkStyle.GetFrameRowsHeight(3);
-            using (CkRaii.FramedChildPaddedW($"##HypnoT_{_editorRef.PopupLabel}", width, height, 0, CkColor.VibrantPink.Uint(), DFlags.RoundCornersAll))
+            using (CkRaii.FramedChildPaddedW($"##HypnoT_{_editorRef.PopupLabel}", width, height, 0, GsCol.VibrantPink.Uint(), DFlags.RoundCornersAll))
             {
-                if (_editorRef._displayTextEditor.DrawTagsEditor($"##EffectPhrases_{_editorRef.PopupLabel}", effect.DisplayMessages, out var newDisplayWords))
+                if (_editorRef._displayTextEditor.DrawTagsEditor($"##EffectPhrases_{_editorRef.PopupLabel}", effect.DisplayMessages, out var newDisplayWords, GsCol.VibrantPink.Vec4()))
                     _editorRef.UpdateEffect(() => effect.DisplayMessages = newDisplayWords.ToArray());
 
-                if (_editorRef._displayTextEditor.DrawHelpButtons(effect.DisplayMessages, out var newWords, true))
+                if (_editorRef._displayTextEditor.DrawHelpButtons(effect.DisplayMessages, out var newWords, true, GsCol.VibrantPink.Vec4()))
                     _editorRef.UpdateEffect(() => effect.DisplayMessages = newWords.ToArray());
             }
 
@@ -854,15 +854,15 @@ public class HypnoEffectEditor : IDisposable
                     "--SEP----COL--[Double-Click]--COL-- Load Preset" +
                     "--NL----COL--[Right-Click]--COL-- Rename Preset" +
                     "--NL----COL--[CTRL + Left-Click]--COL-- Toggle Binding Mode." +
-                    "--NL--(Binding mode saves changes to bound preset)", color: CkColor.VibrantPink.Vec4());
+                    "--NL--(Binding mode saves changes to bound preset)", color: GsCol.VibrantPink.Vec4());
             }
 
             bool DrawPresetItemBox(string setName, HypnoticEffect preset, bool isBinded)
             {
                 var pos = ImGui.GetCursorScreenPos();
                 var hovering = ImGui.IsMouseHoveringRect(pos, pos + itemSize);
-                var color = hovering ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkColor.FancyHeaderContrast.Uint();
-                var frameCol = isBinded ? 0xFF00FF00 : CkColor.VibrantPink.Uint();
+                var color = hovering ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkCol.CurvedHeaderFade.Uint();
+                var frameCol = isBinded ? 0xFF00FF00 : GsCol.VibrantPink.Uint();
                 using (CkRaii.FramedChild($"Preset-{setName}", itemSize, color, frameCol, CkStyle.HeaderRounding(), 1.5f * ImGuiHelpers.GlobalScale))
                 {
                     var comboW = ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FAI.Eraser).X - ImGui.GetStyle().ItemInnerSpacing.X;
@@ -942,8 +942,8 @@ public class HypnoEffectEditor : IDisposable
         {
             var pos = ImGui.GetCursorScreenPos();
             var hovering = ImGui.IsMouseHoveringRect(pos, pos + size);
-            var color = hovering ? CkColor.ElementBG.Uint() : CkColor.FancyHeader.Uint();
-            using (CkRaii.FramedChild("NewPresetButton", size, color, CkColor.VibrantPink.Uint(), CkStyle.HeaderRounding(), 1.5f * ImGuiHelpers.GlobalScale))
+            var color = hovering ? CkCol.LChildBg.Uint() : CkCol.CurvedHeader.Uint();
+            using (CkRaii.FramedChild("NewPresetButton", size, color, GsCol.VibrantPink.Uint(), CkStyle.HeaderRounding(), 1.5f * ImGuiHelpers.GlobalScale))
                 CkGui.CenterTextAligned("New Preset From Options");
 
             if (ImGui.IsMouseClicked(ImGuiMouseButton.Left) && hovering && _editorRef._current.Effect is { } eff)

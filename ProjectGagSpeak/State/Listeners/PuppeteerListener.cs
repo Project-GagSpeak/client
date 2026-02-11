@@ -27,9 +27,9 @@ public sealed class PuppeteerListener
             _mediator.Publish(new EventMessage(new(nick, enactor, type, message)));
     }
 
+    // Fix later.
     public void UpdateListener(string pairName, string listenerName)
     {
-        _aliasManager.UpdateStoredAliasName(pairName, listenerName);
-        PostActionMsg(pairName, InteractionType.ListenerName, $"Updated listener name to {listenerName} for {pairName}.");
+
     }
 }

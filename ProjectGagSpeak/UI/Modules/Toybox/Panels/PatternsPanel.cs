@@ -149,7 +149,7 @@ public partial class PatternsPanel
         var clicked = ImGui.IsItemClicked(ImGuiMouseButton.Left);
         var isActive = _remotes.ClientData.ActivePattern.Equals(pattern.Identifier);
         var icon = isActive ? CoreTexture.Stop : CoreTexture.Play;
-        var color = hovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkColor.FancyHeaderContrast.Uint();
+        var color = hovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkCol.CurvedHeaderFade.Uint();
         var size = ImGui.GetItemRectSize();
         ImGui.GetWindowDrawList().AddDalamudImageRounded(CosmeticService.CoreTextures.Cache[icon], ImGui.GetItemRectMin(), size, 45);
         ImGui.GetWindowDrawList().AddCircleFilled(ImGui.GetItemRectMin() + size * .5f, size.X * .55f, color);

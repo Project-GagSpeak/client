@@ -1,10 +1,11 @@
 using CkCommons.Gui;
 using CkCommons.Widgets;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
-using Dalamud.Bindings.ImGui;
+using GagSpeak.Utils;
 using OtterGui.Extensions;
 using OtterGui.Raii;
 using OtterGui.Text;

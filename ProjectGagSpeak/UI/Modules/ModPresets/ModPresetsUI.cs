@@ -59,7 +59,7 @@ public class ModPresetsUI : WindowMediatorSubscriberBase
         var splitterSize = ImGui.GetFrameHeight() / 4;
 
         // Draw a flat header.
-        var drawRegions = CkHeader.Flat(CkColor.FancyHeader.Uint(), headerInner, ModListLength, splitterSize);
+        var drawRegions = CkHeader.Flat(CkCol.CurvedHeader.Uint(), headerInner, ModListLength, splitterSize);
 
         // Create a child for each region, drawn to the size.
         ImGui.SetCursorScreenPos(drawRegions.TopLeft.Pos);

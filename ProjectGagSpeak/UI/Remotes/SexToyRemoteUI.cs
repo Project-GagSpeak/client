@@ -109,17 +109,17 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
             ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0, 0));
             ImGui.PushStyleVar(ImGuiStyleVar.CellPadding, new Vector2(0, 0));
 
-            ImGui.PushStyleColor(ImGuiCol.WindowBg, CkColor.RemoteBgDark.Uint());
-            ImGui.PushStyleColor(ImGuiCol.ChildBg, CkColor.RemoteBg.Uint());
-            ImGui.PushStyleColor(ImGuiCol.TitleBg, CkColor.RemoteBgDark.Uint());
-            ImGui.PushStyleColor(ImGuiCol.TitleBgCollapsed, CkColor.RemoteBgDark.Uint());
-            ImGui.PushStyleColor(ImGuiCol.TitleBgActive, CkColor.RemoteBg.Uint());
+            ImGui.PushStyleColor(ImGuiCol.WindowBg, GsCol.RemoteBgDark.Uint());
+            ImGui.PushStyleColor(ImGuiCol.ChildBg, GsCol.RemoteBg.Uint());
+            ImGui.PushStyleColor(ImGuiCol.TitleBg, GsCol.RemoteBgDark.Uint());
+            ImGui.PushStyleColor(ImGuiCol.TitleBgCollapsed, GsCol.RemoteBgDark.Uint());
+            ImGui.PushStyleColor(ImGuiCol.TitleBgActive, GsCol.RemoteBg.Uint());
 
             ImPlot.PushStyleVar(ImPlotStyleVar.MajorTickSize, new Vector2(1.0f));
             ImPlot.PushStyleVar(ImPlotStyleVar.Padding, Vector2.Zero);
 
-            ImPlot.PushStyleColor(ImPlotCol.Line, CkColor.LushPinkLine.Uint());
-            ImPlot.PushStyleColor(ImPlotCol.Bg, CkColor.RemoteBgDark.Uint());
+            ImPlot.PushStyleColor(ImPlotCol.Line, GsCol.LushPinkLine.Uint());
+            ImPlot.PushStyleColor(ImPlotCol.Bg, GsCol.RemoteBgDark.Uint());
             ImPlot.PushStyleColor(ImPlotCol.FrameBg, 0x00FFFFFF);
             _themePushed = true;
         }
@@ -196,21 +196,21 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
 
         // above and center (we hate ImPlot here)
         var plotGraphSize = new Vector2(c.InnerRegion.X, PLAYBACK_H * ImGuiHelpers.GlobalScale);
-        wdl.AddLine(min + lineYOffset, min + new Vector2(plotGraphSize.X, lineYOffset.Y), CkColor.RemoteLines.Uint(), lineStroke);
+        wdl.AddLine(min + lineYOffset, min + new Vector2(plotGraphSize.X, lineYOffset.Y), GsCol.RemoteLines.Uint(), lineStroke);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + lineStroke);
 
         DrawLatestPositionGraph(plotGraphSize);
 
         // below and center.
         var pbMax = ImGui.GetItemRectMax();
-        wdl.AddLine(pbMax with { X = min.X } + lineYOffset, pbMax + lineYOffset, CkColor.RemoteLines.Uint(), lineStroke);
+        wdl.AddLine(pbMax with { X = min.X } + lineYOffset, pbMax + lineYOffset, GsCol.RemoteLines.Uint(), lineStroke);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - lineStroke);
 
         DrawSelectedToys();
 
         // below and center.
         var barMax = ImGui.GetItemRectMax();
-        wdl.AddLine(barMax with { X = min.X } + lineYOffset, barMax + lineYOffset, CkColor.RemoteLines.Uint(), lineStroke);
+        wdl.AddLine(barMax with { X = min.X } + lineYOffset, barMax + lineYOffset, GsCol.RemoteLines.Uint(), lineStroke);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - lineStroke);
 
         DrawInteractableRow();
@@ -252,7 +252,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
     private void DrawSelectedToys()
     {
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(4));
-        using var c = CkRaii.ChildPaddedW("###CenterBar", ImGui.GetContentRegionAvail().X, DEVICEBAR_H.RemoveWinPadY(), CkColor.RemoteBg.Uint());
+        using var c = CkRaii.ChildPaddedW("###CenterBar", ImGui.GetContentRegionAvail().X, DEVICEBAR_H.RemoveWinPadY(), GsCol.RemoteBg.Uint());
 
         var imgSize = new Vector2(c.InnerRegion.Y);
         var imgCache = CosmeticService.IntifaceTextures.Cache;
@@ -396,7 +396,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
             // Disable the motors for this device is the device is not enabled.
             // (still process them for updates though)
             using var dis = ImRaii.Disabled(!device.IsEnabled || !CurrentAccess.MotorControl);
-            var col = device.IsEnabled && SelRemoteUser.UserIsBeingBuzzed ? CkColor.LushPinkButton.Vec4() : CkColor.LushPinkButtonDisabled.Vec4();
+            var col = device.IsEnabled && SelRemoteUser.UserIsBeingBuzzed ? GsCol.LushPinkButton.Vec4() : GsCol.LushPinkButtonDisabled.Vec4();
 
 
             foreach (var motor in device.MotorDotMap.Values)
@@ -500,8 +500,8 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
         {
             using var alpha = ImRaii.PushStyle(ImGuiStyleVar.Alpha, isDisabled ? 0.5f : 1.0f);
             ImGui.Dummy(imgSize);
-            var col = isDisabled ? (isActive ? CkColor.LushPinkButton.Uint() : _idleTint)
-                : isActive ? CkColor.LushPinkButton.Uint() : ImGui.IsItemHovered() ? _hoverTint : _idleTint;
+            var col = isDisabled ? (isActive ? GsCol.LushPinkButton.Uint() : _idleTint)
+                : isActive ? GsCol.LushPinkButton.Uint() : ImGui.IsItemHovered() ? _hoverTint : _idleTint;
             ImGui.GetWindowDrawList().AddDalamudImageRounded(wrap, ImGui.GetItemRectMin(), imgSize, 45, col);
             return !isDisabled && ImGui.IsItemClicked();
         }
@@ -521,14 +521,14 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
 
         // above.
         var plotGraphSize = new Vector2(c.InnerRegion.X, PLAYBACK_H * ImGuiHelpers.GlobalScale);
-        wdl.AddLine(min + lineYOffset, min + new Vector2(plotGraphSize.X, lineYOffset.Y), CkColor.RemoteLines.Uint(), lineStroke);
+        wdl.AddLine(min + lineYOffset, min + new Vector2(plotGraphSize.X, lineYOffset.Y), GsCol.RemoteLines.Uint(), lineStroke);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + lineStroke);
 
         DrawParticipantsBox(new Vector2(c.InnerRegion.X, PLAYBACK_H));
 
         // below
         var pbMax = ImGui.GetItemRectMax();
-        wdl.AddLine(pbMax with { X = min.X } + lineYOffset, pbMax + lineYOffset, CkColor.RemoteLines.Uint(), lineStroke);
+        wdl.AddLine(pbMax with { X = min.X } + lineYOffset, pbMax + lineYOffset, GsCol.RemoteLines.Uint(), lineStroke);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - lineStroke);
 
         DrawVibeRoomChat();

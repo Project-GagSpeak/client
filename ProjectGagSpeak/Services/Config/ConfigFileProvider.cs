@@ -31,12 +31,16 @@ public class ConfigFileProvider : IConfigFileProvider
     public readonly string HypnoEffects;
     public readonly string BuzzToys;
 
+    // Change later to have a unified DDS file config since all of these are preset DDS hierarchies.
+    public string DDS_Marionettes => Path.Combine(FileSysDirectory, "dds-marionettes.json");
+    public string DDS_Puppeteers => Path.Combine(FileSysDirectory, "dds-puppeteers.json");
     public string DDS_Requests => Path.Combine(FileSysDirectory, "dds-requests.json");
     public string DDS_Whitelist => Path.Combine(FileSysDirectory, "dds-whitelist.json");
     public string CKFS_RestraintSets => Path.Combine(FileSysDirectory, "fs-restraintsets.json");
     public string CKFS_Restrictions => Path.Combine(FileSysDirectory, "fs-restrictions.json");
     public string CKFS_GagRestrictions => Path.Combine(FileSysDirectory, "fs-gagrestrictions.json");
     public string CKFS_CursedLoot => Path.Combine(FileSysDirectory, "fs-cursedloot.json");
+    public string CKFS_Aliases => Path.Combine(FileSysDirectory, "fs-aliases.json");
     public string CKFS_BuzzToys => Path.Combine(FileSysDirectory, "fs-buzzdevices.json");
     public string CKFS_Patterns => Path.Combine(FileSysDirectory, "fs-patterns.json");
     public string CKFS_Alarms => Path.Combine(FileSysDirectory, "fs-alarms.json");

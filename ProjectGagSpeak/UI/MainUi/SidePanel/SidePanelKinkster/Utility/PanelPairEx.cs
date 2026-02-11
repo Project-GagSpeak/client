@@ -393,24 +393,24 @@ public enum KPID : byte
 
             CkGui.Separator(ImGuiColors.DalamudRed.ToUint(), size.X);
 
-            CkGui.OutlinedFont("In Hardcore Mode:", ImGuiColors.DalamudOrange, CkColor.ElementSplit.Vec4(), 2);
+            CkGui.OutlinedFont("In Hardcore Mode:", ImGuiColors.DalamudOrange, CkCol.LChildSplit.Vec4(), 2);
 
             CkGui.IconText(FAI.AngleDoubleRight);
             CkGui.TextInline("You can no longer change permissions or edit access for");
-            CkGui.ColorTextInline(name, CkColor.VibrantPink.Uint());
+            CkGui.ColorTextInline(name, GsCol.VibrantPink.Uint());
 
             CkGui.IconText(FAI.AngleDoubleRight);
-            CkGui.ColorTextInline(name, CkColor.VibrantPink.Uint());
+            CkGui.ColorTextInline(name, GsCol.VibrantPink.Uint());
             CkGui.TextInline("can change non-hardcore permissions with edit access.");
 
             CkGui.IconText(FAI.AngleDoubleRight);
             CkGui.TextInline("You can set which Hardcore Interactions");
-            CkGui.ColorTextInline(name, CkColor.VibrantPink.Uint());
+            CkGui.ColorTextInline(name, GsCol.VibrantPink.Uint());
             CkGui.TextInline("can use.");
             CkGui.ColorTextInline("(Only you can change this)", ImGuiColors.ParsedGrey);
 
             CkGui.Separator(ImGuiColors.DalamudRed.ToUint(), size.X - ImGui.GetStyle().WindowPadding.X);
-            CkGui.OutlinedFont("Recommendations:", ImGuiColors.DalamudOrange, CkColor.ElementSplit.Vec4(), 2);
+            CkGui.OutlinedFont("Recommendations:", ImGuiColors.DalamudOrange, CkCol.LChildSplit.Vec4(), 2);
 
             CkGui.IconText(FAI.AngleDoubleRight);
             ImGui.SameLine();
@@ -418,7 +418,7 @@ public enum KPID : byte
                 "and enable permissions without access as fit for your dynamics limits.");
 
             CkGui.IconText(FAI.AngleDoubleRight);
-            CkGui.ColorTextInline("Power Control Adjustment", CkColor.VibrantPink.Uint());
+            CkGui.ColorTextInline("Power Control Adjustment", GsCol.VibrantPink.Uint());
             ImGui.SameLine(0, 1);
             CkGui.HoverIconText(FAI.QuestionCircle, ImGuiColors.TankBlue.ToUint(), ImGui.GetColorU32(ImGuiCol.TextDisabled));
             CkGui.AttachToolTip($"Provides a 5 second window for you to change permissions and edit access for {name}.");

@@ -44,10 +44,10 @@ public class LootItemsTab : IFancyTab
         _guides = guides;
 
         _gagCombo = new RestrictionGagCombo(logger, favorites, () => [
-        ..gags.Storage.Values.OrderByDescending(p => favorites.Gags.Contains(p.GagType)).ThenBy(p => p.GagType)
+        ..gags.Storage.Values.OrderByDescending(p => FavoritesConfig.Gags.Contains(p.GagType)).ThenBy(p => p.GagType)
         ]);
         _bindCombo = new RestrictionCombo(logger, mediator, favorites, () => [
-            ..restrictions.Storage.OrderByDescending(p => favorites.Restrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
+            ..restrictions.Storage.OrderByDescending(p => FavoritesConfig.Restrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
             ]);
     }
 
@@ -77,15 +77,15 @@ public class LootItemsTab : IFancyTab
 
     private void DrawLootItemList(float leftWidth, float rounding)
     {
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(4));
-        using var _ = CkRaii.FramedChildPaddedWH("List", new Vector2(leftWidth, ImGui.GetContentRegionAvail().Y), 0, CkColor.VibrantPink.Uint(), rounding);
-        
+        using var _ = CkRaii.FramedChildPaddedWH("list", new Vector2(leftWidth, ImGui.GetContentRegionAvail().Y), 0, GsCol.VibrantPink.Uint(), rounding);
+
+        _selector.DrawFilterRow(_.InnerRegion.X);
         _selector.DrawList(_.InnerRegion.X);
     }
 
     private void DrawSelectedItem(float innerHeight, float rounding)
     {
-        using var _ = CkRaii.FramedChildPaddedW("Sel", ImGui.GetContentRegionAvail().X, innerHeight, 0, CkColor.VibrantPink.Uint(), rounding);
+        using var _ = CkRaii.FramedChildPaddedW("Sel", ImGui.GetContentRegionAvail().X, innerHeight, 0, GsCol.VibrantPink.Uint(), rounding);
         
         if (_manager.ItemInEditor is CursedGagItem gagItem)
             DrawGagLootEditor(_.InnerRegion, gagItem, rounding);
@@ -98,31 +98,31 @@ public class LootItemsTab : IFancyTab
     private void DrawStatistics(float rounding)
     {
         var region = ImGui.GetContentRegionAvail();
-        using var _ = CkRaii.FramedChildPaddedWH("Stats", ImGui.GetContentRegionAvail(), 0, CkColor.VibrantPink.Uint(), rounding);
+        using var _ = CkRaii.FramedChildPaddedWH("Stats", ImGui.GetContentRegionAvail(), 0, GsCol.VibrantPink.Uint(), rounding);
 
         CkGui.FontTextCentered("Statistics", UiFontService.UidFont);
-        CkGui.Separator(CkColor.VibrantPink.Uint());
+        CkGui.Separator(GsCol.VibrantPink.Uint());
 
         ImGui.Text("Total Loot Found:");
-        CkGui.ColorTextInline(_manager.TotalEncounters.ToString(), CkColor.VibrantPink.Uint());
+        CkGui.ColorTextInline(_manager.TotalEncounters.ToString(), GsCol.VibrantPink.Uint());
 
         ImGui.Text("Gags Found:");
-        CkGui.ColorTextInline(_manager.GagEncounters.ToString(), CkColor.VibrantPink.Uint());
+        CkGui.ColorTextInline(_manager.GagEncounters.ToString(), GsCol.VibrantPink.Uint());
 
         ImGui.Text("Restrictions Found:");
-        CkGui.ColorTextInline(_manager.BindEncounters.ToString(), CkColor.VibrantPink.Uint());
+        CkGui.ColorTextInline(_manager.BindEncounters.ToString(), GsCol.VibrantPink.Uint());
 
         ImGui.Text("Mimics Evaded:");
-        CkGui.ColorTextInline(_manager.MimicsEvaded.ToString(), CkColor.VibrantPink.Uint());
+        CkGui.ColorTextInline(_manager.MimicsEvaded.ToString(), GsCol.VibrantPink.Uint());
 
         ImGui.Text("Total Time Cursed:");
-        CkGui.ColorTextInline(_manager.TimeInCursedLoot.ToGsRemainingTime(), CkColor.VibrantPink.Uint());
+        CkGui.ColorTextInline(_manager.TimeInCursedLoot.ToGsRemainingTime(), GsCol.VibrantPink.Uint());
 
         ImGui.Text("Longest Lock Time:");
-        CkGui.ColorTextInline(_manager.LongestLockTime.ToGsRemainingTime(), CkColor.VibrantPink.Uint());
+        CkGui.ColorTextInline(_manager.LongestLockTime.ToGsRemainingTime(), GsCol.VibrantPink.Uint());
 
         ImGui.Text("Max Active At Once:");
-        CkGui.ColorTextInline(_manager.MaxLootActiveAtOnce.ToString(), CkColor.VibrantPink.Uint());
+        CkGui.ColorTextInline(_manager.MaxLootActiveAtOnce.ToString(), GsCol.VibrantPink.Uint());
     }
 
     private void DrawGagLootEditor(Vector2 region, CursedGagItem item, float rounding)

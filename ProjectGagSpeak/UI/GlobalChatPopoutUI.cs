@@ -48,14 +48,14 @@ public class GlobalChatPopoutUI : WindowMediatorSubscriberBase
     protected override void DrawInternal()
     {
         using var font = UiFontService.Default150Percent.Push();
-        using var col = ImRaii.PushColor(ImGuiCol.ScrollbarBg, CkColor.LushPinkButton.Uint())
-            .Push(ImGuiCol.ScrollbarGrab, CkColor.VibrantPink.Uint())
-            .Push(ImGuiCol.ScrollbarGrabHovered, CkColor.VibrantPinkHovered.Uint());
+        using var col = ImRaii.PushColor(ImGuiCol.ScrollbarBg, GsCol.LushPinkButton.Uint())
+            .Push(ImGuiCol.ScrollbarGrab, GsCol.VibrantPink.Uint())
+            .Push(ImGuiCol.ScrollbarGrabHovered, GsCol.VibrantPinkHovered.Uint());
 
         var min = ImGui.GetCursorScreenPos();
         var max = min + ImGui.GetContentRegionAvail();
         // Add some CkRichText variant here later.
-        CkGui.ColorTextCentered("GagSpeak Global Chat", CkColor.VibrantPink.Uint());
+        CkGui.ColorTextCentered("GagSpeak Global Chat", GsCol.VibrantPink.Uint());
         ImGui.Separator();
 
         // Restrict drawing the chat if their not verified or blocked from using it.

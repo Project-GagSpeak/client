@@ -9,7 +9,7 @@ using OtterGui;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 
-namespace CkCommons.Widgets;
+namespace GagSpeak.Utils;
 
 public static class Icons
 {
@@ -48,7 +48,7 @@ public static class Icons
         }
         catch (Bagagwa e)
         {
-            Svc.Log.Error(e, "Error drawing icon");
+            Svc.Logger.Error(e, "Error drawing icon");
         }
     }
 
@@ -86,12 +86,12 @@ public static class Icons
     {
         var isFavorite = type switch
         {
-            FavoriteIdContainer.Restraint => favorites.Restraints.Contains(id),
-            FavoriteIdContainer.Restriction => favorites.Restrictions.Contains(id),
-            FavoriteIdContainer.CursedLoot => favorites.CursedLoot.Contains(id),
-            FavoriteIdContainer.Pattern => favorites.Patterns.Contains(id),
-            FavoriteIdContainer.Alarm => favorites.Alarms.Contains(id),
-            FavoriteIdContainer.Trigger => favorites.Triggers.Contains(id),
+            FavoriteIdContainer.Restraint => FavoritesConfig.Restraints.Contains(id),
+            FavoriteIdContainer.Restriction => FavoritesConfig.Restrictions.Contains(id),
+            FavoriteIdContainer.CursedLoot => FavoritesConfig.CursedLoot.Contains(id),
+            FavoriteIdContainer.Pattern => FavoritesConfig.Patterns.Contains(id),
+            FavoriteIdContainer.Alarm => FavoritesConfig.Alarms.Contains(id),
+            FavoriteIdContainer.Trigger => FavoritesConfig.Triggers.Contains(id),
             _ => false
         };
         var hovering = ImGui.IsMouseHoveringRect(
@@ -116,7 +116,7 @@ public static class Icons
 
     public static bool DrawFavoriteStar(FavoritesConfig favorites, GagType gag, bool framed = true)
     {
-        var isFavorite = favorites.Gags.Contains(gag);
+        var isFavorite = FavoritesConfig.Gags.Contains(gag);
         var hovering = ImGui.IsMouseHoveringRect(
             ImGui.GetCursorScreenPos(), ImGui.GetCursorScreenPos() + new Vector2(ImGui.GetTextLineHeight()));
 
@@ -139,7 +139,7 @@ public static class Icons
 
     public static bool DrawFavoriteStar(FavoritesConfig favorites, string kinksterUid, bool framed = true)
     {
-        var isFavorite = favorites.Kinksters.Contains(kinksterUid); 
+        var isFavorite = FavoritesConfig.Kinksters.Contains(kinksterUid); 
         var pos = ImGui.GetCursorScreenPos();
         var hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetTextLineHeight()));
         var col = hovering ? ImGuiColors.DalamudGrey2 : isFavorite ? ImGuiColors.ParsedGold : ImGuiColors.ParsedGrey;

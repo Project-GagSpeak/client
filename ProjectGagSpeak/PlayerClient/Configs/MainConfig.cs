@@ -1,3 +1,4 @@
+using CkCommons;
 using CkCommons.HybridSaver;
 using FFXIVClientStructs.FFXIV.Common.Lua;
 using GagSpeak.Services.Configs;
@@ -85,6 +86,10 @@ public class MainConfig : IHybridSavable
     ///     When set to a value, the config is automatically saved.
     /// </summary>
     public bool ServerPaused { get; set; } = false;
+
+    // For Themes and color customization
+    public Dictionary<GsCol, uint> GsColors { get; private set; } = [];
+    public Dictionary<CkCol, uint> CkColors { get; private set; } = [];
 
     public static LogLevel LogLevel = LogLevel.Trace;
     public static LoggerType LoggerFilters = LoggerType.Recommended;

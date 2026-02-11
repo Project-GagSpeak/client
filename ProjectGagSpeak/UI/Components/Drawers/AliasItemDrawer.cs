@@ -67,10 +67,10 @@ public sealed class AliasItemDrawer
         _moodleDrawer = moodleDrawer;
 
         _restrictionCombo = new RestrictionCombo(logger, mediator, favorites, () => [
-            ..restrictions.Storage.OrderByDescending(p => favorites.Restrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
+            ..restrictions.Storage.OrderByDescending(p => FavoritesConfig.Restrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
         _restraintCombo = new RestraintCombo(logger, mediator, favorites, () => [
-            ..restraints.Storage.OrderByDescending(p => favorites.Restraints.Contains(p.Identifier)).ThenBy(p => p.Label)
+            ..restraints.Storage.OrderByDescending(p => FavoritesConfig.Restraints.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
         _statusCombo = new MoodleStatusCombo(logger, 1.15f);
         _presetCombo = new MoodlePresetCombo(logger, 1.15f);
@@ -100,7 +100,7 @@ public sealed class AliasItemDrawer
     public void DrawAchievementProgressBox(AchievementBase achievementItem, Vector2 size)
     {
         var imageTabWidth = 96 + ImGui.GetStyle().ItemSpacing.X * 2;
-        using var _ = CkRaii.FramedChild($"Achievement-{achievementItem.Title}", size, new Vector4(0.25f, 0.2f, 0.2f, 0.4f).ToUint(), CkColor.VibrantPink.Uint(), 5f, 1f);
+        using var _ = CkRaii.FramedChild($"Achievement-{achievementItem.Title}", size, new Vector4(0.25f, 0.2f, 0.2f, 0.4f).ToUint(), GsCol.VibrantPink.Uint(), 5f, 1f);
         using var t = ImRaii.Table($"AchievementTable {achievementItem.Title}", 2, ImGuiTableFlags.RowBg);
         if (!t) return;
 

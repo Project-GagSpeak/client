@@ -14,6 +14,7 @@ using GagSpeak.WebAPI;
 using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Text;
+using GagSpeak.Utils;
 
 namespace GagSpeak.FileSystems;
 
@@ -144,7 +145,7 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
         CkGui.FramedIconText(FAI.QuestionCircle, hovering ? ImGui.GetColorU32(ImGuiColors.TankBlue) : ImGui.GetColorU32(ImGuiCol.TextDisabled));
         CkGui.AttachToolTip($"Total Length: --COL--{leaf.Value.Duration.ToString("mm\\:ss")}--COL--" +
             $"--NL--Start Time: --COL--{leaf.Value.StartPoint.ToString("mm\\:ss")}--COL--" +
-            $"--NL--Playback Time: --COL--{leaf.Value.PlaybackDuration.ToString("mm\\:ss")}--COL--", color: CkColor.VibrantPink.Vec4());
+            $"--NL--Playback Time: --COL--{leaf.Value.PlaybackDuration.ToString("mm\\:ss")}--COL--", color: GsCol.VibrantPink.Vec4());
         return wasHovered && ImGui.IsMouseReleased(ImGuiMouseButton.Left);
     }
 

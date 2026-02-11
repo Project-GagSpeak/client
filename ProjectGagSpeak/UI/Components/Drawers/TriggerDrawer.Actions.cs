@@ -441,7 +441,7 @@ public sealed partial class TriggerDrawer
         {
             var timeLimit = TimeSpan.FromMilliseconds(59999);
             var refStart = toyAct.StartAfter;
-            using (var c = CkRaii.ChildPaddedW("ToyActStart", columnWidth, height, CkColor.FancyHeaderContrast.Uint(),
+            using (var c = CkRaii.ChildPaddedW("ToyActStart", columnWidth, height, CkCol.CurvedHeaderFade.Uint(),
                 CkStyle.ChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
             {
                 ImGuiUtil.Center("Start After");
@@ -461,7 +461,7 @@ public sealed partial class TriggerDrawer
         ImGui.SameLine();
         using (ImRaii.Group())
         {
-            using (var c = CkRaii.ChildPaddedW("ToyActEnd", columnWidth, height, CkColor.FancyHeaderContrast.Uint(),
+            using (var c = CkRaii.ChildPaddedW("ToyActEnd", columnWidth, height, CkCol.CurvedHeaderFade.Uint(),
                 CkStyle.ChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
             {
                 ImGuiUtil.Center("End After");

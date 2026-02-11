@@ -93,7 +93,7 @@ public class CollarOverviewTab : IFancyTab
 
     private void DrawSetupEditor(Vector2 size, GagSpeakCollar collar)
     {
-        using var child = CkRaii.FramedChildPaddedWH("Setup", size, 0, CkColor.VibrantPink.Uint(), FancyTabBar.RoundingInner);
+        using var child = CkRaii.FramedChildPaddedWH("Setup", size, 0, GsCol.VibrantPink.Uint(), FancyTabBar.RoundingInner);
         // Precalculate essential variable sizes.
         var textH = CkGui.CalcFontTextSize("T", UiFontService.UidFont).Y;
         var iconSize = CkGui.IconButtonSize(FAI.Edit);
@@ -113,7 +113,7 @@ public class CollarOverviewTab : IFancyTab
             _manager.SaveChangesAndStopEditing();
         CkGui.AttachToolTip("Save Changes and Exit Editing.");
 
-        CkGui.Separator(CkColor.VibrantPink.Uint());
+        CkGui.Separator(GsCol.VibrantPink.Uint());
 
         // Collar Label edit.
         ImGui.Spacing();
@@ -185,7 +185,7 @@ public class CollarOverviewTab : IFancyTab
     
     private void DrawSetupOverview(Vector2 size)
     {
-        using var child = CkRaii.FramedChildPaddedWH("Setup", size, 0, CkColor.VibrantPink.Uint(), FancyTabBar.RoundingInner);
+        using var child = CkRaii.FramedChildPaddedWH("Setup", size, 0, GsCol.VibrantPink.Uint(), FancyTabBar.RoundingInner);
         // Precalculate essential variable sizes.
         var pos = ImGui.GetCursorScreenPos();
         var textH = CkGui.CalcFontTextSize("T", UiFontService.UidFont).Y;
@@ -203,7 +203,7 @@ public class CollarOverviewTab : IFancyTab
             if (CkGui.IconButton(FAI.Edit, inPopup: true))
                 _manager.StartEditing();
 
-            CkGui.Separator(CkColor.VibrantPink.Uint(), topleftWidth);
+            CkGui.Separator(GsCol.VibrantPink.Uint(), topleftWidth);
 
             ImGui.Spacing();
             CkGui.FramedIconText(FAI.Font);
@@ -227,7 +227,7 @@ public class CollarOverviewTab : IFancyTab
             CkGui.AttachToolTip("The Mod Preset applied to this Collar.");
 
             ImGui.SameLine();
-            CkGui.TagLabelText(_manager.ClientCollar.Mod.Container.ModName, CkColor.FancyHeader.Uint());
+            CkGui.TagLabelText(_manager.ClientCollar.Mod.Container.ModName, CkCol.CurvedHeader.Uint());
             if(ImGui.IsItemHovered())
                 _modDrawer.DrawPresetTooltip(_manager.ClientCollar.Mod);
         }
@@ -240,8 +240,8 @@ public class CollarOverviewTab : IFancyTab
         var thickness = CkStyle.FrameThickness();
         pos += new Vector2(child.InnerRegion.X - thumbnailSize.X - thickness, thickness);
         ImGui.SetCursorScreenPos(pos);
-        ActiveItemsDrawer.DrawCollarImage(_manager.ClientCollar, thumbnailSize, FancyTabBar.RoundingInner, CkColor.ElementSplit.Uint());
-        ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.VibrantPink.Uint(), FancyTabBar.RoundingInner, thickness);
+        ActiveItemsDrawer.DrawCollarImage(_manager.ClientCollar, thumbnailSize, FancyTabBar.RoundingInner, CkCol.LChildSplit.Uint());
+        ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), GsCol.VibrantPink.Uint(), FancyTabBar.RoundingInner, thickness);
 
         if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
             _thumbnails.SetThumbnailSource(Guid.Empty, new Vector2(120 * 1.2f, 120f), ImageDataType.Collar);
@@ -281,7 +281,7 @@ public class CollarOverviewTab : IFancyTab
 
     private void DrawActiveState(Vector2 region)
     {
-        using var child = CkRaii.FramedChildPaddedWH("Active", region, 0, CkColor.VibrantPink.Uint(), FancyTabBar.RoundingInner);
+        using var child = CkRaii.FramedChildPaddedWH("Active", region, 0, GsCol.VibrantPink.Uint(), FancyTabBar.RoundingInner);
 
         var textH = CkGui.CalcFontTextSize("T", UiFontService.UidFont).Y;
         var pos = ImGui.GetCursorScreenPos();
@@ -290,7 +290,7 @@ public class CollarOverviewTab : IFancyTab
         ImGui.GetWindowDrawList().AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Collar], pos, new(textH));
         CkGui.FontText("Active State", UiFontService.UidFont);
 
-        CkGui.Separator(CkColor.VibrantPink.Uint());
+        CkGui.Separator(GsCol.VibrantPink.Uint());
         
         if (_manager.SyncedData is not { } curState)
         {

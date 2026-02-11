@@ -9,6 +9,7 @@ public enum FavoriteIdContainer
     Restriction,
     Collar,
     CursedLoot,
+    Alias,
     Pattern,
     Alarm,
     Trigger,
@@ -31,17 +32,17 @@ public class FavoritesConfig : IHybridSavable
     }
 
     // Favorites Sections.
-    public readonly HashSet<Guid>    Restraints = [];
-    public readonly HashSet<Guid>    Restrictions = [];
-    public readonly HashSet<GagType> Gags         = [];
-    public readonly HashSet<Guid>    Collars      = [];
-    public readonly HashSet<Guid>    CursedLoot   = [];
-
-    public readonly HashSet<Guid>    Patterns     = [];
-    public readonly HashSet<Guid>    Alarms       = [];
-    public readonly HashSet<Guid>    Triggers     = [];
-
-    public readonly HashSet<string>  Kinksters    = []; // Stores the UID
+    public static readonly HashSet<Guid>    Restraints      = [];
+    public static readonly HashSet<Guid>    Restrictions    = [];
+    public static readonly HashSet<GagType> Gags            = [];
+    public static readonly HashSet<Guid>    Collars         = [];
+    public static readonly HashSet<Guid>    CursedLoot      = [];
+    public static readonly HashSet<Guid>    Aliases         = [];
+    public static readonly HashSet<Guid>    Patterns        = [];
+    public static readonly HashSet<Guid>    Alarms          = [];
+    public static readonly HashSet<Guid>    Triggers        = [];
+    // Stores the UID
+    public static readonly HashSet<string>  Kinksters       = [];
 
     public void Load()
     {
@@ -86,6 +87,7 @@ public class FavoritesConfig : IHybridSavable
             FavoriteIdContainer.Restraint => Restraints.Add(restriction),
             FavoriteIdContainer.Collar => Collars.Add(restriction),
             FavoriteIdContainer.CursedLoot => CursedLoot.Add(restriction),
+            FavoriteIdContainer.Alias => Aliases.Add(restriction),
             FavoriteIdContainer.Pattern => Patterns.Add(restriction),
             FavoriteIdContainer.Alarm => Alarms.Add(restriction),
             FavoriteIdContainer.Trigger => Triggers.Add(restriction),
@@ -138,6 +140,7 @@ public class FavoritesConfig : IHybridSavable
             FavoriteIdContainer.Restriction => Restrictions.Remove(restriction),
             FavoriteIdContainer.Collar => Collars.Remove(restriction),
             FavoriteIdContainer.CursedLoot => CursedLoot.Remove(restriction),
+            FavoriteIdContainer.Alias => Aliases.Remove(restriction),
             FavoriteIdContainer.Pattern => Patterns.Remove(restriction),
             FavoriteIdContainer.Alarm => Alarms.Remove(restriction),
             FavoriteIdContainer.Trigger => Triggers.Remove(restriction),
@@ -252,6 +255,7 @@ public class FavoritesConfig : IHybridSavable
         public IEnumerable<GagType> Gags         = [];
         public IEnumerable<Guid>    Collars      = [];
         public IEnumerable<Guid>    CursedLoot   = [];
+        public IEnumerable<Guid>    Aliases      = [];
         public IEnumerable<Guid>    Patterns     = [];
         public IEnumerable<Guid>    Alarms       = [];
         public IEnumerable<Guid>    Triggers     = [];

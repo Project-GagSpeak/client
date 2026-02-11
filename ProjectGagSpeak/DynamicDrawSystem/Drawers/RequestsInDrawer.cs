@@ -160,14 +160,14 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
         endX -= rejectAllSize + acceptAllSize + CkGui.GetSeparatorVWidth(inner: true);
 
         ImGui.SameLine(endX);
-        using (ImRaii.PushColor(ImGuiCol.Text, CkColor.TriStateCheck.Uint()))
+        using (ImRaii.PushColor(ImGuiCol.Text, CkCol.TriStateCheck.Uint()))
             if (CkGui.IconTextButton(FAI.CheckCircle, "Accept All", null, true, UiService.DisableUI))
                 Log.Information("Accepting all incoming kinkster requests.");
         CkGui.AttachToolTip("Accept all incoming kinkster requests.");
 
         CkGui.FrameSeparatorV(inner: true);
 
-        using (ImRaii.PushColor(ImGuiCol.Text, CkColor.TriStateCross.Uint()))
+        using (ImRaii.PushColor(ImGuiCol.Text, CkCol.TriStateCross.Uint()))
             if (CkGui.IconTextButton(FAI.TimesCircle, "Reject All", null, true, UiService.DisableUI))
                 Log.Information("Rejecting all incoming kinkster requests.");
         CkGui.AttachToolTip("Reject all incoming kinkster requests.");
@@ -235,11 +235,11 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
                 using (ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 12f))
                 {
                     // Draw out the initial frame with a small outer boarder.
-                    if (CkGui.IconButtonColored(FAI.Check, CkColor.TriStateCheck.Uint(), UiService.DisableUI))
+                    if (CkGui.IconButtonColored(FAI.Check, CkCol.TriStateCheck.Uint(), UiService.DisableUI))
                         AcceptRequest(leaf.Data);
                     CkGui.AttachToolTip("Accept this kinkster request.");
                     ImUtf8.SameLineInner();
-                    if (CkGui.IconButtonColored(FAI.Times, CkColor.TriStateCross.Uint(), UiService.DisableUI))
+                    if (CkGui.IconButtonColored(FAI.Times, CkCol.TriStateCross.Uint(), UiService.DisableUI))
                         RejectRequest(leaf.Data);
                     CkGui.AttachToolTip("Reject this kinkster request.");
                     ImUtf8.SameLineInner();

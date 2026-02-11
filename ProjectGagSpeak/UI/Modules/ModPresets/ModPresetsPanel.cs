@@ -36,9 +36,9 @@ public class ModPresetsPanel : DisposableMediatorSubscriberBase
 
         _presetSelector = new ItemSelectorBoxBuilder<ModSettingsPreset>()
             .Create(FAI.Plus, "New Preset")
-            .WithColSelected(CkColor.ElementHeader.Uint())
+            .WithColSelected(CkCol.LChild.Uint())
             .WithColHovered(ImGui.GetColorU32(ImGuiCol.FrameBgHovered))
-            .WithBgCol(CkColor.FancyHeaderContrast.Uint())
+            .WithBgCol(CkCol.CurvedHeaderFade.Uint())
             .OnAdd(name => _manager.TryCreatePreset(_selector.Selected, name))
             .OnSelect(newSel => _selectedRef = newSel)
             .OnRename((oldItem, newName) => _manager.RenamePreset(oldItem, newName))
@@ -105,14 +105,14 @@ public class ModPresetsPanel : DisposableMediatorSubscriberBase
 
     private void DrawPresetListForSelected(Vector2 region)
     {
-        var col = CkColor.FancyHeaderContrast.Uint();
+        var col = CkCol.CurvedHeaderFade.Uint();
         using (var child = CkRaii.FramedChildPaddedW("PresetList", region.X, CkStyle.GetFrameRowsHeight(3), col, col, DFlags.RoundCornersAll))
         {
             // return early if nothing is selected.
             if (_selector.Selected is not { } selected)
                 return;
 
-            _presetSelector.DrawSelectorChildBox("PresetListBox", child.InnerRegion, true, selected.ModPresets, _selectedRef, _ => _.Label);
+            _presetSelector.DrawSelectorChildBox("PresetListBox", child.InnerRegion, true, selected.ModPresets, _selectedRef, _ => _.Label, GsCol.VibrantPink.Vec4());
         }
     }
 }

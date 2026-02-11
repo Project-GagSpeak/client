@@ -3,6 +3,7 @@ using Dalamud.Bindings.ImGui;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Utils;
 using OtterGui.Classes;
 using OtterGui.Extensions;
 using OtterGui.Text;
@@ -16,10 +17,10 @@ public sealed class PairCombo : CkFilterComboCache<Kinkster>, IMediatorSubscribe
 
     private Kinkster? _currentKinkster;
     private bool _needsRefresh = false;
-    public PairCombo(ILogger log, GagspeakMediator mediator, MainConfig config, KinksterManager pairs, FavoritesConfig favorites)
+    public PairCombo(ILogger log, GagspeakMediator mediator, KinksterManager pairs, FavoritesConfig favorites)
         : base(() => [
             ..pairs.DirectPairs
-                .OrderByDescending(p => favorites.Kinksters.Contains(p.UserData.UID))
+                .OrderByDescending(p => FavoritesConfig.Kinksters.Contains(p.UserData.UID))
                 .ThenByDescending(u => u.IsRendered)
                 .ThenByDescending(u => u.IsOnline)
                 .ThenBy(pair => pair.GetDisplayName(), StringComparer.OrdinalIgnoreCase)
@@ -29,6 +30,15 @@ public sealed class PairCombo : CkFilterComboCache<Kinkster>, IMediatorSubscribe
         _favorites = favorites;
         SearchByParts = true;
 
+        Mediator.Subscribe<FolderUpdateKinkster>(this, _ => _needsRefresh = true);
+    }
+
+    public PairCombo(ILogger log, GagspeakMediator mediator, FavoritesConfig favorites, Func<IReadOnlyList<Kinkster>> generator)
+        : base(generator, log)
+    {
+        Mediator = mediator;
+        _favorites = favorites;
+        SearchByParts = true;
         Mediator.Subscribe<FolderUpdateKinkster>(this, _ => _needsRefresh = true);
     }
 

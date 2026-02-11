@@ -87,10 +87,10 @@ public partial class TriggersPanel
 
         // Styles shared throughout all draw settings.
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 10f);
-        using var color = ImRaii.PushColor(ImGuiCol.FrameBg, CkColor.FancyHeaderContrast.Uint());
+        using var color = ImRaii.PushColor(ImGuiCol.FrameBg, CkCol.CurvedHeaderFade.Uint());
 
         // Begin the child constraint.
-        using (var c = CkRaii.Child("Sel_Outer", region.Size, CkColor.FancyHeader.Uint(), ImGui.GetFrameHeight(), DFlags.RoundCornersRight))
+        using (var c = CkRaii.Child("Sel_Outer", region.Size, CkCol.CurvedHeader.Uint(), ImGui.GetFrameHeight(), DFlags.RoundCornersRight))
         {
             try
             {
@@ -140,7 +140,7 @@ public partial class TriggersPanel
 
         // Top Strip.
         ImGui.Dummy(stripSize);
-        wdl.AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.ElementSplit.Uint());
+        wdl.AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkCol.LChildSplit.Uint());
         // Left Button.
         if (ImGui.InvisibleButton("tab_left", tabSize))
             _selectedTab = TriggerTab.Detection;
@@ -156,15 +156,15 @@ public partial class TriggersPanel
 
         // Bot Strip.
         ImGui.Dummy(stripSize);
-        wdl.AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.ElementSplit.Uint());
+        wdl.AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkCol.LChildSplit.Uint());
 
         void DrawButtonText(string text, TriggerTab tab)
         {
             var min = ImGui.GetItemRectMin();
-            var col = ImGui.IsItemHovered()
-                ? CkColor.VibrantPinkHovered 
-                : (_selectedTab == tab ? CkColor.VibrantPink : CkColor.FancyHeaderContrast);
-            wdl.AddRectFilled(min, ImGui.GetItemRectMax(), col.Uint());
+            var col = ImGui.IsItemHovered() 
+                ? GsCol.VibrantPinkHovered.Uint() 
+                : (_selectedTab == tab ? GsCol.VibrantPink.Uint() : CkCol.CurvedHeaderFade.Uint());
+            wdl.AddRectFilled(min, ImGui.GetItemRectMax(), col);
             var textPos = min + new Vector2((tabSize.X - ImGui.CalcTextSize(text).X) / 2, textYOffset);
             wdl.AddText(textPos, ImGui.GetColorU32(ImGuiCol.Text), text);
         }
@@ -196,7 +196,7 @@ public partial class TriggersPanel
                 }
             });
 
-            CkGui.SeparatorSpaced(CkColor.FancyHeaderContrast.Uint());
+            CkGui.SeparatorSpaced(CkCol.CurvedHeaderFade.Uint());
             
             // re-aquire the trigger item.
             _drawer.DrawDetectionInfo(trigger, isEditorItem, searchBg);
@@ -224,7 +224,7 @@ public partial class TriggersPanel
                 }
             });
 
-            CkGui.SeparatorSpaced(CkColor.FancyHeaderContrast.Uint());
+            CkGui.SeparatorSpaced(CkCol.CurvedHeaderFade.Uint());
 
             _drawer.DrawActionInfo(trigger, isEditorItem, searchBg);
             DrawFooter(trigger);
@@ -237,7 +237,7 @@ public partial class TriggersPanel
         using var style = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, Vector2.Zero);
 
         var size = new Vector2(ImGui.GetContentRegionAvail().X - ImGui.GetFrameHeight() - ImGui.GetStyle().ItemSpacing.X, ImGui.GetFrameHeight());
-        using (var c = CkRaii.FramedChild("Priority", size, CkColor.FancyHeaderContrast.Uint(), 0, CkStyle.ThinThickness(), 0, DFlags.RoundCornersAll))
+        using (var c = CkRaii.FramedChild("Priority", size, CkCol.CurvedHeaderFade.Uint(), 0, CkStyle.ThinThickness(), 0, DFlags.RoundCornersAll))
         {
             if (isEditing)
             {
@@ -261,7 +261,7 @@ public partial class TriggersPanel
         var flags = isEditing ? WFlags.None : WFlags.AlwaysUseWindowPadding;
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, ImGui.GetStyle().FramePadding);
         using var color = ImRaii.PushColor(ImGuiCol.FrameBg, 0);
-        using var c = CkRaii.FramedChild("Description", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint(), 0,
+        using var c = CkRaii.FramedChild("Description", ImGui.GetContentRegionAvail(), CkCol.CurvedHeaderFade.Uint(), 0,
             CkStyle.ChildRoundingLarge(), CkStyle.ThinThickness(), DFlags.RoundCornersAll, flags);
 
         // Display the correct text field based on the editing state.
@@ -322,9 +322,9 @@ public partial class TriggersPanel
             }
         }
         var min = ImGui.GetItemRectMin();
-        var col = isHovered ? CkColor.VibrantPinkHovered.Uint() : CkColor.VibrantPink.Uint();
+        var col = isHovered ? GsCol.VibrantPinkHovered.Uint() : GsCol.VibrantPink.Uint();
         ImGui.GetWindowDrawList().AddRectFilled(min, min + region + new Vector2(ImGui.GetStyle().WindowPadding.X / 2),
-            CkColor.ElementSplit.Uint(), ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersBottomRight);
+            CkCol.LChildSplit.Uint(), ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersBottomRight);
         ImGui.GetWindowDrawList().AddRectFilled(min, min + region, col, ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersBottomRight);
     }
 

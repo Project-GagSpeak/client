@@ -92,7 +92,7 @@ public class WhitelistDrawSystem : DynamicDrawSystem<Kinkster>, IMediatorSubscri
             if (FolderMap.ContainsKey(Constants.FolderTagVisible))
                 return false;
             // Try to add it.
-            return TryAdd(FAI.Eye, Constants.FolderTagVisible, CkColor.TriStateCheck.Uint(), () => [.. _kinksters.DirectPairs.Where(u => u.IsRendered && u.IsOnline)]);
+            return TryAdd(FAI.Eye, Constants.FolderTagVisible, CkCol.TriStateCheck.Uint(), () => [.. _kinksters.DirectPairs.Where(u => u.IsRendered && u.IsOnline)]);
         }
         // Otherwise attempt to remove it.
         return Delete(Constants.FolderTagVisible);
@@ -107,8 +107,8 @@ public class WhitelistDrawSystem : DynamicDrawSystem<Kinkster>, IMediatorSubscri
         if (showFolder)
         {
             anyChanges |= Delete(Constants.FolderTagAll);
-            anyChanges |= TryAdd(FAI.Link, Constants.FolderTagOnline, CkColor.TriStateCheck.Uint(), () => [.. _kinksters.DirectPairs.Where(s => s.IsOnline)]);
-            anyChanges |= TryAdd(FAI.Link, Constants.FolderTagOffline, CkColor.TriStateCross.Uint(), () => [.. _kinksters.DirectPairs.Where(s => !s.IsOnline)]);
+            anyChanges |= TryAdd(FAI.Link, Constants.FolderTagOnline, CkCol.TriStateCheck.Uint(), () => [.. _kinksters.DirectPairs.Where(s => s.IsOnline)]);
+            anyChanges |= TryAdd(FAI.Link, Constants.FolderTagOffline, CkCol.TriStateCross.Uint(), () => [.. _kinksters.DirectPairs.Where(s => !s.IsOnline)]);
         }
         // Otherwise we wanted to only show ALL.
         else

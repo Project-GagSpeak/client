@@ -109,8 +109,8 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
         // that information will not be processed by those that receive your data.
         var newActiveData = new CharaCompositeActiveData()
         {
-            GlobalAliasData = null!,
-            PairAliasData = null!,
+            AliasData = null!,
+            ListeningTo = [],
             LightStorageData = null!,
             ActiveAlarms = _alarms.ActiveAlarms.Select(x => x.Identifier).ToList(),
             ActiveTriggers = _triggers.Storage.Select(x => x.Identifier).ToList(),
@@ -130,6 +130,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
         // We need to make sure that we disable these locally, even if we cannot process them server-side.
         // It is critical we do things this way so we ensure the Safeword effectiveness and prevent achievement miss-matches.
         Logger.LogInformation("[SAFEWORD PROGRESS]: Pushing Client GlobalPerm & HardcoreStatuss for Safeword Changes");
+        // Revise when we polish how to store network related data
         if (!ClientData.IsNull)
         {
             var prevGlobals = ClientData.Globals!;

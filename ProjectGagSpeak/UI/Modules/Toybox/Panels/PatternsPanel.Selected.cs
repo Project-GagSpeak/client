@@ -15,14 +15,14 @@ namespace GagSpeak.Gui.Toybox;
 // REMOVE THIS AND MIGRATE IT OVER TO THE MAIN PANEL. (or just functionalize it here)
 public partial class PatternsPanel
 {
-    private static IconCheckboxEx LoopCheckbox = new(FAI.Sync, CkColor.LushPinkButton.Uint(), CkColor.IconCheckOff.Uint());
+    private static IconCheckboxEx LoopCheckbox = new(FAI.Sync, GsCol.LushPinkButton.Uint(), CkCol.IconOff.Uint());
 
     private void DrawLabel(Pattern pattern, bool isEditing)
     {
         CkGui.ColorTextFrameAligned("Name", ImGuiColors.ParsedGold);
         using var style = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, Vector2.Zero);
         using var c = CkRaii.ChildPaddedW("PatternName", ImGui.GetContentRegionAvail().X * .6f, ImGui.GetFrameHeight(),
-            CkColor.FancyHeaderContrast.Uint(), ImDrawFlags.RoundCornersAll);
+            CkCol.CurvedHeaderFade.Uint(), ImDrawFlags.RoundCornersAll);
 
         if (isEditing)
         {
@@ -42,7 +42,7 @@ public partial class PatternsPanel
         CkGui.ColorTextFrameAligned("Description", ImGuiColors.ParsedGold);
         using var style = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, Vector2.Zero);
         using var _ = CkRaii.ChildPaddedW("Description", ImGui.GetContentRegionAvail().X, ImGui.GetTextLineHeightWithSpacing() * 3,
-            CkColor.FancyHeaderContrast.Uint(), ImDrawFlags.RoundCornersAll);
+            CkCol.CurvedHeaderFade.Uint(), ImDrawFlags.RoundCornersAll);
         
         // Display the correct text field based on the editing state.
         if(isEditing)
@@ -64,7 +64,7 @@ public partial class PatternsPanel
     {
         CkGui.ColorTextFrameAligned("Duration", ImGuiColors.ParsedGold);
         using (CkRaii.ChildPaddedW("Duration", ImGui.GetContentRegionAvail().X * .25f, ImGui.GetTextLineHeight(),
-            CkColor.FancyHeaderContrast.Uint(), ImDrawFlags.RoundCornersAll))
+            CkCol.CurvedHeaderFade.Uint(), ImDrawFlags.RoundCornersAll))
         {
             ImUtf8.Text(pattern.Duration.ToString(pattern.Duration.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss"));
         }
@@ -72,7 +72,7 @@ public partial class PatternsPanel
         ImUtf8.SameLineInner();
         using (ImRaii.Group())
         {
-            using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint(), ImGui.GetStyle().FrameRounding, ImDrawFlags.RoundCornersAll))
+            using (CkRaii.Group(CkCol.CurvedHeaderFade.Uint(), ImGui.GetStyle().FrameRounding, ImDrawFlags.RoundCornersAll))
             {
                 if(isEditing)
                 {
@@ -81,7 +81,7 @@ public partial class PatternsPanel
                 }
                 else
                 {
-                    CkGui.FramedIconText(FAI.Sync, pattern.ShouldLoop ? CkColor.LushPinkButton.Uint() : CkColor.IconCheckOff.Uint());
+                    CkGui.FramedIconText(FAI.Sync, pattern.ShouldLoop ? GsCol.LushPinkButton.Uint() : CkCol.IconOff.Uint());
                 }
             }
             CkGui.TextFrameAlignedInline("Loop");
@@ -99,7 +99,7 @@ public partial class PatternsPanel
         using var group = ImRaii.Group();
 
         // First child. (left, startpoint)
-        using (var c = CkRaii.ChildPaddedW("PatternStartPoint", columnWidth, height, CkColor.FancyHeaderContrast.Uint(),
+        using (var c = CkRaii.ChildPaddedW("PatternStartPoint", columnWidth, height, CkCol.CurvedHeaderFade.Uint(),
             CkStyle.ChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
         {
             var refStartPoint = pattern.StartPoint;
@@ -129,7 +129,7 @@ public partial class PatternsPanel
 
         // Shift to next column and display the pattern playback child.
         ImGui.SameLine();
-        using (var c = CkRaii.ChildPaddedW("PlaybackDur", columnWidth, height, CkColor.FancyHeaderContrast.Uint(),
+        using (var c = CkRaii.ChildPaddedW("PlaybackDur", columnWidth, height, CkCol.CurvedHeaderFade.Uint(),
             CkStyle.ChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
         {
             var refPlaybackDur = pattern.PlaybackDuration;

@@ -21,9 +21,6 @@ namespace GagSpeak.Gui.Components;
 // Scoped, sealed class to draw the editor and display components of aliasItems.
 public sealed partial class TriggerDrawer : IDisposable
 {
-    private static readonly string[] ThreeLayerNames = ["Layer 1", "Layer 2", "Layer 3", "Any Layer"];
-    private static readonly string[] FiveLayerNames = ["Layer 1", "Layer 2", "Layer 3", "Layer 4", "Layer 5", "Any Layer"];
-
     private readonly ILogger<TriggerDrawer> _logger;
     private readonly TriggerManager _manager;
     private readonly MoodleDrawer _moodleDrawer;
@@ -53,15 +50,15 @@ public sealed partial class TriggerDrawer : IDisposable
         _moodleDrawer = moodleDrawer;
 
         _restrictionCombo = new RestrictionCombo(logger, mediator, favorites, () => [
-            ..restrictions.Storage.OrderByDescending(p => favorites.Restrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
+            ..restrictions.Storage.OrderByDescending(p => FavoritesConfig.Restrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
 
         _restraintCombo = new RestraintCombo(logger, mediator, favorites, () => [
-            ..restraints.Storage.OrderByDescending(p => favorites.Restraints.Contains(p.Identifier)).ThenBy(p => p.Label)
+            ..restraints.Storage.OrderByDescending(p => FavoritesConfig.Restraints.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
 
         _patternCombo = new PatternCombo(logger, mediator, favorites, () => [
-            ..patterns.Storage.OrderByDescending(p => favorites.Patterns.Contains(p.Identifier)).ThenBy(p => p.Label)
+            ..patterns.Storage.OrderByDescending(p => FavoritesConfig.Patterns.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
 
         _statusCombo = new MoodleStatusCombo(logger, 1.15f);
@@ -275,7 +272,7 @@ public sealed partial class TriggerDrawer : IDisposable
         var iconsToShow = spellAct.StoredActions.Values.SelectMany(a => a).Distinct().ToList();
         var iconSize = new Vector2(ImGui.GetFrameHeight());
         var width = ImGui.GetContentRegionAvail().X;
-        using (CkRaii.FramedChildPaddedW("JobActionIcons", width, iconSize.Y * 2, CkColor.FancyHeaderContrast.Uint(), 0))
+        using (CkRaii.FramedChildPaddedW("JobActionIcons", width, iconSize.Y * 2, CkCol.CurvedHeaderFade.Uint(), 0))
         {
             if (iconsToShow.Count() <= 0)
                 return;
@@ -536,7 +533,7 @@ public sealed partial class TriggerDrawer : IDisposable
                 if (CkGuiUtils.EnumCombo("##DirectionCombo", width, emote.EmoteDirection, out var newVal, _ => _.ToName(), flags: CFlags.NoArrowButton))
                     emote.EmoteDirection = newVal;
             });
-            CkGui.AttachToolTip(directionsTT, color: CkColor.LushPinkButton.Vec4());
+            CkGui.AttachToolTip(directionsTT, color: GsCol.LushPinkButton.Vec4());
         }
 
 

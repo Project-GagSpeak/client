@@ -110,6 +110,7 @@ public class CacheStateManager : IHostedService
             _overlayHandler.ClearCache(),
             _arousalHandler.ClearArousals() // this might mess with other source handles?
         );
+
         _logger.LogInformation("------- All caches reset -------");
     }
 

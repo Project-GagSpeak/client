@@ -51,15 +51,6 @@ public class DebugTab
 
     public void DrawDebugMain()
     {
-        CkGui.FontText("Debug Configuration", UiFontService.UidFont);
-        if (CkGui.FancyButton(FAI.Folder, "Plugin Config", 150f, false))
-        {
-            try { Process.Start(new ProcessStartInfo { FileName = ConfigFileProvider.GagSpeakDirectory, UseShellExecute = true }); }
-            catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the config directory. {e.Message}"); }
-        }
-        CkGui.AttachToolTip("Opens the Config Folder.--NL--(Useful for debugging)");
-
-
         // display the combo box for setting the log level we wish to have for our plugin
         if (CkGuiUtils.EnumCombo("Log Level", 400, MainConfig.LogLevel, out var newValue))
         {

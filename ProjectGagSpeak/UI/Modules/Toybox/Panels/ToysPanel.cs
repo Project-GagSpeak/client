@@ -77,7 +77,7 @@ public class ToysPanel
     {
         using var _ = ImRaii.Group();
         using var style = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 10f);
-        using var color = ImRaii.PushColor(ImGuiCol.Button, CkColor.FancyHeaderContrast.Uint());
+        using var color = ImRaii.PushColor(ImGuiCol.Button, CkCol.CurvedHeaderFade.Uint());
 
         var spacing = ImGui.GetStyle().ItemSpacing;
         var sideButtonLengths = CkGui.IconButtonSize(FAI.ArrowUpRightFromSquare).X + spacing.X;
@@ -90,7 +90,7 @@ public class ToysPanel
 
         // Draw the center child with the connection state.
         ImGui.SameLine();
-        using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint(), 45f))
+        using (CkRaii.Group(CkCol.CurvedHeaderFade.Uint(), 45f))
         {
             // Draw the intiface opener button.
             if (CkGui.IconButton(FAI.ArrowUpRightFromSquare, inPopup: true))
@@ -195,9 +195,9 @@ public class ToysPanel
 
     private void DrawSelectedInner(BuzzToy device, bool isEditorItem)
     {
-        using var col = ImRaii.PushColor(ImGuiCol.FrameBg, CkColor.FancyHeaderContrast.Uint());
+        using var col = ImRaii.PushColor(ImGuiCol.FrameBg, CkCol.CurvedHeaderFade.Uint());
 
-        using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
+        using (CkRaii.Group(CkCol.CurvedHeaderFade.Uint()))
         {
             CkGui.BooleanToColoredIcon(_selector.Selected!.Interactable, false);
             CkGui.TextFrameAlignedInline($"Interactable  ");
@@ -235,7 +235,7 @@ public class ToysPanel
         }
         else
         {
-            using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
+            using (CkRaii.Group(CkCol.CurvedHeaderFade.Uint()))
             {
                 ImGui.Dummy(childSize);
                 ImGui.SetCursorScreenPos(ImGui.GetItemRectMin());
@@ -294,21 +294,21 @@ public class ToysPanel
                     wdl.AddDalamudImage(imgCache[CoreIntifaceElement.MotorVibration], ImGui.GetItemRectMin(), imgSize);
 
                     ImUtf8.SameLineInner();
-                    using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
+                    using (CkRaii.Group(CkCol.CurvedHeaderFade.Uint()))
                     {
                         CkGui.InlineSpacingInner();
                         CkGui.TextFrameAlignedInline("Steps:");
                         CkGui.ColorTextFrameAlignedInline($"{motor.StepCount}  ", CkGui.Color(ImGuiColors.ParsedGold));
                     }
                     ImUtf8.SameLineInner();
-                    using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
+                    using (CkRaii.Group(CkCol.CurvedHeaderFade.Uint()))
                     {
                         CkGui.InlineSpacingInner();
                         CkGui.TextFrameAlignedInline("Interval:");
                         CkGui.ColorTextFrameAlignedInline($"{motor.Interval}  ", CkGui.Color(ImGuiColors.ParsedGold));
                     }
                     ImUtf8.SameLineInner();
-                    using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
+                    using (CkRaii.Group(CkCol.CurvedHeaderFade.Uint()))
                     {
                         CkGui.InlineSpacingInner();
                         CkGui.TextFrameAlignedInline("Intensity:");
@@ -323,7 +323,7 @@ public class ToysPanel
     {
         using var _ = ImRaii.Group();
         using var style = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 10f);
-        using var color = ImRaii.PushColor(ImGuiCol.Button, CkColor.FancyHeaderContrast.Uint());
+        using var color = ImRaii.PushColor(ImGuiCol.Button, CkCol.CurvedHeaderFade.Uint());
 
         var regionLeftover = ImGui.GetContentRegionAvail().Y;
         // Determine how to space the footer.

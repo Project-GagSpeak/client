@@ -90,7 +90,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
         using (ImRaii.Child("RestraintEditBot", regions.BotSize, false, WFlags.AlwaysUseWindowPadding))
         {
             // Draw out the tab bar, and the items respective contents.
-            using (var _ = CkRaii.TabBarChild("RS_EditBar", CkColor.VibrantPink.Uint(), CkColor.VibrantPinkHovered.Uint(), CkColor.FancyHeader.Uint(),
+            using (var _ = CkRaii.TabBarChild("RS_EditBar", GsCol.VibrantPink.Uint(), GsCol.VibrantPinkHovered.Uint(), CkCol.CurvedHeader.Uint(),
                 LabelFlags.PadInnerChild | LabelFlags.SizeIncludesHeader, out var selected, EditorTabs))
                 selected?.DrawContents(_.InnerRegion.X);
         }
@@ -153,7 +153,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
         if (_selector.Selected is not null)
         {
             // 1st row.
-            using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
+            using (CkRaii.Group(CkCol.CurvedHeaderFade.Uint()))
             {
                 CkGui.BooleanToColoredIcon(_selector.Selected!.IsEnabled, false);
                 CkGui.TextFrameAlignedInline($"Visuals  ");
@@ -175,7 +175,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
         }
 
         // Right side image
-        ImGui.GetWindowDrawList().AddRectFilled(imgDrawPos, imgDrawPos + imgSize, CkColor.FancyHeaderContrast.Uint(), rounding);
+        ImGui.GetWindowDrawList().AddRectFilled(imgDrawPos, imgDrawPos + imgSize, CkCol.CurvedHeaderFade.Uint(), rounding);
         ImGui.SetCursorScreenPos(imgDrawPos);
         if (_selector.Selected is not null)
         {
@@ -201,7 +201,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
         using var s = ImRaii.PushStyle(ImGuiStyleVar.ItemInnerSpacing, new Vector2(2, ImGui.GetStyle().ItemInnerSpacing.Y));
         var sel = _selector.Selected!;
         var trueCol = 0xFFFFFFFF;
-        var falseCol = CkColor.FancyHeaderContrast.Uint();
+        var falseCol = CkCol.CurvedHeaderFade.Uint();
 
         var attrs = new (FAI Icon, bool Condition, string Tooltip)[]
 {
@@ -262,9 +262,9 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
 
         using var s = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 12f)
             .Push(ImGuiStyleVar.ChildRounding, 10f);
-        using var c = ImRaii.PushColor(ImGuiCol.Button, CkColor.FancyHeaderContrast.Uint())
-            .Push(ImGuiCol.FrameBg, CkColor.FancyHeaderContrast.Uint())
-            .Push(ImGuiCol.ChildBg, CkColor.FancyHeaderContrast.Uint());
+        using var c = ImRaii.PushColor(ImGuiCol.Button, CkCol.CurvedHeaderFade.Uint())
+            .Push(ImGuiCol.FrameBg, CkCol.CurvedHeaderFade.Uint())
+            .Push(ImGuiCol.ChildBg, CkCol.CurvedHeaderFade.Uint());
 
         if (CkGui.IconButton(FAI.ArrowLeft))
             _manager.StopEditing();

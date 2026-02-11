@@ -32,7 +32,7 @@ public class CollarRequestsIncomingTab : IFancyTab
     public void DrawContents(float width)
     {
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(6));
-        using var _ = CkRaii.FramedChildPaddedWH("List", ImGui.GetContentRegionAvail(), 0, CkColor.VibrantPink.Uint(), FancyTabBar.RoundingInner);
+        using var _ = CkRaii.FramedChildPaddedWH("List", ImGui.GetContentRegionAvail(), 0, GsCol.VibrantPink.Uint(), FancyTabBar.RoundingInner);
 
         using var s = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 8f);
 

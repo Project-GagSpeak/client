@@ -7,6 +7,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Models;
+using GagSpeak.Utils;
 using OtterGui;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
@@ -380,11 +381,11 @@ public class GlamourCache
         ImGui.Separator();
         CkGui.ColorText("Final State:", ImGuiColors.ParsedGold);
         CkGui.TextInline("Headgear", false);
-        CkGui.ColorTextInline(_finalMeta.Headgear.ToString(), CkColor.LushPinkLine.Uint());
+        CkGui.ColorTextInline(_finalMeta.Headgear.ToString(), GsCol.LushPinkLine.Uint());
         CkGui.TextInline("Visor", false);
-        CkGui.ColorTextInline(_finalMeta.Visor.ToString(), CkColor.LushPinkLine.Uint());
+        CkGui.ColorTextInline(_finalMeta.Visor.ToString(), GsCol.LushPinkLine.Uint());
         CkGui.TextInline("Weapon", false);
-        CkGui.ColorTextInline(_finalMeta.Weapon.ToString(), CkColor.LushPinkLine.Uint());
+        CkGui.ColorTextInline(_finalMeta.Weapon.ToString(), GsCol.LushPinkLine.Uint());
     }
 
     public void DrawUnboundCacheStates(TextureService textures)
@@ -421,11 +422,11 @@ public class GlamourCache
             }
         }
         ImGui.Text("Headgear");
-        CkGui.ColorTextInline(_latestUnboundState.MetaStates.Headgear.ToString(), CkColor.LushPinkLine.Uint());
+        CkGui.ColorTextInline(_latestUnboundState.MetaStates.Headgear.ToString(), GsCol.LushPinkLine.Uint());
         CkGui.TextInline("Visor", false);
-        CkGui.ColorTextInline(_latestUnboundState.MetaStates.Visor.ToString(), CkColor.LushPinkLine.Uint());
+        CkGui.ColorTextInline(_latestUnboundState.MetaStates.Visor.ToString(), GsCol.LushPinkLine.Uint());
         CkGui.TextInline("Weapon", false);
-        CkGui.ColorTextInline(_latestUnboundState.MetaStates.Weapon.ToString(), CkColor.LushPinkLine.Uint());
+        CkGui.ColorTextInline(_latestUnboundState.MetaStates.Weapon.ToString(), GsCol.LushPinkLine.Uint());
     }
 
     private void DrawMetaTableRows(MetaIndex idx)

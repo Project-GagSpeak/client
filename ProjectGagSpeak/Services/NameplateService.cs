@@ -59,8 +59,9 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         Mediator.Subscribe<KinksterPlayerUnrendered>(this, _ => UpdateGaggedKinksters());
         Mediator.Subscribe<KinksterActiveGagsChanged>(this, m =>
             UpdateKinkster(0, 0, m.Kinkster.IsRendered && m.Kinkster.ActiveGags.IsGagged() && m.Kinkster.PairGlobals.ChatGarblerActive, string.Empty, m.Kinkster));
-        Mediator.Subscribe<ChatboxMessageFromSelf>(this, m => OnOwnMessage(m.channel, m.message));
-        Mediator.Subscribe<ChatboxMessageFromKinkster>(this, m => OnKinksterMessage(m.kinkster, m.channel, m.message));
+        Mediator.Subscribe<ChatMsgFromSelf>(this, m => OnOwnMessage(m.channel, m.message));
+        // Handle this later
+        Mediator.Subscribe<ChatMsgFromOther>(this, m => { });
         Mediator.Subscribe<ConnectedMessage>(this, _ => RefreshClientGagState());
 
         Svc.NamePlate.OnPostNamePlateUpdate += NamePlateOnPostUpdate;

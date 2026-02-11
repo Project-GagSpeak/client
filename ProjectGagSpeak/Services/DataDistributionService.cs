@@ -95,8 +95,11 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
             PushCompositeData(_kinksters.GetOnlineUserDatas()).ConfigureAwait(false);
         });
 
+        // Revisit this!
         Mediator.Subscribe<AliasGlobalUpdateMessage>(this, arg => DistributeDataGlobalAlias(arg).ConfigureAwait(false));
         Mediator.Subscribe<AliasPairUpdateMessage>(this, arg => DistributeDataUniqueAlias(arg).ConfigureAwait(false));
+        
+        
         Mediator.Subscribe<ValidToysChangedMessage>(this, arg => PushValidToysUpdate(arg).ConfigureAwait(false));
         Mediator.Subscribe<ActivePatternChangedMessage>(this, arg => PushActivePatternUpdate(arg).ConfigureAwait(false));
         Mediator.Subscribe<ActiveAlarmsChangedMessage>(this, arg => PushActiveAlarmsUpdate(arg).ConfigureAwait(false));
@@ -302,8 +305,8 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
                 Restraint = _restraintManager.ServerData ?? throw new Exception("ActiveRestraintData was null!"),
                 Collar = _collar.SyncedData ?? throw new Exception("ActiveCollarData was null!"),
                 ActiveCursedItems = _cursedManager.Storage.AppliedLootIds.ToList(),
-                GlobalAliasData = _puppetManager.GlobalAliasStorage,
-                PairAliasData = _puppetManager.PairAliasStorage.ToDictionary(),
+                AliasData = _puppetManager.Storage,
+                ListeningTo = _puppetManager.Puppeteers.Keys.ToList(),
                 ValidToys = _toyManager.ValidToysForRemotes,
                 ActivePattern = _patternManager.ActivePatternId,
                 ActiveAlarms = _alarmManager.ActiveAlarms.Select(x => x.Identifier).ToList(),

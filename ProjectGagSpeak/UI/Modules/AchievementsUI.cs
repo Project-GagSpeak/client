@@ -139,7 +139,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
     public void DrawAchievementProgressBox(AchievementBase achievementItem, Vector2 size)
     {
         var imageTabWidth = 96 + ImGui.GetStyle().ItemSpacing.X * 2;
-        using var _ = CkRaii.FramedChild($"Achievement-{achievementItem.Title}", size, new Vector4(0.25f, 0.2f, 0.2f, 0.4f).ToUint(), CkColor.VibrantPink.Uint(), 5f, 1f, wFlags: WFlags.AlwaysUseWindowPadding);
+        using var _ = CkRaii.FramedChild($"Achievement-{achievementItem.Title}", size, new Vector4(0.25f, 0.2f, 0.2f, 0.4f).ToUint(), GsCol.VibrantPink.Uint(), 5f, 1f, wFlags: WFlags.AlwaysUseWindowPadding);
         if (!_.Success) return;
 
         using var t = ImRaii.Table($"AchievementTable {achievementItem.Title}", 2, ImGuiTableFlags.RowBg);

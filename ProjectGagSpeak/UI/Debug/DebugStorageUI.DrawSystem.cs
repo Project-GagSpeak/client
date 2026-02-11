@@ -20,7 +20,7 @@ public partial class DebugStorageUI
         // Now draw out the root data.
         DrawFolderGroup(dds, dds.Root);
 
-        CkGui.SeparatorSpaced(CkColor.VibrantPink.Uint());
+        CkGui.SeparatorSpaced(GsCol.VibrantPink.Uint());
     }
 
     private void DrawFolderMap<T>(DynamicDrawSystem<T> dds) where T : class
@@ -74,7 +74,7 @@ public partial class DebugStorageUI
                 CkGui.ColorText("INVALID CHILD TYPE", ImGuiColors.DalamudRed);
         }
         // Divider
-        CkGui.SeparatorSpaced(CkColor.VibrantPink.Uint());
+        CkGui.SeparatorSpaced(GsCol.VibrantPink.Uint());
     }
 
     // Need to draw distinct folders for each kind of folder? (Do default for now)
@@ -107,7 +107,7 @@ public partial class DebugStorageUI
                 ImGui.TableNextRow();
             }
         }
-        CkGui.SeparatorSpaced(CkColor.VibrantPink.Uint());
+        CkGui.SeparatorSpaced(GsCol.VibrantPink.Uint());
     }
 
     private void DrawFolderInfo<T>(IDynamicCollection<T> folder) where T : class

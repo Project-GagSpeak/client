@@ -59,7 +59,7 @@ public sealed class ModPresetFileSelector : CkFileSystemSelector<ModPresetContai
         var hovered = ImGui.IsItemHovered();
         var rectMin = ImGui.GetItemRectMin();
         var rectMax = ImGui.GetItemRectMax();
-        var bgColor = selected ? CkColor.ElementBG.Uint() : hovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : new Vector4(0.25f, 0.2f, 0.2f, 0.4f).ToUint(); 
+        var bgColor = selected ? CkCol.LChildBg.Uint() : hovered ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : new Vector4(0.25f, 0.2f, 0.2f, 0.4f).ToUint(); 
         ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), bgColor, 5);
 
         // the border if selected.

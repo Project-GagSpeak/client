@@ -73,7 +73,7 @@ public class AllowancesUI : WindowMediatorSubscriberBase
         var splitterSize = ImGui.GetFrameHeight() / 4;
 
         // Draw a flat header.
-        var drawRegions = CkHeader.Flat(CkColor.FancyHeader.Uint(), headerInner, 175f * ImUtf8.GlobalScale, splitterSize);
+        var drawRegions = CkHeader.Flat(CkCol.CurvedHeader.Uint(), headerInner, 175f * ImUtf8.GlobalScale, splitterSize);
 
         // Create a child for each region, drawn to the size.
         ImGui.SetCursorScreenPos(drawRegions.TopLeft.Pos);
@@ -112,7 +112,7 @@ public class AllowancesUI : WindowMediatorSubscriberBase
             using (var c = CkRaii.HeaderChild("Module Management", new Vector2(childWidth, ImGui.GetContentRegionAvail().Y), HeaderFlags.SizeIncludesHeader))
             {
                 var selectorHeight = ImGui.GetFrameHeightWithSpacing() * Options.Length - ImGui.GetStyle().ItemSpacing.Y;
-                using (CkRaii.FramedChildPaddedW("Selector", c.InnerRegion.X, selectorHeight, CkColor.FancyHeaderContrast.Uint(), 0))
+                using (CkRaii.FramedChildPaddedW("Selector", c.InnerRegion.X, selectorHeight, CkCol.CurvedHeaderFade.Uint(), 0))
                 {
                     // We have a mod, so we should grab the presets from it.
                     var itemSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
@@ -126,7 +126,7 @@ public class AllowancesUI : WindowMediatorSubscriberBase
                 var childStartY = ImGui.GetContentRegionAvail().Y - actionsH.AddWinPadY() - ImGui.GetTextLineHeightWithSpacing();
                 ImGui.SetCursorScreenPos(ImGui.GetCursorScreenPos() + new Vector2(0, childStartY));
                 ImGuiUtil.Center("Module Actions");
-                using (CkRaii.FramedChildPaddedW("ActList", c.InnerRegion.X, actionsH, CkColor.FancyHeaderContrast.Uint(), 0))
+                using (CkRaii.FramedChildPaddedW("ActList", c.InnerRegion.X, actionsH, CkCol.CurvedHeaderFade.Uint(), 0))
                 {
                     // We have a mod, so we should grab the presets from it.
                     var itemSize = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
@@ -146,7 +146,7 @@ public class AllowancesUI : WindowMediatorSubscriberBase
         ImGui.SameLine();
         using (CkRaii.HeaderChild("Allowed Pairs", new Vector2(childWidth, ImGui.GetContentRegionAvail().Y), HeaderFlags.SizeIncludesHeader))
         {
-            using (CkRaii.FramedChild("PairsInner", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint(), 0, wFlags: ImGuiWindowFlags.AlwaysUseWindowPadding))
+            using (CkRaii.FramedChild("PairsInner", ImGui.GetContentRegionAvail(), CkCol.CurvedHeaderFade.Uint(), 0, wFlags: ImGuiWindowFlags.AlwaysUseWindowPadding))
             {
                 if (_drawer.AllowedPairs.Count <= 0)
                     return;
@@ -160,7 +160,7 @@ public class AllowancesUI : WindowMediatorSubscriberBase
     {
         var pos = ImGui.GetCursorScreenPos();
         var hovering = ImGui.IsMouseHoveringRect(pos, pos + size);
-        var color = hovering ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkColor.FancyHeaderContrast.Uint();
+        var color = hovering ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkCol.CurvedHeaderFade.Uint();
         using (CkRaii.FramedChild("AllowanceAction-" + label, size, color, 0))
         {
             ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
@@ -180,8 +180,8 @@ public class AllowancesUI : WindowMediatorSubscriberBase
         var pos = ImGui.GetCursorScreenPos();
         var hovering = ImGui.IsMouseHoveringRect(pos, pos + size);
         var color = selected
-            ? CkColor.ElementBG.Uint()
-            : hovering ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkColor.FancyHeaderContrast.Uint();
+            ? CkCol.LChildBg.Uint()
+            : hovering ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkCol.CurvedHeaderFade.Uint();
         using (CkRaii.FramedChild("Module-" + option, size, color, 0))
         {
             ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
@@ -217,7 +217,7 @@ public class AllowancesUI : WindowMediatorSubscriberBase
         var size = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetFrameHeight());
         var pos = ImGui.GetCursorScreenPos();
         var hovering = ImGui.IsMouseHoveringRect(pos, pos + size);
-        var color = hovering ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkColor.FancyHeaderContrast.Uint();
+        var color = hovering ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : CkCol.CurvedHeaderFade.Uint();
         using (CkRaii.FramedChild("AllowedPair" + pair.UserData.UID, size, color, 0))
         {
             ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);

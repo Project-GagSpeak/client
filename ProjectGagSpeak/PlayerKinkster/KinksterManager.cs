@@ -27,8 +27,8 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     private readonly NicksConfig _nicks;
     private readonly KinksterFactory _pairFactory;
     
-    private Lazy<List<Kinkster>> _directPairsInternal;                          // the internal direct pairs lazy list for optimization
-    public List<Kinkster> DirectPairs => _directPairsInternal.Value;            // the direct pairs the client has with other users.
+    private Lazy<List<Kinkster>> _directPairsInternal;
+    public List<Kinkster> DirectPairs => _directPairsInternal.Value;
 
     public KinksterManager(ILogger<KinksterManager> logger, GagspeakMediator mediator,
         MainConfig config, NicksConfig nicks, KinksterFactory factory) 
@@ -41,7 +41,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
 
         Mediator.Subscribe<DisconnectedMessage>(this, _ => OnClientDisconnected(_.Intent));
         Mediator.Subscribe<CutsceneEndMessage>(this, _ => ReapplyAllRendered());
-        Mediator.Subscribe<TargetKinksterMessage>(this, (msg) => TargetKinkster(msg.Kinkster));
+        Mediator.Subscribe<TargetKinksterMessage>(this, _ => TargetKinkster(_.Kinkster));
 
         _directPairsInternal = new(() => _allKinksters.Select(k => k.Value).ToList());
 
@@ -403,18 +403,12 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         kinkster.NewActiveCursedLoot(dto.ActiveItems, dto.ChangedItem);
     }
 
-    public void NewAliasGlobal(UserData targetUser, Guid id, AliasTrigger? newData)
+    // Update this later as we integrate further UI Logic*
+    public void UpdateAlias(UserData targetUser, Guid id, AliasTrigger? newData)
     {
         if (!_allKinksters.TryGetValue(targetUser, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-        kinkster.NewGlobalAlias(id, newData);
-    }
-
-    public void NewAliasUnique(UserData targetUser, Guid id, AliasTrigger? newData)
-    {
-        if (!_allKinksters.TryGetValue(targetUser, out var kinkster))
-            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-        kinkster.NewUniqueAlias(id, newData);
+        kinkster.NewAlias(id, newData);
     }
 
     public void NewValidToys(UserData targetUser, List<ToyBrandName> validToys)
@@ -443,15 +437,6 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         if (!_allKinksters.TryGetValue(dto.User, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
         kinkster.NewActiveTriggers(dto.Enactor, dto.ActiveTriggers, dto.Type);
-    }
-
-    public void NewListenerName(UserData targetUser, string newName)
-    {
-        if (!_allKinksters.TryGetValue(targetUser, out var kinkster))
-            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-
-        Logger.LogDebug($"Updating Listener name to [{newName}]", LoggerType.PairDataTransfer);
-        kinkster.LastPairAliasData.StoredNameWorld = newName;
     }
 
     public void CachedGagDataChange(UserData targetUser, GagType gagItem, LightGag? newData)

@@ -126,10 +126,7 @@ public partial class DebugStorageUI : WindowMediatorSubscriberBase
         DrawCursedLootStorage();
         
         ImGui.Separator();
-        DrawPuppeteerGlobalStorage();
-        
-        ImGui.Separator();
-        DrawPuppeteerPairStorage();
+        DrawPuppeteerAliases();
 
         ImGui.Separator();
         DrawToyStorage();
@@ -401,52 +398,21 @@ public partial class DebugStorageUI : WindowMediatorSubscriberBase
         }
     }
 
-    public void DrawPuppeteerGlobalStorage()
+    public void DrawPuppeteerAliases()
     {
         if (!ImGui.CollapsingHeader("Puppeteer Global Alias Storage"))
             return;
-        if (_puppeteer.GlobalAliasStorage.Items.IsNullOrEmpty())
+        if (_puppeteer.Storage.Items.IsNullOrEmpty())
         {
             ImGui.TextUnformatted("Puppeteer Storage is null or empty");
             return;
         }
-        foreach (var (alias, idx) in _puppeteer.GlobalAliasStorage.Items.WithIndex())
+        foreach (var (alias, idx) in _puppeteer.Storage.Items.WithIndex())
         {
             using var node = ImRaii.TreeNode($"{alias.Label}##{idx}");
             if (!node)
                 continue;
             DrawAliasTrigger(alias);
-        }
-    }
-
-    public void DrawPuppeteerPairStorage()
-    {
-        if (!ImGui.CollapsingHeader("Puppeteer Pair Alias Storage"))
-            return;
-        if (_puppeteer.PairAliasStorage.IsNullOrEmpty())
-        {
-            ImGui.TextUnformatted("Puppeteer Storage is null or empty");
-            return;
-        }
-
-        foreach (var (namedStorage, idx) in _puppeteer.PairAliasStorage.WithIndex())
-            DrawNamedAlias("client", namedStorage.Key, namedStorage.Value);
-    }
-
-    private void DrawNamedAlias(string uid, string label, NamedAliasStorage storage)
-    {
-        using var nodeMain = ImRaii.TreeNode($"{label}'s Alias Data");
-        if (!nodeMain) return;
-
-        CkGui.ColorText($"Listener Name:", ImGuiColors.ParsedGold);
-        CkGui.TextInline(storage.ExtractedListenerName);
-
-        foreach (var aliasTrigger in storage.Storage.Items)
-        {
-            using var node = ImRaii.TreeNode($"{aliasTrigger.Label}##{aliasTrigger.Identifier}");
-            if (!node)
-                continue;
-            DrawAliasTrigger(aliasTrigger);
         }
     }
 
@@ -988,7 +954,7 @@ public partial class DebugStorageUI : WindowMediatorSubscriberBase
             using (ImRaii.PushIndent())
             {
                 ImGui.Text("Device: ");
-                CkGui.ColorTextInline(device.Toy.ToName(), CkColor.VibrantPink.Uint());
+                CkGui.ColorTextInline(device.Toy.ToName(), GsCol.VibrantPink.Uint());
                 foreach (var motor in device.MotorData)
                 {
                     using (ImRaii.PushIndent())

@@ -30,7 +30,7 @@ public static unsafe class AddonCameraManager
     public static GameCamera* ActiveCamera => (GameCamera*)CameraManager->GetActiveCamera();
 
     // Additional Cameras that are probably not that useful.
-    public static Camera3* SpectatorCamera => CameraManager->Camera3;
+    public static SpectatorCamera* SpectatorCamera => CameraManager->SpectatorCamera;
 
     /// <summary>
     ///     Gets the mode of the active camera in integer form.

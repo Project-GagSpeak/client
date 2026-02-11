@@ -1,6 +1,7 @@
 using CkCommons.DrawSystem;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
+using GagspeakAPI.Data;
 
 namespace GagSpeak.DrawSystem;
 
@@ -92,6 +93,14 @@ public static class SorterEx
         public FAI Icon => FAI.Stopwatch;
         public string Tooltip => "Sort by request time.";
         public Func<DynamicLeaf<RequestEntry>, IComparable?> KeySelector => l => l.Data.ExpireTime;
+    }
+
+    public struct ByAliasName : ISortMethod<DynamicLeaf<AliasTrigger>>
+    {
+        public string Name => "Name";
+        public FAI Icon => FAI.SortAlphaDown; // Maybe change.
+        public string Tooltip => "Sort by name.";
+        public Func<DynamicLeaf<AliasTrigger>, IComparable?> KeySelector => l => l.Data.Label;
     }
 }
 

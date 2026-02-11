@@ -100,7 +100,7 @@ public class RestraintEditorLayers : IFancyTab
         // If we are currently holding down our mouse and 'moving' the item, have it fade between a gradient green glow.
         if (_dragLayerId == layer.ID)
         {
-            var greenCol = CkColor.TriStateCheck.Vec4();
+            var greenCol = CkCol.TriStateCheck.Vec4();
             var color = CkGui.Color(Gradient.Get(greenCol, greenCol with { W = greenCol.W / 4 }, 500));
             ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg0, color);
             ImGui.TableSetBgColor(ImGuiTableBgTarget.RowBg1, color);
@@ -191,7 +191,7 @@ public class RestraintEditorLayers : IFancyTab
                 CkGui.AttachToolTip("Delete this layer. (Hold Shift)--SEP--Only the highest layer can be removed.");
             }
         }
-        ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.ElementBG.Uint(), DragDropItemRounding, ImDrawFlags.RoundCornersRight);
+        ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkCol.LChildBg.Uint(), DragDropItemRounding, ImDrawFlags.RoundCornersRight);
     }
 
     private void DrawNewLayerRow(int layerIdx)
@@ -219,7 +219,7 @@ public class RestraintEditorLayers : IFancyTab
                     _manager.ItemInEditor!.Layers.Add(new RestrictionLayer());
                 });
         }
-        ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.ElementBG.Uint(), DragDropItemRounding, ImDrawFlags.RoundCornersRight);
+        ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkCol.LChildBg.Uint(), DragDropItemRounding, ImDrawFlags.RoundCornersRight);
     }
 
     /// <summary> Places a header left-aligned beside a child window. </summary>
@@ -232,9 +232,9 @@ public class RestraintEditorLayers : IFancyTab
         var linePos = min + new Vector2(width, 0);
 
         // Draw the child background with the element header color.
-        wdl.AddRectFilled(min, max, CkColor.ElementHeader.Uint(), DragDropItemRounding, ImDrawFlags.RoundCornersLeft);
+        wdl.AddRectFilled(min, max, CkCol.LChild.Uint(), DragDropItemRounding, ImDrawFlags.RoundCornersLeft);
         // Draw the line off to the left.
-        wdl.AddLine(linePos, linePos with { Y = max.Y }, CkColor.ElementSplit.Uint(), 2);
+        wdl.AddLine(linePos, linePos with { Y = max.Y }, CkCol.LChildSplit.Uint(), 2);
         var textStart = new Vector2((width - ImGui.CalcTextSize(text).X) / 2, (DragDropItemHeight - ImGui.GetTextLineHeight()) / 2);
         wdl.AddText(min + textStart, ImGui.GetColorU32(ImGuiCol.Text), text);
     }

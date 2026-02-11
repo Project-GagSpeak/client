@@ -83,7 +83,7 @@ public class VibeLobbiesPanel
         var buttonWidth = CkGui.IconButtonSize(FAI.Search).X;
         var spacing = ImGui.GetStyle().ItemInnerSpacing.X;
 
-        using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint()))
+        using (CkRaii.Group(CkCol.CurvedHeaderFade.Uint()))
         {
             var groupWidth = region.SizeX - (buttonWidth + spacing);
             ImGui.Dummy(new Vector2(region.SizeX - (buttonWidth + spacing), ImGui.GetFrameHeight()));
@@ -127,7 +127,7 @@ public class VibeLobbiesPanel
             }
         }
 
-        c.Push(ImGuiCol.Button, CkColor.FancyHeaderContrast.Uint());
+        c.Push(ImGuiCol.Button, CkCol.CurvedHeaderFade.Uint());
 
         ImUtf8.SameLineInner();
         if (CkGui.IconButton(FAI.Tags, disabled: UiService.DisableUI))
@@ -210,7 +210,7 @@ public class VibeLobbiesPanel
                 // Draw out a progress bar in the remaining space.
                 var progressText = $"{vibeRoom.CurrentParticipants}/{vibeRoom.MaxParticipants}";
                 var progress = (float)(vibeRoom.CurrentParticipants / (float)vibeRoom.MaxParticipants);
-                CkGuiUtils.DrawProgressBar(new Vector2(remaining * .5f, ImGui.GetTextLineHeight()), progressText, progress, null, CkStyle.ListItemRounding());
+                CkGuiUtils.DrawProgressBar(new Vector2(remaining * .5f, ImGui.GetTextLineHeight()), progressText, progress, GsCol.VibrantPink.Uint(), CkStyle.ListItemRounding());
 
                 // Finally, draw out the tags.
                 using (ImRaii.Group())
@@ -290,7 +290,7 @@ public class VibeLobbiesPanel
             ImGui.SetCursorPos(cursorPos + new Vector2(ImGui.GetFrameHeight()/3, c.InnerNoLabel.Y - ImGui.GetTextLineHeight()));
             var progressText = $"{lobby.CurrentParticipants}/{lobby.MaxParticipants} Participants Inside";
             var progress = (float)(lobby.CurrentParticipants / (float)lobby.MaxParticipants);
-            CkGuiUtils.DrawProgressBar(new Vector2(c.InnerRegion.X - ImGui.GetFrameHeight(), ImGui.GetTextLineHeight()), progressText, progress);
+            CkGuiUtils.DrawProgressBar(new Vector2(c.InnerRegion.X - ImGui.GetFrameHeight(), ImGui.GetTextLineHeight()), progressText, progress, GsCol.VibrantPink.Uint());
 
             ImGui.SetCursorPos(cursorPos);
             if (string.IsNullOrWhiteSpace(lobby.Description))
@@ -343,7 +343,7 @@ public class VibeLobbiesPanel
 
         using var c = CkRaii.ChildLabelText(new Vector2(region.X, totalHeight), .45f, "Host A VibeRoom", ImGui.GetFrameHeight(), ImDrawFlags.RoundCornersRight, LabelFlags.AddPaddingToHeight);
         using var style = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 6f);
-        using var col = ImRaii.PushColor(ImGuiCol.FrameBg, CkColor.FancyHeaderContrast.Uint());
+        using var col = ImRaii.PushColor(ImGuiCol.FrameBg, CkCol.CurvedHeaderFade.Uint());
         ImGui.SameLine(0, 0);
         DrawRoomJoinButton();
         CkGui.AttachToolTip(string.IsNullOrWhiteSpace(_newRoomName) ? "Must provide a name first." :
@@ -371,9 +371,9 @@ public class VibeLobbiesPanel
 
         // extract the tabs by splitting the string by comma's
         CkGui.ColorText("Tags", ImGuiColors.ParsedGold);
-        using (CkRaii.FramedChildPaddedW("NewRoomTags", c.InnerRegion.X * .75f, CkStyle.GetFrameRowsHeight(2), CkColor.FancyHeaderContrast.Uint(), CkColor.FancyHeaderContrast.Uint(), DFlags.RoundCornersAll))
+        using (CkRaii.FramedChildPaddedW("NewRoomTags", c.InnerRegion.X * .75f, CkStyle.GetFrameRowsHeight(2), CkCol.CurvedHeaderFade.Uint(), CkCol.CurvedHeaderFade.Uint(), DFlags.RoundCornersAll))
         {
-            if (_tagCollection.DrawTagsEditor("##NewRoomTags", _newRoomTags, out var updatedTags))
+            if (_tagCollection.DrawTagsEditor("##NewRoomTags", _newRoomTags, out var updatedTags, GsCol.VibrantPink.Vec4()))
                 _newRoomTags = updatedTags.Take(5).ToList(); // limit to 5 tags
         }
     }
@@ -394,7 +394,7 @@ public class VibeLobbiesPanel
         var text = $" Create {(isPublic ? "Public" : "Private")} Room ";
         var size = ImGuiHelpers.GetButtonSize(text);
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (remainingWidth - size.X) / 2);
-        using var _ = CkRaii.Group(CkColor.FancyHeaderContrast.Uint(), ImGui.GetFrameHeight(), 2, ImDrawFlags.RoundCornersAll);
+        using var _ = CkRaii.Group(CkCol.CurvedHeaderFade.Uint(), ImGui.GetFrameHeight(), 2, ImDrawFlags.RoundCornersAll);
 
         if (ImUtf8.SmallButton(text))
         {

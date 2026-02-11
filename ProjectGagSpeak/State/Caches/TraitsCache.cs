@@ -113,7 +113,7 @@ public class TraitsCache
                     {
                         ImGuiUtil.DrawFrameColumn($"{group.Key.Manager} / {group.Key.LayerIndex}");
                         ImGui.TableNextColumn();
-                        CkGui.ColorText(group.Value.ToString(), CkColor.LushPinkButton.Uint());
+                        CkGui.ColorText(group.Value.ToString(), GsCol.LushPinkButton.Uint());
                     }
                 }
             }
@@ -121,7 +121,7 @@ public class TraitsCache
 
         ImGui.Separator();
         ImGui.Text("Final State");
-        CkGui.ColorTextInline(_finalTraits.ToString(), CkColor.LushPinkButton.Uint());
+        CkGui.ColorTextInline(_finalTraits.ToString(), GsCol.LushPinkButton.Uint());
     }
     #endregion Debug Helper
 }

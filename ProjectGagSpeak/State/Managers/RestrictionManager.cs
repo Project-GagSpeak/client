@@ -168,14 +168,22 @@ public sealed class RestrictionManager : IHybridSavable
         }
     }
 
-    /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
-    public void StartEditing(RestrictionItem item) => _itemEditor.StartEditing(Storage, item);
+    /// <summary>
+    ///     Begin the editing process, making a clone of the item we want to edit.
+    /// </summary>
+    public void StartEditing(RestrictionItem item)
+        => _itemEditor.StartEditing(Storage, item);
 
-    /// <summary> Cancel the editing process without saving anything. </summary>
-    public void StopEditing() => _itemEditor.QuitEditing();
+    /// <summary> 
+    ///     Cancel the editing process without saving anything.
+    /// </summary>
+    public void StopEditing()
+        => _itemEditor.QuitEditing();
 
-    /// <summary> Injects all the changes made to the GagRestriction and applies them to the actual item. </summary>
-    /// <remarks> All changes are saved to the config once this completes. </remarks>
+    /// <summary>
+    ///     Injects all the changes made to the GagRestriction and applies them to the actual item. <para />
+    ///     All changes are saved to the config once this completes.
+    /// </summary>
     public void SaveChangesAndStopEditing()
     {
         if (_itemEditor.SaveAndQuitEditing(out var sourceItem))

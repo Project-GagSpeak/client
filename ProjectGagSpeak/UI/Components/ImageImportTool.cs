@@ -94,7 +94,7 @@ public class ImageImportTool
                     ImGui.Dummy(subChildSize);
                 }
             }
-            wdl.AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.VibrantPink.Uint(), FancyTabBar.Rounding, ImDrawFlags.RoundCornersAll, 1.5f);
+            wdl.AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), GsCol.VibrantPink.Uint(), FancyTabBar.Rounding, ImDrawFlags.RoundCornersAll, 1.5f);
 
             using (ImRaii.Child("ImageTool_Bottom_Horizontal", subChildSize, false, WFlags.AlwaysUseWindowPadding))
             {
@@ -152,7 +152,7 @@ public class ImageImportTool
                     DrawImageInfo(img);
                 }
             }
-            ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.VibrantPink.Uint(), FancyTabBar.Rounding, ImDrawFlags.RoundCornersAll, 1.5f);
+            ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), GsCol.VibrantPink.Uint(), FancyTabBar.Rounding, ImDrawFlags.RoundCornersAll, 1.5f);
         }
         catch (Bagagwa ex)
         {
@@ -195,7 +195,7 @@ public class ImageImportTool
                     ImGui.Dummy(subChildSize);
                 }
             }
-            wdl.AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.VibrantPink.Uint(), FancyTabBar.Rounding, ImDrawFlags.RoundCornersAll, 1.5f);
+            wdl.AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), GsCol.VibrantPink.Uint(), FancyTabBar.Rounding, ImDrawFlags.RoundCornersAll, 1.5f);
 
             ImGui.SameLine();
 
@@ -248,7 +248,7 @@ public class ImageImportTool
 
                 DrawImageInfo(img);
             }
-            ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkColor.VibrantPink.Uint(), FancyTabBar.Rounding, ImDrawFlags.RoundCornersAll, 1.5f);
+            ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), GsCol.VibrantPink.Uint(), FancyTabBar.Rounding, ImDrawFlags.RoundCornersAll, 1.5f);
         }
         catch (Bagagwa ex)
         {

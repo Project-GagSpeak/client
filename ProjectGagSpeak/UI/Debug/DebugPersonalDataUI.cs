@@ -138,8 +138,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawGagData(pair.UserData.UID, pair.ActiveGags);
         DrawPairRestrictions(pair.UserData.UID, pair);
         DrawRestraint(pair.UserData.UID, pair);
-        DrawAlias(pair.UserData.UID, "Global", pair.LastGlobalAliasData);
-        DrawNamedAlias(pair.UserData.UID, "Unique", pair.LastPairAliasData);
+        DrawAlias(pair.UserData.UID, "Aliases", pair.SharedAliases);
         DrawToybox(pair.UserData.UID, pair);
         DrawKinksterCache(pair);
         ImGui.Separator();
@@ -776,34 +775,11 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
     {
         // draw out the list of cursed item GUID's
         using var subnodeCursedItems = ImRaii.TreeNode("Active Cursed Items");
-        if (!subnodeCursedItems) return;
+        if (!subnodeCursedItems)
+            return;
 
         foreach (var item in cursedItems)
             ImGui.TextUnformatted(item.ToString());
-
-    }
-
-    private void DrawNamedAlias(string uid, string label, NamedAliasStorage storage)
-    {
-        using var nodeMain = ImRaii.TreeNode($"{label}'s Alias Data");
-        if (!nodeMain) return;
-
-        CkGui.ColorText($"Listener Name:", ImGuiColors.ParsedGold);
-        CkGui.TextInline(storage.ExtractedListenerName);
-
-        using (ImRaii.Table("##debug-aliasdata-" + uid, 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
-        {
-
-            ImGui.TableSetupColumn("Alias Input");
-            ImGui.TableSetupColumn("Alias Output");
-            ImGui.TableHeadersRow();
-            foreach (var aliasData in storage.Storage.Items)
-            {
-                ImGuiUtil.DrawTableColumn(aliasData.InputCommand);
-                ImGuiUtil.DrawTableColumn("(Output sections being worked on atm?)");
-                ImGui.TableNextRow();
-            }
-        }
     }
 
     private void DrawAlias(string uid, string label, AliasStorage storage)

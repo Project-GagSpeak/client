@@ -214,7 +214,7 @@ public partial class SidePanelPair
             UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.DevotionalLocks), !devotionalState));
         CkGui.AttachToolTip(devotionalState
             ? $"Any Hardcore action by {name} will be --COL--pairlocked--COL----NL--This means that only {name} can disable it."
-            : $"Anyone you are in Hardcore for can undo Hardcore interactions from --COL--{name}--COL--", color: CkColor.VibrantPink.Vec4());
+            : $"Anyone you are in Hardcore for can undo Hardcore interactions from --COL--{name}--COL--", color: GsCol.VibrantPink.Vec4());
         return false;
     }
 
@@ -450,7 +450,7 @@ public partial class SidePanelPair
         {
             CkGui.TextFrameAlignedInline(data.ActionText);
             ImGui.SameLine(0, 0);
-            CkGui.ColorTextFrameAlignedInline(isActive ? current.Split('|')[0].AsAnonKinkster() : "ANON.KINKSTER", CkColor.VibrantPink.Uint());
+            CkGui.ColorTextFrameAlignedInline(isActive ? current.Split('|')[0].AsAnonKinkster() : "ANON.KINKSTER", GsCol.VibrantPink.Uint());
         }
         else
         {

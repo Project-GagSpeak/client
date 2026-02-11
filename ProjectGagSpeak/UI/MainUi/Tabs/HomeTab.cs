@@ -6,7 +6,6 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Gui.Modules.Puppeteer;
 using GagSpeak.Gui.Profile;
 using GagSpeak.Gui.Publications;
 using GagSpeak.Gui.Remote;
@@ -14,16 +13,12 @@ using GagSpeak.Gui.Toybox;
 using GagSpeak.Gui.Wardrobe;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.WebAPI;
 using OtterGui.Text;
-using System.Drawing;
 using System.Globalization;
-using TerraFX.Interop.Windows;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -83,7 +78,7 @@ public class HomeTab
         // Gradient backdrop
         wdl.AddRectFilledMultiColor(halfPos, max, uint.MinValue, uint.MinValue, 0x44000000, 0x44000000);
 
-        using var _ = CkRaii.FramedChildPaddedWH("Account", size, 0, CkColor.VibrantPink.Uint(), CkStyle.ChildRounding(), wFlags: WFlags.NoScrollbar);
+        using var _ = CkRaii.FramedChildPaddedWH("Account", size, 0, GsCol.VibrantPink.Uint(), CkStyle.ChildRounding(), wFlags: WFlags.NoScrollbar);
 
         DrawProfileInfo(_.InnerRegion, profile);
         ImGui.Spacing();
@@ -145,7 +140,7 @@ public class HomeTab
             wdl.AddCircleFilled(EditBorderPos + EditBorderSize / 2, EditBorderSize.X / 2, bgCol);
             // Draw out Edit Icon.
             wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Edit], EditIconPos, EditIconSize);
-            wdl.AddCircle(EditBorderPos + EditBorderSize / 2, EditBorderSize.X / 2, CkColor.VibrantPink.Uint(), 0, 3f * ImGuiHelpers.GlobalScale);
+            wdl.AddCircle(EditBorderPos + EditBorderSize / 2, EditBorderSize.X / 2, GsCol.VibrantPink.Uint(), 0, 3f * ImGuiHelpers.GlobalScale);
         }
     }
 
@@ -200,7 +195,7 @@ public class HomeTab
             if (string.IsNullOrWhiteSpace(_config.Current.Safeword))
                 CkGui.ColorTextFrameAlignedInline("Click to set Safeword..", ImGuiColors.DalamudGrey2, false);
             else
-                CkGui.ColorTextFrameAlignedInline(_config.Current.Safeword, CkColor.TriStateCross.Uint(), false);
+                CkGui.ColorTextFrameAlignedInline(_config.Current.Safeword, CkCol.TriStateCross.Uint(), false);
             CkGui.AttachToolTip("Your current safeword. Click to edit!");
 
             if (ImGui.IsItemClicked())

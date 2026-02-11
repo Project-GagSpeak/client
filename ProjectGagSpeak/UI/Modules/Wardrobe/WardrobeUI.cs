@@ -88,7 +88,7 @@ public class WardrobeUI : WindowMediatorSubscriberBase
     private void DrawCollarLayout()
     {
         var frameH = ImGui.GetFrameHeight();
-        var drawSpaces = CkHeader.FlatWithBends(CkColor.FancyHeader.Uint(), 2 * frameH, frameH * 0.5f, frameH);
+        var drawSpaces = CkHeader.FlatWithBends(CkCol.CurvedHeader.Uint(), 2 * frameH, frameH * 0.5f, frameH);
         _collarPanel.DrawContents(drawSpaces, RightLength(), _tabMenu);
     }
 
@@ -98,8 +98,8 @@ public class WardrobeUI : WindowMediatorSubscriberBase
         var isEditing = IsEditing();
         // If we are editing, draw out the flat with bends, otherwise, draw the fancy curve.
         var drawRegions = isEditing
-            ? CkHeader.FlatWithBends(CkColor.FancyHeader.Uint(), frameH, frameH, frameH)
-            : CkHeader.FancyCurve(CkColor.FancyHeader.Uint(), frameH, frameH * .5f, RightLength(), frameH);
+            ? CkHeader.FlatWithBends(CkCol.CurvedHeader.Uint(), frameH, frameH, frameH)
+            : CkHeader.FancyCurve(CkCol.CurvedHeader.Uint(), frameH, frameH * .5f, RightLength(), frameH);
 
         // Then draw out the contents.
         switch (_tabMenu.TabSelection)

@@ -135,7 +135,7 @@ public sealed class ModPresetDrawer
     {
         var region = ImGui.GetContentRegionAvail();
         var id = $"MP-Preview-{(preset?.Container.DirectoryPath ?? "INVALID")}";
-        using (CkRaii.FramedChildPaddedWH(id, region, CkColor.FancyHeaderContrast.Uint(), CkColor.FancyHeaderContrast.Uint()))
+        using (CkRaii.FramedChildPaddedWH(id, region, CkCol.CurvedHeaderFade.Uint(), CkCol.CurvedHeaderFade.Uint()))
         {
             if (preset is null)
                 return;
@@ -190,7 +190,7 @@ public sealed class ModPresetDrawer
     public void DrawPresetEditor()
     {
         var outerRegion = ImGui.GetContentRegionAvail();
-        using (CkRaii.FramedChild("MP-EditorWindow", ImGui.GetContentRegionAvail(), CkColor.FancyHeaderContrast.Uint(), CkColor.FancyHeaderContrast.Uint(),
+        using (CkRaii.FramedChild("MP-EditorWindow", ImGui.GetContentRegionAvail(), CkCol.CurvedHeaderFade.Uint(), CkCol.CurvedHeaderFade.Uint(),
             CkStyle.ChildRounding(), CkStyle.ThinThickness(), wFlags: WFlags.AlwaysUseWindowPadding))
         {
             if (_manager.ItemInEditor is not { } activeEditor)

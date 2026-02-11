@@ -163,7 +163,7 @@ public class IntroUi : WindowMediatorSubscriberBase
 
         // Add a final gradient lining to the bottom of the progress display.
         var contentPos = expandedMin + new Vector2(0, scaledSize.Y);
-        wdl.AddRectFilledMultiColor(contentPos, expandedMax, CkColor.FancyHeaderContrast.Uint(), CkColor.FancyHeaderContrast.Uint(), 0, 0);
+        wdl.AddRectFilledMultiColor(contentPos, expandedMax, CkCol.CurvedHeaderFade.Uint(), CkCol.CurvedHeaderFade.Uint(), 0, 0);
         wdl.AddLine(contentPos, contentPos + new Vector2(scaledSize.X, 0), 0xFF000000, 1f);
         wdl.PopClipRect();
 
@@ -292,7 +292,7 @@ public class IntroUi : WindowMediatorSubscriberBase
     {
         using var dis = ImRaii.Disabled(page > _furthestPage);
         using var alpha = ImRaii.PushStyle(ImGuiStyleVar.Alpha, 1f);
-        var color = _currentPage == page ? CkColor.VibrantPink.Vec4() : ImGuiColors.ParsedGrey.Darken(.15f).WithAlpha(.5f);
+        var color = _currentPage == page ? GsCol.VibrantPink.Vec4() : ImGuiColors.ParsedGrey.Darken(.15f).WithAlpha(.5f);
         using var col = ImRaii.PushColor(ImGuiCol.Button, color).Push(ImGuiCol.ButtonHovered, color).Push(ImGuiCol.ButtonActive, color);
 
         if (ImGui.Button(label, region))
@@ -304,7 +304,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         CkGui.FontText("Welcome to Project GagSpeak!", UiFontService.UidFont);
 
         CkGui.ColorTextWrapped("Project GagSpeak is a highly ambitious project devloped for over a year in closed Beta, " +
-            "aiming to provide kinksters with an all-in-one BDSM plugin free of charge to enjoy.", CkColor.VibrantPinkHovered.Uint());
+            "aiming to provide kinksters with an all-in-one BDSM plugin free of charge to enjoy.", GsCol.VibrantPinkHovered.Uint());
 
 
         CkGui.FontText("Features:", UiFontService.Default150Percent);
@@ -429,7 +429,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         using var _ = CkRaii.Child("innerAbout", region, wFlags: WFlags.AlwaysVerticalScrollbar);
         CkGui.FontText("Dedications", UiFontService.Default150Percent);
 
-        CkGui.BulletText("TBD", CkColor.VibrantPink.Uint());
+        CkGui.BulletText("TBD", GsCol.VibrantPink.Uint());
     }
 
     // Understanding Sundouleia Privacy & Usage Transparency
@@ -438,7 +438,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         CkGui.FontTextCentered("READ CAREFULLY, YOU WILL ONLY SEE THIS ONCE", UiFontService.Default150Percent, ImGuiColors.DalamudRed);
         ImGui.Spacing();
         CkGui.CenterText("Acknowledgement Of Usage & Privacy");
-        using (CkRaii.FramedChildPaddedWH("UsageAndPrivacy", ImGui.GetContentRegionAvail(), 0, CkColor.RemoteBgDark.Uint(), wFlags: WFlags.AlwaysVerticalScrollbar))
+        using (CkRaii.FramedChildPaddedWH("UsageAndPrivacy", ImGui.GetContentRegionAvail(), 0, GsCol.RemoteBgDark.Uint(), wFlags: WFlags.AlwaysVerticalScrollbar))
         {
             ImGui.TextWrapped("Being a Server-Side Plugin, and a plugin full of kinky individuals, we all know there " +
                 "will always be some of *those* people who will try to ruin the fun for everyone.");

@@ -294,7 +294,7 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
         using var _ = ImRaii.Group();
 
         ImGui.Text("Selected Key:");
-        CkGui.ColorTextInline(SelectedKey, CkColor.VibrantPink.Uint());
+        CkGui.ColorTextInline(SelectedKey, GsCol.VibrantPink.Uint());
         DrawClient();
         DrawParticipants();
     }
@@ -313,7 +313,7 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
 
         ImGui.Text("ControlTime:");
         ImUtf8.SameLineInner();
-        CkGui.ColorText(ClientData.TimeAlive.ToString(), CkColor.VibrantPink.Uint());
+        CkGui.ColorText(ClientData.TimeAlive.ToString(), GsCol.VibrantPink.Uint());
 
         ImGui.Separator();
         ImGui.Text("Devices:");
@@ -342,7 +342,7 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
 
             ImGui.Text("ControlTime:");
             ImUtf8.SameLineInner();
-            CkGui.ColorText(remoteData.TimeAlive.ToString(), CkColor.VibrantPink.Uint());
+            CkGui.ColorText(remoteData.TimeAlive.ToString(), GsCol.VibrantPink.Uint());
 
             ImGui.Separator();
             ImGui.Text("Devices:");
@@ -389,7 +389,7 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
                 ImGuiUtil.DrawTableColumn(value.RecordedData.Count().ToString());
                 ImGuiUtil.DrawTableColumn($"{value.PlaybackRef.Idx} / {value.PlaybackRef.Length} / {value.PlaybackRef.Looping}");
                 ImGui.TableNextColumn();
-                CkGui.FramedHoverIconText(FAI.InfoCircle, CkColor.VibrantPink.Uint());
+                CkGui.FramedHoverIconText(FAI.InfoCircle, GsCol.VibrantPink.Uint());
                 CkGui.AttachToolTip(string.Join(", ", value.RecordedData.Select(d => d.ToString("F2"))));
                 ImGui.TableNextRow();
             }

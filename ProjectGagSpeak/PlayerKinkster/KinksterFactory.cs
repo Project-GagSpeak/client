@@ -33,7 +33,7 @@ public class KinksterFactory
     ///     Creates a new Kinkster from the KinksterPair
     /// </summary>
     public Kinkster Create(KinksterPair kinksterPair)
-        => new(kinksterPair, _loggerFactory.CreateLogger<Kinkster>(), _mediator, _config, _favorites, _nicks, this);
+        => new(kinksterPair, _loggerFactory.CreateLogger<Kinkster>(), _mediator, _config, _nicks, this);
 
     /// <summary>
     ///     Handles the current visible state of the Kinkster.

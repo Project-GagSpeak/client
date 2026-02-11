@@ -136,14 +136,14 @@ public class MoodleDrawer
         }
 
         var size = iconSize ?? IconSize;
-        using (CkRaii.FramedChildPaddedW($"##{id}-MoodleRowDrawn", width, FramedIconDisplayHeight(size.Y, rows), CkColor.FancyHeaderContrast.Uint(), 0, rounding))
+        using (CkRaii.FramedChildPaddedW($"##{id}-MoodleRowDrawn", width, FramedIconDisplayHeight(size.Y, rows), CkCol.CurvedHeaderFade.Uint(), 0, rounding))
             DrawIconsOrEmpty(ids, width, size, rows);
     }
 
     public void ShowStatusInfosFramed(string id, IEnumerable<MoodlesStatusInfo> statuses, float width, float rounding, Vector2? iconSize = null, int rows = 1)
     {
         var size = iconSize ?? IconSize;
-        using (CkRaii.FramedChildPaddedW($"##{id}-MoodleRowDrawn", width, FramedIconDisplayHeight(size.Y, rows), ImGui.GetColorU32(ImGuiCol.FrameBgHovered), CkColor.VibrantPink.Uint(), rounding))
+        using (CkRaii.FramedChildPaddedW($"##{id}-MoodleRowDrawn", width, FramedIconDisplayHeight(size.Y, rows), ImGui.GetColorU32(ImGuiCol.FrameBgHovered), GsCol.VibrantPink.Uint(), rounding))
             ShowStatusInfos(statuses, width, size, rows);
     }
 

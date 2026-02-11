@@ -46,7 +46,7 @@ public class RestraintEditorInfo : IFancyTab
         using var _ = CkRaii.HeaderChild("Description", new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetTextLineHeightWithSpacing() * 4));
 
         // Draw out the inner description field.
-        using (CkRaii.Group(CkColor.FancyHeaderContrast.Uint(), CkStyle.ChildRounding(), 2 * ImGuiHelpers.GlobalScale))
+        using (CkRaii.Group(CkCol.CurvedHeaderFade.Uint(), CkStyle.ChildRounding(), 2 * ImGuiHelpers.GlobalScale))
         {
             using var color = ImRaii.PushColor(ImGuiCol.FrameBg, 0x00000000);
             var description = _manager.ItemInEditor!.Description;

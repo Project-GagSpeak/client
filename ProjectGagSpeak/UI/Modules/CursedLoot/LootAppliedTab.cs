@@ -43,7 +43,7 @@ public class LootAppliedTab : IFancyTab
         // Could maybe add some kind of topbar here for filters and sort orders and such.
 
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 12f);
-        using var _ = CkRaii.FramedChildPaddedWH("AppliedItems", ImGui.GetContentRegionAvail(), 0, CkColor.VibrantPink.Uint(), FancyTabBar.RoundingInner);
+        using var _ = CkRaii.FramedChildPaddedWH("AppliedItems", ImGui.GetContentRegionAvail(), 0, GsCol.VibrantPink.Uint(), FancyTabBar.RoundingInner);
 
         // draw out the list of active, applied items.
         var appliedLoot = _manager.Storage.ActiveAppliedLoot;
@@ -102,7 +102,7 @@ public class LootAppliedTab : IFancyTab
         ImGui.SameLine(timeOffsetX);
         using (ImRaii.Group())
         {
-            CkGui.ColorText(timeText, CkColor.VibrantPink.Uint());
+            CkGui.ColorText(timeText, GsCol.VibrantPink.Uint());
             ImUtf8.SameLineInner();
             CkGui.FramedIconText(FAI.Stopwatch);
         }

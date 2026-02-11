@@ -247,7 +247,7 @@ public class TriggerActionService
             case NewState.Enabled:
                 // grab the right restriction first.
                 layerIdx = act.LayerIdx == -1
-                    ? restrictions.Restrictions.IndexOf(x => x.Identifier== Guid.Empty)
+                    ? restrictions.Restrictions.IndexOf(x => x.Identifier == Guid.Empty)
                     : act.LayerIdx;
 
                 if (layerIdx == -1 || restrictions.Restrictions[layerIdx].IsLocked() || !restrictions.Restrictions[layerIdx].CanApply())
