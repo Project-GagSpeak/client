@@ -159,14 +159,14 @@ public sealed class LootHandler
             if (await ApplyCursedGag(cg, lockTime))
                 return;
         }
-        else if (chosen is CursedRestrictionItem cri)
+        else if (chosen is CursedRestrictionItem cri && _restrictions.ServerRestrictionData?.FindFirstUnused() != -1)
         {
             if (await ApplyCursedRestriction(cri, lockTime))
                 return;
         }
         else
         {
-            _logger.LogError("Chosen cursed item was neither gag nor restriction", LoggerType.CursedItems);
+            _logger.LogInformation("Skipping this item, no empty slots available.", LoggerType.CursedItems);
             return;
         }
     }
