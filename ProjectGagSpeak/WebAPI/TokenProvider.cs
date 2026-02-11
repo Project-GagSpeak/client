@@ -131,7 +131,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
                     {
                         new KeyValuePair<string, string>("charaIdent", await GagSpeakSecurity.GetClientIdentHash().ConfigureAwait(false)),
                         new KeyValuePair<string, string>("authKey", secretKey),
-                        new KeyValuePair<string, string>("forceMain", forceMain),
+                        new KeyValuePair<string, string>("enforcePrimary", forceMain),
                     }), token).ConfigureAwait(false);
                 }
                 else if (identifier is LocalContentIDJwtIdentifier localContentIDIdentifier)
@@ -149,7 +149,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
                     result = await _httpClient.PostAsync(tokenUri, new FormUrlEncodedContent(new[]
                     {
                         new KeyValuePair<string, string>("charaIdent", await GagSpeakSecurity.GetClientIdentHash().ConfigureAwait(false)),
-                        new KeyValuePair<string, string>("localContentID", localContentID),
+                        new KeyValuePair<string, string>("contentID", localContentID),
                     }), token).ConfigureAwait(false);
                 }
                 else

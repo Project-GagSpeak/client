@@ -51,6 +51,14 @@ public sealed class UiFontService : IHostedService
             tk.OnPreBuild(tk => tk.AddDalamudAssetFont(Dalamud.DalamudAsset.NotoSansJpMedium, new() { SizePx = 35 }));
         });
 
+        Default150Percent = FontAtlas.NewDelegateFontHandle(tk =>
+        {
+            tk.OnPreBuild(prebuild =>
+            {
+                Default150PercentPtr = prebuild.AddDalamudDefaultFont(UiBuilder.DefaultFontSizePx * 1.5f);
+            });
+        });
+
         // grab the file locat ion of the GagSpeak Font.
         var gsFontFileLoc = Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName!, "Assets", "DoulosSIL-Regular.ttf");
         if (File.Exists(gsFontFileLoc))
@@ -77,6 +85,7 @@ public sealed class UiFontService : IHostedService
 
         // Wait for them to be valid.
         await UidFont.WaitAsync().ConfigureAwait(false);
+        await Default150Percent.WaitAsync().ConfigureAwait(false);
         await GagspeakFont.WaitAsync().ConfigureAwait(false);
         await GagspeakLabelFont.WaitAsync().ConfigureAwait(false);
         await GagspeakTitleFont.WaitAsync().ConfigureAwait(false);
@@ -85,14 +94,6 @@ public sealed class UiFontService : IHostedService
 
     private void InitLargeFonts()
     {
-        Default150Percent = FontAtlas.NewDelegateFontHandle(tk =>
-        {
-            tk.OnPreBuild(prebuild =>
-            {
-                Default150PercentPtr = prebuild.AddDalamudDefaultFont(UiBuilder.DefaultFontSizePx * 1.5f);
-            });
-        });
-
         FullScreenFont = FontAtlas.NewDelegateFontHandle(tk =>
         {
             tk.OnPreBuild(prebuild =>
