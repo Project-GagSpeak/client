@@ -153,7 +153,7 @@ public class AccountConfig : IHybridSavable
     {
         if (data is not JObject storage)
             return;
-        Current = storage.ToObject<AccountStorage>() ?? throw new Exception("Failed to load AccountStorage.");
+        Current = storage.ToObject<AccountStorage>() ?? throw new Exception("Failed to load AccountStorage.");   
     }
 
     public AccountStorage Current { get; set; } = new AccountStorage();

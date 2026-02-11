@@ -29,8 +29,6 @@ public class AccountManagerTab
     private readonly ConfigFileProvider _fileProvider;
 
     private readonly Queue<Action> _postDrawActions = new();
-    private AccountProfile? _exposedKeyProfile = null;
-    private AccountProfile? _inEditMode = null;
 
     public AccountManagerTab(ILogger<AccountManagerTab> logger, GagspeakMediator mediator,
         MainHub hub, MainConfig config, AccountManager account, KinkPlateService kinkPlates, ConfigFileProvider fileProvider)
@@ -63,24 +61,16 @@ public class AccountManagerTab
         _frameH = ImUtf8.FrameHeight;
         _frameHSpacingWidth = ImUtf8.FrameHeight + ImUtf8.ItemInnerSpacing.X;
 
-        _ckFrameCol = CkColor.VibrantPink.Uint();
-        _clientCol = CkColor.ElementSplit.Uint(); // gold if we need it?
-
-        _txtCol = ImGui.GetColorU32(ImGuiCol.Text);
-        _txtDisableCol = ImGui.GetColorU32(ImGuiCol.TextDisabled);
-        _frameBgCol = ImGui.GetColorU32(ImGuiCol.FrameBg);
+        _ckFrameCol = GsCol.VibrantPink.Uint();
         _frameBgHoverCol = ImGui.GetColorU32(ImGuiCol.FrameBgHovered);
 
         _bendS = _style.FrameRounding * 1.25f;
         _bendM = _style.FrameRounding * 1.75f;
         _bendL = _style.FrameRounding * 2f;
-        _bendXL = _style.FrameRounding * 3f;
 
         _shadowSize = ImGuiHelpers.ScaledVector2(1);
         _styleOffset = ImGuiHelpers.ScaledVector2(2);
         _buttonPadding = _styleOffset + _style.FramePadding;
-
-        _playerNodeH = ImUtf8.TextHeightSpacing + ImUtf8.TextHeight + ImUtf8.FramePadding.Y * 2 + _styleOffset.Y * 2;
     }
 
     private ImDrawListPtr _wdl;
@@ -90,22 +80,15 @@ public class AccountManagerTab
     private float _frameHSpacingWidth;
 
     private uint _ckFrameCol;
-    private uint _clientCol;
-
-    private uint _txtCol;
-    private uint _txtDisableCol;
-    private uint _frameBgCol;
     private uint _frameBgHoverCol;
 
     private float _bendS;
     private float _bendM;
     private float _bendL;
-    private float _bendXL;
     private Vector2 _shadowSize;
     private Vector2 _styleOffset;
     private Vector2 _buttonPadding;
 
-    private float _playerNodeH;
     private float _lineH => 5 * ImGuiHelpers.GlobalScale;
 
     // Cached profile display data. (Size is deterministic of other factors).
@@ -294,7 +277,7 @@ public class AccountManagerTab
         var iconPosTR = new Vector2(drawArea.Max.X - iconSize.X, drawArea.Min.Y);
         var iconPosBL = new Vector2(drawArea.Min.X, drawArea.Min.Y + ImUtf8.TextHeightSpacing);
         using (Svc.PluginInterface.UiBuilder.IconFontFixedWidthHandle.Push())
-            window.DrawList.AddText(FAI.CheckCircle.ToIconString(), iconPosTR, profile.HadValidConnection ? CkColor.TriStateCheck.Uint() : _frameBgHoverCol);
+            window.DrawList.AddText(FAI.CheckCircle.ToIconString(), iconPosTR, profile.HadValidConnection ? CkCol.TriStateCheck.Uint() : _frameBgHoverCol);
         if (ImGui.IsMouseHoveringRect(iconPosTR, iconPosTR + iconSize))
             CkGui.ToolTipInternal(profile.HadValidConnection ? "Had a Successful Connection & Aquired UID." : "Profile has not yet connected to the server.");
 
@@ -316,7 +299,6 @@ public class AccountManagerTab
         using var _ = ImRaii.Child("profile-panel", region);
         var cursorMin = ImGui.GetCursorPos();
         var leftGapY = 0f;
-        var rightGapY = 0f;
         // If no profile is selected, just draw nothing is selected and return.
         if (_selected is not { } profile)
         {
@@ -343,35 +325,7 @@ public class AccountManagerTab
 
         // We're not doing anything particularly fancy with the avatar here
         ImGui.NewLine();
-
-        //// Take the leftmax, subtract lineH, and divide by 2, this will be how it divides the splits.
-        //var maxY = cursorMin.Y + region.Y;
-        //var playerDrawRegionsH = (maxY - leftGapY - _lineH) / 2;
-
-        //// Get the Y pos of the line, by cursorMinY + region.Y - lowerHalfY
-        //var splitLinePosY = maxY - playerDrawRegionsH - _lineH;
-
-        //// Ensure the ratio does not exceed the max allowed height.
-        //var maxRatioValue = (splitLinePosY - cursorMin.Y) / ProfileSizeBase.Y;
-        //Ratio = exceedsLeftMax ? Math.Clamp(GetAvatarScaleRatio(ImGui.GetContentRegionAvail().X), 1f, maxRatioValue) : 1f;
-
-        // Correctly draw the profile.
         DrawAvatar(profile);
-        //var rightPos = ImGui.GetCursorScreenPos() + new Vector2(0, ProfileSize.Y);
-        //// Using the cursorPos from min, add the scaled ProfileSizeY to get the YPos.
-        //rightGapY = cursorMin.Y + ProfileSize.Y + _style.ItemSpacing.Y;
-
-        //// Determine the height on the left via LinePosY - LeftHeightEndY
-        //var leftTopAvailH = splitLinePosY - leftGapY;
-        //// Determine the height on the right by using LinePosY - ProfilePosY
-        //var rightTopAvailH = splitLinePosY - rightGapY;
-
-        //var leftOverRight = (leftTopAvailH >= rightTopAvailH * 1.5f);
-        //var canFitOnRight = (rightTopAvailH >= (_playerNodeH));
-        //var shouldDrawLeftBox = leftOverRight || !canFitOnRight;
-        //// Get the deterministic dimentions.
-        //var linkedWidth = shouldDrawLeftBox ? leftWidth : region.X;
-        //var newPos = shouldDrawLeftBox ? new Vector2(cursorMin.X, leftGapY) : new Vector2(cursorMin.X, rightGapY);
     }
 
     private void DrawLabelUidAndKey(AccountProfile profile, float width)

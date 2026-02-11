@@ -33,7 +33,6 @@ public class StyleEditorUI : WindowMediatorSubscriberBase
     // Maybe a Theme config but thats a 2.X feature
 
     private StyleTab _lastTab = StyleTab.GagSpeakColors;
-    private bool _themeChanged = false;
     private bool _copyModifiedOnly = false;
     private string _filterString = string.Empty;
 
@@ -47,6 +46,8 @@ public class StyleEditorUI : WindowMediatorSubscriberBase
     public StyleEditorUI(ILogger<StyleEditorUI> logger, GagspeakMediator mediator, MainConfig config)
         : base(logger, mediator, "GagSpeak Style Editor")
     {
+        _config = config;
+
         Flags = WFlags.NoScrollbar;
         this.SetBoundaries(new Vector2(625, 400), ImGui.GetIO().DisplaySize);
     }
