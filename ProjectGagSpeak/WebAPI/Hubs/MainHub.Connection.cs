@@ -93,7 +93,7 @@ public partial class MainHub
                 Mediator.Publish(new ConnectedMessage());
 
                 // Update our current authentication to reflect the information provided.
-                _accounts.UpdateFromValidConnection(secretKey, ConnectionResponse!);
+                _accounts.UpdateAuthentication(secretKey, ConnectionResponse!);
 
                 // obtain the ShareHub and LobbyInvite data post-connection, as it doesnt depend on anything else.
                 var lobbyHubInfo = await GetShareHubAndLobbyInfo().ConfigureAwait(false);
@@ -294,24 +294,37 @@ public partial class MainHub
         fetchedSecretKey = string.Empty;
 
         // if we are not logged in, we should not be able to connect.
-        if (PlayerData.IsLoggedIn is false)
+        if (!PlayerData.IsLoggedIn)
         {
             Logger.LogDebug("Attempted to connect while not logged in, this shouldnt be possible! Aborting!", LoggerType.ApiCore);
             return false;
         }
 
         // if we have not yet made an account, abort this connection.
-        if (!_accounts.HasAnyProfile)
+        if (!_accounts.HasAnyProfile())
         {
             Logger.LogDebug("No Authentications created. No Primary Account or Alt Account to connect with. Aborting!", LoggerType.ApiCore);
             return false;
         }
 
         // ensure we have a proper template for the active character.
-        if (!_accounts.ProfileExistsForChara())
+        if (!_accounts.CharaHasValidProfile())
         {
-            // Generate a new auth entry for the current character if the primary one has already been made (this is for an alt basically)
-            _accounts.CreateProfileForChara();
+            try
+            {
+                Logger.LogInformation("No profile for character found. Creating new empty alt profile.", LoggerType.ApiCore);
+                // Generate a new auth entry for the current character if the primary one has already been made (this is for an alt basically)
+                if (_accounts.AddNewProfile() is { } newProfile)
+                {
+                    newProfile.IsPrimary = !_accounts.Profiles.Any(p => p.IsPrimary == true); // this should basically always be false, but...
+                    _accounts.Save();
+                }
+            }
+            catch (Exception e) 
+            {
+                Logger.LogError($"Failed to create new alt profile. {e.Message}");
+                return false;
+            }
         }
 
         // If the client wishes to not be connected to the server, return.
@@ -321,17 +334,22 @@ public partial class MainHub
             return false;
         }
 
-        if (_accounts.GetProfileForChara() is not { } profile)
+        if (_accounts.GetCharaProfile() is not { } profile)
         {
-            Logger.LogWarning($"AccountProfile existed but no SecretKey was present.", LoggerType.ApiCore);
+            Logger.LogWarning($"GetCharaProfile failed! Potentially corrupted data?!", LoggerType.ApiCore);
             return false;
         }
 
-        if (profile.SecretKey.IsNullOrEmpty())
+        fetchedSecretKey = profile.Key ?? string.Empty;
+        if (fetchedSecretKey.IsNullOrEmpty())
         {
             // log a warning that no secret key is set for the current character
             Logger.LogWarning("No secret key set for current character, aborting Connection with [NoSecretKey]", LoggerType.ApiCore);
+
+            if (ConnectionResponse is not null)
+                Logger.LogWarning("No secret key, yet ConnectionResponse was not null here!", LoggerType.ApiCore);
             ConnectionResponse = null;
+
             // Set our new ServerState to NoSecretKey and reject connection.
             ServerStatus = ServerState.NoSecretKey;
             _hubConnectionCTS.SafeCancel();

@@ -67,7 +67,7 @@ public class IntroUi : WindowMediatorSubscriberBase
             _currentPage = IntroUiPage.Welcome;
             _furthestPage = IntroUiPage.Welcome;
         }
-        else if (!MainHub.IsServerAlive || !_account.HasValidMainProfile())
+        else if (!MainHub.IsServerAlive || !_account.HasValidProfile())
         {
             _currentPage = IntroUiPage.AccountSetup;
             _furthestPage = IntroUiPage.AccountSetup;
@@ -235,7 +235,7 @@ public class IntroUi : WindowMediatorSubscriberBase
 
             case IntroUiPage.AccountSetup:
                 // Attempt to generate an account. If this is successful, advance the page to initialized.
-                if (_account.HasValidMainProfile())
+                if (_account.HasValidProfile())
                 {
                     _furthestPage = IntroUiPage.Initialized;
                     _currentPage = IntroUiPage.Initialized;
@@ -247,7 +247,7 @@ public class IntroUi : WindowMediatorSubscriberBase
     private bool DisableButton(IntroUiPage page)
     => page switch
     {
-        IntroUiPage.AccountSetup => !_account.HasValidMainProfile(),
+        IntroUiPage.AccountSetup => !_account.HasValidProfile(),
         _ => false
     };
 
@@ -552,7 +552,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         var recoveryKeyInUse = !string.IsNullOrWhiteSpace(_secretKey);
 
         CkGui.FontText("Generate New Account", UiFontService.Default150Percent);
-        var blockButton = _account.HasAnyProfile || recoveryKeyInUse || _config.Current.ButtonUsed || UiService.DisableUI;
+        var blockButton = _account.HasValidProfile() || recoveryKeyInUse || _config.Current.ButtonUsed || UiService.DisableUI;
 
         CkGui.FramedIconText(FAI.UserPlus);
         CkGui.TextFrameAlignedInline("Generate:");
@@ -563,10 +563,10 @@ public class IntroUi : WindowMediatorSubscriberBase
         // Next line to display the account UID.
         var uid = string.Empty;
         var key = string.Empty;
-        if (_account.TryGetMainProfile(out var profile))
+        if (_account.GetMainProfile() is { } profile)
         {
-            uid = profile.ProfileUID;
-            key = profile.SecretKey;
+            uid = profile.UserUID;
+            key = profile.Key;
         }
         CkGui.FramedIconText(FAI.IdBadge);
         ImUtf8.SameLineInner();
@@ -582,7 +582,7 @@ public class IntroUi : WindowMediatorSubscriberBase
             "--COL--THIS IS THE ONLY WAY TO RECOVER YOUR ACCOUNT IF YOU LOSE ACCESS TO IT!--COL--", ImGuiColors.DalamudRed, true);
 
         // if we have valid profile details but failed to connect, allow the user to attempt connection again.
-        if (_account.HasAnyProfile && !MainHub.IsConnected && _config.Current.ButtonUsed)
+        if (_account.HasValidProfile() && !MainHub.IsConnected && _config.Current.ButtonUsed)
         {
             CkGui.FramedIconText(FAI.SatelliteDish);
             CkGui.TextFrameAlignedInline("Attempt Reconnection with Account Login:");
@@ -605,7 +605,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         ImGui.InputTextWithHint("##RefRecoveryKey", "Existing Account Key / Recovered Account Key..", ref _secretKey, 64);
         ImUtf8.SameLineInner();
 
-        var blockButton = string.IsNullOrWhiteSpace(_secretKey) || _secretKey.Length != 64 || _account.HasValidMainProfile() || UiService.DisableUI;
+        var blockButton = string.IsNullOrWhiteSpace(_secretKey) || _secretKey.Length != 64 || _account.HasValidProfile() || UiService.DisableUI;
         if (CkGui.IconTextButton(FAI.Wrench, "Login with Key", disabled: blockButton))
             TryLoginWithExistingKeyAsync();
         CkGui.AttachToolTip("--COL--THIS WILL CREATE YOUR PRIMARY ACCOUNT. ENSURE YOUR KEY IS CORRECT.--COL--", ImGuiColors.DalamudRed);
@@ -636,10 +636,10 @@ public class IntroUi : WindowMediatorSubscriberBase
         {
             try
             {
-                if (_account.HasValidMainProfile())
+                if (_account.HasValidProfile())
                     throw new InvalidOperationException("Cannot recover account when a valid profile already exists!");
 
-                if (!_account.TryGetMainProfile(out var profile))
+                if (_account.GetMainProfile() is not { } profile)
                     throw new InvalidOperationException("No Main Account existed!");
 
                 // Assign the secret key to the profile.
@@ -664,10 +664,6 @@ public class IntroUi : WindowMediatorSubscriberBase
             _config.Save();
             try
             {
-                // Ensure existance.
-                if (!_account.ProfileExistsForChara())
-                    _account.CreateProfileForChara();
-
                 // Begin by fetching the account details. If this fails we will throw to the catch statement and perform an early return.
                 var accountDetails = await _hub.FetchFreshAccountDetails();
 
@@ -675,8 +671,17 @@ public class IntroUi : WindowMediatorSubscriberBase
                 // This means that we can not create the new authentication and validate our account as created.
                 _logger.LogInformation("Fetched Account Details, proceeding to create Primary Account authentication.");
 
-                // This will throw if it failed to set.
-                _account.AssignFreshAccountProfile(accountDetails.Item1, accountDetails.Item2);
+                // create a new profile and populate add'l one-time details, duplicate profiles not permitted.
+                if (_account.AddNewProfile() is { } newProfile)
+                {
+                    newProfile.UserUID = accountDetails.Item1;
+                    newProfile.Key = accountDetails.Item2;
+                    newProfile.IsPrimary = true;
+                    newProfile.HadValidConnection = true;
+                }
+                
+                // Save profile data changes.
+                _account.Save();
 
                 _logger.LogInformation("Profile for Login Auth set successfully.");
                 // Log the details.

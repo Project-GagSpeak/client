@@ -136,7 +136,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
             if (ImGui.BeginTabItem(GSLoc.Settings.TabsAccounts))
             {
-                _accountsTab.DrawManager();
+                _accountsTab.DrawContent();
                 ImGui.EndTabItem();
             }
 
