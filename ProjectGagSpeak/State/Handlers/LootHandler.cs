@@ -166,7 +166,7 @@ public sealed class LootHandler
         }
         else
         {
-            _logger.LogError("Chosen cursed item was neither gag nor restriction", LoggerType.CursedItems);
+            _logger.LogInformation("Skipping this item, no empty slots available.", LoggerType.CursedItems);
             return;
         }
     }
