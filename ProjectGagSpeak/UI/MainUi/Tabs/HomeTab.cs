@@ -358,7 +358,8 @@ public class HomeTab
             catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the Patreon link. {e.Message}"); }
         }
         CkGui.AttachToolTip("This plugin took a massive toll on my life as a mostly solo dev." +
-            "--NL--As happy as I am to make this free for all of you to enjoy, any support is much appreciated ♥");
+            "--NL--As happy as I am to make this free for all of you to enjoy, any support is much appreciated ♥" +
+            "--NL--Will open --COL--ko-fi.com--COL-- in a new browser window.", ImGuiColors.ParsedPink);
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SelfPlug, LastWinPos, LastWinSize);
     }
 
@@ -370,7 +371,8 @@ public class HomeTab
             catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the Patreon link. {e.Message}"); }
         }
         CkGui.AttachToolTip("This plugin took a massive toll on my life as a mostly solo dev." +
-            "--NL--As happy as I am to make this free for all of you to enjoy, any support is much appreciated ♥");
+            "--NL--As happy as I am to make this free for all of you to enjoy, any support is much appreciated ♥" +
+            "--NL--Will open --COL--patreon.com--COL-- in a new browser window.", ImGuiColors.ParsedPink);
     }
 
     private void FeedbackButton(float buttonWidth)
