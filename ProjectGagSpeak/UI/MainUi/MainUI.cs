@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Reflection;
 using CkCommons.Gui;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
@@ -13,8 +15,6 @@ using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Hub;
 using OtterGui.Text;
-using System.Globalization;
-using System.Reflection;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -47,9 +47,9 @@ public class MainUI : WindowMediatorSubscriberBase
     private bool ThemePushed = false;
 
     public MainUI(ILogger<MainUI> logger, GagspeakMediator mediator, MainConfig config,
-        AccountManager account, MainHub hub, MainMenuTabs tabMenu, SidePanelService sidePanel, RequestsManager requestmanager, 
+        AccountManager account, MainHub hub, MainMenuTabs tabMenu, SidePanelService sidePanel, RequestsManager requestmanager,
         KinksterManager kinksters, TutorialService guides, HomeTab home, RequestsTab requests,
-        WhitelistTab whitelist, PatternHubTab patternHub, MoodleHubTab moodlesHub, GlobalChatTab globalChat)         
+        WhitelistTab whitelist, PatternHubTab patternHub, MoodleHubTab moodlesHub, GlobalChatTab globalChat)
         : base(logger, mediator, "###GagSpeakMainUI")
     {
         _config = config;
@@ -69,7 +69,7 @@ public class MainUI : WindowMediatorSubscriberBase
 
         // display info about the folders
         var ver = Assembly.GetExecutingAssembly().GetName().Version!;
-        WindowName = $"GagSpeak Closed Beta ({ver.Major}.{ver.Minor}.{ver.Build}.{ver.Revision})###GagSpeakMainUI";
+        WindowName = $"GagSpeak Open Beta ({ver.Major}.{ver.Minor}.{ver.Build}.{ver.Revision})###GagSpeakMainUI";
         Flags |= WFlags.NoDocking;
 
         this.PinningClickthroughFalse();
@@ -80,9 +80,9 @@ public class MainUI : WindowMediatorSubscriberBase
             .Add(FAI.Bell, "Actions Notifier", () => Mediator.Publish(new UiToggleMessage(typeof(InteractionEventsUI))))
             .AddTutorial(_guides, TutorialType.MainUi)
             .Build();
-        
+
         // Default to open if the user desires for it to be open.
-        if(_config.Current.OpenMainUiOnStartup)
+        if (_config.Current.OpenMainUiOnStartup)
             Toggle();
         // Update the tab menu selection.
         _tabMenu.TabSelection = _config.Current.MainUiTab;
@@ -179,7 +179,7 @@ public class MainUI : WindowMediatorSubscriberBase
                     break;
                 case MainMenuTabs.SelectedTab.PatternHub:
                     _patternHub.DrawPatternHub();
-                    _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternResults, ImGui.GetWindowPos(), ImGui.GetWindowSize(), 
+                    _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternResults, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
                         () => { _tabMenu.TabSelection = MainMenuTabs.SelectedTab.MoodlesHub; });
                     break;
                 case MainMenuTabs.SelectedTab.MoodlesHub:
@@ -270,7 +270,7 @@ public class MainUI : WindowMediatorSubscriberBase
         var textSize = ImGui.CalcTextSize("Kinksters Online");
         var serverText = "Main GagSpeak Server";
         var shardTextSize = ImGui.CalcTextSize(serverText);
-        var totalHeight = ImGui.GetTextLineHeight()*2 + ImGui.GetStyle().ItemSpacing.Y;
+        var totalHeight = ImGui.GetTextLineHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
 
         // create a table
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - ImGui.GetStyle().ItemSpacing.Y);

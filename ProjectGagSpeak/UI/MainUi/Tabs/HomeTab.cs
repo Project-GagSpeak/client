@@ -1,3 +1,4 @@
+using System.Globalization;
 using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Raii;
@@ -18,7 +19,6 @@ using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.WebAPI;
 using OtterGui.Text;
-using System.Globalization;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -40,7 +40,7 @@ public class HomeTab
 
     private bool _editingSafeword = false;
 
-    public HomeTab(GagspeakMediator mediator, MainConfig config, 
+    public HomeTab(GagspeakMediator mediator, MainConfig config,
         KinkPlateService service, TutorialService guides)
     {
         _mediator = mediator;
@@ -132,7 +132,7 @@ public class HomeTab
             if (ImGui.InvisibleButton("##EditProfileButton", EditBorderSize))
                 _mediator.Publish(new UiToggleMessage(typeof(KinkPlateEditorUI)));
             CkGui.AttachToolTip("Open and Customize your KinkPlate™!");
-            
+
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileEditing, LastWinPos, LastWinSize,
                 () => _mediator.Publish(new UiToggleMessage(typeof(KinkPlateEditorUI))));
 
@@ -171,10 +171,10 @@ public class HomeTab
     private void DrawSafewordRow(float width)
     {
         using var _ = ImRaii.Group();
-        
+
         CkGui.IconTextAligned(FAI.HandPaper);
         using var font = ImRaii.PushFont(UiBuilder.MonoFont);
-        
+
         if (_editingSafeword)
         {
             ImGui.SameLine();
@@ -268,9 +268,14 @@ public class HomeTab
 
     private void SexToyRemoteButton(float width)
     {
-        if (CkGui.FancyButton(FAI.WaveSquare, "Sex Toy Remote", width, false))
+        var disabled = true;
+#if DEBUG
+        // TODO: Remove when this works
+        disabled = false;
+#endif
+        if (CkGui.FancyButton(FAI.WaveSquare, "Sex Toy Remote", width, disabled))
             _mediator.Publish(new UiToggleMessage(typeof(BuzzToyRemoteUI)));
-        CkGui.AttachToolTip("Control Simulated, or IRL Sex Toys!");
+        CkGui.AttachToolTip("Control Simulated, or IRL Sex Toys! --COL--[WIP]--COL--");
     }
 
     private void WardrobeButton(float width)
@@ -289,16 +294,26 @@ public class HomeTab
 
     private void PuppeteerButton(float width)
     {
-        if (CkGui.FancyButton(FAI.PersonHarassing, "Puppeteer", width, false))
+        var disabled = true;
+#if DEBUG
+        // TODO: Remove when this works
+        disabled = false;
+#endif
+        if (CkGui.FancyButton(FAI.PersonHarassing, "Puppeteer", width, disabled))
             _mediator.Publish(new UiToggleMessage(typeof(PuppeteerUI)));
-        CkGui.AttachToolTip("Who's in control now? (Global & Per-Kinkster Control)");
+        CkGui.AttachToolTip("Who's in control now? (Global & Per-Kinkster Control) --COL--[WIP]--COL--");
     }
 
     private void ToyboxButton(float width)
     {
-        if (CkGui.FancyButton(FAI.BoxOpen, "Toybox", width, false))
+        var disabled = true;
+#if DEBUG
+        // TODO: Remove when this works
+        disabled = false;
+#endif
+        if (CkGui.FancyButton(FAI.BoxOpen, "Toybox", width, disabled))
             _mediator.Publish(new UiToggleMessage(typeof(ToyboxUI)));
-        CkGui.AttachToolTip("Patterns, Alarms, Triggers, VibeLobbies, Toys and more!");
+        CkGui.AttachToolTip("Patterns, Alarms, Triggers, VibeLobbies, Toys and more! --COL--[WIP]--COL--");
     }
 
     private void ModPresetsButton(float width)
@@ -311,9 +326,14 @@ public class HomeTab
 
     private void AllowancesButton(float width)
     {
-        if (CkGui.FancyButton(FAI.UserShield, "Trait Allowances", width, false))
+        var disabled = true;
+#if DEBUG
+        // TODO: Remove when this works
+        disabled = false;
+#endif
+        if (CkGui.FancyButton(FAI.UserShield, "Trait Allowances", width, disabled))
             _mediator.Publish(new UiToggleMessage(typeof(AllowancesUI)));
-        CkGui.AttachToolTip("Control who has access to view your various Data!");
+        CkGui.AttachToolTip("Control who has access to view your various Data! --COL--[WIP]--COL--");
     }
 
     private void PublicationsButton(float width)

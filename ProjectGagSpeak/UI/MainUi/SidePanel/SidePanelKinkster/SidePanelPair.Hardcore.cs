@@ -44,12 +44,14 @@ public partial class SidePanelPair
 
         // ------ Locked Emote State ------
         var emoteActive = hc.LockedEmoteState.Length > 0;
-        var emoteInfo = emoteActive ? (FAI.StopCircle, $"Free {dispName}'s Locked Emote State.") : k.PairPerms.AllowLockedEmoting 
+        var emoteInfo = emoteActive ? (FAI.StopCircle, $"Free {dispName}'s Locked Emote State.") : k.PairPerms.AllowLockedEmoting
             ? (FAI.PersonArrowDownToLine, $"Force {dispName}'s Emote State.") : (FAI.Chair, $"Force {dispName} to Sit.");
         var emoteDis = (!k.PairPerms.AllowLockedSitting && !k.PairPerms.AllowLockedEmoting) || !hc.CanChange(HcAttribute.EmoteState, MainHub.UID);
         DrawColoredExpander(InteractionType.LockedEmoteState, emoteInfo.Item1, emoteInfo.Item2, emoteActive, emoteDis, emoteInfo.Item2);
         UniqueHcChild(InteractionType.LockedEmoteState, emoteActive, CkStyle.TwoRowHeight(), () => DrawEmoteChild(cache, k, dispName, width, emoteDis));
 
+#if DEBUG
+        // TODO: enable in release when confinement works
         // ------ Locked Confinement ------
         var confinementActive = hc.IndoorConfinement.Length > 0;
         var confinementInfo = confinementActive ? (FAI.StopCircle, $"Release {dispName} from Confinement.") : (FAI.HouseLock, $"Lock {dispName} away indoors.");
@@ -61,6 +63,7 @@ public partial class SidePanelPair
             DrawTimerButtonRow(InteractionType.Confinement, ref cache.ConfinementTimer, "Confine", !confinementAllowed);
             DrawAddressConfig(cache, k, dispName, width);
         });
+#endif
 
         // ------ Locked Imprisonment ------
         var imprisonmentActive = hc.Imprisonment.Length > 0;
@@ -152,7 +155,7 @@ public partial class SidePanelPair
         {
             if (cache.OpenItem != type)
                 return;
-            
+
             using (ImRaii.Child($"{type}Child", new Vector2(width, ImGui.GetFrameHeight())))
             {
                 if (curState)
@@ -224,7 +227,7 @@ public partial class SidePanelPair
             {
                 // reset cycle pose back to 0 if the emote doesn't have it.
                 cache.CyclePose = 0;
-                if(cache.Emotes.Draw("##LockedLoopEmoteCombo", cache.EmoteId, width, 1.3f))
+                if (cache.Emotes.Draw("##LockedLoopEmoteCombo", cache.EmoteId, width, 1.3f))
                 {
                     cache.EmoteId = cache.Emotes.Current.RowId;
                     Svc.Logger.Information($"Changed EmoteID to {cache.EmoteId} for {dispName}.");
@@ -291,7 +294,7 @@ public partial class SidePanelPair
 
         // draw out the sliders based on the property type.
         ImUtf8.SameLineInner();
-        var sliderW = propType is not PropertyType.PrivateChambers 
+        var sliderW = propType is not PropertyType.PrivateChambers
             ? ImGui.GetContentRegionAvail().X : (ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemInnerSpacing.X) / 2;
         switch (propType)
         {
