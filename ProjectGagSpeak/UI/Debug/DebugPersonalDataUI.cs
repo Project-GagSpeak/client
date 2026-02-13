@@ -63,10 +63,10 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         _patterns = patterns;
         _alarms = alarms;
         _triggers = triggers;
+
         // Ensure the list updates properly.
         Mediator.Subscribe<FolderUpdateKinkster>(this, _ => UpdateList());
 
-        IsOpen = true;
         this.SetBoundaries(new Vector2(625, 400), ImGui.GetIO().DisplaySize);
     }
 
