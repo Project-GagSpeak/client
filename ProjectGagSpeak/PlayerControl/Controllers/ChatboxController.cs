@@ -19,7 +19,7 @@ public sealed class ChatboxController : DisposableMediatorSubscriberBase
     private bool _hideChatBoxes = false;
     private bool _hideChatInput = false;
 
-    public ChatboxController(ILogger<KeystateController> logger, GagspeakMediator mediator,
+    public ChatboxController(ILogger<ChatboxController> logger, GagspeakMediator mediator,
         PlayerControlCache cache) : base(logger, mediator)
     {
         _cache = cache;
@@ -39,11 +39,12 @@ public sealed class ChatboxController : DisposableMediatorSubscriberBase
 
     private void ChatLogPostShow(AddonEvent type, AddonArgs args)
     {
+        Logger.LogTrace("ChatLog Visibility changed. Checking if helplessness needs reinforcing.", LoggerType.HardcoreActions);
         if (_hideChatInput)
-            AddonChatLog.SetChatInputVisibility(false);
+            Svc.Framework.RunOnTick(() => AddonChatLog.SetChatInputVisibility(!_hideChatInput), delayTicks:1);
 
-        if(_hideChatBoxes)
-            AddonChatLog.SetChatPanelVisibility(false);
+        if (_hideChatBoxes)
+            Svc.Framework.RunOnTick(() => AddonChatLog.SetChatPanelVisibility(!_hideChatBoxes), delayTicks:1);
     }
 
     private void ChatLogFocusChanged(AddonEvent type, AddonArgs args)
