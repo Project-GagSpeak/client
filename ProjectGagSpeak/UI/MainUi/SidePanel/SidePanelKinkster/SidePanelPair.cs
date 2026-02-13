@@ -312,8 +312,10 @@ public partial class SidePanelPair
             DrawRestraintActions(cache, kinkster, width, dispName);
             ImGui.Separator();
 
+#if DEBUG
             DrawMoodlesActions(cache, kinkster, width, dispName);
             ImGui.Separator();
+#endif
 
             DrawToyboxActions(cache, kinkster, width, dispName);
             ImGui.Separator();
