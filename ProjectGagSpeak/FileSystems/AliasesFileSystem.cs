@@ -23,7 +23,7 @@ public sealed class AliasesFileSystem : CkFileSystem<AliasTrigger>, IMediatorSub
         _hybridSaver = saver;
 
         Mediator.Subscribe<ConfigAliasItemChanged>(this, (msg) => OnAliasChange(msg.Type, msg.Item, msg.OldString));
-        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is GSModule.CursedLoot) Reload(); });
+        Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is GSModule.Puppeteer) Reload(); });
         Changed += OnChange;
         Reload();
     }

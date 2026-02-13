@@ -23,9 +23,8 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
     private readonly PuppeteerManager _manager;
     private readonly TutorialService _guides;
 
-    public PuppeteerUI(ILogger<PuppeteerUI> logger, GagspeakMediator mediator,
-        PuppeteerManager manager, TutorialService guides, AliasesTab aliases, 
-        PuppeteersTab puppeteers, MarionettesTab marionettes)
+    public PuppeteerUI(ILogger<PuppeteerUI> logger, GagspeakMediator mediator, PuppeteerManager manager, 
+        TutorialService guides, AliasesTab aliases, PuppeteersTab puppeteers, MarionettesTab marionettes)
         : base(logger, mediator, "Puppeteer Interface")
     {
         _manager = manager;
@@ -34,11 +33,8 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         PuppeteerTabs = [ aliases, puppeteers, marionettes ];
 
         this.PinningClickthroughFalse();
-        this.SetBoundaries(new(600, 490), ImGui.GetIO().DisplaySize);
-        TitleBarButtons = new TitleBarButtonBuilder()
-            .Add(FAI.CloudDownloadAlt, "Alias Migrations", () => Mediator.Publish(new UiToggleMessage(typeof(MigrationsUI))))
-            .AddTutorial(_guides, TutorialType.Puppeteer)
-            .Build();
+        this.SetBoundaries(new(640, 490), ImGui.GetIO().DisplaySize);
+        TitleBarButtons = new TitleBarButtonBuilder().AddTutorial(_guides, TutorialType.Puppeteer).Build();
     }
 
     public static IFancyTab[] PuppeteerTabs;
@@ -66,12 +62,9 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
 
     protected override void DrawInternal()
     {
-        var frameH = ImGui.GetFrameHeight();
-        var regions = CkHeader.FlatWithBends(CkCol.CurvedHeader.Uint(), frameH, ImUtf8.ItemSpacing.X, frameH);
+        var regions = CkHeader.FlatWithBends(CkCol.CurvedHeader.Uint(), ImUtf8.FrameHeight / 2, ImUtf8.ItemSpacing.X, ImUtf8.FrameHeight);
 
-        ImGui.SetCursorScreenPos(regions.TopLeft.Pos);
-        using (ImRaii.Child("PuppeteerTopBar", regions.TopRight.Size))
-            DrawHeader(regions.TopSize);
+        // Idk what to put on the top section outside of it being a stylized header area.
 
         ImGui.SetCursorScreenPos(regions.BotLeft.Pos);
         using (ImRaii.Child("PuppeteerContent", regions.BotSize, false, WFlags.AlwaysUseWindowPadding))
@@ -80,8 +73,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
 
     private void DrawHeader(Vector2 region)
     {
-        // should be dependant on the tab selected.
-        ImGui.Text("Yeah I dont really like this header area either. Idk what to furnish it with.");
+        // Empty for now.
     }
 
     private void DrawTabBarContent()

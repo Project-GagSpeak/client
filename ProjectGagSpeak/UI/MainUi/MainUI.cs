@@ -234,12 +234,12 @@ public class MainUI : WindowMediatorSubscriberBase
 
     private void DrawUIDHeader()
     {
-        var uidText = GsExtensions.GetUidText();
+        var uidText = GagspeakEx.GetUidText();
         using (UiFontService.UidFont.Push())
         {
             var uidTextSize = ImGui.CalcTextSize(uidText);
             ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) / 2 - uidTextSize.X / 2);
-            ImGui.TextColored(GsExtensions.UidColor(), uidText);
+            ImGui.TextColored(GagspeakEx.UidColor(), uidText);
         }
 
         // if we are connected
@@ -250,7 +250,7 @@ public class MainUI : WindowMediatorSubscriberBase
             {
                 var originalTextSize = ImGui.CalcTextSize(MainHub.UID);
                 ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) / 2 - originalTextSize.X / 2);
-                ImGui.TextColored(GsExtensions.UidColor(), MainHub.UID);
+                ImGui.TextColored(GagspeakEx.UidColor(), MainHub.UID);
                 CkGui.CopyableDisplayText(MainHub.UID);
             }
         }
@@ -322,8 +322,8 @@ public class MainUI : WindowMediatorSubscriberBase
             ImGui.TableNextColumn();
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (totalHeight - addUserButtonSize.Y) / 2);
             // now we need to display the connection link button beside it.
-            var color = GsExtensions.ServerStateColor();
-            var connectedIcon = GsExtensions.ServerStateIcon(MainHub.ServerStatus);
+            var color = GagspeakEx.ServerStateColor();
+            var connectedIcon = GagspeakEx.ServerStateIcon(MainHub.ServerStatus);
 
             // if the server is reconnecting or disconnecting
             using (ImRaii.Disabled(MainHub.ServerStatus is ServerState.Reconnecting or ServerState.Disconnecting))

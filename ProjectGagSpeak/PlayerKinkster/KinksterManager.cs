@@ -403,12 +403,20 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         kinkster.NewActiveCursedLoot(dto.ActiveItems, dto.ChangedItem);
     }
 
-    // Update this later as we integrate further UI Logic*
-    public void UpdateAlias(UserData targetUser, Guid id, AliasTrigger? newData)
+    public void UpdateAliasState(UserData targetUser, Guid id, bool newState)
     {
         if (!_allKinksters.TryGetValue(targetUser, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-        kinkster.NewAlias(id, newData);
+        // Update it if it exists.
+        if (kinkster.SharedAliases.Items.FirstOrDefault(a => a.Identifier == id) is { } alias)
+            alias.Enabled = newState;
+    }
+
+    public void UpdateActiveAliases(KinksterUpdateActiveAliases dto)
+    {
+        if (!_allKinksters.TryGetValue(dto.User, out var kinkster))
+            throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
+        kinkster.NewActiveAliases(dto.ActiveAliases);
     }
 
     public void NewValidToys(UserData targetUser, List<ToyBrandName> validToys)
@@ -472,6 +480,27 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         if (!_allKinksters.TryGetValue(targetUser, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
         kinkster.LightCache.UpdateLootItem(itemId, newData);
+    }
+
+    public void CachedAliasDataChange(UserData targetUser, Guid itemId, AliasTrigger? newData)
+    {
+        if (!_allKinksters.TryGetValue(targetUser, out var kinkster))
+            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
+        
+        var items = kinkster.SharedAliases.Items;
+        var alias = items.FirstOrDefault(a => a.Identifier == itemId);
+
+        if (alias is not null)
+        {
+            if (newData is not null)
+                alias.ApplyChanges(newData);
+            else
+                items.Remove(alias);
+        }
+        else if (newData is not null)
+        {
+            items.Add(newData);
+        }
     }
 
     public void CachedPatternDataChange(UserData targetUser, Guid itemId, LightPattern? newData)

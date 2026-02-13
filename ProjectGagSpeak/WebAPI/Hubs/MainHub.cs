@@ -197,7 +197,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     private async void OnLogin()
     {
         Logger.LogInformation("Starting connection on login after fully loaded...");
-        await GsExtensions.WaitForPlayerLoading();
+        await GagspeakEx.WaitForPlayerLoading();
         Logger.LogInformation("Client fully loaded in, Connecting.");
         // Run the call to attempt a connection to the server.
         await Connect().ConfigureAwait(false);
@@ -254,12 +254,13 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         OnKinksterUpdateActiveRestraint(dto => _ = Callback_KinksterUpdateActiveRestraint(dto));
         OnKinksterUpdateActiveCollar(dto => _ = Callback_KinksterUpdateActiveCollar(dto));
         OnKinksterUpdateActiveCursedLoot(dto => _ = Callback_KinksterUpdateActiveCursedLoot(dto));
-        OnKinksterUpdateAlias(dto => _ = Callback_KinksterUpdateAlias(dto));
+        OnKinksterUpdateAliasState(dto => _ = Callback_KinksterUpdateAliasState(dto));
+        OnKinksterUpdateActiveAliases(dto => _ = Callback_KinksterUpdateActiveAliases(dto));
         OnKinksterUpdateValidToys(dto => _ = Callback_KinksterUpdateValidToys(dto));
         OnKinksterUpdateActivePattern(dto => _ = Callback_KinksterUpdateActivePattern(dto));
         OnKinksterUpdateActiveAlarms(dto => _ = Callback_KinksterUpdateActiveAlarms(dto));
         OnKinksterUpdateActiveTriggers(dto => _ = Callback_KinksterUpdateActiveTriggers(dto));
-        OnListenerName((user, name) => _ = Callback_ListenerName(user, name));
+        OnListenerName(dto => _ = Callback_ListenerName(dto));
         OnShockInstruction(dto => _ = Callback_ShockInstruction(dto));
         OnHypnoticEffect(dto => _ = Callback_HypnoticEffect(dto));
 
@@ -268,6 +269,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         OnKinksterNewRestraintData(dto => _ = Callback_KinksterNewRestraintData(dto));
         OnKinksterNewCollarData(dto => _ = Callback_KinksterNewCollarData(dto));
         OnKinksterNewLootData(dto => _ = Callback_KinksterNewLootData(dto));
+        OnKinksterNewAliasData(dto => _ = Callback_KinksterNewAliasData(dto));
         OnKinksterNewPatternData(dto => _ = Callback_KinksterNewPatternData(dto));
         OnKinksterNewAlarmData(dto => _ = Callback_KinksterNewAlarmData(dto));
         OnKinksterNewTriggerData(dto => _ = Callback_KinksterNewTriggerData(dto));

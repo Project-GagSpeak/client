@@ -208,7 +208,7 @@ public class HypnoService : IDisposable
                 var elapsed = (float)(DateTime.UtcNow - start).TotalMilliseconds;
                 progress = Math.Clamp(elapsed / adjustedDuration, 0.0f, 1.0f);
                 // Perform SmoothStep easing for interpolation.
-                _activeState.ImageOpacity = GsExtensions.Lerp(startOpacity, endOpacity, progress);
+                _activeState.ImageOpacity = GagspeakEx.Lerp(startOpacity, endOpacity, progress);
                 
                 await Task.Delay(Svc.Framework.UpdateDelta.Milliseconds, token);
             }
@@ -364,9 +364,9 @@ public class HypnoService : IDisposable
             // Attempt Smoothstep Easing
             t = t * t * (3f - 2f * t);
             Vector4 lerped = new(
-                GsExtensions.Lerp(sCol.X, tCol.X, t),
-                GsExtensions.Lerp(sCol.Y, tCol.Y, t),
-                GsExtensions.Lerp(sCol.Z, tCol.Z, t),
+                GagspeakEx.Lerp(sCol.X, tCol.X, t),
+                GagspeakEx.Lerp(sCol.Y, tCol.Y, t),
+                GagspeakEx.Lerp(sCol.Z, tCol.Z, t),
                 sCol.W // Keep Alpha
             );
             // Set the state color.
@@ -441,13 +441,13 @@ public class HypnoService : IDisposable
             if(doTextFade)
             {
                 if (doTextFade && elapsed < effect.TextFadeInTime)
-                    state.TextOpacity = GsExtensions.EaseInExpo(elapsed / (float)effect.TextFadeInTime);
+                    state.TextOpacity = GagspeakEx.EaseInExpo(elapsed / (float)effect.TextFadeInTime);
                 // Handle Opacity Fade Out.
                 else if (doTextFade && elapsed >= (duration - effect.TextFadeOutTime))
                 {
                     var fadeOutStart = duration - effect.TextFadeOutTime;
                     var value = (elapsed - fadeOutStart) / (float)effect.TextFadeOutTime;
-                    state.TextOpacity = CkGui.GetAlpha(effect.TextColor) * GsExtensions.EaseOutExpo(1f - value);
+                    state.TextOpacity = CkGui.GetAlpha(effect.TextColor) * GagspeakEx.EaseOutExpo(1f - value);
                 }
                 // Handle simply displaying the text.
                 else
@@ -457,7 +457,7 @@ public class HypnoService : IDisposable
             }
 
             if (linearScale) // Linear Scaling
-                state.TextScale = GsExtensions.Lerp(0.75f, 1.35f, state.TextScaleProgress);
+                state.TextScale = GagspeakEx.Lerp(0.75f, 1.35f, state.TextScaleProgress);
 
             // Lighten Stress Load a little bit.
             await Task.Delay(Svc.Framework.UpdateDelta.Milliseconds);

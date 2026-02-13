@@ -8,6 +8,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.PlayerControl;
 using GagSpeak.Services.Controller;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
@@ -123,7 +124,7 @@ public class PlayerCtrlHandler
 
         _logger.LogInformation($"[{enactor.AliasOrUID}] Enabled your LockedFollowing state!", LoggerType.HardcoreMovement);
         _hcTasks.CreateCollection("Perform LockedEmote", new(HcTaskControl.BlockAllKeys | HcTaskControl.InRequiredTurnTask))
-            .Add(new HardcoreTask(HcCommonTaskFuncs.WaitForPlayerLoading))
+            .Add(new HardcoreTask(GagspeakEx.IsPlayerFullyLoaded))
             .Add(_hcTasks.CreateBranch(() => kinkster.IsTargetable, "TargetIfVisible")
                 .SetTrueTask(new HardcoreTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.PlayerAddress)))
                 .AsBranch())
@@ -141,7 +142,7 @@ public class PlayerCtrlHandler
 
         _logger.LogInformation($"[{kinkster.GetNickAliasOrUid()}] Updated your LockedFollowing state!", LoggerType.HardcoreMovement);
         _hcTasks.CreateCollection("ForcePerformInitialEmote", new(HcTaskControl.BlockAllKeys | HcTaskControl.InRequiredTurnTask))
-            .Add(new HardcoreTask(HcCommonTaskFuncs.WaitForPlayerLoading))
+            .Add(new HardcoreTask(GagspeakEx.IsPlayerFullyLoaded))
             .Add(_hcTasks.CreateBranch(() => kinkster.IsTargetable, "TargetIfVisible")
                 .SetTrueTask(new HardcoreTask(() => HcCommonTaskFuncs.TargetNode(() => kinkster.PlayerAddress)))
                 .AsBranch())
@@ -176,7 +177,7 @@ public class PlayerCtrlHandler
             _hcTasks.CreateCollection("Travel To Location", HcTaskConfiguration.Branch with { Flags = taskCtrlFlags })
                 .Add(_hcTasks.CreateBranch(() => doLifestreamMethod, "LifestreamTravelTask", HcTaskConfiguration.Branch)
                     .SetTrueTask(_hcTasks.CreateGroup("TravelTaskGroup", HcTaskConfiguration.Default with { TimeoutAt = 120000 })
-                        .Add(HcCommonTaskFuncs.WaitForPlayerLoading)
+                        .Add(GagspeakEx.IsPlayerFullyLoaded)
                         .Add(() => _ipc.GoToAddress(address!.AsTuple()))
                         .Add(() => !_ipc.IsCurrentlyBusy())
                         .AsGroup())

@@ -177,7 +177,7 @@ public class MoodleDrawer
                 continue;
 
             MoodleIcon.DrawMoodleIcon(status.IconID, status.Stacks, iconSize);
-            GsExtensions.DrawMoodleStatusTooltip(status, MoodleCache.IpcData.StatusList);
+            GagspeakEx.DrawMoodleStatusTooltip(status, MoodleCache.IpcData.StatusList);
 
             if (++col >= iconsPerRow)
             {
@@ -205,7 +205,7 @@ public class MoodleDrawer
                 continue;
 
             MoodleIcon.DrawMoodleIcon(status.IconID, status.Stacks, size);
-            GsExtensions.DrawMoodleStatusTooltip(status, MoodleCache.IpcData.StatusList);
+            GagspeakEx.DrawMoodleStatusTooltip(status, MoodleCache.IpcData.StatusList);
 
             if (++col >= iconsPerRow)
             {
@@ -232,7 +232,7 @@ public class MoodleDrawer
 
             MoodleIcon.DrawMoodleIcon(status.IconID, status.Stacks, iconSize);
             if (ImGui.IsItemHovered())
-                GsExtensions.DrawMoodleStatusTooltip(status, MoodleCache.IpcData.StatusList);
+                GagspeakEx.DrawMoodleStatusTooltip(status, MoodleCache.IpcData.StatusList);
             ImGui.SameLine();
         }
 

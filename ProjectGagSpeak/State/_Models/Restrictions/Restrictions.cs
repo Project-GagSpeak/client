@@ -124,7 +124,7 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
             throw new ArgumentException("Invalid JObjectToken!");
 
         var modAttachment = ModSettingsPreset.FromRefToken(json["Mod"], mp);
-        var moodles = GsExtensions.LoadMoodle(json["Moodle"]);
+        var moodles = GagspeakEx.LoadMoodle(json["Moodle"]);
         var profileId = json["ProfileGuid"]?.ToObject<Guid>() ?? throw new ArgumentNullException("ProfileGuid");
         var profilePrio = json["ProfilePriority"]?.ToObject<int>() ?? throw new ArgumentNullException("ProfilePriority");
         return new GarblerRestriction(gagType)

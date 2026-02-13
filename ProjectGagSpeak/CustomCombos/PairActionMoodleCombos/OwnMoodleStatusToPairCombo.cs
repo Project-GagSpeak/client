@@ -61,7 +61,7 @@ public sealed class OwnMoodleStatusToPairCombo : CkMoodleComboButtonBase<Moodles
     }
 
     protected override bool CanDoAction(MoodlesStatusInfo item)
-        => PermissionHelper.CanApplyPairStatus(_kinksterRef.PairPerms, [ item ]);
+        => PermHelper.CanApplyPairStatus(_kinksterRef.PairPerms, [ item ]);
 
     protected override void OnApplyButton(MoodlesStatusInfo item)
     {

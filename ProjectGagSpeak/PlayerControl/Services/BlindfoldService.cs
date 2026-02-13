@@ -111,7 +111,7 @@ public class BlindfoldService : IDisposable
                 progress = Math.Clamp(elapsed / adjustedDuration, 0.0f, 1.0f);
 
                 // Perform SmoothStep easing for interpolation.
-                _currentOpacity = GsExtensions.Lerp(startOpacity, endOpacity, progress);
+                _currentOpacity = GagspeakEx.Lerp(startOpacity, endOpacity, progress);
 
                 // Perform a small delay before processing the next progress point in opacity transition.
                 await Task.Delay(20, token);

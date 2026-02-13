@@ -515,10 +515,17 @@ public partial class MainHub
         return Task.CompletedTask;
     }
 
-    public Task Callback_KinksterUpdateAlias(KinksterUpdateAlias dto)
+    public Task Callback_KinksterUpdateAliasState(KinksterUpdateAliasState dto)
     {
-        Logger.LogDebug($"Callback_KinksterUpdateAlias for {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        Generic.Safe(() => _kinksters.UpdateAlias(dto.User, dto.AliasId, dto.NewData));
+        Logger.LogDebug($"Callback_KinksterUpdateAliasState for {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Generic.Safe(() => _kinksters.UpdateAliasState(dto.User, dto.Alias, dto.NewState));
+        return Task.CompletedTask;
+    }
+
+    public Task Callback_KinksterUpdateActiveAliases(KinksterUpdateActiveAliases dto)
+    {
+        Logger.LogDebug($"Callback_KinksterUpdateActiveAliases for {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Generic.Safe(() => _kinksters.UpdateActiveAliases(dto));
         return Task.CompletedTask;
     }
 
@@ -607,10 +614,10 @@ public partial class MainHub
         }
     }
 
-    public Task Callback_ListenerName(UserData user, string trueNameWithWorld)
+    public Task Callback_ListenerName(SendNameAction dto)
     {
-        Logger.LogDebug($"Received a Kinkster {user.UID}'s updated puppeteer name", LoggerType.Callbacks);
-        Generic.Safe(() => _puppetListener.UpdateListener(user.UID, trueNameWithWorld));
+        Logger.LogDebug($"Kinkster {dto.User.AliasOrUID}'s updated their Listener Name", LoggerType.Callbacks);
+        Generic.Safe(() => _puppetListener.UpdateListener(dto.User.UID, dto.Name));
         return Task.CompletedTask;
     }
 
@@ -656,6 +663,12 @@ public partial class MainHub
     public Task Callback_KinksterNewLootData(KinksterNewLootData dto)
     {
         Generic.Safe(() => _kinksters.CachedCursedLootDataChange(dto.User, dto.ItemId, dto.LightItem));
+        return Task.CompletedTask;
+    }
+
+    public Task Callback_KinksterNewAliasData(KinksterNewAliasData dto)
+    {
+        Generic.Safe(() => _kinksters.CachedAliasDataChange(dto.User, dto.AliasId, dto.NewData));
         return Task.CompletedTask;
     }
 
@@ -988,10 +1001,16 @@ public partial class MainHub
         _hubConnection!.On(nameof(Callback_KinksterUpdateActiveCursedLoot), act);
     }
 
-    public void OnKinksterUpdateAlias(Action<KinksterUpdateAlias> act)
+    public void OnKinksterUpdateAliasState(Action<KinksterUpdateAliasState> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_KinksterUpdateAlias), act);
+        _hubConnection!.On(nameof(OnKinksterUpdateAliasState), act);
+    }
+
+    public void OnKinksterUpdateActiveAliases(Action<KinksterUpdateActiveAliases> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_KinksterUpdateActiveAliases), act);
     }
 
     public void OnKinksterUpdateValidToys(Action<KinksterUpdateValidToys> act)
@@ -1018,7 +1037,7 @@ public partial class MainHub
         _hubConnection!.On(nameof(Callback_KinksterUpdateActiveTriggers), act);
     }
 
-    public void OnListenerName(Action<UserData, string> act)
+    public void OnListenerName(Action<SendNameAction> act)
     {
         if (_apiHooksInitialized) return;
         _hubConnection!.On(nameof(Callback_ListenerName), act);
@@ -1064,6 +1083,12 @@ public partial class MainHub
     {
         if (_apiHooksInitialized) return;
         _hubConnection!.On(nameof(Callback_KinksterNewLootData), act);
+    }
+
+    public void OnKinksterNewAliasData(Action<KinksterNewAliasData> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_KinksterNewAliasData), act);
     }
 
     public void OnKinksterNewPatternData(Action<KinksterNewPatternData> act)

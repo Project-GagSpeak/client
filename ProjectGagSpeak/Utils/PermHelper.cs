@@ -25,7 +25,7 @@ namespace GagSpeak.Utils;
 ///     Either find a way to handle the callbacks automatically based on their changed state, or setup callbacks to never callback to the caller 
 ///     that made the change and process internally. Either way, do this AFTER the update, as it mostly saves on server cost for interactions.
 /// </summary>
-public static class PermissionHelper
+public static class PermHelper
 {
     public static PairPerms WithSafewordApplied(this PairPerms perms)
         => perms with

@@ -137,10 +137,10 @@ public sealed class ArousalService : IDisposable
         float percent = StaticArousal / AROUSAL_CAP;
 
         // Generation rate: scaled based on softcapped stimulation
-        _generationRate = GsExtensions.Lerp(MIN_GEN_RATE, MAX_GEN_RATE, percent);
+        _generationRate = GagspeakEx.Lerp(MIN_GEN_RATE, MAX_GEN_RATE, percent);
 
         // Frequency: faster when more stimulated
-        _generationFrequency = GsExtensions.Lerp(MIN_FREQ, MAX_FREQ, percent);
+        _generationFrequency = GagspeakEx.Lerp(MIN_FREQ, MAX_FREQ, percent);
 
         // Decay: usually a fraction of generation
         _degenerationRate = _generationRate * 0.5f;

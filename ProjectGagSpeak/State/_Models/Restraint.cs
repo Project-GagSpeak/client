@@ -143,7 +143,7 @@ public class RestraintSlotAdvanced : IRestraintSlot, IRestrictionRef
 
         var applyFlags = slotJson["ApplyFlags"]?.ToObject<int>() is int v ? (RestraintFlags)v : RestraintFlags.Advanced;
         var refId = slotJson["RestrictionRef"]?.ToObject<Guid>() ?? Guid.Empty;
-        var stains = GsExtensions.ParseCompactStainIds(slotJson["CustomStains"]);
+        var stains = GagspeakEx.ParseCompactStainIds(slotJson["CustomStains"]);
         // Handle invalid advanced slots.
         if (restrictions.Storage.TryGetRestriction(refId, out var restriction))
             return new RestraintSlotAdvanced() { ApplyFlags = applyFlags, Ref = restriction, CustomStains = stains };
@@ -219,7 +219,7 @@ public class RestrictionLayer : IRestraintLayer, IRestrictionRef
         var id = Guid.TryParse(bLayerJson["ID"]?.Value<string>(), out var guid) ? guid : throw new Exception("InvalidGUID");
         var label = bLayerJson["Label"]?.Value<string>() ?? string.Empty;
         var flags = bLayerJson["ApplyFlags"]?.ToObject<int>() is int v ? (RestraintFlags)v : RestraintFlags.Advanced;
-        var customStains = GsExtensions.ParseCompactStainIds(bLayerJson["CustomStains"]);
+        var customStains = GagspeakEx.ParseCompactStainIds(bLayerJson["CustomStains"]);
 
         var refId = Guid.TryParse(bLayerJson["RestrictionRef"]?.Value<string>(), out var rId) ? rId : throw new Exception("Bad Ref GUID");
         // Attempt firstly to get it from the storage.
@@ -437,7 +437,7 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
         var baseMoodles = new HashSet<Moodle>();
         if (setJObj["BaseMoodles"] is JArray moodleArray)
             foreach (var moodleToken in moodleArray)
-                Generic.Safe(() => baseMoodles.Add(GsExtensions.LoadMoodle(moodleToken)));
+                Generic.Safe(() => baseMoodles.Add(GagspeakEx.LoadMoodle(moodleToken)));
 
         // If you made it all the way here without the world absolutely imploding on itself
         // and setting your pc on fire congrats we can now load the restraint set.

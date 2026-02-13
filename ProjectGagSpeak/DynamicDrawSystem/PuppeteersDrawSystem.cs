@@ -61,6 +61,9 @@ public class PuppeteersDrawSystem : DynamicDrawSystem<Kinkster>, IMediatorSubscr
 
     private void LoadData()
     {
+        // Before we load anything, inverse the sort direction of root.
+        SetSortDirection(root, true);
+
         // If any changes occured, re-save the file.
         if (LoadFile(new FileInfo(_hybridSaver.FileNames.DDS_Puppeteers)))
         {

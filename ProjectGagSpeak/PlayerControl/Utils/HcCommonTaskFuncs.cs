@@ -1,11 +1,9 @@
 using CkCommons;
-using Dalamud.Game.ClientState.Objects.Types;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using GagSpeak.PlayerControl;
 using GagSpeak.Services;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak;
 
@@ -186,8 +184,4 @@ public static unsafe class HcCommonTaskFuncs
             return false;
         }
     }
-
-    public static bool WaitForPlayerLoading()
-        => PlayerData.Interactable && HcTaskUtils.IsScreenReady();
-
 }

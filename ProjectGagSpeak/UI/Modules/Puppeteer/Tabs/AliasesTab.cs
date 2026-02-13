@@ -1,32 +1,70 @@
 using CkCommons;
+using CkCommons.DrawSystem;
 using CkCommons.Gui;
+using CkCommons.Gui.Utility;
 using CkCommons.Raii;
 using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
+using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CustomCombos.Editor;
 using GagSpeak.FileSystems;
+using GagSpeak.Gui.Components;
+using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
+using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
+using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
 using OtterGui.Text;
+using TerraFX.Interop.Windows;
+using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace GagSpeak.Gui.Wardrobe;
 
 public class AliasesTab : IFancyTab
 {
     private readonly ILogger<AliasesTab> _logger;
+    private readonly MainHub _hub;
     private readonly AliasesFileSelector _selector;
+    private readonly AliasTriggerDrawer _aliasDrawer;
     private readonly PuppeteerManager _manager;
+    private readonly KinksterManager _kinksters;
     private readonly TutorialService _guides;
+
+    private InvokableActionType _selected;
+    private PairCombo _pairCombo;
+
+    private Kinkster? _selectedKinkster = null;
+
     public AliasesTab(ILogger<AliasesTab> logger, GagspeakMediator mediator,
-        AliasesFileSelector selector, PuppeteerManager manager, TutorialService guides)
+        MainHub hub, FavoritesConfig favorites, AliasesFileSelector selector, 
+        AliasTriggerDrawer drawer, PuppeteerManager manager,
+        KinksterManager kinksters, TutorialService guides)
     {
         _logger = logger;
+        _hub = hub;
         _selector = selector;
+        _aliasDrawer = drawer;
         _manager = manager;
+        _kinksters = kinksters;
         _guides = guides;
+
+        _pairCombo = new(logger, mediator, favorites, () => [
+            ..( _manager.ItemInEditor is { } editor 
+                ? kinksters.DirectPairs.Where(k => !editor.WhitelistedUIDs.Contains(k.UserData.UID)) : kinksters.DirectPairs)
+                .OrderByDescending(p => FavoritesConfig.Kinksters.Contains(p.UserData.UID))
+                .ThenByDescending(u => u.IsRendered)
+                .ThenByDescending(u => u.IsOnline)
+                .ThenBy(pair => pair.GetDisplayName())
+        ]);
     }
 
     public string   Label       => "Aliases";
@@ -36,165 +74,346 @@ public class AliasesTab : IFancyTab
     // should be very similar to drawing out the list of items, except this will have a unique flavor to it.
     public void DrawContents(float width)
     {
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, ImUtf8.FramePadding - new Vector2(0,1));
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, ImUtf8.FramePadding - new Vector2(0, 1));
 
-        var leftWidth = width * 0.6f;
+        var leftW = width * 0.45f;
         var rounding = FancyTabBar.BarHeight * .4f;
-        DrawLootItemList(leftWidth, rounding);
 
-        ImUtf8.SameLineInner();
-        using (ImRaii.Group())
+        using (var _ = CkRaii.FramedChildPaddedWH("list", new(leftW, ImGui.GetContentRegionAvail().Y), 0, GsCol.VibrantPink.Uint(), rounding))
         {
-            DrawSelectedItem(CkStyle.GetFrameRowsHeight(5), rounding);
-            DrawStatistics(rounding);
+            _selector.DrawFilterRow(_.InnerRegion.X);
+            _selector.DrawList(_.InnerRegion.X);
+        }
+        ImUtf8.SameLineInner();
+        using (var _ = CkRaii.FramedChildPaddedWH("alias", ImGui.GetContentRegionAvail(), 0, GsCol.VibrantPink.Uint(), rounding))
+        {
+            if (_manager.ItemInEditor is { } item)
+                DrawAliasEditor(_.InnerRegion, item, rounding);
+            else
+                DrawAlias(_.InnerRegion, rounding);
         }
     }
 
-    private void DrawLootItemList(float leftWidth, float rounding)
+    private void DrawAlias(Vector2 region, float rounding)
     {
-        using var _ = CkRaii.FramedChildPaddedWH("list", new Vector2(leftWidth, ImGui.GetContentRegionAvail().Y), 0, GsCol.VibrantPink.Uint(), rounding);
+        if (_selector.Selected is not { } alias)
+            return;
 
-        _selector.DrawFilterRow(_.InnerRegion.X);
-        _selector.DrawList(_.InnerRegion.X);
+        // Topright should have a selectable checkmark to flick its state
+        CkGui.BooleanToColoredIcon(alias.Enabled, false);
+        CkGui.AttachToolTip("If this alias is enabled.--SEP----COL--Click to toggle!--COL--", ImGuiColors.ParsedPink);
+        if (ImGui.IsItemClicked())
+        {
+            UiService.SetUITask(async () =>
+            {
+                _manager.ToggleState(alias);
+                // Toggle the state, and then afterward, update the people from it
+                var toSend = _kinksters.GetOnlineUserDatas().Where(u => alias.WhitelistedUIDs.Contains(u.UID)).ToList();
+                _logger.LogDebug($"Pushing AliasStateChange to {string.Join(", ", toSend.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
+
+                var dto = new PushClientAliasState(toSend, alias.Identifier, alias.Enabled);
+                if (await _hub.UserPushAliasState(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+                    _logger.LogWarning($"Failed to push AliasStateChange update to server. Reason: [{res}]");
+            });
+        }
+
+        CkGui.TextFrameAlignedInline(alias.Label);
+        var endX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
+        ImGui.SameLine(endX -= CkGui.IconButtonSize(FAI.Edit).X);
+        if (CkGui.IconButton(FAI.Edit, inPopup: true))
+            _manager.StartEditing(alias);
+        CkGui.AttachToolTip("Edit this alias.");
+
+        // Draw out what the alias detects, and if it ignores case or not
+        CkGui.FramedIconText(FAI.AssistiveListeningSystems);
+        if (string.IsNullOrWhiteSpace(alias.InputCommand))
+        {
+            CkGui.ColorTextFrameAlignedInline("<NO-DETECTION>", ImGuiColors.DalamudRed);
+        }
+        else
+        {
+            CkGui.TextFrameAlignedInline("Detects \"");
+            ImGui.SameLine(0, 0);
+            CkGui.ColorTextFrameAligned(alias.InputCommand, ImGuiColors.TankBlue);
+            ImGui.SameLine(0, 0);
+            CkGui.TextFrameAligned("\"");
+        }
+        ImGui.SameLine();
+        CkGui.RightAlignedColor(alias.IgnoreCase ? "Case Sensative" : "Ignores Case", ImGuiColors.DalamudGrey2);
+
+        ImGui.Separator();
+        var posY = ImGui.GetCursorPosY();
+        DrawReactions(alias, region.X);
+
+        ImGui.SetCursorPosY(posY + CkStyle.GetFrameRowsHeight(7));
+        DrawWhitelist(alias);
+
+        // Iterate through the hashset whitelist and display all of the Kinksters that you have allowed.
+        // If a Kinkster is not located, mark them as an invalid kinkster.
+
     }
 
-    private void DrawSelectedItem(float innerHeight, float rounding)
+    private void DrawReactions(AliasTrigger alias, float width)
     {
-        using var _ = CkRaii.FramedChildPaddedW("Sel", ImGui.GetContentRegionAvail().X, innerHeight, 0, GsCol.VibrantPink.Uint(), rounding);
+        if (alias.Actions.Count is 0)
+        {
+            CkGui.ColorTextCentered("No Reactions assigned!", ImGuiColors.DalamudRed);
+            return;
+        }
 
-        // Draw editor if editing
-        DrawPanel(_.InnerRegion, rounding);
+        // Determine height and draw
+        var rows = alias.Actions.Count;
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, new Vector2(ImUtf8.ItemSpacing.X, 2));
+        using var _ = CkRaii.Child("reacitons", new Vector2(width, CkStyle.GetFrameRowsHeight(rows)));
+
+        foreach (var reaction in alias.Actions.ToList())
+        {
+            switch (reaction)
+            {
+                case TextAction ta: _aliasDrawer.DrawTextRow(ta); break;
+                case GagAction ga: _aliasDrawer.DrawGagRow(ga); break;
+                case RestrictionAction rsa: _aliasDrawer.DrawRestrictionRow(rsa); break;
+                case RestraintAction rta: _aliasDrawer.DrawRestraintRow(rta); break;
+                case MoodleAction ma: _aliasDrawer.DrawMoodleRow(ma); break;
+                case PiShockAction ps: _aliasDrawer.DrawShockRow(ps); break;
+                case SexToyAction sta: _aliasDrawer.DrawToyRow(sta); break;
+            }
+        }
     }
 
-    // Bottom right segment (not used in this panel)
-    private void DrawStatistics(float rounding)
+    private void DrawWhitelist(AliasTrigger alias)
     {
-        var region = ImGui.GetContentRegionAvail();
-        using var _ = CkRaii.FramedChildPaddedWH("Stats", ImGui.GetContentRegionAvail(), 0, GsCol.VibrantPink.Uint(), rounding);
-
-        CkGui.FontTextCentered("Statistics", UiFontService.UidFont);
+        CkGui.FontText("Allowed Kinksters:", UiFontService.Default150Percent);
         CkGui.Separator(GsCol.VibrantPink.Uint());
 
-        //ImGui.Text("Total Loot Found:");
-        //CkGui.ColorTextInline(_manager.TotalEncounters.ToString(), CkColor.VibrantPink.Uint());
+        if (alias.WhitelistedUIDs.Count is 0)
+        {
+            CkGui.FontTextAligned("Everyone", UiFontService.Default150Percent);
+            ImUtf8.SameLineInner();
+            CkGui.FontTextAligned("(Global)", UiFontService.Default150Percent, ImGuiColors.DalamudGrey2);
+            return;
+        }
 
-        //ImGui.Text("Gags Found:");
-        //CkGui.ColorTextInline(_manager.GagEncounters.ToString(), CkColor.VibrantPink.Uint());
+        // Then draw out the allowed kinksters in the remaining region
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 8f);
+        using var c = CkRaii.Child("child", ImGui.GetContentRegionAvail());
+        using var t = ImRaii.Table("whitelist", 1, ImGuiTableFlags.BordersOuter | ImGuiTableFlags.RowBg, ImGui.GetContentRegionAvail());
+        if (!t) return;
 
-        //ImGui.Text("Restrictions Found:");
-        //CkGui.ColorTextInline(_manager.BindEncounters.ToString(), CkColor.VibrantPink.Uint());
+        ImGui.TableSetupColumn("Whitelist");
+        ImGui.TableNextColumn();
+        var widthInner = ImGui.GetContentRegionAvail().X;
 
-        //ImGui.Text("Mimics Evaded:");
-        //CkGui.ColorTextInline(_manager.MimicsEvaded.ToString(), CkColor.VibrantPink.Uint());
+        foreach (var kinksterUid in alias.WhitelistedUIDs.ToList())
+        {
+            ImGui.TableNextColumn();
+            if (_kinksters.TryGetKinkster(new(kinksterUid), out var Kinkster))
+            {
+                CkGui.IconTextAligned(FAI.UserCircle);
+                DrawDisplayName(Kinkster);
+                CkGui.AttachToolTip($"UID: --COL--{kinksterUid}--COL--", GsCol.VibrantPink.Vec4Ref());
+            }
+            else
+            {
+                CkGui.IconTextAligned(FAI.UserCircle, ImGuiColors.DalamudGrey3);
+                using (ImRaii.PushFont(UiBuilder.MonoFont))
+                    CkGui.TextFrameAlignedInline(kinksterUid);
+            }
+            ImGui.TableNextRow();
+        }
 
-        //ImGui.Text("Total Time Cursed:");
-        //CkGui.ColorTextInline(_manager.TimeInCursedLoot.ToGsRemainingTime(), CkColor.VibrantPink.Uint());
-
-        //ImGui.Text("Longest Lock Time:");
-        //CkGui.ColorTextInline(_manager.LongestLockTime.ToGsRemainingTime(), CkColor.VibrantPink.Uint());
-
-        //ImGui.Text("Max Active At Once:");
-        //CkGui.ColorTextInline(_manager.MaxLootActiveAtOnce.ToString(), CkColor.VibrantPink.Uint());
+        void DrawDisplayName(Kinkster s)
+        {
+            // Set it to the display name.
+            var dispName = s.GetDisplayName();
+            // Update mono to be disabled if the display name is not the alias/uid.
+            var useMono = s.UserData.AliasOrUID.Equals(dispName, StringComparison.Ordinal);
+            // Display the name.
+            using (ImRaii.PushFont(UiBuilder.MonoFont, useMono))
+                CkGui.TextFrameAlignedInline(dispName);
+        }
     }
 
-
-    private void DrawPanel(Vector2 region, float rounding)
+    private void DrawAliasEditor(Vector2 region, AliasTrigger alias, float rounding)
     {
-        if (_selector.Selected is not { } selected)
-            return;
-        // Image.
-        var pos = ImGui.GetCursorScreenPos();
-        var thumbnailSize = new Vector2(CkStyle.TwoRowHeight());
-        var iconSize = new Vector2(ImUtf8.FrameHeight);
-        var padding = ImGui.GetStyle().FramePadding;
-        ImGui.GetWindowDrawList().AddRectFilled(pos, pos + thumbnailSize, ImGui.GetColorU32(ImGuiCol.FrameBg), rounding);
-        ImGui.Dummy(thumbnailSize);
+        var txtWidth = ImGui.CalcTextSize("Ignore Case");
+        var checkboxW = ImUtf8.FrameHeight + txtWidth.X + ImUtf8.ItemInnerSpacing.X * 2;
+
+        // Checkbox with label, then shift right and draw revert/save
+        var enabled = alias.Enabled;
+        if (ImGui.Checkbox("##state", ref enabled))
+            alias.Enabled = !alias.Enabled;
+        CkGui.AttachToolTip("If this can be detected as an alias");
 
         ImUtf8.SameLineInner();
-        //// The non-editor variant of the topright segment.
-        //using (ImRaii.Group())
-        //{
-        //    CkGui.ColorTextFrameAligned(selected.InPool ? "In Pool" : "Not In Pool", selected.InPool ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed);
-        //    ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImUtf8.FrameHeight);
-        //    if (CkGui.IconButton(FAI.Edit, inPopup: true))
-        //        _manager.StartEditing(selected);
+        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - checkboxW);
+        var label = alias.Label;
+        if (ImGui.InputTextWithHint("##name", "Display Name..", ref label, 64))
+            alias.Label = label;
+        CkGui.AttachToolTip("The UI display name for the AliasTrigger");
 
-        //    // Label field.
-        //    CkGui.TextFrameAligned(selected.Label);
-        //}
+        var endX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
+        ImGui.SameLine(endX - CkGui.IconButtonSize(FAI.Redo).X - CkGui.IconButtonSize(FAI.Save).X);
+        if (CkGui.IconButton(FAI.Undo, inPopup: true))
+            _manager.StopEditing();
+        CkGui.AttachToolTip("Reverts any changes and exits the editor");
+        ImGui.SameLine(0, 0);
+        if (CkGui.IconButton(FAI.Save, inPopup: true))
+            _manager.SaveChangesAndStopEditing();
+        CkGui.AttachToolTip("Saves all changes and exits the editor");
 
-        //// Item Label.
-        //if (selected is CursedGagItem item)
-        //    ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged].Handle, iconSize);
-        //else if (selected is CursedRestrictionItem item2)
-        //    ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Restrained].Handle, iconSize);
-        //else
-        //    ImGui.Dummy(iconSize);
+        // Draw the input area
+        CkGui.FramedIconText(FAI.AssistiveListeningSystems);
+        ImUtf8.SameLineInner();
+        ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - checkboxW);
+        var listenTxt = alias.InputCommand;
+        if (ImGui.InputTextWithHint("##listener-text", "Text to detect..", ref label, 64))
+            alias.InputCommand = listenTxt;
+        CkGui.AttachToolTip("The UI display name for the AliasTrigger");
 
-        //CkGui.TextFrameAlignedInline(selected.RefLabel);
+        ImUtf8.SameLineInner();
+        var ignoreCase = alias.IgnoreCase;
+        if (ImGui.Checkbox("Ignore Case", ref ignoreCase))
+            alias.IgnoreCase = !alias.IgnoreCase;
+        CkGui.AttachToolTip("If detection text works RegArdleSs oF CaSE");
 
-        //// Precedence.
-        //CkGui.FramedIconText(FAI.SortAmountUp);
-        //CkGui.TextFrameAlignedInline(selected.Precedence.ToName());
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(2))
+            .Push(ImGuiStyleVar.ItemSpacing, new Vector2(ImUtf8.ItemSpacing.X, 2));
 
-        //// Trait Application.
-        //CkGui.BooleanToColoredIcon(selected.ApplyTraits, false);
-        //CkGui.TextFrameAlignedInline(selected.ApplyTraits ? "Applies traits" : "Ignores traits");
+        DrawReactionsEditor(alias, region.X);
+
+        // Draw out the whitelist area here (do later and stuff)
+        DrawWhitelistEditor(alias);
     }
 
-    private void DrawEditorPanel(Vector2 region, AliasTrigger item, float rounding)
+    private void DrawReactionsEditor(AliasTrigger alias, float width)
     {
-        var rightButtons = CkStyle.GetFrameWidth(2);
-        var spacing = ImUtf8.ItemInnerSpacing;
-        var frameH = ImUtf8.FrameHeight;
-        var buttonSize = CkGui.IconButtonSize(FAI.ArrowsLeftRight);
-        var imgSize = new Vector2(CkStyle.TwoRowHeight());
+        var comboW = 100f * ImGuiHelpers.GlobalScale;
+        var rightW = CkGui.IconButtonSize(FAI.Plus).X + comboW;
+        var activeTypes = alias.Actions.Select(x => x.ActionType);
+        var options = Enum.GetValues<InvokableActionType>().Except(activeTypes).ToList();
 
-        var pos = ImGui.GetCursorScreenPos();
-        ImGui.GetWindowDrawList().AddRectFilled(pos, pos + imgSize, ImGui.GetColorU32(ImGuiCol.FrameBg), rounding);
-        //_drawer.DrawRestrictionImage(item.RefItem, imgSize.Y, rounding, false);
-        //ImUtf8.SameLineInner();
+        ImGui.Separator();
 
-        //using (ImRaii.Group())
-        //{
-        //    CkGui.ColorTextFrameAligned(item.InPool ? "In Pool" : "Not In Pool", item.InPool ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed);
-        //    ImGui.SameLine(ImGui.GetContentRegionAvail().X - rightButtons);
-        //    if (CkGui.IconButton(FAI.Undo, inPopup: true))
-        //        _manager.StopEditing();
-        //    ImUtf8.SameLineInner();
-        //    if (CkGui.IconButton(FAI.Save, inPopup: true))
-        //        _manager.SaveChangesAndStopEditing();
+        CkGui.TextFrameAligned("Alias Reactions:");
+        ImGui.SameLine(ImGui.GetContentRegionAvail().X - rightW);
+        if (CkGuiUtils.EnumCombo("##types", comboW, _selected, out var newVal, options, i => i.ToName(), "All In Use"))
+            _selected = newVal;
+        CkGui.AttachToolTip("The reaction type to add");
 
-        //    // Label field.
-        //    ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
-        //    var label = item.Label;
-        //    if (ImGui.InputTextWithHint("##Name", "Loot Name..", ref label, 64))
-        //        item.Label = label;
-        //    CkGui.AttachToolTip("The Cursed Loot Name");
-        //}
+        ImUtf8.SameLineInner();
+        if (CkGui.IconButton(FAI.Plus, disabled: options.Count is 0))
+        {
+            alias.Actions.Add(_selected switch
+            {
+                InvokableActionType.TextOutput => new TextAction(),
+                InvokableActionType.Gag => new GagAction(),
+                InvokableActionType.Restriction => new RestrictionAction(),
+                InvokableActionType.Restraint => new RestraintAction(),
+                InvokableActionType.Moodle => new MoodleAction(),
+                InvokableActionType.ShockCollar => new PiShockAction(),
+                InvokableActionType.SexToy => new SexToyAction(),
+                _ => throw new ArgumentOutOfRangeException(nameof(_selected), _selected, null)
+            });
+            // sort the order of the actions and reset selection
+            alias.Actions = alias.Actions.OrderBy(x => x.ActionType).ToHashSet();
+            _selected = options.Except(alias.Actions.Select(x => x.ActionType)).FirstOrDefault();
+        }
+        CkGui.AttachToolTip("Add the selected reaction type to this alias.");
 
-        //ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged].Handle, new Vector2(frameH));
-        //ImUtf8.SameLineInner();
-        //var comboW = ImGui.GetContentRegionAvail().X - buttonSize.X - spacing.X;
-        //if (_bindCombo.Draw("##LootRestriction", item.RefItem.Identifier, comboW))
-        //    item.RefItem = _bindCombo.Current!;
-        //if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-        //    item.RefItem = _restrictions.Storage.FirstOrDefault()!;
-        //ImUtf8.SameLineInner();
-        //if (CkGui.IconButton(FAI.ArrowsLeftRight))
-        //    _manager.ChangeCursedLootType(CursedLootKind.Gag);
-        //CkGui.AttachToolTip("Switch between Gag & Restriction Loot Types.");
+        ImGui.Separator();
+        // Determine height and draw
+        var rows = alias.Actions.Count;
+        using var _ = CkRaii.Child("reacitons", new Vector2(width, CkStyle.GetFrameRowsHeight(rows)));
 
-        //// Everything else here is from shared editor info.
-        //CkGui.FramedIconText(FAI.SortAmountUp);
-        //ImUtf8.SameLineInner();
-        //if (CkGuiUtils.EnumCombo("##Precedence", ImGui.GetContentRegionAvail().X / 2, item.Precedence, out var newP, _ => _.ToName(), flags: CFlags.None))
-        //    item.Precedence = newP;
-        //CkGui.AttachToolTip("The priority of application when multiple applied items go on the same slot.");
+        foreach (var reaction in alias.Actions)
+        {
+            using var id = ImRaii.PushId($"{reaction.ActionType}");
+            switch (reaction)
+            {
+                case TextAction ta: _aliasDrawer.DrawTextRowEditor(ta); break;
+                case GagAction ga: _aliasDrawer.DrawGagRowEditor(ga); break;
+                case RestrictionAction rsa: _aliasDrawer.DrawRestrictionRowEditor(rsa); break;
+                case RestraintAction rta: _aliasDrawer.DrawRestraintRowEditor(rta); break;
+                case MoodleAction ma: _aliasDrawer.DrawMoodleRowEditor(ma, MoodleCache.IpcData); break;
+                case PiShockAction ps: _aliasDrawer.DrawShockRowEditor(ps); break;
+                case SexToyAction sta: _aliasDrawer.DrawToyRowEditor(sta); break;
+            }
+            
+            ImGui.SameLine(ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FAI.Minus).X);
+            using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudRed))
+                if (CkGui.IconButton(FAI.Minus, inPopup: true))
+                {
+                    alias.Actions.Remove(reaction);
+                    _selected = options.Except(alias.Actions.Select(x => x.ActionType)).FirstOrDefault();
+                }
+            CkGui.AttachToolTip("Removes this reaction from the AliasTrigger.");
+        }
+    }
 
-        //var doTraits = item.ApplyTraits;
-        //if (ImGui.Checkbox("Apply Traits", ref doTraits))
-        //    item.ApplyTraits = doTraits;
-        //CkGui.AttachToolTip("If the ref item's hardcore traits are applied.");
+    private void DrawWhitelistEditor(AliasTrigger alias)
+    {
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 8f);
+        CkGui.FontText("Whitelist", UiFontService.Default150Percent);
+
+        if (CkGui.IconTextButton(FAI.Ban, "Clear", disabled: ImGui.GetIO().KeyShift))
+        {
+            alias.WhitelistedUIDs.Clear();
+        }
+        CkGui.AttachToolTip(" Add all visible sundesmos nearby.");
+
+        ImUtf8.SameLineInner();
+        if (_pairCombo.Draw(_selectedKinkster, ImGui.GetContentRegionAvail().X))
+        {
+            if (_pairCombo.Current is not { } selected)
+                return;
+
+            if (alias.WhitelistedUIDs.Add(selected.UserData.UID))
+                _logger.LogInformation($"Adding {selected.GetDisplayName()} to Alias {alias.Label}");
+            // Reset selection.
+            _selectedKinkster = null;
+        }
+
+        using var _ = CkRaii.Child("whitelist-child", ImGui.GetContentRegionAvail());
+        using var t = ImRaii.Table("whitelist", 1, ImGuiTableFlags.BordersOuter | ImGuiTableFlags.RowBg, ImGui.GetContentRegionAvail());
+        if (!t) return;
+
+        ImGui.TableSetupColumn("Whitelist");
+        ImGui.TableNextColumn();
+        var widthInner = ImGui.GetContentRegionAvail().X;
+
+        foreach (var kinksterUid in alias.WhitelistedUIDs.ToList())
+        {
+            ImGui.TableNextColumn();
+            if (_kinksters.TryGetKinkster(new(kinksterUid), out var Kinkster))
+            {
+                CkGui.IconTextAligned(FAI.UserCircle);
+                DrawDisplayName(Kinkster);
+                CkGui.AttachToolTip($"UID: --COL--{kinksterUid}--COL--", GsCol.VibrantPink.Vec4Ref());
+            }
+            else
+            {
+                CkGui.IconTextAligned(FAI.UserCircle, ImGuiColors.DalamudGrey3);
+                using (ImRaii.PushFont(UiBuilder.MonoFont))
+                    CkGui.TextFrameAlignedInline(kinksterUid);
+            }
+
+            ImGui.SameLine(widthInner - CkGui.IconButtonSize(FAI.Minus).X);
+            if (CkGui.IconButton(FAI.Minus, id: kinksterUid, inPopup: true))
+                alias.WhitelistedUIDs.Remove(kinksterUid);
+            CkGui.AttachToolTip($"Remove from Selection");
+            ImGui.TableNextRow();
+        }
+
+        void DrawDisplayName(Kinkster s)
+        {
+            // Set it to the display name.
+            var dispName = s.GetDisplayName();
+            // Update mono to be disabled if the display name is not the alias/uid.
+            var useMono = s.UserData.AliasOrUID.Equals(dispName, StringComparison.Ordinal);
+            // Display the name.
+            using (ImRaii.PushFont(UiBuilder.MonoFont, useMono))
+                CkGui.TextFrameAlignedInline(dispName);
+        }
     }
 }

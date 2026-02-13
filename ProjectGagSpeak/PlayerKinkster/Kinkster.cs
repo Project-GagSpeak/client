@@ -64,6 +64,7 @@ public class Kinkster : IComparable<Kinkster>
     public List<ToyBrandName> ValidToys { get; private set; } = new();
     public List<Guid> ActiveCursedItems { get; private set; } = new();
     public AliasStorage SharedAliases { get; private set; } = new AliasStorage();
+    internal bool HasClientNameStored { get; set; } = false; // Idk a better way to do this, but it works.
     public Guid ActivePattern { get; private set; } = Guid.Empty;
     public List<Guid> ActiveAlarms { get; private set; } = new();
     public List<Guid> ActiveTriggers { get; private set; } = new();
@@ -402,6 +403,14 @@ public class Kinkster : IComparable<Kinkster>
         ActiveCursedItems = newActiveLoot;
         // Update internal cache to reflect latest changes for kinkplates and such.
         UpdateCachedLockedSlots();
+    }
+
+    public void NewActiveAliases(List<Guid> activeItems)
+    {
+        // Ensure the enabled state is correctly updated.
+        var itemsSet = activeItems.ToHashSet();
+        foreach (var alias in SharedAliases.Items)
+            alias.Enabled = itemsSet.Contains(alias.Identifier);
     }
 
     public void NewValidToys(List<ToyBrandName> newValidToys)

@@ -20,5 +20,5 @@ public abstract class CkMoodleComboBase<T> : CkFilterComboCache<T>
     protected virtual Vector2 IconSize => MoodleDrawer.IconSize * IconScale;
 
     protected void DrawItemTooltip(MoodlesStatusInfo item)
-        => GsExtensions.DrawMoodleStatusTooltip(item, MoodleCache.IpcData.StatusList);
+        => GagspeakEx.DrawMoodleStatusTooltip(item, MoodleCache.IpcData.StatusList);
 }

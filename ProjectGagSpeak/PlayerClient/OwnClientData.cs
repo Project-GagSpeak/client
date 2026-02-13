@@ -252,5 +252,5 @@ public sealed class ClientData : IDisposable
     }
 
     public void DrawHardcoreStatus()
-        => PermissionHelper.DrawHardcoreStatus(_clientHardcore);
+        => PermHelper.DrawHardcoreStatus(_clientHardcore);
 }

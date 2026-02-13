@@ -22,8 +22,8 @@ public record HcStateCacheChanged : MessageBase;
 public record NameplateClientChanged : MessageBase;
 
 // Kinkster Data Changes
-public record AliasGlobalUpdateMessage(Guid AliasId, AliasTrigger? NewData) : SameThreadMessage;
-public record AliasPairUpdateMessage(UserData IntendedUser, Guid AliasId, AliasTrigger? NewData) : SameThreadMessage;
+public record AliasStateChangedMessage(AliasTrigger Alias) : SameThreadMessage;
+public record ActiveAliasesChangedMessage(List<Guid> ActiveAliases) : SameThreadMessage;
 public record ValidToysChangedMessage(List<ToyBrandName> ValidToys) : SameThreadMessage;
 public record ActivePatternChangedMessage(DataUpdateType UpdateType, Guid NewActivePattern) : SameThreadMessage;
 public record ActiveAlarmsChangedMessage(DataUpdateType UpdateType, List<Guid> ActiveAlarms, Guid ChangedItem) : SameThreadMessage;

@@ -52,7 +52,7 @@ public class OnTickService : IHostedService
 
     private async void OnLogin()
     {
-        await GsExtensions.WaitForPlayerLoading();
+        await GagspeakEx.WaitForPlayerLoading();
         CurrZone = PlayerContent.TerritoryIdInstanced;
         _mediator.Publish(new TerritoryChanged(0, CurrZone));
     }

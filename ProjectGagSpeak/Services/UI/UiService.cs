@@ -1,3 +1,4 @@
+using CkCommons;
 using Dalamud.Interface.Windowing;
 using GagSpeak.Gui;
 using GagSpeak.Gui.Components;
@@ -201,7 +202,25 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     /// <summary> Draw the windows system and file dialogue managers </summary>
     private void Draw()
     {
-        _windowSystem.Draw();
-        _fileService.Draw();
+        PushCustomStyle();
+        try
+        {
+            _windowSystem.Draw();
+            _fileService.Draw();
+        }
+        finally
+        {
+            PopCustomStyle();
+        }
+    }
+
+    private void PushCustomStyle()
+    {
+        CkColors.PushColor(CkCol.TipFrame, GsCol.VibrantPink.Vec4Ref());
+    }
+
+    private void PopCustomStyle()
+    {
+        CkColors.PopColor();
     }
 }

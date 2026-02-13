@@ -9,7 +9,7 @@ namespace GagSpeak.State.Listeners;
 public sealed class PuppeteerListener
 {
     private readonly GagspeakMediator _mediator;
-    private readonly KinksterManager _pairs;
+    private readonly KinksterManager _kinksters;
     private readonly PuppeteerManager _aliasManager;
     public PuppeteerListener(
         GagspeakMediator mediator,
@@ -17,19 +17,29 @@ public sealed class PuppeteerListener
         PuppeteerManager aliasManager)
     {
         _mediator = mediator;
-        _pairs = pairs;
+        _kinksters = pairs;
         _aliasManager = aliasManager;
     }
 
     private void PostActionMsg(string enactor, InteractionType type, string message)
     {
-        if (_pairs.TryGetNickAliasOrUid(enactor, out var nick))
+        if (_kinksters.TryGetNickAliasOrUid(enactor, out var nick))
             _mediator.Publish(new EventMessage(new(nick, enactor, type, message)));
     }
 
-    // Fix later.
-    public void UpdateListener(string pairName, string listenerName)
+    // Maybe move outside this class into somewhere else idk
+    public void UpdateListener(string pairUid, string listenerName)
     {
+        // Update the Puppeteers
+        if (_aliasManager.Puppeteers.TryGetValue(pairUid, out var puppeteer))
+            puppeteer.NameWithWorld = listenerName;
+        else
+            _aliasManager.Puppeteers.Add(pairUid, new PuppeteerPlayer() { NameWithWorld = listenerName });
+        
+        // Update the kinkster as well.
+        if (_kinksters.TryGetKinkster(new(pairUid), out var kinkster))
+            kinkster.HasClientNameStored = true;
 
+        PostActionMsg(pairUid, InteractionType.ListenerName, $"Obtained Listener name from Kinkster");
     }
 }

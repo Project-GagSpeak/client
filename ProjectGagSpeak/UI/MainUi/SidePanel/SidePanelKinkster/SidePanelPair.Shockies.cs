@@ -27,7 +27,7 @@ public partial class SidePanelPair
         {
             UiService.SetUITask(async () =>
             {
-                if (await PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.PiShockShareCode), refCode))
+                if (await PermHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.PiShockShareCode), refCode))
                     await SyncPermissionsWithCode(refCode, k);
             });
         }
@@ -63,7 +63,7 @@ public partial class SidePanelPair
             var newTicks = (ulong)newVal.Ticks;
             UiService.SetUITask(async () =>
             {
-                if (await PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.MaxVibrateDuration), newTicks))
+                if (await PermHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.MaxVibrateDuration), newTicks))
                     cache.TmpVibeDur = -1;
             });
         }

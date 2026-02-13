@@ -11,6 +11,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
+using GagspeakAPI.Data;
 using OtterGui;
 
 namespace GagSpeak.FileSystems;

@@ -445,7 +445,7 @@ public enum KPID : byte
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offsetX);
         if (ImGui.Button(yesButton))
         {
-            UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(hub, k.UserData, k.OwnPerms, nameof(PairPerms.InHardcore), !k.OwnPerms.InHardcore));
+            UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(hub, k.UserData, k.OwnPerms, nameof(PairPerms.InHardcore), !k.OwnPerms.InHardcore));
             ImGui.CloseCurrentPopup();
         }
         ImGui.SameLine();

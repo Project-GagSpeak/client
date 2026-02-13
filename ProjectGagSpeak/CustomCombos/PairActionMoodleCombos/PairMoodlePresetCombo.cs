@@ -81,7 +81,7 @@ public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePreset
                 statusesToCheck.Add(info);
         }
 
-        return PermissionHelper.CanApplyPairStatus(_kinksterRef.PairPerms, statusesToCheck);
+        return PermHelper.CanApplyPairStatus(_kinksterRef.PairPerms, statusesToCheck);
     }
 
     protected override void OnApplyButton(MoodlePresetInfo item)

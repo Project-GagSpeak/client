@@ -184,6 +184,54 @@ public class LootItemsTab : IFancyTab
         CkGui.AttachToolTip("If the cursed Loot should apply the item's attached hardcore traits.");
     }
 
+    private void DrawSetupOverview(Vector2 region, float rounding)
+    {
+        if (_selector.Selected is not { } selected)
+            return;
+        // Image.
+        var pos = ImGui.GetCursorScreenPos();
+        var thumbnailSize = new Vector2(CkStyle.TwoRowHeight());
+        var iconSize = new Vector2(ImUtf8.FrameHeight);
+        var padding = ImGui.GetStyle().FramePadding;
+        ImGui.GetWindowDrawList().AddRectFilled(pos, pos + thumbnailSize, ImGui.GetColorU32(ImGuiCol.FrameBg), rounding);
+        if (selected is CursedGagItem gag)
+            _drawer.DrawFramedImage(gag.RefItem.GagType, thumbnailSize.Y, rounding, 0);
+        else if (selected is CursedRestrictionItem bind)
+            _drawer.DrawRestrictionImage(bind.RefItem, thumbnailSize.Y, rounding, false);
+        else
+            ImGui.Dummy(thumbnailSize);
+
+        ImUtf8.SameLineInner();
+        using (ImRaii.Group())
+        {
+            CkGui.ColorTextFrameAligned(selected.InPool ? "In Pool" : "Not In Pool", selected.InPool ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed);
+            ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImUtf8.FrameHeight);
+            if (CkGui.IconButton(FAI.Edit, inPopup: true))
+                _manager.StartEditing(selected);
+
+            // Label field.
+            CkGui.TextFrameAligned(selected.Label);
+        }
+
+        // Item Label.
+        if (selected is CursedGagItem item)
+            ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged].Handle, iconSize);
+        else if (selected is CursedRestrictionItem item2)
+            ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Restrained].Handle, iconSize);
+        else
+            ImGui.Dummy(iconSize);
+
+        CkGui.TextFrameAlignedInline(selected.RefLabel);
+
+        // Precedence.
+        CkGui.FramedIconText(FAI.SortAmountUp);
+        CkGui.TextFrameAlignedInline(selected.Precedence.ToName());
+
+        // Trait Application.
+        CkGui.BooleanToColoredIcon(selected.ApplyTraits, false);
+        CkGui.TextFrameAlignedInline(selected.ApplyTraits ? "Applies traits" : "Ignores traits");
+    }
+
     private void DrawBindLootEditor(Vector2 region, CursedRestrictionItem item, float rounding)
     {
         var rightButtons = CkStyle.GetFrameWidth(2);
@@ -238,53 +286,5 @@ public class LootItemsTab : IFancyTab
         if (ImGui.Checkbox("Apply Traits", ref doTraits))
             item.ApplyTraits = doTraits;
         CkGui.AttachToolTip("If the ref item's hardcore traits are applied.");
-    }
-
-    private void DrawSetupOverview(Vector2 region, float rounding)
-    {
-        if (_selector.Selected is not { } selected)
-            return;
-        // Image.
-        var pos = ImGui.GetCursorScreenPos();
-        var thumbnailSize = new Vector2(CkStyle.TwoRowHeight());
-        var iconSize = new Vector2(ImUtf8.FrameHeight);
-        var padding = ImGui.GetStyle().FramePadding;
-        ImGui.GetWindowDrawList().AddRectFilled(pos, pos + thumbnailSize, ImGui.GetColorU32(ImGuiCol.FrameBg), rounding);
-        if (selected is CursedGagItem gag)
-            _drawer.DrawFramedImage(gag.RefItem.GagType, thumbnailSize.Y, rounding, 0);
-        else if (selected is CursedRestrictionItem bind)
-            _drawer.DrawRestrictionImage(bind.RefItem, thumbnailSize.Y, rounding, false);
-        else
-            ImGui.Dummy(thumbnailSize);
-
-        ImUtf8.SameLineInner();
-        using (ImRaii.Group())
-        {
-            CkGui.ColorTextFrameAligned(selected.InPool ? "In Pool" : "Not In Pool", selected.InPool ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed);
-            ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImUtf8.FrameHeight);
-            if (CkGui.IconButton(FAI.Edit, inPopup: true))
-                _manager.StartEditing(selected);
-
-            // Label field.
-            CkGui.TextFrameAligned(selected.Label);
-        }
-
-        // Item Label.
-        if (selected is CursedGagItem item)
-            ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged].Handle, iconSize);
-        else if (selected is CursedRestrictionItem item2)
-            ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Restrained].Handle, iconSize);
-        else
-            ImGui.Dummy(iconSize);
-
-        CkGui.TextFrameAlignedInline(selected.RefLabel);
-
-        // Precedence.
-        CkGui.FramedIconText(FAI.SortAmountUp);
-        CkGui.TextFrameAlignedInline(selected.Precedence.ToName());
-
-        // Trait Application.
-        CkGui.BooleanToColoredIcon(selected.ApplyTraits, false);
-        CkGui.TextFrameAlignedInline(selected.ApplyTraits ? "Applies traits" : "Ignores traits");
     }
 }

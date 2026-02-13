@@ -94,7 +94,7 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
         var style = ImGui.GetStyle();
 
         ImGui.Dummy(iconSize);
-        GsExtensions.DrawMoodleStatusTooltip(info.Status, Enumerable.Empty<MoodlesStatusInfo>());
+        GagspeakEx.DrawMoodleStatusTooltip(info.Status, Enumerable.Empty<MoodlesStatusInfo>());
         CkGui.TextFrameAlignedInline(info.Status.Title.StripColorTags());
 
         var buttonW = tryOnButtonSize + LikeButtonSize + iconSize.X + style.ItemInnerSpacing.X * 2;

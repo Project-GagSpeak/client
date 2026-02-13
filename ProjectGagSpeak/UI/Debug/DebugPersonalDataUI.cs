@@ -317,7 +317,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         using var nodeMain = ImRaii.TreeNode(uid + " Hardcore State");
         if (!nodeMain) return;
 
-        PermissionHelper.DrawHardcoreStatus(perms);
+        PermHelper.DrawHardcoreStatus(perms);
     }
 
     private void DrawPairPerms(string label, Kinkster k)
@@ -693,7 +693,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
             else
             {
                 MoodleIcon.DrawMoodleIcon(collar.Moodle.IconID, collar.Moodle.Stacks, MoodleDrawer.IconSizeFramed);
-                GsExtensions.DrawMoodleStatusTooltip(collar.Moodle, Enumerable.Empty<MoodlesStatusInfo>());
+                GagspeakEx.DrawMoodleStatusTooltip(collar.Moodle, Enumerable.Empty<MoodlesStatusInfo>());
             }
             ImGui.TableNextRow();
 

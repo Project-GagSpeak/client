@@ -54,7 +54,7 @@ public partial class SidePanelPair
                 var res = perm.ToPermValue();
                 // Assign the blocking task if allowed.
                 if (!res.name.IsNullOrEmpty() && res.type is PermissionType.PairPerm)
-                    UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, res.name, ticks));
+                    UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, res.name, ticks));
             }
             _timespanCache.Remove(perm);
         }
@@ -62,7 +62,7 @@ public partial class SidePanelPair
 
         ImGui.SameLine(width - ImGui.GetFrameHeight());
         if (EditAccessCheckbox.Draw($"##{perm}", canEdit, out var newVal) && canEdit != newVal)
-            UiService.SetUITask(async () => await PermissionHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.OwnPermAccess, perm.ToPermAccessValue(), newVal));
+            UiService.SetUITask(async () => await PermHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.OwnPermAccess, perm.ToPermAccessValue(), newVal));
         CkGui.AttachToolTip($"{dispName} {(canEdit ? "can" : "can not")} change your {data.PermLabel} setting.", kinkster.OwnPerms.InHardcore);
     }
 
@@ -88,7 +88,7 @@ public partial class SidePanelPair
                 switch (res.type)
                 {
                     case PermissionType.Global: await _hub.ChangeOwnGlobalPerm(res.name, newState); break;
-                    case PermissionType.PairPerm: await PermissionHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, res.name, newState); break;
+                    case PermissionType.PairPerm: await PermHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, res.name, newState); break;
                     default: break;
                 }
             });
@@ -96,7 +96,7 @@ public partial class SidePanelPair
 
         ImGui.SameLine();
         if (EditAccessCheckbox.Draw($"##{perm}", canEdit, out var newVal) && canEdit != newVal)
-            UiService.SetUITask(async () => await PermissionHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.OwnPermAccess, perm.ToPermAccessValue(), newVal));
+            UiService.SetUITask(async () => await PermHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.OwnPermAccess, perm.ToPermAccessValue(), newVal));
         CkGui.AttachToolTip($"{dispName} {(canEdit ? "can" : "can not")} change your {data.PermLabel} setting.", kinkster.OwnPerms.InHardcore);
 
         // draw inside of the button.
@@ -128,8 +128,8 @@ public partial class SidePanelPair
                 switch (res.type)
                 {
                     case PermissionType.Global: await _hub.ChangeOwnGlobalPerm(res.name, newState); break;
-                    case PermissionType.PairPerm: await PermissionHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, res.name, newState); break;
-                    case PermissionType.PairAccess: await PermissionHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.OwnPermAccess, res.name, newState); break;
+                    case PermissionType.PairPerm: await PermHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, res.name, newState); break;
+                    case PermissionType.PairAccess: await PermHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.OwnPermAccess, res.name, newState); break;
                     default: break;
                 }
             });
@@ -139,7 +139,7 @@ public partial class SidePanelPair
         if (EditAccessCheckbox.Draw($"##{perm}", canEdit, out var newVal) && canEdit != newVal)
         {
             var newEditVal = newEditStateFunc();
-            UiService.SetUITask(async () => await PermissionHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.OwnPermAccess, perm.ToPermAccessValue(), newEditVal!));
+            UiService.SetUITask(async () => await PermHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.OwnPermAccess, perm.ToPermAccessValue(), newEditVal!));
         }
         CkGui.AttachToolTip($"{dispName} {(canEdit ? "can" : "can not")} change your {data.PermLabel} setting.", kinkster.OwnPerms.InHardcore);
 
@@ -193,7 +193,7 @@ public partial class SidePanelPair
                 if (!k.OwnPerms.InHardcore)
                     return true;
                 // otherwise, just turn it off. (temporary until safeword is embedded)
-                UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.InHardcore), false));
+                UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.InHardcore), false));
             }
 
             // draw inside of the button.
@@ -211,7 +211,7 @@ public partial class SidePanelPair
 
         ImGui.SameLine(width - ImGui.GetFrameHeight());
         if (HardcoreCheckbox.Draw($"##DevoLocks{name}", devotionalState, out var newVal) && devotionalState != newVal)
-            UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.DevotionalLocks), !devotionalState));
+            UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.DevotionalLocks), !devotionalState));
         CkGui.AttachToolTip(devotionalState
             ? $"Any Hardcore action by {name} will be --COL--pairlocked--COL----NL--This means that only {name} can disable it."
             : $"Anyone you are in Hardcore for can undo Hardcore interactions from --COL--{name}--COL--", color: GsCol.VibrantPink.Vec4());
@@ -229,7 +229,7 @@ public partial class SidePanelPair
         if (ImGui.Button($"##pair-{perm}", new Vector2(width, ImGui.GetFrameHeight())))
         {
             var res = perm.ToPermValue();
-            UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, res.name, !current));
+            UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, res.name, !current));
         }
         CkGui.AttachToolTip($"You {(current ? data.AllowedStr : data.BlockedStr)} {name} {(current ? data.PairAllowedTT : data.PairBlockedTT)}");
 
@@ -258,7 +258,7 @@ public partial class SidePanelPair
         ImUtf8.SameLineInner();
         using (ImRaii.Disabled(isActive))
             if (EditAccessCheckbox.Draw($"##{permName}", allowanceState, out var newVal) && allowanceState != newVal)
-                UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, perm.ToPermAccessValue(), !allowanceState));
+                UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, perm.ToPermAccessValue(), !allowanceState));
         CkGui.AttachToolTip(isActive ? "You are helpless to change this while active!" : allowanceState
                 ? $"Allowing {name} {data.ToggleTrueSuffixTT}." : $"Preventing {name} {data.ToggleFalseSuffixTT}.");
 
@@ -300,14 +300,14 @@ public partial class SidePanelPair
         ImUtf8.SameLineInner();
         using (ImRaii.Disabled(isActive))
             if (EditAccessCheckbox.Draw($"##EmBasic{permName}", allowBasic, out var newVal) && allowBasic != newVal)
-                UiService.SetUITask(PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, KPID.LockedEmoteState.ToPermAccessValue(), newVal));
+                UiService.SetUITask(PermHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, KPID.LockedEmoteState.ToPermAccessValue(), newVal));
         CkGui.AttachToolTip(isActive ? "Helpless to change this while performing a locked emote!" : allowBasic
                 ? $"{name} can force you to Groundsit, Sit, or Cyclepose." : $"Preventing {name} from placing you in a locked emote state.");
 
         ImUtf8.SameLineInner();
         using (ImRaii.Disabled(isActive))
             if (EditAccessCheckbox.Draw($"##EmFull{permName}", allowAll, out var newVal2) && allowAll != newVal2)
-                UiService.SetUITask(PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, KPID.LockedEmoteState.ToPermAccessValue(true), newVal2));
+                UiService.SetUITask(PermHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, KPID.LockedEmoteState.ToPermAccessValue(true), newVal2));
         CkGui.AttachToolTip(isActive ? "Helpless to change this while performing a locked emote!" : allowBasic
                 ? $"{name} can force you to perform any looping emote." : $"Preventing looped emotes from being forced by {name}.");
 
@@ -364,7 +364,7 @@ public partial class SidePanelPair
                 if (!res.name.IsNullOrEmpty() && res.type is PermissionType.PairPerm)
                 {
                     Svc.Logger.Information($"Attempting to change {dispName}'s {res.name} to {ticks} ticks.", LoggerType.UI);
-                    UiService.SetUITask(async () => await PermissionHelper.ChangeOtherUnique(_hub, kinkster.UserData, kinkster.PairPerms, res.name, ticks));
+                    UiService.SetUITask(async () => await PermHelper.ChangeOtherUnique(_hub, kinkster.UserData, kinkster.PairPerms, res.name, ticks));
                 }
             }
             _timespanCache.Remove(perm);
@@ -397,10 +397,10 @@ public partial class SidePanelPair
                 switch (res.type)
                 {
                     case PermissionType.Global:
-                        await PermissionHelper.ChangeOtherGlobal(_hub, kinkster.UserData, kinkster.PairGlobals, res.name, newState);
+                        await PermHelper.ChangeOtherGlobal(_hub, kinkster.UserData, kinkster.PairGlobals, res.name, newState);
                         break;
                     case PermissionType.PairPerm:
-                        await PermissionHelper.ChangeOtherUnique(_hub, kinkster.UserData, kinkster.PairPerms, res.name, newState);
+                        await PermHelper.ChangeOtherUnique(_hub, kinkster.UserData, kinkster.PairPerms, res.name, newState);
                         break;
                     default:
                         break;

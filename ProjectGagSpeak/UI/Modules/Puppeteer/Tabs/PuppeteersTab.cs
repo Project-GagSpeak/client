@@ -9,9 +9,12 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.DrawSystem;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
-using GagSpeak.Services.Mediator;
+using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
+using GagSpeak.Utils;
+using GagSpeak.WebAPI;
+using GagspeakAPI.Data.Permissions;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Wardrobe;
@@ -19,19 +22,20 @@ namespace GagSpeak.Gui.Wardrobe;
 public class PuppeteersTab : IFancyTab
 {
     private readonly ILogger<PuppeteersTab> _logger;
+    private readonly MainHub _hub;
     private readonly PuppeteersDrawer _drawer;
     private readonly PuppeteerManager _manager;
     private readonly TutorialService _guides;
 
-    private Kinkster? _selected => _drawer.Selected;
-    
-    // may need to move elsewhere
-    private bool _editingPerms = false;
+    private TagCollection _triggersBox = new();
 
-    public PuppeteersTab(ILogger<PuppeteersTab> logger, GagspeakMediator mediator,
+    private Kinkster? _selected => _drawer.Selected;
+
+    public PuppeteersTab(ILogger<PuppeteersTab> logger, MainHub hub,
         PuppeteersDrawer drawer, PuppeteerManager manager, TutorialService guides)
     {
         _logger = logger;
+        _hub = hub;
         _drawer = drawer;
         _manager = manager;
         _guides = guides;
@@ -46,14 +50,14 @@ public class PuppeteersTab : IFancyTab
     {
         using var style = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, ImUtf8.FramePadding - new Vector2(0,1));
 
-        var leftWidth = width * 0.6f;
+        var leftW = width * 0.45f;
         var rounding = FancyTabBar.BarHeight * .4f;
-        DrawPuppeteers(leftWidth, rounding);
+        DrawPuppeteers(leftW, rounding);
 
         ImUtf8.SameLineInner();
         using (ImRaii.Group())
         {
-            DrawSelectedPuppeteer(CkStyle.GetFrameRowsHeight(5), rounding);
+            DrawSelectedPuppeteer(CkStyle.GetFrameRowsHeight(9).AddWinPadY(), rounding);
             DrawMarionetteStats(rounding);
         }
     }
@@ -69,105 +73,126 @@ public class PuppeteersTab : IFancyTab
     private void DrawSelectedPuppeteer(float innerHeight, float rounding)
     {
         using var _ = CkRaii.FramedChildPaddedW("Sel", ImGui.GetContentRegionAvail().X, innerHeight, 0, GsCol.VibrantPink.Uint(), rounding);
-        // Draw editor if editing
-        if (_editingPerms)
-            DrawMarionetteEditor(_.InnerRegion, rounding);
-        else
-            DrawMarionetteView(_.InnerRegion, rounding);
-    }
 
-    private void DrawMarionetteView(Vector2 region, float rounding)
-    {
-        if (_selected is not { } puppeteer)
+        if (_selected is not { } kinkster)
+        {
+            CkGui.CenterColorTextAligned("No Puppeteer Selected", ImGuiColors.DalamudRed);
             return;
+        }
 
-        ImGui.Text("WAH!");
-        //// The non-editor variant of the topright segment.
-        //using (ImRaii.Group())
-        //{
-        //    CkGui.ColorTextFrameAligned(selected.InPool ? "In Pool" : "Not In Pool", selected.InPool ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed);
-        //    ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImUtf8.FrameHeight);
-        //    if (CkGui.IconButton(FAI.Edit, inPopup: true))
-        //        _manager.StartEditing(selected);
+        CkGui.IconTextAligned(FAI.User);
+        if (_manager.Puppeteers.TryGetValue(kinkster.UserData.UID, out var puppeteerData))
+        {
+            CkGui.ColorTextFrameAlignedInline(puppeteerData.NameWithWorld, CkCol.TriStateCheck.Vec4());
+            CkGui.AttachToolTip($"{kinkster.GetDisplayName()} is associated with this PlayerName." +
+                $"--SEP----COL--If they changed Name/World, they will need to send you it again.--COL--", ImGuiColors.TankBlue);
+        }
+        else
+        {
+            CkGui.ColorTextFrameAlignedInline("Kinkster's PlayerName not yet Stored!", ImGuiColors.DalamudRed);
+            CkGui.HelpText("There is currently no PlayerName stored for this Kinkster." +
+                "--NL----COL--They will need to send you theirs for you to react to them.--COL--", ImGuiColors.TankBlue, true);
+        }
 
-        //    // Label field.
-        //    CkGui.TextFrameAligned(selected.Label);
-        //}
+        CkGui.IconTextAligned(FAI.Fingerprint);
+        CkGui.TextFrameAlignedInline("Triggers");
+        var ignoreCase = kinkster.OwnPerms.IgnoreTriggerCase;
+        ImUtf8.SameLineInner();
+        if (CkGui.Checkbox("##ignore-case", ref ignoreCase, UiService.DisableUI))
+        {
+            UiService.SetUITask(async () =>
+            {
+                _logger.LogTrace($"Updating Ignore-Case to {ignoreCase}", LoggerType.Puppeteer);
+                // This updates the result between transit to look instant on the client end, reverting edit on failure.
+                await PermHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, nameof(PairPerms.IgnoreTriggerCase), ignoreCase);
+            });
+        }
+        CkGui.ColorTextFrameAlignedInline("Ignore Case?", ImGuiColors.DalamudGrey2);
 
-        //// Item Label.
-        //if (selected is CursedGagItem item)
-        //    ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged].Handle, iconSize);
-        //else if (selected is CursedRestrictionItem item2)
-        //    ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Restrained].Handle, iconSize);
-        //else
-        //    ImGui.Dummy(iconSize);
+        // Trigger Phrases inside of a framed child
+        using (var phraseBox = CkRaii.FramedChildPaddedW("triggers", _.InnerRegion.X, CkStyle.GetFrameRowsHeight(2), 0, GsCol.RemoteLines.Uint(), rounding, DFlags.RoundCornersAll))
+        {
+            var triggers = kinkster.OwnPerms.TriggerPhrase;
+            if (_triggersBox.DrawTagsEditor("##box", triggers, out var updatedString, GsCol.VibrantPink.Vec4Ref()))
+            {
+                _logger.LogTrace("The Tag Editor had an update!");
+                UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, nameof(PairPerms.TriggerPhrase), updatedString));
+            }
+        }
 
-        //CkGui.TextFrameAlignedInline(selected.RefLabel);
+        // Brackets
+        DrawBracketsRow(kinkster);
 
-        //// Precedence.
-        //CkGui.FramedIconText(FAI.SortAmountUp);
-        //CkGui.TextFrameAlignedInline(selected.Precedence.ToName());
+        // Now the container that draws out the orders and the image.
+        using var perms = CkRaii.Child("permissions", ImGui.GetContentRegionAvail());
 
-        //// Trait Application.
-        //CkGui.BooleanToColoredIcon(selected.ApplyTraits, false);
-        //CkGui.TextFrameAlignedInline(selected.ApplyTraits ? "Applies traits" : "Ignores traits");
+        using (ImRaii.Group())
+        {
+            var filter = (uint)(kinkster.OwnPerms.PuppetPerms);
+            using (ImRaii.Disabled(UiService.DisableUI))
+            {
+                foreach (var category in Enum.GetValues<PuppetPerms>().Skip(1))
+                {
+                    ImGui.CheckboxFlags($"Allow {category}", ref filter, (uint)category);
+
+                    CkGui.AttachToolTip(category switch
+                    {
+                        PuppetPerms.All => $"Grant {kinkster.GetDisplayName()} access to all commands.--SEP--(Take Care with this)",
+                        PuppetPerms.Alias => $"Allow {kinkster.GetDisplayName()} to make you execute alias triggers.",
+                        PuppetPerms.Emotes => $"Allow {kinkster.GetDisplayName()} to make you perform emotes.",
+                        PuppetPerms.Sit => $"Allow {kinkster.GetDisplayName()} to make you sit or cycle poses.",
+                        _ => $"NO PERMS ALLOWED."
+                    });
+                }
+            }
+            // Check for updates
+            if (kinkster.OwnPerms.PuppetPerms != (PuppetPerms)filter)
+                UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, nameof(PairPerms.PuppetPerms), (PuppetPerms)filter));
+        }
+
+        // Get the height, this will be the square ratio that the image is drawn in
+        if (CosmeticService.CoreTextures.Cache[CoreTexture.PuppetPuppeteers] is { } wrap)
+        {
+            var imgSize = new Vector2(perms.InnerRegion.Y);
+            ImGui.SameLine(perms.InnerRegion.X - imgSize.X);
+            ImGui.Image(wrap.Handle, imgSize);
+        }
     }
 
-    // Just editing our generic permissions for this kinkster. Nothing other than the kinkster is nessisary here.
-    private void DrawMarionetteEditor(Vector2 region, float rounding)
+    private void DrawBracketsRow(Kinkster puppeteer)
     {
-        var rightButtons = CkStyle.GetFrameWidth(2);
-        var spacing = ImUtf8.ItemInnerSpacing;
-        var frameH = ImUtf8.FrameHeight;
-        var buttonSize = CkGui.IconButtonSize(FAI.ArrowsLeftRight);
-        var imgSize = new Vector2(CkStyle.TwoRowHeight());
+        CkGui.IconTextAligned(FAI.Code);
+        CkGui.TextFrameAlignedInline("Custom Scope Brackets");
 
-        var pos = ImGui.GetCursorScreenPos();
-        ImGui.GetWindowDrawList().AddRectFilled(pos, pos + imgSize, ImGui.GetColorU32(ImGuiCol.FrameBg), rounding);
-        //_drawer.DrawRestrictionImage(item.RefItem, imgSize.Y, rounding, false);
-        //ImUtf8.SameLineInner();
+        var sChar = puppeteer.OwnPerms.StartChar.ToString();
+        var eChar = puppeteer.OwnPerms.EndChar.ToString();
+        ImUtf8.SameLineInner();
+        ImGui.SetNextItemWidth(ImGui.GetTextLineHeight());
+        ImGui.InputText("##BracketBegin", ref sChar, 1);
+        // Handle this way instead of on updates to prevent forcing the string to not be empty
+        if (ImGui.IsItemDeactivated() && sChar.Length == 1)
+        {
+            if (!char.IsWhiteSpace(sChar, 0) && sChar[0] != puppeteer.OwnPerms.StartChar)
+            {
+                _logger.LogTrace($"Updating Start Bracket as it changed to: {sChar}");
+                UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, puppeteer.UserData, puppeteer.OwnPerms, nameof(PairPerms.StartChar), sChar[0]));
+            }
+        }
+        CkGui.AttachToolTip($"Optional Start character that scopes an order following a trigger phrase.");
 
-        //using (ImRaii.Group())
-        //{
-        //    CkGui.ColorTextFrameAligned(item.InPool ? "In Pool" : "Not In Pool", item.InPool ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed);
-        //    ImGui.SameLine(ImGui.GetContentRegionAvail().X - rightButtons);
-        //    if (CkGui.IconButton(FAI.Undo, inPopup: true))
-        //        _manager.StopEditing();
-        //    ImUtf8.SameLineInner();
-        //    if (CkGui.IconButton(FAI.Save, inPopup: true))
-        //        _manager.SaveChangesAndStopEditing();
-
-        //    // Label field.
-        //    ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
-        //    var label = item.Label;
-        //    if (ImGui.InputTextWithHint("##Name", "Loot Name..", ref label, 64))
-        //        item.Label = label;
-        //    CkGui.AttachToolTip("The Cursed Loot Name");
-        //}
-
-        //ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged].Handle, new Vector2(frameH));
-        //ImUtf8.SameLineInner();
-        //var comboW = ImGui.GetContentRegionAvail().X - buttonSize.X - spacing.X;
-        //if (_bindCombo.Draw("##LootRestriction", item.RefItem.Identifier, comboW))
-        //    item.RefItem = _bindCombo.Current!;
-        //if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-        //    item.RefItem = _restrictions.Storage.FirstOrDefault()!;
-        //ImUtf8.SameLineInner();
-        //if (CkGui.IconButton(FAI.ArrowsLeftRight))
-        //    _manager.ChangeCursedLootType(CursedLootKind.Gag);
-        //CkGui.AttachToolTip("Switch between Gag & Restriction Loot Types.");
-
-        //// Everything else here is from shared editor info.
-        //CkGui.FramedIconText(FAI.SortAmountUp);
-        //ImUtf8.SameLineInner();
-        //if (CkGuiUtils.EnumCombo("##Precedence", ImGui.GetContentRegionAvail().X / 2, item.Precedence, out var newP, _ => _.ToName(), flags: CFlags.None))
-        //    item.Precedence = newP;
-        //CkGui.AttachToolTip("The priority of application when multiple applied items go on the same slot.");
-
-        //var doTraits = item.ApplyTraits;
-        //if (ImGui.Checkbox("Apply Traits", ref doTraits))
-        //    item.ApplyTraits = doTraits;
-        //CkGui.AttachToolTip("If the ref item's hardcore traits are applied.");
+        ImUtf8.SameLineInner();
+        ImGui.SetNextItemWidth(ImGui.GetTextLineHeight());
+        ImGui.InputText("##BracketEnd", ref eChar, 1);
+        // Handle this way instead of on updates to prevent forcing the string to not be empty
+        if (ImGui.IsItemDeactivated() && eChar.Length == 1)
+        {
+            if (!char.IsWhiteSpace(eChar, 0) && eChar[0] != puppeteer.OwnPerms.EndChar)
+            {
+                _logger.LogTrace($"Updating End Bracket as it changed to: {sChar}");
+                UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, puppeteer.UserData, puppeteer.OwnPerms, nameof(PairPerms.EndChar), eChar[0]));
+            }
+        }
+        CkGui.AttachToolTip($"Optional End character that scopes an order following a trigger phrase.");
     }
 
     private void DrawMarionetteStats(float rounding)

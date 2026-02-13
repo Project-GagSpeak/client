@@ -79,7 +79,7 @@ public sealed class OwnMoodlePresetToPairCombo : CkMoodleComboButtonBase<MoodleP
             if (MoodleCache.IpcData.Statuses.TryGetValue(guid, out var s))
                 statuses.Add(s);
         // Check application.
-        return PermissionHelper.CanApplyPairStatus(_kinksterRef.PairPerms, statuses);
+        return PermHelper.CanApplyPairStatus(_kinksterRef.PairPerms, statuses);
     }
 
     protected override void OnApplyButton(MoodlePresetInfo item)

@@ -4,6 +4,7 @@ using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using GagSpeak.GameInternals.Detours;
 using GagSpeak.PlayerControl;
 using GagSpeak.State;
+using GagSpeak.Utils;
 namespace GagSpeak;
 
 public static unsafe class HcApproachNearestHousing
@@ -17,7 +18,7 @@ public static unsafe class HcApproachNearestHousing
     public static HardcoreTaskCollection GetTaskCollection(HcTaskManager hcTasks)
     {
         return hcTasks.CreateCollection("Enter Housing", new(HcTaskControl.LockThirdPerson | HcTaskControl.BlockAllKeys | HcTaskControl.DoConfinementPrompts))
-            .Add(new HardcoreTask(HcCommonTaskFuncs.WaitForPlayerLoading))
+            .Add(new HardcoreTask(GagspeakEx.IsPlayerFullyLoaded))
             .Add(new HardcoreTask(TargetNearestHousingNode))
             .Add(hcTasks.CreateBranch(IsTargetApartment, "Approach Housing Node")
                 .SetTrueTask(hcTasks.CreateGroup("Approach Apartment")

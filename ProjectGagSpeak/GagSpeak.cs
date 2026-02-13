@@ -335,7 +335,7 @@ public static class GagSpeakServiceExtensions
         .AddScoped<ModPresetDrawer>()
         .AddScoped<MoodleDrawer>()
         .AddScoped<ActiveItemsDrawer>()
-        .AddScoped<AliasItemDrawer>()
+        .AddScoped<AliasTriggerDrawer>()
         .AddScoped<TriggerDrawer>()
         .AddScoped<ImageImportTool>()
         .AddScoped<SidePanelPair>()

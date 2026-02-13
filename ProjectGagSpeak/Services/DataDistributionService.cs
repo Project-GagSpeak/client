@@ -95,11 +95,8 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
             PushCompositeData(_kinksters.GetOnlineUserDatas()).ConfigureAwait(false);
         });
 
-        // Revisit this!
-        Mediator.Subscribe<AliasGlobalUpdateMessage>(this, arg => DistributeDataGlobalAlias(arg).ConfigureAwait(false));
-        Mediator.Subscribe<AliasPairUpdateMessage>(this, arg => DistributeDataUniqueAlias(arg).ConfigureAwait(false));
-        
-        
+        Mediator.Subscribe<AliasStateChangedMessage>(this, arg => PushAliasStateChange(arg).ConfigureAwait(false));
+        Mediator.Subscribe<ActiveAliasesChangedMessage>(this, arg => PushActiveAliasesUpdate(arg).ConfigureAwait(false));
         Mediator.Subscribe<ValidToysChangedMessage>(this, arg => PushValidToysUpdate(arg).ConfigureAwait(false));
         Mediator.Subscribe<ActivePatternChangedMessage>(this, arg => PushActivePatternUpdate(arg).ConfigureAwait(false));
         Mediator.Subscribe<ActiveAlarmsChangedMessage>(this, arg => PushActiveAlarmsUpdate(arg).ConfigureAwait(false));
@@ -110,6 +107,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         Mediator.Subscribe<ConfigRestraintSetChanged>(this, msg => DistributeRestraintSetUpdate(msg.Item, msg.Type).ConfigureAwait(false));
         Mediator.Subscribe<ConfigCollarChanged>(this, msg => DistributeCollarUpdate(msg.Item, msg.Type).ConfigureAwait(false));
         Mediator.Subscribe<ConfigCursedItemChanged>(this, msg => DistributeCursedItemUpdate(msg.Item, msg.Type).ConfigureAwait(false));
+        Mediator.Subscribe<ConfigAliasItemChanged>(this, msg => DistributeAliasItemUpdate(msg.Item, msg.Type).ConfigureAwait(false));
         Mediator.Subscribe<ConfigPatternChanged>(this, msg => DistributePatternUpdate(msg.Item, msg.Type).ConfigureAwait(false));
         Mediator.Subscribe<ConfigAlarmChanged>(this, msg => DistributeAlarmUpdate(msg.Item, msg.Type).ConfigureAwait(false));
         Mediator.Subscribe<ConfigTriggerChanged>(this, msg => DistributeTriggerUpdate(msg.Item, msg.Type).ConfigureAwait(false));
@@ -481,31 +479,24 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         return res.Value;
     }
 
-
-
-
-
-    /// <summary> Pushes the new Global AliasTrigger update to the server. </summary>
-    /// <remarks> If this call fails, the previous data will not be updated. </remarks>
-    private async Task DistributeDataGlobalAlias(AliasGlobalUpdateMessage msg)
+    private async Task PushAliasStateChange(AliasStateChangedMessage msg)
     {
-        var onlinePlayers = _kinksters.GetOnlineUserDatas();
-        Logger.LogDebug($"Pushing Updated Global AliasTrigger to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
+        var toSend = _kinksters.GetOnlineUserDatas().Where(u => msg.Alias.WhitelistedUIDs.Contains(u.UID)).ToList();
+        Logger.LogDebug($"Pushing AliasStateChange to {string.Join(", ", toSend.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
 
-        var dto = new PushClientAliasGlobalUpdate(onlinePlayers, msg.AliasId, msg.NewData);
-        if (await _hub.UserPushAliasGlobalUpdate(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
-            Logger.LogError("Failed to push Global AliasTrigger to server Reason: " + res);
+        var dto = new PushClientAliasState(toSend, msg.Alias.Identifier, msg.Alias.Enabled);
+        if (await _hub.UserPushAliasState(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+            Logger.LogError($"Failed to push AliasStateChange update to server. Reason: [{res}]");
     }
 
-    /// <summary> Pushes the new AliasTrigger specific to a Kinkster to the server. </summary>
-    /// <remarks> If this call fails, the previous data will not be updated. </remarks>
-    private async Task DistributeDataUniqueAlias(AliasPairUpdateMessage msg)
+    private async Task PushActiveAliasesUpdate(ActiveAliasesChangedMessage msg)
     {
-        Logger.LogDebug($"Pushing AliasPairUpdate to {msg.IntendedUser.AliasOrUID}", LoggerType.OnlinePairs);
+        var onlinePlayers = _kinksters.GetOnlineUserDatas();
+        Logger.LogDebug($"Pushing ActiveAliasesUpdate to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
 
-        var dto = new PushClientAliasUniqueUpdate(msg.IntendedUser, msg.AliasId, msg.NewData);
-        if (await _hub.UserPushAliasUniqueUpdate(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
-            Logger.LogError($"Failed to push AliasPairUpdate to server. [{res}]");
+        var dto = new PushClientActiveAliases(onlinePlayers, msg.ActiveAliases);
+        if (await _hub.UserPushActiveAliases(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+            Logger.LogError($"Failed to push ActiveAliases update to server. Reason: [{res}]");
     }
 
     public async Task PushValidToysUpdate(ValidToysChangedMessage msg)
@@ -597,6 +588,18 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         Logger.LogDebug($"Pushing CursedItemChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
         var dto = new PushClientDataChangeLoot(onlinePlayers, item.Identifier, item.ToLightItem());
         if (await _hub.UserPushNewLootData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+            Logger.LogError($"Failed to push CursedItemData to paired Kinksters. [{res}]");
+        else
+            Logger.LogDebug("Successfully pushed CursedItemData to server", LoggerType.OnlinePairs);
+    }
+
+    // Recipients will know if they should remove the item if they are not contained within the new whitelist, or if it is null.
+    private async Task DistributeAliasItemUpdate(AliasTrigger item, StorageChangeType kind)
+    {
+        var online = _kinksters.GetOnlineUserDatas();
+        Logger.LogDebug($"Pushing AliasTriggerChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
+        var dto = new PushClientDataChangeAlias(online, item.Identifier, item);
+        if (await _hub.UserPushNewAliasData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push CursedItemData to paired Kinksters. [{res}]");
         else
             Logger.LogDebug("Successfully pushed CursedItemData to server", LoggerType.OnlinePairs);

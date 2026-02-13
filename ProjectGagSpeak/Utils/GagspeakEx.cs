@@ -14,7 +14,7 @@ using Penumbra.GameData.Structs;
 using System.Runtime.InteropServices;
 
 namespace GagSpeak.Utils;
-public static class GsExtensions
+public static class GagspeakEx
 {
     /// <summary>
     ///     A reliable Player.Interactable, that also waits on the loading screen to finish. <para />
@@ -22,11 +22,14 @@ public static class GsExtensions
     /// </summary>
     public static async Task WaitForPlayerLoading()
     {
-        while (!await Svc.Framework.RunOnFrameworkThread(HcCommonTaskFuncs.WaitForPlayerLoading).ConfigureAwait(false))
+        while (!await Svc.Framework.RunOnFrameworkThread(IsPlayerFullyLoaded).ConfigureAwait(false))
         {
             await Task.Delay(100).ConfigureAwait(false);
         }
     }
+
+    public static bool IsPlayerFullyLoaded()
+        => PlayerData.Interactable && HcTaskUtils.IsScreenReady();
 
     public static bool HasValidSetup(this GagspeakConfig configuration)
         => configuration.AcknowledgementUnderstood;

@@ -267,7 +267,7 @@
 //            if (sChar != k.OwnPerms.StartChar.ToString())
 //            {
 //                Logger.LogTrace($"Updating Start Bracket as it changed to: {sChar}");
-//                UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.StartChar), sChar[0]));
+//                UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.StartChar), sChar[0]));
 //            }
 //        }
 //        CkGui.AttachToolTip($"Optional Start Bracket to scope the text command in.");
@@ -280,7 +280,7 @@
 //            if (eChar != k.OwnPerms.EndChar.ToString())
 //            {
 //                Logger.LogTrace($"Updating End Bracket as it changed to: {eChar}");
-//                UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.EndChar), eChar[0]));
+//                UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.EndChar), eChar[0]));
 //            }
 //        }
 //        CkGui.AttachToolTip($"Optional End Bracket to scope the text command in.");
@@ -296,7 +296,7 @@
 //        if (_pairTriggerTags.DrawTagsEditor("##OwnPairPhrases", triggerPhrase, out var updatedString) && kinkster is not null)
 //        {
 //            Logger.LogTrace("The Tag Editor had an update!");
-//            UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, nameof(PairPerms.TriggerPhrase), updatedString));
+//            UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, nameof(PairPerms.TriggerPhrase), updatedString));
 //        }
 //    }
 
@@ -321,7 +321,7 @@
 
 //        if (kinkster is not null && kinkster.OwnPerms.PuppetPerms != (PuppetPerms)categoryFilter)
 //        {
-//            UiService.SetUITask(async () => await PermissionHelper.ChangeOwnUnique(
+//            UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(
 //                _hub, kinkster.UserData, kinkster.OwnPerms, nameof(PairPerms.PuppetPerms), (PuppetPerms)categoryFilter));
 //        }
 //    }

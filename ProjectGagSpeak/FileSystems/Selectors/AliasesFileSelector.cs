@@ -1,4 +1,5 @@
 using CkCommons;
+using CkCommons.DrawSystem;
 using CkCommons.FileSystem;
 using CkCommons.FileSystem.Selector;
 using CkCommons.Gui;
@@ -99,10 +100,6 @@ public sealed class AliasesFileSelector : CkFileSystemSelector<AliasTrigger, Ali
         wdl.ChannelsSetCurrent(1);
 
         ImGui.SetCursorScreenPos(rectMin + padding);
-        var pos = ImGui.GetCursorScreenPos();
-        var iconSize = new Vector2(leafSize.Y - spacing.X);
-        // Draw out the actual contents based on the type.
-        wdl.AddRectFilled(pos, pos + iconSize, ImGui.GetColorU32(ImGuiCol.FrameBg), rounding);
         // Begin drawing out the contents.
         using (ImRaii.Group())
         {
@@ -124,7 +121,7 @@ public sealed class AliasesFileSelector : CkFileSystemSelector<AliasTrigger, Ali
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + centerHeight);
         var dotPos = ImGui.GetCursorScreenPos();
         var col = leaf.Value.Enabled ? CkCol.TriStateCheck.Uint() : CkCol.TriStateCross.Uint();
-        CkGui.IconText(FAI.DotCircle, col);
+        CkGui.IconText(FAI.Circle, col);
         CkGui.AttachToolTip($"This Alias is {(leaf.Value.Enabled ? "Enabled" : "Disabled")}");
 
         wdl.ChannelsSetCurrent(0);
@@ -154,6 +151,7 @@ public sealed class AliasesFileSelector : CkFileSystemSelector<AliasTrigger, Ali
     protected override float CustomFiltersWidth(float width)
     {
         return width
+            - CkGui.IconButtonSize(FAI.Trash).X
             - CkGui.IconButtonSize(FAI.Plus).X
             - CkGui.IconButtonSize(FAI.FolderPlus).X
             - ImGui.GetStyle().ItemInnerSpacing.X;
@@ -161,6 +159,22 @@ public sealed class AliasesFileSelector : CkFileSystemSelector<AliasTrigger, Ali
 
     protected override void DrawCustomFilters()
     {
+        if (CkGui.IconButton(FAI.Trash, disabled: !ImGui.GetIO().KeyShift, inPopup: true))
+        {
+            if (SelectedLeaf is { } singleLeaf)
+            {
+                _manager.Delete(singleLeaf.Value);
+            }
+            else
+            {
+                var toDelete = SelectedPaths.OfType<CkFileSystem<AliasTrigger>.Leaf>();
+                foreach (var leaf in toDelete)
+                    _manager.Delete(leaf.Value);
+            }
+        }
+        CkGui.AttachToolTip("Deletes this aliases selected.");
+
+        ImGui.SameLine(0, 1);
         if (CkGui.IconButton(FAI.Plus, inPopup: true))
             ImGui.OpenPopup("##NewAlias");
         CkGui.AttachToolTip("Create a new Cursed Item.");

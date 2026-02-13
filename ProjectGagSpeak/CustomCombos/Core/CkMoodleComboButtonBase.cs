@@ -66,5 +66,5 @@ public abstract class CkMoodleComboButtonBase<T> : CkFilterComboCache<T>
     }
 
     protected void DrawItemTooltip(MoodlesStatusInfo item)
-        => GsExtensions.DrawMoodleStatusTooltip(item, _kinksterRef.MoodleData.StatusList);
+        => GagspeakEx.DrawMoodleStatusTooltip(item, _kinksterRef.MoodleData.StatusList);
 }

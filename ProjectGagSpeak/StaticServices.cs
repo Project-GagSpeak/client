@@ -242,7 +242,7 @@ public static class ItemSvc
         {
             Slot = slot,
             GameItem = Resolve(slot, new CustomItemId(json["CustomItemId"]?.Value<ulong>() ?? 4294967164)),
-            GameStain = GsExtensions.ParseCompactStainIds(json)
+            GameStain = GagspeakEx.ParseCompactStainIds(json)
         };
     }
 
