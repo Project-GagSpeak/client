@@ -99,7 +99,7 @@ public class AliasesTab : IFancyTab
         if (_selector.Selected is not { } alias)
             return;
 
-        // Topright should have a selectable checkmark to flick its state
+        // Top right should have a selectable checkmark to flick its state
         CkGui.BooleanToColoredIcon(alias.Enabled, false);
         CkGui.AttachToolTip("If this alias is enabled.--SEP----COL--Click to toggle!--COL--", ImGuiColors.ParsedPink);
         if (ImGui.IsItemClicked())
