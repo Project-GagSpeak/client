@@ -3,50 +3,247 @@ using CkCommons.Helpers;
 using Dalamud.Game.Text.SeStringHandling;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
-using GagSpeak.GameInternals;
 using GagSpeak.GameInternals.Structs;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.State.Managers;
+using GagSpeak.State.Models;
 using GagSpeak.Utils;
-using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using System.Diagnostics.CodeAnalysis;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.State.Handlers;
 
 /// <summary>
-///     Handles incoming invokations for various triggers to in turn execute them
-/// </summary>
-/// <remarks>
+///     Handles incoming invokations for various triggers to in turn execute them <para />
 ///     May or may not have future integration weaved into this listener for the vibe server lobby system.
-/// </remarks>
+/// </summary>
 public class TriggerHandler
 {
     private readonly ILogger<TriggerHandler> _logger;
+    private readonly MainConfig _config;
+    private readonly KinksterManager _kinksters;
     private readonly PuppeteerManager _puppeteer;
     private readonly TriggerManager _triggers;
     private readonly TriggerActionService _triggerService;
 
-    public TriggerHandler(ILogger<TriggerHandler> logger, PuppeteerManager aliases, 
-        TriggerManager triggers, TriggerActionService service)
+    public TriggerHandler(ILogger<TriggerHandler> logger, MainConfig config, 
+        KinksterManager kinksters, PuppeteerManager aliases, TriggerManager triggers,
+        TriggerActionService service)
     {
         _logger = logger;
+        _config = config;
+        _kinksters = kinksters;
         _puppeteer = aliases;
         _triggers = triggers;
         _triggerService = service;
     }
-
-    public void CheckForPuppeteerMsg(Kinkster k, InputChannel channel, SeString msg)
+    
+    public async void CheckChatForTrigger(string name, string world, SeString msg)
     {
-        var triggers = k.OwnPerms.TriggerPhrase.Split(',').ToList();
-        if (IsValidTriggerWord(triggers, msg, out var found))
+        // Fail if we are not connected with a valid globals (REMOVE LATER)
+        if (ClientData.Globals is not { } globals)
+            return;
+
+        // Fail if puppeteer is not active
+        if (!globals.PuppeteerEnabled)
+            return;
+
+        // Check global context first.
+        if (!string.IsNullOrWhiteSpace(globals.TriggerPhrase))
         {
-            // Get the possible aliases they could use
-            var shared = _puppeteer.GetAliasesForPuppeteer(k.UserData.UID);
-            ExecuteTrigger(found, msg, k, shared.ToList(), ActionSource.PairAlias);
+            var gTriggers = globals.TriggerPhrase.Split(',').ToList();
+            if (IsValidTriggerWord(gTriggers, msg, out var matched))
+            {
+                var uid = GetUidFromNameWorld(name, world);
+                var aliases = _puppeteer.GetGlobalAliases().ToList();
+                var context = new PuppetMsgContext($"{name}@{world}", uid, matched, aliases, globals.PuppetPerms, null, null);
+                await InvokeTrigger(context, msg);
+                return;
+            }
+        }
+        // Try for paired kinkster
+        if (_puppeteer.GetPuppeteerUid(name, world) is { } matchedUID)
+        {
+            // Ensure still paired (avoid stalking abuse)
+            if (_kinksters.TryGetKinkster(new(matchedUID), out var k))
+            {
+                var pTriggers = k.OwnPerms.TriggerPhrase.Split(',').ToList();
+                if (IsValidTriggerWord(pTriggers, msg, out var matched))
+                {
+                    var shared = _puppeteer.GetAliasesForPuppeteer(matchedUID).ToList();
+                    var context = new PuppetMsgContext(k.GetDisplayName(), matchedUID, matched, shared, k.OwnPerms.PuppetPerms, k.OwnPerms.StartChar, k.OwnPerms.EndChar);
+                    await InvokeTrigger(context, msg);
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    ///     Sees if the trigger phases for a global or pair that matched from a chat message is valid.
+    /// </summary>
+    private bool IsValidTriggerWord(List<string> triggerPhrases, SeString chatMessage, out string matchedTrigger)
+    {
+        matchedTrigger = string.Empty;
+        foreach (var triggerWord in triggerPhrases)
+        {
+            if (triggerWord.IsNullOrWhitespace())
+                continue;
+
+            if (!RegexEx.TryMatchTriggerWord(chatMessage.TextValue, triggerWord).Success)
+                continue;
+
+            _logger.LogTrace("Matched trigger word: " + triggerWord, LoggerType.Puppeteer);
+            matchedTrigger = triggerWord;
+            return true;
+        }
+        return false;
+    }
+
+    /// <summary>
+    ///     Attempts to get if this person was a kinkster, global or per pair.
+    /// </summary>
+    private string? GetUidFromNameWorld(string name, string world)
+    {
+        // First see if they exist as a puppeteer,
+        if (_puppeteer.GetPuppeteerUid(name, world) is { } puppeteerUid)
+            return puppeteerUid;
+        // Otherwise, try to get from current visible.
+        foreach (var k in _kinksters.DirectPairs.Where(k => k.IsRendered && string.Equals(k.PlayerNameWorld, $"{name}@{world}", StringComparison.OrdinalIgnoreCase)))
+            return k.UserData.UID;
+        return null;
+    }
+
+    private async Task InvokeTrigger(PuppetMsgContext context, SeString msg)
+    {
+        _logger.LogTrace($"Trigger ({context.Trigger}) detected in: [ {msg} ]", LoggerType.Puppeteer);
+        // Trim everything before the trigger
+        SeString scoped = msg.TextValue.Substring(msg.TextValue.IndexOf(context.Trigger) + context.Trigger.Length).Trim();
+        
+        // Scope to brackets if possible.
+        scoped = scoped.GetSubstringWithinParentheses(context.StartChar ?? '(', context.EndChar ?? ')');
+        _logger.LogTrace($"Scoped message: {scoped}", LoggerType.Puppeteer);
+
+        // if the final scoped message is empty return
+        if (string.IsNullOrWhiteSpace(scoped.TextValue))
+            return;
+        
+        scoped = scoped.ConvertSquareToAngleBrackets();
+
+        // Alias execution
+        if (context.PuppetPerms.HasAny(PuppetPerms.Alias))
+        {
+            var found = await HandleAliases(scoped, context.Aliases, ActionSource.PairAlias, context.UID).ConfigureAwait(false);
+            if (found > 0)
+            {
+                _logger.LogDebug($"Puppeteered by {context.DisplayName} with an [ALIAS] message. (Handled {found} Aliases)", LoggerType.Puppeteer);
+                IncrementStats(context, PuppetPerms.Alias, found);
+                return;
+            }
+        }
+        // Fallback: sit / emote / ALL
+        InvokeByCriteria(context, scoped);
+    }
+
+    private void IncrementStats(PuppetMsgContext context, PuppetPerms stat, int count, uint emoteRow = uint.MaxValue)
+    {
+        // Trigger regardless
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.OrderRecieved, context.UID ?? string.Empty, stat, count, emoteRow);
+
+        // No need to do stats if the UID is null or the data is not found
+        if (context.UID is null)
+            return;
+        if (!_puppeteer.Puppeteers.TryGetValue(context.UID, out var data))
+            return;
+
+        data.OrdersRecieved += count;
+        switch (stat)
+        {
+            case PuppetPerms.Alias:     data.AliasOrders += count;  break;
+            case PuppetPerms.Emotes:    data.EmoteOrders += count;  break;
+            case PuppetPerms.Sit:       data.SitOrders += count;    break;
+            case PuppetPerms.All:       data.OtherOrders += count;  break;
+        }
+        // Save after incrementing
+        _puppeteer.Save();
+    }
+
+    /// <summary> 
+    ///     Converts the input commands to the output commands from the alias list if any. <para />
+    ///     Only valid aliases should be passed in, or else this will cause errors.
+    /// </summary>
+    private async Task<int> HandleAliases(SeString aliasMsg, IEnumerable<AliasTrigger> items, ActionSource source, string? enactor)
+    {
+        _logger.LogTrace($"Found {items.Count()} aliases for to check", LoggerType.Puppeteer);
+        // sort by descending length so that shorter equivalents to not override longer variants.
+        var sortedAliases = items.OrderByDescending(alias => alias.InputCommand.Length);
+        // see if our message contains any of the alias strings. For it to match, it must match the full alias string.
+        foreach (var alias in items)
+        {
+            if (!aliasMsg.TextValue.Contains(alias.InputCommand))
+                continue;
+
+            _logger.LogTrace($"Alias found: {alias.InputCommand}", LoggerType.Puppeteer);
+            // fire and forget to not hang the chat listener on limbo.
+            if(await _triggerService.HandleMultiActionAsync(alias.Actions, source, enactor))
+            {
+                return 1; // for now do this, maybe allow multiple executions later though.
+            }
+        }
+        // Found nothing
+        return 0;
+    }
+
+    /// <summary>
+    ///     Determines if the message meets the criteria for the sender.
+    /// </summary>
+    public void InvokeByCriteria(PuppetMsgContext context, SeString message)
+    {
+        // ALL permission (non-emote)
+        if (context.PuppetPerms.HasAny(PuppetPerms.All) && !IsEmoteMatch(message, out var _))
+        {
+            _logger.LogDebug($"Puppeteered by {context.DisplayName} with an [ALL] message.", LoggerType.Puppeteer);
+            ChatService.EnqueueMessage($"/{message.TextValue}");
+            IncrementStats(context, PuppetPerms.All, 1);
+            return;
+        }
+
+        // EMOTES
+        if (context.PuppetPerms.HasAny(PuppetPerms.Emotes) && IsEmoteMatch(message, out var emoteRow))
+        {
+            _logger.LogDebug($"Puppeteered by {context.DisplayName} with an [EMOTE] message.", LoggerType.Puppeteer);
+            ChatService.EnqueueMessage($"/{message.TextValue}");
+            IncrementStats(context, PuppetPerms.Emotes, 1, emoteRow);
+            return;
+        }
+
+        // SIT / CPOSE
+        if (context.PuppetPerms.HasAny(PuppetPerms.Sit))
+        {
+            // Match SIT emotes (50, 52)
+            var sitEmote = EmoteEx.SittingEmotes().FirstOrDefault(e => message.TextValue.Contains(e.Name.Replace(" ", "").ToLower()));
+            if (sitEmote.RowId is 50 or 52)
+            {
+                _logger.LogDebug($"Puppeteered by {context.DisplayName} with an [SIT] message.", LoggerType.Puppeteer);
+                ChatService.EnqueueMessage($"/{message.TextValue}");
+                IncrementStats(context, PuppetPerms.Sit, 1, sitEmote.RowId);
+                return;
+            }
+            // Match CPOSE emotes (90)
+            if (EmoteService.ValidLightEmoteCache.Where(e => e.RowId == 90).Any(e => message.TextValue.Contains(e.Name.Replace(" ", "").ToLower())))
+            {
+                _logger.LogDebug($"Puppeteered by {context.DisplayName} with a [CPOSE] message.", LoggerType.Puppeteer);
+                ChatService.EnqueueMessage($"/{message.TextValue}");
+                IncrementStats(context, PuppetPerms.Sit, 1, 90);
+            }
+        }
+
+        // --- Local helper to check for emote match ---
+        bool IsEmoteMatch(SeString msg, out uint rowId)
+        {
+            var emote = EmoteService.ValidLightEmoteCache.FirstOrDefault(e => e.EmoteCommands.Any(c => string.Equals(msg.TextValue, c.Replace(" ", ""), StringComparison.OrdinalIgnoreCase)));
+            rowId = !string.IsNullOrWhiteSpace(emote.Name) ? emote.RowId : uint.MaxValue;
+            return rowId != uint.MaxValue;
         }
     }
 
@@ -74,162 +271,17 @@ public class TriggerHandler
             }
 
             CheckSpellActionTriggers(actionEffect).ConfigureAwait(false);
-        };
+        }
+        ;
     }
 
-
-    /// <summary>
-    ///     Sees if the trigger phases for a global or pair that matched from a chat message is valid.
-    /// </summary>
-    private bool IsValidTriggerWord(List<string> triggerPhrases, SeString chatMessage, out string matchedTrigger)
+    private async Task CheckSpellActionTriggers(ActionEffectEntry actEff)
     {
-        matchedTrigger = string.Empty;
-        foreach (var triggerWord in triggerPhrases)
-        {
-            if (triggerWord.IsNullOrWhitespace())
-                continue;
-
-            if (!RegexEx.TryMatchTriggerWord(chatMessage.TextValue, triggerWord).Success)
-                continue;
-
-            _logger.LogTrace("Matched trigger word: " + triggerWord, LoggerType.Puppeteer);
-            matchedTrigger = triggerWord;
-            return true;
-        }
-        return false;
-    }
-
-    /// <summary>
-    ///     Handles Trigger Execution logic once we have determined one was found! <para />
-    ///     Can track puppeteer stats if we passed in the UID down to the execution.
-    /// </summary>
-    private async void ExecuteTrigger(string trigger, SeString msg, Kinkster k, List<AliasTrigger> aliases, ActionSource source)
-    {
-        _logger.LogTrace($"Checking for trigger: {trigger}", LoggerType.Puppeteer);
-        _logger.LogTrace($"Message to check for trigger: {msg}", LoggerType.Puppeteer);
-
-        // obtain the substring that occurs in the message after the trigger.
-        SeString finalMsg = msg.TextValue.Substring(msg.TextValue.IndexOf(trigger) + trigger.Length).Trim();
-
-        // obtain the substring within the start and end char if provided.
-        finalMsg = finalMsg.GetSubstringWithinParentheses(k.OwnPerms.StartChar, k.OwnPerms.EndChar);
-        _logger.LogTrace("Remaining message after brackets: " + finalMsg);
-
-        // If it was for an alias, and not a text insstruction, handle the alias and return early.
-        if (k.OwnPerms.PuppetPerms.HasAny(PuppetPerms.Alias))
-            if (await ConvertAliasCommandsIfAny(finalMsg, aliases, k.UserData.UID, source))
-                return;
-
-        // Otherwise, handle the final message accordingly.
-        if (finalMsg.TextValue.IsNullOrEmpty())
-            return;
-
-        // apply bracket conversions.
-        finalMsg = finalMsg.ConvertSquareToAngleBrackets();
-
-        // verify permissions are satisfied.
-        if (MeetsSettingCriteria(k, finalMsg))
-        {
-            _logger.LogInformation($"[{k.GetDisplayName()}] made you execute a message!", LoggerType.Puppeteer);
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderReceived);
-            _puppeteer.Puppeteers[k.UserData.UID].OrdersRecieved++;
-            _puppeteer.Save();
-            ChatService.EnqueueMessage($"/{finalMsg.TextValue}");
-            return;
-        }
-        return;
-    }
-
-    /// <summary> 
-    ///     Converts the input commands to the output commands from the alias list if any.
-    /// </summary>
-    /// <remarks> Will also determine what kind of message to prepare for execution based on the alias. </remarks>
-    private async Task<bool> ConvertAliasCommandsIfAny(SeString aliasMsg, List<AliasTrigger> AliasItems, string SenderUid, ActionSource source)
-    {
-        var wasAnAlias = false;
-        _logger.LogTrace("Found " + AliasItems.Count + " alias triggers for this user", LoggerType.Puppeteer);
-
-        // sort by descending length so that shorter equivalents to not override longer variants.
-        var sortedAliases = AliasItems.OrderByDescending(alias => alias.InputCommand.Length);
-        // see if our message contains any of the alias strings. For it to match, it must match the full alias string.
-        foreach (var alias in AliasItems)
-        {
-            if (!alias.Enabled || alias.InputCommand.IsNullOrWhitespace() || !aliasMsg.TextValue.Contains(alias.InputCommand))
-                continue;
-
-            _logger.LogTrace("Alias found: " + alias.InputCommand, LoggerType.Puppeteer);
-            // fire and forget to not hang the chat listener on limbo.
-            if(await _triggerService.HandleMultiActionAsync(alias.Actions, SenderUid, source))
-            {
-                wasAnAlias = true;
-                break;
-            }
-        }
-        return wasAnAlias;
-    }
-
-    /// <summary> Determines if the message meets the criteria for the sender. </summary>
-    public bool MeetsSettingCriteria(Kinkster k, SeString message)
-    {
-        if (k.OwnPerms.PuppetPerms.HasAny(PuppetPerms.All))
-        {
-            _logger.LogTrace("Accepting Message as you allow All Commands", LoggerType.Puppeteer);
-            if (!IsEmoteMatch(message))
-                _puppeteer.Puppeteers[k.UserData.UID].OtherOrders++;
-            return true;
-        }
-        else if (k.OwnPerms.PuppetPerms.HasAny(PuppetPerms.Emotes) && IsEmoteMatch(message))
-        {
-            return true;
-        }
-        // 50 == Sit, 52 == Sit (Ground), 90 == Change Pose
-        else if (k.OwnPerms.PuppetPerms.HasAny(PuppetPerms.Sit))
-        {
-            _logger.LogTrace("Checking if message is a sit command", LoggerType.Puppeteer);
-            var sitEmote = EmoteEx.SittingEmotes().FirstOrDefault(e => message.TextValue.Contains(e.Name.ToString().Replace(" ", "").ToLower()));
-            if (sitEmote.RowId is 50 or 52)
-            {
-                _logger.LogTrace("Message is a sit command", LoggerType.Puppeteer);
-                // Inversed? Idk. Check later with achievements
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteReceived, sitEmote.RowId);
-                _puppeteer.Puppeteers[k.UserData.UID].SitOrders++;
-                return true;
-            }
-            if (EmoteService.ValidLightEmoteCache.Where(e => e.RowId is 90).Any(e => message.TextValue.Contains(e.Name.Replace(" ", "").ToLower())))
-            {
-                _logger.LogTrace("Message is a change pose command", LoggerType.Puppeteer);
-                // Inversed? Idk. Check later with achievements
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteReceived, 90);
-                _puppeteer.Puppeteers[k.UserData.UID].SitOrders++;
-                return true;
-            }
-        }
-
-        return false;
-
-        // Helper function to check if the message matches any emote
-        bool IsEmoteMatch(SeString msg)
-        {
-            var emote = EmoteService.ValidLightEmoteCache.FirstOrDefault(e
-                => e.EmoteCommands.Any(c => string.Equals(msg.TextValue, c.Replace(" ", ""), StringComparison.OrdinalIgnoreCase)));
-
-            if (!string.IsNullOrEmpty(emote.Name))
-            {
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerEmoteReceived, emote.RowId);
-                _puppeteer.Puppeteers[k.UserData.UID].EmoteOrders++;
-                return true;
-            }
-            return false;
-        }
-    }
-
-    private async Task CheckSpellActionTriggers(ActionEffectEntry actionEffect)
-    {
-        _logger.LogTrace("SourceID: " + actionEffect.SourceID + " TargetID: " + actionEffect.TargetID + " ActionID: " + actionEffect.ActionID + " Type: " + actionEffect.Type + " Damage: " + actionEffect.Damage, LoggerType.Triggers);
+        _logger.LogTrace($"SourceID ({actEff.SourceID} | TargetID: {actEff.TargetID} | ActionID: {actEff.ActionID} | Type: {actEff.Type} | Damage: {actEff.Damage}", LoggerType.Triggers);
 
         // please for the love of god find a better way to handle this.
         var relevantTriggers = _triggers.Storage.SpellAction
-            .Where(t => t.ActionKind == actionEffect.Type && t.GetStoredIds().Contains(actionEffect.ActionID) && t.ActionKind == actionEffect.Type )
+            .Where(t => t.ActionKind == actEff.Type && t.GetStoredIds().Contains(actEff.ActionID) && t.ActionKind == actEff.Type )
             .ToList();
 
         if (!relevantTriggers.Any())
@@ -241,7 +293,7 @@ public class TriggerHandler
         foreach (var trigger in relevantTriggers)
         {
             _logger.LogTrace("Checking Trigger: " + trigger.Label, LoggerType.Triggers);
-            if (!IsDirectionMatch(trigger.Direction, PlayerData.GameObjectId, actionEffect.SourceID, actionEffect.TargetID))
+            if (!IsDirectionMatch(trigger.Direction, PlayerData.GameObjectId, actEff.SourceID, actEff.TargetID))
             {
                 _logger.LogDebug("Direction didn't match", LoggerType.Triggers);
                 continue;
@@ -254,9 +306,9 @@ public class TriggerHandler
                 LimitedActionEffectType.BlockedDamage or
                 LimitedActionEffectType.ParriedDamage;
 
-            if (isDamageRelated && !IsDamageWithinThreshold(actionEffect.Damage, trigger.ThresholdMinValue, trigger.ThresholdMaxValue))
+            if (isDamageRelated && !IsDamageWithinThreshold(actEff.Damage, trigger.ThresholdMinValue, trigger.ThresholdMaxValue))
             {
-                _logger.LogTrace($"Was ActionKind [{actionEffect.Type}], but its damage ({actionEffect.Damage}) wasn't " +
+                _logger.LogTrace($"Was ActionKind [{actEff.Type}], but its damage ({actEff.Damage}) wasn't " +
                     $"between ({trigger.ThresholdMinValue}) & ({trigger.ThresholdMaxValue})", LoggerType.Triggers);
                 continue;
             }
@@ -265,7 +317,7 @@ public class TriggerHandler
             _logger.LogInformation("Your Trigger With Name " + trigger.Label + " and priority " + trigger.Priority + " triggering action "
                 + trigger.InvokableAction.ActionType.ToName(), LoggerType.Triggers);
 
-            if (await _triggerService.HandleActionAsync(trigger.InvokableAction, MainHub.UID, ActionSource.TriggerAction))
+            if (await _triggerService.HandleActionAsync(trigger.InvokableAction, ActionSource.TriggerAction))
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.TriggerFired);
         };
     }

@@ -277,6 +277,7 @@ public class KinksterCache
     public KinksterCollar Collar { get; private set; } = KinksterCollar.Empty;
     public Dictionary<Guid, KinksterCursedLoot> CursedItems { get; private set; } = new();
     public Dictionary<Guid, KinksterPattern> Patterns { get; private set; } = new();
+    // Could maybe cache aliases here but maybe not since they store the same format as normal aliases...
     public Dictionary<Guid, KinksterAlarm> Alarms { get; private set; } = new();
     public Dictionary<Guid, KinksterTrigger> Triggers { get; private set; } = new();
     public Dictionary<GSModule, List<string>> Allowances { get; private set; } = new();

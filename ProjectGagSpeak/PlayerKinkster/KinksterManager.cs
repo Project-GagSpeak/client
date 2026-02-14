@@ -408,8 +408,10 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         if (!_allKinksters.TryGetValue(targetUser, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
         // Update it if it exists.
-        if (kinkster.SharedAliases.Items.FirstOrDefault(a => a.Identifier == id) is { } alias)
+        if (kinkster.SharedAliases.FirstOrDefault(a => a.Identifier == id) is { } alias)
             alias.Enabled = newState;
+
+        Mediator.Publish(new FolderUpdateKinksterAliases(kinkster));
     }
 
     public void UpdateActiveAliases(KinksterUpdateActiveAliases dto)
@@ -487,20 +489,16 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         if (!_allKinksters.TryGetValue(targetUser, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
         
-        var items = kinkster.SharedAliases.Items;
-        var alias = items.FirstOrDefault(a => a.Identifier == itemId);
+        kinkster.UpdateAliasTrigger(itemId, newData);
+    }
 
-        if (alias is not null)
-        {
-            if (newData is not null)
-                alias.ApplyChanges(newData);
-            else
-                items.Remove(alias);
-        }
-        else if (newData is not null)
-        {
-            items.Add(newData);
-        }
+    // Simple temporary placeholder for how we store if someone is listening to us or not.
+    // Its far from perfect, but works for now.
+    public void CachedListenerNameChange(UserData targetUser, bool isStored)
+    {
+        if (!_allKinksters.TryGetValue(targetUser, out var kinkster))
+            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
+        kinkster.UpdateIsListening(isStored);
     }
 
     public void CachedPatternDataChange(UserData targetUser, Guid itemId, LightPattern? newData)
@@ -574,11 +572,18 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         kinkster.UserPair.OwnAccess = newAccess;
 
         Logger.LogDebug($"OWN BulkChangeUnique for [{kinkster.GetNickAliasOrUid()}]", LoggerType.PairDataTransfer);
+        // Handle Moodles change
         var MoodlesChanged = (prevPerms.MoodleAccess != newPerms.MoodleAccess) || (prevPerms.MaxMoodleTime != newPerms.MaxMoodleTime);
         if (kinkster.IsRendered && MoodlesChanged)
             Mediator.Publish(new MoodleAccessPermsChanged(kinkster));
 
-        // Handle achievements with changes here.
+        // Handle if this kinkster had a PuppeteerChange for us.
+        if ((newPerms.PuppetPerms & ~prevPerms.PuppetPerms) != 0)
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerAccessGiven, (newPerms.PuppetPerms & ~prevPerms.PuppetPerms));
+
+        // Handle if this kinkster had a PuppeteerChange for us.
+        if (prevPerms.IsMarionette() != kinkster.OwnPerms.IsMarionette())
+            Mediator.Publish(new FolderUpdatePuppeteers());
     }
 
     public void PermBulkChangeUniqueOther(UserData target, PairPerms newPerms, PairPermAccess newAccess)
@@ -594,10 +599,15 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         kinkster.UserPair.Access = newAccess;
 
         Logger.LogDebug($"OTHER BulkChangeUnique for [{kinkster.GetNickAliasOrUid()}]", LoggerType.PairDataTransfer);
+        
         // Handle informing moodles of permission changes.
         var MoodlesChanged = (prevPerms.MoodleAccess != newPerms.MoodleAccess) || (prevPerms.MaxMoodleTime != newPerms.MaxMoodleTime);
         if (kinkster.IsRendered && MoodlesChanged)
             Mediator.Publish(new MoodleAccessPermsChanged(kinkster));
+
+        // Handle if this kinkster had a PuppeteerChange for us.
+        if (prevPerms.IsMarionette() != kinkster.PairPerms.IsMarionette())
+            Mediator.Publish(new FolderUpdateMarionettes());
 
         // Handle achievements with changes here.
     }
@@ -608,7 +618,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
             throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
 
         // cache prev state.
-        var prevPuppetPerms = kinkster.OwnPerms.PuppetPerms;
+        var prevPerms = kinkster.OwnPerms with { };
 
         // Perform change.
         if (!PropertyChanger.TrySetProperty(kinkster.OwnPerms, permName, newValue, out var finalVal) || finalVal is null)
@@ -616,12 +626,16 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
 
         Logger.LogDebug($"OWN PermChangeUnique for [{kinkster.GetNickAliasOrUid()}] set [{permName}] to [{finalVal}]", LoggerType.PairDataTransfer);
 
+        // Handle our clients Moodle change for this Kinkster
         if (permName.Equals(nameof(PairPerms.MoodleAccess)) || permName.Equals(nameof(PairPerms.MaxMoodleTime)))
             Mediator.Publish(new MoodleAccessPermsChanged(kinkster));
 
-        // Achievement if permissions were granted.
-        if (permName.Equals(nameof(PairPerms.PuppetPerms)) && (kinkster.OwnPerms.PuppetPerms & ~prevPuppetPerms) != 0)
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerAccessGiven, (kinkster.OwnPerms.PuppetPerms & ~prevPuppetPerms));
+        if ((kinkster.OwnPerms.PuppetPerms & ~prevPerms.PuppetPerms) != 0)
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerAccessGiven, (kinkster.OwnPerms.PuppetPerms & ~prevPerms.PuppetPerms));
+
+        // Handle if this kinkster had a PuppeteerChange for us.
+        if (prevPerms.IsMarionette() != kinkster.PairPerms.IsMarionette())
+            Mediator.Publish(new FolderUpdatePuppeteers());
     }
 
     public void PermChangeUniqueOther(UserData target, UserData enactor, string permName, object newValue)
@@ -629,6 +643,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         if (!_allKinksters.TryGetValue(target, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
 
+        var prevPerms = kinkster.PairPerms with { };
 
         if (!PropertyChanger.TrySetProperty(kinkster.PairPerms, permName, newValue, out var finalVal) || finalVal is null)
             throw new InvalidOperationException($"Failed to set property '{permName}' on {kinkster.GetNickAliasOrUid()} with value '{newValue}'");
@@ -638,6 +653,10 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         // If moodle permissions updated, notify IpcProvider (Moodles) that we have a change.
         if (permName.Equals(nameof(PairPerms.MoodleAccess)) || permName.Equals(nameof(PairPerms.MaxMoodleTime)))
             Mediator.Publish(new MoodleAccessPermsChanged(kinkster));
+
+        // Handle if this kinkster had a PuppeteerChange for us.
+        if (prevPerms.IsMarionette() != kinkster.PairPerms.IsMarionette())
+            Mediator.Publish(new FolderUpdateMarionettes());
     }
 
     public void PermChangeAccess(UserData target, UserData enactor, string permName, object newValue)

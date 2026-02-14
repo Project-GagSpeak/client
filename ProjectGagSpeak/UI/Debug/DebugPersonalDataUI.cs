@@ -31,6 +31,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
     private readonly RestraintManager _restraints;
     private readonly RestrictionManager _restrictions;
     private readonly GagRestrictionManager _gags;
+    private readonly PuppeteerManager _puppeteer;
     private readonly CollarManager _collar;
     private readonly BuzzToyManager _toys;
     private readonly PatternManager _patterns;
@@ -45,6 +46,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         RestraintManager restraints,
         RestrictionManager restrictions,
         GagRestrictionManager gags,
+        PuppeteerManager puppeteer,
         CollarManager collar,
         BuzzToyManager toys,
         PatternManager patterns,
@@ -59,6 +61,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         _restrictions = restrictions;
         _gags = gags;
         _collar = collar;
+        _puppeteer = puppeteer;
         _toys = toys;
         _patterns = patterns;
         _alarms = alarms;
@@ -138,7 +141,8 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawGagData(pair.UserData.UID, pair.ActiveGags);
         DrawPairRestrictions(pair.UserData.UID, pair);
         DrawRestraint(pair.UserData.UID, pair);
-        DrawAlias(pair.UserData.UID, "Aliases", pair.SharedAliases);
+        DrawCursedLoot(pair.UserData.UID, pair.ActiveCursedItems);
+        DrawPuppeteer(pair);
         DrawToybox(pair.UserData.UID, pair);
         DrawKinksterCache(pair);
         ImGui.Separator();
@@ -782,22 +786,196 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
             ImGui.TextUnformatted(item.ToString());
     }
 
-    private void DrawAlias(string uid, string label, AliasStorage storage)
+    public void DrawPuppeteer(Kinkster k)
     {
-        using var nodeMain = ImRaii.TreeNode($"{label}'s Alias Data");
+        using var nodeMain = ImRaii.TreeNode($"Shred Aliases");
         if (!nodeMain) return;
 
-        using (ImRaii.Table("##debug-aliasdata-" + uid, 2, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        CkGui.TextFrameAligned("Has Your Name Pair Name:");
+        CkGui.BooleanToColoredIcon(k.IsListeningToClient); 
+
+        if (k.SharedAliases.Count is 0)
         {
-            ImGui.TableSetupColumn("Alias Input");
-            ImGui.TableSetupColumn("Alias Output");
-            ImGui.TableHeadersRow();
-            foreach (var aliasData in storage.Items)
+            ImGui.TextUnformatted("Puppeteer Storage is null or empty");
+            return;
+        }
+        foreach (var (alias, idx) in k.SharedAliases.WithIndex())
+        {
+            using var node = ImRaii.TreeNode($"{alias.Label}##{idx}");
+            if (!node)
+                continue;
+            DrawAliasTrigger(alias);
+        }
+    }
+
+    private void DrawAliasTrigger(AliasTrigger alias)
+    {
+        using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        {
+            ImGuiUtil.DrawTableColumn("Identifier");
+            ImGuiUtil.DrawTableColumn(alias.Identifier.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Enabled");
+            ImGuiUtil.DrawTableColumn(alias.Enabled.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Label");
+            ImGuiUtil.DrawTableColumn(alias.Label.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("InputCommand");
+            ImGuiUtil.DrawTableColumn(alias.InputCommand.ToString());
+            ImGui.TableNextRow();
+
+        }
+
+        using var node = ImRaii.TreeNode($"Actions##actions-{alias.Identifier}");
+        if (!node)
+            return;
+
+        foreach (var (action, idx) in alias.Actions.WithIndex())
+        {
+            using var actionNode = ImRaii.TreeNode($"{action.ActionType}##{idx}");
+            if (!actionNode)
+                continue;
+            using (ImRaii.Table($"##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
             {
-                ImGuiUtil.DrawTableColumn(aliasData.InputCommand);
-                ImGuiUtil.DrawTableColumn("(Output sections being worked on atm?)");
+                DrawActionTable(action);
                 ImGui.TableNextRow();
             }
+        }
+    }
+
+    private void DrawActionTable(InvokableGsAction action)
+    {
+        if (action is TextAction text)
+        {
+            ImGuiUtil.DrawTableColumn("Type:");
+            ImGuiUtil.DrawTableColumn("TextAction");
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("OutputCommand");
+            ImGuiUtil.DrawTableColumn(text.OutputCommand.ToString());
+        }
+        else if (action is GagAction gag)
+        {
+
+            ImGuiUtil.DrawTableColumn("Type:");
+            ImGuiUtil.DrawTableColumn("GagAction");
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("LayerIdx");
+            ImGuiUtil.DrawTableColumn(gag.LayerIdx.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("NewState");
+            ImGuiUtil.DrawTableColumn(gag.NewState.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("GagType");
+            ImGuiUtil.DrawTableColumn(gag.GagType.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("Padlock");
+            ImGuiUtil.DrawTableColumn(gag.Padlock.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("LowerBound");
+            ImGuiUtil.DrawTableColumn(gag.LowerBound.ToString());
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("UpperBound");
+            ImGuiUtil.DrawTableColumn(gag.UpperBound.ToString());
+        }
+        else if (action is RestrictionAction restriction)
+        {
+            ImGuiUtil.DrawTableColumn("Type:");
+            ImGuiUtil.DrawTableColumn("RestrictionAction");
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("LayerIdx");
+            ImGuiUtil.DrawTableColumn(restriction.LayerIdx.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("NewState");
+            ImGuiUtil.DrawTableColumn(restriction.NewState.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("RestrictionId");
+            ImGuiUtil.DrawTableColumn(restriction.RestrictionId.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Padlock");
+            ImGuiUtil.DrawTableColumn(restriction.Padlock.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("LowerBound");
+            ImGuiUtil.DrawTableColumn(restriction.LowerBound.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("UpperBound");
+            ImGuiUtil.DrawTableColumn(restriction.UpperBound.ToString());
+        }
+        else if (action is RestraintAction restrain)
+        {
+            ImGuiUtil.DrawTableColumn("Type:");
+            ImGuiUtil.DrawTableColumn("RestraintAction");
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("NewState");
+            ImGuiUtil.DrawTableColumn(restrain.NewState.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("RestrictionId");
+            ImGuiUtil.DrawTableColumn(restrain.RestrictionId.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("Padlock");
+            ImGuiUtil.DrawTableColumn(restrain.Padlock.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("LowerBound");
+            ImGuiUtil.DrawTableColumn(restrain.LowerBound.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("UpperBound");
+            ImGuiUtil.DrawTableColumn(restrain.UpperBound.ToString());
+        }
+        else if (action is MoodleAction moodle)
+        {
+            ImGuiUtil.DrawTableColumn("Type:");
+            ImGuiUtil.DrawTableColumn("MoodleAction");
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("MoodleItem");
+            ImGuiUtil.DrawTableColumn(moodle.MoodleItem.Id.ToString());
+            // MoodleItem
+        }
+        else if (action is PiShockAction shock)
+        {
+            ImGuiUtil.DrawTableColumn("Type:");
+            ImGuiUtil.DrawTableColumn("PiShockAction");
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("ShockInstruction.OpCode");
+            ImGuiUtil.DrawTableColumn(shock.ShockInstruction.OpCode.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("ShockInstruction.Duration");
+            ImGuiUtil.DrawTableColumn(shock.ShockInstruction.Duration.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("ShockInstruction.Intensity");
+            ImGuiUtil.DrawTableColumn(shock.ShockInstruction.Intensity.ToString());
+        }
+        else if (action is SexToyAction toy)
+        {
+            ImGuiUtil.DrawTableColumn("Type:");
+            ImGuiUtil.DrawTableColumn("SexToyAction");
+            ImGui.TableNextRow();
+
+            ImGuiUtil.DrawTableColumn("StartAfter");
+            ImGuiUtil.DrawTableColumn(toy.StartAfter.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("EndAfter");
+            ImGuiUtil.DrawTableColumn(toy.EndAfter.ToString());
+            ImGui.TableNextRow();
+            ImGuiUtil.DrawTableColumn("ShockInstruction.Intensity");
+        }
+        else
+        {
+
+            // If it's not a type of action that we know of, we'll just brute for it so that we at least _have_ the data even if it's not pretty.
+            ImGuiUtil.DrawTableColumn("Unknown Action");
+            ImGuiUtil.DrawTableColumn(action.ToString());
         }
     }
 

@@ -123,6 +123,13 @@ public class AliasesTab : IFancyTab
         if (CkGui.IconButton(FAI.Edit, inPopup: true))
             _manager.StartEditing(alias);
         CkGui.AttachToolTip("Edit this alias.");
+        if (!alias.IsValid())
+        {
+            endX -= CkGui.IconButtonSize(FAI.ExclamationTriangle).X;
+            ImGui.SameLine(endX);
+            CkGui.FramedIconText(FAI.ExclamationTriangle, ImGuiColors.DalamudRed);
+            CkGui.AttachToolTip("This alias it not valid, and won't be included in alias detection!");
+        }
 
         // Draw out what the alias detects, and if it ignores case or not
         CkGui.FramedIconText(FAI.AssistiveListeningSystems);

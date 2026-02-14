@@ -45,7 +45,7 @@ public sealed class ClientData : IDisposable
     ///     When true, <see cref="GlobalPerms"/> or <see cref="HardcoreStatus"/> are not initialized.
     /// </summary>
     public static bool IsNull { get; private set; } = false;
-    internal static IReadOnlyGlobalPerms? Globals => _clientGlobals;
+    internal static GlobalPerms? Globals => _clientGlobals;
     internal static IReadOnlyHardcoreState? Hardcore => _clientHardcore;
     public static Vector3 GetImprisonmentPos()
         => _clientHardcore?.ImprisonedPos ?? Vector3.Zero;

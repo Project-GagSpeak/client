@@ -29,7 +29,7 @@ public sealed class PairCombo : CkFilterComboCache<Kinkster>, IMediatorSubscribe
         Mediator = mediator;
         _favorites = favorites;
         SearchByParts = true;
-
+        // Phase out? we shouldnt need this, should just call refresh
         Mediator.Subscribe<FolderUpdateKinkster>(this, _ => _needsRefresh = true);
     }
 
@@ -49,6 +49,8 @@ public sealed class PairCombo : CkFilterComboCache<Kinkster>, IMediatorSubscribe
         Mediator.UnsubscribeAll(this);
         GC.SuppressFinalize(this);
     }
+
+    public void Refresh() => _needsRefresh = true;
 
     private void UpdateCurrentSelection()
     {

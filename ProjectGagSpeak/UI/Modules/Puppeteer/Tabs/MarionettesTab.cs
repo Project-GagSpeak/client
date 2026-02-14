@@ -81,6 +81,8 @@ public class MarionettesTab : IFancyTab
         {
             _logger.LogInformation("We selected a Marionette!");
         }
+        CkGui.AttachToolTip("Stores the list of Kinksters that set trigger phrases for you or have enabled puppeteer permissions." +
+            "--SEP--To interact with these Kinksters, they must have your name, which you can send after selecting a Kinkster.");
     }
 
     private void DrawMarionetteAliases(float leftWidth, float rounding)
@@ -102,9 +104,9 @@ public class MarionettesTab : IFancyTab
         }
 
         CkGui.IconTextAligned(FAI.User);
-        if (marionette.HasClientNameStored)
+        if (marionette.IsListeningToClient)
         {
-            CkGui.ColorTextFrameAlignedInline(PlayerData.NameWithWorld, ImGuiColors.DalamudGrey);
+            CkGui.ColorTextFrameAlignedInline(PlayerData.NameWithWorld, CkCol.TriStateCheck.Vec4Ref());
             CkGui.AttachToolTip($"{marionette.GetDisplayName()} is associating your PlayerName with your Kinkster.", ImGuiColors.TankBlue);
         }
         else
@@ -113,26 +115,25 @@ public class MarionettesTab : IFancyTab
             CkGui.HelpText($"{marionette.GetDisplayName()} can't perform orders from you until you send them your name." +
                 $"--SEP--Do so by using the --COL--Sync Button--COL-- to the right.", ImGuiColors.TankBlue, true);
         }
-
-        ImGui.SameLine(ImGui.GetContentRegionAvail().X - CkGui.IconTextButtonSize(FAI.Sync, "Sync"));
-        using (ImRaii.PushColor(ImGuiCol.Text, CkCol.TriStateCheck.Vec4Ref()))
-            if (CkGui.IconTextButton(FAI.Sync, "Sync", disabled: UiService.DisableUI, isInPopup: true))
+        var endX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
+        ImGui.SameLine(endX - CkGui.IconTextButtonSize(FAI.CloudUploadAlt, "Send Name"));
+        if (CkGui.IconTextButton(FAI.CloudUploadAlt, "Send Name", disabled: UiService.DisableUI, isInPopup: true))
+        {
+            _logger.LogInformation("Syncing Player Name with Marionette.");
+            UiService.SetUITask(async () =>
             {
-                _logger.LogInformation("Syncing Player Name with Marionette.");
-                UiService.SetUITask(async () =>
+                await GagspeakEx.WaitForPlayerLoading().ConfigureAwait(false);
+                var nameWorld = PlayerData.NameWithWorld;
+                var res = await _hub.UserSendNameToKinkster(new(marionette.UserData, nameWorld)).ConfigureAwait(false);
+                if (res.ErrorCode is not GagSpeakApiEc.Success)
+                    _logger.LogWarning($"Failed to send Player Name to Marionette: {res.ErrorCode}");
+                else
                 {
-                    await GagspeakEx.WaitForPlayerLoading().ConfigureAwait(false);
-                    var nameWorld = PlayerData.NameWithWorld;
-                    var res = await _hub.UserSendNameToKinkster(new(marionette.UserData, nameWorld)).ConfigureAwait(false);
-                    if (res.ErrorCode is not GagSpeakApiEc.Success)
-                        _logger.LogWarning($"Failed to send Player Name to Marionette: {res.ErrorCode}");
-                    else
-                    {
-                        _logger.LogInformation($"Successfully sent Player Name to Marionette.");
-                        marionette.HasClientNameStored = true;
-                    }
-                });
-            }
+                    _logger.LogInformation($"Successfully sent Player Name to Marionette.");
+                    marionette.UpdateIsListening(true);
+                }
+            });
+        }
         CkGui.AttachToolTip($"Sends {marionette.GetDisplayName()} your Name@World, allowing them to respond to your orders.");
 
         CkGui.IconTextAligned(FAI.Fingerprint);

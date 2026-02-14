@@ -13,6 +13,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Handlers;
 using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using Lumina.Excel.Sheets;
 using System.Text.RegularExpressions;
 
@@ -103,7 +104,7 @@ public class ChatService : DisposableMediatorSubscriberBase
         Logger.LogTrace($"Chatbox Message Received: {senderName}@{senderWorld} in {channel} - {msg.TextValue}", LoggerType.ChatDetours);
 
         // if we are the sender, return after checking if what we sent matches any of our pairs triggers.
-        if (senderName + "@" + senderWorld == PlayerData.NameWithWorld)
+        if ($"{senderName}@{senderWorld}" == PlayerData.NameWithWorld)
         {
             CheckOwnChatMessage(channel, msg.TextValue);
             Mediator.Publish(new ChatMsgFromSelf(channel, msg.TextValue));
@@ -113,12 +114,12 @@ public class ChatService : DisposableMediatorSubscriberBase
         // Inform that someone spoke in the chat. (Can maybe shift this to the kinkster one or something idk?)
         Mediator.Publish(new ChatMsgFromOther(senderName, senderWorld, channel, msg.TextValue));
 
-        // See if this is someone who can puppeteer us
-        if (_puppeteer.GetPuppeteerUid(senderName, senderWorld) is { } puppeteerUid)
-            // See if they are a paired Kinkster.
-            if (_kinksters.TryGetKinkster(new(puppeteerUid), out var kinkster))
-                // If they are check for puppeteer message
-                _triggerHandler.CheckForPuppeteerMsg(kinkster, channel, msg);
+        // Ensure it is a valid puppeteer channel
+        if (!_config.Current.PuppeteerChannelsBitfield.IsActiveChannel((int)channel))
+            return;
+
+        // Run this off the thread to avoid blocking
+        _triggerHandler.CheckChatForTrigger(senderName, senderWorld, msg);
     }
 
     /// <summary>

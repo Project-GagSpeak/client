@@ -83,8 +83,10 @@ public class PuppeteersTab : IFancyTab
         CkGui.IconTextAligned(FAI.User);
         if (_manager.Puppeteers.TryGetValue(kinkster.UserData.UID, out var puppeteerData))
         {
+            CkGui.TextFrameAlignedInline("Puppeteered by:");
             CkGui.ColorTextFrameAlignedInline(puppeteerData.NameWithWorld, CkCol.TriStateCheck.Vec4());
             CkGui.AttachToolTip($"{kinkster.GetDisplayName()} is associated with this PlayerName." +
+                $"--SEP--They can not puppeteer you within the boundaries you set." +
                 $"--SEP----COL--If they changed Name/World, they will need to send you it again.--COL--", ImGuiColors.TankBlue);
         }
         else

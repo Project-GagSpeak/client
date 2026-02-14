@@ -303,6 +303,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
                 Restraint = _restraintManager.ServerData ?? throw new Exception("ActiveRestraintData was null!"),
                 Collar = _collar.SyncedData ?? throw new Exception("ActiveCollarData was null!"),
                 ActiveCursedItems = _cursedManager.Storage.AppliedLootIds.ToList(),
+                // Send it all here, and filter it on the other end. It doesnt matter if its exposed because client wont listen to unallowed anyways.
                 AliasData = _puppetManager.Storage,
                 ListeningTo = _puppetManager.Puppeteers.Keys.ToList(),
                 ValidToys = _toyManager.ValidToysForRemotes,
@@ -600,9 +601,9 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         Logger.LogDebug($"Pushing AliasTriggerChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
         var dto = new PushClientDataChangeAlias(online, item.Identifier, item);
         if (await _hub.UserPushNewAliasData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
-            Logger.LogError($"Failed to push CursedItemData to paired Kinksters. [{res}]");
+            Logger.LogError($"Failed to push AliasTriggerChange to paired Kinksters. [{res}]");
         else
-            Logger.LogDebug("Successfully pushed CursedItemData to server", LoggerType.OnlinePairs);
+            Logger.LogDebug("Successfully pushed AliasTriggerChange to server", LoggerType.OnlinePairs);
     }
 
     private async Task DistributePatternUpdate(Pattern item, StorageChangeType kind)

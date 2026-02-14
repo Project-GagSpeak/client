@@ -150,16 +150,7 @@ public sealed class PuppeteersDrawer : DynamicDrawer<Kinkster>
     // For Sending names and stuff
     protected override void DrawContextMenu(IDynamicLeaf<Kinkster> node)
     {
-        if (ImGui.MenuItem("Send your PlayerName"))
-        {
-            UiService.SetUITask(async () =>
-            {
-                // Do some hub command here to send the person our name
-
-
-            });
-        }
-        CkGui.AttachToolTip("Sending them your name allows them to listen to you for orders.");
+        base.DrawContextMenu(node);
     }
 }
 

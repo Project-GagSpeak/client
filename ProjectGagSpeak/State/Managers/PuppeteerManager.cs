@@ -139,12 +139,15 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         return null;
     }
 
+    public IEnumerable<AliasTrigger> GetGlobalAliases()
+        => Storage.Items.Where(a => a.Enabled && a.IsValid() && a.WhitelistedUIDs.Count is 0);
+
     public IEnumerable<AliasTrigger> GetAliasesForPuppeteer(string puppeteerUid)
     {
         if (!Puppeteers.ContainsKey(puppeteerUid))
             return Enumerable.Empty<AliasTrigger>();
         // Return all aliases containing this UID that are enabled.
-        return Storage.Items.Where(alias => alias.Enabled && alias.WhitelistedUIDs.Contains(puppeteerUid));
+        return Storage.Items.Where(a => a.Enabled && a.IsValid() && a.WhitelistedUIDs.Contains(puppeteerUid));
     }
 
     #region HybridSavable

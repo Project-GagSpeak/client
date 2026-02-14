@@ -31,5 +31,3 @@ public record ConfigModPresetChanged(StorageChangeType Type, ModPresetContainer 
 public record ReloadFileSystem(GSModule Module) : MessageBase;
 
 public record AllowancesChanged(GSModule Module, IEnumerable<string> AllowedUids) : MessageBase;
-
-public record SelectedModContainerChanged : MessageBase;

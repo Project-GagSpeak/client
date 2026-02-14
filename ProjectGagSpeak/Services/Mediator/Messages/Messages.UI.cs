@@ -14,17 +14,11 @@ public enum ToggleType
     Show,
     Hide
 }
+
 public record UserPairSelected(Kinkster? Pair) : MessageBase; // This likely can be removed.
 
 /// <summary> Fires once we wish to open the popout permissions menu for a Kinkster pair. </summary>
 public record OpenKinksterSidePanel(Kinkster Kinkster, bool ForceOpen = false) : MessageBase;
-
-public record FolderUpdateKinkster : MessageBase;
-public record FolderUpdateRequests : MessageBase;
-public record FolderUpdateCollars : MessageBase;
-
-
-
 
 /// <summary> Fires whenever we need to toggle the UI. </summary>
 public record UiToggleMessage(Type UiType, ToggleType ToggleType = ToggleType.Toggle) : MessageBase;

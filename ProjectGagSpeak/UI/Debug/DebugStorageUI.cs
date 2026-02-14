@@ -127,6 +127,7 @@ public partial class DebugStorageUI : WindowMediatorSubscriberBase
         
         ImGui.Separator();
         DrawPuppeteerAliases();
+        DrawPuppeteers();
 
         ImGui.Separator();
         DrawToyStorage();
@@ -400,7 +401,7 @@ public partial class DebugStorageUI : WindowMediatorSubscriberBase
 
     public void DrawPuppeteerAliases()
     {
-        if (!ImGui.CollapsingHeader("Puppeteer Global Alias Storage"))
+        if (!ImGui.CollapsingHeader("AliasList Storage"))
             return;
         if (_puppeteer.Storage.Items.IsNullOrEmpty())
         {
@@ -413,6 +414,42 @@ public partial class DebugStorageUI : WindowMediatorSubscriberBase
             if (!node)
                 continue;
             DrawAliasTrigger(alias);
+        }
+    }
+
+    private void DrawPuppeteers()
+    {
+        if (!ImGui.CollapsingHeader("Puppeteers Storage"))
+            return;
+
+        CkGui.ColorText("Puppeteers:", GsCol.VibrantPink.Vec4Ref());
+        using (ImRaii.Table("puppeteers", 6, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        {
+            ImGuiUtil.DrawTableColumn("UID");
+            ImGuiUtil.DrawTableColumn("Name@World");
+            ImGuiUtil.DrawTableColumn("Total Orders");
+            ImGuiUtil.DrawTableColumn("Sit Orders");
+            ImGuiUtil.DrawTableColumn("Emote Orders");
+            ImGuiUtil.DrawTableColumn("Alias Orders");
+            ImGuiUtil.DrawTableColumn("Other Orders");
+            ImGui.TableHeadersRow();
+            ImGui.TableNextRow(); 
+
+            foreach (var (uid, data) in _puppeteer.Puppeteers)
+            {
+                ImGuiUtil.DrawTableColumn(uid);
+                ImGuiUtil.DrawTableColumn($"{data.NameWithWorld}");
+                ImGui.TableNextColumn();
+                CkGui.ColorTextFrameAligned(data.OrdersRecieved.ToString(), ImGuiColors.TankBlue);
+                ImGui.TableNextColumn();
+                CkGui.ColorTextFrameAligned(data.SitOrders.ToString(), ImGuiColors.TankBlue);
+                ImGui.TableNextColumn();
+                CkGui.ColorTextFrameAligned(data.EmoteOrders.ToString(), ImGuiColors.TankBlue);
+                ImGui.TableNextColumn();
+                CkGui.ColorTextFrameAligned(data.AliasOrders.ToString(), ImGuiColors.TankBlue);
+                ImGui.TableNextColumn();
+                CkGui.ColorTextFrameAligned(data.OtherOrders.ToString(), ImGuiColors.TankBlue);
+            }
         }
     }
 
@@ -867,6 +904,7 @@ public partial class DebugStorageUI : WindowMediatorSubscriberBase
         }
     }
 
+
     private void DrawBuzzToy(BuzzToy toy)
     {
         using (ImRaii.Table("##overview", 8, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
@@ -1030,7 +1068,7 @@ public partial class DebugStorageUI : WindowMediatorSubscriberBase
 
             ImGuiUtil.DrawTableColumn("Enabled");
             ImGuiUtil.DrawTableColumn(alias.Enabled.ToString());
-            ImGui.TableNextRow();
+            ImGui.TableNextRow(); 
 
             ImGuiUtil.DrawTableColumn("Label");
             ImGuiUtil.DrawTableColumn(alias.Label.ToString());

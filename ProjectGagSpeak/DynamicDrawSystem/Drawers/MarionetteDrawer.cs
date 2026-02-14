@@ -15,7 +15,8 @@ public sealed class MarionetteDrawer : DynamicDrawer<AliasTrigger>
 {
     public MarionetteDrawer(GagspeakMediator mediator, MarionetteDrawSystem ds)
         : base("##GSMarionette", Svc.Logger.Logger, ds, new MarionetteCache(ds))
-    { }
+    { 
+    }
 
     public AliasTrigger? Selected => Selector.SelectedLeaf?.Data;
 
@@ -33,6 +34,9 @@ public sealed class MarionetteDrawer : DynamicDrawer<AliasTrigger>
         ImGui.SameLine(pos.X);
         CkGui.FramedIconText(folder.IsOpen ? FAI.FolderOpen : FAI.FolderClosed);
         CkGui.ColorTextFrameAlignedInline(folder.Name, folder.NameColor);
+        // Total Context.
+        CkGui.ColorTextFrameAlignedInline(folder.BracketText, ImGuiColors.DalamudGrey2);
+        CkGui.AttachToolTip(folder.BracketTooltip);
     }
 
     // This override intentionally prevents the inner method from being called so that we can call our own inner method.

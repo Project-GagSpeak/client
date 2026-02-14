@@ -141,7 +141,9 @@ public sealed class PlayerHpListener : DisposableMediatorSubscriberBase
         Logger.LogInformation("Your Trigger With Name " + trigger.Label + " and priority " + trigger.Priority + " triggering action "
             + trigger.InvokableAction.ActionType.ToName(), LoggerType.Triggers);
 
-        if (await _service.HandleActionAsync(trigger.InvokableAction, MainHub.UID, ActionSource.TriggerAction))
+        // Could grab the person who this was for and try to identify their UID from it to provide it here.
+
+        if (await _service.HandleActionAsync(trigger.InvokableAction, ActionSource.TriggerAction))
             GagspeakEventManager.AchievementEvent(UnlocksEvent.TriggerFired);
     }
 }

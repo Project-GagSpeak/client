@@ -5,11 +5,13 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Network;
 using OtterGui;
+using OtterGui.Text.Widget.Editors;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 
@@ -63,8 +65,8 @@ public class Kinkster : IComparable<Kinkster>
     public CharaActiveCollar ActiveCollar { get; private set; } = new CharaActiveCollar();
     public List<ToyBrandName> ValidToys { get; private set; } = new();
     public List<Guid> ActiveCursedItems { get; private set; } = new();
-    public AliasStorage SharedAliases { get; private set; } = new AliasStorage();
-    internal bool HasClientNameStored { get; set; } = false; // Idk a better way to do this, but it works.
+    public List<AliasTrigger> SharedAliases { get; private set; } = new();
+    public bool IsListeningToClient { get; private set; } = false; // Idk a better way to do this, but it works.
     public Guid ActivePattern { get; private set; } = Guid.Empty;
     public List<Guid> ActiveAlarms { get; private set; } = new();
     public List<Guid> ActiveTriggers { get; private set; } = new();
@@ -254,14 +256,17 @@ public class Kinkster : IComparable<Kinkster>
             ActiveRestrictions = data.Restrictions;
             ActiveRestraint = data.Restraint;
             ActiveCursedItems = data.ActiveCursedItems;
-            SharedAliases = data.AliasData; // Update later.
+            // Filtered aliases
+            SharedAliases = data.AliasData.Items.Where(a => a.WhitelistedUIDs.Contains(MainHub.UID)).ToList();
+            IsListeningToClient = data.ListeningTo.Contains(UserData.UID);
             ValidToys = data.ValidToys;
             ActivePattern = data.ActivePattern;
             ActiveAlarms = data.ActiveAlarms;
             ActiveTriggers = data.ActiveTriggers;
 
             // Update the kinkster cache with the light storage data.
-            _logger.LogDebug($"Updating LightCache for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+            _logger.LogDebug($"Updating LightCache for {GetNickAliasOrUid()} " +
+                $"[Shared Aliases: {SharedAliases.Count} | ListeningToYou: {IsListeningToClient}]", LoggerType.PairDataTransfer);
             LightCache = new KinksterCache(data.LightStorageData);
         }
 
@@ -409,9 +414,46 @@ public class Kinkster : IComparable<Kinkster>
     {
         // Ensure the enabled state is correctly updated.
         var itemsSet = activeItems.ToHashSet();
-        foreach (var alias in SharedAliases.Items)
+        foreach (var alias in SharedAliases)
             alias.Enabled = itemsSet.Contains(alias.Identifier);
+        // Inform of the change
+        _mediator.Publish(new FolderUpdateKinksterAliases(this));
     }
+
+    // Seperated from cache intentionally.
+    public void UpdateAliasTrigger(Guid id, AliasTrigger? newData)
+    {
+        var alias = SharedAliases.FirstOrDefault(a => a.Identifier == id);
+        if (alias is not null)
+        {
+            if (newData is not null)
+            {
+                alias.ApplyChanges(newData);
+                _logger.LogDebug($"Updating Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+            }
+            else
+            {
+                SharedAliases.Remove(alias);
+                _logger.LogDebug($"Removing Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+            }
+        }
+        else if (newData is not null)
+        {
+            SharedAliases.Add(newData);
+            _logger.LogDebug($"Adding Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+        }
+        // Inform marionettes tab of the change.
+        _mediator.Publish(new FolderUpdateKinksterAliases(this));
+    }
+
+    public void UpdateIsListening(bool newState)
+    {
+        _logger.LogDebug($"Updating IsListening for {GetNickAliasOrUid()} to {newState}", LoggerType.PairDataTransfer);
+        IsListeningToClient = newState;
+        _mediator.Publish(new FolderUpdateMarionettes());
+
+    }
+
 
     public void NewValidToys(List<ToyBrandName> newValidToys)
     {
@@ -442,33 +484,6 @@ public class Kinkster : IComparable<Kinkster>
         // Handle any achievements for a kinkster's Triggers changing states here, by tracking removed
         // and added Triggers ext. [FOR FUTURE IMPLEMENTATION]
     }
-
-    // Revise
-    public void NewAlias(Guid id, AliasTrigger? newData)
-    {
-        // Try and find the existing alias data by its ID.
-        if (SharedAliases.Items.FirstOrDefault(a => a.Identifier == id) is { } match)
-        {
-            // If found, and the newData is null, remove it.
-            if (newData is null)
-            {
-                _logger.LogDebug($"Removing Global Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
-                SharedAliases.Items.Remove(match);
-                return; // exit early since we removed it.
-            }
-
-            // Update it.
-            _logger.LogDebug($"Updating Global Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
-            match = newData;
-        }
-        // Otherwise, if the ID was not found, the new data is not null, and we should add it.
-        else if (newData != null)
-        {
-            _logger.LogDebug($"Adding Global Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
-            SharedAliases.Items.Add(newData);
-        }
-    }
-
     #endregion Data Updates
 
     // Update this method to be obtained by the Kinkster Cache.

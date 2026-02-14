@@ -27,7 +27,11 @@ public sealed class PuppeteerListener
             _mediator.Publish(new EventMessage(new(nick, enactor, type, message)));
     }
 
-    // Maybe move outside this class into somewhere else idk
+    /// <summary>
+    ///     OUR CLIENT recieved a name from ANOTHER KINKSTER. <para />
+    ///     This means we should be updating the PUPPETEERS since 
+    ///     we are now listening to THEM.
+    /// </summary>
     public void UpdateListener(string pairUid, string listenerName)
     {
         // Update the Puppeteers
@@ -35,10 +39,9 @@ public sealed class PuppeteerListener
             puppeteer.NameWithWorld = listenerName;
         else
             _aliasManager.Puppeteers.Add(pairUid, new PuppeteerPlayer() { NameWithWorld = listenerName });
-        
-        // Update the kinkster as well.
-        if (_kinksters.TryGetKinkster(new(pairUid), out var kinkster))
-            kinkster.HasClientNameStored = true;
+        // Ensure the puppeteer changes save after this.
+        _aliasManager.Save();
+        _mediator.Publish(new FolderUpdatePuppeteers());
 
         PostActionMsg(pairUid, InteractionType.ListenerName, $"Obtained Listener name from Kinkster");
     }

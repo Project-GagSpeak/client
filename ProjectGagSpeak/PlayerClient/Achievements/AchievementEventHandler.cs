@@ -69,8 +69,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         _events.Subscribe(UnlocksEvent.AuctionedOff, () => (ClientAchievements.SaveData[Achievements.AuctionedOff.Id] as ProgressAchievement)?.IncrementProgress());
 
         _events.Subscribe<PuppeteerMsgType>(UnlocksEvent.PuppeteerOrderSent, OnPuppeteerOrderSent);
-        _events.Subscribe(UnlocksEvent.PuppeteerOrderReceived, OnPuppeteerReceivedOrder);
-        _events.Subscribe<int>(UnlocksEvent.PuppeteerEmoteReceived, OnPuppeteerReceivedEmoteOrder);
+        _events.Subscribe<string, PuppetPerms, int, uint>(UnlocksEvent.OrderRecieved, OnPuppeteerReceivedOrder);
         _events.Subscribe<PuppetPerms>(UnlocksEvent.PuppeteerAccessGiven, OnPuppetAccessGiven);
 
 
@@ -145,8 +144,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         _events.Unsubscribe(UnlocksEvent.AuctionedOff, () => (ClientAchievements.SaveData[Achievements.AuctionedOff.Id] as ProgressAchievement)?.IncrementProgress());
 
         _events.Unsubscribe<PuppeteerMsgType>(UnlocksEvent.PuppeteerOrderSent, OnPuppeteerOrderSent);
-        _events.Unsubscribe(UnlocksEvent.PuppeteerOrderReceived, OnPuppeteerReceivedOrder);
-        _events.Unsubscribe<int>(UnlocksEvent.PuppeteerEmoteReceived, OnPuppeteerReceivedEmoteOrder);
+        _events.Unsubscribe<string, PuppetPerms, int, uint>(UnlocksEvent.OrderRecieved, OnPuppeteerReceivedOrder);
         _events.Unsubscribe<PuppetPerms>(UnlocksEvent.PuppeteerAccessGiven, OnPuppetAccessGiven);
 
         _events.Unsubscribe(UnlocksEvent.DeviceConnected, OnDeviceConnected);
@@ -1166,7 +1164,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         (ClientAchievements.SaveData[Achievements.OrchestratorOfMinds.Id] as ProgressAchievement)?.IncrementProgress();
     }
 
-    private void OnPuppeteerReceivedOrder()
+    private void OnPuppeteerReceivedOrder(string enactorUID, PuppetPerms orderType, int ammount, uint emoteId)
     {
         // inc the orders received counters.
         (ClientAchievements.SaveData[Achievements.WillingPuppet.Id] as ProgressAchievement)?.IncrementProgress();

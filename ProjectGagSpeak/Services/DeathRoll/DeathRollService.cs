@@ -134,8 +134,11 @@ public sealed class DeathRollService
         _logger.LogInformation("Session completed and removed.");
         // if we were the loser, then fire the deathroll trigger.
         if (session.LastRoller == PlayerData.NameWithWorld)
+        {
+            // Could grab the opponent UID here using the handler if we are wanting to have them perform the trigger action.
             foreach (var trigger in _triggers.Storage.Social)
-                await _triggerActions.HandleActionAsync(trigger.InvokableAction, MainHub.UID, ActionSource.TriggerAction);
+                await _triggerActions.HandleActionAsync(trigger.InvokableAction, ActionSource.TriggerAction);
+        }
 
         MonitoredSessions.Remove(session.Initializer);
     }

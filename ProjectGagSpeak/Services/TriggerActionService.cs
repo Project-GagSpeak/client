@@ -10,6 +10,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using OtterGui.Extensions;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Services;
 
@@ -57,7 +58,7 @@ public class TriggerActionService
         _distributer = distributer;
     }
 
-    public async Task<bool> HandleActionAsync(InvokableGsAction invokableAction, string enactor, ActionSource source)
+    public async Task<bool> HandleActionAsync(InvokableGsAction invokableAction, ActionSource source, string? enactor = null)
     {
         try
         {
@@ -71,7 +72,7 @@ public class TriggerActionService
             // perform an action based on the type.
             return invokableAction switch
             {
-                TextAction        ta  =>       DoTextAction(ta, enactor, source),
+                TextAction        ta  =>       DoTextAction(ta, source, enactor),
                 GagAction         ga  => await DoGagAction(ga, enactor),
                 RestrictionAction rsa => await DoRestrictionAction(rsa, enactor),
                 RestraintAction   rta => await DoRestraintAction(rta, enactor),
@@ -83,17 +84,17 @@ public class TriggerActionService
         }
         catch (Bagagwa ex)
         {
-            _logger.LogError(ex, "Error executing action: {Action}", invokableAction);
+            _logger.LogError($"Error executing action: {invokableAction} ({ex})");
             return false;
         }
     }
 
-    public async Task<bool> HandleMultiActionAsync(IEnumerable<InvokableGsAction> multiAction, string enactor, ActionSource source)
+    public async Task<bool> HandleMultiActionAsync(IEnumerable<InvokableGsAction> multiAction, ActionSource source, string? enactor = null)
     {
         var anySuccess = false;
         foreach (var action in multiAction)
         {
-            var result = await HandleActionAsync(action, enactor, source);
+            var result = await HandleActionAsync(action, source, enactor);
             if (result && !anySuccess)
                 anySuccess = true;
         }
@@ -113,7 +114,7 @@ public class TriggerActionService
         }
     }
 
-    private bool DoTextAction(TextAction act, string enactor, ActionSource source)
+    private bool DoTextAction(TextAction act, ActionSource source, string? enactor = null)
     {
 
         // construct the new SeString to send.
@@ -151,12 +152,13 @@ public class TriggerActionService
         }
 
         _logger.LogInformation("Text Action is being executed.", LoggerType.Puppeteer);
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderReceived);
-        ChatService.EnqueueMessage("/" + remainingMessage.TextValue);
+        // Placeholder values, but these should be ultimately tracking the same way puppeteer does (TODO THIS LATER)
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.OrderRecieved, string.Empty, PuppetPerms.All, 1, uint.MaxValue);
+        ChatService.EnqueueMessage($"/{remainingMessage.TextValue}");
         return true;
     }
 
-    private async Task<bool> DoGagAction(GagAction act, string enactor)
+    private async Task<bool> DoGagAction(GagAction act, string? enactor = null)
     {
         if(_gags.ServerGagData is not { } gagData)
             return false;
@@ -174,7 +176,7 @@ public class TriggerActionService
 
                 _logger.LogInformation($"Applying [{act.GagType}] to layer {layerIdx}", LoggerType.Triggers | LoggerType.Gags);
                 gagSlot.GagItem = act.GagType;
-                gagSlot.Enabler = MainHub.UID;
+                gagSlot.Enabler = enactor ?? MainHub.UID;
                 updateType = DataUpdateType.Applied;
                 break;
 
@@ -212,7 +214,7 @@ public class TriggerActionService
                 gagSlot.Padlock = act.Padlock;
                 gagSlot.Password = password;
                 gagSlot.Timer = new DateTimeOffset(DateTime.UtcNow + timer);
-                gagSlot.PadlockAssigner = MainHub.UID;
+                gagSlot.PadlockAssigner = enactor ?? MainHub.UID;
                 updateType = DataUpdateType.Locked;
                 break;
 
@@ -233,7 +235,7 @@ public class TriggerActionService
         return await _distributer.PushNewActiveGagSlot(layerIdx, gagSlot, updateType).ConfigureAwait(false) is not null;
     }
 
-    private async Task<bool> DoRestrictionAction(RestrictionAction act, string enactor)
+    private async Task<bool> DoRestrictionAction(RestrictionAction act, string? enactor = null)
     {
         if (_restrictions.ServerRestrictionData is not { } restrictions)
             return false;
@@ -255,7 +257,7 @@ public class TriggerActionService
 
                 _logger.LogInformation($"Applying restriction [{act.RestrictionId}] to layer {layerIdx}", LoggerType.Triggers);
                 restriction.Identifier = act.RestrictionId;
-                restriction.Enabler = MainHub.UID;
+                restriction.Enabler = enactor ?? MainHub.UID;
                 updateType = DataUpdateType.Applied;
                 break;
 
@@ -277,7 +279,7 @@ public class TriggerActionService
                     _ => string.Empty
                 };
                 restriction.Timer = new DateTimeOffset(DateTime.UtcNow + (act.Padlock.IsTimerLock() ? Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound) : TimeSpan.Zero));
-                restriction.PadlockAssigner = MainHub.UID;
+                restriction.PadlockAssigner = enactor ?? MainHub.UID;
                 updateType = DataUpdateType.Locked;
                 break;
 
@@ -299,7 +301,7 @@ public class TriggerActionService
         return await _distributer.PushNewActiveRestriction(layerIdx, restriction, updateType) is not null;
     }
 
-    private async Task<bool> DoRestraintAction(RestraintAction act, string enactor)
+    private async Task<bool> DoRestraintAction(RestraintAction act, string? enactor = null)
     {
         if(_restraints.ServerData is not { } restraint)
             return false;
@@ -314,7 +316,7 @@ public class TriggerActionService
                     return false;
 
                 _logger.LogDebug($"Applying restraint [{act.RestrictionId}]", LoggerType.Triggers);
-                restraintData.Enabler = MainHub.UID;
+                restraintData.Enabler = enactor ?? MainHub.UID;
                 updateType = DataUpdateType.Applied;
                 break;
 
@@ -332,7 +334,7 @@ public class TriggerActionService
                     _ => string.Empty
                 };
                 restraintData.Timer = new DateTimeOffset(DateTime.UtcNow + (act.Padlock.IsTimerLock() ? Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound) : TimeSpan.Zero));
-                restraintData.PadlockAssigner = MainHub.UID;
+                restraintData.PadlockAssigner = enactor ?? MainHub.UID;
                 updateType = DataUpdateType.Locked;
                 break;
 
@@ -351,7 +353,7 @@ public class TriggerActionService
         return await _distributer.PushNewActiveRestraint(restraintData, updateType) is not null;
     }
 
-    private async Task<bool> DoMoodleAction(MoodleAction act, string enactor)
+    private async Task<bool> DoMoodleAction(MoodleAction act, string? enactor = null)
     {
         if(!IpcCallerMoodles.APIAvailable || act.MoodleItem.Id== Guid.Empty)
         {
@@ -364,7 +366,7 @@ public class TriggerActionService
         return true;
     }
 
-    private bool DoPiShockAction(PiShockAction act, string enactor)
+    private bool DoPiShockAction(PiShockAction act, string? enactor = null)
     {
         if (ClientData.Globals is not { } perms)
             return false;
@@ -382,7 +384,7 @@ public class TriggerActionService
         return true;
     }
 
-    private bool DoSexToyAction(SexToyAction act, string enactor)
+    private bool DoSexToyAction(SexToyAction act, string? enactor = null)
     {
         // Nothing atm.
         return true;

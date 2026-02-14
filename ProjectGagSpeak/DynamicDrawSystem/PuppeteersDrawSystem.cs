@@ -31,7 +31,12 @@ public class PuppeteersDrawSystem : DynamicDrawSystem<Kinkster>, IMediatorSubscr
         // Load the hierarchy and initialize the folders.
         LoadData();
 
+        // Composite updates dont call these, do its helpful to have.
+        Mediator.Subscribe<PlayerLatestActiveItems>(this, _ => UpdateFolders());
+        // Whenever someone goes online/offline
         Mediator.Subscribe<FolderUpdateKinkster>(this, _ => UpdateFolders());
+        Mediator.Subscribe<FolderUpdatePuppeteers>(this, _ => UpdateFolders());
+
 
         DDSChanged += OnChange;
         CollectionUpdated += OnCollectionUpdate;

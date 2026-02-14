@@ -42,7 +42,18 @@ public class MarionetteDrawSystem : DynamicDrawSystem<AliasTrigger>, IMediatorSu
         // Load the hierarchy and initialize the folders.
         LoadData();
 
+        // Composite updates dont call these, do its helpful to have.
+        Mediator.Subscribe<PlayerLatestActiveItems>(this, _ => UpdateFolders());
+        // Whenever someone goes online/offline
         Mediator.Subscribe<FolderUpdateKinkster>(this, _ => UpdateFolders());
+        // A permission change occured that changes if someone could be a marionette or not.
+        Mediator.Subscribe<FolderUpdateMarionettes>(this, _ => _marionetteCombo.Refresh());
+        Mediator.Subscribe<FolderUpdateKinksterAliases>(this, _ =>
+        {
+            // Only update if matching
+            if (_.Kinkster == SelectedMarionette)
+                UpdateFolders();
+        });
 
         DDSChanged += OnChange;
         CollectionUpdated += OnCollectionUpdate;
@@ -122,11 +133,11 @@ public class MarionetteDrawSystem : DynamicDrawSystem<AliasTrigger>, IMediatorSu
         // Ensure Puppeteers Folder
         if (!FolderMap.ContainsKey(Constants.FolderTagAliasesActive))
             anyChanged |= AddFolder(new AliasFolder(root, idCounter + 1u, Constants.FolderTagAliasesActive, uint.MaxValue,
-                () => [.. SelectedMarionette?.SharedAliases.Items.Where(a => a.Enabled) ?? [] ]));
+                () => [.. SelectedMarionette?.SharedAliases.Where(a => a.Enabled) ?? [] ]));
         // Ensure Other Folder.
         if (!FolderMap.ContainsKey(Constants.FolderTagAliasesInactive))
             anyChanged |= AddFolder(new AliasFolder(root, idCounter + 1u, Constants.FolderTagAliasesInactive, uint.MaxValue,
-                () => [.. SelectedMarionette?.SharedAliases.Items.Where(a => !a.Enabled) ?? []]));
+                () => [.. SelectedMarionette?.SharedAliases.Where(a => !a.Enabled) ?? []]));
 
         return anyChanged;
     }
