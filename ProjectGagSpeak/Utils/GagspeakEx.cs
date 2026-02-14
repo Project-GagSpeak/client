@@ -107,24 +107,6 @@ public static class GagspeakEx
             _ => ImGuiColors.DalamudGrey,
         };
 
-    public static Vector4 UidColor()
-    {
-        return MainHub.ServerStatus switch
-        {
-            ServerState.Connecting => ImGuiColors.DalamudYellow,
-            ServerState.Reconnecting => ImGuiColors.DalamudRed,
-            ServerState.Connected => ImGuiColors.ParsedPink,
-            ServerState.ConnectedDataSynced => ImGuiColors.ParsedPink,
-            ServerState.Disconnected => ImGuiColors.DalamudYellow,
-            ServerState.Disconnecting => ImGuiColors.DalamudYellow,
-            ServerState.Unauthorized => ImGuiColors.DalamudRed,
-            ServerState.VersionMisMatch => ImGuiColors.DalamudRed,
-            ServerState.Offline => ImGuiColors.DalamudRed,
-            ServerState.NoSecretKey => ImGuiColors.DalamudYellow,
-            _ => ImGuiColors.DalamudRed
-        };
-    }
-
     public static Vector4 ServerStateColor()
     {
         return MainHub.ServerStatus switch
@@ -133,11 +115,11 @@ public static class GagspeakEx
             ServerState.Reconnecting => ImGuiColors.DalamudYellow,
             ServerState.Connected => ImGuiColors.HealerGreen,
             ServerState.ConnectedDataSynced => ImGuiColors.HealerGreen,
-            ServerState.Disconnected => ImGuiColors.DalamudRed,
+            ServerState.Disconnected => CkCol.TriStateCross.Vec4Ref(),
             ServerState.Disconnecting => ImGuiColors.DalamudYellow,
             ServerState.Unauthorized => ImGuiColors.ParsedOrange,
             ServerState.VersionMisMatch => ImGuiColors.ParsedOrange,
-            ServerState.Offline => ImGuiColors.DPSRed,
+            ServerState.Offline => CkCol.TriStateCross.Vec4Ref(),
             ServerState.NoSecretKey => ImGuiColors.ParsedOrange,
             _ => ImGuiColors.ParsedOrange
         };
@@ -161,9 +143,7 @@ public static class GagspeakEx
         };
     }
 
-    /// <summary> Retrieves the various UID text based on the current server state. </summary>
-    /// <returns> The text of the UID.</returns>
-    public static string GetUidText()
+    public static string GetCenterStateText()
     {
         return MainHub.ServerStatus switch
         {
@@ -172,12 +152,30 @@ public static class GagspeakEx
             ServerState.Disconnected => "Disconnected",
             ServerState.Disconnecting => "Disconnecting",
             ServerState.Unauthorized => "Unauthorized",
-            ServerState.VersionMisMatch => "Version mismatch",
-            ServerState.Offline => "Unavailable",
+            ServerState.VersionMisMatch => "Version Version",
+            ServerState.Offline => "Offline",
             ServerState.NoSecretKey => "No Secret Key",
-            ServerState.Connected => MainHub.DisplayName,
-            ServerState.ConnectedDataSynced => MainHub.DisplayName,
-            _ => string.Empty
+            ServerState.Connected => "Connected",
+            ServerState.ConnectedDataSynced => "Connected",
+            _ => "UNK-STATE"
+        };
+    }
+
+    public static string GetButtonStateText()
+    {
+        return MainHub.ServerStatus switch
+        {
+            ServerState.Reconnecting        => "Connecting",
+            ServerState.Connecting          => "Connecting",
+            ServerState.Disconnected        => "Offline",
+            ServerState.Disconnecting       => "Aborting",
+            ServerState.Unauthorized        => "Bad Auth",
+            ServerState.VersionMisMatch     => "Missmatch",
+            ServerState.Offline             => "Offline",
+            ServerState.NoSecretKey         => "No Key",
+            ServerState.Connected           => "Connected",
+            ServerState.ConnectedDataSynced => "Connected",
+            _ => "UNK-STATE"
         };
     }
 

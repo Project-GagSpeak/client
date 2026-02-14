@@ -1,8 +1,8 @@
-using System.Globalization;
-using System.Reflection;
 using CkCommons.Gui;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface;
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
 using GagSpeak.Kinksters;
@@ -14,7 +14,11 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
 using OtterGui.Text;
+using OtterGuiInternal;
+using System.Globalization;
+using System.Reflection;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -28,17 +32,16 @@ public class MainUI : WindowMediatorSubscriberBase
     private readonly AccountManager _account;
     private readonly MainHub _hub;
     private readonly MainMenuTabs _tabMenu;
-    private readonly SidePanelService _sidePanelService;
-    private readonly RequestsManager _requestManager;
+    private readonly SidePanelService _sidePanel;
+    private readonly RequestsManager _requests;
     private readonly KinksterManager _kinksters;
     private readonly TutorialService _guides;
-    private readonly HomeTab _homepage;
-    private readonly RequestsTab _requests;
-    private readonly WhitelistTab _whitelist;
-    private readonly PatternHubTab _patternHub;
-    private readonly MoodleHubTab _moodlesHub;
-    private readonly GlobalChatTab _globalChat;
-    private float _windowContentWidth;
+    private readonly HomeTab _homepageTab;
+    private readonly RequestsTab _requestsTab;
+    private readonly WhitelistTab _whitelistTab;
+    private readonly PatternHubTab _patternHubTab;
+    private readonly MoodleHubTab _moodlesHubTab;
+    private readonly GlobalChatTab _globalChatTab;
 
     private bool _creatingRequest = false;
     public string _uidToSentTo = string.Empty;
@@ -56,16 +59,16 @@ public class MainUI : WindowMediatorSubscriberBase
         _account = account;
         _hub = hub;
         _tabMenu = tabMenu;
-        _sidePanelService = sidePanel;
-        _requestManager = requestmanager;
+        _sidePanel = sidePanel;
+        _requests = requestmanager;
         _kinksters = kinksters;
         _guides = guides;
-        _homepage = home;
-        _requests = requests;
-        _whitelist = whitelist;
-        _patternHub = patternHub;
-        _moodlesHub = moodlesHub;
-        _globalChat = globalChat;
+        _homepageTab = home;
+        _requestsTab = requests;
+        _whitelistTab = whitelist;
+        _patternHubTab = patternHub;
+        _moodlesHubTab = moodlesHub;
+        _globalChatTab = globalChat;
 
         // display info about the folders
         var ver = Assembly.GetExecutingAssembly().GetName().Version!;
@@ -93,6 +96,7 @@ public class MainUI : WindowMediatorSubscriberBase
 
     public static Vector2 LastPos { get; private set; } = Vector2.Zero;
     public static Vector2 LastSize { get; private set; } = Vector2.Zero;
+    public static Vector2 LastBottomTabMenuPos { get; private set; } = Vector2.Zero;
 
     // for tutorial.
     private Vector2 WindowPos => ImGui.GetWindowPos();
@@ -121,78 +125,60 @@ public class MainUI : WindowMediatorSubscriberBase
     protected override void DrawInternal()
     {
         // get the width of the window content region we set earlier
-        _windowContentWidth = CkGui.GetWindowContentRegionWidth();
+        var winContentWidth = CkGui.GetWindowContentRegionWidth();
 
-        if (MainHub.ServerStatus is (ServerState.NoSecretKey or ServerState.VersionMisMatch or ServerState.Unauthorized))
-        {
-            using (ImRaii.PushId("header")) DrawUIDHeader();
-
-            var errorTitle = MainHub.ServerStatus switch
-            {
-                ServerState.NoSecretKey => "INVALID/NO KEY",
-                ServerState.VersionMisMatch => "UNSUPPORTED VERSION",
-                ServerState.Unauthorized => "UNAUTHORIZED",
-                _ => "UNK ERROR"
-            };
-            var errorText = GetServerError();
-
-            // push the notice that we are unsupported
-            using (UiFontService.UidFont.Push())
-            {
-                var uidTextSize = ImGui.CalcTextSize(errorTitle);
-                ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X + ImGui.GetWindowContentRegionMin().X) / 2 - uidTextSize.X / 2);
-                CkGui.ColorTextFrameAligned(errorTitle, ImGuiColors.ParsedPink);
-            }
-            // the wrapped text explanation based on the error.
-            CkGui.ColorTextWrapped(errorText, ImGuiColors.DalamudWhite);
-        }
-        else
-        {
-            DrawServerStatus();
-        }
-        // separate our UI once more.
-        ImGui.Separator();
-
-        // store a ref to the end of the content drawn.
-        var menuComponentEnd = ImGui.GetCursorPosY();
-
-        // if we are connected, draw out our menus based on the tab selection.
-        if (MainHub.IsConnected)
-        {
-            if (_creatingRequest)
-                DrawRequestCreator(_windowContentWidth, ImUtf8.ItemInnerSpacing.X);
-
-            // draw the bottom tab bar
-            using (ImRaii.PushId("MainMenuTabBar")) _tabMenu.Draw(_windowContentWidth);
-
-            // display content based on the tab selected
-            switch (_tabMenu.TabSelection)
-            {
-                case MainMenuTabs.SelectedTab.Homepage:
-                    _homepage.DrawSection();
-                    break;
-                case MainMenuTabs.SelectedTab.Requests:
-                    _requests.DrawSection();
-                    break;
-                case MainMenuTabs.SelectedTab.Whitelist:
-                    _whitelist.DrawSection();
-                    break;
-                case MainMenuTabs.SelectedTab.PatternHub:
-                    _patternHub.DrawPatternHub();
-                    _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternResults, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
-                        () => { _tabMenu.TabSelection = MainMenuTabs.SelectedTab.MoodlesHub; });
-                    break;
-                case MainMenuTabs.SelectedTab.MoodlesHub:
-                    _moodlesHub.DrawMoodlesHub();
-                    break;
-                case MainMenuTabs.SelectedTab.GlobalChat:
-                    _globalChat.DrawSection();
-                    break;
-            }
-        }
+        var disableButtons = MainHub.ServerStatus is (ServerState.NoSecretKey or ServerState.VersionMisMatch or ServerState.Unauthorized);
+        DrawTopBar();
 
         LastPos = ImGui.GetWindowPos();
         LastSize = ImGui.GetWindowSize();
+
+        // If we are not connected, then do not draw any further.
+        if (!MainHub.IsConnected)
+        {
+            if (disableButtons)
+            {
+                ImGui.Spacing();
+                ImGui.Separator();
+                ImGui.Separator();
+                // the wrapped text explanation based on the error.
+                CkGui.ColorTextWrapped(GetServerError(), ImGuiColors.DalamudWhite);
+            }
+            return;
+        }
+
+
+        // If we are creating a request to send to another user, draw this first.
+        if (_creatingRequest)
+            DrawRequestCreator(winContentWidth, ImUtf8.ItemInnerSpacing.X);
+
+        // draw the bottom tab bar
+        _tabMenu.Draw(winContentWidth);
+
+        // display content based on the tab selected
+        switch (_tabMenu.TabSelection)
+        {
+            case MainMenuTabs.SelectedTab.Homepage:
+                _homepageTab.DrawSection();
+                break;
+            case MainMenuTabs.SelectedTab.Requests:
+                _requestsTab.DrawSection();
+                break;
+            case MainMenuTabs.SelectedTab.Whitelist:
+                _whitelistTab.DrawSection();
+                break;
+            case MainMenuTabs.SelectedTab.PatternHub:
+                _patternHubTab.DrawPatternHub();
+                _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternResults, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+                    () => { _tabMenu.TabSelection = MainMenuTabs.SelectedTab.MoodlesHub; });
+                break;
+            case MainMenuTabs.SelectedTab.MoodlesHub:
+                _moodlesHubTab.DrawMoodlesHub();
+                break;
+            case MainMenuTabs.SelectedTab.GlobalChat:
+                _globalChatTab.DrawSection();
+                break;
+        }
     }
 
     public void DrawRequestCreator(float availableXWidth, float spacingX)
@@ -210,12 +196,14 @@ public class MainUI : WindowMediatorSubscriberBase
             UiService.SetUITask(async () =>
             {
                 var res = await _hub.UserSendKinksterRequest(new(new(_uidToSentTo), false, string.Empty, _requestMessage));
+                // Add the request if it was successful!
+                if (res.ErrorCode is GagSpeakApiEc.Success)
+                    _requests.AddNewRequest(res.Value!);
+
+                // Clear values
                 _uidToSentTo = string.Empty;
                 _requestMessage = string.Empty;
                 _creatingRequest = false;
-                // Add the request if it was successful!
-                if (res.ErrorCode is GagSpeakApiEc.Success)
-                    _requestManager.AddNewRequest(res.Value!);
             });
         }
         if (!string.IsNullOrEmpty(_uidToSentTo))
@@ -224,141 +212,206 @@ public class MainUI : WindowMediatorSubscriberBase
         // draw a attached message field as well if they want.
         ImGui.SetNextItemWidth(availableXWidth);
         ImGui.InputTextWithHint("##pairAddOptionalMessage", "Attach Msg to Request (Optional)", ref _requestMessage, 100);
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AttachingMessages, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () =>
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AttachingMessages, LastPos, LastSize, () =>
         {
             _creatingRequest = !_creatingRequest;
-            _tabMenu.TabSelection = MainMenuTabs.SelectedTab.Homepage;
+            _tabMenu.TabSelection = MainMenuTabs.SelectedTab.Requests;
         });
         ImGui.Separator();
     }
 
-    private void DrawUIDHeader()
+    private void DrawTopBar()
     {
-        var uidText = GagspeakEx.GetUidText();
-        using (UiFontService.UidFont.Push())
+        var disableButtons = MainHub.ServerStatus is (ServerState.NoSecretKey or ServerState.VersionMisMatch or ServerState.Unauthorized);
+        // Get the window pointer before we draw.
+        var winPtr = ImGuiInternal.GetCurrentWindow();
+        // Expand the region of the topbar to cross the full width.
+        var winPadding = ImGui.GetStyle().WindowPadding;
+        // ImGui hides the actual possible clip-rect-min from going to 0,0.
+        // This is because the ClipRect skips over the titlebar, so if WinPadding is 8,8
+        // then the content region min returns 8,40
+        // Note to only subtract the X padding. ClipRectMin gets Y correctly.
+        var winClipX = winPadding.X / 2;
+        var minPos = winPtr.DrawList.GetClipRectMin() + new Vector2(-winClipX, winPadding.Y);
+        var maxPos = winPtr.DrawList.GetClipRectMax() + new Vector2(winClipX, 0);
+        // Expand the area for our custom header.
+        winPtr.DrawList.PushClipRect(minPos, maxPos, false);
+
+        // Get the expanded width
+        var topBarWidth = maxPos.X - minPos.X;
+        var sideWidth = ImGui.CalcTextSize("Connecting").X + CkGui.IconSize(FAI.Satellite).X + ImUtf8.ItemSpacing.X * 3;
+        var height = CkGui.CalcFontTextSize("A", UiFontService.Default150Percent).Y;
+
+        if (DrawAddUser(winPtr, new Vector2(sideWidth, height), minPos, disableButtons || !MainHub.IsConnected))
+            _creatingRequest = !_creatingRequest;
+        CkGui.AttachToolTip("Add a new Kinkster");
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AddingKinksters, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => _creatingRequest = !_creatingRequest);
+
+        ImGui.SetCursorScreenPos(minPos + new Vector2(sideWidth, 0));
+        DrawConnectedUsers(winPtr, new Vector2(topBarWidth - sideWidth * 2, height), topBarWidth);
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.InitialWelcome, WindowPos, WindowSize);
+
+        ImGui.SameLine(topBarWidth - sideWidth);
+        var blockStateChange = MainHub.ServerStatus is ServerState.Reconnecting or ServerState.Disconnecting;
+        if (DrawConnection(winPtr, new Vector2(sideWidth, height), ImGui.GetCursorScreenPos(), disableButtons || blockStateChange))
         {
-            var uidTextSize = ImGui.CalcTextSize(uidText);
-            ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) / 2 - uidTextSize.X / 2);
-            ImGui.TextColored(GagspeakEx.UidColor(), uidText);
-        }
-
-        // if we are connected
-        if (MainHub.IsConnected)
-        {
-            CkGui.CopyableDisplayText(MainHub.DisplayName);
-            if (!string.Equals(MainHub.DisplayName, MainHub.UID, StringComparison.Ordinal))
-            {
-                var originalTextSize = ImGui.CalcTextSize(MainHub.UID);
-                ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) / 2 - originalTextSize.X / 2);
-                ImGui.TextColored(GagspeakEx.UidColor(), MainHub.UID);
-                CkGui.CopyableDisplayText(MainHub.UID);
-            }
-        }
-    }
-
-
-    /// <summary> Draws the current status of the server, including the number of people online. </summary>
-    private void DrawServerStatus()
-    {
-        var windowPadding = ImGui.GetStyle().WindowPadding;
-        var addUserIcon = FAI.UserPlus;
-        var connectionButtonSize = CkGui.IconButtonSize(FAI.Link);
-        var addUserButtonSize = CkGui.IconButtonSize(addUserIcon);
-
-        var userCount = MainHub.OnlineUsers.ToString(CultureInfo.InvariantCulture);
-        var userSize = ImGui.CalcTextSize(userCount);
-        var textSize = ImGui.CalcTextSize("Kinksters Online");
-        var serverText = "Main GagSpeak Server";
-        var shardTextSize = ImGui.CalcTextSize(serverText);
-        var totalHeight = ImGui.GetTextLineHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
-
-        // create a table
-        ImGui.SetCursorPosY(ImGui.GetCursorPosY() - ImGui.GetStyle().ItemSpacing.Y);
-        using (ImRaii.Table("ServerStatusMainUI", 3))
-        {
-            // define the column lengths.
-            ImGui.TableSetupColumn("##addUser", ImGuiTableColumnFlags.WidthFixed, addUserButtonSize.X);
-            ImGui.TableSetupColumn("##serverState", ImGuiTableColumnFlags.WidthStretch);
-            ImGui.TableSetupColumn("##connectionButton", ImGuiTableColumnFlags.WidthFixed, connectionButtonSize.X);
-
-            // draw the add user button
-            ImGui.TableNextColumn();
-            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (totalHeight - addUserButtonSize.Y) / 2);
-            if (CkGui.IconButton(addUserIcon, disabled: !MainHub.IsConnected))
-                _creatingRequest = !_creatingRequest;
-            CkGui.AttachToolTip("Add New User to Whitelist");
-            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AddingKinksters, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => _creatingRequest = !_creatingRequest);
-
-            // in the next column, draw the centered status.
-            ImGui.TableNextColumn();
-
             if (MainHub.IsConnected)
             {
-                // fancy math shit for clean display, adjust when moving things around
-                ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth())
-                    / 2 - (userSize.X + textSize.X) / 2 - ImGui.GetStyle().ItemSpacing.X / 2);
-                using (ImRaii.Group())
-                {
-                    ImGui.TextColored(ImGuiColors.ParsedPink, userCount);
-                    ImGui.SameLine();
-                    ImGui.TextUnformatted("Kinksters Online");
-                }
-                _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.InitialWelcome, WindowPos, WindowSize);
-
+                _config.SetPauseState(true);
+                UiService.SetUITask(_hub.Disconnect(ServerState.Disconnected, DisconnectIntent.Normal));
             }
-            // otherwise, if we are not connected, display that we aren't connected.
+            else if (MainHub.ServerStatus is (ServerState.Disconnected or ServerState.Offline))
+            {
+                _config.SetPauseState(false);
+                UiService.SetUITask(_hub.Connect());
+            }
+        }
+        CkGui.AttachToolTip($"{(MainHub.IsConnected ? "Disconnect from" : "Connect to")} {MainHub.MAIN_SERVER_NAME}--SEP--Current Status: {MainHub.ServerStatus}");
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ConnectionState, WindowPos, WindowSize, () => _tabMenu.TabSelection = MainMenuTabs.SelectedTab.Homepage);
+
+        winPtr.DrawList.PopClipRect();
+    }
+
+    private bool DrawAddUser(ImGuiWindowPtr winPtr, Vector2 region, Vector2 minPos, bool disabled)
+    {
+        if (winPtr.SkipItems)
+            return false;
+
+        var id = ImGui.GetID("add-kinkster");
+        var style = ImGui.GetStyle();
+        var shadowSize = ImGuiHelpers.ScaledVector2(1);
+        var styleOffset = ImGuiHelpers.ScaledVector2(2f);
+        var buttonPadding = styleOffset + ImUtf8.FramePadding;
+        var bend = region.Y * .5f;
+        var min = minPos;
+        var hitbox = new ImRect(min, min + region);
+
+        ImGuiInternal.ItemSize(region);
+        if (!ImGuiP.ItemAdd(hitbox, id, null))
+            return false;
+
+        // Process interaction with this 'button'
+        var hovered = false;
+        var active = false;
+        var clicked = ImGuiP.ButtonBehavior(hitbox, id, ref hovered, ref active);
+
+        // Render possible nav highlight space over the bounding box region.
+        ImGuiP.RenderNavHighlight(hitbox, id);
+        // Define our colors based on states.
+        uint shadowCol = 0x64000000;
+        uint borderCol = CkGui.ApplyAlpha(0xDCDCDCDC, GetBorderAlpha(active, hovered, disabled));
+        uint bgCol = CkGui.ApplyAlpha(0x64000000, GetBgAlpha(active, hovered, disabled));
+        uint textCol = CkGui.ApplyAlpha(ImGui.GetColorU32(ImGuiCol.Text), disabled ? 0.5f : 1f);
+
+        winPtr.DrawList.AddRectFilled(min, hitbox.Max, shadowCol, bend, ImDrawFlags.RoundCornersRight);
+        winPtr.DrawList.AddRectFilled(min + new Vector2(0, shadowSize.Y), hitbox.Max - shadowSize, borderCol, bend, ImDrawFlags.RoundCornersRight);
+        winPtr.DrawList.AddRectFilled(min + new Vector2(0, styleOffset.Y), hitbox.Max - styleOffset, bgCol, bend, ImDrawFlags.RoundCornersRight);
+
+        // Text computation.
+        var textSize = ImGui.CalcTextSize("Add Kinkster");
+        var textPos = min + ((region - textSize) / 2f);
+        winPtr.DrawList.AddText("Add Kinkster", textPos, textCol);
+
+        return clicked && !disabled;
+    }
+
+    private void DrawConnectedUsers(ImGuiWindowPtr winPtr, Vector2 region, float topBarWidth)
+    {
+        using var font = UiFontService.Default150Percent.Push();
+
+        var userCount = MainHub.OnlineUsers.ToString(CultureInfo.InvariantCulture);
+        var text = MainHub.IsConnected ? $"{userCount} Online" : GagspeakEx.GetCenterStateText();
+        var textSize = ImGui.CalcTextSize(text);
+        var offsetX = (topBarWidth - textSize.X - ImUtf8.ItemInnerSpacing.X) / 2;
+
+        // Make two gradients from the left and right, based on region.
+        var posMin = winPtr.DC.CursorPos;
+        var posMax = posMin + region;
+        var halfRegion = region with { X = region.X * .5f };
+        var innerCol = ColorHelpers.Fade(ImGui.GetColorU32(ImGuiCol.TextDisabled), .75f);
+        var outerCol = ColorHelpers.Fade(ImGui.GetColorU32(ImGuiCol.TextDisabled), .99f);
+
+        winPtr.DrawList.AddRectFilledMultiColor(posMin, posMin + halfRegion, outerCol, innerCol, innerCol, outerCol);
+        winPtr.DrawList.AddRectFilledMultiColor(posMin with { X = posMin.X + halfRegion.X }, posMax, innerCol, outerCol, outerCol, innerCol);
+
+        ImGui.SetCursorPosX(offsetX);
+        using (ImRaii.Group())
+        {
+            if (MainHub.IsConnected)
+            {
+                CkGui.ColorText(userCount, GsCol.VibrantPink.Vec4Ref());
+                CkGui.TextInline("Online");
+            }
             else
             {
-                ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth())
-                    / 2 - ImGui.CalcTextSize("Not connected to any server").X / 2 - ImGui.GetStyle().ItemSpacing.X / 2);
-                ImGui.TextColored(ImGuiColors.DalamudRed, "Not connected to any server");
+                CkGui.ColorText(text, GagspeakEx.ServerStateColor());
             }
-
-            ImGui.SetCursorPosY(ImGui.GetCursorPosY() - ImGui.GetStyle().ItemSpacing.Y);
-            ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth()) / 2 - shardTextSize.X / 2);
-            ImGui.TextUnformatted(serverText);
-
-            // draw the connection link button
-            ImGui.TableNextColumn();
-            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (totalHeight - addUserButtonSize.Y) / 2);
-            // now we need to display the connection link button beside it.
-            var color = GagspeakEx.ServerStateColor();
-            var connectedIcon = GagspeakEx.ServerStateIcon(MainHub.ServerStatus);
-
-            // if the server is reconnecting or disconnecting
-            using (ImRaii.Disabled(MainHub.ServerStatus is ServerState.Reconnecting or ServerState.Disconnecting))
-            {
-                // we need to turn the button from the connected link to the disconnected link.
-                using (ImRaii.PushColor(ImGuiCol.Text, color))
-                {
-                    // then display it
-                    if (CkGui.IconButton(connectedIcon))
-                    {
-                        // If its true, make sure our ServerStatus is Connected, or if its false, make sure our ServerStatus is Disconnected or offline.
-                        if (MainHub.IsConnected)
-                        {
-                            _config.SetPauseState(true);
-                            UiService.SetUITask(_hub.Disconnect(ServerState.Disconnected, DisconnectIntent.Normal));
-                        }
-                        else if (MainHub.ServerStatus is (ServerState.Disconnected or ServerState.Offline))
-                        {
-                            _config.SetPauseState(false);
-                            UiService.SetUITask(_hub.Connect());
-                        }
-                    }
-                }
-                // attach the tooltip for the connection / disconnection button)
-                CkGui.AttachToolTip(MainHub.IsConnected
-                    ? $"Disconnect from {MainHub.MAIN_SERVER_NAME}--SEP--Current Status: {MainHub.ServerStatus}"
-                    : $"Connect to {MainHub.MAIN_SERVER_NAME}--SEP--Current Status: {MainHub.ServerStatus}");
-            }
-            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ConnectionState, WindowPos, WindowSize, () => _tabMenu.TabSelection = MainMenuTabs.SelectedTab.Homepage);
         }
     }
 
+    private bool DrawConnection(ImGuiWindowPtr winPtr, Vector2 region, Vector2 minPos, bool disabled)
+    {
+        if (winPtr.SkipItems)
+            return false;
 
-    /// <summary> Retrieves the various server error messages based on the current server state. </summary>
-    /// <returns> The error message of the server.</returns>
+        var id = ImGui.GetID("change-state");
+        var style = ImGui.GetStyle();
+        var shadowSize = ImGuiHelpers.ScaledVector2(1);
+        var styleOffset = ImGuiHelpers.ScaledVector2(2f);
+        var buttonPadding = styleOffset + ImUtf8.FramePadding;
+        var bend = region.Y * .5f;
+        var min = minPos;
+        var hitbox = new ImRect(min, min + region);
+
+        ImGuiInternal.ItemSize(region);
+        if (!ImGuiP.ItemAdd(hitbox, id, null))
+            return false;
+
+        // Process interaction with this 'button'
+        var hovered = false;
+        var active = false;
+        var clicked = ImGuiP.ButtonBehavior(hitbox, id, ref hovered, ref active);
+
+        // Render possible nav highlight space over the bounding box region.
+        ImGuiP.RenderNavHighlight(hitbox, id);
+
+        // Define our colors based on states.
+        uint shadowCol = 0x64000000;
+        uint borderCol = CkGui.ApplyAlpha(0xDCDCDCDC, GetBorderAlpha(active, hovered, disabled));
+        uint bgCol = CkGui.ApplyAlpha(0x64000000, GetBgAlpha(active, hovered, disabled));
+
+        winPtr.DrawList.AddRectFilled(min, hitbox.Max, shadowCol, bend, ImDrawFlags.RoundCornersLeft);
+        winPtr.DrawList.AddRectFilled(min + shadowSize, hitbox.Max - new Vector2(0, shadowSize.Y), borderCol, bend, ImDrawFlags.RoundCornersLeft);
+        winPtr.DrawList.AddRectFilled(min + styleOffset, hitbox.Max - new Vector2(0, styleOffset.Y), bgCol, bend, ImDrawFlags.RoundCornersLeft);
+
+        // Text computation.
+        var icon = GagspeakEx.ServerStateIcon(MainHub.ServerStatus);
+        var text = GagspeakEx.GetButtonStateText();
+        var stateCol = GagspeakEx.ServerStateColor().ToUint();
+        var iconSize = CkGui.IconSize(icon);
+        var textSize = ImGui.CalcTextSize(text);
+        var iconTextWidth = iconSize.X + style.ItemInnerSpacing.X + textSize.X;
+        var iconPos = min + new Vector2((region.X - iconTextWidth) / 2f, (region.Y - textSize.Y) / 2f);
+        var textPos = iconPos + new Vector2(iconSize.X + style.ItemInnerSpacing.X, 0);
+        // Then draw out the icon and text.
+        using (Svc.PluginInterface.UiBuilder.IconFontFixedWidthHandle.Push())
+            winPtr.DrawList.AddText(icon.ToIconString(), iconPos, stateCol);
+        winPtr.DrawList.AddText(text, textPos, stateCol);
+        // If its true, make sure our ServerStatus is Connected, or if its false, make sure our ServerStatus is Disconnected or offline.
+        return clicked && !disabled;
+    }
+
+    // For Border we want it to be brighter the more active it is.
+    public static float GetBorderAlpha(bool active, bool hovered, bool disabled)
+        => disabled ? 0.27f : active ? 0.7f : hovered ? 0.63f : 0.39f;
+
+    // For the background we want it to have less alpha the brighter we want it.
+    public static float GetBgAlpha(bool active, bool hovered, bool disabled)
+        => disabled ? 0.44f : active ? 0.19f : hovered ? 0.26f : 0.39f;
+
+    /// <summary>
+    ///     Retrieves the various server error messages based on the current server state.
+    /// </summary>
     private string GetServerError()
     {
         return MainHub.ServerStatus switch
@@ -387,7 +440,7 @@ public class MainUI : WindowMediatorSubscriberBase
     public override void OnClose()
     {
         Mediator.Publish(new ClosedMainUiMessage());
-        _sidePanelService.ClearDisplay();
+        _sidePanel.ClearDisplay();
         base.OnClose();
     }
 }

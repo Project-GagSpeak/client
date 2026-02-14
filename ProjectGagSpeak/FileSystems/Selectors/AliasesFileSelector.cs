@@ -177,7 +177,7 @@ public sealed class AliasesFileSelector : CkFileSystemSelector<AliasTrigger, Ali
         ImGui.SameLine(0, 1);
         if (CkGui.IconButton(FAI.Plus, inPopup: true))
             ImGui.OpenPopup("##NewAlias");
-        CkGui.AttachToolTip("Create a new Cursed Item.");
+        CkGui.AttachToolTip("Create a new AliasTrigger.");
 
         ImGui.SameLine(0, 1);
         DrawFolderButton();

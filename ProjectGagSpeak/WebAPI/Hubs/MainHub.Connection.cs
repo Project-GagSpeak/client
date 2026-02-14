@@ -328,7 +328,7 @@ public partial class MainHub
         }
 
         // If the client wishes to not be connected to the server, return.
-        if (ClientHasConnectionPaused)
+        if (IsFullPaused)
         {
             Logger.LogDebug("You have your connection to server paused. Stopping any attempt to connect!", LoggerType.ApiCore);
             return false;

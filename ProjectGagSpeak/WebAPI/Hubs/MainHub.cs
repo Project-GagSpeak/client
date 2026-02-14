@@ -154,7 +154,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     public static bool IsConnectionDataSynced => _serverStatus is ServerState.ConnectedDataSynced;
     public static bool IsConnected => _serverStatus is ServerState.Connected or ServerState.ConnectedDataSynced;
     public static bool IsServerAlive => _serverStatus is ServerState.ConnectedDataSynced or ServerState.Connected or ServerState.Unauthorized or ServerState.Disconnected;
-    public bool ClientHasConnectionPaused => _config.ServerPaused;
+    public bool IsFullPaused => _config.ServerPaused;
 
     protected override void Dispose(bool disposing)
     {
