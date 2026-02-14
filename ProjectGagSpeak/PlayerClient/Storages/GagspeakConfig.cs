@@ -29,7 +29,6 @@ public class GagspeakConfig
     public bool VisibleFolder { get; set; } = true;
     public bool OfflineFolder { get; set; } = true;
     public bool TargetWithFocus { get; set; } = false;
-    public bool ViewingIncoming { get; set; } = true;
 
     public bool OpenMainUiOnStartup { get; set; } = true;
     public MainMenuTabs.SelectedTab MainUiTab { get; set; } = MainMenuTabs.SelectedTab.Whitelist;

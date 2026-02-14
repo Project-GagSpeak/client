@@ -43,19 +43,8 @@ public class RequestsOutDrawer : DynamicDrawer<RequestEntry>
     {
         var tmp = FilterCache.Filter;
         // Update the search bar if things change, like normal.
-        if (FancySearchBar.Draw("Filter", width, ref tmp, "filter..", length, CkGui.IconTextButtonSize(FAI.Stopwatch, "Outgoing"), DrawButtons))
+        if (FancySearchBar.Draw("Filter", width, ref tmp, "filter Requests..", length))
             FilterCache.Filter = tmp;
-
-        void DrawButtons()
-        {
-            if (CkGui.IconTextButton(FAI.Stopwatch, "Outgoing", null, true))
-            {
-                _config.Current.ViewingIncoming = !_config.Current.ViewingIncoming;
-                _config.Save();
-                Selector.ClearSelected();
-            }
-            CkGui.AttachToolTip($"Switch to incoming requests.");
-        }
     }
 
     // Custom draw method spesifically for our incoming folder.

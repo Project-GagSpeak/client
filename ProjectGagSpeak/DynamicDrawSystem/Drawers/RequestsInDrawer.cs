@@ -47,25 +47,12 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
         _kinksters = kinksters;
     }
 
-    // Special top area here due to how it displays either essential config or bulk selection options.
     protected override void DrawSearchBar(float width, int length)
     {
         var tmp = FilterCache.Filter;
         // Update the search bar if things change, like normal.
-        if (FancySearchBar.Draw("Filter", width, ref tmp, "filter..", length, CkGui.IconTextButtonSize(FAI.Envelope, "Incoming"), DrawButtons))
+        if (FancySearchBar.Draw("Filter", width, ref tmp, "filter Requests..", length))
             FilterCache.Filter = tmp;
-        
-        void DrawButtons()
-        {
-            // For swapping which drawer is displayed. (Should also swap what is present in the service if multi-selecting.
-            if (CkGui.IconTextButton(FAI.Envelope, "Incoming", null, true))
-            {
-                _config.Current.ViewingIncoming = !_config.Current.ViewingIncoming;
-                _config.Save();
-                Selector.ClearSelected();
-            }
-            CkGui.AttachToolTip($"Switch to outgoing requests.");
-        }
     }
 
     protected override void UpdateHoverNode()
