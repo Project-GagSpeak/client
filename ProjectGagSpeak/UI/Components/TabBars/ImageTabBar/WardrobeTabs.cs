@@ -21,7 +21,10 @@ public class WardrobeTabs : ImageTabBar<WardrobeTabs.SelectedTab>
             "Restrictions--SEP--Apply, Lock, Unlock, Remove, or Configure your various Restrictions");
         AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged], SelectedTab.MyGags,
             "Gags--SEP--Apply, Lock, Unlock, Remove, or Configure your various Gags");
+#if DEBUG
+        // TODO: enable in release when collar management is implemented
         AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Collar], SelectedTab.MyCollar,
             "My Collar--SEP--Setup your Collar, and manage incoming and outgoing collar requests.");
+#endif
     }
 }
