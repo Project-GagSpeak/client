@@ -1,3 +1,4 @@
+using CkCommons;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Memory;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -8,127 +9,112 @@ namespace GagSpeak.Game.Readers;
 #nullable disable
 
 /// <summary>
-///     Various AtkReaders for undocumented AtkUnitBase's in FFXIVClientStructs
+///     Various AtkReaders for undocumented AtkUnitBase's in FFXIVClientStructs. <para />
+///     Pulled from ECommons for navigation in MansionSelectRoom
 /// </summary>
-public abstract unsafe class AtkReaderBase(AtkUnitBase* unitBase, int beginOffset = 0)
+public abstract unsafe class AtkReaderBase(AtkUnitBase* UnitBase, int BeginOffset = 0)
 {
-    // loop through the contents of a AtkUnitBase parent, creating activator instances for them.
-    public List<T> Loop<T>(int offset, int size, int maxLen, bool ignoreNull = false) where T : AtkReaderBase
+    public List<T> Loop<T>(int Offset, int Size, int MaxLength, bool IgnoreNull = false) where T : AtkReaderBase
     {
         var ret = new List<T>();
-        for (var i = 0; i < maxLen; i++)
+        for (var i = 0; i < MaxLength; i++)
         {
-            var r = (AtkReaderBase)Activator.CreateInstance(typeof(T), [(nint)unitBase, offset + (i * size)]);
-            // validate if r is null or not by checking its instance, and break if we are not ignoring null.
-            if (r.IsNull && !ignoreNull)
-                break; // break out if we want to respect null.
-            // otherwise, add it to the list.
+            var r = (AtkReaderBase)Activator.CreateInstance(typeof(T), [(nint)UnitBase, Offset + (i * Size)]);
+            if (r.IsNull && !IgnoreNull) break;
             ret.Add((T)r);
         }
-        // return the looped iterations.
         return ret;
     }
 
-    public AtkReaderBase(nint unitBasePtr, int beginOffset = 0) : this((AtkUnitBase*)unitBasePtr, beginOffset)
-    { }
+    public AtkReaderBase(nint UnitBasePtr, int BeginOffset = 0) : this((AtkUnitBase*)UnitBasePtr, BeginOffset) { }
 
-    public (nint UnitBase, int BeginOffset) AtkReaderParams => ((nint)unitBase, beginOffset);
+    public (nint UnitBase, int BeginOffset) AtkReaderParams => ((nint)UnitBase, BeginOffset);
 
-    // check if the created activator instance was null or not.
     public bool IsNull
     {
         get
         {
-            // the created instance is considered null if it has no atk values.
-            if (unitBase->AtkValuesCount == 0)
-                return true;
-            // get the number that must be ensured, based on the create instances offset.
-            var num = 0 + beginOffset;
-            // ensure the count, throw exception if out of range. 
-            EnsureCount(unitBase, num);
-            // if the values at the number have a type equal to 0, it is considered null.
-            if (unitBase->AtkValues[num].Type == 0)
-                return true;
-            // otherwise, it's valid.
-            return true;
+            if (UnitBase->AtkValuesCount == 0) return true;
+            var num = 0 + BeginOffset;
+            EnsureCount(UnitBase, num);
+            if (UnitBase->AtkValues[num].Type == 0) return true;
+            return false;
         }
     }
-
-    // we need to read in the various values of the created instance, to make evaluating the unit base easier for parent classes.
     protected uint? ReadUInt(int n)
     {
-        // basic formula goes as follows:
-        var num = n + beginOffset; // get num with n & offset.
-        EnsureCount(unitBase, num); // ensure the count of the unit base.
-        // obtain the value since it was ensured.
-        var value = unitBase->AtkValues[num];
-        // if the type is not 0, return null.
+        var num = n + BeginOffset;
+        EnsureCount(UnitBase, num);
+        var value = UnitBase->AtkValues[num];
         if (value.Type == 0)
+        {
             return null;
-        // throw invalid cast exception if the type does not match uint.
+        }
         if (value.Type != ValueType.UInt)
-            throw new InvalidCastException($"Value {num} from {unitBase->Name.Read()} is not a UInt, but {value.Type}.");
-        // othwise, return the value.
+            throw new InvalidCastException($"Value {num} from Addon {Generic.Read(UnitBase->Name)} was requested as uint but it was {value.Type}");
         return value.UInt;
     }
 
     protected int? ReadInt(int n)
     {
-        var num = n + beginOffset;
-        EnsureCount(unitBase, num);
-        var value = unitBase->AtkValues[num];
+        var num = n + BeginOffset;
+        EnsureCount(UnitBase, num);
+        var value = UnitBase->AtkValues[num];
         if (value.Type == 0)
+        {
             return null;
+        }
         if (value.Type != ValueType.Int)
-            throw new InvalidCastException($"Value {num} from {unitBase->Name.Read()} is not an Int, but {value.Type}.");
+            throw new InvalidCastException($"Value {num} from Addon {Generic.Read(
+            UnitBase->Name)} was requested as int but it was {value.Type}");
         return value.Int;
     }
 
     protected bool? ReadBool(int n)
     {
-        var num = n + beginOffset;
-        EnsureCount(unitBase, num);
-        var value = unitBase->AtkValues[num];
+        var num = n + BeginOffset;
+        EnsureCount(UnitBase, num);
+        var value = UnitBase->AtkValues[num];
         if (value.Type == 0)
+        {
             return null;
+        }
         if (value.Type != ValueType.Bool)
-            throw new InvalidCastException($"Value {num} from {unitBase->Name.Read()} is not a Bool, but {value.Type}.");
-        return value.Bool;
+            throw new InvalidCastException($"Value {num} from Addon {Generic.Read(UnitBase->Name)} was requested as bool but it was {value.Type}");
+        return value.Byte != 0;
     }
 
     protected SeString ReadSeString(int n)
     {
-        var num = n + beginOffset;
-        EnsureCount(unitBase, num);
-        var value = unitBase->AtkValues[num];
+        var num = n + BeginOffset;
+        EnsureCount(UnitBase, num);
+        var value = UnitBase->AtkValues[num];
         if (value.Type == 0)
+        {
             return null;
+        }
+        if (!value.Type.EqualsAny(ValueType.String, ValueType.String8, ValueType.WideString, ValueType.ManagedString))
+            throw new InvalidCastException($"Value {num} from Addon {Generic.Read(UnitBase->Name)} was requested as SeString but it was {value.Type}");
 
-        // possible valueType candidates:
-        var validTypes = new[] { ValueType.String, ValueType.String8, ValueType.WideString, ValueType.ManagedString };
-        if (!validTypes.Contains(value.Type))
-            throw new InvalidCastException($"Value {num} from {unitBase->Name.Read()} is not a SeString, but {value.Type}.");
         return MemoryHelper.ReadSeStringNullTerminated((nint)value.String.Value);
     }
 
     protected string ReadString(int n)
     {
-        var num = n + beginOffset;
-        EnsureCount(unitBase, num);
-        var value = unitBase->AtkValues[num];
+        var num = n + BeginOffset;
+        EnsureCount(UnitBase, num);
+        var value = UnitBase->AtkValues[num];
         if (value.Type == 0)
+        {
             return null;
-        // possible valueType candidates:
-        var validTypes = new[] { ValueType.String, ValueType.String8, ValueType.WideString, ValueType.ManagedString };
-        if (!validTypes.Contains(value.Type))
-            throw new InvalidCastException($"Value {num} from {unitBase->Name.Read()} is not a String, but {value.Type}.");
+        }
+        if (!value.Type.EqualsAny(ValueType.String, ValueType.ManagedString, ValueType.String8, ValueType.WideString))
+            throw new InvalidCastException($"Value {num} from Addon {Generic.Read(UnitBase->Name)} was requested as String but it was {value.Type}");
         return MemoryHelper.ReadStringNullTerminated((nint)value.String.Value);
     }
 
-
-    private void EnsureCount(AtkUnitBase* addon, int num)
+    private void EnsureCount(AtkUnitBase* Addon, int num)
     {
-        if (num >= addon->AtkValuesCount)
-            throw new ArgumentOutOfRangeException(nameof(num));
+        if (num >= Addon->AtkValuesCount) throw new ArgumentOutOfRangeException(nameof(num));
     }
 }

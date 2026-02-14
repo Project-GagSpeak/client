@@ -166,23 +166,46 @@ public static unsafe class HcTaskUtils
             if (!IsAddonReady(addon))
                 return null;
 
-            Svc.Logger.Verbose($"SelectYesNo checking addon for {string.Join(", ", possibleNames)}");
-            // obtain the text node from the addon.
-            var txtNode = addon->UldManager.NodeList[15]->GetAsAtkTextNode();
-            var rawTxtInNode = &txtNode->NodeText;
-            var finalStr = MemoryHelper.ReadSeString(rawTxtInNode).ExtractText().Replace(" ", "");
-            // Dictate if this addon is the right one, based on the contains paramater.
-            var options = possibleNames.Select(n => n.Replace(" ", ""));
-
-            if (contains ? options.Any(finalStr.Contains) : options.Any(finalStr.Equals))
-                return addon;
+            if (YesNoMatches(addon, contains, possibleNames))
+                return addon; 
         }
         catch (Bagagwa ex)
         {
             Svc.Logger.Error($"Error obtaining SelectYesNo: {ex}");
-            return null;
         }
+        // Null if failed
         return null;
+    }
+
+    internal static bool YesNoMatches(AtkUnitBase* addon, params string[] possibleNames)
+        => YesNoMatches(addon, false, possibleNames);
+
+    internal static bool YesNoMatches(AtkUnitBase* addon, bool contains, params string[] possibleNames)
+    {               
+        if (addon == null || !IsAddonReady(addon))
+            return false;
+
+        // Svc.Logger.Verbose($"SelectYesNo checking addon for {string.Join(", ", possibleNames)}");  
+        var txtNode = addon->UldManager.NodeList[15]->GetAsAtkTextNode();
+        if (txtNode == null)
+            return false;
+
+        var rawTxt = &txtNode->NodeText;
+        var finalStr = MemoryHelper.ReadSeString(rawTxt).ExtractText().Replace(" ", "");
+        var options = possibleNames.Select(n => n.Replace(" ", ""));
+
+        return contains? options.Any(finalStr.Contains) : options.Any(finalStr.Equals);
+    }
+
+    public static bool ClickButtonIfEnabled(AtkUnitBase* nodeBase, AtkComponentButton* buttonToPress)
+    {
+        //if the button is enabled and its resolution node is visible, try interacting with it.
+        if (buttonToPress->IsEnabled && buttonToPress->AtkResNode->IsVisible())
+        {
+            buttonToPress->ClickAddonButton(nodeBase);
+            return true;
+        }
+        return false;
     }
 
     /// <summary> Obtain an addon* by its name alone. If it is not found, returns false. </summary>

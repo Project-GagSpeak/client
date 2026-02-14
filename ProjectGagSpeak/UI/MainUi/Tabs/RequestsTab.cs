@@ -1,6 +1,7 @@
 using CkCommons.DrawSystem;
 using Dalamud.Bindings.ImGui;
 using GagSpeak.DrawSystem;
+using GagSpeak.Gui.Components;
 using GagSpeak.PlayerClient;
 
 namespace GagSpeak.Gui.MainWindow;
@@ -9,11 +10,13 @@ namespace GagSpeak.Gui.MainWindow;
 public class RequestsTab
 {
     private readonly MainConfig _config;
+    private readonly RequestTabs _tabs;
     private readonly RequestsInDrawer _incoming;
     private readonly RequestsOutDrawer _outgoing;
-    public RequestsTab(MainConfig config, RequestsInDrawer incoming, RequestsOutDrawer outgoing)
+    public RequestsTab(MainConfig config, RequestTabs tabs, RequestsInDrawer incoming, RequestsOutDrawer outgoing)
     {
         _config = config;
+        _tabs = tabs;
         _incoming = incoming;
         _outgoing = outgoing;
     }
@@ -21,7 +24,8 @@ public class RequestsTab
     public void DrawSection()
     {
         var width = ImGui.GetContentRegionAvail().X;
-        if (_config.Current.ViewingIncoming)
+        _tabs.Draw(width);
+        if (_tabs.TabSelection is RequestTabs.SelectedTab.Incoming)
         {
             _incoming.DrawFilterRow(width, 100);
             _incoming.DrawRequests(width, DynamicFlags.Selectable);

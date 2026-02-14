@@ -167,7 +167,7 @@ public partial class HcTaskManager : IDisposable
             {
                 using (ImRaii.Group())
                 {
-                    foreach (var task in _taskOperations)
+                    foreach (var task in _taskOperations.ToList())
                         DrawTask(task);
                 }
                 ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), ImGuiColors.ParsedGold.ToUint());

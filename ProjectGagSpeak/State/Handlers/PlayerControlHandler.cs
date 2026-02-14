@@ -1,3 +1,4 @@
+using CkCommons;
 using GagSpeak.GameInternals;
 using GagSpeak.GameInternals.Addons;
 using GagSpeak.GameInternals.Detours;
@@ -171,10 +172,13 @@ public class PlayerCtrlHandler
         var taskCtrlFlags = HcTaskControl.LockThirdPerson | HcTaskControl.BlockAllKeys | HcTaskControl.DoConfinementPrompts;
         if (doLifestreamMethod) taskCtrlFlags |= HcTaskControl.InLifestreamTask;
 
+        var roomNumber = address is not null && address.PropertyType is PropertyType.Apartment ? address.Apartment : int.MaxValue;
+
         // enqueue the task collection based on if we are doing lifestream of not.
         Svc.Framework.RunOnFrameworkThread(() =>
         {
-            _hcTasks.CreateCollection("Travel To Location", HcTaskConfiguration.Branch with { Flags = taskCtrlFlags })
+            // Not respecting inner timeouts for some reason
+            _hcTasks.CreateCollection("Travel To Location", HcTaskConfiguration.Branch with {  Flags = taskCtrlFlags })
                 .Add(_hcTasks.CreateBranch(() => doLifestreamMethod, "LifestreamTravelTask", HcTaskConfiguration.Branch)
                     .SetTrueTask(_hcTasks.CreateGroup("TravelTaskGroup", HcTaskConfiguration.Default with { TimeoutAt = 120000 })
                         .Add(GagspeakEx.IsPlayerFullyLoaded)
@@ -182,11 +186,14 @@ public class PlayerCtrlHandler
                         .Add(() => !_ipc.IsCurrentlyBusy())
                         .AsGroup())
                     .AsBranch())
+                // Need to find a way to delay this or it skips to the movement operations before we begin zoning.
+                // It still works, but is just something of note.
+                .Add(new HardcoreTask(GagspeakEx.IsPlayerFullyLoaded))
                 .Add(_hcTasks.CreateBranch(() => doLifestreamMethod && HcApproachNearestHousing.AtHouseButMustBeCloser(), "Close Gap For Arrival")
                     .SetTrueTask(new HardcoreTask(HcApproachNearestHousing.MoveToAcceptableRange, HcTaskConfiguration.Rapid with { OnEnd = () => StaticDetours.MoveOverrides.Disable() }))
                     .AsBranch())
                 .Add(_hcTasks.CreateBranch(HcTaskUtils.IsOutside, "AppraochNearestNode", HcTaskConfiguration.Short)
-                    .SetTrueTask(HcApproachNearestHousing.GetTaskCollection(_hcTasks))
+                    .SetTrueTask(HcApproachNearestHousing.GetTaskCollection(_hcTasks, roomNumber))
                     .AsBranch())
                 .Add(new HardcoreTask(() => _mediator.Publish(new HcStateCacheChanged()), HcTaskConfiguration.Quick))
                 .Enqueue();

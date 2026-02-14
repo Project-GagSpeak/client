@@ -48,13 +48,14 @@ public class SettingsUi : WindowMediatorSubscriberBase
         Flags = WFlags.NoScrollbar;
         this.PinningClickthroughFalse();
         this.SetBoundaries(new Vector2(625, 400), ImGui.GetIO().DisplaySize);
-#if DEBUG
+
         TitleBarButtons = new TitleBarButtonBuilder()
             .Add(FAI.Tshirt, "Open Active State Debugger", () => Mediator.Publish(new UiToggleMessage(typeof(DebugActiveStateUI))))
+#if DEBUG
             .Add(FAI.PersonRays, "Open Personal Data Debugger", () => Mediator.Publish(new UiToggleMessage(typeof(DebugPersonalDataUI))))
             .Add(FAI.Database, "Open Storages Debugger", () => Mediator.Publish(new UiToggleMessage(typeof(DebugStorageUI))))
-            .Build();
 #endif
+            .Build();
     }
 
     private bool ThemePushed = false;

@@ -114,12 +114,12 @@ public sealed class CommandManager : IDisposable
         {
             if (splitArgs.Length > 1)
             {
-                var uid = splitArgs[1];
-                if (_kinksters.GetUserDataFromUID(uid) is { } validUserData)
+                var aliasOrUid = splitArgs[1];
+                if (_kinksters.GetFromAliasOrUid(aliasOrUid) is { } validUserData)
                     UiService.SetUITask(_safeword.OnSafewordInvoked(validUserData.UID));
                 else
                 {
-                    Svc.Chat.Print(new SeStringBuilder().AddYellow($"UID Provided is not in Pair List: {uid}").BuiltString);
+                    Svc.Chat.Print(new SeStringBuilder().AddYellow($"UID Provided is not in Pair List: {aliasOrUid}").BuiltString);
                     PrintSafewordHelp();
                 }
             }
@@ -142,12 +142,12 @@ public sealed class CommandManager : IDisposable
         // if there is a first argument given, see if it matches one of our pairs.
         if (splitArgs.Length > 0 && !splitArgs[0].IsNullOrWhitespace())
         {
-            var uid = splitArgs[0];
-            if (_kinksters.GetUserDataFromUID(uid) is { } validUserData)
+            var aliasOrUid = splitArgs[0];
+            if (_kinksters.GetFromAliasOrUid(aliasOrUid) is { } validUserData)
                 UiService.SetUITask(_safeword.OnHcSafewordUsed(validUserData.UID));
             else
             {
-                Svc.Chat.Print(new SeStringBuilder().AddYellow($"UID Provided is not in Pair List: {uid}, /safewordhardcore does not require your actual safeword.").BuiltString);
+                Svc.Chat.Print(new SeStringBuilder().AddYellow($"UID Provided is not in Pair List: {aliasOrUid}, /safewordhardcore does not require your actual safeword.").BuiltString);
                 PrintSafewordHardcoreHelp();
             }
         }

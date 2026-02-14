@@ -301,13 +301,13 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         return !string.IsNullOrWhiteSpace(nickAliasUid);
     }
 
+    public UserData? GetFromAliasOrUid(string aliasOrUid)
+        => _allKinksters.Keys.FirstOrDefault(p => string.Equals(p.AliasOrUID, aliasOrUid, StringComparison.OrdinalIgnoreCase));
+
     /// <summary>
     ///     Attempt to retrieve a kinkster by <see cref="UserData"/>. If failed, null is returned.
     /// </summary>
     public Kinkster? GetUserOrDefault(UserData user) => _allKinksters.TryGetValue(user, out var kinkster) ? kinkster : null;
-
-    // Fetch a user's UserData off of their UID
-    public UserData? GetUserDataFromUID(string uid) => _allKinksters.Keys.FirstOrDefault(p => string.Equals(p.UID, uid, StringComparison.OrdinalIgnoreCase));
 
     #endregion ManagerHelpers
 

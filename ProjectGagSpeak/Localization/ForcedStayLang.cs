@@ -4,7 +4,8 @@ using System.Text.RegularExpressions;
 
 namespace GagSpeak;
 
-internal static class NodeStringLang
+// Most of these are from Lifestream for additional translations to be defined ahead of time.
+internal static class GsLang
 {
     public const string SymbolWard = "";
     public const string SymbolPlot = "";
@@ -29,7 +30,14 @@ internal static class NodeStringLang
     public static readonly string[] EnterApartment = ["Enter", "よろしいですか？", "betreten?", "Aller dans l'appartement", "要移动到", "要移動到", "이동하시겠습니까?"];
     public static readonly string[] GoToMyApartment = ["Go to your apartment", "移动到自己的房间", "移動到自己的房間", "自分の部屋に移動する", "자신의 방으로 이동", "Aller dans votre appartement"];
 
+    public static readonly string[] ExitApartment = [ "Exit" ]; // No actual label here, but is the name of the node
     public static readonly string[] RejectApartmentLeave = [ "Cancel" ];
+
+    internal static string[] ApartmentEntrance =>
+    [
+        Svc.Data.GetExcelSheet<EObjName>().GetRow(2007402).Singular.ToDalamudString().ExtractText(),
+            Regex.Replace(Svc.Data.GetExcelSheet<EObjName>().GetRow(2007402).Singular.ToDalamudString().ExtractText(), @"\[.*?\]", "")
+    ];
 
     // All possible node names revolving around entering homes.
     public static readonly string[] Entrance = [ "ハウスへ入る", "进入房屋", "進入房屋", "Eingang", "Entrée", "Entrance" ];

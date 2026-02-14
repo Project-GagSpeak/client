@@ -1,6 +1,7 @@
 using CkCommons;
 using Dalamud.Game.ClientState.Objects.Enums;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using GagSpeak.Game.Readers;
 using GagSpeak.GameInternals.Detours;
@@ -75,12 +76,34 @@ public static unsafe class HcStayApartment
 
     /// <summary> Select the "Go to my Apartment" option from the apartment confirmation menu. </summary>
     public static unsafe bool GoToMyApartment()
-        => HcTaskUtils.TrySelectSpesificEntry(NodeStringLang.GoToMyApartment, () => NodeThrottler.Throttle("SelectStringApartment"));
+        => HcTaskUtils.TrySelectSpesificEntry(GsLang.GoToMyApartment, () => NodeThrottler.Throttle("SelectStringApartment"));
 
     /// <summary> Select the "Go to specified apartment"? option from the room confirmation menu. </summary>
     public static unsafe bool SelectGoToSpecifiedApartment()
-        => HcTaskUtils.TrySelectSpesificEntry(NodeStringLang.GoToSpecifiedApartment, () => NodeThrottler.Throttle("SelectStringApartment"));
+        => HcTaskUtils.TrySelectSpesificEntry(GsLang.GoToSpecifiedApartment, () => NodeThrottler.Throttle("SelectStringApartment"));
 
+    public static unsafe bool ConfirmApartmentEnterYesNo()
+    {
+        var addon = HcTaskUtils.GetSpesificYesNo(true, GsLang.EnterApartment);
+        if (addon is null)
+            return false;
+        // Addon valid, throttle the yesno selection, if possible.
+        if (HcTaskUtils.IsAddonReady(addon) && NodeThrottler.Throttle("SelectYesNo"))
+        {
+            var yesno = (AddonSelectYesno*)addon;
+            // if addon is ready, check for validation to hit the yes button prior to pressing it.
+            if (yesno->YesButton is not null && !yesno->YesButton->IsEnabled)
+            {
+                // forcibly enable the yes button through node flag manipulation.
+                Svc.Logger.Verbose($"{nameof(AddonSelectYesno)}: Force enabling [Yes]");
+                var flagsPtr = (ushort*)&yesno->YesButton->AtkComponentBase.OwnerNode->AtkResNode.NodeFlags;
+                *flagsPtr ^= 1 << 5; // Toggle the 5th bit to enable the button.
+            }
+            return HcTaskUtils.ClickButtonIfEnabled(addon, yesno->YesButton);
+        }
+        // failed
+        return false;
+    }
 
     /// <summary> Select a spesific apartment index. </summary>
     public static unsafe bool? SelectApartment(int apartmentNum)
@@ -116,6 +139,11 @@ public static unsafe class HcStayApartment
             }
             // get the room info.
             var roomInfo = reader.Rooms.SafelySelect(targetRoom);
+            if (roomInfo == null)
+            {
+                Svc.Logger.Error($"[HcTaskUtils] Failed to get room info for Apartment # {apartmentNum + 1} ({targetRoom} in section {desiredSection})");
+                return null;
+            }
             // if the room owner is blank, or the room access state is vacent, log error and return null.
             if (string.IsNullOrEmpty(roomInfo.RoomOwner) || roomInfo.AccessState == 1)
             {

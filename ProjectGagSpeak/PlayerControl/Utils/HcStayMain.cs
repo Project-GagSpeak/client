@@ -12,20 +12,29 @@ public static unsafe class HcApproachNearestHousing
     public static bool IsTargetApartment()
     {
         var tName = Svc.Targets.Target?.Name.ToString() ?? string.Empty;
-        return NodeStringLang.EnterApartment.Any(n => n.Equals(tName, StringComparison.OrdinalIgnoreCase));
+        return GsLang.ApartmentEntrance.Any(n => n.Equals(tName, StringComparison.OrdinalIgnoreCase));
     }
 
-    public static HardcoreTaskCollection GetTaskCollection(HcTaskManager hcTasks)
+    public static bool IsValidRoom(int room)
+        => room != int.MaxValue;
+
+    public static HardcoreTaskCollection GetTaskCollection(HcTaskManager hcTasks, int appartmentRoom = int.MaxValue)
     {
         return hcTasks.CreateCollection("Enter Housing", new(HcTaskControl.LockThirdPerson | HcTaskControl.BlockAllKeys | HcTaskControl.DoConfinementPrompts))
             .Add(new HardcoreTask(GagspeakEx.IsPlayerFullyLoaded))
             .Add(new HardcoreTask(TargetNearestHousingNode))
             .Add(hcTasks.CreateBranch(IsTargetApartment, "Approach Housing Node")
-                .SetTrueTask(hcTasks.CreateGroup("Approach Apartment")
-                    .Add(() => HcCommonTaskFuncs.ApproachNode(() => Svc.Targets.Target?.Address ?? nint.Zero, 3.5f))
-                    .Add(HcStayApartment.InteractWithApartmentEntrance)
-                    .Add(HcStayApartment.SelectGoToSpecifiedApartment)
-                    .AsGroup())
+                .SetTrueTask(hcTasks.CreateCollection("Approach Apartment")
+                    .Add(new HardcoreTask(() => HcCommonTaskFuncs.ApproachNode(() => Svc.Targets.Target?.Address ?? nint.Zero, 3.5f)))
+                    .Add(new HardcoreTask(HcStayApartment.InteractWithApartmentEntrance))
+                    .Add(new HardcoreTask(HcStayApartment.SelectGoToSpecifiedApartment))
+                    .Add(hcTasks.CreateBranch(() => IsValidRoom(appartmentRoom), "Select Apartment Room")
+                        .SetTrueTask(hcTasks.CreateGroup("SelectAndEnterApartment")
+                            .Add(() => HcStayApartment.SelectApartment(appartmentRoom - 1))
+                            .Add(HcStayApartment.ConfirmApartmentEnterYesNo)
+                            .AsGroup())
+                        .AsBranch())
+                    .AsCollection())
                 .SetFalseTask(hcTasks.CreateGroup("Approach Home")
                     .Add(() => HcCommonTaskFuncs.ApproachNode(() => Svc.Targets.Target?.Address ?? nint.Zero, 2.75f))
                     .Add(InteractWithHousingEntrance)
@@ -72,10 +81,16 @@ public static unsafe class HcApproachNearestHousing
     public static unsafe bool TargetNearestHousingNode()
     {
         var node = HcStayHousingEntrance.GetNearestHousingEntrance(out var distance);
+        if (node is null)
+            return false;
+        // Now that we know the node is not null convert it to a struct
         var nodeObj = node.ToStruct();
         // if the node is too far away, or the node further than the maximum yalm distance, return false.
-        if (nodeObj is null || distance >= 20f)
+        if (distance >= 20f)
+        {
+            Svc.Logger.Warning($"Housing entrance node is too far away: {distance} yalms.");
             return false;
+        }
 
         // We know that we have a valid node. If we are not yet targetting it, we should target it.
         if (!HcTaskUtils.IsTarget(nodeObj))
@@ -83,7 +98,7 @@ public static unsafe class HcApproachNearestHousing
             if (node.IsTargetable && NodeThrottler.Throttle("HousingEntrance.Target", 200))
             {
                 TargetSystem.Instance()->SetHardTarget(nodeObj);
-                return false;
+                return HcTaskUtils.IsTarget(nodeObj);
             }
         }
         else

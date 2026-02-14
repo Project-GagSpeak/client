@@ -294,24 +294,14 @@ public class HomeTab
 
     private void PuppeteerButton(float width)
     {
-        var disabled = true;
-#if DEBUG
-        // TODO: Remove when this works
-        disabled = false;
-#endif
-        if (CkGui.FancyButton(FAI.PersonHarassing, "Puppeteer", width, disabled))
+        if (CkGui.FancyButton(FAI.PersonHarassing, "Puppeteer", width))
             _mediator.Publish(new UiToggleMessage(typeof(PuppeteerUI)));
         CkGui.AttachToolTip("Who's in control now? (Global & Per-Kinkster Control) --COL--[WIP]--COL--");
     }
 
     private void ToyboxButton(float width)
     {
-        var disabled = true;
-#if DEBUG
-        // TODO: Remove when this works
-        disabled = false;
-#endif
-        if (CkGui.FancyButton(FAI.BoxOpen, "Toybox", width, disabled))
+        if (CkGui.FancyButton(FAI.BoxOpen, "Toybox", width))
             _mediator.Publish(new UiToggleMessage(typeof(ToyboxUI)));
         CkGui.AttachToolTip("Patterns, Alarms, Triggers, VibeLobbies, Toys and more! --COL--[WIP]--COL--");
     }

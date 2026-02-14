@@ -1,8 +1,15 @@
+using CkCommons;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
+using Dalamud.Memory;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
+using FFXIVClientStructs.FFXIV.Component.GUI;
+using GagSpeak.GameInternals.Addons;
+using GagSpeak.GameInternals.Detours;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
+using GagSpeak.Utils;
 
 namespace GagSpeak.Services.Controller;
 
@@ -22,8 +29,6 @@ public sealed class AutoPromptController : DisposableMediatorSubscriberBase
     {
         _cache = cache;
 
-        EnableListeners();
-
         Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreStatus());
     }
 
@@ -35,9 +40,6 @@ public sealed class AutoPromptController : DisposableMediatorSubscriberBase
 
     private void UpdateHardcoreStatus()
     {
-        // always enable right now for debug purposes.
-        return;
-
         if (_cache.DoAutoPrompts && !_promptsEnabled)
             EnableListeners();
 
@@ -52,7 +54,7 @@ public sealed class AutoPromptController : DisposableMediatorSubscriberBase
 
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", OnYesNoSetup);
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectString", OnStringSetup);
-        Svc.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "SelectString", OnStringFinalize);
+        Svc.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "SelectString", OnStringSelected);
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "HousingSelectRoom", OnRoomSetup);
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, "HousingSelectRoom", OnRoomFinalize);
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "MansionSelectRoom", OnApartmentSetup);
@@ -66,7 +68,7 @@ public sealed class AutoPromptController : DisposableMediatorSubscriberBase
             return;
         Svc.AddonLifecycle.UnregisterListener(OnYesNoSetup);
         Svc.AddonLifecycle.UnregisterListener(OnStringSetup);
-        Svc.AddonLifecycle.UnregisterListener(OnStringFinalize);
+        Svc.AddonLifecycle.UnregisterListener(OnStringSelected);
         Svc.AddonLifecycle.UnregisterListener(OnRoomSetup);
         Svc.AddonLifecycle.UnregisterListener(OnRoomFinalize);
         Svc.AddonLifecycle.UnregisterListener(OnApartmentSetup);
@@ -76,38 +78,112 @@ public sealed class AutoPromptController : DisposableMediatorSubscriberBase
 
     private unsafe void OnYesNoSetup(AddonEvent eventType, AddonArgs addonInfo)
     {
-        var stuff = (AddonSelectYesno*)addonInfo.Addon.Address;
-        var moreStuff = stuff->NameString;
-        var moreId = stuff->Id;
+        var yesno = (AddonSelectYesno*)addonInfo.Addon.Address;
+        var baseAddon = (AtkUnitBase*)yesno;
 
-        Logger.LogInformation($"YesNo Setup for {moreStuff} (ID: {moreId})");
-        Logger.LogInformation($"Text: {stuff->PromptText->NodeText}");
-        Logger.LogInformation($"Yes: {stuff->YesButton->ButtonTextNode->NodeText}");
-        Logger.LogInformation($"No: {stuff->NoButton->ButtonTextNode->NodeText}");
-        Logger.LogInformation($"Target ID: {Svc.Targets.Target?.BaseId.ToString() ?? "UNK"}");
+        string[] nodesToDecline = [ ..GsLang.ConfirmHouseExit, ..GsLang.ConfirmChamberLeave ];
+        string[] nodesToAccept = [ ..GsLang.ConfirmHouseEntrance ];
 
+        // Check for auto-no responces
+        if (HcTaskUtils.YesNoMatches(baseAddon, contains: false, nodesToDecline))
+        {
+            // if addon is ready, check for validation to hit the yes button prior to pressing it.
+            if (yesno->NoButton is not null && !yesno->NoButton->IsEnabled)
+            {
+                // forcibly enable the yes button through node flag manipulation.
+                Svc.Logger.Verbose($"{nameof(AddonSelectYesno)}: Force enabling [No]");
+                var flagsPtr = (ushort*)&yesno->NoButton->AtkComponentBase.OwnerNode->AtkResNode.NodeFlags;
+                *flagsPtr ^= 1 << 5; // Toggle the 5th bit to enable the button.
+            }
+            HcTaskUtils.ClickButtonIfEnabled(baseAddon, yesno->NoButton);
+            return;
+        }
+
+        // For force accept
+        if (HcTaskUtils.YesNoMatches(baseAddon, contains: false, nodesToAccept))
+        {
+            // if addon is ready, check for validation to hit the yes button prior to pressing it.
+            if (yesno->YesButton is not null && !yesno->YesButton->IsEnabled)
+            {
+                // forcibly enable the yes button through node flag manipulation.
+                Svc.Logger.Verbose($"{nameof(AddonSelectYesno)}: Force enabling [Yes]");
+                var flagsPtr = (ushort*)&yesno->YesButton->AtkComponentBase.OwnerNode->AtkResNode.NodeFlags;
+                *flagsPtr ^= 1 << 5; // Toggle the 5th bit to enable the button.
+            }
+            HcTaskUtils.ClickButtonIfEnabled(baseAddon, yesno->YesButton);
+            return;
+        }
     }
 
-    private void OnStringSetup(AddonEvent eventType, AddonArgs addonInfo)
+    private unsafe void OnStringSetup(AddonEvent eventType, AddonArgs addonInfo)
     {
-        Logger.LogTrace("I'm Now in the String Finalize!");
+        // If we are not inside, we should ignore auto selecting prompts, as our goal is to keep people inside.
+        var haus = HousingManager.Instance();
+        if (haus is null || !haus->IsInside())
+            return;
+
+        var selectStr = (AddonSelectString*)addonInfo.Addon.Address;
+        var baseAddon = (AtkUnitBase*)selectStr;
+
+        var promptTxt = MemoryHelper.ReadSeString(&baseAddon->GetTextNodeById(2)->NodeText).ExtractText();
+        var entries = HcTaskUtils.GetEntries(selectStr);
+
+        if (GsLang.ConfirmChamberLeave.Any(promptTxt.Equals))
+        {
+            // Try and select no
+            if (GsLang.RejectChamberLeave.FirstOrDefault(x => entries.Any(e => e.Equals(x))) is { } match)
+            {
+                var index = entries.IndexOf(match);
+                if (index >= 0)
+                {
+                    Svc.Logger.Debug($"[HcTaskUtils] SelectSpesificEntry: selecting {match}/{index} requested from [{string.Join(',', entries)}].");
+                    StaticDetours.FireCallback((AtkUnitBase*)addonInfo.Addon.Address, true, index);
+                }
+                return;
+            }
+        }
+        // It was a target, and it was exit.
+        else if (Svc.Targets.Target is { } target && GsLang.ExitApartment.Any(target.Name.ToString().Equals))
+        {
+
+            // if there are no entries, we cannot select anything.
+            if (entries.FirstOrDefault(x => GsLang.RejectApartmentLeave.Any(e => e.Equals(x))) is { } match)
+            {
+                // the entry does exist, so try and select it. (if our throttle allows it)
+                var index = entries.IndexOf(match);
+                if (index >= 0)
+                {
+                    Svc.Logger.Debug($"[HcTaskUtils] SelectSpesificEntry: selecting {match}/{index} requested from [{string.Join(',', entries)}].");
+                    StaticDetours.FireCallback((AtkUnitBase*)baseAddon, true, index);
+                    return;
+                }
+            }
+        }
+        else
+        {
+            // Other use cases can be handled here.
+        }
     }
 
-    private void OnStringFinalize(AddonEvent eventType, AddonArgs addonInfo)
+    private unsafe void OnStringSelected(AddonEvent eventType, AddonArgs addonInfo)
     {
-        Logger.LogTrace("Im now in the String Finalize!");
+        // This was originally used to detect if we skipped a cutscene. If we wanted to do this another way,
+        // or we find another way to detect selection history that is easier, this could be avoided entirely.
+        return;
+
+        // Just some placeholder stuff for now.
+        var lastLabel = string.Empty;
+        var lastSelected = string.Empty;
+
+        if (lastLabel.Contains("Skip cutscene", StringComparison.OrdinalIgnoreCase) && lastSelected.Contains("Yes", StringComparison.OrdinalIgnoreCase))
+        {
+            Logger.LogTrace("Cutscene Skip Detected, Halting Achievement WarriorOfLewd", LoggerType.Achievements);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.CutsceneInturrupted);
+        }
     }
 
-    private void OnRoomSetup(AddonEvent eventType, AddonArgs addonInfo)
-    {
-        Logger.LogTrace("I'm Now in the Room Setup!");
-    }
-
-    private void OnRoomFinalize(AddonEvent eventType, AddonArgs addonInfo)
-    {
-        Logger.LogTrace("I'm Now in the Room Finalize!");
-    }
-
+    // These would be mainly for automating the entrance of apartments / chambers, which we could do via automation if possible.
+    // Apartment automation is already doable, so OnApartmentSetup and OnApartmentFinalize likely will not need much with lifestream.
     private void OnApartmentSetup(AddonEvent eventType, AddonArgs addonInfo)
     {
         Logger.LogTrace("I'm Now in the Apartment Setup!");
@@ -116,5 +192,16 @@ public sealed class AutoPromptController : DisposableMediatorSubscriberBase
     private void OnApartmentFinalize(AddonEvent eventType, AddonArgs addonInfo)
     {
         Logger.LogTrace("I'm Now in the Apartment Finalize!");
+    }
+
+    // This can be setup later when we want advanced functionality
+    private void OnRoomSetup(AddonEvent eventType, AddonArgs addonInfo)
+    {
+        Logger.LogTrace("I'm Now in the Room Setup!");
+    }
+
+    private void OnRoomFinalize(AddonEvent eventType, AddonArgs addonInfo)
+    {
+        Logger.LogTrace("I'm Now in the Room Finalize!");
     }
 }

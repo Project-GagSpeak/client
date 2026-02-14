@@ -1,10 +1,16 @@
-using System.Runtime.InteropServices;
 using CkCommons;
 using Dalamud.Game.ClientState.Conditions;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using GagSpeak.GameInternals.Detours;
+using GagSpeak.Interop.Helpers;
+using GagSpeak.PlayerClient;
+using GagSpeak.PlayerControl;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
+using GagSpeak.Utils;
+using GagspeakAPI.Attributes;
+using GagspeakAPI.Extensions;
+using System.Runtime.InteropServices;
 
 namespace GagSpeak.Services.Controller;
 
@@ -16,6 +22,7 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     private readonly record struct MoveState(bool MustWalk, bool WasWalking);
 
     private readonly PlayerControlCache _cache;
+    private readonly HcTaskManager _hcTasks;
     private readonly MovementDetours _detours;
 
     // Fields useful for forced-follow behavior.
@@ -24,12 +31,14 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     private MoveState _moveState;
     private bool _freezePlayer = false;
     public MovementController(ILogger<MovementController> logger, GagspeakMediator mediator,
-        PlayerControlCache cache, MovementDetours detours)
+        PlayerControlCache cache, HcTaskManager hcTasks, MovementDetours detours)
         : base(logger, mediator)
     {
         _cache = cache;
+        _hcTasks = hcTasks;
         _detours = detours;
         _timeoutTracker.Stop();
+        Mediator.Subscribe<TerritoryChanged>(this, _ => EnsureConfinement());
         Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreStatus());
         Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
         Svc.Condition.ConditionChange += OnConditionChange;
@@ -111,6 +120,38 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
             Logger.LogInformation("Deactivating movement key blocking due to change in hardcore status.", LoggerType.HardcoreMovement);
             _detours.NoAutoMoveActive = false;
             _detours.NoMouseMovementActive = false;
+        }
+    }
+
+    private async void EnsureConfinement()
+    {
+        // Occurs whenever we change zones.
+        if (ClientData.Hardcore is not { } hcState)
+        {
+            Logger.LogInformation("Not ensuring confinement due to null hardcore state.", LoggerType.HardcoreMovement);
+            return;
+        }
+        if (!hcState.IsEnabled(HcAttribute.Confinement))
+        {
+            Logger.LogInformation("Not ensuring confinement due to confinement hardcore status being disabled.", LoggerType.HardcoreMovement);
+            return;
+        }
+
+        // Wait for us to load in.
+        await GagspeakEx.WaitForPlayerLoading().ConfigureAwait(false);
+
+        // By reaching this point, we have addressed we're in confinement,
+        // meaning we are already on the way to our destination.
+        // If we can identify the nearest node from this point, we almost
+        // garentee it is our destination.
+        Logger.LogInformation("Ensuring confinement by checking if we can approach nearest housing node.", LoggerType.HardcoreMovement);
+        if (HcApproachNearestHousing.TargetNearestHousingNode())
+        {
+            // We could, so we should enqueue the task to re-enter.
+            Logger.LogInformation("Enqueuing approach nearest housing task due to confinement hardcore status.", LoggerType.HardcoreMovement);
+            var addr = AddressBookEntry.FromHardcoreStatus(hcState);
+            var roomNum = addr is not null && addr.PropertyType is PropertyType.Apartment ? addr.Apartment : int.MaxValue;
+            _hcTasks.EnqueueOperation(HcApproachNearestHousing.GetTaskCollection(_hcTasks, roomNum));
         }
     }
 

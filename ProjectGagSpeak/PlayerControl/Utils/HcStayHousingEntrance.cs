@@ -9,7 +9,7 @@ public static unsafe class HcStayHousingEntrance
 {
     public static bool ConfirmHouseEntranceAndEnter()
     {
-        var addon = HcTaskUtils.GetSpesificYesNo(NodeStringLang.ConfirmHouseEntrance);
+        var addon = HcTaskUtils.GetSpesificYesNo(GsLang.ConfirmHouseEntrance);
         if (addon is null)
             return false;
         // Addon valid, throttle the yesno selection, if possible.
@@ -24,22 +24,12 @@ public static unsafe class HcStayHousingEntrance
                 var flagsPtr = (ushort*)&yesno->YesButton->AtkComponentBase.OwnerNode->AtkResNode.NodeFlags;
                 *flagsPtr ^= 1 << 5; // Toggle the 5th bit to enable the button.
             }
-            return ClickButtonIfEnabled(addon, yesno->YesButton);
+            return HcTaskUtils.ClickButtonIfEnabled(addon, yesno->YesButton);
         }
         // failed
         return false;
     }
 
-    public static bool ClickButtonIfEnabled(AtkUnitBase* nodeBase, AtkComponentButton* buttonToPress)
-    {
-        //if the button is enabled and its resolution node is visible, try interacting with it.
-        if (buttonToPress->IsEnabled && buttonToPress->AtkResNode->IsVisible())
-        {
-            buttonToPress->ClickAddonButton(nodeBase);
-            return true;
-        }
-        return false;
-    }
     public static void ClickAddonButton(this AtkComponentButton target, AtkUnitBase* addon)
     {
         var buttonResNode = target.AtkComponentBase.OwnerNode->AtkResNode;
@@ -53,8 +43,7 @@ public static unsafe class HcStayHousingEntrance
         var nearestDist = float.MaxValue;
         IGameObject nearestNode = null!;
 
-        var validNames = NodeStringLang.Entrance.Concat(NodeStringLang.EnterApartment);
-
+        var validNames = GsLang.Entrance.Concat(GsLang.ApartmentEntrance);
         // iterate through the current objects in the table.
         foreach (var o in Svc.Objects)
         {
@@ -62,7 +51,7 @@ public static unsafe class HcStayHousingEntrance
             if (o.ObjectKind != ObjectKind.EventObj)
                 continue;
 
-            if (!o.IsTargetable || !validNames.Any(n => n.Equals(o.Name.ToString())))
+            if (!o.IsTargetable || !validNames.Any(n => n.Equals(o.Name.ToString(), StringComparison.OrdinalIgnoreCase)))
                 continue;
 
             // If the name is valid, and it is targetable, consider it a valid entrance and calculate its distance.

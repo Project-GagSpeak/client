@@ -33,6 +33,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
     private readonly ArousalService _arousal;
     private readonly RemoteService _remotes;
     private readonly TextureService _iconTextures;
+    private readonly OnTickService _onTick;
 
     public DebugActiveStateUI(ILogger<DebugActiveStateUI> logger,
         GagspeakMediator mediator,
@@ -48,7 +49,8 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         OverlayCache overlayCache,
         ArousalService arousal,
         RemoteService remotes,
-        TextureService iconTextures)
+        TextureService iconTextures,
+        OnTickService onTick)
         : base(logger, mediator, "Active State Debugger")
     {
         _clientData = clientData;
@@ -64,6 +66,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         _arousal = arousal;
         _remotes = remotes;
         _iconTextures = iconTextures;
+        _onTick = onTick;
 
         // IsOpen = true;
         this.SetBoundaries(new Vector2(625, 400), ImGui.GetIO().DisplaySize);
@@ -86,6 +89,27 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
 
         if (ImGui.CollapsingHeader("HcTaskManager State"))
             _hcTasks.DrawCacheState();
+
+        if (ImGui.CollapsingHeader("Location Service"))
+        {
+            using (var t = ImRaii.Table("Location Data", 2, ImGuiTableFlags.BordersOuter | ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.SizingStretchSame))
+            {
+                if (!t) return;
+
+                ImGui.TableSetupColumn("Previous");
+                ImGui.TableSetupColumn("Current");
+                ImGui.TableHeadersRow();
+
+                ImGui.TableNextColumn();
+                DebugArea(OnTickService.Previous);
+
+                ImGui.TableNextColumn();
+                DebugArea(OnTickService.Current);
+                ImGui.TableNextRow();
+            }
+            if (CkGui.IconTextButton(FAI.Sync, "Force Update"))
+                _onTick.TriggerUpdate();
+        }
 
         ImGui.Separator();
         if (ImGui.CollapsingHeader("Glamour Cache"))
@@ -120,6 +144,43 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         ImGui.Separator();
         if (ImGui.CollapsingHeader("RemoteService Cache"))
             _remotes.DrawCacheTable();
+    }
+
+    public static unsafe void DebugArea(LocationEntry entry)
+    {
+        ImGui.Text("DataCenter:");
+        CkGui.ColorTextInline($"{entry.DataCenterName} ({entry.DataCenterId})", ImGuiColors.DalamudGrey);
+        ImGui.Text("World:");
+        CkGui.ColorTextInline($"{entry.WorldName} ({entry.WorldId})", ImGuiColors.DalamudGrey);
+
+        ImGui.Text("Territory Intended Use:");
+        CkGui.ColorTextInline($"{entry.IntendedUse} ({(byte)entry.IntendedUse})", ImGuiColors.DalamudGrey);
+
+        ImGui.Text("Territory:");
+        CkGui.ColorTextInline($"{entry.TerritoryName} ({entry.TerritoryId})", ImGuiColors.DalamudGrey);
+
+        ImGui.Text("In Housing District:");
+        ImUtf8.SameLineInner();
+        CkGui.ColorTextBool(entry.IsInHousing.ToString(), entry.IsInHousing);
+        if (entry.IsInHousing)
+        {
+            ImGui.Text("Housing Area:");
+            CkGui.ColorTextInline($"{OnTickService.ResidentialNames[entry.HousingArea]}", ImGuiColors.DalamudGrey);
+            ImGui.Text("Housing Type:");
+            CkGui.ColorTextInline($"{entry.HousingType} ({(byte)entry.HousingType})", ImGuiColors.DalamudGrey);
+            ImGui.Text("Ward:");
+            CkGui.ColorTextInline($"{entry.Ward + 1}", ImGuiColors.DalamudGrey);
+            ImGui.Text("Plot:");
+            CkGui.ColorTextInline($"{entry.Plot + 1}", ImGuiColors.DalamudGrey);
+            ImGui.Text("Indoors:");
+            ImUtf8.SameLineInner();
+            CkGui.ColorTextBool(entry.IsIndoors.ToString(), entry.IsIndoors);
+            if (entry.IsIndoors)
+            {
+                ImGui.Text("Apartment Division:");
+                CkGui.ColorTextInline($"{entry.ApartmentDivision}", ImGuiColors.TankBlue);
+            }
+        }
     }
 
     // Draws the current state of the moodles IPC data.

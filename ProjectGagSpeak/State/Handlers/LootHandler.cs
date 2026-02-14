@@ -86,7 +86,7 @@ public sealed class LootHandler
         && obj->EventHandler->Info.EventId.Id is 983600
         && obj->EventHandler->Info.EventId.EntryId is 560
         && obj->EventHandler->Info.EventId.ContentId is EventHandlerContent.GimmickAccessor
-        && NodeStringLang.DeepDungeonCoffer.Any(n => n.Equals(obj->NameString.ToString()));
+        && GsLang.DeepDungeonCoffer.Any(n => n.Equals(obj->NameString.ToString()));
 
     /// <summary> 
     ///     Handles opening a loot item to apply cursed loot!. <para />

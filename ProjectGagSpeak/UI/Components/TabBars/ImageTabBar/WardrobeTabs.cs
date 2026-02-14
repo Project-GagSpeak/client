@@ -13,6 +13,15 @@ public class WardrobeTabs : ImageTabBar<WardrobeTabs.SelectedTab>
         MyCollar,
     }
 
+    protected override bool IsTabDisabled(SelectedTab tab)
+    {
+        var disable = tab is SelectedTab.MyCollar;
+#if DEBUG
+        disable = false;
+#endif
+        return disable;
+    }
+
     public WardrobeTabs()
     {
         AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Restrained], SelectedTab.MyRestraints,
@@ -21,10 +30,8 @@ public class WardrobeTabs : ImageTabBar<WardrobeTabs.SelectedTab>
             "Restrictions--SEP--Apply, Lock, Unlock, Remove, or Configure your various Restrictions");
         AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged], SelectedTab.MyGags,
             "Gags--SEP--Apply, Lock, Unlock, Remove, or Configure your various Gags");
-#if DEBUG
-        // TODO: enable in release when collar management is implemented
         AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Collar], SelectedTab.MyCollar,
-            "My Collar--SEP--Setup your Collar, and manage incoming and outgoing collar requests.");
-#endif
+            "My Collar--SEP--Setup your Collar, and manage incoming and outgoing collar requests." +
+            "--SEP--[CURRENTLY DISABLED]");
     }
 }

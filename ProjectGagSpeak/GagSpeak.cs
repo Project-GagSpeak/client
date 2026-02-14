@@ -293,7 +293,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<VibeRoomChatlog>()
         .AddSingleton<MainMenuTabs>()
         .AddSingleton<SidePanelTabs>()
-
+        .AddSingleton<RequestTabs>()
 
         // WebAPI (Server stuff)
         .AddSingleton<MainHub>()

@@ -50,8 +50,6 @@ public partial class SidePanelPair
         DrawColoredExpander(InteractionType.LockedEmoteState, emoteInfo.Item1, emoteInfo.Item2, emoteActive, emoteDis, emoteInfo.Item2);
         UniqueHcChild(InteractionType.LockedEmoteState, emoteActive, CkStyle.TwoRowHeight(), () => DrawEmoteChild(cache, k, dispName, width, emoteDis));
 
-#if DEBUG
-        // TODO: enable in release when confinement works
         // ------ Locked Confinement ------
         var confinementActive = hc.IndoorConfinement.Length > 0;
         var confinementInfo = confinementActive ? (FAI.StopCircle, $"Release {dispName} from Confinement.") : (FAI.HouseLock, $"Lock {dispName} away indoors.");
@@ -63,7 +61,6 @@ public partial class SidePanelPair
             DrawTimerButtonRow(InteractionType.Confinement, ref cache.ConfinementTimer, "Confine", !confinementAllowed);
             DrawAddressConfig(cache, k, dispName, width);
         });
-#endif
 
         // ------ Locked Imprisonment ------
         var imprisonmentActive = hc.Imprisonment.Length > 0;

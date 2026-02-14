@@ -15,6 +15,15 @@ public class ToyboxTabs : ImageTabBar<ToyboxTabs.SelectedTab>
         Triggers
     }
 
+    protected override bool IsTabDisabled(SelectedTab tab)
+    {
+        var disable = tab is SelectedTab.VibeLobbies;
+#if DEBUG
+        disable = false;
+#endif
+        return disable;
+    }
+
     public ToyboxTabs()
     {
         AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Vibrator], SelectedTab.BuzzToys,
