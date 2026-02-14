@@ -482,7 +482,8 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
 
     private async Task PushAliasStateChange(AliasStateChangedMessage msg)
     {
-        var toSend = _kinksters.GetOnlineUserDatas().Where(u => msg.Alias.WhitelistedUIDs.Contains(u.UID)).ToList();
+        var onlineUsers = _kinksters.GetOnlineUserDatas();
+        var toSend = msg.Alias.WhitelistedUIDs.Count is 0 ? onlineUsers : onlineUsers.Where(u => msg.Alias.WhitelistedUIDs.Contains(u.UID)).ToList();
         Logger.LogDebug($"Pushing AliasStateChange to {string.Join(", ", toSend.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
 
         var dto = new PushClientAliasState(toSend, msg.Alias.Identifier, msg.Alias.Enabled);
@@ -554,7 +555,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
     {
         var onlinePlayers = _kinksters.GetOnlineUserDatas();
         Logger.LogDebug($"Pushing RestrictionChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
-        var dto = new PushClientDataChangeRestriction(onlinePlayers, item.Identifier, item.ToLightItem());
+        var dto = new PushClientDataChangeRestriction(onlinePlayers, item.Identifier, kind is StorageChangeType.Deleted ? null : item.ToLightItem());
         if (await _hub.UserPushNewRestrictionData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push RestrictionData to paired Kinksters. [{res}]");
         else
@@ -565,7 +566,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
     {
         var onlinePlayers = _kinksters.GetOnlineUserDatas();
         Logger.LogDebug($"Pushing RestraintSetChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
-        var dto = new PushClientDataChangeRestraint(onlinePlayers, item.Identifier, item.ToLightItem());
+        var dto = new PushClientDataChangeRestraint(onlinePlayers, item.Identifier, kind is StorageChangeType.Deleted ? null : item.ToLightItem());
         if (await _hub.UserPushNewRestraintData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push RestraintSetData to paired Kinksters. [{res}]");
         else
@@ -576,7 +577,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
     {
         var onlinePlayers = _kinksters.GetOnlineUserDatas();
         Logger.LogDebug($"Pushing CollarChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
-        var dto = new PushClientDataChangeCollar(onlinePlayers, collar.ToLightItem());
+        var dto = new PushClientDataChangeCollar(onlinePlayers, kind is StorageChangeType.Deleted ? null : collar.ToLightItem());
         if (await _hub.UserPushNewCollarData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push CollarData to paired Kinksters. [{res}]");
         else
@@ -587,7 +588,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
     {
         var onlinePlayers = _kinksters.GetOnlineUserDatas();
         Logger.LogDebug($"Pushing CursedItemChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
-        var dto = new PushClientDataChangeLoot(onlinePlayers, item.Identifier, item.ToLightItem());
+        var dto = new PushClientDataChangeLoot(onlinePlayers, item.Identifier, kind is StorageChangeType.Deleted ? null : item.ToLightItem());
         if (await _hub.UserPushNewLootData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push CursedItemData to paired Kinksters. [{res}]");
         else
@@ -599,7 +600,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
     {
         var online = _kinksters.GetOnlineUserDatas();
         Logger.LogDebug($"Pushing AliasTriggerChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
-        var dto = new PushClientDataChangeAlias(online, item.Identifier, item);
+        var dto = new PushClientDataChangeAlias(online, item.Identifier, kind is StorageChangeType.Deleted ? null : item);
         if (await _hub.UserPushNewAliasData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push AliasTriggerChange to paired Kinksters. [{res}]");
         else
@@ -610,7 +611,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
     {
         var onlinePlayers = _kinksters.GetOnlineUserDatas();
         Logger.LogDebug($"Pushing PatternChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
-        var dto = new PushClientDataChangePattern(onlinePlayers, item.Identifier, item.ToLightItem());
+        var dto = new PushClientDataChangePattern(onlinePlayers, item.Identifier, kind is StorageChangeType.Deleted ? null : item.ToLightItem());
         if (await _hub.UserPushNewPatternData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push PatternData to paired Kinksters. [{res}]");
         else
@@ -621,7 +622,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
     {
         var onlinePlayers = _kinksters.GetOnlineUserDatas();
         Logger.LogDebug($"Pushing AlarmChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
-        var dto = new PushClientDataChangeAlarm(onlinePlayers, item.Identifier, item.ToLightItem());
+        var dto = new PushClientDataChangeAlarm(onlinePlayers, item.Identifier, kind is StorageChangeType.Deleted ? null : item.ToLightItem());
         if (await _hub.UserPushNewAlarmData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push AlarmData to paired Kinksters. [{res}]");
         else
@@ -632,7 +633,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
     {
         var onlinePlayers = _kinksters.GetOnlineUserDatas();
         Logger.LogDebug($"Pushing TriggerChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
-        var dto = new PushClientDataChangeTrigger(onlinePlayers, item.Identifier, item.ToLightItem());
+        var dto = new PushClientDataChangeTrigger(onlinePlayers, item.Identifier, kind is StorageChangeType.Deleted ? null : item.ToLightItem());
         if (await _hub.UserPushNewTriggerData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push TriggerData to paired Kinksters. [{res}]");
         else

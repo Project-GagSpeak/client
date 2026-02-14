@@ -79,7 +79,7 @@ public sealed class AliasTriggerDrawer
         CkGui.AttachToolTip("The Classic PuppetMaster reaction of sending a message");
 
         var isValid = !string.IsNullOrEmpty(act.OutputCommand) && !act.OutputCommand.StartsWith('/');
-        CkGui.ColorTextFrameAlignedInline(isValid ? "<Invalid>" : $"/{act.OutputCommand}", ImGuiColors.TankBlue);
+        CkGui.ColorTextFrameAlignedInline(isValid ? $"/{act.OutputCommand}" : "<Invalid>", ImGuiColors.TankBlue);
         CkGui.AttachToolTip("What you send in chat." +
             "--SEP----COL--TIP:--COL-- Don't include --COL--'/'--COL--, it is added for you.", GsCol.VibrantPink.Vec4());
     }
@@ -104,30 +104,36 @@ public sealed class AliasTriggerDrawer
         CkGui.AttachToolTip("Invokes an interaction with the Gags module");
 
         CkGui.TextFrameAlignedInline($"{(act.LayerIdx is -1 ? "On any open layer" : $"On layer {act.LayerIdx}")}, a");
-        CkGui.ColorTextFrameAlignedInline(isLockAndKey ? act.GagType.GagName() : act.Padlock.ToName(), ImGuiColors.TankBlue);
+        CkGui.ColorTextFrameAlignedInline(isLockAndKey ? act.Padlock.ToName() : act.GagType.GagName(), ImGuiColors.TankBlue);
         CkGui.TextFrameAlignedInline("will be");
         CkGui.ColorTextFrameAlignedInline(act.NewState.ToName(), ImGuiColors.TankBlue);
+        if (!act.IsValid())
+        {
+            ImGui.SameLine();
+            CkGui.FramedIconText(FAI.ExclamationTriangle, ImGuiColors.DalamudRed);
+            CkGui.AttachToolTip("An Invalid Gag/Lock/Layer is selected!");
+        }
     }
 
-    public void DrawGagRowEditor(GagAction action)
+    public void DrawGagRowEditor(GagAction act)
     {
         ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged].Handle, new(ImUtf8.FrameHeight));
         CkGui.AttachToolTip("Invokes an interaction with the Gags module");
 
         ImUtf8.SameLineInner();
-        if (CkGuiUtils.EnumCombo("##GagState", 60f, action.NewState, out var newState, [NewState.Enabled, NewState.Locked, NewState.Disabled],
+        if (CkGuiUtils.EnumCombo("##GagState", 60f, act.NewState, out var newState, [NewState.Enabled, NewState.Locked, NewState.Disabled],
             i => i switch { NewState.Enabled => "Apply", NewState.Locked => "Lock", _ => "Remove" }, flags: CFlags.NoArrowButton))
-            action.NewState = newState;
+            act.NewState = newState;
         CkGui.AttachToolTip("The new state set on the targeted gag.");
 
         if (newState is NewState.Locked)
         {
             ImUtf8.SameLineInner();
             var options = PadlockEx.ClientLocks.Except(PadlockEx.PasswordPadlocks);
-            if (CkGuiUtils.EnumCombo("##PadlockType", 100f, action.Padlock, out var newVal, options, i => i.ToName(), flags: CFlags.NoArrowButton))
-                action.Padlock = newVal;
+            if (CkGuiUtils.EnumCombo("##PadlockType", 100f, act.Padlock, out var newVal, options, i => i.ToName(), flags: CFlags.NoArrowButton))
+                act.Padlock = newVal;
 
-            if (action.Padlock.IsTimerLock())
+            if (act.Padlock.IsTimerLock())
             {
                 CkGui.TextFrameAlignedInline("[TBD]");
             }
@@ -135,14 +141,14 @@ public sealed class AliasTriggerDrawer
         else
         {
             ImUtf8.SameLineInner();
-            if (CkGuiUtils.EnumCombo("##GagType", 100f, action.GagType, out var newVal, i => i switch { GagType.None => "Any Gag", _ => i.GagName() }, flags: CFlags.NoArrowButton))
-                action.GagType = newVal;
+            if (CkGuiUtils.EnumCombo("##GagType", 100f, act.GagType, out var newVal, i => i switch { GagType.None => "Any Gag", _ => i.GagName() }, flags: CFlags.NoArrowButton))
+                act.GagType = newVal;
         }
 
         ImUtf8.SameLineInner();
         var width = ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FAI.Minus).X;
-        if (CkGuiUtils.LayerIdxCombo("##gagLayer", width, action.LayerIdx, out int newIdx, 3, true, CFlags.NoArrowButton))
-            action.LayerIdx = (newIdx == 3) ? -1 : newIdx;
+        if (CkGuiUtils.LayerIdxCombo("##gagLayer", width, act.LayerIdx, out int newIdx, 3, true, CFlags.NoArrowButton))
+            act.LayerIdx = (newIdx == 3) ? -1 : newIdx;
     }
 
     public void DrawRestrictionRow(RestrictionAction act)
@@ -180,6 +186,14 @@ public sealed class AliasTriggerDrawer
                 CkGui.TextFrameAlignedInline("if unlocked");
                 break;
         };
+
+
+        if (!act.IsValid())
+        {
+            ImGui.SameLine();
+            CkGui.FramedIconText(FAI.ExclamationTriangle, ImGuiColors.DalamudRed);
+            CkGui.AttachToolTip("An Invalid Item/Lock/Layer is selected!");
+        }
     }
 
     public void DrawRestrictionRowEditor(RestrictionAction act)
@@ -245,6 +259,14 @@ public sealed class AliasTriggerDrawer
                 CkGui.TextFrameAlignedInline("a restraint set, if unlocked and present");
                 break;
         };
+
+
+        if (!act.IsValid())
+        {
+            ImGui.SameLine();
+            CkGui.FramedIconText(FAI.ExclamationTriangle, ImGuiColors.DalamudRed);
+            CkGui.AttachToolTip("An Invalid Item/Lock/Layer is selected!");
+        }
     }
 
     public void DrawRestraintRowEditor(RestraintAction act)
@@ -315,6 +337,13 @@ public sealed class AliasTriggerDrawer
         else
         {
             CkGui.ColorTextFrameAlignedInline("<INVALID_SETUP>", ImGuiColors.DalamudRed);
+        }
+
+        if (!act.IsValid())
+        {
+            ImGui.SameLine();
+            CkGui.FramedIconText(FAI.ExclamationTriangle, ImGuiColors.DalamudRed);
+            CkGui.AttachToolTip("No Status/Preset Selected!");
         }
     }
 

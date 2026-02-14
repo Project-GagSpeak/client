@@ -257,8 +257,8 @@ public class Kinkster : IComparable<Kinkster>
             ActiveRestraint = data.Restraint;
             ActiveCursedItems = data.ActiveCursedItems;
             // Filtered aliases
-            SharedAliases = data.AliasData.Items.Where(a => a.WhitelistedUIDs.Contains(MainHub.UID)).ToList();
-            IsListeningToClient = data.ListeningTo.Contains(UserData.UID);
+            SharedAliases = data.AliasData.Items.Where(a => a.CanView(MainHub.UID)).ToList();
+            IsListeningToClient = data.ListeningTo.Contains(MainHub.UID);
             ValidToys = data.ValidToys;
             ActivePattern = data.ActivePattern;
             ActiveAlarms = data.ActiveAlarms;
@@ -426,7 +426,7 @@ public class Kinkster : IComparable<Kinkster>
         var alias = SharedAliases.FirstOrDefault(a => a.Identifier == id);
         if (alias is not null)
         {
-            if (newData is not null)
+            if (newData is not null && newData.CanView(MainHub.UID))
             {
                 alias.ApplyChanges(newData);
                 _logger.LogDebug($"Updating Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
@@ -437,7 +437,7 @@ public class Kinkster : IComparable<Kinkster>
                 _logger.LogDebug($"Removing Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
             }
         }
-        else if (newData is not null)
+        else if (newData is not null && newData.CanView(MainHub.UID))
         {
             SharedAliases.Add(newData);
             _logger.LogDebug($"Adding Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);

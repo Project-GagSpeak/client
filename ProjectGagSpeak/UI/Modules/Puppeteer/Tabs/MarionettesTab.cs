@@ -77,7 +77,7 @@ public class MarionettesTab : IFancyTab
     private void DrawMarionetteCombo(float width, float rounding)
     {
         using var _ = CkRaii.FramedChildPaddedW("Combo", width, ImUtf8.FrameHeight, 0, GsCol.VibrantPink.Uint(), rounding);
-        if (_dds.DrawMarionetteCombo(_.InnerRegion.X))
+        if (_dds.DrawMarionetteCombo(_.InnerRegion.X, 1f))
         {
             _logger.LogInformation("We selected a Marionette!");
         }
@@ -111,7 +111,7 @@ public class MarionettesTab : IFancyTab
         }
         else
         {
-            CkGui.ColorTextFrameAlignedInline($"{marionette.GetDisplayName()} isn't listening to you!", ImGuiColors.DalamudRed);
+            CkGui.ColorTextFrameAlignedInline($"{marionette.GetNickAliasOrUid()}'s not listening to you!", ImGuiColors.DalamudRed);
             CkGui.HelpText($"{marionette.GetDisplayName()} can't perform orders from you until you send them your name." +
                 $"--SEP--Do so by using the --COL--Sync Button--COL-- to the right.", ImGuiColors.TankBlue, true);
         }

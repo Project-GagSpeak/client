@@ -788,14 +788,14 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         {
             Name = new SeStringBuilder().AddText("Open KinkPlate").Build(),
             PrefixChar = 'G',
-            PrefixColor = 708,
+            PrefixColor = 561,
             OnClicked = (a) => { Mediator.Publish(new KinkPlateCreateOpenMessage(kinkster)); },
         });
         args.AddMenuItem(new MenuItem()
         {
             Name = new SeStringBuilder().AddText("Pair Actions").Build(),
             PrefixChar = 'G',
-            PrefixColor = 708,
+            PrefixColor = 561,
             OnClicked = (a) => { Mediator.Publish(new OpenKinksterSidePanel(kinkster, true)); },
         });
     }

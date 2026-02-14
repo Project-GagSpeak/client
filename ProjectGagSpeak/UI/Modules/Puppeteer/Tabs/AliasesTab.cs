@@ -118,18 +118,18 @@ public class AliasesTab : IFancyTab
         }
 
         CkGui.TextFrameAlignedInline(alias.Label);
+        if (string.IsNullOrWhiteSpace(alias.Label))
+        {
+            ImGui.SameLine();
+            CkGui.FramedIconText(FAI.ExclamationTriangle, ImGuiColors.DalamudRed);
+            CkGui.AttachToolTip("Must have a valid alias to scan!");
+        }
+
         var endX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
         ImGui.SameLine(endX -= CkGui.IconButtonSize(FAI.Edit).X);
         if (CkGui.IconButton(FAI.Edit, inPopup: true))
             _manager.StartEditing(alias);
         CkGui.AttachToolTip("Edit this alias.");
-        if (!alias.IsValid())
-        {
-            endX -= CkGui.IconButtonSize(FAI.ExclamationTriangle).X;
-            ImGui.SameLine(endX);
-            CkGui.FramedIconText(FAI.ExclamationTriangle, ImGuiColors.DalamudRed);
-            CkGui.AttachToolTip("This alias it not valid, and won't be included in alias detection!");
-        }
 
         // Draw out what the alias detects, and if it ignores case or not
         CkGui.FramedIconText(FAI.AssistiveListeningSystems);
@@ -274,7 +274,7 @@ public class AliasesTab : IFancyTab
         ImUtf8.SameLineInner();
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - checkboxW);
         var listenTxt = alias.InputCommand;
-        if (ImGui.InputTextWithHint("##listener-text", "Text to detect..", ref label, 64))
+        if (ImGui.InputTextWithHint("##listener-text", "Text to detect..", ref listenTxt, 64))
             alias.InputCommand = listenTxt;
         CkGui.AttachToolTip("The UI display name for the AliasTrigger");
 

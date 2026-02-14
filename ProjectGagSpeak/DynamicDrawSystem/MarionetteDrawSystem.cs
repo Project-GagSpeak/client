@@ -71,7 +71,7 @@ public class MarionetteDrawSystem : DynamicDrawSystem<AliasTrigger>, IMediatorSu
     /// <summary>
     ///     Properly draws out the Marionette selector for the given width.
     /// </summary>
-    public bool DrawMarionetteCombo(float width, float scalar = 1.5f)
+    public bool DrawMarionetteCombo(float width, float scalar = 1.15f)
     {
         if (_marionetteCombo.Draw(SelectedMarionette, width, scalar))
         {
@@ -127,9 +127,6 @@ public class MarionetteDrawSystem : DynamicDrawSystem<AliasTrigger>, IMediatorSu
     protected override bool EnsureAllFolders(Dictionary<string, string> _)
     {
         bool anyChanged = false;
-        // Get the kinksters that are puppeteers.
-        var puppeteers = _kinksters.DirectPairs.Where(p => _manager.Puppeteers.ContainsKey(p.UserData.UID)).ToList();
-        var nonPuppeteers = _kinksters.DirectPairs.Except(puppeteers).ToList();
         // Ensure Puppeteers Folder
         if (!FolderMap.ContainsKey(Constants.FolderTagAliasesActive))
             anyChanged |= AddFolder(new AliasFolder(root, idCounter + 1u, Constants.FolderTagAliasesActive, uint.MaxValue,
