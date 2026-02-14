@@ -1,25 +1,23 @@
 using CkCommons.Helpers;
 using CkCommons.RichText;
 using CkCommons.Textures;
+using Dalamud.Bindings.ImGui;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Attributes;
-using GagspeakAPI.Hub;
-using GagspeakAPI.Network;
-using Dalamud.Bindings.ImGui;
-using OtterGui.Text;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.Hub;
+using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.Moodles;
 
-public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePresetInfo>
+public sealed class PairPresetCombo : MoodleComboBase<MoodlePresetInfo>
 {
     private int _maxPresetCount => _kinksterRef.MoodleData.Presets.Count > 0 ? _kinksterRef.MoodleData.PresetList.Max(x => x.Statuses.Count) : 0;
     private float _iconWithPadding => IconSize.X + ImGui.GetStyle().ItemInnerSpacing.X;
 
-    public PairMoodlePresetCombo(ILogger log, MainHub hub, Kinkster kinkster, float scale)
+    public PairPresetCombo(ILogger log, MainHub hub, Kinkster kinkster, float scale)
         : base(log, hub, kinkster, scale, () => [.. kinkster.MoodleData.PresetList.OrderBy(x => x.Title)])
     { }
 
@@ -28,7 +26,7 @@ public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePreset
     protected override string ToString(MoodlePresetInfo obj)
         => obj.Title.StripColorTags();
 
-    public bool DrawApplyPresets(string id, float width, string buttonTT)
+    public bool DrawPresets(string id, float width, string buttonTT)
     {
         InnerWidth = width + _iconWithPadding * _maxPresetCount;
         var prevLabel = Current.GUID == Guid.Empty ? "Select Preset.." : Current.Title.StripColorTags();
@@ -43,6 +41,9 @@ public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePreset
         var titleSpace = size.X - iconsSpace;
         var ret = ImGui.Selectable($"##{moodlePreset.Title}", selected, ImGuiSelectableFlags.None, size);
 
+        // Push the font first so the height is correct.
+        using var _ = UiFontService.Default150Percent.Push();
+
         if (moodlePreset.Statuses.Count > 0)
         {
             ImGui.SameLine(titleSpace);
@@ -56,32 +57,29 @@ public sealed class PairMoodlePresetCombo : CkMoodleComboButtonBase<MoodlePreset
                 }
 
                 MoodleIcon.DrawMoodleIcon(info.IconID, info.Stacks, IconSize);
-                DrawItemTooltip(info);
+                info.AttachTooltip(_kinksterRef.MoodleData.StatusList);
 
                 if (++iconsDrawn < moodlePreset.Statuses.Count)
                     ImUtf8.SameLineInner();
             }
         }
 
-        ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
-        var adjust = (size.Y - SelectableTextHeight) * 0.5f;
+        ImGui.SameLine(ImUtf8.ItemInnerSpacing.X);
+        var adjust = (size.Y - ImUtf8.TextHeight) * 0.5f;
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + adjust);
-        using (UiFontService.Default150Percent.Push())
-            CkRichText.Text(titleSpace, moodlePreset.Title);
+        CkRichText.Text(titleSpace, moodlePreset.Title);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - adjust);
         return ret;
     }
 
     protected override bool CanDoAction(MoodlePresetInfo item)
     {
-        var statusesToCheck = new List<MoodlesStatusInfo>(item.Statuses.Count);
+        var toCheck = new List<MoodlesStatusInfo>(item.Statuses.Count);
         foreach (var guid in item.Statuses)
-        {
             if (_kinksterRef.MoodleData.Statuses.TryGetValue(guid, out var info))
-                statusesToCheck.Add(info);
-        }
+                toCheck.Add(info);
 
-        return PermHelper.CanApplyPairStatus(_kinksterRef.PairPerms, statusesToCheck);
+        return MoodlesEx.CanApplyMoodles(_kinksterRef.PairPerms, toCheck);
     }
 
     protected override void OnApplyButton(MoodlePresetInfo item)

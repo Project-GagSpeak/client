@@ -9,7 +9,9 @@ using System.Diagnostics.CodeAnalysis;
 namespace GagSpeak.Interop;
 
 /// <summary>
-/// The IPC Provider for GagSpeak to interact with other plugins by sharing information about visible players.
+///     <b>NOTE:</b><br />
+///     A lot of this was functional, and recently all got erased without warning, as such it won't
+///     be usable until until its author returns.
 /// </summary>
 public class IpcProvider : DisposableMediatorSubscriberBase, IHostedService
 {
@@ -35,11 +37,11 @@ public class IpcProvider : DisposableMediatorSubscriberBase, IHostedService
     private ICallGateProvider<nint, ProviderMoodleAccessTuple>             GetAccessInfo;      // Get a kinkster's access info.
 
     // IPC Event Actions (for Moodles)
-    private static ICallGateProvider<MoodlesStatusInfo, bool, object?>        ApplyStatusInfo;    // Apply a moodle tuple to the client actor.
-    private static ICallGateProvider<List<MoodlesStatusInfo>, bool, object?>  ApplyStatusInfoList;// Apply moodle tuples to the client actor.
-    private static ICallGateProvider<List<Guid>, object>                      LockIds;            // Locks statuses by their GUID on the Client.
-    private static ICallGateProvider<List<Guid>, object>                      UnlockIds;          // Unlocks statuses by their GUID on the Client.
-    private static ICallGateProvider<object>                                  ClearLocks;         // Removes all locks from the Client StatusManager.
+    // private static ICallGateProvider<MoodlesStatusInfo, bool, object?>        ApplyStatusInfo;    // Apply a moodle tuple to the client actor.
+    // private static ICallGateProvider<List<MoodlesStatusInfo>, bool, object?>  ApplyStatusInfoList;// Apply moodle tuples to the client actor.
+    // private static ICallGateProvider<List<Guid>, object>                      LockIds;            // Locks statuses by their GUID on the Client.
+    // private static ICallGateProvider<List<Guid>, object>                      UnlockIds;          // Unlocks statuses by their GUID on the Client.
+    // private static ICallGateProvider<object>                                  ClearLocks;         // Removes all locks from the Client StatusManager.
     
     /// <summary>
     ///     --<br/>(From Moodles) a request to apply Moodles to another Kinkster. <para/>
@@ -47,7 +49,7 @@ public class IpcProvider : DisposableMediatorSubscriberBase, IHostedService
     ///     This request is processed by GagSpeak and sent to that kinkster if allowed. <br/>
     ///     When the Kinkster receives it, they simply apply it to themselves.
     /// </summary>
-    private ICallGateProvider<nint, List<MoodlesStatusInfo>, bool, object?>? ApplyToPairRequest;
+    // private ICallGateProvider<nint, List<MoodlesStatusInfo>, bool, object?>? ApplyToPairRequest;
 
     public IpcProvider(ILogger<IpcProvider> logger, GagspeakMediator mediator, KinksterManager kinksters)
         : base(logger, mediator)
@@ -100,13 +102,14 @@ public class IpcProvider : DisposableMediatorSubscriberBase, IHostedService
         GetAllRenderedInfo = Svc.PluginInterface.GetIpcProvider<Dictionary<nint, ProviderMoodleAccessTuple>>("GagSpeak.GetAllRenderedInfo");
         GetAccessInfo = Svc.PluginInterface.GetIpcProvider<nint, ProviderMoodleAccessTuple>("GagSpeak.GetAccessInfo");
         // Init appliers
-        ApplyStatusInfo = Svc.PluginInterface.GetIpcProvider<MoodlesStatusInfo, bool, object?>("GagSpeak.ApplyStatusInfo");
-        ApplyStatusInfoList = Svc.PluginInterface.GetIpcProvider<List<MoodlesStatusInfo>, bool, object?>("GagSpeak.ApplyStatusInfoList");
-        LockIds = Svc.PluginInterface.GetIpcProvider<List<Guid>, object>("GagSpeak.LockMoodleStatusIds");
-        UnlockIds = Svc.PluginInterface.GetIpcProvider<List<Guid>, object>("GagSpeak.UnlockMoodleStatusIds");
-        ClearLocks = Svc.PluginInterface.GetIpcProvider<object>("GagSpeak.ClearMoodleStatusLocks");
-        // Init Moodles-Invokable applier.
-        ApplyToPairRequest = Svc.PluginInterface.GetIpcProvider<nint, List<MoodlesStatusInfo>, bool, object?>("GagSpeak.ApplyToPairRequest");
+        
+        // -- All of the below did work until it all got erased :> --
+        //ApplyStatusInfo = Svc.PluginInterface.GetIpcProvider<MoodlesStatusInfo, bool, object?>("GagSpeak.ApplyStatusInfo");
+        //ApplyStatusInfoList = Svc.PluginInterface.GetIpcProvider<List<MoodlesStatusInfo>, bool, object?>("GagSpeak.ApplyStatusInfoList");
+        //LockIds = Svc.PluginInterface.GetIpcProvider<List<Guid>, object>("GagSpeak.LockMoodleStatusIds");
+        //UnlockIds = Svc.PluginInterface.GetIpcProvider<List<Guid>, object>("GagSpeak.UnlockMoodleStatusIds");
+        //ClearLocks = Svc.PluginInterface.GetIpcProvider<object>("GagSpeak.ClearMoodleStatusLocks");
+        //ApplyToPairRequest = Svc.PluginInterface.GetIpcProvider<nint, List<MoodlesStatusInfo>, bool, object?>("GagSpeak.ApplyToPairRequest");
         
         // =====================================
         // ---- FUNC & ACTION REGISTRATIONS ----
@@ -118,7 +121,7 @@ public class IpcProvider : DisposableMediatorSubscriberBase, IHostedService
         GetAllRenderedInfo.RegisterFunc(() => new Dictionary<nint, ProviderMoodleAccessTuple>(_handledKinksters));
         GetAccessInfo.RegisterFunc((address) => _handledKinksters.TryGetValue(address, out var access) ? access : (0, 0, 0, 0));
         // Register the action that moodles can call upon.
-        ApplyToPairRequest.RegisterAction(ProcessApplyToPairRequest);
+        // ApplyToPairRequest.RegisterAction(ProcessApplyToPairRequest);
 
         Logger.LogInformation("Started IpcProviderService");
         NotifyReady();
@@ -141,7 +144,8 @@ public class IpcProvider : DisposableMediatorSubscriberBase, IHostedService
         GetAllRendered?.UnregisterFunc();
         GetAllRenderedInfo?.UnregisterFunc();
         GetAccessInfo?.UnregisterFunc();
-        ApplyToPairRequest?.UnregisterAction();
+        
+        // ApplyToPairRequest?.UnregisterAction();
 
         Mediator.UnsubscribeAll(this);
         return Task.CompletedTask;
@@ -153,72 +157,72 @@ public class IpcProvider : DisposableMediatorSubscriberBase, IHostedService
     private void NotifyPairUnrendered(nint pairPtr) => PairUnrendered?.SendMessage(pairPtr);
     private void NotifyAccessUpdated(nint pairPtr) => AccessUpdated?.SendMessage(pairPtr);
 
-    /// <summary>
-    ///     Applies a <see cref="MoodlesStatusInfo"/> tuple to the CLIENT ONLY via Moodles. <para />
-    ///     This helps account for trying on Moodle Presets, or applying the preset's StatusTuples. <para />
-    ///     Method is invoked via GagSpeak's IpcProvider to prevent miss-use of bypassing permissions.
-    /// </summary>
-    internal static void ApplyStatusTuple(MoodlesStatusInfo status, bool lockStatus) => ApplyStatusInfo?.SendMessage(status, lockStatus);
+    ///// <summary>
+    /////     Applies a <see cref="MoodlesStatusInfo"/> tuple to the CLIENT ONLY via Moodles. <para />
+    /////     This helps account for trying on Moodle Presets, or applying the preset's StatusTuples. <para />
+    /////     Method is invoked via GagSpeak's IpcProvider to prevent miss-use of bypassing permissions.
+    ///// </summary>
+    //internal static void ApplyStatusTuple(MoodlesStatusInfo status, bool lockStatus) => ApplyStatusInfo?.SendMessage(status, lockStatus);
 
-    /// <summary>
-    ///     Applies a group of <see cref="MoodlesStatusInfo"/> tuples to the CLIENT ONLY via Moodles. <para />
-    ///     This helps account for trying on Moodle Presets, or applying the preset's StatusTuples. <para />
-    ///     Method is invoked via GagSpeak's IpcProvider to prevent miss-use of bypassing permissions.
-    /// </summary>
-    internal static void ApplyStatusTuples(IEnumerable<MoodlesStatusInfo> statuses, bool lockStatuses) => ApplyStatusInfoList?.SendMessage(statuses.ToList(), lockStatuses);
+    ///// <summary>
+    /////     Applies a group of <see cref="MoodlesStatusInfo"/> tuples to the CLIENT ONLY via Moodles. <para />
+    /////     This helps account for trying on Moodle Presets, or applying the preset's StatusTuples. <para />
+    /////     Method is invoked via GagSpeak's IpcProvider to prevent miss-use of bypassing permissions.
+    ///// </summary>
+    //internal static void ApplyStatusTuples(IEnumerable<MoodlesStatusInfo> statuses, bool lockStatuses) => ApplyStatusInfoList?.SendMessage(statuses.ToList(), lockStatuses);
 
-    /// <summary>
-    ///     Locks the select GUID's, if currently present in the Client's StatusManager. <para/>
-    ///     Locked ID's cannot be right clicked off, and can only be removed via Unlock or Clear 
-    ///     methods, or on plugin shutdown.
-    /// </summary>
-    internal static void LockClientStatuses(List<Guid> ids) => LockIds?.SendMessage(ids);
+    ///// <summary>
+    /////     Locks the select GUID's, if currently present in the Client's StatusManager. <para/>
+    /////     Locked ID's cannot be right clicked off, and can only be removed via Unlock or Clear 
+    /////     methods, or on plugin shutdown.
+    ///// </summary>
+    //internal static void LockClientStatuses(List<Guid> ids) => LockIds?.SendMessage(ids);
 
-    /// <summary>
-    ///     Unlocks Statuses from the Client's StatusManager by their GUID's, if they are currently locked.
-    /// </summary>
-    internal static void UnlockClientStatuses(List<Guid> ids) => UnlockIds?.SendMessage(ids);
+    ///// <summary>
+    /////     Unlocks Statuses from the Client's StatusManager by their GUID's, if they are currently locked.
+    ///// </summary>
+    //internal static void UnlockClientStatuses(List<Guid> ids) => UnlockIds?.SendMessage(ids);
 
-    /// <summary>
-    ///     Clears all locks from the Client's StatusManager.
-    /// </summary>
-    internal static void ClearClientLocks() => ClearLocks?.SendMessage();
+    ///// <summary>
+    /////     Clears all locks from the Client's StatusManager.
+    ///// </summary>
+    //internal static void ClearClientLocks() => ClearLocks?.SendMessage();
 
 
     // Used to ensure integrity before pushing update to the server.
-    private void ProcessApplyToPairRequest(nint recipientAddr, List<MoodlesStatusInfo> toApply, bool isPreset)
-    {
-        if (_kinksters.DirectPairs.FirstOrDefault(p => p.IsRendered && p.PlayerAddress == recipientAddr) is not { } pair)
-            return;
+    //private void ProcessApplyToPairRequest(nint recipientAddr, List<MoodlesStatusInfo> toApply, bool isPreset)
+    //{
+    //    if (_kinksters.DirectPairs.FirstOrDefault(p => p.IsRendered && p.PlayerAddress == recipientAddr) is not { } pair)
+    //        return;
 
-        // Validate.
-        foreach (var status in toApply)
-            if (!IsStatusValid(status, out var errorMsg))
-            {
-                Logger.LogWarning(errorMsg);
-                return;
-            }
+    //    // Validate.
+    //    foreach (var status in toApply)
+    //        if (!IsStatusValid(status, out var errorMsg))
+    //        {
+    //            Logger.LogWarning(errorMsg);
+    //            return;
+    //        }
 
-        // If valid, publish
-        Mediator.Publish(new MoodlesApplyStatusToPair(new(pair.UserData, toApply, false)));
+    //    // If valid, publish
+    //    Mediator.Publish(new MoodlesApplyStatusToPair(new(pair.UserData, toApply, false)));
 
-        bool IsStatusValid(MoodlesStatusInfo status, [NotNullWhen(false)] out string? error)
-        {
-            if (!pair.PairPerms.MoodleAccess.HasAny(MoodleAccess.AllowOther))
-                return (error = "Attempted to apply to a pair without 'AllowOther' active.") is null;
-            else if (!pair.PairPerms.MoodleAccess.HasAny(MoodleAccess.Positive))
-                return (error = "Pair does not allow application of Moodles with positive status types.") is null;
-            else if (!pair.PairPerms.MoodleAccess.HasAny(MoodleAccess.Negative))
-                return (error = "Pair does not allow application of Moodles with negative status types.") is null;
-            else if (!pair.PairPerms.MoodleAccess.HasAny(MoodleAccess.Special))
-                return (error = "Pair does not allow application of Moodles with special status types.") is null;
-            else if (!pair.PairPerms.MoodleAccess.HasAny(MoodleAccess.Permanent) && status.ExpireTicks == -1)
-                return (error = "Pair does not allow application of permanent Moodles.") is null;
-            else if (pair.PairPerms.MaxMoodleTime < TimeSpan.FromMilliseconds(status.ExpireTicks))
-                return (error = "Moodle duration of requested Moodle was longer than the pair allows!") is null;
+    //    bool IsStatusValid(MoodlesStatusInfo status, [NotNullWhen(false)] out string? error)
+    //    {
+    //        if (!pair.PairPerms.MoodleAccess.HasAny(MoodleAccess.AllowOther))
+    //            return (error = "Attempted to apply to a pair without 'AllowOther' active.") is null;
+    //        else if (!pair.PairPerms.MoodleAccess.HasAny(MoodleAccess.Positive))
+    //            return (error = "Pair does not allow application of Moodles with positive status types.") is null;
+    //        else if (!pair.PairPerms.MoodleAccess.HasAny(MoodleAccess.Negative))
+    //            return (error = "Pair does not allow application of Moodles with negative status types.") is null;
+    //        else if (!pair.PairPerms.MoodleAccess.HasAny(MoodleAccess.Special))
+    //            return (error = "Pair does not allow application of Moodles with special status types.") is null;
+    //        else if (!pair.PairPerms.MoodleAccess.HasAny(MoodleAccess.Permanent) && status.ExpireTicks == -1)
+    //            return (error = "Pair does not allow application of permanent Moodles.") is null;
+    //        else if (pair.PairPerms.MaxMoodleTime < TimeSpan.FromMilliseconds(status.ExpireTicks))
+    //            return (error = "Moodle duration of requested Moodle was longer than the pair allows!") is null;
 
-            return (error = null) is null;
-        }
-    }
+    //        return (error = null) is null;
+    //    }
+    //}
 }
 

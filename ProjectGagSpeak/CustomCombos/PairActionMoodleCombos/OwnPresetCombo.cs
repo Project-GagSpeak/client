@@ -14,11 +14,11 @@ using GagspeakAPI.Extensions;
 
 namespace GagSpeak.CustomCombos.Moodles;
 
-public sealed class OwnMoodlePresetToPairCombo : CkMoodleComboButtonBase<MoodlePresetInfo>
+public sealed class OwnPresetCombo : MoodleComboBase<MoodlePresetInfo>
 {
     private int _maxPresetCount => MoodleCache.IpcData.PresetList.Max(x => x.Statuses.Count);
     private float _iconWithPadding => IconSize.X + ImGui.GetStyle().ItemInnerSpacing.X;
-    public OwnMoodlePresetToPairCombo(ILogger log, MainHub hub, Kinkster pair, float scale)
+    public OwnPresetCombo(ILogger log, MainHub hub, Kinkster pair, float scale)
         : base(log, hub, pair, scale, () => [ ..MoodleCache.IpcData.PresetList.OrderBy(x => x.Title) ])
     { }
 
@@ -41,6 +41,10 @@ public sealed class OwnMoodlePresetToPairCombo : CkMoodleComboButtonBase<MoodleP
         var size = new Vector2(GetFilterWidth(), IconSize.Y);
         var iconsSpace = (_iconWithPadding * moodlePreset.Statuses.Count);
         var titleSpace = size.X - iconsSpace;
+
+        // Push the font first so the height is correct.
+        using var _ = UiFontService.Default150Percent.Push();
+
         var ret = ImGui.Selectable($"##{moodlePreset.Title}", selected, ImGuiSelectableFlags.None, size);
 
         if (moodlePreset.Statuses.Count > 0)
@@ -56,18 +60,17 @@ public sealed class OwnMoodlePresetToPairCombo : CkMoodleComboButtonBase<MoodleP
                 }
 
                 MoodleIcon.DrawMoodleIcon(info.IconID, info.Stacks, IconSize);
-                DrawItemTooltip(info);
+                info.AttachTooltip(MoodleCache.IpcData.StatusList);
 
                 if (++iconsDrawn < moodlePreset.Statuses.Count)
                     ImUtf8.SameLineInner();
             }
         }
 
-        ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
-        var adjust = (size.Y - SelectableTextHeight) * 0.5f;
+        ImGui.SameLine(ImUtf8.ItemInnerSpacing.X);
+        var adjust = (size.Y - ImUtf8.TextHeight) * 0.5f;
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + adjust);
-        using (UiFontService.Default150Percent.Push())
-            CkRichText.Text(titleSpace, moodlePreset.Title);
+        CkRichText.Text(titleSpace, moodlePreset.Title);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - adjust);
         return ret;
     }

@@ -90,7 +90,7 @@ public class MoodleHandler
         var idsToApply = MoodleCache.IpcData.DataInfo.Any()
             ? _cache.FinalStatusIds.Except(MoodleCache.IpcData.DataInfo.Keys)
             : _cache.FinalStatusIds;
-        await _ipc.ApplyOwnStatus(idsToApply, true);
+        await _ipc.ApplyOwnStatus(idsToApply);
         _logger.LogDebug("Applied all cached moodles to the client.", LoggerType.IpcMoodles);
     }
 
@@ -99,7 +99,7 @@ public class MoodleHandler
     /// </summary>
     private async Task RestoreAndReapplyCache(IEnumerable<Guid> moodlesToRemove)
     {
-        await _ipc.RemoveOwnStatuses(moodlesToRemove, true);
+        await _ipc.RemoveOwnStatuses(moodlesToRemove);
         _logger.LogDebug($"Removed Moodles: {string.Join(", ", moodlesToRemove)}", LoggerType.IpcMoodles);
         // Reapply restricted.
         await ApplyMoodleCache();
@@ -111,7 +111,7 @@ public class MoodleHandler
     /// <remarks> If this moodle is not present in the client's Moodle Status List, it will not work. </remarks>
     public async Task ApplyMoodle(Moodle moodle)
     {
-        await _ipc.ApplyOwnStatus(moodle is MoodlePreset p ? p.StatusIds : [moodle.Id], false);
+        await _ipc.ApplyOwnStatus(moodle is MoodlePreset p ? p.StatusIds : [moodle.Id]);
     }
 
     // Hopefully never use this.
@@ -125,7 +125,7 @@ public class MoodleHandler
     /// </summary>
     private async Task RemoveMoodle(Moodle moodle)
     {
-        await _ipc.RemoveOwnStatuses((moodle is MoodlePreset p ? p.StatusIds : [moodle.Id]).Except(_cache.FinalStatusIds), true);
+        await _ipc.RemoveOwnStatuses((moodle is MoodlePreset p ? p.StatusIds : [moodle.Id]).Except(_cache.FinalStatusIds));
     }
 
     // Hopefully never use this.

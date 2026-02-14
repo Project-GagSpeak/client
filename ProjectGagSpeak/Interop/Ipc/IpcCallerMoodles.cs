@@ -192,57 +192,38 @@ public sealed class IpcCallerMoodles : IIpcCaller
     ///     Applies one of our Client's own moodles to them by GUID. <br/>
     ///     Optionally, if you want to lock the applied status, you can do so.
     /// </summary>
-    public async Task ApplyOwnStatus(Guid guid, bool lockId)
+    public async Task ApplyOwnStatus(Guid guid)
     {
         if (!APIAvailable) return;
         // To my knowledge this no longer should be required to run on the main thread but we'll see.
         ApplyStatusByPtr.InvokeAction(guid, PlayerData.Address);
-        if (lockId)
-        {
-            // Lock the status via our provider (TODO)
-        }
     }
 
     /// <inheritdoc cref="ApplyOwnStatus(Guid, bool)"/>
-    public async Task ApplyOwnStatus(IEnumerable<Guid> guidsToAdd, bool lockIds)
+    public async Task ApplyOwnStatus(IEnumerable<Guid> guidsToAdd)
     {
         if (!APIAvailable) return;
 
         foreach (var guid in guidsToAdd)
             ApplyStatusByPtr.InvokeAction(guid, PlayerData.Address);
-
-        if (lockIds)
-        {
-            // Lock the status via our provider (TODO)
-        }
     }
 
     /// <summary>
     ///     Applies one of our Client's own presets to them by GUID.
     /// </summary>
-    public async Task ApplyOwnPreset(Guid guid, bool lockIds)
+    public async Task ApplyOwnPreset(Guid guid)
     {
         if (!APIAvailable) return;
         ApplyPresetByPtr.InvokeAction(guid, PlayerData.Address);
-        if (lockIds)
-        {
-            // Lock the status via our provider (TODO)
-        }
     }
 
     /// <summary> 
     ///     Removes statuses from the Client's StatusManager by GUID. <para />
     ///     If the statuses are locked, this action will be ignored unless unlocked.
     /// </summary>
-    public async Task RemoveOwnStatuses(IEnumerable<Guid> toRemove, bool unlockIds)
+    public async Task RemoveOwnStatuses(IEnumerable<Guid> toRemove)
     {
         if (!APIAvailable) return;
-
-        if (unlockIds)
-        {
-            // Unlock the statuses via our provider (TODO)
-        }
-
         RemoveStatusesByPtr.InvokeAction(toRemove.ToList(), PlayerData.Address);
     }
     #endregion Moodle Manipulation

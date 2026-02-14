@@ -353,96 +353,100 @@ public partial class SidePanelPair
     #region Moodles
     private void DrawMoodlesActions(KinksterInfoCache cache, Kinkster k, float width, string dispName)
     {
-        ImGui.TextUnformatted("Moodles Actions");
-        ImGui.TextUnformatted("NOT YET IMPLEMENTED");
-        // if (!k.IsRendered)
-        //     CkGui.ColorTextInline("( Not Visible! )", ImGuiColors.DalamudRed);
+        ImGui.Text("Moodles");
+        CkGui.ColorTextCentered("Broken By Moodles Changes", CkCol.TriStateCross.Uint());
+        using var dis = ImRaii.Disabled();
+        DrawApplyMoodleOwn(cache, k, dispName, width);
+        DrawApplyMoodleOther(cache, k, dispName, width);
+    }
 
-        // var clientIpcValid = MoodleCache.IpcData.Statuses.Count > 0 && k.IsRendered;
-        // var kinksterIpcValid = k.MoodleData.Statuses.Count > 0 && k.IsRendered;
+    private void DrawApplyMoodleOwn(KinksterInfoCache cache, Kinkster k, string dispName, float width)
+    {
+        var hasStatuses = MoodleCache.IpcData.Statuses.Count > 0;
+        var hasPresets = MoodleCache.IpcData.Presets.Count > 0;
+        var isAllowed = k.PairPerms.MoodleAccess.HasAny(MoodleAccess.AllowOther);
 
-        // ////////// APPLY MOODLES FROM PAIR's LIST //////////
-        // var canApplyOther = k.PairPerms.MoodleAccess.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou) && kinksterIpcValid;
-        // var applyOtherStatusTxt = canApplyOther ? $"Apply a Status from {dispName}'s list" : $"Cannot apply {dispName}'s Statuses";
-        // var applyOtherStatusTT = canApplyOther
-        //     ? $"Applies a Moodle Status from {dispName}'s Statuses to them."
-        //     : $"You don't have permission to apply Statuses to {dispName} or they have none!";
-        // if (CkGui.IconTextButton(FAI.PersonCirclePlus, applyOtherStatusTxt, width, true, !canApplyOther))
-        //     cache.ToggleInteraction(InteractionType.ApplyPairMoodle);
-        // CkGui.AttachToolTip(applyOtherStatusTT);
+        var statusTxt = hasStatuses ? $"Apply a status to {dispName}" : $"No statuses to apply";
+        var statusTT = isAllowed ? $"Applies a status to {dispName}." : $"Cannot apply your own moodles to {dispName}. --COL--(Permission Denied)--COL--";
+        var presetTxt = hasStatuses ? $"Apply a preset to {dispName}" : $"No presets to apply";
+        var presetTT = isAllowed ? $"Applies a preset to {dispName}." : $"Cannot apply your own moodles to {dispName}. --COL--(Permission Denied)--COL--";
 
-        // if (cache.OpenItem is InteractionType.ApplyPairMoodle)
-        // {
-        //     using (ImRaii.Child("ApplyPairMoodles", new Vector2(width, ImGui.GetFrameHeight())))
-        //         cache.Statuses.DrawApplyStatuses($"##OtherPresets-{k.UserData.UID}", width, $"Applies Selected Status to {dispName}");
-        //     ImGui.Separator();
-        // }
+        // Applying own moodles
+        if (CkGui.IconTextButton(FAI.UserPlus, statusTxt, width, true, !isAllowed || !hasStatuses))
+            cache.ToggleInteraction(InteractionType.ApplyOwnStatus);
+        CkGui.AttachToolTip(statusTT);
 
-        // ////////// APPLY PRESETS FROM PAIR's LIST //////////
-        // var applyOtherPresetTxt = canApplyOther ? $"Apply a Preset from {dispName}'s list" : $"Cannot apply {dispName}'s Presets";
-        // var applyOtherPresetTT = canApplyOther
-        //     ? $"Applies a Preset from {dispName}'s Presets List to them."
-        //     : $"You don't have permission to apply Presets to {dispName} or they have none!";
-        // if (CkGui.IconTextButton(FAI.FileCirclePlus, applyOtherPresetTxt, width, true, !canApplyOther))
-        //     cache.ToggleInteraction(InteractionType.ApplyPairMoodlePreset);
-        // CkGui.AttachToolTip(applyOtherPresetTT);
+        if (cache.OpenItem is InteractionType.ApplyOwnStatus)
+        {
+            using (ImRaii.Child("applyownstatus", new Vector2(width, ImGui.GetFrameHeight())))
+                cache.OwnStatuses.DrawApplyStatuses($"##ownstatus-{k.UserData.UID}", width, $"Applies this Status to {dispName}");
+            ImGui.Separator();
+        }
 
-        // if (cache.OpenItem is InteractionType.ApplyPairMoodlePreset)
-        // {
-        //     using (ImRaii.Child("ApplyPairPresets", new Vector2(width, ImGui.GetFrameHeight())))
-        //         cache.Presets.DrawApplyPresets($"##OtherPresets-{k.UserData.UID}", width, $"Applies Selected Preset to {dispName}");
-        //     ImGui.Separator();
-        // }
+        // Applying own presets.
+        if (CkGui.IconTextButton(FAI.FileCirclePlus, presetTxt, width, true, !isAllowed || !hasPresets))
+            cache.ToggleInteraction(InteractionType.ApplyOwnPreset);
+        CkGui.AttachToolTip(presetTT);
 
-        // ////////// APPLY MOODLES FROM OWN LIST //////////
-        // var canApplyOwn = k.PairPerms.MoodlePerms.HasAny(MoodlePerms.PairCanApplyYourMoodlesToYou) && clientIpcValid;
-        // var applyOwnStatusTxt = canApplyOwn ? $"Apply a Status from your list" : "Cannot apply your Statuses";
-        // var applyOwnStatusTT = canApplyOwn
-        //     ? $"Applies one of your Moodle Statuses to {dispName}."
-        //     : "You don't have permission to apply your own Statuses, or you have none!";
-        // if (CkGui.IconTextButton(FAI.UserPlus, applyOwnStatusTxt, width, true, !canApplyOwn))
-        //     cache.ToggleInteraction(InteractionType.ApplyOwnMoodle);
-        // CkGui.AttachToolTip(applyOwnStatusTT);
+        if (cache.OpenItem is InteractionType.ApplyOwnPreset)
+        {
+            using (ImRaii.Child("applyownpresets", new Vector2(width, ImGui.GetFrameHeight())))
+                cache.OwnPresets.DrawApplyPresets($"##ownpreset-{k.UserData.UID}", width, $"Applies this Preset to {dispName}");
+            ImGui.Separator();
+        }
+    }
 
-        // if (cache.OpenItem is InteractionType.ApplyOwnMoodle)
-        // {
-        //     using (ImRaii.Child("ApplyOwnMoodles", new Vector2(width, ImGui.GetFrameHeight())))
-        //         cache.OwnStatuses.DrawApplyStatuses($"##OwnStatus-{k.UserData.UID}", width, $"Applies Selected Status to {dispName}");
-        //     ImGui.Separator();
-        // }
+    private void DrawApplyMoodleOther(KinksterInfoCache cache, Kinkster k, string dispName, float width)
+    {
+        var hasStatuses = k.MoodleData.Statuses.Count > 0;
+        var hasPresets = k.MoodleData.Presets.Count > 0;
+        var isAllowed = k.PairPerms.MoodleAccess.HasAny(MoodleAccess.AllowOwn);
 
-        // ////////// APPLY PRESETS FROM OWN LIST //////////
-        // var applyOwnPresetTxt = canApplyOwn ? $"Apply a Preset from your list" : "Cannot apply your Presets";
-        // var applyOwnPresetTT = canApplyOwn
-        //     ? $"Applies one of your Moodle Presets to {dispName}."
-        //     : "You don't have permission to apply your Presets, or you have none created!";
-        // if (CkGui.IconTextButton(FAI.FileCirclePlus, applyOwnPresetTxt, width, true, !canApplyOwn))
-        //     cache.ToggleInteraction(InteractionType.ApplyOwnMoodlePreset);
-        // CkGui.AttachToolTip(applyOwnPresetTT);
+        var statusTxt = hasStatuses ? $"Apply a status from {dispName}'s list" : "No statuses to apply.";
+        var statusTT = isAllowed ? $"Applies a chosen status to {dispName}." : $"Cannot apply {dispName}'s statuses. --COL--(Permission Denied)--COL--";
+        var presetTxt = hasPresets ? $"Apply a preset from {dispName}'s list" : "No presets to apply.";
+        var presetTT = isAllowed ? $"Applies a chosen preset to {dispName}." : $"Cannot apply {dispName}'s presets. --COL--(Permission Denied)--COL--";
 
-        // if (cache.OpenItem is InteractionType.ApplyOwnMoodlePreset)
-        // {
-        //     using (ImRaii.Child("ApplyOwnPresets", new Vector2(width, ImGui.GetFrameHeight())))
-        //         cache.OwnPresets.DrawApplyPresets($"##OwnPresets-{k.UserData.UID}", width, $"Applies Selected Preset to {dispName}");
-        //     ImGui.Separator();
-        // }
+        // Applying sundesmo's moodles
+        if (CkGui.IconTextButton(FAI.UserPlus, statusTxt, width, true, !isAllowed || !hasStatuses))
+            cache.ToggleInteraction(InteractionType.ApplyOtherStatus);
+        CkGui.AttachToolTip(statusTT);
 
+        if (cache.OpenItem is InteractionType.ApplyOtherStatus)
+        {
+            using (ImRaii.Child("applyotherstatus", new Vector2(width, ImGui.GetFrameHeight())))
+                cache.Statuses.DrawStatuses($"##otherstatus-{k.UserData.UID}", width, true, $"Applies this Status to {dispName}");
+            ImGui.Separator();
+        }
 
-        // ////////// REMOVE MOODLES //////////
-        // var canRemove = k.PairPerms.MoodlePerms.HasAny(MoodlePerms.RemovingMoodles) && clientIpcValid;
-        // var removeStatusTxt = canRemove ? $"Remove a Status from {dispName}" : "Cannot remove Statuses";
-        // var removeStatusTT = canRemove
-        //     ? $"Removes a Moodle Status from {dispName}'s Status Manager (Active Display)"
-        //     : $"Permission to remove Moodles was not granted by {dispName}, or they have none active!";
-        // if (CkGui.IconTextButton(FAI.UserMinus, removeStatusTxt, width, true, !canRemove))
-        //     cache.ToggleInteraction(InteractionType.RemoveMoodle);
-        // CkGui.AttachToolTip(removeStatusTT);
+        // Applying sundesmo's presets.
+        if (CkGui.IconTextButton(FAI.FileCirclePlus, presetTxt, width, true, !isAllowed || !hasPresets))
+            cache.ToggleInteraction(InteractionType.ApplyOtherPreset);
+        CkGui.AttachToolTip(presetTT);
 
-        // if (cache.OpenItem is InteractionType.RemoveMoodle)
-        // {
-        //     using (ImRaii.Child("RemoveMoodles", new Vector2(width, ImGui.GetFrameHeight())))
-        //         cache.ActiveStatuses.DrawRemoveStatuses("##ActivePairStatuses" + dispName, width, $"Removes Selected Status to {dispName}");
-        // }
+        if (cache.OpenItem is InteractionType.ApplyOtherPreset)
+        {
+            using (ImRaii.Child("applyotherpresets", new Vector2(width, ImGui.GetFrameHeight())))
+                cache.Presets.DrawPresets($"##otherpreset-{k.UserData.UID}", width, $"Applies this Preset to {dispName}");
+            ImGui.Separator();
+        }
+
+        // For removing. (Of note, we will need to make a seperate combo for removals if we want to distinguish between applied vs any.)
+        var canRemApplied = k.PairPerms.MoodleAccess.HasAny(MoodleAccess.RemoveApplied);
+        var canRemAny = k.PairPerms.MoodleAccess.HasAny(MoodleAccess.RemoveAny);
+        var canRemove = canRemApplied || canRemAny;
+        var remText = canRemove ? $"Remove a status from {dispName}." : "Cannot remove statuses.";
+        var remTT = canRemove ? $"Removes a status from {dispName}." : $"Cannot remove statuses from {dispName}. --COL--(Permission Denied)--COL--";
+
+        if (CkGui.IconTextButton(FAI.UserMinus, remText, width, true, !canRemove))
+            cache.ToggleInteraction(InteractionType.RemoveStatus);
+        CkGui.AttachToolTip(remTT);
+
+        if (cache.OpenItem is InteractionType.RemoveStatus)
+        {
+            using (ImRaii.Child("removestatus", new Vector2(width, ImGui.GetFrameHeight())))
+                cache.Remover.DrawStatuses($"##statusremover-{k.UserData.UID}", width, false, $"Removes Selected Status from {dispName}");
+        }
     }
     #endregion Moodles
 

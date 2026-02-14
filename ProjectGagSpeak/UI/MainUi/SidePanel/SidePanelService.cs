@@ -105,15 +105,16 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
     public PairRestrictionPadlockCombo  RestrictionLocks{ get; private set; } = null!;
     public PairRestraintCombo           Restraints { get; private set; } = null!;
     public PairRestraintPadlockCombo    RestraintLocks { get; private set; } = null!;
-    public PairMoodleStatusCombo        Statuses { get; private set; } = null!;
-    public PairMoodlePresetCombo        Presets { get; private set; } = null!;
+    public PairStatusCombo              Statuses { get; private set; } = null!;
+    public PairPresetCombo              Presets { get; private set; } = null!;
     public PairPatternCombo             Patterns { get; private set; } = null!;
+    public PairStatusCombo              Remover { get; private set; } = null!;
+
     public PairAlarmCombo               Alarms { get; private set; } = null!;
     public PairTriggerCombo             Triggers { get; private set; } = null!;
-    public OwnMoodleStatusToPairCombo   OwnStatuses { get; private set; } = null!;
-    public OwnMoodlePresetToPairCombo   OwnPresets { get; private set; } = null!;
+    public OwnStatusCombo   OwnStatuses { get; private set; } = null!;
+    public OwnPresetCombo   OwnPresets { get; private set; } = null!;
     public EmoteCombo                   Emotes { get; private set; } = null!;
-    public PairMoodleStatusCombo        ActiveStatuses { get; private set; } = null!;
     public WorldCombo                   Worlds { get; private set; } = null!;
 
     public void Dispose()
@@ -158,14 +159,14 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
         RestrictionLocks = new PairRestrictionPadlockCombo(_log, _hub, Kinkster, ClearInteraction);
         Restraints = new PairRestraintCombo(_log, _hub, Kinkster, ClearInteraction);
         RestraintLocks = new PairRestraintPadlockCombo(_log, _hub, Kinkster, ClearInteraction);
-        Statuses = new PairMoodleStatusCombo(_log, _hub, Kinkster, 1.3f);
-        Presets = new PairMoodlePresetCombo(_log, _hub, Kinkster, 1.3f);
+        Statuses = new PairStatusCombo(_log, _hub, Kinkster, 1.3f);
+        Presets = new PairPresetCombo(_log, _hub, Kinkster, 1.3f);
         Patterns = new PairPatternCombo(_log, _hub, Kinkster, ClearInteraction);
         Alarms = new PairAlarmCombo(_log, _hub, Kinkster);
         Triggers = new PairTriggerCombo(_log, _hub, Kinkster);
-        OwnStatuses = new OwnMoodleStatusToPairCombo(_log, _hub, Kinkster, 1.3f);
-        OwnPresets = new OwnMoodlePresetToPairCombo(_log, _hub, Kinkster, 1.3f);
-        ActiveStatuses = new PairMoodleStatusCombo(_log, _hub, Kinkster, 1.3f, () =>
+        OwnStatuses = new OwnStatusCombo(_log, _hub, Kinkster, 1.3f);
+        OwnPresets = new OwnPresetCombo(_log, _hub, Kinkster, 1.3f);
+        Remover = new PairStatusCombo(_log, _hub, Kinkster, 1.3f, () =>
         {
             if (Kinkster.PairPerms.MoodleAccess.HasAny(MoodleAccess.RemoveAny))
                 return [.. Kinkster.MoodleData.DataInfoList.OrderBy(x => x.Title)];

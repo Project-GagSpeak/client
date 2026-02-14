@@ -185,7 +185,7 @@ public partial class MainHub
         else
         {
             // Could maybe make the dto send if they want them to be locked or not? Idk, but its possible if we want.
-            await _moodles.ApplyOwnStatus(dto.Ids, false).ConfigureAwait(false);
+            await _moodles.ApplyOwnStatus(dto.Ids).ConfigureAwait(false);
         }
     }
 
@@ -199,9 +199,10 @@ public partial class MainHub
             Logger.LogWarning($"Received ApplyMoodleTuples from an unrendered kinkster: {dto.User.AliasOrUID}");
         else
         {
-            Mediator.Publish(new EventMessage(new(pair.GetNickAliasOrUid(), pair.UserData.UID, InteractionType.ApplyPairMoodle, "Applied by Pair.")));
+            Mediator.Publish(new EventMessage(new(pair.GetNickAliasOrUid(), pair.UserData.UID, InteractionType.ApplyOtherStatus, "Applied by Pair.")));
             // Could maybe make the dto send if they want them to be locked or not? Idk, but its possible if we want.
-            IpcProvider.ApplyStatusTuples(dto.Statuses, false);
+            // Can't do this anymore
+            // IpcProvider.ApplyStatusTuples(dto.Statuses);
         }
     }
 
@@ -216,7 +217,7 @@ public partial class MainHub
         else
         {
             // Could maybe make the dto send if they want them to be locked or not? Idk, but its possible if we want.
-            await _moodles.RemoveOwnStatuses(dto.Ids, false).ConfigureAwait(false);
+            await _moodles.RemoveOwnStatuses(dto.Ids).ConfigureAwait(false);
         }
     }
 
@@ -231,7 +232,7 @@ public partial class MainHub
         else
         {
             // Could maybe make the dto send if they want them to be locked or not? Idk, but its possible if we want.
-            await _moodles.RemoveOwnStatuses(MoodleCache.IpcData.DataInfo.Keys, false).ConfigureAwait(false);
+            await _moodles.RemoveOwnStatuses(MoodleCache.IpcData.DataInfo.Keys).ConfigureAwait(false);
         }
     }
     #endregion Moodles

@@ -37,7 +37,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
 
     public string SearchString { get; set; } = string.Empty;
     public string SearchTags { get; set; } = string.Empty;
-    public HubFilter SearchFilter { get; set; } = HubFilter.DatePosted;
+    public HubFilter SearchFilter { get; set; } = HubFilter.Likes;
     public DurationLength SearchDuration { get; set; } = DurationLength.Any;
     public ToyBrandName SearchDevice { get; set; } = ToyBrandName.Unknown;
     public ToyMotor MotorType { get; set; } = ToyMotor.Vibration;
@@ -74,7 +74,8 @@ public class ShareHubService : DisposableMediatorSubscriberBase
 
         var moodleTupleToTry = match.Status;
         Logger.LogInformation("Trying on moodle from server. Sending request to Moodles!");
-        IpcProvider.ApplyStatusTuple(moodleTupleToTry, false);
+        // Cant do this anymore.
+        // IpcProvider.ApplyStatusTuple(moodleTupleToTry, false);
     }
 
     #region PatternHub Tasks

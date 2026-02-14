@@ -1,6 +1,7 @@
 using CkCommons.Helpers;
 using CkCommons.RichText;
 using CkCommons.Textures;
+using Dalamud.Bindings.ImGui;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.State.Caches;
@@ -9,13 +10,13 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
-using Dalamud.Bindings.ImGui;
+using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.Moodles;
 
-public sealed class OwnMoodleStatusToPairCombo : CkMoodleComboButtonBase<MoodlesStatusInfo>
+public sealed class OwnStatusCombo : MoodleComboBase<MoodlesStatusInfo>
 {
-    public OwnMoodleStatusToPairCombo(ILogger log, MainHub hub, Kinkster kinkster, float scale)
+    public OwnStatusCombo(ILogger log, MainHub hub, Kinkster kinkster, float scale)
         : base(log, hub, kinkster, scale, () => [.. MoodleCache.IpcData.Statuses.Values.OrderBy(x => x.Title)])
     { }
 
@@ -43,18 +44,21 @@ public sealed class OwnMoodleStatusToPairCombo : CkMoodleComboButtonBase<Moodles
     {
         var size = new Vector2(GetFilterWidth(), IconSize.Y);
         var titleSpace = size.X - IconSize.X;
-        var moodleStatus = Items[globalIdx];
-        var ret = ImGui.Selectable("##" + moodleStatus.Title, selected, ImGuiSelectableFlags.None, size);
+        var myStatus = Items[globalIdx];
+
+        // Push the font first so the height is correct.
+        using var _ = UiFontService.Default150Percent.Push();
+
+        var ret = ImGui.Selectable($"##{myStatus.Title}", selected, ImGuiSelectableFlags.None, size);
 
         ImGui.SameLine(titleSpace);
-        MoodleIcon.DrawMoodleIcon(moodleStatus.IconID, moodleStatus.Stacks, IconSize);
-        DrawItemTooltip(moodleStatus);
+        MoodleIcon.DrawMoodleIcon(myStatus.IconID, myStatus.Stacks, IconSize);
+        myStatus.AttachTooltip(MoodleCache.IpcData.StatusList);
 
-        ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
-        var adjust = (size.Y - SelectableTextHeight) * 0.5f;
+        ImGui.SameLine(ImUtf8.ItemInnerSpacing.X);
+        var adjust = (size.Y - ImUtf8.TextHeight) * 0.5f;
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + adjust);
-        using (UiFontService.Default150Percent.Push())
-            CkRichText.Text(titleSpace, moodleStatus.Title);
+        CkRichText.Text(titleSpace, myStatus.Title);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - adjust);
 
         return ret;

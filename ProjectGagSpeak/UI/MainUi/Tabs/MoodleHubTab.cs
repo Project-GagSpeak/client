@@ -39,6 +39,10 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
 
     public void DrawMoodlesHub()
     {
+        CkGui.FontTextCentered("Database Broken Due", UiFontService.Default150Percent, CkCol.TriStateCross.Uint());
+        CkGui.FontTextCentered("To Moodles Changes", UiFontService.Default150Percent, CkCol.TriStateCross.Uint());
+        using var disabled = ImRaii.Disabled();
+
         // Handle grabbing new info from the server if none is present. (not the most elegent but it works)
         if (!_shareHub.InitialMoodlesCall && !UiService.DisableUI)
             UiService.SetUITask(_shareHub.SearchMoodles());
