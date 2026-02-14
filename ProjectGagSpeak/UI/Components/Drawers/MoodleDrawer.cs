@@ -12,6 +12,7 @@ using OtterGui.Text;
 using CkCommons.Gui;
 using CkCommons.Helpers;
 using CkCommons.Textures;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Gui.Components;
 public class MoodleDrawer
@@ -220,22 +221,20 @@ public class MoodleDrawer
         }
     }
 
-    public void DrawStatusInfos(IEnumerable<MoodlesStatusInfo> statuses, Vector2 iconSize)
+    public void DrawStatusInfos(List<MoodlesStatusInfo> statuses, Vector2 iconSize)
     {
         using var _ = ImRaii.Group();
         // Calculate the remaining height in the region.
-        foreach (var status in statuses)
+        for (var i = 0; i < statuses.Count; i++)
         {
-            // Prevent invalid draws
-            if(status.IconID is 0)
+            if (statuses[i].IconID is 0)
                 continue;
 
-            MoodleIcon.DrawMoodleIcon(status.IconID, status.Stacks, iconSize);
-            if (ImGui.IsItemHovered())
-                GagspeakEx.DrawMoodleStatusTooltip(status, MoodleCache.IpcData.StatusList);
-            ImGui.SameLine();
-        }
+            MoodleIcon.DrawMoodleIcon(statuses[i].IconID, statuses[i].Stacks, iconSize);
+            GagspeakEx.DrawMoodleStatusTooltip(statuses[i], MoodleCache.IpcData.StatusList);
 
-        ImGui.NewLine();
+            if (i < statuses.Count - 1)
+                ImUtf8.SameLineInner();
+        }
     }
 }

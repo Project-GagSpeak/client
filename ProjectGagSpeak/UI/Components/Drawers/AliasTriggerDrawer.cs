@@ -320,8 +320,9 @@ public sealed class AliasTriggerDrawer
                 CkGui.ColorTextFrameAlignedInline("(", ImGuiColors.TankBlue, false);
                 ImUtf8.SameLineInner();
                 var statuses = MoodleCache.IpcData.StatusList.Where(x => preset.Statuses.Contains(x.GUID));
-                _moodles.DrawStatusInfos(statuses, MoodleDrawer.IconSizeFramed);
-                CkGui.ColorTextFrameAlignedInline(")", ImGuiColors.TankBlue);
+                _moodles.DrawStatusInfos(statuses.ToList(), MoodleDrawer.IconSizeFramed);
+                ImGui.SameLine();
+                CkGui.ColorTextFrameAligned(")", ImGuiColors.TankBlue);
             }
         }
         else if (MoodleCache.IpcData.Statuses.TryGetValue(act.MoodleItem.Id, out var status))
@@ -380,7 +381,8 @@ public sealed class AliasTriggerDrawer
         else if (action.MoodleItem is Moodle status)
         {
             ImUtf8.SameLineInner();
-            if (_statusCombo.Draw("##M_Status", status.Id, 100f, CFlags.NoArrowButton))
+            var width = ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FAI.Minus).X;
+            if (_statusCombo.Draw("##M_Status", status.Id, width, CFlags.NoArrowButton))
                 status.UpdateId(_statusCombo.Current.GUID);
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 action.MoodleItem = new Moodle();
@@ -388,7 +390,8 @@ public sealed class AliasTriggerDrawer
             // Verify a second time incase the item has changed.
             if (ipc.Statuses.TryGetValue(status.Id, out var match))
             {
-                ImUtf8.SameLineInner();
+                var offset = ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FAI.Minus).X - MoodleDrawer.IconSizeFramed.X - ImUtf8.ItemInnerSpacing.X;
+                ImGui.SameLine(offset);
                 _moodles.DrawStatusInfos([match], MoodleDrawer.IconSizeFramed);
             }
         }

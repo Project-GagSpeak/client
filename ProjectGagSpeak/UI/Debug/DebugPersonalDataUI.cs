@@ -535,7 +535,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
                 ImGui.Text(preset.Title);
                 ImGui.TableNextColumn();
                 var statuses = preset.Statuses.Select(s => data.Statuses.GetValueOrDefault(s)).Where(x => x.GUID != Guid.Empty);
-                _moodleDrawer.DrawStatusInfos(statuses, MoodleDrawer.IconSizeFramed);
+                _moodleDrawer.DrawStatusInfos(statuses.ToList(), MoodleDrawer.IconSizeFramed);
             }
 
         }

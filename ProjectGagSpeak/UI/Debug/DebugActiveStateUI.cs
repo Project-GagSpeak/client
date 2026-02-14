@@ -131,7 +131,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
 
         ImUtf8.TextFrameAligned($"Active Moodles: {MoodleCache.IpcData.DataInfo.Count()}");
         ImGui.SameLine();
-        _moodleDrawer.DrawStatusInfos(MoodleCache.IpcData.DataInfoList, MoodleDrawer.IconSizeFramed);
+        _moodleDrawer.DrawStatusInfos(MoodleCache.IpcData.DataInfoList.ToList(), MoodleDrawer.IconSizeFramed);
 
         ImGui.Text($"Total Moodles: {MoodleCache.IpcData.StatusList.Count()}");
         ImGui.Text($"Total Presets: {MoodleCache.IpcData.PresetList.Count()}");

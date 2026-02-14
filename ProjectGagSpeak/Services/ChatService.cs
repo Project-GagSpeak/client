@@ -116,7 +116,10 @@ public class ChatService : DisposableMediatorSubscriberBase
 
         // Ensure it is a valid puppeteer channel
         if (!_config.Current.PuppeteerChannelsBitfield.IsActiveChannel((int)channel))
+        {
+            Logger.LogWarning($"The channel {channel} is not enabled for puppeteer triggers, skipping trigger checks for this message.");
             return;
+        }
 
         // Run this off the thread to avoid blocking
         _triggerHandler.CheckChatForTrigger(senderName, senderWorld, msg);

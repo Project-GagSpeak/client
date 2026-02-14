@@ -2,8 +2,10 @@ using CkCommons.Helpers;
 using Dalamud.Game.Text.SeStringHandling;
 using GagSpeak.Interop;
 using GagSpeak.Kinksters;
+using GagSpeak.MufflerCore;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Handlers;
+using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
@@ -31,6 +33,7 @@ public class TriggerActionService
     private readonly RestraintManager _restraints;
     private readonly BuzzToyManager _toys;
     private readonly MoodleHandler _moodles;
+    private readonly VisualStateListener _visualListener;
     private readonly DistributorService _distributer;
 
     // (This rate limiter is kind of busted at the moment, maybe find a better solution for this)
@@ -45,6 +48,7 @@ public class TriggerActionService
         RestraintManager restraints,
         BuzzToyManager toys,
         MoodleHandler moodles,
+        VisualStateListener visualLister,
         DistributorService distributer)
     {
         _logger = logger;
@@ -55,6 +59,7 @@ public class TriggerActionService
         _restraints = restraints;
         _toys = toys;
         _moodles = moodles;
+        _visualListener = visualLister;
         _distributer = distributer;
     }
 
@@ -104,6 +109,7 @@ public class TriggerActionService
 
     private bool CanExecuteAction(InvokableGsAction invokableAction)
     {
+        // May not even need this if we can just add a delayer to accumulate calls.
         switch (invokableAction)
         {
             case GagAction         _: return _rateLimiter.CanExecute(InvokableActionType.Gag);
@@ -116,7 +122,6 @@ public class TriggerActionService
 
     private bool DoTextAction(TextAction act, ActionSource source, string? enactor = null)
     {
-
         // construct the new SeString to send.
         var remainingMessage = new SeString().Append(act.OutputCommand);
         remainingMessage = remainingMessage.ConvertSquareToAngleBrackets();
@@ -160,145 +165,134 @@ public class TriggerActionService
 
     private async Task<bool> DoGagAction(GagAction act, string? enactor = null)
     {
-        if(_gags.ServerGagData is not { } gagData)
+        if (_gags.ServerGagData is not { } gagData)
             return false;
 
         var layerIdx = -1;
-        var gagSlot = new ActiveGagSlot();
-        DataUpdateType updateType;
-
-        switch (act.NewState)
+        if (act.NewState is NewState.Enabled)
         {
-            case NewState.Enabled:
-                layerIdx = gagData.FindFirstUnused();
-                if (layerIdx == -1)
-                    return false;
-
-                _logger.LogInformation($"Applying [{act.GagType}] to layer {layerIdx}", LoggerType.Triggers | LoggerType.Gags);
-                gagSlot.GagItem = act.GagType;
-                gagSlot.Enabler = enactor ?? MainHub.UID;
-                updateType = DataUpdateType.Applied;
-                break;
-
-            case NewState.Locked:
-                if (act.Padlock is Padlocks.None)
-                    return false;
-
-                // If we have defined a layer idx, look for a gag on that index and return false if none are present or it is locked.
-                if (act.LayerIdx != -1)
-                {
-                    if (gagData.GagSlots[act.LayerIdx].IsLocked() || gagData.GagSlots[act.LayerIdx].GagItem is GagType.None)
-                        return false;
-                }
-
-                // If we have selected a specific gag to lock, look for it, and if none are found, return false.
-                if (act.GagType is not GagType.None && gagData.FindOutermostActive(act.GagType) is -1)
-                    return false;
-
-                // Otherwise, attempt to locate the first lockable gagslot.
-                layerIdx = gagData.FindFirstUnlocked();
-                if (layerIdx == -1)
-                    return false;
-
-                // We have found one to lock. Check what lock we chose, and define accordingly.
-                var password = act.Padlock switch
-                {
-                    Padlocks.Password => Generators.GetRandomCharaString(10),
-                    Padlocks.Combination => Generators.GetRandomIntString(4),
-                    Padlocks.TimerPassword => Generators.GetRandomCharaString(10),
-                    _ => string.Empty
-                };
-                // define a random time between 2 timespan bounds.
-                var timer = act.Padlock.IsTimerLock() ? Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound) : TimeSpan.Zero;
-                _logger.LogInformation($"Locking [{act.GagType}] with [{act.Padlock}] on layer {layerIdx}", LoggerType.Triggers);
-                gagSlot.Padlock = act.Padlock;
-                gagSlot.Password = password;
-                gagSlot.Timer = new DateTimeOffset(DateTime.UtcNow + timer);
-                gagSlot.PadlockAssigner = enactor ?? MainHub.UID;
-                updateType = DataUpdateType.Locked;
-                break;
-
-            case NewState.Disabled:
-                layerIdx = act.GagType is GagType.None ? gagData.FindOutermostActive() : gagData.FindOutermostActive(act.GagType);
-                if (layerIdx == -1)
-                    return false;
-
-                _logger.LogDebug($"Removing [{act.GagType}] from layer {layerIdx}", LoggerType.Triggers);
-                updateType = DataUpdateType.Removed;
-                break;
-
-            default:
+            layerIdx = gagData.FindFirstUnused();
+            if (layerIdx == -1)
                 return false;
+
+            _logger.LogInformation($"Applying [{act.GagType}] to layer {layerIdx}", LoggerType.Triggers | LoggerType.Gags);
+            var gagSlot = gagData.GagSlots[layerIdx] with
+            {
+                GagItem = act.GagType,
+                Enabler = enactor ?? MainHub.UID
+            };
+            return await SelfBondageHelper.GagUpdateRetTask(layerIdx, gagSlot, DataUpdateType.Applied, _distributer, _visualListener).ConfigureAwait(false);
+        }
+        else if (act.NewState is NewState.Locked)
+        {
+            if (act.Padlock is Padlocks.None)
+                return false;
+
+            // If we have defined a layer idx, look for a gag on that index and return false if none are present or it is locked.
+            if (act.LayerIdx != -1)
+            {
+                if (gagData.GagSlots[act.LayerIdx].IsLocked() || gagData.GagSlots[act.LayerIdx].GagItem is GagType.None)
+                    return false;
+            }
+
+            // If we have selected a specific gag to lock, look for it, and if none are found, return false.
+            if (act.GagType is not GagType.None && gagData.FindOutermostActive(act.GagType) is -1)
+                return false;
+
+            // Otherwise, attempt to locate the first lockable gagslot.
+            layerIdx = gagData.FindFirstUnlocked();
+            if (layerIdx == -1)
+                return false;
+
+            // We have found one to lock. Check what lock we chose, and define accordingly.
+            var password = act.Padlock switch
+            {
+                Padlocks.Password => Generators.GetRandomCharaString(10),
+                Padlocks.Combination => Generators.GetRandomIntString(4),
+                Padlocks.TimerPassword => Generators.GetRandomCharaString(10),
+                _ => string.Empty
+            };
+
+            // define a random time between 2 timespan bounds.
+            var timer = act.Padlock.IsTimerLock() ? Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound) : TimeSpan.Zero;
+            _logger.LogInformation($"Locking [{act.GagType}] with [{act.Padlock}] on layer {layerIdx}", LoggerType.Triggers);
+            var gagSlot = gagData.GagSlots[layerIdx] with
+            {
+                Padlock = act.Padlock,
+                Password = password,
+                Timer = new DateTimeOffset(DateTime.UtcNow + timer),
+                PadlockAssigner = enactor ?? MainHub.UID
+            };
+            return await SelfBondageHelper.GagUpdateRetTask(layerIdx, gagSlot, DataUpdateType.Locked, _distributer, _visualListener).ConfigureAwait(false);
+        }
+        else if (act.NewState is NewState.Disabled)
+        {
+            layerIdx = act.GagType is GagType.None ? gagData.FindOutermostActive() : gagData.FindOutermostActive(act.GagType);
+            if (layerIdx == -1)
+                return false;
+
+            _logger.LogDebug($"Removing [{act.GagType}] from layer {layerIdx}", LoggerType.Triggers);
+            return await SelfBondageHelper.GagUpdateRetTask(layerIdx, new ActiveGagSlot(), DataUpdateType.Removed, _distributer, _visualListener);
         }
 
-        // Call the new distribution method
-        return await _distributer.PushNewActiveGagSlot(layerIdx, gagSlot, updateType).ConfigureAwait(false) is not null;
+        return false;
     }
-
     private async Task<bool> DoRestrictionAction(RestrictionAction act, string? enactor = null)
     {
         if (_restrictions.ServerRestrictionData is not { } restrictions)
             return false;
 
         var layerIdx = -1;
-        var restriction = new ActiveRestriction();
-        DataUpdateType updateType;
-
-        switch (act.NewState)
+        if (act.NewState is NewState.Enabled)
         {
-            case NewState.Enabled:
-                // grab the right restriction first.
-                layerIdx = act.LayerIdx == -1
-                    ? restrictions.Restrictions.IndexOf(x => x.Identifier == Guid.Empty)
-                    : act.LayerIdx;
+            // grab the right restriction first.
+            layerIdx = act.LayerIdx == -1 ? restrictions.Restrictions.IndexOf(x => x.Identifier == Guid.Empty) : act.LayerIdx;
 
-                if (layerIdx == -1 || restrictions.Restrictions[layerIdx].IsLocked() || !restrictions.Restrictions[layerIdx].CanApply())
-                    return false;
+            if (layerIdx == -1 || restrictions.Restrictions[layerIdx].IsLocked() || !restrictions.Restrictions[layerIdx].CanApply())
+                return false;
+            _logger.LogInformation($"Applying restriction [{act.RestrictionId}] to layer {layerIdx}", LoggerType.Triggers);
+            var itemSlot = restrictions.Restrictions[layerIdx] with
+            {
+                Identifier = act.RestrictionId,
+                Enabler = enactor ?? MainHub.UID
+            };
+            return await SelfBondageHelper.RestrictionUpdateRetTask(layerIdx, itemSlot, DataUpdateType.Applied, _distributer, _visualListener).ConfigureAwait(false);
+        }
+        else if (act.NewState is NewState.Locked)
+        {
+            layerIdx = act.LayerIdx == -1 ? restrictions.Restrictions.IndexOf(x => x.Identifier != Guid.Empty && x.CanLock()) : act.LayerIdx;
 
-                _logger.LogInformation($"Applying restriction [{act.RestrictionId}] to layer {layerIdx}", LoggerType.Triggers);
-                restriction.Identifier = act.RestrictionId;
-                restriction.Enabler = enactor ?? MainHub.UID;
-                updateType = DataUpdateType.Applied;
-                break;
+            if (layerIdx == -1 || !restrictions.Restrictions[layerIdx].CanLock() || act.Padlock is Padlocks.None)
+                return false;
 
-            case NewState.Locked:
-                layerIdx = act.LayerIdx == -1
-                    ? restrictions.Restrictions.IndexOf(x => x.Identifier != Guid.Empty && x.CanLock())
-                    : act.LayerIdx;
-
-                if (layerIdx == -1 || !restrictions.Restrictions[layerIdx].CanLock() || act.Padlock is Padlocks.None)
-                    return false;
-
-                _logger.LogInformation($"Locking restriction [{act.RestrictionId}] with [{act.Padlock}] on layer {layerIdx}", LoggerType.Triggers);
-                restriction.Padlock = act.Padlock;
-                restriction.Password = act.Padlock switch
+            _logger.LogInformation($"Locking restriction [{act.RestrictionId}] with [{act.Padlock}] on layer {layerIdx}", LoggerType.Triggers);
+            var itemSlot = restrictions.Restrictions[layerIdx] with
+            {
+                Padlock = act.Padlock,
+                Password = act.Padlock switch
                 {
                     Padlocks.Password => Generators.GetRandomCharaString(10),
                     Padlocks.Combination => Generators.GetRandomIntString(4),
                     Padlocks.TimerPassword => Generators.GetRandomCharaString(10),
                     _ => string.Empty
-                };
-                restriction.Timer = new DateTimeOffset(DateTime.UtcNow + (act.Padlock.IsTimerLock() ? Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound) : TimeSpan.Zero));
-                restriction.PadlockAssigner = enactor ?? MainHub.UID;
-                updateType = DataUpdateType.Locked;
-                break;
-
-            case NewState.Disabled:
-                layerIdx = act.RestrictionId != Guid.Empty
-                    ? restrictions.FindOutermostActiveUnlocked()
-                    : restrictions.Restrictions.IndexOf(x => x.Identifier == act.RestrictionId);
-
-                if (layerIdx == -1 || !restrictions.Restrictions[layerIdx].CanRemove())
-                    return false;
-
-                _logger.LogDebug($"Removing restriction [{act.RestrictionId}] from layer {layerIdx}", LoggerType.Triggers);
-                updateType = DataUpdateType.Removed;
-                break;
-
-            default:
-                return false;
+                },
+                Timer = new DateTimeOffset(DateTime.UtcNow + (act.Padlock.IsTimerLock() ? Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound) : TimeSpan.Zero)),
+                PadlockAssigner = enactor ?? MainHub.UID
+            };
+            return await SelfBondageHelper.RestrictionUpdateRetTask(layerIdx, itemSlot, DataUpdateType.Locked, _distributer, _visualListener).ConfigureAwait(false);
         }
-        return await _distributer.PushNewActiveRestriction(layerIdx, restriction, updateType) is not null;
+        else if (act.NewState is NewState.Disabled)
+        {
+            layerIdx = act.RestrictionId != Guid.Empty ? restrictions.FindOutermostActiveUnlocked() : restrictions.Restrictions.IndexOf(x => x.Identifier == act.RestrictionId);
+
+            if (layerIdx == -1 || !restrictions.Restrictions[layerIdx].CanRemove())
+                return false;
+
+            _logger.LogDebug($"Removing restriction [{act.RestrictionId}] from layer {layerIdx}", LoggerType.Triggers);
+            return await SelfBondageHelper.RestrictionUpdateRetTask(layerIdx, new ActiveRestriction(), DataUpdateType.Removed, _distributer, _visualListener).ConfigureAwait(false);
+        }
+
+        return false;
     }
 
     private async Task<bool> DoRestraintAction(RestraintAction act, string? enactor = null)
@@ -306,51 +300,48 @@ public class TriggerActionService
         if(_restraints.ServerData is not { } restraint)
             return false;
 
-        CharaActiveRestraint restraintData = new() { Identifier = act.RestrictionId };
-        DataUpdateType updateType;
-
-        switch (act.NewState)
+        if (act.NewState is NewState.Enabled)
         {
-            case NewState.Enabled:
-                if (!restraint.CanApply() || !_restraints.Storage.Contains(act.RestrictionId))
-                    return false;
+            if (!restraint.CanApply() || !_restraints.Storage.Contains(act.RestrictionId))
+                return false;
 
-                _logger.LogDebug($"Applying restraint [{act.RestrictionId}]", LoggerType.Triggers);
-                restraintData.Enabler = enactor ?? MainHub.UID;
-                updateType = DataUpdateType.Applied;
-                break;
-
-            case NewState.Locked:
-                if (!restraint.CanLock() || act.Padlock is Padlocks.None)
-                    return false;
-
-                _logger.LogDebug($"Locking restraint [{act.RestrictionId}] with [{act.Padlock}]", LoggerType.Triggers);
-                restraintData.Padlock = act.Padlock;
-                restraintData.Password = act.Padlock switch
+            _logger.LogDebug($"Applying restraint [{act.RestrictionId}]", LoggerType.Triggers);
+            var setData = restraint with
+            {
+                Identifier = act.RestrictionId,
+                Enabler = enactor ?? MainHub.UID
+            };
+            return await SelfBondageHelper.RestraintUpdateRetTask(setData, DataUpdateType.Applied, _distributer, _visualListener).ConfigureAwait(false);
+        }
+        else if (act.NewState is NewState.Locked)
+        {
+            if (!restraint.CanLock() || act.Padlock is Padlocks.None)
+                return false;
+            _logger.LogDebug($"Locking restraint [{act.RestrictionId}] with [{act.Padlock}]", LoggerType.Triggers);
+            var setData = restraint with
+            {
+                Padlock = act.Padlock,
+                Password = act.Padlock switch
                 {
                     Padlocks.Password => Generators.GetRandomCharaString(10),
                     Padlocks.Combination => Generators.GetRandomIntString(4),
                     Padlocks.TimerPassword => Generators.GetRandomCharaString(10),
                     _ => string.Empty
-                };
-                restraintData.Timer = new DateTimeOffset(DateTime.UtcNow + (act.Padlock.IsTimerLock() ? Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound) : TimeSpan.Zero));
-                restraintData.PadlockAssigner = enactor ?? MainHub.UID;
-                updateType = DataUpdateType.Locked;
-                break;
-
-            case NewState.Disabled:
-                if (!restraint.CanRemove() || !_restraints.Storage.Contains(act.RestrictionId))
-                    return false;
-
-                _logger.LogDebug($"Removing restraint [{act.RestrictionId}]", LoggerType.Triggers);
-                updateType = DataUpdateType.Removed;
-                break;
-
-            default:
+                },
+                Timer = new DateTimeOffset(DateTime.UtcNow + (act.Padlock.IsTimerLock() ? Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound) : TimeSpan.Zero)),
+                PadlockAssigner = enactor ?? MainHub.UID
+            };
+            return await SelfBondageHelper.RestraintUpdateRetTask(setData, DataUpdateType.Locked, _distributer, _visualListener).ConfigureAwait(false);
+        }
+        else if (act.NewState is NewState.Disabled)
+        {
+            if (!restraint.CanRemove() || !_restraints.Storage.Contains(act.RestrictionId))
                 return false;
+            _logger.LogDebug($"Removing restraint [{act.RestrictionId}]", LoggerType.Triggers);
+            return await SelfBondageHelper.RestraintUpdateRetTask(new CharaActiveRestraint(), DataUpdateType.Removed, _distributer, _visualListener).ConfigureAwait(false);
         }
 
-        return await _distributer.PushNewActiveRestraint(restraintData, updateType) is not null;
+        return false;
     }
 
     private async Task<bool> DoMoodleAction(MoodleAction act, string? enactor = null)

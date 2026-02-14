@@ -302,7 +302,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
             using var indent = ImRaii.PushIndent();
 
             ImGui.SetNextItemWidth(200 * ImGuiHelpers.GlobalScale);
-            if (ImGui.InputText(GSLoc.Settings.MainOptions.GlobalTriggerPhrase, ref globalTriggerPhrase, 100, ImGuiInputTextFlags.EnterReturnsTrue))
+            ImGui.InputTextWithHint(GSLoc.Settings.MainOptions.GlobalTriggerPhrase, "Global Triggers...", ref globalTriggerPhrase, 150);
+            if (ImGui.IsItemDeactivatedAfterEdit())
                 AssignGlobalPermChangeTask(nameof(GlobalPerms.TriggerPhrase), globalTriggerPhrase);
             CkGui.HelpText(GSLoc.Settings.MainOptions.GlobalTriggerPhraseTT);
 
