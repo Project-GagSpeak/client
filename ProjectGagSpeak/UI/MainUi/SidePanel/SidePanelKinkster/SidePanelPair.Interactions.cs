@@ -353,7 +353,8 @@ public partial class SidePanelPair
     #region Moodles
     private void DrawMoodlesActions(KinksterInfoCache cache, Kinkster k, float width, string dispName)
     {
-        // ImGui.TextUnformatted("Moodles Actions");
+        ImGui.TextUnformatted("Moodles Actions");
+        ImGui.TextUnformatted("NOT YET IMPLEMENTED");
         // if (!k.IsRendered)
         //     CkGui.ColorTextInline("( Not Visible! )", ImGuiColors.DalamudRed);
 
