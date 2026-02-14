@@ -1,3 +1,6 @@
+using Dalamud.Game.Addon.Lifecycle;
+using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
+using Dalamud.Plugin.Services;
 using GagSpeak.GameInternals.Addons;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
@@ -16,14 +19,41 @@ public sealed class ChatboxController : DisposableMediatorSubscriberBase
     private bool _hideChatBoxes = false;
     private bool _hideChatInput = false;
 
-    public ChatboxController(ILogger<KeystateController> logger, GagspeakMediator mediator,
+    public ChatboxController(ILogger<ChatboxController> logger, GagspeakMediator mediator,
         PlayerControlCache cache) : base(logger, mediator)
     {
         _cache = cache;
+
         Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreStatus());
-        Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
+        //Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
+        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostShow, "ChatLog", ChatLogPostShow);
+        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostFocusChanged, "ChatLog", ChatLogFocusChanged);
     }
 
+    protected override void Dispose(bool disposing) {
+        if (!disposing) return;
+        Svc.AddonLifecycle.UnregisterListener(ChatLogPostShow);
+        Svc.AddonLifecycle.UnregisterListener(ChatLogFocusChanged);
+        base.Dispose(disposing);
+    }
+
+    private void ChatLogPostShow(AddonEvent type, AddonArgs args)
+    {
+        Logger.LogTrace("ChatLog Visibility changed. Checking if helplessness needs reinforcing.", LoggerType.HardcoreActions);
+        if (_hideChatInput)
+            Svc.Framework.RunOnTick(() => AddonChatLog.SetChatInputVisibility(!_hideChatInput), delayTicks:1);
+
+        if (_hideChatBoxes)
+            Svc.Framework.RunOnTick(() => AddonChatLog.SetChatPanelVisibility(!_hideChatBoxes), delayTicks:1);
+    }
+
+    private void ChatLogFocusChanged(AddonEvent type, AddonArgs args)
+    {
+        if (_blockInput) 
+            AddonChatLog.EnsureNoChatInputFocus();
+    }
+
+    /* this shouldn't be necessary any more, let's test.
     private unsafe void FrameworkUpdate()
     {
         // assuming that this causes issues when ran outside framework 
@@ -34,7 +64,7 @@ public sealed class ChatboxController : DisposableMediatorSubscriberBase
             AddonChatLog.SetChatPanelVisibility(false);
         if (_hideChatInput)
             AddonChatLog.SetChatInputVisibility(false);
-    }
+    } */
 
     // Update our local value to reflect the latest state in the cache.
     public void UpdateHardcoreStatus()
