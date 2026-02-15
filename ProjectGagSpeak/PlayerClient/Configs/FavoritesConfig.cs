@@ -1,5 +1,6 @@
 using CkCommons.HybridSaver;
 using GagSpeak.Services.Configs;
+using GagSpeak.Services.Mediator;
 
 namespace GagSpeak.PlayerClient;
 
@@ -7,26 +8,30 @@ public enum FavoriteIdContainer
 {
     Restraint,
     Restriction,
+    Gag,
     Collar,
     CursedLoot,
     Alias,
     Pattern,
     Alarm,
     Trigger,
+    Kinkster,
 }
 
 public class FavoritesConfig : IHybridSavable
 {
     private readonly ILogger<FavoritesConfig> _logger;
+    private readonly GagspeakMediator _mediator;
     private readonly HybridSaveService _saver;
     public int ConfigVersion => 0;
     public HybridSaveType SaveType => HybridSaveType.StreamWrite;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     public string GetFileName(ConfigFileProvider ser, out bool upa) => (upa = false, ser.Favorites).Item2;
     public string JsonSerialize() => throw new NotImplementedException();
-    public FavoritesConfig(ILogger<FavoritesConfig> logger, HybridSaveService saver)
+    public FavoritesConfig(ILogger<FavoritesConfig> logger, GagspeakMediator mediator, HybridSaveService saver)
     {
         _logger = logger;
+        _mediator = mediator;
         _saver = saver;
         Load();
     }
@@ -105,27 +110,28 @@ public class FavoritesConfig : IHybridSavable
 
     public bool TryAddGag(GagType gag)
     {
-        if (Gags.Add(gag))
-        {
-            _saver.Save(this);
-            return true;
-        }
-        return false;
+        if (!Gags.Add(gag))
+            return false;
+
+        _mediator.Publish(new FavoritesChanged(FavoriteIdContainer.Gag));
+        _saver.Save(this);
+        return true;
     }
 
     public bool TryAddKinkster(string kinkster)
     {
-        if (Kinksters.Add(kinkster))
-        {
-            _saver.Save(this);
-            return true;
-        }
-        return false;
+        if (!Kinksters.Add(kinkster))
+            return false;
+
+        _mediator.Publish(new FavoritesChanged(FavoriteIdContainer.Kinkster));
+        _saver.Save(this);
+        return true;
     }
 
     public void AddKinksters(IEnumerable<string> kinksters)
     {
         Kinksters.UnionWith(kinksters);
+        _mediator.Publish(new FavoritesChanged(FavoriteIdContainer.Kinkster));
         _saver.Save(this);
     }
 
@@ -146,33 +152,38 @@ public class FavoritesConfig : IHybridSavable
             FavoriteIdContainer.Trigger => Triggers.Remove(restriction),
             _ => false
         };
-        if (res) _saver.Save(this);
+        if (res)
+        {
+            _mediator.Publish(new FavoritesChanged(type));
+            _saver.Save(this);
+        }
         return res;
     }
 
     public bool RemoveGag(GagType gag)
     {
-        if (Gags.Remove(gag))
-        {
-            _saver.Save(this);
-            return true;
-        }
-        return false;
+        if (!Gags.Remove(gag))
+            return false;
+
+        _mediator.Publish(new FavoritesChanged(FavoriteIdContainer.Gag));
+        _saver.Save(this);
+        return true;
     }
 
     public bool RemoveKinkster(string kinkster)
     {
-        if (Kinksters.Remove(kinkster))
-        {
-            _saver.Save(this);
-            return true;
-        }
-        return false;
+        if (!Kinksters.Remove(kinkster))
+            return false;
+
+        _mediator.Publish(new FavoritesChanged(FavoriteIdContainer.Kinkster));
+        _saver.Save(this);
+        return true;
     }
 
     public void RemoveKinksters(IEnumerable<string> kinksters)
     {
         Kinksters.ExceptWith(kinksters);
+        _mediator.Publish(new FavoritesChanged(FavoriteIdContainer.Kinkster));
         _saver.Save(this);
     }
 
