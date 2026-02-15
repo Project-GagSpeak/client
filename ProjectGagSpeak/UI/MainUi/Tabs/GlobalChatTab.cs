@@ -73,14 +73,12 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
         {
             _chat.DrawChat(ImGui.GetContentRegionAvail());
         }
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.UsingGlobalChat, ImGui.GetWindowPos(), ImGui.GetWindowSize());
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatMessageExamine, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.UsingGlobalChat, MainUI.LastPos, MainUI.LastSize);
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatMessageExamine, MainUI.LastPos, MainUI.LastSize,
             () => _tabmenu.TabSelection = MainMenuTabs.SelectedTab.Homepage);
 
         if (GlobalChatLog.NotVerified)
             CkGui.AttachToolTip("Cannot use chat, your account is not verified!");
-        // Attach tutorials.
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.GlobalChat, ImGui.GetWindowPos(), ImGui.GetWindowSize());
     }
 
     private void DrawChatUseBlockedWarning()

@@ -23,9 +23,10 @@ public enum StepsMainUi
 {
     InitialWelcome, // welcome message, warn user to follow tutorial for basic overview, and how to access them at any time (the ? buttons)
     ConnectionState, // Connection Button
-    Whitelist, // Overview whitelist.
     AddingKinksters, // How to Add Pairs, Select dropdown button.
     AttachingMessages, // optional message attachment to requests, close menu on next, and move to account page.
+    RequestsPage, // Show the requests page, explain how to accept/reject requests.
+    Whitelist, // Overview whitelist.
     Homepage, // overview of account page.
     ClientUID, // indicate the client's UID, and how this is what others give you to pair.
     Safewords, // Importance of safeword.

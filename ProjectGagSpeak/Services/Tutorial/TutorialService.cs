@@ -94,7 +94,7 @@ public class TutorialService
         .AddStep(mainUiStr.Step4Title, mainUiStr.Step4Desc, mainUiStr.Step4DescExtended)
         .AddStep(mainUiStr.Step5Title, mainUiStr.Step5Desc, mainUiStr.Step5DescExtended)
         .AddStep(mainUiStr.Step6Title, mainUiStr.Step6Desc, mainUiStr.Step6DescExtended)
-        // Fix later - adjust steps in lang.
+        .AddStep(mainUiStr.Step7Title, mainUiStr.Step7Desc, mainUiStr.Step7DescExtended)
         .AddStep(mainUiStr.Step8Title, mainUiStr.Step8Desc, mainUiStr.Step8DescExtended)
         .AddStep(mainUiStr.Step9Title, mainUiStr.Step9Desc, mainUiStr.Step9DescExtended)
         .AddStep(mainUiStr.Step10Title, mainUiStr.Step10Desc, mainUiStr.Step10DescExtended)

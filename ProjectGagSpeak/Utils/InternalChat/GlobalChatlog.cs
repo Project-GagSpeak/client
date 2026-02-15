@@ -22,6 +22,7 @@ using GagspeakAPI.Extensions;
 using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 using System.Globalization;
+using GagSpeak.Gui.MainWindow;
 
 namespace GagSpeak.Utils;
 
@@ -228,14 +229,14 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
                 _showEmotes = !_showEmotes;
         }
         CkGui.AttachToolTip($"Toggles Quick-Emote selection.");
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatEmotes, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatEmotes, MainUI.LastSize, MainUI.LastSize);
 
         // Toggle AutoScroll functionality
         ImUtf8.SameLineInner();
         if (CkGui.IconButton(scrollIcon))
             DoAutoScroll = !DoAutoScroll;
         CkGui.AttachToolTip($"Toggles AutoScroll (Current: {(DoAutoScroll ? "Enabled" : "Disabled")})");
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatScroll, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatScroll, MainUI.LastSize, MainUI.LastSize);
 
         // draw the popout button
         ImUtf8.SameLineInner();

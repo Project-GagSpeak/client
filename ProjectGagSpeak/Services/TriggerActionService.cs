@@ -2,7 +2,6 @@ using CkCommons.Helpers;
 using Dalamud.Game.Text.SeStringHandling;
 using GagSpeak.Interop;
 using GagSpeak.Kinksters;
-using GagSpeak.MufflerCore;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Handlers;
 using GagSpeak.State.Listeners;
@@ -12,7 +11,6 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using OtterGui.Extensions;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Services;
 
@@ -134,26 +132,13 @@ public class TriggerActionService
 
         // apply bracket conversions.
         remainingMessage = remainingMessage.ConvertSquareToAngleBrackets();
-        
-        // Handle final checks based on the source type.
-        switch (source)
+
+        // triggers shouldn't be able to run this code, but check just in case.
+        // we already check for permission earlier.
+        if (source == ActionSource.TriggerAction)
         {
-            case ActionSource.GlobalAlias:
-                if(ClientData.Globals is not { } globals || !globals.PuppetPerms.HasAny(PuppetPerms.Alias))
-                    return false;
-
-                break;
-            case ActionSource.PairAlias:
-                if (_pairs.DirectPairs.FirstOrDefault(x => x.UserData.UID == enactor) is not { } match)
-                    return false;
-                // If it was a match, return false if you have not given the pair alias permissions.
-                if(!match.OwnPerms.PuppetPerms.HasAny(PuppetPerms.Alias))
-                    return false;
-
-                break;
-            default:
-                _logger.LogWarning("Unknown or disallowed type for Text Action.");
-                return false;
+            _logger.LogWarning("Invalid source type for Text Action", LoggerType.Puppeteer);
+            return false;
         }
 
         _logger.LogInformation("Text Action is being executed.", LoggerType.Puppeteer);

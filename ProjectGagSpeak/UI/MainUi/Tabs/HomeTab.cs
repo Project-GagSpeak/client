@@ -59,10 +59,6 @@ public class HomeTab
     private Vector2 EditIconPos => RectMin + ImGuiHelpers.ScaledVector2(165f, 11f);
     private Vector2 EditIconSize => ImGuiHelpers.ScaledVector2(27f);
 
-    // For tutorials.
-    private static Vector2 LastWinPos = Vector2.Zero;
-    private static Vector2 LastWinSize = Vector2.Zero;
-
     public void DrawSection()
     {
         var wdl = ImGui.GetWindowDrawList();
@@ -91,8 +87,8 @@ public class HomeTab
         var wdl = ImGui.GetWindowDrawList();
         using (CkRaii.Child("##AccountInfo", new Vector2(left, ProfileSize.Y)))
         {
-            ProfileDisplayName();
-            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ClientUID, LastWinPos, LastWinSize);
+            ProfileDisplayName(); 
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ClientUID, MainUI.LastPos, MainUI.LastSize);
             // Line Splitter.
             var pos = ImGui.GetCursorScreenPos();
             var lineSize = new Vector2(region.X - ProfileSize.X - ImUtf8.ItemSpacing.X, 5 * ImGuiHelpers.GlobalScale);
@@ -111,7 +107,7 @@ public class HomeTab
                 "--SEP--Accumulating too many strikes may lead to restrictions or bans.");
 
             DrawSafewordRow(left);
-            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Safewords, LastWinPos, LastWinSize);
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Safewords, MainUI.LastPos, MainUI.LastSize);
         }
 
         // Then the profile image.
@@ -133,8 +129,8 @@ public class HomeTab
                 _mediator.Publish(new UiToggleMessage(typeof(KinkPlateEditorUI)));
             CkGui.AttachToolTip("Open and Customize your KinkPlate™!");
 
-            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileEditing, LastWinPos, LastWinSize,
-                () => _mediator.Publish(new UiToggleMessage(typeof(KinkPlateEditorUI))));
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileEditing, MainUI.LastPos, MainUI.LastSize,
+                () => _mediator.Publish(new UiToggleMessage(typeof(KinkPlateEditorUI), ToggleType.Show)));
 
             var bgCol = ImGui.IsItemHovered() ? 0xFF444444 : 0xFF000000;
             wdl.AddCircleFilled(EditBorderPos + EditBorderSize / 2, EditBorderSize.X / 2, bgCol);
@@ -188,6 +184,8 @@ public class HomeTab
             }
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 _editingSafeword = false;
+            font.Dispose();
+            CkGui.AttachToolTip("Enter to save, right-click to cancel.");
         }
         else
         {
@@ -196,11 +194,12 @@ public class HomeTab
                 CkGui.ColorTextFrameAlignedInline("Click to set Safeword..", ImGuiColors.DalamudGrey2, false);
             else
                 CkGui.ColorTextFrameAlignedInline(_config.Current.Safeword, CkCol.TriStateCross.Uint(), false);
+            font.Dispose(); // will affect tt and tutorial if not.
             CkGui.AttachToolTip("Your current safeword. Click to edit!");
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SettingSafeword, MainUI.LastPos, MainUI.LastSize);
 
             if (ImGui.IsItemClicked())
                 _editingSafeword = !_editingSafeword;
-            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SettingSafeword, LastWinPos, LastWinSize);
         }
     }
 
@@ -350,7 +349,7 @@ public class HomeTab
         CkGui.AttachToolTip("This plugin took a massive toll on my life as a mostly solo dev." +
             "--NL--As happy as I am to make this free for all of you to enjoy, any support is much appreciated ♥" +
             "--NL--Will open --COL--ko-fi.com--COL-- in a new browser window.", ImGuiColors.ParsedPink);
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SelfPlug, LastWinPos, LastWinSize);
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SelfPlug, MainUI.LastPos, MainUI.LastSize);
     }
 
     private void PatreonButton(float buttonWidth)

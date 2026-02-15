@@ -51,7 +51,7 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
         {
             DrawSearchFilter();
         }
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.MoodleSearch, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.MoodleSearch, MainUI.LastPos, MainUI.LastSize);
 
         ImGui.Separator();
 
@@ -65,7 +65,7 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
 
         using (ImRaii.Child("ResultListGuard", ImGui.GetContentRegionAvail(), false, WFlags.NoScrollbar))
             DrawResultList();
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.MoodleResults, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.MoodleResults, MainUI.LastPos, MainUI.LastSize,
             () => _tabMenu.TabSelection = MainMenuTabs.SelectedTab.GlobalChat);
     }
 

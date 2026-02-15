@@ -6,6 +6,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Gui.MainWindow;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
@@ -47,22 +48,22 @@ public class MainMenuTabs : IconTabBar<MainMenuTabs.SelectedTab>
         _requests = requests;
 
         AddDrawButton(FontAwesomeIcon.Home, SelectedTab.Homepage, "Homepage",
-            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Homepage, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => TabSelection = SelectedTab.Requests));
+            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Homepage, MainUI.LastPos, MainUI.LastSize));
 
         AddDrawButton(FontAwesomeIcon.Inbox, SelectedTab.Requests, "Kinkster Requests",
-            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Homepage, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => TabSelection = SelectedTab.Whitelist));
+            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.RequestsPage, MainUI.LastPos, MainUI.LastSize, () => TabSelection = SelectedTab.Whitelist));
 
         AddDrawButton(FontAwesomeIcon.PeopleArrows, SelectedTab.Whitelist, "Kinkster Whitelist", 
-            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Whitelist, ImGui.GetWindowPos(), ImGui.GetWindowSize()));
+            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Whitelist, MainUI.LastPos, MainUI.LastSize, () => TabSelection = SelectedTab.Homepage));
 
         AddDrawButton(FontAwesomeIcon.Compass, SelectedTab.PatternHub, "Discover Patterns from the community!", 
-            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHub, ImGui.GetWindowPos(), ImGui.GetWindowSize()));
+            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHub, MainUI.LastPos, MainUI.LastSize));
 
         AddDrawButton(FontAwesomeIcon.WandMagicSparkles, SelectedTab.MoodlesHub, "Browse Moodles made by others in the community!",
-            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.MoodleHub, ImGui.GetWindowPos(), ImGui.GetWindowSize()));
+            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.MoodleHub, MainUI.LastPos, MainUI.LastSize));
 
         AddDrawButton(FontAwesomeIcon.Comments, SelectedTab.GlobalChat, "Meet & Chat with others in a cross-region chat!",
-            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.GlobalChat, ImGui.GetWindowPos(), ImGui.GetWindowSize()));
+            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.GlobalChat, MainUI.LastPos, MainUI.LastSize));
 
         TabSelectionChanged += (oldTab, newTab) => _mediator.Publish(new MainWindowTabChangeMessage(newTab));
     }
