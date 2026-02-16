@@ -1,11 +1,11 @@
+using System.Net;
+using System.Text.Json;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data.Struct;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
-using System.Net;
-using System.Text.Json;
 using SysJsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace GagSpeak.WebAPI;
@@ -166,6 +166,19 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
         var interactionType = dto.OpCode switch { 0 => "shocked", 1 => "vibrated", 2 => "beeped", _ => "unknown" };
         var eventLogMessage = $"Pishock {interactionType}, intensity: {dto.Intensity}, duration: {dto.Duration}";
         Logger.LogDebug($"Received Instruction for {eventLogMessage}", LoggerType.Callbacks);
+
+        // Handle quirk in pishock API where it accepts durations in seconds up to 15, but anything above 15 is treated as milliseconds.
+        // Our slider only accepts 0.1 second increments, so we will enforce a minimum of 100 milliseconds to avoid the aforementioned issue.
+        if (dto.Duration < 100)
+        {
+            dto = dto with { Duration = 100 };
+        }
+
+        if (dto.Duration > enactor.OwnPerms.MaxDuration || dto.Intensity > enactor.OwnPerms.MaxIntensity)
+        {
+            Logger.LogWarning("Received instruction that exceeds the max duration or intensity for this user. Ignoring.");
+            return;
+        }
 
         if (!enactor.OwnPerms.PiShockShareCode.IsNullOrEmpty())
         {
