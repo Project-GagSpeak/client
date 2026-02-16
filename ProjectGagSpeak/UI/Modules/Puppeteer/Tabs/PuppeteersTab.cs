@@ -41,9 +41,9 @@ public class PuppeteersTab : IFancyTab
         _guides = guides;
     }
 
-    public string   Label       => "Puppeteers";
-    public string   Tooltip     => "Manage how others can puppeteer you, distinct for each person.";
-    public bool     Disabled    => false;
+    public string Label => "Puppeteers";
+    public string Tooltip => "Manage how others can puppeteer you, distinct for each person.";
+    public bool Disabled => false;
 
     // should be very similar to drawing out the list of items, except this will have a unique flavor to it.
     public void DrawContents(float width)
@@ -52,12 +52,16 @@ public class PuppeteersTab : IFancyTab
 
         var leftW = width * 0.45f;
         var rounding = FancyTabBar.BarHeight * .4f;
-        DrawPuppeteers(leftW, rounding);
+        using (ImRaii.Group())
+            DrawPuppeteers(leftW, rounding);
+        _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.PuppeteersPairs, PuppeteerUI.LastPos, PuppeteerUI.LastSize,
+            () => { /*select first kinkster in the list if we can, some tutorial stuff won't work otherwise?*/ });
 
         ImUtf8.SameLineInner();
         using (ImRaii.Group())
         {
             DrawSelectedPuppeteer(CkStyle.GetFrameRowsHeight(9).AddWinPadY(), rounding);
+            _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.PuppeteersPairSettings, PuppeteerUI.LastPos, PuppeteerUI.LastSize);
             DrawMarionetteStats(rounding);
         }
     }
@@ -80,50 +84,61 @@ public class PuppeteersTab : IFancyTab
             return;
         }
 
-        CkGui.IconTextAligned(FAI.User);
-        if (_manager.Puppeteers.TryGetValue(kinkster.UserData.UID, out var puppeteerData))
+        using (ImRaii.Group())
         {
-            CkGui.TextFrameAlignedInline("Puppeteered by:");
-            CkGui.ColorTextFrameAlignedInline(puppeteerData.NameWithWorld, CkCol.TriStateCheck.Vec4());
-            CkGui.AttachToolTip($"{kinkster.GetDisplayName()} is associated with this PlayerName." +
-                $"--SEP--They can not puppeteer you within the boundaries you set." +
-                $"--SEP----COL--If they changed Name/World, they will need to send you it again.--COL--", ImGuiColors.TankBlue);
-        }
-        else
-        {
-            CkGui.ColorTextFrameAlignedInline("Kinkster's PlayerName not yet Stored!", ImGuiColors.DalamudRed);
-            CkGui.HelpText("There is currently no PlayerName stored for this Kinkster." +
-                "--NL----COL--They will need to send you theirs for you to react to them.--COL--", ImGuiColors.TankBlue, true);
-        }
-
-        CkGui.IconTextAligned(FAI.Fingerprint);
-        CkGui.TextFrameAlignedInline("Triggers");
-        var ignoreCase = kinkster.OwnPerms.IgnoreTriggerCase;
-        ImUtf8.SameLineInner();
-        if (CkGui.Checkbox("##ignore-case", ref ignoreCase, UiService.DisableUI))
-        {
-            UiService.SetUITask(async () =>
+            CkGui.IconTextAligned(FAI.User);
+            if (_manager.Puppeteers.TryGetValue(kinkster.UserData.UID, out var puppeteerData))
             {
-                _logger.LogTrace($"Updating Ignore-Case to {ignoreCase}", LoggerType.Puppeteer);
-                // This updates the result between transit to look instant on the client end, reverting edit on failure.
-                await PermHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, nameof(PairPerms.IgnoreTriggerCase), ignoreCase);
-            });
-        }
-        CkGui.ColorTextFrameAlignedInline("Ignore Case?", ImGuiColors.DalamudGrey2);
-
-        // Trigger Phrases inside of a framed child
-        using (var phraseBox = CkRaii.FramedChildPaddedW("triggers", _.InnerRegion.X, CkStyle.GetFrameRowsHeight(2), 0, GsCol.RemoteLines.Uint(), rounding, DFlags.RoundCornersAll))
-        {
-            var triggers = kinkster.OwnPerms.TriggerPhrase;
-            if (_triggersBox.DrawTagsEditor("##box", triggers, out var updatedString, GsCol.VibrantPink.Vec4Ref()))
+                CkGui.TextFrameAlignedInline("Puppeteered by:");
+                CkGui.ColorTextFrameAlignedInline(puppeteerData.NameWithWorld, CkCol.TriStateCheck.Vec4());
+                CkGui.AttachToolTip($"{kinkster.GetDisplayName()} is associated with this PlayerName." +
+                    $"--SEP--They can not puppeteer you within the boundaries you set." +
+                    $"--SEP----COL--If they changed Name/World, they will need to send you it again.--COL--", ImGuiColors.TankBlue);
+            }
+            else
             {
-                _logger.LogTrace("The Tag Editor had an update!");
-                UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, nameof(PairPerms.TriggerPhrase), updatedString));
+                CkGui.ColorTextFrameAlignedInline("Kinkster's PlayerName not yet Stored!", ImGuiColors.DalamudRed);
+                CkGui.HelpText("There is currently no PlayerName stored for this Kinkster." +
+                    "--NL----COL--They will need to send you theirs for you to react to them.--COL--", ImGuiColors.TankBlue, true);
             }
         }
+        _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.PuppeteersPairName, PuppeteerUI.LastPos, PuppeteerUI.LastSize);
+
+        using (ImRaii.Group())
+        {
+            CkGui.IconTextAligned(FAI.Fingerprint);
+            CkGui.TextFrameAlignedInline("Triggers");
+            var ignoreCase = kinkster.OwnPerms.IgnoreTriggerCase;
+            ImUtf8.SameLineInner();
+            if (CkGui.Checkbox("##ignore-case", ref ignoreCase, UiService.DisableUI))
+            {
+                UiService.SetUITask(async () =>
+                {
+                    _logger.LogTrace($"Updating Ignore-Case to {ignoreCase}", LoggerType.Puppeteer);
+                    // This updates the result between transit to look instant on the client end, reverting edit on failure.
+                    await PermHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, nameof(PairPerms.IgnoreTriggerCase), ignoreCase);
+                });
+            }
+            CkGui.ColorTextFrameAlignedInline("Ignore Case?", ImGuiColors.DalamudGrey2);
+
+            // Trigger Phrases inside of a framed child
+            using (var phraseBox = CkRaii.FramedChildPaddedW("triggers", _.InnerRegion.X, CkStyle.GetFrameRowsHeight(2), 0, GsCol.RemoteLines.Uint(), rounding, DFlags.RoundCornersAll))
+            {
+                var triggers = kinkster.OwnPerms.TriggerPhrase;
+                if (_triggersBox.DrawTagsEditor("##box", triggers, out var updatedString, GsCol.VibrantPink.Vec4Ref()))
+                {
+                    _logger.LogTrace("The Tag Editor had an update!");
+                    UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, nameof(PairPerms.TriggerPhrase), updatedString));
+                }
+            }
+        }
+        _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.PuppeteersPairTriggers, PuppeteerUI.LastPos, PuppeteerUI.LastSize);
 
         // Brackets
-        DrawBracketsRow(kinkster);
+        using (ImRaii.Group())
+            DrawBracketsRow(kinkster);
+        _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.PuppeteersAdvanced, PuppeteerUI.LastPos, PuppeteerUI.LastSize,
+            () => FancyTabBar.SelectTab("PuppeteerTabs", PuppeteerUI.PuppeteerTabs[2], PuppeteerUI.PuppeteerTabs));
 
         // Now the container that draws out the orders and the image.
         using var perms = CkRaii.Child("permissions", ImGui.GetContentRegionAvail());
@@ -151,6 +166,7 @@ public class PuppeteersTab : IFancyTab
             if (kinkster.OwnPerms.PuppetPerms != (PuppetPerms)filter)
                 UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, nameof(PairPerms.PuppetPerms), (PuppetPerms)filter));
         }
+        _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.PuppeteersPairOrders, PuppeteerUI.LastPos, PuppeteerUI.LastSize);
 
         // Get the height, this will be the square ratio that the image is drawn in
         if (CosmeticService.CoreTextures.Cache[CoreTexture.PuppetPuppeteers] is { } wrap)

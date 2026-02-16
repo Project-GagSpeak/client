@@ -12,6 +12,7 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using OtterGui.Text;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Gui.Wardrobe;
 
@@ -39,6 +40,10 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
 
     public static IFancyTab[] PuppeteerTabs;
 
+    // Accessed by Tutorial System
+    public static Vector2 LastPos { get; private set; } = Vector2.Zero;
+    public static Vector2 LastSize { get; private set; } = Vector2.Zero;
+
     protected override void PreDrawInternal()
     {
         if (!THEME_PUSHED)
@@ -62,6 +67,9 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
 
     protected override void DrawInternal()
     {
+        LastPos = ImGui.GetWindowPos();
+        LastSize = ImGui.GetWindowSize();
+
         var regions = CkHeader.FlatWithBends(CkCol.CurvedHeader.Uint(), ImUtf8.FrameHeight / 2, ImUtf8.ItemSpacing.X, ImUtf8.FrameHeight);
 
         // Idk what to put on the top section outside of it being a stylized header area.
@@ -69,6 +77,8 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         ImGui.SetCursorScreenPos(regions.BotLeft.Pos);
         using (ImRaii.Child("PuppeteerContent", regions.BotSize, false, WFlags.AlwaysUseWindowPadding))
             DrawTabBarContent();
+        _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.Overview, LastPos, LastSize, 
+            () => FancyTabBar.SelectTab("PuppeteerTabs", PuppeteerTabs[0], PuppeteerTabs));
     }
 
     private void DrawHeader(Vector2 region)
@@ -81,6 +91,14 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         using var _ = CkRaii.TabBarChild("PuppeteerTabs", GsCol.VibrantPink.Uint(), GsCol.VibrantPinkHovered.Uint(), CkCol.CurvedHeader.Uint(),
                 LabelFlags.PadInnerChild | LabelFlags.SizeIncludesHeader, out var selected, PuppeteerTabs);
         // Draw the selected tab's contents.
-        selected?.DrawContents(_.InnerRegion.X);
+        using (ImRaii.Group())
+            selected?.DrawContents(_.InnerRegion.X);
+
+        if (selected == PuppeteerTabs[0])
+            _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.AliasPage, LastPos, LastSize);
+        if (selected == PuppeteerTabs[1])
+            _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.PuppeteersPage, LastPos, LastSize);
+        if (selected == PuppeteerTabs[2])
+            _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.MarionettesPage, LastPos, LastSize);
     }
 }

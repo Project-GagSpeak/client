@@ -273,7 +273,31 @@ public class TutorialService
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             PopupLabel = "Puppeteer Tutorial",
         }
-        .EnsureSize(0);
+        .AddStep(puppetStr.Step1Title, puppetStr.Step1Desc, puppetStr.Step1DescExtended)
+        .AddStep(puppetStr.Step2Title, puppetStr.Step2Desc, puppetStr.Step2DescExtended)
+        .AddStep(puppetStr.Step3Title, puppetStr.Step3Desc, puppetStr.Step3DescExtended)
+        .AddStep(puppetStr.Step4Title, puppetStr.Step4Desc, puppetStr.Step4DescExtended)
+        .AddStep(puppetStr.Step5Title, puppetStr.Step5Desc, puppetStr.Step5DescExtended)
+        .AddStep(puppetStr.Step6Title, puppetStr.Step6Desc, puppetStr.Step6DescExtended)
+        .AddStep(puppetStr.Step7Title, puppetStr.Step7Desc, puppetStr.Step7DescExtended)
+        .AddStep(puppetStr.Step8Title, puppetStr.Step8Desc, puppetStr.Step8DescExtended)
+        .AddStep(puppetStr.Step9Title, puppetStr.Step9Desc, puppetStr.Step9DescExtended)
+        .AddStep(puppetStr.Step10Title, puppetStr.Step10Desc, puppetStr.Step10DescExtended)
+        .AddStep(puppetStr.Step11Title, puppetStr.Step11Desc, puppetStr.Step11DescExtended)
+        .AddStep(puppetStr.Step12Title, puppetStr.Step12Desc, puppetStr.Step12DescExtended)
+        .AddStep(puppetStr.Step13Title, puppetStr.Step13Desc, puppetStr.Step13DescExtended)
+        .AddStep(puppetStr.Step14Title, puppetStr.Step14Desc, puppetStr.Step14DescExtended)
+        .AddStep(puppetStr.Step15Title, puppetStr.Step15Desc, puppetStr.Step15DescExtended)
+        .AddStep(puppetStr.Step16Title, puppetStr.Step16Desc, puppetStr.Step16DescExtended)
+        .AddStep(puppetStr.Step17Title, puppetStr.Step17Desc, puppetStr.Step17DescExtended)
+        .AddStep(puppetStr.Step18Title, puppetStr.Step18Desc, puppetStr.Step18DescExtended)
+        .AddStep(puppetStr.Step19Title, puppetStr.Step19Desc, puppetStr.Step19DescExtended)
+        .AddStep(puppetStr.Step20Title, puppetStr.Step20Desc, puppetStr.Step20DescExtended)
+        .AddStep(puppetStr.Step21Title, puppetStr.Step21Desc, puppetStr.Step21DescExtended)
+        .AddStep(puppetStr.Step22Title, puppetStr.Step22Desc, puppetStr.Step22DescExtended)
+        .AddStep(puppetStr.Step23Title, puppetStr.Step23Desc, puppetStr.Step23DescExtended)
+        .AddStep(puppetStr.Step24Title, puppetStr.Step24Desc, puppetStr.Step24DescExtended)
+        .EnsureSize(_tutorialSizes[TutorialType.Puppeteer]);
 
         var toyboxStr = GSLoc.Tutorials.Toys;
         _tutorials[TutorialType.Toys] = new Tutorial()

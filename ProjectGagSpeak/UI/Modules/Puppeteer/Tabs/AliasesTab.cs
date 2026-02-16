@@ -1,5 +1,4 @@
 using CkCommons;
-using CkCommons.DrawSystem;
 using CkCommons.Gui;
 using CkCommons.Gui.Utility;
 using CkCommons.Raii;
@@ -24,8 +23,6 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using OtterGui.Text;
-using TerraFX.Interop.Windows;
-using static System.ComponentModel.Design.ObjectSelectorEditor;
 
 namespace GagSpeak.Gui.Wardrobe;
 
@@ -45,7 +42,7 @@ public class AliasesTab : IFancyTab
     private Kinkster? _selectedKinkster = null;
 
     public AliasesTab(ILogger<AliasesTab> logger, GagspeakMediator mediator,
-        MainHub hub, FavoritesConfig favorites, AliasesFileSelector selector, 
+        MainHub hub, FavoritesConfig favorites, AliasesFileSelector selector,
         AliasTriggerDrawer drawer, PuppeteerManager manager,
         KinksterManager kinksters, TutorialService guides)
     {
@@ -58,7 +55,7 @@ public class AliasesTab : IFancyTab
         _guides = guides;
 
         _pairCombo = new(logger, mediator, favorites, () => [
-            ..( _manager.ItemInEditor is { } editor 
+            ..( _manager.ItemInEditor is { } editor
                 ? kinksters.DirectPairs.Where(k => !editor.WhitelistedUIDs.Contains(k.UserData.UID)) : kinksters.DirectPairs)
                 .OrderByDescending(p => FavoritesConfig.Kinksters.Contains(p.UserData.UID))
                 .ThenByDescending(u => u.IsRendered)
@@ -67,9 +64,9 @@ public class AliasesTab : IFancyTab
         ]);
     }
 
-    public string   Label       => "Aliases";
-    public string   Tooltip     => "Create aliases to enhance puppeteer!";
-    public bool     Disabled    => false;
+    public string Label => "Aliases";
+    public string Tooltip => "Create aliases to enhance puppeteer!";
+    public bool Disabled => false;
 
     // should be very similar to drawing out the list of items, except this will have a unique flavor to it.
     public void DrawContents(float width)
@@ -82,16 +79,26 @@ public class AliasesTab : IFancyTab
         using (var _ = CkRaii.FramedChildPaddedWH("list", new(leftW, ImGui.GetContentRegionAvail().Y), 0, GsCol.VibrantPink.Uint(), rounding))
         {
             _selector.DrawFilterRow(_.InnerRegion.X);
+            _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.SearchBar, PuppeteerUI.LastPos, PuppeteerUI.LastSize,
+                () =>
+                {
+                    var at = _manager.CreateNew("Tutorial Alias");
+                    _selector.SelectByValue(at);
+                });
             _selector.DrawList(_.InnerRegion.X);
         }
+        _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.AliasList, PuppeteerUI.LastPos, PuppeteerUI.LastSize);
         ImUtf8.SameLineInner();
         using (var _ = CkRaii.FramedChildPaddedWH("alias", ImGui.GetContentRegionAvail(), 0, GsCol.VibrantPink.Uint(), rounding))
         {
             if (_manager.ItemInEditor is { } item)
                 DrawAliasEditor(_.InnerRegion, item, rounding);
             else
+            {
                 DrawAlias(_.InnerRegion, rounding);
+            }
         }
+        _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.SelectedAlias, PuppeteerUI.LastPos, PuppeteerUI.LastSize);
     }
 
     private void DrawAlias(Vector2 region, float rounding)
@@ -130,6 +137,8 @@ public class AliasesTab : IFancyTab
         if (CkGui.IconButton(FAI.Edit, inPopup: true))
             _manager.StartEditing(alias);
         CkGui.AttachToolTip("Edit this alias.");
+        _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.EditingAlias, PuppeteerUI.LastPos, PuppeteerUI.LastSize,
+            () => _manager.StartEditing(alias));
 
         // Draw out what the alias detects, and if it ignores case or not
         CkGui.FramedIconText(FAI.AssistiveListeningSystems);
@@ -254,6 +263,7 @@ public class AliasesTab : IFancyTab
         if (ImGui.InputTextWithHint("##name", "Display Name..", ref label, 64))
             alias.Label = label;
         CkGui.AttachToolTip("The UI display name for the AliasTrigger");
+        _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.EditAliasName, PuppeteerUI.LastPos, PuppeteerUI.LastSize);
 
         var endX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
         ImGui.SameLine(endX - CkGui.IconButtonSize(FAI.Redo).X - CkGui.IconButtonSize(FAI.Save).X);
@@ -264,6 +274,13 @@ public class AliasesTab : IFancyTab
         if (CkGui.IconButton(FAI.Save, inPopup: true))
             _manager.SaveChangesAndStopEditing();
         CkGui.AttachToolTip("Saves all changes and exits the editor");
+        _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.EditSavingAliases, PuppeteerUI.LastPos, PuppeteerUI.LastSize,
+            () =>
+            {
+                _manager.SaveChangesAndStopEditing();
+                FancyTabBar.SelectTab("PuppeteerTabs", PuppeteerUI.PuppeteerTabs[1], PuppeteerUI.PuppeteerTabs);
+
+            });
 
         // Draw the input area
         CkGui.FramedIconText(FAI.AssistiveListeningSystems);
@@ -272,7 +289,7 @@ public class AliasesTab : IFancyTab
         var listenTxt = alias.InputCommand;
         if (ImGui.InputTextWithHint("##listener-text", "Text to detect..", ref listenTxt, 64))
             alias.InputCommand = listenTxt;
-        CkGui.AttachToolTip("The UI display name for the AliasTrigger");
+        CkGui.AttachToolTip("What text the alias is listening for");
 
         ImUtf8.SameLineInner();
         var ignoreCase = alias.IgnoreCase;
@@ -282,11 +299,14 @@ public class AliasesTab : IFancyTab
 
         using var style = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(2))
             .Push(ImGuiStyleVar.ItemSpacing, new Vector2(ImUtf8.ItemSpacing.X, 2));
-
-        DrawReactionsEditor(alias, region.X);
+        using (ImRaii.Group())
+            DrawReactionsEditor(alias, region.X);
+        _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.EditAliasActions, PuppeteerUI.LastPos, PuppeteerUI.LastSize);
 
         // Draw out the whitelist area here (do later and stuff)
-        DrawWhitelistEditor(alias);
+        using (ImRaii.Group())
+            DrawWhitelistEditor(alias);
+        _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.EditAliasPermissions, PuppeteerUI.LastPos, PuppeteerUI.LastSize);
     }
 
     private void DrawReactionsEditor(AliasTrigger alias, float width)
@@ -342,7 +362,7 @@ public class AliasesTab : IFancyTab
                 case PiShockAction ps: _aliasDrawer.DrawShockRowEditor(ps); break;
                 case SexToyAction sta: _aliasDrawer.DrawToyRowEditor(sta); break;
             }
-            
+
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FAI.Minus).X);
             using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudRed))
                 if (CkGui.IconButton(FAI.Minus, inPopup: true))
