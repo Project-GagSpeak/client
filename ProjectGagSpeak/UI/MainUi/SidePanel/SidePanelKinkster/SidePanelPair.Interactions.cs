@@ -575,10 +575,10 @@ public partial class SidePanelPair
 
         var shockerDurationSeconds = (int)(shockerDuration * 1000f);
 
-        ImGui.SetNextItemWidth(100 * ImGuiHelpers.GlobalScale);
+        ImGui.SetNextItemWidth(120 * ImGuiHelpers.GlobalScale);
         ImGui.SliderInt("Intensity", ref shockerIntensity, 1, maxIntensity, "%d%%");
         CkGui.AttachToolTip($"Sets the intensity for shocks, vibrations, and beeps. Intensity is a percentage of the maximum effect delivered to {dispName}.");
-        ImGui.SetNextItemWidth(150 * ImGuiHelpers.GlobalScale);
+        ImGui.SetNextItemWidth(120 * ImGuiHelpers.GlobalScale);
         ImGui.SliderFloat("Shock Duration", ref shockerDuration, 0.1f, maxDuration, "%.1fs");
         CkGui.AttachToolTip($"Sets the duration for shocks and beeps. Duration is the length of time the effect is delivered to {dispName}.");
 
