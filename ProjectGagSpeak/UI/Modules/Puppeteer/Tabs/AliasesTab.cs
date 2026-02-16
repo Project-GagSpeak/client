@@ -146,7 +146,7 @@ public class AliasesTab : IFancyTab
             CkGui.TextFrameAligned("\"");
         }
         ImGui.SameLine();
-        CkGui.RightAlignedColor(alias.IgnoreCase ? "Case Sensative" : "Ignores Case", ImGuiColors.DalamudGrey2);
+        CkGui.RightAlignedColor(alias.IgnoreCase ? "Ignores Case" : "Case Sensative", ImGuiColors.DalamudGrey2);
 
         ImGui.Separator();
         var posY = ImGui.GetCursorPosY();
@@ -154,10 +154,6 @@ public class AliasesTab : IFancyTab
 
         ImGui.SetCursorPosY(posY + CkStyle.GetFrameRowsHeight(7));
         DrawWhitelist(alias);
-
-        // Iterate through the hashset whitelist and display all of the Kinksters that you have allowed.
-        // If a Kinkster is not located, mark them as an invalid kinkster.
-
     }
 
     private void DrawReactions(AliasTrigger alias, float width)
