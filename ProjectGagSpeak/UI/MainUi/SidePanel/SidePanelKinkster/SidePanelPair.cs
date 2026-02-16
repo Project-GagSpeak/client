@@ -321,6 +321,9 @@ public partial class SidePanelPair
             DrawToyboxActions(cache, kinkster, width, dispName);
             ImGui.Separator();
 
+            DrawShockActions(cache, kinkster, width, dispName);
+            ImGui.Separator();
+
             DrawMiscActions(cache, kinkster, width, dispName);
             ImGui.Separator();
         }
