@@ -193,7 +193,6 @@ public partial class SidePanelPair
         else
         {
             UniqueShareCode(kinkster, dispName, width);
-            MaxVibrateDuration(cache, kinkster, dispName, width);
         }
     }
 
@@ -326,6 +325,12 @@ public partial class SidePanelPair
         }
         if (kinkster.PairPerms.InHardcore)
         {
+            if (kinkster.IsOnline)
+            {
+                DrawShockActions(cache, kinkster, width, dispName);
+                ImGui.Separator();
+            }
+
             DrawHardcoreActions(cache, kinkster, dispName, width);
             ImGui.Separator();
         }

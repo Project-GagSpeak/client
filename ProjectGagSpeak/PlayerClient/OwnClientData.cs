@@ -62,7 +62,7 @@ public sealed class ClientData : IDisposable
             AllowVibrations = newPerms.AllowVibrations,
             AllowBeeps = newPerms.AllowBeeps,
             MaxDuration = newPerms.MaxDuration,
-            MaxIntensity = newPerms.MaxIntensity
+            MaxIntensity = newPerms.MaxIntensity,
         };
 
     public static GlobalPerms GlobalsWithSafewordApplied()
@@ -147,7 +147,7 @@ public sealed class ClientData : IDisposable
                 hcState.ImprisonedTerritory = newData.ImprisonedTerritory;
                 // this is set to the client position if anything but 0 (enabling/disabling)
                 hcState.ImprisonedPos = newData.Imprisonment.Length > 0
-                    ? (newData.ImprisonedPos == Vector3.Zero ? PlayerData.Position: newData.ImprisonedPos)
+                    ? (newData.ImprisonedPos == Vector3.Zero ? PlayerData.Position : newData.ImprisonedPos)
                     : Vector3.Zero;
                 hcState.ImprisonedRadius = newData.ImprisonedRadius;
                 break;

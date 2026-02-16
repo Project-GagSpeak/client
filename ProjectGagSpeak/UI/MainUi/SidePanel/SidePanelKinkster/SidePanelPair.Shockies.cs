@@ -1,4 +1,5 @@
 using CkCommons.Gui;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
@@ -7,7 +8,6 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
-using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.MainWindow;
@@ -25,6 +25,10 @@ public partial class SidePanelPair
         CkGui.IconInputText(FAI.ShareAlt, string.Empty, "Unique Share Code", ref refCode, 40, width, true, false);
         if (ImGui.IsItemDeactivatedAfterEdit())
         {
+            // No action if the code is the same.
+            if (refCode == k.OwnPerms.PiShockShareCode)
+                return;
+
             UiService.SetUITask(async () =>
             {
                 if (await PermHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.PiShockShareCode), refCode))
@@ -37,37 +41,6 @@ public partial class SidePanelPair
         ImUtf8.SameLineInner();
         if (CkGui.IconTextButton(FAI.Sync, "Refresh", disabled: string.IsNullOrEmpty(refCode) || UiService.DisableUI))
             UiService.SetUITask(async () => await SyncPermissionsWithCode(k.OwnPerms.PiShockShareCode, k));
-    }
-
-    private void MaxVibrateDuration(KinksterInfoCache cache, Kinkster k, string dispName, float width)
-    {
-        using var _ = ImRaii.Group();
-
-        // grab seconds from the service cache or our permissions.
-        var seconds = cache.TmpVibeDur == -1 ? (float)k.OwnPerms.MaxVibrateDuration.TotalMilliseconds / 1000 : cache.TmpVibeDur;
-        var disableDur = k.OwnPerms.HasValidShareCode();
-        if (CkGui.IconSliderFloat($"##mvt-{k.UserData.UID}", FAI.Stopwatch, "Max Vibe Time", ref seconds, 0.1f, 15f, width * .65f, true, disableDur))
-            cache.TmpVibeDur = seconds;
-
-        if (ImGui.IsItemDeactivatedAfterEdit())
-        {
-            // if the max duration is under 15, parse to seconds.
-            var newVal = k.OwnPerms.MaxDuration < 15 ? TimeSpan.FromSeconds(cache.TmpVibeDur) : TimeSpan.FromMilliseconds(cache.TmpVibeDur);
-            // make sure its different from the stored duration.
-            if (newVal.Milliseconds == k.OwnPerms.MaxVibrateDuration.Milliseconds)
-            {
-                cache.TmpVibeDur = -1;
-                return;
-            }
-            // It was valid, so set it.
-            var newTicks = (ulong)newVal.Ticks;
-            UiService.SetUITask(async () =>
-            {
-                if (await PermHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.MaxVibrateDuration), newTicks))
-                    cache.TmpVibeDur = -1;
-            });
-        }
-        CkGui.AttachToolTip("Max duration you allow this pair to vibrate your Shock Collar for");
     }
 
     public void DrawShockActions(KinksterInfoCache cache, Kinkster k, string dispName, float width)
@@ -120,7 +93,7 @@ public partial class SidePanelPair
     private async Task SyncPermissionsWithCode(string code, Kinkster k)
     {
         var newShockPerms = await _shockies.GetPermissionsFromCode(code);
-        var newPerms = k.PairPerms with
+        var newPerms = k.OwnPerms with
         {
             PiShockShareCode = code,
             AllowShocks = newShockPerms.AllowShocks,
@@ -170,7 +143,7 @@ public partial class SidePanelPair
         // ensure we cant fall below 100ms to rely on millisecond conversion.
         ImGui.SetNextItemWidth(width - CkGui.IconTextButtonSize(FAI.HeartCircleBolt, "Vibrate") - ImGui.GetStyle().ItemInnerSpacing.X);
         ImGui.SliderFloat($"##DSR-{k.UserData.UID}", ref cache.ApplyVibeDur, 0.0f, (float)maxDuration.TotalMilliseconds / 1000f, "%.1fs", ImGuiSliderFlags.None);
-        
+
         ImUtf8.SameLineInner();
         if (CkGui.IconTextButton(FAI.HeartCircleBolt, "Send Vibration", disabled: cache.ApplyDuration <= 100))
         {

@@ -1,11 +1,11 @@
+using System.Net;
+using System.Text.Json;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data.Struct;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
-using System.Net;
-using System.Text.Json;
 using SysJsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace GagSpeak.WebAPI;
@@ -79,6 +79,11 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
 
     public async Task<PiShockPermissions> GetPermissionsFromCode(string shareCode)
     {
+        if (shareCode.IsNullOrEmpty())
+        {
+            Logger.LogWarning("Attempted to get PiShock permissions with empty share code.");
+            return new();
+        }
         try
         {
             var jsonContent = CreateGetInfoContent(shareCode);
@@ -90,6 +95,7 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
             {
                 Logger.LogTrace("PiShock Request Info Response: {response}", response);
                 var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                Logger.LogTrace("PiShock Request Info Content: {content}", content);
                 var jsonDocument = JsonDocument.Parse(content);
                 var root = jsonDocument.RootElement;
 
@@ -167,8 +173,22 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
         var eventLogMessage = $"Pishock {interactionType}, intensity: {dto.Intensity}, duration: {dto.Duration}";
         Logger.LogDebug($"Received Instruction for {eventLogMessage}", LoggerType.Callbacks);
 
+        // Handle quirk in pishock API where it accepts durations in seconds up to 15, but anything above 15 is treated as milliseconds.
+        // Our slider only accepts 0.1 second increments, so we will enforce a minimum of 100 milliseconds to avoid the aforementioned issue.
+        if (dto.Duration < 100)
+        {
+            dto = dto with { Duration = 100 };
+        }
+
         if (!enactor.OwnPerms.PiShockShareCode.IsNullOrEmpty())
         {
+            // MaxDuration is in seconds while the incoming duration is in ms, so we need to convert before comparing. Ignore intensity for beeps.
+            if (dto.Duration / 1000f > enactor.OwnPerms.MaxDuration || (dto.OpCode != 2 && dto.Intensity > enactor.OwnPerms.MaxIntensity))
+            {
+                Logger.LogWarning("Received instruction that exceeds the max duration or intensity for this user. Ignoring.");
+                return;
+            }
+
             Logger.LogDebug("Executing Shock Instruction to UniquePair ShareCode", LoggerType.Callbacks);
             Mediator.Publish(new EventMessage(new(enactor.GetNickAliasOrUid(), enactor.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
             ExecuteOperation(enactor.OwnPerms.PiShockShareCode, dto.OpCode, dto.Intensity, dto.Duration);
@@ -177,6 +197,13 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
         }
         else if (ClientData.Globals is { } g && !g.GlobalShockShareCode.IsNullOrEmpty())
         {
+            // MaxDuration is in seconds while the incoming duration is in ms, so we need to convert before comparing. Ignore intensity for beeps.
+            if (dto.Duration / 1000f > g.MaxDuration || (dto.OpCode != 2 && dto.Intensity > g.MaxIntensity))
+            {
+                Logger.LogWarning("Received instruction that exceeds the max duration or intensity for this user. Ignoring.");
+                return;
+            }
+
             Logger.LogDebug("Executing Shock Instruction to Global ShareCode", LoggerType.Callbacks);
             Mediator.Publish(new EventMessage(new(enactor.GetNickAliasOrUid(), enactor.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
             ExecuteOperation(g.GlobalShockShareCode, dto.OpCode, dto.Intensity, dto.Duration);

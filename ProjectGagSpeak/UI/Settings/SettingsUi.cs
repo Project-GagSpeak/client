@@ -176,6 +176,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
     {
         UiService.SetUITask(async () =>
         {
+            _logger.LogDebug($"Attempting to change global permission {globalKey} to {newValue}", LoggerType.UI);
             var res = await _hub.ChangeOwnGlobalPerm(globalKey, newValue);
             if (res.ErrorCode is not GagSpeakApiEc.Success)
                 _logger.LogError($"Failed to change global permission {globalKey} to {newValue}. Error: {res.ErrorCode}", LoggerType.UI);
@@ -397,7 +398,6 @@ public class SettingsUi : WindowMediatorSubscriberBase
         var allowBeep = globals.AllowBeeps;
         var maxShockIntensity = globals.MaxIntensity;
         var maxShockTime = globals.GetTimespanFromDuration();
-        var maxVibrateTime = (int)globals.ShockVibrateDuration.TotalSeconds;
 
         using var node = ImRaii.TreeNode("Pi-Shock Global Settings");
         if (node)
@@ -444,12 +444,6 @@ public class SettingsUi : WindowMediatorSubscriberBase
             ImUtf8.SameLineInner();
             ImGui.TextUnformatted(GSLoc.Settings.MainOptions.PiShockShareCode);
             CkGui.HelpText(GSLoc.Settings.MainOptions.PiShockShareCodeTT);
-
-            ImGui.SetNextItemWidth(250 * ImGuiHelpers.GlobalScale);
-            ImGui.SliderInt(GSLoc.Settings.MainOptions.PiShockVibeTime, ref maxVibrateTime, 0, 30);
-            if (ImGui.IsItemDeactivatedAfterEdit())
-                AssignGlobalPermChangeTask(nameof(GlobalPerms.ShockVibrateDuration), (ulong)TimeSpan.FromSeconds(maxVibrateTime).Ticks);
-            CkGui.HelpText(GSLoc.Settings.MainOptions.PiShockVibeTimeTT);
 
             CkGui.ColorText(GSLoc.Settings.MainOptions.PiShockPermsLabel, ImGuiColors.ParsedGold);
             using (ImRaii.Group())

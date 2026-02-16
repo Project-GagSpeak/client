@@ -3,6 +3,7 @@ using CkCommons.Gui;
 using CkCommons.Gui.Utility;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
@@ -526,6 +527,95 @@ public partial class SidePanelPair
         }
     }
     #endregion Toybox
+
+    #region Shocks
+    private float shockerDuration = 0.1f;
+    private int shockerIntensity = 10;
+
+    private void DrawShockActions(KinksterInfoCache cache, Kinkster k, float width, string dispName)
+    {
+        ImGui.TextUnformatted("Shock Actions");
+
+        bool canShock;
+        bool canVibrate;
+        bool canBeep;
+        float maxDuration;
+        int maxIntensity;
+        if (k.PairPerms.HasValidShareCode())
+        {
+            canShock = k.PairPerms.AllowShocks;
+            canVibrate = k.PairPerms.AllowVibrations;
+            canBeep = k.PairPerms.AllowBeeps;
+            maxDuration = k.PairPerms.MaxDuration;
+            maxIntensity = k.PairPerms.MaxIntensity;
+        }
+        else if (k.PairGlobals.HasValidShareCode())
+        {
+            canShock = k.PairGlobals.AllowShocks;
+            canVibrate = k.PairGlobals.AllowVibrations;
+            canBeep = k.PairGlobals.AllowBeeps;
+            maxDuration = k.PairGlobals.MaxDuration;
+            maxIntensity = k.PairGlobals.MaxIntensity;
+        }
+        else
+        {
+            ImGui.TextUnformatted("Not permitted to use.");
+            return;
+        }
+
+        var shockTxt = canShock ? $"Shock {dispName}" : $"Cannot shock {dispName}";
+        var vibrateTxt = canVibrate ? $"Vibrate {dispName}" : $"Cannot vibrate {dispName}";
+        var beepTxt = canBeep ? $"Beep {dispName}" : $"Cannot beep {dispName}";
+
+        // Verify duration and intensity within bounds
+        if (shockerDuration < 0.1f) shockerDuration = 0.1f;
+        else if (shockerDuration > maxDuration) shockerDuration = maxDuration;
+        if (shockerIntensity < 1) shockerIntensity = 1;
+        else if (shockerIntensity > maxIntensity) shockerIntensity = maxIntensity;
+
+        var shockerDurationSeconds = (int)(shockerDuration * 1000f);
+
+        ImGui.SetNextItemWidth(120 * ImGuiHelpers.GlobalScale);
+        ImGui.SliderInt("Intensity", ref shockerIntensity, 1, maxIntensity, "%d%%");
+        CkGui.AttachToolTip($"Sets the intensity for shocks, vibrations, and beeps. Intensity is a percentage of the maximum effect delivered to {dispName}.");
+        ImGui.SetNextItemWidth(120 * ImGuiHelpers.GlobalScale);
+        ImGui.SliderFloat("Shock Duration", ref shockerDuration, 0.1f, maxDuration, "%.1fs");
+        CkGui.AttachToolTip($"Sets the duration for shocks and beeps. Duration is the length of time the effect is delivered to {dispName}.");
+
+        if (CkGui.IconTextButton(FAI.Bolt, shockTxt, width, true, !canShock))
+        {
+            UiService.SetUITask(async () =>
+            {
+                var res = await _hub.UserShockKinkster(new(k.UserData, 0 /* shock */, shockerIntensity, shockerDurationSeconds));
+                if (res.ErrorCode is not GagSpeakApiEc.Success)
+                    _logger.LogError($"Failed to shock {dispName}. ({res.ErrorCode})", LoggerType.StickyUI);
+            });
+        }
+        CkGui.AttachToolTip($"--COL--Delivers a shock to {dispName}.{(canShock ? "" : " Not permitted.")}--COL--", color: canShock ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudGrey);
+
+        if (CkGui.IconTextButton(FAI.LandMineOn, beepTxt, width, true, !canBeep))
+        {
+            UiService.SetUITask(async () =>
+            {
+                var res = await _hub.UserShockKinkster(new(k.UserData, 2 /* beep */, shockerIntensity, shockerDurationSeconds));
+                if (res.ErrorCode is not GagSpeakApiEc.Success)
+                    _logger.LogError($"Failed to beep {dispName}. ({res.ErrorCode})", LoggerType.StickyUI);
+            });
+        }
+        CkGui.AttachToolTip($"--COL--Delivers a beep to {dispName}.{(canBeep ? "" : " Not permitted.")}--COL--", color: canBeep ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudGrey);
+
+        if (CkGui.IconTextButton(FAI.HeartCircleBolt, vibrateTxt, width, true, !canVibrate))
+        {
+            UiService.SetUITask(async () =>
+            {
+                var res = await _hub.UserShockKinkster(new(k.UserData, 1 /* vibrate */, shockerIntensity, shockerDurationSeconds));
+                if (res.ErrorCode is not GagSpeakApiEc.Success)
+                    _logger.LogError($"Failed to vibrate {dispName}. ({res.ErrorCode})", LoggerType.StickyUI);
+            });
+        }
+        CkGui.AttachToolTip($"--COL--Delivers a vibration to {dispName}.{(canVibrate ? "" : " Not permitted.")}--COL--", color: canVibrate ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudGrey);
+    }
+    #endregion Shocks
 
     #region Misc
     private void DrawMiscActions(KinksterInfoCache cache, Kinkster k, float width, string dispName)
