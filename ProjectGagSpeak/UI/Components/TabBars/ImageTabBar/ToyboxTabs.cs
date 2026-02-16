@@ -17,7 +17,7 @@ public class ToyboxTabs : ImageTabBar<ToyboxTabs.SelectedTab>
 
     protected override bool IsTabDisabled(SelectedTab tab)
     {
-        var disable = tab is SelectedTab.VibeLobbies or SelectedTab.Patterns or SelectedTab.Alarms;
+        var disable = tab is SelectedTab.VibeLobbies or SelectedTab.Patterns or SelectedTab.Alarms or SelectedTab.Triggers;
 #if DEBUG
         disable = false;
 #endif
@@ -43,7 +43,9 @@ public class ToyboxTabs : ImageTabBar<ToyboxTabs.SelectedTab>
             "--SEP----COL--[WIP]--COL--" +
             "--NL--- Try overlapping on patterns without inturruption");
         AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.CircleDot], SelectedTab.Triggers,
-            "Create various kinds of Triggers");
+            "Create various kinds of Triggers" +
+            "--SEP----COL--[WIP]--COL--" +
+            "--NL--- Should be out very soon, need to hook up detection. Logic itself works.");
     }
 
 }

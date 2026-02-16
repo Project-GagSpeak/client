@@ -144,10 +144,9 @@ public sealed class GagRestrictionManager : IHybridSavable
         {
             _logger.LogTrace($"Found GagRestriction for {newGag.GagName()} in Storage.");
             _activeItems[layer] = item;
-            return item.IsEnabled;
         }
-
-        return false;
+         
+        return _activeItems[layer].IsEnabled;
     }
 
     public void LockGag(int layer, ActiveGagSlot newData, string enactor)

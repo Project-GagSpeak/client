@@ -44,6 +44,7 @@ public partial class StaticDetours
             Logger.LogTrace($"OnEmote >> [{emoteCallerName}] used Emote [{emoteName}](ID:{emoteId}) on Target: [{targetName}]", LoggerType.EmoteMonitor);
 
             // Could keep as nint or do snapshotting.
+
             GagspeakEventManager.AchievementEvent(UnlocksEvent.EmoteExecuted, (nint)emoteCaller, emoteId, (nint)tgtObj);
         }
         catch (Bagagwa e)

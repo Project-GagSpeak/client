@@ -272,7 +272,6 @@ public class TriggerHandler
 
             CheckSpellActionTriggers(actionEffect).ConfigureAwait(false);
         }
-        ;
     }
 
     private async Task CheckSpellActionTriggers(ActionEffectEntry actEff)
