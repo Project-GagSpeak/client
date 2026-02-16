@@ -174,7 +174,8 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
             dto = dto with { Duration = 100 };
         }
 
-        if (dto.Duration > enactor.OwnPerms.MaxDuration || dto.Intensity > enactor.OwnPerms.MaxIntensity)
+        // MaxDuration is in seconds while the incoming duration is in ms, so we need to convert before comparing. Ignore intensity for beeps.
+        if (dto.Duration / 1000f > enactor.OwnPerms.MaxDuration || (dto.OpCode != 2 && dto.Intensity > enactor.OwnPerms.MaxIntensity))
         {
             Logger.LogWarning("Received instruction that exceeds the max duration or intensity for this user. Ignoring.");
             return;

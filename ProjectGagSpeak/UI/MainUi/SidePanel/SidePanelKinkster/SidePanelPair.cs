@@ -321,14 +321,17 @@ public partial class SidePanelPair
             DrawToyboxActions(cache, kinkster, width, dispName);
             ImGui.Separator();
 
-            DrawShockActions(cache, kinkster, width, dispName);
-            ImGui.Separator();
-
             DrawMiscActions(cache, kinkster, width, dispName);
             ImGui.Separator();
         }
         if (kinkster.PairPerms.InHardcore)
         {
+            if (kinkster.IsOnline)
+            {
+                DrawShockActions(cache, kinkster, width, dispName);
+                ImGui.Separator();
+            }
+
             DrawHardcoreActions(cache, kinkster, dispName, width);
             ImGui.Separator();
         }

@@ -537,23 +537,41 @@ public partial class SidePanelPair
     {
         ImGui.TextUnformatted("Shock Actions");
 
-        var hasShocker = k.PairPerms.HasValidShareCode();
-        // if (!hasShocker)
-        // {
-        //     ImGui.TextUnformatted("Not permitted to use.");
-        //     return;
-        // }
-
-        var canShock = k.PairPerms.AllowShocks;
-        var canVibrate = k.PairPerms.AllowVibrations;
-        var canBeep = k.PairPerms.AllowBeeps;
+        bool canShock;
+        bool canVibrate;
+        bool canBeep;
+        float maxVibrateDuration;
+        float maxShockBeepDuration;
+        int maxIntensity;
+        if (k.PairPerms.HasValidShareCode())
+        {
+            canShock = k.PairPerms.AllowShocks;
+            canVibrate = k.PairPerms.AllowVibrations;
+            canBeep = k.PairPerms.AllowBeeps;
+            maxVibrateDuration = (float)k.PairPerms.MaxVibrateDuration.TotalSeconds;
+            maxShockBeepDuration = k.PairPerms.MaxDuration;
+            maxIntensity = k.PairPerms.MaxIntensity;
+        }
+        else if (k.PairGlobals.HasValidShareCode())
+        {
+            canShock = k.PairGlobals.AllowShocks;
+            canVibrate = k.PairGlobals.AllowVibrations;
+            canBeep = k.PairGlobals.AllowBeeps;
+            maxVibrateDuration = (float)k.PairGlobals.ShockVibrateDuration.TotalSeconds;
+            maxShockBeepDuration = k.PairGlobals.MaxDuration;
+            maxIntensity = k.PairGlobals.MaxIntensity;
+        }
+        else
+        {
+            ImGui.TextUnformatted("Not permitted to use.");
+            return;
+        }
 
         var shockTxt = canShock ? $"Shock {dispName}" : $"Cannot shock {dispName}";
         var vibrateTxt = canVibrate ? $"Vibrate {dispName}" : $"Cannot vibrate {dispName}";
         var beepTxt = canBeep ? $"Beep {dispName}" : $"Cannot beep {dispName}";
 
         // Verify duration and intensity within bounds
-        var maxVibrateDuration = (float)k.PairPerms.MaxVibrateDuration.TotalSeconds;
         if (shockBeepDuration < 0.1f) shockBeepDuration = 0.1f;
         else if (shockBeepDuration > k.PairPerms.MaxDuration) shockBeepDuration = k.PairPerms.MaxDuration;
         if (vibrateDuration < 0.1f) vibrateDuration = 0.1f;
