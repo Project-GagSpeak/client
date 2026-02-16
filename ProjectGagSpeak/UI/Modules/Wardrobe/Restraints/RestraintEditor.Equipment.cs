@@ -52,7 +52,7 @@ public class RestraintEditorEquipment : IFancyTab
             using (CkRaii.IconButtonHeaderChild("Equipment", FAI.FileImport, subWindowSize, ImportEquipment, FancyTabBar.Rounding,
                 HeaderFlags.CR_HeaderCentered, "Import current Equipment on your Character."))
             {
-                _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Importing, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+
                 var region = ImGui.GetContentRegionAvail();
                 var innerWidth = region.X;
                 foreach (var slot in EquipSlotExtensions.EquipmentSlots)
@@ -60,7 +60,7 @@ public class RestraintEditorEquipment : IFancyTab
                     ImGui.Spacing();
                     _equipDrawer.DrawRestraintSlot(_manager.ItemInEditor.RestraintSlots, slot, innerWidth);
                     if (slot == EquipSlot.Head)
-                        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SlotTypes, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+                        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SlotTypes, WardrobeUI.LastPos, WardrobeUI.LastSize,
                             () =>
                             {
                                 if (_manager.ItemInEditor.RestraintSlots[slot] is RestraintSlotBasic basicSlot) // swap it to advanced slot here if we can.
@@ -68,6 +68,8 @@ public class RestraintEditorEquipment : IFancyTab
                             });
                 }
             }
+            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Importing, WardrobeUI.LastPos, WardrobeUI.LastSize, 
+                    () => ImportEquipment());
 
             ImGui.SameLine(0, ImGui.GetStyle().WindowPadding.X);
             // Draw out one area for the accessories. (And glasses management.)
@@ -88,7 +90,7 @@ public class RestraintEditorEquipment : IFancyTab
                 _equipDrawer.DrawGlassesSlot(_manager.ItemInEditor.Glasses, innerWidth);
             }
         }
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EquipSlots, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EquipSlots, WardrobeUI.LastPos, WardrobeUI.LastSize);
     }
 
     private void ImportEquipment()

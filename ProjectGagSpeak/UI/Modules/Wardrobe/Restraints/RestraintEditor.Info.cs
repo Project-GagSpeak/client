@@ -35,9 +35,8 @@ public class RestraintEditorInfo : IFancyTab
 
         DrawDescription();
         _attributeDrawer.DrawAttributesChild(item, width, 8, Traits.All);
-        // try to attach these to the relevant part of the panel later...
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.HardcoreTraits, ImGui.GetWindowPos(), ImGui.GetWindowSize());
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Arousal, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.HardcoreTraits, WardrobeUI.LastPos, WardrobeUI.LastSize);
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Arousal, WardrobeUI.LastPos, WardrobeUI.LastSize,
             () => FancyTabBar.SelectTab("RS_EditBar", RestraintsPanel.EditorTabs[1], RestraintsPanel.EditorTabs));
     }
 

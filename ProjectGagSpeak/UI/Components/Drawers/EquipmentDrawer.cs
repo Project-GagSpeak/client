@@ -10,6 +10,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.CustomCombos.Glamourer;
+using GagSpeak.Gui.Wardrobe;
 using GagSpeak.Interop;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
@@ -161,9 +162,9 @@ public class EquipmentDrawer
                 basicSlot.ApplyFlags ^= RestraintFlags.IsOverlay;
         if (basicSlot.EquipSlot == EquipSlot.Body)
         {
-            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Overlay, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Overlay, WardrobeUI.LastPos, WardrobeUI.LastSize,
                 () => basicSlot.ApplyFlags ^= RestraintFlags.IsOverlay);
-            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.OverlayBuffer, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.OverlayBuffer, WardrobeUI.LastPos, WardrobeUI.LastSize,
                 () => FancyTabBar.SelectTab("RS_EditBar", Wardrobe.RestraintsPanel.EditorTabs[2], Wardrobe.RestraintsPanel.EditorTabs));
         }
 

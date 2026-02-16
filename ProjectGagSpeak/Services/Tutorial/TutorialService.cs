@@ -94,7 +94,7 @@ public class TutorialService
         .AddStep(mainUiStr.Step4Title, mainUiStr.Step4Desc, mainUiStr.Step4DescExtended)
         .AddStep(mainUiStr.Step5Title, mainUiStr.Step5Desc, mainUiStr.Step5DescExtended)
         .AddStep(mainUiStr.Step6Title, mainUiStr.Step6Desc, mainUiStr.Step6DescExtended)
-        // Fix later - adjust steps in lang.
+        .AddStep(mainUiStr.Step7Title, mainUiStr.Step7Desc, mainUiStr.Step7DescExtended)
         .AddStep(mainUiStr.Step8Title, mainUiStr.Step8Desc, mainUiStr.Step8DescExtended)
         .AddStep(mainUiStr.Step9Title, mainUiStr.Step9Desc, mainUiStr.Step9DescExtended)
         .AddStep(mainUiStr.Step10Title, mainUiStr.Step10Desc, mainUiStr.Step10DescExtended)
@@ -107,6 +107,7 @@ public class TutorialService
         .AddStep(mainUiStr.Step17Title, mainUiStr.Step17Desc, mainUiStr.Step17DescExtended)
         .AddStep(mainUiStr.Step18Title, mainUiStr.Step18Desc, mainUiStr.Step18DescExtended)
         .AddStep(mainUiStr.Step19Title, mainUiStr.Step19Desc, mainUiStr.Step19DescExtended)
+        .AddStep(mainUiStr.Step20Title, mainUiStr.Step20Desc, mainUiStr.Step20DescExtended)
         .AddStep(mainUiStr.Step21Title, mainUiStr.Step21Desc, mainUiStr.Step21DescExtended)
         .AddStep(mainUiStr.Step22Title, mainUiStr.Step22Desc, mainUiStr.Step22DescExtended)
         .AddStep(mainUiStr.Step23Title, mainUiStr.Step23Desc, mainUiStr.Step23DescExtended)
@@ -149,8 +150,8 @@ public class TutorialService
         .AddStep(restraintsStr.Step11Title, restraintsStr.Step11Desc, restraintsStr.Step11DescExtended)
         .AddStep(restraintsStr.Step12Title, restraintsStr.Step12Desc, restraintsStr.Step12DescExtended)
         .AddStep(restraintsStr.Step13Title, restraintsStr.Step13Desc, restraintsStr.Step13DescExtended)
-        .AddStep(restraintsStr.Step13Title, restraintsStr.Step13Desc, restraintsStr.Step13DescExtended) // buffer step, uses same text as previous
         .AddStep(restraintsStr.Step14Title, restraintsStr.Step14Desc, restraintsStr.Step14DescExtended)
+        .AddStep(restraintsStr.Step14Title, restraintsStr.Step14Desc, restraintsStr.Step14DescExtended) // buffer step
         .AddStep(restraintsStr.Step15Title, restraintsStr.Step15Desc, restraintsStr.Step15DescExtended)
         .AddStep(restraintsStr.Step16Title, restraintsStr.Step16Desc, restraintsStr.Step16DescExtended)
         .AddStep(restraintsStr.Step17Title, restraintsStr.Step17Desc, restraintsStr.Step17DescExtended)

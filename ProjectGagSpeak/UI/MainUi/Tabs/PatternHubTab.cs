@@ -45,7 +45,7 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
         {
             DrawSearchFilter();
         }
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternSearch, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternSearch, MainUI.LastPos, MainUI.LastSize);
         ImGui.Separator();
         // draw the results if there are any.
         if (_shareHub.LatestPatternResults.Count <= 0)

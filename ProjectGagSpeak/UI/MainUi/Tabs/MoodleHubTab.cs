@@ -41,31 +41,36 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
     {
         CkGui.FontTextCentered("Database Broken Due", UiFontService.Default150Percent, CkCol.TriStateCross.Uint());
         CkGui.FontTextCentered("To Moodles Changes", UiFontService.Default150Percent, CkCol.TriStateCross.Uint());
-        using var disabled = ImRaii.Disabled();
-
-        // Handle grabbing new info from the server if none is present. (not the most elegent but it works)
-        if (!_shareHub.InitialMoodlesCall && !UiService.DisableUI)
-            UiService.SetUITask(_shareHub.SearchMoodles());
-
-        using (ImRaii.Group())
+        using (ImRaii.Disabled())
         {
-            DrawSearchFilter();
+
+            // Handle grabbing new info from the server if none is present. (not the most elegent but it works)
+            if (!_shareHub.InitialMoodlesCall && !UiService.DisableUI)
+                UiService.SetUITask(_shareHub.SearchMoodles());
+
+            using (ImRaii.Group())
+            {
+                DrawSearchFilter();
+            }
         }
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.MoodleSearch, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.MoodleSearch, MainUI.LastPos, MainUI.LastSize);
 
-        ImGui.Separator();
-
-        // draw the results if there are any.
-        if (_shareHub.LatestMoodleResults.Count <= 0)
+        using (ImRaii.Disabled())
         {
-            ImGui.Spacing();
-            ImGuiUtil.Center("Search something to find results!");
-            return;
-        }
+            ImGui.Separator();
 
-        using (ImRaii.Child("ResultListGuard", ImGui.GetContentRegionAvail(), false, WFlags.NoScrollbar))
-            DrawResultList();
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.MoodleResults, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+            // draw the results if there are any.
+            if (_shareHub.LatestMoodleResults.Count <= 0)
+            {
+                ImGui.Spacing();
+                ImGuiUtil.Center("Search something to find results!");
+                return;
+            }
+
+            using (ImRaii.Child("ResultListGuard", ImGui.GetContentRegionAvail(), false, WFlags.NoScrollbar))
+                DrawResultList();
+        }
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.MoodleResults, MainUI.LastPos, MainUI.LastSize,
             () => _tabMenu.TabSelection = MainMenuTabs.SelectedTab.GlobalChat);
     }
 

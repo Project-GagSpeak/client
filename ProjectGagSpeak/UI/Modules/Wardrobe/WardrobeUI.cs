@@ -46,6 +46,10 @@ public class WardrobeUI : WindowMediatorSubscriberBase
             .Build();
     }
 
+    // Used for tutorial popups
+    public static Vector2 LastPos = Vector2.Zero;
+    public static Vector2 LastSize = Vector2.Zero;
+
     private WardrobeTabs _tabMenu { get; init; }
     private bool ThemePushed = false;
 
@@ -83,6 +87,9 @@ public class WardrobeUI : WindowMediatorSubscriberBase
             DrawCollarLayout();
         else
             DrawNormalLayout();
+
+        LastPos = ImGui.GetWindowPos();
+        LastSize = ImGui.GetWindowSize();
     }
 
     private void DrawCollarLayout()

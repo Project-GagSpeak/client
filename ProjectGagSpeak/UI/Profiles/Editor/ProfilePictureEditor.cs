@@ -1,5 +1,6 @@
 using CkCommons.Gui;
 using CkCommons.Helpers;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Textures.TextureWraps; // This is discouraged, try and look into better way to do it later.
 using Dalamud.Interface.Utility;
@@ -7,10 +8,10 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
+using GagSpeak.Services.Tutorial;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Network;
-using Dalamud.Bindings.ImGui;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
@@ -23,6 +24,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
     private readonly UiFileDialogService _dialogService;
     private readonly KinkPlateService _KinkPlateManager;
     private readonly CosmeticService _cosmetics;
+    private readonly TutorialService _guides;
 
     public ProfilePictureEditor(
         ILogger<ProfilePictureEditor> logger,
@@ -30,7 +32,8 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
         MainHub hub,
         UiFileDialogService dialogService,
         KinkPlateService KinkPlateManager,
-        CosmeticService cosmetics) : base(logger, mediator, "Edit KinkPlate Pic###KP_PFP_UI")
+        CosmeticService cosmetics,
+        TutorialService guides) : base(logger, mediator, "Edit KinkPlate Pic###KP_PFP_UI")
     {
         IsOpen = false;
         Size = new(768, 600);
@@ -41,7 +44,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
         _dialogService = dialogService;
         _KinkPlateManager = KinkPlateManager;
         _cosmetics = cosmetics;
-
+        _guides = guides;
 
         Mediator.Subscribe<DisconnectedMessage>(this, (_) => IsOpen = false);
     }
@@ -123,6 +126,8 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
             if (CkGui.IconTextButton(FAI.FileUpload, "Upload new profile picture", width))
                 HandleFileDialog();
             CkGui.AttachToolTip("Select and upload a new profile picture");
+            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileEditImage, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+                    () => Mediator.Publish(new UiToggleMessage(typeof(ProfilePictureEditor))));
 
             // let them clean their image too if they desire.
             if (CkGui.IconTextButton(FAI.Trash, "Clear uploaded profile picture", width, disabled: !KeyMonitor.ShiftPressed()))

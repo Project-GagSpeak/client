@@ -87,7 +87,7 @@ public class RestraintEditorLayers : IFancyTab
                 x.AcceptDraw();
             }
         }
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Layers, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Layers, WardrobeUI.LastPos, WardrobeUI.LastSize);
     }
 
     private void DrawExistingLayer(IRestraintLayer layer, int idx, float totalWidth) 
@@ -180,9 +180,9 @@ public class RestraintEditorLayers : IFancyTab
                 CkGui.AttachToolTip("Swap layer type to Mod Preset Layer. (Hold Shift)");
                 if (idx == 0) // this only needs to attach to the first layer item.
                 {
-                    _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.LayerTypes, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+                    _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.LayerTypes, WardrobeUI.LastPos, WardrobeUI.LastSize,
                         () => _manager.ItemInEditor!.Layers[idx] = layer is RestrictionLayer ? new ModPresetLayer() : new RestrictionLayer());
-                    _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.LayerTypesBuffer, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+                    _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.LayerTypesBuffer, WardrobeUI.LastPos, WardrobeUI.LastSize,
                         () => FancyTabBar.SelectTab("RS_EditBar", RestraintsPanel.EditorTabs[3], RestraintsPanel.EditorTabs));
                 }
                     ImUtf8.SameLineInner();
@@ -212,7 +212,7 @@ public class RestraintEditorLayers : IFancyTab
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - buttonSize - ImGui.GetStyle().ItemSpacing.X);
             if (CkGui.IconTextButton(FAI.Plus, "New Layer", isInPopup: true))
                 _manager.ItemInEditor!.Layers.Add(new RestrictionLayer());
-            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.AddingLayers, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.AddingLayers, WardrobeUI.LastPos, WardrobeUI.LastSize,
                 () =>
                 {
                     _manager.ItemInEditor!.Layers.Add(new RestrictionLayer());
