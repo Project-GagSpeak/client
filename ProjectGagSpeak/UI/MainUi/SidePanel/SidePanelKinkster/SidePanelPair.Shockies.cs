@@ -124,7 +124,6 @@ public partial class SidePanelPair
     private async Task SyncPermissionsWithCode(string code, Kinkster k)
     {
         var newShockPerms = await _shockies.GetPermissionsFromCode(code);
-        Svc.Logger.Info($"SyncPermissionsWithCode BEFORE: {k.OwnPerms}");
         var newPerms = k.OwnPerms with
         {
             PiShockShareCode = code,
@@ -134,7 +133,6 @@ public partial class SidePanelPair
             MaxDuration = newShockPerms.MaxDuration,
             MaxIntensity = newShockPerms.MaxIntensity
         };
-        Svc.Logger.Info($"SyncPermissionsWithCode AFTER: {newPerms}");
         // push update
         await _hub.UserBulkChangeUnique(new(k.UserData, newPerms, k.OwnPermAccess, UpdateDir.Own, MainHub.OwnUserData));
     }
