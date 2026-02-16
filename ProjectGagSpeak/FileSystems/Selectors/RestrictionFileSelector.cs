@@ -54,8 +54,9 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
         UnsubscribeRightClickLeaf(RenameLeaf);
         // Subscribe to the rename Restriction.
         SubscribeRightClickLeaf(RenameRestriction);
-
     }
+
+    public override ISortMode<RestrictionItem> SortMode => new RestrictionSorter();
 
     private void RenameRestriction(RestrictionFileSystem.Leaf leaf)
     {
@@ -103,7 +104,8 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
         }
 
         ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
-        Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restriction, leaf.Value.Identifier);
+        if (Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restriction, leaf.Value.Identifier))
+            SetFilterDirty();
         CkGui.TextFrameAlignedInline(leaf.Value.Label);
         // Only draw the deletion if the item is not active or occupied.
         if(!_manager.IsItemApplied(leaf.Value.Identifier))
@@ -199,6 +201,20 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
 
         ImGui.CloseCurrentPopup();
         return true;
+    }
+
+    // Placeholder until we Integrate the DynamicSorter
+    private struct RestrictionSorter : ISortMode<RestrictionItem>
+    {
+        public string Name
+            => "Restriction Sorter";
+
+        public string Description
+            => "Sort all Restrictions by their name, with favorites first.";
+
+        public IEnumerable<CkFileSystem<RestrictionItem>.IPath> GetChildren(CkFileSystem<RestrictionItem>.Folder folder)
+            => folder.GetSubFolders().Cast<CkFileSystem<RestrictionItem>.IPath>()
+                .Concat(folder.GetLeaves().OrderByDescending(l => FavoritesConfig.Restrictions.Contains(l.Value.Identifier)));
     }
 }
 

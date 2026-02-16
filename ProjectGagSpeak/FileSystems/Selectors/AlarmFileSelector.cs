@@ -47,6 +47,8 @@ public sealed class AlarmFileSelector : CkFileSystemSelector<Alarm, AlarmFileSel
         SubscribeRightClickLeaf(RenameAlarm);
     }
 
+    public override ISortMode<Alarm> SortMode => new AlarmSorter();
+
     private void RenameAlarm(AlarmFileSystem.Leaf leaf)
     {
         ImGui.Separator();
@@ -93,7 +95,8 @@ public sealed class AlarmFileSelector : CkFileSystemSelector<Alarm, AlarmFileSel
         }
 
         ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
-        Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Alarm, leaf.Value.Identifier);
+        if (Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Alarm, leaf.Value.Identifier))
+            SetFilterDirty();
         CkGui.TextFrameAlignedInline(leaf.Value.Label);
         // Only draw the deletion if the item is not active or occupied.
         if (!_manager.ActiveAlarms.Contains(leaf.Value))
@@ -146,6 +149,20 @@ public sealed class AlarmFileSelector : CkFileSystemSelector<Alarm, AlarmFileSel
 
         _manager.CreateNew(_newName);
         _newName = string.Empty;
+    }
+
+    // Placeholder until we Integrate the DynamicSorter
+    private struct AlarmSorter : ISortMode<Alarm>
+    {
+        public string Name
+            => "Alarm Sorter";
+
+        public string Description
+            => "Sort all alarms by their name, with favorites first.";
+
+        public IEnumerable<CkFileSystem<Alarm>.IPath> GetChildren(CkFileSystem<Alarm>.Folder folder)
+            => folder.GetSubFolders().Cast<CkFileSystem<Alarm>.IPath>()
+                .Concat(folder.GetLeaves().OrderByDescending(l => FavoritesConfig.Alarms.Contains(l.Value.Identifier)));
     }
 }
 

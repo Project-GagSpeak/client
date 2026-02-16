@@ -33,16 +33,11 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
     /// We will find out later if anything.
     /// </summary>
     /// <remarks> This allows each item in here to be accessed efficiently at runtime during the draw loop. </remarks>
-    public record struct RestraintSetState(uint Color) { }
+    public record struct RestraintSetState(uint Color)
+    { }
 
-
-    // Helper operations used for creating new items and cloning them.
-    // private RestraintSet? _clonedRestraintSet; // This will be done via the right click menu later so it will go away probably.
-
-
-    /// <summary> This is the currently selected leaf in the file system. </summary>
     public new RestraintSetFileSystem.Leaf? SelectedLeaf
-    => base.SelectedLeaf;
+        => base.SelectedLeaf;
 
     public RestraintSet tutorialSet { get; private set; }
 
@@ -57,6 +52,8 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
 
         Mediator.Subscribe<ConfigRestraintSetChanged>(this, (msg) => OnRestraintSetChange(msg.Type, msg.Item, msg.OldString));
     }
+
+    public override ISortMode<RestraintSet> SortMode => new RestraintSetSorter();
 
     private void RenameLeafRestraintSet(RestraintSetFileSystem.Leaf leaf)
     {
@@ -124,7 +121,8 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
             ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
             using (ImRaii.Group())
             {
-                Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restraint, leaf.Value.Identifier);
+                if (Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restraint, leaf.Value.Identifier))
+                    SetFilterDirty();
                 CkGui.TextFrameAlignedInline(leaf.Name, false);
                 // below, in a darker text, draw out the description, up to 100 characters.
                 if(leaf.Value.Description.IsNullOrWhitespace())
@@ -198,6 +196,20 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
 
         _manager.CreateNew(_newName);
         _newName = string.Empty;
+    }
+
+    // Placeholder until we Integrate the DynamicSorter
+    private struct RestraintSetSorter : ISortMode<RestraintSet>
+    {
+        public string Name
+            => "RestraintSet Sorter";
+
+        public string Description
+            => "Sort all RestraintSets by their name, with favorites first.";
+
+        public IEnumerable<CkFileSystem<RestraintSet>.IPath> GetChildren(CkFileSystem<RestraintSet>.Folder folder)
+            => folder.GetSubFolders().Cast<CkFileSystem<RestraintSet>.IPath>()
+                .Concat(folder.GetLeaves().OrderByDescending(l => FavoritesConfig.Restraints.Contains(l.Value.Identifier)));
     }
 }
 

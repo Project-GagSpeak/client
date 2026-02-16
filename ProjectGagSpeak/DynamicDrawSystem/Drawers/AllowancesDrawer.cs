@@ -44,7 +44,7 @@ public sealed class AllowancesDrawer : DynamicDrawer<Kinkster>
 
     public AllowancesDrawer(AllowancesConfig config, FavoritesConfig favorites,
         KinksterManager kinksters, WhitelistDrawSystem ds)
-        : base("##GSAlllowanceDrawer", Svc.Logger.Logger, ds, new KinksterFolderCache(ds))
+        : base("##GSAlllowanceDrawer", Svc.Logger.Logger, ds, new WhitelistCache(ds))
     {
         _config    = config;
         _favorites = favorites;

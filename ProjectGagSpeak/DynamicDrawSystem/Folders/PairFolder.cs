@@ -31,8 +31,20 @@ public sealed class PairFolder : DynamicFolder<Kinkster>
         BorderColor = ImGui.GetColorU32(ImGuiCol.TextDisabled);
         _generator = generator;
     }
+    public PairFolder(DynamicFolderGroup<Kinkster> parent, uint id, FAI icon, string name,
+        uint iconColor, Func<IReadOnlyList<Kinkster>> generator, DynamicSorter<DynamicLeaf<Kinkster>> sorter)
+        : base(parent, icon, name, id, sorter)
+    {
+        // Can set stylizations here.
+        NameColor = uint.MaxValue;
+        IconColor = iconColor;
+        BgColor = uint.MinValue;
+        BorderColor = ImGui.GetColorU32(ImGuiCol.TextDisabled);
+        _generator = generator;
+    }
 
-    public int Rendered => Children.Count((Func<DynamicLeaf<Kinkster>, bool>)(s => (bool)s.Data.IsRendered));
+
+    public int Rendered => Children.Count(s => s.Data.IsRendered);
     public int Online => Children.Count(s => s.Data.IsOnline);
     protected override IReadOnlyList<Kinkster> GetAllItems() => _generator();
     protected override DynamicLeaf<Kinkster> ToLeaf(Kinkster item) => new(this, item.UserData.UID, item);

@@ -49,12 +49,13 @@ public class SettingsUi : WindowMediatorSubscriberBase
         this.PinningClickthroughFalse();
         this.SetBoundaries(new Vector2(625, 400), ImGui.GetIO().DisplaySize);
 
-        TitleBarButtons = new TitleBarButtonBuilder()
-            .Add(FAI.Tshirt, "Open Active State Debugger", () => Mediator.Publish(new UiToggleMessage(typeof(DebugActiveStateUI))))
+        TitleBarButtons = new TitleBarButtonBuilder() 
+            .Add(FAI.Tshirt, "Open Active State Debugg er", () => Mediator.Publish(new UiToggleMessage(typeof(DebugActiveStateUI))))
 #if DEBUG
             .Add(FAI.PersonRays, "Open Personal Data Debugger", () => Mediator.Publish(new UiToggleMessage(typeof(DebugPersonalDataUI))))
             .Add(FAI.Database, "Open Storages Debugger", () => Mediator.Publish(new UiToggleMessage(typeof(DebugStorageUI))))
 #endif
+            .Add(FAI.Bell, "Actions Notifier", () => Mediator.Publish(new UiToggleMessage(typeof(InteractionEventsUI))))
             .Build();
     }
 
@@ -153,10 +154,11 @@ public class SettingsUi : WindowMediatorSubscriberBase
         ImGui.SetCursorPos(buttonPos);
         using (ImRaii.Group())
         {
+#if DEBUG
             if (CkGui.FancyButton(FAI.Palette, "Style Editor", 150f, false))
                 Mediator.Publish(new UiToggleMessage(typeof(StyleEditorUI)));
             CkGui.AttachToolTip("Edit GagSpeak Style, Create Themes, and Import them for editor styles!");
-
+#endif
             if (CkGui.FancyButton(FAI.Folder, "Plugin Config", 150f, false))
             {
                 try { Process.Start(new ProcessStartInfo { FileName = ConfigFileProvider.GagSpeakDirectory, UseShellExecute = true }); }

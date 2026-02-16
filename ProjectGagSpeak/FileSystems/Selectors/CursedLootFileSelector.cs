@@ -57,6 +57,8 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
         SubscribeRightClickLeaf(RenameCursedItem);
     }
 
+    public override ISortMode<CursedItem> SortMode => new CursedLootSorter();
+
     private void DissolveLeafOption(CursedLootFileSystem.Leaf leaf)
     {
         // Some logic here to remove a leaf from its current folders to the root folder.
@@ -146,7 +148,8 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
             ImUtf8.SameLineInner();
             using (ImRaii.Group())
             {
-                Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.CursedLoot, leaf.Value.Identifier, false);
+                if (Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.CursedLoot, leaf.Value.Identifier, false))
+                    SetFilterDirty();
                 keyElementHovered = ImGui.IsItemHovered();
                 CkGui.TextInline(leaf.Value.Label);
 
@@ -230,6 +233,20 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
 
         _manager.CreateNew(_newName);
         _newName = string.Empty;
+    }
+
+    // Placeholder until we Integrate the DynamicSorter
+    private struct CursedLootSorter : ISortMode<CursedItem>
+    {
+        public string Name
+            => "Cursed Loot Sorter";
+
+        public string Description
+            => "Sort all cursed loot by their name, with favorites first.";
+
+        public IEnumerable<CkFileSystem<CursedItem>.IPath> GetChildren(CkFileSystem<CursedItem>.Folder folder)
+            => folder.GetSubFolders().Cast<CkFileSystem<CursedItem>.IPath>()
+                .Concat(folder.GetLeaves().OrderByDescending(l => FavoritesConfig.CursedLoot.Contains(l.Value.Identifier)));
     }
 }
 

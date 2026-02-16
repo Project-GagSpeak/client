@@ -14,7 +14,7 @@ namespace GagSpeak;
 /// <summary> Handles all of the commands that are used in the plugin. </summary>
 public sealed class CommandManager : IDisposable
 {
-    private const string MainCommand = "/gagspeak";
+    private const string MainCommand = "/gspeak";
     private const string SafewordCommand = "/safeword";
     private const string SafewordHardcoreCommand = "/safewordhardcore";
     private const string DeathRollShortcutCommand = "/dr";
@@ -193,13 +193,13 @@ public sealed class CommandManager : IDisposable
         {
             PrintHelpToChat();
         }
-    }
+    } 
 
     private void PrintHelpToChat()
     {
         Svc.Chat.Print(new SeStringBuilder().AddYellow(" -- Gagspeak Commands --").BuiltString);
-        Svc.Chat.Print(new SeStringBuilder().AddCommand("/gagspeak", "Toggles the primary UI").BuiltString);
-        Svc.Chat.Print(new SeStringBuilder().AddCommand("/gagspeak settings", "Toggles the settings UI window.").BuiltString);
+        Svc.Chat.Print(new SeStringBuilder().AddCommand("/gspeak", "Toggles the primary UI").BuiltString);
+        Svc.Chat.Print(new SeStringBuilder().AddCommand("/gspeak settings", "Toggles the settings UI window.").BuiltString);
         Svc.Chat.Print(new SeStringBuilder().AddCommand("/safeword", "Cries out your safeword, disabling any active restrictions.").BuiltString);
         Svc.Chat.Print(new SeStringBuilder().AddCommand("/safewordhardcore", "Cries out your hardcore safeword, disabling any hardcore restrictions.").BuiltString);
         Svc.Chat.Print(new SeStringBuilder().AddCommand("/dr", "Begins a DeathRoll. '/dr r' responds to the last seen or interacted DeathRoll").BuiltString);

@@ -53,6 +53,8 @@ public sealed class AliasesFileSelector : CkFileSystemSelector<AliasTrigger, Ali
         SubscribeRightClickLeaf(RenameAlias);
     }
 
+    public override ISortMode<AliasTrigger> SortMode => new AliasSorter();
+
     private void DissolveLeafOption(AliasesFileSystem.Leaf leaf)
     {
         // Some logic here to remove a leaf from its current folders to the root folder.
@@ -103,7 +105,8 @@ public sealed class AliasesFileSelector : CkFileSystemSelector<AliasTrigger, Ali
         // Begin drawing out the contents.
         using (ImRaii.Group())
         {
-            Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Alias, leaf.Value.Identifier, false);
+            if (Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Alias, leaf.Value.Identifier, false))
+                SetFilterDirty();
             keyElementHovered |= ImGui.IsItemHovered();
             CkGui.TextInline(leaf.Value.Label);
 
@@ -193,6 +196,20 @@ public sealed class AliasesFileSelector : CkFileSystemSelector<AliasTrigger, Ali
 
         _manager.CreateNew(_newName);
         _newName = string.Empty;
+    }
+
+    // Placeholder until we Integrate the DynamicSorter
+    private struct AliasSorter : ISortMode<AliasTrigger>
+    {
+        public string Name
+            => "Alias Sorter";
+
+        public string Description
+            => "Sort all alarms by their name, with favorites first.";
+
+        public IEnumerable<CkFileSystem<AliasTrigger>.IPath> GetChildren(CkFileSystem<AliasTrigger>.Folder folder)
+            => folder.GetSubFolders().Cast<CkFileSystem<AliasTrigger>.IPath>()
+                .Concat(folder.GetLeaves().OrderByDescending(l => FavoritesConfig.Aliases.Contains(l.Value.Identifier)));
     }
 }
 

@@ -15,6 +15,8 @@ public class WhitelistDrawSystem : DynamicDrawSystem<Kinkster>, IMediatorSubscri
     private readonly KinksterManager _kinksters;
     private readonly HybridSaveService _hybridSaver;
 
+    private readonly object _folderUpdateLock = new();
+
     public GagspeakMediator Mediator { get; init; }
 
     public WhitelistDrawSystem(ILogger<WhitelistDrawSystem> logger, GagspeakMediator mediator,
@@ -29,9 +31,9 @@ public class WhitelistDrawSystem : DynamicDrawSystem<Kinkster>, IMediatorSubscri
         // Load the hierarchy and initialize the folders.
         LoadData();
 
-        Mediator.Subscribe<FolderUpdateKinkster>(this, _ => UpdateFolders());
-        Mediator.Subscribe<KinksterPlayerRendered>(this, _ => UpdateFolder(Constants.FolderTagVisible));
-        Mediator.Subscribe<KinksterPlayerUnrendered>(this, _ => UpdateFolder(Constants.FolderTagVisible));
+        Mediator.Subscribe<FolderUpdateKinkster>(this, _ => { lock (_folderUpdateLock) UpdateFolders(); });
+        Mediator.Subscribe<KinksterPlayerRendered>(this, _ => { lock (_folderUpdateLock) UpdateFolder(Constants.FolderTagVisible); });
+        Mediator.Subscribe<ConnectedMessage>(this, _ => { lock (_folderUpdateLock) UpdateFolders(); });
 
         // Subscribe to the changes (which is to change very, very soon, with overrides.
         DDSChanged += OnChange;
@@ -71,6 +73,13 @@ public class WhitelistDrawSystem : DynamicDrawSystem<Kinkster>, IMediatorSubscri
             _logger.LogInformation("WhitelistDrawSystem folder structure changed on load, saving updated structure.");
             _hybridSaver.Save(this);
         }
+        // See if the file doesnt exist, if it does not, load defaults.
+        else if (!File.Exists(_hybridSaver.FileNames.DDS_Whitelist))
+        {
+            _logger.LogInformation("Loading Defaults and saving.");
+            EnsureAllFolders(new Dictionary<string, string>());
+            _hybridSaver.Save(this);
+        }
     }
 
     protected override bool EnsureAllFolders(Dictionary<string, string> _)
@@ -92,7 +101,8 @@ public class WhitelistDrawSystem : DynamicDrawSystem<Kinkster>, IMediatorSubscri
             if (FolderMap.ContainsKey(Constants.FolderTagVisible))
                 return false;
             // Try to add it.
-            return TryAdd(FAI.Eye, Constants.FolderTagVisible, CkCol.TriStateCheck.Uint(), () => [.. _kinksters.DirectPairs.Where(u => u.IsRendered && u.IsOnline)]);
+            return AddFolder(new PairFolder(root, idCounter + 1u, FAI.Eye, Constants.FolderTagVisible, CkCol.TriStateCheck.Uint(),
+                () => [.. _kinksters.DirectPairs.Where(u => u.IsRendered && u.IsOnline)], GetDefaultSorter()));
         }
         // Otherwise attempt to remove it.
         return Delete(Constants.FolderTagVisible);
@@ -106,24 +116,36 @@ public class WhitelistDrawSystem : DynamicDrawSystem<Kinkster>, IMediatorSubscri
         // If we wanted to show offline/online..
         if (showFolder)
         {
+            var sorter = GetDefaultSorter();
             anyChanges |= Delete(Constants.FolderTagAll);
-            anyChanges |= TryAdd(FAI.Link, Constants.FolderTagOnline, CkCol.TriStateCheck.Uint(), () => [.. _kinksters.DirectPairs.Where(s => s.IsOnline)]);
-            anyChanges |= TryAdd(FAI.Link, Constants.FolderTagOffline, CkCol.TriStateCross.Uint(), () => [.. _kinksters.DirectPairs.Where(s => !s.IsOnline)]);
+            anyChanges |= AddFolder(new PairFolder(root, idCounter + 1u, FAI.Link, Constants.FolderTagOnline, CkCol.TriStateCheck.Uint(), () => [.. _kinksters.DirectPairs.Where(s => s.IsOnline)], new(sorter)));
+            anyChanges |= AddFolder(new PairFolder(root, idCounter + 1u, FAI.Link, Constants.FolderTagOffline, CkCol.TriStateCross.Uint(), () => [.. _kinksters.DirectPairs.Where(s => !s.IsOnline)], new(sorter)));
         }
         // Otherwise we wanted to only show ALL.
         else
         {
+            var sorter = GetDefaultSorter();
+            sorter.Prepend(SorterEx.ByRendered);
+            sorter.Prepend(SorterEx.ByOnline);
+
             anyChanges |= Delete(Constants.FolderTagOnline);
             anyChanges |= Delete(Constants.FolderTagOffline);
-            anyChanges |= AddFolder(new PairFolder(root, idCounter + 1u, FAI.Globe, Constants.FolderTagAll,
-                                        uint.MaxValue, () => _kinksters.DirectPairs, SorterEx.AllFolderSorter));
+            anyChanges |= AddFolder(new PairFolder(root, idCounter + 1u, FAI.Globe, Constants.FolderTagAll, uint.MaxValue, () => _kinksters.DirectPairs, sorter));
         }
         // Return if anything was modified.
         return anyChanges;
     }
 
-    private bool TryAdd(FAI icon, string name, uint iconColor, Func<IReadOnlyList<Kinkster>> generator)
-        => AddFolder(new PairFolder(root, idCounter + 1u, icon, name, iconColor, generator, [SorterEx.ByPairName]));
+    public void UpdateFilters()
+    {
+        var sorter = GetDefaultSorter();
+        // Update all children to be either favorites first or not.
+        foreach (var folder in Root.Children.OfType<PairFolder>())
+            SetSorterSteps(folder, sorter);
+    }
+
+    private IReadOnlyList<ISortMethod<DynamicLeaf<Kinkster>>> GetDefaultSorter()
+        => _config.Current.PrioritizeFavorites ? [SorterEx.ByFavorite, SorterEx.ByPairName] : [SorterEx.ByPairName];
 
     // HybridSavable
     public int ConfigVersion => 0;

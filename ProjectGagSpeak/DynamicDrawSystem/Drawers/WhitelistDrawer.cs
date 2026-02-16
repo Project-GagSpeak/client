@@ -8,14 +8,15 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Kinksters;
-using OtterGui.Text;
 using GagSpeak.Gui.MainWindow;
+using GagSpeak.Kinksters;
 using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Utils;
+using OtterGui.Text;
+using System.Linq;
 
 namespace GagSpeak.DrawSystem;
 
@@ -39,13 +40,7 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
     private readonly WhitelistDrawSystem _drawSystem;
     private readonly SidePanelService _stickyService;
 
-    // If the FilterRow is to be expanded.
-    private bool _configExpanded = false;
-
-    // private vars for renaming items.
-    private HashSet<IDynamicNode<Kinkster>> _showingUID = new(); // Nodes in here show UID.
-    private IDynamicNode<Kinkster>?         _renaming   = null;
-    private string                          _nameEditStr= string.Empty; // temp nick text.
+    private WhitelistCache _cache => (WhitelistCache)FilterCache;
 
     // Popout Tracking.
     private IDynamicNode? _hoveredTextNode;     // From last frame.
@@ -55,7 +50,7 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
 
     public WhitelistDrawer(GagspeakMediator mediator, MainConfig config, FavoritesConfig favorites,
         NicksConfig nicks, KinksterManager kinksters, SidePanelService stickyService, WhitelistDrawSystem ds)
-        : base("##GSWhitelistDrawer", Svc.Logger.Logger, ds, new KinksterFolderCache(ds))
+        : base("##GSWhitelistDrawer", Svc.Logger.Logger, ds, new WhitelistCache(ds))
     {
         _mediator = mediator;
         _config = config;
@@ -70,26 +65,27 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
     protected override void DrawSearchBar(float width, int length)
     {
         var tmp = FilterCache.Filter;
-        if (FancySearchBar.Draw("Filter", width, ref tmp, "filter..", length, CkGui.IconButtonSize(FAI.Cog).X, DrawButtons))
+        // Update the search bar if things change, like normal.
+        if (FancySearchBar.Draw("Filter", width, ref tmp, "filter..", length, CkGui.IconTextButtonSize(FAI.Cog, "Settings"), DrawButtons))
             FilterCache.Filter = tmp;
 
         // If the config is expanded, draw that.
-        if (_configExpanded)
+        if (_cache.FilterConfigOpen)
             DrawFilterConfig(width);
+
+        void DrawButtons()
+        {
+            if (CkGui.IconTextButton(FAI.Cog, "Settings", isInPopup: !_cache.FilterConfigOpen))
+                _cache.FilterConfigOpen = !_cache.FilterConfigOpen;
+            CkGui.AttachToolTip("Configure preferences for folders.");
+        }
     }
 
     // Draws the grey line around the filtered content when expanded and stuff.
     protected override void PostSearchBar()
     {
-        if (_configExpanded)
+        if (_cache.FilterConfigOpen)
             ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), ImGui.GetColorU32(ImGuiCol.Button), 5f);
-    }
-
-    private void DrawButtons()
-    {
-        if (CkGui.IconButton(FAI.Cog, inPopup: !_configExpanded))
-            _configExpanded = !_configExpanded;
-        CkGui.AttachToolTip("Configure preferences for default folders.");
     }
     #endregion Search
 
@@ -148,7 +144,7 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
     {
         var cursorPos = ImGui.GetCursorPos();
         var size = new Vector2(CkGui.GetWindowContentRegionWidth() - cursorPos.X, ImUtf8.FrameHeight);
-        var editing = _renaming == leaf;
+        var editing = _cache.RenamingNode == leaf;
         var bgCol = (!editing && selected) ? ImGui.GetColorU32(ImGuiCol.FrameBgHovered) : 0;
         using (var _ = CkRaii.Child(Label + leaf.Name, size, bgCol, 5f))
             DrawLeafInner(leaf, _.InnerRegion, flags, editing);
@@ -213,20 +209,23 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
         }
 
         ImGui.AlignTextToFramePadding();
-        Icons.DrawFavoriteStar(_favorites, leaf.Data.UserData.UID, true);
+        // Would need to refresh all folders they are a part of since they could be in any of them.
+        // Could probably remove this after setting up a mediator call for favorite changes.
+        if (Icons.DrawFavoriteStar(_favorites, leaf.Data.UserData.UID, true))
+            _cache.MarkCacheDirty();
         return currentRightSide;
     }
 
     private void DrawNameEditor(IDynamicLeaf<Kinkster> leaf, float width)
     {
         ImGui.SetNextItemWidth(width);
-        if (ImGui.InputTextWithHint($"##{leaf.FullPath}-nick", "Give a nickname..", ref _nameEditStr, 45, ImGuiInputTextFlags.EnterReturnsTrue))
+        if (ImGui.InputTextWithHint($"##{leaf.FullPath}-nick", "Give a nickname..", ref _cache.NameEditStr, 45, ITFlags.EnterReturnsTrue))
         {
-            _nicks.SetNickname(leaf.Data.UserData.UID, _nameEditStr);
-            _renaming = null;
+            _nicks.SetNickname(leaf.Data.UserData.UID, _cache.NameEditStr);
+            _cache.RenamingNode = null;
         }
         if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-            _renaming = null;
+            _cache.RenamingNode = null;
         // Helper tooltip.
         CkGui.AttachToolTip("--COL--[ENTER]--COL-- To save" +
             "--NL----COL--[R-CLICK]--COL-- Cancel edits.", ImGuiColors.DalamudOrange);
@@ -268,11 +267,11 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
         // Assume we use mono font initially.
         var useMono = true;
         // Get if we are set to show the UID over the name.
-        var showUidOverName = _showingUID.Contains(s);
+        var showUidOverName = _cache.ShowingUID.Contains(s);
         // obtain the DisplayName (Player || Nick > Alias/UID).
         var dispName = string.Empty;
         // If we should be showing the uid, then set the display name to it.
-        if (_showingUID.Contains(s))
+        if (_cache.ShowingUID.Contains(s))
         {
             // Mono Font is enabled.
             dispName = s.Data.UserData.AliasOrUID;
@@ -306,8 +305,8 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
             // Additional, KinksterLeaf-Specific interaction handles.
             if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             {
-                if (!_showingUID.Remove(node))
-                    _showingUID.Add(node);
+                if (!_cache.ShowingUID.Remove(node))
+                    _cache.ShowingUID.Add(node);
             }
             if (ImGui.IsItemClicked(ImGuiMouseButton.Middle))
             {
@@ -315,8 +314,8 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
             }
             if (ImGui.GetIO().KeyShift && ImGui.IsItemClicked(ImGuiMouseButton.Right))
             {
-                _renaming = node;
-                _nameEditStr = node.Data.GetNickname() ?? string.Empty;
+                _cache.RenamingNode = node;
+                _cache.NameEditStr = node.Data.GetNickname() ?? string.Empty;
             }
         }
     }
@@ -335,7 +334,7 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
     #region Utility
     private void DrawFilterConfig(float width)
     {
-        var bgCol = _configExpanded ? ColorHelpers.Fade(ImGui.GetColorU32(ImGuiCol.FrameBg), 0.4f) : 0;
+        var bgCol = _cache.FilterConfigOpen ? ColorHelpers.Fade(ImGui.GetColorU32(ImGuiCol.FrameBg), 0.4f) : 0;
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - ImUtf8.ItemSpacing.Y);
         using var s = ImRaii.PushStyle(ImGuiStyleVar.CellPadding, ImGui.GetStyle().CellPadding with { Y = 0 });
         using var child = CkRaii.ChildPaddedW("BasicExpandedChild", width, CkStyle.ThreeRowHeight(), bgCol, 5f);
@@ -368,16 +367,15 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
         }
         CkGui.AttachToolTip(GSLoc.Settings.DDSPrefs.ShowOfflineSeparateTT);
 
-        var favoritesFirst = _config.Current.FavoritesFirst;
-        if (ImGui.Checkbox(GSLoc.Settings.DDSPrefs.FavoritesFirstLabel, ref favoritesFirst))
+        var useFocusTarget = _config.Current.TargetWithFocus;
+        if (ImGui.Checkbox(GSLoc.Settings.DDSPrefs.FocusTargetLabel, ref useFocusTarget))
         {
-            _config.Current.FavoritesFirst = favoritesFirst;
+            _config.Current.TargetWithFocus = useFocusTarget;
             _config.Save();
         }
-        CkGui.AttachToolTip(GSLoc.Settings.DDSPrefs.FavoritesFirstTT);
+        CkGui.AttachToolTip(GSLoc.Settings.DDSPrefs.FocusTargetTT);
 
         ImGui.TableNextColumn();
-
         var nickOverName = _config.Current.NickOverPlayerName;
         if (ImGui.Checkbox(GSLoc.Settings.DDSPrefs.PreferNicknamesLabel, ref nickOverName))
         {
@@ -386,13 +384,13 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
         }
         CkGui.AttachToolTip(GSLoc.Settings.DDSPrefs.PreferNicknamesTT);
 
-        var useFocusTarget = _config.Current.TargetWithFocus;
-        if (ImGui.Checkbox(GSLoc.Settings.DDSPrefs.FocusTargetLabel, ref useFocusTarget))
+        var prioritizeFavs = _config.Current.PrioritizeFavorites;
+        if (ImGui.Checkbox(GSLoc.Settings.DDSPrefs.FavoritesFirstLabel, ref prioritizeFavs))
         {
-            _config.Current.TargetWithFocus = useFocusTarget;
+            _config.Current.PrioritizeFavorites = prioritizeFavs;
             _config.Save();
         }
-        CkGui.AttachToolTip(GSLoc.Settings.DDSPrefs.FocusTargetTT);
+        CkGui.AttachToolTip(GSLoc.Settings.DDSPrefs.FavoritesFirstTT);
     }
     #endregion Utility
 }

@@ -28,7 +28,7 @@ public sealed class PuppeteersDrawer : DynamicDrawer<Kinkster>
     private HashSet<string> _incognitoFolders = new(StringComparer.Ordinal);
 
     public PuppeteersDrawer(GagspeakMediator mediator, FavoritesConfig favorites, PuppeteersDrawSystem ds)
-        : base("##GSPuppeteers", Svc.Logger.Logger, ds, new KinksterFolderCache(ds))
+        : base("##GSPuppeteers", Svc.Logger.Logger, ds, new WhitelistCache(ds))
     {
         _mediator = mediator;
         _favorites = favorites;

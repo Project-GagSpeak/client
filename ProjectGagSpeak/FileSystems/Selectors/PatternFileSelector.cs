@@ -4,17 +4,18 @@ using CkCommons.FileSystem.Selector;
 using CkCommons.Gui;
 using CkCommons.Helpers;
 using CkCommons.Widgets;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using Dalamud.Bindings.ImGui;
+using GagspeakAPI.Data;
 using OtterGui;
 using OtterGui.Text;
-using GagSpeak.Utils;
 
 namespace GagSpeak.FileSystems;
 
@@ -52,6 +53,8 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
         UnsubscribeRightClickLeaf(RenameLeaf);
         SubscribeRightClickLeaf(RenamePattern);
     }
+
+    public override ISortMode<Pattern> SortMode => new PatternSorter();
 
     private void RenamePattern(PatternFileSystem.Leaf leaf)
     {
@@ -109,7 +112,8 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
         }
 
         ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
-        Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Pattern, leaf.Value.Identifier);
+        if (Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Pattern, leaf.Value.Identifier))
+            SetFilterDirty();
         CkGui.TextFrameAlignedInline(leaf.Value.Label);
         if(leaf.Value.ShouldLoop)
         {
@@ -183,6 +187,20 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
 
         _manager.CreateNew(_newName);
         _newName = string.Empty;
+    }
+
+    // Placeholder until we Integrate the DynamicSorter
+    private struct PatternSorter : ISortMode<Pattern>
+    {
+        public string Name
+            => "Pattern Sorter";
+
+        public string Description
+            => "Sort all Pattern by their name, with favorites first.";
+
+        public IEnumerable<CkFileSystem<Pattern>.IPath> GetChildren(CkFileSystem<Pattern>.Folder folder)
+            => folder.GetSubFolders().Cast<CkFileSystem<Pattern>.IPath>()
+                .Concat(folder.GetLeaves().OrderByDescending(l => FavoritesConfig.Patterns.Contains(l.Value.Identifier)));
     }
 }
 

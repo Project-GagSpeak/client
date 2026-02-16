@@ -80,7 +80,6 @@ public class MainUI : WindowMediatorSubscriberBase
         TitleBarButtons = new TitleBarButtonBuilder()
             .Add(FAI.Book, "Changelog", () => Mediator.Publish(new UiToggleMessage(typeof(ChangelogUI))))
             .Add(FAI.Cog, "Settings", () => Mediator.Publish(new UiToggleMessage(typeof(SettingsUi))))
-            .Add(FAI.Bell, "Actions Notifier", () => Mediator.Publish(new UiToggleMessage(typeof(InteractionEventsUI))))
             .AddTutorial(_guides, TutorialType.MainUi)
             .Build();
 

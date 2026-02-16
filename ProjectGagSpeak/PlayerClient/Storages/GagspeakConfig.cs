@@ -24,11 +24,11 @@ public class GagspeakConfig
 
     // pair listing preferences
     public bool PreferThreeCharaAnonName { get; set; } = false;
-    public bool FavoritesFirst { get; set; } = true;
-    public bool NickOverPlayerName { get; set; } = false;
     public bool VisibleFolder { get; set; } = true;
     public bool OfflineFolder { get; set; } = true;
     public bool TargetWithFocus { get; set; } = false;
+    public bool NickOverPlayerName { get; set; } = false;
+    public bool PrioritizeFavorites { get; set; } = true;
 
     public bool OpenMainUiOnStartup { get; set; } = true;
     public MainMenuTabs.SelectedTab MainUiTab { get; set; } = MainMenuTabs.SelectedTab.Whitelist;

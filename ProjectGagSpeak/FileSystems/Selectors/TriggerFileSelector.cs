@@ -48,6 +48,8 @@ public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerF
         SubscribeRightClickLeaf(RenameTrigger);
     }
 
+    public override ISortMode<Trigger> SortMode => new TriggerSorter();
+
     private void RenameTrigger(TriggerFileSystem.Leaf leaf)
     {
         ImGui.Separator();
@@ -93,7 +95,8 @@ public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerF
         }
 
         ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
-        Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Trigger, leaf.Value.Identifier);
+        if (Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Trigger, leaf.Value.Identifier))
+            SetFilterDirty();
         CkGui.TextFrameAlignedInline(leaf.Value.Label);
 
         // Only draw the deletion if the item is not active or occupied.
@@ -148,6 +151,20 @@ public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerF
 
         _manager.CreateNew(_newName);
         _newName = string.Empty;
+    }
+
+    // Placeholder until we Integrate the DynamicSorter
+    private struct TriggerSorter : ISortMode<Trigger>
+    {
+        public string Name
+            => "Trigger Sorter";
+
+        public string Description
+            => "Sort all Triggers by their name, with favorites first.";
+
+        public IEnumerable<CkFileSystem<Trigger>.IPath> GetChildren(CkFileSystem<Trigger>.Folder folder)
+            => folder.GetSubFolders().Cast<CkFileSystem<Trigger>.IPath>()
+                .Concat(folder.GetLeaves().OrderByDescending(l => FavoritesConfig.Triggers.Contains(l.Value.Identifier)));
     }
 }
 

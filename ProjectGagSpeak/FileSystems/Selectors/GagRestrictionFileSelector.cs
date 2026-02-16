@@ -53,6 +53,8 @@ public sealed class GagRestrictionFileSelector : CkFileSystemSelector<GarblerRes
         Mediator.Unsubscribe<ConfigGagRestrictionChanged>(this);
     }
 
+    public override ISortMode<GarblerRestriction> SortMode => new GagSorter();
+
     // can override the selector here to mark the last selected set in the config or something somewhere.
     protected override bool DrawLeafInner(CkFileSystem<GarblerRestriction>.Leaf leaf, in GagRestrictionState state, bool selected)
     {
@@ -88,7 +90,8 @@ public sealed class GagRestrictionFileSelector : CkFileSystemSelector<GarblerRes
         {
             ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
             ImGui.AlignTextToFramePadding();
-            Icons.DrawFavoriteStar(_favorites, leaf.Value.GagType);
+            if (Icons.DrawFavoriteStar(_favorites, leaf.Value.GagType))
+                SetFilterDirty();
             ImGui.SameLine();
             ImGui.Text(leaf.Value.GagType.GagName());
         }
@@ -107,6 +110,20 @@ public sealed class GagRestrictionFileSelector : CkFileSystemSelector<GarblerRes
     {
         ImGui.SameLine(0, 1);
         DrawFolderButton();
+    }
+
+    // Placeholder until we Integrate the DynamicSorter
+    private struct GagSorter : ISortMode<GarblerRestriction>
+    {
+        public string Name
+            => "Gag Sorter";
+
+        public string Description
+            => "Sort all gags by their name, with favorites first.";
+
+        public IEnumerable<CkFileSystem<GarblerRestriction>.IPath> GetChildren(CkFileSystem<GarblerRestriction>.Folder folder)
+            => folder.GetSubFolders().Cast<CkFileSystem<GarblerRestriction>.IPath>()
+                .Concat(folder.GetLeaves().OrderByDescending(l => FavoritesConfig.Gags.Contains(l.Value.GagType)));
     }
 }
 
