@@ -85,7 +85,13 @@ public sealed class CommandManager : IDisposable
             if (_mainConfig.Current.HasValidSetup())
                 _mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
         }
-
+#if DEBUG
+        else if (string.Equals(splitArgs[0], "intro", StringComparison.OrdinalIgnoreCase))
+        {
+            _mediator.Publish(new UiToggleMessage(typeof(IntroUi)));
+            return;
+        }
+#endif
         // if its help or ?, print help
         else if (string.Equals(splitArgs[0], "help", StringComparison.OrdinalIgnoreCase) || string.Equals(splitArgs[0], "?", StringComparison.OrdinalIgnoreCase))
         {

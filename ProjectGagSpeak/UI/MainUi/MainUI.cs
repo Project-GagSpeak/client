@@ -1,20 +1,22 @@
+using CkCommons;
 using CkCommons.Gui;
+using CkCommons.Raii;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
+using GagSpeak.Interop;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Hub;
-using GagspeakAPI.Network;
+using OtterGui;
 using OtterGui.Text;
 using OtterGuiInternal;
 using System.Globalization;
@@ -32,6 +34,7 @@ public class MainUI : WindowMediatorSubscriberBase
     private readonly AccountManager _account;
     private readonly MainHub _hub;
     private readonly MainMenuTabs _tabMenu;
+    private readonly IpcManager _ipc;
     private readonly SidePanelService _sidePanel;
     private readonly RequestsManager _requests;
     private readonly KinksterManager _kinksters;
@@ -43,6 +46,8 @@ public class MainUI : WindowMediatorSubscriberBase
     private readonly MoodleHubTab _moodlesHubTab;
     private readonly GlobalChatTab _globalChatTab;
 
+    private bool _showSundWarning = true;
+
     private bool _creatingRequest = false;
     public string _uidToSentTo = string.Empty;
     public string _requestMessage = string.Empty;
@@ -50,15 +55,17 @@ public class MainUI : WindowMediatorSubscriberBase
     private bool ThemePushed = false;
 
     public MainUI(ILogger<MainUI> logger, GagspeakMediator mediator, MainConfig config,
-        AccountManager account, MainHub hub, MainMenuTabs tabMenu, SidePanelService sidePanel, RequestsManager requestmanager,
-        KinksterManager kinksters, TutorialService guides, HomeTab home, RequestsTab requests,
-        WhitelistTab whitelist, PatternHubTab patternHub, MoodleHubTab moodlesHub, GlobalChatTab globalChat)
+        AccountManager account, MainHub hub, MainMenuTabs tabMenu, IpcManager ipc,
+        SidePanelService sidePanel, RequestsManager requestmanager, KinksterManager kinksters,
+        TutorialService guides, HomeTab home, RequestsTab requests, WhitelistTab whitelist, 
+        PatternHubTab patternHub, MoodleHubTab moodlesHub, GlobalChatTab globalChat)
         : base(logger, mediator, "###GagSpeakMainUI")
     {
         _config = config;
         _account = account;
         _hub = hub;
         _tabMenu = tabMenu;
+        _ipc = ipc;
         _sidePanel = sidePanel;
         _requests = requestmanager;
         _kinksters = kinksters;
@@ -76,7 +83,7 @@ public class MainUI : WindowMediatorSubscriberBase
         Flags |= WFlags.NoDocking;
 
         this.PinningClickthroughFalse();
-        this.SetBoundaries(new Vector2(MAIN_UI_WIDTH, 548), new Vector2(MAIN_UI_WIDTH, 2000));
+        this.SetBoundaries(new Vector2(MAIN_UI_WIDTH, 535), new Vector2(MAIN_UI_WIDTH, 2000));
         TitleBarButtons = new TitleBarButtonBuilder()
             .Add(FAI.Book, "Changelog", () => Mediator.Publish(new UiToggleMessage(typeof(ChangelogUI))))
             .Add(FAI.Cog, "Settings", () => Mediator.Publish(new UiToggleMessage(typeof(SettingsUi))))
@@ -91,13 +98,16 @@ public class MainUI : WindowMediatorSubscriberBase
 
         Mediator.Subscribe<SwitchToMainUiMessage>(this, (_) => IsOpen = true);
         Mediator.Subscribe<SwitchToIntroUiMessage>(this, (_) => IsOpen = false);
-
         // make sure opening the side panel also opens the main ui and selects whitelist tab
         Mediator.Subscribe<OpenKinksterSidePanel>(this, _ =>
         {
             IsOpen = true;
             _tabMenu.TabSelection = MainMenuTabs.SelectedTab.Whitelist;
         });
+
+        // Set initial sundouleia warning.
+        _ipc.Sundouleia.CheckAPI();
+        _showSundWarning = !IpcCallerSundouleia.APIAvailable;
     }
 
     public static Vector2 LastPos { get; private set; } = Vector2.Zero;
@@ -160,6 +170,32 @@ public class MainUI : WindowMediatorSubscriberBase
 
         // draw the bottom tab bar
         _tabMenu.Draw(winContentWidth);
+
+        if (!IpcCallerSundouleia.APIAvailable && _showSundWarning)
+        {
+            var warnHeight = ImUtf8.FrameHeight + ImUtf8.TextHeightSpacing * 5;
+            using (var _ = CkRaii.FramedChildPaddedW("sund-warn", winContentWidth, warnHeight, 0, CkCol.TriStateCross.Uint(), CkStyle.ChildRounding(), 3f, wFlags: WFlags.NoScrollbar))
+            {
+                CkGui.ColorText("Not Currently Attached to Sundouleia!", CkCol.TriStateCross.Vec4Ref());
+                ImGui.SameLine(_.InnerRegion.X - ImGuiHelpers.GetButtonSize("Ignore").X + ImUtf8.ItemSpacing.X);
+                if (ImGui.SmallButton("Ignore"))
+                    _showSundWarning = false;
+                CkGui.AttachToolTip("Dismiss this message for this instance of GagSpeak.");
+
+                ImGui.Text("Get a stable, responsive, and immersive experience with:");
+                ImGui.BulletText("Near-instant updates (~250ms)");
+                ImGui.BulletText("Minimal redraws when updating actors");
+                ImGui.BulletText("More responsive interactions");
+                if (CkGui.IconTextButton(FAI.SquareArrowUpRight, "Open Experimental Plugins UI"))
+                    Svc.PluginInterface.OpenDalamudSettingsTo(SettingsOpenKind.Experimental);
+                CkGui.AttachToolTip("Opens the experimental plugins tab in settings to paste the repo link.");
+                ImUtf8.SameLineInner();
+                if (CkGui.IconTextButton(FAI.Clipboard, "Copy Plugin Repo"))
+                    ImGui.SetClipboardText("https://raw.githubusercontent.com/Sundouleia/repo/main/sundouleia.json");
+                CkGui.AttachToolTip("Copies the plugin repo to your clipboard to paste into the experimental plugins");
+            }
+        }
+
 
         // display content based on the tab selected
         switch (_tabMenu.TabSelection)

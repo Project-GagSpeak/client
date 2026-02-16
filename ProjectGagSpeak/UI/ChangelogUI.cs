@@ -5,6 +5,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Gui.Components;
 using GagSpeak.PlayerClient;
 using Dalamud.Bindings.ImGui;
+using CkCommons.Gui;
 namespace GagSpeak.Gui;
 
 internal class ChangelogUI : WindowMediatorSubscriberBase
@@ -36,6 +37,8 @@ internal class ChangelogUI : WindowMediatorSubscriberBase
     protected override void PostDrawInternal() { }
     protected override void DrawInternal()
     {
+        CkGui.ColorTextCentered("Changelog Rework Pending...", ImGuiColors.DalamudRed);
+        ImGui.Separator();
         var region = ImGui.GetContentRegionAvail();
         var itemSpacing = ImGui.GetStyle().ItemSpacing;
         var topLeftSideHeight = region.Y;

@@ -89,8 +89,7 @@ public class CursedLootUI : WindowMediatorSubscriberBase
 
     private void DrawTopLeft(Vector2 region)
     {
-        // should be dependant on the tab selected.
-        ImGui.Text("awawawawawa");
+        // To Be Determined.
     }
 
     private void DrawTopRight(Vector2 region)

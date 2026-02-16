@@ -294,6 +294,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<MainMenuTabs>()
         .AddSingleton<SidePanelTabs>()
         .AddSingleton<RequestTabs>()
+        .AddSingleton<PublicationTabs>()
 
         // WebAPI (Server stuff)
         .AddSingleton<MainHub>()

@@ -149,7 +149,8 @@ public sealed class UiService : DisposableMediatorSubscriberBase
         return await taskToRun.ConfigureAwait(false);
     }
 
-    public static bool IsRemoteUIOpen() => _createdWindows.OfType<BuzzToyRemoteUI>().FirstOrDefault() is { } m && m.IsOpen;
+    public static bool IsRemoteUIOpen()
+        => _createdWindows.OfType<BuzzToyRemoteUI>().FirstOrDefault() is { } m && m.IsOpen;
 
 
     /// <summary> Method to toggle the main UI for the plugin. </summary>

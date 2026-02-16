@@ -98,7 +98,11 @@ public class SettingsUi : WindowMediatorSubscriberBase
             CkGui.AttachToolTip(IpcCallerGlamourer.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
 
             ImGui.SameLine();
-            CkGui.ColorTextBool("Customize+", IpcCallerCustomize.APIAvailable);
+            CkGui.ColorTextBool("Sundouleia", IpcCallerSundouleia.APIAvailable);
+            CkGui.AttachToolTip(IpcCallerSundouleia.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
+
+            ImGui.SameLine();
+            CkGui.ColorTextBool("C+", IpcCallerCustomize.APIAvailable);
             CkGui.AttachToolTip(IpcCallerCustomize.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
 
             ImGui.SameLine();

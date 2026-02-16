@@ -29,8 +29,8 @@ public class IntroUi : WindowMediatorSubscriberBase
         Welcome = 0,
         AttributionsAbout = 1,
         UsageAgreement = 2,
-        AccountSetup = 4,
-        Initialized = 5
+        AccountSetup = 3,
+        Initialized = 4
     }
 
     private readonly MainHub _hub;
@@ -263,7 +263,7 @@ public class IntroUi : WindowMediatorSubscriberBase
     private void DrawProgressDisplay()
     {
         var frameH = ImUtf8.FrameHeight;
-        var buttonSize = new Vector2((ImGui.GetContentRegionAvail().X - (frameH * 4)) / 4, frameH * 1.5f);
+        var buttonSize = new Vector2((ImGui.GetContentRegionAvail().X - (frameH * 3)) / 4, frameH * 1.5f);
         var offsetY = (buttonSize.Y - frameH) / 2;
 
         // Draw out the buttons.
@@ -421,6 +421,8 @@ public class IntroUi : WindowMediatorSubscriberBase
                 CkGui.BulletText("Force others to follow you, perform Emotes, stay locked away, and more.", ImGuiColors.DalamudGrey2);
                 CkGui.BulletText("An area of control that requires mutual trust and respect between both parties.", ImGuiColors.DalamudGrey2);
             }
+
+            CkGui.ColorTextWrapped("Click the header image to proceed ♥", GsCol.VibrantPink.Vec4Ref());
         }
     }
     // Attributions, Acknowledgements, and 'What helped get GagSpeak to this point.'

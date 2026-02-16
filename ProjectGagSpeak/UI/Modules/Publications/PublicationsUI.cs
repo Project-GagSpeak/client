@@ -3,28 +3,26 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Gui.Components;
 using Dalamud.Bindings.ImGui;
+using GagSpeak.Utils;
 
 namespace GagSpeak.Gui.Publications;
 
 public class PublicationsUI : WindowMediatorSubscriberBase
 {
-    private readonly PublicationTabs _tabMenu = new PublicationTabs();
-    private readonly PublicationsManager _publicationsPanel;
+    private readonly PublicationTabs _tabMenu;
+    private readonly PublicationsManager _manager;
     private readonly CosmeticService _cosmetics;
 
-
-    public PublicationsUI(ILogger<PublicationsUI> logger, GagspeakMediator mediator,
-        PublicationsManager publicationsPanel, CosmeticService cosmetics) : base(logger, mediator, "My Publications")
+    public PublicationsUI(ILogger<PublicationsUI> logger, GagspeakMediator mediator, PublicationTabs tabs,
+        PublicationsManager manager, CosmeticService cosmetics)
+        : base(logger, mediator, "My Publications")
     {
-        _publicationsPanel = publicationsPanel;
+        _tabMenu = tabs;
+        _manager = manager;
         _cosmetics = cosmetics;
 
         // define initial size of window and to not respect the close hotkey.
-        SizeConstraints = new WindowSizeConstraints
-        {
-            MinimumSize = new Vector2(525, 450),
-            MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
-        };
+        this.SetBoundaries(new Vector2(525, 450), ImGui.GetIO().DisplaySize);
         RespectCloseHotkey = false;
     }
     // perhaps migrate the opened selectable for the UIShared service so that other trackers can determine if they should refresh / update it or not.
@@ -63,10 +61,10 @@ public class PublicationsUI : WindowMediatorSubscriberBase
             switch (_tabMenu.TabSelection)
             {
                 case PublicationTabs.SelectedTab.Patterns:
-                    _publicationsPanel.DrawPatternPublications();
+                    _manager.DrawPatternPublications();
                     break;
                 case PublicationTabs.SelectedTab.Moodles:
-                    _publicationsPanel.DrawMoodlesPublications();
+                    _manager.DrawMoodlesPublications();
                     break;
                 default:
                     break;
