@@ -79,6 +79,11 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
 
     public async Task<PiShockPermissions> GetPermissionsFromCode(string shareCode)
     {
+        if (shareCode.IsNullOrEmpty())
+        {
+            Logger.LogWarning("Attempted to get PiShock permissions with empty share code.");
+            return new();
+        }
         try
         {
             var jsonContent = CreateGetInfoContent(shareCode);
@@ -90,6 +95,7 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
             {
                 Logger.LogTrace("PiShock Request Info Response: {response}", response);
                 var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
+                Logger.LogTrace("PiShock Request Info Content: {content}", content);
                 var jsonDocument = JsonDocument.Parse(content);
                 var root = jsonDocument.RootElement;
 

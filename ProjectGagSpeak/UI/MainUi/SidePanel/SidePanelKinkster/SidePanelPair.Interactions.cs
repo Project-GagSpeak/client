@@ -529,8 +529,7 @@ public partial class SidePanelPair
     #endregion Toybox
 
     #region Shocks
-    private float shockBeepDuration = 0.1f;
-    private float vibrateDuration = 0.1f;
+    private float shockerDuration = 0.1f;
     private int shockerIntensity = 10;
 
     private void DrawShockActions(KinksterInfoCache cache, Kinkster k, float width, string dispName)
@@ -540,7 +539,6 @@ public partial class SidePanelPair
         bool canShock;
         bool canVibrate;
         bool canBeep;
-        float maxVibrateDuration;
         float maxShockBeepDuration;
         int maxIntensity;
         if (k.PairPerms.HasValidShareCode())
@@ -548,7 +546,6 @@ public partial class SidePanelPair
             canShock = k.PairPerms.AllowShocks;
             canVibrate = k.PairPerms.AllowVibrations;
             canBeep = k.PairPerms.AllowBeeps;
-            maxVibrateDuration = (float)k.PairPerms.MaxVibrateDuration.TotalSeconds;
             maxShockBeepDuration = k.PairPerms.MaxDuration;
             maxIntensity = k.PairPerms.MaxIntensity;
         }
@@ -557,7 +554,6 @@ public partial class SidePanelPair
             canShock = k.PairGlobals.AllowShocks;
             canVibrate = k.PairGlobals.AllowVibrations;
             canBeep = k.PairGlobals.AllowBeeps;
-            maxVibrateDuration = (float)k.PairGlobals.ShockVibrateDuration.TotalSeconds;
             maxShockBeepDuration = k.PairGlobals.MaxDuration;
             maxIntensity = k.PairGlobals.MaxIntensity;
         }
@@ -572,56 +568,52 @@ public partial class SidePanelPair
         var beepTxt = canBeep ? $"Beep {dispName}" : $"Cannot beep {dispName}";
 
         // Verify duration and intensity within bounds
-        if (shockBeepDuration < 0.1f) shockBeepDuration = 0.1f;
-        else if (shockBeepDuration > k.PairPerms.MaxDuration) shockBeepDuration = k.PairPerms.MaxDuration;
-        if (vibrateDuration < 0.1f) vibrateDuration = 0.1f;
-        else if (vibrateDuration > maxVibrateDuration) vibrateDuration = maxVibrateDuration;
+        if (shockerDuration < 0.1f) shockerDuration = 0.1f;
+        else if (shockerDuration > k.PairPerms.MaxDuration) shockerDuration = k.PairPerms.MaxDuration;
         if (shockerIntensity < 1) shockerIntensity = 1;
         else if (shockerIntensity > k.PairPerms.MaxIntensity) shockerIntensity = k.PairPerms.MaxIntensity;
+
+        var shockerDurationSeconds = (int)(shockerDuration * 1000f);
 
         ImGui.SetNextItemWidth(100 * ImGuiHelpers.GlobalScale);
         ImGui.SliderInt("Intensity", ref shockerIntensity, 1, k.PairPerms.MaxIntensity, "%d%%");
         CkGui.AttachToolTip($"Sets the intensity for shocks, vibrations, and beeps. Intensity is a percentage of the maximum effect delivered to {dispName}.");
         ImGui.SetNextItemWidth(150 * ImGuiHelpers.GlobalScale);
-        ImGui.SliderFloat("Shock Duration", ref shockBeepDuration, 0.1f, k.PairPerms.MaxDuration, "%.1fs");
+        ImGui.SliderFloat("Shock Duration", ref shockerDuration, 0.1f, k.PairPerms.MaxDuration, "%.1fs");
         CkGui.AttachToolTip($"Sets the duration for shocks and beeps. Duration is the length of time the effect is delivered to {dispName}.");
 
         if (CkGui.IconTextButton(FAI.Bolt, shockTxt, width, true, !canShock))
         {
             UiService.SetUITask(async () =>
             {
-                var res = await _hub.UserShockKinkster(new(k.UserData, 0 /* shock */, shockerIntensity, (int)(shockBeepDuration * 1000f)));
+                var res = await _hub.UserShockKinkster(new(k.UserData, 0 /* shock */, shockerIntensity, shockerDurationSeconds));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                     _logger.LogError($"Failed to shock {dispName}. ({res.ErrorCode})", LoggerType.StickyUI);
             });
         }
-        CkGui.AttachToolTip($"Delivers a shock to {dispName}.{(canShock ? "" : " Not permitted.")}", color: canShock ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudGrey);
+        CkGui.AttachToolTip($"--COL--Delivers a shock to {dispName}.{(canShock ? "" : " Not permitted.")}--COL--", color: canShock ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudGrey);
 
         if (CkGui.IconTextButton(FAI.LandMineOn, beepTxt, width, true, !canBeep))
         {
             UiService.SetUITask(async () =>
             {
-                var res = await _hub.UserShockKinkster(new(k.UserData, 2 /* beep */, shockerIntensity, (int)(shockBeepDuration * 1000f)));
+                var res = await _hub.UserShockKinkster(new(k.UserData, 2 /* beep */, shockerIntensity, shockerDurationSeconds));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                     _logger.LogError($"Failed to beep {dispName}. ({res.ErrorCode})", LoggerType.StickyUI);
             });
         }
-        CkGui.AttachToolTip($"Delivers a beep to {dispName}.{(canBeep ? "" : " Not permitted.")}", color: canBeep ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudGrey);
-
-        ImGui.SetNextItemWidth(150 * ImGuiHelpers.GlobalScale);
-        ImGui.SliderFloat("Vibrate Duration", ref vibrateDuration, 0.1f, maxVibrateDuration, "%.1fs");
-        CkGui.AttachToolTip($"Sets the duration for vibrations. Duration is the length of time the vibration is delivered to {dispName}.");
+        CkGui.AttachToolTip($"--COL--Delivers a beep to {dispName}.{(canBeep ? "" : " Not permitted.")}--COL--", color: canBeep ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudGrey);
 
         if (CkGui.IconTextButton(FAI.HeartCircleBolt, vibrateTxt, width, true, !canVibrate))
         {
             UiService.SetUITask(async () =>
             {
-                var res = await _hub.UserShockKinkster(new(k.UserData, 1 /* vibrate */, shockerIntensity, (int)(vibrateDuration * 1000f)));
+                var res = await _hub.UserShockKinkster(new(k.UserData, 1 /* vibrate */, shockerIntensity, shockerDurationSeconds));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                     _logger.LogError($"Failed to vibrate {dispName}. ({res.ErrorCode})", LoggerType.StickyUI);
             });
         }
-        CkGui.AttachToolTip($"Delivers a vibration to {dispName}.{(canVibrate ? "" : " Not permitted.")}", color: canVibrate ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudGrey);
+        CkGui.AttachToolTip($"--COL--Delivers a vibration to {dispName}.{(canVibrate ? "" : " Not permitted.")}--COL--", color: canVibrate ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudGrey);
     }
     #endregion Shocks
 

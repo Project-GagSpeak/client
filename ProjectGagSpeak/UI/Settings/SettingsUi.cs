@@ -33,8 +33,6 @@ public class SettingsUi : WindowMediatorSubscriberBase
     private readonly VfxSpawnManager _vfxSpawner;
     private readonly ClientDataListener _clientDatListener;
 
-    private int MaxVibeTimeCache = -1;
-
     public SettingsUi(ILogger<SettingsUi> logger, GagspeakMediator mediator, MainHub hub,
         MainConfig config, AccountManagerTab accounts, DebugTab debug, PiShockProvider shockProvider,
         VfxSpawnManager vfxSpawner, ClientDataListener listener) : base(logger, mediator, "GagSpeak Settings")
@@ -61,18 +59,6 @@ public class SettingsUi : WindowMediatorSubscriberBase
     }
 
     private bool ThemePushed = false;
-
-    public override void OnOpen()
-    {
-        if (ClientData.Globals is not { } globals)
-        {
-            _logger.LogWarning("ClientData.Globals is null on SettingsUi open!", LoggerType.UI);
-            MaxVibeTimeCache = -1;
-            return;
-        }
-
-        MaxVibeTimeCache = (int)globals.ShockVibrateDuration.TotalSeconds;
-    }
 
     protected override void PreDrawInternal()
     {
@@ -407,10 +393,6 @@ public class SettingsUi : WindowMediatorSubscriberBase
         var maxShockIntensity = globals.MaxIntensity;
         var maxShockTime = globals.GetTimespanFromDuration();
 
-        // If settings were opened before we were able to grab the globals, we may not have been able to set the MaxVibeTimeCache. Do so now if that's the case.
-        if (MaxVibeTimeCache == -1)
-            MaxVibeTimeCache = (int)globals.ShockVibrateDuration.TotalSeconds;
-
         using var node = ImRaii.TreeNode("Pi-Shock Global Settings");
         if (node)
         {
@@ -456,15 +438,6 @@ public class SettingsUi : WindowMediatorSubscriberBase
             ImUtf8.SameLineInner();
             ImGui.TextUnformatted(GSLoc.Settings.MainOptions.PiShockShareCode);
             CkGui.HelpText(GSLoc.Settings.MainOptions.PiShockShareCodeTT);
-
-            ImGui.SetNextItemWidth(250 * ImGuiHelpers.GlobalScale);
-            ImGui.SliderInt(GSLoc.Settings.MainOptions.PiShockVibeTime, ref MaxVibeTimeCache, 0, 15);
-            if (ImGui.IsItemDeactivatedAfterEdit())
-            {
-                _logger.LogDebug($"Setting PiShockVibeTime to {MaxVibeTimeCache} seconds, {TimeSpan.FromSeconds(MaxVibeTimeCache).Ticks} ticks", LoggerType.UI);
-                AssignGlobalPermChangeTask(nameof(GlobalPerms.ShockVibrateDuration), (ulong)TimeSpan.FromSeconds(MaxVibeTimeCache).Ticks);
-            }
-            CkGui.HelpText(GSLoc.Settings.MainOptions.PiShockVibeTimeTT);
 
             CkGui.ColorText(GSLoc.Settings.MainOptions.PiShockPermsLabel, ImGuiColors.ParsedGold);
             using (ImRaii.Group())

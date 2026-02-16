@@ -43,38 +43,6 @@ public partial class SidePanelPair
             UiService.SetUITask(async () => await SyncPermissionsWithCode(k.OwnPerms.PiShockShareCode, k));
     }
 
-    private void MaxVibrateDuration(KinksterInfoCache cache, Kinkster k, string dispName, float width)
-    {
-        using var _ = ImRaii.Group();
-
-        // grab seconds from the service cache or our permissions.
-        var seconds = cache.TmpVibeDur == -1 ? (float)k.OwnPerms.MaxVibrateDuration.TotalMilliseconds / 1000 : cache.TmpVibeDur;
-        var disableDur = string.IsNullOrEmpty(k.OwnPerms.PiShockShareCode);
-        if (CkGui.IconSliderFloat($"##mvt-{k.UserData.UID}", FAI.Stopwatch, "Max Vibe Time", ref seconds, 0.1f, 15f, width * .65f, true, disableDur))
-            cache.TmpVibeDur = seconds;
-
-        if (ImGui.IsItemDeactivatedAfterEdit())
-        {
-            // if the max duration is under 15, parse to seconds. (it always is as the slider is capped at 15)
-            var newVal = TimeSpan.FromSeconds(cache.TmpVibeDur);
-            // make sure its different from the stored duration.
-            if (newVal.Milliseconds == k.OwnPerms.MaxVibrateDuration.Milliseconds)
-            {
-                cache.TmpVibeDur = -1;
-                return;
-            }
-            // It was valid, so set it.
-            UiService.SetUITask(async () =>
-            {
-                // Update local immediately so the user sees the change reflected in the UI, then push to the service.
-                k.OwnPerms.MaxVibrateDuration = newVal;
-                if (await PermHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.MaxVibrateDuration), (ulong)newVal.Ticks))
-                    cache.TmpVibeDur = -1;
-            });
-        }
-        CkGui.AttachToolTip("Max duration you allow this pair to vibrate your Shock Collar for");
-    }
-
     public void DrawShockActions(KinksterInfoCache cache, Kinkster k, string dispName, float width)
     {
         ImGui.TextUnformatted("Shock Collar Actions");

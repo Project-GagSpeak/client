@@ -193,7 +193,6 @@ public partial class SidePanelPair
         else
         {
             UniqueShareCode(kinkster, dispName, width);
-            MaxVibrateDuration(cache, kinkster, dispName, width);
         }
     }
 
