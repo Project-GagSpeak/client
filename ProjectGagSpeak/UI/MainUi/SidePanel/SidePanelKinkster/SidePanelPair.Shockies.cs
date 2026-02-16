@@ -55,8 +55,8 @@ public partial class SidePanelPair
 
         if (ImGui.IsItemDeactivatedAfterEdit())
         {
-            // if the max duration is under 15, parse to seconds.
-            var newVal = k.OwnPerms.MaxDuration < 15 ? TimeSpan.FromSeconds(cache.TmpVibeDur) : TimeSpan.FromMilliseconds(cache.TmpVibeDur);
+            // if the max duration is under 15, parse to seconds. (it always is as the slider is capped at 15)
+            var newVal = TimeSpan.FromSeconds(cache.TmpVibeDur);
             // make sure its different from the stored duration.
             if (newVal.Milliseconds == k.OwnPerms.MaxVibrateDuration.Milliseconds)
             {
@@ -64,10 +64,11 @@ public partial class SidePanelPair
                 return;
             }
             // It was valid, so set it.
-            var newTicks = (ulong)newVal.Ticks;
             UiService.SetUITask(async () =>
             {
-                if (await PermHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.MaxVibrateDuration), newTicks))
+                // Update local immediately so the user sees the change reflected in the UI, then push to the service.
+                k.OwnPerms.MaxVibrateDuration = newVal;
+                if (await PermHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.MaxVibrateDuration), (ulong)newVal.Ticks))
                     cache.TmpVibeDur = -1;
             });
         }

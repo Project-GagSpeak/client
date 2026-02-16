@@ -527,6 +527,22 @@ public partial class SidePanelPair
     }
     #endregion Toybox
 
+    #region Shocks
+    private void DrawShockActions(KinksterInfoCache cache, Kinkster k, float width, string dispName)
+    {
+        ImGui.TextUnformatted("Shock Actions");
+
+        var canShock = k.PairPerms.HasValidShareCode();
+        if (!canShock)
+        {
+            ImGui.TextUnformatted("Not permitted to use.");
+            return;
+        }
+
+        // TODO: Implement shock actions.
+    }
+    #endregion Shocks
+
     #region Misc
     private void DrawMiscActions(KinksterInfoCache cache, Kinkster k, float width, string dispName)
     {

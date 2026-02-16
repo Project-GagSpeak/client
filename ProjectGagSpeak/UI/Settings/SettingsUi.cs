@@ -33,6 +33,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
     private readonly VfxSpawnManager _vfxSpawner;
     private readonly ClientDataListener _clientDatListener;
 
+    private int MaxVibeTimeCache = -1;
+
     public SettingsUi(ILogger<SettingsUi> logger, GagspeakMediator mediator, MainHub hub,
         MainConfig config, AccountManagerTab accounts, DebugTab debug, PiShockProvider shockProvider,
         VfxSpawnManager vfxSpawner, ClientDataListener listener) : base(logger, mediator, "GagSpeak Settings")
@@ -59,6 +61,18 @@ public class SettingsUi : WindowMediatorSubscriberBase
     }
 
     private bool ThemePushed = false;
+
+    public override void OnOpen()
+    {
+        if (ClientData.Globals is not { } globals)
+        {
+            _logger.LogWarning("ClientData.Globals is null on SettingsUi open!", LoggerType.UI);
+            MaxVibeTimeCache = -1;
+            return;
+        }
+
+        MaxVibeTimeCache = (int)globals.ShockVibrateDuration.TotalSeconds;
+    }
 
     protected override void PreDrawInternal()
     {
@@ -170,6 +184,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
     {
         UiService.SetUITask(async () =>
         {
+            _logger.LogDebug($"Attempting to change global permission {globalKey} to {newValue}", LoggerType.UI);
             var res = await _hub.ChangeOwnGlobalPerm(globalKey, newValue);
             if (res.ErrorCode is not GagSpeakApiEc.Success)
                 _logger.LogError($"Failed to change global permission {globalKey} to {newValue}. Error: {res.ErrorCode}", LoggerType.UI);
@@ -391,7 +406,10 @@ public class SettingsUi : WindowMediatorSubscriberBase
         var allowBeep = globals.AllowBeeps;
         var maxShockIntensity = globals.MaxIntensity;
         var maxShockTime = globals.GetTimespanFromDuration();
-        var maxVibrateTime = (int)globals.ShockVibrateDuration.TotalSeconds;
+
+        // If settings were opened before we were able to grab the globals, we may not have been able to set the MaxVibeTimeCache. Do so now if that's the case.
+        if (MaxVibeTimeCache == -1)
+            MaxVibeTimeCache = (int)globals.ShockVibrateDuration.TotalSeconds;
 
         using var node = ImRaii.TreeNode("Pi-Shock Global Settings");
         if (node)
@@ -440,9 +458,12 @@ public class SettingsUi : WindowMediatorSubscriberBase
             CkGui.HelpText(GSLoc.Settings.MainOptions.PiShockShareCodeTT);
 
             ImGui.SetNextItemWidth(250 * ImGuiHelpers.GlobalScale);
-            ImGui.SliderInt(GSLoc.Settings.MainOptions.PiShockVibeTime, ref maxVibrateTime, 0, 30);
+            ImGui.SliderInt(GSLoc.Settings.MainOptions.PiShockVibeTime, ref MaxVibeTimeCache, 0, 15);
             if (ImGui.IsItemDeactivatedAfterEdit())
-                AssignGlobalPermChangeTask(nameof(GlobalPerms.ShockVibrateDuration), (ulong)TimeSpan.FromSeconds(maxVibrateTime).Ticks);
+            {
+                _logger.LogDebug($"Setting PiShockVibeTime to {MaxVibeTimeCache} seconds, {TimeSpan.FromSeconds(MaxVibeTimeCache).Ticks} ticks", LoggerType.UI);
+                AssignGlobalPermChangeTask(nameof(GlobalPerms.ShockVibrateDuration), (ulong)TimeSpan.FromSeconds(MaxVibeTimeCache).Ticks);
+            }
             CkGui.HelpText(GSLoc.Settings.MainOptions.PiShockVibeTimeTT);
 
             CkGui.ColorText(GSLoc.Settings.MainOptions.PiShockPermsLabel, ImGuiColors.ParsedGold);
