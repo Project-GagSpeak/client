@@ -107,6 +107,7 @@ public class TutorialService
         .AddStep(mainUiStr.Step17Title, mainUiStr.Step17Desc, mainUiStr.Step17DescExtended)
         .AddStep(mainUiStr.Step18Title, mainUiStr.Step18Desc, mainUiStr.Step18DescExtended)
         .AddStep(mainUiStr.Step19Title, mainUiStr.Step19Desc, mainUiStr.Step19DescExtended)
+        .AddStep(mainUiStr.Step20Title, mainUiStr.Step20Desc, mainUiStr.Step20DescExtended)
         .AddStep(mainUiStr.Step21Title, mainUiStr.Step21Desc, mainUiStr.Step21DescExtended)
         .AddStep(mainUiStr.Step22Title, mainUiStr.Step22Desc, mainUiStr.Step22DescExtended)
         .AddStep(mainUiStr.Step23Title, mainUiStr.Step23Desc, mainUiStr.Step23DescExtended)

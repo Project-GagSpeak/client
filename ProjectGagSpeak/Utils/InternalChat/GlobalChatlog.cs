@@ -229,14 +229,14 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
                 _showEmotes = !_showEmotes;
         }
         CkGui.AttachToolTip($"Toggles Quick-Emote selection.");
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatEmotes, MainUI.LastSize, MainUI.LastSize);
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatEmotes, MainUI.LastPos, MainUI.LastSize);
 
         // Toggle AutoScroll functionality
         ImUtf8.SameLineInner();
         if (CkGui.IconButton(scrollIcon))
             DoAutoScroll = !DoAutoScroll;
         CkGui.AttachToolTip($"Toggles AutoScroll (Current: {(DoAutoScroll ? "Enabled" : "Disabled")})");
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatScroll, MainUI.LastSize, MainUI.LastSize);
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatScroll, MainUI.LastPos, MainUI.LastSize);
 
         // draw the popout button
         ImUtf8.SameLineInner();

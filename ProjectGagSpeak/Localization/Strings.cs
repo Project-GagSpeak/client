@@ -149,57 +149,57 @@ namespace GagSpeak.Localization
         public readonly string Step19Desc = Loc.Localize("HelpMainUi_Step19Desc", "Make sure you save changes, or edits will be lost!");
         public readonly string Step19DescExtended = Loc.Localize("HelpMainUi_Step19DescExtended", " ");
 
-        public readonly string Step21Title = Loc.Localize("HelpMainUi_Step22Title", "Pattern Hub");
-        public readonly string Step21Desc = Loc.Localize("HelpMainUi_Step22Desc", "Browse and explore patterns uploaded by others.");
-        public readonly string Step21DescExtended = Loc.Localize("HelpMainUi_Step22DescExtended", " ");
+        public readonly string Step20Title = Loc.Localize("HelpMainUi_Step20Title", "Pattern Hub");
+        public readonly string Step20Desc = Loc.Localize("HelpMainUi_Step20Desc", "Browse and explore patterns uploaded by others.");
+        public readonly string Step20DescExtended = Loc.Localize("HelpMainUi_Step20DescExtended", " ");
 
-        public readonly string Step22Title = Loc.Localize("HelpMainUi_Step23Title", "Pattern Search");
-        public readonly string Step22Desc = Loc.Localize("HelpMainUi_Step23Desc", "Use tags and filters to narrow your search results.");
-        public readonly string Step22DescExtended = Loc.Localize("HelpMainUi_Step23DescExtended", "Up to a maximum of 50 results are polled, so if " +
+        public readonly string Step21Title = Loc.Localize("HelpMainUi_Step21Title", "Pattern Search");
+        public readonly string Step21Desc = Loc.Localize("HelpMainUi_Step21Desc", "Use tags and filters to narrow your search results.");
+        public readonly string Step21DescExtended = Loc.Localize("HelpMainUi_Step21DescExtended", "Up to a maximum of 50 results are polled, so if " +
             "you can't find the result you are looking for, narrow it with filters!");
 
-        public readonly string Step23Title = Loc.Localize("HelpMainUi_Step24Title", "Pattern Results");
-        public readonly string Step23Desc = Loc.Localize("HelpMainUi_Step24Desc", "Results let you preview devices & motors used, duration, and authors.");
-        public readonly string Step23DescExtended = Loc.Localize("HelpMainUi_Step24DescExtended", " ");
+        public readonly string Step22Title = Loc.Localize("HelpMainUi_Step22Title", "Pattern Results");
+        public readonly string Step22Desc = Loc.Localize("HelpMainUi_Step22Desc", "Results let you preview devices & motors used, duration, and authors.");
+        public readonly string Step22DescExtended = Loc.Localize("HelpMainUi_Step22DescExtended", " ");
 
-        public readonly string Step24Title = Loc.Localize("HelpMainUi_Step25Title", "Moodle Hub");
-        public readonly string Step24Desc = Loc.Localize("HelpMainUi_Step25Desc", "Browse and explore Moodles uploaded by others.");
-        public readonly string Step24DescExtended = Loc.Localize("HelpMainUi_Step25DescExtended", " ");
+        public readonly string Step23Title = Loc.Localize("HelpMainUi_Step23Title", "Moodle Hub");
+        public readonly string Step23Desc = Loc.Localize("HelpMainUi_Step23Desc", "Browse and explore Moodles uploaded by others.");
+        public readonly string Step23DescExtended = Loc.Localize("HelpMainUi_Step23DescExtended", " ");
 
-        public readonly string Step25Title = Loc.Localize("HelpMainUi_Step26Title", "Moodle Search");
-        public readonly string Step25Desc = Loc.Localize("HelpMainUi_Step26Desc", "Use tags and filters to narrow your search results.");
-        public readonly string Step25DescExtended = Loc.Localize("HelpMainUi_Step26DescExtended", "Up to a maximum of 75 results are polled, so if " +
+        public readonly string Step24Title = Loc.Localize("HelpMainUi_Step24Title", "Moodle Search");
+        public readonly string Step24Desc = Loc.Localize("HelpMainUi_Step24Desc", "Use tags and filters to narrow your search results.");
+        public readonly string Step24DescExtended = Loc.Localize("HelpMainUi_Step24DescExtended", "Up to a maximum of 75 results are polled, so if " +
             "you can't find the result you are looking for, narrow it with filters!");
 
-        public readonly string Step26Title = Loc.Localize("HelpMainUi_Step27Title", "Moodle Results");
-        public readonly string Step26Desc = Loc.Localize("HelpMainUi_Step27Desc", "You can preview a Moodle by hovering over it's icon.");
-        public readonly string Step26DescExtended = Loc.Localize("HelpMainUi_Step27DescExtended", "You can also try on, like, or grab a copy of the Moodle for yourself.");
+        public readonly string Step25Title = Loc.Localize("HelpMainUi_Step25Title", "Moodle Results");
+        public readonly string Step25Desc = Loc.Localize("HelpMainUi_Step25Desc", "You can preview a Moodle by hovering over it's icon.");
+        public readonly string Step25DescExtended = Loc.Localize("HelpMainUi_Step25DescExtended", "You can also try on, like, or grab a copy of the Moodle for yourself.");
 
-        public readonly string Step27Title = Loc.Localize("HelpMainUi_Step28Title", "Global Chat");
-        public readonly string Step27Desc = Loc.Localize("HelpMainUi_Step28Desc", "Chat Anonymously with other Kinksters from anywhere in the world with Global Chat!");
-        public readonly string Step27DescExtended = Loc.Localize("HelpMainUi_Step28DescExtended", "ChatLogs are restored on reconnection, and reset at midnight every day relative to your local time zone.");
+        public readonly string Step26Title = Loc.Localize("HelpMainUi_Step26Title", "Global Chat");
+        public readonly string Step26Desc = Loc.Localize("HelpMainUi_Step26Desc", "Chat Anonymously with other Kinksters from anywhere in the world with Global Chat!");
+        public readonly string Step26DescExtended = Loc.Localize("HelpMainUi_Step26DescExtended", "ChatLogs are restored on reconnection, and reset at midnight every day relative to your local time zone.");
 
-        public readonly string Step28Title = Loc.Localize("HelpMainUi_Step29Title", "Using Global Chat");
-        public readonly string Step28Desc = Loc.Localize("HelpMainUi_Step29Desc", "To talk in Global Chat, you must verify your account first! This is to prevent anonymous harassment.");
-        public readonly string Step28DescExtended = Loc.Localize("HelpMainUi_Step29DescExtended", "In order to verify your account, you will need to join the discord server, where further instructions can be found.");
+        public readonly string Step27Title = Loc.Localize("HelpMainUi_Step27Title", "Using Global Chat");
+        public readonly string Step27Desc = Loc.Localize("HelpMainUi_Step27Desc", "To talk in Global Chat, you must verify your account first! This is to prevent anonymous harassment.");
+        public readonly string Step27DescExtended = Loc.Localize("HelpMainUi_Step27DescExtended", "In order to verify your account, you will need to join the discord server, where further instructions can be found.");
 
-        public readonly string Step29Title = Loc.Localize("HelpMainUi_Step30Title", "Chat Emotes");
-        public readonly string Step29Desc = Loc.Localize("HelpMainUi_Step30Desc", "You can add expressive emotes to messages!");
-        public readonly string Step29DescExtended = Loc.Localize("HelpMainUi_Step30DescExtended", "Emotes can also be manually added to chat messages by typing out emotes like discord emotes. :catsnuggle:");
+        public readonly string Step28Title = Loc.Localize("HelpMainUi_Step28Title", "Chat Emotes");
+        public readonly string Step28Desc = Loc.Localize("HelpMainUi_Step28Desc", "You can add expressive emotes to messages!");
+        public readonly string Step28DescExtended = Loc.Localize("HelpMainUi_Step28DescExtended", "Emotes can also be manually added to chat messages by typing out emotes like discord emotes. :catsnuggle:");
 
-        public readonly string Step30Title = Loc.Localize("HelpMainUi_Step31Title", "Chat Scroll");
-        public readonly string Step30Desc = Loc.Localize("HelpMainUi_Step31Desc", "Sets if the window will always auto-scroll to the last sent message.");
-        public readonly string Step30DescExtended = Loc.Localize("HelpMainUi_Step31DescExtended", "Turning Auto-Scroll off lets you scroll up freely.");
+        public readonly string Step29Title = Loc.Localize("HelpMainUi_Step29Title", "Chat Scroll");
+        public readonly string Step29Desc = Loc.Localize("HelpMainUi_Step29Desc", "Sets if the window will always auto-scroll to the last sent message.");
+        public readonly string Step29DescExtended = Loc.Localize("HelpMainUi_Step29DescExtended", "Turning Auto-Scroll off lets you scroll up freely.");
 
-        public readonly string Step31Title = Loc.Localize("HelpMainUi_Step32Title", "Chat Message Examine");
-        public readonly string Step31Desc = Loc.Localize("HelpMainUi_Step32Desc", "Hover messages to see when they were sent, the Kinkster's Light KinkPlate™, or send them a request!");
-        public readonly string Step31DescExtended = Loc.Localize("HelpMainUi_Step32DescExtended", "Additionally, you are able to choose to add a kinkster to " +
+        public readonly string Step30Title = Loc.Localize("HelpMainUi_Step30Title", "Chat Message Examine");
+        public readonly string Step30Desc = Loc.Localize("HelpMainUi_Step30Desc", "Hover messages to see when they were sent, the Kinkster's Light KinkPlate™, or send them a request!");
+        public readonly string Step30DescExtended = Loc.Localize("HelpMainUi_Step30DescExtended", "Additionally, you are able to choose to add a kinkster to " +
             "your silence list, hiding messages from them until the next plugin restart.");
 
-        public readonly string Step32Title = Loc.Localize("HelpMainUi_Step33Title", "Self Plug");
-        public readonly string Step32Desc = Loc.Localize("HelpMainUi_Step33Desc", "If you ever fancy tossing a tip or becoming a supporter as a thanks for all the hard work, or just to help support me, it would be much appreciated." +
+        public readonly string Step31Title = Loc.Localize("HelpMainUi_Step31Title", "Self Plug");
+        public readonly string Step31Desc = Loc.Localize("HelpMainUi_Step31Desc", "If you ever fancy tossing a tip or becoming a supporter as a thanks for all the hard work, or just to help support me, it would be much appreciated." +
             "\n\nBut please don't feel guilty if you don't. Only support me if you want to! I will always love and cherish you all regardless ♥");
-        public readonly string Step32DescExtended = Loc.Localize("HelpMainUi_Step33DescExtended", " ");
+        public readonly string Step31DescExtended = Loc.Localize("HelpMainUi_Step31DescExtended", " ");
     }
 
     public class HelpRemote

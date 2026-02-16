@@ -1,4 +1,3 @@
-using System.Globalization;
 using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Raii;
@@ -19,6 +18,7 @@ using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.WebAPI;
 using OtterGui.Text;
+using System.Globalization;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -87,7 +87,7 @@ public class HomeTab
         var wdl = ImGui.GetWindowDrawList();
         using (CkRaii.Child("##AccountInfo", new Vector2(left, ProfileSize.Y)))
         {
-            ProfileDisplayName(); 
+            ProfileDisplayName();
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ClientUID, MainUI.LastPos, MainUI.LastSize);
             // Line Splitter.
             var pos = ImGui.GetCursorScreenPos();
@@ -241,6 +241,7 @@ public class HomeTab
             AchievementsButton(buttonWidth);
             KoFiButton(buttonWidth);
             PatreonButton(buttonWidth);
+
             FeedbackButton(buttonWidth);
         }
     }
@@ -362,6 +363,7 @@ public class HomeTab
         CkGui.AttachToolTip("This plugin took a massive toll on my life as a mostly solo dev." +
             "--NL--As happy as I am to make this free for all of you to enjoy, any support is much appreciated ♥" +
             "--NL--Will open --COL--patreon.com--COL-- in a new browser window.", ImGuiColors.ParsedPink);
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SelfPlug, MainUI.LastPos, MainUI.LastSize);
     }
 
     private void FeedbackButton(float buttonWidth)
