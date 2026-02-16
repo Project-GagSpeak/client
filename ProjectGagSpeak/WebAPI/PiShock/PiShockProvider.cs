@@ -180,15 +180,15 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
             dto = dto with { Duration = 100 };
         }
 
-        // MaxDuration is in seconds while the incoming duration is in ms, so we need to convert before comparing. Ignore intensity for beeps.
-        if (dto.Duration / 1000f > enactor.OwnPerms.MaxDuration || (dto.OpCode != 2 && dto.Intensity > enactor.OwnPerms.MaxIntensity))
-        {
-            Logger.LogWarning("Received instruction that exceeds the max duration or intensity for this user. Ignoring.");
-            return;
-        }
-
         if (!enactor.OwnPerms.PiShockShareCode.IsNullOrEmpty())
         {
+            // MaxDuration is in seconds while the incoming duration is in ms, so we need to convert before comparing. Ignore intensity for beeps.
+            if (dto.Duration / 1000f > enactor.OwnPerms.MaxDuration || (dto.OpCode != 2 && dto.Intensity > enactor.OwnPerms.MaxIntensity))
+            {
+                Logger.LogWarning("Received instruction that exceeds the max duration or intensity for this user. Ignoring.");
+                return;
+            }
+
             Logger.LogDebug("Executing Shock Instruction to UniquePair ShareCode", LoggerType.Callbacks);
             Mediator.Publish(new EventMessage(new(enactor.GetNickAliasOrUid(), enactor.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
             ExecuteOperation(enactor.OwnPerms.PiShockShareCode, dto.OpCode, dto.Intensity, dto.Duration);
@@ -197,6 +197,13 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
         }
         else if (ClientData.Globals is { } g && !g.GlobalShockShareCode.IsNullOrEmpty())
         {
+            // MaxDuration is in seconds while the incoming duration is in ms, so we need to convert before comparing. Ignore intensity for beeps.
+            if (dto.Duration / 1000f > g.MaxDuration || (dto.OpCode != 2 && dto.Intensity > g.MaxIntensity))
+            {
+                Logger.LogWarning("Received instruction that exceeds the max duration or intensity for this user. Ignoring.");
+                return;
+            }
+
             Logger.LogDebug("Executing Shock Instruction to Global ShareCode", LoggerType.Callbacks);
             Mediator.Publish(new EventMessage(new(enactor.GetNickAliasOrUid(), enactor.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
             ExecuteOperation(g.GlobalShockShareCode, dto.OpCode, dto.Intensity, dto.Duration);

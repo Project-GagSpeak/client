@@ -539,14 +539,14 @@ public partial class SidePanelPair
         bool canShock;
         bool canVibrate;
         bool canBeep;
-        float maxShockBeepDuration;
+        float maxDuration;
         int maxIntensity;
         if (k.PairPerms.HasValidShareCode())
         {
             canShock = k.PairPerms.AllowShocks;
             canVibrate = k.PairPerms.AllowVibrations;
             canBeep = k.PairPerms.AllowBeeps;
-            maxShockBeepDuration = k.PairPerms.MaxDuration;
+            maxDuration = k.PairPerms.MaxDuration;
             maxIntensity = k.PairPerms.MaxIntensity;
         }
         else if (k.PairGlobals.HasValidShareCode())
@@ -554,7 +554,7 @@ public partial class SidePanelPair
             canShock = k.PairGlobals.AllowShocks;
             canVibrate = k.PairGlobals.AllowVibrations;
             canBeep = k.PairGlobals.AllowBeeps;
-            maxShockBeepDuration = k.PairGlobals.MaxDuration;
+            maxDuration = k.PairGlobals.MaxDuration;
             maxIntensity = k.PairGlobals.MaxIntensity;
         }
         else
@@ -569,17 +569,17 @@ public partial class SidePanelPair
 
         // Verify duration and intensity within bounds
         if (shockerDuration < 0.1f) shockerDuration = 0.1f;
-        else if (shockerDuration > k.PairPerms.MaxDuration) shockerDuration = k.PairPerms.MaxDuration;
+        else if (shockerDuration > maxDuration) shockerDuration = maxDuration;
         if (shockerIntensity < 1) shockerIntensity = 1;
-        else if (shockerIntensity > k.PairPerms.MaxIntensity) shockerIntensity = k.PairPerms.MaxIntensity;
+        else if (shockerIntensity > maxIntensity) shockerIntensity = maxIntensity;
 
         var shockerDurationSeconds = (int)(shockerDuration * 1000f);
 
         ImGui.SetNextItemWidth(100 * ImGuiHelpers.GlobalScale);
-        ImGui.SliderInt("Intensity", ref shockerIntensity, 1, k.PairPerms.MaxIntensity, "%d%%");
+        ImGui.SliderInt("Intensity", ref shockerIntensity, 1, maxIntensity, "%d%%");
         CkGui.AttachToolTip($"Sets the intensity for shocks, vibrations, and beeps. Intensity is a percentage of the maximum effect delivered to {dispName}.");
         ImGui.SetNextItemWidth(150 * ImGuiHelpers.GlobalScale);
-        ImGui.SliderFloat("Shock Duration", ref shockerDuration, 0.1f, k.PairPerms.MaxDuration, "%.1fs");
+        ImGui.SliderFloat("Shock Duration", ref shockerDuration, 0.1f, maxDuration, "%.1fs");
         CkGui.AttachToolTip($"Sets the duration for shocks and beeps. Duration is the length of time the effect is delivered to {dispName}.");
 
         if (CkGui.IconTextButton(FAI.Bolt, shockTxt, width, true, !canShock))
