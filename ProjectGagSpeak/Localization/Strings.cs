@@ -254,7 +254,7 @@ namespace GagSpeak.Localization
 
         public readonly string Step6Title = Loc.Localize("HelpRestraints_Step6Title", "Editing a Restraint");
         public readonly string Step6Desc = Loc.Localize("HelpRestraints_Step6Desc", "Edit a restraint set by double-clicking it's name here");
-        public readonly string Step6DescExtended = Loc.Localize("HelpRestraints_Step6DescExtended", " ");
+        public readonly string Step6DescExtended = Loc.Localize("HelpRestraints_Step6DescExtended", "You can't edit something you're wearing, by the way.");
 
         public readonly string Step7Title = Loc.Localize("HelpRestraints_Step7Title", "Renaming a Restraint");
         public readonly string Step7Desc = Loc.Localize("HelpRestraints_Step7Desc", "If you change your mind, you can always rename a restraint.");
@@ -265,7 +265,7 @@ namespace GagSpeak.Localization
         public readonly string Step8DescExtended = Loc.Localize("HelpRestraints_Step8DescExtended", "A property set to forced show will always override one set to forced hide. Redrawing your character is necessary if animations are being changed.");
 
         public readonly string Step9Title = Loc.Localize("HelpRestraints_Step9Title", "Hardcore Traits");
-        public readonly string Step9Desc = Loc.Localize("HelpRestraints_Step9Desc", "Each of the hardcore traits can be toggled on or off.");
+        public readonly string Step9Desc = Loc.Localize("HelpRestraints_Step9Desc", "Each of the hardcore traits can be toggled on or off.\n[NOTE] With the Trait Allowances currently disabled, these will always be applied with any Restraints. Be careful!");
         public readonly string Step9DescExtended = Loc.Localize("HelpRestraints_Step9DescExtended", "These will always be applied if you put on a restraint yourself. " +
             "Be careful which ones you set, as they each disable various aspects of gameplay!");
 
@@ -373,7 +373,7 @@ namespace GagSpeak.Localization
         public readonly string Step34DescExtended = Loc.Localize("HelpRestraints_Step34DescExtended", "(We definitely snuck a Metal Padlock on you while you were reading earlier steps, click next and it will be unlocked for you.)"); //ehehehe i am amused
 
         public readonly string Step35Title = Loc.Localize("HelpRestraints_Step35Title", "Removing a Restraint");
-        public readonly string Step35Desc = Loc.Localize("HelpRestraints_Step35Desc", "Right click the thumbnail to remove a restraint once it's unlocked.");
+        public readonly string Step35Desc = Loc.Localize("HelpRestraints_Step35Desc", "Right click the thumbnail to remove a restraint once it's unlocked. You can do this one yourself after clicking next!");
         public readonly string Step35DescExtended = Loc.Localize("HelpRestraints_Step35DescExtended", " ");
 
         // -- OLD CONTENT -- //

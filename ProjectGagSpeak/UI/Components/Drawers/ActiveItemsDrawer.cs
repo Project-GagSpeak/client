@@ -1,7 +1,6 @@
 using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Raii;
-using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Textures.TextureWraps;
@@ -9,6 +8,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.CustomCombos.Padlock;
+using GagSpeak.Gui.Wardrobe;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
@@ -26,7 +26,6 @@ using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
-using System.Text.RegularExpressions;
 namespace GagSpeak.Gui.Components;
 
 public class ActiveItemsDrawer
@@ -261,10 +260,11 @@ public class ActiveItemsDrawer
     {
         using var group = ImRaii.Group();
         _restraintPadlocks.DrawLockCombo(ImGui.GetContentRegionAvail().X, "Lock this Padlock!");
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.LockingRestraint, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.LockingRestraint, WardrobeUI.LastPos, WardrobeUI.LastSize,
             () =>
             {
-                // TODO: Actually implement this step.
+                var tdata = data with { Padlock = Padlocks.Metal, PadlockAssigner = MainHub.UID };
+                SelfBondageHelper.RestraintUpdateTask(tdata, DataUpdateType.Locked, _dds, _visuals);
             });
 
         var height = ImGui.GetFrameHeightWithSpacing() * 5 + ImGui.GetFrameHeight();
@@ -274,7 +274,7 @@ public class ActiveItemsDrawer
         if (dispData is null)
             CkGui.AttachToolTip("--SEP----COL--The item that was here couldn't be found." +
                 "--NL--It may have been deleted or the data is corrupted.--COL--", color: ImGuiColors.DalamudRed);
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.RemovingRestraints, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.RemovingRestraints, WardrobeUI.LastPos, WardrobeUI.LastSize);
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             ImGui.OpenPopup($"##RestraintSetSelector");
@@ -300,7 +300,6 @@ public class ActiveItemsDrawer
                 {
                     var idx = BitOperations.TrailingZeroCount((int)_); return (idx < dispData.Layers.Count) && (!dispData.Layers[idx].Label.IsNullOrWhitespace()) ? dispData.Layers[idx].Label : $"Layer {idx + 1}";
                 });
-                _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EditingLayers, ImGui.GetWindowPos(), ImGui.GetWindowSize());
             }
         }
     }
@@ -389,6 +388,11 @@ public class ActiveItemsDrawer
         {
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + offsetV);
             _restraintPadlocks.DrawUnlockCombo(ImGui.GetContentRegionAvail().X, "Attempt to unlock this Padlock!");
+            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.UnlockingRestraints, WardrobeUI.LastPos, WardrobeUI.LastSize, () =>
+            {
+                var tdata = data with { Padlock = Padlocks.None, PadlockAssigner = string.Empty };
+                SelfBondageHelper.RestraintUpdateTask(tdata, DataUpdateType.Unlocked, _dds, _visuals);
+            });
         }
 
         var height = ImGui.GetFrameHeightWithSpacing() * 5 + ImGui.GetFrameHeight();
@@ -407,7 +411,7 @@ public class ActiveItemsDrawer
                 var newData = new CharaActiveRestraint() { ActiveLayers = (data.ActiveLayers | added) & ~removed };
                 SelfBondageHelper.RestraintUpdateTask(newData, DataUpdateType.LayersChanged, _dds, _visuals);
             }
-            
+
             if (dispData != null) // dont draw if display data is null.
             {
                 // Below draw out the layers.
@@ -418,6 +422,7 @@ public class ActiveItemsDrawer
                 });
             }
         }
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EditingLayers, WardrobeUI.LastPos, WardrobeUI.LastSize);
     }
 
     private string UnlockTooltip(string? label, string enabler, Padlocks padlock, string padlockAssigner)

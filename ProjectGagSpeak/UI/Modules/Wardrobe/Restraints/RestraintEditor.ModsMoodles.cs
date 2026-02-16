@@ -1,20 +1,20 @@
-using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Gui.Components;
+using CkCommons;
+using CkCommons.Gui;
 using CkCommons.Helpers;
 using CkCommons.Raii;
 using CkCommons.Widgets;
+using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility.Raii;
 using GagSpeak.FileSystems;
+using GagSpeak.Gui.Components;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
 using GagspeakAPI.Data;
-using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
-using CkCommons;
-using CkCommons.Gui;
 
 namespace GagSpeak.Gui.Wardrobe;
 
@@ -29,7 +29,7 @@ public class RestraintEditorModsMoodles : IFancyTab
     private readonly CosmeticService _cosmetics;
     private readonly TutorialService _guides;
     public RestraintEditorModsMoodles(ILogger<RestraintEditorModsMoodles> logger,
-        RestraintSetFileSelector selector, RestraintManager manager, 
+        RestraintSetFileSelector selector, RestraintManager manager,
         ModPresetManager modPresets, ModPresetDrawer modPresetDrawer,
         MoodleDrawer moodleDrawer, CosmeticService cosmetics, TutorialService guides)
     {
@@ -58,28 +58,30 @@ public class RestraintEditorModsMoodles : IFancyTab
             return;
 
         var panelSize = new Vector2((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().WindowPadding.X) / 2, ImGui.GetContentRegionAvail().Y);
+        using (ImRaii.Group())
+        {        
+            // Draw out the associated Mods Child.
+            using (CkRaii.HeaderChild("Associated Mods", panelSize, FancyTabBar.RoundingInner, HeaderFlags.SizeIncludesHeader))
+            {
+                DrawModSelector();
+                _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.AddingMods, WardrobeUI.LastPos, WardrobeUI.LastSize);
+                DrawModsList();
+            }
 
-        // Draw out the associated Mods Child.
-        using (CkRaii.HeaderChild("Associated Mods", panelSize, FancyTabBar.RoundingInner, HeaderFlags.SizeIncludesHeader))
-        {
-            DrawModSelector();
-            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.AddingMods, ImGui.GetWindowPos(), ImGui.GetWindowSize());
-            DrawModsList();
+            // Then the one for the moodles and such.
+            ImGui.SameLine(0, ImGui.GetStyle().WindowPadding.X);
+            using (CkRaii.HeaderChild("Associated Moodles", panelSize, FancyTabBar.RoundingInner, HeaderFlags.SizeIncludesHeader))
+            {
+                DrawMoodleSelector();
+                _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.AddingMoodles, WardrobeUI.LastPos, WardrobeUI.LastSize);
+                DrawMoodlesList();
+                // Draw out the moodle icon row.
+                _moodleDrawer.ShowStatusIconsFramed("AssociatedMoodles", _manager.ItemInEditor!.RestraintMoodles,
+                    ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), rows: 2);
+                _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.MoodlePreview, WardrobeUI.LastPos, WardrobeUI.LastSize);
+            }
         }
-
-        // Then the one for the moodles and such.
-        ImGui.SameLine(0, ImGui.GetStyle().WindowPadding.X);
-        using (CkRaii.HeaderChild("Associated Moodles", panelSize, FancyTabBar.RoundingInner, HeaderFlags.SizeIncludesHeader))
-        {
-            DrawMoodleSelector();
-            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.AddingMoodles, ImGui.GetWindowPos(), ImGui.GetWindowSize());
-            DrawMoodlesList();
-            // Draw out the moodle icon row.
-            _moodleDrawer.ShowStatusIconsFramed("AssociatedMoodles", _manager.ItemInEditor!.RestraintMoodles, 
-                ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), rows: 2);
-            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.MoodlePreview, ImGui.GetWindowPos(), ImGui.GetWindowSize());
-        }
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.ModsMoodles, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.ModsMoodles, WardrobeUI.LastPos, WardrobeUI.LastSize);
     }
 
     public void DrawModSelector()
@@ -93,7 +95,7 @@ public class RestraintEditorModsMoodles : IFancyTab
 
         ImUtf8.SameLineInner();
         PresetCombo();
-        
+
         ImUtf8.SameLineInner();
         if (CkGui.IconButton(FAI.Plus))
         {
@@ -154,8 +156,8 @@ public class RestraintEditorModsMoodles : IFancyTab
             };
         }
         CkGui.AttachToolTip(_moodleDrawer.MoodleTypeTooltip(_selectedMoodle));
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SwapMoodleTypes, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
-            () => { }/* attach a moodle here */ );
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SwapMoodleTypes, WardrobeUI.LastPos, WardrobeUI.LastSize,
+            () => _manager.ItemInEditor!.RestraintMoodles.Add(new MoodleTuple(MoodleCache.IpcData.StatusList.FirstOrDefault())));
 
         ImUtf8.SameLineInner();
         var comboWidth = ImGui.GetContentRegionAvail().X - buttonWidth - ImGui.GetStyle().ItemInnerSpacing.X;
@@ -196,7 +198,7 @@ public class RestraintEditorModsMoodles : IFancyTab
                 if (CkGui.IconButton(FAI.Eraser, inPopup: true))
                     _manager.ItemInEditor!.RestraintMods.Remove(mod);
             }
-            if(ImGui.IsItemHovered())
+            if (ImGui.IsItemHovered())
                 _modDrawer.DrawPresetTooltip(mod);
         }
     }
@@ -207,7 +209,7 @@ public class RestraintEditorModsMoodles : IFancyTab
         var height = size.Y - (MoodleDrawer.FramedIconDisplayHeight(2).AddWinPadY() + ImGui.GetStyle().ItemSpacing.Y);
 
         using var _ = CkRaii.FramedChildPaddedWH("MoodlesList", new Vector2(size.X, height), CkCol.CurvedHeaderFade.Uint(), 0, CkStyle.ChildRoundingLarge());
-        
+
         var buttonSize = CkGui.IconButtonSize(FAI.Eraser);
 
         foreach (var moodle in _manager.ItemInEditor!.RestraintMoodles.ToList())

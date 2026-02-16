@@ -7,6 +7,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Gui.Wardrobe;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
@@ -177,13 +178,13 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
             ImGui.OpenPopup("##NewRestraintSet");
         CkGui.AttachToolTip("Create a new restraint set.");
         // this needs the parent window information
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.CreatingRestraints, ImGui.GetWindowPos(), ImGui.GetWindowSize(), 
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.CreatingRestraints, WardrobeUI.LastPos, WardrobeUI.LastSize, 
             () => { tutorialSet = _manager.CreateNew("Tutorial Restraint"); });
 
         ImGui.SameLine(0, 1);
         DrawFolderButton();
         // this also needs the parent window information
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.CreatingFolders, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.CreatingFolders, WardrobeUI.LastPos, WardrobeUI.LastSize,
             () => CkFileSystem.FindOrCreateAllFolders("Tutorial Folder"));
     }
 
