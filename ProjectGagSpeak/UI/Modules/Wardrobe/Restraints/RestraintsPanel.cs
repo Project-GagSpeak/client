@@ -353,7 +353,8 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
                 CkGui.AttachToolTip("If you redraw after application.");
             }
         }
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EditMeta, WardrobeUI.LastPos, WardrobeUI.LastSize);
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EditMeta, WardrobeUI.LastPos, WardrobeUI.LastSize,
+            () => FancyTabBar.SelectTab("RS_EditBar", EditorTabs[0], EditorTabs));
 
         // beside this, enhances the font scale to 1.5x, draw the save icon, then restore the font scale.
         ImGui.SameLine(0, itemSpacing);
