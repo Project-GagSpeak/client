@@ -116,6 +116,7 @@ public sealed class UiFontService : IHostedService
     {
         Svc.Logger.Information("UiFontService Stopped.");
         GagspeakFont?.Dispose();
+        Default150Percent?.Dispose();
         GagspeakLabelFont?.Dispose();
         GagspeakTitleFont?.Dispose();
         UidFont?.Dispose();
