@@ -87,13 +87,7 @@ public static class ConfigMigrator
         config["IntifaceConnectionSocket"] = mainConfig["IntifaceConnectionSocket"];
         config["PiShockApiKey"] = mainConfig["PiShockApiKey"];
         config["PiShockUsername"] = mainConfig["PiShockUsername"];
-        config["BlindfoldStyle"] = mainConfig["BlindfoldStyle"];
-        config["ForceLockFirstPerson"] = mainConfig["ForceLockFirstPerson"];
-        config["OverlayMaxOpacity"] = mainConfig["OverlayMaxOpacity"];
-
-        // Handle ForcedStayPromptList conversion (keeping it intact)
-        config["ForcedStayPromptList"] = mainConfig["ForcedStayPromptList"];
-
+        config["OverlayMaxOpacity"] = mainConfig["BlindfoldOpacity"];
         config["MoveToChambersInEstates"] = mainConfig["MoveToChambersInEstates"];
 
         // Add the config object to the new format

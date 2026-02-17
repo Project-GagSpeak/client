@@ -20,6 +20,11 @@ public class Changelog
     // Add Version Data here.
     private void AddVersionData()
     {
+        VersionEntry(2, 0, 1, 0)
+            .RegisterMain("Pretty much everything got reworked from the ground up. Everything is much more interconnected.")
+            .RegisterMain("A lot has changed. I helped you migrate what I could, but a lot will take some time to set up.")
+            .RegisterMain("Yes the UI Coloring is going to suck and look bad for a bit. Bare with it while I get things sorted.")
+            .RegisterMain("Go explore, have fun, meet friends!");
         VersionEntry(1, 2, 1, 6)
             .RegisterMain("Fixed all the lingering issues since 1.2.1.0 in regards to appearance updates.")
             .RegisterMain("IF YOU HAD A PADLOCK ON PRIOR TO 1.2.1.0, YOU WILL NEED TO SAFEWORD OUT OF IT.");

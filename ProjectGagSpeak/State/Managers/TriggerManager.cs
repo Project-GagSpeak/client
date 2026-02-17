@@ -167,7 +167,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
     }
 
     #region HybridSavable
-    public int ConfigVersion => 0;
+    public int ConfigVersion => 1;
     public HybridSaveType SaveType => HybridSaveType.Json;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     public string GetFileName(ConfigFileProvider files, out bool isAccountUnique) => (isAccountUnique = true, files.Triggers).Item2;
@@ -204,13 +204,13 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
         if (jObject["Triggers"] is JObject)
             jObject = ConfigMigrator.MigrateTriggersConfig(jObject, _fileNames, file);
 
-        var version = jObject["Version"]?.Value<int>() ?? 0;
+        var version = jObject["Version"]?.Value<int>() ?? 1;
 
         // Perform Migrations if any, and then load the data.
         switch (version)
         {
-            case 0:
-                LoadV0(jObject["Triggers"]);
+            case 1:
+                LoadV1(jObject["Triggers"]);
                 break;
             default:
                 Logger.LogError("Invalid Version!");
@@ -220,7 +220,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
         Mediator.Publish(new ReloadFileSystem(GSModule.Trigger));
     }
 
-    private void LoadV0(JToken? data)
+    private void LoadV1(JToken? data)
     {
         if (data is not JArray triggers)
             return;

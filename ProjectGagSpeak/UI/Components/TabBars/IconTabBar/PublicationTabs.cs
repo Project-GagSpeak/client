@@ -17,8 +17,8 @@ public class PublicationTabs : IconTabBar<PublicationTabs.SelectedTab>
 
     public PublicationTabs()
     {
-        AddDrawButton(FontAwesomeIcon.CommentDots, SelectedTab.Patterns, "Pattern Publisher");
-        AddDrawButton(FontAwesomeIcon.CommentDots, SelectedTab.Moodles, "Moodle Publisher");
+        AddDrawButton(FontAwesomeIcon.WaveSquare, SelectedTab.Patterns, "Pattern Publisher");
+        AddDrawButton(FontAwesomeIcon.TheaterMasks, SelectedTab.Moodles, "Moodle Publisher");
     }
 
     public override void Draw(float availableWidth)

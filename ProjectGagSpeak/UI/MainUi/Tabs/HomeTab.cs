@@ -85,8 +85,9 @@ public class HomeTab
     {
         var left = region.X - ProfileSize.X - ImUtf8.ItemSpacing.X;
         var wdl = ImGui.GetWindowDrawList();
-        using (CkRaii.Child("##AccountInfo", new Vector2(left, ProfileSize.Y)))
+        using (var _ = CkRaii.Child("##AccountInfo", new Vector2(region.X, ProfileSize.Y)))
         {
+            var min = ImGui.GetCursorPos();
             ProfileDisplayName();
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ClientUID, MainUI.LastPos, MainUI.LastSize);
             // Line Splitter.
@@ -108,12 +109,8 @@ public class HomeTab
 
             DrawSafewordRow(left);
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Safewords, MainUI.LastPos, MainUI.LastSize);
-        }
 
-        // Then the profile image.
-        ImGui.SameLine();
-        using (CkRaii.Child("##AccountPFP", ProfileSize))
-        {
+            ImGui.SetCursorPos(min + new Vector2(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - ProfileSize.X, 0));
             var avatar = profile.GetProfileOrDefault();
             RectMin = ImGui.GetCursorScreenPos();
 
@@ -347,7 +344,7 @@ public class HomeTab
             try { Process.Start(new ProcessStartInfo { FileName = "https://www.ko-fi.com/cordeliamist", UseShellExecute = true }); }
             catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the Patreon link. {e.Message}"); }
         }
-        CkGui.AttachToolTip("This plugin took a massive toll on my life as a mostly solo dev." +
+        CkGui.AttachToolTip("This plugin took a massive toll on my life." +
             "--NL--As happy as I am to make this free for all of you to enjoy, any support is much appreciated ♥" +
             "--NL--Will open --COL--ko-fi.com--COL-- in a new browser window.", ImGuiColors.ParsedPink);
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SelfPlug, MainUI.LastPos, MainUI.LastSize);
@@ -360,7 +357,7 @@ public class HomeTab
             try { Process.Start(new ProcessStartInfo { FileName = "https://www.patreon.com/CordeliaMist", UseShellExecute = true }); }
             catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the Patreon link. {e.Message}"); }
         }
-        CkGui.AttachToolTip("This plugin took a massive toll on my life as a mostly solo dev." +
+        CkGui.AttachToolTip("This plugin took a massive toll on my life." +
             "--NL--As happy as I am to make this free for all of you to enjoy, any support is much appreciated ♥" +
             "--NL--Will open --COL--patreon.com--COL-- in a new browser window.", ImGuiColors.ParsedPink);
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SelfPlug, MainUI.LastPos, MainUI.LastSize);

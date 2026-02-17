@@ -209,12 +209,13 @@ public class PublicationsManager
             return;
         }
 
-        using var windowRounding = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f);
-        using var borderColor = ImRaii.PushStyle(ImGuiStyleVar.WindowBorderSize, 1f);
-        using var borderCol = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.TankBlue);
-        using var bgColor = ImRaii.PushColor(ImGuiCol.ChildBg, new Vector4(0.1f, 0.1f, 0.3f, 0.4f));
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.ChildRounding, 5f)
+            .Push(ImGuiStyleVar.WindowBorderSize, 1f);
+        using var col = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.TankBlue)
+            .Push(ImGuiCol.ChildBg, new Vector4(0.1f, 0.1f, 0.3f, 0.4f));
 
-        foreach (var moodle in items) PublishedMoodleItem(moodle);
+        foreach (var moodle in items.ToList())
+            PublishedMoodleItem(moodle);
     }
 
     private void PublishedPatternItem(PublishedPattern pattern)
@@ -270,21 +271,12 @@ public class PublicationsManager
         var height = ImGui.GetFrameHeight() * 2.25f + ImGui.GetStyle().ItemSpacing.Y + ImGui.GetStyle().WindowPadding.Y * 2;
         using (ImRaii.Child($"##MoodleResult_{moodle.Status.GUID}", new Vector2(ImGui.GetContentRegionAvail().X, height), true, WFlags.ChildWindow))
         {
-            var imagePos = Vector2.Zero;
+            var min = ImGui.GetCursorScreenPos();
             using (ImRaii.Group())
             {
                 // display name, then display the downloads and likes on the other side.
-                imagePos = ImGui.GetCursorPos();
-                ImGuiHelpers.ScaledDummy(MoodleDrawer.IconSize);
-                // if the scaled dummy is hovered, display the description, if any.
-                if(ImGui.IsItemHovered())
-                {
-                    if(!moodle.Status.Description.IsNullOrEmpty()) 
-                        CkGui.AttachToolTip(moodle.Status.Description.StripColorTags());
-                }
-                ImGui.SameLine();
-                ImGui.AlignTextToFramePadding();
-                CkGui.ColorText(moodle.Status.Title.StripColorTags(), ImGuiColors.DalamudWhite);
+                ImGuiHelpers.ScaledDummy(MoodleDrawer.IconSizeFramed);
+                CkGui.ColorTextFrameAlignedInline(moodle.Status.Title.StripColorTags(), ImGuiColors.DalamudWhite, false);
 
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - unpublishButton);
                 using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink))
@@ -303,10 +295,8 @@ public class PublicationsManager
                 var customVfxPath = CkGui.IconSize(FAI.Magic).X;
                 var stackOnReapply = CkGui.IconSize(FAI.PersonCirclePlus).X;
 
-                ImGui.AlignTextToFramePadding();
-                CkGui.IconText(FAI.UserCircle);
-                ImUtf8.SameLineInner();
-                CkGui.ColorText(moodle.AuthorName, ImGuiColors.DalamudGrey);
+                CkGui.IconTextAligned(FAI.UserCircle);
+                CkGui.ColorTextInline(moodle.AuthorName, ImGuiColors.DalamudGrey);
                 CkGui.AttachToolTip("Publisher of the Moodle");
 
 
@@ -338,8 +328,12 @@ public class PublicationsManager
                 CkGui.AttachToolTip(moodle.Status.Modifiers.Has(Modifiers.StacksIncrease) ? "Stacks " + moodle.Status.StackSteps + " times on Reapplication." : "Doesn't stack on reapplication.");
             }
 
-            if (moodle.Status.IconID != 0 && imagePos != Vector2.Zero)
+            if (moodle.Status.IconID != 0)
+            {
+                ImGui.SetCursorScreenPos(min);
                 MoodleIcon.DrawMoodleIcon(moodle.Status.IconID, moodle.Status.Stacks, MoodleDrawer.IconSize);
+                MoodlesEx.AttachTooltip(moodle.Status, MoodleCache.IpcData.StatusList);
+            }
         }
     }
 

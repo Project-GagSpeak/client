@@ -104,10 +104,6 @@ public class MainUI : WindowMediatorSubscriberBase
             IsOpen = true;
             _tabMenu.TabSelection = MainMenuTabs.SelectedTab.Whitelist;
         });
-
-        // Set initial sundouleia warning.
-        _ipc.Sundouleia.CheckAPI();
-        _showSundWarning = !IpcCallerSundouleia.APIAvailable;
     }
 
     public static Vector2 LastPos { get; private set; } = Vector2.Zero;

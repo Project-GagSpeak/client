@@ -54,6 +54,7 @@ public class MainConfig : IHybridSavable
                 {
                     jsonText = File.ReadAllText(backupFile);
                     jObject = JObject.Parse(jsonText);
+                    Svc.Logger.Warning("Old Config found, attempting to migrate.");
                     jObject = ConfigMigrator.MigrateMainConfig(jObject, _saver.FileNames);
                     // remove the old file.
                     // File.Delete(backupFile);

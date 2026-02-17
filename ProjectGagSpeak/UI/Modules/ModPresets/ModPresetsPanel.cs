@@ -52,7 +52,7 @@ public class ModPresetsPanel : DisposableMediatorSubscriberBase
     public void DrawModuleTitle()
     {
         // get the text of the mod we are currently editing.
-        var text = "Mod Preset Manager";
+        var text = "Mod Preset Manager (Sorry for the eyesore)";
         if (_selector.Selected is not null)
             text = $"Preset Manager for {_selector.Selected.ModName}";
         var offset = (ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize(text).X) / 2;
