@@ -53,7 +53,7 @@ public class TriggerHandler
         if (!string.IsNullOrWhiteSpace(globals.TriggerPhrase))
         {
             var gTriggers = globals.TriggerPhrase.Split(',').ToList();
-            if (IsValidTriggerWord(gTriggers, msg, out var matched))
+            if (IsValidTriggerWord(gTriggers, msg, false, out var matched))
             {
                 var uid = GetUidFromNameWorld(name, world);
                 var aliases = _puppeteer.GetGlobalAliases().ToList();
@@ -68,8 +68,9 @@ public class TriggerHandler
             // Ensure still paired (avoid stalking abuse)
             if (_kinksters.TryGetKinkster(new(matchedUID), out var k))
             {
+                var ignoreCase = k.OwnPerms.IgnoreTriggerCase;
                 var pTriggers = k.OwnPerms.TriggerPhrase.Split(',').ToList();
-                if (IsValidTriggerWord(pTriggers, msg, out var matched))
+                if (IsValidTriggerWord(pTriggers, msg, ignoreCase, out var matched))
                 {
                     var shared = _puppeteer.GetAliasesForPuppeteer(matchedUID).ToList();
                     var context = new PuppetMsgContext(k.GetDisplayName(), matchedUID, matched, shared, k.OwnPerms.PuppetPerms, k.OwnPerms.StartChar, k.OwnPerms.EndChar);
@@ -82,7 +83,7 @@ public class TriggerHandler
     /// <summary>
     ///     Sees if the trigger phases for a global or pair that matched from a chat message is valid.
     /// </summary>
-    private bool IsValidTriggerWord(List<string> triggerPhrases, SeString chatMessage, out string matchedTrigger)
+    private bool IsValidTriggerWord(List<string> triggerPhrases, SeString chatMessage, bool ignoreCase, out string matchedTrigger)
     {
         matchedTrigger = string.Empty;
         foreach (var triggerWord in triggerPhrases)
@@ -90,7 +91,7 @@ public class TriggerHandler
             if (triggerWord.IsNullOrWhitespace())
                 continue;
 
-            if (!RegexEx.TryMatchTriggerWord(chatMessage.TextValue, triggerWord).Success)
+            if (!RegexEx.TryMatchTriggerWord(chatMessage.TextValue, triggerWord, ignoreCase).Success)
                 continue;
 
             _logger.LogTrace("Matched trigger word: " + triggerWord, LoggerType.Puppeteer);
