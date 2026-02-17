@@ -328,7 +328,11 @@ public class HomeTab
 
     private void PublicationsButton(float width)
     {
-        if (CkGui.FancyButton(FAI.CloudUploadAlt, "Publications", width, false))
+        var disabled = true;
+#if DEBUG
+        disabled = false;
+#endif
+        if (CkGui.FancyButton(FAI.CloudUploadAlt, "Publications", width, disabled))
             _mediator.Publish(new UiToggleMessage(typeof(PublicationsUI)));
         CkGui.AttachToolTip("Publish created Patterns & Moodles for others to enjoy!");
     }
