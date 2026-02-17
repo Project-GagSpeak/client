@@ -46,9 +46,9 @@ public class WardrobeUI : WindowMediatorSubscriberBase
             .Build();
     }
 
-    // Used for tutorial popups
-    public static Vector2 LastPos = Vector2.Zero;
-    public static Vector2 LastSize = Vector2.Zero;
+    // Accessed by Tutorial System
+    public static Vector2 LastPos { get; private set; } = Vector2.Zero;
+    public static Vector2 LastSize { get; private set; } = Vector2.Zero;
 
     private WardrobeTabs _tabMenu { get; init; }
     private bool ThemePushed = false;

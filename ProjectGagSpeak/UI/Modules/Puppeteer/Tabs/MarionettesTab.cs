@@ -64,13 +64,17 @@ public class MarionettesTab : IFancyTab
         using (ImRaii.Group())
         {
             DrawMarionetteCombo(leftW, rounding);
+            _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.MarionettesPairs, PuppeteerUI.LastPos, PuppeteerUI.LastSize);
             DrawMarionetteAliases(leftW, rounding);
+            _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.MarionettesPairAliases, PuppeteerUI.LastPos, PuppeteerUI.LastSize);
         }
         ImUtf8.SameLineInner();
         using (ImRaii.Group())
         {
             DrawMarionettesPerms(CkStyle.GetFrameRowsHeight(6).AddWinPadY(), rounding);
+            _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.MarionettesPairPermissions, PuppeteerUI.LastPos, PuppeteerUI.LastSize);
             DrawAliasPreview(rounding);
+            _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.MarionettesPairAliasConfig, PuppeteerUI.LastPos, PuppeteerUI.LastSize);
         }
     }
 
@@ -102,67 +106,74 @@ public class MarionettesTab : IFancyTab
             CkGui.CenterColorTextAligned("No Marionette Selected", ImGuiColors.DalamudRed);
             return;
         }
-
-        CkGui.IconTextAligned(FAI.User);
-        if (marionette.IsListeningToClient)
+        using (ImRaii.Group())
         {
-            CkGui.ColorTextFrameAlignedInline(PlayerData.NameWithWorld, CkCol.TriStateCheck.Vec4Ref());
-            CkGui.AttachToolTip($"{marionette.GetDisplayName()} is associating your PlayerName with your Kinkster.", ImGuiColors.TankBlue);
-        }
-        else
-        {
-            CkGui.ColorTextFrameAlignedInline($"{marionette.GetNickAliasOrUid()}'s not listening to you!", ImGuiColors.DalamudRed);
-            CkGui.HelpText($"{marionette.GetDisplayName()} can't perform orders from you until you send them your name." +
-                $"--SEP--Do so by using the --COL--Sync Button--COL-- to the right.", ImGuiColors.TankBlue, true);
-        }
-        var endX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
-        ImGui.SameLine(endX - CkGui.IconTextButtonSize(FAI.CloudUploadAlt, "Send Name"));
-        if (CkGui.IconTextButton(FAI.CloudUploadAlt, "Send Name", disabled: UiService.DisableUI, isInPopup: true))
-        {
-            _logger.LogInformation("Syncing Player Name with Marionette.");
-            UiService.SetUITask(async () =>
+            CkGui.IconTextAligned(FAI.User);
+            if (marionette.IsListeningToClient)
             {
-                await GagspeakEx.WaitForPlayerLoading().ConfigureAwait(false);
-                var nameWorld = PlayerData.NameWithWorld;
-                var res = await _hub.UserSendNameToKinkster(new(marionette.UserData, nameWorld)).ConfigureAwait(false);
-                if (res.ErrorCode is not GagSpeakApiEc.Success)
-                    _logger.LogWarning($"Failed to send Player Name to Marionette: {res.ErrorCode}");
-                else
+                CkGui.ColorTextFrameAlignedInline(PlayerData.NameWithWorld, CkCol.TriStateCheck.Vec4Ref());
+                CkGui.AttachToolTip($"{marionette.GetDisplayName()} is associating your PlayerName with your Kinkster.", ImGuiColors.TankBlue);
+            }
+            else
+            {
+                CkGui.ColorTextFrameAlignedInline($"{marionette.GetNickAliasOrUid()}'s not listening to you!", ImGuiColors.DalamudRed);
+                CkGui.HelpText($"{marionette.GetDisplayName()} can't perform orders from you until you send them your name." +
+                    $"--SEP--Do so by using the --COL--Sync Button--COL-- to the right.", ImGuiColors.TankBlue, true);
+            }
+            var endX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
+            ImGui.SameLine(endX - CkGui.IconTextButtonSize(FAI.CloudUploadAlt, "Send Name"));
+            if (CkGui.IconTextButton(FAI.CloudUploadAlt, "Send Name", disabled: UiService.DisableUI, isInPopup: true))
+            {
+                _logger.LogInformation("Syncing Player Name with Marionette.");
+                UiService.SetUITask(async () =>
                 {
-                    _logger.LogInformation($"Successfully sent Player Name to Marionette.");
-                    marionette.UpdateIsListening(true);
-                }
-            });
+                    await GagspeakEx.WaitForPlayerLoading().ConfigureAwait(false);
+                    var nameWorld = PlayerData.NameWithWorld;
+                    var res = await _hub.UserSendNameToKinkster(new(marionette.UserData, nameWorld)).ConfigureAwait(false);
+                    if (res.ErrorCode is not GagSpeakApiEc.Success)
+                        _logger.LogWarning($"Failed to send Player Name to Marionette: {res.ErrorCode}");
+                    else
+                    {
+                        _logger.LogInformation($"Successfully sent Player Name to Marionette.");
+                        marionette.UpdateIsListening(true);
+                    }
+                });
+            }
+            CkGui.AttachToolTip($"Sends {marionette.GetDisplayName()} your Name@World, allowing them to respond to your orders.");
         }
-        CkGui.AttachToolTip($"Sends {marionette.GetDisplayName()} your Name@World, allowing them to respond to your orders.");
+        _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.MarionettesPairName, PuppeteerUI.LastPos, PuppeteerUI.LastSize);
 
-        CkGui.IconTextAligned(FAI.Fingerprint);
-        CkGui.TextFrameAlignedInline("Triggers");
-        if (!marionette.PairPerms.IgnoreTriggerCase)
-            CkGui.ColorTextFrameAlignedInline("(Case Sensitive)", ImGuiColors.DalamudGrey2);
-
-        // Trigger Phrases inside of a framed child
-        using (var phraseBox = CkRaii.FramedChildPaddedW("triggers", _.InnerRegion.X, CkStyle.GetFrameRowsHeight(2), 0, GsCol.RemoteLines.Uint(), rounding, DFlags.RoundCornersAll))
+        using (ImRaii.Group())
         {
-            var triggers = marionette.PairPerms.TriggerPhrase;
-            _triggersBox.DrawTagsPreview("##box", triggers);
+            CkGui.IconTextAligned(FAI.Fingerprint);
+            CkGui.TextFrameAlignedInline("Triggers");
+            if (!marionette.PairPerms.IgnoreTriggerCase)
+                CkGui.ColorTextFrameAlignedInline("(Case Sensitive)", ImGuiColors.DalamudGrey2);
+
+            // Trigger Phrases inside of a framed child
+            using (var phraseBox = CkRaii.FramedChildPaddedW("triggers", _.InnerRegion.X, CkStyle.GetFrameRowsHeight(2), 0, GsCol.RemoteLines.Uint(), rounding, DFlags.RoundCornersAll))
+            {
+                var triggers = marionette.PairPerms.TriggerPhrase;
+                _triggersBox.DrawTagsPreview("##box", triggers);
+            }
+
+            // Brackets
+            CkGui.IconTextAligned(FAI.Code);
+            CkGui.TextFrameAlignedInline("Custom Scope Brackets");
+
+            ImUtf8.SameLineInner();
+            ImGui.SetNextItemWidth(ImGui.GetTextLineHeight());
+            var sChar = marionette.PairPerms.StartChar.ToString();
+            ImGui.InputText("##BracketBegin", ref sChar, 1, ITFlags.ReadOnly);
+            CkGui.AttachToolTip($"Optional Start character that scopes an order following a trigger phrase.");
+
+            ImUtf8.SameLineInner();
+            ImGui.SetNextItemWidth(ImGui.GetTextLineHeight());
+            var eChar = marionette.OwnPerms.EndChar.ToString();
+            ImGui.InputText("##BracketEnd", ref eChar, 1, ITFlags.ReadOnly);
+            CkGui.AttachToolTip($"Optional End character that scopes an order following a trigger phrase.");
         }
-
-        // Brackets
-        CkGui.IconTextAligned(FAI.Code);
-        CkGui.TextFrameAlignedInline("Custom Scope Brackets");
-
-        ImUtf8.SameLineInner();
-        ImGui.SetNextItemWidth(ImGui.GetTextLineHeight());
-        var sChar = marionette.PairPerms.StartChar.ToString();
-        ImGui.InputText("##BracketBegin", ref sChar, 1, ITFlags.ReadOnly);
-        CkGui.AttachToolTip($"Optional Start character that scopes an order following a trigger phrase.");
-
-        ImUtf8.SameLineInner();
-        ImGui.SetNextItemWidth(ImGui.GetTextLineHeight());
-        var eChar = marionette.OwnPerms.EndChar.ToString();
-        ImGui.InputText("##BracketEnd", ref eChar, 1, ITFlags.ReadOnly);
-        CkGui.AttachToolTip($"Optional End character that scopes an order following a trigger phrase.");
+        _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.MarionettesPairTriggerWords, PuppeteerUI.LastPos, PuppeteerUI.LastSize);
 
         // Next row, draw out the permissions in color text.
         CkGui.IconTextAligned(FAI.Flag);

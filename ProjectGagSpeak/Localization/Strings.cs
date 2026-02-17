@@ -89,7 +89,7 @@ namespace GagSpeak.Localization
 
         public readonly string Step6Title = Loc.Localize("HelpMainUi_Step6Title", "Whitelist");
         public readonly string Step6Desc = Loc.Localize("HelpMainUi_Step6Desc", "Where your added Kinksters appear. Click the side arrow to open the interactions menu.");
-        public readonly string Step6DescExtended = Loc.Localize("HelpMainUi_Step6DescExtended", 
+        public readonly string Step6DescExtended = Loc.Localize("HelpMainUi_Step6DescExtended",
             "[LEFT CLICK] Toggle between Nickname and UID." +
             "[MIDDLE CLICK] Open the Kinkplate for the Kinkster." +
             "[SHIFT + RIGHT CLICK] Edit the nickname for this Kinkster.");
@@ -375,88 +375,6 @@ namespace GagSpeak.Localization
         public readonly string Step35Title = Loc.Localize("HelpRestraints_Step35Title", "Removing a Restraint");
         public readonly string Step35Desc = Loc.Localize("HelpRestraints_Step35Desc", "Right click the thumbnail to remove a restraint once it's unlocked. You can do this one yourself after clicking next!");
         public readonly string Step35DescExtended = Loc.Localize("HelpRestraints_Step35DescExtended", " ");
-
-        // -- OLD CONTENT -- //
-        //public readonly string Step1Title = Loc.Localize("HelpRestraints_Step1Title", "Adding a New Restraint Set");
-        //public readonly string Step1Desc = Loc.Localize("HelpRestraints_Step1Desc", "Select this button to begin creating a new Restraint Set!\n(The Tutorial will do this for you)");
-
-        //public readonly string Step2Title = Loc.Localize("HelpRestraints_Step2Title", "The Info Tab");
-        //public readonly string Step2Desc = Loc.Localize("HelpRestraints_Step2Desc", "Space to insert the Name of the Restraint and a short description for it!");
-
-        //public readonly string Step3Title = Loc.Localize("HelpRestraints_Step3Title", "To the Appearance Tab");
-        //public readonly string Step3Desc = Loc.Localize("HelpRestraints_Step3Desc", "Navigate to the Appearance Tab for setting Glamour & Customizations");
-
-        //public readonly string Step4Title = Loc.Localize("HelpRestraints_Step4Title", "Setting Gear Items");
-        //public readonly string Step4Desc = Loc.Localize("HelpRestraints_Step4Desc", "This space is there you can setup what Glamourer Appearance you want to have applied.");
-
-        //public readonly string Step5Title = Loc.Localize("HelpRestraints_Step5Title", "Restraint MetaData");
-        //public readonly string Step5Desc = Loc.Localize("HelpRestraints_Step5Desc", "Determines if your Hat or Visor will be enabled.");
-
-        //public readonly string Step6Title = Loc.Localize("HelpRestraints_Step6Title", "Importing Current Gear");
-        //public readonly string Step6Desc = Loc.Localize("HelpRestraints_Step6Desc", "Takes your current Appearance from Glamourer, and applies it here.");
-
-        //public readonly string Step7Title = Loc.Localize("HelpRestraints_Step7Title", "Importing Customizations");
-        //public readonly string Step7Desc = Loc.Localize("HelpRestraints_Step7Desc", "Takes your characters current customization appearance, and store it as part of the set.");
-
-        //public readonly string Step8Title = Loc.Localize("HelpRestraints_Step8Title", "Customizations: Applying");
-        //public readonly string Step8Desc = Loc.Localize("HelpRestraints_Step8Desc", "If selected, the customization state you imported will apply with the set.");
-
-        //public readonly string Step9Title = Loc.Localize("HelpRestraints_Step9Title", "Customizations: Clearing");
-        //public readonly string Step9Desc = Loc.Localize("HelpRestraints_Step9Desc", "If Selected, the stored customization data for the set will be cleared.");
-
-        //public readonly string Step10Title = Loc.Localize("HelpRestraints_Step10Title", "To the Mods Tab");
-        //public readonly string Step10Desc = Loc.Localize("HelpRestraints_Step10Desc", "In this tab you can add mods that can be temporarily set while the restraint is active.");
-
-        //public readonly string Step11Title = Loc.Localize("HelpRestraints_Step11Title", "Selecting a Mod");
-        //public readonly string Step11Desc = Loc.Localize("HelpRestraints_Step11Desc", "You can select a mod from your penumbra mods here.");
-
-        //public readonly string Step12Title = Loc.Localize("HelpRestraints_Step12Title", "Adding a Mod");
-        //public readonly string Step12Desc = Loc.Localize("HelpRestraints_Step12Desc", "Once you found one you want to add, you can press this button to append it.");
-
-        //public readonly string Step13Title = Loc.Localize("HelpRestraints_Step13Title", "Setting Mod Options.");
-        //public readonly string Step13Desc = Loc.Localize("HelpRestraints_Step13Desc", "You are able to decide if the mod is toggled back off, or if it should perform a redraw.");
-        //public readonly string Step13DescExtended = Loc.Localize("HelpRestraints_Step13DescExtended", "Asking a restraint set to perform a redraw for a mod will allow any added " +
-        //    "animation mods to apply their modded animation on the first try, without needing to play it twice for mare to reconize it.");
-
-        //public readonly string Step14Title = Loc.Localize("HelpRestraints_Step14Title", "The Moodles Tab");
-        //public readonly string Step14Desc = Loc.Localize("HelpRestraints_Step14Desc", "In this section you can define which Moodles are applied with this Set.");
-
-        //public readonly string Step15Title = Loc.Localize("HelpRestraints_Step15Title", "Moodles: Statuses");
-        //public readonly string Step15Desc = Loc.Localize("HelpRestraints_Step15Desc", "You can append individual Moodle Statuses here.");
-
-        //public readonly string Step16Title = Loc.Localize("HelpRestraints_Step16Title", "Moodles: Presets");
-        //public readonly string Step16Desc = Loc.Localize("HelpRestraints_Step16Desc", "You can append a Moodle Preset here as well, which stores a collection of statuses.");
-
-        //public readonly string Step17Title = Loc.Localize("HelpRestraints_Step17Title", "Currently Stored Moodles");
-        //public readonly string Step17Desc = Loc.Localize("HelpRestraints_Step17Desc", "Displays the current finalized selection of appended presets and statuses.");
-
-        //public readonly string Step18Title = Loc.Localize("HelpRestraints_Step18Title", "The Sounds Tab");
-        //public readonly string Step18Desc = Loc.Localize("HelpRestraints_Step18Desc", "You are able to link certain types of sounds from audio selections to your set.");
-
-        //public readonly string Step19Title = Loc.Localize("HelpRestraints_Step19Title", "Restraint Audio");
-        //public readonly string Step19Desc = Loc.Localize("HelpRestraints_Step19Desc", "WIP");
-
-        //public readonly string Step20Title = Loc.Localize("HelpRestraints_Step20Title", "The Hardcore Traits Tab");
-        //public readonly string Step20Desc = Loc.Localize("HelpRestraints_Step20Desc", "You can set which Hardcore Traits are applied when restrained by certain Kinksters here.");
-
-        //public readonly string Step21Title = Loc.Localize("HelpRestraints_Step21Title", "Selecting a Kinkster");
-        //public readonly string Step21Desc = Loc.Localize("HelpRestraints_Step21Desc", "First, you should select a Kinkster that you wish to set Hardcore Traits for.");
-
-        //public readonly string Step22Title = Loc.Localize("HelpRestraints_Step22Title", "Setting Hardcore Traits");
-        //public readonly string Step22Desc = Loc.Localize("HelpRestraints_Step22Desc", "Now you can pick which traits you want to check off that relate to your set.");
-        //public readonly string Step22DescExtended = Loc.Localize("HelpRestraints_Step22DescExtended", "This traits will only take affect if applied by the Kinkster you set them for.");
-
-        //public readonly string Step23Title = Loc.Localize("HelpRestraints_Step23Title", "Saving the New Set");
-        //public readonly string Step23Desc = Loc.Localize("HelpRestraints_Step23Desc", "Pressing this will save any changes you have made to an edited set. Or finish creation of a new one.");
-
-        //public readonly string Step24Title = Loc.Localize("HelpRestraints_Step24Title", "The Restraint Set List");
-        //public readonly string Step24Desc = Loc.Localize("HelpRestraints_Step24Desc", "Any created sets are listed here.");
-
-        //public readonly string Step25Title = Loc.Localize("HelpRestraints_Step25Title", "Toggling Restraint Sets");
-        //public readonly string Step25Desc = Loc.Localize("HelpRestraints_Step25Desc", "Pressing this button will toggle a restraint set.");
-
-        //public readonly string Step26Title = Loc.Localize("HelpRestraints_Step26Title", "Locking a Restraint Set");
-        //public readonly string Step26Desc = Loc.Localize("HelpRestraints_Step26Desc", "Once a set is active, this Padlock dropdown will appear. You are able to self-lock your set here.");
     }
 
     public class HelpRestrictions
@@ -726,35 +644,6 @@ namespace GagSpeak.Localization
         public readonly string Step25Title = Loc.Localize("HelpGags_Step25Title", "Removing a Gag");
         public readonly string Step25Desc = Loc.Localize("HelpGags_Step25Desc", "Right click the thumbnail to remove a gag once it's unlocked.");
         public readonly string Step25DescExtended = Loc.Localize("HelpGags_Step25DescExtended", " ");
-
-        // --- OLD CONTENT --- //
-        //public readonly string Step1Title = Loc.Localize("HelpGags_Step1Title", "What do Layers do?");
-        //public readonly string Step1Desc = Loc.Localize("HelpGags_Step1Desc", "Layers define the priorities of applied gags. If Conflicts immerge, higher layers take priority.");
-        //public readonly string Step1DescExtended = Loc.Localize("HelpGags_Step1DescExtended", "For Example: Glamours on the same slot will take the priority of the gag on the higher layer.");
-
-        //public readonly string Step2Title = Loc.Localize("HelpGags_Step2Title", "Equipping a Gag");
-        //public readonly string Step2Desc = Loc.Localize("HelpGags_Step2Desc", "The Gag Displayed here reflects the currently equipped gag for the corrisponding layer.\nEquip one to continue the Tutorial.");
-
-        //public readonly string Step3Title = Loc.Localize("HelpGags_Step3Title", "Selecting a Padlock");
-        //public readonly string Step3Desc = Loc.Localize("HelpGags_Step3Desc", "You can select the lock to apply to your gag here.\nSelect any Padlock to continue.");
-
-        //public readonly string Step4Title = Loc.Localize("HelpGags_Step4Title", "Brief Info on Padlocks");
-        //public readonly string Step4Desc = Loc.Localize("HelpGags_Step4Desc", "Each padlock you select has its own properties:" + Environment.NewLine +
-        //    "Metal Locks ⇒ Can be locked/unlocked by anyone." + Environment.NewLine +
-        //    "Password Locks ⇒ Requires password to unlock" + Environment.NewLine +
-        //    "Timer Locks ⇒ Unlock after a certain time." + Environment.NewLine +
-        //    "Owner Locks ⇒ Can be only interacted with by Kinksters with OwnerLock perms." + Environment.NewLine +
-        //    "Devotional Locks ⇒ Can be only interacted with by the Locker. (DevotionalLock access required)");
-
-        //public readonly string Step5Title = Loc.Localize("HelpGags_Step5Title", "Locking the Selected Padlock");
-        //public readonly string Step5Desc = Loc.Localize("HelpGags_Step5Desc", "Once you have chosen a padlock and filled out nessisary fields, this will complete the locking process.");
-        //public readonly string Step5DescExtended = Loc.Localize("HelpGags_Step5DescExtended", "While a Gag is Locked, you cannot change the gag type or lock type until unlocked.");
-
-        //public readonly string Step6Title = Loc.Localize("HelpGags_Step6Title", "Unlocking the Selected Padlock");
-        //public readonly string Step6Desc = Loc.Localize("HelpGags_Step6Desc", "To unlock a locked Padlock, you must correctly guess its password, if it was set with one.");
-
-        //public readonly string Step7Title = Loc.Localize("HelpGags_Step7Title", "Removing a Gag");
-        //public readonly string Step7Desc = Loc.Localize("HelpGags_Step7Desc", "To Remove a Gag, Simply Right click the Gag Selection List");
     }
 
     public class HelpCursedLoot
@@ -796,11 +685,109 @@ namespace GagSpeak.Localization
         //public readonly string Step11Title = Loc.Localize("HelpCursedLoot_Step11Title", "The CursedItem Discovery Percent");
         //public readonly string Step11Desc = Loc.Localize("HelpCursedLoot_Step11Desc", "Whatever you set here will be the %% Chance that a chest you loot will be Cursed Loot.");
     }
-
+    
     public class HelpPuppeteer
     {
+        public readonly string Step1Title = Loc.Localize("HelpPuppeter_Step1Title", "Puppeteer");
+        public readonly string Step1Desc = Loc.Localize("HelpPuppeter_Step1Desc", "Puppeteer lets other Kinksters control you by running commands and aliases");
+        public readonly string Step1DescExtended = Loc.Localize("HelpPuppeter_Step1DescExtended", "With everything in GagSpeak, you have full control over what you allow others to do. Please play safe!");
+
+        public readonly string Step2Title = Loc.Localize("HelpPuppeter_Step2Title", "Aliases");
+        public readonly string Step2Desc = Loc.Localize("HelpPuppeter_Step2Desc", "The Aliases tab is where you can configure special responses to a specific trigger.");
+        public readonly string Step2DescExtended = Loc.Localize("HelpPuppeter_Step2DescExtended", "An Alias is like a special command where you can set what activates it and what it does when it is activated. They can do many things, from running commands, to playing patterns on connected toys, to putting on restraints, to applying moodles, and more!");
+
+        public readonly string Step3Title = Loc.Localize("HelpPuppeter_Step3Title", "Alias List");
+        public readonly string Step3Desc = Loc.Localize("HelpPuppeter_Step3Desc", "Here's the list of all your configured aliases");
+        public readonly string Step3DescExtended = Loc.Localize("HelpPuppeter_Step3DescExtended", "You can right click an alias for quick-access to options, including deleting them.");
+
+        public readonly string Step4Title = Loc.Localize("HelpPuppeter_Step4Title", "The Top Bar");
+        public readonly string Step4Desc = Loc.Localize("HelpPuppeter_Step4Desc", "You can search for aliases, or create a new alias or folder here.");
+        public readonly string Step4DescExtended = Loc.Localize("HelpPuppeter_Step4DescExtended", "The buttons on the side of the bar can be used to create a new alias or folder.");
+
+        public readonly string Step5Title = Loc.Localize("HelpPuppeter_Step5Title", "Selected Alias");
+        public readonly string Step5Desc = Loc.Localize("HelpPuppeter_Step5Desc", "You can see your currently selected alias on the right panel.");
+        public readonly string Step5DescExtended = Loc.Localize("HelpPuppeter_Step5DescExtended", " ");
+
+        public readonly string Step6Title = Loc.Localize("HelpPuppeter_Step6Title", "Editing an Alias");
+        public readonly string Step6Desc = Loc.Localize("HelpPuppeter_Step6Desc", "Clicking this button will let you edit an alias.");
+        public readonly string Step6DescExtended = Loc.Localize("HelpPuppeter_Step6DescExtended", " ");
+
+        public readonly string Step7Title = Loc.Localize("HelpPuppeter_Step7Title", "Alias Name");
+        public readonly string Step7Desc = Loc.Localize("HelpPuppeter_Step7Desc", "The name you want to give the alias. This doesn't affect how it works, but helps you keep things organized.");
+        public readonly string Step7DescExtended = Loc.Localize("HelpPuppeter_Step7DescExtended", " ");
+
+        public readonly string Step8Title = Loc.Localize("HelpPuppeter_Step8Title", "Alias Actions");
+        public readonly string Step8Desc = Loc.Localize("HelpPuppeter_Step8Desc", "Here's where you can set up the various Alias actions.");
+        public readonly string Step8DescExtended = Loc.Localize("HelpPuppeter_Step8DescExtended", "You can only use each action type once, but you do not have to use all of them for every alias.");
+
+        public readonly string Step9Title = Loc.Localize("HelpPuppeter_Step9Title", "Alias Permissions");
+        public readonly string Step9Desc = Loc.Localize("HelpPuppeter_Step9Desc", "You can configure which kinksters are allowed to activate this alias here.");
+        public readonly string Step9DescExtended = Loc.Localize("HelpPuppeter_Step9DescExtended", "Leaving this empty will make the alias global. Global aliases can be used by ANYONE, so long as they are enabled.");
+
+        public readonly string Step10Title = Loc.Localize("HelpPuppeter_Step10Title", "Saving Aliases");
+        public readonly string Step10Desc = Loc.Localize("HelpPuppeter_Step10Desc", "Click this button to save your changes and exit the editor");
+        public readonly string Step10DescExtended = Loc.Localize("HelpPuppeter_Step10DescExtended", "The back button next to it will exit the editor without saving.");
+
+        public readonly string Step11Title = Loc.Localize("HelpPuppeter_Step11Title", "Puppeteers Tab");
+        public readonly string Step11Desc = Loc.Localize("HelpPuppeter_Step11Desc", "This tab is where you can configure other puppeteer permissions for all of your Kinkster pairs.");
+        public readonly string Step11DescExtended = Loc.Localize("HelpPuppeter_Step11DescExtended", " ");
+
+        public readonly string Step12Title = Loc.Localize("HelpPuppeter_Step12Title", "Puppeteers Kinkster List");
+        public readonly string Step12Desc = Loc.Localize("HelpPuppeter_Step12Desc", "This is a list of all of the Kinksters you're paired with. The folders split them up into who is and isn't allowed to control you.");
+        public readonly string Step12DescExtended = Loc.Localize("HelpPuppeter_Step12DescExtended", " ");
+
+        public readonly string Step13Title = Loc.Localize("HelpPuppeter_Step13Title", "Puppeteers Kinkster Settings");
+        public readonly string Step13Desc = Loc.Localize("HelpPuppeter_Step13Desc", "The right pane is where you can see and configure settings for a specific Kinkster.");
+        public readonly string Step13DescExtended = Loc.Localize("HelpPuppeter_Step13DescExtended", " ");
+
+        public readonly string Step14Title = Loc.Localize("HelpPuppeter_Step14Title", "Puppeteers Name");
+        public readonly string Step14Desc = Loc.Localize("HelpPuppeter_Step14Desc", "In order for a kinkster to be able to control you, you need their in-game name.");
+        public readonly string Step14DescExtended = Loc.Localize("HelpPuppeter_Step14DescExtended", "The kinkster will have to sync their name with you on the Marionettes tab.");
+
+        public readonly string Step15Title = Loc.Localize("HelpPuppeter_Step15Title", "Puppeteers Triggers");
+        public readonly string Step15Desc = Loc.Localize("HelpPuppeter_Step15Desc", "Puppeteer works by listening for specific words or phrases in chat. Each word you set here is the start of the trigger.");
+        public readonly string Step15DescExtended = Loc.Localize("HelpPuppeter_Step15DescExtended", "Think of it like how slash commands work, except the \"/\" is the words you add here.");
+
+        public readonly string Step16Title = Loc.Localize("HelpPuppeter_Step16Title", "Puppeteers Allowed Orders");
+        public readonly string Step16Desc = Loc.Localize("HelpPuppeter_Step16Desc", "You can control which sets of commands others can make you use.");
+        public readonly string Step16DescExtended = Loc.Localize("HelpPuppeter_Step16DescExtended", "Be careful with who you give full access to, as they can run any commands on your client.");
+
+        public readonly string Step17Title = Loc.Localize("HelpPuppeter_Step17Title", "Puppeteers Advanced");
+        public readonly string Step17Desc = Loc.Localize("HelpPuppeter_Step17Desc", "Custom Scope Brackets are the characters that Puppeteer uses to mark the start and end of multi-word commands. They are not needed for single-word commands and emotes.");
+        public readonly string Step17DescExtended = Loc.Localize("HelpPuppeter_Step17DescExtended",
+            "To use a command like \"/gaction \"Jump\",\" or an alias with multiple words like \"please sit down,\" it needs to be surrounded by these symbols for it to be correctly handled.\n" +
+            "ex: 'yappy (gaction \"Jump\")' They go around the command, not the trigger word.");
+
+        public readonly string Step18Title = Loc.Localize("HelpPuppeter_Step18Title", "Marionettes");
+        public readonly string Step18Desc = Loc.Localize("HelpPuppeter_Step18Desc", "You can use this page to see how you can control other Kinksters.");
+        public readonly string Step18DescExtended = Loc.Localize("HelpPuppeter_Step18DescExtended", "Only kinksters who have given you control permission will be available.");
+
+        public readonly string Step19Title = Loc.Localize("HelpPuppeter_Step19Title", "Marionettes Kinksters");
+        public readonly string Step19Desc = Loc.Localize("HelpPuppeter_Step19Desc", "Select a Kinster to view here");
+        public readonly string Step19DescExtended = Loc.Localize("HelpPuppeter_Step19DescExtended", " ");
+
+        public readonly string Step20Title = Loc.Localize("HelpPuppeter_Step20Title", "Marionettes Aliases");
+        public readonly string Step20Desc = Loc.Localize("HelpPuppeter_Step20Desc", "The list of aliases for this Kinkster.");
+        public readonly string Step20DescExtended = Loc.Localize("HelpPuppeter_Step20DescExtended", "Enabled and disabled show up in seperate folders.");
+
+        public readonly string Step21Title = Loc.Localize("HelpPuppeter_Step21Title", "Marionettes Permissions");
+        public readonly string Step21Desc = Loc.Localize("HelpPuppeter_Step21Desc", "This is where you can view the permission you've been given for a selected Kinkster.");
+        public readonly string Step21DescExtended = Loc.Localize("HelpPuppeter_Step21DescExtended", " ");
+
+        public readonly string Step22Title = Loc.Localize("HelpPuppeter_Step22Title", "Marionettes Name Sharing");
+        public readonly string Step22Desc = Loc.Localize("HelpPuppeter_Step22Desc", "In order for a Kinkster to respond to your commands, they will need your ingame name. Click the Sync button to securely send your name to them.");
+        public readonly string Step22DescExtended = Loc.Localize("HelpPuppeter_Step22DescExtended", " ");
+
+        public readonly string Step23Title = Loc.Localize("HelpPuppeter_Step23Title", "Marionettes Triggers");
+        public readonly string Step23Desc = Loc.Localize("HelpPuppeter_Step23Desc", "The list of trigger phrases for this Kinkster.");
+        public readonly string Step23DescExtended = Loc.Localize("HelpPuppeter_Step23DescExtended", " ");
+
+        public readonly string Step24Title = Loc.Localize("HelpPuppeter_Step24Title", "Marionettes Selected Alias");
+        public readonly string Step24Desc = Loc.Localize("HelpPuppeter_Step24Desc", "Selecting an alias on the left side will show you what what it's set up to do here.");
+        public readonly string Step24DescExtended = Loc.Localize("HelpPuppeter_Step24DescExtended", "You can see all of the actions that will happen when you use this alias.");
 
     }
+
 
     public class HelpToys
     {
@@ -1287,13 +1274,15 @@ namespace GagSpeak.Localization
         public readonly string CharaWorldLabel = Loc.Localize("Accounts_CharaWorldLabel", "Account Character's World");
         public readonly string CharaKeyLabel = Loc.Localize("Accounts_CharaKeyLabel", "Account Secret Key");
 
-        public readonly string DeleteButtonLabel = Loc.Localize("Accounts_DeleteButtonLabel", "Delete Account");
+        public readonly string DeleteButtonLabel = Loc.Localize("Accounts_DeleteButtonLabel", "Delete Profile");
         public readonly string DeleteButtonDisabledTT = Loc.Localize("Accounts_DeleteButtonDisabledTT", "Cannot delete this account as it is not yet registered.");
-        public readonly string DeleteButtonTT = Loc.Localize("Accounts_DeleteButtonTT", "Permanently deleting this account from GagSpeak servers." +
-            "--SEP--WARNING: Once an account is deleted, the associated secret key will become unusable." +
-            "--SEP--If you wish to create a new account for the currently logged in character, you will need to obtain a new secret key." +
-            "--SEP--(A confirmation dialog will open upon clicking this button)");
-        public readonly string DeleteButtonPrimaryTT = Loc.Localize("Accounts_DeleteButtonPrimaryTT", "--SEP----COL--DELETING THIS ACCOUNT WILL ALSO DELETE ALL SECONDARY ACCOUNTS");
+        public readonly string DeleteButtonTT = Loc.Localize("Accounts_DeleteButtonTT", "Deletes this profile from your account!" +
+            "--NL----COL--WARNING:--COL--Once an profile is deleted, the secret key is invalidated." +
+            "--SEP--Must hold --COL--CTRL+SHIFT--COL--To delete this profile.");
+        public readonly string RemoveMainProfileTT = Loc.Localize("Accounts_RemoveMainProfileTT", "Deletes your main profile from your account!" +
+            "--SEP----COL--THIS WILL REMOVE YOUR ENTIRE ACCOUNT AND ALL OTHER PROFILES.--COL--" +
+            "--SEP--Must hold --COL--CTRL+SHIFT--COL--To delete this profile." +
+            "--NL--(A confirmation dialog will open upon clicking this button)");
 
         public readonly string FingerprintPrimary = Loc.Localize("Accounts_FingerprintPrimary", "Primary GagSpeak Account");
         public readonly string FingerprintSecondary = Loc.Localize("Accounts_FingerprintSecondary", "Secondary GagSpeak Account");

@@ -211,10 +211,32 @@ public enum StepsCursedLoot
     RollChance,
 } 
 
-// Can implement later
 public enum StepsPuppeteer
 {
-
+    Overview, // overview, select alias tab JIC
+    AliasPage, // Explain Aliases
+    AliasList, // List of aliases
+    SearchBar, // Searching, create and select an alias here
+    SelectedAlias, // Details of selected alias
+    EditingAlias,
+    EditAliasName,
+    EditAliasActions,
+    EditAliasPermissions,
+    EditSavingAliases,
+    PuppeteersPage,
+    PuppeteersPairs,
+    PuppeteersPairSettings,
+    PuppeteersPairName,
+    PuppeteersPairTriggers,
+    PuppeteersPairOrders,
+    PuppeteersAdvanced,
+    MarionettesPage,
+    MarionettesPairs,
+    MarionettesPairAliases,
+    MarionettesPairPermissions,
+    MarionettesPairName,
+    MarionettesPairTriggerWords,
+    MarionettesPairAliasConfig
 }
 
 public enum StepsToys

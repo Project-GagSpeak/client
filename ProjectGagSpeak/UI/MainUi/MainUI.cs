@@ -110,10 +110,6 @@ public class MainUI : WindowMediatorSubscriberBase
     public static Vector2 LastSize { get; private set; } = Vector2.Zero;
     public static Vector2 LastBottomTabMenuPos { get; private set; } = Vector2.Zero;
 
-    // for tutorial.
-    private Vector2 WindowPos => ImGui.GetWindowPos();
-    private Vector2 WindowSize => ImGui.GetWindowSize();
-
     protected override void PreDrawInternal()
     {
         if (!ThemePushed)
@@ -250,7 +246,7 @@ public class MainUI : WindowMediatorSubscriberBase
         // draw a attached message field as well if they want.
         ImGui.SetNextItemWidth(availableXWidth);
         ImGui.InputTextWithHint("##pairAddOptionalMessage", "Attach Msg to Request (Optional)", ref _requestMessage, 100);
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AttachingMessages, WindowPos, WindowSize, () =>
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AttachingMessages, LastPos, LastSize, () =>
         {
             _creatingRequest = !_creatingRequest;
             _tabMenu.TabSelection = MainMenuTabs.SelectedTab.Requests;
@@ -283,11 +279,11 @@ public class MainUI : WindowMediatorSubscriberBase
         if (DrawAddUser(winPtr, new Vector2(sideWidth, height), minPos, disableButtons || !MainHub.IsConnected))
             _creatingRequest = !_creatingRequest;
         CkGui.AttachToolTip("Add a new Kinkster");
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AddingKinksters, WindowPos, WindowSize, () => _creatingRequest = !_creatingRequest);
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AddingKinksters, LastPos, LastSize, () => _creatingRequest = !_creatingRequest);
 
         ImGui.SetCursorScreenPos(minPos + new Vector2(sideWidth, 0));
         DrawConnectedUsers(winPtr, new Vector2(topBarWidth - sideWidth * 2, height), topBarWidth);
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.InitialWelcome, WindowPos, WindowSize);
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.InitialWelcome, LastPos, LastSize);
 
         ImGui.SameLine(topBarWidth - sideWidth);
         var blockStateChange = MainHub.ServerStatus is ServerState.Reconnecting or ServerState.Disconnecting;
@@ -305,7 +301,7 @@ public class MainUI : WindowMediatorSubscriberBase
             }
         }
         CkGui.AttachToolTip($"{(MainHub.IsConnected ? "Disconnect from" : "Connect to")} {MainHub.MAIN_SERVER_NAME}--SEP--Current Status: {MainHub.ServerStatus}");
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ConnectionState, WindowPos, WindowSize, () => _tabMenu.TabSelection = MainMenuTabs.SelectedTab.Whitelist);
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ConnectionState, LastPos, LastSize, () => _tabMenu.TabSelection = MainMenuTabs.SelectedTab.Whitelist);
 
         winPtr.DrawList.PopClipRect();
     }
