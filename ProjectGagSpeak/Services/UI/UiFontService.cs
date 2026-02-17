@@ -121,6 +121,7 @@ public sealed class UiFontService : IHostedService
         GagspeakTitleFont?.Dispose();
         UidFont?.Dispose();
         Default150Percent?.Dispose();
+        FullScreenFont?.Dispose();
         return Task.CompletedTask;
     }
 
