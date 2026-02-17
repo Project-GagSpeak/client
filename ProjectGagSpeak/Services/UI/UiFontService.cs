@@ -2,6 +2,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.ManagedFontAtlas;
 using Dalamud.Bindings.ImGui;
 using Microsoft.Extensions.Hosting;
+using System.Threading.Tasks;
 
 namespace GagSpeak.Services;
 
@@ -35,13 +36,9 @@ public sealed class UiFontService : IHostedService
     {
         // Initialize the nessisary fonts.
         await InitNessisaryFonts().ConfigureAwait(false);
-        // Build the fonts.
-        await FontAtlas.BuildFontsAsync().ConfigureAwait(false);
+        // Initialize the large fonts.
+        await InitLargeFonts().ConfigureAwait(false);
 
-        // Load the large font.
-        InitLargeFonts();
-
-        Svc.Logger.Information("UiFontService: Fonts initialized successfully.");
     }
 
     private async Task InitNessisaryFonts()
@@ -89,10 +86,11 @@ public sealed class UiFontService : IHostedService
         await GagspeakFont.WaitAsync().ConfigureAwait(false);
         await GagspeakLabelFont.WaitAsync().ConfigureAwait(false);
         await GagspeakTitleFont.WaitAsync().ConfigureAwait(false);
+        await FontAtlas.BuildFontsAsync().ConfigureAwait(false);
         Svc.Logger.Information("UiFontService: Initialized Nessisary fonts.");
     }
 
-    private void InitLargeFonts()
+    private async Task InitLargeFonts()
     {
         FullScreenFont = FontAtlas.NewDelegateFontHandle(tk =>
         {
@@ -102,6 +100,9 @@ public sealed class UiFontService : IHostedService
             });
         });
         Svc.Logger.Information("UiFontService: Initialized supported fonts.");
+
+        await FullScreenFont.WaitAsync().ConfigureAwait(false);
+        await FontAtlas.BuildFontsAsync().ConfigureAwait(false);
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
@@ -119,7 +120,7 @@ public sealed class UiFontService : IHostedService
         GagspeakLabelFont?.Dispose();
         GagspeakTitleFont?.Dispose();
         UidFont?.Dispose();
-        FullScreenFont?.Dispose();
+        Default150Percent?.Dispose();
         return Task.CompletedTask;
     }
 
