@@ -11,10 +11,13 @@ using GagSpeak.Utils;
 using OtterGui.Classes;
 namespace GagSpeak;
 
-/// <summary> Handles all of the commands that are used in the plugin. </summary>
+/// <summary>
+///     Handles all of the commands that are used in the plugin.
+/// </summary>
 public sealed class CommandManager : IDisposable
 {
     private const string MainCommand = "/gspeak";
+    private const string MainCommandAlias = "/gagspeak";
     private const string SafewordCommand = "/safeword";
     private const string SafewordHardcoreCommand = "/safewordhardcore";
     private const string DeathRollShortcutCommand = "/dr";
@@ -36,6 +39,11 @@ public sealed class CommandManager : IDisposable
 
         // Add handlers to the main commands
         Svc.Commands.AddHandler(MainCommand, new CommandInfo(OnGagSpeak)
+        {
+            HelpMessage = "Toggles the UI. Use with 'help' or '?' to view sub-commands.",
+            ShowInHelp = true
+        });
+        Svc.Commands.AddHandler(MainCommandAlias, new CommandInfo(OnGagSpeak)
         {
             HelpMessage = "Toggles the UI. Use with 'help' or '?' to view sub-commands.",
             ShowInHelp = true

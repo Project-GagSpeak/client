@@ -128,7 +128,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
 
         // filter down the unlocks to searchable results.
         var filteredUnlocks = unlocks
-            .Where(goal => goal.Title.Contains(string.Empty, StringComparison.OrdinalIgnoreCase))
+            .Where(goal => goal.Title.Contains(_searchStr, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         var size = new Vector2(ImGui.GetContentRegionAvail().X, 96f.AddWinPadY() + ImGui.GetStyle().CellPadding.Y * 2);
