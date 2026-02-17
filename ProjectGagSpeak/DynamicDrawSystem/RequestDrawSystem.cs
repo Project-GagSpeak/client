@@ -61,6 +61,13 @@ public sealed class RequestsDrawSystem : DynamicDrawSystem<RequestEntry>, IMedia
             _logger.LogInformation("RequestsDrawSystem folder structure changed on load, saving updated structure.");
             _hybridSaver.Save(this);
         }
+        // See if the file doesnt exist, if it does not, load defaults.
+        else if (!File.Exists(_hybridSaver.FileNames.DDS_Requests))
+        {
+            _logger.LogInformation("Loading Defaults and saving.");
+            EnsureAllFolders(new Dictionary<string, string>());
+            _hybridSaver.Save(this);
+        }
     }
 
     // We dont care about the icons since we won't be showing them.
