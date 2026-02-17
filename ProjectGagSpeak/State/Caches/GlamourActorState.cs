@@ -11,7 +11,7 @@ namespace GagSpeak.State.Caches;
 /// <remarks> Useful for storing unrestricted states to restore slots when removed. </remarks>
 public struct GlamourActorState
 {
-    private JObject? State;
+    public JObject? State;
     public JToken? Equipment => State?["Equipment"];
     public JToken? Customize => State?["Customize"];
     public JToken? Parameters => State?["Parameters"];
@@ -27,6 +27,8 @@ public struct GlamourActorState
         ParseEquipments(Equipment);
         ParseMeta(Equipment);
     }
+
+    public bool IsEmpty => State is null && ParsedEquipment.Count == 0 && MetaStates.IsEmpty;
 
     public static GlamourActorState Empty => new GlamourActorState(null);
 

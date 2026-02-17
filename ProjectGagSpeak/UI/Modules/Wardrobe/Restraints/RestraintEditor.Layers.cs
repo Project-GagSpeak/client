@@ -191,7 +191,7 @@ public class RestraintEditorLayers : IFancyTab
                 CkGui.AttachToolTip("Delete this layer. (Hold Shift)--SEP--Only the highest layer can be removed.");
             }
         }
-        ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkCol.LChildBg.Uint(), DragDropItemRounding, ImDrawFlags.RoundCornersRight);
+        ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkCol.HChildBg.Uint(), DragDropItemRounding, ImDrawFlags.RoundCornersRight);
     }
 
     private void DrawNewLayerRow(int layerIdx)
@@ -219,7 +219,7 @@ public class RestraintEditorLayers : IFancyTab
                     _manager.ItemInEditor!.Layers.Add(new RestrictionLayer());
                 });
         }
-        ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkCol.LChildBg.Uint(), DragDropItemRounding, ImDrawFlags.RoundCornersRight);
+        ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkCol.HChildBg.Uint(), DragDropItemRounding, ImDrawFlags.RoundCornersRight);
     }
 
     /// <summary> Places a header left-aligned beside a child window. </summary>

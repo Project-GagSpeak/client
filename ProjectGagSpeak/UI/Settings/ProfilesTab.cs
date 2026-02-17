@@ -18,9 +18,9 @@ using OtterGuiInternal;
 
 namespace GagSpeak.Gui;
 
-public class AccountManagerTab
+public class ProfilesTab
 {
-    private readonly ILogger<AccountManagerTab> _logger;
+    private readonly ILogger<ProfilesTab> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly MainHub _hub;
     private readonly MainConfig _mainConfig;
@@ -30,7 +30,7 @@ public class AccountManagerTab
 
     private readonly Queue<Action> _postDrawActions = new();
 
-    public AccountManagerTab(ILogger<AccountManagerTab> logger, GagspeakMediator mediator,
+    public ProfilesTab(ILogger<ProfilesTab> logger, GagspeakMediator mediator,
         MainHub hub, MainConfig config, AccountManager account, KinkPlateService kinkPlates, ConfigFileProvider fileProvider)
     {
         _logger = logger;
@@ -93,11 +93,10 @@ public class AccountManagerTab
 
     // Cached profile display data. (Size is deterministic of other factors).
     private float Ratio { get; set; } = 1f;
-    private Vector2 ProfileSizeBase => ImGuiHelpers.ScaledVector2(154);
-    private Vector2 ProfileSize => ImGuiHelpers.ScaledVector2(154 * Ratio);
+    private Vector2 ProfileSize => ImGuiHelpers.ScaledVector2(154);
     private Vector2 RectMin { get; set; } = Vector2.Zero;
-    private Vector2 AvatarPos => RectMin + ImGuiHelpers.ScaledVector2(4.2f * Ratio);
-    private Vector2 AvatarSize => ImGuiHelpers.ScaledVector2(145.6f * Ratio); // Default
+    private Vector2 AvatarPos => RectMin + ImGuiHelpers.ScaledVector2(4.2f);
+    private Vector2 AvatarSize => ImGuiHelpers.ScaledVector2(145.6f); // Default
 
     public void DrawContent()
     {
@@ -169,55 +168,17 @@ public class AccountManagerTab
                 {
                     _postDrawActions.Enqueue(() =>
                     {
-                        // We can just remove it plainly as it is not bound to any profile serverside.
-                        _account.Profiles.Remove(_selected);
-                        _account.Save();
+                        _logger.LogInformation("Removing Profile from account!");
+                        _account.RemoveProfile(_selected);
                     });
                 }
             }
         }
-        CkGui.AttachToolTip(GSLoc.Settings.Accounts.DeleteButtonTT);
+        CkGui.AttachToolTip(GSLoc.Settings.Accounts.DeleteButtonTT, ImGuiColors.DalamudOrange);
 
         // Fire if true.
         AccountDeletionPopup(_selected);
     }
-
-    #region DEBUGGER
-    public static void DumpButtonColors()
-    {
-        var states = new[]
-        {
-            (active: false, hovered: false, disabled: false, name: "Idle"),
-            (active: false, hovered: true,  disabled: false, name: "Hovered"),
-            (active: true,  hovered: false, disabled: false, name: "Active"),
-            (active: false, hovered: false, disabled: true,  name: "Disabled"),
-        };
-
-        foreach (var s in states)
-        {
-            uint shadowCol = 0x64000000;
-            uint borderCol = CkGui.ApplyAlpha(0xDCDCDCDC, CkGui.GetBorderAlpha(s.active, s.hovered, s.disabled));
-            uint bgCol = CkGui.ApplyAlpha(0x64000000, CkGui.GetBgAlpha(s.active, s.hovered, s.disabled));
-            uint textFade = CkGui.ApplyAlpha(0xFF1E191E, s.disabled ? 0.5f : 1f);
-            uint textCol = CkGui.ApplyAlpha(0xFFFFFFFF, s.disabled ? 0.5f : 1f);
-
-            LogColors(
-                s.name,
-                shadowCol,
-                borderCol,
-                bgCol,
-                textFade,
-                textCol
-            );
-        }
-
-        void LogColors(string state, uint shadow, uint border, uint bg, uint textFade, uint text)
-        {
-            static string Hex(uint v) => $"0x{v:X8}";
-            Svc.Logger.Information($"[{state}][Shadow: {Hex(shadow)}][Border: {Hex(border)}][BG: {Hex(bg)}][TextFade: {Hex(textFade)}][Text: {Hex(text)}]");
-        }
-    }
-    #endregion DEBUGGER
 
     // Shift these stylizations to be calculated prior to our draws so we can use them throughout the drawframe without calculating every time.
     private bool SelectableProfile(AccountProfile profile, Vector2 size)
@@ -298,20 +259,12 @@ public class AccountManagerTab
         // Outer group
         using var _ = ImRaii.Child("profile-panel", region);
         var cursorMin = ImGui.GetCursorPos();
-        var leftGapY = 0f;
-        // If no profile is selected, just draw nothing is selected and return.
+        var leftWidth = region.X - ProfileSize.X - _style.ItemSpacing.X;
         if (_selected is not { } profile)
         {
             CkGui.FontText("No Profile Selected", UiFontService.UidFont);
             return;
         }
-        // We need to determine the maximum left width to know how to scale the profile image.
-        var maxLeft = _frameH + CkGui.IconButtonSize(FAI.Edit).X + _style.ItemInnerSpacing.X * 2;
-        using (ImRaii.PushFont(UiBuilder.MonoFont)) maxLeft += ImGui.CalcTextSize(new string('*', 32)).X;
-
-        // Check if we exceed the maximum left side or not when compared against the base avatar size, which determines if we scale it.
-        var exceedsLeftMax = region.X - ProfileSizeBase.X - _style.ItemSpacing.X > maxLeft;
-        var leftWidth = exceedsLeftMax ? maxLeft : region.X - ProfileSizeBase.X - _style.ItemSpacing.X;
 
         using (ImRaii.Group())
         {
@@ -319,32 +272,42 @@ public class AccountManagerTab
             var lineSize = new Vector2(leftWidth, _lineH);
             _wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.AchievementLineSplit], ImGui.GetCursorScreenPos(), lineSize);
             ImGui.Dummy(lineSize);
-            DrawLabelUidAndKey(profile, leftWidth);
-            leftGapY = ImGui.GetCursorPosY() + _style.ItemSpacing.Y;
-        }
 
+            using (ImRaii.PushFont(UiBuilder.MonoFont))
+            {
+                CkGui.FramedIconText(FAI.Crown);
+                CkGui.TextFrameAlignedInline("Is Primary Profile:");
+                CkGui.BooleanToColoredIcon(profile.IsPrimary);
+
+                CkGui.FramedIconText(FAI.CheckCircle);
+                CkGui.TextFrameAlignedInline("Is Valid:");
+                CkGui.BooleanToColoredIcon(profile.HadValidConnection);
+
+                CkGui.FramedIconText(FAI.Globe);
+                CkGui.TextFrameAlignedInline("World:");
+                // i am positive there is a lookup for worldid > name... and so i search
+                CkGui.ColorTextFrameAlignedInline(ItemSvc.WorldData[profile.WorldId], ImGuiColors.TankBlue);
+
+                CkGui.FramedIconText(FAI.IdBadge);
+                CkGui.TextFrameAlignedInline("UID:");
+                var noUid = string.IsNullOrEmpty(profile.UserUID);
+                CkGui.ColorTextFrameAlignedInline(noUid ? "Not Yet Assigned" : profile.UserUID, noUid ? ImGuiColors.DalamudRed : ImGuiColors.TankBlue);
+                CkGui.AttachToolTip("Once you successfully connect with the inserted secret key below, your UID will be set!");
+            }
+        }
         // We're not doing anything particularly fancy with the avatar here
-        ImGui.NewLine();
+        ImGui.SameLine();
         DrawAvatar(profile);
+
+        // Below draw out the key
+        ImGui.NewLine();
+        DrawSecretKey(profile, region.X);
     }
 
-    private void DrawLabelUidAndKey(AccountProfile profile, float width)
+    private  void DrawSecretKey(AccountProfile profile, float width)
     {
         var showEditor = _editingSecretKey == profile;
         var showKey = _showingKey == profile;
-
-        using var font = ImRaii.PushFont(UiBuilder.MonoFont);
-
-        CkGui.FramedIconText(FAI.Globe);
-        CkGui.TextFrameAlignedInline("World:");
-        // i am positive there is a lookup for worldid > name... and so i search
-        CkGui.ColorTextFrameAlignedInline(ItemSvc.WorldData[profile.WorldId], ImGuiColors.TankBlue);
-
-        CkGui.FramedIconText(FAI.IdBadge);
-        CkGui.TextFrameAlignedInline("UID:");
-        var noUid = string.IsNullOrEmpty(profile.UserUID);
-        CkGui.ColorTextFrameAlignedInline(noUid ? "Not Yet Assigned" : profile.UserUID, noUid ? ImGuiColors.DalamudRed : ImGuiColors.TankBlue);
-        CkGui.AttachToolTip("Once you successfully connect with the inserted secret key below, your UID will be set!");
 
         CkGui.FramedHoverIconText(FAI.Key, ImGuiColors.TankBlue.ToUint());
         CkGui.AttachToolTip(GSLoc.Settings.Accounts.CharaKeyLabel);
@@ -364,7 +327,12 @@ public class AccountManagerTab
                 key = key.Trim();
                 //Fail if the key already exists.
                 if (_account.TryUpdateSecretKey(profile, key))
+                {
                     _logger.LogDebug($"Updated SecretKey for {profile.PlayerName}");
+                    // If we were logged into this profile, we should reconnect.
+                    if (PlayerData.CID == profile.ContentId)
+                        UiService.SetUITask(() => _hub.Reconnect(DisconnectIntent.Reload));
+                }
                 // exit edit mode.
                 _editingSecretKey = null;
             }
@@ -374,7 +342,7 @@ public class AccountManagerTab
             var pos = ImGui.GetCursorScreenPos();
             var txtSize = new Vector2(innerWidth, ImUtf8.TextHeight);
             var txtRect = new ImRect(pos, pos + txtSize);
-            var txt = showKey ? profile.Key : new string('*', Math.Clamp(profile.Key.Length, 0, 32));
+            var txt = showKey ? profile.Key : new string('*', Math.Clamp(profile.Key.Length, 0, 64));
             ImGuiInternal.RenderTextClipped(_wdl, txtRect.Min + _style.FramePadding, txtRect.Max - _style.FramePadding, txt, Vector2.Zero, txtSize, txtRect, true);
             ImGui.Dummy(txtSize);
             CkGui.AttachToolTip(GSLoc.Settings.Accounts.CopyKeyToClipboard);
@@ -505,7 +473,7 @@ public class AccountManagerTab
         try
         {
             _logger.LogInformation("Removing Authentication for current character.");
-            _account.Profiles.Remove(profile);
+            _account.RemoveProfile(profile);
             // The server automatically handles cleanup of alt profiles, so just clear the manager.
             if (isMain)
             {

@@ -45,6 +45,9 @@ public struct MetaDataStruct
         Weapon = weapon;
     }
 
+    public bool IsEmpty => !AnySet();
+
+
     public bool AnySet()
         => Headgear.HasValue || Visor.HasValue || Weapon.HasValue;
 

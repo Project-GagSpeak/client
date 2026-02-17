@@ -27,14 +27,14 @@ public class SettingsUi : WindowMediatorSubscriberBase
 {
     private readonly MainHub _hub;
     private readonly MainConfig _mainConfig;
-    private readonly AccountManagerTab _accountsTab;
+    private readonly ProfilesTab _accountsTab;
     private readonly DebugTab _debugTab;
     private readonly PiShockProvider _shockProvider;
     private readonly VfxSpawnManager _vfxSpawner;
     private readonly ClientDataListener _clientDatListener;
 
     public SettingsUi(ILogger<SettingsUi> logger, GagspeakMediator mediator, MainHub hub,
-        MainConfig config, AccountManagerTab accounts, DebugTab debug, PiShockProvider shockProvider,
+        MainConfig config, ProfilesTab accounts, DebugTab debug, PiShockProvider shockProvider,
         VfxSpawnManager vfxSpawner, ClientDataListener listener) : base(logger, mediator, "GagSpeak Settings")
     {
         _hub = hub;

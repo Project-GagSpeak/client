@@ -25,7 +25,7 @@ public class GlamourHandler
     }
 
     public IpcBlockReason BlockIpcCalls => _ipcBlocker;
-    private bool ActorCacheIsEmpty => _cache.LastUnboundState.Equals(GlamourActorState.Empty);
+    public bool ActorCacheIsEmpty => _cache.LastUnboundState.IsEmpty;
 
     // Invoked by the EquipGearsetInternal detour.
     public void OnEquipGearsetInternal(int gearsetId, byte glamourPlateId)
@@ -103,6 +103,8 @@ public class GlamourHandler
         _logger.LogDebug("Clearing Glamour Cache.");
         _cache.ClearCaches();
         await UpdateCaches();
+        // After we clear out the cache and update them to their recovered state we should clear the unbound cache out
+        _cache.CacheUnboundState(GlamourActorState.Empty);
     }
 
     /// <summary> Use this as your go-to update method for everything outside of IPC calls. </summary>
@@ -386,5 +388,13 @@ public class GlamourHandler
             // Release the slim, allowing further execution.
             _applySlim.Release();
         }
+    }
+
+    public void PrintLatestCache()
+    {
+        var latest = _cache.LastUnboundState;
+        // get the jobject string to print.
+        _logger.LogInformation($"Latest Unbound State: {latest.State?.ToString() ?? string.Empty}, " +
+            $"Meta: Hat: {latest.MetaStates.Headgear}, Visor: {latest.MetaStates.Visor}, Weapon: {latest.MetaStates.Weapon}");
     }
 }

@@ -9,29 +9,25 @@ using Penumbra.GameData.Structs;
 
 namespace GagSpeak.Interop.Helpers;
 
-public sealed class PenumbraChangedItemTooltip : DisposableMediatorSubscriberBase
+public sealed class PenumbraTooltips : DisposableMediatorSubscriberBase
 {
-    private readonly IpcCallerPenumbra _penumbra;
-    private readonly ItemData _itemData;
+    private readonly IpcCallerPenumbra _ipc;
     public DateTime LastTooltip { get; private set; } = DateTime.MinValue;
     public DateTime LastClick { get; private set; } = DateTime.MinValue;
 
-    public PenumbraChangedItemTooltip(ILogger<PenumbraChangedItemTooltip> logger,
-        GagspeakMediator mediator, IpcCallerPenumbra penumbra, ItemData itemData)
+    public PenumbraTooltips(ILogger<PenumbraTooltips> logger, GagspeakMediator mediator, IpcCallerPenumbra ipc)
         : base(logger, mediator)
     {
-        _penumbra = penumbra;
-        _itemData = itemData;
-
-        _penumbra.Tooltip += OnPenumbraTooltip;
-        _penumbra.Click += OnPenumbraClick;
+        _ipc = ipc;
+        _ipc.Tooltip += OnPenumbraTooltip;
+        _ipc.Click += OnPenumbraClick;
     }
 
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-        _penumbra.Tooltip -= OnPenumbraTooltip;
-        _penumbra.Click -= OnPenumbraClick;
+        _ipc.Tooltip -= OnPenumbraTooltip;
+        _ipc.Click -= OnPenumbraClick;
     }
 
     public void CreateTooltip(EquipItem item, string prefix, bool openTooltip)
@@ -95,7 +91,7 @@ public sealed class PenumbraChangedItemTooltip : DisposableMediatorSubscriberBas
 
         if (type == ChangedItemType.Item)
         {
-            if (!_itemData.TryGetValue(id, type is ChangedItemType.Item ? EquipSlot.MainHand : EquipSlot.OffHand, out var item))
+            if (!ItemSvc.ItemData.TryGetValue(id, type is ChangedItemType.Item ? EquipSlot.MainHand : EquipSlot.OffHand, out var item))
             {
                 return;
             }
@@ -115,7 +111,7 @@ public sealed class PenumbraChangedItemTooltip : DisposableMediatorSubscriberBas
 
         if (type is ChangedItemType.Item)
         {
-            if (!_itemData.TryGetValue(id, type is ChangedItemType.Item ? EquipSlot.MainHand : EquipSlot.OffHand, out var item))
+            if (!ItemSvc.ItemData.TryGetValue(id, type is ChangedItemType.Item ? EquipSlot.MainHand : EquipSlot.OffHand, out var item))
             {
                 return;
             }

@@ -160,6 +160,7 @@ public class EquipmentDrawer
         using (ImRaii.PushColor(ImGuiCol.Button, CkCol.CurvedHeaderFade.Uint()))
             if (CkGui.IconButton(overlayState ? FAI.Eye : FAI.EyeSlash, CkStyle.TwoRowHeight(), basicSlot.EquipSlot + "Overlay"))
                 basicSlot.ApplyFlags ^= RestraintFlags.IsOverlay;
+        CkGui.AttachToolTip(overlayState ? "Prevent applicatoin if Nothing or SmallClothes" : "Apply the slots Glamour, even if empty.");
         if (basicSlot.EquipSlot == EquipSlot.Body)
         {
             _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Overlay, WardrobeUI.LastPos, WardrobeUI.LastSize,

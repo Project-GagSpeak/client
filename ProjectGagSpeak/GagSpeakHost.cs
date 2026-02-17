@@ -1,7 +1,7 @@
-using System.Reflection;
 using CkCommons;
 using GagSpeak.GameInternals.Detours;
 using GagSpeak.Gui;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Controller;
@@ -10,6 +10,7 @@ using GagSpeak.State.Listeners;
 using GagSpeak.Utils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Reflection;
 
 namespace GagSpeak;
 
@@ -178,6 +179,7 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             _runtimeServiceScope.ServiceProvider.GetRequiredService<AchievementsService>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<DtrBarService>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<NameplateService>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<PenumbraTooltips>();
 
             // Init Player Controllers.
             _runtimeServiceScope.ServiceProvider.GetRequiredService<AutoPromptController>();

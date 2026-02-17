@@ -10,21 +10,24 @@ namespace GagSpeak.State.Models;
 public static class RestraintExtentions
 {
     #region Glamour
-    /// <summary> Determines if an item should be ignored. </summary>
-    /// <returns> True when there is a "nothing" item _and_ it's not set to be an overlay which means the slot should be ignored.</returns>
-    public static bool IsOverlayItem(this IRestraintSlot slot)
-    {
-        return slot.EquipItem.ItemId == ItemSvc.NothingItem(slot.EquipSlot).ItemId
-            && !slot.ApplyFlags.HasAny(RestraintFlags.IsOverlay);
-    }
+    /// <summary>
+    ///     Determines if an item should be ignored.
+    /// </summary>
+    /// <returns>
+    ///     True when there is a "nothing" item _and_ it's set to be an overlay which means the slot should be ignored.
+    /// </returns>
+    public static bool IsOverlayItem(this IRestraintSlot s)
+        => s.EquipItem.ItemId == ItemSvc.NothingItem(s.EquipSlot).ItemId && s.ApplyFlags.HasAny(RestraintFlags.IsOverlay);
 
-    /// <summary> Determines if an item should be ignored. <b>Assumes the Ref is not null.</b> </summary>
-    /// <returns> True when there is a "nothing" item _and_ it's not set to be an overlay which means the slot should be ignored.</returns>
-    public static bool IsOverlayItem(this IRestrictionRef slot)
-    {
-        return slot.Ref.Glamour.GameItem.ItemId == ItemSvc.NothingItem(slot.Ref.Glamour.Slot).ItemId
-            && !slot.ApplyFlags.HasAny(RestraintFlags.IsOverlay);
-    }
+    /// <summary> 
+    ///     Determines if an item should be ignored. <br/>
+    ///     <b>Assumes the Ref is not null.</b>
+    /// </summary>
+    /// <returns> 
+    ///     True when there is a "nothing" item _and_ it's set to be an overlay which means the slot should be ignored.
+    /// </returns>
+    public static bool IsOverlayItem(this IRestrictionRef s)
+        => s.Ref.Glamour.GameItem.ItemId == ItemSvc.NothingItem(s.Ref.Glamour.Slot).ItemId && s.ApplyFlags.HasAny(RestraintFlags.IsOverlay);
 
     /// <summary> Retrieves ONLY the base GlamourSlots. </summary>
     public static IEnumerable<GlamourSlot> GetBaseGlamours(this RestraintSet set)
@@ -70,9 +73,15 @@ public static class RestraintExtentions
         var applied = new List<GlamourSlot>();
         foreach (var item in slots)
         {
-            if (!item.ApplyFlags.HasAny(RestraintFlags.Glamour)
-                || item.IsOverlayItem()
-                || !seen.Add(item.EquipSlot))
+            if (!item.ApplyFlags.HasAny(RestraintFlags.Glamour))
+                continue;
+
+            // If we already saw this slot, skip over it.
+            if (!seen.Add(item.EquipSlot))
+                continue;
+
+            // If the item is 'nothing', and set as an overlay, ignore it.
+            if (item.IsOverlayItem())
                 continue;
 
             // Store the item. (no need to worry about slots since we only have one of each here)
@@ -94,11 +103,19 @@ public static class RestraintExtentions
             if (i < 0 || i >= layers.Count)
                 continue;
             // Ensure it satisfies the conditions for a valid layer.
-            if (layers[i] is not RestrictionLayer layer
-                || !layer.ApplyFlags.HasAny(RestraintFlags.Glamour)
-                || !layer.IsValid()
-                || layer.IsOverlayItem()
-                || !seen.Add(layer.EquipSlot))
+            if (layers[i] is not RestrictionLayer layer)
+                continue;
+
+            // If not a glamour layer, or valid, skip.
+            if (!layer.ApplyFlags.HasAny(RestraintFlags.Glamour) || !layer.IsValid())
+                continue;
+
+            // If we already saw this slot, skip over it.
+            if (!seen.Add(layer.EquipSlot))
+                continue;
+
+            // If the item is 'nothing', and set as an overlay, ignore it.
+            if (layer.IsOverlayItem())
                 continue;
 
             applied.Add(new GlamourSlot(layer.EquipSlot, layer.EquipItem, layer.Stains));

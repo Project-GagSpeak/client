@@ -21,27 +21,25 @@ public static class ConfigMigrator
         {
             var json = File.ReadAllText(fileNames.ServerConfig);
             var serverConfig = JObject.Parse(json);
-            var authObjects = serverConfig["ServerStorage"]!["Authentications"];
-            if (authObjects != null && authObjects.HasValues)
-                config["AcknowledgementUnderstood"] = true;
-            else
-                config["AcknowledgementUnderstood"] = false;
+            var hasProfiles = serverConfig.SelectToken("ServerStorage.Authentications")?.HasValues == true 
+                           || serverConfig.SelectToken("AccountInfo.Profiles")?.HasValues == true;
+            // Update value
+            config["AcknowledgementUnderstood"] = hasProfiles;
         }
         else
         {
             config["AcknowledgementUnderstood"] = false;
         }
 
-        config["AcknowledgementUnderstood"] = mainConfig["AcknowledgementUnderstood"];
         config["ButtonUsed"] = mainConfig["ButtonUsed"];
         config["EnableDtrEntry"] = mainConfig["EnableDtrEntry"];
         config["ShowPrivacyRadar"] = mainConfig["ShowPrivacyRadar"];
         config["ShowActionNotifs"] = mainConfig["ShowActionNotifs"];
         config["ShowVibeStatus"] = mainConfig["ShowVibeStatus"];
         config["PreferThreeCharaAnonName"] = mainConfig["PreferThreeCharaAnonName"];
-        config["PreferNicknamesOverNames"] = mainConfig["PreferNicknamesOverNames"];
-        config["ShowVisibleUsersSeparately"] = mainConfig["ShowVisibleUsersSeparately"];
-        config["ShowOfflineUsersSeparately"] = mainConfig["ShowOfflineUsersSeparately"];
+        config["NickOverPlayerName"] = mainConfig["PreferNicknamesOverNames"];
+        config["VisibleFolder"] = mainConfig["ShowVisibleUsersSeparately"];
+        config["OfflineFolder"] = mainConfig["ShowOfflineUsersSeparately"];
         config["OpenMainUiOnStartup"] = mainConfig["OpenMainUiOnStartup"];
         config["ShowProfiles"] = mainConfig["ShowProfiles"];
         config["ProfileDelay"] = mainConfig["ProfileDelay"];
@@ -67,8 +65,8 @@ public static class ConfigMigrator
         }
 
         config["LiveGarblerZoneChangeWarn"] = mainConfig["LiveGarblerZoneChangeWarn"];
-        config["NotifyForServerConnections"] = mainConfig["NotifyForServerConnections"];
-        config["NotifyForOnlinePairs"] = mainConfig["NotifyForOnlinePairs"];
+        config["ConnectionNotifications"] = mainConfig["NotifyForServerConnections"];
+        config["OnlineNotifications"] = mainConfig["NotifyForOnlinePairs"];
         config["NotifyLimitToNickedPairs"] = mainConfig["NotifyLimitToNickedPairs"];
         config["InfoNotification"] = mainConfig["InfoNotification"];
         config["WarningNotification"] = mainConfig["WarningNotification"];

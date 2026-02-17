@@ -47,19 +47,29 @@ public class AccountManager
         => Profiles.Count != 0;
 
     /// <summary>
-    /// Determines whether the current instance has at least one profile with a valid connection.
+    ///     Determines whether the current instance has at least one profile with a valid connection.
     /// </summary>
-    /// <returns>true if there is at least one profile with a valid connection; otherwise, false.</returns>
     public bool HasValidProfile()
-        => HasAnyProfile() && Profiles.Any(p => p.HadValidConnection);
+        => Profiles.Count != 0 && Profiles.Any(p => p.HadValidConnection);
 
     /// <summary>
-    /// Determines whether the current player has a valid profile with a successful connection.
+    ///     If the character has an entry in the profiles dictionary.
     /// </summary>
-    /// <returns>true if the player has a profile matching their content ID and the profile indicates a valid connection;
-    /// otherwise, false.</returns>
+    public bool CharaIsTracked()
+        => _config.Current.Profiles.ContainsKey(PlayerData.CID);
+
+    /// <summary>
+    ///     If the character has a profile entry with a 
+    ///     valid secret key of 64 characters.
+    /// </summary>
+    public bool CharaIsAttached()
+        => _config.Current.Profiles.TryGetValue(PlayerData.CID, out var a) && a.Key.Length is 64;
+
+    /// <summary>
+    ///     Determines whether the current player has a valid profile with a successful connection.
+    /// </summary>
     public bool CharaHasValidProfile()
-        => Profiles.Exists(p => p.ContentId == PlayerData.CID && p.HadValidConnection);
+        => _config.Current.Profiles.TryGetValue(PlayerData.CID, out var p) && p.HadValidConnection;
 
     /// <summary>
     /// Retrieves the primary account profile associated with this account, if one exists.
@@ -108,7 +118,7 @@ public class AccountManager
     }
 
     /// <summary>
-    /// Creates and adds a new account profile for the current player.
+    ///     Creates and adds a new account profile for the current player.
     /// </summary>
     /// <remarks>This method generates a new profile using the current player's name, home world, and
     /// content ID. If a profile with the same content ID already exists, the method does not overwrite it and
@@ -133,6 +143,15 @@ public class AccountManager
         };
         _config.Save();
         return _config.Current.Profiles[cid];
+    }
+
+    public void RemoveProfile(AccountProfile profile)
+    {
+        if (!_config.Current.Profiles.Remove(profile.ContentId))
+            _logger.LogWarning($"Attempted to remove profile with CID {profile.ContentId} but it was not found.");
+        else
+            _logger.LogInformation($"Removed profile for {profile.PlayerName} ({profile.ContentId}).");
+        _config.Save();
     }
 
     public bool TryUpdateSecretKey(AccountProfile profile, string newKey)

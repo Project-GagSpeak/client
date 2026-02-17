@@ -314,7 +314,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<IpcCallerPenumbra>()
         .AddSingleton<IpcManager>()
         .AddSingleton<IpcProvider>()
-        .AddSingleton<PenumbraChangedItemTooltip>();
+        .AddSingleton<PenumbraTooltips>();
 
     public static IServiceCollection AddGagSpeakConfigs(this IServiceCollection services)
     => services
@@ -426,7 +426,7 @@ public static class GagSpeakServiceExtensions
 
         // Scoped Settings
         .AddScoped<WindowMediatorSubscriberBase, SettingsUi>()
-        .AddScoped<AccountManagerTab>()
+        .AddScoped<ProfilesTab>()
         .AddScoped<DebugTab>()
 
         // Scoped Misc

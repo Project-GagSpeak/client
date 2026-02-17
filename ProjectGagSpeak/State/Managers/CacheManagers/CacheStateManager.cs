@@ -255,6 +255,17 @@ public class CacheStateManager : IHostedService
             _moodleHandler.TryAddMoodleToCache(key, new MoodleTuple(syncData.Moodle));
         }
         _logger.LogInformation("------ Collar Data synced to Cache ------ ");
+        // Ensure we have things cached if empty.
+        if (_glamourHandler.ActorCacheIsEmpty)
+        {
+            _logger.LogInformation("Caching Actor from latest Glamour data since cache was empty after sync.");
+            _glamourHandler.CacheActorFromLatest();
+        }
+        else
+        {
+            _logger.LogInformation("Actor cache was not empty after sync, skipping caching from latest Glamour data.");
+            _glamourHandler.PrintLatestCache();
+        }
 
         // Now perform all updates in parallel.
         _logger.LogInformation("------ Applying all Cache Updates In Parallel ------");

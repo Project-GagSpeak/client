@@ -25,7 +25,7 @@ public class GlamourListener : IDisposable
         _handler = handler;
 
         // Always attempt to immediately cache our player.
-        _handler.CacheActorFromLatest();
+        // _handler.CacheActorFromLatest();
         
         _ipc.OnStateChanged = StateChangedWithType.Subscriber(Svc.PluginInterface, OnStateChanged);
         _ipc.OnStateFinalized = StateFinalized.Subscriber(Svc.PluginInterface, OnStateFinalized);
