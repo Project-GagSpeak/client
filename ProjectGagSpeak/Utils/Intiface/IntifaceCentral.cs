@@ -52,7 +52,7 @@ public static partial class IntifaceCentral
         {
             Svc.Logger.Warning("Application not found, redirecting you to download installer.\n" +
                 $"Current App Path is: {AppPath}");
-            Util.OpenLink("https://intiface.com/central/");
+            Util.OpenLink("https://intiface.com/");
         }
     }
 
