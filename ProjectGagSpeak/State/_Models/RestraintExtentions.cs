@@ -17,7 +17,7 @@ public static class RestraintExtentions
     ///     True when there is a "nothing" item _and_ it's set to be an overlay which means the slot should be ignored.
     /// </returns>
     public static bool IsOverlayItem(this IRestraintSlot s)
-        => s.ApplyFlags.HasAny(RestraintFlags.IsOverlay);
+        => s.EquipItem.ItemId == ItemSvc.NothingItem(s.EquipSlot).ItemId && s.ApplyFlags.HasAny(RestraintFlags.IsOverlay);
 
     /// <summary> 
     ///     Determines if an item should be ignored. <br/>
@@ -27,7 +27,7 @@ public static class RestraintExtentions
     ///     True when there is a "nothing" item _and_ it's set to be an overlay which means the slot should be ignored.
     /// </returns>
     public static bool IsOverlayItem(this IRestrictionRef s)
-        => s.ApplyFlags.HasAny(RestraintFlags.IsOverlay);
+        => s.Ref.Glamour.GameItem.ItemId == ItemSvc.NothingItem(s.Ref.Glamour.Slot).ItemId && s.ApplyFlags.HasAny(RestraintFlags.IsOverlay);
 
     /// <summary> Retrieves ONLY the base GlamourSlots. </summary>
     public static IEnumerable<GlamourSlot> GetBaseGlamours(this RestraintSet set)

@@ -5,6 +5,7 @@ using CkCommons.Gui.Utility;
 using CkCommons.Raii;
 using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Game.Inventory;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
@@ -149,22 +150,19 @@ public class EquipmentDrawer
 
         // Get the width for the combo stuff.
         var comboWidth = width - CkGui.IconButtonSize(FAI.EyeSlash).X - ImGui.GetStyle().ItemInnerSpacing.X;
-        var overlayState = basicSlot.ApplyFlags.HasAny(RestraintFlags.IsOverlay);
-        using (ImRaii.Disabled(overlayState))
+        using (ImRaii.Group())
         {
-            using (ImRaii.Group())
-            {
-                DrawItem(basicSlot.Glamour, comboWidth);
-                DrawStains(basicSlot.Glamour, comboWidth);
-            }
+            DrawItem(basicSlot.Glamour, comboWidth);
+            DrawStains(basicSlot.Glamour, comboWidth);
         }
 
         ImUtf8.SameLineInner();
-        
+
+        var overlayState = basicSlot.ApplyFlags.HasAny(RestraintFlags.IsOverlay);
         using (ImRaii.PushColor(ImGuiCol.Button, CkCol.CurvedHeaderFade.Uint()))
             if (CkGui.IconButton(overlayState ? FAI.EyeSlash : FAI.Eye, CkStyle.TwoRowHeight(), basicSlot.EquipSlot + "Overlay"))
                 basicSlot.ApplyFlags ^= RestraintFlags.IsOverlay;
-        CkGui.AttachToolTip(overlayState ? "This slot won't be applied." : "Always apply this slot, even if empty.");
+        CkGui.AttachToolTip(overlayState ? "This slot won't be applied if it's empty." : "Always apply this slot, even if empty.");
         if (basicSlot.EquipSlot == EquipSlot.Body)
         {
             _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Overlay, WardrobeUI.LastPos, WardrobeUI.LastSize,
@@ -209,7 +207,7 @@ public class EquipmentDrawer
                 _logger.LogTrace($"Item changed to {_restrictionCombo.Current?.Identifier} " +
                     $"[{_restrictionCombo.Current?.Label}] from {restriction.Ref.Identifier} [{restriction.Ref.Label}]");
                 // Get the actual reference to the restrictions item.
-                if(_restrictions.Storage.TryGetRestriction(_restrictionCombo.Current?.Identifier ?? Guid.Empty, out var match))
+                if (_restrictions.Storage.TryGetRestriction(_restrictionCombo.Current?.Identifier ?? Guid.Empty, out var match))
                     restriction.Ref = match;
             }
 
