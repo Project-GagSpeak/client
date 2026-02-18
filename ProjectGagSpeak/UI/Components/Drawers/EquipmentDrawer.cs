@@ -33,12 +33,12 @@ namespace GagSpeak.Gui.Components;
 public class EquipmentDrawer
 {
     internal readonly record struct CachedSlotItemData(EquipItem Item);
-    
+
     private static IconCheckboxEx GlamourFlagCheckbox = new(FAI.Vest, CkCol.IconOn.Uint(), CkCol.IconOff.Uint());
     private static IconCheckboxEx ModFlagCheckbox = new(FAI.FileArchive, CkCol.IconOn.Uint(), CkCol.IconOff.Uint());
     private static IconCheckboxEx MoodleFlagCheckbox = new(FAI.TheaterMasks, CkCol.IconOn.Uint(), CkCol.IconOff.Uint());
     private static IconCheckboxEx HardcoreTraitsCheckbox = new(FAI.Handcuffs, CkCol.IconOn.Uint(), CkCol.IconOff.Uint());
-    
+
     private readonly GameItemCombo[] _itemCombos;
     private readonly BonusItemCombo[] _bonusCombos;
     private readonly GameStainCombo _stainCombo;
@@ -63,7 +63,7 @@ public class EquipmentDrawer
         _bonusCombos = BonusExtensions.AllFlags.Select(f => new BonusItemCombo(f, logger)).ToArray();
         _stainCombo = new GameStainCombo(logger);
         _guides = guides;
-        _restrictionCombo = new RestrictionCombo(logger, mediator, favorites, () => [ 
+        _restrictionCombo = new RestrictionCombo(logger, mediator, favorites, () => [
             ..restrictions.Storage.OrderByDescending(p => FavoritesConfig.Restrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
     }
@@ -149,18 +149,22 @@ public class EquipmentDrawer
 
         // Get the width for the combo stuff.
         var comboWidth = width - CkGui.IconButtonSize(FAI.EyeSlash).X - ImGui.GetStyle().ItemInnerSpacing.X;
-        using (ImRaii.Group())
+        var overlayState = basicSlot.ApplyFlags.HasAny(RestraintFlags.IsOverlay);
+        using (ImRaii.Disabled(overlayState))
         {
-            DrawItem(basicSlot.Glamour, comboWidth);
-            DrawStains(basicSlot.Glamour, comboWidth);
+            using (ImRaii.Group())
+            {
+                DrawItem(basicSlot.Glamour, comboWidth);
+                DrawStains(basicSlot.Glamour, comboWidth);
+            }
         }
 
         ImUtf8.SameLineInner();
-        var overlayState = basicSlot.ApplyFlags.HasAny(RestraintFlags.IsOverlay);
+        
         using (ImRaii.PushColor(ImGuiCol.Button, CkCol.CurvedHeaderFade.Uint()))
-            if (CkGui.IconButton(overlayState ? FAI.Eye : FAI.EyeSlash, CkStyle.TwoRowHeight(), basicSlot.EquipSlot + "Overlay"))
+            if (CkGui.IconButton(overlayState ? FAI.EyeSlash : FAI.Eye, CkStyle.TwoRowHeight(), basicSlot.EquipSlot + "Overlay"))
                 basicSlot.ApplyFlags ^= RestraintFlags.IsOverlay;
-        CkGui.AttachToolTip(overlayState ? "Prevent applicatoin if Nothing or SmallClothes" : "Apply the slots Glamour, even if empty.");
+        CkGui.AttachToolTip(overlayState ? "This slot won't be applied." : "Always apply this slot, even if empty.");
         if (basicSlot.EquipSlot == EquipSlot.Body)
         {
             _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Overlay, WardrobeUI.LastPos, WardrobeUI.LastSize,
