@@ -42,7 +42,7 @@ public class GagSpeakLoc : IHostedService
 
         // subscribe to any localization changes.
         Svc.PluginInterface.LanguageChanged += LoadLocalization;
-        _logger.LogInformation("GagSpeak Localization Service started successfully.");
+        _logger.LogInformation("GagSpeak Localization Service started successfully and loaded " + Svc.PluginInterface.UiLanguage + " as language.");
         return Task.CompletedTask;
     }
 
