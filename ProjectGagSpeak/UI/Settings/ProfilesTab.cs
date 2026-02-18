@@ -262,13 +262,13 @@ public class ProfilesTab
         var leftWidth = region.X - ProfileSize.X - _style.ItemSpacing.X;
         if (_selected is not { } profile)
         {
-            CkGui.FontText("No Profile Selected", UiFontService.UidFont);
+            CkGui.FontText("No Profile Selected", Fonts.UidFont);
             return;
         }
 
         using (ImRaii.Group())
         {
-            CkGui.FontText(profile.PlayerName, UiFontService.UidFont);
+            CkGui.FontText(profile.PlayerName, Fonts.UidFont);
             var lineSize = new Vector2(leftWidth, _lineH);
             _wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.AchievementLineSplit], ImGui.GetCursorScreenPos(), lineSize);
             ImGui.Dummy(lineSize);
@@ -415,7 +415,7 @@ public class ProfilesTab
 
         using (ImRaii.Group())
         {
-            CkGui.FontTextCentered("WARNING", UiFontService.UidFont, ImGuiColors.DalamudRed);
+            CkGui.FontTextCentered("WARNING", Fonts.UidFont, ImGuiColors.DalamudRed);
             CkGui.Separator(ImGuiColors.DalamudRed.ToUint(), size.X);
 
             if (profile.IsPrimary)

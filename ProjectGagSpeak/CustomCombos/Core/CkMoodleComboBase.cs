@@ -15,8 +15,8 @@ public abstract class CkMoodleComboBase<T> : CkFilterComboCache<T>
         IconScale = iconScale;
     }
 
-    protected unsafe virtual float SelectableTextHeight => UiFontService.Default150PercentPtr.IsLoaded()
-        ? UiFontService.Default150PercentPtr.FontSize : ImGui.GetTextLineHeight();
+    protected unsafe virtual float SelectableTextHeight => Fonts.Default150PercentPtr.IsLoaded()
+        ? Fonts.Default150PercentPtr.FontSize : ImGui.GetTextLineHeight();
     protected virtual Vector2 IconSize => MoodleDrawer.IconSize * IconScale;
 
     protected void DrawItemTooltip(MoodlesStatusInfo item)

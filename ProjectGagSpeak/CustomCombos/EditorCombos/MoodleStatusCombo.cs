@@ -68,7 +68,7 @@ public sealed class MoodleStatusCombo : CkMoodleComboBase<MoodlesStatusInfo>
         ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
         var pos = ImGui.GetCursorPosY();
         ImGui.SetCursorPosY(pos + (size.Y - SelectableTextHeight) * 0.5f);
-        using (UiFontService.Default150Percent.Push())
+        using (Fonts.Default150Percent.Push())
             CkRichText.Text(titleSpace, moodleStatus.Title);
 
         return ret;

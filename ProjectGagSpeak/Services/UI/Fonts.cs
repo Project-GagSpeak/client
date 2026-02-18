@@ -1,8 +1,9 @@
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.ManagedFontAtlas;
-using Dalamud.Bindings.ImGui;
 using Microsoft.Extensions.Hosting;
 using System.Threading.Tasks;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Services;
 
@@ -11,48 +12,34 @@ namespace GagSpeak.Services;
 ///     Should probably look at chat2 to see how to handle 
 ///     pointers for fonts and various font scales better at some point.
 /// </summary>
-public sealed class UiFontService : IHostedService
+public static class Fonts
 {
-    public static IFontHandle IconFont => Svc.PluginInterface.UiBuilder.IconFontFixedWidthHandle;
-    public static IFontHandle UidFont { get; private set; }
-    public static IFontHandle Default150Percent { get; private set; }
-    public unsafe static ImFontPtr Default150PercentPtr { get; private set; }
-    public static IFontHandle FullScreenFont { get; private set; }
-    public unsafe static ImFontPtr FullScreenFontPtr { get; private set; }
+    public const int FULLSCREEN_FONT_SIZE = 300;
+    public static IFontHandle FullscreenFont { get; private set; }
+    public static ImFontPtr FullscreenFontPtr { get; private set; }
 
-    // the below 3 are the same font at different sizes because idk how to register seperate sizes.
-    // You can implement font pointers if you want here, but due to the glyph allocations, it will take 12s to load.
+    // Gs-Related Fonts.
     public static IFontHandle GagspeakFont { get; private set; }
     public static IFontHandle GagspeakLabelFont { get; private set; }
     public static IFontHandle GagspeakTitleFont { get; private set; }
 
-    // Shortcut.
-    private IFontAtlas FontAtlas => Svc.PluginInterface.UiBuilder.FontAtlas;
+    // Normal Fonts
+    public static IFontHandle IconFont => Svc.PluginInterface.UiBuilder.IconFontFixedWidthHandle;
+    public static IFontHandle UidFont { get; private set; }
+    public static IFontHandle Default150Percent { get; private set; }
+    public static ImFontPtr Default150PercentPtr { get; private set; }
 
-    public UiFontService()
-    { }
-
-    private async Task InitializeAllFonts()
+    /// <summary>
+    ///     Helper task to initialize GagSpeak's fonts.
+    /// </summary>
+    public static async Task InitializeFonts()
     {
-        // Initialize the nessisary fonts.
-        await InitNessisaryFonts().ConfigureAwait(false);
-        // Initialize the large fonts.
-        await InitLargeFonts().ConfigureAwait(false);
-
-    }
-
-    private async Task InitNessisaryFonts()
-    {
-        UidFont = FontAtlas.NewDelegateFontHandle(tk =>
-        {
-            tk.OnPreBuild(tk => tk.AddDalamudAssetFont(Dalamud.DalamudAsset.NotoSansJpMedium, new() { SizePx = 35 }));
-        });
-
-        Default150Percent = FontAtlas.NewDelegateFontHandle(tk =>
+        // Attempt the large font first.
+        FullscreenFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
         {
             tk.OnPreBuild(prebuild =>
             {
-                Default150PercentPtr = prebuild.AddDalamudDefaultFont(UiBuilder.DefaultFontSizePx * 1.5f);
+                FullscreenFontPtr = prebuild.AddDalamudAssetFont(Dalamud.DalamudAsset.InconsolataRegular, new() { SizePx = 300 });
             });
         });
 
@@ -64,21 +51,35 @@ public sealed class UiFontService : IHostedService
             var glyphRanges = GetGlyphRanges();
 
             // Assign the IFontHandltk.
-            GagspeakFont = FontAtlas.NewDelegateFontHandle(tk =>
+            GagspeakFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
             {
                 tk.OnPreBuild(e => e.AddFontFromFile(gsFontFileLoc, new SafeFontConfig { SizePx = 22, GlyphRanges = glyphRanges }));
             });
 
-            GagspeakLabelFont = FontAtlas.NewDelegateFontHandle(tk =>
+            GagspeakLabelFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
             {
                 tk.OnPreBuild(e => e.AddFontFromFile(gsFontFileLoc, new SafeFontConfig { SizePx = 36, GlyphRanges = glyphRanges }));
             });
 
-            GagspeakTitleFont = FontAtlas.NewDelegateFontHandle(tk =>
+            GagspeakTitleFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
             {
                 tk.OnPreBuild(e => e.AddFontFromFile(gsFontFileLoc, new SafeFontConfig { SizePx = 48, GlyphRanges = glyphRanges }));
             });
         }
+
+        // Now for UID and 150% default.
+        UidFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
+        {
+            tk.OnPreBuild(tk => tk.AddDalamudAssetFont(Dalamud.DalamudAsset.NotoSansJpMedium, new() { SizePx = 35 }));
+        });
+
+        Default150Percent = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
+        {
+            tk.OnPreBuild(prebuild =>
+            {
+                Default150PercentPtr = prebuild.AddDalamudDefaultFont(UiBuilder.DefaultFontSizePx * 1.5f);
+            });
+        });
 
         // Wait for them to be valid.
         await UidFont.WaitAsync().ConfigureAwait(false);
@@ -86,46 +87,23 @@ public sealed class UiFontService : IHostedService
         await GagspeakFont.WaitAsync().ConfigureAwait(false);
         await GagspeakLabelFont.WaitAsync().ConfigureAwait(false);
         await GagspeakTitleFont.WaitAsync().ConfigureAwait(false);
-        await FontAtlas.BuildFontsAsync().ConfigureAwait(false);
-        Svc.Logger.Information("UiFontService: Initialized Nessisary fonts.");
+        await FullscreenFont.WaitAsync().ConfigureAwait(false);
+        await Svc.PluginInterface.UiBuilder.FontAtlas.BuildFontsAsync().ConfigureAwait(false);
+        Svc.Logger.Information("Fonts: Initialized Nessisary fonts.");
     }
 
-    private async Task InitLargeFonts()
+    public static void Dispose()
     {
-        FullScreenFont = FontAtlas.NewDelegateFontHandle(tk =>
-        {
-            tk.OnPreBuild(prebuild =>
-            {
-                FullScreenFontPtr = prebuild.AddDalamudAssetFont(Dalamud.DalamudAsset.NotoSansJpMedium, new() { SizePx = 300 });
-            });
-        });
-        Svc.Logger.Information("UiFontService: Initialized supported fonts.");
-
-        await FullScreenFont.WaitAsync().ConfigureAwait(false);
-        await FontAtlas.BuildFontsAsync().ConfigureAwait(false);
-    }
-
-    public Task StartAsync(CancellationToken cancellationToken)
-    {
-        Svc.Logger.Information("UiFontService Started.");
-        // Fire-And-Forget, we must not block the startup process.
-        _ = InitializeAllFonts();
-        return Task.CompletedTask;
-    }
-
-    public Task StopAsync(CancellationToken cancellationToken)
-    {
-        Svc.Logger.Information("UiFontService Stopped.");
+        Svc.Logger.Information("Disposing Fonts.");
         GagspeakFont?.Dispose();
         GagspeakLabelFont?.Dispose();
         GagspeakTitleFont?.Dispose();
         UidFont?.Dispose();
         Default150Percent?.Dispose();
-        FullScreenFont?.Dispose();
-        return Task.CompletedTask;
+        FullscreenFont?.Dispose();
     }
 
-    private ushort[] GetGlyphRanges() // Used for the GagSpeak custom Font Service to be injected properly.
+    private static ushort[] GetGlyphRanges() // Used for the GagSpeak custom Font Service to be injected properly.
     {
         return new ushort[] {
             0x0020, 0x007E,  // Basic Latin

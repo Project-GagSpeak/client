@@ -195,14 +195,14 @@ public class AliasesTab : IFancyTab
 
     private void DrawWhitelist(AliasTrigger alias)
     {
-        CkGui.FontText("Allowed Kinksters:", UiFontService.Default150Percent);
+        CkGui.FontText("Allowed Kinksters:", Fonts.Default150Percent);
         CkGui.Separator(GsCol.VibrantPink.Uint());
 
         if (alias.WhitelistedUIDs.Count is 0)
         {
-            CkGui.FontTextAligned("Everyone", UiFontService.Default150Percent);
+            CkGui.FontTextAligned("Everyone", Fonts.Default150Percent);
             ImUtf8.SameLineInner();
-            CkGui.FontTextAligned("(Global)", UiFontService.Default150Percent, ImGuiColors.DalamudGrey2);
+            CkGui.FontTextAligned("(Global)", Fonts.Default150Percent, ImGuiColors.DalamudGrey2);
             return;
         }
 
@@ -377,7 +377,7 @@ public class AliasesTab : IFancyTab
     private void DrawWhitelistEditor(AliasTrigger alias)
     {
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 8f);
-        CkGui.FontText("Whitelist", UiFontService.Default150Percent);
+        CkGui.FontText("Whitelist", Fonts.Default150Percent);
 
         if (CkGui.IconTextButton(FAI.Ban, "Clear", disabled: ImGui.GetIO().KeyShift))
         {

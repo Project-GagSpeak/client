@@ -61,7 +61,7 @@ public class KinkPlateLight
         DrawDescription(drawList, profile, userData, isPair);
 
         // Now let's draw out the chosen achievement Name..
-        using (UiFontService.GagspeakLabelFont.Push())
+        using (Fonts.GagspeakLabelFont.Push())
         {
             var titleName = ClientAchievements.GetTitleById(profile.Info.ChosenTitleId);
             var chosenTitleSize = ImGui.CalcTextSize(titleName);
@@ -135,7 +135,7 @@ public class KinkPlateLight
 
         // draw out the UID here. We must make it centered. To do this, we must fist calculate how to center it.
         var widthToCenterOn = ProfilePictureBorderSize.X;
-        using (UiFontService.UidFont.Push())
+        using (Fonts.UidFont.Push())
         {
             var aliasOrUidSize = ImGui.CalcTextSize(displayName);
             ImGui.SetCursorScreenPos(new Vector2(ProfilePictureBorderPos.X + widthToCenterOn / 2 - aliasOrUidSize.X / 2, ProfilePictureBorderPos.Y + ProfilePictureBorderSize.Y + 5));

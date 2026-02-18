@@ -591,20 +591,20 @@ public class HypnoEffectEditor : IDisposable
             drawList.PopClipRect();
 
             // If text is not present, or font is not valid, do not draw.
-            if (_activeState.CurrentText.IsNullOrEmpty() || !UiFontService.FullScreenFont.Available || UiFontService.FullScreenFontPtr.Handle is null)
+            if (_activeState.CurrentText.IsNullOrEmpty() || Fonts.FullscreenFontPtr.Handle is null)
                 return screenSize;
 
             // determine the font scalar.
-            var fontScaler = sizeScale * (eff.TextFontSize / UiFontService.FullScreenFontPtr.FontSize) * _activeState.TextScale;
+            var fontScaler = sizeScale * (eff.TextFontSize / Fonts.FullscreenFontPtr.FontSize) * _activeState.TextScale;
 
             // determine the new target position.
             var targetPos = eff.Attributes.HasAny(HypnoAttributes.LinearTextScale)
                 ? center - Vector2.Lerp(sizeScale * _activeState.TextOffsetStart, sizeScale * _activeState.TextOffsetEnd, _activeState.TextScaleProgress)
-                : center - (CkGui.CalcFontTextSize(_activeState.CurrentText, UiFontService.FullScreenFont) * fontScaler) * 0.5f;
+                : center - (CkGui.CalcTextSizeFontPtr(Fonts.FullscreenFontPtr, _activeState.CurrentText) * fontScaler) * 0.5f;
 
             drawList.OutlinedFontScaled(
-                UiFontService.FullScreenFontPtr,
-                UiFontService.FullScreenFontPtr.FontSize,
+                Fonts.FullscreenFontPtr,
+                Fonts.FullscreenFontPtr.FontSize,
                 fontScaler,
                 targetPos,
                 _activeState.CurrentText,

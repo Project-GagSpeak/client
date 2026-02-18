@@ -163,7 +163,7 @@ public partial class SidePanelPair
         CkGui.HoverIconText(FAI.QuestionCircle, ImGuiColors.TankBlue.ToUint(), ImGui.GetColorU32(ImGuiCol.TextDisabled));
         if (ImGui.IsItemHovered())
         {
-            using (UiFontService.UidFont.Push())
+            using (Fonts.UidFont.Push())
                 CkGui.AttachToolTip($"--COL--IMPORTANT:--COL-- Once in hardcore mode, you can only change EditAccess for {dispName}." +
                     $"--NL--{dispName} will have control over any permissions they have edit access to instead." +
                     "--NL--Be sure you are ok with this before enabling!", color: ImGuiColors.DalamudRed);

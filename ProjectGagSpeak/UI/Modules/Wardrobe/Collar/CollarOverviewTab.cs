@@ -95,12 +95,12 @@ public class CollarOverviewTab : IFancyTab
     {
         using var child = CkRaii.FramedChildPaddedWH("Setup", size, 0, GsCol.VibrantPink.Uint(), FancyTabBar.RoundingInner);
         // Precalculate essential variable sizes.
-        var textH = CkGui.CalcFontTextSize("T", UiFontService.UidFont).Y;
+        var textH = CkGui.CalcFontTextSize("T", Fonts.UidFont).Y;
         var iconSize = CkGui.IconButtonSize(FAI.Edit);
         var buttonOffset = (textH - iconSize.Y) / 2;
         var topleftWidth = child.InnerRegion.X - (iconSize.X * 2 + ImGui.GetStyle().ItemInnerSpacing.X);
         // Idealy this should all be to the right of the displayed image.
-        CkGui.FontText("Collar Setup", UiFontService.UidFont);
+        CkGui.FontText("Collar Setup", Fonts.UidFont);
         ImGui.SameLine(topleftWidth);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + buttonOffset);
         if (CkGui.IconButton(FAI.Undo, inPopup: true))
@@ -188,7 +188,7 @@ public class CollarOverviewTab : IFancyTab
         using var child = CkRaii.FramedChildPaddedWH("Setup", size, 0, GsCol.VibrantPink.Uint(), FancyTabBar.RoundingInner);
         // Precalculate essential variable sizes.
         var pos = ImGui.GetCursorScreenPos();
-        var textH = CkGui.CalcFontTextSize("T", UiFontService.UidFont).Y;
+        var textH = CkGui.CalcFontTextSize("T", Fonts.UidFont).Y;
         var iconSize = CkGui.IconButtonSize(FAI.Edit);
         var thumbnailH = ImGui.GetFrameHeight() + CkGui.GetSeparatorHeight() + textH;
         var buttonOffset = (textH - iconSize.Y) / 2;
@@ -197,7 +197,7 @@ public class CollarOverviewTab : IFancyTab
         // Idealy this should all be to the right of the displayed image.
         using (ImRaii.Group())
         {
-            CkGui.FontText("Collar Setup", UiFontService.UidFont);
+            CkGui.FontText("Collar Setup", Fonts.UidFont);
             ImGui.SameLine(child.InnerRegion.X - (thumbnailSize.X + ImGui.GetStyle().ItemSpacing.X + CkGui.IconButtonSize(FAI.Edit).X));
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + buttonOffset);
             if (CkGui.IconButton(FAI.Edit, inPopup: true))
@@ -283,12 +283,12 @@ public class CollarOverviewTab : IFancyTab
     {
         using var child = CkRaii.FramedChildPaddedWH("Active", region, 0, GsCol.VibrantPink.Uint(), FancyTabBar.RoundingInner);
 
-        var textH = CkGui.CalcFontTextSize("T", UiFontService.UidFont).Y;
+        var textH = CkGui.CalcFontTextSize("T", Fonts.UidFont).Y;
         var pos = ImGui.GetCursorScreenPos();
         pos.X += (child.InnerRegion.X - textH - ImUtf8.ItemSpacing.X);
 
         ImGui.GetWindowDrawList().AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Collar], pos, new(textH));
-        CkGui.FontText("Active State", UiFontService.UidFont);
+        CkGui.FontText("Active State", Fonts.UidFont);
 
         CkGui.Separator(GsCol.VibrantPink.Uint());
         

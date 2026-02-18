@@ -141,7 +141,7 @@ public class HomeTab
     {
         var isSupporter = MainHub.OwnUserData.Tier is not CkSupporterTier.NoRole;
 
-        CkGui.FontText(MainHub.DisplayName, UiFontService.UidFont);
+        CkGui.FontText(MainHub.DisplayName, Fonts.UidFont);
         CkGui.AttachToolTip(isSupporter ? SUPPORTER_NAME_TOOLTIP : NAME_TOOLTIP);
         // Copy based on interaction type.
         if (isSupporter && ImGui.GetIO().KeyCtrl && ImGui.IsItemClicked())

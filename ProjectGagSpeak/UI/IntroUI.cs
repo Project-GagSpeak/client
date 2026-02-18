@@ -301,13 +301,13 @@ public class IntroUi : WindowMediatorSubscriberBase
 
     private void PageContentsWelcome(Vector2 region)
     {
-        CkGui.FontText("Welcome to Project GagSpeak!", UiFontService.UidFont);
+        CkGui.FontText("Welcome to Project GagSpeak!", Fonts.UidFont);
 
         CkGui.ColorTextWrapped("Project GagSpeak is a highly ambitious project devloped for over a year in closed Beta, " +
             "aiming to provide kinksters with an all-in-one BDSM plugin free of charge to enjoy.", GsCol.VibrantPinkHovered.Uint());
 
 
-        CkGui.FontText("Features:", UiFontService.Default150Percent);
+        CkGui.FontText("Features:", Fonts.Default150Percent);
         using (CkRaii.Child("FeaturesListScrollable", ImGui.GetContentRegionAvail()))
         {
             CkGui.BulletText("KinkPlates™");
@@ -429,7 +429,7 @@ public class IntroUi : WindowMediatorSubscriberBase
     private void PageContentsAbout(Vector2 region)
     {
         using var _ = CkRaii.Child("innerAbout", region, wFlags: WFlags.AlwaysVerticalScrollbar);
-        CkGui.FontText("Dedications", UiFontService.Default150Percent);
+        CkGui.FontText("Dedications", Fonts.Default150Percent);
 
         CkGui.BulletText("TBD", GsCol.VibrantPink.Uint());
     }
@@ -437,7 +437,7 @@ public class IntroUi : WindowMediatorSubscriberBase
     // Understanding Sundouleia Privacy & Usage Transparency
     private void PageContentsUsage(Vector2 region)
     {
-        CkGui.FontTextCentered("READ CAREFULLY, YOU WILL ONLY SEE THIS ONCE", UiFontService.Default150Percent, ImGuiColors.DalamudRed);
+        CkGui.FontTextCentered("READ CAREFULLY, YOU WILL ONLY SEE THIS ONCE", Fonts.Default150Percent, ImGuiColors.DalamudRed);
         ImGui.Spacing();
         CkGui.CenterText("Acknowledgement Of Usage & Privacy");
         using (CkRaii.FramedChildPaddedWH("UsageAndPrivacy", ImGui.GetContentRegionAvail(), 0, GsCol.RemoteBgDark.Uint(), wFlags: WFlags.AlwaysVerticalScrollbar))
@@ -448,7 +448,7 @@ public class IntroUi : WindowMediatorSubscriberBase
 
             // Consent Reminder.
             ImGui.Spacing();
-            CkGui.FontText("Consent", UiFontService.Default150Percent, ImGuiColors.ParsedGold);
+            CkGui.FontText("Consent", Fonts.Default150Percent, ImGuiColors.ParsedGold);
             ImGui.TextWrapped("BDSM, at its foundation, highly values the aspect of consent.");
             CkGui.BulletText("By using GagSpeak you MUST abide by the boundaries & limits others set for you.");
             CkGui.BulletText("If you push these limits against their will or pressure them to give you more than they " +
@@ -456,7 +456,7 @@ public class IntroUi : WindowMediatorSubscriberBase
 
             // Privacy 
             ImGui.Spacing();
-            CkGui.FontText("Privacy", UiFontService.Default150Percent, ImGuiColors.ParsedGold);
+            CkGui.FontText("Privacy", Fonts.Default150Percent, ImGuiColors.ParsedGold);
             ImGui.TextWrapped("By using GagSpeak, you understand and acknowledge the following about data sharing:");
             CkGui.BulletText("Personal information (Character Name & Homeworld) are censored with an anonymous identity.");
             CkGui.BulletText("If you give up this information about you and it is used against you, that is of your own fault.");
@@ -467,7 +467,7 @@ public class IntroUi : WindowMediatorSubscriberBase
 
             // Account Rep.
             ImGui.Spacing();
-            CkGui.FontText("Account Reputation", UiFontService.Default150Percent, ImGuiColors.ParsedGold);
+            CkGui.FontText("Account Reputation", Fonts.Default150Percent, ImGuiColors.ParsedGold);
             CkGui.TextWrapped("Reputation is shared across all profiles (all Characters) to prevent abuse of social features. " +
                 "Valid reports may result in strikes. 3 in any category restrict access to that category, and too many total " +
                 "strikes lead to a ban.");
@@ -492,7 +492,7 @@ public class IntroUi : WindowMediatorSubscriberBase
             }
 
             ImGui.Spacing();
-            CkGui.FontText("Hardcore Control", UiFontService.Default150Percent, ImGuiColors.ParsedGold);
+            CkGui.FontText("Hardcore Control", Fonts.Default150Percent, ImGuiColors.ParsedGold);
             CkGui.ColorTextWrapped("Hardcore Functionality in GagSpeak directly affects your game at a core level, such as preventing " +
                 "you from typing, blocking your sight, restricting your movement, forcing you to perform emotes, blocking " +
                 "out actions from being used, and controling the GCD's of your actions, and more.", new Vector4(1,0,0,1));
@@ -501,7 +501,7 @@ public class IntroUi : WindowMediatorSubscriberBase
                 "individuals if granted access over them, and to not be wreckless.");
 
             ImGui.Spacing();
-            CkGui.FontText("Predatory Behavior", UiFontService.Default150Percent, ImGuiColors.DalamudRed);
+            CkGui.FontText("Predatory Behavior", Fonts.Default150Percent, ImGuiColors.DalamudRed);
             ImGui.TextWrapped("The Main Dev of GagSpeak has endured years of manipulative predatory abuse, and will ensure that any report made" +
                 "is resolved thoughtfully and with consideration in a manner that will not cause the reported to go after the reporter.");
             CkGui.BulletText("This experience will help distiguish between 'bait reports' and 'actual reports'.");
@@ -526,7 +526,7 @@ public class IntroUi : WindowMediatorSubscriberBase
     // For Generating an Account.
     private void PageContentsAccountSetup(Vector2 region)
     {
-        CkGui.FontText("Account Generation", UiFontService.UidFont);
+        CkGui.FontText("Account Generation", Fonts.UidFont);
 
         ImGui.Text("You are not required to join the discord to login. Instead, it is generated for you below.");
 
@@ -553,7 +553,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         var generateWidth = CkGui.IconTextButtonSize(FAI.IdCardAlt, "Create Account (One-Time Use!)");
         var recoveryKeyInUse = !string.IsNullOrWhiteSpace(_secretKey);
 
-        CkGui.FontText("Generate New Account", UiFontService.Default150Percent);
+        CkGui.FontText("Generate New Account", Fonts.Default150Percent);
         var blockButton = _account.HasValidProfile() || recoveryKeyInUse || _config.Current.ButtonUsed || UiService.DisableUI;
 
         CkGui.FramedIconText(FAI.UserPlus);
@@ -596,7 +596,7 @@ public class IntroUi : WindowMediatorSubscriberBase
 
     private void DrawExistingAccountRecovery()
     {
-        CkGui.FontText("Use Existing Account / Recover Account", UiFontService.Default150Percent);
+        CkGui.FontText("Use Existing Account / Recover Account", Fonts.Default150Percent);
         // Warning Notice.
         CkGui.FramedIconText(FAI.ExclamationTriangle, ImGuiColors.DalamudYellow);
         CkGui.ColorTextInline("To use an existing account / login with a recovered key from the discord bot, use it here and connect.", ImGuiColors.DalamudYellow);

@@ -67,7 +67,7 @@ public class StyleEditorUI : WindowMediatorSubscriberBase
     {
         var width = ImGui.GetContentRegionAvail().X;
         var halfW = width / 2;
-        CkGui.FontText("Selected Theme:", UiFontService.GagspeakLabelFont);
+        CkGui.FontText("Selected Theme:", Fonts.GagspeakLabelFont);
         if (DrawThemeCombo(width))
         {
             // Do some theme Setting here

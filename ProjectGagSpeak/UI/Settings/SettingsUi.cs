@@ -206,7 +206,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         var gagVisuals = globals.GagVisuals;
         var removeGagOnLockExpiration = _mainConfig.Current.RemoveRestrictionOnTimerExpire;
 
-        CkGui.FontText(GSLoc.Settings.MainOptions.HeaderGags, UiFontService.UidFont);
+        CkGui.FontText(GSLoc.Settings.MainOptions.HeaderGags, Fonts.UidFont);
         using (ImRaii.Disabled(globals.ChatGarblerLocked))
         {
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.LiveChatGarbler, ref liveChatGarblerActive))
@@ -239,7 +239,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         var mimicsApplyTraits = _mainConfig.Current.CursedItemsApplyTraits;
 
         ImGui.Separator();
-        CkGui.FontText(GSLoc.Settings.MainOptions.HeaderWardrobe, UiFontService.UidFont);
+        CkGui.FontText(GSLoc.Settings.MainOptions.HeaderWardrobe, Fonts.UidFont);
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.WardrobeActive, ref wardrobeEnabled))
         {
             UiService.SetUITask(async () =>
@@ -295,7 +295,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
     private void DrawPuppeteerSettings(IReadOnlyGlobalPerms globals)
     {
         ImGui.Separator();
-        CkGui.FontText(GSLoc.Settings.MainOptions.HeaderPuppet, UiFontService.UidFont);
+        CkGui.FontText(GSLoc.Settings.MainOptions.HeaderPuppet, Fonts.UidFont);
 
         var puppeteerEnabled = globals.PuppeteerEnabled;
         var globalTriggerPhrase = globals.TriggerPhrase;
@@ -341,7 +341,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
     private void DrawToyboxSettings(IReadOnlyGlobalPerms globals)
     {
         ImGui.Separator();
-        CkGui.FontText(GSLoc.Settings.MainOptions.HeaderToybox, UiFontService.UidFont);
+        CkGui.FontText(GSLoc.Settings.MainOptions.HeaderToybox, Fonts.UidFont);
 
         var toyboxEnabled = globals.ToyboxEnabled;
         var emitSpatialAudio = globals.SpatialAudio;
@@ -471,7 +471,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
     private void DrawSpatialAudioSettings(IReadOnlyGlobalPerms globals)
     {
         ImGui.Separator();
-        CkGui.FontText(GSLoc.Settings.MainOptions.HeaderAudio, UiFontService.UidFont);
+        CkGui.FontText(GSLoc.Settings.MainOptions.HeaderAudio, Fonts.UidFont);
 
         //if (CkGuiUtils.EnumCombo("##AudioType", 150f, _mainConfig.Current.AudioOutputType, out var newVal, defaultText: "Select Audio Type.."))
         //{
@@ -541,7 +541,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         ImGui.Columns(2, "PreferencesColumns", true);
         ImGui.SetColumnWidth(0, width);
 
-        CkGui.FontText("Live Chat Garbler", UiFontService.UidFont);
+        CkGui.FontText("Live Chat Garbler", Fonts.UidFont);
 
         using (ImRaii.Group())
         {
@@ -598,7 +598,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         DrawChannelPreferences();
 
         ImGui.NextColumn();
-        CkGui.FontText(GSLoc.Settings.Preferences.HeaderPuppet, UiFontService.UidFont);
+        CkGui.FontText(GSLoc.Settings.Preferences.HeaderPuppet, Fonts.UidFont);
         using (ImRaii.Group())
         {
             foreach (var (label, channels) in ChatLogAgent.SortedChannels)
@@ -627,7 +627,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         ImGui.Columns(1);
 
         ImGui.Separator();
-        CkGui.FontText(GSLoc.Settings.Preferences.HeaderUiPrefs, UiFontService.UidFont);
+        CkGui.FontText(GSLoc.Settings.Preferences.HeaderUiPrefs, Fonts.UidFont);
 
         var showMainUiOnStart = _mainConfig.Current.OpenMainUiOnStartup;
 
@@ -725,7 +725,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
         /* --------------- Separator for moving onto the Notifications Section ----------- */
         ImGui.Separator();
-        CkGui.FontText(GSLoc.Settings.Preferences.HeaderNotifications, UiFontService.UidFont);
+        CkGui.FontText(GSLoc.Settings.Preferences.HeaderNotifications, Fonts.UidFont);
 
         var liveGarblerZoneChangeWarn = _mainConfig.Current.LiveGarblerZoneChangeWarn;
         var serverConnectionNotifs = _mainConfig.Current.ConnectionNotifications;

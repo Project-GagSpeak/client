@@ -43,7 +43,7 @@ public sealed class OwnPresetCombo : MoodleComboBase<MoodlePresetInfo>
         var titleSpace = size.X - iconsSpace;
 
         // Push the font first so the height is correct.
-        using var _ = UiFontService.Default150Percent.Push();
+        using var _ = Fonts.Default150Percent.Push();
 
         var ret = ImGui.Selectable($"##{moodlePreset.Title}", selected, ImGuiSelectableFlags.None, size);
 

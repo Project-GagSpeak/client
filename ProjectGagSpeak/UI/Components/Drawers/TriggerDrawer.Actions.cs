@@ -435,7 +435,7 @@ public sealed partial class TriggerDrawer
 
         // Split things up into 2 columns.
         var columnWidth = (ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) / 2;
-        var height = CkGuiUtils.GetTimeDisplayHeight(UiFontService.UidFont) + ImGui.GetFrameHeightWithSpacing();
+        var height = CkGuiUtils.GetTimeDisplayHeight(Fonts.UidFont) + ImGui.GetFrameHeightWithSpacing();
         // Enter the first column.
         using (ImRaii.Group())
         {
@@ -447,12 +447,12 @@ public sealed partial class TriggerDrawer
                 ImGuiUtil.Center("Start After");
                 if (isEditorItem)
                 {
-                    CkGuiUtils.TimeSpanEditor("ToyActStart", TimeSpan.FromMilliseconds(59999), ref refStart, "ss\\:fff", UiFontService.UidFont, c.InnerRegion.X);
+                    CkGuiUtils.TimeSpanEditor("ToyActStart", TimeSpan.FromMilliseconds(59999), ref refStart, "ss\\:fff", Fonts.UidFont, c.InnerRegion.X);
                     toyAct.StartAfter = refStart;
                 }
                 else
                 {
-                    CkGuiUtils.TimeSpanPreview("ToyActStart", TimeSpan.FromMilliseconds(59999), refStart, "ss\\:fff", UiFontService.UidFont, c.InnerRegion.X);
+                    CkGuiUtils.TimeSpanPreview("ToyActStart", TimeSpan.FromMilliseconds(59999), refStart, "ss\\:fff", Fonts.UidFont, c.InnerRegion.X);
                 }
             }
         }
@@ -469,12 +469,12 @@ public sealed partial class TriggerDrawer
                 var format = toyAct.EndAfter.Minutes > 0 ? "mm\\:ss" : "ss\\:fff";
                 if (isEditorItem)
                 {
-                    CkGuiUtils.TimeSpanEditor("ToyActEnd", TimeSpan.FromMinutes(30), ref refEnd, format, UiFontService.UidFont, c.InnerRegion.X);
+                    CkGuiUtils.TimeSpanEditor("ToyActEnd", TimeSpan.FromMinutes(30), ref refEnd, format, Fonts.UidFont, c.InnerRegion.X);
                     toyAct.EndAfter = refEnd;
                 }
                 else
                 {
-                    CkGuiUtils.TimeSpanPreview("ToyActEnd", TimeSpan.FromMinutes(30), refEnd, format, UiFontService.UidFont, c.InnerRegion.X);
+                    CkGuiUtils.TimeSpanPreview("ToyActEnd", TimeSpan.FromMinutes(30), refEnd, format, Fonts.UidFont, c.InnerRegion.X);
                 }
             }
         }

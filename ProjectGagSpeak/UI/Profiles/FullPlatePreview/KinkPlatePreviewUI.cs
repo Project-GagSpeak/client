@@ -80,7 +80,7 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
         DrawDescription(drawList, profile);
 
         // Now let's draw out the chosen achievement Name..
-        using (UiFontService.GagspeakTitleFont.Push())
+        using (Fonts.GagspeakTitleFont.Push())
         {
             var titleName = ClientAchievements.GetTitleById(profile.Info.ChosenTitleId);
             var titleHeightGap = TitleLineStartPos.Y - (RectMin.Y + 4f);
@@ -144,7 +144,7 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
         var widthToCenterOn = ProfilePictureBorderSize.X;
         // determine the height gap between the icon overview and bottom of the profile picture.
         var gapHeight = IconOverviewListPos.Y - (ProfilePictureBorderPos.Y + ProfilePictureBorderSize.Y);
-        using (UiFontService.UidFont.Push())
+        using (Fonts.UidFont.Push())
         {
             var aliasOrUidSize = ImGui.CalcTextSize(MainHub.OwnUserData.AliasOrUID);
             var yHeight = (gapHeight - aliasOrUidSize.Y) / 2;

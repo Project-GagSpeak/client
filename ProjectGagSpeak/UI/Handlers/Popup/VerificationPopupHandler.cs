@@ -26,7 +26,7 @@ internal class VerificationPopupHandler : IPopupHandler
     {
         var width = ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X;
         // push the title for the popup.
-        using (UiFontService.UidFont.Push())
+        using (Fonts.UidFont.Push())
         {
             var headerTextSize = ImGui.CalcTextSize("Verification Code for " + MainHub.DisplayName);
             ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) / 2 - (headerTextSize.X / 2));

@@ -47,7 +47,7 @@ public sealed class OwnStatusCombo : MoodleComboBase<MoodlesStatusInfo>
         var myStatus = Items[globalIdx];
 
         // Push the font first so the height is correct.
-        using var _ = UiFontService.Default150Percent.Push();
+        using var _ = Fonts.Default150Percent.Push();
 
         var ret = ImGui.Selectable($"##{myStatus.Title}", selected, ImGuiSelectableFlags.None, size);
 

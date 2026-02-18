@@ -221,7 +221,7 @@ public class PuppeteersTab : IFancyTab
         if (_selected is not { } puppeteer)
             return;
 
-        CkGui.FontTextCentered("Marionette Stats", UiFontService.UidFont);
+        CkGui.FontTextCentered("Marionette Stats", Fonts.UidFont);
         CkGui.Separator(GsCol.VibrantPink.Uint());
 
         // Fallback in the case that this puppeteer is not yet tracked for us.

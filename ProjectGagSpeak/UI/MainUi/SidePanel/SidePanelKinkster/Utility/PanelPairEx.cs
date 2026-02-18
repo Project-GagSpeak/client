@@ -389,7 +389,7 @@ public enum KPID : byte
 
         using (ImRaii.Group())
         {
-            CkGui.FontTextCentered("CAUTIONARY WARNING", UiFontService.GagspeakTitleFont, ImGuiColors.DalamudRed);
+            CkGui.FontTextCentered("CAUTIONARY WARNING", Fonts.GagspeakTitleFont, ImGuiColors.DalamudRed);
 
             CkGui.Separator(ImGuiColors.DalamudRed.ToUint(), size.X);
 

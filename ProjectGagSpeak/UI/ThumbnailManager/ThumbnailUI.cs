@@ -155,7 +155,7 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
         // Otherwise, scan for them if our current entries are null.
         if (_service.Folder.AllFiles.IsNullOrEmpty())
         {
-            using (UiFontService.GagspeakTitleFont.Push())
+            using (Fonts.GagspeakTitleFont.Push())
                 ImGuiUtil.Center("No Thumbnails In Folder");
             return;
         }
@@ -226,7 +226,7 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
                 ImGui.SetCursorScreenPos(rectMin + new Vector2(0, imgSpace.Y));
 
                 if(!imgFits)
-                    using (UiFontService.GagspeakLabelFont.Push())
+                    using (Fonts.GagspeakLabelFont.Push())
                         ImGuiUtil.TextWrapped(entry.FileNameNoExtension);
                 else
                     ImGuiUtil.TextWrapped(entry.FileNameNoExtension);

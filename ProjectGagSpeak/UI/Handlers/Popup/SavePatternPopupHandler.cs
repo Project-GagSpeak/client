@@ -43,7 +43,7 @@ public class SavePatternPopupHandler : IPopupHandler
         SaveWidth = CkGui.IconTextButtonSize(FAI.Save, "Save Pattern Data");
         RevertWidth = CkGui.IconTextButtonSize(FAI.Undo, "Discard Pattern");
         var start = 0f;
-        using (UiFontService.UidFont.Push())
+        using (Fonts.UidFont.Push())
         {
             start = ImGui.GetCursorPosY() - ImGui.CalcTextSize("Create New Pattern").Y;
             ImGui.Text("Create New Pattern");

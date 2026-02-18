@@ -112,7 +112,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
         // we need here to draw the group for content.
         using (ImRaii.Group())
         {
-            CkGui.FontText("Current Image", UiFontService.GagspeakTitleFont);
+            CkGui.FontText("Current Image", Fonts.GagspeakTitleFont);
             ImGui.Separator();
             CkGui.ColorText("Square Image Preview:", ImGuiColors.ParsedGold);
             CkGui.TextWrapped("Meant to display the original display of the stored image data.");
@@ -249,7 +249,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
         ImGuiHelpers.ScaledRelativeSameLine(256, spacing);
         using (ImRaii.Group())
         {
-            CkGui.FontText("Image Editor", UiFontService.GagspeakTitleFont);
+            CkGui.FontText("Image Editor", Fonts.GagspeakTitleFont);
             ImGui.Separator();
             if (_croppedImageData != null)
             {

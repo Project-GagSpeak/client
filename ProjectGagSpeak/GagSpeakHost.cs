@@ -155,7 +155,6 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             // Services that require an initial constructor call during bootup.
             _runtimeServiceScope.ServiceProvider.GetRequiredService<SpellActionService>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<EmoteService>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<UiFontService>();
 
             // Init our listeners for IPC.
             _runtimeServiceScope.ServiceProvider.GetRequiredService<CustomizePlusListener>();

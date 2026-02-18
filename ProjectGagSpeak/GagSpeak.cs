@@ -52,6 +52,9 @@ public sealed class GagSpeak : IDalamudPlugin
         _host = ConstructHostBuilder(pi);
         // start up the host
         _ = _host.StartAsync();
+        // Init the fonts
+        _ = Fonts.InitializeFonts().ConfigureAwait(false);
+
     }
 
     // Method that creates the host builder for the GagSpeak plugin
@@ -114,7 +117,8 @@ public sealed class GagSpeak : IDalamudPlugin
         ItemSvc.Dispose();
         // Dispose the Host.
         _host.Dispose();
-
+        // Dispose of fonts.
+        Fonts.Dispose();
     }
 }
 
@@ -230,7 +234,6 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<SpellActionService>()
         .AddSingleton<TriggerActionService>()
         .AddSingleton<TutorialService>()
-        .AddSingleton<UiFontService>()
         .AddSingleton<VibeLobbyDistributionService>()
 
         // Spatial Audio
@@ -460,7 +463,6 @@ public static class GagSpeakServiceExtensions
 
         // Cached Data That MUST be initialized before anything else for validity.
         .AddHostedService(p => p.GetRequiredService<CosmeticService>())     // Provides all Textures nessisary for the plugin.
-        .AddHostedService(p => p.GetRequiredService<UiFontService>())       // Provides all fonts nessisary for the plugin.
         .AddHostedService(p => p.GetRequiredService<SpellActionService>())  // Provides all actions nessisary for the plugin.
         .AddHostedService(p => p.GetRequiredService<EmoteService>())        // Provides all emotes nessisary for the plugin.
 

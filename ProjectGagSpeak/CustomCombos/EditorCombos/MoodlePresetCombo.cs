@@ -81,7 +81,7 @@ public sealed class MoodlePresetCombo : CkMoodleComboBase<MoodlePresetInfo>
         ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
         var pos = ImGui.GetCursorPosY();
         ImGui.SetCursorPosY(pos + (size.Y - SelectableTextHeight) * 0.5f);
-        using (UiFontService.Default150Percent.Push())
+        using (Fonts.Default150Percent.Push())
             CkRichText.Text(titleSpace, moodlePreset.Title);
         return ret;
     }

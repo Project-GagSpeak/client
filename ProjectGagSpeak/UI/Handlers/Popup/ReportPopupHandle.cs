@@ -118,7 +118,7 @@ internal class ReportPopupHandler : IPopupHandler
         ImGui.SetCursorScreenPos(rectMin + new Vector2(475, 235));
         using (ImRaii.Group())
         {
-            using (UiFontService.GagspeakFont.Push())
+            using (Fonts.GagspeakFont.Push())
             {
                 CkGui.ColorTextWrapped("We will analyze reports with care. Cordy has been a victum " +
                 "of manipulation and abuse multiple times, and will do her best to ensure her team does not allow " +
@@ -127,7 +127,7 @@ internal class ReportPopupHandler : IPopupHandler
 
             ImGui.Spacing();
 
-            CkGui.FontText("Report " + _reportedDisplayName + "?", UiFontService.GagspeakTitleFont, ImGuiColors.ParsedGold);
+            CkGui.FontText("Report " + _reportedDisplayName + "?", Fonts.GagspeakTitleFont, ImGuiColors.ParsedGold);
             if (CkGui.IconTextButton(FAI.ExclamationTriangle, "Report Kinkster", 
                 disabled: _reportReason.IsNullOrWhitespace() || string.Equals(_reportReason, DefaultReportReason, StringComparison.OrdinalIgnoreCase)))
             {

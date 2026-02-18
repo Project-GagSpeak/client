@@ -3,6 +3,7 @@ using CkCommons.Gui;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Textures.TextureWraps;
+using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Textures;
@@ -290,21 +291,23 @@ public class HypnoService : IDisposable
             imgTint);
 
         // If text is not present, or font is not valid, do not draw.
-        if (_activeState.CurrentText.IsNullOrEmpty() || !UiFontService.FullScreenFont.Available || UiFontService.FullScreenFontPtr.Handle is null)
+        if (_activeState.CurrentText.IsNullOrEmpty() || Fonts.FullscreenFontPtr.Handle is null)
             return;
 
 
         // determine the font scalar.
-        var fontScaler = scaledZoom * (_activeEffect.TextFontSize / UiFontService.FullScreenFontPtr.FontSize) * _activeState.TextScale;
+        var fontScaler = scaledZoom * (_activeEffect.TextFontSize / Fonts.FullscreenFontPtr.FontSize) * _activeState.TextScale;
 
         // determine the new target position.
-        var targetPos = _activeEffect.Attributes.HasAny(HypnoAttributes.LinearTextScale)
-            ? center - Vector2.Lerp(scaledZoom * _activeState.TextOffsetStart, scaledZoom * _activeState.TextOffsetEnd, _activeState.TextScaleProgress)
-            : center - (CkGui.CalcFontTextSize(_activeState.CurrentText, UiFontService.FullScreenFont) * fontScaler) * 0.5f;
+        var targetPos = Vector2.Zero;
+        if (_activeEffect.Attributes.HasAny(HypnoAttributes.LinearTextScale))
+            targetPos = center - Vector2.Lerp(scaledZoom * _activeState.TextOffsetStart, scaledZoom * _activeState.TextOffsetEnd, _activeState.TextScaleProgress);
+        else
+            targetPos = center - (CkGui.CalcTextSizeFontPtr(Fonts.FullscreenFontPtr, _activeState.CurrentText) * fontScaler) * 0.5f;
 
         drawList.OutlinedFontScaled(
-            UiFontService.FullScreenFontPtr,
-            UiFontService.FullScreenFontPtr.FontSize,
+            Fonts.FullscreenFontPtr,
+            Fonts.FullscreenFontPtr.FontSize,
             fontScaler,
             targetPos,
             _activeState.CurrentText,
@@ -419,8 +422,8 @@ public class HypnoService : IDisposable
         if (linearScale)
         {
             // Calculate it with the font pointer since we run this off the main thread.
-            var sizeBase = CkGui.CalcTextSizeFontPtr(UiFontService.FullScreenFontPtr, state.CurrentText);
-            var sizeScaled = sizeBase * (effect.TextFontSize / UiFontService.FullScreenFontPtr.FontSize);
+            var sizeBase = CkGui.CalcTextSizeFontPtr(Fonts.FullscreenFontPtr, state.CurrentText);
+            var sizeScaled = sizeBase * (effect.TextFontSize / Fonts.FullscreenFontPtr.FontSize);
             state.TextOffsetStart = (sizeScaled * 0.75f) * 0.5f; // offset from center
             state.TextOffsetEnd = (sizeScaled * 1.35f) * 0.5f; // offset from center
             state.TextScaleProgress = 0f; // Reset the progress for linear scaling.

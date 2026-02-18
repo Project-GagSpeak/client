@@ -57,7 +57,7 @@ public class CollarPanel : DisposableMediatorSubscriberBase
     {
         // This ensures no scrollbar or text clipping occurs via bypassing ImGui's draw and writing to the draw list directly.
         var textPos = regions.TopLeft.Pos + new Vector2(ImGui.GetStyle().WindowPadding.X, 0);
-        using (UiFontService.GagspeakTitleFont.Push())
+        using (Fonts.GagspeakTitleFont.Push())
             ImGui.GetWindowDrawList().AddText(textPos, uint.MaxValue, "Collar Management");
 
         // Tab Menu still should be shown here!

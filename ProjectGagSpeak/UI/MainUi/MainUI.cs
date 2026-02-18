@@ -274,7 +274,7 @@ public class MainUI : WindowMediatorSubscriberBase
         // Get the expanded width
         var topBarWidth = maxPos.X - minPos.X;
         var sideWidth = ImGui.CalcTextSize("Connecting").X + CkGui.IconSize(FAI.Satellite).X + ImUtf8.ItemSpacing.X * 3;
-        var height = CkGui.CalcFontTextSize("A", UiFontService.Default150Percent).Y;
+        var height = CkGui.CalcFontTextSize("A", Fonts.Default150Percent).Y;
 
         if (DrawAddUser(winPtr, new Vector2(sideWidth, height), minPos, disableButtons || !MainHub.IsConnected))
             _creatingRequest = !_creatingRequest;
@@ -351,7 +351,7 @@ public class MainUI : WindowMediatorSubscriberBase
 
     private void DrawConnectedUsers(ImGuiWindowPtr winPtr, Vector2 region, float topBarWidth)
     {
-        using var font = UiFontService.Default150Percent.Push();
+        using var font = Fonts.Default150Percent.Push();
 
         var userCount = MainHub.OnlineUsers.ToString(CultureInfo.InvariantCulture);
         var text = MainHub.IsConnected ? $"{userCount} Online" : GagspeakEx.GetCenterStateText();

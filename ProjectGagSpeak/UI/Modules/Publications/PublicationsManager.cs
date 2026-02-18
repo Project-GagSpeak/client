@@ -45,7 +45,7 @@ public class PublicationsManager
 
     public void DrawPatternPublications()
     {
-        CkGui.FontText("Publish A Pattern", UiFontService.UidFont);
+        CkGui.FontText("Publish A Pattern", Fonts.UidFont);
 
         _patternCombo.Draw("PatternSelector", _selectedPattern.Identifier, 200f);
 
@@ -117,7 +117,7 @@ public class PublicationsManager
         else
         {
             // draw the create section.
-            CkGui.FontText("Publish A Moodle", UiFontService.UidFont);
+            CkGui.FontText("Publish A Moodle", Fonts.UidFont);
 
             _statusCombo.Draw("PublicationStatuses", 200f);
 

@@ -117,7 +117,7 @@ public class Tutorial
         var windowSize = ImGui.GetContentRegionAvail();
 
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - 5f);
-        CkGui.FontText(step.Name, UiFontService.GagspeakLabelFont);
+        CkGui.FontText(step.Name, Fonts.GagspeakLabelFont);
         int? nextValue = null;
 
         ImGui.Separator();

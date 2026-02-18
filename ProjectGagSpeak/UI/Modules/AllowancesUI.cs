@@ -96,7 +96,7 @@ public class AllowancesUI : WindowMediatorSubscriberBase
 
     public void DrawModuleTitle()
     {
-        //using var font = UiFontService.GagspeakLabelFont.Push();
+        //using var font = Fonts.GagspeakLabelFont.Push();
         var offset = (ImGui.GetContentRegionAvail().X - ImGui.CalcTextSize("Trait Allowance Manager").X) / 2;
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offset);
         ImGui.TextUnformatted("Trait Allowance Manager");

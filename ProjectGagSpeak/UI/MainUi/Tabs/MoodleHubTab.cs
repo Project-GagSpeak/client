@@ -39,8 +39,8 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
 
     public void DrawMoodlesHub()
     {
-        CkGui.FontTextCentered("Database Broken Due", UiFontService.Default150Percent, CkCol.TriStateCross.Uint());
-        CkGui.FontTextCentered("To Moodles Changes", UiFontService.Default150Percent, CkCol.TriStateCross.Uint());
+        CkGui.FontTextCentered("Database Broken Due", Fonts.Default150Percent, CkCol.TriStateCross.Uint());
+        CkGui.FontTextCentered("To Moodles Changes", Fonts.Default150Percent, CkCol.TriStateCross.Uint());
         using (ImRaii.Disabled())
         {
 

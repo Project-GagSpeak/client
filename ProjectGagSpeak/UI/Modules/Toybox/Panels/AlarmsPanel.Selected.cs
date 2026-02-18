@@ -21,9 +21,9 @@ public partial class AlarmsPanel
         var padding = ImGui.GetStyle().FramePadding;
         var innerSpacing = ImGui.GetStyle().ItemInnerSpacing;
         var textlength = CkGui.IconSize(FAI.Clock).X + padding.X * 4 + innerSpacing.X + ImGui.CalcTextSize(TimeZoneInfo.Local.StandardName).X;
-        var timeLengthDisp = CkGuiUtils.GetDateTimeDisplayWidth(alarm.SetTimeUTC, UiFontService.UidFont);
+        var timeLengthDisp = CkGuiUtils.GetDateTimeDisplayWidth(alarm.SetTimeUTC, Fonts.UidFont);
         var width = Math.Max(textlength, timeLengthDisp);
-        var height = CkGuiUtils.GetTimeDisplayHeight(UiFontService.UidFont) + ImGui.GetFrameHeightWithSpacing();
+        var height = CkGuiUtils.GetTimeDisplayHeight(Fonts.UidFont) + ImGui.GetFrameHeightWithSpacing();
         // create a group with a background and some rounding.
         using (var c = CkRaii.ChildPadded("C_AlarmTime", new Vector2(width, height), CkCol.CurvedHeaderFade.Uint(), CkStyle.ChildRoundingLarge(), ImDrawFlags.RoundCornersAll))
         {
@@ -42,12 +42,12 @@ public partial class AlarmsPanel
             if (isEditing)
             {
                 var refTime = alarm.SetTimeUTC;
-                CkGuiUtils.DateTimeEditorUtcAsLocal("AlarmTimeEdit", ref refTime, UiFontService.UidFont, c.InnerRegion.X);
+                CkGuiUtils.DateTimeEditorUtcAsLocal("AlarmTimeEdit", ref refTime, Fonts.UidFont, c.InnerRegion.X);
                 alarm.SetTimeUTC = refTime;
             }
             else
             {
-                CkGuiUtils.DateTimePreviewUtcAsLocal("AlarmTime", alarm.SetTimeUTC, UiFontService.UidFont, c.InnerRegion.X);
+                CkGuiUtils.DateTimePreviewUtcAsLocal("AlarmTime", alarm.SetTimeUTC, Fonts.UidFont, c.InnerRegion.X);
             }
         }
         // _guides.OpenTutorial(TutorialType.Alarms, StepsAlarms.SettingAlarmTime, Vector2.Zero, Vector2.Zero);
@@ -95,7 +95,7 @@ public partial class AlarmsPanel
 
         // Split things up into 2 columns.
         var columnWidth = (ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) / 2;
-        var height = CkGuiUtils.GetTimeDisplayHeight(UiFontService.UidFont) + ImGui.GetFrameHeightWithSpacing();
+        var height = CkGuiUtils.GetTimeDisplayHeight(Fonts.UidFont) + ImGui.GetFrameHeightWithSpacing();
 
         // Enter the first column.
         using (ImRaii.Group())
@@ -108,12 +108,12 @@ public partial class AlarmsPanel
                 var format = refDuration.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
                 if (isEditing)
                 {
-                    CkGuiUtils.TimeSpanEditor("AlarmStartPnt", refDuration, ref refStartPoint, format, UiFontService.UidFont, c.InnerRegion.X);
+                    CkGuiUtils.TimeSpanEditor("AlarmStartPnt", refDuration, ref refStartPoint, format, Fonts.UidFont, c.InnerRegion.X);
                     alarm.PatternStartPoint = refStartPoint;
                 }
                 else
                 {
-                    CkGuiUtils.TimeSpanPreview("AlarmStartPnt", refDuration, refStartPoint, format, UiFontService.UidFont, c.InnerRegion.X);
+                    CkGuiUtils.TimeSpanPreview("AlarmStartPnt", refDuration, refStartPoint, format, Fonts.UidFont, c.InnerRegion.X);
                 }
             }
         }
@@ -141,12 +141,12 @@ public partial class AlarmsPanel
                 var format = refPlaybackDuration.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
                 if (isEditing)
                 {
-                    CkGuiUtils.TimeSpanEditor("PlaybackDur", maxPlaybackDuration, ref refPlaybackDuration, format, UiFontService.UidFont, c.InnerRegion.X);
+                    CkGuiUtils.TimeSpanEditor("PlaybackDur", maxPlaybackDuration, ref refPlaybackDuration, format, Fonts.UidFont, c.InnerRegion.X);
                     alarm.PatternDuration = refPlaybackDuration;
                 }
                 else
                 {
-                    CkGuiUtils.TimeSpanPreview("PlaybackDur", maxPlaybackDuration, refPlaybackDuration, format, UiFontService.UidFont, c.InnerRegion.X);
+                    CkGuiUtils.TimeSpanPreview("PlaybackDur", maxPlaybackDuration, refPlaybackDuration, format, Fonts.UidFont, c.InnerRegion.X);
                 }
             }
         }
