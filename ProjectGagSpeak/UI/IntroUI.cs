@@ -638,15 +638,27 @@ public class IntroUi : WindowMediatorSubscriberBase
         {
             try
             {
-                if (_account.HasValidProfile())
-                    throw new InvalidOperationException("Cannot recover account when a valid profile already exists!");
+                // If no profiles exist, create a new profile for the main account.
+                if (!_account.HasAnyProfile())
+                {
+                    // Make a new one, define it as primary, store the key, and save.
+                    if (_account.AddNewProfile() is { } mainProfile)
+                    {
+                        mainProfile.IsPrimary = true;
+                        mainProfile.Key = _secretKey;
+                        _account.Save();
+                    }
+                }
+                else
+                {
+                    // Attempt to grab the main profile and update its key.
+                    if (_account.GetMainProfile() is not { } profile)
+                        throw new InvalidOperationException("No Main Account existed!");
 
-                if (_account.GetMainProfile() is not { } profile)
-                    throw new InvalidOperationException("No Main Account existed!");
-
-                // Assign the secret key to the profile.
-                if (!_account.TryUpdateSecretKey(profile, _secretKey))
-                    throw new Bagagwa("Failed to update secret key for main profile, key may already exist.");
+                    // Assign the secret key to the profile.
+                    if (!_account.TryUpdateSecretKey(profile, _secretKey))
+                        throw new Bagagwa("Failed to update secret key for main profile, key may already exist.");
+                }
 
                 _logger.LogInformation("Updated Secret Key Successfully.");
                 await TryConnectForInitialization();
