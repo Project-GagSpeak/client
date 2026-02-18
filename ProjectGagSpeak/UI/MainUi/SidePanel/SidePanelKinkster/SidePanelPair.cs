@@ -47,7 +47,11 @@ public partial class SidePanelPair
         if (ClientData.Globals is not { } globals || ClientData.Hardcore is not { } hc)
             return;
 
-        ImGui.TextUnformatted("Global Settings (view only)");
+        ImGui.TextUnformatted("Global Settings (view only)"); 
+        ImUtf8.SameLineInner();
+        CkGui.HoverIconText(FAI.QuestionCircle, ImGuiColors.TankBlue.ToUint(), ImGui.GetColorU32(ImGuiCol.TextDisabled));
+        if (ImGui.IsItemHovered())
+            CkGui.AttachToolTip("You can toggle the Chat Garbler and GagPlates in the Settings!");
         using (ImRaii.Group())
         {
             ClientRowTextOnly(kinkster, dispName, width, KPID.ChatGarblerActive, globals.ChatGarblerActive, kinkster.OwnPermAccess.ChatGarblerActiveAllowed);
