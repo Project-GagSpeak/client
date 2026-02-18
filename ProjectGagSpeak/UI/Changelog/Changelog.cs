@@ -20,6 +20,11 @@ public class Changelog
     // Add Version Data here.
     private void AddVersionData()
     {
+        VersionEntry(2, 0, 3, 0)
+            .RegisterMain("Fixed the VRAM leak with fonts constantly rebuilding.")
+            .RegisterQol("Polished restraints tutorial")
+            .RegisterQol("Further Hardcore prompt support for German Localization.")
+            .RegisterBugfix("Fixed Intiface Central link");
         VersionEntry(2, 0, 1, 0)
             .RegisterMain("Pretty much everything got reworked from the ground up. Everything is much more interconnected.")
             .RegisterMain("A lot has changed. I helped you migrate what I could, but a lot will take some time to set up.")

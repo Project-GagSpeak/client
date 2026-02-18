@@ -1,9 +1,6 @@
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.ManagedFontAtlas;
-using Microsoft.Extensions.Hosting;
-using System.Threading.Tasks;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Services;
 
