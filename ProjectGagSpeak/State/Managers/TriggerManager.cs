@@ -209,6 +209,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
         // Perform Migrations if any, and then load the data.
         switch (version)
         {
+            case 0:
             case 1:
                 LoadV1(jObject["Triggers"]);
                 break;
