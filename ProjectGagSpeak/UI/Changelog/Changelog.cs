@@ -25,7 +25,7 @@ public class Changelog
             .RegisterQol("Global chat now has a scrollbar")
             .RegisterQol("Global chat auto-scroll functions as intended now.")
             .RegisterBugfix("Fixed issue where emotes didnt wrap properly.")
-            .RegisterBugfix("Fixed issue where emotes and text didnt wrap properly with global scaling.")
+            .RegisterBugfix("Fixed issue where emotes and text didnt wrap properly with global scaling.");
         VersionEntry(2, 0, 3, 0)
             .RegisterMain("Fixed the VRAM leak with fonts constantly rebuilding.")
             .RegisterQol("Polished restraints tutorial")
