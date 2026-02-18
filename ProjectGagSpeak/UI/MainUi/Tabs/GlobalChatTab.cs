@@ -2,6 +2,7 @@ using CkCommons;
 using CkCommons.Gui;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using GagSpeak.Gui.Components;
@@ -40,9 +41,8 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
         // Add some CkRichText variant here later.
         CkGui.ColorTextCentered("GagSpeak Global Chat", GsCol.VibrantPink.Uint());
         ImGui.Separator();
-
-        using var col = ImRaii.PushColor(ImGuiCol.ScrollbarBg, GsCol.LushPinkButton.Uint())
-            .Push(ImGuiCol.ScrollbarGrab, GsCol.VibrantPink.Uint())
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 10f * ImGuiHelpers.GlobalScale);
+        using var col = ImRaii.PushColor(ImGuiCol.ScrollbarGrab, GsCol.VibrantPink.Uint())
             .Push(ImGuiCol.ScrollbarGrabHovered, GsCol.VibrantPinkHovered.Uint());
 
         // Restrict drawing the chat if their not verified or blocked from using it.
@@ -71,7 +71,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
     {
         using (ImRaii.Group())
         {
-            _chat.DrawChat(ImGui.GetContentRegionAvail());
+            _chat.DrawChat(ImGui.GetContentRegionAvail(), WFlags.None);
         }
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.UsingGlobalChat, MainUI.LastPos, MainUI.LastSize);
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatMessageExamine, MainUI.LastPos, MainUI.LastSize,

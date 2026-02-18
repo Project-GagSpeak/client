@@ -2,6 +2,7 @@ using CkCommons;
 using CkCommons.Gui;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
@@ -48,8 +49,8 @@ public class GlobalChatPopoutUI : WindowMediatorSubscriberBase
     protected override void DrawInternal()
     {
         using var font = Fonts.Default150Percent.Push();
-        using var col = ImRaii.PushColor(ImGuiCol.ScrollbarBg, GsCol.LushPinkButton.Uint())
-            .Push(ImGuiCol.ScrollbarGrab, GsCol.VibrantPink.Uint())
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 10f * ImGuiHelpers.GlobalScale);
+        using var col = ImRaii.PushColor(ImGuiCol.ScrollbarGrab, GsCol.VibrantPink.Uint())
             .Push(ImGuiCol.ScrollbarGrabHovered, GsCol.VibrantPinkHovered.Uint());
 
         var min = ImGui.GetCursorScreenPos();
@@ -82,7 +83,7 @@ public class GlobalChatPopoutUI : WindowMediatorSubscriberBase
 
     private void DrawChatContents()
     {
-        _chat.DrawChat(ImGui.GetContentRegionAvail());
+        _chat.DrawChat(ImGui.GetContentRegionAvail(), WFlags.None);
 
         if (GlobalChatLog.NotVerified)
             CkGui.AttachToolTip("Cannot use chat, your account is not verified!");
