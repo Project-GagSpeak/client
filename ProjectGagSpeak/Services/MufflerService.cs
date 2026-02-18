@@ -219,6 +219,8 @@ public class MufflerService : DisposableMediatorSubscriberBase
         {
             phoneticKey = StaticGarbleData.MouthOpenKey;
         }
+        else if (_activeMuffleType.HasFlag(GagMuffleType.NoSound))
+            phoneticKey = StaticGarbleData.NoSoundKey;
         else
         {
             return word;
@@ -247,7 +249,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
             try
             {
                 var gagWithMaxMuffle = _activeGags
-                    .Where(gag => gag.Phonemes.ContainsKey(phonetic) && !string.IsNullOrEmpty(gag.Phonemes[phonetic].Sound))
+                    .Where(gag => gag.Phonemes.ContainsKey(phonetic) && gag.Phonemes[phonetic].Sound != null)
                     .OrderByDescending(gag => gag.Phonemes[phonetic].Muffle)
                     .FirstOrDefault();
                 if (gagWithMaxMuffle != null)
@@ -336,7 +338,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
             GagType.PumpGaglv1 => GagMuffleType.MouthFull,
             GagType.PumpGaglv2 => GagMuffleType.MouthFull,
             GagType.PumpGaglv3 => GagMuffleType.MouthFull,
-            GagType.PumpGaglv4 => GagMuffleType.MouthFull,
+            GagType.PumpGaglv4 => GagMuffleType.NoSound,
             GagType.RibbonGag => GagMuffleType.MouthFull,
             GagType.RingGag => GagMuffleType.MouthOpen,
             GagType.RopeGag => GagMuffleType.MouthClosed,
