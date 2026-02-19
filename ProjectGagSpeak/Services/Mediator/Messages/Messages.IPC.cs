@@ -27,10 +27,3 @@ public record GlamourerChanged : MessageBase;
 public record CustomizeReady : MessageBase;
 public record CustomizeProfileListRequest : MessageBase;
 
-
-// Intiface IPC
-public record BuzzToyAdded(ButtplugClientDevice Device) : MessageBase;
-public record BuzzToyRemoved(ButtplugClientDevice Device) : MessageBase;
-public record DeviceScanFinished : MessageBase; // Unsure how much this is actually needed?
-public record IntifaceClientConnected : MessageBase;
-public record IntifaceClientDisconnected : MessageBase;

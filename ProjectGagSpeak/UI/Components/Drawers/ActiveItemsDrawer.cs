@@ -36,12 +36,14 @@ public class ActiveItemsDrawer
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
     private readonly FavoritesConfig _favorites;
-    private readonly VisualStateListener _visuals;
+    private readonly CallbackHandler _visuals;
     private readonly DistributorService _dds;
     private readonly TextureService _textures;
     private readonly CosmeticService _cosmetics;
-    private readonly TutorialService _guides;
     private readonly KinksterManager _kinksters;
+    private readonly SelfBondageService _selfBondage;
+    private readonly TutorialService _guides;
+
     private RestrictionGagCombo[] _gagItems;
     private PadlockGagsClient[] _gagPadlocks;
 
@@ -60,11 +62,12 @@ public class ActiveItemsDrawer
         RestrictionManager restrictions,
         RestraintManager restraints,
         FavoritesConfig favorites,
-        VisualStateListener visuals,
+        CallbackHandler visuals,
         DistributorService dds,
         TextureService textures,
         CosmeticService cosmetics,
         KinksterManager kinksters,
+        SelfBondageService selfBondage,
         TutorialService guides)
     {
         _logger = logger;
@@ -77,8 +80,9 @@ public class ActiveItemsDrawer
         _dds = dds;
         _textures = textures;
         _cosmetics = cosmetics;
-        _guides = guides;
         _kinksters = kinksters;
+        _selfBondage = selfBondage;
+        _guides = guides;
 
         // Initialize the GagCombos.
         _gagItems = new RestrictionGagCombo[Constants.MaxGagSlots];
@@ -90,7 +94,7 @@ public class ActiveItemsDrawer
         // Init Gag Padlocks.
         _gagPadlocks = new PadlockGagsClient[Constants.MaxGagSlots];
         for (var i = 0; i < _gagPadlocks.Length; i++)
-            _gagPadlocks[i] = new PadlockGagsClient(logger, dds, visuals, gags);
+            _gagPadlocks[i] = new PadlockGagsClient(logger, gags, selfBondage);
 
         // Init Restriction Combos.
         _restrictionItems = new RestrictionCombo[Constants.MaxRestrictionSlots];
@@ -102,13 +106,13 @@ public class ActiveItemsDrawer
         // Init Restriction Padlocks.
         _restrictionPadlocks = new PadlockRestrictionsClient[Constants.MaxRestrictionSlots];
         for (var i = 0; i < _restrictionPadlocks.Length; i++)
-            _restrictionPadlocks[i] = new PadlockRestrictionsClient(logger, dds, visuals, restrictions);
+            _restrictionPadlocks[i] = new PadlockRestrictionsClient(logger, restrictions, selfBondage);
 
         // Init Restraint Combo & Padlock.
         _restraintItem = new RestraintCombo(logger, mediator, favorites, () => [
             ..restraints.Storage.OrderByDescending(p => FavoritesConfig.Restraints.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
-        _restraintPadlocks = new PadlockRestraintsClient(logger, dds, visuals, restraints);
+        _restraintPadlocks = new PadlockRestraintsClient(logger, restraints, selfBondage);
 
         // Init Layer Editor Client.
         _layerFlagsWidget = new(FAI.LayerGroup, "ClientRestraintLayers", string.Empty);
@@ -123,7 +127,7 @@ public class ActiveItemsDrawer
 
         var type = (curr is GagType.None) ? DataUpdateType.Applied : DataUpdateType.Swapped;
         var newDat = _gags.ServerGagData!.GagSlots[slotIdx] with { GagItem = combo.Current.GagType, Enabler = MainHub.UID };
-        SelfBondageHelper.GagUpdateTask(slotIdx, newDat, type, _dds, _visuals);
+        _selfBondage.DoSelfGag(slotIdx, newDat, type);
     }
 
     private void RestrictionComboChanged(RestrictionCombo combo, int slotIdx, Guid curr)
@@ -139,7 +143,7 @@ public class ActiveItemsDrawer
             Identifier = combo.Current.Identifier,
             Enabler = MainHub.UID,
         };
-        SelfBondageHelper.RestrictionUpdateTask(slotIdx, newData, updateType, _dds, _visuals);
+        _selfBondage.DoSelfBind(slotIdx, newData, updateType);
     }
 
     private void RestraintComboChanged(Guid curr)
@@ -155,7 +159,7 @@ public class ActiveItemsDrawer
             Identifier = _restraintItem.Current.Identifier,
             Enabler = MainHub.UID,
         };
-        SelfBondageHelper.RestraintUpdateTask(newData, updateType, _dds, _visuals);
+        _selfBondage.DoSelfRestraint(newData, updateType);
     }
 
     public void ApplyItemGroup(int slotIdx, ActiveGagSlot data)
@@ -215,7 +219,7 @@ public class ActiveItemsDrawer
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             ImGui.OpenPopup($"##GagSelector-{slotIdx}");
         else if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _gags.CanRemove(slotIdx))
-            SelfBondageHelper.GagUpdateTask(slotIdx, new ActiveGagSlot(), DataUpdateType.Removed, _dds, _visuals);
+            _selfBondage.DoSelfGag(slotIdx, new ActiveGagSlot(), DataUpdateType.Removed);
 
         // Draw out padlocks selections.
         ImUtf8.SameLineInner();
@@ -244,7 +248,7 @@ public class ActiveItemsDrawer
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             ImGui.OpenPopup($"##Restrictions-{slotIdx}");
         else if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _restrictions.CanRemove(slotIdx))
-            SelfBondageHelper.RestrictionUpdateTask(slotIdx, new ActiveRestriction(), DataUpdateType.Removed, _dds, _visuals);
+            _selfBondage.DoSelfBind(slotIdx, new ActiveRestriction(), DataUpdateType.Removed);
 
         ImUtf8.SameLineInner();
         var rightWidth = ImGui.GetContentRegionAvail().X;
@@ -264,7 +268,7 @@ public class ActiveItemsDrawer
             () =>
             {
                 var tdata = data with { Padlock = Padlocks.Metal, PadlockAssigner = MainHub.UID };
-                SelfBondageHelper.RestraintUpdateTask(tdata, DataUpdateType.Locked, _dds, _visuals);
+                _selfBondage.DoSelfRestraint(tdata, DataUpdateType.Locked);
             });
 
         var height = ImGui.GetFrameHeightWithSpacing() * 5 + ImGui.GetFrameHeight();
@@ -279,7 +283,7 @@ public class ActiveItemsDrawer
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             ImGui.OpenPopup($"##RestraintSetSelector");
         else if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _restraints.CanRemove())
-            SelfBondageHelper.RestraintUpdateTask(new CharaActiveRestraint(), DataUpdateType.Removed, _dds, _visuals);
+            _selfBondage.DoSelfRestraint(new CharaActiveRestraint(), DataUpdateType.Removed);
 
         ImUtf8.SameLineInner();
         using var s = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, CkStyle.ChildRoundingLarge());
@@ -289,7 +293,7 @@ public class ActiveItemsDrawer
             if (_layerFlagsWidget.DrawUpdateButton(FAI.Sync, "Update Layers", out var added, out var removed, ImGui.GetContentRegionAvail().X))
             {
                 var newData = new CharaActiveRestraint() { ActiveLayers = (data.ActiveLayers | added) & ~removed };
-                SelfBondageHelper.RestraintUpdateTask(newData, DataUpdateType.LayersChanged, _dds, _visuals);
+                _selfBondage.DoSelfRestraint(newData, DataUpdateType.LayersChanged);
             }
 
             if (dispData != null) // no layers if no valid set, don't draw this.
@@ -391,7 +395,7 @@ public class ActiveItemsDrawer
             _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.UnlockingRestraints, WardrobeUI.LastPos, WardrobeUI.LastSize, () =>
             {
                 var tdata = data with { Padlock = Padlocks.None, PadlockAssigner = string.Empty };
-                SelfBondageHelper.RestraintUpdateTask(tdata, DataUpdateType.Unlocked, _dds, _visuals);
+                _selfBondage.DoSelfRestraint(tdata, DataUpdateType.Unlocked);
             });
         }
 
@@ -409,7 +413,7 @@ public class ActiveItemsDrawer
             {
                 // calculate the new layers by blending the current with the applied and removed layers.
                 var newData = new CharaActiveRestraint() { ActiveLayers = (data.ActiveLayers | added) & ~removed };
-                SelfBondageHelper.RestraintUpdateTask(newData, DataUpdateType.LayersChanged, _dds, _visuals);
+                _selfBondage.DoSelfRestraint(newData, DataUpdateType.LayersChanged);
             }
 
             if (dispData != null) // dont draw if display data is null.

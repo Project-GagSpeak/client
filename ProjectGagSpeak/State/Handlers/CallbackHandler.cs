@@ -15,10 +15,9 @@ using GagspeakAPI.Util;
 namespace GagSpeak.State.Listeners;
 
 /// <summary>
-///     Handles all incoming events from the GagSpeakHub, and potentially other sources
-///     that intend to update server-synced playerData, and updates their visual caches.
+///     Any callback from the server that should update our state is handled here.
 /// </summary>
-public sealed class VisualStateListener : DisposableMediatorSubscriberBase
+public sealed class CallbackHandler : DisposableMediatorSubscriberBase
 {
     private readonly IpcProvider _provider;
     private readonly IpcManager _interop;
@@ -28,10 +27,11 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
     private readonly GagRestrictionManager _gags;
     private readonly CollarManager _collar;
     private readonly CursedLootManager _cursedLoot;
+    private readonly PuppeteerManager _puppeteer;
     private readonly CacheStateManager _cacheManager;
 
-    public VisualStateListener(
-        ILogger<VisualStateListener> logger,
+    public CallbackHandler(
+        ILogger<CallbackHandler> logger,
         GagspeakMediator mediator,
         MainConfig config,
         IpcManager interop,
@@ -41,6 +41,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         GagRestrictionManager gags,
         CollarManager collar,
         CursedLootManager cursedLoot,
+        PuppeteerManager aliasManager,
         CacheStateManager cacheManager,
         IpcProvider provider)
         : base(logger, mediator)
@@ -52,6 +53,7 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         _gags = gags;
         _collar = collar;
         _cursedLoot = cursedLoot;
+        _puppeteer = aliasManager;
         _cacheManager = cacheManager;
         _provider = provider;
     }
@@ -424,4 +426,24 @@ public sealed class VisualStateListener : DisposableMediatorSubscriberBase
         Svc.Chat.PrintError(new SeStringBuilder().AddItalics("The curse lifts, and the item vanishes in a puff of smoke!").BuiltString);
     }
     #endregion CursedLoot Manipulation
+
+    /// <summary>
+    ///     OUR CLIENT recieved a name from ANOTHER KINKSTER. <para />
+    ///     This means we should be updating the PUPPETEERS since 
+    ///     we are now listening to THEM.
+    /// </summary>
+    public void UpdateListener(string pairUid, string listenerName)
+    {
+        // Update the Puppeteers
+        if (_puppeteer.Puppeteers.TryGetValue(pairUid, out var puppeteer))
+            puppeteer.NameWithWorld = listenerName;
+        else
+            _puppeteer.Puppeteers.Add(pairUid, new PuppeteerPlayer() { NameWithWorld = listenerName });
+        // Ensure the puppeteer changes save after this.
+        _puppeteer.Save();
+        Mediator.Publish(new FolderUpdatePuppeteers());
+
+        PostActionMsg(pairUid, InteractionType.ListenerName, $"Obtained Listener name from Kinkster");
+    }
+
 }

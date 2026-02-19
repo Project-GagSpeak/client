@@ -10,15 +10,13 @@ namespace GagSpeak.CustomCombos.Padlock;
 
 public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
 {
-    private readonly DistributorService _dds;
-    private readonly VisualStateListener _visuals;
     private readonly RestrictionManager _manager;
-    public PadlockRestrictionsClient(ILogger log, DistributorService dds, VisualStateListener visuals, RestrictionManager manager)
+    private readonly SelfBondageService _selfBondage;
+    public PadlockRestrictionsClient(ILogger log, RestrictionManager manager, SelfBondageService selfBondage)
         : base(() => manager.ServerRestrictionData?.Restrictions ?? [], PadlockEx.ClientLocks, log)
     {
-        _dds = dds;
-        _visuals = visuals;
         _manager = manager;
+        _selfBondage = selfBondage;
     }
 
     protected override string ItemName(ActiveRestriction item)
@@ -45,7 +43,7 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
 
         var time = SelectedLock is Padlocks.FiveMinutes ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
         var newData = Items[layerIdx] with { Padlock = SelectedLock, Password = Password, Timer = time, PadlockAssigner = MainHub.UID };
-        if (await SelfBondageHelper.RestrictionUpdateRetTask(layerIdx, newData, DataUpdateType.Locked, _dds, _visuals))
+        if (await _selfBondage.DoSelfBindResult(layerIdx, newData, DataUpdateType.Locked))
         {
             ResetSelection();
             ResetInputs();
@@ -71,7 +69,7 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
             return false;
 
         var newData = Items[layerIdx] with { Padlock = Items[layerIdx].Padlock, Password = Items[layerIdx].Password, PadlockAssigner = MainHub.UID };
-        if (await SelfBondageHelper.RestrictionUpdateRetTask(layerIdx, newData, DataUpdateType.Unlocked, _dds, _visuals))
+        if (await _selfBondage.DoSelfBindResult(layerIdx, newData, DataUpdateType.Unlocked))
         {
             ResetSelection();
             ResetInputs();

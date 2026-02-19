@@ -16,6 +16,7 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using Microsoft.Extensions.Hosting;
+using System;
 
 namespace GagSpeak.Services;
 
@@ -45,7 +46,7 @@ public sealed class AutoUnlockService : BackgroundService
     private readonly CursedLootManager _cursedLoot;
     private readonly PatternManager _patterns;
     private readonly AlarmManager _alarms;
-    private readonly VisualStateListener _visuals;
+    private readonly CallbackHandler _visuals;
     private readonly PlayerCtrlHandler _hcHandler;
     private readonly DistributorService _dds;
     
@@ -60,7 +61,7 @@ public sealed class AutoUnlockService : BackgroundService
         ClientData clientData, ImprisonmentController cageControl, MovementController moveControl, 
         KinksterManager kinksters, GagRestrictionManager gags, RestrictionManager restrictions, 
         RestraintManager restraints, CursedLootManager cursedLoot, PatternManager patterns, 
-        AlarmManager alarms, VisualStateListener visuals, PlayerCtrlHandler hcHandler, 
+        AlarmManager alarms, CallbackHandler visuals, PlayerCtrlHandler hcHandler, 
         DistributorService dds)
     {
         _logger = logger;
@@ -181,7 +182,7 @@ public sealed class AutoUnlockService : BackgroundService
 
             _logger.LogInformation($"{gag.GagItem.GagName()}'s [{gag.Padlock}] Timer Expired!", LoggerType.AutoUnlocks);
             // store backup state.
-            var backup = gag;
+            var backup = gag with { };
             var dat = new ActiveGagSlot() with { Padlock = backup.Padlock, Password = backup.Password, PadlockAssigner = backup.PadlockAssigner };
             // Temporarily update the changes locally, to prevent excess Auto-unlock calls.
             gag.Padlock = Padlocks.None;
@@ -191,7 +192,7 @@ public sealed class AutoUnlockService : BackgroundService
             // push update.
             if (await _dds.PushNewActiveGagSlot(index, dat, DataUpdateType.Unlocked).ConfigureAwait(false) is not null)
             {
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.GagLockStateChange, false, index, backup.Padlock, MainHub.UID);
+                _mediator.Publish(new GagStateChanged(NewState.Unlocked, index, backup, MainHub.UID, MainHub.UID));
                 _mediator.Publish(new EventMessage(new("Auto-Unlock", MainHub.UID, InteractionType.UnlockGag, $"{gag.GagItem.GagName()}'s Timed Padlock Expired!")));
             }
             else
@@ -216,7 +217,7 @@ public sealed class AutoUnlockService : BackgroundService
 
             _logger.LogInformation($"Restriction Layer {index + 1}'s [{item.Padlock}] Timer Expired!", LoggerType.Restrictions);
             // store backup state.
-            var backup = item;
+            var backup = item with { };
             var dat = new ActiveRestriction() with { Padlock = backup.Padlock, Password = backup.Password, PadlockAssigner = backup.PadlockAssigner };
             // Temporarily update the changes locally, to prevent excess Auto-unlock calls.
             item.Padlock = Padlocks.None;
@@ -225,8 +226,7 @@ public sealed class AutoUnlockService : BackgroundService
             item.PadlockAssigner = string.Empty;
             if (await _dds.PushNewActiveRestriction(index, dat, DataUpdateType.Unlocked).ConfigureAwait(false) is not null)
             {
-                // update was valid, so do whatever we would normally do in the manager.
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.RestrictionLockStateChange, false, index, backup.Padlock, MainHub.UID);
+                _mediator.Publish(new RestrictionStateChanged(NewState.Unlocked, index, backup, MainHub.UID, MainHub.UID));
                 _mediator.Publish(new EventMessage(new("Auto-Unlock", MainHub.UID, InteractionType.UnlockRestriction, $"Restriction Layer {index + 1}'s Timed Padlock Expired!")));
             }
             else
@@ -253,7 +253,7 @@ public sealed class AutoUnlockService : BackgroundService
         
         _logger.LogInformation($"RestraintSet's [{data.Padlock.ToName()}] Timer Expired!", LoggerType.AutoUnlocks);
         // store backup state.
-        var backup = data;
+        var backup = data with { };
         var dat = new CharaActiveRestraint() with { Padlock = backup.Padlock, Password = backup.Password, PadlockAssigner = backup.PadlockAssigner };
         // Temporarily update the changes locally, to prevent excess Auto-unlock calls.
         data.Padlock = Padlocks.None;
@@ -262,8 +262,7 @@ public sealed class AutoUnlockService : BackgroundService
         data.PadlockAssigner = string.Empty;
         if (await _dds.PushNewActiveRestraint(dat, DataUpdateType.Unlocked).ConfigureAwait(false) is not null)
         {
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintLockChange, data.Identifier, backup.Padlock, false, MainHub.UID);
-            // Sold slave is never valid here.            
+            _mediator.Publish(new RestraintStateChanged(NewState.Unlocked, backup, MainHub.UID, MainHub.UID));
             _mediator.Publish(new EventMessage(new("Auto-Unlock", MainHub.UID, InteractionType.UnlockRestraint, $"Active RestraintSet's Timed Padlock Expired!")));
         }
         else

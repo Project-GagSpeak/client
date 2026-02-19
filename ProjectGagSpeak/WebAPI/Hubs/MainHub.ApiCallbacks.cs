@@ -355,18 +355,18 @@ public partial class MainHub
                 case DataUpdateType.Swapped:
                 case DataUpdateType.Applied:
                     if (dataDto.PreviousGag is GagType.None)
-                        _visualListener.ApplyGag(dataDto.AffectedLayer, dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
+                        _callbackHandler.ApplyGag(dataDto.AffectedLayer, dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
                     else
-                        _visualListener.SwapGag(dataDto.AffectedLayer, dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
+                        _callbackHandler.SwapGag(dataDto.AffectedLayer, dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
                     break;
                 case DataUpdateType.Locked:
-                    _visualListener.LockGag(dataDto.AffectedLayer, dataDto.NewData, dataDto.Enactor);
+                    _callbackHandler.LockGag(dataDto.AffectedLayer, dataDto.NewData, dataDto.Enactor);
                     break;
                 case DataUpdateType.Unlocked:
-                    _visualListener.UnlockGag(dataDto.AffectedLayer, dataDto.Enactor);
+                    _callbackHandler.UnlockGag(dataDto.AffectedLayer, dataDto.Enactor);
                     break;
                 case DataUpdateType.Removed:
-                    _visualListener.RemoveGag(dataDto.AffectedLayer, dataDto.Enactor).ConfigureAwait(false);
+                    _callbackHandler.RemoveGag(dataDto.AffectedLayer, dataDto.Enactor).ConfigureAwait(false);
                     break;
             }
             return Task.CompletedTask;
@@ -389,18 +389,18 @@ public partial class MainHub
                 case DataUpdateType.Swapped:
                 case DataUpdateType.Applied:
                     if (dataDto.PreviousRestriction == Guid.Empty)
-                        _visualListener.ApplyRestriction(dataDto.AffectedLayer, dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
+                        _callbackHandler.ApplyRestriction(dataDto.AffectedLayer, dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
                     else
-                        _visualListener.SwapRestriction(dataDto.AffectedLayer, dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
+                        _callbackHandler.SwapRestriction(dataDto.AffectedLayer, dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
                     break;
                 case DataUpdateType.Locked:
-                    _visualListener.LockRestriction(dataDto.AffectedLayer, dataDto.NewData, dataDto.Enactor);
+                    _callbackHandler.LockRestriction(dataDto.AffectedLayer, dataDto.NewData, dataDto.Enactor);
                     break;
                 case DataUpdateType.Unlocked:
-                    _visualListener.UnlockRestriction(dataDto.AffectedLayer, dataDto.Enactor);
+                    _callbackHandler.UnlockRestriction(dataDto.AffectedLayer, dataDto.Enactor);
                     break;
                 case DataUpdateType.Removed:
-                    _visualListener.RemoveRestriction(dataDto.AffectedLayer, dataDto.Enactor).ConfigureAwait(false);
+                    _callbackHandler.RemoveRestriction(dataDto.AffectedLayer, dataDto.Enactor).ConfigureAwait(false);
                     break;
             }
             return Task.CompletedTask;
@@ -424,27 +424,27 @@ public partial class MainHub
                 case DataUpdateType.Swapped:
                 case DataUpdateType.Applied:
                     if (dataDto.PreviousRestraint == Guid.Empty)
-                        _visualListener.ApplyRestraint(dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
+                        _callbackHandler.ApplyRestraint(dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
                     else
-                        _visualListener.SwapRestraint(dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
+                        _callbackHandler.SwapRestraint(dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
                     break;
                 case DataUpdateType.LayersChanged:
-                    _visualListener.SwapRestraintLayers(dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
+                    _callbackHandler.SwapRestraintLayers(dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
                     break;
                 case DataUpdateType.LayersApplied:
-                    _visualListener.ApplyRestraintLayers(dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
+                    _callbackHandler.ApplyRestraintLayers(dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
                     break;
                 case DataUpdateType.Locked:
-                    _visualListener.LockRestraint(dataDto.NewData, dataDto.Enactor);
+                    _callbackHandler.LockRestraint(dataDto.NewData, dataDto.Enactor);
                     break;
                 case DataUpdateType.Unlocked:
-                    _visualListener.UnlockRestraint(dataDto.Enactor);
+                    _callbackHandler.UnlockRestraint(dataDto.Enactor);
                     break;
                 case DataUpdateType.LayersRemoved:
-                    _visualListener.RemoveRestraintLayers(dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
+                    _callbackHandler.RemoveRestraintLayers(dataDto.NewData, dataDto.Enactor).ConfigureAwait(false);
                     break;
                 case DataUpdateType.Removed:
-                    _visualListener.RemoveRestraint(dataDto.Enactor).ConfigureAwait(false);
+                    _callbackHandler.RemoveRestraint(dataDto.Enactor).ConfigureAwait(false);
                     break;
             }
             return Task.CompletedTask;
@@ -618,7 +618,7 @@ public partial class MainHub
     public Task Callback_ListenerName(SendNameAction dto)
     {
         Logger.LogDebug($"Kinkster {dto.User.AliasOrUID}'s updated their Listener Name", LoggerType.Callbacks);
-        Generic.Safe(() => _puppetListener.UpdateListener(dto.User.UID, dto.Name));
+        Generic.Safe(() => _callbackHandler.UpdateListener(dto.User.UID, dto.Name));
         return Task.CompletedTask;
     }
 

@@ -24,7 +24,7 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
     private readonly AlarmManager _alarms;
     private readonly TriggerManager _triggers;
     private readonly ClientDataListener _clientDatListener;
-    private readonly VisualStateListener _visuals;
+    private readonly CallbackHandler _visuals;
     private readonly ConfigFileProvider _fileNames;
     private readonly AchievementsService _achievements;
 
@@ -42,7 +42,7 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
         OverlayHandler overlays,
         PlayerCtrlHandler playerControl,
         ClientDataListener clientDatListener,
-        VisualStateListener visuals,
+        CallbackHandler visuals,
         ConfigFileProvider fileNames,
         AchievementsService achievements)
         : base(logger, mediator)

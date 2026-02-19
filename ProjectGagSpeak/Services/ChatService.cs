@@ -1,11 +1,9 @@
 using CkCommons;
-using CkCommons.Helpers;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI;
-using GagSpeak.GameInternals;
 using GagSpeak.GameInternals.Agents;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
@@ -13,42 +11,26 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Handlers;
 using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Attributes;
 using Lumina.Excel.Sheets;
-using System.Text.RegularExpressions;
 
 
 namespace GagSpeak.Services;
 
 /// <summary>
-///     Handles all functionality related to chat message sending, intercepting, and post-process.
-///     Note that this holes an internal queue 
+///     Centralized Message dispatcher and informant for chat related activities. <para />
+///     Chat Messages are parsed into a friendly format that can be passed through the mediator with essential data parsed.
 /// </summary>
 public class ChatService : DisposableMediatorSubscriberBase
 {
-    private readonly MainConfig _config;
-    private readonly KinksterManager _kinksters;
-    private readonly GagRestrictionManager _gags;
-    private readonly PuppeteerManager _puppeteer;
-    private readonly TriggerHandler _triggerHandler;
-    private readonly DeathRollService _deathRolls;
-
-    // private variables for chat message handling 
+    // Internal queue for sending backlogged messages.
     public static readonly ConcurrentQueue<string> _messagesToSend = new();
+    // A helpful timer to make our performed messages seem realistic and not instantanious.
+    // Could probably remove this.
     private readonly Stopwatch _delayTimer = new();
 
-    public ChatService(ILogger<ChatService> logger, GagspeakMediator mediator, MainConfig config, 
-        KinksterManager pairs, GagRestrictionManager gags, PuppeteerManager puppetManager, 
-        TriggerHandler triggerHandler, DeathRollService dr)
+    public ChatService(ILogger<ChatService> logger, GagspeakMediator mediator)
         : base(logger, mediator)
     {
-        _config = config;
-        _gags = gags;
-        _kinksters = pairs;
-        _puppeteer = puppetManager;
-        _triggerHandler = triggerHandler;
-        _deathRolls = dr;
-
         _delayTimer.Start();
         Svc.Chat.ChatMessage += OnChatboxMessage;
         Mediator.Subscribe<FrameworkUpdateMessage>(this, (_) => FrameworkUpdate());
@@ -62,6 +44,9 @@ public class ChatService : DisposableMediatorSubscriberBase
         _delayTimer?.Stop();
     }
 
+    /// <summary>
+    ///     Process the requested queue of messages to send.
+    /// </summary>
     private void FrameworkUpdate()
     {
         if (_messagesToSend.IsEmpty || !_delayTimer.IsRunning)
@@ -88,38 +73,19 @@ public class ChatService : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnected || !PlayerData.Available)
             return; // Process as normal.
 
-        // Check for things we dont need the player payload for.
-        CheckForPvpActivity(type, msg);
-        CheckForDeathroll(type, msg);
-
-        // Extract the sender name & world from the sender payload, defaulting to the client player if not available.
         var senderPayload = sender.Payloads.OfType<PlayerPayload>().FirstOrDefault();
         var senderName = senderPayload?.PlayerName ?? PlayerData.Name;
         var senderWorld = senderPayload?.World.Value.Name.ToString() ?? PlayerData.HomeWorldName;
 
-        // If the chat is not a GsChatChannel, don't process anything more.
+        // Check for things we dont need the player payload for.
+        CheckForPvpActivity(type, msg);
+        CheckForDeathroll(type, msg);
+
+        // If the chat is not a normal chat channel do not process.
         if(ChatLogAgent.FromXivChatType(type) is not { } channel)
             return;
 
-        Logger.LogTrace($"Chatbox Message Received: {senderName}@{senderWorld} in {channel} - {msg.TextValue}", LoggerType.ChatDetours);
-
-        // if we are the sender, return after checking if what we sent matches any of our pairs triggers.
-        if ($"{senderName}@{senderWorld}" == PlayerData.NameWithWorld)
-        {
-            CheckOwnChatMessage(channel, msg.TextValue);
-            Mediator.Publish(new ChatMsgFromSelf(channel, msg.TextValue));
-            return;
-        }
-
-        // Inform that someone spoke in the chat. (Can maybe shift this to the kinkster one or something idk?)
-        Mediator.Publish(new ChatMsgFromOther(senderName, senderWorld, channel, msg.TextValue));
-
-        // Ensure it is a valid puppeteer channel
-        if (!_config.Current.PuppeteerChannelsBitfield.IsActiveChannel((int)channel))
-            return;
-
-        // Run this off the thread to avoid blocking
-        _triggerHandler.CheckChatForTrigger(senderName, senderWorld, msg);
+        Mediator.Publish(new GameChatMessage(channel, $"{senderName}@{senderWorld}", msg));
     }
 
     /// <summary>
@@ -146,49 +112,9 @@ public class ChatService : DisposableMediatorSubscriberBase
         if (type is (XivChatType)2122 || type is (XivChatType)8266 || type is (XivChatType)4170)
         {
             if (msg.Payloads.OfType<PlayerPayload>().FirstOrDefault() is { } otherPlayer)
-                _deathRolls.ProcessMessage(type, otherPlayer.PlayerName + "@" + otherPlayer.World.Value.Name.ToString(), msg);
+                Mediator.Publish(new DeathrollMessage(type, $"{otherPlayer.PlayerName}@{otherPlayer.World.Value.Name.ToString()}", msg));
             else
-                _deathRolls.ProcessMessage(type, PlayerData.NameWithWorld, msg);
-        }
-    }
-
-    /// <summary>
-    ///     When a message processed by the chatbox was spesifically from us, do some unique
-    ///     checks to help fulfill the conditoins for various Achievements.
-    /// </summary>
-    public void CheckOwnChatMessage(InputChannel channel, string msg)
-    {
-        // check if the message we sent contains any of our pairs triggers.
-        foreach (var pair in _kinksters.DirectPairs)
-        {
-            var triggers = pair.PairPerms.TriggerPhrase.Split("|").Where(x => !string.IsNullOrWhiteSpace(x)).ToArray();
-            // This ensures it is a full word.
-            var foundTrigger = triggers.FirstOrDefault(trigger
-                => Regex.IsMatch(msg, $@"(?<!\w){Regex.Escape(trigger)}(?!\w)", RegexOptions.IgnoreCase));
-
-            if (!string.IsNullOrEmpty(foundTrigger))
-            {
-                // This was a trigger message for the pair, so let's see what the pairs settings are for.
-                var startChar = pair.PairPerms.StartChar;
-                var endChar = pair.PairPerms.EndChar;
-
-                // Get the string that exists beyond the trigger phrase found in the message.
-                Logger.LogTrace("Sent Message with trigger phrase set by " + pair.GetNickAliasOrUid() + ". Gathering Results.", LoggerType.Puppeteer);
-                SeString remainingMessage = msg.Substring(msg.IndexOf(foundTrigger) + foundTrigger.Length).Trim();
-
-                // Get the substring within the start and end char if provided. If the start and end chars are not both present in the remaining message, keep the remaining message.
-                remainingMessage.GetSubstringWithinParentheses(startChar, endChar);
-                Logger.LogTrace("Remaining message after brackets: " + remainingMessage, LoggerType.Puppeteer);
-
-                // If the string contains the word "grovel", fire the grovel achievement. (Fix these to be ID's not names.)
-                if (remainingMessage.TextValue.Contains("grovel"))
-                    GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderSent, PuppeteerMsgType.GrovelOrder);
-                else if (remainingMessage.TextValue.Contains("dance"))
-                    GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderSent, PuppeteerMsgType.DanceOrder);
-                else
-                    GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerOrderSent, PuppeteerMsgType.GenericOrder);
-                return;
-            }
+                Mediator.Publish(new DeathrollMessage(type, PlayerData.NameWithWorld, msg));
         }
     }
 

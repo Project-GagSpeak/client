@@ -174,12 +174,13 @@ public sealed class RestraintManager : IHybridSavable
         if (_serverRestraintData is not { } data)
             return false;
 
-        // update values & ping achievement.
+        // update values & inform mediator of state change
         data.Identifier = newData.Identifier;
         data.Enabler = enactor;
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintStateChange, data.Identifier, true, data.Enabler);
+        _mediator.Publish(new RestraintStateChanged(NewState.Enabled, data, enactor, MainHub.UID));
 
-        // If we obtain the set here, it means we should apply the visual aspect of this change, otherwise return.
+        // Update the applied restraint set if valid in storage
+        // (Nessisary due to possible desync in connecting to server with an equipped restraint you removed while offline)
         if (!Storage.TryGetRestraint(data.Identifier, out visualSet))
             return false;
 
@@ -203,7 +204,7 @@ public sealed class RestraintManager : IHybridSavable
         removed = data.ActiveLayers & ~newData.ActiveLayers;
         // update the active layers.
         data.ActiveLayers = newData.ActiveLayers;
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintLayerChange, data.Identifier, added, removed, enactor);
+        _mediator.Publish(new RestraintLayersChanged(data, added, removed, enactor, MainHub.UID));
 
         // If we obtain the visualSet here, it means we should apply the visual aspect of this change, otherwise return.
         return Storage.TryGetRestraint(data.Identifier, out visualSet);
@@ -224,7 +225,7 @@ public sealed class RestraintManager : IHybridSavable
         added = newLayers & ~data.ActiveLayers;
         // update the active layers.
         data.ActiveLayers |= added;
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintLayerChange, data.Identifier, added, true, enactor);
+        _mediator.Publish(new RestraintLayersChanged(data, added, RestraintLayer.None, enactor, MainHub.UID));
 
         // If we obtain the visualSet here, it means we should apply the visual aspect of this change, otherwise return.
         return Storage.TryGetRestraint(data.Identifier, out visualSet);
@@ -239,7 +240,8 @@ public sealed class RestraintManager : IHybridSavable
         data.Password = newData.Password;
         data.Timer = newData.Timer;
         data.PadlockAssigner = newData.PadlockAssigner;
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintLockChange, data.Identifier, newData.Padlock, true, enactor);
+        // Inform mediator of lock change.
+        _mediator.Publish(new RestraintStateChanged(NewState.Locked, data, enactor, MainHub.UID));
     }
 
     public void Unlock(string enactor)
@@ -248,15 +250,17 @@ public sealed class RestraintManager : IHybridSavable
         if (_serverRestraintData is not { } data)
             return;
 
-        var prevLock = data.Padlock;
-        var prevAssigner = data.PadlockAssigner;
+        var prev = data with { };
+
+        // Update data and inform mediator of change
         data.Padlock = Padlocks.None;
         data.Password = string.Empty;
         data.Timer = DateTimeOffset.MinValue;
         data.PadlockAssigner = string.Empty;
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintLockChange, data.Identifier, prevLock, false, enactor);
-
-        if ((prevAssigner != MainHub.UID) && (enactor != MainHub.UID) && (enactor != prevAssigner))
+        _mediator.Publish(new RestraintStateChanged(NewState.Unlocked, data, enactor, MainHub.UID));
+        
+        // can move to achievements
+        if ((prev.PadlockAssigner != MainHub.UID) && (enactor != MainHub.UID) && (enactor != prev.PadlockAssigner))
             GagspeakEventManager.AchievementEvent(UnlocksEvent.SoldSlave);
     }
 
@@ -268,9 +272,9 @@ public sealed class RestraintManager : IHybridSavable
             return false;
         // Determine which layers are being removed (were present but not anymore)
         removed = data.ActiveLayers & ~remLayers;
-        // Remove those layers
         data.ActiveLayers &= ~removed;
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintLayerChange, data.Identifier, removed, false, enactor);
+        _mediator.Publish(new RestraintLayersChanged(data, RestraintLayer.None, removed, enactor, MainHub.UID));
+
         // If we obtain the visualSet here, it means we should apply the visual aspect of this change, otherwise return.
         return Storage.TryGetRestraint(data.Identifier, out visualSet);
     }
@@ -283,21 +287,20 @@ public sealed class RestraintManager : IHybridSavable
         if (_serverRestraintData is not { } data)
             return false;
 
-        var removedRestraint = data.Identifier;
-        var setEnabler = data.Enabler;
+        var prev = data with { };
         removedLayers = data.ActiveLayers;
-        // Update values, then fire achievements.
+        // Update values, then inform mediator
         data.Identifier = Guid.Empty;
         data.Enabler = string.Empty;
         data.ActiveLayers = RestraintLayer.None;
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintStateChange, removedRestraint, false, enactor);
+        _mediator.Publish(new RestraintStateChanged(NewState.Disabled, data, enactor, MainHub.UID));
 
-        // set was applied by one person and removed by another where neither was the client.
-        if ((setEnabler != MainHub.UID) && (enactor != MainHub.UID) && (enactor != setEnabler))
+        // Can move this to achievements later
+        if ((prev.Enabler != MainHub.UID) && (enactor != MainHub.UID) && (enactor != prev.Enabler))
             GagspeakEventManager.AchievementEvent(UnlocksEvent.AuctionedOff);
 
         // Update the affected visual states, if item is enabled.
-        if (!Storage.TryGetRestraint(removedRestraint, out visualSet))
+        if (!Storage.TryGetRestraint(prev.Identifier, out visualSet))
             return false;
 
         AppliedRestraint = null;

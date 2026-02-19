@@ -6,6 +6,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using OtterGui.Extensions;
@@ -258,7 +259,8 @@ public sealed class RestrictionManager : IHybridSavable
         // update the values and fire achievement ping. ( None yet )
         data.Restrictions[layer].Identifier = newData.Identifier;
         data.Restrictions[layer].Enabler = newData.Enabler;
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestrictionStateChange, true, layer, newData.Identifier, enactor);
+        // Invoke the Mediator of this change.
+        _mediator.Publish(new RestrictionStateChanged(NewState.Enabled, layer, data.Restrictions[layer], enactor, MainHub.UID));
 
         // assign the information if present.
         if (Storage.TryGetRestriction(newData.Identifier, out item))
@@ -280,8 +282,8 @@ public sealed class RestrictionManager : IHybridSavable
         data.Restrictions[layer].Password = newData.Password;
         data.Restrictions[layer].Timer = newData.Timer;
         data.Restrictions[layer].PadlockAssigner = newData.PadlockAssigner;
-        // Fire that the gag was locked for this layer.
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestrictionLockStateChange, true, layer, newData.Padlock, enactor);
+        // Invoke the Mediator of this change.
+        _mediator.Publish(new RestrictionStateChanged(NewState.Locked, layer, data.Restrictions[layer], enactor, MainHub.UID));
     }
 
     public void UnlockRestriction(int layer, string enactor)
@@ -289,13 +291,14 @@ public sealed class RestrictionManager : IHybridSavable
         if (_serverRestrictionData is not { } data)
             return;
 
-        var prevLock = data.Restrictions[layer].Padlock;
+        var prev = data.Restrictions[layer] with { };
 
         data.Restrictions[layer].Padlock = Padlocks.None;
         data.Restrictions[layer].Password = string.Empty;
         data.Restrictions[layer].Timer = DateTimeOffset.MinValue;
         data.Restrictions[layer].PadlockAssigner = string.Empty;
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestrictionLockStateChange, false, layer, prevLock, enactor);
+        // Invoke the Mediator of this change.
+        _mediator.Publish(new RestrictionStateChanged(NewState.Unlocked, layer, prev, enactor, MainHub.UID));
     }
 
     public bool RemoveRestriction(int layer, string enactor, [NotNullWhen(true)] out RestrictionItem? item)
@@ -305,17 +308,19 @@ public sealed class RestrictionManager : IHybridSavable
         if (_serverRestrictionData is not { } data)
             return false;
 
-        // store the new data, then fire the achievement.
-        var removedItem = data.Restrictions[layer].Identifier;
+        var prev = data.Restrictions[layer] with { };
+
+        // Update data
         data.Restrictions[layer].Identifier = Guid.Empty;
         data.Restrictions[layer].Enabler = string.Empty;
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.RestrictionStateChange, false, layer, removedItem, enactor);
+        // Inform mediator of this change.
+        _mediator.Publish(new RestrictionStateChanged(NewState.Disabled, layer, prev, enactor, MainHub.UID));
 
         // Update the affected visual states, if item is enabled.
-        if (Storage.TryGetRestriction(removedItem, out item))
+        if (Storage.TryGetRestriction(prev.Identifier, out item))
         {
             _activeItems.Remove(layer);
-            _idToLayerMap.Remove(removedItem);
+            _idToLayerMap.Remove(prev.Identifier);
             return true;
         }
 

@@ -1,4 +1,4 @@
-namespace GagSpeak.Services;
+namespace GagSpeak.Minigames;
 
 public class DeathRollSession
 {

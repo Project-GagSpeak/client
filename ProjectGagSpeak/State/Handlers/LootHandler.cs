@@ -26,7 +26,7 @@ public sealed class LootHandler
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly CursedLootManager _manager;
-    private readonly VisualStateListener _visuals;
+    private readonly CallbackHandler _visuals;
     private readonly MainConfig _config;
     private readonly DistributorService _dds;
 
@@ -36,7 +36,7 @@ public sealed class LootHandler
     private Task? _openLootTask = null;
 
     public LootHandler(ILogger<LootHandler> logger, GagspeakMediator mediator, GagRestrictionManager gags,
-        RestrictionManager restrictions, CursedLootManager manager, VisualStateListener visuals,
+        RestrictionManager restrictions, CursedLootManager manager, CallbackHandler visuals,
         MainConfig config, DistributorService dds)
     {
         _logger = logger;
