@@ -248,6 +248,11 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
             DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
         };
     }
+
+    public override string ToString()
+    {
+        return $"{Type} Restriction {Identifier} - {Label}";
+    }
 }
 
 public class HypnoticRestriction : RestrictionItem

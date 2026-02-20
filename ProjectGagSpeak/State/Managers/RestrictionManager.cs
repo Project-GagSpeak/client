@@ -341,7 +341,7 @@ public sealed class RestrictionManager : IHybridSavable
         var restrictionItems = new JArray();
         foreach (var item in Storage)
         {
-            _logger.LogInformation("Serializing item: " + item.ToString());
+            _logger.LogDebug("Serializing item: " + item.ToString());
             restrictionItems.Add(item.Serialize());
         }
 
