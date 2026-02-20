@@ -47,12 +47,16 @@ public partial class SidePanelPair
         if (ClientData.Globals is not { } globals || ClientData.Hardcore is not { } hc)
             return;
 
-        ImGui.TextUnformatted("Global Settings");
+        ImGui.TextUnformatted("Global Settings (view only)"); 
+        ImUtf8.SameLineInner();
+        CkGui.HoverIconText(FAI.QuestionCircle, ImGuiColors.TankBlue.ToUint(), ImGui.GetColorU32(ImGuiCol.TextDisabled));
+        if (ImGui.IsItemHovered())
+            CkGui.AttachToolTip("You can toggle the Chat Garbler and GagPlates in the Settings!");
         using (ImRaii.Group())
         {
-            ClientPermRow(kinkster, dispName, width, KPID.ChatGarblerActive, globals.ChatGarblerActive, kinkster.OwnPermAccess.ChatGarblerActiveAllowed, globals.ChatGarblerLocked);
-            ClientPermRow(kinkster, dispName, width, KPID.ChatGarblerLocked, globals.ChatGarblerLocked, kinkster.OwnPermAccess.ChatGarblerLockedAllowed, globals.ChatGarblerLocked);
-            ClientPermRow(kinkster, dispName, width, KPID.GaggedNameplate, globals.GaggedNameplate, kinkster.OwnPermAccess.GaggedNameplateAllowed);
+            ClientRowTextOnly(kinkster, dispName, width, KPID.ChatGarblerActive, globals.ChatGarblerActive, kinkster.OwnPermAccess.ChatGarblerActiveAllowed);
+            ClientRowTextOnly(kinkster, dispName, width, KPID.ChatGarblerLocked, globals.ChatGarblerLocked, kinkster.OwnPermAccess.ChatGarblerLockedAllowed);
+            ClientRowTextOnly(kinkster, dispName, width, KPID.GaggedNameplate, globals.GaggedNameplate, kinkster.OwnPermAccess.GaggedNameplateAllowed);
         }
         CkGui.AttachToolTip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
         ImGui.Separator();

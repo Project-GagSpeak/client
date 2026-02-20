@@ -10,6 +10,7 @@ using GagSpeak.Utils;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using OtterGui.Text;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -105,6 +106,28 @@ public partial class SidePanelPair
         CkGui.AttachToolTip(data.IsGlobal
             ? $"Your {data.PermLabel} {data.JoinWord} {(current ? data.AllowedStr : data.BlockedStr)}. (Globally)"
             : $"You {(current ? data.AllowedStr : data.BlockedStr)} {dispName} {(current ? data.PairAllowedTT : data.PairBlockedTT)}", kinkster.OwnPerms.InHardcore);
+    }
+
+    // client perm text only. Is same as ClientPermRow, but not a button.
+    private void ClientRowTextOnly(Kinkster kinkster, string dispName, float width, KPID perm, bool current, bool canEdit, bool disabled = false)
+    {
+        using var _ = ImRaii.PushColor(ImGuiCol.Button, 0);
+        using var dis = ImRaii.Disabled(kinkster.OwnPerms.InHardcore || disabled);
+        var data = PanelPairEx.OwnRowInfo[perm];
+        var buttonW = width - ImGui.GetFrameHeight();
+        var editCol = canEdit ? ImGuiColors.HealerGreen.ToUint() : ImGuiColors.DalamudRed.ToUint();
+        var pos = ImGui.GetCursorScreenPos();
+
+        // draw where the button would have been
+        ClientRowText(data, current);
+        CkGui.AttachToolTip(data.IsGlobal
+            ? $"Your {data.PermLabel} {data.JoinWord} {(current ? data.AllowedStr : data.BlockedStr)}. (Globally)"
+            : $"You {(current ? data.AllowedStr : data.BlockedStr)} {dispName} {(current ? data.PairAllowedTT : data.PairBlockedTT)}", kinkster.OwnPerms.InHardcore);
+
+        ImGui.SameLine(buttonW);
+        if (EditAccessCheckbox.Draw($"##{perm}", canEdit, out var newVal) && canEdit != newVal)
+            UiService.SetUITask(async () => await PermHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.OwnPermAccess, perm.ToPermAccessValue(), newVal));
+        CkGui.AttachToolTip($"{dispName} {(canEdit ? "can" : "can not")} change your {data.PermLabel} setting.", kinkster.OwnPerms.InHardcore);
     }
 
     private void ClientRowEnum<T>(Kinkster kinkster, string dispName, float width, KPID perm, bool current, bool canEdit, Func<T> newStateFunc, Func<T> newEditStateFunc)
