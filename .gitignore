@@ -24,3 +24,6 @@ bash.exe.*
 .idea/
 
 *DotSettings.user
+
+#difftool files
+*.orig
