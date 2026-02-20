@@ -12,26 +12,26 @@ namespace GagSpeak.Services.Tutorial;
 /// </summary>
 public class TutorialService
 {
-    private readonly Dictionary<TutorialType, Tutorial> _tutorials = new();
+    private readonly Dictionary<TutorialType, Tutorial> tutorials = new();
 
     public TutorialService() { }
-    public bool IsTutorialActive(TutorialType type) => _tutorials[type].CurrentStep is not -1;
+    public bool IsTutorialActive(TutorialType type) => tutorials[type].CurrentStep is not -1;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void StartTutorial(TutorialType guide)
     {
-        if (!_tutorials.ContainsKey(guide))
+        if (!tutorials.ContainsKey(guide))
             return;
 
         // set all other tutorials to -1, stopping them.
-        foreach (var t in _tutorials)
+        foreach (var t in tutorials)
             t.Value.CurrentStep = (t.Key != guide) ?  -1 : 0;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void OpenTutorial<TEnum>(TutorialType guide, TEnum step, Vector2 pos, Vector2 size, Action? onNext = null) where TEnum : Enum
     {
-        if (_tutorials.TryGetValue(guide, out var tutorial))
+        if (tutorials.TryGetValue(guide, out var tutorial))
             tutorial.Open(Convert.ToInt32(step), pos, size, onNext);
     }
 
@@ -39,7 +39,7 @@ public class TutorialService
     public void SkipTutorial(TutorialType guide)
     {
         // reset the step to -1, stopping the tutorial.
-        if (_tutorials.TryGetValue(guide, out var tutorial))
+        if (tutorials.TryGetValue(guide, out var tutorial))
             tutorial.CurrentStep = -1;
     }
 
@@ -48,21 +48,21 @@ public class TutorialService
     public void JumpToStep<TEnum>(TutorialType guide, TEnum step)
     {
         // reset the step to -1, stopping the tutorial.
-        if (_tutorials.TryGetValue(guide, out var tutorial))
+        if (tutorials.TryGetValue(guide, out var tutorial))
             tutorial.CurrentStep = Convert.ToInt32(step);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int CurrentStep(TutorialType guide)
     {
-        if (_tutorials.TryGetValue(guide, out var tutorial))
+        if (tutorials.TryGetValue(guide, out var tutorial))
             return tutorial.CurrentStep;
 
         return -1;
     }
 
-    // Create a mappinng between the tutorialTypes and the associated enum size.
-    private static readonly Dictionary<TutorialType, int> _tutorialSizes = new()
+    // Create a mapping between the tutorialTypes and the associated enum size.
+    private static readonly Dictionary<TutorialType, int> TutorialSizes = new()
     {
         { TutorialType.MainUi, Enum.GetValues<StepsMainUi>().Length },
         { TutorialType.Remote, Enum.GetValues<StepsRemote>().Length },
@@ -82,7 +82,7 @@ public class TutorialService
     public void InitializeTutorialStrings()
     {
         var mainUiStr = GSLoc.Tutorials.MainUi;
-        _tutorials[TutorialType.MainUi] = new Tutorial()
+        tutorials[TutorialType.MainUi] = new Tutorial()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
@@ -119,10 +119,10 @@ public class TutorialService
         .AddStep(mainUiStr.Step29Title, mainUiStr.Step29Desc, mainUiStr.Step29DescExtended)
         .AddStep(mainUiStr.Step30Title, mainUiStr.Step30Desc, mainUiStr.Step30DescExtended)
         .AddStep(mainUiStr.Step31Title, mainUiStr.Step31Desc, mainUiStr.Step31DescExtended)
-        .EnsureSize(_tutorialSizes[TutorialType.MainUi]);
+        .EnsureSize(TutorialSizes[TutorialType.MainUi]);
 
         var remoteStr = GSLoc.Tutorials.Remote;
-        _tutorials[TutorialType.Remote] = new Tutorial()
+        tutorials[TutorialType.Remote] = new Tutorial()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
@@ -131,7 +131,7 @@ public class TutorialService
         .EnsureSize(0);
 
         var restraintsStr = GSLoc.Tutorials.Restraints;
-        _tutorials[TutorialType.Restraints] = new Tutorial()
+        tutorials[TutorialType.Restraints] = new Tutorial()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
@@ -174,10 +174,10 @@ public class TutorialService
         .AddStep(restraintsStr.Step33Title, restraintsStr.Step33Desc, restraintsStr.Step33DescExtended)
         .AddStep(restraintsStr.Step34Title, restraintsStr.Step34Desc, restraintsStr.Step34DescExtended)
         .AddStep(restraintsStr.Step35Title, restraintsStr.Step35Desc, restraintsStr.Step35DescExtended)
-        .EnsureSize(_tutorialSizes[TutorialType.Restraints]);
+        .EnsureSize(TutorialSizes[TutorialType.Restraints]);
 
         var restrictionsStr = GSLoc.Tutorials.Restrictions;
-        _tutorials[TutorialType.Restrictions] = new Tutorial()
+        tutorials[TutorialType.Restrictions] = new Tutorial()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
@@ -221,10 +221,11 @@ public class TutorialService
         .AddStep(restrictionsStr.Step36Title, restrictionsStr.Step36Desc, restrictionsStr.Step36DescExtended)
         .AddStep(restrictionsStr.Step37Title, restrictionsStr.Step37Desc, restrictionsStr.Step37DescExtended)
         .AddStep(restrictionsStr.Step38Title, restrictionsStr.Step38Desc, restrictionsStr.Step38DescExtended)
-        .EnsureSize(_tutorialSizes[TutorialType.Restrictions]);
+        .AddStep(restrictionsStr.Step39Title, restrictionsStr.Step39Desc, restrictionsStr.Step39DescExtended)
+        .EnsureSize(TutorialSizes[TutorialType.Restrictions]);
 
         var gagsStr = GSLoc.Tutorials.Gags;
-        _tutorials[TutorialType.Gags] = new Tutorial()
+        tutorials[TutorialType.Gags] = new Tutorial()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
@@ -255,10 +256,10 @@ public class TutorialService
         .AddStep(gagsStr.Step23Title, gagsStr.Step23Desc, gagsStr.Step23DescExtended)
         .AddStep(gagsStr.Step24Title, gagsStr.Step24Desc, gagsStr.Step24DescExtended)
         .AddStep(gagsStr.Step25Title, gagsStr.Step25Desc, gagsStr.Step25DescExtended)
-        .EnsureSize(_tutorialSizes[TutorialType.Gags]);
+        .EnsureSize(TutorialSizes[TutorialType.Gags]);
 
         var cursedLootStr = GSLoc.Tutorials.CursedLoot;
-        _tutorials[TutorialType.CursedLoot] = new Tutorial()
+        tutorials[TutorialType.CursedLoot] = new Tutorial()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
@@ -267,7 +268,7 @@ public class TutorialService
         .EnsureSize(0);
 
         var puppetStr = GSLoc.Tutorials.Puppeteer;
-        _tutorials[TutorialType.Puppeteer] = new Tutorial()
+        tutorials[TutorialType.Puppeteer] = new Tutorial()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
@@ -297,10 +298,10 @@ public class TutorialService
         .AddStep(puppetStr.Step22Title, puppetStr.Step22Desc, puppetStr.Step22DescExtended)
         .AddStep(puppetStr.Step23Title, puppetStr.Step23Desc, puppetStr.Step23DescExtended)
         .AddStep(puppetStr.Step24Title, puppetStr.Step24Desc, puppetStr.Step24DescExtended)
-        .EnsureSize(_tutorialSizes[TutorialType.Puppeteer]);
+        .EnsureSize(TutorialSizes[TutorialType.Puppeteer]);
 
         var toyboxStr = GSLoc.Tutorials.Toys;
-        _tutorials[TutorialType.Toys] = new Tutorial()
+        tutorials[TutorialType.Toys] = new Tutorial()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
@@ -309,7 +310,7 @@ public class TutorialService
         .EnsureSize(0);
 
         var patternsStr = GSLoc.Tutorials.Patterns;
-        _tutorials[TutorialType.Patterns] = new Tutorial()
+        tutorials[TutorialType.Patterns] = new Tutorial()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
@@ -318,7 +319,7 @@ public class TutorialService
         .EnsureSize(0);
 
         var alarmsStr = GSLoc.Tutorials.Alarms;
-        _tutorials[TutorialType.Alarms] = new Tutorial()
+        tutorials[TutorialType.Alarms] = new Tutorial()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
@@ -327,7 +328,7 @@ public class TutorialService
         .EnsureSize(0);
 
         var triggersStr = GSLoc.Tutorials.Triggers;
-        _tutorials[TutorialType.Triggers] = new Tutorial()
+        tutorials[TutorialType.Triggers] = new Tutorial()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
@@ -336,7 +337,7 @@ public class TutorialService
         .EnsureSize(0);
 
         var achievementsStr = GSLoc.Tutorials.Achievements;
-        _tutorials[TutorialType.Achievements] = new Tutorial()
+        tutorials[TutorialType.Achievements] = new Tutorial()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
@@ -348,6 +349,6 @@ public class TutorialService
         .AddStep(achievementsStr.Step4Title, achievementsStr.Step4Desc, string.Empty)
         .AddStep(achievementsStr.Step5Title, achievementsStr.Step5Desc, achievementsStr.Step5DescExtended)
         .AddStep(achievementsStr.Step6Title, achievementsStr.Step6Desc, achievementsStr.Step6DescExtended)
-        .EnsureSize(_tutorialSizes[TutorialType.Achievements]);
+        .EnsureSize(TutorialSizes[TutorialType.Achievements]);
     }
 }

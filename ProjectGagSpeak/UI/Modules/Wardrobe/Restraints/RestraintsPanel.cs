@@ -256,11 +256,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
             _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SelectingRestraint, WardrobeUI.LastPos, WardrobeUI.LastSize,
                 () =>
                 {
-                    var r = new CharaActiveRestraint()
-                    {
-                        Identifier = _selector.tutorialSet.Identifier,
-                        Enabler = MainHub.UID
-                    };
+                    var r = new CharaActiveRestraint() { Identifier = _selector.tutorialSet.Identifier, Enabler = MainHub.UID };
                     SelfBondageHelper.RestraintUpdateTask(r, DataUpdateType.Applied, _dds, _visuals);
                 });
             return;

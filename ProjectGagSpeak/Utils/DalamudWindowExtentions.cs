@@ -26,12 +26,16 @@ public class TitleBarButtonBuilder
     }
 
     public TitleBarButtonBuilder AddTutorial(TutorialService service, TutorialType type)
+        => AddTutorial(service, () => type);
+
+    public TitleBarButtonBuilder AddTutorial(TutorialService service, Func<TutorialType> func)
     {
         _buttons.Add(new TitleBarButton
         {
             Icon = FAI.QuestionCircle,
             Click = (msg) =>
             {
+                var type = func.Invoke();
                 if (service.IsTutorialActive(type))
                 {
                     service.SkipTutorial(type);
@@ -44,7 +48,12 @@ public class TitleBarButtonBuilder
                 }
             },
             IconOffset = new(2, 1),
-            ShowTooltip = () => CkGui.AttachToolTip($"Start/Stop {type.ToString()} Tutorial"),
+            ShowTooltip = () =>
+            {
+                var type = func.Invoke();
+                CkGui.AttachToolTip(
+                    service.IsTutorialActive(type) ? $"Stop {type} Tutorial" : $"Start {type} tutorial.");
+            },
         });
         return this;
     }

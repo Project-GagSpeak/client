@@ -2,19 +2,22 @@ using CkCommons;
 using CkCommons.Classes;
 using CkCommons.Gui;
 using CkCommons.Raii;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
 using GagSpeak.Services.Textures;
+using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
-using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Wardrobe;
+
 public partial class RestrictionsPanel
 {
     private static TriStateBoolCheckbox TriCheckbox = new();
+
     private void DrawEditorHeaderLeft(float width)
     {
         // Dont draw anything if the editor is not active.
@@ -28,13 +31,15 @@ public partial class RestrictionsPanel
 
         if (CkGui.IconButton(FAI.ArrowLeft))
             _manager.StopEditing();
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.CancelingChanges, WardrobeUI.LastPos, WardrobeUI.LastSize);
 
         // Create a child that spans the remaining region.
         ImUtf8.SameLineInner();
         ImGui.SetNextItemWidth(width - CkGui.IconButtonSize(FAI.ArrowLeft).X - ImGui.GetStyle().ItemInnerSpacing.X);
         var curLabel = item.Label;
-        if(ImGui.InputTextWithHint("##EditorNameField", "Enter Name...", ref curLabel, 48))
+        if (ImGui.InputTextWithHint("##EditorNameField", "Enter Name...", ref curLabel, 48))
             item.Label = curLabel;
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.EditName, WardrobeUI.LastPos, WardrobeUI.LastSize);
     }
 
     private void DrawEditorHeaderRight(Vector2 contentRegionAvail)
@@ -54,66 +59,80 @@ public partial class RestrictionsPanel
         var childGroupSize = new Vector2(ImGui.GetFrameHeight() * 2 + styler.ItemInnerSpacing.X, ImGui.GetFrameHeight());
         var itemSpacing = (contentRegionAvail.X - CkGui.IconButtonSize(FAI.Save).X - (childGroupSize.X * 3)) / 5;
 
-
-        // Handle the Meta ONLY if they are a blindfold restriction.
-        ImGui.SetCursorPosX(ImGui.GetCursorPosX() + itemSpacing);
-        using (ImRaii.Child("HelmetMetaGroup", childGroupSize))
+        using (ImRaii.Group())
         {
-            ImGui.AlignTextToFramePadding();
-            if (TriCheckbox.Draw("##RestrictionHelmetMeta", item.HeadgearState, out var newHelmValue))
-                item.HeadgearState = newHelmValue;
-            ImUtf8.SameLineInner();
-            CkGui.FramedIconText(FAI.HardHat);
-            CkGui.AttachToolTip("The Forced Helmet State.--SEP--Note: conflicts priorize ON over OFF.");
+            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + itemSpacing);
+            using (ImRaii.Child("HelmetMetaGroup", childGroupSize))
+            {
+                ImGui.AlignTextToFramePadding();
+                if (TriCheckbox.Draw("##RestrictionHelmetMeta", item.HeadgearState, out var newHelmValue))
+                    item.HeadgearState = newHelmValue;
+                ImUtf8.SameLineInner();
+                CkGui.FramedIconText(FAI.HardHat);
+                CkGui.AttachToolTip("The Forced Helmet State.--SEP--Note: conflicts priorize ON over OFF.");
+            }
+
+            ImGui.SameLine(0, itemSpacing);
+            using (ImRaii.Child("VisorMetaGroup", childGroupSize))
+            {
+                if (TriCheckbox.Draw("##RestrictionVisorMeta", item.VisorState, out var newVisorValue))
+                    item.VisorState = newVisorValue;
+                ImUtf8.SameLineInner();
+                CkGui.FramedIconText(FAI.Glasses);
+                CkGui.AttachToolTip("The Forced Visor State.--SEP--Note: conflicts priorize ON over OFF.");
+            }
+
+            ImGui.SameLine(0, itemSpacing);
+            using (ImRaii.Child("RedrawMetaGroup", childGroupSize))
+            {
+                var doRedraw = item.DoRedraw;
+                if (ImGui.Checkbox("##GagRedrawMeta", ref doRedraw))
+                    item.DoRedraw = doRedraw;
+                ImUtf8.SameLineInner();
+                CkGui.IconText(FAI.Repeat);
+                CkGui.AttachToolTip("If you redraw after application.");
+            }
         }
 
-        ImGui.SameLine(0, itemSpacing);
-        using (ImRaii.Child("VisorMetaGroup", childGroupSize))
-        {
-            if (TriCheckbox.Draw("##RestrictionVisorMeta", item.VisorState, out var newVisorValue))
-                item.VisorState = newVisorValue;
-            ImUtf8.SameLineInner();
-            CkGui.FramedIconText(FAI.Glasses);
-            CkGui.AttachToolTip("The Forced Visor State.--SEP--Note: conflicts priorize ON over OFF.");
-        }
-        ImGui.SameLine(0, itemSpacing);
-        using (ImRaii.Child("RedrawMetaGroup", childGroupSize))
-        {
-            var doRedraw = item.DoRedraw;
-            if (ImGui.Checkbox("##GagRedrawMeta", ref doRedraw))
-                item.DoRedraw = doRedraw;
-            ImUtf8.SameLineInner();
-            CkGui.IconText(FAI.Repeat);
-            CkGui.AttachToolTip("If you redraw after application.");
-        }
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.EditMeta, WardrobeUI.LastPos, WardrobeUI.LastSize);
 
-        // beside this, enhances the font scale to 1.5x, draw the save icon, then restore the font scale.
         ImGui.SameLine(0, itemSpacing);
         style.Push(ImGuiStyleVar.FrameRounding, 10f);
         if (CkGui.IconButton(FAI.Save))
             _manager.SaveChangesAndStopEditing();
         CkGui.AttachToolTip("Save Changes to this Restriction.");
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.SavingChanges, WardrobeUI.LastPos, WardrobeUI.LastSize,
+            () => _manager.SaveChangesAndStopEditing());
 
         ImGui.SetWindowFontScale(1f);
     }
 
     private void DrawEditorLeft(float width)
     {
-        // Dont draw anything if the editor is not active.
+        // Don't draw anything if the editor is not active.
         if (_manager.ItemInEditor is not { } item)
             return;
 
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(5));
 
         _equipDrawer.DrawAssociatedGlamour("RestrictionGlamour", item.Glamour, width);
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.ItemGlamour, WardrobeUI.LastPos, WardrobeUI.LastSize);
 
-        // Draw hypnotic section, if our type is a hypnotic restriction.
-        if (item is HypnoticRestriction hypnoticRestriction)
-            DrawHypnoInfo(hypnoticRestriction, width);
-
-        // Draw blindfold section, if our type is a blindfold restriction.
-        if (item is BlindfoldRestriction blindfoldRestriction) 
-            DrawBlindfoldInfo(blindfoldRestriction, width);
+        switch (item)
+        {
+            // Draw hypnotic section, if our type is a hypnotic restriction.
+            case HypnoticRestriction hypnoticRestriction:
+            {
+                using (ImRaii.Group())
+                    DrawHypnoInfo(hypnoticRestriction, width);
+                _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.HypnoInfo, WardrobeUI.LastPos, WardrobeUI.LastSize);
+                break;
+            }
+            // Draw blindfold section, if our type is a blindfold restriction.
+            case BlindfoldRestriction blindfoldRestriction:
+                DrawBlindfoldInfo(blindfoldRestriction, width);
+                break;
+        }
 
         // Determine the disabled traits based on the restriction type.
         var shownTraits = item switch
@@ -123,8 +142,11 @@ public partial class RestrictionsPanel
             _ => Traits.All
         };
         _attributeDrawer.DrawAttributesChild(item, width, 4, shownTraits);
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.HardcoreTraits, WardrobeUI.LastPos, WardrobeUI.LastSize);
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Arousal, WardrobeUI.LastPos, WardrobeUI.LastSize);
 
         _moodleDrawer.DrawAssociatedMoodle("RestrictionMoodle", item, width, MoodleDrawer.IconSizeFramed);
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.AttachedMoodle, WardrobeUI.LastPos, WardrobeUI.LastSize);
     }
 
     public void DrawEditorRight(float width)
@@ -133,6 +155,7 @@ public partial class RestrictionsPanel
             return;
 
         _modDrawer.DrawModPresetBox("RestrictionModPreset", item, width);
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.AttachedMod, WardrobeUI.LastPos, WardrobeUI.LastSize);
     }
 
     private void DrawBlindfoldInfo(BlindfoldRestriction blindfoldItem, float width)
@@ -155,6 +178,7 @@ public partial class RestrictionsPanel
                     ImGui.GetWindowDrawList().AddDalamudImageRounded(validImage, pos, scaledPreview, CkStyle.HeaderRounding());
                 }
             }
+
             CkGui.AttachToolTip("The overlay image when applied.--SEP--Right-Click to clear.");
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 blindfoldItem.Properties.OverlayPath = string.Empty;
@@ -192,6 +216,7 @@ public partial class RestrictionsPanel
                     ImGui.GetWindowDrawList().AddDalamudImageRounded(validImage, pos, scaledPreview, CkStyle.HeaderRounding());
                 }
             }
+
             CkGui.AttachToolTip("The overlay image when applied.--SEP--Right-Click to clear.");
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 hypnoticItem.Properties.OverlayPath = string.Empty;
@@ -202,12 +227,19 @@ public partial class RestrictionsPanel
                 var isFirstPerson = hypnoticItem.Properties.ForceFirstPerson;
                 if (ImGui.Checkbox("1st Person", ref isFirstPerson))
                     hypnoticItem.Properties.ForceFirstPerson = isFirstPerson;
+                _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.FirstPersonLock, WardrobeUI.LastPos, WardrobeUI.LastSize);
 
                 // Editor Button for the effect.
                 if (CkGui.IconTextButton(FAI.BookOpen, "Effect Editor"))
                     _hypnoEditor.SetGenericEffect(hypnoticItem.Properties.Effect);
+                _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.EffectEditing, WardrobeUI.LastPos, WardrobeUI.LastSize,
+                    () => _hypnoEditor.SetGenericEffect(hypnoticItem.Properties.Effect));
             }
         }
+
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.SelectingImage, WardrobeUI.LastPos, WardrobeUI.LastSize,
+            // set the editor open but also set the path to the item as the default included spiral, hypno editor breaks with no item selected.
+            () => { OpenEditor(); hypnoticItem.Properties.OverlayPath = "Hypno Spiral.png"; });
 
         void OpenEditor() => _thumbnails.SetThumbnailSource(_selector.Selected!.Identifier, displaySize, ImageDataType.Hypnosis);
     }

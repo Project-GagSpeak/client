@@ -12,17 +12,22 @@ using OtterGui.Text;
 using CkCommons.Gui;
 using CkCommons.Helpers;
 using CkCommons.Textures;
+using GagSpeak.Gui.Wardrobe;
+using GagSpeak.Services.Tutorial;
 using TerraFX.Interop.Windows;
+using Tutorial = OtterGui.Widgets.Tutorial;
 
 namespace GagSpeak.Gui.Components;
 public class MoodleDrawer
 {
     private readonly ILogger<MoodleDrawer> _logger;
+    private readonly TutorialService _guides;
     private MoodleStatusCombo _statusCombo { get; init; }
     private MoodlePresetCombo _presetCombo { get; init; }
-    public MoodleDrawer(ILogger<MoodleDrawer> logger)
+    public MoodleDrawer(ILogger<MoodleDrawer> logger, TutorialService guides)
     {
         _logger = logger;
+        _guides = guides;
         _statusCombo = new MoodleStatusCombo(logger, 1.15f);
         _presetCombo = new MoodlePresetCombo(logger, 1.15f);
     }
@@ -98,6 +103,8 @@ public class MoodleDrawer
                     };
                 }
                 CkGui.AttachToolTip(MoodleTypeTooltip(item.Moodle));
+                _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.SwitchingMoodleType, WardrobeUI.LastPos, WardrobeUI.LastSize,
+                                     () => item.Moodle = new MoodleTuple(MoodleCache.IpcData.StatusList.FirstOrDefault()));
 
                 ImUtf8.SameLineInner();
                 DrawMoodleCombo(item.Moodle, ImGui.GetContentRegionAvail().X);
@@ -105,6 +112,7 @@ public class MoodleDrawer
 
             // Below this, we need to draw the display field of the moodles that the selected status has.
             ShowStatusIconsFramed(id, item.Moodle, ImGui.GetContentRegionAvail().X, CkStyle.ChildRounding(), moodleSize);
+            _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.SelectedMoodlePreview, WardrobeUI.LastPos, WardrobeUI.LastSize);
         }
     }
 

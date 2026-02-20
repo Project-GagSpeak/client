@@ -22,3 +22,5 @@ bash.exe.*
 
 # Ignore Rider
 .idea/
+
+*DotSettings.user

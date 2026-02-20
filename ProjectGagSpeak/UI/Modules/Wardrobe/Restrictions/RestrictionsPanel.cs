@@ -7,19 +7,23 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.FileSystems;
 using GagSpeak.Gui.Components;
-using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
+using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
+using GagSpeak.Utils;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
+using GagspeakAPI.Data;
 using OtterGui.Extensions;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Wardrobe;
+
 public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
 {
     private readonly RestrictionFileSelector _selector;
@@ -31,7 +35,11 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
     private readonly RestrictionManager _manager;
     private readonly UiThumbnailService _thumbnails;
     private readonly TutorialService _guides;
+    private readonly DistributorService _dds;
+    private readonly VisualStateListener _visuals;
+
     public bool IsEditing => _manager.ItemInEditor != null;
+
     public RestrictionsPanel(
         ILogger<RestrictionsPanel> logger,
         GagspeakMediator mediator,
@@ -43,7 +51,8 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         AttributeDrawer traitsDrawer,
         RestrictionManager manager,
         HypnoEffectManager effectPresets,
-        KinksterManager pairs,
+        DistributorService dds,
+        VisualStateListener visuals,
         UiThumbnailService thumbnails,
         TutorialService guides) : base(logger, mediator)
     {
@@ -55,9 +64,11 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         _moodleDrawer = moodleDrawer;
         _activeItemDrawer = activeItemDrawer;
         _manager = manager;
+        _visuals = visuals;
+        _dds = dds;
         _guides = guides;
 
-        _hypnoEditor = new HypnoEffectEditor("RestrictionEditor", effectPresets);
+        _hypnoEditor = new HypnoEffectEditor("RestrictionEditor", effectPresets, guides);
 
         Mediator.Subscribe<ThumbnailImageSelected>(this, (msg) =>
         {
@@ -95,10 +106,13 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         ImGui.SetCursorScreenPos(drawRegions.TopLeft.Pos);
         using (ImRaii.Child("RestrictionsTopLeft", drawRegions.TopLeft.Size))
             _selector.DrawFilterRow(drawRegions.TopLeft.SizeX);
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Searching, WardrobeUI.LastPos, WardrobeUI.LastSize);
 
         ImGui.SetCursorScreenPos(drawRegions.BotLeft.Pos);
         using (ImRaii.Child("RestrictionsBottomLeft", drawRegions.BotLeft.Size, false, WFlags.NoScrollbar))
             _selector.DrawList(drawRegions.BotLeft.SizeX);
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.RestrictionList, WardrobeUI.LastPos, WardrobeUI.LastSize,
+            () => _selector.SelectByValue(_selector.TutorialHypnoRestriction));
 
         ImGui.SetCursorScreenPos(drawRegions.TopRight.Pos);
         using (ImRaii.Child("RestrictionsTopRight", drawRegions.TopRight.Size))
@@ -106,15 +120,23 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
 
         // Draw the selected Item
         ImGui.SetCursorScreenPos(drawRegions.BotRight.Pos);
-        DrawSelectedItemInfo(drawRegions.BotRight, curveSize);
-        var lineTopLeft = ImGui.GetItemRectMin() - new Vector2(ImGui.GetStyle().WindowPadding.X, 0);
-        var lineBotRight = lineTopLeft + new Vector2(ImGui.GetStyle().WindowPadding.X, ImGui.GetItemRectSize().Y);
-        ImGui.GetWindowDrawList().AddRectFilled(lineTopLeft, lineBotRight, CkGui.Color(ImGuiColors.DalamudGrey));
+        using (ImRaii.Group())
+        {
+            DrawSelectedItemInfo(drawRegions.BotRight, curveSize);
+            var lineTopLeft = ImGui.GetItemRectMin() - new Vector2(ImGui.GetStyle().WindowPadding.X, 0);
+            var lineBotRight = lineTopLeft + new Vector2(ImGui.GetStyle().WindowPadding.X, ImGui.GetItemRectSize().Y);
+            ImGui.GetWindowDrawList().AddRectFilled(lineTopLeft, lineBotRight, CkGui.Color(ImGuiColors.DalamudGrey));
+        }
+
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.SelectedRestriction, WardrobeUI.LastPos, WardrobeUI.LastSize);
 
         // Shift down and draw the Active items
         var verticalShift = new Vector2(0, ImGui.GetItemRectSize().Y + ImGui.GetStyle().WindowPadding.Y * 3);
         ImGui.SetCursorScreenPos(drawRegions.BotRight.Pos + verticalShift);
         DrawActiveItemInfo(drawRegions.BotRight.Size - verticalShift);
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Applying, WardrobeUI.LastPos, WardrobeUI.LastSize);
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.NoFreeSlots, WardrobeUI.LastPos, WardrobeUI.LastSize, () =>
+            _guides.JumpToStep(TutorialType.Restrictions, StepsRestrictions.Removing));
     }
 
     public void DrawEditorContents(CkHeader.QuadDrawRegions drawRegions, float curveSize)
@@ -146,7 +168,8 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         var isActive = !notSelected && _manager.IsItemApplied(_selector.Selected!.Identifier);
         var tooltip = notSelected ? "No item selected!" : isActive ? "Item is Active!" : "Double Click to begin editing!";
 
-        using var c = CkRaii.ChildLabelCustomButton("SelItem", region, ImGui.GetFrameHeight(), LabelButton, BeginEdits, tooltip, DFlags.RoundCornersRight, LabelFlags.AddPaddingToHeight);
+        using var c = CkRaii.ChildLabelCustomButton("SelItem", region, ImGui.GetFrameHeight(), LabelButton, BeginEdits, tooltip,
+            DFlags.RoundCornersRight, LabelFlags.AddPaddingToHeight);
 
         var pos = ImGui.GetItemRectMin();
         var imgSize = new Vector2(c.InnerRegion.Y);
@@ -164,6 +187,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             if (!isActive && ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
                 _thumbnails.SetThumbnailSource(_selector.Selected!.Identifier, new Vector2(120), ImageDataType.Restrictions);
             CkGui.AttachToolTip("The Thumbnail for this item.--SEP--Double Click to change the image.");
+            _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.SelectingThumbnails, WardrobeUI.LastPos, WardrobeUI.LastSize);
         }
 
         void LabelButton()
@@ -185,6 +209,9 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
                     ImGui.GetWindowDrawList().AddDalamudImage(image, ImGui.GetCursorScreenPos(), imgSize, tooltip);
                 }
             }
+
+            _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.EnteringEditor, WardrobeUI.LastPos, WardrobeUI.LastSize,
+                () => _manager.StartEditing(_selector.Selected!));
         }
 
         void BeginEdits(ImGuiMouseButton b)
@@ -203,6 +230,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             CkGui.BooleanToColoredIcon(_selector.Selected!.IsEnabled, false);
             CkGui.TextFrameAlignedInline($"Visuals  ");
         }
+
         if (!isActive && ImGui.IsItemHovered() && ImGui.IsItemClicked())
             _manager.ToggleVisibility(_selector.Selected!.Identifier);
         CkGui.AttachToolTip($"Visuals {(_selector.Selected!.IsEnabled ? "will" : "will not")} be applied.");
@@ -215,6 +243,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             CkGui.AttachToolTip($"A --COL--{_selector.Selected!.Glamour.GameItem.Name}--COL-- is attached to the " +
                 $"--COL--{_selector.Selected!.Label}--COL--.", color: ImGuiColors.ParsedGold);
         }
+
         if (_selector.Selected!.Mod.HasData)
         {
             ImUtf8.SameLineInner();
@@ -222,13 +251,18 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             CkGui.AttachToolTip($"Mod Preset ({_selector.Selected.Mod.Label}) is applied." +
                 $"--SEP--Source Mod: {_selector.Selected!.Mod.Container.ModName}");
         }
+
         if (_selector.Selected!.Traits > 0)
         {
             ImUtf8.SameLineInner();
             _attributeDrawer.DrawTraitPreview(_selector.Selected!.Traits);
         }
+
         _moodleDrawer.ShowStatusIcons(_selector.Selected!.Moodle, ImGui.GetContentRegionAvail().X);
     }
+
+    // tutorial item storage, so we don't have to reinitialize data every frame.
+    private (int, ActiveRestriction?) _tActiveRestriction = (-1, null);
 
     private void DrawActiveItemInfo(Vector2 region)
     {
@@ -241,7 +275,6 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         var groupH = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
         var groupSpacing = (height - 5 * groupH) / 6;
 
-
         foreach (var (data, index) in activeSlots.Restrictions.WithIndex())
         {
             // Spacing.
@@ -250,7 +283,18 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             // if no item is selected, display the unique 'Applier' group.
             if (data.Identifier == Guid.Empty)
             {
+                if (_tActiveRestriction.Item1 == -1) _tActiveRestriction.Item1 = index; // a slot for the tutorial item is found
+
                 _activeItemDrawer.ApplyItemGroup(index, data);
+                if (index != _tActiveRestriction.Item1) continue;
+                // skip tutorial step for subsequent runs
+                _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Selecting, WardrobeUI.LastPos, WardrobeUI.LastSize, () =>
+                {
+                    _tActiveRestriction.Item2 = new ActiveRestriction { Enabler = MainHub.UID, Identifier = _selector.TutorialBasicRestriction.Identifier };
+                    SelfBondageHelper.RestrictionUpdateTask(_tActiveRestriction.Item1, _tActiveRestriction.Item2, DataUpdateType.Applied, _dds, _visuals);
+                    // because we found a free slot, we need to skip the next NoFreeSlots step too.
+                    _guides.JumpToStep(TutorialType.Restrictions, StepsRestrictions.Locking);
+                });
                 continue;
             }
 
@@ -259,10 +303,35 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
 
             // If the padlock is currently locked, show the 'Unlocking' group.
             if (data.IsLocked())
+            {
                 _activeItemDrawer.UnlockItemGroup(index, data, item);
-            // Otherwise, show the 'Locking' group. Locking group can still change applied items.
+                if (index == _tActiveRestriction.Item1)
+                {
+                    _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Unlocking, WardrobeUI.LastPos, WardrobeUI.LastSize, () =>
+                    {
+                        _tActiveRestriction.Item2 = data with { Padlock = Padlocks.None, PadlockAssigner = string.Empty };
+                        SelfBondageHelper.RestrictionUpdateTask(_tActiveRestriction.Item1, _tActiveRestriction.Item2, DataUpdateType.Unlocked, _dds, _visuals);
+                    });
+                }
+            }
             else
+            {
+                // Otherwise, show the 'Locking' group. Locking group can still change applied items.
                 _activeItemDrawer.LockItemGroup(index, data, item);
+                if (index == _tActiveRestriction.Item1)
+                {
+                    _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Locking, WardrobeUI.LastPos, WardrobeUI.LastSize, () =>
+                    {
+                        _tActiveRestriction.Item2 = data with { Padlock = Padlocks.Metal, PadlockAssigner = MainHub.UID };
+                        SelfBondageHelper.RestrictionUpdateTask(_tActiveRestriction.Item1, _tActiveRestriction.Item2, DataUpdateType.Locked, _dds, _visuals);
+                    });
+                }
+            }
         }
+
+        // if we get through the loop without finding an empty slot, skip a few steps.
+        if (_tActiveRestriction.Item1 == -1 && _guides.IsTutorialActive(TutorialType.Restrictions) && 
+            _guides.CurrentStep(TutorialType.Restrictions) == (int)StepsRestrictions.Selecting)
+            _guides.JumpToStep(TutorialType.Restrictions, StepsRestrictions.NoFreeSlots);
     }
 }
