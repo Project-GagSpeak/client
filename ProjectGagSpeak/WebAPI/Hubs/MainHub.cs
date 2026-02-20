@@ -40,8 +40,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     private readonly IpcProvider _ipcProvider;
 
     private readonly ClientDataListener _clientDatListener;
-    private readonly VisualStateListener _visualListener;
-    private readonly PuppeteerListener _puppetListener;
+    private readonly CallbackHandler _callbackHandler;
     private readonly ToyboxStateListener _toyboxListener;
     private readonly PiShockProvider _shockies;
     private readonly ConnectionSyncService _dataSync;
@@ -76,8 +75,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         IpcCallerMoodles moodles,
         IpcProvider ipcProvider,
         ClientDataListener clientDatListener,
-        VisualStateListener visuals,
-        PuppeteerListener puppeteer,
+        CallbackHandler callbackHandler,
         ToyboxStateListener toybox,
         PiShockProvider shockies,
         ConnectionSyncService dataSync)
@@ -95,8 +93,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         _ipcProvider = ipcProvider;
 
         _clientDatListener = clientDatListener;
-        _visualListener = visuals;
-        _puppetListener = puppeteer;
+        _callbackHandler = callbackHandler;
         _toyboxListener = toybox;
         _shockies = shockies;
         _dataSync = dataSync;

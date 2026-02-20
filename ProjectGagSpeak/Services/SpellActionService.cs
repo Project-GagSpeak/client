@@ -6,8 +6,7 @@ using GameAction = Lumina.Excel.Sheets.Action;
 
 namespace GagSpeak.Services;
 
-// Hosted service responsible for allocating a cache of valid SpellAction data,
-// and holding it for future references.
+// Might be worth converting this into a static class *or adopting some GameData cources provided by penumbra?
 public sealed class SpellActionService : IHostedService
 {
     // Immutable (one-time gen) readonly cache of all valid existing Emotes.

@@ -30,9 +30,8 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
     private readonly AttributeDrawer _attributeDrawer;
     private readonly RestraintManager _manager;
     private readonly UiThumbnailService _thumbnails;
+    private readonly SelfBondageService _selfBondage;
     private readonly TutorialService _guides;
-    private readonly DistributorService _dds;
-    private readonly VisualStateListener _visuals;
 
     public bool IsEditing => _manager.ItemInEditor != null;
     public RestraintsPanel(
@@ -48,8 +47,9 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
         RestraintEditorEquipment editorEquipment,
         RestraintEditorModsMoodles editorModsMoodles,
         DistributorService dds,
-        VisualStateListener visuals,
+        CallbackHandler visuals,
         UiThumbnailService thumbnails,
+        SelfBondageService selfBondage,
         TutorialService guides) : base(logger, mediator)
     {
         _selector = selector;
@@ -58,9 +58,8 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
         _moodleDrawer = moodleDrawer;
         _attributeDrawer = attributeDrawer;
         _manager = manager;
+        _selfBondage = selfBondage;
         _guides = guides;
-        _dds = dds;
-        _visuals = visuals;
 
         // The editor tab windows.
         EditorTabs = [editorInfo, editorEquipment, editorLayers, editorModsMoodles];
@@ -256,8 +255,12 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
             _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SelectingRestraint, WardrobeUI.LastPos, WardrobeUI.LastSize,
                 () =>
                 {
-                    var r = new CharaActiveRestraint() { Identifier = _selector.tutorialSet.Identifier, Enabler = MainHub.UID };
-                    SelfBondageHelper.RestraintUpdateTask(r, DataUpdateType.Applied, _dds, _visuals);
+                    var r = new CharaActiveRestraint()
+                    {
+                        Identifier = _selector.tutorialSet.Identifier,
+                        Enabler = MainHub.UID
+                    };
+                    _selfBondage.DoSelfRestraint(r, DataUpdateType.Applied);
                 });
             return;
         }

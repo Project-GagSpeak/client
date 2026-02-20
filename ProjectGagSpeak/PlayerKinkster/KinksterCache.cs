@@ -289,9 +289,6 @@ public class KinksterCache
     // Init Data.
     public KinksterCache(CharaLightStorageData networkData)
     {
-        Svc.Logger.Information($"Initializing Kinkster Cache with {networkData.GagItems.Count()} Gags, {networkData.Restrictions.Count()} Restrictions, " +
-            $"{networkData.Restraints.Count()} Restraints, {networkData.CursedItems.Count()} Cursed Items, " +
-            $"{networkData.Patterns.Count()} Patterns, {networkData.Alarms.Count()} Alarms, and {networkData.Triggers.Count()} Triggers.");
         // convert to local data.
         foreach (var lightGag in networkData.GagItems)
             Gags.TryAdd(lightGag.Gag, new KinksterGag(lightGag));

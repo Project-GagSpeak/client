@@ -57,9 +57,3 @@ public record GlobalChatMessage(ChatMessageGlobal Message, bool FromSelf) : Mess
 /// <summary> Notifies you that a Kinkster in the VibeRoom has sent a message. </summary>
 /// <param name="User"> The Kinkster that sent the message. </param>
 public record VibeRoomChatMessage(UserData Kinkster, string Message) : MessageBase;
-
-/// <summary> Contains the message content of a Chatbox message. </summary>
-public record ChatMsgFromSelf(InputChannel channel, string message) : MessageBase;
-
-/// <summary> Contains the message content of a Chatbox message. </summary>
-public record ChatMsgFromOther(string name, string world, InputChannel channel, string message) : MessageBase;

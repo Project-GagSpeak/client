@@ -266,7 +266,16 @@ public class Kinkster : IComparable<Kinkster>
 
             // Update the kinkster cache with the light storage data.
             _logger.LogDebug($"Updating LightCache for {GetNickAliasOrUid()} " +
-                $"[Shared Aliases: {SharedAliases.Count} | ListeningToYou: {IsListeningToClient}]", LoggerType.PairDataTransfer);
+                $"[Shared Aliases: {SharedAliases.Count} | ListeningToYou: {IsListeningToClient}]", LoggerType.KinksterCache);
+
+            _logger.LogInformation($"Initializing Kinkster Cache with " +
+                $"{data.LightStorageData.GagItems.Count()} Gags, " +
+                $"{data.LightStorageData.Restrictions.Count()} Restrictions, " +
+                $"{data.LightStorageData.Restraints.Count()} Restraints, " +
+                $"{data.LightStorageData.CursedItems.Count()} Cursed Items, " +
+                $"{data.LightStorageData.Patterns.Count()} Patterns, " +
+                $"{data.LightStorageData.Alarms.Count()} Alarms, " +
+                $"and {data.LightStorageData.Triggers.Count()} Triggers.", LoggerType.KinksterCache);
             LightCache = new KinksterCache(data.LightStorageData);
         }
 
@@ -281,26 +290,27 @@ public class Kinkster : IComparable<Kinkster>
     public void NewActiveGagData(KinksterUpdateActiveGag data)
     {
         _logger.LogDebug($"Applying updated gag data for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+        var prev = ActiveGags.GagSlots[data.AffectedLayer] with { };
         ActiveGags.GagSlots[data.AffectedLayer] = data.NewData;
         switch (data.Type)
         {
             case DataUpdateType.Swapped:
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.PreviousGag, false, data.Enactor.UID, this);
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.NewData.GagItem, true, data.Enactor.UID, this);
+                _mediator.Publish(new GagStateChanged(NewState.Disabled, data.AffectedLayer, prev, data.Enactor.UID, UserData.UID));
+                _mediator.Publish(new GagStateChanged(NewState.Enabled, data.AffectedLayer, data.NewData, data.Enactor.UID, UserData.UID));
                 UpdateCachedLockedSlots();
                 return;
             case DataUpdateType.Applied:
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.NewData.GagItem, true, data.Enactor.UID, this);
+                _mediator.Publish(new GagStateChanged(NewState.Enabled, data.AffectedLayer, data.NewData, data.Enactor.UID, UserData.UID));
                 UpdateCachedLockedSlots();
                 return;
             case DataUpdateType.Locked:
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairGagLockStateChange, data.AffectedLayer, data.NewData.Padlock, true, data.NewData.PadlockAssigner, UserData.UID);
+                _mediator.Publish(new GagStateChanged(NewState.Locked, data.AffectedLayer, data.NewData, data.Enactor.UID, UserData.UID));
                 return;
             case DataUpdateType.Unlocked:
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairGagLockStateChange, data.AffectedLayer, data.PreviousPadlock, false, data.Enactor.UID, UserData.UID);
+                _mediator.Publish(new GagStateChanged(NewState.Unlocked, data.AffectedLayer, prev, data.Enactor.UID, UserData.UID));
                 return;
             case DataUpdateType.Removed:
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairGagStateChange, data.AffectedLayer, data.PreviousGag, false, data.Enactor.UID, this);
+                _mediator.Publish(new GagStateChanged(NewState.Disabled, data.AffectedLayer, prev, data.Enactor.UID, UserData.UID));
                 UpdateCachedLockedSlots();
                 return;
         }
@@ -312,27 +322,28 @@ public class Kinkster : IComparable<Kinkster>
     public void NewActiveRestrictionData(KinksterUpdateActiveRestriction data)
     {
         _logger.LogDebug("Applying updated restriction data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
+        var prev = ActiveRestrictions.Restrictions[data.AffectedLayer] with { };
         ActiveRestrictions.Restrictions[data.AffectedLayer] = data.NewData;
 
         switch (data.Type)
         {
             case DataUpdateType.Swapped:
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestrictionStateChange, data.PreviousRestriction, false, data.Enactor.UID, UserData.UID);
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestrictionStateChange, data.NewData.Identifier, true, data.NewData.Enabler, UserData.UID);
+                _mediator.Publish(new RestrictionStateChanged(NewState.Disabled, data.AffectedLayer, prev, data.Enactor.UID, UserData.UID));
+                _mediator.Publish(new RestrictionStateChanged(NewState.Enabled, data.AffectedLayer, data.NewData, data.Enactor.UID, UserData.UID));
                 UpdateCachedLockedSlots();
                 return;
             case DataUpdateType.Applied:
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestrictionStateChange, data.NewData.Identifier, true, data.NewData.Enabler, UserData.UID);
+                _mediator.Publish(new RestrictionStateChanged(NewState.Enabled, data.AffectedLayer, data.NewData, data.Enactor.UID, UserData.UID));
                 UpdateCachedLockedSlots();
                 return;
             case DataUpdateType.Locked:
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestrictionLockStateChange, data.NewData.Identifier, data.NewData.Padlock, true, data.NewData.PadlockAssigner, UserData.UID);
+                _mediator.Publish(new RestrictionStateChanged(NewState.Locked, data.AffectedLayer, data.NewData, data.Enactor.UID, UserData.UID));
                 return;
             case DataUpdateType.Unlocked:
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestrictionLockStateChange, data.NewData.Identifier, data.PreviousPadlock, false, data.Enactor.UID, UserData.UID);
+                _mediator.Publish(new RestrictionStateChanged(NewState.Unlocked, data.AffectedLayer, prev, data.Enactor.UID, UserData.UID));
                 return;
             case DataUpdateType.Removed:
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestrictionStateChange, data.PreviousRestriction, false, data.Enactor.UID, UserData.UID);
+                _mediator.Publish(new RestrictionStateChanged(NewState.Disabled, data.AffectedLayer, prev, data.Enactor.UID, UserData.UID));
                 UpdateCachedLockedSlots();
                 return;
         }
@@ -341,30 +352,28 @@ public class Kinkster : IComparable<Kinkster>
     public void NewActiveRestraintData(KinksterUpdateActiveRestraint data)
     {
         _logger.LogDebug("Applying updated restraint data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
+        var prev = ActiveRestraint with { };
         ActiveRestraint = data.NewData;
 
         switch (data.Type)
         {
             case DataUpdateType.Swapped:
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, data.PreviousRestraint, false, data.Enactor.UID, UserData.UID);
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, data.NewData.Identifier, true, data.NewData.Enabler, UserData.UID);
-                // Update internal cache to reflect latest changes for kinkplates and such.
+                _mediator.Publish(new RestraintStateChanged(NewState.Disabled, prev, data.Enactor.UID, UserData.UID));
+                _mediator.Publish(new RestraintStateChanged(NewState.Enabled, data.NewData, data.Enactor.UID, UserData.UID));
                 UpdateCachedLockedSlots();
                 break;
             case DataUpdateType.Applied:
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, data.NewData.Identifier, true, data.NewData.Enabler, UserData.UID);
-                // Update internal cache to reflect latest changes for kinkplates and such.
+                _mediator.Publish(new RestraintStateChanged(NewState.Enabled, data.NewData, data.Enactor.UID, UserData.UID));
                 UpdateCachedLockedSlots();
                 break;
             case DataUpdateType.Locked:
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestraintLockChange, data.NewData.Identifier, data.NewData.Padlock, true, data.NewData.PadlockAssigner, UserData.UID);
+                _mediator.Publish(new RestraintStateChanged(NewState.Locked, data.NewData, data.Enactor.UID, UserData.UID));
                 break;
             case DataUpdateType.Unlocked:
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestraintLockChange, data.NewData.Identifier, data.PreviousPadlock, false, data.Enactor.UID, UserData.UID);
+                _mediator.Publish(new RestraintStateChanged(NewState.Unlocked, prev, data.Enactor.UID, UserData.UID));
                 break;
             case DataUpdateType.Removed:
-                GagspeakEventManager.AchievementEvent(UnlocksEvent.PairRestraintStateChange, data.PreviousRestraint, false, data.Enactor.UID, UserData.UID);
-                // Update internal cache to reflect latest changes for kinkplates and such.
+                _mediator.Publish(new RestraintStateChanged(NewState.Disabled, prev, data.Enactor.UID, UserData.UID));
                 UpdateCachedLockedSlots();
                 break;
         }

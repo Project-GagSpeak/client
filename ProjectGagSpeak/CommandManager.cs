@@ -4,6 +4,7 @@ using Dalamud.Game.Text.SeStringHandling;
 using GagSpeak.Gui;
 using GagSpeak.Gui.MainWindow;
 using GagSpeak.Kinksters;
+using GagSpeak.Minigames.Watchers;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
@@ -25,10 +26,10 @@ public sealed class CommandManager : IDisposable
     private readonly MainConfig _mainConfig;
     private readonly KinksterManager _kinksters;
     private readonly AccountConfig _serverConfig;
-    private readonly DeathRollService _deathRolls;
+    private readonly DeathRollMonitor _deathRolls;
     private readonly SafewordService _safeword;
     public CommandManager(GagspeakMediator mediator, MainConfig config, KinksterManager pairManager,
-        AccountConfig server, DeathRollService dr, SafewordService safeword)
+        AccountConfig server, DeathRollMonitor dr, SafewordService safeword)
     {
         _mediator = mediator;
         _mainConfig = config;

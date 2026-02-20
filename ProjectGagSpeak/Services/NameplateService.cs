@@ -11,7 +11,9 @@ using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
+using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 
 namespace GagSpeak.Services;
@@ -51,18 +53,18 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         GaggedIcon = Svc.Texture.GetFromFile(gaggedPath).RentAsync().Result;
         GaggedSpeakingIcon = Svc.Texture.GetFromFile(speakingPath).RentAsync().Result;
 
-        // Events
-        _events.Subscribe<int, GagType, bool, string>(UnlocksEvent.GagStateChange, UpdateClientGagState);
-        _events.Subscribe<int, GagType, bool, string, Kinkster>(UnlocksEvent.PairGagStateChange, UpdateKinkster);
+        // All of these methods should perform an update to a persons Gagged State.
+        // This accounts for both client and pair, on or off. (Supposedly) and should fix the issues we have with removals.
+        Mediator.Subscribe<GagStateChanged>(this, _ => OnGagStateChange(_.State, _.Enactor, _.Target));
 
-        Mediator.Subscribe<KinksterPlayerRendered>(this, _ => UpdateGaggedKinksters());
-        Mediator.Subscribe<KinksterPlayerUnrendered>(this, _ => UpdateGaggedKinksters());
-        Mediator.Subscribe<KinksterActiveGagsChanged>(this, m =>
-            UpdateKinkster(0, 0, m.Kinkster.IsRendered && m.Kinkster.ActiveGags.IsGagged() && m.Kinkster.PairGlobals.ChatGarblerActive, string.Empty, m.Kinkster));
-        Mediator.Subscribe<ChatMsgFromSelf>(this, m => OnOwnMessage(m.channel, m.message));
-        // Handle this later
-        Mediator.Subscribe<ChatMsgFromOther>(this, m => { });
+        // Whenever someone unrenders or renders, we should pull a refresh on the nameplates
+        // Handle this in a way where we dont need to worry about keying by nameworld anymore or something.
+        Mediator.Subscribe<KinksterPlayerRendered>(this, _ => RefreshGagPlates());
+        Mediator.Subscribe<KinksterPlayerUnrendered>(this, _ => RefreshGagPlates());
         Mediator.Subscribe<ConnectedMessage>(this, _ => RefreshClientGagState());
+
+        // Temporarily change the GagPlate state if talking while gagged! (Works for both client and pair)
+        Mediator.Subscribe<GameChatMessage>(this, _ => OnGameChatMessage(_.Channel, _.SenderNameWorld, _.Msg.TextValue));
 
         Svc.NamePlate.OnPostNamePlateUpdate += NamePlateOnPostUpdate;
         Logger.LogInformation("NameplateService initialized.");
@@ -76,66 +78,84 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         // perform one final rescan after clearing the dictionary to remove all icons.
         TrackedKinksters.Clear();
         Svc.NamePlate.RequestRedraw();
-
-        _events.Unsubscribe<int, GagType, bool, string>(UnlocksEvent.GagStateChange, UpdateClientGagState);
-        _events.Unsubscribe<int, GagType, bool, string, Kinkster>(UnlocksEvent.PairGagStateChange, UpdateKinkster);
-
         GaggedIcon?.Dispose();
         GaggedSpeakingIcon?.Dispose();
     }
 
     public void RefreshClientGagState()
-        => UpdateClientGagState(0, 0, _gags.ServerGagData?.IsGagged() ?? false, string.Empty);
+        => CheckUpdateClient(NewState.Disabled, string.Empty, MainHub.UID);
 
-    private void UpdateClientGagState(int _, GagType __, bool applied, string ___)
+    private void OnGagStateChange(NewState newState, string enactor, string target)
     {
+        if (target == MainHub.UID)
+            CheckUpdateClient(newState, enactor, target);
+        else
+            CheckUpdateKinkster(newState, enactor, target);
+    }
+
+    private void CheckUpdateClient(NewState newState, string enactor, string target)
+    {
+        // Fail if globals not valid (not connected)
         if (ClientData.Globals is not { } g)
             return;
 
-        if (g.GaggedNameplate && applied)
+        // If we have gaggedNameplate settings on and the change was apply, we should attempt to add them to tracked.
+        if (g.GaggedNameplate && newState is NewState.Enabled)
         {
             Logger.LogDebug($"Adding {PlayerData.NameWithWorld} to tracked Nameplates", LoggerType.Gags);
             TrackedKinksters.TryAdd(PlayerData.NameWithWorld, false);
         }
+        // If we had gagged data and are gagged, we should proceed as normal
         else if (_gags.ServerGagData is { } data && data.IsGagged())
         {
-            // do nothing, they are still gagged.
-            return;
+            // Add it if we are not already added.
+            TrackedKinksters.TryAdd(PlayerData.NameWithWorld, false);
         }
+        // Otherwise, remove it
         else
         {
             Logger.LogDebug($"Removing {PlayerData.NameWithWorld} to tracked Nameplates", LoggerType.Gags);
-            TrackedKinksters.Remove(PlayerData.NameWithWorld, out var ____);
+            TrackedKinksters.Remove(PlayerData.NameWithWorld, out var _);
         }
+        // Request a redraw afterwards to the latest state is reflected.
         Svc.NamePlate.RequestRedraw();
     }
 
-    private void UpdateKinkster(int _, GagType __, bool applied, string ___, Kinkster k)
+    private void CheckUpdateKinkster(NewState newState, string enactor, string target)
     {
-        if (!k.PairGlobals.GaggedNameplate)
+        // Attempt to grab the Kinkster associated with this targetted message
+        if (!_kinksters.TryGetKinkster(new(target), out var kinkster))
             return;
 
-        Logger.LogDebug($"Updating kinkster gag state for {k.PlayerNameWorld} to {applied}", LoggerType.Gags);
-        if (applied)
-        {
-            Logger.LogDebug($"Adding {k.PlayerNameWorld} to tracked Nameplates", LoggerType.Gags);
-            TrackedKinksters.TryAdd(k.PlayerNameWorld, false);
-        }
-        else if (k.ActiveGags.IsGagged())
-        {
-            // do nothing, they are still gagged.
+        // If the kinkster is not rendered, we do not care (I think?)
+        if (!kinkster.IsRendered)
             return;
+
+        var hasNameplates = kinkster.PairGlobals.GaggedNameplate;
+        if (hasNameplates && newState is NewState.Enabled)
+        {
+            Logger.LogDebug($"Adding {kinkster.PlayerNameWorld} to tracked Nameplates", LoggerType.Gags);
+            TrackedKinksters.TryAdd(kinkster.PlayerNameWorld, false);
         }
+        // Otherwise if they are gagged we shouldnt do anything.
+        else if (hasNameplates && kinkster.ActiveGags.IsGagged())
+        {
+            // Add it if we are not already added.
+            TrackedKinksters.TryAdd(kinkster.PlayerNameWorld, false);
+        }
+        // Otherwise we should remove the tracked nameplate.
         else
         {
-            Logger.LogDebug($"Removing {k.PlayerNameWorld} to tracked Nameplates", LoggerType.Gags);
-            TrackedKinksters.Remove(k.PlayerNameWorld, out var ____);
+            Logger.LogDebug($"Removing {kinkster.PlayerNameWorld} to tracked Nameplates", LoggerType.Gags);
+            TrackedKinksters.Remove(kinkster.PlayerNameWorld, out var _);
         }
+
+        // Request a redraw afterwards to the latest state is reflected.
         Svc.NamePlate.RequestRedraw();
     }
 
     // Do this by pointer now since we are cool like that. (TODO)
-    private void UpdateGaggedKinksters()
+    private void RefreshGagPlates()
     {
         // assume a local copy of the kinksters, in which the remaining kinksters are gagged with an active chat garbler.
         var visibleGaggedKinksters = _kinksters.DirectPairs
@@ -156,20 +176,39 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         Svc.NamePlate.RequestRedraw();
     }
 
-    private void OnOwnMessage(InputChannel c, string message)
+    private void OnGameChatMessage(InputChannel channel, string senderNameWorld, string message)
     {
-        if (_gags.ServerGagData is not { } data || ClientData.Globals is not { } g)
-            return;
+        if (PlayerData.NameWithWorld == senderNameWorld)
+        {
+            // Handle a client chat message
+            if (_gags.ServerGagData is not { } data || ClientData.Globals is not { } g)
+                return;
 
-        // Discard if not a garbled message.
-        if (!data.IsGagged() || !g.ChatGarblerActive || !g.AllowedGarblerChannels.IsActiveChannel((int)c))
-            return;
+            // Discard if not a garbled message.
+            if (!data.IsGagged() || !g.ChatGarblerActive || !g.AllowedGarblerChannels.IsActiveChannel((int)channel))
+                return;
 
-        // Fire achievement if it was longer than 5 words and stuff.
-        if (g.ChatGarblerActive && message.Split(' ').Length > 5)
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.GaggedChatSent, c, message);
+            // Fire achievement if it was longer than 5 words and stuff.
+            if (g.ChatGarblerActive && message.Split(' ').Length > 5)
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.GaggedChatSent, channel, message);
 
-        DisplayGaggedSpeaking(PlayerData.NameWithWorld, (int)(650.0f * message.Length / 20.0f));
+            DisplayGaggedSpeaking(PlayerData.NameWithWorld, (int)(650.0f * message.Length / 20.0f));
+        }
+        else if (_kinksters.DirectPairs.FirstOrDefault(k => k.PlayerNameWorld == senderNameWorld) is { } match)
+        {
+            // If not rendered, ignore.
+            if (!match.IsRendered)
+                return;
+            // Handle a Kinkster chat message.
+            if (!match.ActiveGags.IsGagged() || !match.PairGlobals.ChatGarblerActive || !match.PairGlobals.AllowedGarblerChannels.IsActiveChannel((int)channel))
+                return;
+
+            // Fire achievement if it was longer than 5 words and stuff.
+            if (message.Split(' ').Length > 5)
+                GagspeakEventManager.AchievementEvent(UnlocksEvent.KinksterGaggedChatSent, match, channel, message);
+
+            DisplayGaggedSpeaking(match.PlayerNameWorld, (int)(650.0f * message.Length / 20.0f));
+        }
     }
 
     private void OnKinksterMessage(Kinkster k, InputChannel c, string message)
@@ -185,6 +224,9 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         DisplayGaggedSpeaking(k.PlayerNameWorld, (int)(650.0f * message.Length / 20.0f));
     }
 
+    /// <summary>
+    ///     Temporarily sets a tracked Kinkster's GagPlate to the speaking variant momentarily, and then sets it back.
+    /// </summary>
     private async void DisplayGaggedSpeaking(string playerNameWorld, int milliseconds)
     {
         // Add the key or update the value to true.

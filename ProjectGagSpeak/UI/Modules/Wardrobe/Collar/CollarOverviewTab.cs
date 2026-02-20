@@ -32,11 +32,12 @@ public class CollarOverviewTab : IFancyTab
     private readonly EquipmentDrawer _equipDrawer;
     private readonly ModPresetDrawer _modDrawer;
     private readonly MoodleDrawer _moodles;
-    private readonly VisualStateListener _visuals;
+    private readonly CallbackHandler _visuals;
     private readonly CollarManager _manager;
     private readonly KinksterManager _kinksters;
     private readonly ModPresetManager _modPresets;
     private readonly DistributorService _dds;
+    private readonly SelfBondageService _selfBondage;
     private readonly UiThumbnailService _thumbnails;
     private readonly TutorialService _guides;
     public CollarOverviewTab(
@@ -44,11 +45,12 @@ public class CollarOverviewTab : IFancyTab
         EquipmentDrawer equipDrawer, 
         ModPresetDrawer modDrawer,
         MoodleDrawer moodleDrawer,
-        VisualStateListener visuals,
+        CallbackHandler visuals,
         CollarManager collar,
         KinksterManager kinksters,
         ModPresetManager modPresets,
-        DistributorService dds, 
+        DistributorService dds,
+        SelfBondageService selfBondage,
         UiThumbnailService thumbnails,
         TutorialService guides)
     {
@@ -61,6 +63,7 @@ public class CollarOverviewTab : IFancyTab
         _kinksters = kinksters;
         _modPresets = modPresets;
         _dds = dds;
+        _selfBondage = selfBondage;
         _thumbnails = thumbnails;
         _guides = guides;
     }
@@ -326,7 +329,7 @@ public class CollarOverviewTab : IFancyTab
         {
             _logger.LogInformation("Toggling Collar Visuals to " + refVisuals);
             var newData = _manager.SyncedData with { Visuals = refVisuals };
-            SelfBondageHelper.CollarUpdateTask(newData, DataUpdateType.VisibilityChange, _dds, _visuals);
+            _selfBondage.DoSelfCollarUpdate(newData, DataUpdateType.VisibilityChange);
         }
     }
 
@@ -344,7 +347,7 @@ public class CollarOverviewTab : IFancyTab
             {
                 _logger.LogInformation($"Updating Collar Writing to [{writing}]");
                 var newData = _manager.SyncedData with { Writing = writing };
-                SelfBondageHelper.CollarUpdateTask(newData, DataUpdateType.CollarWritingChange, _dds, _visuals);
+                _selfBondage.DoSelfCollarUpdate(newData, DataUpdateType.CollarWritingChange);
             }
         }
     }
@@ -363,7 +366,7 @@ public class CollarOverviewTab : IFancyTab
             {
                 _logger.LogInformation($"Updating Collar Dyes to [{dye1}][{dye2}]");
                 var newData = _manager.SyncedData with { Dye1 = dye1, Dye2 = dye2 };
-                SelfBondageHelper.CollarUpdateTask(newData, DataUpdateType.CollarWritingChange, _dds, _visuals);
+                _selfBondage.DoSelfCollarUpdate(newData, DataUpdateType.CollarWritingChange);
             }
         }
     }

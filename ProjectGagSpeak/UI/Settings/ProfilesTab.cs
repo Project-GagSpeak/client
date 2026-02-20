@@ -15,6 +15,9 @@ using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
 using OtterGui.Text;
 using OtterGuiInternal;
+using OtterGuiInternal.Structs;
+using OtterGuiInternal.Utility;
+using System.Runtime.CompilerServices;
 
 namespace GagSpeak.Gui;
 
@@ -233,7 +236,7 @@ public class ProfilesTab
         var txtSize = ImGui.CalcTextSize(profile.PlayerName);
         var innerClip = new ImRect(hitbox.Min + _styleOffset, new Vector2(hitbox.Max.X - iconSize.X - _style.ItemSpacing.X * 2 - _styleOffset.X, hitbox.Max.Y - _styleOffset.Y));
 
-        ImGuiInternal.RenderTextClipped(window.DrawList, drawArea.Min, drawArea.Max, profile.PlayerName, Vector2.Zero, txtSize, innerClip, true);
+        RenderTextClipped(window.DrawList, drawArea.Min, drawArea.Max, profile.PlayerName, Vector2.Zero, txtSize, innerClip, true);
 
         var iconPosTR = new Vector2(drawArea.Max.X - iconSize.X, drawArea.Min.Y);
         var iconPosBL = new Vector2(drawArea.Min.X, drawArea.Min.Y + ImUtf8.TextHeightSpacing);
@@ -249,6 +252,27 @@ public class ProfilesTab
             profile.HadValidConnection ? ImGuiColors.DalamudGrey2.ToUint() : ImGuiColors.DalamudRed.ToUint(),
             profile.HadValidConnection ? profile.UserUID : "No UID Assigned");
         return clicked;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static unsafe void RenderTextClipped(ImDrawListPtr drawList, Vector2 posMin, Vector2 posMax, ReadOnlySpan<char> text, Vector2 align,
+        Vector2 knownTextSize, ImRect clipRect, bool scanText)
+    {
+        RenderTextClippedExInternal(drawList, posMin, posMax, text, &knownTextSize, align, clipRect, scanText);
+    }
+
+    // Internal override for the render text clipped OtterGuiInternal does.
+    [SkipLocalsInit]
+    private static unsafe void RenderTextClippedExInternal(ImDrawList* drawList, ImVec2 posMin, ImVec2 posMax, ReadOnlySpan<char> text,
+        Vector2* textSizeIfKnown, ImVec2 align, ImRect clipRect, bool scanText)
+    {
+        var (visibleEnd, _, _) = scanText ? StringHelpers.SplitStringWithNull(text) : (text.Length, 0, 0);
+        if (visibleEnd == 0)
+            return;
+
+        var bytes = visibleEnd * 4 > StringHelpers.MaxStackAlloc ? new byte[visibleEnd * 4] : stackalloc byte[visibleEnd * 4];
+        var numBytes = Encoding.UTF8.GetBytes(text[..visibleEnd], bytes);
+        ImGuiP.RenderTextClippedEx(drawList, posMin, posMax, bytes[..numBytes], *textSizeIfKnown, align, clipRect);
     }
 
     /// <summary>

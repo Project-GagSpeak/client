@@ -13,13 +13,11 @@ namespace GagSpeak.CustomCombos.Padlock;
 // These are displayed seperately so dont use a layer updater.
 public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
 {
-    private readonly DistributorService _dds;
-    private readonly VisualStateListener _visuals;
-    public PadlockGagsClient(ILogger log, DistributorService dds, VisualStateListener visuals, GagRestrictionManager manager)
+    private readonly SelfBondageService _selfBondage;
+    public PadlockGagsClient(ILogger log, GagRestrictionManager manager, SelfBondageService selfBondage)
         : base(new LazyList<ActiveGagSlot>(() => [ ..manager.ServerGagData?.GagSlots ?? [new ActiveGagSlot()] ]), PadlockEx.ClientLocks, log)
     {
-        _dds = dds;
-        _visuals = visuals;
+        _selfBondage = selfBondage;
     }
 
     protected override string ItemName(ActiveGagSlot item)
@@ -45,7 +43,7 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
         // we know it was valid, so begin assigning the new data to send off.
         var time = SelectedLock is Padlocks.FiveMinutes ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
         var newData = Items[layerIdx] with { Padlock = SelectedLock, Password = Password, Timer = time, PadlockAssigner = MainHub.UID };
-        if (await SelfBondageHelper.GagUpdateRetTask(layerIdx, newData, DataUpdateType.Locked, _dds, _visuals))
+        if (await _selfBondage.DoSelfGagResult(layerIdx, newData, DataUpdateType.Locked))
         {
             ResetSelection();
             ResetInputs();
@@ -69,7 +67,7 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
             return false;
 
         var newData = Items[layerIdx] with { Padlock = Items[layerIdx].Padlock, Password = Items[layerIdx].Password, PadlockAssigner = MainHub.UID };
-        if (await SelfBondageHelper.GagUpdateRetTask(layerIdx, newData, DataUpdateType.Unlocked, _dds, _visuals))
+        if (await _selfBondage.DoSelfGagResult(layerIdx, newData, DataUpdateType.Unlocked))
         {
             ResetSelection();
             ResetInputs();

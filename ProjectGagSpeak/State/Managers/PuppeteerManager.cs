@@ -131,8 +131,10 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
     }
 
     public string? GetPuppeteerUid(string name, string world)
+        => GetPuppeteerUid($"{name}@{world}");
+
+    public string? GetPuppeteerUid(string nameWorld)
     {
-        var nameWorld = $"{name}@{world}";
         foreach (var (uid, puppeteer) in Puppeteers)
             if (puppeteer.NameWithWorld == nameWorld)
                 return uid;

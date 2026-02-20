@@ -1,4 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
 using CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
 using GagSpeak.PlayerClient;
@@ -6,10 +5,13 @@ using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using OtterGui.Extensions;
+using System.Diagnostics.CodeAnalysis;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak.State.Managers;
 
@@ -135,11 +137,12 @@ public sealed class GagRestrictionManager : IHybridSavable
         data.GagSlots[layer].Enabler = enactor;
 
         _logger.LogTrace($"Updating Garbler Logic for gag {newGag.GagName()} to layer {layer} by {enactor}");
+        // Update the garbler logic to reflect the new gags.
         _muffler.UpdateGarblerLogic(data.CurrentGagNames(), MufflerService.MuffleType(data.GagSlots.Select(g => g.GagItem)));
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.GagStateChange, layer, newGag, true, enactor);
+        // Invoke the Mediator of this change.
+        _mediator.Publish(new GagStateChanged(NewState.Enabled, layer, data.GagSlots[layer], enactor, MainHub.UID));
 
         // Mark what parts of this item will end up having effective changes.
-        _logger.LogTrace($"Attempting to fetch gag from storage if visuals are enabled.");
         if (Storage.TryGetGag(newGag, out item))
         {
             _logger.LogTrace($"Found GagRestriction for {newGag.GagName()} in Storage.");
@@ -159,8 +162,8 @@ public sealed class GagRestrictionManager : IHybridSavable
         data.GagSlots[layer].Password = newData.Password;
         data.GagSlots[layer].Timer = newData.Timer;
         data.GagSlots[layer].PadlockAssigner = newData.PadlockAssigner;
-        // Fire that the gag was locked for this layer.
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.GagLockStateChange, true, layer, newData.Padlock, enactor);
+        // Invoke the Mediator of this change.
+        _mediator.Publish(new GagStateChanged(NewState.Locked, layer, data.GagSlots[layer], enactor, MainHub.UID));
     }
 
     public void UnlockGag(int layer, string enactor)
@@ -169,14 +172,14 @@ public sealed class GagRestrictionManager : IHybridSavable
         if (ServerGagData is not { } data)
             return;
 
-        var prevLock = data.GagSlots[layer].Padlock;
+        var prev = data.GagSlots[layer] with { };
 
         data.GagSlots[layer].Padlock = Padlocks.None;
         data.GagSlots[layer].Password = string.Empty;
         data.GagSlots[layer].Timer = DateTimeOffset.MinValue;
         data.GagSlots[layer].PadlockAssigner = string.Empty;
-        // Fire that the gag was unlocked for this layer.
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.GagLockStateChange, false, layer, prevLock, enactor);
+        // Invoke the Mediator of this change.
+        _mediator.Publish(new GagStateChanged(NewState.Unlocked, layer, prev, enactor, MainHub.UID));
     }
 
     /// <summary> Applies the gag to the spesified layer if possible, and updates the active items. </summary>
@@ -189,14 +192,16 @@ public sealed class GagRestrictionManager : IHybridSavable
             return false;
 
         // store what gag we are removing, then update data and fire achievement ping.
-        var removedGag = data.GagSlots[layer].GagItem;
+        var prev = data.GagSlots[layer] with { };
+
         data.GagSlots[layer].GagItem = GagType.None;
         data.GagSlots[layer].Enabler = string.Empty;
+        // Update the garbler logic to reflect the new gags.
         _muffler.UpdateGarblerLogic(data.CurrentGagNames(), MufflerService.MuffleType(data.GagSlots.Select(g => g.GagItem)));
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.GagStateChange, layer, removedGag, false, enactor);
+        _mediator.Publish(new GagStateChanged(NewState.Disabled, layer, prev, enactor, MainHub.UID));
 
         // Update the affected visual states, if item is enabled.
-        if (Storage.TryGetGag(removedGag, out item))
+        if (Storage.TryGetGag(prev.GagItem, out item))
         {
             // always revert the visuals.
             _activeItems.Remove(layer);

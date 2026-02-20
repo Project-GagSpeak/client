@@ -17,6 +17,7 @@ using GagSpeak.Gui.Wardrobe;
 using GagSpeak.Interop;
 using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
+using GagSpeak.Minigames.Watchers;
 using GagSpeak.MufflerCore.Handler;
 using GagSpeak.PlayerClient;
 using GagSpeak.PlayerControl;
@@ -200,7 +201,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<KinksterManager>()
 
         // Services (Deathroll)
-        .AddSingleton<DeathRollService>()
+        .AddSingleton<DeathRollMonitor>()
         .AddSingleton<GagspeakMediator>()
 
         // Services (KinkPlates)
@@ -220,6 +221,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<CosmeticService>()
         .AddSingleton<ConnectionSyncService>()
         .AddSingleton<DistributorService>()
+        .AddSingleton<ReactionDistributor>()
         .AddSingleton<DtrBarService>()
         .AddSingleton<EmoteService>()
         .AddSingleton<GagspeakMediator>()
@@ -232,7 +234,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<SidePanelService>()
         .AddSingleton<ShareHubService>()
         .AddSingleton<SpellActionService>()
-        .AddSingleton<TriggerActionService>()
+        .AddSingleton<SelfBondageService>()
         .AddSingleton<TutorialService>()
         .AddSingleton<VibeLobbyDistributionService>()
 
@@ -267,11 +269,10 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<ModListener>()
         .AddSingleton<MoodleListener>()
         .AddSingleton<ClientDataListener>()
-        .AddSingleton<PlayerHpListener>()
+        .AddSingleton<HealthMonitor>()
         .AddSingleton<IntifaceListener>()
-        .AddSingleton<PuppeteerListener>()
         .AddSingleton<ToyboxStateListener>()
-        .AddSingleton<VisualStateListener>()
+        .AddSingleton<CallbackHandler>()
 
         // State (Managers)
         .AddSingleton<AlarmManager>()

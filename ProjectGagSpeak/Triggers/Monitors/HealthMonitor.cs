@@ -1,5 +1,4 @@
 using CkCommons;
-using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using GagSpeak.Services;
@@ -7,7 +6,6 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.Watchers;
-using GagSpeak.WebAPI;
 
 namespace GagSpeak.State.Listeners;
 
@@ -18,23 +16,21 @@ internal record PlayerHealth(IEnumerable<HealthPercentTrigger> triggers)
 };
 
 /// <summary>
-///     Tracks the player health of the characters we want to modify, 
-///     and notifies trigger applier when threshold is met.
+///     Track the HP of rendered actors that we have for Health% Triggers.
 /// </summary>
-public sealed class PlayerHpListener : DisposableMediatorSubscriberBase
+public sealed class HealthMonitor : DisposableMediatorSubscriberBase
 {
     private readonly TriggerManager _manager;
-    private readonly TriggerActionService _service;
     private readonly CharaObjectWatcher _watcher;
 
-    public PlayerHpListener(ILogger<PlayerHpListener> logger, GagspeakMediator mediator,
-        TriggerManager manager, TriggerActionService service, CharaObjectWatcher watcher)
+    public HealthMonitor(ILogger<HealthMonitor> logger, GagspeakMediator mediator,
+        TriggerManager manager, CharaObjectWatcher watcher)
         : base(logger, mediator)
     {
         _manager = manager;
-        _service = service;
         _watcher = watcher;
 
+        // This could be removed entirely if we detect when triggers enable or disable but yeah.
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => UpdateTriggerMonitors());
 
         Mediator.Subscribe<WatchedObjectCreated>(this, _ => { });
@@ -131,19 +127,8 @@ public sealed class PlayerHpListener : DisposableMediatorSubscriberBase
                 }
 
                 if (isValid)
-                    ExecuteTriggerAction(trigger);
+                    Mediator.Publish(new HpMonitorTriggered(addr, trigger));
             }
         }
-    }
-
-    public async void ExecuteTriggerAction(HealthPercentTrigger trigger)
-    {
-        Logger.LogInformation("Your Trigger With Name " + trigger.Label + " and priority " + trigger.Priority + " triggering action "
-            + trigger.InvokableAction.ActionType.ToName(), LoggerType.Triggers);
-
-        // Could grab the person who this was for and try to identify their UID from it to provide it here.
-
-        if (await _service.HandleActionAsync(trigger.InvokableAction, ActionSource.TriggerAction))
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.TriggerFired);
     }
 }

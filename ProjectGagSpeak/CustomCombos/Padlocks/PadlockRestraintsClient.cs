@@ -10,15 +10,13 @@ namespace GagSpeak.CustomCombos.Padlock;
 
 public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
 {
-    private readonly DistributorService _dds;
-    private readonly VisualStateListener _visuals;
     private readonly RestraintManager _manager;
-    public PadlockRestraintsClient(ILogger log, DistributorService dds, VisualStateListener visuals, RestraintManager manager)
+    private readonly SelfBondageService _selfBondage;
+    public PadlockRestraintsClient(ILogger log, RestraintManager manager, SelfBondageService selfBondage)
         : base(() => [ manager.ServerData ?? new CharaActiveRestraint() ], PadlockEx.ClientLocks, log)
     {
-        _dds = dds;
-        _visuals = visuals;
         _manager = manager;
+        _selfBondage = selfBondage;
     }
 
     protected override string ItemName(CharaActiveRestraint item)
@@ -44,7 +42,7 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
         // get new data.
         var time = SelectedLock is Padlocks.FiveMinutes ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
         var newData = new CharaActiveRestraint() { Padlock = SelectedLock, Password = Password, Timer = time, PadlockAssigner = MainHub.UID };
-        if (await SelfBondageHelper.RestraintUpdateRetTask(newData, DataUpdateType.Locked, _dds, _visuals))
+        if (await _selfBondage.DoSelfRestraintResult(newData, DataUpdateType.Locked))
         {
             ResetSelection();
             ResetInputs();
@@ -65,7 +63,7 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
             return false;
 
         var newData = Items[0] with { Padlock = Items[0].Padlock, Password = Items[0].Password, PadlockAssigner = MainHub.UID };
-        if (await SelfBondageHelper.RestraintUpdateRetTask(newData, DataUpdateType.Unlocked, _dds, _visuals))
+        if (await _selfBondage.DoSelfRestraintResult(newData, DataUpdateType.Unlocked))
         {
             ResetSelection();
             ResetInputs();

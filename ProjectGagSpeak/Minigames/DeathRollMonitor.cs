@@ -1,66 +1,60 @@
 using CkCommons;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
-using GagSpeak.State.Managers;
-using GagSpeak.WebAPI;
+using GagSpeak.Services.Mediator;
 using System.Text.RegularExpressions;
 
-namespace GagSpeak.Services;
+namespace GagSpeak.Minigames.Watchers;
 
-public sealed class DeathRollService
+/// <summary>
+///     Monitors the chatlogs for deathroll messages sent to the chat.
+/// </summary>
+public sealed class DeathRollMonitor : DisposableMediatorSubscriberBase
 {
-    private readonly ILogger<DeathRollService> _logger;
-    private readonly TriggerManager _triggers;
-    private readonly TriggerActionService _triggerActions;
+    private Dictionary<string, DeathRollSession> _monitored = [];
 
-    public DeathRollService(ILogger<DeathRollService> logger, TriggerManager manager, TriggerActionService actions)
+    public DeathRollMonitor(ILogger<DeathRollMonitor> logger, GagspeakMediator mediator)
+        : base(logger, mediator)
     {
-        _logger = logger;
-        _triggers = manager;
-        _triggerActions = actions;
+        Mediator.Subscribe<DeathrollMessage>(this, _ => OnDeathrollMessage(_.Type, _.SenderNameWorld, _.Msg));
     }
-
-    private Dictionary<string, DeathRollSession> MonitoredSessions = new();
 
     // add a helper function to retrieve the roll cap of the last active session our player is in.
     public int? GetLastRollCap()
     {
         var player = PlayerData.NameWithWorld;
         // Sort all sessions in order by their LastRollTime, and return the first one where either the opponent is nullorEmpty, or matches the clientplayernameandworld.
-        var matchedSession = MonitoredSessions.Values
+        var matchedSession = _monitored.Values
         .OrderByDescending(s => s.LastRollTime)
             .FirstOrDefault(s => s.Opponent.IsNullOrEmpty() || ((s.Opponent == player || s.Initializer == player) && s.LastRoller != player));
 
         return matchedSession?.CurrentRollCap ?? null;
     }
 
-    public void ProcessMessage(XivChatType type, string nameWithWorld, SeString message)
+    private void OnDeathrollMessage(XivChatType type, string nameWithWorld, SeString message)
     {
         if (!PlayerData.Available || !message.Payloads.Exists(p => p.Type == PayloadType.Icon))
-        {
-            _logger.LogDebug("Ignoring message due to not being in a world or not being a chat message.", LoggerType.Triggers);
             return;
-        }
 
         var (rollValue, rollCap) = ParseMessage(message.TextValue);
 
         // if the roll value and cap are 0, its an invalid, so return.
         if (rollValue is -1 && rollCap is -1)
         {
-            _logger.LogDebug("Ignoring message due to invalid roll values.", LoggerType.Triggers);
+            Logger.LogDebug("Ignoring message due to invalid roll values.", LoggerType.Triggers);
             return;
         }
 
-        _logger.LogDebug($"{nameWithWorld} rolled {rollValue} with cap {rollCap}", LoggerType.Triggers);
+        Logger.LogDebug($"{nameWithWorld} rolled {rollValue} with cap {rollCap}", LoggerType.Triggers);
 
         if (rollValue is -1)
         {
-            _logger.LogDebug($"A Player has started a different deathroll session!", LoggerType.Triggers);
+            Logger.LogDebug($"A Player has started a different deathroll session!", LoggerType.Triggers);
             StartNewSession(nameWithWorld, rollCap);
         }
         else
         {
-            _logger.LogDebug($"{nameWithWorld} is attempting to continue / join a session", LoggerType.Triggers);
+            Logger.LogDebug($"{nameWithWorld} is attempting to continue / join a session", LoggerType.Triggers);
             ContinueSession(nameWithWorld, rollValue, rollCap);
         }
     }
@@ -72,24 +66,24 @@ public sealed class DeathRollService
 
         // Create and add new session
         var session = new DeathRollSession(initializer, initialRollCap, OnSessionComplete);
-        MonitoredSessions[initializer] = session;
-        _logger.LogDebug($"New session started by {initializer} with cap {initialRollCap}");
+        _monitored[initializer] = session;
+        Logger.LogDebug($"New session started by {initializer} with cap {initialRollCap}");
     }
 
     private void ContinueSession(string playerName, int rollValue, int rollCap)
     {
         // Find a matching active session where the cap matches
-        var session = MonitoredSessions.Values
+        var session = _monitored.Values
             .FirstOrDefault(s => s.CurrentRollCap == rollCap && !s.IsComplete && s.LastRoller != playerName);
 
         if (session is null) {
-            _logger.LogDebug("No active session found to match roll.", LoggerType.Triggers);
+            Logger.LogDebug("No active session found to match roll.", LoggerType.Triggers);
             return;
         }
 
         // do not join a session we are not a part of.
         if (!session.Opponent.IsNullOrEmpty() && (session.Opponent != playerName && session.Initializer != playerName)) {
-            _logger.LogTrace($"{playerName} is not part of the session, ignoring!", LoggerType.Triggers);
+            Logger.LogTrace($"{playerName} is not part of the session, ignoring!", LoggerType.Triggers);
             return;
         }
 
@@ -97,17 +91,17 @@ public sealed class DeathRollService
         // and should clear all other instances with our name.
         if (session.Opponent.IsNullOrEmpty())
         {
-            _logger.LogDebug($"{playerName} joined session with {session.Initializer}.", LoggerType.Triggers);
+            Logger.LogDebug($"{playerName} joined session with {session.Initializer}.", LoggerType.Triggers);
             RemovePlayerSessions(playerName);
         }
 
         if (session.TryProcessRoll(playerName, rollValue))
         {
-            _logger.LogDebug($"{playerName} rolled {rollValue} in session.", LoggerType.Triggers);
+            Logger.LogDebug($"{playerName} rolled {rollValue} in session.", LoggerType.Triggers);
         }
         else
         {
-            _logger.LogDebug("Invalid roll attempt by " + playerName);
+            Logger.LogDebug("Invalid roll attempt by " + playerName);
         }
     }
 
@@ -116,11 +110,11 @@ public sealed class DeathRollService
     /// </summary>
     private void RemovePlayerSessions(string playerName)
     {
-        foreach (var session in MonitoredSessions.Values.Where(k => k.Initializer == playerName || k.Opponent == playerName).ToList())
+        foreach (var session in _monitored.Values.Where(k => k.Initializer == playerName || k.Opponent == playerName).ToList())
         {
-            _logger.LogDebug($"Removing session involving {playerName}, (Initializer: {session.Initializer} and Opponent {session.Opponent}" +
+            Logger.LogDebug($"Removing session involving {playerName}, (Initializer: {session.Initializer} and Opponent {session.Opponent}" +
                 " due to them joining / creating another!", LoggerType.Triggers);
-            MonitoredSessions.Remove(session.Initializer);
+            _monitored.Remove(session.Initializer);
         }
     }
 
@@ -129,18 +123,16 @@ public sealed class DeathRollService
     /// </summary>
     private async void OnSessionComplete(DeathRollSession session)
     {
-        var se = new SeStringBuilder().AddText("[Deathroll]").AddUiForeground("Match ended. Loser: " + session.LastRoller, 31).AddUiForegroundOff();
-        Svc.Chat.Print(se.BuiltString);
-        _logger.LogInformation("Session completed and removed.");
+        Svc.Chat.Print(new SeStringBuilder().AddText("[Deathroll]").AddUiForeground("Match ended. Loser: " + session.LastRoller, 31).AddUiForegroundOff().BuiltString);
         // if we were the loser, then fire the deathroll trigger.
-        if (session.LastRoller == PlayerData.NameWithWorld)
-        {
-            // Could grab the opponent UID here using the handler if we are wanting to have them perform the trigger action.
-            foreach (var trigger in _triggers.Storage.Social)
-                await _triggerActions.HandleActionAsync(trigger.InvokableAction, ActionSource.TriggerAction);
-        }
-
-        MonitoredSessions.Remove(session.Initializer);
+        var playerName = PlayerData.NameWithWorld;
+        var loser = session.LastRoller;
+        var winner = session.Initializer == loser ? session.Opponent : session.Initializer;
+        // It was a match where we were involved.
+        if (playerName == loser || playerName == winner)
+            Mediator.Publish(new DeathrollResult(winner, loser));
+        // Remove the match
+        _monitored.Remove(session.Initializer);
     }
 
     /// <summary>

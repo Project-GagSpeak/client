@@ -161,7 +161,7 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             _runtimeServiceScope.ServiceProvider.GetRequiredService<GlamourListener>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<ModListener>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<MoodleListener>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<PlayerHpListener>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<HealthMonitor>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<IntifaceListener>();
 
             // get the required service for the online player manager (and notification service if we add it)

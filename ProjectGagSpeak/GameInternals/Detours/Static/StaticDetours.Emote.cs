@@ -6,6 +6,7 @@ using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
+using GagSpeak.Services.Mediator;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 
@@ -37,15 +38,18 @@ public partial class StaticDetours
             if (emoteCaller == null)
                 throw new Bagagwa("Emote Caller GameObject is null in EmoteDetour.");
 
-            var emoteCallerName = (emoteCaller->IsCharacter()) ? ((Character*)emoteCaller)->GetNameWithWorld() : "No Player Was Emote Caller";
-            var emoteName = EmoteService.EmoteName(emoteId);
             var tgtObj = GameObjectManager.Instance()->Objects.GetObjectByGameObjectId(targetId);
-            var targetName = (tgtObj != null && tgtObj->IsCharacter()) ? ((Character*)tgtObj)->GetNameWithWorld() : "No Player Was Target";
-            Logger.LogTrace($"OnEmote >> [{emoteCallerName}] used Emote [{emoteName}](ID:{emoteId}) on Target: [{targetName}]", LoggerType.EmoteMonitor);
 
-            // Could keep as nint or do snapshotting.
+            if ((MainConfig.LoggerFilters & LoggerType.EmoteMonitor) != 0)
+            {
+                var emoteCallerName = (emoteCaller->IsCharacter()) ? ((Character*)emoteCaller)->GetNameWithWorld() : "No Player Was Emote Caller";
+                var emoteName = EmoteService.EmoteName(emoteId);
+                var targetName = (tgtObj != null && tgtObj->IsCharacter()) ? ((Character*)tgtObj)->GetNameWithWorld() : "No Player Was Target";
+                Logger.LogTrace($"OnEmote >> [{emoteCallerName}] used Emote [{emoteName}](ID:{emoteId}) on Target: [{targetName}]", LoggerType.EmoteMonitor);
+            }
 
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.EmoteExecuted, (nint)emoteCaller, emoteId, (nint)tgtObj);
+            // Published as a SameThreadMessage to be handled internally by respective monitors.
+            Mediator.Publish(new EmoteDetected(emoteId, (nint)emoteCallerAddr, (nint)tgtObj));
         }
         catch (Bagagwa e)
         {
