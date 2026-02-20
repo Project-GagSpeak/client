@@ -12,10 +12,8 @@ using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
@@ -35,8 +33,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
     private readonly RestrictionManager _manager;
     private readonly UiThumbnailService _thumbnails;
     private readonly TutorialService _guides;
-    private readonly DistributorService _dds;
-    private readonly VisualStateListener _visuals;
+    private readonly SelfBondageService _selfBondage;
 
     public bool IsEditing => _manager.ItemInEditor != null;
 
@@ -51,8 +48,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         AttributeDrawer traitsDrawer,
         RestrictionManager manager,
         HypnoEffectManager effectPresets,
-        DistributorService dds,
-        VisualStateListener visuals,
+        SelfBondageService selfBondage,
         UiThumbnailService thumbnails,
         TutorialService guides) : base(logger, mediator)
     {
@@ -64,8 +60,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         _moodleDrawer = moodleDrawer;
         _activeItemDrawer = activeItemDrawer;
         _manager = manager;
-        _visuals = visuals;
-        _dds = dds;
+        _selfBondage = selfBondage;
         _guides = guides;
 
         _hypnoEditor = new HypnoEffectEditor("RestrictionEditor", effectPresets, guides);
@@ -271,6 +266,9 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         if (_manager.ServerRestrictionData is not { } activeSlots)
             return;
 
+        // clear the tutorial object if it has stale data, in case tutorial needs to run again.
+        if (!_guides.IsTutorialActive(TutorialType.Restrictions) && _tActiveRestriction.Item1 != -1) _tActiveRestriction = (-1, null);
+
         var height = ImGui.GetContentRegionAvail().Y;
         var groupH = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
         var groupSpacing = (height - 5 * groupH) / 6;
@@ -291,7 +289,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
                 _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Selecting, WardrobeUI.LastPos, WardrobeUI.LastSize, () =>
                 {
                     _tActiveRestriction.Item2 = new ActiveRestriction { Enabler = MainHub.UID, Identifier = _selector.TutorialBasicRestriction.Identifier };
-                    SelfBondageHelper.RestrictionUpdateTask(_tActiveRestriction.Item1, _tActiveRestriction.Item2, DataUpdateType.Applied, _dds, _visuals);
+                    _selfBondage.DoSelfBind(_tActiveRestriction.Item1, _tActiveRestriction.Item2, DataUpdateType.Applied);
                     // because we found a free slot, we need to skip the next NoFreeSlots step too.
                     _guides.JumpToStep(TutorialType.Restrictions, StepsRestrictions.Locking);
                 });
@@ -310,7 +308,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
                     _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Unlocking, WardrobeUI.LastPos, WardrobeUI.LastSize, () =>
                     {
                         _tActiveRestriction.Item2 = data with { Padlock = Padlocks.None, PadlockAssigner = string.Empty };
-                        SelfBondageHelper.RestrictionUpdateTask(_tActiveRestriction.Item1, _tActiveRestriction.Item2, DataUpdateType.Unlocked, _dds, _visuals);
+                        _selfBondage.DoSelfBind(_tActiveRestriction.Item1, _tActiveRestriction.Item2, DataUpdateType.Unlocked);
                     });
                 }
             }
@@ -323,14 +321,14 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
                     _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Locking, WardrobeUI.LastPos, WardrobeUI.LastSize, () =>
                     {
                         _tActiveRestriction.Item2 = data with { Padlock = Padlocks.Metal, PadlockAssigner = MainHub.UID };
-                        SelfBondageHelper.RestrictionUpdateTask(_tActiveRestriction.Item1, _tActiveRestriction.Item2, DataUpdateType.Locked, _dds, _visuals);
+                        _selfBondage.DoSelfBind(_tActiveRestriction.Item1, _tActiveRestriction.Item2, DataUpdateType.Locked);
                     });
                 }
             }
         }
 
         // if we get through the loop without finding an empty slot, skip a few steps.
-        if (_tActiveRestriction.Item1 == -1 && _guides.IsTutorialActive(TutorialType.Restrictions) && 
+        if (_tActiveRestriction.Item1 == -1 && _guides.IsTutorialActive(TutorialType.Restrictions) &&
             _guides.CurrentStep(TutorialType.Restrictions) == (int)StepsRestrictions.Selecting)
             _guides.JumpToStep(TutorialType.Restrictions, StepsRestrictions.NoFreeSlots);
     }

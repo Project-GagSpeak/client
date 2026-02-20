@@ -44,8 +44,6 @@ public class WardrobeUI : WindowMediatorSubscriberBase
             .Add(FAI.CloudDownloadAlt, "Wardrobe Migrations", () => Mediator.Publish(new UiToggleMessage(typeof(MigrationsUI))))
             .AddTutorial(_guides, TutorialFromTab)
             .Build();
-        IsOpen = true;
-        _tabMenu.TabSelection = SelectedTab.MyRestrictions;
     }
 
     // Accessed by Tutorial System

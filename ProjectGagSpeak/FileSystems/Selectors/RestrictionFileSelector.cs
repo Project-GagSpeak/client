@@ -27,13 +27,13 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
     private readonly FavoritesConfig _favorites;
     private readonly RestrictionManager _manager;
     private readonly TutorialService _guides;
-    
+
     public GagspeakMediator Mediator { get; init; }
 
     public RestrictionItem TutorialHypnoRestriction { get; private set; }
     public RestrictionItem TutorialBasicRestriction { get; private set; }
 
-    /// <summary> 
+    /// <summary>
     /// For now, use this 'state storage', it is a list of attributes linked to each leaf.
     /// To be honest im not sure why to not just access this from the path item directly during the draw, but whatever.
     /// We will find out later if anything.
@@ -157,9 +157,10 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
             () =>
             {
                 // make a hypno item to show the user the extra things it can do
-                TutorialHypnoRestriction = _manager.CreateNew("Tutorial Hypno", RestrictionType.Hypnotic); 
+                TutorialHypnoRestriction = _manager.CreateNew("Tutorial Hypno", RestrictionType.Hypnotic);
                 // This is to apply later, as I don't feel comfy applying hypno for photosensitive reasons
                 TutorialBasicRestriction = _manager.CreateNew("Tutorial Restriction", RestrictionType.Normal);
+                // TODO: Apply this properly, it's a bit buggy doing it this way but it works.
                 TutorialBasicRestriction.Glamour = new GlamourSlot(EquipSlot.Head, EquipItem.FromId(2784));
             });
         _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.RestrictionTypes, WardrobeUI.LastPos, WardrobeUI.LastSize);
@@ -238,4 +239,3 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
                 .Concat(folder.GetLeaves().OrderByDescending(l => FavoritesConfig.Restrictions.Contains(l.Value.Identifier)));
     }
 }
-
