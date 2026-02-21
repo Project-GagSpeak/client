@@ -127,43 +127,37 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
         }
     }
 
-    /// <summary> Attempts to add the gag restriction as a favorite. </summary>
-    public bool AddFavorite(Trigger t) => _favorites.TryAddRestriction(FavoriteIdContainer.Trigger, t.Identifier);
+    /// <summary>
+    ///     Attempts to add the Trigger as a favorite.
+    /// </summary>
+    public bool AddFavorite(Trigger t)
+        => _favorites.TryAddRestriction(FavoriteIdContainer.Trigger, t.Identifier);
 
-    /// <summary> Attempts to remove the gag restriction as a favorite. </summary>
-    public bool RemoveFavorite(Trigger t) => _favorites.RemoveRestriction(FavoriteIdContainer.Trigger, t.Identifier);
+    /// <summary>
+    ///     Attempts to remove the Trigger as a favorite.
+    /// </summary>
+    public bool RemoveFavorite(Trigger t)
+        => _favorites.RemoveRestriction(FavoriteIdContainer.Trigger, t.Identifier);
 
     // unsure how stable these are to use atm but we will see.
-    public bool ToggleTrigger(Guid triggerId, string enactor)
+    public bool ToggleState(Guid triggerId, string enactor)
     {
         if (!Storage.TryGetTrigger(triggerId, out var trigger))
             return false;
-        
-        trigger.Enabled = !trigger.Enabled;
-        _saver.Save(this);
+
+        ToggleState(trigger);
         return true;
     }
 
-    public void EnableTrigger(Guid triggerId, string enactor)
-    {
-        if (Storage.TryGetTrigger(triggerId, out var trigger))
-        {
-            trigger.Enabled = true;
-            _saver.Save(this);
-        }
-    }
+    public void ToggleState(Trigger trigger)
+        => ToggleState([trigger]);
 
-    public void DisableTrigger(Guid triggerId, string enactor)
+    public void ToggleState(IEnumerable<Trigger> triggers)
     {
-        // if this is false it means one is active for us to disable.
-        if (Storage.TryGetTrigger(triggerId, out var trigger))
-        {
-            if(!trigger.Enabled) 
-                return;
-
-            trigger.Enabled = false;
-            _saver.Save(this);
-        }
+        foreach (var a in triggers)
+            a.Enabled = !a.Enabled;
+        Logger.LogDebug($"Toggled Trigger(s): ({string.Join(", ", triggers.Select(a => a.Label))})", LoggerType.Triggers);
+        _saver.Save(this);
     }
 
     #region HybridSavable
@@ -248,22 +242,22 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
                 // Safely parse the integer to InvokableActionType
                 if (Enum.TryParse(triggerToken["ActionType"]?.ToString(), out InvokableActionType executionType))
                 {
-                    InvokableGsAction executableAction = executionType switch
+                    InvokableGsAction invokableAct = executionType switch
                     {
-                        InvokableActionType.TextOutput => triggerToken["ExecutableAction"]?.ToObject<TextAction>() ?? new TextAction(),
-                        InvokableActionType.Gag => triggerToken["ExecutableAction"]?.ToObject<GagAction>() ?? new GagAction(),
-                        InvokableActionType.Restriction => triggerToken["ExecutableAction"]?.ToObject<RestrictionAction>() ?? new RestrictionAction(),
-                        InvokableActionType.Restraint => triggerToken["ExecutableAction"]?.ToObject<RestraintAction>() ?? new RestraintAction(),
-                        InvokableActionType.Moodle => triggerToken["ExecutableAction"]?.ToObject<MoodleAction>() ?? new MoodleAction(),
-                        InvokableActionType.ShockCollar => triggerToken["ExecutableAction"]?.ToObject<PiShockAction>() ?? new PiShockAction(),
-                        InvokableActionType.SexToy => triggerToken["ExecutableAction"]?.ToObject<SexToyAction>() ?? new SexToyAction(),
-                        _ => throw new Exception("Invalid Execution Type")
+                        InvokableActionType.TextOutput => triggerToken["InvokableAction"]?.ToObject<TextAction>() ?? new TextAction(),
+                        InvokableActionType.Gag => triggerToken["InvokableAction"]?.ToObject<GagAction>() ?? new GagAction(),
+                        InvokableActionType.Restriction => triggerToken["InvokableAction"]?.ToObject<RestrictionAction>() ?? new RestrictionAction(),
+                        InvokableActionType.Restraint => triggerToken["InvokableAction"]?.ToObject<RestraintAction>() ?? new RestraintAction(),
+                        InvokableActionType.Moodle => triggerToken["InvokableAction"]?.ToObject<MoodleAction>() ?? new MoodleAction(),
+                        InvokableActionType.ShockCollar => triggerToken["InvokableAction"]?.ToObject<PiShockAction>() ?? new PiShockAction(),
+                        InvokableActionType.SexToy => triggerToken["InvokableAction"]?.ToObject<SexToyAction>() ?? new SexToyAction(),
+                        _ => throw new Exception("Invalid InvokableAction Type")
                     };
 
-                    if (executableAction is not null)
-                        triggerAbstract.InvokableAction = executableAction;
+                    if (invokableAct is not null)
+                        triggerAbstract.InvokableAction = invokableAct;
                     else
-                        throw new Exception("Failed to deserialize ExecutableAction");
+                        throw new Exception("Failed to deserialize InvokableAction");
                 }
                 else
                 {

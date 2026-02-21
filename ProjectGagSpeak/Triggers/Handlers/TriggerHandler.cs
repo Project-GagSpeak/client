@@ -1,13 +1,11 @@
 using CkCommons;
 using CkCommons.Helpers;
-using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using GagSpeak.GameInternals;
 using GagSpeak.GameInternals.Structs;
 using GagSpeak.Kinksters;
-using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
@@ -18,11 +16,6 @@ using GagSpeak.Watchers;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
-using Penumbra.GameData.Files.ShaderStructs;
-using Penumbra.GameData.Interop;
-using System.Text.RegularExpressions;
-using TerraFX.Interop.Windows;
-using static System.Windows.Forms.AxHost;
 
 namespace GagSpeak.State.Handlers;
 

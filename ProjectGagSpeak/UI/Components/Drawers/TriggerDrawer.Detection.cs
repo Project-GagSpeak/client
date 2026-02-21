@@ -19,9 +19,9 @@ using OtterGui.Text;
 namespace GagSpeak.Gui.Components;
 
 // Scoped, sealed class to draw the editor and display components of aliasItems.
-public sealed partial class TriggerDrawer : IDisposable
+public sealed class DetectionDrawer : IDisposable
 {
-    private readonly ILogger<TriggerDrawer> _logger;
+    private readonly ILogger<DetectionDrawer> _logger;
     private readonly TriggerManager _manager;
     private readonly MoodleDrawer _moodleDrawer;
 
@@ -34,8 +34,8 @@ public sealed partial class TriggerDrawer : IDisposable
     private JobActionCombo _jobActionCombo;
     private EmoteCombo _emoteCombo;
 
-    public TriggerDrawer(
-        ILogger<TriggerDrawer> logger,
+    public DetectionDrawer(
+        ILogger<DetectionDrawer> logger,
         GagspeakMediator mediator,
         MoodleDrawer moodleDrawer,
         GagRestrictionManager gags,
@@ -90,6 +90,78 @@ public sealed partial class TriggerDrawer : IDisposable
         _logger.LogTrace($"Changed from ({oldJob.ToString()}) to ({newJob.ToString()}). Refreshing action list.", LoggerType.Triggers);
         _jobActionCombo.RefreshActionList();
     }
+
+    public void DrawSpellAction(SpellActionTrigger trigger)
+    {
+
+    }
+
+    public void DrawSpellActionEditor(SpellActionTrigger trigger)
+    {
+
+    }
+
+    public void DrawHealthPercent(HealthPercentTrigger trigger)
+    {
+
+    }
+
+    public void DrawHealthPercentEditor(HealthPercentTrigger trigger)
+    {
+
+    }
+
+    public void DrawRestraint(RestraintTrigger trigger)
+    {
+
+    }
+
+    public void DrawRestraintEditor(RestraintTrigger trigger)
+    {
+
+    }
+
+    public void DrawRestriction(RestrictionTrigger trigger)
+    {
+
+    }
+
+    public void DrawRestrictionEditor(RestrictionTrigger trigger)
+    {
+
+    }
+
+    public void DrawGag(GagTrigger trigger)
+    {
+
+    }
+
+    public void DrawGagEditor(GagTrigger trigger)
+    {
+
+    }
+
+    public void DrawSocial(SocialTrigger trigger)
+    {
+
+    }
+
+    public void DrawSocialEditor(SocialTrigger trigger)
+    {
+
+    }
+
+    public void DrawEmote(EmoteTrigger trigger)
+    {
+
+    }
+
+    public void DrawEmoteEditor(EmoteTrigger trigger)
+    {
+
+    }
+
+
 
     public void DrawDetectionInfo(Trigger trigger, bool isEditorItem, uint searchBg)
     {
@@ -500,55 +572,71 @@ public sealed partial class TriggerDrawer : IDisposable
 
     private void DrawEmoteTrigger(EmoteTrigger emote, bool isEditorItem, uint? searchBg)
     {
-        using (CkRaii.InfoRow(FAI.Eye, "Detect", "The Emote to detect.", string.Empty))
+        using (ImRaii.Group())
         {
-            var label = _emoteCombo.Current.Name ?? "<No Emote Selected>";
+            CkGui.FramedIconText(FAI.Eye);
+            CkGui.AttachToolTip("The Emote to detect.");
+
+            CkGui.TextFrameAlignedInline("Detect");
+            ImGui.SameLine();
+
             var width = ImGui.GetContentRegionAvail().X * .7f;
-            CkGuiUtils.FramedEditDisplay("##EmoteSelect", width, isEditorItem, label, _ =>
+            var flags = isEditorItem ? CFlags.None : CFlags.NoArrowButton;
+
+            using (ImRaii.Disabled(!isEditorItem))
             {
-                var change = _emoteCombo.Draw("##EmoteSelectCombo", emote.EmoteID, width, 1.25f, CFlags.None, searchBg);
-                if (change && emote.EmoteID != _emoteCombo.Current.RowId)
+                if (_emoteCombo.Draw("##emote-sel", emote.EmoteID, width, 1.25f, flags, searchBg))
                     emote.EmoteID = _emoteCombo.Current.RowId;
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                     emote.EmoteID = uint.MaxValue;
-            });
-            CkGui.AttachToolTip("The Emote to detect.");
+            }
+            CkGui.AttachToolTip("The emote to detect.");
 
             ImGui.SameLine();
-            _emoteCombo.DrawSelectedIcon(ImGui.GetFrameHeight());
+            _emoteCombo.DrawSelectedIcon(ImUtf8.FrameHeight);
         }
 
         // The direction the emote should be in.
         var directionsTT = "Determines how the trigger is fired." +
             "--SEP----COL--From Self ⇒--COL-- Done by you." +
-            "--SEP----COL--Self to Others ⇒--COL-- Done by you, and the target WAS NOT you." +
-            "--SEP----COL--From Others ⇒--COL-- Done by someone else." +
-            "--SEP----COL--Others to You ⇒--COL-- Done by someone else, and the target WAS you." +
-            "--SEP----COL--Any ⇒--COL-- Ignores Direction. Source & Target can be anyone.";
-        using (CkRaii.InfoRow(FAI.Flag, "Direction is", "Required Direction of the Emote", string.Empty))
+            "--NL----COL--Self to Others ⇒--COL-- Done by you, and the target WAS NOT you." +
+            "--NL----COL--From Others ⇒--COL-- Done by someone else." +
+            "--NL----COL--Others to You ⇒--COL-- Done by someone else, and the target WAS you." +
+            "--NL----COL--Any ⇒--COL-- Ignores Direction. Source & Target can be anyone.";
+        using (ImRaii.Group())
         {
-            var width = ImGui.CalcTextSize("From others to Youm").X;
-            CkGuiUtils.FramedEditDisplay("##Direction", width, isEditorItem, emote.EmoteDirection.ToName(), _ =>
+            CkGui.FramedIconText(FAI.Flag);
+            CkGui.AttachToolTip("Required direction of the emote");
+
+            CkGui.TextFrameAlignedInline("Direction is");
+
+            var width = ImGui.CalcTextSize("From others to Youmm").X + ImUtf8.FrameHeight;
+            var cFlags = isEditorItem ? CFlags.None : CFlags.NoArrowButton;
+
+            using (ImRaii.Disabled(isEditorItem))
             {
-                if (CkGuiUtils.EnumCombo("##DirectionCombo", width, emote.EmoteDirection, out var newVal, _ => _.ToName(), flags: CFlags.NoArrowButton))
+                ImGui.SameLine();
+                if (CkGuiUtils.EnumCombo("##DirectionCombo", width, emote.EmoteDirection, out var newVal, _ => _.ToName(), flags: cFlags))
                     emote.EmoteDirection = newVal;
-            });
+            }
             CkGui.AttachToolTip(directionsTT, color: GsCol.LushPinkButton.Vec4());
         }
 
-
-        // Player to Monitor that would use this emote.
-        using (CkRaii.InfoRow(FAI.Eye, "Defines who the \"Target\" is, if desired.--SEP--Leaving this blank allows anyone."))
+        using (ImRaii.Group())
         {
+            CkGui.FramedIconText(FAI.User);
+            CkGui.AttachToolTip("Defines the --COL--Target--COL----SEP--Leaving this blank allows anyone.", GsCol.LushPinkLine.Vec4Ref());
+            ImGui.SameLine();
             var width = ImGui.GetContentRegionAvail().X;
             var playerStrRef = emote.PlayerNameWorld;
-            var label = playerStrRef.IsNullOrEmpty() ? "<No Name@World Set!>" : playerStrRef;
-            CkGuiUtils.FramedEditDisplay("##PlayerMonitor", width, isEditorItem, label, _ =>
+            ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+            using (ImRaii.Disabled(isEditorItem))
             {
-                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
                 if (ImGui.InputTextWithHint("##PlayerMonitor", "Devious Diva@Balmung..", ref playerStrRef, 68))
                     emote.PlayerNameWorld = playerStrRef;
-            });
+                if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+                    emote.PlayerNameWorld = string.Empty;
+            }
             CkGui.AttachToolTip("The Target Emote User.--SEP--Must use Player Name@World format.");
         }
     }

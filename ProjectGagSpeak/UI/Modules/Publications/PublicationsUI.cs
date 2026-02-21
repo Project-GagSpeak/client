@@ -7,6 +7,7 @@ using GagSpeak.Utils;
 
 namespace GagSpeak.Gui.Publications;
 
+// TODO: Merge this into the main UI or something.
 public class PublicationsUI : WindowMediatorSubscriberBase
 {
     private readonly PublicationTabs _tabMenu;

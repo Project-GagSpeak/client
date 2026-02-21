@@ -2,7 +2,6 @@ using CkCommons;
 using CkCommons.Widgets;
 using Dalamud.Interface.Utility;
 using GagSpeak.Gui.Components;
-using GagSpeak.Gui.UiToybox;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Utils;
@@ -13,27 +12,21 @@ namespace GagSpeak.Gui.Toybox;
 public class ToyboxUI : WindowMediatorSubscriberBase
 {
     private readonly ToysPanel _sexToys;
-    private readonly VibeLobbiesPanel _vibeLobbies;
     private readonly PatternsPanel _patterns;
     private readonly AlarmsPanel _alarms;
-    private readonly TriggersPanel _triggers;
     private readonly TutorialService _guides;
 
     public ToyboxUI(
         ILogger<ToyboxUI> logger,
         GagspeakMediator mediator,
         ToysPanel sexToys,
-        VibeLobbiesPanel vibeLobbies,
         PatternsPanel patterns,
         AlarmsPanel alarms,
-        TriggersPanel triggers,
         TutorialService guides) : base(logger, mediator, "Toybox UI")
     {
         _sexToys = sexToys;
-        _vibeLobbies = vibeLobbies;
         _patterns = patterns;
         _alarms = alarms;
-        _triggers = triggers;
         _guides = guides;
 
         _tabMenu = new ToyboxTabs();
@@ -84,10 +77,6 @@ public class ToyboxUI : WindowMediatorSubscriberBase
                 _sexToys.DrawContents(drawRegions, frameH, _tabMenu);
                 break;
 
-            case ToyboxTabs.SelectedTab.VibeLobbies:
-                _vibeLobbies.DrawContents(drawRegions, frameH, _tabMenu);
-                break;
-
             case ToyboxTabs.SelectedTab.Patterns:
                 _patterns.DrawContents(drawRegions, frameH, _tabMenu);
                 break;
@@ -95,19 +84,13 @@ public class ToyboxUI : WindowMediatorSubscriberBase
             case ToyboxTabs.SelectedTab.Alarms:
                 _alarms.DrawContents(drawRegions, frameH, _tabMenu);
                 break;
-
-            case ToyboxTabs.SelectedTab.Triggers:
-                _triggers.DrawContents(drawRegions, frameH, _tabMenu);
-                break;
         }
     }
     private TutorialType TutorialFromTab()
         => _tabMenu.TabSelection switch
         {
             ToyboxTabs.SelectedTab.BuzzToys => TutorialType.Toys,
-            ToyboxTabs.SelectedTab.VibeLobbies => TutorialType.VibeLobby,
             ToyboxTabs.SelectedTab.Patterns => TutorialType.Patterns,
-            ToyboxTabs.SelectedTab.Alarms => TutorialType.Alarms,
-            _ => TutorialType.Triggers
+            _ => TutorialType.Alarms,
         };
 }

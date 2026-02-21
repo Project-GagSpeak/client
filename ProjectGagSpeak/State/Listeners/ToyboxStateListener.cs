@@ -96,7 +96,7 @@ public sealed class ToyboxStateListener
 
     public bool TriggerToggled(Guid triggerId, string enactor)
     {
-        if (!_triggers.ToggleTrigger(triggerId, enactor))
+        if (!_triggers.ToggleState(triggerId, enactor))
             return false;
 
         PostActionMsg(enactor, InteractionType.ToggleTrigger, "Trigger Toggled");

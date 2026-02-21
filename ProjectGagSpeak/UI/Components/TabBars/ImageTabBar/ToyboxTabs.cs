@@ -9,7 +9,6 @@ public class ToyboxTabs : ImageTabBar<ToyboxTabs.SelectedTab>
     public enum SelectedTab
     {
         BuzzToys,
-        VibeLobbies,
         Patterns,
         Alarms,
         Triggers
@@ -17,7 +16,7 @@ public class ToyboxTabs : ImageTabBar<ToyboxTabs.SelectedTab>
 
     protected override bool IsTabDisabled(SelectedTab tab)
     {
-        var disable = tab is SelectedTab.VibeLobbies or SelectedTab.Patterns or SelectedTab.Alarms or SelectedTab.Triggers;
+        var disable = tab is SelectedTab.Patterns or SelectedTab.Alarms or SelectedTab.Triggers;
 #if DEBUG
         disable = false;
 #endif
@@ -28,10 +27,6 @@ public class ToyboxTabs : ImageTabBar<ToyboxTabs.SelectedTab>
     {
         AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Vibrator], SelectedTab.BuzzToys,
             "Configure your interactable Sex Toy Devices");
-        AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.VibeLobby], SelectedTab.VibeLobbies,
-            "Invite, Join, or create Vibe Rooms to play with others" +
-            "--SEP----COL--[WIP]--COL--" +
-            "--NL--- You have no idea how hard streaming this is.");
         AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Stimulated], SelectedTab.Patterns,
             "Create, Edit, and playback patterns " +
             "--SEP----COL--[WIP]--COL--" +

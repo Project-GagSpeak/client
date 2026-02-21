@@ -27,7 +27,7 @@ public class MarionettesTab : IFancyTab
 {
     private readonly ILogger<MarionettesTab> _logger;
     private readonly MainHub _hub;
-    private readonly AliasTriggerDrawer _aliasDrawer;
+    private readonly ReactionsDrawer _aliasDrawer;
     private readonly MarionetteDrawer _drawer;
     private readonly MarionetteDrawSystem _dds;
     private readonly PuppeteerManager _manager;
@@ -37,7 +37,7 @@ public class MarionettesTab : IFancyTab
 
     private AliasTrigger? _selected => _drawer.Selected;
 
-    public MarionettesTab(ILogger<MarionettesTab> logger, MainHub hub, AliasTriggerDrawer aliasDrawer,
+    public MarionettesTab(ILogger<MarionettesTab> logger, MainHub hub, ReactionsDrawer aliasDrawer,
         MarionetteDrawer drawer, MarionetteDrawSystem dds, PuppeteerManager manager, TutorialService guides)
     {
         _logger = logger;

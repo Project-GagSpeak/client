@@ -259,29 +259,22 @@ public class MainUI : WindowMediatorSubscriberBase
         var disableButtons = MainHub.ServerStatus is (ServerState.NoSecretKey or ServerState.VersionMisMatch or ServerState.Unauthorized);
         // Get the window pointer before we draw.
         var winPtr = ImGuiInternal.GetCurrentWindow();
-        // Expand the region of the topbar to cross the full width.
-        var winPadding = ImGui.GetStyle().WindowPadding;
-        // ImGui hides the actual possible clip-rect-min from going to 0,0.
-        // This is because the ClipRect skips over the titlebar, so if WinPadding is 8,8
-        // then the content region min returns 8,40
-        // Note to only subtract the X padding. ClipRectMin gets Y correctly.
-        var winClipX = winPadding.X / 2;
-        var minPos = winPtr.DrawList.GetClipRectMin() + new Vector2(-winClipX, winPadding.Y);
-        var maxPos = winPtr.DrawList.GetClipRectMax() + new Vector2(winClipX, 0);
+        var innerMinPos = winPtr.InnerRect.Min + new Vector2(0, ImGui.GetStyle().WindowPadding.Y);
+        var innerMaxPos = winPtr.InnerRect.Max;
         // Expand the area for our custom header.
-        winPtr.DrawList.PushClipRect(minPos, maxPos, false);
+        winPtr.DrawList.PushClipRect(innerMinPos, innerMaxPos, false);
 
         // Get the expanded width
-        var topBarWidth = maxPos.X - minPos.X;
+        var topBarWidth = innerMaxPos.X - innerMinPos.X;
         var sideWidth = ImGui.CalcTextSize("Connecting").X + CkGui.IconSize(FAI.Satellite).X + ImUtf8.ItemSpacing.X * 3;
         var height = CkGui.CalcFontTextSize("A", Fonts.Default150Percent).Y;
 
-        if (DrawAddUser(winPtr, new Vector2(sideWidth, height), minPos, disableButtons || !MainHub.IsConnected))
+        if (DrawAddUser(winPtr, new Vector2(sideWidth, height), innerMinPos, disableButtons || !MainHub.IsConnected))
             _creatingRequest = !_creatingRequest;
         CkGui.AttachToolTip("Add a new Kinkster");
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AddingKinksters, LastPos, LastSize, () => _creatingRequest = !_creatingRequest);
 
-        ImGui.SetCursorScreenPos(minPos + new Vector2(sideWidth, 0));
+        ImGui.SetCursorScreenPos(innerMinPos + new Vector2(sideWidth, 0));
         DrawConnectedUsers(winPtr, new Vector2(topBarWidth - sideWidth * 2, height), topBarWidth);
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.InitialWelcome, LastPos, LastSize);
 

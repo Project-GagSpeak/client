@@ -12,7 +12,6 @@ using GagSpeak.Gui.Profile;
 using GagSpeak.Gui.Publications;
 using GagSpeak.Gui.Remote;
 using GagSpeak.Gui.Toybox;
-using GagSpeak.Gui.UiToybox;
 using GagSpeak.Gui.Wardrobe;
 using GagSpeak.Interop;
 using GagSpeak.Interop.Helpers;
@@ -340,8 +339,8 @@ public static class GagSpeakServiceExtensions
         .AddScoped<ModPresetDrawer>()
         .AddScoped<MoodleDrawer>()
         .AddScoped<ActiveItemsDrawer>()
-        .AddScoped<AliasTriggerDrawer>()
-        .AddScoped<TriggerDrawer>()
+        .AddScoped<ReactionsDrawer>()
+        .AddScoped<DetectionDrawer>()
         .AddScoped<ImageImportTool>()
         .AddScoped<SidePanelPair>()
 
@@ -392,20 +391,17 @@ public static class GagSpeakServiceExtensions
         .AddScoped<PuppeteersTab>()
         .AddScoped<MarionettesTab>()
 
+        .AddScoped<WindowMediatorSubscriberBase, TriggersUI>()
+
         // Scoped UI (Toybox)
         .AddScoped<WindowMediatorSubscriberBase, ToyboxUI>()
         .AddScoped<ToysPanel>()
-        .AddScoped<VibeLobbiesPanel>()
         .AddScoped<PatternsPanel>()
         .AddScoped<AlarmsPanel>()
-        .AddScoped<TriggersPanel>()
 
         // Scoped UI (Mod Presets)
         .AddScoped<WindowMediatorSubscriberBase, ModPresetsUI>()
         .AddScoped<ModPresetsPanel>()
-
-        // Scoped UI (Trait Allowances Presets)
-        .AddScoped<WindowMediatorSubscriberBase, AllowancesUI>()
 
         // Scoped UI (Publications)
         .AddScoped<WindowMediatorSubscriberBase, PublicationsUI>()

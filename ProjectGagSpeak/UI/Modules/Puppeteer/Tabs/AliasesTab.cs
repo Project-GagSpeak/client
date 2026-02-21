@@ -31,7 +31,7 @@ public class AliasesTab : IFancyTab
     private readonly ILogger<AliasesTab> _logger;
     private readonly MainHub _hub;
     private readonly AliasesFileSelector _selector;
-    private readonly AliasTriggerDrawer _aliasDrawer;
+    private readonly ReactionsDrawer _aliasDrawer;
     private readonly PuppeteerManager _manager;
     private readonly KinksterManager _kinksters;
     private readonly TutorialService _guides;
@@ -43,7 +43,7 @@ public class AliasesTab : IFancyTab
 
     public AliasesTab(ILogger<AliasesTab> logger, GagspeakMediator mediator,
         MainHub hub, FavoritesConfig favorites, AliasesFileSelector selector,
-        AliasTriggerDrawer drawer, PuppeteerManager manager,
+        ReactionsDrawer drawer, PuppeteerManager manager,
         KinksterManager kinksters, TutorialService guides)
     {
         _logger = logger;
@@ -94,9 +94,7 @@ public class AliasesTab : IFancyTab
             if (_manager.ItemInEditor is { } item)
                 DrawAliasEditor(_.InnerRegion, item, rounding);
             else
-            {
                 DrawAlias(_.InnerRegion, rounding);
-            }
         }
         _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.SelectedAlias, PuppeteerUI.LastPos, PuppeteerUI.LastSize);
     }

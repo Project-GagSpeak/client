@@ -226,9 +226,9 @@ public class HomeTab
             WardrobeButton(buttonWidth);
             CursedLootButton(buttonWidth);
             PuppeteerButton(buttonWidth);
+            TriggersButton(buttonWidth);
             ToyboxButton(buttonWidth);
             ModPresetsButton(buttonWidth);
-            AllowancesButton(buttonWidth);
         }
         ImUtf8.SameLineInner();
         using (ImRaii.Group())
@@ -252,9 +252,9 @@ public class HomeTab
             WardrobeButton(buttonWidth);
             CursedLootButton(buttonWidth);
             PuppeteerButton(buttonWidth);
+            TriggersButton(buttonWidth);
             ToyboxButton(buttonWidth);
             ModPresetsButton(buttonWidth);
-            AllowancesButton(buttonWidth);
             PublicationsButton(buttonWidth);
             AchievementsButton(buttonWidth);
             KoFiButton(buttonWidth);
@@ -284,7 +284,7 @@ public class HomeTab
 
     private void CursedLootButton(float width)
     {
-        if (CkGui.FancyButton(FAI.BoxOpen, "Cursed Loot", width, false))
+        if (CkGui.FancyButton(FAI.Coins, "Cursed Loot", width, false))
             _mediator.Publish(new UiToggleMessage(typeof(CursedLootUI)));
         CkGui.AttachToolTip("Gamble away your fortunes and freedom with Cursed Loot!");
     }
@@ -293,14 +293,21 @@ public class HomeTab
     {
         if (CkGui.FancyButton(FAI.PersonHarassing, "Puppeteer", width))
             _mediator.Publish(new UiToggleMessage(typeof(PuppeteerUI)));
-        CkGui.AttachToolTip("Who's in control now? (Global & Per-Kinkster Control) --COL--[WIP]--COL--");
+        CkGui.AttachToolTip("Who's in control now? (Global & Per-Kinkster Control)");
+    }
+
+    private void TriggersButton(float width)
+    {
+        if (CkGui.FancyButton(FAI.Bolt, "Triggers", width))
+            _mediator.Publish(new UiToggleMessage(typeof(TriggersUI)));
+        CkGui.AttachToolTip("Monitor events and react to them");
     }
 
     private void ToyboxButton(float width)
     {
         if (CkGui.FancyButton(FAI.BoxOpen, "Toybox", width))
             _mediator.Publish(new UiToggleMessage(typeof(ToyboxUI)));
-        CkGui.AttachToolTip("Patterns, Alarms, Triggers, VibeLobbies, Toys and more! --COL--[WIP]--COL--");
+        CkGui.AttachToolTip("Contains your Toys, Patterns, and Alarms--COL--[WIP]--COL--");
     }
 
     private void ModPresetsButton(float width)
@@ -309,18 +316,6 @@ public class HomeTab
             _mediator.Publish(new UiToggleMessage(typeof(ModPresetsUI)));
         CkGui.AttachToolTip("Configure presets for your Penumbra mod settings!" +
             "--SEP--Presets can be attached to restraints and restrictions!");
-    }
-
-    private void AllowancesButton(float width)
-    {
-        var disabled = true;
-#if DEBUG
-        // TODO: Remove when this works
-        disabled = false;
-#endif
-        if (CkGui.FancyButton(FAI.UserShield, "Trait Allowances", width, disabled))
-            _mediator.Publish(new UiToggleMessage(typeof(AllowancesUI)));
-        CkGui.AttachToolTip("Control who has access to view your various Data! --COL--[WIP]--COL--");
     }
 
     private void PublicationsButton(float width)
