@@ -53,4 +53,7 @@ public class HealthPercentTrigger : Trigger, IThresholdContainer
         ThresholdMinValue = hpt.ThresholdMinValue;
         ThresholdMaxValue = hpt.ThresholdMaxValue;
     }
+
+    public bool HasValidNameFormat()
+        => !string.IsNullOrWhiteSpace(PlayerNameWorld) && PlayerNameWorld.Contains('@');
 }

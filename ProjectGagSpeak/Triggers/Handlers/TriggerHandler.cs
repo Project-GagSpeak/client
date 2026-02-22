@@ -137,15 +137,44 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
             if (!trigger.Enabled || trigger.EmoteID != emoteId)
                 return false;
 
-            return trigger.EmoteDirection switch
+            switch (trigger.EmoteDirection)
             {
-                TriggerDirection.Any => true,
-                TriggerDirection.OtherToSelf => CharaObjectWatcher.Rendered.Contains(targetAddr) && !clientIsCaller && clientIsTarget,
-                TriggerDirection.Other => CharaObjectWatcher.Rendered.Contains(targetAddr) && !clientIsCaller,
-                TriggerDirection.SelfToOther => CharaObjectWatcher.Rendered.Contains(targetAddr) && clientIsCaller,
-                TriggerDirection.Self => clientIsCaller,
-                _ => false
-            };
+                case TriggerDirection.Any:
+                    return true;
+                
+                case TriggerDirection.OtherToSelf:
+                    // Ensure valid states.
+                    if (!(CharaObjectWatcher.Rendered.Contains(targetAddr) && !clientIsCaller && clientIsTarget))
+                        return false;
+                    // If the target was defined, ensure it matches.
+                    return !string.IsNullOrEmpty(trigger.PlayerNameWorld)
+                        ? ((Character*)callerAddr)->GetNameWithWorld() == trigger.PlayerNameWorld
+                        : true;
+
+                case TriggerDirection.Other:
+                    // Ensure valid states.
+                    if (!(CharaObjectWatcher.Rendered.Contains(targetAddr) && !clientIsCaller))
+                        return false;
+                    // If the target was defined, ensure it matches.
+                    return !string.IsNullOrEmpty(trigger.PlayerNameWorld)
+                        ? ((Character*)targetAddr)->GetNameWithWorld() == trigger.PlayerNameWorld
+                        : true;
+
+                case TriggerDirection.SelfToOther:
+                    // Ensure valid states.
+                    if (!(CharaObjectWatcher.Rendered.Contains(targetAddr) && clientIsCaller))
+                        return false;
+                    // If the target was defined, ensure it matches.
+                    return !string.IsNullOrEmpty(trigger.PlayerNameWorld)
+                        ? ((Character*)targetAddr)->GetNameWithWorld() == trigger.PlayerNameWorld
+                        : true;
+
+                case TriggerDirection.Self:
+                    return clientIsCaller;
+
+                default:
+                    return false;
+            }
         }
     }
 
@@ -254,7 +283,9 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
 
         // Filter down to the triggers matching our change type and other details.
         var socialTriggers = _triggers.Storage.OfType<SocialTrigger>()
-            .Where(t => t.Enabled && (isWinner ? t.SocialType is SocialActionType.DeathRollWin : t.SocialType is SocialActionType.DeathRollLoss))
+            .Where(t => t.Enabled 
+                && t.Game is SocialGame.DeathRoll 
+                && (isWinner ? t.Result == SocialGameResult.Win : t.Result == SocialGameResult.Loss))
             .OrderByDescending(t => t.Priority);
 
         // Dunno the enactor here, but could maybe see if possible to extract if we need it for achievements down the line or something.

@@ -57,7 +57,13 @@ public static class GagspeakEx
     public static float EaseInOutSine(float t)
         => (1f - MathF.Cos(t * MathF.PI)) * 0.5f;
 
+    public static string TrimText(this string s, int max)
+    {
+        if (string.IsNullOrEmpty(s) || s.Length <= max)
+            return s;
 
+        return s[..max] + "..";
+    }
 
     public static string ExtractText(this SeString seStr, bool onlyFirst = false)
     {

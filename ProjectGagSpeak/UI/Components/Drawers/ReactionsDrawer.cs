@@ -18,6 +18,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
+using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
@@ -89,14 +90,6 @@ public sealed class ReactionsDrawer
         NewState.Disabled => "Remove",
         _ => string.Empty
     };
-
-    private string TrimDisplay(string s, int max)
-    {
-        if (string.IsNullOrEmpty(s) || s.Length <= max)
-            return s;
-
-        return s[..max] + "..";
-    }
 
     public void DrawText(TextAction act)
     {
@@ -216,15 +209,18 @@ public sealed class ReactionsDrawer
 
         var stateW = ImGui.CalcTextSize("removem").X;
         ImUtf8.SameLineInner();
-        if (CkGuiUtils.EnumCombo("##GagState", stateW, act.NewState, out var newVal, _statesNoUnlock, GetStateName, flags: CFlags.NoArrowButton))
+        if (CkGuiUtils.EnumCombo("##edit-state", stateW, act.NewState, out var newVal, _statesNoUnlock, GetStateName, flags: CFlags.NoArrowButton))
             act.NewState = newVal;
 
         CkGui.TextFrameAlignedInline(act.NewState is NewState.Locked ? "the gag on" : "a gag to");
         
         var width = ImGui.CalcTextSize("Any Layerm").X;
         ImUtf8.SameLineInner();
-        if (CkGuiUtils.LayerIdxCombo("##gagLayer", width, act.LayerIdx, out int newIdx, 3, true, CFlags.NoArrowButton))
+        if (CkGuiUtils.LayerIdxCombo("##edit-layer", width, act.LayerIdx, out int newIdx, 3, true, CFlags.NoArrowButton))
+        {
             act.LayerIdx = (newIdx == 3) ? -1 : newIdx;
+            Svc.Logger.Information($"Updating to IDX: {act.LayerIdx}");
+        }
 
         if (act.NewState is NewState.Disabled)
             return;
@@ -237,7 +233,7 @@ public sealed class ReactionsDrawer
             CkGui.TextFrameAlignedInline("Using a");
 
             ImUtf8.SameLineInner();
-            if (CkGuiUtils.EnumCombo("##gag", width, act.GagType, out var newGag, i => i.GagName(), "Randomly chosen Gag", skip: 1))
+            if (CkGuiUtils.EnumCombo("##edit-gag", width, act.GagType, out var newGag, i => i.GagName(), "Randomly chosen Gag", skip: 1))
                 act.GagType = newGag;
             return;
         }
@@ -249,7 +245,7 @@ public sealed class ReactionsDrawer
 
         ImUtf8.SameLineInner();
         var options = PadlockEx.ClientLocks.Except(PadlockEx.PasswordPadlocks);
-        if (CkGuiUtils.EnumCombo("##Padlock", ImGui.GetContentRegionAvail().X, act.Padlock, out var newLock, options, i => i.ToName(), flags: CFlags.NoArrowButton))
+        if (CkGuiUtils.EnumCombo("##edit-lock", ImGui.GetContentRegionAvail().X, act.Padlock, out var newLock, options, i => i.ToName(), flags: CFlags.NoArrowButton))
             act.Padlock = newLock;
         CkGui.AttachToolTip("The padlock that the trigger attempts to apply");
 
@@ -289,7 +285,7 @@ public sealed class ReactionsDrawer
         CkGui.AttachToolTip("Invokes an interaction with the Gags module");
 
         ImUtf8.SameLineInner();
-        if (CkGuiUtils.EnumCombo("##GagState", 60f, act.NewState, out var newState, [NewState.Enabled, NewState.Locked, NewState.Disabled],
+        if (CkGuiUtils.EnumCombo("##edit-state", 60f, act.NewState, out var newState, [NewState.Enabled, NewState.Locked, NewState.Disabled],
             i => i switch { NewState.Enabled => "Apply", NewState.Locked => "Lock", _ => "Remove" }, flags: CFlags.NoArrowButton))
             act.NewState = newState;
         CkGui.AttachToolTip("The new state set on the targeted gag.");
@@ -315,7 +311,7 @@ public sealed class ReactionsDrawer
 
         ImUtf8.SameLineInner();
         var width = ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FAI.Minus).X;
-        if (CkGuiUtils.LayerIdxCombo("##gagLayer", width, act.LayerIdx, out int newIdx, 3, true, CFlags.NoArrowButton))
+        if (CkGuiUtils.LayerIdxCombo("##edit-layer", width, act.LayerIdx, out int newIdx, 3, true, CFlags.NoArrowButton))
             act.LayerIdx = (newIdx == 3) ? -1 : newIdx;
     }
 
@@ -338,7 +334,7 @@ public sealed class ReactionsDrawer
             CkGui.AttachToolTip("Indicates what restriction is applied.");
             CkGui.TextFrameAlignedInline("Using");
             var item = _restrictions.Storage.FirstOrDefault(r => r.Identifier == act.RestrictionId);
-            CkGui.ColorTextFrameAlignedInline(item is { } re ? $"{TrimDisplay(re.Label, 50)}" : "<UNK>", ImGuiColors.TankBlue);
+            CkGui.ColorTextFrameAlignedInline(item is { } re ? $"{re.Label.TrimText(50)}" : "<UNK>", ImGuiColors.TankBlue);
             return;
         }
 
@@ -367,7 +363,7 @@ public sealed class ReactionsDrawer
                 var item = _restrictions.Storage.FirstOrDefault(r => r.Identifier == act.RestrictionId);
                 CkGui.ColorTextFrameAlignedInline("Applies", ImGuiColors.TankBlue);
                 CkGui.TextFrameAlignedInline("a");
-                CkGui.ColorTextFrameAlignedInline(item is { } re ? $"{TrimDisplay(re.Label, 20)}" : "<UNK>", ImGuiColors.TankBlue);
+                CkGui.ColorTextFrameAlignedInline(item is { } re ? $"{re.Label.TrimText(20)}" : "<UNK>", ImGuiColors.TankBlue);
                 CkGui.AttachToolTip(item?.Label, item is null);
                 CkGui.TextFrameAlignedInline("on");
                 CkGui.ColorTextFrameAlignedInline($"{(act.LayerIdx is -1 ? "any layer" : $"layer {act.LayerIdx}")}", ImGuiColors.TankBlue);
@@ -410,14 +406,14 @@ public sealed class ReactionsDrawer
 
         var stateW = ImGui.CalcTextSize("removem").X;
         ImUtf8.SameLineInner();
-        if (CkGuiUtils.EnumCombo("##state", stateW, act.NewState, out var newVal, _statesNoUnlock, GetStateName, flags: CFlags.NoArrowButton))
+        if (CkGuiUtils.EnumCombo("##edit-state", stateW, act.NewState, out var newVal, _statesNoUnlock, GetStateName, flags: CFlags.NoArrowButton))
             act.NewState = newVal;
 
         CkGui.TextFrameAlignedInline(act.NewState is NewState.Locked ? "the binding on" : "a binding to");
 
         var width = ImGui.CalcTextSize("Any Layerm").X;
         ImUtf8.SameLineInner();
-        if (CkGuiUtils.LayerIdxCombo("##layer", width, act.LayerIdx, out int newIdx, 5, true, CFlags.NoArrowButton))
+        if (CkGuiUtils.LayerIdxCombo("##edit-layer", width, act.LayerIdx, out int newIdx, 5, true, CFlags.NoArrowButton))
             act.LayerIdx = (newIdx == 5) ? -1 : newIdx;
 
         if (act.NewState is NewState.Disabled)
@@ -432,7 +428,10 @@ public sealed class ReactionsDrawer
 
             ImUtf8.SameLineInner();
             if (_restrictionCombo.Draw("##restrictions", act.RestrictionId, ImGui.GetContentRegionAvail().X))
+            {
+                _logger.LogInformation($"Selected Restriction: {_restrictionCombo.Current?.Label} ({_restrictionCombo.Current?.Identifier})");
                 act.RestrictionId = _restrictionCombo.Current?.Identifier ?? Guid.Empty;
+            }
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 act.RestrictionId = Guid.Empty;
             return;
@@ -536,7 +535,7 @@ public sealed class ReactionsDrawer
             CkGui.AttachToolTip("Indicates what restraint set is applied.");
             CkGui.TextFrameAlignedInline("Using");
             var item = _restraints.Storage.FirstOrDefault(r => r.Identifier == act.RestrictionId);
-            CkGui.ColorTextFrameAlignedInline(item is { } re ? $"{TrimDisplay(re.Label, 50)}" : "<UNK>", ImGuiColors.TankBlue);
+            CkGui.ColorTextFrameAlignedInline(item is { } re ? $"{re.Label.TrimText(50)}" : "<UNK>", ImGuiColors.TankBlue);
             return;
         }
 
@@ -565,7 +564,7 @@ public sealed class ReactionsDrawer
                 var item = _restraints.Storage.FirstOrDefault(r => r.Identifier == act.RestrictionId);
                 CkGui.ColorTextFrameAlignedInline("Applies", ImGuiColors.TankBlue);
                 CkGui.TextFrameAlignedInline("a");
-                CkGui.ColorTextFrameAlignedInline(item is { } re ? $"{TrimDisplay(re.Label, 20)}.." : "<UNK>", ImGuiColors.TankBlue);
+                CkGui.ColorTextFrameAlignedInline(item is { } re ? $"{re.Label.TrimText(20)}.." : "<UNK>", ImGuiColors.TankBlue);
                 CkGui.AttachToolTip(item?.Label, item is null);
                 CkGui.TextFrameAlignedInline("if not locked");
                 break;
@@ -597,7 +596,7 @@ public sealed class ReactionsDrawer
 
         var stateW = ImGui.CalcTextSize("removem").X;
         ImUtf8.SameLineInner();
-        if (CkGuiUtils.EnumCombo("##state", stateW, act.NewState, out var newVal, _statesNoUnlock, GetStateName, flags: CFlags.NoArrowButton))
+        if (CkGuiUtils.EnumCombo("##restraint-state", stateW, act.NewState, out var newVal, _statesNoUnlock, GetStateName, flags: CFlags.NoArrowButton))
             act.NewState = newVal;
 
         CkGui.TextFrameAlignedInline(act.NewState is NewState.Enabled ? "a restraint set" : "the active restraint set");
@@ -784,36 +783,40 @@ public sealed class ReactionsDrawer
         var width = ImGui.CalcTextSize("Statusm").X;
         if (CkGuiUtils.EnumCombo("##M_Type", width, act.MoodleItem.Type, out var newVal))
             act.MoodleItem = newVal is MoodleType.Preset ? new MoodlePreset() : new Moodle();
-        if (act.MoodleItem is MoodlePreset p && MoodleCache.IpcData.Presets.TryGetValue(p.Id, out var preset))
+
+        if (act.MoodleItem is MoodlePreset preset)
         {
-            if (_presetCombo.Draw("##preset", p.Id, ImGui.GetContentRegionAvail().X))
-                p.UpdatePreset(_presetCombo.Current.GUID, _presetCombo.Current.Statuses);
+            ImUtf8.SameLineInner();
+            if (_presetCombo.Draw("##M_Preset", preset.Id, ImGui.GetContentRegionAvail().X, CFlags.NoArrowButton))
+                preset.UpdatePreset(_presetCombo.Current.GUID, _presetCombo.Current.Statuses);
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 act.MoodleItem = new MoodlePreset();
-
-            if (preset.Statuses.Count > 0)
-            {
-                CkGui.FramedIconText(FAI.TheaterMasks);
-                CkGui.ColorTextFrameAlignedInline("(", ImGuiColors.TankBlue, false);
-                ImUtf8.SameLineInner();
-                var statuses = MoodleCache.IpcData.StatusList.Where(x => preset.Statuses.Contains(x.GUID));
-                _moodles.DrawStatusInfos(statuses.ToList(), MoodleDrawer.IconSizeFramed);
-                ImGui.SameLine();
-                CkGui.ColorTextFrameAligned(")", ImGuiColors.TankBlue);
-            }
         }
-        else if (MoodleCache.IpcData.Statuses.TryGetValue(act.MoodleItem.Id, out var status))
+        else if (act.MoodleItem is Moodle status)
         {
-            if (_statusCombo.Draw("##M_Status", act.MoodleItem.Id, ImGui.GetContentRegionAvail().X))
-                act.MoodleItem.UpdateId(_statusCombo.Current.GUID);
+            ImUtf8.SameLineInner();
+            if (_statusCombo.Draw("##M_Status", status.Id, ImGui.GetContentRegionAvail().X, 1.75f, CFlags.NoArrowButton))
+                status.UpdateId(_statusCombo.Current.GUID);
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 act.MoodleItem = new Moodle();
+        }
 
-            CkGui.FramedIconText(FAI.TheaterMasks);
-            CkGui.ColorTextFrameAlignedInline("(", ImGuiColors.TankBlue, false);
+        // Then the next row.
+        CkGui.FramedIconText(FAI.TheaterMasks);
+        CkGui.TextFrameAlignedInline("Applied:"); 
+        if (act.MoodleItem is MoodlePreset p)
+        {
+            if (MoodleCache.IpcData.Presets.TryGetValue(p.Id, out var presetData))
+            {
+                ImUtf8.SameLineInner();
+                var statuses = MoodleCache.IpcData.StatusList.Where(x => presetData.Statuses.Contains(x.GUID));
+                _moodles.DrawStatusInfos(statuses.ToList(), MoodleDrawer.IconSizeFramed);
+            }
+        }
+        else if (MoodleCache.IpcData.Statuses.TryGetValue(act.MoodleItem.Id, out var statusData))
+        {
             ImUtf8.SameLineInner();
-            _moodles.DrawStatusInfos([status], MoodleDrawer.IconSizeFramed);
-            CkGui.ColorTextFrameAlignedInline(")", ImGuiColors.TankBlue);
+            _moodles.DrawStatusInfos([statusData], MoodleDrawer.IconSizeFramed);
         }
         else
         {
@@ -912,6 +915,7 @@ public sealed class ReactionsDrawer
         CkGui.TextFrameAlignedInline("Sends a");
 
         var opWidth = ImGui.CalcTextSize("Vibratem").X;
+        ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo("##OpCode", opWidth, act.ShockInstruction.OpCode, out var mode))
             act.ShockInstruction.OpCode = mode;
         CkGui.AttachToolTip("What type of instruction to send to the Shock Collar.");
@@ -922,6 +926,7 @@ public sealed class ReactionsDrawer
         CkGui.TextFrameAlignedInline("Lasting for");
 
         var dur = act.ShockInstruction.GetDurationFloat();
+        ImUtf8.SameLineInner();
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
         if (ImGui.SliderFloat("##Duration", ref dur, 0.016f, 15f, "%.3fs"))
             act.ShockInstruction.SetDuration(dur);
@@ -932,6 +937,7 @@ public sealed class ReactionsDrawer
             CkGui.TextFrameAlignedInline("With an intensity of");
 
             var intensity = act.ShockInstruction.Intensity;
+            ImUtf8.SameLineInner();
             ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
             if (ImGui.SliderInt("##ShockIntensity", ref intensity, 0, 100))
                 act.ShockInstruction.Intensity = intensity;
@@ -969,21 +975,17 @@ public sealed class ReactionsDrawer
 
     public void DrawToy(SexToyAction act)
     {
-        var columnWidth = (ImGui.GetContentRegionAvail().X - ImUtf8.ItemSpacing.X) / 2;
-        var height = CkGuiUtils.GetTimeDisplayHeight(Fonts.UidFont) + ImUtf8.FrameHeightSpacing;
-        // Enter the first column.
-        using (var _ = CkRaii.FramedChildPaddedW("toyStart", columnWidth, height, 0, GsCol.SideButton.Uint(), FancyTabBar.Rounding, DFlags.RoundCornersAll))
-        {
-            ImGuiUtil.Center("Starts After");
-            CkGuiUtils.TimeSpanPreview("toyStart", TimeSpan.FromMilliseconds(59999), act.StartAfter, "ss\\:fff", Fonts.UidFont, _.InnerRegion.X);
-        }
+        ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Vibrator].Handle, new(ImUtf8.FrameHeight));
+        CkGui.AttachToolTip("How long to delay the invocation on the active devices.");
 
-        ImGui.SameLine();
-        using (var _ = CkRaii.FramedChildPaddedW("toyEnd", columnWidth, height, 0, GsCol.SideButton.Uint(), FancyTabBar.Rounding, DFlags.RoundCornersAll))
-        {
-            ImGuiUtil.Center("Ends After");
-            CkGuiUtils.TimeSpanPreview("toyEnd", TimeSpan.FromMilliseconds(59999), act.StartAfter, "ss\\:fff", Fonts.UidFont, _.InnerRegion.X);
-        }
+        CkGui.TextFrameAlignedInline("Starts after");
+        CkGui.ColorTextFrameAlignedInline($"{act.StartAfter.Seconds}s {act.StartAfter.Milliseconds}ms", ImGuiColors.TankBlue);
+
+        ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Vibrator].Handle, new(ImUtf8.FrameHeight));
+        CkGui.AttachToolTip("How long until we stop the action after it starts.");
+
+        CkGui.TextFrameAlignedInline("Ends after");
+        CkGui.ColorTextFrameAlignedInline($"{act.EndAfter.Seconds}s {act.EndAfter.Milliseconds}ms", ImGuiColors.TankBlue);
 
         // Next line.
         CkGui.FramedIconText(FAI.Filter);
@@ -1014,33 +1016,28 @@ public sealed class ReactionsDrawer
 
         // in theory this listing could get pretty expansive so for now just list a summary.
         CkGui.TextFrameAlignedInline("After");
-        CkGui.ColorTextFrameAlignedInline(act.StartAfter.ToString("ss\\:fff"), ImGuiColors.TankBlue);
+        CkGui.ColorTextFrameAlignedInline($"{act.StartAfter.Seconds}s {act.StartAfter.Milliseconds}ms", ImGuiColors.TankBlue);
         CkGui.TextFrameAlignedInline("toys to vibrate for");
-        CkGui.ColorTextFrameAlignedInline(act.EndAfter.ToString("ss\\:fff"), ImGuiColors.TankBlue);
+        CkGui.ColorTextFrameAlignedInline($"{act.EndAfter.Seconds}s {act.EndAfter.Milliseconds}ms", ImGuiColors.TankBlue);
     }
 
     public void DrawToyEditor(SexToyAction act)
     {
-        var columnWidth = (ImGui.GetContentRegionAvail().X - ImUtf8.ItemSpacing.X) / 2;
-        var height = CkGuiUtils.GetTimeDisplayHeight(Fonts.UidFont) + ImUtf8.FrameHeightSpacing;
-        // Enter the first column.
-        using (var _ = CkRaii.FramedChildPaddedW("toyStart", columnWidth, height, 0, GsCol.SideButton.Uint(), FancyTabBar.Rounding, DFlags.RoundCornersAll))
-        {
-            ImGuiUtil.Center("Starts After");
-            var refStart = act.StartAfter;
-            CkGuiUtils.TimeSpanEditor("ToyActStart", TimeSpan.FromMilliseconds(59999), ref refStart, "ss\\:fff", Fonts.UidFont, _.InnerRegion.X);
-            act.StartAfter = refStart;
-        }
-
+        ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Vibrator].Handle, new(ImUtf8.FrameHeight));
+        CkGui.TextFrameAlignedInline("Start toys after");
+        // Editor for timespan here or something idk.
+        var refStart = act.StartAfter;
         ImGui.SameLine();
-        using (var _ = CkRaii.FramedChildPaddedW("toyEnd", columnWidth, height, 0, GsCol.SideButton.Uint(), FancyTabBar.Rounding, DFlags.RoundCornersAll))
-        {
-            ImGuiUtil.Center("Ends After");
-            var refEnd = act.EndAfter;
-            CkGuiUtils.TimeSpanEditor("ToyActEnd", TimeSpan.FromMilliseconds(59999), ref refEnd, "ss\\:fff", Fonts.UidFont, _.InnerRegion.X);
-            act.EndAfter = refEnd;
-        }
+        CkGuiUtils.DrawTimeSpanLine("ToyActStart", TimeSpan.FromMilliseconds(59999), ref refStart, "ss\\:fff", true);
+        act.StartAfter = refStart;
 
+        ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Vibrator].Handle, new(ImUtf8.FrameHeight));
+        CkGui.TextFrameAlignedInline("Ends after");
+        ImGui.SameLine();
+        var refEnd = act.EndAfter;
+        CkGuiUtils.DrawTimeSpanLine("ToyActEnd", TimeSpan.FromMilliseconds(59999), ref refEnd, "ss\\:fff", true);
+        act.EndAfter = refEnd;
+      
         // Next line.
         CkGui.FramedIconText(FAI.Filter);
         CkGui.TextFrameAlignedInline("Execute a");
@@ -1068,10 +1065,12 @@ public sealed class ReactionsDrawer
             CkGui.FramedIconText(FAI.Signal);
             CkGui.TextFrameAlignedInline("With an intensity of");
 
-            var intensity = act.Intensity;
+            ImUtf8.SameLineInner();
             ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+            var intensity = act.Intensity;
             if (ImGui.SliderInt("##intensity", ref intensity, 0, 100))
                 act.Intensity = intensity;
+            CkGui.AttachToolTip("The intensity of the action performed on the toys.");
         }
     }
 

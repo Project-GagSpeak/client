@@ -5,7 +5,9 @@ public class SocialTrigger : Trigger
 {
     public override TriggerKind Type => TriggerKind.SocialAction;
 
-    public SocialActionType SocialType { get; set; } = SocialActionType.DeathRollLoss;
+    public SocialGame Game { get; set; } = SocialGame.DeathRoll;
+
+    public SocialGameResult Result { get; set; } = SocialGameResult.Loss;
 
     public SocialTrigger()
     { }
@@ -17,10 +19,11 @@ public class SocialTrigger : Trigger
     public SocialTrigger(SocialTrigger other, bool clone)
         : base(other, clone)
     {
-        SocialType = other.SocialType;
+        Game = other.Game;
     }
 
-    public override SocialTrigger Clone(bool keepId) => new SocialTrigger(this, keepId);
+    public override SocialTrigger Clone(bool keepId)
+        => new SocialTrigger(this, keepId);
 
     public override void ApplyChanges(Trigger other)
     {
@@ -28,6 +31,7 @@ public class SocialTrigger : Trigger
         if (other is not SocialTrigger st)
             return;
 
-        SocialType = st.SocialType;
+        Game = st.Game;
+        Result = st.Result;
     }
 }

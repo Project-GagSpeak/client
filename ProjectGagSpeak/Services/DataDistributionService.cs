@@ -338,7 +338,10 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
     public async Task<ActiveGagSlot?> PushNewActiveGagSlot(List<UserData> onlinePlayers, int layer, ActiveGagSlot slot, DataUpdateType type)
     {
         if (type is not DataUpdateType.Unlocked && !DataIsDifferent(_prevGagData, slot))
+        {
+            Logger.LogWarning("Data is no different!");
             return null;
+        }
 
         Logger.LogDebug($"Pushing GagChange [{type}] to: {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
 

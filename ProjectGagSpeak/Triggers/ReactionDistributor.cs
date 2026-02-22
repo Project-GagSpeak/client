@@ -212,10 +212,12 @@ public class ReactionDistributor
         if (_gags.ServerGagData is not { } gagData)
             return false;
 
-        var layerIdx = -1;
+        var layerIdx = act.LayerIdx; // Should be -1 for wildcard.
         if (act.NewState is NewState.Enabled)
         {
-            layerIdx = gagData.FindFirstUnused();
+            if (layerIdx is -1)
+                layerIdx = gagData.FindFirstUnused();
+            // If still -1, none was found.
             if (layerIdx == -1)
                 return false;
 
