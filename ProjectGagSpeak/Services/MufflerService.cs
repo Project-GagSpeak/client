@@ -104,7 +104,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
         _activeMuffleType = newMuffleType;
     }
 
-    /// <summary> Processes the input message by converting it to GagSpeak format </summary> 
+    /// <summary> Processes the input message by converting it to GagSpeak format </summary>
     public string ProcessMessage(string inputMessage)
     {
         if (_activeGags == null || _activeGags.All(gag => gag.Name == "None")) return inputMessage;
@@ -132,7 +132,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
             return inputMessage;
         }
 
-        // Initialize the algorithm scoped variables 
+        // Initialize the algorithm scoped variables
         Logger.LogDebug($"Converting message to GagSpeak, at least one gag is not None.", LoggerType.GarblerCore);
         var finalMessage = new StringBuilder(); // initialize a stringbuilder object so we dont need to make a new string each time
         var skipTranslation = false;
@@ -153,15 +153,21 @@ public class MufflerService : DisposableMediatorSubscriberBase
                     continue; // Skip the rest of the loop for this word
                 }
                 // If the word starts with "*", toggle skip translations and remove the "*"
-                if (word.StartsWith("*"))
+                if (word.StartsWith('*'))
                 {
                     skipTranslation = !skipTranslation;
                 }
                 // If the word ends with "*", remove the "*" and set a flag to toggle skip translations after processing the word
                 var toggleAfter = false;
-                if (word.EndsWith("*"))
+                if (word.EndsWith('*'))
                 {
                     toggleAfter = true;
+                }
+                // if the word starts and ends with :, it's an emote, and don't garble it, put garbler back after.
+                if (word.StartsWith(':') && word.EndsWith(':'))
+                {
+                    toggleAfter = !skipTranslation;
+                    skipTranslation = true;
                 }
                 // If the word is not to be translated, just add the word to the final message and continue
                 if (!skipTranslation && word.Any(char.IsLetter))
@@ -175,7 +181,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
                     // Remove leading and trailing punctuation from the word
                     var wordWithoutPunctuation = word.Substring(leadingPunctuation.Length, word.Length - leadingPunctuation.Length - trailingPunctuation.Length);
                     // Convert the phonetics to GagSpeak if the list is not empty, otherwise use the original word
-                    var gaggedSpeak = phonetics.Any() ? ConvertPhoneticsToGagSpeak(phonetics, isAllCaps, isFirstLetterCaps) : ConvertNonWordsToGagSpeak(wordWithoutPunctuation, isAllCaps, isFirstLetterCaps);
+                    var gaggedSpeak = phonetics.Count != 0 ? ConvertPhoneticsToGagSpeak(phonetics, isAllCaps, isFirstLetterCaps) : ConvertNonWordsToGagSpeak(wordWithoutPunctuation, isAllCaps, isFirstLetterCaps);
                     // Add the GagSpeak to the final message
 
                     /* ---- THE BELOW LINE WILL CAUSE LOTS OF SPAM, ONLY FOR USE WHEN DEVELOPER DEBUGGING ---- */
@@ -220,7 +226,9 @@ public class MufflerService : DisposableMediatorSubscriberBase
             phoneticKey = StaticGarbleData.MouthOpenKey;
         }
         else if (_activeMuffleType.HasFlag(GagMuffleType.NoSound))
+        {
             phoneticKey = StaticGarbleData.NoSoundKey;
+        }
         else
         {
             return word;
@@ -249,7 +257,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
             try
             {
                 var gagWithMaxMuffle = _activeGags
-                    .Where(gag => gag.Phonemes.ContainsKey(phonetic) && gag.Phonemes[phonetic].Sound != null)
+                    .Where(gag => gag.Phonemes.ContainsKey(phonetic))
                     .OrderByDescending(gag => gag.Phonemes[phonetic].Muffle)
                     .FirstOrDefault();
                 if (gagWithMaxMuffle != null)
@@ -271,7 +279,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
         if (isAllCaps) result = result.ToUpper();
         if (isFirstLetterCapitalized && result.Length > 0)
         {
-            result = char.ToUpper(result[0]) + result.Substring(1);
+            result = char.ToUpper(result[0]) + result[1..];
         }
         return result;
     }

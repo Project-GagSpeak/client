@@ -1,12 +1,14 @@
 using CkCommons.GarblerCore;
 using System.Text.RegularExpressions;
+using CkCommons.FileSystem;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
+using Lumina.Excel.Sheets;
 
 namespace GagSpeak.MufflerCore.Handler;
 
 /// <summary>
-///     Class to convert English, French, Japanese, and Spanish text to 
+///     Class to convert English, French, Japanese, and Spanish text to
 ///     International Phonetic Alphabet (IPA) notation
 /// </summary>
 public class Ipa_EN_FR_JP_SP_Handler
@@ -15,6 +17,7 @@ public class Ipa_EN_FR_JP_SP_Handler
     private readonly MainConfig _config; // The GagSpeak configuration
     private Dictionary<string, string> obj; // Dictionary to store the conversion rules in JSON
     public string uniqueSymbolsString = "";
+    private readonly char[] _trimmingPunctuation = ['.', '-'];
 
     /* FOR DEBUGGING: If you ever need to aquire new unique symbols please reference the outdated private gagspeak repo. */
 
@@ -71,7 +74,7 @@ public class Ipa_EN_FR_JP_SP_Handler
             if (!string.IsNullOrEmpty(word))
             {
                 // remove punctuation from the word
-                var wordWithoutPunctuation = Regex.Replace(word, @"\p{P}", "");
+                var wordWithoutPunctuation = Regex.Replace(word, @"(?![.'-])\p{P}", "");
                 wordWithoutPunctuation = wordWithoutPunctuation.ToLower();
                 // if the word exists in the dictionary
                 if (obj.ContainsKey(wordWithoutPunctuation))
@@ -108,73 +111,88 @@ public class Ipa_EN_FR_JP_SP_Handler
     public List<Tuple<string, List<string>>> ToIPAList(string input)
     {
         // Log the input string
-
         _logger.LogTrace($"Parsing IPA string from original message:", LoggerType.GarblerCore);
+
         var c_w = (Preprocess(input) + " ").Split(" ");
+
         // Initialize the result dictionary
         var result = new List<Tuple<string, List<string>>>();
+
         // Iterate over each word in the input string
         foreach (var word in c_w)
         {
-            // If the word is not empty
-            if (!string.IsNullOrEmpty(word))
+            // skip empty words
+            if (string.IsNullOrEmpty(word)) continue;
+
+            // remove punctuation from the word and convert to lower case
+            var strippedWord = Regex.Replace(word, @"(?![.'-])\p{P}", "").ToLower();
+
+            // attempt to retrieve the phonetic representation of the word.
+            if (!obj.TryGetValue(strippedWord, out var phonetics))
             {
-                // remove punctuation from the word
-                var wordWithoutPunctuation = Regex.Replace(word, @"\p{P}", "");
-                wordWithoutPunctuation = wordWithoutPunctuation.ToLower();
-                // If the word exists in the obj dictionary
-                if (obj.ContainsKey(wordWithoutPunctuation))
+                // no word was found, make sure it wasn't because of errant trailing punctuation we allow.
+                if (!strippedWord.EndsWith('.') || strippedWord.EndsWith('-'))
                 {
-                    // Retrieve the phonetic representation of the word
-                    var phonetics = obj[wordWithoutPunctuation];
-                    // Process the phonetic representation to remove unwanted characters
-                    phonetics = phonetics.Replace("/", "");
-                    if (phonetics.Contains(","))
+                    result.Add(Tuple.Create(word, new List<string>()));
+                    continue;
+                }
+
+                // remove last character for a second lookup
+                if (!obj.TryGetValue(strippedWord[..^1], out phonetics))
+                {
+                    // one last check, removing the last character didn't help,
+                    strippedWord = strippedWord.TrimEnd(_trimmingPunctuation);
+                    if (!obj.TryGetValue(strippedWord, out phonetics))
                     {
-                        phonetics = phonetics.Split(',')[0].Trim();
+                        result.Add(Tuple.Create(word, new List<string>()));
+                        continue;
                     }
-                    phonetics = phonetics.Replace("ˈ", "").Replace("ˌ", "");
-                    // Initialize a list to hold the phonetic symbols
-                    var phoneticSymbols = new List<string>();
-                    // Iterate over the phonetic symbols
-                    for (var i = 0; i < phonetics.Length; i++)
-                    {
-                        // Check for known combinations of symbols
-                        if (i < phonetics.Length - 1)
-                        {
-                            // first 
-                            var possibleCombination = phonetics.Substring(i, 2);
-                            var index = GetMasterListBasedOnDialect().FindIndex(t => t == possibleCombination);
-                            if (index != -1)
-                            {
-                                // If a combination is found, add it to the list and skip the next character
-                                phoneticSymbols.Add(GetMasterListBasedOnDialect()[index]);
-                                i++;
-                            }
-                            else
-                            {
-                                // If no combination is found, add the current character to the list
-                                phoneticSymbols.Add(phonetics[i].ToString());
-                            }
-                        }
-                        else
-                        {
-                            // Add the last character to the list
-                            phoneticSymbols.Add(phonetics[i].ToString());
-                        }
-                    }
-                    // Add the list of phonetic symbols to the result dictionary
-                    result.Add(Tuple.Create(word, phoneticSymbols));
+                }
+            }
+
+            // strip unwanted characters out of the phonetics data
+            phonetics = phonetics.Replace("/", "");
+
+            // this word is a homograph
+            if (phonetics.Contains(','))
+                phonetics = phonetics.Split(',')[0].Trim();
+
+            // remove IPA symbols we aren't using.
+            phonetics = phonetics.Replace("ˈ", "").Replace("ˌ", "");
+
+            // create and iterate over our phonetic data
+            var phoneticSymbols = new List<string>();
+            var dialectMasterList = GetMasterListBasedOnDialect();
+            for (var i = 0; i < phonetics.Length; i++)
+            {
+                // can't look ahead at characters if there's no characters to look ahead for.
+                if (i >= phonetics.Length - 1)
+                {
+                    phoneticSymbols.Add(phonetics[i].ToString());
+                    continue;
+                }
+
+                // check if the next character makes a valid IPA combination w/ this character.
+                var candidate = phonetics.Substring(i, 2);
+                var idx = dialectMasterList.FindIndex(s => s == candidate);
+                if (idx != -1)
+                {
+                    // valid pair was found, add to list, and consume this and next char in loop.
+                    phoneticSymbols.Add(dialectMasterList[idx]);
+                    i++;
                 }
                 else
                 {
-                    // If the word does not exist in the obj dictionary, add an empty list to the result dictionary
-                    result.Add(Tuple.Create(word, new List<string>()));
+                    // just add the character normally
+                    phoneticSymbols.Add(phonetics[i].ToString());
                 }
             }
+
+            // add the final result to the dictionary.
+            result.Add(Tuple.Create(word, phoneticSymbols));
         }
-        _logger.LogTrace("String parsed to list successfully: " +
-                        $"{string.Join(", ", result.Select(t => $"{t.Item1}: [{string.Join(", ", t.Item2)}]"))}", LoggerType.GarblerCore);
+
+        _logger.LogTrace($"Parsed \"{input}\" to final list:\n{string.Join(',', result.Select(t => $"{t.Item1}:[{string.Join(',',t.Item2)}]"))}", LoggerType.GarblerCore);
         return result;
     }
 
@@ -202,7 +220,7 @@ public class Ipa_EN_FR_JP_SP_Handler
     }
 
     /// <summary>
-    /// Returns the json file path based on the selected language
+    /// Returns the JSON file path based on the selected language
     /// </summary>
     public string GetDataFilePath()
     {
@@ -290,4 +308,3 @@ public class Ipa_EN_FR_JP_SP_Handler
     }
 
 }
-
