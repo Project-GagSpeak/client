@@ -268,9 +268,9 @@ public sealed class ReactionsDrawer
 
             CkGui.FramedIconText(FAI.HourglassStart);
             CkGui.TextFrameAlignedInline("Maximum Lock Time");
-            if (CkGui.IconInputText(FAI.Clock, "minTime", "0h0m0s..", ref minTime, 32, length, true))
+            if (CkGui.IconInputText(FAI.Clock, "maxTime", "0h0m0s..", ref maxTime, 32, length, true))
             {
-                if (minTime != act.UpperBound.ToGsRemainingTime() && PadlockEx.TryParseTimeSpan(minTime, out var newTime))
+                if (maxTime != act.UpperBound.ToGsRemainingTime() && PadlockEx.TryParseTimeSpan(maxTime, out var newTime))
                     act.UpperBound = newTime;
                 // Clear it
                 _upperTime = null;
@@ -467,9 +467,9 @@ public sealed class ReactionsDrawer
 
             CkGui.FramedIconText(FAI.HourglassStart);
             CkGui.TextFrameAlignedInline("Maximum Lock Time");
-            if (CkGui.IconInputText(FAI.Clock, "minTime", "0h0m0s..", ref minTime, 32, length, true))
+            if (CkGui.IconInputText(FAI.Clock, "maxTime", "0h0m0s..", ref maxTime, 32, length, true))
             {
-                if (minTime != act.UpperBound.ToGsRemainingTime() && PadlockEx.TryParseTimeSpan(minTime, out var newTime))
+                if (maxTime != act.UpperBound.ToGsRemainingTime() && PadlockEx.TryParseTimeSpan(maxTime, out var newTime))
                     act.UpperBound = newTime;
                 // Clear it
                 _upperTime = null;
@@ -648,9 +648,9 @@ public sealed class ReactionsDrawer
 
             CkGui.FramedIconText(FAI.HourglassStart);
             CkGui.TextFrameAlignedInline("Maximum Lock Time");
-            if (CkGui.IconInputText(FAI.Clock, "minTime", "0h0m0s..", ref minTime, 32, length, true))
+            if (CkGui.IconInputText(FAI.Clock, "maxTime", "0h0m0s..", ref maxTime, 32, length, true))
             {
-                if (minTime != act.UpperBound.ToGsRemainingTime() && PadlockEx.TryParseTimeSpan(minTime, out var newTime))
+                if (maxTime != act.UpperBound.ToGsRemainingTime() && PadlockEx.TryParseTimeSpan(maxTime, out var newTime))
                     act.UpperBound = newTime;
                 // Clear it
                 _upperTime = null;
