@@ -21,9 +21,9 @@ public static class StaticGarbleData
 
     public static readonly IReadOnlyDictionary<string, List<string>> GagDataMap = new Dictionary<string, List<string>>
     {
-        { MouthOpenKey, ["a", "e", "ae", "h", "hh"] },
-        { MouthClosedKey, ["h", "m", "mh", "n", "ng", "mgh"] },
-        { MouthFullKey, ["m", "m", "m", "m", "m", "h", "mh"] },
+        { MouthOpenKey, ["a", "a", "a", "e", "e", "e", "ae", "h", "h", "hh", ""] },
+        { MouthClosedKey, ["h", "h", "h", "m", "m", "m", "mh", "n", "n", "ng", "mgh", "", ""] },
+        { MouthFullKey, ["m", "m", "m", "m", "m", "h", "h", "mh", "", ""] },
         { NoSoundKey, [""] }
     };
 }

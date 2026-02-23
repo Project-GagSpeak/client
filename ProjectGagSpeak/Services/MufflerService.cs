@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using CkCommons.GarblerCore;
 using GagSpeak.MufflerCore;
 using GagSpeak.MufflerCore.Handler;
@@ -213,6 +214,10 @@ public class MufflerService : DisposableMediatorSubscriberBase
     private string ConvertNonWordsToGagSpeak(string word, bool isAllCaps, bool isFirstLetterCapitalized)
     {
         string phoneticKey;
+        if (Regex.IsMatch(word, @"^[mpfh\p{P}]+$"))
+        {
+            return word;
+        }
         if (_activeMuffleType.HasFlag(GagMuffleType.MouthFull))
         {
             phoneticKey = StaticGarbleData.MouthFullKey;
