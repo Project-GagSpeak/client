@@ -125,7 +125,9 @@ public class Ipa_EN_FR_JP_SP_Handler
             if (string.IsNullOrEmpty(word)) continue;
 
             // remove punctuation from the word and convert to lower case
-            var strippedWord = Regex.Replace(word, @"(?![.'-])\p{P}", "").ToLower();
+            var strippedWord = Regex.Replace(word, @"(?![.'-])\p{P}", "")
+                .TrimStart(_trimmingPunctuation)
+                .ToLower();
 
             // attempt to retrieve the phonetic representation of the word.
             if (!obj.TryGetValue(strippedWord, out var phonetics))
