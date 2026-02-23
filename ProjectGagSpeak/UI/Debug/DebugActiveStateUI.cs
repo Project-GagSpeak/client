@@ -12,6 +12,7 @@ using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
+using GagSpeak.State.Listeners;
 using GagSpeak.Utils;
 using OtterGui.Text;
 using static Lumina.Data.Parsing.Layer.LayerCommon;
@@ -31,6 +32,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
     private readonly TraitsCache _traitsCache;
     private readonly OverlayCache _overlayCache;
     private readonly ArousalService _arousal;
+    private readonly HealthMonitor _hpMonitor;
     private readonly RemoteService _remotes;
     private readonly TextureService _iconTextures;
     private readonly OnTickService _onTick;
@@ -48,6 +50,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         TraitsCache traitsCache,
         OverlayCache overlayCache,
         ArousalService arousal,
+        HealthMonitor hpMonitor,
         RemoteService remotes,
         TextureService iconTextures,
         OnTickService onTick)
@@ -64,6 +67,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         _traitsCache = traitsCache;
         _overlayCache = overlayCache;
         _arousal = arousal;
+        _hpMonitor = hpMonitor;
         _remotes = remotes;
         _iconTextures = iconTextures;
         _onTick = onTick;
@@ -144,6 +148,8 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         ImGui.Separator();
         if (ImGui.CollapsingHeader("RemoteService Cache"))
             _remotes.DrawCacheTable();
+
+        _hpMonitor.DrawDebug();
     }
 
     public static unsafe void DebugArea(LocationEntry entry)

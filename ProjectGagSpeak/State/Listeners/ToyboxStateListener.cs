@@ -85,7 +85,7 @@ public sealed class ToyboxStateListener
         return true;
     }
 
-    public bool AlarmToggled(Guid alarmId, string enactor)
+    public bool AlarmStateChanged(Guid alarmId, string enactor)
     {
         if (!_alarms.ToggleAlarm(alarmId, enactor))
             return false;

@@ -452,7 +452,7 @@ public sealed class DetectionDrawer : IDisposable
 
         ImUtf8.SameLineInner();
         if (_restrictionCombo.Draw("##restrictions", trigger.RestrictionId, ImGui.GetContentRegionAvail().X))
-            trigger.RestrictionId = _restraintCombo.Current?.Identifier ?? Guid.Empty;
+            trigger.RestrictionId = _restrictionCombo.Current?.Identifier ?? Guid.Empty;
         if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
             trigger.RestrictionId = Guid.Empty;
         CkGui.AttachToolTip("The Restriction to monitor for state changes.");
@@ -515,14 +515,15 @@ public sealed class DetectionDrawer : IDisposable
         CkGui.TextFrameAlignedInline("Monitor:");
 
         ImUtf8.SameLineInner();
-        if (CkGuiUtils.EnumCombo("##SocialActivity", ImGui.GetContentRegionAvail().X, trigger.Game, out var newVal, _ => _.ToString()))
+        if (CkGuiUtils.EnumCombo("##SocialActivity", ImGui.GetContentRegionAvail().X * .5f, trigger.Game, out var newVal, _ => _.ToString()))
             trigger.Game = newVal;
         CkGui.AttachToolTip("The Social Game to monitor for.");
 
         CkGui.FramedIconText(FAI.Trophy);
         CkGui.TextFrameAlignedInline("When outcome is a");
         ImUtf8.SameLineInner();
-        if (CkGuiUtils.EnumCombo("##SocialResult", ImGui.GetContentRegionAvail().X, trigger.Result, out var newRes, _ => _.ToString()))
+        var resWidth = ImGui.CalcTextSize("lossmmm").X;
+        if (CkGuiUtils.EnumCombo("##SocialResult", resWidth, trigger.Result, out var newRes, _ => _.ToString()))
             trigger.Result = newRes;
         CkGui.AttachToolTip("What result from the game will invoke this trigger.");
     }

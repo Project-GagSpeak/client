@@ -4,6 +4,7 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.ImGuiNotification;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
+using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Attributes;
@@ -396,57 +397,46 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         kinkster.NewActiveCollarData(dto);
     }
 
-    public void NewActiveCursedLoot(KinksterUpdateActiveCursedLoot dto)
+    public void UpdateItemState(UserData target, UserData enactor, GSModule module, Guid item, bool newState)
     {
-        if (!_allKinksters.TryGetValue(dto.User, out var kinkster))
-            throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
-        kinkster.NewActiveCursedLoot(dto.ActiveItems, dto.ChangedItem);
+        if (!_allKinksters.TryGetValue(target, out var kinkster))
+            throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
+        kinkster.NewEnabledState(module, item, newState); 
     }
 
-    public void UpdateAliasState(UserData targetUser, Guid id, bool newState)
+    public void UpdateItemStates(UserData target, UserData enactor, GSModule module, List<Guid> items, bool newState)
+    {
+        if (!_allKinksters.TryGetValue(target, out var kinkster))
+            throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
+        kinkster.NewEnabledStates(module, items, newState);
+    }
+
+    public void UpdateGagState(UserData target, GagType gag, bool newState)
+    {
+        if (!_allKinksters.TryGetValue(target, out var kinkster))
+            throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
+        kinkster.NewEnabledState(gag, newState);
+    }
+
+    public void UpdateGagStates(UserData target, List<GagType> gags, bool newState)
+    {
+        if (!_allKinksters.TryGetValue(target, out var kinkster))
+            throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
+        kinkster.NewEnabledStates(gags, newState);
+    }
+
+    public void UpdateToyState(UserData targetUser, ToyBrandName toy, bool newState)
     {
         if (!_allKinksters.TryGetValue(targetUser, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-        // Update it if it exists.
-        if (kinkster.SharedAliases.FirstOrDefault(a => a.Identifier == id) is { } alias)
-            alias.Enabled = newState;
-
-        Mediator.Publish(new FolderUpdateKinksterAliases(kinkster));
+        kinkster.NewEnabledState(toy, newState);
     }
 
-    public void UpdateActiveAliases(KinksterUpdateActiveAliases dto)
-    {
-        if (!_allKinksters.TryGetValue(dto.User, out var kinkster))
-            throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
-        kinkster.NewActiveAliases(dto.ActiveAliases);
-    }
-
-    public void NewValidToys(UserData targetUser, List<ToyBrandName> validToys)
+    public void UpdateToyStates(UserData targetUser, List<ToyBrandName> toys, bool newState)
     {
         if (!_allKinksters.TryGetValue(targetUser, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-        kinkster.NewValidToys(validToys);
-    }
-
-    public void NewActivePattern(KinksterUpdateActivePattern dto)
-    {
-        if (!_allKinksters.TryGetValue(dto.User, out var kinkster))
-            throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
-        kinkster.NewActivePattern(dto.Enactor, dto.ActivePattern, dto.Type);
-    }
-
-    public void NewActiveAlarms(KinksterUpdateActiveAlarms dto)
-    {
-        if (!_allKinksters.TryGetValue(dto.User, out var kinkster))
-            throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
-        kinkster.NewActiveAlarms(dto.Enactor, dto.ActiveAlarms, dto.Type);
-    }
-
-    public void NewActiveTriggers(KinksterUpdateActiveTriggers dto)
-    {
-        if (!_allKinksters.TryGetValue(dto.User, out var kinkster))
-            throw new InvalidOperationException($"Kinkster [{dto.User.AliasOrUID}] not found.");
-        kinkster.NewActiveTriggers(dto.Enactor, dto.ActiveTriggers, dto.Type);
+        kinkster.NewEnabledStates(toys, newState);
     }
 
     public void CachedGagDataChange(UserData targetUser, GagType gagItem, LightGag? newData)
@@ -520,13 +510,6 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         if (!_allKinksters.TryGetValue(targetUser, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
         kinkster.LightCache.UpdateTriggerItem(itemId, newData);
-    }
-
-    public void CachedAllowancesChange(UserData targetUser, GSModule module, List<string> newAllowances)
-    {
-        if (!_allKinksters.TryGetValue(targetUser, out var kinkster))
-            throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
-        kinkster.LightCache.UpdateAllowances(module, newAllowances);
     }
     #endregion DataUpdates
 

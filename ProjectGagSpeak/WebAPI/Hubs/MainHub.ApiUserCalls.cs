@@ -166,40 +166,40 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse<AppliedCursedItem>>(nameof(UserPushActiveLoot), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserPushAliasState(PushClientAliasState dto)
+    public async Task<HubResponse> UserPushItemEnabledState(PushItemEnabledState dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushAliasState), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushItemEnabledState), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserPushActiveAliases(PushClientActiveAliases dto)
+    public async Task<HubResponse> UserPushGagEnabledState(PushGagEnabledState dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActiveAliases), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushGagEnabledState), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserPushValidToys(PushClientValidToys dto)
+    public async Task<HubResponse> UserPushToyEnabledState(PushToyEnabledState dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushValidToys), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushToyEnabledState), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserPushActivePattern(PushClientActivePattern dto)
+    public async Task<HubResponse> UserPushItemEnabledStates(PushItemEnabledStates dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActivePattern), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushItemEnabledStates), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserPushActiveAlarms(PushClientActiveAlarms dto)
+    public async Task<HubResponse> UserPushGagEnabledStates(PushGagEnabledStates dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActiveAlarms), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushGagEnabledStates), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserPushActiveTriggers(PushClientActiveTriggers dto)
+    public async Task<HubResponse> UserPushToyEnabledStates(PushToyEnabledStates dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActiveTriggers), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushToyEnabledStates), dto).ConfigureAwait(false);
     }
 
     public async Task<HubResponse> UserPushNewGagData(PushClientDataChangeGag dto)
@@ -254,12 +254,6 @@ public partial class MainHub
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushNewTriggerData), dto).ConfigureAwait(false);
-    }
-
-    public async Task<HubResponse> UserPushNewAllowances(PushClientAllowances dto)
-    {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushNewAllowances), dto).ConfigureAwait(false);
     }
 
     public async Task<HubResponse<ClientGlobals>> UserBulkChangeGlobal(BulkChangeGlobal allGlobalPerms)

@@ -2,6 +2,7 @@ using CkCommons.Helpers;
 using Dalamud.Game.Text.SeStringHandling;
 using GagSpeak.Interop;
 using GagSpeak.Kinksters;
+using GagSpeak.MufflerCore;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Handlers;
 using GagSpeak.State.Listeners;
@@ -25,7 +26,6 @@ public class ReactionDistributor
 {
     private readonly ILogger<ReactionDistributor> _logger;
     private readonly PiShockProvider _shockies;
-    private readonly KinksterManager _pairs;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
@@ -34,13 +34,9 @@ public class ReactionDistributor
     private readonly MoodleHandler _moodles;
     private readonly SelfBondageService _selfBondage;
 
-    // (This rate limiter is kind of busted at the moment, maybe find a better solution for this)
-    private ActionRateLimiter _rateLimiter = new(TimeSpan.FromSeconds(3), 1, 3, 3, 3);
-
     public ReactionDistributor(
         ILogger<ReactionDistributor> logger,
         PiShockProvider shockies,
-        KinksterManager pairs,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
@@ -51,7 +47,6 @@ public class ReactionDistributor
     {
         _logger = logger;
         _shockies = shockies;
-        _pairs = pairs;
         _gags = gags;
         _restrictions = restrictions;
         _restraints = restraints;
@@ -246,8 +241,11 @@ public class ReactionDistributor
                 return false;
 
             // Otherwise, attempt to locate the first lockable gagslot.
-            layerIdx = gagData.FindFirstUnlocked();
-            if (layerIdx == -1)
+            if (layerIdx is -1)
+                layerIdx = gagData.FindFirstUnlocked();
+
+            // If still not valid, fail.
+            if (layerIdx is -1)
                 return false;
 
             // We have found one to lock. Check what lock we chose, and define accordingly.
@@ -273,11 +271,15 @@ public class ReactionDistributor
         }
         else if (act.NewState is NewState.Disabled)
         {
-            layerIdx = act.GagType is GagType.None ? gagData.FindOutermostActive() : gagData.FindOutermostActive(act.GagType);
-            if (layerIdx == -1)
-                return false;
+            layerIdx = gagData.FindOutermostActive();
 
-            _logger.LogDebug($"Removing [{act.GagType}] from layer {layerIdx}", LoggerType.Triggers);
+            if (layerIdx is -1)
+            {
+                _logger.LogWarning($"No active gag found for [{act.GagType}] when attempting to disable.", LoggerType.Triggers);
+                return false;
+            }
+
+            _logger.LogDebug($"Removing [{gagData.GagSlots[layerIdx].GagItem}] from layer {layerIdx}", LoggerType.Triggers);
             return await _selfBondage.DoSelfGagResult(layerIdx, new ActiveGagSlot(), DataUpdateType.Removed);
         }
 
@@ -288,14 +290,16 @@ public class ReactionDistributor
         if (_restrictions.ServerRestrictionData is not { } restrictions)
             return false;
 
-        var layerIdx = -1;
+        var layerIdx = act.LayerIdx; // Should be -1 for wildcard.
         if (act.NewState is NewState.Enabled)
         {
-            // grab the right restriction first.
-            layerIdx = act.LayerIdx == -1 ? restrictions.Restrictions.IndexOf(x => x.Identifier == Guid.Empty) : act.LayerIdx;
-
-            if (layerIdx == -1 || restrictions.Restrictions[layerIdx].IsLocked() || !restrictions.Restrictions[layerIdx].CanApply())
+            if (layerIdx is -1)
+                layerIdx = restrictions.Restrictions.IndexOf(x => x.Identifier == Guid.Empty);
+            
+            // If still -1, none was found.
+            if (layerIdx is -1 || restrictions.Restrictions[layerIdx].IsLocked() || !restrictions.Restrictions[layerIdx].CanApply())
                 return false;
+
             _logger.LogInformation($"Applying restriction [{act.RestrictionId}] to layer {layerIdx}", LoggerType.Triggers);
             var itemSlot = restrictions.Restrictions[layerIdx] with
             {
@@ -308,7 +312,7 @@ public class ReactionDistributor
         {
             layerIdx = act.LayerIdx == -1 ? restrictions.Restrictions.IndexOf(x => x.Identifier != Guid.Empty && x.CanLock()) : act.LayerIdx;
 
-            if (layerIdx == -1 || !restrictions.Restrictions[layerIdx].CanLock() || act.Padlock is Padlocks.None)
+            if (layerIdx is -1 || !restrictions.Restrictions[layerIdx].CanLock() || act.Padlock is Padlocks.None)
                 return false;
 
             _logger.LogInformation($"Locking restriction [{act.RestrictionId}] with [{act.Padlock}] on layer {layerIdx}", LoggerType.Triggers);
@@ -329,12 +333,14 @@ public class ReactionDistributor
         }
         else if (act.NewState is NewState.Disabled)
         {
-            layerIdx = act.RestrictionId != Guid.Empty ? restrictions.FindOutermostActiveUnlocked() : restrictions.Restrictions.IndexOf(x => x.Identifier == act.RestrictionId);
+            layerIdx = act.RestrictionId != Guid.Empty
+                ? restrictions.Restrictions.IndexOf(x => x.Identifier == act.RestrictionId)
+                : restrictions.FindOutermostActiveUnlocked();
 
             if (layerIdx == -1 || !restrictions.Restrictions[layerIdx].CanRemove())
                 return false;
 
-            _logger.LogDebug($"Removing restriction [{act.RestrictionId}] from layer {layerIdx}", LoggerType.Triggers);
+            _logger.LogDebug($"Removing restriction [{restrictions.Restrictions[layerIdx].Identifier}] from layer {layerIdx}", LoggerType.Triggers);
             return await _selfBondage.DoSelfBindResult(layerIdx, new ActiveRestriction(), DataUpdateType.Removed).ConfigureAwait(false);
         }
 
@@ -381,7 +387,7 @@ public class ReactionDistributor
         }
         else if (act.NewState is NewState.Disabled)
         {
-            if (!restraint.CanRemove() || !_restraints.Storage.Contains(act.RestrictionId))
+            if (!restraint.CanRemove())
                 return false;
             _logger.LogDebug($"Removing restraint [{act.RestrictionId}]", LoggerType.Triggers);
             return await _selfBondage.DoSelfRestraintResult(new CharaActiveRestraint(), DataUpdateType.Removed).ConfigureAwait(false);

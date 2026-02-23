@@ -176,7 +176,7 @@ public class CharaObjectWatcher : DisposableMediatorSubscriberBase
             var charaIdent = GagSpeakSecurity.GetIdentHashByCharacterPtr(addr);
             if (charaIdent != identToCheck)
                 continue;
-            // Ident match found, so call the handlers object rendered method.
+            // Ident match found, so call the handlers object rendered method
             address = addr;
             return true;
         }

@@ -111,13 +111,10 @@ public class AliasesTab : IFancyTab
         {
             UiService.SetUITask(async () =>
             {
-                _manager.ToggleState(alias);
-                // Toggle the state, and then afterward, update the people from it
+                _manager.SetEnabledState(alias, !alias.Enabled);
                 var toSend = _kinksters.GetOnlineUserDatas().Where(u => alias.WhitelistedUIDs.Contains(u.UID)).ToList();
-                _logger.LogDebug($"Pushing AliasStateChange to {string.Join(", ", toSend.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
-
-                var dto = new PushClientAliasState(toSend, alias.Identifier, alias.Enabled);
-                if (await _hub.UserPushAliasState(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+                var dto = new PushItemEnabledState(toSend, GSModule.Puppeteer, alias.Identifier, alias.Enabled);
+                if (await _hub.UserPushItemEnabledState(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
                     _logger.LogWarning($"Failed to push AliasStateChange update to server. Reason: [{res}]");
             });
         }

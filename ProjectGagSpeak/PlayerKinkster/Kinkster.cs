@@ -3,6 +3,7 @@ using CkCommons.Gui;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
@@ -63,13 +64,13 @@ public class Kinkster : IComparable<Kinkster>
     public CharaActiveRestrictions ActiveRestrictions { get; private set; } = new CharaActiveRestrictions();
     public CharaActiveRestraint ActiveRestraint { get; private set; } = new CharaActiveRestraint();
     public CharaActiveCollar ActiveCollar { get; private set; } = new CharaActiveCollar();
-    public List<ToyBrandName> ValidToys { get; private set; } = new();
-    public List<Guid> ActiveCursedItems { get; private set; } = new();
+    public HashSet<ToyBrandName> ValidToys { get; private set; } = new();
+    public HashSet<Guid> ActiveCursedItems { get; private set; } = new();
     public List<AliasTrigger> SharedAliases { get; private set; } = new();
     public bool IsListeningToClient { get; private set; } = false; // Idk a better way to do this, but it works.
     public Guid ActivePattern { get; private set; } = Guid.Empty;
-    public List<Guid> ActiveAlarms { get; private set; } = new();
-    public List<Guid> ActiveTriggers { get; private set; } = new();
+    public HashSet<Guid> ActiveAlarms { get; private set; } = new();
+    public HashSet<Guid> ActiveTriggers { get; private set; } = new();
 
     // Internal Data. (Useful for tooltip information and KinkPlates™
     public KinksterCache LightCache { get; private set; } = new KinksterCache();
@@ -243,10 +244,10 @@ public class Kinkster : IComparable<Kinkster>
             ActiveRestrictions = data.Restrictions;
             ActiveRestraint = data.Restraint;
             // Cursed loot the same?... (will likely add it in once i tackle cursed loot)
-            ValidToys = data.ValidToys;
+            ValidToys = data.ValidToys.ToHashSet();
             ActivePattern = data.ActivePattern;
-            ActiveAlarms = data.ActiveAlarms;
-            ActiveTriggers = data.ActiveTriggers;
+            ActiveAlarms = data.ActiveAlarms.ToHashSet();
+            ActiveTriggers = data.ActiveTriggers.ToHashSet();
             // Do not update the cache, nothing is in it.
         }
         else
@@ -255,14 +256,14 @@ public class Kinkster : IComparable<Kinkster>
             ActiveGags = data.Gags;
             ActiveRestrictions = data.Restrictions;
             ActiveRestraint = data.Restraint;
-            ActiveCursedItems = data.ActiveCursedItems;
+            ActiveCursedItems = data.ActiveCursedItems.ToHashSet();
             // Filtered aliases
             SharedAliases = data.AliasData.Items.Where(a => a.CanView(MainHub.UID)).ToList();
             IsListeningToClient = data.ListeningTo.Contains(MainHub.UID);
-            ValidToys = data.ValidToys;
+            ValidToys = data.ValidToys.ToHashSet();
             ActivePattern = data.ActivePattern;
-            ActiveAlarms = data.ActiveAlarms;
-            ActiveTriggers = data.ActiveTriggers;
+            ActiveAlarms = data.ActiveAlarms.ToHashSet();
+            ActiveTriggers = data.ActiveTriggers.ToHashSet();
 
             // Update the kinkster cache with the light storage data.
             _logger.LogDebug($"Updating LightCache for {GetNickAliasOrUid()} " +
@@ -411,22 +412,108 @@ public class Kinkster : IComparable<Kinkster>
         }
     }
 
-    public void NewActiveCursedLoot(List<Guid> newActiveLoot, Guid changedItem)
+    public void NewEnabledState(GagType gag, bool newState)
     {
-        _logger.LogDebug($"Updating ActiveCursedLoot for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
-        ActiveCursedItems = newActiveLoot;
-        // Update internal cache to reflect latest changes for kinkplates and such.
-        UpdateCachedLockedSlots();
+        if (LightCache.Gags.TryGetValue(gag, out var item))
+            item.IsEnabled = newState;
     }
 
-    public void NewActiveAliases(List<Guid> activeItems)
+    public void NewEnabledStates(IEnumerable<GagType> gags, bool newState)
     {
-        // Ensure the enabled state is correctly updated.
-        var itemsSet = activeItems.ToHashSet();
-        foreach (var alias in SharedAliases)
-            alias.Enabled = itemsSet.Contains(alias.Identifier);
-        // Inform of the change
-        _mediator.Publish(new FolderUpdateKinksterAliases(this));
+        foreach (var gag in gags)
+            if (LightCache.Gags.TryGetValue(gag, out var item))
+                item.IsEnabled = newState;
+    }
+
+    public void NewEnabledState(ToyBrandName toy, bool newState)
+    {
+        if (newState) ValidToys.Add(toy);
+        else ValidToys.Remove(toy);
+    }
+
+    public void NewEnabledStates(IEnumerable<ToyBrandName> toys, bool newState)
+    {
+        if (newState) ValidToys.UnionWith(toys);
+        else ValidToys.ExceptWith(toys);
+    }
+
+    public void NewEnabledState(GSModule module, Guid item, bool newState)
+    {
+        if (module is GSModule.Restriction && LightCache.Restrictions.TryGetValue(item, out var restriction))
+        {
+            restriction.IsEnabled = newState;
+        }
+        else if (module is GSModule.Restraint && LightCache.Restraints.TryGetValue(item, out var restraint))
+        {
+            restraint.IsEnabled = newState;
+        }
+        else if (module is GSModule.CursedLoot)
+        {
+            if (newState) ActiveCursedItems.Add(item);
+            else ActiveCursedItems.Remove(item);
+            UpdateCachedLockedSlots();
+        }
+        else if (module is GSModule.Puppeteer)
+        {
+            if (SharedAliases.FirstOrDefault(a => a.Identifier == item) is { } alias)
+            {
+                alias.Enabled = newState;
+                _mediator.Publish(new FolderUpdateKinksterAliases(this));
+            }
+        }
+        else if (module is GSModule.Pattern)
+        {
+            ActivePattern = newState ? item : Guid.Empty;
+        }
+        else if (module is GSModule.Alarm)
+        {
+            if (newState) ActiveAlarms.Add(item);
+            else ActiveAlarms.Remove(item);
+        }
+        else if (module is GSModule.Trigger)
+        {
+            if (newState) ActiveTriggers.Add(item);
+            else ActiveTriggers.Remove(item);
+        }
+    }
+
+    public void NewEnabledStates(GSModule module, IEnumerable<Guid> items, bool newState)
+    {
+        if (module is GSModule.Restriction)
+        {
+            foreach (var item in items)
+                if (LightCache.Restrictions.TryGetValue(item, out var restriction))
+                    restriction.IsEnabled = newState;
+        }
+        else if (module is GSModule.Restraint)
+        {
+            foreach (var item in items)
+                if(LightCache.Restraints.TryGetValue(item, out var restraint))
+                    restraint.IsEnabled = newState;
+        }
+        else if (module is GSModule.CursedLoot)
+        {
+            if (newState) ActiveCursedItems.UnionWith(items);
+            else ActiveCursedItems.ExceptWith(items);
+            UpdateCachedLockedSlots();
+        }
+        else if (module is GSModule.Puppeteer)
+        {
+            var itemsSet = items.ToHashSet();
+            foreach (var alias in SharedAliases)
+                alias.Enabled = itemsSet.Contains(alias.Identifier);
+            _mediator.Publish(new FolderUpdateKinksterAliases(this));
+        }
+        else if (module is GSModule.Alarm)
+        {
+            if (newState) ActiveAlarms.UnionWith(items);
+            else ActiveAlarms.ExceptWith(items);
+        }
+        else if (module is GSModule.Trigger)
+        {
+            if (newState) ActiveTriggers.UnionWith(items);
+            else ActiveTriggers.ExceptWith(items);
+        }
     }
 
     // Seperated from cache intentionally.
@@ -463,36 +550,6 @@ public class Kinkster : IComparable<Kinkster>
 
     }
 
-
-    public void NewValidToys(List<ToyBrandName> newValidToys)
-    {
-        _logger.LogDebug($"Updating Valid Toys for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
-        ValidToys = newValidToys;
-    }
-
-    public void NewActivePattern(UserData enactor, Guid activePattern, DataUpdateType updateType)
-    {
-        _logger.LogDebug($"Applying NewActivePattern for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
-        ActivePattern = activePattern;
-        // Handle any achievements for a kinkster's pattern changing states here, by tracking removed
-        // and added patterns ext. [FOR FUTURE IMPLEMENTATION]
-    }
-
-    public void NewActiveAlarms(UserData enactor, List<Guid> activeAlarms, DataUpdateType updateType)
-    {
-        _logger.LogDebug($"Applying NewActiveAlarms for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
-        ActiveAlarms = activeAlarms;
-        // Handle any achievements for a kinkster's alarm changing states here, by tracking removed
-        // and added alarms ext. [FOR FUTURE IMPLEMENTATION]
-    }
-
-    public void NewActiveTriggers(UserData enactor, List<Guid> activeTriggers, DataUpdateType updateType)
-    {
-        _logger.LogDebug($"Applying NewActiveTriggers for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
-        ActiveTriggers = activeTriggers;
-        // Handle any achievements for a kinkster's Triggers changing states here, by tracking removed
-        // and added Triggers ext. [FOR FUTURE IMPLEMENTATION]
-    }
     #endregion Data Updates
 
     // Update this method to be obtained by the Kinkster Cache.

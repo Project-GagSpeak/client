@@ -775,7 +775,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
     }
 
     // Probably better to make these light cursed item structs or something idk.
-    private void DrawCursedLoot(string uid, List<Guid> cursedItems)
+    private void DrawCursedLoot(string uid, HashSet<Guid> cursedItems)
     {
         // draw out the list of cursed item GUID's
         using var subnodeCursedItems = ImRaii.TreeNode("Active Cursed Items");

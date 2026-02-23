@@ -30,7 +30,6 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
     private readonly PatternManager _patternManager;
     private readonly AlarmManager _alarmManager;
     private readonly TriggerManager _triggerManager;
-    private readonly AllowancesConfig _traitManager;
 
     private SemaphoreSlim _updateSlim = new SemaphoreSlim(1, 1);
     private readonly HashSet<UserData> _newVisibleKinksters = [];
@@ -50,8 +49,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         PuppeteerManager puppetManager,
         PatternManager patterns,
         AlarmManager alarms,
-        TriggerManager triggers,
-        AllowancesConfig traits)
+        TriggerManager triggers)
         : base(logger, mediator)
     {
         _hub = hub;
@@ -67,7 +65,6 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         _patternManager = patterns;
         _alarmManager = alarms;
         _triggerManager = triggers;
-        _traitManager = traits;
 
         // Achievement Handling
         Mediator.Subscribe<SendAchievementData>(this, (_) => UpdateAchievementData().ConfigureAwait(false));
@@ -95,13 +92,6 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
             PushCompositeData(_kinksters.GetOnlineUserDatas()).ConfigureAwait(false);
         });
 
-        Mediator.Subscribe<AliasStateChangedMessage>(this, arg => PushAliasStateChange(arg).ConfigureAwait(false));
-        Mediator.Subscribe<ActiveAliasesChangedMessage>(this, arg => PushActiveAliasesUpdate(arg).ConfigureAwait(false));
-        Mediator.Subscribe<ValidToysChangedMessage>(this, arg => PushValidToysUpdate(arg).ConfigureAwait(false));
-        Mediator.Subscribe<ActivePatternChangedMessage>(this, arg => PushActivePatternUpdate(arg).ConfigureAwait(false));
-        Mediator.Subscribe<ActiveAlarmsChangedMessage>(this, arg => PushActiveAlarmsUpdate(arg).ConfigureAwait(false));
-        Mediator.Subscribe<ActiveTriggersChangedMessage>(this, arg => PushActiveTriggersUpdate(arg).ConfigureAwait(false));
-
         Mediator.Subscribe<ConfigGagRestrictionChanged>(this, msg => DistributeGagUpdate(msg.Item, msg.Type).ConfigureAwait(false));
         Mediator.Subscribe<ConfigRestrictionChanged>(this, msg => DistributeRestrictionUpdate(msg.Item, msg.Type).ConfigureAwait(false));
         Mediator.Subscribe<ConfigRestraintSetChanged>(this, msg => DistributeRestraintSetUpdate(msg.Item, msg.Type).ConfigureAwait(false));
@@ -111,7 +101,6 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         Mediator.Subscribe<ConfigPatternChanged>(this, msg => DistributePatternUpdate(msg.Item, msg.Type).ConfigureAwait(false));
         Mediator.Subscribe<ConfigAlarmChanged>(this, msg => DistributeAlarmUpdate(msg.Item, msg.Type).ConfigureAwait(false));
         Mediator.Subscribe<ConfigTriggerChanged>(this, msg => DistributeTriggerUpdate(msg.Item, msg.Type).ConfigureAwait(false));
-        Mediator.Subscribe<AllowancesChanged>(this, msg => DistributeAllowancesUpdate(msg.Module, msg.AllowedUids).ConfigureAwait(false));
     }
 
     // Do this for now, later, migrate the newly visible kinksters into an update service that multiple different distribution services could pull from.
@@ -214,7 +203,6 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
             Patterns = _patternManager.Storage.Select(p => p.ToLightItem()).ToArray(),
             Alarms = _alarmManager.Storage.Select(a => a.ToLightItem()).ToArray(),
             Triggers = _triggerManager.Storage.Select(t => t.ToLightItem()).ToArray(),
-            Allowances = _traitManager.GetLightAllowances(),
         };
     }
 
@@ -330,6 +318,74 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
             Logger.LogError("Failed to push Composite Data to server: " + ex);
             return;
         }
+    }
+
+    /*
+     *         Mediator.Subscribe<EnabledItemChanged>(this, arg => PushEnabledItemChanged(arg).ConfigureAwait(false));
+        Mediator.Subscribe<EnabledGagChanged>(this, arg => PushEnabledGagChanged(arg).ConfigureAwait(false));
+        Mediator.Subscribe<EnabledToyChanged>(this, arg => PushEnabledToyChanged(arg).ConfigureAwait(false));
+        Mediator.Subscribe<EnabledItemsChanged>(this, arg => PushEnabledItemsChanged(arg).ConfigureAwait(false));
+        Mediator.Subscribe<EnabledGagsChanged>(this, arg => PushEnabledGagsChanged(arg).ConfigureAwait(false));
+        Mediator.Subscribe<EnabledToysChanged>(this, arg => PushEnabledToysChanged(arg).ConfigureAwait(false));
+     */
+
+    /// <summary>
+    ///     Manually call to ensure we only invoke when we change our state.
+    /// </summary>
+    /// <param name="arg"></param>
+    /// <returns></returns>
+    public async Task PushEnabledItemChanged(EnabledItemChanged arg)
+    {
+        var onlineUsers = _kinksters.GetOnlineUserDatas();
+        Logger.LogDebug($"Pushing EnabledItemChanged to {string.Join(", ", onlineUsers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
+        var dto = new PushItemEnabledState(onlineUsers, arg.Module, arg.ItemId, arg.NewState);
+        if (await _hub.UserPushItemEnabledState(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+            Logger.LogError($"Failed to push EnabledItemChanged update to server. Reason: [{res}]");
+    }
+
+    public async Task PushEnabledGagChanged(EnabledGagChanged arg)
+    {
+        var onlineUsers = _kinksters.GetOnlineUserDatas();
+        Logger.LogDebug($"Pushing EnabledGagChanged to {string.Join(", ", onlineUsers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
+        var dto = new PushGagEnabledState(onlineUsers, arg.Gag, arg.NewState);
+        if (await _hub.UserPushGagEnabledState(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+            Logger.LogError($"Failed to push EnabledGagChanged update to server. Reason: [{res}]");
+    }
+
+    public async Task PushEnabledToyChanged(EnabledToyChanged arg)
+    {
+        var onlineUsers = _kinksters.GetOnlineUserDatas();
+        Logger.LogDebug($"Pushing EnabledToyChanged to {string.Join(", ", onlineUsers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
+        var dto = new PushToyEnabledState(onlineUsers, arg.Toy, arg.NewState);
+        if (await _hub.UserPushToyEnabledState(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+            Logger.LogError($"Failed to push EnabledToyChanged update to server. Reason: [{res}]");
+    }
+
+    public async Task PushEnabledItemsChanged(EnabledItemsChanged arg)
+    {
+        var onlineUsers = _kinksters.GetOnlineUserDatas();
+        Logger.LogDebug($"Pushing EnabledItemsChanged to {string.Join(", ", onlineUsers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
+        var dto = new PushItemEnabledStates(onlineUsers, arg.Module, arg.Items.ToList(), arg.NewState);
+        if (await _hub.UserPushItemEnabledStates(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+            Logger.LogError($"Failed to push EnabledItemsChanged update to server. Reason: [{res}]");
+    }
+
+    public async Task PushEnabledGagsChanged(EnabledGagsChanged arg)
+    {
+        var onlineUsers = _kinksters.GetOnlineUserDatas();
+        Logger.LogDebug($"Pushing EnabledGagsChanged to {string.Join(", ", onlineUsers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
+        var dto = new PushGagEnabledStates(onlineUsers, arg.Gags.ToList(), arg.NewState);
+        if (await _hub.UserPushGagEnabledStates(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+            Logger.LogError($"Failed to push EnabledGagsChanged update to server. Reason: [{res}]");
+    }
+
+    public async Task PushEnabledToysChanged(EnabledToysChanged arg)
+    {
+        var onlineUsers = _kinksters.GetOnlineUserDatas();
+        Logger.LogDebug($"Pushing EnabledToysChanged to {string.Join(", ", onlineUsers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
+        var dto = new PushToyEnabledStates(onlineUsers, arg.Toys.ToList(), arg.NewState);
+        if (await _hub.UserPushToyEnabledStates(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+            Logger.LogError($"Failed to push EnabledToysChanged update to server. Reason: [{res}]");
     }
 
     public async Task<ActiveGagSlot?> PushNewActiveGagSlot(int layer, ActiveGagSlot slot, DataUpdateType type)
@@ -469,79 +525,16 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
     public async Task<AppliedCursedItem?> PushActiveCursedLoot(List<UserData> onlinePlayers, List<Guid> activeItems, Guid changeItem, AppliedItem? lootItem)
     {
         Logger.LogDebug($"Pushing ActiveCursedLoot to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
-        var dto = new PushClientActiveLoot(onlinePlayers, activeItems, changeItem, lootItem);
-
-        // push out the result and get the data.
-        var res = await _hub.UserPushActiveLoot(dto).ConfigureAwait(false);
+        var res = await _hub.UserPushActiveLoot(new(onlinePlayers, activeItems, changeItem, lootItem)).ConfigureAwait(false);
         // if not successful, log and return null.
         if (res.ErrorCode is not GagSpeakApiEc.Success)
         {
             Logger.LogError($"Failed to push ActiveCursedLoot to server [{res}]");
             return null;
         }
-        // otherwise return the value.
         return res.Value;
     }
 
-    private async Task PushAliasStateChange(AliasStateChangedMessage msg)
-    {
-        var onlineUsers = _kinksters.GetOnlineUserDatas();
-        var toSend = msg.Alias.WhitelistedUIDs.Count is 0 ? onlineUsers : onlineUsers.Where(u => msg.Alias.WhitelistedUIDs.Contains(u.UID)).ToList();
-        Logger.LogDebug($"Pushing AliasStateChange to {string.Join(", ", toSend.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
-
-        var dto = new PushClientAliasState(toSend, msg.Alias.Identifier, msg.Alias.Enabled);
-        if (await _hub.UserPushAliasState(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
-            Logger.LogError($"Failed to push AliasStateChange update to server. Reason: [{res}]");
-    }
-
-    private async Task PushActiveAliasesUpdate(ActiveAliasesChangedMessage msg)
-    {
-        var onlinePlayers = _kinksters.GetOnlineUserDatas();
-        Logger.LogDebug($"Pushing ActiveAliasesUpdate to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
-
-        var dto = new PushClientActiveAliases(onlinePlayers, msg.ActiveAliases);
-        if (await _hub.UserPushActiveAliases(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
-            Logger.LogError($"Failed to push ActiveAliases update to server. Reason: [{res}]");
-    }
-
-    public async Task PushValidToysUpdate(ValidToysChangedMessage msg)
-    {
-        var onlinePlayers = _kinksters.GetOnlineUserDatas();
-        Logger.LogDebug($"Pushing ValidToysUpdate to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
-        var dto = new PushClientValidToys(onlinePlayers, msg.ValidToys);
-        if (await _hub.UserPushValidToys(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
-            Logger.LogError($"Failed to push ValidToys update to server. Reason: [{res}]");
-    }
-
-    public async Task PushActivePatternUpdate(ActivePatternChangedMessage msg)
-    {
-        var onlinePlayers = _kinksters.GetOnlineUserDatas();
-        Logger.LogDebug($"Pushing ActivePatternUpdate to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))} [{msg.UpdateType}]", LoggerType.OnlinePairs);
-
-        var dto = new PushClientActivePattern(onlinePlayers, msg.NewActivePattern, msg.UpdateType);
-        if (await _hub.UserPushActivePattern(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
-            Logger.LogError($"Failed to push ActivePattern update to server. Reason: [{res}]");
-    }
-
-    public async Task PushActiveAlarmsUpdate(ActiveAlarmsChangedMessage msg)
-    {
-        var onlinePlayers = _kinksters.GetOnlineUserDatas();
-        Logger.LogDebug($"Pushing ActiveAlarmsUpdate to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))} [{msg.UpdateType}]", LoggerType.OnlinePairs);
-
-        var dto = new PushClientActiveAlarms(onlinePlayers, msg.ActiveAlarms, msg.ChangedItem, msg.UpdateType);
-        if (await _hub.UserPushActiveAlarms(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
-            Logger.LogError($"Failed to push ActiveAlarms update to server. Reason: [{res}]");
-    }
-
-    public async Task PushActiveTriggersUpdate(ActiveTriggersChangedMessage msg)
-    {
-        var onlinePlayers = _kinksters.GetOnlineUserDatas();
-        Logger.LogDebug($"Pushing ActivePatternUpdate to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))} [{msg.UpdateType}]", LoggerType.OnlinePairs);
-
-        var dto = new PushClientActiveTriggers(onlinePlayers, msg.ActiveTriggers, msg.ChangedItem, msg.UpdateType);
-        if (await _hub.UserPushActiveTriggers(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
-            Logger.LogError($"Failed to push ActiveTriggers update to server. Reason: [{res}]");
-    }
 
     private async Task DistributeGagUpdate(GarblerRestriction item, StorageChangeType kind)
     {
@@ -641,16 +634,5 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
             Logger.LogError($"Failed to push TriggerData to paired Kinksters. [{res}]");
         else
             Logger.LogDebug("Successfully pushed TriggerData to server", LoggerType.OnlinePairs);
-    }
-
-    private async Task DistributeAllowancesUpdate(GSModule module, IEnumerable<string> allowedUids)
-    {
-        var onlinePlayers = _kinksters.GetOnlineUserDatas();
-        Logger.LogDebug($"Pushing AllowancesUpdate for GagspeakModule [{module}] to online pairs.", LoggerType.OnlinePairs);
-        var dto = new PushClientAllowances(onlinePlayers, module, allowedUids.ToArray());
-        if (await _hub.UserPushNewAllowances(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
-            Logger.LogError($"Failed to push AllowancesUpdate to paired Kinksters. [{res}]");
-        else
-            Logger.LogDebug("Successfully pushed AllowancesUpdate to server", LoggerType.OnlinePairs);
     }
 }

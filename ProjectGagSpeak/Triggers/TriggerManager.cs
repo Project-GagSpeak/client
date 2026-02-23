@@ -1,10 +1,12 @@
 using CkCommons.Helpers;
 using CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
+using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 
 namespace GagSpeak.State.Managers;
@@ -145,19 +147,28 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
         if (!Storage.TryGetTrigger(triggerId, out var trigger))
             return false;
 
-        ToggleState(trigger);
+        trigger.Enabled = !trigger.Enabled;
+        Logger.LogDebug($"Toggled Trigger: {trigger.Label} to {(trigger.Enabled ? "Enabled" : "Disabled")}", LoggerType.Triggers);
+        _saver.Save(this);
+        Mediator.Publish(new EnabledItemChanged(GSModule.Trigger, trigger.Identifier, trigger.Enabled));
         return true;
     }
 
-    public void ToggleState(Trigger trigger)
-        => ToggleState([trigger]);
+    public void SetEnabledState(Trigger trigger, bool newState)
+    {
+        trigger.Enabled = newState;
+        _saver.Save(this);
+        Logger.LogDebug($"Toggled Trigger: {trigger.Label} to {(trigger.Enabled ? "Enabled" : "Disabled")}", LoggerType.Triggers);
+        Mediator.Publish(new EnabledItemChanged(GSModule.Trigger, trigger.Identifier, trigger.Enabled));
+    }
 
-    public void ToggleState(IEnumerable<Trigger> triggers)
+    public void SetEnabledState(IEnumerable<Trigger> triggers, bool newState)
     {
         foreach (var a in triggers)
-            a.Enabled = !a.Enabled;
-        Logger.LogDebug($"Toggled Trigger(s): ({string.Join(", ", triggers.Select(a => a.Label))})", LoggerType.Triggers);
+            a.Enabled = newState;
         _saver.Save(this);
+        Logger.LogDebug($"Toggled Trigger(s): ({string.Join(", ", triggers.Select(a => a.Label))})", LoggerType.Triggers);
+        Mediator.Publish(new EnabledItemsChanged(GSModule.Trigger, triggers.Select(t => t.Identifier), newState));
     }
 
     #region HybridSavable

@@ -53,7 +53,7 @@ public sealed class RestraintManager : IHybridSavable
     {
         _serverRestraintData = serverData;
         // iterate through each of the server's gag data.
-        AppliedRestraint = Storage.FirstOrDefault(rs => Guid.Equals(rs.Identifier, serverData.Identifier));
+        AppliedRestraint = Storage.FirstOrDefault(rs => rs.Identifier.Equals(serverData.Identifier));
         _logger.LogInformation("Synchronized Active RestraintSet with Client-Side Manager.");
     }
 
@@ -257,7 +257,7 @@ public sealed class RestraintManager : IHybridSavable
         data.Password = string.Empty;
         data.Timer = DateTimeOffset.MinValue;
         data.PadlockAssigner = string.Empty;
-        _mediator.Publish(new RestraintStateChanged(NewState.Unlocked, data, enactor, MainHub.UID));
+        _mediator.Publish(new RestraintStateChanged(NewState.Unlocked, prev, enactor, MainHub.UID));
         
         // can move to achievements
         if ((prev.PadlockAssigner != MainHub.UID) && (enactor != MainHub.UID) && (enactor != prev.PadlockAssigner))
@@ -293,7 +293,7 @@ public sealed class RestraintManager : IHybridSavable
         data.Identifier = Guid.Empty;
         data.Enabler = string.Empty;
         data.ActiveLayers = RestraintLayer.None;
-        _mediator.Publish(new RestraintStateChanged(NewState.Disabled, data, enactor, MainHub.UID));
+        _mediator.Publish(new RestraintStateChanged(NewState.Disabled, prev, enactor, MainHub.UID));
 
         // Can move this to achievements later
         if ((prev.Enabler != MainHub.UID) && (enactor != MainHub.UID) && (enactor != prev.Enabler))

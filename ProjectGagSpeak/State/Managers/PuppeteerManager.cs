@@ -14,6 +14,7 @@ namespace GagSpeak.State.Managers;
 
 public sealed class PuppeteerPlayer
 {
+    // make a hashset if we want to allow multiple players on a profile
     public string NameWithWorld { get; set; } = string.Empty;
     public int OrdersRecieved { get; set; } = 0;
     public int SitOrders { get; set; } = 0;
@@ -119,15 +120,21 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
     public void Save()
         => _saver.Save(this);
 
-    public void ToggleState(AliasTrigger alias)
-        => ToggleState([alias]);
+    public void SetEnabledState(AliasTrigger alias, bool newState)
+    {
+        alias.Enabled = newState;
+        Logger.LogDebug($"Set EnabledState: {alias.Label} to {(alias.Enabled ? "Enabled" : "Disabled")}", LoggerType.Puppeteer);
+        _saver.Save(this);
+        Mediator.Publish(new EnabledItemChanged(GSModule.Puppeteer, alias.Identifier, newState));
+    }
 
-    public void ToggleState(IEnumerable<AliasTrigger> aliases)
+    public void SetEnabledState(IEnumerable<AliasTrigger> aliases, bool newState)
     {
         foreach (var a in aliases)
-            a.Enabled = !a.Enabled;
-        Logger.LogDebug($"Toggled AliasTriggers ({string.Join(", ", aliases.Select(a => a.Label))})", LoggerType.Puppeteer);
+            a.Enabled = newState;
         _saver.Save(this);
+        Logger.LogDebug($"SetEnabledState for ({string.Join(", ", aliases.Select(a => a.Label))})", LoggerType.Puppeteer);
+        Mediator.Publish(new EnabledItemsChanged(GSModule.Puppeteer, aliases.Select(a => a.Identifier), newState));
     }
 
     public string? GetPuppeteerUid(string name, string world)

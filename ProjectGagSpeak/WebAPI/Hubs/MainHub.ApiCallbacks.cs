@@ -499,120 +499,94 @@ public partial class MainHub
         }
     }
 
-
-    /// <summary> The only condition that we receive this, is if it's for another pair. </summary>
-    public Task Callback_KinksterUpdateActiveCursedLoot(KinksterUpdateActiveCursedLoot dataDto)
+    public async Task Callback_KinksterChangeEnabledItem(KinksterChangeEnabledItem dto)
     {
-        if (dataDto.User.UID != UID)
+        Logger.LogDebug($"KinksterChangeEnabledItem for {dto.User.AliasOrUID} (from {dto.Enactor.AliasOrUID})", LoggerType.Callbacks);
+        if (dto.User.UID != UID)
         {
-            Logger.LogDebug($"[OTHER-CURSEDLOOT-ACTIVE]: {dataDto.User} ({dataDto.ChangedItem})", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksters.NewActiveCursedLoot(dataDto));
-            return Task.CompletedTask;
+            Generic.Safe(() => _kinksters.UpdateItemState(dto.User, dto.Enactor, dto.Module, dto.ItemId, dto.NewState));
         }
         else
         {
-            Logger.LogWarning("Received a Cursed Loot update for ourselves, this should never happen!", LoggerType.Callbacks);
-        }
-        return Task.CompletedTask;
-    }
-
-    public Task Callback_KinksterUpdateAliasState(KinksterUpdateAliasState dto)
-    {
-        Logger.LogDebug($"Callback_KinksterUpdateAliasState for {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        Generic.Safe(() => _kinksters.UpdateAliasState(dto.User, dto.Alias, dto.NewState));
-        return Task.CompletedTask;
-    }
-
-    public Task Callback_KinksterUpdateActiveAliases(KinksterUpdateActiveAliases dto)
-    {
-        Logger.LogDebug($"Callback_KinksterUpdateActiveAliases for {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        Generic.Safe(() => _kinksters.UpdateActiveAliases(dto));
-        return Task.CompletedTask;
-    }
-
-    public Task Callback_KinksterUpdateValidToys(KinksterUpdateValidToys dto)
-    {
-        Logger.LogDebug($"Received a Kinkster's updated Valid Toys: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        Generic.Safe(() => _kinksters.NewValidToys(dto.User, dto.ValidToys));
-        return Task.CompletedTask;
-    }
-
-    public async Task Callback_KinksterUpdateActivePattern(KinksterUpdateActivePattern dto)
-    {
-        if (dto.User.UID == UID)
-        {
-            // if the callback wants us to update our pattern state but we are recording or in a vibe room we should reject this?
-            // patterns are fragile babies and must be handled with care.
-            Logger.LogDebug($"OWN KinksterUpdateActivePattern: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-            await Generic.Safe(async () =>
+            // For Patterns
+            if (dto.Module is GSModule.Pattern)
             {
-                var success = dto.Type switch
+                await Generic.Safe(async () =>
                 {
-                    DataUpdateType.PatternSwitched => _toyboxListener.PatternSwitched(dto.ActivePattern, dto.Enactor.UID),
-                    DataUpdateType.PatternExecuted => _toyboxListener.PatternStarted(dto.ActivePattern, dto.Enactor.UID),
-                    DataUpdateType.PatternStopped => _toyboxListener.PatternStopped(dto.ActivePattern, dto.Enactor.UID),
-                    _ => false
-                };
-                if (!success)
-                {
-                    Logger.LogError($"Failed to handle KinksterUpdateActivePattern for {dto.User.AliasOrUID} with type {dto.Type}");
-                    Logger.LogError($"Attempt to find out why this is even allowed to happen, and fix it, as it should never occur!");
-                    var recallType = _toyboxListener.ActivePattern == Guid.Empty ? DataUpdateType.PatternStopped : DataUpdateType.PatternSwitched;
-                    await UserPushActivePattern(new PushClientActivePattern(_kinksters.GetOnlineUserDatas(), _toyboxListener.ActivePattern, recallType));
-                }
-            });
-        }
-        else
-        {
-            Logger.LogDebug($"OTHER KinksterUpdateActivePattern: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksters.NewActivePattern(dto));
+                    //var success = dto.Type switch
+                    //{
+                    //    DataUpdateType.PatternSwitched => _toyboxListener.PatternSwitched(dto.ItemId, dto.Enactor.UID),
+                    //    DataUpdateType.PatternExecuted => _toyboxListener.PatternStarted(dto.ItemId, dto.Enactor.UID),
+                    //    DataUpdateType.PatternStopped => _toyboxListener.PatternStopped(dto.ItemId, dto.Enactor.UID),
+                    //    _ => false
+                    //};
+                    //if (!success)
+                    //{
+                    //    Logger.LogError($"Failed to handle KinksterUpdateActivePattern for {dto.User.AliasOrUID} with type {dto.Type}");
+                    //    Logger.LogError($"Attempt to find out why this is even allowed to happen, and fix it, as it should never occur!");
+                    //    var recallType = _toyboxListener.ActivePattern == Guid.Empty ? DataUpdateType.PatternStopped : DataUpdateType.PatternSwitched;
+                    //    await UserPushActivePattern(new PushItemEnabledState(_kinksters.GetOnlineUserDatas(), GSModule.Pattern, _toyboxListener.ActivePattern, false)));
+                    //}
+                });
+            }
+            else if (dto.Module is GSModule.Alarm)
+            {
+                _toyboxListener.AlarmStateChanged(dto.ItemId, dto.Enactor.UID);
+            }
+            else if (dto.Module is GSModule.Trigger)
+            {
+                _toyboxListener.TriggerToggled(dto.ItemId, dto.Enactor.UID);
+            }
+            else
+            {
+                Logger.LogWarning("No support is added for this outcome!");
+            }
+            // Was for player. Ensure to properly handle these changes accordingly for patterns, alarms, and triggers.
         }
     }
 
-    public Task Callback_KinksterUpdateActiveAlarms(KinksterUpdateActiveAlarms dto)
+    public Task Callback_KinksterChangeEnabledGag(KinksterChangeEnabledGag dto)
     {
-        if (dto.Type is not DataUpdateType.AlarmToggled)
-        {
-            Logger.LogWarning("Received an Alarm Update that was not a toggle, this should never happen! " + dto.Type, LoggerType.Callbacks);
-            return Task.CompletedTask;
-        }
-
-        // Valid type, so process the change.
-        if (dto.User.UID == UID)
-        {
-            Logger.LogDebug($"OWN Callback_KinksterUpdateActiveAlarms: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-            _toyboxListener.AlarmToggled(dto.ChangedItem, dto.Enactor.UID);
-            return Task.CompletedTask;
-        }
-        else
-        {
-            Logger.LogDebug($"OTHER Callback_ReceiveDataToybox: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksters.NewActiveAlarms(dto));
-            return Task.CompletedTask;
-        }
+        Logger.LogDebug($"KinksterChangeEnabledGag for {dto.User.AliasOrUID})", LoggerType.Callbacks);
+        Generic.Safe(() => _kinksters.UpdateGagState(dto.User, dto.Gag, dto.NewState));
+        return Task.CompletedTask;
     }
 
-    public Task Callback_KinksterUpdateActiveTriggers(KinksterUpdateActiveTriggers dto)
+    public Task Callback_KinksterChangeEnabledToy(KinksterChangeEnabledToy dto)
     {
-        if (dto.Type is not DataUpdateType.TriggerToggled)
-        {
-            Logger.LogWarning("Received a Trigger Update that was not a toggle, this should never happen! " + dto.Type, LoggerType.Callbacks);
-            return Task.CompletedTask;
-        }
+        Logger.LogDebug($"KinksterChangeEnabledToy for {dto.User.AliasOrUID})", LoggerType.Callbacks);
+        Generic.Safe(() => _kinksters.UpdateToyState(dto.User, dto.Toy, dto.NewState));
+        return Task.CompletedTask;
+    }
 
-        // Valid type, so process the change.
-        if (dto.User.UID == UID)
+    public Task Callback_KinksterChangeEnabledItems(KinksterChangeEnabledItems dto)
+    {
+        Logger.LogDebug($"KinksterChangeEnabledItems for {dto.User.AliasOrUID} (from {dto.Enactor.AliasOrUID})", LoggerType.Callbacks);
+        if (dto.User.UID != UID)
         {
-            Logger.LogDebug($"OWN Callback_ReceiveDataToybox: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-            _toyboxListener.TriggerToggled(dto.ChangedItem, dto.Enactor.UID);
-            return Task.CompletedTask;
+            Generic.Safe(() => _kinksters.UpdateItemStates(dto.User, dto.Enactor, dto.Module, dto.ActiveItems, dto.NewState));
         }
         else
         {
-            Logger.LogDebug($"OTHER Callback_ReceiveDataToybox: {dto.Enactor.AliasOrUID}", LoggerType.Callbacks);
-            Generic.Safe(() => _kinksters.NewActiveTriggers(dto));
-            return Task.CompletedTask;
+            Logger.LogWarning("No support is added for this outcome!");
+            // Was for player. Ensure to properly handle these changes accordingly for patterns, alarms, and triggers.
         }
+        return Task.CompletedTask;
+
+    }
+    
+    public Task Callback_KinksterChangeEnabledGags(KinksterChangeEnabledGags dto)
+    {
+        Logger.LogDebug($"KinksterChangeEnabledGags for {dto.User.AliasOrUID})", LoggerType.Callbacks);
+        Generic.Safe(() => _kinksters.UpdateGagStates(dto.User, dto.ActiveGags, dto.NewState));
+        return Task.CompletedTask;
+    }
+
+    public Task Callback_KinksterChangeEnabledToys(KinksterChangeEnabledToys dto)
+    {
+        Logger.LogDebug($"KinksterChangeEnabledToys for {dto.User.AliasOrUID})", LoggerType.Callbacks);
+        Generic.Safe(() => _kinksters.UpdateToyStates(dto.User, dto.ActiveToys, dto.NewState));
+        return Task.CompletedTask;
     }
 
     public Task Callback_ListenerName(SendNameAction dto)
@@ -639,65 +613,58 @@ public partial class MainHub
 
     public Task Callback_KinksterNewGagData(KinksterNewGagData dto)
     {
-        Generic.Safe(() => _kinksters.CachedGagDataChange(dto.User, dto.GagType, dto.Item));
+        Generic.Safe(() => _kinksters.CachedGagDataChange(dto.User, dto.GagType, dto.NewData));
         return Task.CompletedTask;
     }
 
     public Task Callback_KinksterNewRestrictionData(KinksterNewRestrictionData dto)
     {
-        Generic.Safe(() => _kinksters.CachedRestrictionDataChange(dto.User, dto.ItemId, dto.LightItem));
+        Generic.Safe(() => _kinksters.CachedRestrictionDataChange(dto.User, dto.ItemId, dto.NewData));
         return Task.CompletedTask;
     }
 
     public Task Callback_KinksterNewRestraintData(KinksterNewRestraintData dto)
     {
-        Generic.Safe(() => _kinksters.CachedRestraintDataChange(dto.User, dto.ItemId, dto.LightItem));
+        Generic.Safe(() => _kinksters.CachedRestraintDataChange(dto.User, dto.ItemId, dto.NewData));
         return Task.CompletedTask;
     }
 
     public Task Callback_KinksterNewCollarData(KinksterNewCollarData dto)
     {
-        Generic.Safe(() => _kinksters.CachedCollarDataChange(dto.User, dto.LightItem));
+        Generic.Safe(() => _kinksters.CachedCollarDataChange(dto.User, dto.NewData));
         return Task.CompletedTask;
     }
 
     public Task Callback_KinksterNewLootData(KinksterNewLootData dto)
     {
-        Generic.Safe(() => _kinksters.CachedCursedLootDataChange(dto.User, dto.ItemId, dto.LightItem));
+        Generic.Safe(() => _kinksters.CachedCursedLootDataChange(dto.User, dto.ItemId, dto.NewData));
         return Task.CompletedTask;
     }
 
     public Task Callback_KinksterNewAliasData(KinksterNewAliasData dto)
     {
-        Generic.Safe(() => _kinksters.CachedAliasDataChange(dto.User, dto.AliasId, dto.NewData));
+        Generic.Safe(() => _kinksters.CachedAliasDataChange(dto.User, dto.ItemId, dto.NewData));
         return Task.CompletedTask;
     }
 
     /// <summary> Receive a Kinkster's updated PatternData change. </summary>
     public Task Callback_KinksterNewPatternData(KinksterNewPatternData dto)
     {
-        Generic.Safe(() => _kinksters.CachedPatternDataChange(dto.User, dto.ItemId, dto.LightItem));
+        Generic.Safe(() => _kinksters.CachedPatternDataChange(dto.User, dto.ItemId, dto.NewData));
         return Task.CompletedTask;
     }
 
     /// <summary> Receive a Kinkster's updated AlarmData change. </summary>
     public Task Callback_KinksterNewAlarmData(KinksterNewAlarmData dto)
     {
-        Generic.Safe(() => _kinksters.CachedAlarmDataChange(dto.User, dto.ItemId, dto.LightItem));
+        Generic.Safe(() => _kinksters.CachedAlarmDataChange(dto.User, dto.ItemId, dto.NewData));
         return Task.CompletedTask;
     }
 
     /// <summary> Receive a Kinkster's updated TriggerData change. </summary>
     public Task Callback_KinksterNewTriggerData(KinksterNewTriggerData dto)
     {
-        Generic.Safe(() => _kinksters.CachedTriggerDataChange(dto.User, dto.ItemId, dto.LightItem));
-        return Task.CompletedTask;
-    }
-
-    /// <summary> Receive a Kinkster's updated TriggerData change. </summary>
-    public Task Callback_KinksterNewAllowances(KinksterNewAllowances dto)
-    {
-        Generic.Safe(() => _kinksters.CachedAllowancesChange(dto.User, dto.Module, [.. dto.AllowedUids]));
+        Generic.Safe(() => _kinksters.CachedTriggerDataChange(dto.User, dto.ItemId, dto.NewData));
         return Task.CompletedTask;
     }
 
@@ -993,49 +960,43 @@ public partial class MainHub
     public void OnKinksterUpdateActiveCollar(Action<KinksterUpdateActiveCollar> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_KinksterUpdateActiveRestraint), act);
+        _hubConnection!.On(nameof(Callback_KinksterUpdateActiveCollar), act);
     }
 
-    public void OnKinksterUpdateActiveCursedLoot(Action<KinksterUpdateActiveCursedLoot> act)
+    public void OnKinksterChangeEnabledItem(Action<KinksterChangeEnabledItem> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_KinksterUpdateActiveCursedLoot), act);
+        _hubConnection!.On(nameof(Callback_KinksterChangeEnabledItem), act);
     }
 
-    public void OnKinksterUpdateAliasState(Action<KinksterUpdateAliasState> act)
+    public void OnKinksterChangeEnabledGag(Action<KinksterChangeEnabledGag> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(OnKinksterUpdateAliasState), act);
+        _hubConnection!.On(nameof(Callback_KinksterChangeEnabledGag), act);
     }
 
-    public void OnKinksterUpdateActiveAliases(Action<KinksterUpdateActiveAliases> act)
+    public void OnKinksterChangeEnabledToy(Action<KinksterChangeEnabledToy> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_KinksterUpdateActiveAliases), act);
+        _hubConnection!.On(nameof(Callback_KinksterChangeEnabledToy), act);
     }
 
-    public void OnKinksterUpdateValidToys(Action<KinksterUpdateValidToys> act)
+    public void OnKinksterChangeEnabledItems(Action<KinksterChangeEnabledItems> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_KinksterUpdateValidToys), act);
+        _hubConnection!.On(nameof(Callback_KinksterChangeEnabledItems), act);
     }
 
-    public void OnKinksterUpdateActivePattern(Action<KinksterUpdateActivePattern> act)
+    public void OnKinksterChangeEnabledGags(Action<KinksterChangeEnabledGags> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_KinksterUpdateActivePattern), act);
+        _hubConnection!.On(nameof(Callback_KinksterChangeEnabledGags), act);
     }
 
-    public void OnKinksterUpdateActiveAlarms(Action<KinksterUpdateActiveAlarms> act)
+    public void OnKinksterChangeEnabledToys(Action<KinksterChangeEnabledToys> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_KinksterUpdateActiveAlarms), act);
-    }
-
-    public void OnKinksterUpdateActiveTriggers(Action<KinksterUpdateActiveTriggers> act)
-    {
-        if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_KinksterUpdateActiveTriggers), act);
+        _hubConnection!.On(nameof(Callback_KinksterChangeEnabledToys), act);
     }
 
     public void OnListenerName(Action<SendNameAction> act)
@@ -1108,12 +1069,6 @@ public partial class MainHub
     {
         if (_apiHooksInitialized) return;
         _hubConnection!.On(nameof(Callback_KinksterNewTriggerData), act);
-    }
-
-    public void OnKinksterNewAllowances(Action<KinksterNewAllowances> act)
-    {
-        if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_KinksterNewAllowances), act);
     }
 
     public void OnChatMessageGlobal(Action<ChatMessageGlobal> act)

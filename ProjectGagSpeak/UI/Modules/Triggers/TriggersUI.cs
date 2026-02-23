@@ -9,6 +9,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.FileSystems;
 using GagSpeak.Gui.Components;
+using GagSpeak.Kinksters;
 using GagSpeak.Localization;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
@@ -17,7 +18,10 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
+using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
 using OtterGui.Text;
 using System.Drawing;
 using TerraFX.Interop.Windows;
@@ -31,19 +35,24 @@ public class TriggersUI : WindowMediatorSubscriberBase
     // Revamp this later.
     private static bool THEME_PUSHED = false;
 
+    private readonly MainHub _hub;
     private readonly TriggerFileSelector _selector;
     private readonly DetectionDrawer _detections;
     private readonly ReactionsDrawer _reactions;
+    private readonly KinksterManager _kinksters;
     private readonly TriggerManager _manager;
     private readonly TutorialService _guides;
 
-    public TriggersUI(ILogger<TriggersUI> logger, GagspeakMediator mediator, TriggerFileSelector selector,
-        DetectionDrawer detections, ReactionsDrawer reactions, TriggerManager manager, TutorialService guides)
+    public TriggersUI(ILogger<TriggersUI> logger, GagspeakMediator mediator, MainHub hub,
+        TriggerFileSelector selector, DetectionDrawer detections, ReactionsDrawer reactions,
+        KinksterManager kinksters, TriggerManager manager, TutorialService guides)
         : base(logger, mediator, "Triggers ###GagSpeakTriggers")
     {
+        _hub = hub;
         _selector = selector;
         _detections = detections;
         _reactions = reactions;
+        _kinksters = kinksters;
         _manager = manager;
         _guides = guides;
 
@@ -112,10 +121,15 @@ public class TriggersUI : WindowMediatorSubscriberBase
 
         CkGui.BooleanToColoredIcon(trigger.Enabled, false);
         CkGui.AttachToolTip("If this alias is enabled.--SEP----COL--Click to toggle!--COL--", ImGuiColors.ParsedPink);
-        if (ImGui.IsItemClicked())
+        if (!UiService.DisableUI && ImGui.IsItemClicked())
         {
-            _manager.ToggleState(trigger);
-            // Do state toggles here later.
+            UiService.SetUITask(async () =>
+            {
+                _manager.SetEnabledState(trigger, !trigger.Enabled);
+                var dto = new PushItemEnabledState(_kinksters.GetOnlineUserDatas(), GSModule.Trigger, trigger.Identifier, trigger.Enabled);
+                if (await _hub.UserPushItemEnabledState(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+                    _logger.LogWarning($"Failed to push TriggerStateChange update to server. Reason: [{res}]");
+            });
         }
         CkGui.AttachToolTip($"{(trigger.Enabled ? "Disable" : "Enable")} this Trigger.");
 

@@ -29,5 +29,3 @@ public record ConfigTriggerChanged(StorageChangeType Type, Trigger Item, string?
 public record ConfigModPresetChanged(StorageChangeType Type, ModPresetContainer Item, string? OldDirString = null) : MessageBase;
 
 public record ReloadFileSystem(GSModule Module) : MessageBase;
-
-public record AllowancesChanged(GSModule Module, IEnumerable<string> AllowedUids) : MessageBase;

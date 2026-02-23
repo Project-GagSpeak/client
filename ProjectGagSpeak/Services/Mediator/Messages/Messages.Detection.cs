@@ -4,6 +4,7 @@ using GagSpeak.GameInternals;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
+using MessagePack;
 
 namespace GagSpeak.Services.Mediator;
 
@@ -45,3 +46,11 @@ public record RestraintStateChanged(NewState State, CharaActiveRestraint Data, s
 ///     Informs of an update in where an active restraint set had its layers changed, and what got added and removed.
 /// </summary>
 public record RestraintLayersChanged(CharaActiveRestraint Data, RestraintLayer Added, RestraintLayer Removed, string Enactor, string Target) : MessageBase;
+
+// Whenever the enabled state of an item changes. (Visuals / Active state)
+public record EnabledItemChanged(GSModule Module, Guid ItemId, bool NewState) : MessageBase;
+public record EnabledGagChanged(GagType Gag, bool NewState) : MessageBase;
+public record EnabledToyChanged(ToyBrandName Toy, bool NewState) : MessageBase;
+public record EnabledItemsChanged(GSModule Module, IEnumerable<Guid> Items, bool NewState) : MessageBase;
+public record EnabledGagsChanged(IEnumerable<GagType> Gags, bool NewState) : MessageBase;
+public record EnabledToysChanged(IEnumerable<ToyBrandName> Toys, bool NewState) : MessageBase;

@@ -1,5 +1,6 @@
 using CkCommons;
 using GagSpeak.State.Listeners;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 
@@ -23,7 +24,8 @@ public class SelfBondageService : IDisposable
     private readonly DistributorService _dds;
     private readonly CallbackHandler _callbacks;
 
-    private readonly Dictionary<SelfBondageType, Task?> _updateTasks = new();
+    private RateLimiter<SelfBondageType> _rateLimiter = new(.85, 5);
+    private Dictionary<SelfBondageType, Task?> _updateTasks = new();
     private CancellationTokenSource _runtimeCTS = new();
     private readonly object _lock = new();
 
@@ -46,11 +48,8 @@ public class SelfBondageService : IDisposable
     ///     Checks if we are currently allowed to execute a spesific task.
     /// </summary>
     public bool CanRunTask(SelfBondageType type)
-        => !_updateTasks.TryGetValue(type, out var existingTask) || existingTask == null || existingTask.IsCompleted;
+        => !_updateTasks.TryGetValue(type, out var task) || task is null || task.IsCompleted;
 
-    /// <summary>
-    ///     Check if we are able to perform a trigger reaction based on its type.
-    /// </summary>
     public bool CanExecute(InvokableActionType actionType) => actionType switch
     {
         InvokableActionType.Gag => CanRunTask(SelfBondageType.Gag),
@@ -70,9 +69,17 @@ public class SelfBondageService : IDisposable
     /// </summary>
     public void DoSelfGag(int layer, ActiveGagSlot newData, DataUpdateType type)
     {
+        // Prevent running while another is still running.
         if (!CanRunTask(SelfBondageType.Gag))
         {
-            _logger.LogWarning("Attempted to start a GagUpdateTask while another was still running. Action was rejected.");
+            _logger.LogWarning("Rejected SelfGag as another SelfGag is already running!");
+            return;
+        }
+
+        // Prevent overuse (skip removals recording, should always allow things to be removed)
+        if (type is not DataUpdateType.Removed && !_rateLimiter.RecordUse(SelfBondageType.Gag))
+        {
+            _logger.LogWarning($"Doing Self-Gag tasks too frequently! Try again in ({_rateLimiter.GetPenaltyLength(SelfBondageType.Gag)})");
             return;
         }
 
@@ -103,7 +110,14 @@ public class SelfBondageService : IDisposable
         // Reject if not available.
         if (!CanRunTask(SelfBondageType.Gag))
         {
-            _logger.LogWarning("Attempted to start a GagUpdate while another was still running. Action was rejected.");
+            _logger.LogWarning("Rejected SelfGag as another SelfGag is already running!");
+            return false;
+        }
+
+        // Prevent overuse
+        if (type is not DataUpdateType.Removed && !_rateLimiter.RecordUse(SelfBondageType.Gag))
+        {
+            _logger.LogWarning($"Doing Self-Gag tasks too frequently! Try again in ({_rateLimiter.GetPenaltyLength(SelfBondageType.Gag)})");
             return false;
         }
 
@@ -138,7 +152,14 @@ public class SelfBondageService : IDisposable
     {
         if (!CanRunTask(SelfBondageType.Restriction))
         {
-            _logger.LogWarning("Attempted to start a RestrictionUpdate while another was still running. Action was rejected.");
+            _logger.LogWarning("Rejected SelfBind as another SelfBind is already running!");
+            return;
+        }
+
+        // Prevent overuse
+        if (type is not DataUpdateType.Removed && !_rateLimiter.RecordUse(SelfBondageType.Restriction))
+        {
+            _logger.LogWarning($"Doing Self-Bind tasks too frequently! Try again in ({_rateLimiter.GetPenaltyLength(SelfBondageType.Restriction)})");
             return;
         }
 
@@ -169,7 +190,14 @@ public class SelfBondageService : IDisposable
         // Reject if not available.
         if (!CanRunTask(SelfBondageType.Restriction))
         {
-            _logger.LogWarning("Attempted to start a RestrictionUpdate while another was still running. Action was rejected.");
+            _logger.LogWarning("Rejected SelfBind as another SelfBind is already running!");
+            return false;
+        }
+
+        // Prevent overuse
+        if (type is not DataUpdateType.Removed && !_rateLimiter.RecordUse(SelfBondageType.Restriction))
+        {
+            _logger.LogWarning($"Doing Self-Bind tasks too frequently! Try again in ({_rateLimiter.GetPenaltyLength(SelfBondageType.Restriction)})");
             return false;
         }
 
@@ -204,7 +232,14 @@ public class SelfBondageService : IDisposable
     {
         if (!CanRunTask(SelfBondageType.Restraint))
         {
-            _logger.LogWarning("Attempted to start a RestraintUpdate while another was still running. Action was rejected.");
+            _logger.LogWarning("Rejected SelfRestrain as another SelfRestrain is already running!");
+            return;
+        }
+
+        // Prevent overuse
+        if (type is not (DataUpdateType.Removed or DataUpdateType.LayersRemoved) && !_rateLimiter.RecordUse(SelfBondageType.Restraint))
+        {
+            _logger.LogWarning($"Doing SelfRestrain tasks too frequently! Try again in ({_rateLimiter.GetPenaltyLength(SelfBondageType.Restraint)})");
             return;
         }
 
@@ -238,7 +273,14 @@ public class SelfBondageService : IDisposable
         // Reject if not available.
         if (!CanRunTask(SelfBondageType.Restraint))
         {
-            _logger.LogWarning("Attempted to start a RestraintUpdate while another was still running. Action was rejected.");
+            _logger.LogWarning("Rejected SelfRestrain as another SelfRestrain is already running!");
+
+            return false;
+        }
+
+        if (type is not (DataUpdateType.Removed or DataUpdateType.LayersRemoved) && !_rateLimiter.RecordUse(SelfBondageType.Restraint))
+        {
+            _logger.LogWarning($"Doing SelfRestrain tasks too frequently! Try again in ({_rateLimiter.GetPenaltyLength(SelfBondageType.Restraint)})");
             return false;
         }
 
@@ -276,7 +318,7 @@ public class SelfBondageService : IDisposable
     {
         if (!CanRunTask(SelfBondageType.Collar))
         {
-            _logger.LogWarning("Attempted to start a CollarUpdate while another was still running. Action was rejected.");
+            _logger.LogWarning("Rejected CollarUpdate as another CollarUpdate is already running!");
             return;
         }
 

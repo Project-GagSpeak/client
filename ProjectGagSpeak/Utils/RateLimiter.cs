@@ -1,117 +1,145 @@
 using GagspeakAPI.Extensions;
+using System.Security.Principal;
 
 namespace GagSpeak.Utils;
 
-public class ActionRateLimiter
+internal sealed class UsageTracker
 {
-    // Track each module's action counts and strike status
-    private readonly Dictionary<InvokableActionType, ActionStats> _actionStats = new();
+    /// <summary>
+    ///     The current score for this usage tracker.
+    /// </summary>
+    public double BaseScore;
 
-    // List of delays (block times) based on strike count
-    private readonly IReadOnlyList<TimeSpan> _delays = new List<TimeSpan>
+    /// <summary>
+    ///     Increases each time the threshold is passed. A punishment multiplier.
+    /// </summary>
+    public int StackCount = 0;
+
+    /// <summary>
+    ///     The last tick this was updated. (Calculates decay and timeout.)
+    /// </summary>
+    public long LastTick;
+
+    /// <summary>
+    ///     The tick when we last passed the threshold. 0 if not yet passed.
+    /// </summary>
+    public long LastThresholdTick = 0;
+}
+
+/// <summary>
+///     Makeshift rate limiter that allows for actions to be performed in burst, but decay
+///     overtime and prevent excessive use.
+/// </summary>
+internal sealed class RateLimiter<T> where T : notnull
+{
+    /// <summary>
+    ///     How much to remove from the score per second.
+    /// </summary>
+    internal double DecayRate { get; }
+
+    internal double LogDecay { get; }
+
+    /// <summary>
+    ///     The threshold to decline actions after.
+    /// </summary>
+    internal double Threshold { get; }
+
+    /// <summary>
+    ///     If no action occurs for the length of the reset time, reset to 0.
+    /// </summary>
+    internal double ScoreTimeout { get; } = 30;
+
+    /// <summary>
+    ///     The multiplier to apply to the score when the threshold is passed.
+    /// </summary>
+    internal double PunishMultiplier { get; } = 1.5;
+
+    /// <summary>
+    ///     How many seconds after the last threshold pass tick that 
+    ///     we will increase the pass count over resetting it.
+    /// </summary>
+    internal double PunishWindow { get; } = 15;
+
+    private readonly ConcurrentDictionary<T, UsageTracker> _trackers = new();
+
+    public RateLimiter(double decayRate, double threshold)
     {
-        TimeSpan.FromSeconds(10),  // 1st delay (10 seconds)
-        TimeSpan.FromSeconds(30),  // 2nd delay (30 seconds)
-        TimeSpan.FromMinutes(5),   // 3rd delay (5 minutes)
-        TimeSpan.FromHours(1)      // 4th delay (1 hour)
-    };
+        DecayRate = decayRate;
+        LogDecay = Math.Log(decayRate);
+        Threshold = threshold;
+    }
 
-    private readonly TimeSpan _actionWindow; // The time our stopwatches run for when started.
-
-    public class ActionStats
+    public RateLimiter(double decayRate, double threshold, double punishMultiplier, double punishWindow, double scoreTimeout = 30)
+        : this(decayRate, threshold)
     {
-        public int ActionCapPerWindow { get; init; }
-        public int Count { get; set; } = 0; // Number of actions invoked within the time window
-        public int StrikeCount { get; set; } = 0; // Track how many strikes this module has accumulated
-        public Stopwatch Stopwatch { get; set; } = new Stopwatch(); // Stopwatch to track the time window
-        public TimeSpan BlockFor { get; set; } = TimeSpan.Zero; // Time until actions are allowed again
-        public DateTime LastStrikeTime { get; set; } = DateTime.MinValue; // Time when last strike occurred
+        ScoreTimeout = scoreTimeout;
+        PunishMultiplier = punishMultiplier;
+        PunishWindow = punishWindow;
+    }
 
-        public ActionStats(int actionCapPerWindow)
-        {
-            Stopwatch.Start();
-            ActionCapPerWindow = actionCapPerWindow;
-        }
+    public UsageTracker GetOrCreateTracker(T key)
+        => _trackers.GetOrAdd(key, _ => new UsageTracker { LastTick = Stopwatch.GetTimestamp() });
 
-        public void Reset()
+    public bool CanRecord(T key)
+    {
+        var t = GetOrCreateTracker(key);
+        var projected = t.BaseScore * Math.Exp(LogDecay * (Stopwatch.GetTimestamp() - t.LastTick) / Stopwatch.Frequency) + t.StackCount * PunishMultiplier;
+        //Svc.Logger.Information($"Projected score: {projected:F2}. Threshold: {Threshold}. StackCount: {t.StackCount}, Multiplier {PunishMultiplier}");
+        return projected < Threshold;
+    }
+
+    /// <summary>
+    ///     Records usage, returning if we went over the threshold or not.
+    /// </summary>
+    public bool RecordUse(T key)
+    {
+        var t = GetOrCreateTracker(key);
+        lock (t)
         {
-            Count = 0;
-            StrikeCount = 0;
-            Stopwatch.Restart();
-            BlockFor = TimeSpan.Zero;
-            LastStrikeTime = DateTime.MinValue;
+            ApplyUse(t);
+            return t.BaseScore < Threshold;
         }
     }
 
-    public ActionRateLimiter(TimeSpan timeWindow, int restraintCap, int restrictionCap, int gagCap, int moodleCap)
+    public TimeSpan GetPenaltyLength(T key)
     {
-        _actionWindow = timeWindow;
-        _actionStats[InvokableActionType.Restraint] = new ActionStats(restraintCap);
-        _actionStats[InvokableActionType.Restriction] = new ActionStats(restrictionCap);
-        _actionStats[InvokableActionType.Gag] = new ActionStats(gagCap);
-        _actionStats[InvokableActionType.Moodle] = new ActionStats(moodleCap);
+        var t = GetOrCreateTracker(key);
+        lock (t)
+        {
+            var projected = t.BaseScore * Math.Exp(LogDecay * (Stopwatch.GetTimestamp() - t.LastTick) / Stopwatch.Frequency);
+            var effective = projected + t.StackCount * PunishMultiplier;
+            if (effective < Threshold) return TimeSpan.Zero;
+            return TimeSpan.FromSeconds(Math.Max(0, Math.Log(Threshold / effective) / LogDecay));
+        }
     }
 
-    public bool CanExecute(InvokableActionType actionType)
+    /// <summary>
+    ///     Applies usage, updating the score and stack count as necessary. <para />
+    ///     <b>Ensure this is called within a LOCK</b>
+    /// </summary>
+    private void ApplyUse(UsageTracker t)
     {
-        // False if the type is not in the dictionary
-        if (!_actionStats.ContainsKey(actionType))
-            return false;
+        var now = Stopwatch.GetTimestamp();
+        var elapsed = (now - t.LastTick) / (double)Stopwatch.Frequency;
 
-        var stats = _actionStats[actionType];
+        t.BaseScore *= Math.Exp(LogDecay * elapsed);
+        t.BaseScore += 1.0;
 
-        // If the module is currently blocked (lockout time is active), reject the action
-        if (stats.Stopwatch.Elapsed < stats.BlockFor)
-            return false;
-
-        // If the time has passed the action window, reset the count and start the stopwatch again
-        if (stats.Stopwatch.Elapsed > _actionWindow)
+        if (t.BaseScore >= Threshold)
         {
-            // Make sure we are not still straining the server the moment the restriction is lifted.
-            if (stats.LastStrikeTime + stats.BlockFor + TimeSpan.FromSeconds(3) > DateTime.Now)
-            {
-                StrikeModule(actionType);
-                return false;
-            }
-
-            stats.Reset();
+            var stackElapsed = t.LastThresholdTick == 0
+                ? double.MaxValue
+                : (now - t.LastThresholdTick) / (double)Stopwatch.Frequency;
+            t.StackCount = stackElapsed > PunishWindow ? 1 : t.StackCount + 1;
+            t.LastThresholdTick = now;
+            t.BaseScore += t.StackCount * PunishMultiplier;
         }
-        else
+        else if (elapsed >= ScoreTimeout)
         {
-            // If within the action window, increment the count and check if it exceeds the cap
-            if (stats.Count >= stats.ActionCapPerWindow)
-            {
-                // Strike the module and set the block time if the action cap is exceeded
-                StrikeModule(actionType);
-                return false;
-            }
-
-            // Otherwise, increment the count and allow the action to proceed
-            stats.Count++;
+            t.StackCount = 0;
+            t.LastThresholdTick = 0;
         }
 
-        return true;
-    }
-
-    private void StrikeModule(InvokableActionType type)
-    {
-        var stats = _actionStats[type];
-
-        // Increment the strike count
-        stats.StrikeCount++;
-        stats.LastStrikeTime = DateTime.Now;
-
-        // Apply the appropriate block time based on strike count
-        switch (stats.StrikeCount)
-        {
-            case 1: stats.BlockFor.Add(TimeSpan.FromSeconds(10)); break;
-            case 2: stats.BlockFor.Add(TimeSpan.FromSeconds(30)); break;
-            case 3: stats.BlockFor.Add(TimeSpan.FromMinutes(5)); break;
-            default: stats.BlockFor.Add(TimeSpan.FromHours(1)); break;
-        }
-
-        // Log the strike for debugging purposes
-        Svc.Logger.Verbose($"[RateLimiter] {type} has been struck at {DateTime.Now}, " +
-            $"next available time allowed in: {stats.BlockFor.ToGsRemainingTime()}", LoggerType.Triggers);
+        t.LastTick = now;
     }
 }

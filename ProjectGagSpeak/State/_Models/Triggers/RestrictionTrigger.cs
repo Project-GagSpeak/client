@@ -21,7 +21,8 @@ public class RestrictionTrigger : Trigger
         RestrictionState = other.RestrictionState;
     }
 
-    public override RestrictionTrigger Clone(bool keepId) => new RestrictionTrigger(this, keepId);
+    public override RestrictionTrigger Clone(bool keepId)
+        => new RestrictionTrigger(this, keepId);
 
     public override void ApplyChanges(Trigger other)
     {

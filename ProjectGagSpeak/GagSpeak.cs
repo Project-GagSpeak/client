@@ -135,7 +135,6 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<GagspeakEventManager>()
 
         // Draw System
-        .AddSingleton<AllowancesDrawer>()
         .AddSingleton<RequestsInDrawer>()
         .AddSingleton<RequestsOutDrawer>()
         .AddSingleton<WhitelistDrawer>()
@@ -325,7 +324,6 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<MainConfig>()
         .AddSingleton<NicksConfig>()
         .AddSingleton<FavoritesConfig>()
-        .AddSingleton<AllowancesConfig>()
         .AddSingleton<AccountConfig>()
         .AddSingleton<AccountManager>()
         .AddSingleton<HybridSaveService>();

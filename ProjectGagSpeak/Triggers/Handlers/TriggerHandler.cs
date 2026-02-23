@@ -123,7 +123,6 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
         var isClientRendered = CharaObjectWatcher.LocalPlayerRendered;
         var clientIsCaller = isClientRendered && callerAddr == PlayerData.Address;
         var clientIsTarget = isClientRendered && targetAddr == PlayerData.Address;
-        Logger.LogTrace($"ClientRendered: {isClientRendered} | ClientIsCaller: {clientIsCaller} | ClientIsTarget: {clientIsTarget}", LoggerType.Triggers);
 
         // Get the health triggers scoped down to this person we are monitoring.
         var emoteTriggers = _triggers.Storage.OfType<EmoteTrigger>()
@@ -388,8 +387,12 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
             {
                 // If we cant execute, continue.
                 if (!_selfBondage.CanExecute(trigger.ActionType))
+                {
+                    Logger.LogWarning($"Cannot execute action of type {trigger.ActionType} for trigger {trigger.Label}. Skipping.");
                     continue;
-                // Need some kind of fallback here to make sure that we try the next trigger if this one fails?
+                }
+
+                // Logger.LogInformation($"Executing async action of type {trigger.ActionType} for trigger {trigger.Label}.", LoggerType.Triggers);
                 if (await _processor.HandleActionAsync(trigger.InvokableAction, enactor).ConfigureAwait(false))
                 {
                     GagspeakEventManager.AchievementEvent(UnlocksEvent.TriggerFired);
@@ -450,8 +453,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
             if (!aliasMsg.TextValue.Contains(alias.InputCommand))
                 continue;
             // We found a potential match, but we must make sure it is allowed to be executed.
-            var reactionTypes = GetReactionTypes(alias);
-            if (!_selfBondage.CanExecute(reactionTypes))
+            if (!_selfBondage.CanExecute(alias.Actions.Select(a => a.ActionType)))
                 continue;
 
             // We have a valid AliasTrigger whose reactions are all available to process.

@@ -198,7 +198,7 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
         // Server-side, any time an active pattern update is received, it sends that update back to us and all our paired Kinksters.
         // Thus, if only send the update if the call is not self-invoked.
         if (enactor == MainHub.UID)
-            Mediator.Publish(new ActivePatternChangedMessage(DataUpdateType.PatternExecuted, ActivePattern));
+            Mediator.Publish(new EnabledItemChanged(GSModule.Pattern, ActivePattern, true));
     }
 
     // This assumes the enactor is already valid to do so. May break the flow otherwise.
@@ -214,7 +214,7 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
         // Server-side, any time an active pattern update is received, it sends that update back to us and all our paired Kinksters.
         // Thus, if only send the update if the call is not self-invoked.
         if (enactor == MainHub.UID && callSource is not RemoteSource.PatternSwitch or RemoteSource.Safeword)
-            Mediator.Publish(new ActivePatternChangedMessage(DataUpdateType.PatternStopped, Guid.Empty));
+            Mediator.Publish(new EnabledItemChanged(GSModule.Pattern, ActivePattern, false));
 
         // if the call source is not from a power on or down, we must perform cleanup.
         if (callSource is not RemoteSource.PowerOn and not RemoteSource.PowerOff)

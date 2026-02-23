@@ -250,13 +250,12 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         OnKinksterUpdateActiveRestriction(dto => _ = Callback_KinksterUpdateActiveRestriction(dto));
         OnKinksterUpdateActiveRestraint(dto => _ = Callback_KinksterUpdateActiveRestraint(dto));
         OnKinksterUpdateActiveCollar(dto => _ = Callback_KinksterUpdateActiveCollar(dto));
-        OnKinksterUpdateActiveCursedLoot(dto => _ = Callback_KinksterUpdateActiveCursedLoot(dto));
-        OnKinksterUpdateAliasState(dto => _ = Callback_KinksterUpdateAliasState(dto));
-        OnKinksterUpdateActiveAliases(dto => _ = Callback_KinksterUpdateActiveAliases(dto));
-        OnKinksterUpdateValidToys(dto => _ = Callback_KinksterUpdateValidToys(dto));
-        OnKinksterUpdateActivePattern(dto => _ = Callback_KinksterUpdateActivePattern(dto));
-        OnKinksterUpdateActiveAlarms(dto => _ = Callback_KinksterUpdateActiveAlarms(dto));
-        OnKinksterUpdateActiveTriggers(dto => _ = Callback_KinksterUpdateActiveTriggers(dto));
+        OnKinksterChangeEnabledItem(dto => _ = Callback_KinksterChangeEnabledItem(dto));
+        OnKinksterChangeEnabledGag(dto => _ = Callback_KinksterChangeEnabledGag(dto));
+        OnKinksterChangeEnabledToy(dto => _ = Callback_KinksterChangeEnabledToy(dto));
+        OnKinksterChangeEnabledItems(dto => _ = Callback_KinksterChangeEnabledItems(dto));
+        OnKinksterChangeEnabledGags(dto => _ = Callback_KinksterChangeEnabledGags(dto));
+        OnKinksterChangeEnabledToys(dto => _ = Callback_KinksterChangeEnabledToys(dto));
         OnListenerName(dto => _ = Callback_ListenerName(dto));
         OnShockInstruction(dto => _ = Callback_ShockInstruction(dto));
         OnHypnoticEffect(dto => _ = Callback_HypnoticEffect(dto));
@@ -270,7 +269,6 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         OnKinksterNewPatternData(dto => _ = Callback_KinksterNewPatternData(dto));
         OnKinksterNewAlarmData(dto => _ = Callback_KinksterNewAlarmData(dto));
         OnKinksterNewTriggerData(dto => _ = Callback_KinksterNewTriggerData(dto));
-        OnKinksterNewAllowances(dto => _ = Callback_KinksterNewAllowances(dto));
 
         OnChatMessageGlobal(dto => _ = Callback_ChatMessageGlobal(dto));
         OnKinksterOffline(dto => _ = Callback_KinksterOffline(dto));

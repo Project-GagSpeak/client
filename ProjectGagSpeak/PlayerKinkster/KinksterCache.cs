@@ -7,13 +7,13 @@ namespace GagSpeak.Kinksters;
 
 public class RestrictionBase
 {
-    public EquipSlot Slot { get; private set; }
-    public EquipItem GlamItem { get; private set; }
-    public StainIds GlamDyes { get; private set; }
-    public string ModName { get; private set; }
-    public LightMoodle Moodle { get; private set; }
-    public Traits Traits { get; private set; }
-    public Arousal Arousal { get; private set; }
+    public EquipSlot Slot { get; set; }
+    public EquipItem GlamItem { get; set; }
+    public StainIds GlamDyes { get; set; }
+    public string ModName { get; set; }
+    public LightMoodle Moodle { get; set; }
+    public Traits Traits { get; set; }
+    public Arousal Arousal { get; set; }
 
     public RestrictionBase(LightItem item) => UpdateFrom(item);
 
@@ -39,9 +39,9 @@ public class RestrictionBase
 public class KinksterGag : RestrictionBase
 {
     public GagType Gag { get; private set; }
-    public bool IsEnabled { get; private set; }
-    public string CPlusName { get; private set; }
-    public bool Redraw { get; private set; }
+    public bool IsEnabled { get; set; }
+    public string CPlusName { get; set; }
+    public bool Redraw { get; set; }
 
     public KinksterGag(LightGag apiItem)
         : base(apiItem.Properties)
@@ -64,8 +64,8 @@ public class KinksterGag : RestrictionBase
 public class KinksterRestriction : RestrictionBase
 {
     public Guid Id { get; private set; } = Guid.Empty;
-    public bool IsEnabled { get; private set; }
-    public string Label { get; private set; }
+    public bool IsEnabled { get; set; }
+    public string Label { get; set; }
 
     public KinksterRestriction(LightRestriction apiItem)
         : base(apiItem.Properties)
@@ -169,10 +169,10 @@ public class KinksterRestraint
 
 public class KinksterCollar
 {
-    public string Label { get; private set; }
-    public EquipSlot Slot { get; private set; }
-    public EquipItem GlamItem { get; private set; }
-    public string ModName { get; private set; }
+    public string Label { get; set; }
+    public EquipSlot Slot { get; set; }
+    public EquipItem GlamItem { get; set; }
+    public string ModName { get; set; }
 
     public KinksterCollar(LightCollar lightItem)
         => UpdateFrom(lightItem);
@@ -192,8 +192,8 @@ public class KinksterCollar
 public class KinksterCursedLoot
 {
     public Guid Id { get; private set; } = Guid.Empty;
-    public string Label { get; private set; } = string.Empty;
-    public Precedence Precedence { get; private set; } = Precedence.VeryLow;
+    public string Label { get; set; } = string.Empty;
+    public Precedence Precedence { get; set; } = Precedence.VeryLow;
 
     public KinksterCursedLoot(Guid id, string label, Precedence precedence, RestrictionBase? ItemRef)
     {
@@ -217,13 +217,13 @@ public class KinksterCursedLoot
 public class KinksterPattern
 {
     public Guid Id { get; private set; } = Guid.Empty;
-    public string Label { get; private set; } = string.Empty;
-    public string Description { get; private set; } = string.Empty;
-    public TimeSpan Duration { get; private set; } = TimeSpan.Zero;
-    public bool Loops { get; private set; } = false;
-    public ToyBrandName Device1 { get; private set; } = ToyBrandName.Unknown;
-    public ToyBrandName Device2 { get; private set; } = ToyBrandName.Unknown;
-    public ToyMotor Motors { get; private set; } = ToyMotor.Unknown;
+    public string Label { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public TimeSpan Duration { get; set; } = TimeSpan.Zero;
+    public bool Loops { get; set; } = false;
+    public ToyBrandName Device1 { get; set; } = ToyBrandName.Unknown;
+    public ToyBrandName Device2 { get; set; } = ToyBrandName.Unknown;
+    public ToyMotor Motors { get; set; } = ToyMotor.Unknown;
 
     public KinksterPattern(LightPattern apiItem)
         => UpdateFrom(apiItem);
@@ -245,10 +245,10 @@ public class KinksterPattern
 public class KinksterAlarm
 {
     public Guid Id { get; private set; } = Guid.Empty;
-    public string Label { get; private set; } = string.Empty;
-    public DateTimeOffset SetTimeUTC { get; private set; } = DateTimeOffset.MinValue;
-    public DaysOfWeek SetDays { get; private set; } = DaysOfWeek.None;
-    public KinksterPattern? PatternRef { get; private set; } = null;
+    public string Label { get; set; } = string.Empty;
+    public DateTimeOffset SetTimeUTC { get; set; } = DateTimeOffset.MinValue;
+    public DaysOfWeek SetDays { get; set; } = DaysOfWeek.None;
+    public KinksterPattern? PatternRef { get; set; } = null;
     public KinksterAlarm(LightAlarm apiItem, KinksterPattern? patternRef)
         => UpdateFrom(apiItem, patternRef);
 
@@ -336,10 +336,6 @@ public class KinksterCache
         foreach (var lt in networkData.Triggers)
             Triggers.TryAdd(lt.Id, new KinksterTrigger(lt.Id, lt.Label, lt.Desc, lt.Priority, lt.Kind, lt.ActionType));
     }
-
-    // Injections and updaters for the various modules.
-    public void UpdateAllowances(GSModule module, List<string> allowances)
-        => Allowances[module] = allowances;
 
     public void UpdateGagItem(GagType gagType, LightGag? apiGag)
     {

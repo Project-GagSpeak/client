@@ -141,7 +141,8 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
         if (validItems.Count > 0)
         {
             Logger.LogDebug($"Valid Devices changed from {string.Join(", ", validItems)} to {string.Join(", ", postValid)}.");
-            Mediator.Publish(new ValidToysChangedMessage(postValid.ToList()));
+            // Might need to revise how this works to behave seperately in logic...
+            Mediator.Publish(new EnabledToysChanged(postValid.ToList(), true));
         }
     }
 
