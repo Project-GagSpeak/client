@@ -477,7 +477,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
 
         // please for the love of god find a better way to handle this.
         var relevantTriggers = _triggers.Storage.SpellAction
-            .Where(t => t.ActionKind == actEff.Type && t.GetStoredIds().Contains(actEff.ActionID) && t.ActionKind == actEff.Type)
+            .Where(t => t.ActionKind == actEff.Type && (t.GetStoredIds().Contains(actEff.ActionID) || t.IsGenericDetection))
             .ToList();
 
         if (!relevantTriggers.Any())
