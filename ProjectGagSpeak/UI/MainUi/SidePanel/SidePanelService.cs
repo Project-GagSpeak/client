@@ -49,7 +49,7 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
     // Stored internally for regenerators.
     private readonly ILogger _log;
     private readonly MainHub _hub;
-   
+
     private HypnoEffectEditor _hypnoEditor;
     public KinksterInfoCache(ILogger log, MainHub hub, Kinkster kinkster, HypnoEffectManager hypno, TutorialService guides)
     {
@@ -91,7 +91,7 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
     // Readonly Publics
     public string DisplayName => Kinkster.GetNickAliasOrUid();
     public bool   IsValid     => Kinkster is not null;
-    public float  DispWidth   => Math.Max(300f, ImGui.CalcTextSize($"{DisplayName} prevents removing locked layers ").X + ImGui.GetFrameHeightWithSpacing() * 2).AddWinPadX();
+    public float  DispWidth   => Math.Max(300f, ImGui.CalcTextSize($"{DisplayName} prevents removing applied Moodles. ").X + ImGui.GetFrameHeightWithSpacing() * 2).AddWinPadX();
 
     // Instance get-private setters.
     public string                        LastUID     { get; private set; }
