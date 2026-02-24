@@ -105,7 +105,7 @@ public class Ipa_EN_FR_JP_SP_Handler
         _logger.LogTrace($"Parsing input to Phonetics...", LoggerType.GarblerCore);
         // Clear line endings and split by spaces, removing empty entries.
         var sanitizedInput = input.ReplaceLineEndings(" ").Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        
+
         // Init the return list, over dictionary, to preserve order.
         var parsedResult = new List<(string, List<string>, bool)>();
 
@@ -120,7 +120,7 @@ public class Ipa_EN_FR_JP_SP_Handler
             if (!obj.TryGetValue(sanitized, out var phonetics))
             {
                 // no word was found, make sure it wasn't because of errant trailing punctuation we allow.
-                if (!sanitized.EndsWith('.') || sanitized.EndsWith('-'))
+                if (!(sanitized.EndsWith('.') || sanitized.EndsWith('-')))
                 {
                     parsedResult.Add((word, [], false));
                     continue;
