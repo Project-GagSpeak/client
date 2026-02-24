@@ -258,7 +258,16 @@ public class ReactionDistributor
             };
 
             // define a random time between 2 timespan bounds.
-            var timer = act.Padlock.IsTimerLock() ? Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound) : TimeSpan.Zero;
+            var timer = TimeSpan.Zero;
+            if (act.Padlock.IsTimerLock())
+            {
+                // We have a timer lock. We need to check if we have a normal timer lock or a 5 minutes lock
+                if (act.Padlock is Padlocks.FiveMinutes)
+                    timer = TimeSpan.FromMinutes(5);
+                else
+                    timer = Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound);
+            }
+
             _logger.LogInformation($"Locking [{act.GagType}] with [{act.Padlock}] on layer {layerIdx}", LoggerType.Triggers);
             var gagSlot = gagData.GagSlots[layerIdx] with
             {
@@ -315,6 +324,16 @@ public class ReactionDistributor
             if (layerIdx is -1 || !restrictions.Restrictions[layerIdx].CanLock() || act.Padlock is Padlocks.None)
                 return false;
 
+            var timer = TimeSpan.Zero;
+            if (act.Padlock.IsTimerLock())
+            {
+                // We have a timer lock. We need to check if we have a normal timer lock or a 5 minutes lock
+                if (act.Padlock is Padlocks.FiveMinutes)
+                    timer = TimeSpan.FromMinutes(5);
+                else
+                    timer = Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound);
+            }
+
             _logger.LogInformation($"Locking restriction [{act.RestrictionId}] with [{act.Padlock}] on layer {layerIdx}", LoggerType.Triggers);
             var itemSlot = restrictions.Restrictions[layerIdx] with
             {
@@ -326,7 +345,7 @@ public class ReactionDistributor
                     Padlocks.TimerPassword => Generators.GetRandomCharaString(10),
                     _ => string.Empty
                 },
-                Timer = new DateTimeOffset(DateTime.UtcNow + (act.Padlock.IsTimerLock() ? Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound) : TimeSpan.Zero)),
+                Timer = new DateTimeOffset(DateTime.UtcNow + timer),
                 PadlockAssigner = enactor ?? MainHub.UID
             };
             return await _selfBondage.DoSelfBindResult(layerIdx, itemSlot, DataUpdateType.Locked).ConfigureAwait(false);
@@ -369,6 +388,17 @@ public class ReactionDistributor
         {
             if (!restraint.CanLock() || act.Padlock is Padlocks.None)
                 return false;
+
+            var timer = TimeSpan.Zero;
+            if (act.Padlock.IsTimerLock())
+            {
+                // We have a timer lock. We need to check if we have a normal timer lock or a 5 minutes lock
+                if (act.Padlock is Padlocks.FiveMinutes)
+                    timer = TimeSpan.FromMinutes(5);
+                else
+                    timer = Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound);
+            }
+
             _logger.LogDebug($"Locking restraint [{act.RestrictionId}] with [{act.Padlock}]", LoggerType.Triggers);
             var setData = restraint with
             {
@@ -380,7 +410,7 @@ public class ReactionDistributor
                     Padlocks.TimerPassword => Generators.GetRandomCharaString(10),
                     _ => string.Empty
                 },
-                Timer = new DateTimeOffset(DateTime.UtcNow + (act.Padlock.IsTimerLock() ? Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound) : TimeSpan.Zero)),
+                Timer = new DateTimeOffset(DateTime.UtcNow + timer),
                 PadlockAssigner = enactor ?? MainHub.UID
             };
             return await _selfBondage.DoSelfRestraintResult(setData, DataUpdateType.Locked).ConfigureAwait(false);
