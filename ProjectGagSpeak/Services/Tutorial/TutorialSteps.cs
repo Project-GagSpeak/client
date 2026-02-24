@@ -146,6 +146,7 @@ public enum StepsRestrictions
     SelectingThumbnails, // how to change thumbnails for a restraint set. (open browser)
     Applying, // where to apply restrictions, or view active ones.
     Selecting, // locate first open one, if all are full, do not apply any. (otherwise, apply tutorial)
+    NoFreeSlots, // Shows if no slots are available
     Locking, // lock system overview. (lock on click)
     Unlocking, // how 2 unlocky (if possible, unlock on next)
     Removing, // remove restriction on click if tutorial one is present.
@@ -209,7 +210,7 @@ public enum StepsCursedLoot
     LowerLockTimer,
     UpperLockTimer,
     RollChance,
-} 
+}
 
 public enum StepsPuppeteer
 {

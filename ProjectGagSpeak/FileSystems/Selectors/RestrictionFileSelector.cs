@@ -3,18 +3,21 @@ using CkCommons.FileSystem.Selector;
 using CkCommons.Gui;
 using CkCommons.Gui.Utility;
 using CkCommons.Helpers;
-using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Gui.Wardrobe;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
 using OtterGui.Text;
+using Penumbra.GameData.Enums;
+using Penumbra.GameData.Structs;
 
 namespace GagSpeak.FileSystems;
 
@@ -23,9 +26,14 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
 {
     private readonly FavoritesConfig _favorites;
     private readonly RestrictionManager _manager;
+    private readonly TutorialService _guides;
+
     public GagspeakMediator Mediator { get; init; }
 
-    /// <summary> 
+    public RestrictionItem TutorialHypnoRestriction { get; private set; }
+    public RestrictionItem TutorialBasicRestriction { get; private set; }
+
+    /// <summary>
     /// For now, use this 'state storage', it is a list of attributes linked to each leaf.
     /// To be honest im not sure why to not just access this from the path item directly during the draw, but whatever.
     /// We will find out later if anything.
@@ -41,12 +49,13 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
     public new RestrictionFileSystem.Leaf? SelectedLeaf
     => base.SelectedLeaf;
 
-    public RestrictionFileSelector(GagspeakMediator mediator, FavoritesConfig favorites, RestrictionManager manager, 
-        RestrictionFileSystem fileSystem) : base(fileSystem, Svc.Logger.Logger, Svc.KeyState, "##RestrictionFS")
+    public RestrictionFileSelector(GagspeakMediator mediator, FavoritesConfig favorites, RestrictionManager manager,
+        RestrictionFileSystem fileSystem, TutorialService guides) : base(fileSystem, Svc.Logger.Logger, Svc.KeyState, "##RestrictionFS")
     {
         Mediator = mediator;
         _favorites = favorites;
         _manager = manager;
+        _guides = guides;
 
         Mediator.Subscribe<ConfigRestrictionChanged>(this, (msg) => OnRestrictionChange(msg.Type, msg.Item, msg.OldString));
 
@@ -108,7 +117,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
             SetFilterDirty();
         CkGui.TextFrameAlignedInline(leaf.Value.Label);
         // Only draw the deletion if the item is not active or occupied.
-        if(!_manager.IsItemApplied(leaf.Value.Identifier))
+        if (!_manager.IsItemApplied(leaf.Value.Identifier))
         {
             ImGui.SameLine((rectMax.X - rectMin.X) - ImGui.GetFrameHeightWithSpacing());
             var pos = ImGui.GetCursorScreenPos();
@@ -144,9 +153,22 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
         if (CkGui.IconButton(FAI.Plus, inPopup: true))
             ImGui.OpenPopup("##NewRestriction");
         CkGui.AttachToolTip("Create a new Restriction Item.");
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.CreatingRestriction, WardrobeUI.LastPos, WardrobeUI.LastSize,
+            () =>
+            {
+                // make a hypno item to show the user the extra things it can do
+                TutorialHypnoRestriction = _manager.CreateNew("Tutorial Hypno", RestrictionType.Hypnotic);
+                // This is to apply later, as I don't feel comfy applying hypno for photosensitive reasons
+                TutorialBasicRestriction = _manager.CreateNew("Tutorial Restriction", RestrictionType.Normal);
+                // TODO: Apply this properly, it's a bit buggy doing it this way but it works.
+                TutorialBasicRestriction.Glamour = new GlamourSlot(EquipSlot.Head, EquipItem.FromId(2784));
+            });
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.RestrictionTypes, WardrobeUI.LastPos, WardrobeUI.LastSize);
 
         ImGui.SameLine(0, 1);
         DrawFolderButton();
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.CreatingFolders, WardrobeUI.LastPos, WardrobeUI.LastSize,
+            () => CkFileSystem.FindOrCreateAllFolders("Tutorial Folder"));
     }
 
     public override void DrawPopups()
@@ -217,4 +239,3 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
                 .Concat(folder.GetLeaves().OrderByDescending(l => FavoritesConfig.Restrictions.Contains(l.Value.Identifier)));
     }
 }
-

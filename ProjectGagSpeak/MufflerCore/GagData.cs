@@ -17,12 +17,14 @@ public static class StaticGarbleData
     public const string MouthOpenKey = "MOUTH_OPEN";
     public const string MouthClosedKey = "MOUTH_CLOSED";
     public const string MouthFullKey = "MOUTH_FULL";
+    public const string NoSoundKey = "NO_SOUND";
 
     public static readonly IReadOnlyDictionary<string, List<string>> GagDataMap = new Dictionary<string, List<string>>
     {
-        { MouthOpenKey, new List<string> { "a", "e", "ae", "h", "hh" } },
-        { MouthClosedKey, new List<string> { "h", "m", "mh", "n", "ng", "mgh" } },
-        { MouthFullKey, new List<string> { "m", "mh", "mmh" } }
+        { MouthOpenKey, ["a", "a", "a", "e", "e", "e", "ae", "h", "h", "hh", ""] },
+        { MouthClosedKey, ["h", "h", "h", "m", "m", "m", "mh", "n", "n", "ng", "mgh", "", ""] },
+        { MouthFullKey, ["m", "m", "m", "m", "m", "h", "h", "mh", "", ""] },
+        { NoSoundKey, [""] }
     };
 }
 
@@ -43,5 +45,5 @@ public enum GagMuffleType
     MouthOpen = 1 << 0,
     MouthClosed = 1 << 1,
     MouthFull = 1 << 2,
+    NoSound = 1 << 3,
 }
-

@@ -9,6 +9,7 @@
         <IsTestProject>true</IsTestProject>
         <Platforms>AnyCPU;x64</Platforms>
         <NoWarn>$(NoWarn);MSB3270</NoWarn>
+        <EnableWindowsTargeting>true</EnableWindowsTargeting>
     </PropertyGroup>
 
     <ItemGroup>

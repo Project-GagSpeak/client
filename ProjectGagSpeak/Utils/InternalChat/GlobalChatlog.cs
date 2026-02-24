@@ -316,6 +316,10 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
         if ((_gags.ServerGagData?.IsGagged() ?? true) && (ClientData.Globals?.ChatGarblerActive ?? false))
             previewMessage = _garbler.ProcessMessage(previewMessage);
 
+        // truncate the string if it ends up longer than the character limit.
+        if (previewMessage.Length > 400)
+            previewMessage = previewMessage[..400];
+
         // Send message to the server
         _hub.UserSendGlobalChat(new(MainHub.OwnUserData, previewMessage, _config.Current.PreferThreeCharaAnonName)).ConfigureAwait(false);
 

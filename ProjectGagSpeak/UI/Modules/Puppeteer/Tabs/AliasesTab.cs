@@ -150,7 +150,7 @@ public class AliasesTab : IFancyTab
             CkGui.TextFrameAligned("\"");
         }
         ImGui.SameLine();
-        CkGui.RightAlignedColor(alias.IgnoreCase ? "Ignores Case" : "Case Sensative", ImGuiColors.DalamudGrey2);
+        CkGui.RightAlignedColor(alias.IgnoreCase ? "Ignores Case" : "Case Sensitive", ImGuiColors.DalamudGrey2);
 
         ImGui.Separator();
         var posY = ImGui.GetCursorPosY();

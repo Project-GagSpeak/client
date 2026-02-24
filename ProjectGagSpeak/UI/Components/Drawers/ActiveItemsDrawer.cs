@@ -244,6 +244,7 @@ public class ActiveItemsDrawer
         if (dispData is null)
             CkGui.AttachToolTip("--SEP----COL--The item that was here couldn't be found." +
                 "--NL--It may have been deleted or the data is corrupted.--COL--", color: ImGuiColors.DalamudRed);
+        if (slotIdx == 1) _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Removing, WardrobeUI.LastPos, WardrobeUI.LastSize);
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             ImGui.OpenPopup($"##Restrictions-{slotIdx}");
@@ -253,7 +254,7 @@ public class ActiveItemsDrawer
         ImUtf8.SameLineInner();
         var rightWidth = ImGui.GetContentRegionAvail().X;
         _restrictionPadlocks[slotIdx].DrawLockCombo(rightWidth, slotIdx, "Lock this Padlock!");
-
+            
         // Draw the potential popup if we should.
         var applyCombo = _restrictionItems[slotIdx];
         if (applyCombo.DrawPopup($"##Restrictions-{slotIdx}", data.Identifier, rightWidth * .75f, drawPos))
