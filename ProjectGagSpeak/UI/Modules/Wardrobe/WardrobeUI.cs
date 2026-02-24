@@ -42,7 +42,7 @@ public class WardrobeUI : WindowMediatorSubscriberBase
         this.SetBoundaries(new Vector2(600, 490), ImGui.GetIO().DisplaySize);
         TitleBarButtons = new TitleBarButtonBuilder()
             .Add(FAI.CloudDownloadAlt, "Wardrobe Migrations", () => Mediator.Publish(new UiToggleMessage(typeof(MigrationsUI))))
-            .AddTutorial(_guides, TutorialFromTab())
+            .AddTutorial(_guides, TutorialFromTab)
             .Build();
     }
 
@@ -141,7 +141,7 @@ public class WardrobeUI : WindowMediatorSubscriberBase
         => _tabMenu.TabSelection switch
         {
             SelectedTab.MyRestraints => TutorialType.Restraints,
-            SelectedTab.MyRestrictions => TutorialType.Restraints,
+            SelectedTab.MyRestrictions => TutorialType.Restrictions,
             SelectedTab.MyGags => TutorialType.Gags,
             _ => TutorialType.Collar,
         };

@@ -6,13 +6,16 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Gui.Wardrobe;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
+using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using OtterGui.Text;
 using OtterGui.Widgets;
 using Penumbra.Api.Enums;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Gui.Components;
 // This class will automate the drawing of checkboxes, buttons, sliders and more used across the various UI elements through a modular approach.
@@ -20,11 +23,13 @@ public sealed class ModPresetDrawer
 {
     private readonly ILogger<ModPresetDrawer> _logger;
     private readonly ModPresetManager _manager;
+    private readonly TutorialService _guides;
 
-    public ModPresetDrawer(ILogger<ModPresetDrawer> logger, ModPresetManager manager)
+    public ModPresetDrawer(ILogger<ModPresetDrawer> logger, ModPresetManager manager,  TutorialService guides)
     {
         _logger = logger;
         _manager = manager;
+        _guides = guides;
     }
 
     // this needs a refactor as it sucks at properly updating currently when we have everything refernecing the same 2 combos.
@@ -69,49 +74,51 @@ public sealed class ModPresetDrawer
     public void DrawModPresetBox(string id, IRestriction item, float width)
     {
         var winSize = new Vector2(width, CkStyle.GetFrameRowsHeight(2) + (9 * ImGui.GetFrameHeightWithSpacing()));
-        using (var c = CkRaii.HeaderChild("Associated Mod", winSize, HeaderFlags.AddPaddingToHeight))
+        using var c = CkRaii.HeaderChild("Associated Mod", winSize, HeaderFlags.AddPaddingToHeight);
+        using (ImRaii.Group())
         {
-            using (ImRaii.Group())
+            // The Mod Selection.
+            var change = _manager.ModCombo.Draw("AMP-ModCombo-" + id, item.Mod.Container.DirectoryPath, c.InnerRegion.X, 1.4f);
+            if (change && !item.Mod.Container.DirectoryPath.Equals(_manager.ModCombo.Current?.DirPath))
             {
-                // The Mod Selection.
-                var change = _manager.ModCombo.Draw("AMP-ModCombo-" + id, item.Mod.Container.DirectoryPath, c.InnerRegion.X, 1.4f);
-                if (change && !item.Mod.Container.DirectoryPath.Equals(_manager.ModCombo.Current?.DirPath))
+                // retrieve and set the new container reference.
+                if (_manager.ModPresetStorage.FirstOrDefault(mps => mps.DirectoryPath == _manager.ModCombo.Current!.DirPath) is { } match)
                 {
-                    // retrieve and set the new container reference.
-                    if (_manager.ModPresetStorage.FirstOrDefault(mps => mps.DirectoryPath == _manager.ModCombo.Current!.DirPath) is { } match)
-                    {
-                        _logger.LogTrace($"Associated Mod changed to {_manager.ModCombo.Current!.Name} [{_manager.ModCombo.Current!.DirPath}] from {item.Mod.Container.ModName}");
-                        item.Mod = match.ModPresets.First(); // Let this crash you if it happens, because it means something has gone horribly wrong.
-                    }
-                }
-                if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-                {
-                    _logger.LogTrace("Associated Mod was cleared. and is now Empty");
-                    item.Mod = new ModSettingsPreset(new ModPresetContainer());
-                }
-
-                // The Mod Preset Selection.
-                var presetChange = _manager.PresetCombo.Draw("AMP-ModPresetCombo-" + id, item.Mod.Label, c.InnerRegion.X, 1f);
-                if (presetChange && !item.Mod.Label.Equals(_manager.PresetCombo.Current?.Label))
-                {
-                    // recreate the same modsettingPreset, but at the new label.
-                    if (item.Mod.Container.ModPresets.FirstOrDefault(mp => mp.Label == _manager.PresetCombo.Current!.Label) is { } match)
-                    {
-                        _logger.LogTrace($"Associated Mod Preset changed to {_manager.PresetCombo.Current!.Label} " +
-                            $"[{_manager.PresetCombo.Current.Label}] from {item.Mod.Label}");
-                        item.Mod = match;
-                    }
-                }
-                if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-                {
-                    _logger.LogTrace("Associated Mod Preset was cleared. and is now Empty");
-                    var curContainer = item.Mod.Container;
-                    item.Mod = new ModSettingsPreset(curContainer);
+                    _logger.LogTrace($"Associated Mod changed to {_manager.ModCombo.Current!.Name} [{_manager.ModCombo.Current!.DirPath}] from {item.Mod.Container.ModName}");
+                    item.Mod = match.ModPresets.First(); // Let this crash you if it happens, because it means something has gone horribly wrong.
                 }
             }
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+            {
+                _logger.LogTrace("Associated Mod was cleared. and is now Empty");
+                item.Mod = new ModSettingsPreset(new ModPresetContainer());
+            }
+            _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.SelectingMod, WardrobeUI.LastPos, WardrobeUI.LastSize);
 
-            DrawPresetPreview(item.Mod);
+            // The Mod Preset Selection.
+            var presetChange = _manager.PresetCombo.Draw("AMP-ModPresetCombo-" + id, item.Mod.Label, c.InnerRegion.X, 1f);
+            if (presetChange && !item.Mod.Label.Equals(_manager.PresetCombo.Current?.Label))
+            {
+                // recreate the same modsettingPreset, but at the new label.
+                if (item.Mod.Container.ModPresets.FirstOrDefault(mp => mp.Label == _manager.PresetCombo.Current!.Label) is { } match)
+                {
+                    _logger.LogTrace($"Associated Mod Preset changed to {_manager.PresetCombo.Current!.Label} " +
+                                     $"[{_manager.PresetCombo.Current.Label}] from {item.Mod.Label}");
+                    item.Mod = match;
+                }
+            }
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+            {
+                _logger.LogTrace("Associated Mod Preset was cleared. and is now Empty");
+                var curContainer = item.Mod.Container;
+                item.Mod = new ModSettingsPreset(curContainer);
+            }
+
+            _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.SelectingPreset, WardrobeUI.LastPos, WardrobeUI.LastSize);
         }
+        
+        DrawPresetPreview(item.Mod);
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.PresetPreview, WardrobeUI.LastPos, WardrobeUI.LastSize);
     }
 
     public void DrawPresetTooltip(ModSettingsPreset modPreset)

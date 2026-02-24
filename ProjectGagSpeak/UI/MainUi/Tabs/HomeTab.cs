@@ -22,7 +22,7 @@ using System.Globalization;
 
 namespace GagSpeak.Gui.MainWindow;
 
-/// <summary> 
+/// <summary>
 ///     The landing page of GagSpeak. Pretty UI, and polished design.
 /// </summary>
 public class HomeTab
@@ -342,7 +342,6 @@ public class HomeTab
         CkGui.AttachToolTip("This plugin took a massive toll on my life." +
             "--NL--As happy as I am to make this free for all of you to enjoy, any support is much appreciated ♥" +
             "--NL--Will open --COL--ko-fi.com--COL-- in a new browser window.", ImGuiColors.ParsedPink);
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SelfPlug, MainUI.LastPos, MainUI.LastSize);
     }
 
     private void PatreonButton(float buttonWidth)

@@ -24,9 +24,12 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
     private readonly MainConfig _config;
     private readonly UiThumbnailService _service;
     private readonly TutorialService _guides;
+    private Vector2 LastPos = Vector2.Zero;
+    private Vector2 LastSize = Vector2.Zero;
+
     public ThumbnailUI(ILogger<ThumbnailUI> logger, GagspeakMediator mediator,
-        ImageImportTool imageImport, MainConfig config, UiThumbnailService service,
-        TutorialService guides) : base(logger, mediator, "##Thumbnail_Browser")
+                       ImageImportTool imageImport, MainConfig config, UiThumbnailService service,
+                       TutorialService guides) : base(logger, mediator, "##Thumbnail_Browser")
     {
         _imageImport = imageImport;
         _config = config;
@@ -46,6 +49,8 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
 
     protected override void DrawInternal()
     {
+        LastPos = ImGui.GetWindowPos();
+        LastSize = ImGui.GetWindowSize();
         var frameH = ImGui.GetFrameHeight();
         var drawSpaces = CkHeader.FlatWithBends(CkCol.CurvedHeader.Uint(), frameH, 0, frameH);
 
@@ -76,8 +81,8 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
         {
             if (CkGui.IconButton(FAI.Sync))
                 TryRefresh(true);
-            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.UpdateContents, ImGui.GetWindowPos(), ImGui.GetWindowSize());
-            _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.UpdateContents, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.UpdateContents, LastPos, LastSize);
+            _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.UpdateContents, LastPos, LastSize);
         });
 
         ImGui.SameLine();
@@ -91,8 +96,8 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
         // Save changes only once we deactivate, to avoid spamming the hybrid saver.
         if (ImGui.IsItemDeactivatedAfterEdit())
             _config.Save();
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.DisplayScale, ImGui.GetWindowPos(), ImGui.GetWindowSize());
-        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.DisplayScale, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.DisplayScale, LastPos, LastSize);
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.DisplayScale, LastPos, LastSize);
 
         // Let them use File Dialog Manager to import images.
         ImUtf8.SameLineInner();
@@ -100,8 +105,8 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
             _imageImport.ImportFromFile(_service.Kind, _service.DispSize, botRegionSize, KeyMonitor.ShiftPressed());
         CkGui.AttachToolTip("Add a Thumbnail Image from the file browser."
             + "--SEP-- Holding SHIFT will force the image to be re-imported.");
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.ImportByFile, ImGui.GetWindowPos(), ImGui.GetWindowSize());
-        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.ImportingByFile, ImGui.GetWindowPos(), ImGui.GetWindowSize());
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.ImportByFile, LastPos, LastSize);
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.ImportingByFile, LastPos, LastSize);
 
         // Add a option to add new images by clipboard pasting.
         ImUtf8.SameLineInner();
@@ -109,8 +114,8 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
             _imageImport.ImportFromClipboard(_service.Kind, _service.DispSize, botRegionSize, KeyMonitor.ShiftPressed());
         CkGui.AttachToolTip("Add a Thumbnail Image from the contents copied to clipboard."
             + "--SEP-- Holding SHIFT will force the image to be re-imported.");
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.ImportByClipboard, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => IsOpen = false );
-        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.ImportingByClipboard, ImGui.GetWindowPos(), ImGui.GetWindowSize(), () => IsOpen = false);
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.ImportByClipboard, LastPos, LastSize, () => IsOpen = false );
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.ImportingByClipboard, LastPos, LastSize, () => IsOpen = false);
     }
 
     public void DrawFileImporter()

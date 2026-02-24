@@ -12,6 +12,7 @@ using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Services.Tutorial;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
@@ -50,11 +51,11 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
     private readonly MainHub _hub;
    
     private HypnoEffectEditor _hypnoEditor;
-    public KinksterInfoCache(ILogger log, MainHub hub, Kinkster kinkster, HypnoEffectManager hypno)
+    public KinksterInfoCache(ILogger log, MainHub hub, Kinkster kinkster, HypnoEffectManager hypno, TutorialService guides)
     {
         _log = log;
         _hub = hub;
-        _hypnoEditor = new HypnoEffectEditor("KinksterEffectEditor", hypno);
+        _hypnoEditor = new HypnoEffectEditor("KinksterEffectEditor", hypno, guides);
 
         UpdateKinkster(kinkster);
     }
@@ -362,13 +363,16 @@ public sealed class SidePanelService : DisposableMediatorSubscriberBase
     private readonly MainHub _hub;
     private readonly SidePanelTabs _tabs;
     private readonly HypnoEffectManager _hypnoManager;
+    private readonly TutorialService _guides;
+
     public SidePanelService(ILogger<SidePanelService> logger, GagspeakMediator mediator, 
-        MainHub hub, HypnoEffectManager hypnoManager, SidePanelTabs tabs)
+        MainHub hub, HypnoEffectManager hypnoManager, SidePanelTabs tabs, TutorialService guides)
         : base(logger, mediator)
     {
         _hub = hub;
         _hypnoManager = hypnoManager;
         _tabs = tabs;
+        _guides = guides;
 
         // Dont clear display entirely if on Interactions.
         Mediator.Subscribe<DisconnectedMessage>(this, _ => ClearDisplay());
@@ -380,6 +384,7 @@ public sealed class SidePanelService : DisposableMediatorSubscriberBase
         {
             // Maybe do some restoration of Interactions here if any were present, but otherwise, ignore.
         });
+        
     }
 
     private void UpdateForNewTab(MainMenuTabs.SelectedTab newTab)
@@ -437,7 +442,7 @@ public sealed class SidePanelService : DisposableMediatorSubscriberBase
         else
         {
             Logger.LogInformation($"Opening Side Panel Interactions for {kinkster.GetNickAliasOrUid()}");
-            DisplayCache = new KinksterInfoCache(Logger, _hub, kinkster, _hypnoManager);
+            DisplayCache = new KinksterInfoCache(Logger, _hub, kinkster, _hypnoManager, _guides);
         }
     }
 

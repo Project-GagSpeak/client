@@ -3,6 +3,7 @@ using CkCommons.Gui;
 using CkCommons.Helpers;
 using CkCommons.Raii;
 using CkCommons.Widgets;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
@@ -10,14 +11,15 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Controller;
 using GagSpeak.Services.Textures;
+using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using GagspeakAPI.Data;
-using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.Gui.Components;
+
 public class HypnoEffectEditor : IDisposable
 {
     // Effect Constants
@@ -25,6 +27,7 @@ public class HypnoEffectEditor : IDisposable
     const ImGuiColorEditFlags KINKSTER_COLOR_FLAGS = ImGuiColorEditFlags.DisplayRgb | ImGuiColorEditFlags.AlphaPreview | ImGuiColorEditFlags.AlphaBar | ImGuiColorEditFlags.NoSidePreview;
 
     private readonly HypnoEffectManager _presetManager;
+    private readonly TutorialService _guides;
 
     private CompactConfigTab _compactConfigTab;
     private CompactPhrasesColorsTab _compactPhrasesColorsTab;
@@ -40,16 +43,17 @@ public class HypnoEffectEditor : IDisposable
     // Locals.
     private bool            _isOpen = false;
 
-    public HypnoEffectEditor(string popupLabel, HypnoEffectManager presetManager)
+    public HypnoEffectEditor(string popupLabel, HypnoEffectManager presetManager, TutorialService guides)
     {
         _presetManager = presetManager;
+        _guides = guides;
         PopupLabel = popupLabel;
         _tasksCTS = new CancellationTokenSource();
         _displayTextEditor = new TagCollection();
         _compactConfigTab = new CompactConfigTab(this);
         _compactPhrasesColorsTab = new CompactPhrasesColorsTab(this);
         _presetsTab = new CompactPresetsTab(this, presetManager);
-        EditorTabs = [ _compactConfigTab, _compactPhrasesColorsTab, _presetsTab ];
+        EditorTabs = [_compactConfigTab, _compactPhrasesColorsTab, _presetsTab];
     }
 
     /// <summary>
@@ -62,6 +66,9 @@ public class HypnoEffectEditor : IDisposable
     private HypnosisState _activeState = new();
 
     public readonly string PopupLabel = "HypnosisEditorModal";
+    
+    private Vector2 LastPos = Vector2.Zero;
+    private Vector2 LastSize = Vector2.Zero;
 
     public bool InBindingMode => !string.IsNullOrEmpty(_current.Name);
     public bool IsEffectNull => _current.Effect is null;
@@ -130,7 +137,7 @@ public class HypnoEffectEditor : IDisposable
         _tasksCTS?.SafeCancel();
         // set the new effect.
         // Copy the effect to avoid modifying the preset directly.
-        _current = (isBindingMode ? presetName : string.Empty, new HypnoticEffect(effect)); 
+        _current = (isBindingMode ? presetName : string.Empty, new HypnoticEffect(effect));
         // Set the new effect.
         _activeState = new HypnosisState { ImageColor = _current.Effect.ImageColor };
         // Assign the new tasks for the display editor.
@@ -171,6 +178,8 @@ public class HypnoEffectEditor : IDisposable
 
         if (ImGui.BeginPopupModal($"Effect Editor###{PopupLabel}", ref _isOpen, ImGuiWindowFlags.AlwaysAutoResize))
         {
+            LastPos = ImGui.GetWindowPos();
+            LastSize = ImGui.GetWindowSize();
             // Draw out the editor contents.
             using (ImRaii.Table($"EditorContainerOuter{PopupLabel}", 2, ImGuiTableFlags.NoPadOuterX | ImGuiTableFlags.BordersInner))
             {
@@ -199,15 +208,19 @@ public class HypnoEffectEditor : IDisposable
                         var pos = ImGui.GetCursorScreenPos();
                         if (_displayTextEditor.DrawTagsEditor($"##EffectPhrases_{PopupLabel}", eff.DisplayMessages, out var newDisplayWords, GsCol.VibrantPink.Vec4()))
                             UpdateEffect(() => eff.DisplayMessages = newDisplayWords.ToArray());
+                        
 
                         if (_displayTextEditor.DrawHelpButtons(eff.DisplayMessages, out var newWords, true, GsCol.VibrantPink.Vec4()))
                             UpdateEffect(() => eff.DisplayMessages = newWords.ToArray());
                     }
                 }
+                _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.EffectWords, LastPos, LastSize);
 
                 // Color Selections
                 ImGui.TableNextColumn();
-                DrawColorSections(size.X);
+                using (ImRaii.Group())
+                    DrawColorSections(size.X);
+                _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.EffectColors, LastPos, LastSize, () => _isOpen=false);
             }
 
             CkGui.SeparatorSpaced(GsCol.LushPinkLine.Uint());
@@ -240,9 +253,9 @@ public class HypnoEffectEditor : IDisposable
 
     public void DrawCompactEditorTabs(float width)
     {
-        using (CkRaii.TabBarChild("EffectEdit", width, CkStyle.GetFrameRowsHeight(GetCompactHeightRowCount()), FancyTabBar.Rounding, GsCol.VibrantPink.Uint(), GsCol.VibrantPinkHovered.Uint(), CkCol.CurvedHeader.Uint(), 
+        using (CkRaii.TabBarChild("EffectEdit", width, CkStyle.GetFrameRowsHeight(GetCompactHeightRowCount()), FancyTabBar.Rounding, GsCol.VibrantPink.Uint(), GsCol.VibrantPinkHovered.Uint(), CkCol.CurvedHeader.Uint(),
             LabelFlags.PadInnerChild | LabelFlags.AddPaddingToHeight, out var selected, EditorTabs))
-                selected?.DrawContents(ImGui.GetContentRegionAvail().X);
+            selected?.DrawContents(ImGui.GetContentRegionAvail().X);
     }
 
     private void DrawEditorArea(float width)
@@ -468,6 +481,7 @@ public class HypnoEffectEditor : IDisposable
                 ImGui.Dummy(new Vector2(0, ImGui.GetFrameHeight() * fillerFrameHeights));
             }
         }
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.EffectConfig, LastPos, LastSize);
     }
 
     private void DrawColorSections(float width)
@@ -809,7 +823,7 @@ public class HypnoEffectEditor : IDisposable
                 _editorRef.UpdateEffect(() => effect.ImageColor = ColorHelpers.RgbaVector4ToUint(tintVec));
                 activeState.ImageColor = effect.ImageColor;
             }
-            
+
             CkGui.CenterTextAligned("Text Color");
             ImGui.SetNextItemWidth(width);
             var textColVec = ColorHelpers.RgbaUintToVector4(effect.TextColor);
