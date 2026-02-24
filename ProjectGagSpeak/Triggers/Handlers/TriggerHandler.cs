@@ -387,10 +387,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
             {
                 // If we cant execute, continue.
                 if (!_selfBondage.CanExecute(trigger.ActionType))
-                {
-                    Logger.LogWarning($"Cannot execute action of type {trigger.ActionType} for trigger {trigger.Label}. Skipping.");
                     continue;
-                }
 
                 // Logger.LogInformation($"Executing async action of type {trigger.ActionType} for trigger {trigger.Label}.", LoggerType.Triggers);
                 if (await _processor.HandleActionAsync(trigger.InvokableAction, enactor).ConfigureAwait(false))
