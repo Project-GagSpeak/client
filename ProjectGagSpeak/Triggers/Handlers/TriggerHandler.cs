@@ -140,7 +140,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
             {
                 case TriggerDirection.Any:
                     return true;
-                
+
                 case TriggerDirection.OtherToSelf:
                     // Ensure valid states.
                     if (!(CharaObjectWatcher.Rendered.Contains(targetAddr) && !clientIsCaller && clientIsTarget))
@@ -282,8 +282,8 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
 
         // Filter down to the triggers matching our change type and other details.
         var socialTriggers = _triggers.Storage.OfType<SocialTrigger>()
-            .Where(t => t.Enabled 
-                && t.Game is SocialGame.DeathRoll 
+            .Where(t => t.Enabled
+                && t.Game is SocialGame.DeathRoll
                 && (isWinner ? t.Result == SocialGameResult.Win : t.Result == SocialGameResult.Loss))
             .OrderByDescending(t => t.Priority);
 
@@ -429,6 +429,8 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
 
         scoped = scoped.ConvertSquareToAngleBrackets();
 
+        Logger.LogTrace($"Context for scoped message {scoped} is UID: {context.UID}, DisplayName: {context.DisplayName}, Trigger: {context.Trigger}, Aliases ({context.Aliases.Count}): {string.Join(", ", context.Aliases.Select(a => a.InputCommand))}, Perms: {context.PuppetPerms}", LoggerType.Puppeteer);
+
         // Alias execution
         if (context.PuppetPerms.HasAny(PuppetPerms.Alias) && GetValidAlias(context.Aliases, scoped) is { } match)
         {
@@ -450,11 +452,17 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
         // Order by Aliases based on length. If a valid one is found, only return it if valid and can be executed.
         foreach (var alias in candidates.OrderByDescending(alias => alias.InputCommand.Length).ToList())
         {
-            if (!aliasMsg.TextValue.Contains(alias.InputCommand))
+            if (!aliasMsg.TextValue.Contains(alias.InputCommand, alias.IgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
+            {
+                Logger.LogTrace($"Alias not matched due to string contains: {alias.InputCommand}", LoggerType.Puppeteer);
                 continue;
+            }
             // We found a potential match, but we must make sure it is allowed to be executed.
             if (!_selfBondage.CanExecute(alias.Actions.Select(a => a.ActionType)))
+            {
+                Logger.LogTrace($"Alias found but cannot be executed: {alias.InputCommand} - actions: {string.Join(", ", alias.Actions.Select(a => a.ActionType.ToName()))}", LoggerType.Puppeteer);
                 continue;
+            }
 
             // We have a valid AliasTrigger whose reactions are all available to process.
             Logger.LogTrace($"Alias found: {alias.InputCommand}", LoggerType.Puppeteer);
@@ -469,7 +477,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
 
         // please for the love of god find a better way to handle this.
         var relevantTriggers = _triggers.Storage.SpellAction
-            .Where(t => t.ActionKind == actEff.Type && t.GetStoredIds().Contains(actEff.ActionID) && t.ActionKind == actEff.Type)
+            .Where(t => t.ActionKind == actEff.Type && (t.GetStoredIds().Contains(actEff.ActionID) || t.IsGenericDetection))
             .ToList();
 
         if (!relevantTriggers.Any())
