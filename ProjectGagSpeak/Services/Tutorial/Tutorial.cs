@@ -108,7 +108,7 @@ public class Tutorial
         ImGui.SetNextWindowPos(pos);
         ImGui.SetNextWindowSize(size);
         ImGui.SetNextWindowFocus();
-        using var popup = Popup(PopupLabel, WFlags.AlwaysAutoResize | WFlags.Popup);
+        using var popup = Popup(PopupLabel, WFlags.AlwaysAutoResize);
         if (!popup)
             return;
 
