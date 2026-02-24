@@ -268,7 +268,7 @@ public class PopoutGlobalChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubs
 
         // Process message if gagged
         if ((_gags.ServerGagData?.IsGagged() ?? true) && (ClientData.Globals?.ChatGarblerActive ?? false))
-            previewMessage = _garbler.ProcessMessage(previewMessage);
+            previewMessage = _garbler.GarbleMessage(previewMessage, true);
 
         // Send message to the server
         _hub.UserSendGlobalChat(new(MainHub.OwnUserData, previewMessage, _config.Current.PreferThreeCharaAnonName)).ConfigureAwait(false);

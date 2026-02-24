@@ -105,8 +105,8 @@ public partial class StaticDetours
                 var stringToProcess = originalText.Substring(prefix.Length);
                 // set the output to the prefix + the garbled message.
                 var output = string.IsNullOrEmpty(prefix)
-                    ? _muffler.ProcessMessage(stringToProcess)
-                    : prefix + " " + _muffler.ProcessMessage(stringToProcess);
+                    ? _muffler.GarbleMessage(stringToProcess)
+                    : prefix + " " + _muffler.GarbleMessage(stringToProcess);
 
                 if (string.IsNullOrWhiteSpace(output))
                     return 0; // Do not sent message.

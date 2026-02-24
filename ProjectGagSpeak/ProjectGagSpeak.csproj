@@ -27,6 +27,10 @@
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
     </ItemGroup>
+    
+    <ItemGroup>
+      <Content Include="MufflerCore\GagData\gag_data.json" />
+    </ItemGroup>
 
     <!--As Now that we use Dalamud.SDK, most Dalamud Sources are not needed, but some must stay.-->
     <ItemGroup>

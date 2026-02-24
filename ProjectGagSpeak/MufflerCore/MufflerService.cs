@@ -5,6 +5,7 @@ using GagSpeak.MufflerCore.Handler;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Services.Textures;
 using GagspeakAPI.Util;
 
 namespace GagSpeak.Services;
@@ -19,26 +20,22 @@ public class MufflerService : DisposableMediatorSubscriberBase
     ///    The collected GagData for all Gags, indexed by gag name and phoneme,
     ///    taken from the dictionary of the selected dialect.
     /// </summary>
-    private static Dictionary<string, Dictionary<string, PhonemeProperties>> _gagData;
+    private static Dictionary<string, Dictionary<string, PhonemeProperties>> _garbleData;
 
     /// <summary>
     ///     The collected GarblerData for all Gags.
     /// </summary>
-    private static List<GagData> _allGarblerData = new List<GagData>();
+    private static List<GarbleData> _allGarblerData = new List<GarbleData>();
 
     /// <summary>
     ///     The Muffler GagData for the currently active Gags worn.
     /// </summary>
-    private static List<GagData> _activeGags;
+    private static List<GarbleData> _activeGags;
 
     private static GagMuffleType _activeMuffleType = GagMuffleType.None;
 
-    public MufflerService(
-        ILogger<MufflerService> logger,
-        GagspeakMediator mediator,
-        MainConfig mainConfig,
-        Ipa_EN_FR_JP_SP_Handler ipaParser,
-        ConfigFileProvider fileprovider)
+    public MufflerService(ILogger<MufflerService> logger, GagspeakMediator mediator, MainConfig mainConfig,
+        Ipa_EN_FR_JP_SP_Handler ipaParser, ConfigFileProvider fileprovider)
         : base(logger, mediator)
     {
         _mainConfig = mainConfig;
@@ -48,18 +45,18 @@ public class MufflerService : DisposableMediatorSubscriberBase
         try
         {
             var json = File.ReadAllText(fileprovider.GagDataJson);
-            _gagData = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, PhonemeProperties>>>(json)
+            _garbleData = JsonConvert.DeserializeObject<Dictionary<string, Dictionary<string, PhonemeProperties>>>(json)
                 ?? new Dictionary<string, Dictionary<string, PhonemeProperties>>();
         }
         catch (FileNotFoundException)
         {
             Logger.LogError($"[IPA Parser] File does not exist");
-            _gagData = new Dictionary<string, Dictionary<string, PhonemeProperties>>();
+            _garbleData = new Dictionary<string, Dictionary<string, PhonemeProperties>>();
         }
         catch (Bagagwa ex)
         {
             Logger.LogError($"[IPA Parser] An error occurred while reading the file: {ex.Message}");
-            _gagData = new Dictionary<string, Dictionary<string, PhonemeProperties>>();
+            _garbleData = new Dictionary<string, Dictionary<string, PhonemeProperties>>();
         }
 
         CreateGags();
@@ -88,13 +85,11 @@ public class MufflerService : DisposableMediatorSubscriberBase
         };
 
         // Assuming you want to reset the list each time you create gags
-        foreach (var (gagName, phonemes) in _gagData)
+        foreach (var (gagName, phonemes) in _garbleData)
             _allGarblerData.Add(new(gagName, phonemes));
     }
 
-    public void UpdateGarblerLogic(GagType gagOne, GagType gagTwo, GagType gagThree)
-        => UpdateGarblerLogic([gagOne.GagName(), gagTwo.GagName(), gagThree.GagName()], MuffleType(gagOne) | MuffleType(gagTwo) | MuffleType(gagThree));
-
+    // Change to GagTypes soon.
     public void UpdateGarblerLogic(List<string> newGagListNames, GagMuffleType newMuffleType)
     {
         _activeGags = newGagListNames
@@ -105,160 +100,132 @@ public class MufflerService : DisposableMediatorSubscriberBase
         _activeMuffleType = newMuffleType;
     }
 
-    /// <summary> Processes the input message by converting it to GagSpeak format </summary>
-    public string ProcessMessage(string inputMessage)
+    /// <summary>
+    ///     Processes the input message by converting it to GagSpeak format <br />
+    ///     (we should probably consider using a ref string for this. Idk.
+    /// </summary>
+    public string GarbleMessage(string inputMessage, bool allowEmotes = false)
     {
-        if (_activeGags == null || _activeGags.All(gag => gag.Name == "None")) return inputMessage;
-        var outputStr = "";
+        // Return the normal message if no active gags are present.
+        if (_activeGags is null || _activeGags.All(gag => gag.Name == "None")) 
+            return inputMessage;
+
+        // Otherwise, assume initially a blank message. If errors occur, output a blank message.
+        var outputStr = "";   
         try
         {
-            outputStr = ConvertToGagSpeak(inputMessage);
-            Logger.LogTrace($"Converted message to GagSpeak: {outputStr}", LoggerType.GarblerCore);
+            outputStr = GarbleMessageInternal(inputMessage, allowEmotes);
+            Logger.LogTrace($"Garlbed msg: {outputStr}", LoggerType.GarblerCore);
         }
         catch (Bagagwa e)
         {
-            Logger.LogError($"Error processing message: {e}");
+            Logger.LogError($"Error garbling message: {e}");
         }
-        return outputStr;
+        return outputStr; 
     }
 
     /// <summary>
     ///     Internal convert for gagspeak
     /// </summary>
-    private string ConvertToGagSpeak(string inputMessage)
+    private string GarbleMessageInternal(string inputMessage, bool allowEmotes)
     {
         // If all gags are None, return the input message as is
         if (_activeGags.All(gag => gag.Name == "None"))
-        {
             return inputMessage;
-        }
 
         // Initialize the algorithm scoped variables
         Logger.LogDebug($"Converting message to GagSpeak, at least one gag is not None.", LoggerType.GarblerCore);
-        var finalMessage = new StringBuilder(); // initialize a stringbuilder object so we dont need to make a new string each time
+        var finalMessage = new StringBuilder();
         var skipTranslation = false;
         try
         {
             // Convert the message to a list of phonetics for each word
             var wordsAndPhonetics = _ipaParser.ToIPAList(inputMessage);
             // Iterate over each word and its phonetics
-            foreach (var (word, phonetics) in wordsAndPhonetics)
+            foreach (var parsed in wordsAndPhonetics)
             {
-                // word includes its puncuation
-
-                // If the word is "*", then toggle skip translations
-                if (word == "*")
+                // Toggle skipping translation if an RP post (*)
+                if (parsed.Word == "*")
                 {
                     skipTranslation = !skipTranslation;
-                    finalMessage.Append(word + " "); // append the word to the string
-                    continue; // Skip the rest of the loop for this word
+                    finalMessage.Append($"{parsed.Word} ");
+                    continue;
                 }
                 // If the word starts with "*", toggle skip translations and remove the "*"
-                if (word.StartsWith('*'))
-                {
+                if (parsed.Word.StartsWith('*'))
                     skipTranslation = !skipTranslation;
-                }
-                // If the word ends with "*", remove the "*" and set a flag to toggle skip translations after processing the word
+
+                // Init a 'toggleAfter' variable, that dictates if we should toggle translation after, treating this as the last word before toggling.
                 var toggleAfter = false;
-                if (word.EndsWith('*'))
-                {
+
+                // Immidiately assume true if it ends with a *
+                if (parsed.Word.EndsWith('*'))
                     toggleAfter = true;
-                }
-                // if the word starts and ends with :, it's an emote, and don't garble it, put garbler back after.
-                if (word.StartsWith(':') && word.EndsWith(':'))
+
+                // If we are allowing emotes, we can mark toggle afer as inverse of translation, then set it to skip.
+                if (allowEmotes && parsed.Word.Length > 2)
                 {
-                    toggleAfter = !skipTranslation;
-                    skipTranslation = true;
+                    // Only validate if a valid emote.
+                    if (parsed.Word.StartsWith(':') && parsed.Word.EndsWith(':') && CosmeticLabels.NameToEmote.ContainsKey(parsed.Word[1..^1]))
+                    {
+                        toggleAfter = !skipTranslation;
+                        skipTranslation = true;
+                    }
                 }
-                // If the word is not to be translated, just add the word to the final message and continue
-                if (!skipTranslation && word.Any(char.IsLetter))
+
+                // If we should not skip translation, and any letters are present, attempt the parse
+                if (!skipTranslation && parsed.Word.Any(char.IsLetter))
                 {
                     // do checks for punctuation stuff
-                    var isAllCaps = word.All(c => !char.IsLetter(c) || char.IsUpper(c));       // Set to true if the full letter is in caps
-                    var isFirstLetterCaps = char.IsUpper(word[0]);
-                    // Extract all leading and trailing punctuation
-                    var leadingPunctuation = new string(word.TakeWhile(char.IsPunctuation).ToArray());
-                    var trailingPunctuation = new string(word.Reverse().TakeWhile(char.IsPunctuation).Reverse().ToArray());
-                    // Remove leading and trailing punctuation from the word
-                    var wordWithoutPunctuation = word.Substring(leadingPunctuation.Length, word.Length - leadingPunctuation.Length - trailingPunctuation.Length);
-                    // Convert the phonetics to GagSpeak if the list is not empty, otherwise use the original word
-                    var gaggedSpeak = phonetics.Count != 0 ? ConvertPhoneticsToGagSpeak(phonetics, isAllCaps, isFirstLetterCaps) : ConvertNonWordsToGagSpeak(wordWithoutPunctuation, isAllCaps, isFirstLetterCaps);
-                    // Add the GagSpeak to the final message
+                    var isAllCaps = parsed.Word.All(c => !char.IsLetter(c) || char.IsUpper(c));       // Set to true if the full letter is in caps
+                    var isFirstLetterCaps = char.IsUpper(parsed.Word[0]);
+                    // Cache the leading and trailing punctuation to inject back in after.
+                    var leadingPunctuation = new string([.. parsed.Word.TakeWhile(char.IsPunctuation)]);
+                    var trailingPunctuation = new string([.. parsed.Word.Reverse().TakeWhile(char.IsPunctuation).Reverse()]);
 
+                    // Sanitize to the word we will garble
+                    var sanitizedWord = parsed.Word.Substring(leadingPunctuation.Length, parsed.Word.Length - leadingPunctuation.Length - trailingPunctuation.Length);
+                    // Convert based on phonetics.
+                    var converted = parsed.Found
+                        ? GarbleWithPhonetics(sanitizedWord, parsed.Phonetics, isAllCaps, isFirstLetterCaps)
+                        : GarbleWithFallback(sanitizedWord, isAllCaps, isFirstLetterCaps);
+                    // Append to the final message
+                    finalMessage.Append($"{leadingPunctuation}{converted}{trailingPunctuation} ");
+                    
                     /* ---- THE BELOW LINE WILL CAUSE LOTS OF SPAM, ONLY FOR USE WHEN DEVELOPER DEBUGGING ---- */
-                    //_logger.LogTrace($"[GagGarbleManager] Converted [{leadingPunctuation}] + [{word}] + [{trailingPunctuation}]");
-                    finalMessage.Append(leadingPunctuation + gaggedSpeak + trailingPunctuation + " ");
+                    //Logger.LogTrace($"Converting word [{parsed.Word}] with phonetics [{string.Join(", ", parsed.Phonetics)}]", LoggerType.GarblerCore);
                 }
                 else
                 {
-                    finalMessage.Append(word + " "); // append the word to the string
+                    finalMessage.Append($"{parsed.Word} ");
                 }
+
                 // If the word ended with "*", toggle skip translations now
                 if (toggleAfter)
-                {
                     skipTranslation = !skipTranslation;
-                }
             }
         }
         catch (Bagagwa e)
         {
-            Svc.Logger.Error($"[GagGarbleManager] Error converting from IPA Spaced to final output: {e.Message}");
+            Logger.LogError($"Error converting to final output: {e.Message}");
         }
-        return finalMessage.ToString().Trim();
-    }
 
-    /// <summary>
-    ///    Handles conversion of speech that does not contain recognized words (e.g. misspellings, names, etc.)
-    /// </summary>
-    /// <returns>garbled version of the input word</returns>
-    private string ConvertNonWordsToGagSpeak(string word, bool isAllCaps, bool isFirstLetterCapitalized)
-    {
-        string phoneticKey;
-        if (Regex.IsMatch(word, @"^[mpfh\p{P}]+$"))
-        {
-            return word;
-        }
-        if (_activeMuffleType.HasFlag(GagMuffleType.MouthFull))
-        {
-            phoneticKey = StaticGarbleData.MouthFullKey;
-        }
-        else if (_activeMuffleType.HasFlag(GagMuffleType.MouthClosed))
-        {
-            phoneticKey = StaticGarbleData.MouthClosedKey;
-        }
-        else if (_activeMuffleType.HasFlag(GagMuffleType.MouthOpen))
-        {
-            phoneticKey = StaticGarbleData.MouthOpenKey;
-        }
-        else if (_activeMuffleType.HasFlag(GagMuffleType.NoSound))
-        {
-            phoneticKey = StaticGarbleData.NoSoundKey;
-        }
-        else
-        {
-            return word;
-        }
-        List<string> phonetics = new(word.Length);
-        foreach (var character in word)
-        {
-            phonetics.Add(phoneticKey);
-        }
-        return ConvertPhoneticsToGagSpeak(phonetics, isAllCaps, isFirstLetterCapitalized);
+        return finalMessage.ToString().Trim();
     }
 
     /// <summary>
     ///     Phonetic IPA -> Garbled sound equivalent in selected language
     /// </summary>
-    private string ConvertPhoneticsToGagSpeak(List<string> phonetics, bool isAllCaps, bool isFirstLetterCapitalized)
+    private string GarbleWithPhonetics(string word, List<string> phonetics, bool isAllCaps, bool isFirstLetterCapitalized)
     {
+        // If there are no phonetics, the sound is completely blank. But for the sake of fallback, implement a fun replacement.
+        if (phonetics.Count is 0)
+            return GetNoSoundWord(word, isAllCaps, isFirstLetterCapitalized);
+
+        // Otherwise, parse it out normally.
         var outputString = new StringBuilder();
         foreach (var phonetic in phonetics)
         {
-            if (StaticGarbleData.GagDataMap.ContainsKey(phonetic))
-            {
-                outputString.Append(StaticGarbleData.GagDataMap[phonetic][Random.Shared.Next(StaticGarbleData.GagDataMap[phonetic].Count)]);
-                continue;
-            }
             try
             {
                 var gagWithMaxMuffle = _activeGags
@@ -270,32 +237,95 @@ public class MufflerService : DisposableMediatorSubscriberBase
                     var translationSound = gagWithMaxMuffle.Phonemes[phonetic].Sound;
                     outputString.Append(translationSound);
                 }
-                else
-                {
-                    outputString.Append(ConvertNonWordsToGagSpeak(phonetic, isAllCaps, isFirstLetterCapitalized));
-                }
             }
             catch (Bagagwa e)
             {
-                Svc.Logger.Error($"Error converting phonetic {phonetic} to GagSpeak: {e.Message}");
+                Logger.LogError($"Error converting phonetic {phonetic} to GagSpeak: {e.Message}");
             }
         }
+
         var result = outputString.ToString();
-        if (isAllCaps) result = result.ToUpper();
+        // Ensure the output is uppercase.
+        if (isAllCaps)
+            result = result.ToUpper();
+
+        // Capitalize the first letter if the original one was.
         if (isFirstLetterCapitalized && result.Length > 0)
-        {
             result = char.ToUpper(result[0]) + result[1..];
-        }
+
         return result;
+    }
+
+    /// <summary>
+    ///    Handles conversion of speech that does not contain recognized words (e.g. misspellings, names, etc.)
+    /// </summary>
+    private string GarbleWithFallback(string word, bool isAllCaps, bool isFirstLetterCapitalized)
+    {
+        // Return the no sound converter for no sound words
+        if (_activeMuffleType.HasFlag(GagMuffleType.NoSound))
+            return GetNoSoundWord(word, isAllCaps, isFirstLetterCapitalized);
+
+        // If this fallback word only contains classic muffle characters, then return it as is.
+        // (Allows mhm, mmph, mnph ext..)
+        if (Regex.IsMatch(word, @"^[mpgfh\p{P}]+$"))
+            return word;
+
+        // Get the prioritized muffle type.
+        var toMuffle = _activeMuffleType.ToPrioritizedType();
+        // If none, return the word
+        if (!FallbackGarbleData.GagDataMap.TryGetValue(toMuffle, out var garbleStrings))
+            return word;
+
+        // Iterate through the word, applying translations until we reach the word length.
+        var muffledWord = string.Empty;
+        while (muffledWord.Length < word.Length)
+        {
+            muffledWord += garbleStrings[Random.Shared.Next(garbleStrings.Count)];
+        }
+        // Trim to match word length.
+        muffledWord = muffledWord.Substring(0, word.Length);
+        
+        // Capitalize if we should
+        if (isAllCaps)
+            muffledWord = muffledWord.ToUpper();
+        // Capitalize the first letter if the original one was.
+        if (isFirstLetterCapitalized && muffledWord.Length > 0)
+            muffledWord = char.ToUpper(muffledWord[0]) + muffledWord[1..];
+        
+        // Return the muffled word.
+        return muffledWord;
+    }
+
+    private string GetNoSoundWord(string word, bool isAllCaps, bool isFirstLetterCapitalized)
+    {
+        // Always empty if less than 7 letters.
+        if (string.IsNullOrEmpty(word) || word.Length < 6)
+            return string.Empty;
+
+        // 15% chance to generate periods, +1 for every 4 letters after 7.
+        if (Random.Shared.NextDouble() >= 0.15)
+            return string.Empty;
+
+        var sb = new StringBuilder();
+        // Get the number of periods.
+        var periods = 1 + ((word.Length - 6) / 4);
+        sb.Append('.', periods);
+
+        // 10% chance to prepend a single m/h, case dependant on isAllCaps || isFirstLetterCapitalized.
+        if (Random.Shared.NextDouble() < 0.25)
+        {
+            char leadingChar = isAllCaps || isFirstLetterCapitalized ? 'M' : 'm';
+            sb.Insert(0, leadingChar);
+        }
+
+        return sb.ToString();
     }
 
     public static GagMuffleType MuffleType(IEnumerable<GagType> gagTypes)
     {
         var combinedMuffleType = GagMuffleType.None;
         foreach (var gagType in gagTypes)
-        {
             combinedMuffleType |= MuffleType(gagType);
-        }
         return combinedMuffleType;
     }
 

@@ -150,7 +150,7 @@ public class VibeRoomChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscrib
 
         // Process message if gagged
         if ((_gags.ServerGagData?.IsGagged() ?? false) && (ClientData.Globals?.ChatGarblerActive ?? false))
-            previewMessage = _garbler.ProcessMessage(previewMessage);
+            previewMessage = _garbler.GarbleMessage(previewMessage, true);
 
         // Send message to the server
         _logger.LogTrace($"Sending Message: {previewMessage}", LoggerType.GlobalChat);

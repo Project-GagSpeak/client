@@ -314,7 +314,7 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
 
         // Process message if gagged
         if ((_gags.ServerGagData?.IsGagged() ?? true) && (ClientData.Globals?.ChatGarblerActive ?? false))
-            previewMessage = _garbler.ProcessMessage(previewMessage);
+            previewMessage = _garbler.GarbleMessage(previewMessage, true);
 
         // truncate the string if it ends up longer than the character limit.
         if (previewMessage.Length > 400)
