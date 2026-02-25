@@ -60,16 +60,14 @@ public class RestraintEditorEquipment : IFancyTab
                     ImGui.Spacing();
                     _equipDrawer.DrawRestraintSlot(_manager.ItemInEditor.RestraintSlots, slot, innerWidth);
                     if (slot == EquipSlot.Head)
-                        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SlotTypes, WardrobeUI.LastPos, WardrobeUI.LastSize,
-                            () =>
-                            {
-                                if (_manager.ItemInEditor.RestraintSlots[slot] is RestraintSlotBasic basicSlot) // swap it to advanced slot here if we can.
-                                    _manager.ItemInEditor.RestraintSlots[slot] = RestraintSlotAdvanced.GetEmpty(slot, basicSlot.Stains);
-                            });
+                        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SlotTypes, WardrobeUI.LastPos, WardrobeUI.LastSize, _ =>
+                        {
+                            if (_manager.ItemInEditor.RestraintSlots[slot] is RestraintSlotBasic basicSlot) // swap it to advanced slot here if we can.
+                                _manager.ItemInEditor.RestraintSlots[slot] = RestraintSlotAdvanced.GetEmpty(slot, basicSlot.Stains);
+                        });
                 }
             }
-            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Importing, WardrobeUI.LastPos, WardrobeUI.LastSize, 
-                    () => ImportEquipment());
+            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Importing, WardrobeUI.LastPos, WardrobeUI.LastSize, _ => ImportEquipment());
 
             ImGui.SameLine(0, ImGui.GetStyle().WindowPadding.X);
             // Draw out one area for the accessories. (And glasses management.)

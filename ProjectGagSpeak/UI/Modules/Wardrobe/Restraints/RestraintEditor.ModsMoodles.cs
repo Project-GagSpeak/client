@@ -156,8 +156,8 @@ public class RestraintEditorModsMoodles : IFancyTab
             };
         }
         CkGui.AttachToolTip(_moodleDrawer.MoodleTypeTooltip(_selectedMoodle));
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SwapMoodleTypes, WardrobeUI.LastPos, WardrobeUI.LastSize,
-            () => _manager.ItemInEditor!.RestraintMoodles.Add(new MoodleTuple(MoodleCache.IpcData.StatusList.FirstOrDefault())));
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SwapMoodleTypes, WardrobeUI.LastPos, WardrobeUI.LastSize, 
+            _ => _manager.ItemInEditor!.RestraintMoodles.Add(new MoodleTuple(MoodleCache.IpcData.StatusList.FirstOrDefault())));
 
         ImUtf8.SameLineInner();
         var comboWidth = ImGui.GetContentRegionAvail().X - buttonWidth - ImGui.GetStyle().ItemInnerSpacing.X;

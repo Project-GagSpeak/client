@@ -118,12 +118,11 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
                 if (CkGui.IconTextButton(FAI.Save, "Save Changes"))
                     _ = _hub.UserSetKinkPlateContent(new KinkPlateInfo(new UserData(MainHub.UID), profile.Info));
                 CkGui.AttachToolTip("Updates your stored profile with latest information");
-                _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileSaving, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
-                    () =>
-                    {
-                        IsOpen = false;
-                        _mainMenuTabs.TabSelection = MainMenuTabs.SelectedTab.PatternHub;
-                    }); // tutorial locks interactions, no need to save, just close
+                _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileSaving, ImGui.GetWindowPos(), ImGui.GetWindowSize(), _ =>
+                {
+                    IsOpen = false;
+                    _mainMenuTabs.TabSelection = MainMenuTabs.SelectedTab.PatternHub;
+                }); // tutorial locks interactions, no need to save, just close
 
                 ImUtf8.SameLineInner();
                 if (ImGui.Checkbox("Public", ref publicRef))
@@ -205,10 +204,10 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
                 profile.Info.Description = refText;
         }
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileDescription, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
-            () => Mediator.Publish(new KinkPlateLightCreateOpenMessage(MainHub.OwnUserData)));
-                if (profile.Info.Disabled)
-            CkGui.AttachToolTip("You're Profile Customization Access has been Revoked!" +
-                "--SEP--You will not be able to edit your KinkPlate Description!");
+            _ => Mediator.Publish(new KinkPlateLightCreateOpenMessage(MainHub.OwnUserData)));
+        
+        CkGui.AttachToolTip("You're Profile Customization Access has been Revoked!" +
+            "--SEP--You will not be able to edit your KinkPlate Description!", profile.Info.Disabled);
 
         // draw the plate preview buttons.
         var width = (ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) / 2;
@@ -216,21 +215,21 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
         if (CkGui.IconTextButton(FAI.Expand, "Preview KinkPlate™ Light", width, id: MainHub.UID + "KinkPlatePreviewLight"))
             Mediator.Publish(new KinkPlateLightCreateOpenMessage(MainHub.OwnUserData));
         CkGui.AttachToolTip("Preview your Light KinkPlate™ in a standalone window!");
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfilePreviewLight, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
-            () =>
-            {
-                // TODO: Light Kinkplates don't respond to this message, and potentially leak data if closed this way?
-                //Mediator.Publish(new UiToggleMessage(typeof(KinkPlateLight), ToggleType.Hide));
-                Mediator.Publish(new UiToggleMessage(typeof(KinkPlatePreviewUI), ToggleType.Show));
-            }); 
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfilePreviewLight, ImGui.GetWindowPos(), ImGui.GetWindowSize(), _ =>
+        {
+            // TODO: Light Kinkplates don't respond to this message, and potentially leak data if closed this way?
+            //Mediator.Publish(new UiToggleMessage(typeof(KinkPlateLight), ToggleType.Hide));
+            Mediator.Publish(new UiToggleMessage(typeof(KinkPlatePreviewUI), ToggleType.Show));
+        }); 
 
 
         ImGui.SameLine();
         if (CkGui.IconTextButton(FAI.Expand, "Preview KinkPlate™ Full", width, id: MainHub.UID + "KinkPlatePreviewFull"))
             Mediator.Publish(new UiToggleMessage(typeof(KinkPlatePreviewUI)));
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfilePreviewFull, ImGui.GetWindowPos(), ImGui.GetWindowSize(), ()=> {
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfilePreviewFull, ImGui.GetWindowPos(), ImGui.GetWindowSize(), _ =>
+        {
             Mediator.Publish(new UiToggleMessage(typeof(KinkPlatePreviewUI), ToggleType.Hide));
             Mediator.Publish(new UiToggleMessage(typeof(ProfilePictureEditor), ToggleType.Show));
-         });
+        });
     }
 }

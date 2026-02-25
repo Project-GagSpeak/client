@@ -114,8 +114,8 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
             _imageImport.ImportFromClipboard(_service.Kind, _service.DispSize, botRegionSize, KeyMonitor.ShiftPressed());
         CkGui.AttachToolTip("Add a Thumbnail Image from the contents copied to clipboard."
             + "--SEP-- Holding SHIFT will force the image to be re-imported.");
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.ImportByClipboard, LastPos, LastSize, () => IsOpen = false );
-        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.ImportingByClipboard, LastPos, LastSize, () => IsOpen = false);
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.ImportByClipboard, LastPos, LastSize, _ => IsOpen = false );
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.ImportingByClipboard, LastPos, LastSize, _ => IsOpen = false);
     }
 
     public void DrawFileImporter()

@@ -220,7 +220,7 @@ public class HypnoEffectEditor : IDisposable
                 ImGui.TableNextColumn();
                 using (ImRaii.Group())
                     DrawColorSections(size.X);
-                _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.EffectColors, LastPos, LastSize, () => _isOpen=false);
+                _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.EffectColors, LastPos, LastSize, _ => _isOpen=false);
             }
 
             CkGui.SeparatorSpaced(GsCol.LushPinkLine.Uint());

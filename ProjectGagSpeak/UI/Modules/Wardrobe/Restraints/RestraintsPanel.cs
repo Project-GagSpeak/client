@@ -116,12 +116,12 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
         ImGui.SetCursorScreenPos(drawRegions.BotLeft.Pos);
         using (ImRaii.Child("RestraintsBottomLeft", drawRegions.BotLeft.Size, false, WFlags.NoScrollbar))
             _selector.DrawList(drawRegions.BotLeft.SizeX);
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.RestraintList, WardrobeUI.LastPos, WardrobeUI.LastSize,
-            () =>
-            {
-                if (_selector.tutorialSet is not null)
-                    _selector.SelectByValue(_selector.tutorialSet);
-            });
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.RestraintList, WardrobeUI.LastPos, WardrobeUI.LastSize, _ =>
+        {
+            var cache = (RestraintGuideCache)_;
+            if (cache.TutorialSet is { } set)
+                _selector.SelectByValue(set);
+        });
 
         ImGui.SetCursorScreenPos(drawRegions.TopRight.Pos);
         using (ImRaii.Child("RestraintsTopRight", drawRegions.TopRight.Size))
@@ -153,7 +153,8 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
         var label = notSelected ? "Nothing Selected!" : _selector.Selected!.Label;
         using var inner = CkRaii.ChildLabelButton(region, .6f, label, ImGui.GetFrameHeight(), BeginEdits, tooltip, DFlags.RoundCornersRight, LabelFlags.AddPaddingToHeight);
         if (_selector.Selected is not null)
-            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EnteringEditor, WardrobeUI.LastPos, WardrobeUI.LastSize, () => _manager.StartEditing(_selector.Selected));
+            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EnteringEditor, WardrobeUI.LastPos, WardrobeUI.LastSize,
+                _ => _manager.StartEditing(_selector.Selected));
 
         var pos = ImGui.GetItemRectMin();
         var imgSize = new Vector2(inner.InnerRegion.Y / 1.2f, inner.InnerRegion.Y);
@@ -189,13 +190,13 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
         ImGui.SetCursorScreenPos(imgDrawPos);
         if (_selector.Selected is not null)
         {
-            ActiveItemsDrawer.DrawRestraintImage(_selector.Selected!, imgSize, rounding);
+            ActiveItemsDrawer.DrawRestraintImage(_selector.Selected, imgSize, rounding);
             if (!isActive && ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
-                _thumbnails.SetThumbnailSource(_selector.Selected!.Identifier, new Vector2(120, 120f * 1.2f), ImageDataType.Restraints);
+                _thumbnails.SetThumbnailSource(_selector.Selected.Identifier, new Vector2(120, 120f * 1.2f), ImageDataType.Restraints);
             CkGui.AttachToolTip("The Thumbnail for this Restraint Set.--SEP--Double Click to change the image.");
 
             _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SelectingThumbnails, WardrobeUI.LastPos, WardrobeUI.LastSize,
-                () => _thumbnails.SetThumbnailSource(_selector.Selected!.Identifier, new Vector2(120, 120f * 1.2f), ImageDataType.Restraints));
+                _ => _thumbnails.SetThumbnailSource(_selector.Selected.Identifier, new Vector2(120, 120f * 1.2f), ImageDataType.Restraints));
         }
 
         void BeginEdits(ImGuiMouseButton b)
@@ -252,16 +253,16 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
         if (data.Identifier == Guid.Empty)
         {
             _activeItemDrawer.ApplyItemGroup(data);
-            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SelectingRestraint, WardrobeUI.LastPos, WardrobeUI.LastSize,
-                () =>
+            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SelectingRestraint, WardrobeUI.LastPos, WardrobeUI.LastSize, _ =>
+            {
+                var cache = (RestraintGuideCache)_;
+                var r = new CharaActiveRestraint()
                 {
-                    var r = new CharaActiveRestraint()
-                    {
-                        Identifier = _selector.tutorialSet.Identifier,
-                        Enabler = MainHub.UID
-                    };
-                    _selfBondage.DoSelfRestraint(r, DataUpdateType.Applied);
-                });
+                    Identifier = cache.TutorialSet!.Identifier,
+                    Enabler = MainHub.UID
+                };
+                _selfBondage.DoSelfRestraint(r, DataUpdateType.Applied);
+            });
             return;
         }
 
@@ -353,7 +354,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
             }
         }
         _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EditMeta, WardrobeUI.LastPos, WardrobeUI.LastSize,
-            () => FancyTabBar.SelectTab("RS_EditBar", EditorTabs[0], EditorTabs));
+            _ => FancyTabBar.SelectTab("RS_EditBar", EditorTabs[0], EditorTabs));
 
         // beside this, enhances the font scale to 1.5x, draw the save icon, then restore the font scale.
         ImGui.SameLine(0, itemSpacing);
@@ -361,6 +362,6 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
             _manager.SaveChangesAndStopEditing();
         CkGui.AttachToolTip("Save Changes to this Restraint Set.");
         _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SavingChanges, WardrobeUI.LastPos, WardrobeUI.LastSize,
-            () => _manager.SaveChangesAndStopEditing());
+            _ => _manager.SaveChangesAndStopEditing());
     }
 }

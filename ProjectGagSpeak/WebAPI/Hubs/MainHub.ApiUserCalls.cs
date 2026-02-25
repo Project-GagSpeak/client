@@ -383,22 +383,22 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeKinksterActiveCollar), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserChangeKinksterActivePattern(PushKinksterActivePattern dto)
+    public async Task<HubResponse> UserChangeKinksterPatternState(PushKinksterEnabledState dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeKinksterActivePattern), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeKinksterPatternState), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserChangeKinksterActiveAlarms(PushKinksterActiveAlarms dto)
+    public async Task<HubResponse> UserChangeKinksterAlarmState(PushKinksterEnabledState dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeKinksterActiveAlarms), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeKinksterAlarmState), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserChangeKinksterActiveTriggers(PushKinksterActiveTriggers dto)
+    public async Task<HubResponse> UserChangeKinksterTriggerState(PushKinksterEnabledState dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError); ;
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeKinksterActiveTriggers), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeKinksterTriggerState), dto).ConfigureAwait(false);
     }
 
     public async Task<HubResponse> UserChangeOtherGlobalPerm(SingleChangeGlobal userPermissions)

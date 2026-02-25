@@ -127,7 +127,7 @@ public class HomeTab
             CkGui.AttachToolTip("Open and Customize your KinkPlate™!");
 
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileEditing, MainUI.LastPos, MainUI.LastSize,
-                () => _mediator.Publish(new UiToggleMessage(typeof(KinkPlateEditorUI), ToggleType.Show)));
+                _ => _mediator.Publish(new UiToggleMessage(typeof(KinkPlateEditorUI), ToggleType.Show)));
 
             var bgCol = ImGui.IsItemHovered() ? 0xFF444444 : 0xFF000000;
             wdl.AddCircleFilled(EditBorderPos + EditBorderSize / 2, EditBorderSize.X / 2, bgCol);

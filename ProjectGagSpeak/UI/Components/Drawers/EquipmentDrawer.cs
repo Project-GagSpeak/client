@@ -166,9 +166,9 @@ public class EquipmentDrawer
         if (basicSlot.EquipSlot == EquipSlot.Body)
         {
             _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Overlay, WardrobeUI.LastPos, WardrobeUI.LastSize,
-                () => basicSlot.ApplyFlags ^= RestraintFlags.IsOverlay);
+                _ => basicSlot.ApplyFlags ^= RestraintFlags.IsOverlay);
             _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.OverlayBuffer, WardrobeUI.LastPos, WardrobeUI.LastSize,
-                () => FancyTabBar.SelectTab("RS_EditBar", Wardrobe.RestraintsPanel.EditorTabs[2], Wardrobe.RestraintsPanel.EditorTabs));
+                _ => FancyTabBar.SelectTab("RS_EditBar", Wardrobe.RestraintsPanel.EditorTabs[2], Wardrobe.RestraintsPanel.EditorTabs));
         }
 
         ImGui.GetWindowDrawList().AddRect(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkCol.CurvedHeaderFade.Uint(), ImGui.GetStyle().FrameRounding);

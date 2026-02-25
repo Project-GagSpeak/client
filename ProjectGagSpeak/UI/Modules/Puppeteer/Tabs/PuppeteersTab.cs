@@ -54,8 +54,7 @@ public class PuppeteersTab : IFancyTab
         var rounding = FancyTabBar.BarHeight * .4f;
         using (ImRaii.Group())
             DrawPuppeteers(leftW, rounding);
-        _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.PuppeteersPairs, PuppeteerUI.LastPos, PuppeteerUI.LastSize,
-            () => { /*select first kinkster in the list if we can, some tutorial stuff won't work otherwise?*/ });
+        _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.PuppeteersPairs, PuppeteerUI.LastPos, PuppeteerUI.LastSize);
 
         ImUtf8.SameLineInner();
         using (ImRaii.Group())
@@ -138,7 +137,7 @@ public class PuppeteersTab : IFancyTab
         using (ImRaii.Group())
             DrawBracketsRow(kinkster);
         _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.PuppeteersAdvanced, PuppeteerUI.LastPos, PuppeteerUI.LastSize,
-            () => FancyTabBar.SelectTab("PuppeteerTabs", PuppeteerUI.PuppeteerTabs[2], PuppeteerUI.PuppeteerTabs));
+            _ => FancyTabBar.SelectTab("PuppeteerTabs", PuppeteerUI.PuppeteerTabs[2], PuppeteerUI.PuppeteerTabs));
 
         // Now the container that draws out the orders and the image.
         using var perms = CkRaii.Child("permissions", ImGui.GetContentRegionAvail());

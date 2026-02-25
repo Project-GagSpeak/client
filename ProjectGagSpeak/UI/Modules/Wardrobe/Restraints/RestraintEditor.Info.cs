@@ -37,7 +37,7 @@ public class RestraintEditorInfo : IFancyTab
         _attributeDrawer.DrawAttributesChild(item, width, 8, Traits.All);
         _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.HardcoreTraits, WardrobeUI.LastPos, WardrobeUI.LastSize);
         _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Arousal, WardrobeUI.LastPos, WardrobeUI.LastSize,
-            () => FancyTabBar.SelectTab("RS_EditBar", RestraintsPanel.EditorTabs[1], RestraintsPanel.EditorTabs));
+            _ => FancyTabBar.SelectTab("RS_EditBar", RestraintsPanel.EditorTabs[1], RestraintsPanel.EditorTabs));
     }
 
     private void DrawDescription()

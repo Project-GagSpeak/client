@@ -181,9 +181,9 @@ public class RestraintEditorLayers : IFancyTab
                 if (idx == 0) // this only needs to attach to the first layer item.
                 {
                     _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.LayerTypes, WardrobeUI.LastPos, WardrobeUI.LastSize,
-                        () => _manager.ItemInEditor!.Layers[idx] = layer is RestrictionLayer ? new ModPresetLayer() : new RestrictionLayer());
+                        _ => _manager.ItemInEditor!.Layers[idx] = layer is RestrictionLayer ? new ModPresetLayer() : new RestrictionLayer());
                     _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.LayerTypesBuffer, WardrobeUI.LastPos, WardrobeUI.LastSize,
-                        () => FancyTabBar.SelectTab("RS_EditBar", RestraintsPanel.EditorTabs[3], RestraintsPanel.EditorTabs));
+                        _ => FancyTabBar.SelectTab("RS_EditBar", RestraintsPanel.EditorTabs[3], RestraintsPanel.EditorTabs));
                 }
                     ImUtf8.SameLineInner();
                 if (CkGui.IconButton(FAI.Eraser, inPopup: true, disabled: !KeyMonitor.ShiftPressed() || idx != _manager.ItemInEditor!.Layers.Count - 1))
@@ -212,12 +212,11 @@ public class RestraintEditorLayers : IFancyTab
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - buttonSize - ImGui.GetStyle().ItemSpacing.X);
             if (CkGui.IconTextButton(FAI.Plus, "New Layer", isInPopup: true))
                 _manager.ItemInEditor!.Layers.Add(new RestrictionLayer());
-            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.AddingLayers, WardrobeUI.LastPos, WardrobeUI.LastSize,
-                () =>
-                {
-                    _manager.ItemInEditor!.Layers.Add(new RestrictionLayer());
-                    _manager.ItemInEditor!.Layers.Add(new RestrictionLayer());
-                });
+            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.AddingLayers, WardrobeUI.LastPos, WardrobeUI.LastSize, _ =>
+            {
+                _manager.ItemInEditor!.Layers.Add(new RestrictionLayer());
+                _manager.ItemInEditor!.Layers.Add(new RestrictionLayer());
+            });
         }
         ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkCol.HChildBg.Uint(), DragDropItemRounding, ImDrawFlags.RoundCornersRight);
     }

@@ -107,7 +107,7 @@ public class PopoutGlobalChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubs
             UserColors[newMsg.UID] = GsCol.ShopKeeperColor.Vec4();
             // allow any rich text tags, as she is a special case.
             var prefix = $"[img=RequiredImages\\Tier4Icon][rawcolor={GsCol.ShopKeeperColor.Uint()}]{newMsg.Name}[/rawcolor]: ";
-            Messages.PushBack(newMsg with { Message = prefix + newMsg.Message });
+            Messages.PushBack(newMsg with { Message = $"{prefix}[rawcolor={GsCol.ShopKeeperText.Uint()}]{newMsg.Message}[/rawcolor]" });
             unreadSinceScroll++;
         }
         else if (newMsg.UID == "System")

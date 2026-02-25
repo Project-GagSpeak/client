@@ -107,7 +107,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         using (ImRaii.Child("RestrictionsBottomLeft", drawRegions.BotLeft.Size, false, WFlags.NoScrollbar))
             _selector.DrawList(drawRegions.BotLeft.SizeX);
         _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.RestrictionList, WardrobeUI.LastPos, WardrobeUI.LastSize,
-            () => _selector.SelectByValue(_selector.TutorialHypnoRestriction));
+            _ => _selector.SelectByValue(_selector.TutorialHypnoRestriction));
 
         ImGui.SetCursorScreenPos(drawRegions.TopRight.Pos);
         using (ImRaii.Child("RestrictionsTopRight", drawRegions.TopRight.Size))
@@ -130,7 +130,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         ImGui.SetCursorScreenPos(drawRegions.BotRight.Pos + verticalShift);
         DrawActiveItemInfo(drawRegions.BotRight.Size - verticalShift);
         _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Applying, WardrobeUI.LastPos, WardrobeUI.LastSize);
-        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.NoFreeSlots, WardrobeUI.LastPos, WardrobeUI.LastSize, () =>
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.NoFreeSlots, WardrobeUI.LastPos, WardrobeUI.LastSize, _ =>
             _guides.JumpToStep(TutorialType.Restrictions, StepsRestrictions.Removing));
     }
 
@@ -206,7 +206,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             }
 
             _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.EnteringEditor, WardrobeUI.LastPos, WardrobeUI.LastSize,
-                () => _manager.StartEditing(_selector.Selected!));
+                _ => _manager.StartEditing(_selector.Selected!));
         }
 
         void BeginEdits(ImGuiMouseButton b)
@@ -286,7 +286,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
                 _activeItemDrawer.ApplyItemGroup(index, data);
                 if (index != _tActiveRestriction.Item1) continue;
                 // skip tutorial step for subsequent runs
-                _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Selecting, WardrobeUI.LastPos, WardrobeUI.LastSize, () =>
+                _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Selecting, WardrobeUI.LastPos, WardrobeUI.LastSize, _ =>
                 {
                     _tActiveRestriction.Item2 = new ActiveRestriction { Enabler = MainHub.UID, Identifier = _selector.TutorialBasicRestriction.Identifier };
                     _selfBondage.DoSelfBind(_tActiveRestriction.Item1, _tActiveRestriction.Item2, DataUpdateType.Applied);
@@ -305,7 +305,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
                 _activeItemDrawer.UnlockItemGroup(index, data, item);
                 if (index == _tActiveRestriction.Item1)
                 {
-                    _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Unlocking, WardrobeUI.LastPos, WardrobeUI.LastSize, () =>
+                    _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Unlocking, WardrobeUI.LastPos, WardrobeUI.LastSize, _ =>
                     {
                         _tActiveRestriction.Item2 = data with { Padlock = Padlocks.None, PadlockAssigner = string.Empty };
                         _selfBondage.DoSelfBind(_tActiveRestriction.Item1, _tActiveRestriction.Item2, DataUpdateType.Unlocked);
@@ -318,7 +318,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
                 _activeItemDrawer.LockItemGroup(index, data, item);
                 if (index == _tActiveRestriction.Item1)
                 {
-                    _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Locking, WardrobeUI.LastPos, WardrobeUI.LastSize, () =>
+                    _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Locking, WardrobeUI.LastPos, WardrobeUI.LastSize, _ =>
                     {
                         _tActiveRestriction.Item2 = data with { Padlock = Padlocks.Metal, PadlockAssigner = MainHub.UID };
                         _selfBondage.DoSelfBind(_tActiveRestriction.Item1, _tActiveRestriction.Item2, DataUpdateType.Locked);

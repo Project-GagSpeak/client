@@ -39,8 +39,6 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
     public new RestraintSetFileSystem.Leaf? SelectedLeaf
         => base.SelectedLeaf;
 
-    public RestraintSet tutorialSet { get; private set; }
-
     public RestraintSetFileSelector(ILogger<RestraintSetFileSelector> log, GagspeakMediator mediator,
         FavoritesConfig favorites, RestraintManager manager, RestraintSetFileSystem fileSystem, TutorialService guides)
         : base(fileSystem, Svc.Logger.Logger, Svc.KeyState, "##RestraintSetFS")
@@ -176,14 +174,14 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
             ImGui.OpenPopup("##NewRestraintSet");
         CkGui.AttachToolTip("Create a new restraint set.");
         // this needs the parent window information
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.CreatingRestraints, WardrobeUI.LastPos, WardrobeUI.LastSize, 
-            () => { tutorialSet = _manager.CreateNew("Tutorial Restraint"); });
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.CreatingRestraints, WardrobeUI.LastPos, WardrobeUI.LastSize,
+            _ => ((RestraintGuideCache)_).TutorialSet = _manager.CreateNew("Tutorial Restraint"));
 
         ImGui.SameLine(0, 1);
         DrawFolderButton();
         // this also needs the parent window information
         _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.CreatingFolders, WardrobeUI.LastPos, WardrobeUI.LastSize,
-            () => CkFileSystem.FindOrCreateAllFolders("Tutorial Folder"));
+            _ => CkFileSystem.FindOrCreateAllFolders("Tutorial Folder"));
     }
 
     public override void DrawPopups()

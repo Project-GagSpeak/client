@@ -78,7 +78,7 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
         using (ImRaii.Child("PuppeteerContent", regions.BotSize, false, WFlags.AlwaysUseWindowPadding))
             DrawTabBarContent();
         _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.Overview, LastPos, LastSize, 
-            () => FancyTabBar.SelectTab("PuppeteerTabs", PuppeteerTabs[0], PuppeteerTabs));
+            _ => FancyTabBar.SelectTab("PuppeteerTabs", PuppeteerTabs[0], PuppeteerTabs));
     }
 
     private void DrawHeader(Vector2 region)

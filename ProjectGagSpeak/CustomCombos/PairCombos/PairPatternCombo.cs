@@ -102,8 +102,8 @@ public sealed class PairPatternCombo : CkFilterComboIconTextButton<KinksterPatte
 
         UiService.SetUITask(async () =>
         {
-            var dto = new PushKinksterActivePattern(_ref.UserData, Current.Id, updateType);
-            var result = await _mainHub.UserChangeKinksterActivePattern(dto);
+            // (for now we handle the sent and recieved GUID as the new active one for patterns spesifically)
+            var result = await _mainHub.UserChangeKinksterAlarmState(new(_ref.UserData, GSModule.Pattern, Current.Id, true));
             if (result.ErrorCode is not GagSpeakApiEc.Success)
             {
                 Log.LogDebug($"Failed to perform Pattern with {Current.Label} on {_ref.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LoggerType.StickyUI);

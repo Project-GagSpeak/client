@@ -127,7 +127,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
                 HandleFileDialog();
             CkGui.AttachToolTip("Select and upload a new profile picture");
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileEditImage, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
-                    () => Mediator.Publish(new UiToggleMessage(typeof(ProfilePictureEditor))));
+                _ => Mediator.Publish(new UiToggleMessage(typeof(ProfilePictureEditor))));
 
             // let them clean their image too if they desire.
             if (CkGui.IconTextButton(FAI.Trash, "Clear uploaded profile picture", width, disabled: !KeyMonitor.ShiftPressed()))

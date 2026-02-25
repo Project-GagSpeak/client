@@ -140,7 +140,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
         if (CkGui.IconButton(FAI.Edit, inPopup: true))
             _manager.StartEditing(trigger);
         CkGui.AttachToolTip("Edit this Trigger.");
-        _guides.OpenTutorial(TutorialType.Triggers, StepsTriggers.EditingTrigger, LastPos, LastSize, () => _manager.StartEditing(trigger));
+        _guides.OpenTutorial(TutorialType.Triggers, StepsTriggers.EditingTrigger, LastPos, LastSize, _ => _manager.StartEditing(trigger));
 
         CkGui.FramedIconText(FAI.SortNumericUp);
         CkGui.TextFrameAlignedInline("Priority:");

@@ -51,10 +51,10 @@ public class MainMenuTabs : IconTabBar<MainMenuTabs.SelectedTab>
             () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Homepage, MainUI.LastPos, MainUI.LastSize));
 
         AddDrawButton(FontAwesomeIcon.Inbox, SelectedTab.Requests, "Kinkster Requests",
-            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.RequestsPage, MainUI.LastPos, MainUI.LastSize, () => TabSelection = SelectedTab.Whitelist));
+            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.RequestsPage, MainUI.LastPos, MainUI.LastSize, _ => TabSelection = SelectedTab.Whitelist));
 
         AddDrawButton(FontAwesomeIcon.PeopleArrows, SelectedTab.Whitelist, "Kinkster Whitelist", 
-            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Whitelist, MainUI.LastPos, MainUI.LastSize, () => TabSelection = SelectedTab.Homepage));
+            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Whitelist, MainUI.LastPos, MainUI.LastSize, _ => TabSelection = SelectedTab.Homepage));
 
         AddDrawButton(FontAwesomeIcon.Compass, SelectedTab.PatternHub, "Discover Patterns from the community!", 
             () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHub, MainUI.LastPos, MainUI.LastSize));

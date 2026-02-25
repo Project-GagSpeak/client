@@ -79,17 +79,17 @@ public sealed class PairAlarmCombo : CkFilterComboIconTextButton<KinksterAlarm>
         if (Current is null) 
             return;
 
-        var alarms = new List<Guid>(_ref.ActiveAlarms);
-        if (!alarms.Remove(Current.Id))
-            alarms.Add(Current.Id);
-
         UiService.SetUITask(async () =>
         {
-            // Construct the dto, and then send it off.
-            var dto = new PushKinksterActiveAlarms(_ref.UserData, alarms, Current.Id, DataUpdateType.AlarmToggled);
-            var result = await _mainHub.UserChangeKinksterActiveAlarms(dto);
+            var newState = !_ref.ActiveAlarms.Contains(Current.Id);
+            var result = await _mainHub.UserChangeKinksterAlarmState(new(_ref.UserData, GSModule.Alarm, Current.Id, newState));
             if (result.ErrorCode is not GagSpeakApiEc.Success)
                 Log.LogDebug($"Failed to perform AlarmToggled on {_ref.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LoggerType.StickyUI);
+            else
+            {
+                if (newState) _ref.ActiveAlarms.Add(Current.Id);
+                else _ref.ActiveAlarms.Remove(Current.Id);
+            }
         });
     }
 

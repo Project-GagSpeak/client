@@ -104,7 +104,7 @@ public class MoodleDrawer
                 }
                 CkGui.AttachToolTip(MoodleTypeTooltip(item.Moodle));
                 _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.SwitchingMoodleType, WardrobeUI.LastPos, WardrobeUI.LastSize,
-                                     () => item.Moodle = new MoodleTuple(MoodleCache.IpcData.StatusList.FirstOrDefault()));
+                    _ => item.Moodle = new MoodleTuple(MoodleCache.IpcData.StatusList.FirstOrDefault()));
 
                 ImUtf8.SameLineInner();
                 DrawMoodleCombo(item.Moodle, ImGui.GetContentRegionAvail().X);

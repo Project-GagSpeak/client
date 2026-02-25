@@ -70,8 +70,7 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
             using (ImRaii.Child("ResultListGuard", ImGui.GetContentRegionAvail(), false, WFlags.NoScrollbar))
                 DrawResultList();
         }
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.MoodleResults, MainUI.LastPos, MainUI.LastSize,
-            () => _tabMenu.TabSelection = MainMenuTabs.SelectedTab.GlobalChat);
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.MoodleResults, MainUI.LastPos, MainUI.LastSize, _ => _tabMenu.TabSelection = MainMenuTabs.SelectedTab.GlobalChat);
     }
 
     private void DrawResultList()

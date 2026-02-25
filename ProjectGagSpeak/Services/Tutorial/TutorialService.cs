@@ -2,6 +2,8 @@ using Dalamud.Interface.Colors;
 using GagSpeak.Localization;
 using Dalamud.Bindings.ImGui;
 using System.Runtime.CompilerServices;
+using GagSpeak.State.Managers;
+using GagSpeak.WebAPI;
 
 // A Modified take on OtterGui.Widgets.Tutorial.
 // This iteration removes redundant buttons, adds detailed text, and sections.
@@ -12,26 +14,40 @@ namespace GagSpeak.Services.Tutorial;
 /// </summary>
 public class TutorialService
 {
-    private readonly Dictionary<TutorialType, Tutorial> tutorials = new();
+    private readonly MainHub _hub;
+    private readonly RestrictionManager _restrictions;
+    private readonly RestraintManager _restraints;
+    private readonly PuppeteerManager _aliases;
 
-    public TutorialService() { }
-    public bool IsTutorialActive(TutorialType type) => tutorials[type].CurrentStep is not -1;
+    private Dictionary<TutorialType, Tutorial> _tutorials = new();
+
+    public TutorialService(MainHub hub, RestrictionManager restrictions,
+        RestraintManager restraints, PuppeteerManager aliases)
+    {
+        _hub = hub;
+        _restrictions = restrictions;
+        _restraints = restraints;
+        _aliases = aliases;
+    }
+
+    public bool IsTutorialActive(TutorialType type)
+        => _tutorials[type].Cache.CurrentStep is not -1;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void StartTutorial(TutorialType guide)
     {
-        if (!tutorials.ContainsKey(guide))
+        if (!_tutorials.ContainsKey(guide))
             return;
 
         // set all other tutorials to -1, stopping them.
-        foreach (var t in tutorials)
-            t.Value.CurrentStep = (t.Key != guide) ?  -1 : 0;
+        foreach (var t in _tutorials)
+            t.Value.Cache.CurrentStep = (t.Key != guide) ?  -1 : 0;
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public void OpenTutorial<TEnum>(TutorialType guide, TEnum step, Vector2 pos, Vector2 size, Action? onNext = null) where TEnum : Enum
+    public void OpenTutorial<TEnum>(TutorialType guide, TEnum step, Vector2 pos, Vector2 size, Action<GuideCache>? onNext = null) where TEnum : Enum
     {
-        if (tutorials.TryGetValue(guide, out var tutorial))
+        if (_tutorials.TryGetValue(guide, out var tutorial))
             tutorial.Open(Convert.ToInt32(step), pos, size, onNext);
     }
 
@@ -39,8 +55,8 @@ public class TutorialService
     public void SkipTutorial(TutorialType guide)
     {
         // reset the step to -1, stopping the tutorial.
-        if (tutorials.TryGetValue(guide, out var tutorial))
-            tutorial.CurrentStep = -1;
+        if (_tutorials.TryGetValue(guide, out var tutorial))
+            tutorial.Cache.CurrentStep = -1;
     }
 
 
@@ -48,15 +64,15 @@ public class TutorialService
     public void JumpToStep<TEnum>(TutorialType guide, TEnum step)
     {
         // reset the step to -1, stopping the tutorial.
-        if (tutorials.TryGetValue(guide, out var tutorial))
-            tutorial.CurrentStep = Convert.ToInt32(step);
+        if (_tutorials.TryGetValue(guide, out var tutorial))
+            tutorial.Cache.CurrentStep = Convert.ToInt32(step);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public int CurrentStep(TutorialType guide)
     {
-        if (tutorials.TryGetValue(guide, out var tutorial))
-            return tutorial.CurrentStep;
+        if (_tutorials.TryGetValue(guide, out var tutorial))
+            return tutorial.Cache.CurrentStep;
 
         return -1;
     }
@@ -82,12 +98,12 @@ public class TutorialService
     public void InitializeTutorialStrings()
     {
         var mainUiStr = GSLoc.Tutorials.MainUi;
-        tutorials[TutorialType.MainUi] = new Tutorial()
+        _tutorials[TutorialType.MainUi] = new Tutorial("Main Tutorial")
+        .WithCache(new GuideCache()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
-            PopupLabel = "Main UI Tutorial",
-        }
+        })
         .AddStep(mainUiStr.Step1Title, mainUiStr.Step1Desc, mainUiStr.Step1DescExtended)
         .AddStep(mainUiStr.Step2Title, mainUiStr.Step2Desc, mainUiStr.Step2DescExtended)
         .AddStep(mainUiStr.Step3Title, mainUiStr.Step3Desc, mainUiStr.Step3DescExtended)
@@ -122,21 +138,21 @@ public class TutorialService
         .EnsureSize(TutorialSizes[TutorialType.MainUi]);
 
         var remoteStr = GSLoc.Tutorials.Remote;
-        tutorials[TutorialType.Remote] = new Tutorial()
+        _tutorials[TutorialType.Remote] = new Tutorial("Remote Tutorial")
+        .WithCache(new GuideCache()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
-            PopupLabel = "Remote Tutorial",
-        }
+        })
         .EnsureSize(0);
 
         var restraintsStr = GSLoc.Tutorials.Restraints;
-        tutorials[TutorialType.Restraints] = new Tutorial()
+        _tutorials[TutorialType.Restraints] = new Tutorial("Restraints Tutorial")
+        .WithCache(new GuideCache()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
-            PopupLabel = "Restraints Tutorial",
-        }
+        })
         .AddStep(restraintsStr.Step1Title, restraintsStr.Step1Desc, restraintsStr.Step1DescExtended)
         .AddStep(restraintsStr.Step2Title, restraintsStr.Step2Desc, restraintsStr.Step2DescExtended)
         .AddStep(restraintsStr.Step3Title, restraintsStr.Step3Desc, restraintsStr.Step3DescExtended)
@@ -177,12 +193,12 @@ public class TutorialService
         .EnsureSize(TutorialSizes[TutorialType.Restraints]);
 
         var restrictionsStr = GSLoc.Tutorials.Restrictions;
-        tutorials[TutorialType.Restrictions] = new Tutorial()
+        _tutorials[TutorialType.Restrictions] = new Tutorial("Restrictions Tutorial")
+        .WithCache(new GuideCache()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
-            PopupLabel = "Restrictions Tutorial",
-        }
+        })
         .AddStep(restrictionsStr.Step1Title, restrictionsStr.Step1Desc, restrictionsStr.Step1DescExtended)
         .AddStep(restrictionsStr.Step2Title, restrictionsStr.Step2Desc, restrictionsStr.Step2DescExtended)
         .AddStep(restrictionsStr.Step3Title, restrictionsStr.Step3Desc, restrictionsStr.Step3DescExtended)
@@ -225,12 +241,12 @@ public class TutorialService
         .EnsureSize(TutorialSizes[TutorialType.Restrictions]);
 
         var gagsStr = GSLoc.Tutorials.Gags;
-        tutorials[TutorialType.Gags] = new Tutorial()
+        _tutorials[TutorialType.Gags] = new Tutorial("Gags Tutorial")
+        .WithCache(new GuideCache()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
-            PopupLabel = "Gags Tutorial",
-        }
+        })
         .AddStep(gagsStr.Step1Title, gagsStr.Step1Desc, gagsStr.Step1DescExtended)
         .AddStep(gagsStr.Step2Title, gagsStr.Step2Desc, gagsStr.Step2DescExtended)
         .AddStep(gagsStr.Step3Title, gagsStr.Step3Desc, gagsStr.Step3DescExtended)
@@ -259,21 +275,21 @@ public class TutorialService
         .EnsureSize(TutorialSizes[TutorialType.Gags]);
 
         var cursedLootStr = GSLoc.Tutorials.CursedLoot;
-        tutorials[TutorialType.CursedLoot] = new Tutorial()
+        _tutorials[TutorialType.CursedLoot] = new Tutorial("Cursed Loot Tutorial")
+        .WithCache(new GuideCache()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
-            PopupLabel = "Cursed Loot Tutorial",
-        }
+        })
         .EnsureSize(0);
 
         var puppetStr = GSLoc.Tutorials.Puppeteer;
-        tutorials[TutorialType.Puppeteer] = new Tutorial()
+        _tutorials[TutorialType.Puppeteer] = new Tutorial("Puppeteer Tutorial")
+        .WithCache(new PuppeteerGuideCache(_aliases)
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
-            PopupLabel = "Puppeteer Tutorial",
-        }
+        })
         .AddStep(puppetStr.Step1Title, puppetStr.Step1Desc, puppetStr.Step1DescExtended)
         .AddStep(puppetStr.Step2Title, puppetStr.Step2Desc, puppetStr.Step2DescExtended)
         .AddStep(puppetStr.Step3Title, puppetStr.Step3Desc, puppetStr.Step3DescExtended)
@@ -301,48 +317,48 @@ public class TutorialService
         .EnsureSize(TutorialSizes[TutorialType.Puppeteer]);
 
         var toyboxStr = GSLoc.Tutorials.Toys;
-        tutorials[TutorialType.Toys] = new Tutorial()
+        _tutorials[TutorialType.Toys] = new Tutorial("Toybox Tutorial")
+        .WithCache(new GuideCache()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
-            PopupLabel = "Toybox Tutorial",
-        }
+        })
         .EnsureSize(0);
 
         var patternsStr = GSLoc.Tutorials.Patterns;
-        tutorials[TutorialType.Patterns] = new Tutorial()
+        _tutorials[TutorialType.Patterns] = new Tutorial("Patterns Tutorial")
+        .WithCache(new GuideCache()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
-            PopupLabel = "Patterns Tutorial",
-        }
+        })
         .EnsureSize(0);
 
         var alarmsStr = GSLoc.Tutorials.Alarms;
-        tutorials[TutorialType.Alarms] = new Tutorial()
+        _tutorials[TutorialType.Alarms] = new Tutorial("Alarms Tutorial")
+        .WithCache(new GuideCache()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
-            PopupLabel = "Alarms Tutorial",
-        }
+        })
         .EnsureSize(0);
 
         var triggersStr = GSLoc.Tutorials.Triggers;
-        tutorials[TutorialType.Triggers] = new Tutorial()
+        _tutorials[TutorialType.Triggers] = new Tutorial("Triggers Tutorial")
+        .WithCache(new GuideCache()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
-            PopupLabel = "Triggers Tutorial",
-        }
+        })
         .EnsureSize(0);
 
         var achievementsStr = GSLoc.Tutorials.Achievements;
-        tutorials[TutorialType.Achievements] = new Tutorial()
+        _tutorials[TutorialType.Achievements] = new Tutorial("Achievements Tutorial")
+        .WithCache(new GuideCache()
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
-            PopupLabel = "Achievements Tutorial",
-        }
+        })
         .AddStep(achievementsStr.Step1Title, achievementsStr.Step1Desc, string.Empty)
         .AddStep(achievementsStr.Step2Title, achievementsStr.Step2Desc, string.Empty)
         .AddStep(achievementsStr.Step3Title, achievementsStr.Step3Desc, string.Empty)

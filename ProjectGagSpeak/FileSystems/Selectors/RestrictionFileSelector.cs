@@ -154,7 +154,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
             ImGui.OpenPopup("##NewRestriction");
         CkGui.AttachToolTip("Create a new Restriction Item.");
         _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.CreatingRestriction, WardrobeUI.LastPos, WardrobeUI.LastSize,
-            () =>
+            _ => 
             {
                 // make a hypno item to show the user the extra things it can do
                 TutorialHypnoRestriction = _manager.CreateNew("Tutorial Hypno", RestrictionType.Hypnotic);
@@ -168,7 +168,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
         ImGui.SameLine(0, 1);
         DrawFolderButton();
         _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.CreatingFolders, WardrobeUI.LastPos, WardrobeUI.LastSize,
-            () => CkFileSystem.FindOrCreateAllFolders("Tutorial Folder"));
+            _ => CkFileSystem.FindOrCreateAllFolders("Tutorial Folder"));
     }
 
     public override void DrawPopups()

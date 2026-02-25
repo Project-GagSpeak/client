@@ -12,23 +12,33 @@ using static OtterGui.Raii.ImRaii;
 // This iteration removes redundant buttons, adds detailed text, and sections.
 namespace GagSpeak.Services.Tutorial;
 
+public record struct Step(string Name, string Info, string MoreInfo, bool Enabled);
+
 public class Tutorial
 {
-    public record struct Step(string Name, string Info, string MoreInfo, bool Enabled);
-    public Tutorial() { }
-    public uint HighlightColor { get; init; } = 0xFF20FFFF;
-    public uint BorderColor { get; init; } = 0xD00000FF;
-    public string PopupLabel { get; init; } = "Tutorial";
-    public int CurrentStep { get; set; } = -1;
-
     private readonly List<Step> _steps = new();
-    private int _waitFrames = 0;
-    private bool _showDetails = false;
-    private bool _hoveringExit = false;
-    private static Vector2 _buttonCloseSize = Vector2.One * 20;
+
+    private static Vector2 _closeSize = new Vector2(20f * ImGuiHelpers.GlobalScale);
+    private string  _popupLabel;
+    private int     _waitFrames     = 0;
+    private bool    _showDetails    = false;
+    private bool    _hoveringExit   = false;
+
+    public Tutorial(string label)
+    {
+        _popupLabel = label;
+    }
+
+    public GuideCache Cache { get; private set; } = new GuideCache();
 
     public int EndStep => _steps.Count;
     public IReadOnlyList<Step> Steps => _steps;
+
+    public Tutorial WithCache(GuideCache cache)
+    {
+        Cache = cache;
+        return this;
+    }
 
     public Tutorial AddStep(string name, string info, string moreInfo)
     {
@@ -37,9 +47,9 @@ public class Tutorial
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.AggressiveInlining)]
-    public void Open(int step, Vector2 parentWinPos, Vector2 parentWinSize, Action? onNext = null)
+    public void Open(int step, Vector2 parentWinPos, Vector2 parentWinSize, Action<GuideCache>? onNext = null)
     {
-        if (step != CurrentStep)
+        if (step != Cache.CurrentStep)
             return;
 
         OpenWhenMatch(parentWinPos, parentWinSize, onNext);
@@ -47,23 +57,24 @@ public class Tutorial
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.AggressiveInlining)]
-    public void Skip() => CurrentStep = NextId();
+    public void Skip()
+        => Cache.CurrentStep = NextId();
 
-    private void OpenWhenMatch(Vector2 parentWinPos, Vector2 parentWinSize, Action? onNext = null)
+    private void OpenWhenMatch(Vector2 parentWinPos, Vector2 parentWinSize, Action<GuideCache>? onNext = null)
     {
-        var step = Steps[CurrentStep];
+        var step = Steps[Cache.CurrentStep];
 
         // Skip disabled tutorials.
         if (!step.Enabled)
         {
-            CurrentStep = NextId();
+            Cache.CurrentStep = NextId();
             return;
         }
 
         if (_waitFrames > 0)
             --_waitFrames;
-        else if (ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows) && !ImGui.IsPopupOpen(PopupLabel))
-            ImGui.OpenPopup(PopupLabel);
+        else if (ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows) && !ImGui.IsPopupOpen(_popupLabel))
+            ImGui.OpenPopup(_popupLabel);
         
         HighlightObject();
         var popupPos = new Vector2(parentWinPos.X + parentWinSize.X, parentWinPos.Y); // Position the popup to the right of the window
@@ -81,7 +92,7 @@ public class Tutorial
         var min = ImGui.GetItemRectMin() - offset;
         var max = ImGui.GetItemRectMax() + offset;
         ImGui.GetForegroundDrawList().PushClipRect(ImGui.GetWindowPos() - offset, ImGui.GetWindowPos() + ImGui.GetWindowSize() + offset);
-        ImGui.GetForegroundDrawList().AddRect(min, max, HighlightColor, 5 * ImGuiHelpers.GlobalScale, ImDrawFlags.RoundCornersAll,
+        ImGui.GetForegroundDrawList().AddRect(min, max, Cache.HighlightColor, 5 * ImGuiHelpers.GlobalScale, ImDrawFlags.RoundCornersAll,
             2 * ImGuiHelpers.GlobalScale);
         ImGui.GetForegroundDrawList().PopClipRect();
         return max + new Vector2(ImGuiHelpers.GlobalScale);
@@ -90,14 +101,14 @@ public class Tutorial
     /// <summary>
     /// The tutorial display.
     /// </summary>
-    private void DrawPopup(Vector2 pos, Step step, int nextStepVal, Action? onNext = null)
+    private void DrawPopup(Vector2 pos, Step step, int nextStepVal, Action<GuideCache>? onNext = null)
     {
         using var style = DefaultStyle()
             .Push(ImGuiStyleVar.WindowPadding, Vector2.One*8 * ImGuiHelpers.GlobalScale)
             .Push(ImGuiStyleVar.PopupBorderSize, 2 * ImGuiHelpers.GlobalScale)
             .Push(ImGuiStyleVar.PopupRounding, 5 * ImGuiHelpers.GlobalScale);
         using var color = DefaultColors()
-            .Push(ImGuiCol.Border, BorderColor)
+            .Push(ImGuiCol.Border, Cache.BorderColor)
             .Push(ImGuiCol.PopupBg, 0xFF000000)
             .Push(ImGuiCol.Button, ImGui.ColorConvertFloat4ToU32(new(0, 0, 0, 0)));
         using var font = DefaultFont();
@@ -108,7 +119,7 @@ public class Tutorial
         ImGui.SetNextWindowPos(pos);
         ImGui.SetNextWindowSize(size);
         ImGui.SetNextWindowFocus();
-        using var popup = Popup(PopupLabel, WFlags.AlwaysAutoResize);
+        using var popup = Popup(_popupLabel, WFlags.AlwaysAutoResize);
         if (!popup)
             return;
 
@@ -149,11 +160,6 @@ public class Tutorial
         ImGui.Spacing();
         using (ImRaii.Group())
         {
-/*            if(CkGui.IconButton(FAI.ArrowAltCircleLeft, disabled: CurrentStep == 0))
-                nextValue = nextStepVal-2;
-            ImGuiUtil.HoverTooltip("Go back one Step.");
-
-            ImUtf8.SameLineInner();*/
             using (ImRaii.PushColor(ImGuiCol.Text, ImGui.GetColorU32(_showDetails ? ImGuiColors.DalamudViolet : ImGuiColors.DalamudWhite)))
             {
                 if(CkGui.IconButton(FAI.InfoCircle))
@@ -166,29 +172,32 @@ public class Tutorial
                 nextValue = nextStepVal;
             ImGuiUtil.HoverTooltip("Go to the next Step.");
 
-            CkGui.ColorTextFrameAlignedInline(PopupLabel + " ("+(CurrentStep+1)+"/"+EndStep+")", ImGuiColors.ParsedPink);
+            CkGui.ColorTextFrameAlignedInline(_popupLabel + " ("+(Cache.CurrentStep + 1)+"/"+EndStep+")", ImGuiColors.ParsedPink);
         }
 
-        var buttonPos = windowPos + new Vector2(windowSize.X - _buttonCloseSize.X - ImGui.GetStyle().ItemInnerSpacing.X, ImGui.GetStyle().ItemSpacing.Y);
+        var buttonPos = windowPos + new Vector2(windowSize.X - _closeSize.X - ImGui.GetStyle().ItemInnerSpacing.X, ImGui.GetStyle().ItemSpacing.Y);
         if (CloseButton(buttonPos))
             nextValue = -1;
 
         if (nextValue != null)
         {
-            CurrentStep = nextValue.Value;
-            onNext?.Invoke();
+            var prevStep = Cache.CurrentStep;
+            Cache.CurrentStep = nextValue.Value;
+            onNext?.Invoke(Cache);
             _waitFrames = 2;
+            // If the next value is -1, but was not -1 before, then fire onExit
+            if (prevStep != -1 && nextValue.Value == -1)
+                Cache.OnExit();
+            // Regardless, close this popup
             ImGui.CloseCurrentPopup();
         }
     }
 
     private int NextId()
     {
-        for (var i = CurrentStep + 1; i < EndStep; ++i)
-        {
+        for (var i = Cache.CurrentStep + 1; i < EndStep; ++i)
             if (Steps[i].Enabled)
                 return i;
-        }
 
         return -1;
     }
@@ -196,10 +205,10 @@ public class Tutorial
     // Obtain the current ID if it is enabled, otherwise the first enabled ID after it.
     public int CurrentEnabledId()
     {
-        if (CurrentStep < 0)
+        if (Cache.CurrentStep < 0)
             return -1;
 
-        for (var i = CurrentStep; i < EndStep; ++i)
+        for (var i = Cache.CurrentStep; i < EndStep; ++i)
         {
             if (Steps[i].Enabled)
                 return i;
@@ -215,7 +224,7 @@ public class Tutorial
         {
             if (_steps.Count != size)
             {
-                throw new Exception("Tutorial size for ["+ PopupLabel + "] is incorrect. Current Size is " + _steps.Count + " and expected size is " + size);
+                throw new Exception($"Size of [{_popupLabel}] is invalid. Size is {_steps.Count}, and expected is {size}");
             }
         }
         catch (Bagagwa e)
@@ -229,13 +238,13 @@ public class Tutorial
     {
         var drawList = ImGui.GetWindowDrawList();
 
-        var closeButtonColor = _hoveringExit ? ImGui.GetColorU32(new Vector4(1f, 1f, 1f, 1f)) : BorderColor;
+        var closeButtonColor = _hoveringExit ? ImGui.GetColorU32(new Vector4(1f, 1f, 1f, 1f)) : Cache.BorderColor;
 
-        drawList.AddLine(btnPos, btnPos + _buttonCloseSize, closeButtonColor, 3);
-        drawList.AddLine(new Vector2(btnPos.X + _buttonCloseSize.X, btnPos.Y), new Vector2(btnPos.X, btnPos.Y + _buttonCloseSize.Y), closeButtonColor, 3);
+        drawList.AddLine(btnPos, btnPos + _closeSize, closeButtonColor, 3);
+        drawList.AddLine(new Vector2(btnPos.X + _closeSize.X, btnPos.Y), new Vector2(btnPos.X, btnPos.Y + _closeSize.Y), closeButtonColor, 3);
 
         ImGui.SetCursorScreenPos(btnPos);
-        if (ImGui.InvisibleButton("##CloseTutorial-" + PopupLabel, _buttonCloseSize))
+        if (ImGui.InvisibleButton("##CloseTutorial-" + _popupLabel, _closeSize))
             return true;
 
         _hoveringExit = ImGui.IsItemHovered();

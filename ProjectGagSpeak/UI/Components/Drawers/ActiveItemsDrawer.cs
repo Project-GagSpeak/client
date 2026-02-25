@@ -265,12 +265,11 @@ public class ActiveItemsDrawer
     {
         using var group = ImRaii.Group();
         _restraintPadlocks.DrawLockCombo(ImGui.GetContentRegionAvail().X, "Lock this Padlock!");
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.LockingRestraint, WardrobeUI.LastPos, WardrobeUI.LastSize,
-            () =>
-            {
-                var tdata = data with { Padlock = Padlocks.Metal, PadlockAssigner = MainHub.UID };
-                _selfBondage.DoSelfRestraint(tdata, DataUpdateType.Locked);
-            });
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.LockingRestraint, WardrobeUI.LastPos, WardrobeUI.LastSize, _ =>
+        {
+            var tdata = data with { Padlock = Padlocks.Metal, PadlockAssigner = MainHub.UID };
+            _selfBondage.DoSelfRestraint(tdata, DataUpdateType.Locked);
+        });
 
         var height = ImGui.GetFrameHeightWithSpacing() * 5 + ImGui.GetFrameHeight();
         DrawRestraintImage(dispData, new Vector2(height / 1.2f, height), CkStyle.ChildRoundingLarge(), CkCol.CurvedHeaderFade.Uint());
@@ -393,7 +392,7 @@ public class ActiveItemsDrawer
         {
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + offsetV);
             _restraintPadlocks.DrawUnlockCombo(ImGui.GetContentRegionAvail().X, "Attempt to unlock this Padlock!");
-            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.UnlockingRestraints, WardrobeUI.LastPos, WardrobeUI.LastSize, () =>
+            _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.UnlockingRestraints, WardrobeUI.LastPos, WardrobeUI.LastSize, _ =>
             {
                 var tdata = data with { Padlock = Padlocks.None, PadlockAssigner = string.Empty };
                 _selfBondage.DoSelfRestraint(tdata, DataUpdateType.Unlocked);

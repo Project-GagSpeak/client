@@ -102,7 +102,7 @@ public partial class RestrictionsPanel
             _manager.SaveChangesAndStopEditing();
         CkGui.AttachToolTip("Save Changes to this Restriction.");
         _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.SavingChanges, WardrobeUI.LastPos, WardrobeUI.LastSize,
-            () => _manager.SaveChangesAndStopEditing());
+            _ => _manager.SaveChangesAndStopEditing());
 
         ImGui.SetWindowFontScale(1f);
     }
@@ -233,13 +233,13 @@ public partial class RestrictionsPanel
                 if (CkGui.IconTextButton(FAI.BookOpen, "Effect Editor"))
                     _hypnoEditor.SetGenericEffect(hypnoticItem.Properties.Effect);
                 _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.EffectEditing, WardrobeUI.LastPos, WardrobeUI.LastSize,
-                    () => _hypnoEditor.SetGenericEffect(hypnoticItem.Properties.Effect));
+                    _ => _hypnoEditor.SetGenericEffect(hypnoticItem.Properties.Effect));
             }
         }
 
         _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.SelectingImage, WardrobeUI.LastPos, WardrobeUI.LastSize,
             // set the editor open but also set the path to the item as the default included spiral, hypno editor breaks with no item selected.
-            () => { OpenEditor(); hypnoticItem.Properties.OverlayPath = "Hypno Spiral.png"; });
+            _ => { OpenEditor(); hypnoticItem.Properties.OverlayPath = "Hypno Spiral.png"; });
 
         void OpenEditor() => _thumbnails.SetThumbnailSource(_selector.Selected!.Identifier, displaySize, ImageDataType.Hypnosis);
     }

@@ -79,12 +79,12 @@ public class AliasesTab : IFancyTab
         using (var _ = CkRaii.FramedChildPaddedWH("list", new(leftW, ImGui.GetContentRegionAvail().Y), 0, GsCol.VibrantPink.Uint(), rounding))
         {
             _selector.DrawFilterRow(_.InnerRegion.X);
-            _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.SearchBar, PuppeteerUI.LastPos, PuppeteerUI.LastSize,
-                () =>
-                {
-                    var at = _manager.CreateNew("Tutorial Alias");
-                    _selector.SelectByValue(at);
-                });
+            _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.SearchBar, PuppeteerUI.LastPos, PuppeteerUI.LastSize, _ =>
+            {
+                var myCache = (PuppeteerGuideCache)_;
+                myCache.TutorialAlias = _manager.CreateNew("Tutorial Alias");
+                _selector.SelectByValue(myCache.TutorialAlias);
+            });
             _selector.DrawList(_.InnerRegion.X);
         }
         _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.AliasList, PuppeteerUI.LastPos, PuppeteerUI.LastSize);
@@ -133,7 +133,7 @@ public class AliasesTab : IFancyTab
             _manager.StartEditing(alias);
         CkGui.AttachToolTip("Edit this alias.");
         _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.EditingAlias, PuppeteerUI.LastPos, PuppeteerUI.LastSize,
-            () => _manager.StartEditing(alias));
+            _ => _manager.StartEditing(((PuppeteerGuideCache)_).TutorialAlias!));
 
         // Draw out what the alias detects, and if it ignores case or not
         CkGui.FramedIconText(FAI.AssistiveListeningSystems);
@@ -269,13 +269,11 @@ public class AliasesTab : IFancyTab
         if (CkGui.IconButton(FAI.Save, inPopup: true))
             _manager.SaveChangesAndStopEditing();
         CkGui.AttachToolTip("Saves all changes and exits the editor");
-        _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.EditSavingAliases, PuppeteerUI.LastPos, PuppeteerUI.LastSize,
-            () =>
-            {
-                _manager.SaveChangesAndStopEditing();
-                FancyTabBar.SelectTab("PuppeteerTabs", PuppeteerUI.PuppeteerTabs[1], PuppeteerUI.PuppeteerTabs);
-
-            });
+        _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.EditSavingAliases, PuppeteerUI.LastPos, PuppeteerUI.LastSize, _ =>
+        {
+            _manager.SaveChangesAndStopEditing();
+            FancyTabBar.SelectTab("PuppeteerTabs", PuppeteerUI.PuppeteerTabs[1], PuppeteerUI.PuppeteerTabs);
+        });
 
         // Draw the input area
         CkGui.FramedIconText(FAI.AssistiveListeningSystems);

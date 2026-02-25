@@ -76,17 +76,19 @@ public sealed class PairTriggerCombo : CkFilterComboIconTextButton<KinksterTrigg
         if (Current is null)
             return;
 
-        var triggers = new List<Guid>(_ref.ActiveTriggers);
-        if (!triggers.Remove(Current.Id))
-            triggers.Add(Current.Id);
-
         UiService.SetUITask(async () =>
         {
+            var newState = !_ref.ActiveTriggers.Contains(Current.Id);
             // Construct the dto, and then send it off.
-            var dto = new PushKinksterActiveTriggers(_ref.UserData, triggers, Current.Id, DataUpdateType.TriggerToggled);
-            var result = await _mainHub.UserChangeKinksterActiveTriggers(dto);
+            var result = await _mainHub.UserChangeKinksterTriggerState(new(_ref.UserData, GSModule.Trigger, Current.Id, newState));
             if (result.ErrorCode is not GagSpeakApiEc.Success)
                 Log.LogDebug($"Failed to perform TriggerToggle on {_ref.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LoggerType.StickyUI);
+            else
+            {
+                // Update the triggers presence in the ActiveTriggers list.
+                if (newState) _ref.ActiveTriggers.Add(Current.Id);
+                else _ref.ActiveTriggers.Remove(Current.Id);
+            }
         });
     }
 

@@ -484,11 +484,14 @@ public partial class SidePanelPair
             // Avoid blocking the UI by executing this off the UI thread.
             UiService.SetUITask(async () =>
             {
-                var res = await _hub.UserChangeKinksterActivePattern(new(k.UserData, Guid.Empty, DataUpdateType.PatternStopped));
+                var res = await _hub.UserChangeKinksterPatternState(new(k.UserData, GSModule.Pattern, k.ActivePattern, false));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                     _logger.LogError($"Failed to stop {dispName}'s active pattern. ({res.ErrorCode})", LoggerType.StickyUI);
                 else
+                {
+                    k.NewEnabledState(GSModule.Pattern, k.ActivePattern, false);
                     cache.ClearInteraction();
+                }
             });
         }
         CkGui.AttachToolTip(stopPatternTT);
