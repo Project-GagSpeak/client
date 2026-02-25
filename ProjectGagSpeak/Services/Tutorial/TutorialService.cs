@@ -18,16 +18,18 @@ public class TutorialService
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
     private readonly PuppeteerManager _aliases;
+    private readonly SelfBondageService _selfBondage;
 
     private Dictionary<TutorialType, Tutorial> _tutorials = new();
 
-    public TutorialService(MainHub hub, RestrictionManager restrictions,
-        RestraintManager restraints, PuppeteerManager aliases)
+    public TutorialService(MainHub hub, RestrictionManager restrictions, RestraintManager restraints,
+        PuppeteerManager aliases, SelfBondageService selfBondage)
     {
         _hub = hub;
         _restrictions = restrictions;
         _restraints = restraints;
         _aliases = aliases;
+        _selfBondage = selfBondage;
     }
 
     public bool IsTutorialActive(TutorialType type)
@@ -58,7 +60,6 @@ public class TutorialService
         if (_tutorials.TryGetValue(guide, out var tutorial))
             tutorial.Cache.CurrentStep = -1;
     }
-
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void JumpToStep<TEnum>(TutorialType guide, TEnum step)
@@ -148,7 +149,7 @@ public class TutorialService
 
         var restraintsStr = GSLoc.Tutorials.Restraints;
         _tutorials[TutorialType.Restraints] = new Tutorial("Restraints Tutorial")
-        .WithCache(new GuideCache()
+        .WithCache(new RestraintGuideCache(_restraints, _selfBondage)
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
