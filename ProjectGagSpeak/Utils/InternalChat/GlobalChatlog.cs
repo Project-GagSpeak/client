@@ -321,11 +321,14 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
             previewMessage = previewMessage[..400];
 
         // Send message to the server
-        _hub.UserSendGlobalChat(new(MainHub.OwnUserData, previewMessage, _config.Current.PreferThreeCharaAnonName)).ConfigureAwait(false);
-
+        if (!string.IsNullOrWhiteSpace(previewMessage))
+        {
+            _hub.UserSendGlobalChat(new(MainHub.OwnUserData, previewMessage, _config.Current.PreferThreeCharaAnonName)).ConfigureAwait(false);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.GlobalSent);
+        }
+        
         // Clear message and trigger achievement event
         previewMessage = string.Empty;
-        GagspeakEventManager.AchievementEvent(UnlocksEvent.GlobalSent);
     }
 
     protected override void DrawPopupInternal()

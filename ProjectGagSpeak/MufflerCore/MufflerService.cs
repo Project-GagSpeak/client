@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using CkCommons.GarblerCore;
 using GagSpeak.MufflerCore;
 using GagSpeak.MufflerCore.Handler;
@@ -7,6 +6,9 @@ using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagspeakAPI.Util;
+using OtterGui.Extensions;
+using System.Text.RegularExpressions;
+using static FFXIVClientStructs.FFXIV.Client.UI.RaptureAtkHistory.Delegates;
 
 namespace GagSpeak.Services;
 
@@ -142,7 +144,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
             // Convert the message to a list of phonetics for each word
             var wordsAndPhonetics = _ipaParser.ToIPAList(inputMessage);
             // Iterate over each word and its phonetics
-            foreach (var parsed in wordsAndPhonetics)
+            foreach (var (parsed, idx) in wordsAndPhonetics.WithIndex())
             {
                 // Toggle skipping translation if an RP post (*)
                 if (parsed.Word == "*")
@@ -189,11 +191,15 @@ public class MufflerService : DisposableMediatorSubscriberBase
                     var converted = parsed.Found
                         ? GarbleWithPhonetics(sanitizedWord, parsed.Phonetics, isAllCaps, isFirstLetterCaps)
                         : GarbleWithFallback(sanitizedWord, isAllCaps, isFirstLetterCaps);
-                    // Append to the final message
-                    finalMessage.Append($"{leadingPunctuation}{converted}{trailingPunctuation} ");
-                    
-                    /* ---- THE BELOW LINE WILL CAUSE LOTS OF SPAM, ONLY FOR USE WHEN DEVELOPER DEBUGGING ---- */
-                    //Logger.LogTrace($"Converting word [{parsed.Word}] with phonetics [{string.Join(", ", parsed.Phonetics)}]", LoggerType.GarblerCore);
+
+                    if (converted.Length is not 0 || idx == wordsAndPhonetics.Count - 1)
+                    {
+                        // Append to the final message
+                        finalMessage.Append($"{leadingPunctuation}{converted}{trailingPunctuation} ");
+
+                        /* ---- THE BELOW LINE WILL CAUSE LOTS OF SPAM, ONLY FOR USE WHEN DEVELOPER DEBUGGING ---- */
+                        Logger.LogTrace($"Converting word [{parsed.Word}] with phonetics [{string.Join(", ", parsed.Phonetics)}]", LoggerType.GarblerCore);
+                    }
                 }
                 else
                 {
@@ -218,10 +224,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
     /// </summary>
     private string GarbleWithPhonetics(string word, List<string> phonetics, bool isAllCaps, bool isFirstLetterCapitalized)
     {
-        // If there are no phonetics, the sound is completely blank. But for the sake of fallback, implement a fun replacement.
-        if (phonetics.Count is 0)
-            return GetNoSoundWord(word, isAllCaps, isFirstLetterCapitalized);
-
+        Logger.LogTrace($"Garbling word [{word}] with phonetics [{string.Join(", ", phonetics)}]", LoggerType.GarblerCore);
         // Otherwise, parse it out normally.
         var outputString = new StringBuilder();
         foreach (var phonetic in phonetics)
@@ -245,6 +248,11 @@ public class MufflerService : DisposableMediatorSubscriberBase
         }
 
         var result = outputString.ToString();
+
+        // If the combined result is empty, return the GetNoSoundWord instead (No Phonetic Matches)
+        if (string.IsNullOrWhiteSpace(result))
+            return GetNoSoundWord(word, isAllCaps, isFirstLetterCapitalized);
+
         // Ensure the output is uppercase.
         if (isAllCaps)
             result = result.ToUpper();
@@ -299,24 +307,35 @@ public class MufflerService : DisposableMediatorSubscriberBase
     private string GetNoSoundWord(string word, bool isAllCaps, bool isFirstLetterCapitalized)
     {
         // Always empty if less than 7 letters.
-        if (string.IsNullOrEmpty(word) || word.Length < 6)
+        if (string.IsNullOrEmpty(word) || word.Length < 3)
             return string.Empty;
 
-        // 15% chance to generate periods, +1 for every 4 letters after 7.
-        if (Random.Shared.NextDouble() >= 0.15)
+        // 25% chance to generate periods
+        if (Random.Shared.NextDouble() >= (isAllCaps ? 0.5 : 0.25))
             return string.Empty;
 
         var sb = new StringBuilder();
-        // Get the number of periods.
-        var periods = 1 + ((word.Length - 6) / 4);
-        sb.Append('.', periods);
+        int dots = Random.Shared.Next(0, 3);
 
-        // 10% chance to prepend a single m/h, case dependant on isAllCaps || isFirstLetterCapitalized.
-        if (Random.Shared.NextDouble() < 0.25)
+        // 50% chance to prepend letters. Case dependant on isAllCaps || isFirstLetterCapitalized.
+        if (Random.Shared.NextDouble() < 0.50)
         {
-            char leadingChar = isAllCaps || isFirstLetterCapitalized ? 'M' : 'm';
-            sb.Insert(0, leadingChar);
+            char[] choices = { 'm', 'n', 'h' };
+            // Ensure letters always follow with more than one dot.
+            dots = Math.Clamp(dots, 2, 3);
+            // get sound cluster length.
+            var soundLen = Random.Shared.Next(1, 3);
+            for (int i = 0; i < soundLen; i++)
+            {
+                if (i == 0 && (isAllCaps || isFirstLetterCapitalized))
+                    sb.Insert(0, isAllCaps ? char.ToUpper(choices[Random.Shared.Next(choices.Length)]) : choices[Random.Shared.Next(choices.Length)]);
+                else
+                    sb.Insert(0, choices[Random.Shared.Next(choices.Length)]);
+            }
         }
+
+        // Then the dots after.
+        sb.Append('.', dots);
 
         return sb.ToString();
     }
