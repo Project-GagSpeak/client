@@ -11,12 +11,11 @@ public class ToyboxTabs : ImageTabBar<ToyboxTabs.SelectedTab>
         BuzzToys,
         Patterns,
         Alarms,
-        Triggers
     }
 
     protected override bool IsTabDisabled(SelectedTab tab)
     {
-        var disable = tab is SelectedTab.Patterns or SelectedTab.Alarms or SelectedTab.Triggers;
+        var disable = true;
 #if DEBUG
         disable = false;
 #endif
@@ -37,10 +36,6 @@ public class ToyboxTabs : ImageTabBar<ToyboxTabs.SelectedTab>
             "Set various Alarms that play patterns when triggered" +
             "--SEP----COL--[WIP]--COL--" +
             "--NL--- Try overlapping on patterns without inturruption");
-        AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.CircleDot], SelectedTab.Triggers,
-            "Create various kinds of Triggers" +
-            "--SEP----COL--[WIP]--COL--" +
-            "--NL--- Should be out very soon, need to hook up detection. Logic itself works.");
     }
 
 }

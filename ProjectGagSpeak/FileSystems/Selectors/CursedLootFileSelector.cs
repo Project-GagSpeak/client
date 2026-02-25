@@ -172,7 +172,7 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + centerHeight);
         var eraserPos = ImGui.GetCursorScreenPos();
         var overErase = ImGui.IsMouseHoveringRect(eraserPos, eraserPos + eraserSize);
-        var allowErase = !leaf.Value.InPool && overErase && shiftPressed;
+        var allowErase = !leaf.Value.InPool && overErase && shiftPressed && !leaf.Value.Identifier.Equals(_manager.ItemInEditor?.Identifier);
         var col = allowErase ? ImGuiCol.Text : ImGuiCol.TextDisabled;
         CkGui.IconText(FAI.Eraser, ImGui.GetColorU32(col));
         keyElementHovered |= overErase;

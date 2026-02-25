@@ -100,7 +100,7 @@ public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerF
         CkGui.TextFrameAlignedInline(leaf.Value.Label);
 
         // Only draw the deletion if the item is not active or occupied.
-        if (!_manager.ActiveTriggers.Contains(leaf.Value))
+        if (!_manager.ActiveTriggers.Contains(leaf.Value) && !leaf.Value.Identifier.Equals(_manager.ItemInEditor?.Identifier))
         {
             ImGui.SameLine((rectMax.X - rectMin.X) - ImGui.GetFrameHeightWithSpacing());
             var pos = ImGui.GetCursorScreenPos();

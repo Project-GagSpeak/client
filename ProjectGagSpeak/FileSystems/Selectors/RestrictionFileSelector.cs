@@ -117,7 +117,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
             SetFilterDirty();
         CkGui.TextFrameAlignedInline(leaf.Value.Label);
         // Only draw the deletion if the item is not active or occupied.
-        if (!_manager.IsItemApplied(leaf.Value.Identifier))
+        if (!_manager.IsItemApplied(leaf.Value.Identifier) && !leaf.Value.Identifier.Equals(_manager.ItemInEditor?.Identifier))
         {
             ImGui.SameLine((rectMax.X - rectMin.X) - ImGui.GetFrameHeightWithSpacing());
             var pos = ImGui.GetCursorScreenPos();

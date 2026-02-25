@@ -20,6 +20,16 @@ public class Changelog
     // Add Version Data here.
     private void AddVersionData()
     {
+        VersionEntry(2, 0, 5, 0)
+            .RegisterMain("Triggers are now implemented")
+            .RegisterFeature("TraitAllowances are moved to permissions (WIP)")
+            .RegisterQol("Garbler fallback no longer fires when it shouldnt.")
+            .RegisterQol("Garbler fallback does not make words longer than they should be")
+            .RegisterQol("Garbler performs unique logic when a sound cannot be produced. (Find out~)")
+            .RegisterQol("UI No longer squishes like Jello (Kinkplates still do because JELLO")
+            .RegisterBugfix("Fixed DevChat not printing properly to global chat")
+            .RegisterBugfix("Fixed CN/JP Names not rendering in the account manager properly")
+            .RegisterBugfix("Updated the discord bot to now run scheduled checks for vanity access, over only once when its restarted. (Idk why it was doing this)");
         VersionEntry(2, 0, 4, 0)
             .RegisterFeature("[Bone Gag] Is now supported in the Ck's MufflerCore.")
             .RegisterQol("Global chat now has a scrollbar")

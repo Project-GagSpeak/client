@@ -134,7 +134,7 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
                 }
             }
             // Optimize later.
-            if (_manager.AppliedRestraint?.Identifier != leaf.Value.Identifier)
+            if (_manager.AppliedRestraint?.Identifier != leaf.Value.Identifier && !leaf.Value.Identifier.Equals(_manager.ItemInEditor?.Identifier))
             {
                 ImGui.SameLine((rectMax.X - rectMin.X) - iconSpacing);
                 var centerHeight = (ImGui.GetItemRectSize().Y - CkGui.IconSize(FAI.Trash).Y) / 2;

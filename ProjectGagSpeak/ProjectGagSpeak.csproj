@@ -3,7 +3,7 @@
     <!--Basic Plugin Definitions-->
     <PropertyGroup>
         <Copyright>Copyright © 2025</Copyright>
-        <Version>2.0.4.2</Version>
+        <Version>2.0.5.0</Version>
         <WarningLevel>4</WarningLevel>
         <PackageLicenseExpression>AGPL-3.0-or-later</PackageLicenseExpression>
     </PropertyGroup>
@@ -28,10 +28,6 @@
         </Content>
     </ItemGroup>
     
-    <ItemGroup>
-      <Content Include="MufflerCore\GagData\gag_data.json" />
-    </ItemGroup>
-
     <!--As Now that we use Dalamud.SDK, most Dalamud Sources are not needed, but some must stay.-->
     <ItemGroup>
         <!--For localization and language handling. (and PInvoke replacement)-->
@@ -85,6 +81,7 @@
       <Folder Include="GameData\" />
     </ItemGroup>
 </Project>
+
 
 
 

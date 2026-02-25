@@ -40,6 +40,16 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
         var max = min + ImGui.GetContentRegionAvail();
         // Add some CkRichText variant here later.
         CkGui.ColorTextCentered("GagSpeak Global Chat", GsCol.VibrantPink.Uint());
+        var endX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
+        ImGui.SameLine(endX -= CkGui.IconSize(FAI.Book).X);
+        CkGui.HoverIconText(FAI.Book, ImGuiColors.TankBlue.ToUint());
+        CkGui.AttachToolTip("--COL--Global Chat Rules--COL--" +
+            "--SEP----COL--1.--COL-- Have common sense please." +
+            "--NL----COL--2.--COL-- No discussion of NSFL (Gore/Vore/Scat/Ageplay)" +
+            "--NL----COL--2b.--COL-- The above is fine in Kinkplate™ descriptions." +
+            "--NL----COL--3.--COL-- Respect Cordys word as it is final." +
+            "--NL----COL--4.--COL-- Enjoy socializing with others ♥", ImGuiColors.ParsedGold);
+
         ImGui.Separator();
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 10f * ImGuiHelpers.GlobalScale);
         using var col = ImRaii.PushColor(ImGuiCol.ScrollbarGrab, GsCol.VibrantPink.Uint())
