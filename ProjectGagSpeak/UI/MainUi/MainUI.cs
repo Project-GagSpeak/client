@@ -16,7 +16,6 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Hub;
-using OtterGui;
 using OtterGui.Text;
 using OtterGuiInternal;
 using System.Globalization;
@@ -57,7 +56,7 @@ public class MainUI : WindowMediatorSubscriberBase
     public MainUI(ILogger<MainUI> logger, GagspeakMediator mediator, MainConfig config,
         AccountManager account, MainHub hub, MainMenuTabs tabMenu, IpcManager ipc,
         SidePanelService sidePanel, RequestsManager requestmanager, KinksterManager kinksters,
-        TutorialService guides, HomeTab home, RequestsTab requests, WhitelistTab whitelist, 
+        TutorialService guides, HomeTab home, RequestsTab requests, WhitelistTab whitelist,
         PatternHubTab patternHub, MoodleHubTab moodlesHub, GlobalChatTab globalChat)
         : base(logger, mediator, "###GagSpeakMainUI")
     {
@@ -248,7 +247,7 @@ public class MainUI : WindowMediatorSubscriberBase
         ImGui.InputTextWithHint("##pairAddOptionalMessage", "Attach Msg to Request (Optional)", ref _requestMessage, 100);
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AttachingMessages, LastPos, LastSize, _ =>
         {
-            _creatingRequest = !_creatingRequest;
+            _creatingRequest = false;
             _tabMenu.TabSelection = MainMenuTabs.SelectedTab.Requests;
         });
         ImGui.Separator();
@@ -272,7 +271,7 @@ public class MainUI : WindowMediatorSubscriberBase
         if (DrawAddUser(winPtr, new Vector2(sideWidth, height), innerMinPos, disableButtons || !MainHub.IsConnected))
             _creatingRequest = !_creatingRequest;
         CkGui.AttachToolTip("Add a new Kinkster");
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AddingKinksters, LastPos, LastSize, _ => _creatingRequest = !_creatingRequest);
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AddingKinksters, LastPos, LastSize, _ => _creatingRequest = true);
 
         ImGui.SetCursorScreenPos(innerMinPos + new Vector2(sideWidth, 0));
         DrawConnectedUsers(winPtr, new Vector2(topBarWidth - sideWidth * 2, height), topBarWidth);
@@ -294,7 +293,7 @@ public class MainUI : WindowMediatorSubscriberBase
             }
         }
         CkGui.AttachToolTip($"{(MainHub.IsConnected ? "Disconnect from" : "Connect to")} {MainHub.MAIN_SERVER_NAME}--SEP--Current Status: {MainHub.ServerStatus}");
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ConnectionState, LastPos, LastSize, _ => _tabMenu.TabSelection = MainMenuTabs.SelectedTab.Whitelist);
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ConnectionState, LastPos, LastSize);
 
         winPtr.DrawList.PopClipRect();
     }

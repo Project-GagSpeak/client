@@ -75,7 +75,7 @@ public class Tutorial
             --_waitFrames;
         else if (ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows) && !ImGui.IsPopupOpen(_popupLabel))
             ImGui.OpenPopup(_popupLabel);
-        
+
         HighlightObject();
         var popupPos = new Vector2(parentWinPos.X + parentWinSize.X, parentWinPos.Y); // Position the popup to the right of the window
         DrawPopup(popupPos, step, NextId(), onNext);
@@ -177,7 +177,10 @@ public class Tutorial
 
         var buttonPos = windowPos + new Vector2(windowSize.X - _closeSize.X - ImGui.GetStyle().ItemInnerSpacing.X, ImGui.GetStyle().ItemSpacing.Y);
         if (CloseButton(buttonPos))
-            nextValue = -1;
+        {
+            Close();
+            return;
+        }
 
         if (nextValue != null)
         {
@@ -191,6 +194,21 @@ public class Tutorial
             // Regardless, close this popup
             ImGui.CloseCurrentPopup();
         }
+    }
+
+    /// <summary>
+    /// Closes the currently active tutorial. Will call <see cref="GuideCache.OnExit"/> for this tutorial if it was previously running.
+    /// </summary>
+    public void Close()
+    {
+        var wasRunning = Cache.CurrentStep != -1;
+        Cache.CurrentStep = -1;
+        if (!wasRunning)
+            return;
+
+        Cache.OnExit();
+        _waitFrames = 0;
+        ImGui.CloseCurrentPopup();
     }
 
     private int NextId()

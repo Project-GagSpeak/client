@@ -58,7 +58,7 @@ public class TutorialService
     {
         // reset the step to -1, stopping the tutorial.
         if (_tutorials.TryGetValue(guide, out var tutorial))
-            tutorial.Cache.CurrentStep = -1;
+            tutorial.Close();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
