@@ -440,7 +440,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
         else
         {
             // Fallback: sit / emote / ALL
-            _processor.HandlePuppeteeredText(context, msg);
+            _processor.HandlePuppeteeredText(context, scoped);
         }
     }
 

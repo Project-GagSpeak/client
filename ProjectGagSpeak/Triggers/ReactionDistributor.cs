@@ -107,6 +107,8 @@ public class ReactionDistributor
     /// <summary>
     ///     Determines if the message meets the criteria for the sender.
     /// </summary>
+    /// <param name="context"> The context of the puppeteer message, including permissions and sender info. </param>
+    /// <param name="message"> The message to evaluate a command, EXCLUDING any trigger words. </param>
     public void HandlePuppeteeredText(PuppetMsgContext context, SeString message)
     {
         // ALL permission (non-emote)
