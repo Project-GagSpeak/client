@@ -109,6 +109,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         if (ImGui.CollapsingHeader("Client Player Data (Serverside Active State)"))
             DrawPlayerCharacterDebug();
 
+#if DEBUG
         ImGui.Separator();
         if (ImGui.CollapsingHeader("Pair Data"))
         {
@@ -125,6 +126,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
             foreach (var pair in _immutablePairs)
                 DrawPairData(pair, width);
         }
+#endif
     }
 
     private void DrawPairData(Kinkster pair, float width)

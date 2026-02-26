@@ -101,7 +101,7 @@ internal class ReportPopupHandler : IPopupHandler
             // The text for it.
             ImGui.SetCursorScreenPos(descPos + borderSize);
             var desc = kinkPlate.Info.Description;
-            DrawLimitedDescription(desc, ImGuiColors.DalamudWhite, new Vector2(230, 185));
+            DrawLimitedDescription(desc, ImGuiColors.DalamudWhite, new Vector2(pfpSize.X, 185));
             CkGui.AttachToolTip("The Description being Reported");
 
             ImGui.SetCursorScreenPos(pfpBorderPos);
@@ -117,7 +117,7 @@ internal class ReportPopupHandler : IPopupHandler
         using var rightChild = CkRaii.Child("ReportPlateRight", ImGui.GetContentRegionAvail() - outerPadding);
         using (ImRaii.Group())
         {
-            using (var __ = CkRaii.Child("ReportBox", new(ImGui.GetContentRegionAvail().X, pfpBorderSize.Y)))
+            using (var __ = CkRaii.Child("ReportBox", new(rightChild.InnerRegion.X, pfpBorderSize.Y)))
             {
                 ImGui.InputTextMultiline("##reportReason", ref _reportReason, 500, new Vector2(__.InnerRegion.X / 2, __.InnerRegion.Y));
 
@@ -151,10 +151,10 @@ internal class ReportPopupHandler : IPopupHandler
             }
 
             // Draw the gold line split.
-            var reportBoxSize = new Vector2(250 + 192 + ImGui.GetStyle().ItemSpacing.X);
-            drawList.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.AchievementLineSplit], rectMin + new Vector2(15, 235), new Vector2(770, 6));
+            var linePos = ImGui.GetCursorScreenPos();
+            drawList.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.AchievementLineSplit], linePos, new Vector2(rightChild.InnerRegion.X, 6));
+            ImGui.Dummy(new Vector2(0, 10));
 
-            ImGui.SetCursorScreenPos(rectMin + new Vector2(15, 235));
             CkGui.FontTextWrapped("We will analyze reports with care. Cordy has been a victum " +
                 "of manipulation and abuse multiple times, and will do her best to ensure her team does not allow " +
                 "predators to exploit this reporting system on you.", Fonts.Default150Percent);

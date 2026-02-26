@@ -15,12 +15,14 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
 using OtterGui;
 using OtterGui.Text;
+using OtterGui.Text.Widget.Editors;
 
 namespace GagSpeak.Gui.MainWindow;
 
 public partial class SidePanelPair
 {
     private readonly ILogger<SidePanelPair> _logger;
+    private readonly GagspeakMediator _mediator;
     private readonly MainHub _hub;
     private readonly PiShockProvider _shockies;
 
@@ -28,9 +30,10 @@ public partial class SidePanelPair
     private static IconCheckboxEx EditAccessCheckbox = new(FAI.Pen, 0xFF00FF00, 0);
     private static IconCheckboxEx HardcoreCheckbox = new(FAI.UserLock, 0xFF00FF00, 0xFF0000FF);
 
-    public SidePanelPair(ILogger<SidePanelPair> logger, MainHub hub, PiShockProvider shockies)
+    public SidePanelPair(ILogger<SidePanelPair> logger, GagspeakMediator mediator, MainHub hub, PiShockProvider shockies)
     {
         _logger = logger;
+        _mediator = mediator;
         _hub = hub;
         _shockies = shockies;
     }
@@ -345,6 +348,14 @@ public partial class SidePanelPair
         // }
 
         ImGui.TextUnformatted("Individual Pair Functions");
+        if (CkGui.IconTextButton(FAI.User, "Open Profile", width, true))
+            _mediator.Publish(new OpenKinkPlatePopout(kinkster.UserData));
+        CkGui.AttachToolTip($"Opens {dispName}'s profile!");
+
+        if (CkGui.IconTextButton(FAI.ExclamationTriangle, $"Report {dispName}'s KinkPlate", width, true))
+            _mediator.Publish(new OpenReportUIMessage(kinkster.UserData, ReportKind.Profile));
+        CkGui.AttachToolTip($"Snapshot {dispName}'s KinkPlate and make a report with its state.");
+        
         if (CkGui.IconTextButton(FAI.Trash, "Unpair Permanently", width, true, !KeyMonitor.CtrlPressed() || !KeyMonitor.ShiftPressed()))
             _hub.UserRemoveKinkster(new(kinkster.UserData)).ConfigureAwait(false);
         CkGui.AttachToolTip($"--COL--CTRL + SHIFT + L-Click--COL-- to remove {dispName}", color: ImGuiColors.DalamudRed);

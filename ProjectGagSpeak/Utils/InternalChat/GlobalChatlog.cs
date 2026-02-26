@@ -360,7 +360,7 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
             ImGui.Separator();
         }
 
-        if (CkGui.SelectableEx("View Light KinkPlate", LastInteractedMsg.UID != "System"))
+        if (CkGui.SelectableEx("View Light KinkPlate", LastInteractedMsg.UID == "System"))
         {
             Mediator.Publish(new KinkPlateLightCreateOpenMessage(LastInteractedMsg.UserData));
             ClosePopupAndResetMsg();
