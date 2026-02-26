@@ -103,16 +103,17 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
         // grab our profile.
         var profile = _KinkPlateManager.GetKinkPlate(new UserData(MainHub.UID));
         var publicRef = profile.Info.IsPublic;
+        var canEdit = MainHub.Reputation.CanEditProfile();
         var pos = new Vector2(ImGui.GetCursorScreenPos().X + contentRegion.X - 242, ImGui.GetCursorScreenPos().Y);
         using (ImRaii.Group())
         {
             using (ImRaii.Group())
             {
-                if (CkGui.IconTextButton(FAI.FileUpload, "Edit Image", disabled: profile.Info.Disabled))
+                if (CkGui.IconTextButton(FAI.FileUpload, "Edit Image", disabled: !canEdit))
                     Mediator.Publish(new UiToggleMessage(typeof(ProfilePictureEditor)));
-                CkGui.AttachToolTip(profile.Info.Disabled
-                    ? "You're Profile Customization Access has been Revoked!"
-                    : "Import and adjust a new profile picture to your liking!");
+                CkGui.AttachToolTip(canEdit
+                    ? "Import and adjust a new profile picture to your liking!"
+                    : "You're Profile Customization Access has been Revoked!");
                 
                 ImUtf8.SameLineInner();
                 if (CkGui.IconTextButton(FAI.Save, "Save Changes"))
@@ -196,7 +197,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
         // below this, we should draw out the description editor
         ImGui.AlignTextToFramePadding();
         CkGui.ColorText("Description", ImGuiColors.ParsedGold);
-        using (ImRaii.Disabled(profile.Info.Disabled))
+        using (ImRaii.Disabled(!canEdit))
         {
             var refText = profile.Info.Description.IsNullOrEmpty() ? "No Description Set..." : profile.Info.Description;
             var size = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetContentRegionAvail().Y - ImGui.GetFrameHeightWithSpacing());
@@ -207,7 +208,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
             _ => Mediator.Publish(new KinkPlateLightCreateOpenMessage(MainHub.OwnUserData)));
         
         CkGui.AttachToolTip("You're Profile Customization Access has been Revoked!" +
-            "--SEP--You will not be able to edit your KinkPlate Description!", profile.Info.Disabled);
+            "--SEP--You will not be able to edit your KinkPlate Description!", !canEdit);
 
         // draw the plate preview buttons.
         var width = (ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) / 2;

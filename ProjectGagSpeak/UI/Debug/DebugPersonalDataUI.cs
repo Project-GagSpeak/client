@@ -194,7 +194,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 
         CkGui.FramedIconText(FAI.ExclamationTriangle, ImGuiColors.DalamudYellow);
         CkGui.TextFrameAlignedInline("WarningStrikes:");
-        CkGui.ColorTextInline($"{responce.Reputation.WarningStrikes}", ImGuiColors.DalamudOrange);
+        CkGui.ColorTextInline($"{responce.Reputation.TotalStrikes()}", ImGuiColors.DalamudOrange);
 
         // Display Hardcore State.
         using var t = ImRaii.Table("ReputationStatus", 3, ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.SizingFixedFit);
