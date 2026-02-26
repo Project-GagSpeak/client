@@ -156,11 +156,12 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawAccountReputation();
         DrawGlobalPermissions("Player", ClientData.Globals ?? new GlobalPerms());
         DrawPlayerHardcore();
+#if DEBUG
         DrawGagData("Player", _gags.ServerGagData ?? new CharaActiveGags());
         DrawRestrictions("Player", _restrictions.ServerRestrictionData ?? new CharaActiveRestrictions());
         DrawRestraint("Player", _restraints.ServerData ?? new CharaActiveRestraint());
         DrawCollar("Player", _collar.SyncedData ?? new CharaActiveCollar());
-
+#endif
         CkGui.ColorText("Active Valid Toys:", ImGuiColors.ParsedGold);
         CkGui.TextInline(string.Join(", ", _toys.ValidToysForRemotes));
 
