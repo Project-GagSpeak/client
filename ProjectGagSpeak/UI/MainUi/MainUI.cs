@@ -78,7 +78,11 @@ public class MainUI : WindowMediatorSubscriberBase
 
         // display info about the folders
         var ver = Assembly.GetExecutingAssembly().GetName().Version!;
+#if !DEBUG
         WindowName = $"GagSpeak v{ver.Major}.{ver.Minor}.{ver.Build}.{ver.Revision}###GagSpeakMainUI";
+#else
+        WindowName = $"GagSpeak v{ver.Major}.{ver.Minor}.{ver.Build}.{ver.Revision} (DEVELOPMENT BUILD)###GagSpeakMainUI";
+#endif
         Flags |= WFlags.NoDocking;
 
         this.PinningClickthroughFalse();
