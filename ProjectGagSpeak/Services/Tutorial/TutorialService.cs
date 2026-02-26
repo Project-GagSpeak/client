@@ -58,7 +58,7 @@ public class TutorialService
     {
         // reset the step to -1, stopping the tutorial.
         if (_tutorials.TryGetValue(guide, out var tutorial))
-            tutorial.Cache.CurrentStep = -1;
+            tutorial.Close();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -173,7 +173,7 @@ public class TutorialService
         .AddStep(restraintsStr.Step16Title, restraintsStr.Step16Desc, restraintsStr.Step16DescExtended)
         .AddStep(restraintsStr.Step17Title, restraintsStr.Step17Desc, restraintsStr.Step17DescExtended)
         .AddStep(restraintsStr.Step17Title, restraintsStr.Step17Desc, restraintsStr.Step17DescExtended) // buffer step, uses same text as previous
-        .AddStep(restraintsStr.Step18Title, restraintsStr.Step18Desc, restraintsStr.Step18DescExtended) 
+        .AddStep(restraintsStr.Step18Title, restraintsStr.Step18Desc, restraintsStr.Step18DescExtended)
         .AddStep(restraintsStr.Step19Title, restraintsStr.Step19Desc, restraintsStr.Step19DescExtended)
         .AddStep(restraintsStr.Step20Title, restraintsStr.Step20Desc, restraintsStr.Step20DescExtended)
         .AddStep(restraintsStr.Step21Title, restraintsStr.Step21Desc, restraintsStr.Step21DescExtended)
@@ -195,7 +195,7 @@ public class TutorialService
 
         var restrictionsStr = GSLoc.Tutorials.Restrictions;
         _tutorials[TutorialType.Restrictions] = new Tutorial("Restrictions Tutorial")
-        .WithCache(new GuideCache()
+        .WithCache(new RestrictionGuideCache(_restrictions,_selfBondage)
         {
             BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
             HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),

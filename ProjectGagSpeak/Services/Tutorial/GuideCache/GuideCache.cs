@@ -1,7 +1,7 @@
 namespace GagSpeak.Services.Tutorial;
 
 /// <summary>
-///     To be treated as a base class that should be overriden by parent 
+///     To be treated as a base class that should be overriden by parent
 ///     classes wishing to use these methods
 /// </summary>
 public class GuideCache

@@ -30,16 +30,15 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
 
     public GagspeakMediator Mediator { get; init; }
 
-    public RestrictionItem TutorialHypnoRestriction { get; private set; }
-    public RestrictionItem TutorialBasicRestriction { get; private set; }
-
     /// <summary>
     /// For now, use this 'state storage', it is a list of attributes linked to each leaf.
     /// To be honest im not sure why to not just access this from the path item directly during the draw, but whatever.
     /// We will find out later if anything.
     /// </summary>
     /// <remarks> This allows each item in here to be accessed efficiently at runtime during the draw loop. </remarks>
-    public record struct RestrictionState(uint Color) { }
+    public record struct RestrictionState(uint Color)
+    {
+    }
 
     // Helper operations used for creating new items and cloning them.
     private RestrictionType _newType;
@@ -47,7 +46,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
 
     /// <summary> This is the currently selected leaf in the file system. </summary>
     public new RestrictionFileSystem.Leaf? SelectedLeaf
-    => base.SelectedLeaf;
+        => base.SelectedLeaf;
 
     public RestrictionFileSelector(GagspeakMediator mediator, FavoritesConfig favorites, RestrictionManager manager,
         RestrictionFileSystem fileSystem, TutorialService guides) : base(fileSystem, Svc.Logger.Logger, Svc.KeyState, "##RestrictionFS")
@@ -79,6 +78,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
             _manager.Rename(leaf.Value, currentName);
             ImGui.CloseCurrentPopup();
         }
+
         CkGui.AttachToolTip("Enter a new name here to rename the changed restriction.");
     }
 
@@ -129,8 +129,10 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
                 Log.Debug($"Deleting {leaf.Value.Label} with SHIFT pressed.");
                 _manager.Delete(leaf.Value);
             }
+
             CkGui.AttachToolTip("Delete this restriction item. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
         }
+
         return hovered && ImGui.IsMouseReleased(ImGuiMouseButton.Left);
     }
 
@@ -153,16 +155,15 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
         if (CkGui.IconButton(FAI.Plus, inPopup: true))
             ImGui.OpenPopup("##NewRestriction");
         CkGui.AttachToolTip("Create a new Restriction Item.");
-        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.CreatingRestriction, WardrobeUI.LastPos, WardrobeUI.LastSize,
-            _ => 
-            {
-                // make a hypno item to show the user the extra things it can do
-                TutorialHypnoRestriction = _manager.CreateNew("Tutorial Hypno", RestrictionType.Hypnotic);
-                // This is to apply later, as I don't feel comfy applying hypno for photosensitive reasons
-                TutorialBasicRestriction = _manager.CreateNew("Tutorial Restriction", RestrictionType.Normal);
-                // TODO: Apply this properly, it's a bit buggy doing it this way but it works.
-                TutorialBasicRestriction.Glamour = new GlamourSlot(EquipSlot.Head, EquipItem.FromId(2784));
-            });
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.CreatingRestriction, WardrobeUI.LastPos, WardrobeUI.LastSize, gc =>
+        {
+            var cache = (RestrictionGuideCache)gc;
+            // create two tutorial items. Hypno for showing the features, basic for showing apply/lock/unlock.
+            cache.TutorialHypnoItem = _manager.CreateNew("Tutorial Hypno", RestrictionType.Hypnotic);
+            cache.TutorialBasicItem = _manager.CreateNew("Tutorial Restriction", RestrictionType.Normal);
+            // TODO: Apply this properly, it's a bit buggy doing it this way but it works.
+            cache.TutorialBasicItem.Glamour = new GlamourSlot(EquipSlot.Head, EquipItem.FromId(2784));
+        });
         _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.RestrictionTypes, WardrobeUI.LastPos, WardrobeUI.LastSize);
 
         ImGui.SameLine(0, 1);
@@ -208,6 +209,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
         {
             _newType = newType;
         }
+
         CkGui.AttachToolTip("Define what type of restriction you want to make.");
 
         // Alternative early exit.

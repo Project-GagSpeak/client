@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Raii;
@@ -19,6 +20,7 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using OtterGui.Extensions;
 using OtterGui.Text;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Gui.Wardrobe;
 
@@ -106,8 +108,11 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         ImGui.SetCursorScreenPos(drawRegions.BotLeft.Pos);
         using (ImRaii.Child("RestrictionsBottomLeft", drawRegions.BotLeft.Size, false, WFlags.NoScrollbar))
             _selector.DrawList(drawRegions.BotLeft.SizeX);
-        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.RestrictionList, WardrobeUI.LastPos, WardrobeUI.LastSize,
-            _ => _selector.SelectByValue(_selector.TutorialHypnoRestriction));
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.RestrictionList, WardrobeUI.LastPos, WardrobeUI.LastSize, gc =>
+        {
+            var cache = (RestrictionGuideCache)gc;
+            _selector.SelectByValue(cache.TutorialHypnoItem!);
+        });
 
         ImGui.SetCursorScreenPos(drawRegions.TopRight.Pos);
         using (ImRaii.Child("RestrictionsTopRight", drawRegions.TopRight.Size))
@@ -131,7 +136,12 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         DrawActiveItemInfo(drawRegions.BotRight.Size - verticalShift);
         _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Applying, WardrobeUI.LastPos, WardrobeUI.LastSize);
         _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.NoFreeSlots, WardrobeUI.LastPos, WardrobeUI.LastSize, _ =>
-            _guides.JumpToStep(TutorialType.Restrictions, StepsRestrictions.Removing));
+        {
+            // end tutorial here, no more can be shown.
+            var cache = (RestrictionGuideCache)_;
+            _guides.SkipTutorial(TutorialType.Restrictions);
+            cache.OnExit();
+        });
     }
 
     public void DrawEditorContents(CkHeader.QuadDrawRegions drawRegions, float curveSize)
@@ -256,8 +266,8 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         _moodleDrawer.ShowStatusIcons(_selector.Selected!.Moodle, ImGui.GetContentRegionAvail().X);
     }
 
-    // tutorial item storage, so we don't have to reinitialize data every frame.
-    private (int, ActiveRestriction?) _tActiveRestriction = (-1, null);
+    /// Stores the index of the first empty slot, provided the correct tutorial is running.
+    private int _guideItemIndex = -1;
 
     private void DrawActiveItemInfo(Vector2 region)
     {
@@ -266,12 +276,10 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         if (_manager.ServerRestrictionData is not { } activeSlots)
             return;
 
-        // clear the tutorial object if it has stale data, in case tutorial needs to run again.
-        if (!_guides.IsTutorialActive(TutorialType.Restrictions) && _tActiveRestriction.Item1 != -1) _tActiveRestriction = (-1, null);
-
         var height = ImGui.GetContentRegionAvail().Y;
         var groupH = ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemSpacing.Y;
         var groupSpacing = (height - 5 * groupH) / 6;
+        var currentStep = _guides.CurrentStep(TutorialType.Restrictions);
 
         foreach (var (data, index) in activeSlots.Restrictions.WithIndex())
         {
@@ -281,18 +289,8 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             // if no item is selected, display the unique 'Applier' group.
             if (data.Identifier == Guid.Empty)
             {
-                if (_tActiveRestriction.Item1 == -1) _tActiveRestriction.Item1 = index; // a slot for the tutorial item is found
-
-                _activeItemDrawer.ApplyItemGroup(index, data);
-                if (index != _tActiveRestriction.Item1) continue;
-                // skip tutorial step for subsequent runs
-                _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Selecting, WardrobeUI.LastPos, WardrobeUI.LastSize, _ =>
-                {
-                    _tActiveRestriction.Item2 = new ActiveRestriction { Enabler = MainHub.UID, Identifier = _selector.TutorialBasicRestriction.Identifier };
-                    _selfBondage.DoSelfBind(_tActiveRestriction.Item1, _tActiveRestriction.Item2, DataUpdateType.Applied);
-                    // because we found a free slot, we need to skip the next NoFreeSlots step too.
-                    _guides.JumpToStep(TutorialType.Restrictions, StepsRestrictions.Locking);
-                });
+                _activeItemDrawer.ApplyItemGroup(index, data, index == _guideItemIndex);
+                if (_guideItemIndex == -1 && currentStep >= (int)StepsRestrictions.Applying) _guideItemIndex = index;
                 continue;
             }
 
@@ -302,34 +300,19 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             // If the padlock is currently locked, show the 'Unlocking' group.
             if (data.IsLocked())
             {
-                _activeItemDrawer.UnlockItemGroup(index, data, item);
-                if (index == _tActiveRestriction.Item1)
-                {
-                    _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Unlocking, WardrobeUI.LastPos, WardrobeUI.LastSize, _ =>
-                    {
-                        _tActiveRestriction.Item2 = data with { Padlock = Padlocks.None, PadlockAssigner = string.Empty };
-                        _selfBondage.DoSelfBind(_tActiveRestriction.Item1, _tActiveRestriction.Item2, DataUpdateType.Unlocked);
-                    });
-                }
+                _activeItemDrawer.UnlockItemGroup(index, data, item, index == _guideItemIndex);
             }
             else
             {
                 // Otherwise, show the 'Locking' group. Locking group can still change applied items.
-                _activeItemDrawer.LockItemGroup(index, data, item);
-                if (index == _tActiveRestriction.Item1)
-                {
-                    _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Locking, WardrobeUI.LastPos, WardrobeUI.LastSize, _ =>
-                    {
-                        _tActiveRestriction.Item2 = data with { Padlock = Padlocks.Metal, PadlockAssigner = MainHub.UID };
-                        _selfBondage.DoSelfBind(_tActiveRestriction.Item1, _tActiveRestriction.Item2, DataUpdateType.Locked);
-                    });
-                }
+                _activeItemDrawer.LockItemGroup(index, data, item, index == _guideItemIndex);
             }
         }
 
-        // if we get through the loop without finding an empty slot, skip a few steps.
-        if (_tActiveRestriction.Item1 == -1 && _guides.IsTutorialActive(TutorialType.Restrictions) &&
-            _guides.CurrentStep(TutorialType.Restrictions) == (int)StepsRestrictions.Selecting)
+        // the selecting step cannot be successfully executed, skip it.
+        if (_guideItemIndex == -1 && currentStep == (int)StepsRestrictions.Selecting)
             _guides.JumpToStep(TutorialType.Restrictions, StepsRestrictions.NoFreeSlots);
+
+        _guideItemIndex = currentStep >= (int)StepsRestrictions.Applying ? _guideItemIndex : -1;
     }
 }

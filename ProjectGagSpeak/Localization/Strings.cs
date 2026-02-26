@@ -233,7 +233,7 @@ namespace GagSpeak.Localization
 
     public class HelpRestraints
     {
-        
+
         public readonly string Step1Title = Loc.Localize("HelpRestraints_Step1Title", "Searching");
         public readonly string Step1Desc = Loc.Localize("HelpRestraints_Step1Desc", "You can search for a specific restraint set by typing its name here.");
         public readonly string Step1DescExtended = Loc.Localize("HelpRestraints_Step1DescExtended", " ");
@@ -286,7 +286,7 @@ namespace GagSpeak.Localization
         public readonly string Step13Title = Loc.Localize("HelpRestraints_Step13Title", "Slot Types");
         public readonly string Step13Desc = Loc.Localize("HelpRestraints_Step13Desc", "Slots can be either a gear item, or a restriction. Click to swap between the two");
         public readonly string Step13DescExtended = Loc.Localize("HelpRestraints_Step13DescExtended", " ");
-        
+
         public readonly string Step14Title = Loc.Localize("HelpRestraints_Step14Title", "Overlay");
         public readonly string Step14Desc = Loc.Localize("HelpRestraints_Step14Desc", "A row that's set to overlay (the eye with a slash through) will not apply if it is set to \"Nothing\".");
         public readonly string Step14DescExtended = Loc.Localize("HelpRestraints_Step14DescExtended", "A row with an open eye will always apply.");
@@ -322,7 +322,7 @@ namespace GagSpeak.Localization
         public readonly string Step22Title = Loc.Localize("HelpRestraints_Step22Title", "Moodle Preview");
         public readonly string Step22Desc = Loc.Localize("HelpRestraints_Step22Desc", "Hover over any of the moodles here to see what they will look like.");
         public readonly string Step22DescExtended = Loc.Localize("HelpRestraints_Step22DescExtended", " ");
-        
+
         public readonly string Step23Title = Loc.Localize("HelpRestraints_Step23Title", "Cancelling Changes");
         public readonly string Step23Desc = Loc.Localize("HelpRestraints_Step23Desc", "Made a mistake or just don't want to save a change, use the back button.");
         public readonly string Step23DescExtended = Loc.Localize("HelpRestraints_Step23DescExtended", " ");
@@ -373,8 +373,10 @@ namespace GagSpeak.Localization
         public readonly string Step34DescExtended = Loc.Localize("HelpRestraints_Step34DescExtended", "(We definitely snuck a Metal Padlock on you while you were reading earlier steps, click next and it will be unlocked for you.)"); //ehehehe i am amused
 
         public readonly string Step35Title = Loc.Localize("HelpRestraints_Step35Title", "Removing a Restraint");
-        public readonly string Step35Desc = Loc.Localize("HelpRestraints_Step35Desc", "Right click to remove a restraint once it's unlocked. Click next and right click this spot to remove this restraint.");
-        public readonly string Step35DescExtended = Loc.Localize("HelpRestraints_Step35DescExtended", " ");
+        public readonly string Step35Desc = Loc.Localize("HelpRestraints_Step35Desc", "Right click on this square to remove your equipped restraint. This is " +
+            "where the thumbnail would show up if one was set.");
+        public readonly string Step35DescExtended = Loc.Localize("HelpRestraints_Step35DescExtended", "Click next to finish this tutorial. We'll clean up the" +
+            " mess we made around here.");
     }
 
     public class HelpRestrictions
@@ -527,8 +529,10 @@ namespace GagSpeak.Localization
             "Note: Any hardcore traits enabled on a selected restriction always apply when you put it on yourself.");
 
         public readonly string Step36Title = Loc.Localize("HelpRestrictions_Step36Title", "No Free Slots!");
-        public readonly string Step36Desc = Loc.Localize("HelpRestrictions_Step36Desc", "You don't have any open slots available. A couple of steps are going to be skipped");
-        public readonly string Step36DescExtended = Loc.Localize("HelpRestrictions_Step36DescExtended", "If you want to see how applying, locking and unlocking restrictions works, restart this tutorial with an empty slot!");
+        public readonly string Step36Desc = Loc.Localize("HelpRestrictions_Step36Desc", "You don't have any free slots available. The rest of this tutorial " +
+            "will be skipped.");
+        public readonly string Step36DescExtended = Loc.Localize("HelpRestrictions_Step36DescExtended", "Come back with an empty slot or three if you want to" +
+            " see the skipped steps.");
 
         public readonly string Step37Title = Loc.Localize("HelpRestrictions_Step37Title", "Locking a Restriction");
         public readonly string Step37Desc = Loc.Localize("HelpRestrictions_Step37Desc", "There are several locks to choose from.");
@@ -541,10 +545,9 @@ namespace GagSpeak.Localization
             "earlier steps, click next and it will be unlocked for you.)");
 
         public readonly string Step39Title = Loc.Localize("HelpRestrictions_Step39Title", "Removing a Restriction");
-        public readonly string Step39Desc = Loc.Localize("HelpRestrictions_Step39Desc", "Right click the thumbnail to remove a restriction once it's unlocked.\nJust in case we " +
-            "didn't put anything on you, we aren't going to remove anything for you. Once you click next, this tutorial is finished, and you can remove items normally.");
-        public readonly string Step39DescExtended = Loc.Localize("HelpRestrictions_Step39DescExtended", " ");
-
+        public readonly string Step39Desc = Loc.Localize("HelpRestrictions_Step39Desc", "Right click inside of the pink square to remove an item");
+        public readonly string Step39DescExtended = Loc.Localize("HelpRestrictions_Step39DescExtended", "Click next to finish this tutorial. We'll clean up " +
+            "the mess we made when you do.");
     }
 
     public class HelpGags
@@ -691,7 +694,7 @@ namespace GagSpeak.Localization
         //public readonly string Step11Title = Loc.Localize("HelpCursedLoot_Step11Title", "The CursedItem Discovery Percent");
         //public readonly string Step11Desc = Loc.Localize("HelpCursedLoot_Step11Desc", "Whatever you set here will be the %% Chance that a chest you loot will be Cursed Loot.");
     }
-    
+
     public class HelpPuppeteer
     {
         public readonly string Step1Title = Loc.Localize("HelpPuppeter_Step1Title", "Puppeteer");

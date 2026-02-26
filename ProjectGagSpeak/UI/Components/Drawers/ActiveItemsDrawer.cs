@@ -26,6 +26,7 @@ using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
+
 namespace GagSpeak.Gui.Components;
 
 public class ActiveItemsDrawer
@@ -87,7 +88,8 @@ public class ActiveItemsDrawer
         // Initialize the GagCombos.
         _gagItems = new RestrictionGagCombo[Constants.MaxGagSlots];
         for (var i = 0; i < _gagItems.Length; i++)
-            _gagItems[i] = new RestrictionGagCombo(logger, favorites, () => [
+            _gagItems[i] = new RestrictionGagCombo(logger, favorites, () =>
+            [
                 ..gags.Storage.Values.OrderByDescending(p => FavoritesConfig.Gags.Contains(p.GagType)).ThenBy(p => p.GagType)
             ]);
 
@@ -99,7 +101,8 @@ public class ActiveItemsDrawer
         // Init Restriction Combos.
         _restrictionItems = new RestrictionCombo[Constants.MaxRestrictionSlots];
         for (var i = 0; i < _restrictionItems.Length; i++)
-            _restrictionItems[i] = new RestrictionCombo(logger, mediator, favorites, () => [
+            _restrictionItems[i] = new RestrictionCombo(logger, mediator, favorites, () =>
+            [
                 ..restrictions.Storage.OrderByDescending(p => FavoritesConfig.Restrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
             ]);
 
@@ -109,7 +112,8 @@ public class ActiveItemsDrawer
             _restrictionPadlocks[i] = new PadlockRestrictionsClient(logger, restrictions, selfBondage);
 
         // Init Restraint Combo & Padlock.
-        _restraintItem = new RestraintCombo(logger, mediator, favorites, () => [
+        _restraintItem = new RestraintCombo(logger, mediator, favorites, () =>
+        [
             ..restraints.Storage.OrderByDescending(p => FavoritesConfig.Restraints.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
         _restraintPadlocks = new PadlockRestraintsClient(logger, restraints, selfBondage);
@@ -181,7 +185,7 @@ public class ActiveItemsDrawer
         }
     }
 
-    public void ApplyItemGroup(int slotIdx, ActiveRestriction data)
+    public void ApplyItemGroup(int slotIdx, ActiveRestriction data, bool drawGuide)
     {
         using var group = ImRaii.Group();
 
@@ -189,13 +193,21 @@ public class ActiveItemsDrawer
         DrawRestrictionImage(null, height, 10f);
 
         ImUtf8.SameLineInner();
-        using (ImRaii.Group())
+        // Center vertically the combo.
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ((height - ImGui.GetFrameHeight()) / 2));
+        var combo = _restrictionItems[slotIdx];
+        if (combo.Draw($"##Restrictions-{slotIdx}", data.Identifier, ImGui.GetContentRegionAvail().X))
+            RestrictionComboChanged(combo, slotIdx, data.Identifier);
+
+        if (drawGuide)
         {
-            // Center vertically the combo.
-            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ((height - ImGui.GetFrameHeight()) / 2));
-            var combo = _restrictionItems[slotIdx];
-            if (combo.Draw($"##Restrictions-{slotIdx}", data.Identifier, ImGui.GetContentRegionAvail().X))
-                RestrictionComboChanged(combo, slotIdx, data.Identifier);
+            _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Selecting, WardrobeUI.LastPos, WardrobeUI.LastSize, gc =>
+            {
+                var cache = (RestrictionGuideCache)gc;
+                var r = new ActiveRestriction { Enabler = MainHub.UID, Identifier = cache.TutorialBasicItem!.Identifier };
+                _selfBondage.DoSelfBind(slotIdx, r, DataUpdateType.Applied);
+                _guides.JumpToStep(TutorialType.Restrictions, StepsRestrictions.Locking);
+            });
         }
     }
 
@@ -232,7 +244,7 @@ public class ActiveItemsDrawer
             GagComboChanged(applyCombo, slotIdx, data.GagItem);
     }
 
-    public void LockItemGroup(int slotIdx, ActiveRestriction data, RestrictionItem? dispData)
+    public void LockItemGroup(int slotIdx, ActiveRestriction data, RestrictionItem? dispData, bool drawGuide)
     {
         using var group = ImRaii.Group();
 
@@ -244,7 +256,7 @@ public class ActiveItemsDrawer
         if (dispData is null)
             CkGui.AttachToolTip("--SEP----COL--The item that was here couldn't be found." +
                 "--NL--It may have been deleted or the data is corrupted.--COL--", color: ImGuiColors.DalamudRed);
-        if (slotIdx == 1) _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Removing, WardrobeUI.LastPos, WardrobeUI.LastSize);
+        if (drawGuide) _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Removing, WardrobeUI.LastPos, WardrobeUI.LastSize);
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             ImGui.OpenPopup($"##Restrictions-{slotIdx}");
@@ -254,7 +266,15 @@ public class ActiveItemsDrawer
         ImUtf8.SameLineInner();
         var rightWidth = ImGui.GetContentRegionAvail().X;
         _restrictionPadlocks[slotIdx].DrawLockCombo(rightWidth, slotIdx, "Lock this Padlock!");
-            
+        if (drawGuide)
+        {
+            _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Locking, WardrobeUI.LastPos, WardrobeUI.LastSize, gc =>
+            {
+                var r = data with { Padlock = Padlocks.Metal, PadlockAssigner = MainHub.UID };
+                _selfBondage.DoSelfBind(slotIdx, r, DataUpdateType.Locked);
+            });
+        }
+
         // Draw the potential popup if we should.
         var applyCombo = _restrictionItems[slotIdx];
         if (applyCombo.DrawPopup($"##Restrictions-{slotIdx}", data.Identifier, rightWidth * .75f, drawPos))
@@ -302,7 +322,8 @@ public class ActiveItemsDrawer
                 var options = Enum.GetValues<RestraintLayer>().Skip(1).SkipLast(1).Take(dispData.Layers.Count);
                 _layerFlagsWidget.DrawLayerCheckboxes(data.ActiveLayers, options, _ =>
                 {
-                    var idx = BitOperations.TrailingZeroCount((int)_); return (idx < dispData.Layers.Count) && (!dispData.Layers[idx].Label.IsNullOrWhitespace()) ? dispData.Layers[idx].Label : $"Layer {idx + 1}";
+                    var idx = BitOperations.TrailingZeroCount((int)_);
+                    return (idx < dispData.Layers.Count) && (!dispData.Layers[idx].Label.IsNullOrWhitespace()) ? dispData.Layers[idx].Label : $"Layer {idx + 1}";
                 });
             }
         }
@@ -326,6 +347,7 @@ public class ActiveItemsDrawer
             ImGui.SetCursorScreenPos(gagDispPos + new Vector2(size.X * .75f, offsetV));
             DrawFramedImage(data.Padlock, padlockSize.X, padlockSize.X / 2);
         }
+
         CkGui.AttachToolTip(UnlockTooltip(data.GagItem.GagName(), data.Enabler, data.Padlock, data.PadlockAssigner), color: ImGuiColors.ParsedPink);
 
         // Move over the distance of the framed image.
@@ -343,7 +365,7 @@ public class ActiveItemsDrawer
         }
     }
 
-    public void UnlockItemGroup(int slotIdx, ActiveRestriction data, RestrictionItem? dispData)
+    public void UnlockItemGroup(int slotIdx, ActiveRestriction data, RestrictionItem? dispData, bool drawGuide)
     {
         using var group = ImRaii.Group();
 
@@ -361,6 +383,7 @@ public class ActiveItemsDrawer
             ImGui.SetCursorScreenPos(gagDispPos + new Vector2(size.X * .75f, offsetV * .5f));
             DrawFramedImage(data.Padlock, padlockSize.X, padlockSize.X / 2);
         }
+
         CkGui.AttachToolTip(UnlockTooltip(dispData?.Label, data.Enabler, data.Padlock, data.PadlockAssigner), color: ImGuiColors.ParsedPink);
         if (dispData is null)
             CkGui.AttachToolTip("--SEP----COL--The item that was here couldn't be found." +
@@ -370,6 +393,14 @@ public class ActiveItemsDrawer
         ImGui.SameLine();
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ImGui.GetFrameHeight() / 2);
         _restrictionPadlocks[slotIdx].DrawUnlockCombo(ImGui.GetContentRegionAvail().X, slotIdx, "Attempt to unlock this Padlock!");
+        if (drawGuide)
+        {
+            _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Unlocking, WardrobeUI.LastPos, WardrobeUI.LastSize, gc =>
+            {
+                var r = data with { Padlock = Padlocks.None, PadlockAssigner = string.Empty };
+                _selfBondage.DoSelfBind(slotIdx, r, DataUpdateType.Unlocked);
+            });
+        }
     }
 
     public void UnlockItemGroup(CharaActiveRestraint data, RestraintSet? dispData)
@@ -422,10 +453,12 @@ public class ActiveItemsDrawer
                 var options = Enum.GetValues<RestraintLayer>().Skip(1).SkipLast(1).Take(dispData.Layers.Count);
                 _layerFlagsWidget.DrawLayerCheckboxes(data.ActiveLayers, options, _ =>
                 {
-                    var idx = BitOperations.TrailingZeroCount((int)_); return (idx < dispData.Layers.Count) && (!dispData.Layers[idx].Label.IsNullOrWhitespace()) ? dispData.Layers[idx].Label : $"Layer {idx + 1}";
+                    var idx = BitOperations.TrailingZeroCount((int)_);
+                    return (idx < dispData.Layers.Count) && (!dispData.Layers[idx].Label.IsNullOrWhitespace()) ? dispData.Layers[idx].Label : $"Layer {idx + 1}";
                 });
             }
         }
+
         _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EditingLayers, WardrobeUI.LastPos, WardrobeUI.LastSize);
     }
 

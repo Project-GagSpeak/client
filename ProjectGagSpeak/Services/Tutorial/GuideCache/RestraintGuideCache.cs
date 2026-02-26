@@ -1,13 +1,10 @@
-using GagSpeak.Localization;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
-using GagSpeak.WebAPI;
-using GagspeakAPI.Data;
 
 namespace GagSpeak.Services.Tutorial;
 
 /// <summary>
-///     To be treated as a base class that should be overriden by parent 
+///     To be treated as a base class that should be overriden by parent
 ///     classes wishing to use these methods
 /// </summary>
 public class RestraintGuideCache : GuideCache
