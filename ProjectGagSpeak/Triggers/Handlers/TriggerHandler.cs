@@ -76,7 +76,26 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
         if (!globals.PuppeteerEnabled)
             return;
 
-        // Assume first that this was a GlobalTrigger
+        // Try for paired kinkster first as their permissions would override globals, and we want to give them priority.
+        var pairPermissions = PuppetPerms.None;
+        if (_puppeteer.GetPuppeteerUid(senderNameWorld) is { } matchedUID)
+        {
+            // Ensure still paired (avoid stalking abuse)
+            if (_kinksters.TryGetKinkster(new(matchedUID), out var k))
+            {
+                pairPermissions = k.OwnPerms.PuppetPerms;
+                var pTriggers = k.OwnPerms.TriggerPhrase.Split(',').ToList();
+                if (GetValidTrigger(pTriggers, msg) is { } match)
+                {
+                    var shared = _puppeteer.GetAliasesForPuppeteer(matchedUID).ToList();
+                    var context = new PuppetMsgContext(k.GetDisplayName(), matchedUID, match, shared, k.OwnPerms.PuppetPerms, k.OwnPerms.StartChar, k.OwnPerms.EndChar);
+                    ProcessPuppetMsg(context, msg);
+                    return; // Processed one, halt.
+                }
+            }
+        }
+
+        // Handle global triggers last, as they would have less permissions and we want to give the paired ones priority if they exist.
         if (!string.IsNullOrWhiteSpace(globals.TriggerPhrase))
         {
             var gTriggers = globals.TriggerPhrase.Split(',').ToList();
@@ -84,27 +103,11 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
             {
                 var uid = GetUidFromNameWorld(senderNameWorld);
                 var aliases = _puppeteer.GetGlobalAliases().ToList();
-                // Create Puppeteer message context.
-                var context = new PuppetMsgContext(senderNameWorld, uid, match, aliases, globals.PuppetPerms, null, null);
+                // Create Puppeteer message context, use a union of pair permissions and global permissions for global triggers. This would happen, when the pair uses the global trigger phrase instead of their own, so we want to make sure they can still use their permissions if they do.
+                var context = new PuppetMsgContext(senderNameWorld, uid, match, aliases, globals.PuppetPerms | pairPermissions, null, null);
                 // Process the invocation seperately, so we can handle result logic for it without concern
                 ProcessPuppetMsg(context, msg);
-                return;
-            }
-        }
-
-        // Try for paired kinkster
-        if (_puppeteer.GetPuppeteerUid(senderNameWorld) is { } matchedUID)
-        {
-            // Ensure still paired (avoid stalking abuse)
-            if (_kinksters.TryGetKinkster(new(matchedUID), out var k))
-            {
-                var pTriggers = k.OwnPerms.TriggerPhrase.Split(',').ToList();
-                if (GetValidTrigger(pTriggers, msg) is { } match)
-                {
-                    var shared = _puppeteer.GetAliasesForPuppeteer(matchedUID).ToList();
-                    var context = new PuppetMsgContext(k.GetDisplayName(), matchedUID, match, shared, k.OwnPerms.PuppetPerms, k.OwnPerms.StartChar, k.OwnPerms.EndChar);
-                    ProcessPuppetMsg(context, msg);
-                }
+                return; // Processed one, halt.
             }
         }
     }
@@ -440,7 +443,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
         else
         {
             // Fallback: sit / emote / ALL
-            _processor.HandlePuppeteeredText(context, msg);
+            _processor.HandlePuppeteeredText(context, scoped);
         }
     }
 
