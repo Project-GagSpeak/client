@@ -62,7 +62,7 @@ public class SelfBondageService : IDisposable
     ///     Check if we're able to perform an alias reaction based on its types. If any fail, all fail.
     /// </summary>
     public bool CanExecute(IEnumerable<InvokableActionType> actionTypes)
-        => actionTypes.All(t => CanExecute(t));
+        => actionTypes.All(CanExecute);
 
     /// <summary>
     ///     Attempt to perform a Gag related SelfBondage act. If one is in progress, it will be rejected.
