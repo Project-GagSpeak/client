@@ -121,10 +121,16 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserSetKinkPlatePicture), kinkPlateImage).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserReportKinkPlate(KinkPlateReport userProfileDto)
+    public async Task<HubResponse> UserReportProfile(ProfileReport profileReport)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserReportKinkPlate), userProfileDto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserReportProfile), profileReport).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> UserReportChat(ChatReport chatReport)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserReportChat), chatReport).ConfigureAwait(false);
     }
     #endregion Client Vanity
 

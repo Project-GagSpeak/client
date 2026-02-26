@@ -278,7 +278,7 @@ public class KinkPlateLight
         using (ImRaii.Disabled(!KeyMonitor.CtrlPressed() || !KeyMonitor.ShiftPressed()))
         {
             if (ImGui.InvisibleButton($"ReportKinkPlate##ReportKinkPlate" + userData.UID, CloseButtonSize))
-                _mediator.Publish(new ReportKinkPlateMessage(userData));
+                _mediator.Publish(new OpenReportUIMessage(userData, ReportKind.Profile));
 
         }
         CkGui.AttachToolTip("Report " + displayName + "'s KinkPlate™" +

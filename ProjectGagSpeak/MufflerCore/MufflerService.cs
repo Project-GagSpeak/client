@@ -5,14 +5,14 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagspeakAPI.Util;
 using OtterGui.Extensions;
 using System.Text.RegularExpressions;
-using static FFXIVClientStructs.FFXIV.Client.UI.RaptureAtkHistory.Delegates;
 
 namespace GagSpeak.Services;
 
-/// <summary> Service for managing the gags. </summary>
+/// <summary>
+///     Service for managing the gags.
+/// </summary>
 public class MufflerService : DisposableMediatorSubscriberBase
 {
     private readonly MainConfig _mainConfig;

@@ -23,6 +23,8 @@ using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 using System.Globalization;
 using GagSpeak.Gui.MainWindow;
+using OtterGui;
+using Dalamud.Interface.Utility;
 
 namespace GagSpeak.Utils;
 
@@ -333,46 +335,51 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
 
     protected override void DrawPopupInternal()
     {
-        var shiftHeld = KeyMonitor.ShiftPressed();
-        var ctrlHeld = KeyMonitor.CtrlPressed();
+        var shiftHeld = ImGui.GetIO().KeyShift;
+        var ctrlHeld = ImGui.GetIO().KeyCtrl;
+        var sysOrSelf = LastInteractedMsg?.UID == "System" || LastInteractedMsg?.UID == MainHub.UID;
 
-        if(LastInteractedMsg is null)
+        if (LastInteractedMsg is null)
             return;
 
         CkGui.FontText(LastInteractedMsg.Name, Svc.PluginInterface.UiBuilder.MonoFontHandle);
         ImGui.Separator();
-        if (ImGui.Selectable("View Light KinkPlate") && LastInteractedMsg.UID != "System")
+
+        if (!_kinksters.ContainsKinkster(LastInteractedMsg.UID))
+        {
+            if (CkGui.SelectableEx("Send Kinkster Request", !shiftHeld || string.IsNullOrWhiteSpace(_requestMessage)))
+            {
+                _hub.UserSendKinksterRequest(new(new(LastInteractedMsg.UID), false, _requestNickPref, _requestMessage)).ConfigureAwait(false);
+                ClosePopupAndResetMsg();
+            }
+            CkGui.AttachToolTip(!shiftHeld ? "Must be holding SHIFT to select." : string.IsNullOrWhiteSpace(_requestMessage)
+                ? "Must attach a message to the request!" : $"Sends a Kinkster Request to {LastInteractedMsg.Name}.");
+            
+            ImGui.SetNextItemWidth(ImGui.GetWindowWidth() - 20);
+            ImGui.InputTextWithHint("##attachedPairMsg", "Attached Request Msg..", ref _requestMessage, 150);
+            ImGui.Separator();
+        }
+
+        if (CkGui.SelectableEx("View Light KinkPlate", LastInteractedMsg.UID != "System"))
         {
             Mediator.Publish(new KinkPlateLightCreateOpenMessage(LastInteractedMsg.UserData));
             ClosePopupAndResetMsg();
         }
         CkGui.AttachToolTip($"Opens {LastInteractedMsg.Name}'s Light KinkPlate.");
-
-        ImGui.Separator();
-        using (ImRaii.Disabled(!shiftHeld || string.IsNullOrWhiteSpace(_requestMessage)))
-            if (ImGui.Selectable("Send Kinkster Request"))
-            {
-                _hub.UserSendKinksterRequest(new(new(LastInteractedMsg.UID), false, _requestNickPref, _requestMessage)).ConfigureAwait(false);
-                ClosePopupAndResetMsg();
-            }
-        CkGui.AttachToolTip(!shiftHeld ? "Must be holding SHIFT to select."
-            : string.IsNullOrWhiteSpace(_requestMessage)
-            ? "Must attach a message to the request!"
-                : $"Sends a Kinkster Request to {LastInteractedMsg.Name}.");
-
-        ImGui.SetNextItemWidth(ImGui.GetWindowWidth() - 20);
-        ImGui.InputTextWithHint("##attachedPairMsg", "Attached Request Msg..", ref _requestMessage, 150);
         ImGui.Separator();
 
-        using (ImRaii.Disabled(!ctrlHeld))
-            if (ImGui.Selectable("Hide Messages from Kinkster") && LastInteractedMsg.UID != "System" && LastInteractedMsg.UID != MainHub.UID)
-            {
-                SilenceList.Add(LastInteractedMsg.UID);
-                ClosePopupAndResetMsg();
-            }
-        CkGui.AttachToolTip(ctrlHeld
-            ? $"Hides all messages from {LastInteractedMsg.Name} until plugin reload/restart."
-            : "Must be holding CTRL to select.");
+        if (CkGui.SelectableEx("Hide messages from Kinkster", sysOrSelf))
+        {
+            SilenceList.Add(LastInteractedMsg.UID);
+            ClosePopupAndResetMsg();
+        }
+        CkGui.AttachToolTip(ctrlHeld ? $"Hides all messages from {LastInteractedMsg.Name} until plugin reload/restart." : "Must be holding CTRL to select.");
+
+        if (CkGui.SelectableEx("Report Chat Behavior", !(shiftHeld && ctrlHeld) || sysOrSelf))
+        {
+
+        }
+        CkGui.AttachToolTip(!(shiftHeld && ctrlHeld) ? "Must be holding CTRL + SHIFT to report!" : $"Report {LastInteractedMsg.Name} for their Chat Behavior!");
     }
 
     private void ClosePopupAndResetMsg()
@@ -381,6 +388,34 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
         _requestMessage = string.Empty;
         _requestNickPref = string.Empty;
         ImGui.CloseCurrentPopup();
+    }
+
+    public string GetRecentChatForReport()
+    {
+        var toSave = Messages.TakeLast(100);
+        // Sanitize all messages to remove the chatlog stuff.
+        var sanitizedToSave = new List<GagSpeakChatMessage>();
+        foreach (var msg in toSave)
+        {
+            // Strip any colors appended to the names.
+            var sanitizedMsg = CkRichText.StripDisallowedRichTags(msg.Message, AllowedTypes);
+            // Prepend the message with the timestamp in hour and minutes using 24h timezone.
+            sanitizedMsg = $"[{msg.Timestamp:HH:mm}] {sanitizedMsg}";
+            sanitizedToSave.Add(msg with { Message = sanitizedMsg });
+        }
+        var logToSave = new SerializableChatLog(TimeCreated, sanitizedToSave);
+        
+        try
+        {
+            var json = JsonConvert.SerializeObject(logToSave);
+            var compressed = json.Compress(6);
+            return Convert.ToBase64String(compressed);
+        }
+        catch (Bagagwa ex)
+        {
+            Svc.Logger.Error($"Failed to compress chat log: {ex}");
+            return string.Empty;
+        }
     }
 
     private void SaveChatLog()

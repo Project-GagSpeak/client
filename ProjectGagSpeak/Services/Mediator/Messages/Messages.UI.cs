@@ -51,7 +51,7 @@ public record CloseKinkPlatePopout : MessageBase;
 public record ClearKinkPlateDataMessage(UserData? UserData = null) : MessageBase;
 
 /// <summary> When we wish to create a report on a defined Kinkster's profile. </summary>
-public record ReportKinkPlateMessage(UserData KinksterToReport) : MessageBase;
+public record OpenReportUIMessage(UserData UserToReport, ReportKind Kind) : MessageBase;
 
 /// <summary> This is fired whenever the discord bot wishes to send out an account verification to our client. </summary>
 public record VerificationPopupMessage(VerificationCode VerificationCode) : MessageBase;
