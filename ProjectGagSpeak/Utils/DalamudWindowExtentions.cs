@@ -10,7 +10,7 @@ namespace GagSpeak.Utils;
 /// </summary>
 public class TitleBarButtonBuilder
 {
-    // temporary 
+    // temporary
     private readonly List<TitleBarButton> _buttons = new();
 
     public TitleBarButtonBuilder Add(FAI icon, string tooltip, Action onClick)
@@ -36,6 +36,13 @@ public class TitleBarButtonBuilder
             Click = (msg) =>
             {
                 var type = func.Invoke();
+                if (!service.Exists(type))
+                {
+                    // do nothing, this tutorial doesn't exist just print an error for the devs.
+                    Svc.Logger.Error($"!!!NO TUTORIAL OF {type} ADDED TO DICTIONARY!!!");
+                    return;
+                }
+
                 if (service.IsTutorialActive(type))
                 {
                     service.SkipTutorial(type);
@@ -51,8 +58,14 @@ public class TitleBarButtonBuilder
             ShowTooltip = () =>
             {
                 var type = func.Invoke();
-                CkGui.AttachToolTip(
-                    service.IsTutorialActive(type) ? $"Stop {type} Tutorial" : $"Start {type} tutorial.");
+                if (!service.Exists(type))
+                {
+                    // do nothing, this tutorial doesn't exist just print an error for the devs.
+                    Svc.Logger.Error($"!!!NO TUTORIAL OF {type} ADDED TO DICTIONARY!!!");
+                    return;
+                }
+
+                CkGui.AttachToolTip(service.IsTutorialActive(type) ? $"Stop {type} Tutorial" : $"Start {type} tutorial.");
             },
         });
         return this;
@@ -62,7 +75,7 @@ public class TitleBarButtonBuilder
 }
 
 /// <summary>
-///     Extension methods that help simplify Dalamud window 
+///     Extension methods that help simplify Dalamud window
 ///     setup and operations, to reduce boilerplate code.
 /// </summary>
 public static class DalamudWindowExtentions

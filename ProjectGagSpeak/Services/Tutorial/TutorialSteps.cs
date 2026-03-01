@@ -378,3 +378,8 @@ public enum StepsAchievements
     ProgressDisplay,
     RewardPreview,
 }
+
+public enum StepsModPresets
+{
+    // TODO: NYI
+}

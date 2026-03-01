@@ -54,6 +54,7 @@ namespace GagSpeak.Localization
         public HelpRestraints Restraints { get; set; } = new();
         public HelpRestrictions Restrictions { get; set; } = new();
         public HelpGags Gags { get; set; } = new();
+        public HelpCollar Collar { get; set; } = new();
         public HelpCursedLoot CursedLoot { get; set; } = new();
         public HelpPuppeteer Puppeteer { get; set; } = new();
         public HelpToys Toys { get; set; } = new();
@@ -62,6 +63,7 @@ namespace GagSpeak.Localization
         public HelpAlarms Alarms { get; set; } = new();
         public HelpTriggers Triggers { get; set; } = new();
         public HelpAchievements Achievements { get; set; } = new();
+        public HelpModPresets ModPresets { get; set; } = new();
     }
 
     public class HelpMainUi
@@ -655,6 +657,11 @@ namespace GagSpeak.Localization
         public readonly string Step25DescExtended = Loc.Localize("HelpGags_Step25DescExtended", " ");
     }
 
+    public class HelpCollar
+    {
+
+    }
+
     public class HelpCursedLoot
     {
         //public readonly string Step1Title = Loc.Localize("HelpCursedLoot_Step1Title", "Creating Cursed Items");
@@ -1004,6 +1011,11 @@ namespace GagSpeak.Localization
         public readonly string Step6Title = Loc.Localize("HelpAchievements_Step6Title", "Achievement Rewards");
         public readonly string Step6Desc = Loc.Localize("HelpAchievements_Step6Desc", "Achievement Rewards come in the form of profile cosmetic customizations, in addition to your title, and can be previewed here.");
         public readonly string Step6DescExtended = Loc.Localize("HelpAchievements_Step6DescExtended", "Cosmetic rewards can be used to decorate your profile in the profile editor.");
+    }
+
+    public class HelpModPresets
+    {
+
     }
 
     #endregion Tutorials
