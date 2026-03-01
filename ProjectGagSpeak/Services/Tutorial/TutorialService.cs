@@ -35,6 +35,14 @@ public class TutorialService
     public bool IsTutorialActive(TutorialType type)
         => _tutorials[type].Cache.CurrentStep is not -1;
 
+    /// <summary>
+    /// Checks if a <see cref="TutorialType"/> tutorial has been added to the service's dictionary.
+    /// </summary>
+    /// <param name="type">The <see cref="TutorialType"/> key to look for in the dictionary.</param>
+    /// <returns><see langword="true"/> if the type has been added, otherwise false.</returns>
+    public bool Exists(TutorialType type)
+        => _tutorials.ContainsKey(type);
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void StartTutorial(TutorialType guide)
     {
@@ -86,6 +94,7 @@ public class TutorialService
         { TutorialType.Restraints, Enum.GetValues<StepsRestraints>().Length },
         { TutorialType.Restrictions, Enum.GetValues<StepsRestrictions>().Length },
         { TutorialType.Gags, Enum.GetValues<StepsGags>().Length },
+        { TutorialType.Collar, Enum.GetValues<StepsGags>().Length },
         { TutorialType.CursedLoot, Enum.GetValues<StepsCursedLoot>().Length },
         { TutorialType.Puppeteer, Enum.GetValues<StepsPuppeteer>().Length },
         { TutorialType.Toys, Enum.GetValues<StepsToys>().Length },
@@ -94,6 +103,7 @@ public class TutorialService
         { TutorialType.Triggers, Enum.GetValues<StepsTriggers>().Length },
         { TutorialType.Alarms, Enum.GetValues<StepsAlarms>().Length },
         { TutorialType.Achievements, Enum.GetValues<StepsAchievements>().Length },
+        { TutorialType.ModPresets, Enum.GetValues<StepsModPresets>().Length },
     };
 
     public void InitializeTutorialStrings()
@@ -275,6 +285,15 @@ public class TutorialService
         .AddStep(gagsStr.Step25Title, gagsStr.Step25Desc, gagsStr.Step25DescExtended)
         .EnsureSize(TutorialSizes[TutorialType.Gags]);
 
+        var collarStr = GSLoc.Tutorials.Collar;
+        _tutorials[TutorialType.Collar] = new Tutorial("Collar Tutorial")
+            .WithCache(new GuideCache()
+            {
+                BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
+                HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
+            })
+            .EnsureSize(0);
+
         var cursedLootStr = GSLoc.Tutorials.CursedLoot;
         _tutorials[TutorialType.CursedLoot] = new Tutorial("Cursed Loot Tutorial")
         .WithCache(new GuideCache()
@@ -367,5 +386,14 @@ public class TutorialService
         .AddStep(achievementsStr.Step5Title, achievementsStr.Step5Desc, achievementsStr.Step5DescExtended)
         .AddStep(achievementsStr.Step6Title, achievementsStr.Step6Desc, achievementsStr.Step6DescExtended)
         .EnsureSize(TutorialSizes[TutorialType.Achievements]);
+
+        var modPresetsStr = GSLoc.Tutorials.ModPresets;
+        _tutorials[TutorialType.ModPresets] = new Tutorial("Mod Presets")
+            .WithCache(new GuideCache()
+            {
+                BorderColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
+                HighlightColor = ImGui.GetColorU32(ImGuiColors.TankBlue),
+            })
+            .EnsureSize(0);
     }
 }
