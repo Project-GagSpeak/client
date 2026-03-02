@@ -13,8 +13,9 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
     private Action PostButtonPress;
     private readonly MainHub _mainHub;
     private Kinkster _ref;
+
     public PairRestraintPadlockCombo(ILogger log, MainHub hub, Kinkster k, Action postButtonPress)
-        : base(() => [k.ActiveRestraint], () => [..PadlockEx.GetLocksForPair(k.PairPerms)], log)
+        : base(() => [..PadlockEx.GetLocksForPair(k.PairPerms)], log)
     {
         _mainHub = hub;
         _ref = k;
@@ -23,18 +24,32 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
 
     protected override string ItemName(CharaActiveRestraint item)
         => _ref.LightCache.Restraints.TryGetValue(item.Identifier, out var restraint) ? restraint.Label : "None";
-    protected override bool DisableCondition(int _)
-        => Items[0].Identifier == Guid.Empty;
 
-    protected override async Task<bool> OnLockButtonPress(string label, int _)
+    protected override bool DisableCondition(int _)
+        => ActiveItem.Identifier == Guid.Empty;
+
+    public override void DrawLockCombo(string label, float width, int layerIdx, string buttonTxt, string tooltip, bool isTwoRow)
+    {
+        ActiveItem = _ref.ActiveRestraint;
+        base.DrawLockCombo(label, width, layerIdx, buttonTxt, tooltip, isTwoRow);
+    }
+
+    public override void DrawUnlockCombo(string label, float width, int layerIdx, string buttonTxt, string tooltip)
+    {
+        ActiveItem = _ref.ActiveRestraint;
+        base.DrawUnlockCombo(label, width, layerIdx, buttonTxt, tooltip);
+    }
+
+    protected override async Task OnLockButtonPress(string label, int _)
     {
         // return if we cannot lock.
-        if (!Items[0].CanLock() || !_ref.PairPerms.LockRestraintSets)
-            return false;
+        if (!ActiveItem.CanLock() || !_ref.PairPerms.LockRestraintSets)
+            return;
 
         // we know it was valid, so begin assigning the new data to send off.
         var finalTime = SelectedLock == Padlocks.FiveMinutes
-            ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
+            ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5))
+            : Timer.GetEndTimeUTC();
 
         var dto = new PushKinksterActiveRestraint(_ref.UserData, DataUpdateType.Locked)
         {
@@ -49,27 +64,24 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
         {
             Log.LogDebug($"Failed to perform LockRestraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
             DisplayToastErrorAndReset(result.ErrorCode, SelectedLock, false);
-            return false;
+            return;
         }
-        else
-        {
-            Log.LogDebug($"Locking Restraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
-            ResetSelection();
-            ResetInputs();
-            RefreshStorage(label);
-            PostButtonPress.Invoke();
-            return true;
-        }
+
+        Log.LogDebug($"Locking Restraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
+        ResetSelection();
+        ResetInputs();
+        ActiveItem = new CharaActiveRestraint();
+        PostButtonPress.Invoke();
     }
 
-    protected override async Task<bool> OnUnlockButtonPress(string label, int _)
+    protected override async Task OnUnlockButtonPress(string label, int _)
     {
-        if (!Items[0].CanUnlock() || !_ref.PairPerms.UnlockRestraintSets)
-            return false;
+        if (!ActiveItem.CanUnlock() || !_ref.PairPerms.UnlockRestraintSets)
+            return;
 
         var dto = new PushKinksterActiveRestraint(_ref.UserData, DataUpdateType.Unlocked)
         {
-            Padlock = Items[0].Padlock,
+            Padlock = ActiveItem.Padlock,
             Password = Password,
             PadlockAssigner = MainHub.UID,
         };
@@ -80,19 +92,16 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
             Log.LogDebug($"Failed to perform UnlockRestraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
-            DisplayToastErrorAndReset(result.ErrorCode, Items[0].Padlock, true);
-            return false;
+            DisplayToastErrorAndReset(result.ErrorCode, ActiveItem.Padlock, true);
+            return;
         }
-        else
-        {
-            Log.LogDebug($"Unlocking Restraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
-            ResetSelection();
-            ResetInputs();
-            RefreshStorage(label);
-            SelectedLock = Padlocks.None;
-            PostButtonPress.Invoke();
-            return true;
-        }
+
+        Log.LogDebug($"Unlocking Restraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
+        ResetSelection();
+        ResetInputs();
+        ActiveItem = new CharaActiveRestraint();
+        SelectedLock = Padlocks.None;
+        PostButtonPress.Invoke();
     }
 
     private bool DisplayToastErrorAndReset(GagSpeakApiEc errorCode, Padlocks padlock, bool unlocking)
@@ -148,6 +157,7 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
                 Svc.Logger.Warning($"UNK Padlock Error: {errorCode}.");
                 break;
         }
+
         ResetSelection();
         ResetInputs();
         return false;
