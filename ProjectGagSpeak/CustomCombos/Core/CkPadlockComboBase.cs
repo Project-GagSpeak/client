@@ -113,6 +113,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
                         SelectedLock = item;
                         _closePopup = true;
                     }
+
                     if (item != 0)
                     {
                         ImGui.SameLine(comboWidth - tooltipIconSize.X);
@@ -121,7 +122,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
                     }
                 }
 
-                if(_closePopup)
+                if (_closePopup)
                 {
                     _padlocksList.Clear();
                     _closePopup = false;
@@ -131,7 +132,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
 
         // draw button thing for locking / unlocking.
         ImUtf8.SameLineInner();
-        if(buttonTxt.IsNullOrEmpty())
+        if (buttonTxt.IsNullOrEmpty())
         {
             if (CkGui.IconButton(FAI.Lock, disabled: SelectedLock is Padlocks.None, id: "##" + SelectedLock + "-LockButton"))
                 OnLockButtonPress(label, layerIdx);
@@ -141,6 +142,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
             if (CkGui.IconTextButton(FAI.Lock, "Lock", disabled: SelectedLock is Padlocks.None, id: "##" + SelectedLock + "-LockButton"))
                 OnLockButtonPress(label, layerIdx);
         }
+
         CkGui.AttachToolTip(tooltip);
 
         // on next line show lock fields.
@@ -184,6 +186,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
             if (CkGui.IconTextButton(FAI.Unlock, "Unlock", disabled: lastPadlock is Padlocks.None, id: "##" + label + "-UnlockButton"))
                 OnUnlockButtonPress(label, layerIdx);
         }
+
         CkGui.AttachToolTip(tooltip);
 
         // The special unlock field.
@@ -204,6 +207,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
                 CkGui.AttachToolTip($"--COL--{ActiveItem.Timer.ToGsRemainingTimeFancy()}--COL--", color: ImGuiColors.ParsedPink);
                 ImGui.SameLine(0, -ImGui.GetStyle().FramePadding.X);
             }
+
             CkGui.FramedIconText(FAI.Key, ImGui.GetColorU32(ImGuiCol.TextDisabled));
         }
     }
