@@ -104,8 +104,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
             CkGui.AttachToolTip(IpcCallerCustomize.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
 
             ImGui.SameLine();
-            CkGui.ColorTextBool("Moodles", IpcCallerMoodles.APIAvailable);
-            CkGui.AttachToolTip(IpcCallerMoodles.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
+            CkGui.ColorTextBool("Moodles", IpcCallerLoci.APIAvailable);
+            CkGui.AttachToolTip(IpcCallerLoci.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
 
             ImGui.SameLine();
             CkGui.ColorTextBool("Lifestream", IpcCallerLifestream.APIAvailable);

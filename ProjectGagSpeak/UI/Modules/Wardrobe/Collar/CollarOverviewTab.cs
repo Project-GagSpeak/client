@@ -8,6 +8,7 @@ using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using GagSpeak.Gui.Components;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
@@ -31,7 +32,6 @@ public class CollarOverviewTab : IFancyTab
     private readonly ILogger<CollarOverviewTab> _logger;
     private readonly EquipmentDrawer _equipDrawer;
     private readonly ModPresetDrawer _modDrawer;
-    private readonly MoodleDrawer _moodles;
     private readonly CallbackHandler _visuals;
     private readonly CollarManager _manager;
     private readonly KinksterManager _kinksters;
@@ -44,7 +44,6 @@ public class CollarOverviewTab : IFancyTab
         ILogger<CollarOverviewTab> logger,
         EquipmentDrawer equipDrawer, 
         ModPresetDrawer modDrawer,
-        MoodleDrawer moodleDrawer,
         CallbackHandler visuals,
         CollarManager collar,
         KinksterManager kinksters,
@@ -57,7 +56,6 @@ public class CollarOverviewTab : IFancyTab
         _logger = logger;
         _equipDrawer = equipDrawer;
         _modDrawer = modDrawer;
-        _moodles = moodleDrawer;
         _visuals = visuals;
         _manager = collar;
         _kinksters = kinksters;
@@ -376,16 +374,16 @@ public class CollarOverviewTab : IFancyTab
         ImGui.Spacing();
         CkGui.FramedIconText(FAI.TheaterMasks);
         ImUtf8.SameLineInner();
-        var moodle = _manager.SyncedData!.Moodle;
-        if (moodle.GUID == Guid.Empty)
+        var status = _manager.SyncedData!.StatusInfo;
+        if (status.GUID == Guid.Empty)
         {
             CkGui.ColorText("<No Moodle Set!>", ImGuiColors.DalamudRed);
             return;
         }
 
-        CkRichText.Text(ImGui.GetContentRegionAvail().X - MoodleDrawer.IconSizeFramed.X, _manager.SyncedData!.Moodle.Title);
+        CkRichText.Text(ImGui.GetContentRegionAvail().X - LociIcon.SizeFramed.X, status.Title);
         ImGui.SameLine();
-        MoodleIcon.DrawMoodleIcon(moodle.IconID, moodle.Stacks, MoodleDrawer.IconSizeFramed);
-        GagspeakEx.DrawMoodleStatusTooltip(moodle, MoodleCache.IpcData.StatusList);
+        LociIcon.Draw(status.IconID, status.Stacks, LociIcon.SizeFramed);
+        LociEx.AttachTooltip(status, LociCache.Data);
     }
 }

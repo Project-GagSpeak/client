@@ -21,7 +21,7 @@ public abstract class MoodleComboBase<T> : CkFilterComboCache<T>
         Current = default;
     }
 
-    protected virtual Vector2 IconSize => MoodleIcon.Size * IconScale;
+    protected virtual Vector2 IconSize => LociIcon.Size * IconScale;
 
     /// <summary> The condition that when met, prevents the combo from being interacted. </summary>
     protected abstract bool DisableCondition();

@@ -4,7 +4,7 @@ using GagSpeak.Services.Mediator;
 namespace GagSpeak.Interop;
 
 /// <summary>
-/// The primary manager for all IPC calls.
+///     The primary manager for all IPC calls.
 /// </summary>
 public sealed partial class IpcManager : DisposableMediatorSubscriberBase
 {
@@ -13,7 +13,7 @@ public sealed partial class IpcManager : DisposableMediatorSubscriberBase
     public IpcCallerGlamourer Glamourer { get; }
     public IpcCallerIntiface Intiface { get; }
     public IpcCallerLifestream Lifestream { get; }
-    public IpcCallerMoodles Moodles { get; }
+    public IpcCallerLoci Loci { get; }
     public IpcCallerPenumbra Penumbra { get; }
 
     public IpcManager(ILogger<IpcManager> logger, GagspeakMediator mediator,
@@ -22,7 +22,7 @@ public sealed partial class IpcManager : DisposableMediatorSubscriberBase
         IpcCallerGlamourer glamourer,
         IpcCallerIntiface intiface,
         IpcCallerLifestream lifestream,
-        IpcCallerMoodles moodles,
+        IpcCallerLoci loci,
         IpcCallerPenumbra penumbra
         ) : base(logger, mediator)
     {
@@ -31,7 +31,7 @@ public sealed partial class IpcManager : DisposableMediatorSubscriberBase
         Glamourer = glamourer;
         Intiface = intiface;
         Lifestream = lifestream;
-        Moodles = moodles;
+        Loci = loci;
         Penumbra = penumbra;
 
         // subscribe to the delayed framework update message, which will call upon the periodic API state check.
@@ -47,7 +47,7 @@ public sealed partial class IpcManager : DisposableMediatorSubscriberBase
         Glamourer.CheckAPI();
         Intiface.CheckAPI();
         Lifestream.CheckAPI();
-        Moodles.CheckAPI();
+        Loci.CheckAPI();
         Penumbra.CheckAPI();
         Penumbra.CheckModDirectory();
     }

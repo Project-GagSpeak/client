@@ -1,4 +1,5 @@
 using CkCommons;
+using CkCommons.Textures;
 using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
 using GagSpeak.Gui.Components;
@@ -53,8 +54,8 @@ public class WardrobeUI : WindowMediatorSubscriberBase
     private WardrobeTabs _tabMenu { get; init; }
     private bool ThemePushed = false;
 
-    public static float SelectedRestrictionH() => ImGui.GetFrameHeight() * 2 + MoodleDrawer.IconSize.Y + ImGui.GetStyle().ItemSpacing.Y * 2;
-    public static float SelectedRestraintH() => ImGui.GetFrameHeight() * 3 + MoodleDrawer.IconSize.Y + ImGui.GetStyle().ItemSpacing.Y * 3;
+    public static float SelectedRestrictionH() => ImGui.GetFrameHeight() * 2 + LociIcon.Size.Y + ImGui.GetStyle().ItemSpacing.Y * 2;
+    public static float SelectedRestraintH() => ImGui.GetFrameHeight() * 3 + LociIcon.Size.Y + ImGui.GetStyle().ItemSpacing.Y * 3;
     public static float SelectedOtherH() => ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2;
     private static float RightLength() => 7 * ImGui.GetFrameHeightWithSpacing() + (SelectedRestraintH() / 1.2f);
 

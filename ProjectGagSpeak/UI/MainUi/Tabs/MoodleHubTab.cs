@@ -16,6 +16,7 @@ using GagspeakAPI.Data;
 using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Text;
+using GagSpeak.State.Caches;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -86,11 +87,11 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
             .Push(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
 
         var size = new Vector2(ImGui.GetContentRegionAvail().X, CkStyle.GetFrameRowsHeight(3).AddWinPadY());
-        foreach (var pattern in _shareHub.LatestMoodleResults)
-            DrawMoodleResultBox(pattern, size);
+        foreach (var lociInfo in _shareHub.LatestMoodleResults)
+            DrawMoodleResultBox(lociInfo, size);
     }
 
-    private void DrawMoodleResultBox(ServerMoodleInfo info, Vector2 size)
+    private void DrawMoodleResultBox(ServerLociInfo info, Vector2 size)
     {
         using var _ = ImRaii.Child($"Moodle-{info.Status.GUID}", size, true, WFlags.ChildWindow);
 
@@ -102,7 +103,7 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
         var style = ImGui.GetStyle();
 
         ImGui.Dummy(iconSize);
-        GagspeakEx.DrawMoodleStatusTooltip(info.Status, Enumerable.Empty<MoodlesStatusInfo>());
+        LociEx.AttachTooltip(info.Status, LociCache.Data);
         CkGui.TextFrameAlignedInline(info.Status.Title.StripColorTags());
 
         var buttonW = tryOnButtonSize + LikeButtonSize + iconSize.X + style.ItemInnerSpacing.X * 2;
@@ -110,13 +111,13 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudGrey))
             if (CkGui.IconTextButton(FAI.PersonCircleQuestion, "Try", isInPopup: true))
                 _shareHub.TryOnMoodle(info.Status.GUID);
-        CkGui.AttachToolTip("Try this Moodle on your character to see a preview of it.");
+        CkGui.AttachToolTip("Try this Loci Status on yourself to preview it!");
         
         ImUtf8.SameLineInner();
-        using (ImRaii.PushColor(ImGuiCol.Text, info.HasLikedMoodle ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey))
+        using (ImRaii.PushColor(ImGuiCol.Text, info.HasLiked ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey))
             if (CkGui.IconTextButton(FAI.Heart, info.Likes.ToString(), null, true, UiService.DisableUI))
-                UiService.SetUITask(_shareHub.LikeMoodle(info.Status.GUID));
-        CkGui.AttachToolTip(info.HasLikedMoodle ? "Remove Like from this pattern." : "Like this pattern!");
+                UiService.SetUITask(_shareHub.LikeLociData(info.Status.GUID));
+        CkGui.AttachToolTip(info.HasLiked ? "Remove Like from this status." : "Like this status!");
 
         ImUtf8.SameLineInner();
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudGrey))
@@ -149,7 +150,7 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
         if (info.Status.IconID != 0)
         {
             ImGui.SetCursorPos(imagePos);
-            MoodleIcon.DrawMoodleIcon(info.Status.IconID, info.Status.Stacks, MoodleDrawer.IconSize);
+            LociIcon.Draw(info.Status.IconID, info.Status.Stacks, LociIcon.Size);
         }
 
         void DrawMoodleEffects()
@@ -162,8 +163,6 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
             MoodleEffect(FAI.Eraser, info.Status.Modifiers.Has(Modifiers.CanDispel), "Can be dispelled", "Cannot be dispelled");
             ImUtf8.SameLineInner(); 
             MoodleEffect(FAI.Infinity, info.Status.ExpireTicks < 0, "Permanent Moodle", "Temporary Moodle");
-            ImUtf8.SameLineInner(); 
-            MoodleEffect(FAI.MapPin, info.Status.Permanent, "Is Sticky", "Not Sticky");
             ImUtf8.SameLineInner();
             MoodleEffect(FAI.Magic, !string.IsNullOrEmpty(info.Status.CustomVFXPath), "Has custom VFX", "No custom VFX");
             ImUtf8.SameLineInner();
@@ -173,7 +172,7 @@ public class MoodleHubTab : DisposableMediatorSubscriberBase
 
         void MoodleEffect(FAI icon, bool state, string tooltipTrue, string tooltipFalse)
         {
-            CkGui.BooleanToColoredIcon(state, false, icon, icon, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+            CkGui.BoolIcon(state, false, icon, icon, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
             CkGui.AttachToolTip(state ? tooltipTrue : tooltipFalse);
         }
     }

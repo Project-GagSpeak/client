@@ -9,6 +9,7 @@ using GagSpeak.Gui.Components;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
@@ -26,7 +27,6 @@ namespace GagSpeak.Gui;
 public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 {
     private readonly ClientData _clientData;
-    private readonly MoodleDrawer _moodleDrawer;
     private readonly KinksterManager _pairs;
     private readonly RestraintManager _restraints;
     private readonly RestrictionManager _restrictions;
@@ -41,7 +41,6 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         ILogger<DebugPersonalDataUI> logger,
         GagspeakMediator mediator,
         ClientData clientData,
-        MoodleDrawer moodleDrawer,
         KinksterManager pairs,
         RestraintManager restraints,
         RestrictionManager restrictions,
@@ -55,7 +54,6 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         : base(logger, mediator, "Kinkster Data Debugger")
     {
         _clientData = clientData;
-        _moodleDrawer = moodleDrawer;
         _pairs = pairs;
         _restraints = restraints;
         _restrictions = restrictions;
@@ -187,10 +185,10 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         if (!node) return;
 
         CkGui.TextFrameAligned("IsVerified:");
-        CkGui.BooleanToColoredIcon(responce.Reputation.IsVerified);
+        CkGui.BoolIcon(responce.Reputation.IsVerified);
 
         CkGui.TextFrameAligned("IsBanned:");
-        CkGui.BooleanToColoredIcon(responce.Reputation.IsBanned);
+        CkGui.BoolIcon(responce.Reputation.IsBanned);
 
         CkGui.FramedIconText(FAI.ExclamationTriangle, ImGuiColors.DalamudYellow);
         CkGui.TextFrameAlignedInline("WarningStrikes:");
@@ -207,19 +205,19 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 
         ImGuiUtil.DrawTableColumn("Profile Viewing");
         ImGui.TableNextColumn();
-        CkGui.BooleanToColoredIcon(responce.Reputation.ProfileViewing, false);
+        CkGui.BoolIcon(responce.Reputation.ProfileViewing, false);
         ImGuiUtil.DrawTableColumn(responce.Reputation.ProfileViewStrikes.ToString());
         ImGui.TableNextRow();
 
         ImGuiUtil.DrawTableColumn("Profile Editing");
         ImGui.TableNextColumn();
-        CkGui.BooleanToColoredIcon(responce.Reputation.ProfileEditing, false);
+        CkGui.BoolIcon(responce.Reputation.ProfileEditing, false);
         ImGuiUtil.DrawTableColumn(responce.Reputation.ProfileEditStrikes.ToString());
         ImGui.TableNextRow();
 
         ImGuiUtil.DrawTableColumn("Chat Usage");
         ImGui.TableNextColumn();
-        CkGui.BooleanToColoredIcon(responce.Reputation.ChatUsage, false);
+        CkGui.BoolIcon(responce.Reputation.ChatUsage, false);
         ImGuiUtil.DrawTableColumn(responce.Reputation.ChatStrikes.ToString());
     }
 
@@ -377,15 +375,15 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawKinksterPermRowBool("All Requests", k.OwnPerms.PuppetPerms.HasAny(PuppetPerms.All), k.PairPerms.PuppetPerms.HasAny(PuppetPerms.All));
         ImGui.TableNextRow();
 
-        DrawKinksterPermRowBool("Positive Moodles", k.OwnPerms.MoodleAccess.HasAny(MoodleAccess.Positive), k.PairPerms.MoodleAccess.HasAny(MoodleAccess.Positive));
-        DrawKinksterPermRowBool("Negative Moodles", k.OwnPerms.MoodleAccess.HasAny(MoodleAccess.Negative), k.PairPerms.MoodleAccess.HasAny(MoodleAccess.Negative));
-        DrawKinksterPermRowBool("Special Moodles", k.OwnPerms.MoodleAccess.HasAny(MoodleAccess.Special), k.PairPerms.MoodleAccess.HasAny(MoodleAccess.Special));
-        DrawKinksterPermRowBool("Apply Own Moodles", k.OwnPerms.MoodleAccess.HasAny(MoodleAccess.AllowOther), k.PairPerms.MoodleAccess.HasAny(MoodleAccess.AllowOther));
-        DrawKinksterPermRowBool("Apply Your Moodles", k.OwnPerms.MoodleAccess.HasAny(MoodleAccess.AllowOwn), k.PairPerms.MoodleAccess.HasAny(MoodleAccess.AllowOwn));
-        DrawKinksterPermRowString("Max Moodle Time", k.OwnPerms.MaxMoodleTime.ToString(), k.PairPerms.MaxMoodleTime.ToString());
-        DrawKinksterPermRowBool("Permanent Moodles", k.OwnPerms.MoodleAccess.HasAny(MoodleAccess.Permanent), k.PairPerms.MoodleAccess.HasAny(MoodleAccess.Permanent));
-        DrawKinksterPermRowBool("Removing Applied Moodles", k.OwnPerms.MoodleAccess.HasAny(MoodleAccess.RemoveApplied), k.PairPerms.MoodleAccess.HasAny(MoodleAccess.RemoveApplied));
-        DrawKinksterPermRowBool("Removing Any Moodles", k.OwnPerms.MoodleAccess.HasAny(MoodleAccess.RemoveAny), k.PairPerms.MoodleAccess.HasAny(MoodleAccess.RemoveAny));
+        DrawKinksterPermRowBool("Positive Statuses", k.OwnPerms.LociAccess.HasAny(LociAccess.Positive), k.PairPerms.LociAccess.HasAny(LociAccess.Positive));
+        DrawKinksterPermRowBool("Negative Statuses", k.OwnPerms.LociAccess.HasAny(LociAccess.Negative), k.PairPerms.LociAccess.HasAny(LociAccess.Negative));
+        DrawKinksterPermRowBool("Special Statuses", k.OwnPerms.LociAccess.HasAny(LociAccess.Special), k.PairPerms.LociAccess.HasAny(LociAccess.Special));
+        DrawKinksterPermRowBool("Apply Own LociData", k.OwnPerms.LociAccess.HasAny(LociAccess.AllowOther), k.PairPerms.LociAccess.HasAny(LociAccess.AllowOther));
+        DrawKinksterPermRowBool("Apply Your LociData", k.OwnPerms.LociAccess.HasAny(LociAccess.AllowOwn), k.PairPerms.LociAccess.HasAny(LociAccess.AllowOwn));
+        DrawKinksterPermRowString("Max Status Time", k.OwnPerms.MaxLociTime.ToString(), k.PairPerms.MaxLociTime.ToString());
+        DrawKinksterPermRowBool("Permanent Statuses", k.OwnPerms.LociAccess.HasAny(LociAccess.Permanent), k.PairPerms.LociAccess.HasAny(LociAccess.Permanent));
+        DrawKinksterPermRowBool("Removing Applied Statuses", k.OwnPerms.LociAccess.HasAny(LociAccess.RemoveApplied), k.PairPerms.LociAccess.HasAny(LociAccess.RemoveApplied));
+        DrawKinksterPermRowBool("Removing Any Status", k.OwnPerms.LociAccess.HasAny(LociAccess.RemoveAny), k.PairPerms.LociAccess.HasAny(LociAccess.RemoveAny));
         ImGui.TableNextRow();
 
         DrawKinksterPermRowBool("Can Execute Patterns", k.OwnPerms.ExecutePatterns, k.PairPerms.ExecutePatterns);
@@ -486,16 +484,16 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         ImGui.TableNextRow();
 
         // Moodles
-        DrawKinksterPermRowBool("Moodles", k.OwnPermAccess.MoodlesEnabledAllowed, k.PairPermAccess.MoodlesEnabledAllowed);
-        DrawKinksterPermRowBool("Allow Positive Moodles", k.OwnPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.Positive), k.PairPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.Positive));
-        DrawKinksterPermRowBool("Allow Negative Moodles", k.OwnPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.Negative), k.PairPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.Negative));
-        DrawKinksterPermRowBool("Allow Special Moodles", k.OwnPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.Special), k.PairPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.Special));
-        DrawKinksterPermRowBool("Apply Own Moodles", k.OwnPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.AllowOther), k.PairPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.AllowOther));
-        DrawKinksterPermRowBool("Apply Your Moodles", k.OwnPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.AllowOwn), k.PairPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.AllowOwn));
-        DrawKinksterPermRowString("Max Moodle Time", k.OwnPermAccess.MaxMoodleTimeAllowed.ToString(), k.PairPermAccess.MaxMoodleTimeAllowed.ToString());
-        DrawKinksterPermRowBool("Allow Permanent Moodles", k.OwnPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.Permanent), k.PairPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.Permanent));
-        DrawKinksterPermRowBool("Allow Removing Applied Moodles", k.OwnPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.RemoveApplied), k.PairPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.RemoveApplied));
-        DrawKinksterPermRowBool("Allow Removing Any Moodles", k.OwnPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.RemoveAny), k.PairPermAccess.MoodleAccessAllowed.HasAny(MoodleAccess.RemoveAny));
+        DrawKinksterPermRowBool("Loci", k.OwnPermAccess.LociEnabledAllowed, k.PairPermAccess.LociEnabledAllowed);
+        DrawKinksterPermRowBool("Allow Positive Statuses", k.OwnPermAccess.LociAccessAllowed.HasAny(LociAccess.Positive), k.PairPermAccess.LociAccessAllowed.HasAny(LociAccess.Positive));
+        DrawKinksterPermRowBool("Allow Negative Statuses", k.OwnPermAccess.LociAccessAllowed.HasAny(LociAccess.Negative), k.PairPermAccess.LociAccessAllowed.HasAny(LociAccess.Negative));
+        DrawKinksterPermRowBool("Allow Special Statuses", k.OwnPermAccess.LociAccessAllowed.HasAny(LociAccess.Special), k.PairPermAccess.LociAccessAllowed.HasAny(LociAccess.Special));
+        DrawKinksterPermRowBool("Apply Own LociData", k.OwnPermAccess.LociAccessAllowed.HasAny(LociAccess.AllowOther), k.PairPermAccess.LociAccessAllowed.HasAny(LociAccess.AllowOther));
+        DrawKinksterPermRowBool("Apply Your LociData", k.OwnPermAccess.LociAccessAllowed.HasAny(LociAccess.AllowOwn), k.PairPermAccess.LociAccessAllowed.HasAny(LociAccess.AllowOwn));
+        DrawKinksterPermRowString("Max Status Time", k.OwnPermAccess.MaxLociTimeAllowed.ToString(), k.PairPermAccess.MaxLociTimeAllowed.ToString());
+        DrawKinksterPermRowBool("Allow Permanent Statuses", k.OwnPermAccess.LociAccessAllowed.HasAny(LociAccess.Permanent), k.PairPermAccess.LociAccessAllowed.HasAny(LociAccess.Permanent));
+        DrawKinksterPermRowBool("Allow Removing Applied Statuses", k.OwnPermAccess.LociAccessAllowed.HasAny(LociAccess.RemoveApplied), k.PairPermAccess.LociAccessAllowed.HasAny(LociAccess.RemoveApplied));
+        DrawKinksterPermRowBool("Allow Removing Any Status", k.OwnPermAccess.LociAccessAllowed.HasAny(LociAccess.RemoveAny), k.PairPermAccess.LociAccessAllowed.HasAny(LociAccess.RemoveAny));
         ImGui.TableNextRow();
 
         // Toybox
@@ -511,17 +509,17 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         using var nodeMain = ImRaii.TreeNode($"{dispName}'s IPC Data");
         if (!nodeMain) return;
 
-        CkGui.ColorTextCentered($"Active Statuses: {kinkster.MoodleData.DataInfo.Count()}", ImGuiColors.ParsedGold);
-        _moodleDrawer.ShowStatusInfosFramed($"DataInfo-{dispName}", kinkster.MoodleData.DataInfoList, ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), MoodleDrawer.IconSizeFramed);
+        CkGui.ColorTextCentered($"Active Statuses: {kinkster.LociData.DataInfo.Count()}", ImGuiColors.ParsedGold);
+        LociDrawer.DrawTuplesFramed($"DataInfo-{dispName}", kinkster.LociData.DataInfoList, ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), LociIcon.SizeFramed);
 
 
-        CkGui.ColorTextCentered($"Stored Statuses: {kinkster.MoodleData.StatusList.Count()}", ImGuiColors.ParsedGold);
-        _moodleDrawer.ShowStatusInfosFramed($"StatusList-{dispName}", kinkster.MoodleData.StatusList, ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), MoodleDrawer.IconSizeFramed, 2);
+        CkGui.ColorTextCentered($"Stored Statuses: {kinkster.LociData.StatusList.Count()}", ImGuiColors.ParsedGold);
+        LociDrawer.DrawTuplesFramed($"StatusList-{dispName}", kinkster.LociData.StatusList, ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), LociIcon.SizeFramed, 2);
 
-        DrawMoodlePresetTable(dispName, kinkster.MoodleData);
+        DrawMoodlePresetTable(dispName, kinkster.LociData);
     }
 
-    private void DrawMoodlePresetTable(string uid, MoodleData data)
+    private void DrawMoodlePresetTable(string uid, CachedLociData data)
     {
         using var nodeMain = ImRaii.TreeNode($"{uid}'s Stored Preset Data");
         if (!nodeMain) return;
@@ -538,7 +536,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
                 ImGui.Text(preset.Title);
                 ImGui.TableNextColumn();
                 var statuses = preset.Statuses.Select(s => data.Statuses.GetValueOrDefault(s)).Where(x => x.GUID != Guid.Empty);
-                _moodleDrawer.DrawStatusInfos(statuses.ToList(), MoodleDrawer.IconSizeFramed);
+                LociDrawer.DrawTuples(statuses.ToList(), LociIcon.SizeFramed);
             }
 
         }
@@ -695,12 +693,12 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 
             ImGuiUtil.DrawTableColumn("Moodle");
             ImGui.TableNextColumn();
-            if (collar.Moodle.GUID == Guid.Empty)
+            if (collar.StatusInfo.GUID == Guid.Empty)
                 ImGui.TextUnformatted("None");
             else
             {
-                MoodleIcon.DrawMoodleIcon(collar.Moodle.IconID, collar.Moodle.Stacks, MoodleDrawer.IconSizeFramed);
-                GagspeakEx.DrawMoodleStatusTooltip(collar.Moodle, Enumerable.Empty<MoodlesStatusInfo>());
+                LociIcon.Draw(collar.StatusInfo.IconID, collar.StatusInfo.Stacks, LociIcon.SizeFramed);
+                LociEx.AttachTooltip(collar.StatusInfo, LociCache.Data);
             }
             ImGui.TableNextRow();
 
@@ -721,28 +719,28 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 
             ImGuiUtil.DrawTableColumn(uid);
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(collar.CollaredAccess.HasAny(CollarAccess.Visuals), false);
+            CkGui.BoolIcon(collar.CollaredAccess.HasAny(CollarAccess.Visuals), false);
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(collar.CollaredAccess.HasAny(CollarAccess.Dyes), false);
+            CkGui.BoolIcon(collar.CollaredAccess.HasAny(CollarAccess.Dyes), false);
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(collar.CollaredAccess.HasAny(CollarAccess.Moodle), false);
+            CkGui.BoolIcon(collar.CollaredAccess.HasAny(CollarAccess.StatusInfo), false);
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(collar.CollaredAccess.HasAny(CollarAccess.Writing), false);
+            CkGui.BoolIcon(collar.CollaredAccess.HasAny(CollarAccess.Writing), false);
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(collar.CollaredAccess.HasAny(CollarAccess.GlamMod), false);
+            CkGui.BoolIcon(collar.CollaredAccess.HasAny(CollarAccess.GlamMod), false);
             ImGui.TableNextRow();
 
             ImGuiUtil.DrawTableColumn("Owners");
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(collar.OwnerAccess.HasAny(CollarAccess.Visuals), false);
+            CkGui.BoolIcon(collar.OwnerAccess.HasAny(CollarAccess.Visuals), false);
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(collar.OwnerAccess.HasAny(CollarAccess.Dyes), false);
+            CkGui.BoolIcon(collar.OwnerAccess.HasAny(CollarAccess.Dyes), false);
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(collar.OwnerAccess.HasAny(CollarAccess.Moodle), false);
+            CkGui.BoolIcon(collar.OwnerAccess.HasAny(CollarAccess.StatusInfo), false);
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(collar.OwnerAccess.HasAny(CollarAccess.Writing), false);
+            CkGui.BoolIcon(collar.OwnerAccess.HasAny(CollarAccess.Writing), false);
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(collar.OwnerAccess.HasAny(CollarAccess.GlamMod), false);
+            CkGui.BoolIcon(collar.OwnerAccess.HasAny(CollarAccess.GlamMod), false);
             ImGui.TableNextRow();
         }
     }
@@ -795,7 +793,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         if (!nodeMain) return;
 
         CkGui.TextFrameAligned("Has Your Name Pair Name:");
-        CkGui.BooleanToColoredIcon(k.IsListeningToClient); 
+        CkGui.BoolIcon(k.IsListeningToClient); 
 
         if (k.SharedAliases.Count is 0)
         {
@@ -935,13 +933,13 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
             ImGuiUtil.DrawTableColumn("UpperBound");
             ImGuiUtil.DrawTableColumn(restrain.UpperBound.ToString());
         }
-        else if (action is MoodleAction moodle)
+        else if (action is LociDataAction moodle)
         {
             ImGuiUtil.DrawTableColumn("Type:");
             ImGuiUtil.DrawTableColumn("MoodleAction");
             ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("MoodleItem");
-            ImGuiUtil.DrawTableColumn(moodle.MoodleItem.Id.ToString());
+            ImGuiUtil.DrawTableColumn(moodle.LociItem.Id.ToString());
             // MoodleItem
         }
         else if (action is PiShockAction shock)

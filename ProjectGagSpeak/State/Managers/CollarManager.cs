@@ -139,7 +139,7 @@ public sealed class CollarManager : IHybridSavable
         data.Visuals = dto.NewData.Visuals;
         data.Dye1 = dto.NewData.Dye1;
         data.Dye2 = dto.NewData.Dye2;
-        data.Moodle = dto.NewData.Moodle;
+        data.StatusInfo = dto.NewData.StatusInfo;
         data.Writing = dto.NewData.Writing;
         data.CollaredAccess = dto.NewData.CollaredAccess;
         data.OwnerAccess = dto.NewData.OwnerAccess;
@@ -169,8 +169,8 @@ public sealed class CollarManager : IHybridSavable
                 data.Dye1 = newData.Dye1;
                 data.Dye2 = newData.Dye2;
                 break;
-            case DataUpdateType.CollarMoodleChange:
-                data.Moodle = newData.Moodle;
+            case DataUpdateType.CollarLociDataChange:
+                data.StatusInfo = newData.StatusInfo;
                 break;
             case DataUpdateType.CollarWritingChange:
                 data.Writing = newData.Writing;

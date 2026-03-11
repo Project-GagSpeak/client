@@ -31,7 +31,7 @@ public partial class SidePanelPair
     }
 
     // Moodle Variant
-    private void ClientPermRow(Kinkster kinkster, string dispName, float width, KPID perm, MoodleAccess current, MoodleAccess canEdit, MoodleAccess editFlag)
+    private void ClientPermRow(Kinkster kinkster, string dispName, float width, KPID perm, LociAccess current, LociAccess canEdit, LociAccess editFlag)
     {
         var isFlagSet = (current & editFlag) == editFlag;
         ClientRowEnum(kinkster, dispName, width, perm, isFlagSet, canEdit.HasAny(editFlag), () => current ^ editFlag, () => canEdit ^ editFlag);
@@ -364,7 +364,7 @@ public partial class SidePanelPair
         KinksterRowCommon(kinkster, dispName, width, perm, isFlagSet, canEdit.HasAny(editFlag), () => current ^ editFlag);
     }
 
-    private void KinksterPermRow(Kinkster kinkster, string dispName, float width, KPID perm, MoodleAccess current, MoodleAccess canEdit, MoodleAccess editFlag)
+    private void KinksterPermRow(Kinkster kinkster, string dispName, float width, KPID perm, LociAccess current, LociAccess canEdit, LociAccess editFlag)
     {
         var isFlagSet = (current & editFlag) == editFlag;
         KinksterRowCommon(kinkster, dispName, width, perm, isFlagSet, canEdit.HasAny(editFlag), () => current ^ editFlag);
@@ -395,7 +395,7 @@ public partial class SidePanelPair
         CkGui.AttachToolTip($"The Maximum Time {dispName} can be locked for.");
 
         ImGui.SameLine(width - ImGui.GetFrameHeight());
-        CkGui.BooleanToColoredIcon(canEdit, false, FAI.Pen, FAI.Pen);
+        CkGui.BoolIcon(canEdit, false, FAI.Pen, FAI.Pen);
         CkGui.AttachToolTip(canEdit ? $"{dispName} allows you to change this." : $"Only {dispName} can update this permission.");
     }
 
@@ -432,7 +432,7 @@ public partial class SidePanelPair
             });
         }
         ImUtf8.SameLineInner();
-        CkGui.BooleanToColoredIcon(canEdit, false, FAI.Pen, FAI.Pen);
+        CkGui.BoolIcon(canEdit, false, FAI.Pen, FAI.Pen);
         CkGui.AttachToolTip(dispName + (canEdit
             ? " allows you to change this permission at will."
             : " is preventing you from changing this permission. Only they can update it."));

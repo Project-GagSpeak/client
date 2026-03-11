@@ -32,7 +32,7 @@ public class WhitelistDrawSystem : DynamicDrawSystem<Kinkster>, IMediatorSubscri
         LoadData();
 
         Mediator.Subscribe<FolderUpdateKinkster>(this, _ => { lock (_folderUpdateLock) UpdateFolders(); });
-        Mediator.Subscribe<KinksterPlayerRendered>(this, _ => { lock (_folderUpdateLock) UpdateFolder(Constants.FolderTagVisible); });
+        Mediator.Subscribe<KinksterRendered>(this, _ => { lock (_folderUpdateLock) UpdateFolder(Constants.FolderTagVisible); });
         Mediator.Subscribe<ConnectedMessage>(this, _ => { lock (_folderUpdateLock) UpdateFolders(); });
 
         // Subscribe to the changes (which is to change very, very soon, with overrides.

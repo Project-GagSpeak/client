@@ -309,7 +309,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
         InvokableActionType.Gag => true,
         InvokableActionType.Restriction => true,
         InvokableActionType.Restraint => true,
-        InvokableActionType.Moodle => false,
+        InvokableActionType.LociItem => false,
         InvokableActionType.ShockCollar => false,
         InvokableActionType.SexToy => false,
         _ => false

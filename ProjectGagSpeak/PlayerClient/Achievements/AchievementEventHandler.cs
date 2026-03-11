@@ -90,7 +90,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         Mediator.Subscribe<RestraintStateChanged>(this, _ => OnRestraintStateChanged(_.State, _.Data, _.Enactor, _.Target));
 
         Mediator.Subscribe<PlayerLatestActiveItems>(this, (msg) => OnCharaOnlineCleanupForLatest(msg.User, msg.GagsInfo, msg.RestrictionsInfo, msg.RestraintInfo));
-        Mediator.Subscribe<KinksterPlayerRendered>(this, _ => OnPairVisible());
+        Mediator.Subscribe<KinksterRendered>(this, _ => OnPairVisible());
         Mediator.Subscribe<CommendationsIncreasedMessage>(this, (msg) => OnCommendationsGiven(msg.amount));
 
         Mediator.Subscribe<EmoteDetected>(this, _ => OnEmoteExecuted(_.ID, _.CallerAddr, _.TargetAddr));

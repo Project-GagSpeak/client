@@ -2,6 +2,7 @@ using CkCommons;
 using CkCommons.Classes;
 using CkCommons.Gui;
 using CkCommons.Raii;
+using CkCommons.Textures;
 using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
@@ -14,7 +15,6 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using OtterGui.Text;
@@ -26,7 +26,6 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
 {
     private readonly RestraintSetFileSelector _selector;
     private readonly ActiveItemsDrawer _activeItemDrawer;
-    private readonly MoodleDrawer _moodleDrawer;
     private readonly AttributeDrawer _attributeDrawer;
     private readonly RestraintManager _manager;
     private readonly UiThumbnailService _thumbnails;
@@ -39,7 +38,6 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
         GagspeakMediator mediator,
         RestraintSetFileSelector selector,
         ActiveItemsDrawer activeDrawer,
-        MoodleDrawer moodleDrawer,
         AttributeDrawer attributeDrawer,
         RestraintManager manager,
         RestraintEditorInfo editorInfo,
@@ -50,12 +48,12 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
         CallbackHandler visuals,
         UiThumbnailService thumbnails,
         SelfBondageService selfBondage,
-        TutorialService guides) : base(logger, mediator)
+        TutorialService guides)
+        : base(logger, mediator)
     {
         _selector = selector;
         _thumbnails = thumbnails;
         _activeItemDrawer = activeDrawer;
-        _moodleDrawer = moodleDrawer;
         _attributeDrawer = attributeDrawer;
         _manager = manager;
         _selfBondage = selfBondage;
@@ -144,7 +142,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
 
     private void DrawSelectedItemInfo(CkHeader.DrawRegion drawRegion, float rounding)
     {
-        var height = ImGui.GetFrameHeightWithSpacing() * 2 + MoodleDrawer.IconSize.Y;
+        var height = ImGui.GetFrameHeightWithSpacing() * 2 + LociIcon.Size.Y;
         var region = new Vector2(drawRegion.Size.X, height);
         var notSelected = _selector.Selected is null;
         var isActive = !notSelected && _selector.Selected!.Equals(_manager.AppliedRestraint!);
@@ -166,7 +164,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
             // 1st row.
             using (CkRaii.Group(CkCol.CurvedHeaderFade.Uint()))
             {
-                CkGui.BooleanToColoredIcon(_selector.Selected!.IsEnabled, false);
+                CkGui.BoolIcon(_selector.Selected!.IsEnabled, false);
                 CkGui.TextFrameAlignedInline($"Visuals  ");
             }
             if (!isActive && ImGui.IsItemHovered() && ImGui.IsItemClicked())
@@ -182,7 +180,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
             DrawAttributeRow();
             // 3rd row
             var maxWidth = drawRegion.Size.X - imgSize.X - ImGui.GetStyle().WindowPadding.X * 2;
-            _moodleDrawer.ShowStatusIcons(_selector.Selected!.GetAllMoodles(), maxWidth, MoodleDrawer.IconSize, 1);
+            LociDrawer.DrawIcons(_selector.Selected!.GetAllMoodles(), maxWidth, LociIcon.Size, 1);
         }
 
         // Right side image

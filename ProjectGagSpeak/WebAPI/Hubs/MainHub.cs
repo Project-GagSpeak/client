@@ -1,10 +1,8 @@
 using CkCommons;
 using GagSpeak.Interop;
 using GagSpeak.Kinksters;
-using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
@@ -36,8 +34,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     private readonly RequestsManager _requests;
     private readonly CollarManager _collarManager;
 
-    private readonly IpcCallerMoodles _moodles;
-    private readonly IpcProvider _ipcProvider;
+    private readonly IpcCallerLoci _loci;
 
     private readonly ClientDataListener _clientDatListener;
     private readonly CallbackHandler _callbackHandler;
@@ -72,8 +69,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         KinksterManager kinksters,
         RequestsManager requests,
         CollarManager collarManager,
-        IpcCallerMoodles moodles,
-        IpcProvider ipcProvider,
+        IpcCallerLoci loci,
         ClientDataListener clientDatListener,
         CallbackHandler callbackHandler,
         ToyboxStateListener toybox,
@@ -89,9 +85,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         _kinksters = kinksters;
         _requests = requests;
         _collarManager = collarManager;
-        _moodles = moodles;
-        _ipcProvider = ipcProvider;
-
+        _loci = loci;
         _clientDatListener = clientDatListener;
         _callbackHandler = callbackHandler;
         _toyboxListener = toybox;
@@ -227,16 +221,15 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         OnAddCollarRequest(dto => _ = Callback_AddCollarRequest(dto));
         OnRemoveCollarRequest(dto => _ = Callback_RemoveCollarRequest(dto));
 
-        OnMoodleDataUpdated(dto => _ = Callback_MoodleDataUpdated(dto));
-        OnMoodleSMUpdated(dto => _ = Callback_MoodleSMUpdated(dto));
-        OnMoodleStatusesUpdate(dto => _ = Callback_MoodleStatusesUpdate(dto));
-        OnMoodlePresetsUpdate(dto => _ = Callback_MoodlePresetsUpdate(dto));
-        OnMoodleStatusModified(dto => _ = Callback_MoodleStatusModified(dto));
-        OnMoodlePresetModified(dto => _ = Callback_MoodlePresetModified(dto));
-        OnApplyMoodlesByGuid(dto => _ = Callback_ApplyMoodlesByGuid(dto));
-        OnApplyMoodlesByStatus(dto => _ = Callback_ApplyMoodlesByStatus(dto));
-        OnRemoveMoodles(dto => _ = Callback_RemoveMoodles(dto));
-        OnClearMoodles(dto => _ = Callback_ClearMoodles(dto));
+        OnLociDataUpdated(dto => _ = Callback_LociDataUpdated(dto));
+        OnLociStatusesUpdate(dto => _ = Callback_LociStatusesUpdate(dto));
+        OnLociPresetsUpdate(dto => _ = Callback_LociPresetsUpdate(dto));
+        OnLociStatusModified(dto => _ = Callback_LociStatusModified(dto));
+        OnLociPresetModified(dto => _ = Callback_LociPresetModified(dto));
+        OnLociApplyDataById(dto => _ = Callback_LociApplyDataById(dto));
+        OnLociApplyStatus(dto => _ = Callback_LociApplyStatus(dto));
+        OnLociRemoveData(dto => _ = Callback_LociRemoveData(dto));
+        OnLociClearData(dto => _ = Callback_LociClearData(dto));
 
         OnBulkChangeGlobal(dto => _ = Callback_BulkChangeGlobal(dto));
         OnBulkChangeUnique(dto => _ = Callback_BulkChangeUnique(dto));

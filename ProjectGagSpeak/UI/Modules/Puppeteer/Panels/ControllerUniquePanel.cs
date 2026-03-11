@@ -105,7 +105,7 @@
 //            return;
 
 //        foreach (var aliasItem in _filteredItems.ToList())
-//            _aliasDrawer.DrawAliasTrigger(aliasItem, SelectedKinkster.MoodleData, out bool _, false);
+//            _aliasDrawer.DrawAliasTrigger(aliasItem, SelectedKinkster.LociData, out bool _, false);
 //    }
 
 //    private void DrawPermsAndExamples(CkHeader.DrawRegion region)

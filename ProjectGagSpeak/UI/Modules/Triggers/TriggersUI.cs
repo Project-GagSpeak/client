@@ -119,7 +119,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
         if (_selector.Selected is not { } trigger)
             return;
 
-        CkGui.BooleanToColoredIcon(trigger.Enabled, false);
+        CkGui.BoolIcon(trigger.Enabled, false);
         CkGui.AttachToolTip("If this alias is enabled.--SEP----COL--Click to toggle!--COL--", ImGuiColors.ParsedPink);
         if (!UiService.DisableUI && ImGui.IsItemClicked())
         {
@@ -175,7 +175,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
             case GagAction ga: _reactions.DrawGag(ga); break;
             case RestrictionAction rsa: _reactions.DrawRestriction(rsa); break;
             case RestraintAction rta: _reactions.DrawRestraint(rta); break;
-            case MoodleAction ma: _reactions.DrawMoodle(ma); break;
+            case LociDataAction ma: _reactions.DrawLociItem(ma); break;
             case PiShockAction ps: _reactions.DrawShock(ps); break;
             case SexToyAction sta: _reactions.DrawToy(sta); break;
         }
@@ -263,7 +263,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
                     InvokableActionType.Gag => new GagAction(),
                     InvokableActionType.Restriction => new RestrictionAction(),
                     InvokableActionType.Restraint => new RestraintAction(),
-                    InvokableActionType.Moodle => new MoodleAction(),
+                    InvokableActionType.LociItem => new LociDataAction(),
                     InvokableActionType.ShockCollar => new PiShockAction(),
                     _ => new SexToyAction(),
                 };
@@ -277,7 +277,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
             case GagAction ga: _reactions.DrawGagEditor(ga); break;
             case RestrictionAction rsa: _reactions.DrawRestrictionEditor(rsa); break;
             case RestraintAction rta: _reactions.DrawRestraintEditor(rta); break;
-            case MoodleAction ma: _reactions.DrawMoodleEditor(ma); break;
+            case LociDataAction ma: _reactions.DrawLociItemEditor(ma); break;
             case PiShockAction ps: _reactions.DrawShockEditor(ps); break;
             case SexToyAction sta: _reactions.DrawToyEditor(sta); break;
         }

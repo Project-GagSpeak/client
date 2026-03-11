@@ -14,18 +14,18 @@ using GagspeakAPI.Extensions;
 
 namespace GagSpeak.CustomCombos.Moodles;
 
-public sealed class OwnPresetCombo : MoodleComboBase<MoodlePresetInfo>
+public sealed class OwnPresetCombo : MoodleComboBase<LociPresetInfo>
 {
-    private int _maxPresetCount => MoodleCache.IpcData.PresetList.Max(x => x.Statuses.Count);
+    private int _maxPresetCount => LociCache.Data.PresetList.Max(x => x.Statuses.Count);
     private float _iconWithPadding => IconSize.X + ImGui.GetStyle().ItemInnerSpacing.X;
     public OwnPresetCombo(ILogger log, MainHub hub, Kinkster pair, float scale)
-        : base(log, hub, pair, scale, () => [ ..MoodleCache.IpcData.PresetList.OrderBy(x => x.Title) ])
+        : base(log, hub, pair, scale, () => [ ..LociCache.Data.PresetList.OrderBy(x => x.Title) ])
     { }
 
     protected override bool DisableCondition()
-        => Current.GUID == Guid.Empty || !_kinksterRef.PairPerms.MoodleAccess.HasAny(MoodleAccess.AllowOther);
+        => Current.GUID == Guid.Empty || !_kinksterRef.PairPerms.LociAccess.HasAny(LociAccess.AllowOther);
 
-    protected override string ToString(MoodlePresetInfo obj)
+    protected override string ToString(LociPresetInfo obj)
         => obj.Title.StripColorTags();
 
     public bool DrawApplyPresets(string id, float width, string buttonTT)
@@ -53,14 +53,14 @@ public sealed class OwnPresetCombo : MoodleComboBase<MoodlePresetInfo>
             for (int i = 0, iconsDrawn = 0; i < moodlePreset.Statuses.Count; i++)
             {
                 var status = moodlePreset.Statuses[i];
-                if (!MoodleCache.IpcData.Statuses.TryGetValue(status, out var info))
+                if (!LociCache.Data.Statuses.TryGetValue(status, out var info))
                 {
                     ImGui.SameLine(0, _iconWithPadding);
                     continue;
                 }
 
-                MoodleIcon.DrawMoodleIcon(info.IconID, info.Stacks, IconSize);
-                info.AttachTooltip(MoodleCache.IpcData.StatusList);
+                LociIcon.Draw(info.IconID, info.Stacks, IconSize);
+                LociEx.AttachTooltip(info, LociCache.Data);
 
                 if (++iconsDrawn < moodlePreset.Statuses.Count)
                     ImUtf8.SameLineInner();
@@ -75,29 +75,29 @@ public sealed class OwnPresetCombo : MoodleComboBase<MoodlePresetInfo>
         return ret;
     }
 
-    protected override bool CanDoAction(MoodlePresetInfo item)
+    protected override bool CanDoAction(LociPresetInfo item)
     {
-        var statuses = new List<MoodlesStatusInfo>(item.Statuses.Count);
+        var statuses = new List<LociStatusInfo>(item.Statuses.Count);
         foreach (var guid in item.Statuses)
-            if (MoodleCache.IpcData.Statuses.TryGetValue(guid, out var s))
+            if (LociCache.Data.Statuses.TryGetValue(guid, out var s))
                 statuses.Add(s);
         // Check application.
         return PermHelper.CanApplyPairStatus(_kinksterRef.PairPerms, statuses);
     }
 
-    protected override void OnApplyButton(MoodlePresetInfo item)
+    protected override void OnApplyButton(LociPresetInfo item)
     {
         if (!CanDoAction(item))
             return;
 
         UiService.SetUITask(async () =>
         {
-            var statuses = new List<MoodlesStatusInfo>();
+            var statuses = new List<LociStatusInfo>();
             foreach (var guid in item.Statuses)
-                if (MoodleCache.IpcData.Statuses.TryGetValue(guid, out var s))
+                if (LociCache.Data.Statuses.TryGetValue(guid, out var s))
                     statuses.Add(s);
 
-            var res = await _mainHub.UserApplyMoodlesByStatus(new(_kinksterRef.UserData, statuses, false));
+            var res = await _mainHub.UserApplyLociStatusTuples(new(_kinksterRef.UserData, statuses, false));
             if (res.ErrorCode is GagSpeakApiEc.Success)
                 Log.LogDebug($"Failed to apply moodle preset {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
         });

@@ -18,19 +18,19 @@ namespace GagSpeak.Services;
 public class ShareHubService : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _hub;
-    private readonly IpcProvider _ipcProvider;
+    private readonly IpcCallerLoci _loci;
     private readonly PatternManager _patterns;
     public ShareHubService(ILogger<ShareHubService> logger, GagspeakMediator mediator,
-        MainHub hub, IpcProvider ipcProvider, PatternManager patterns) : base(logger, mediator)
+        MainHub hub, IpcCallerLoci loci, PatternManager patterns) : base(logger, mediator)
     {
         _hub = hub;
-        _ipcProvider = ipcProvider;
+        _loci = loci;
         _patterns = patterns;
 
         Mediator.Subscribe<ConnectedDataSyncedMessage>(this, msg =>
         {
-            ClientPublishedPatterns = msg.Info.PublishedPatterns;
-            ClientPublishedMoodles = msg.Info.PublishedMoodles;
+            PublishedPatterns = msg.Info.PublishedPatterns;
+            PublishedLociData = msg.Info.PublishedLociData;
             FetchedTags = msg.Info.HubTags;
         });
     }
@@ -43,10 +43,10 @@ public class ShareHubService : DisposableMediatorSubscriberBase
     public ToyMotor MotorType { get; set; } = ToyMotor.Vibration;
     public HubDirection SortOrder { get; set; } = HubDirection.Descending;
     public List<ServerPatternInfo> LatestPatternResults { get; private set; } = new();
-    public List<ServerMoodleInfo> LatestMoodleResults { get; private set; } = new();
+    public List<ServerLociInfo> LatestMoodleResults { get; private set; } = new();
     public List<string> FetchedTags { get; private set; } = new List<string>();
-    public List<PublishedPattern> ClientPublishedPatterns { get; private set; } = new();
-    public List<PublishedMoodle> ClientPublishedMoodles { get; private set; } = new();
+    public List<PublishedPattern> PublishedPatterns { get; private set; } = new();
+    public List<PublishedLociData> PublishedLociData { get; private set; } = new();
 
     // This makes sure that we only automatically fetch the patterns and moodles and tags once automatically.
     // Afterwards, manual updates are requied.
@@ -75,7 +75,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         var moodleTupleToTry = match.Status;
         Logger.LogInformation("Trying on moodle from server. Sending request to Moodles!");
         // Cant do this anymore.
-        // IpcProvider.ApplyStatusTuple(moodleTupleToTry, false);
+        _loci.ApplyLociStatus(moodleTupleToTry, false).ConfigureAwait(false);
     }
 
     #region PatternHub Tasks
@@ -147,7 +147,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             
             // Publish that the pattern was uploaded.
             Mediator.Publish(new NotificationMessage("Pattern Upload", "uploaded successful!", NotificationType.Info));
-            ClientPublishedPatterns.Add(new PublishedPattern()
+            PublishedPatterns.Add(new PublishedPattern()
             {
                 Identifier = pattern.Identifier,
                 Label = pattern.Label,
@@ -242,15 +242,15 @@ public class ShareHubService : DisposableMediatorSubscriberBase
     {
         try
         {
-            if (IdToRemove == Guid.Empty || !ClientPublishedPatterns.Any(p => p.Identifier == IdToRemove))
+            if (IdToRemove == Guid.Empty || !PublishedPatterns.Any(p => p.Identifier == IdToRemove))
                 return;
 
-            HubResponse res = await _hub.RemovePattern(IdToRemove);
+            HubResponse res = await _hub.DelistPattern(IdToRemove);
             if (res.ErrorCode is GagSpeakApiEc.Success)
             {
                 Logger.LogTrace("RemovePatternTask completed.", LoggerType.ShareHub);
                 // if successful. Notify the success.
-                ClientPublishedPatterns.RemoveAll(p => p.Identifier == IdToRemove);
+                PublishedPatterns.RemoveAll(p => p.Identifier == IdToRemove);
                 Mediator.Publish(new NotificationMessage("Pattern Removal", "removed successful!", NotificationType.Info));
             }
             else throw new Exception($"Failed to remove pattern from servers: [{res.ErrorCode}]");
@@ -274,10 +274,10 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             .ToArray();
 
         // perform the search operation.
-        var res = await _hub.SearchMoodles(new(SearchString, tags, SearchFilter, SortOrder));
+        var res = await _hub.SearchLociData(new(SearchString, tags, SearchFilter, SortOrder));
         var serverMoodles = res.Value ?? [];
         if (serverMoodles.Count <= 0)
-            LatestMoodleResults = new List<ServerMoodleInfo>();
+            LatestMoodleResults = new List<ServerLociInfo>();
         else
         {
             Logger.LogInformation("Retrieved Moodle from servers.", LoggerType.ShareHub);
@@ -287,9 +287,10 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         if(!InitialMoodlesCall)
             InitialMoodlesCall = true;
     }
-    public async Task LikeMoodle(Guid moodleId)
+
+    public async Task LikeLociData(Guid moodleId)
     {
-        HubResponse res = await _hub.LikeMoodle(moodleId);
+        HubResponse res = await _hub.LikeLociData(moodleId);
         if (res.ErrorCode is not GagSpeakApiEc.Success)
         {
             Logger.LogWarning($"Failed to like moodle from servers. Error: {res.ErrorCode}");
@@ -303,25 +304,25 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         if (LatestMoodleResults.FirstOrDefault(x => x.Status.GUID == moodleId) is not { } moodle)
             return;
 
-        moodle.Likes += moodle.HasLikedMoodle ? -1 : 1;
-        moodle.HasLikedMoodle = !moodle.HasLikedMoodle;
+        moodle.Likes += moodle.HasLiked ? -1 : 1;
+        moodle.HasLiked = !moodle.HasLiked;
 
-        if (moodle.HasLikedMoodle)
+        if (moodle.HasLiked)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternHubAction, PatternHubInteractionKind.Liked);
     }
 
-    public async Task UploadMoodle(string authorName, HashSet<string> tags, MoodlesStatusInfo moodleInfo)
+    public async Task UploadMoodle(string authorName, HashSet<string> tags, LociStatusInfo moodleInfo)
     {
         try
         {
             Logger.LogTrace("Uploading Moodle to server.", LoggerType.ShareHub);
-            HubResponse res = await _hub.UploadMoodle(new(authorName, tags, moodleInfo));
+            HubResponse res = await _hub.UploadLociStatus(new(authorName, tags, moodleInfo));
             if (res.ErrorCode is not GagSpeakApiEc.Success)
                 throw new Exception($"Failed to upload moodle to servers. Error: {res.ErrorCode}");
 
             // if the upload was successful, then we can notify the user.
             Mediator.Publish(new NotificationMessage("Moodle Upload", "uploaded successful!", NotificationType.Info));
-            ClientPublishedMoodles.Add(new PublishedMoodle() { AuthorName = authorName, Status = moodleInfo });
+            PublishedLociData.Add(new PublishedLociData() { AuthorName = authorName, Status = moodleInfo });
             GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternHubAction, PatternHubInteractionKind.Published);
         }
         catch (Bagagwa e)
@@ -331,26 +332,25 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         }
     }
 
-    public async Task RemoveMoodle(Guid moodleId)
+    public async Task DelistLociData(Guid lociDataId)
     {
-        if (moodleId == Guid.Empty || !ClientPublishedMoodles.Any(m => m.Status.GUID == moodleId))
+        if (lociDataId == Guid.Empty || !PublishedLociData.Any(m => m.Status.GUID == lociDataId))
             return;
 
         try
         {
-
-            HubResponse res = await _hub.RemoveMoodle(moodleId);
+            HubResponse res = await _hub.DelistLociData(lociDataId);
             if (res.ErrorCode is not GagSpeakApiEc.Success)
                 throw new Exception($"Failed to remove moodle from servers: [{res.ErrorCode}]");
 
             // if successful, notify the user.
-            Logger.LogInformation("RemovePatternTask completed.", LoggerType.ShareHub);
-            ClientPublishedMoodles.RemoveAll(m => m.Status.GUID == moodleId);
+            Logger.LogInformation("DelistLociDataTask completed.", LoggerType.ShareHub);
+            PublishedLociData.RemoveAll(m => m.Status.GUID == lociDataId);
         }
         catch (Bagagwa e)
         {
-            Logger.LogError(e, "Failed to upload pattern to servers.");
-            Mediator.Publish(new NotificationMessage("Pattern Upload", "upload failed!", NotificationType.Warning));
+            Logger.LogError(e, "Failed to delist LociData from servers.");
+            Mediator.Publish(new NotificationMessage("Delisting", "removal failed!", NotificationType.Warning));
         }
     }
     #endregion PatternHub Tasks
@@ -375,12 +375,14 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             CustomFXPath    = status.CustomVFXPath,
             
             Type            = (int)status.Type,
-            Modifiers       = (uint)status.Modifiers,
+            Modifiers       = status.Modifiers,
 
             Stacks          = status.Stacks,
             StackSteps      = status.StackSteps,
+            StackToChain    = status.StackToChain,
 
-            ChainedStatus   = status.ChainedStatus,
+            ChainedGUID     = status.ChainedGUID,
+            ChainedType     = status.ChainType,
             ChainTrigger    = status.ChainTrigger,
 
             Applier         = status.Applier,
@@ -392,7 +394,6 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             Seconds         = totalTime.Seconds,
 
             NoExpire        = status.ExpireTicks == -1,
-            AsPermanent     = status.Permanent
         };
         var stringToCopy = JsonConvert.SerializeObject(jsonObject, Formatting.None);
         ImGui.SetClipboardText(stringToCopy);

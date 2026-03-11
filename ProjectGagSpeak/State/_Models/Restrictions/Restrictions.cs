@@ -32,8 +32,8 @@ public interface IRestriction : IModPreset
     /// <summary> Determines the Glamour applied from this restriction item. </summary>
     GlamourSlot Glamour { get; set; }
 
-    /// <summary> Determines the Moodle applied from this restriction item. </summary>
-    Moodle Moodle { get; set; }
+    /// <summary> Determines the LociItem applied from this restriction item. </summary>
+    LociItem Moodle { get; set; }
 
     /// <summary> If a redraw should be performed after application or removal. </summary>
     bool DoRedraw { get; set; }
@@ -57,7 +57,7 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
     public bool IsEnabled { get; set; } = false;
     public GlamourSlot Glamour { get; set; } = GlamourSlot.Default;
     public ModSettingsPreset Mod { get; set; } = new ModSettingsPreset(new ModPresetContainer());
-    public Moodle Moodle { get; set; } = new Moodle();
+    public LociItem Moodle { get; set; } = new LociItem();
     public Traits Traits { get; set; } = Traits.None;
     public Arousal Arousal { get; set; } = Arousal.None;
     public TriStateBool HeadgearState { get; set; } = TriStateBool.Null;
@@ -111,7 +111,7 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
         {
             Slot = Glamour.ToLightSlot(),
             ModName = Mod.ToString(),
-            Moodle = new LightMoodle(Moodle.Type, Moodle.Id),
+            LociItem = new LightLoci(Moodle.Type, Moodle.Id),
             Traits = Traits,
             Arousal = Arousal
         };
@@ -124,7 +124,7 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
             throw new ArgumentException("Invalid JObjectToken!");
 
         var modAttachment = ModSettingsPreset.FromRefToken(json["Mod"], mp);
-        var moodles = GagspeakEx.LoadMoodle(json["Moodle"]);
+        var lociItem = GagspeakEx.LoadLociItem(json["Moodle"]);
         var profileId = json["ProfileGuid"]?.ToObject<Guid>() ?? throw new ArgumentNullException("ProfileGuid");
         var profilePrio = json["ProfilePriority"]?.ToObject<int>() ?? throw new ArgumentNullException("ProfilePriority");
         return new GarblerRestriction(gagType)
@@ -132,7 +132,7 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
             IsEnabled = json["IsEnabled"]?.ToObject<bool>() ?? false,
             Glamour = ItemSvc.ParseGlamourSlot(json["Glamour"]),
             Mod = modAttachment,
-            Moodle = moodles,
+            Moodle = lociItem,
             Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
             Arousal = Enum.TryParse<Arousal>(json["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
             HeadgearState = TriStateBool.FromJObject(json["HeadgearState"]),
@@ -154,7 +154,7 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
     public ModSettingsPreset Mod { get; set; } = new ModSettingsPreset(new ModPresetContainer());
     public TriStateBool HeadgearState { get; set; } = TriStateBool.Null;
     public TriStateBool VisorState { get; set; } = TriStateBool.Null;
-    public Moodle Moodle { get; set; } = new Moodle();
+    public LociItem Moodle { get; set; } = new LociItem(); // keep name until we can properly migrate
     public Traits Traits { get; set; } = Traits.None;
     public Arousal Arousal { get; set; } = Arousal.None;
     public bool DoRedraw { get; set; } = false;
@@ -212,7 +212,7 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
         {
             Slot = Glamour.ToLightSlot(),
             ModName = Mod.ToString(),
-            Moodle = new LightMoodle(Moodle is MoodlePreset ? MoodleType.Preset : MoodleType.Status, Moodle.Id),
+            LociItem = new LightLoci(Moodle is LociPreset ? LociType.Preset : LociType.Status, Moodle.Id),
             Traits = Traits,
             Arousal = Arousal
         };
@@ -226,11 +226,6 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
         if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
             throw new ArgumentException("Invalid JObjectToken!");
 
-        var id = jsonMoodle["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
-        // If the "StatusIds" property exists, treat this as a MoodlePreset
-        var moodle = jsonMoodle.TryGetValue("StatusIds", out var statusToken) && statusToken is JArray
-            ? new MoodlePreset(id, statusToken.Select(x => x.ToObject<Guid>()) ?? Enumerable.Empty<Guid>()) : new Moodle(id);
-
         // Construct the item to return.
         return new RestrictionItem()
         {
@@ -240,7 +235,7 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
             ThumbnailPath = json["ThumbnailPath"]?.ToObject<string>() ?? string.Empty,
             Glamour = ItemSvc.ParseGlamourSlot(json["Glamour"]),
             Mod = ModSettingsPreset.FromRefToken(json["Mod"], mp),
-            Moodle = moodle,
+            Moodle = GagspeakEx.LoadLociItem(jsonMoodle),
             HeadgearState = TriStateBool.FromJObject(json["HeadgearState"]),
             VisorState = TriStateBool.FromJObject(json["VisorState"]),
             Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
@@ -250,9 +245,7 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
     }
 
     public override string ToString()
-    {
-        return $"{Type} Restriction {Identifier} - {Label}";
-    }
+        => $"{Type} Restriction {Identifier} - {Label}";
 }
 
 public class HypnoticRestriction : RestrictionItem
@@ -297,11 +290,6 @@ public class HypnoticRestriction : RestrictionItem
         if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
             throw new ArgumentException("Invalid JObjectToken!");
 
-        var id = jsonMoodle["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
-        // If the "StatusIds" property exists, treat this as a MoodlePreset
-        var moodle = jsonMoodle.TryGetValue("StatusIds", out var statusToken) && statusToken is JArray
-            ? new MoodlePreset(id, statusToken.Select(x => x.ToObject<Guid>()) ?? Enumerable.Empty<Guid>()) : new Moodle(id);
-
         // Construct the item to return.
         return new HypnoticRestriction()
         {
@@ -311,7 +299,7 @@ public class HypnoticRestriction : RestrictionItem
             ThumbnailPath = json["ThumbnailPath"]?.ToObject<string>() ?? string.Empty,
             Glamour = ItemSvc.ParseGlamourSlot(json["Glamour"]),
             Mod = ModSettingsPreset.FromRefToken(json["Mod"], mp),
-            Moodle = moodle,
+            Moodle = GagspeakEx.LoadLociItem(jsonMoodle),
             Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
             Arousal = Enum.TryParse<Arousal>(json["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
             DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
@@ -365,12 +353,6 @@ public class BlindfoldRestriction : RestrictionItem
     {
         if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
             throw new ArgumentException("Invalid JObjectToken!");
-
-        var id = jsonMoodle["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
-        // If the "StatusIds" property exists, treat this as a MoodlePreset
-        var moodle = jsonMoodle.TryGetValue("StatusIds", out var statusToken) && statusToken is JArray
-            ? new MoodlePreset(id, statusToken.Select(x => x.ToObject<Guid>()) ?? Enumerable.Empty<Guid>()) : new Moodle(id);
-
         // Construct the item to return.
         return new BlindfoldRestriction()
         {
@@ -380,7 +362,7 @@ public class BlindfoldRestriction : RestrictionItem
             ThumbnailPath = json["ThumbnailPath"]?.ToObject<string>() ?? string.Empty,
             Glamour = ItemSvc.ParseGlamourSlot(json["Glamour"]),
             Mod = ModSettingsPreset.FromRefToken(json["Mod"], mp),
-            Moodle = moodle,
+            Moodle = GagspeakEx.LoadLociItem(jsonMoodle),
             Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
             Arousal = Enum.TryParse<Arousal>(json["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
             DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,

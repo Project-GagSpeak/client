@@ -8,16 +8,16 @@ using OtterGui.Extensions;
 
 namespace GagSpeak.CustomCombos.Editor;
 
-public sealed class MoodleStatusCombo : CkMoodleComboBase<MoodlesStatusInfo>
+public sealed class MoodleStatusCombo : CkMoodleComboBase<LociStatusInfo>
 {
     private Guid _currentItem;
     public MoodleStatusCombo(ILogger log, float iconScale)
-        : base(log, iconScale, () => [.. MoodleCache.IpcData.StatusList.OrderBy(x => x.Title)])
+        : base(log, iconScale, () => [.. LociCache.Data.StatusList.OrderBy(x => x.Title)])
     {
         _currentItem = Guid.Empty;
     }
 
-    protected override string ToString(MoodlesStatusInfo obj)
+    protected override string ToString(LociStatusInfo obj)
         => obj.Title;
 
     protected override int UpdateCurrentSelected(int currentSelected)
@@ -62,8 +62,8 @@ public sealed class MoodleStatusCombo : CkMoodleComboBase<MoodlesStatusInfo>
         var ret = ImGui.Selectable("##"+moodleStatus.Title, selected, ImGuiSelectableFlags.None, size);
 
         ImGui.SameLine(titleSpace);
-        MoodleIcon.DrawMoodleIcon(moodleStatus.IconID, moodleStatus.Stacks, IconSize);
-        DrawItemTooltip(moodleStatus);
+        LociIcon.Draw((uint)moodleStatus.IconID, moodleStatus.Stacks, IconSize);
+        LociEx.AttachTooltip(moodleStatus, LociCache.Data);
 
         ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
         var pos = ImGui.GetCursorPosY();

@@ -10,19 +10,19 @@ using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.Editor;
 
-public sealed class MoodlePresetCombo : CkMoodleComboBase<MoodlePresetInfo>
+public sealed class MoodlePresetCombo : CkMoodleComboBase<LociPresetInfo>
 {
-    private int _maxPresetCount => MoodleCache.IpcData.Presets.Values.Max(x => x.Statuses.Count);
+    private int _maxPresetCount => LociCache.Data.Presets.Values.Max(x => x.Statuses.Count);
     private Guid _currentItem;
     private float IconWithPadding => IconSize.X + ImGui.GetStyle().ItemInnerSpacing.X;
     public MoodlePresetCombo(ILogger log, float iconScale)
-        : base(log, iconScale, () => [ .. MoodleCache.IpcData.Presets.Values.OrderBy(x => x.Title)])
+        : base(log, iconScale, () => [ .. LociCache.Data.Presets.Values.OrderBy(x => x.Title)])
     {
         SearchByParts = false;
     }
 
 
-    protected override string ToString(MoodlePresetInfo obj)
+    protected override string ToString(LociPresetInfo obj)
         => obj.Title;
 
     protected override int UpdateCurrentSelected(int currentSelected)
@@ -47,7 +47,7 @@ public sealed class MoodlePresetCombo : CkMoodleComboBase<MoodlePresetInfo>
         // Maybe there is a faster way to know this, but atm I do not know.
         var currentTitle = Items.FirstOrDefault(i => i.GUID == _currentItem).Title?.StripColorTags() ?? string.Empty;
         var preview = currentTitle.IsNullOrWhitespace() ? "Select Moodle Preset..." : currentTitle;
-        return Draw($"##preset{label}", preview, string.Empty, width, MoodleDrawer.IconSize.Y, flags);
+        return Draw($"##preset{label}", preview, string.Empty, width, LociIcon.Size.Y, flags);
     }
 
     protected override bool DrawSelectable(int globalIdx, bool selected)
@@ -65,14 +65,14 @@ public sealed class MoodlePresetCombo : CkMoodleComboBase<MoodlePresetInfo>
         for (int i = 0, iconsDrawn = 0; i < moodlePreset.Statuses.Count; i++)
         {
             var status = moodlePreset.Statuses[i];
-            if (!MoodleCache.IpcData.Statuses.TryGetValue(status, out var info))
+            if (!LociCache.Data.Statuses.TryGetValue(status, out var info))
             {
                 ImGui.SameLine(0, IconWithPadding);
                 continue;
             }
 
-            MoodleIcon.DrawMoodleIcon(info.IconID, info.Stacks, IconSize);
-            DrawItemTooltip(info);
+            LociIcon.Draw(info.IconID, info.Stacks, IconSize);
+            LociEx.AttachTooltip(info, LociCache.Data);
 
             if (++iconsDrawn < moodlePreset.Statuses.Count)
                 ImUtf8.SameLineInner();

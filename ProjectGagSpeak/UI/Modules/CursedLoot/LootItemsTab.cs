@@ -228,7 +228,7 @@ public class LootItemsTab : IFancyTab
         CkGui.TextFrameAlignedInline(selected.Precedence.ToName());
 
         // Trait Application.
-        CkGui.BooleanToColoredIcon(selected.ApplyTraits, false);
+        CkGui.BoolIcon(selected.ApplyTraits, false);
         CkGui.TextFrameAlignedInline(selected.ApplyTraits ? "Applies traits" : "Ignores traits");
     }
 

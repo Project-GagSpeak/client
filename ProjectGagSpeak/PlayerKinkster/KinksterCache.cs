@@ -11,7 +11,7 @@ public class RestrictionBase
     public EquipItem GlamItem { get; set; }
     public StainIds GlamDyes { get; set; }
     public string ModName { get; set; }
-    public LightMoodle Moodle { get; set; }
+    public LightLoci LociItem { get; set; }
     public Traits Traits { get; set; }
     public Arousal Arousal { get; set; }
 
@@ -23,7 +23,7 @@ public class RestrictionBase
         GlamItem = ItemSvc.Resolve(Slot, new(item.Slot.CItemId));
         GlamDyes = new(item.Slot.Dye1, item.Slot.Dye2);
         ModName = item.ModName;
-        Moodle = item.Moodle;
+        LociItem = item.LociItem;
         Traits = item.Traits;
         Arousal = item.Arousal;
     }
@@ -112,7 +112,7 @@ public class KinksterRestraint
     public Dictionary<EquipSlot, KinksterSlotBase> SlotData { get; set; } = new();
     public List<KinksterLayerBase> Layers { get; set; } = new();
     public List<string> Mods { get; set; } = new();
-    public List<LightMoodle> Moodles { get; set; } = new();
+    public List<LightLoci> LociItems { get; set; } = new();
     public Traits BaseTraits { get; set; } = new();
     public Arousal Arousal { get; set; } = new();
     public bool Redraws { get; set; } = false;
@@ -160,7 +160,7 @@ public class KinksterRestraint
         Layers = orderedLayers.OrderBy(x => x.Index).Select(x => x.Layer).ToList();
         // clone the remaining properties.
         Mods = apiItem.Mods;
-        Moodles = apiItem.Moodles;
+        LociItems = apiItem.LociItems;
         BaseTraits = apiItem.BaseTraits;
         Arousal = apiItem.Arousal;
         Redraws = apiItem.Redraws;

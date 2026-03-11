@@ -169,10 +169,10 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
         OwnPresets = new OwnPresetCombo(_log, _hub, Kinkster, 1.3f);
         Remover = new PairStatusCombo(_log, _hub, Kinkster, 1.3f, () =>
         {
-            if (Kinkster.PairPerms.MoodleAccess.HasAny(MoodleAccess.RemoveAny))
-                return [.. Kinkster.MoodleData.DataInfoList.OrderBy(x => x.Title)];
-            else if (Kinkster.PairPerms.MoodleAccess.HasAny(MoodleAccess.RemoveApplied))
-                return [.. Kinkster.MoodleData.DataInfoList.Where(x => x.Applier == PlayerData.NameWithWorld).OrderBy(x => x.Title)];
+            if (Kinkster.PairPerms.LociAccess.HasAny(LociAccess.RemoveAny))
+                return [.. Kinkster.LociData.DataInfoList.OrderBy(x => x.Title)];
+            else if (Kinkster.PairPerms.LociAccess.HasAny(LociAccess.RemoveApplied))
+                return [.. Kinkster.LociData.DataInfoList.Where(x => x.Applier == PlayerData.NameWithWorld).OrderBy(x => x.Title)];
             else
                 return [];
         });

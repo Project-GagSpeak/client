@@ -37,7 +37,7 @@ public class EquipmentDrawer
 
     private static IconCheckboxEx GlamourFlagCheckbox = new(FAI.Vest, CkCol.IconOn.Uint(), CkCol.IconOff.Uint());
     private static IconCheckboxEx ModFlagCheckbox = new(FAI.FileArchive, CkCol.IconOn.Uint(), CkCol.IconOff.Uint());
-    private static IconCheckboxEx MoodleFlagCheckbox = new(FAI.TheaterMasks, CkCol.IconOn.Uint(), CkCol.IconOff.Uint());
+    private static IconCheckboxEx LociFlagCheckbox = new(FAI.TheaterMasks, CkCol.IconOn.Uint(), CkCol.IconOff.Uint());
     private static IconCheckboxEx HardcoreTraitsCheckbox = new(FAI.Handcuffs, CkCol.IconOn.Uint(), CkCol.IconOff.Uint());
 
     private readonly GameItemCombo[] _itemCombos;
@@ -258,7 +258,7 @@ public class EquipmentDrawer
         {
             var curGlam = restrictionRef.ApplyFlags.HasAny(RestraintFlags.Glamour);
             var curMod = restrictionRef.ApplyFlags.HasAny(RestraintFlags.Mod);
-            var curMoodle = restrictionRef.ApplyFlags.HasAny(RestraintFlags.Moodle);
+            var curLoci = restrictionRef.ApplyFlags.HasAny(RestraintFlags.Loci);
             var curHcTrait = restrictionRef.ApplyFlags.HasAny(RestraintFlags.Trait);
 
             if (GlamourFlagCheckbox.Draw($"##GlamFlag{id}", curGlam, out var newGlam) && curGlam != newGlam)
@@ -271,9 +271,9 @@ public class EquipmentDrawer
             CkGui.AttachToolTip(curMod ? "Mods from this Restriction Item will be applied." : "Mods are ignored.");
 
             // Next Line.
-            if (MoodleFlagCheckbox.Draw($"##MoodleFlag{id}", curMoodle, out var newMoodle) && curMoodle != newMoodle)
-                restrictionRef.ApplyFlags ^= RestraintFlags.Moodle;
-            CkGui.AttachToolTip(curMoodle ? "Moodles from this Restriction Item will be applied." : "Moodles are ignored.");
+            if (LociFlagCheckbox.Draw($"##LociFlag{id}", curLoci, out var newLoci) && curLoci != newLoci)
+                restrictionRef.ApplyFlags ^= RestraintFlags.Loci;
+            CkGui.AttachToolTip(curLoci ? "LociData from this Restriction Item will be applied." : "LociData is ignored.");
 
             ImUtf8.SameLineInner();
             if (HardcoreTraitsCheckbox.Draw($"##TraitFlag{id}", curHcTrait, out var newHcTrait) && curHcTrait != newHcTrait)

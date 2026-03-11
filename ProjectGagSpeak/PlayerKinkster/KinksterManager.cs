@@ -41,7 +41,6 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         _pairFactory = factory;
 
         Mediator.Subscribe<DisconnectedMessage>(this, _ => OnClientDisconnected(_.Intent));
-        Mediator.Subscribe<CutsceneEndMessage>(this, _ => ReapplyAllRendered());
         Mediator.Subscribe<TargetKinksterMessage>(this, _ => TargetKinkster(_.Kinkster));
 
         _directPairsInternal = new(() => _allKinksters.Select(k => k.Value).ToList());
@@ -61,18 +60,13 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     ///     Adds a Kinkster to the manager. Called by GetPairedUsers upon connection.
     ///     Also called when a kinkster goes online, or after accepting a kinkster request.
     /// </summary>
-    /// <remarks>
-    ///     Because Kinkster are used in other classes and combos, we must retain their
-    ///     reference here even when reconnecting. Instead, check for existence upon adding.
-    /// </remarks>
     public void AddKinkster(KinksterPair dto)
     {
         var exists = _allKinksters.ContainsKey(dto.User);
         Logger.LogDebug($"Kinkster ({dto.User.UID}) {(exists ? "found, applying latest!" : "not found. Creating!")}.", LoggerType.PairManagement);
-        
-        // Determine if we perform a reapplication, or a creation. (Maybe change later)
-        if (exists) _allKinksters[dto.User].ReapplyAlterations();
-        else _allKinksters[dto.User] = _pairFactory.Create(dto);
+        // Determine if we need to create
+        if (!exists)
+            _allKinksters[dto.User] = _pairFactory.Create(dto);
 
         RecreateLazy();
     } 
@@ -91,7 +85,6 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
             }
             else
             {
-                _allKinksters[dto.User].ReapplyAlterations();
                 refreshed.Add(dto.User.UID);
             }
         }
@@ -226,22 +219,15 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         }
     }
 
-    private void ReapplyAllRendered()
+    private unsafe void TargetKinkster(Kinkster k)
     {
-        foreach (var pair in _allKinksters.Select(k => k.Value).Where(p => p.IsRendered))
-            pair.ReapplyAlterations();
-    }
-
-    private void TargetKinkster(Kinkster k)
-    {
-        if (PlayerData.InPvP || !k.IsRendered) return;
-        unsafe
-        {
-            if (_config.Current.TargetWithFocus)
-                TargetSystem.Instance()->FocusTarget = (GameObject*)k.PlayerAddress;
-            else
-                TargetSystem.Instance()->SetHardTarget((GameObject*)k.PlayerAddress);
-        }
+        if (PlayerData.InPvP || !k.IsRendered)
+            return;
+        
+        if (_config.Current.TargetWithFocus)
+            TargetSystem.Instance()->FocusTarget = (GameObject*)k.PlayerAddress;
+        else
+            TargetSystem.Instance()->SetHardTarget((GameObject*)k.PlayerAddress);
     }
 
     public void RecreateLazy()
@@ -313,52 +299,49 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     #endregion ManagerHelpers
 
     #region Updates
-    public void ReceiveMoodleData(UserData target, MoodleData newMoodleData)
-    {
-        if (!_allKinksters.TryGetValue(target, out var kinkster)) 
-            throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
-        Logger.LogTrace($"Received MoodleData from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
-        kinkster.SetMoodlesData(newMoodleData);
-    }
-
-    public void ReceiveSMUpdate(UserData target, string dataString, List<MoodlesStatusInfo> dataInfo)
+    public void ReceiveLociData(UserData target, CachedLociData newLociData)
     {
         if (!_allKinksters.TryGetValue(target, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
-        Logger.LogTrace($"{kinkster.GetNickAliasOrUid()}'s StatusManager updated!", LoggerType.Callbacks);
-        kinkster.SetMoodlesData(dataString, dataInfo);
+
+        Logger.LogTrace($"Received loci update for {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
+        kinkster.NewLociData(newLociData);
     }
 
-    public void ReceiveMoodleStatuses(UserData target, List<MoodlesStatusInfo> newStatuses)
+    public void ReceiveLociStatuses(UserData target, List<LociStatusInfo> newStatuses)
     {
         if (!_allKinksters.TryGetValue(target, out var kinkster))
-            throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
-        Logger.LogTrace($"Received updated MoodleStatusList from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
-        kinkster.SetMoodleStatusData(newStatuses);
+            throw new InvalidOperationException($"User [{target.AliasOrUID}] not found.");
+        Logger.LogTrace($"Received loci status update for {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
+        kinkster.LociData.SetStatuses(newStatuses);
     }
 
-    public void ReceiveMoodlePresets(UserData target, List<MoodlePresetInfo> newPresets)
-    { 
-        if (!_allKinksters.TryGetValue(target, out var kinkster))
-            throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
-        Logger.LogTrace($"Received updated MoodlePresetList from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
-        kinkster.SetMoodlePresetData(newPresets);
-    }
-
-    public void ReceiveMoodleStatusUpdate(UserData target, MoodlesStatusInfo status, bool deleted)
+    public void ReceiveLociPresets(UserData target, List<LociPresetInfo> newPresets)
     {
         if (!_allKinksters.TryGetValue(target, out var kinkster))
-            throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
-        Logger.LogTrace($"Received MoodleStatus data update from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
-        kinkster.UpdateMoodleStatusData(status, deleted);
+            throw new InvalidOperationException($"User [{target.AliasOrUID}] not found.");
+        Logger.LogTrace($"Received loci preset update for {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
+        kinkster.LociData.SetPresets(newPresets);
     }
 
-    public void ReceiveMoodlePresetUpdate(UserData target, MoodlePresetInfo preset, bool deleted)
+    public void ReceiveLociStatusUpdate(UserData target, LociStatusInfo status, bool deleted)
     {
         if (!_allKinksters.TryGetValue(target, out var kinkster))
-            throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
-        Logger.LogTrace($"Received MoodlePreset data update from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
-        kinkster.UpdateMoodlePresetData(preset, deleted);
+            throw new InvalidOperationException($"User [{target.AliasOrUID}] not found.");
+        Logger.LogTrace($"Received loci status single update for {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
+
+        if (deleted) kinkster.LociData.Statuses.Remove(status.GUID);
+        else kinkster.LociData.TryUpdateStatus(status);
+    }
+
+    public void ReceiveLociPresetUpdate(UserData target, LociPresetInfo preset, bool deleted)
+    {
+        if (!_allKinksters.TryGetValue(target, out var kinkster))
+            throw new InvalidOperationException($"User [{target.AliasOrUID}] not found.");
+        Logger.LogTrace($"Received loci preset single update for {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
+
+        if (deleted) kinkster.LociData.Presets.Remove(preset.GUID);
+        else kinkster.LociData.TryUpdatePreset(preset);
     }
 
     public void NewActiveComposite(UserData target, CharaCompositeActiveData data, bool safeword)
@@ -556,9 +539,8 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
 
         Logger.LogDebug($"OWN BulkChangeUnique for [{kinkster.GetNickAliasOrUid()}]", LoggerType.PairDataTransfer);
         // Handle Moodles change
-        var MoodlesChanged = (prevPerms.MoodleAccess != newPerms.MoodleAccess) || (prevPerms.MaxMoodleTime != newPerms.MaxMoodleTime);
-        if (kinkster.IsRendered && MoodlesChanged)
-            Mediator.Publish(new MoodleAccessPermsChanged(kinkster));
+        var lociPermChange = (prevPerms.LociAccess != newPerms.LociAccess) || (prevPerms.MaxLociTime != newPerms.MaxLociTime);
+        // Could add some achievement handling here maybe, idk.
 
         // Handle if this kinkster had a PuppeteerChange for us.
         if ((newPerms.PuppetPerms & ~prevPerms.PuppetPerms) != 0)
@@ -582,11 +564,10 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         kinkster.UserPair.Access = newAccess;
 
         Logger.LogDebug($"OTHER BulkChangeUnique for [{kinkster.GetNickAliasOrUid()}]", LoggerType.PairDataTransfer);
-        
+
         // Handle informing moodles of permission changes.
-        var MoodlesChanged = (prevPerms.MoodleAccess != newPerms.MoodleAccess) || (prevPerms.MaxMoodleTime != newPerms.MaxMoodleTime);
-        if (kinkster.IsRendered && MoodlesChanged)
-            Mediator.Publish(new MoodleAccessPermsChanged(kinkster));
+        var lociPermChange = (prevPerms.LociAccess != newPerms.LociAccess) || (prevPerms.MaxLociTime != newPerms.MaxLociTime);
+        // Could add some achievement handling here maybe, idk.
 
         // Handle if this kinkster had a PuppeteerChange for us.
         if (prevPerms.IsMarionette() != kinkster.PairPerms.IsMarionette())
@@ -610,8 +591,10 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         Logger.LogDebug($"OWN PermChangeUnique for [{kinkster.GetNickAliasOrUid()}] set [{permName}] to [{finalVal}]", LoggerType.PairDataTransfer);
 
         // Handle our clients Moodle change for this Kinkster
-        if (permName.Equals(nameof(PairPerms.MoodleAccess)) || permName.Equals(nameof(PairPerms.MaxMoodleTime)))
-            Mediator.Publish(new MoodleAccessPermsChanged(kinkster));
+        if (permName.Equals(nameof(PairPerms.LociAccess)) || permName.Equals(nameof(PairPerms.MaxLociTime)))
+        {
+            // Could do achievement stuff here i guess.
+        }
 
         if ((kinkster.OwnPerms.PuppetPerms & ~prevPerms.PuppetPerms) != 0)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.PuppeteerAccessGiven, (kinkster.OwnPerms.PuppetPerms & ~prevPerms.PuppetPerms));
@@ -632,10 +615,12 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
             throw new InvalidOperationException($"Failed to set property '{permName}' on {kinkster.GetNickAliasOrUid()} with value '{newValue}'");
 
         Logger.LogDebug($"OTHER SingleChangeUnique for [{kinkster.GetNickAliasOrUid()}] set [{permName}] to [{finalVal}]", LoggerType.PairDataTransfer);
-        
+
         // If moodle permissions updated, notify IpcProvider (Moodles) that we have a change.
-        if (permName.Equals(nameof(PairPerms.MoodleAccess)) || permName.Equals(nameof(PairPerms.MaxMoodleTime)))
-            Mediator.Publish(new MoodleAccessPermsChanged(kinkster));
+        if (permName.Equals(nameof(PairPerms.LociAccess)) || permName.Equals(nameof(PairPerms.MaxLociTime)))
+        {
+            // Could do achievement stuff here i guess.
+        }
 
         // Handle if this kinkster had a PuppeteerChange for us.
         if (prevPerms.IsMarionette() != kinkster.PairPerms.IsMarionette())

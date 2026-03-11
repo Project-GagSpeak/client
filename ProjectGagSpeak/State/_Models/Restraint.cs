@@ -321,7 +321,7 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
     public MetaDataStruct MetaStates { get; set; } = MetaDataStruct.Empty;
 
     public List<ModSettingsPreset> RestraintMods { get; set; } = new();
-    public HashSet<Moodle> RestraintMoodles { get; set; } = new();
+    public HashSet<LociItem> RestraintMoodles { get; set; } = new();
     public Traits Traits { get; set; } = Traits.None;
     public Arousal Arousal { get; set; } = Arousal.None;
 
@@ -351,7 +351,7 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
         MetaStates = other.MetaStates;
 
         RestraintMods = other.RestraintMods.Select(mod => new ModSettingsPreset(mod)).ToList();
-        RestraintMoodles = other.RestraintMoodles.Select(m => m is MoodlePreset p ? new MoodlePreset(p) : new Moodle(m)).ToHashSet();
+        RestraintMoodles = other.RestraintMoodles.Select(m => m is LociPreset p ? new LociPreset(p) : new LociItem(m)).ToHashSet();
 
         Traits = other.Traits;
         Arousal = other.Arousal;
@@ -434,10 +434,10 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
                 Generic.Safe(() => baseMods.Add(ModSettingsPreset.FromRefToken(modToken, mods)));
 
         // Handle the base Moodles.
-        var baseMoodles = new HashSet<Moodle>();
-        if (setJObj["BaseMoodles"] is JArray moodleArray)
-            foreach (var moodleToken in moodleArray)
-                Generic.Safe(() => baseMoodles.Add(GagspeakEx.LoadMoodle(moodleToken)));
+        var baseLociItems = new HashSet<LociItem>();
+        if (setJObj["BaseMoodles"] is JArray lociItemArray)
+            foreach (var lociToken in lociItemArray)
+                Generic.Safe(() => baseLociItems.Add(GagspeakEx.LoadLociItem(lociToken)));
 
         // If you made it all the way here without the world absolutely imploding on itself
         // and setting your pc on fire congrats we can now load the restraint set.
@@ -454,7 +454,7 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
             Layers = layers,
             MetaStates = MetaDataStruct.FromJObject(setJObj["MetaStates"]),
             RestraintMods = baseMods,
-            RestraintMoodles = baseMoodles,
+            RestraintMoodles = baseLociItems,
             Traits = Enum.TryParse<Traits>(setJObj["BaseTraits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
             Arousal = Enum.TryParse<Arousal>(setJObj["BaseArousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
         };
@@ -491,7 +491,7 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
             RestrictionLayers = bindLayers,
             ModLayers = modLayers,
             Mods = RestraintMods.Select(x => x.ToString()).ToList(),
-            Moodles = RestraintMoodles.Select(x => new LightMoodle(x.Type, x.Id)).ToList(),
+            LociItems = RestraintMoodles.Select(x => new LightLoci(x.Type, x.Id)).ToList(),
             BaseTraits = Traits,
             Arousal = Arousal,
             Redraws = DoRedraw,

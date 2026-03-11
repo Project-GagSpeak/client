@@ -192,7 +192,7 @@ public class CollarRequestsOutgoingTab : IFancyTab
             ImUtf8.SameLineInner();
             AccessPerm(FAI.FillDrip, request.OwnerAccess.HasAny(CollarAccess.Dyes), $"You can dye {request.Target.AliasOrUID}'s collar", $"You cannot dye {request.Target.AliasOrUID}'s collar");
             ImUtf8.SameLineInner();
-            AccessPerm(FAI.TheaterMasks, request.OwnerAccess.HasAny(CollarAccess.Moodle), $"You can change {request.Target.AliasOrUID}'s collar moodle", $"You cannot change {request.Target.AliasOrUID}'s collar moodle");
+            AccessPerm(FAI.TheaterMasks, request.OwnerAccess.HasAny(CollarAccess.StatusInfo), $"You can change {request.Target.AliasOrUID}'s collar LociData", $"You cannot change {request.Target.AliasOrUID}'s collar LociData");
             ImUtf8.SameLineInner();
             AccessPerm(FAI.PenFancy, request.OwnerAccess.HasAny(CollarAccess.Writing), $"You can change {request.Target.AliasOrUID}'s collar writing", $"You cannot change {request.Target.AliasOrUID}'s collar writing");
 
@@ -203,7 +203,7 @@ public class CollarRequestsOutgoingTab : IFancyTab
             ImUtf8.SameLineInner();
             AccessPerm(FAI.FillDrip, request.TargetAccess.HasAny(CollarAccess.Dyes), $"{request.Target.AliasOrUID} can dye their collar", $"{request.Target.AliasOrUID} cannot dye their collar.");
             ImUtf8.SameLineInner();
-            AccessPerm(FAI.TheaterMasks, request.TargetAccess.HasAny(CollarAccess.Moodle), $"{request.Target.AliasOrUID} can change their collar moodle", $"{request.Target.AliasOrUID} cannot change their collar moodle.");
+            AccessPerm(FAI.TheaterMasks, request.TargetAccess.HasAny(CollarAccess.StatusInfo), $"{request.Target.AliasOrUID} can change their collar LociData", $"{request.Target.AliasOrUID} cannot change their collar LociData.");
             ImUtf8.SameLineInner();
             AccessPerm(FAI.PenFancy, request.TargetAccess.HasAny(CollarAccess.Writing), $"{request.Target.AliasOrUID} can change their collar writing", $"{request.Target.AliasOrUID} cannot change their collar writing.");
         }
@@ -219,7 +219,7 @@ public class CollarRequestsOutgoingTab : IFancyTab
 
         void AccessPerm(FAI icon, bool state, string tooltipTrue, string tooltipFalse)
         {
-            CkGui.BooleanToColoredIcon(state, false, icon, icon, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+            CkGui.BoolIcon(state, false, icon, icon, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
             CkGui.AttachToolTip(state ? tooltipTrue : tooltipFalse);
         }
     }

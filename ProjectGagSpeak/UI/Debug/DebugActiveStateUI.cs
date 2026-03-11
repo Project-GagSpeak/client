@@ -1,4 +1,5 @@
 using CkCommons.Gui;
+using CkCommons.Textures;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
@@ -23,12 +24,11 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
 {
     private readonly ClientData _clientData;
     private readonly ModPresetDrawer _modDrawer;
-    private readonly MoodleDrawer _moodleDrawer;
     private readonly HcTaskManager _hcTasks;
     private readonly GlamourCache _glamourCache;
     private readonly CustomizePlusCache _profileCache;
     private readonly ModCache _modCache;
-    private readonly MoodleCache _moodleCache;
+    private readonly LociCache _moodleCache;
     private readonly TraitsCache _traitsCache;
     private readonly OverlayCache _overlayCache;
     private readonly ArousalService _arousal;
@@ -41,12 +41,11 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         GagspeakMediator mediator,
         ClientData clientData,
         ModPresetDrawer modDrawer,
-        MoodleDrawer moodleDrawer,
         HcTaskManager hcTasks,
         GlamourCache glamourCache,
         CustomizePlusCache profileCache,
         ModCache modCache,
-        MoodleCache moodleCache,
+        LociCache moodleCache,
         TraitsCache traitsCache,
         OverlayCache overlayCache,
         ArousalService arousal,
@@ -58,7 +57,6 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
     {
         _clientData = clientData;
         _modDrawer = modDrawer;
-        _moodleDrawer = moodleDrawer;
         _hcTasks = hcTasks;
         _glamourCache = glamourCache;
         _profileCache = profileCache;
@@ -131,7 +129,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
 
         ImGui.Separator();
         if (ImGui.CollapsingHeader("Moodles Cache"))
-            _moodleCache.DrawCacheTable(_iconTextures, _moodleDrawer);
+            _moodleCache.DrawCacheTable(_iconTextures);
 
         ImGui.Separator();
         if (ImGui.CollapsingHeader("Traits/Attributes Cache"))
@@ -194,14 +192,14 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
     {
         using var _ = ImRaii.Group();
         ImGui.Text("Moodles IPC Status:");
-        CkGui.ColorTextInline(IpcCallerMoodles.APIAvailable ? "Available" : "Unavailable", ImGuiColors.ParsedOrange);
+        CkGui.ColorTextInline(IpcCallerLoci.APIAvailable ? "Available" : "Unavailable", ImGuiColors.ParsedOrange);
 
-        ImUtf8.TextFrameAligned($"Active Moodles: {MoodleCache.IpcData.DataInfo.Count()}");
+        ImUtf8.TextFrameAligned($"Active Moodles: {LociCache.Data.DataInfo.Count()}");
         ImGui.SameLine();
-        _moodleDrawer.DrawStatusInfos(MoodleCache.IpcData.DataInfoList.ToList(), MoodleDrawer.IconSizeFramed);
+        LociDrawer.DrawTuples(LociCache.Data.DataInfoList.ToList(), LociIcon.SizeFramed);
 
-        ImGui.Text($"Total Moodles: {MoodleCache.IpcData.StatusList.Count()}");
-        ImGui.Text($"Total Presets: {MoodleCache.IpcData.PresetList.Count()}");
+        ImGui.Text($"Total Moodles: {LociCache.Data.StatusList.Count()}");
+        ImGui.Text($"Total Presets: {LociCache.Data.PresetList.Count()}");
     }
 
     private unsafe void DrawSundouleiaIpc()

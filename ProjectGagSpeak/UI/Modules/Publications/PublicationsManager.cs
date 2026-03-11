@@ -6,6 +6,7 @@ using GagSpeak.CustomCombos.Editor;
 using GagSpeak.Services;
 using GagSpeak.Gui.Components;
 using GagspeakAPI.Data;
+using GagspeakAPI;
 using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Text;
@@ -110,7 +111,7 @@ public class PublicationsManager
     public void DrawMoodlesPublications()
     {
         // start by selecting the pattern.
-        if (MoodleCache.IpcData.Statuses.Count <= 0)
+        if (LociCache.Data.Statuses.Count <= 0)
         {
             CkGui.ColorText("No Ipc Data Available.", ImGuiColors.DalamudRed);
         }
@@ -185,7 +186,7 @@ public class PublicationsManager
 
     private void DrawPublishedPatternList()
     {
-        var items = _shareHub.ClientPublishedPatterns.ToHashSet();
+        var items = _shareHub.PublishedPatterns.ToHashSet();
         if (items.Count == 0)
         {
             ImGui.TextUnformatted("No Patterns Published.");
@@ -202,7 +203,7 @@ public class PublicationsManager
 
     private void DrawPublishedMoodlesList()
     {
-        var items = _shareHub.ClientPublishedMoodles.ToHashSet();
+        var items = _shareHub.PublishedLociData.ToHashSet();
         if (items.Count == 0)
         {
             ImGui.TextUnformatted("No Moodles Published.");
@@ -265,23 +266,23 @@ public class PublicationsManager
         }
     }
 
-    private void PublishedMoodleItem(PublishedMoodle moodle)
+    private void PublishedMoodleItem(PublishedLociData lociData)
     {
         var unpublishButton = CkGui.IconTextButtonSize(FAI.Globe, "Unpublish");
         var height = ImGui.GetFrameHeight() * 2.25f + ImGui.GetStyle().ItemSpacing.Y + ImGui.GetStyle().WindowPadding.Y * 2;
-        using (ImRaii.Child($"##MoodleResult_{moodle.Status.GUID}", new Vector2(ImGui.GetContentRegionAvail().X, height), true, WFlags.ChildWindow))
+        using (ImRaii.Child($"##Loci_{lociData.Status.GUID}", new Vector2(ImGui.GetContentRegionAvail().X, height), true, WFlags.ChildWindow))
         {
             var min = ImGui.GetCursorScreenPos();
             using (ImRaii.Group())
             {
                 // display name, then display the downloads and likes on the other side.
-                ImGuiHelpers.ScaledDummy(MoodleDrawer.IconSizeFramed);
-                CkGui.ColorTextFrameAlignedInline(moodle.Status.Title.StripColorTags(), ImGuiColors.DalamudWhite, false);
+                ImGuiHelpers.ScaledDummy(LociIcon.SizeFramed);
+                CkGui.ColorTextFrameAlignedInline(lociData.Status.Title.StripColorTags(), ImGuiColors.DalamudWhite, false);
 
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - unpublishButton);
                 using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink))
                     if (CkGui.IconTextButton(FAI.Globe, "Unpublish", isInPopup: true, disabled: !KeyMonitor.ShiftPressed() || UiService.DisableUI))
-                        UiService.SetUITask(async () => await _shareHub.RemoveMoodle(moodle.Status.GUID));
+                        UiService.SetUITask(async () => await _shareHub.DelistLociData(lociData.Status.GUID));
                 CkGui.AttachToolTip("Remove this publication from the Moodle ShareHub!--SEP--Must hold SHIFT");
             }
             ImGui.Spacing();
@@ -291,48 +292,42 @@ public class PublicationsManager
                 var stacksSize = CkGui.IconSize(FAI.LayerGroup).X;
                 var dispellableSize = CkGui.IconSize(FAI.Eraser).X;
                 var permanentSize = CkGui.IconSize(FAI.Infinity).X;
-                var stickySize = CkGui.IconSize(FAI.MapPin).X;
                 var customVfxPath = CkGui.IconSize(FAI.Magic).X;
                 var stackOnReapply = CkGui.IconSize(FAI.PersonCirclePlus).X;
 
                 CkGui.IconTextAligned(FAI.UserCircle);
-                CkGui.ColorTextInline(moodle.AuthorName, ImGuiColors.DalamudGrey);
+                CkGui.ColorTextInline(lociData.AuthorName, ImGuiColors.DalamudGrey);
                 CkGui.AttachToolTip("Publisher of the Moodle");
 
 
                 // jump to the right side to draw all the icon data.
-                ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemInnerSpacing.X * 5
-                    - stacksSize - dispellableSize - permanentSize - stickySize - customVfxPath - stackOnReapply);
+                ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImUtf8.ItemInnerSpacing.X * 5 - stacksSize - dispellableSize - permanentSize - customVfxPath - stackOnReapply);
                 ImGui.AlignTextToFramePadding();
-                CkGui.BooleanToColoredIcon(moodle.Status.Stacks > 1, false, FAI.LayerGroup, FAI.LayerGroup, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(moodle.Status.Stacks > 1 ? "Has " + moodle.Status.Stacks + "Stacks." : "Not a stackable Moodle.");
+                CkGui.BoolIcon(lociData.Status.Stacks > 1, false, FAI.LayerGroup, FAI.LayerGroup, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.AttachToolTip(lociData.Status.Stacks > 1 ? $"Has {lociData.Status.Stacks} Stacks." : "Not a stackable Status.");
 
                 ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(moodle.Status.Modifiers.Has(Modifiers.CanDispel), false, FAI.Eraser, FAI.Eraser, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(moodle.Status.Modifiers.Has(Modifiers.CanDispel) ? "Can be dispelled." : "Cannot be dispelled.");
+                CkGui.BoolIcon(lociData.Status.Modifiers.Has(Modifiers.CanDispel), false, FAI.Eraser, FAI.Eraser, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.AttachToolTip(lociData.Status.Modifiers.Has(Modifiers.CanDispel) ? "Can be dispelled." : "Cannot be dispelled.");
 
                 ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(moodle.Status.ExpireTicks < 0, false, FAI.Infinity, FAI.Infinity, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(moodle.Status.ExpireTicks < 0 ? "Permanent Moodle." : "Temporary Moodle.");
+                CkGui.BoolIcon(lociData.Status.ExpireTicks < 0, false, FAI.Infinity, FAI.Infinity, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.AttachToolTip(lociData.Status.ExpireTicks < 0 ? "Permanent Status." : "Temporary Status.");
 
                 ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(moodle.Status.Permanent, false, FAI.MapPin, FAI.MapPin, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(moodle.Status.Permanent ? "Marked as a Sticky Moodle." : "Not Sticky.");
+                CkGui.BoolIcon(!string.IsNullOrEmpty(lociData.Status.CustomVFXPath), false, FAI.Magic, FAI.Magic, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.AttachToolTip(!string.IsNullOrEmpty(lociData.Status.CustomVFXPath) ? "Has a custom VFX path." : "No custom VFX path.");
 
                 ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(!string.IsNullOrEmpty(moodle.Status.CustomVFXPath), false, FAI.Magic, FAI.Magic, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(!string.IsNullOrEmpty(moodle.Status.CustomVFXPath) ? "Has a custom VFX path." : "No custom VFX path.");
-
-                ImUtf8.SameLineInner();
-                CkGui.BooleanToColoredIcon(moodle.Status.Modifiers.Has(Modifiers.StacksIncrease), false, FAI.PersonCirclePlus, FAI.PersonCirclePlus, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(moodle.Status.Modifiers.Has(Modifiers.StacksIncrease) ? "Stacks " + moodle.Status.StackSteps + " times on Reapplication." : "Doesn't stack on reapplication.");
+                CkGui.BoolIcon(lociData.Status.Modifiers.Has(Modifiers.StacksIncrease), false, FAI.PersonCirclePlus, FAI.PersonCirclePlus, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
+                CkGui.AttachToolTip(lociData.Status.Modifiers.Has(Modifiers.StacksIncrease) ? $"Stacks {lociData.Status.StackSteps} times." : "Doesn't stack on reapplication.");
             }
 
-            if (moodle.Status.IconID != 0)
+            if (lociData.Status.IconID != 0)
             {
                 ImGui.SetCursorScreenPos(min);
-                MoodleIcon.DrawMoodleIcon(moodle.Status.IconID, moodle.Status.Stacks, MoodleDrawer.IconSize);
-                MoodlesEx.AttachTooltip(moodle.Status, MoodleCache.IpcData.StatusList);
+                LociIcon.Draw(lociData.Status.IconID, lociData.Status.Stacks, LociIcon.Size);
+                LociEx.AttachTooltip(lociData.Status, LociCache.Data);
             }
         }
     }

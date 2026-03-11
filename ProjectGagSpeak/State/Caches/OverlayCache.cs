@@ -195,7 +195,7 @@ public sealed class OverlayCache
                         ImGuiUtil.DrawFrameColumn(key.EnactorUID);
                         ImGuiUtil.DrawFrameColumn(string.IsNullOrWhiteSpace(overlay.OverlayPath) ? "<No Image Path Set>" : overlay.OverlayPath);
                         ImGui.TableNextColumn();
-                        CkGui.BooleanToColoredIcon(overlay.ForceFirstPerson);
+                        CkGui.BoolIcon(overlay.ForceFirstPerson);
                     }
                 }
             }
@@ -220,7 +220,7 @@ public sealed class OverlayCache
                         ImGuiUtil.DrawFrameColumn(key.EnactorUID);
                         ImGuiUtil.DrawFrameColumn(string.IsNullOrWhiteSpace(overlay.OverlayPath) ? "<No Image Path Set>" : overlay.OverlayPath);
                         ImGui.TableNextColumn();
-                        CkGui.BooleanToColoredIcon(overlay.ForceFirstPerson);
+                        CkGui.BoolIcon(overlay.ForceFirstPerson);
                     }
                 }
             }

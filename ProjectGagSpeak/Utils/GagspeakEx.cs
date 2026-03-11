@@ -65,24 +65,6 @@ public static class GagspeakEx
         return s[..max] + "..";
     }
 
-    public static string ExtractText(this SeString seStr, bool onlyFirst = false)
-    {
-        StringBuilder sb = new();
-        foreach (var x in seStr.Payloads)
-        {
-            if (x is TextPayload tp)
-            {
-                sb.Append(tp.Text);
-                if (onlyFirst) break;
-            }
-            if (x.Type == PayloadType.Unknown && x.Encode().SequenceEqual<byte>([0x02, 0x1d, 0x01, 0x03]))
-            {
-                sb.Append(' ');
-            }
-        }
-        return sb.ToString();
-    }
-
     public unsafe static string Read(this Span<byte> bytes)
     {
         for (var i = 0; i < bytes.Length; i++)
@@ -201,9 +183,9 @@ public static class GagspeakEx
         };
     }
 
-    public static JObject Serialize(this Moodle moodle)
+    public static JObject Serialize(this LociItem moodle)
     {
-        var type = moodle is MoodlePreset ? MoodleType.Preset : MoodleType.Status;
+        var type = moodle is LociPreset ? LociType.Preset : LociType.Status;
 
         var json = new JObject
         {
@@ -211,26 +193,26 @@ public static class GagspeakEx
             ["Id"] = moodle.Id.ToString(),
         };
 
-        if (moodle is MoodlePreset moodlePreset)
+        if (moodle is LociPreset preset)
         {
-            json["StatusIds"] = new JArray(moodlePreset.StatusIds.Select(x => x.ToString()));
+            json["StatusIds"] = new JArray(preset.StatusIds.Select(x => x.ToString()));
         }
 
         return json;
     }
 
-    public static Moodle LoadMoodle(JToken? token)
+    public static LociItem LoadLociItem(JToken? token)
     {
         if (token is not JObject jsonObject)
             throw new ArgumentException("Invalid JObjectToken!");
 
-        var type = Enum.TryParse<MoodleType>(jsonObject["Type"]?.Value<string>(), out var moodleType) ? moodleType : MoodleType.Status;
+        var type = Enum.TryParse<LociType>(jsonObject["Type"]?.Value<string>(), out var moodleType) ? moodleType : LociType.Status;
         Guid id = jsonObject["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
         IEnumerable<Guid> statusIds = jsonObject["StatusIds"]?.Select(x => x.ToObject<Guid>()) ?? Enumerable.Empty<Guid>();
         return type switch
         {
-            MoodleType.Preset => new MoodlePreset(id, statusIds),
-            _ => new Moodle(id)
+            LociType.Preset => new LociPreset(id, statusIds),
+            _ => new LociItem(id)
         };
     }
 
@@ -246,61 +228,5 @@ public static class GagspeakEx
                && int.TryParse(gameStainString[1], out int stain2)
             ? new StainIds((StainId)stain1, (StainId)stain2)
             : StainIds.None;
-    }
-
-    public static void DrawMoodleStatusTooltip(MoodlesStatusInfo item, IEnumerable<MoodlesStatusInfo> otherStatuses)
-    {
-        if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-        {
-            ImGui.SetNextWindowSizeConstraints(new Vector2(350f, 0f), new Vector2(350f, float.MaxValue));
-            using var s = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One * 8f)
-                .Push(ImGuiStyleVar.WindowRounding, 4f)
-                .Push(ImGuiStyleVar.PopupBorderSize, 1f);
-            using var c =ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
-
-            ImGui.BeginTooltip();
-
-            // push the title, converting all color tags into the actual label.
-            CkCommons.RichText.CkRichText.Text(item.Title, cloneId: 100);
-
-            if (!item.Description.IsNullOrWhitespace())
-            {
-                ImGui.Separator();
-                CkCommons.RichText.CkRichText.Text(350f, item.Description);
-            }
-
-            // This has... heavily changed... lol.
-            ImGui.Separator();
-            CkGui.ColorText("Stacks:", ImGuiColors.ParsedGold);
-            ImGui.SameLine();
-            ImGui.Text(item.Stacks.ToString());
-            //if (item.StackOnReapply)
-            //{
-            //    ImGui.SameLine();
-            //    CkGui.ColorText(" (inc by " + item.StacksIncOnReapply + ")", ImGuiColors.ParsedGold);
-            //}
-
-            //CkGui.ColorText("Duration:", ImGuiColors.ParsedGold);
-            //ImGui.SameLine();
-            //ImGui.Text($"{item.Days}d {item.Hours}h {item.Minutes}m {item.Seconds}");
-
-            //CkGui.ColorText("Category:", ImGuiColors.ParsedGold);
-            //ImGui.SameLine();
-            //ImGui.Text(item.Type.ToString());
-
-            //CkGui.ColorText("Dispellable:", ImGuiColors.ParsedGold);
-            //ImGui.SameLine();
-            //ImGui.Text(item.Dispelable ? "Yes" : "No");
-
-            //if (item.StatusOnDispell != Guid.Empty)
-            //{
-            //    CkGui.ColorText("StatusOnDispell:", ImGuiColors.ParsedGold);
-            //    ImGui.SameLine();
-            //    var status = otherStatuses.FirstOrDefault(x => x.GUID == item.StatusOnDispell).Title ?? "Unknown";
-            //    ImGui.Text(status);
-            //}
-
-            ImGui.EndTooltip();
-        }
     }
 }

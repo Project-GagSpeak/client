@@ -3,6 +3,7 @@ using GagSpeak.Services;
 using GagSpeak.State.Caches;
 using GagSpeak.Utils;
 using Dalamud.Bindings.ImGui;
+using CkCommons.Textures;
 
 namespace GagSpeak.CustomCombos;
 
@@ -17,8 +18,5 @@ public abstract class CkMoodleComboBase<T> : CkFilterComboCache<T>
 
     protected unsafe virtual float SelectableTextHeight => Fonts.Default150PercentPtr.IsLoaded()
         ? Fonts.Default150PercentPtr.FontSize : ImGui.GetTextLineHeight();
-    protected virtual Vector2 IconSize => MoodleDrawer.IconSize * IconScale;
-
-    protected void DrawItemTooltip(MoodlesStatusInfo item)
-        => GagspeakEx.DrawMoodleStatusTooltip(item, MoodleCache.IpcData.StatusList);
+    protected virtual Vector2 IconSize => LociIcon.Size * IconScale;
 }

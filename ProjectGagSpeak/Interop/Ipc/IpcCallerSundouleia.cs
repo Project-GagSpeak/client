@@ -3,12 +3,11 @@ using GagSpeak.Services.Mediator;
 
 namespace GagSpeak.Interop;
 
+// Not sure why this is needed since we no longer handle moodles internally. but can leave it for future notice i guess.
+// (Unless we want to use Loci to identify if Sundouleia is active.
 public sealed class IpcCallerSundouleia : IIpcCaller
 {
-    // Version Checks.
     private readonly ICallGateSubscriber<int> ApiVersion;
-
-    // Event Calls.
     private readonly ICallGateSubscriber<object> Ready;
     private readonly ICallGateSubscriber<object> Disposing;
 
@@ -34,8 +33,7 @@ public sealed class IpcCallerSundouleia : IIpcCaller
 
         PairRendered = Svc.PluginInterface.GetIpcSubscriber<nint, object>("Sundouleia.PairRendered");
         PairUnrendered = Svc.PluginInterface.GetIpcSubscriber<nint, object>("Sundouleia.PairUnrendered");
-
-        GetAllRendered = Svc.PluginInterface.GetIpcSubscriber<List<nint>>("Sundouleia.GetAllRendered");
+        GetAllRendered = Svc.PluginInterface.GetIpcSubscriber<List<nint>>("Sundouleia.GetRendered");
 
         Ready.Subscribe(OnSundouleiaReady);
         Disposing.Subscribe(OnSundouleiaDisposing);
@@ -99,7 +97,7 @@ public sealed class IpcCallerSundouleia : IIpcCaller
             return new List<nint>();
         // Can be called off the framework thread, it does not madder.
         var result = GetAllRendered.InvokeFunc();
-        _logger.LogDebug($"Retrieved {result.Count} kinksters.", LoggerType.IpcGagSpeak);
+        _logger.LogDebug($"Retrieved {result.Count} sundesmos.", LoggerType.IpcGagSpeak);
         // Update the internal list too.
         _renderedSundesmos = result.ToHashSet();
         return result;

@@ -34,7 +34,7 @@ public class CacheStateManager : IHostedService
     private readonly CustomizePlusHandler _cplusHandler;
     private readonly GlamourHandler _glamourHandler;
     private readonly ModHandler _modHandler;
-    private readonly MoodleHandler _moodleHandler;
+    private readonly LociHandler _moodleHandler;
     private readonly TraitsHandler _traitsHandler;
     private readonly OverlayHandler _overlayHandler;
     private readonly ArousalService _arousalHandler;
@@ -42,7 +42,7 @@ public class CacheStateManager : IHostedService
     public CacheStateManager(ILogger<CacheStateManager> logger, IpcCallerPenumbra redrawAssist,
         GagRestrictionManager gags, RestrictionManager restrictions, RestraintManager restraints,
         CollarManager collar, CursedLootManager cursedItems, CustomizePlusHandler profiles, 
-        GlamourHandler glamours, ModHandler mods, MoodleHandler moodles, TraitsHandler traits, 
+        GlamourHandler glamours, ModHandler mods, LociHandler moodles, TraitsHandler traits, 
         OverlayHandler overlays, ArousalService arousals) 
     {
         _logger = logger;
@@ -131,7 +131,7 @@ public class CacheStateManager : IHostedService
             _glamourHandler.TryAddGlamourToCache(key, gagItem.Glamour);
             _glamourHandler.TryAddMetaToCache(key, new(gagItem.HeadgearState, gagItem.VisorState));
             _modHandler.TryAddModToCache(key, gagItem.Mod);
-            _moodleHandler.TryAddMoodleToCache(key, gagItem.Moodle);
+            _moodleHandler.TryAddLociItemToCache(key, gagItem.Moodle);
             _traitsHandler.TryAddTraitsToCache(key, gagItem.Traits);
             _cplusHandler.TryAddToCache(key, gagItem.CPlusProfile);
             _arousalHandler.TryAddArousalToCache(key, gagItem.Arousal);
@@ -158,7 +158,7 @@ public class CacheStateManager : IHostedService
             _glamourHandler.TryAddGlamourToCache(key, item.Glamour);
             _glamourHandler.TryAddMetaToCache(key, metaStruct);
             _modHandler.TryAddModToCache(key, item.Mod);
-            _moodleHandler.TryAddMoodleToCache(key, item.Moodle);
+            _moodleHandler.TryAddLociItemToCache(key, item.Moodle);
             _traitsHandler.TryAddTraitsToCache(key, item.Traits);
             _arousalHandler.TryAddArousalToCache(key, item.Arousal);
             // Conditional Additions.
@@ -183,7 +183,7 @@ public class CacheStateManager : IHostedService
             _glamourHandler.TryAddGlamourToCache(key, restraintSet.GetBaseGlamours());
             _glamourHandler.TryAddMetaToCache(key, restraintSet.MetaStates);
             _modHandler.TryAddModToCache(key, restraintSet.GetBaseMods());
-            _moodleHandler.TryAddMoodleToCache(key, restraintSet.GetBaseMoodles());
+            _moodleHandler.TryAddLociItemToCache(key, restraintSet.GetBaseMoodles());
             _traitsHandler.TryAddTraitsToCache(key, restraintSet.GetBaseTraits());
             _arousalHandler.TryAddArousalToCache(key, restraintSet.Arousal);
             _overlayHandler.TryAddBlindfoldToCache(key, restraintSet.GetBaseBlindfold());
@@ -195,7 +195,7 @@ public class CacheStateManager : IHostedService
                 var layerKey = new CombinedCacheKey(ManagerPriority.Restraints, (idx + 1), serverItem.Enabler, restraintSet.Label);
                 _glamourHandler.TryAddGlamourToCache(layerKey, restraintSet.GetGlamourAtLayer(idx));
                 _modHandler.TryAddModToCache(layerKey, restraintSet.GetModAtLayer(idx));
-                _moodleHandler.TryAddMoodleToCache(layerKey, restraintSet.GetMoodleAtLayer(idx));
+                _moodleHandler.TryAddLociItemToCache(layerKey, restraintSet.GetMoodleAtLayer(idx));
                 _traitsHandler.TryAddTraitsToCache(layerKey, restraintSet.GetTraitsForLayer(idx));
                 _arousalHandler.TryAddArousalToCache(layerKey, restraintSet.Arousal);
                 _overlayHandler.TryAddBlindfoldToCache(layerKey, restraintSet.GetBlindfoldAtLayer(idx));
@@ -227,7 +227,7 @@ public class CacheStateManager : IHostedService
             _glamourHandler.TryAddGlamourToCache(key, item.Glamour);
             _glamourHandler.TryAddMetaToCache(key, metaStruct);
             _modHandler.TryAddModToCache(key, item.Mod);
-            _moodleHandler.TryAddMoodleToCache(key, item.Moodle);
+            _moodleHandler.TryAddLociItemToCache(key, item.Moodle);
             _traitsHandler.TryAddTraitsToCache(key, item.Traits & ~(Traits.Immobile | Traits.Weighty));
             _arousalHandler.TryAddArousalToCache(key, item.Arousal);
             // Conditional Additions.
@@ -252,7 +252,7 @@ public class CacheStateManager : IHostedService
             var glamour = new GlamourSlot(data.Glamour.Slot, data.Glamour.GameItem, new StainIds([syncData.Dye1, syncData.Dye2]));
             _glamourHandler.TryAddGlamourToCache(key, glamour);
             _modHandler.TryAddModToCache(key, data.Mod);
-            _moodleHandler.TryAddMoodleToCache(key, new MoodleTuple(syncData.Moodle));
+            _moodleHandler.TryAddLociItemToCache(key, new LociTuple(syncData.StatusInfo));
         }
         _logger.LogInformation("------ Collar Data synced to Cache ------ ");
         // Ensure we have things cached if empty.
@@ -272,7 +272,7 @@ public class CacheStateManager : IHostedService
         await Task.WhenAll(
             _glamourHandler.UpdateCaches(),
             _modHandler.UpdateModCache(),
-            _moodleHandler.UpdateMoodleCache(),
+            _moodleHandler.UpdateLociCache(),
             _cplusHandler.UpdateProfileCache(),
             _traitsHandler.UpdateTraitCache(),
             _arousalHandler.UpdateFinalCache(),
@@ -294,7 +294,7 @@ public class CacheStateManager : IHostedService
         await TimedWhenAll($"[{key}]'s Visual Attributes added to caches",
             AddGlamourMeta(key, item.Glamour, new(item.HeadgearState, item.VisorState)),
             AddModPreset(key, item.Mod),
-            AddMoodle(key, item.Moodle),
+            AddLociItem(key, item.Moodle),
             AddProfile(key, item.CPlusProfile),
             AddTraits(key, item.Traits),
             AddArousalStrength(key, item.Arousal)
@@ -338,7 +338,7 @@ public class CacheStateManager : IHostedService
         {
             AddGlamourMeta(key, item.Glamour, metaStruct),
             AddModPreset(key, item.Mod),
-            AddMoodle(key, item.Moodle),
+            AddLociItem(key, item.Moodle),
             AddTraits(key, item.Traits),
             AddArousalStrength(key, item.Arousal),
         };
@@ -379,7 +379,7 @@ public class CacheStateManager : IHostedService
         await TimedWhenAll($"[{key}]'s Visual Attributes added to caches",
             AddGlamourMeta(key, item.GetBaseGlamours(), item.MetaStates),
             AddModPreset(key, item.GetBaseMods()),
-            AddMoodle(key, item.GetBaseMoodles()),
+            AddLociItem(key, item.GetBaseMoodles()),
             AddTraits(key, item.GetBaseTraits()),
             AddArousalStrength(key, item.Arousal),
             AddBlindfold(key, item.GetBaseBlindfold()),
@@ -403,7 +403,7 @@ public class CacheStateManager : IHostedService
             var layerKey = new CombinedCacheKey(ManagerPriority.Restraints, (idx + 1), enablerName, item.Label);
             _glamourHandler.TryRemGlamourFromCache(layerKey);
             _modHandler.TryRemModFromCache(layerKey);
-            _moodleHandler.TryRemMoodleFromCache(layerKey);
+            _moodleHandler.TryRemLociDataFromCache(layerKey);
             _traitsHandler.TryRemTraitsFromCache(layerKey);
             _arousalHandler.TryRemArousalFromCache(layerKey);
             _overlayHandler.TryRemBlindfoldFromCache(layerKey);
@@ -416,7 +416,7 @@ public class CacheStateManager : IHostedService
             var layerKey = new CombinedCacheKey(ManagerPriority.Restraints, (idx + 1), enablerName, item.Label);
             _glamourHandler.TryAddGlamourToCache(layerKey, item.GetGlamourAtLayer(idx));
             _modHandler.TryAddModToCache(layerKey, item.GetModAtLayer(idx));
-            _moodleHandler.TryAddMoodleToCache(layerKey, item.GetMoodleAtLayer(idx));
+            _moodleHandler.TryAddLociItemToCache(layerKey, item.GetMoodleAtLayer(idx));
             _traitsHandler.TryAddTraitsToCache(layerKey, item.GetTraitsForLayer(idx));
             _arousalHandler.TryAddArousalToCache(layerKey, item.Arousal);
             _overlayHandler.TryAddBlindfoldToCache(layerKey, item.GetBlindfoldAtLayer(idx));
@@ -427,7 +427,7 @@ public class CacheStateManager : IHostedService
         await TimedWhenAll($"[{item.Label}]'s Visual Attributes for layers ({added}) added to caches",
             _glamourHandler.UpdateCaches(),
             _modHandler.UpdateModCache(),
-            _moodleHandler.UpdateMoodleCache(),
+            _moodleHandler.UpdateLociCache(),
             _traitsHandler.UpdateTraitCache(),
             _arousalHandler.UpdateFinalCache(),
             _overlayHandler.UpdateCaches()
@@ -450,7 +450,7 @@ public class CacheStateManager : IHostedService
             var layerKey = new CombinedCacheKey(ManagerPriority.Restraints, (idx + 1), enablerName, item.Label);
             _glamourHandler.TryAddGlamourToCache(layerKey, item.GetGlamourAtLayer(idx));
             _modHandler.TryAddModToCache(layerKey, item.GetModAtLayer(idx));
-            _moodleHandler.TryAddMoodleToCache(layerKey, item.GetMoodleAtLayer(idx));
+            _moodleHandler.TryAddLociItemToCache(layerKey, item.GetMoodleAtLayer(idx));
             _traitsHandler.TryAddTraitsToCache(layerKey, item.GetTraitsForLayer(idx));
             _arousalHandler.TryAddArousalToCache(layerKey, item.Arousal);
             _overlayHandler.TryAddBlindfoldToCache(layerKey, item.GetBlindfoldAtLayer(idx));
@@ -461,7 +461,7 @@ public class CacheStateManager : IHostedService
         await TimedWhenAll($"[{item.Label}]'s Visual Attributes for layers ({added}) added to caches",
             _glamourHandler.UpdateCaches(),
             _modHandler.UpdateModCache(),
-            _moodleHandler.UpdateMoodleCache(),
+            _moodleHandler.UpdateLociCache(),
             _traitsHandler.UpdateTraitCache(),
             _arousalHandler.UpdateFinalCache(),
             _overlayHandler.UpdateCaches()
@@ -477,7 +477,7 @@ public class CacheStateManager : IHostedService
             var layerKey = new CombinedCacheKey(ManagerPriority.Restraints, (idx + 1), string.Empty, item.Label);
             _glamourHandler.TryRemGlamourFromCache(layerKey);
             _modHandler.TryRemModFromCache(layerKey);
-            _moodleHandler.TryRemMoodleFromCache(layerKey);
+            _moodleHandler.TryRemLociDataFromCache(layerKey);
             _traitsHandler.TryRemTraitsFromCache(layerKey);
             _arousalHandler.TryRemArousalFromCache(layerKey);
             _overlayHandler.TryRemBlindfoldFromCache(layerKey);
@@ -511,7 +511,7 @@ public class CacheStateManager : IHostedService
             var key = new CombinedCacheKey(ManagerPriority.Restraints, (idx + 1), string.Empty, item.Label);
             _glamourHandler.TryRemGlamourFromCache(key);
             _modHandler.TryRemModFromCache(key);
-            _moodleHandler.TryRemMoodleFromCache(key);
+            _moodleHandler.TryRemLociDataFromCache(key);
             _traitsHandler.TryRemTraitsFromCache(key);
             _arousalHandler.TryRemArousalFromCache(key);
             _overlayHandler.TryRemBlindfoldFromCache(key);
@@ -522,7 +522,7 @@ public class CacheStateManager : IHostedService
         await TimedWhenAll($"({item.Label}) had layers [{removed}] removed from cache and base states restored",
             _glamourHandler.UpdateCaches(),
             _modHandler.UpdateModCache(),
-            _moodleHandler.UpdateMoodleCache(),
+            _moodleHandler.UpdateLociCache(),
             _traitsHandler.UpdateTraitCache(),
             _arousalHandler.UpdateFinalCache(),
             _overlayHandler.UpdateCaches()
@@ -544,7 +544,7 @@ public class CacheStateManager : IHostedService
         {
             AddGlamourMeta(key, item.RefItem.Glamour, metaStruct),
             AddModPreset(key, item.RefItem.Mod),
-            AddMoodle(key, item.RefItem.Moodle),
+            AddLociItem(key, item.RefItem.Moodle),
             AddTraits(key, item.RefItem.Traits &~ (Traits.Immobile | Traits.Weighty)),
             AddArousalStrength(key, item.RefItem.Arousal)
         };
@@ -595,7 +595,7 @@ public class CacheStateManager : IHostedService
         await TimedWhenAll($"[{key}]'s Visual Attributes added to caches",
             AddGlamourMeta(key, glamour, MetaDataStruct.Empty),
             AddModPreset(key, data.Mod),
-            AddMoodle(key, new MoodleTuple(synced.Moodle))
+            AddLociItem(key, new LociTuple(synced.StatusInfo))
         );
     }
 
@@ -605,7 +605,7 @@ public class CacheStateManager : IHostedService
             return;
 
         // Ignore if not valid update type.
-        if (type is not DataUpdateType.DyesChange and not DataUpdateType.CollarMoodleChange)
+        if (type is not DataUpdateType.DyesChange and not DataUpdateType.CollarLociDataChange)
             return;
 
         var data = _collar.ClientCollar;
@@ -613,7 +613,7 @@ public class CacheStateManager : IHostedService
 
         await TimedWhenAll($"[{key}]'s Collar Visuals updated in caches", type is DataUpdateType.DyesChange
             ? UpdateGlamour(key, data.Glamour.Slot, new StainIds([synced.Dye1, synced.Dye2]))
-            : UpdateMoodle(key, new MoodleTuple(synced.Moodle)));
+            : UpdateMoodle(key, new LociTuple(synced.StatusInfo)));
     }
 
     public async Task RemoveCollar(UserData enactor)
@@ -696,28 +696,28 @@ public class CacheStateManager : IHostedService
         await _modHandler.UpdateModCache();
     }
 
-    private async Task AddMoodle(CombinedCacheKey key, Moodle moodle)
+    private async Task AddLociItem(CombinedCacheKey key, LociItem item)
     {
-        _moodleHandler.TryAddMoodleToCache(key, moodle);
-        await _moodleHandler.UpdateMoodleCache();
+        _moodleHandler.TryAddLociItemToCache(key, item);
+        await _moodleHandler.UpdateLociCache();
     }
 
-    private async Task AddMoodle(CombinedCacheKey key, IEnumerable<Moodle> moodles)
+    private async Task AddLociItem(CombinedCacheKey key, IEnumerable<LociItem> items)
     {
-        _moodleHandler.TryAddMoodleToCache(key, moodles);
-        await _moodleHandler.UpdateMoodleCache();
+        _moodleHandler.TryAddLociItemToCache(key, items);
+        await _moodleHandler.UpdateLociCache();
     }
 
-    private async Task UpdateMoodle(CombinedCacheKey key, Moodle newMoodle)
+    private async Task UpdateMoodle(CombinedCacheKey key, LociItem newItem)
     {
-        _moodleHandler.TryUpdateMoodleInCache(key, newMoodle);
-        await _moodleHandler.UpdateMoodleCache();
+        _moodleHandler.TryUpdateItemInCache(key, newItem);
+        await _moodleHandler.UpdateLociCache();
     }
 
     private async Task RemoveMoodle(CombinedCacheKey key)
     {
-        _moodleHandler.TryRemMoodleFromCache(key);
-        await _moodleHandler.UpdateMoodleCache();
+        _moodleHandler.TryRemLociDataFromCache(key);
+        await _moodleHandler.UpdateLociCache();
     }
 
     private async Task AddProfile(CombinedCacheKey key, CustomizeProfile profile)

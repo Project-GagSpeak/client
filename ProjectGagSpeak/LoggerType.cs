@@ -20,7 +20,7 @@ public enum LoggerType : long
     IpcPenumbra         = 1L << 8,
     IpcGlamourer        = 1L << 9,
     IpcCustomize        = 1L << 10,
-    IpcMoodles          = 1L << 11,
+    IpcLoci          = 1L << 11,
     IpcHeels            = 1L << 12,
     IpcLifeStream       = 1L << 13,
     IpcHonorific        = 1L << 14,
@@ -89,7 +89,7 @@ public enum LoggerType : long
     // All Recommended types.
     Recommended =
             Achievements |
-            IpcGagSpeak | IpcPenumbra | IpcGlamourer | IpcCustomize | IpcMoodles | IpcHeels | IpcLifeStream | IpcHonorific | IpcPetNames | IpcIntiface |
+            IpcGagSpeak | IpcPenumbra | IpcGlamourer | IpcCustomize | IpcLoci | IpcHeels | IpcLifeStream | IpcHonorific | IpcPetNames | IpcIntiface |
             VisualCache | Gags | Restrictions | Restraints | Collars | CursedItems |
             Puppeteer |
             Toys | Patterns | Alarms | Triggers |

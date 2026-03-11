@@ -16,6 +16,7 @@ using Dalamud.Bindings.ImGui;
 using OtterGui.Extensions;
 using OtterGui.Raii;
 using OtterGui.Text;
+using CkCommons.Textures;
 
 namespace GagSpeak.Gui.Wardrobe;
 public partial class GagRestrictionsPanel
@@ -25,12 +26,14 @@ public partial class GagRestrictionsPanel
     private readonly ActiveItemsDrawer _activeItemDrawer;
     private readonly EquipmentDrawer _equipDrawer;
     private readonly ModPresetDrawer _modDrawer;
-    private readonly MoodleDrawer _moodleDrawer;
     private readonly AttributeDrawer _attributeDrawer;
     private readonly GagRestrictionManager _manager;
     private readonly KinksterManager _pairs;
     private readonly CosmeticService _textures;
     private readonly TutorialService _guides;
+
+    private MoodleStatusCombo _statusCombo;
+    private MoodlePresetCombo _presetCombo;
     public bool IsEditing => _manager.ItemInEditor != null;
     public GagRestrictionsPanel(
         ILogger<GagRestrictionsPanel> logger,
@@ -39,7 +42,6 @@ public partial class GagRestrictionsPanel
         ActiveItemsDrawer activeItemDrawer,
         EquipmentDrawer equipDrawer,
         ModPresetDrawer modDrawer,
-        MoodleDrawer moodleDrawer,
         AttributeDrawer attributeDrawer,
         GagRestrictionManager manager,
         KinksterManager pairs,
@@ -51,12 +53,14 @@ public partial class GagRestrictionsPanel
         _activeItemDrawer = activeItemDrawer;
         _equipDrawer = equipDrawer;
         _modDrawer = modDrawer;
-        _moodleDrawer = moodleDrawer;
         _attributeDrawer = attributeDrawer;
         _manager = manager;
         _pairs = pairs;
         _textures = textures;
         _guides = guides;
+
+        _statusCombo = new MoodleStatusCombo(logger, 1.15f);
+        _presetCombo = new MoodlePresetCombo(logger, 1.15f);
         _profileCombo = new CustomizeProfileCombo(logger, mediator);
     }
 
@@ -109,7 +113,7 @@ public partial class GagRestrictionsPanel
     private void DrawSelectedItemInfo(CkHeader.DrawRegion drawRegion, float rounding)
     {
         var wdl = ImGui.GetWindowDrawList();
-        var height = ImGui.GetFrameHeightWithSpacing() + MoodleDrawer.IconSize.Y;
+        var height = ImGui.GetFrameHeightWithSpacing() + LociIcon.Size.Y;
         var region = new Vector2(drawRegion.Size.X, height);
         var notSelected = _selector.Selected is null;
         var isActive = _manager.ActiveItems.Values.Any(gi => gi.GagType == _selector.Selected?.GagType);
@@ -157,7 +161,7 @@ public partial class GagRestrictionsPanel
 
         using (CkRaii.Group(CkCol.CurvedHeaderFade.Uint()))
         {
-            CkGui.BooleanToColoredIcon(_selector.Selected!.IsEnabled, false);
+            CkGui.BoolIcon(_selector.Selected!.IsEnabled, false);
             CkGui.TextFrameAlignedInline($"Visuals  ");
         }
         if (!isActive && ImGui.IsItemHovered() && ImGui.IsItemClicked())
@@ -184,7 +188,7 @@ public partial class GagRestrictionsPanel
             _attributeDrawer.DrawTraitPreview(_selector.Selected!.Traits);
         }
 
-        _moodleDrawer.ShowStatusIcons(_selector.Selected!.Moodle, ImGui.GetContentRegionAvail().X);
+        LociDrawer.DrawIcons(_selector.Selected!.Moodle, ImGui.GetContentRegionAvail().X);
     }
 
     private void DrawActiveItemInfo(Vector2 region)

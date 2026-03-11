@@ -301,11 +301,11 @@ public class ProfilesTab
             {
                 CkGui.FramedIconText(FAI.Crown);
                 CkGui.TextFrameAlignedInline("Is Primary Profile:");
-                CkGui.BooleanToColoredIcon(profile.IsPrimary);
+                CkGui.BoolIcon(profile.IsPrimary);
 
                 CkGui.FramedIconText(FAI.CheckCircle);
                 CkGui.TextFrameAlignedInline("Is Valid:");
-                CkGui.BooleanToColoredIcon(profile.HadValidConnection);
+                CkGui.BoolIcon(profile.HadValidConnection);
 
                 CkGui.FramedIconText(FAI.Globe);
                 CkGui.TextFrameAlignedInline("World:");

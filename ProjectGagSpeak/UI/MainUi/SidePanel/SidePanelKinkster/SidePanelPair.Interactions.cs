@@ -363,9 +363,9 @@ public partial class SidePanelPair
 
     private void DrawApplyMoodleOwn(KinksterInfoCache cache, Kinkster k, string dispName, float width)
     {
-        var hasStatuses = MoodleCache.IpcData.Statuses.Count > 0;
-        var hasPresets = MoodleCache.IpcData.Presets.Count > 0;
-        var isAllowed = k.PairPerms.MoodleAccess.HasAny(MoodleAccess.AllowOther);
+        var hasStatuses = LociCache.Data.Statuses.Count > 0;
+        var hasPresets = LociCache.Data.Presets.Count > 0;
+        var isAllowed = k.PairPerms.LociAccess.HasAny(LociAccess.AllowOther);
 
         var statusTxt = hasStatuses ? $"Apply a status to {dispName}" : $"No statuses to apply";
         var statusTT = isAllowed ? $"Applies a status to {dispName}." : $"Cannot apply your own moodles to {dispName}. --COL--(Permission Denied)--COL--";
@@ -399,9 +399,9 @@ public partial class SidePanelPair
 
     private void DrawApplyMoodleOther(KinksterInfoCache cache, Kinkster k, string dispName, float width)
     {
-        var hasStatuses = k.MoodleData.Statuses.Count > 0;
-        var hasPresets = k.MoodleData.Presets.Count > 0;
-        var isAllowed = k.PairPerms.MoodleAccess.HasAny(MoodleAccess.AllowOwn);
+        var hasStatuses = k.LociData.Statuses.Count > 0;
+        var hasPresets = k.LociData.Presets.Count > 0;
+        var isAllowed = k.PairPerms.LociAccess.HasAny(LociAccess.AllowOwn);
 
         var statusTxt = hasStatuses ? $"Apply a status from {dispName}'s list" : "No statuses to apply.";
         var statusTT = isAllowed ? $"Applies a chosen status to {dispName}." : $"Cannot apply {dispName}'s statuses. --COL--(Permission Denied)--COL--";
@@ -433,8 +433,8 @@ public partial class SidePanelPair
         }
 
         // For removing. (Of note, we will need to make a seperate combo for removals if we want to distinguish between applied vs any.)
-        var canRemApplied = k.PairPerms.MoodleAccess.HasAny(MoodleAccess.RemoveApplied);
-        var canRemAny = k.PairPerms.MoodleAccess.HasAny(MoodleAccess.RemoveAny);
+        var canRemApplied = k.PairPerms.LociAccess.HasAny(LociAccess.RemoveApplied);
+        var canRemAny = k.PairPerms.LociAccess.HasAny(LociAccess.RemoveAny);
         var canRemove = canRemApplied || canRemAny;
         var remText = canRemove ? $"Remove a status from {dispName}." : "Cannot remove statuses.";
         var remTT = canRemove ? $"Removes a status from {dispName}." : $"Cannot remove statuses from {dispName}. --COL--(Permission Denied)--COL--";

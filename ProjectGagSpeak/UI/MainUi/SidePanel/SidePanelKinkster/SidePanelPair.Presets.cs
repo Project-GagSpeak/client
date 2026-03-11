@@ -158,8 +158,8 @@ public partial class SidePanelPair
             RemoveLayers = true,
             RemoveRestraintSets = true,
 
-            MoodleAccess = MoodleAccess.Positive | MoodleAccess.Negative,
-            MaxMoodleTime = new TimeSpan(1, 0, 0),
+            LociAccess = LociAccess.Positive | LociAccess.Negative,
+            MaxLociTime = new TimeSpan(1, 0, 0),
         };
         // all is false by default.
         var pairAccess = new PairPermAccess();
@@ -197,8 +197,8 @@ public partial class SidePanelPair
             EndChar = ')',
             PuppetPerms = PuppetPerms.Sit,
 
-            MoodleAccess = MoodleAccess.Positive | MoodleAccess.Negative,
-            MaxMoodleTime = new TimeSpan(1, 30, 0),
+            LociAccess = LociAccess.Positive | LociAccess.Negative,
+            MaxLociTime = new TimeSpan(1, 30, 0),
         };
         // all is false by default.
         var pairAccess = new PairPermAccess();
@@ -233,8 +233,8 @@ public partial class SidePanelPair
             EndChar = ')',
             PuppetPerms = PuppetPerms.Sit | PuppetPerms.Emotes,
 
-            MoodleAccess = MoodleAccess.Positive | MoodleAccess.Negative | MoodleAccess.AllowOwn,
-            MaxMoodleTime = new TimeSpan(1, 30, 0),
+            LociAccess = LociAccess.Positive | LociAccess.Negative | LociAccess.AllowOwn,
+            MaxLociTime = new TimeSpan(1, 30, 0),
 
             ExecutePatterns = true,
             StopPatterns = true,
@@ -279,8 +279,8 @@ public partial class SidePanelPair
             EndChar = ')',
             PuppetPerms = PuppetPerms.Sit | PuppetPerms.Emotes | PuppetPerms.Alias,
 
-            MoodleAccess = MoodleAccess.Positive | MoodleAccess.Negative | MoodleAccess.Special | MoodleAccess.AllowOwn,
-            MaxMoodleTime = new TimeSpan(3, 0, 0),
+            LociAccess = LociAccess.Positive | LociAccess.Negative | LociAccess.Special | LociAccess.AllowOwn,
+            MaxLociTime = new TimeSpan(3, 0, 0),
 
             ExecutePatterns = true,
             StopPatterns = true,
@@ -325,9 +325,9 @@ public partial class SidePanelPair
             EndChar = ')',
             PuppetPerms = PuppetPerms.Sit | PuppetPerms.Emotes | PuppetPerms.Alias,
 
-            MoodleAccess = MoodleAccess.Positive | MoodleAccess.Negative | MoodleAccess.Special 
-            | MoodleAccess.AllowOwn | MoodleAccess.Permanent | MoodleAccess.RemoveApplied,
-            MaxMoodleTime = new TimeSpan(12, 0, 0),
+            LociAccess = LociAccess.Positive | LociAccess.Negative | LociAccess.Special 
+            | LociAccess.AllowOwn | LociAccess.Permanent | LociAccess.RemoveApplied,
+            MaxLociTime = new TimeSpan(12, 0, 0),
 
             ExecutePatterns = true,
             StopPatterns = true,
@@ -377,8 +377,8 @@ public partial class SidePanelPair
             EndChar = ')',
             PuppetPerms = PuppetPerms.Sit | PuppetPerms.Emotes | PuppetPerms.Alias,
 
-            MoodleAccess = MoodleAccess.Positive | MoodleAccess.Negative | MoodleAccess.AllowOwn,
-            MaxMoodleTime = new TimeSpan(1, 30, 0),
+            LociAccess = LociAccess.Positive | LociAccess.Negative | LociAccess.AllowOwn,
+            MaxLociTime = new TimeSpan(1, 30, 0),
 
             ExecutePatterns = true,
             StopPatterns = true,
@@ -418,9 +418,9 @@ public partial class SidePanelPair
             PuppeteerEnabledAllowed = false,
             PuppetPermsAllowed = PuppetPerms.Sit,
 
-            MoodlesEnabledAllowed = false,
-            MoodleAccessAllowed = MoodleAccess.Positive | MoodleAccess.Negative | MoodleAccess.Special
-            | MoodleAccess.AllowOther | MoodleAccess.AllowOwn | MoodleAccess.Permanent,
+            LociEnabledAllowed = false,
+            LociAccessAllowed = LociAccess.Positive | LociAccess.Negative | LociAccess.Special
+            | LociAccess.AllowOther | LociAccess.AllowOwn | LociAccess.Permanent,
 
             SpatialAudioAllowed = true,
             ExecutePatternsAllowed = true,
@@ -464,9 +464,9 @@ public partial class SidePanelPair
             EndChar = ')',
             PuppetPerms = PuppetPerms.Sit | PuppetPerms.Emotes | PuppetPerms.Alias,
 
-            MoodleAccess = MoodleAccess.Positive | MoodleAccess.Negative | MoodleAccess.Special
-            | MoodleAccess.AllowOwn,
-            MaxMoodleTime = new TimeSpan(3, 0, 0),
+            LociAccess = LociAccess.Positive | LociAccess.Negative | LociAccess.Special
+            | LociAccess.AllowOwn,
+            MaxLociTime = new TimeSpan(3, 0, 0),
 
             ExecutePatterns = true,
             StopPatterns = true,
@@ -515,10 +515,10 @@ public partial class SidePanelPair
             PuppeteerEnabledAllowed = false,
             PuppetPermsAllowed = PuppetPerms.Sit | PuppetPerms.Emotes | PuppetPerms.Alias,
 
-            MoodlesEnabledAllowed = false,
-            MoodleAccessAllowed = MoodleAccess.Positive | MoodleAccess.Negative | MoodleAccess.Special
-            | MoodleAccess.AllowOther | MoodleAccess.AllowOwn | MoodleAccess.Permanent,
-            MaxMoodleTimeAllowed = false,
+            LociEnabledAllowed = false,
+            LociAccessAllowed = LociAccess.Positive | LociAccess.Negative | LociAccess.Special
+            | LociAccess.AllowOther | LociAccess.AllowOwn | LociAccess.Permanent,
+            MaxLociTimeAllowed = false,
 
             SpatialAudioAllowed = true,
             ExecutePatternsAllowed = true,
@@ -564,9 +564,9 @@ public partial class SidePanelPair
             EndChar = ')',
             PuppetPerms = PuppetPerms.Sit | PuppetPerms.Emotes | PuppetPerms.Alias,
 
-            MoodleAccess = MoodleAccess.Positive | MoodleAccess.Negative | MoodleAccess.Special
-            | MoodleAccess.AllowOwn | MoodleAccess.Permanent | MoodleAccess.RemoveApplied,
-            MaxMoodleTime = new TimeSpan(12, 0, 0),
+            LociAccess = LociAccess.Positive | LociAccess.Negative | LociAccess.Special
+            | LociAccess.AllowOwn | LociAccess.Permanent | LociAccess.RemoveApplied,
+            MaxLociTime = new TimeSpan(12, 0, 0),
 
             ExecutePatterns = true,
             StopPatterns = true,
@@ -617,10 +617,10 @@ public partial class SidePanelPair
             PuppeteerEnabledAllowed = false,
             PuppetPermsAllowed = PuppetPerms.Sit | PuppetPerms.Emotes | PuppetPerms.Alias,
 
-            MoodlesEnabledAllowed = false,
-            MoodleAccessAllowed = MoodleAccess.Positive | MoodleAccess.Negative | MoodleAccess.Special
-            | MoodleAccess.AllowOther | MoodleAccess.AllowOwn | MoodleAccess.Permanent,
-            MaxMoodleTimeAllowed = true,
+            LociEnabledAllowed = false,
+            LociAccessAllowed = LociAccess.Positive | LociAccess.Negative | LociAccess.Special
+            | LociAccess.AllowOther | LociAccess.AllowOwn | LociAccess.Permanent,
+            MaxLociTimeAllowed = true,
 
             SpatialAudioAllowed = true,
             ExecutePatternsAllowed = true,

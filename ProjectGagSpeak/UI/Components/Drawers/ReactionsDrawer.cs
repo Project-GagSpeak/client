@@ -3,6 +3,7 @@ using CkCommons.Gui;
 using CkCommons.Gui.Utility;
 using CkCommons.Helpers;
 using CkCommons.Raii;
+using CkCommons.Textures;
 using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
@@ -39,7 +40,6 @@ public sealed class ReactionsDrawer
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
     private readonly PatternManager _patterns;
-    private readonly MoodleDrawer _moodles;
 
     // Related combos
     private RestrictionCombo _restrictionCombo;
@@ -56,7 +56,6 @@ public sealed class ReactionsDrawer
     public ReactionsDrawer(
         ILogger<ReactionsDrawer> logger,
         GagspeakMediator mediator,
-        MoodleDrawer moodleDrawer,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
@@ -68,7 +67,6 @@ public sealed class ReactionsDrawer
         _restrictions = restrictions;
         _restraints = restraints;
         _patterns = patterns;
-        _moodles = moodleDrawer;
 
         _restrictionCombo = new RestrictionCombo(logger, mediator, favorites, () => [
             ..restrictions.Storage.OrderByDescending(p => FavoritesConfig.Restrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
@@ -696,14 +694,14 @@ public sealed class ReactionsDrawer
         }
     }
 
-    public void DrawMoodle(MoodleAction act)
+    public void DrawLociItem(LociDataAction act)
     {
         CkGui.FramedIconText(FAI.WandMagicSparkles);
         CkGui.TextFrameAlignedInline("Applies the");
-        CkGui.ColorTextFrameAlignedInline(act.MoodleItem.Type is MoodleType.Preset ? "preset" : "status", ImGuiColors.TankBlue);
+        CkGui.ColorTextFrameAlignedInline(act.LociItem.Type is LociType.Preset ? "preset" : "status", ImGuiColors.TankBlue);
         ImGui.SameLine(0, 0);
         CkGui.TextFrameAligned(":");
-        if (act.MoodleItem is MoodlePreset p && MoodleCache.IpcData.Presets.TryGetValue(p.Id, out var preset))
+        if (act.LociItem is LociPreset p && LociCache.Data.Presets.TryGetValue(p.Id, out var preset))
         {
             CkGui.ColorTextFrameAlignedInline(preset.Title.StripColorTags(), ImGuiColors.TankBlue);
             if (preset.Statuses.Count > 0)
@@ -711,20 +709,20 @@ public sealed class ReactionsDrawer
                 CkGui.FramedIconText(FAI.TheaterMasks);
                 CkGui.ColorTextFrameAlignedInline("(", ImGuiColors.TankBlue, false);
                 ImUtf8.SameLineInner();
-                var statuses = MoodleCache.IpcData.StatusList.Where(x => preset.Statuses.Contains(x.GUID));
-                _moodles.DrawStatusInfos(statuses.ToList(), MoodleDrawer.IconSizeFramed);
+                var statuses = LociCache.Data.StatusList.Where(x => preset.Statuses.Contains(x.GUID));
+                LociDrawer.DrawTuples(statuses.ToList(), LociIcon.SizeFramed);
                 ImGui.SameLine();
                 CkGui.ColorTextFrameAligned(")", ImGuiColors.TankBlue);
             }
         }
-        else if (MoodleCache.IpcData.Statuses.TryGetValue(act.MoodleItem.Id, out var status))
+        else if (LociCache.Data.Statuses.TryGetValue(act.LociItem.Id, out var status))
         {
             CkGui.ColorTextFrameAlignedInline(status.Title.StripColorTags(), ImGuiColors.TankBlue);
 
             CkGui.FramedIconText(FAI.TheaterMasks);
             CkGui.ColorTextFrameAlignedInline("(", ImGuiColors.TankBlue, false);
             ImUtf8.SameLineInner();
-            _moodles.DrawStatusInfos([status], MoodleDrawer.IconSizeFramed);
+            LociDrawer.DrawTuples([status], LociIcon.SizeFramed);
             CkGui.ColorTextFrameAlignedInline(")", ImGuiColors.TankBlue);
         }
         else
@@ -732,12 +730,12 @@ public sealed class ReactionsDrawer
             CkGui.ColorTextFrameAlignedInline("<INVALID_SETUP>", ImGuiColors.DalamudRed);
         }
     }
-    public void DrawMoodleRow(MoodleAction act)
+    public void DrawLociRow(LociDataAction act)
     {
         CkGui.FramedIconText(FAI.TheaterMasks);
         CkGui.AttachToolTip("Invokes an interaction with Moodles");
 
-        if (act.MoodleItem is MoodlePreset p && MoodleCache.IpcData.Presets.TryGetValue(p.Id, out var preset))
+        if (act.LociItem is LociPreset p && LociCache.Data.Presets.TryGetValue(p.Id, out var preset))
         {
             CkGui.TextFrameAlignedInline("Applies preset:");
             CkGui.ColorTextFrameAlignedInline(preset.Title.StripColorTags(), ImGuiColors.TankBlue);
@@ -745,20 +743,20 @@ public sealed class ReactionsDrawer
             {
                 CkGui.ColorTextFrameAlignedInline("(", ImGuiColors.TankBlue, false);
                 ImUtf8.SameLineInner();
-                var statuses = MoodleCache.IpcData.StatusList.Where(x => preset.Statuses.Contains(x.GUID));
-                _moodles.DrawStatusInfos(statuses.ToList(), MoodleDrawer.IconSizeFramed);
+                var statuses = LociCache.Data.StatusList.Where(x => preset.Statuses.Contains(x.GUID));
+                LociDrawer.DrawTuples(statuses.ToList(), LociIcon.SizeFramed);
                 ImGui.SameLine();
                 CkGui.ColorTextFrameAligned(")", ImGuiColors.TankBlue);
             }
         }
-        else if (MoodleCache.IpcData.Statuses.TryGetValue(act.MoodleItem.Id, out var status))
+        else if (LociCache.Data.Statuses.TryGetValue(act.LociItem.Id, out var status))
         {
             CkGui.TextFrameAlignedInline("Applies status:");
             CkGui.ColorTextFrameAlignedInline(status.Title.StripColorTags(), ImGuiColors.TankBlue);
 
             CkGui.ColorTextFrameAlignedInline("(", ImGuiColors.TankBlue, false);
             ImUtf8.SameLineInner();
-            _moodles.DrawStatusInfos([status], MoodleDrawer.IconSizeFramed);
+            LociDrawer.DrawTuples([status], LociIcon.SizeFramed);
             CkGui.ColorTextFrameAlignedInline(")", ImGuiColors.TankBlue);
         }
         else
@@ -774,49 +772,49 @@ public sealed class ReactionsDrawer
         }
     }
 
-    public void DrawMoodleEditor(MoodleAction act)
+    public void DrawLociItemEditor(LociDataAction act)
     {
         CkGui.FramedIconText(FAI.WandMagicSparkles);
         CkGui.TextFrameAlignedInline("Applies the");
         
         ImUtf8.SameLineInner();
         var width = ImGui.CalcTextSize("Statusm").X;
-        if (CkGuiUtils.EnumCombo("##M_Type", width, act.MoodleItem.Type, out var newVal))
-            act.MoodleItem = newVal is MoodleType.Preset ? new MoodlePreset() : new Moodle();
+        if (CkGuiUtils.EnumCombo("##M_Type", width, act.LociItem.Type, out var newVal))
+            act.LociItem = newVal is LociType.Preset ? new LociPreset() : new LociItem();
 
-        if (act.MoodleItem is MoodlePreset preset)
+        if (act.LociItem is LociPreset preset)
         {
             ImUtf8.SameLineInner();
             if (_presetCombo.Draw("##M_Preset", preset.Id, ImGui.GetContentRegionAvail().X, CFlags.NoArrowButton))
                 preset.UpdatePreset(_presetCombo.Current.GUID, _presetCombo.Current.Statuses);
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-                act.MoodleItem = new MoodlePreset();
+                act.LociItem = new LociPreset();
         }
-        else if (act.MoodleItem is Moodle status)
+        else if (act.LociItem is LociItem status)
         {
             ImUtf8.SameLineInner();
             if (_statusCombo.Draw("##M_Status", status.Id, ImGui.GetContentRegionAvail().X, 1.75f, CFlags.NoArrowButton))
                 status.UpdateId(_statusCombo.Current.GUID);
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-                act.MoodleItem = new Moodle();
+                act.LociItem = new LociItem();
         }
 
         // Then the next row.
         CkGui.FramedIconText(FAI.TheaterMasks);
         CkGui.TextFrameAlignedInline("Applied:"); 
-        if (act.MoodleItem is MoodlePreset p)
+        if (act.LociItem is LociPreset p)
         {
-            if (MoodleCache.IpcData.Presets.TryGetValue(p.Id, out var presetData))
+            if (LociCache.Data.Presets.TryGetValue(p.Id, out var presetData))
             {
                 ImUtf8.SameLineInner();
-                var statuses = MoodleCache.IpcData.StatusList.Where(x => presetData.Statuses.Contains(x.GUID));
-                _moodles.DrawStatusInfos(statuses.ToList(), MoodleDrawer.IconSizeFramed);
+                var statuses = LociCache.Data.StatusList.Where(x => presetData.Statuses.Contains(x.GUID));
+                LociDrawer.DrawTuples(statuses.ToList(), LociIcon.SizeFramed);
             }
         }
-        else if (MoodleCache.IpcData.Statuses.TryGetValue(act.MoodleItem.Id, out var statusData))
+        else if (LociCache.Data.Statuses.TryGetValue(act.LociItem.Id, out var statusData))
         {
             ImUtf8.SameLineInner();
-            _moodles.DrawStatusInfos([statusData], MoodleDrawer.IconSizeFramed);
+            LociDrawer.DrawTuples([statusData], LociIcon.SizeFramed);
         }
         else
         {
@@ -824,7 +822,7 @@ public sealed class ReactionsDrawer
         }
     }
 
-    public void DrawMoodleRowEditor(MoodleAction act, MoodleData ipc)
+    public void DrawMoodleRowEditor(LociDataAction act, CachedLociData ipc)
     {
         CkGui.FramedIconText(FAI.TheaterMasks);
         CkGui.AttachToolTip("Invokes an interaction with Moodles");
@@ -832,40 +830,40 @@ public sealed class ReactionsDrawer
         CkGui.TextFrameAlignedInline("Apply");
 
         ImUtf8.SameLineInner();
-        var curType = act.MoodleItem is MoodlePreset p ? MoodleType.Preset : MoodleType.Status;
+        var curType = act.LociItem is LociPreset p ? LociType.Preset : LociType.Status;
         if (CkGuiUtils.EnumCombo("##M_Type", 40f, curType, out var newVal))
-            act.MoodleItem = newVal is MoodleType.Preset ? new MoodlePreset() : new Moodle();
+            act.LociItem = newVal is LociType.Preset ? new LociPreset() : new LociItem();
 
-        if (act.MoodleItem is MoodlePreset preset)
+        if (act.LociItem is LociPreset preset)
         {
             ImUtf8.SameLineInner();
             if (_presetCombo.Draw("##M_Preset", preset.Id, 100f, CFlags.NoArrowButton))
                 preset.UpdatePreset(_presetCombo.Current.GUID, _presetCombo.Current.Statuses);
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-                act.MoodleItem = new MoodlePreset();
+                act.LociItem = new LociPreset();
 
             // Verify a second time incase the item has changed.
             if (preset.StatusIds.Count() > 0)
             {
                 ImUtf8.SameLineInner();
-                _moodles.DrawStatusInfos([ ..ipc.StatusList.Where(m => preset.StatusIds.Contains(m.GUID)) ], MoodleDrawer.IconSizeFramed);
+                LociDrawer.DrawTuples([ ..ipc.StatusList.Where(m => preset.StatusIds.Contains(m.GUID)) ], LociIcon.SizeFramed);
             }
         }
-        else if (act.MoodleItem is Moodle status)
+        else if (act.LociItem is LociItem status)
         {
             ImUtf8.SameLineInner();
             var width = ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FAI.Minus).X;
             if (_statusCombo.Draw("##M_Status", status.Id, width, CFlags.NoArrowButton))
                 status.UpdateId(_statusCombo.Current.GUID);
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-                act.MoodleItem = new Moodle();
+                act.LociItem = new LociItem();
 
             // Verify a second time incase the item has changed.
             if (ipc.Statuses.TryGetValue(status.Id, out var match))
             {
-                var offset = ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FAI.Minus).X - MoodleDrawer.IconSizeFramed.X - ImUtf8.ItemInnerSpacing.X;
+                var offset = ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FAI.Minus).X - LociIcon.SizeFramed.X - ImUtf8.ItemInnerSpacing.X;
                 ImGui.SameLine(offset);
-                _moodles.DrawStatusInfos([match], MoodleDrawer.IconSizeFramed);
+                LociDrawer.DrawTuples([match], LociIcon.SizeFramed);
             }
         }
     }

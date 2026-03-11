@@ -160,7 +160,7 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             _runtimeServiceScope.ServiceProvider.GetRequiredService<CustomizePlusListener>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<GlamourListener>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<ModListener>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<MoodleListener>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<LociListener>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<HealthMonitor>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<IntifaceListener>();
 

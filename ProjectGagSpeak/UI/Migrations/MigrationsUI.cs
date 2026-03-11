@@ -158,19 +158,19 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
             CkGui.GagspeakBigText("Adjustments:");
             ImGui.Text("IsEnabled:");
             ImGui.SameLine();
-            CkGui.BooleanToColoredIcon(data.IsEnabled);
+            CkGui.BoolIcon(data.IsEnabled);
 
             ImGui.Text("ForceHeadgear:");
             ImGui.SameLine();
-            CkGui.BooleanToColoredIcon(data.ForceHeadgear);
+            CkGui.BoolIcon(data.ForceHeadgear);
 
             ImGui.Text("ForceVisor:");
             ImGui.SameLine();
-            CkGui.BooleanToColoredIcon(data.ForceVisor);
+            CkGui.BoolIcon(data.ForceVisor);
 
             ImGui.Text("Contains Gag Moodles:");
             ImGui.SameLine();
-            CkGui.BooleanToColoredIcon(data.AssociatedMoodles.Count > 0);
+            CkGui.BoolIcon(data.AssociatedMoodles.Count > 0);
         }*/
     }
 
@@ -228,23 +228,23 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 
                 ImGui.Text("ForceHeadgear:");
                 ImGui.SameLine();
-                CkGui.BooleanToColoredIcon(SelectedRestraintSet.ForceHeadgear);
+                CkGui.BoolIcon(SelectedRestraintSet.ForceHeadgear);
 
                 ImGui.Text("ForceVisor:");
                 ImGui.SameLine();
-                CkGui.BooleanToColoredIcon(SelectedRestraintSet.ForceVisor);
+                CkGui.BoolIcon(SelectedRestraintSet.ForceVisor);
 
                 ImGui.Text("Has Customize Data:");
                 ImGui.SameLine();
-                CkGui.BooleanToColoredIcon(SelectedRestraintSet.CustomizeObject != null);
+                CkGui.BoolIcon(SelectedRestraintSet.CustomizeObject != null);
 
                 ImGui.Text("Has Attached Mods:");
                 ImGui.SameLine();
-                CkGui.BooleanToColoredIcon(SelectedRestraintSet.AssociatedMods.Count > 0);
+                CkGui.BoolIcon(SelectedRestraintSet.AssociatedMods.Count > 0);
 
                 ImGui.Text("Contains Gag Moodles:");
                 ImGui.SameLine();
-                CkGui.BooleanToColoredIcon(SelectedRestraintSet.AssociatedMoodles.Count > 0);
+                CkGui.BoolIcon(SelectedRestraintSet.AssociatedMoodles.Count > 0);
 
                 ImGui.TableNextColumn();
                 // for some wierd ass reason when we calculate the centered preview text you need to take away the window padding or else it will never fit???
@@ -302,7 +302,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
             ImGui.Text(SelectedCursedItem.Name);
 
             CkGui.ColorText("In Pool: ", ImGuiColors.ParsedGold);
-            CkGui.BooleanToColoredIcon(SelectedCursedItem.InPool, true);
+            CkGui.BoolIcon(SelectedCursedItem.InPool, true);
 
             CkGui.ColorText("Cursed Item Type:", ImGuiColors.ParsedGold);
             ImGui.SameLine();
@@ -330,7 +330,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
 
                 CkGui.ColorText("Moodle Type:", ImGuiColors.ParsedGold);
                 ImGui.SameLine();
-                ImGui.Text(SelectedCursedItem.MoodleType.ToString());
+                ImGui.Text(SelectedCursedItem.LociType.ToString());
             }
         }*/
     }

@@ -20,10 +20,10 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UploadPattern), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UploadMoodle(MoodleUpload dto)
+    public async Task<HubResponse> UploadLociStatus(LociStatusUpload dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UploadMoodle), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UploadLociStatus), dto).ConfigureAwait(false);
     }
 
     public async Task<HubResponse<string>> DownloadPattern(Guid patternId)
@@ -38,22 +38,22 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(LikePattern), patternId).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> LikeMoodle(Guid moodleId)
+    public async Task<HubResponse> LikeLociData(Guid lociStatusId)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(LikeMoodle), moodleId).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(LikeLociData), lociStatusId).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> RemovePattern(Guid patternId)
+    public async Task<HubResponse> DelistPattern(Guid patternId)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(RemovePattern), patternId).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(DelistPattern), patternId).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> RemoveMoodle(Guid moodleId)
+    public async Task<HubResponse> DelistLociData(Guid lociStatusId)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(RemoveMoodle), moodleId).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(DelistLociData), lociStatusId).ConfigureAwait(false);
     }
 
     public async Task<HubResponse<List<ServerPatternInfo>>> SearchPatterns(PatternSearch patternSearchDto)
@@ -62,10 +62,10 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse<List<ServerPatternInfo>>>(nameof(SearchPatterns), patternSearchDto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse<List<ServerMoodleInfo>>> SearchMoodles(SearchBase moodleSearchDto)
+    public async Task<HubResponse<List<ServerLociInfo>>> SearchLociData(SearchBase lociSearchDto)
     {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new List<ServerMoodleInfo>());
-        return await _hubConnection!.InvokeAsync<HubResponse<List<ServerMoodleInfo>>>(nameof(SearchMoodles), moodleSearchDto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new List<ServerLociInfo>());
+        return await _hubConnection!.InvokeAsync<HubResponse<List<ServerLociInfo>>>(nameof(SearchLociData), lociSearchDto).ConfigureAwait(false);
     }
 
     public async Task<HubResponse<HashSet<string>>> FetchSearchTags()
@@ -135,11 +135,39 @@ public partial class MainHub
     #endregion Client Vanity
 
     #region Personal Interactions
+    public async Task<HubResponse> UserPushLociData(PushLociData dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushLociData), dto).ConfigureAwait(false);
+    }
+    public async Task<HubResponse> UserPushLociStatuses(PushLociStatuses dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushLociStatuses), dto).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> UserPushLociPresets(PushLociPresets dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushLociPresets), dto).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> UserPushStatusModified(PushStatusModified dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushStatusModified), dto).ConfigureAwait(false);
+    }
+
+    public async Task<HubResponse> UserPushPresetModified(PushPresetModified dto)
+    {
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushPresetModified), dto).ConfigureAwait(false);
+    }
+
     public async Task<HubResponse> UserPushActiveData(PushClientCompositeUpdate dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushActiveData), dto).ConfigureAwait(false);
-
     }
 
     public async Task<HubResponse<ActiveGagSlot>> UserPushActiveGags(PushClientActiveGagSlot dto)
@@ -430,64 +458,28 @@ public partial class MainHub
     #endregion Kinkster Interactions
 
     #region IPC Interactions
-    public async Task<HubResponse> UserPushMoodlesFull(PushMoodlesFull dto)
+    public async Task<HubResponse> UserApplyLociData(ApplyLociDataById dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushMoodlesFull), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserApplyLociData), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserPushMoodlesSM(PushMoodlesSM dto)
+    public async Task<HubResponse> UserApplyLociStatusTuples(ApplyLociStatus dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushMoodlesSM), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserApplyLociStatusTuples), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserPushMoodlesStatuses(PushMoodlesStatuses dto)
+    public async Task<HubResponse> UserRemoveLociData(RemoveLociData dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushMoodlesStatuses), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserRemoveLociData), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UserPushMoodlesPresets(PushMoodlesPresets dto)
+    public async Task<HubResponse> UserClearLociData(KinksterBase dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushMoodlesPresets), dto).ConfigureAwait(false);
-    }
-
-    public async Task<HubResponse> UserPushStatusModified(PushStatusModified dto)
-    {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushStatusModified), dto).ConfigureAwait(false);
-    }
-
-    public async Task<HubResponse> UserPushPresetModified(PushPresetModified dto)
-    {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserPushPresetModified), dto).ConfigureAwait(false);
-    }
-
-    public async Task<HubResponse> UserApplyMoodlesByGuid(ApplyMoodleId dto)
-    {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserApplyMoodlesByGuid), dto).ConfigureAwait(false);
-    }
-
-    public async Task<HubResponse> UserApplyMoodlesByStatus(ApplyMoodleStatus dto)
-    {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserApplyMoodlesByStatus), dto).ConfigureAwait(false);
-    }
-
-    public async Task<HubResponse> UserRemoveMoodles(RemoveMoodleId dto)
-    {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserRemoveMoodles), dto).ConfigureAwait(false);
-    }
-
-    public async Task<HubResponse> UserClearMoodles(KinksterBase dto)
-    {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserClearMoodles), dto).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserClearLociData), dto).ConfigureAwait(false);
     }
 
     public async Task<HubResponse> UserSendNameToKinkster(SendNameAction dto)

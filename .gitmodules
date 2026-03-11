@@ -1,5 +1,5 @@
-[submodule "CkCommons"]
-	path = CkCommons
+[submodule "Submodules/CkCommons"]
+    path = Submodules/CkCommons
 	url = https://github.com/CordeliaMist/CkCommons.git
 	branch = main
 [submodule "OtterGui"]
@@ -26,3 +26,6 @@
 	path = Glamourer.Api
 	url = https://github.com/Ottermandias/Glamourer.Api.git
 	branch = main
+[submodule "Submodules/LociAPI"]
+	path = Submodules/LociAPI
+	url = https://github.com/CordeliaMist/Loci.Api.git

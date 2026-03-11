@@ -1,6 +1,3 @@
-using Buttplug.Client;
-using GagSpeak.Kinksters;
-using GagspeakAPI.Network;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 
@@ -17,9 +14,10 @@ public record SundouleiaReady : MessageBase;
 public record SundouleiaDisposed : MessageBase;
 
 public record MoodlesReady : MessageBase;
-public record MoodlesChanged(IntPtr Address) : MessageBase;
-public record MoodleAccessPermsChanged(Kinkster Kinkster) : MessageBase;
-public record MoodlesApplyStatusToPair(ApplyMoodleStatus ApplyStatusTupleDto) : MessageBase;
+public record MoodlesDisposed : MessageBase;
+
+public record LociReady : MessageBase;
+public record LociDisposed : MessageBase;
 
 public record GlamourerReady : MessageBase;
 public record GlamourerChanged : MessageBase;

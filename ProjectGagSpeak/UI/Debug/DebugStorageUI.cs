@@ -1,6 +1,7 @@
 using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Helpers;
+using CkCommons.Textures;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
@@ -42,7 +43,6 @@ public partial class DebugStorageUI : WindowMediatorSubscriberBase
     private readonly GagFileSystem _gagFS;
     private readonly RestrictionFileSystem _restrictionsFS;
     private readonly RestraintSetFileSystem _restraintsFS;
-    private readonly MoodleDrawer _moodleDrawer;
     private readonly ModPresetDrawer _modPresetDrawer;
 
     private readonly WhitelistDrawSystem _mainDDS;
@@ -66,7 +66,6 @@ public partial class DebugStorageUI : WindowMediatorSubscriberBase
         GagFileSystem gagFS,
         RestrictionFileSystem restrictionsFS,
         RestraintSetFileSystem restraintsFS,
-        MoodleDrawer moodleDrawer,
         ModPresetDrawer modPresetDrawer,
         WhitelistDrawSystem kinksterDDS,
         RequestsDrawSystem requestsDDS)
@@ -87,7 +86,6 @@ public partial class DebugStorageUI : WindowMediatorSubscriberBase
         _gagFS = gagFS;
         _restrictionsFS = restrictionsFS;
         _restraintsFS = restraintsFS;
-        _moodleDrawer = moodleDrawer;
         _modPresetDrawer = modPresetDrawer;
         _mainDDS = kinksterDDS;
         _requestsDDS = requestsDDS;
@@ -590,7 +588,7 @@ public partial class DebugStorageUI : WindowMediatorSubscriberBase
         ImGui.TextUnformatted("Moodles:");
         using (ImRaii.Table("##moodles", 1, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
-            _moodleDrawer.ShowStatusIcons(rs.GetAllMoodles(), ImGui.GetContentRegionAvail().X, MoodleDrawer.IconSizeFramed, 2);
+            LociDrawer.DrawIcons(rs.GetAllMoodles(), ImGui.GetContentRegionAvail().X, LociIcon.SizeFramed, 2);
         }
     }
 
@@ -640,17 +638,17 @@ public partial class DebugStorageUI : WindowMediatorSubscriberBase
             ImGui.TableNextRow();
 
             ImGuiUtil.DrawTableColumn("Moodle");
-            if (gag.Moodle is MoodlePreset preset)
+            if (gag.Moodle is LociPreset preset)
             {
                 ImGuiUtil.DrawTableColumn("[Preset Type]");
-                ImGuiUtil.DrawTableColumn(MoodleCache.IpcData.Presets
+                ImGuiUtil.DrawTableColumn(LociCache.Data.Presets
                     .GetValueOrDefault(preset.Id).Title.StripColorTags() ?? "Unknown Preset");
                 ImGui.TableNextRow();
             }
             else
             {
                 ImGuiUtil.DrawTableColumn("[Status Type]");
-                ImGuiUtil.DrawTableColumn(MoodleCache.IpcData.Statuses
+                ImGuiUtil.DrawTableColumn(LociCache.Data.Statuses
                     .GetValueOrDefault(gag.Moodle.Id).Title.StripColorTags() ?? "Unknown Status");
                 ImGui.TableNextRow();
             }
@@ -703,11 +701,11 @@ public partial class DebugStorageUI : WindowMediatorSubscriberBase
             ImGuiUtil.DrawTableColumn(restriction.Mod.Label);
             ImGui.TableNextRow();
 
-            if (restriction.Moodle is MoodlePreset preset)
+            if (restriction.Moodle is LociPreset preset)
             {
                 ImGuiUtil.DrawTableColumn("Moodle Type");
                 ImGuiUtil.DrawTableColumn("Moodle Preset");
-                ImGuiUtil.DrawTableColumn(MoodleCache.IpcData.Presets
+                ImGuiUtil.DrawTableColumn(LociCache.Data.Presets
                     .GetValueOrDefault(preset.Id).Title.StripColorTags() ?? "Unknown Preset");
                 ImGui.TableNextRow();
             }
@@ -715,7 +713,7 @@ public partial class DebugStorageUI : WindowMediatorSubscriberBase
             {
                 ImGuiUtil.DrawTableColumn("Moodle Type");
                 ImGuiUtil.DrawTableColumn("Moodle Status");
-                ImGuiUtil.DrawTableColumn(MoodleCache.IpcData.Statuses
+                ImGuiUtil.DrawTableColumn(LociCache.Data.Statuses
                     .GetValueOrDefault(restriction.Moodle.Id).Title.StripColorTags() ?? "Unknown Status");
                 ImGui.TableNextRow();
             }
@@ -1182,13 +1180,13 @@ public partial class DebugStorageUI : WindowMediatorSubscriberBase
             ImGuiUtil.DrawTableColumn("UpperBound");
             ImGuiUtil.DrawTableColumn(restrain.UpperBound.ToString());
         }
-        else if (action is MoodleAction moodle)
+        else if (action is LociDataAction lociAct)
         {
             ImGuiUtil.DrawTableColumn("Type:");
-            ImGuiUtil.DrawTableColumn("MoodleAction");
+            ImGuiUtil.DrawTableColumn("LociAction");
             ImGui.TableNextRow();
-            ImGuiUtil.DrawTableColumn("MoodleItem");
-            ImGuiUtil.DrawTableColumn(moodle.MoodleItem.Id.ToString());
+            ImGuiUtil.DrawTableColumn("LociItem");
+            ImGuiUtil.DrawTableColumn(lociAct.LociItem.Id.ToString());
             // MoodleItem
         }
         else if (action is PiShockAction shock)

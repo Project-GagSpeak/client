@@ -322,7 +322,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
                 InvokableActionType.Gag => token.ToObject<GagAction>() ?? new GagAction(),
                 InvokableActionType.Restriction => token.ToObject<RestrictionAction>() ?? new RestrictionAction(),
                 InvokableActionType.Restraint => token.ToObject<RestraintAction>() ?? new RestraintAction(),
-                InvokableActionType.Moodle => token.ToObject<MoodleAction>() ?? new MoodleAction(),
+                InvokableActionType.LociItem => token.ToObject<LociDataAction>() ?? new LociDataAction(),
                 InvokableActionType.ShockCollar => token.ToObject<PiShockAction>() ?? new PiShockAction(),
                 InvokableActionType.SexToy => token.ToObject<SexToyAction>() ?? new SexToyAction(),
                 _ => throw new NotImplementedException()

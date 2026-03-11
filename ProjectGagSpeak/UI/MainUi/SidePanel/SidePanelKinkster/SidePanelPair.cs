@@ -131,15 +131,15 @@ public partial class SidePanelPair
         ImGui.TextUnformatted("Moodles Permissions");
         using (ImRaii.Group())
         {
-            ClientPermRow(kinkster, dispName, width, KPID.ApplyPositive, kinkster.OwnPerms.MoodleAccess, kinkster.OwnPermAccess.MoodleAccessAllowed, MoodleAccess.Positive);
-            ClientPermRow(kinkster, dispName, width, KPID.ApplyNegative, kinkster.OwnPerms.MoodleAccess, kinkster.OwnPermAccess.MoodleAccessAllowed, MoodleAccess.Negative);
-            ClientPermRow(kinkster, dispName, width, KPID.ApplySpecial, kinkster.OwnPerms.MoodleAccess, kinkster.OwnPermAccess.MoodleAccessAllowed, MoodleAccess.Special);
-            ClientPermRow(kinkster, dispName, width, KPID.ApplyOwnMoodles, kinkster.OwnPerms.MoodleAccess, kinkster.OwnPermAccess.MoodleAccessAllowed, MoodleAccess.AllowOther);
-            ClientPermRow(kinkster, dispName, width, KPID.ApplyPairsMoodles, kinkster.OwnPerms.MoodleAccess, kinkster.OwnPermAccess.MoodleAccessAllowed, MoodleAccess.AllowOwn);
-            ClientPermRow(kinkster, dispName, width, KPID.MaxMoodleTime, kinkster.OwnPerms.MaxMoodleTime, kinkster.OwnPermAccess.MaxMoodleTimeAllowed);
-            ClientPermRow(kinkster, dispName, width, KPID.PermanentMoodles, kinkster.OwnPerms.MoodleAccess, kinkster.OwnPermAccess.MoodleAccessAllowed, MoodleAccess.Permanent);
-            ClientPermRow(kinkster, dispName, width, KPID.RemoveAppliedMoodles, kinkster.OwnPerms.MoodleAccess, kinkster.OwnPermAccess.MoodleAccessAllowed, MoodleAccess.RemoveApplied);
-            ClientPermRow(kinkster, dispName, width, KPID.RemoveAnyMoodles, kinkster.OwnPerms.MoodleAccess, kinkster.OwnPermAccess.MoodleAccessAllowed, MoodleAccess.RemoveAny);
+            ClientPermRow(kinkster, dispName, width, KPID.ApplyPositive, kinkster.OwnPerms.LociAccess, kinkster.OwnPermAccess.LociAccessAllowed, LociAccess.Positive);
+            ClientPermRow(kinkster, dispName, width, KPID.ApplyNegative, kinkster.OwnPerms.LociAccess, kinkster.OwnPermAccess.LociAccessAllowed, LociAccess.Negative);
+            ClientPermRow(kinkster, dispName, width, KPID.ApplySpecial, kinkster.OwnPerms.LociAccess, kinkster.OwnPermAccess.LociAccessAllowed, LociAccess.Special);
+            ClientPermRow(kinkster, dispName, width, KPID.ApplyOwnMoodles, kinkster.OwnPerms.LociAccess, kinkster.OwnPermAccess.LociAccessAllowed, LociAccess.AllowOther);
+            ClientPermRow(kinkster, dispName, width, KPID.ApplyPairsMoodles, kinkster.OwnPerms.LociAccess, kinkster.OwnPermAccess.LociAccessAllowed, LociAccess.AllowOwn);
+            ClientPermRow(kinkster, dispName, width, KPID.MaxMoodleTime, kinkster.OwnPerms.MaxLociTime, kinkster.OwnPermAccess.MaxLociTimeAllowed);
+            ClientPermRow(kinkster, dispName, width, KPID.PermanentMoodles, kinkster.OwnPerms.LociAccess, kinkster.OwnPermAccess.LociAccessAllowed, LociAccess.Permanent);
+            ClientPermRow(kinkster, dispName, width, KPID.RemoveAppliedMoodles, kinkster.OwnPerms.LociAccess, kinkster.OwnPermAccess.LociAccessAllowed, LociAccess.RemoveApplied);
+            ClientPermRow(kinkster, dispName, width, KPID.RemoveAnyMoodles, kinkster.OwnPerms.LociAccess, kinkster.OwnPermAccess.LociAccessAllowed, LociAccess.RemoveAny);
         }
         CkGui.AttachToolTip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
         ImGui.Separator();
@@ -262,15 +262,15 @@ public partial class SidePanelPair
         ImGui.Separator();
 
         ImGui.TextUnformatted("Moodles Permissions");
-        KinksterPermRow(kinkster, dispName, width, KPID.ApplyPositive,           kinkster.PairPerms.MoodleAccess,              kinkster.PairPermAccess.MoodleAccessAllowed, MoodleAccess.Positive);
-        KinksterPermRow(kinkster, dispName, width, KPID.ApplyNegative,           kinkster.PairPerms.MoodleAccess,              kinkster.PairPermAccess.MoodleAccessAllowed, MoodleAccess.Negative);
-        KinksterPermRow(kinkster, dispName, width, KPID.ApplySpecial,            kinkster.PairPerms.MoodleAccess,              kinkster.PairPermAccess.MoodleAccessAllowed, MoodleAccess.Special);
-        KinksterPermRow(kinkster, dispName, width, KPID.ApplyOwnMoodles,         kinkster.PairPerms.MoodleAccess,              kinkster.PairPermAccess.MoodleAccessAllowed, MoodleAccess.AllowOwn);
-        KinksterPermRow(kinkster, dispName, width, KPID.ApplyPairsMoodles,       kinkster.PairPerms.MoodleAccess,              kinkster.PairPermAccess.MoodleAccessAllowed, MoodleAccess.AllowOther);
-        KinksterPermRow(kinkster, dispName, width, KPID.MaxMoodleTime,           kinkster.PairPerms.MaxMoodleTime,             kinkster.PairPermAccess.MaxMoodleTimeAllowed);
-        KinksterPermRow(kinkster, dispName, width, KPID.PermanentMoodles,        kinkster.PairPerms.MoodleAccess,              kinkster.PairPermAccess.MoodleAccessAllowed, MoodleAccess.Permanent);
-        KinksterPermRow(kinkster, dispName, width, KPID.RemoveAppliedMoodles,    kinkster.PairPerms.MoodleAccess,              kinkster.PairPermAccess.MoodleAccessAllowed, MoodleAccess.RemoveApplied);
-        KinksterPermRow(kinkster, dispName, width, KPID.RemoveAnyMoodles,        kinkster.PairPerms.MoodleAccess,              kinkster.PairPermAccess.MoodleAccessAllowed, MoodleAccess.RemoveAny);
+        KinksterPermRow(kinkster, dispName, width, KPID.ApplyPositive,           kinkster.PairPerms.LociAccess,              kinkster.PairPermAccess.LociAccessAllowed, LociAccess.Positive);
+        KinksterPermRow(kinkster, dispName, width, KPID.ApplyNegative,           kinkster.PairPerms.LociAccess,              kinkster.PairPermAccess.LociAccessAllowed, LociAccess.Negative);
+        KinksterPermRow(kinkster, dispName, width, KPID.ApplySpecial,            kinkster.PairPerms.LociAccess,              kinkster.PairPermAccess.LociAccessAllowed, LociAccess.Special);
+        KinksterPermRow(kinkster, dispName, width, KPID.ApplyOwnMoodles,         kinkster.PairPerms.LociAccess,              kinkster.PairPermAccess.LociAccessAllowed, LociAccess.AllowOwn);
+        KinksterPermRow(kinkster, dispName, width, KPID.ApplyPairsMoodles,       kinkster.PairPerms.LociAccess,              kinkster.PairPermAccess.LociAccessAllowed, LociAccess.AllowOther);
+        KinksterPermRow(kinkster, dispName, width, KPID.MaxMoodleTime,           kinkster.PairPerms.MaxLociTime,             kinkster.PairPermAccess.MaxLociTimeAllowed);
+        KinksterPermRow(kinkster, dispName, width, KPID.PermanentMoodles,        kinkster.PairPerms.LociAccess,              kinkster.PairPermAccess.LociAccessAllowed, LociAccess.Permanent);
+        KinksterPermRow(kinkster, dispName, width, KPID.RemoveAppliedMoodles,    kinkster.PairPerms.LociAccess,              kinkster.PairPermAccess.LociAccessAllowed, LociAccess.RemoveApplied);
+        KinksterPermRow(kinkster, dispName, width, KPID.RemoveAnyMoodles,        kinkster.PairPerms.LociAccess,              kinkster.PairPermAccess.LociAccessAllowed, LociAccess.RemoveAny);
         ImGui.Separator();
 
         ImGui.TextUnformatted("Misc. Permissions");

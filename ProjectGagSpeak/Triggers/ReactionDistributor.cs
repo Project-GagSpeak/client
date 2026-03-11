@@ -31,7 +31,7 @@ public class ReactionDistributor
     private readonly RestraintManager _restraints;
     private readonly PuppeteerManager _puppeteer;
     private readonly BuzzToyManager _toys;
-    private readonly MoodleHandler _moodles;
+    private readonly LociHandler _moodles;
     private readonly SelfBondageService _selfBondage;
 
     public ReactionDistributor(
@@ -42,7 +42,7 @@ public class ReactionDistributor
         RestraintManager restraints,
         PuppeteerManager puppeteer,
         BuzzToyManager toys,
-        MoodleHandler moodles,
+        LociHandler moodles,
         SelfBondageService selfBondage)
     {
         _logger = logger;
@@ -60,7 +60,7 @@ public class ReactionDistributor
     public bool HandleAction(InvokableGsAction action, string? enactor = null) => action switch
     {
         TextAction ta       => TextReaction(ta, enactor),
-        MoodleAction ma     => MoodleReaction(ma, enactor),
+        LociDataAction lda  => LociReaction(lda, enactor),
         PiShockAction ps    => PiShockReaction(ps, enactor),
         SexToyAction sta    => SexToyReaction(sta, enactor),
         _ => false
@@ -72,7 +72,7 @@ public class ReactionDistributor
         GagAction ga => await DoGagAction(ga, enactor),
         RestrictionAction rsa => await DoRestrictionAction(rsa, enactor),
         RestraintAction rta => await DoRestraintAction(rta, enactor),
-        MoodleAction ma => MoodleReaction(ma, enactor),
+        LociDataAction lda => LociReaction(lda, enactor),
         PiShockAction ps => PiShockReaction(ps, enactor),
         SexToyAction sta => SexToyReaction(sta, enactor),
         _ => false
@@ -428,16 +428,16 @@ public class ReactionDistributor
         return false;
     }
 
-    private bool MoodleReaction(MoodleAction act, string? enactor = null)
+    private bool LociReaction(LociDataAction act, string? enactor = null)
     {
-        if(!IpcCallerMoodles.APIAvailable || act.MoodleItem.Id== Guid.Empty)
+        if(!IpcCallerLoci.APIAvailable || act.LociItem.Id== Guid.Empty)
         {
             _logger.LogWarning("Moodles not available, cannot execute moodle trigger.");
             return false;
         }
 
-        _logger.LogDebug("Applying a Moodle action to the player.", LoggerType.IpcMoodles);
-        _moodles.ApplyMoodle(act.MoodleItem).ConfigureAwait(false);
+        _logger.LogDebug("Applying a Moodle action to the player.", LoggerType.IpcLoci);
+        _moodles.ApplyLociItem(act.LociItem).ConfigureAwait(false);
         return true;
     }
 

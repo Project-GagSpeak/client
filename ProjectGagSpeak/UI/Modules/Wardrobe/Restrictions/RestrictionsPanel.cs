@@ -1,11 +1,12 @@
-using System.Diagnostics.CodeAnalysis;
 using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Raii;
+using CkCommons.Textures;
 using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CustomCombos.Editor;
 using GagSpeak.FileSystems;
 using GagSpeak.Gui.Components;
 using GagSpeak.PlayerClient;
@@ -20,6 +21,7 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using OtterGui.Extensions;
 using OtterGui.Text;
+using System.Diagnostics.CodeAnalysis;
 using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Gui.Wardrobe;
@@ -30,13 +32,14 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
     private readonly ActiveItemsDrawer _activeItemDrawer;
     private readonly EquipmentDrawer _equipDrawer;
     private readonly ModPresetDrawer _modDrawer;
-    private readonly MoodleDrawer _moodleDrawer;
     private readonly AttributeDrawer _attributeDrawer;
     private readonly RestrictionManager _manager;
     private readonly UiThumbnailService _thumbnails;
     private readonly TutorialService _guides;
     private readonly SelfBondageService _selfBondage;
 
+    private MoodleStatusCombo _statusCombo;
+    private MoodlePresetCombo _presetCombo;
     public bool IsEditing => _manager.ItemInEditor != null;
 
     public RestrictionsPanel(
@@ -46,7 +49,6 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         ActiveItemsDrawer activeItemDrawer,
         EquipmentDrawer equipDrawer,
         ModPresetDrawer modDrawer,
-        MoodleDrawer moodleDrawer,
         AttributeDrawer traitsDrawer,
         RestrictionManager manager,
         HypnoEffectManager effectPresets,
@@ -59,12 +61,13 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         _attributeDrawer = traitsDrawer;
         _equipDrawer = equipDrawer;
         _modDrawer = modDrawer;
-        _moodleDrawer = moodleDrawer;
         _activeItemDrawer = activeItemDrawer;
         _manager = manager;
         _selfBondage = selfBondage;
         _guides = guides;
 
+        _statusCombo = new MoodleStatusCombo(logger, 1.15f);
+        _presetCombo = new MoodlePresetCombo(logger, 1.15f);
         _hypnoEditor = new HypnoEffectEditor("RestrictionEditor", effectPresets, guides);
 
         Mediator.Subscribe<ThumbnailImageSelected>(this, (msg) =>
@@ -167,7 +170,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
     private void DrawSelectedItemInfo(CkHeader.DrawRegion drawRegion, float rounding)
     {
         var wdl = ImGui.GetWindowDrawList();
-        var height = ImGui.GetFrameHeightWithSpacing() + MoodleDrawer.IconSize.Y;
+        var height = ImGui.GetFrameHeightWithSpacing() + LociIcon.Size.Y;
         var region = new Vector2(drawRegion.Size.X, height);
         var notSelected = _selector.Selected is null;
         var isActive = !notSelected && _manager.IsItemApplied(_selector.Selected!.Identifier);
@@ -232,7 +235,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
 
         using (CkRaii.Group(CkCol.CurvedHeaderFade.Uint()))
         {
-            CkGui.BooleanToColoredIcon(_selector.Selected!.IsEnabled, false);
+            CkGui.BoolIcon(_selector.Selected!.IsEnabled, false);
             CkGui.TextFrameAlignedInline($"Visuals  ");
         }
 
@@ -263,7 +266,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             _attributeDrawer.DrawTraitPreview(_selector.Selected!.Traits);
         }
 
-        _moodleDrawer.ShowStatusIcons(_selector.Selected!.Moodle, ImGui.GetContentRegionAvail().X);
+        LociDrawer.DrawIcons(_selector.Selected!.Moodle, ImGui.GetContentRegionAvail().X);
     }
 
     /// Stores the index of the first empty slot, provided the correct tutorial is running.

@@ -238,7 +238,7 @@ public class MarionettesTab : IFancyTab
                 case GagAction ga: _aliasDrawer.DrawGagRow(ga); break;
                 case RestrictionAction rsa: _aliasDrawer.DrawRestrictionRow(rsa); break;
                 case RestraintAction rta: _aliasDrawer.DrawRestraintRow(rta); break;
-                case MoodleAction ma: _aliasDrawer.DrawMoodleRow(ma); break;
+                case LociDataAction ma: _aliasDrawer.DrawLociRow(ma); break;
                 case PiShockAction ps: _aliasDrawer.DrawShockRow(ps); break;
                 case SexToyAction sta: _aliasDrawer.DrawToyRow(sta); break;
             }

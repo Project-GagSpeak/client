@@ -1,12 +1,16 @@
 using CkCommons;
 using CkCommons.Classes;
 using CkCommons.Gui;
+using CkCommons.Helpers;
 using CkCommons.Raii;
+using CkCommons.Textures;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
+using Dalamud.Plugin.Services;
 using GagSpeak.Gui.Components;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
+using GagSpeak.State.Caches;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
@@ -145,7 +149,7 @@ public partial class RestrictionsPanel
         _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.HardcoreTraits, WardrobeUI.LastPos, WardrobeUI.LastSize);
         _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Arousal, WardrobeUI.LastPos, WardrobeUI.LastSize);
 
-        _moodleDrawer.DrawAssociatedMoodle("RestrictionMoodle", item, width, MoodleDrawer.IconSizeFramed);
+        DrawAssociatedLociData(item, width);
         _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.AttachedMoodle, WardrobeUI.LastPos, WardrobeUI.LastSize);
     }
 
@@ -156,6 +160,72 @@ public partial class RestrictionsPanel
 
         _modDrawer.DrawModPresetBox("RestrictionModPreset", item, width);
         _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.AttachedMod, WardrobeUI.LastPos, WardrobeUI.LastSize);
+    }
+
+    private void DrawAssociatedLociData(RestrictionItem item, float width)
+    {
+        var style = ImGui.GetStyle();
+        var moodleDisplayHeight = ImUtf8.FrameHeight.AddWinPadY();
+        var winSize = new Vector2(width, moodleDisplayHeight + style.ItemSpacing.Y + ImGui.GetFrameHeight());
+        using (CkRaii.HeaderChild("Associated Moodle", winSize, HeaderFlags.AddPaddingToHeight))
+        {
+            using (ImRaii.Group())
+            {
+                if (CkGui.IconButton(FAI.ArrowsLeftRight, disabled: !KeyMonitor.ShiftPressed()))
+                {
+                    // convert the type.
+                    item.Moodle = item.Moodle switch
+                    {
+                        LociPreset => new LociItem(),
+                        LociItem => new LociPreset(),
+                        _ => throw new ArgumentOutOfRangeException(nameof(item.Moodle), item.Moodle, "Unknown LociDataType"),
+                    };
+                }
+                _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.SwitchingMoodleType, WardrobeUI.LastPos, WardrobeUI.LastSize,
+                    _ => item.Moodle = new LociTuple(LociCache.Data.StatusList.FirstOrDefault()));
+
+                ImUtf8.SameLineInner();
+                DrawLociItemCombo(item.Moodle, ImGui.GetContentRegionAvail().X);
+            }
+
+            // Below this, we need to draw the display field of the moodles that the selected status has.
+            LociDrawer.DrawIconsFramed("restriction", item.Moodle, ImGui.GetContentRegionAvail().X, CkStyle.ChildRounding(), LociIcon.SizeFramed);
+            _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.SelectedMoodlePreview, WardrobeUI.LastPos, WardrobeUI.LastSize);
+        }
+    }
+
+    public void DrawLociItemCombo(LociItem lociItem, float width, CFlags flags = CFlags.None)
+    {
+        // draw the dropdown for the status/preset selection. This is based on the type of moodle.
+        if (lociItem is LociPreset preset)
+        {
+            var change = _presetCombo.Draw("GagLociPreset", preset.Id, width, flags);
+            if (change && !preset.Id.Equals(_presetCombo.Current.GUID))
+            {
+                Logger.LogTrace($"Item changed to {_presetCombo.Current.GUID} [{_presetCombo.Current.Title}] from {preset.Id}");
+                preset.UpdatePreset(_presetCombo.Current.GUID, _presetCombo.Current.Statuses);
+            }
+
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+            {
+                Logger.LogTrace("Combo Was Right Clicked, and Cleared the Preset.");
+                preset.UpdatePreset(Guid.Empty, Enumerable.Empty<Guid>());
+            }
+        }
+        else if (lociItem is LociItem status)
+        {
+            var change = _statusCombo.Draw("GagLociStatus", status.Id, width, flags);
+            if (change && !status.Id.Equals(_statusCombo.Current.GUID))
+            {
+                Logger.LogTrace($"Item changed to {_statusCombo.Current.GUID} [{_statusCombo.Current.Title}] from {status.Id}");
+                status.UpdateId(_statusCombo.Current.GUID);
+            }
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+            {
+                Logger.LogTrace("Combo Was Right Clicked, and Cleared the Status.");
+                status.UpdateId(Guid.Empty);
+            }
+        }
     }
 
     private void DrawBlindfoldInfo(BlindfoldRestriction blindfoldItem, float width)

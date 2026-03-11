@@ -24,20 +24,18 @@ public class RestraintEditorLayers : IFancyTab
     private readonly RestraintManager _manager;
     private readonly EquipmentDrawer _equipDrawer;
     private readonly ModPresetDrawer _modDrawer;
-    private readonly MoodleDrawer _moodleDrawer;
     private readonly AttributeDrawer _traitDrawer;
     private readonly CosmeticService _cosmetics;
     private readonly TutorialService _guides;
     public RestraintEditorLayers(ILogger<RestraintEditorLayers> logger,
         RestraintSetFileSelector selector, EquipmentDrawer equipDrawer,
-        ModPresetDrawer modDrawer, MoodleDrawer moodleDrawer, AttributeDrawer traitsDrawer,
+        ModPresetDrawer modDrawer, AttributeDrawer traitsDrawer,
         RestraintManager manager, CosmeticService cosmetics, TutorialService guides)
     {
         _logger = logger;
         _selector = selector;
         _equipDrawer = equipDrawer;
         _modDrawer = modDrawer;
-        _moodleDrawer = moodleDrawer;
         _traitDrawer = traitsDrawer;
         _manager = manager;
         _cosmetics = cosmetics;

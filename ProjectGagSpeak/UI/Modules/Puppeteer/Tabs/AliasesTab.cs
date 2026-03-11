@@ -105,7 +105,7 @@ public class AliasesTab : IFancyTab
             return;
 
         // Top right should have a selectable checkmark to flick its state
-        CkGui.BooleanToColoredIcon(alias.Enabled, false);
+        CkGui.BoolIcon(alias.Enabled, false);
         CkGui.AttachToolTip("If this alias is enabled.--SEP----COL--Click to toggle!--COL--", ImGuiColors.ParsedPink);
         if (ImGui.IsItemClicked())
         {
@@ -181,7 +181,7 @@ public class AliasesTab : IFancyTab
                 case GagAction ga: _aliasDrawer.DrawGagRow(ga); break;
                 case RestrictionAction rsa: _aliasDrawer.DrawRestrictionRow(rsa); break;
                 case RestraintAction rta: _aliasDrawer.DrawRestraintRow(rta); break;
-                case MoodleAction ma: _aliasDrawer.DrawMoodleRow(ma); break;
+                case LociDataAction ma: _aliasDrawer.DrawLociRow(ma); break;
                 case PiShockAction ps: _aliasDrawer.DrawShockRow(ps); break;
                 case SexToyAction sta: _aliasDrawer.DrawToyRow(sta); break;
             }
@@ -326,7 +326,7 @@ public class AliasesTab : IFancyTab
                 InvokableActionType.Gag => new GagAction(),
                 InvokableActionType.Restriction => new RestrictionAction(),
                 InvokableActionType.Restraint => new RestraintAction(),
-                InvokableActionType.Moodle => new MoodleAction(),
+                InvokableActionType.LociItem => new LociDataAction(),
                 InvokableActionType.ShockCollar => new PiShockAction(),
                 InvokableActionType.SexToy => new SexToyAction(),
                 _ => throw new ArgumentOutOfRangeException(nameof(_selected), _selected, null)
@@ -351,7 +351,7 @@ public class AliasesTab : IFancyTab
                 case GagAction ga: _aliasDrawer.DrawGagRowEditor(ga); break;
                 case RestrictionAction rsa: _aliasDrawer.DrawRestrictionRowEditor(rsa); break;
                 case RestraintAction rta: _aliasDrawer.DrawRestraintRowEditor(rta); break;
-                case MoodleAction ma: _aliasDrawer.DrawMoodleRowEditor(ma, MoodleCache.IpcData); break;
+                case LociDataAction ma: _aliasDrawer.DrawMoodleRowEditor(ma, LociCache.Data); break;
                 case PiShockAction ps: _aliasDrawer.DrawShockRowEditor(ps); break;
                 case SexToyAction sta: _aliasDrawer.DrawToyRowEditor(sta); break;
             }

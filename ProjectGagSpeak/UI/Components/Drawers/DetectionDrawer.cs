@@ -29,7 +29,6 @@ public sealed class DetectionDrawer : IDisposable
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
     private readonly TriggerManager _manager;
-    private readonly MoodleDrawer _moodleDrawer;
 
     private RestraintCombo _restraintCombo;
     private RestrictionCombo _restrictionCombo;
@@ -43,7 +42,6 @@ public sealed class DetectionDrawer : IDisposable
     public DetectionDrawer(
         ILogger<DetectionDrawer> logger,
         GagspeakMediator mediator,
-        MoodleDrawer moodleDrawer,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
@@ -55,7 +53,6 @@ public sealed class DetectionDrawer : IDisposable
         _restrictions = restrictions;
         _restraints = restraints;
         _manager = manager;
-        _moodleDrawer = moodleDrawer;
 
         _restrictionCombo = new RestrictionCombo(logger, mediator, favorites, () => [
             ..restrictions.Storage.OrderByDescending(p => FavoritesConfig.Restrictions.Contains(p.Identifier)).ThenBy(p => p.Label)
@@ -242,7 +239,7 @@ public sealed class DetectionDrawer : IDisposable
             return;
 
         // Combo Row.
-        var img = Svc.Texture.GetFromGameIcon(SpellActionService.GetLightJob(_selectedJob).GetIconId()).GetWrapOrEmpty();
+        var img = Svc.Texture.GetFromGameIcon(SpellActionService.GetLightJob((uint)_selectedJob).GetIconId()).GetWrapOrEmpty();
         ImGui.Image(img.Handle, new Vector2(ImGui.GetFrameHeight()));
         CkGui.AttachToolTip("The selected Job");
 

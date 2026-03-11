@@ -199,7 +199,7 @@ public class ToysPanel
 
         using (CkRaii.Group(CkCol.CurvedHeaderFade.Uint()))
         {
-            CkGui.BooleanToColoredIcon(_selector.Selected!.Interactable, false);
+            CkGui.BoolIcon(_selector.Selected!.Interactable, false);
             CkGui.TextFrameAlignedInline($"Interactable  ");
         }
         if (ImGui.IsItemHovered() && ImGui.IsItemClicked())

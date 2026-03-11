@@ -10,6 +10,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
+using Microsoft.AspNetCore.SignalR;
 
 namespace GagSpeak.Services;
 
@@ -80,10 +81,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
                 return;
             _newOnlineKinksters.Add(arg.Kinkster.UserData);
         });
-        Mediator.Subscribe<KinksterPlayerRendered>(this, msg => _newVisibleKinksters.Add(msg.Kinkster.UserData));
-
-        // Visible Data Updaters
-        Mediator.Subscribe<MoodlesApplyStatusToPair>(this, msg => ApplyMoodleToKinkster(msg.ApplyStatusTupleDto).ConfigureAwait(false));
+        Mediator.Subscribe<KinksterRendered>(this, msg => _newVisibleKinksters.Add(msg.Kinkster.UserData));
 
         // Online Data Updaters
         Mediator.Subscribe<ConnectedMessage>(this, _ =>
@@ -102,9 +100,6 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         Mediator.Subscribe<ConfigAlarmChanged>(this, msg => DistributeAlarmUpdate(msg.Item, msg.Type).ConfigureAwait(false));
         Mediator.Subscribe<ConfigTriggerChanged>(this, msg => DistributeTriggerUpdate(msg.Item, msg.Type).ConfigureAwait(false));
     }
-
-    // Do this for now, later, migrate the newly visible kinksters into an update service that multiple different distribution services could pull from.
-    internal static string LastMoodlesDataString = string.Empty;
 
     // Idk why we need this really, anymore, but whatever i guess. If it helps it helps.
     private ActiveGagSlot? _prevGagData;
@@ -160,14 +155,14 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         }
 
         Logger.LogDebug($"Pushing Appearance and Moodles data to ({string.Join(", ", visibleCharas.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
-        await DistributeFullMoodlesData(visibleCharas);
+        await UserPushLociData(visibleCharas);
     }
 
     /// <summary>
     ///     This IPC Method should ONLY be sent to the newly visible kinksters, as it is the heaviest weight IPC call. <para />
     ///     Never generate for _kinksters.GetVisibleConnected() as this will cause a lot of unnecessary data to be sent.
     /// </summary>
-    public async Task DistributeFullMoodlesData(List<UserData> visibleCharas)
+    public async Task UserPushLociData(List<UserData> visibleCharas)
     {
         // if we are not yet connected, append the visible character list to the _newVisibleKinksters
         if (!MainHub.IsConnectionDataSynced)
@@ -175,20 +170,29 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
             _newVisibleKinksters.UnionWith(visibleCharas);
             return;
         }
-
-        LastMoodlesDataString = MoodleCache.IpcData.DataString;
         // Distribute the full IPC Data to the list of visible characters passed in.
-        Logger.LogDebug($"Pushing Full IPCData to ({string.Join(", ", visibleCharas.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
-        await _hub.UserPushMoodlesFull(new(visibleCharas, MoodleCache.IpcData));
+        Logger.LogDebug($"Pushing LociData to ({string.Join(", ", visibleCharas.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
+        try
+        {
+            await _hub.UserPushLociData(new(visibleCharas, LociCache.Data));
+        }
+        catch (HubException ex)
+        {
+            Logger.LogError($"Failed to push LociData to server: {ex}");
+        }
+        catch (Bagagwa ex)
+        {
+            Logger.LogError($"Failed to push LociData to server: {ex}");
+        }
     }
 
-    private async Task ApplyMoodleToKinkster(ApplyMoodleStatus dto)
+    public async Task ApplyTuplesToKinkster(UserData target, IEnumerable<LociStatusInfo> statuses, bool lockIds)
     {
-        Logger.LogDebug($"Pushing ApplyMoodlesByStatus to: {dto.User.AliasOrUID}", LoggerType.ApiCore);
-        if (await _hub.UserApplyMoodlesByStatus(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
-            Logger.LogError($"Failed to push ApplyMoodlesByStatus to server. [{res.ErrorCode}]");
+        Logger.LogDebug($"Pushing ApplyLociStatusTuples to: {target.AliasOrUID}", LoggerType.ApiCore);
+        if (await _hub.UserApplyLociStatusTuples(new(target, statuses, lockIds)).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+            Logger.LogError($"Failed to push ApplyLociStatusTuples to server. [{res.ErrorCode}]");
         else
-            Logger.LogDebug($"Successfully pushed ApplyMoodlesByStatus to the server", LoggerType.ApiCore);
+            Logger.LogDebug($"Successfully pushed ApplyLociStatusTuples to the server", LoggerType.ApiCore);
     }
 
     private CharaLightStorageData GetLatestLightStorage()
@@ -320,20 +324,9 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         }
     }
 
-    /*
-     *         Mediator.Subscribe<EnabledItemChanged>(this, arg => PushEnabledItemChanged(arg).ConfigureAwait(false));
-        Mediator.Subscribe<EnabledGagChanged>(this, arg => PushEnabledGagChanged(arg).ConfigureAwait(false));
-        Mediator.Subscribe<EnabledToyChanged>(this, arg => PushEnabledToyChanged(arg).ConfigureAwait(false));
-        Mediator.Subscribe<EnabledItemsChanged>(this, arg => PushEnabledItemsChanged(arg).ConfigureAwait(false));
-        Mediator.Subscribe<EnabledGagsChanged>(this, arg => PushEnabledGagsChanged(arg).ConfigureAwait(false));
-        Mediator.Subscribe<EnabledToysChanged>(this, arg => PushEnabledToysChanged(arg).ConfigureAwait(false));
-     */
-
     /// <summary>
     ///     Manually call to ensure we only invoke when we change our state.
     /// </summary>
-    /// <param name="arg"></param>
-    /// <returns></returns>
     public async Task PushEnabledItemChanged(EnabledItemChanged arg)
     {
         var onlineUsers = _kinksters.GetOnlineUserDatas();
@@ -502,7 +495,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
             Visuals = newData.Visuals,
             Dye1 = newData.Dye1,
             Dye2 = newData.Dye2,
-            Moodle = newData.Moodle,
+            StatusInfo = newData.StatusInfo,
             Writing = newData.Writing,
             EditAccess = newData.CollaredAccess,
             OwnerEditAccess = newData.OwnerAccess

@@ -153,7 +153,7 @@ public class LootPoolTab : IFancyTab
         CkGui.ColorTextInline(item.Precedence.ToName(), item.Precedence.ToColor());
 
         CkGui.ColorText("Set Traits:", ImGuiColors.ParsedGold);
-        CkGui.BooleanToColoredIcon(item.ApplyTraits);
+        CkGui.BoolIcon(item.ApplyTraits);
 
         CkGui.ColorText("Applies At:", ImGuiColors.ParsedGold);
         CkGui.TextInline(item.AppliedTime == DateTimeOffset.MinValue ? "<Not Applied>" : item.AppliedTime.ToLocalTime().ToString("G"));

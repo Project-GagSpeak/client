@@ -59,8 +59,8 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
 
         // Whenever someone unrenders or renders, we should pull a refresh on the nameplates
         // Handle this in a way where we dont need to worry about keying by nameworld anymore or something.
-        Mediator.Subscribe<KinksterPlayerRendered>(this, _ => RefreshGagPlates());
-        Mediator.Subscribe<KinksterPlayerUnrendered>(this, _ => RefreshGagPlates());
+        Mediator.Subscribe<KinksterRendered>(this, _ => RefreshGagPlates());
+        Mediator.Subscribe<KinksterUnrendered>(this, _ => RefreshGagPlates());
         Mediator.Subscribe<ConnectedMessage>(this, _ => RefreshClientGagState());
 
         // Temporarily change the GagPlate state if talking while gagged! (Works for both client and pair)

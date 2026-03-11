@@ -4,19 +4,14 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Utils;
+using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 
 namespace GagSpeak;
-public static class MoodlesEx
+public static class LociEx
 {
-    public static IPCMoodleAccessTuple ToIpc(this ProviderMoodleAccessTuple t)
-        => ((MoodleAccess)t.OtherAccessFlags, t.OtherMaxTime, (MoodleAccess)t.CallerAccessFlags, t.CallerMaxTime);
-
-    public static ProviderMoodleAccessTuple ToCallGate(this IPCMoodleAccessTuple t)
-        => ((short)t.OtherAccess, t.OtherMaxTime, (short)t.CallerAccess, t.CallerMaxTime);
-
-    public static void AttachTooltip(this MoodlesStatusInfo item, IEnumerable<MoodlesStatusInfo> otherStatuses)
+    public static void AttachTooltip(this LociStatusInfo item, CachedLociData cache)
     {
         if (!ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
             return;
@@ -25,7 +20,7 @@ public static class MoodlesEx
         using var s = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One * 8f)
             .Push(ImGuiStyleVar.WindowRounding, 4f)
             .Push(ImGuiStyleVar.PopupBorderSize, 1f);
-        using var c = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
+        using var c = ImRaii.PushColor(ImGuiCol.Border, GsCol.VibrantPink.Uint());
         using var tt = ImRaii.Tooltip();
 
         // push the title, converting all color tags into the actual label.
@@ -45,39 +40,49 @@ public static class MoodlesEx
         ImGui.SameLine();
         ImGui.Text(item.Type.ToString());
 
-        if (item.ChainedStatus != Guid.Empty)
+        if (item.ChainedGUID != Guid.Empty)
         {
-            CkGui.ColorText("Chained Status:", ImGuiColors.ParsedGold);
-            ImGui.SameLine();
-            var status = otherStatuses.FirstOrDefault(x => x.GUID == item.ChainedStatus).Title ?? "Unknown";
-            ImGui.Text(status);
+            if (item.ChainType is ChainType.Status)
+            {
+                CkGui.ColorText("Chained Status:", ImGuiColors.ParsedGold);
+                ImGui.SameLine();
+                var status = cache.Statuses.GetValueOrDefault(item.ChainedGUID).Title;
+                CkRichText.Text(status, 100);
+            }
+            else
+            {
+                CkGui.ColorText("Chained Preset:", ImGuiColors.ParsedGold);
+                ImGui.SameLine();
+                var preset = cache.Presets.GetValueOrDefault(item.ChainedGUID).Title;
+                CkRichText.Text(preset, 100);
+            }
         }
     }
 
     /// <summary>
     ///     Does a fairly basic check before applying a set of status tuples to ensure we are able to apply them.
     /// </summary>
-    public static bool CanApplyMoodles(PairPerms perms, IEnumerable<MoodlesStatusInfo> statuses)
+    public static bool CanApply(PairPerms perms, IEnumerable<LociStatusInfo> statuses)
     {
         foreach (var status in statuses)
         {
-            if (status.Type is StatusType.Positive && !perms.MoodleAccess.HasAny(MoodleAccess.Positive))
+            if (status.Type is StatusType.Positive && !perms.LociAccess.HasAny(LociAccess.Positive))
             {
                 Svc.Toasts.ShowError("You do not have permission to apply Positive Statuses.");
                 return false;
             }
-            else if (status.Type is StatusType.Negative && !perms.MoodleAccess.HasAny(MoodleAccess.Negative))
+            else if (status.Type is StatusType.Negative && !perms.LociAccess.HasAny(LociAccess.Negative))
             {
                 Svc.Toasts.ShowError("You do not have permission to apply Negative Statuses.");
                 return false;
 
             }
-            else if (status.Type is StatusType.Special && !perms.MoodleAccess.HasAny(MoodleAccess.Special))
+            else if (status.Type is StatusType.Special && !perms.LociAccess.HasAny(LociAccess.Special))
             {
                 Svc.Toasts.ShowError("You do not have permission to apply Special Statuses.");
                 return false;
             }
-            else if (status.Permanent && !perms.MoodleAccess.HasAny(MoodleAccess.Permanent))
+            else if (status.ExpireTicks == -1 && !perms.LociAccess.HasAny(LociAccess.Permanent))
             {
                 Svc.Toasts.ShowError("You do not have permission to apply Permanent Statuses.");
                 return false;
@@ -85,7 +90,7 @@ public static class MoodlesEx
             else if (status.ExpireTicks > 0)
             {
                 var totalTime = TimeSpan.FromMilliseconds(status.ExpireTicks - DateTimeOffset.Now.ToUnixTimeMilliseconds());
-                if (totalTime > perms.MaxMoodleTime)
+                if (totalTime > perms.MaxLociTime)
                 {
                     Svc.Toasts.ShowError("You do not have permission to apply Statuses for that long.");
                     return false;
@@ -95,6 +100,4 @@ public static class MoodlesEx
         // return true if reached here.
         return true;
     }
-
-
 }

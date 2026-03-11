@@ -74,6 +74,7 @@ public class Kinkster : IComparable<Kinkster>
 
     // Internal Data. (Useful for tooltip information and KinkPlates™
     public KinksterCache LightCache { get; private set; } = new KinksterCache();
+    public CachedLociData LociData { get; private set; } = new();
 
     // Internal Helpers.
     // public bool IsTemporary => UserPair.IsTemporary; (Can implement this later maybe, idk)
@@ -90,7 +91,6 @@ public class Kinkster : IComparable<Kinkster>
     public bool IsTargetable => IsRendered ? _player.DataState.GetIsTargetable() : false;
 
     // Additional Information.
-    public MoodleData MoodleData => _player.MoodlesData; // Phase to a readonly or explicit getters maybe.
     public bool HasShockCollar => PairGlobals.HasValidShareCode() || PairPerms.HasValidShareCode();
 
     // Definitely change how this information is stored, possibly do so within some internal kinkplate cache or whatever.
@@ -121,42 +121,8 @@ public class Kinkster : IComparable<Kinkster>
     public string GetNickAliasOrUid() 
         => _nicks.TryGetNickname(UserData.UID, out var n) ? n : UserData.AliasOrUID;
 
-    public IPCMoodleAccessTuple ToAccessTuple()
-        => new IPCMoodleAccessTuple(
-            OwnPerms.MoodleAccess, (long)OwnPerms.MaxMoodleTime.TotalMilliseconds,
-            PairPerms.MoodleAccess, (long)PairPerms.MaxMoodleTime.TotalMilliseconds);
-
     public float DistanceToPlayer() 
         => IsRendered ? PlayerData.DistanceTo(_player.DataState.Position) : float.MaxValue;
-
-
-
-    #region Handler Updates
-    public void SetMoodlesData(MoodleData newData)
-        => _player.UpdateAndApplyMoodles(newData);
-
-    public void SetMoodlesData(string dataString, IEnumerable<MoodlesStatusInfo> dataInfo)
-        => _player.UpdateAndApplyMoodles(dataString, dataInfo);
-
-    public void SetMoodleStatusData(List<MoodlesStatusInfo> statuses)
-        => _player.MoodlesData.SetStatuses(statuses);
-    
-    public void SetMoodlePresetData(List<MoodlePresetInfo> presets)
-        => _player.MoodlesData.SetPresets(presets);
-
-    public void UpdateMoodleStatusData(MoodlesStatusInfo status, bool deleted)
-    {
-        if (deleted) _player.MoodlesData.Statuses.Remove(status.GUID);
-        else _player.MoodlesData.AddOrUpdateStatus(status);
-    }
-
-    public void UpdateMoodlePresetData(MoodlePresetInfo preset, bool deleted)
-    {
-        if (deleted) _player.MoodlesData.Presets.Remove(preset.GUID);
-        else _player.MoodlesData.AddOrUpdatePreset(preset);
-    }
-
-    #endregion Handler Updates
 
     /// <summary>
     ///     After a Kinkster is initialized / created, it will then be marked as
@@ -193,26 +159,9 @@ public class Kinkster : IComparable<Kinkster>
     {
         _onlineUser = null;
         _mediator.Publish(new KinksterOffline(this));
-        // Revert any visible state alterations.
-        _player.RevertAlterations().ConfigureAwait(false);
         _logger.LogTrace($"[{PlayerName}] ({GetNickAliasOrUid()}) went offline, reverting alterations.", LoggerType.PairManagement);
     }
 
-    /// <summary>
-    ///     Reapply cached Alterations to all visible OwnedObjects.
-    /// </summary>
-    public void ReapplyAlterations()
-        => _player.RevertAlterations().ConfigureAwait(false);
-
-    /// <summary>
-    ///     Revert the visual alterations of the Kinkster, if rendered. <para/>
-    ///     <b>This will clear the internal data.</b> (Maybe dont do this to support pausing or something idk)
-    /// </summary>
-    public async Task RevertRenderedAlterations()
-    {
-        _logger.LogDebug($"Reverting alterations for [{PlayerName}] ({GetNickAliasOrUid()}).", UserData.AliasOrUID);
-        await _player.RevertAlterations().ConfigureAwait(false);
-    }
 
     /// <summary>
     ///     Disposes of the Kinkster's Handlers, and all internal data. <para/>
@@ -287,6 +236,9 @@ public class Kinkster : IComparable<Kinkster>
         _logger.LogDebug($"Aligning Achievement Trackers in sync with {GetNickAliasOrUid()}'s latest composite data!", LoggerType.PairDataTransfer);
         _mediator.Publish(new PlayerLatestActiveItems(UserData, ActiveGags, ActiveRestrictions, ActiveRestraint)); // <-- Send whole composite?
     }
+
+    public void NewLociData(CachedLociData newData)
+        => LociData = newData;
 
     public void NewActiveGagData(KinksterUpdateActiveGag data)
     {
@@ -399,8 +351,8 @@ public class Kinkster : IComparable<Kinkster>
             case DataUpdateType.DyesChange:
                 // process a change to the active collar's dyes.
                 break;
-            case DataUpdateType.CollarMoodleChange:
-                // process a change to the active collar's Moodles.
+            case DataUpdateType.CollarLociDataChange:
+                // process a change to the active collar's Loci.
                 break;
             case DataUpdateType.CollarWritingChange:
                 // process a change to the collar's writing,
@@ -579,10 +531,6 @@ public class Kinkster : IComparable<Kinkster>
             ImGui.TableSetupColumn("EntityId");
             ImGui.TableSetupColumn("ObjectId");
             ImGui.TableSetupColumn("ParentId");
-            ImGui.TableSetupColumn("DrawObjValid");
-            ImGui.TableSetupColumn("RenderFlags");
-            ImGui.TableSetupColumn("MdlInSlot");
-            ImGui.TableSetupColumn("MdlFilesInSlot");
             ImGui.TableHeadersRow();
             // Handle Player.
             ImGuiUtil.DrawFrameColumn("Player");
@@ -597,26 +545,9 @@ public class Kinkster : IComparable<Kinkster>
                 ImGuiUtil.DrawFrameColumn(PlayerEntityId.ToString());
                 ImGuiUtil.DrawFrameColumn(PlayerObjectId.ToString());
                 ImGuiUtil.DrawFrameColumn("N/A");
-
-                ImGui.TableNextColumn();
-                var drawObjValid = _player.DrawObjAddress != IntPtr.Zero;
-                CkGui.IconText(drawObjValid ? FAI.Check : FAI.Times, drawObjValid ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed);
-
-                ImGui.TableNextColumn();
-                CkGui.ColorText(_player.RenderFlags.ToString(), ImGuiColors.DalamudGrey2);
-
-                if (drawObjValid)
-                {
-                    ImGui.TableNextColumn();
-                    CkGui.IconText(_player.HasModelInSlotLoaded ? FAI.Check : FAI.Times, _player.HasModelInSlotLoaded ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed);
-                    ImGui.TableNextColumn();
-                    CkGui.IconText(_player.HasModelFilesInSlotLoaded ? FAI.Check : FAI.Times, _player.HasModelFilesInSlotLoaded ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed);
-                }
             }
             ImGui.TableNextRow();
         }
-
-        _player.DrawDebugInfo();
     }
     #endregion Debug
 }

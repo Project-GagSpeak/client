@@ -19,8 +19,8 @@ global using FAI = Dalamud.Interface.FontAwesomeIcon;
 // MERV! DON'T SUMMON BAGAGWA!
 global using Bagagwa = System.Exception;
 
-/// Global Tuple
-global using MoodlesStatusInfo = (
+/// Old, for migration maybe (or just remove)
+global using MoodleStatusInfo = (
     int Version,
     System.Guid GUID,
     int IconID,
@@ -39,26 +39,43 @@ global using MoodlesStatusInfo = (
     bool Permanent                      // Referred to as 'Sticky' in the Moodles UI
 );
 
-
 global using MoodlePresetInfo = (
     System.Guid GUID,
     System.Collections.Generic.List<System.Guid> Statuses,
-    GagspeakAPI.PresetApplicationType ApplicationType,
+    GagspeakAPI.PresetApplyType ApplicationType,
     string Title
 );
 
-// The IPC Tuple used to define MoodleAccess permission between recipient and client.
-global using IPCMoodleAccessTuple = (
-    GagspeakAPI.Enums.MoodleAccess OtherAccess, long OtherMaxTime,
-    GagspeakAPI.Enums.MoodleAccess CallerAccess, long CallerMaxTime
+// New, For current use
+global using LociStatusInfo = (
+    int Version,
+    System.Guid GUID,
+    int IconID,
+    string Title,
+    string Description,
+    string CustomVFXPath,               // What VFX to show on application.
+    long ExpireTicks,                   // Permanent if -1, referred to as 'NoExpire' in LociStatus
+    GagspeakAPI.StatusType Type,        // Loci StatusType enum.
+    int Stacks,                         // Usually 1 when no stacks are used.
+    int StackSteps,                     // How many stacks to add per reapplication.
+    int StackToChain,                   // Used for chaining on set stacks
+    GagspeakAPI.Modifiers Modifiers,    // What can be customized, casted to uint from Modifiers (Dalamud IPC Rules)
+    System.Guid ChainedGUID,            // What status is chained to this one.
+    GagspeakAPI.ChainType ChainType,    // What type of chaining is this for.
+    GagspeakAPI.ChainTrigger ChainTrigger, // What triggers the chained status.
+    string Applier,                     // Who applied the status.
+    string Dispeller                    // When set, only this person can dispel your loci.
 );
 
-// Dalamud's Newtonsoft-based converter for objects does not play nice with nested [Flag] Enums in tuples, inside dictionaries.
-global using ProviderMoodleAccessTuple = (
-    short OtherAccessFlags, long OtherMaxTime, 
-    short CallerAccessFlags, long CallerMaxTime
+global using LociPresetInfo = (
+    System.Guid GUID,
+    System.Collections.Generic.List<System.Guid> Statuses,
+    byte ApplicationType,
+    string Title,
+    string Description
 );
 
+// For Customize+
 global using IPCProfileDataTuple = (
     System.Guid UniqueId,
     string Name,
@@ -68,6 +85,7 @@ global using IPCProfileDataTuple = (
     bool IsEnabled
 );
 
+// For Lifestream
 global using AddressBookEntryTuple = (
     string Name, 
     int World, 

@@ -259,32 +259,32 @@ public static class PermHelper
     /// <param name="pairPerms"> The permissions of the pair. </param>
     /// <param name="statuses"> The statuses to apply. </param>
     /// <returns> True if the statuses can be applied.
-    public static bool CanApplyPairStatus(PairPerms pairPerms, IEnumerable<MoodlesStatusInfo> statuses)
+    public static bool CanApplyPairStatus(PairPerms pairPerms, IEnumerable<LociStatusInfo> statuses)
     {
-        if (!pairPerms.MoodleAccess.HasAny(MoodleAccess.Positive) && statuses.Any(statuses => statuses.Type == StatusType.Positive))
+        if (!pairPerms.LociAccess.HasAny(LociAccess.Positive) && statuses.Any(statuses => statuses.Type == StatusType.Positive))
         {
             Svc.Logger.Warning("Client Attempted to apply status(s) with at least one containing a positive status, but they are not allowed to.");
             return false;
         }
-        if (!pairPerms.MoodleAccess.HasAny(MoodleAccess.Negative) && statuses.Any(statuses => statuses.Type == StatusType.Negative))
+        if (!pairPerms.LociAccess.HasAny(LociAccess.Negative) && statuses.Any(statuses => statuses.Type == StatusType.Negative))
         {
             Svc.Logger.Warning("Client Attempted to apply status(s) with at least one containing a negative status, but they are not allowed to.");
             return false;
         }
-        if (!pairPerms.MoodleAccess.HasAny(MoodleAccess.Special) && statuses.Any(statuses => statuses.Type == StatusType.Special))
+        if (!pairPerms.LociAccess.HasAny(LociAccess.Special) && statuses.Any(statuses => statuses.Type == StatusType.Special))
         {
             Svc.Logger.Warning("Client Attempted to apply status(s) with at least one containing a special status, but they are not allowed to.");
             return false;
         }
 
-        if (!pairPerms.MoodleAccess.HasAny(MoodleAccess.Permanent) && statuses.Any(statuses => statuses.ExpireTicks < 0))
+        if (!pairPerms.LociAccess.HasAny(LociAccess.Permanent) && statuses.Any(statuses => statuses.ExpireTicks < 0))
         {
             Svc.Logger.Warning("Client Attempted to apply status(s) with at least one containing a permanent status, but they are not allowed to.");
             return false;
         }
 
         // check the max moodle time exceeding
-        if (statuses.Any(status => pairPerms.MaxMoodleTime < TimeSpan.FromMilliseconds(status.ExpireTicks)))
+        if (statuses.Any(status => pairPerms.MaxLociTime < TimeSpan.FromMilliseconds(status.ExpireTicks)))
         {
             Svc.Logger.Warning("Client Attempted to apply status(s) with at least one containing a time exceeding the max allowed time.");
             return false;
@@ -318,23 +318,23 @@ public static class PermHelper
             var followOn = hc.IsEnabled(HcAttribute.Follow);
             ImGuiUtil.DrawFrameColumn("Follow");
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(followOn, false);
+            CkGui.BoolIcon(followOn, false);
             ImGuiUtil.DrawFrameColumn(hc.LockedFollowing.Split('|')[0]);
             ImGui.TableNextColumn();
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(hc.IsDevotional(HcAttribute.Follow), false);
+            CkGui.BoolIcon(hc.IsDevotional(HcAttribute.Follow), false);
             ImGui.TableNextRow();
 
             // Emote:
             var emoteOn = hc.IsEnabled(HcAttribute.EmoteState);
             ImGuiUtil.DrawFrameColumn("Emote");
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(emoteOn, false);
+            CkGui.BoolIcon(emoteOn, false);
             ImGuiUtil.DrawFrameColumn(hc.LockedEmoteState.Split('|')[0]);
             ImGui.TableNextColumn();
             CkGui.ColorText(hc.EmoteExpireTime.ToGsRemainingTimeFancy(), ImGuiColors.TankBlue);
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(hc.IsDevotional(HcAttribute.EmoteState), false);
+            CkGui.BoolIcon(hc.IsDevotional(HcAttribute.EmoteState), false);
             ImGui.TableNextColumn();
             ImGui.Text("Emote ID:");
             CkGui.ColorTextInline($"{hc.EmoteId}", ImGuiColors.TankBlue);
@@ -346,12 +346,12 @@ public static class PermHelper
             var confinementOn = hc.IsEnabled(HcAttribute.Confinement);
             ImGuiUtil.DrawFrameColumn("Confinement");
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(confinementOn, false);
+            CkGui.BoolIcon(confinementOn, false);
             ImGuiUtil.DrawFrameColumn(hc.IndoorConfinement.Split('|')[0]);
             ImGui.TableNextColumn();
             CkGui.ColorText(hc.ConfinementTimer.ToGsRemainingTimeFancy(), ImGuiColors.TankBlue);
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(hc.IsDevotional(HcAttribute.Confinement), false);
+            CkGui.BoolIcon(hc.IsDevotional(HcAttribute.Confinement), false);
             ImGui.TableNextColumn();
             ImGui.Text("World:");
             CkGui.ColorTextInline($"{hc.ConfinedWorld}", ImGuiColors.TankBlue);
@@ -362,21 +362,21 @@ public static class PermHelper
             CkGui.TextInline("| Place ID:");
             CkGui.ColorTextInline($"{hc.ConfinedPlaceId}", ImGuiColors.TankBlue);
             CkGui.TextInline("| In Apartment:");
-            CkGui.BooleanToColoredIcon(hc.ConfinedInApartment);
+            CkGui.BoolIcon(hc.ConfinedInApartment);
             CkGui.TextInline("| In Subdivision:");
-            CkGui.BooleanToColoredIcon(hc.ConfinedInSubdivision);
+            CkGui.BoolIcon(hc.ConfinedInSubdivision);
             ImGui.TableNextRow();
 
             // Imprisonment:
             var imprisonmentOn = hc.IsEnabled(HcAttribute.Imprisonment);
             ImGuiUtil.DrawFrameColumn("Imprisonment");
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(imprisonmentOn, false);
+            CkGui.BoolIcon(imprisonmentOn, false);
             ImGuiUtil.DrawFrameColumn(hc.Imprisonment.Split('|')[0]);
             ImGui.TableNextColumn();
             CkGui.ColorText(hc.ImprisonmentTimer.ToGsRemainingTimeFancy(), ImGuiColors.TankBlue);
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(hc.IsDevotional(HcAttribute.Imprisonment), false);
+            CkGui.BoolIcon(hc.IsDevotional(HcAttribute.Imprisonment), false);
             ImGui.TableNextColumn();
             ImGui.Text("Territory:");
             CkGui.ColorTextInline($"{hc.ImprisonedTerritory}", ImGuiColors.TankBlue);
@@ -390,36 +390,36 @@ public static class PermHelper
             var chatBoxesOn = hc.IsEnabled(HcAttribute.HiddenChatBox);
             ImGuiUtil.DrawFrameColumn("NoChatBox");
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(chatBoxesOn, false);
+            CkGui.BoolIcon(chatBoxesOn, false);
             ImGuiUtil.DrawFrameColumn(hc.ChatBoxesHidden.Split('|')[0]);
             ImGui.TableNextColumn();
             CkGui.ColorText(hc.ChatBoxesHiddenTimer.ToGsRemainingTimeFancy(), ImGuiColors.TankBlue);
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(hc.IsDevotional(HcAttribute.HiddenChatBox), false);
+            CkGui.BoolIcon(hc.IsDevotional(HcAttribute.HiddenChatBox), false);
             ImGui.TableNextRow();
 
             // Chat Input Hidden:
             var chatInputHiddenOn = hc.IsEnabled(HcAttribute.HiddenChatInput);
             ImGuiUtil.DrawFrameColumn("NoChatInput");
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(chatInputHiddenOn, false);
+            CkGui.BoolIcon(chatInputHiddenOn, false);
             ImGuiUtil.DrawFrameColumn(hc.ChatInputHidden.Split('|')[0]);
             ImGui.TableNextColumn();
             CkGui.ColorText(hc.ChatInputHiddenTimer.ToGsRemainingTimeFancy(), ImGuiColors.TankBlue);
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(hc.IsDevotional(HcAttribute.HiddenChatInput), false);
+            CkGui.BoolIcon(hc.IsDevotional(HcAttribute.HiddenChatInput), false);
             ImGui.TableNextRow();
 
             // Chat Input Blocked:
             var chatInputBlockedOn = hc.IsEnabled(HcAttribute.BlockedChatInput);
             ImGuiUtil.DrawFrameColumn("BlockedChatInput");
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(chatInputBlockedOn, false);
+            CkGui.BoolIcon(chatInputBlockedOn, false);
             ImGuiUtil.DrawFrameColumn(hc.ChatInputBlocked.Split('|')[0]);
             ImGui.TableNextColumn();
             CkGui.ColorText(hc.ChatInputBlockedTimer.ToGsRemainingTimeFancy(), ImGuiColors.TankBlue);
             ImGui.TableNextColumn();
-            CkGui.BooleanToColoredIcon(hc.IsDevotional(HcAttribute.BlockedChatInput), false);
+            CkGui.BoolIcon(hc.IsDevotional(HcAttribute.BlockedChatInput), false);
             ImGui.TableNextRow();
         }
     }

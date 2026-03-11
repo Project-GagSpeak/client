@@ -208,47 +208,47 @@ public static class RestraintExtentions
     #endregion Mods
 
     #region Moodles
-    public static IEnumerable<Moodle> GetBaseMoodles(this RestraintSet set)
+    public static IEnumerable<LociItem> GetBaseMoodles(this RestraintSet set)
     => IterateBaseMoodles(set, new());
 
-    public static IEnumerable<Moodle> GetLayerMoodles(this RestraintSet set)
+    public static IEnumerable<LociItem> GetLayerMoodles(this RestraintSet set)
         => IterateLayerMoodles(set.Layers, new());
 
-    public static IEnumerable<Moodle> GetActiveLayerMoodles(this RestraintSet set, RestraintLayer active)
+    public static IEnumerable<LociItem> GetActiveLayerMoodles(this RestraintSet set, RestraintLayer active)
         => IterateLayerMoodles(set.Layers, new(), active);
 
-    public static IEnumerable<Moodle> GetAllMoodles(this RestraintSet set)
+    public static IEnumerable<LociItem> GetAllMoodles(this RestraintSet set)
         => GetAllMoodles(set, RestraintLayer.All);
 
-    public static IEnumerable<Moodle> GetAllMoodles(this RestraintSet set, RestraintLayer active)
+    public static IEnumerable<LociItem> GetAllMoodles(this RestraintSet set, RestraintLayer active)
     {
-        var seen = new HashSet<Moodle>();
-        var result = new List<Moodle>();
+        var seen = new HashSet<LociItem>();
+        var result = new List<LociItem>();
         result.AddRange(IterateLayerMoodles(set.Layers, seen, active));
         result.AddRange(IterateBaseMoodles(set, seen));
         return result;
     }
 
-    public static Moodle? GetMoodleAtLayer(this RestraintSet set, int layerIndex)
+    public static LociItem? GetMoodleAtLayer(this RestraintSet set, int layerIndex)
     {
         if (layerIndex < 0 || layerIndex >= set.Layers.Count)
             return null;
 
-        return set.Layers[layerIndex] is RestrictionLayer l && l.ApplyFlags.HasAny(RestraintFlags.Moodle) && l.IsValid()
+        return set.Layers[layerIndex] is RestrictionLayer l && l.ApplyFlags.HasAny(RestraintFlags.Loci) && l.IsValid()
             ? l.Ref.Moodle : null;
     }
 
     /// <summary> Core internal Iterator that collects the Moodles from the base slots. </summary>
     /// <returns> An enumerable of applied Moodles, and seen Moodles updated. </returns>
-    private static IEnumerable<Moodle> IterateBaseMoodles(RestraintSet set, HashSet<Moodle> seen)
+    private static IEnumerable<LociItem> IterateBaseMoodles(RestraintSet set, HashSet<LociItem> seen)
     {
-        var applied = new List<Moodle>();
+        var applied = new List<LociItem>();
         foreach (var slot in set.RestraintSlots.Values.OfType<RestraintSlotAdvanced>())
         {
             if (!slot.IsValid())
                 continue;
 
-            if (slot.ApplyFlags.HasAny(RestraintFlags.Moodle) && seen.Add(slot.Ref.Moodle))
+            if (slot.ApplyFlags.HasAny(RestraintFlags.Loci) && seen.Add(slot.Ref.Moodle))
                 applied.Add(slot.Ref.Moodle);
         }
         // The base Moodles appended, if we have not yet already added them.
@@ -261,9 +261,9 @@ public static class RestraintExtentions
 
     /// <summary> Iterate through all layers of a restraint set. </summary>
     /// <returns> All Moodles from the layers, and seen Moodles updated. </returns>
-    private static IEnumerable<Moodle> IterateLayerMoodles(List<IRestraintLayer> layers, HashSet<Moodle> seen, RestraintLayer active = RestraintLayer.All)
+    private static IEnumerable<LociItem> IterateLayerMoodles(List<IRestraintLayer> layers, HashSet<LociItem> seen, RestraintLayer active = RestraintLayer.All)
     {
-        var applied = new List<Moodle>();
+        var applied = new List<LociItem>();
         foreach (var i in active.GetLayerIndices().OrderByDescending(i => i))
         {
             if (i < 0 || i >= layers.Count)
@@ -271,7 +271,7 @@ public static class RestraintExtentions
 
             // Ensure it satisfies the conditions for a valid layer.
             if (layers[i] is not RestrictionLayer l 
-                || !l.ApplyFlags.HasAny(RestraintFlags.Moodle) 
+                || !l.ApplyFlags.HasAny(RestraintFlags.Loci) 
                 || !l.IsValid() 
                 || !seen.Add(l.Ref.Moodle))
                 continue;

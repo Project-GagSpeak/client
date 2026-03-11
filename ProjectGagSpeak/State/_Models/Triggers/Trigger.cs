@@ -36,7 +36,7 @@ public abstract class Trigger : IEditableStorageItem<Trigger>
         {
             SexToyAction sta => new SexToyAction(sta),
             PiShockAction ps => new PiShockAction(ps),
-            MoodleAction ma => new MoodleAction(ma),
+            LociDataAction ma => new LociDataAction(ma),
             RestraintAction ra => new RestraintAction(ra),
             RestrictionAction ra => new RestrictionAction(ra),
             GagAction ga => new GagAction(ga),

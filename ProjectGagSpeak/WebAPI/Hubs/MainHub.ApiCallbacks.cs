@@ -136,103 +136,97 @@ public partial class MainHub
     #endregion Pairing & Messages
 
     #region Moodles
-    public Task Callback_MoodleDataUpdated(MoodlesDataUpdate dto)
+    public Task Callback_LociDataUpdated(LociDataUpdate dto)
     {
-        Logger.LogDebug($"Callback_MoodleDataUpdated: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        Generic.Safe(() => _kinksters.ReceiveMoodleData(dto.User, dto.NewData));
-        return Task.CompletedTask;
-    }
-    public Task Callback_MoodleSMUpdated(MoodlesSMUpdate dto)
-    {
-        Logger.LogDebug($"Callback_MoodleSMUpdated: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        Generic.Safe(() => _kinksters.ReceiveSMUpdate(dto.User, dto.DataString, dto.DataInfo));
-        return Task.CompletedTask;
-    }
-    public Task Callback_MoodleStatusesUpdate(MoodlesStatusesUpdate dto)
-    {
-        Logger.LogDebug($"Callback_MoodleStatusesUpdate: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        Generic.Safe(() => _kinksters.ReceiveMoodleStatuses(dto.User, dto.Statuses));
-        return Task.CompletedTask;
-    }
-    public Task Callback_MoodlePresetsUpdate(MoodlesPresetsUpdate dto)
-    {
-        Logger.LogDebug($"Callback_SetKinksterMoodlesPresets: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        Generic.Safe(() => _kinksters.ReceiveMoodlePresets(dto.User, dto.Presets));
+        Logger.LogDebug($"Callback_LociDataUpdated: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Generic.Safe(() => _kinksters.ReceiveLociData(dto.User, dto.Data));
         return Task.CompletedTask;
     }
 
-    public Task Callback_MoodleStatusModified(MoodlesStatusModified dto)
+    public Task Callback_LociStatusesUpdate(LociStatusesUpdate dto)
     {
-        Logger.LogDebug($"Callback_MoodleStatusesUpdate: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        Generic.Safe(() => _kinksters.ReceiveMoodleStatusUpdate(dto.User, dto.Status, dto.Deleted));
-        return Task.CompletedTask;
-    }
-    public Task Callback_MoodlePresetModified(MoodlesPresetModified dto)
-    {
-        Logger.LogDebug($"Callback_SetKinksterMoodlesPresets: {dto.User.AliasOrUID}", LoggerType.Callbacks);
-        Generic.Safe(() => _kinksters.ReceiveMoodlePresetUpdate(dto.User, dto.Preset, dto.Deleted));
+        Logger.LogDebug($"Callback_LociStatusesUpdate: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Generic.Safe(() => _kinksters.ReceiveLociStatuses(dto.User, dto.Statuses));
         return Task.CompletedTask;
     }
 
-    public async Task Callback_ApplyMoodlesByGuid(ApplyMoodleId dto)
+    public Task Callback_LociPresetsUpdate(LociPresetsUpdate dto)
     {
-        Logger.LogDebug($"Callback_ApplyMoodlesById: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Logger.LogDebug($"Callback_LociPresetsUpdate: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Generic.Safe(() => _kinksters.ReceiveLociPresets(dto.User, dto.Presets));
+        return Task.CompletedTask;
+    }
+
+    public Task Callback_LociStatusModified(LociStatusModified dto)
+    {
+        Logger.LogDebug($"Callback_LociStatusModified: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Generic.Safe(() => _kinksters.ReceiveLociStatusUpdate(dto.User, dto.Status, dto.Deleted));
+        return Task.CompletedTask;
+    }
+
+    public Task Callback_LociPresetModified(LociPresetModified dto)
+    {
+        Logger.LogDebug($"Callback_LociPresetModified: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Generic.Safe(() => _kinksters.ReceiveLociPresetUpdate(dto.User, dto.Preset, dto.Deleted));
+        return Task.CompletedTask;
+    }
+    public async Task Callback_LociApplyDataById(ApplyLociDataById dto)
+    {
+        Logger.LogDebug($"Callback_LociApplyDataById: {dto.User.AliasOrUID}", LoggerType.Callbacks);
         // Fail if not a valid pair or not rendered.
-        if (_kinksters.GetUserOrDefault(dto.User) is not { } pair)
-            Logger.LogWarning($"Received ApplyMoodlesById from an unpaired user: {dto.User.AliasOrUID}");
-        else if (!pair.IsRendered)
-            Logger.LogWarning($"Received ApplyMoodlesById from an unrendered kinkster: {dto.User.AliasOrUID}");
+        if (_kinksters.GetUserOrDefault(dto.User) is not { } kinkster)
+            Logger.LogWarning($"Received ApplyLociDataById for an unpaired Kinkster: {dto.User.AliasOrUID}");
+        else if (!kinkster.IsRendered)
+            Logger.LogWarning($"Received ApplyLociDataById for an unrendered Kinkster: {dto.User.AliasOrUID}");
         else
         {
-            // Could maybe make the dto send if they want them to be locked or not? Idk, but its possible if we want.
-            await _moodles.ApplyOwnStatus(dto.Ids).ConfigureAwait(false);
+            Mediator.Publish(new EventMessage(new(kinkster.GetNickAliasOrUid(), kinkster.UserData.UID, InteractionType.ApplyOwnStatus, "Applied by Kinkster.")));
+            await _loci.ApplyLociStatus(dto.Ids, dto.LockIds).ConfigureAwait(false);
         }
     }
 
-    public async Task Callback_ApplyMoodlesByStatus(ApplyMoodleStatus dto)
+    public async Task Callback_LociApplyStatus(ApplyLociStatus dto)
     {
-        Logger.LogDebug("Callback_ApplyMoodlesByStatus: " + dto, LoggerType.Callbacks);
+        Logger.LogDebug($"Callback_LociApplyStatus: {dto.User.AliasOrUID}", LoggerType.Callbacks);
         // Fail if not a valid pair.
         if (_kinksters.GetUserOrDefault(dto.User) is not { } pair)
-            Logger.LogWarning($"Received ApplyMoodleTuples from an unpaired user: {dto.User.AliasOrUID}");
+            Logger.LogWarning($"Received LociApplyStatus for an unpaired Kinkster: {dto.User.AliasOrUID}");
         else if (!pair.IsRendered)
-            Logger.LogWarning($"Received ApplyMoodleTuples from an unrendered kinkster: {dto.User.AliasOrUID}");
+            Logger.LogWarning($"Received LociApplyStatus for an unrendered Kinkster: {pair.GetNickAliasOrUid()}");
         else
         {
-            Mediator.Publish(new EventMessage(new(pair.GetNickAliasOrUid(), pair.UserData.UID, InteractionType.ApplyOtherStatus, "Applied by Pair.")));
-            // Could maybe make the dto send if they want them to be locked or not? Idk, but its possible if we want.
-            // Can't do this anymore
-            // IpcProvider.ApplyStatusTuples(dto.Statuses);
+            Mediator.Publish(new EventMessage(new(pair.GetNickAliasOrUid(), pair.UserData.UID, InteractionType.ApplyOtherStatus, "Applied by Kinkster.")));
+            await _loci.ApplyLociStatus(dto.Statuses, dto.LockIds).ConfigureAwait(false);
         }
     }
 
-    public async Task Callback_RemoveMoodles(RemoveMoodleId dto)
+    public async Task Callback_LociRemoveData(RemoveLociData dto)
     {
-        Logger.LogDebug($"Callback_RemoveMoodles: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Logger.LogDebug($"Callback_LociRemmoveData: {dto.User.AliasOrUID}", LoggerType.Callbacks);
         // Fail if not a valid pair or not rendered.
         if (_kinksters.GetUserOrDefault(dto.User) is not { } pair)
-            Logger.LogWarning($"Received RemoveMoodles from an unpaired user: {dto.User.AliasOrUID}");
+            Logger.LogWarning($"Received RemoveLociData from an unpaired kinkster: {dto.User.AliasOrUID}");
         else if (!pair.IsRendered)
-            Logger.LogWarning($"Received RemoveMoodles from an unrendered kinkster: {pair.GetNickAliasOrUid()}");
+            Logger.LogWarning($"Received RemoveLociData from an unrendered kinkster: {pair.GetNickAliasOrUid()}");
         else
         {
-            // Could maybe make the dto send if they want them to be locked or not? Idk, but its possible if we want.
-            await _moodles.RemoveOwnStatuses(dto.Ids).ConfigureAwait(false);
+            Mediator.Publish(new EventMessage(new(pair.GetNickAliasOrUid(), pair.UserData.UID, InteractionType.RemoveStatus, "Removed by Kinkster.")));
+            await _loci.RemoveStatusID(dto.Ids, false).ConfigureAwait(false);
         }
     }
 
-    public async Task Callback_ClearMoodles(KinksterBase dto)
+    public async Task Callback_LociClearData(KinksterBase dto)
     {
-        Logger.LogInformation($"Callback_ClearMoodles: {dto.User.AliasOrUID}");
+        Logger.LogInformation($"Callback_LociClearData: {dto.User.AliasOrUID}");
         // Fail if not a valid pair or not rendered.
         if (_kinksters.GetUserOrDefault(dto.User) is not { } pair)
-            Logger.LogWarning($"Received ClearMoodles from an unpaired user: {dto.User.AliasOrUID}");
+            Logger.LogWarning($"Received LociClearData from an unpaired user: {dto.User.AliasOrUID}");
         else if (!pair.IsRendered)
-            Logger.LogWarning($"Received ClearMoodles from an unrendered kinkster: {pair.GetNickAliasOrUid()}");
+            Logger.LogWarning($"Received LociClearData from an unrendered kinkster: {pair.GetNickAliasOrUid()}");
         else
         {
-            // Could maybe make the dto send if they want them to be locked or not? Idk, but its possible if we want.
-            await _moodles.RemoveOwnStatuses(MoodleCache.IpcData.DataInfo.Keys).ConfigureAwait(false);
+            Mediator.Publish(new EventMessage(new(pair.GetNickAliasOrUid(), pair.UserData.UID, InteractionType.ClearStatuses, "Cleared by Kinkster.")));
+            await _loci.RemoveStatusID(LociCache.Data.DataInfo.Keys, false).ConfigureAwait(false);
         }
     }
     #endregion Moodles
@@ -477,7 +471,7 @@ public partial class MainHub
                 case DataUpdateType.DyesChange:
                     // process a change to the active collar's dyes.
                     break;
-                case DataUpdateType.CollarMoodleChange:
+                case DataUpdateType.CollarLociDataChange:
                     // process a change to the active collar's Moodles.
                     break;
                 case DataUpdateType.CollarWritingChange:
@@ -838,65 +832,60 @@ public partial class MainHub
         _hubConnection!.On(nameof(Callback_RemoveCollarRequest), act);
     }
 
-    public void OnMoodleDataUpdated(Action<MoodlesDataUpdate> act)
+    public void OnLociDataUpdated(Action<LociDataUpdate> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_MoodleDataUpdated), act);
+        _hubConnection!.On(nameof(Callback_LociDataUpdated), act);
     }
 
-    public void OnMoodleSMUpdated(Action<MoodlesSMUpdate> act)
+    public void OnLociStatusesUpdate(Action<LociStatusesUpdate> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_MoodleSMUpdated), act);
+        _hubConnection!.On(nameof(Callback_LociStatusesUpdate), act);
     }
 
-    public void OnMoodleStatusesUpdate(Action<MoodlesStatusesUpdate> act)
+    public void OnLociPresetsUpdate(Action<LociPresetsUpdate> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_MoodleStatusesUpdate), act);
+        _hubConnection!.On(nameof(Callback_LociPresetsUpdate), act);
     }
 
-    public void OnMoodlePresetsUpdate(Action<MoodlesPresetsUpdate> act)
+    public void OnLociStatusModified(Action<LociStatusModified> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_MoodlePresetsUpdate), act);
+        _hubConnection!.On(nameof(Callback_LociStatusModified), act);
     }
 
-    public void OnMoodleStatusModified(Action<MoodlesStatusModified> act)
+    public void OnLociPresetModified(Action<LociPresetModified> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_MoodleStatusModified), act);
+        _hubConnection!.On(nameof(Callback_LociPresetModified), act);
     }
 
-    public void OnMoodlePresetModified(Action<MoodlesPresetModified> act)
+    public void OnLociApplyDataById(Action<ApplyLociDataById> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_MoodlePresetModified), act);
+        _hubConnection!.On(nameof(Callback_LociApplyDataById), act);
     }
 
-    public void OnApplyMoodlesByGuid(Action<ApplyMoodleId> act)
+    public void OnLociApplyStatus(Action<ApplyLociStatus> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_ApplyMoodlesByGuid), act);
+        _hubConnection!.On(nameof(Callback_LociApplyStatus), act);
     }
 
-    public void OnApplyMoodlesByStatus(Action<ApplyMoodleStatus> act)
+    public void OnLociRemoveData(Action<RemoveLociData> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_ApplyMoodlesByStatus), act);
+        _hubConnection!.On(nameof(Callback_LociRemoveData), act);
     }
 
-    public void OnRemoveMoodles(Action<RemoveMoodleId> act)
+    public void OnLociClearData(Action<KinksterBase> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_RemoveMoodles), act);
+        _hubConnection!.On(nameof(Callback_LociClearData), act);
     }
 
-    public void OnClearMoodles(Action<KinksterBase> act)
-    {
-        if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_ClearMoodles), act);
-    }
     public void OnBulkChangeGlobal(Action<BulkChangeGlobal> act)
     {
         if (_apiHooksInitialized) return;
