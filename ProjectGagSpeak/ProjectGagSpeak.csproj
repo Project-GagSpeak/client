@@ -37,13 +37,14 @@
     
     <ItemGroup>
         <!--Submodules-->
-        <ProjectReference Include="..\CkCommons\CkCommons.csproj" />
-        <ProjectReference Include="..\GagspeakAPI\ProjectGagspeakAPI.csproj" GlobalPropertiesToRemove="Platform" />
-        <ProjectReference Include="..\OtterGui\OtterGui.csproj" />
-        <ProjectReference Include="..\Penumbra.Api\Penumbra.Api.csproj" />
-        <ProjectReference Include="..\Penumbra.String\Penumbra.String.csproj" />
-        <ProjectReference Include="..\Penumbra.GameData\Penumbra.GameData.csproj" />
-        <ProjectReference Include="..\Glamourer.Api\Glamourer.Api.csproj" />
+        <ProjectReference Include="..\Submodules\CkCommons\CkCommons.csproj" />
+        <ProjectReference Include="..\Submodules\GagspeakAPI\ProjectGagspeakAPI.csproj" GlobalPropertiesToRemove="Platform" />
+        <ProjectReference Include="..\Submodules\OtterGui\OtterGui.csproj" />
+        <ProjectReference Include="..\Submodules\Penumbra.API\Penumbra.Api.csproj" />
+        <ProjectReference Include="..\Submodules\Penumbra.String\Penumbra.String.csproj" />
+        <ProjectReference Include="..\Submodules\Penumbra.GameData\Penumbra.GameData.csproj" />
+        <ProjectReference Include="..\Submodules\GlamourerAPI\Glamourer.Api.csproj" />
+        <ProjectReference Include="..\Submodules\LociAPI\Loci.Api.csproj" />
         
         <!-- Required for Buttplug, but because Dalamud has its own Newtonsoft Assembly, thus, any
         JObject types, despite being the same, are coming from different assemblies, so we must exclude 

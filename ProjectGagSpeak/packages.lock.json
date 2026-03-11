@@ -546,6 +546,9 @@
       "glamourer.api": {
         "type": "Project"
       },
+      "loci.api": {
+        "type": "Project"
+      },
       "ottergui": {
         "type": "Project",
         "dependencies": {

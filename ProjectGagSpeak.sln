@@ -3,23 +3,27 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.10.35004.147
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProjectGagSpeakAPI", "GagspeakAPI\ProjectGagspeakAPI.csproj", "{ADE16015-A637-C298-BE45-140AA59624B5}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CkCommons", "CkCommons\CkCommons.csproj", "{73A10A32-1037-45B2-8BF4-8A962C141E22}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Glamourer.Api", "Glamourer.Api\Glamourer.Api.csproj", "{62A2C866-7F88-4CAD-B765-960655136B6B}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OtterGui", "OtterGui\OtterGui.csproj", "{56D31355-70F4-4418-BF8A-FE6A3EED7D5F}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Penumbra.Api", "Penumbra.Api\Penumbra.Api.csproj", "{FED65111-EAAE-43BB-8145-25CFB347CA77}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Penumbra.GameData", "Penumbra.GameData\Penumbra.GameData.csproj", "{611056A2-CF49-442F-94B2-65A665D0F0B6}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Penumbra.String", "Penumbra.String\Penumbra.String.csproj", "{1849BA3A-036D-483D-A181-C87C3ABEE26C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProjectGagspeakAPI", "Submodules\GagspeakAPI\ProjectGagspeakAPI.csproj", "{ADE16015-A637-C298-BE45-140AA59624B5}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProjectGagSpeak", "ProjectGagSpeak\ProjectGagSpeak.csproj", "{074EF6F6-70FE-4813-9881-5D28FC6F757A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProjectGagSpeak.Tests", "ProjectGagSpeak.Tests\ProjectGagSpeak.Tests.csproj", "{C81B3229-028D-4E2B-BF01-3A38CEA93EDD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CkCommons", "Submodules\CkCommons\CkCommons.csproj", "{73A10A32-1037-45B2-8BF4-8A962C141E22}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Glamourer.Api", "Submodules\GlamourerAPI\Glamourer.Api.csproj", "{62A2C866-7F88-4CAD-B765-960655136B6B}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OtterGui", "Submodules\OtterGui\OtterGui.csproj", "{56D31355-70F4-4418-BF8A-FE6A3EED7D5F}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Penumbra.Api", "Submodules\Penumbra.API\Penumbra.Api.csproj", "{FED65111-EAAE-43BB-8145-25CFB347CA77}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Penumbra.GameData", "Submodules\Penumbra.GameData\Penumbra.GameData.csproj", "{611056A2-CF49-442F-94B2-65A665D0F0B6}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Penumbra.String", "Submodules\Penumbra.String\Penumbra.String.csproj", "{1849BA3A-036D-483D-A181-C87C3ABEE26C}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Submodules", "Submodules", "{B3415621-5EBA-1A55-0B57-0078FEC59DC7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Loci.Api", "Submodules\LociAPI\Loci.Api.csproj", "{5DE4FB80-8E18-4013-BDAB-31237420716E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -139,6 +143,18 @@ Global
 		{C81B3229-028D-4E2B-BF01-3A38CEA93EDD}.Release|x64.Build.0 = Release|Any CPU
 		{C81B3229-028D-4E2B-BF01-3A38CEA93EDD}.Release|x86.ActiveCfg = Release|Any CPU
 		{C81B3229-028D-4E2B-BF01-3A38CEA93EDD}.Release|x86.Build.0 = Release|Any CPU
+		{5DE4FB80-8E18-4013-BDAB-31237420716E}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{5DE4FB80-8E18-4013-BDAB-31237420716E}.Debug|Any CPU.Build.0 = Debug|x64
+		{5DE4FB80-8E18-4013-BDAB-31237420716E}.Debug|x64.ActiveCfg = Debug|x64
+		{5DE4FB80-8E18-4013-BDAB-31237420716E}.Debug|x64.Build.0 = Debug|x64
+		{5DE4FB80-8E18-4013-BDAB-31237420716E}.Debug|x86.ActiveCfg = Debug|x64
+		{5DE4FB80-8E18-4013-BDAB-31237420716E}.Debug|x86.Build.0 = Debug|x64
+		{5DE4FB80-8E18-4013-BDAB-31237420716E}.Release|Any CPU.ActiveCfg = Release|x64
+		{5DE4FB80-8E18-4013-BDAB-31237420716E}.Release|Any CPU.Build.0 = Release|x64
+		{5DE4FB80-8E18-4013-BDAB-31237420716E}.Release|x64.ActiveCfg = Release|x64
+		{5DE4FB80-8E18-4013-BDAB-31237420716E}.Release|x64.Build.0 = Release|x64
+		{5DE4FB80-8E18-4013-BDAB-31237420716E}.Release|x86.ActiveCfg = Release|x64
+		{5DE4FB80-8E18-4013-BDAB-31237420716E}.Release|x86.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
