@@ -340,9 +340,9 @@ public partial class SidePanelPair
         CkGui.FramedIconText(isActive ? data.IconT : data.IconF);
         if (isActive)
         {
-            CkGui.ColorTextFrameAligned(isActive ? stateLocker.AsAnonKinkster() : "UNK KINKSTER", editCol);
-            ImGui.SameLine(0, 0);
             CkGui.TextFrameAlignedInline(data.EnabledPreText);
+            ImGui.SameLine(0, 0);
+            CkGui.ColorTextFrameAlignedInline(isActive ? stateLocker.AsAnonKinkster() : "UNK KINKSTER", editCol);
             ImGui.SameLine(0, 0);
             ImUtf8.TextFrameAligned(".");
         }
