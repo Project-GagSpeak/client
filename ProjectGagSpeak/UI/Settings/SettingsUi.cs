@@ -1,11 +1,16 @@
+using CkCommons;
 using CkCommons.GarblerCore;
 using CkCommons.Gui;
+using CkCommons.Raii;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using FFXIVClientStructs.FFXIV.Client.Game.InstanceContent;
 using GagSpeak.GameInternals.Agents;
 using GagSpeak.Interop;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
@@ -20,11 +25,17 @@ using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Hub;
 using OtterGui;
 using OtterGui.Text;
+using System.Diagnostics.CodeAnalysis;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Gui;
 
+
+
 public class SettingsUi : WindowMediatorSubscriberBase
 {
+    private static bool THEME_PUSHED = false;
+
     private readonly MainHub _hub;
     private readonly MainConfig _mainConfig;
     private readonly ProfilesTab _accountsTab;
@@ -32,10 +43,12 @@ public class SettingsUi : WindowMediatorSubscriberBase
     private readonly PiShockProvider _shockProvider;
     private readonly VfxSpawnManager _vfxSpawner;
     private readonly ClientDataListener _clientDatListener;
+    private readonly PluginGuideProvider _guideProvider;
 
+    private ProjectTabBar _myProjects;
     public SettingsUi(ILogger<SettingsUi> logger, GagspeakMediator mediator, MainHub hub,
         MainConfig config, ProfilesTab accounts, DebugTab debug, PiShockProvider shockProvider,
-        VfxSpawnManager vfxSpawner, ClientDataListener listener) : base(logger, mediator, "GagSpeak Settings")
+        VfxSpawnManager vfxSpawner, ClientDataListener listener, PluginGuideProvider guideProvider) : base(logger, mediator, "GagSpeak Settings")
     {
         _hub = hub;
         _mainConfig = config;
@@ -44,76 +57,76 @@ public class SettingsUi : WindowMediatorSubscriberBase
         _shockProvider = shockProvider;
         _vfxSpawner = vfxSpawner;
         _clientDatListener = listener;
+        _guideProvider = guideProvider;
 
         Flags = WFlags.NoScrollbar;
         this.PinningClickthroughFalse();
         this.SetBoundaries(new Vector2(625, 400), ImGui.GetIO().DisplaySize);
 
-        TitleBarButtons = new TitleBarButtonBuilder() 
-            .Add(FAI.Tshirt, "Open Active State Debugg er", () => Mediator.Publish(new UiToggleMessage(typeof(DebugActiveStateUI))))
+        TitleBarButtons = new TitleBarButtonBuilder()
+            .Add(FAI.Tshirt, "Open Active State Debugger", () => Mediator.Publish(new UiToggleMessage(typeof(DebugActiveStateUI))))
             .Add(FAI.PersonRays, "Open Personal Data Debugger", () => Mediator.Publish(new UiToggleMessage(typeof(DebugPersonalDataUI))))
             .Add(FAI.Database, "Open Storages Debugger", () => Mediator.Publish(new UiToggleMessage(typeof(DebugStorageUI))))
             .Add(FAI.Bell, "Actions Notifier", () => Mediator.Publish(new UiToggleMessage(typeof(InteractionEventsUI))))
             .Build();
+
+        _myProjects = new ProjectTabBar(_guideProvider);
+
+        Mediator.Subscribe<OpenSettingsPluginInfoMessage>(this, _ =>
+        {
+            IsOpen = true;
+            _expandedInfo = _.Plugin;
+        });
+
     }
 
-    private bool ThemePushed = false;
+    private OptionalPlugin _expandedInfo = OptionalPlugin.None;
 
     protected override void PreDrawInternal()
     {
-        if (!ThemePushed)
+        if (!THEME_PUSHED)
         {
             ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .803f));
             ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.579f, 0.170f, 0.359f, 0.828f));
-            ThemePushed = true;
+            THEME_PUSHED = true;
         }
     }
 
     protected override void PostDrawInternal()
     {
-        if (ThemePushed)
+        if (THEME_PUSHED)
         {
             ImGui.PopStyleColor(2);
-            ThemePushed = false;
+            THEME_PUSHED = false;
         }
     }
-
 
     protected override void DrawInternal()
     {
         var minPos = ImGui.GetCursorPos();
-        var buttonPos = minPos + new Vector2(ImGui.GetContentRegionAvail().X - 150f, 0);
+        var rWidth = ImGui.CalcTextSize("Configs").X + ImUtf8.FrameHeight + ImUtf8.ItemSpacing.X * 4;
+        var leftLength = ImGui.GetContentRegionAvail().X - rWidth;
+        var buttonPos = minPos + new Vector2(leftLength, 0);
         using (ImRaii.Group())
         {
             ImGui.Text(GSLoc.Settings.OptionalPlugins);
-
             ImGui.SameLine();
-            CkGui.ColorTextBool("Penumbra", IpcCallerPenumbra.APIAvailable);
-            CkGui.AttachToolTip(IpcCallerPenumbra.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
-
+            DrawOptionalPluginButton("Sundouleia", IpcCallerSundouleia.APIAvailable, OptionalPlugin.Sundouleia, true); 
             ImGui.SameLine();
-            CkGui.ColorTextBool("Glamourer", IpcCallerGlamourer.APIAvailable);
-            CkGui.AttachToolTip(IpcCallerGlamourer.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
-
+            DrawOptionalPluginButton("Penumbra", IpcCallerPenumbra.APIAvailable, OptionalPlugin.Penumbra, true);
             ImGui.SameLine();
-            CkGui.ColorTextBool("Sundouleia", IpcCallerSundouleia.APIAvailable);
-            CkGui.AttachToolTip(IpcCallerSundouleia.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
-
+            DrawOptionalPluginButton("Glamourer", IpcCallerGlamourer.APIAvailable, OptionalPlugin.Glamourer, true);
             ImGui.SameLine();
-            CkGui.ColorTextBool("C+", IpcCallerCustomize.APIAvailable);
-            CkGui.AttachToolTip(IpcCallerCustomize.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
-
+            DrawOptionalPluginButton("CPlus", IpcCallerCustomize.APIAvailable, OptionalPlugin.CustomizePlus, false);
             ImGui.SameLine();
-            CkGui.ColorTextBool("Moodles", IpcCallerLoci.APIAvailable);
-            CkGui.AttachToolTip(IpcCallerLoci.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
-
+            DrawOptionalPluginButton("Loci", IpcCallerLoci.APIAvailable, OptionalPlugin.Loci, true);
             ImGui.SameLine();
-            CkGui.ColorTextBool("Lifestream", IpcCallerLifestream.APIAvailable);
-            CkGui.AttachToolTip(IpcCallerLifestream.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
-
+            DrawOptionalPluginButton("Lifestream", IpcCallerLifestream.APIAvailable, OptionalPlugin.Lifestream, false);
             ImGui.SameLine();
-            CkGui.ColorTextBool("Intiface", IpcCallerIntiface.APIAvailable);
-            CkGui.AttachToolTip(IpcCallerIntiface.APIAvailable ? GSLoc.Settings.PluginValid : GSLoc.Settings.PluginInvalid);
+            DrawOptionalPluginButton("Intiface", IpcCallerIntiface.APIAvailable, OptionalPlugin.Intiface, false);
+
+            // Below it, draw out the plugin details if we should.
+            _guideProvider.DrawOptionalPluginDetails(_expandedInfo, leftLength);
 
             ImGui.Text(GSLoc.Settings.AccountClaimText);
             ImGui.SameLine();
@@ -150,24 +163,63 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 ImGui.EndTabItem();
             }
 
+            if (ImGui.BeginTabItem("Cordy's Projects"))
+            {
+                DrawProjectPromo();
+                ImGui.EndTabItem();
+            }
+
             ImGui.EndTabBar();
         }
 
         ImGui.SetCursorPos(buttonPos);
         using (ImRaii.Group())
         {
+            var noStyler = true;
 #if DEBUG
-            if (CkGui.FancyButton(FAI.Palette, "Style Editor", 150f, false))
+            noStyler = false;
+#endif
+            if (CkGui.FancyButton(FAI.Palette, "Styler", rWidth, noStyler))
                 Mediator.Publish(new UiToggleMessage(typeof(StyleEditorUI)));
             CkGui.AttachToolTip("Edit GagSpeak Style, Create Themes, and Import them for editor styles!");
-#endif
-            if (CkGui.FancyButton(FAI.Folder, "Plugin Config", 150f, false))
+
+            if (CkGui.FancyButton(FAI.Folder, "Configs", rWidth, false))
             {
                 try { Process.Start(new ProcessStartInfo { FileName = ConfigFileProvider.GagSpeakDirectory, UseShellExecute = true }); }
                 catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the config directory. {e.Message}"); }
             }
             CkGui.AttachToolTip("Opens the Config Folder.--NL--(Useful for debugging)");
         }
+    }
+
+    private void DrawOptionalPluginButton(string name, bool apiAvailable, OptionalPlugin plugin, bool recommended, string tooltip = "Click to see more info!")
+    {
+        var showWarn = !apiAvailable && recommended;
+        using (ImRaii.Group())
+        {
+            CkGui.ColorTextBool(name, apiAvailable);
+            // Show yellow caution if unavailable
+            if (showWarn)
+            {
+                ImGui.SameLine(0, 1);
+                CkGui.ColorText("⚠", ImGuiColors.DalamudYellow);
+            }
+        }
+
+        var ttText = showWarn ? $"{tooltip}--SEP----COL--Recommended plugin {plugin} is not installed or up to date!--COL--" : tooltip;
+        CkGui.AttachToolTip(ttText, ImGuiColors.DalamudYellow);
+
+        // If this is our currently expanded plugin, draw a rect ring around it in yellow.
+        if (_expandedInfo == plugin)
+        {
+            var min = ImGui.GetItemRectMin() - ImUtf8.FramePadding;
+            var max = ImGui.GetItemRectMax() + ImUtf8.FramePadding;
+            ImGui.GetWindowDrawList().AddRect(min, max, CkCol.Favorite.Uint(), 5f, DFlags.RoundCornersTop, 2);
+        }
+
+        // Otherwise, if clicked, toggle the info.
+        if (ImGui.IsItemClicked())
+            _expandedInfo = (_expandedInfo == plugin) ? OptionalPlugin.None : plugin;
     }
 
     private void AssignGlobalPermChangeTask(string globalKey, object newValue)
@@ -197,7 +249,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
         DrawSpatialAudioSettings(globals);
     }
 
-    private void DrawGagSettings(IReadOnlyGlobalPerms globals)
+    // Do this better at some point!
+    private void DrawGagSettings(GlobalPerms globals)
     {
         var liveChatGarblerActive = globals.ChatGarblerActive;
         var gaggedNamePlates = globals.GaggedNameplate;
@@ -228,7 +281,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         CkGui.HelpText(GSLoc.Settings.MainOptions.GagPadlockTimerTT);
     }
 
-    private void DrawWardrobeSettings(IReadOnlyGlobalPerms globals)
+    private void DrawWardrobeSettings(GlobalPerms globals)
     {
         var wardrobeEnabled = globals.WardrobeEnabled;
         var restrictionVisuals = globals.RestrictionVisuals;
@@ -290,7 +343,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         }
     }
 
-    private void DrawPuppeteerSettings(IReadOnlyGlobalPerms globals)
+    private void DrawPuppeteerSettings(GlobalPerms globals)
     {
         ImGui.Separator();
         CkGui.FontText(GSLoc.Settings.MainOptions.HeaderPuppet, Fonts.UidFont);
@@ -336,7 +389,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         }
     }
 
-    private void DrawToyboxSettings(IReadOnlyGlobalPerms globals)
+    private void DrawToyboxSettings(GlobalPerms globals)
     {
         ImGui.Separator();
         CkGui.FontText(GSLoc.Settings.MainOptions.HeaderToybox, Fonts.UidFont);
@@ -386,7 +439,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
     }
 
-    private void DrawPiShockSettings(IReadOnlyGlobalPerms globals)
+    private void DrawPiShockSettings(GlobalPerms globals)
     {
         var apiKey = _mainConfig.Current.PiShockApiKey;
         var username = _mainConfig.Current.PiShockUsername;
@@ -431,7 +484,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
                     var shareCodePerms = await _shockProvider.GetPermissionsFromCode(globals.GlobalShockShareCode);
                     var newPerms = ClientData.GlobalsWithNewShockPermissions(shareCodePerms);
-                    var res = await _hub.UserBulkChangeGlobal(new(MainHub.OwnUserData, newPerms, ClientData.HardcoreClone() ?? new HardcoreStatus()));
+                    var res = await _hub.UserBulkChangeGlobal(new(MainHub.OwnUserData, newPerms, ClientData.HardcoreClone() ?? new HardcoreState()));
                     // be sure to invoke the changes manually when performed by self.
                     if (res.ErrorCode is GagSpeakApiEc.Success)
                         _clientDatListener.ChangeAllGlobalPerms(newPerms);
@@ -466,7 +519,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         }
     }
 
-    private void DrawSpatialAudioSettings(IReadOnlyGlobalPerms globals)
+    private void DrawSpatialAudioSettings(GlobalPerms globals)
     {
         ImGui.Separator();
         CkGui.FontText(GSLoc.Settings.MainOptions.HeaderAudio, Fonts.UidFont);
@@ -794,5 +847,77 @@ public class SettingsUi : WindowMediatorSubscriberBase
                               + Environment.NewLine + "'Chat' will print Error notifications in chat"
                               + Environment.NewLine + "'Toast' will show Error toast notifications in the bottom right corner"
                               + Environment.NewLine + "'Both' will show chat as well as the toast notification");
+    }
+
+
+    private void DrawProjectPromo()
+    {        
+        _myProjects.Draw(ImGui.GetContentRegionAvail().X, Fonts.GagspeakTitleFont);
+
+        using var scroll = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 8f);
+        using var contents = ImRaii.Child("cordy-promo", ImGui.GetContentRegionAvail());
+        // Draw based on the contents.
+        if (_myProjects.TabSelection is OptionalPlugin.Sundouleia)
+            DrawSundouleiaInfo(ImGui.GetContentRegionAvail());
+        else
+            DrawLociInfo(ImGui.GetContentRegionAvail());
+    }
+
+    private void DrawSundouleiaInfo(Vector2 region)
+    {
+        ImGui.Spacing();
+        _guideProvider.DrawCenterButtonRow(OptionalPlugin.Sundouleia);
+        ImGui.Spacing();
+
+        CkGui.TextUnderlined("What is it?", ImGuiColors.ParsedGold);
+        using (ImRaii.PushIndent(ImUtf8.ItemSpacing.X))
+        {
+            CkGui.TextWrapped("A plugin based off GagSpeaks framework, inspired by Mare, and repurposed for DataSync.");
+        }
+
+        CkGui.TextUnderlined("Why was it made?", ImGuiColors.ParsedGold);
+        using (ImRaii.PushIndent(ImUtf8.ItemSpacing.X))
+        {
+            CkGui.TextWrapped("Created with the goal of providing a reliable alternative with a heavy " +
+                "focus security, safety, community health, and the long-term impact of its features.");
+            
+            CkGui.TextWrapped("It addresses limitations in Mares’ structure, improves data transfer, " +
+                "responsiveness, update delays, and repetitive redraws.");
+        }
+
+        CkGui.TextUnderlined("Whats different about it?", ImGuiColors.ParsedGold);
+        CkGui.BulletText("Uses GagSpeak's request system with bulk operations.");
+        CkGui.BulletText("Updates process as fast as ~250ms for near-instant responce time on GS interactions.");
+        CkGui.BulletText("Reduces actor redraws to minimize flashing.");
+        CkGui.BulletText("Radar feature for secure, anonymous pairing with nearby users.");
+        CkGui.BulletText("Groups aren’t 'owned', only controlled by Client or Location. (No Syncshell Cap)");
+        CkGui.BulletText("Groups and GroupFolders are fully customizable.");
+    }
+
+    private void DrawLociInfo(Vector2 region)
+    {
+        ImGui.Spacing();
+        _guideProvider.DrawCenterButtonRow(OptionalPlugin.Loci);
+        ImGui.Spacing();
+
+        CkGui.TextUnderlined("What is it?", ImGuiColors.ParsedGold);
+        using (ImRaii.PushIndent(ImUtf8.ItemSpacing.X))
+        {
+            CkGui.TextWrapped("A modern take on custom status control. Create custom statuses, combine them " +
+                "into presets, and automate application through modular LociEvents!.");
+        }
+        CkGui.TextUnderlined("Why was it made?", ImGuiColors.ParsedGold);
+        using (ImRaii.PushIndent(ImUtf8.ItemSpacing.X))
+        {
+            CkGui.TextWrapped("GS's Sharehub created an inner community with many creative ideas for status control and immersion.");
+            CkGui.TextWrapped("Many required major changes, so I designed a modular, inclusive, and expandable system with Loci!");
+        }
+
+        CkGui.TextUnderlined("What can it do?", ImGuiColors.ParsedGold);
+        CkGui.BulletText("Create custom statuses Icons you can apply to yourself or others.");
+        CkGui.BulletText("Add modifiers that impact how statuses update, and triggers that allow them to chain.");
+        CkGui.BulletText("Apply custom statuses to players and companions alike!");
+        CkGui.BulletText("Create presets for multiple statuses that can apply in any order you want.");
+        CkGui.BulletText("Use LociEvents to automate statuses & presets by jobs, gearsets, location, content type, emotes, and more.");
     }
 }
