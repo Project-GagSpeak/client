@@ -7,7 +7,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
-using GagspeakAPI.Data;
+using GagSpeak.State.Models;
 
 namespace GagSpeak.DrawSystem;
 

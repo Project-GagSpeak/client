@@ -6,11 +6,13 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
+using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
@@ -265,7 +267,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         ImGui.TableNextRow();
     }
 
-    private void DrawGlobalPermissions(string uid, IReadOnlyGlobalPerms perms)
+    private void DrawGlobalPermissions(string uid, GlobalPerms perms)
     {
         using var nodeMain = ImRaii.TreeNode(uid + " Global Perms");
         if (!nodeMain) return;
@@ -317,7 +319,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         }
     }
 
-    private void DrawHardcoreStatus(string uid, HardcoreStatus perms)
+    private void DrawHardcoreStatus(string uid, HardcoreState perms)
     {
         using var nodeMain = ImRaii.TreeNode(uid + " Hardcore State");
         if (!nodeMain) return;
@@ -483,7 +485,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         DrawKinksterPermRowBool("Allow All Requests", k.OwnPermAccess.PuppetPermsAllowed.HasAny(PuppetPerms.All), k.PairPermAccess.PuppetPermsAllowed.HasAny(PuppetPerms.All));
         ImGui.TableNextRow();
 
-        // Moodles
+        // Loci
         DrawKinksterPermRowBool("Loci", k.OwnPermAccess.LociEnabledAllowed, k.PairPermAccess.LociEnabledAllowed);
         DrawKinksterPermRowBool("Allow Positive Statuses", k.OwnPermAccess.LociAccessAllowed.HasAny(LociAccess.Positive), k.PairPermAccess.LociAccessAllowed.HasAny(LociAccess.Positive));
         DrawKinksterPermRowBool("Allow Negative Statuses", k.OwnPermAccess.LociAccessAllowed.HasAny(LociAccess.Negative), k.PairPermAccess.LociAccessAllowed.HasAny(LociAccess.Negative));
@@ -516,10 +518,10 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         CkGui.ColorTextCentered($"Stored Statuses: {kinkster.LociData.StatusList.Count()}", ImGuiColors.ParsedGold);
         LociDrawer.DrawTuplesFramed($"StatusList-{dispName}", kinkster.LociData.StatusList, ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), LociIcon.SizeFramed, 2);
 
-        DrawMoodlePresetTable(dispName, kinkster.LociData);
+        DrawLociPresetTable(dispName, kinkster.LociData);
     }
 
-    private void DrawMoodlePresetTable(string uid, CachedLociData data)
+    private void DrawLociPresetTable(string uid, LociContainer data)
     {
         using var nodeMain = ImRaii.TreeNode($"{uid}'s Stored Preset Data");
         if (!nodeMain) return;
@@ -691,14 +693,14 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
             ImGuiUtil.DrawTableColumn(collar.Dye2.ToString());
             ImGui.TableNextRow();
 
-            ImGuiUtil.DrawTableColumn("Moodle");
+            ImGuiUtil.DrawTableColumn("LociStatus");
             ImGui.TableNextColumn();
             if (collar.StatusInfo.GUID == Guid.Empty)
                 ImGui.TextUnformatted("None");
             else
             {
                 LociIcon.Draw(collar.StatusInfo.IconID, collar.StatusInfo.Stacks, LociIcon.SizeFramed);
-                LociEx.AttachTooltip(collar.StatusInfo, LociCache.Data);
+                LociHelpers.AttachTooltip(collar.StatusInfo, LociCache.Data);
             }
             ImGui.TableNextRow();
 
@@ -712,7 +714,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
             ImGui.TableSetupColumn("Permission-Relation");
             ImGui.TableSetupColumn("Visuals");
             ImGui.TableSetupColumn("Dye Control");
-            ImGui.TableSetupColumn("Moodle Control");
+            ImGui.TableSetupColumn("LociData Control");
             ImGui.TableSetupColumn("Collar Writing");
             ImGui.TableSetupColumn("Glamour/Mod Control");
             ImGui.TableHeadersRow();
@@ -723,7 +725,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
             ImGui.TableNextColumn();
             CkGui.BoolIcon(collar.CollaredAccess.HasAny(CollarAccess.Dyes), false);
             ImGui.TableNextColumn();
-            CkGui.BoolIcon(collar.CollaredAccess.HasAny(CollarAccess.StatusInfo), false);
+            CkGui.BoolIcon(collar.CollaredAccess.HasAny(CollarAccess.LociData), false);
             ImGui.TableNextColumn();
             CkGui.BoolIcon(collar.CollaredAccess.HasAny(CollarAccess.Writing), false);
             ImGui.TableNextColumn();
@@ -736,7 +738,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
             ImGui.TableNextColumn();
             CkGui.BoolIcon(collar.OwnerAccess.HasAny(CollarAccess.Dyes), false);
             ImGui.TableNextColumn();
-            CkGui.BoolIcon(collar.OwnerAccess.HasAny(CollarAccess.StatusInfo), false);
+            CkGui.BoolIcon(collar.OwnerAccess.HasAny(CollarAccess.LociData), false);
             ImGui.TableNextColumn();
             CkGui.BoolIcon(collar.OwnerAccess.HasAny(CollarAccess.Writing), false);
             ImGui.TableNextColumn();
@@ -933,14 +935,13 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
             ImGuiUtil.DrawTableColumn("UpperBound");
             ImGuiUtil.DrawTableColumn(restrain.UpperBound.ToString());
         }
-        else if (action is LociDataAction moodle)
+        else if (action is LociDataAction lociData)
         {
             ImGuiUtil.DrawTableColumn("Type:");
-            ImGuiUtil.DrawTableColumn("MoodleAction");
+            ImGuiUtil.DrawTableColumn("LociDataAction");
             ImGui.TableNextRow();
-            ImGuiUtil.DrawTableColumn("MoodleItem");
-            ImGuiUtil.DrawTableColumn(moodle.LociItem.Id.ToString());
-            // MoodleItem
+            ImGuiUtil.DrawTableColumn("LociDataItem");
+            ImGuiUtil.DrawTableColumn(lociData.LociItem.Id.ToString());
         }
         else if (action is PiShockAction shock)
         {

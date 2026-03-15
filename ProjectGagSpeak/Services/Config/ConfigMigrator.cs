@@ -146,8 +146,8 @@ public static class ConfigMigrator
             };
             // Build the "Mod" object (with default values)
             newGagData["Mod"] = new JObject();
-            // Build the Moodle object with default values. Assume MoodleStatus.
-            newGagData["Moodle"] = new JObject()
+            // Build the LociData object with default values. Assume Loci Status.
+            newGagData["LociData"] = new JObject()
             {
                 ["Type"] = "Status",
                 ["Id"] = "00000000-0000-0000-0000-000000000000"
@@ -230,17 +230,17 @@ public static class ConfigMigrator
             {
                 glasses = 0;
             }
-            // Note: While individual moodles can be saved, presets cannot because it now requires storing the associated moodles.
-            var moodles = new JArray();
-            foreach (JValue moodle in restraint["AssociatedMoodles"]!)
+            // Note: While individual lociData can be saved, presets cannot because it now requires storing the associated statuses.
+            var lociDataArr = new JArray();
+            foreach (JValue lociData in restraint["AssociatedMoodles"]!)
             {
 
-                var newmoodle = new JObject()
+                var newLociData = new JObject()
                 {
                     ["Type"] = "Status",
-                    ["Id"] = moodle
+                    ["Id"] = lociData
                 };
-                moodles.Add(newmoodle);
+                lociDataArr.Add(newLociData);
             }
             var newrestraint = new JObject
             {
@@ -263,7 +263,7 @@ public static class ConfigMigrator
                     ["Weapon"] = "null"
                 },
                 ["BaseMods"] = new JArray(),
-                ["BaseMoodles"] = moodles,
+                ["BaseLociData"] = lociDataArr,
                 ["BaseTraits"] = "None",
                 ["BaseArousal"] = "None",
             }

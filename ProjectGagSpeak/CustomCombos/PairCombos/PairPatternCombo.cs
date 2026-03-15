@@ -8,7 +8,6 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
-using GagspeakAPI.Network;
 using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 

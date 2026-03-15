@@ -38,21 +38,21 @@ public sealed class ClientData : IDisposable
     }
 
     private static GlobalPerms? _clientGlobals;
-    private static HardcoreStatus? _clientHardcore;
+    private static HardcoreState? _clientHardcore;
     private HashSet<CollarRequest> _collarRequests = new();
 
     /// <summary>
-    ///     When true, <see cref="GlobalPerms"/> or <see cref="HardcoreStatus"/> are not initialized.
+    ///     When true, <see cref="GlobalPerms"/> or <see cref="HardcoreState"/> are not initialized.
     /// </summary>
     public static bool IsNull { get; private set; } = false;
     internal static GlobalPerms? Globals => _clientGlobals;
-    internal static IReadOnlyHardcoreState? Hardcore => _clientHardcore;
+    internal static HardcoreState? Hardcore => _clientHardcore;
     public static Vector3 GetImprisonmentPos()
         => _clientHardcore?.ImprisonedPos ?? Vector3.Zero;
 
     public static GlobalPerms? GlobalPermClone()
         => _clientGlobals != null ? _clientGlobals with { } : null;
-    public static HardcoreStatus? HardcoreClone()
+    public static HardcoreState? HardcoreClone()
         => _clientHardcore != null ? _clientHardcore with { } : null;
 
     public static GlobalPerms GlobalsWithNewShockPermissions(PiShockPermissions newPerms)
@@ -86,7 +86,7 @@ public sealed class ClientData : IDisposable
             MaxDuration = -1
         };
 
-    public void SetGlobals(GlobalPerms? globals, HardcoreStatus? hardcore)
+    public void SetGlobals(GlobalPerms? globals, HardcoreState? hardcore)
     {
         _clientGlobals = globals;
         _clientHardcore = hardcore;
@@ -111,7 +111,7 @@ public sealed class ClientData : IDisposable
     ///     This method cannot, and should be enabled by the client, and must only be enacted by a kinkster pair.
     ///     <b> THIS WILL NOT HANDLE ANY PLAYER CONTROL LOGIC AND MUST BE HANDLED SEPERATELY. </b>
     /// </summary>
-    public void SetHardcoreStatus(UserData enactor, HcAttribute attribute, HardcoreStatus newData, Kinkster pair)
+    public void SetHardcoreStatus(UserData enactor, HcAttribute attribute, HardcoreState newData, Kinkster pair)
     {
         if (_clientHardcore is not { } hcState)
             throw new InvalidOperationException("Hardcore State is not initialized. Cannot change Hardcore State.");

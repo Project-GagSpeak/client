@@ -89,7 +89,7 @@ public class CollarRequestsIncomingTab : IFancyTab
             ImUtf8.SameLineInner();
             AccessPerm(FAI.FillDrip, request.OwnerAccess.HasAny(CollarAccess.Dyes), "Owners can dye your collar", "Owners cannot dye your collar.");
             ImUtf8.SameLineInner();
-            AccessPerm(FAI.TheaterMasks, request.OwnerAccess.HasAny(CollarAccess.StatusInfo), "Owners can change the collar LociData", "Owners cannot change the collar LociData.");
+            AccessPerm(FAI.TheaterMasks, request.OwnerAccess.HasAny(CollarAccess.LociData), "Owners can change the collar LociData", "Owners cannot change the collar LociData.");
             ImUtf8.SameLineInner();
             AccessPerm(FAI.PenFancy, request.OwnerAccess.HasAny(CollarAccess.Writing), "Owners can change the collar writing", "Owners cannot change the collar writing.");
 
@@ -100,7 +100,7 @@ public class CollarRequestsIncomingTab : IFancyTab
             ImUtf8.SameLineInner();
             AccessPerm(FAI.FillDrip, request.TargetAccess.HasAny(CollarAccess.Dyes), "You can dye your collar", "You cannot dye your collar.");
             ImUtf8.SameLineInner();
-            AccessPerm(FAI.TheaterMasks, request.TargetAccess.HasAny(CollarAccess.StatusInfo), "You can change your collar LociData", "You cannot change your collar LociData.");
+            AccessPerm(FAI.TheaterMasks, request.TargetAccess.HasAny(CollarAccess.LociData), "You can change your collar LociData", "You cannot change your collar LociData.");
             ImUtf8.SameLineInner();
             AccessPerm(FAI.PenFancy, request.TargetAccess.HasAny(CollarAccess.Writing), "You can change your collar writing", "You cannot change your collar writing.");
         }

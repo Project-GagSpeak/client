@@ -9,7 +9,6 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
-using GagspeakAPI.Data;
 using OtterGui.Text;
 
 namespace GagSpeak.FileSystems;

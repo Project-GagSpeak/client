@@ -207,40 +207,40 @@ public static class RestraintExtentions
     }
     #endregion Mods
 
-    #region Moodles
-    public static IEnumerable<LociItem> GetBaseMoodles(this RestraintSet set)
-    => IterateBaseMoodles(set, new());
+    #region LociData
+    public static IEnumerable<LociItem> GetBaseLociData(this RestraintSet set)
+        => IterateBaseLociData(set, new());
 
-    public static IEnumerable<LociItem> GetLayerMoodles(this RestraintSet set)
-        => IterateLayerMoodles(set.Layers, new());
+    public static IEnumerable<LociItem> GetLayerLociData(this RestraintSet set)
+        => IterateLayerLociData(set.Layers, new());
 
-    public static IEnumerable<LociItem> GetActiveLayerMoodles(this RestraintSet set, RestraintLayer active)
-        => IterateLayerMoodles(set.Layers, new(), active);
+    public static IEnumerable<LociItem> GetActiveLayerLociData(this RestraintSet set, RestraintLayer active)
+        => IterateLayerLociData(set.Layers, new(), active);
 
-    public static IEnumerable<LociItem> GetAllMoodles(this RestraintSet set)
-        => GetAllMoodles(set, RestraintLayer.All);
+    public static IEnumerable<LociItem> GetAllLociData(this RestraintSet set)
+        => GetAllLociData(set, RestraintLayer.All);
 
-    public static IEnumerable<LociItem> GetAllMoodles(this RestraintSet set, RestraintLayer active)
+    public static IEnumerable<LociItem> GetAllLociData(this RestraintSet set, RestraintLayer active)
     {
         var seen = new HashSet<LociItem>();
         var result = new List<LociItem>();
-        result.AddRange(IterateLayerMoodles(set.Layers, seen, active));
-        result.AddRange(IterateBaseMoodles(set, seen));
+        result.AddRange(IterateLayerLociData(set.Layers, seen, active));
+        result.AddRange(IterateBaseLociData(set, seen));
         return result;
     }
 
-    public static LociItem? GetMoodleAtLayer(this RestraintSet set, int layerIndex)
+    public static LociItem? GetLociDataAtLayer(this RestraintSet set, int layerIndex)
     {
         if (layerIndex < 0 || layerIndex >= set.Layers.Count)
             return null;
 
         return set.Layers[layerIndex] is RestrictionLayer l && l.ApplyFlags.HasAny(RestraintFlags.Loci) && l.IsValid()
-            ? l.Ref.Moodle : null;
+            ? l.Ref.LociData : null;
     }
 
-    /// <summary> Core internal Iterator that collects the Moodles from the base slots. </summary>
-    /// <returns> An enumerable of applied Moodles, and seen Moodles updated. </returns>
-    private static IEnumerable<LociItem> IterateBaseMoodles(RestraintSet set, HashSet<LociItem> seen)
+    /// <summary> Core internal Iterator that collects the LociItems from the base slots. </summary>
+    /// <returns> An enumerable of applied LociItems, and seen LociItems updated. </returns>
+    private static IEnumerable<LociItem> IterateBaseLociData(RestraintSet set, HashSet<LociItem> seen)
     {
         var applied = new List<LociItem>();
         foreach (var slot in set.RestraintSlots.Values.OfType<RestraintSlotAdvanced>())
@@ -248,20 +248,20 @@ public static class RestraintExtentions
             if (!slot.IsValid())
                 continue;
 
-            if (slot.ApplyFlags.HasAny(RestraintFlags.Loci) && seen.Add(slot.Ref.Moodle))
-                applied.Add(slot.Ref.Moodle);
+            if (slot.ApplyFlags.HasAny(RestraintFlags.Loci) && seen.Add(slot.Ref.LociData))
+                applied.Add(slot.Ref.LociData);
         }
-        // The base Moodles appended, if we have not yet already added them.
-        foreach (var moodle in set.RestraintMoodles)
-            if (seen.Add(moodle))
-                applied.Add(moodle);
+        // The base LociData appended, if we have not yet already added them.
+        foreach (var lociItem in set.RestraintLociData)
+            if (seen.Add(lociItem))
+                applied.Add(lociItem);
 
         return applied;
     }
 
     /// <summary> Iterate through all layers of a restraint set. </summary>
-    /// <returns> All Moodles from the layers, and seen Moodles updated. </returns>
-    private static IEnumerable<LociItem> IterateLayerMoodles(List<IRestraintLayer> layers, HashSet<LociItem> seen, RestraintLayer active = RestraintLayer.All)
+    /// <returns> All LociItems from the passed in layers, and seen LociItems updated. </returns>
+    private static IEnumerable<LociItem> IterateLayerLociData(List<IRestraintLayer> layers, HashSet<LociItem> seen, RestraintLayer active = RestraintLayer.All)
     {
         var applied = new List<LociItem>();
         foreach (var i in active.GetLayerIndices().OrderByDescending(i => i))
@@ -273,14 +273,15 @@ public static class RestraintExtentions
             if (layers[i] is not RestrictionLayer l 
                 || !l.ApplyFlags.HasAny(RestraintFlags.Loci) 
                 || !l.IsValid() 
-                || !seen.Add(l.Ref.Moodle))
+                || !seen.Add(l.Ref.LociData))
                 continue;
 
-            applied.Add(l.Ref.Moodle);
+            applied.Add(l.Ref.LociData);
         }
         return applied;
     }
-    #endregion Moodles
+    #endregion LociData
+
     #region Traits
     public static Traits GetBaseTraits(this RestraintSet set)
     => CollectBaseTraits(set);

@@ -3,7 +3,6 @@ using Dalamud.Bindings.ImGui;
 using GagSpeak.Services.Mediator;
 using OtterGui.Raii;
 using Penumbra.Api.Enums;
-using Penumbra.GameData.Data;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 

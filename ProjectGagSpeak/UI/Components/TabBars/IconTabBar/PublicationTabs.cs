@@ -12,23 +12,23 @@ public class PublicationTabs : IconTabBar<PublicationTabs.SelectedTab>
     public enum SelectedTab
     {
         Patterns,
-        Moodles,
+        Loci,
     }
 
     public PublicationTabs()
     {
         AddDrawButton(FontAwesomeIcon.WaveSquare, SelectedTab.Patterns, "Pattern Publisher");
-        AddDrawButton(FontAwesomeIcon.TheaterMasks, SelectedTab.Moodles, "Moodle Publisher");
+        AddDrawButton(FontAwesomeIcon.TheaterMasks, SelectedTab.Loci, "Loci Publisher");
     }
 
-    public override void Draw(float availableWidth)
+    public override void Draw(float width)
     {
         if (_tabButtons.Count == 0)
             return;
 
         using var color = ImRaii.PushColor(ImGuiCol.Button, ImGui.ColorConvertFloat4ToU32(new(0, 0, 0, 0)));
         var spacing = ImGui.GetStyle().ItemSpacing;
-        var buttonX = (availableWidth - (spacing.X * (_tabButtons.Count - 1))) / _tabButtons.Count;
+        var buttonX = (width - (spacing.X * (_tabButtons.Count - 1))) / _tabButtons.Count;
         var buttonY = CkGui.IconButtonSize(FontAwesomeIcon.Pause).Y;
         var buttonSize = new Vector2(buttonX, buttonY);
         var drawList = ImGui.GetWindowDrawList();

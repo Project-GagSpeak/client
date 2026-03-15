@@ -1,6 +1,7 @@
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.Services.Textures;
 using GagspeakAPI.Data;
 using OtterGui;
@@ -8,7 +9,7 @@ using OtterGui;
 namespace GagSpeak.State.Caches;
 
 /// <summary>
-///     Stores the expected moodles applied while restricted.
+///     Stores the expected lociData applied while restricted.
 /// </summary>
 public class LociCache
 {
@@ -18,7 +19,7 @@ public class LociCache
         _logger = logger;
     }
 
-    private static CachedLociData _cache = new CachedLociData();
+    private static LociContainer _cache = new LociContainer();
 
     private SortedList<(CombinedCacheKey, Guid), LociItem> _lociData = new();
     private HashSet<LociItem> _finalItems = new();
@@ -27,7 +28,7 @@ public class LociCache
     /// <summary>
     ///     The cached IPC Data reflecting their Loci Information.
     /// </summary>
-    public static CachedLociData Data => _cache;
+    public static LociContainer Data => _cache;
 
     /// <summary>
     ///     The combined LociData collection from the full Cache.
@@ -40,12 +41,12 @@ public class LociCache
     public IReadOnlySet<Guid> FinalStatusIds => _finalStatusIds;
 
 
-    /// <summary> Applies a <paramref name="moodle"/> with <paramref name="key"/> to the Locis Cache. </summary>
+    /// <summary> Applies a <paramref name="lociItem"/> with <paramref name="key"/> to the Locis Cache. </summary>
 
     public bool AddLoci(CombinedCacheKey key, LociItem lociItem)
         => AddLoci(key, [lociItem]);
 
-    /// <summary> Applies many <paramref name="moodles"/> with <paramref name="key"/> to the Locis Cache. </summary>
+    /// <summary> Applies many <paramref name="lociItems"/> with <paramref name="key"/> to the Locis Cache. </summary>
     public bool AddLoci(CombinedCacheKey key, IEnumerable<LociItem> lociItems)
     {
         if (_lociData.Keys.Any(keys => keys.Item1.Equals(key)))
@@ -73,7 +74,7 @@ public class LociCache
         }
         // Remove the old entry
         _lociData.Remove(originalKey);
-        // Add the new entry with the same CombinedCacheKey and new moodle's Id
+        // Add the new entry with the same CombinedCacheKey and new lociItem's Id
         _lociData.Add((originalKey.Item1, newItem.Id), newItem);
 
         _logger.LogDebug($"Updated LociData with Key [{key}] to new Id [{newItem.Id}]", LoggerType.VisualCache);
@@ -121,10 +122,10 @@ public class LociCache
         _finalItems.Clear();
         _finalStatusIds.Clear();
 
-        // Automatically recalculates the statusIds list based on the moodle type for the moodles added.
-        foreach (var moodle in _lociData.Values)
+        // Automatically recalculates the statusIds list based on the lociItem type for the lociItems added.
+        foreach (var lociItem in _lociData.Values)
         {
-            if (moodle is LociPreset p)
+            if (lociItem is LociPreset p)
             {
                 // Continue if all of the ID's are in the seenStatuses.
                 if (p.StatusIds.All(_finalStatusIds.Contains))
@@ -137,9 +138,9 @@ public class LociCache
             else
             {
                 // If we can add the status it means it doesn't exist yet.
-                if (_finalStatusIds.Add(moodle.Id))
+                if (_finalStatusIds.Add(lociItem.Id))
                 {
-                    _finalItems.Add(moodle);
+                    _finalItems.Add(lociItem);
                     anyChanges = true;
                 }
             }

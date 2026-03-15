@@ -19,13 +19,13 @@ using OtterGui.Text;
 using System.Globalization;
 
 namespace GagSpeak.Gui.MainWindow;
-public class PatternHubTab : DisposableMediatorSubscriberBase
+public class PatternSharehubTab : DisposableMediatorSubscriberBase
 {
     private readonly PatternManager _patterns;
     private readonly ShareHubService _shareHub;
     private readonly TutorialService _guides;
     private HubTagsCombo _hubTags;
-    public PatternHubTab(ILogger<PatternHubTab> logger, GagspeakMediator mediator,
+    public PatternSharehubTab(ILogger<PatternSharehubTab> logger, GagspeakMediator mediator,
         PatternManager patterns, ShareHubService shareHub, TutorialService guides) 
         : base(logger, mediator)
     {
@@ -36,7 +36,7 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
         _hubTags = new HubTagsCombo(logger, () => [ .._shareHub.FetchedTags.OrderBy(x => x) ]);
     }
 
-    public void DrawPatternHub()
+    public void DrawSharehub()
     {
         if (!_shareHub.InitialPatternsCall && !UiService.DisableUI)
             UiService.SetUITask(_shareHub.SearchPatterns());
@@ -235,14 +235,14 @@ public class PatternHubTab : DisposableMediatorSubscriberBase
         ImUtf8.SameLineInner();
         var pressed = CkGui.IconButton(FAI.Tags);
         var popupDrawPos = ImGui.GetItemRectMin() + new Vector2(ImGui.GetItemRectSize().X, 0);
-        CkGui.AttachToolTip("Select from an existing list of tags." +
-            "--SEP--This will help make your Pattern easier to find.");
+        CkGui.AttachToolTip("Select from an existing list of tags.--NL----COL--(Helps make patterns easier to find)", ImGuiColors.DalamudGrey2);
+
 
         if (pressed)
-            ImGui.OpenPopup("##PatternHubTags");
+            ImGui.OpenPopup("##pattern-sharehub-tags");
 
         // open the popup if we should.
-        if (_hubTags.DrawPopup("##MoodleHubTags", 200f, popupDrawPos))
+        if (_hubTags.DrawPopup("##pattern-sharehub-tags", 200f, popupDrawPos))
         {
             if (_hubTags.Current is not { } selected)
                 return;

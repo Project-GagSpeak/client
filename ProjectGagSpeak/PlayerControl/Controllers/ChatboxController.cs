@@ -1,6 +1,5 @@
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
-using Dalamud.Plugin.Services;
 using GagSpeak.GameInternals.Addons;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;

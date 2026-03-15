@@ -18,6 +18,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
+using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
@@ -351,7 +352,7 @@ public class AliasesTab : IFancyTab
                 case GagAction ga: _aliasDrawer.DrawGagRowEditor(ga); break;
                 case RestrictionAction rsa: _aliasDrawer.DrawRestrictionRowEditor(rsa); break;
                 case RestraintAction rta: _aliasDrawer.DrawRestraintRowEditor(rta); break;
-                case LociDataAction ma: _aliasDrawer.DrawMoodleRowEditor(ma, LociCache.Data); break;
+                case LociDataAction ma: _aliasDrawer.DrawLociRowEditor(ma, LociCache.Data); break;
                 case PiShockAction ps: _aliasDrawer.DrawShockRowEditor(ps); break;
                 case SexToyAction sta: _aliasDrawer.DrawToyRowEditor(sta); break;
             }

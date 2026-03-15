@@ -1,7 +1,6 @@
 using CkCommons;
 using Dalamud.Interface.ImGuiNotification;
 using GagSpeak.PlayerClient;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
 using GagspeakAPI.Hub;

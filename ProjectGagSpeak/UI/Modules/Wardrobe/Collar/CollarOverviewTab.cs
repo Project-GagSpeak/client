@@ -8,8 +8,8 @@ using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using FFXIVClientStructs.FFXIV.Client.Game;
 using GagSpeak.Gui.Components;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
@@ -262,7 +262,7 @@ public class CollarOverviewTab : IFancyTab
             var refVar5 = false;
             ImGui.Checkbox("Toggle Visibility", ref refVar2);
             ImGui.Checkbox("Glamour Dyes", ref refVar3);
-            ImGui.Checkbox("Moodle", ref refVar4);
+            ImGui.Checkbox("LociData", ref refVar4);
             ImGui.Checkbox("Collar Writing", ref refVar5);
             ImGui.Checkbox("Glam/Mod Editing", ref refVar1);
         }
@@ -275,7 +275,7 @@ public class CollarOverviewTab : IFancyTab
             var refVar5 = false;
             ImGui.Checkbox("Toggle Visibility", ref refVar2);
             ImGui.Checkbox("Glamour Dyes", ref refVar3);
-            ImGui.Checkbox("Moodle", ref refVar4);
+            ImGui.Checkbox("LociData", ref refVar4);
             ImGui.Checkbox("Collar Writing", ref refVar5);
         }
     }
@@ -306,7 +306,7 @@ public class CollarOverviewTab : IFancyTab
         DrawCollarVisuals(ownPerms);
         DrawCollarWriting(ownPerms);
         DrawDyes(ownPerms);
-        DrawMoodle(ownPerms);
+        DrawLociStatus(ownPerms);
 
         ImGui.Spacing();
         foreach (var owner in curState.OwnerUIDs)
@@ -369,7 +369,7 @@ public class CollarOverviewTab : IFancyTab
         }
     }
 
-    private void DrawMoodle(CollarAccess ownPerms)
+    private void DrawLociStatus(CollarAccess ownPerms)
     {
         ImGui.Spacing();
         CkGui.FramedIconText(FAI.TheaterMasks);
@@ -377,13 +377,13 @@ public class CollarOverviewTab : IFancyTab
         var status = _manager.SyncedData!.StatusInfo;
         if (status.GUID == Guid.Empty)
         {
-            CkGui.ColorText("<No Moodle Set!>", ImGuiColors.DalamudRed);
+            CkGui.ColorText("<No Status Set!>", ImGuiColors.DalamudRed);
             return;
         }
 
         CkRichText.Text(ImGui.GetContentRegionAvail().X - LociIcon.SizeFramed.X, status.Title);
         ImGui.SameLine();
         LociIcon.Draw(status.IconID, status.Stacks, LociIcon.SizeFramed);
-        LociEx.AttachTooltip(status, LociCache.Data);
+        LociHelpers.AttachTooltip(status, LociCache.Data);
     }
 }

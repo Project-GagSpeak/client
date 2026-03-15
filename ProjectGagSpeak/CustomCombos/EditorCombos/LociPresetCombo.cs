@@ -1,21 +1,21 @@
 using CkCommons.Helpers;
 using CkCommons.RichText;
 using CkCommons.Textures;
-using GagSpeak.Gui.Components;
 using GagSpeak.Services;
 using GagSpeak.State.Caches;
 using Dalamud.Bindings.ImGui;
 using OtterGui.Extensions;
 using OtterGui.Text;
+using GagSpeak.Interop.Helpers;
 
 namespace GagSpeak.CustomCombos.Editor;
 
-public sealed class MoodlePresetCombo : CkMoodleComboBase<LociPresetInfo>
+public sealed class LociPresetCombo : CkLociComboBase<LociPresetInfo>
 {
     private int _maxPresetCount => LociCache.Data.Presets.Values.Max(x => x.Statuses.Count);
     private Guid _currentItem;
     private float IconWithPadding => IconSize.X + ImGui.GetStyle().ItemInnerSpacing.X;
-    public MoodlePresetCombo(ILogger log, float iconScale)
+    public LociPresetCombo(ILogger log, float iconScale)
         : base(log, iconScale, () => [ .. LociCache.Data.Presets.Values.OrderBy(x => x.Title)])
     {
         SearchByParts = false;
@@ -46,25 +46,25 @@ public sealed class MoodlePresetCombo : CkMoodleComboBase<LociPresetInfo>
         _currentItem = current;
         // Maybe there is a faster way to know this, but atm I do not know.
         var currentTitle = Items.FirstOrDefault(i => i.GUID == _currentItem).Title?.StripColorTags() ?? string.Empty;
-        var preview = currentTitle.IsNullOrWhitespace() ? "Select Moodle Preset..." : currentTitle;
+        var preview = currentTitle.IsNullOrWhitespace() ? "Select Loci Preset..." : currentTitle;
         return Draw($"##preset{label}", preview, string.Empty, width, LociIcon.Size.Y, flags);
     }
 
     protected override bool DrawSelectable(int globalIdx, bool selected)
     {
-        var moodlePreset = Items[globalIdx];
+        var lociPreset = Items[globalIdx];
         var size = new Vector2(GetFilterWidth(), IconSize.Y);
-        var iconsSpace = (IconWithPadding * moodlePreset.Statuses.Count);
+        var iconsSpace = (IconWithPadding * lociPreset.Statuses.Count);
         var titleSpace = size.X - iconsSpace;
-        var ret = ImGui.Selectable($"##{moodlePreset.Title}", selected, ImGuiSelectableFlags.None, size);
+        var ret = ImGui.Selectable($"##{lociPreset.Title}", selected, ImGuiSelectableFlags.None, size);
 
-        if (moodlePreset.Statuses.Count <= 0)
+        if (lociPreset.Statuses.Count <= 0)
             return ret;
 
         ImGui.SameLine(titleSpace);
-        for (int i = 0, iconsDrawn = 0; i < moodlePreset.Statuses.Count; i++)
+        for (int i = 0, iconsDrawn = 0; i < lociPreset.Statuses.Count; i++)
         {
-            var status = moodlePreset.Statuses[i];
+            var status = lociPreset.Statuses[i];
             if (!LociCache.Data.Statuses.TryGetValue(status, out var info))
             {
                 ImGui.SameLine(0, IconWithPadding);
@@ -72,9 +72,9 @@ public sealed class MoodlePresetCombo : CkMoodleComboBase<LociPresetInfo>
             }
 
             LociIcon.Draw(info.IconID, info.Stacks, IconSize);
-            LociEx.AttachTooltip(info, LociCache.Data);
+            LociHelpers.AttachTooltip(info, LociCache.Data);
 
-            if (++iconsDrawn < moodlePreset.Statuses.Count)
+            if (++iconsDrawn < lociPreset.Statuses.Count)
                 ImUtf8.SameLineInner();
         }
 
@@ -82,7 +82,7 @@ public sealed class MoodlePresetCombo : CkMoodleComboBase<LociPresetInfo>
         var pos = ImGui.GetCursorPosY();
         ImGui.SetCursorPosY(pos + (size.Y - SelectableTextHeight) * 0.5f);
         using (Fonts.Default150Percent.Push())
-            CkRichText.Text(titleSpace, moodlePreset.Title);
+            CkRichText.Text(titleSpace, lociPreset.Title);
         return ret;
     }
 }

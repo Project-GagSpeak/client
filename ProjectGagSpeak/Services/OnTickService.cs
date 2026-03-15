@@ -8,9 +8,6 @@ using GagSpeak.Utils;
 using Lumina.Excel;
 using Lumina.Excel.Sheets;
 using Microsoft.Extensions.Hosting;
-using Penumbra.GameData.Structs;
-using TerraFX.Interop.Windows;
-using static FFXIVClientStructs.FFXIV.Client.UI.Misc.DataCenterHelper;
 using LuminaWorld = Lumina.Excel.Sheets.World;
 
 namespace GagSpeak.Services;

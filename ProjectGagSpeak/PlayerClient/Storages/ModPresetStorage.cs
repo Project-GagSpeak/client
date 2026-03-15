@@ -1,6 +1,5 @@
 using GagSpeak.Interop;
 using GagSpeak.State.Managers;
-using GagspeakAPI.Data;
 using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.PlayerClient;

@@ -6,13 +6,13 @@ using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos;
 
-public abstract class MoodleComboBase<T> : CkFilterComboCache<T>
+public abstract class LociComboBase<T> : CkFilterComboCache<T>
 {
     protected readonly MainHub _mainHub;
     protected readonly Kinkster _kinksterRef;
     protected float IconScale;
 
-    protected MoodleComboBase(ILogger log, MainHub hub, Kinkster pair, float scale, Func<IReadOnlyList<T>> generator)
+    protected LociComboBase(ILogger log, MainHub hub, Kinkster pair, float scale, Func<IReadOnlyList<T>> generator)
         : base(generator, log)
     {
         _mainHub = hub;

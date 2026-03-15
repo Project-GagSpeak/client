@@ -1,5 +1,5 @@
 using GagSpeak.State.Managers;
-using GagspeakAPI.Data;
+using GagSpeak.State.Models;
 
 namespace GagSpeak.Services.Tutorial;
 

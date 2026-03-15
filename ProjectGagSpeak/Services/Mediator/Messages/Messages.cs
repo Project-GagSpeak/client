@@ -1,6 +1,4 @@
 using Dalamud.Interface.ImGuiNotification;
-using GagSpeak.GameInternals;
-using GagSpeak.Kinksters;
 using GagSpeak.Services.Events;
 using GagspeakAPI.Data;
 using GagspeakAPI.Network;

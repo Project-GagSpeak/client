@@ -2,33 +2,23 @@ using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Gui.Utility;
 using CkCommons.Helpers;
-using CkCommons.Raii;
 using CkCommons.Textures;
-using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CustomCombos.Editor;
-using GagSpeak.Kinksters;
-using GagSpeak.Localization;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.PlayerClient;
-using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
 using GagSpeak.Utils;
-using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
-using NAudio.CoreAudioApi;
-using OtterGui;
 using OtterGui.Text;
-using TerraFX.Interop.DirectX;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Gui.Components;
 
@@ -45,8 +35,8 @@ public sealed class ReactionsDrawer
     private RestrictionCombo _restrictionCombo;
     private RestraintCombo _restraintCombo;
     private PatternCombo _patternCombo;
-    private MoodleStatusCombo _statusCombo;
-    private MoodlePresetCombo _presetCombo;
+    private LociStatusCombo _statusCombo;
+    private LociPresetCombo _presetCombo;
     // toy combo ext.
 
     private IEnumerable<NewState> _statesNoUnlock => [NewState.Enabled, NewState.Locked, NewState.Disabled];
@@ -77,8 +67,8 @@ public sealed class ReactionsDrawer
         _patternCombo = new PatternCombo(logger, mediator, favorites, () => [
             ..patterns.Storage.OrderByDescending(p => FavoritesConfig.Patterns.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
-        _statusCombo = new MoodleStatusCombo(logger, 1.15f);
-        _presetCombo = new MoodlePresetCombo(logger, 1.15f);
+        _statusCombo = new LociStatusCombo(logger, 1.15f);
+        _presetCombo = new LociPresetCombo(logger, 1.15f);
     }
 
     private string GetStateName(NewState state) => state switch
@@ -733,7 +723,7 @@ public sealed class ReactionsDrawer
     public void DrawLociRow(LociDataAction act)
     {
         CkGui.FramedIconText(FAI.TheaterMasks);
-        CkGui.AttachToolTip("Invokes an interaction with Moodles");
+        CkGui.AttachToolTip("Invokes an interaction with Loci");
 
         if (act.LociItem is LociPreset p && LociCache.Data.Presets.TryGetValue(p.Id, out var preset))
         {
@@ -822,22 +812,22 @@ public sealed class ReactionsDrawer
         }
     }
 
-    public void DrawMoodleRowEditor(LociDataAction act, CachedLociData ipc)
+    public void DrawLociRowEditor(LociDataAction act, LociContainer ipc)
     {
         CkGui.FramedIconText(FAI.TheaterMasks);
-        CkGui.AttachToolTip("Invokes an interaction with Moodles");
+        CkGui.AttachToolTip("Invokes an interaction with Loci");
 
         CkGui.TextFrameAlignedInline("Apply");
 
         ImUtf8.SameLineInner();
         var curType = act.LociItem is LociPreset p ? LociType.Preset : LociType.Status;
-        if (CkGuiUtils.EnumCombo("##M_Type", 40f, curType, out var newVal))
+        if (CkGuiUtils.EnumCombo("##L_Type", 40f, curType, out var newVal))
             act.LociItem = newVal is LociType.Preset ? new LociPreset() : new LociItem();
 
         if (act.LociItem is LociPreset preset)
         {
             ImUtf8.SameLineInner();
-            if (_presetCombo.Draw("##M_Preset", preset.Id, 100f, CFlags.NoArrowButton))
+            if (_presetCombo.Draw("##L_Preset", preset.Id, 100f, CFlags.NoArrowButton))
                 preset.UpdatePreset(_presetCombo.Current.GUID, _presetCombo.Current.Statuses);
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 act.LociItem = new LociPreset();

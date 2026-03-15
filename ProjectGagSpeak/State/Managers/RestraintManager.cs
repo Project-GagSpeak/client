@@ -309,7 +309,7 @@ public sealed class RestraintManager : IHybridSavable
     #endregion Active Set Updates
 
     #region HybridSaver
-    public int ConfigVersion => 0;
+    public int ConfigVersion => 1;
     public HybridSaveType SaveType => HybridSaveType.Json;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
@@ -382,11 +382,17 @@ public sealed class RestraintManager : IHybridSavable
         // Perform Migrations if any, and then load the data.
 
         var version = jObject["Version"]?.Value<int>() ?? 0;
+
         switch (version)
         {
             case 0:
+                MigrateRestraintSetsV0toV1(jObject);
+                goto case 1;
+
+            case 1:
                 LoadV0(jObject["RestraintSets"]);
                 break;
+
             default:
                 _logger.LogError("Invalid Version!");
                 return;
@@ -420,10 +426,26 @@ public sealed class RestraintManager : IHybridSavable
 
     }
 
-    private void MigrateV0toV1(JObject oldConfigJson)
+    private void MigrateRestraintSetsV0toV1(JObject root)
     {
-        // update only the version value to 1, then return it.
-        oldConfigJson["Version"] = 1;
+        if (root["RestraintSets"] is not JArray sets)
+            return;
+
+        foreach (var setToken in sets)
+        {
+            if (setToken is not JObject setObj)
+                continue;
+
+            // Rename BaseMoodles -> BaseLociData
+            if (!setObj.ContainsKey("BaseLociData") &&
+                setObj.TryGetValue("BaseMoodles", out var baseMoodles))
+            {
+                setObj["BaseLociData"] = baseMoodles;
+                setObj.Remove("BaseMoodles");
+            }
+        }
+
+        root["Version"] = 1;
     }
     #endregion HybridSaver
 }

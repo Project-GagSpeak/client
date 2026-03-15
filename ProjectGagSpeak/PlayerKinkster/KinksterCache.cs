@@ -23,7 +23,7 @@ public class RestrictionBase
         GlamItem = ItemSvc.Resolve(Slot, new(item.Slot.CItemId));
         GlamDyes = new(item.Slot.Dye1, item.Slot.Dye2);
         ModName = item.ModName;
-        LociItem = item.LociItem;
+        LociItem = item.LociData;
         Traits = item.Traits;
         Arousal = item.Arousal;
     }

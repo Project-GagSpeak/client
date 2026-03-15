@@ -1,5 +1,4 @@
 using CkCommons.Gui;
-using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using GagSpeak.PlayerClient;
@@ -87,7 +86,7 @@ public sealed class RestrictionGagCombo : CkFilterComboCache<GarblerRestriction>
     {
         return item.IsEnabled 
             && (item.Glamour.GameItem.ItemId != ItemSvc.NothingItem(item.Glamour.Slot).ItemId
-                || item.Moodle.Id != Guid.Empty || !string.IsNullOrEmpty(item.Mod.Label));
+                || item.LociData.Id != Guid.Empty || !string.IsNullOrEmpty(item.Mod.Label));
     }
 }
 

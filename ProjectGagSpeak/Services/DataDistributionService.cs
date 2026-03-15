@@ -1,5 +1,6 @@
 using CkCommons;
 using GagSpeak.FileSystems;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
@@ -142,7 +143,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Method used for updating all provided visible kinkster's with our moodles and appearance data. <para />
+    ///     Method used for updating all provided visible kinkster's with our loci data. <para />
     ///     Called whenever a new visible pair enters our render range.
     /// </summary>
     private async Task UpdateVisibleFull(List<UserData> visibleCharas)
@@ -154,7 +155,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
             return;
         }
 
-        Logger.LogDebug($"Pushing Appearance and Moodles data to ({string.Join(", ", visibleCharas.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
+        Logger.LogDebug($"Pushing Appearance and Loci data to ({string.Join(", ", visibleCharas.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
         await UserPushLociData(visibleCharas);
     }
 
@@ -174,7 +175,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         Logger.LogDebug($"Pushing LociData to ({string.Join(", ", visibleCharas.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
         try
         {
-            await _hub.UserPushLociData(new(visibleCharas, LociCache.Data));
+            await _hub.UserPushLociData(new(visibleCharas, LociCache.Data.ToDto()));
         }
         catch (HubException ex)
         {
@@ -186,10 +187,11 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
         }
     }
 
-    public async Task ApplyTuplesToKinkster(UserData target, IEnumerable<LociStatusInfo> statuses, bool lockIds)
+    public async Task ApplyTuplesToKinkster(UserData target, IEnumerable<LociStatusInfo> data, bool lockIds)
     {
         Logger.LogDebug($"Pushing ApplyLociStatusTuples to: {target.AliasOrUID}", LoggerType.ApiCore);
-        if (await _hub.UserApplyLociStatusTuples(new(target, statuses, lockIds)).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
+        var apiData = data.Select(s => s.ToStruct()).ToList();
+        if (await _hub.UserApplyLociStatusTuples(new(target, apiData, lockIds)).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push ApplyLociStatusTuples to server. [{res.ErrorCode}]");
         else
             Logger.LogDebug($"Successfully pushed ApplyLociStatusTuples to the server", LoggerType.ApiCore);
@@ -296,7 +298,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
                 Collar = _collar.SyncedData ?? throw new Exception("ActiveCollarData was null!"),
                 ActiveCursedItems = _cursedManager.Storage.AppliedLootIds.ToList(),
                 // Send it all here, and filter it on the other end. It doesnt matter if its exposed because client wont listen to unallowed anyways.
-                AliasData = _puppetManager.Storage,
+                AliasData = _puppetManager.GetStorageDto(),
                 ListeningTo = _puppetManager.Puppeteers.Keys.ToList(),
                 ValidToys = _toyManager.ValidToysForRemotes,
                 ActivePattern = _patternManager.ActivePatternId,
@@ -589,7 +591,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
     {
         var online = _kinksters.GetOnlineUserDatas();
         Logger.LogDebug($"Pushing AliasTriggerChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
-        var dto = new PushClientDataChangeAlias(online, item.Identifier, kind is StorageChangeType.Deleted ? null : item);
+        var dto = new PushClientDataChangeAlias(online, item.Identifier, kind is StorageChangeType.Deleted ? null : item.ToDto());
         if (await _hub.UserPushNewAliasData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push AliasTriggerChange to paired Kinksters. [{res}]");
         else

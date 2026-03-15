@@ -23,8 +23,6 @@ using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 using System.Globalization;
 using GagSpeak.Gui.MainWindow;
-using OtterGui;
-using Dalamud.Interface.Utility;
 
 namespace GagSpeak.Utils;
 

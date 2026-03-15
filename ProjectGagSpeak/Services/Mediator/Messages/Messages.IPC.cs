@@ -10,9 +10,6 @@ public record PenumbraDirectoryChanged(string? NewDirectory) : MessageBase;
 public record PenumbraSettingsChanged : MessageBase;
 public record PenumbraDisposed : MessageBase;
 
-public record SundouleiaReady : MessageBase;
-public record SundouleiaDisposed : MessageBase;
-
 public record MoodlesReady : MessageBase;
 public record MoodlesDisposed : MessageBase;
 

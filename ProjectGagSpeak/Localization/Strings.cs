@@ -164,18 +164,18 @@ namespace GagSpeak.Localization
         public readonly string Step22Desc = Loc.Localize("HelpMainUi_Step22Desc", "Results let you preview devices & motors used, duration, and authors.");
         public readonly string Step22DescExtended = Loc.Localize("HelpMainUi_Step22DescExtended", " ");
 
-        public readonly string Step23Title = Loc.Localize("HelpMainUi_Step23Title", "Moodle Hub");
-        public readonly string Step23Desc = Loc.Localize("HelpMainUi_Step23Desc", "Browse and explore Moodles uploaded by others.");
+        public readonly string Step23Title = Loc.Localize("HelpMainUi_Step23Title", "Loci Sharehub");
+        public readonly string Step23Desc = Loc.Localize("HelpMainUi_Step23Desc", "Browse and explore LociData uploaded by others.");
         public readonly string Step23DescExtended = Loc.Localize("HelpMainUi_Step23DescExtended", " ");
 
-        public readonly string Step24Title = Loc.Localize("HelpMainUi_Step24Title", "Moodle Search");
+        public readonly string Step24Title = Loc.Localize("HelpMainUi_Step24Title", "Loci Search");
         public readonly string Step24Desc = Loc.Localize("HelpMainUi_Step24Desc", "Use tags and filters to narrow your search results.");
         public readonly string Step24DescExtended = Loc.Localize("HelpMainUi_Step24DescExtended", "Up to a maximum of 75 results are polled, so if " +
             "you can't find the result you are looking for, narrow it with filters!");
 
-        public readonly string Step25Title = Loc.Localize("HelpMainUi_Step25Title", "Moodle Results");
-        public readonly string Step25Desc = Loc.Localize("HelpMainUi_Step25Desc", "You can preview a Moodle by hovering over it's icon.");
-        public readonly string Step25DescExtended = Loc.Localize("HelpMainUi_Step25DescExtended", "You can also try on, like, or grab a copy of the Moodle for yourself.");
+        public readonly string Step25Title = Loc.Localize("HelpMainUi_Step25Title", "Search Results");
+        public readonly string Step25Desc = Loc.Localize("HelpMainUi_Step25Desc", "You can preview a Loci Status by hovering over it's icon.");
+        public readonly string Step25DescExtended = Loc.Localize("HelpMainUi_Step25DescExtended", "You can also try on, like, or grab a copy of the Status for yourself.");
 
         public readonly string Step26Title = Loc.Localize("HelpMainUi_Step26Title", "Global Chat");
         public readonly string Step26Desc = Loc.Localize("HelpMainUi_Step26Desc", "Chat Anonymously with other Kinksters from anywhere in the world with Global Chat!");
@@ -252,7 +252,7 @@ namespace GagSpeak.Localization
 
         public readonly string Step5Title = Loc.Localize("HelpRestraints_Step5Title", "The Selected Restraint");
         public readonly string Step5Desc = Loc.Localize("HelpRestraints_Step5Desc", "You can see the details of any selected restraint.");
-        public readonly string Step5DescExtended = Loc.Localize("HelpRestraints_Step5DescExtended", "The different properties of your restraint will show up here, as well as any attached hardcore traits and moodles. You can mouse over lit up icons to see each property.");
+        public readonly string Step5DescExtended = Loc.Localize("HelpRestraints_Step5DescExtended", "The different properties of your restraint will show up here, as well as any attached hardcore traits and locis. You can mouse over lit up icons to see each property.");
 
         public readonly string Step6Title = Loc.Localize("HelpRestraints_Step6Title", "Editing a Restraint");
         public readonly string Step6Desc = Loc.Localize("HelpRestraints_Step6Desc", "Edit a restraint set by double-clicking it's name here");
@@ -303,24 +303,24 @@ namespace GagSpeak.Localization
         public readonly string Step17Desc = Loc.Localize("HelpRestraints_Step17Desc", "A layer can either be a restriction, or a mod preset.");
         public readonly string Step17DescExtended = Loc.Localize("HelpRestraints_Step17DescExtended", " ");
 
-        public readonly string Step18Title = Loc.Localize("HelpRestraints_Step18Title", "Mod Presets and Moodles");
-        public readonly string Step18Desc = Loc.Localize("HelpRestraints_Step18Desc", "Set up which mods to load, and moodles to apply for the base set.");
+        public readonly string Step18Title = Loc.Localize("HelpRestraints_Step18Title", "Mod Presets and Loci Data");
+        public readonly string Step18Desc = Loc.Localize("HelpRestraints_Step18Desc", "Set up which mods to load, and what loci items to apply for the base set.");
         public readonly string Step18DescExtended = Loc.Localize("HelpRestraints_Step18DescExtended", " ");
 
         public readonly string Step19Title = Loc.Localize("HelpRestraints_Step19Title", "Adding a Mod Preset");
         public readonly string Step19Desc = Loc.Localize("HelpRestraints_Step19Desc", "Use the dropdowns to pick which mod and preset to load.");
         public readonly string Step19DescExtended = Loc.Localize("HelpRestraints_Step19DescExtended", " ");
 
-        public readonly string Step20Title = Loc.Localize("HelpRestraints_Step20Title", "Adding a Moodle");
-        public readonly string Step20Desc = Loc.Localize("HelpRestraints_Step20Desc", "You can add a moodle by clicking this button.");
+        public readonly string Step20Title = Loc.Localize("HelpRestraints_Step20Title", "Adding a Loci Item");
+        public readonly string Step20Desc = Loc.Localize("HelpRestraints_Step20Desc", "You can add a loci status by clicking this button.");
         public readonly string Step20DescExtended = Loc.Localize("HelpRestraints_Step20DescExtended", " ");
 
-        public readonly string Step21Title = Loc.Localize("HelpRestraints_Step21Title", "Moodle Presets");
-        public readonly string Step21Desc = Loc.Localize("HelpRestraints_Step21Desc", "Switch between individual moodles or moodle presets with this button.");
+        public readonly string Step21Title = Loc.Localize("HelpRestraints_Step21Title", "Loci Presets");
+        public readonly string Step21Desc = Loc.Localize("HelpRestraints_Step21Desc", "Switch between loci statuses and presets with this button.");
         public readonly string Step21DescExtended = Loc.Localize("HelpRestraints_Step21DescExtended", "Hold shift when clicking to switch.");
 
-        public readonly string Step22Title = Loc.Localize("HelpRestraints_Step22Title", "Moodle Preview");
-        public readonly string Step22Desc = Loc.Localize("HelpRestraints_Step22Desc", "Hover over any of the moodles here to see what they will look like.");
+        public readonly string Step22Title = Loc.Localize("HelpRestraints_Step22Title", "LociData Preview");
+        public readonly string Step22Desc = Loc.Localize("HelpRestraints_Step22Desc", "Hover over any status icons to see what they will look like.");
         public readonly string Step22DescExtended = Loc.Localize("HelpRestraints_Step22DescExtended", " ");
 
         public readonly string Step23Title = Loc.Localize("HelpRestraints_Step23Title", "Cancelling Changes");
@@ -478,16 +478,16 @@ namespace GagSpeak.Localization
         public readonly string Step23Desc = Loc.Localize("HelpRestrictions_Step23Desc", "You can decide how arousing being in this restriction is.");
         public readonly string Step23DescExtended = Loc.Localize("HelpRestrictions_Step23DescExtended", "Arousal builds up slowly over time, and can do things like change your chat messages, blur your screen, increase global cooldowns, and more.");
 
-        public readonly string Step24Title = Loc.Localize("HelpRestrictions_Step24Title", "Moodles");
-        public readonly string Step24Desc = Loc.Localize("HelpRestrictions_Step24Desc", "Manage any moodles for this restriction here.");
-        public readonly string Step24DescExtended = Loc.Localize("HelpRestrictions_Step24DescExtended", "Moodles are custom buffs and debuffs!");
+        public readonly string Step24Title = Loc.Localize("HelpRestrictions_Step24Title", "LociData");
+        public readonly string Step24Desc = Loc.Localize("HelpRestrictions_Step24Desc", "Manage loci data for this restriction here.");
+        public readonly string Step24DescExtended = Loc.Localize("HelpRestrictions_Step24DescExtended", "Loci items apply custom buffs and debuffs!");
 
-        public readonly string Step25Title = Loc.Localize("HelpRestrictions_Step25Title", "Using Moodle Presets");
-        public readonly string Step25Desc = Loc.Localize("HelpRestrictions_Step25Desc", "Switch between individual moodles or moodle presets with this button.");
+        public readonly string Step25Title = Loc.Localize("HelpRestrictions_Step25Title", "Using Loci Presets");
+        public readonly string Step25Desc = Loc.Localize("HelpRestrictions_Step25Desc", "Switch between loci statuses and presets with this button.");
         public readonly string Step25DescExtended = Loc.Localize("HelpRestrictions_Step25DescExtended", "Hold shift and click to switch.");
 
-        public readonly string Step26Title = Loc.Localize("HelpRestrictions_Step26Title", "Moodle Preview");
-        public readonly string Step26Desc = Loc.Localize("HelpRestrictions_Step26Desc", "Hover over any of the moodles here to see what they will look like.");
+        public readonly string Step26Title = Loc.Localize("HelpRestrictions_Step26Title", "Loci Icon Preview");
+        public readonly string Step26Desc = Loc.Localize("HelpRestrictions_Step26Desc", "Hover over the Status icons to preview their info.");
         public readonly string Step26DescExtended = Loc.Localize("HelpRestrictions_Step26DescExtended", " ");
 
         public readonly string Step27Title = Loc.Localize("HelpRestrictions_Step27Title", "Attached Mods");
@@ -596,16 +596,16 @@ namespace GagSpeak.Localization
         public readonly string Step11Desc = Loc.Localize("HelpGags_Step11Desc", "You can set a Customize+ Preset to apply with this gag.");
         public readonly string Step11DescExtended = Loc.Localize("HelpGags_Step11DescExtended", " ");
 
-        public readonly string Step12Title = Loc.Localize("HelpGags_Step12Title", "Moodles");
-        public readonly string Step12Desc = Loc.Localize("HelpGags_Step12Desc", "Manage any moodles for this gag here.");
-        public readonly string Step12DescExtended = Loc.Localize("HelpGags_Step12DescExtended", "Moodles are custom buffs and debuffs!");
+        public readonly string Step12Title = Loc.Localize("HelpGags_Step12Title", "Loci Data");
+        public readonly string Step12Desc = Loc.Localize("HelpGags_Step12Desc", "Manage loci data for this gag here.");
+        public readonly string Step12DescExtended = Loc.Localize("HelpGags_Step12DescExtended", "Loci Icons are custom buffs and debuffs!");
 
-        public readonly string Step13Title = Loc.Localize("HelpGags_Step13Title", "Using Moodles Presets");
-        public readonly string Step13Desc = Loc.Localize("HelpGags_Step13Desc", "Switch between individual moodles or moodle presets with this button.");
+        public readonly string Step13Title = Loc.Localize("HelpGags_Step13Title", "Using Loci Presets");
+        public readonly string Step13Desc = Loc.Localize("HelpGags_Step13Desc", "Switch between loci statuses and presets with this button.");
         public readonly string Step13DescExtended = Loc.Localize("HelpGags_Step13DescExtended", "Hold shift and click to switch.");
 
-        public readonly string Step14Title = Loc.Localize("HelpGags_Step14Title", "Moodle Preview");
-        public readonly string Step14Desc = Loc.Localize("HelpGags_Step14Desc", "Hover over any of the moodles here to see what they will look like.");
+        public readonly string Step14Title = Loc.Localize("HelpGags_Step14Title", "Loci Status Preview");
+        public readonly string Step14Desc = Loc.Localize("HelpGags_Step14Desc", "Hover over the status icons to preview info about them.");
         public readonly string Step14DescExtended = Loc.Localize("HelpGags_Step14DescExtended", " ");
 
         public readonly string Step15Title = Loc.Localize("HelpGags_Step15Title", "Attached Mod");
@@ -703,7 +703,8 @@ namespace GagSpeak.Localization
 
         public readonly string Step2Title = Loc.Localize("HelpPuppeter_Step2Title", "Aliases");
         public readonly string Step2Desc = Loc.Localize("HelpPuppeter_Step2Desc", "The Aliases tab is where you can configure special responses to a specific trigger.");
-        public readonly string Step2DescExtended = Loc.Localize("HelpPuppeter_Step2DescExtended", "An Alias is like a special command where you can set what activates it and what it does when it is activated. They can do many things, from running commands, to playing patterns on connected toys, to putting on restraints, to applying moodles, and more!");
+        public readonly string Step2DescExtended = Loc.Localize("HelpPuppeter_Step2DescExtended", "An Alias is like a special command where you can set what activates it and what it does when it is activated. They can do many things, " +
+            "from running commands, to playing patterns on connected toys, to putting on restraints, to applying loci data, and more!");
 
         public readonly string Step3Title = Loc.Localize("HelpPuppeter_Step3Title", "Alias List");
         public readonly string Step3Desc = Loc.Localize("HelpPuppeter_Step3Desc", "Here's the list of all your configured aliases");
@@ -1082,7 +1083,7 @@ namespace GagSpeak.Localization
         public readonly string TabsGlobal = Loc.Localize("Settings_TabsGlobal", "General");
         public readonly string TabsHardcore = Loc.Localize("Settings_TabsHardcore", "Hardcore");
         public readonly string TabsPreferences = Loc.Localize("Settings_TabsPreferences", "Chat & UI");
-        public readonly string TabsAccounts = Loc.Localize("Settings_TabsAccounts", "Account Management");
+        public readonly string TabsAccounts = Loc.Localize("Settings_TabsAccounts", "Account");
 
         public DDSPrefs DDSPrefs { get; set; } = new();
         public MainOptions MainOptions { get; set; } = new();
@@ -1154,8 +1155,8 @@ namespace GagSpeak.Localization
         public readonly string MimicsApplyTraitsTT = Loc.Localize("MainOptions_MimicsApplyTraitsTT", "Allows applied cursed items to set their hardcore traits." +
             "--SEP--WARNING: This includes traits such as immobilize, weighted, and other action limiting factors!");
 
-        public readonly string MoodlesActive = Loc.Localize("MainOptions_MoodlesActive", "Moodles Integration");
-        public readonly string MoodlesActiveTT = Loc.Localize("MainOptions_MoodlesActiveTT", "Enables Moodles integration and functionality.");
+        public readonly string LociActive = Loc.Localize("MainOptions_LociActive", "Loci Integration");
+        public readonly string LociActiveTT = Loc.Localize("MainOptions_LociActiveTT", "Enables Loci integration and functionality.");
 
         public readonly string PuppeteerActive = Loc.Localize("MainOptions_PuppeteerActive", "Puppeteer Features");
         public readonly string PuppeteerActiveTT = Loc.Localize("MainOptions_PuppeteerActiveTT", "Enables Puppeteer functionality.");

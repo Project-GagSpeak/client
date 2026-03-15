@@ -5,11 +5,7 @@ using Dalamud.Game.Text.SeStringHandling.Payloads;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using GagSpeak.GameInternals.Agents;
-using GagSpeak.Kinksters;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
-using GagSpeak.State.Handlers;
-using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
 using Lumina.Excel.Sheets;
 

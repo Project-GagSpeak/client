@@ -3,9 +3,6 @@ using CkCommons.Gui.Utility;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerClient;
-using GagSpeak.Services;
-using GagSpeak.Services.Configs;
-using OtterGui.Text;
 
 namespace GagSpeak.Gui;
 

@@ -1,7 +1,6 @@
 using CkCommons.DrawSystem;
 using CkCommons.DrawSystem.Selector;
-using GagSpeak.Kinksters;
-using GagspeakAPI.Data;
+using GagSpeak.State.Models;
 
 namespace GagSpeak.DrawSystem;
 

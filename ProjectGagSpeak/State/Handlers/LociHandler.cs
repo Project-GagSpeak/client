@@ -17,12 +17,12 @@ public class LociHandler
         _ipc = ipc;
     }
 
-    /// <summary> Add a single Moodle to the GlamourCache for the key. </summary>
-    public bool TryAddLociItemToCache(CombinedCacheKey key, LociItem? moodle)
+    /// <summary> Add a single LociItem to the GlamourCache for the key. </summary>
+    public bool TryAddLociItemToCache(CombinedCacheKey key, LociItem? lociItem)
     {
-        if (moodle is null)
+        if (lociItem is null)
             return false;
-        return _cache.AddLoci(key, moodle);
+        return _cache.AddLoci(key, lociItem);
     }
 
     public bool TryAddLociItemToCache(CombinedCacheKey key, IEnumerable<LociItem> items)
@@ -57,11 +57,11 @@ public class LociHandler
 
     public async Task UpdateLociCache()
     {
-        if (_cache.UpdateFinalCache(out var removedMoodles))
+        if (_cache.UpdateFinalCache(out var removedItems))
         {
-            _logger.LogDebug($"FinalLociCache was updated! Removed: {removedMoodles.Count()}", LoggerType.VisualCache);
-            if (removedMoodles.Any())
-                await RestoreAndReapplyCache(removedMoodles);
+            _logger.LogDebug($"FinalLociCache was updated! Removed: {removedItems.Count()}", LoggerType.VisualCache);
+            if (removedItems.Any())
+                await RestoreAndReapplyCache(removedItems);
             else
                 await ApplyLociCache();
         }
@@ -82,16 +82,16 @@ public class LociHandler
         var idsToApply = LociCache.Data.DataInfo.Any()
             ? _cache.FinalStatusIds.Except(LociCache.Data.DataInfo.Keys)
             : _cache.FinalStatusIds;
-        await _ipc.ApplyLociStatus(idsToApply, true);
+        await _ipc.ApplyStatus([ ..idsToApply ], true);
         _logger.LogDebug("Applied all Statuses to the client.", LoggerType.IpcLoci);
     }
 
     /// <summary>
-    ///     Removes moodles no longer meant to be present, then reapplies restricted ones
+    ///     Removes lociItems no longer meant to be present, then reapplies restricted ones
     /// </summary>
     private async Task RestoreAndReapplyCache(IEnumerable<Guid> itemsToRemove)
     {
-        await _ipc.RemoveStatusID(itemsToRemove, true);
+        await _ipc.BombStatus([..itemsToRemove], true);
         _logger.LogDebug($"Removed LociItems: {string.Join(", ", itemsToRemove)}", LoggerType.IpcLoci);
         // Reapply restricted.
         await ApplyLociCache();
@@ -102,7 +102,7 @@ public class LociHandler
     /// </summary>
     /// <remarks> If this item is not present in the client's Status List, it will not work. </remarks>
     public async Task ApplyLociItem(LociItem item)
-        => await _ipc.ApplyLociStatus(item is LociPreset p ? p.StatusIds : [item.Id], true);
+        => await _ipc.ApplyStatus(item is LociPreset p ? p.StatusIds : [item.Id], true);
 
     // Hopefully never use this.
     public async Task ApplyLociItems(IEnumerable<LociItem> items)
@@ -112,7 +112,7 @@ public class LociHandler
     ///     Assumes they have already been removed from the finalLociCache.
     /// </summary>
     private async Task RemoveLociItem(LociItem item)
-        => await _ipc.RemoveStatusID((item is LociPreset p ? p.StatusIds : [item.Id]).Except(_cache.FinalStatusIds), true);
+        => await _ipc.BombStatus([.. (item is LociPreset p ? p.StatusIds : [item.Id]).Except(_cache.FinalStatusIds)], true);
 
     // Hopefully never use this.
     public async Task RemoveLociItems(IEnumerable<LociItem> items)

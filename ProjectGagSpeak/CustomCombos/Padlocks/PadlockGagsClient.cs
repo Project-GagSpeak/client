@@ -1,7 +1,5 @@
 using GagSpeak.Services;
-using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;

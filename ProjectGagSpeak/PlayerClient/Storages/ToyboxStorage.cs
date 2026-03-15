@@ -1,4 +1,3 @@
-using GagspeakAPI.Data;
 using System.Diagnostics.CodeAnalysis;
 using GagSpeak.State.Models;
 

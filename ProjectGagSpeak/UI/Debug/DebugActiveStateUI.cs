@@ -3,8 +3,6 @@ using CkCommons.Textures;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Plugin.Services;
-using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using GagSpeak.Gui.Components;
 using GagSpeak.Interop;
 using GagSpeak.PlayerClient;
@@ -16,7 +14,6 @@ using GagSpeak.State.Caches;
 using GagSpeak.State.Listeners;
 using GagSpeak.Utils;
 using OtterGui.Text;
-using static Lumina.Data.Parsing.Layer.LayerCommon;
 
 namespace GagSpeak.Gui;
 
@@ -28,7 +25,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
     private readonly GlamourCache _glamourCache;
     private readonly CustomizePlusCache _profileCache;
     private readonly ModCache _modCache;
-    private readonly LociCache _moodleCache;
+    private readonly LociCache _lociCache;
     private readonly TraitsCache _traitsCache;
     private readonly OverlayCache _overlayCache;
     private readonly ArousalService _arousal;
@@ -45,7 +42,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         GlamourCache glamourCache,
         CustomizePlusCache profileCache,
         ModCache modCache,
-        LociCache moodleCache,
+        LociCache lociCache,
         TraitsCache traitsCache,
         OverlayCache overlayCache,
         ArousalService arousal,
@@ -61,7 +58,7 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         _glamourCache = glamourCache;
         _profileCache = profileCache;
         _modCache = modCache;
-        _moodleCache = moodleCache;
+        _lociCache = lociCache;
         _traitsCache = traitsCache;
         _overlayCache = overlayCache;
         _arousal = arousal;
@@ -74,17 +71,16 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         this.SetBoundaries(new Vector2(625, 400), ImGui.GetIO().DisplaySize);
     }
 
-    protected override void PreDrawInternal() { }
+    protected override void PreDrawInternal()
+    { }
 
-    protected override void PostDrawInternal() { }
+    protected override void PostDrawInternal()
+    { }
 
     protected override void DrawInternal()
     {
-        if (ImGui.CollapsingHeader("Moodles IPC Status"))
-            DrawMoodlesIpc();
-
-        if (ImGui.CollapsingHeader("Sundouleia IPC"))
-            DrawSundouleiaIpc();
+        if (ImGui.CollapsingHeader("Loci IPC"))
+            DrawLociIpc();
 
         if (ImGui.CollapsingHeader("Hardcore State"))
             _clientData.DrawHardcoreStatus();
@@ -128,8 +124,8 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
             _modCache.DrawCacheTable(_iconTextures, _modDrawer);
 
         ImGui.Separator();
-        if (ImGui.CollapsingHeader("Moodles Cache"))
-            _moodleCache.DrawCacheTable(_iconTextures);
+        if (ImGui.CollapsingHeader("Loci Cache"))
+            _lociCache.DrawCacheTable(_iconTextures);
 
         ImGui.Separator();
         if (ImGui.CollapsingHeader("Traits/Attributes Cache"))
@@ -187,57 +183,16 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         }
     }
 
-    // Draws the current state of the moodles IPC data.
-    private void DrawMoodlesIpc()
+    private unsafe void DrawLociIpc()
     {
-        using var _ = ImRaii.Group();
-        ImGui.Text("Moodles IPC Status:");
+        ImGui.Text("Loci IPC Status:");
         CkGui.ColorTextInline(IpcCallerLoci.APIAvailable ? "Available" : "Unavailable", ImGuiColors.ParsedOrange);
 
-        ImUtf8.TextFrameAligned($"Active Moodles: {LociCache.Data.DataInfo.Count()}");
+        ImUtf8.TextFrameAligned($"Active Loci: {LociCache.Data.DataInfo.Count()}");
         ImGui.SameLine();
         LociDrawer.DrawTuples(LociCache.Data.DataInfoList.ToList(), LociIcon.SizeFramed);
 
-        ImGui.Text($"Total Moodles: {LociCache.Data.StatusList.Count()}");
+        ImGui.Text($"Total Statuses: {LociCache.Data.StatusList.Count()}");
         ImGui.Text($"Total Presets: {LociCache.Data.PresetList.Count()}");
-    }
-
-    private unsafe void DrawSundouleiaIpc()
-    {
-        ImGui.Text("Sundouleia IPC Status:");
-        CkGui.ColorTextInline(IpcCallerSundouleia.APIAvailable ? "Available" : "Unavailable", ImGuiColors.ParsedOrange);
-        if (!IpcCallerSundouleia.Sundesmos.Any()) return;
-        using var _ = ImRaii.PushIndent();
-        try
-        {
-            using (var t = ImRaii.Table($"##sundouleiaPlayers", 5, ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.RowBg | ImGuiTableFlags.BordersInnerV))
-            {
-                if (!t) return;
-                ImGui.TableSetupColumn("Address");
-                ImGui.TableSetupColumn("Name");
-                ImGui.TableSetupColumn("ObjIdx");
-                ImGui.TableSetupColumn("ObjKind");
-                ImGui.TableSetupColumn("EntityId");
-                ImGui.TableHeadersRow();
-
-                foreach (Character* chara in IpcCallerSundouleia.Sundesmos)
-                {
-                    ImGui.TableNextColumn();
-                    ImGui.Text($"{(nint)chara:X}");
-                    ImGui.TableNextColumn();
-                    ImGui.Text(chara->NameString.ToString());
-                    ImGui.TableNextColumn();
-                    ImGui.Text(chara->ObjectIndex.ToString());
-                    ImGui.TableNextColumn();
-                    ImGui.Text(chara->ObjectKind.ToString());
-                    ImGui.TableNextColumn();
-                    ImGui.Text(chara->EntityId.ToString());
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"Error drawing rendered charas: {ex}");
-        }
     }
 }

@@ -8,13 +8,11 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
-using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using OtterGui;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui;
@@ -343,7 +341,7 @@ public class IntroUi : WindowMediatorSubscriberBase
             using (ImRaii.PushIndent())
             {
                 CkGui.BulletText("Restrictions that can be applied to your Character.", ImGuiColors.DalamudGrey2);
-                CkGui.BulletText("Lock your Glamour, C+, Penumbra Mods, Moodles, Hardcore Traits, and more!", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Lock your Glamour, C+, Penumbra Mods, LociData, Hardcore Traits, and more!", ImGuiColors.DalamudGrey2);
                 CkGui.BulletText("Adjust variants of your Restraint Sets using Layers, granting dynamic control.", ImGuiColors.DalamudGrey2);
             }
 
@@ -361,7 +359,7 @@ public class IntroUi : WindowMediatorSubscriberBase
             CkGui.BulletText("Collars");
             using (ImRaii.PushIndent())
             {
-                CkGui.BulletText("Assign a Moodle, Glamour item & Dyes, Penumbra Mod to your Collar.", ImGuiColors.DalamudGrey2);
+                CkGui.BulletText("Assign a Glamour item, Dyes, LociData, and Mod to your Collar.", ImGuiColors.DalamudGrey2);
                 CkGui.BulletText("Manage who owns your Collar, and who's Collars you own.", ImGuiColors.DalamudGrey2);
                 CkGui.BulletText("Set allowances for owner control over Collar contents.", ImGuiColors.DalamudGrey2);
                 CkGui.BulletText("Add Collar writing, which is displayable on KinkPlates!", ImGuiColors.DalamudGrey2);

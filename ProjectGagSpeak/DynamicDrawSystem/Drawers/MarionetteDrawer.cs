@@ -6,7 +6,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services.Mediator;
-using GagspeakAPI.Data;
+using GagSpeak.State.Models;
 using OtterGui.Text;
 
 namespace GagSpeak.DrawSystem;

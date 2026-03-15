@@ -329,7 +329,7 @@ public sealed class RestrictionManager : IHybridSavable
     #endregion Active Restriction Updates
 
     #region HybridSavable
-    public int ConfigVersion => 0;
+    public int ConfigVersion => 1;
     public HybridSaveType SaveType => HybridSaveType.Json;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
@@ -375,8 +375,13 @@ public sealed class RestrictionManager : IHybridSavable
         switch (version)
         {
             case 0:
-                LoadV0(jObject["RestrictionItems"]);
+                MigrateRestrictionsV0toV1(jObject);
+                goto case 1;
+
+            case 1:
+                LoadV1(jObject["RestrictionItems"]);
                 break;
+
             default:
                 _logger.LogError("Invalid Version!");
                 return;
@@ -385,7 +390,7 @@ public sealed class RestrictionManager : IHybridSavable
         _mediator.Publish(new ReloadFileSystem(GSModule.Restriction));
     }
 
-    private void LoadV0(JToken? data)
+    private void LoadV1(JToken? data)
     {
         if (data is not JArray restrictions)
             return;
@@ -422,10 +427,25 @@ public sealed class RestrictionManager : IHybridSavable
         }
     }
 
-    private void MigrateV0toV1(JObject oldConfigJson)
+    private void MigrateRestrictionsV0toV1(JObject root)
     {
-        // update only the version value to 1, then return it.
-        oldConfigJson["Version"] = 1;
+        if (root["RestrictionItems"] is not JArray items)
+            return;
+
+        foreach (var token in items)
+        {
+            if (token is not JObject item)
+                continue;
+
+            // Rename Moodle -> LociData
+            if (!item.ContainsKey("LociData") && item.TryGetValue("Moodle", out var moodle))
+            {
+                item["LociData"] = moodle;
+                item.Remove("Moodle");
+            }
+        }
+
+        root["Version"] = 1;
     }
 
     #endregion HybridSavable

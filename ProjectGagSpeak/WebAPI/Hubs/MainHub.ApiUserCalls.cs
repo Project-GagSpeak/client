@@ -14,13 +14,13 @@ namespace GagSpeak.WebAPI;
 public partial class MainHub
 {
     #region ShareHubs
-    public async Task<HubResponse> UploadPattern(PatternUpload dto)
+    public async Task<HubResponse> UploadPattern(SharehubUploadPattern dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UploadPattern), dto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> UploadLociStatus(LociStatusUpload dto)
+    public async Task<HubResponse> UploadLociStatus(SharehubUploadLociStatus dto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UploadLociStatus), dto).ConfigureAwait(false);
@@ -38,10 +38,10 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(LikePattern), patternId).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> LikeLociData(Guid lociStatusId)
+    public async Task<HubResponse> LikeLociStatus(Guid lociStatusId)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(LikeLociData), lociStatusId).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(LikeLociStatus), lociStatusId).ConfigureAwait(false);
     }
 
     public async Task<HubResponse> DelistPattern(Guid patternId)
@@ -50,22 +50,22 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(DelistPattern), patternId).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse> DelistLociData(Guid lociStatusId)
+    public async Task<HubResponse> DelistLociStatus(Guid lociStatusId)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError);
-        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(DelistLociData), lociStatusId).ConfigureAwait(false);
+        return await _hubConnection!.InvokeAsync<HubResponse>(nameof(DelistLociStatus), lociStatusId).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse<List<ServerPatternInfo>>> SearchPatterns(PatternSearch patternSearchDto)
+    public async Task<HubResponse<List<ServerPatternInfo>>> SearchPatterns(SearchPattern patternSearchDto)
     {
         if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new List<ServerPatternInfo>());
         return await _hubConnection!.InvokeAsync<HubResponse<List<ServerPatternInfo>>>(nameof(SearchPatterns), patternSearchDto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse<List<ServerLociInfo>>> SearchLociData(SearchBase lociSearchDto)
+    public async Task<HubResponse<List<ServerDataLociStatus>>> SearchLociData(SearchBase lociSearchDto)
     {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new List<ServerLociInfo>());
-        return await _hubConnection!.InvokeAsync<HubResponse<List<ServerLociInfo>>>(nameof(SearchLociData), lociSearchDto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new List<ServerDataLociStatus>());
+        return await _hubConnection!.InvokeAsync<HubResponse<List<ServerDataLociStatus>>>(nameof(SearchLociData), lociSearchDto).ConfigureAwait(false);
     }
 
     public async Task<HubResponse<HashSet<string>>> FetchSearchTags()
@@ -292,7 +292,7 @@ public partial class MainHub
 
     public async Task<HubResponse<ClientGlobals>> UserBulkChangeGlobal(BulkChangeGlobal allGlobalPerms)
     {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new ClientGlobals(new GlobalPerms(), new HardcoreStatus()));
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new ClientGlobals(new GlobalPerms(), new HardcoreState()));
         return await _hubConnection!.InvokeAsync<HubResponse<ClientGlobals>>(nameof(UserBulkChangeGlobal), allGlobalPerms);
     }
 
@@ -324,10 +324,10 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(UserChangeOwnPairPermAccess), userPermissions);
     }
 
-    public async Task<HubResponse<HardcoreStatus>> UserHardcoreAttributeExpired(HardcoreAttributeExpired change)
+    public async Task<HubResponse<HardcoreState>> UserHardcoreAttributeExpired(HardcoreAttributeExpired change)
     {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new HardcoreStatus());
-        return await _hubConnection!.InvokeAsync<HubResponse<HardcoreStatus>>(nameof(UserHardcoreAttributeExpired), change).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new HardcoreState());
+        return await _hubConnection!.InvokeAsync<HubResponse<HardcoreState>>(nameof(UserHardcoreAttributeExpired), change).ConfigureAwait(false);
     }
 
     public async Task<HubResponse> UserDelete()

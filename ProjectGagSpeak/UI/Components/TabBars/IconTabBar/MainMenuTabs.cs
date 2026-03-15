@@ -1,4 +1,3 @@
-using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
@@ -21,8 +20,8 @@ public class MainMenuTabs : IconTabBar<MainMenuTabs.SelectedTab>
         Homepage,
         Requests,
         Whitelist,
-        PatternHub,
-        MoodlesHub,
+        PatternSharehub,
+        LociSharehub,
         GlobalChat,
     }
 
@@ -56,11 +55,11 @@ public class MainMenuTabs : IconTabBar<MainMenuTabs.SelectedTab>
         AddDrawButton(FontAwesomeIcon.PeopleArrows, SelectedTab.Whitelist, "Kinkster Whitelist", 
             () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Whitelist, MainUI.LastPos, MainUI.LastSize, _ => TabSelection = SelectedTab.Homepage));
 
-        AddDrawButton(FontAwesomeIcon.Compass, SelectedTab.PatternHub, "Discover Patterns from the community!", 
+        AddDrawButton(FontAwesomeIcon.Compass, SelectedTab.PatternSharehub, "Discover Patterns from the community!", 
             () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternHub, MainUI.LastPos, MainUI.LastSize));
 
-        AddDrawButton(FontAwesomeIcon.WandMagicSparkles, SelectedTab.MoodlesHub, "Browse Moodles made by others in the community!",
-            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.MoodleHub, MainUI.LastPos, MainUI.LastSize));
+        AddDrawButton(FontAwesomeIcon.WandMagicSparkles, SelectedTab.LociSharehub, "Browse LociData made by others in the community!",
+            () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.LociSharehub, MainUI.LastPos, MainUI.LastSize));
 
         AddDrawButton(FontAwesomeIcon.Comments, SelectedTab.GlobalChat, "Meet & Chat with others in a cross-region chat!",
             () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.GlobalChat, MainUI.LastPos, MainUI.LastSize));

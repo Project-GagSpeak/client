@@ -2,19 +2,18 @@ using CkCommons.Helpers;
 using CkCommons.RichText;
 using CkCommons.Textures;
 using Dalamud.Bindings.ImGui;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
-using GagspeakAPI.Network;
 using OtterGui.Text;
 
-namespace GagSpeak.CustomCombos.Moodles;
+namespace GagSpeak.CustomCombos.Loci;
 
-public sealed class PairStatusCombo : MoodleComboBase<LociStatusInfo>
+public sealed class PairStatusCombo : LociComboBase<LociStatusInfo>
 {
     public PairStatusCombo(ILogger log, MainHub hub, Kinkster kinkster, float scale)
         : base(log, hub, kinkster, scale, () => [ .. kinkster.LociData.Statuses.Values.OrderBy(x => x.Title)])
@@ -49,8 +48,8 @@ public sealed class PairStatusCombo : MoodleComboBase<LociStatusInfo>
         var ret = ImGui.Selectable("##" + myStatus.Title, selected, ImGuiSelectableFlags.None, size);
 
         ImGui.SameLine(titleSpace);
-        LociIcon.Draw((uint)myStatus.IconID, myStatus.Stacks, IconSize);
-        LociEx.AttachTooltip(myStatus, _kinksterRef.LociData);
+        LociIcon.Draw(myStatus.IconID, myStatus.Stacks, IconSize);
+        LociHelpers.AttachTooltip(myStatus, _kinksterRef.LociData);
 
         ImGui.SameLine(ImUtf8.ItemInnerSpacing.X);
         var adjust = (size.Y - ImUtf8.TextHeight) * 0.5f;
@@ -61,7 +60,7 @@ public sealed class PairStatusCombo : MoodleComboBase<LociStatusInfo>
     }
 
     protected override bool CanDoAction(LociStatusInfo item)
-        => PermHelper.CanApplyPairStatus(_kinksterRef.PairPerms, [ item ]);
+        => LociHelpers.CanApply(_kinksterRef.PairPerms, [ item ]);
 
     protected override void OnApplyButton(LociStatusInfo item)
     {
@@ -69,7 +68,7 @@ public sealed class PairStatusCombo : MoodleComboBase<LociStatusInfo>
         {
             var res = await _mainHub.UserApplyLociData(new(_kinksterRef.UserData, [item.GUID], false, false));
             if (res.ErrorCode is not GagSpeakApiEc.Success)
-                Log.LogDebug($"Failed to apply moodle status {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
+                Log.LogDebug($"Failed to apply loci status {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
         });
     }
 
@@ -79,7 +78,7 @@ public sealed class PairStatusCombo : MoodleComboBase<LociStatusInfo>
         {
             var res = await _mainHub.UserRemoveLociData(new(_kinksterRef.UserData, [item.GUID]));
             if (res.ErrorCode is not GagSpeakApiEc.Success)
-                Log.LogDebug($"Failed to remove moodle status {item.Title} from {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
+                Log.LogDebug($"Failed to remove loci status {item.Title} from {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
         });
     }
 }

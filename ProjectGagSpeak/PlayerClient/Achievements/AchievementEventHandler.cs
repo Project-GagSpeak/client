@@ -1,9 +1,7 @@
 using CkCommons;
-using Dalamud.Game.ClientState.Objects.Types;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using GagSpeak.GameInternals;
 using GagSpeak.Kinksters;
-using GagSpeak.Localization;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;

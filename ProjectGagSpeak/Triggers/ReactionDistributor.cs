@@ -1,11 +1,8 @@
 using CkCommons.Helpers;
 using Dalamud.Game.Text.SeStringHandling;
 using GagSpeak.Interop;
-using GagSpeak.Kinksters;
-using GagSpeak.MufflerCore;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Handlers;
-using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
@@ -31,7 +28,7 @@ public class ReactionDistributor
     private readonly RestraintManager _restraints;
     private readonly PuppeteerManager _puppeteer;
     private readonly BuzzToyManager _toys;
-    private readonly LociHandler _moodles;
+    private readonly LociHandler _lociHandler;
     private readonly SelfBondageService _selfBondage;
 
     public ReactionDistributor(
@@ -42,7 +39,7 @@ public class ReactionDistributor
         RestraintManager restraints,
         PuppeteerManager puppeteer,
         BuzzToyManager toys,
-        LociHandler moodles,
+        LociHandler lociHandler,
         SelfBondageService selfBondage)
     {
         _logger = logger;
@@ -52,7 +49,7 @@ public class ReactionDistributor
         _restraints = restraints;
         _puppeteer = puppeteer;
         _toys = toys;
-        _moodles = moodles;
+        _lociHandler = lociHandler;
         _selfBondage = selfBondage;
     }
 
@@ -432,12 +429,12 @@ public class ReactionDistributor
     {
         if(!IpcCallerLoci.APIAvailable || act.LociItem.Id== Guid.Empty)
         {
-            _logger.LogWarning("Moodles not available, cannot execute moodle trigger.");
+            _logger.LogWarning("Loci not available, cannot execute loci trigger.");
             return false;
         }
 
-        _logger.LogDebug("Applying a Moodle action to the player.", LoggerType.IpcLoci);
-        _moodles.ApplyLociItem(act.LociItem).ConfigureAwait(false);
+        _logger.LogDebug("Applying a LociData action to the player.", LoggerType.IpcLoci);
+        _lociHandler.ApplyLociItem(act.LociItem).ConfigureAwait(false);
         return true;
     }
 

@@ -14,7 +14,6 @@ using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
-using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
@@ -585,11 +584,9 @@ public partial class DebugStorageUI : WindowMediatorSubscriberBase
                 DrawModAssociationRow(mod);
 
         ImGui.Spacing();
-        ImGui.TextUnformatted("Moodles:");
-        using (ImRaii.Table("##moodles", 1, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
-        {
-            LociDrawer.DrawIcons(rs.GetAllMoodles(), ImGui.GetContentRegionAvail().X, LociIcon.SizeFramed, 2);
-        }
+        ImGui.TextUnformatted("LociData:");
+        using (ImRaii.Table("##loci", 1, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+            LociDrawer.DrawIcons(rs.GetAllLociData(), ImGui.GetContentRegionAvail().X, LociIcon.SizeFramed, 2);
     }
 
     public void DrawGag(GarblerRestriction gag)
@@ -637,19 +634,17 @@ public partial class DebugStorageUI : WindowMediatorSubscriberBase
             }
             ImGui.TableNextRow();
 
-            ImGuiUtil.DrawTableColumn("Moodle");
-            if (gag.Moodle is LociPreset preset)
+            ImGuiUtil.DrawTableColumn("LociData");
+            if (gag.LociData is LociPreset preset)
             {
                 ImGuiUtil.DrawTableColumn("[Preset Type]");
-                ImGuiUtil.DrawTableColumn(LociCache.Data.Presets
-                    .GetValueOrDefault(preset.Id).Title.StripColorTags() ?? "Unknown Preset");
+                ImGuiUtil.DrawTableColumn(LociCache.Data.Presets.GetValueOrDefault(preset.Id).Title.StripColorTags() ?? "Unknown Preset");
                 ImGui.TableNextRow();
             }
             else
             {
                 ImGuiUtil.DrawTableColumn("[Status Type]");
-                ImGuiUtil.DrawTableColumn(LociCache.Data.Statuses
-                    .GetValueOrDefault(gag.Moodle.Id).Title.StripColorTags() ?? "Unknown Status");
+                ImGuiUtil.DrawTableColumn(LociCache.Data.Statuses.GetValueOrDefault(gag.LociData.Id).Title.StripColorTags() ?? "Unknown Status");
                 ImGui.TableNextRow();
             }
 
@@ -701,20 +696,18 @@ public partial class DebugStorageUI : WindowMediatorSubscriberBase
             ImGuiUtil.DrawTableColumn(restriction.Mod.Label);
             ImGui.TableNextRow();
 
-            if (restriction.Moodle is LociPreset preset)
+            if (restriction.LociData is LociPreset preset)
             {
-                ImGuiUtil.DrawTableColumn("Moodle Type");
-                ImGuiUtil.DrawTableColumn("Moodle Preset");
-                ImGuiUtil.DrawTableColumn(LociCache.Data.Presets
-                    .GetValueOrDefault(preset.Id).Title.StripColorTags() ?? "Unknown Preset");
+                ImGuiUtil.DrawTableColumn("LociData Type");
+                ImGuiUtil.DrawTableColumn("Loci Preset");
+                ImGuiUtil.DrawTableColumn(LociCache.Data.Presets.GetValueOrDefault(preset.Id).Title.StripColorTags() ?? "Unknown Preset");
                 ImGui.TableNextRow();
             }
             else
             {
-                ImGuiUtil.DrawTableColumn("Moodle Type");
-                ImGuiUtil.DrawTableColumn("Moodle Status");
-                ImGuiUtil.DrawTableColumn(LociCache.Data.Statuses
-                    .GetValueOrDefault(restriction.Moodle.Id).Title.StripColorTags() ?? "Unknown Status");
+                ImGuiUtil.DrawTableColumn("LociData Type");
+                ImGuiUtil.DrawTableColumn("Loci Status");
+                ImGuiUtil.DrawTableColumn(LociCache.Data.Statuses.GetValueOrDefault(restriction.LociData.Id).Title.StripColorTags() ?? "Unknown Status");
                 ImGui.TableNextRow();
             }
 
@@ -1187,7 +1180,6 @@ public partial class DebugStorageUI : WindowMediatorSubscriberBase
             ImGui.TableNextRow();
             ImGuiUtil.DrawTableColumn("LociItem");
             ImGuiUtil.DrawTableColumn(lociAct.LociItem.Id.ToString());
-            // MoodleItem
         }
         else if (action is PiShockAction shock)
         {

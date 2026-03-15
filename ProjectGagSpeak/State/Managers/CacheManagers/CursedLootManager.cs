@@ -6,7 +6,6 @@ using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
-using GagspeakAPI.Data;
 
 namespace GagSpeak.State.Managers;
 

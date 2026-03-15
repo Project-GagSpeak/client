@@ -2,13 +2,11 @@ using CkCommons.Gui;
 using CkCommons.Helpers;
 using CkCommons.HybridSaver;
 using GagSpeak.FileSystems;
-using GagSpeak.Kinksters;
-using GagSpeak.Localization;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
 using GagspeakAPI.Data;
-using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.State.Managers;
 
@@ -158,6 +156,9 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         // Return all aliases containing this UID that are enabled.
         return Storage.Items.Where(a => a.Enabled && a.ValidAlias() && a.WhitelistedUIDs.Contains(puppeteerUid));
     }
+
+    public List<GagspeakAlias> GetStorageDto()
+        => Storage.Items.Select(a => a.ToDto()).ToList();
 
     #region HybridSavable
     public int ConfigVersion => 1;

@@ -7,19 +7,15 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace GagSpeak.Services;
 
-public class KinkPlateService : MediatorSubscriberBase
+public class KinkPlateService : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _hub;
     private readonly KinkPlateFactory _factory;
 
     // concurrent dictionary of cached profile data.
     private static ConcurrentDictionary<UserData, KinkPlate> _kinkPlates= new(UserDataComparer.Instance);
-
-    public KinkPlateService(
-        ILogger<KinkPlateService> logger,
-        GagspeakMediator mediator,
-        MainHub hub, 
-        KinkPlateFactory factory)
+    public KinkPlateService(ILogger<KinkPlateService> logger, GagspeakMediator mediator,
+        MainHub hub, KinkPlateFactory factory)
         : base(logger, mediator)
     {
         _hub = hub;
@@ -30,13 +26,9 @@ public class KinkPlateService : MediatorSubscriberBase
         {
             // if UserData exists, clear the profile, otherwise, clear whole cache and reload things again.
             if (msg.UserData != null)
-            {
                 RemoveKinkPlate(msg.UserData);
-            }
             else
-            {
                 ClearAllKinkPlates();
-            }
         });
 
         // Clear all profiles on disconnect

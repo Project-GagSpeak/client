@@ -8,11 +8,10 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CustomCombos.Editor;
-using GagSpeak.CustomCombos.Moodles;
 using GagSpeak.FileSystems;
 using GagSpeak.Gui.Components;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.PlayerClient;
-using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
@@ -21,19 +20,19 @@ using OtterGui.Text;
 
 namespace GagSpeak.Gui.Wardrobe;
 
-public class RestraintEditorModsMoodles : IFancyTab
+public class RestraintEditorModsLociData : IFancyTab
 {
-    private readonly ILogger<RestraintEditorModsMoodles> _logger;
+    private readonly ILogger<RestraintEditorModsLociData> _logger;
     private readonly RestraintSetFileSelector _selector;
     private readonly RestraintManager _manager;
     private readonly ModPresetManager _modPresets;
     private readonly ModPresetDrawer _modDrawer;
     private readonly TutorialService _guides;
 
-    private MoodleStatusCombo _statusCombo;
-    private MoodlePresetCombo _presetCombo;
+    private LociStatusCombo _statusCombo;
+    private LociPresetCombo _presetCombo;
 
-    public RestraintEditorModsMoodles(ILogger<RestraintEditorModsMoodles> logger,
+    public RestraintEditorModsLociData(ILogger<RestraintEditorModsLociData> logger,
         RestraintSetFileSelector selector, RestraintManager manager,
         ModPresetManager modPresets, ModPresetDrawer modPresetDrawer,
         TutorialService guides)
@@ -45,12 +44,12 @@ public class RestraintEditorModsMoodles : IFancyTab
         _modDrawer = modPresetDrawer;
         _guides = guides;
 
-        _statusCombo = new MoodleStatusCombo(logger, 1.15f);
-        _presetCombo = new MoodlePresetCombo(logger, 1.15f);
+        _statusCombo = new LociStatusCombo(logger, 1.15f);
+        _presetCombo = new LociPresetCombo(logger, 1.15f);
     }
 
-    public string Label => "Mods & Moodles";
-    public string Tooltip => "Set Mods & Moodles for your set." +
+    public string Label => "Mods & LociData";
+    public string Tooltip => "Set the Mods & LociData for your set." +
         "--SEP--These are applied in addition to the ones linked to layers and advanced slots.";
     public bool Disabled => false;
 
@@ -74,20 +73,24 @@ public class RestraintEditorModsMoodles : IFancyTab
                 DrawModsList();
             }
 
-            // Then the one for the moodles and such.
+            // Then the one for the LociData and such.
             ImGui.SameLine(0, ImGui.GetStyle().WindowPadding.X);
-            using (CkRaii.HeaderChild("Associated Moodles", panelSize, FancyTabBar.RoundingInner, HeaderFlags.SizeIncludesHeader))
+            using (CkRaii.HeaderChild("restraint-locidata", panelSize, FancyTabBar.RoundingInner, HeaderFlags.SizeIncludesHeader))
             {
-                DrawMoodleSelector();
-                _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.AddingMoodles, WardrobeUI.LastPos, WardrobeUI.LastSize);
-                DrawMoodlesList();
-                // Draw out the moodle icon row.
-                LociDrawer.DrawIconsFramed("AssociatedMoodles", _manager.ItemInEditor!.RestraintMoodles,
+                // Selector for the locidata.
+                DrawLociSelector();
+                _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.AddingLociData, WardrobeUI.LastPos, WardrobeUI.LastSize);
+                
+                // List of all LociData entries.
+                DrawLociStatusList();
+
+                // Icon Preview
+                LociDrawer.DrawIconsFramed("restraint-locidata", _manager.ItemInEditor!.RestraintLociData,
                     ImGui.GetContentRegionAvail().X, CkStyle.ChildRoundingLarge(), rows: 2);
-                _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.MoodlePreview, WardrobeUI.LastPos, WardrobeUI.LastSize);
+                _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.LociDataPreview, WardrobeUI.LastPos, WardrobeUI.LastSize);
             }
         }
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.ModsMoodles, WardrobeUI.LastPos, WardrobeUI.LastSize);
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.ModsAndLociData, WardrobeUI.LastPos, WardrobeUI.LastSize);
     }
 
     public void DrawModSelector()
@@ -147,7 +150,7 @@ public class RestraintEditorModsMoodles : IFancyTab
         }
     }
 
-    private void DrawMoodleSelector()
+    private void DrawLociSelector()
     {
         using var _ = ImRaii.Group();
         var buttonWidth = CkGui.IconButtonSize(FAI.Plus).X;
@@ -161,8 +164,8 @@ public class RestraintEditorModsMoodles : IFancyTab
                 _ => throw new ArgumentOutOfRangeException(nameof(_selectedLociItem), _selectedLociItem, "Unknown LociDataType"),
             };
         }
-        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SwapMoodleTypes, WardrobeUI.LastPos, WardrobeUI.LastSize, 
-            _ => _manager.ItemInEditor!.RestraintMoodles.Add(new LociTuple(LociCache.Data.StatusList.FirstOrDefault())));
+        _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SwapLociDataType, WardrobeUI.LastPos, WardrobeUI.LastSize, 
+            _ => _manager.ItemInEditor!.RestraintLociData.Add(new LociTuple(LociCache.Data.StatusList.FirstOrDefault().ToStruct())));
 
         ImUtf8.SameLineInner();
         var comboWidth = ImGui.GetContentRegionAvail().X - buttonWidth - ImGui.GetStyle().ItemInnerSpacing.X;
@@ -172,18 +175,18 @@ public class RestraintEditorModsMoodles : IFancyTab
         if (CkGui.IconButton(FAI.Plus))
         {
             if (_selectedLociItem is LociPreset p)
-                _manager.ItemInEditor!.RestraintMoodles.Add(new LociPreset(p));
+                _manager.ItemInEditor!.RestraintLociData.Add(new LociPreset(p));
             else
-                _manager.ItemInEditor!.RestraintMoodles.Add(new LociItem(_selectedLociItem));
+                _manager.ItemInEditor!.RestraintLociData.Add(new LociItem(_selectedLociItem));
         }
     }
 
     private void DrawLociItemCombo(LociItem lociItem, float width, CFlags flags = CFlags.None)
     {
-        // draw the dropdown for the status/preset selection. This is based on the type of moodle.
+        // draw the dropdown for the status/preset selection.
         if (lociItem is LociPreset preset)
         {
-            var change = _presetCombo.Draw("RestrainLociPreset", preset.Id, width, flags);
+            var change = _presetCombo.Draw("restraint-preset", preset.Id, width, flags);
             if (change && !preset.Id.Equals(_presetCombo.Current.GUID))
             {
                 _logger.LogTrace($"Item changed to {_presetCombo.Current.GUID} [{_presetCombo.Current.Title}] from {preset.Id}");
@@ -198,7 +201,7 @@ public class RestraintEditorModsMoodles : IFancyTab
         }
         else if (lociItem is LociItem status)
         {
-            var change = _statusCombo.Draw("RestrainLociStatus", status.Id, width, flags);
+            var change = _statusCombo.Draw("restraint-status", status.Id, width, flags);
             if (change && !status.Id.Equals(_statusCombo.Current.GUID))
             {
                 _logger.LogTrace($"Item changed to {_statusCombo.Current.GUID} [{_statusCombo.Current.Title}] from {status.Id}");
@@ -216,7 +219,7 @@ public class RestraintEditorModsMoodles : IFancyTab
     private void DrawModsList()
     {
         var innerRegion = ImGui.GetContentRegionAvail().WithoutWinPadding();
-        using var _ = CkRaii.FrameChildPadded("MoodlesList", innerRegion, CkCol.CurvedHeaderFade.Uint(), 0, CkStyle.ChildRoundingLarge());
+        using var _ = CkRaii.FrameChildPadded("mods-list", innerRegion, CkCol.CurvedHeaderFade.Uint(), 0, CkStyle.ChildRoundingLarge());
 
         var buttonSize = CkGui.IconButtonSize(FAI.Eraser);
         foreach (var mod in _manager.ItemInEditor!.RestraintMods.ToList())
@@ -243,21 +246,21 @@ public class RestraintEditorModsMoodles : IFancyTab
         }
     }
 
-    private void DrawMoodlesList()
+    private void DrawLociStatusList()
     {
         var size = ImGui.GetContentRegionAvail();
-        var height = size.Y - (LociIcon.GetRowHeight(2).AddWinPadY() + ImGui.GetStyle().ItemSpacing.Y);
+        var height = size.Y - (LociIcon.GetRowHeight(LociIcon.Size.Y, 2).AddWinPadY() + ImUtf8.ItemSpacing.Y);
 
-        using var _ = CkRaii.FramedChildPaddedWH("MoodlesList", new Vector2(size.X, height), CkCol.CurvedHeaderFade.Uint(), 0, CkStyle.ChildRoundingLarge());
+        using var _ = CkRaii.FramedChildPaddedWH("statuses", new Vector2(size.X, height), CkCol.CurvedHeaderFade.Uint(), 0, CkStyle.ChildRoundingLarge());
 
         var buttonSize = CkGui.IconButtonSize(FAI.Eraser);
 
-        foreach (var item in _manager.ItemInEditor!.RestraintMoodles.ToList())
+        foreach (var item in _manager.ItemInEditor!.RestraintLociData.ToList())
         {
             var itemLabel = item is LociPreset p
                 ? LociCache.Data.Presets.GetValueOrDefault(p.Id).Title.StripColorTags() ?? "<invalid preset>"
                 : LociCache.Data.Statuses.GetValueOrDefault(item.Id).Title.StripColorTags() ?? "<invalid status>";
-            var typeText = item is LociPreset ? "Moodle Preset Item" : "Moodle Status Item";
+            var typeText = item is LociPreset ? "Loci Preset" : "Loci Status";
 
             using (CkRaii.FramedChildPaddedW(item.Id.ToString(), ImGui.GetContentRegionAvail().X, ImGui.GetTextLineHeight() * 2, CkCol.CurvedHeaderFade.Uint(), 0))
             {
@@ -271,7 +274,7 @@ public class RestraintEditorModsMoodles : IFancyTab
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - buttonSize.X);
                 ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (ImGui.GetContentRegionAvail().Y - buttonSize.Y) / 2);
                 if (CkGui.IconButton(FAI.Eraser, inPopup: true))
-                    _manager.ItemInEditor!.RestraintMoodles.Remove(item);
+                    _manager.ItemInEditor!.RestraintLociData.Remove(item);
             }
         }
     }

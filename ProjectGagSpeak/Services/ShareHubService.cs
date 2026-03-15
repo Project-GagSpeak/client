@@ -11,6 +11,7 @@ using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using Dalamud.Bindings.ImGui;
 using GagspeakAPI.Attributes;
+using GagSpeak.Interop.Helpers;
 
 namespace GagSpeak.Services;
 
@@ -43,39 +44,32 @@ public class ShareHubService : DisposableMediatorSubscriberBase
     public ToyMotor MotorType { get; set; } = ToyMotor.Vibration;
     public HubDirection SortOrder { get; set; } = HubDirection.Descending;
     public List<ServerPatternInfo> LatestPatternResults { get; private set; } = new();
-    public List<ServerLociInfo> LatestMoodleResults { get; private set; } = new();
+    public List<ServerDataLociStatus> LatestLociResults { get; private set; } = new();
     public List<string> FetchedTags { get; private set; } = new List<string>();
     public List<PublishedPattern> PublishedPatterns { get; private set; } = new();
     public List<PublishedLociData> PublishedLociData { get; private set; } = new();
 
-    // This makes sure that we only automatically fetch the patterns and moodles and tags once automatically.
+    // This makes sure that we only automatically fetch the patterns and lociData and tags once automatically.
     // Afterwards, manual updates are requied.
+    // TODO: Repurpose this into something like the UISetTask but for sharehub.
     public bool InitialPatternsCall { get; private set; } = false;
-    public bool InitialMoodlesCall { get; private set; } = false;
-    public bool HasPatternResults 
-        => LatestPatternResults.Count > 0;
-    public bool HasMoodleResults 
-        => LatestMoodleResults.Count > 0;
-    public bool HasTags 
-        => FetchedTags.Count > 0;
+    public bool InitialLociCall { get; private set; } = false;
     public void ToggleSortDirection()
     {
         SortOrder = SortOrder is HubDirection.Ascending ? HubDirection.Descending : HubDirection.Ascending;
         // update the results to reflect the new sort order.
-        LatestMoodleResults.Reverse();
+        LatestLociResults.Reverse();
         LatestPatternResults.Reverse();
     }
 
-    public void TryOnMoodle(Guid moodleId)
+    public void TryLociStatus(Guid lociStatusId)
     {
-        // apply the moodle to yourself via moodleStatusInfo.
-        var match = LatestMoodleResults.FirstOrDefault(x => x.Status.GUID == moodleId);
+        var match = LatestLociResults.FirstOrDefault(x => x.Status.GUID == lociStatusId);
         if (match is null) return;
 
-        var moodleTupleToTry = match.Status;
-        Logger.LogInformation("Trying on moodle from server. Sending request to Moodles!");
-        // Cant do this anymore.
-        _loci.ApplyLociStatus(moodleTupleToTry, false).ConfigureAwait(false);
+        var statusToTry = match.Status;
+        Logger.LogInformation("Trying on lociStatus from server..");
+        _loci.ApplyStatusInfo(statusToTry.ToTuple(), false).ConfigureAwait(false);
     }
 
     #region PatternHub Tasks
@@ -89,7 +83,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             .Where(x => x.Length > 0);
 
         // Firstly, we should compose the Dto for the search operation.
-        var dto = new PatternSearch(SearchString, tags.ToArray(), SearchFilter, SortOrder)
+        var dto = new SearchPattern(SearchString, tags.ToArray(), SearchFilter, SortOrder)
         {
             Duration = SearchDuration,
             Toy = SearchDevice,
@@ -139,7 +133,7 @@ public class ShareHubService : DisposableMediatorSubscriberBase
             };
             Logger.LogTrace("Uploading Pattern to server.", LoggerType.ShareHub);
             // construct the dto for the upload.
-            PatternUpload patternDto = new(patternInfo, base64Pattern);
+            SharehubUploadPattern patternDto = new(patternInfo, base64Pattern);
             // perform the api call for the upload.
             var result = await _hub.UploadPattern(patternDto);
             if (result.ErrorCode is not GagSpeakApiEc.Success)
@@ -263,8 +257,8 @@ public class ShareHubService : DisposableMediatorSubscriberBase
     }
     #endregion PatternHub Tasks
 
-    #region MoodlesHub Tasks
-    public async Task SearchMoodles()
+    #region LociShareHub Tasks
+    public async Task SearchLociStatuses()
     {
         // take the comma seperated search string, split them by commas, convert to lowercase, and trim tailing and leading whitespaces.
         var tags = SearchTags.Split(',')
@@ -275,60 +269,53 @@ public class ShareHubService : DisposableMediatorSubscriberBase
 
         // perform the search operation.
         var res = await _hub.SearchLociData(new(SearchString, tags, SearchFilter, SortOrder));
-        var serverMoodles = res.Value ?? [];
-        if (serverMoodles.Count <= 0)
-            LatestMoodleResults = new List<ServerLociInfo>();
+        var fetchedLociStatuses = res.Value ?? [];
+        if (fetchedLociStatuses.Count <= 0)
+            LatestLociResults = new List<ServerDataLociStatus>();
         else
         {
-            Logger.LogInformation("Retrieved Moodle from servers.", LoggerType.ShareHub);
-            LatestMoodleResults = serverMoodles;
+            Logger.LogInformation("Retrieved LociData from servers.", LoggerType.ShareHub);
+            LatestLociResults = fetchedLociStatuses;
         }
 
-        if(!InitialMoodlesCall)
-            InitialMoodlesCall = true;
+        if(!InitialLociCall)
+            InitialLociCall = true;
     }
 
-    public async Task LikeLociData(Guid moodleId)
+    public async Task HeartLociStatus(Guid statusId)
     {
-        HubResponse res = await _hub.LikeLociData(moodleId);
+        var res = await _hub.LikeLociStatus(statusId);
         if (res.ErrorCode is not GagSpeakApiEc.Success)
         {
-            Logger.LogWarning($"Failed to like moodle from servers. Error: {res.ErrorCode}");
+            Logger.LogWarning($"Failed to like status from servers. Error: {res.ErrorCode}");
             return;
         }
 
-        // It did the worky, yippee
         Logger.LogInformation("Like interaction successful.", LoggerType.ShareHub);
-            
-        // fetch the appropriate Moodle
-        if (LatestMoodleResults.FirstOrDefault(x => x.Status.GUID == moodleId) is not { } moodle)
+        if (LatestLociResults.FirstOrDefault(x => x.Status.GUID == statusId) is not { } status)
             return;
 
-        moodle.Likes += moodle.HasLiked ? -1 : 1;
-        moodle.HasLiked = !moodle.HasLiked;
-
-        if (moodle.HasLiked)
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternHubAction, PatternHubInteractionKind.Liked);
+        status.Likes += status.HasLiked ? -1 : 1;
+        status.HasLiked = !status.HasLiked;
     }
 
-    public async Task UploadMoodle(string authorName, HashSet<string> tags, LociStatusInfo moodleInfo)
+    public async Task UploadLociStatus(string authorName, HashSet<string> tags, LociStatusInfo statusInfo)
     {
         try
         {
-            Logger.LogTrace("Uploading Moodle to server.", LoggerType.ShareHub);
-            HubResponse res = await _hub.UploadLociStatus(new(authorName, tags, moodleInfo));
+            Logger.LogTrace("Uploading Loci Status to server.", LoggerType.ShareHub);
+            var res = await _hub.UploadLociStatus(new(authorName, tags, statusInfo.ToStruct()));
             if (res.ErrorCode is not GagSpeakApiEc.Success)
-                throw new Exception($"Failed to upload moodle to servers. Error: {res.ErrorCode}");
+                throw new Exception($"Failed to upload status to servers. Error: {res.ErrorCode}");
 
             // if the upload was successful, then we can notify the user.
-            Mediator.Publish(new NotificationMessage("Moodle Upload", "uploaded successful!", NotificationType.Info));
-            PublishedLociData.Add(new PublishedLociData() { AuthorName = authorName, Status = moodleInfo });
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.PatternHubAction, PatternHubInteractionKind.Published);
+            Mediator.Publish(new NotificationMessage("Loci Status Upload", "uploaded successful!", NotificationType.Info));
+            PublishedLociData.Add(new(authorName, statusInfo.ToStruct()));
         }
         catch (Bagagwa e)
         {
-            Logger.LogError(e, "Failed to upload pattern to servers.");
-            Mediator.Publish(new NotificationMessage("Pattern Upload", "upload failed!", NotificationType.Warning));
+            Logger.LogError(e, "Failed to upload status to servers.");
+            Mediator.Publish(new NotificationMessage("Loci Status Upload", "upload failed!", NotificationType.Warning));
         }
     }
 
@@ -339,9 +326,9 @@ public class ShareHubService : DisposableMediatorSubscriberBase
 
         try
         {
-            HubResponse res = await _hub.DelistLociData(lociDataId);
+            var res = await _hub.DelistLociStatus(lociDataId);
             if (res.ErrorCode is not GagSpeakApiEc.Success)
-                throw new Exception($"Failed to remove moodle from servers: [{res.ErrorCode}]");
+                throw new Exception($"Failed to remove status from servers: [{res.ErrorCode}]");
 
             // if successful, notify the user.
             Logger.LogInformation("DelistLociDataTask completed.", LoggerType.ShareHub);
@@ -350,23 +337,20 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         catch (Bagagwa e)
         {
             Logger.LogError(e, "Failed to delist LociData from servers.");
-            Mediator.Publish(new NotificationMessage("Delisting", "removal failed!", NotificationType.Warning));
+            Mediator.Publish(new NotificationMessage("Delist LociData", "removal failed!", NotificationType.Warning));
         }
     }
-    #endregion PatternHub Tasks
+    #endregion LociShareHub Tasks
 
-    public void CopyMoodleToClipboard(Guid moodleId)
+    public void CopyLociStatusToClipboard(Guid statusId)
     {
-        // Grab the moodle status of the moodle id we want to copy.
-        if (!LatestMoodleResults.Any(moodleInfo => moodleInfo.Status.GUID == moodleId))
+        if (LatestLociResults.FirstOrDefault(s => s.Status.GUID == statusId) is not { } resultMatch)
             return;
 
-        // grab it.
-        var status = LatestMoodleResults.First(moodleInfo => moodleInfo.Status.GUID == moodleId).Status;
-
+        var status = resultMatch.Status;
         var totalTime = status.ExpireTicks == -1 ? TimeSpan.Zero : TimeSpan.FromMilliseconds(status.ExpireTicks);
 
-        // convert the moodle status to a copiable json clipboard.
+        // convert the loci status to a copiable json.
         var jsonObject = new
         {
             IconID          = status.IconID,
@@ -397,6 +381,6 @@ public class ShareHubService : DisposableMediatorSubscriberBase
         };
         var stringToCopy = JsonConvert.SerializeObject(jsonObject, Formatting.None);
         ImGui.SetClipboardText(stringToCopy);
-        Logger.LogInformation("Copied moodle to clipboard.");
+        Logger.LogInformation("Copied loci status to clipboard.");
     }
 }

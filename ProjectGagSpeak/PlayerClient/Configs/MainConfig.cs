@@ -1,6 +1,5 @@
 using CkCommons;
 using CkCommons.HybridSaver;
-using FFXIVClientStructs.FFXIV.Common.Lua;
 using GagSpeak.Services.Configs;
 
 namespace GagSpeak.PlayerClient;

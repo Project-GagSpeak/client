@@ -1,7 +1,5 @@
-using CkCommons;
 using CkCommons.Classes;
 using CkCommons.Gui;
-using CkCommons.Gui.Utility;
 using CkCommons.Helpers;
 using CkCommons.Raii;
 using Dalamud.Bindings.ImGui;
@@ -15,7 +13,6 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
 using OtterGui;
 using OtterGui.Text;
-using OtterGui.Text.Widget.Editors;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -128,18 +125,18 @@ public partial class SidePanelPair
         CkGui.AttachToolTip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
         ImGui.Separator();
 
-        ImGui.TextUnformatted("Moodles Permissions");
+        ImGui.TextUnformatted("Loci Permissions");
         using (ImRaii.Group())
         {
             ClientPermRow(kinkster, dispName, width, KPID.ApplyPositive, kinkster.OwnPerms.LociAccess, kinkster.OwnPermAccess.LociAccessAllowed, LociAccess.Positive);
             ClientPermRow(kinkster, dispName, width, KPID.ApplyNegative, kinkster.OwnPerms.LociAccess, kinkster.OwnPermAccess.LociAccessAllowed, LociAccess.Negative);
             ClientPermRow(kinkster, dispName, width, KPID.ApplySpecial, kinkster.OwnPerms.LociAccess, kinkster.OwnPermAccess.LociAccessAllowed, LociAccess.Special);
-            ClientPermRow(kinkster, dispName, width, KPID.ApplyOwnMoodles, kinkster.OwnPerms.LociAccess, kinkster.OwnPermAccess.LociAccessAllowed, LociAccess.AllowOther);
-            ClientPermRow(kinkster, dispName, width, KPID.ApplyPairsMoodles, kinkster.OwnPerms.LociAccess, kinkster.OwnPermAccess.LociAccessAllowed, LociAccess.AllowOwn);
-            ClientPermRow(kinkster, dispName, width, KPID.MaxMoodleTime, kinkster.OwnPerms.MaxLociTime, kinkster.OwnPermAccess.MaxLociTimeAllowed);
-            ClientPermRow(kinkster, dispName, width, KPID.PermanentMoodles, kinkster.OwnPerms.LociAccess, kinkster.OwnPermAccess.LociAccessAllowed, LociAccess.Permanent);
-            ClientPermRow(kinkster, dispName, width, KPID.RemoveAppliedMoodles, kinkster.OwnPerms.LociAccess, kinkster.OwnPermAccess.LociAccessAllowed, LociAccess.RemoveApplied);
-            ClientPermRow(kinkster, dispName, width, KPID.RemoveAnyMoodles, kinkster.OwnPerms.LociAccess, kinkster.OwnPermAccess.LociAccessAllowed, LociAccess.RemoveAny);
+            ClientPermRow(kinkster, dispName, width, KPID.ApplyOwnLociData, kinkster.OwnPerms.LociAccess, kinkster.OwnPermAccess.LociAccessAllowed, LociAccess.AllowOther);
+            ClientPermRow(kinkster, dispName, width, KPID.ApplyPairsLociData, kinkster.OwnPerms.LociAccess, kinkster.OwnPermAccess.LociAccessAllowed, LociAccess.AllowOwn);
+            ClientPermRow(kinkster, dispName, width, KPID.MaxLociStatusTime, kinkster.OwnPerms.MaxLociTime, kinkster.OwnPermAccess.MaxLociTimeAllowed);
+            ClientPermRow(kinkster, dispName, width, KPID.PermaLociStatuses, kinkster.OwnPerms.LociAccess, kinkster.OwnPermAccess.LociAccessAllowed, LociAccess.Permanent);
+            ClientPermRow(kinkster, dispName, width, KPID.RemoveAppliedLociData, kinkster.OwnPerms.LociAccess, kinkster.OwnPermAccess.LociAccessAllowed, LociAccess.RemoveApplied);
+            ClientPermRow(kinkster, dispName, width, KPID.RemoveAnyLociStatus, kinkster.OwnPerms.LociAccess, kinkster.OwnPermAccess.LociAccessAllowed, LociAccess.RemoveAny);
         }
         CkGui.AttachToolTip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
         ImGui.Separator();
@@ -182,13 +179,13 @@ public partial class SidePanelPair
 
         ClientHcRow(kinkster, dispName, width, KPID.GarbleChannelEditing, kinkster.OwnPerms.AllowGarbleChannelEditing);
         ClientHcRow(kinkster, dispName, width, KPID.HypnoticImage, kinkster.OwnPerms.AllowHypnoImageSending);
-        ClientHcStateRow(kinkster, dispName, width, KPID.LockedFollowing, nameof(HardcoreStatus.LockedFollowing), hc.LockedFollowing, kinkster.OwnPerms.AllowLockedFollowing);
-        ClientHcEmoteRow(kinkster, dispName, width, KPID.LockedEmoteState, nameof(HardcoreStatus.LockedEmoteState), hc.LockedEmoteState, kinkster.OwnPerms.AllowLockedSitting, kinkster.OwnPerms.AllowLockedEmoting);
-        ClientHcStateRow(kinkster, dispName, width, KPID.IndoorConfinement, nameof(HardcoreStatus.IndoorConfinement), hc.IndoorConfinement, kinkster.OwnPerms.AllowIndoorConfinement);
-        ClientHcStateRow(kinkster, dispName, width, KPID.Imprisonment, nameof(HardcoreStatus.Imprisonment), hc.Imprisonment, kinkster.OwnPerms.AllowImprisonment);
-        ClientHcStateRow(kinkster, dispName, width, KPID.ChatBoxesHidden, nameof(HardcoreStatus.ChatBoxesHidden), hc.ChatBoxesHidden, kinkster.OwnPerms.AllowHidingChatBoxes);
-        ClientHcStateRow(kinkster, dispName, width, KPID.ChatInputHidden, nameof(HardcoreStatus.ChatInputHidden), hc.ChatInputHidden, kinkster.OwnPerms.AllowHidingChatInput);
-        ClientHcStateRow(kinkster, dispName, width, KPID.ChatInputBlocked, nameof(HardcoreStatus.ChatInputBlocked), hc.ChatInputBlocked, kinkster.OwnPerms.AllowChatInputBlocking);
+        ClientHcStateRow(kinkster, dispName, width, KPID.LockedFollowing, nameof(HardcoreState.LockedFollowing), hc.LockedFollowing, kinkster.OwnPerms.AllowLockedFollowing);
+        ClientHcEmoteRow(kinkster, dispName, width, KPID.LockedEmoteState, nameof(HardcoreState.LockedEmoteState), hc.LockedEmoteState, kinkster.OwnPerms.AllowLockedSitting, kinkster.OwnPerms.AllowLockedEmoting);
+        ClientHcStateRow(kinkster, dispName, width, KPID.IndoorConfinement, nameof(HardcoreState.IndoorConfinement), hc.IndoorConfinement, kinkster.OwnPerms.AllowIndoorConfinement);
+        ClientHcStateRow(kinkster, dispName, width, KPID.Imprisonment, nameof(HardcoreState.Imprisonment), hc.Imprisonment, kinkster.OwnPerms.AllowImprisonment);
+        ClientHcStateRow(kinkster, dispName, width, KPID.ChatBoxesHidden, nameof(HardcoreState.ChatBoxesHidden), hc.ChatBoxesHidden, kinkster.OwnPerms.AllowHidingChatBoxes);
+        ClientHcStateRow(kinkster, dispName, width, KPID.ChatInputHidden, nameof(HardcoreState.ChatInputHidden), hc.ChatInputHidden, kinkster.OwnPerms.AllowHidingChatInput);
+        ClientHcStateRow(kinkster, dispName, width, KPID.ChatInputBlocked, nameof(HardcoreState.ChatInputBlocked), hc.ChatInputBlocked, kinkster.OwnPerms.AllowChatInputBlocking);
         ImGui.Separator();
 
         // Hardcore confirm modal.
@@ -261,16 +258,16 @@ public partial class SidePanelPair
         KinksterPermRow(kinkster, dispName, width, KPID.PuppetPermAll,           kinkster.PairPerms.PuppetPerms,              kinkster.PairPermAccess.PuppetPermsAllowed, PuppetPerms.All);
         ImGui.Separator();
 
-        ImGui.TextUnformatted("Moodles Permissions");
+        ImGui.TextUnformatted("Loci Permissions");
         KinksterPermRow(kinkster, dispName, width, KPID.ApplyPositive,           kinkster.PairPerms.LociAccess,              kinkster.PairPermAccess.LociAccessAllowed, LociAccess.Positive);
         KinksterPermRow(kinkster, dispName, width, KPID.ApplyNegative,           kinkster.PairPerms.LociAccess,              kinkster.PairPermAccess.LociAccessAllowed, LociAccess.Negative);
         KinksterPermRow(kinkster, dispName, width, KPID.ApplySpecial,            kinkster.PairPerms.LociAccess,              kinkster.PairPermAccess.LociAccessAllowed, LociAccess.Special);
-        KinksterPermRow(kinkster, dispName, width, KPID.ApplyOwnMoodles,         kinkster.PairPerms.LociAccess,              kinkster.PairPermAccess.LociAccessAllowed, LociAccess.AllowOwn);
-        KinksterPermRow(kinkster, dispName, width, KPID.ApplyPairsMoodles,       kinkster.PairPerms.LociAccess,              kinkster.PairPermAccess.LociAccessAllowed, LociAccess.AllowOther);
-        KinksterPermRow(kinkster, dispName, width, KPID.MaxMoodleTime,           kinkster.PairPerms.MaxLociTime,             kinkster.PairPermAccess.MaxLociTimeAllowed);
-        KinksterPermRow(kinkster, dispName, width, KPID.PermanentMoodles,        kinkster.PairPerms.LociAccess,              kinkster.PairPermAccess.LociAccessAllowed, LociAccess.Permanent);
-        KinksterPermRow(kinkster, dispName, width, KPID.RemoveAppliedMoodles,    kinkster.PairPerms.LociAccess,              kinkster.PairPermAccess.LociAccessAllowed, LociAccess.RemoveApplied);
-        KinksterPermRow(kinkster, dispName, width, KPID.RemoveAnyMoodles,        kinkster.PairPerms.LociAccess,              kinkster.PairPermAccess.LociAccessAllowed, LociAccess.RemoveAny);
+        KinksterPermRow(kinkster, dispName, width, KPID.ApplyOwnLociData,        kinkster.PairPerms.LociAccess,              kinkster.PairPermAccess.LociAccessAllowed, LociAccess.AllowOwn);
+        KinksterPermRow(kinkster, dispName, width, KPID.ApplyPairsLociData,      kinkster.PairPerms.LociAccess,              kinkster.PairPermAccess.LociAccessAllowed, LociAccess.AllowOther);
+        KinksterPermRow(kinkster, dispName, width, KPID.MaxLociStatusTime,       kinkster.PairPerms.MaxLociTime,             kinkster.PairPermAccess.MaxLociTimeAllowed);
+        KinksterPermRow(kinkster, dispName, width, KPID.PermaLociStatuses,       kinkster.PairPerms.LociAccess,              kinkster.PairPermAccess.LociAccessAllowed, LociAccess.Permanent);
+        KinksterPermRow(kinkster, dispName, width, KPID.RemoveAppliedLociData,   kinkster.PairPerms.LociAccess,              kinkster.PairPermAccess.LociAccessAllowed, LociAccess.RemoveApplied);
+        KinksterPermRow(kinkster, dispName, width, KPID.RemoveAnyLociStatus,     kinkster.PairPerms.LociAccess,              kinkster.PairPermAccess.LociAccessAllowed, LociAccess.RemoveAny);
         ImGui.Separator();
 
         ImGui.TextUnformatted("Misc. Permissions");
@@ -320,7 +317,7 @@ public partial class SidePanelPair
 
             if (kinkster.IsRendered)
             {
-                DrawMoodlesActions(cache, kinkster, width, dispName);
+                DrawLociActions(cache, kinkster, width, dispName);
                 ImGui.Separator();
             }
 

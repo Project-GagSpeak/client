@@ -137,7 +137,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
             var prevHc = ClientData.Hardcore!;
             // get updated versions.
             var newGlobals = ClientData.GlobalsWithSafewordApplied();
-            var newHardcore = new HardcoreStatus();
+            var newHardcore = new HardcoreState();
             // REGARDLESS of the change, we should update things locally!
             _clientData.SetGlobals(newGlobals, newHardcore);
             // Then perform the server call.
@@ -239,7 +239,7 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
         {
             Logger.LogInformation("[HC-SAFEWORD PROGRESS]: Syncing HardcoreStatus with player control!");
             var prevHc = ClientData.HardcoreClone()!;
-            var newHardcore = new HardcoreStatus();
+            var newHardcore = new HardcoreState();
             // REGARDLESS of the change, we should update things locally!
             _clientData.SetGlobals((GlobalPerms)ClientData.Globals!, newHardcore);
             var result = await _hub.UserBulkChangeGlobal(new(MainHub.OwnUserData, (GlobalPerms)ClientData.Globals!, newHardcore)).ConfigureAwait(false);

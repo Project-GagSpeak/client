@@ -16,7 +16,6 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Utils;
 using OtterGui.Text;
-using System.Linq;
 
 namespace GagSpeak.DrawSystem;
 

@@ -1,9 +1,7 @@
 using CkCommons;
-using CkCommons.DrawSystem;
 using CkCommons.FileSystem;
 using CkCommons.FileSystem.Selector;
 using CkCommons.Gui;
-using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
@@ -12,8 +10,8 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
+using GagSpeak.State.Models;
 using GagSpeak.Utils;
-using GagspeakAPI.Data;
 using OtterGui;
 
 namespace GagSpeak.FileSystems;

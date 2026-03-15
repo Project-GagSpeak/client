@@ -68,7 +68,7 @@ public sealed class ClientDataListener : IDisposable
         if (_kinksters.GetUserOrDefault(enactor) is not { } kinkster)
             throw new InvalidOperationException($"Kinkster [{enactor.AliasOrUID}] not found, this will throw your data out of sync!");
         // get a dummy HcPerms.
-        var newData = new HardcoreStatus()
+        var newData = new HardcoreState()
         {
             HypnoticEffect = kinkster.OwnPerms.InHardcore && kinkster.OwnPerms.DevotionalLocks ? enactor.UID + Constants.DevotedString : enactor.UID,
             HypnoticEffectTimer = expireTime,
@@ -82,7 +82,7 @@ public sealed class ClientDataListener : IDisposable
     }
 
     // Only ever self-invoked, all handlers should process their own strings.
-    public void ChangeAllClientGlobals(UserData enactor, GlobalPerms globals, HardcoreStatus hardcore)
+    public void ChangeAllClientGlobals(UserData enactor, GlobalPerms globals, HardcoreState hardcore)
     {
         var prevGlobals = ClientData.GlobalPermClone();
         var prevHardcore = ClientData.HardcoreClone();
@@ -119,7 +119,7 @@ public sealed class ClientDataListener : IDisposable
     ///     Either enables or disables a hardcore attribute within the hardcore state, making use of the newData object. <para />
     ///     If enabling a hardcore state, <paramref name="newData"/> <b> MUST BE NON-NULL.</b>
     /// </summary>
-    public void ChangeHardcoreStatus(UserData enactor, HcAttribute attribute, HardcoreStatus newData)
+    public void ChangeHardcoreStatus(UserData enactor, HcAttribute attribute, HardcoreState newData)
     {
         // if the attribute was hypno with a new state of active, fail. This MUST be handled separately.
         if (attribute is HcAttribute.HypnoticEffect && newData.HypnoticEffect.Length > 0)
@@ -138,7 +138,7 @@ public sealed class ClientDataListener : IDisposable
     }
 
     // All Single Change handles for GlobalPermissions so far are just bools, which makes this easier for us.
-    public void HandleGlobalPermChanges(UserData enactor, IReadOnlyGlobalPerms? prev, IReadOnlyGlobalPerms? current)
+    public void HandleGlobalPermChanges(UserData enactor, GlobalPerms? prev, GlobalPerms? current)
     {
         var garblerChanged = prev?.ChatGarblerActive != current?.ChatGarblerActive;
         var nameplateChanged = prev?.GaggedNameplate != current?.GaggedNameplate;

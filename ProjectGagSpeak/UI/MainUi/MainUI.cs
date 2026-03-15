@@ -8,6 +8,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
 using GagSpeak.Interop;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
@@ -41,11 +42,11 @@ public class MainUI : WindowMediatorSubscriberBase
     private readonly HomeTab _homepageTab;
     private readonly RequestsTab _requestsTab;
     private readonly WhitelistTab _whitelistTab;
-    private readonly PatternHubTab _patternHubTab;
-    private readonly MoodleHubTab _moodlesHubTab;
+    private readonly PatternSharehubTab _patternSharehubTab;
+    private readonly LociSharehubTab _lociSharehubTab;
     private readonly GlobalChatTab _globalChatTab;
 
-    private bool _showSundWarning = true;
+    private bool _showMissingRecommended = true;
 
     private bool _creatingRequest = false;
     public string _uidToSentTo = string.Empty;
@@ -57,7 +58,7 @@ public class MainUI : WindowMediatorSubscriberBase
         AccountManager account, MainHub hub, MainMenuTabs tabMenu, IpcManager ipc,
         SidePanelService sidePanel, RequestsManager requestmanager, KinksterManager kinksters,
         TutorialService guides, HomeTab home, RequestsTab requests, WhitelistTab whitelist,
-        PatternHubTab patternHub, MoodleHubTab moodlesHub, GlobalChatTab globalChat)
+        PatternSharehubTab patternHub, LociSharehubTab lociSharehub, GlobalChatTab globalChat)
         : base(logger, mediator, "###GagSpeakMainUI")
     {
         _config = config;
@@ -72,8 +73,8 @@ public class MainUI : WindowMediatorSubscriberBase
         _homepageTab = home;
         _requestsTab = requests;
         _whitelistTab = whitelist;
-        _patternHubTab = patternHub;
-        _moodlesHubTab = moodlesHub;
+        _patternSharehubTab = patternHub;
+        _lociSharehubTab = lociSharehub;
         _globalChatTab = globalChat;
 
         // display info about the folders
@@ -129,10 +130,21 @@ public class MainUI : WindowMediatorSubscriberBase
         }
     }
 
+    private int GetMissingRecommended()
+    {
+        var missing = 0;
+        if (!_showMissingRecommended) return missing;
+        if (!IpcCallerSundouleia.APIAvailable) missing++;
+        if (!IpcCallerPenumbra.APIAvailable) missing++;
+        if (!IpcCallerGlamourer.APIAvailable) missing++;
+        if (!IpcCallerLoci.APIAvailable) missing++;
+        return missing;
+    }
+
     protected override void DrawInternal()
     {
         // get the width of the window content region we set earlier
-        var winContentWidth = CkGui.GetWindowContentRegionWidth();
+        var width = CkGui.GetWindowContentRegionWidth();
 
         var disableButtons = MainHub.ServerStatus is (ServerState.NoSecretKey or ServerState.VersionMisMatch or ServerState.Unauthorized);
         DrawTopBar();
@@ -147,8 +159,6 @@ public class MainUI : WindowMediatorSubscriberBase
             {
                 ImGui.Spacing();
                 ImGui.Separator();
-                ImGui.Separator();
-                // the wrapped text explanation based on the error.
                 CkGui.ColorTextWrapped(GetServerError(), ImGuiColors.DalamudWhite);
             }
             return;
@@ -157,36 +167,14 @@ public class MainUI : WindowMediatorSubscriberBase
 
         // If we are creating a request to send to another user, draw this first.
         if (_creatingRequest)
-            DrawRequestCreator(winContentWidth, ImUtf8.ItemInnerSpacing.X);
+            DrawRequestCreator(width, ImUtf8.ItemInnerSpacing.X);
 
         // draw the bottom tab bar
-        _tabMenu.Draw(winContentWidth);
+        _tabMenu.Draw(width);
 
-        if (!IpcCallerSundouleia.APIAvailable && _showSundWarning)
-        {
-            var warnHeight = ImUtf8.FrameHeight + ImUtf8.TextHeightSpacing * 5;
-            using (var _ = CkRaii.FramedChildPaddedW("sund-warn", winContentWidth, warnHeight, 0, CkCol.TriStateCross.Uint(), CkStyle.ChildRounding(), 3f, wFlags: WFlags.NoScrollbar))
-            {
-                CkGui.ColorText("Not Currently Attached to Sundouleia!", CkCol.TriStateCross.Vec4Ref());
-                ImGui.SameLine(_.InnerRegion.X - ImGuiHelpers.GetButtonSize("Ignore").X + ImUtf8.ItemSpacing.X);
-                if (ImGui.SmallButton("Ignore"))
-                    _showSundWarning = false;
-                CkGui.AttachToolTip("Dismiss this message for this instance of GagSpeak.");
-
-                ImGui.Text("Get a stable, responsive, and immersive experience with:");
-                ImGui.BulletText("Near-instant updates (~250ms)");
-                ImGui.BulletText("Minimal redraws when updating actors");
-                ImGui.BulletText("More responsive interactions");
-                if (CkGui.IconTextButton(FAI.SquareArrowUpRight, "Open Experimental Plugins UI"))
-                    Svc.PluginInterface.OpenDalamudSettingsTo(SettingsOpenKind.Experimental);
-                CkGui.AttachToolTip("Opens the experimental plugins tab in settings to paste the repo link.");
-                ImUtf8.SameLineInner();
-                if (CkGui.IconTextButton(FAI.Clipboard, "Copy Plugin Repo"))
-                    ImGui.SetClipboardText("https://raw.githubusercontent.com/Sundouleia/repo/main/sundouleia.json");
-                CkGui.AttachToolTip("Copies the plugin repo to your clipboard to paste into the experimental plugins");
-            }
-        }
-
+        // Get if we have missing recommended plugins.
+        if (GetMissingRecommended() > 0)
+            ShowMissingPlugins(width);
 
         // display content based on the tab selected
         switch (_tabMenu.TabSelection)
@@ -200,17 +188,84 @@ public class MainUI : WindowMediatorSubscriberBase
             case MainMenuTabs.SelectedTab.Whitelist:
                 _whitelistTab.DrawSection();
                 break;
-            case MainMenuTabs.SelectedTab.PatternHub:
-                _patternHubTab.DrawPatternHub();
+            case MainMenuTabs.SelectedTab.PatternSharehub:
+                _patternSharehubTab.DrawSharehub();
                 _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.PatternResults, LastPos, LastSize,
-                    _ => { _tabMenu.TabSelection = MainMenuTabs.SelectedTab.MoodlesHub; });
+                    _ => { _tabMenu.TabSelection = MainMenuTabs.SelectedTab.LociSharehub; });
                 break;
-            case MainMenuTabs.SelectedTab.MoodlesHub:
-                _moodlesHubTab.DrawMoodlesHub();
+            case MainMenuTabs.SelectedTab.LociSharehub:
+                _lociSharehubTab.DrawSharehub();
                 break;
             case MainMenuTabs.SelectedTab.GlobalChat:
                 _globalChatTab.DrawSection();
                 break;
+        }
+    }
+
+    private void ShowMissingPlugins(float width)
+    {
+        var total = GetMissingRecommended();
+        var warnH = ImUtf8.TextHeight + ((ImUtf8.TextHeight + ImUtf8.ItemSpacing.Y * 2) * total);
+        using var _ = CkRaii.FramedChildPaddedW("missing-recommended", width, warnH, 0, ImGuiColors.DalamudYellow.ToUint(), CkStyle.ChildRounding());
+
+        var closeSize = new Vector2(ImUtf8.TextHeight * .75f);
+        var padding = new Vector2((ImUtf8.TextHeight - closeSize.Y) / 2);
+        var drawPos = ImGui.GetCursorScreenPos() + new Vector2(_.InnerRegion.X - closeSize.X - padding.X, padding.Y);
+        CkGui.TextUnderlined("Recommended Plugins Missing!", ImGuiColors.DalamudYellow);
+
+        CloseButton(drawPos, closeSize);
+        CkGui.AttachToolTip("Dismiss this message for this instance of GagSpeak.");
+
+        if (!IpcCallerSundouleia.APIAvailable)
+        {
+            ImGui.Spacing();
+            ImGui.Bullet();
+            CkGui.TextInline("Sundouleia");
+            ImGui.SameLine();
+            if (ImGui.SmallButton("Learn More##sund-warn"))
+                Mediator.Publish(new OpenSettingsPluginInfoMessage(OptionalPlugin.Sundouleia));
+            CkGui.AttachToolTip("Opens a helper box in the Settings UI for more info.");
+        }
+        if (!IpcCallerPenumbra.APIAvailable)
+        {
+            ImGui.Spacing();
+            ImGui.Bullet();
+            CkGui.TextInline("Penumbra");
+            ImGui.SameLine();
+            if (ImGui.SmallButton("Learn More##pen-warn"))
+                Mediator.Publish(new OpenSettingsPluginInfoMessage(OptionalPlugin.Penumbra));
+            CkGui.AttachToolTip("Opens a helper box in the Settings UI for more info.");
+        }
+        if (!IpcCallerGlamourer.APIAvailable)
+        {
+            ImGui.Spacing();
+            ImGui.Bullet();
+            CkGui.TextInline("Glamourer");
+            ImGui.SameLine();
+            if (ImGui.SmallButton("Learn More##glam-warn"))
+                Mediator.Publish(new OpenSettingsPluginInfoMessage(OptionalPlugin.Glamourer));
+            CkGui.AttachToolTip("Opens a helper box in the Settings UI for more info.");
+        }
+        if (!IpcCallerLoci.APIAvailable)
+        {
+            ImGui.Spacing();
+            ImGui.Bullet();
+            CkGui.TextInline("Loci");
+            ImGui.SameLine();
+            if (ImGui.SmallButton("Learn More##loci-warn"))
+                Mediator.Publish(new OpenSettingsPluginInfoMessage(OptionalPlugin.Loci));
+            CkGui.AttachToolTip("Opens a helper box in the Settings UI for more info.");
+        }
+
+        void CloseButton(Vector2 pos, Vector2 size)
+        {
+            var hovered = ImGui.IsMouseHoveringRect(pos, pos + size);
+            var closeButtonColor = hovered ? uint.MaxValue : CkCol.Favorite.Uint();
+            ImGui.GetWindowDrawList().AddLine(pos, pos + size, closeButtonColor, 3 * ImGuiHelpers.GlobalScale);
+            ImGui.GetWindowDrawList().AddLine(new Vector2(pos.X + size.X, pos.Y), new Vector2(pos.X, pos.Y + size.Y), closeButtonColor, 3 * ImGuiHelpers.GlobalScale);
+
+            if (ImGui.IsMouseReleased(ImGuiMouseButton.Left) && hovered)
+                _showMissingRecommended = false;
         }
     }
 

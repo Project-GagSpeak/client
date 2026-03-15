@@ -35,7 +35,7 @@ public class AddressBookEntry
         };
     }
 
-    public static AddressBookEntry FromHardcoreStatus(IReadOnlyHardcoreState hcState)
+    public static AddressBookEntry FromHardcoreStatus(HardcoreState hcState)
         => new AddressBookEntry
         {
             Name = "HardcoreStatus-Assigned-Address",

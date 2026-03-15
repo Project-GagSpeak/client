@@ -6,7 +6,6 @@ using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Hub;
-using GagspeakAPI.Network;
 using Dalamud.Bindings.ImGui;
 using OtterGui.Text;
 

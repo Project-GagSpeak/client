@@ -112,7 +112,7 @@ public class CollarRequestsOutgoingTab : IFancyTab
             var refVar5 = false;
             ImGui.Checkbox("Toggle Visibility", ref refVar2);
             ImGui.Checkbox("Glamour Dyes", ref refVar3);
-            ImGui.Checkbox("Moodle", ref refVar4);
+            ImGui.Checkbox("LociData", ref refVar4);
             ImGui.Checkbox("Collar Writing", ref refVar5);
         }
         CkGui.AttachToolTip("This is the access you will have if the request is accepted.");
@@ -127,7 +127,7 @@ public class CollarRequestsOutgoingTab : IFancyTab
             var refVar5 = false;
             ImGui.Checkbox("Toggle Visibility", ref refVar2);
             ImGui.Checkbox("Glamour Dyes", ref refVar3);
-            ImGui.Checkbox("Moodle", ref refVar4);
+            ImGui.Checkbox("LociData", ref refVar4);
             ImGui.Checkbox("Collar Writing", ref refVar5);
             ImGui.Checkbox("Glam/Mod Access", ref refVar1);
         }
@@ -192,7 +192,7 @@ public class CollarRequestsOutgoingTab : IFancyTab
             ImUtf8.SameLineInner();
             AccessPerm(FAI.FillDrip, request.OwnerAccess.HasAny(CollarAccess.Dyes), $"You can dye {request.Target.AliasOrUID}'s collar", $"You cannot dye {request.Target.AliasOrUID}'s collar");
             ImUtf8.SameLineInner();
-            AccessPerm(FAI.TheaterMasks, request.OwnerAccess.HasAny(CollarAccess.StatusInfo), $"You can change {request.Target.AliasOrUID}'s collar LociData", $"You cannot change {request.Target.AliasOrUID}'s collar LociData");
+            AccessPerm(FAI.TheaterMasks, request.OwnerAccess.HasAny(CollarAccess.LociData), $"You can change {request.Target.AliasOrUID}'s collar LociData", $"You cannot change {request.Target.AliasOrUID}'s collar LociData");
             ImUtf8.SameLineInner();
             AccessPerm(FAI.PenFancy, request.OwnerAccess.HasAny(CollarAccess.Writing), $"You can change {request.Target.AliasOrUID}'s collar writing", $"You cannot change {request.Target.AliasOrUID}'s collar writing");
 
@@ -203,7 +203,7 @@ public class CollarRequestsOutgoingTab : IFancyTab
             ImUtf8.SameLineInner();
             AccessPerm(FAI.FillDrip, request.TargetAccess.HasAny(CollarAccess.Dyes), $"{request.Target.AliasOrUID} can dye their collar", $"{request.Target.AliasOrUID} cannot dye their collar.");
             ImUtf8.SameLineInner();
-            AccessPerm(FAI.TheaterMasks, request.TargetAccess.HasAny(CollarAccess.StatusInfo), $"{request.Target.AliasOrUID} can change their collar LociData", $"{request.Target.AliasOrUID} cannot change their collar LociData.");
+            AccessPerm(FAI.TheaterMasks, request.TargetAccess.HasAny(CollarAccess.LociData), $"{request.Target.AliasOrUID} can change their collar LociData", $"{request.Target.AliasOrUID} cannot change their collar LociData.");
             ImUtf8.SameLineInner();
             AccessPerm(FAI.PenFancy, request.TargetAccess.HasAny(CollarAccess.Writing), $"{request.Target.AliasOrUID} can change their collar writing", $"{request.Target.AliasOrUID} cannot change their collar writing.");
         }

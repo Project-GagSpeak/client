@@ -5,8 +5,11 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Interop;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
+using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
@@ -351,28 +354,35 @@ public partial class SidePanelPair
     }
     #endregion Restraints
 
-    #region Moodles
-    private void DrawMoodlesActions(KinksterInfoCache cache, Kinkster k, float width, string dispName)
+    #region Loci
+    private void DrawLociActions(KinksterInfoCache cache, Kinkster k, float width, string dispName)
     {
-        ImGui.Text("Moodles");
-        CkGui.ColorTextCentered("Broken By Moodles Changes", CkCol.TriStateCross.Uint());
-        using var dis = ImRaii.Disabled();
-        DrawApplyMoodleOwn(cache, k, dispName, width);
-        DrawApplyMoodleOther(cache, k, dispName, width);
+        ImGui.Text("Loci Actions");
+        if (!IpcCallerLoci.APIAvailable)
+        {
+            ImGui.SameLine();
+            CkGui.ColorText("(plugin not found)", CkCol.TriStateCross.Uint());
+            ImUtf8.SameLineInner();
+            if (ImGui.SmallButton("Learn More##loci-help-panel"))
+                _mediator.Publish(new OpenSettingsPluginInfoMessage(OptionalPlugin.Loci));
+        }
+        using var _ = ImRaii.Disabled(!IpcCallerLoci.APIAvailable);
+        DrawApplyOwnLociData(cache, k, dispName, width);
+        DrawApplyPairLociData(cache, k, dispName, width);
     }
 
-    private void DrawApplyMoodleOwn(KinksterInfoCache cache, Kinkster k, string dispName, float width)
+    private void DrawApplyOwnLociData(KinksterInfoCache cache, Kinkster k, string dispName, float width)
     {
         var hasStatuses = LociCache.Data.Statuses.Count > 0;
         var hasPresets = LociCache.Data.Presets.Count > 0;
         var isAllowed = k.PairPerms.LociAccess.HasAny(LociAccess.AllowOther);
 
         var statusTxt = hasStatuses ? $"Apply a status to {dispName}" : $"No statuses to apply";
-        var statusTT = isAllowed ? $"Applies a status to {dispName}." : $"Cannot apply your own moodles to {dispName}. --COL--(Permission Denied)--COL--";
+        var statusTT = isAllowed ? $"Applies a status to {dispName}." : $"Cannot apply your loci statuses to {dispName}. --COL--(Permission Denied)--COL--";
         var presetTxt = hasStatuses ? $"Apply a preset to {dispName}" : $"No presets to apply";
-        var presetTT = isAllowed ? $"Applies a preset to {dispName}." : $"Cannot apply your own moodles to {dispName}. --COL--(Permission Denied)--COL--";
+        var presetTT = isAllowed ? $"Applies a preset to {dispName}." : $"Cannot apply your loci presets to {dispName}. --COL--(Permission Denied)--COL--";
 
-        // Applying own moodles
+        // Applying own statuses
         if (CkGui.IconTextButton(FAI.UserPlus, statusTxt, width, true, !isAllowed || !hasStatuses))
             cache.ToggleInteraction(InteractionType.ApplyOwnStatus);
         CkGui.AttachToolTip(statusTT);
@@ -397,7 +407,7 @@ public partial class SidePanelPair
         }
     }
 
-    private void DrawApplyMoodleOther(KinksterInfoCache cache, Kinkster k, string dispName, float width)
+    private void DrawApplyPairLociData(KinksterInfoCache cache, Kinkster k, string dispName, float width)
     {
         var hasStatuses = k.LociData.Statuses.Count > 0;
         var hasPresets = k.LociData.Presets.Count > 0;
@@ -408,7 +418,7 @@ public partial class SidePanelPair
         var presetTxt = hasPresets ? $"Apply a preset from {dispName}'s list" : "No presets to apply.";
         var presetTT = isAllowed ? $"Applies a chosen preset to {dispName}." : $"Cannot apply {dispName}'s presets. --COL--(Permission Denied)--COL--";
 
-        // Applying sundesmo's moodles
+        // Applying kinksters statuses
         if (CkGui.IconTextButton(FAI.UserPlus, statusTxt, width, true, !isAllowed || !hasStatuses))
             cache.ToggleInteraction(InteractionType.ApplyOtherStatus);
         CkGui.AttachToolTip(statusTT);
@@ -420,7 +430,7 @@ public partial class SidePanelPair
             ImGui.Separator();
         }
 
-        // Applying sundesmo's presets.
+        // Applying kinksters presets.
         if (CkGui.IconTextButton(FAI.FileCirclePlus, presetTxt, width, true, !isAllowed || !hasPresets))
             cache.ToggleInteraction(InteractionType.ApplyOtherPreset);
         CkGui.AttachToolTip(presetTT);
@@ -449,7 +459,7 @@ public partial class SidePanelPair
                 cache.Remover.DrawStatuses($"##statusremover-{k.UserData.UID}", width, false, $"Removes Selected Status from {dispName}");
         }
     }
-    #endregion Moodles
+    #endregion Loci
 
     #region Toybox
     private void DrawToyboxActions(KinksterInfoCache cache, Kinkster k, float width, string dispName)

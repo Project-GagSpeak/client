@@ -64,8 +64,8 @@ public class PublicationsUI : WindowMediatorSubscriberBase
                 case PublicationTabs.SelectedTab.Patterns:
                     _manager.DrawPatternPublications();
                     break;
-                case PublicationTabs.SelectedTab.Moodles:
-                    _manager.DrawMoodlesPublications();
+                case PublicationTabs.SelectedTab.Loci:
+                    _manager.DrawLociPublications();
                     break;
                 default:
                     break;

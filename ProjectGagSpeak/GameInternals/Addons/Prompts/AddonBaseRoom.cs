@@ -2,7 +2,6 @@ using CkCommons;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Memory;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using GagSpeak.Utils;
 
 namespace GagSpeak.GameInternals.Addons;
 public unsafe static class AddonBaseRoom

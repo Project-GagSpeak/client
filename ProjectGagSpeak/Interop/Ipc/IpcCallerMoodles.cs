@@ -1,29 +1,34 @@
 using CkCommons;
 using Dalamud.Plugin.Ipc;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.Services.Mediator;
 
 namespace GagSpeak.Interop;
 
+// Honestly dont really know what to use here.
+// I guess we can check for version... maybe use it to apply own Ids?
+// But others wouldnt know the ID's unless they had the data..
+// There is also the nightmare of trying to design combos for each type.
+// If anything, include the typedefs here.... not globally.
 public sealed class IpcCallerMoodles : IIpcCaller
 {
     private readonly ICallGateSubscriber<int> ApiVersion;
 
-    public readonly ICallGateSubscriber<nint, object>       OnStatusManagerModified;
+    // Guess we can monitor these to not completely screw people over. But dont use it in transfer either.
     public readonly ICallGateSubscriber<Guid, bool, object> OnStatusUpdated;
     public readonly ICallGateSubscriber<Guid, bool, object> OnPresetUpdated;
 
-    // API Getters
-    private readonly ICallGateSubscriber<List<MoodleStatusInfo>>       GetManagerInfo;
-    private readonly ICallGateSubscriber<nint, List<MoodleStatusInfo>> GetManagerInfoByPtr;
-    private readonly ICallGateSubscriber<Guid, MoodleStatusInfo>       GetStatusInfo;
-    private readonly ICallGateSubscriber<List<MoodleStatusInfo>>       GetStatusInfoList;
-    private readonly ICallGateSubscriber<Guid, MoodlePresetInfo>       GetPresetInfo;
-    private readonly ICallGateSubscriber<List<MoodlePresetInfo>>       GetPresetsInfoList;
-    // API Enactors
+    // Dont fetch status manager info as we only allow removal via Loci.
+
+    // This data when obtained could be used for initial storage if absolutely nessisary 
+    private readonly ICallGateSubscriber<Guid, DeprecatedStatusInfo>       GetStatusInfo;
+    private readonly ICallGateSubscriber<List<DeprecatedStatusInfo>>       GetStatusInfoList;
+    private readonly ICallGateSubscriber<Guid, DeprecatedPresetInfo>       GetPresetInfo;
+    private readonly ICallGateSubscriber<List<DeprecatedPresetInfo>>       GetPresetsInfoList;
+    
+    // Basic interaction for GUID application, but will can only be used to apply ones own statuses.
     private readonly ICallGateSubscriber<Guid, nint, object>        ApplyStatusByPtr;
     private readonly ICallGateSubscriber<List<Guid>, nint, object>  RemoveStatusesByPtr;
-    // Other calls are made via the static calls of the IpcProvider,
-    // such as tuple application and locking/unlocking.
 
     private readonly GagspeakMediator _mediator;
 
@@ -33,19 +38,17 @@ public sealed class IpcCallerMoodles : IIpcCaller
 
         ApiVersion = Svc.PluginInterface.GetIpcSubscriber<int>("Moodles.Version");
 
-        // API Getters (Status Managers)
-        GetManagerInfo = Svc.PluginInterface.GetIpcSubscriber<List<MoodleStatusInfo>>("Moodles.GetClientStatusManagerInfoV2");
-        GetManagerInfoByPtr = Svc.PluginInterface.GetIpcSubscriber<nint, List<MoodleStatusInfo>>("Moodles.GetStatusManagerInfoByPtrV2");
-        // API Getters (Status and Preset Info)
-        GetStatusInfo = Svc.PluginInterface.GetIpcSubscriber<Guid, MoodleStatusInfo>("Moodles.GetStatusInfoV2");
-        GetStatusInfoList = Svc.PluginInterface.GetIpcSubscriber<List<MoodleStatusInfo>>("Moodles.GetStatusInfoListV2");
-        GetPresetInfo = Svc.PluginInterface.GetIpcSubscriber<Guid, MoodlePresetInfo>("Moodles.GetPresetInfoV2");
-        GetPresetsInfoList = Svc.PluginInterface.GetIpcSubscriber<List<MoodlePresetInfo>>("Moodles.GetPresetsInfoListV2");
-        // API Enactors
+        // Helps the client obtain their own moodles data.
+        GetStatusInfo = Svc.PluginInterface.GetIpcSubscriber<Guid, DeprecatedStatusInfo>("Moodles.GetStatusInfoV2");
+        GetStatusInfoList = Svc.PluginInterface.GetIpcSubscriber<List<DeprecatedStatusInfo>>("Moodles.GetStatusInfoListV2");
+        GetPresetInfo = Svc.PluginInterface.GetIpcSubscriber<Guid, DeprecatedPresetInfo>("Moodles.GetPresetInfoV2");
+        GetPresetsInfoList = Svc.PluginInterface.GetIpcSubscriber<List<DeprecatedPresetInfo>>("Moodles.GetPresetsInfoListV2");
+        
+        // Helps the client apply their own moodle stuff.
         ApplyStatusByPtr = Svc.PluginInterface.GetIpcSubscriber<Guid, nint, object>("Moodles.AddOrUpdateMoodleByPtrV2");
         RemoveStatusesByPtr = Svc.PluginInterface.GetIpcSubscriber<List<Guid>, nint, object>("Moodles.RemoveMoodlesByPtrV2");
-        // API Action Events:
-        OnStatusManagerModified = Svc.PluginInterface.GetIpcSubscriber<nint, object>("Moodles.StatusManagerModified");
+
+        // Help keep the clients stored data in check.
         OnStatusUpdated = Svc.PluginInterface.GetIpcSubscriber<Guid, bool, object>("Moodles.StatusUpdated");
         OnPresetUpdated = Svc.PluginInterface.GetIpcSubscriber<Guid, bool, object>("Moodles.PresetUpdated");
 
@@ -61,11 +64,13 @@ public sealed class IpcCallerMoodles : IIpcCaller
             var result = ApiVersion.InvokeFunc() >= 4;
             if (!APIAvailable && result)
                 _mediator.Publish(new MoodlesReady());
+            else if (APIAvailable && !result)
+                _mediator.Publish(new MoodlesDisposed());
+
             APIAvailable = result;
         }
         catch
         {
-            // Moodles was not ready yet / went offline. Set back to false. (Statuses are auto-cleared by moodles)
             APIAvailable = false;
         }
     }
@@ -73,65 +78,44 @@ public sealed class IpcCallerMoodles : IIpcCaller
     public void Dispose()
     { }
 
-    /// <summary>
-    ///     Gets the ClientPlayer's StatusManager in tuple format.
-    /// </summary>
-    public async Task<List<MoodleStatusInfo>> GetOwnDataInfo()
+    // Grab the client's Moodle Statuses. These should be converted to Loci format.
+    public async Task<LociStatusInfo> GetStatusDetails(Guid guid)
     {
-        if (!APIAvailable) return new List<MoodleStatusInfo>();
-        return await Svc.Framework.RunOnFrameworkThread(GetManagerInfo.InvokeFunc).ConfigureAwait(false);
-    }
-
-    /// <summary>
-    ///     Gets another player's StatusManager in tuple format by pointer.
-    /// </summary>
-    public async Task<List<MoodleStatusInfo>> GetDataInfoByPtr(nint charaAddr)
-    {
-        if (!APIAvailable) return new List<MoodleStatusInfo>();
-        return await Svc.Framework.RunOnFrameworkThread(() => GetManagerInfoByPtr.InvokeFunc(charaAddr)).ConfigureAwait(false);
-    }
-
-    #region Info Collection
-
-    /// <summary>
-    ///     Gets the StatusTuple for a specified GUID.
-    /// </summary>
-    public async Task<MoodleStatusInfo> GetStatusDetails(Guid guid)
-    {
-        if (!APIAvailable) return new MoodleStatusInfo();
-        return await Svc.Framework.RunOnFrameworkThread(() => GetStatusInfo.InvokeFunc(guid)).ConfigureAwait(false);
+        if (!APIAvailable) return new LociStatusInfo();
+        var deprecatedData = await Svc.Framework.RunOnFrameworkThread(() => GetStatusInfo.InvokeFunc(guid)).ConfigureAwait(false);
+        return deprecatedData.ToLociTuple();
     }
 
     /// <summary> 
     ///     Gets the list of all our clients Moodles Info
     /// </summary>
-    public async Task<IEnumerable<MoodleStatusInfo>> GetStatusListDetails()
+    public async Task<List<LociStatusInfo>> GetStatusListDetails()
     {
         if (!APIAvailable) return [];
-        return await Svc.Framework.RunOnFrameworkThread(GetStatusInfoList.InvokeFunc).ConfigureAwait(false);
+        var deprecatedData = await Svc.Framework.RunOnFrameworkThread(GetStatusInfoList.InvokeFunc).ConfigureAwait(false);
+        return deprecatedData.Select(x => x.ToLociTuple()).ToList();
     }
 
     /// <summary> 
     ///     Gets the preset info for a provided GUID from the client.
     /// </summary>
-    public async Task<MoodlePresetInfo> GetPresetDetails(Guid guid)
+    public async Task<LociPresetInfo> GetPresetDetails(Guid guid)
     {
-        if (!APIAvailable) return new MoodlePresetInfo();
-        return await Svc.Framework.RunOnFrameworkThread(() => GetPresetInfo.InvokeFunc(guid)).ConfigureAwait(false);
+        if (!APIAvailable) return new LociPresetInfo();
+        var deprecatedData = await Svc.Framework.RunOnFrameworkThread(() => GetPresetInfo.InvokeFunc(guid)).ConfigureAwait(false);
+        return deprecatedData.ToLociTuple();
     }
 
     /// <summary>
     ///     Gets the list of all our clients Presets Info 
     /// </summary>
-    public async Task<IEnumerable<MoodlePresetInfo>> GetPresetListDetails()
+    public async Task<List<LociPresetInfo>> GetPresetListDetails()
     {
         if (!APIAvailable) return [];
-        return await Svc.Framework.RunOnFrameworkThread(GetPresetsInfoList.InvokeFunc).ConfigureAwait(false);
+        var deprecatedData = await Svc.Framework.RunOnFrameworkThread(GetPresetsInfoList.InvokeFunc).ConfigureAwait(false);
+        return deprecatedData.Select(x => x.ToLociTuple()).ToList();
     }
 
-    #endregion Info Collection.
-
-    #region Moodle Manipulation
     public async Task ApplyOwnStatus(Guid guid)
     {
         if (!APIAvailable) return;
@@ -151,5 +135,4 @@ public sealed class IpcCallerMoodles : IIpcCaller
         if (!APIAvailable) return;
         RemoveStatusesByPtr.InvokeAction(toRemove.ToList(), PlayerData.Address);
     }
-    #endregion Moodle Manipulation
 }

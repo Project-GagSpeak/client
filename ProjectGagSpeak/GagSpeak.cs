@@ -293,6 +293,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<GlobalChatLog>()
         .AddSingleton<PopoutGlobalChatlog>()
         .AddSingleton<VibeRoomChatlog>()
+        .AddSingleton<PluginGuideProvider>()
         .AddSingleton<MainMenuTabs>()
         .AddSingleton<SidePanelTabs>()
         .AddSingleton<RequestTabs>()
@@ -307,13 +308,14 @@ public static class GagSpeakServiceExtensions
 
     public static IServiceCollection AddGagSpeakIPC(this IServiceCollection services)
     => services
-        .AddSingleton<IpcCallerSundouleia>()
         .AddSingleton<IpcCallerCustomize>()
         .AddSingleton<IpcCallerGlamourer>()
         .AddSingleton<IpcCallerIntiface>()
         .AddSingleton<IpcCallerLifestream>()
         .AddSingleton<IpcCallerLoci>()
+        .AddSingleton<IpcCallerMoodles>()
         .AddSingleton<IpcCallerPenumbra>()
+        .AddSingleton<IpcCallerSundouleia>()
         .AddSingleton<IpcManager>()
         .AddSingleton<IpcProvider>()
         .AddSingleton<PenumbraTooltips>();
@@ -357,8 +359,8 @@ public static class GagSpeakServiceExtensions
         .AddScoped<HomeTab>()
         .AddScoped<RequestsTab>()
         .AddScoped<WhitelistTab>()
-        .AddScoped<PatternHubTab>()
-        .AddScoped<MoodleHubTab>()
+        .AddScoped<PatternSharehubTab>()
+        .AddScoped<LociSharehubTab>()
         .AddScoped<GlobalChatTab>()
         .AddScoped<WindowMediatorSubscriberBase, SidePanelUI>()
 
@@ -368,7 +370,7 @@ public static class GagSpeakServiceExtensions
         .AddScoped<RestraintEditorInfo>()
         .AddScoped<RestraintEditorEquipment>()
         .AddScoped<RestraintEditorLayers>()
-        .AddScoped<RestraintEditorModsMoodles>()
+        .AddScoped<RestraintEditorModsLociData>()
         .AddScoped<RestrictionsPanel>()
         .AddScoped<GagRestrictionsPanel>()
         .AddScoped<CollarPanel>()

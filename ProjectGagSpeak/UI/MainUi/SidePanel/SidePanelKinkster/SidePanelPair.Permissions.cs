@@ -1,4 +1,3 @@
-using CkCommons;
 using CkCommons.DrawSystem;
 using CkCommons.Gui;
 using Dalamud.Bindings.ImGui;
@@ -10,7 +9,6 @@ using GagSpeak.Utils;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using OtterGui.Text;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -30,7 +28,7 @@ public partial class SidePanelPair
         ClientRowEnum(kinkster, dispName, width, perm, isFlagSet, canEdit.HasAny(editFlag), () => current ^ editFlag, () => canEdit ^ editFlag);
     }
 
-    // Moodle Variant
+    // LociData Variant
     private void ClientPermRow(Kinkster kinkster, string dispName, float width, KPID perm, LociAccess current, LociAccess canEdit, LociAccess editFlag)
     {
         var isFlagSet = (current & editFlag) == editFlag;

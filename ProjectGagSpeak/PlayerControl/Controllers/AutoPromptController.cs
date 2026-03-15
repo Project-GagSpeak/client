@@ -5,11 +5,9 @@ using Dalamud.Memory;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using GagSpeak.GameInternals.Addons;
 using GagSpeak.GameInternals.Detours;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
-using GagSpeak.Utils;
 
 namespace GagSpeak.Services.Controller;
 

@@ -2,6 +2,7 @@ using CkCommons.Helpers;
 using CkCommons.RichText;
 using CkCommons.Textures;
 using Dalamud.Bindings.ImGui;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.Utils;
@@ -10,9 +11,9 @@ using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using OtterGui.Text;
 
-namespace GagSpeak.CustomCombos.Moodles;
+namespace GagSpeak.CustomCombos.Loci;
 
-public sealed class PairPresetCombo : MoodleComboBase<LociPresetInfo>
+public sealed class PairPresetCombo : LociComboBase<LociPresetInfo>
 {
     private int _maxPresetCount => _kinksterRef.LociData.Presets.Count > 0 ? _kinksterRef.LociData.PresetList.Max(x => x.Statuses.Count) : 0;
     private float _iconWithPadding => IconSize.X + ImGui.GetStyle().ItemInnerSpacing.X;
@@ -35,21 +36,21 @@ public sealed class PairPresetCombo : MoodleComboBase<LociPresetInfo>
 
     protected override bool DrawSelectable(int globalIdx, bool selected)
     {
-        var moodlePreset = Items[globalIdx];
+        var lociPreset = Items[globalIdx];
         var size = new Vector2(GetFilterWidth(), IconSize.Y);
-        var iconsSpace = (_iconWithPadding * moodlePreset.Statuses.Count);
+        var iconsSpace = (_iconWithPadding * lociPreset.Statuses.Count);
         var titleSpace = size.X - iconsSpace;
-        var ret = ImGui.Selectable($"##{moodlePreset.Title}", selected, ImGuiSelectableFlags.None, size);
+        var ret = ImGui.Selectable($"##{lociPreset.Title}", selected, ImGuiSelectableFlags.None, size);
 
         // Push the font first so the height is correct.
         using var _ = Fonts.Default150Percent.Push();
 
-        if (moodlePreset.Statuses.Count > 0)
+        if (lociPreset.Statuses.Count > 0)
         {
             ImGui.SameLine(titleSpace);
-            for (int i = 0, iconsDrawn = 0; i < moodlePreset.Statuses.Count; i++)
+            for (int i = 0, iconsDrawn = 0; i < lociPreset.Statuses.Count; i++)
             {
-                var status = moodlePreset.Statuses[i];
+                var status = lociPreset.Statuses[i];
                 if (!_kinksterRef.LociData.Statuses.TryGetValue(status, out var info))
                 {
                     ImGui.SameLine(0, _iconWithPadding);
@@ -57,9 +58,9 @@ public sealed class PairPresetCombo : MoodleComboBase<LociPresetInfo>
                 }
 
                 LociIcon.Draw(info.IconID, info.Stacks, IconSize);
-                LociEx.AttachTooltip(info, _kinksterRef.LociData);
+                LociHelpers.AttachTooltip(info, _kinksterRef.LociData);
 
-                if (++iconsDrawn < moodlePreset.Statuses.Count)
+                if (++iconsDrawn < lociPreset.Statuses.Count)
                     ImUtf8.SameLineInner();
             }
         }
@@ -67,7 +68,7 @@ public sealed class PairPresetCombo : MoodleComboBase<LociPresetInfo>
         ImGui.SameLine(ImUtf8.ItemInnerSpacing.X);
         var adjust = (size.Y - ImUtf8.TextHeight) * 0.5f;
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + adjust);
-        CkRichText.Text(titleSpace, moodlePreset.Title);
+        CkRichText.Text(titleSpace, lociPreset.Title);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - adjust);
         return ret;
     }
@@ -79,7 +80,7 @@ public sealed class PairPresetCombo : MoodleComboBase<LociPresetInfo>
             if (_kinksterRef.LociData.Statuses.TryGetValue(guid, out var info))
                 toCheck.Add(info);
 
-        return LociEx.CanApply(_kinksterRef.PairPerms, toCheck);
+        return LociHelpers.CanApply(_kinksterRef.PairPerms, toCheck);
     }
 
     protected override void OnApplyButton(LociPresetInfo item)
@@ -88,7 +89,7 @@ public sealed class PairPresetCombo : MoodleComboBase<LociPresetInfo>
         {
             var res = await _mainHub.UserApplyLociData(new(_kinksterRef.UserData, item.Statuses, true, false));
             if (res.ErrorCode is not GagSpeakApiEc.Success)
-                Log.LogDebug($"Failed to apply moodle preset {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
+                Log.LogDebug($"Failed to apply loci preset {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
         });
     }
 }

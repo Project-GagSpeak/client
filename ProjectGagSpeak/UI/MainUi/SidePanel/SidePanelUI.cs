@@ -1,7 +1,5 @@
-using CkCommons.Gui;
 using CkCommons.Raii;
 using Dalamud.Bindings.ImGui;
-using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
 

@@ -6,8 +6,8 @@ using CkCommons.Raii;
 using CkCommons.Textures;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Utility.Raii;
-using Dalamud.Plugin.Services;
 using GagSpeak.Gui.Components;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Caches;
@@ -150,7 +150,7 @@ public partial class RestrictionsPanel
         _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Arousal, WardrobeUI.LastPos, WardrobeUI.LastSize);
 
         DrawAssociatedLociData(item, width);
-        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.AttachedMoodle, WardrobeUI.LastPos, WardrobeUI.LastSize);
+        _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.AttachedLociData, WardrobeUI.LastPos, WardrobeUI.LastSize);
     }
 
     public void DrawEditorRight(float width)
@@ -165,41 +165,40 @@ public partial class RestrictionsPanel
     private void DrawAssociatedLociData(RestrictionItem item, float width)
     {
         var style = ImGui.GetStyle();
-        var moodleDisplayHeight = ImUtf8.FrameHeight.AddWinPadY();
-        var winSize = new Vector2(width, moodleDisplayHeight + style.ItemSpacing.Y + ImGui.GetFrameHeight());
-        using (CkRaii.HeaderChild("Associated Moodle", winSize, HeaderFlags.AddPaddingToHeight))
+        var lociDispH = ImUtf8.FrameHeight.AddWinPadY();
+        var winSize = new Vector2(width, lociDispH + style.ItemSpacing.Y + ImGui.GetFrameHeight());
+        using var _ = CkRaii.HeaderChild("linked-loci", winSize, HeaderFlags.AddPaddingToHeight);
         {
             using (ImRaii.Group())
             {
                 if (CkGui.IconButton(FAI.ArrowsLeftRight, disabled: !KeyMonitor.ShiftPressed()))
                 {
-                    // convert the type.
-                    item.Moodle = item.Moodle switch
+                    item.LociData = item.LociData switch
                     {
                         LociPreset => new LociItem(),
                         LociItem => new LociPreset(),
-                        _ => throw new ArgumentOutOfRangeException(nameof(item.Moodle), item.Moodle, "Unknown LociDataType"),
+                        _ => throw new ArgumentOutOfRangeException(nameof(item.LociData), item.LociData, "Unknown LociDataType"),
                     };
                 }
-                _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.SwitchingMoodleType, WardrobeUI.LastPos, WardrobeUI.LastSize,
-                    _ => item.Moodle = new LociTuple(LociCache.Data.StatusList.FirstOrDefault()));
+                _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.SwitchingLociDataType, WardrobeUI.LastPos, WardrobeUI.LastSize,
+                    _ => item.LociData = new LociTuple(LociCache.Data.StatusList.FirstOrDefault().ToStruct()));
 
                 ImUtf8.SameLineInner();
-                DrawLociItemCombo(item.Moodle, ImGui.GetContentRegionAvail().X);
+                DrawLociSelector(item.LociData, ImGui.GetContentRegionAvail().X);
             }
 
-            // Below this, we need to draw the display field of the moodles that the selected status has.
-            LociDrawer.DrawIconsFramed("restriction", item.Moodle, ImGui.GetContentRegionAvail().X, CkStyle.ChildRounding(), LociIcon.SizeFramed);
-            _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.SelectedMoodlePreview, WardrobeUI.LastPos, WardrobeUI.LastSize);
+            // Below this, we need to draw the display field of the lociData in the selector.
+            LociDrawer.DrawIconsFramed("restriction", item.LociData, ImGui.GetContentRegionAvail().X, CkStyle.ChildRounding(), LociIcon.SizeFramed);
+            _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.SelectedLociDataPreview, WardrobeUI.LastPos, WardrobeUI.LastSize);
         }
     }
 
-    public void DrawLociItemCombo(LociItem lociItem, float width, CFlags flags = CFlags.None)
+    public void DrawLociSelector(LociItem lociItem, float width, CFlags flags = CFlags.None)
     {
-        // draw the dropdown for the status/preset selection. This is based on the type of moodle.
+        // draw the dropdown for the status/preset selection.
         if (lociItem is LociPreset preset)
         {
-            var change = _presetCombo.Draw("GagLociPreset", preset.Id, width, flags);
+            var change = _presetCombo.Draw("gag-loci-preset", preset.Id, width, flags);
             if (change && !preset.Id.Equals(_presetCombo.Current.GUID))
             {
                 Logger.LogTrace($"Item changed to {_presetCombo.Current.GUID} [{_presetCombo.Current.Title}] from {preset.Id}");
@@ -214,7 +213,7 @@ public partial class RestrictionsPanel
         }
         else if (lociItem is LociItem status)
         {
-            var change = _statusCombo.Draw("GagLociStatus", status.Id, width, flags);
+            var change = _statusCombo.Draw("gag-loci-status", status.Id, width, flags);
             if (change && !status.Id.Equals(_statusCombo.Current.GUID))
             {
                 Logger.LogTrace($"Item changed to {_statusCombo.Current.GUID} [{_statusCombo.Current.Title}] from {status.Id}");

@@ -322,7 +322,7 @@ public class HomeTab
     {
         if (CkGui.FancyButton(FAI.CloudUploadAlt, "Publications", width, false))
             _mediator.Publish(new UiToggleMessage(typeof(PublicationsUI)));
-        CkGui.AttachToolTip("Publish created Patterns & Moodles for others to enjoy!");
+        CkGui.AttachToolTip("Publish created Patterns & LociData for others to enjoy!");
     }
 
     private void AchievementsButton(float width)

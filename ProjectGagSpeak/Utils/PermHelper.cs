@@ -11,7 +11,6 @@ using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Util;
 using OtterGui;
-using OtterGui.Text;
 
 namespace GagSpeak.Utils;
 
@@ -255,45 +254,7 @@ public static class PermHelper
         return true;
     }
 
-    /// <summary> Validates if the pair can apply the status to the user. </summary>
-    /// <param name="pairPerms"> The permissions of the pair. </param>
-    /// <param name="statuses"> The statuses to apply. </param>
-    /// <returns> True if the statuses can be applied.
-    public static bool CanApplyPairStatus(PairPerms pairPerms, IEnumerable<LociStatusInfo> statuses)
-    {
-        if (!pairPerms.LociAccess.HasAny(LociAccess.Positive) && statuses.Any(statuses => statuses.Type == StatusType.Positive))
-        {
-            Svc.Logger.Warning("Client Attempted to apply status(s) with at least one containing a positive status, but they are not allowed to.");
-            return false;
-        }
-        if (!pairPerms.LociAccess.HasAny(LociAccess.Negative) && statuses.Any(statuses => statuses.Type == StatusType.Negative))
-        {
-            Svc.Logger.Warning("Client Attempted to apply status(s) with at least one containing a negative status, but they are not allowed to.");
-            return false;
-        }
-        if (!pairPerms.LociAccess.HasAny(LociAccess.Special) && statuses.Any(statuses => statuses.Type == StatusType.Special))
-        {
-            Svc.Logger.Warning("Client Attempted to apply status(s) with at least one containing a special status, but they are not allowed to.");
-            return false;
-        }
-
-        if (!pairPerms.LociAccess.HasAny(LociAccess.Permanent) && statuses.Any(statuses => statuses.ExpireTicks < 0))
-        {
-            Svc.Logger.Warning("Client Attempted to apply status(s) with at least one containing a permanent status, but they are not allowed to.");
-            return false;
-        }
-
-        // check the max moodle time exceeding
-        if (statuses.Any(status => pairPerms.MaxLociTime < TimeSpan.FromMilliseconds(status.ExpireTicks)))
-        {
-            Svc.Logger.Warning("Client Attempted to apply status(s) with at least one containing a time exceeding the max allowed time.");
-            return false;
-        }
-        // return true if reached here.
-        return true;
-    }
-
-    public static void DrawHardcoreStatus(HardcoreStatus? hardcoreState)
+    public static void DrawHardcoreStatus(HardcoreState? hardcoreState)
     {
         if (hardcoreState is not { } hc)
         {

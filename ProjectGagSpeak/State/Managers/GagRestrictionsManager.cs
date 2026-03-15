@@ -11,7 +11,6 @@ using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using OtterGui.Extensions;
 using System.Diagnostics.CodeAnalysis;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.State.Managers;
 
@@ -213,7 +212,7 @@ public sealed class GagRestrictionManager : IHybridSavable
     #endregion Performers
 
     #region HybridSavable
-    public int ConfigVersion => 0;
+    public int ConfigVersion => 1;
     public HybridSaveType SaveType => HybridSaveType.Json;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
@@ -269,14 +268,19 @@ public sealed class GagRestrictionManager : IHybridSavable
         }
 
         // Read the json from the file.
-        var version = jObject["Version"]?.Value<int>() ?? 0;
+        var version = jObject["Version"]?.Value<int>() ?? 1;
 
         // Perform Migrations if any, and then load the data.
         switch (version)
         {
             case 0:
-                LoadV0(jObject["GagRestrictions"]);
+                MigrateV0toV1(jObject);
+                goto case 1;
+
+            case 1:
+                LoadV1(jObject["GagRestrictions"]);
                 break;
+
             default:
                 _logger.LogError("Invalid Version!");
                 return;
@@ -285,7 +289,7 @@ public sealed class GagRestrictionManager : IHybridSavable
         _mediator.Publish(new ReloadFileSystem(GSModule.Gag));
     }
 
-    private void LoadV0(JToken? data)
+    private void LoadV1(JToken? data)
     {
         if (data is not JObject sortedListData)
             return;
@@ -298,7 +302,7 @@ public sealed class GagRestrictionManager : IHybridSavable
                 var gagType = gagName.ToGagType();
                 if (gagType is GagType.None)
                 {
-                    _logger.LogWarning("Invalid GagType: {0}", gagName);
+                    _logger.LogWarning($"Invalid GagType: {gagName}");
                     continue;
                 }
 
@@ -308,15 +312,30 @@ public sealed class GagRestrictionManager : IHybridSavable
         }
         catch (Bagagwa e)
         {
-            _logger.LogError("Failed to load Gag Restrictions: {0}", e);
+            _logger.LogError($"Failed to load Gag Restrictions: {e}");
             return;
         }
     }
 
-    private void MigrateV0toV1(JObject oldConfigJson)
+    private void MigrateV0toV1(JObject root)
     {
-        // update only the version value to 1, then return it.
-        oldConfigJson["Version"] = 1;
+        if (root["GagRestrictions"] is not JObject gagRestrictions)
+            return;
+
+        foreach (var (_, gagToken) in gagRestrictions)
+        {
+            if (gagToken is not JObject gagObj)
+                continue;
+
+            // Rename "Moodle" -> "LociData"
+            if (gagObj.TryGetValue("Moodle", out var moodleToken))
+            {
+                gagObj["LociData"] = moodleToken;
+                gagObj.Remove("Moodle");
+            }
+        }
+
+        root["Version"] = 1;
     }
     #endregion HybridSavable
 }

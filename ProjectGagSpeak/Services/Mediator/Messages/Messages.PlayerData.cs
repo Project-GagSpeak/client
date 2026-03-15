@@ -1,5 +1,4 @@
 using GagSpeak.Kinksters;
-using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 
 namespace GagSpeak.Services.Mediator;

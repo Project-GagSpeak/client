@@ -3,16 +3,16 @@ using CkCommons.Gui;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
-using GagSpeak.Localization;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
+using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Network;
 using OtterGui;
-using OtterGui.Text.Widget.Editors;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 
@@ -55,7 +55,7 @@ public class Kinkster : IComparable<Kinkster>
     public PairPerms        OwnPerms        => UserPair.OwnPerms;
     public PairPermAccess   OwnPermAccess   => UserPair.OwnAccess;
     public GlobalPerms      PairGlobals     => UserPair.Globals;
-    public HardcoreStatus   PairHardcore    => UserPair.Hardcore;
+    public HardcoreState   PairHardcore    => UserPair.Hardcore;
     public PairPerms        PairPerms       => UserPair.Perms;
     public PairPermAccess   PairPermAccess  => UserPair.Access;
 
@@ -74,7 +74,7 @@ public class Kinkster : IComparable<Kinkster>
 
     // Internal Data. (Useful for tooltip information and KinkPlates™
     public KinksterCache LightCache { get; private set; } = new KinksterCache();
-    public CachedLociData LociData { get; private set; } = new();
+    public LociContainer LociData { get; private set; } = new();
 
     // Internal Helpers.
     // public bool IsTemporary => UserPair.IsTemporary; (Can implement this later maybe, idk)
@@ -207,7 +207,7 @@ public class Kinkster : IComparable<Kinkster>
             ActiveRestraint = data.Restraint;
             ActiveCursedItems = data.ActiveCursedItems.ToHashSet();
             // Filtered aliases
-            SharedAliases = data.AliasData.Items.Where(a => a.CanView(MainHub.UID)).ToList();
+            SharedAliases = data.AliasData.Where(a => a.CanView(MainHub.UID)).Select(a => new AliasTrigger(a)).ToList();
             IsListeningToClient = data.ListeningTo.Contains(MainHub.UID);
             ValidToys = data.ValidToys.ToHashSet();
             ActivePattern = data.ActivePattern;
@@ -237,8 +237,8 @@ public class Kinkster : IComparable<Kinkster>
         _mediator.Publish(new PlayerLatestActiveItems(UserData, ActiveGags, ActiveRestrictions, ActiveRestraint)); // <-- Send whole composite?
     }
 
-    public void NewLociData(CachedLociData newData)
-        => LociData = newData;
+    public void NewLociData(LociContainerData newData)
+        => LociData = new(newData);
 
     public void NewActiveGagData(KinksterUpdateActiveGag data)
     {
@@ -469,7 +469,7 @@ public class Kinkster : IComparable<Kinkster>
     }
 
     // Seperated from cache intentionally.
-    public void UpdateAliasTrigger(Guid id, AliasTrigger? newData)
+    public void UpdateGagspeakAlias(Guid id, GagspeakAlias? newData)
     {
         var alias = SharedAliases.FirstOrDefault(a => a.Identifier == id);
         if (alias is not null)
@@ -487,7 +487,7 @@ public class Kinkster : IComparable<Kinkster>
         }
         else if (newData is not null && newData.CanView(MainHub.UID))
         {
-            SharedAliases.Add(newData);
+            SharedAliases.Add(new AliasTrigger(newData));
             _logger.LogDebug($"Adding Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
         }
         // Inform marionettes tab of the change.

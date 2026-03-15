@@ -1,6 +1,3 @@
-using GagspeakAPI.Extensions;
-using System.Security.Principal;
-
 namespace GagSpeak.Utils;
 
 internal sealed class UsageTracker

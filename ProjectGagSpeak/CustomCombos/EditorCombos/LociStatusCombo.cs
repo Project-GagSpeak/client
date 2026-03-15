@@ -5,13 +5,14 @@ using GagSpeak.Services;
 using GagSpeak.State.Caches;
 using Dalamud.Bindings.ImGui;
 using OtterGui.Extensions;
+using GagSpeak.Interop.Helpers;
 
 namespace GagSpeak.CustomCombos.Editor;
 
-public sealed class MoodleStatusCombo : CkMoodleComboBase<LociStatusInfo>
+public sealed class LociStatusCombo : CkLociComboBase<LociStatusInfo>
 {
     private Guid _currentItem;
-    public MoodleStatusCombo(ILogger log, float iconScale)
+    public LociStatusCombo(ILogger log, float iconScale)
         : base(log, iconScale, () => [.. LociCache.Data.StatusList.OrderBy(x => x.Title)])
     {
         _currentItem = Guid.Empty;
@@ -50,7 +51,7 @@ public sealed class MoodleStatusCombo : CkMoodleComboBase<LociStatusInfo>
         _currentItem = current;
         // Maybe there is a faster way to know this, but atm I do not know.
         var currentTitle = Items.FirstOrDefault(i => i.GUID == _currentItem).Title?.StripColorTags() ?? string.Empty;
-        var previewName = currentTitle.IsNullOrWhitespace() ? "Select Moodle Status..." : currentTitle;
+        var previewName = currentTitle.IsNullOrWhitespace() ? "Select Loci Status..." : currentTitle;
         return Draw($"##status{label}", previewName, string.Empty, width, IconSize.Y, flags);
     }
 
@@ -58,18 +59,18 @@ public sealed class MoodleStatusCombo : CkMoodleComboBase<LociStatusInfo>
     {
         var size = new Vector2(GetFilterWidth(), IconSize.Y);
         var titleSpace = size.X - IconSize.X;
-        var moodleStatus = Items[globalIdx];
-        var ret = ImGui.Selectable("##"+moodleStatus.Title, selected, ImGuiSelectableFlags.None, size);
+        var lociStatus = Items[globalIdx];
+        var ret = ImGui.Selectable("##"+lociStatus.Title, selected, ImGuiSelectableFlags.None, size);
 
         ImGui.SameLine(titleSpace);
-        LociIcon.Draw((uint)moodleStatus.IconID, moodleStatus.Stacks, IconSize);
-        LociEx.AttachTooltip(moodleStatus, LociCache.Data);
+        LociIcon.Draw(lociStatus.IconID, lociStatus.Stacks, IconSize);
+        LociHelpers.AttachTooltip(lociStatus, LociCache.Data);
 
         ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
         var pos = ImGui.GetCursorPosY();
         ImGui.SetCursorPosY(pos + (size.Y - SelectableTextHeight) * 0.5f);
         using (Fonts.Default150Percent.Push())
-            CkRichText.Text(titleSpace, moodleStatus.Title);
+            CkRichText.Text(titleSpace, lociStatus.Title);
 
         return ret;
     }

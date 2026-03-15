@@ -321,7 +321,7 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
     public MetaDataStruct MetaStates { get; set; } = MetaDataStruct.Empty;
 
     public List<ModSettingsPreset> RestraintMods { get; set; } = new();
-    public HashSet<LociItem> RestraintMoodles { get; set; } = new();
+    public HashSet<LociItem> RestraintLociData { get; set; } = new();
     public Traits Traits { get; set; } = Traits.None;
     public Arousal Arousal { get; set; } = Arousal.None;
 
@@ -351,7 +351,7 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
         MetaStates = other.MetaStates;
 
         RestraintMods = other.RestraintMods.Select(mod => new ModSettingsPreset(mod)).ToList();
-        RestraintMoodles = other.RestraintMoodles.Select(m => m is LociPreset p ? new LociPreset(p) : new LociItem(m)).ToHashSet();
+        RestraintLociData = other.RestraintLociData.Select(m => m is LociPreset p ? new LociPreset(p) : new LociItem(m)).ToHashSet();
 
         Traits = other.Traits;
         Arousal = other.Arousal;
@@ -372,7 +372,7 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
             ["RestraintLayers"] = new JArray(Layers.Select(x => x.Serialize())),
             ["MetaStates"] = MetaStates.ToJObject(),
             ["BaseMods"] = new JArray(RestraintMods.Select(x => x.SerializeReference())),
-            ["BaseMoodles"] = new JArray(RestraintMoodles.Select(x => x.Serialize())),
+            ["BaseLociData"] = new JArray(RestraintLociData.Select(x => x.Serialize())),
             ["BaseTraits"] = Traits.ToString(),
             ["BaseArousal"] = Arousal.ToString(),
         };
@@ -433,9 +433,9 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
             foreach (var modToken in modArray)
                 Generic.Safe(() => baseMods.Add(ModSettingsPreset.FromRefToken(modToken, mods)));
 
-        // Handle the base Moodles.
+        // Handle the base LociData.
         var baseLociItems = new HashSet<LociItem>();
-        if (setJObj["BaseMoodles"] is JArray lociItemArray)
+        if (setJObj["BaseLociData"] is JArray lociItemArray)
             foreach (var lociToken in lociItemArray)
                 Generic.Safe(() => baseLociItems.Add(GagspeakEx.LoadLociItem(lociToken)));
 
@@ -454,7 +454,7 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
             Layers = layers,
             MetaStates = MetaDataStruct.FromJObject(setJObj["MetaStates"]),
             RestraintMods = baseMods,
-            RestraintMoodles = baseLociItems,
+            RestraintLociData = baseLociItems,
             Traits = Enum.TryParse<Traits>(setJObj["BaseTraits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
             Arousal = Enum.TryParse<Arousal>(setJObj["BaseArousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
         };
@@ -491,7 +491,7 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
             RestrictionLayers = bindLayers,
             ModLayers = modLayers,
             Mods = RestraintMods.Select(x => x.ToString()).ToList(),
-            LociItems = RestraintMoodles.Select(x => new LightLoci(x.Type, x.Id)).ToList(),
+            LociItems = RestraintLociData.Select(x => new LightLoci(x.Type, x.Id)).ToList(),
             BaseTraits = Traits,
             Arousal = Arousal,
             Redraws = DoRedraw,

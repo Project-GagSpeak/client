@@ -16,13 +16,9 @@ using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
-using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
-using GagspeakAPI.Data;
 using OtterGui.Extensions;
 using OtterGui.Text;
-using System.Diagnostics.CodeAnalysis;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Gui.Wardrobe;
 
@@ -38,8 +34,8 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
     private readonly TutorialService _guides;
     private readonly SelfBondageService _selfBondage;
 
-    private MoodleStatusCombo _statusCombo;
-    private MoodlePresetCombo _presetCombo;
+    private LociStatusCombo _statusCombo;
+    private LociPresetCombo _presetCombo;
     public bool IsEditing => _manager.ItemInEditor != null;
 
     public RestrictionsPanel(
@@ -66,8 +62,8 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         _selfBondage = selfBondage;
         _guides = guides;
 
-        _statusCombo = new MoodleStatusCombo(logger, 1.15f);
-        _presetCombo = new MoodlePresetCombo(logger, 1.15f);
+        _statusCombo = new LociStatusCombo(logger, 1.15f);
+        _presetCombo = new LociPresetCombo(logger, 1.15f);
         _hypnoEditor = new HypnoEffectEditor("RestrictionEditor", effectPresets, guides);
 
         Mediator.Subscribe<ThumbnailImageSelected>(this, (msg) =>
@@ -266,7 +262,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             _attributeDrawer.DrawTraitPreview(_selector.Selected!.Traits);
         }
 
-        LociDrawer.DrawIcons(_selector.Selected!.Moodle, ImGui.GetContentRegionAvail().X);
+        LociDrawer.DrawIcons(_selector.Selected!.LociData, ImGui.GetContentRegionAvail().X);
     }
 
     /// Stores the index of the first empty slot, provided the correct tutorial is running.

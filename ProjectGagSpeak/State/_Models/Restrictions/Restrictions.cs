@@ -33,7 +33,7 @@ public interface IRestriction : IModPreset
     GlamourSlot Glamour { get; set; }
 
     /// <summary> Determines the LociItem applied from this restriction item. </summary>
-    LociItem Moodle { get; set; }
+    LociItem LociData { get; set; }
 
     /// <summary> If a redraw should be performed after application or removal. </summary>
     bool DoRedraw { get; set; }
@@ -57,7 +57,7 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
     public bool IsEnabled { get; set; } = false;
     public GlamourSlot Glamour { get; set; } = GlamourSlot.Default;
     public ModSettingsPreset Mod { get; set; } = new ModSettingsPreset(new ModPresetContainer());
-    public LociItem Moodle { get; set; } = new LociItem();
+    public LociItem LociData { get; set; } = new LociItem();
     public Traits Traits { get; set; } = Traits.None;
     public Arousal Arousal { get; set; } = Arousal.None;
     public TriStateBool HeadgearState { get; set; } = TriStateBool.Null;
@@ -80,7 +80,7 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
         IsEnabled = other.IsEnabled;
         Glamour = other.Glamour;
         Mod = other.Mod;
-        Moodle = other.Moodle;
+        LociData = other.LociData;
         Traits = other.Traits;
         Arousal = other.Arousal;
         HeadgearState = other.HeadgearState;
@@ -95,7 +95,7 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
             ["IsEnabled"] = IsEnabled,
             ["Glamour"] = Glamour.Serialize(),
             ["Mod"] = Mod.SerializeReference(),
-            ["Moodle"] = Moodle.Serialize(),
+            ["LociData"] = LociData.Serialize(),
             ["Traits"] = Traits.ToString(),
             ["Arousal"] = Arousal.ToString(),
             ["HeadgearState"] = HeadgearState.ToString(),
@@ -111,7 +111,7 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
         {
             Slot = Glamour.ToLightSlot(),
             ModName = Mod.ToString(),
-            LociItem = new LightLoci(Moodle.Type, Moodle.Id),
+            LociData = new LightLoci(LociData.Type, LociData.Id),
             Traits = Traits,
             Arousal = Arousal
         };
@@ -124,7 +124,7 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
             throw new ArgumentException("Invalid JObjectToken!");
 
         var modAttachment = ModSettingsPreset.FromRefToken(json["Mod"], mp);
-        var lociItem = GagspeakEx.LoadLociItem(json["Moodle"]);
+        var lociItem = GagspeakEx.LoadLociItem(json["LociData"]);
         var profileId = json["ProfileGuid"]?.ToObject<Guid>() ?? throw new ArgumentNullException("ProfileGuid");
         var profilePrio = json["ProfilePriority"]?.ToObject<int>() ?? throw new ArgumentNullException("ProfilePriority");
         return new GarblerRestriction(gagType)
@@ -132,7 +132,7 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
             IsEnabled = json["IsEnabled"]?.ToObject<bool>() ?? false,
             Glamour = ItemSvc.ParseGlamourSlot(json["Glamour"]),
             Mod = modAttachment,
-            Moodle = lociItem,
+            LociData = lociItem,
             Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
             Arousal = Enum.TryParse<Arousal>(json["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
             HeadgearState = TriStateBool.FromJObject(json["HeadgearState"]),
@@ -154,7 +154,7 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
     public ModSettingsPreset Mod { get; set; } = new ModSettingsPreset(new ModPresetContainer());
     public TriStateBool HeadgearState { get; set; } = TriStateBool.Null;
     public TriStateBool VisorState { get; set; } = TriStateBool.Null;
-    public LociItem Moodle { get; set; } = new LociItem(); // keep name until we can properly migrate
+    public LociItem LociData { get; set; } = new LociItem(); // keep name until we can properly migrate
     public Traits Traits { get; set; } = Traits.None;
     public Arousal Arousal { get; set; } = Arousal.None;
     public bool DoRedraw { get; set; } = false;
@@ -180,7 +180,7 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
         ThumbnailPath = other.ThumbnailPath;
         Glamour = other.Glamour;
         Mod = other.Mod;
-        Moodle = other.Moodle;
+        LociData = other.LociData;
         HeadgearState = other.HeadgearState;
         VisorState = other.VisorState;
         Traits = other.Traits;
@@ -198,7 +198,7 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
             ["ThumbnailPath"] = ThumbnailPath,
             ["Glamour"] = Glamour.Serialize(),
             ["Mod"] = Mod.SerializeReference(),
-            ["Moodle"] = Moodle.Serialize(),
+            ["LociData"] = LociData.Serialize(),
             ["HeadgearState"] = HeadgearState.ToString(),
             ["VisorState"] = VisorState.ToString(),
             ["Traits"] = Traits.ToString(),
@@ -212,7 +212,7 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
         {
             Slot = Glamour.ToLightSlot(),
             ModName = Mod.ToString(),
-            LociItem = new LightLoci(Moodle is LociPreset ? LociType.Preset : LociType.Status, Moodle.Id),
+            LociData = new LightLoci(LociData is LociPreset ? LociType.Preset : LociType.Status, LociData.Id),
             Traits = Traits,
             Arousal = Arousal
         };
@@ -223,7 +223,7 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
     /// <remarks> This method can throw an exception if tokens are not valid. </remarks>
     public static RestrictionItem FromToken(JToken? token, ModPresetManager mp)
     {
-        if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
+        if (token is not JObject json || json["LociData"] is not JObject jsonLociData)
             throw new ArgumentException("Invalid JObjectToken!");
 
         // Construct the item to return.
@@ -235,7 +235,7 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
             ThumbnailPath = json["ThumbnailPath"]?.ToObject<string>() ?? string.Empty,
             Glamour = ItemSvc.ParseGlamourSlot(json["Glamour"]),
             Mod = ModSettingsPreset.FromRefToken(json["Mod"], mp),
-            Moodle = GagspeakEx.LoadLociItem(jsonMoodle),
+            LociData = GagspeakEx.LoadLociItem(jsonLociData),
             HeadgearState = TriStateBool.FromJObject(json["HeadgearState"]),
             VisorState = TriStateBool.FromJObject(json["VisorState"]),
             Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
@@ -287,7 +287,7 @@ public class HypnoticRestriction : RestrictionItem
     /// <remarks> This method can throw an exception if tokens are not valid. </remarks>
     public new static HypnoticRestriction FromToken(JToken? token, ModPresetManager mp)
     {
-        if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
+        if (token is not JObject json || json["LociData"] is not JObject jsonLociData)
             throw new ArgumentException("Invalid JObjectToken!");
 
         // Construct the item to return.
@@ -299,7 +299,7 @@ public class HypnoticRestriction : RestrictionItem
             ThumbnailPath = json["ThumbnailPath"]?.ToObject<string>() ?? string.Empty,
             Glamour = ItemSvc.ParseGlamourSlot(json["Glamour"]),
             Mod = ModSettingsPreset.FromRefToken(json["Mod"], mp),
-            Moodle = GagspeakEx.LoadLociItem(jsonMoodle),
+            LociData = GagspeakEx.LoadLociItem(jsonLociData),
             Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
             Arousal = Enum.TryParse<Arousal>(json["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
             DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
@@ -351,7 +351,7 @@ public class BlindfoldRestriction : RestrictionItem
     /// <remarks> This method can throw an exception if tokens are not valid. </remarks>
     public new static BlindfoldRestriction FromToken(JToken? token, ModPresetManager mp)
     {
-        if (token is not JObject json || json["Moodle"] is not JObject jsonMoodle)
+        if (token is not JObject json || json["LociData"] is not JObject jsonLociData)
             throw new ArgumentException("Invalid JObjectToken!");
         // Construct the item to return.
         return new BlindfoldRestriction()
@@ -362,7 +362,7 @@ public class BlindfoldRestriction : RestrictionItem
             ThumbnailPath = json["ThumbnailPath"]?.ToObject<string>() ?? string.Empty,
             Glamour = ItemSvc.ParseGlamourSlot(json["Glamour"]),
             Mod = ModSettingsPreset.FromRefToken(json["Mod"], mp),
-            Moodle = GagspeakEx.LoadLociItem(jsonMoodle),
+            LociData = GagspeakEx.LoadLociItem(jsonLociData),
             Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
             Arousal = Enum.TryParse<Arousal>(json["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
             DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
@@ -380,7 +380,7 @@ public class BlindfoldRestriction : RestrictionItem
 ///     while properties that can be changed by either are located in the active collar state. <para />
 ///     
 ///     The primary purpose of the GagSpeakCollar is to serve as a foundation for glamour 
-///     and mods, while glamour dyes, moodles, writing, ownership, and visual toggles can be found
+///     and mods, while glamour dyes, lociData, writing, ownership, and visual toggles can be found
 ///     inside the ActiveCollar item.
 /// </summary>
 public class GagSpeakCollar : IEditableStorageItem<GagSpeakCollar>, IModPreset

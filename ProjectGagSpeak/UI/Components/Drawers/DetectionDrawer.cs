@@ -2,7 +2,6 @@ using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Gui.Utility;
 using CkCommons.Raii;
-using CkCommons.Textures;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
@@ -17,7 +16,6 @@ using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
-using Microsoft.VisualBasic;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Components;
@@ -33,8 +31,8 @@ public sealed class DetectionDrawer : IDisposable
     private RestraintCombo _restraintCombo;
     private RestrictionCombo _restrictionCombo;
     private PatternCombo _patternCombo;
-    private MoodleStatusCombo _statusCombo;
-    private MoodlePresetCombo _presetCombo;
+    private LociStatusCombo _statusCombo;
+    private LociPresetCombo _presetCombo;
     private JobCombo _jobCombo;
     private JobActionCombo _jobActionCombo;
     private EmoteCombo _emoteCombo;
@@ -66,8 +64,8 @@ public sealed class DetectionDrawer : IDisposable
             ..patterns.Storage.OrderByDescending(p => FavoritesConfig.Patterns.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
 
-        _statusCombo = new MoodleStatusCombo(logger, 1.15f);
-        _presetCombo = new MoodlePresetCombo(logger, 1.15f);
+        _statusCombo = new LociStatusCombo(logger, 1.15f);
+        _presetCombo = new LociPresetCombo(logger, 1.15f);
 
         _jobCombo = new JobCombo(logger, 1.15f);
         _jobActionCombo = new JobActionCombo(logger, 1.15f, () => [
@@ -145,7 +143,8 @@ public sealed class DetectionDrawer : IDisposable
 
             var padding = ImGui.GetStyle().ItemInnerSpacing.X;
             var iconsPerRow = MathF.Floor((width - padding) / (iconSize.X + padding));
-            // display each moodle.
+            
+            // display each loci status icon.
             var currentRow = 0;
             var iconsInRow = 0;
             foreach (var actionIcon in iconsToShow)

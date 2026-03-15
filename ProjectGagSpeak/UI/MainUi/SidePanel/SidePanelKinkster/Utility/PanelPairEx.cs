@@ -46,12 +46,12 @@ public enum KPID : byte
     ApplyPositive,
     ApplyNegative,
     ApplySpecial,
-    ApplyPairsMoodles,
-    ApplyOwnMoodles,
-    MaxMoodleTime,
-    PermanentMoodles,
-    RemoveAppliedMoodles,
-    RemoveAnyMoodles,
+    ApplyPairsLociData,
+    ApplyOwnLociData,
+    MaxLociStatusTime,
+    PermaLociStatuses,
+    RemoveAppliedLociData,
+    RemoveAnyLociStatus,
 
     PatternStarting,
     PatternStopping,
@@ -123,15 +123,15 @@ public enum KPID : byte
         .Add(KPID.PuppetPermAlias,       new OwnPermRowData(false, FAI.Scroll,                FAI.Ban,           "allow",       "prevent",      "alias requests", "are", "to invoke alias requests",         "from invoking alias requests"))
         .Add(KPID.PuppetPermAll,         new OwnPermRowData(false, FAI.CheckDouble,           FAI.Ban,           "allow",       "prevent",      "all requests", "are", "to invoke all requests",           "from invoking all requests"))
 
-        .Add(KPID.ApplyPositive,         new OwnPermRowData(false, FAI.SmileBeam,             FAI.Ban,           "allow",       "prevent",      "positive Moodles", "are", "to apply positive moodles",        "from applying positive moodles"))
-        .Add(KPID.ApplyNegative,         new OwnPermRowData(false, FAI.FrownOpen,             FAI.Ban,           "allow",       "prevent",      "negative Moodles", "are", "to apply negative moodles",        "from applying negative moodles"))
-        .Add(KPID.ApplySpecial,          new OwnPermRowData(false, FAI.WandMagicSparkles,     FAI.Ban,           "allow",       "prevent",      "special Moodles", "are", "to apply special moodles",         "from applying special moodles"))
-        .Add(KPID.ApplyPairsMoodles,     new OwnPermRowData(false, FAI.PersonArrowUpFromLine, FAI.Ban,           "allow",       "prevent",      "applying your Moodles", "are", "to apply your moodles",            "from applying your moodles"))
-        .Add(KPID.ApplyOwnMoodles,       new OwnPermRowData(false, FAI.PersonArrowDownToLine, FAI.Ban,           "allow",       "prevent",      "applying their Moodles", "are", "to apply their moodles",           "from applying their moodles"))
-        .Add(KPID.MaxMoodleTime,         new OwnPermRowData(false, FAI.HourglassHalf,         FAI.None,          string.Empty,    string.Empty, "Max Moodle Time", string.Empty,         string.Empty,                       string.Empty))
-        .Add(KPID.PermanentMoodles,      new OwnPermRowData(false, FAI.Infinity,              FAI.Ban,           "allow",       "prevent",      "permanent Moodles", "are", "to apply permanent moodles",       "from applying permanent moodles"))
-        .Add(KPID.RemoveAppliedMoodles,  new OwnPermRowData(false, FAI.Eraser,                FAI.Ban,           "allow",       "prevent",      "removing applied Moodles", "are", "to remove applied moodles",                "from removing applied moodles"))
-        .Add(KPID.RemoveAnyMoodles,      new OwnPermRowData(false, FAI.Eraser,                FAI.Ban,           "allow",       "prevent",      "removing any Moodle", "are", "to remove any moodle",                "from removing any moodle"))
+        .Add(KPID.ApplyPositive,         new OwnPermRowData(false, FAI.SmileBeam,             FAI.Ban,           "allow",       "prevent",      "positive statuses", "are", "to apply positive statuses",        "from applying positive statuses"))
+        .Add(KPID.ApplyNegative,         new OwnPermRowData(false, FAI.FrownOpen,             FAI.Ban,           "allow",       "prevent",      "negative statuses", "are", "to apply negative statuses",        "from applying negative statuses"))
+        .Add(KPID.ApplySpecial,          new OwnPermRowData(false, FAI.WandMagicSparkles,     FAI.Ban,           "allow",       "prevent",      "special statuses", "are", "to apply special statuses",         "from applying special statuses"))
+        .Add(KPID.ApplyPairsLociData,     new OwnPermRowData(false, FAI.PersonArrowUpFromLine, FAI.Ban,           "allow",       "prevent",      "applying your LociData", "are", "to apply your LociData",            "from applying your LociData"))
+        .Add(KPID.ApplyOwnLociData,       new OwnPermRowData(false, FAI.PersonArrowDownToLine, FAI.Ban,           "allow",       "prevent",      "applying their LociData", "are", "to apply their LociData",           "from applying their LociData"))
+        .Add(KPID.MaxLociStatusTime,         new OwnPermRowData(false, FAI.HourglassHalf,         FAI.None,          string.Empty,    string.Empty, "Max Status Time", string.Empty,         string.Empty,                       string.Empty))
+        .Add(KPID.PermaLociStatuses,      new OwnPermRowData(false, FAI.Infinity,              FAI.Ban,           "allow",       "prevent",      "permanent statuses", "are", "to apply permanent statuses",       "from applying permanent statuses"))
+        .Add(KPID.RemoveAppliedLociData,  new OwnPermRowData(false, FAI.Eraser,                FAI.Ban,           "allow",       "prevent",      "removing applied statuses", "are", "to remove applied statuses",                "from removing applied statuses"))
+        .Add(KPID.RemoveAnyLociStatus,      new OwnPermRowData(false, FAI.Eraser,                FAI.Ban,           "allow",       "prevent",      "removing any status", "are", "to remove any status",                "from removing any status"))
 
         .Add(KPID.HypnosisMaxTime,       new OwnPermRowData(false, FAI.HourglassHalf,         FAI.None,          string.Empty,    string.Empty, "Max Hypnosis Time", string.Empty, string.Empty,                       string.Empty))
         .Add(KPID.HypnosisEffect,        new OwnPermRowData(false, FAI.CameraRotate,          FAI.Ban,           "allow",       "prevent",      "Hypnotic Effect Sending", "are", "to send hypnotic effects",         "from sending hypnotic effects"))
@@ -184,15 +184,15 @@ public enum KPID : byte
         .Add(KPID.PuppetPermAlias,       new OtherPermRowData(FAI.Scroll,                FAI.Ban,        "allows",        "prevents",     "alias Requests",            false))
         .Add(KPID.PuppetPermAll,         new OtherPermRowData(FAI.CheckDouble,           FAI.Ban,        "allows",        "prevents",     "all Requests",              false))
 
-        .Add(KPID.ApplyPositive,         new OtherPermRowData(FAI.SmileBeam,             FAI.Ban,        "allows",        "prevents",     "positive Moodles",          false))
-        .Add(KPID.ApplyNegative,         new OtherPermRowData(FAI.FrownOpen,             FAI.Ban,        "allows",        "prevents",     "negative Moodles",          false))
-        .Add(KPID.ApplySpecial,          new OtherPermRowData(FAI.WandMagicSparkles,     FAI.Ban,        "allows",        "prevents",     "special Moodles",           false))
-        .Add(KPID.ApplyPairsMoodles,     new OtherPermRowData(FAI.PersonArrowUpFromLine, FAI.Ban,        "allows",        "prevents",     "applying your Moodles",     false))
-        .Add(KPID.ApplyOwnMoodles,       new OtherPermRowData(FAI.PersonArrowDownToLine, FAI.Ban,        "allows",        "prevents",     "applying their Moodles",    false))
-        .Add(KPID.MaxMoodleTime,         new OtherPermRowData(FAI.HourglassHalf,         FAI.None,       string.Empty,    string.Empty,   "Max Moodle time",           false))
-        .Add(KPID.PermanentMoodles,      new OtherPermRowData(FAI.Infinity,              FAI.Ban,        "allows",        "prevents",     "permanent Moodles",         false))
-        .Add(KPID.RemoveAppliedMoodles,  new OtherPermRowData(FAI.Eraser,                FAI.Ban,        "allows",        "prevents",     "removing applied Moodles",  false))
-        .Add(KPID.RemoveAnyMoodles,      new OtherPermRowData(FAI.Eraser,                FAI.Ban,        "allows",        "prevents",     "removing any Moodle",       false))
+        .Add(KPID.ApplyPositive,         new OtherPermRowData(FAI.SmileBeam,             FAI.Ban,        "allows",        "prevents",     "positive statuses",          false))
+        .Add(KPID.ApplyNegative,         new OtherPermRowData(FAI.FrownOpen,             FAI.Ban,        "allows",        "prevents",     "negative statuses",          false))
+        .Add(KPID.ApplySpecial,          new OtherPermRowData(FAI.WandMagicSparkles,     FAI.Ban,        "allows",        "prevents",     "special statuses",           false))
+        .Add(KPID.ApplyPairsLociData,     new OtherPermRowData(FAI.PersonArrowUpFromLine, FAI.Ban,       "allows",        "prevents",     "applying your LociData",     false))
+        .Add(KPID.ApplyOwnLociData,       new OtherPermRowData(FAI.PersonArrowDownToLine, FAI.Ban,       "allows",        "prevents",     "applying their LociData",    false))
+        .Add(KPID.MaxLociStatusTime,         new OtherPermRowData(FAI.HourglassHalf,     FAI.None,       string.Empty,    string.Empty,   "Max status time",           false))
+        .Add(KPID.PermaLociStatuses,      new OtherPermRowData(FAI.Infinity,             FAI.Ban,        "allows",        "prevents",     "permanent statuses",         false))
+        .Add(KPID.RemoveAppliedLociData,  new OtherPermRowData(FAI.Eraser,               FAI.Ban,        "allows",        "prevents",     "removing applied statuses",  false))
+        .Add(KPID.RemoveAnyLociStatus,      new OtherPermRowData(FAI.Eraser,             FAI.Ban,        "allows",        "prevents",     "removing any status",       false))
 
         .Add(KPID.HypnosisMaxTime,       new OtherPermRowData(FAI.HourglassHalf,         FAI.None,       string.Empty,    string.Empty,   "Max hypnosis time",         false))
         .Add(KPID.HypnosisEffect,        new OtherPermRowData(FAI.CameraRotate,          FAI.Ban,        "allows",        "prevents",     "Hypno effect sending",      false))
@@ -266,12 +266,12 @@ public enum KPID : byte
             KPID.ApplyPositive         => (nameof(PairPerms.LociAccess),                 PermissionType.PairPerm),
             KPID.ApplyNegative         => (nameof(PairPerms.LociAccess),                 PermissionType.PairPerm),
             KPID.ApplySpecial          => (nameof(PairPerms.LociAccess),                 PermissionType.PairPerm),
-            KPID.ApplyPairsMoodles     => (nameof(PairPerms.LociAccess),                 PermissionType.PairPerm),
-            KPID.ApplyOwnMoodles       => (nameof(PairPerms.LociAccess),                 PermissionType.PairPerm),
-            KPID.MaxMoodleTime         => (nameof(PairPerms.MaxLociTime),                PermissionType.PairPerm),
-            KPID.PermanentMoodles      => (nameof(PairPerms.LociAccess),                 PermissionType.PairPerm),
-            KPID.RemoveAppliedMoodles  => (nameof(PairPerms.LociAccess),                 PermissionType.PairPerm),
-            KPID.RemoveAnyMoodles      => (nameof(PairPerms.LociAccess),                 PermissionType.PairPerm),
+            KPID.ApplyPairsLociData     => (nameof(PairPerms.LociAccess),                 PermissionType.PairPerm),
+            KPID.ApplyOwnLociData       => (nameof(PairPerms.LociAccess),                 PermissionType.PairPerm),
+            KPID.MaxLociStatusTime         => (nameof(PairPerms.MaxLociTime),                PermissionType.PairPerm),
+            KPID.PermaLociStatuses      => (nameof(PairPerms.LociAccess),                 PermissionType.PairPerm),
+            KPID.RemoveAppliedLociData  => (nameof(PairPerms.LociAccess),                 PermissionType.PairPerm),
+            KPID.RemoveAnyLociStatus      => (nameof(PairPerms.LociAccess),                 PermissionType.PairPerm),
 
             KPID.PatternStarting       => (nameof(PairPerms.ExecutePatterns),              PermissionType.PairPerm),
             KPID.PatternStopping       => (nameof(PairPerms.StopPatterns),                 PermissionType.PairPerm),
@@ -283,12 +283,12 @@ public enum KPID : byte
 
             KPID.HardcoreModeState     => (nameof(PairPerms.InHardcore),                   PermissionType.PairPerm),
             KPID.PairLockedStates      => (nameof(PairPerms.PairLockedStates),             PermissionType.PairPerm),
-            KPID.LockedFollowing       => (nameof(HardcoreStatus.LockedFollowing),          PermissionType.Global),
-            KPID.LockedEmoteState      => (nameof(HardcoreStatus.LockedEmoteState),         PermissionType.Global),
-            KPID.IndoorConfinement     => (nameof(HardcoreStatus.IndoorConfinement),        PermissionType.Global),
-            KPID.ChatBoxesHidden       => (nameof(HardcoreStatus.ChatBoxesHidden),          PermissionType.Global),
-            KPID.ChatInputHidden       => (nameof(HardcoreStatus.ChatInputHidden),          PermissionType.Global),
-            KPID.ChatInputBlocked      => (nameof(HardcoreStatus.ChatInputBlocked),         PermissionType.Global),
+            KPID.LockedFollowing       => (nameof(HardcoreState.LockedFollowing),          PermissionType.Global),
+            KPID.LockedEmoteState      => (nameof(HardcoreState.LockedEmoteState),         PermissionType.Global),
+            KPID.IndoorConfinement     => (nameof(HardcoreState.IndoorConfinement),        PermissionType.Global),
+            KPID.ChatBoxesHidden       => (nameof(HardcoreState.ChatBoxesHidden),          PermissionType.Global),
+            KPID.ChatInputHidden       => (nameof(HardcoreState.ChatInputHidden),          PermissionType.Global),
+            KPID.ChatInputBlocked      => (nameof(HardcoreState.ChatInputBlocked),         PermissionType.Global),
             
             KPID.GarbleChannelEditing  => (nameof(PairPerms.AllowGarbleChannelEditing),    PermissionType.PairPerm),
             KPID.HypnoticImage         => (nameof(PairPerms.AllowHypnoImageSending),       PermissionType.PairPerm),
@@ -342,12 +342,12 @@ public enum KPID : byte
             KPID.ApplyPositive         => nameof(PairPermAccess.LociAccessAllowed),
             KPID.ApplyNegative         => nameof(PairPermAccess.LociAccessAllowed),
             KPID.ApplySpecial          => nameof(PairPermAccess.LociAccessAllowed),
-            KPID.ApplyPairsMoodles     => nameof(PairPermAccess.LociAccessAllowed),
-            KPID.ApplyOwnMoodles       => nameof(PairPermAccess.LociAccessAllowed),
-            KPID.MaxMoodleTime         => nameof(PairPermAccess.MaxLociTimeAllowed),
-            KPID.PermanentMoodles      => nameof(PairPermAccess.LociAccessAllowed),
-            KPID.RemoveAppliedMoodles  => nameof(PairPermAccess.LociAccessAllowed),
-            KPID.RemoveAnyMoodles      => nameof(PairPermAccess.LociAccessAllowed),
+            KPID.ApplyPairsLociData     => nameof(PairPermAccess.LociAccessAllowed),
+            KPID.ApplyOwnLociData       => nameof(PairPermAccess.LociAccessAllowed),
+            KPID.MaxLociStatusTime         => nameof(PairPermAccess.MaxLociTimeAllowed),
+            KPID.PermaLociStatuses      => nameof(PairPermAccess.LociAccessAllowed),
+            KPID.RemoveAppliedLociData  => nameof(PairPermAccess.LociAccessAllowed),
+            KPID.RemoveAnyLociStatus      => nameof(PairPermAccess.LociAccessAllowed),
 
             KPID.PatternStarting       => nameof(PairPermAccess.ExecutePatternsAllowed),
             KPID.PatternStopping       => nameof(PairPermAccess.StopPatternsAllowed),

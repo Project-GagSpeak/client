@@ -1,11 +1,6 @@
 using CkCommons;
-using CkCommons.Gui;
-using Dalamud.Bindings.ImGui;
-using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerClient;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
@@ -183,17 +178,17 @@ public static class GagspeakEx
         };
     }
 
-    public static JObject Serialize(this LociItem moodle)
+    public static JObject Serialize(this LociItem lociData)
     {
-        var type = moodle is LociPreset ? LociType.Preset : LociType.Status;
+        var type = lociData is LociPreset ? LociType.Preset : LociType.Status;
 
         var json = new JObject
         {
             ["Type"] = type.ToString(),
-            ["Id"] = moodle.Id.ToString(),
+            ["Id"] = lociData.Id.ToString(),
         };
 
-        if (moodle is LociPreset preset)
+        if (lociData is LociPreset preset)
         {
             json["StatusIds"] = new JArray(preset.StatusIds.Select(x => x.ToString()));
         }
@@ -206,7 +201,7 @@ public static class GagspeakEx
         if (token is not JObject jsonObject)
             throw new ArgumentException("Invalid JObjectToken!");
 
-        var type = Enum.TryParse<LociType>(jsonObject["Type"]?.Value<string>(), out var moodleType) ? moodleType : LociType.Status;
+        var type = Enum.TryParse<LociType>(jsonObject["Type"]?.Value<string>(), out var lociItem) ? lociItem : LociType.Status;
         Guid id = jsonObject["Id"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier");
         IEnumerable<Guid> statusIds = jsonObject["StatusIds"]?.Select(x => x.ToObject<Guid>()) ?? Enumerable.Empty<Guid>();
         return type switch

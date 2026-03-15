@@ -3,7 +3,7 @@ using CkCommons.DrawSystem;
 using Dalamud.Bindings.ImGui;
 using GagSpeak.CustomCombos;
 using GagSpeak.CustomCombos.Editor;
-using GagSpeak.CustomCombos.Moodles;
+using GagSpeak.CustomCombos.Loci;
 using GagSpeak.CustomCombos.Padlock;
 using GagSpeak.CustomCombos.Pairs;
 using GagSpeak.Gui.Components;
@@ -91,7 +91,7 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
     // Readonly Publics
     public string DisplayName => Kinkster.GetNickAliasOrUid();
     public bool   IsValid     => Kinkster is not null;
-    public float  DispWidth   => Math.Max(300f, ImGui.CalcTextSize($"{DisplayName} prevents removing applied Moodles. ").X + ImGui.GetFrameHeightWithSpacing() * 2).AddWinPadX();
+    public float  DispWidth   => Math.Max(300f, ImGui.CalcTextSize($"{DisplayName} prevents removing applied Statuses. ").X + ImGui.GetFrameHeightWithSpacing() * 2).AddWinPadX();
 
     // Instance get-private setters.
     public string                        LastUID     { get; private set; }
@@ -337,7 +337,7 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
     {
         UiService.SetUITask(async () =>
         {
-            var dto = new HardcoreStateChange(Kinkster!.UserData, new HardcoreStatus(), attribute, MainHub.OwnUserData);
+            var dto = new HardcoreStateChange(Kinkster!.UserData, new HardcoreState(), attribute, MainHub.OwnUserData);
             if (await _hub.UserChangeOtherHardcoreState(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             {
                 switch (res.ErrorCode)

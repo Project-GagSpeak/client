@@ -122,7 +122,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
                 _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileSaving, ImGui.GetWindowPos(), ImGui.GetWindowSize(), _ =>
                 {
                     IsOpen = false;
-                    _mainMenuTabs.TabSelection = MainMenuTabs.SelectedTab.PatternHub;
+                    _mainMenuTabs.TabSelection = MainMenuTabs.SelectedTab.PatternSharehub;
                 }); // tutorial locks interactions, no need to save, just close
 
                 ImUtf8.SameLineInner();

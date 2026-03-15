@@ -1,6 +1,5 @@
 using GagSpeak.GameInternals.Structs;
 using Dalamud.Bindings.ImGui;
-using static FFXIVClientStructs.FFXIV.Client.Game.Control.CameraManager.Delegates;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game;
 

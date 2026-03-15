@@ -5,6 +5,7 @@ using CkCommons.Textures;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.State.Caches;
 using GagspeakAPI.Data;
 using Microsoft.IdentityModel.Tokens;
@@ -51,14 +52,14 @@ public static class LociDrawer
         }
 
         var size = iconSize ?? LociIcon.Size;
-        using (CkRaii.FramedChildPaddedW($"##{id}-MoodleRowDrawn", width, LociIcon.GetRowHeight(size.Y, rows), CkCol.CurvedHeaderFade.Uint(), 0, rounding))
+        using (CkRaii.FramedChildPaddedW($"##{id}-LociRowDrawn", width, LociIcon.GetRowHeight(size.Y, rows), CkCol.CurvedHeaderFade.Uint(), 0, rounding))
             DrawIconsOrEmpty(ids, width, size, rows);
     }
 
     public static void DrawTuplesFramed(string id, IEnumerable<LociStatusInfo> statuses, float width, float rounding, Vector2? iconSize = null, int rows = 1)
     {
         var size = iconSize ?? LociIcon.Size;
-        using (CkRaii.FramedChildPaddedW($"##{id}-MoodleRowDrawn", width, LociIcon.GetRowHeight(size.Y, rows), ImGui.GetColorU32(ImGuiCol.FrameBgHovered), GsCol.VibrantPink.Uint(), rounding))
+        using (CkRaii.FramedChildPaddedW($"##{id}-LociRowDrawn", width, LociIcon.GetRowHeight(size.Y, rows), ImGui.GetColorU32(ImGuiCol.FrameBgHovered), GsCol.VibrantPink.Uint(), rounding))
             DrawTuples(statuses, width, size, rows);
     }
 
@@ -91,8 +92,8 @@ public static class LociDrawer
             if (status.IconID is 0)
                 continue;
 
-            LociIcon.Draw((uint)status.IconID, status.Stacks, iconSize);
-            LociEx.AttachTooltip(status, LociCache.Data);
+            LociIcon.Draw(status.IconID, status.Stacks, iconSize);
+            LociHelpers.AttachTooltip(status, LociCache.Data);
 
             if (++col >= iconsPerRow)
             {
@@ -116,8 +117,8 @@ public static class LociDrawer
             if (statuses[i].IconID is 0)
                 continue;
 
-            LociIcon.Draw((uint)statuses[i].IconID, statuses[i].Stacks, iconSize);
-            LociEx.AttachTooltip(statuses[i], LociCache.Data);
+            LociIcon.Draw(statuses[i].IconID, statuses[i].Stacks, iconSize);
+            LociHelpers.AttachTooltip(statuses[i], LociCache.Data);
 
             if (i < statuses.Count - 1)
                 ImUtf8.SameLineInner();
@@ -136,8 +137,8 @@ public static class LociDrawer
             if (status.IconID is 0)
                 continue;
 
-            LociIcon.Draw((uint)status.IconID, status.Stacks, size);
-            LociEx.AttachTooltip(status, LociCache.Data);
+            LociIcon.Draw(status.IconID, status.Stacks, size);
+            LociHelpers.AttachTooltip(status, LociCache.Data);
 
             if (++col >= iconsPerRow)
             {

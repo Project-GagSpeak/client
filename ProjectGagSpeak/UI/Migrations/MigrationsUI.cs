@@ -168,9 +168,9 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
             ImGui.SameLine();
             CkGui.BoolIcon(data.ForceVisor);
 
-            ImGui.Text("Contains Gag Moodles:");
+            ImGui.Text("Contains Gag LociData:");
             ImGui.SameLine();
-            CkGui.BoolIcon(data.AssociatedMoodles.Count > 0);
+            CkGui.BoolIcon(data.AssociatedLociData.Count > 0);
         }*/
     }
 
@@ -242,9 +242,9 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
                 ImGui.SameLine();
                 CkGui.BoolIcon(SelectedRestraintSet.AssociatedMods.Count > 0);
 
-                ImGui.Text("Contains Gag Moodles:");
+                ImGui.Text("Contains Gag LociData:");
                 ImGui.SameLine();
-                CkGui.BoolIcon(SelectedRestraintSet.AssociatedMoodles.Count > 0);
+                CkGui.BoolIcon(SelectedRestraintSet.AssociatedLociData.Count > 0);
 
                 ImGui.TableNextColumn();
                 // for some wierd ass reason when we calculate the centered preview text you need to take away the window padding or else it will never fit???
@@ -328,7 +328,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
                 ImGui.SameLine();
                 ImGui.Text(SelectedCursedItem.AssociatedMod.Mod.Name);
 
-                CkGui.ColorText("Moodle Type:", ImGuiColors.ParsedGold);
+                CkGui.ColorText("LociData Type:", ImGuiColors.ParsedGold);
                 ImGui.SameLine();
                 ImGui.Text(SelectedCursedItem.LociType.ToString());
             }

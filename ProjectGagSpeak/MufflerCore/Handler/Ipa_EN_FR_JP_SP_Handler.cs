@@ -1,9 +1,7 @@
 using CkCommons.GarblerCore;
 using System.Text.RegularExpressions;
-using CkCommons.FileSystem;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
-using Lumina.Excel.Sheets;
 
 namespace GagSpeak.MufflerCore.Handler;
 

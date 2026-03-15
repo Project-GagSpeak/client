@@ -16,7 +16,6 @@ using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using Microsoft.Extensions.Hosting;
-using System;
 
 namespace GagSpeak.Services;
 

@@ -1,4 +1,5 @@
 using GagSpeak.Gui.Components;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.State.Models;
 using GagspeakAPI.Data;
@@ -25,6 +26,9 @@ public record SwitchToIntroUiMessage : MessageBase;
 
 /// <summary> Forcefully opens the Main UI, and closes the Introduction UI if opened. </summary>
 public record SwitchToMainUiMessage : MessageBase;
+
+/// <summary> Opens the Settings UI and expands the chosen OptionalPlugin info. </summary>
+public record OpenSettingsPluginInfoMessage(OptionalPlugin Plugin) : MessageBase;
 
 /// <summary> Forces a specific tab to be opened within the Main UI </summary>
 public record MainWindowTabChangeMessage(MainMenuTabs.SelectedTab NewTab) : MessageBase;

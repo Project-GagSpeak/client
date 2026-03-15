@@ -1,5 +1,4 @@
 using CkCommons.Gui;
-using CkCommons.Raii;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.ManagedFontAtlas;
 using Dalamud.Interface.Utility;

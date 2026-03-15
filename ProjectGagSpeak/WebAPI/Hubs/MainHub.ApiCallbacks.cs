@@ -1,6 +1,6 @@
 using CkCommons;
 using Dalamud.Interface.ImGuiNotification;
-using GagSpeak.Interop;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagspeakAPI.Data;
@@ -135,7 +135,7 @@ public partial class MainHub
 
     #endregion Pairing & Messages
 
-    #region Moodles
+    #region Loci
     public Task Callback_LociDataUpdated(LociDataUpdate dto)
     {
         Logger.LogDebug($"Callback_LociDataUpdated: {dto.User.AliasOrUID}", LoggerType.Callbacks);
@@ -181,7 +181,7 @@ public partial class MainHub
         else
         {
             Mediator.Publish(new EventMessage(new(kinkster.GetNickAliasOrUid(), kinkster.UserData.UID, InteractionType.ApplyOwnStatus, "Applied by Kinkster.")));
-            await _loci.ApplyLociStatus(dto.Ids, dto.LockIds).ConfigureAwait(false);
+            await _loci.ApplyStatus([..dto.Ids], dto.LockIds).ConfigureAwait(false);
         }
     }
 
@@ -196,7 +196,7 @@ public partial class MainHub
         else
         {
             Mediator.Publish(new EventMessage(new(pair.GetNickAliasOrUid(), pair.UserData.UID, InteractionType.ApplyOtherStatus, "Applied by Kinkster.")));
-            await _loci.ApplyLociStatus(dto.Statuses, dto.LockIds).ConfigureAwait(false);
+            await _loci.ApplyStatusInfo([.. dto.Statuses.Select(s => s.ToTuple())], dto.LockIds).ConfigureAwait(false);
         }
     }
 
@@ -211,7 +211,7 @@ public partial class MainHub
         else
         {
             Mediator.Publish(new EventMessage(new(pair.GetNickAliasOrUid(), pair.UserData.UID, InteractionType.RemoveStatus, "Removed by Kinkster.")));
-            await _loci.RemoveStatusID(dto.Ids, false).ConfigureAwait(false);
+            await _loci.BombStatus([ ..dto.Ids], false).ConfigureAwait(false);
         }
     }
 
@@ -226,10 +226,10 @@ public partial class MainHub
         else
         {
             Mediator.Publish(new EventMessage(new(pair.GetNickAliasOrUid(), pair.UserData.UID, InteractionType.ClearStatuses, "Cleared by Kinkster.")));
-            await _loci.RemoveStatusID(LociCache.Data.DataInfo.Keys, false).ConfigureAwait(false);
+            await _loci.BombStatus([..LociCache.Data.DataInfo.Keys], false).ConfigureAwait(false);
         }
     }
-    #endregion Moodles
+    #endregion Loci
 
     #region Pair Permission Exchange
     public Task Callback_BulkChangeGlobal(BulkChangeGlobal dto)
@@ -472,7 +472,7 @@ public partial class MainHub
                     // process a change to the active collar's dyes.
                     break;
                 case DataUpdateType.CollarLociDataChange:
-                    // process a change to the active collar's Moodles.
+                    // process a change to the active collar's Loci Status.
                     break;
                 case DataUpdateType.CollarWritingChange:
                     // process a change to the collar's writing,

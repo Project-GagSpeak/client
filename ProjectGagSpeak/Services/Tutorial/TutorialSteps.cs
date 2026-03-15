@@ -43,9 +43,9 @@ public enum StepsMainUi
     PatternHub, // overview of pattern hub.
     PatternSearch, // how searches are filtered.
     PatternResults, // up to 50 results, ext ext, liking and downloading.
-    MoodleHub, // overview of moodle hub.
-    MoodleSearch, // how searches are filtered.
-    MoodleResults, // up to 50 results, ext ext, liking and downloading.
+    LociSharehub, // overview of Loci Sharehub.
+    LociSearch, // how searches are filtered.
+    SearchResults, // up to 50 results, ext ext, liking and downloading.
     GlobalChat, // overview of global chat, how it works, log clearing ext.
     UsingGlobalChat, // must be verified to use, how to verify, ext.
     ChatEmotes, // how to include emotes.
@@ -86,12 +86,12 @@ public enum StepsRestraints
     Layers, // what layers are, how they work.
     AddingLayers, // show where to add. (on click, add 2)
     LayerTypes, // on click, swap first layer to opposite type.
-    LayerTypesBuffer, // duplicate previous step, then switch to modsmoodles panel
-    ModsMoodles, // overview.
+    LayerTypesBuffer, // duplicate previous step, then switch to mods & lociData panel
+    ModsAndLociData, // overview.
     AddingMods,
-    AddingMoodles,
-    SwapMoodleTypes, // on click, add a moodle, if any are present.
-    MoodlePreview, // moodle preview box.
+    AddingLociData,
+    SwapLociDataType, // on click, add the LociData, if any are present.
+    LociDataPreview, // preview box for all loci status icons.
     CancelingChanges, // what happens if you dont want to save edits.
     SavingChanges, // on click, saving changes and close.
     SelectingThumbnails, // how to change thumbnails for a restraint set. (open browser)
@@ -134,9 +134,9 @@ public enum StepsRestrictions
     EffectColors, // color controls. (on click, close hypno editor)
     HardcoreTraits, // these can only be allowed by pairs you set in allowances.
     Arousal, // how arousal works.
-    AttachedMoodle, // overview.
-    SwitchingMoodleType, // how to swap types. (select first from list if any exist).
-    SelectedMoodlePreview, // where preview displays.
+    AttachedLociData, // overview.
+    SwitchingLociDataType, // how to swap types. (select first from list if any exist).
+    SelectedLociDataPreview, // where preview displays.
     AttachedMod, // overview,
     SelectingMod, // select mod first,
     SelectingPreset, // preset second,
@@ -165,9 +165,9 @@ public enum StepsGags
     HardcoreTraits, // these can only be allowed by pairs you set in allowances.
     Arousal, // how arousal works.
     CPlusPreset, // setting the preset thingy.
-    AttachedMoodle, // overview.
-    SwitchingMoodleType, // how to swap types. (select first from list if any exist).
-    SelectedMoodlePreview, // where preview displays.
+    AttachedLociData, // overview.
+    SwitchingLociDataType, // how to swap types. (select first from list if any exist).
+    SelectedLociDataPreview, // where preview displays.
     AttachedMod, // overview,
     SelectingMod, // select mod first,
     SelectingPreset, // preset second,
@@ -360,8 +360,8 @@ public enum StepsTriggers
     TextOutputAction, // what it does, brief overview. (on click, move to applied actions)
     GagAction, // what it does, brief overview. (on click, move to restriction action)
     RestrictionAction, // what it does, brief overview. (on click, move to restraint action)
-    RestraintAction, // what it does, brief overview. (on click, move to moodle action)
-    MoodleAction, // what it does, brief overview. (on click, move to shock collar action)
+    RestraintAction, // what it does, brief overview. (on click, move to lociData action)
+    LociDataAction, // what it does, brief overview. (on click, move to shock collar action)
     ShockCollarAction, // what it does, brief overview. (on click, move to sex toy action)
     SexToyAction, // what it does, brief overview.
     DiscardingChanges, // how to exit editor without saving.

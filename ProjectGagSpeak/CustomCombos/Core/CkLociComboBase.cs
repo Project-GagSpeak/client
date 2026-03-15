@@ -1,16 +1,13 @@
-using GagSpeak.Gui.Components;
 using GagSpeak.Services;
-using GagSpeak.State.Caches;
-using GagSpeak.Utils;
 using Dalamud.Bindings.ImGui;
 using CkCommons.Textures;
 
 namespace GagSpeak.CustomCombos;
 
-public abstract class CkMoodleComboBase<T> : CkFilterComboCache<T>
+public abstract class CkLociComboBase<T> : CkFilterComboCache<T>
 {
     protected float IconScale { get; }
-    protected CkMoodleComboBase(ILogger log, float iconScale, Func<IReadOnlyList<T>> generator)
+    protected CkLociComboBase(ILogger log, float iconScale, Func<IReadOnlyList<T>> generator)
         : base(generator, log)
     {
         IconScale = iconScale;

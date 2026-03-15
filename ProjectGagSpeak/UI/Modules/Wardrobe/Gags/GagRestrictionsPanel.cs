@@ -32,8 +32,8 @@ public partial class GagRestrictionsPanel
     private readonly CosmeticService _textures;
     private readonly TutorialService _guides;
 
-    private MoodleStatusCombo _statusCombo;
-    private MoodlePresetCombo _presetCombo;
+    private LociStatusCombo _statusCombo;
+    private LociPresetCombo _presetCombo;
     public bool IsEditing => _manager.ItemInEditor != null;
     public GagRestrictionsPanel(
         ILogger<GagRestrictionsPanel> logger,
@@ -59,8 +59,8 @@ public partial class GagRestrictionsPanel
         _textures = textures;
         _guides = guides;
 
-        _statusCombo = new MoodleStatusCombo(logger, 1.15f);
-        _presetCombo = new MoodlePresetCombo(logger, 1.15f);
+        _statusCombo = new LociStatusCombo(logger, 1.15f);
+        _presetCombo = new LociPresetCombo(logger, 1.15f);
         _profileCombo = new CustomizeProfileCombo(logger, mediator);
     }
 
@@ -188,7 +188,7 @@ public partial class GagRestrictionsPanel
             _attributeDrawer.DrawTraitPreview(_selector.Selected!.Traits);
         }
 
-        LociDrawer.DrawIcons(_selector.Selected!.Moodle, ImGui.GetContentRegionAvail().X);
+        LociDrawer.DrawIcons(_selector.Selected!.LociData, ImGui.GetContentRegionAvail().X);
     }
 
     private void DrawActiveItemInfo(Vector2 region)

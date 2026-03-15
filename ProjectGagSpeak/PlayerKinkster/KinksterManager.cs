@@ -4,7 +4,7 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.ImGuiNotification;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
-using GagSpeak.Localization;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Attributes;
@@ -299,7 +299,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     #endregion ManagerHelpers
 
     #region Updates
-    public void ReceiveLociData(UserData target, CachedLociData newLociData)
+    public void ReceiveLociData(UserData target, LociContainerData newLociData)
     {
         if (!_allKinksters.TryGetValue(target, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
@@ -308,7 +308,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         kinkster.NewLociData(newLociData);
     }
 
-    public void ReceiveLociStatuses(UserData target, List<LociStatusInfo> newStatuses)
+    public void ReceiveLociStatuses(UserData target, List<LociStatusStruct> newStatuses)
     {
         if (!_allKinksters.TryGetValue(target, out var kinkster))
             throw new InvalidOperationException($"User [{target.AliasOrUID}] not found.");
@@ -316,7 +316,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         kinkster.LociData.SetStatuses(newStatuses);
     }
 
-    public void ReceiveLociPresets(UserData target, List<LociPresetInfo> newPresets)
+    public void ReceiveLociPresets(UserData target, List<LociPresetStruct> newPresets)
     {
         if (!_allKinksters.TryGetValue(target, out var kinkster))
             throw new InvalidOperationException($"User [{target.AliasOrUID}] not found.");
@@ -324,24 +324,24 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         kinkster.LociData.SetPresets(newPresets);
     }
 
-    public void ReceiveLociStatusUpdate(UserData target, LociStatusInfo status, bool deleted)
+    public void ReceiveLociStatusUpdate(UserData target, LociStatusStruct status, bool deleted)
     {
         if (!_allKinksters.TryGetValue(target, out var kinkster))
             throw new InvalidOperationException($"User [{target.AliasOrUID}] not found.");
         Logger.LogTrace($"Received loci status single update for {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
 
         if (deleted) kinkster.LociData.Statuses.Remove(status.GUID);
-        else kinkster.LociData.TryUpdateStatus(status);
+        else kinkster.LociData.Statuses[status.GUID] = status.ToTuple();
     }
 
-    public void ReceiveLociPresetUpdate(UserData target, LociPresetInfo preset, bool deleted)
+    public void ReceiveLociPresetUpdate(UserData target, LociPresetStruct preset, bool deleted)
     {
         if (!_allKinksters.TryGetValue(target, out var kinkster))
             throw new InvalidOperationException($"User [{target.AliasOrUID}] not found.");
         Logger.LogTrace($"Received loci preset single update for {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
 
         if (deleted) kinkster.LociData.Presets.Remove(preset.GUID);
-        else kinkster.LociData.TryUpdatePreset(preset);
+        else kinkster.LociData.Presets[preset.GUID] = preset.ToTuple();
     }
 
     public void NewActiveComposite(UserData target, CharaCompositeActiveData data, bool safeword)
@@ -457,12 +457,12 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         kinkster.LightCache.UpdateLootItem(itemId, newData);
     }
 
-    public void CachedAliasDataChange(UserData targetUser, Guid itemId, AliasTrigger? newData)
+    public void CachedAliasDataChange(UserData targetUser, Guid itemId, GagspeakAlias? newData)
     {
         if (!_allKinksters.TryGetValue(targetUser, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{targetUser.AliasOrUID}] not found.");
         
-        kinkster.UpdateAliasTrigger(itemId, newData);
+        kinkster.UpdateGagspeakAlias(itemId, newData);
     }
 
     // Simple temporary placeholder for how we store if someone is listening to us or not.
@@ -538,7 +538,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         kinkster.UserPair.OwnAccess = newAccess;
 
         Logger.LogDebug($"OWN BulkChangeUnique for [{kinkster.GetNickAliasOrUid()}]", LoggerType.PairDataTransfer);
-        // Handle Moodles change
+        // Handle LociData change
         var lociPermChange = (prevPerms.LociAccess != newPerms.LociAccess) || (prevPerms.MaxLociTime != newPerms.MaxLociTime);
         // Could add some achievement handling here maybe, idk.
 
@@ -565,7 +565,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
 
         Logger.LogDebug($"OTHER BulkChangeUnique for [{kinkster.GetNickAliasOrUid()}]", LoggerType.PairDataTransfer);
 
-        // Handle informing moodles of permission changes.
+        // Handle informing loci of permission changes.
         var lociPermChange = (prevPerms.LociAccess != newPerms.LociAccess) || (prevPerms.MaxLociTime != newPerms.MaxLociTime);
         // Could add some achievement handling here maybe, idk.
 
@@ -590,7 +590,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
 
         Logger.LogDebug($"OWN PermChangeUnique for [{kinkster.GetNickAliasOrUid()}] set [{permName}] to [{finalVal}]", LoggerType.PairDataTransfer);
 
-        // Handle our clients Moodle change for this Kinkster
+        // Handle our clients LociData change for this Kinkster
         if (permName.Equals(nameof(PairPerms.LociAccess)) || permName.Equals(nameof(PairPerms.MaxLociTime)))
         {
             // Could do achievement stuff here i guess.
@@ -616,7 +616,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
 
         Logger.LogDebug($"OTHER SingleChangeUnique for [{kinkster.GetNickAliasOrUid()}] set [{permName}] to [{finalVal}]", LoggerType.PairDataTransfer);
 
-        // If moodle permissions updated, notify IpcProvider (Moodles) that we have a change.
+        // If lociAccess updated, notify IpcProvider (LociData) that we have a change.
         if (permName.Equals(nameof(PairPerms.LociAccess)) || permName.Equals(nameof(PairPerms.MaxLociTime)))
         {
             // Could do achievement stuff here i guess.
@@ -652,7 +652,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     }
 
     // Not really sure how I want to revise this but I really hate the readonly global permissions lol.
-    public void StateChangeHardcore(UserData target, UserData enactor, HcAttribute attribute, HardcoreStatus newData)
+    public void StateChangeHardcore(UserData target, UserData enactor, HcAttribute attribute, HardcoreState newData)
     {
         if (!_allKinksters.TryGetValue(target, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");

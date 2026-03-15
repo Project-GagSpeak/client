@@ -43,7 +43,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
         RestraintEditorInfo editorInfo,
         RestraintEditorLayers editorLayers,
         RestraintEditorEquipment editorEquipment,
-        RestraintEditorModsMoodles editorModsMoodles,
+        RestraintEditorModsLociData editorModsLoci,
         DistributorService dds,
         CallbackHandler visuals,
         UiThumbnailService thumbnails,
@@ -60,7 +60,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
         _guides = guides;
 
         // The editor tab windows.
-        EditorTabs = [editorInfo, editorEquipment, editorLayers, editorModsMoodles];
+        EditorTabs = [editorInfo, editorEquipment, editorLayers, editorModsLoci];
         Mediator.Subscribe<TooltipSetItemToEditorMessage>(this, (msg) =>
         {
             if (_manager.ItemInEditor?.RestraintSlots[msg.Slot] is RestraintSlotBasic basicSlot)
@@ -180,7 +180,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
             DrawAttributeRow();
             // 3rd row
             var maxWidth = drawRegion.Size.X - imgSize.X - ImGui.GetStyle().WindowPadding.X * 2;
-            LociDrawer.DrawIcons(_selector.Selected!.GetAllMoodles(), maxWidth, LociIcon.Size, 1);
+            LociDrawer.DrawIcons(_selector.Selected!.GetAllLociData(), maxWidth, LociIcon.Size, 1);
         }
 
         // Right side image
@@ -216,7 +216,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
 {
             (FAI.LayerGroup,      sel.Layers.Count > 0,                         "This Restraint has layers"),
             (FAI.FileDownload,    sel.RestraintMods.Count > 0,                  "This Set has attached Mods"),
-            (FAI.TheaterMasks,    sel.RestraintMoodles.Count > 0,               "This Set has attached Moodles"),
+            (FAI.TheaterMasks,    sel.RestraintLociData.Count > 0,              "This Set has attached LociData"),
             (FAI.Glasses,         !sel.MetaStates.Equals(MetaDataStruct.Empty), "This Set is forcing Metadata states."),
             (FAI.Repeat,          sel.DoRedraw,                                 "This Set redraws the player upon application / removal."),
             (FAI.PersonRays,      sel.Traits != 0,                              "This Set applies Hardcore Traits when set by allowed kinksters."),

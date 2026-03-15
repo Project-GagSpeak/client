@@ -37,8 +37,8 @@ public class CustomizePlusListener : DisposableMediatorSubscriberBase
         _ipc.OnProfileUpdate.Unsubscribe(OnProfileUpdate);
     }
 
-    /// <summary> Fetches all information from moodles we can cache and store. (Presets, Statuses, StatusManager). </summary>
-    /// <remarks> This will fire every time that Moodles Plugin initializes. </remarks>
+    /// <summary> Fetches all information from C+ we can cache and store. (Presets, Statuses, StatusManager). </summary>
+    /// <remarks> This will fire every time that C+ Plugin initializes. </remarks>
     private void FetchProfileList()
     {
         _cache.UpdateIpcProfileList(_ipc.GetClientProfiles());

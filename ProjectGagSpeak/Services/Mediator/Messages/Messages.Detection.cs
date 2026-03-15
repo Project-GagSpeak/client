@@ -4,7 +4,6 @@ using GagSpeak.GameInternals;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
-using MessagePack;
 
 namespace GagSpeak.Services.Mediator;
 

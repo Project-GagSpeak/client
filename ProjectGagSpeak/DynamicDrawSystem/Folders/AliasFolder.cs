@@ -1,8 +1,6 @@
 using CkCommons.DrawSystem;
 using Dalamud.Bindings.ImGui;
-using GagSpeak.Kinksters;
-using GagspeakAPI.Data;
-using static GagSpeak.DrawSystem.SorterEx;
+using GagSpeak.State.Models;
 
 namespace GagSpeak.DrawSystem;
 
