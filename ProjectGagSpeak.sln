@@ -21,10 +21,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Penumbra.GameData", "Submod
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Penumbra.String", "Submodules\Penumbra.String\Penumbra.String.csproj", "{1849BA3A-036D-483D-A181-C87C3ABEE26C}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Submodules", "Submodules", "{B3415621-5EBA-1A55-0B57-0078FEC59DC7}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Loci.Api", "Submodules\LociAPI\Loci.Api.csproj", "{5DE4FB80-8E18-4013-BDAB-31237420716E}"
 EndProject
+
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
