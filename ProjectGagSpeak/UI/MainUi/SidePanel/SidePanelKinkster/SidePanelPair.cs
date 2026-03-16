@@ -11,8 +11,10 @@ using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
+using GagspeakAPI.Hub;
 using OtterGui;
 using OtterGui.Text;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -21,17 +23,22 @@ public partial class SidePanelPair
     private readonly ILogger<SidePanelPair> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly MainHub _hub;
+    private readonly KinksterManager _kinksters;
+    private readonly SidePanelService _service;
     private readonly PiShockProvider _shockies;
 
     private Dictionary<KPID, string> _timespanCache = new();
     private static IconCheckboxEx EditAccessCheckbox = new(FAI.Pen, 0xFF00FF00, 0);
     private static IconCheckboxEx HardcoreCheckbox = new(FAI.UserLock, 0xFF00FF00, 0xFF0000FF);
 
-    public SidePanelPair(ILogger<SidePanelPair> logger, GagspeakMediator mediator, MainHub hub, PiShockProvider shockies)
+    public SidePanelPair(ILogger<SidePanelPair> logger, GagspeakMediator mediator, MainHub hub,
+        KinksterManager kinksters, SidePanelService service, PiShockProvider shockies)
     {
         _logger = logger;
         _mediator = mediator;
         _hub = hub;
+        _kinksters = kinksters;
+        _service = service;
         _shockies = shockies;
     }
 
@@ -354,7 +361,18 @@ public partial class SidePanelPair
         CkGui.AttachToolTip($"Snapshot {dispName}'s KinkPlate and make a report with its state.");
         
         if (CkGui.IconTextButton(FAI.Trash, "Unpair Permanently", width, true, !KeyMonitor.CtrlPressed() || !KeyMonitor.ShiftPressed()))
-            _hub.UserRemoveKinkster(new(kinkster.UserData)).ConfigureAwait(false);
+            UiService.SetUITask(async () =>
+            {
+                var res = await _hub.UserRemoveKinkster(new(kinkster.UserData)).ConfigureAwait(false);
+                if (res.ErrorCode is not GagSpeakApiEc.Success)
+                    _logger.LogWarning($"Failed to remove pair {dispName}. Reason: {res.ErrorCode}");
+                else
+                {
+                    _logger.LogInformation($"Successfully removed pair {dispName}.");
+                    _kinksters.RemoveKinkster(new(kinkster.UserData));
+                    _service.ClearDisplay();
+                }
+            });
         CkGui.AttachToolTip($"--COL--CTRL + SHIFT + L-Click--COL-- to remove {dispName}", color: ImGuiColors.DalamudRed);
     }
 

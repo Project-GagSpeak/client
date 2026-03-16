@@ -292,11 +292,11 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
     {
         UiService.SetUITask(async () =>
         {
-            var res = await _hub.UserRejectKinksterRequest(new(new(request.RecipientUID))).ConfigureAwait(false);
+            var res = await _hub.UserRejectKinksterRequest(new(new(request.SenderUID))).ConfigureAwait(false);
             if (res.ErrorCode is GagSpeakApiEc.Success)
                 _manager.RemoveRequest(request);
             else
-                Log.Warning($"Failed to reject kinkster request to {request.RecipientAnonName} ({request.RecipientUID}): {res.ErrorCode}");
+                Log.Warning($"Failed to reject kinkster request from {request.SenderAnonName} ({request.SenderUID}): {res.ErrorCode}");
         });
     }
 

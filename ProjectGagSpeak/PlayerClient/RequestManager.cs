@@ -46,6 +46,7 @@ public sealed class RequestsManager : DisposableMediatorSubscriberBase
         // Add it to the requests.
         Logger.LogDebug($"Adding new request entry to manager.", LoggerType.PairManagement);
         _allRequests.Add(entry);
+
         RecreateLazy();
     }
 

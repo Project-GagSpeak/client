@@ -294,8 +294,7 @@ public class MainUI : WindowMediatorSubscriberBase
                 _creatingRequest = false;
             });
         }
-        if (!string.IsNullOrEmpty(_uidToSentTo))
-            CkGui.AttachToolTip($"Send Pair Request to {_uidToSentTo}");
+        CkGui.AttachToolTip($"Send Pair Request to {_uidToSentTo}", string.IsNullOrEmpty(_uidToSentTo));
 
         // draw a attached message field as well if they want.
         ImGui.SetNextItemWidth(availableXWidth);

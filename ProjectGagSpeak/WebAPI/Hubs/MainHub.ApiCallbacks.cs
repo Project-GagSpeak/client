@@ -108,7 +108,7 @@ public partial class MainHub
     public Task Callback_AddPairRequest(KinksterRequest dto)
     {
         Logger.LogDebug($"Callback_AddPairRequest: {dto}", LoggerType.Callbacks);
-        Generic.Safe(() => _requests.AddNewRequest(dto));
+        _requests.AddNewRequest(dto);
         return Task.CompletedTask;
     }
 
