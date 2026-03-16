@@ -9,6 +9,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.CustomCombos.Editor;
 using GagSpeak.Gui.Components;
+using GagSpeak.Interop;
 using GagSpeak.Interop.Helpers;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
@@ -19,6 +20,7 @@ using GagspeakAPI.Data;
 using LociApi.Enums;
 using OtterGui;
 using OtterGui.Text;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -47,7 +49,7 @@ public class LociSharehubTab : DisposableMediatorSubscriberBase
 
     public void DrawSharehub()
     {
-        
+
         DrawSearchFilter();
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.LociSearch, MainUI.LastPos, MainUI.LastSize);
 
@@ -60,9 +62,34 @@ public class LociSharehubTab : DisposableMediatorSubscriberBase
             return;
         }
 
+        var minPos = ImGui.GetCursorScreenPos();
         using (ImRaii.Child("search-result-wrapper", ImGui.GetContentRegionAvail(), false, WFlags.NoScrollbar))
             DrawResultList();
+        var maxPos = ImGui.GetItemRectMax();
+
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SearchResults, MainUI.LastPos, MainUI.LastSize, _ => _tabMenu.TabSelection = MainMenuTabs.SelectedTab.GlobalChat);
+
+        if (IpcCallerLoci.APIAvailable)
+            return;
+
+        // Overlay ontop of this if Loci should be installed.
+        ImGui.SetCursorScreenPos(minPos);
+        using (ImRaii.Child("warn-display", ImGui.GetContentRegionAvail()))
+        {
+            // Draw warnings if we should.
+            ImGui.GetWindowDrawList().AddRectFilledMultiColor(minPos, maxPos, 0x77000000, 0x77000000, 0xAA000000, 0xAA000000);
+            var errorHeight = CkGui.CalcFontTextSize("A", Fonts.UidFont).Y + CkGui.CalcFontTextSize("A", Fonts.Default150Percent).Y + ImUtf8.FrameHeightSpacing;
+            var centerDrawHeight = (ImGui.GetContentRegionAvail().Y - errorHeight) / 2;
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + centerDrawHeight);
+            CkGui.FontTextCentered("Requires Loci To Use!", Fonts.UidFont, ImGuiColors.DalamudRed);
+            CkGui.FontTextCentered("Try-on and status importing require Loci", Fonts.Default150Percent);
+            var buttonW = ImGui.GetContentRegionAvail().X * .4f;
+            CkGui.SetCursorXtoCenter(buttonW);
+            using (ImRaii.PushColor(ImGuiCol.Button, ImGuiColors.DPSRed))
+                if (CkGui.IconTextButtonCentered(FAI.InfoCircle, "Learn More", buttonW))
+                    Mediator.Publish(new OpenSettingsPluginInfoMessage(OptionalPlugin.Loci));
+            CkGui.AttachToolTip("Opens the PluginInfoBox in the SettingsUI for Loci");
+        }
     }
 
     private void DrawResultList()
@@ -138,7 +165,7 @@ public class LociSharehubTab : DisposableMediatorSubscriberBase
                 tagsString = tagsString.Substring(0, (int)(allowedLength / ImGui.CalcTextSize("A").X)) + "...";
             CkGui.ColorTextFrameAlignedInline(tagsString, ImGuiColors.ParsedGrey);
         }
-        CkGui.AttachToolTip("Associated Tags");
+        CkGui.AttachToolTip("Associated Tags", !IpcCallerLoci.APIAvailable);
 
         // if the status icon is valid, display it at the starting pos.
         if (info.Status.IconID != 0)
@@ -189,9 +216,9 @@ public class LociSharehubTab : DisposableMediatorSubscriberBase
 
 
         ImUtf8.SameLineInner();
-        if (CkGui.IconTextButton(FAI.Search, "Search", disabled: LociHubService.InUpdate))
+        if (CkGui.IconTextButton(FAI.Search, "Search", disabled: LociHubService.InUpdate || !IpcCallerLoci.APIAvailable))
             _shareHub.Search(_searchStr, _searchTags);
-        CkGui.AttachToolTip("Update Search Results");
+        CkGui.AttachToolTip(IpcCallerLoci.APIAvailable ? "Update Search Results" : "Loci must be installed to use the sharehub!");
 
         // Show the filter combo.
         ImUtf8.SameLineInner();
