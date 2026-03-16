@@ -141,7 +141,7 @@ public class RequestsOutDrawer : DynamicDrawer<RequestEntry>
         // Bounce back and draw out the name.
         ImGui.SameLine(posX);
         using var _ = ImRaii.PushFont(UiBuilder.MonoFont);
-        CkGui.TextFrameAligned(leaf.Data.SenderAnonName);
+        CkGui.TextFrameAligned(leaf.Data.RecipientAnonName);
     }
 
     private void DrawLeftSide(RequestEntry entry, DynamicFlags flags)

@@ -327,16 +327,16 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     {
         // retrieve any current kinkster requests.
         var requests = await UserGetActiveRequests().ConfigureAwait(false);
-#if DEBUG
-        // Generate some dummy entries.
-        var dummyRequests = new List<KinksterRequest>();
-        for (int i = 0; i < 5; i++)
-        {
-            dummyRequests.Add(new KinksterRequest(new($"Dummy Sender {i}"), OwnUserData, new(false, "Wawa", "Blah Blah"), DateTime.Now));
-            dummyRequests.Add(new KinksterRequest(OwnUserData, new($"Dummy Recipient {i}"), new(false, "Wawa", "Blah Blah"), DateTime.Now));
-        }
-        requests.KinksterRequests.AddRange(dummyRequests);
-#endif
+//#if DEBUG
+//        // Generate some dummy entries.
+//        var dummyRequests = new List<KinksterRequest>();
+//        for (int i = 0; i < 5; i++)
+//        {
+//            dummyRequests.Add(new KinksterRequest(new($"Dummy Sender {i}"), OwnUserData, new(false, "Wawa", "Blah Blah"), DateTime.Now));
+//            dummyRequests.Add(new KinksterRequest(OwnUserData, new($"Dummy Recipient {i}"), new(false, "Wawa", "Blah Blah"), DateTime.Now));
+//        }
+//        requests.KinksterRequests.AddRange(dummyRequests);
+//#endif
         _requests.AddNewRequest(requests.KinksterRequests);
         _collarManager.LoadServerRequests(requests.CollarRequests);
     }

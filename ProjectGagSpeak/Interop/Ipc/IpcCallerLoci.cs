@@ -168,10 +168,10 @@ public sealed class IpcCallerLoci : IIpcCaller
     }
 
     /// <inheritdoc cref="LociApi.Ipc.UnregisterByName"/>
-    public async Task UnregisterPlayer(string playerNameWorld)
+    public void UnregisterPlayer(string playerNameWorld)
     {
         if (!APIAvailable) return;
-        var res = await Svc.Framework.RunOnFrameworkThread(() => UnregisterName.Invoke(playerNameWorld, GAGSPEAK_TAG)).ConfigureAwait(false);
+        var res = UnregisterName.Invoke(playerNameWorld, GAGSPEAK_TAG);
         if (res is not (LociApiEc.Success or LociApiEc.NoChange))
             _logger.LogWarning($"Loci Failed to unregister Player {playerNameWorld} with Loci! Error: {res}");
     }

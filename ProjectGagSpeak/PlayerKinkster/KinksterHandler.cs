@@ -4,6 +4,7 @@ using GagSpeak.Interop;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
 using GagSpeak.Watchers;
+using System;
 
 namespace GagSpeak.Kinksters;
 
@@ -18,6 +19,7 @@ public sealed class KinksterHandler : DisposableMediatorSubscriberBase
 
     public Kinkster Kinkster { get; init; } // Self-Parent reference.
     private unsafe Character* _player = null;
+    private bool _lociRegistered = false;
 
     public KinksterHandler(Kinkster kinkster, ILogger<KinksterHandler> logger, 
         GagspeakMediator mediator, IpcManager ipc, CharaObjectWatcher watcher)
@@ -29,6 +31,13 @@ public sealed class KinksterHandler : DisposableMediatorSubscriberBase
 
         Mediator.Subscribe<WatchedObjectCreated>(this, msg => MarkVisibleForAddress(msg.Address));
         Mediator.Subscribe<WatchedObjectDestroyed>(this, msg => UnrenderPlayer(msg.Address));
+        Mediator.Subscribe<LociReady>(this, async _ =>
+        {
+            if (!IsRendered) return;
+            // Re-Register
+            if (await _ipc.Loci.RegisterActor(Address).ConfigureAwait(false))
+                _lociRegistered = true;
+        });
     }
 
     // Public Accessors.
@@ -83,6 +92,13 @@ public sealed class KinksterHandler : DisposableMediatorSubscriberBase
         // Notify other services.
         Logger.LogInformation($"[{Kinkster.GetNickAliasOrUid()}] rendered!", LoggerType.PairHandlers);
         Mediator.Publish(new KinksterRendered(this, Kinkster));
+        RefreshLoci();
+    }
+
+    private async void RefreshLoci()
+    {
+        if (await _ipc.Loci.RegisterActor(Address).ConfigureAwait(false))
+            _lociRegistered = true;
     }
 
     /// <summary>
@@ -108,6 +124,10 @@ public sealed class KinksterHandler : DisposableMediatorSubscriberBase
             Logger.LogDebug($"Disposing {NameString}({Kinkster.GetNickAliasOrUid()}) @ [{Address:X}]", LoggerType.PairHandlers);
             Mediator.Publish(new EventMessage(new(NameString, Kinkster.UserData.UID, InteractionType.VisibilityChange, "Disposed")));
         }
+
+        // This can be called off the thread.
+        _ipc.Loci.UnregisterPlayer(NameWithWorld);
+
         // Clear internal data.
         NameString = string.Empty;
         NameWithWorld = string.Empty;
