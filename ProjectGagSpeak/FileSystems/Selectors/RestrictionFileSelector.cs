@@ -143,12 +143,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
 
     /// <summary> Add the state filter combo-button to the right of the filter box. </summary>
     protected override float CustomFiltersWidth(float width)
-    {
-        return width
-            - CkGui.IconButtonSize(FAI.Plus).X
-            - CkGui.IconButtonSize(FAI.FolderPlus).X
-            - ImGui.GetStyle().ItemInnerSpacing.X;
-    }
+        => CkGui.IconButtonSize(FAI.Plus).X + CkGui.IconButtonSize(FAI.FolderPlus).X + ImUtf8.ItemInnerSpacing.X;
 
     protected override void DrawCustomFilters()
     {

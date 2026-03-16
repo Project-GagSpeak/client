@@ -11,6 +11,7 @@ using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using OtterGui;
+using OtterGui.Text;
 
 namespace GagSpeak.FileSystems;
 
@@ -121,12 +122,7 @@ public sealed class AlarmFileSelector : CkFileSystemSelector<Alarm, AlarmFileSel
 
     /// <summary> Add the state filter combo-button to the right of the filter box. </summary>
     protected override float CustomFiltersWidth(float width)
-    {
-        return width
-            - CkGui.IconButtonSize(FAI.Plus).X
-            - CkGui.IconButtonSize(FAI.FolderPlus).X
-            - ImGui.GetStyle().ItemInnerSpacing.X;
-    }
+        => CkGui.IconButtonSize(FAI.Plus).X + CkGui.IconButtonSize(FAI.FolderPlus).X + ImUtf8.ItemInnerSpacing.X;
 
     protected override void DrawCustomFilters()
     {

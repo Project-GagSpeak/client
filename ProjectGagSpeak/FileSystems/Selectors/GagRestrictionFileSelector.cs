@@ -103,7 +103,7 @@ public sealed class GagRestrictionFileSelector : CkFileSystemSelector<GarblerRes
 
     /// <summary> Add the state filter combo-button to the right of the filter box. </summary>
     protected override float CustomFiltersWidth(float width)
-        => width - CkGui.IconButtonSize(FAI.FolderPlus).X;
+        => CkGui.IconButtonSize(FAI.FolderPlus).X;
 
     protected override void DrawCustomFilters()
     {
