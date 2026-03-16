@@ -62,11 +62,11 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
     // DI Instance Injection
     private readonly VibeRoomChatlog _lobbyChatLog;
     private readonly VibeLobbyManager _lobbyManager;
-    private readonly VibeLobbyDistributionService _hubCaller;
+    private readonly VibeLobbyDistributor _hubCaller;
     private readonly RemoteService _service;
     private readonly TutorialService _guides;
     public BuzzToyRemoteUI(ILogger<BuzzToyRemoteUI> logger, GagspeakMediator mediator,
-        VibeLobbyManager lobbyManager, VibeLobbyDistributionService hubCaller,
+        VibeLobbyManager lobbyManager, VibeLobbyDistributor hubCaller,
         VibeRoomChatlog chatLog, RemoteService service,  TutorialService guides) 
         : base(logger, mediator, "Remote" + REMOTE_IDENTIFIER)
     {

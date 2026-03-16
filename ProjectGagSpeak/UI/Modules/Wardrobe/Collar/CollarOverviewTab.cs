@@ -36,7 +36,7 @@ public class CollarOverviewTab : IFancyTab
     private readonly CollarManager _manager;
     private readonly KinksterManager _kinksters;
     private readonly ModPresetManager _modPresets;
-    private readonly DistributorService _dds;
+    private readonly CharaDataDistributor _dds;
     private readonly SelfBondageService _selfBondage;
     private readonly UiThumbnailService _thumbnails;
     private readonly TutorialService _guides;
@@ -48,7 +48,7 @@ public class CollarOverviewTab : IFancyTab
         CollarManager collar,
         KinksterManager kinksters,
         ModPresetManager modPresets,
-        DistributorService dds,
+        CharaDataDistributor dds,
         SelfBondageService selfBondage,
         UiThumbnailService thumbnails,
         TutorialService guides)

@@ -14,6 +14,7 @@ using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Caches;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using LociApi.Enums;
 using OtterGui;
@@ -24,11 +25,16 @@ namespace GagSpeak.Gui.MainWindow;
 // this can easily become the "contact list" tab of the "main UI" window.
 public class LociSharehubTab : DisposableMediatorSubscriberBase
 {
-    private readonly ShareHubService _shareHub;
-    private HubTagsCombo _hubTags;
+    private readonly LociHubService _shareHub;
     private readonly TutorialService _guides;
     private readonly MainMenuTabs _tabMenu;
-    public LociSharehubTab(ILogger<LociSharehubTab> logger, GagspeakMediator mediator, ShareHubService shareHub,
+
+    private HubTagsCombo _hubTagCombo;
+
+    private string _searchStr = string.Empty;
+    private string _searchTags = string.Empty;
+
+    public LociSharehubTab(ILogger<LociSharehubTab> logger, GagspeakMediator mediator, LociHubService shareHub,
         TutorialService guides, MainMenuTabs tabMenu) 
         : base(logger, mediator)
     {
@@ -36,28 +42,25 @@ public class LociSharehubTab : DisposableMediatorSubscriberBase
         _guides = guides;
         _tabMenu = tabMenu;
 
-        _hubTags = new HubTagsCombo(logger, () => [ ..shareHub.FetchedTags.OrderBy(x => x) ]);
+        _hubTagCombo = new HubTagsCombo(logger, () => [.. MainHub.SharehubTags.OrderBy(x => x)]);
     }
 
     public void DrawSharehub()
     {
-        // Handle grabbing new info from the server if none is present. (not the most elegent but it works)
-        if (!_shareHub.InitialLociCall && !UiService.DisableUI)
-            UiService.SetUITask(_shareHub.SearchLociStatuses());
         
         DrawSearchFilter();
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.LociSearch, MainUI.LastPos, MainUI.LastSize);
 
         ImGui.Separator();
         // draw the results if there are any.
-        if (_shareHub.LatestLociResults.Count <= 0)
+        if (_shareHub.SearchResults.Count <= 0)
         {
             ImGui.Spacing();
             ImGuiUtil.Center("Search something to find results!");
             return;
         }
 
-        using (ImRaii.Child("search-results-gaurd", ImGui.GetContentRegionAvail(), false, WFlags.NoScrollbar))
+        using (ImRaii.Child("search-result-wrapper", ImGui.GetContentRegionAvail(), false, WFlags.NoScrollbar))
             DrawResultList();
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SearchResults, MainUI.LastPos, MainUI.LastSize, _ => _tabMenu.TabSelection = MainMenuTabs.SelectedTab.GlobalChat);
     }
@@ -76,11 +79,11 @@ public class LociSharehubTab : DisposableMediatorSubscriberBase
             .Push(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
 
         var size = new Vector2(ImGui.GetContentRegionAvail().X, CkStyle.GetFrameRowsHeight(3).AddWinPadY());
-        foreach (var lociInfo in _shareHub.LatestLociResults)
+        foreach (var lociInfo in _shareHub.SearchResults)
             DrawLociStatusEntry(lociInfo, size);
     }
 
-    private void DrawLociStatusEntry(ServerDataLociStatus info, Vector2 size)
+    private void DrawLociStatusEntry(SharehubLociStatus info, Vector2 size)
     {
         var modifiers = (Modifiers)info.Status.Modifiers;
 
@@ -106,14 +109,14 @@ public class LociSharehubTab : DisposableMediatorSubscriberBase
         
         ImUtf8.SameLineInner();
         using (ImRaii.PushColor(ImGuiCol.Text, info.HasLiked ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey))
-            if (CkGui.IconTextButton(FAI.Heart, info.Likes.ToString(), null, true, UiService.DisableUI))
-                UiService.SetUITask(_shareHub.HeartLociStatus(info.Status.GUID));
+            if (CkGui.IconTextButton(FAI.Heart, info.Likes.ToString(), null, true, LociHubService.InUpdate))
+                _shareHub.ToggleLike(info.Status.GUID);
         CkGui.AttachToolTip(info.HasLiked ? "Remove Like from status." : "Like this status!");
 
         ImUtf8.SameLineInner();
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudGrey))
             if (CkGui.IconButton(FAI.Copy, inPopup: true))
-                _shareHub.CopyLociStatusToClipboard(info.Status.GUID);
+                _shareHub.CopyToClipboard(info.Status.GUID);
         CkGui.AttachToolTip("Copy this Status to import into Loci");
 
         // Middle Row.
@@ -178,34 +181,34 @@ public class LociSharehubTab : DisposableMediatorSubscriberBase
         var sortIconSize = CkGui.IconButtonSize(FAI.SortAmountUp).X;
         var filterTypeSize = 80f * ImGuiHelpers.GlobalScale;
 
-        var sortIcon = _shareHub.SortOrder == HubDirection.Ascending ? FAI.SortAmountUp : FAI.SortAmountDown;
+        var sortIcon = _shareHub.SortDirection == SortDirection.Ascending ? FAI.SortAmountUp : FAI.SortAmountDown;
+
         // Draw out the first row. This contains the search bar, the Update Search Button, and the Show 
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - (sortIconSize + filterTypeSize + updateSize + spacing * 3));
-        var searchString = _shareHub.SearchString;
-        if (ImGui.InputTextWithHint("##status-search-filter", "Search for Statuses...", ref searchString, 125))
-            _shareHub.SearchString = searchString;
-        
+        ImGui.InputTextWithHint("##search-filter", "Search for Statuses...", ref _searchStr, 125);
+
+
         ImUtf8.SameLineInner();
-        if (CkGui.IconTextButton(FAI.Search, "Search", disabled: UiService.DisableUI))
-            UiService.SetUITask(_shareHub.SearchLociStatuses());
-        CkGui.AttachToolTip("Update Results");
+        if (CkGui.IconTextButton(FAI.Search, "Search", disabled: LociHubService.InUpdate))
+            _shareHub.Search(_searchStr, _searchTags);
+        CkGui.AttachToolTip("Update Search Results");
 
         // Show the filter combo.
         ImUtf8.SameLineInner();
-        if (CkGuiUtils.EnumCombo("##filter-type", filterTypeSize, _shareHub.SearchFilter, out var newFilterType, [HubFilter.Likes, HubFilter.DatePosted], flags: CFlags.NoArrowButton))
-            _shareHub.SearchFilter = newFilterType;
+        if (CkGuiUtils.EnumCombo("##filter-type", filterTypeSize, _shareHub.SortBy, out var newType, [HubSortBy.Likes, HubSortBy.DatePosted], flags: CFlags.NoArrowButton))
+            _shareHub.SortBy = newType;
         CkGui.AttachToolTip("Sort Method--SEP--Define how results are found.");
 
         // the sort direction.
         ImUtf8.SameLineInner();
         if (CkGui.IconButton(sortIcon))
             _shareHub.ToggleSortDirection();
-        CkGui.AttachToolTip($"Sort Direction--SEP--Current: {_shareHub.SortOrder}");
+        CkGui.AttachToolTip($"Sort Direction--SEP--Current: {_shareHub.SortDirection}");
         
+        // NEXT ROW (tags)
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FAI.Tags).X - ImGui.GetStyle().ItemInnerSpacing.X);
-        var searchTags = _shareHub.SearchTags;
-        if (ImGui.InputTextWithHint("##shareHubTags", "Enter tags split by , (optional)", ref searchTags, 200))
-            _shareHub.SearchTags = searchTags;
+        ImGui.InputTextWithHint("##search-tags", "Enter tags split by , (optional)", ref _searchTags, 200);
+
         // the combo.
         ImUtf8.SameLineInner();
         var pressed = CkGui.IconButton(FAI.Tags);
@@ -216,19 +219,19 @@ public class LociSharehubTab : DisposableMediatorSubscriberBase
             ImGui.OpenPopup("##loci-sharehub-tags");
 
         // open the popup if we should.
-        if (_hubTags.DrawPopup("##loci-sharehub-tags", 200f, popupDrawPos))
+        if (_hubTagCombo.DrawPopup("##loci-sharehub-tags", 200f, popupDrawPos))
         {
-            if (_hubTags.Current is not { } selected)
+            if (_hubTagCombo.Current is not { } selected)
                 return;
 
-            if (string.IsNullOrWhiteSpace(selected) || _shareHub.SearchTags.Contains(selected))
+            if (string.IsNullOrWhiteSpace(selected) || _searchTags.Contains(selected))
                 return;
 
             // Append the tag.
-            if (_shareHub.SearchTags.Length > 0 && _shareHub.SearchTags[^1] != ',')
-                _shareHub.SearchTags += ", ";
+            if (_searchTags.Length > 0 && _searchTags[^1] != ',')
+                _searchTags += ", ";
             // append the tag to it.
-            _shareHub.SearchTags += selected.ToLower();
+            _searchTags += selected.ToLower();
         }
     }
 }

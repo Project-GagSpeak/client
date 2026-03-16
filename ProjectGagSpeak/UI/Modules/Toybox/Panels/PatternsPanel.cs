@@ -22,7 +22,7 @@ public partial class PatternsPanel
     private readonly ILogger<PatternsPanel> _logger;
     private readonly PatternFileSelector _selector;
     private readonly PatternManager _manager;
-    private readonly DistributorService _dds;
+    private readonly CharaDataDistributor _dds;
     private readonly RemoteService _remotes;
     private readonly TutorialService _guides;
 
@@ -30,7 +30,7 @@ public partial class PatternsPanel
         ILogger<PatternsPanel> logger,
         PatternFileSelector selector,
         PatternManager manager,
-        DistributorService dds,
+        CharaDataDistributor dds,
         RemoteService remotes,
         TutorialService guides)
     {

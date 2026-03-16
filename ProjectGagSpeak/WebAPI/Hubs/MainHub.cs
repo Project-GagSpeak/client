@@ -129,6 +129,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     public static string DisplayName => ConnectionResponse?.User.AliasOrUID ?? string.Empty;
     public static string UID => ConnectionResponse?.User.UID ?? string.Empty;
     public static UserReputation Reputation => ConnectionResponse?.Reputation ?? new();
+    public static HashSet<string> SharehubTags = [];
     public static ServerState ServerStatus
     {
         get => _serverStatus;

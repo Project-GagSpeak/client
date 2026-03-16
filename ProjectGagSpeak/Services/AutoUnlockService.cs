@@ -47,7 +47,7 @@ public sealed class AutoUnlockService : BackgroundService
     private readonly AlarmManager _alarms;
     private readonly CallbackHandler _visuals;
     private readonly PlayerCtrlHandler _hcHandler;
-    private readonly DistributorService _dds;
+    private readonly CharaDataDistributor _dds;
     
     // the interval tasks to check for
     private readonly List<Task> _intervalTasks = [];
@@ -61,7 +61,7 @@ public sealed class AutoUnlockService : BackgroundService
         KinksterManager kinksters, GagRestrictionManager gags, RestrictionManager restrictions, 
         RestraintManager restraints, CursedLootManager cursedLoot, PatternManager patterns, 
         AlarmManager alarms, CallbackHandler visuals, PlayerCtrlHandler hcHandler, 
-        DistributorService dds)
+        CharaDataDistributor dds)
     {
         _logger = logger;
         _mediator = mediator;

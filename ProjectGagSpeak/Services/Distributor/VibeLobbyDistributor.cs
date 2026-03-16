@@ -11,7 +11,7 @@ namespace GagSpeak.Services;
 
 /// <summary> Creates various calls to the server for the VibeLobby. </summary>
 /// <remarks> Intended to be created in, and called by a UI element to avoid circular dependancy. </remarks>
-public sealed class VibeLobbyDistributionService : DisposableMediatorSubscriberBase
+public sealed class VibeLobbyDistributor : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _hub;
     private readonly MainConfig _config;
@@ -19,8 +19,8 @@ public sealed class VibeLobbyDistributionService : DisposableMediatorSubscriberB
     private readonly VibeLobbyManager _lobbies;
     private readonly RemoteService _remotes;
 
-    public VibeLobbyDistributionService(
-        ILogger<VibeLobbyDistributionService> logger,
+    public VibeLobbyDistributor(
+        ILogger<VibeLobbyDistributor> logger,
         GagspeakMediator mediator,
         MainHub hub, 
         MainConfig config,

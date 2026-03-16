@@ -211,6 +211,12 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<HypnoService>()
 
         // Services [Other]
+        .AddSingleton<CharaDataDistributor>()
+        .AddSingleton<ReactionDistributor>()
+        .AddSingleton<VibeLobbyDistributor>()
+        .AddSingleton<PatternHubService>()
+        .AddSingleton<LociHubService>()
+
         .AddSingleton<AchievementsService>()
         .AddSingleton<ArousalService>()
         .AddSingleton<AutoUnlockService>()
@@ -218,8 +224,6 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<ChatService>()
         .AddSingleton<CosmeticService>()
         .AddSingleton<ConnectionSyncService>()
-        .AddSingleton<DistributorService>()
-        .AddSingleton<ReactionDistributor>()
         .AddSingleton<DtrBarService>()
         .AddSingleton<EmoteService>()
         .AddSingleton<GagspeakMediator>()
@@ -230,11 +234,10 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<RemoteService>()
         .AddSingleton<SafewordService>()
         .AddSingleton<SidePanelService>()
-        .AddSingleton<ShareHubService>()
+        .AddSingleton<LociHubService>()
         .AddSingleton<SpellActionService>()
         .AddSingleton<SelfBondageService>()
         .AddSingleton<TutorialService>()
-        .AddSingleton<VibeLobbyDistributionService>()
 
         // Spatial Audio
         .AddSingleton<VfxSpawnManager>()

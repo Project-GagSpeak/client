@@ -17,7 +17,7 @@ namespace GagSpeak.Services;
 
 // Orchistrates server calls to distribute data off to the server.
 // This should not be included by any serices that should not be interacting with MainHub circular dependancy.
-public sealed class DistributorService : DisposableMediatorSubscriberBase
+public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
 {
     private readonly MainHub _hub;
     private readonly ClientAchievements _achievements;
@@ -37,7 +37,7 @@ public sealed class DistributorService : DisposableMediatorSubscriberBase
     private readonly HashSet<UserData> _newVisibleKinksters = [];
     private readonly HashSet<UserData> _newOnlineKinksters = [];
 
-    public DistributorService(ILogger<DistributorService> logger,
+    public CharaDataDistributor(ILogger<CharaDataDistributor> logger,
         GagspeakMediator mediator,
         MainHub hub,
         ClientAchievements achievements,

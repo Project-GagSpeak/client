@@ -165,7 +165,7 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             _runtimeServiceScope.ServiceProvider.GetRequiredService<IntifaceListener>();
 
             // get the required service for the online player manager (and notification service if we add it)
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<DistributorService>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<CharaDataDistributor>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<ConnectionSyncService>();
 
             // boot up our chat services. (this don't work as hosted services because they are unsafe)

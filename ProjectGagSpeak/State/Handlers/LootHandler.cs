@@ -28,7 +28,7 @@ public sealed class LootHandler
     private readonly CursedLootManager _manager;
     private readonly CallbackHandler _visuals;
     private readonly MainConfig _config;
-    private readonly DistributorService _dds;
+    private readonly CharaDataDistributor _dds;
 
     /// <summary> Stores last interacted chestId so we dont keep spam opening the same chest. </summary>
     /// <remarks> This is static so we can send it to mediator calls and update it. </remarks>
@@ -37,7 +37,7 @@ public sealed class LootHandler
 
     public LootHandler(ILogger<LootHandler> logger, GagspeakMediator mediator, GagRestrictionManager gags,
         RestrictionManager restrictions, CursedLootManager manager, CallbackHandler visuals,
-        MainConfig config, DistributorService dds)
+        MainConfig config, CharaDataDistributor dds)
     {
         _logger = logger;
         _mediator = mediator;

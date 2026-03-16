@@ -11,7 +11,9 @@ using GagSpeak.Utils;
 
 namespace GagSpeak.Services;
 
-/// <summary> A sealed class dictating the UI service for the plugin. </summary>
+/// <summary>
+///   A sealed class dictating the UI service for the plugin.
+/// </summary>
 public sealed class UiService : DisposableMediatorSubscriberBase
 {
     private static readonly List<WindowMediatorSubscriberBase> _createdWindows = [];

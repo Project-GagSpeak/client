@@ -56,16 +56,16 @@ public partial class MainHub
         return await _hubConnection!.InvokeAsync<HubResponse>(nameof(DelistLociStatus), lociStatusId).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse<List<ServerPatternInfo>>> SearchPatterns(SearchPattern patternSearchDto)
+    public async Task<HubResponse<List<SharehubPattern>>> SearchPatterns(SearchPattern patternSearchDto)
     {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new List<ServerPatternInfo>());
-        return await _hubConnection!.InvokeAsync<HubResponse<List<ServerPatternInfo>>>(nameof(SearchPatterns), patternSearchDto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new List<SharehubPattern>());
+        return await _hubConnection!.InvokeAsync<HubResponse<List<SharehubPattern>>>(nameof(SearchPatterns), patternSearchDto).ConfigureAwait(false);
     }
 
-    public async Task<HubResponse<List<ServerDataLociStatus>>> SearchLociData(SearchBase lociSearchDto)
+    public async Task<HubResponse<List<SharehubLociStatus>>> SearchLociData(SearchBase lociSearchDto)
     {
-        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new List<ServerDataLociStatus>());
-        return await _hubConnection!.InvokeAsync<HubResponse<List<ServerDataLociStatus>>>(nameof(SearchLociData), lociSearchDto).ConfigureAwait(false);
+        if (!IsConnected) return HubResponseBuilder.AwDangIt(GagSpeakApiEc.NetworkError, new List<SharehubLociStatus>());
+        return await _hubConnection!.InvokeAsync<HubResponse<List<SharehubLociStatus>>>(nameof(SearchLociData), lociSearchDto).ConfigureAwait(false);
     }
 
     public async Task<HubResponse<HashSet<string>>> FetchSearchTags()

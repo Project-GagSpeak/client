@@ -95,8 +95,11 @@ public partial class MainHub
                 // Update our current authentication to reflect the information provided.
                 _accounts.UpdateAuthentication(secretKey, ConnectionResponse!);
 
-                // obtain the ShareHub and LobbyInvite data post-connection, as it doesnt depend on anything else.
+                // Get Published Sharehub and VibeobbyData post connection, and update tags.
                 var lobbyHubInfo = await GetShareHubAndLobbyInfo().ConfigureAwait(false);
+                SharehubTags = lobbyHubInfo.HubTags.ToHashSet();
+
+                // Inform we finished connecting and have updated authentication
                 Mediator.Publish(new ConnectedDataSyncedMessage(lobbyHubInfo));
             }
             catch (OperationCanceledException)

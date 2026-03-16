@@ -21,7 +21,7 @@ public enum SelfBondageType
 public class SelfBondageService : IDisposable
 {
     private readonly ILogger<SelfBondageService> _logger;
-    private readonly DistributorService _dds;
+    private readonly CharaDataDistributor _dds;
     private readonly CallbackHandler _callbacks;
 
     private RateLimiter<SelfBondageType> _rateLimiter = new(.85, 5);
@@ -29,7 +29,7 @@ public class SelfBondageService : IDisposable
     private CancellationTokenSource _runtimeCTS = new();
     private readonly object _lock = new();
 
-    public SelfBondageService(ILogger<SelfBondageService> logger, DistributorService dds, CallbackHandler callbacks)
+    public SelfBondageService(ILogger<SelfBondageService> logger, CharaDataDistributor dds, CallbackHandler callbacks)
     {
         _logger = logger;
         _dds = dds;

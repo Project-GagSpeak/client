@@ -13,6 +13,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using LociApi.Enums;
 using OtterGui;
@@ -25,11 +26,13 @@ namespace GagSpeak.Gui.Publications;
 // Wow this manager is a mess holy moly. Really needs a rework lol.
 public class PublicationsManager
 {
-    private readonly ShareHubService _shareHub;
+    private readonly PatternHubService _patternHub;
+    private readonly LociHubService _lociHub;
     public PublicationsManager(ILogger<PublicationsManager> logger, GagspeakMediator mediator,
-        FavoritesConfig favorites, PatternManager patterns, ShareHubService shareHub)
+        FavoritesConfig favorites, PatternManager patterns, PatternHubService patternhub, LociHubService lociHub)
     {
-        _shareHub = shareHub;
+        _patternHub = patternhub;
+        _lociHub = lociHub;
 
         _patternCombo = new PatternCombo(logger, mediator, favorites, () => [
             ..patterns.Storage.OrderByDescending(p => FavoritesConfig.Patterns.Contains(p.Identifier)).ThenBy(p => p.Label)
@@ -38,7 +41,11 @@ public class PublicationsManager
         _statusCombo = new LociStatusCombo(logger, 1.5f);
     }
 
-    private HashSet<string> _searchableTagList => _tagList.Split(',').Select(x => x.ToLower().Trim()).ToHashSet();
+    private HashSet<string> _searchableTagList => _tagList
+        .Split(',', StringSplitOptions.RemoveEmptyEntries)
+        .Select(x => x.Trim().ToLower())
+        .Where(x => !string.IsNullOrWhiteSpace(x))
+        .ToHashSet();
 
     private string _authorName = string.Empty;
     private string _tagList = string.Empty;
@@ -70,9 +77,7 @@ public class PublicationsManager
             var commaCount = _tagList.Count(c => c == ',');
             if (commaCount > 4)
             {
-                var tags = _tagList.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries)
-                                   .Select(tag => tag.Trim())
-                                   .ToArray();
+                var tags = _tagList.Split([','], StringSplitOptions.RemoveEmptyEntries).Select(tag => tag.Trim()).ToArray();
                 _tagList = string.Join(", ", tags.Take(5));
             }
         }
@@ -93,9 +98,9 @@ public class PublicationsManager
             }
         });
 
-        var blockUpload = _authorName.IsNullOrEmpty() || _selectedPattern.Identifier == Guid.Empty || UiService.DisableUI;
-        if (CkGui.IconTextButton(FAI.CloudUploadAlt, "Publish Pattern to the Pattern ShareHub", ImGui.GetContentRegionAvail().X, false, blockUpload))
-            UiService.SetUITask(async () => await _shareHub.UploadPattern(_selectedPattern, _authorName, _tagList.Split(',').Select(x => x.ToLower().Trim()).ToHashSet()));
+        var blockUpload = _authorName.IsNullOrEmpty() || _selectedPattern.Identifier == Guid.Empty || PatternHubService.InUpdate;
+        if (CkGui.IconTextButton(FAI.CloudUploadAlt, "Publish Pattern to ShareHub", ImGui.GetContentRegionAvail().X, false, blockUpload))
+            _patternHub.Upload(_selectedPattern, _authorName, _searchableTagList);
         CkGui.AttachToolTip("Must have a selected pattern and author name to upload.");
 
         ImGui.Spacing();
@@ -112,7 +117,7 @@ public class PublicationsManager
 
     private void DrawPublishedPatternList()
     {
-        if (_shareHub.PublishedPatterns.Count is 0)
+        if (_patternHub.Publications.Count is 0)
         {
             ImGui.TextUnformatted("No Patterns Published.");
             return;
@@ -123,7 +128,7 @@ public class PublicationsManager
         using var col = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.TankBlue)
             .Push(ImGuiCol.ChildBg, new Vector4(0.1f, 0.1f, 0.3f, 0.4f));
 
-        foreach (var pattern in _shareHub.PublishedPatterns.ToList())
+        foreach (var pattern in _patternHub.Publications.ToList())
             PublishedPatternItem(pattern);
     }
 
@@ -143,8 +148,8 @@ public class PublicationsManager
 
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - unpublishButton);
                 using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink))
-                    if (CkGui.IconTextButton(FAI.Globe, "Unpublish", isInPopup: true, disabled: !KeyMonitor.ShiftPressed() || UiService.DisableUI))
-                        UiService.SetUITask(async () => await _shareHub.RemovePattern(pattern.Identifier));
+                    if (CkGui.IconTextButton(FAI.Globe, "Unpublish", isInPopup: true, disabled: !ImGui.GetIO().KeyShift || PatternHubService.InUpdate))
+                        _patternHub.Unpublish(pattern.Identifier);
                 CkGui.AttachToolTip("Removes this pattern publication from the pattern hub.--SEP--Must hold SHIFT");
             }
             // next line:
@@ -156,7 +161,7 @@ public class PublicationsManager
                 CkGui.ColorText(pattern.Author, ImGuiColors.DalamudGrey);
                 CkGui.AttachToolTip("The Author Name you gave yourself when publishing this pattern.");
                 ImGui.SameLine();
-                CkGui.ColorText("(" + pattern.UploadedDate.ToLocalTime().ToString("d", CultureInfo.CurrentCulture) + ")", ImGuiColors.DalamudGrey);
+                CkGui.ColorText($"({pattern.UploadedDate.ToLocalTime().ToString("d", CultureInfo.CurrentCulture)})", ImGuiColors.DalamudGrey);
                 CkGui.AttachToolTip("The date this pattern was published.");
 
                 var formatDuration = pattern.Length.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
@@ -226,10 +231,10 @@ public class PublicationsManager
             });
             CkGui.AttachToolTip("Select an existing tag on the Server.--SEP--This makes it easier for people to find your Status!");
 
-            var blockUpload = _authorName.IsNullOrEmpty() || _statusCombo.Current.GUID == Guid.Empty || UiService.DisableUI;
+            var blockUpload = _authorName.IsNullOrEmpty() || _statusCombo.Current.GUID == Guid.Empty || LociHubService.InUpdate;
 
-            if (CkGui.IconTextButton(FAI.CloudUploadAlt, "Publish Status to Loci Sharehub", ImGui.GetContentRegionAvail().X, false, blockUpload))
-                UiService.SetUITask(async () => await _shareHub.UploadLociStatus(_authorName, _searchableTagList, _statusCombo.Current));
+            if (CkGui.IconTextButton(FAI.CloudUploadAlt, "Publish Status to Sharehub", ImGui.GetContentRegionAvail().X, false, blockUpload))
+                _lociHub.Upload(_statusCombo.Current, _authorName, _searchableTagList);
             CkGui.AttachToolTip("Must have a selected Status and valid name to upload.");
 
             ImGui.Spacing();
@@ -246,7 +251,7 @@ public class PublicationsManager
 
     private void DrawUploadedStatuses()
     {
-        if (_shareHub.PublishedLociData.Count is 0)
+        if (_lociHub.Publications.Count is 0)
         {
             ImGui.TextUnformatted("Nothing Published.");
             return;
@@ -257,7 +262,7 @@ public class PublicationsManager
         using var col = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.TankBlue)
             .Push(ImGuiCol.ChildBg, new Vector4(0.1f, 0.1f, 0.3f, 0.4f));
 
-        foreach (var lociStatus in _shareHub.PublishedLociData.ToList())
+        foreach (var lociStatus in _lociHub.Publications.ToList())
             DrawUploadedStatus(lociStatus);
     }
 
@@ -277,8 +282,8 @@ public class PublicationsManager
 
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - unpublishButton);
                 using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink))
-                    if (CkGui.IconTextButton(FAI.Globe, "Unpublish", isInPopup: true, disabled: !KeyMonitor.ShiftPressed() || UiService.DisableUI))
-                        UiService.SetUITask(async () => await _shareHub.DelistLociData(lociData.Status.GUID));
+                    if (CkGui.IconTextButton(FAI.Globe, "Unpublish", isInPopup: true, disabled: !ImGui.GetIO().KeyShift || LociHubService.InUpdate))
+                        _lociHub.Unpublish(lociData.Status.GUID);
                 CkGui.AttachToolTip("Unpublish from the Loci ShareHub!--SEP--Must hold SHIFT");
             }
 
@@ -328,14 +333,13 @@ public class PublicationsManager
 
     private void DrawTagCombo(string label, float width, Action<string> onSelected)
     {
-        var tagList = _shareHub.FetchedTags.ToImmutableList();
-
         ImGui.SetNextItemWidth(width);
-        using var tagCombo = ImRaii.Combo(label, tagList.FirstOrDefault() ?? "Select Tag..");
-        if (!tagCombo) return;
-        
-        foreach (var tag in tagList)
-            if (ImGui.Selectable(tag, false))
-                onSelected(tag);
+        using var tagCombo = ImRaii.Combo(label, MainHub.SharehubTags.FirstOrDefault() ?? "Select Tag..");
+        if (tagCombo)
+        {
+            foreach (var tag in MainHub.SharehubTags.ToList())
+                if (ImGui.Selectable(tag, false))
+                    onSelected(tag);
+        }
     }
 }

@@ -17,9 +17,9 @@ public class LociListener : DisposableMediatorSubscriberBase
     private readonly IpcCallerMoodles _moodles;
     private readonly IpcCallerLoci _loci;
     private readonly KinksterManager _kinksters;
-    private readonly DistributorService _dds;
+    private readonly CharaDataDistributor _dds;
 
-    private readonly EventSubscriber<nint> ManagerModified;
+    private readonly EventSubscriber<nint, ManagerChangeType> ManagerModified;
     private readonly EventSubscriber<nint, string, List<LociStatusInfo>> ApplyToTargetSent;
     private readonly EventSubscriber<Guid, bool> StatusUpdated;
     private readonly EventSubscriber<Guid, bool> PresetUpdated;
@@ -27,7 +27,7 @@ public class LociListener : DisposableMediatorSubscriberBase
 
     public LociListener(ILogger<LociListener> logger, GagspeakMediator mediator,
         MainHub hub, IpcCallerMoodles moodles, IpcCallerLoci ipc, 
-        KinksterManager kinksters, DistributorService dds)
+        KinksterManager kinksters, CharaDataDistributor dds)
         : base(logger, mediator)
     {
         _hub = hub;
@@ -130,7 +130,7 @@ public class LociListener : DisposableMediatorSubscriberBase
         await _dds.UserPushLociData(_kinksters.GetVisibleConnected());
     }
 
-    public async void OnLociDisposed()
+    private async void OnLociDisposed()
     {
         LociCache.Data.DataInfo.Clear();
         LociCache.Data.Statuses.Clear();
@@ -139,7 +139,7 @@ public class LociListener : DisposableMediatorSubscriberBase
         Logger.LogDebug("Loci disposed, pushing empty data to visible kinksters", LoggerType.IpcLoci);
     }
 
-    public async void OnManagerModified(nint charaAddr)
+    public async void OnManagerModified(nint charaAddr, ManagerChangeType changeType)
     {
         if (PlayerData.IsZoning || !PlayerData.Available)
             return;

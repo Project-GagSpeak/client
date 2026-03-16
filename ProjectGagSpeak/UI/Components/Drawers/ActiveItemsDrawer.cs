@@ -38,7 +38,7 @@ public class ActiveItemsDrawer
     private readonly RestraintManager _restraints;
     private readonly FavoritesConfig _favorites;
     private readonly CallbackHandler _visuals;
-    private readonly DistributorService _dds;
+    private readonly CharaDataDistributor _dds;
     private readonly TextureService _textures;
     private readonly CosmeticService _cosmetics;
     private readonly KinksterManager _kinksters;
@@ -64,7 +64,7 @@ public class ActiveItemsDrawer
         RestraintManager restraints,
         FavoritesConfig favorites,
         CallbackHandler visuals,
-        DistributorService dds,
+        CharaDataDistributor dds,
         TextureService textures,
         CosmeticService cosmetics,
         KinksterManager kinksters,

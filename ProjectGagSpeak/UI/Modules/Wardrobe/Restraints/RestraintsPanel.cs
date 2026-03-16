@@ -44,7 +44,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
         RestraintEditorLayers editorLayers,
         RestraintEditorEquipment editorEquipment,
         RestraintEditorModsLociData editorModsLoci,
-        DistributorService dds,
+        CharaDataDistributor dds,
         CallbackHandler visuals,
         UiThumbnailService thumbnails,
         SelfBondageService selfBondage,
