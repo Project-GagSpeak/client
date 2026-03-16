@@ -40,7 +40,7 @@
         <ProjectReference Include="..\Submodules\CkCommons\CkCommons.csproj" />
         <ProjectReference Include="..\Submodules\GagspeakAPI\ProjectGagspeakAPI.csproj" GlobalPropertiesToRemove="Platform" />
         <ProjectReference Include="..\Submodules\OtterGui\OtterGui.csproj" />
-        <ProjectReference Include="..\Submodules\Penumbra.API\Penumbra.Api.csproj" />
+        <ProjectReference Include="..\Submodules\Penumbra.Api\Penumbra.Api.csproj" />
         <ProjectReference Include="..\Submodules\Penumbra.String\Penumbra.String.csproj" />
         <ProjectReference Include="..\Submodules\Penumbra.GameData\Penumbra.GameData.csproj" />
         <ProjectReference Include="..\Submodules\GlamourerAPI\Glamourer.Api.csproj" />

@@ -15,7 +15,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Glamourer.Api", "Submodules
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OtterGui", "Submodules\OtterGui\OtterGui.csproj", "{56D31355-70F4-4418-BF8A-FE6A3EED7D5F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Penumbra.Api", "Submodules\Penumbra.API\Penumbra.Api.csproj", "{FED65111-EAAE-43BB-8145-25CFB347CA77}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Penumbra.Api", "Submodules\Penumbra.Api\Penumbra.Api.csproj", "{FED65111-EAAE-43BB-8145-25CFB347CA77}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Penumbra.GameData", "Submodules\Penumbra.GameData\Penumbra.GameData.csproj", "{611056A2-CF49-442F-94B2-65A665D0F0B6}"
 EndProject
