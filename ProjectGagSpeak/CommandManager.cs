@@ -94,6 +94,11 @@ public sealed class CommandManager : IDisposable
             if (_mainConfig.Current.HasValidSetup())
                 _mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
         }
+        else if (string.Equals(splitArgs[0], "chat", StringComparison.OrdinalIgnoreCase))
+        {
+            if (_mainConfig.Current.HasValidSetup())
+                _mediator.Publish(new UiToggleMessage(typeof(GlobalChatPopoutUI)));
+        }
 #if DEBUG
         else if (string.Equals(splitArgs[0], "intro", StringComparison.OrdinalIgnoreCase))
         {
