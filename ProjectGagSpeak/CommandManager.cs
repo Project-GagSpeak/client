@@ -220,6 +220,7 @@ public sealed class CommandManager : IDisposable
         Svc.Chat.Print(new SeStringBuilder().AddYellow(" -- Gagspeak Commands --").BuiltString);
         Svc.Chat.Print(new SeStringBuilder().AddCommand("/gspeak", "Toggles the primary UI").BuiltString);
         Svc.Chat.Print(new SeStringBuilder().AddCommand("/gspeak settings", "Toggles the settings UI window.").BuiltString);
+        Svc.Chat.Print(new SeStringBuilder().AddCommand("/gspeak chat", "Toggles the global chat popout UI window.").BuiltString);
         Svc.Chat.Print(new SeStringBuilder().AddCommand("/safeword", "Cries out your safeword, disabling any active restrictions.").BuiltString);
         Svc.Chat.Print(new SeStringBuilder().AddCommand("/safewordhardcore", "Cries out your hardcore safeword, disabling any hardcore restrictions.").BuiltString);
         Svc.Chat.Print(new SeStringBuilder().AddCommand("/dr", "Begins a DeathRoll. '/dr r' responds to the last seen or interacted DeathRoll").BuiltString);
