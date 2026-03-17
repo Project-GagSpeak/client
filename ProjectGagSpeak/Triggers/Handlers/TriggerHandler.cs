@@ -84,7 +84,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
             if (_kinksters.TryGetKinkster(new(matchedUID), out var k))
             {
                 pairPermissions = k.OwnPerms.PuppetPerms;
-                var pTriggers = k.OwnPerms.TriggerPhrase.Split(',').ToList();
+                var pTriggers = k.OwnPerms.TriggerPhrase.Split(',').Select(t => t.TrimStart()).ToList();
                 if (GetValidTrigger(pTriggers, msg) is { } match)
                 {
                     var shared = _puppeteer.GetAliasesForPuppeteer(matchedUID).ToList();
@@ -98,7 +98,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
         // Handle global triggers last, as they would have less permissions and we want to give the paired ones priority if they exist.
         if (!string.IsNullOrWhiteSpace(globals.TriggerPhrase))
         {
-            var gTriggers = globals.TriggerPhrase.Split(',').ToList();
+            var gTriggers = globals.TriggerPhrase.Split(',').Select(t => t.TrimStart()).ToList();
             if (GetValidTrigger(gTriggers, msg) is { } match)
             {
                 var uid = GetUidFromNameWorld(senderNameWorld);
@@ -325,7 +325,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
         var toCheck = _kinksters.DirectPairs.Where(p => p.PairPerms.IsMarionette());
         foreach (var marionette in toCheck)
         {
-            var possibleTriggers = marionette.PairPerms.TriggerPhrase.Split(',').ToList();
+            var possibleTriggers = marionette.PairPerms.TriggerPhrase.Split(',').Select(t => t.TrimStart()).ToList();
             if (GetValidTrigger(possibleTriggers, msg) is not { } match)
                 continue;
 
