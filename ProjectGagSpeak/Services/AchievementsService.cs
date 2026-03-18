@@ -336,7 +336,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         {
             if (PlayerData.Level < 90)
                 return false;
-            return (_restraints.AppliedRestraint is not null && (_traits.FinalTraits & Traits.BoundArms | Traits.BoundLegs) != 0) ? true : false;
+            return (_restraints.AppliedRestraint is not null && (_traits.FinalTraits & (Traits.BoundArms | Traits.BoundLegs)) != 0) ? true : false;
         }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Hardcore Trials Cleared");
 
         _saveData.AddConditionalProgress(AchievementModuleKind.Wardrobe, Achievements.TrialOfTheBlind, 1, () =>
