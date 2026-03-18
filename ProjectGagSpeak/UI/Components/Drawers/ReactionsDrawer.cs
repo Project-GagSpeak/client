@@ -687,7 +687,12 @@ public sealed class ReactionsDrawer
     public void DrawLociItem(LociDataAction act)
     {
         CkGui.FramedIconText(FAI.WandMagicSparkles);
-        CkGui.TextFrameAlignedInline("Applies the");
+        if (act.NewState is NewState.Enabled)
+            CkGui.ColorTextFrameAlignedInline("Applies", ImGuiColors.TankBlue);
+        else
+            CkGui.ColorTextFrameAlignedInline("Removes", ImGuiColors.TankBlue);
+
+        CkGui.TextFrameAlignedInline("the");
         CkGui.ColorTextFrameAlignedInline(act.LociItem.Type is LociType.Preset ? "preset" : "status", ImGuiColors.TankBlue);
         ImGui.SameLine(0, 0);
         CkGui.TextFrameAligned(":");
@@ -720,14 +725,21 @@ public sealed class ReactionsDrawer
             CkGui.ColorTextFrameAlignedInline("<INVALID_SETUP>", ImGuiColors.DalamudRed);
         }
     }
+
     public void DrawLociRow(LociDataAction act)
     {
         CkGui.FramedIconText(FAI.TheaterMasks);
         CkGui.AttachToolTip("Invokes an interaction with Loci");
 
+        CkGui.FramedIconText(FAI.WandMagicSparkles);
+        if (act.NewState is NewState.Enabled)
+            CkGui.ColorTextFrameAlignedInline("Applies", ImGuiColors.TankBlue);
+        else
+            CkGui.ColorTextFrameAlignedInline("Removes", ImGuiColors.TankBlue);
+
         if (act.LociItem is LociPreset p && LociCache.Data.Presets.TryGetValue(p.Id, out var preset))
         {
-            CkGui.TextFrameAlignedInline("Applies preset:");
+            CkGui.TextFrameAlignedInline("the preset:");
             CkGui.ColorTextFrameAlignedInline(preset.Title.StripColorTags(), ImGuiColors.TankBlue);
             if (preset.Statuses.Count > 0)
             {
@@ -741,7 +753,7 @@ public sealed class ReactionsDrawer
         }
         else if (LociCache.Data.Statuses.TryGetValue(act.LociItem.Id, out var status))
         {
-            CkGui.TextFrameAlignedInline("Applies status:");
+            CkGui.TextFrameAlignedInline("the status:");
             CkGui.ColorTextFrameAlignedInline(status.Title.StripColorTags(), ImGuiColors.TankBlue);
 
             CkGui.ColorTextFrameAlignedInline("(", ImGuiColors.TankBlue, false);
@@ -765,7 +777,15 @@ public sealed class ReactionsDrawer
     public void DrawLociItemEditor(LociDataAction act)
     {
         CkGui.FramedIconText(FAI.WandMagicSparkles);
-        CkGui.TextFrameAlignedInline("Applies the");
+
+
+        ImUtf8.SameLineInner();
+        if (CkGuiUtils.EnumCombo("##loci-state", 60f, act.NewState, out var newState, [NewState.Enabled, NewState.Disabled],
+            i => i switch { NewState.Enabled => "Apply", _ => "Remove" }, flags: CFlags.NoArrowButton))
+            act.NewState = newState;
+        CkGui.AttachToolTip("How to use the selected Loci item.");
+
+        CkGui.TextFrameAlignedInline("the");
         
         ImUtf8.SameLineInner();
         var width = ImGui.CalcTextSize("Statusm").X;

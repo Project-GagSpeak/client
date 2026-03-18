@@ -1,6 +1,8 @@
 using GagSpeak.Interop;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.State.Caches;
 using GagspeakAPI.Data;
+using LociApi.Enums;
 using Microsoft.IdentityModel.Tokens;
 
 namespace GagSpeak.State.Handlers;
@@ -9,12 +11,14 @@ public class LociHandler
 {
     private readonly ILogger<LociHandler> _logger;
     private readonly LociCache _cache;
-    private readonly IpcCallerLoci _ipc;
-    public LociHandler(ILogger<LociHandler> logger, LociCache cache, IpcCallerLoci ipc)
+    private readonly IpcCallerMoodles _ipcMoodles;
+    private readonly IpcCallerLoci _ipcLoci;
+    public LociHandler(ILogger<LociHandler> logger, LociCache cache, IpcCallerMoodles moodles, IpcCallerLoci loci)
     {
         _logger = logger;
         _cache = cache;
-        _ipc = ipc;
+        _ipcMoodles = moodles;
+        _ipcLoci = loci;
     }
 
     /// <summary> Add a single LociItem to the GlamourCache for the key. </summary>
@@ -82,7 +86,9 @@ public class LociHandler
         var idsToApply = LociCache.Data.DataInfo.Any()
             ? _cache.FinalStatusIds.Except(LociCache.Data.DataInfo.Keys)
             : _cache.FinalStatusIds;
-        await _ipc.ApplyStatus([ ..idsToApply ], true);
+
+        // Handle application accordingly.
+        await ApplyStatus(idsToApply.ToList(), true);
         _logger.LogDebug("Applied all Statuses to the client.", LoggerType.IpcLoci);
     }
 
@@ -91,30 +97,156 @@ public class LociHandler
     /// </summary>
     private async Task RestoreAndReapplyCache(IEnumerable<Guid> itemsToRemove)
     {
-        await _ipc.BombStatus([..itemsToRemove], true);
+        await RemoveStatus([.. itemsToRemove], true);
         _logger.LogDebug($"Removed LociItems: {string.Join(", ", itemsToRemove)}", LoggerType.IpcLoci);
         // Reapply restricted.
         await ApplyLociCache();
     }
 
-    /// <summary>
-    ///     Applies a LociItem to the client. Can be souced from anything.
-    /// </summary>
-    /// <remarks> If this item is not present in the client's Status List, it will not work. </remarks>
-    public async Task ApplyLociItem(LociItem item)
-        => await _ipc.ApplyStatus(item is LociPreset p ? p.StatusIds : [item.Id], true);
+    public async Task ApplyStatus(Guid status, bool lockId)
+    {
+        // Prioritize Loci
+        if (IpcCallerLoci.APIAvailable)
+            await _ipcLoci.ApplyStatus(status, lockId);
+        else if (IpcCallerMoodles.APIAvailable)
+            await _ipcMoodles.ApplyStatus([status]);
+    }
 
-    // Hopefully never use this.
-    public async Task ApplyLociItems(IEnumerable<LociItem> items)
-        => await Parallel.ForEachAsync(items, async (item, _) => await ApplyLociItem(item));
+    public async Task ApplyStatus(List<Guid> statusIds, bool lockIds)
+    {
+        // Prioritize Loci
+        if (IpcCallerLoci.APIAvailable)
+            await _ipcLoci.ApplyStatus(statusIds, lockIds);
+        else if (IpcCallerMoodles.APIAvailable)
+            await _ipcMoodles.ApplyStatus(statusIds);
+    }
 
-    /// <summary>
-    ///     Assumes they have already been removed from the finalLociCache.
-    /// </summary>
-    private async Task RemoveLociItem(LociItem item)
-        => await _ipc.BombStatus([.. (item is LociPreset p ? p.StatusIds : [item.Id]).Except(_cache.FinalStatusIds)], true);
+    public async Task RemoveStatus(Guid statusId, bool lockId)
+    {
+        // Prioritize Loci
+        if (IpcCallerLoci.APIAvailable)
+            await _ipcLoci.BombStatus(statusId, lockId);
+        else if (IpcCallerMoodles.APIAvailable)
+            await _ipcMoodles.RemoveStatuses([statusId]);
+    }
 
-    // Hopefully never use this.
-    public async Task RemoveLociItems(IEnumerable<LociItem> items)
-        => await Parallel.ForEachAsync(items, async (item, _) => await RemoveLociItem(item));
+    private async Task RemoveStatus(List<Guid> statusIds, bool lockIds)
+    {
+        // Prioritize Loci
+        if (IpcCallerLoci.APIAvailable)
+            await _ipcLoci.BombStatus(statusIds, lockIds);
+        else if (IpcCallerMoodles.APIAvailable)
+            await _ipcMoodles.RemoveStatuses(statusIds);
+    }
+
+    public async Task<bool> ApplyLociItem(LociItem item, bool lockItem)
+    {
+        // Prioritize loci.
+        if (IpcCallerLoci.APIAvailable)
+        {
+            return item switch
+            {
+                LociTuple tuple => await _ipcLoci.ApplyStatusInfo(tuple.Tuple.ToTuple(), lockItem).ConfigureAwait(false),
+                LociPreset preset => await _ipcLoci.ApplyPreset(preset.Id, lockItem).ConfigureAwait(false),
+                _ => await _ipcLoci.ApplyStatus(item.Id, lockItem).ConfigureAwait(false)
+            };
+        }
+        else if (IpcCallerMoodles.APIAvailable)
+        {
+            switch (item)
+            {
+                case LociTuple:
+                    _logger.LogWarning("Moodles cannot support applying by tuple!");
+                    return false;
+                case LociPreset preset:
+                    await _ipcMoodles.ApplyStatus([.. preset.StatusIds]).ConfigureAwait(false);
+                    return true; // Can lead to false positives since moodles api isnt as granular
+                default:
+                    await _ipcMoodles.RemoveStatuses([item.Id]).ConfigureAwait(false);
+                    return true; // Can lead to false positives since moodles api isnt as granular
+            }
+        }
+        _logger.LogWarning("No API available to apply LociItem!");
+        return false;
+    }
+
+    public async Task<bool> RemoveLociItem(LociItem item, bool unlock)
+    {
+        // Prioritize loci.
+        if (IpcCallerLoci.APIAvailable)
+        {
+            return item switch
+            {
+                LociTuple tuple => await _ipcLoci.BombStatus(tuple.Tuple.GUID, unlock).ConfigureAwait(false),
+                LociPreset preset => await _ipcLoci.BombStatus(preset.StatusIds, unlock).ConfigureAwait(false),
+                _ => await _ipcLoci.BombStatus(item.Id, unlock).ConfigureAwait(false)
+            };
+        }
+        else if (IpcCallerMoodles.APIAvailable)
+        {
+            switch (item)
+            {
+                case LociTuple:
+                    _logger.LogWarning("Moodles cannot support removing by tuple!");
+                    return false;
+                case LociPreset preset:
+                    await _ipcMoodles.RemoveStatuses(preset.StatusIds).ConfigureAwait(false);
+                    return true; // Can lead to false positives since moodles api isnt as granular
+                default:
+                    await _ipcMoodles.RemoveStatuses([item.Id]).ConfigureAwait(false);
+                    return true; // Can lead to false positives since moodles api isnt as granular
+            }
+        }
+        _logger.LogWarning("No API available to remove LociItem!");
+        return false;
+    }
+
+    public async Task<bool> ApplyLociItem(List<LociItem> items, bool lockItems)
+    {
+        if (IpcCallerLoci.APIAvailable)
+        {
+            var statusIds = new List<Guid>();
+            var presetIds = new List<Guid>();
+            var tuples = new List<LociStatusInfo>();
+            foreach (var item in items)
+            {
+                switch (item)
+                {
+                    case LociTuple t: tuples.Add(t.Tuple.ToTuple()); break;
+                    case LociPreset p: presetIds.Add(p.Id); break;
+                    default: statusIds.Add(item.Id); break;
+                }
+            }
+
+            var res = await _ipcLoci.ApplyStatus(statusIds, lockItems).ConfigureAwait(false);
+            var presetRes = await _ipcLoci.ApplyPreset(presetIds, lockItems).ConfigureAwait(false);
+            var tupleRes = await _ipcLoci.ApplyStatusInfo(tuples, lockItems).ConfigureAwait(false);
+            // Ensure all 3 had either success or partial success.
+            return res && presetRes && tupleRes;
+        }
+        else if (IpcCallerMoodles.APIAvailable)
+        {
+            var statusIds = items.SelectMany(i => i is LociPreset p ? p.StatusIds : [i.Id]).ToList(); 
+            await _ipcMoodles.ApplyStatus(statusIds).ConfigureAwait(false);
+            return true; // Can lead to false positives since moodles api isnt as granular
+        }
+
+        _logger.LogWarning("No API available to apply LociItems!");
+        return false;
+    }
+
+    public async Task<bool> RemoveLociItem(List<LociItem> items, bool unlock)
+    {
+        var statusIds = items.SelectMany(i => i is LociPreset p ? p.StatusIds : [i.Id]).ToList();
+        if (IpcCallerLoci.APIAvailable)
+            return await _ipcLoci.BombStatus(statusIds, unlock).ConfigureAwait(false);
+        else if (IpcCallerMoodles.APIAvailable)
+        {
+            await _ipcMoodles.RemoveStatuses(statusIds).ConfigureAwait(false);
+            return true; // Can lead to false positives since moodles api isnt as granular
+        }
+
+        _logger.LogWarning("No API available to remove LociItems!");
+        return false;
+    }
 }

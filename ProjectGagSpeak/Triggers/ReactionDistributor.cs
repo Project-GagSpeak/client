@@ -1,6 +1,7 @@
 using CkCommons.Helpers;
 using Dalamud.Game.Text.SeStringHandling;
 using GagSpeak.Interop;
+using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Handlers;
 using GagSpeak.State.Managers;
@@ -28,7 +29,7 @@ public class ReactionDistributor
     private readonly RestraintManager _restraints;
     private readonly PuppeteerManager _puppeteer;
     private readonly BuzzToyManager _toys;
-    private readonly LociHandler _lociHandler;
+    private readonly LociHandler _loci;
     private readonly SelfBondageService _selfBondage;
 
     public ReactionDistributor(
@@ -39,7 +40,7 @@ public class ReactionDistributor
         RestraintManager restraints,
         PuppeteerManager puppeteer,
         BuzzToyManager toys,
-        LociHandler lociHandler,
+        LociHandler loci,
         SelfBondageService selfBondage)
     {
         _logger = logger;
@@ -49,7 +50,7 @@ public class ReactionDistributor
         _restraints = restraints;
         _puppeteer = puppeteer;
         _toys = toys;
-        _lociHandler = lociHandler;
+        _loci = loci;
         _selfBondage = selfBondage;
     }
 
@@ -57,7 +58,6 @@ public class ReactionDistributor
     public bool HandleAction(InvokableGsAction action, string? enactor = null) => action switch
     {
         TextAction ta       => TextReaction(ta, enactor),
-        LociDataAction lda  => LociReaction(lda, enactor),
         PiShockAction ps    => PiShockReaction(ps, enactor),
         SexToyAction sta    => SexToyReaction(sta, enactor),
         _ => false
@@ -69,7 +69,7 @@ public class ReactionDistributor
         GagAction ga => await DoGagAction(ga, enactor),
         RestrictionAction rsa => await DoRestrictionAction(rsa, enactor),
         RestraintAction rta => await DoRestraintAction(rta, enactor),
-        LociDataAction lda => LociReaction(lda, enactor),
+        LociDataAction lda => await LociReaction(lda, enactor),
         PiShockAction ps => PiShockReaction(ps, enactor),
         SexToyAction sta => SexToyReaction(sta, enactor),
         _ => false
@@ -425,17 +425,17 @@ public class ReactionDistributor
         return false;
     }
 
-    private bool LociReaction(LociDataAction act, string? enactor = null)
+    private async Task<bool> LociReaction(LociDataAction act, string? enactor = null)
     {
-        if(!IpcCallerLoci.APIAvailable || act.LociItem.Id== Guid.Empty)
-        {
-            _logger.LogWarning("Loci not available, cannot execute loci trigger.");
+        if(act.LociItem.Id== Guid.Empty)
             return false;
-        }
+        // Handle based on state.
+        if (act.NewState is NewState.Enabled)
+            return await _loci.ApplyLociItem(act.LociItem, false).ConfigureAwait(false);
+        else if (act.NewState is NewState.Disabled)
+            return await _loci.RemoveLociItem(act.LociItem, false).ConfigureAwait(false);
 
-        _logger.LogDebug("Applying a LociData action to the player.", LoggerType.IpcLoci);
-        _lociHandler.ApplyLociItem(act.LociItem).ConfigureAwait(false);
-        return true;
+        return false;
     }
 
     private bool PiShockReaction(PiShockAction act, string? enactor = null)
