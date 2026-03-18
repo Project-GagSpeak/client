@@ -22,6 +22,7 @@ public sealed class CommandManager : IDisposable
     private const string SafewordCommand = "/safeword";
     private const string SafewordHardcoreCommand = "/safewordhardcore";
     private const string DeathRollShortcutCommand = "/dr";
+    private const string DeathRollShortcutCommandAlias = "/gdr";
     private readonly GagspeakMediator _mediator;
     private readonly MainConfig _mainConfig;
     private readonly KinksterManager _kinksters;
@@ -64,6 +65,11 @@ public sealed class CommandManager : IDisposable
             HelpMessage = "DeathRoll Shortcut '/dr' to Start, '/dr r' to respond",
             ShowInHelp = true
         });
+        Svc.Commands.AddHandler(DeathRollShortcutCommandAlias, new CommandInfo(OnDeathRollShortcut)
+        {
+            HelpMessage = "DeathRoll Shortcut '/gdr' to Start, '/gdr r' to respond",
+            ShowInHelp = true
+        });
     }
 
     public void Dispose()
@@ -98,10 +104,6 @@ public sealed class CommandManager : IDisposable
         {
             if (_mainConfig.Current.HasValidSetup())
                 _mediator.Publish(new UiToggleMessage(typeof(GlobalChatPopoutUI)));
-        }
-        else if (string.Equals(splitArgs[0], "dr", StringComparison.OrdinalIgnoreCase))
-        {
-            OnDeathRollShortcut(splitArgs[0], string.Join(" ", splitArgs.Skip(1)));
         }
 #if DEBUG
         else if (string.Equals(splitArgs[0], "intro", StringComparison.OrdinalIgnoreCase))
@@ -225,10 +227,10 @@ public sealed class CommandManager : IDisposable
         Svc.Chat.Print(new SeStringBuilder().AddCommand("/gspeak", "Toggles the primary UI").BuiltString);
         Svc.Chat.Print(new SeStringBuilder().AddCommand("/gspeak settings", "Toggles the settings UI window.").BuiltString);
         Svc.Chat.Print(new SeStringBuilder().AddCommand("/gspeak chat", "Toggles the global chat popout UI window.").BuiltString);
-        Svc.Chat.Print(new SeStringBuilder().AddCommand("/gspeak dr", "Alias for '/dr'.").BuiltString);
         Svc.Chat.Print(new SeStringBuilder().AddCommand("/safeword", "Cries out your safeword, disabling any active restrictions.").BuiltString);
         Svc.Chat.Print(new SeStringBuilder().AddCommand("/safewordhardcore", "Cries out your hardcore safeword, disabling any hardcore restrictions.").BuiltString);
         Svc.Chat.Print(new SeStringBuilder().AddCommand("/dr", "Begins a DeathRoll. '/dr r' responds to the last seen or interacted DeathRoll").BuiltString);
+        Svc.Chat.Print(new SeStringBuilder().AddCommand("/gdr", "Begins a DeathRoll. '/gdr r' responds to the last seen or interacted DeathRoll").BuiltString);
     }
 
     private void PrintSafewordHelp()
