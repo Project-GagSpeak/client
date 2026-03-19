@@ -330,20 +330,20 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         {
             if (PlayerData.Level < 90)
                 return false;
-            return (_restraints.AppliedRestraint is not null && ArousalService.ArousalPercent > 0.5f) ? true : false;
+            return _restraints.AppliedRestraint is not null && ArousalService.ArousalPercent > 0.5f;
         }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Hardcore Trials Cleared");
         _saveData.AddConditionalProgress(AchievementModuleKind.Wardrobe, Achievements.TrialOfDexterity, 1, () =>
         {
             if (PlayerData.Level < 90)
                 return false;
-            return (_restraints.AppliedRestraint is not null && (_traits.FinalTraits & Traits.BoundArms | Traits.BoundLegs) != 0) ? true : false;
+            return _restraints.AppliedRestraint is not null && _traits.FinalTraits.HasAny(Traits.BoundArms | Traits.BoundLegs);
         }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Hardcore Trials Cleared");
 
         _saveData.AddConditionalProgress(AchievementModuleKind.Wardrobe, Achievements.TrialOfTheBlind, 1, () =>
         {
             if (PlayerData.Level < 90)
                 return false;
-            return (_restraints.AppliedRestraint is not null && (_traits.FinalTraits & Traits.Blindfolded) != 0) ? true : false;
+            return _restraints.AppliedRestraint is not null && _traits.FinalTraits.HasAny(Traits.Blindfolded);
         }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Hardcore Trials Cleared");
 
         // While actively moving, incorrectly guess a restraint lock while gagged (Secret)
@@ -480,7 +480,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.WalkOfShame, TimeSpan.FromMinutes(5),
         () =>
         {
-            if (_restraints.AppliedRestraint is not null && (_traits.FinalTraits & Traits.Blindfolded) != 0 && ClientData.Hardcore.IsEnabled(HcAttribute.Follow))
+            if (_restraints.AppliedRestraint is not null && _traits.FinalTraits.HasAny(Traits.Blindfolded) && ClientData.Hardcore.IsEnabled(HcAttribute.Follow))
                 if (PlayerContent.InMainCity)
                     return true;
             return false;
@@ -498,9 +498,9 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
                 return false;
             }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Blind Pairs Led");
 
-        _saveData.AddConditional(AchievementModuleKind.Hardcore, Achievements.WhatAView, () => (_traits.FinalTraits & Traits.Blindfolded) != 0, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Blind Lookouts Performed");
+        _saveData.AddConditional(AchievementModuleKind.Hardcore, Achievements.WhatAView, () => _traits.FinalTraits.HasAny(Traits.Blindfolded), (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Blind Lookouts Performed");
 
-        _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.WhoNeedsToSee, TimeSpan.FromHours(3), () => (_traits.FinalTraits & Traits.Blindfolded) != 0,
+        _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.WhoNeedsToSee, TimeSpan.FromHours(3), () => _traits.FinalTraits.HasAny(Traits.Blindfolded),
         DurationTimeUnit.Hours, (id, name) => OnCompletion(id, name).ConfigureAwait(false), prefix: "Blindfolded for");
 
         _saveData.AddRequiredTimeConditional(AchievementModuleKind.Hardcore, Achievements.OfDomesticDiscipline, TimeSpan.FromMinutes(30), () => ClientData.Hardcore.IsEnabled(HcAttribute.Confinement),
