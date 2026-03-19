@@ -116,21 +116,22 @@ public sealed class IpcCallerMoodles : IIpcCaller
         return deprecatedData.Select(x => x.ToLociTuple()).ToList();
     }
 
-    public async Task ApplyOwnStatus(Guid guid)
+    public async Task ApplyStatus(Guid guid)
     {
         if (!APIAvailable) return;
         // To my knowledge this no longer should be required to run on the main thread but we'll see.
         ApplyStatusByPtr.InvokeAction(guid, PlayerData.Address);
     }
 
-    public async Task ApplyOwnStatus(IEnumerable<Guid> guidsToAdd)
+    public async Task ApplyStatus(List<Guid> guidsToAdd)
     {
         if (!APIAvailable) return;
 
         foreach (var guid in guidsToAdd)
             ApplyStatusByPtr.InvokeAction(guid, PlayerData.Address);
     }
-    public async Task RemoveOwnStatuses(IEnumerable<Guid> toRemove)
+
+    public async Task RemoveStatuses(List<Guid> toRemove)
     {
         if (!APIAvailable) return;
         RemoveStatusesByPtr.InvokeAction(toRemove.ToList(), PlayerData.Address);

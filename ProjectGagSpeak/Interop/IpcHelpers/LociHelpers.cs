@@ -68,7 +68,7 @@ public static class LociHelpers
             statStruct.Title,
             statStruct.Description,
             statStruct.CustomVFXPath,
-            statStruct.ExpireTicks,
+            (statStruct.ExpireTicks == 0) ? -1 : statStruct.ExpireTicks,
             (StatusType)statStruct.Type,
             statStruct.Stacks,
             statStruct.StackSteps,
@@ -78,7 +78,8 @@ public static class LociHelpers
             (ChainType)statStruct.ChainType,
             (ChainTrigger)statStruct.ChainTrigger,
             statStruct.Applier,
-            statStruct.Dispeller);
+            statStruct.Dispeller
+        );
 
     /// <summary> Convert the depricated preset tuple to a reliable LociPresetStruct. </summary>
     public static LociPresetInfo ToLociTuple(this DeprecatedPresetInfo info)

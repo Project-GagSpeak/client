@@ -20,6 +20,13 @@ public class Changelog
     // Add Version Data here.
     private void AddVersionData()
     {
+        VersionEntry(2, 1, 1, 0)
+            .RegisterMain("Allows LociRemoval on triggers.")
+            .RegisterQol("Basic bondage application uses moodles as a fallback. However, " +
+            "locking, sharehub, and interactions with statuses remain broken with Moodles.")
+            .RegisterBugfix("<!> Fixed Pair removal not updating until reconnection")
+            .RegisterBugfix("<!> Sent pair requests now properly show up in the incoming requests.")
+            .RegisterBugfix("<!> Recieved pair requests now properly show up in the incoming requests.");
         VersionEntry(2, 0, 5, 0)
             .RegisterMain("Triggers are now implemented")
             .RegisterFeature("TraitAllowances are moved to permissions (WIP)")

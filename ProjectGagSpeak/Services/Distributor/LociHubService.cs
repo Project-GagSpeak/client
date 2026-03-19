@@ -148,7 +148,8 @@ public class LociHubService : DisposableMediatorSubscriberBase
             return;
 
         var status = match.Status;
-        var totalTime = status.ExpireTicks == -1 ? TimeSpan.Zero : TimeSpan.FromMilliseconds(status.ExpireTicks);
+        var realExpireTicks = status.ExpireTicks == 0 ? -1 : status.ExpireTicks; // Handle bad offsets.
+        var totalTime = realExpireTicks == -1 ? TimeSpan.Zero : TimeSpan.FromMilliseconds(status.ExpireTicks);
 
         // convert the loci status to a copiable json.
         var jsonObject = new
@@ -177,7 +178,7 @@ public class LociHubService : DisposableMediatorSubscriberBase
             Minutes = totalTime.Minutes,
             Seconds = totalTime.Seconds,
 
-            NoExpire = status.ExpireTicks == -1,
+            NoExpire = realExpireTicks == -1,
         };
         var stringToCopy = JsonConvert.SerializeObject(jsonObject, Formatting.None);
         ImGui.SetClipboardText(stringToCopy);

@@ -44,6 +44,7 @@ public sealed class IpcCallerLoci : IIpcCaller
     private readonly GetPresetInfo GetPresetTuple;
     private readonly GetPresetInfoList GetAllPresetTuples;
     private readonly ApplyPreset ApplyPresetById;
+    private readonly ApplyPresets ApplyPresetByIds;
     private readonly ApplyPresetInfo ApplyPresetTuple;
 
     // Additional lock stuff
@@ -104,6 +105,7 @@ public sealed class IpcCallerLoci : IIpcCaller
         GetPresetTuple = new GetPresetInfo(Svc.PluginInterface);
         GetAllPresetTuples = new GetPresetInfoList(Svc.PluginInterface);
         ApplyPresetById = new ApplyPreset(Svc.PluginInterface);
+        ApplyPresetByIds = new ApplyPresets(Svc.PluginInterface);
         ApplyPresetTuple = new ApplyPresetInfo(Svc.PluginInterface);
         // Lockables
         IsLockable = new CanLock(Svc.PluginInterface);
@@ -226,45 +228,51 @@ public sealed class IpcCallerLoci : IIpcCaller
     }
 
     /// <inheritdoc cref="LociApi.Ipc.ApplyStatus"/>
-    public async Task ApplyStatus(Guid id, bool asLocked)
+    public async Task<bool> ApplyStatus(Guid id, bool asLocked)
     {
-        if (!APIAvailable) return;
-        await Svc.Framework.RunOnFrameworkThread(() => ApplyStatusById.Invoke(id, asLocked ? GAGSPEAK_KEY : 0)).ConfigureAwait(false);
+        if (!APIAvailable) return false;
+        var res = await Svc.Framework.RunOnFrameworkThread(() => ApplyStatusById.Invoke(id, asLocked ? GAGSPEAK_KEY : 0)).ConfigureAwait(false);
+        return res is (LociApiEc.Success or LociApiEc.PartialSuccess);
     }
 
     /// <inheritdoc cref="LociApi.Ipc.ApplyStatuses"/>
-    public async Task ApplyStatus(List<Guid> ids, bool asLocked)
+    public async Task<bool> ApplyStatus(List<Guid> ids, bool asLocked)
     {
-        if (!APIAvailable) return;
-        await Svc.Framework.RunOnFrameworkThread(() => ApplyStatusByIds.Invoke(ids, asLocked ? GAGSPEAK_KEY : 0, out _)).ConfigureAwait(false);
+        if (!APIAvailable) return false;
+        var res = await Svc.Framework.RunOnFrameworkThread(() => ApplyStatusByIds.Invoke(ids, asLocked ? GAGSPEAK_KEY : 0, out _)).ConfigureAwait(false);
+        return res is (LociApiEc.Success or LociApiEc.PartialSuccess);
     }
 
     /// <inheritdoc cref="LociApi.Ipc.ApplyStatusInfo"/>
-    public async Task ApplyStatusInfo(LociStatusInfo tuple, bool asLocked)
+    public async Task<bool> ApplyStatusInfo(LociStatusInfo tuple, bool asLocked)
     {
-        if (!APIAvailable) return;
-        await Svc.Framework.RunOnFrameworkThread(() => ApplyStatusTuple.Invoke(tuple, asLocked ? GAGSPEAK_KEY : 0)).ConfigureAwait(false);
+        if (!APIAvailable) return false;
+        var res = await Svc.Framework.RunOnFrameworkThread(() => ApplyStatusTuple.Invoke(tuple, asLocked ? GAGSPEAK_KEY : 0)).ConfigureAwait(false);
+        return res is (LociApiEc.Success or LociApiEc.PartialSuccess);
     }
 
     /// <inheritdoc cref="LociApi.Ipc.ApplyStatusInfos"/>
-    public async Task ApplyStatusInfo(List<LociStatusInfo> tuples, bool asLocked)
+    public async Task<bool> ApplyStatusInfo(List<LociStatusInfo> tuples, bool asLocked)
     {
-        if (!APIAvailable) return;
-        await Svc.Framework.RunOnFrameworkThread(() => ApplyStatusTuples.Invoke(tuples, asLocked ? GAGSPEAK_KEY : 0)).ConfigureAwait(false);
+        if (!APIAvailable) return false;
+        var res = await Svc.Framework.RunOnFrameworkThread(() => ApplyStatusTuples.Invoke(tuples, asLocked ? GAGSPEAK_KEY : 0)).ConfigureAwait(false);
+        return res is (LociApiEc.Success or LociApiEc.PartialSuccess);
     }
 
     /// <inheritdoc cref="LociApi.Ipc.RemoveStatus"/>
-    public async Task BombStatus(Guid id, bool useKey)
+    public async Task<bool> BombStatus(Guid id, bool useKey)
     {
-        if (!APIAvailable) return;
-        await Svc.Framework.RunOnFrameworkThread(() => RemoveStatus.Invoke(id, useKey ? GAGSPEAK_KEY : 0)).ConfigureAwait(false);
+        if (!APIAvailable) return false;
+        var res = await Svc.Framework.RunOnFrameworkThread(() => RemoveStatus.Invoke(id, useKey ? GAGSPEAK_KEY : 0)).ConfigureAwait(false);
+        return res is (LociApiEc.Success or LociApiEc.PartialSuccess);
     }
 
     /// <inheritdoc cref="LociApi.Ipc.RemoveStatuses"/>
-    public async Task BombStatus(List<Guid> ids, bool useKey)
+    public async Task<bool> BombStatus(List<Guid> ids, bool useKey)
     {
-        if (!APIAvailable) return;
-        await Svc.Framework.RunOnFrameworkThread(() => RemoveStatuses.Invoke(ids, useKey ? GAGSPEAK_KEY : 0, out _)).ConfigureAwait(false);
+        if (!APIAvailable) return false;
+        var res = await Svc.Framework.RunOnFrameworkThread(() => RemoveStatuses.Invoke(ids, useKey ? GAGSPEAK_KEY : 0, out _)).ConfigureAwait(false);
+        return res is (LociApiEc.Success or LociApiEc.PartialSuccess);
     }
 
     /// <inheritdoc cref="LociApi.Ipc.GetPresetInfo"/>
@@ -282,10 +290,18 @@ public sealed class IpcCallerLoci : IIpcCaller
     }
 
     /// <inheritdoc cref="LociApi.Ipc.ApplyPreset"/>
-    public async Task ApplyPreset(Guid id, bool asLocked)
+    public async Task<bool> ApplyPreset(Guid id, bool asLocked)
     {
-        if (!APIAvailable) return;
-        await Svc.Framework.RunOnFrameworkThread(() => ApplyPresetById.Invoke(id, asLocked ? GAGSPEAK_KEY : 0)).ConfigureAwait(false);
+        if (!APIAvailable) return false;
+        var res = await Svc.Framework.RunOnFrameworkThread(() => ApplyPresetById.Invoke(id, asLocked ? GAGSPEAK_KEY : 0)).ConfigureAwait(false);
+        return res is (LociApiEc.Success or LociApiEc.PartialSuccess);
+    }
+
+    public async Task<bool> ApplyPreset(List<Guid> ids, bool asLocked)
+    {
+        if (!APIAvailable) return false;
+        var res = await Svc.Framework.RunOnFrameworkThread(() => ApplyPresetByIds.Invoke(ids, asLocked ? GAGSPEAK_KEY : 0, out _)).ConfigureAwait(false);
+        return res is (LociApiEc.Success or LociApiEc.PartialSuccess);
     }
 
     /// <inheritdoc cref="LociApi.Ipc.ApplyPresetInfo"/>
