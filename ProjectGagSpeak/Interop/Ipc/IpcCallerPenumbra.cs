@@ -47,7 +47,7 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
     // ID displayed in penumbra when the mod settings are set.
     private const string GAGSPEAK_ID = "ProjectGagSpeak";
     // Key used to associate with glamourer
-    // value is Cordy's handle WUV = 01010111 01010101 01010110 = 5723478 (hey, don't cringe! I thought it was cute <3) 
+    // value is Cordy's handle WUV = 01010111 01010101 01010110 = 5723478 (hey, don't cringe! I thought it was cute <3)
     private const int GAGSPEAK_KEY = 5723478;
 
     private bool _shownPenumbraUnavailable = false; // safety net to prevent notification spam.
@@ -183,7 +183,7 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
     ///     We use this to fetch the changes in data that <see cref="GetKinksterModData"/> fails to obtain. <para />
     /// </summary>
     /// <remarks>
-    ///     Maybe if one day this is fixed by penumbra a lot of overhead could be reduced, if they made it 
+    ///     Maybe if one day this is fixed by penumbra a lot of overhead could be reduced, if they made it
     ///     so before firing a resource loaded, they updated the paths shown on screen to the client with it.
     /// </remarks>
     private unsafe void GameObjectResourceLoaded(IntPtr address, string gamePath, string resolvedPath)
@@ -361,7 +361,7 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
             modPreset.Container.DirectoryPath,
             false,
             true,
-            modPreset.Container.Priority + 25,
+            modPreset.Container.Priority + 25000,
             readOnlyModSettings,
             GAGSPEAK_ID,
             GAGSPEAK_KEY,
