@@ -17,8 +17,9 @@ public static unsafe class AddonChatLog
 {
     private const uint TEXT_INPUT_CURSOR_ID = 2;
     private const uint TEXT_INPUT_NODE_ID = 5;
+    private const ushort TEXT_INPUT_INPUT_NODE_ID = 16;
 
-    /// <summary> 
+    /// <summary>
     ///     The Area in the Chat Box with the Chat-Input field and button row.
     /// </summary>
     private static AddonChatLogPanel* _mainChatLog => (AddonChatLogPanel*)(AtkUnitBase*)Svc.GameGui.GetAddonByName("ChatLog").Address;
@@ -54,6 +55,36 @@ public static unsafe class AddonChatLog
             RaptureAtkModule.Instance()->ClearFocus();
     }
 
+    public static void DisableInput(bool blockInput)
+    {
+        var node = (AtkComponentNode*)_mainChatLog->AtkUnitBase.GetNodeById(TEXT_INPUT_NODE_ID);
+        if (node is null) return;
+
+        var uldManager = node->Component->UldManager;
+        if (uldManager.NodeList is null) return;
+
+        AtkResNode* txtNode = null;
+        for (var i = 0; i < uldManager.NodeListCount; i++)
+        {
+            var tnode = uldManager.NodeList[i];
+            // If true, this is the TextInputCursorNode
+            if (tnode != null && tnode->NodeId == TEXT_INPUT_INPUT_NODE_ID)
+                txtNode = tnode;
+        }
+        if (txtNode is null) return;
+
+        if (blockInput)
+        {
+            node->NodeFlags &= ~(NodeFlags.Enabled | NodeFlags.Focusable);
+            txtNode->NodeFlags &= ~(NodeFlags.Enabled | NodeFlags.Focusable);
+        }
+        else
+        {
+            node->NodeFlags |= (NodeFlags.Enabled | NodeFlags.Focusable);
+            txtNode->NodeFlags |= (NodeFlags.Enabled | NodeFlags.Focusable);
+        }
+    }
+
     public static unsafe void SetChatInputVisibility(bool state)
     {
         if (HasValidRoot(_mainChatLog))
@@ -84,7 +115,7 @@ public static unsafe class AddonChatLog
     private static AtkResNode* GetChatInputCursorNode()
     {
         // Validate ChatInput Node
-        if(!HasValidRoot(_mainChatLog)) 
+        if(!HasValidRoot(_mainChatLog))
             return null;
 
         // Grab the TextInput Node & Validate path to UldManager.
@@ -108,4 +139,6 @@ public static unsafe class AddonChatLog
 
         return null;
     }
+
+
 }
