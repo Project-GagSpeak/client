@@ -48,6 +48,7 @@ public sealed class ChatboxController : DisposableMediatorSubscriberBase
     private void FrameworkUpdate()
     {
         if (_blockingInput == _blockInput) return;
+        Logger.LogTrace($"Chat input block changed to {_blockInput}. Correcting text box state.", LoggerType.HardcoreActions);
         AddonChatLog.DisableInput(_blockInput);
         _blockingInput = _blockInput;
     }
