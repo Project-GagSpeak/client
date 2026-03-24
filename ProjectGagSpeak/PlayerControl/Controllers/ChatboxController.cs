@@ -15,6 +15,7 @@ public sealed class ChatboxController : DisposableMediatorSubscriberBase
 {
     private readonly PlayerControlCache _cache;
     private bool _blockInput = false;
+    private bool _blockingInput = false;
     private bool _hideChatBoxes = false;
     private bool _hideChatInput = false;
 
@@ -46,7 +47,9 @@ public sealed class ChatboxController : DisposableMediatorSubscriberBase
 
     private void FrameworkUpdate()
     {
+        if (_blockingInput == _blockInput) return;
         AddonChatLog.DisableInput(_blockInput);
+        _blockingInput = _blockInput;
     }
 
     // Update our local value to reflect the latest state in the cache.
