@@ -3,6 +3,7 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
+using OtterGui.Classes;
 using OtterGui.Raii;
 using OtterGui.Text;
 
@@ -24,15 +25,15 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
     protected string Timer = string.Empty;
     protected Padlocks SelectedLock { get; set; } = Padlocks.None;
 
-    private readonly Func<List<Padlocks>> _padlocksListGenerator;
-    private List<Padlocks> _padlocksList;
+    private readonly ICachingList<Padlocks> _padlocksList;
+    //private readonly Func<List<Padlocks>> _padlocksListGenerator;
+    //private List<Padlocks> _padlocksList;
     private bool _closePopup;
 
-    protected CkPadlockComboBase(Func<List<Padlocks>> padlocks, ILogger log)
+    protected CkPadlockComboBase(Func<IReadOnlyList<Padlocks>> padlocks, ILogger log)
     {
         Log = log;
-        _padlocksListGenerator = padlocks;
-        _padlocksList = padlocks();
+        _padlocksList = new LazyList<Padlocks>(padlocks);
     }
 
     /// <summary>
@@ -40,7 +41,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
     /// </summary>
     protected void ResetSelection()
     {
-        _padlocksList.Clear();
+        _padlocksList.ClearList();
         SelectedLock = Padlocks.None;
         ResetInputs();
     }
@@ -101,11 +102,6 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
             // handle combo.
             if (combo)
             {
-                if (_padlocksList.Count == 0)
-                {
-                    _padlocksList = _padlocksListGenerator();
-                }
-
                 foreach (var item in _padlocksList)
                 {
                     if (ImGui.Selectable(item.ToName(), item == SelectedLock))
@@ -124,7 +120,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
 
                 if (_closePopup)
                 {
-                    _padlocksList.Clear();
+                    _padlocksList.ClearList();
                     _closePopup = false;
                 }
             }
