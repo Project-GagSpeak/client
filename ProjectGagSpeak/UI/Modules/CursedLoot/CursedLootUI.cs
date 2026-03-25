@@ -21,9 +21,9 @@ public class CursedLootUI : WindowMediatorSubscriberBase
 
     private readonly CursedLootManager _manager;
     private readonly TutorialService _guides;
-   
+
     public CursedLootUI(ILogger<CursedLootUI> logger, GagspeakMediator mediator,
-        CursedLootManager manager, TutorialService guides, 
+        CursedLootManager manager, TutorialService guides,
         LootItemsTab itemsTab, LootPoolTab itemPoolTab, LootAppliedTab appliedTab)
         : base(logger, mediator, "Cursed Loot UI")
     {
@@ -147,7 +147,7 @@ public class CursedLootUI : WindowMediatorSubscriberBase
             var chance = _chance ?? _manager.LockChance;
             if (ImGui.DragInt("##ChanceSel", ref chance, 0.1f, 0, 100, "%d%%"))
                 _chance = chance;
-            if (ImGui.IsItemDeactivatedAfterEdit())
+            if (_chance != _manager.LockChance) // update chance if it changed.
             {
                 _manager.SetLockChance(chance);
                 _chance = null;
