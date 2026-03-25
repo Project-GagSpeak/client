@@ -445,5 +445,19 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
 
         PostActionMsg(pairUid, InteractionType.ListenerName, $"Obtained Listener name from Kinkster");
     }
+    
+    public Task ReceivedPairRequest(KinksterRequest dto)
+    {
+        if (!MainHub.IsConnectionDataSynced)
+            return Task.CompletedTask;
+        
+        Logger.LogTrace("Received pair request from server!", LoggerType.PairManagement);
+        var message = $"Received a new pair request from {dto.User.AnonName}";
+        if (dto.Details.Message.Length > 0)
+            message = $"{dto.Details.Message}";
+        
+        Mediator.Publish(new EventMessage(new(dto.User.AnonName, dto.User.AnonName, InteractionType.PairRequestReceived, message)));
+        return Task.CompletedTask;
+    }
 
 }

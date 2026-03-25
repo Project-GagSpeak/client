@@ -109,6 +109,7 @@ public partial class MainHub
     {
         Logger.LogDebug($"Callback_AddPairRequest: {dto}", LoggerType.Callbacks);
         _requests.AddNewRequest(dto);
+        _callbackHandler.ReceivedPairRequest(dto);
         return Task.CompletedTask;
     }
 
