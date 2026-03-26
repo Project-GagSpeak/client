@@ -32,6 +32,7 @@ public sealed class ChatboxController : DisposableMediatorSubscriberBase
     protected override void Dispose(bool disposing) {
         if (!disposing) return;
         Svc.AddonLifecycle.UnregisterListener(ChatLogPostShow);
+        AddonChatLog.DisableInput(false); // restore access to chat input if we're disabling
         base.Dispose(disposing);
     }
 
