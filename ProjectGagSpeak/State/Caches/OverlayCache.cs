@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using Dalamud.Interface.Utility.Raii;
 using OtterGui;
 using CkCommons.Gui;
+using GagSpeak.PlayerClient;
 
 namespace GagSpeak.State.Caches;
 
@@ -15,9 +16,11 @@ namespace GagSpeak.State.Caches;
 public sealed class OverlayCache
 {
     private readonly ILogger<OverlayCache> _logger;
-    public OverlayCache(ILogger<OverlayCache> logger)
+    private readonly MainConfig _config;
+    public OverlayCache(ILogger<OverlayCache> logger, MainConfig config)
     {
         _logger = logger;
+        _config = config;
     }
 
     private SortedList<CombinedCacheKey, BlindfoldOverlay> _blindfolds = new();
@@ -43,6 +46,9 @@ public sealed class OverlayCache
     {
         if (!overlay.IsValid())
             return false;
+        
+        if (key.Manager == ManagerPriority.CursedLoot &&  !_config.Current.CursedItemsApplyTraits)
+            return false;
 
         if (!_blindfolds.TryAdd(key, overlay))
         {
@@ -62,6 +68,9 @@ public sealed class OverlayCache
     public bool TryAddHypnoEffect(CombinedCacheKey key, HypnoticOverlay overlay)
     {
         if (!overlay.IsValid())
+            return false;
+        
+        if (key.Manager == ManagerPriority.CursedLoot &&  !_config.Current.CursedItemsApplyTraits)
             return false;
 
         if (!_hypnoEffects.TryAdd(key, overlay))
