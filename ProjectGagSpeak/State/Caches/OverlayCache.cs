@@ -16,11 +16,9 @@ namespace GagSpeak.State.Caches;
 public sealed class OverlayCache
 {
     private readonly ILogger<OverlayCache> _logger;
-    private readonly MainConfig _config;
-    public OverlayCache(ILogger<OverlayCache> logger, MainConfig config)
+    public OverlayCache(ILogger<OverlayCache> logger)
     {
         _logger = logger;
-        _config = config;
     }
 
     private SortedList<CombinedCacheKey, BlindfoldOverlay> _blindfolds = new();
@@ -46,9 +44,6 @@ public sealed class OverlayCache
     {
         if (!overlay.IsValid())
             return false;
-        
-        if (key.Manager == ManagerPriority.CursedLoot &&  !_config.Current.CursedItemsApplyTraits)
-            return false;
 
         if (!_blindfolds.TryAdd(key, overlay))
         {
@@ -68,9 +63,6 @@ public sealed class OverlayCache
     public bool TryAddHypnoEffect(CombinedCacheKey key, HypnoticOverlay overlay)
     {
         if (!overlay.IsValid())
-            return false;
-        
-        if (key.Manager == ManagerPriority.CursedLoot &&  !_config.Current.CursedItemsApplyTraits)
             return false;
 
         if (!_hypnoEffects.TryAdd(key, overlay))
