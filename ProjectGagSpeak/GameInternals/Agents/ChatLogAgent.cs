@@ -43,7 +43,6 @@ public static class ChatLogAgent
     public static readonly ImmutableDictionary<string, InputChannel> PrefixToChannel = ImmutableDictionary<string, InputChannel>.Empty
         .Add("/t", InputChannel.Tell)
         .Add("/tell", InputChannel.Tell)
-        .Add("/r", InputChannel.Tell)
         .Add("/s", InputChannel.Say)
         .Add("/say", InputChannel.Say)
         .Add("/p", InputChannel.Party)
