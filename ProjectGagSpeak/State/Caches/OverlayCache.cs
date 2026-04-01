@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using Dalamud.Interface.Utility.Raii;
 using OtterGui;
 using CkCommons.Gui;
+using GagSpeak.PlayerClient;
 
 namespace GagSpeak.State.Caches;
 
