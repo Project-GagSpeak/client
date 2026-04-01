@@ -468,7 +468,7 @@ public class CacheStateManager : IHostedService
         );
     }
 
-    // I can almost garentee that removing this without considering for any
+    // I can almost guarantee that removing this without considering for any
     // active layers will cause issues, handle later, or restrict well.
     public async Task RemoveRestraintSet(RestraintSet item, RestraintLayer removedLayers)
     {
@@ -545,10 +545,10 @@ public class CacheStateManager : IHostedService
             AddGlamourMeta(key, item.RefItem.Glamour, metaStruct),
             AddModPreset(key, item.RefItem.Mod),
             AddLociItem(key, item.RefItem.LociData),
-            AddTraits(key, item.RefItem.Traits &~ (Traits.Immobile | Traits.Weighty)),
             AddArousalStrength(key, item.RefItem.Arousal)
         };
         // Conditional additions
+        if (item.ApplyTraits) tasks.Add(AddTraits(key, item.RefItem.Traits &~ (Traits.Immobile | Traits.Weighty)));
         if (item.RefItem is BlindfoldRestriction bfr) tasks.Add(AddBlindfold(key, bfr.Properties));
         if (item.RefItem is HypnoticRestriction hr) tasks.Add(AddHypnoEffect(key, hr.Properties));
 
