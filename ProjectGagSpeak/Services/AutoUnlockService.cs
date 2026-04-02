@@ -48,6 +48,8 @@ public sealed class AutoUnlockService : BackgroundService
     private readonly CallbackHandler _visuals;
     private readonly PlayerCtrlHandler _hcHandler;
     private readonly CharaDataDistributor _dds;
+    private readonly MainConfig _config;
+    private readonly CacheStateManager _cacheManager;
     
     // the interval tasks to check for
     private readonly List<Task> _intervalTasks = [];
@@ -61,7 +63,7 @@ public sealed class AutoUnlockService : BackgroundService
         KinksterManager kinksters, GagRestrictionManager gags, RestrictionManager restrictions, 
         RestraintManager restraints, CursedLootManager cursedLoot, PatternManager patterns, 
         AlarmManager alarms, CallbackHandler visuals, PlayerCtrlHandler hcHandler, 
-        CharaDataDistributor dds)
+        CharaDataDistributor dds, MainConfig config, CacheStateManager cacheManager)
     {
         _logger = logger;
         _mediator = mediator;
@@ -78,6 +80,8 @@ public sealed class AutoUnlockService : BackgroundService
         _visuals = visuals;
         _hcHandler = hcHandler;
         _dds = dds;
+        _config = config;
+        _cacheManager = cacheManager;
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -193,6 +197,15 @@ public sealed class AutoUnlockService : BackgroundService
             {
                 _mediator.Publish(new GagStateChanged(NewState.Unlocked, index, backup, MainHub.UID, MainHub.UID));
                 _mediator.Publish(new EventMessage(new("Auto-Unlock", MainHub.UID, InteractionType.UnlockGag, $"{gag.GagItem.GagName()}'s Timed Padlock Expired!")));
+
+                // Auto remove Gag if configured to do so.
+                if (_config.Current.RemoveRestrictionOnTimerExpire && await _dds.PushNewActiveGagSlot(index, new ActiveGagSlot(), DataUpdateType.Removed).ConfigureAwait(false) is not null)
+                {
+                    // _mediator.Publish(new GagStateChanged(NewState.Disabled, index, backup, MainHub.UID, MainHub.UID));
+                    if (_gags.RemoveGag(index, MainHub.UID, out var visualItem))
+                        await _cacheManager.RemoveGagItem(visualItem, index);
+                    _logger.LogInformation($"Gag [{gag.GagItem.GagName()}] Removed due to Timer Expire!", LoggerType.AutoUnlocks);
+                }
             }
             else
             {
