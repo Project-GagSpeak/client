@@ -48,19 +48,19 @@ public sealed class AutoUnlockService : BackgroundService
     private readonly CallbackHandler _visuals;
     private readonly PlayerCtrlHandler _hcHandler;
     private readonly CharaDataDistributor _dds;
-    
+
     // the interval tasks to check for
     private readonly List<Task> _intervalTasks = [];
-    
+
     // local helper values.
     private bool _clientWasDead = false;
     private int _lastPlayerCount = 0;
 
     public AutoUnlockService(ILogger<AutoUnlockService> logger, GagspeakMediator mediator, MainHub hub,
-        ClientData clientData, ImprisonmentController cageControl, MovementController moveControl, 
-        KinksterManager kinksters, GagRestrictionManager gags, RestrictionManager restrictions, 
-        RestraintManager restraints, CursedLootManager cursedLoot, PatternManager patterns, 
-        AlarmManager alarms, CallbackHandler visuals, PlayerCtrlHandler hcHandler, 
+        ClientData clientData, ImprisonmentController cageControl, MovementController moveControl,
+        KinksterManager kinksters, GagRestrictionManager gags, RestrictionManager restrictions,
+        RestraintManager restraints, CursedLootManager cursedLoot, PatternManager patterns,
+        AlarmManager alarms, CallbackHandler visuals, PlayerCtrlHandler hcHandler,
         CharaDataDistributor dds)
     {
         _logger = logger;
@@ -97,7 +97,7 @@ public sealed class AutoUnlockService : BackgroundService
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            Generic.Safe(checkFunc);            
+            Generic.Safe(checkFunc);
             await Task.Delay(msDelay, stoppingToken);
         }
     }
@@ -249,7 +249,7 @@ public sealed class AutoUnlockService : BackgroundService
 
         if (!data.HasTimerExpired())
             return;
-        
+
         _logger.LogInformation($"RestraintSet's [{data.Padlock.ToName()}] Timer Expired!", LoggerType.AutoUnlocks);
         // store backup state.
         var backup = data with { };
@@ -402,7 +402,7 @@ public sealed class AutoUnlockService : BackgroundService
         if (hcState.ChatInputHidden.Length > 0 && hcState.ChatInputHiddenTimer < DateTimeOffset.UtcNow)
         {
             _logger.LogInformation("Hidden ChatInput Expired!", LoggerType.AutoUnlocks);
-            var enactor = hcState.ChatInputBlocked.Split('|')[0];
+            var enactor = hcState.ChatInputHidden.Split('|')[0];
             // locally change first.
             _clientData.DisableHardcoreStatus(MainHub.OwnUserData, HcAttribute.HiddenChatInput);
             // Attempt the server-side call.
