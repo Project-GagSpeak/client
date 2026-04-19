@@ -90,7 +90,7 @@ public class PuppeteersTab : IFancyTab
             {
                 CkGui.TextFrameAlignedInline("Puppeteered by:");
                 CkGui.ColorTextFrameAlignedInline(puppeteerData.NameWithWorld, CkCol.TriStateCheck.Vec4());
-                CkGui.AttachToolTip($"{kinkster.GetDisplayName()} is associated with this PlayerName." +
+                CkGui.AttachTooltip($"{kinkster.GetDisplayName()} is associated with this PlayerName." +
                     $"--SEP--They can not puppeteer you within the boundaries you set." +
                     $"--SEP----COL--If they changed Name/World, they will need to send you it again.--COL--", ImGuiColors.TankBlue);
             }
@@ -151,7 +151,7 @@ public class PuppeteersTab : IFancyTab
                 {
                     ImGui.CheckboxFlags($"Allow {category}", ref filter, (uint)category);
 
-                    CkGui.AttachToolTip(category switch
+                    CkGui.AttachTooltip(category switch
                     {
                         PuppetPerms.All => $"Grant {kinkster.GetDisplayName()} access to all commands.--SEP--(Take Care with this)",
                         PuppetPerms.Alias => $"Allow {kinkster.GetDisplayName()} to make you execute alias triggers.",
@@ -195,7 +195,7 @@ public class PuppeteersTab : IFancyTab
                 UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, puppeteer.UserData, puppeteer.OwnPerms, nameof(PairPerms.StartChar), sChar[0]));
             }
         }
-        CkGui.AttachToolTip($"Optional Start character that scopes an order following a trigger phrase.");
+        CkGui.AttachTooltip($"Optional Start character that scopes an order following a trigger phrase.");
 
         ImUtf8.SameLineInner();
         ImGui.SetNextItemWidth(ImGui.GetTextLineHeight());
@@ -209,7 +209,7 @@ public class PuppeteersTab : IFancyTab
                 UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, puppeteer.UserData, puppeteer.OwnPerms, nameof(PairPerms.EndChar), eChar[0]));
             }
         }
-        CkGui.AttachToolTip($"Optional End character that scopes an order following a trigger phrase.");
+        CkGui.AttachTooltip($"Optional End character that scopes an order following a trigger phrase.");
     }
 
     private void DrawMarionetteStats(float rounding)

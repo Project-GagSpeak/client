@@ -174,7 +174,7 @@ public partial class PatternsPanel
                 }
             }
         }
-        CkGui.AttachToolTip(isActive ? "Stop this Pattern." : wouldBeSwitching  
+        CkGui.AttachTooltip(isActive ? "Stop this Pattern." : wouldBeSwitching  
             ? "Switch to play this Pattern on all valid Toys." : "Start this Pattern on all Toys.");
     }
 }

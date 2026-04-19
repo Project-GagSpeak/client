@@ -78,7 +78,7 @@ public partial class GagRestrictionsPanel
                 gagItem.HeadgearState = newHelmValue;
             ImUtf8.SameLineInner();
             CkGui.IconText(FAI.HardHat);
-            CkGui.AttachToolTip("The Forced Helmet State when wearing this Gag.--SEP--Note: conflicts priorize ON over OFF.");
+            CkGui.AttachTooltip("The Forced Helmet State when wearing this Gag.--SEP--Note: conflicts priorize ON over OFF.");
         }
         ImGui.SameLine(0, itemSpacing);
         using (ImRaii.Child("VisorMetaGroup", childGroupSize))
@@ -87,7 +87,7 @@ public partial class GagRestrictionsPanel
                 gagItem.VisorState = newVisorValue;
             ImUtf8.SameLineInner();
             CkGui.IconText(FAI.Glasses);
-            CkGui.AttachToolTip("The Forced Visor State when wearing this Gag.--SEP--Note: conflicts priorize ON over OFF.");
+            CkGui.AttachTooltip("The Forced Visor State when wearing this Gag.--SEP--Note: conflicts priorize ON over OFF.");
         }
         ImGui.SameLine(0, itemSpacing);
         using (ImRaii.Child("RedrawMetaGroup", childGroupSize))
@@ -97,7 +97,7 @@ public partial class GagRestrictionsPanel
                 gagItem.DoRedraw = doRedraw;
             ImUtf8.SameLineInner();
             CkGui.IconText(FAI.Repeat);
-            CkGui.AttachToolTip("If you redraw after application.");
+            CkGui.AttachTooltip("If you redraw after application.");
         }
 
         // beside this, enhances the font scale to 1.5x, draw the save icon, then restore the font scale.
@@ -105,7 +105,7 @@ public partial class GagRestrictionsPanel
         style.Push(ImGuiStyleVar.FrameRounding, 10f);
         if (CkGui.IconButton(FAI.Save))
             _manager.SaveChangesAndStopEditing();
-        CkGui.AttachToolTip("Save Changes to this Gag Restriction.");
+        CkGui.AttachTooltip("Save Changes to this Gag Restriction.");
 
         ImGui.SetWindowFontScale(1f);
     }

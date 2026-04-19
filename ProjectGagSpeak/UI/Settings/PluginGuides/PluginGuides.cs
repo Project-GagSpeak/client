@@ -59,18 +59,18 @@ public sealed class PluginGuideProvider : IDisposable
         using (ImRaii.PushColor(ImGuiCol.Button, 0xFFDA8972))
             if (ImGui.Button("Discord", buttonSize))
                 Util.OpenLink(details.DiscordUrl!);
-        CkGui.AttachToolTip(details.DiscordTooltip, CkCol.TriStateCross.Vec4Ref());
+        CkGui.AttachTooltip(details.DiscordTooltip, CkCol.TriStateCross.Vec4Ref());
 
         ImUtf8.SameLineInner();
         using (ImRaii.PushColor(ImGuiCol.Button, 0xFFD5449D))
             if (ImGui.Button("GitHub", buttonSize))
                 Util.OpenLink(details.GithubUrl!);
-        CkGui.AttachToolTip($"View the GitHub repository for {details.Name}");
+        CkGui.AttachTooltip($"View the GitHub repository for {details.Name}");
 
         ImUtf8.SameLineInner();
         if (CkGui.IconTextButton(FAI.Copy, "Plugin Repo Link"))
             ImGui.SetClipboardText(details.RepoUrl);
-        CkGui.AttachToolTip("Copies the plugin repository link.");
+        CkGui.AttachTooltip("Copies the plugin repository link.");
     }
 
     // Details about selected optional plugins.
@@ -109,7 +109,7 @@ public sealed class PluginGuideProvider : IDisposable
                         if (ImGui.Button("Discord", buttonSize))
                             Util.OpenLink(details.DiscordUrl);
                     if (!string.IsNullOrEmpty(details.DiscordTooltip))
-                        CkGui.AttachToolTip(details.DiscordTooltip, CkCol.TriStateCross.Vec4Ref());
+                        CkGui.AttachTooltip(details.DiscordTooltip, CkCol.TriStateCross.Vec4Ref());
 
                     ImGui.SameLine();
                 }
@@ -120,14 +120,14 @@ public sealed class PluginGuideProvider : IDisposable
                     using (ImRaii.PushColor(ImGuiCol.Button, 0xFFD5449D))
                         if (ImGui.Button("GitHub", buttonSize))
                             Util.OpenLink(details.GithubUrl);
-                    CkGui.AttachToolTip($"View the GitHub repository for {details.Name}");
+                    CkGui.AttachTooltip($"View the GitHub repository for {details.Name}");
                     ImGui.SameLine();
                 }
 
                 // Repo link copy (Handle Intiface specially here)
                 if (CkGui.IconTextButton(FAI.Copy, "Plugin Repo Link"))
                     ImGui.SetClipboardText(details.RepoUrl);
-                CkGui.AttachToolTip("Copies the plugin repository link.");
+                CkGui.AttachTooltip("Copies the plugin repository link.");
             }
 
             // Do the bullet list thing.

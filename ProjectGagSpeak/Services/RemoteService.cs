@@ -391,7 +391,7 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
                 ImGuiUtil.DrawTableColumn($"{value.PlaybackRef.Idx} / {value.PlaybackRef.Length} / {value.PlaybackRef.Looping}");
                 ImGui.TableNextColumn();
                 CkGui.FramedHoverIconText(FAI.InfoCircle, GsCol.VibrantPink.Uint());
-                CkGui.AttachToolTip(string.Join(", ", value.RecordedData.Select(d => d.ToString("F2"))));
+                CkGui.AttachTooltip(string.Join(", ", value.RecordedData.Select(d => d.ToString("F2"))));
                 ImGui.TableNextRow();
             }
         }

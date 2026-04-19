@@ -169,7 +169,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
             }
             if (!isActive && ImGui.IsItemHovered() && ImGui.IsItemClicked())
                 _manager.ToggleVisibility(_selector.Selected!.Identifier);
-            CkGui.AttachToolTip($"Visuals {(_selector.Selected!.IsEnabled ? "will" : "will not")} be applied.");
+            CkGui.AttachTooltip($"Visuals {(_selector.Selected!.IsEnabled ? "will" : "will not")} be applied.");
 
             if (_selector.Selected!.Traits > 0)
             {
@@ -191,7 +191,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
             ActiveItemsDrawer.DrawRestraintImage(_selector.Selected, imgSize, rounding);
             if (!isActive && ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
                 _thumbnails.SetThumbnailSource(_selector.Selected.Identifier, new Vector2(120, 120f * 1.2f), ImageDataType.Restraints);
-            CkGui.AttachToolTip("The Thumbnail for this Restraint Set.--SEP--Double Click to change the image.");
+            CkGui.AttachTooltip("The Thumbnail for this Restraint Set.--SEP--Double Click to change the image.");
 
             _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SelectingThumbnails, WardrobeUI.LastPos, WardrobeUI.LastSize,
                 _ => _thumbnails.SetThumbnailSource(_selector.Selected.Identifier, new Vector2(120, 120f * 1.2f), ImageDataType.Restraints));
@@ -230,7 +230,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
         void DrawAttrIcon(FAI icon, bool condition, string tooltip)
         {
             CkGui.FramedIconText(icon, condition ? trueCol : falseCol);
-            CkGui.AttachToolTip(condition ? tooltip : string.Empty);
+            CkGui.AttachTooltip(condition ? tooltip : string.Empty);
             ImUtf8.SameLineInner();
         }
     }
@@ -314,7 +314,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
 
                 ImUtf8.SameLineInner();
                 CkGui.IconText(FAI.HatCowboySide);
-                CkGui.AttachToolTip("The locked helmet state while active.--SEP--Note: conflicts prioritize ON over OFF.");
+                CkGui.AttachTooltip("The locked helmet state while active.--SEP--Note: conflicts prioritize ON over OFF.");
             }
 
             ImGui.SameLine(0, itemSpacing);
@@ -325,7 +325,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
 
                 ImUtf8.SameLineInner();
                 CkGui.IconText(FAI.Glasses);
-                CkGui.AttachToolTip("The locked visor state while active.--SEP--Note: conflicts prioritize ON over OFF.");
+                CkGui.AttachTooltip("The locked visor state while active.--SEP--Note: conflicts prioritize ON over OFF.");
             }
 
             ImGui.SameLine(0, itemSpacing);
@@ -336,7 +336,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
 
                 ImUtf8.SameLineInner();
                 CkGui.IconText(FAI.Explosion);
-                CkGui.AttachToolTip("The locked weapon state while active.--SEP--Note: conflicts prioritize ON over OFF.");
+                CkGui.AttachTooltip("The locked weapon state while active.--SEP--Note: conflicts prioritize ON over OFF.");
             }
 
             ImGui.SameLine(0, itemSpacing);
@@ -348,7 +348,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
 
                 ImUtf8.SameLineInner();
                 CkGui.IconText(FAI.Repeat);
-                CkGui.AttachToolTip("If you redraw after application.");
+                CkGui.AttachTooltip("If you redraw after application.");
             }
         }
         _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.EditMeta, WardrobeUI.LastPos, WardrobeUI.LastSize,
@@ -358,7 +358,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
         ImGui.SameLine(0, itemSpacing);
         if (CkGui.IconButton(FAI.Save))
             _manager.SaveChangesAndStopEditing();
-        CkGui.AttachToolTip("Save Changes to this Restraint Set.");
+        CkGui.AttachTooltip("Save Changes to this Restraint Set.");
         _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.SavingChanges, WardrobeUI.LastPos, WardrobeUI.LastSize,
             _ => _manager.SaveChangesAndStopEditing());
     }

@@ -421,7 +421,7 @@ public enum KPID : byte
             CkGui.ColorTextInline("Power Control Adjustment", GsCol.VibrantPink.Uint());
             ImGui.SameLine(0, 1);
             CkGui.HoverIconText(FAI.QuestionCircle, ImGuiColors.TankBlue.ToUint(), ImGui.GetColorU32(ImGuiCol.TextDisabled));
-            CkGui.AttachToolTip($"Provides a 5 second window for you to change permissions and edit access for {name}.");
+            CkGui.AttachTooltip($"Provides a 5 second window for you to change permissions and edit access for {name}.");
             CkGui.TextInline($"can modify your dynamic limits while in Hardcore.");
 
             CkGui.Separator(ImGuiColors.DalamudRed.ToUint(), size.X - ImGui.GetStyle().WindowPadding.X);

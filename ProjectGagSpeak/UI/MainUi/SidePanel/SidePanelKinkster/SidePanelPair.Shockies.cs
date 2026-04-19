@@ -35,7 +35,7 @@ public partial class SidePanelPair
                     await SyncPermissionsWithCode(refCode, k);
             });
         }
-        CkGui.AttachToolTip($"Unique Share Code for --COL--{dispName}--COL--." +
+        CkGui.AttachTooltip($"Unique Share Code for --COL--{dispName}--COL--." +
             $"--NL--Permissions here are prioritized over --COL--Global Share Code--COL--, unique to {dispName}.");
 
         ImUtf8.SameLineInner();
@@ -53,7 +53,7 @@ public partial class SidePanelPair
         var AllowShocks = preferPairCode ? k.PairPerms.AllowShocks : k.PairGlobals.AllowShocks;
         if (CkGui.IconTextButton(FAI.BoltLightning, $"Shock {dispName}'s Shock Collar", width, true, !AllowShocks))
             cache.ToggleInteraction(InteractionType.ShockAction);
-        CkGui.AttachToolTip($"Perform a Shock action to {dispName}'s Shock Collar.");
+        CkGui.AttachTooltip($"Perform a Shock action to {dispName}'s Shock Collar.");
 
         if (cache.OpenItem is InteractionType.ShockAction)
         {
@@ -66,7 +66,7 @@ public partial class SidePanelPair
         var AllowVibrations = preferPairCode ? k.PairPerms.AllowVibrations : k.PairGlobals.AllowVibrations;
         if (CkGui.IconTextButton(FAI.WaveSquare, $"Vibrate {dispName}'s Shock Collar", width, true, !AllowVibrations))
             cache.ToggleInteraction(InteractionType.VibrateAction);
-        CkGui.AttachToolTip($"Perform a Vibrate action to {dispName}'s Shock Collar.");
+        CkGui.AttachTooltip($"Perform a Vibrate action to {dispName}'s Shock Collar.");
 
         if (cache.OpenItem is InteractionType.VibrateAction)
         {
@@ -80,7 +80,7 @@ public partial class SidePanelPair
         var AllowBeeps = preferPairCode ? k.PairPerms.AllowBeeps : k.PairGlobals.AllowBeeps;
         if (CkGui.IconTextButton(FAI.LandMineOn, $"Beep {dispName}'s Shock Collar", width, true, !AllowBeeps))
             cache.ToggleInteraction(InteractionType.BeepAction);
-        CkGui.AttachToolTip($"Beep {dispName}'s Shock Collar");
+        CkGui.AttachTooltip($"Beep {dispName}'s Shock Collar");
 
         if (cache.OpenItem is InteractionType.BeepAction)
         {

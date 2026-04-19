@@ -48,7 +48,7 @@ public abstract class LociComboBase<T> : CkFilterComboCache<T>
             if (isApply) OnApplyButton(item);
             else OnRemoveButton(item);
         }
-        CkGui.AttachToolTip(tt);
+        CkGui.AttachTooltip(tt);
 
         return ret;
     }

@@ -174,7 +174,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
             // display it, it should be green if connected and red when not.
             ImGui.TextColored(ImGuiColors.ParsedPink, DisplayName);
         }
-        CkGui.AttachToolTip(ttText);
+        CkGui.AttachTooltip(ttText);
         CkGui.CopyableDisplayText(Pair.UserData.UID);
     }
 
@@ -374,7 +374,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         statsPos += new Vector2(24, 0);
         ImGui.SetCursorScreenPos(statsPos);
         CkGui.ColorText($"{info.CompletedTotal}/{ClientAchievements.Total}", ImGuiColors.ParsedGold);
-        CkGui.AttachToolTip($"The total achievements {DisplayName} has earned.");
+        CkGui.AttachTooltip($"The total achievements {DisplayName} has earned.");
     }
 
     private void DrawBlockedSlots(ImDrawListPtr wdl, KinkPlateContent info)

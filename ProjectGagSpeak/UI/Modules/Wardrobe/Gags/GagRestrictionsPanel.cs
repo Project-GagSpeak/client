@@ -166,20 +166,20 @@ public partial class GagRestrictionsPanel
         }
         if (!isActive && ImGui.IsItemHovered() && ImGui.IsItemClicked())
             _manager.ToggleVisibility(_selector.Selected!.GagType);
-        CkGui.AttachToolTip($"Visuals {(_selector.Selected!.IsEnabled ? "will" : "will not")} be applied.");
+        CkGui.AttachTooltip($"Visuals {(_selector.Selected!.IsEnabled ? "will" : "will not")} be applied.");
 
         if (ItemSvc.NothingItem(_selector.Selected!.Glamour.Slot).Id != _selector.Selected!.Glamour.GameItem.Id)
         {
             ImUtf8.SameLineInner();
             CkGui.FramedIconText(FAI.Vest);
-            CkGui.AttachToolTip($"A --COL--{_selector.Selected!.Glamour.GameItem.Name}--COL-- is attached to the " +
+            CkGui.AttachTooltip($"A --COL--{_selector.Selected!.Glamour.GameItem.Name}--COL-- is attached to the " +
                 $"--COL--{_selector.Selected!.GagType.GagName()}--COL--.", color: ImGuiColors.ParsedGold);
         }
         if (_selector.Selected!.Mod.HasData)
         {
             ImUtf8.SameLineInner();
             CkGui.FramedIconText(FAI.FileDownload);
-            CkGui.AttachToolTip($"Mod Preset ({_selector.Selected.Mod.Label}) is applied." +
+            CkGui.AttachTooltip($"Mod Preset ({_selector.Selected.Mod.Label}) is applied." +
                 $"--SEP--Source Mod: {_selector.Selected!.Mod.Container.ModName}");
         }
         if (_selector.Selected!.Traits > 0)

@@ -161,7 +161,7 @@ public class EquipmentDrawer
         using (ImRaii.PushColor(ImGuiCol.Button, CkCol.CurvedHeaderFade.Uint()))
             if (CkGui.IconButton(overlayState ? FAI.EyeSlash : FAI.Eye, CkStyle.TwoRowHeight(), basicSlot.EquipSlot + "Overlay"))
                 basicSlot.ApplyFlags ^= RestraintFlags.IsOverlay;
-        CkGui.AttachToolTip(overlayState ? "This slot won't be applied if it's empty." : "Always apply this slot, even if empty.");
+        CkGui.AttachTooltip(overlayState ? "This slot won't be applied if it's empty." : "Always apply this slot, even if empty.");
         if (basicSlot.EquipSlot == EquipSlot.Body)
         {
             _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.Overlay, WardrobeUI.LastPos, WardrobeUI.LastSize,
@@ -262,22 +262,22 @@ public class EquipmentDrawer
 
             if (GlamourFlagCheckbox.Draw($"##GlamFlag{id}", curGlam, out var newGlam) && curGlam != newGlam)
                 restrictionRef.ApplyFlags ^= RestraintFlags.Glamour;
-            CkGui.AttachToolTip(curGlam ? "The Glamour from this Restriction Item will be applied." : "Glamour application is ignored.");
+            CkGui.AttachTooltip(curGlam ? "The Glamour from this Restriction Item will be applied." : "Glamour application is ignored.");
 
             ImUtf8.SameLineInner();
             if (ModFlagCheckbox.Draw($"##ModFlag{id}", curMod, out var newMod) && curMod != newMod)
                 restrictionRef.ApplyFlags ^= RestraintFlags.Mod;
-            CkGui.AttachToolTip(curMod ? "Mods from this Restriction Item will be applied." : "Mods are ignored.");
+            CkGui.AttachTooltip(curMod ? "Mods from this Restriction Item will be applied." : "Mods are ignored.");
 
             // Next Line.
             if (LociFlagCheckbox.Draw($"##LociFlag{id}", curLoci, out var newLoci) && curLoci != newLoci)
                 restrictionRef.ApplyFlags ^= RestraintFlags.Loci;
-            CkGui.AttachToolTip(curLoci ? "LociData from this Restriction Item will be applied." : "LociData is ignored.");
+            CkGui.AttachTooltip(curLoci ? "LociData from this Restriction Item will be applied." : "LociData is ignored.");
 
             ImUtf8.SameLineInner();
             if (HardcoreTraitsCheckbox.Draw($"##TraitFlag{id}", curHcTrait, out var newHcTrait) && curHcTrait != newHcTrait)
                 restrictionRef.ApplyFlags ^= RestraintFlags.Trait;
-            CkGui.AttachToolTip(curHcTrait ? "Hardcore Traits from this Restriction Item will be applied." : "Hardcore Traits are ignored.");
+            CkGui.AttachTooltip(curHcTrait ? "Hardcore Traits from this Restriction Item will be applied." : "Hardcore Traits are ignored.");
         }
 
         // Draw a bordered rect around this.

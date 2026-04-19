@@ -81,7 +81,7 @@ public class PublicationsManager
                 _tagList = string.Join(", ", tags.Take(5));
             }
         }
-        CkGui.AttachToolTip("You can have a maximum of 5 tags."); 
+        CkGui.AttachTooltip("You can have a maximum of 5 tags."); 
         
         ImUtf8.SameLineInner();
         DrawTagCombo("##patternTagsFilter", ImGui.GetContentRegionAvail().X, (tag) =>
@@ -101,7 +101,7 @@ public class PublicationsManager
         var blockUpload = _authorName.IsNullOrEmpty() || _selectedPattern.Identifier == Guid.Empty || PatternHubService.InUpdate;
         if (CkGui.IconTextButton(FAI.CloudUploadAlt, "Publish Pattern to ShareHub", ImGui.GetContentRegionAvail().X, false, blockUpload))
             _patternHub.Upload(_selectedPattern, _authorName, _searchableTagList);
-        CkGui.AttachToolTip("Must have a selected pattern and author name to upload.");
+        CkGui.AttachTooltip("Must have a selected pattern and author name to upload.");
 
         ImGui.Spacing();
         ImGui.Separator();
@@ -150,7 +150,7 @@ public class PublicationsManager
                 using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink))
                     if (CkGui.IconTextButton(FAI.Globe, "Unpublish", isInPopup: true, disabled: !ImGui.GetIO().KeyShift || PatternHubService.InUpdate))
                         _patternHub.Unpublish(pattern.Identifier);
-                CkGui.AttachToolTip("Removes this pattern publication from the pattern hub.--SEP--Must hold SHIFT");
+                CkGui.AttachTooltip("Removes this pattern publication from the pattern hub.--SEP--Must hold SHIFT");
             }
             // next line:
             using (ImRaii.Group())
@@ -159,10 +159,10 @@ public class PublicationsManager
                 CkGui.IconText(FAI.UserCircle);
                 ImUtf8.SameLineInner();
                 CkGui.ColorText(pattern.Author, ImGuiColors.DalamudGrey);
-                CkGui.AttachToolTip("The Author Name you gave yourself when publishing this pattern.");
+                CkGui.AttachTooltip("The Author Name you gave yourself when publishing this pattern.");
                 ImGui.SameLine();
                 CkGui.ColorText($"({pattern.UploadedDate.ToLocalTime().ToString("d", CultureInfo.CurrentCulture)})", ImGuiColors.DalamudGrey);
-                CkGui.AttachToolTip("The date this pattern was published.");
+                CkGui.AttachTooltip("The date this pattern was published.");
 
                 var formatDuration = pattern.Length.Hours > 0 ? "hh\\:mm\\:ss" : "mm\\:ss";
                 var timerText = pattern.Length.ToString(formatDuration);
@@ -174,7 +174,7 @@ public class PublicationsManager
                     ImUtf8.SameLineInner();
                     ImGui.TextUnformatted(pattern.Length.ToString(formatDuration));
                 }
-                CkGui.AttachToolTip("Total Pattern Duration");
+                CkGui.AttachTooltip("Total Pattern Duration");
             }
         }
     }
@@ -196,7 +196,7 @@ public class PublicationsManager
 
             ImGui.SetNextItemWidth(200f);
             ImGui.InputTextWithHint("##author-name", "Author DisplayName...", ref _authorName, 50);
-            CkGui.AttachToolTip("The name displayed on the ShareHub as the publisher of this Status.");
+            CkGui.AttachTooltip("The name displayed on the ShareHub as the publisher of this Status.");
 
             CkGui.ColorTextFrameAlignedInline("Author Name", ImGuiColors.ParsedGold);
 
@@ -212,7 +212,7 @@ public class PublicationsManager
                     _tagList = string.Join(", ", tags.Take(5));
                 }
             }
-            CkGui.AttachToolTip("You can have a maximum of 5 tags.");
+            CkGui.AttachTooltip("You can have a maximum of 5 tags.");
 
             ImUtf8.SameLineInner();
             DrawTagCombo("##loci-tags-filter", ImGui.GetContentRegionAvail().X, (tag) =>
@@ -229,13 +229,13 @@ public class PublicationsManager
                     _tagList += tag.ToLower();
                 }
             });
-            CkGui.AttachToolTip("Select an existing tag on the Server.--SEP--This makes it easier for people to find your Status!");
+            CkGui.AttachTooltip("Select an existing tag on the Server.--SEP--This makes it easier for people to find your Status!");
 
             var blockUpload = _authorName.IsNullOrEmpty() || _statusCombo.Current.GUID == Guid.Empty || LociHubService.InUpdate;
 
             if (CkGui.IconTextButton(FAI.CloudUploadAlt, "Publish Status to Sharehub", ImGui.GetContentRegionAvail().X, false, blockUpload))
                 _lociHub.Upload(_statusCombo.Current, _authorName, _searchableTagList);
-            CkGui.AttachToolTip("Must have a selected Status and valid name to upload.");
+            CkGui.AttachTooltip("Must have a selected Status and valid name to upload.");
 
             ImGui.Spacing();
             ImGui.Separator();
@@ -284,7 +284,7 @@ public class PublicationsManager
                 using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink))
                     if (CkGui.IconTextButton(FAI.Globe, "Unpublish", isInPopup: true, disabled: !ImGui.GetIO().KeyShift || LociHubService.InUpdate))
                         _lociHub.Unpublish(lociData.Status.GUID);
-                CkGui.AttachToolTip("Unpublish from the Loci ShareHub!--SEP--Must hold SHIFT");
+                CkGui.AttachTooltip("Unpublish from the Loci ShareHub!--SEP--Must hold SHIFT");
             }
 
             ImGui.Spacing();
@@ -301,25 +301,25 @@ public class PublicationsManager
                     CkGui.IconTextAligned(FAI.UserCircle);
                     CkGui.ColorTextInline(lociData.AuthorName, ImGuiColors.DalamudGrey);
                 }
-                CkGui.AttachToolTip("The name you published this status under.");
+                CkGui.AttachTooltip("The name you published this status under.");
 
 
                 // jump to the right side to draw all the icon data.
                 ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImUtf8.ItemInnerSpacing.X * 5 - stacksSize - dispellableSize - permanentSize - customVfxPath - stackOnReapply);
                 CkGui.BoolIconFramed(lociData.Status.Stacks > 1, false, FAI.LayerGroup, FAI.LayerGroup, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(lociData.Status.Stacks > 1 ? $"Has {lociData.Status.Stacks} initial stacks." : "Not a stackable Status.");
+                CkGui.AttachTooltip(lociData.Status.Stacks > 1 ? $"Has {lociData.Status.Stacks} initial stacks." : "Not a stackable Status.");
 
                 CkGui.BoolIconFramed(modifiers.Has(Modifiers.CanDispel), true, FAI.Eraser, FAI.Eraser, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(modifiers.Has(Modifiers.CanDispel) ? "Can be dispelled." : "Cannot be dispelled.");
+                CkGui.AttachTooltip(modifiers.Has(Modifiers.CanDispel) ? "Can be dispelled." : "Cannot be dispelled.");
 
                 CkGui.BoolIconFramed(lociData.Status.ExpireTicks < 0, true, FAI.Infinity, FAI.Infinity, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(lociData.Status.ExpireTicks < 0 ? "Permanent status." : "Timed status.");
+                CkGui.AttachTooltip(lociData.Status.ExpireTicks < 0 ? "Permanent status." : "Timed status.");
 
                 CkGui.BoolIconFramed(!string.IsNullOrEmpty(lociData.Status.CustomVFXPath), true, FAI.Magic, FAI.Magic, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(!string.IsNullOrEmpty(lociData.Status.CustomVFXPath) ? "Has a custom VFX path." : "No custom VFX path.");
+                CkGui.AttachTooltip(!string.IsNullOrEmpty(lociData.Status.CustomVFXPath) ? "Has a custom VFX path." : "No custom VFX path.");
 
                 CkGui.BoolIconFramed(modifiers.Has(Modifiers.StacksIncrease), true, FAI.PersonCirclePlus, FAI.PersonCirclePlus, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-                CkGui.AttachToolTip(modifiers.Has(Modifiers.StacksIncrease) ? $"Stacks {lociData.Status.StackSteps} times." : "Doesn't stack on reapplication.");
+                CkGui.AttachTooltip(modifiers.Has(Modifiers.StacksIncrease) ? $"Stacks {lociData.Status.StackSteps} times." : "Doesn't stack on reapplication.");
             }
 
             if (lociData.Status.IconID != 0)

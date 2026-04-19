@@ -114,7 +114,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
             return;
 
         CkGui.BoolIcon(trigger.Enabled, false);
-        CkGui.AttachToolTip("If this alias is enabled.--SEP----COL--Click to toggle!--COL--", ImGuiColors.ParsedPink);
+        CkGui.AttachTooltip("If this alias is enabled.--SEP----COL--Click to toggle!--COL--", ImGuiColors.ParsedPink);
         if (!UiService.DisableUI && ImGui.IsItemClicked())
         {
             UiService.SetUITask(async () =>
@@ -125,7 +125,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
                     _logger.LogWarning($"Failed to push TriggerStateChange update to server. Reason: [{res}]");
             });
         }
-        CkGui.AttachToolTip($"{(trigger.Enabled ? "Disable" : "Enable")} this Trigger.");
+        CkGui.AttachTooltip($"{(trigger.Enabled ? "Disable" : "Enable")} this Trigger.");
 
         CkGui.TextFrameAlignedInline(trigger.Label);
         // Shift for the editor
@@ -133,7 +133,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
         ImGui.SameLine(endX -= CkGui.IconButtonSize(FAI.Edit).X);
         if (CkGui.IconButton(FAI.Edit, inPopup: true))
             _manager.StartEditing(trigger);
-        CkGui.AttachToolTip("Edit this Trigger.");
+        CkGui.AttachTooltip("Edit this Trigger.");
         _guides.OpenTutorial(TutorialType.Triggers, StepsTriggers.EditingTrigger, LastPos, LastSize, _ => _manager.StartEditing(trigger));
 
         CkGui.FramedIconText(FAI.SortNumericUp);
@@ -183,24 +183,24 @@ public class TriggersUI : WindowMediatorSubscriberBase
         var enabled = trigger.Enabled;
         if (ImGui.Checkbox("##state", ref enabled))
             trigger.Enabled = !trigger.Enabled;
-        CkGui.AttachToolTip("If this can be detected as an alias");
+        CkGui.AttachTooltip("If this can be detected as an alias");
 
         ImUtf8.SameLineInner();
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - rightW);
         var label = trigger.Label;
         if (ImGui.InputTextWithHint("##name", "Display Name..", ref label, 64))
             trigger.Label = label;
-        CkGui.AttachToolTip("The UI display name for the Trigger");
+        CkGui.AttachTooltip("The UI display name for the Trigger");
        
         var endX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
         ImGui.SameLine(endX -= rightW);
         if (CkGui.IconButton(FAI.Undo, inPopup: true))
             _manager.StopEditing();
-        CkGui.AttachToolTip("Reverts any changes and exits the editor");
+        CkGui.AttachTooltip("Reverts any changes and exits the editor");
         ImGui.SameLine(0, 0);
         if (CkGui.IconButton(FAI.Save, inPopup: true))
             _manager.SaveChangesAndStopEditing();
-        CkGui.AttachToolTip("Saves all changes and exits the editor");
+        CkGui.AttachTooltip("Saves all changes and exits the editor");
 
         CkGui.FramedIconText(FAI.SortNumericUp);
         ImUtf8.SameLineInner();
@@ -208,7 +208,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
         ImGui.SetNextItemWidth(80f * ImGuiHelpers.GlobalScale);
         if (ImGui.DragInt("Priority", ref priority, 1.0f, 0, 100, "%d"))
             trigger.Priority = priority;
-        CkGui.AttachToolTip("The priority of this trigger");
+        CkGui.AttachTooltip("The priority of this trigger");
 
         // Description area
         CkGui.FramedIconText(FAI.InfoCircle);
@@ -231,7 +231,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
                 _manager.ChangeTriggerType(trigger, newDetect);
             }
         }
-        CkGui.AttachToolTip("The detection method used to invoke this trigger");
+        CkGui.AttachTooltip("The detection method used to invoke this trigger");
         ImGui.Spacing();
         switch (trigger)
         {
@@ -263,7 +263,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
                 };
             }
         }
-        CkGui.AttachToolTip("What action occurs when this trigger's detection is met.");
+        CkGui.AttachTooltip("What action occurs when this trigger's detection is met.");
         ImGui.Spacing();
         switch (trigger.InvokableAction)
         {

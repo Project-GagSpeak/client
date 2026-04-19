@@ -16,7 +16,6 @@ public class MarionetteDrawSystem : DynamicDrawSystem<AliasTrigger>, IMediatorSu
 {
     private readonly ILogger<MarionetteDrawSystem> _logger;
     private readonly MainConfig _config;
-    private readonly PuppeteerManager _manager;
     private readonly KinksterManager _kinksters;
     private readonly HybridSaveService _hybridSaver;
     public GagspeakMediator Mediator { get; init; }

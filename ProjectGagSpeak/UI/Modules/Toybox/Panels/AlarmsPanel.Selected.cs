@@ -34,7 +34,7 @@ public partial class AlarmsPanel
                 CkGui.FramedIconText(FAI.Clock);
                 CkGui.TextFrameAlignedInline(TimeZoneInfo.Local.StandardName);
             }
-            CkGui.AttachToolTip("The time that this alarm will go off at." +
+            CkGui.AttachTooltip("The time that this alarm will go off at." +
                 "--SEP--This is relative to your local timezone.");
             // _guides.OpenTutorial(TutorialType.Alarms, StepsAlarms.AlarmLocalTimeZone, Vector2.Zero, Vector2.Zero);
 

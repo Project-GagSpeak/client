@@ -77,7 +77,7 @@ public class StyleEditorUI : WindowMediatorSubscriberBase
         {
             // Some uniform save, eventually, hopefully.
         }
-        CkGui.AttachToolTip("Currently Non-Functional" +
+        CkGui.AttachTooltip("Currently Non-Functional" +
             "--NL--Should Save all changes to a temporary theme template storage in the editor, " +
             "which is used as a placeholder theme until the window is exited." +
             "--SEP--Saving this as a Theme will export it and add it to your Config.");
@@ -87,7 +87,7 @@ public class StyleEditorUI : WindowMediatorSubscriberBase
         {
             // Some uniform save, eventually, hopefully
         }
-        CkGui.AttachToolTip("Currently Non-Functional." +
+        CkGui.AttachTooltip("Currently Non-Functional." +
             "--NL--Should revert all applied / saved changes and revert to the selected theme.");
 
         ImGui.Separator();
@@ -185,7 +185,7 @@ public class StyleEditorUI : WindowMediatorSubscriberBase
             {
                 // An individual save to the temporary placeholder theme.
             }
-            CkGui.AttachToolTip("Does nothing atm, but would save the individual color change.");
+            CkGui.AttachTooltip("Does nothing atm, but would save the individual color change.");
 
             ImUtf8.SameLineInner();
             if (CkGui.IconButton(FAI.Redo, disabled: !_gsColChanges.ContainsKey(colIdx)))
@@ -193,7 +193,7 @@ public class StyleEditorUI : WindowMediatorSubscriberBase
                 GsColors.RevertCol(colIdx);
                 _gsColChanges.Remove(colIdx);
             }
-            CkGui.AttachToolTip("Reverts any changes made to this color.");
+            CkGui.AttachTooltip("Reverts any changes made to this color.");
 
             CkGui.TextInline(name);
             ImGui.PopID();
@@ -258,7 +258,7 @@ public class StyleEditorUI : WindowMediatorSubscriberBase
             {
                 // An individual save to the temporary placeholder theme.
             }
-            CkGui.AttachToolTip("Does nothing atm, but would save the individual color change.");
+            CkGui.AttachTooltip("Does nothing atm, but would save the individual color change.");
 
             ImUtf8.SameLineInner();
             if (CkGui.IconButton(FAI.Redo, disabled: !_ckColChanges.ContainsKey(colIdx)))
@@ -266,7 +266,7 @@ public class StyleEditorUI : WindowMediatorSubscriberBase
                 CkColors.RevertCol(colIdx);
                 _ckColChanges.Remove(colIdx);
             }
-            CkGui.AttachToolTip("Reverts any changes made to this color.");
+            CkGui.AttachTooltip("Reverts any changes made to this color.");
 
             CkGui.TextInline(name);
             ImGui.PopID();

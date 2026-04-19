@@ -190,7 +190,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             _activeItemDrawer.DrawRestrictionImage(_selector.Selected!, imgSize.Y, rounding, false);
             if (!isActive && ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
                 _thumbnails.SetThumbnailSource(_selector.Selected!.Identifier, new Vector2(120), ImageDataType.Restrictions);
-            CkGui.AttachToolTip("The Thumbnail for this item.--SEP--Double Click to change the image.");
+            CkGui.AttachTooltip("The Thumbnail for this item.--SEP--Double Click to change the image.");
             _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.SelectingThumbnails, WardrobeUI.LastPos, WardrobeUI.LastSize);
         }
 
@@ -237,14 +237,14 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
 
         if (!isActive && ImGui.IsItemHovered() && ImGui.IsItemClicked())
             _manager.ToggleVisibility(_selector.Selected!.Identifier);
-        CkGui.AttachToolTip($"Visuals {(_selector.Selected!.IsEnabled ? "will" : "will not")} be applied.");
+        CkGui.AttachTooltip($"Visuals {(_selector.Selected!.IsEnabled ? "will" : "will not")} be applied.");
 
         // Next row we need to draw the Glamour Icon, Mod Icon, and hardcore Traits.
         if (ItemSvc.NothingItem(_selector.Selected!.Glamour.Slot).Id != _selector.Selected!.Glamour.GameItem.Id)
         {
             ImUtf8.SameLineInner();
             CkGui.FramedIconText(FAI.Vest);
-            CkGui.AttachToolTip($"A --COL--{_selector.Selected!.Glamour.GameItem.Name}--COL-- is attached to the " +
+            CkGui.AttachTooltip($"A --COL--{_selector.Selected!.Glamour.GameItem.Name}--COL-- is attached to the " +
                 $"--COL--{_selector.Selected!.Label}--COL--.", color: ImGuiColors.ParsedGold);
         }
 
@@ -252,7 +252,7 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
         {
             ImUtf8.SameLineInner();
             CkGui.FramedIconText(FAI.FileDownload);
-            CkGui.AttachToolTip($"Mod Preset ({_selector.Selected.Mod.Label}) is applied." +
+            CkGui.AttachTooltip($"Mod Preset ({_selector.Selected.Mod.Label}) is applied." +
                 $"--SEP--Source Mod: {_selector.Selected!.Mod.Container.ModName}");
         }
 

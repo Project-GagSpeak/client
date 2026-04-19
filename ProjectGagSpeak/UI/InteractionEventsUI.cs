@@ -172,7 +172,7 @@ internal class InteractionEventsUI : WindowMediatorSubscriberBase
             }
             ImGui.TextUnformatted(msg);
             if (!string.Equals(msg, ev.InteractionContent, StringComparison.Ordinal))
-                CkGui.AttachToolTip(ev.InteractionContent);
+                CkGui.AttachTooltip(ev.InteractionContent);
         }
     }
 }

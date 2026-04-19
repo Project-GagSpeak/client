@@ -62,7 +62,7 @@ public sealed class PairTriggerCombo : CkFilterComboIconTextButton<KinksterTrigg
         var isEnabled = _ref.ActiveTriggers.Contains(trigger.Id);
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - _infoIconWidth - _powerIconWidth - ImGui.GetStyle().ItemInnerSpacing.X);
         CkGui.IconText(FAI.PowerOff, isEnabled ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey);
-        CkGui.AttachToolTip($"Trigger is currently {(isEnabled ? "Enabled" : "Disabled")}");
+        CkGui.AttachTooltip($"Trigger is currently {(isEnabled ? "Enabled" : "Disabled")}");
 
         ImUtf8.SameLineInner();
         CkGui.HoverIconText(FAI.InfoCircle, ImGuiColors.TankBlue.ToUint(), ImGui.GetColorU32(ImGuiCol.TextDisabled));

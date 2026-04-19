@@ -78,7 +78,7 @@ public sealed class PatternCombo : CkFilterComboCache<Pattern>, IMediatorSubscri
 
         // draw the shouldLoop icon.
         CkGui.IconText(FAI.Sync, ImGui.GetColorU32(pattern.ShouldLoop ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey));
-        if (pattern.ShouldLoop) CkGui.AttachToolTip("This is a Looping Pattern.");
+        if (pattern.ShouldLoop) CkGui.AttachTooltip("This is a Looping Pattern.");
 
         // draw the info icon.
         ImGui.SameLine();

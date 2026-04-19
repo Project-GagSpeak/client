@@ -219,7 +219,7 @@
 //                    if (vibeRoom.Tags.Count() <= 0)
 //                    {
 //                        CkGui.ColorTextFrameAlignedInline("(No Tags)", ImGuiColors.ParsedGrey);
-//                        CkGui.AttachToolTip("This VibeRoom has no tags.");
+//                        CkGui.AttachTooltip("This VibeRoom has no tags.");
 //                    }
 //                    else
 //                    {
@@ -231,7 +231,7 @@
 //                        CkGui.ColorTextFrameAlignedInline(tagsString, ImGuiColors.ParsedGrey);
 //                    }
 //                }
-//                CkGui.AttachToolTip("This VibeRoom's tag filters.");
+//                CkGui.AttachTooltip("This VibeRoom's tag filters.");
 
 //                // Next line, draw out the description, with no icon label.
 //                if (string.IsNullOrWhiteSpace(vibeRoom.Description))
@@ -345,7 +345,7 @@
 //        using var col = ImRaii.PushColor(ImGuiCol.FrameBg, CkCol.CurvedHeaderFade.Uint());
 //        ImGui.SameLine(0, 0);
 //        DrawRoomJoinButton();
-//        CkGui.AttachToolTip(string.IsNullOrWhiteSpace(_newRoomName) ? "Must provide a name first." :
+//        CkGui.AttachTooltip(string.IsNullOrWhiteSpace(_newRoomName) ? "Must provide a name first." :
 //            "Create a new VibeRoom." +
 //            "--SEP--Once a room is made, you can change the password, or the host." +
 //            "--SEP--Only the host is allowed to control other people in the lobby." +
@@ -354,19 +354,19 @@
 //        CkGui.ColorText("Name", ImGuiColors.ParsedGold);
 //        ImGui.SetNextItemWidth(c.InnerRegion.X * 0.6f);
 //        ImGui.InputTextWithHint("##NewRoomName", "name..", ref _newRoomName, 55);
-//        CkGui.AttachToolTip("The VibeRooms name, will be visible in public listings and invites.");
+//        CkGui.AttachTooltip("The VibeRooms name, will be visible in public listings and invites.");
 
 //        CkGui.ColorText("Password", ImGuiColors.ParsedGold);
 //        ImGui.SetNextItemWidth(c.InnerRegion.X * 0.6f);
 //        ImGui.InputText("##NewRoomPass", ref _newRoomPassword, 40);
-//        CkGui.AttachToolTip("Rooms with a password will be private. Leave blank if you want this to be public.");
+//        CkGui.AttachTooltip("Rooms with a password will be private. Leave blank if you want this to be public.");
 
 //        CkGui.ColorText("Description", ImGuiColors.ParsedGold);
 //        ImGui.InputTextMultiline("##RoomDesc", ref _newRoomDescription, 100, new Vector2(c.InnerRegion.X * .75f, ImGui.GetTextLineHeightWithSpacing() * 2));
 //        // Draw a hint if no text is present.
 //        if (string.IsNullOrWhiteSpace(_newRoomDescription) && !ImGui.IsItemActive())
 //            ImGui.GetWindowDrawList().AddText(ImGui.GetItemRectMin() + ImGui.GetStyle().FramePadding, ImGui.GetColorU32(ImGuiCol.TextDisabled), "your desc..");
-//        CkGui.AttachToolTip("This VibeRoom description will be visible on public VibeRoom listings, but not invites.");
+//        CkGui.AttachTooltip("This VibeRoom description will be visible on public VibeRoom listings, but not invites.");
 
 //        // extract the tabs by splitting the string by comma's
 //        CkGui.ColorText("Tags", ImGuiColors.ParsedGold);

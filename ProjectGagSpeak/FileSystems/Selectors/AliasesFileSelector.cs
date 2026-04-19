@@ -72,7 +72,7 @@ public sealed class AliasesFileSelector : CkFileSystemSelector<AliasTrigger, Ali
             // _manager.Rename(leaf.Value, currentName);
             ImGui.CloseCurrentPopup();
         }
-        CkGui.AttachToolTip("Enter a new name here to rename the alias.");
+        CkGui.AttachTooltip("Enter a new name here to rename the alias.");
     }
 
     public override void Dispose()
@@ -124,7 +124,7 @@ public sealed class AliasesFileSelector : CkFileSystemSelector<AliasTrigger, Ali
         var dotPos = ImGui.GetCursorScreenPos();
         var col = leaf.Value.Enabled ? CkCol.TriStateCheck.Uint() : CkCol.TriStateCross.Uint();
         CkGui.IconText(FAI.Circle, col);
-        CkGui.AttachToolTip($"This Alias is {(leaf.Value.Enabled ? "Enabled" : "Disabled")}");
+        CkGui.AttachTooltip($"This Alias is {(leaf.Value.Enabled ? "Enabled" : "Disabled")}");
 
         wdl.ChannelsSetCurrent(0);
         // Draw the bg, and the selected items.
@@ -168,12 +168,12 @@ public sealed class AliasesFileSelector : CkFileSystemSelector<AliasTrigger, Ali
                     _manager.Delete(leaf.Value);
             }
         }
-        CkGui.AttachToolTip("Deletes this aliases selected.");
+        CkGui.AttachTooltip("Deletes this aliases selected.");
 
         ImGui.SameLine(0, 1);
         if (CkGui.IconButton(FAI.Plus, inPopup: true))
             ImGui.OpenPopup("##NewAlias");
-        CkGui.AttachToolTip("Create a new AliasTrigger.");
+        CkGui.AttachTooltip("Create a new AliasTrigger.");
 
         ImGui.SameLine(0, 1);
         DrawFolderButton();

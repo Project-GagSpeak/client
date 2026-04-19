@@ -148,7 +148,7 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
                     Log.Debug($"Deleting {leaf.Value.Label} with SHIFT pressed.");
                     _manager.Delete(leaf.Value);
                 }
-                CkGui.AttachToolTip("Delete this restraint set. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
+                CkGui.AttachTooltip("Delete this restraint set. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
             }
         }
 
@@ -167,7 +167,7 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
     {
         if (CkGui.IconButton(FAI.Plus, inPopup: true))
             ImGui.OpenPopup("##NewRestraintSet");
-        CkGui.AttachToolTip("Create a new restraint set.");
+        CkGui.AttachTooltip("Create a new restraint set.");
         // this needs the parent window information
         _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.CreatingRestraints, WardrobeUI.LastPos, WardrobeUI.LastSize,
             _ => ((RestraintGuideCache)_).TutorialSet = _manager.CreateNew("Tutorial Restraint"));

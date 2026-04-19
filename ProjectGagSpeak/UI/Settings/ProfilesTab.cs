@@ -177,7 +177,7 @@ public class ProfilesTab
                 }
             }
         }
-        CkGui.AttachToolTip(GSLoc.Settings.Accounts.DeleteButtonTT, ImGuiColors.DalamudOrange);
+        CkGui.AttachTooltip(GSLoc.Settings.Accounts.DeleteButtonTT, ImGuiColors.DalamudOrange);
 
         // Fire if true.
         AccountDeletionPopup(_selected);
@@ -316,7 +316,7 @@ public class ProfilesTab
                 CkGui.TextFrameAlignedInline("UID:");
                 var noUid = string.IsNullOrEmpty(profile.UserUID);
                 CkGui.ColorTextFrameAlignedInline(noUid ? "Not Yet Assigned" : profile.UserUID, noUid ? ImGuiColors.DalamudRed : ImGuiColors.TankBlue);
-                CkGui.AttachToolTip("Once you successfully connect with the inserted secret key below, your UID will be set!");
+                CkGui.AttachTooltip("Once you successfully connect with the inserted secret key below, your UID will be set!");
             }
         }
         // We're not doing anything particularly fancy with the avatar here
@@ -334,7 +334,7 @@ public class ProfilesTab
         var showKey = _showingKey == profile;
 
         CkGui.FramedHoverIconText(FAI.Key, ImGuiColors.TankBlue.ToUint());
-        CkGui.AttachToolTip(GSLoc.Settings.Accounts.CharaKeyLabel);
+        CkGui.AttachTooltip(GSLoc.Settings.Accounts.CharaKeyLabel);
         if (ImGui.IsItemClicked())
             _showingKey = _showingKey == profile ? null : profile;
 
@@ -369,7 +369,7 @@ public class ProfilesTab
             var txt = showKey ? profile.Key : new string('*', Math.Clamp(profile.Key.Length, 0, 64));
             ImGuiInternal.RenderTextClipped(_wdl, txtRect.Min + _style.FramePadding, txtRect.Max - _style.FramePadding, txt, Vector2.Zero, txtSize, txtRect, true);
             ImGui.Dummy(txtSize);
-            CkGui.AttachToolTip(GSLoc.Settings.Accounts.CopyKeyToClipboard);
+            CkGui.AttachTooltip(GSLoc.Settings.Accounts.CopyKeyToClipboard);
             if (ImGui.IsItemClicked())
                 ImGui.SetClipboardText(profile.Key);
         }
@@ -378,14 +378,14 @@ public class ProfilesTab
         {
             ImGui.SameLine(width - ImUtf8.FrameHeight, 0);
             CkGui.FramedIconText(FAI.CheckCircle);
-            CkGui.AttachToolTip(GSLoc.Settings.Accounts.EditKeyNotAllowed);
+            CkGui.AttachTooltip(GSLoc.Settings.Accounts.EditKeyNotAllowed);
         }
         else
         {
             ImGui.SameLine(width - CkGui.IconButtonSize(FAI.PenSquare).X, 0);
             if (CkGui.IconButton(FAI.PenSquare, inPopup: true))
                 _editingSecretKey = showEditor ? null : profile;
-            CkGui.AttachToolTip(GSLoc.Settings.Accounts.EditKeyAllowed);
+            CkGui.AttachTooltip(GSLoc.Settings.Accounts.EditKeyAllowed);
         }
     }
 
@@ -481,7 +481,7 @@ public class ProfilesTab
                 ImGui.CloseCurrentPopup();
             }
         }
-        CkGui.AttachToolTip("Must hold CTRL+SHIFT to select!");
+        CkGui.AttachTooltip("Must hold CTRL+SHIFT to select!");
 
         ImGui.SameLine();
         if (ImGui.Button(noButton))

@@ -125,7 +125,7 @@ public sealed class BuzzToyFileSelector : CkFileSystemSelector<BuzzToy, BuzzToyF
             Log.Debug($"Deleting {leaf.Value.LabelName} with SHIFT pressed.");
             _manager.RemoveDevice(leaf.Value);
         }
-        CkGui.AttachToolTip("Delete this device from storage.--SEP--Must be holding SHIFT to remove.");
+        CkGui.AttachTooltip("Delete this device from storage.--SEP--Must be holding SHIFT to remove.");
 
         currentX -= iconSpacing;
         ImGui.SameLine(currentX);
@@ -134,7 +134,7 @@ public sealed class BuzzToyFileSelector : CkFileSystemSelector<BuzzToy, BuzzToyF
         var interactIcon = leaf.Value.Interactable ? FAI.Handshake : FAI.HandshakeSlash;
         var interactCol = leaf.Value.Interactable ? CkCol.TriStateCheck.Vec4() : CkCol.TriStateCross.Vec4();
         CkGui.FramedIconText(interactIcon, interactCol);
-        CkGui.AttachToolTip(leaf.Value.Interactable
+        CkGui.AttachTooltip(leaf.Value.Interactable
             ? "Device interactions are active, and can be used by GagSpeak's Remote."
             : "This device has interactions off, preventing usage via GagSpeak's Remote.");
 
@@ -146,7 +146,7 @@ public sealed class BuzzToyFileSelector : CkFileSystemSelector<BuzzToy, BuzzToyF
             hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
             var onlineCol = ibt.DeviceConnected ? CkCol.TriStateCheck.Vec4() : CkCol.TriStateCross.Vec4();
             CkGui.FramedIconText(FAI.Globe, onlineCol);
-            CkGui.AttachToolTip(ibt.DeviceConnected
+            CkGui.AttachTooltip(ibt.DeviceConnected
                 ? "This device is online and connected to Intiface."
                 : "This device is offline or not connected to Intiface.");
         }
@@ -166,7 +166,7 @@ public sealed class BuzzToyFileSelector : CkFileSystemSelector<BuzzToy, BuzzToyF
     {
         if (CkGui.IconButton(FAI.Plus, inPopup: true))
             ImGui.OpenPopup("##NewSexToy");
-        CkGui.AttachToolTip("Create a new SexToy.");
+        CkGui.AttachTooltip("Create a new SexToy.");
 
         ImGui.SameLine(0, 1);
         DrawFolderButton();

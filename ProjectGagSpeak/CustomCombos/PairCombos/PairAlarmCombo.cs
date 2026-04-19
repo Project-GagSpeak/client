@@ -58,12 +58,12 @@ public sealed class PairAlarmCombo : CkFilterComboIconTextButton<KinksterAlarm>
         // Beside this, we should draw an alarm icon and the time it will go off.
         ImGui.SameLine(0, ImGui.GetStyle().ItemSpacing.X);
         CkGui.ColorText(alarm.SetTimeUTC.ToLocalTime().ToString("t", CultureInfo.CurrentCulture), ImGuiColors.ParsedGold);
-        CkGui.AttachToolTip("(Your Local Time)");
+        CkGui.AttachTooltip("(Your Local Time)");
 
         var isEnabled = _ref.ActiveAlarms.Contains(alarm.Id);
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - _infoIconWidth - _powerIconWidth - ImGui.GetStyle().ItemInnerSpacing.X);
         CkGui.IconText(FAI.PowerOff, isEnabled ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey);
-        CkGui.AttachToolTip($"Alarm is currently {(isEnabled ? "Enabled" : "Disabled")}");
+        CkGui.AttachTooltip($"Alarm is currently {(isEnabled ? "Enabled" : "Disabled")}");
 
         ImUtf8.SameLineInner();
         CkGui.HoverIconText(FAI.InfoCircle, ImGuiColors.TankBlue.ToUint(), ImGui.GetColorU32(ImGuiCol.TextDisabled));

@@ -226,7 +226,7 @@ public class ActiveItemsDrawer
         var height = CkStyle.ThreeRowHeight();
         DrawFramedImage(data.GagItem, height, 10f, uint.MaxValue);
         var drawPos = ImGui.GetItemRectMin() + new Vector2(ImGui.GetItemRectSize().X, 0);
-        CkGui.AttachToolTip(LockTooltip(data.GagItem.GagName(), data.Enabler, "Gag"), color: ImGuiColors.ParsedGold);
+        CkGui.AttachTooltip(LockTooltip(data.GagItem.GagName(), data.Enabler, "Gag"), color: ImGuiColors.ParsedGold);
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             ImGui.OpenPopup($"##GagSelector-{slotIdx}");
@@ -252,9 +252,9 @@ public class ActiveItemsDrawer
         // Draw out the framed image first.
         DrawRestrictionImage(dispData, height, 10f);
         var drawPos = ImGui.GetItemRectMin() + new Vector2(ImGui.GetItemRectSize().X, 0);
-        CkGui.AttachToolTip(LockTooltip(dispData?.Label, data.Enabler, "Restriction"), color: ImGuiColors.ParsedGold);
+        CkGui.AttachTooltip(LockTooltip(dispData?.Label, data.Enabler, "Restriction"), color: ImGuiColors.ParsedGold);
         if (dispData is null)
-            CkGui.AttachToolTip("--SEP----COL--The item that was here couldn't be found." +
+            CkGui.AttachTooltip("--SEP----COL--The item that was here couldn't be found." +
                 "--NL--It may have been deleted or the data is corrupted.--COL--", color: ImGuiColors.DalamudRed);
         if (drawGuide) _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Removing, WardrobeUI.LastPos, WardrobeUI.LastSize);
 
@@ -294,9 +294,9 @@ public class ActiveItemsDrawer
         var height = ImGui.GetFrameHeightWithSpacing() * 5 + ImGui.GetFrameHeight();
         DrawRestraintImage(dispData, new Vector2(height / 1.2f, height), CkStyle.ChildRoundingLarge(), CkCol.CurvedHeaderFade.Uint());
         var drawPos = ImGui.GetItemRectMin() + new Vector2(ImGui.GetItemRectSize().X, 0);
-        CkGui.AttachToolTip(LockTooltip(dispData?.Label, data.Enabler, "Restraint"), color: ImGuiColors.ParsedGold);
+        CkGui.AttachTooltip(LockTooltip(dispData?.Label, data.Enabler, "Restraint"), color: ImGuiColors.ParsedGold);
         if (dispData is null)
-            CkGui.AttachToolTip("--SEP----COL--The item that was here couldn't be found." +
+            CkGui.AttachTooltip("--SEP----COL--The item that was here couldn't be found." +
                 "--NL--It may have been deleted or the data is corrupted.--COL--", color: ImGuiColors.DalamudRed);
         _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.RemovingRestraints, WardrobeUI.LastPos, WardrobeUI.LastSize);
 
@@ -348,7 +348,7 @@ public class ActiveItemsDrawer
             DrawFramedImage(data.Padlock, padlockSize.X, padlockSize.X / 2);
         }
 
-        CkGui.AttachToolTip(UnlockTooltip(data.GagItem.GagName(), data.Enabler, data.Padlock, data.PadlockAssigner), color: ImGuiColors.ParsedPink);
+        CkGui.AttachTooltip(UnlockTooltip(data.GagItem.GagName(), data.Enabler, data.Padlock, data.PadlockAssigner), color: ImGuiColors.ParsedPink);
 
         // Move over the distance of the framed image.
         ImGui.SameLine();
@@ -384,9 +384,9 @@ public class ActiveItemsDrawer
             DrawFramedImage(data.Padlock, padlockSize.X, padlockSize.X / 2);
         }
 
-        CkGui.AttachToolTip(UnlockTooltip(dispData?.Label, data.Enabler, data.Padlock, data.PadlockAssigner), color: ImGuiColors.ParsedPink);
+        CkGui.AttachTooltip(UnlockTooltip(dispData?.Label, data.Enabler, data.Padlock, data.PadlockAssigner), color: ImGuiColors.ParsedPink);
         if (dispData is null)
-            CkGui.AttachToolTip("--SEP----COL--The item that was here couldn't be found." +
+            CkGui.AttachTooltip("--SEP----COL--The item that was here couldn't be found." +
                 "--NL--It may have been deleted or the data is corrupted.--COL--", color: ImGuiColors.DalamudRed);
 
         // Move over the distance of the framed image.
@@ -412,9 +412,9 @@ public class ActiveItemsDrawer
 
         // Go back and show the image.
         DrawFramedImage(data.Padlock, size.X, size.X / 2);
-        CkGui.AttachToolTip(UnlockTooltip(dispData?.Label, data.Enabler, data.Padlock, data.PadlockAssigner), ImGuiColors.ParsedPink);
+        CkGui.AttachTooltip(UnlockTooltip(dispData?.Label, data.Enabler, data.Padlock, data.PadlockAssigner), ImGuiColors.ParsedPink);
         if (dispData is null)
-            CkGui.AttachToolTip("--SEP----COL--The item that was here couldn't be found." +
+            CkGui.AttachTooltip("--SEP----COL--The item that was here couldn't be found." +
                 "--NL--It may have been deleted or the data is corrupted.--COL--", color: ImGuiColors.DalamudRed);
 
         // Move over the distance of the framed image.

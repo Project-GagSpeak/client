@@ -42,7 +42,7 @@ public abstract class CkFilterComboButton<T> : CkFilterComboCache<T>
         // disable the button if we should.
         if (ImGuiUtil.DrawDisabledButton(bText, new Vector2(), string.Empty, DisableCondition()))
             OnButtonPress(layerIdx);
-        CkGui.AttachToolTip(tt);
+        CkGui.AttachTooltip(tt);
 
         return ret;
     }

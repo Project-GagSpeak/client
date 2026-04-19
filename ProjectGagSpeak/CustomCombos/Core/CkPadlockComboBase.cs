@@ -114,7 +114,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
                     {
                         ImGui.SameLine(comboWidth - tooltipIconSize.X);
                         CkGui.HoverIconText(FAI.InfoCircle, ImGuiColors.TankBlue.ToUint(), ImGui.GetColorU32(ImGuiCol.TextDisabled));
-                        CkGui.AttachToolTip(item.ToTooltip(), color: ImGuiColors.ParsedGold);
+                        CkGui.AttachTooltip(item.ToTooltip(), color: ImGuiColors.ParsedGold);
                     }
                 }
 
@@ -139,7 +139,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
                 OnLockButtonPress(label, layerIdx);
         }
 
-        CkGui.AttachToolTip(tooltip);
+        CkGui.AttachTooltip(tooltip);
 
         // on next line show lock fields.
         if (isTwoRow)
@@ -183,7 +183,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
                 OnUnlockButtonPress(label, layerIdx);
         }
 
-        CkGui.AttachToolTip(tooltip);
+        CkGui.AttachTooltip(tooltip);
 
         // The special unlock field.
         void DrawUnlockFieldSpecial(float width, string hint, bool isTimer)
@@ -200,7 +200,7 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
             if (isTimer)
             {
                 CkGui.AnimatedHourglass(3000);
-                CkGui.AttachToolTip($"--COL--{ActiveItem.Timer.ToGsRemainingTimeFancy()}--COL--", color: ImGuiColors.ParsedPink);
+                CkGui.AttachTooltip($"--COL--{ActiveItem.Timer.ToGsRemainingTimeFancy()}--COL--", color: ImGuiColors.ParsedPink);
                 ImGui.SameLine(0, -ImGui.GetStyle().FramePadding.X);
             }
 
@@ -222,12 +222,12 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
 
         using (ImRaii.Disabled(!SelectedLock.IsPasswordLock()))
             CkGui.IconInputText($"##Input_{id}", leftWidth, FAI.Key, passHint, ref Password, maxLength, flags);
-        CkGui.AttachToolTip("If interactable, a valid password must be entered here to lock this padlock.");
+        CkGui.AttachTooltip("If interactable, a valid password must be entered here to lock this padlock.");
 
         ImUtf8.SameLineInner();
         using (ImRaii.Disabled(!PadlockEx.TimerLocks.Contains(SelectedLock)))
             CkGui.IconInputText($"##Timer_{id}", rightWidth, FAI.Clock, timerHint, ref Timer, 12);
-        CkGui.AttachToolTip("If interactable, a valid time must be entered here to lock this padlock." +
+        CkGui.AttachTooltip("If interactable, a valid time must be entered here to lock this padlock." +
             "--SEP--Ex: 0h2m7s (0 hours, 2 minutes, 7 seconds).");
     }
 
@@ -241,12 +241,12 @@ public abstract class CkPadlockComboBase<T> where T : IPadlockableRestriction
         // Password Row
         using (ImRaii.Disabled(!SelectedLock.IsPasswordLock()))
             CkGui.IconInputTextOuter("##Input_" + id, width, FAI.Key, passHint, ref Password, maxLength, flags);
-        CkGui.AttachToolTip("If interactable, a valid password must be entered here to lock this padlock.");
+        CkGui.AttachTooltip("If interactable, a valid password must be entered here to lock this padlock.");
 
         // Timer Row.
         using (ImRaii.Disabled(!PadlockEx.TimerLocks.Contains(SelectedLock)))
             CkGui.IconInputTextOuter("##Timer_" + id, width, FAI.Clock, timerHint, ref Timer, 12);
-        CkGui.AttachToolTip("If interactable, a valid time must be entered here to lock this padlock." +
+        CkGui.AttachTooltip("If interactable, a valid time must be entered here to lock this padlock." +
             "--SEP--Ex: 0h2m7s (0 hours, 2 minutes, 7 seconds).");
     }
 }

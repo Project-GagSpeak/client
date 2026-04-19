@@ -36,21 +36,20 @@ public class SettingsUi : WindowMediatorSubscriberBase
     private readonly ProfilesTab _accountsTab;
     private readonly DebugTab _debugTab;
     private readonly PiShockProvider _shockProvider;
-    private readonly VfxSpawnManager _vfxSpawner;
     private readonly ClientDataListener _clientDatListener;
     private readonly PluginGuideProvider _guideProvider;
 
     private ProjectTabBar _myProjects;
     public SettingsUi(ILogger<SettingsUi> logger, GagspeakMediator mediator, MainHub hub,
         MainConfig config, ProfilesTab accounts, DebugTab debug, PiShockProvider shockProvider,
-        VfxSpawnManager vfxSpawner, ClientDataListener listener, PluginGuideProvider guideProvider) : base(logger, mediator, "GagSpeak Settings")
+        ClientDataListener listener, PluginGuideProvider guideProvider)
+        : base(logger, mediator, "GagSpeak Settings")
     {
         _hub = hub;
         _mainConfig = config;
         _accountsTab = accounts;
         _debugTab = debug;
         _shockProvider = shockProvider;
-        _vfxSpawner = vfxSpawner;
         _clientDatListener = listener;
         _guideProvider = guideProvider;
 
@@ -176,14 +175,14 @@ public class SettingsUi : WindowMediatorSubscriberBase
 #endif
             if (CkGui.FancyButton(FAI.Palette, "Styler", rWidth, noStyler))
                 Mediator.Publish(new UiToggleMessage(typeof(StyleEditorUI)));
-            CkGui.AttachToolTip("Edit GagSpeak Style, Create Themes, and Import them for editor styles!");
+            CkGui.AttachTooltip("Edit GagSpeak Style, Create Themes, and Import them for editor styles!");
 
             if (CkGui.FancyButton(FAI.Folder, "Configs", rWidth, false))
             {
                 try { Process.Start(new ProcessStartInfo { FileName = ConfigFileProvider.GagSpeakDirectory, UseShellExecute = true }); }
                 catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the config directory. {e.Message}"); }
             }
-            CkGui.AttachToolTip("Opens the Config Folder.--NL--(Useful for debugging)");
+            CkGui.AttachTooltip("Opens the Config Folder.--NL--(Useful for debugging)");
         }
     }
 
@@ -202,7 +201,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         }
 
         var ttText = showWarn ? $"{tooltip}--SEP----COL--Recommended plugin {plugin} is not installed or up to date!--COL--" : tooltip;
-        CkGui.AttachToolTip(ttText, ImGuiColors.DalamudYellow);
+        CkGui.AttachTooltip(ttText, ImGuiColors.DalamudYellow);
 
         // If this is our currently expanded plugin, draw a rect ring around it in yellow.
         if (_expandedInfo == plugin)
@@ -485,7 +484,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
                         _clientDatListener.ChangeAllGlobalPerms(newPerms);
                 });
             }
-            CkGui.AttachToolTip(GSLoc.Settings.MainOptions.PiShockShareCodeRefreshTT);
+            CkGui.AttachTooltip(GSLoc.Settings.MainOptions.PiShockShareCodeRefreshTT);
 
             ImUtf8.SameLineInner();
             ImGui.TextUnformatted(GSLoc.Settings.MainOptions.PiShockShareCode);
@@ -565,12 +564,10 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
         //if (CkGui.IconTextButton(FAI.Sync, "Refresh audio devices", disabled: UiService.DisableUI))
         //    AudioSystem.FetchLatestAudioDevices();
-        //CkGui.AttachToolTip("Refreshes the list of audio devices available for selection.\n" +
+        //CkGui.AttachTooltip("Refreshes the list of audio devices available for selection.\n" +
         //                    "This is useful if you have changed your audio devices while the game was running.");
 
         ImGui.InputTextWithHint("##VfxPathFileLabel", "Vfx Path In Audio Folder", ref _currentVfxPath, 300, ITFlags.EnterReturnsTrue);
-
-        _vfxSpawner.DrawVfxSpawnOptions(_currentVfxPath, false);
     }
     private string _currentVfxPath = string.Empty;
 
@@ -627,7 +624,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 _mainConfig.Current.Language = newLang;
                 _mainConfig.Save();
             }
-            CkGui.AttachToolTip(GSLoc.Settings.Preferences.LangTT);
+            CkGui.AttachTooltip(GSLoc.Settings.Preferences.LangTT);
 
             ImGui.SameLine();
             if (ImGuiUtil.GenericEnumCombo("##Dialect", 55, _mainConfig.Current.LanguageDialect, out var newDialect,
@@ -636,7 +633,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 _mainConfig.Current.LanguageDialect = newDialect;
                 _mainConfig.Save();
             }
-            CkGui.AttachToolTip(GSLoc.Settings.Preferences.DialectTT);
+            CkGui.AttachTooltip(GSLoc.Settings.Preferences.DialectTT);
         }
     }
     private void DrawPreferences()

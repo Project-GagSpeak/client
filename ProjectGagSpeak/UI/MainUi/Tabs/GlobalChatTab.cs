@@ -40,7 +40,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
         var endX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
         ImGui.SameLine(endX -= CkGui.IconSize(FAI.Book).X);
         CkGui.HoverIconText(FAI.Book, ImGuiColors.TankBlue.ToUint());
-        CkGui.AttachToolTip("--COL--Global Chat Rules--COL--" +
+        CkGui.AttachTooltip("--COL--Global Chat Rules--COL--" +
             "--SEP----COL--1.--COL-- Have common sense please." +
             "--NL----COL--2.--COL-- No discussion of NSFL (Gore/Vore/Scat/Ageplay)" +
             "--NL----COL--2b.--COL-- The above is fine in Kinkplate™ descriptions." +
@@ -84,7 +84,7 @@ public class GlobalChatTab : DisposableMediatorSubscriberBase
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatMessageExamine, MainUI.LastPos, MainUI.LastSize, _ => _tabmenu.TabSelection = MainMenuTabs.SelectedTab.Homepage);
 
         if (GlobalChatLog.NotVerified)
-            CkGui.AttachToolTip("Cannot use chat, your account is not verified!");
+            CkGui.AttachTooltip("Cannot use chat, your account is not verified!");
     }
 
     private void DrawChatUseBlockedWarning()

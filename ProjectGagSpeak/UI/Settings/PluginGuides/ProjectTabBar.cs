@@ -78,7 +78,7 @@ public sealed class ProjectTabBar
         using var group = ImRaii.Group();
         if (ImGui.Button($"##portfolio_tab_{tab.Tab}", buttonSize))
             TabSelection = tab.Tab;
-        CkGui.AttachToolTip(tab.Tooltip);
+        CkGui.AttachTooltip(tab.Tooltip);
 
         if (TabSelection == tab.Tab)
             wdl.AddLine(x with { Y = x.Y + buttonSize.Y + spacing.Y }, ImGui.GetItemRectMax() + new Vector2(0, spacing.Y), GsCol.VibrantPink.Uint(), 2f);

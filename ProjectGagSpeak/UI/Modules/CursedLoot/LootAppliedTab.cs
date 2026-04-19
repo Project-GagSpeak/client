@@ -106,6 +106,6 @@ public class LootAppliedTab : IFancyTab
             ImUtf8.SameLineInner();
             CkGui.FramedIconText(FAI.Stopwatch);
         }
-        CkGui.AttachToolTip("The time remaining until the cursed item is removed.");
+        CkGui.AttachTooltip("The time remaining until the cursed item is removed.");
     }
 }

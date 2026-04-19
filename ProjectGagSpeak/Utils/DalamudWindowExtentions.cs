@@ -20,7 +20,7 @@ public class TitleBarButtonBuilder
             Icon = icon,
             Click = _ => onClick(),
             IconOffset = new Vector2(2, 1),
-            ShowTooltip = () => CkGui.AttachToolTip(tooltip),
+            ShowTooltip = () => CkGui.AttachTooltip(tooltip),
         });
         return this;
     }
@@ -65,7 +65,7 @@ public class TitleBarButtonBuilder
                     return;
                 }
 
-                CkGui.AttachToolTip(service.IsTutorialActive(type) ? $"Stop {type} Tutorial" : $"Start {type} tutorial.");
+                CkGui.AttachTooltip(service.IsTutorialActive(type) ? $"Stop {type} Tutorial" : $"Start {type} tutorial.");
             },
         });
         return this;

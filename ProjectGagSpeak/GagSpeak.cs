@@ -170,7 +170,6 @@ public static class GagSpeakServiceExtensions
         // Game Internals
         .AddSingleton<StaticDetours>()
         .AddSingleton<MovementDetours>()
-        .AddSingleton<ResourceDetours>()
 
         // MufflerCore
         .AddSingleton<Ipa_EN_FR_JP_SP_Handler>()
@@ -239,9 +238,6 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<SelfBondageService>()
         .AddSingleton<TutorialService>()
 
-        // Spatial Audio
-        .AddSingleton<VfxSpawnManager>()
-
         // State (Caches)
         .AddSingleton<CustomizePlusCache>()
         .AddSingleton<GlamourCache>()
@@ -289,7 +285,6 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<RestraintManager>()
         .AddSingleton<RestrictionManager>()
         .AddSingleton<TriggerManager>()
-        .AddSingleton<VfxSpawnManager>()
 
         // UI (Probably mostly in Scoped)
         .AddSingleton<AccountInfoExchanger>()

@@ -138,7 +138,7 @@ public class MainMenuTabs : IconTabBar<MainMenuTabs.SelectedTab>
                 }
             }
         }
-        CkGui.AttachToolTip(tab.Tooltip);
+        CkGui.AttachTooltip(tab.Tooltip);
 
         // invoke action if we should.
         tab.CustomAction?.Invoke();

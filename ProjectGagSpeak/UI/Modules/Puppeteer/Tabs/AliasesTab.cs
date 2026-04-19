@@ -107,7 +107,7 @@ public class AliasesTab : IFancyTab
 
         // Top right should have a selectable checkmark to flick its state
         CkGui.BoolIcon(alias.Enabled, false);
-        CkGui.AttachToolTip("If this alias is enabled.--SEP----COL--Click to toggle!--COL--", ImGuiColors.ParsedPink);
+        CkGui.AttachTooltip("If this alias is enabled.--SEP----COL--Click to toggle!--COL--", ImGuiColors.ParsedPink);
         if (ImGui.IsItemClicked())
         {
             UiService.SetUITask(async () =>
@@ -125,14 +125,14 @@ public class AliasesTab : IFancyTab
         {
             ImGui.SameLine();
             CkGui.FramedIconText(FAI.ExclamationTriangle, ImGuiColors.DalamudRed);
-            CkGui.AttachToolTip("Must have a valid alias to scan!");
+            CkGui.AttachTooltip("Must have a valid alias to scan!");
         }
 
         var endX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
         ImGui.SameLine(endX -= CkGui.IconButtonSize(FAI.Edit).X);
         if (CkGui.IconButton(FAI.Edit, inPopup: true))
             _manager.StartEditing(alias);
-        CkGui.AttachToolTip("Edit this alias.");
+        CkGui.AttachTooltip("Edit this alias.");
         _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.EditingAlias, PuppeteerUI.LastPos, PuppeteerUI.LastSize,
             _ => _manager.StartEditing(((PuppeteerGuideCache)_).TutorialAlias!));
 
@@ -219,7 +219,7 @@ public class AliasesTab : IFancyTab
             {
                 CkGui.IconTextAligned(FAI.UserCircle);
                 DrawDisplayName(Kinkster);
-                CkGui.AttachToolTip($"UID: --COL--{kinksterUid}--COL--", GsCol.VibrantPink.Vec4Ref());
+                CkGui.AttachTooltip($"UID: --COL--{kinksterUid}--COL--", GsCol.VibrantPink.Vec4Ref());
             }
             else
             {
@@ -251,25 +251,25 @@ public class AliasesTab : IFancyTab
         var enabled = alias.Enabled;
         if (ImGui.Checkbox("##state", ref enabled))
             alias.Enabled = !alias.Enabled;
-        CkGui.AttachToolTip("If this can be detected as an alias");
+        CkGui.AttachTooltip("If this can be detected as an alias");
 
         ImUtf8.SameLineInner();
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - checkboxW);
         var label = alias.Label;
         if (ImGui.InputTextWithHint("##name", "Display Name..", ref label, 64))
             alias.Label = label;
-        CkGui.AttachToolTip("The UI display name for the AliasTrigger");
+        CkGui.AttachTooltip("The UI display name for the AliasTrigger");
         _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.EditAliasName, PuppeteerUI.LastPos, PuppeteerUI.LastSize);
 
         var endX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
         ImGui.SameLine(endX - CkGui.IconButtonSize(FAI.Redo).X - CkGui.IconButtonSize(FAI.Save).X);
         if (CkGui.IconButton(FAI.Undo, inPopup: true))
             _manager.StopEditing();
-        CkGui.AttachToolTip("Reverts any changes and exits the editor");
+        CkGui.AttachTooltip("Reverts any changes and exits the editor");
         ImGui.SameLine(0, 0);
         if (CkGui.IconButton(FAI.Save, inPopup: true))
             _manager.SaveChangesAndStopEditing();
-        CkGui.AttachToolTip("Saves all changes and exits the editor");
+        CkGui.AttachTooltip("Saves all changes and exits the editor");
         _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.EditSavingAliases, PuppeteerUI.LastPos, PuppeteerUI.LastSize, _ =>
         {
             _manager.SaveChangesAndStopEditing();
@@ -283,13 +283,13 @@ public class AliasesTab : IFancyTab
         var listenTxt = alias.InputCommand;
         if (ImGui.InputTextWithHint("##listener-text", "Text to detect..", ref listenTxt, 64))
             alias.InputCommand = listenTxt;
-        CkGui.AttachToolTip("What text the alias is listening for");
+        CkGui.AttachTooltip("What text the alias is listening for");
 
         ImUtf8.SameLineInner();
         var ignoreCase = alias.IgnoreCase;
         if (ImGui.Checkbox("Ignore Case", ref ignoreCase))
             alias.IgnoreCase = !alias.IgnoreCase;
-        CkGui.AttachToolTip("If detection text works RegArdleSs oF CaSE");
+        CkGui.AttachTooltip("If detection text works RegArdleSs oF CaSE");
 
         using var style = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, new Vector2(2))
             .Push(ImGuiStyleVar.ItemSpacing, new Vector2(ImUtf8.ItemSpacing.X, 2));
@@ -316,7 +316,7 @@ public class AliasesTab : IFancyTab
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - rightW);
         if (CkGuiUtils.EnumCombo("##types", comboW, _selected, out var newVal, options, i => i.ToName(), "All In Use"))
             _selected = newVal;
-        CkGui.AttachToolTip("The reaction type to add");
+        CkGui.AttachTooltip("The reaction type to add");
 
         ImUtf8.SameLineInner();
         if (CkGui.IconButton(FAI.Plus, disabled: options.Count is 0))
@@ -336,7 +336,7 @@ public class AliasesTab : IFancyTab
             alias.Actions = alias.Actions.OrderBy(x => x.ActionType).ToHashSet();
             _selected = options.Except(alias.Actions.Select(x => x.ActionType)).FirstOrDefault();
         }
-        CkGui.AttachToolTip("Add the selected reaction type to this alias.");
+        CkGui.AttachTooltip("Add the selected reaction type to this alias.");
 
         ImGui.Separator();
         // Determine height and draw
@@ -364,7 +364,7 @@ public class AliasesTab : IFancyTab
                     alias.Actions.Remove(reaction);
                     _selected = options.Except(alias.Actions.Select(x => x.ActionType)).FirstOrDefault();
                 }
-            CkGui.AttachToolTip("Removes this reaction from the AliasTrigger.");
+            CkGui.AttachTooltip("Removes this reaction from the AliasTrigger.");
         }
     }
 
@@ -377,7 +377,7 @@ public class AliasesTab : IFancyTab
         {
             alias.WhitelistedUIDs.Clear();
         }
-        CkGui.AttachToolTip(" Add all visible sundesmos nearby.");
+        CkGui.AttachTooltip(" Add all visible sundesmos nearby.");
 
         ImUtf8.SameLineInner();
         if (_pairCombo.Draw(_selectedKinkster, ImGui.GetContentRegionAvail().X))
@@ -406,7 +406,7 @@ public class AliasesTab : IFancyTab
             {
                 CkGui.IconTextAligned(FAI.UserCircle);
                 DrawDisplayName(Kinkster);
-                CkGui.AttachToolTip($"UID: --COL--{kinksterUid}--COL--", GsCol.VibrantPink.Vec4Ref());
+                CkGui.AttachTooltip($"UID: --COL--{kinksterUid}--COL--", GsCol.VibrantPink.Vec4Ref());
             }
             else
             {
@@ -418,7 +418,7 @@ public class AliasesTab : IFancyTab
             ImGui.SameLine(widthInner - CkGui.IconButtonSize(FAI.Minus).X);
             if (CkGui.IconButton(FAI.Minus, id: kinksterUid, inPopup: true))
                 alias.WhitelistedUIDs.Remove(kinksterUid);
-            CkGui.AttachToolTip($"Remove from Selection");
+            CkGui.AttachTooltip($"Remove from Selection");
             ImGui.TableNextRow();
         }
 

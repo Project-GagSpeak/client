@@ -99,7 +99,7 @@ public class PatternSharehubTab : DisposableMediatorSubscriberBase
         }
 
         ImUtf8.TextFrameAligned(info.Label);
-        CkGui.AttachToolTip(string.IsNullOrEmpty(info.Description) ? "No Description Set" : info.Description);
+        CkGui.AttachTooltip(string.IsNullOrEmpty(info.Description) ? "No Description Set" : info.Description);
         // display name, then display the downloads and likes on the other side.
 
         var buttonW = CkGui.IconTextButtonSize(FAI.Heart, info.Likes.ToString()) + CkGui.IconTextButtonSize(FAI.Download, info.Downloads.ToString()) + style.ItemInnerSpacing.X;
@@ -108,14 +108,14 @@ public class PatternSharehubTab : DisposableMediatorSubscriberBase
         using (ImRaii.PushColor(ImGuiCol.Text, info.HasLiked ? ImGuiColors.ParsedPink : ImGuiColors.DalamudGrey))
             if (CkGui.IconTextButton(FAI.Heart, info.Likes.ToString(), null, true, PatternHubService.InUpdate))
                 _shareHub.ToggleLike(info.Identifier);
-        CkGui.AttachToolTip(info.HasLiked ? "Remove Like from this pattern." : "Like this pattern!");
+        CkGui.AttachTooltip(info.HasLiked ? "Remove Like from this pattern." : "Like this pattern!");
             
         ImUtf8.SameLineInner();
         var disable = _patterns.Storage.Contains(info.Identifier) || PatternHubService.InUpdate;
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudWhite2))
             if (CkGui.IconTextButton(FAI.Download, info.Downloads.ToString(), null, true, disable, $"DownloadPattern-{info.Identifier}"))
                 _shareHub.Download(info.Identifier);
-        CkGui.AttachToolTip("Download this pattern!");
+        CkGui.AttachTooltip("Download this pattern!");
 
         // Middle Row.
         DrawAuthor();
@@ -123,7 +123,7 @@ public class PatternSharehubTab : DisposableMediatorSubscriberBase
 
         // Bottom Row.
         DrawTags();
-        CkGui.AttachToolTip("Tags for the Pattern");
+        CkGui.AttachTooltip("Tags for the Pattern");
         DrawMotors();
 
         void DrawAuthor()
@@ -133,7 +133,7 @@ public class PatternSharehubTab : DisposableMediatorSubscriberBase
                 CkGui.FramedIconText(FAI.UserCircle);
                 CkGui.ColorTextFrameAlignedInline($"{info.Author} ({info.UploadedDate.ToLocalTime().ToString("d", CultureInfo.CurrentCulture)})", ImGuiColors.DalamudGrey);
             }
-            CkGui.AttachToolTip("Publisher of the Pattern");
+            CkGui.AttachTooltip("Publisher of the Pattern");
         }
 
         void DrawLength()
@@ -146,14 +146,14 @@ public class PatternSharehubTab : DisposableMediatorSubscriberBase
                 CkGui.FramedIconText(FAI.Stopwatch);
                 CkGui.TextFrameAlignedInline(info.Length.ToString(formatDuration));
             }
-            CkGui.AttachToolTip("Total Pattern Duration");
+            CkGui.AttachTooltip("Total Pattern Duration");
         }
 
         void DrawToyIcon(CoreIntifaceElement icon, string tooltip)
         {
             ImGui.Dummy(iconSize);
             wdl.AddDalamudImage(CosmeticService.IntifaceTextures.Cache[icon], ImGui.GetItemRectMin(), iconSize);
-            CkGui.AttachToolTip(tooltip);
+            CkGui.AttachTooltip(tooltip);
         }
 
         void DrawTags()
@@ -167,7 +167,7 @@ public class PatternSharehubTab : DisposableMediatorSubscriberBase
                     tagsString = tagsString.Substring(0, (int)(allowedLength / ImGui.CalcTextSize("A").X)) + "...";
                 CkGui.ColorTextFrameAlignedInline(tagsString, ImGuiColors.ParsedGrey);
             }
-            CkGui.AttachToolTip("Tags for the Pattern");
+            CkGui.AttachTooltip("Tags for the Pattern");
         }
 
         void DrawMotors()
@@ -209,17 +209,17 @@ public class PatternSharehubTab : DisposableMediatorSubscriberBase
         ImUtf8.SameLineInner();
         if (CkGui.IconTextButton(FAI.Search, "Search", disabled: PatternHubService.InUpdate))
             _shareHub.Search(_searchStr, _searchTags);
-        CkGui.AttachToolTip("Update Search Results");
+        CkGui.AttachTooltip("Update Search Results");
 
         ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo("##filterType", filter, _shareHub.SortBy, out var newType, Enum.GetValues<HubSortBy>().SkipLast(1), flags: CFlags.NoArrowButton))
             _shareHub.SortBy = newType;
-        CkGui.AttachToolTip("Sort Method--SEP--Define how results are found.");
+        CkGui.AttachTooltip("Sort Method--SEP--Define how results are found.");
 
         ImUtf8.SameLineInner();
         if (CkGui.IconButton(sortIcon))
             _shareHub.ToggleSortDirection();
-        CkGui.AttachToolTip($"Sort Direction--SEP--Current: {_shareHub.SortDirection}");
+        CkGui.AttachTooltip($"Sort Direction--SEP--Current: {_shareHub.SortDirection}");
 
         // NEXT ROW.
         var buttonWidth = duration + tags + spacing * 2;
@@ -229,12 +229,12 @@ public class PatternSharehubTab : DisposableMediatorSubscriberBase
         ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo("##DurationFilter", duration, _shareHub.DurationFilter, out var newLength, i => i.ToName(), flags: CFlags.NoArrowButton))
             _shareHub.DurationFilter = newLength;
-        CkGui.AttachToolTip("Time Range");
+        CkGui.AttachTooltip("Time Range");
 
         ImUtf8.SameLineInner();
         var pressed = CkGui.IconButton(FAI.Tags);
         var popupDrawPos = ImGui.GetItemRectMin() + new Vector2(ImGui.GetItemRectSize().X, 0);
-        CkGui.AttachToolTip("Select from an existing list of tags.--NL----COL--(Helps make patterns easier to find)", ImGuiColors.DalamudGrey2);
+        CkGui.AttachTooltip("Select from an existing list of tags.--NL----COL--(Helps make patterns easier to find)", ImGuiColors.DalamudGrey2);
 
 
         if (pressed)

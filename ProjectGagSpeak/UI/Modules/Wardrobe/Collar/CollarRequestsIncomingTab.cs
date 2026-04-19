@@ -64,19 +64,19 @@ public class CollarRequestsIncomingTab : IFancyTab
         {
             CkGui.FramedIconText(FAI.UserCircle);
             CkGui.TextFrameAlignedInline($"From: {request.User.AliasOrUID}");
-            CkGui.AttachToolTip($"The kinkster that sent this request");
+            CkGui.AttachTooltip($"The kinkster that sent this request");
 
             // Time Remaining.
             ImGui.SameLine();
             CkGui.AnimatedHourglass(3000);
             CkGui.ColorTextFrameAlignedInline(request.ExpireTime().ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
-            CkGui.AttachToolTip("Time remaining to accept this request.");
+            CkGui.AttachTooltip("Time remaining to accept this request.");
 
             //// Desired Writing.
             CkGui.FramedIconText(FAI.PenFancy);
             ImGui.SameLine(0, 0);
             CkGui.TextFrameAligned(request.Writing ?? "<No Writing>");
-            CkGui.AttachToolTip("The writing the requester wants on your collar.");
+            CkGui.AttachTooltip("The writing the requester wants on your collar.");
         }
 
         ImGui.SameLine(regionAvail - rightWidth);
@@ -114,19 +114,19 @@ public class CollarRequestsIncomingTab : IFancyTab
             {
                 // I dont actually think i have anything for accepting a request lol.
             }
-            CkGui.AttachToolTip("Accept this collar request.");
+            CkGui.AttachTooltip("Accept this collar request.");
 
             if (CkGui.IconTextButton(FAI.Times, "Reject", buttonW))
             {
                 // I dont actually think i have anything for rejecting a request lol.
             }
-            CkGui.AttachToolTip("Reject this collar request.");
+            CkGui.AttachTooltip("Reject this collar request.");
         }
 
         void AccessPerm(FAI icon, bool state, string tooltipTrue, string tooltipFalse)
         {
             CkGui.BoolIcon(state, false, icon, icon, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-            CkGui.AttachToolTip(state ? tooltipTrue : tooltipFalse);
+            CkGui.AttachTooltip(state ? tooltipTrue : tooltipFalse);
         }      
     }
 }

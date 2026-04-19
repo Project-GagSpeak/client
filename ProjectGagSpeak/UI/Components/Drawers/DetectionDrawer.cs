@@ -122,11 +122,11 @@ public sealed class DetectionDrawer : IDisposable
 
             CkGui.TextFrameAlignedInline("Between");
             CkGui.ColorTextFrameAlignedInline($"{trigger.ThresholdMinValue}{format}", ImGuiColors.TankBlue);
-            CkGui.AttachToolTip("The lowest HP that is \"In Range\".");
+            CkGui.AttachTooltip("The lowest HP that is \"In Range\".");
 
             CkGui.TextFrameAlignedInline("and");
             CkGui.ColorTextFrameAlignedInline($"{trigger.ThresholdMaxValue}{format}", ImGuiColors.TankBlue);
-            CkGui.AttachToolTip("The highest HP that is \"In Range\".");
+            CkGui.AttachTooltip("The highest HP that is \"In Range\".");
         }
 
         if (trigger.IsGenericDetection)
@@ -166,7 +166,7 @@ public sealed class DetectionDrawer : IDisposable
                     break;
             }
         }
-        CkGui.AttachToolTip("The actions that must be used to satisfy the above paramaters.");
+        CkGui.AttachTooltip("The actions that must be used to satisfy the above paramaters.");
     }
 
     private JobType _selectedJob = JobType.ADV;
@@ -174,16 +174,16 @@ public sealed class DetectionDrawer : IDisposable
     public void DrawSpellActionEditor(SpellActionTrigger trigger)
     {
         CkGui.FramedIconText(FAI.ArrowsLeftRight);
-        CkGui.AttachToolTip($"Required Direction of the {trigger.ActionKind}");
+        CkGui.AttachTooltip($"Required Direction of the {trigger.ActionKind}");
         CkGui.TextFrameAlignedInline("When");
         var options = trigger.GetOptions();
         ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo("##Dir", ImGui.GetContentRegionAvail().X, trigger.Direction, out var newDir, options, _ => _.GetDirectionText(trigger.ActionKind)))
             trigger.Direction = newDir;
-        CkGui.AttachToolTip($"Required Direction of the {trigger.ActionKind}");
+        CkGui.AttachTooltip($"Required Direction of the {trigger.ActionKind}");
         
         CkGui.FramedIconText(FAI.User);
-        CkGui.AttachToolTip("Limit trigger to only accept 'other(s)' as valid if they are the defined player.--SEP--Leave blank to ignore.");
+        CkGui.AttachTooltip("Limit trigger to only accept 'other(s)' as valid if they are the defined player.--SEP--Leave blank to ignore.");
         CkGui.TextFrameAlignedInline("Limit to");
 
         ImUtf8.SameLineInner();
@@ -191,7 +191,7 @@ public sealed class DetectionDrawer : IDisposable
         var limiter = trigger.PlayerNameWorld;
         if (ImGui.InputTextWithHint("##PlayerMonitor", "Devious Diva@Balmung..", ref limiter, 68))
             trigger.PlayerNameWorld = limiter;
-        CkGui.AttachToolTip("Limit 'others' to this Player. --COL--(Must use Player Name@World format)--COL--" +
+        CkGui.AttachTooltip("Limit 'others' to this Player. --COL--(Must use Player Name@World format)--COL--" +
             "--SEP--Leave blank to ignore.", ImGuiColors.DalamudGrey2); 
 
         CkGui.FramedIconText(FAI.Filter);
@@ -202,14 +202,14 @@ public sealed class DetectionDrawer : IDisposable
             trigger.IsGenericDetection = refVal;
             if (!refVal) trigger.ActionKind = LimitedActionEffectType.Nothing;
         }
-        CkGui.AttachToolTip("If detection is done under an umbrella catagory, or spesific actions.");
+        CkGui.AttachTooltip("If detection is done under an umbrella catagory, or spesific actions.");
 
         if (trigger.IsGenericDetection)
         {
             ImUtf8.SameLineInner();
             if (CkGuiUtils.EnumCombo("##ActionType", ImGui.GetContentRegionAvail().X, trigger.ActionKind, out var newVal, af => af.ToName(), skip: 1))
                 trigger.ActionKind = newVal;
-            CkGui.AttachToolTip("The generic catagory to detect.");
+            CkGui.AttachTooltip("The generic catagory to detect.");
         }
 
         if (trigger.ActionKind is not LimitedActionEffectType.Miss or LimitedActionEffectType.Knockback or LimitedActionEffectType.Attract1)
@@ -224,13 +224,13 @@ public sealed class DetectionDrawer : IDisposable
             ImGui.SetNextItemWidth(dragW);
             if (ImGui.DragInt("##MinThresSlider", ref minRef, 10.0f, -1, 1000000, $"Min. %d{formatPost}"))
                 trigger.ThresholdMinValue = minRef;
-            CkGui.AttachToolTip("The lowest HP that is --COL--\"In Range\"--COL--.", ImGuiColors.TankBlue);
+            CkGui.AttachTooltip("The lowest HP that is --COL--\"In Range\"--COL--.", ImGuiColors.TankBlue);
 
             ImUtf8.SameLineInner();
             ImGui.SetNextItemWidth(dragW);
             if (ImGui.DragInt("##MaxThresSlider", ref maxRef, 10.0f, minRef, 1000000, $"Max. %d{formatPost}"))
                 trigger.ThresholdMaxValue = maxRef;
-            CkGui.AttachToolTip("The highest HP that is --COL--\"In Range\"--COL--.", ImGuiColors.TankBlue);
+            CkGui.AttachTooltip("The highest HP that is --COL--\"In Range\"--COL--.", ImGuiColors.TankBlue);
         }
 
         // DetectableActions - This filter display allows you to append certain jobs and actions you want the trigger to qualify for.
@@ -240,14 +240,14 @@ public sealed class DetectionDrawer : IDisposable
         // Combo Row.
         var img = Svc.Texture.GetFromGameIcon(SpellActionService.GetLightJob((uint)_selectedJob).GetIconId()).GetWrapOrEmpty();
         ImGui.Image(img.Handle, new Vector2(ImGui.GetFrameHeight()));
-        CkGui.AttachToolTip("The selected Job");
+        CkGui.AttachTooltip("The selected Job");
 
         ImUtf8.SameLineInner();
         if (_jobCombo.Draw("##JobSelector", _selectedJob, ImGui.GetContentRegionAvail().X / 2, 1.25f, flags: CFlags.NoArrowButton))
             _selectedJob = _jobCombo.Current.JobId;
         if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
             _selectedJob = JobType.ADV;
-        CkGui.AttachToolTip("The job to add actions for.--SEP----COL--[R-Click]:--COL-- Reset to ADV", GsCol.VibrantPink.Vec4Ref());
+        CkGui.AttachTooltip("The job to add actions for.--SEP----COL--[R-Click]:--COL-- Reset to ADV", GsCol.VibrantPink.Vec4Ref());
 
         ImUtf8.SameLineInner();
         if (_jobActionCombo.Draw("##JobActionSelector", _selectedAction, ImGui.GetContentRegionAvail().X, 1.5f))
@@ -287,7 +287,7 @@ public sealed class DetectionDrawer : IDisposable
                 // Maybe check out XIVCombo or something to figure out how they properly display all actions to their screen fine.
                 // (They handle icon management well, perhaps we could learn a thing or two from them)
                 ImGui.Image(Svc.Texture.GetFromGameIcon((uint)iconData.IconID).GetWrapOrEmpty().Handle, iconSize);
-                CkGui.AttachToolTip($"--COL--[R-Click]:--COL-- Remove {iconData.Name} from actions", GsCol.VibrantPink.Vec4Ref());
+                CkGui.AttachTooltip($"--COL--[R-Click]:--COL-- Remove {iconData.Name} from actions", GsCol.VibrantPink.Vec4Ref());
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 {
                     if (trigger.StoredActions.FirstOrDefault(kvp => kvp.Value.Contains(actionIcon)) is { } list)
@@ -310,7 +310,7 @@ public sealed class DetectionDrawer : IDisposable
                     break;
             }
         }
-        CkGui.AttachToolTip("The actions that must be used to satisfy the above paramaters.");
+        CkGui.AttachTooltip("The actions that must be used to satisfy the above paramaters.");
     }
 
     public void DrawHealthPercent(HealthPercentTrigger trigger)
@@ -346,21 +346,21 @@ public sealed class DetectionDrawer : IDisposable
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
         if (ImGui.InputTextWithHint("##PlayerMonitor", "Devious Diva@Balmung..", ref name, 68))
             trigger.PlayerNameWorld = name;
-        CkGui.AttachToolTip("The monitored player. --COL--(Must use Player Name@World format)--COL--", ImGuiColors.DalamudGrey2);
+        CkGui.AttachTooltip("The monitored player. --COL--(Must use Player Name@World format)--COL--", ImGuiColors.DalamudGrey2);
 
         var refVal = trigger.UsePercentageHealth;
         if (ImGui.Checkbox("Detect HP % Instead##UsePercent", ref refVal))
             trigger.UsePercentageHealth = refVal;
-        CkGui.AttachToolTip("If we detect based on % health difference, or flat HP values.");
+        CkGui.AttachTooltip("If we detect based on % health difference, or flat HP values.");
 
         CkGui.FramedIconText(FAI.Flag);
-        CkGui.AttachToolTip("What Pass-Kind to use for HP Detection.");
+        CkGui.AttachTooltip("What Pass-Kind to use for HP Detection.");
         CkGui.TextFrameAlignedInline("Threshold Pass Type:");
 
         ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo("##PassTypeCombo", ImGui.CalcTextSize("undermmm").X, trigger.PassKind, out var newVal))
             trigger.PassKind = newVal;
-        CkGui.AttachToolTip("--COL--[Under]:--COL-- HP drops below the threshold" +
+        CkGui.AttachTooltip("--COL--[Under]:--COL-- HP drops below the threshold" +
             "--SEP----COL--[Over]:--COL-- HP goes above the threshold", GsCol.VibrantPink.Vec4Ref());
 
         if (trigger.UsePercentageHealth)
@@ -371,7 +371,7 @@ public sealed class DetectionDrawer : IDisposable
             ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
             if (ImGui.DragInt("##HealthPercentage", ref hpRef, 0.1f, 0, 100, "%d%%"))
                 trigger.ThresholdMinValue = hpRef;
-            CkGui.AttachToolTip("The HP% that must be crossed.");
+            CkGui.AttachTooltip("The HP% that must be crossed.");
         }
         else
         {
@@ -382,20 +382,20 @@ public sealed class DetectionDrawer : IDisposable
             ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X / 2 - ImGui.GetStyle().ItemInnerSpacing.X);
             if (ImGui.DragInt("##MinThresSlider", ref minHpRef, 10.0f, -1, 1000000, "Min. %dHP"))
                 trigger.ThresholdMinValue = minHpRef;
-            CkGui.AttachToolTip("The lowest HP that is --COL--\"In Range\"--COL--.", ImGuiColors.TankBlue);
+            CkGui.AttachTooltip("The lowest HP that is --COL--\"In Range\"--COL--.", ImGuiColors.TankBlue);
 
             var maxHpRef = trigger.ThresholdMaxValue;
             ImUtf8.SameLineInner();
             if (ImGui.DragInt("##MaxThresSlider", ref maxHpRef, 10.0f, minHpRef, 1000000, "Max. %dHP"))
                 trigger.ThresholdMaxValue = maxHpRef;
-            CkGui.AttachToolTip("The highest HP that is --COL--\"In Range\"--COL--.", ImGuiColors.TankBlue);
+            CkGui.AttachTooltip("The highest HP that is --COL--\"In Range\"--COL--.", ImGuiColors.TankBlue);
         }
     }
 
     public void DrawRestraint(RestraintTrigger trigger)
     {
         ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Restrained].Handle, new(ImUtf8.FrameHeight));
-        CkGui.AttachToolTip("Invokes an interaction with the Restraint module");
+        CkGui.AttachTooltip("Invokes an interaction with the Restraint module");
 
         CkGui.TextFrameAlignedInline("Monitoring:");
         var item = _restraints.Storage.FirstOrDefault(r => r.Identifier == trigger.RestraintSetId);
@@ -416,7 +416,7 @@ public sealed class DetectionDrawer : IDisposable
             trigger.RestraintSetId = _restraintCombo.Current?.Identifier ?? Guid.Empty;
         if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
             trigger.RestraintSetId = Guid.Empty;
-        CkGui.AttachToolTip("The Restraint Set to monitor for state changes.");
+        CkGui.AttachTooltip("The Restraint Set to monitor for state changes.");
 
         CkGui.FramedIconText(FAI.Flag);
         CkGui.TextFrameAlignedInline("When set to");
@@ -424,13 +424,13 @@ public sealed class DetectionDrawer : IDisposable
         ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo("##rs-state", 75f, trigger.RestraintState, out var newState))
             trigger.RestraintState = newState;
-        CkGui.AttachToolTip("The state change type that will invoke this trigger");
+        CkGui.AttachTooltip("The state change type that will invoke this trigger");
     }
 
     public void DrawRestriction(RestrictionTrigger trigger)
     {
         ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Restrained].Handle, new(ImUtf8.FrameHeight));
-        CkGui.AttachToolTip("Invokes an interaction with the Restraint module");
+        CkGui.AttachTooltip("Invokes an interaction with the Restraint module");
 
         CkGui.TextFrameAlignedInline("Monitoring:");
         var item = _restrictions.Storage.FirstOrDefault(r => r.Identifier == trigger.RestrictionId);
@@ -451,7 +451,7 @@ public sealed class DetectionDrawer : IDisposable
             trigger.RestrictionId = _restrictionCombo.Current?.Identifier ?? Guid.Empty;
         if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
             trigger.RestrictionId = Guid.Empty;
-        CkGui.AttachToolTip("The Restriction to monitor for state changes.");
+        CkGui.AttachTooltip("The Restriction to monitor for state changes.");
 
         CkGui.FramedIconText(FAI.Flag);
         CkGui.TextFrameAlignedInline("When set to");
@@ -459,13 +459,13 @@ public sealed class DetectionDrawer : IDisposable
         ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo("##r-state", 75f, trigger.RestrictionState, out var newState))
             trigger.RestrictionState = newState;
-        CkGui.AttachToolTip("The state change type that will invoke this trigger");
+        CkGui.AttachTooltip("The state change type that will invoke this trigger");
     }
 
     public void DrawGag(GagTrigger trigger)
     {
         ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged].Handle, new(ImUtf8.FrameHeight));
-        CkGui.AttachToolTip("Invokes an interaction with the Restraint module");
+        CkGui.AttachTooltip("Invokes an interaction with the Restraint module");
 
         CkGui.TextFrameAlignedInline("Monitoring:");
         CkGui.ColorTextFrameAlignedInline(trigger.Gag.GagName(), ImGuiColors.TankBlue);
@@ -483,7 +483,7 @@ public sealed class DetectionDrawer : IDisposable
         ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo("##gag", ImGui.GetContentRegionAvail().X, trigger.Gag, out var newGag, i => i.GagName(), "Any Gag", skip: 1))
             trigger.Gag = newGag;
-        CkGui.AttachToolTip("The Gag to monitor for state changes.");
+        CkGui.AttachTooltip("The Gag to monitor for state changes.");
 
         CkGui.FramedIconText(FAI.Flag);
         CkGui.TextFrameAlignedInline("When set to");
@@ -491,7 +491,7 @@ public sealed class DetectionDrawer : IDisposable
         ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo("##gag-state", 75f, trigger.GagState, out var newState))
             trigger.GagState = newState;
-        CkGui.AttachToolTip("The state change type that will invoke this trigger");
+        CkGui.AttachTooltip("The state change type that will invoke this trigger");
     }
 
     public void DrawSocial(SocialTrigger trigger)
@@ -513,7 +513,7 @@ public sealed class DetectionDrawer : IDisposable
         ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo("##SocialActivity", ImGui.GetContentRegionAvail().X * .5f, trigger.Game, out var newVal, _ => _.ToString()))
             trigger.Game = newVal;
-        CkGui.AttachToolTip("The Social Game to monitor for.");
+        CkGui.AttachTooltip("The Social Game to monitor for.");
 
         CkGui.FramedIconText(FAI.Trophy);
         CkGui.TextFrameAlignedInline("When outcome is a");
@@ -521,7 +521,7 @@ public sealed class DetectionDrawer : IDisposable
         var resWidth = ImGui.CalcTextSize("lossmmm").X;
         if (CkGuiUtils.EnumCombo("##SocialResult", resWidth, trigger.Result, out var newRes, _ => _.ToString()))
             trigger.Result = newRes;
-        CkGui.AttachToolTip("What result from the game will invoke this trigger.");
+        CkGui.AttachTooltip("What result from the game will invoke this trigger.");
     }
 
     public void DrawEmote(EmoteTrigger trigger)
@@ -553,7 +553,7 @@ public sealed class DetectionDrawer : IDisposable
             trigger.EmoteID = _emoteCombo.Current.RowId;
         if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
             trigger.EmoteID = uint.MaxValue;
-        CkGui.AttachToolTip("The emote to detect.");
+        CkGui.AttachTooltip("The emote to detect.");
         DrawEmoteIconWithTooltip(_emoteCombo.Current.RowId);
 
         // Direction row
@@ -562,7 +562,7 @@ public sealed class DetectionDrawer : IDisposable
         ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo("##direction", ImGui.GetContentRegionAvail().X, trigger.EmoteDirection, out var newVal, _ => _.ToName()))
             trigger.EmoteDirection = newVal;
-        CkGui.AttachToolTip("How detection is validated." +
+        CkGui.AttachTooltip("How detection is validated." +
             "--SEP----COL--[Self]:--COL-- Emote is from you" +
             "--NL----COL--[Self ⇒ Others]:--COL-- You used an emote on someone" +
             "--NL----COL--[Others]:--COL-- Someone else used an emote" +
@@ -580,7 +580,7 @@ public sealed class DetectionDrawer : IDisposable
                 trigger.PlayerNameWorld = playerStrRef;
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 trigger.PlayerNameWorld = string.Empty;
-            CkGui.AttachToolTip("Defines the --COL--Target--COL----SEP--Leaving this blank allows anyone.", GsCol.VibrantPink.Vec4Ref());
+            CkGui.AttachTooltip("Defines the --COL--Target--COL----SEP--Leaving this blank allows anyone.", GsCol.VibrantPink.Vec4Ref());
         }
     }
 

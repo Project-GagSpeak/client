@@ -608,7 +608,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         var blockButton = string.IsNullOrWhiteSpace(_secretKey) || _secretKey.Length != 64 || _account.HasValidProfile() || UiService.DisableUI;
         if (CkGui.IconTextButton(FAI.Wrench, "Login with Key", disabled: blockButton))
             TryLoginWithExistingKeyAsync();
-        CkGui.AttachToolTip("--COL--THIS WILL CREATE YOUR PRIMARY ACCOUNT. ENSURE YOUR KEY IS CORRECT.--COL--", ImGuiColors.DalamudRed);
+        CkGui.AttachTooltip("--COL--THIS WILL CREATE YOUR PRIMARY ACCOUNT. ENSURE YOUR KEY IS CORRECT.--COL--", ImGuiColors.DalamudRed);
     }
 
     private async Task TryConnectForInitialization()

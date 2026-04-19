@@ -88,7 +88,7 @@ public class LociSharehubTab : DisposableMediatorSubscriberBase
             using (ImRaii.PushColor(ImGuiCol.Button, ImGuiColors.DPSRed))
                 if (CkGui.IconTextButtonCentered(FAI.InfoCircle, "Learn More", buttonW))
                     Mediator.Publish(new OpenSettingsPluginInfoMessage(OptionalPlugin.Loci));
-            CkGui.AttachToolTip("Opens the PluginInfoBox in the SettingsUI for Loci");
+            CkGui.AttachTooltip("Opens the PluginInfoBox in the SettingsUI for Loci");
         }
     }
 
@@ -132,19 +132,19 @@ public class LociSharehubTab : DisposableMediatorSubscriberBase
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudGrey))
             if (CkGui.IconTextButton(FAI.PersonCircleQuestion, "Try", isInPopup: true))
                 _shareHub.TryLociStatus(info.Status.GUID);
-        CkGui.AttachToolTip("Try this Status on yourself to preview it!");
+        CkGui.AttachTooltip("Try this Status on yourself to preview it!");
         
         ImUtf8.SameLineInner();
         using (ImRaii.PushColor(ImGuiCol.Text, info.HasLiked ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGrey))
             if (CkGui.IconTextButton(FAI.Heart, info.Likes.ToString(), null, true, LociHubService.InUpdate))
                 _shareHub.ToggleLike(info.Status.GUID);
-        CkGui.AttachToolTip(info.HasLiked ? "Remove Like from status." : "Like this status!");
+        CkGui.AttachTooltip(info.HasLiked ? "Remove Like from status." : "Like this status!");
 
         ImUtf8.SameLineInner();
         using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.DalamudGrey))
             if (CkGui.IconButton(FAI.Copy, inPopup: true))
                 _shareHub.CopyToClipboard(info.Status.GUID);
-        CkGui.AttachToolTip("Copy this Status to import into Loci");
+        CkGui.AttachTooltip("Copy this Status to import into Loci");
 
         // Middle Row.
         using (ImRaii.Group())
@@ -152,7 +152,7 @@ public class LociSharehubTab : DisposableMediatorSubscriberBase
             CkGui.FramedIconText(FAI.UserCircle);
             CkGui.ColorTextFrameAlignedInline(info.Author, ImGuiColors.DalamudGrey);
         }
-        CkGui.AttachToolTip("The Status Author/Publisher");
+        CkGui.AttachTooltip("The Status Author/Publisher");
         DrawStatusProperties();
 
         // Final Row.
@@ -165,7 +165,7 @@ public class LociSharehubTab : DisposableMediatorSubscriberBase
                 tagsString = tagsString.Substring(0, (int)(allowedLength / ImGui.CalcTextSize("A").X)) + "...";
             CkGui.ColorTextFrameAlignedInline(tagsString, ImGuiColors.ParsedGrey);
         }
-        CkGui.AttachToolTip("Associated Tags", !IpcCallerLoci.APIAvailable);
+        CkGui.AttachTooltip("Associated Tags", !IpcCallerLoci.APIAvailable);
 
         // if the status icon is valid, display it at the starting pos.
         if (info.Status.IconID != 0)
@@ -194,7 +194,7 @@ public class LociSharehubTab : DisposableMediatorSubscriberBase
         void StatusProperty(FAI icon, bool state, string tooltipTrue, string tooltipFalse)
         {
             CkGui.BoolIcon(state, false, icon, icon, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-            CkGui.AttachToolTip(state ? tooltipTrue : tooltipFalse);
+            CkGui.AttachTooltip(state ? tooltipTrue : tooltipFalse);
         } 
     }
 
@@ -218,19 +218,19 @@ public class LociSharehubTab : DisposableMediatorSubscriberBase
         ImUtf8.SameLineInner();
         if (CkGui.IconTextButton(FAI.Search, "Search", disabled: LociHubService.InUpdate || !IpcCallerLoci.APIAvailable))
             _shareHub.Search(_searchStr, _searchTags);
-        CkGui.AttachToolTip(IpcCallerLoci.APIAvailable ? "Update Search Results" : "Loci must be installed to use the sharehub!");
+        CkGui.AttachTooltip(IpcCallerLoci.APIAvailable ? "Update Search Results" : "Loci must be installed to use the sharehub!");
 
         // Show the filter combo.
         ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo("##filter-type", filterTypeSize, _shareHub.SortBy, out var newType, [HubSortBy.Likes, HubSortBy.DatePosted], flags: CFlags.NoArrowButton))
             _shareHub.SortBy = newType;
-        CkGui.AttachToolTip("Sort Method--SEP--Define how results are found.");
+        CkGui.AttachTooltip("Sort Method--SEP--Define how results are found.");
 
         // the sort direction.
         ImUtf8.SameLineInner();
         if (CkGui.IconButton(sortIcon))
             _shareHub.ToggleSortDirection();
-        CkGui.AttachToolTip($"Sort Direction--SEP--Current: {_shareHub.SortDirection}");
+        CkGui.AttachTooltip($"Sort Direction--SEP--Current: {_shareHub.SortDirection}");
         
         // NEXT ROW (tags)
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - CkGui.IconButtonSize(FAI.Tags).X - ImGui.GetStyle().ItemInnerSpacing.X);
@@ -240,7 +240,7 @@ public class LociSharehubTab : DisposableMediatorSubscriberBase
         ImUtf8.SameLineInner();
         var pressed = CkGui.IconButton(FAI.Tags);
         var popupDrawPos = ImGui.GetItemRectMin() + new Vector2(ImGui.GetItemRectSize().X, 0);
-        CkGui.AttachToolTip("Select from an existing list of tags.--NL----COL--(Helps make statuses easier to find)", ImGuiColors.DalamudGrey2);
+        CkGui.AttachTooltip("Select from an existing list of tags.--NL----COL--(Helps make statuses easier to find)", ImGuiColors.DalamudGrey2);
 
         if (pressed)
             ImGui.OpenPopup("##loci-sharehub-tags");

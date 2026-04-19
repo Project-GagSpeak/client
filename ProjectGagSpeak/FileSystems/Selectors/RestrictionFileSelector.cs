@@ -79,7 +79,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
             ImGui.CloseCurrentPopup();
         }
 
-        CkGui.AttachToolTip("Enter a new name here to rename the changed restriction.");
+        CkGui.AttachTooltip("Enter a new name here to rename the changed restriction.");
     }
 
     public override void Dispose()
@@ -130,7 +130,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
                 _manager.Delete(leaf.Value);
             }
 
-            CkGui.AttachToolTip("Delete this restriction item. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
+            CkGui.AttachTooltip("Delete this restriction item. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
         }
 
         return hovered && ImGui.IsMouseReleased(ImGuiMouseButton.Left);
@@ -149,7 +149,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
     {
         if (CkGui.IconButton(FAI.Plus, inPopup: true))
             ImGui.OpenPopup("##NewRestriction");
-        CkGui.AttachToolTip("Create a new Restriction Item.");
+        CkGui.AttachTooltip("Create a new Restriction Item.");
         _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.CreatingRestriction, WardrobeUI.LastPos, WardrobeUI.LastSize, gc =>
         {
             var cache = (RestrictionGuideCache)gc;
@@ -205,7 +205,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
             _newType = newType;
         }
 
-        CkGui.AttachToolTip("Define what type of restriction you want to make.");
+        CkGui.AttachTooltip("Define what type of restriction you want to make.");
 
         // Alternative early exit.
         ImUtf8.SameLineInner();

@@ -184,19 +184,19 @@ public class PopoutGlobalChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubs
         ImUtf8.SameLineInner();
         if (CkGui.IconButton(FAI.Heart))
             _showEmotes = !_showEmotes;
-        CkGui.AttachToolTip($"Toggles Quick-Emote selection.");
+        CkGui.AttachTooltip($"Toggles Quick-Emote selection.");
 
         // Toggle AutoScroll functionality
         ImUtf8.SameLineInner();
         if (CkGui.IconButton(scrollIcon))
             DoAutoScroll = !DoAutoScroll;
-        CkGui.AttachToolTip($"Toggles AutoScroll (Current: {(DoAutoScroll ? "Enabled" : "Disabled")})");
+        CkGui.AttachTooltip($"Toggles AutoScroll (Current: {(DoAutoScroll ? "Enabled" : "Disabled")})");
 
         // draw the popout button
         ImUtf8.SameLineInner();
         if (CkGui.IconButton(FAI.Expand, disabled: !KeyMonitor.ShiftPressed()))
             Mediator.Publish(new UiToggleMessage(typeof(GlobalChatPopoutUI)));
-        CkGui.AttachToolTip("Open the Global Chat in a Popout Window--SEP--Hold SHIFT to activate!");
+        CkGui.AttachTooltip("Open the Global Chat in a Popout Window--SEP--Hold SHIFT to activate!");
     }
 
     protected override void DrawPostChatLog(Vector2 inputPosMin)
@@ -296,7 +296,7 @@ public class PopoutGlobalChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubs
             Mediator.Publish(new KinkPlateLightCreateOpenMessage(LastInteractedMsg.UserData));
             ClosePopupAndResetMsg();
         }
-        CkGui.AttachToolTip($"Opens {LastInteractedMsg.Name}'s Light KinkPlate.");
+        CkGui.AttachTooltip($"Opens {LastInteractedMsg.Name}'s Light KinkPlate.");
 
         ImGui.Separator();
         using (ImRaii.Disabled(!shiftHeld || string.IsNullOrWhiteSpace(_requestMessage)))
@@ -305,7 +305,7 @@ public class PopoutGlobalChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubs
                 _hub.UserSendKinksterRequest(new(new(LastInteractedMsg.UID), false, _requestNickPref, _requestMessage)).ConfigureAwait(false);
                 ClosePopupAndResetMsg();
             }
-        CkGui.AttachToolTip(!shiftHeld ? "Must be holding SHIFT to select."
+        CkGui.AttachTooltip(!shiftHeld ? "Must be holding SHIFT to select."
             : string.IsNullOrWhiteSpace(_requestMessage)
             ? "Must attach a message to the request!"
                 : $"Sends a Kinkster Request to {LastInteractedMsg.Name}.");
@@ -320,7 +320,7 @@ public class PopoutGlobalChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubs
                 SilenceList.Add(LastInteractedMsg.UID);
                 ClosePopupAndResetMsg();
             }
-        CkGui.AttachToolTip(ctrlHeld
+        CkGui.AttachTooltip(ctrlHeld
             ? $"Hides all messages from {LastInteractedMsg.Name} until plugin reload/restart."
             : "Must be holding CTRL to select.");
     }

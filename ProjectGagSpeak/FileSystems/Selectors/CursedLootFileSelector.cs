@@ -84,7 +84,7 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
             _manager.Rename(leaf.Value, currentName);
             ImGui.CloseCurrentPopup();
         }
-        CkGui.AttachToolTip("Enter a new name here to rename the changed cursedItem.");
+        CkGui.AttachTooltip("Enter a new name here to rename the changed cursedItem.");
     }
 
 
@@ -132,7 +132,7 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
 
                 ImGui.SameLine();
                 ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged].Handle, new Vector2(ImGui.GetTextLineHeight()));
-                CkGui.AttachToolTip("Cursed Loot type is [Gag].");
+                CkGui.AttachTooltip("Cursed Loot type is [Gag].");
 
                 ImGui.SameLine();
                 CkGui.TagLabelText(gag.Precedence.ToName(), gag.Precedence.ToColor(), 3 * ImGuiHelpers.GlobalScale);
@@ -177,7 +177,7 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
         keyElementHovered |= overErase;
         if (allowErase && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
             _manager.Delete(leaf.Value);
-        CkGui.AttachToolTip(leaf.Value.InPool ? "Cannot delete while in loot pool" : "Delete this cursed Item. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
+        CkGui.AttachTooltip(leaf.Value.InPool ? "Cannot delete while in loot pool" : "Delete this cursed Item. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
 
 
         wdl.ChannelsSetCurrent(0);
@@ -212,7 +212,7 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
     {
         if (CkGui.IconButton(FAI.Plus, inPopup: true))
             ImGui.OpenPopup("##NewCursedItem");
-        CkGui.AttachToolTip("Create a new Cursed Item.");
+        CkGui.AttachTooltip("Create a new Cursed Item.");
 
         ImGui.SameLine(0, 1);
         DrawFolderButton();

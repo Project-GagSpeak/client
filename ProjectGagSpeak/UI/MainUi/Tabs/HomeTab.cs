@@ -124,7 +124,7 @@ public class HomeTab
             ImGui.SetCursorScreenPos(EditBorderPos);
             if (ImGui.InvisibleButton("##EditProfileButton", EditBorderSize))
                 _mediator.Publish(new UiToggleMessage(typeof(KinkPlateEditorUI)));
-            CkGui.AttachToolTip("Open and Customize your KinkPlate™!");
+            CkGui.AttachTooltip("Open and Customize your KinkPlate™!");
 
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileEditing, MainUI.LastPos, MainUI.LastSize,
                 _ => _mediator.Publish(new UiToggleMessage(typeof(KinkPlateEditorUI), ToggleType.Show)));
@@ -142,7 +142,7 @@ public class HomeTab
         var isSupporter = MainHub.OwnUserData.Tier is not CkSupporterTier.NoRole;
 
         CkGui.FontText(MainHub.DisplayName, Fonts.UidFont);
-        CkGui.AttachToolTip(isSupporter ? SUPPORTER_NAME_TOOLTIP : NAME_TOOLTIP);
+        CkGui.AttachTooltip(isSupporter ? SUPPORTER_NAME_TOOLTIP : NAME_TOOLTIP);
         // Copy based on interaction type.
         if (isSupporter && ImGui.GetIO().KeyCtrl && ImGui.IsItemClicked())
             ImGui.SetClipboardText(MainHub.OwnUserData.Alias);
@@ -158,7 +158,7 @@ public class HomeTab
             CkGui.IconTextAligned(icon);
             CkGui.TextFrameAlignedInline(text);
         }
-        CkGui.AttachToolTip(tooltip);
+        CkGui.AttachTooltip(tooltip);
     }
 
     private void DrawSafewordRow(float width)
@@ -182,7 +182,7 @@ public class HomeTab
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 _editingSafeword = false;
             font.Dispose();
-            CkGui.AttachToolTip("Enter to save, right-click to cancel.");
+            CkGui.AttachTooltip("Enter to save, right-click to cancel.");
         }
         else
         {
@@ -192,7 +192,7 @@ public class HomeTab
             else
                 CkGui.ColorTextFrameAlignedInline(_config.Current.Safeword, CkCol.TriStateCross.Uint(), false);
             font.Dispose(); // will affect tt and tutorial if not.
-            CkGui.AttachToolTip("Your current safeword. Click to edit!");
+            CkGui.AttachTooltip("Your current safeword. Click to edit!");
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SettingSafeword, MainUI.LastPos, MainUI.LastSize);
 
             if (ImGui.IsItemClicked())
@@ -272,49 +272,49 @@ public class HomeTab
 #endif
         if (CkGui.FancyButton(FAI.WaveSquare, "Sex Toy Remote", width, disabled))
             _mediator.Publish(new UiToggleMessage(typeof(BuzzToyRemoteUI)));
-        CkGui.AttachToolTip("Control Simulated, or IRL Sex Toys! --COL--[WIP]--COL--");
+        CkGui.AttachTooltip("Control Simulated, or IRL Sex Toys! --COL--[WIP]--COL--");
     }
 
     private void WardrobeButton(float width)
     {
         if (CkGui.FancyButton(FAI.ToiletPortable, "Wardrobe", width, false))
             _mediator.Publish(new UiToggleMessage(typeof(WardrobeUI)));
-        CkGui.AttachToolTip("Restraint Sets, Restrictions, Gags, and Collars");
+        CkGui.AttachTooltip("Restraint Sets, Restrictions, Gags, and Collars");
     }
 
     private void CursedLootButton(float width)
     {
         if (CkGui.FancyButton(FAI.Coins, "Cursed Loot", width, false))
             _mediator.Publish(new UiToggleMessage(typeof(CursedLootUI)));
-        CkGui.AttachToolTip("Gamble away your fortunes and freedom with Cursed Loot!");
+        CkGui.AttachTooltip("Gamble away your fortunes and freedom with Cursed Loot!");
     }
 
     private void PuppeteerButton(float width)
     {
         if (CkGui.FancyButton(FAI.PersonHarassing, "Puppeteer", width))
             _mediator.Publish(new UiToggleMessage(typeof(PuppeteerUI)));
-        CkGui.AttachToolTip("Who's in control now? (Global & Per-Kinkster Control)");
+        CkGui.AttachTooltip("Who's in control now? (Global & Per-Kinkster Control)");
     }
 
     private void TriggersButton(float width)
     {
         if (CkGui.FancyButton(FAI.Bolt, "Triggers", width))
             _mediator.Publish(new UiToggleMessage(typeof(TriggersUI)));
-        CkGui.AttachToolTip("Monitor events and react to them");
+        CkGui.AttachTooltip("Monitor events and react to them");
     }
 
     private void ToyboxButton(float width)
     {
         if (CkGui.FancyButton(FAI.BoxOpen, "Toybox", width))
             _mediator.Publish(new UiToggleMessage(typeof(ToyboxUI)));
-        CkGui.AttachToolTip("Contains your Toys, Patterns, and Alarms--COL--[WIP]--COL--");
+        CkGui.AttachTooltip("Contains your Toys, Patterns, and Alarms--COL--[WIP]--COL--");
     }
 
     private void ModPresetsButton(float width)
     {
         if (CkGui.FancyButton(FAI.FileAlt, "Mod Presets", width, false))
             _mediator.Publish(new UiToggleMessage(typeof(ModPresetsUI)));
-        CkGui.AttachToolTip("Configure presets for your Penumbra mod settings!" +
+        CkGui.AttachTooltip("Configure presets for your Penumbra mod settings!" +
             "--SEP--Presets can be attached to restraints and restrictions!");
     }
 
@@ -322,14 +322,14 @@ public class HomeTab
     {
         if (CkGui.FancyButton(FAI.CloudUploadAlt, "Publications", width, false))
             _mediator.Publish(new UiToggleMessage(typeof(PublicationsUI)));
-        CkGui.AttachToolTip("Publish created Patterns & LociData for others to enjoy!");
+        CkGui.AttachTooltip("Publish created Patterns & LociData for others to enjoy!");
     }
 
     private void AchievementsButton(float width)
     {
         if (CkGui.FancyButton(FAI.Trophy, "Achievements", width, false))
             _mediator.Publish(new UiToggleMessage(typeof(AchievementsUI)));
-        CkGui.AttachToolTip("View Achievement Progress & Rewards.");
+        CkGui.AttachTooltip("View Achievement Progress & Rewards.");
     }
 
     private void KoFiButton(float buttonWidth)
@@ -339,7 +339,7 @@ public class HomeTab
             try { Process.Start(new ProcessStartInfo { FileName = "https://www.ko-fi.com/cordeliamist", UseShellExecute = true }); }
             catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the Patreon link. {e.Message}"); }
         }
-        CkGui.AttachToolTip("This plugin took a massive toll on my life." +
+        CkGui.AttachTooltip("This plugin took a massive toll on my life." +
             "--NL--As happy as I am to make this free for all of you to enjoy, any support is much appreciated ♥" +
             "--NL--Will open --COL--ko-fi.com--COL-- in a new browser window.", ImGuiColors.ParsedPink);
     }
@@ -351,7 +351,7 @@ public class HomeTab
             try { Process.Start(new ProcessStartInfo { FileName = "https://www.patreon.com/CordeliaMist", UseShellExecute = true }); }
             catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the Patreon link. {e.Message}"); }
         }
-        CkGui.AttachToolTip("This plugin took a massive toll on my life." +
+        CkGui.AttachTooltip("This plugin took a massive toll on my life." +
             "--NL--As happy as I am to make this free for all of you to enjoy, any support is much appreciated ♥" +
             "--NL--Will open --COL--patreon.com--COL-- in a new browser window.", ImGuiColors.ParsedPink);
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SelfPlug, MainUI.LastPos, MainUI.LastSize);
@@ -364,7 +364,7 @@ public class HomeTab
             try { Process.Start(new ProcessStartInfo { FileName = "https://forms.gle/4AL43XUeWna2DtYK7", UseShellExecute = true }); }
             catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the google form. {e.Message}"); }
         }
-        CkGui.AttachToolTip("Opens a short 1 question positive feedback form ♥" +
+        CkGui.AttachTooltip("Opens a short 1 question positive feedback form ♥" +
             "--SEP--They're a nice way for me to reflect how my efforts are positively impacting others~");
     }
 }

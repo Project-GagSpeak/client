@@ -58,14 +58,14 @@ public partial class SidePanelPair
         ImUtf8.SameLineInner();
         CkGui.HoverIconText(FAI.QuestionCircle, ImGuiColors.TankBlue.ToUint(), ImGui.GetColorU32(ImGuiCol.TextDisabled));
         if (ImGui.IsItemHovered())
-            CkGui.AttachToolTip("You can toggle the Chat Garbler and GagPlates in the Settings!");
+            CkGui.AttachTooltip("You can toggle the Chat Garbler and GagPlates in the Settings!");
         using (ImRaii.Group())
         {
             ClientRowTextOnly(kinkster, dispName, width, KPID.ChatGarblerActive, globals.ChatGarblerActive, kinkster.OwnPermAccess.ChatGarblerActiveAllowed);
             ClientRowTextOnly(kinkster, dispName, width, KPID.ChatGarblerLocked, globals.ChatGarblerLocked, kinkster.OwnPermAccess.ChatGarblerLockedAllowed);
             ClientRowTextOnly(kinkster, dispName, width, KPID.GaggedNameplate, globals.GaggedNameplate, kinkster.OwnPermAccess.GaggedNameplateAllowed);
         }
-        CkGui.AttachToolTip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
+        CkGui.AttachTooltip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
         ImGui.Separator();
 
         ImGui.TextUnformatted("Padlock Permissions");
@@ -75,7 +75,7 @@ public partial class SidePanelPair
             ClientPermRow(kinkster, dispName, width, KPID.OwnerLocks, kinkster.OwnPerms.OwnerLocks, kinkster.OwnPermAccess.OwnerLocksAllowed);
             ClientPermRow(kinkster, dispName, width, KPID.DevotionalLocks, kinkster.OwnPerms.DevotionalLocks, kinkster.OwnPermAccess.DevotionalLocksAllowed);
         }
-        CkGui.AttachToolTip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
+        CkGui.AttachTooltip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
         ImGui.Separator();
 
         ImGui.TextUnformatted("Gag Permissions");
@@ -88,7 +88,7 @@ public partial class SidePanelPair
             ClientPermRow(kinkster, dispName, width, KPID.UnlockGags, kinkster.OwnPerms.UnlockGags, kinkster.OwnPermAccess.UnlockGagsAllowed);
             ClientPermRow(kinkster, dispName, width, KPID.RemoveGags, kinkster.OwnPerms.RemoveGags, kinkster.OwnPermAccess.RemoveGagsAllowed);
         }
-        CkGui.AttachToolTip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
+        CkGui.AttachTooltip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
         ImGui.Separator();
 
         ImGui.TextUnformatted("Restriction Permissions");
@@ -101,7 +101,7 @@ public partial class SidePanelPair
             ClientPermRow(kinkster, dispName, width, KPID.UnlockRestrictions, kinkster.OwnPerms.UnlockRestrictions, kinkster.OwnPermAccess.UnlockRestrictionsAllowed);
             ClientPermRow(kinkster, dispName, width, KPID.RemoveRestrictions, kinkster.OwnPerms.RemoveRestrictions, kinkster.OwnPermAccess.RemoveRestrictionsAllowed);
         }
-        CkGui.AttachToolTip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
+        CkGui.AttachTooltip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
         ImGui.Separator();
 
         ImGui.TextUnformatted("Restraint Set Permissions");
@@ -118,7 +118,7 @@ public partial class SidePanelPair
             ClientPermRow(kinkster, dispName, width, KPID.RemoveLayersWhileLocked, kinkster.OwnPerms.RemoveLayersWhileLocked, kinkster.OwnPermAccess.RemoveLayersWhileLockedAllowed);
             ClientPermRow(kinkster, dispName, width, KPID.RemoveRestraintSets, kinkster.OwnPerms.RemoveRestraintSets, kinkster.OwnPermAccess.RemoveRestraintSetsAllowed);
         }
-        CkGui.AttachToolTip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
+        CkGui.AttachTooltip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
         ImGui.Separator();
 
         ImGui.TextUnformatted("Puppeteer Permissions");
@@ -129,7 +129,7 @@ public partial class SidePanelPair
             ClientPermRow(kinkster, dispName, width, KPID.PuppetPermAlias, kinkster.OwnPerms.PuppetPerms, kinkster.OwnPermAccess.PuppetPermsAllowed, PuppetPerms.Alias);
             ClientPermRow(kinkster, dispName, width, KPID.PuppetPermAll, kinkster.OwnPerms.PuppetPerms, kinkster.OwnPermAccess.PuppetPermsAllowed, PuppetPerms.All);
         }
-        CkGui.AttachToolTip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
+        CkGui.AttachTooltip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
         ImGui.Separator();
 
         ImGui.TextUnformatted("Loci Permissions");
@@ -145,7 +145,7 @@ public partial class SidePanelPair
             ClientPermRow(kinkster, dispName, width, KPID.RemoveAppliedLociData, kinkster.OwnPerms.LociAccess, kinkster.OwnPermAccess.LociAccessAllowed, LociAccess.RemoveApplied);
             ClientPermRow(kinkster, dispName, width, KPID.RemoveAnyLociStatus, kinkster.OwnPerms.LociAccess, kinkster.OwnPermAccess.LociAccessAllowed, LociAccess.RemoveAny);
         }
-        CkGui.AttachToolTip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
+        CkGui.AttachTooltip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
         ImGui.Separator();
 
         ImGui.TextUnformatted("Miscellaneous Permissions");
@@ -154,7 +154,7 @@ public partial class SidePanelPair
             ClientPermRow(kinkster, dispName, width, KPID.HypnosisMaxTime, kinkster.OwnPerms.MaxHypnosisTime, kinkster.OwnPermAccess.HypnosisMaxTimeAllowed);
             ClientPermRow(kinkster, dispName, width, KPID.HypnosisEffect, kinkster.OwnPerms.HypnoEffectSending, kinkster.OwnPermAccess.HypnosisSendingAllowed);
         }
-        CkGui.AttachToolTip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
+        CkGui.AttachTooltip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
         ImGui.Separator();
 
         ImGui.TextUnformatted("Toybox Permissions");
@@ -165,7 +165,7 @@ public partial class SidePanelPair
             ClientPermRow(kinkster, dispName, width, KPID.AlarmToggling, kinkster.OwnPerms.ToggleAlarms, kinkster.OwnPermAccess.ToggleAlarmsAllowed);
             ClientPermRow(kinkster, dispName, width, KPID.TriggerToggling, kinkster.OwnPerms.ToggleTriggers, kinkster.OwnPermAccess.ToggleTriggersAllowed);
         }
-        CkGui.AttachToolTip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
+        CkGui.AttachTooltip($"Cannot change perms for {dispName} in Hardcore mode!", !kinkster.OwnPerms.InHardcore);
         ImGui.Separator();
 
         // Probably a good idea to add a warning here on a popup or something idk.
@@ -175,7 +175,7 @@ public partial class SidePanelPair
         if (ImGui.IsItemHovered())
         {
             using (Fonts.UidFont.Push())
-                CkGui.AttachToolTip($"--COL--IMPORTANT:--COL-- Once in hardcore mode, you can only change EditAccess for {dispName}." +
+                CkGui.AttachTooltip($"--COL--IMPORTANT:--COL-- Once in hardcore mode, you can only change EditAccess for {dispName}." +
                     $"--NL--{dispName} will have control over any permissions they have edit access to instead." +
                     "--NL--Be sure you are ok with this before enabling!", color: ImGuiColors.DalamudRed);
         }
@@ -353,12 +353,12 @@ public partial class SidePanelPair
 
         ImGui.TextUnformatted("Individual Pair Functions");
         if (CkGui.IconTextButton(FAI.User, "Open Profile", width, true))
-            _mediator.Publish(new OpenKinkPlatePopout(kinkster.UserData));
-        CkGui.AttachToolTip($"Opens {dispName}'s profile!");
+            _mediator.Publish(new KinkPlateLightCreateOpenMessage(kinkster.UserData));
+        CkGui.AttachTooltip($"Opens {dispName}'s profile!");
 
         if (CkGui.IconTextButton(FAI.ExclamationTriangle, $"Report {dispName}'s KinkPlate", width, true))
             _mediator.Publish(new OpenReportUIMessage(kinkster.UserData, ReportKind.Profile));
-        CkGui.AttachToolTip($"Snapshot {dispName}'s KinkPlate and make a report with its state.");
+        CkGui.AttachTooltip($"Snapshot {dispName}'s KinkPlate and make a report with its state.");
         
         if (CkGui.IconTextButton(FAI.Trash, "Unpair Permanently", width, true, !KeyMonitor.CtrlPressed() || !KeyMonitor.ShiftPressed()))
             UiService.SetUITask(async () =>
@@ -373,7 +373,7 @@ public partial class SidePanelPair
                     _service.ClearDisplay();
                 }
             });
-        CkGui.AttachToolTip($"--COL--CTRL + SHIFT + L-Click--COL-- to remove {dispName}", color: ImGuiColors.DalamudRed);
+        CkGui.AttachTooltip($"--COL--CTRL + SHIFT + L-Click--COL-- to remove {dispName}", color: ImGuiColors.DalamudRed);
     }
 
 }

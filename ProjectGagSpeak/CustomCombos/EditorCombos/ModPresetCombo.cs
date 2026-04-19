@@ -60,7 +60,7 @@ public sealed class ModPresetCombo : CkFilterComboCache<ModSettingsPreset>
         var previewLabel = Items.FirstOrDefault(i => i.Label == _currentItem)?.Label ?? "Select a Preset...";
         var result = Draw(label, previewLabel, string.Empty, width, ImGui.GetTextLineHeightWithSpacing(), flags);
         if(Items.Count <= 0)
-            CkGui.AttachToolTip("You will not be able to open this dropdown until you have selected a mod from the mod list above!");
+            CkGui.AttachTooltip("You will not be able to open this dropdown until you have selected a mod from the mod list above!");
         return result;
     }
 

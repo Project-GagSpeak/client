@@ -89,6 +89,6 @@ public class SidePanelTabs : IconTabBar<SidePanelTabs.SelectedTab>
                     ImGui.GetColorU32(ImGuiCol.Separator), 2f);
             }
         }
-        CkGui.AttachToolTip(tab.Tooltip);
+        CkGui.AttachTooltip(tab.Tooltip);
     }
 }

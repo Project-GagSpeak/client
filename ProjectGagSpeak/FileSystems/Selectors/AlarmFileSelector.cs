@@ -111,7 +111,7 @@ public sealed class AlarmFileSelector : CkFileSystemSelector<Alarm, AlarmFileSel
                 Log.Debug($"Deleting {leaf.Value.Label} with SHIFT pressed.");
                 _manager.Delete(leaf.Value);
             }
-            CkGui.AttachToolTip("Delete this alarm. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
+            CkGui.AttachTooltip("Delete this alarm. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
         }
         return hovered && ImGui.IsMouseReleased(ImGuiMouseButton.Left);
     }
@@ -128,7 +128,7 @@ public sealed class AlarmFileSelector : CkFileSystemSelector<Alarm, AlarmFileSel
     {
         if (CkGui.IconButton(FAI.Plus, inPopup: true))
             ImGui.OpenPopup("##NewAlarm");
-        CkGui.AttachToolTip("Create a new Alarm.");
+        CkGui.AttachTooltip("Create a new Alarm.");
 
         ImGui.SameLine(0, 1);
         DrawFolderButton();

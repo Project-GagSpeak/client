@@ -46,7 +46,7 @@ public sealed class CustomizeProfileCombo : CkFilterComboCache<CustomizeProfile>
         // Maybe there is a faster way to know this, but atm I do not know.
         var previewName = Items.FirstOrDefault(i => i.ProfileGuid == _currentItem).ProfileName ?? "Select a Profile...";
         var selected = Draw($"##{label}", previewName, string.Empty, width, ImGui.GetTextLineHeightWithSpacing());
-        CkGui.AttachToolTip("[CTRL + L-Click] -> Fetch latest profile list.");
+        CkGui.AttachTooltip("[CTRL + L-Click] -> Fetch latest profile list.");
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left) && KeyMonitor.CtrlPressed())
             _mediator.Publish(new CustomizeProfileListRequest());
 
@@ -61,7 +61,7 @@ public sealed class CustomizeProfileCombo : CkFilterComboCache<CustomizeProfile>
         using var id = ImRaii.PushId(globalIdx);
         var profile = Items[globalIdx];
         var ret = ImGui.Selectable(profile.ProfileName, selected);
-        CkGui.AttachToolTip("Bound Guid: " + profile.ProfileGuid);
+        CkGui.AttachTooltip("Bound Guid: " + profile.ProfileGuid);
         return ret;
     }
 }

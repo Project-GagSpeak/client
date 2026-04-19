@@ -287,7 +287,7 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
         statsPos += new Vector2(24, 0);
         ImGui.SetCursorScreenPos(statsPos);
         CkGui.ColorText($"{ClientAchievements.Completed}/{ClientAchievements.Total}", ImGuiColors.ParsedGold);
-        CkGui.AttachToolTip("The total achievements " + MainHub.OwnUserData.AliasOrUID + " has earned.");
+        CkGui.AttachTooltip("The total achievements " + MainHub.OwnUserData.AliasOrUID + " has earned.");
     }
 
     private void DrawBlockedSlots(ImDrawListPtr drawList, KinkPlateContent info)

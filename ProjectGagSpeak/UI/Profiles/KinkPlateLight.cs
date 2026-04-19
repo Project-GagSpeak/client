@@ -250,7 +250,7 @@ public class KinkPlateLight
         statsPos.X += StatIconSize.X + 2f;
         ImGui.SetCursorScreenPos(statsPos);
         CkGui.ColorText(createdDate, ImGuiColors.ParsedGold);
-        CkGui.AttachToolTip("The date " + displayName + " first joined GagSpeak.");
+        CkGui.AttachTooltip("The date " + displayName + " first joined GagSpeak.");
 
         statsPos.X += dateWidth + spacing;
         drawList.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Achievement], statsPos, StatIconSize, ImGuiColors.ParsedGold);
@@ -258,7 +258,7 @@ public class KinkPlateLight
         statsPos.X += StatIconSize.X + 2f;
         ImGui.SetCursorScreenPos(statsPos);
         CkGui.ColorText($"{info.CompletedTotal}/{ClientAchievements.Total}", ImGuiColors.ParsedGold);
-        CkGui.AttachToolTip("The total achievements " + displayName + " has earned.");
+        CkGui.AttachTooltip("The total achievements " + displayName + " has earned.");
 
         statsPos.X += achievementWidth + spacing;
         statsPos.Y += 2f;
@@ -278,7 +278,7 @@ public class KinkPlateLight
                 _mediator.Publish(new OpenReportUIMessage(userData, ReportKind.Profile));
 
         }
-        CkGui.AttachToolTip("Report " + displayName + "'s KinkPlate™" +
+        CkGui.AttachTooltip("Report " + displayName + "'s KinkPlate™" +
             "--SEP--Press CTRL+SHIFT to report.\n" +
             "(Opens Report Submission Window)");
 

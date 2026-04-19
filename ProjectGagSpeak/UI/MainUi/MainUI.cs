@@ -82,7 +82,7 @@ public class MainUI : WindowMediatorSubscriberBase
 #if !DEBUG
         WindowName = $"GagSpeak v{ver.Major}.{ver.Minor}.{ver.Build}.{ver.Revision}###GagSpeakMainUI";
 #else
-        WindowName = $"GagSpeak v{ver.Major}.{ver.Minor}.{ver.Build}.{ver.Revision} (DEVELOPMENT BUILD)###GagSpeakMainUI";
+        WindowName = $"GagSpeak v{ver.Major}.{ver.Minor}.{ver.Build}.{ver.Revision} (DEV BUILD)###GagSpeakMainUI";
 #endif
         Flags |= WFlags.NoDocking;
 
@@ -218,7 +218,7 @@ public class MainUI : WindowMediatorSubscriberBase
         CkGui.TextUnderlined("Recommended Plugins Missing!", ImGuiColors.DalamudYellow);
 
         CloseButton(drawPos, closeSize);
-        CkGui.AttachToolTip("Dismiss this message for this instance of GagSpeak.");
+        CkGui.AttachTooltip("Dismiss this message for this instance of GagSpeak.");
 
         if (!IpcCallerSundouleia.APIAvailable)
         {
@@ -228,7 +228,7 @@ public class MainUI : WindowMediatorSubscriberBase
             ImGui.SameLine();
             if (ImGui.SmallButton("Learn More##sund-warn"))
                 Mediator.Publish(new OpenSettingsPluginInfoMessage(OptionalPlugin.Sundouleia));
-            CkGui.AttachToolTip("Opens a helper box in the Settings UI for more info.");
+            CkGui.AttachTooltip("Opens a helper box in the Settings UI for more info.");
         }
         if (!IpcCallerPenumbra.APIAvailable)
         {
@@ -238,7 +238,7 @@ public class MainUI : WindowMediatorSubscriberBase
             ImGui.SameLine();
             if (ImGui.SmallButton("Learn More##pen-warn"))
                 Mediator.Publish(new OpenSettingsPluginInfoMessage(OptionalPlugin.Penumbra));
-            CkGui.AttachToolTip("Opens a helper box in the Settings UI for more info.");
+            CkGui.AttachTooltip("Opens a helper box in the Settings UI for more info.");
         }
         if (!IpcCallerGlamourer.APIAvailable)
         {
@@ -248,7 +248,7 @@ public class MainUI : WindowMediatorSubscriberBase
             ImGui.SameLine();
             if (ImGui.SmallButton("Learn More##glam-warn"))
                 Mediator.Publish(new OpenSettingsPluginInfoMessage(OptionalPlugin.Glamourer));
-            CkGui.AttachToolTip("Opens a helper box in the Settings UI for more info.");
+            CkGui.AttachTooltip("Opens a helper box in the Settings UI for more info.");
         }
         if (!IpcCallerLoci.APIAvailable)
         {
@@ -258,7 +258,7 @@ public class MainUI : WindowMediatorSubscriberBase
             ImGui.SameLine();
             if (ImGui.SmallButton("Learn More##loci-warn"))
                 Mediator.Publish(new OpenSettingsPluginInfoMessage(OptionalPlugin.Loci));
-            CkGui.AttachToolTip("Opens a helper box in the Settings UI for more info.");
+            CkGui.AttachTooltip("Opens a helper box in the Settings UI for more info.");
         }
 
         void CloseButton(Vector2 pos, Vector2 size)
@@ -298,7 +298,7 @@ public class MainUI : WindowMediatorSubscriberBase
                 _creatingRequest = false;
             });
         }
-        CkGui.AttachToolTip($"Send Pair Request to {_uidToSentTo}", string.IsNullOrEmpty(_uidToSentTo));
+        CkGui.AttachTooltip($"Send Pair Request to {_uidToSentTo}", string.IsNullOrEmpty(_uidToSentTo));
 
         // draw a attached message field as well if they want.
         ImGui.SetNextItemWidth(availableXWidth);
@@ -328,7 +328,7 @@ public class MainUI : WindowMediatorSubscriberBase
 
         if (DrawAddUser(winPtr, new Vector2(sideWidth, height), innerMinPos, disableButtons || !MainHub.IsConnected))
             _creatingRequest = !_creatingRequest;
-        CkGui.AttachToolTip("Add a new Kinkster");
+        CkGui.AttachTooltip("Add a new Kinkster");
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.AddingKinksters, LastPos, LastSize, _ => _creatingRequest = true);
 
         ImGui.SetCursorScreenPos(innerMinPos + new Vector2(sideWidth, 0));
@@ -350,7 +350,7 @@ public class MainUI : WindowMediatorSubscriberBase
                 UiService.SetUITask(_hub.Connect());
             }
         }
-        CkGui.AttachToolTip($"{(MainHub.IsConnected ? "Disconnect from" : "Connect to")} {MainHub.MAIN_SERVER_NAME}--SEP--Current Status: {MainHub.ServerStatus}");
+        CkGui.AttachTooltip($"{(MainHub.IsConnected ? "Disconnect from" : "Connect to")} {MainHub.MAIN_SERVER_NAME}--SEP--Current Status: {MainHub.ServerStatus}");
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ConnectionState, LastPos, LastSize);
 
         winPtr.DrawList.PopClipRect();

@@ -41,7 +41,7 @@ public abstract class CkFilterComboIconTextButton<T> : CkFilterComboCache<T>
         ImUtf8.SameLineInner();
         if (CkGui.IconTextButton(ButtonIcon, buttonText, disabled: DisableCondition(), id: label + "-Button"))
             OnButtonPress();
-        CkGui.AttachToolTip(tt);
+        CkGui.AttachTooltip(tt);
 
         return ret;
     }

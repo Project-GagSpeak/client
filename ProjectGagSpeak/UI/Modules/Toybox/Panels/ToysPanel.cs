@@ -86,7 +86,7 @@ public class ToysPanel
         // Draw the leftmost button, the personal remote.
         if (CkGui.IconButton(FAI.TabletAlt))
             _mediator.Publish(new UiToggleMessage(typeof(BuzzToyRemoteUI)));
-        CkGui.AttachToolTip("Open Personal Remote");
+        CkGui.AttachTooltip("Open Personal Remote");
 
         // Draw the center child with the connection state.
         ImGui.SameLine();
@@ -95,7 +95,7 @@ public class ToysPanel
             // Draw the intiface opener button.
             if (CkGui.IconButton(FAI.ArrowUpRightFromSquare, inPopup: true))
                 IntifaceCentral.OpenIntiface(true);
-            CkGui.AttachToolTip("Opens Intiface Central on your PC for connection.\nIf application is not detected, opens a link to installer.");
+            CkGui.AttachTooltip("Opens Intiface Central on your PC for connection.\nIf application is not detected, opens a link to installer.");
 
             // Now we need to draw our connection state, centered to the remaining width.
             ImGui.SameLine();
@@ -114,14 +114,14 @@ public class ToysPanel
                 else
                     UiService.SetUITask(_ipc.Connect);
             }
-            CkGui.AttachToolTip(IpcCallerIntiface.IsConnected ? "Disconnect from Intiface Central" : "Connect to Intiface Central");
+            CkGui.AttachTooltip(IpcCallerIntiface.IsConnected ? "Disconnect from Intiface Central" : "Connect to Intiface Central");
         }
 
         // Draw the rightmost button, the Intiface Central link.
         ImGui.SameLine();
         if (CkGui.IconButton(FAI.Plus))
             ImGui.OpenPopup("##NewSexToy");
-        CkGui.AttachToolTip("Create a new SexToy.");
+        CkGui.AttachTooltip("Create a new SexToy.");
 
         _selector.DrawPopups();
     }
@@ -338,7 +338,7 @@ public class ToysPanel
             // Draw the leftmost button, the personal remote.
             if (CkGui.IconButton(FAI.SatelliteDish))
                 UiService.SetUITask(_ipc.DeviceScannerTask());
-            CkGui.AttachToolTip("Perform 2.5s Scan for Devices");
+            CkGui.AttachTooltip("Perform 2.5s Scan for Devices");
 
             CkGui.TextFrameAlignedInline("ID:");
             CkGui.TextFrameAlignedInline(device.Id.ToString());

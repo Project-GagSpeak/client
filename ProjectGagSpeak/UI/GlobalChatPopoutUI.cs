@@ -85,7 +85,7 @@ public class GlobalChatPopoutUI : WindowMediatorSubscriberBase
         _chat.DrawChat(ImGui.GetContentRegionAvail(), WFlags.None);
 
         if (GlobalChatLog.NotVerified)
-            CkGui.AttachToolTip("Cannot use chat, your account is not verified!");
+            CkGui.AttachTooltip("Cannot use chat, your account is not verified!");
     }
 
     private void DrawChatUseBlockedWarning()

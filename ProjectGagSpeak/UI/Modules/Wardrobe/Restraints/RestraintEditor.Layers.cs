@@ -169,13 +169,13 @@ public class RestraintEditorLayers : IFancyTab
                 ImGui.InputTextWithHint($"##LayerName_{idx}", "Input Layer Name..", ref tmpLabel, 45);
                 if (ImGui.IsItemDeactivatedAfterEdit() && tmpLabel != layer.Label)
                     layer.Label = tmpLabel;
-                CkGui.AttachToolTip("The Layer name is seen by other Kinksters when applying Restraint Layers!");
+                CkGui.AttachTooltip("The Layer name is seen by other Kinksters when applying Restraint Layers!");
 
                 // Swap the layer type to the other type.
                 ImUtf8.SameLineInner();
                 if (CkGui.IconButton(FAI.ArrowsLeftRight, inPopup: true, disabled: !KeyMonitor.ShiftPressed()))
                     _manager.ItemInEditor!.Layers[idx] = layer is RestrictionLayer ? new ModPresetLayer() : new RestrictionLayer();
-                CkGui.AttachToolTip("Swap layer type to Mod Preset Layer. (Hold Shift)");
+                CkGui.AttachTooltip("Swap layer type to Mod Preset Layer. (Hold Shift)");
                 if (idx == 0) // this only needs to attach to the first layer item.
                 {
                     _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.LayerTypes, WardrobeUI.LastPos, WardrobeUI.LastSize,
@@ -186,7 +186,7 @@ public class RestraintEditorLayers : IFancyTab
                     ImUtf8.SameLineInner();
                 if (CkGui.IconButton(FAI.Eraser, inPopup: true, disabled: !KeyMonitor.ShiftPressed() || idx != _manager.ItemInEditor!.Layers.Count - 1))
                     _manager.ItemInEditor!.Layers.RemoveAt(idx);
-                CkGui.AttachToolTip("Delete this layer. (Hold Shift)--SEP--Only the highest layer can be removed.");
+                CkGui.AttachTooltip("Delete this layer. (Hold Shift)--SEP--Only the highest layer can be removed.");
             }
         }
         ImGui.GetWindowDrawList().AddRectFilled(ImGui.GetItemRectMin(), ImGui.GetItemRectMax(), CkCol.HChildBg.Uint(), DragDropItemRounding, ImDrawFlags.RoundCornersRight);

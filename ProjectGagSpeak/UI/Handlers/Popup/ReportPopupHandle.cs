@@ -101,7 +101,7 @@ internal class ReportPopupHandler : IPopupHandler
             ImGui.SetCursorScreenPos(descPos + borderSize);
             var desc = kinkPlate.Info.Description;
             DrawLimitedDescription(desc, ImGuiColors.DalamudWhite, new Vector2(pfpSize.X, 185));
-            CkGui.AttachToolTip("The Description being Reported");
+            CkGui.AttachTooltip("The Description being Reported");
 
             ImGui.SetCursorScreenPos(pfpBorderPos);
             ImGui.Dummy((descPos + descSize) - pfpBorderPos);

@@ -6,6 +6,7 @@ using GagSpeak.Gui.Components;
 using GagSpeak.PlayerClient;
 using Dalamud.Bindings.ImGui;
 using CkCommons.Gui;
+using GagSpeak.Utils;
 namespace GagSpeak.Gui;
 
 internal class ChangelogUI : WindowMediatorSubscriberBase
@@ -16,12 +17,7 @@ internal class ChangelogUI : WindowMediatorSubscriberBase
     {
         _config = config;
 
-        SizeConstraints = new()
-        {
-            MinimumSize = new(600, 300),
-            MaximumSize = new(600, 600)
-        };
-
+        this.SetBoundaries(new(600, 300), ImGui.GetIO().DisplaySize);
         Flags |= WFlags.NoTitleBar;
 
         // Init changelog Data

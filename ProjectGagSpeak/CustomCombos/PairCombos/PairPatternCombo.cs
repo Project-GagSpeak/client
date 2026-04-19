@@ -62,7 +62,7 @@ public sealed class PairPatternCombo : CkFilterComboIconTextButton<KinksterPatte
             var rightW = _iconLoopWidth + _iconCheckWidth + _iconInfoWidth + ImGui.GetStyle().ItemInnerSpacing.X * 2;
             ImGui.SameLine(ImGui.GetContentRegionAvail().X - rightW);
             CkGui.IconText(FAI.Sync, ImGui.GetColorU32(ImGuiColors.ParsedPink));
-            CkGui.AttachToolTip("This is a Looping Pattern.");
+            CkGui.AttachTooltip("This is a Looping Pattern.");
 
             ImUtf8.SameLineInner();
         }
@@ -73,7 +73,7 @@ public sealed class PairPatternCombo : CkFilterComboIconTextButton<KinksterPatte
         }
 
         CkGui.IconText(FAI.Check, isValid ? ImGuiColors.HealerGreen.ToUint() : ImGui.GetColorU32(ImGuiCol.TextDisabled));
-        CkGui.AttachToolTip(isValid
+        CkGui.AttachTooltip(isValid
             ? $"Can execute: A used device is active on {_ref.GetNickAliasOrUid()}."
             : $"Cannot execute: No used devices are active on {_ref.GetNickAliasOrUid()}.");
 

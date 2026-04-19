@@ -106,20 +106,20 @@ public class CollarOverviewTab : IFancyTab
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + buttonOffset);
         if (CkGui.IconButton(FAI.Undo, inPopup: true))
             _manager.StopEditing();
-        CkGui.AttachToolTip("Discard Changes and Exit Editing.");
+        CkGui.AttachTooltip("Discard Changes and Exit Editing.");
 
         ImUtf8.SameLineInner();
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + buttonOffset);
         if (CkGui.IconButton(FAI.Save, inPopup: true))
             _manager.SaveChangesAndStopEditing();
-        CkGui.AttachToolTip("Save Changes and Exit Editing.");
+        CkGui.AttachTooltip("Save Changes and Exit Editing.");
 
         CkGui.Separator(GsCol.VibrantPink.Uint());
 
         // Collar Label edit.
         ImGui.Spacing();
         CkGui.FramedIconText(FAI.Font);
-        CkGui.AttachToolTip("The Label for this Collar.");
+        CkGui.AttachTooltip("The Label for this Collar.");
 
         ImUtf8.SameLineInner();
         var label = collar.Label;
@@ -130,7 +130,7 @@ public class CollarOverviewTab : IFancyTab
         // Glamour edit.
         ImGui.Spacing();
         CkGui.FramedIconText(FAI.Vest);
-        CkGui.AttachToolTip("The attached Glamourer item.");
+        CkGui.AttachTooltip("The attached Glamourer item.");
 
         ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo($"##CollarES", 100f, collar.Glamour.Slot, out var nSlot, EquipSlotExtensions.EqdpSlots, _ => _.ToName(), flags: CFlags.NoArrowButton))
@@ -144,7 +144,7 @@ public class CollarOverviewTab : IFancyTab
         // Mod Field.
         ImGui.Spacing();
         CkGui.FramedIconText(FAI.FileDownload);
-        CkGui.AttachToolTip("The Mod Preset applied to this Collar.");
+        CkGui.AttachTooltip("The Mod Preset applied to this Collar.");
 
         ImUtf8.SameLineInner();
         if (_modPresets.PresetCombo.Draw("##CollarMPS", collar.Mod.Label, ImGui.GetContentRegionAvail().X * .4f, 1f, CFlags.NoArrowButton))
@@ -209,7 +209,7 @@ public class CollarOverviewTab : IFancyTab
             ImGui.Spacing();
             CkGui.FramedIconText(FAI.Font);
             CkGui.TextFrameAlignedInline(string.IsNullOrEmpty(_manager.ClientCollar.Label) ? "<No Label Set!>" : _manager.ClientCollar.Label);
-            CkGui.AttachToolTip("The Label for this Collar.");
+            CkGui.AttachTooltip("The Label for this Collar.");
         }
 
         // Glamour Field.
@@ -225,7 +225,7 @@ public class CollarOverviewTab : IFancyTab
         if (validMod)
         {
             CkGui.TextFrameAlignedInline(_manager.ClientCollar.Mod.Label);
-            CkGui.AttachToolTip("The Mod Preset applied to this Collar.");
+            CkGui.AttachTooltip("The Mod Preset applied to this Collar.");
 
             ImGui.SameLine();
             CkGui.TagLabelText(_manager.ClientCollar.Mod.Container.ModName, CkCol.CurvedHeader.Uint());
@@ -246,7 +246,7 @@ public class CollarOverviewTab : IFancyTab
 
         if (ImGui.IsItemHovered() && ImGui.IsMouseDoubleClicked(ImGuiMouseButton.Left))
             _thumbnails.SetThumbnailSource(Guid.Empty, new Vector2(120 * 1.2f, 120f), ImageDataType.Collar);
-        CkGui.AttachToolTip("The Thumbnail for this Collar.--SEP--Double Click to change the image.");
+        CkGui.AttachTooltip("The Thumbnail for this Collar.--SEP--Double Click to change the image.");
     }
 
     private void DrawPermissionEdits(Vector2 region)
@@ -313,7 +313,7 @@ public class CollarOverviewTab : IFancyTab
         {
             CkGui.FramedIconText(FAI.Heart);
             CkGui.TextFrameAlignedInline(owner);
-            CkGui.AttachToolTip("An owner of this collar.");
+            CkGui.AttachTooltip("An owner of this collar.");
         }
     }
 

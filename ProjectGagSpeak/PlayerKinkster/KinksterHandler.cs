@@ -92,12 +92,16 @@ public sealed class KinksterHandler : DisposableMediatorSubscriberBase
         // Notify other services.
         Logger.LogInformation($"[{Kinkster.GetNickAliasOrUid()}] rendered!", LoggerType.PairHandlers);
         Mediator.Publish(new KinksterRendered(this, Kinkster));
-        RefreshLoci();
+        TryRegisterLoci().ConfigureAwait(false);
     }
 
-    private async void RefreshLoci()
+    private async Task TryRegisterLoci()
     {
-        if (await _ipc.Loci.RegisterActor(Address).ConfigureAwait(false))
+        if (_lociRegistered)
+            return;
+        else if (!IsRendered && await _ipc.Loci.RegisterPlayer(NameString).ConfigureAwait(false))
+            _lociRegistered = true;
+        else if (await _ipc.Loci.RegisterActor(Address).ConfigureAwait(false))
             _lociRegistered = true;
     }
 
@@ -111,6 +115,10 @@ public sealed class KinksterHandler : DisposableMediatorSubscriberBase
 
         Logger.LogDebug($"Marking {Kinkster.GetNickAliasOrUid()} as unrendered @ [{address:X}]", LoggerType.PairHandlers);
         _player = null;
+        // Unregister after leaving visibility range.
+        _ipc.Loci.UnregisterPlayer(NameWithWorld);
+        _lociRegistered = false;
+        // Notify services.
         Mediator.Publish(new KinksterUnrendered(address));
         Mediator.Publish(new FolderUpdateKinkster());
     }

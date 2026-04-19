@@ -92,7 +92,7 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
         var size = _config.Current.FileIconScale;
         if (ImGui.SliderFloat("##icon_scaler", ref size, 0.5f, 2.0f, $"Scale: %.2fx"))
             _config.Current.FileIconScale = size;
-        CkGui.AttachToolTip($"Scalar: {size}x (Size: {_service.ItemSize.X}px)");
+        CkGui.AttachTooltip($"Scalar: {size}x (Size: {_service.ItemSize.X}px)");
         // Save changes only once we deactivate, to avoid spamming the hybrid saver.
         if (ImGui.IsItemDeactivatedAfterEdit())
             _config.Save();
@@ -103,7 +103,7 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
         ImUtf8.SameLineInner();
         if (CkGui.IconTextButton(FAI.FileImport, "From File"))
             _imageImport.ImportFromFile(_service.Kind, _service.DispSize, botRegionSize, KeyMonitor.ShiftPressed());
-        CkGui.AttachToolTip("Add a Thumbnail Image from the file browser."
+        CkGui.AttachTooltip("Add a Thumbnail Image from the file browser."
             + "--SEP-- Holding SHIFT will force the image to be re-imported.");
         _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.ImportByFile, LastPos, LastSize);
         _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.ImportingByFile, LastPos, LastSize);
@@ -112,7 +112,7 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
         ImUtf8.SameLineInner();
         if (CkGui.IconTextButton(FAI.Clipboard, "From Clipboard"))
             _imageImport.ImportFromClipboard(_service.Kind, _service.DispSize, botRegionSize, KeyMonitor.ShiftPressed());
-        CkGui.AttachToolTip("Add a Thumbnail Image from the contents copied to clipboard."
+        CkGui.AttachTooltip("Add a Thumbnail Image from the contents copied to clipboard."
             + "--SEP-- Holding SHIFT will force the image to be re-imported.");
         _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.ImportByClipboard, LastPos, LastSize, _ => IsOpen = false );
         _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.ImportingByClipboard, LastPos, LastSize, _ => IsOpen = false);
@@ -277,7 +277,7 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
             
             ImGui.CloseCurrentPopup();
         }
-        CkGui.AttachToolTip("Enter a new name for this file.--SEP--The .png is added for you.");
+        CkGui.AttachTooltip("Enter a new name for this file.--SEP--The .png is added for you.");
     }
 
     private void TryRefresh(bool force)

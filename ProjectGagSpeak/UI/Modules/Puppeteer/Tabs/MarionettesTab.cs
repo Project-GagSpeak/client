@@ -82,7 +82,7 @@ public class MarionettesTab : IFancyTab
         {
             _logger.LogInformation("We selected a Marionette!");
         }
-        CkGui.AttachToolTip("Stores the list of Kinksters that set trigger phrases for you or have enabled puppeteer permissions." +
+        CkGui.AttachTooltip("Stores the list of Kinksters that set trigger phrases for you or have enabled puppeteer permissions." +
             "--SEP--To interact with these Kinksters, they must have your name, which you can send after selecting a Kinkster.");
     }
 
@@ -109,7 +109,7 @@ public class MarionettesTab : IFancyTab
             if (marionette.IsListeningToClient)
             {
                 CkGui.ColorTextFrameAlignedInline(PlayerData.NameWithWorld, CkCol.TriStateCheck.Vec4Ref());
-                CkGui.AttachToolTip($"{marionette.GetDisplayName()} is associating your PlayerName with your Kinkster.", ImGuiColors.TankBlue);
+                CkGui.AttachTooltip($"{marionette.GetDisplayName()} is associating your PlayerName with your Kinkster.", ImGuiColors.TankBlue);
             }
             else
             {
@@ -136,7 +136,7 @@ public class MarionettesTab : IFancyTab
                     }
                 });
             }
-            CkGui.AttachToolTip($"Sends {marionette.GetDisplayName()} your Name@World, allowing them to respond to your orders.");
+            CkGui.AttachTooltip($"Sends {marionette.GetDisplayName()} your Name@World, allowing them to respond to your orders.");
         }
         _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.MarionettesPairName, PuppeteerUI.LastPos, PuppeteerUI.LastSize);
 
@@ -162,13 +162,13 @@ public class MarionettesTab : IFancyTab
             ImGui.SetNextItemWidth(ImGui.GetTextLineHeight());
             var sChar = marionette.PairPerms.StartChar.ToString();
             ImGui.InputText("##BracketBegin", ref sChar, 1, ITFlags.ReadOnly);
-            CkGui.AttachToolTip($"Optional Start character that scopes an order following a trigger phrase.");
+            CkGui.AttachTooltip($"Optional Start character that scopes an order following a trigger phrase.");
 
             ImUtf8.SameLineInner();
             ImGui.SetNextItemWidth(ImGui.GetTextLineHeight());
             var eChar = marionette.OwnPerms.EndChar.ToString();
             ImGui.InputText("##BracketEnd", ref eChar, 1, ITFlags.ReadOnly);
-            CkGui.AttachToolTip($"Optional End character that scopes an order following a trigger phrase.");
+            CkGui.AttachTooltip($"Optional End character that scopes an order following a trigger phrase.");
         }
         _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.MarionettesPairTriggerWords, PuppeteerUI.LastPos, PuppeteerUI.LastSize);
 

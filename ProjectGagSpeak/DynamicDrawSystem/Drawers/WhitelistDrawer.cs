@@ -76,7 +76,7 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
         {
             if (CkGui.IconTextButton(FAI.Cog, "Settings", isInPopup: !_cache.FilterConfigOpen))
                 _cache.FilterConfigOpen = !_cache.FilterConfigOpen;
-            CkGui.AttachToolTip("Configure preferences for folders.");
+            CkGui.AttachTooltip("Configure preferences for folders.");
         }
     }
 
@@ -134,7 +134,7 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
         CkGui.ColorTextFrameAlignedInline(folder.Name, folder.NameColor);
         // Total Context.
         CkGui.ColorTextFrameAlignedInline(folder.BracketText, ImGuiColors.DalamudGrey2);
-        CkGui.AttachToolTip(folder.BracketTooltip);
+        CkGui.AttachTooltip(folder.BracketTooltip);
     }
 
     #region KinksterLeaf
@@ -157,7 +157,7 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
                 ImGui.SameLine(cursorPos.X);
                 ImGui.SetCursorPosX(cursorPos.X - ImUtf8.FrameHeight - ImUtf8.ItemInnerSpacing.X);
                 ImGui.Image(wrap.Handle, new Vector2(ImUtf8.FrameHeight));
-                CkGui.AttachToolTip(Image.Tooltip);
+                CkGui.AttachTooltip(Image.Tooltip);
             }
         }
     }
@@ -186,7 +186,7 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
         var icon = s.IsRendered ? FAI.Eye : FAI.User;
         var color = s.IsOnline ? ImGuiColors.ParsedGreen : ImGuiColors.DalamudRed;
         CkGui.IconTextAligned(icon, color);
-        CkGui.AttachToolTip(TooltipText(s));
+        CkGui.AttachTooltip(TooltipText(s));
         if (!flags.HasAny(DynamicFlags.DragDropLeaves) && s.IsRendered && ImGui.IsItemClicked())
             _mediator.Publish(new TargetKinksterMessage(s));
     }
@@ -226,7 +226,7 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
         if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
             _cache.RenamingNode = null;
         // Helper tooltip.
-        CkGui.AttachToolTip("--COL--[ENTER]--COL-- To save" +
+        CkGui.AttachTooltip("--COL--[ENTER]--COL-- To save" +
             "--NL----COL--[R-CLICK]--COL-- Cancel edits.", ImGuiColors.DalamudOrange);
     }
 
@@ -244,7 +244,7 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
 
         // Push the monofont if we should show the UID, otherwise dont.
         DrawKinksterName(leaf);
-        CkGui.AttachToolTip(isDragDrop ? DragDropTooltip : NormalTooltip, ImGuiColors.DalamudOrange);
+        CkGui.AttachTooltip(isDragDrop ? DragDropTooltip : NormalTooltip, ImGuiColors.DalamudOrange);
         if (isDragDrop)
             return;
         // Handle hover state.
@@ -355,7 +355,7 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
             // Update the folder structure to reflect this change.
             _drawSystem.UpdateVisibleFolderState(showVisible);
         }
-        CkGui.AttachToolTip(GSLoc.Settings.DDSPrefs.ShowVisibleSeparateTT);
+        CkGui.AttachTooltip(GSLoc.Settings.DDSPrefs.ShowVisibleSeparateTT);
 
         var showOffline = _config.Current.OfflineFolder;
         if (ImGui.Checkbox(GSLoc.Settings.DDSPrefs.ShowOfflineSeparateLabel, ref showOffline))
@@ -364,7 +364,7 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
             _config.Save();
             _drawSystem.UpdateOfflineFolderState(showOffline);
         }
-        CkGui.AttachToolTip(GSLoc.Settings.DDSPrefs.ShowOfflineSeparateTT);
+        CkGui.AttachTooltip(GSLoc.Settings.DDSPrefs.ShowOfflineSeparateTT);
 
         var useFocusTarget = _config.Current.TargetWithFocus;
         if (ImGui.Checkbox(GSLoc.Settings.DDSPrefs.FocusTargetLabel, ref useFocusTarget))
@@ -372,7 +372,7 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
             _config.Current.TargetWithFocus = useFocusTarget;
             _config.Save();
         }
-        CkGui.AttachToolTip(GSLoc.Settings.DDSPrefs.FocusTargetTT);
+        CkGui.AttachTooltip(GSLoc.Settings.DDSPrefs.FocusTargetTT);
 
         ImGui.TableNextColumn();
         var nickOverName = _config.Current.NickOverPlayerName;
@@ -381,7 +381,7 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
             _config.Current.NickOverPlayerName = nickOverName;
             _config.Save();
         }
-        CkGui.AttachToolTip(GSLoc.Settings.DDSPrefs.PreferNicknamesTT);
+        CkGui.AttachTooltip(GSLoc.Settings.DDSPrefs.PreferNicknamesTT);
 
         var prioritizeFavs = _config.Current.PrioritizeFavorites;
         if (ImGui.Checkbox(GSLoc.Settings.DDSPrefs.FavoritesFirstLabel, ref prioritizeFavs))
@@ -389,7 +389,7 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
             _config.Current.PrioritizeFavorites = prioritizeFavs;
             _config.Save();
         }
-        CkGui.AttachToolTip(GSLoc.Settings.DDSPrefs.FavoritesFirstTT);
+        CkGui.AttachTooltip(GSLoc.Settings.DDSPrefs.FavoritesFirstTT);
     }
     #endregion Utility
 }

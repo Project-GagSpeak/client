@@ -86,7 +86,7 @@ public partial class PatternsPanel
             }
             CkGui.TextFrameAlignedInline("Loop");
         }
-        CkGui.AttachToolTip($"This pattern {(pattern.ShouldLoop ? "will loop upon finishing." : "will stop after reaching the end.")}");
+        CkGui.AttachTooltip($"This pattern {(pattern.ShouldLoop ? "will loop upon finishing." : "will stop after reaching the end.")}");
     }
 
     private void DrawPatternTimeSpans(Pattern pattern, bool isEditing)

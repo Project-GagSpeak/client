@@ -189,9 +189,8 @@ public static unsafe class HcTaskUtils
         if (txtNode == null)
             return false;
 
-        var rawTxt = &txtNode->NodeText;
-        var finalStr = MemoryHelper.ReadSeString(rawTxt).ExtractText().Replace(" ", "");
-        var options = possibleNames.Select(n => n.Replace(" ", ""));
+        var finalStr = Utf8StringExtensions.AsReadOnlySeString(txtNode->NodeText).ExtractText().Replace(" ", "");
+        var options =  possibleNames.Select(n => n.Replace(" ", ""));
 
         return contains? options.Any(finalStr.Contains) : options.Any(finalStr.Equals);
     }

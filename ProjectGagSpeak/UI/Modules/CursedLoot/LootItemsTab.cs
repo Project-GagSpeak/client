@@ -153,7 +153,7 @@ public class LootItemsTab : IFancyTab
             var label = item.Label;
             if (ImGui.InputTextWithHint("##Name", "Loot Name..", ref label, 64))
                 item.Label = label;
-            CkGui.AttachToolTip("The Cursed Loot Name");
+            CkGui.AttachTooltip("The Cursed Loot Name");
         }
 
         ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged].Handle, new Vector2(frameH));
@@ -176,12 +176,12 @@ public class LootItemsTab : IFancyTab
         ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo("##Precedence", ImGui.GetContentRegionAvail().X / 2, item.Precedence, out var newP, _ => _.ToName(), flags: CFlags.None))
             item.Precedence = newP;
-        CkGui.AttachToolTip("The priority of application when multiple applied items go on the same slot.");
+        CkGui.AttachTooltip("The priority of application when multiple applied items go on the same slot.");
 
         var doTraits = item.ApplyTraits;
         if (ImGui.Checkbox("Apply Traits", ref doTraits))
             item.ApplyTraits = doTraits;
-        CkGui.AttachToolTip("If the cursed Loot should apply the item's attached hardcore traits.");
+        CkGui.AttachTooltip("If the cursed Loot should apply the item's attached hardcore traits.");
     }
 
     private void DrawSetupOverview(Vector2 region, float rounding)
@@ -260,7 +260,7 @@ public class LootItemsTab : IFancyTab
             var label = item.Label;
             if (ImGui.InputTextWithHint("##Name", "Loot Name..", ref label, 64))
                 item.Label = label;
-            CkGui.AttachToolTip("The Cursed Loot Name");
+            CkGui.AttachTooltip("The Cursed Loot Name");
         }
 
         ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged].Handle, new Vector2(frameH));
@@ -273,18 +273,18 @@ public class LootItemsTab : IFancyTab
         ImUtf8.SameLineInner();
         if (CkGui.IconButton(FAI.ArrowsLeftRight))
             _manager.ChangeCursedLootType(CursedLootKind.Gag);
-        CkGui.AttachToolTip("Switch between Gag & Restriction Loot Types.");
+        CkGui.AttachTooltip("Switch between Gag & Restriction Loot Types.");
 
         // Everything else here is from shared editor info.
         CkGui.FramedIconText(FAI.SortAmountUp);
         ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo("##Precedence", ImGui.GetContentRegionAvail().X / 2, item.Precedence, out var newP, _ => _.ToName(), flags: CFlags.None))
             item.Precedence = newP;
-        CkGui.AttachToolTip("The priority of application when multiple applied items go on the same slot.");
+        CkGui.AttachTooltip("The priority of application when multiple applied items go on the same slot.");
 
         var doTraits = item.ApplyTraits;
         if (ImGui.Checkbox("Apply Traits", ref doTraits))
             item.ApplyTraits = doTraits;
-        CkGui.AttachToolTip("If the ref item's hardcore traits are applied.");
+        CkGui.AttachTooltip("If the ref item's hardcore traits are applied.");
     }
 }

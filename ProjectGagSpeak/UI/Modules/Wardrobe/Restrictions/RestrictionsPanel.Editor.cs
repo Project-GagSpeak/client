@@ -73,7 +73,7 @@ public partial class RestrictionsPanel
                     item.HeadgearState = newHelmValue;
                 ImUtf8.SameLineInner();
                 CkGui.FramedIconText(FAI.HardHat);
-                CkGui.AttachToolTip("The Forced Helmet State.--SEP--Note: conflicts priorize ON over OFF.");
+                CkGui.AttachTooltip("The Forced Helmet State.--SEP--Note: conflicts priorize ON over OFF.");
             }
 
             ImGui.SameLine(0, itemSpacing);
@@ -83,7 +83,7 @@ public partial class RestrictionsPanel
                     item.VisorState = newVisorValue;
                 ImUtf8.SameLineInner();
                 CkGui.FramedIconText(FAI.Glasses);
-                CkGui.AttachToolTip("The Forced Visor State.--SEP--Note: conflicts priorize ON over OFF.");
+                CkGui.AttachTooltip("The Forced Visor State.--SEP--Note: conflicts priorize ON over OFF.");
             }
 
             ImGui.SameLine(0, itemSpacing);
@@ -94,7 +94,7 @@ public partial class RestrictionsPanel
                     item.DoRedraw = doRedraw;
                 ImUtf8.SameLineInner();
                 CkGui.IconText(FAI.Repeat);
-                CkGui.AttachToolTip("If you redraw after application.");
+                CkGui.AttachTooltip("If you redraw after application.");
             }
         }
 
@@ -104,7 +104,7 @@ public partial class RestrictionsPanel
         style.Push(ImGuiStyleVar.FrameRounding, 10f);
         if (CkGui.IconButton(FAI.Save))
             _manager.SaveChangesAndStopEditing();
-        CkGui.AttachToolTip("Save Changes to this Restriction.");
+        CkGui.AttachTooltip("Save Changes to this Restriction.");
         _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.SavingChanges, WardrobeUI.LastPos, WardrobeUI.LastSize,
             _ => _manager.SaveChangesAndStopEditing());
 
@@ -248,7 +248,7 @@ public partial class RestrictionsPanel
                 }
             }
 
-            CkGui.AttachToolTip("The overlay image when applied.--SEP--Right-Click to clear.");
+            CkGui.AttachTooltip("The overlay image when applied.--SEP--Right-Click to clear.");
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 blindfoldItem.Properties.OverlayPath = string.Empty;
 
@@ -286,7 +286,7 @@ public partial class RestrictionsPanel
                 }
             }
 
-            CkGui.AttachToolTip("The overlay image when applied.--SEP--Right-Click to clear.");
+            CkGui.AttachTooltip("The overlay image when applied.--SEP--Right-Click to clear.");
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 hypnoticItem.Properties.OverlayPath = string.Empty;
             ImUtf8.SameLineInner();

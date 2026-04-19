@@ -111,14 +111,14 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
             {
                 if (CkGui.IconTextButton(FAI.FileUpload, "Edit Image", disabled: !canEdit))
                     Mediator.Publish(new UiToggleMessage(typeof(ProfilePictureEditor)));
-                CkGui.AttachToolTip(canEdit
+                CkGui.AttachTooltip(canEdit
                     ? "Import and adjust a new profile picture to your liking!"
                     : "You're Profile Customization Access has been Revoked!");
                 
                 ImUtf8.SameLineInner();
                 if (CkGui.IconTextButton(FAI.Save, "Save Changes"))
                     _ = _hub.UserSetKinkPlateContent(new KinkPlateInfo(new UserData(MainHub.UID), profile.Info));
-                CkGui.AttachToolTip("Updates your stored profile with latest information");
+                CkGui.AttachTooltip("Updates your stored profile with latest information");
                 _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileSaving, ImGui.GetWindowPos(), ImGui.GetWindowSize(), _ =>
                 {
                     IsOpen = false;
@@ -128,7 +128,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
                 ImUtf8.SameLineInner();
                 if (ImGui.Checkbox("Public", ref publicRef))
                     profile.Info.IsPublic = publicRef;
-                CkGui.AttachToolTip("If checked, your profile picture and description will become visible\n" +
+                CkGui.AttachTooltip("If checked, your profile picture and description will become visible\n" +
                     "to others through private rooms and global chat!" +
                     "--SEP--Non-Paired Kinksters still won't be able to see your UID if viewing your KinkPlate");
                 _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfilePublicity, ImGui.GetWindowPos(), ImGui.GetWindowSize());
@@ -207,7 +207,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileDescription, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
             _ => Mediator.Publish(new KinkPlateLightCreateOpenMessage(MainHub.OwnUserData)));
         
-        CkGui.AttachToolTip("You're Profile Customization Access has been Revoked!" +
+        CkGui.AttachTooltip("You're Profile Customization Access has been Revoked!" +
             "--SEP--You will not be able to edit your KinkPlate Description!", !canEdit);
 
         // draw the plate preview buttons.
@@ -215,7 +215,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
 
         if (CkGui.IconTextButton(FAI.Expand, "Preview KinkPlate™ Light", width, id: MainHub.UID + "KinkPlatePreviewLight"))
             Mediator.Publish(new KinkPlateLightCreateOpenMessage(MainHub.OwnUserData));
-        CkGui.AttachToolTip("Preview your Light KinkPlate™ in a standalone window!");
+        CkGui.AttachTooltip("Preview your Light KinkPlate™ in a standalone window!");
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfilePreviewLight, ImGui.GetWindowPos(), ImGui.GetWindowSize(), _ =>
         {
             // TODO: Light Kinkplates don't respond to this message, and potentially leak data if closed this way?

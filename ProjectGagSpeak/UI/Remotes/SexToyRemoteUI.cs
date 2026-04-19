@@ -317,7 +317,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
                     toyState.IsEnabled = !toyState.IsEnabled;
             }
 
-            CkGui.AttachToolTip($"{name}" +
+            CkGui.AttachTooltip($"{name}" +
                 $"--SEP----COL--Left-Click:--COL-- View Device's Motors" +
                 $"--NL----COL--Right-Click:--COL-- Toggle Enabled State, {(toyState.IsEnabled ? "disabling" : "enabling")} motor input", color: ImGuiColors.ParsedGold);
         }
@@ -351,7 +351,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
             if (motorDot.Equals(_selectedMotor))
                 ImGui.GetWindowDrawList().AddCircle(ImGui.GetItemRectMin() + imgSize / 2, imgSize.X / 2, CkGui.Color(ImGuiColors.ParsedGold), 32, 2);
 
-            CkGui.AttachToolTip($"{motorDot.Motor.Type.ToString()} Motor#{motorDot.MotorIdx}" +
+            CkGui.AttachTooltip($"{motorDot.Motor.Type.ToString()} Motor#{motorDot.MotorIdx}" +
                 $"--SEP----COL--Left-Click:--COL--Select Motor" +
                 $"--SEP----COL--Right-Click:--COL--Toggle Visibility (will still run)", color: ImGuiColors.ParsedGold);
 
@@ -472,7 +472,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
         var disableLoop = _selectedMotor is null || !CurrentAccess.MotorFunctions;
         if (CustomImageButton(CosmeticService.CoreTextures.Cache[CoreTexture.ArrowSpin], disableLoop, loopState))
             _selectedMotor!.IsLooping = !loopState;
-        CkGui.AttachToolTip(disableLoop ? "No Motor currently selected!"
+        CkGui.AttachTooltip(disableLoop ? "No Motor currently selected!"
             : $"{(loopState ? "Disable" : "Enable")} looping for this motor.--SEP----COL--Right-Click:--COL--Keybind Alternative", color: ImGuiColors.ParsedGold);
         // _guides.OpenTutorial(TutorialType.Remote, StepsRemote.LoopButton, WindowPos, WindowSize);
 
@@ -484,7 +484,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
         var disableFloat = _selectedMotor is null || !CurrentAccess.MotorFunctions;
         if (CustomImageButton(CosmeticService.CoreTextures.Cache[CoreTexture.CircleDot], disableFloat, floatState))
             _selectedMotor!.IsFloating = !_selectedMotor.IsFloating;
-        CkGui.AttachToolTip(disableFloat ? "No Motor currently selected!" : $"{(floatState ? "Disable" : "Enable")} floating for this motor." +
+        CkGui.AttachTooltip(disableFloat ? "No Motor currently selected!" : $"{(floatState ? "Disable" : "Enable")} floating for this motor." +
             $"--SEP----COL--Middle-Click:--COL--Keybind Alternative", color: ImGuiColors.ParsedGold);
         // _guides.OpenTutorial(TutorialType.Remote, StepsRemote.FloatButton, WindowPos, WindowSize);
 
@@ -493,7 +493,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
         var disablePower = !CurrentAccess.RemotePower;
         if (CustomImageButton(CosmeticService.CoreTextures.Cache[CoreTexture.Power], disablePower, SelRemoteUser.UserIsBeingBuzzed))
             _service.SetUserRemotePower(SelRemoteUser.Owner.User.UID, !SelRemoteUser.RemotePowerActive, MainHub.UID);
-        CkGui.AttachToolTip("Start/Stop Recording the Sex Toy DataStream");
+        CkGui.AttachTooltip("Start/Stop Recording the Sex Toy DataStream");
         // _guides.OpenTutorial(TutorialType.Remote, StepsRemote.PowerButton, WindowPos, WindowSize);
 
         bool CustomImageButton(IDalamudTextureWrap wrap, bool isDisabled, bool isActive)
@@ -567,7 +567,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
         {
             DrawParticipantIcon(participants[i], iconSize, wdl);
             ImGui.SameLine(0, spacing);
-            CkGui.AttachToolTip($"({participants[i].DisplayName})");
+            CkGui.AttachTooltip($"({participants[i].DisplayName})");
         }
 
         // --- Draw Bottom Row ---
@@ -581,7 +581,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
             {
                 DrawParticipantIcon(participants[j], iconSize, wdl);
                 ImGui.SameLine(0, spacing);
-                CkGui.AttachToolTip($"({participants[j].DisplayName})");
+                CkGui.AttachTooltip($"({participants[j].DisplayName})");
             }
         }
     }
@@ -599,7 +599,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
         // Handle left click interaction.
         if (ImGui.IsItemClicked())
             _service.SelectedKey = participant.User.UID;
-        CkGui.AttachToolTip($"View {participant.DisplayName}'s Toys.");
+        CkGui.AttachTooltip($"View {participant.DisplayName}'s Toys.");
     }
 
     private void DrawVibeRoomChat()

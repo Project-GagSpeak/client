@@ -96,7 +96,7 @@ public class CollarRequestsOutgoingTab : IFancyTab
             ImUtf8.SameLineInner();
             ImGui.SetNextItemWidth(comboW + spacing + sendWidth);
             ImGui.InputTextWithHint("##DesiredWriting", "Desired Writing...", ref _desiredWriting, 100);
-            CkGui.AttachToolTip("The initial writing you want on your collar.");
+            CkGui.AttachTooltip("The initial writing you want on your collar.");
         }
 
         // Beside this group draw out the permission areas.
@@ -115,7 +115,7 @@ public class CollarRequestsOutgoingTab : IFancyTab
             ImGui.Checkbox("LociData", ref refVar4);
             ImGui.Checkbox("Collar Writing", ref refVar5);
         }
-        CkGui.AttachToolTip("This is the access you will have if the request is accepted.");
+        CkGui.AttachTooltip("This is the access you will have if the request is accepted.");
 
         ImUtf8.SameLineInner();
         using (CkRaii.HeaderChild("Their Access", permBoxSize, FancyTabBar.RoundingInner, HeaderFlags.AddPaddingToHeight))
@@ -131,7 +131,7 @@ public class CollarRequestsOutgoingTab : IFancyTab
             ImGui.Checkbox("Collar Writing", ref refVar5);
             ImGui.Checkbox("Glam/Mod Access", ref refVar1);
         }
-        CkGui.AttachToolTip("This is the access the person you are sending the request to will have.");
+        CkGui.AttachTooltip("This is the access the person you are sending the request to will have.");
     }
 
     private void DrawSentRequests(float width)
@@ -167,19 +167,19 @@ public class CollarRequestsOutgoingTab : IFancyTab
         {
             CkGui.FramedIconText(FAI.UserCircle);
             CkGui.TextFrameAlignedInline($"Sent to: {request.User.AliasOrUID}");
-            CkGui.AttachToolTip($"The kinkster you sent this request to.");
+            CkGui.AttachTooltip($"The kinkster you sent this request to.");
 
             // Time Remaining.
             ImGui.SameLine();
             CkGui.AnimatedHourglass(3000);
             CkGui.ColorTextFrameAlignedInline(request.ExpireTime().ToGsRemainingTimeFancy(), ImGuiColors.ParsedPink);
-            CkGui.AttachToolTip("Time remaining until this requerst expires.");
+            CkGui.AttachTooltip("Time remaining until this requerst expires.");
 
             //// Desired Writing.
             CkGui.FramedIconText(FAI.PenFancy);
             ImGui.SameLine(0, 0);
             CkGui.TextFrameAligned(request.Writing ?? "<No Writing>");
-            CkGui.AttachToolTip("The initial writing you wish to be assigned to this collar.");
+            CkGui.AttachTooltip("The initial writing you wish to be assigned to this collar.");
         }
 
         ImGui.SameLine(regionAvail - rightWidth);
@@ -220,7 +220,7 @@ public class CollarRequestsOutgoingTab : IFancyTab
         void AccessPerm(FAI icon, bool state, string tooltipTrue, string tooltipFalse)
         {
             CkGui.BoolIcon(state, false, icon, icon, ImGuiColors.HealerGreen, ImGuiColors.DalamudGrey3);
-            CkGui.AttachToolTip(state ? tooltipTrue : tooltipFalse);
+            CkGui.AttachTooltip(state ? tooltipTrue : tooltipFalse);
         }
     }
 }

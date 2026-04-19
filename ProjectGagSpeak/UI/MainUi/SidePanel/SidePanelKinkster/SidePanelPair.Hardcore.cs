@@ -39,7 +39,7 @@ public partial class SidePanelPair
         {
             if (ImGuiUtil.DrawDisabledButton("Enable Locked Follow", new Vector2(width, ImGui.GetFrameHeight()), string.Empty, !followAllowed))
                 cache.TryEnableHardcoreAction(HcAttribute.Follow);
-            CkGui.AttachToolTip($"Force {dispName} to follow you! (--COL--{dispName} must be within 5 yalms--COL--)", ImGuiColors.ParsedPink);
+            CkGui.AttachTooltip($"Force {dispName} to follow you! (--COL--{dispName} must be within 5 yalms--COL--)", ImGuiColors.ParsedPink);
         });
 
         // ------ Locked Emote State ------
@@ -74,24 +74,24 @@ public partial class SidePanelPair
             var rightW = CkGui.IconTextButtonSize(FAI.Upload, "Enable State");
             if (CkGui.IconButton(FAI.MapPin, disabled: !PlayerData.Available))
                 cache.ImprisonPos = PlayerData.Position;
-            CkGui.AttachToolTip("Anchor Cage to your current position.");
+            CkGui.AttachTooltip("Anchor Cage to your current position.");
 
             ImUtf8.SameLineInner();
             if (CkGui.IconButton(FAI.Bullseye, disabled: !isTarget))
                 cache.ImprisonPos = k.PlayerPosition;
-            CkGui.AttachToolTip("Anchor Cage to the targeted Kinkster's position.");
+            CkGui.AttachTooltip("Anchor Cage to the targeted Kinkster's position.");
 
             ImUtf8.SameLineInner();
             ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - rightW - ImGui.GetStyle().ItemInnerSpacing.X);
             ImGui.SliderFloat("##FreedomRadius", ref cache.ImprisonRadius, 1f, 10f);
-            CkGui.AttachToolTip($"Set the radius {dispName} can move within their cage. Be careful of pathing!");
+            CkGui.AttachTooltip($"Set the radius {dispName} can move within their cage. Be careful of pathing!");
 
             ImUtf8.SameLineInner();
             var clientInAnchorRange = PlayerData.DistanceTo(cache.ImprisonPos) <= cache.ImprisonRadius;
             var frameCol = clientInAnchorRange ? CkCol.TriStateCheck.Vec4().ToUint() : CkCol.TriStateCross.Vec4().ToUint();
             using (CkRaii.FramedChild("CageAnchor", new Vector2(rightW, ImGui.GetFrameHeight()), 0, frameCol, CkStyle.ListItemRounding(), CkStyle.ThinThickness()))
                 CkGui.CenterTextAligned($"{cache.ImprisonPos:F1}");
-            CkGui.AttachToolTip("The current cage anchor position." +
+            CkGui.AttachTooltip("The current cage anchor position." +
                 "--SEP----COL--Note:--COL--0,0,0 Anchor uses the Kinkster's position.", ImGuiColors.ParsedPink);
         });
 
@@ -129,7 +129,7 @@ public partial class SidePanelPair
             using (ImRaii.PushColor(ImGuiCol.Text, showCol ? ImGuiColors.DalamudYellow : ImGuiColors.DalamudWhite))
                 if (CkGui.IconTextButton(icon, text, width, true, disabled))
                     cache.ToggleInteraction(type);
-            CkGui.AttachToolTip(tooltip, color: ImGuiColors.ParsedPink);
+            CkGui.AttachTooltip(tooltip, color: ImGuiColors.ParsedPink);
         }
 
         void UniqueHcChild(InteractionType type, bool curState, float enableChildH, Action enabledDraw)
@@ -168,14 +168,14 @@ public partial class SidePanelPair
             var buttonW = CkGui.IconTextButtonSize(FAI.Upload, enableText);
             var txtWidth = width - buttonW - ImGui.GetStyle().ItemInnerSpacing.X;
             CkGui.IconInputText($"##Timer{type}{k.UserData.UID}", txtWidth, FAI.Clock, "Ex: 2h8m43s..", ref timerStr, 12);
-            CkGui.AttachToolTip("Define a time to enable this state for (or blank to make permanent)" +
+            CkGui.AttachTooltip("Define a time to enable this state for (or blank to make permanent)" +
                 "--NL--When the timer expires, the state is automatically disabled." +
                 "--NL--You can also disable this early manually.");
 
             ImUtf8.SameLineInner();
             if (CkGui.IconTextButton(FAI.Upload, enableText, buttonW, disabled: disabled))
                 cache.TryEnableHardcoreAction(type.ToHcAttribute());
-            CkGui.AttachToolTip($"Enable Hardcore State for {dispName}.");
+            CkGui.AttachTooltip($"Enable Hardcore State for {dispName}.");
         }
 
         void DrawDisableRow(InteractionType type)
@@ -193,14 +193,14 @@ public partial class SidePanelPair
             var buttonW = CkGui.IconTextButtonSize(FAI.PersonRays, "Force State");
             var txtWidth = width - buttonW - ImGui.GetStyle().ItemInnerSpacing.X;
             CkGui.IconInputText($"##EmoteTimer-{k.UserData.UID}", txtWidth, FAI.Clock, "Ex: 2h8m43s..", ref cache.EmoteTimer, 12);
-            CkGui.AttachToolTip($"Define how long {dispName} will be locked in the selected looping emote state for." +
+            CkGui.AttachTooltip($"Define how long {dispName} will be locked in the selected looping emote state for." +
                 "--SEP--LockedEmoteState automatically disables when the timer expires. (leave blank for permanent)" +
                 "--NL--You can also disable this early manually.");
 
             ImUtf8.SameLineInner();
             if (CkGui.IconTextButton(FAI.Upload, "Force State", buttonW, disabled: disable))
                 cache.TryEnableHardcoreAction(HcAttribute.EmoteState);
-            CkGui.AttachToolTip($"Force {dispName} to perform any {(k.PairPerms.AllowLockedEmoting ? "looped emote state" : "sitting or cycle pose state")}." +
+            CkGui.AttachTooltip($"Force {dispName} to perform any {(k.PairPerms.AllowLockedEmoting ? "looped emote state" : "sitting or cycle pose state")}." +
             $"--SEP--If providing a timer, {dispName} can move once it expires.");
 
             // Draw the combo and slider row.
@@ -218,7 +218,7 @@ public partial class SidePanelPair
                 ImUtf8.SameLineInner();
                 ImGui.SetNextItemWidth(sliderW);
                 ImGui.SliderInt("##EnforceCyclePose", ref cache.CyclePose, 0, EmoteService.CyclePoseCount((ushort)cache.Emotes.Current.RowId));
-                CkGui.AttachToolTip("Select the cycle pose for the forced emote.");
+                CkGui.AttachTooltip("Select the cycle pose for the forced emote.");
             }
             else
             {
@@ -251,13 +251,13 @@ public partial class SidePanelPair
                 cache.Address.PropertyType = PropertyType.House;
                 cache.Address.ApartmentSubdivision = false;
             }
-        CkGui.AttachToolTip($"Confining {dispName} in a house.");
+        CkGui.AttachTooltip($"Confining {dispName} in a house.");
 
         ImUtf8.SameLineInner();
         using (ImRaii.Disabled(cache.Address.PropertyType is PropertyType.Apartment))
             if (ImGui.Button("Apartment", new Vector2(triItemWidth, ImGui.GetFrameHeight())))
                 cache.Address.PropertyType = PropertyType.Apartment;
-        CkGui.AttachToolTip($"Confining {dispName} to an apartment room.");
+        CkGui.AttachTooltip($"Confining {dispName} to an apartment room.");
 
         ImUtf8.SameLineInner();
         using (ImRaii.Disabled(cache.Address.PropertyType is PropertyType.PrivateChambers))
@@ -266,28 +266,28 @@ public partial class SidePanelPair
                 cache.Address.PropertyType = PropertyType.PrivateChambers;
                 cache.Address.ApartmentSubdivision = false;
             }
-        CkGui.AttachToolTip($"Confining {dispName} the private chambers of an FC.");
+        CkGui.AttachTooltip($"Confining {dispName} the private chambers of an FC.");
 
         CkGui.FramedIconText(FAI.MapMarkedAlt);
         ImUtf8.SameLineInner();
 
         if (cache.Worlds.Draw(cache.Address.World, triItemWidth, CFlags.NoArrowButton))
             cache.Address.World = cache.Worlds.Current.Key.Id;
-        CkGui.AttachToolTip($"The World {dispName} will be confined to.");
+        CkGui.AttachTooltip($"The World {dispName} will be confined to.");
 
         ImUtf8.SameLineInner();
         CkGuiUtils.ResidentialAetheryteCombo($"##resdis", triItemWidth, ref cache.Address.City);
-        CkGui.AttachToolTip($"The District {dispName} will be confined to.");
+        CkGui.AttachTooltip($"The District {dispName} will be confined to.");
 
         ImUtf8.SameLineInner();
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
         ImGui.DragInt($"##ward", ref cache.Address.Ward, .5f, 1, 30, "Ward %d");
-        CkGui.AttachToolTip($"The Ward {dispName} will be confined to.");
+        CkGui.AttachTooltip($"The Ward {dispName} will be confined to.");
 
         var propType = cache.Address.PropertyType;
         using (ImRaii.Disabled(propType is not PropertyType.Apartment))
             ImGui.Checkbox("##SubdivisionCheck", ref cache.Address.ApartmentSubdivision);
-        CkGui.AttachToolTip("If the apartment is in the ward's subdivision.");
+        CkGui.AttachTooltip("If the apartment is in the ward's subdivision.");
 
         // draw out the sliders based on the property type.
         ImUtf8.SameLineInner();
@@ -298,22 +298,22 @@ public partial class SidePanelPair
             case PropertyType.House:
                 ImGui.SetNextItemWidth(sliderW);
                 ImGui.SliderInt("##plot", ref cache.Address.Plot, 1, 60, "Plot %d");
-                CkGui.AttachToolTip($"The plot # of the home {dispName} will be confined to.");
+                CkGui.AttachTooltip($"The plot # of the home {dispName} will be confined to.");
                 break;
             case PropertyType.Apartment:
                 ImGui.SetNextItemWidth(sliderW);
                 ImGui.SliderInt("##room", ref cache.Address.Apartment, 1, 100, "Room %d");
-                CkGui.AttachToolTip($"The apartment room # {dispName} will be confined to.");
+                CkGui.AttachTooltip($"The apartment room # {dispName} will be confined to.");
                 break;
             case PropertyType.PrivateChambers:
                 ImGui.SetNextItemWidth(sliderW);
                 ImGui.SliderInt("##plot", ref cache.Address.Plot, 1, 60, "Plot %d");
-                CkGui.AttachToolTip($"The plot # of the home {dispName} will be confined to.");
+                CkGui.AttachTooltip($"The plot # of the home {dispName} will be confined to.");
 
                 ImUtf8.SameLineInner();
                 ImGui.SetNextItemWidth(sliderW);
                 ImGui.SliderInt("##chambers", ref cache.Address.Apartment, 1, 100, "Chamber %d");
-                CkGui.AttachToolTip($"The private chambers # {dispName} will be confined to.");
+                CkGui.AttachTooltip($"The private chambers # {dispName} will be confined to.");
                 break;
             default:
                 CkGui.ColorTextCentered("UNKNOWN PLOT TYPE", ImGuiColors.DalamudRed);

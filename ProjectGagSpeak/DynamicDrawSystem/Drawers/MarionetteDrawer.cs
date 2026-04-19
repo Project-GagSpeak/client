@@ -36,7 +36,7 @@ public sealed class MarionetteDrawer : DynamicDrawer<AliasTrigger>
         CkGui.ColorTextFrameAlignedInline(folder.Name, folder.NameColor);
         // Total Context.
         CkGui.ColorTextFrameAlignedInline(folder.BracketText, ImGuiColors.DalamudGrey2);
-        CkGui.AttachToolTip(folder.BracketTooltip);
+        CkGui.AttachTooltip(folder.BracketTooltip);
     }
 
     // This override intentionally prevents the inner method from being called so that we can call our own inner method.
@@ -60,7 +60,7 @@ public sealed class MarionetteDrawer : DynamicDrawer<AliasTrigger>
         ImGui.SameLine(posX);
         // Display the alias label here
         CkGui.TextFrameAligned(leaf.Data.Label);
-        CkGui.AttachToolTip("Display name for the Alias. Used for UI Only.");
+        CkGui.AttachTooltip("Display name for the Alias. Used for UI Only.");
         // Inline, draw the detection in coded text.
         ImUtf8.SameLineInner();
         ImGui.AlignTextToFramePadding();
@@ -72,7 +72,7 @@ public sealed class MarionetteDrawer : DynamicDrawer<AliasTrigger>
             ImGui.SameLine(0, 0);
             CkGui.ColorText("\"", ImGuiColors.DalamudGrey2);
         }
-        CkGui.AttachToolTip("The scanned text that, when said after any trigger phrase, is reacted to.");
+        CkGui.AttachTooltip("The scanned text that, when said after any trigger phrase, is reacted to.");
     }
 }
 

@@ -9,6 +9,7 @@ public unsafe static class AddonBaseString
 {
     public static SeString SeString(AddonSelectString* addon)
         => MemoryHelper.ReadSeString(&((AtkUnitBase*)addon)->GetTextNodeById(2)->NodeText);
+
     public static string ToText(AddonSelectString* addon) => SeString(addon).ExtractText();
 
     public static Entry[] GetEntries(AddonSelectString* addon)

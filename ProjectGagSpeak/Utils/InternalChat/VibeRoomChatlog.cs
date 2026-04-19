@@ -135,7 +135,7 @@ public class VibeRoomChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscrib
         ImUtf8.SameLineInner();
         if (CkGui.IconButton(Icon))
             DoAutoScroll = !DoAutoScroll;
-        CkGui.AttachToolTip($"Toggles AutoScroll (Current: {(DoAutoScroll ? "Enabled" : "Disabled")})");
+        CkGui.AttachTooltip($"Toggles AutoScroll (Current: {(DoAutoScroll ? "Enabled" : "Disabled")})");
     }
 
     protected override void OnMiddleClick(GagSpeakChatMessage message)

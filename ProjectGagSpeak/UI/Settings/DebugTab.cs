@@ -124,7 +124,7 @@ public class DebugTab
                         }
                     }
                 }
-                CkGui.AttachToolTip(label, color: new Vector4(1f, 0.85f, 0f, 1f));
+                CkGui.AttachTooltip(label, color: new Vector4(1f, 0.85f, 0f, 1f));
             }
 
             isFirstSection = false;

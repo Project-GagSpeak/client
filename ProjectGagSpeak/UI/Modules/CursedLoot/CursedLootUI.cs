@@ -121,7 +121,7 @@ public class CursedLootUI : WindowMediatorSubscriberBase
                 // Revert to null so we can update it with the latest value in the manager.
                 _lowerBoundStr = null;
             }
-            CkGui.AttachToolTip("The lower Mimic Lock Time.");
+            CkGui.AttachTooltip("The lower Mimic Lock Time.");
 
             ImGui.SameLine(0, 0);
             CkGui.FramedIconText(FAI.HourglassHalf);
@@ -137,7 +137,7 @@ public class CursedLootUI : WindowMediatorSubscriberBase
                 // Revert to null so we can update it with the latest value in the manager.
                 _upperBoundStr = null;
             }
-            CkGui.AttachToolTip("The upper Mimic Lock Time.");
+            CkGui.AttachTooltip("The upper Mimic Lock Time.");
         }
 
         ImGui.SameLine();
@@ -155,7 +155,7 @@ public class CursedLootUI : WindowMediatorSubscriberBase
             ImUtf8.SameLineInner();
             CkGui.IconText(FAI.Percentage);
         }
-        CkGui.AttachToolTip("How likely you are to encounter cursed loot.");
+        CkGui.AttachTooltip("How likely you are to encounter cursed loot.");
     }
 
     private void DrawTabBarContent()

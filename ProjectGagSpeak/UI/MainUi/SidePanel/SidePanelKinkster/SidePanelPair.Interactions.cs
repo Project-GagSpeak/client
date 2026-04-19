@@ -30,7 +30,7 @@ public partial class SidePanelPair
 
         if (CkGuiUtils.LayerIdxCombo("##gagLayer", width, cache.GagLayer, out var newVal, 3))
             cache.GagLayer = newVal;
-        CkGui.AttachToolTip("Select the layer to apply a Gag to.");
+        CkGui.AttachTooltip("Select the layer to apply a Gag to.");
 
         if (k.ActiveGags.GagSlots[cache.GagLayer] is not { } slot)
             return;
@@ -53,7 +53,7 @@ public partial class SidePanelPair
         // Applying.
         if (CkGui.IconTextButton(FAI.CommentDots, applyTxt, width, true, !k.PairPerms.ApplyGags || !slot.CanApply()))
             cache.ToggleInteraction(InteractionType.ApplyGag);
-        CkGui.AttachToolTip(applyTT);
+        CkGui.AttachTooltip(applyTT);
 
         if (cache.OpenItem is InteractionType.ApplyGag)
         {
@@ -69,7 +69,7 @@ public partial class SidePanelPair
             if (CkGui.IconTextButton(FAI.Lock, lockTxt, width, true, !k.PairPerms.LockGags || !slot.CanLock()))
                 cache.ToggleInteraction(InteractionType.LockGag);
         }
-        CkGui.AttachToolTip(lockTT + (PadlockEx.IsTimerLock(slot.Padlock) ? "--SEP----COL--" + slot.Timer.ToGsRemainingTimeFancy() : ""), color: ImGuiColors.ParsedPink);
+        CkGui.AttachTooltip(lockTT + (PadlockEx.IsTimerLock(slot.Padlock) ? "--SEP----COL--" + slot.Timer.ToGsRemainingTimeFancy() : ""), color: ImGuiColors.ParsedPink);
 
         if (cache.OpenItem is InteractionType.LockGag)
         {
@@ -81,7 +81,7 @@ public partial class SidePanelPair
         // Unlocking.
         if (CkGui.IconTextButton(FAI.Unlock, unlockTxt, width, true, !slot.CanUnlock() || !k.PairPerms.UnlockGags))
             cache.ToggleInteraction(InteractionType.UnlockGag);
-        CkGui.AttachToolTip(unlockTT);
+        CkGui.AttachTooltip(unlockTT);
 
         if (cache.OpenItem is InteractionType.UnlockGag)
         {
@@ -94,7 +94,7 @@ public partial class SidePanelPair
         // Removing.
         if (CkGui.IconTextButton(FAI.TimesCircle, removeTxt, width, true, !slot.CanRemove() || !k.PairPerms.RemoveGags))
             cache.ToggleInteraction(InteractionType.RemoveGag);
-        CkGui.AttachToolTip(removeTT);
+        CkGui.AttachTooltip(removeTT);
 
         if (cache.OpenItem is InteractionType.RemoveGag)
         {
@@ -134,7 +134,7 @@ public partial class SidePanelPair
         // Drawing out restriction layers.
         if (CkGuiUtils.LayerIdxCombo("##restrictionLayer", width, cache.RestrictionLayer, out var newVal, 5))
             cache.RestrictionLayer = newVal;
-        CkGui.AttachToolTip("Select the layer to apply a Restriction to.");
+        CkGui.AttachTooltip("Select the layer to apply a Restriction to.");
 
         if (k.ActiveRestrictions.Restrictions[cache.RestrictionLayer] is not { } slot)
             return;
@@ -157,7 +157,7 @@ public partial class SidePanelPair
         // Expander for ApplyRestriction
         if (CkGui.IconTextButton(FAI.CommentDots, applyTxt, width, true, !slot.CanApply() || !k.PairPerms.ApplyRestrictions))
             cache.ToggleInteraction(InteractionType.ApplyRestriction);
-        CkGui.AttachToolTip(applyTT);
+        CkGui.AttachTooltip(applyTT);
 
         if (cache.OpenItem is InteractionType.ApplyRestriction)
         {
@@ -172,7 +172,7 @@ public partial class SidePanelPair
             if (CkGui.IconTextButton(FAI.Lock, lockTxt, width, true, !slot.CanLock() || !k.PairPerms.LockRestrictions))
                 cache.ToggleInteraction(InteractionType.LockRestriction);
         }
-        CkGui.AttachToolTip(lockTT + (PadlockEx.IsTimerLock(slot.Padlock) ? "--SEP----COL--" + slot.Timer.ToGsRemainingTimeFancy() : ""), color: ImGuiColors.ParsedPink);
+        CkGui.AttachTooltip(lockTT + (PadlockEx.IsTimerLock(slot.Padlock) ? "--SEP----COL--" + slot.Timer.ToGsRemainingTimeFancy() : ""), color: ImGuiColors.ParsedPink);
 
         if (cache.OpenItem is InteractionType.LockRestriction)
         {
@@ -184,7 +184,7 @@ public partial class SidePanelPair
         // Expander for unlocking.
         if (CkGui.IconTextButton(FAI.Unlock, unlockTxt, width, true, !slot.CanUnlock() || !k.PairPerms.UnlockRestrictions))
             cache.ToggleInteraction(InteractionType.UnlockRestriction);
-        CkGui.AttachToolTip(unlockTT);
+        CkGui.AttachTooltip(unlockTT);
 
         if (cache.OpenItem is InteractionType.UnlockRestriction)
         {
@@ -196,7 +196,7 @@ public partial class SidePanelPair
         // Expander for removing.
         if (CkGui.IconTextButton(FAI.TimesCircle, removeTxt, width, true, !slot.CanRemove() || !k.PairPerms.RemoveRestrictions))
             cache.ToggleInteraction(InteractionType.RemoveRestriction);
-        CkGui.AttachToolTip(removeTT);
+        CkGui.AttachTooltip(removeTT);
 
         // Interaction Window for RemoveRestriction
         if (cache.OpenItem is InteractionType.RemoveRestriction)
@@ -260,7 +260,7 @@ public partial class SidePanelPair
         // Expander for ApplyRestraint
         if (CkGui.IconTextButton(FAI.Handcuffs, applyTxt, width, true, !k.PairPerms.ApplyRestraintSets || !k.ActiveRestraint.CanApply()))
             cache.ToggleInteraction(InteractionType.ApplyRestraint);
-        CkGui.AttachToolTip(applyTT);
+        CkGui.AttachTooltip(applyTT);
 
         // Interaction Window for ApplyRestraint
         if (cache.OpenItem is InteractionType.ApplyRestraint)
@@ -274,7 +274,7 @@ public partial class SidePanelPair
         var disableApplyLayer = !hasItem || itemLayers <= 0 || allLayersSet || (hasPadlock ? !k.PairPerms.ApplyLayersWhileLocked : !k.PairPerms.ApplyLayers);
         if (CkGui.IconTextButton(FAI.LayerGroup, applyLayerText, width, true, disableApplyLayer))
             cache.ToggleInteraction(InteractionType.ApplyRestraintLayers);
-        CkGui.AttachToolTip(applyLayerTT);
+        CkGui.AttachTooltip(applyLayerTT);
 
         // Interaction Window for ApplyRestraintLayer
         if (cache.OpenItem is InteractionType.ApplyRestraintLayers)
@@ -291,7 +291,7 @@ public partial class SidePanelPair
             if (CkGui.IconTextButton(FAI.Lock, lockTxt, width, true, disableLockExpand))
                 cache.ToggleInteraction(InteractionType.LockRestraint);
         }
-        CkGui.AttachToolTip(lockTT +
+        CkGui.AttachTooltip(lockTT +
             (PadlockEx.IsTimerLock(k.ActiveRestraint.Padlock) ? "--SEP----COL--" + k.ActiveRestraint.Timer.ToGsRemainingTimeFancy() : ""), color: ImGuiColors.ParsedPink);
 
         // Interaction Window for LockRestraint
@@ -306,7 +306,7 @@ public partial class SidePanelPair
         var disableUnlockExpand = k.ActiveRestraint.Padlock is Padlocks.None || !k.PairPerms.UnlockRestraintSets;
         if (CkGui.IconTextButton(FAI.Unlock, unlockTxt, width, true, disableUnlockExpand))
             cache.ToggleInteraction(InteractionType.UnlockRestraint);
-        CkGui.AttachToolTip(unlockTT);
+        CkGui.AttachTooltip(unlockTT);
 
         // Interaction Window for UnlockRestraint
         if (cache.OpenItem is InteractionType.UnlockRestraint)
@@ -320,7 +320,7 @@ public partial class SidePanelPair
         var blockLayerRemove = !hasItem || itemLayers <= 0 || k.ActiveRestraint.ActiveLayers is 0 || (hasPadlock ? !k.PairPerms.RemoveLayersWhileLocked : !k.PairPerms.RemoveLayers);
         if (CkGui.IconTextButton(FAI.LayerGroup, removeLayerText, width, true, blockLayerRemove))
             cache.ToggleInteraction(InteractionType.RemoveRestraintLayers);
-        CkGui.AttachToolTip(removeLayerTT);
+        CkGui.AttachTooltip(removeLayerTT);
 
         // Interaction Window for ApplyRestraintLayer
         if (cache.OpenItem is InteractionType.RemoveRestraintLayers)
@@ -334,7 +334,7 @@ public partial class SidePanelPair
         var disableRemoveExpand = k.ActiveRestraint.Identifier == Guid.Empty || k.ActiveRestraint.Padlock is not Padlocks.None || !k.PairPerms.RemoveRestraintSets;
         if (CkGui.IconTextButton(FAI.TimesCircle, removeTxt, width, true, disableRemoveExpand))
             cache.ToggleInteraction(InteractionType.RemoveRestraint);
-        CkGui.AttachToolTip(removeTT);
+        CkGui.AttachTooltip(removeTT);
 
         // Interaction Window for RemoveRestraint
         if (cache.OpenItem is InteractionType.RemoveRestraint)
@@ -385,7 +385,7 @@ public partial class SidePanelPair
         // Applying own statuses
         if (CkGui.IconTextButton(FAI.UserPlus, statusTxt, width, true, !isAllowed || !hasStatuses))
             cache.ToggleInteraction(InteractionType.ApplyOwnStatus);
-        CkGui.AttachToolTip(statusTT);
+        CkGui.AttachTooltip(statusTT);
 
         if (cache.OpenItem is InteractionType.ApplyOwnStatus)
         {
@@ -397,7 +397,7 @@ public partial class SidePanelPair
         // Applying own presets.
         if (CkGui.IconTextButton(FAI.FileCirclePlus, presetTxt, width, true, !isAllowed || !hasPresets))
             cache.ToggleInteraction(InteractionType.ApplyOwnPreset);
-        CkGui.AttachToolTip(presetTT);
+        CkGui.AttachTooltip(presetTT);
 
         if (cache.OpenItem is InteractionType.ApplyOwnPreset)
         {
@@ -421,7 +421,7 @@ public partial class SidePanelPair
         // Applying kinksters statuses
         if (CkGui.IconTextButton(FAI.UserPlus, statusTxt, width, true, !isAllowed || !hasStatuses))
             cache.ToggleInteraction(InteractionType.ApplyOtherStatus);
-        CkGui.AttachToolTip(statusTT);
+        CkGui.AttachTooltip(statusTT);
 
         if (cache.OpenItem is InteractionType.ApplyOtherStatus)
         {
@@ -433,7 +433,7 @@ public partial class SidePanelPair
         // Applying kinksters presets.
         if (CkGui.IconTextButton(FAI.FileCirclePlus, presetTxt, width, true, !isAllowed || !hasPresets))
             cache.ToggleInteraction(InteractionType.ApplyOtherPreset);
-        CkGui.AttachToolTip(presetTT);
+        CkGui.AttachTooltip(presetTT);
 
         if (cache.OpenItem is InteractionType.ApplyOtherPreset)
         {
@@ -451,7 +451,7 @@ public partial class SidePanelPair
 
         if (CkGui.IconTextButton(FAI.UserMinus, remText, width, true, !canRemove))
             cache.ToggleInteraction(InteractionType.RemoveStatus);
-        CkGui.AttachToolTip(remTT);
+        CkGui.AttachTooltip(remTT);
 
         if (cache.OpenItem is InteractionType.RemoveStatus)
         {
@@ -474,7 +474,7 @@ public partial class SidePanelPair
             : "You don't have permission to play Patterns, or there are no Patterns available!";
         if (CkGui.IconTextButton(FAI.PlayCircle, playPatternTxt, width, true, !canPlayPattern))
             cache.ToggleInteraction(InteractionType.StartPattern);
-        CkGui.AttachToolTip(playPatternTT);
+        CkGui.AttachTooltip(playPatternTT);
 
         if (cache.OpenItem is InteractionType.StartPattern)
         {
@@ -504,7 +504,7 @@ public partial class SidePanelPair
                 }
             });
         }
-        CkGui.AttachToolTip(stopPatternTT);
+        CkGui.AttachTooltip(stopPatternTT);
 
         ///////// Toggle Alarms ////////
         var canToggleAlarms = k.PairPerms.ToggleAlarms && !k.PairGlobals.InVibeRoom && k.LightCache.Alarms.Any();
@@ -514,7 +514,7 @@ public partial class SidePanelPair
             : $"Either {dispName} has not created any Alarms, or you don't have permission to toggle them.";
         if (CkGui.IconTextButton(FAI.Clock, toggleAlarmTxt, width, true, !canToggleAlarms))
             cache.ToggleInteraction(InteractionType.ToggleAlarm);
-        CkGui.AttachToolTip(toggleAlarmTT);
+        CkGui.AttachTooltip(toggleAlarmTT);
 
         if (cache.OpenItem is InteractionType.ToggleAlarm)
         {
@@ -531,7 +531,7 @@ public partial class SidePanelPair
             : $"Either {dispName} has not created any Triggers, or you don't have permission to toggle them.";
         if (CkGui.IconTextButton(FAI.LandMineOn, toggleTriggerTxt, width, true, !canToggleTriggers))
             cache.ToggleInteraction(InteractionType.ToggleTrigger);
-        CkGui.AttachToolTip(toggleTriggerTT);
+        CkGui.AttachTooltip(toggleTriggerTT);
 
         if (cache.OpenItem is InteractionType.ToggleTrigger)
         {
@@ -590,10 +590,10 @@ public partial class SidePanelPair
 
         ImGui.SetNextItemWidth(120 * ImGuiHelpers.GlobalScale);
         ImGui.SliderInt("Intensity", ref shockerIntensity, 1, maxIntensity, "%d%%");
-        CkGui.AttachToolTip($"Sets the intensity for shocks, vibrations, and beeps. Intensity is a percentage of the maximum effect delivered to {dispName}.");
+        CkGui.AttachTooltip($"Sets the intensity for shocks, vibrations, and beeps. Intensity is a percentage of the maximum effect delivered to {dispName}.");
         ImGui.SetNextItemWidth(120 * ImGuiHelpers.GlobalScale);
         ImGui.SliderFloat("Shock Duration", ref shockerDuration, 0.1f, maxDuration, "%.1fs");
-        CkGui.AttachToolTip($"Sets the duration for shocks and beeps. Duration is the length of time the effect is delivered to {dispName}.");
+        CkGui.AttachTooltip($"Sets the duration for shocks and beeps. Duration is the length of time the effect is delivered to {dispName}.");
 
         if (CkGui.IconTextButton(FAI.Bolt, shockTxt, width, true, !canShock))
         {
@@ -604,7 +604,7 @@ public partial class SidePanelPair
                     _logger.LogError($"Failed to shock {dispName}. ({res.ErrorCode})", LoggerType.StickyUI);
             });
         }
-        CkGui.AttachToolTip($"--COL--Delivers a shock to {dispName}.{(canShock ? "" : " Not permitted.")}--COL--", color: canShock ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudGrey);
+        CkGui.AttachTooltip($"--COL--Delivers a shock to {dispName}.{(canShock ? "" : " Not permitted.")}--COL--", color: canShock ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudGrey);
 
         if (CkGui.IconTextButton(FAI.LandMineOn, beepTxt, width, true, !canBeep))
         {
@@ -615,7 +615,7 @@ public partial class SidePanelPair
                     _logger.LogError($"Failed to beep {dispName}. ({res.ErrorCode})", LoggerType.StickyUI);
             });
         }
-        CkGui.AttachToolTip($"--COL--Delivers a beep to {dispName}.{(canBeep ? "" : " Not permitted.")}--COL--", color: canBeep ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudGrey);
+        CkGui.AttachTooltip($"--COL--Delivers a beep to {dispName}.{(canBeep ? "" : " Not permitted.")}--COL--", color: canBeep ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudGrey);
 
         if (CkGui.IconTextButton(FAI.HeartCircleBolt, vibrateTxt, width, true, !canVibrate))
         {
@@ -626,7 +626,7 @@ public partial class SidePanelPair
                     _logger.LogError($"Failed to vibrate {dispName}. ({res.ErrorCode})", LoggerType.StickyUI);
             });
         }
-        CkGui.AttachToolTip($"--COL--Delivers a vibration to {dispName}.{(canVibrate ? "" : " Not permitted.")}--COL--", color: canVibrate ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudGrey);
+        CkGui.AttachTooltip($"--COL--Delivers a vibration to {dispName}.{(canVibrate ? "" : " Not permitted.")}--COL--", color: canVibrate ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudGrey);
     }
     #endregion Shocks
 
@@ -643,7 +643,7 @@ public partial class SidePanelPair
 
         if (CkGui.IconTextButton(FAI.Dizzy, hypnoTxt, width, true, hasEffect || !k.PairPerms.HypnoEffectSending))
             cache.ToggleHypnosisView();
-        CkGui.AttachToolTip(hypnoTT);
+        CkGui.AttachTooltip(hypnoTT);
 
         if (cache.OpenItem is InteractionType.HypnosisEffect)
         {

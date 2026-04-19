@@ -42,7 +42,7 @@ public sealed class PuppeteersDrawer : DynamicDrawer<Kinkster>
         CkGui.FramedIconText(folder.IsOpen ? FAI.CaretDown : FAI.CaretRight);
         CkGui.ColorTextFrameAlignedInline(folder.Name, folder.NameColor);
         CkGui.ColorTextFrameAlignedInline($"[{folder.TotalChildren}]", ImGuiColors.DalamudGrey2);
-        CkGui.AttachToolTip(folder.BracketTooltip);
+        CkGui.AttachTooltip(folder.BracketTooltip);
 
         var endX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
         endX -= CkGui.IconButtonSize(FAI.EyeSlash).X;
@@ -54,7 +54,7 @@ public sealed class PuppeteersDrawer : DynamicDrawer<Kinkster>
             else
                 _incognitoFolders.Add(folder.Name);
         }
-        CkGui.AttachToolTip("Toggles Anonymous View");
+        CkGui.AttachTooltip("Toggles Anonymous View");
 
         ImGui.SameLine(pos.X);
         if (ImGui.InvisibleButton($"{Label}_node_{folder.ID}", new(endX - pos.X, region.Y)))
@@ -83,7 +83,7 @@ public sealed class PuppeteersDrawer : DynamicDrawer<Kinkster>
                 ImGui.SameLine(cursorPos.X);
                 ImGui.SetCursorPosX(cursorPos.X - ImUtf8.FrameHeight - ImUtf8.ItemInnerSpacing.X);
                 ImGui.Image(wrap.Handle, new Vector2(ImUtf8.FrameHeight));
-                CkGui.AttachToolTip(Image.Tooltip);
+                CkGui.AttachTooltip(Image.Tooltip);
             }
         }
     }
@@ -118,7 +118,7 @@ public sealed class PuppeteersDrawer : DynamicDrawer<Kinkster>
             using (ImRaii.PushFont(UiBuilder.MonoFont, useMono))
                 CkGui.TextFrameAligned(dispName);
         }
-        CkGui.AttachToolTip(Tooltip, ImGuiColors.DalamudOrange);
+        CkGui.AttachTooltip(Tooltip, ImGuiColors.DalamudOrange);
     }
 
     private float DrawRightButtons(IDynamicLeaf<Kinkster> leaf, DynamicFlags flags)

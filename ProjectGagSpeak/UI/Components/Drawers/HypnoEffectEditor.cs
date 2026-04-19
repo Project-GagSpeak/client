@@ -287,7 +287,7 @@ public class HypnoEffectEditor : IDisposable
                 {
                     if (ImGui.CheckboxFlags(attribute.ToName(), ref selectedAttributes, (uint)attribute))
                         UpdateEffect(() => eff.Attributes ^= attribute);
-                    CkGui.AttachToolTip(attribute.ToTooltip());
+                    CkGui.AttachTooltip(attribute.ToTooltip());
                     ImGui.TableNextColumn();
                 }
             }
@@ -324,12 +324,12 @@ public class HypnoEffectEditor : IDisposable
 
             if (ImGui.RadioButton(HypnoAttributes.TextDisplayOrdered.ToName(), currentMode == HypnoAttributes.TextDisplayOrdered))
                 UpdateEffect(() => eff.Attributes = (eff.Attributes & ~HypnoAttributes.TextDisplayMask) | HypnoAttributes.TextDisplayOrdered);
-            CkGui.AttachToolTip(HypnoAttributes.TextDisplayOrdered.ToTooltip());
+            CkGui.AttachTooltip(HypnoAttributes.TextDisplayOrdered.ToTooltip());
 
             ImGui.SameLine();
             if (ImGui.RadioButton(HypnoAttributes.TextDisplayRandom.ToName(), currentMode == HypnoAttributes.TextDisplayRandom))
                 UpdateEffect(() => eff.Attributes = (eff.Attributes & ~HypnoAttributes.TextDisplayMask) | HypnoAttributes.TextDisplayRandom);
-            CkGui.AttachToolTip(HypnoAttributes.TextDisplayRandom.ToTooltip());
+            CkGui.AttachTooltip(HypnoAttributes.TextDisplayRandom.ToTooltip());
 
             // Text Scale Properties
             ImGui.TableNextRow();
@@ -340,17 +340,17 @@ public class HypnoEffectEditor : IDisposable
 
             if (ImGui.RadioButton("Static", scaleMode == 0))
                 UpdateEffect(() => eff.Attributes &= ~HypnoAttributes.ScaleMask);
-            CkGui.AttachToolTip("Text should remain the same size.");
+            CkGui.AttachTooltip("Text should remain the same size.");
 
             ImGui.SameLine();
             if (ImGui.RadioButton("Grows Overtime", scaleMode == HypnoAttributes.LinearTextScale))
                 UpdateEffect(() => eff.Attributes = (eff.Attributes & ~HypnoAttributes.ScaleMask) | HypnoAttributes.LinearTextScale);
-            CkGui.AttachToolTip(HypnoAttributes.LinearTextScale.ToTooltip());
+            CkGui.AttachTooltip(HypnoAttributes.LinearTextScale.ToTooltip());
 
             ImGui.SameLine();
             if (ImGui.RadioButton("Random Scale", scaleMode == HypnoAttributes.RandomTextScale))
                 UpdateEffect(() => eff.Attributes = (eff.Attributes & ~HypnoAttributes.ScaleMask) | HypnoAttributes.RandomTextScale);
-            CkGui.AttachToolTip(HypnoAttributes.RandomTextScale.ToTooltip());
+            CkGui.AttachTooltip(HypnoAttributes.RandomTextScale.ToTooltip());
 
             // Text Font Size
             ImGui.TableNextRow();
@@ -400,7 +400,7 @@ public class HypnoEffectEditor : IDisposable
                     eff.TextFadeOutTime = Math.Min(eff.TextFadeOutTime, eff.TextDisplayTime - eff.TextFadeInTime);
                 });
             }
-            CkGui.AttachToolTip("How frequently the text cycles through the display words.");
+            CkGui.AttachTooltip("How frequently the text cycles through the display words.");
 
             var hasFade = eff.Attributes.HasAny(HypnoAttributes.TextFade);
             var hasSpeedUp = eff.Attributes.HasAny(HypnoAttributes.SpeedUpOnCycle);
@@ -456,7 +456,7 @@ public class HypnoEffectEditor : IDisposable
                 ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
                 if (ImGui.SliderInt("##SpeedUpTime", ref speedUp, HypnoService.SPEED_BETWEEN_MIN, HypnoService.SPEED_BETWEEN_MAX, "%dms"))
                     UpdateEffect(() => eff.SpeedupTime = speedUp);
-                CkGui.AttachToolTip(HypnoAttributes.SpeedUpOnCycle.ToTooltip());
+                CkGui.AttachTooltip(HypnoAttributes.SpeedUpOnCycle.ToTooltip());
             }
 
             if (hasTranspose)
@@ -659,7 +659,7 @@ public class HypnoEffectEditor : IDisposable
             {
                 if (ImGui.CheckboxFlags(attribute.ToCompactName(), ref selectedAttributes, (uint)attribute))
                     _editorRef.UpdateEffect(() => effect.Attributes ^= attribute);
-                CkGui.AttachToolTip(attribute.ToTooltip());
+                CkGui.AttachTooltip(attribute.ToTooltip());
                 ImGui.NextColumn();
             }
             ImGui.Columns(1);
@@ -668,12 +668,12 @@ public class HypnoEffectEditor : IDisposable
             var txtMode = effect.Attributes & HypnoAttributes.TextDisplayMask;
             if (ImGui.RadioButton(HypnoAttributes.TextDisplayOrdered.ToCompactName(), txtMode == HypnoAttributes.TextDisplayOrdered))
                 _editorRef.UpdateEffect(() => effect.Attributes = (effect.Attributes & ~HypnoAttributes.TextDisplayMask) | HypnoAttributes.TextDisplayOrdered);
-            CkGui.AttachToolTip(HypnoAttributes.TextDisplayOrdered.ToTooltip());
+            CkGui.AttachTooltip(HypnoAttributes.TextDisplayOrdered.ToTooltip());
 
             ImGui.SameLine();
             if (ImGui.RadioButton(HypnoAttributes.TextDisplayRandom.ToCompactName(), txtMode == HypnoAttributes.TextDisplayRandom))
                 _editorRef.UpdateEffect(() => effect.Attributes = (effect.Attributes & ~HypnoAttributes.TextDisplayMask) | HypnoAttributes.TextDisplayRandom);
-            CkGui.AttachToolTip(HypnoAttributes.TextDisplayRandom.ToTooltip());
+            CkGui.AttachTooltip(HypnoAttributes.TextDisplayRandom.ToTooltip());
 
             // Type
             ImUtf8.TextFrameAligned("Scale:");
@@ -681,17 +681,17 @@ public class HypnoEffectEditor : IDisposable
             var scaleMode = effect.Attributes & HypnoAttributes.ScaleMask;
             if (ImGui.RadioButton("Static", scaleMode == 0))
                 _editorRef.UpdateEffect(() => effect.Attributes &= ~HypnoAttributes.ScaleMask);
-            CkGui.AttachToolTip("Text should remain the same size.");
+            CkGui.AttachTooltip("Text should remain the same size.");
 
             ImUtf8.SameLineInner();
             if (ImGui.RadioButton("Grows", scaleMode == HypnoAttributes.LinearTextScale))
                 _editorRef.UpdateEffect(() => effect.Attributes = (effect.Attributes & ~HypnoAttributes.ScaleMask) | HypnoAttributes.LinearTextScale);
-            CkGui.AttachToolTip(HypnoAttributes.LinearTextScale.ToTooltip());
+            CkGui.AttachTooltip(HypnoAttributes.LinearTextScale.ToTooltip());
 
             ImUtf8.SameLineInner();
             if (ImGui.RadioButton("Random", scaleMode == HypnoAttributes.RandomTextScale))
                 _editorRef.UpdateEffect(() => effect.Attributes = (effect.Attributes & ~HypnoAttributes.ScaleMask) | HypnoAttributes.RandomTextScale);
-            CkGui.AttachToolTip(HypnoAttributes.RandomTextScale.ToTooltip());
+            CkGui.AttachTooltip(HypnoAttributes.RandomTextScale.ToTooltip());
 
             var fullWidth = ImGui.GetContentRegionAvail().X;
 
@@ -743,7 +743,7 @@ public class HypnoEffectEditor : IDisposable
                     effect.TextFadeOutTime = Math.Min(effect.TextFadeOutTime, effect.TextDisplayTime - effect.TextFadeInTime);
                 });
             }
-            CkGui.AttachToolTip("How frequently the text cycles through the display words.");
+            CkGui.AttachTooltip("How frequently the text cycles through the display words.");
 
             if (hasFade)
             {
@@ -780,7 +780,7 @@ public class HypnoEffectEditor : IDisposable
                 ImGui.SetNextItemWidth(fullWidth);
                 if (ImGui.SliderInt("##SpeedUpTime", ref speedUp, HypnoService.SPEED_BETWEEN_MIN, HypnoService.SPEED_BETWEEN_MAX, "%dms Transition Time"))
                     _editorRef.UpdateEffect(() => effect.SpeedupTime = speedUp);
-                CkGui.AttachToolTip(HypnoAttributes.SpeedUpOnCycle.ToTooltip());
+                CkGui.AttachTooltip(HypnoAttributes.SpeedUpOnCycle.ToTooltip());
             }
 
             if (hasTranspose)
@@ -864,7 +864,7 @@ public class HypnoEffectEditor : IDisposable
                 var bindedPreset = _editorRef._current.Name == name;
                 if (DrawPresetItemBox(name, preset, bindedPreset))
                     break;
-                CkGui.AttachToolTip("Keybinds:" +
+                CkGui.AttachTooltip("Keybinds:" +
                     "--SEP----COL--[Double-Click]--COL-- Load Preset" +
                     "--NL----COL--[Right-Click]--COL-- Rename Preset" +
                     "--NL----COL--[CTRL + Left-Click]--COL-- Toggle Binding Mode." +

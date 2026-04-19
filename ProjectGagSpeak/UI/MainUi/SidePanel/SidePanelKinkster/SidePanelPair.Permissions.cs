@@ -57,12 +57,12 @@ public partial class SidePanelPair
             }
             _timespanCache.Remove(perm);
         }
-        CkGui.AttachToolTip($"How long of a timer {dispName} can put on your padlocks.", kinkster.OwnPerms.InHardcore);
+        CkGui.AttachTooltip($"How long of a timer {dispName} can put on your padlocks.", kinkster.OwnPerms.InHardcore);
 
         ImGui.SameLine(width - ImGui.GetFrameHeight());
         if (EditAccessCheckbox.Draw($"##{perm}", canEdit, out var newVal) && canEdit != newVal)
             UiService.SetUITask(async () => await PermHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.OwnPermAccess, perm.ToPermAccessValue(), newVal));
-        CkGui.AttachToolTip($"{dispName} {(canEdit ? "can" : "can not")} change your {data.PermLabel} setting.", kinkster.OwnPerms.InHardcore);
+        CkGui.AttachTooltip($"{dispName} {(canEdit ? "can" : "can not")} change your {data.PermLabel} setting.", kinkster.OwnPerms.InHardcore);
     }
 
     // optimize later and stuff.
@@ -96,12 +96,12 @@ public partial class SidePanelPair
         ImGui.SameLine();
         if (EditAccessCheckbox.Draw($"##{perm}", canEdit, out var newVal) && canEdit != newVal)
             UiService.SetUITask(async () => await PermHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.OwnPermAccess, perm.ToPermAccessValue(), newVal));
-        CkGui.AttachToolTip($"{dispName} {(canEdit ? "can" : "can not")} change your {data.PermLabel} setting.", kinkster.OwnPerms.InHardcore);
+        CkGui.AttachTooltip($"{dispName} {(canEdit ? "can" : "can not")} change your {data.PermLabel} setting.", kinkster.OwnPerms.InHardcore);
 
         // draw inside of the button.
         ImGui.SetCursorScreenPos(pos);
         ClientRowText(data, current);
-        CkGui.AttachToolTip(data.IsGlobal
+        CkGui.AttachTooltip(data.IsGlobal
             ? $"Your {data.PermLabel} {data.JoinWord} {(current ? data.AllowedStr : data.BlockedStr)}. (Globally)"
             : $"You {(current ? data.AllowedStr : data.BlockedStr)} {dispName} {(current ? data.PairAllowedTT : data.PairBlockedTT)}", kinkster.OwnPerms.InHardcore);
     }
@@ -118,14 +118,14 @@ public partial class SidePanelPair
 
         // draw where the button would have been
         ClientRowText(data, current);
-        CkGui.AttachToolTip(data.IsGlobal
+        CkGui.AttachTooltip(data.IsGlobal
             ? $"Your {data.PermLabel} {data.JoinWord} {(current ? data.AllowedStr : data.BlockedStr)}. (Globally)"
             : $"You {(current ? data.AllowedStr : data.BlockedStr)} {dispName} {(current ? data.PairAllowedTT : data.PairBlockedTT)}", kinkster.OwnPerms.InHardcore);
 
         ImGui.SameLine(buttonW);
         if (EditAccessCheckbox.Draw($"##{perm}", canEdit, out var newVal) && canEdit != newVal)
             UiService.SetUITask(async () => await PermHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.OwnPermAccess, perm.ToPermAccessValue(), newVal));
-        CkGui.AttachToolTip($"{dispName} {(canEdit ? "can" : "can not")} change your {data.PermLabel} setting.", kinkster.OwnPerms.InHardcore);
+        CkGui.AttachTooltip($"{dispName} {(canEdit ? "can" : "can not")} change your {data.PermLabel} setting.", kinkster.OwnPerms.InHardcore);
     }
 
     private void ClientRowEnum<T>(Kinkster kinkster, string dispName, float width, KPID perm, bool current, bool canEdit, Func<T> newStateFunc, Func<T> newEditStateFunc)
@@ -162,12 +162,12 @@ public partial class SidePanelPair
             var newEditVal = newEditStateFunc();
             UiService.SetUITask(async () => await PermHelper.ChangeOwnAccess(_hub, kinkster.UserData, kinkster.OwnPermAccess, perm.ToPermAccessValue(), newEditVal!));
         }
-        CkGui.AttachToolTip($"{dispName} {(canEdit ? "can" : "can not")} change your {data.PermLabel} setting.", kinkster.OwnPerms.InHardcore);
+        CkGui.AttachTooltip($"{dispName} {(canEdit ? "can" : "can not")} change your {data.PermLabel} setting.", kinkster.OwnPerms.InHardcore);
 
         // draw inside of the button.
         ImGui.SetCursorScreenPos(pos);
         ClientRowText(data, current);
-        CkGui.AttachToolTip(data.IsGlobal
+        CkGui.AttachTooltip(data.IsGlobal
             ? $"Your {data.PermLabel} {data.JoinWord} {(current ? data.AllowedStr : data.BlockedStr)}. (Globally)"
             : $"You {(current ? data.AllowedStr : data.BlockedStr)} {dispName} {(current ? data.PairAllowedTT : data.PairBlockedTT)}", kinkster.OwnPerms.InHardcore);
     }
@@ -233,7 +233,7 @@ public partial class SidePanelPair
         ImGui.SameLine(width - ImGui.GetFrameHeight());
         if (HardcoreCheckbox.Draw($"##DevoLocks{name}", devotionalState, out var newVal) && devotionalState != newVal)
             UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.DevotionalLocks), !devotionalState));
-        CkGui.AttachToolTip(devotionalState
+        CkGui.AttachTooltip(devotionalState
             ? $"Any Hardcore action by {name} will be --COL--pairlocked--COL----NL--This means that only {name} can disable it."
             : $"Anyone you are in Hardcore for can undo Hardcore interactions from --COL--{name}--COL--", color: GsCol.VibrantPink.Vec4());
         return false;
@@ -252,7 +252,7 @@ public partial class SidePanelPair
             var res = perm.ToPermValue();
             UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, res.name, !current));
         }
-        CkGui.AttachToolTip($"You {(current ? data.AllowedStr : data.BlockedStr)} {name} {(current ? data.PairAllowedTT : data.PairBlockedTT)}");
+        CkGui.AttachTooltip($"You {(current ? data.AllowedStr : data.BlockedStr)} {name} {(current ? data.PairAllowedTT : data.PairBlockedTT)}");
 
         // go back and draw inside the dummy.
         ImGui.SetCursorScreenPos(pos);
@@ -280,7 +280,7 @@ public partial class SidePanelPair
         using (ImRaii.Disabled(isActive))
             if (EditAccessCheckbox.Draw($"##{permName}", allowanceState, out var newVal) && allowanceState != newVal)
                 UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, perm.ToPermAccessValue(), !allowanceState));
-        CkGui.AttachToolTip(isActive ? "You are helpless to change this while active!" : allowanceState
+        CkGui.AttachTooltip(isActive ? "You are helpless to change this while active!" : allowanceState
                 ? $"Allowing {name} {data.ToggleTrueSuffixTT}." : $"Preventing {name} {data.ToggleFalseSuffixTT}.");
 
         // go back and draw inside the dummy.
@@ -315,21 +315,21 @@ public partial class SidePanelPair
         // change to ckgui for disabled?
         var pos = ImGui.GetCursorScreenPos();
         ImGui.Dummy(new Vector2(width - ((ImGui.GetFrameHeight() + ImGui.GetStyle().ItemInnerSpacing.X) * 2), ImGui.GetFrameHeight()));
-        CkGui.AttachToolTip($"{permName}'s current locked emote status.");
+        CkGui.AttachTooltip($"{permName}'s current locked emote status.");
 
         // draw out the checkboxessss
         ImUtf8.SameLineInner();
         using (ImRaii.Disabled(isActive))
             if (EditAccessCheckbox.Draw($"##EmBasic{permName}", allowBasic, out var newVal) && allowBasic != newVal)
                 UiService.SetUITask(PermHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, KPID.LockedEmoteState.ToPermAccessValue(), newVal));
-        CkGui.AttachToolTip(isActive ? "Helpless to change this while performing a locked emote!" : allowBasic
+        CkGui.AttachTooltip(isActive ? "Helpless to change this while performing a locked emote!" : allowBasic
                 ? $"{name} can force you to Groundsit, Sit, or Cyclepose." : $"Preventing {name} from placing you in a locked emote state.");
 
         ImUtf8.SameLineInner();
         using (ImRaii.Disabled(isActive))
             if (EditAccessCheckbox.Draw($"##EmFull{permName}", allowAll, out var newVal2) && allowAll != newVal2)
                 UiService.SetUITask(PermHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, KPID.LockedEmoteState.ToPermAccessValue(true), newVal2));
-        CkGui.AttachToolTip(isActive ? "Helpless to change this while performing a locked emote!" : allowBasic
+        CkGui.AttachTooltip(isActive ? "Helpless to change this while performing a locked emote!" : allowBasic
                 ? $"{name} can force you to perform any looping emote." : $"Preventing looped emotes from being forced by {name}.");
 
         // go back and draw inside the dummy.
@@ -390,11 +390,11 @@ public partial class SidePanelPair
             }
             _timespanCache.Remove(perm);
         }
-        CkGui.AttachToolTip($"The Maximum Time {dispName} can be locked for.");
+        CkGui.AttachTooltip($"The Maximum Time {dispName} can be locked for.");
 
         ImGui.SameLine(width - ImGui.GetFrameHeight());
         CkGui.BoolIcon(canEdit, false, FAI.Pen, FAI.Pen);
-        CkGui.AttachToolTip(canEdit ? $"{dispName} allows you to change this." : $"Only {dispName} can update this permission.");
+        CkGui.AttachTooltip(canEdit ? $"{dispName} allows you to change this." : $"Only {dispName} can update this permission.");
     }
 
     private void KinksterRowCommon<T>(Kinkster kinkster, string dispName, float width, KPID perm, bool current, bool canEdit, Func<T> newStateFunc)
@@ -431,14 +431,14 @@ public partial class SidePanelPair
         }
         ImUtf8.SameLineInner();
         CkGui.BoolIcon(canEdit, false, FAI.Pen, FAI.Pen);
-        CkGui.AttachToolTip(dispName + (canEdit
+        CkGui.AttachTooltip(dispName + (canEdit
             ? " allows you to change this permission at will."
             : " is preventing you from changing this permission. Only they can update it."));
 
         ImGui.SetCursorScreenPos(pos);
         KinksterRowText(data, dispName, current, canEdit);
         if (canEdit)
-            CkGui.AttachToolTip($"Toggle {dispName}'s permission.");
+            CkGui.AttachTooltip($"Toggle {dispName}'s permission.");
     }
 
     private void KinksterHcRow(Kinkster k, string name, float width, KPID perm, string current, bool grantedAllowance)
@@ -454,7 +454,7 @@ public partial class SidePanelPair
         {
             ImUtf8.SameLineInner();
             CkGui.FramedIconText(FAI.UserLock, ImGuiColors.HealerGreen);
-            CkGui.AttachToolTip($"{name} {data.AllowedTT}");
+            CkGui.AttachTooltip($"{name} {data.AllowedTT}");
         }
 
         // go back to the dummy and draw out the text stuff.
@@ -463,7 +463,7 @@ public partial class SidePanelPair
         var iconCol = isPairlocked ? ImGuiColors.DalamudRed.ToUint() : uint.MaxValue;
         CkGui.FramedIconText(isActive ? data.IconActive : data.IconInactive, iconCol);
         if (isPairlocked)
-            CkGui.AttachToolTip("This status was Devotion Locked, and can only be changed by the assigner!");
+            CkGui.AttachTooltip("This status was Devotion Locked, and can only be changed by the assigner!");
 
         // print the text row.
         using var _ = ImRaii.PushStyle(ImGuiStyleVar.Alpha, .5f);

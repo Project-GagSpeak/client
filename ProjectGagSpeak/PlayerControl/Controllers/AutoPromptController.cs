@@ -167,17 +167,17 @@ public sealed class AutoPromptController : DisposableMediatorSubscriberBase
     {
         // This was originally used to detect if we skipped a cutscene. If we wanted to do this another way,
         // or we find another way to detect selection history that is easier, this could be avoided entirely.
-        return;
 
         // Just some placeholder stuff for now.
         var lastLabel = string.Empty;
         var lastSelected = string.Empty;
+        return;
 
-        if (lastLabel.Contains("Skip cutscene", StringComparison.OrdinalIgnoreCase) && lastSelected.Contains("Yes", StringComparison.OrdinalIgnoreCase))
-        {
-            Logger.LogTrace("Cutscene Skip Detected, Halting Achievement WarriorOfLewd", LoggerType.Achievements);
-            GagspeakEventManager.AchievementEvent(UnlocksEvent.CutsceneInturrupted);
-        }
+        //if (lastLabel.Contains("Skip cutscene", StringComparison.OrdinalIgnoreCase) && lastSelected.Contains("Yes", StringComparison.OrdinalIgnoreCase))
+        //{
+        //    Logger.LogTrace("Cutscene Skip Detected, Halting Achievement WarriorOfLewd", LoggerType.Achievements);
+        //    GagspeakEventManager.AchievementEvent(UnlocksEvent.CutsceneInturrupted);
+        //}
     }
 
     // These would be mainly for automating the entrance of apartments / chambers, which we could do via automation if possible.

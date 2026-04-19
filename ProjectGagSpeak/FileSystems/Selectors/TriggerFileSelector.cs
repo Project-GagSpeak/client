@@ -111,7 +111,7 @@ public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerF
                 Log.Debug($"Deleting {leaf.Value.Label} with SHIFT pressed.");
                 _manager.Delete(leaf.Value);
             }
-            CkGui.AttachToolTip("Delete this trigger set. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
+            CkGui.AttachTooltip("Delete this trigger set. This cannot be undone.--SEP--Must be holding SHIFT to remove.");
         }
 
         return hovered && ImGui.IsMouseReleased(ImGuiMouseButton.Left);
@@ -130,7 +130,7 @@ public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerF
     {
         if (CkGui.IconButton(FAI.Plus, inPopup: true))
             ImGui.OpenPopup("##NewTrigger");
-        CkGui.AttachToolTip("Create a new Trigger.");
+        CkGui.AttachTooltip("Create a new Trigger.");
 
         ImGui.SameLine(0, 1);
         DrawFolderButton();

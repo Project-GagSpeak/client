@@ -116,7 +116,7 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
         {
             ImUtf8.SameLineInner();
             CkGui.FramedIconText(FAI.Sync, ImGuiColors.ParsedPink);
-            CkGui.AttachToolTip("This Pattern will loop indefinitely until stopped.");
+            CkGui.AttachTooltip("This Pattern will loop indefinitely until stopped.");
         }
 
         var shiftPressed = KeyMonitor.ShiftPressed();
@@ -137,14 +137,14 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
             Log.Debug($"Deleting {leaf.Value.Label} with SHIFT pressed.");
             _manager.Delete(leaf.Value);
         }
-        CkGui.AttachToolTip("Delete this Pattern from storage.--SEP--Must be holding SHIFT to remove.");
+        CkGui.AttachTooltip("Delete this Pattern from storage.--SEP--Must be holding SHIFT to remove.");
 
         currentX -= iconSpacing;
         ImGui.SameLine(currentX);
         pos = ImGui.GetCursorScreenPos();
         hovering = ImGui.IsMouseHoveringRect(pos, pos + new Vector2(ImGui.GetFrameHeight()));
         CkGui.FramedIconText(FAI.QuestionCircle, hovering ? ImGui.GetColorU32(ImGuiColors.TankBlue) : ImGui.GetColorU32(ImGuiCol.TextDisabled));
-        CkGui.AttachToolTip($"Total Length: --COL--{leaf.Value.Duration.ToString("mm\\:ss")}--COL--" +
+        CkGui.AttachTooltip($"Total Length: --COL--{leaf.Value.Duration.ToString("mm\\:ss")}--COL--" +
             $"--NL--Start Time: --COL--{leaf.Value.StartPoint.ToString("mm\\:ss")}--COL--" +
             $"--NL--Playback Time: --COL--{leaf.Value.PlaybackDuration.ToString("mm\\:ss")}--COL--", color: GsCol.VibrantPink.Vec4());
         return wasHovered && ImGui.IsMouseReleased(ImGuiMouseButton.Left);
@@ -163,7 +163,7 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
     {
         if (CkGui.IconButton(FAI.Plus, disabled: !_manager.CanRecordPattern, inPopup: true))
             _manager.OpenRemoteForRecording();
-        CkGui.AttachToolTip(_manager.CanRecordPattern ? "Create a new Pattern." : "Cannot be in a VibeRoom, or playing a pattern!");
+        CkGui.AttachTooltip(_manager.CanRecordPattern ? "Create a new Pattern." : "Cannot be in a VibeRoom, or playing a pattern!");
 
         ImGui.SameLine(0, 1);
         DrawFolderButton();

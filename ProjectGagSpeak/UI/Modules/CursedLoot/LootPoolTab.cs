@@ -104,7 +104,7 @@ public class LootPoolTab : IFancyTab
             ActiveItemsDrawer.DrawImagePadded(CosmeticService.CoreTextures.Cache[CoreTexture.Weighty], iconSize, 0, imgPadding);
         else
             CkGui.FramedIconText(FAI.QuestionCircle, ImGuiColors.DalamudYellow);
-        CkGui.AttachToolTip($"Item has --COL--[{item.Precedence.ToName()}]--COL-- precedence.", item.Precedence.ToColor());
+        CkGui.AttachTooltip($"Item has --COL--[{item.Precedence.ToName()}]--COL-- precedence.", item.Precedence.ToColor());
 
         // The cursed item name.
         CkGui.TextFrameAlignedInline(item.Label);
@@ -118,7 +118,7 @@ public class LootPoolTab : IFancyTab
         ImGui.SameLine(ImGui.GetContentRegionAvail().X - ImUtf8.FrameHeight);
         if (CkGui.IconButton(item.InPool ? FAI.ArrowLeft : FAI.ArrowRight, disabled: item.IsActive(), inPopup: true))
             _manager.TogglePoolState(item);
-        CkGui.AttachToolTip(item.InPool ? "Remove item from the pool." : "Add item to the pool.");
+        CkGui.AttachTooltip(item.InPool ? "Remove item from the pool." : "Add item to the pool.");
     }
 
     private void DrawLootTooltip(CursedItem item)

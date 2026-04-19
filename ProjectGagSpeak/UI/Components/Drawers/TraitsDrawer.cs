@@ -72,7 +72,7 @@ public class AttributeDrawer
         {
             var (trait, icon, tooltip, col) = traitData[i];
             TraitCheckbox(trait.ToString(), CosmeticService.CoreTextures.Cache[icon], ref attributes, trait);
-            CkGui.AttachToolTip(tooltip, color: col);
+            CkGui.AttachTooltip(tooltip, color: col);
 
             // Only SameLine if not the last in the row
             if ((i + 1) % maxPerRow != 0 || i == traitData.Length - 1)
@@ -84,7 +84,7 @@ public class AttributeDrawer
         {
             attributes.Arousal = newVal;
         }
-        CkGui.AttachToolTip("How much this item arouses you.");
+        CkGui.AttachTooltip("How much this item arouses you.");
     }
 
     public void DrawTraitPreview(Traits itemTraits)
@@ -116,7 +116,7 @@ public class AttributeDrawer
         {
             if (i > 0) ImUtf8.SameLineInner();
             ImGui.Image(CosmeticService.CoreTextures.Cache[icons[i].tex].Handle, iconSize);
-            CkGui.AttachToolTip(icons[i].tooltip);
+            CkGui.AttachTooltip(icons[i].tooltip);
         }
     }
 

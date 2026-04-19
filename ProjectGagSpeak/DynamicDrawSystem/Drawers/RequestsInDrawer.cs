@@ -149,14 +149,14 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
         using (ImRaii.PushColor(ImGuiCol.Text, CkCol.TriStateCheck.Uint()))
             if (CkGui.IconTextButton(FAI.CheckCircle, "Accept All", null, true, UiService.DisableUI))
                 Log.Information("Accepting all incoming kinkster requests.");
-        CkGui.AttachToolTip("Accept all incoming kinkster requests.");
+        CkGui.AttachTooltip("Accept all incoming kinkster requests.");
 
         CkGui.FrameSeparatorV(inner: true);
 
         using (ImRaii.PushColor(ImGuiCol.Text, CkCol.TriStateCross.Uint()))
             if (CkGui.IconTextButton(FAI.TimesCircle, "Reject All", null, true, UiService.DisableUI))
                 Log.Information("Rejecting all incoming kinkster requests.");
-        CkGui.AttachToolTip("Reject all incoming kinkster requests.");
+        CkGui.AttachTooltip("Reject all incoming kinkster requests.");
     }
 
 
@@ -177,7 +177,7 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
         if (ImGui.InvisibleButton($"{leaf.FullPath}-hoverspace", new Vector2(rightSide - posX, region.Y)))
             HandleLeftClick(leaf, flags);
         HandleDetections(leaf, flags);
-        CkGui.AttachToolTip(ToolTip, ImGuiColors.DalamudOrange);
+        CkGui.AttachTooltip(ToolTip, ImGuiColors.DalamudOrange);
 
         // Bounce back and draw out the name.
         ImGui.SameLine(posX);
@@ -192,7 +192,7 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
             CkGui.FramedHoverIconText(FAI.CommentDots, ImGuiColors.TankBlue.ToUint());
         else
             CkGui.FramedIconText(FAI.CommentDots, ImGui.GetColorU32(ImGuiCol.TextDisabled));
-        CkGui.AttachToolTip($"--COL--Attached Message:--COL----SEP--{entry.Message}", !entry.HasMessage, ImGuiColors.ParsedGold);
+        CkGui.AttachTooltip($"--COL--Attached Message:--COL----SEP--{entry.Message}", !entry.HasMessage, ImGuiColors.ParsedGold);
     }
 
     // Draw out the responder entry.
@@ -223,17 +223,17 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
                     // Draw out the initial frame with a small outer boarder.
                     if (CkGui.IconButtonColored(FAI.Check, CkCol.TriStateCheck.Uint(), UiService.DisableUI))
                         AcceptRequest(leaf.Data);
-                    CkGui.AttachToolTip("Accept this kinkster request.");
+                    CkGui.AttachTooltip("Accept this kinkster request.");
                     ImUtf8.SameLineInner();
                     if (CkGui.IconButtonColored(FAI.Times, CkCol.TriStateCross.Uint(), UiService.DisableUI))
                         RejectRequest(leaf.Data);
-                    CkGui.AttachToolTip("Reject this kinkster request.");
+                    CkGui.AttachTooltip("Reject this kinkster request.");
                     ImUtf8.SameLineInner();
                 }
             }
 
             CkGui.FramedHoverIconText(FAI.Reply, uint.MaxValue);
-            CkGui.AttachToolTip("Hover me to open single-request responder.");
+            CkGui.AttachTooltip("Hover me to open single-request responder.");
         }
         // Should be if we hover anywhere in the area.
         if (ImGui.IsItemHovered())
@@ -245,7 +245,7 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
             endX -= (timeTxtWidth + spacing);
             ImGui.SameLine(endX);
             CkGui.ColorTextFrameAligned(timeTxt, ImGuiColors.ParsedGrey);
-            CkGui.AttachToolTip("Time left to respond to this request.");
+            CkGui.AttachTooltip("Time left to respond to this request.");
         }
         
         return endX;

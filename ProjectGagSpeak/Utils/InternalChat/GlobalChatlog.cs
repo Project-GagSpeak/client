@@ -228,21 +228,21 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
             if (CkGui.IconButton(FAI.Heart))
                 _showEmotes = !_showEmotes;
         }
-        CkGui.AttachToolTip($"Toggles Quick-Emote selection.");
+        CkGui.AttachTooltip($"Toggles Quick-Emote selection.");
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatEmotes, MainUI.LastPos, MainUI.LastSize);
 
         // Toggle AutoScroll functionality
         ImUtf8.SameLineInner();
         if (CkGui.IconButton(scrollIcon))
             DoAutoScroll = !DoAutoScroll;
-        CkGui.AttachToolTip($"Toggles AutoScroll (Current: {(DoAutoScroll ? "Enabled" : "Disabled")})");
+        CkGui.AttachTooltip($"Toggles AutoScroll (Current: {(DoAutoScroll ? "Enabled" : "Disabled")})");
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatScroll, MainUI.LastPos, MainUI.LastSize);
 
         // draw the popout button
         ImUtf8.SameLineInner();
         if (CkGui.IconButton(FAI.Expand, disabled: !KeyMonitor.ShiftPressed()))
             Mediator.Publish(new UiToggleMessage(typeof(GlobalChatPopoutUI)));
-        CkGui.AttachToolTip("Open the Global Chat in a Popout Window--SEP--Hold SHIFT to activate!");
+        CkGui.AttachTooltip("Open the Global Chat in a Popout Window--SEP--Hold SHIFT to activate!");
     }
 
     protected override void DrawPostChatLog(Vector2 inputPosMin)
@@ -350,7 +350,7 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
                 _hub.UserSendKinksterRequest(new(new(LastInteractedMsg.UID), false, _requestNickPref, _requestMessage)).ConfigureAwait(false);
                 ClosePopupAndResetMsg();
             }
-            CkGui.AttachToolTip(!shiftHeld ? "Must be holding SHIFT to select." : string.IsNullOrWhiteSpace(_requestMessage)
+            CkGui.AttachTooltip(!shiftHeld ? "Must be holding SHIFT to select." : string.IsNullOrWhiteSpace(_requestMessage)
                 ? "Must attach a message to the request!" : $"Sends a Kinkster Request to {LastInteractedMsg.Name}.");
             
             ImGui.SetNextItemWidth(ImGui.GetWindowWidth() - 20);
@@ -363,7 +363,7 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
             Mediator.Publish(new KinkPlateLightCreateOpenMessage(LastInteractedMsg.UserData));
             ClosePopupAndResetMsg();
         }
-        CkGui.AttachToolTip($"Opens {LastInteractedMsg.Name}'s Light KinkPlate.");
+        CkGui.AttachTooltip($"Opens {LastInteractedMsg.Name}'s Light KinkPlate.");
         ImGui.Separator();
 
         if (CkGui.SelectableEx("Hide messages from Kinkster", sysOrSelf))
@@ -371,13 +371,13 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
             SilenceList.Add(LastInteractedMsg.UID);
             ClosePopupAndResetMsg();
         }
-        CkGui.AttachToolTip(ctrlHeld ? $"Hides all messages from {LastInteractedMsg.Name} until plugin reload/restart." : "Must be holding CTRL to select.");
+        CkGui.AttachTooltip(ctrlHeld ? $"Hides all messages from {LastInteractedMsg.Name} until plugin reload/restart." : "Must be holding CTRL to select.");
 
         if (CkGui.SelectableEx("Report Chat Behavior", !(shiftHeld && ctrlHeld) || sysOrSelf))
         {
 
         }
-        CkGui.AttachToolTip(!(shiftHeld && ctrlHeld) ? "Must be holding CTRL + SHIFT to report!" : $"Report {LastInteractedMsg.Name} for their Chat Behavior!");
+        CkGui.AttachTooltip(!(shiftHeld && ctrlHeld) ? "Must be holding CTRL + SHIFT to report!" : $"Report {LastInteractedMsg.Name} for their Chat Behavior!");
     }
 
     private void ClosePopupAndResetMsg()

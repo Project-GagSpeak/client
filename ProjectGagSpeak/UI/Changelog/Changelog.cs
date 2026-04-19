@@ -20,6 +20,26 @@ public class Changelog
     // Add Version Data here.
     private void AddVersionData()
     {
+        VersionEntry(2, 1, 2, 0)
+            .RegisterMain("Beeeeg patch of many small things.")
+            .RegisterFeature("Additional support for Deustch localization for Hardcore traits. - Cuteki")
+            .RegisterFeature("Make the Visuals toggle determine if Mod / Glamour application is blocked " +
+            "or not for application. (This may be revised and is a temp fix.) - Yfthbr")
+            .RegisterQol("Auto-Remove Gags on timer expiration now works as intended. - Azure")
+            .RegisterQol("More consistant ModPreset priority setting to respect layer priority. - Yfthbr")
+            .RegisterQol("Padlock fields should no longer randomly vanish due to bad caching - A'nil")
+            .RegisterQol("Added support for /gdr to avoid conflict with /dr where applicable - Azure")
+            .RegisterQol("Added /gagspeak chat to quick-open GlobalChatPopout - Azure")
+            .RegisterQol("Puppeteer now properly supports multiple trigger phrases. - Azure")
+            .RegisterQol("Garbler supports both /cwl and /cwlinkshell for chat channels - Azure")
+            .RegisterBugfix("Fixed enactor in autoUnlock for chatHidden -Yfthbr")
+            .RegisterBugfix("Fixed bad text parsing that allowed color formatting in text to break from text like :catscream:.")
+            .RegisterBugfix("Fixed Moodle/Loci preset titles not displaying when no icons are used. - A'nil")
+            .RegisterBugfix("CursedLoot now properly reflects the apply traits setting in the config - Azure")
+            .RegisterBugfix("Some achievement logic polished -  Arghb.")
+            .RegisterBugfix("Fix block chat input not working sometimes - A'nil");
+
+
         VersionEntry(2, 1, 1, 0)
             .RegisterMain("Allows LociRemoval on triggers.")
             .RegisterQol("Basic bondage application uses moodles as a fallback. However, " +

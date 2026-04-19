@@ -99,7 +99,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
         ImUtf8.SameLineInner();
         if (CkGui.IconTextButton(FAI.Ban, "Clear", disabled: string.IsNullOrEmpty(_searchStr)))
             _searchStr = string.Empty;
-        CkGui.AttachToolTip("Clear the search filter.");
+        CkGui.AttachTooltip("Clear the search filter.");
     }
 
     private AchievementModuleKind GetTypeFromTab()
@@ -159,7 +159,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
             var tooltip = achievementItem.IsCompleted ? "Achievement Completed!" : (progress != 0 ? "Achievement in Progress" : "Achievement Not Started");
             ImGui.AlignTextToFramePadding();
             CkGui.IconText(icon, color);
-            CkGui.AttachToolTip(tooltip);
+            CkGui.AttachTooltip(tooltip);
 
             // beside it, draw out the achievement's Title in white text.
             ImUtf8.SameLineInner();
@@ -176,12 +176,12 @@ public class AchievementsUI : WindowMediatorSubscriberBase
             var descText = achievementItem.IsSecretAchievement ? "????" : achievementItem.Description;
             CkGui.TextWrapped(descText);
             if (achievementItem.IsSecretAchievement)
-                CkGui.AttachToolTip("Explore GagSpeak's Features or work together with others to uncover how you obtain this Achievement!)");
+                CkGui.AttachTooltip("Explore GagSpeak's Features or work together with others to uncover how you obtain this Achievement!)");
         }
         // underneath this, we should draw the current progress towards the goal.
         DrawProgressForAchievement(achievementItem);
         if (ImGui.IsItemHovered() && achievementItem is DurationAchievement)
-            CkGui.AttachToolTip((achievementItem as DurationAchievement)?.GetActiveItemProgressString() ?? "NO PROGRESS");
+            CkGui.AttachTooltip((achievementItem as DurationAchievement)?.GetActiveItemProgressString() ?? "NO PROGRESS");
 
         // draw the text in the second column.
         ImGui.TableNextColumn();

@@ -82,21 +82,21 @@ public sealed class ReactionsDrawer
     public void DrawText(TextAction act)
     {
         CkGui.FramedIconText(FAI.Comment);
-        CkGui.AttachToolTip("The Classic PuppetMaster reaction of sending a message");
+        CkGui.AttachTooltip("The Classic PuppetMaster reaction of sending a message");
         var isValid = act.IsValid();
         ImUtf8.SameLineInner();
         CkGui.ColorTextWrapped($"/{act.OutputCommand}", isValid ? ImGuiColors.TankBlue : CkCol.TriStateCross.Vec4Ref());
-        CkGui.AttachToolTip("What you send in chat.--SEP--The --COL--'/'--COL--, it is added for you.", GsCol.VibrantPink.Vec4());
+        CkGui.AttachTooltip("What you send in chat.--SEP--The --COL--'/'--COL--, it is added for you.", GsCol.VibrantPink.Vec4());
     }
 
     public void DrawTextRow(TextAction act)
     {
         CkGui.FramedIconText(FAI.Comment);
-        CkGui.AttachToolTip("The Classic PuppetMaster reaction of sending a message");
+        CkGui.AttachTooltip("The Classic PuppetMaster reaction of sending a message");
 
         var isValid = !string.IsNullOrEmpty(act.OutputCommand) && !act.OutputCommand.StartsWith('/');
         CkGui.ColorTextFrameAlignedInline(isValid ? $"/{act.OutputCommand}" : "<Invalid>", ImGuiColors.TankBlue);
-        CkGui.AttachToolTip("What you send in chat." +
+        CkGui.AttachTooltip("What you send in chat." +
             "--SEP----COL--TIP:--COL-- Don't include --COL--'/'--COL--, it is added for you.", GsCol.VibrantPink.Vec4());
     }
 
@@ -107,7 +107,7 @@ public sealed class ReactionsDrawer
             CkGui.FramedIconText(FAI.Comment);
             CkGui.TextFrameAlignedInline("/");
         }
-        CkGui.AttachToolTip("The Classic PuppetMaster reaction of sending a message");
+        CkGui.AttachTooltip("The Classic PuppetMaster reaction of sending a message");
 
         ImUtf8.SameLineInner();
         var output = act.OutputCommand;
@@ -117,14 +117,14 @@ public sealed class ReactionsDrawer
         // Draw a hint if no text is present.
         if (string.IsNullOrWhiteSpace(act.OutputCommand))
             ImGui.GetWindowDrawList().AddText(ImGui.GetItemRectMin() + ImGui.GetStyle().FramePadding, 0xFFBBBBBB, "party Hello World!");
-        CkGui.AttachToolTip("What you send in chat." +
+        CkGui.AttachTooltip("What you send in chat." +
             "--SEP----COL--TIP:--COL-- Don't include --COL--'/'--COL--, it is added for you.", GsCol.VibrantPink.Vec4());
     }
 
     public void DrawTextRowEditor(TextAction act)
     {
         CkGui.FramedIconText(FAI.Comment);
-        CkGui.AttachToolTip("The Classic PuppetMaster reaction of sending a message");
+        CkGui.AttachTooltip("The Classic PuppetMaster reaction of sending a message");
 
         ImUtf8.SameLineInner();
         var outputText = act.OutputCommand;
@@ -137,7 +137,7 @@ public sealed class ReactionsDrawer
     {
         // State and layer row
         CkGui.FramedIconText(FAI.ListOl);
-        CkGui.AttachToolTip("Invokes an interaction with the Gags module");
+        CkGui.AttachTooltip("Invokes an interaction with the Gags module");
 
         CkGui.ColorTextFrameAlignedInline(GetStateName(act.NewState), ImGuiColors.TankBlue);
         CkGui.TextFrameAlignedInline(act.NewState is NewState.Locked ? "the gag on" : "a gag to");
@@ -149,7 +149,7 @@ public sealed class ReactionsDrawer
         if (act.NewState is NewState.Enabled)
         {
             ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged].Handle, new(ImUtf8.FrameHeight));
-            CkGui.AttachToolTip("Indicates what gag will be applied.");
+            CkGui.AttachTooltip("Indicates what gag will be applied.");
             CkGui.TextFrameAlignedInline("Using a");
             CkGui.ColorTextFrameAlignedInline(act.GagType.GagName(), ImGuiColors.TankBlue);
             return;
@@ -157,7 +157,7 @@ public sealed class ReactionsDrawer
 
         // Lock state
         CkGui.FramedIconText(FAI.Lock);
-        CkGui.AttachToolTip("Indicates what lock will be applied to the gag.");
+        CkGui.AttachTooltip("Indicates what lock will be applied to the gag.");
         CkGui.TextFrameAlignedInline("Using a");
         CkGui.ColorTextFrameAlignedInline(act.Padlock.ToName(), ImGuiColors.TankBlue);
         if (act.Padlock.IsTimerLock() && act.Padlock is not Padlocks.FiveMinutes)
@@ -175,7 +175,7 @@ public sealed class ReactionsDrawer
         var isLockAndKey = act.NewState is NewState.Locked or NewState.Unlocked;
 
         ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged].Handle, new(ImUtf8.FrameHeight));
-        CkGui.AttachToolTip("Invokes an interaction with the Gags module");
+        CkGui.AttachTooltip("Invokes an interaction with the Gags module");
 
         CkGui.TextFrameAlignedInline($"{(act.LayerIdx is -1 ? "On any open layer" : $"On layer {act.LayerIdx}")}, a");
         CkGui.ColorTextFrameAlignedInline(isLockAndKey ? act.Padlock.ToName() : act.GagType.GagName(), ImGuiColors.TankBlue);
@@ -185,7 +185,7 @@ public sealed class ReactionsDrawer
         {
             ImGui.SameLine();
             CkGui.FramedIconText(FAI.ExclamationTriangle, ImGuiColors.DalamudRed);
-            CkGui.AttachToolTip("An Invalid Gag/Lock/Layer is selected!");
+            CkGui.AttachTooltip("An Invalid Gag/Lock/Layer is selected!");
         }
     }
 
@@ -193,7 +193,7 @@ public sealed class ReactionsDrawer
     {
         // State and layer row
         CkGui.FramedIconText(FAI.ListOl);
-        CkGui.AttachToolTip("Invokes an interaction with the Gags module");
+        CkGui.AttachTooltip("Invokes an interaction with the Gags module");
 
         var stateW = ImGui.CalcTextSize("removem").X;
         ImUtf8.SameLineInner();
@@ -217,7 +217,7 @@ public sealed class ReactionsDrawer
         if (act.NewState is NewState.Enabled)
         {
             ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged].Handle, new(ImUtf8.FrameHeight));
-            CkGui.AttachToolTip("Indicates what gag will be applied.");
+            CkGui.AttachTooltip("Indicates what gag will be applied.");
             CkGui.TextFrameAlignedInline("Using a");
 
             ImUtf8.SameLineInner();
@@ -228,14 +228,14 @@ public sealed class ReactionsDrawer
 
         // Lock state
         CkGui.FramedIconText(FAI.Lock);
-        CkGui.AttachToolTip("Indicates what lock will be applied to the gag.");
+        CkGui.AttachTooltip("Indicates what lock will be applied to the gag.");
         CkGui.TextFrameAlignedInline("Using a");
 
         ImUtf8.SameLineInner();
         var options = PadlockEx.ClientLocks.Except(PadlockEx.PasswordPadlocks);
         if (CkGuiUtils.EnumCombo("##edit-lock", ImGui.GetContentRegionAvail().X, act.Padlock, out var newLock, options, i => i.ToName(), flags: CFlags.NoArrowButton))
             act.Padlock = newLock;
-        CkGui.AttachToolTip("The padlock that the trigger attempts to apply");
+        CkGui.AttachTooltip("The padlock that the trigger attempts to apply");
 
         // For timer locks we should ask for timer input
         if (act.Padlock.IsTimerLock() && act.Padlock is not Padlocks.FiveMinutes)
@@ -252,7 +252,7 @@ public sealed class ReactionsDrawer
                 // Clear it
                 _lowerTime = null;
             }
-            CkGui.AttachToolTip("The lower range when randomly picking a lock time.");
+            CkGui.AttachTooltip("The lower range when randomly picking a lock time.");
 
             CkGui.FramedIconText(FAI.HourglassStart);
             CkGui.TextFrameAlignedInline("Maximum Lock Time");
@@ -263,20 +263,20 @@ public sealed class ReactionsDrawer
                 // Clear it
                 _upperTime = null;
             }
-            CkGui.AttachToolTip("The upper range when randomly picking a lock time.");
+            CkGui.AttachTooltip("The upper range when randomly picking a lock time.");
         }
     }
 
     public void DrawGagRowEditor(GagAction act)
     {
         ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged].Handle, new(ImUtf8.FrameHeight));
-        CkGui.AttachToolTip("Invokes an interaction with the Gags module");
+        CkGui.AttachTooltip("Invokes an interaction with the Gags module");
 
         ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo("##edit-state", 60f, act.NewState, out var newState, [NewState.Enabled, NewState.Locked, NewState.Disabled],
             i => i switch { NewState.Enabled => "Apply", NewState.Locked => "Lock", _ => "Remove" }, flags: CFlags.NoArrowButton))
             act.NewState = newState;
-        CkGui.AttachToolTip("The new state set on the targeted gag.");
+        CkGui.AttachTooltip("The new state set on the targeted gag.");
 
         if (newState is NewState.Locked)
         {
@@ -307,7 +307,7 @@ public sealed class ReactionsDrawer
     {
         // State and layer row
         CkGui.FramedIconText(FAI.ListOl);
-        CkGui.AttachToolTip("Invokes an interaction with the Restriction module");
+        CkGui.AttachTooltip("Invokes an interaction with the Restriction module");
 
         CkGui.ColorTextFrameAlignedInline(GetStateName(act.NewState), ImGuiColors.TankBlue);
         CkGui.TextFrameAlignedInline(act.NewState is NewState.Locked ? "the binding on" : "a binding to");
@@ -319,7 +319,7 @@ public sealed class ReactionsDrawer
         if (act.NewState is NewState.Enabled)
         {
             CkGui.FramedIconText(FAI.Handcuffs);
-            CkGui.AttachToolTip("Indicates what restriction is applied.");
+            CkGui.AttachTooltip("Indicates what restriction is applied.");
             CkGui.TextFrameAlignedInline("Using");
             var item = _restrictions.Storage.FirstOrDefault(r => r.Identifier == act.RestrictionId);
             CkGui.ColorTextFrameAlignedInline(item is { } re ? $"{re.Label.TrimText(50)}" : "<UNK>", ImGuiColors.TankBlue);
@@ -328,7 +328,7 @@ public sealed class ReactionsDrawer
 
         // Lock state
         CkGui.FramedIconText(FAI.Lock);
-        CkGui.AttachToolTip("Indicates what lock will be applied to the restriction.");
+        CkGui.AttachTooltip("Indicates what lock will be applied to the restriction.");
         CkGui.TextFrameAlignedInline("Uses a");
         CkGui.ColorTextFrameAlignedInline(act.Padlock.ToName(), ImGuiColors.TankBlue);
         if (act.Padlock.IsTimerLock() && act.Padlock is not Padlocks.FiveMinutes)
@@ -344,7 +344,7 @@ public sealed class ReactionsDrawer
     public void DrawRestrictionRow(RestrictionAction act)
     {
         CkGui.FramedIconText(FAI.Handcuffs);
-        CkGui.AttachToolTip("Invokes an interaction with the Restrictions module");
+        CkGui.AttachTooltip("Invokes an interaction with the Restrictions module");
         switch (act.NewState)
         {
             case NewState.Enabled:
@@ -352,7 +352,7 @@ public sealed class ReactionsDrawer
                 CkGui.ColorTextFrameAlignedInline("Applies", ImGuiColors.TankBlue);
                 CkGui.TextFrameAlignedInline("a");
                 CkGui.ColorTextFrameAlignedInline(item is { } re ? $"{re.Label.TrimText(20)}" : "<UNK>", ImGuiColors.TankBlue);
-                CkGui.AttachToolTip(item?.Label, item is null);
+                CkGui.AttachTooltip(item?.Label, item is null);
                 CkGui.TextFrameAlignedInline("on");
                 CkGui.ColorTextFrameAlignedInline($"{(act.LayerIdx is -1 ? "any layer" : $"layer {act.LayerIdx}")}", ImGuiColors.TankBlue);
                 break;
@@ -382,7 +382,7 @@ public sealed class ReactionsDrawer
         {
             ImGui.SameLine();
             CkGui.FramedIconText(FAI.ExclamationTriangle, ImGuiColors.DalamudRed);
-            CkGui.AttachToolTip("An Invalid Item/Lock/Layer is selected!");
+            CkGui.AttachTooltip("An Invalid Item/Lock/Layer is selected!");
         }
     }
 
@@ -390,7 +390,7 @@ public sealed class ReactionsDrawer
     {
         // State and layer row
         CkGui.FramedIconText(FAI.ListOl);
-        CkGui.AttachToolTip("Invokes an interaction with the Restrictions module");
+        CkGui.AttachTooltip("Invokes an interaction with the Restrictions module");
 
         var stateW = ImGui.CalcTextSize("removem").X;
         ImUtf8.SameLineInner();
@@ -411,7 +411,7 @@ public sealed class ReactionsDrawer
         if (act.NewState is NewState.Enabled)
         {
             CkGui.FramedIconText(FAI.Handcuffs);
-            CkGui.AttachToolTip("Indicates what restriction will be applied.");
+            CkGui.AttachTooltip("Indicates what restriction will be applied.");
             CkGui.TextFrameAlignedInline("Using");
 
             ImUtf8.SameLineInner();
@@ -427,14 +427,14 @@ public sealed class ReactionsDrawer
 
         // Lock state
         CkGui.FramedIconText(FAI.Lock);
-        CkGui.AttachToolTip("Indicates what lock will be applied to the restriction.");
+        CkGui.AttachTooltip("Indicates what lock will be applied to the restriction.");
         CkGui.TextFrameAlignedInline("Using a");
 
         ImUtf8.SameLineInner();
         var options = PadlockEx.ClientLocks.Except(PadlockEx.PasswordPadlocks);
         if (CkGuiUtils.EnumCombo("##Padlock", ImGui.GetContentRegionAvail().X, act.Padlock, out var newLock, options, i => i.ToName(), flags: CFlags.NoArrowButton))
             act.Padlock = newLock;
-        CkGui.AttachToolTip("The padlock that the trigger attempts to apply");
+        CkGui.AttachTooltip("The padlock that the trigger attempts to apply");
 
         // For timer locks we should ask for timer input
         if (act.Padlock.IsTimerLock() && act.Padlock is not Padlocks.FiveMinutes)
@@ -451,7 +451,7 @@ public sealed class ReactionsDrawer
                 // Clear it
                 _lowerTime = null;
             }
-            CkGui.AttachToolTip("The lower range when randomly picking a lock time.");
+            CkGui.AttachTooltip("The lower range when randomly picking a lock time.");
 
             CkGui.FramedIconText(FAI.HourglassStart);
             CkGui.TextFrameAlignedInline("Maximum Lock Time");
@@ -462,20 +462,20 @@ public sealed class ReactionsDrawer
                 // Clear it
                 _upperTime = null;
             }
-            CkGui.AttachToolTip("The upper range when randomly picking a lock time.");
+            CkGui.AttachTooltip("The upper range when randomly picking a lock time.");
         }
     }
 
     public void DrawRestrictionRowEditor(RestrictionAction act)
     {
         CkGui.FramedIconText(FAI.Handcuffs);
-        CkGui.AttachToolTip("The Restriction Action performed to the Kinkster.");
+        CkGui.AttachTooltip("The Restriction Action performed to the Kinkster.");
 
         ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo("##RestrictionState", 60f, act.NewState, out var newState, [NewState.Enabled, NewState.Locked, NewState.Disabled],
             i => i switch { NewState.Enabled => "Apply", NewState.Locked => "Lock", _ => "Remove" }, flags: CFlags.NoArrowButton))
             act.NewState = newState;
-        CkGui.AttachToolTip("The new state set on the targeted restriction item.");
+        CkGui.AttachTooltip("The new state set on the targeted restriction item.");
 
         if (newState is NewState.Locked)
         {
@@ -509,7 +509,7 @@ public sealed class ReactionsDrawer
     {
         // State and layer row
         CkGui.FramedIconText(FAI.ListOl);
-        CkGui.AttachToolTip("Invokes an interaction with the Restraints module");
+        CkGui.AttachTooltip("Invokes an interaction with the Restraints module");
 
         CkGui.ColorTextFrameAlignedInline(GetStateName(act.NewState), ImGuiColors.TankBlue);
         CkGui.TextFrameAlignedInline(act.NewState is NewState.Enabled ? "a restraint set" : "the active restraint set");
@@ -520,7 +520,7 @@ public sealed class ReactionsDrawer
         if (act.NewState is NewState.Enabled)
         {
             CkGui.FramedIconText(FAI.Handcuffs);
-            CkGui.AttachToolTip("Indicates what restraint set is applied.");
+            CkGui.AttachTooltip("Indicates what restraint set is applied.");
             CkGui.TextFrameAlignedInline("Using");
             var item = _restraints.Storage.FirstOrDefault(r => r.Identifier == act.RestrictionId);
             CkGui.ColorTextFrameAlignedInline(item is { } re ? $"{re.Label.TrimText(50)}" : "<UNK>", ImGuiColors.TankBlue);
@@ -529,7 +529,7 @@ public sealed class ReactionsDrawer
 
         // Lock state
         CkGui.FramedIconText(FAI.Lock);
-        CkGui.AttachToolTip("Indicates what lock will be applied to the restriction.");
+        CkGui.AttachTooltip("Indicates what lock will be applied to the restriction.");
         CkGui.TextFrameAlignedInline("Uses a");
         CkGui.ColorTextFrameAlignedInline(act.Padlock.ToName(), ImGuiColors.TankBlue);
         if (act.Padlock.IsTimerLock() && act.Padlock is not Padlocks.FiveMinutes)
@@ -545,7 +545,7 @@ public sealed class ReactionsDrawer
     public void DrawRestraintRow(RestraintAction act)
     {
         ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Restrained].Handle, new(ImUtf8.FrameHeight));
-        CkGui.AttachToolTip("Invokes an interaction with the Restraint module");
+        CkGui.AttachTooltip("Invokes an interaction with the Restraint module");
         switch (act.NewState)
         {
             case NewState.Enabled:
@@ -553,7 +553,7 @@ public sealed class ReactionsDrawer
                 CkGui.ColorTextFrameAlignedInline("Applies", ImGuiColors.TankBlue);
                 CkGui.TextFrameAlignedInline("a");
                 CkGui.ColorTextFrameAlignedInline(item is { } re ? $"{re.Label.TrimText(20)}.." : "<UNK>", ImGuiColors.TankBlue);
-                CkGui.AttachToolTip(item?.Label, item is null);
+                CkGui.AttachTooltip(item?.Label, item is null);
                 CkGui.TextFrameAlignedInline("if not locked");
                 break;
             case NewState.Locked:
@@ -572,7 +572,7 @@ public sealed class ReactionsDrawer
         {
             ImGui.SameLine();
             CkGui.FramedIconText(FAI.ExclamationTriangle, ImGuiColors.DalamudRed);
-            CkGui.AttachToolTip("An Invalid Item/Lock/Layer is selected!");
+            CkGui.AttachTooltip("An Invalid Item/Lock/Layer is selected!");
         }
     }
 
@@ -580,7 +580,7 @@ public sealed class ReactionsDrawer
     {
         // State and layer row
         CkGui.FramedIconText(FAI.ListOl);
-        CkGui.AttachToolTip("Invokes an interaction with the Restraints module");
+        CkGui.AttachTooltip("Invokes an interaction with the Restraints module");
 
         var stateW = ImGui.CalcTextSize("removem").X;
         ImUtf8.SameLineInner();
@@ -595,7 +595,7 @@ public sealed class ReactionsDrawer
         if (act.NewState is NewState.Enabled)
         {
             CkGui.FramedIconText(FAI.Handcuffs);
-            CkGui.AttachToolTip("Indicates what restraint set will be applied.");
+            CkGui.AttachTooltip("Indicates what restraint set will be applied.");
             CkGui.TextFrameAlignedInline("Using");
 
             ImUtf8.SameLineInner();
@@ -608,14 +608,14 @@ public sealed class ReactionsDrawer
 
         // Lock state
         CkGui.FramedIconText(FAI.Lock);
-        CkGui.AttachToolTip("Indicates what lock will be applied to the restraint set.");
+        CkGui.AttachTooltip("Indicates what lock will be applied to the restraint set.");
         CkGui.TextFrameAlignedInline("Using a");
 
         ImUtf8.SameLineInner();
         var options = PadlockEx.ClientLocks.Except(PadlockEx.PasswordPadlocks);
         if (CkGuiUtils.EnumCombo("##Padlock", ImGui.GetContentRegionAvail().X, act.Padlock, out var newLock, options, i => i.ToName(), flags: CFlags.NoArrowButton))
             act.Padlock = newLock;
-        CkGui.AttachToolTip("The padlock that the trigger attempts to apply");
+        CkGui.AttachTooltip("The padlock that the trigger attempts to apply");
 
         // For timer locks we should ask for timer input
         if (act.Padlock.IsTimerLock() && act.Padlock is not Padlocks.FiveMinutes)
@@ -632,7 +632,7 @@ public sealed class ReactionsDrawer
                 // Clear it
                 _lowerTime = null;
             }
-            CkGui.AttachToolTip("The lower range when randomly picking a lock time.");
+            CkGui.AttachTooltip("The lower range when randomly picking a lock time.");
 
             CkGui.FramedIconText(FAI.HourglassStart);
             CkGui.TextFrameAlignedInline("Maximum Lock Time");
@@ -643,20 +643,20 @@ public sealed class ReactionsDrawer
                 // Clear it
                 _upperTime = null;
             }
-            CkGui.AttachToolTip("The upper range when randomly picking a lock time.");
+            CkGui.AttachTooltip("The upper range when randomly picking a lock time.");
         }
     }
 
     public void DrawRestraintRowEditor(RestraintAction act)
     {
         ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Restrained].Handle, new(ImUtf8.FrameHeight));
-        CkGui.AttachToolTip("Invokes an interaction with the Restraint module");
+        CkGui.AttachTooltip("Invokes an interaction with the Restraint module");
 
         ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo("##RestraintState", 60f, act.NewState, out var newState, [NewState.Enabled, NewState.Locked, NewState.Disabled],
             i => i switch { NewState.Enabled => "Apply", NewState.Locked => "Lock", _ => "Remove" }, flags: CFlags.NoArrowButton))
             act.NewState = newState;
-        CkGui.AttachToolTip("The new state set on the chosen restraint set.");
+        CkGui.AttachTooltip("The new state set on the chosen restraint set.");
 
         if (newState is NewState.Locked)
         {
@@ -729,7 +729,7 @@ public sealed class ReactionsDrawer
     public void DrawLociRow(LociDataAction act)
     {
         CkGui.FramedIconText(FAI.TheaterMasks);
-        CkGui.AttachToolTip("Invokes an interaction with Loci");
+        CkGui.AttachTooltip("Invokes an interaction with Loci");
 
         CkGui.FramedIconText(FAI.WandMagicSparkles);
         if (act.NewState is NewState.Enabled)
@@ -770,7 +770,7 @@ public sealed class ReactionsDrawer
         {
             ImGui.SameLine();
             CkGui.FramedIconText(FAI.ExclamationTriangle, ImGuiColors.DalamudRed);
-            CkGui.AttachToolTip("No Status/Preset Selected!");
+            CkGui.AttachTooltip("No Status/Preset Selected!");
         }
     }
 
@@ -783,7 +783,7 @@ public sealed class ReactionsDrawer
         if (CkGuiUtils.EnumCombo("##loci-state", 60f, act.NewState, out var newState, [NewState.Enabled, NewState.Disabled],
             i => i switch { NewState.Enabled => "Apply", _ => "Remove" }, flags: CFlags.NoArrowButton))
             act.NewState = newState;
-        CkGui.AttachToolTip("How to use the selected Loci item.");
+        CkGui.AttachTooltip("How to use the selected Loci item.");
 
         CkGui.TextFrameAlignedInline("the");
         
@@ -835,7 +835,7 @@ public sealed class ReactionsDrawer
     public void DrawLociRowEditor(LociDataAction act, LociContainer ipc)
     {
         CkGui.FramedIconText(FAI.TheaterMasks);
-        CkGui.AttachToolTip("Invokes an interaction with Loci");
+        CkGui.AttachTooltip("Invokes an interaction with Loci");
 
         CkGui.TextFrameAlignedInline("Apply");
 
@@ -901,7 +901,7 @@ public sealed class ReactionsDrawer
     public void DrawShockRow(PiShockAction act)
     {
         CkGui.FramedIconText(FAI.Bolt);
-        CkGui.AttachToolTip("Invokes a interaction with your Shock Collar");
+        CkGui.AttachTooltip("Invokes a interaction with your Shock Collar");
 
         CkGui.ColorTextFrameAlignedInline(act.ShockInstruction.OpCode.ToString(), ImGuiColors.TankBlue);
         CkGui.TextFrameAlignedInline("for");
@@ -926,7 +926,7 @@ public sealed class ReactionsDrawer
         ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo("##OpCode", opWidth, act.ShockInstruction.OpCode, out var mode))
             act.ShockInstruction.OpCode = mode;
-        CkGui.AttachToolTip("What type of instruction to send to the Shock Collar.");
+        CkGui.AttachTooltip("What type of instruction to send to the Shock Collar.");
         
         CkGui.TextFrameAlignedInline("instruction to the collar");
 
@@ -955,7 +955,7 @@ public sealed class ReactionsDrawer
     public void DrawShockRowEditor(PiShockAction action)
     {
         CkGui.FramedIconText(FAI.Bolt);
-        CkGui.AttachToolTip("Invokes a interaction with your Shock Collar");
+        CkGui.AttachTooltip("Invokes a interaction with your Shock Collar");
 
         ImUtf8.SameLineInner();
         if (CkGuiUtils.EnumCombo("##OpCodeEdit", 50f, action.ShockInstruction.OpCode, out var mode))
@@ -967,7 +967,7 @@ public sealed class ReactionsDrawer
         ImGui.SetNextItemWidth(85f);
         if (ImGui.SliderFloat("##ShockDur", ref durationRef, 0.016f, 15f))
             action.ShockInstruction.SetDuration(durationRef);
-        CkGui.AttachToolTip("The duration of the instruction.");
+        CkGui.AttachTooltip("The duration of the instruction.");
 
         // display extra information if a vibrator or shock.
         if (action.ShockInstruction.OpCode is not ShockMode.Beep)
@@ -977,20 +977,20 @@ public sealed class ReactionsDrawer
             ImGui.SetNextItemWidth(85f);
             if (ImGui.SliderInt("##ShockIntensity", ref intensity, 0, 100, "%d%%"))
                 action.ShockInstruction.Intensity = intensity;
-            CkGui.AttachToolTip("The intensity of the instruction.");
+            CkGui.AttachTooltip("The intensity of the instruction.");
         }
     }
 
     public void DrawToy(SexToyAction act)
     {
         ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Vibrator].Handle, new(ImUtf8.FrameHeight));
-        CkGui.AttachToolTip("How long to delay the invocation on the active devices.");
+        CkGui.AttachTooltip("How long to delay the invocation on the active devices.");
 
         CkGui.TextFrameAlignedInline("Starts after");
         CkGui.ColorTextFrameAlignedInline($"{act.StartAfter.Seconds}s {act.StartAfter.Milliseconds}ms", ImGuiColors.TankBlue);
 
         ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Vibrator].Handle, new(ImUtf8.FrameHeight));
-        CkGui.AttachToolTip("How long until we stop the action after it starts.");
+        CkGui.AttachTooltip("How long until we stop the action after it starts.");
 
         CkGui.TextFrameAlignedInline("Ends after");
         CkGui.ColorTextFrameAlignedInline($"{act.EndAfter.Seconds}s {act.EndAfter.Milliseconds}ms", ImGuiColors.TankBlue);
@@ -1020,7 +1020,7 @@ public sealed class ReactionsDrawer
     public void DrawToyRow(SexToyAction act)
     {
         CkGui.FramedIconText(FAI.WaveSquare);
-        CkGui.AttachToolTip("Invokes a interaction with your sex toys");
+        CkGui.AttachTooltip("Invokes a interaction with your sex toys");
 
         // in theory this listing could get pretty expansive so for now just list a summary.
         CkGui.TextFrameAlignedInline("After");
@@ -1054,7 +1054,7 @@ public sealed class ReactionsDrawer
         ImGui.SameLine();
         if (CkGuiUtils.EnumCombo("##ToyActionType", typeW, act.ActionKind, out var newVal))
             act.ActionKind = newVal;
-        CkGui.AttachToolTip("The kind of action to perform on all active toys.");
+        CkGui.AttachTooltip("The kind of action to perform on all active toys.");
 
         CkGui.TextFrameAlignedInline("to all active toys");
 
@@ -1078,7 +1078,7 @@ public sealed class ReactionsDrawer
             var intensity = act.Intensity;
             if (ImGui.SliderInt("##intensity", ref intensity, 0, 100))
                 act.Intensity = intensity;
-            CkGui.AttachToolTip("The intensity of the action performed on the toys.");
+            CkGui.AttachTooltip("The intensity of the action performed on the toys.");
         }
     }
 
@@ -1086,7 +1086,7 @@ public sealed class ReactionsDrawer
     {
         using var _ = ImRaii.Group();
         CkGui.FramedIconText(FAI.WaveSquare);
-        CkGui.AttachToolTip("The action to be executed on the listed toys.");
+        CkGui.AttachTooltip("The action to be executed on the listed toys.");
 
         // in theory this listing could get pretty expansive so for now just list a summary.
         CkGui.TextFrameAlignedInline("Buzz for");
@@ -1096,7 +1096,7 @@ public sealed class ReactionsDrawer
         var valueE = (float)act.EndAfter.TotalSeconds;
         if (ImGui.SliderFloat("##EndAfter", ref valueE, 0.016f, 15f))
             act.EndAfter = TimeSpan.FromSeconds(valueE);
-        CkGui.AttachToolTip("How long the buzz will go on for.");
+        CkGui.AttachTooltip("How long the buzz will go on for.");
 
         ImGui.SameLine(0, 1);
         CkGui.TextFrameAligned("(");
@@ -1106,7 +1106,7 @@ public sealed class ReactionsDrawer
         var valueS = (float)act.StartAfter.TotalSeconds;
         if (ImGui.SliderFloat("##StartAfter", ref valueS, 0.016f, 15f))
             act.StartAfter = TimeSpan.FromSeconds(valueS);
-        CkGui.AttachToolTip("The time to wait before starting the toy actions.");
+        CkGui.AttachTooltip("The time to wait before starting the toy actions.");
         ImGui.SameLine(0, 1);
         CkGui.TextFrameAligned("delay)");
     }

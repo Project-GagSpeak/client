@@ -32,7 +32,7 @@ public partial class SidePanelPair
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.PresetApplied);
             }
         }
-        CkGui.AttachToolTip(kinkster.OwnPerms.InHardcore
+        CkGui.AttachTooltip(kinkster.OwnPerms.InHardcore
             ? "Can't use while in Hardcore mode!" 
             : "Select a preset to apply for this Kinkster.--NL--This will update your permissions in bulk.");
     }
