@@ -4,7 +4,6 @@ using Dalamud.Bindings.ImGui;
 using OtterGui;
 using System.Collections.Immutable;
 using CkCommons.Gui;
-using GagSpeak.PlayerClient;
 
 namespace GagSpeak.State.Caches;
 
@@ -14,11 +13,9 @@ namespace GagSpeak.State.Caches;
 public class TraitsCache
 {
     private readonly ILogger<TraitsCache> _logger;
-    private readonly MainConfig _config;
-    public TraitsCache(ILogger<TraitsCache> logger, MainConfig config)
+    public TraitsCache(ILogger<TraitsCache> logger)
     {
         _logger = logger;
-        _config = config;
     }
 
     /// <summary> The stored traits for every active gag, restriction, or restraint set. </summary>
@@ -40,9 +37,6 @@ public class TraitsCache
     /// <returns> If the traits were successfully added. </returns>
     public bool AddTraits(CombinedCacheKey key, Traits traits)
     {
-        if (key.Manager == ManagerPriority.CursedLoot &&  !_config.Current.CursedItemsApplyTraits)
-            return false;
-        
         if (!_traits.TryAdd(key, traits))
         {
             _logger.LogWarning($"Attempted to add traits for {key} but it already exists.");
