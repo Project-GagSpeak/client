@@ -12,9 +12,9 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
 {
     private Action PostButtonPress;
     private readonly MainHub _mainHub;
-    private Kinkster _ref;
+    private readonly Kinkster _ref;
     public PairGagPadlockCombo(ILogger log, MainHub hub, Kinkster k, Action postButtonPress)
-        : base(() => [ .. k.ActiveGags.GagSlots ], () => [ ..PadlockEx.GetLocksForPair(k.PairPerms) ], log)
+        : base(() => [..PadlockEx.GetLocksForPair(k.PairPerms)], log)
     {
         _mainHub = hub;
         _ref = k;
@@ -23,15 +23,27 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
 
     protected override string ItemName(ActiveGagSlot item)
         => item.GagItem.GagName();
-    
-    protected override bool DisableCondition(int layerIdx)
-        => Items[layerIdx].GagItem is GagType.None;
 
-    protected override async Task<bool> OnLockButtonPress(string label, int layerIdx)
+    protected override bool DisableCondition(int layerIdx)
+        => ActiveItem.GagItem is GagType.None;
+
+    public override void DrawLockCombo(string label, float width, int layerIdx, string buttonTxt, string tooltip, bool isTwoRow)
+    {
+        ActiveItem = _ref.ActiveGags.GagSlots[layerIdx];
+        base.DrawLockCombo(label, width, layerIdx, buttonTxt, tooltip, isTwoRow);
+    }
+
+    public override void DrawUnlockCombo(string label, float width, int layerIdx, string buttonTxt, string tooltip)
+    {
+        ActiveItem = _ref.ActiveGags.GagSlots[layerIdx];
+        base.DrawUnlockCombo(label, width, layerIdx, buttonTxt, tooltip);
+    }
+
+    protected override async Task OnLockButtonPress(string label, int layerIdx)
     {
         // return if we cannot lock.
-        if (!Items[layerIdx].CanLock() || !_ref.PairPerms.LockGags)
-            return false;
+        if (!ActiveItem.CanLock() || !_ref.PairPerms.LockGags)
+            return;
 
         // we know it was valid, so begin assigning the new data to send off.
         var finalTime = SelectedLock == Padlocks.FiveMinutes
@@ -52,32 +64,28 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
         {
             Log.LogDebug($"Failed to perform LockGag with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{result}", LoggerType.StickyUI);
             DisplayToastErrorAndReset(result.ErrorCode, SelectedLock, false);
-            return false;
+            return;
         }
-        else
-        {
-            Log.LogDebug($"Locking Gag with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
-            ResetSelection();
-            ResetInputs();
-            RefreshStorage(label);
-            PostButtonPress?.Invoke();
-            return true;
-        }
+        Log.LogDebug($"Locking Gag with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
+        ResetSelection();
+        ResetInputs();
+        ActiveItem = new ActiveGagSlot();
+        PostButtonPress?.Invoke();
     }
 
-    protected override async Task<bool> OnUnlockButtonPress(string label, int layerIdx)
+    protected override async Task OnUnlockButtonPress(string label, int layerIdx)
     {
         // return if we cannot lock.
-        if (!Items[layerIdx].CanUnlock() || !_ref.PairPerms.UnlockGags)
+        if (!ActiveItem.CanUnlock() || !_ref.PairPerms.UnlockGags)
         {
-            Log.LogDebug($"Cannot unlock Gag with {Items[layerIdx].Padlock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason: Cannot Unlock", LoggerType.StickyUI);
-            return false;
+            Log.LogDebug($"Cannot unlock Gag with {ActiveItem.Padlock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason: Cannot Unlock", LoggerType.StickyUI);
+            return;
         }
 
         var dto = new PushKinksterActiveGagSlot(_ref.UserData, DataUpdateType.Unlocked)
         {
             Layer = layerIdx,
-            Padlock = Items[layerIdx].Padlock,
+            Padlock = ActiveItem.Padlock,
             Password = Password, // Our guessed password.
             PadlockAssigner = MainHub.UID,
         };
@@ -85,20 +93,17 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
         var result = await _mainHub.UserChangeKinksterActiveGag(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
-            Log.LogDebug($"Failed to perform UnlockGag with {Items[layerIdx].Padlock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{result}", LoggerType.StickyUI);
-            DisplayToastErrorAndReset(result.ErrorCode, Items[layerIdx].Padlock, true);
-            return false;
+            Log.LogDebug($"Failed to perform UnlockGag with {ActiveItem.Padlock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{result}", LoggerType.StickyUI);
+            DisplayToastErrorAndReset(result.ErrorCode, ActiveItem.Padlock, true);
+            return;
         }
-        else
-        {
-            Log.LogDebug($"Unlocking Gag with {Items[layerIdx].Padlock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
-            ResetSelection();
-            ResetInputs();
-            RefreshStorage(label);
-            SelectedLock = Padlocks.None;
-            PostButtonPress?.Invoke();
-            return true;
-        }
+
+        Log.LogDebug($"Unlocking Gag with {ActiveItem.Padlock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
+        ResetSelection();
+        ResetInputs();
+        ActiveItem = new ActiveGagSlot();
+        SelectedLock = Padlocks.None;
+        PostButtonPress?.Invoke();
     }
 
     private bool DisplayToastErrorAndReset(GagSpeakApiEc errorCode, Padlocks padlock, bool unlocking)

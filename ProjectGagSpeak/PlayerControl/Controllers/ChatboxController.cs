@@ -15,6 +15,7 @@ public sealed class ChatboxController : DisposableMediatorSubscriberBase
 {
     private readonly PlayerControlCache _cache;
     private bool _blockInput = false;
+    private bool _blockingInput = false;
     private bool _hideChatBoxes = false;
     private bool _hideChatInput = false;
 
@@ -24,15 +25,14 @@ public sealed class ChatboxController : DisposableMediatorSubscriberBase
         _cache = cache;
 
         Mediator.Subscribe<HcStateCacheChanged>(this, _ => UpdateHardcoreStatus());
-        //Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
+        Mediator.Subscribe<FrameworkUpdateMessage>(this, _ => FrameworkUpdate());
         Svc.AddonLifecycle.RegisterListener(AddonEvent.PostShow, "ChatLog", ChatLogPostShow);
-        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostFocusChanged, "ChatLog", ChatLogFocusChanged);
     }
 
     protected override void Dispose(bool disposing) {
         if (!disposing) return;
         Svc.AddonLifecycle.UnregisterListener(ChatLogPostShow);
-        Svc.AddonLifecycle.UnregisterListener(ChatLogFocusChanged);
+        AddonChatLog.DisableInput(false); // restore access to chat input if we're disabling
         base.Dispose(disposing);
     }
 
@@ -46,24 +46,13 @@ public sealed class ChatboxController : DisposableMediatorSubscriberBase
             Svc.Framework.RunOnTick(() => AddonChatLog.SetChatPanelVisibility(!_hideChatBoxes), delayTicks:1);
     }
 
-    private void ChatLogFocusChanged(AddonEvent type, AddonArgs args)
+    private void FrameworkUpdate()
     {
-        if (_blockInput) 
-            AddonChatLog.EnsureNoChatInputFocus();
+        if (_blockingInput == _blockInput) return;
+        Logger.LogTrace($"Chat input block changed to {_blockInput}. Correcting text box state.", LoggerType.HardcoreActions);
+        AddonChatLog.DisableInput(_blockInput);
+        _blockingInput = _blockInput;
     }
-
-    /* this shouldn't be necessary any more, let's test.
-    private unsafe void FrameworkUpdate()
-    {
-        // assuming that this causes issues when ran outside framework 
-        // todo: move this to addon.lifecycle events when we figure out how
-        if (_blockInput)
-            AddonChatLog.EnsureNoChatInputFocus();
-        if (_hideChatBoxes)
-            AddonChatLog.SetChatPanelVisibility(false);
-        if (_hideChatInput)
-            AddonChatLog.SetChatInputVisibility(false);
-    } */
 
     // Update our local value to reflect the latest state in the cache.
     public void UpdateHardcoreStatus()

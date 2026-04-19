@@ -10,6 +10,7 @@ public readonly struct CombinedCacheKey : IComparable<CombinedCacheKey>, IEquata
 {
     public ManagerPriority Manager { get; }
     public int LayerIndex { get; }
+    public int Priority => ((int)Manager * 1000) + LayerIndex; // For sorting by Manager, then LayerIndex
 
     // Used only for display and substituion purposes, may keep if useful later.
     // Do not use for any comparisons.

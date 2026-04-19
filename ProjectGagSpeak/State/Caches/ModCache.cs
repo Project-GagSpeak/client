@@ -1,10 +1,10 @@
 using CkCommons.Gui;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
-using Dalamud.Bindings.ImGui;
 
 namespace GagSpeak.State.Caches;
 
@@ -22,7 +22,7 @@ public class ModCache
     // This is really difficult for me, because the key is for the most part out of my control.
     // If at any point the mod name is changed in penumbra, it would damage the storage in gagspeak...
     // So unless I could resync the cache on every mod name change, this would be difficult to pull off.
-    private SortedList<(CombinedCacheKey, string), ModSettingsPreset> _mods = new();
+    private SortedList<(CombinedCacheKey Key, string ModCacheKey), ModSettingsPreset> _mods = new(new ModCachePriorityComparer());
     private HashSet<ModSettingsPreset> _finalMods = new();
     public IReadOnlySet<ModSettingsPreset> FinalMods => _finalMods;
 
@@ -33,7 +33,7 @@ public class ModCache
     /// <summary> Applies all <paramref name="mods"/> to the Mods Cache under <paramref name="key"/>. </summary>
     public bool AddMod(CombinedCacheKey key, IEnumerable<ModSettingsPreset> mods)
     {
-        if (_mods.Keys.Any(keys => keys.Item1.Equals(key)))
+        if (_mods.Keys.Any(keys => keys.Key.Equals(key)))
         {
             Logger.LogWarning($"Cannot add [{key}] to Cache, the Key already exists!");
             return false;
@@ -44,7 +44,7 @@ public class ModCache
         {
             if (!mod.HasData) continue;
             added |= _mods.TryAdd((key, mod.CacheKey), mod);
-            if(added) Logger.LogDebug($"Added ModCache ([{key}]-[{mod.CacheKey}]) -> [{mod.Label}]");
+            if (added) Logger.LogDebug($"Added ModCache ([{key}]-[{mod.CacheKey}]) -> [{mod.Label}]");
         }
         return added;
     }
@@ -56,7 +56,7 @@ public class ModCache
     /// <summary> Removes all <paramref name="keys"/> from the Mods Cache. </summary>
     public bool RemoveMod(IEnumerable<CombinedCacheKey> keys)
     {
-        var allKeys = _mods.Keys.Where(k => keys.Contains(k.Item1)).ToList();
+        var allKeys = _mods.Keys.Where(k => keys.Contains(k.Key)).ToList();
         if (!allKeys.Any())
         {
             Logger.LogWarning($"None of the CombinedKeys were found in the ModCache!");
@@ -67,7 +67,7 @@ public class ModCache
         bool anyRemoved = false;
         foreach (var key in allKeys)
         {
-            Logger.LogDebug($"Removing GlamourCache key ([{key.Item1}]-[{key.Item2}])");
+            Logger.LogDebug($"Removing GlamourCache key ([{key.Key}]-[{key.ModCacheKey}])");
             anyRemoved |= _mods.Remove(key);
         }
         return anyRemoved;
@@ -87,8 +87,22 @@ public class ModCache
         _finalMods.Clear();
         // Cycle through the glamours in the order they are sorted in.
         // Once a mod is added, any further presets with the same source mod won't be added.
-        foreach (var modItem in _mods.Values)
-            anyChange |= _finalMods.Add(modItem);
+        foreach (var mod in _mods)
+        {
+            if (!_finalMods.Any(m => m.Container.DirectoryPath == mod.Value.Container.DirectoryPath) && _finalMods.Add(mod.Value))
+            {
+                if (!prevMods.Contains(mod.Value))
+                {
+                    anyChange = true;
+                }
+                Logger.LogTrace($"Adding Mod [{mod.Key.ModCacheKey}] with priority [{mod.Key.Key.Priority}] to FinalMods Cache.", LoggerType.VisualCache);
+            }
+            else
+            {
+                Logger.LogTrace($"Skipped Mod [{mod.Key.ModCacheKey}] with priority [{mod.Key.Key.Priority}] because a mod from the same source mod is already in the FinalMods Cache.", LoggerType.VisualCache);
+            }
+        }
+        Logger.LogDebug($"FinalMods Cache has [{_finalMods.Count}] mods after update. Any Change: {anyChange}. Total mods tracked: {_mods.Count}", LoggerType.VisualCache);
 
         // output the mods that were removed as well.
         removed = prevMods.Except(_finalMods).ToList();
@@ -116,7 +130,7 @@ public class ModCache
                     ImGui.TableSetupColumn("##Settings", ImGuiTableColumnFlags.WidthFixed, ImGui.GetFrameHeight());
                     ImGui.TableHeadersRow();
 
-                    var grouped = _mods.GroupBy(kvp => kvp.Key.Item1); // Group by CombinedCacheKey
+                    var grouped = _mods.GroupBy(kvp => kvp.Key.Key); // Group by CombinedCacheKey
 
                     foreach (var group in grouped)
                     {
@@ -199,4 +213,15 @@ public class ModCache
         }
     }
     #endregion Debug Helper
+
+    private class ModCachePriorityComparer : IComparer<(CombinedCacheKey Key, string ModCacheKey)>
+    {
+        public int Compare((CombinedCacheKey Key, string ModCacheKey) x, (CombinedCacheKey Key, string ModCacheKey) y)
+        {
+            int result = -x.Key.Priority.CompareTo(y.Key.Priority);
+            if (result != 0)
+                return result;
+            return string.Compare(x.ModCacheKey, y.ModCacheKey, StringComparison.Ordinal);
+        }
+    }
 }

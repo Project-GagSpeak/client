@@ -128,11 +128,14 @@ public class CacheStateManager : IHostedService
         {
             var serverItem = _gags.ServerGagData!.GagSlots[layer];
             _logger.LogDebug($"Adding ({gagItem.GagType.GagName()}) at layer {layer}, which was enabled by {serverItem.Enabler}.");
-            
+
             var key = new CombinedCacheKey(ManagerPriority.Gags, layer, serverItem.Enabler, gagItem.GagType.GagName());
-            _glamourHandler.TryAddGlamourToCache(key, gagItem.Glamour);
-            _glamourHandler.TryAddMetaToCache(key, new(gagItem.HeadgearState, gagItem.VisorState));
-            _modHandler.TryAddModToCache(key, gagItem.Mod);
+            if (gagItem.IsEnabled)
+            {
+                _glamourHandler.TryAddGlamourToCache(key, gagItem.Glamour);
+                _glamourHandler.TryAddMetaToCache(key, new(gagItem.HeadgearState, gagItem.VisorState));
+                _modHandler.TryAddModToCache(key, gagItem.Mod);
+            }
             _lociHandler.TryAddLociItemToCache(key, gagItem.LociData);
             _traitsHandler.TryAddTraitsToCache(key, gagItem.Traits);
             _cplusHandler.TryAddToCache(key, gagItem.CPlusProfile);
@@ -157,9 +160,12 @@ public class CacheStateManager : IHostedService
                 HypnoticRestriction h => new MetaDataStruct(h.HeadgearState, h.VisorState),
                 _ => MetaDataStruct.Empty
             };
-            _glamourHandler.TryAddGlamourToCache(key, item.Glamour);
-            _glamourHandler.TryAddMetaToCache(key, metaStruct);
-            _modHandler.TryAddModToCache(key, item.Mod);
+            if (item.IsEnabled)
+            {
+                _glamourHandler.TryAddGlamourToCache(key, item.Glamour);
+                _glamourHandler.TryAddMetaToCache(key, metaStruct);
+                _modHandler.TryAddModToCache(key, item.Mod);
+            }
             _lociHandler.TryAddLociItemToCache(key, item.LociData);
             _traitsHandler.TryAddTraitsToCache(key, item.Traits);
             _arousalHandler.TryAddArousalToCache(key, item.Arousal);
@@ -182,9 +188,12 @@ public class CacheStateManager : IHostedService
 
             // Set the base RestraintSet (layer 0). The RestraintSet layers are index's 1-5
             var key = new CombinedCacheKey(ManagerPriority.Restraints, 0, serverItem.Enabler, restraintSet.Label);
-            _glamourHandler.TryAddGlamourToCache(key, restraintSet.GetBaseGlamours());
-            _glamourHandler.TryAddMetaToCache(key, restraintSet.MetaStates);
-            _modHandler.TryAddModToCache(key, restraintSet.GetBaseMods());
+            if (restraintSet.IsEnabled)
+            {
+                _glamourHandler.TryAddGlamourToCache(key, restraintSet.GetBaseGlamours());
+                _glamourHandler.TryAddMetaToCache(key, restraintSet.MetaStates);
+                _modHandler.TryAddModToCache(key, restraintSet.GetBaseMods());
+            }
             _lociHandler.TryAddLociItemToCache(key, restraintSet.GetBaseLociData());
             _traitsHandler.TryAddTraitsToCache(key, restraintSet.GetBaseTraits());
             _arousalHandler.TryAddArousalToCache(key, restraintSet.Arousal);
@@ -195,8 +204,11 @@ public class CacheStateManager : IHostedService
             foreach (var idx in serverItem.ActiveLayers.GetLayerIndices())
             {
                 var layerKey = new CombinedCacheKey(ManagerPriority.Restraints, (idx + 1), serverItem.Enabler, restraintSet.Label);
-                _glamourHandler.TryAddGlamourToCache(layerKey, restraintSet.GetGlamourAtLayer(idx));
-                _modHandler.TryAddModToCache(layerKey, restraintSet.GetModAtLayer(idx));
+                if (restraintSet.IsEnabled)
+                {
+                    _glamourHandler.TryAddGlamourToCache(layerKey, restraintSet.GetGlamourAtLayer(idx));
+                    _modHandler.TryAddModToCache(layerKey, restraintSet.GetModAtLayer(idx));
+                }
                 _lociHandler.TryAddLociItemToCache(layerKey, restraintSet.GetLociDataAtLayer(idx));
                 _traitsHandler.TryAddTraitsToCache(layerKey, restraintSet.GetTraitsForLayer(idx));
                 _arousalHandler.TryAddArousalToCache(layerKey, restraintSet.Arousal);
@@ -292,15 +304,23 @@ public class CacheStateManager : IHostedService
     {
         _logger.LogDebug($"Adding ({item.GagType.GagName()}) at layer {layerIdx}, enabled by ({enabler}).");
         var key = new CombinedCacheKey(ManagerPriority.Gags, layerIdx, enabler, item.GagType.GagName());
-        // perform the updates in parallel.
-        await TimedWhenAll($"[{key}]'s Visual Attributes added to caches",
-            AddGlamourMeta(key, item.Glamour, new(item.HeadgearState, item.VisorState)),
-            AddModPreset(key, item.Mod),
+
+        var tasks = new List<Task>
+        {
             AddLociItem(key, item.LociData),
-            AddProfile(key, item.CPlusProfile),
             AddTraits(key, item.Traits),
             AddArousalStrength(key, item.Arousal)
-        );
+        };
+
+        if (item.IsEnabled)
+        {
+            tasks.Add(AddGlamourMeta(key, item.Glamour, new(item.HeadgearState, item.VisorState)));
+            tasks.Add(AddModPreset(key, item.Mod));
+            tasks.Add(AddProfile(key, item.CPlusProfile));
+        }
+
+        // perform the updates in parallel.
+        await TimedWhenAll($"[{key}]'s Visual Attributes added to caches", tasks);
         // Handle Redraw afterwards
         if (item.DoRedraw)
             _redrawAssist.RedrawObject();
@@ -329,7 +349,7 @@ public class CacheStateManager : IHostedService
     public async Task AddRestrictionItem(RestrictionItem item, int layerIdx, string enabler)
     {
         _logger.LogDebug($"Adding Restriction ({item.Label}) at layer {layerIdx}, enabled by ({enabler}).");
-        var key = new CombinedCacheKey(ManagerPriority.Restrictions, layerIdx, enabler, item.Label);        
+        var key = new CombinedCacheKey(ManagerPriority.Restrictions, layerIdx, enabler, item.Label);
         var metaStruct = item switch
         {
             BlindfoldRestriction c => new MetaDataStruct(c.HeadgearState, c.VisorState),
@@ -338,13 +358,16 @@ public class CacheStateManager : IHostedService
         };
         var tasks = new List<Task>
         {
-            AddGlamourMeta(key, item.Glamour, metaStruct),
-            AddModPreset(key, item.Mod),
             AddLociItem(key, item.LociData),
             AddTraits(key, item.Traits),
             AddArousalStrength(key, item.Arousal),
         };
         // Conditional additions
+        if (item.IsEnabled)
+        {
+            tasks.Add(AddGlamourMeta(key, item.Glamour, metaStruct));
+            tasks.Add(AddModPreset(key, item.Mod));
+        }
         if (item is BlindfoldRestriction bfr) tasks.Add(AddBlindfold(key, bfr.Properties));
         if (item is HypnoticRestriction hr) tasks.Add(AddHypnoEffect(key, hr.Properties));
 
@@ -378,15 +401,24 @@ public class CacheStateManager : IHostedService
     {
         _logger.LogInformation($"Adding RestraintSet ({item.Label}), which was enabled by {enabler}.");
         var key = new CombinedCacheKey(ManagerPriority.Restraints, 0, enabler, item.Label);
-        await TimedWhenAll($"[{key}]'s Visual Attributes added to caches",
-            AddGlamourMeta(key, item.GetBaseGlamours(), item.MetaStates),
-            AddModPreset(key, item.GetBaseMods()),
+
+        var tasks = new List<Task>
+        {
             AddLociItem(key, item.GetBaseLociData()),
             AddTraits(key, item.GetBaseTraits()),
             AddArousalStrength(key, item.Arousal),
             AddBlindfold(key, item.GetBaseBlindfold()),
             AddHypnoEffect(key, item.GetBaseHypnoEffect())
-        );
+        };
+
+        // Only apply glamour and mod if visuals are enabled
+        if (item.IsEnabled)
+        {
+            tasks.Add(AddGlamourMeta(key, item.GetBaseGlamours(), item.MetaStates));
+            tasks.Add(AddModPreset(key, item.GetBaseMods()));
+        }
+
+        await TimedWhenAll($"[{key}]'s Visual Attributes added to caches", tasks);
         // Handle Redraw afterwards
         if (item.DoRedraw)
             _redrawAssist.RedrawObject();
@@ -416,8 +448,11 @@ public class CacheStateManager : IHostedService
         foreach (var idx in added.GetLayerIndices())
         {
             var layerKey = new CombinedCacheKey(ManagerPriority.Restraints, (idx + 1), enablerName, item.Label);
-            _glamourHandler.TryAddGlamourToCache(layerKey, item.GetGlamourAtLayer(idx));
-            _modHandler.TryAddModToCache(layerKey, item.GetModAtLayer(idx));
+            if (item.IsEnabled)
+            {
+                _glamourHandler.TryAddGlamourToCache(layerKey, item.GetGlamourAtLayer(idx));
+                _modHandler.TryAddModToCache(layerKey, item.GetModAtLayer(idx));
+            }
             _lociHandler.TryAddLociItemToCache(layerKey, item.GetLociDataAtLayer(idx));
             _traitsHandler.TryAddTraitsToCache(layerKey, item.GetTraitsForLayer(idx));
             _arousalHandler.TryAddArousalToCache(layerKey, item.Arousal);
@@ -440,8 +475,8 @@ public class CacheStateManager : IHostedService
     {
         // If we want blindfolds and hypno to work on the applier, it will be hard to fix once reconnect since we wont know who applied each layer.
         // So for now, we are just going to restrict it to the enabler, or the enactor if the padlock is devotional.
-        var enablerName = _restraints.ServerData is { } serverData 
-            ? (serverData.Padlock.IsDevotionalLock() ? serverData.PadlockAssigner : serverData.Enabler) 
+        var enablerName = _restraints.ServerData is { } serverData
+            ? (serverData.Padlock.IsDevotionalLock() ? serverData.PadlockAssigner : serverData.Enabler)
             : string.Empty;
 
         _logger.LogInformation($"Adding RestraintSet ({item.Label}) Layers ({added}), applied by {enactor} (Enabler Name will go under [{enablerName}]).");
@@ -450,8 +485,11 @@ public class CacheStateManager : IHostedService
         foreach (var idx in added.GetLayerIndices())
         {
             var layerKey = new CombinedCacheKey(ManagerPriority.Restraints, (idx + 1), enablerName, item.Label);
-            _glamourHandler.TryAddGlamourToCache(layerKey, item.GetGlamourAtLayer(idx));
-            _modHandler.TryAddModToCache(layerKey, item.GetModAtLayer(idx));
+            if (item.IsEnabled)
+            {
+                _glamourHandler.TryAddGlamourToCache(layerKey, item.GetGlamourAtLayer(idx));
+                _modHandler.TryAddModToCache(layerKey, item.GetModAtLayer(idx));
+            }
             _lociHandler.TryAddLociItemToCache(layerKey, item.GetLociDataAtLayer(idx));
             _traitsHandler.TryAddTraitsToCache(layerKey, item.GetTraitsForLayer(idx));
             _arousalHandler.TryAddArousalToCache(layerKey, item.Arousal);
@@ -586,7 +624,7 @@ public class CacheStateManager : IHostedService
     {
         if (!_collar.IsActive || !_collar.ShowVisuals)
             return;
-        
+
         var synced = _collar.SyncedData!;
         var data = _collar.ClientCollar;
         var key = new CombinedCacheKey(ManagerPriority.Collar, 0, MainHub.UID, data.Label);
