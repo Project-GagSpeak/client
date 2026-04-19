@@ -1,6 +1,5 @@
 using GagSpeak.Services;
 using GagSpeak.State.Managers;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
@@ -11,8 +10,9 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
 {
     private readonly RestraintManager _manager;
     private readonly SelfBondageService _selfBondage;
+
     public PadlockRestraintsClient(ILogger log, RestraintManager manager, SelfBondageService selfBondage)
-        : base(() => [ manager.ServerData ?? new CharaActiveRestraint() ], PadlockEx.ClientLocks, log)
+        : base(() => [..PadlockEx.ClientLocks], log)
     {
         _manager = manager;
         _selfBondage = selfBondage;
@@ -22,60 +22,63 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
         => _manager.Storage.TryGetRestraint(item.Identifier, out var restraint) ? restraint.Label : "None";
 
     protected override bool DisableCondition(int _)
-        => Items[0].Identifier == Guid.Empty;
+        => ActiveItem.Identifier == Guid.Empty;
 
     public void DrawLockCombo(float width, string tooltip)
-        => DrawLockCombo("##ClientRestraintLock", width, 0, string.Empty, tooltip, true);
+    {
+        ActiveItem = _manager.ServerData ?? new CharaActiveRestraint();
+        DrawLockCombo("##ClientRestraintLock", width, 0, string.Empty, tooltip, true);
+    }
 
     public void DrawUnlockCombo(float width, string tooltip)
-        => DrawUnlockCombo("##ClientRestraintUnlock", width, 0, string.Empty, tooltip);
-
-    protected override async Task<bool> OnLockButtonPress(string label, int _)
     {
-        if (!Items[0].CanLock())
-            return false;
+        ActiveItem = _manager.ServerData ?? new CharaActiveRestraint();
+        DrawUnlockCombo("##ClientRestraintUnlock", width, 0, string.Empty, tooltip);
+    }
+
+    protected override async Task OnLockButtonPress(string label, int _)
+    {
+        if (!ActiveItem.CanLock())
+            return;
 
         if (!ValidateLock())
-            return false;
+            return;
 
         // get new data.
         var time = SelectedLock is Padlocks.FiveMinutes ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
         var newData = new CharaActiveRestraint() { Padlock = SelectedLock, Password = Password, Timer = time, PadlockAssigner = MainHub.UID };
         if (await _selfBondage.DoSelfRestraintResult(newData, DataUpdateType.Locked))
         {
-            ResetSelection();
-            ResetInputs();
-            RefreshStorage(label);
-            return true;
-        }
-        Log.LogDebug($"Failed to perform LockRestraint with {SelectedLock.ToName()} on self", LoggerType.StickyUI);
-        ResetSelection();
-        ResetInputs();
-        return false;
-    }
-    protected override async Task<bool> OnUnlockButtonPress(string label, int _)
-    {
-        if (!Items[0].CanUnlock())
-            return false;
-
-        if (!ValidateUnlock())
-            return false;
-
-        var newData = Items[0] with { Padlock = Items[0].Padlock, Password = Items[0].Password, PadlockAssigner = MainHub.UID };
-        if (await _selfBondage.DoSelfRestraintResult(newData, DataUpdateType.Unlocked))
-        {
-            ResetSelection();
-            ResetInputs();
-            RefreshStorage(label);
-            SelectedLock = Padlocks.None;
-            return true;
+            ActiveItem = new CharaActiveRestraint();
         }
         else
         {
-            ResetSelection();
-            ResetInputs();
-            return false;
+            Log.LogDebug($"Failed to perform LockRestraint with {SelectedLock.ToName()} on self.", LoggerType.StickyUI);
         }
+        ResetSelection();
+        ResetInputs();
+    }
+
+    protected override async Task OnUnlockButtonPress(string label, int _)
+    {
+        if (!ActiveItem.CanUnlock())
+            return;
+
+        if (!ValidateUnlock())
+            return;
+
+        var newData = ActiveItem with { Padlock = ActiveItem.Padlock, Password = ActiveItem.Password, PadlockAssigner = MainHub.UID };
+        if (await _selfBondage.DoSelfRestraintResult(newData, DataUpdateType.Unlocked))
+        {
+            ActiveItem = new CharaActiveRestraint();
+            SelectedLock = Padlocks.None;
+        }
+        else
+        {
+            Log.LogDebug("Failed to perform UnlockRestraint on self.");
+        }
+        ResetSelection();
+        ResetInputs();
     }
 
     private bool ValidateLock()
@@ -125,12 +128,12 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
     private bool ValidateUnlock()
     {
         // Determine if we have access to unlock.
-        var valid = Items[0].Padlock switch
+        var valid = ActiveItem.Padlock switch
         {
             Padlocks.Metal or Padlocks.FiveMinutes or Padlocks.Timer => true,
-            Padlocks.Combination => Items[0].Password == Password,
-            Padlocks.Password => Items[0].Password == Password,
-            Padlocks.TimerPassword => Items[0].Password == Password,
+            Padlocks.Combination => ActiveItem.Password == Password,
+            Padlocks.Password => ActiveItem.Password == Password,
+            Padlocks.TimerPassword => ActiveItem.Password == Password,
             _ => false
         };
 
