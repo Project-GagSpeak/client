@@ -38,12 +38,13 @@ public class CacheStateManager : IHostedService
     private readonly TraitsHandler _traitsHandler;
     private readonly OverlayHandler _overlayHandler;
     private readonly ArousalService _arousalHandler;
+    private readonly MainConfig _config;
 
     public CacheStateManager(ILogger<CacheStateManager> logger, IpcCallerPenumbra redrawAssist,
         GagRestrictionManager gags, RestrictionManager restrictions, RestraintManager restraints,
-        CollarManager collar, CursedLootManager cursedItems, CustomizePlusHandler profiles,
-        GlamourHandler glamours, ModHandler mods, LociHandler lociHandler, TraitsHandler traits,
-        OverlayHandler overlays, ArousalService arousals)
+        CollarManager collar, CursedLootManager cursedItems, CustomizePlusHandler profiles, 
+        GlamourHandler glamours, ModHandler mods, LociHandler lociHandler, TraitsHandler traits, 
+        OverlayHandler overlays, ArousalService arousals, MainConfig config) 
     {
         _logger = logger;
         _redrawAssist = redrawAssist;
@@ -59,6 +60,7 @@ public class CacheStateManager : IHostedService
         _traitsHandler = traits;
         _overlayHandler = overlays;
         _arousalHandler = arousals;
+        _config = config;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
@@ -506,7 +508,7 @@ public class CacheStateManager : IHostedService
         );
     }
 
-    // I can almost garentee that removing this without considering for any
+    // I can almost guarantee that removing this without considering for any
     // active layers will cause issues, handle later, or restrict well.
     public async Task RemoveRestraintSet(RestraintSet item, RestraintLayer removedLayers)
     {
@@ -583,10 +585,10 @@ public class CacheStateManager : IHostedService
             AddGlamourMeta(key, item.RefItem.Glamour, metaStruct),
             AddModPreset(key, item.RefItem.Mod),
             AddLociItem(key, item.RefItem.LociData),
-            AddTraits(key, item.RefItem.Traits &~ (Traits.Immobile | Traits.Weighty)),
             AddArousalStrength(key, item.RefItem.Arousal)
         };
         // Conditional additions
+        if (_config.Current.CursedItemsApplyTraits && item.ApplyTraits) tasks.Add(AddTraits(key, item.RefItem.Traits &~ (Traits.Immobile | Traits.Weighty)));
         if (item.RefItem is BlindfoldRestriction bfr) tasks.Add(AddBlindfold(key, bfr.Properties));
         if (item.RefItem is HypnoticRestriction hr) tasks.Add(AddHypnoEffect(key, hr.Properties));
 
