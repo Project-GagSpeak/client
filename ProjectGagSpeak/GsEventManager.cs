@@ -202,7 +202,7 @@ public class GagspeakEventManager
             }
             catch (Bagagwa ex)
             {
-                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
+                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName + "! {Bagagwa}", ex, LoggerType.AchievementEvents);
             }
         }
     }
@@ -226,7 +226,7 @@ public class GagspeakEventManager
             }
             catch (Bagagwa ex)
             {
-                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
+                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName + "! {Bagagwa}", ex, LoggerType.AchievementEvents);
             }
         }
     }
@@ -250,7 +250,7 @@ public class GagspeakEventManager
             }
             catch (Bagagwa ex)
             {
-                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
+                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName + "! {Bagagwa}", ex, LoggerType.AchievementEvents);
             }
         }
     }
@@ -274,7 +274,7 @@ public class GagspeakEventManager
             }
             catch (Bagagwa ex)
             {
-                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
+                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName + "! {Bagagwa}", ex, LoggerType.AchievementEvents);
             }
         }
     }
@@ -298,7 +298,7 @@ public class GagspeakEventManager
             }
             catch (Bagagwa ex)
             {
-                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
+                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName + "! {Bagagwa}", ex, LoggerType.AchievementEvents);
             }
         }
     }
@@ -322,7 +322,7 @@ public class GagspeakEventManager
             }
             catch (Bagagwa ex)
             {
-                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName, ex, LoggerType.AchievementEvents);
+                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName + "! {Bagagwa}", ex, LoggerType.AchievementEvents);
             }
         }
     }

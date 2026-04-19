@@ -13,7 +13,7 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
     private readonly MainHub _mainHub;
     private Kinkster _ref;
     public PairRestrictionPadlockCombo(ILogger log, MainHub hub, Kinkster k, Action postButtonPress)
-        : base(() => [..k.ActiveRestrictions.Restrictions], () => [..PadlockEx.GetLocksForPair(k.PairPerms)], log)
+        : base(() => [..PadlockEx.GetLocksForPair(k.PairPerms)], log)
     {
         _mainHub = hub;
         _ref = k;
@@ -23,13 +23,25 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
     protected override string ItemName(ActiveRestriction item)
         => _ref.LightCache.Restrictions.TryGetValue(item.Identifier, out var bind) ? bind.Label : "None";
     protected override bool DisableCondition(int layerIdx)
-        => Items[layerIdx].Identifier == Guid.Empty;
+        => ActiveItem.Identifier == Guid.Empty;
 
-    protected override async Task<bool> OnLockButtonPress(string label, int layerIdx)
+    public override void DrawLockCombo(string label, float width, int layerIdx, string buttonTxt, string tooltip, bool isTwoRow)
+    {
+        ActiveItem = _ref.ActiveRestrictions.Restrictions[layerIdx];
+        base.DrawLockCombo(label, width, layerIdx, buttonTxt, tooltip, isTwoRow);
+    }
+
+    public override void DrawUnlockCombo(string label, float width, int layerIdx, string buttonTxt, string tooltip)
+    {
+        ActiveItem = _ref.ActiveRestrictions.Restrictions[layerIdx];
+        base.DrawUnlockCombo(label, width, layerIdx, buttonTxt, tooltip);
+    }
+
+    protected override async Task OnLockButtonPress(string label, int layerIdx)
     {
         // return if we cannot lock.
-        if (!Items[layerIdx].CanLock() || !_ref.PairPerms.LockRestrictions)
-            return false;
+        if (!ActiveItem.CanLock() || !_ref.PairPerms.LockRestrictions)
+            return;
 
         // we know it was valid, so begin assigning the new data to send off.
         var finalTime = SelectedLock == Padlocks.FiveMinutes
@@ -49,28 +61,26 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
         {
             Log.LogDebug($"Failed to perform LockRestriction with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
             DisplayToastErrorAndReset(result.ErrorCode, SelectedLock, false);
-            return false;
         }
         else
         {
             Log.LogDebug($"Locking Restriction with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
             ResetSelection();
             ResetInputs();
-            RefreshStorage(label);
+            ActiveItem = new ActiveRestriction();
             PostButtonPress?.Invoke();
-            return true;
         }
     }
 
-    protected override async Task<bool> OnUnlockButtonPress(string label, int layerIdx)
+    protected override async Task OnUnlockButtonPress(string label, int layerIdx)
     {
-        if (!Items[layerIdx].CanUnlock() || !_ref.PairPerms.UnlockRestrictions)
-            return false;
+        if (!ActiveItem.CanUnlock() || !_ref.PairPerms.UnlockRestrictions)
+            return;
 
         var dto = new PushKinksterActiveRestriction(_ref.UserData, DataUpdateType.Unlocked)
         {
             Layer = layerIdx,
-            Padlock = Items[layerIdx].Padlock,
+            Padlock = ActiveItem.Padlock,
             Password = Password,
             PadlockAssigner = MainHub.UID,
         };
@@ -78,19 +88,17 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
         var result = await _mainHub.UserChangeKinksterActiveRestriction(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
-            Log.LogDebug($"Failed to perform UnlockRestriction with {Items[layerIdx].Padlock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
-            DisplayToastErrorAndReset(result.ErrorCode, Items[layerIdx].Padlock, true);
-            return false;
+            Log.LogDebug($"Failed to perform UnlockRestriction with {ActiveItem.Padlock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
+            DisplayToastErrorAndReset(result.ErrorCode, ActiveItem.Padlock, true);
         }
         else
         {
-            Log.LogDebug($"Unlocking Restriction with {Items[layerIdx].Padlock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
+            Log.LogDebug($"Unlocking Restriction with {ActiveItem.Padlock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
             ResetSelection();
             ResetInputs();
-            RefreshStorage(label);
+            ActiveItem = new ActiveRestriction();
             SelectedLock = Padlocks.None;
             PostButtonPress?.Invoke();
-            return true;
         }
     }
 

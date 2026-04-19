@@ -1,6 +1,5 @@
 using GagSpeak.Services;
 using GagSpeak.State.Managers;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
@@ -11,8 +10,9 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
 {
     private readonly RestrictionManager _manager;
     private readonly SelfBondageService _selfBondage;
+
     public PadlockRestrictionsClient(ILogger log, RestrictionManager manager, SelfBondageService selfBondage)
-        : base(() => manager.ServerRestrictionData?.Restrictions ?? [], PadlockEx.ClientLocks, log)
+        : base(() => [..PadlockEx.ClientLocks], log)
     {
         _manager = manager;
         _selfBondage = selfBondage;
@@ -22,65 +22,66 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
         => _manager.Storage.TryGetRestriction(item.Identifier, out var restriction) ? restriction.Label : "None";
 
     protected override bool DisableCondition(int layerIdx)
-        => Items[layerIdx].Identifier == Guid.Empty;
+        => ActiveItem.Identifier == Guid.Empty;
 
     public void DrawLockCombo(float width, int layerIdx, string tooltip)
-        => DrawLockCombo($"##ClientLock-{layerIdx}", width, layerIdx, string.Empty, tooltip, true);
+    {
+        ActiveItem = _manager.ServerRestrictionData?.Restrictions[layerIdx] ?? new ActiveRestriction();
+        DrawLockCombo($"##ClientLock-{layerIdx}", width, layerIdx, string.Empty, tooltip, true);
+    }
 
     public void DrawUnlockCombo(float width, int layerIdx, string tooltip)
-        => DrawUnlockCombo($"##ClientUnlock-{layerIdx}", width, layerIdx, string.Empty, tooltip);
+    {
+        ActiveItem = _manager.ServerRestrictionData?.Restrictions[layerIdx] ?? new ActiveRestriction();
+        DrawUnlockCombo($"##ClientUnlock-{layerIdx}", width, layerIdx, string.Empty, tooltip);
+    }
 
-    protected override async Task<bool> OnLockButtonPress(string label, int layerIdx)
+    protected override async Task OnLockButtonPress(string label, int layerIdx)
     {
         // return if we cannot lock.
-        if (!Items[layerIdx].CanLock())
-            return false;
+        if (!ActiveItem.CanLock())
+            return;
 
         // validate the lock, if it is not valid, we will display an error and reset inputs.
         if (!ValidateLock(layerIdx))
-            return false;
+            return;
 
         var time = SelectedLock is Padlocks.FiveMinutes ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
-        var newData = Items[layerIdx] with { Padlock = SelectedLock, Password = Password, Timer = time, PadlockAssigner = MainHub.UID };
+        var newData = ActiveItem with { Padlock = SelectedLock, Password = Password, Timer = time, PadlockAssigner = MainHub.UID };
         if (await _selfBondage.DoSelfBindResult(layerIdx, newData, DataUpdateType.Locked))
         {
-            ResetSelection();
-            ResetInputs();
-            RefreshStorage(label);
-            return true;
+            ActiveItem = new ActiveRestriction();
         }
         else
         {
             Log.LogDebug($"Failed to perform LockRestriction with {SelectedLock.ToName()} on self.", LoggerType.StickyUI);
-            ResetSelection();
-            ResetInputs();
-            return false;
         }
+
+        ResetSelection();
+        ResetInputs();
     }
 
-    protected override async Task<bool> OnUnlockButtonPress(string label, int layerIdx)
+    protected override async Task OnUnlockButtonPress(string label, int layerIdx)
     {
         // make a general common sense assumption logic check here, the rest can be handled across the server.
-        if (!Items[layerIdx].CanUnlock())
-            return false;
+        if (!ActiveItem.CanUnlock())
+            return;
 
         if (!ValidateUnlock(layerIdx))
-            return false;
+            return;
 
-        var newData = Items[layerIdx] with { Padlock = Items[layerIdx].Padlock, Password = Items[layerIdx].Password, PadlockAssigner = MainHub.UID };
+        var newData = ActiveItem with { Padlock = ActiveItem.Padlock, Password = ActiveItem.Password, PadlockAssigner = MainHub.UID };
         if (await _selfBondage.DoSelfBindResult(layerIdx, newData, DataUpdateType.Unlocked))
         {
-            ResetSelection();
-            ResetInputs();
-            RefreshStorage(label);
-            return true;
+            ActiveItem = new ActiveRestriction();
+            SelectedLock = Padlocks.None;
         }
         else
         {
-            ResetSelection();
-            ResetInputs();
-            return false;
+            Log.LogDebug("Failed to perform UnlockRestriction on self.");
         }
+        ResetSelection();
+        ResetInputs();
     }
 
     private bool ValidateLock(int layerIdx)
@@ -130,12 +131,12 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
     private bool ValidateUnlock(int layerIdx)
     {
         // Determine if we have access to unlock.
-        bool valid = Items[layerIdx].Padlock switch
+        bool valid = ActiveItem.Padlock switch
         {
             Padlocks.Metal or Padlocks.FiveMinutes or Padlocks.Timer => true,
-            Padlocks.Combination => Items[layerIdx].Password == Password,
-            Padlocks.Password => Items[layerIdx].Password == Password,
-            Padlocks.TimerPassword => Items[layerIdx].Password == Password,
+            Padlocks.Combination => ActiveItem.Password == Password,
+            Padlocks.Password => ActiveItem.Password == Password,
+            Padlocks.TimerPassword => ActiveItem.Password == Password,
             _ => false
         };
 
@@ -143,7 +144,7 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
             return true;
 
         // If we don't, display the appropriate error and reset inputs.
-        switch (Items[layerIdx].Padlock)
+        switch (ActiveItem.Padlock)
         {
             case Padlocks.Combination:
             case Padlocks.Password:
