@@ -158,9 +158,12 @@ public class CacheStateManager : IHostedService
                 HypnoticRestriction h => new MetaDataStruct(h.HeadgearState, h.VisorState),
                 _ => MetaDataStruct.Empty
             };
-            _glamourHandler.TryAddGlamourToCache(key, item.Glamour);
-            _glamourHandler.TryAddMetaToCache(key, metaStruct);
-            _modHandler.TryAddModToCache(key, item.Mod);
+            if (item.IsEnabled)
+            {
+                _glamourHandler.TryAddGlamourToCache(key, item.Glamour);
+                _glamourHandler.TryAddMetaToCache(key, metaStruct);
+                _modHandler.TryAddModToCache(key, item.Mod);
+            }
             _lociHandler.TryAddLociItemToCache(key, item.LociData);
             _traitsHandler.TryAddTraitsToCache(key, item.Traits);
             _arousalHandler.TryAddArousalToCache(key, item.Arousal);
