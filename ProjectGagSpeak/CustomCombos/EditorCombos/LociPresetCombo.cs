@@ -12,7 +12,8 @@ namespace GagSpeak.CustomCombos.Editor;
 
 public sealed class LociPresetCombo : CkLociComboBase<LociPresetInfo>
 {
-    private int _maxPresetCount => LociCache.Data.Presets.Values.Max(x => x.Statuses.Count);
+    private int MaxStatuses =>
+        LociCache.Data.Presets.Count > 0 ? Math.Clamp(LociCache.Data.Presets.Values.Max(x => x.Statuses.Count), 1, 10): 1;
     private Guid _currentItem;
     private float IconWithPadding => IconSize.X + ImGui.GetStyle().ItemInnerSpacing.X;
     public LociPresetCombo(ILogger log, float iconScale)
@@ -42,7 +43,7 @@ public sealed class LociPresetCombo : CkLociComboBase<LociPresetInfo>
 
     public bool Draw(string label, Guid current, float width, CFlags flags, uint? searchBg = null)
     {
-        InnerWidth = width + IconWithPadding * _maxPresetCount;
+        InnerWidth = width + IconWithPadding * MaxStatuses;
         _currentItem = current;
         // Maybe there is a faster way to know this, but atm I do not know.
         var currentTitle = Items.FirstOrDefault(i => i.GUID == _currentItem).Title?.StripColorTags() ?? string.Empty;
@@ -58,8 +59,9 @@ public sealed class LociPresetCombo : CkLociComboBase<LociPresetInfo>
         var titleSpace = size.X - iconsSpace;
         var ret = ImGui.Selectable($"##{lociPreset.Title}", selected, ImGuiSelectableFlags.None, size);
 
-        if (lociPreset.Statuses.Count <= 0)
-            return ret;
+        // don't return early if 0 statuses in the preset otherwise the title isn't shown!
+        //if (lociPreset.Statuses.Count <= 0)
+        //    return ret;
 
         ImGui.SameLine(titleSpace);
         for (int i = 0, iconsDrawn = 0; i < lociPreset.Statuses.Count; i++)
