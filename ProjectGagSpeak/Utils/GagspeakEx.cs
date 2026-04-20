@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using CkCommons;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
@@ -6,9 +7,9 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using Penumbra.GameData.Structs;
-using System.Runtime.InteropServices;
 
 namespace GagSpeak.Utils;
+
 public static class GagspeakEx
 {
     /// <summary>
@@ -40,10 +41,10 @@ public static class GagspeakEx
     /// <param name="b"> upper bound value </param>
     /// <param name="t"> should be in the range [a, b] </param>
     /// <returns> the interpolated value between a and b </returns>
-    public static float Lerp(float a, float b, float t) 
+    public static float Lerp(float a, float b, float t)
         => a + (b - a) * t;
 
-    public static float EaseInExpo(float t) 
+    public static float EaseInExpo(float t)
         => t <= 0f ? 0f : MathF.Pow(2f, 10f * (t - 1f));
 
     public static float EaseOutExpo(float t)
@@ -148,15 +149,15 @@ public static class GagspeakEx
     {
         return MainHub.ServerStatus switch
         {
-            ServerState.Reconnecting        => "Connecting",
-            ServerState.Connecting          => "Connecting",
-            ServerState.Disconnected        => "Offline",
-            ServerState.Disconnecting       => "Aborting",
-            ServerState.Unauthorized        => "Bad Auth",
-            ServerState.VersionMisMatch     => "Missmatch",
-            ServerState.Offline             => "Offline",
-            ServerState.NoSecretKey         => "No Key",
-            ServerState.Connected           => "Connected",
+            ServerState.Reconnecting => "Connecting",
+            ServerState.Connecting => "Connecting",
+            ServerState.Disconnected => "Offline",
+            ServerState.Disconnecting => "Aborting",
+            ServerState.Unauthorized => "Bad Auth",
+            ServerState.VersionMisMatch => "Missmatch",
+            ServerState.Offline => "Offline",
+            ServerState.NoSecretKey => "No Key",
+            ServerState.Connected => "Connected",
             ServerState.ConnectedDataSynced => "Connected",
             _ => "UNK-STATE"
         };
@@ -213,14 +214,24 @@ public static class GagspeakEx
 
     public static StainIds ParseCompactStainIds(JToken? jToken)
     {
-        if (jToken is not JObject stainJson)
+        string[] gameStainString;
+        // Handle glamour slot json, where stains are stored as an array of two bytes under the "Stains" property
+        if (jToken is JObject stainJson)
+        {
+            gameStainString = (stainJson["Stains"]?.Value<string>() ?? "0,0").Split(',');
+        }
+        // Handle cases where stain property is parsed directly instead
+        else if (jToken?.Type == JTokenType.String)
+        {
+            gameStainString = jToken.Value<string>()?.Split(',') ?? ["0", "0"];
+        }
+        else
+        {
             return StainIds.None;
-
-        var result = StainIds.None;
-        var gameStainString = (stainJson["Stains"]?.Value<string>() ?? "0,0").Split(',');
+        }
         return gameStainString.Length == 2
-               && int.TryParse(gameStainString[0], out int stain1)
-               && int.TryParse(gameStainString[1], out int stain2)
+                && byte.TryParse(gameStainString[0], out var stain1)
+                && byte.TryParse(gameStainString[1], out var stain2)
             ? new StainIds((StainId)stain1, (StainId)stain2)
             : StainIds.None;
     }
