@@ -1,5 +1,6 @@
 using CkCommons;
 using CkCommons.Gui;
+using CkCommons.Textures;
 using Dalamud.Interface.Textures.TextureWraps;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Textures;
@@ -48,10 +49,13 @@ public class BlindfoldService : IDisposable
 
     public async Task ApplyBlindfold(BlindfoldOverlay overlay, CombinedCacheKey source)
     {
-        if (!overlay.IsValid())
+        if (overlay.OverlayPath.IsNullOrEmpty())
+            _storedImage = await TextureManager.GetImageFromBytesAsync(BlindfoldOverlay.FallbackImagePNG);
+        else if (!overlay.IsValid())
             _storedImage = await TextureManagerEx.RentMetadataPath(ImageDataType.Blindfolds, Constants.DefaultBlindfoldPath);
         else
             _storedImage = await TextureManagerEx.RentMetadataPath(ImageDataType.Blindfolds, overlay.OverlayPath);
+
         // Img was valid, so set other properties.
         _logger.LogDebug($"{BlindfoldEnactor} applied a blindfold from ({source.ToString()}): ({overlay.OverlayPath})");
         // set source and enactor.
@@ -63,8 +67,8 @@ public class BlindfoldService : IDisposable
         await ExecuteWithSemaphore(() => AnimateOpacityTransition(_currentOpacity, _config.Current.OverlayMaxOpacity, _opacityCTS.Token));
     }
 
-    /// <summary> 
-    ///     Performs the remove animation then clears the stored data. 
+    /// <summary>
+    ///     Performs the remove animation then clears the stored data.
     ///     Will inturrupt equip-animation.
     /// </summary>
     public async Task RemoveBlindfold()
@@ -165,4 +169,3 @@ public class BlindfoldService : IDisposable
         }
     }
 }
-
