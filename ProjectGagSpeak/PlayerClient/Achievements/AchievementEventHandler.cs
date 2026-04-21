@@ -53,7 +53,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         _events.Subscribe(UnlocksEvent.AuctionedOff, () => (ClientAchievements.SaveData[Achievements.AuctionedOff.Id] as ProgressAchievement)?.IncrementProgress());
 
         _events.Subscribe<PuppeteerMsgType>(UnlocksEvent.PuppeteerOrderSent, OnPuppeteerOrderSent);
-        _events.Subscribe<string, PuppetPerms, int, uint>(UnlocksEvent.OrderRecieved, OnPuppeteerReceivedOrder);
+        _events.Subscribe<string, PuppetPerms, uint>(UnlocksEvent.OrderRecieved, OnPuppeteerReceivedOrder);
         _events.Subscribe<PuppetPerms>(UnlocksEvent.PuppeteerAccessGiven, OnPuppetAccessGiven);
 
         _events.Subscribe(UnlocksEvent.DeviceConnected, OnDeviceConnected);
@@ -118,7 +118,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         _events.Unsubscribe(UnlocksEvent.AuctionedOff, () => (ClientAchievements.SaveData[Achievements.AuctionedOff.Id] as ProgressAchievement)?.IncrementProgress());
 
         _events.Unsubscribe<PuppeteerMsgType>(UnlocksEvent.PuppeteerOrderSent, OnPuppeteerOrderSent);
-        _events.Unsubscribe<string, PuppetPerms, int, uint>(UnlocksEvent.OrderRecieved, OnPuppeteerReceivedOrder);
+        _events.Unsubscribe<string, PuppetPerms, uint>(UnlocksEvent.OrderRecieved, OnPuppeteerReceivedOrder);
         _events.Unsubscribe<PuppetPerms>(UnlocksEvent.PuppeteerAccessGiven, OnPuppetAccessGiven);
 
         _events.Unsubscribe(UnlocksEvent.DeviceConnected, OnDeviceConnected);
@@ -1187,7 +1187,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         (ClientAchievements.SaveData[Achievements.OrchestratorOfMinds.Id] as ProgressAchievement)?.IncrementProgress();
     }
 
-    private void OnPuppeteerReceivedOrder(string enactorUID, PuppetPerms orderType, int ammount, uint emoteId)
+    private void OnPuppeteerReceivedOrder(string enactorUID, PuppetPerms orderType, uint emoteId)
     {
         // inc the orders received counters.
         (ClientAchievements.SaveData[Achievements.WillingPuppet.Id] as ProgressAchievement)?.IncrementProgress();
@@ -1202,9 +1202,12 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         (ClientAchievements.SaveData[Achievements.MastersPlaything.Id] as ProgressAchievement)?.IncrementProgress();
         (ClientAchievements.SaveData[Achievements.MistressesPlaything.Id] as ProgressAchievement)?.IncrementProgress();
         (ClientAchievements.SaveData[Achievements.ThePerfectDoll.Id] as ProgressAchievement)?.IncrementProgress();
+        
+        if (orderType is PuppetPerms.Emotes)
+            OnPuppeteerReceivedEmoteOrder(emoteId);
     }
 
-    private void OnPuppeteerReceivedEmoteOrder(int emoteId)
+    private void OnPuppeteerReceivedEmoteOrder(uint emoteId)
     {
         switch (emoteId)
         {
