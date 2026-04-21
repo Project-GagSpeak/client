@@ -279,7 +279,7 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
             HcAttribute.Follow => Kinkster.PairHardcore with { LockedFollowing = enactingString },
             HcAttribute.EmoteState => Kinkster.PairHardcore with
             {
-                LockedEmoteState = Kinkster!.PairPerms.DevotionalLocks ? $"{MainHub.UID}|{EmoteId}{Constants.DevotedString}" : $"{MainHub.UID}|{EmoteId}", // needs emote id for achievements to fire
+                LockedEmoteState = enactingString,
                 EmoteExpireTime = expireTimer,
                 EmoteId = (ushort)EmoteId,
                 EmoteCyclePose = (byte)CyclePose
@@ -308,7 +308,7 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
             HcAttribute.BlockedChatInput => Kinkster.PairHardcore with { ChatInputBlocked = enactingString, ChatInputBlockedTimer = expireTimer },
             _ => Kinkster!.PairHardcore
         };
-        
+
         // Process the task.
         UiService.SetUITask(async () =>
         {
