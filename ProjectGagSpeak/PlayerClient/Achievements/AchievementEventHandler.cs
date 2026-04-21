@@ -1043,7 +1043,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
     /// <param name="targetUID"> who the target of the action is. </param>
     private void OnHardcoreAction(HcAttribute actionKind, bool state, UserData enactor, string targetUID)
     {
-        var enactorUID = enactor?.UID;
+        var enactorUID = enactor!.UID;
         Logger.LogDebug($"HardcoreStatus ({actionKind}) is now ({state}). And was enacted by [{enactorUID}] on [{targetUID}]", LoggerType.AchievementInfo);
         var targetIsClient = targetUID == MainHub.UID;
 
