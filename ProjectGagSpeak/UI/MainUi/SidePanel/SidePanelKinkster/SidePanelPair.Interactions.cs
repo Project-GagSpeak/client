@@ -13,6 +13,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
+using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
@@ -23,13 +24,32 @@ namespace GagSpeak.Gui.MainWindow;
 
 public partial class SidePanelPair
 {
+    // The width of the character M, plus padding, for single character buttons.
+    private readonly float _emWidth = ImGui.CalcTextSize("M").X + ImGui.GetStyle().ItemInnerSpacing.X / 4;
+
     #region Gags
     private void DrawGagActions(KinksterInfoCache cache, Kinkster k, float width, string dispName)
     {
         ImGui.TextUnformatted("Gag Actions");
 
-        if (CkGuiUtils.LayerIdxCombo("##gagLayer", width, cache.GagLayer, out var newVal, 3))
-            cache.GagLayer = newVal;
+        using (ImRaii.Group())
+        {
+            CkGui.FramedIconText(FAI.LayerGroup);
+            CkGui.TextFrameAlignedInline("Layers");
+            for (var i = 0; i <= k.ActiveGags.GagSlots.GetUpperBound(0); i++)
+            {
+                ImGui.SameLine();
+                var item = k.ActiveGags.GagSlots[i];
+                using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink, cache.GagLayer == i))
+                {
+                    if (CkGui.IconTextButton(GetStateIcon(item), $"{i + 1}", ImGui.GetFrameHeight() + _emWidth, true, id: "###GagLayer-" + i))
+                        cache.GagLayer = i;
+
+                    FAI GetStateIcon(ActiveGagSlot res) => res.GagItem == GagType.None ? FAI.Expand : res.Padlock == Padlocks.None ? FAI.Tshirt : FAI.Lock;
+                }
+
+            }
+        }
         CkGui.AttachTooltip("Select the layer to apply a Gag to.");
 
         if (k.ActiveGags.GagSlots[cache.GagLayer] is not { } slot)
@@ -132,8 +152,28 @@ public partial class SidePanelPair
         ImGui.TextUnformatted("Restriction Actions");
 
         // Drawing out restriction layers.
-        if (CkGuiUtils.LayerIdxCombo("##restrictionLayer", width, cache.RestrictionLayer, out var newVal, 5))
-            cache.RestrictionLayer = newVal;
+        using (ImRaii.Group())
+        {
+            // Drawing out restriction layers.
+            CkGui.FramedIconText(FAI.LayerGroup);
+            CkGui.TextFrameAlignedInline("Layers");
+            for (var i = 0; i <= k.ActiveRestrictions.Restrictions.GetUpperBound(0); i++)
+            {
+                ImGui.SameLine();
+                var res = k.ActiveRestrictions.Restrictions[i];
+                //CkGui.IconTextAligned(GetStateIcon(res), GetLayerColor(i));
+                using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedPink, cache.RestrictionLayer == i))
+                {
+                    if (CkGui.IconTextButton(GetStateIcon(res), $"{i + 1}", ImGui.GetFrameHeight() + _emWidth, true, id: "###RestrictionLayer-" + i))
+                    {
+                        cache.RestrictionLayer = i;
+                    }
+
+                    FAI GetStateIcon(ActiveRestriction r) => r.Identifier == Guid.Empty ? FAI.Expand : res.Padlock == Padlocks.None ? FAI.Tshirt : FAI.Lock;
+                }
+            }
+        }
+
         CkGui.AttachTooltip("Select the layer to apply a Restriction to.");
 
         if (k.ActiveRestrictions.Restrictions[cache.RestrictionLayer] is not { } slot)
