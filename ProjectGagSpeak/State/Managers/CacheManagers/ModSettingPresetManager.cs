@@ -161,11 +161,16 @@ public class ModPresetManager : DisposableMediatorSubscriberBase, IHybridSavable
 
     public void OnModDirChanged(string oldPath, ModInfo newInfo, Dictionary<string, List<string>> latestCurrentOptions)
     {
-        // firstly, if the old path is not present, just return.
+        // update ModData so the combo reflects the new path immediately.
+        ModData = ModData.Where(m => m.DirPath != oldPath).Append(newInfo).ToList();
+        ModCombo.SetDirty();
+        PresetCombo.SetDirty();
+
+        // if the old path has no container, nothing else to update.
         if (ModPresetStorage.ByDirectory(oldPath) is not { } container)
             return;
 
-        // if there is a change, resync the contents with the updated data.
+        // resync the container with the updated path and settings.
         container.SyncWithPenumbraInfo(newInfo, latestCurrentOptions);
         _saver.Save(this);
         Mediator.Publish(new ConfigModPresetChanged(StorageChangeType.Modified, container));
@@ -173,11 +178,13 @@ public class ModPresetManager : DisposableMediatorSubscriberBase, IHybridSavable
 
     public void OnModAdded(ModInfo info, Dictionary<string, List<string>> currentOptions)
     {
-        // If a container does not yet exist for the mod, then create it.
+        // update ModData so the combo picks up the new mod without needing a restart.
+        ModData = ModData.Where(m => m.DirPath != info.DirPath).Append(info).ToList();
+
+        // if a container does not yet exist for the mod, create it.
         if (ModPresetStorage.ByDirectory(info.DirPath) is not { } container)
         {
             Logger.LogTrace($"No Container in storage exists for: {info.ToString()}");
-            // Create a new container object for the mod.
             container = new ModPresetContainer(info);
             ModPresetStorage.Add(container);
             var preset = new ModSettingsPreset(container) { Label = "Current", ModSettings = currentOptions };
@@ -192,21 +199,28 @@ public class ModPresetManager : DisposableMediatorSubscriberBase, IHybridSavable
             _saver.Save(this);
             Mediator.Publish(new ConfigModPresetChanged(StorageChangeType.Created, container));
         }
+
+        ModCombo.SetDirty();
+        PresetCombo.SetDirty();
     }
 
     public void OnModRemoved(string dirPath)
     {
-        // Remove all presets from the container, and then the container itself.
+        // remove from ModData first so the combo stops listing it.
+        ModData = ModData.Where(m => m.DirPath != dirPath).ToList();
+
+        // remove all presets from the container, then the container itself.
         if (ModPresetStorage.FirstOrDefault(x => x.DirectoryPath == dirPath) is { } container)
         {
             Logger.LogTrace($"Removing Mod Preset Container for {container.ModName} ({dirPath})");
-            // Remove all presets from the container
             container.ModPresets.Clear();
             ModPresetStorage.Remove(container);
-            // Optionally, save and notify
             _saver.Save(this);
             Mediator.Publish(new ConfigModPresetChanged(StorageChangeType.Deleted, container));
         }
+
+        ModCombo.SetDirty();
+        PresetCombo.SetDirty();
     }
 
 

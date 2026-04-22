@@ -281,8 +281,8 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
             return (new ModInfo(), new());
 
         var currentSettings = GetModSettingsSelected.Invoke(collection.Value.Id, directory);
-        if (currentSettings.Item1 is not PenumbraApiEc.Success || !currentSettings.Item2.HasValue)
-            return (new ModInfo(), new());
+        var priority = currentSettings.Item2.HasValue ? currentSettings.Item2.Value.Item2 : 0;
+        var currentOptions = currentSettings.Item2.HasValue ? currentSettings.Item2.Value.Item3 : new Dictionary<string, List<string>>();
 
         var modPathRes = GetModPath.Invoke(directory);
         if (modPathRes.Item1 is not PenumbraApiEc.Success)
@@ -293,8 +293,8 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
             ? allSettingsResult.ToDictionary(t => t.Key, t => t.Value)
             : new();
 
-        var modInfo = new ModInfo(directory, modName, modPathRes.Item2, currentSettings.Item2.Value.Item2, allSettings);
-        return (modInfo, currentSettings.Item2.Value.Item3);
+        var modInfo = new ModInfo(directory, modName, modPathRes.Item2, priority, allSettings);
+        return (modInfo, currentOptions);
     }
 
 
