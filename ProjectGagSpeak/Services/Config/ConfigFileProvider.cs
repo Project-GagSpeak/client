@@ -72,6 +72,14 @@ public class ConfigFileProvider : IConfigFileProvider
         FileSysDirectory = Path.Combine(GagSpeakDirectory, "filesystem");
         ThumbnailDirectory = Path.Combine(GagSpeakDirectory, "thumbnails");
 
+        // Ensure all directories exist.
+        // We do this here to avoid having to synchronize between each file provider that share a directory.
+        foreach (var dir in new[] { SpatialDirectory, EventDirectory, FileSysDirectory, ThumbnailDirectory })
+        {
+            if (!Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+        }
+
         MainConfig = Path.Combine(GagSpeakDirectory, "config.json");
         Patterns = Path.Combine(GagSpeakDirectory, "patterns.json");
 

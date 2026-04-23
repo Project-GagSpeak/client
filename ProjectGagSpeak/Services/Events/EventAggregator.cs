@@ -124,7 +124,6 @@ public class EventAggregator : MediatorSubscriberBase, IHostedService
         var eventLogFile = Path.Combine(ConfigFileProvider.EventDirectory, CurrentLogName);
         try
         {
-            if (!Directory.Exists(ConfigFileProvider.EventDirectory)) Directory.CreateDirectory(ConfigFileProvider.EventDirectory);
             File.AppendAllLines(eventLogFile, [receivedEvent.ToString()]);
         }
         catch (Bagagwa ex)
