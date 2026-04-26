@@ -132,6 +132,32 @@ public sealed class LootHandler
         await ApplyCursedLoot().ConfigureAwait(false);
     }
 
+    private TimeSpan getTimeSpanForItem(CursedItem? item)
+    {
+        // The way this will work as as follows: If the item has no time at all, we simply use the global range, otherwise, we use the items range. Item's range will always be used if it exists.
+        if (item == null) return TimeSpan.Zero; // Should never happen, but just in case.
+
+        // Now, get the lower and upper bounds for the item. Use global range if the item has no bounds set.
+        TimeSpan lower = item.TimeRangeLower ?? _manager.LockRangeLower;
+        TimeSpan upper = item.TimeRangeUpper ?? _manager.LockRangeUpper;
+
+        // Now correct the bounds. We bound that isn't set by the item equal to that of the bound that is. 
+        if (lower > upper && item.TimeRangeLower.HasValue && !item.TimeRangeUpper.HasValue)
+        {
+            return lower;                                                      
+        }
+        else if (lower > upper && !item.TimeRangeLower.HasValue && item.TimeRangeUpper.HasValue)
+        {
+            return upper;
+        }
+        else if (lower > upper)
+        {
+            // This shouldn't happen, but let's just use the smaller value for both bounds. Tho, the smaller one is the upper bound, so we will use that for both.
+            return upper;
+        }
+        return Generators.GetRandomTimeSpan(lower, upper);
+    }
+
     private async Task ApplyCursedLoot()
     {
         // run our first roll, return if not in range.
@@ -150,7 +176,7 @@ public sealed class LootHandler
         var chosen = validItems[chosenIdx];
 
         // Calculate the timespan to apply the lock for.
-        var lockTime = Generators.GetRandomTimeSpan(_manager.LockRangeLower, _manager.LockRangeUpper);
+        var lockTime = getTimeSpanForItem(chosen);
 
         // If the chosen item is a gag, and there is space to apply one, apply the gag item.
         // (This will fail if it is a restriction item that was selected).
