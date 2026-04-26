@@ -144,16 +144,16 @@ public sealed class LootHandler
         // Now correct the bounds. We bound that isn't set by the item equal to that of the bound that is. 
         if (lower > upper && item.TimeRangeLower.HasValue && !item.TimeRangeUpper.HasValue)
         {
-            upper = lower;                                                      
+            return lower;                                                      
         }
         else if (lower > upper && !item.TimeRangeLower.HasValue && item.TimeRangeUpper.HasValue)
         {
-            lower = upper;
+            return upper;
         }
         else if (lower > upper)
         {
             // This shouldn't happen, but let's just use the smaller value for both bounds. Tho, the smaller one is the upper bound, so we will use that for both.
-            lower = upper;
+            return upper;
         }
         return Generators.GetRandomTimeSpan(lower, upper);
     }
