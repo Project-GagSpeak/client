@@ -1149,6 +1149,9 @@ namespace GagSpeak.Localization
         public readonly string RestrictionGlamours = Loc.Localize("MainOptions_RestrictionGlamours", "Restriction Glamours");
         public readonly string RestrictionGlamoursTT = Loc.Localize("MainOptions_RestrictionGlamoursTT", "Allows Glamourer to apply restraint glamour items from your Restraint Storage." +
             "--SEP--Restraint glamours can be created in the Wardrobe Interface.");
+        
+        public readonly string RestrictionPadlockTimer = Loc.Localize("MainOptions_RestrictionPadlockTimer", "Expired Timer Restriction Removal");
+        public readonly string RestrictionPadlockTimerTT = Loc.Localize("MainOptions_RestrictionPadlockTimerTT", "Automatically removes locked restrictions when the timer expires.");
 
         public readonly string RestraintSetGlamour = Loc.Localize("MainOptions_RestraintSetGlamour", "Restraint Glamours");
         public readonly string RestraintSetGlamourTT = Loc.Localize("MainOptions_RestraintSetGlamourTT", "Allows Glamourer to apply restraints from your Restraint Sets." +

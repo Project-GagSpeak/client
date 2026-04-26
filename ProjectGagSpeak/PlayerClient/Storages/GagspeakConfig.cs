@@ -55,9 +55,11 @@ public class GagspeakConfig
     public GarbleCoreLang Language { get; set; } = GarbleCoreLang.English; // MuffleCore
     public GarbleCoreDialect LanguageDialect { get; set; } = GarbleCoreDialect.US; // MuffleCore
     
-    public bool CursedLootUI { get; set; } = false; // CursedLootUI
-    public bool CursedItemsApplyTraits { get; set; } = false; // If Mimics can apply restriction traits to you.
-    public bool RemoveRestrictionOnTimerExpire { get; set; } = false; // Auto-Remove Items when timer falloff occurs.
+    public bool CursedLootUI { get; set; } = false;                   // CursedLootUI
+    public bool CursedItemsApplyTraits { get; set; } = false;         // If Mimics can apply restriction traits to you.
+    public bool RemoveGagOnTimerExpire { get; set; } = false; // Auto-Remove Items when timer falloff occurs.
+    public bool RemoveRestrictionOnTimerExpire { get; set; } = false; // Auto-Remove Restriction when timer falloff occurs.
+    public bool RemoveRestraintOnTimerExpire { get; set; } = false; // Auto-Remove restraint when timer falloff occurs.
 
     // GLOBAL TOYBOX SETTINGS
     // public OutputType AudioOutputType { get; set; } = OutputType.DirectSound; // Best for FFXIV.

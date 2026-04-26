@@ -80,7 +80,7 @@ public static class ConfigMigrator
 
 
         config["CursedLootUI"] = mainConfig["CursedDungeonLoot"];
-        config["RemoveRestrictionOnTimerExpire"] = mainConfig["RemoveGagUponLockExpiration"];
+        config["RemoveGagOnTimerExpire"] = mainConfig["RemoveGagUponLockExpiration"];
         config["VibratorMode"] = mainConfig["VibratorMode"];
         config["VibeSimAudio"] = mainConfig["VibeSimAudio"];
         config["IntifaceAutoConnect"] = mainConfig["IntifaceAutoConnect"];

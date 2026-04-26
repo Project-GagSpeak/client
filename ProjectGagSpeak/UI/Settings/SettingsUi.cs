@@ -249,7 +249,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         var liveChatGarblerActive = globals.ChatGarblerActive;
         var gaggedNamePlates = globals.GaggedNameplate;
         var gagVisuals = globals.GagVisuals;
-        var removeGagOnLockExpiration = _mainConfig.Current.RemoveRestrictionOnTimerExpire;
+        var removeGagOnLockExpiration = _mainConfig.Current.RemoveGagOnTimerExpire;
 
         CkGui.FontText(GSLoc.Settings.MainOptions.HeaderGags, Fonts.UidFont);
         using (ImRaii.Disabled(globals.ChatGarblerLocked))
@@ -269,7 +269,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GagPadlockTimer, ref removeGagOnLockExpiration))
         {
-            _mainConfig.Current.RemoveRestrictionOnTimerExpire = removeGagOnLockExpiration;
+            _mainConfig.Current.RemoveGagOnTimerExpire = removeGagOnLockExpiration;
             _mainConfig.Save();
         }
         CkGui.HelpText(GSLoc.Settings.MainOptions.GagPadlockTimerTT);
@@ -282,6 +282,8 @@ public class SettingsUi : WindowMediatorSubscriberBase
         var restraintSetVisuals = globals.RestraintSetVisuals;
         var cursedDungeonLoot = _mainConfig.Current.CursedLootUI;
         var mimicsApplyTraits = _mainConfig.Current.CursedItemsApplyTraits;
+        var removeRestrictionOnLockExpiration = _mainConfig.Current.RemoveRestrictionOnTimerExpire;
+        var removeRestraintOnLockExpiration = _mainConfig.Current.RemoveRestraintOnTimerExpire;
 
         ImGui.Separator();
         CkGui.FontText(GSLoc.Settings.MainOptions.HeaderWardrobe, Fonts.UidFont);
@@ -316,10 +318,24 @@ public class SettingsUi : WindowMediatorSubscriberBase
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.RestrictionGlamours, ref restrictionVisuals))
                 AssignGlobalPermChangeTask(nameof(GlobalPerms.RestrictionVisuals), restrictionVisuals);
             CkGui.HelpText(GSLoc.Settings.MainOptions.RestrictionGlamoursTT);
+            
+            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.RestrictionPadlockTimer, ref removeRestrictionOnLockExpiration))
+            {
+                _mainConfig.Current.RemoveRestrictionOnTimerExpire = removeRestrictionOnLockExpiration;
+                _mainConfig.Save();
+            }
+            CkGui.HelpText(GSLoc.Settings.MainOptions.RestrictionPadlockTimerTT);
 
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.RestraintSetGlamour, ref restraintSetVisuals))
                 AssignGlobalPermChangeTask(nameof(GlobalPerms.RestraintSetVisuals), restraintSetVisuals);
             CkGui.HelpText(GSLoc.Settings.MainOptions.RestraintSetGlamourTT);
+            
+            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.RestraintPadlockTimer, ref removeRestraintOnLockExpiration))
+            {
+                _mainConfig.Current.RemoveRestraintOnTimerExpire = removeRestraintOnLockExpiration;
+                _mainConfig.Save();
+            }
+            CkGui.HelpText(GSLoc.Settings.MainOptions.RestraintPadlockTimerTT);
 
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.CursedLootActive, ref cursedDungeonLoot))
             {
