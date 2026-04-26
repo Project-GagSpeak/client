@@ -314,7 +314,7 @@ public class HypnoticRestriction : RestrictionItem
 public class BlindfoldRestriction : RestrictionItem
 {
     public override RestrictionType Type { get; } = RestrictionType.Blindfold;
-    public BlindfoldOverlay Properties { get; set; } = new("Blindfold_Light.png");
+    public BlindfoldOverlay Properties { get; set; } = new("Blindfold Light.png");
 
     public BlindfoldRestriction()
     { }
@@ -375,11 +375,11 @@ public class BlindfoldRestriction : RestrictionItem
 
 /// <summary>
 ///     Collar restrictions are special due to the way that they work. <para />
-///     
+///
 ///     Collar's settings that ONLY the collar's bearer can change are stored here,
 ///     while properties that can be changed by either are located in the active collar state. <para />
-///     
-///     The primary purpose of the GagSpeakCollar is to serve as a foundation for glamour 
+///
+///     The primary purpose of the GagSpeakCollar is to serve as a foundation for glamour
 ///     and mods, while glamour dyes, lociData, writing, ownership, and visual toggles can be found
 ///     inside the ActiveCollar item.
 /// </summary>
