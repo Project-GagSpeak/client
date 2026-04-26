@@ -53,7 +53,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         _events.Subscribe(UnlocksEvent.AuctionedOff, () => (ClientAchievements.SaveData[Achievements.AuctionedOff.Id] as ProgressAchievement)?.IncrementProgress());
 
         _events.Subscribe<PuppeteerMsgType>(UnlocksEvent.PuppeteerOrderSent, OnPuppeteerOrderSent);
-        _events.Subscribe<string, PuppetPerms, int, uint>(UnlocksEvent.OrderRecieved, OnPuppeteerReceivedOrder);
+        _events.Subscribe<string, PuppetPerms, uint>(UnlocksEvent.OrderRecieved, OnPuppeteerReceivedOrder);
         _events.Subscribe<PuppetPerms>(UnlocksEvent.PuppeteerAccessGiven, OnPuppetAccessGiven);
 
         _events.Subscribe(UnlocksEvent.DeviceConnected, OnDeviceConnected);
@@ -63,7 +63,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         _events.Subscribe(UnlocksEvent.ShockSent, OnShockSent);
         _events.Subscribe(UnlocksEvent.ShockReceived, OnShockReceived);
 
-        _events.Subscribe<HcAttribute, bool, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
+        _events.Subscribe<HcAttribute, bool, UserData, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
 
         _events.Subscribe<PatternHubInteractionKind>(UnlocksEvent.PatternHubAction, OnPatternHubAction);
         _events.Subscribe<RemoteInteraction, Guid, string>(UnlocksEvent.RemoteAction, OnRemoteInteraction);
@@ -118,7 +118,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         _events.Unsubscribe(UnlocksEvent.AuctionedOff, () => (ClientAchievements.SaveData[Achievements.AuctionedOff.Id] as ProgressAchievement)?.IncrementProgress());
 
         _events.Unsubscribe<PuppeteerMsgType>(UnlocksEvent.PuppeteerOrderSent, OnPuppeteerOrderSent);
-        _events.Unsubscribe<string, PuppetPerms, int, uint>(UnlocksEvent.OrderRecieved, OnPuppeteerReceivedOrder);
+        _events.Unsubscribe<string, PuppetPerms, uint>(UnlocksEvent.OrderRecieved, OnPuppeteerReceivedOrder);
         _events.Unsubscribe<PuppetPerms>(UnlocksEvent.PuppeteerAccessGiven, OnPuppetAccessGiven);
 
         _events.Unsubscribe(UnlocksEvent.DeviceConnected, OnDeviceConnected);
@@ -128,7 +128,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         _events.Unsubscribe(UnlocksEvent.ShockSent, OnShockSent);
         _events.Unsubscribe(UnlocksEvent.ShockReceived, OnShockReceived);
 
-        _events.Unsubscribe<HcAttribute, bool, string, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
+        _events.Unsubscribe<HcAttribute, bool, UserData, string>(UnlocksEvent.HardcoreAction, OnHardcoreAction);
 
         _events.Unsubscribe<PatternHubInteractionKind>(UnlocksEvent.PatternHubAction, OnPatternHubAction);
         _events.Unsubscribe<RemoteInteraction, Guid, string>(UnlocksEvent.RemoteAction, OnRemoteInteraction);
@@ -1039,10 +1039,11 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
     /// </summary>
     /// <param name="actionKind"> The kind of hardcore action that was performed. </param>
     /// <param name="state"> If the hardcore action began or ended. </param>
+    /// <param name="enactor"> Who Called the action. </param>
     /// <param name="targetUID"> who the target of the action is. </param>
-    /// <param name="enactorUID"> Who Called the action. </param>
-    private void OnHardcoreAction(HcAttribute actionKind, bool state, string enactorUID, string targetUID)
+    private void OnHardcoreAction(HcAttribute actionKind, bool state, UserData enactor, string targetUID)
     {
+        var enactorUID = enactor!.UID;
         Logger.LogDebug($"HardcoreStatus ({actionKind}) is now ({state}). And was enacted by [{enactorUID}] on [{targetUID}]", LoggerType.AchievementInfo);
         var targetIsClient = targetUID == MainHub.UID;
 
@@ -1186,7 +1187,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         (ClientAchievements.SaveData[Achievements.OrchestratorOfMinds.Id] as ProgressAchievement)?.IncrementProgress();
     }
 
-    private void OnPuppeteerReceivedOrder(string enactorUID, PuppetPerms orderType, int ammount, uint emoteId)
+    private void OnPuppeteerReceivedOrder(string enactorUID, PuppetPerms orderType, uint emoteId)
     {
         // inc the orders received counters.
         (ClientAchievements.SaveData[Achievements.WillingPuppet.Id] as ProgressAchievement)?.IncrementProgress();
@@ -1201,9 +1202,12 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         (ClientAchievements.SaveData[Achievements.MastersPlaything.Id] as ProgressAchievement)?.IncrementProgress();
         (ClientAchievements.SaveData[Achievements.MistressesPlaything.Id] as ProgressAchievement)?.IncrementProgress();
         (ClientAchievements.SaveData[Achievements.ThePerfectDoll.Id] as ProgressAchievement)?.IncrementProgress();
+        
+        if (orderType is PuppetPerms.Emotes)
+            OnPuppeteerReceivedEmoteOrder(emoteId);
     }
 
-    private void OnPuppeteerReceivedEmoteOrder(int emoteId)
+    private void OnPuppeteerReceivedEmoteOrder(uint emoteId)
     {
         switch (emoteId)
         {
