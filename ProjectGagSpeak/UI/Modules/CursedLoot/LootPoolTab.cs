@@ -161,6 +161,12 @@ public class LootPoolTab : IFancyTab
         CkGui.ColorText("Unlocks At:", ImGuiColors.ParsedGold);
         CkGui.TextInline(item.ReleaseTime == DateTimeOffset.MinValue ? "<Not Applied>" : item.ReleaseTime.ToLocalTime().ToString("G"));
 
+        CkGui.ColorText("Minimum Time:", ImGuiColors.ParsedGold);
+        CkGui.TextInline(!item.TimeRangeLower.HasValue ? "<No Override Set>" : item.TimeRangeLower.Value.ToGsRemainingTime());
+
+        CkGui.ColorText("Maximum Time:", ImGuiColors.ParsedGold);
+        CkGui.TextInline(!item.TimeRangeUpper.HasValue ? "<No Override Set>" : item.TimeRangeUpper.Value.ToGsRemainingTime());
+
         ImGui.EndTooltip();
     }
 }
