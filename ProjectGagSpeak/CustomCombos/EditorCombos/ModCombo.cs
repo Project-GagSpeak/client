@@ -17,6 +17,11 @@ public sealed class ModCombo : CkFilterComboCache<ModInfo>
         SearchByParts = false;
     }
 
+    public void SetDirty()
+    {
+        Cleanup();
+    }
+
     protected override int UpdateCurrentSelected(int currentSelected)
     {
         if (Current?.DirPath == _currentPath)
