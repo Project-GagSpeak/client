@@ -1,6 +1,5 @@
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using System.Runtime.InteropServices;
-using AtkValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 
 namespace GagSpeak.GameInternals.Addons;
 

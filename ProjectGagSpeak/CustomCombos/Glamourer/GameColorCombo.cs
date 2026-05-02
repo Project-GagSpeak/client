@@ -19,6 +19,5 @@ public sealed class GameStainCombo(ILogger log) : CkFilterComboColors(CreateFunc
     private static Func<IReadOnlyList<KeyValuePair<byte, (string Name, uint Color, bool Gloss)>>> CreateFunc()
         => () => ItemSvc.Stains.Select(kvp => kvp)
             .Prepend(new KeyValuePair<StainId, Stain>(Stain.None.RowIndex, Stain.None)).Select(kvp
-                => new KeyValuePair<byte, (string, uint, bool)>(kvp.Key.Id, (kvp.Value.Name, kvp.Value.RgbaColor, kvp.Value.Gloss))).ToList();
+                => new KeyValuePair<byte, (string, uint, bool)>(kvp.Key.Id, (kvp.Value.Name.ToString(), kvp.Value.RgbaColor.Color, kvp.Value.Gloss))).ToList();
 }
-

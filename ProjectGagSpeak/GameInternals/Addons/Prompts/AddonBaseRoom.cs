@@ -7,7 +7,7 @@ namespace GagSpeak.GameInternals.Addons;
 public unsafe static class AddonBaseRoom
 {
     public static SeString SeString(AtkUnitBase* addon, uint idx)
-        => MemoryHelper.ReadSeString(&(addon)->GetTextNodeById(idx)->NodeText);
+        => addon->GetTextNodeById(idx)->NodeText.AsDalamudSeString();
     public static string ToText(AtkUnitBase* addon, uint idx) => SeString(addon, idx).ExtractText();
 
     public static string GetAllTextNodesText(AtkUnitBase* baseUnit)
@@ -21,7 +21,7 @@ public unsafe static class AddonBaseRoom
             if (node->Type == NodeType.Text)
             {
                 var textNode = (AtkTextNode*)node;
-                var seString = MemoryHelper.ReadSeString(&textNode->NodeText);
+                var seString = textNode->NodeText.AsDalamudSeString();
                 textList.Add("["+sizeCounter+"] "+seString.ExtractText());
                 sizeCounter++;
             }

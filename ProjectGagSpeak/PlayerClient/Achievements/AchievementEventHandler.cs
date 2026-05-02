@@ -1,4 +1,5 @@
 using CkCommons;
+using Dalamud.Game.DutyState;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using GagSpeak.GameInternals;
 using GagSpeak.Kinksters;
@@ -137,7 +138,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         _events.Unsubscribe(UnlocksEvent.PvpPlayerSlain, OnPvpKill);
         _events.Unsubscribe(UnlocksEvent.ClientSlain, () => (ClientAchievements.SaveData[Achievements.BadEndHostage.Id] as ConditionalAchievement)?.CheckCompletion());
         _events.Unsubscribe<InputChannel, string>(UnlocksEvent.GaggedChatSent, OnClientGaggedChatMessage);
-        _events.Unsubscribe<Kinkster, InputChannel, string>(UnlocksEvent.KinksterGaggedChatSent, OnKinksterGaggedChatMessage); 
+        _events.Unsubscribe<Kinkster, InputChannel, string>(UnlocksEvent.KinksterGaggedChatSent, OnKinksterGaggedChatMessage);
         _events.Unsubscribe(UnlocksEvent.TutorialCompleted, () => (ClientAchievements.SaveData[Achievements.TutorialComplete.Id] as ProgressAchievement)?.CheckCompletion());
         _events.Unsubscribe(UnlocksEvent.PairAdded, OnPairAdded);
         _events.Unsubscribe(UnlocksEvent.PresetApplied, () => (ClientAchievements.SaveData[Achievements.BoundaryRespecter.Id] as ProgressAchievement)?.IncrementProgress());
@@ -265,7 +266,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         }
     }
 
-    private void OnDutyStart(object? sender, ushort e)
+    private void OnDutyStart(IDutyStateEventArgs args)
     {
         Logger.LogInformation("Duty Started", LoggerType.AchievementEvents);
         if (PlayerData.InPvP)
@@ -291,10 +292,11 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         CheckDeepDungeonStatus();
     }
 
-    private void OnDutyEnd(object? sender, ushort e)
+    private void OnDutyEnd(IDutyStateEventArgs args)
     {
         if (PlayerData.InPvP)
             return;
+
         Logger.LogInformation("Duty Ended", LoggerType.AchievementEvents);
         if ((ClientAchievements.SaveData[Achievements.UCanTieThis.Id] as ConditionalProgressAchievement)?.ConditionalTaskBegun ?? false)
             (ClientAchievements.SaveData[Achievements.UCanTieThis.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
@@ -627,7 +629,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         }
         else if (state is NewState.Locked)
         {
-            if (data.Padlock is not Padlocks.None or Padlocks.FiveMinutes)
+            if (data.Padlock is not (Padlocks.None or Padlocks.FiveMinutes))
             {
                 // make sure that someone is locking us up in a set.
                 if (true /*enactorUID != MainHub.UID*/)
@@ -646,7 +648,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         else if (state is NewState.Unlocked)
         {
             // if the set is being unlocked, stop progress regardless.
-            if (data.Padlock is not Padlocks.None or Padlocks.FiveMinutes)
+            if (data.Padlock is not (Padlocks.None or Padlocks.FiveMinutes))
             {
                 (ClientAchievements.SaveData[Achievements.FirstTimeBondage.Id] as DurationAchievement)?.StopTracking(data.Identifier.ToString(), MainHub.UID);
                 (ClientAchievements.SaveData[Achievements.AmateurBondage.Id] as DurationAchievement)?.StopTracking(data.Identifier.ToString(), MainHub.UID);
@@ -690,7 +692,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         }
         else if (state is NewState.Locked)
         {
-            if (data.Padlock is not Padlocks.None or Padlocks.FiveMinutes) // locking
+            if (data.Padlock is not (Padlocks.None or Padlocks.FiveMinutes)) // locking
             {
                 // make sure we are the locker before continuing
                 if (enactor == MainHub.UID)
@@ -707,7 +709,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         else if (state is NewState.Unlocked)
         {
             // if the padlock is a timed padlock that we have unlocked, we should stop tracking it from these achievements.
-            if (data.Padlock is not Padlocks.None or Padlocks.FiveMinutes)
+            if (data.Padlock is not (Padlocks.None or Padlocks.FiveMinutes))
             {
                 (ClientAchievements.SaveData[Achievements.RiggersFirstSession.Id] as DurationAchievement)?.StopTracking(data.Identifier.ToString(), target);
                 (ClientAchievements.SaveData[Achievements.MyLittlePlaything.Id] as DurationAchievement)?.StopTracking(data.Identifier.ToString(), target);
@@ -1202,7 +1204,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         (ClientAchievements.SaveData[Achievements.MastersPlaything.Id] as ProgressAchievement)?.IncrementProgress();
         (ClientAchievements.SaveData[Achievements.MistressesPlaything.Id] as ProgressAchievement)?.IncrementProgress();
         (ClientAchievements.SaveData[Achievements.ThePerfectDoll.Id] as ProgressAchievement)?.IncrementProgress();
-        
+
         if (orderType is PuppetPerms.Emotes)
             OnPuppeteerReceivedEmoteOrder(emoteId);
     }
@@ -1275,7 +1277,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
     //        return;
     //    }
 
-    //    Logger.LogInformation("Current State: [GateDirectorValid]: " + Content.GateDirectorIsValid 
+    //    Logger.LogInformation("Current State: [GateDirectorValid]: " + Content.GateDirectorIsValid
     //        + " [GateType]: " + Content.GetActiveGate()
     //        + " [Flags]: " + Content.GetGateFlags()
     //        + " [InGateWithKB] " + Content.IsInGateWithKnockback());

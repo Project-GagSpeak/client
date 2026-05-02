@@ -349,7 +349,8 @@ public class EquipmentDrawer
             using var id = ImUtf8.PushId(index);
             var found = ItemSvc.Stains.TryGetValue(stainId, out var stain);
             // draw the stain itemCombo.
-            var change = _stainCombo.Draw($"##stain{item.Slot}", widthStains * innerWidthScaler, widthStains, stain.RgbaColor, stain.Name, found, stain.Gloss);
+            var change = _stainCombo.Draw($"##stain{item.Slot}", widthStains * innerWidthScaler, widthStains, stain.RgbaColor.Color, stain.Name.ToString(), found, stain
+                .Gloss);
             if (index < item.GameStain.Count - 1)
                 ImUtf8.SameLineInner(); // instantly go to draw the next one.
 
@@ -388,7 +389,7 @@ public class EquipmentDrawer
         {
             var found = ItemSvc.Stains.TryGetValue(dye1, out var stain);
             // draw the stain itemCombo.
-            if (_stainCombo.Draw($"##byteStain{id}", widthStains * innerWidthScaler, widthStains, stain.RgbaColor, stain.Name, found, stain.Gloss))
+            if (_stainCombo.Draw($"##byteStain{id}", widthStains * innerWidthScaler, widthStains, stain.RgbaColor.Color, stain.Name.ToString(), found, stain.Gloss))
             {
                 if (ItemSvc.Stains.TryGetValue(_stainCombo.Current.Key, out stain))
                 {
@@ -413,7 +414,7 @@ public class EquipmentDrawer
         {
             var found = ItemSvc.Stains.TryGetValue(dye2, out var stain);
             // draw the stain itemCombo.
-            if (_stainCombo.Draw($"##byteStain{id}", widthStains * innerWidthScaler, widthStains, stain.RgbaColor, stain.Name, found, stain.Gloss))
+            if (_stainCombo.Draw($"##byteStain{id}", widthStains * innerWidthScaler, widthStains, stain.RgbaColor.Color, stain.Name.ToString(), found, stain.Gloss))
             {
                 if (ItemSvc.Stains.TryGetValue(_stainCombo.Current.Key, out stain))
                 {
@@ -446,7 +447,7 @@ public class EquipmentDrawer
             using var _ = ImUtf8.PushId(index);
             var found = ItemSvc.Stains.TryGetValue(stainId, out var stain);
             // draw the stain itemCombo.
-            var change = _stainCombo.Draw($"##customStain{id}", width, widthStains, stain.RgbaColor, stain.Name, found, stain.Gloss);
+            var change = _stainCombo.Draw($"##customStain{id}", width, widthStains, stain.RgbaColor.Color, stain.Name.ToString(), found, stain.Gloss);
             if (index < item.CustomStains.Count - 1)
                 ImUtf8.SameLineInner(); // instantly go to draw the next one.
 

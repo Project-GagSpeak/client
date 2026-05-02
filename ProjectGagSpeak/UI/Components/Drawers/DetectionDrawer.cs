@@ -115,7 +115,7 @@ public sealed class DetectionDrawer : IDisposable
             CkGui.ColorTextFrameAlignedInline(trigger.PlayerNameWorld, ImGuiColors.TankBlue);
         }
 
-        if (trigger.ActionKind is not LimitedActionEffectType.Miss or LimitedActionEffectType.Knockback or LimitedActionEffectType.Attract1)
+        if (trigger.ActionKind is not (LimitedActionEffectType.Miss or LimitedActionEffectType.Knockback or LimitedActionEffectType.Attract1))
         {
             CkGui.FramedIconText(FAI.BarsProgress);
             var format = trigger.ActionKind is LimitedActionEffectType.Heal ? "HP" : "DPS";
@@ -143,7 +143,7 @@ public sealed class DetectionDrawer : IDisposable
 
             var padding = ImGui.GetStyle().ItemInnerSpacing.X;
             var iconsPerRow = MathF.Floor((width - padding) / (iconSize.X + padding));
-            
+
             // display each loci status icon.
             var currentRow = 0;
             var iconsInRow = 0;
@@ -181,7 +181,7 @@ public sealed class DetectionDrawer : IDisposable
         if (CkGuiUtils.EnumCombo("##Dir", ImGui.GetContentRegionAvail().X, trigger.Direction, out var newDir, options, _ => _.GetDirectionText(trigger.ActionKind)))
             trigger.Direction = newDir;
         CkGui.AttachTooltip($"Required Direction of the {trigger.ActionKind}");
-        
+
         CkGui.FramedIconText(FAI.User);
         CkGui.AttachTooltip("Limit trigger to only accept 'other(s)' as valid if they are the defined player.--SEP--Leave blank to ignore.");
         CkGui.TextFrameAlignedInline("Limit to");
@@ -192,7 +192,7 @@ public sealed class DetectionDrawer : IDisposable
         if (ImGui.InputTextWithHint("##PlayerMonitor", "Devious Diva@Balmung..", ref limiter, 68))
             trigger.PlayerNameWorld = limiter;
         CkGui.AttachTooltip("Limit 'others' to this Player. --COL--(Must use Player Name@World format)--COL--" +
-            "--SEP--Leave blank to ignore.", ImGuiColors.DalamudGrey2); 
+            "--SEP--Leave blank to ignore.", ImGuiColors.DalamudGrey2);
 
         CkGui.FramedIconText(FAI.Filter);
         ImUtf8.SameLineInner();
@@ -212,7 +212,7 @@ public sealed class DetectionDrawer : IDisposable
             CkGui.AttachTooltip("The generic catagory to detect.");
         }
 
-        if (trigger.ActionKind is not LimitedActionEffectType.Miss or LimitedActionEffectType.Knockback or LimitedActionEffectType.Attract1)
+        if (trigger.ActionKind is not (LimitedActionEffectType.Miss or LimitedActionEffectType.Knockback or LimitedActionEffectType.Attract1))
         {
             var formatPost = trigger.ActionKind is LimitedActionEffectType.Heal ? "HP" : "DPS";
             CkGui.FramedIconText(FAI.BarsProgress);
@@ -281,7 +281,7 @@ public sealed class DetectionDrawer : IDisposable
                 if (!SpellActionService.AllActionsLookup.TryGetValue(actionIcon, out var iconData))
                     continue;
 
-                // I really dont understand why hell rendering a single image here consumes more drawtime than an 
+                // I really dont understand why hell rendering a single image here consumes more drawtime than an
                 // entire combo of actions drawing icons via the exact same method.
                 // Might be some internal problem or something where ImGui doesnt reconize the caching, look into later.
                 // Maybe check out XIVCombo or something to figure out how they properly display all actions to their screen fine.
@@ -410,7 +410,7 @@ public sealed class DetectionDrawer : IDisposable
     {
         ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Restrained].Handle, new(ImUtf8.FrameHeight));
         CkGui.TextFrameAlignedInline("Monitor");
-        
+
         ImUtf8.SameLineInner();
         if (_restraintCombo.Draw("##restraintsets", trigger.RestraintSetId, ImGui.GetContentRegionAvail().X))
             trigger.RestraintSetId = _restraintCombo.Current?.Identifier ?? Guid.Empty;

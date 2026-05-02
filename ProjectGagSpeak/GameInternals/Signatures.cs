@@ -35,7 +35,7 @@ namespace GagSpeak.GameInternals;
 
 // ================================================
 // - VFXEDITOR Signatures:
-// 
+//
 // FFXIVClientStruct Sound Manager for handling sound effects and music
 // https://github.com/aers/FFXIVClientStructs/blob/f42f0b960f0c956e62344daf161a2196123f0426/FFXIVClientStructs/FFXIV/Client/Sound/SoundManager.cs
 //
@@ -51,7 +51,7 @@ namespace GagSpeak.GameInternals;
 public static class Signatures
 {
     // gip.HookFromAddress<ProcessActionEffect>(ss.ScanText(this)
-    public const string ReceiveActionEffect = "40 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24";
+    public const string ReceiveActionEffect = "40 55 53 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 45 ?? 4C 8B BD";
 
     // ScanType: Signature
     public const string OnEmote = "E8 ?? ?? ?? ?? 48 8D 8B ?? ?? ?? ?? 4C 89 74 24";

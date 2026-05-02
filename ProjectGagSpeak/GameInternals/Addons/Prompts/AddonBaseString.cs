@@ -8,7 +8,7 @@ namespace GagSpeak.GameInternals.Addons;
 public unsafe static class AddonBaseString
 {
     public static SeString SeString(AddonSelectString* addon)
-        => MemoryHelper.ReadSeString(&((AtkUnitBase*)addon)->GetTextNodeById(2)->NodeText);
+        => ((AtkUnitBase*)addon)->GetTextNodeById(2)->NodeText.AsDalamudSeString();
 
     public static string ToText(AddonSelectString* addon) => SeString(addon).ExtractText();
 

@@ -8,7 +8,7 @@ namespace GagSpeak.CustomCombos;
 
 public class CkFilterComboColors : CkFilterComboCache<KeyValuePair<byte, (string Name, uint Color, bool Gloss)>>
 {
-    private readonly ImRaii.Color _color = new();
+    private readonly ImRaii.ColorDisposable _color = new();
     private Vector2 _buttonSize;
     private float _comboWidth;
     private uint _currentColor;

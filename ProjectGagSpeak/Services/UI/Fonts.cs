@@ -6,7 +6,7 @@ namespace GagSpeak.Services;
 
 /// <summary>
 ///     Manages GagSpeaks custom fonts during plugin lifetime. <para />
-///     Should probably look at chat2 to see how to handle 
+///     Should probably look at chat2 to see how to handle
 ///     pointers for fonts and various font scales better at some point.
 /// </summary>
 public static class Fonts
@@ -67,7 +67,7 @@ public static class Fonts
         // Now for UID and 150% default.
         UidFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
         {
-            tk.OnPreBuild(tk => tk.AddDalamudAssetFont(Dalamud.DalamudAsset.NotoSansJpMedium, new() { SizePx = 35 }));
+            tk.OnPreBuild(tk => tk.AddDalamudAssetFont(Dalamud.DalamudAsset.NotoSansCjkMedium, new() { SizePx = 35 }));
         });
 
         Default150Percent = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>

@@ -13,7 +13,7 @@ namespace GagSpeak.Services.Controller;
 
 /// <summary>
 ///     Handles automatically opening and responding to prompts for the player.
-///     
+///
 ///     Ideally we should be adapting more of Lifestreams behavior for this, but
 ///     wait until we turn to the dark side of the force for that.
 /// </summary>
@@ -123,7 +123,7 @@ public sealed class AutoPromptController : DisposableMediatorSubscriberBase
         var selectStr = (AddonSelectString*)addonInfo.Addon.Address;
         var baseAddon = (AtkUnitBase*)selectStr;
 
-        var promptTxt = MemoryHelper.ReadSeString(&baseAddon->GetTextNodeById(2)->NodeText).ExtractText();
+        var promptTxt = baseAddon->GetTextNodeById(2)->NodeText.ExtractText();
         var entries = HcTaskUtils.GetEntries(selectStr);
 
         if (GsLang.ConfirmChamberLeave.Any(promptTxt.Equals))
