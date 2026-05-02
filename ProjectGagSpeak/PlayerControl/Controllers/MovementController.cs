@@ -198,13 +198,21 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     private unsafe bool IsWalking() => Marshal.ReadByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_NORMAL) == 0x1; //Control.Instance()->IsWalking;
     private unsafe void ForceWalking()
     {
-        Svc.Logger.Verbose($"{(nint)Control.Instance():X}");
+        // Leaving this here as a reminder that CS now has these offsets and that we can use that going forward, once updated.
+        //var inst = Control.Instance();
+        //inst->IsWalking = true;
+        //inst->IsWalkingDuringAutorun = true;
+
         // below is obsolete, cs has these values now.
         Marshal.WriteByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_NORMAL, 0x1);
         Marshal.WriteByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_AUTOMOVE, 0x1);
     }
     private unsafe void ForceRunning()
     {
+        //var inst = Control.Instance();
+        //inst->IsWalking = false;
+        //inst->IsWalkingDuringAutorun = false;
+
         Marshal.WriteByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_NORMAL, 0x0);
         Marshal.WriteByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_AUTOMOVE, 0x0);
     }
