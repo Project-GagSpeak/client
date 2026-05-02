@@ -25,10 +25,14 @@ public sealed class POVController : DisposableMediatorSubscriberBase
 
     private void UpdateHardcoreStatus()
     {
-        // update local perspective to match if different.
         var cachePerspective = _cache.GetPerspectiveToLock();
         if (_perspective != cachePerspective)
+        {
+            // When releasing a forced first-person lock, actively restore to third-person.
+            if (cachePerspective is CameraControlMode.Unknown && _perspective is CameraControlMode.FirstPerson)
+                SetCameraPerspective(CameraControlMode.ThirdPerson);
             _perspective = cachePerspective;
+        }
     }
 
     private unsafe void OnUpdate()
