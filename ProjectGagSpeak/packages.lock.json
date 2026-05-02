@@ -565,8 +565,8 @@
           "FlatSharp.Compiler": "[7.9.0, )",
           "FlatSharp.Runtime": "[7.9.0, )",
           "OtterGui": "[1.0.0, )",
-          "Penumbra.Api": "[5.13.1, )",
-          "Penumbra.String": "[1.0.7, )"
+          "Penumbra.Api": "[5.15.1, )",
+          "Penumbra.String": "[1.0.8, )"
         }
       },
       "penumbra.string": {
