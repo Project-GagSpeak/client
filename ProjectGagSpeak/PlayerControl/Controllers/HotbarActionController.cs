@@ -1,6 +1,5 @@
 using CkCommons;
 using Dalamud.Game.Addon.Lifecycle;
-using Dalamud.Game.Gui;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -11,6 +10,7 @@ using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using System.Collections.Immutable;
+using Dalamud.Game.Gui;
 
 
 namespace GagSpeak.Services.Controller;
@@ -31,7 +31,7 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
 
     // Stores the pointer that we most recently interacted with. Useful for resetting the height.
     private unsafe AtkUnitBase* _lastModifiedTooltip;
-    
+
     /// <summary> The currently banned actions determined by the <see cref="_cache"/>'s _finalTrait's </summary>
     private ImmutableDictionary<uint, Traits> _bannedActions = ImmutableDictionary<uint, Traits>.Empty;
 
@@ -249,17 +249,17 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
             return;
 
         // Must be an action tooltip.
-        if (hoveredAct.ActionKind is not HoverActionKind.Action)
+        if (hoveredAct.DetailKind is not DetailKind.Action)
             return;
 
         // store latest action tooltip.
         _lastModifiedTooltip = addon;
 
         // Must be a TraitAction Action.
-        if (!_traitActionIds.Any(x => x.Id == hoveredAct.ActionID))
+        if (_traitActionIds.All(x => x.Id != hoveredAct.ActionId))
             return;
 
-        Logger.LogTrace($"Action ({hoveredAct.ActionID}) is a TraitRestriction tooltip, altaring display.", LoggerType.HardcoreActions);
+        Logger.LogTrace($"Action ({hoveredAct.ActionId}) is a TraitRestriction tooltip, altaring display.", LoggerType.HardcoreActions);
         // hide away the recast container, as it is not needed. (but maybe make it work?)
         var castRecastContainer = addon->GetNodeById(CAST_RECAST_CONTAINER_ID);
         if (castRecastContainer is not null)
@@ -274,7 +274,7 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
         ActionTooltipEx.ReplaceTextNodeText(addon, RADIUS_NODE_ID, "0y");
 
         // Replace title and description based on the trait.
-        var trait = _traitActionIds.FirstOrDefault(x => x.Id == hoveredAct.ActionID).Traits;
+        var trait = _traitActionIds.FirstOrDefault(x => x.Id == hoveredAct.ActionId).Traits;
         var title = ActionTooltipEx.GetTitle(trait);
         var desc  = ActionTooltipEx.GetDescription(trait, _cache.GetTraitSourceName(trait));
         ActionTooltipEx.ReplaceTextNodeText(addon, TITLE_NODE_ID, title);

@@ -9,6 +9,7 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 using Dalamud.Bindings.ImGui;
+using ImSharp;
 
 namespace GagSpeak.CustomCombos.Pairs;
 
@@ -101,7 +102,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
 
         // Valid for draw:
         var layers = cacheInfo.Layers.Count;
-        var options = Enum.GetValues<RestraintLayer>().Skip(1).SkipLast(5 - layers + 1);
+        var options = RestraintLayer.Values.Skip(1).SkipLast(5 - layers + 1);
         if (_layersHelper.DrawApply(width, _pairRef.ActiveRestraint.ActiveLayers, out var changes, options, GetLabel))
         {
             // we need to ensure that we have a valid pairRef and that the changes are not empty.
@@ -157,7 +158,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
 
         // Valid for draw:
         var layers = cacheInfo.Layers.Count;
-        var options = Enum.GetValues<RestraintLayer>().Skip(1).SkipLast(5 - layers + 1);
+        var options = RestraintLayer.Values.Skip(1).SkipLast(5 - layers + 1);
         if (_layersHelper.DrawRemove(width, _pairRef.ActiveRestraint.ActiveLayers, out var changes, options, GetLabel))
         {
             UiService.SetUITask(async () =>
@@ -204,7 +205,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
                 .Push(ImGuiStyleVar.WindowRounding, 4f)
                 .Push(ImGuiStyleVar.PopupBorderSize, 1f);
             using var c = ImRaii.PushColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
-            
+
             ImGui.BeginTooltip();
 
             if (!setItem.Description.IsNullOrWhitespace() && !setItem.Description.Contains("Enter Description Here..."))
@@ -214,4 +215,3 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
         }
     }
 }
-

@@ -1,5 +1,5 @@
 [submodule "Submodules/CkCommons"]
-    path = Submodules/CkCommons
+	path = Submodules/CkCommons
 	url = https://github.com/CordeliaMist/CkCommons.git
 	branch = main
 [submodule "Submodules/OtterGui"]
@@ -21,7 +21,7 @@
 [submodule "Submodules/Penumbra.GameData"]
 	path = Submodules/Penumbra.GameData
 	url = https://github.com/Ottermandias/Penumbra.GameData.git
-    branch = main
+	branch = main
 [submodule "Submodules/GlamourerAPI"]
 	path = Submodules/GlamourerAPI
 	url = https://github.com/Ottermandias/Glamourer.Api.git
@@ -29,3 +29,7 @@
 [submodule "Submodules/LociAPI"]
 	path = Submodules/LociAPI
 	url = https://github.com/CordeliaMist/Loci.Api.git
+[submodule "Submodules/Luna"]
+	path = Submodules/Luna
+	url = git@github.com:Ottermandias/Luna.git
+	branch = main

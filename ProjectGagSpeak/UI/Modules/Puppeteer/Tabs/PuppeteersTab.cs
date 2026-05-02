@@ -15,6 +15,7 @@ using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
+using ImSharp;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Wardrobe;
@@ -147,7 +148,7 @@ public class PuppeteersTab : IFancyTab
             var filter = (uint)(kinkster.OwnPerms.PuppetPerms);
             using (ImRaii.Disabled(UiService.DisableUI))
             {
-                foreach (var category in Enum.GetValues<PuppetPerms>().Skip(1))
+                foreach (var category in PuppetPerms.Values.Skip(1))
                 {
                     ImGui.CheckboxFlags($"Allow {category}", ref filter, (uint)category);
 

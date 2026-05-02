@@ -5,7 +5,7 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
-using OtterGui.Log;
+using Luna;
 using Penumbra.GameData.Data;
 using Penumbra.GameData.DataContainers;
 using Penumbra.GameData.Enums;
@@ -85,7 +85,7 @@ public static class ItemSvc
         if (_isInitialized)
             return;
 
-        var logger = new Logger();
+        var logger = new MainLogger();
 
         WorldData = new DictWorld(pi, logger, Svc.Data);
         BonusData = new DictBonusItems(pi, logger, Svc.Data);

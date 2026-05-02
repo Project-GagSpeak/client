@@ -13,9 +13,9 @@
       },
       "DalamudPackager": {
         "type": "Direct",
-        "requested": "[14.0.1, )",
-        "resolved": "14.0.1",
-        "contentHash": "y0WWyUE6dhpGdolK3iKgwys05/nZaVf4ZPtIjpLhJBZvHxkkiE23zYRo7K7uqAgoK/QvK5cqF6l3VG5AbgC6KA=="
+        "requested": "[15.0.0, )",
+        "resolved": "15.0.0",
+        "contentHash": "411vwC8/X8Z/sQ2TI6v3SvOn66xFPeOjFn3Zn+h0d3Ox2t1kFm66AhDvmx/qcMwVrR+Hidxj0dadpQ2dgyXMBQ=="
       },
       "DebounceThrottle": {
         "type": "Direct",
@@ -535,6 +535,11 @@
         "resolved": "8.0.1",
         "contentHash": "n1ZP7NM2Gkn/MgD8+eOT5MulMj6wfeQMNS2Pizvq5GHCZfjlFMXV2irQlQmJhwA2VABC57M0auudO89Iu2uRLg=="
       },
+      "System.IO.Hashing": {
+        "type": "Transitive",
+        "resolved": "9.0.8",
+        "contentHash": "5TJUS9EIYrp0VEcm06EPYxXmLmsVUakewFnM/CAxQfvlasI9fGkTKM9afSf2dodZcMCzFna/o7Fn+gYRt3uTiA=="
+      },
       "ckcommons": {
         "type": "Project",
         "dependencies": {
@@ -548,6 +553,14 @@
       },
       "loci.api": {
         "type": "Project"
+      },
+      "luna": {
+        "type": "Project",
+        "dependencies": {
+          "JetBrains.Annotations": "[2024.2.0, )",
+          "Microsoft.Extensions.Logging": "[9.0.0, )",
+          "System.IO.Hashing": "[9.0.8, )"
+        }
       },
       "ottergui": {
         "type": "Project",
@@ -564,9 +577,9 @@
         "dependencies": {
           "FlatSharp.Compiler": "[7.9.0, )",
           "FlatSharp.Runtime": "[7.9.0, )",
-          "OtterGui": "[1.0.0, )",
-          "Penumbra.Api": "[5.13.1, )",
-          "Penumbra.String": "[1.0.7, )"
+          "Luna": "[1.0.0, )",
+          "Penumbra.Api": "[5.15.1, )",
+          "Penumbra.String": "[1.0.8, )"
         }
       },
       "penumbra.string": {

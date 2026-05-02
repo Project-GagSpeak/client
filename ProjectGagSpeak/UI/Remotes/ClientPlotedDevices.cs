@@ -213,7 +213,7 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
         Access = RemoteAccess.Full;
         // Server-side, any time an active pattern update is received, it sends that update back to us and all our paired Kinksters.
         // Thus, if only send the update if the call is not self-invoked.
-        if (enactor == MainHub.UID && callSource is not RemoteSource.PatternSwitch or RemoteSource.Safeword)
+        if (enactor == MainHub.UID && callSource is not (RemoteSource.PatternSwitch or RemoteSource.Safeword))
             Mediator.Publish(new EnabledItemChanged(GSModule.Pattern, ActivePattern, false));
 
         // if the call source is not from a power on or down, we must perform cleanup.
@@ -324,7 +324,7 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
             Log.LogInformation($"Opening Remote UI for {Owner.DisplayName} to begin pattern playback.");
             Mediator.Publish(new UiToggleMessage(typeof(BuzzToyRemoteUI), ToggleType.Show));
         }
-        
+
         return true;
     }
 
@@ -375,7 +375,7 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
             _injectedInfo.Idx = 0;
             GagspeakEventManager.AchievementEvent(UnlocksEvent.RemoteAction, RemoteInteraction.VibeDataStreamStart, Guid.Empty, enactor);
         }
-        
+
         // open and begin playback if not active.
         if (!UiService.IsRemoteUIOpen())
             Mediator.Publish(new UiToggleMessage(typeof(BuzzToyRemoteUI), ToggleType.Show));

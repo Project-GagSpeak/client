@@ -108,7 +108,7 @@ public class StyleEditorUI : WindowMediatorSubscriberBase
         //NativeStyleTab();
     }
 
-    private ImRaii.IEndObject DrawTab(StyleTab newTab)
+    private ImRaii.TabItemDisposable DrawTab(StyleTab newTab)
     {
         var tab = ImRaii.TabItem(GetName(newTab));
         if (tab)

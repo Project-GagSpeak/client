@@ -24,6 +24,7 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
+using ImSharp;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
 
@@ -319,7 +320,7 @@ public class ActiveItemsDrawer
             if (dispData != null) // no layers if no valid set, don't draw this.
             {
                 // Below draw out the layers.
-                var options = Enum.GetValues<RestraintLayer>().Skip(1).SkipLast(1).Take(dispData.Layers.Count);
+                var options = RestraintLayer.Values.Skip(1).SkipLast(1).Take(dispData.Layers.Count);
                 _layerFlagsWidget.DrawLayerCheckboxes(data.ActiveLayers, options, _ =>
                 {
                     var idx = BitOperations.TrailingZeroCount((int)_);
@@ -450,7 +451,7 @@ public class ActiveItemsDrawer
             if (dispData != null) // dont draw if display data is null.
             {
                 // Below draw out the layers.
-                var options = Enum.GetValues<RestraintLayer>().Skip(1).SkipLast(1).Take(dispData.Layers.Count);
+                var options = RestraintLayer.Values.Skip(1).SkipLast(1).Take(dispData.Layers.Count);
                 _layerFlagsWidget.DrawLayerCheckboxes(data.ActiveLayers, options, _ =>
                 {
                     var idx = BitOperations.TrailingZeroCount((int)_);

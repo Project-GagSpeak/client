@@ -1,3 +1,5 @@
+using ImSharp;
+
 namespace GagSpeak.Services.Textures;
 
 public static class CosmeticLabels
@@ -222,7 +224,7 @@ public static class CosmeticLabels
     {
         if (hasBackground)
         {
-            foreach (var styleBG in Enum.GetValues<KinkPlateBG>())
+            foreach (var styleBG in KinkPlateBG.Values)
             {
                 var key = component.ToString() + "_Background_" + styleBG.ToString();
                 var value = $"CosmeticImages\\{component}\\Background_{styleBG}.png";
@@ -232,7 +234,7 @@ public static class CosmeticLabels
 
         if (hasBorder)
         {
-            foreach (var styleBorder in Enum.GetValues<KinkPlateBorder>())
+            foreach (var styleBorder in KinkPlateBorder.Values)
             {
                 var key = component.ToString() + "_Border_" + styleBorder.ToString();
                 var value = $"CosmeticImages\\{component}\\Border_{styleBorder}.png";
@@ -242,7 +244,7 @@ public static class CosmeticLabels
 
         if (hasOverlay)
         {
-            foreach (var styleOverlay in Enum.GetValues<KinkPlateOverlay>())
+            foreach (var styleOverlay in KinkPlateOverlay.Values)
             {
                 var key = component.ToString() + "_Overlay_" + styleOverlay.ToString();
                 var value = $"CosmeticImages\\{component}\\Overlay_{styleOverlay}.png";

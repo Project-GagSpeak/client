@@ -1,4 +1,5 @@
 using CkCommons;
+using Dalamud.Game.Chat;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
@@ -64,10 +65,15 @@ public class ChatService : DisposableMediatorSubscriberBase
     /// <summary>
     ///     Handles incoming chat messages that have finished being processed by the server.
     /// </summary>
-    private void OnChatboxMessage(XivChatType type, int ts, ref SeString sender, ref SeString msg, ref bool showInChatbox)
+    private void OnChatboxMessage(IHandleableChatMessage message)
+    //private void OnChatboxMessage(XivChatType type, int ts, ref SeString sender, ref SeString msg, ref bool showInChatbox)
     {
         if (!MainHub.IsConnected || !PlayerData.Available)
             return; // Process as normal.
+
+        var sender = message.Sender;
+        var type = message.LogKind;
+        var msg = message.OriginalMessage.ToDalamudString();
 
         var senderPayload = sender.Payloads.OfType<PlayerPayload>().FirstOrDefault();
         var senderName = senderPayload?.PlayerName ?? PlayerData.Name;
@@ -171,10 +177,10 @@ public class ChatService : DisposableMediatorSubscriberBase
         utf8Str->Dtor(true);
     }
 
-    /// <summary> 
+    /// <summary>
     ///     The filters to apply when sanatizing a chat message we are sending off.
     /// </summary>
-    private const AllowedEntities SanatizeFilters = 
+    private const AllowedEntities SanatizeFilters =
         AllowedEntities.UppercaseLetters |
         AllowedEntities.LowercaseLetters |
         AllowedEntities.Numbers |
@@ -187,4 +193,3 @@ public class ChatService : DisposableMediatorSubscriberBase
 
     #endregion Helper Methods
 }
-

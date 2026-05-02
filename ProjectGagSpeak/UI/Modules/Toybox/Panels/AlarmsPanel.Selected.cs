@@ -10,6 +10,7 @@ using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Text;
 using GagSpeak.Services;
+using ImSharp;
 
 namespace GagSpeak.Gui.Toybox;
 
@@ -156,7 +157,7 @@ public partial class AlarmsPanel
     {
         using var _ = ImRaii.Group();
         using var col = ImRaii.PushColor(ImGuiCol.FrameBg, CkCol.CurvedHeaderFade.Uint());
-        
+
         // Frequency of occurrence
         CkGui.ColorText("Alarm Frequency Per Week", ImGuiColors.ParsedGold);
 
@@ -167,7 +168,7 @@ public partial class AlarmsPanel
         // calc the exact width of each checkbox.
         var checkboxWidth = ImGui.CalcTextSize("MMM").X + ImGui.GetStyle().ItemInnerSpacing.X + ImGui.GetFrameHeight();
         var dayFilters = (uint)alarm.DaysToFire;
-        var daysOfTheWeek = Enum.GetValues<DaysOfWeek>().Skip(1).ToArray();
+        var daysOfTheWeek = DaysOfWeek.Values.Skip(1).ToArray();
         for (var i = 0; i < daysOfTheWeek.Length; i++)
         {
             ImGui.CheckboxFlags(daysOfTheWeek[i].ToShortName(), ref dayFilters, (uint)daysOfTheWeek[i]);

@@ -1,5 +1,6 @@
 using CkCommons;
 using GagSpeak.State.Models;
+using ImSharp;
 
 namespace GagSpeak.Utils;
 
@@ -17,9 +18,7 @@ public static class TriggersEx
                 => [TriggerDirection.Self, TriggerDirection.Other, TriggerDirection.Any],
             LimitedActionEffectType.Damage
                 => [TriggerDirection.SelfToOther, TriggerDirection.Other, TriggerDirection.OtherToSelf, TriggerDirection.Any],
-            LimitedActionEffectType.Heal or
-            LimitedActionEffectType.Nothing or
-            _ => Enum.GetValues<TriggerDirection>()
+            _ => TriggerDirection.Values
         };
 
     public static string GetDirectionText(this TriggerDirection dir, LimitedActionEffectType curLAET)

@@ -7,6 +7,7 @@ using GagSpeak.Gui.Components;
 using GagSpeak.PlayerClient;
 using Dalamud.Bindings.ImGui;
 using CkCommons.Gui;
+using Dalamud.Interface.Windowing;
 
 namespace GagSpeak.Gui;
 
@@ -76,7 +77,7 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
     {
         // get information about the window region, its item spacing, and the topleftside height.
         var region = ImGui.GetContentRegionAvail();
-        
+
         _tabMenu.Draw(region.X);
 
         // display right half viewport based on the tab selection

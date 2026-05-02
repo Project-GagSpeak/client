@@ -11,6 +11,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Network;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Windowing;
 using Microsoft.IdentityModel.Tokens;
 using OtterGui.Text;
 using GagSpeak.Gui.Components;
@@ -71,7 +72,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
             _ => throw new NotImplementedException()
         };
 
-    private IEnumerable<KinkPlateBG> UnlockedBackgrounds() 
+    private IEnumerable<KinkPlateBG> UnlockedBackgrounds()
         => ClientAchievements.CompletedAchievements
             .Where(x => x.RewardComponent == SelectedComponent && x.RewardStyleType == SelectedStyle)
             .Select(x => (KinkPlateBG)x.RewardStyleIndex)
@@ -114,7 +115,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
                 CkGui.AttachTooltip(canEdit
                     ? "Import and adjust a new profile picture to your liking!"
                     : "You're Profile Customization Access has been Revoked!");
-                
+
                 ImUtf8.SameLineInner();
                 if (CkGui.IconTextButton(FAI.Save, "Save Changes"))
                     _ = _hub.UserSetKinkPlateContent(new KinkPlateInfo(new UserData(MainHub.UID), profile.Info));
@@ -206,7 +207,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
         }
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileDescription, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
             _ => Mediator.Publish(new KinkPlateLightCreateOpenMessage(MainHub.OwnUserData)));
-        
+
         CkGui.AttachTooltip("You're Profile Customization Access has been Revoked!" +
             "--SEP--You will not be able to edit your KinkPlate Description!", !canEdit);
 
@@ -221,7 +222,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
             // TODO: Light Kinkplates don't respond to this message, and potentially leak data if closed this way?
             //Mediator.Publish(new UiToggleMessage(typeof(KinkPlateLight), ToggleType.Hide));
             Mediator.Publish(new UiToggleMessage(typeof(KinkPlatePreviewUI), ToggleType.Show));
-        }); 
+        });
 
 
         ImGui.SameLine();

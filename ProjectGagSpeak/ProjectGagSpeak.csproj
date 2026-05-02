@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Dalamud.NET.Sdk/14.0.1">
+<Project Sdk="Dalamud.NET.Sdk/15.0.0">
     <!--Basic Plugin Definitions-->
     <PropertyGroup>
         <Copyright>Copyright © 2025</Copyright>
@@ -15,42 +15,44 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <NoWarn>$(NoWarn);IDE1006,CS8618,MSB3270</NoWarn>
     </PropertyGroup>
-    
+
     <ItemGroup>
         <!-- Include all files and subfolders within the Assets folder -->
         <Content Include=".\Assets\**\*.*">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
-        
+
         <!--Include files nessisary for GagSpeak's Muffler Core-->
         <Content Include=".\MufflerCore\**\*.json">
             <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
         </Content>
     </ItemGroup>
-    
+
     <!--As Now that we use Dalamud.SDK, most Dalamud Sources are not needed, but some must stay.-->
     <ItemGroup>
         <!--For localization and language handling. (and PInvoke replacement)-->
         <Reference Include="TerraFX.Interop.Windows" Private="false" />
         <Reference Include="CheapLoc" Private="false" />
     </ItemGroup>
-    
+
     <ItemGroup>
         <!--Submodules-->
         <ProjectReference Include="..\Submodules\CkCommons\CkCommons.csproj" />
         <ProjectReference Include="..\Submodules\GagspeakAPI\ProjectGagspeakAPI.csproj" GlobalPropertiesToRemove="Platform" />
         <ProjectReference Include="..\Submodules\OtterGui\OtterGui.csproj" />
-        <ProjectReference Include="..\Submodules\Penumbra.Api\Penumbra.Api.csproj" />
-        <ProjectReference Include="..\Submodules\Penumbra.String\Penumbra.String.csproj" />
+        <ProjectReference Include="..\Submodules\Luna\Luna.Generators\Luna.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
+        <ProjectReference Include="..\Submodules\Luna\Luna\Luna.csproj"/>
+        <ProjectReference Include="..\Submodules\Penumbra.Api\Penumbra.Api.csproj"/>
+        <ProjectReference Include="..\Submodules\Penumbra.String\Penumbra.String.csproj"/>
         <ProjectReference Include="..\Submodules\Penumbra.GameData\Penumbra.GameData.csproj" />
         <ProjectReference Include="..\Submodules\GlamourerAPI\Glamourer.Api.csproj" />
         <ProjectReference Include="..\Submodules\LociAPI\Loci.Api.csproj" />
-        
+
         <!-- Required for Buttplug, but because Dalamud has its own Newtonsoft Assembly, thus, any
-        JObject types, despite being the same, are coming from different assemblies, so we must exclude 
+        JObject types, despite being the same, are coming from different assemblies, so we must exclude
         all assets to only reference the dalamud Newtonsoft.-->
         <PackageReference Include="Newtonsoft.Json" Version="13.0.3" ExcludeAssets="all" />
-        
+
         <!--For SignalR server connectivity, helpful for server connectivity processing-->
         <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.1" />
         <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="10.0.1" />
@@ -58,17 +60,17 @@
 
         <!--For JWT token handling, helpful for server connectivity processing-->
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.5.2" />
-        
+
         <!--Adds support for our simulated vibrator (potentially replace with better audio option for more sound quality.-->
         <PackageReference Include="NAudio" Version="2.2.1" />
-        
+
         <!--For handling debouncing inputs to send vibrations to connected devices, for stablizing overload (might not need this anymore we will see) -->
         <PackageReference Include="DebounceThrottle" Version="3.0.1" />
-        
+
         <!-- Toybox Lovense Compatibility. (According to docs possibly estim too) -->
         <PackageReference Include="Buttplug" Version="4.0.0" />
     </ItemGroup>
-    
+
     <!-- If i could use projectgagspeak.json i would, but sadly dalamud prevents this lol.-->
     <ItemGroup>
         <None Update="ProjectGagSpeak.json">
@@ -82,56 +84,3 @@
       <Folder Include="GameData\" />
     </ItemGroup>
 </Project>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

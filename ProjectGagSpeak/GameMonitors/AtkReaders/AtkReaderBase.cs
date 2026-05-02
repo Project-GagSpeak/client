@@ -2,7 +2,6 @@ using CkCommons;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Memory;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 
 namespace GagSpeak.Game.Readers;
 #nullable disable
@@ -49,7 +48,7 @@ public abstract unsafe class AtkReaderBase(AtkUnitBase* UnitBase, int BeginOffse
         {
             return null;
         }
-        if (value.Type != ValueType.UInt)
+        if (value.Type != AtkValueType.UInt)
             throw new InvalidCastException($"Value {num} from Addon {Generic.Read(UnitBase->Name)} was requested as uint but it was {value.Type}");
         return value.UInt;
     }
@@ -63,7 +62,7 @@ public abstract unsafe class AtkReaderBase(AtkUnitBase* UnitBase, int BeginOffse
         {
             return null;
         }
-        if (value.Type != ValueType.Int)
+        if (value.Type != AtkValueType.Int)
             throw new InvalidCastException($"Value {num} from Addon {Generic.Read(
             UnitBase->Name)} was requested as int but it was {value.Type}");
         return value.Int;
@@ -78,7 +77,7 @@ public abstract unsafe class AtkReaderBase(AtkUnitBase* UnitBase, int BeginOffse
         {
             return null;
         }
-        if (value.Type != ValueType.Bool)
+        if (value.Type != AtkValueType.Bool)
             throw new InvalidCastException($"Value {num} from Addon {Generic.Read(UnitBase->Name)} was requested as bool but it was {value.Type}");
         return value.Byte != 0;
     }
@@ -92,7 +91,7 @@ public abstract unsafe class AtkReaderBase(AtkUnitBase* UnitBase, int BeginOffse
         {
             return null;
         }
-        if (!value.Type.EqualsAny(ValueType.String, ValueType.String8, ValueType.WideString, ValueType.ManagedString))
+        if (!value.Type.EqualsAny(AtkValueType.String, AtkValueType.String8, AtkValueType.WideString, AtkValueType.ManagedString))
             throw new InvalidCastException($"Value {num} from Addon {Generic.Read(UnitBase->Name)} was requested as SeString but it was {value.Type}");
 
         return MemoryHelper.ReadSeStringNullTerminated((nint)value.String.Value);
@@ -107,7 +106,7 @@ public abstract unsafe class AtkReaderBase(AtkUnitBase* UnitBase, int BeginOffse
         {
             return null;
         }
-        if (!value.Type.EqualsAny(ValueType.String, ValueType.ManagedString, ValueType.String8, ValueType.WideString))
+        if (!value.Type.EqualsAny(AtkValueType.String, AtkValueType.ManagedString, AtkValueType.String8, AtkValueType.WideString))
             throw new InvalidCastException($"Value {num} from Addon {Generic.Read(UnitBase->Name)} was requested as String but it was {value.Type}");
         return MemoryHelper.ReadStringNullTerminated((nint)value.String.Value);
     }
