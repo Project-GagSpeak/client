@@ -9,6 +9,7 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
+using ImSharp;
 
 namespace GagSpeak.State.Listeners;
 
@@ -89,7 +90,7 @@ public sealed class ClientDataListener : IDisposable
         _data.SetGlobals(globals, hardcore);
         HandleGlobalPermChanges(enactor, prevGlobals, globals);
         // Resync Hardcore State Changes. (Skip UNKNOWN and HYPNO-EFFECT)
-        foreach (var attr in Enum.GetValues<HcAttribute>().Skip(1).SkipLast(1))
+        foreach (var attr in HcAttribute.Values.Skip(1).SkipLast(1))
             HandleHardcoreStatusChange(new(hardcore.Enactor(attr)), attr, prevHardcore.IsEnabled(attr), hardcore.IsEnabled(attr));
     }
 

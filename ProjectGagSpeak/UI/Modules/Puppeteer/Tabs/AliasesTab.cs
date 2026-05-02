@@ -23,6 +23,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
+using ImSharp;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Wardrobe;
@@ -308,7 +309,7 @@ public class AliasesTab : IFancyTab
         var comboW = 100f * ImGuiHelpers.GlobalScale;
         var rightW = CkGui.IconButtonSize(FAI.Plus).X + comboW;
         var activeTypes = alias.Actions.Select(x => x.ActionType);
-        var options = Enum.GetValues<InvokableActionType>().Except(activeTypes).ToList();
+        var options = InvokableActionType.Values.Except(activeTypes).ToList();
 
         ImGui.Separator();
 

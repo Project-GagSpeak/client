@@ -4,6 +4,7 @@ using Dalamud.Bindings.ImGui;
 using System.Runtime.CompilerServices;
 using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
+using ImSharp;
 
 // A Modified take on OtterGui.Widgets.Tutorial.
 // This iteration removes redundant buttons, adds detailed text, and sections.
@@ -89,21 +90,21 @@ public class TutorialService
     // Create a mapping between the tutorialTypes and the associated enum size.
     private static readonly Dictionary<TutorialType, int> TutorialSizes = new()
     {
-        { TutorialType.MainUi, Enum.GetValues<StepsMainUi>().Length },
-        { TutorialType.Remote, Enum.GetValues<StepsRemote>().Length },
-        { TutorialType.Restraints, Enum.GetValues<StepsRestraints>().Length },
-        { TutorialType.Restrictions, Enum.GetValues<StepsRestrictions>().Length },
-        { TutorialType.Gags, Enum.GetValues<StepsGags>().Length },
-        { TutorialType.Collar, Enum.GetValues<StepsGags>().Length },
-        { TutorialType.CursedLoot, Enum.GetValues<StepsCursedLoot>().Length },
-        { TutorialType.Puppeteer, Enum.GetValues<StepsPuppeteer>().Length },
-        { TutorialType.Toys, Enum.GetValues<StepsToys>().Length },
-        { TutorialType.VibeLobby, Enum.GetValues<StepsVibeLobby>().Length },
-        { TutorialType.Patterns, Enum.GetValues<StepsPatterns>().Length },
-        { TutorialType.Triggers, Enum.GetValues<StepsTriggers>().Length },
-        { TutorialType.Alarms, Enum.GetValues<StepsAlarms>().Length },
-        { TutorialType.Achievements, Enum.GetValues<StepsAchievements>().Length },
-        { TutorialType.ModPresets, Enum.GetValues<StepsModPresets>().Length },
+        { TutorialType.MainUi, StepsMainUi.Values.Count },
+        { TutorialType.Remote, StepsRemote.Values.Count },
+        { TutorialType.Restraints, StepsRestraints.Values.Count },
+        { TutorialType.Restrictions, StepsRestrictions.Values.Count },
+        { TutorialType.Gags, StepsGags.Values.Count },
+        { TutorialType.Collar, StepsGags.Values.Count },
+        { TutorialType.CursedLoot, StepsCursedLoot.Values.Count },
+        { TutorialType.Puppeteer, StepsPuppeteer.Values.Count },
+        { TutorialType.Toys, StepsToys.Values.Count },
+        { TutorialType.VibeLobby, StepsVibeLobby.Values.Count },
+        { TutorialType.Patterns, StepsPatterns.Values.Count },
+        { TutorialType.Triggers, StepsTriggers.Values.Count },
+        { TutorialType.Alarms, StepsAlarms.Values.Count },
+        { TutorialType.Achievements, StepsAchievements.Values.Count },
+        { TutorialType.ModPresets, StepsModPresets.Values.Count },
     };
 
     public void InitializeTutorialStrings()

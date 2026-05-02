@@ -4,6 +4,7 @@ using Dalamud.Interface.Utility.Raii;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using Dalamud.Bindings.ImGui;
+using ImSharp;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Components;
@@ -22,7 +23,7 @@ public class LayerFlagsWidget
 
     public readonly FAI Icon;
     public readonly string IdLabel;
-    
+
     public LayerFlagsWidget(FAI icon, string id, string preview)
     {
         _preview = preview;
@@ -47,7 +48,7 @@ public class LayerFlagsWidget
     /// <summary>
     ///     Draws a combo - button pair, that tracks what flags are enabled and which are removed. <para />
     ///     Changes are passed out as <c>added</c> and <c>removed</c> flags, which can be used to apply the changes.
-    /// </summary> 
+    /// </summary>
     /// <returns> True when the update button is pressed, false otherwise.</returns>
     public bool Draw(float width, RestraintLayer current, out RestraintLayer added, out RestraintLayer removed, IEnumerable<RestraintLayer> options,
         Func<RestraintLayer, string>? toName = null, CFlags flags = CFlags.None)
@@ -148,36 +149,35 @@ public class LayerFlagsWidget
     /// <summary>
     ///     Combo-Button pair, that tracks the <seealso cref="_added"/> flags, not currently enabled in <paramref name="current"/>.<para />
     ///     Changes are passed out as <paramref name="updates"/>, which can be used to apply the changes.
-    /// </summary> 
+    /// </summary>
     /// <returns> True when the update button is pressed, false otherwise.</returns>
-    public bool DrawApply(float width, RestraintLayer current, out RestraintLayer updates, 
+    public bool DrawApply(float width, RestraintLayer current, out RestraintLayer updates,
         IEnumerable<RestraintLayer> options, Func<RestraintLayer, string>? toName = null, CFlags flags = CFlags.None)
         => DrawInternal(FlagComboMode.EnableOnly, width, current, out updates, out _, options, toName, flags);
 
     /// <summary>
     ///     Combo-Button pair, that tracks the <seealso cref="_removed"/> flags, not currently enabled in <paramref name="current"/>.<para />
     ///     Changes are passed out as <paramref name="updates"/>, which can be used to apply the changes.
-    /// </summary> 
+    /// </summary>
     /// <returns> True when the update button is pressed, false otherwise.</returns>
-    public bool DrawRemove(float width, RestraintLayer current, out RestraintLayer updates, 
+    public bool DrawRemove(float width, RestraintLayer current, out RestraintLayer updates,
         IEnumerable<RestraintLayer> options, Func<RestraintLayer, string>? toName = null, CFlags flags = CFlags.None)
         => DrawInternal(FlagComboMode.DisableOnly, width, current, out _, out updates, options, toName, flags);
 
     /// <inheritdoc cref="DrawApply(float, RestraintLayer, out RestraintLayer, IEnumerable{RestraintLayer}, Func{RestraintLayer, string}?, ImGuiComboFlags)"/>
     public bool Draw(float width, RestraintLayer current, out RestraintLayer added, out RestraintLayer removed,
         Func<RestraintLayer, string>? toName = null, int skip = 0, int skipEnd = 0, CFlags flags = CFlags.None)
-        => Draw(width, current, out added, out removed, Enum.GetValues<RestraintLayer>().Skip(skip).SkipLast(skipEnd), toName, flags);
+        => Draw(width, current, out added, out removed, RestraintLayer.Values.Skip(skip).SkipLast(skipEnd), toName, flags);
 
     /// <inheritdoc cref="DrawApply(float, RestraintLayer, out RestraintLayer, IEnumerable{RestraintLayer}, Func{RestraintLayer, string}?, ImGuiComboFlags)"/>
     public bool DrawApply(float width, RestraintLayer current, out RestraintLayer added,
         Func<RestraintLayer, string>? toName = null, int skip = 0, int skipEnd = 0, CFlags flags = CFlags.None)
-        => DrawApply(width, current, out added, Enum.GetValues<RestraintLayer>().Skip(skip).SkipLast(skipEnd), toName, flags);
+        => DrawApply(width, current, out added, RestraintLayer.Values.Skip(skip).SkipLast(skipEnd), toName, flags);
 
     /// <inheritdoc cref="DrawRemove(float, RestraintLayer, out RestraintLayer, IEnumerable{RestraintLayer}, Func{RestraintLayer, string}?, ImGuiComboFlags)"/>
     public bool DrawRemove(float width, RestraintLayer current, out RestraintLayer removed,
         Func<RestraintLayer, string>? toName = null, int skip = 0, int skipEnd = 0, CFlags flags = CFlags.None)
-        => DrawRemove(width, current, out removed, Enum.GetValues<RestraintLayer>().Skip(skip).SkipLast(skipEnd), toName, flags);
+        => DrawRemove(width, current, out removed, RestraintLayer.Values.Skip(skip).SkipLast(skipEnd), toName, flags);
 
 
 }
-
