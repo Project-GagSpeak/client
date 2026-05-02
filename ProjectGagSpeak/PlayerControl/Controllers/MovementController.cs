@@ -169,7 +169,7 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         if (_freezePlayer && !_detours.ForceDisableMovementIsActive)
             _detours.EnableFullMovementLock();
 
-        var isWalking = IsWalking() || IsWalkingDuringAutorun();
+        var isWalking = IsWalking();
 
         // If we are following someone and too far away we should catch up to them.
         if (_timeoutTracker.IsRunning && PlayerData.DistanceTo(Svc.Targets.Target) > 8f)
@@ -197,14 +197,15 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
     private unsafe bool IsWalkingMarshal() => Marshal.ReadByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_NORMAL) == 0x1;
     private unsafe bool IsWalking() => Control.Instance()->IsWalking;
     private unsafe bool IsWalkingDuringAutorun() => Control.Instance()->IsWalkingDuringAutorun;
+
     private unsafe void ForceWalking()
     {
         // get the control instance
         var inst = Control.Instance();
 
-        // set the character's walk state to running.
-        inst->IsWalking = false;
-        inst->IsWalkingDuringAutorun = false;
+        // set the character's walk state to walking.
+        inst->IsWalking = true;
+        inst->IsWalkingDuringAutorun = true;
     }
     private unsafe void ForceRunning()
     {
