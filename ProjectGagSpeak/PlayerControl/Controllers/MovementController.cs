@@ -16,6 +16,7 @@ namespace GagSpeak.Services.Controller;
 
 public sealed class MovementController : DisposableMediatorSubscriberBase
 {
+    // Offset reference: FFXIVClientStructs.FFXIV.Client.Game.Control
     private const int CONTROL_WALKING_OFFSET_NORMAL = 0x7637; // Applies when not automoving
     private const int CONTROL_WALKING_OFFSET_AUTOMOVE = 0x7518; // Applies when automoving
 
@@ -192,20 +193,27 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         _lastPos = Vector3.Zero;
     }
 
-    // Direct marshal byte manipulation for walking state
-    // (because the control access wont read you the right values apparently?)
-    // private unsafe bool IsWalkingMarshal() => Marshal.ReadByte((nint)Control.Instance(), 30259) == 0x1;
-    private unsafe bool IsWalking() => Marshal.ReadByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_NORMAL) == 0x1; //Control.Instance()->IsWalking;
+    [Obsolete("This is retained for informational purposes, use IsWalking.")]
+    private unsafe bool IsWalkingMarshal() => Marshal.ReadByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_NORMAL) == 0x1;
+    private unsafe bool IsWalking() => Control.Instance()->IsWalking;
+    private unsafe bool IsWalkingDuringAutorun() => Control.Instance()->IsWalkingDuringAutorun;
+
     private unsafe void ForceWalking()
     {
-        Svc.Logger.Verbose($"{(nint)Control.Instance():X}");
-        // below is obsolete, cs has these values now.
-        Marshal.WriteByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_NORMAL, 0x1);
-        Marshal.WriteByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_AUTOMOVE, 0x1);
+        // get the control instance
+        var inst = Control.Instance();
+
+        // set the character's walk state to walking.
+        inst->IsWalking = true;
+        inst->IsWalkingDuringAutorun = true;
     }
     private unsafe void ForceRunning()
     {
-        Marshal.WriteByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_NORMAL, 0x0);
-        Marshal.WriteByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_AUTOMOVE, 0x0);
+        // get the control instance
+        var inst = Control.Instance();
+
+        // set the character's walk state to running.
+        inst->IsWalking = false;
+        inst->IsWalkingDuringAutorun = false;
     }
 }

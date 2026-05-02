@@ -80,7 +80,4 @@
         <EmbeddedResource Include="Localization\jp.json" />
         <EmbeddedResource Include="Localization\fr.json" />
     </ItemGroup>
-    <ItemGroup>
-      <Folder Include="GameData\" />
-    </ItemGroup>
 </Project>
