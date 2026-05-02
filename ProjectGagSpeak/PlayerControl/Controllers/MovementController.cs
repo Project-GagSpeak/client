@@ -16,6 +16,7 @@ namespace GagSpeak.Services.Controller;
 
 public sealed class MovementController : DisposableMediatorSubscriberBase
 {
+    // Offset reference: FFXIVClientStructs.FFXIV.Client.Game.Control
     private const int CONTROL_WALKING_OFFSET_NORMAL = 0x7637; // Applies when not automoving
     private const int CONTROL_WALKING_OFFSET_AUTOMOVE = 0x7518; // Applies when automoving
 
@@ -168,7 +169,7 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         if (_freezePlayer && !_detours.ForceDisableMovementIsActive)
             _detours.EnableFullMovementLock();
 
-        var isWalking = IsWalking();
+        var isWalking = IsWalking() || IsWalkingDuringAutorun();
 
         // If we are following someone and too far away we should catch up to them.
         if (_timeoutTracker.IsRunning && PlayerData.DistanceTo(Svc.Targets.Target) > 8f)
@@ -192,28 +193,26 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         _lastPos = Vector3.Zero;
     }
 
-    // Direct marshal byte manipulation for walking state
-    // (because the control access wont read you the right values apparently?)
-    // private unsafe bool IsWalkingMarshal() => Marshal.ReadByte((nint)Control.Instance(), 30259) == 0x1;
-    private unsafe bool IsWalking() => Marshal.ReadByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_NORMAL) == 0x1; //Control.Instance()->IsWalking;
+    [Obsolete("This is retained for informational purposes, use IsWalking.")]
+    private unsafe bool IsWalkingMarshal() => Marshal.ReadByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_NORMAL) == 0x1;
+    private unsafe bool IsWalking() => Control.Instance()->IsWalking;
+    private unsafe bool IsWalkingDuringAutorun() => Control.Instance()->IsWalkingDuringAutorun;
     private unsafe void ForceWalking()
     {
-        // Leaving this here as a reminder that CS now has these offsets and that we can use that going forward, once updated.
-        //var inst = Control.Instance();
-        //inst->IsWalking = true;
-        //inst->IsWalkingDuringAutorun = true;
+        // get the control instance
+        var inst = Control.Instance();
 
-        // below is obsolete, cs has these values now.
-        Marshal.WriteByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_NORMAL, 0x1);
-        Marshal.WriteByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_AUTOMOVE, 0x1);
+        // set the character's walk state to running.
+        inst->IsWalking = false;
+        inst->IsWalkingDuringAutorun = false;
     }
     private unsafe void ForceRunning()
     {
-        //var inst = Control.Instance();
-        //inst->IsWalking = false;
-        //inst->IsWalkingDuringAutorun = false;
+        // get the control instance
+        var inst = Control.Instance();
 
-        Marshal.WriteByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_NORMAL, 0x0);
-        Marshal.WriteByte((nint)Control.Instance(), CONTROL_WALKING_OFFSET_AUTOMOVE, 0x0);
+        // set the character's walk state to running.
+        inst->IsWalking = false;
+        inst->IsWalkingDuringAutorun = false;
     }
 }
