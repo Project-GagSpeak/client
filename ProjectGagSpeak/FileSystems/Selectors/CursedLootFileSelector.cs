@@ -65,7 +65,10 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
 
     private void PoolOptions(CursedLootFileSystem.Leaf leaf)
     {
-        if (ImGui.MenuItem($"{(leaf.Value.InPool ? "Remove item from" : "Add item to")} the Loot Pool"))
+        var leafText = $"{(leaf.Value.InPool ? "Remove item from" : "Add item to")} the Loot Pool";
+        if (leaf.Value.IsActive()) leafText = "Item is currently active";
+
+        if (ImGui.MenuItem(leafText, false, !leaf.Value.IsActive()))
         {
             _manager.TogglePoolState(leaf.Value);
             ImGui.CloseCurrentPopup();

@@ -146,8 +146,9 @@ public class CacheStateManager : IHostedService
         _logger.LogInformation("------ Gag Data synced to Cache ------ ");
 
         // Sync all server restriction data with the RestrictionManager.
-        var validCursedItems = _cursedItems.Storage.ActiveAppliedLoot.OfType<CursedRestrictionItem>().Where(i => i.RefItem != null).ToList();
-        _restrictions.LoadInternalData(connectionDto.RestrictionsData, validCursedItems);
+        // I decided to put things in a dictionary so I can check the actual cursed item for the apply traits later. Alternative would have been to modify the RestrictionManager instead
+        var validCursedItems = _cursedItems.Storage.ActiveAppliedLoot.OfType<CursedRestrictionItem>().Where(i => i.RefItem != null).Select(i => (i.Identifier, i)).ToDictionary();
+        _restrictions.LoadInternalData(connectionDto.RestrictionsData, [.. validCursedItems.Values]);
         _logger.LogInformation("------ Syncing Restriction Data to Cache ------");
         foreach (var (layer, item) in _restrictions.ActiveItems)
         {
@@ -216,7 +217,7 @@ public class CacheStateManager : IHostedService
 
         // maybe sync cursed items here, OR we can just do it in conjunction with the other restriction items, i dont freaking know anymore.
         _logger.LogInformation("------ Syncing Cursed Item Restrictions to Cache ------");
-        foreach (var item in _restrictions.LootItems.Values)
+        foreach (var (cursedId, item) in _restrictions.LootItems)
         {
             if (!_restrictions.IdToLayerMap.TryGetValue(item.Identifier, out int layer))
             {
@@ -233,7 +234,9 @@ public class CacheStateManager : IHostedService
                 _modHandler.TryAddModToCache(key, item.Mod);
             }
             _lociHandler.TryAddLociItemToCache(key, item.LociData);
-            _traitsHandler.TryAddTraitsToCache(key, item.Traits & ~(Traits.Immobile | Traits.Weighty));
+            // We have to check if the item we are about to apply traits for actually has the ApplyTraits flag set.
+            if (_config.Current.CursedItemsApplyTraits && validCursedItems[cursedId].ApplyTraits)
+                _traitsHandler.TryAddTraitsToCache(key, item.Traits & ~(Traits.Immobile | Traits.Weighty));
             _arousalHandler.TryAddArousalToCache(key, item.Arousal);
             // Conditional Additions.
             if (item is BlindfoldRestriction bfr) _overlayHandler.TryAddBlindfoldToCache(key, bfr.Properties);
