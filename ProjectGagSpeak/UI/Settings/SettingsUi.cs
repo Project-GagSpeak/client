@@ -216,17 +216,6 @@ public class SettingsUi : WindowMediatorSubscriberBase
             _expandedInfo = (_expandedInfo == plugin) ? OptionalPlugin.None : plugin;
     }
 
-    private void AssignGlobalPermChangeTask(string globalKey, object newValue)
-    {
-        UiService.SetUITask(async () =>
-        {
-            _logger.LogDebug($"Attempting to change global permission {globalKey} to {newValue}", LoggerType.UI);
-            var res = await _hub.ChangeOwnGlobalPerm(globalKey, newValue);
-            if (res.ErrorCode is not GagSpeakApiEc.Success)
-                _logger.LogError($"Failed to change global permission {globalKey} to {newValue}. Error: {res.ErrorCode}", LoggerType.UI);
-        });
-    }
-
     private void DrawGlobalSettings()
     {
         if (ClientData.Globals is not { } globals)
@@ -243,6 +232,9 @@ public class SettingsUi : WindowMediatorSubscriberBase
         DrawSpatialAudioSettings(globals);
     }
 
+    private void AssignGlobalPermChangeTask(GlobalPerms perms, string globalKey, object newValue)
+        => UiService.SetUITask(async () => await PermHelper.ChangeOwnGlobal(_hub, perms, globalKey, newValue));
+
     // Do this better at some point!
     private void DrawGagSettings(GlobalPerms globals)
     {
@@ -255,16 +247,16 @@ public class SettingsUi : WindowMediatorSubscriberBase
         using (ImRaii.Disabled(globals.ChatGarblerLocked))
         {
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.LiveChatGarbler, ref liveChatGarblerActive))
-                AssignGlobalPermChangeTask(nameof(GlobalPerms.ChatGarblerActive), liveChatGarblerActive);
+                AssignGlobalPermChangeTask(globals, nameof(GlobalPerms.ChatGarblerActive), liveChatGarblerActive);
             CkGui.HelpText(GSLoc.Settings.MainOptions.LiveChatGarblerTT);
 
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GaggedNameplates, ref gaggedNamePlates))
-                AssignGlobalPermChangeTask(nameof(GlobalPerms.GaggedNameplate), gaggedNamePlates);
+                AssignGlobalPermChangeTask(globals, nameof(GlobalPerms.GaggedNameplate), gaggedNamePlates);
             CkGui.HelpText(GSLoc.Settings.MainOptions.GaggedNameplatesTT);
         }
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GagGlamours, ref gagVisuals))
-            AssignGlobalPermChangeTask(nameof(GlobalPerms.GagVisuals), gagVisuals);
+            AssignGlobalPermChangeTask(globals, nameof(GlobalPerms.GagVisuals), gagVisuals);
         CkGui.HelpText(GSLoc.Settings.MainOptions.GagGlamoursTT);
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GagPadlockTimer, ref removeGagOnLockExpiration))
@@ -291,23 +283,13 @@ public class SettingsUi : WindowMediatorSubscriberBase
         {
             UiService.SetUITask(async () =>
             {
-                var res = await _hub.ChangeOwnGlobalPerm(nameof(GlobalPerms.WardrobeEnabled), wardrobeEnabled);
+                var success = await PermHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.WardrobeEnabled), wardrobeEnabled);
                 // Otherwise, process the remaining permissions we should forcibly change if the new state is now false.
-                if (!wardrobeEnabled)
+                if (success && !wardrobeEnabled)
                 {
                     // If wardrobe is disabled, we should also disable the visuals.
-                    var restrictionVisualsOff = await _hub.ChangeOwnGlobalPerm(nameof(GlobalPerms.RestrictionVisuals), false);
-                    if (restrictionVisualsOff.ErrorCode is not GagSpeakApiEc.Success)
-                    {
-                        _logger.LogError($"Failed to change [RestrictionVisuals] to false. Error: {restrictionVisualsOff.ErrorCode}", LoggerType.UI);
-                        return;
-                    }
-                    var restraintVisualsOff = await _hub.ChangeOwnGlobalPerm(nameof(GlobalPerms.RestraintSetVisuals), false);
-                    if (restraintVisualsOff.ErrorCode is not GagSpeakApiEc.Success)
-                    {
-                        _logger.LogError($"Failed to change [RestraintSetVisuals] to false. Error: {restraintVisualsOff.ErrorCode}", LoggerType.UI);
-                        return;
-                    }
+                    await PermHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.RestrictionVisuals), false);
+                    await PermHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.RestraintSetVisuals), false);
                 }
             });
         }
@@ -316,7 +298,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         using (ImRaii.Disabled(!wardrobeEnabled))
         {
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.RestrictionGlamours, ref restrictionVisuals))
-                AssignGlobalPermChangeTask(nameof(GlobalPerms.RestrictionVisuals), restrictionVisuals);
+                AssignGlobalPermChangeTask(globals, nameof(GlobalPerms.RestrictionVisuals), restrictionVisuals);
             CkGui.HelpText(GSLoc.Settings.MainOptions.RestrictionGlamoursTT);
             
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.RestrictionPadlockTimer, ref removeRestrictionOnLockExpiration))
@@ -327,7 +309,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
             CkGui.HelpText(GSLoc.Settings.MainOptions.RestrictionPadlockTimerTT);
 
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.RestraintSetGlamour, ref restraintSetVisuals))
-                AssignGlobalPermChangeTask(nameof(GlobalPerms.RestraintSetVisuals), restraintSetVisuals);
+                AssignGlobalPermChangeTask(globals, nameof(GlobalPerms.RestraintSetVisuals), restraintSetVisuals);
             CkGui.HelpText(GSLoc.Settings.MainOptions.RestraintSetGlamourTT);
             
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.RestraintPadlockTimer, ref removeRestraintOnLockExpiration))
@@ -363,7 +345,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         var globalPuppetPerms = globals.PuppetPerms;
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.PuppeteerActive, ref puppeteerEnabled))
-            AssignGlobalPermChangeTask(nameof(GlobalPerms.PuppeteerEnabled), puppeteerEnabled);
+            AssignGlobalPermChangeTask(globals, nameof(GlobalPerms.PuppeteerEnabled), puppeteerEnabled);
         CkGui.HelpText(GSLoc.Settings.MainOptions.PuppeteerActiveTT);
 
         using (ImRaii.Disabled(!puppeteerEnabled))
@@ -373,28 +355,28 @@ public class SettingsUi : WindowMediatorSubscriberBase
             ImGui.SetNextItemWidth(200 * ImGuiHelpers.GlobalScale);
             ImGui.InputTextWithHint(GSLoc.Settings.MainOptions.GlobalTriggerPhrase, "Global Triggers...", ref globalTriggerPhrase, 150);
             if (ImGui.IsItemDeactivatedAfterEdit())
-                AssignGlobalPermChangeTask(nameof(GlobalPerms.TriggerPhrase), globalTriggerPhrase);
+                AssignGlobalPermChangeTask(globals, nameof(GlobalPerms.TriggerPhrase), globalTriggerPhrase);
             CkGui.HelpText(GSLoc.Settings.MainOptions.GlobalTriggerPhraseTT);
 
             // Correct these!
             var refSits = (globalPuppetPerms & PuppetPerms.Sit) == PuppetPerms.Sit;
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalSit, ref refSits))
-                AssignGlobalPermChangeTask(nameof(GlobalPerms.PuppetPerms), globalPuppetPerms ^ PuppetPerms.Sit);
+                AssignGlobalPermChangeTask(globals, nameof(GlobalPerms.PuppetPerms), globalPuppetPerms ^ PuppetPerms.Sit);
             CkGui.HelpText(GSLoc.Settings.MainOptions.GlobalSitTT);
 
             var refEmotes = (globalPuppetPerms & PuppetPerms.Emotes) == PuppetPerms.Emotes;
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalMotion, ref refEmotes))
-                AssignGlobalPermChangeTask(nameof(GlobalPerms.PuppetPerms), globalPuppetPerms ^ PuppetPerms.Emotes);
+                AssignGlobalPermChangeTask(globals, nameof(GlobalPerms.PuppetPerms), globalPuppetPerms ^ PuppetPerms.Emotes);
             CkGui.HelpText(GSLoc.Settings.MainOptions.GlobalMotionTT);
 
             var refAlias = (globalPuppetPerms & PuppetPerms.Alias) == PuppetPerms.Alias;
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalAlias, ref refAlias))
-                AssignGlobalPermChangeTask(nameof(GlobalPerms.PuppetPerms), globalPuppetPerms ^ PuppetPerms.Alias);
+                AssignGlobalPermChangeTask(globals, nameof(GlobalPerms.PuppetPerms), globalPuppetPerms ^ PuppetPerms.Alias);
             CkGui.HelpText(GSLoc.Settings.MainOptions.GlobalAliasTT);
 
             var refAllPerms = (globalPuppetPerms & PuppetPerms.All) == PuppetPerms.All;
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GlobalAll, ref refAllPerms))
-                AssignGlobalPermChangeTask(nameof(GlobalPerms.PuppetPerms), globalPuppetPerms ^ PuppetPerms.All);
+                AssignGlobalPermChangeTask(globals, nameof(GlobalPerms.PuppetPerms), globalPuppetPerms ^ PuppetPerms.All);
             CkGui.HelpText(GSLoc.Settings.MainOptions.GlobalAllTT);
         }
     }
@@ -411,11 +393,11 @@ public class SettingsUi : WindowMediatorSubscriberBase
         var intifaceConnectionAddr = _mainConfig.Current.IntifaceConnectionSocket;
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.ToyboxActive, ref toyboxEnabled))
-            AssignGlobalPermChangeTask(nameof(GlobalPerms.ToyboxEnabled), toyboxEnabled);
+            AssignGlobalPermChangeTask(globals, nameof(GlobalPerms.ToyboxEnabled), toyboxEnabled);
         CkGui.HelpText(GSLoc.Settings.MainOptions.ToyboxActiveTT);
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.SpatialAudioActive, ref emitSpatialAudio))
-            AssignGlobalPermChangeTask(nameof(GlobalPerms.SpatialAudio), emitSpatialAudio);
+            AssignGlobalPermChangeTask(globals, nameof(GlobalPerms.SpatialAudio), emitSpatialAudio);
         CkGui.HelpText(GSLoc.Settings.MainOptions.SpatialAudioActiveTT);
 
         ImGui.SetNextItemWidth(200 * ImGuiHelpers.GlobalScale);
@@ -482,7 +464,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
             ImGui.SetNextItemWidth(250 * ImGuiHelpers.GlobalScale - CkGui.IconTextButtonSize(FAI.Sync, "Refresh") - ImGui.GetStyle().ItemInnerSpacing.X);
             if (ImGui.InputText("##Global PiShock Share Code", ref shareCode, 100, ImGuiInputTextFlags.EnterReturnsTrue))
-                AssignGlobalPermChangeTask(nameof(GlobalPerms.GlobalShockShareCode), shareCode);
+                AssignGlobalPermChangeTask(globals, nameof(GlobalPerms.GlobalShockShareCode), shareCode);
 
             ImUtf8.SameLineInner();
             if (CkGui.IconTextButton(FAI.Sync, "Refresh", disabled: UiService.DisableUI))
@@ -617,7 +599,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
                     if (ImGui.Checkbox(checkboxLabel, ref enabled))
                     {
                         var newBitfield = globals.AllowedGarblerChannels.SetChannelState((int)channel, enabled);
-                        AssignGlobalPermChangeTask(nameof(GlobalPerms.AllowedGarblerChannels), newBitfield);
+                        AssignGlobalPermChangeTask(globals, nameof(GlobalPerms.AllowedGarblerChannels), newBitfield);
                     }
 
                     // Only SameLine if not the third column

@@ -4,6 +4,8 @@ using Dalamud.Hooking;
 using Dalamud.Memory;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.System.String;
+using FFXIVClientStructs.FFXIV.Client.UI;
+using FFXIVClientStructs.FFXIV.Component.Shell;
 using GagSpeak.GameInternals.Agents;
 using GagSpeak.PlayerClient;
 using GagspeakAPI.Attributes;
@@ -17,7 +19,7 @@ public partial class StaticDetours
     ///     Intercepts messages after pressing enter and before they are sent off to the server.
     ///     Be very fucking careful with how you handle this as one slip-up makes you detectable.
     /// </summary>
-    private unsafe delegate byte ProcessChatInputDelegate(IntPtr uiModule, byte** message, IntPtr a3);
+    private unsafe delegate void ProcessChatInputDelegate(ShellCommandModule* uiModule, Utf8String* message, UIModule* a3);
     [Signature(Signatures.ProcessChatInput, DetourName = nameof(ProcessChatInputDetour), Fallibility = Fallibility.Auto)]
     private Hook<ProcessChatInputDelegate> ProcessChatInputHook { get; set; } = null!;
 
@@ -26,15 +28,18 @@ public partial class StaticDetours
     ///     Be very fucking careful with how you handle this as one slip-up makes you detectable.
     /// </summary>
     /// <remarks> Yes, you are wondering that is why I am not functionalizing any of this to not take risks. </remarks>
-    private unsafe byte ProcessChatInputDetour(IntPtr uiModule, byte** message, IntPtr a3)
+    private unsafe void ProcessChatInputDetour(ShellCommandModule* uiModule, Utf8String* message, UIModule* a3)
     {
         try
         {
             if (ClientData.Globals is not { } g || _gags.ServerGagData is not { } gagData)
-                return ProcessChatInputHook.Original(uiModule, message, a3);
+            {
+                ProcessChatInputHook.Original(uiModule, message, a3);
+                return;
+            }
 
             // Grab the original string.
-            var originalSeString = MemoryHelper.ReadSeStringNullTerminated((nint)(*message));
+            var originalSeString = message->AsDalamudSeString();
             var messageDecoded = originalSeString.ToString();
 
             // Debug the output (remove later)
@@ -44,11 +49,17 @@ public partial class StaticDetours
             Logger.LogTrace($"Message Payload Present", LoggerType.ChatDetours);
 
             if (string.IsNullOrWhiteSpace(messageDecoded))
-                return ProcessChatInputHook.Original(uiModule, message, a3);
+            {
+                ProcessChatInputHook.Original(uiModule, message, a3);
+                return;
+            }
 
             // If we are not meant to garble the message, then return original.
             if (!g.ChatGarblerActive || !gagData.AnyGagActive())
-                return ProcessChatInputHook.Original(uiModule, message, a3);
+            {
+                ProcessChatInputHook.Original(uiModule, message, a3);
+                return;
+            }
 
             /* -------------------------- MUFFLERCORE / GAGSPEAK CHAT GARBLER TRANSLATION LOGIC -------------------------- */
             // Firstly, make sure that we are setup to allow garbling in the current channel.
@@ -57,12 +68,15 @@ public partial class StaticDetours
             var muffleMessage = g.AllowedGarblerChannels.IsActiveChannel((int)ChatLogAgent.CurrentChannel());
 
             // It's possible to be in a channel (ex. Say) but send (/party Hello World), we must check this.
-            if (messageDecoded.StartsWith("/"))
+            if (messageDecoded.StartsWith('/'))
             {
                 // If its a command outside a chatChannel command, return original.
                 if (!ChatLogAgent.IsPrefixForGsChannel(messageDecoded, out prefix, out channel))
-                    return ProcessChatInputHook.Original(uiModule, message, a3);
-
+                {
+                    ProcessChatInputHook.Original(uiModule, message, a3);
+                    return;
+                }
+                
                 // Handle Tells, these are special, use advanced Regex to protect name mix-up
                 if (channel is InputChannel.Tell)
                 {
@@ -77,7 +91,8 @@ public partial class StaticDetours
                     if (!Regex.Match(messageDecoded, selfTellRegex).Value.IsNullOrEmpty())
                     {
                         Logger.LogTrace("[Chat Processor]: Ignoring Message as it is a self tell garbled message.");
-                        return ProcessChatInputHook.Original(uiModule, message, a3);
+                        ProcessChatInputHook.Original(uiModule, message, a3);
+                        return;
                     }
 
                     // Match any other outgoing tell to preserve target name including all valid placeholders that
@@ -86,8 +101,8 @@ public partial class StaticDetours
 
                     prefix = Regex.Match(messageDecoded, tellRegex).Value;
                 }
-                Logger.LogTrace($"Matched Command [{prefix}] for [{channel}]", LoggerType.ChatDetours);
 
+                Logger.LogTrace($"Matched Command [{prefix}] for [{channel}]", LoggerType.ChatDetours);
                 // Finally if we reached this point, update `muffleAllowedForChannel` to reflect the intended channel.
                 muffleMessage = g.AllowedGarblerChannels.IsActiveChannel((int)channel);
             }
@@ -109,7 +124,10 @@ public partial class StaticDetours
                     : prefix + " " + _muffler.GarbleMessage(stringToProcess);
 
                 if (string.IsNullOrWhiteSpace(output))
-                    return 0; // Do not sent message.
+                {
+                    // Don't send message.
+                    return;
+                }
 
                 Logger.LogTrace("Output: " + output, LoggerType.ChatDetours);
                 var newSeString = new SeStringBuilder().Add(new TextPayload(output)).Build();
@@ -117,24 +135,22 @@ public partial class StaticDetours
                 // Verify its a legal width
                 if (newSeString.TextValue.Length <= 500)
                 {
-                    var utf8String = Utf8String.FromString(".");
-                    utf8String->SetString(newSeString.Encode());
-                    return ProcessChatInputHook.Original(uiModule, (byte**)((nint)utf8String).ToPointer(), a3);
+                    // Set the message string.
+                    message->SetString(newSeString.Encode());
+                    ProcessChatInputHook.Original(uiModule, message, a3);
                 }
                 else
                 {
                     Logger.LogError("Chat Garbler Variant of Message was longer than max message length!");
-                    return ProcessChatInputHook.Original(uiModule, message, a3);
+                    ProcessChatInputHook.Original(uiModule, message, a3);
                 }
             }
         }
         catch (Bagagwa e)
         {
             Logger.LogError($"Error sending message to chat box (secondary): {e}");
+            ProcessChatInputHook.Original(uiModule, message, a3);
         }
-
-        // return the original message untranslated
-        return ProcessChatInputHook.Original(uiModule, message, a3);
     }
 }
 

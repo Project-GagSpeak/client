@@ -13,23 +13,25 @@ namespace GagSpeak.Interop;
 
 public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcCaller
 {
-    // API Version
+    // value is Cordy's handle WUV = 01010111 01010101 01010110 = 5723478 (hey, don't cringe! I thought it was cute <3) 
+    private const uint GAGSPEAK_LOCK = 0x05723478;
+
+    
     private readonly ApiVersion ApiVersion;
-    // API EVENTS
+    
     public EventSubscriber<nint, StateChangeType> OnStateChanged;   // Informs us when ANY Glamour Change has occurred.
     public EventSubscriber<nint, StateFinalizationType> OnStateFinalized; // Informs us when any Glamourer operation has FINISHED.
-    // API GETTERS
+    
     private readonly GetState GetState;  // Get the JSONObject of the client's current state.
-    // API ENACTORS
-    private readonly ApplyState ApplyState;           // Applies a JSONObject of an actors state to a player.
-    private readonly SetItem SetItem;              // Useful for enforcing bondage.
-    private readonly SetMetaState SetMetaState;         // Useful for enforcing bondage.
+    
+    private readonly ApplyState     ApplyState;           // Applies a JSONObject of an actors state to a player.
+    private readonly SetItem        SetItem;              // Useful for enforcing bondage.
+    private readonly SetMetaState   SetMetaState;         // Useful for enforcing bondage.
 
     private readonly ILogger<IpcCallerGlamourer> _logger;
     private readonly GagspeakMediator _mediator;
-    // value is Cordy's handle WUV = 01010111 01010101 01010110 = 5723478 (hey, don't cringe! I thought it was cute <3) 
-    private const uint GAGSPEAK_LOCK = 0x05723478;
-    private bool _shownGlamourerUnavailable = false;
+
+    private bool _shownUnavailableMsg = false;
 
     public IpcCallerGlamourer(ILogger<IpcCallerGlamourer> logger, GagspeakMediator mediator) : base(logger, mediator)
     {
@@ -50,40 +52,44 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
     public static bool APIAvailable { get; private set; } = false;
     public void CheckAPI()
     {
-        var apiAvailable = false; // assume false at first
-        Generic.Safe(() =>
+        var prevAvail = APIAvailable;
+        try
         {
-            if (ApiVersion.Invoke() is { Major: 1, Minor: >= 3 })
-                apiAvailable = true;
-            _shownGlamourerUnavailable = _shownGlamourerUnavailable && !apiAvailable;
-        }, true);
-        // update available state.
-        APIAvailable = apiAvailable;
-        if (!apiAvailable && !_shownGlamourerUnavailable)
+            APIAvailable = ApiVersion.Invoke() is { Major: 1, Minor: >= 3 };
+        }
+        catch
         {
-            _shownGlamourerUnavailable = true;
-            _mediator.Publish(new NotificationMessage("Glamourer inactive", "Features Using Glamourer will not function.", NotificationType.Error));
+            APIAvailable = false;
+        }
+        finally
+        {
+            if (!prevAvail && APIAvailable)
+            {
+                _logger.LogInformation("Glamourer is now Ready!", LoggerType.IpcGlamourer);
+                _mediator.Publish(new GlamourerReady());
+            }
+            // Only show if logged in and this fails.
+            if (!_shownUnavailableMsg && !APIAvailable && PlayerData.Available)
+            {
+                _shownUnavailableMsg = true;
+                _mediator.Publish(new NotificationMessage("Glamourer inactive", "Features Using Glamourer will not function.", NotificationType.Error));
+            }
         }
     }
 
-    private void OnGlamourerReady()
-    {
-        _logger.LogInformation("Glamourer is now Ready!", LoggerType.IpcGlamourer);
-        _mediator.Publish(new GlamourerReady());
-    }
-
     /// <summary>
-    ///     Obtains the JObject of the client's current Actor State
+    ///   Obtains the JObject of the client's current Actor State
     /// </summary>
     public JObject? GetActorState()
-        => GetState.Invoke(0).Item2;
+        => APIAvailable ? GetState.Invoke(0).Item2 : null;
 
     /// <summary>
-    ///     Enforces the Clients EquipSlot data to reflect their bondage state.
+    ///   Enforces the Clients EquipSlot data to reflect their bondage state.
     /// </summary>
     public async Task SetClientItemSlot(ApiEquipSlot slot, ulong item, IReadOnlyList<byte> dye, uint variant)
     {
-        if (!APIAvailable || PlayerData.IsZoning) return;
+        if (!APIAvailable || PlayerData.IsZoning)
+            return;
         try
         {
             await Svc.Framework.RunOnFrameworkThread(() => SetItem.Invoke(0, slot, item, dye, GAGSPEAK_LOCK)).ConfigureAwait(false);
@@ -99,11 +105,17 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
     /// </summary>
     public async Task SetMetaStates(MetaFlag metaTypes, bool newValue)
     {
-        if (!APIAvailable || PlayerData.IsZoning) return;
-        await Generic.Safe(async () =>
+        if (!APIAvailable || PlayerData.IsZoning)
+            return;
+
+        try
         {
             await Svc.Framework.RunOnFrameworkThread(() => SetMetaState.Invoke(0, metaTypes, newValue, GAGSPEAK_LOCK)).ConfigureAwait(false);
-        });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, $"Failed to set Glamourer MetaState {metaTypes} to {newValue}!", LoggerType.IpcGlamourer);
+        }
     }
 
     /// <summary>
@@ -112,9 +124,10 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
     public async Task SetClientCustomize(JToken customizations, JToken parameters)
     {
         // if the glamourerApi is not active, then return an empty string for the customization
-        if (!APIAvailable || PlayerData.IsZoning) return;
+        if (!APIAvailable || PlayerData.IsZoning)
+            return;
 
-        await Generic.Safe(async () =>
+        try
         {
             await Svc.Framework.RunOnFrameworkThread(() =>
             {
@@ -123,7 +136,11 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
                 playerState!["Parameters"] = parameters;
                 ApplyState.Invoke(playerState!, 0, flags: ApplyFlag.Customization);
             }).ConfigureAwait(false);
-        });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Failed to set Glamourer Customization: {ex}", LoggerType.IpcGlamourer);
+        }
     }
 
     #region Glamour Enforcement Helpers

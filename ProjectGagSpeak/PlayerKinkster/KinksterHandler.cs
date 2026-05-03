@@ -116,7 +116,8 @@ public sealed class KinksterHandler : DisposableMediatorSubscriberBase
         Logger.LogDebug($"Marking {Kinkster.GetNickAliasOrUid()} as unrendered @ [{address:X}]", LoggerType.PairHandlers);
         _player = null;
         // Unregister after leaving visibility range.
-        _ipc.Loci.UnregisterPlayer(NameWithWorld);
+        if (!string.IsNullOrEmpty(NameWithWorld))
+            _ipc.Loci.UnregisterPlayer(NameWithWorld);
         _lociRegistered = false;
         // Notify services.
         Mediator.Publish(new KinksterUnrendered(address));
@@ -134,7 +135,9 @@ public sealed class KinksterHandler : DisposableMediatorSubscriberBase
         }
 
         // This can be called off the thread.
-        _ipc.Loci.UnregisterPlayer(NameWithWorld);
+        if (!string.IsNullOrEmpty(NameWithWorld))
+            _ipc.Loci.UnregisterPlayer(NameWithWorld);
+        _lociRegistered = false;
 
         // Clear internal data.
         NameString = string.Empty;
