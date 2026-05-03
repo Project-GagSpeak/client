@@ -1,12 +1,15 @@
 using CkCommons.Gui;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
-using Dalamud.Bindings.ImGui;
+using OtterGui;
+using OtterGui.Text;
 
 namespace GagSpeak.CustomCombos.Pairs;
 
@@ -25,14 +28,37 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<KinksterRestricti
         Current = default;
     }
 
-    protected override bool DisableCondition()
-        => Current is null || !_ref.PairPerms.ApplyRestraintSets || _ref.ActiveRestraint.Identifier == Current.Id;
-
     protected override string ToString(KinksterRestriction obj)
         => obj.Label.IsNullOrWhitespace() ? $"UNK ITEM NAME" : obj.Label;
 
     public bool DrawComboButton(string label, float width, int layer, string buttonTT)
         => DrawComboButton(label, width, layer, "Apply", buttonTT);
+
+    public override bool DrawComboButton(string label, float width, int layerIdx, string bText, string tt, Action? onButtonSuccess = null)
+    {
+        // we need to first extract the width of the button.
+        var comboWidth = width - ImGuiHelpers.GetButtonSize(bText).X - ImGui.GetStyle().ItemInnerSpacing.X;
+        InnerWidth = width;
+
+        // if we have a new item selected we need to update some conditionals.
+
+        var previewLabel = Current is not null ? ToString(Current) : "Select an Item...";
+        var ret = Draw(label, previewLabel, string.Empty, comboWidth, ImGui.GetTextLineHeightWithSpacing(), CFlags.None);
+        // move just beside it to draw the button.
+        ImUtf8.SameLineInner();
+
+        // disable the button if we should.
+        var disable = Current is null
+            || !_ref.PairGlobals.RestrictionVisuals
+            || !_ref.PairPerms.ApplyRestrictions
+            || _ref.ActiveRestrictions.Restrictions[layerIdx].Identifier == Current.Id;
+        if (ImGuiUtil.DrawDisabledButton(bText, new Vector2(), string.Empty, disable))
+            OnButtonPress(layerIdx);
+        CkGui.AttachTooltip(tt);
+
+        return ret;
+    }
+
 
     protected override bool DrawSelectable(int globalIdx, bool selected)
     {

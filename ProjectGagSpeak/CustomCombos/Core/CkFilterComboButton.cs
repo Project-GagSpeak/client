@@ -17,7 +17,7 @@ public abstract class CkFilterComboButton<T> : CkFilterComboCache<T>
     { }
 
     /// <summary> The condition that when met, prevents the combo from being interacted. </summary>
-    protected abstract bool DisableCondition();
+    protected virtual bool DisableCondition() => false;
 
     /// <summary> What will occur when the button is pressed. </summary>
     protected virtual void OnButtonPress(int layerIdx) 

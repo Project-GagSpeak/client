@@ -154,16 +154,10 @@ public class CacheStateManager : IHostedService
             var serverItem = _restrictions.ServerRestrictionData!.Restrictions[layer];
             _logger.LogDebug($"Adding Restriction [{item.Label}] at layer {layer}, which was enabled by {serverItem.Enabler}.");
             var key = new CombinedCacheKey(ManagerPriority.Restrictions, layer, serverItem.Enabler, item.Label);
-            var metaStruct = item switch
-            {
-                BlindfoldRestriction c => new MetaDataStruct(c.HeadgearState, c.VisorState),
-                HypnoticRestriction h => new MetaDataStruct(h.HeadgearState, h.VisorState),
-                _ => MetaDataStruct.Empty
-            };
             if (item.IsEnabled)
             {
                 _glamourHandler.TryAddGlamourToCache(key, item.Glamour);
-                _glamourHandler.TryAddMetaToCache(key, metaStruct);
+                _glamourHandler.TryAddMetaToCache(key, new(item.HeadgearState, item.VisorState));
                 _modHandler.TryAddModToCache(key, item.Mod);
             }
             _lociHandler.TryAddLociItemToCache(key, item.LociData);
@@ -232,15 +226,12 @@ public class CacheStateManager : IHostedService
 
             _logger.LogDebug($"Adding CursedItem [{item.Label}] at layer {layer}.");
             var key = new CombinedCacheKey(ManagerPriority.CursedLoot, layer, "Mimic", $"Cursed {item.Label}");
-            var metaStruct = item switch
+            if (item.IsEnabled)
             {
-                BlindfoldRestriction c => new MetaDataStruct(c.HeadgearState, c.VisorState),
-                HypnoticRestriction h => new MetaDataStruct(h.HeadgearState, h.VisorState),
-                _ => MetaDataStruct.Empty
-            };
-            _glamourHandler.TryAddGlamourToCache(key, item.Glamour);
-            _glamourHandler.TryAddMetaToCache(key, metaStruct);
-            _modHandler.TryAddModToCache(key, item.Mod);
+                _glamourHandler.TryAddGlamourToCache(key, item.Glamour);
+                _glamourHandler.TryAddMetaToCache(key, new(item.HeadgearState, item.VisorState));
+                _modHandler.TryAddModToCache(key, item.Mod);
+            }
             _lociHandler.TryAddLociItemToCache(key, item.LociData);
             _traitsHandler.TryAddTraitsToCache(key, item.Traits & ~(Traits.Immobile | Traits.Weighty));
             _arousalHandler.TryAddArousalToCache(key, item.Arousal);
@@ -350,12 +341,6 @@ public class CacheStateManager : IHostedService
     {
         _logger.LogDebug($"Adding Restriction ({item.Label}) at layer {layerIdx}, enabled by ({enabler}).");
         var key = new CombinedCacheKey(ManagerPriority.Restrictions, layerIdx, enabler, item.Label);
-        var metaStruct = item switch
-        {
-            BlindfoldRestriction c => new MetaDataStruct(c.HeadgearState, c.VisorState),
-            HypnoticRestriction h => new MetaDataStruct(h.HeadgearState, h.VisorState),
-            _ => MetaDataStruct.Empty
-        };
         var tasks = new List<Task>
         {
             AddLociItem(key, item.LociData),
@@ -365,7 +350,7 @@ public class CacheStateManager : IHostedService
         // Conditional additions
         if (item.IsEnabled)
         {
-            tasks.Add(AddGlamourMeta(key, item.Glamour, metaStruct));
+            tasks.Add(AddGlamourMeta(key, item.Glamour, new(item.HeadgearState, item.VisorState)));
             tasks.Add(AddModPreset(key, item.Mod));
         }
         if (item is BlindfoldRestriction bfr) tasks.Add(AddBlindfold(key, bfr.Properties));
