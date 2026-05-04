@@ -1,7 +1,7 @@
+using System.Text.RegularExpressions;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Hooking;
-using Dalamud.Memory;
 using Dalamud.Utility.Signatures;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI;
@@ -10,9 +10,9 @@ using GagSpeak.GameInternals.Agents;
 using GagSpeak.PlayerClient;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
-using System.Text.RegularExpressions;
 
 namespace GagSpeak.GameInternals.Detours;
+
 public partial class StaticDetours
 {
     /// <summary>
@@ -76,7 +76,7 @@ public partial class StaticDetours
                     ProcessChatInputHook.Original(uiModule, message, a3);
                     return;
                 }
-                
+
                 // Handle Tells, these are special, use advanced Regex to protect name mix-up
                 if (channel is InputChannel.Tell)
                 {
@@ -144,6 +144,11 @@ public partial class StaticDetours
                     Logger.LogError("Chat Garbler Variant of Message was longer than max message length!");
                     ProcessChatInputHook.Original(uiModule, message, a3);
                 }
+            }
+            else
+            {
+                Logger.LogTrace($"Not Garbling Message: {messageDecoded}", LoggerType.ChatDetours);
+                ProcessChatInputHook.Original(uiModule, message, a3);
             }
         }
         catch (Bagagwa e)
