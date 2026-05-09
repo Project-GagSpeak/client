@@ -111,7 +111,7 @@ public class ChatService : DisposableMediatorSubscriberBase
     /// </summary>
     private void CheckForDeathroll(XivChatType type, SeString msg)
     {
-        if (type is (XivChatType)2122 || type is (XivChatType)8266 || type is (XivChatType)4170)
+        if (type is (XivChatType)2122 || type is (XivChatType)8266 || type is (XivChatType)4170 || type is XivChatType.RandomNumber)
         {
             if (msg.Payloads.OfType<PlayerPayload>().FirstOrDefault() is { } otherPlayer)
                 Mediator.Publish(new DeathrollMessage(type, $"{otherPlayer.PlayerName}@{otherPlayer.World.Value.Name.ToString()}", msg));
