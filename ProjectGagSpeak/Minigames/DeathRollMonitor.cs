@@ -16,7 +16,7 @@ public sealed class DeathRollMonitor : DisposableMediatorSubscriberBase
     public DeathRollMonitor(ILogger<DeathRollMonitor> logger, GagspeakMediator mediator)
         : base(logger, mediator)
     {
-        Mediator.Subscribe<DeathrollMessage>(this, _ => OnDeathrollMessage(_.Type, _.SenderNameWorld, _.Msg));
+        Mediator.Subscribe<DeathrollMessage>(this, _ => OnDeathrollMessage(_.SenderNameWorld, _.Roll, _.RollCap));
     }
 
     // add a helper function to retrieve the roll cap of the last active session our player is in.
@@ -31,12 +31,10 @@ public sealed class DeathRollMonitor : DisposableMediatorSubscriberBase
         return matchedSession?.CurrentRollCap ?? null;
     }
 
-    private void OnDeathrollMessage(XivChatType type, string nameWithWorld, SeString message)
+    private void OnDeathrollMessage(string nameWithWorld, int rollValue, int rollCap)
     {
-        if (!PlayerData.Available || !message.Payloads.Exists(p => p.Type == PayloadType.Icon))
+        if (!PlayerData.Available)
             return;
-
-        var (rollValue, rollCap) = ParseMessage(message.TextValue);
 
         // if the roll value and cap are 0, its an invalid, so return.
         if (rollValue is -1 && rollCap is -1)
@@ -47,10 +45,10 @@ public sealed class DeathRollMonitor : DisposableMediatorSubscriberBase
 
         Logger.LogDebug($"{nameWithWorld} rolled {rollValue} with cap {rollCap}", LoggerType.Triggers);
 
-        if (rollValue is -1)
+        if (rollCap is -1)
         {
             Logger.LogDebug($"A Player has started a different deathroll session!", LoggerType.Triggers);
-            StartNewSession(nameWithWorld, rollCap);
+            StartNewSession(nameWithWorld, rollValue);
         }
         else
         {
@@ -67,7 +65,7 @@ public sealed class DeathRollMonitor : DisposableMediatorSubscriberBase
         // Create and add new session
         var session = new DeathRollSession(initializer, initialRollCap, OnSessionComplete);
         _monitored[initializer] = session;
-        Logger.LogDebug($"New session started by {initializer} with cap {initialRollCap}");
+        Logger.LogDebug($"New session started by {initializer} with cap {initialRollCap}", LoggerType.Triggers);
     }
 
     private void ContinueSession(string playerName, int rollValue, int rollCap)
@@ -133,30 +131,5 @@ public sealed class DeathRollMonitor : DisposableMediatorSubscriberBase
             Mediator.Publish(new DeathrollResult(winner, loser));
         // Remove the match
         _monitored.Remove(session.Initializer);
-    }
-
-    /// <summary>
-    /// Parses the message string for the rolled value and cap value in a DeathRoll.
-    /// Roll Value is the lower of two numbers found; Roll Cap is the higher.
-    /// If only one number is found, it is assumed to be the Roll Cap.
-    /// </summary>
-    /// <returns>A tuple containing the Roll Value (-1 if not found) and Roll Cap (-1 if not found).</returns>
-    private (int rollValue, int rollCap) ParseMessage(string message)
-    {
-        var regex = new Regex(@"\b(\d+)\b");
-        var matches = regex.Matches(message);
-
-        if (matches.Count == 0)
-            return (-1, -1);
-
-        var firstNumber = int.Parse(matches[0].Groups[1].Value);
-        var secondNumber = matches.Count > 1 ? int.Parse(matches[1].Groups[1].Value) : -1;
-
-        // If only one number is found, treat it as the roll cap
-        if (secondNumber is -1)
-            return (-1, firstNumber);
-
-        // Otherwise, return the minimum as rollValue and maximum as rollCap
-        return (Math.Min(firstNumber, secondNumber), Math.Max(firstNumber, secondNumber));
     }
 }

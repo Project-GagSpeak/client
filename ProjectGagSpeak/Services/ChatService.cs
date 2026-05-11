@@ -30,6 +30,7 @@ public class ChatService : DisposableMediatorSubscriberBase
     {
         _delayTimer.Start();
         Svc.Chat.ChatMessage += OnChatboxMessage;
+        Svc.Chat.LogMessage += OnLogMessage;
         Mediator.Subscribe<FrameworkUpdateMessage>(this, (_) => FrameworkUpdate());
     }
 
@@ -37,6 +38,7 @@ public class ChatService : DisposableMediatorSubscriberBase
     {
         base.Dispose(disposing);
         Logger.LogInformation("Disposing ChatService and unsubscribing from events.");
+        Svc.Chat.LogMessage -= OnLogMessage;
         Svc.Chat.ChatMessage -= OnChatboxMessage;
         _delayTimer?.Stop();
     }
@@ -61,6 +63,15 @@ public class ChatService : DisposableMediatorSubscriberBase
         SendMessage(message);
         _delayTimer.Restart();
     }
+    
+    private void OnLogMessage(ILogMessage message)
+    {
+        if (!MainHub.IsConnected || !PlayerData.Available)
+            return; // Process as normal.
+        
+        // Check for things that are pushed to LogMessages.
+        CheckForDeathroll(message);
+    }
 
     /// <summary>
     ///     Handles incoming chat messages that have finished being processed by the server.
@@ -81,7 +92,6 @@ public class ChatService : DisposableMediatorSubscriberBase
 
         // Check for things we dont need the player payload for.
         CheckForPvpActivity(type, msg);
-        CheckForDeathroll(type, msg);
 
         // If the chat is not a normal chat channel do not process.
         if(ChatLogAgent.FromXivChatType(type) is not { } channel)
@@ -107,17 +117,35 @@ public class ChatService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Handle Deathroll Checks (/random or /dice)
+    ///     Handle Deathroll Checks (/random)
+    ///     MessageId 856 -> /random
+    ///     MessageId 3887 -> /random 1000
     /// </summary>
-    private void CheckForDeathroll(XivChatType type, SeString msg)
+    private void CheckForDeathroll(ILogMessage message)
     {
-        if (type is (XivChatType)2122 || type is (XivChatType)8266 || type is (XivChatType)4170 || type is XivChatType.RandomNumber)
-        {
-            if (msg.Payloads.OfType<PlayerPayload>().FirstOrDefault() is { } otherPlayer)
-                Mediator.Publish(new DeathrollMessage(type, $"{otherPlayer.PlayerName}@{otherPlayer.World.Value.Name.ToString()}", msg));
-            else
-                Mediator.Publish(new DeathrollMessage(type, PlayerData.NameWithWorld, msg));
-        }
+        Logger.LogDebug("Checking for Deathroll Message.", LoggerType.Triggers);
+        Logger.LogDebug($"Message LogId: {message.LogMessageId}, Source: {message.SourceEntity?.Name}, Parameters: {message.ParameterCount}", LoggerType.Triggers);
+        // Only care about /random messages
+        if (message.LogMessageId is not (856 or 3887))
+            return;
+        
+        Logger.LogDebug("Handling Deathroll Message.", LoggerType.Triggers);
+        var world = message.SourceEntity?.HomeWorld.ValueNullable?.Name.ToString();
+        var sender = message.Parameters[0].StringValue;
+        var nameWithWorld = $"{sender}@{world}";
+        var rolled = message.Parameters[1].UIntValue;
+        Logger.LogDebug($"Received Deathroll Message from {nameWithWorld}", LoggerType.Triggers);
+        
+        // Check for a number cap. If not present, default to 999.
+        var cap = message.ParameterCount > 2 ? message.Parameters[2].UIntValue : 0;
+        
+        Logger.LogDebug($"Rolled {rolled} with cap {cap}", LoggerType.Triggers);
+        // Clamp and validate values.
+        var rollResult = rolled > 1000 ? -1 : (int)Math.Min(rolled, 1000u);
+        var capResult = cap is 0 or > 1000 ? -1 : (int)Math.Min(cap, 1000u);
+        
+        Logger.LogDebug($"Validated Deathroll: Roll {rollResult}, Cap {capResult}", LoggerType.Triggers);
+        Mediator.Publish(new DeathrollMessage(nameWithWorld, rollResult, capResult));
     }
 
     /// <summary>
@@ -178,7 +206,7 @@ public class ChatService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     The filters to apply when sanatizing a chat message we are sending off.
+    ///     The filters to apply when sanitizing a chat message we are sending off.
     /// </summary>
     private const AllowedEntities SanatizeFilters =
         AllowedEntities.UppercaseLetters |
