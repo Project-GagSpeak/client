@@ -141,8 +141,8 @@ public class ChatService : DisposableMediatorSubscriberBase
         
         Logger.LogDebug($"Rolled {rolled} with cap {cap}", LoggerType.Triggers);
         // Clamp and validate values.
-        var rollResult = rolled > 1000 ? -1 : (int)Math.Min(rolled, 1000u);
-        var capResult = cap is 0 or > 1000 ? -1 : (int)Math.Min(cap, 1000u);
+        var rollResult = rolled > 999 ? -1 : (int)rolled;
+        var capResult = cap is 0 or > 999 ? -1 : (int)cap;
         
         Logger.LogDebug($"Validated Deathroll: Roll {rollResult}, Cap {capResult}", LoggerType.Triggers);
         Mediator.Publish(new DeathrollMessage(nameWithWorld, rollResult, capResult));
