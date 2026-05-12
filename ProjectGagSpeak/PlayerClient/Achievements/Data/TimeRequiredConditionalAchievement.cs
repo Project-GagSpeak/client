@@ -87,12 +87,11 @@ public class TimeRequiredConditionalAchievement : AchievementBase
         if (IsCompleted || !MainHub.IsConnected)
             return;
 
-        if (RequiredCondition())
+        if (TaskStarted && ((DateTime.UtcNow - StartPoint) + TimeSpan.FromSeconds(10)) >= MilestoneDuration)
         {
-            if (TaskStarted && ((DateTime.UtcNow - StartPoint) + TimeSpan.FromSeconds(10)) >= MilestoneDuration)
-                CompleteTask();
+            CompleteTask();
         }
-        else
+        else if (!RequiredCondition())
         {
             GagspeakEventManager.UnlocksLogger.LogTrace($"Condition for {Title} not met. Resetting the timer.", LoggerType.AchievementInfo);
             ResetTask();
@@ -143,8 +142,8 @@ public class TimeRequiredConditionalAchievement : AchievementBase
             try
             {
                 await Task.Delay(MilestoneDuration, token);
-                if (!token.IsCancellationRequested && RequiredCondition())
-                    CompleteTask(); // reset if we take longer than the requirement.
+                if (!token.IsCancellationRequested)
+                    CompleteTask();
             }
             catch (TaskCanceledException)
             {
