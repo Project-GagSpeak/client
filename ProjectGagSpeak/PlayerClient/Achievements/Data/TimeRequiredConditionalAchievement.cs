@@ -142,8 +142,8 @@ public class TimeRequiredConditionalAchievement : AchievementBase
             try
             {
                 await Task.Delay(MilestoneDuration, token);
-                if (!token.IsCancellationRequested)
-                    CompleteTask();
+                if (!token.IsCancellationRequested && RequiredCondition())
+                    CompleteTask(); // reset if we take longer than the requirement.
             }
             catch (TaskCanceledException)
             {
