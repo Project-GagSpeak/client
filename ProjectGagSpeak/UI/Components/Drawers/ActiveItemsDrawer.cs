@@ -437,7 +437,7 @@ public class ActiveItemsDrawer
         ImUtf8.SameLineInner();
         //ImGui.SameLine(0,0);
         using var s = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, CkStyle.ChildRoundingLarge());
-        using var _ = ImRaii.Disabled(data.PadlockAssigner != MainHub.UID);
+        using var _ = ImRaii.Disabled(data.PadlockAssigner != MainHub.UID || data.Padlock == Padlocks.PredicamentTimer);
         using (ImRaii.Group())
         {
             // draw sync button, and call layer update if pressed.
