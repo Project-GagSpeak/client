@@ -48,6 +48,9 @@ public partial class SidePanelPair
         ImGui.TextUnformatted("Shock Collar Actions");
         var preferPairCode = k.PairPerms.HasValidShareCode();
         var maxDuration = preferPairCode ? k.PairPerms.GetTimespanFromDuration() : k.PairGlobals.GetTimespanFromDuration();
+        var maxSecs = (float)maxDuration.TotalSeconds;
+        cache.ApplyDuration = Math.Clamp(cache.ApplyDuration, 0.1f, maxSecs);
+        cache.ApplyVibeDur = Math.Clamp(cache.ApplyVibeDur, 0.0f, maxSecs);
 
         // Shock Expander
         var AllowShocks = preferPairCode ? k.PairPerms.AllowShocks : k.PairGlobals.AllowShocks;
@@ -112,24 +115,23 @@ public partial class SidePanelPair
         ImGui.SetNextItemWidth(width);
         ImGui.SliderInt($"##SCI-{k.UserData.UID}", ref cache.ApplyIntensity, 0, maxIntensity, " % d%%", ImGuiSliderFlags.None);
 
-        // ensure we cant fall below 100ms to rely on millisecond conversion.
         ImGui.SetNextItemWidth(width - CkGui.IconTextButtonSize(FAI.BoltLightning, "Shock") - ImGui.GetStyle().ItemInnerSpacing.X);
-        ImGui.SliderFloat($"##SCD-{k.UserData.UID}", ref cache.ApplyDuration, 0.1f, (float)maxDuration.TotalMilliseconds / 1000f, "%.1fs", ImGuiSliderFlags.None);
+        ImGui.SliderFloat($"##SCD-{k.UserData.UID}", ref cache.ApplyDuration, 0.1f, (float)maxDuration.TotalSeconds, "%.1fs", ImGuiSliderFlags.None);
 
         ImUtf8.SameLineInner();
-        if (CkGui.IconTextButton(FAI.BoltLightning, "Send Shock", disabled: cache.ApplyDuration <= 100))
+        if (CkGui.IconTextButton(FAI.BoltLightning, "Send Shock", disabled: cache.ApplyDuration <= 0))
         {
-            var finalVal = TimeSpan.FromMilliseconds(cache.ApplyDuration);
-            _logger.LogDebug($"Sending Shock with duration: {finalVal}ms");
+            var durationMs = (int)(cache.ApplyDuration * 1000f);
+            _logger.LogDebug($"Sending Shock with duration: {durationMs}ms");
             UiService.SetUITask(async () =>
             {
-                var res = await _hub.UserShockKinkster(new(k.UserData, 0, cache.ApplyIntensity, finalVal.Milliseconds));
+                var res = await _hub.UserShockKinkster(new(k.UserData, 0, cache.ApplyIntensity, durationMs));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                 {
                     _logger.LogDebug($"Failed to send Shock to {dispName}'s Shock Collar. ({res})", LoggerType.StickyUI);
                     return;
                 }
-                _logger.LogDebug($"Sent Shock to {dispName}'s Shock Collar for: {finalVal}ms", LoggerType.StickyUI);
+                _logger.LogDebug($"Sent Shock to {dispName}'s Shock Collar for: {durationMs}ms", LoggerType.StickyUI);
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.ShockSent);
             });
         }
@@ -140,45 +142,43 @@ public partial class SidePanelPair
         ImGui.SetNextItemWidth(width);
         ImGui.SliderInt($"##ISR-{k.UserData.UID}", ref cache.ApplyVibeIntensity, 0, 100, "%d%%", ImGuiSliderFlags.None);
 
-        // ensure we cant fall below 100ms to rely on millisecond conversion.
         ImGui.SetNextItemWidth(width - CkGui.IconTextButtonSize(FAI.HeartCircleBolt, "Vibrate") - ImGui.GetStyle().ItemInnerSpacing.X);
-        ImGui.SliderFloat($"##DSR-{k.UserData.UID}", ref cache.ApplyVibeDur, 0.0f, (float)maxDuration.TotalMilliseconds / 1000f, "%.1fs", ImGuiSliderFlags.None);
+        ImGui.SliderFloat($"##DSR-{k.UserData.UID}", ref cache.ApplyVibeDur, 0.0f, (float)maxDuration.TotalSeconds, "%.1fs", ImGuiSliderFlags.None);
 
         ImUtf8.SameLineInner();
-        if (CkGui.IconTextButton(FAI.HeartCircleBolt, "Send Vibration", disabled: cache.ApplyDuration <= 100))
+        if (CkGui.IconTextButton(FAI.HeartCircleBolt, "Send Vibration", disabled: cache.ApplyVibeDur <= 0))
         {
-            var finalVal = TimeSpan.FromMilliseconds(cache.ApplyVibeDur);
-            _logger.LogDebug($"Sending Vibration with duration: {finalVal}ms");
+            var durationMs = (int)(cache.ApplyVibeDur * 1000f);
+            _logger.LogDebug($"Sending Vibration with duration: {durationMs}ms");
             UiService.SetUITask(async () =>
             {
-                var res = await _hub.UserShockKinkster(new(k.UserData, 1, cache.ApplyVibeIntensity, finalVal.Milliseconds));
+                var res = await _hub.UserShockKinkster(new(k.UserData, 1, cache.ApplyVibeIntensity, durationMs));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                     _logger.LogDebug($"Failed to send Vibration to {dispName}'s Shock Collar. ({res})", LoggerType.StickyUI);
                 else
-                    _logger.LogDebug($"Sent Vibration to {dispName}'s Shock Collar for: {finalVal}ms", LoggerType.StickyUI);
+                    _logger.LogDebug($"Sent Vibration to {dispName}'s Shock Collar for: {durationMs}ms", LoggerType.StickyUI);
             });
         }
     }
 
     private void BeepAct(KinksterInfoCache cache, Kinkster k, string dispName, float width, bool usePairCode, TimeSpan maxDuration)
     {
-        var max = (float)maxDuration.TotalMilliseconds / 1000f;
+        var max = (float)maxDuration.TotalSeconds;
         ImGui.SetNextItemWidth(width - CkGui.IconTextButtonSize(FAI.LandMineOn, "Beep") - ImGui.GetStyle().ItemInnerSpacing.X);
         ImGui.SliderFloat("##DurationSliderRef" + k.UserData.UID, ref cache.ApplyVibeDur, 0.1f, max, "%.1fs", ImGuiSliderFlags.None);
 
         ImUtf8.SameLineInner();
-        if (CkGui.IconTextButton(FAI.LandMineOn, "Send Beep", disabled: cache.ApplyVibeDur <= 100))
+        if (CkGui.IconTextButton(FAI.LandMineOn, "Send Beep", disabled: cache.ApplyVibeDur <= 0))
         {
-            _logger.LogDebug($"Sending Beep foir {cache.ApplyVibeDur}ms!");
+            var durationMs = (int)(cache.ApplyVibeDur * 1000f);
+            _logger.LogDebug($"Sending Beep for: {durationMs}ms");
             UiService.SetUITask(async () =>
             {
-                var finalVal = TimeSpan.FromMilliseconds(cache.ApplyVibeDur);
-                _logger.LogDebug($"Sending Beep for: {finalVal}ms");
-                var res = await _hub.UserShockKinkster(new ShockCollarAction(k.UserData, 2, cache.ApplyIntensity, finalVal.Milliseconds));
+                var res = await _hub.UserShockKinkster(new ShockCollarAction(k.UserData, 2, cache.ApplyIntensity, durationMs));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                     _logger.LogDebug($"Failed to send Beep to {dispName}'s Shock Collar. ({res})", LoggerType.StickyUI);
                 else
-                    _logger.LogDebug($"Sent Beep to {dispName}'s Shock Collar for: {finalVal}ms", LoggerType.StickyUI);
+                    _logger.LogDebug($"Sent Beep to {dispName}'s Shock Collar for: {durationMs}ms", LoggerType.StickyUI);
             });
         }
     }

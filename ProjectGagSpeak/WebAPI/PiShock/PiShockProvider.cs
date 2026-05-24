@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.WebSockets;
 using System.Text.Json;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
@@ -12,10 +13,20 @@ namespace GagSpeak.WebAPI;
 
 public sealed class PiShockProvider : DisposableMediatorSubscriberBase
 {
+    private const string WsBrokerUri = "wss://broker.pishock.com/v2";
+    private const string PsBaseUri = "https://ps.pishock.com";
+    private const string AuthBaseUri = "https://auth.pishock.com";
+
     private readonly HttpClient _httpClient;
     private readonly MainConfig _mainConfig;
     private readonly KinksterManager _kinksters;
     private readonly ClientData _clientData;
+
+    private ClientWebSocket? _ws;
+    private readonly SemaphoreSlim _wsSend = new(1, 1);
+    private CancellationTokenSource _wsCts = new();
+    private readonly Dictionary<string, (int ClientId, int ShockerId)> _resolvedShockers = new();
+    private int _userId = 0;
 
     public PiShockProvider(ILogger<PiShockProvider> logger, GagspeakMediator mediator, MainConfig mainConfig,
         KinksterManager kinksters, ClientData clientData)
@@ -29,52 +40,227 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
 
     protected override void Dispose(bool disposing)
     {
+        _wsCts.Cancel();
+        _ws?.Abort();
+        _ws?.Dispose();
+        _wsSend.Dispose();
+        _wsCts.Dispose();
         base.Dispose(disposing);
         _httpClient.Dispose();
     }
 
-    // grab basic information from shock collar.
-    private StringContent CreateGetInfoContent(string shareCode)
+    private async Task FetchUserIdAsync()
     {
-        StringContent content = new(SysJsonSerializer.Serialize(new
+        if (_userId != 0)
+            return;
+
+        var apikey = Uri.EscapeDataString(_mainConfig.Current.PiShockApiKey);
+        var username = Uri.EscapeDataString(_mainConfig.Current.PiShockUsername);
+        try
         {
-            UserName = _mainConfig.Current.PiShockUsername,
-            Code = shareCode,
-            Apikey = _mainConfig.Current.PiShockApiKey,
-        }), Encoding.UTF8, "application/json");
-        return content;
+            var resp = await _httpClient.GetAsync($"{AuthBaseUri}/Auth/GetUserIfAPIKeyValid?apikey={apikey}&username={username}").ConfigureAwait(false);
+            if (!resp.IsSuccessStatusCode) return;
+            var body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+            if (string.IsNullOrWhiteSpace(body)) return;
+
+            using var doc = JsonDocument.Parse(body);
+            var root = doc.RootElement;
+            var obj = root.ValueKind == JsonValueKind.Array ? root[0] : root;
+            if (obj.TryGetProperty("UserId", out var idProp))
+            {
+                _userId = idProp.GetInt32();
+                Logger.LogDebug("PiShock UserId resolved: {id}", _userId);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "PiShock UserId fetch error");
+        }
     }
 
-    // For grabbing boolean permissions from a share code.
-    private StringContent CreateDummyExecuteContent(string shareCode, int opCode)
+    private async Task<bool> EnsureWsConnectedAsync()
     {
-        StringContent content = new(SysJsonSerializer.Serialize(new
+        if (_ws?.State == WebSocketState.Open)
+            return true;
+
+        try
         {
-            Username = _mainConfig.Current.PiShockUsername,
-            Name = "GagSpeakProvider",
-            Op = opCode,
-            Intensity = 0,
-            Duration = 0,
-            Code = shareCode,
-            Apikey = _mainConfig.Current.PiShockApiKey,
-        }), Encoding.UTF8, "application/json");
-        return content;
+            _ws?.Dispose();
+            if (_wsCts.IsCancellationRequested)
+            {
+                _wsCts.Dispose();
+                _wsCts = new CancellationTokenSource();
+            }
+            _ws = new ClientWebSocket();
+            var username = Uri.EscapeDataString(_mainConfig.Current.PiShockUsername);
+            var apikey = Uri.EscapeDataString(_mainConfig.Current.PiShockApiKey);
+            var token = _wsCts.Token;
+            await _ws.ConnectAsync(new Uri($"{WsBrokerUri}?Username={username}&ApiKey={apikey}"), token).ConfigureAwait(false);
+
+            var ping = Encoding.UTF8.GetBytes("{\"Operation\":\"PING\"}");
+            await _ws.SendAsync(ping, WebSocketMessageType.Text, true, token).ConfigureAwait(false);
+
+            using var pingCts = CancellationTokenSource.CreateLinkedTokenSource(token);
+            pingCts.CancelAfter(4000);
+            var buf = new byte[4096];
+            var result = await _ws.ReceiveAsync(new ArraySegment<byte>(buf), pingCts.Token).ConfigureAwait(false);
+            var pongMsg = Encoding.UTF8.GetString(buf, 0, result.Count);
+            Logger.LogDebug("PiShock WS ping response: {msg}", pongMsg);
+
+            if (!pongMsg.Contains("PONG"))
+            {
+                try
+                {
+                    using var doc = JsonDocument.Parse(pongMsg);
+                    if (doc.RootElement.TryGetProperty("IsError", out var isErr) && isErr.GetBoolean())
+                    {
+                        var errMsg = doc.RootElement.TryGetProperty("Message", out var m) ? m.GetString() : "unknown";
+                        Logger.LogError("PiShock WS auth failed: {msg}", errMsg);
+                        if (pongMsg.Contains("Redis") || pongMsg.Contains("API_KEY"))
+                            Logger.LogError("Fix: log out and back in at login.pishock.com to validate your API key");
+                    }
+                }
+                catch (System.Text.Json.JsonException) { }
+                _ws.Abort();
+                return false;
+            }
+
+            Logger.LogDebug("PiShock WebSocket connected and authenticated");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "PiShock WebSocket connection failed");
+            return false;
+        }
     }
 
-    // Sends operation to shock collar
-    private StringContent CreateExecuteOperationContent(string shareCode, int opCode, int intensity, int duration)
+    private async Task<string?> WsSendReceiveAsync(string json, int timeoutMs = 5000)
     {
-        StringContent content = new(SysJsonSerializer.Serialize(new
+        var token = _wsCts.Token;
+        await _wsSend.WaitAsync(token).ConfigureAwait(false);
+        try
         {
-            Username = _mainConfig.Current.PiShockUsername,
-            Name = "GagSpeakProvider",
-            Op = opCode,
-            Intensity = intensity,
-            Duration = duration,
-            Code = shareCode,
-            Apikey = _mainConfig.Current.PiShockApiKey,
-        }), Encoding.UTF8, "application/json");
-        return content;
+            if (_ws == null || _ws.State != WebSocketState.Open)
+                return null;
+
+            await _ws.SendAsync(Encoding.UTF8.GetBytes(json), WebSocketMessageType.Text, true, token).ConfigureAwait(false);
+
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
+            cts.CancelAfter(timeoutMs);
+            var buffer = new byte[8192];
+            var result = await _ws.ReceiveAsync(new ArraySegment<byte>(buffer), cts.Token).ConfigureAwait(false);
+            return result.MessageType == WebSocketMessageType.Text
+                ? Encoding.UTF8.GetString(buffer, 0, result.Count)
+                : null;
+        }
+        catch (OperationCanceledException)
+        {
+            Logger.LogWarning("PiShock WS timed out for: {json}", json);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "PiShock WS send/receive error");
+            return null;
+        }
+        finally
+        {
+            _wsSend.Release();
+        }
+    }
+
+    private async Task<List<int>> FetchShareIdsAsync(string apikey)
+    {
+        await FetchUserIdAsync().ConfigureAwait(false);
+
+        var urls = new List<string>();
+        if (_userId != 0)
+            urls.Add($"{PsBaseUri}/PiShock/GetShareCodesByOwner?UserId={_userId}&Token={apikey}&api=true");
+        urls.Add($"{PsBaseUri}/PiShock/GetShareCodesByOwner?Token={apikey}&api=true");
+
+        foreach (var url in urls)
+        {
+            try
+            {
+                var resp = await _httpClient.GetAsync(url).ConfigureAwait(false);
+                var body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                Logger.LogDebug("PiShock GetShareCodesByOwner: status={s} body={b}", (int)resp.StatusCode, body);
+
+                if (!resp.IsSuccessStatusCode || string.IsNullOrWhiteSpace(body) || body == "{}") continue;
+
+                var ids = new List<int>();
+                using var doc = JsonDocument.Parse(body);
+                foreach (var entry in doc.RootElement.EnumerateObject())
+                    foreach (var idElem in entry.Value.EnumerateArray())
+                        ids.Add(idElem.GetInt32());
+
+                if (ids.Count > 0) return ids;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "PiShock GetShareCodesByOwner error");
+            }
+        }
+        return [];
+    }
+
+    private async Task<List<JsonElement>> FetchShockersByIdsAsync(string apikey, List<int> shareIds)
+    {
+        var qs = string.Join("", shareIds.Select(id => $"&shareIds={id}"));
+
+        var urls = new List<string>();
+        if (_userId != 0)
+            urls.Add($"{PsBaseUri}/PiShock/GetShockersByShareIds?UserId={_userId}&Token={apikey}&api=true{qs}");
+        urls.Add($"{PsBaseUri}/PiShock/GetShockersByShareIds?Token={apikey}&api=true{qs}");
+
+        foreach (var url in urls)
+        {
+            try
+            {
+                var resp = await _httpClient.GetAsync(url).ConfigureAwait(false);
+                var body = await resp.Content.ReadAsStringAsync().ConfigureAwait(false);
+                Logger.LogDebug("PiShock GetShockersByShareIds: status={s} body={b}", (int)resp.StatusCode, body);
+
+                if (!resp.IsSuccessStatusCode || string.IsNullOrWhiteSpace(body)) continue;
+
+                var shockers = new List<JsonElement>();
+                using var doc = JsonDocument.Parse(body);
+                foreach (var entry in doc.RootElement.EnumerateObject())
+                    foreach (var shocker in entry.Value.EnumerateArray())
+                        shockers.Add(shocker.Clone());
+
+                if (shockers.Count > 0) return shockers;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "PiShock GetShockersByShareIds error");
+            }
+        }
+        return [];
+    }
+
+    private async Task TryResolveShockerAsync(string shareCode)
+    {
+        if (_resolvedShockers.ContainsKey(shareCode))
+            return;
+
+        var apikey = Uri.EscapeDataString(_mainConfig.Current.PiShockApiKey);
+        var shareIds = await FetchShareIdsAsync(apikey).ConfigureAwait(false);
+        if (shareIds.Count == 0) return;
+
+        var shockers = await FetchShockersByIdsAsync(apikey, shareIds).ConfigureAwait(false);
+        foreach (var shocker in shockers)
+        {
+            if (!shocker.TryGetProperty("shareCode", out var scProp)) continue;
+            if (scProp.GetString()?.Equals(shareCode, StringComparison.OrdinalIgnoreCase) != true) continue;
+
+            var clientId = shocker.GetProperty("clientId").GetInt32();
+            var shockerId = shocker.GetProperty("shockerId").GetInt32();
+            _resolvedShockers[shareCode] = (clientId, shockerId);
+            Logger.LogDebug("PiShock shocker resolved: clientId={c} shockerId={s}", clientId, shockerId);
+            return;
+        }
     }
 
     public async Task<PiShockPermissions> GetPermissionsFromCode(string shareCode)
@@ -84,88 +270,46 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
             Logger.LogWarning("Attempted to get PiShock permissions with empty share code.");
             return new();
         }
-        try
-        {
-            var jsonContent = CreateGetInfoContent(shareCode);
-
-            Logger.LogTrace("PiShock Request Info URI Firing: {piShockUri}", GagspeakPiShock.GetInfoPath());
-            var response = await _httpClient.PostAsync(GagspeakPiShock.GetInfoPath(), jsonContent).ConfigureAwait(false);
-
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-                Logger.LogTrace("PiShock Request Info Response: {response}", response);
-                var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-                Logger.LogTrace("PiShock Request Info Content: {content}", content);
-                var jsonDocument = JsonDocument.Parse(content);
-                var root = jsonDocument.RootElement;
-
-                var maxIntensity = root.GetProperty("maxIntensity").GetInt32();
-                var maxShockDuration = root.GetProperty("maxDuration").GetInt32();
-
-                Logger.LogTrace("Obtaining boolean values by passing dummy requests to share code");
-                var result = await ConstructPermissionObject(shareCode, maxIntensity, maxShockDuration);
-                Logger.LogTrace("PiShock Permissions obtained: {result}", result);
-                return result;
-            }
-            else if (response.StatusCode == HttpStatusCode.InternalServerError)
-            {
-                Logger.LogWarning("The Credentials for your API Key and Username do not match any profile in PiShock");
-                return new();
-            }
-            else
-            {
-                Logger.LogError("The ShareCode for this profile does not exist, or this is a simple error 404: {statusCode}", response.StatusCode);
-                return new();
-            }
-        }
-        catch (HttpRequestException ex)
-        {
-            Logger.LogError(ex, "Error getting PiShock permissions from share code");
-            return new PiShockPermissions();
-        }
-    }
-
-    private async Task<PiShockPermissions> ConstructPermissionObject(string shareCode, int intensityLimit, int durationLimit)
-    {
-        // Shock, Vibrate, Beep. In that order
-        int[] opCodes = { 0, 1, 2 };
-        var shocks = false;
-        var vibrations = false;
-        var beeps = false;
 
         try
         {
-            foreach (var opCode in opCodes)
+            var apikey = Uri.EscapeDataString(_mainConfig.Current.PiShockApiKey);
+            var shareIds = await FetchShareIdsAsync(apikey).ConfigureAwait(false);
+
+            if (shareIds.Count > 0)
             {
-                var jsonContent = CreateDummyExecuteContent(shareCode, opCode);
-                var response = await _httpClient.PostAsync(GagspeakPiShock.ExecuteOperationPath(), jsonContent).ConfigureAwait(false);
-
-                if (response.StatusCode != HttpStatusCode.OK) continue;
-
-                var content = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-
-                switch (opCode)
+                var shockers = await FetchShockersByIdsAsync(apikey, shareIds).ConfigureAwait(false);
+                foreach (var shocker in shockers)
                 {
-                    case 0:
-                        shocks = content! == "Operation Attempted."; break;
-                    case 1:
-                        vibrations = content! == "Operation Attempted."; break;
-                    case 2:
-                        beeps = content! == "Operation Attempted."; break;
+                    if (!shocker.TryGetProperty("shareCode", out var scProp)) continue;
+                    if (scProp.GetString()?.Equals(shareCode, StringComparison.OrdinalIgnoreCase) != true) continue;
+
+                    var clientId = shocker.GetProperty("clientId").GetInt32();
+                    var shockerId = shocker.GetProperty("shockerId").GetInt32();
+                    var maxIntensity = shocker.GetProperty("maxIntensity").GetInt32();
+                    var canShock = shocker.GetProperty("canShock").GetBoolean();
+                    var canVibrate = shocker.GetProperty("canVibrate").GetBoolean();
+                    var canBeep = shocker.GetProperty("canBeep").GetBoolean();
+
+                    _resolvedShockers[shareCode] = (clientId, shockerId);
+                    var maxDur = _mainConfig.Current.PiShockMaxDuration;
+                    Logger.LogTrace("PiShock permissions: shock={s} vibe={v} beep={b} maxIntensity={i} maxDuration={d}", canShock, canVibrate, canBeep, maxIntensity, maxDur);
+                    return new PiShockPermissions(canShock, canVibrate, canBeep, maxIntensity, maxDur);
                 }
+                Logger.LogWarning("PiShock share code {shareCode} not found among account shockers.", shareCode);
             }
         }
-        catch (HttpRequestException ex)
+        catch (Exception ex)
         {
-            Logger.LogError(ex, "Error executing operation on PiShock");
+            Logger.LogError(ex, "PiShock permission discovery error");
         }
 
-        return new PiShockPermissions() { AllowShocks = shocks, AllowVibrations = vibrations, AllowBeeps = beeps, MaxIntensity = intensityLimit, MaxDuration = durationLimit };
+        Logger.LogWarning("PiShock could not resolve permissions for {shareCode}.", shareCode);
+        return new();
     }
 
     public void PerformShockCollarAct(ShockCollarAction dto)
     {
-        // figure out who sent the command, and see if we have a unique sharecode setup for them.
         if (!_kinksters.TryGetKinkster(dto.User, out var enactor))
             throw new InvalidOperationException($"Shock Collar Action received from non-kinkster user: {dto.User.AliasOrUID}");
 
@@ -173,16 +317,12 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
         var eventLogMessage = $"Pishock {interactionType}, intensity: {dto.Intensity}, duration: {dto.Duration}";
         Logger.LogDebug($"Received Instruction for {eventLogMessage}", LoggerType.Callbacks);
 
-        // Handle quirk in pishock API where it accepts durations in seconds up to 15, but anything above 15 is treated as milliseconds.
-        // Our slider only accepts 0.1 second increments, so we will enforce a minimum of 100 milliseconds to avoid the aforementioned issue.
+        // PiShock treats d<=15 as seconds and d>15 as milliseconds; enforce 100ms minimum to avoid the ambiguous range.
         if (dto.Duration < 100)
-        {
             dto = dto with { Duration = 100 };
-        }
 
         if (!enactor.OwnPerms.PiShockShareCode.IsNullOrEmpty())
         {
-            // MaxDuration is in seconds while the incoming duration is in ms, so we need to convert before comparing. Ignore intensity for beeps.
             if (dto.Duration / 1000f > enactor.OwnPerms.MaxDuration || (dto.OpCode != 2 && dto.Intensity > enactor.OwnPerms.MaxIntensity))
             {
                 Logger.LogWarning("Received instruction that exceeds the max duration or intensity for this user. Ignoring.");
@@ -197,7 +337,6 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
         }
         else if (ClientData.Globals is { } g && !g.GlobalShockShareCode.IsNullOrEmpty())
         {
-            // MaxDuration is in seconds while the incoming duration is in ms, so we need to convert before comparing. Ignore intensity for beeps.
             if (dto.Duration / 1000f > g.MaxDuration || (dto.OpCode != 2 && dto.Intensity > g.MaxIntensity))
             {
                 Logger.LogWarning("Received instruction that exceeds the max duration or intensity for this user. Ignoring.");
@@ -218,22 +357,63 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
 
     public async void ExecuteOperation(string shareCode, int opCode, int intensity, int duration)
     {
-        try
-        {
-            var jsonContent = CreateExecuteOperationContent(shareCode, opCode, intensity, duration);
-            var response = await _httpClient.PostAsync(GagspeakPiShock.ExecuteOperationPath(), jsonContent).ConfigureAwait(false);
+        if (!_resolvedShockers.ContainsKey(shareCode))
+            await TryResolveShockerAsync(shareCode).ConfigureAwait(false);
 
-            if (response.StatusCode != HttpStatusCode.OK)
-            {
-                Logger.LogError("Error executing operation on PiShock. Status returned: " + response.StatusCode);
-                return;
-            }
-            var contentStr = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
-            Logger.LogDebug("PiShock Request Sent to Shock Collar Successfully! Content returned was:\n" + contentStr);
-        }
-        catch (HttpRequestException ex)
+        if (!await EnsureWsConnectedAsync().ConfigureAwait(false))
         {
-            Logger.LogError(ex, "Error executing operation on PiShock");
+            Logger.LogError("PiShock WebSocket unavailable, cannot execute operation");
+            return;
+        }
+
+        var mode = opCode switch { 0 => "s", 1 => "v", 2 => "b", _ => "s" };
+        string target;
+        int shockerId;
+
+        if (!_resolvedShockers.TryGetValue(shareCode, out var shocker))
+        {
+            Logger.LogError("PiShock shocker unresolved for {shareCode}, cannot send operation", shareCode);
+            return;
+        }
+
+        target = $"c{shocker.ClientId}-sops-{shareCode}";
+        shockerId = shocker.ShockerId;
+
+        var payload = SysJsonSerializer.Serialize(new
+        {
+            Operation = "PUBLISH",
+            PublishCommands = new[]
+            {
+                new
+                {
+                    Target = target,
+                    Body = new
+                    {
+                        id = shockerId,
+                        m = mode,
+                        i = intensity,
+                        d = duration,
+                        r = true,
+                        l = new { u = _userId, ty = "sc", w = false, o = "GagSpeak" }
+                    }
+                }
+            }
+        });
+
+        Logger.LogTrace("PiShock WS PUBLISH: {payload}", payload);
+        var wsResponse = await WsSendReceiveAsync(payload).ConfigureAwait(false);
+        Logger.LogDebug("PiShock WS response: {response}", wsResponse ?? "(null)");
+
+        if (wsResponse != null)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(wsResponse);
+                if (doc.RootElement.TryGetProperty("IsError", out var isErrorProp) && isErrorProp.GetBoolean())
+                    Logger.LogError("PiShock WS error: {msg}",
+                        doc.RootElement.TryGetProperty("Message", out var msg) ? msg.GetString() : "unknown");
+            }
+            catch (System.Text.Json.JsonException) { }
         }
     }
 }

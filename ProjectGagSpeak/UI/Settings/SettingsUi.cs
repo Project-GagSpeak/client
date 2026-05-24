@@ -452,6 +452,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 _mainConfig.Save();
             }
             CkGui.HelpText(GSLoc.Settings.MainOptions.PiShockKeyTT);
+            CkGui.ColorText("API keys must be generated after Oct 15, 2024. If connection fails, re-login at login.pishock.com to validate your key.", ImGuiColors.DalamudYellow);
 
             ImGui.SetNextItemWidth(250 * ImGuiHelpers.GlobalScale);
             if (ImGui.InputText("PiShock Username", ref username, 100, ImGuiInputTextFlags.EnterReturnsTrue))
@@ -461,6 +462,14 @@ public class SettingsUi : WindowMediatorSubscriberBase
             }
             CkGui.HelpText(GSLoc.Settings.MainOptions.PiShockUsernameTT);
 
+            var maxDuration = _mainConfig.Current.PiShockMaxDuration;
+            ImGui.SetNextItemWidth(250 * ImGuiHelpers.GlobalScale);
+            if (ImGui.SliderInt("Max Duration (s)##pishock", ref maxDuration, 1, 15))
+            {
+                _mainConfig.Current.PiShockMaxDuration = maxDuration;
+                _mainConfig.Save();
+            }
+            CkGui.HelpText("Maximum shock duration in seconds sent to Kinksters as your allowed limit. Click Refresh after changing.");
 
             ImGui.SetNextItemWidth(250 * ImGuiHelpers.GlobalScale - CkGui.IconTextButtonSize(FAI.Sync, "Refresh") - ImGui.GetStyle().ItemInnerSpacing.X);
             if (ImGui.InputText("##Global PiShock Share Code", ref shareCode, 100, ImGuiInputTextFlags.EnterReturnsTrue))
@@ -508,6 +517,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 var maxGlobalShockDuration = globals.GetTimespanFromDuration();
                 CkGui.ColorTextFrameAlignedInline($"{maxGlobalShockDuration.Seconds}.{maxGlobalShockDuration.Milliseconds}s", ImGuiColors.ParsedGold);
             }
+
         }
     }
 
