@@ -24,6 +24,7 @@ public class ReactionDistributor
 {
     private readonly ILogger<ReactionDistributor> _logger;
     private readonly PiShockProvider _shockies;
+    private readonly MainConfig _mainConfig;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
@@ -35,6 +36,7 @@ public class ReactionDistributor
     public ReactionDistributor(
         ILogger<ReactionDistributor> logger,
         PiShockProvider shockies,
+        MainConfig mainConfig,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
@@ -45,6 +47,7 @@ public class ReactionDistributor
     {
         _logger = logger;
         _shockies = shockies;
+        _mainConfig = mainConfig;
         _gags = gags;
         _restrictions = restrictions;
         _restraints = restraints;
@@ -440,19 +443,19 @@ public class ReactionDistributor
 
     private bool PiShockReaction(PiShockAction act, string? enactor = null)
     {
-        if (ClientData.Globals is not { } perms)
+        if (ClientData.Globals is null)
             return false;
 
-        if(string.IsNullOrWhiteSpace(perms.GlobalShockShareCode) || !perms.HasValidShareCode())
+        var shockerId = _mainConfig.Current.GlobalShockerId;
+        if (shockerId == 0)
         {
-            _logger.LogWarning("Can't execute Shock Instruction if none are currently connected!");
+            _logger.LogWarning("Can't execute Shock Instruction if no shocker is selected!");
             return false;
         }
 
-        // execute the instruction with our global share code.
-        _logger.LogInformation("DoPiShock Action is executing instruction based on global sharecode settings!", LoggerType.PiShock);
-        var shareCode = perms.GlobalShockShareCode;
-        _shockies.ExecuteOperation(shareCode, (int)act.ShockInstruction.OpCode, act.ShockInstruction.Intensity, act.ShockInstruction.Duration);
+        _logger.LogInformation("DoPiShock Action is executing instruction based on global shocker settings!", LoggerType.PiShock);
+        var durationMs = (int)(act.ShockInstruction.GetDurationFloat() * 1000f);
+        _shockies.ExecuteOperation(shockerId, (int)act.ShockInstruction.OpCode, act.ShockInstruction.Intensity, durationMs);
         return true;
     }
 

@@ -11,6 +11,7 @@ using GagSpeak.CustomCombos.Editor;
 using GagSpeak.Interop.Helpers;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
+using GagSpeak.WebAPI;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
@@ -936,7 +937,7 @@ public sealed class ReactionsDrawer
         var dur = act.ShockInstruction.GetDurationFloat();
         ImUtf8.SameLineInner();
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
-        if (ImGui.SliderFloat("##Duration", ref dur, 0.016f, 15f, "%.3fs"))
+        if (ImGui.SliderFloat("##Duration", ref dur, 0.3f, 15f, "%.3fs"))
             act.ShockInstruction.SetDuration(dur);
 
         if (act.ShockInstruction.OpCode is not ShockMode.Beep)
@@ -965,7 +966,7 @@ public sealed class ReactionsDrawer
         var durationRef = action.ShockInstruction.GetDurationFloat();
         ImUtf8.SameLineInner();
         ImGui.SetNextItemWidth(85f);
-        if (ImGui.SliderFloat("##ShockDur", ref durationRef, 0.016f, 15f))
+        if (ImGui.SliderFloat("##ShockDur", ref durationRef, 0.3f, 15f))
             action.ShockInstruction.SetDuration(durationRef);
         CkGui.AttachTooltip("The duration of the instruction.");
 

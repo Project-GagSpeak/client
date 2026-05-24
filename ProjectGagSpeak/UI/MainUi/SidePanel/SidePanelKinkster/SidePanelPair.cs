@@ -199,8 +199,8 @@ public partial class SidePanelPair
         PanelPairEx.HardcoreConfirmationPopup(_hub, kinkster, dispName);
 
         ImGui.TextUnformatted("Shock Collar Permissions");
-        if (ClientData.Globals is not { } p || !p.HasValidShareCode())
-            CkGui.ColorTextCentered("Must have a valid Global ShareCode first!", ImGuiColors.DalamudRed);
+        if (!_shockies.IsConfigured)
+            CkGui.ColorTextCentered("PiShock not configured - set Username & API Key in Settings.", ImGuiColors.DalamudRed);
         else
         {
             UniqueShareCode(kinkster, dispName, width);

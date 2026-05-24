@@ -8,6 +8,7 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.GameInternals.Agents;
 using GagSpeak.Interop;
 using GagSpeak.Interop.Helpers;
+using GagSpeak.Kinksters;
 using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
@@ -19,7 +20,9 @@ using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data.Permissions;
+using GagspeakAPI.Enums;
 using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
 using OtterGui;
 using OtterGui.Text;
 
@@ -38,11 +41,12 @@ public class SettingsUi : WindowMediatorSubscriberBase
     private readonly PiShockProvider _shockProvider;
     private readonly ClientDataListener _clientDatListener;
     private readonly PluginGuideProvider _guideProvider;
+    private readonly KinksterManager _kinksters;
 
     private ProjectTabBar _myProjects;
     public SettingsUi(ILogger<SettingsUi> logger, GagspeakMediator mediator, MainHub hub,
         MainConfig config, ProfilesTab accounts, DebugTab debug, PiShockProvider shockProvider,
-        ClientDataListener listener, PluginGuideProvider guideProvider)
+        ClientDataListener listener, PluginGuideProvider guideProvider, KinksterManager kinksters)
         : base(logger, mediator, "GagSpeak Settings")
     {
         _hub = hub;
@@ -52,6 +56,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         _shockProvider = shockProvider;
         _clientDatListener = listener;
         _guideProvider = guideProvider;
+        _kinksters = kinksters;
 
         Flags = WFlags.NoScrollbar;
         this.PinningClickthroughFalse();
@@ -234,6 +239,15 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
     private void AssignGlobalPermChangeTask(GlobalPerms perms, string globalKey, object newValue)
         => UiService.SetUITask(async () => await PermHelper.ChangeOwnGlobal(_hub, perms, globalKey, newValue));
+
+    private void AssignShockPermBulkTask(GlobalPerms perms, GlobalPerms updated)
+        => UiService.SetUITask(async () =>
+        {
+            if (ClientData.IsNull) return;
+            var res = await _hub.UserBulkChangeGlobal(new(MainHub.OwnUserData, updated, ClientData.HardcoreClone() ?? new HardcoreState()));
+            if (res.ErrorCode is GagSpeakApiEc.Success)
+                _clientDatListener.ChangeAllGlobalPerms(updated);
+        });
 
     // Do this better at some point!
     private void DrawGagSettings(GlobalPerms globals)
@@ -434,90 +448,59 @@ public class SettingsUi : WindowMediatorSubscriberBase
     private void DrawPiShockSettings(GlobalPerms globals)
     {
         var apiKey = _mainConfig.Current.PiShockApiKey;
-        var username = _mainConfig.Current.PiShockUsername;
-        var shareCode = globals.GlobalShockShareCode;
-        var allowShocks = globals.AllowShocks;
-        var allowVibrate = globals.AllowVibrations;
-        var allowBeep = globals.AllowBeeps;
-        var maxShockIntensity = globals.MaxIntensity;
-        var maxShockTime = globals.GetTimespanFromDuration();
 
-        using var node = ImRaii.TreeNode("Pi-Shock Global Settings");
-        if (node)
+        using var node = ImRaii.TreeNode("Pi-Shock Settings");
+        if (!node) return;
+
+        var inputWidth = 250 * ImGuiHelpers.GlobalScale;
+        var saveWidth = CkGui.IconTextButtonSize(FAI.PlugCircleCheck, "Save & Connect");
+
+        ImGui.SetNextItemWidth(inputWidth - saveWidth - ImGui.GetStyle().ItemInnerSpacing.X);
+        ImGui.InputText("##PiShock API Key", ref apiKey, 100);
+        CkGui.AttachTooltip(GSLoc.Settings.MainOptions.PiShockKeyTT);
+
+        ImUtf8.SameLineInner();
+        ImGui.TextUnformatted("API Key");
+
+        ImUtf8.SameLineInner();
+        if (CkGui.IconTextButton(FAI.PlugCircleCheck, "Save & Connect", disabled: UiService.DisableUI || string.IsNullOrEmpty(apiKey)))
         {
-            ImGui.SetNextItemWidth(250 * ImGuiHelpers.GlobalScale);
-            if (ImGui.InputText("PiShock API Key", ref apiKey, 100, ImGuiInputTextFlags.EnterReturnsTrue))
-            {
-                _mainConfig.Current.PiShockApiKey = apiKey;
-                _mainConfig.Save();
-            }
-            CkGui.HelpText(GSLoc.Settings.MainOptions.PiShockKeyTT);
-            CkGui.ColorText("API keys must be generated after Oct 15, 2024. If connection fails, re-login at login.pishock.com to validate your key.", ImGuiColors.DalamudYellow);
+            _mainConfig.Current.PiShockApiKey = apiKey;
+            _mainConfig.Save();
+            UiService.SetUITask(async () => await _shockProvider.ConnectAsync());
+        }
+        CkGui.AttachTooltip("Save your API key and fetch your connected PiShock devices.");
 
-            ImGui.SetNextItemWidth(250 * ImGuiHelpers.GlobalScale);
-            if (ImGui.InputText("PiShock Username", ref username, 100, ImGuiInputTextFlags.EnterReturnsTrue))
-            {
-                _mainConfig.Current.PiShockUsername = username;
-                _mainConfig.Save();
-            }
-            CkGui.HelpText(GSLoc.Settings.MainOptions.PiShockUsernameTT);
+        ImGui.Spacing();
 
-            var maxDuration = _mainConfig.Current.PiShockMaxDuration;
-            ImGui.SetNextItemWidth(250 * ImGuiHelpers.GlobalScale);
-            if (ImGui.SliderInt("Max Duration (s)##pishock", ref maxDuration, 1, 15))
-            {
-                _mainConfig.Current.PiShockMaxDuration = maxDuration;
-                _mainConfig.Save();
-            }
-            CkGui.HelpText("Maximum shock duration in seconds sent to Kinksters as your allowed limit. Click Refresh after changing.");
+        switch (_shockProvider.LastConnectState)
+        {
+            case PiShockProvider.ConnectState.NotAttempted:
+                if (!_shockProvider.IsConfigured)
+                    CkGui.ColorText("Enter your API Key, then click Save & Connect.", ImGuiColors.DalamudGrey);
+                else
+                    CkGui.ColorText("Click Save & Connect to detect your PiShock devices.", ImGuiColors.DalamudYellow);
+                break;
 
-            ImGui.SetNextItemWidth(250 * ImGuiHelpers.GlobalScale - CkGui.IconTextButtonSize(FAI.Sync, "Refresh") - ImGui.GetStyle().ItemInnerSpacing.X);
-            if (ImGui.InputText("##Global PiShock Share Code", ref shareCode, 100, ImGuiInputTextFlags.EnterReturnsTrue))
-                AssignGlobalPermChangeTask(globals, nameof(GlobalPerms.GlobalShockShareCode), shareCode);
+            case PiShockProvider.ConnectState.AuthFailed:
+                CkGui.ColorText("Authentication failed - check your API Key.", ImGuiColors.DalamudRed);
+                break;
 
-            ImUtf8.SameLineInner();
-            if (CkGui.IconTextButton(FAI.Sync, "Refresh", disabled: UiService.DisableUI))
-            {
-                UiService.SetUITask(async () =>
-                {
-                    if (ClientData.IsNull)
-                        return;
+            case PiShockProvider.ConnectState.NetworkError:
+                CkGui.ColorText("Connection error - check your internet or PiShock status.", ImGuiColors.DalamudRed);
+                break;
 
-                    var shareCodePerms = await _shockProvider.GetPermissionsFromCode(globals.GlobalShockShareCode);
-                    var newPerms = ClientData.GlobalsWithNewShockPermissions(shareCodePerms);
-                    var res = await _hub.UserBulkChangeGlobal(new(MainHub.OwnUserData, newPerms, ClientData.HardcoreClone() ?? new HardcoreState()));
-                    // be sure to invoke the changes manually when performed by self.
-                    if (res.ErrorCode is GagSpeakApiEc.Success)
-                        _clientDatListener.ChangeAllGlobalPerms(newPerms);
-                });
-            }
-            CkGui.AttachTooltip(GSLoc.Settings.MainOptions.PiShockShareCodeRefreshTT);
+            case PiShockProvider.ConnectState.Success when _shockProvider.ShockerCount == 0:
+                CkGui.ColorText("Connected - no devices found. Check your PiShock account.", ImGuiColors.DalamudYellow);
+                break;
 
-            ImUtf8.SameLineInner();
-            ImGui.TextUnformatted(GSLoc.Settings.MainOptions.PiShockShareCode);
-            CkGui.HelpText(GSLoc.Settings.MainOptions.PiShockShareCodeTT);
-
-            CkGui.ColorText(GSLoc.Settings.MainOptions.PiShockPermsLabel, ImGuiColors.ParsedGold);
-            using (ImRaii.Group())
-            {
-                CkGui.ColorTextBool(GSLoc.Settings.MainOptions.PiShockAllowShocks, allowShocks);
-                ImGui.SameLine();
-                CkGui.ColorTextBool(GSLoc.Settings.MainOptions.PiShockAllowVibes, allowVibrate);
-                ImGui.SameLine();
-                CkGui.ColorTextBool(GSLoc.Settings.MainOptions.PiShockAllowBeeps, allowBeep);
-
-                CkGui.FrameSeparatorV(2);
-
-                ImUtf8.TextFrameAligned(GSLoc.Settings.MainOptions.PiShockMaxShockIntensity);
-                CkGui.ColorTextFrameAlignedInline(maxShockIntensity.ToString() + "%", ImGuiColors.ParsedGold);
-
-                CkGui.FrameSeparatorV(2);
-
-                ImUtf8.TextFrameAligned(GSLoc.Settings.MainOptions.PiShockMaxShockDuration);
-                var maxGlobalShockDuration = globals.GetTimespanFromDuration();
-                CkGui.ColorTextFrameAlignedInline($"{maxGlobalShockDuration.Seconds}.{maxGlobalShockDuration.Milliseconds}s", ImGuiColors.ParsedGold);
-            }
-
+            case PiShockProvider.ConnectState.Success:
+                CkGui.ColorText($"{_shockProvider.ShockerCount} Available Shocker(s):", ImGuiColors.DalamudGrey);
+                foreach (var (_, name) in _shockProvider.CachedShockers)
+                    CkGui.ColorText($"  • {name}", ImGuiColors.HealerGreen);
+                ImGui.Spacing();
+                CkGui.ColorText("Configure a share code in each pair's permissions.", ImGuiColors.DalamudGrey);
+                break;
         }
     }
 
