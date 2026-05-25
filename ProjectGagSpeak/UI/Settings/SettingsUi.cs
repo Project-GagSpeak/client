@@ -495,12 +495,32 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 break;
 
             case PiShockProvider.ConnectState.Success:
-                CkGui.ColorText($"{_shockProvider.ShockerCount} Available Shocker(s):", ImGuiColors.DalamudGrey);
-                foreach (var (_, name) in _shockProvider.CachedShockers)
-                    CkGui.ColorText($"  • {name}", ImGuiColors.HealerGreen);
+            {
+                var shockers = _shockProvider.CachedShockers;
+                CkGui.ColorText($"{shockers.Count} Shocker(s) found. Default device for triggers:", ImGuiColors.DalamudGrey);
+
+                var currentId   = _mainConfig.Current.GlobalShockerId;
+                var currentName = shockers.FirstOrDefault(s => s.Id == currentId).Name ?? "Select a device...";
+                ImGui.SetNextItemWidth(inputWidth);
+                using (var combo = ImRaii.Combo("##GlobalShocker", currentName))
+                {
+                    if (combo)
+                    {
+                        foreach (var (id, name) in shockers)
+                        {
+                            if (ImGui.Selectable(name, id == currentId))
+                            {
+                                _mainConfig.Current.GlobalShockerId = id;
+                                _mainConfig.Save();
+                            }
+                        }
+                    }
+                }
+                CkGui.AttachTooltip("The device used when a trigger fires a shock action.");
                 ImGui.Spacing();
                 CkGui.ColorText("Configure a share code in each pair's permissions.", ImGuiColors.DalamudGrey);
                 break;
+            }
         }
     }
 
