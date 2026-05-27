@@ -357,7 +357,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
             blindfoldMaxOpacity *= 100; // show a prettier value for the end user
             ImGui.SetNextItemWidth(200f);
-            if (ImGui.SliderScalar(GSLoc.Settings.MainOptions.OverlayMaxOpacity, ref blindfoldMaxOpacity, 0f, 100f, "%.0f%%", ImGuiSliderFlags.AlwaysClamp))
+            if (ImGui.SliderFloat(GSLoc.Settings.MainOptions.OverlayMaxOpacity, ref blindfoldMaxOpacity, 0f, 100f, "%.1f%%", ImGuiSliderFlags.AlwaysClamp))
             {
                 _mainConfig.Current.OverlayMaxOpacity = blindfoldMaxOpacity / 100;
                 _mainConfig.Save();
