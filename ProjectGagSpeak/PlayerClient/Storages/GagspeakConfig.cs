@@ -54,7 +54,8 @@ public class GagspeakConfig
     public string Safeword { get; set; } = "";
     public GarbleCoreLang Language { get; set; } = GarbleCoreLang.English; // MuffleCore
     public GarbleCoreDialect LanguageDialect { get; set; } = GarbleCoreDialect.US; // MuffleCore
-    
+    public bool GarbleWordsNotInDictionary { get; set; } = true; // toggle for fallback garbler.
+
     public bool CursedLootUI { get; set; } = false;                   // CursedLootUI
     public bool CursedItemsApplyTraits { get; set; } = false;         // If Mimics can apply restriction traits to you.
     public bool RemoveGagOnTimerExpire { get; set; } = false; // Auto-Remove Items when timer falloff occurs.
@@ -81,5 +82,5 @@ public class GagspeakConfig
     public float OverlayMaxOpacity { get; set; } = 1.0f; // Blindfold Opacity
     public HypnoticEffect? HypnoEffectInfo { get; set; } = null;
     public string? Base64CustomImageData { get; set; } = null;
-}
 
+}
