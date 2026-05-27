@@ -1133,6 +1133,10 @@ namespace GagSpeak.Localization
         public readonly string LiveChatGarbler = Loc.Localize("MainOptions_LiveChatGarbler", "Live Chat Garbler");
         public readonly string LiveChatGarblerTT = Loc.Localize("MainOptions_LiveChatGarblerTT", "Generates garbled text using GagSpeak's server-side chat garbler." +
                 "--SEP--Note: Garbled text is visible to other players.");
+        
+        public readonly string LiveChatGarblerLock = Loc.Localize("MainOptions_LiveChatGarblerChannelLock", "Live Chat Garbler Channel Lock");
+        public readonly string LiveChatGarblerLockTT = Loc.Localize("MainOptions_LiveChatGarblerChannelLockTT", "Lock the Live Chat Garbler Channel settings when" +
+                "Chat Garbler is locked.");
 
         public readonly string GaggedNameplates = Loc.Localize("MainOptions_GaggedNameplates", "Gagged Nameplates");
         public readonly string GaggedNameplatesTT = Loc.Localize("MainOptions_GaggedNameplatesTT", "Displays custom icons indicating your gagstate on your nameplate while gagged!");

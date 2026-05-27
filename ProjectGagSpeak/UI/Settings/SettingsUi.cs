@@ -242,6 +242,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         var gaggedNamePlates = globals.GaggedNameplate;
         var gagVisuals = globals.GagVisuals;
         var removeGagOnLockExpiration = _mainConfig.Current.RemoveGagOnTimerExpire;
+        var liveChatGarbleChannelLocked = _mainConfig.Current.LiveChatGarbleChannelLocked;
 
         CkGui.FontText(GSLoc.Settings.MainOptions.HeaderGags, Fonts.UidFont);
         using (ImRaii.Disabled(globals.ChatGarblerLocked))
@@ -253,6 +254,14 @@ public class SettingsUi : WindowMediatorSubscriberBase
             if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GaggedNameplates, ref gaggedNamePlates))
                 AssignGlobalPermChangeTask(globals, nameof(GlobalPerms.GaggedNameplate), gaggedNamePlates);
             CkGui.HelpText(GSLoc.Settings.MainOptions.GaggedNameplatesTT);
+            
+            // TODO: Figure out how to make this an actual permission instead of a local setting
+            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.LiveChatGarblerLock, ref liveChatGarbleChannelLocked))
+            {
+                _mainConfig.Current.LiveChatGarbleChannelLocked = liveChatGarbleChannelLocked;
+                _mainConfig.Save();
+            }
+            CkGui.HelpText(GSLoc.Settings.MainOptions.LiveChatGarblerLockTT);
         }
 
         if (ImGui.Checkbox(GSLoc.Settings.MainOptions.GagGlamours, ref gagVisuals))
@@ -586,25 +595,29 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
         using (ImRaii.Group())
         {
-            foreach (var (label, channels) in ChatLogAgent.SortedChannels)
+            using (ImRaii.Disabled(_mainConfig.Current.LiveChatGarbleChannelLocked && globals.ChatGarblerLocked))
             {
-                ImGui.Text(label); // Show the group label
-
-                for (var i = 0; i < channels.Length; i++)
+                foreach (var (label, channels) in ChatLogAgent.SortedChannels)
                 {
-                    var channel = channels[i];
-                    var enabled = globals.AllowedGarblerChannels.IsActiveChannel((int)channel);
-                    var checkboxLabel = channel.ToString();
+                    ImGui.Text(label); // Show the group label
 
-                    if (ImGui.Checkbox(checkboxLabel, ref enabled))
+                    for (var i = 0; i < channels.Length; i++)
                     {
-                        var newBitfield = globals.AllowedGarblerChannels.SetChannelState((int)channel, enabled);
-                        AssignGlobalPermChangeTask(globals, nameof(GlobalPerms.AllowedGarblerChannels), newBitfield);
-                    }
+                        var channel = channels[i];
+                        var enabled = globals.AllowedGarblerChannels.IsActiveChannel((int)channel);
+                        var checkboxLabel = channel.ToString();
 
-                    // Only SameLine if not the third column
-                    if ((i + 1) % 4 != 0 && (i + 1) != channels.Length)
-                        ImGui.SameLine();
+                        if (ImGui.Checkbox(checkboxLabel, ref enabled))
+                        {
+                            var newBitfield = globals.AllowedGarblerChannels.SetChannelState((int)channel, enabled);
+                            AssignGlobalPermChangeTask(globals, nameof(GlobalPerms.AllowedGarblerChannels),
+                                                       newBitfield);
+                        }
+
+                        // Only SameLine if not the third column
+                        if ((i + 1) % 4 != 0 && (i + 1) != channels.Length)
+                            ImGui.SameLine();
+                    }
                 }
             }
 
