@@ -60,7 +60,6 @@ public class GagspeakConfig
     public bool RemoveGagOnTimerExpire { get; set; } = false; // Auto-Remove Items when timer falloff occurs.
     public bool RemoveRestrictionOnTimerExpire { get; set; } = false; // Auto-Remove Restriction when timer falloff occurs.
     public bool RemoveRestraintOnTimerExpire { get; set; } = false; // Auto-Remove restraint when timer falloff occurs.
-    public bool LiveChatGarbleChannelLocked { get; set; } = false; // toggle Live Chat Garbler Channel Lock.
 
     // GLOBAL TOYBOX SETTINGS
     // public OutputType AudioOutputType { get; set; } = OutputType.DirectSound; // Best for FFXIV.
