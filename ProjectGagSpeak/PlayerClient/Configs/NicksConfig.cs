@@ -100,12 +100,12 @@ public class NicksConfig : IHybridSavable
         Save();
     }
 
-    public void ClearNickname(string userDataUID)
+    public void ClearNickname(string uid)
     {
-        if (userDataUID.IsNullOrWhitespace())
-            throw new ArgumentException("UserDataUID cannot be null or empty.");
+        if (uid.IsNullOrWhitespace())
+            throw new ArgumentException("uid cannot be null or empty.");
 
-        Current.Nicknames.Remove(userDataUID);
+        Current.Nicknames.Remove(uid);
         Save();
     }
 }
