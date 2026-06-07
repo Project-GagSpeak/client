@@ -273,7 +273,9 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
             expireTimer = DateTimeOffset.UtcNow.Add(newTime);
         }
 
-        var enactingString = Kinkster!.PairPerms.DevotionalLocks ? $"{MainHub.UID}{Constants.DevotedString}" : MainHub.UID;
+        var enactingString = MainHub.UID;
+        if (attribute is HcAttribute.EmoteState) enactingString += $"|{EmoteId}";
+        if (Kinkster!.PairPerms.DevotionalLocks) enactingString += Constants.DevotedString;
         var newHcData = attribute switch
         {
             HcAttribute.Follow => Kinkster.PairHardcore with { LockedFollowing = enactingString },
