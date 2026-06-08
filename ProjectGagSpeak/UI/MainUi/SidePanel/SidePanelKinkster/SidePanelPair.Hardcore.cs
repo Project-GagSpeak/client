@@ -346,7 +346,7 @@ public partial class SidePanelPair
                     if (ImGui.Checkbox(checkboxLabel, ref enabled))
                     {
                         var newBitfield = k.PairGlobals.AllowedGarblerChannels.SetChannelState((int)channel, enabled);
-                        k.PairGlobals.AllowedGarblerChannels = newBitfield;
+                        PermHelper.ChangeOtherGlobal(_hub, k.UserData, k.PairGlobals, "AllowedGarblerChannels", newBitfield);
                     }
 
                     // Only SameLine if not the third column
@@ -354,15 +354,6 @@ public partial class SidePanelPair
                         ImGui.SameLine();
                 }
             }
-            
-            var enableText = "Apply";
-            var buttonW = CkGui.IconTextButtonSize(FAI.Upload, enableText);
-            if (CkGui.IconTextButton(FAI.Upload, enableText, buttonW, disabled: false))
-            {
-                Svc.Logger.Debug($"Attempting to apply Garbler Channel settings for {dispName}.");
-                PermHelper.ChangeOtherGlobal(_hub, k.UserData, k.PairGlobals, "AllowedGarblerChannels", k.PairGlobals.AllowedGarblerChannels);
-            }
-            CkGui.AttachTooltip($"Apply garbler channel changes for {dispName}.");
         }
     }
 }
