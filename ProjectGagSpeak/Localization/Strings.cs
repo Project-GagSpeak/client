@@ -1168,7 +1168,7 @@ namespace GagSpeak.Localization
 
         public readonly string MimicsApplyTraits = Loc.Localize("MainOptions_MimicsApplyTraits", "Cursed Loot can Apply Traits");
         public readonly string MimicsApplyTraitsTT = Loc.Localize("MainOptions_MimicsApplyTraitsTT", "Allows applied cursed items to set their hardcore traits." +
-            "--SEP--WARNING: This includes traits such as immobilize, weighted, and other action limiting factors!");
+            "--SEP--WARNING: This includes limiting traits (immobilize and weighted excluded)!");
 
         public readonly string LociActive = Loc.Localize("MainOptions_LociActive", "Loci Integration");
         public readonly string LociActiveTT = Loc.Localize("MainOptions_LociActiveTT", "Enables Loci integration and functionality.");
