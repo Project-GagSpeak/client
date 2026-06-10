@@ -27,6 +27,7 @@ public sealed class GagRestrictionManager : IHybridSavable
     private StorageItemEditor<GarblerRestriction> _itemEditor = new();
     private CharaActiveGags? _serverGagData = null;
     private Dictionary<int, GarblerRestriction> _activeItems = new();
+    private IReadOnlyList<GagType> _cursedLootGags = [];
 
     public GagRestrictionManager(
         ILogger<GagRestrictionManager> logger,
@@ -65,8 +66,25 @@ public sealed class GagRestrictionManager : IHybridSavable
             if (slot.GagItem is not GagType.None && Storage.TryGetGag(slot.GagItem, out var item))
                 _activeItems.TryAdd(idx, item);
         // resync the active chat garbler data if any were set.
-        _muffler.UpdateGarblerLogic(serverData.CurrentGagNames(), MufflerService.MuffleType(serverData.GagSlots.Select(g => g.GagItem)));
+        RefreshGarblerLogic();
         _logger.LogInformation("Synchronized all Active GagSlots with Client-Side Manager.");
+    }
+
+    /// <summary> Updates the cursed loot gags fed to the chat garbler. </summary>
+    /// <remarks> Cursed loot gags garble through this list, and not the gag slots, as eventually they will no longer occupy one. </remarks>
+    public void SetCursedLootGags(IEnumerable<GagType> gags)
+    {
+        _cursedLootGags = gags.ToList();
+        RefreshGarblerLogic();
+    }
+
+    /// <summary> Rebuilds the chat garbler from the active gag slots and the applied cursed loot gags. </summary>
+    /// <remarks> Mimic-enabled slots are excluded; while cursed gags still occupy a server slot, they only garble via the cursed loot list. Will remove when the server no longer occupies a slot for cursed loot. </remarks>
+    private void RefreshGarblerLogic()
+    {
+        var slotGags = _serverGagData?.GagSlots.Where(s => s.Enabler != "Mimic").Select(s => s.GagItem) ?? [];
+        var allGags = slotGags.Concat(_cursedLootGags).Where(g => g is not GagType.None).Distinct().ToList();
+        _muffler.UpdateGarblerLogic(allGags.Select(g => g.GagName()).ToList(), MufflerService.MuffleType(allGags));
     }
 
     /// <summary> Begin the editing process, making a clone of the item we want to edit. </summary>
@@ -137,7 +155,7 @@ public sealed class GagRestrictionManager : IHybridSavable
 
         _logger.LogTrace($"Updating Garbler Logic for gag {newGag.GagName()} to layer {layer} by {enactor}");
         // Update the garbler logic to reflect the new gags.
-        _muffler.UpdateGarblerLogic(data.CurrentGagNames(), MufflerService.MuffleType(data.GagSlots.Select(g => g.GagItem)));
+        RefreshGarblerLogic();
         // Invoke the Mediator of this change.
         _mediator.Publish(new GagStateChanged(NewState.Enabled, layer, data.GagSlots[layer], enactor, MainHub.UID));
 
@@ -196,7 +214,7 @@ public sealed class GagRestrictionManager : IHybridSavable
         data.GagSlots[layer].GagItem = GagType.None;
         data.GagSlots[layer].Enabler = string.Empty;
         // Update the garbler logic to reflect the new gags.
-        _muffler.UpdateGarblerLogic(data.CurrentGagNames(), MufflerService.MuffleType(data.GagSlots.Select(g => g.GagItem)));
+        RefreshGarblerLogic();
         _mediator.Publish(new GagStateChanged(NewState.Disabled, layer, prev, enactor, MainHub.UID));
 
         // Update the affected visual states, if item is enabled.

@@ -133,6 +133,11 @@ public sealed class CursedLootManager : IHybridSavable
     public void AddFavorite(CursedItem loot) => _favorites.TryAddRestriction(FavoriteIdContainer.CursedLoot, loot.Identifier);
     public void RemoveFavorite(CursedItem loot) => _favorites.RemoveRestriction(FavoriteIdContainer.CursedLoot, loot.Identifier);
     #endregion Generic Methods
+    /// <summary> Feeds the chat garbler the gag types of all applied cursed loot gags. </summary>
+    /// <remarks> Required, as cursed loot gags garble through this list instead of the gag slots. </remarks>
+    private void SyncGarblerWithCursedGags()
+        => _gags.SetCursedLootGags(Storage.AppliedLootUnsorted.OfType<CursedGagItem>().Where(c => c.RefItem is not null).Select(c => c.RefItem.GagType));
+
     // Called from safeword service, deactivates all items.
     public void InvalidateAllActive()
     {
@@ -142,6 +147,7 @@ public sealed class CursedLootManager : IHybridSavable
             item.ReleaseTime = DateTimeOffset.MinValue;
         }
         _saver.Save(this);
+        SyncGarblerWithCursedGags();
     }
 
     public void ForceSave() => _saver.Save(this);
@@ -159,6 +165,7 @@ public sealed class CursedLootManager : IHybridSavable
         item.AppliedTime = DateTimeOffset.UtcNow;
         item.ReleaseTime = endTimeUtc;
         _saver.Save(this);
+        SyncGarblerWithCursedGags();
     }
 
     public void SetInactive(Guid lootId)
@@ -168,6 +175,7 @@ public sealed class CursedLootManager : IHybridSavable
         item.AppliedTime = DateTimeOffset.MinValue;
         item.ReleaseTime = DateTimeOffset.MinValue;
         _saver.Save(this);
+        SyncGarblerWithCursedGags();
     }
 
     public void SetLowerLimit(TimeSpan time)
@@ -281,6 +289,8 @@ public sealed class CursedLootManager : IHybridSavable
         }
         // run a save after the load.
         _saver.Save(this);
+        // feed the garbler any cursed gags that were applied when this config last saved. Might not need?
+        SyncGarblerWithCursedGags();
         _mediator.Publish(new ReloadFileSystem(GSModule.CursedLoot));
     }
 
