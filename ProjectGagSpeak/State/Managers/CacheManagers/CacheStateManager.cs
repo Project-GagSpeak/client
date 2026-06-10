@@ -294,10 +294,12 @@ public class CacheStateManager : IHostedService
 
     /// <summary> Adds a GagItem's visual properties to the cache at the defined layer. </summary>
     /// <remarks> Changes are immediately reflected and updated to the player. </remarks>
-    public async Task AddGagItem(GarblerRestriction item, int layerIdx, string enabler, bool applyTraits = true)
+    public async Task AddGagItem(GarblerRestriction item, int layerIdx, string enabler)
     {
         _logger.LogDebug($"Adding ({item.GagType.GagName()}) at layer {layerIdx}, enabled by ({enabler}).");
         var key = new CombinedCacheKey(ManagerPriority.Gags, layerIdx, enabler, item.GagType.GagName());
+        
+        var applyTraits = enabler != "Mimic" || _config.Current.CursedItemsApplyTraits;
         
         var tasks = new List<Task>
         {
