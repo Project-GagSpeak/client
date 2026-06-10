@@ -298,17 +298,13 @@ public class CacheStateManager : IHostedService
     {
         _logger.LogDebug($"Adding ({item.GagType.GagName()}) at layer {layerIdx}, enabled by ({enabler}).");
         var key = new CombinedCacheKey(ManagerPriority.Gags, layerIdx, enabler, item.GagType.GagName());
-        
-        var applyTraits = enabler != "Mimic" || _config.Current.CursedItemsApplyTraits;
-        
+
         var tasks = new List<Task>
         {
             AddLociItem(key, item.LociData),
+            AddTraits(key, item.Traits),
             AddArousalStrength(key, item.Arousal)
         };
-        
-        if (applyTraits)
-            tasks.Add(AddTraits(key, item.Traits));
 
         if (item.IsEnabled)
         {
