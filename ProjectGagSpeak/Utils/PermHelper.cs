@@ -90,9 +90,9 @@ public static class PermHelper
     }
 
     /// <summary>
-    ///     Updates a client's own PairPermission for a defined <paramref name="target"/> Kinkster client-side.
-    ///     After the client-side change is made, it requests the change serverside.
-    ///     If any error occurs from the server-call, the value is reverted to its state before the change.
+    ///     Requests a change to one of the client's own PairPermissions for a defined <paramref name="target"/> Kinkster.
+    ///     The change is validated against a temp copy, then sent to the server. The live permission object is only
+    ///     mutated by the server callback (Callback_SingleChangeUnique).
     /// </summary>
     public static async Task<bool> ChangeOwnUnique(MainHub hub, UserData target, PairPerms perms, string propertyName, object newValue)
     {
@@ -101,29 +101,20 @@ public static class PermHelper
         if (property is null || !property.CanRead || !property.CanWrite)
             return false;
 
-        // Initially, Before sending it off, store the current value.
-        var currentValue = property.GetValue(perms);
-
-        try
+        // Validate the change on a temp copy without touching the live perms.
+        if (!PropertyChanger.TrySetProperty(perms with { }, propertyName, newValue, out object? finalVal) || finalVal is null)
         {
-            // Update it before we send off for validation.
-            if (!PropertyChanger.TrySetProperty(perms, propertyName, newValue, out object? finalVal))
-                throw new InvalidOperationException($"Failed to set property {propertyName} for self in PairPerms with value {newValue}.");
-
-            if (finalVal is null)
-                throw new InvalidOperationException($"Property {propertyName} in PairPerms, has the finalValue was null, which is not allowed.");
-
-            // Now that it is updated clientside, attempt to make the change on the server, and get the hub responce.
-            HubResponse response = await hub.UserChangeOwnPairPerm(
-                new(target, new KeyValuePair<string, object>(propertyName, newValue), UpdateDir.Own, MainHub.OwnUserData));
-
-            if (response.ErrorCode is not GagSpeakApiEc.Success)
-                throw new InvalidOperationException($"Failed to change {propertyName} to {finalVal} for self. Reason: {response.ErrorCode}");
+            Svc.Logger.Warning($"Failed to set property {propertyName} for self in PairPerms with value {newValue}.");
+            return false;
         }
-        catch (InvalidOperationException ex)
+
+        // Request the change on the server; the callback will apply it client-side.
+        HubResponse response = await hub.UserChangeOwnPairPerm(
+            new(target, new KeyValuePair<string, object>(propertyName, newValue), UpdateDir.Own, MainHub.OwnUserData));
+
+        if (response.ErrorCode is not GagSpeakApiEc.Success)
         {
-            Svc.Logger.Warning(ex.Message + "(Resetting to Previous Value)");
-            property.SetValue(perms, currentValue);
+            Svc.Logger.Warning($"Failed to change {propertyName} to {finalVal} for self. Reason: {response.ErrorCode}");
             return false;
         }
 
