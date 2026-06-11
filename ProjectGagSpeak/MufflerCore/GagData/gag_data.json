@@ -27,7 +27,7 @@
         "ɡ":    { "MUFFLE": 1, "SOUND": "g"  },
         "ŋ":    { "MUFFLE": 1, "SOUND": "nn"  },
         "h":    { "MUFFLE": 0, "SOUND": "h"  },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay"  },
         "ə":    { "MUFFLE": 0, "SOUND": "a"  },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw"  },
@@ -44,7 +44,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo"  },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow"  },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy"  },
-        
+
         "ɾ":    { "MUFFLE": 2, "SOUND": "eh"  },
         "β":    { "MUFFLE": 1, "SOUND": "s"   },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh"  },
@@ -52,7 +52,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "naw" },
         "ɣ":    { "MUFFLE": 2, "SOUND": "gr"  },
         "ʝ":    { "MUFFLE": 1, "SOUND": "zh"  },
-        
+
         "œ̃":    { "MUFFLE": 1, "SOUND": "uh"  },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw"  },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "ah"  },
@@ -63,14 +63,14 @@
         "ø":    { "MUFFLE": 2, "SOUND": "euu"  },
         "ʁː":   { "MUFFLE": 2, "SOUND": "sa"  },
         "ε":    { "MUFFLE": 2, "SOUND": "eh"  },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh"  },
         "ʀ":    { "MUFFLE": 2, "SOUND": "rg"  },
         "õ":    { "MUFFLE": 0, "SOUND": "ou"  },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en"  },
         "ĩ":    { "MUFFLE": 1, "SOUND": "eh"  },
         "ã":    { "MUFFLE": 1, "SOUND": "an"  },
-        
+
         "ɯ":    { "MUFFLE": 1, "SOUND": "ou"  },
         "tɕ":   { "MUFFLE": 1, "SOUND": "sah"  },
         "ts":   { "MUFFLE": 1, "SOUND": "sa"  },
@@ -111,7 +111,7 @@
         "ɡ":    { "MUFFLE": 1, "SOUND": "g"  },
         "ŋ":    { "MUFFLE": 1, "SOUND": "nn"  },
         "h":    { "MUFFLE": 0, "SOUND": "h"  },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay"  },
         "ə":    { "MUFFLE": 0, "SOUND": "a"  },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw"  },
@@ -128,7 +128,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo"  },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow"  },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy"  },
-        
+
         "ɾ":    { "MUFFLE": 2, "SOUND": "eh"  },
         "β":    { "MUFFLE": 1, "SOUND": "s"   },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh"  },
@@ -136,7 +136,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "naw" },
         "ɣ":    { "MUFFLE": 2, "SOUND": "gr"  },
         "ʝ":    { "MUFFLE": 1, "SOUND": "zh"  },
-        
+
         "œ̃":    { "MUFFLE": 1, "SOUND": "uh"  },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw"  },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "ah"  },
@@ -147,14 +147,14 @@
         "ø":    { "MUFFLE": 2, "SOUND": "euu"  },
         "ʁː":   { "MUFFLE": 2, "SOUND": "sa"  },
         "ε":    { "MUFFLE": 2, "SOUND": "eh"  },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh"  },
         "ʀ":    { "MUFFLE": 2, "SOUND": "rg"  },
         "õ":    { "MUFFLE": 0, "SOUND": "ou"  },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en"  },
         "ĩ":    { "MUFFLE": 1, "SOUND": "eh"  },
         "ã":    { "MUFFLE": 1, "SOUND": "an"  },
-        
+
         "ɯ":    { "MUFFLE": 1, "SOUND": "ou"  },
         "tɕ":   { "MUFFLE": 1, "SOUND": "sah"  },
         "ts":   { "MUFFLE": 1, "SOUND": "sa"  },
@@ -212,7 +212,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 2, "SOUND": "mh" },
-        
+
         "ɾ":    { "MUFFLE": 2, "SOUND": "eh" },
         "β":    { "MUFFLE": 0, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 1, "SOUND": "" },
@@ -220,7 +220,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "mya" },
         "ɣ":    { "MUFFLE": 1, "SOUND": "" },
         "ʝ":    { "MUFFLE": 2, "SOUND": "gah" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -231,14 +231,14 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 1, "SOUND": "" },
         "ε":    { "MUFFLE": 0, "SOUND": "e" },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh" },
         "ʀ":    { "MUFFLE": 2, "SOUND": "awa" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 0, "SOUND": "i" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "hhj" },
         "ts":   { "MUFFLE": 2, "SOUND": "zz" },
@@ -279,7 +279,7 @@
         "ɡ":    { "MUFFLE": 0, "SOUND": "g" },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng" },
         "h":    { "MUFFLE": 0, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay" },
         "ə":    { "MUFFLE": 1, "SOUND": "uh'" },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw" },
@@ -296,7 +296,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy" },
-        
+
         "ɾ":    { "MUFFLE": 0, "SOUND": "t" },
         "β":    { "MUFFLE": 2, "SOUND": "h" },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh" },
@@ -304,7 +304,7 @@
         "ɲ":    { "MUFFLE": 0, "SOUND": "ny" },
         "ɣ":    { "MUFFLE": 0, "SOUND": "rh" },
         "ʝ":    { "MUFFLE": 0, "SOUND": "ya" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -315,14 +315,14 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh" },
         "ε":    { "MUFFLE": 0, "SOUND": "e" },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh" },
         "ʀ":    { "MUFFLE": 0, "SOUND": "rr" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 0, "SOUND": "i" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 0, "SOUND": "ch" },
         "ts":   { "MUFFLE": 1, "SOUND": "tch" },
@@ -363,7 +363,7 @@
         "ɡ":    { "MUFFLE": 0, "SOUND": "g" },
         "ŋ":    { "MUFFLE": 2, "SOUND": "ngh" },
         "h":    { "MUFFLE": 0, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay" },
         "ə":    { "MUFFLE": 0, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw" },
@@ -380,7 +380,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 2, "SOUND": "mh" },
-        
+
         "ɾ":    { "MUFFLE": 2, "SOUND": "eh" },
         "β":    { "MUFFLE": 0, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 1, "SOUND": "" },
@@ -388,7 +388,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "mya" },
         "ɣ":    { "MUFFLE": 1, "SOUND": "" },
         "ʝ":    { "MUFFLE": 2, "SOUND": "gah" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -399,14 +399,14 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 1, "SOUND": "" },
         "ε":    { "MUFFLE": 0, "SOUND": "e" },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "hh" },
         "ʀ":    { "MUFFLE": 2, "SOUND": "awa" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 0, "SOUND": "i" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "hhj" },
         "ts":   { "MUFFLE": 2, "SOUND": "zz" },
@@ -450,7 +450,7 @@
         "ɡ":    { "MUFFLE": 0, "SOUND": "g"  },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng"  },
         "h":    { "MUFFLE": 0, "SOUND": "h"  },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay"  },
         "ə":    { "MUFFLE": 0, "SOUND": "a"  },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw"  },
@@ -467,7 +467,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo"  },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow"  },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy"  },
-        
+
         "ɾ":    { "MUFFLE": 2, "SOUND": "eh"  },
         "β":    { "MUFFLE": 1, "SOUND": "v"   },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh"  },
@@ -475,7 +475,7 @@
         "ɲ":    { "MUFFLE": 0, "SOUND": "ny" },
         "ɣ":    { "MUFFLE": 0, "SOUND": "rh"  },
         "ʝ":    { "MUFFLE": 0, "SOUND": "ya"  },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur"  },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw"  },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o"  },
@@ -486,14 +486,14 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh"  },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh"  },
         "ε":    { "MUFFLE": 0, "SOUND": "e"  },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh"  },
         "ʀ":    { "MUFFLE": 0, "SOUND": "rr"  },
         "õ":    { "MUFFLE": 0, "SOUND": "on"  },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en"  },
         "ĩ":    { "MUFFLE": 0, "SOUND": "i"  },
         "ã":    { "MUFFLE": 0, "SOUND": "a"  },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu"  },
         "tɕ":   { "MUFFLE": 0, "SOUND": "ch"  },
         "ts":   { "MUFFLE": 1, "SOUND": "tch"  },
@@ -554,7 +554,7 @@
         "ʊ":    { "MUFFLE": 2, "SOUND": "ou" },
         "aʊ":   { "MUFFLE": 1, "SOUND": "aw" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy" },
-        
+
         "ɾ":    { "MUFFLE": 2, "SOUND": "eh" },
         "β":    { "MUFFLE": 0, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 1, "SOUND": "" },
@@ -562,7 +562,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "mya" },
         "ɣ":    { "MUFFLE": 1, "SOUND": "" },
         "ʝ":    { "MUFFLE": 2, "SOUND": "gah" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 1, "SOUND": "" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -573,14 +573,14 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 1, "SOUND": "" },
         "ε":    { "MUFFLE": 0, "SOUND": "e" },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh" },
         "ʀ":    { "MUFFLE": 2, "SOUND": "awa" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 1, "SOUND": "" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "hj" },
         "ts":   { "MUFFLE": 2, "SOUND": "zah" },
@@ -621,7 +621,7 @@
         "ɡ":    { "MUFFLE": 0, "SOUND": "g"  },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng"  },
         "h":    { "MUFFLE": 0, "SOUND": "h"  },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay"  },
         "ə":    { "MUFFLE": 0, "SOUND": "a"  },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw"  },
@@ -638,7 +638,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo"  },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow"  },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy"  },
-        
+
         "ɾ":    { "MUFFLE": 0, "SOUND": "t"  },
         "β":    { "MUFFLE": 0, "SOUND": "v"  },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh"  },
@@ -646,7 +646,7 @@
         "ɲ":    { "MUFFLE": 0, "SOUND": "ny"  },
         "ɣ":    { "MUFFLE": 0, "SOUND": "rh"  },
         "ʝ":    { "MUFFLE": 0, "SOUND": "ya"  },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur"  },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw"  },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o"  },
@@ -657,19 +657,19 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh"  },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh"  },
         "ε":    { "MUFFLE": 0, "SOUND": "e"  },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh"  },
         "ʀ":    { "MUFFLE": 0, "SOUND": "rr"  },
         "õ":    { "MUFFLE": 0, "SOUND": "on"  },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en"  },
         "ĩ":    { "MUFFLE": 0, "SOUND": "i"  },
         "ã":    { "MUFFLE": 0, "SOUND": "a"  },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu"  },
         "tɕ":   { "MUFFLE": 0, "SOUND": "ch"  },
         "ts":   { "MUFFLE": 0, "SOUND": "ts"  },
         "ɴ":    { "MUFFLE": 0, "SOUND": "ng"  },
-        "dʑ":   { "MUFFLE": 0, "SOUND": "j"  },  
+        "dʑ":   { "MUFFLE": 0, "SOUND": "j"  },
         "ɕ":    { "MUFFLE": 0, "SOUND": "sh"  },
         "ɰᵝ":   { "MUFFLE": 0, "SOUND": "rr"  },
         "ɸ":    { "MUFFLE": 0, "SOUND": "sh"  },
@@ -705,7 +705,7 @@
         "ɡ":    { "MUFFLE": 0, "SOUND": "g" },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng" },
         "h":    { "MUFFLE": 0, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay" },
         "ə":    { "MUFFLE": 0, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw" },
@@ -722,7 +722,7 @@
         "ʊ":    { "MUFFLE": 1, "SOUND": "" },
         "aʊ":   { "MUFFLE": 1, "SOUND": "" },
         "ɔɪ":   { "MUFFLE": 1, "SOUND": "" },
-        
+
         "ɾ":    { "MUFFLE": 1, "SOUND": "" },
         "β":    { "MUFFLE": 1, "SOUND": "" },
         "ʎ":    { "MUFFLE": 1, "SOUND": "" },
@@ -730,7 +730,7 @@
         "ɲ":    { "MUFFLE": 1, "SOUND": "" },
         "ɣ":    { "MUFFLE": 1, "SOUND": "" },
         "ʝ":    { "MUFFLE": 1, "SOUND": "" },
-        
+
         "œ̃":    { "MUFFLE": 1, "SOUND": "" },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -741,14 +741,14 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 1, "SOUND": "" },
         "ε":    { "MUFFLE": 0, "SOUND": "e" },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh" },
         "ʀ":    { "MUFFLE": 1, "SOUND": "" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 0, "SOUND": "i" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 0, "SOUND": "ch" },
         "ts":   { "MUFFLE": 0, "SOUND": "ts" },
@@ -789,7 +789,7 @@
         "ɡ":    { "MUFFLE": 1, "SOUND": ""  },
         "ŋ":    { "MUFFLE": 2, "SOUND": "ngh"  },
         "h":    { "MUFFLE": 1, "SOUND": ""  },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay"  },
         "ə":    { "MUFFLE": 1, "SOUND": ""  },
         "ɔ":    { "MUFFLE": 1, "SOUND": ""  },
@@ -806,7 +806,7 @@
         "ʊ":    { "MUFFLE": 2, "SOUND": "mm"  },
         "aʊ":   { "MUFFLE": 2, "SOUND": ""  },
         "ɔɪ":   { "MUFFLE": 1, "SOUND": ""  },
-        
+
         "ɾ":    { "MUFFLE": 0, "SOUND": "t"  },
         "β":    { "MUFFLE": 1, "SOUND": "b"  },
         "ʎ":    { "MUFFLE": 2, "SOUND": "ymm"  },
@@ -814,7 +814,7 @@
         "ɲ":    { "MUFFLE": 1, "SOUND": "na"  },
         "ɣ":    { "MUFFLE": 1, "SOUND": ""  },
         "ʝ":    { "MUFFLE": 2, "SOUND": "gh"  },
-        
+
         "œ̃":    { "MUFFLE": 2, "SOUND": "mr"  },
         "ɔ̃":    { "MUFFLE": 1, "SOUND": ""  },
         "ɑ̃":    { "MUFFLE": 1, "SOUND": ""  },
@@ -825,14 +825,14 @@
         "ø":    { "MUFFLE": 1, "SOUND": ""  },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh"  },
         "ε":    { "MUFFLE": 1, "SOUND": ""  },
-    
+
         "ʏ":    { "MUFFLE": 2, "SOUND": "mmh"  },
         "ʀ":    { "MUFFLE": 0, "SOUND": "rr"  },
         "õ":    { "MUFFLE": 1, "SOUND": ""  },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en"  },
         "ĩ":    { "MUFFLE": 1, "SOUND": ""  },
         "ã":    { "MUFFLE": 1, "SOUND": ""  },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu"  },
         "tɕ":   { "MUFFLE": 3, "SOUND": "" },
         "ts":   { "MUFFLE": 1, "SOUND": ""  },
@@ -876,7 +876,7 @@
         "ɡ":    { "MUFFLE": 0, "SOUND": "g" },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng" },
         "h":    { "MUFFLE": 1, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay" },
         "ə":    { "MUFFLE": 0, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw" },
@@ -893,7 +893,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy" },
-        
+
         "ɾ":    { "MUFFLE": 0, "SOUND": "t" },
         "β":    { "MUFFLE": 0, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh" },
@@ -901,7 +901,7 @@
         "ɲ":    { "MUFFLE": 0, "SOUND": "ny" },
         "ɣ":    { "MUFFLE": 0, "SOUND": "rh" },
         "ʝ":    { "MUFFLE": 0, "SOUND": "ya" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -912,14 +912,14 @@
         "ø":    { "MUFFLE": 1, "SOUND": "" },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh" },
         "ε":    { "MUFFLE": 1, "SOUND": "" },
-    
+
         "ʏ":    { "MUFFLE": 1, "SOUND": "" },
         "ʀ":    { "MUFFLE": 1, "SOUND": "" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 0, "SOUND": "i" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 1, "SOUND": "" },
         "tɕ":   { "MUFFLE": 1, "SOUND": "t" },
         "ts":   { "MUFFLE": 0, "SOUND": "ts" },
@@ -960,7 +960,7 @@
         "ɡ":    { "MUFFLE": 1, "SOUND": "g" },
         "ŋ":    { "MUFFLE": 2, "SOUND": "mh" },
         "h":    { "MUFFLE": 1, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 2, "SOUND": "auh" },
         "ə":    { "MUFFLE": 2, "SOUND": "mm" },
         "ɔ":    { "MUFFLE": 2, "SOUND": "um" },
@@ -977,7 +977,7 @@
         "ʊ":    { "MUFFLE": 2, "SOUND": "mm" },
         "aʊ":   { "MUFFLE": 2, "SOUND": "mm" },
         "ɔɪ":   { "MUFFLE": 2, "SOUND": "mm" },
-        
+
         "ɾ":    { "MUFFLE": 2, "SOUND": "hrm" },
         "β":    { "MUFFLE": 2, "SOUND": "fh" },
         "ʎ":    { "MUFFLE": 2, "SOUND": "ym" },
@@ -985,7 +985,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "mhn" },
         "ɣ":    { "MUFFLE": 2, "SOUND": "mmh" },
         "ʝ":    { "MUFFLE": 2, "SOUND": "ym" },
-        
+
         "œ̃":    { "MUFFLE": 2, "SOUND": "mmr" },
         "ɔ̃":    { "MUFFLE": 2, "SOUND": "um" },
         "ɑ̃":    { "MUFFLE": 2, "SOUND": "mm" },
@@ -996,14 +996,14 @@
         "ø":    { "MUFFLE": 2, "SOUND": "mm" },
         "ʁː":   { "MUFFLE": 2, "SOUND": "mmr" },
         "ε":    { "MUFFLE": 2, "SOUND": "m" },
-    
+
         "ʏ":    { "MUFFLE": 2, "SOUND": "hm" },
         "ʀ":    { "MUFFLE": 2, "SOUND": "mh" },
         "õ":    { "MUFFLE": 2, "SOUND": "hm" },
         "ẽ":    { "MUFFLE": 2, "SOUND": "agn" },
         "ĩ":    { "MUFFLE": 1, "SOUND": "ah" },
         "ã":    { "MUFFLE": 2, "SOUND": "mh" },
-        
+
         "ɯ":    { "MUFFLE": 2, "SOUND": "mm" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "hm" },
         "ts":   { "MUFFLE": 2, "SOUND": "mm" },
@@ -1061,7 +1061,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 2, "SOUND": "mh" },
-        
+
         "ɾ":    { "MUFFLE": 2, "SOUND": "eh" },
         "β":    { "MUFFLE": 0, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 1, "SOUND": "" },
@@ -1069,7 +1069,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "mya" },
         "ɣ":    { "MUFFLE": 1, "SOUND": "" },
         "ʝ":    { "MUFFLE": 2, "SOUND": "gah" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -1080,14 +1080,14 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 1, "SOUND": "" },
         "ε":    { "MUFFLE": 0, "SOUND": "e" },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh" },
         "ʀ":    { "MUFFLE": 2, "SOUND": "awa" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 0, "SOUND": "i" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "hhj" },
         "ts":   { "MUFFLE": 2, "SOUND": "zz" },
@@ -1128,7 +1128,7 @@
         "ɡ":    { "MUFFLE": 1, "SOUND": "g"  },
         "ŋ":    { "MUFFLE": 1, "SOUND": "nn"  },
         "h":    { "MUFFLE": 0, "SOUND": "h"  },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay"  },
         "ə":    { "MUFFLE": 0, "SOUND": "a"  },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw"  },
@@ -1145,7 +1145,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo"  },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow"  },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy"  },
-        
+
         "ɾ":    { "MUFFLE": 2, "SOUND": "eh"  },
         "β":    { "MUFFLE": 1, "SOUND": "s"   },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh"  },
@@ -1153,7 +1153,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "naw" },
         "ɣ":    { "MUFFLE": 2, "SOUND": "gr"  },
         "ʝ":    { "MUFFLE": 1, "SOUND": "zh"  },
-        
+
         "œ̃":    { "MUFFLE": 1, "SOUND": "uh"  },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw"  },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "ah"  },
@@ -1164,14 +1164,14 @@
         "ø":    { "MUFFLE": 2, "SOUND": "euu"  },
         "ʁː":   { "MUFFLE": 2, "SOUND": "sa"  },
         "ε":    { "MUFFLE": 2, "SOUND": "eh"  },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh"  },
         "ʀ":    { "MUFFLE": 2, "SOUND": "rg"  },
         "õ":    { "MUFFLE": 0, "SOUND": "ou"  },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en"  },
         "ĩ":    { "MUFFLE": 1, "SOUND": "eh"  },
         "ã":    { "MUFFLE": 1, "SOUND": "an"  },
-        
+
         "ɯ":    { "MUFFLE": 1, "SOUND": "ou"  },
         "tɕ":   { "MUFFLE": 1, "SOUND": "sah"  },
         "ts":   { "MUFFLE": 1, "SOUND": "sa"  },
@@ -1212,7 +1212,7 @@
         "ɡ":    { "MUFFLE": 0, "SOUND": "g" },
         "ŋ":    { "MUFFLE": 2, "SOUND": "ngh" },
         "h":    { "MUFFLE": 1, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay" },
         "ə":    { "MUFFLE": 0, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw" },
@@ -1229,7 +1229,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy" },
-        
+
         "ɾ":    { "MUFFLE": 2, "SOUND": "aw" },
         "β":    { "MUFFLE": 0, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh" },
@@ -1237,7 +1237,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "nha" },
         "ɣ":    { "MUFFLE": 0, "SOUND": "rh" },
         "ʝ":    { "MUFFLE": 1, "SOUND": "ya" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -1248,14 +1248,14 @@
         "ø":    { "MUFFLE": 1, "SOUND": "oeh" },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh" },
         "ε":    { "MUFFLE": 0, "SOUND": "e" },
-    
+
         "ʏ":    { "MUFFLE": 1, "SOUND": "erh" },
         "ʀ":    { "MUFFLE": 0, "SOUND": "rr" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 1, "SOUND": "eh" },
         "ĩ":    { "MUFFLE": 0, "SOUND": "i" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "kuh" },
         "ts":   { "MUFFLE": 2, "SOUND": "huh" },
@@ -1298,7 +1298,7 @@
         "ɡ":    { "MUFFLE": 0, "SOUND": "g" },
         "ŋ":    { "MUFFLE": 2, "SOUND": "ngh" },
         "h":    { "MUFFLE": 1, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay" },
         "ə":    { "MUFFLE": 0, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw" },
@@ -1315,7 +1315,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy" },
-        
+
         "ɾ":    { "MUFFLE": 2, "SOUND": "aw" },
         "β":    { "MUFFLE": 0, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh" },
@@ -1323,7 +1323,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "nha" },
         "ɣ":    { "MUFFLE": 0, "SOUND": "rh" },
         "ʝ":    { "MUFFLE": 1, "SOUND": "ya" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -1334,14 +1334,14 @@
         "ø":    { "MUFFLE": 1, "SOUND": "oeh" },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh" },
         "ε":    { "MUFFLE": 0, "SOUND": "e" },
-    
+
         "ʏ":    { "MUFFLE": 1, "SOUND": "erh" },
         "ʀ":    { "MUFFLE": 0, "SOUND": "rr" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 1, "SOUND": "eh" },
         "ĩ":    { "MUFFLE": 0, "SOUND": "i" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "kuh" },
         "ts":   { "MUFFLE": 2, "SOUND": "huh" },
@@ -1382,7 +1382,7 @@
         "ɡ":    { "MUFFLE": 0, "SOUND": "g" },
         "ŋ":    { "MUFFLE": 2, "SOUND": "mh" },
         "h":    { "MUFFLE": 0, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 1, "SOUND": "ay" },
         "ə":    { "MUFFLE": 1, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 1, "SOUND": "ah" },
@@ -1399,7 +1399,7 @@
         "ʊ":    { "MUFFLE": 2, "SOUND": "mn" },
         "aʊ":   { "MUFFLE": 2, "SOUND": "mm" },
         "ɔɪ":   { "MUFFLE": 2, "SOUND": "mh" },
-        
+
         "ɾ":    { "MUFFLE": 2, "SOUND": "dm" },
         "β":    { "MUFFLE": 1, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 2, "SOUND": "ym" },
@@ -1407,7 +1407,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "mk" },
         "ɣ":    { "MUFFLE": 2, "SOUND": "mm" },
         "ʝ":    { "MUFFLE": 2, "SOUND": "hm" },
-        
+
         "œ̃":    { "MUFFLE": 2, "SOUND": "hm" },
         "ɔ̃":    { "MUFFLE": 1, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 2, "SOUND": "m" },
@@ -1418,14 +1418,14 @@
         "ø":    { "MUFFLE": 2, "SOUND": "mm" },
         "ʁː":   { "MUFFLE": 2, "SOUND": "mw" },
         "ε":    { "MUFFLE": 2, "SOUND": "hm" },
-    
+
         "ʏ":    { "MUFFLE": 2, "SOUND": "mh" },
         "ʀ":    { "MUFFLE": 2, "SOUND": "mw" },
         "õ":    { "MUFFLE": 1, "SOUND": "en" },
         "ẽ":    { "MUFFLE": 1, "SOUND": "an" },
         "ĩ":    { "MUFFLE": 2, "SOUND": "m" },
         "ã":    { "MUFFLE": 1, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 2, "SOUND": "mb" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "hm" },
         "ts":   { "MUFFLE": 2, "SOUND": "sm" },
@@ -1466,7 +1466,7 @@
         "ɡ":    { "MUFFLE": 1, "SOUND": "g"  },
         "ŋ":    { "MUFFLE": 1, "SOUND": "nn"  },
         "h":    { "MUFFLE": 0, "SOUND": "h"  },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay"  },
         "ə":    { "MUFFLE": 0, "SOUND": "a"  },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw"  },
@@ -1483,7 +1483,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo"  },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow"  },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy"  },
-        
+
         "ɾ":    { "MUFFLE": 2, "SOUND": "eh"  },
         "β":    { "MUFFLE": 1, "SOUND": "s"   },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh"  },
@@ -1491,7 +1491,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "naw" },
         "ɣ":    { "MUFFLE": 2, "SOUND": "gr"  },
         "ʝ":    { "MUFFLE": 1, "SOUND": "zh"  },
-        
+
         "œ̃":    { "MUFFLE": 1, "SOUND": "uh"  },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw"  },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "ah"  },
@@ -1502,14 +1502,14 @@
         "ø":    { "MUFFLE": 2, "SOUND": "euu"  },
         "ʁː":   { "MUFFLE": 2, "SOUND": "sa"  },
         "ε":    { "MUFFLE": 2, "SOUND": "eh"  },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh"  },
         "ʀ":    { "MUFFLE": 2, "SOUND": "rg"  },
         "õ":    { "MUFFLE": 0, "SOUND": "ou"  },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en"  },
         "ĩ":    { "MUFFLE": 1, "SOUND": "eh"  },
         "ã":    { "MUFFLE": 1, "SOUND": "an"  },
-        
+
         "ɯ":    { "MUFFLE": 1, "SOUND": "ou"  },
         "tɕ":   { "MUFFLE": 1, "SOUND": "sah"  },
         "ts":   { "MUFFLE": 1, "SOUND": "sa"  },
@@ -1550,7 +1550,7 @@
         "ɡ":    { "MUFFLE": 0, "SOUND": "g" },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng" },
         "h":    { "MUFFLE": 0, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay" },
         "ə":    { "MUFFLE": 1, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 1, "SOUND": "auh" },
@@ -1567,7 +1567,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy" },
-        
+
         "ɾ":    { "MUFFLE": 0, "SOUND": "t" },
         "β":    { "MUFFLE": 2, "SOUND": "hw" },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh" },
@@ -1575,7 +1575,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "nn" },
         "ɣ":    { "MUFFLE": 0, "SOUND": "rh" },
         "ʝ":    { "MUFFLE": 0, "SOUND": "ya" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 1, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -1586,14 +1586,14 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh" },
         "ε":    { "MUFFLE": 0, "SOUND": "e" },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh" },
         "ʀ":    { "MUFFLE": 0, "SOUND": "rr" },
         "õ":    { "MUFFLE": 1, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 3, "SOUND": "" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "sah" },
         "ts":   { "MUFFLE": 2, "SOUND": "tch" },
@@ -1634,7 +1634,7 @@
         "ɡ":    { "MUFFLE": 1, "SOUND": "he" },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng" },
         "h":    { "MUFFLE": 0, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay" },
         "ə":    { "MUFFLE": 0, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw" },
@@ -1651,7 +1651,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy" },
-        
+
         "ɾ":    { "MUFFLE": 1, "SOUND": "er" },
         "β":    { "MUFFLE": 0, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh" },
@@ -1659,7 +1659,7 @@
         "ɲ":    { "MUFFLE": 1, "SOUND": "ay" },
         "ɣ":    { "MUFFLE": 2, "SOUND": "gh" },
         "ʝ":    { "MUFFLE": 1, "SOUND": "ya" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 1, "SOUND": "oh" },
@@ -1670,14 +1670,14 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh" },
         "ε":    { "MUFFLE": 0, "SOUND": "e" },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh" },
         "ʀ":    { "MUFFLE": 3, "SOUND": "" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 0, "SOUND": "i" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "ha" },
         "ts":   { "MUFFLE": 2, "SOUND": "ta" },
@@ -1718,7 +1718,7 @@
         "ɡ":    { "MUFFLE": 1, "SOUND": "g"  },
         "ŋ":    { "MUFFLE": 1, "SOUND": "nn"  },
         "h":    { "MUFFLE": 1, "SOUND": "h"  },
-        
+
         "eɪ":   { "MUFFLE": 2, "SOUND": "auh"  },
         "ə":    { "MUFFLE": 2, "SOUND": "a"  },
         "ɔ":    { "MUFFLE": 1, "SOUND": "aw"  },
@@ -1735,7 +1735,7 @@
         "ʊ":    { "MUFFLE": 1, "SOUND": "oo"  },
         "aʊ":   { "MUFFLE": 1, "SOUND": "ow"  },
         "ɔɪ":   { "MUFFLE": 2, "SOUND": "oy"  },
-        
+
         "ɾ":    { "MUFFLE": 2, "SOUND": "eh"  },
         "β":    { "MUFFLE": 1, "SOUND": "v"   },
         "ʎ":    { "MUFFLE": 1, "SOUND": "yh"  },
@@ -1743,7 +1743,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "mh" },
         "ɣ":    { "MUFFLE": 2, "SOUND": "gh"  },
         "ʝ":    { "MUFFLE": 1, "SOUND": "ya"  },
-        
+
         "œ̃":    { "MUFFLE": 1, "SOUND": "ur"  },
         "ɔ̃":    { "MUFFLE": 1, "SOUND": "aw"  },
         "ɑ̃":    { "MUFFLE": 1, "SOUND": "oh"  },
@@ -1754,14 +1754,14 @@
         "ø":    { "MUFFLE": 2, "SOUND": "euu"  },
         "ʁː":   { "MUFFLE": 2, "SOUND": "th"  },
         "ε":    { "MUFFLE": 2, "SOUND": "eh"  },
-    
+
         "ʏ":    { "MUFFLE": 1, "SOUND": "bh"  },
         "ʀ":    { "MUFFLE": 2, "SOUND": "rg"  },
         "õ":    { "MUFFLE": 0, "SOUND": "on"  },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en"  },
         "ĩ":    { "MUFFLE": 1, "SOUND": "eh"  },
         "ã":    { "MUFFLE": 1, "SOUND": "an"  },
-        
+
         "ɯ":    { "MUFFLE": 1, "SOUND": "ou"  },
         "tɕ":   { "MUFFLE": 2, "SOUND": "ha"  },
         "ts":   { "MUFFLE": 2, "SOUND": "zah"  },
@@ -1775,7 +1775,7 @@
         "ッ":   { "MUFFLE": 0, "SOUND": "ッ"  },
         "ヮ":   { "MUFFLE": 0, "SOUND": "ヮ"  },
         "ヶ":   { "MUFFLE": 0, "SOUND": "ヶ"  },
-        "ゎ":   { "MUFFLE": 0, "SOUND": "ゎ"  }    
+        "ゎ":   { "MUFFLE": 0, "SOUND": "ゎ"  }
     },
     "Gas Mask": {
         "p":    { "MUFFLE": 0, "SOUND": "p"  },
@@ -1802,7 +1802,7 @@
         "ɡ":    { "MUFFLE": 0, "SOUND": "g"  },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng"  },
         "h":    { "MUFFLE": 0, "SOUND": "h"  },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay"  },
         "ə":    { "MUFFLE": 0, "SOUND": "a"  },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw"  },
@@ -1819,7 +1819,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo"  },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow"  },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy"  },
-        
+
         "ɾ":    { "MUFFLE": 0, "SOUND": "t"  },
         "β":    { "MUFFLE": 0, "SOUND": "v"  },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh"  },
@@ -1827,7 +1827,7 @@
         "ɲ":    { "MUFFLE": 0, "SOUND": "ny"  },
         "ɣ":    { "MUFFLE": 0, "SOUND": "rh"  },
         "ʝ":    { "MUFFLE": 0, "SOUND": "ya"  },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur"  },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw"  },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o"  },
@@ -1838,19 +1838,19 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh"  },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh"  },
         "ε":    { "MUFFLE": 0, "SOUND": "e"  },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh"  },
         "ʀ":    { "MUFFLE": 0, "SOUND": "rr"  },
         "õ":    { "MUFFLE": 0, "SOUND": "on"  },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en"  },
         "ĩ":    { "MUFFLE": 0, "SOUND": "i"  },
         "ã":    { "MUFFLE": 0, "SOUND": "a"  },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu"  },
         "tɕ":   { "MUFFLE": 0, "SOUND": "ch"  },
         "ts":   { "MUFFLE": 0, "SOUND": "ts"  },
         "ɴ":    { "MUFFLE": 0, "SOUND": "ng"  },
-        "dʑ":   { "MUFFLE": 0, "SOUND": "j"  },  
+        "dʑ":   { "MUFFLE": 0, "SOUND": "j"  },
         "ɕ":    { "MUFFLE": 0, "SOUND": "sh"  },
         "ɰᵝ":   { "MUFFLE": 0, "SOUND": "rr"  },
         "ɸ":    { "MUFFLE": 0, "SOUND": "sh"  },
@@ -1886,7 +1886,7 @@
         "ɡ":    { "MUFFLE": 1, "SOUND": "he" },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng" },
         "h":    { "MUFFLE": 0, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay" },
         "ə":    { "MUFFLE": 0, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw" },
@@ -1903,7 +1903,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy" },
-        
+
         "ɾ":    { "MUFFLE": 1, "SOUND": "er" },
         "β":    { "MUFFLE": 0, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh" },
@@ -1911,7 +1911,7 @@
         "ɲ":    { "MUFFLE": 1, "SOUND": "ay" },
         "ɣ":    { "MUFFLE": 2, "SOUND": "gh" },
         "ʝ":    { "MUFFLE": 1, "SOUND": "ya" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 1, "SOUND": "oh" },
@@ -1922,14 +1922,14 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh" },
         "ε":    { "MUFFLE": 0, "SOUND": "e" },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh" },
         "ʀ":    { "MUFFLE": 3, "SOUND": "" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 0, "SOUND": "i" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "ha" },
         "ts":   { "MUFFLE": 2, "SOUND": "ta" },
@@ -1970,7 +1970,7 @@
         "ɡ":    { "MUFFLE": 1, "SOUND": "he" },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng" },
         "h":    { "MUFFLE": 0, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay" },
         "ə":    { "MUFFLE": 0, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw" },
@@ -1987,7 +1987,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy" },
-        
+
         "ɾ":    { "MUFFLE": 1, "SOUND": "er" },
         "β":    { "MUFFLE": 0, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh" },
@@ -1995,7 +1995,7 @@
         "ɲ":    { "MUFFLE": 1, "SOUND": "ay" },
         "ɣ":    { "MUFFLE": 2, "SOUND": "gh" },
         "ʝ":    { "MUFFLE": 1, "SOUND": "ya" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 1, "SOUND": "oh" },
@@ -2006,14 +2006,14 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh" },
         "ε":    { "MUFFLE": 0, "SOUND": "e" },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh" },
         "ʀ":    { "MUFFLE": 3, "SOUND": "" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 0, "SOUND": "i" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "ha" },
         "ts":   { "MUFFLE": 2, "SOUND": "ta" },
@@ -2054,7 +2054,7 @@
         "ɡ":    { "MUFFLE": 1, "SOUND": "g"  },
         "ŋ":    { "MUFFLE": 1, "SOUND": "nn"  },
         "h":    { "MUFFLE": 1, "SOUND": "h"  },
-        
+
         "eɪ":   { "MUFFLE": 2, "SOUND": "auh"  },
         "ə":    { "MUFFLE": 2, "SOUND": "a"  },
         "ɔ":    { "MUFFLE": 1, "SOUND": "aw"  },
@@ -2071,7 +2071,7 @@
         "ʊ":    { "MUFFLE": 1, "SOUND": "oo"  },
         "aʊ":   { "MUFFLE": 1, "SOUND": "ow"  },
         "ɔɪ":   { "MUFFLE": 2, "SOUND": "oy"  },
-        
+
         "ɾ":    { "MUFFLE": 2, "SOUND": "eh"  },
         "β":    { "MUFFLE": 1, "SOUND": "v"   },
         "ʎ":    { "MUFFLE": 1, "SOUND": "yh"  },
@@ -2079,7 +2079,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "mh" },
         "ɣ":    { "MUFFLE": 2, "SOUND": "gh"  },
         "ʝ":    { "MUFFLE": 1, "SOUND": "ya"  },
-        
+
         "œ̃":    { "MUFFLE": 1, "SOUND": "ur"  },
         "ɔ̃":    { "MUFFLE": 1, "SOUND": "aw"  },
         "ɑ̃":    { "MUFFLE": 1, "SOUND": "oh"  },
@@ -2090,14 +2090,14 @@
         "ø":    { "MUFFLE": 2, "SOUND": "euu"  },
         "ʁː":   { "MUFFLE": 2, "SOUND": "th"  },
         "ε":    { "MUFFLE": 2, "SOUND": "eh"  },
-    
+
         "ʏ":    { "MUFFLE": 1, "SOUND": "bh"  },
         "ʀ":    { "MUFFLE": 2, "SOUND": "rg"  },
         "õ":    { "MUFFLE": 0, "SOUND": "on"  },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en"  },
         "ĩ":    { "MUFFLE": 1, "SOUND": "eh"  },
         "ã":    { "MUFFLE": 1, "SOUND": "an"  },
-        
+
         "ɯ":    { "MUFFLE": 1, "SOUND": "ou"  },
         "tɕ":   { "MUFFLE": 2, "SOUND": "ha"  },
         "ts":   { "MUFFLE": 2, "SOUND": "zah"  },
@@ -2111,13 +2111,13 @@
         "ッ":   { "MUFFLE": 0, "SOUND": "ッ"  },
         "ヮ":   { "MUFFLE": 0, "SOUND": "ヮ"  },
         "ヶ":   { "MUFFLE": 0, "SOUND": "ヶ"  },
-        "ゎ":   { "MUFFLE": 0, "SOUND": "ゎ"  }    
+        "ゎ":   { "MUFFLE": 0, "SOUND": "ゎ"  }
     },
     "Hook Gag Mask": {
-    
+
     },
     "Inflatable Hood": {
-    
+
     },
     "Large Dildo Gag": {
         "p":    { "MUFFLE": 1, "SOUND": "p" },
@@ -2144,7 +2144,7 @@
         "ɡ":    { "MUFFLE": 0, "SOUND": "g" },
         "ŋ":    { "MUFFLE": 2, "SOUND": "ngh" },
         "h":    { "MUFFLE": 1, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay" },
         "ə":    { "MUFFLE": 0, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw" },
@@ -2161,7 +2161,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy" },
-        
+
         "ɾ":    { "MUFFLE": 2, "SOUND": "aw" },
         "β":    { "MUFFLE": 0, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh" },
@@ -2169,7 +2169,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "nha" },
         "ɣ":    { "MUFFLE": 0, "SOUND": "rh" },
         "ʝ":    { "MUFFLE": 1, "SOUND": "ya" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -2180,14 +2180,14 @@
         "ø":    { "MUFFLE": 1, "SOUND": "oeh" },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh" },
         "ε":    { "MUFFLE": 0, "SOUND": "e" },
-    
+
         "ʏ":    { "MUFFLE": 1, "SOUND": "erh" },
         "ʀ":    { "MUFFLE": 0, "SOUND": "rr" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 1, "SOUND": "eh" },
         "ĩ":    { "MUFFLE": 0, "SOUND": "i" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "kuh" },
         "ts":   { "MUFFLE": 2, "SOUND": "huh" },
@@ -2228,7 +2228,7 @@
         "ɡ":    { "MUFFLE": 0, "SOUND": "g"  },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng"  },
         "h":    { "MUFFLE": 0, "SOUND": "h"  },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay"  },
         "ə":    { "MUFFLE": 0, "SOUND": "a"  },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw"  },
@@ -2245,7 +2245,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo"  },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow"  },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy"  },
-        
+
         "ɾ":    { "MUFFLE": 0, "SOUND": "t"  },
         "β":    { "MUFFLE": 0, "SOUND": "v"  },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh"  },
@@ -2253,7 +2253,7 @@
         "ɲ":    { "MUFFLE": 0, "SOUND": "ny"  },
         "ɣ":    { "MUFFLE": 0, "SOUND": "rh"  },
         "ʝ":    { "MUFFLE": 0, "SOUND": "ya"  },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur"  },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw"  },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o"  },
@@ -2264,19 +2264,19 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh"  },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh"  },
         "ε":    { "MUFFLE": 0, "SOUND": "e"  },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh"  },
         "ʀ":    { "MUFFLE": 0, "SOUND": "rr"  },
         "õ":    { "MUFFLE": 0, "SOUND": "on"  },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en"  },
         "ĩ":    { "MUFFLE": 0, "SOUND": "i"  },
         "ã":    { "MUFFLE": 0, "SOUND": "a"  },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu"  },
         "tɕ":   { "MUFFLE": 0, "SOUND": "ch"  },
         "ts":   { "MUFFLE": 0, "SOUND": "ts"  },
         "ɴ":    { "MUFFLE": 0, "SOUND": "ng"  },
-        "dʑ":   { "MUFFLE": 0, "SOUND": "j"  },  
+        "dʑ":   { "MUFFLE": 0, "SOUND": "j"  },
         "ɕ":    { "MUFFLE": 0, "SOUND": "sh"  },
         "ɰᵝ":   { "MUFFLE": 0, "SOUND": "rr"  },
         "ɸ":    { "MUFFLE": 0, "SOUND": "sh"  },
@@ -2312,7 +2312,7 @@
         "ɡ":    { "MUFFLE": 1, "SOUND": "gh" },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng" },
         "h":    { "MUFFLE": 0, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay" },
         "ə":    { "MUFFLE": 0, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw" },
@@ -2329,7 +2329,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "uh" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy" },
-        
+
         "ɾ":    { "MUFFLE": 0, "SOUND": "t" },
         "β":    { "MUFFLE": 0, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh" },
@@ -2337,7 +2337,7 @@
         "ɲ":    { "MUFFLE": 1, "SOUND": "ng" },
         "ɣ":    { "MUFFLE": 0, "SOUND": "rh" },
         "ʝ":    { "MUFFLE": 0, "SOUND": "ya" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -2348,14 +2348,14 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh" },
         "ε":    { "MUFFLE": 0, "SOUND": "e" },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh" },
         "ʀ":    { "MUFFLE": 3, "SOUND": "" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 1, "SOUND": "" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "hya" },
         "ts":   { "MUFFLE": 1, "SOUND": "ah" },
@@ -2396,7 +2396,7 @@
         "ɡ":    { "MUFFLE": 1, "SOUND": "gh" },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng" },
         "h":    { "MUFFLE": 0, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay" },
         "ə":    { "MUFFLE": 0, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw" },
@@ -2413,7 +2413,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "uh" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy" },
-        
+
         "ɾ":    { "MUFFLE": 0, "SOUND": "t" },
         "β":    { "MUFFLE": 0, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh" },
@@ -2421,7 +2421,7 @@
         "ɲ":    { "MUFFLE": 1, "SOUND": "ng" },
         "ɣ":    { "MUFFLE": 0, "SOUND": "rh" },
         "ʝ":    { "MUFFLE": 0, "SOUND": "ya" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -2432,14 +2432,14 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh" },
         "ε":    { "MUFFLE": 0, "SOUND": "e" },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh" },
         "ʀ":    { "MUFFLE": 3, "SOUND": "" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 1, "SOUND": "" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "hya" },
         "ts":   { "MUFFLE": 1, "SOUND": "ah" },
@@ -2480,7 +2480,7 @@
         "ɡ":    { "MUFFLE": 1, "SOUND": "gh" },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng" },
         "h":    { "MUFFLE": 0, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay" },
         "ə":    { "MUFFLE": 0, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw" },
@@ -2497,7 +2497,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "uh" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy" },
-        
+
         "ɾ":    { "MUFFLE": 0, "SOUND": "t" },
         "β":    { "MUFFLE": 0, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh" },
@@ -2505,7 +2505,7 @@
         "ɲ":    { "MUFFLE": 1, "SOUND": "ng" },
         "ɣ":    { "MUFFLE": 0, "SOUND": "rh" },
         "ʝ":    { "MUFFLE": 0, "SOUND": "ya" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -2516,14 +2516,14 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh" },
         "ε":    { "MUFFLE": 0, "SOUND": "e" },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh" },
         "ʀ":    { "MUFFLE": 3, "SOUND": "" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 1, "SOUND": "" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "hya" },
         "ts":   { "MUFFLE": 1, "SOUND": "ah" },
@@ -2564,7 +2564,7 @@
         "ɡ":    { "MUFFLE": 0, "SOUND": "g"  },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng"  },
         "h":    { "MUFFLE": 0, "SOUND": "h"  },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay"  },
         "ə":    { "MUFFLE": 0, "SOUND": "a"  },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw"  },
@@ -2581,7 +2581,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo"  },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow"  },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy"  },
-        
+
         "ɾ":    { "MUFFLE": 0, "SOUND": "t"  },
         "β":    { "MUFFLE": 0, "SOUND": "v"  },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh"  },
@@ -2589,7 +2589,7 @@
         "ɲ":    { "MUFFLE": 0, "SOUND": "ny"  },
         "ɣ":    { "MUFFLE": 0, "SOUND": "rh"  },
         "ʝ":    { "MUFFLE": 0, "SOUND": "ya"  },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur"  },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw"  },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o"  },
@@ -2600,19 +2600,19 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh"  },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh"  },
         "ε":    { "MUFFLE": 0, "SOUND": "e"  },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh"  },
         "ʀ":    { "MUFFLE": 0, "SOUND": "rr"  },
         "õ":    { "MUFFLE": 0, "SOUND": "on"  },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en"  },
         "ĩ":    { "MUFFLE": 0, "SOUND": "i"  },
         "ã":    { "MUFFLE": 0, "SOUND": "a"  },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu"  },
         "tɕ":   { "MUFFLE": 0, "SOUND": "ch"  },
         "ts":   { "MUFFLE": 0, "SOUND": "ts"  },
         "ɴ":    { "MUFFLE": 0, "SOUND": "ng"  },
-        "dʑ":   { "MUFFLE": 0, "SOUND": "j"  },  
+        "dʑ":   { "MUFFLE": 0, "SOUND": "j"  },
         "ɕ":    { "MUFFLE": 0, "SOUND": "sh"  },
         "ɰᵝ":   { "MUFFLE": 0, "SOUND": "rr"  },
         "ɸ":    { "MUFFLE": 0, "SOUND": "sh"  },
@@ -2648,7 +2648,7 @@
         "ɡ":    { "MUFFLE": 0, "SOUND": "g" },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng" },
         "h":    { "MUFFLE": 1, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 1, "SOUND": "ah" },
         "ə":    { "MUFFLE": 0, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw" },
@@ -2665,7 +2665,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy" },
-        
+
         "ɾ":    { "MUFFLE": 0, "SOUND": "t" },
         "β":    { "MUFFLE": 2, "SOUND": "h" },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh" },
@@ -2673,7 +2673,7 @@
         "ɲ":    { "MUFFLE": 1, "SOUND": "nea" },
         "ɣ":    { "MUFFLE": 1, "SOUND": "gha" },
         "ʝ":    { "MUFFLE": 0, "SOUND": "ya" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -2684,14 +2684,14 @@
         "ø":    { "MUFFLE": 1, "SOUND": "eoh" },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh" },
         "ε":    { "MUFFLE": 0, "SOUND": "e" },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh" },
         "ʀ":    { "MUFFLE": 1, "SOUND": "eoh" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 1, "SOUND": "eh" },
         "ĩ":    { "MUFFLE": 1, "SOUND": "i" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 2, "SOUND": "eh" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "hy" },
         "ts":   { "MUFFLE": 2, "SOUND": "t" },
@@ -2732,7 +2732,7 @@
         "ɡ":    { "MUFFLE": 0, "SOUND": "g"  },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng"  },
         "h":    { "MUFFLE": 0, "SOUND": "h"  },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay"  },
         "ə":    { "MUFFLE": 0, "SOUND": "a"  },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw"  },
@@ -2749,7 +2749,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo"  },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow"  },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy"  },
-        
+
         "ɾ":    { "MUFFLE": 0, "SOUND": "t"  },
         "β":    { "MUFFLE": 0, "SOUND": "v"  },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh"  },
@@ -2757,7 +2757,7 @@
         "ɲ":    { "MUFFLE": 0, "SOUND": "ny"  },
         "ɣ":    { "MUFFLE": 0, "SOUND": "rh"  },
         "ʝ":    { "MUFFLE": 0, "SOUND": "ya"  },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur"  },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw"  },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o"  },
@@ -2768,19 +2768,19 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh"  },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh"  },
         "ε":    { "MUFFLE": 0, "SOUND": "e"  },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh"  },
         "ʀ":    { "MUFFLE": 0, "SOUND": "rr"  },
         "õ":    { "MUFFLE": 0, "SOUND": "on"  },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en"  },
         "ĩ":    { "MUFFLE": 0, "SOUND": "i"  },
         "ã":    { "MUFFLE": 0, "SOUND": "a"  },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu"  },
         "tɕ":   { "MUFFLE": 0, "SOUND": "ch"  },
         "ts":   { "MUFFLE": 0, "SOUND": "ts"  },
         "ɴ":    { "MUFFLE": 0, "SOUND": "ng"  },
-        "dʑ":   { "MUFFLE": 0, "SOUND": "j"  },  
+        "dʑ":   { "MUFFLE": 0, "SOUND": "j"  },
         "ɕ":    { "MUFFLE": 0, "SOUND": "sh"  },
         "ɰᵝ":   { "MUFFLE": 0, "SOUND": "rr"  },
         "ɸ":    { "MUFFLE": 0, "SOUND": "sh"  },
@@ -2816,7 +2816,7 @@
         "ɡ":    { "MUFFLE": 1, "SOUND": "gh" },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng" },
         "h":    { "MUFFLE": 0, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay" },
         "ə":    { "MUFFLE": 0, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw" },
@@ -2833,7 +2833,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "uh" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy" },
-        
+
         "ɾ":    { "MUFFLE": 0, "SOUND": "t" },
         "β":    { "MUFFLE": 0, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh" },
@@ -2841,7 +2841,7 @@
         "ɲ":    { "MUFFLE": 1, "SOUND": "ng" },
         "ɣ":    { "MUFFLE": 0, "SOUND": "rh" },
         "ʝ":    { "MUFFLE": 0, "SOUND": "ya" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -2852,14 +2852,14 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh" },
         "ε":    { "MUFFLE": 0, "SOUND": "e" },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh" },
         "ʀ":    { "MUFFLE": 3, "SOUND": "" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 1, "SOUND": "" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "hya" },
         "ts":   { "MUFFLE": 1, "SOUND": "ah" },
@@ -2900,7 +2900,7 @@
         "ɡ":    { "MUFFLE": 1, "SOUND": "g" },
         "ŋ":    { "MUFFLE": 1, "SOUND": "ng" },
         "h":    { "MUFFLE": 2, "SOUND": "ph" },
-        
+
         "eɪ":   { "MUFFLE": 1, "SOUND": "ay" },
         "ə":    { "MUFFLE": 1, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 1, "SOUND": "auh" },
@@ -2917,7 +2917,7 @@
         "ʊ":    { "MUFFLE": 2, "SOUND": "mm" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy" },
-        
+
         "ɾ":    { "MUFFLE": 1, "SOUND": "ur" },
         "β":    { "MUFFLE": 2, "SOUND": "mh" },
         "ʎ":    { "MUFFLE": 1, "SOUND": "yh" },
@@ -2925,7 +2925,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "nh" },
         "ɣ":    { "MUFFLE": 2, "SOUND": "mh" },
         "ʝ":    { "MUFFLE": 2, "SOUND": "mh" },
-        
+
         "œ̃":    { "MUFFLE": 2, "SOUND": "uh" },
         "ɔ̃":    { "MUFFLE": 1, "SOUND": "auh" },
         "ɑ̃":    { "MUFFLE": 1, "SOUND": "oh" },
@@ -2936,14 +2936,14 @@
         "ø":    { "MUFFLE": 2, "SOUND": "mm" },
         "ʁː":   { "MUFFLE": 2, "SOUND": "hh" },
         "ε":    { "MUFFLE": 2, "SOUND": "mm" },
-    
+
         "ʏ":    { "MUFFLE": 2, "SOUND": "mh" },
         "ʀ":    { "MUFFLE": 2, "SOUND": "uh" },
         "õ":    { "MUFFLE": 1, "SOUND": "hm" },
         "ẽ":    { "MUFFLE": 1, "SOUND": "agn" },
         "ĩ":    { "MUFFLE": 2, "SOUND": "mm" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 2, "SOUND": "mm" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "kuh" },
         "ts":   { "MUFFLE": 2, "SOUND": "kh" },
@@ -2984,7 +2984,7 @@
         "ɡ":    { "MUFFLE": 1, "SOUND": "g" },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng" },
         "h":    { "MUFFLE": 0, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 1, "SOUND": "ay" },
         "ə":    { "MUFFLE": 2, "SOUND": "mm" },
         "ɔ":    { "MUFFLE": 2, "SOUND": "" },
@@ -3001,7 +3001,7 @@
         "ʊ":    { "MUFFLE": 2, "SOUND": "mm" },
         "aʊ":   { "MUFFLE": 1, "SOUND": "mw" },
         "ɔɪ":   { "MUFFLE": 2, "SOUND": "mh" },
-        
+
         "ɾ":    { "MUFFLE": 2, "SOUND": "hm" },
         "β":    { "MUFFLE": 2, "SOUND": "rm" },
         "ʎ":    { "MUFFLE": 1, "SOUND": "yh" },
@@ -3009,7 +3009,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "na" },
         "ɣ":    { "MUFFLE": 2, "SOUND": "ngh" },
         "ʝ":    { "MUFFLE": 2, "SOUND": "mh" },
-        
+
         "œ̃":    { "MUFFLE": 2, "SOUND": "ff" },
         "ɔ̃":    { "MUFFLE": 2, "SOUND": "ah" },
         "ɑ̃":    { "MUFFLE": 2, "SOUND": "mm" },
@@ -3020,14 +3020,14 @@
         "ø":    { "MUFFLE": 2, "SOUND": "mm" },
         "ʁː":   { "MUFFLE": 2, "SOUND": "err" },
         "ε":    { "MUFFLE": 1, "SOUND": "eh" },
-    
+
         "ʏ":    { "MUFFLE": 2, "SOUND": "mh" },
         "ʀ":    { "MUFFLE": 3, "SOUND": "" },
         "õ":    { "MUFFLE": 2, "SOUND": "mm" },
         "ẽ":    { "MUFFLE": 1, "SOUND": "eh" },
         "ĩ":    { "MUFFLE": 2, "SOUND": "mm" },
         "ã":    { "MUFFLE": 2, "SOUND": "mh" },
-        
+
         "ɯ":    { "MUFFLE": 2, "SOUND": "mm" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "sh" },
         "ts":   { "MUFFLE": 2, "SOUND": "mm" },
@@ -3044,7 +3044,7 @@
         "ゎ":   { "MUFFLE": 0, "SOUND": "ゎ"  }
     },
     "Plug Gag": {
-    
+
     },
     "Pony Gag": {
         "p":    { "MUFFLE": 0, "SOUND": "p" },
@@ -3088,7 +3088,7 @@
         "ʊ":    { "MUFFLE": 2, "SOUND": "ou" },
         "aʊ":   { "MUFFLE": 1, "SOUND": "aw" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy" },
-        
+
         "ɾ":    { "MUFFLE": 2, "SOUND": "eh" },
         "β":    { "MUFFLE": 0, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 1, "SOUND": "" },
@@ -3096,7 +3096,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "mya" },
         "ɣ":    { "MUFFLE": 1, "SOUND": "" },
         "ʝ":    { "MUFFLE": 2, "SOUND": "gah" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 1, "SOUND": "" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -3107,14 +3107,14 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 1, "SOUND": "" },
         "ε":    { "MUFFLE": 0, "SOUND": "e" },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh" },
         "ʀ":    { "MUFFLE": 2, "SOUND": "awa" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 1, "SOUND": "" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "hj" },
         "ts":   { "MUFFLE": 2, "SOUND": "zah" },
@@ -3155,7 +3155,7 @@
         "ɡ":    { "MUFFLE": 0, "SOUND": "g" },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng" },
         "h":    { "MUFFLE": 0, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay" },
         "ə":    { "MUFFLE": 0, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw" },
@@ -3172,7 +3172,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy" },
-            
+
         "ɾ":    { "MUFFLE": 2, "SOUND": "eh" },
         "β":    { "MUFFLE": 0, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh" },
@@ -3180,7 +3180,7 @@
         "ɲ":    { "MUFFLE": 1, "SOUND": "nea" },
         "ɣ":    { "MUFFLE": 1, "SOUND": "gha" },
         "ʝ":    { "MUFFLE": 1, "SOUND": "ya" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 1, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -3191,14 +3191,14 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh" },
         "ε":    { "MUFFLE": 1, "SOUND": "eh" },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh" },
         "ʀ":    { "MUFFLE": 2, "SOUND": "rg" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 1, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 1, "SOUND": "i" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 1, "SOUND": "sah" },
         "ts":   { "MUFFLE": 0, "SOUND": "ts" },
@@ -3239,7 +3239,7 @@
         "ɡ":    { "MUFFLE": 1, "SOUND": "gh" },
         "ŋ":    { "MUFFLE": 1, "SOUND": "ng" },
         "h":    { "MUFFLE": 0, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay" },
         "ə":    { "MUFFLE": 0, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw" },
@@ -3256,7 +3256,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo" },
         "aʊ":   { "MUFFLE": 1, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 1, "SOUND": "oy" },
-            
+
         "ɾ":    { "MUFFLE": 2, "SOUND": "eh" },
         "β":    { "MUFFLE": 1, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 1, "SOUND": "yh" },
@@ -3264,7 +3264,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "nh" },
         "ɣ":    { "MUFFLE": 2, "SOUND": "gr" },
         "ʝ":    { "MUFFLE": 2, "SOUND": "yh" },
-        
+
         "œ̃":    { "MUFFLE": 1, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 1, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 1, "SOUND": "oh" },
@@ -3275,14 +3275,14 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 1, "SOUND": "rh" },
         "ε":    { "MUFFLE": 1, "SOUND": "eh" },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh" },
         "ʀ":    { "MUFFLE": 2, "SOUND": "rg" },
         "õ":    { "MUFFLE": 1, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 1, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 1, "SOUND": "eh" },
         "ã":    { "MUFFLE": 1, "SOUND": "an" },
-        
+
         "ɯ":    { "MUFFLE": 1, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 1, "SOUND": "sah" },
         "ts":   { "MUFFLE": 1, "SOUND": "ss" },
@@ -3323,7 +3323,7 @@
         "ɡ":    { "MUFFLE": 2, "SOUND": "gh" },
         "ŋ":    { "MUFFLE": 2, "SOUND": "ngh" },
         "h":    { "MUFFLE": 1, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 1, "SOUND": "ay" },
         "ə":    { "MUFFLE": 1, "SOUND": "ah" },
         "ɔ":    { "MUFFLE": 1, "SOUND": "aw" },
@@ -3340,7 +3340,7 @@
         "ʊ":    { "MUFFLE": 2, "SOUND": "mm" },
         "aʊ":   { "MUFFLE": 1, "SOUND": "aw" },
         "ɔɪ":   { "MUFFLE": 2, "SOUND": "oy" },
-            
+
         "ɾ":    { "MUFFLE": 2, "SOUND": "aw" },
         "β":    { "MUFFLE": 2, "SOUND": "fh" },
         "ʎ":    { "MUFFLE": 2, "SOUND": "ym" },
@@ -3348,7 +3348,7 @@
         "ɲ":    { "MUFFLE": 3, "SOUND": "" },
         "ɣ":    { "MUFFLE": 2, "SOUND": "ngh" },
         "ʝ":    { "MUFFLE": 2, "SOUND": "yh" },
-        
+
         "œ̃":    { "MUFFLE": 2, "SOUND": "uh" },
         "ɔ̃":    { "MUFFLE": 1, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 3, "SOUND": "" },
@@ -3359,14 +3359,14 @@
         "ø":    { "MUFFLE": 1, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 3, "SOUND": "" },
         "ε":    { "MUFFLE": 1, "SOUND": "eh" },
-    
+
         "ʏ":    { "MUFFLE": 1, "SOUND": "eh" },
         "ʀ":    { "MUFFLE": 2, "SOUND": "mm" },
         "õ":    { "MUFFLE": 2, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 2, "SOUND": "nm" },
         "ĩ":    { "MUFFLE": 1, "SOUND": "eh" },
         "ã":    { "MUFFLE": 2, "SOUND": "uh" },
-        
+
         "ɯ":    { "MUFFLE": 1, "SOUND": "ou" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "sah" },
         "ts":   { "MUFFLE": 2, "SOUND": "zz" },
@@ -3407,7 +3407,7 @@
         "ɡ":    { "MUFFLE": 3, "SOUND": "" },
         "ŋ":    { "MUFFLE": 3, "SOUND": "" },
         "h":    { "MUFFLE": 3, "SOUND": "" },
-        
+
         "eɪ":   { "MUFFLE": 3, "SOUND": "" },
         "ə":    { "MUFFLE": 3, "SOUND": "" },
         "ɔ":    { "MUFFLE": 3, "SOUND": "" },
@@ -3424,7 +3424,7 @@
         "ʊ":    { "MUFFLE": 3, "SOUND": "" },
         "aʊ":   { "MUFFLE": 3, "SOUND": "" },
         "ɔɪ":   { "MUFFLE": 3, "SOUND": "" },
-            
+
         "ɾ":    { "MUFFLE": 3, "SOUND": "" },
         "β":    { "MUFFLE": 3, "SOUND": "" },
         "ʎ":    { "MUFFLE": 3, "SOUND": "" },
@@ -3432,7 +3432,7 @@
         "ɲ":    { "MUFFLE": 3, "SOUND": "" },
         "ɣ":    { "MUFFLE": 3, "SOUND": "" },
         "ʝ":    { "MUFFLE": 3, "SOUND": "" },
-        
+
         "œ̃":    { "MUFFLE": 3, "SOUND": "" },
         "ɔ̃":    { "MUFFLE": 3, "SOUND": "" },
         "ɑ̃":    { "MUFFLE": 3, "SOUND": "" },
@@ -3443,14 +3443,14 @@
         "ø":    { "MUFFLE": 3, "SOUND": "" },
         "ʁː":   { "MUFFLE": 3, "SOUND": "" },
         "ε":    { "MUFFLE": 3, "SOUND": "" },
-    
+
         "ʏ":    { "MUFFLE": 3, "SOUND": "" },
         "ʀ":    { "MUFFLE": 3, "SOUND": "" },
         "õ":    { "MUFFLE": 3, "SOUND": "" },
         "ẽ":    { "MUFFLE": 3, "SOUND": "" },
         "ĩ":    { "MUFFLE": 3, "SOUND": "" },
         "ã":    { "MUFFLE": 3, "SOUND": "" },
-        
+
         "ɯ":    { "MUFFLE": 3, "SOUND": "" },
         "tɕ":   { "MUFFLE": 3, "SOUND": "" },
         "ts":   { "MUFFLE": 3, "SOUND": "" },
@@ -3491,7 +3491,7 @@
         "ɡ":    { "MUFFLE": 0, "SOUND": "g" },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng" },
         "h":    { "MUFFLE": 0, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay" },
         "ə":    { "MUFFLE": 0, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw" },
@@ -3508,7 +3508,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy" },
-        
+
         "ɾ":    { "MUFFLE": 1, "SOUND": "t" },
         "β":    { "MUFFLE": 0, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh" },
@@ -3516,7 +3516,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "ya" },
         "ɣ":    { "MUFFLE": 2, "SOUND": "ngh" },
         "ʝ":    { "MUFFLE": 0, "SOUND": "ya" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -3527,14 +3527,14 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 2, "SOUND": "mmr" },
         "ε":    { "MUFFLE": 0, "SOUND": "e" },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh" },
         "ʀ":    { "MUFFLE": 2, "SOUND": "bgh" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 0, "SOUND": "i" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "sah" },
         "ts":   { "MUFFLE": 1, "SOUND": "th" },
@@ -3575,7 +3575,7 @@
         "ɡ":    { "MUFFLE": 0, "SOUND": "g" },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng" },
         "h":    { "MUFFLE": 0, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay" },
         "ə":    { "MUFFLE": 1, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 1, "SOUND": "auh" },
@@ -3592,7 +3592,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy" },
-        
+
         "ɾ":    { "MUFFLE": 0, "SOUND": "t" },
         "β":    { "MUFFLE": 2, "SOUND": "hw" },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh" },
@@ -3600,7 +3600,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "nn" },
         "ɣ":    { "MUFFLE": 0, "SOUND": "rh" },
         "ʝ":    { "MUFFLE": 0, "SOUND": "ya" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 1, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -3611,14 +3611,14 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh" },
         "ε":    { "MUFFLE": 0, "SOUND": "e" },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh" },
         "ʀ":    { "MUFFLE": 0, "SOUND": "rr" },
         "õ":    { "MUFFLE": 1, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 3, "SOUND": "" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "sah" },
         "ts":   { "MUFFLE": 2, "SOUND": "tch" },
@@ -3659,7 +3659,7 @@
         "ɡ":    { "MUFFLE": 0, "SOUND": "g" },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng" },
         "h":    { "MUFFLE": 0, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay" },
         "ə":    { "MUFFLE": 0, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw" },
@@ -3676,7 +3676,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy" },
-        
+
         "ɾ":    { "MUFFLE": 1, "SOUND": "t" },
         "β":    { "MUFFLE": 0, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh" },
@@ -3684,7 +3684,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "ya" },
         "ɣ":    { "MUFFLE": 2, "SOUND": "ngh" },
         "ʝ":    { "MUFFLE": 0, "SOUND": "ya" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -3695,14 +3695,14 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 2, "SOUND": "mmr" },
         "ε":    { "MUFFLE": 0, "SOUND": "e" },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh" },
         "ʀ":    { "MUFFLE": 2, "SOUND": "bgh" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 0, "SOUND": "i" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "sah" },
         "ts":   { "MUFFLE": 1, "SOUND": "th" },
@@ -3743,7 +3743,7 @@
         "ɡ":    { "MUFFLE": 0, "SOUND": "g" },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng" },
         "h":    { "MUFFLE": 1, "SOUND": "nh" },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay" },
         "ə":    { "MUFFLE": 0, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw" },
@@ -3760,7 +3760,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy" },
-        
+
         "ɾ":    { "MUFFLE": 0, "SOUND": "t" },
         "β":    { "MUFFLE": 0, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh" },
@@ -3768,7 +3768,7 @@
         "ɲ":    { "MUFFLE": 0, "SOUND": "ny" },
         "ɣ":    { "MUFFLE": 0, "SOUND": "rh" },
         "ʝ":    { "MUFFLE": 0, "SOUND": "ya" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -3779,14 +3779,14 @@
         "ø":    { "MUFFLE": 1, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 0, "SOUND": "rh" },
         "ε":    { "MUFFLE": 1, "SOUND": "ae" },
-    
+
         "ʏ":    { "MUFFLE": 1, "SOUND": "bh" },
         "ʀ":    { "MUFFLE": 1, "SOUND": "mh" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 0, "SOUND": "i" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 1, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 1, "SOUND": "t" },
         "ts":   { "MUFFLE": 0, "SOUND": "ts" },
@@ -3803,7 +3803,7 @@
         "ゎ":   { "MUFFLE": 0, "SOUND": "ゎ"  }
     },
     "Sensory Deprivation Hood": {
-    
+
     },
     "Sock Stuffing Gag": {
         "p":    { "MUFFLE": 1, "SOUND": "ph" },
@@ -3830,7 +3830,7 @@
         "ɡ":    { "MUFFLE": 0, "SOUND": "g" },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng" },
         "h":    { "MUFFLE": 0, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay" },
         "ə":    { "MUFFLE": 0, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 0, "SOUND": "aw" },
@@ -3847,7 +3847,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oi" },
-        
+
         "ɾ":    { "MUFFLE": 2, "SOUND": "hrr" },
         "β":    { "MUFFLE": 1, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 1, "SOUND": "yh" },
@@ -3855,7 +3855,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "my" },
         "ɣ":    { "MUFFLE": 2, "SOUND": "gr" },
         "ʝ":    { "MUFFLE": 1, "SOUND": "ya" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 0, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -3866,14 +3866,14 @@
         "ø":    { "MUFFLE": 1, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 1, "SOUND": "vn" },
         "ε":    { "MUFFLE": 2, "SOUND": "aa" },
-    
+
         "ʏ":    { "MUFFLE": 1, "SOUND": "bh" },
         "ʀ":    { "MUFFLE": 2, "SOUND": "gm" },
         "õ":    { "MUFFLE": 0, "SOUND": "on" },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 0, "SOUND": "i" },
         "ã":    { "MUFFLE": 0, "SOUND": "a" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 1, "SOUND": "huh" },
         "ts":   { "MUFFLE": 2, "SOUND": "ss" },
@@ -3890,10 +3890,10 @@
         "ゎ":   { "MUFFLE": 0, "SOUND": "ゎ"  }
     },
     "Spider Gag": {
-    
+
     },
     "Tentacle Gag": {
-    
+
     },
     "Web Gag": {
         "p":    { "MUFFLE": 1, "SOUND": "h" },
@@ -3920,7 +3920,7 @@
         "ɡ":    { "MUFFLE": 1, "SOUND": "g" },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng" },
         "h":    { "MUFFLE": 0, "SOUND": "h" },
-        
+
         "eɪ":   { "MUFFLE": 1, "SOUND": "ay" },
         "ə":    { "MUFFLE": 2, "SOUND": "mm" },
         "ɔ":    { "MUFFLE": 2, "SOUND": "" },
@@ -3937,7 +3937,7 @@
         "ʊ":    { "MUFFLE": 2, "SOUND": "mm" },
         "aʊ":   { "MUFFLE": 1, "SOUND": "mw" },
         "ɔɪ":   { "MUFFLE": 2, "SOUND": "mh" },
-        
+
         "ɾ":    { "MUFFLE": 2, "SOUND": "hm" },
         "β":    { "MUFFLE": 2, "SOUND": "rm" },
         "ʎ":    { "MUFFLE": 1, "SOUND": "yh" },
@@ -3945,7 +3945,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "na" },
         "ɣ":    { "MUFFLE": 2, "SOUND": "ngh" },
         "ʝ":    { "MUFFLE": 2, "SOUND": "mh" },
-        
+
         "œ̃":    { "MUFFLE": 2, "SOUND": "ff" },
         "ɔ̃":    { "MUFFLE": 2, "SOUND": "ah" },
         "ɑ̃":    { "MUFFLE": 2, "SOUND": "mm" },
@@ -3956,14 +3956,14 @@
         "ø":    { "MUFFLE": 2, "SOUND": "mm" },
         "ʁː":   { "MUFFLE": 2, "SOUND": "err" },
         "ε":    { "MUFFLE": 1, "SOUND": "eh" },
-    
+
         "ʏ":    { "MUFFLE": 2, "SOUND": "mh" },
         "ʀ":    { "MUFFLE": 3, "SOUND": "" },
         "õ":    { "MUFFLE": 2, "SOUND": "mm" },
         "ẽ":    { "MUFFLE": 1, "SOUND": "eh" },
         "ĩ":    { "MUFFLE": 2, "SOUND": "mm" },
         "ã":    { "MUFFLE": 2, "SOUND": "mh" },
-        
+
         "ɯ":    { "MUFFLE": 2, "SOUND": "mm" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "sh" },
         "ts":   { "MUFFLE": 2, "SOUND": "mm" },
@@ -3979,7 +3979,7 @@
         "ヶ":   { "MUFFLE": 0, "SOUND": "ヶ"  },
         "ゎ":   { "MUFFLE": 0, "SOUND": "ゎ"  }
     },
-    "Wiffle Gag": {
+    "Whiffle Gag": {
         "p":    { "MUFFLE": 2, "SOUND": "v" },
         "b":    { "MUFFLE": 2, "SOUND": "v" },
         "m":    { "MUFFLE": 1, "SOUND": "eh" },
@@ -4004,7 +4004,7 @@
         "ɡ":    { "MUFFLE": 1, "SOUND": "g" },
         "ŋ":    { "MUFFLE": 0, "SOUND": "ng" },
         "h":    { "MUFFLE": 3, "SOUND": "" },
-        
+
         "eɪ":   { "MUFFLE": 0, "SOUND": "ay" },
         "ə":    { "MUFFLE": 0, "SOUND": "a" },
         "ɔ":    { "MUFFLE": 1, "SOUND": "ar" },
@@ -4021,7 +4021,7 @@
         "ʊ":    { "MUFFLE": 0, "SOUND": "oo" },
         "aʊ":   { "MUFFLE": 0, "SOUND": "ow" },
         "ɔɪ":   { "MUFFLE": 0, "SOUND": "oy" },
-        
+
         "ɾ":    { "MUFFLE": 0, "SOUND": "t" },
         "β":    { "MUFFLE": 0, "SOUND": "v" },
         "ʎ":    { "MUFFLE": 0, "SOUND": "yh" },
@@ -4029,7 +4029,7 @@
         "ɲ":    { "MUFFLE": 2, "SOUND": "ya" },
         "ɣ":    { "MUFFLE": 1, "SOUND": "ra" },
         "ʝ":    { "MUFFLE": 0, "SOUND": "ya" },
-        
+
         "œ̃":    { "MUFFLE": 0, "SOUND": "ur" },
         "ɔ̃":    { "MUFFLE": 1, "SOUND": "aw" },
         "ɑ̃":    { "MUFFLE": 0, "SOUND": "o" },
@@ -4040,14 +4040,14 @@
         "ø":    { "MUFFLE": 0, "SOUND": "euh" },
         "ʁː":   { "MUFFLE": 1, "SOUND": "vh" },
         "ε":    { "MUFFLE": 0, "SOUND": "ee" },
-    
+
         "ʏ":    { "MUFFLE": 0, "SOUND": "bh" },
         "ʀ":    { "MUFFLE": 3, "SOUND": "" },
         "õ":    { "MUFFLE": 1, "SOUND": "an" },
         "ẽ":    { "MUFFLE": 0, "SOUND": "en" },
         "ĩ":    { "MUFFLE": 0, "SOUND": "i" },
         "ã":    { "MUFFLE": 1, "SOUND": "eh" },
-        
+
         "ɯ":    { "MUFFLE": 0, "SOUND": "eu" },
         "tɕ":   { "MUFFLE": 2, "SOUND": "ha" },
         "ts":   { "MUFFLE": 1, "SOUND": "ah" },
