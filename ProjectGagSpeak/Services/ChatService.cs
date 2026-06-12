@@ -29,7 +29,6 @@ public class ChatService : DisposableMediatorSubscriberBase
         : base(logger, mediator)
     {
         _delayTimer.Start();
-        Svc.Chat.ChatMessage += OnChatboxMessage;
         Svc.Chat.LogMessage += OnLogMessage;
         Mediator.Subscribe<FrameworkUpdateMessage>(this, (_) => FrameworkUpdate());
     }
@@ -39,7 +38,6 @@ public class ChatService : DisposableMediatorSubscriberBase
         base.Dispose(disposing);
         Logger.LogInformation("Disposing ChatService and unsubscribing from events.");
         Svc.Chat.LogMessage -= OnLogMessage;
-        Svc.Chat.ChatMessage -= OnChatboxMessage;
         _delayTimer?.Stop();
     }
 
@@ -63,7 +61,15 @@ public class ChatService : DisposableMediatorSubscriberBase
         SendMessage(message);
         _delayTimer.Restart();
     }
-    
+
+
+    /// <summary>
+    /// Handles the `LogMessage` event, parsing incoming chat messages and invoking specific checks
+    /// for relevant in-game activities such as deathroll or PvP activity.
+    /// </summary>
+    /// <param name="message">
+    /// The chat message provided by the game's logging system, containing details to be processed.
+    /// </param>
     private void OnLogMessage(ILogMessage message)
     {
         if (!MainHub.IsConnected || !PlayerData.Available)
@@ -71,45 +77,33 @@ public class ChatService : DisposableMediatorSubscriberBase
         
         // Check for things that are pushed to LogMessages.
         CheckForDeathroll(message);
+        CheckForPvpActivity(message);
     }
 
     /// <summary>
-    ///     Handles incoming chat messages that have finished being processed by the server.
+    /// Generates the full entity name including the world name if available.
     /// </summary>
-    private void OnChatboxMessage(IHandleableChatMessage message)
-    //private void OnChatboxMessage(XivChatType type, int ts, ref SeString sender, ref SeString msg, ref bool showInChatbox)
+    /// <param name="entity">The log message entity containing the name and home world information.</param>
+    /// <returns>
+    /// A string representing the entity name combined with the world name, or an empty string if the entity is null.
+    /// </returns>
+    private static string CalculateEntityNameWithWorld(ILogMessageEntity? entity)
     {
-        if (!MainHub.IsConnected || !PlayerData.Available)
-            return; // Process as normal.
-
-        var sender = message.Sender;
-        var type = message.LogKind;
-        var msg = message.OriginalMessage.ToDalamudString();
-
-        var senderPayload = sender.Payloads.OfType<PlayerPayload>().FirstOrDefault();
-        var senderName = senderPayload?.PlayerName ?? PlayerData.Name;
-        var senderWorld = senderPayload?.World.Value.Name.ToString() ?? PlayerData.HomeWorldName;
-
-        // Check for things we dont need the player payload for.
-        CheckForPvpActivity(type, msg);
-
-        // If the chat is not a normal chat channel do not process.
-        if(ChatLogAgent.FromXivChatType(type) is not { } channel)
-            return;
-
-        Mediator.Publish(new GameChatMessage(channel, $"{senderName}@{senderWorld}", msg));
+        return entity is null ? string.Empty : $"{entity.Name}@{entity.HomeWorld.ValueNullable?.Name.ToString()}";
     }
-
+    
     /// <summary>
     ///     Detects any desired activity from PVP interactions.
     /// </summary>
-    private void CheckForPvpActivity(XivChatType type, SeString msg)
+    private void CheckForPvpActivity(ILogMessage message)
     {
-        if (!PlayerData.InPvP || type is not (XivChatType)2874)
+        // Pvp defeat log messages are of type SystemError.
+        if (!PlayerData.InPvP || message.LogMessageId is not 557)
             return;
 
         // If we got a kill, fore achievement.
-        if (!PlayerData.IsDead)
+        var sourceName = CalculateEntityNameWithWorld(message.SourceEntity);
+        if (!PlayerData.IsDead && sourceName == PlayerData.Name)
         {
             Logger.LogInformation("We just killed someone in PvP!", LoggerType.Achievements);
             GagspeakEventManager.AchievementEvent(UnlocksEvent.PvpPlayerSlain);
