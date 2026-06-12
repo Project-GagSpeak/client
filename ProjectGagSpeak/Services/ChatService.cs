@@ -98,12 +98,12 @@ public class ChatService : DisposableMediatorSubscriberBase
     private void CheckForPvpActivity(ILogMessage message)
     {
         // Pvp defeat log messages are of type SystemError.
-        if (!PlayerData.InPvP || message.LogMessageId is not 557)
+        if (!PlayerData.InPvP || message.LogMessageId is not 7409)
             return;
-
+        
         // If we got a kill, fore achievement.
         var sourceName = CalculateEntityNameWithWorld(message.SourceEntity);
-        if (!PlayerData.IsDead && sourceName == PlayerData.Name)
+        if (!PlayerData.IsDead && sourceName == PlayerData.NameWithWorld)
         {
             Logger.LogInformation("We just killed someone in PvP!", LoggerType.Achievements);
             GagspeakEventManager.AchievementEvent(UnlocksEvent.PvpPlayerSlain);
