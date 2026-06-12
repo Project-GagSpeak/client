@@ -396,7 +396,6 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
                 if (await _processor.HandleActionAsync(trigger.InvokableAction, enactor).ConfigureAwait(false))
                 {
                     GagspeakEventManager.AchievementEvent(UnlocksEvent.TriggerFired);
-                    break;
                 }
             }
             else
@@ -405,7 +404,6 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
                 if (_processor.HandleAction(trigger.InvokableAction))
                 {
                     GagspeakEventManager.AchievementEvent(UnlocksEvent.TriggerFired);
-                    break;
                 }
             }
         }
