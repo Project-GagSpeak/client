@@ -117,18 +117,14 @@ public class ChatService : DisposableMediatorSubscriberBase
     /// </summary>
     private void CheckForDeathroll(ILogMessage message)
     {
-        Logger.LogDebug("Checking for Deathroll Message.", LoggerType.Triggers);
-        Logger.LogDebug($"Message LogId: {message.LogMessageId}, Source: {message.SourceEntity?.Name}, Parameters: {message.ParameterCount}", LoggerType.Triggers);
         // Only care about /random messages
         if (message.LogMessageId is not (856 or 3887))
             return;
         
         Logger.LogDebug("Handling Deathroll Message.", LoggerType.Triggers);
-        var world = message.SourceEntity?.HomeWorld.ValueNullable?.Name.ToString();
-        var sender = message.Parameters[0].StringValue;
-        var nameWithWorld = $"{sender}@{world}";
+        var sourceName = CalculateEntityNameWithWorld(message.SourceEntity);
         var rolled = message.Parameters[1].UIntValue;
-        Logger.LogDebug($"Received Deathroll Message from {nameWithWorld}", LoggerType.Triggers);
+        Logger.LogDebug($"Received Deathroll Message from {sourceName}", LoggerType.Triggers);
         
         // Check for a number cap. If not present, default to 999.
         var cap = message.ParameterCount > 2 ? message.Parameters[2].UIntValue : 0;
@@ -139,7 +135,7 @@ public class ChatService : DisposableMediatorSubscriberBase
         var capResult = cap is 0 or > 999 ? -1 : (int)cap;
         
         Logger.LogDebug($"Validated Deathroll: Roll {rollResult}, Cap {capResult}", LoggerType.Triggers);
-        Mediator.Publish(new DeathrollMessage(nameWithWorld, rollResult, capResult));
+        Mediator.Publish(new DeathrollMessage(sourceName, rollResult, capResult));
     }
 
     /// <summary>
