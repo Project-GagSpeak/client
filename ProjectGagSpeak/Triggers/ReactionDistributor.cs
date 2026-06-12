@@ -381,7 +381,7 @@ public class ReactionDistributor
                 Identifier = act.RestrictionId,
                 Enabler = enactor ?? MainHub.UID
             };
-            return await _selfBondage.DoSelfRestraintResult(setData, DataUpdateType.Applied).ConfigureAwait(false);
+            return await _selfBondage.DoSelfRestraintResult(setData, DataUpdateType.Swapped).ConfigureAwait(false);
         }
         else if (act.NewState is NewState.Locked)
         {
