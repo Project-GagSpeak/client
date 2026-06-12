@@ -442,7 +442,7 @@ public partial class MainHub
     }
 
     public async Task<HubResponse> ChangeOtherGlobalPerm(UserData target, string propertyName, object newValue)
-        => await UserChangeOtherGlobalPerm(new(target, new KeyValuePair<string, object>(propertyName, newValue), target));
+        => await UserChangeOtherGlobalPerm(new(target, new KeyValuePair<string, object>(propertyName, newValue), OwnUserData));
 
     public async Task<HubResponse> UserChangeOtherPairPerm(SingleChangeUnique userPermissions)
     {
