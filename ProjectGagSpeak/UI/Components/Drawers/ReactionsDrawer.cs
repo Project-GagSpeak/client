@@ -140,10 +140,16 @@ public sealed class ReactionsDrawer
         CkGui.AttachTooltip("Invokes an interaction with the Gags module");
 
         CkGui.ColorTextFrameAlignedInline(GetStateName(act.NewState), ImGuiColors.TankBlue);
-        CkGui.TextFrameAlignedInline(act.NewState is NewState.Locked ? "the gag on" : "a gag to");
+        CkGui.TextFrameAlignedInline(act.NewState switch { NewState.Locked => "the gag on", NewState.Disabled => "a gag from", _ => "a gag to" });
         CkGui.ColorTextFrameAlignedInline(CkGuiUtils.LayerIdxName(act.LayerIdx), ImGuiColors.TankBlue);
         if (act.NewState is NewState.Disabled)
+        {
+            ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged].Handle, new(ImUtf8.FrameHeight));
+            CkGui.AttachTooltip("Indicates what gag will be removed.");
+            CkGui.TextFrameAlignedInline("Targeting");
+            CkGui.ColorTextFrameAlignedInline(act.GagType is GagType.None ? "Any Gag" : act.GagType.GagName(), ImGuiColors.TankBlue);
             return;
+        }
 
         // For Apply, do the gag selection, otherwise do the lock selection.
         if (act.NewState is NewState.Enabled)
@@ -178,7 +184,7 @@ public sealed class ReactionsDrawer
         CkGui.AttachTooltip("Invokes an interaction with the Gags module");
 
         CkGui.TextFrameAlignedInline($"{(act.LayerIdx is -1 ? "On any open layer" : $"On layer {act.LayerIdx}")}, a");
-        CkGui.ColorTextFrameAlignedInline(isLockAndKey ? act.Padlock.ToName() : act.GagType.GagName(), ImGuiColors.TankBlue);
+        CkGui.ColorTextFrameAlignedInline(isLockAndKey ? act.Padlock.ToName() : (act.GagType is GagType.None ? "Any Gag" : act.GagType.GagName()), ImGuiColors.TankBlue);
         CkGui.TextFrameAlignedInline("will be");
         CkGui.ColorTextFrameAlignedInline(act.NewState.ToName(), ImGuiColors.TankBlue);
         if (!act.IsValid())
@@ -200,8 +206,8 @@ public sealed class ReactionsDrawer
         if (CkGuiUtils.EnumCombo("##edit-state", stateW, act.NewState, out var newVal, _statesNoUnlock, GetStateName, flags: CFlags.NoArrowButton))
             act.NewState = newVal;
 
-        CkGui.TextFrameAlignedInline(act.NewState is NewState.Locked ? "the gag on" : "a gag to");
-        
+        CkGui.TextFrameAlignedInline(act.NewState switch { NewState.Locked => "the gag on", NewState.Disabled => "a gag from", _ => "a gag to" });
+
         var width = ImGui.CalcTextSize("Any Layerm").X;
         ImUtf8.SameLineInner();
         if (CkGuiUtils.LayerIdxCombo("##edit-layer", width, act.LayerIdx, out int newIdx, 3, true, CFlags.NoArrowButton))
@@ -211,7 +217,16 @@ public sealed class ReactionsDrawer
         }
 
         if (act.NewState is NewState.Disabled)
+        {
+            ImGui.Image(CosmeticService.CoreTextures.Cache[CoreTexture.Gagged].Handle, new(ImUtf8.FrameHeight));
+            CkGui.AttachTooltip("Indicates what gag will be removed.");
+            CkGui.TextFrameAlignedInline("Targeting");
+
+            ImUtf8.SameLineInner();
+            if (CkGuiUtils.EnumCombo("##edit-gag-rem", width, act.GagType, out var remGag, i => i switch { GagType.None => "Any Gag", _ => i.GagName() }, flags: CFlags.NoArrowButton))
+                act.GagType = remGag;
             return;
+        }
 
         // For Apply, do the gag selection, otherwise do the lock selection.
         if (act.NewState is NewState.Enabled)
@@ -310,10 +325,17 @@ public sealed class ReactionsDrawer
         CkGui.AttachTooltip("Invokes an interaction with the Restriction module");
 
         CkGui.ColorTextFrameAlignedInline(GetStateName(act.NewState), ImGuiColors.TankBlue);
-        CkGui.TextFrameAlignedInline(act.NewState is NewState.Locked ? "the binding on" : "a binding to");
+        CkGui.TextFrameAlignedInline(act.NewState switch { NewState.Locked => "the binding on", NewState.Disabled => "a binding from", _ => "a binding to" });
         CkGui.ColorTextFrameAlignedInline(CkGuiUtils.LayerIdxName(act.LayerIdx), ImGuiColors.TankBlue);
         if (act.NewState is NewState.Disabled)
+        {
+            CkGui.FramedIconText(FAI.Handcuffs);
+            CkGui.AttachTooltip("Indicates what restriction is removed.");
+            CkGui.TextFrameAlignedInline("Targeting");
+            var remItem = _restrictions.Storage.FirstOrDefault(r => r.Identifier == act.RestrictionId);
+            CkGui.ColorTextFrameAlignedInline(act.RestrictionId == Guid.Empty ? "Any Restriction" : (remItem is { } ri ? ri.Label.TrimText(50) : "<UNK>"), ImGuiColors.TankBlue);
             return;
+        }
 
         // For Apply, do the gag selection, otherwise do the lock selection.
         if (act.NewState is NewState.Enabled)
@@ -370,9 +392,13 @@ public sealed class ReactionsDrawer
                 }
                 break;
             case NewState.Disabled:
+                var remItem = _restrictions.Storage.FirstOrDefault(r => r.Identifier == act.RestrictionId);
                 CkGui.ColorTextFrameAligned("Remove", ImGuiColors.TankBlue);
-                CkGui.TextFrameAlignedInline("the restriction on");
-                CkGui.ColorTextFrameAligned($"layer {act.LayerIdx}", ImGuiColors.TankBlue);
+                CkGui.TextFrameAlignedInline("the");
+                CkGui.ColorTextFrameAlignedInline(act.RestrictionId == Guid.Empty ? "restriction" : (remItem is { } ri ? ri.Label.TrimText(20) : "<UNK>"), ImGuiColors.TankBlue);
+                CkGui.AttachTooltip(remItem?.Label, remItem is null);
+                CkGui.TextFrameAlignedInline("on");
+                CkGui.ColorTextFrameAlignedInline(act.LayerIdx is -1 ? "any layer" : $"layer {act.LayerIdx}", ImGuiColors.TankBlue);
                 CkGui.TextFrameAlignedInline("if unlocked");
                 break;
         };
@@ -397,7 +423,7 @@ public sealed class ReactionsDrawer
         if (CkGuiUtils.EnumCombo("##edit-state", stateW, act.NewState, out var newVal, _statesNoUnlock, GetStateName, flags: CFlags.NoArrowButton))
             act.NewState = newVal;
 
-        CkGui.TextFrameAlignedInline(act.NewState is NewState.Locked ? "the binding on" : "a binding to");
+        CkGui.TextFrameAlignedInline(act.NewState switch { NewState.Locked => "the binding on", NewState.Disabled => "a binding from", _ => "a binding to" });
 
         var width = ImGui.CalcTextSize("Any Layerm").X;
         ImUtf8.SameLineInner();
@@ -405,7 +431,18 @@ public sealed class ReactionsDrawer
             act.LayerIdx = (newIdx == 5) ? -1 : newIdx;
 
         if (act.NewState is NewState.Disabled)
+        {
+            CkGui.FramedIconText(FAI.Handcuffs);
+            CkGui.AttachTooltip("Indicates what restriction will be removed.--SEP--Right-Click to clear, targeting any restriction.");
+            CkGui.TextFrameAlignedInline("Targeting");
+
+            ImUtf8.SameLineInner();
+            if (_restrictionCombo.Draw("##restrictions-remove", act.RestrictionId, ImGui.GetContentRegionAvail().X))
+                act.RestrictionId = _restrictionCombo.Current?.Identifier ?? Guid.Empty;
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+                act.RestrictionId = Guid.Empty;
             return;
+        }
 
         // For Apply, do the gag selection, otherwise do the lock selection.
         if (act.NewState is NewState.Enabled)
@@ -514,7 +551,14 @@ public sealed class ReactionsDrawer
         CkGui.ColorTextFrameAlignedInline(GetStateName(act.NewState), ImGuiColors.TankBlue);
         CkGui.TextFrameAlignedInline(act.NewState is NewState.Enabled ? "a restraint set" : "the active restraint set");
         if (act.NewState is NewState.Disabled)
+        {
+            CkGui.FramedIconText(FAI.Handcuffs);
+            CkGui.AttachTooltip("Indicates what restraint set is removed.");
+            CkGui.TextFrameAlignedInline("Targeting");
+            var remItem = _restraints.Storage.FirstOrDefault(r => r.Identifier == act.RestrictionId);
+            CkGui.ColorTextFrameAlignedInline(act.RestrictionId == Guid.Empty ? "Any Restraint Set" : (remItem is { } rs ? rs.Label.TrimText(50) : "<UNK>"), ImGuiColors.TankBlue);
             return;
+        }
 
         // For Apply, do the gag selection, otherwise do the lock selection.
         if (act.NewState is NewState.Enabled)
@@ -562,8 +606,12 @@ public sealed class ReactionsDrawer
                 CkGui.TextFrameAlignedInline("on an unlocked, applied restraint");
                 break;
             case NewState.Disabled:
+                var remItem = _restraints.Storage.FirstOrDefault(r => r.Identifier == act.RestrictionId);
                 CkGui.ColorTextFrameAligned("Removes", ImGuiColors.TankBlue);
-                CkGui.TextFrameAlignedInline("a restraint set, if unlocked and present");
+                CkGui.TextFrameAlignedInline("the");
+                CkGui.ColorTextFrameAlignedInline(act.RestrictionId == Guid.Empty ? "active restraint set" : (remItem is { } rs ? rs.Label.TrimText(20) : "<UNK>"), ImGuiColors.TankBlue);
+                CkGui.AttachTooltip(remItem?.Label, remItem is null);
+                CkGui.TextFrameAlignedInline("if unlocked and present");
                 break;
         };
 
@@ -589,7 +637,18 @@ public sealed class ReactionsDrawer
 
         CkGui.TextFrameAlignedInline(act.NewState is NewState.Enabled ? "a restraint set" : "the active restraint set");
         if (act.NewState is NewState.Disabled)
+        {
+            CkGui.FramedIconText(FAI.Handcuffs);
+            CkGui.AttachTooltip("Indicates what restraint set will be removed.--SEP--Right-Click to clear, targeting any restraint set.");
+            CkGui.TextFrameAlignedInline("Targeting");
+
+            ImUtf8.SameLineInner();
+            if (_restraintCombo.Draw("##restraints-remove", act.RestrictionId, ImGui.GetContentRegionAvail().X))
+                act.RestrictionId = _restraintCombo.Current?.Identifier ?? Guid.Empty;
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+                act.RestrictionId = Guid.Empty;
             return;
+        }
 
         // For Apply, do the gag selection, otherwise do the lock selection.
         if (act.NewState is NewState.Enabled)
