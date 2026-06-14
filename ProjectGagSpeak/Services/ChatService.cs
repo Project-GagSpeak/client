@@ -29,6 +29,7 @@ public class ChatService : DisposableMediatorSubscriberBase
         : base(logger, mediator)
     {
         _delayTimer.Start();
+        Svc.Chat.ChatMessage += OnChatboxMessage;
         Svc.Chat.LogMessage += OnLogMessage;
         Mediator.Subscribe<FrameworkUpdateMessage>(this, (_) => FrameworkUpdate());
     }
@@ -37,6 +38,7 @@ public class ChatService : DisposableMediatorSubscriberBase
     {
         base.Dispose(disposing);
         Logger.LogInformation("Disposing ChatService and unsubscribing from events.");
+        Svc.Chat.ChatMessage -= OnChatboxMessage;
         Svc.Chat.LogMessage -= OnLogMessage;
         _delayTimer?.Stop();
     }
@@ -62,6 +64,30 @@ public class ChatService : DisposableMediatorSubscriberBase
         _delayTimer.Restart();
     }
 
+
+    /// <summary>
+    ///     Handles incoming chat messages that have finished being processed by the server.
+    ///     Parses normal chat channels into a <see cref="GameChatMessage"/> for downstream consumers.
+    /// </summary>
+    private void OnChatboxMessage(IHandleableChatMessage message)
+    {
+        if (!MainHub.IsConnected || !PlayerData.Available)
+            return; // Process as normal.
+
+        var sender = message.Sender;
+        var type = message.LogKind;
+        var msg = message.OriginalMessage.ToDalamudString();
+
+        var senderPayload = sender.Payloads.OfType<PlayerPayload>().FirstOrDefault();
+        var senderName = senderPayload?.PlayerName ?? PlayerData.Name;
+        var senderWorld = senderPayload?.World.Value.Name.ToString() ?? PlayerData.HomeWorldName;
+
+        // If the chat is not a normal chat channel do not process.
+        if (ChatLogAgent.FromXivChatType(type) is not { } channel)
+            return;
+
+        Mediator.Publish(new GameChatMessage(channel, $"{senderName}@{senderWorld}", msg));
+    }
 
     /// <summary>
     /// Handles the `LogMessage` event, parsing incoming chat messages and invoking specific checks
