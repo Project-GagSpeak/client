@@ -118,15 +118,24 @@ public sealed class DetectionDrawer : IDisposable
         if (trigger.ActionKind is not (LimitedActionEffectType.Miss or LimitedActionEffectType.Knockback or LimitedActionEffectType.Attract1))
         {
             CkGui.FramedIconText(FAI.BarsProgress);
-            var format = trigger.ActionKind is LimitedActionEffectType.Heal ? "HP" : "DPS";
+            if (trigger.UsePercentChance)
+            {
+                CkGui.TextFrameAlignedInline("On a");
+                CkGui.ColorTextFrameAlignedInline($"{trigger.PercentChance}%", ImGuiColors.TankBlue);
+                CkGui.TextFrameAlignedInline("chance.");
+            }
+            else
+            {
+                var format = trigger.ActionKind is LimitedActionEffectType.Heal ? "HP" : "DPS";
 
-            CkGui.TextFrameAlignedInline("Between");
-            CkGui.ColorTextFrameAlignedInline($"{trigger.ThresholdMinValue}{format}", ImGuiColors.TankBlue);
-            CkGui.AttachTooltip("The lowest HP that is \"In Range\".");
+                CkGui.TextFrameAlignedInline("Between");
+                CkGui.ColorTextFrameAlignedInline($"{trigger.ThresholdMinValue}{format}", ImGuiColors.TankBlue);
+                CkGui.AttachTooltip("The lowest HP that is \"In Range\".");
 
-            CkGui.TextFrameAlignedInline("and");
-            CkGui.ColorTextFrameAlignedInline($"{trigger.ThresholdMaxValue}{format}", ImGuiColors.TankBlue);
-            CkGui.AttachTooltip("The highest HP that is \"In Range\".");
+                CkGui.TextFrameAlignedInline("and");
+                CkGui.ColorTextFrameAlignedInline($"{trigger.ThresholdMaxValue}{format}", ImGuiColors.TankBlue);
+                CkGui.AttachTooltip("The highest HP that is \"In Range\".");
+            }
         }
 
         if (trigger.IsGenericDetection)
@@ -214,23 +223,39 @@ public sealed class DetectionDrawer : IDisposable
 
         if (trigger.ActionKind is not (LimitedActionEffectType.Miss or LimitedActionEffectType.Knockback or LimitedActionEffectType.Attract1))
         {
-            var formatPost = trigger.ActionKind is LimitedActionEffectType.Heal ? "HP" : "DPS";
+            var pctRef = trigger.UsePercentChance;
+            if (ImGui.Checkbox("Use % Chance Instead##UsePercentChance", ref pctRef))
+                trigger.UsePercentChance = pctRef;
+            CkGui.AttachTooltip("If the trigger fires on a random % chance, or on a damage/heal threshold.");
+
             CkGui.FramedIconText(FAI.BarsProgress);
             ImUtf8.SameLineInner();
-            var dragW = (ImGui.GetContentRegionAvail().X - ImUtf8.ItemInnerSpacing.X) / 2;
-            var minRef = trigger.ThresholdMinValue;
-            var maxRef = trigger.ThresholdMaxValue;
+            if (trigger.UsePercentChance)
+            {
+                var chanceRef = trigger.PercentChance;
+                ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
+                if (ImGui.DragInt("##PercentChanceSlider", ref chanceRef, 1.0f, 0, 100, "%d%% Chance"))
+                    trigger.PercentChance = Math.Clamp(chanceRef, 0, 100);
+                CkGui.AttachTooltip("The % chance the trigger fires when its action is detected.", ImGuiColors.TankBlue);
+            }
+            else
+            {
+                var formatPost = trigger.ActionKind is LimitedActionEffectType.Heal ? "HP" : "DPS";
+                var dragW = (ImGui.GetContentRegionAvail().X - ImUtf8.ItemInnerSpacing.X) / 2;
+                var minRef = trigger.ThresholdMinValue;
+                var maxRef = trigger.ThresholdMaxValue;
 
-            ImGui.SetNextItemWidth(dragW);
-            if (ImGui.DragInt("##MinThresSlider", ref minRef, 10.0f, -1, 1000000, $"Min. %d{formatPost}"))
-                trigger.ThresholdMinValue = minRef;
-            CkGui.AttachTooltip("The lowest HP that is --COL--\"In Range\"--COL--.", ImGuiColors.TankBlue);
+                ImGui.SetNextItemWidth(dragW);
+                if (ImGui.DragInt("##MinThresSlider", ref minRef, 10.0f, -1, 1000000, $"Min. %d{formatPost}"))
+                    trigger.ThresholdMinValue = minRef;
+                CkGui.AttachTooltip("The lowest HP that is --COL--\"In Range\"--COL--.", ImGuiColors.TankBlue);
 
-            ImUtf8.SameLineInner();
-            ImGui.SetNextItemWidth(dragW);
-            if (ImGui.DragInt("##MaxThresSlider", ref maxRef, 10.0f, minRef, 1000000, $"Max. %d{formatPost}"))
-                trigger.ThresholdMaxValue = maxRef;
-            CkGui.AttachTooltip("The highest HP that is --COL--\"In Range\"--COL--.", ImGuiColors.TankBlue);
+                ImUtf8.SameLineInner();
+                ImGui.SetNextItemWidth(dragW);
+                if (ImGui.DragInt("##MaxThresSlider", ref maxRef, 10.0f, minRef, 1000000, $"Max. %d{formatPost}"))
+                    trigger.ThresholdMaxValue = maxRef;
+                CkGui.AttachTooltip("The highest HP that is --COL--\"In Range\"--COL--.", ImGuiColors.TankBlue);
+            }
         }
 
         // DetectableActions - This filter display allows you to append certain jobs and actions you want the trigger to qualify for.
