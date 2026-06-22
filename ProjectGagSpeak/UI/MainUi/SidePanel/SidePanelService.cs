@@ -73,6 +73,7 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
 
     public string ConfinementTimer = string.Empty;
     public AddressBookEntry Address = new();
+    public bool UseLifestreamAddress = false;
 
     public string ImprisonTimer = string.Empty;
     public Vector3 ImprisonPos = Vector3.Zero;
@@ -198,6 +199,7 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
         EmoteId = 0;
         CyclePose = 0;
         Address = new AddressBookEntry();
+        UseLifestreamAddress = false;
         ImprisonPos = Vector3.Zero;
         ImprisonRadius = 1f;
         ApplyIntensity = 0;

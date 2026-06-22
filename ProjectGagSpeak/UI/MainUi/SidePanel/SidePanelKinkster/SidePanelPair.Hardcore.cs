@@ -5,6 +5,9 @@ using CkCommons.Raii;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CustomCombos;
+using GagSpeak.Interop;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.Watchers;
@@ -56,7 +59,9 @@ public partial class SidePanelPair
         var confinementAllowed = k.PairPerms.AllowIndoorConfinement && hc.CanChange(HcAttribute.Confinement, MainHub.UID);
         var confinementTT = confinementActive ? $"End {dispName}'s confinement period." : $"Confine {dispName} indoors.";
         DrawColoredExpander(InteractionType.Confinement, confinementInfo.Item1, confinementInfo.Item2, confinementActive, !confinementAllowed, confinementTT);
-        UniqueHcChild(InteractionType.Confinement, confinementActive, CkStyle.GetFrameRowsHeight(4).AddWinPadY(), () =>
+        // Confine child = timer row (1) + address config rows. Address config grows by a row for the Lifestream toggle when it is available.
+        var confineRows = AddressConfigRows(cache) + 1;
+        UniqueHcChild(InteractionType.Confinement, confinementActive, CkStyle.GetFrameRowsHeight(confineRows).AddWinPadY(), () =>
         {
             DrawTimerButtonRow(InteractionType.Confinement, ref cache.ConfinementTimer, "Confine", !confinementAllowed);
             DrawAddressConfig(cache, k, dispName, width);
@@ -235,9 +240,37 @@ public partial class SidePanelPair
         }
     }
 
+    // Rows the AddressConfig child needs. Default (no Lifestream) = 3. With Lifestream a toggle row is added;
+    // when that toggle picks the address book, the manual slider rows collapse away.
+    private static int AddressConfigRows(KinksterInfoCache cache)
+        => !IpcCallerLifestream.APIAvailable ? 3 : (cache.UseLifestreamAddress ? 1 : 4);
+
     private void DrawAddressConfig(KinksterInfoCache cache, Kinkster k, string dispName, float width)
     {
-        using var c = CkRaii.FramedChildPaddedWH("##AddressConfig", new(width, CkStyle.GetFrameRowsHeight(3).AddWinPadY()), 0, GsCol.VibrantPink.Uint());
+        using var c = CkRaii.FramedChildPaddedWH("##AddressConfig", new(width, CkStyle.GetFrameRowsHeight(AddressConfigRows(cache)).AddWinPadY()), 0, GsCol.VibrantPink.Uint());
+
+        // When Lifestream is installed, offer pulling a saved address from its address book instead of the manual sliders.
+        if (IpcCallerLifestream.APIAvailable)
+        {
+            ImGui.Checkbox("##UseLifestreamAddr", ref cache.UseLifestreamAddress);
+            CkGui.AttachTooltip("Pick a saved address from your Lifestream address book instead of entering it manually.");
+
+            ImUtf8.SameLineInner();
+            using (ImRaii.Disabled(!cache.UseLifestreamAddress))
+            {
+                // Default AddressBookEntry leaves World at ushort.MaxValue; treat that as "nothing picked yet".
+                var preview = cache.Address.World == ushort.MaxValue
+                    ? "Select an Address.."
+                    : AddressBookCombo.DisplayString(cache.Address.AsTuple());
+                if (_addressBook.Draw(preview, ImGui.GetContentRegionAvail().X, CFlags.NoArrowButton) && _addressBook.Current is { } picked)
+                    cache.Address = AddressBookEntry.FromTuple(picked);
+            }
+            CkGui.AttachTooltip($"The saved Lifestream address {dispName} will be confined to.");
+
+            // When using the address book, all manual fields are sourced from the picked entry, so hide them.
+            if (cache.UseLifestreamAddress)
+                return;
+        }
 
         CkGui.FramedIconText(FAI.Home);
         ImUtf8.SameLineInner();
