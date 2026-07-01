@@ -1,3 +1,5 @@
+using GagSpeak.PlayerClient;
+
 namespace GagSpeak;
 
 #nullable disable
@@ -14,6 +16,21 @@ public class GagspeakEventManager
     }
 
     private static Dictionary<UnlocksEvent, Delegate> EventDictionary = new Dictionary<UnlocksEvent, Delegate>();
+
+    /// <summary>
+    ///     Gate for all achievement event dispatch. Until the server's achievement SaveData has
+    ///     loaded (<see cref="ClientAchievements.HasValidData"/>), events must not run: they would
+    ///     act on freshly re-initialized achievements. This causes issues like wiping out all completed
+    ///     achievements and starting timers for achievements that were completed already.
+    /// </summary>
+    private static bool CanProcess(UnlocksEvent eventName)
+    {
+        if (ClientAchievements.HasValidData)
+            return true;
+
+        UnlocksLogger?.LogTrace($"Event [{eventName}] skipped - achievement SaveData not loaded yet.", LoggerType.AchievementEvents);
+        return false;
+    }
 
     // Subscribe with no parameters
     public void Subscribe(UnlocksEvent eventName, Action listener)
@@ -186,6 +203,9 @@ public class GagspeakEventManager
     // Trigger event with no parameter
     public static void AchievementEvent(UnlocksEvent eventName)
     {
+        if (!CanProcess(eventName))
+            return;
+
         if (EventDictionary.TryGetValue(eventName, out var action))
         {
             try
@@ -210,6 +230,9 @@ public class GagspeakEventManager
     // Trigger event with one parameter
     public static void AchievementEvent<T>(UnlocksEvent eventName, T param)
     {
+        if (!CanProcess(eventName))
+            return;
+
         if (EventDictionary.TryGetValue(eventName, out var action))
         {
             try
@@ -234,6 +257,9 @@ public class GagspeakEventManager
     // Trigger event with two parameters
     public static void AchievementEvent<T1, T2>(UnlocksEvent eventName, T1 param1, T2 param2)
     {
+        if (!CanProcess(eventName))
+            return;
+
         if (EventDictionary.TryGetValue(eventName, out var action))
         {
             try
@@ -258,6 +284,9 @@ public class GagspeakEventManager
     // Trigger event with three parameters
     public static void AchievementEvent<T1, T2, T3>(UnlocksEvent eventName, T1 param1, T2 param2, T3 param3)
     {
+        if (!CanProcess(eventName))
+            return;
+
         if (EventDictionary.TryGetValue(eventName, out var action))
         {
             try
@@ -282,6 +311,9 @@ public class GagspeakEventManager
     // Trigger event with four parameters
     public static void AchievementEvent<T1, T2, T3, T4>(UnlocksEvent eventName, T1 param1, T2 param2, T3 param3, T4 param4)
     {
+        if (!CanProcess(eventName))
+            return;
+
         if (EventDictionary.TryGetValue(eventName, out var action))
         {
             try
@@ -306,6 +338,9 @@ public class GagspeakEventManager
     // Trigger event with five parameters
     public static void AchievementEvent<T1, T2, T3, T4, T5>(UnlocksEvent eventName, T1 param1, T2 param2, T3 param3, T4 param4, T5 param5)
     {
+        if (!CanProcess(eventName))
+            return;
+
         if (EventDictionary.TryGetValue(eventName, out var action))
         {
             try

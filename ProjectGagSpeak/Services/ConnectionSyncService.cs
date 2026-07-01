@@ -102,21 +102,21 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
         _alarms.Load();
         _triggers.Load();
 
-        // 3. Load in the data from the server into our storages.
+        // 3. Update the achievement manager with the latest UID and the latest data.
+        Logger.LogInformation($"[SYNC PROGRESS]: Syncing Achievement Data ({MainHub.UID})");
+        _achievements.OnServerConnection(connectionInfo.UserAchievements);
+
+        // 4. Load in the data from the server into our storages.
         Logger.LogInformation("[SYNC PROGRESS]: Syncing ClientData GlobalPerms & HardcoreStatus!");
         _clientDatListener.ChangeAllClientGlobals(connectionInfo.User, connectionInfo.GlobalPerms, connectionInfo.HardcoreState);
 
-        // 4. Sync overlays with the global permissions & metadata.
+        // 5. Sync overlays with the global permissions & metadata.
         Logger.LogInformation("[SYNC PROGRESS]: Applying Custom Hypnosis Data if Any!");
         await _overlays.ReapplySavedActiveEffect();
 
-        // 5. Sync Visual Cache with active state.
+        // 6. Sync Visual Cache with active state.
         Logger.LogInformation("[SYNC PROGRESS]: Syncing Visual Cache With Display");
         await _visuals.SyncServerData(connectionInfo);
-
-        // 6. Update the achievement manager with the latest UID and the latest data.
-        Logger.LogInformation($"[SYNC PROGRESS]: Syncing Achievement Data ({MainHub.UID})");
-        _achievements.OnServerConnection(connectionInfo.UserAchievements);
 
         Logger.LogInformation("[SYNC PROGRESS]: Done!");
     }
