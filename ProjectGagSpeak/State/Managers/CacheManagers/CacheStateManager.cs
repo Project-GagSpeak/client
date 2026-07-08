@@ -320,11 +320,11 @@ public class CacheStateManager : IHostedService
             _glamourHandler.PrintLatestCache();
         }
 
-        // Now perform all updates in parallel.
-        _logger.LogInformation("------ Applying all Cache Updates In Parallel ------");
+        // Set temp mods first so glamour applies onto the modded state with correct priorities, then run the rest in parallel.
+        _logger.LogInformation("------ Applying all Cache Updates ------");
+        await _modHandler.UpdateModCache();
         await Task.WhenAll(
             _glamourHandler.UpdateCaches(),
-            _modHandler.UpdateModCache(),
             _lociHandler.UpdateLociCache(),
             _cplusHandler.UpdateProfileCache(),
             _traitsHandler.UpdateTraitCache(),
@@ -353,8 +353,7 @@ public class CacheStateManager : IHostedService
 
         if (item.IsEnabled)
         {
-            tasks.Add(AddGlamourMeta(key, item.Glamour, new(item.HeadgearState, item.VisorState)));
-            tasks.Add(AddModPreset(key, item.Mod));
+            tasks.Add(AddModThenGlamourMeta(key, item.Mod, item.Glamour, new(item.HeadgearState, item.VisorState)));
             tasks.Add(AddProfile(key, item.CPlusProfile));
         }
 
@@ -397,10 +396,7 @@ public class CacheStateManager : IHostedService
         };
         // Conditional additions
         if (item.IsEnabled)
-        {
-            tasks.Add(AddGlamourMeta(key, item.Glamour, new(item.HeadgearState, item.VisorState)));
-            tasks.Add(AddModPreset(key, item.Mod));
-        }
+            tasks.Add(AddModThenGlamourMeta(key, item.Mod, item.Glamour, new(item.HeadgearState, item.VisorState)));
         if (item is BlindfoldRestriction bfr) tasks.Add(AddBlindfold(key, bfr.Properties));
         if (item is HypnoticRestriction hr) tasks.Add(AddHypnoEffect(key, hr.Properties));
 
@@ -446,10 +442,7 @@ public class CacheStateManager : IHostedService
 
         // Only apply glamour and mod if visuals are enabled
         if (item.IsEnabled)
-        {
-            tasks.Add(AddGlamourMeta(key, item.GetBaseGlamours(), item.MetaStates));
-            tasks.Add(AddModPreset(key, item.GetBaseMods()));
-        }
+            tasks.Add(AddModsThenGlamourMeta(key, item.GetBaseMods(), item.GetBaseGlamours(), item.MetaStates));
 
         await TimedWhenAll($"[{key}]'s Visual Attributes added to caches", tasks);
         // Handle Redraw afterwards
@@ -493,10 +486,10 @@ public class CacheStateManager : IHostedService
             _overlayHandler.TryAddEffectToCache(layerKey, item.GetHypnoEffectAtLayer(idx));
         }
 
-        // Run the updates.
+        // Set temp mods first so glamour applies onto the modded state with correct priorities, then run the rest in parallel.
+        await _modHandler.UpdateModCache();
         await TimedWhenAll($"[{item.Label}]'s Visual Attributes for layers ({added}) added to caches",
             _glamourHandler.UpdateCaches(),
-            _modHandler.UpdateModCache(),
             _lociHandler.UpdateLociCache(),
             _traitsHandler.UpdateTraitCache(),
             _arousalHandler.UpdateFinalCache(),
@@ -530,10 +523,10 @@ public class CacheStateManager : IHostedService
             _overlayHandler.TryAddEffectToCache(layerKey, item.GetHypnoEffectAtLayer(idx));
         }
 
-        // Run the updates.
+        // Set temp mods first so glamour applies onto the modded state with correct priorities, then run the rest in parallel.
+        await _modHandler.UpdateModCache();
         await TimedWhenAll($"[{item.Label}]'s Visual Attributes for layers ({added}) added to caches",
             _glamourHandler.UpdateCaches(),
-            _modHandler.UpdateModCache(),
             _lociHandler.UpdateLociCache(),
             _traitsHandler.UpdateTraitCache(),
             _arousalHandler.UpdateFinalCache(),
@@ -615,8 +608,7 @@ public class CacheStateManager : IHostedService
         };
         var tasks = new List<Task>
         {
-            AddGlamourMeta(key, item.RefItem.Glamour, metaStruct),
-            AddModPreset(key, item.RefItem.Mod),
+            AddModThenGlamourMeta(key, item.RefItem.Mod, item.RefItem.Glamour, metaStruct),
             AddLociItem(key, item.RefItem.LociData),
             AddArousalStrength(key, item.RefItem.Arousal)
         };
@@ -665,8 +657,7 @@ public class CacheStateManager : IHostedService
         };
         if (refGag.IsEnabled)
         {
-            tasks.Add(AddGlamourMeta(key, refGag.Glamour, new(refGag.HeadgearState, refGag.VisorState)));
-            tasks.Add(AddModPreset(key, refGag.Mod));
+            tasks.Add(AddModThenGlamourMeta(key, refGag.Mod, refGag.Glamour, new(refGag.HeadgearState, refGag.VisorState)));
             tasks.Add(AddProfile(key, refGag.CPlusProfile));
         }
         if (_config.Current.CursedItemsApplyTraits && item.ApplyTraits)
@@ -712,8 +703,7 @@ public class CacheStateManager : IHostedService
         // compose the actual glamour item.
         var glamour = new GlamourSlot(data.Glamour.Slot, data.Glamour.GameItem, new StainIds([synced.Dye1, synced.Dye2]));
         await TimedWhenAll($"[{key}]'s Visual Attributes added to caches",
-            AddGlamourMeta(key, glamour, MetaDataStruct.Empty),
-            AddModPreset(key, data.Mod),
+            AddModThenGlamourMeta(key, data.Mod, glamour, MetaDataStruct.Empty),
             AddLociItem(key, new LociTuple(synced.StatusInfo))
         );
     }
@@ -800,6 +790,20 @@ public class CacheStateManager : IHostedService
         _glamourHandler.TryRemGlamourFromCache(key);
         _glamourHandler.TryRemMetaFromCache(key);
         await _glamourHandler.UpdateCaches();
+    }
+
+    /// <summary> Sets temp mods before applying glamour, so Glamourer applies onto the modded state with correct priorities. </summary>
+    private async Task AddModThenGlamourMeta(CombinedCacheKey key, ModSettingsPreset preset, GlamourSlot glamSlot, MetaDataStruct meta)
+    {
+        await AddModPreset(key, preset);
+        await AddGlamourMeta(key, glamSlot, meta);
+    }
+
+    /// <summary> Sets temp mods before applying glamour, so Glamourer applies onto the modded state with correct priorities. </summary>
+    private async Task AddModsThenGlamourMeta(CombinedCacheKey key, IEnumerable<ModSettingsPreset> presets, IEnumerable<GlamourSlot> glamSlots, MetaDataStruct meta)
+    {
+        await AddModPreset(key, presets);
+        await AddGlamourMeta(key, glamSlots, meta);
     }
 
     private async Task AddModPreset(CombinedCacheKey key, ModSettingsPreset preset)
