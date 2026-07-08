@@ -420,7 +420,7 @@ public partial class DebugStorageUI : WindowMediatorSubscriberBase
             return;
 
         CkGui.ColorText("Puppeteers:", GsCol.VibrantPink.Vec4Ref());
-        using (ImRaii.Table("puppeteers", 6, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        using (ImRaii.Table("puppeteers", 7, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
             ImGuiUtil.DrawTableColumn("UID");
             ImGuiUtil.DrawTableColumn("Name@World");
