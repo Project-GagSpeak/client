@@ -8,6 +8,7 @@ using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using OtterGui.Extensions;
@@ -372,14 +373,15 @@ public class ReactionDistributor
 
         if (act.NewState is NewState.Enabled)
         {
-            if (!restraint.CanApply() || !_restraints.Storage.Contains(act.RestrictionId))
+            if (!restraint.CanApply() || !_restraints.Storage.TryGetRestraint(act.RestrictionId, out var setItem))
                 return false;
 
-            _logger.LogDebug($"Applying restraint [{act.RestrictionId}]", LoggerType.Triggers);
+            _logger.LogDebug($"Applying restraint [{act.RestrictionId}] with layers [{act.Layers}]", LoggerType.Triggers);
             var setData = restraint with
             {
                 Identifier = act.RestrictionId,
-                Enabler = enactor ?? MainHub.UID
+                Enabler = enactor ?? MainHub.UID,
+                ActiveLayers = act.Layers & (RestraintLayer)((1 << setItem.Layers.Count) - 1)
             };
             return await _selfBondage.DoSelfRestraintResult(setData, DataUpdateType.Applied).ConfigureAwait(false);
         }

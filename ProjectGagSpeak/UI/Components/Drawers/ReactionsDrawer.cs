@@ -14,7 +14,9 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
+using GagSpeak.State.Models;
 using GagSpeak.Utils;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
@@ -524,6 +526,13 @@ public sealed class ReactionsDrawer
             CkGui.TextFrameAlignedInline("Using");
             var item = _restraints.Storage.FirstOrDefault(r => r.Identifier == act.RestrictionId);
             CkGui.ColorTextFrameAlignedInline(item is { } re ? $"{re.Label.TrimText(50)}" : "<UNK>", ImGuiColors.TankBlue);
+            if (act.Layers is not RestraintLayer.None)
+            {
+                CkGui.FramedIconText(FAI.LayerGroup);
+                CkGui.AttachTooltip("Layers enabled on the restraint set once applied.");
+                CkGui.TextFrameAlignedInline("With layers");
+                CkGui.ColorTextFrameAlignedInline(RestraintLayerSummary(act, item), ImGuiColors.TankBlue);
+            }
             return;
         }
 
@@ -554,6 +563,11 @@ public sealed class ReactionsDrawer
                 CkGui.TextFrameAlignedInline("a");
                 CkGui.ColorTextFrameAlignedInline(item is { } re ? $"{re.Label.TrimText(20)}.." : "<UNK>", ImGuiColors.TankBlue);
                 CkGui.AttachTooltip(item?.Label, item is null);
+                if (act.Layers is not RestraintLayer.None)
+                {
+                    CkGui.TextFrameAlignedInline("with layers");
+                    CkGui.ColorTextFrameAlignedInline(RestraintLayerSummary(act, item), ImGuiColors.TankBlue);
+                }
                 CkGui.TextFrameAlignedInline("if not locked");
                 break;
             case NewState.Locked:
@@ -603,6 +617,8 @@ public sealed class ReactionsDrawer
                 act.RestrictionId = _restraintCombo.Current?.Identifier ?? Guid.Empty;
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 act.RestrictionId = Guid.Empty;
+
+            DrawRestraintLayerCheckboxes(act);
             return;
         }
 
@@ -681,6 +697,41 @@ public sealed class ReactionsDrawer
             }
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 act.RestrictionId = Guid.Empty;
+
+            if (act.NewState is NewState.Enabled)
+                DrawRestraintLayerCheckboxes(act, sameLine: true);
+        }
+    }
+
+    /// <summary> Lists the layers enabled on apply as "N: Label", falling back to the number alone when unnamed. </summary>
+    private static string RestraintLayerSummary(RestraintAction act, RestraintSet? set)
+        => string.Join(", ", act.Layers.GetLayerIndices().Select(i =>
+        {
+            var label = set is not null && i < set.Layers.Count ? set.Layers[i].Label : string.Empty;
+            return label.IsNullOrWhitespace() ? $"{i + 1}" : $"{i + 1}: {label.TrimText(20)}";
+        }));
+
+    /// <summary> Checkbox per layer of the chosen restraint set, toggling the layers enabled on apply. </summary>
+    private void DrawRestraintLayerCheckboxes(RestraintAction act, bool sameLine = false)
+    {
+        if (!_restraints.Storage.TryGetRestraint(act.RestrictionId, out var set) || set.Layers.Count is 0)
+            return;
+
+        if (!sameLine)
+        {
+            CkGui.FramedIconText(FAI.LayerGroup);
+            CkGui.AttachTooltip("Layers enabled on the restraint set once applied.");
+            CkGui.TextFrameAlignedInline("With layers");
+        }
+
+        for (var i = 0; i < set.Layers.Count; i++)
+        {
+            var flag = (RestraintLayer)(1 << i);
+            var isSet = act.Layers.HasAny(flag);
+            ImUtf8.SameLineInner();
+            if (ImGui.Checkbox($"##rs-layer-{i}", ref isSet))
+                act.Layers = isSet ? act.Layers | flag : act.Layers & ~flag;
+            CkGui.AttachTooltip(set.Layers[i].Label.IsNullOrWhitespace() ? $"Layer {i + 1}" : set.Layers[i].Label);
         }
     }
 
