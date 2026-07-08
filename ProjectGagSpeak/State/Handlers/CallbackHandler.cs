@@ -229,7 +229,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
         Logger.LogTrace("Received ApplyRestraint instruction from server!", LoggerType.Restraints);
         var setName = _restraints.Storage.TryGetRestraint(newData.Identifier, out var appliedSet) ? appliedSet.Label : newData.Identifier.ToString();
         Logger.LogDebug($"Applying RestraintSet [{newData.Identifier}]", LoggerType.Restraints);
-        PostActionMsg(enactor.UID, InteractionType.ApplyRestraint, $"{setName} was applied to you!");
+        PostActionMsg(enactor.UID, InteractionType.ApplyRestraint, $"[{setName}] was applied to you!");
 
         if (_restraints.Apply(newData, enactor.UID, out var restraintSet))
             await _cacheManager.AddRestraintSet(restraintSet, enactor.UID);
