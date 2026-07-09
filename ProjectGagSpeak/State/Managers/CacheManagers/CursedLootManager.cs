@@ -146,6 +146,7 @@ public sealed class CursedLootManager : IHybridSavable
             item.AppliedTime = DateTimeOffset.MinValue;
             item.ReleaseTime = DateTimeOffset.MinValue;
         }
+        RefundUnservedTime();
         _saver.Save(this);
         SyncGarblerWithCursedGags();
     }
@@ -160,12 +161,46 @@ public sealed class CursedLootManager : IHybridSavable
     }
 
     // does not relate to the cached item, handle this seperately in the visual listener.
-    public void ActivateItem(CursedItem item, DateTimeOffset endTimeUtc)
+    // newEncounter should only be true for freshly opened loot, not for re-activations from a server sync.
+    public void ActivateItem(CursedItem item, DateTimeOffset endTimeUtc, bool newEncounter = false)
     {
         item.AppliedTime = DateTimeOffset.UtcNow;
         item.ReleaseTime = endTimeUtc;
+        if (newEncounter)
+            RecordEncounterStats(item, endTimeUtc);
         _saver.Save(this);
         SyncGarblerWithCursedGags();
+    }
+
+    public void RecordMimicEvaded()
+    {
+        MimicsEvaded++;
+        _saver.Save(this);
+    }
+
+    private void RecordEncounterStats(CursedItem item, DateTimeOffset endTimeUtc)
+    {
+        TotalEncounters++;
+        if (item is CursedGagItem)
+            GagEncounters++;
+        else if (item is CursedRestrictionItem)
+            BindEncounters++;
+
+        var lockTime = endTimeUtc - item.AppliedTime;
+        if (lockTime > LongestLockTime)
+            LongestLockTime = lockTime;
+
+        // Only count time not already covered by other active loot, so overlapping locks don't inflate the total.
+        if (endTimeUtc > CursedTimeCoveredUntil)
+        {
+            var countFrom = item.AppliedTime > CursedTimeCoveredUntil ? item.AppliedTime : CursedTimeCoveredUntil;
+            TimeInCursedLoot += endTimeUtc - countFrom;
+            CursedTimeCoveredUntil = endTimeUtc;
+        }
+
+        var activeCount = Storage.AppliedLootIds.Count();
+        if (activeCount > MaxLootActiveAtOnce)
+            MaxLootActiveAtOnce = activeCount;
     }
 
     public void SetInactive(Guid lootId)
@@ -174,8 +209,28 @@ public sealed class CursedLootManager : IHybridSavable
             return;
         item.AppliedTime = DateTimeOffset.MinValue;
         item.ReleaseTime = DateTimeOffset.MinValue;
+        RefundUnservedTime();
         _saver.Save(this);
         SyncGarblerWithCursedGags();
+    }
+
+    /// <summary> Removes any counted lock time that will no longer be served after an early release. </summary>
+    /// <remarks> Remaining active items all began in the past, so their future coverage is the contiguous span [now, max release]. </remarks>
+    private void RefundUnservedTime()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var stillCovered = Storage.AppliedLootUnsorted
+            .Select(i => i.ReleaseTime)
+            .DefaultIfEmpty(now)
+            .Max();
+        if (stillCovered < now)
+            stillCovered = now;
+
+        if (CursedTimeCoveredUntil > stillCovered)
+        {
+            TimeInCursedLoot -= CursedTimeCoveredUntil - stillCovered;
+            CursedTimeCoveredUntil = stillCovered;
+        }
     }
 
     public void SetLowerLimit(TimeSpan time)
@@ -208,6 +263,8 @@ public sealed class CursedLootManager : IHybridSavable
     public TimeSpan TimeInCursedLoot { get; set; } = TimeSpan.Zero;
     public TimeSpan LongestLockTime { get; set; } = TimeSpan.Zero;
     public int MaxLootActiveAtOnce { get; set; } = 0;
+    // Tracks how far into the future TimeInCursedLoot has already been counted, so overlapping locks are not double counted.
+    public DateTimeOffset CursedTimeCoveredUntil { get; set; } = DateTimeOffset.MinValue;
 
 
     public int ConfigVersion => 0;
@@ -237,6 +294,7 @@ public sealed class CursedLootManager : IHybridSavable
             ["TimeInCursedLoot"] = TimeInCursedLoot.ToString(),
             ["LongestLockTime"] = LongestLockTime.ToString(),
             ["MaxLootActiveAtOnce"] = MaxLootActiveAtOnce,
+            ["CursedTimeCoveredUntil"] = CursedTimeCoveredUntil.UtcDateTime.ToString("o"),
             ["CursedItems"] = cursedItems,
         }.ToString(Formatting.Indented);
     }
@@ -310,6 +368,7 @@ public sealed class CursedLootManager : IHybridSavable
         TimeInCursedLoot = TimeSpan.TryParse(cursedLootData["TimeInCursedLoot"]?.Value<string>(), out var timeInLoot) ? timeInLoot : TimeSpan.Zero;
         LongestLockTime = TimeSpan.TryParse(cursedLootData["LongestLockTime"]?.Value<string>(), out var longestLock) ? longestLock : TimeSpan.Zero;
         MaxLootActiveAtOnce = cursedLootData["MaxLootActiveAtOnce"]?.Value<int>() ?? 0;
+        CursedTimeCoveredUntil = DateTimeOffset.TryParse(cursedLootData["CursedTimeCoveredUntil"]?.Value<string>(), out var coveredUntil) ? coveredUntil : DateTimeOffset.MinValue;
 
         // get the array of cursed loot items from the token
         if (cursedLootData["CursedItems"] is not JArray lootItemsList)

@@ -353,7 +353,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
             return;
 
         // Mark the loot as applied, so it shows up in the applied loot tab like the other cursed loot types.
-        _cursedLoot.ActivateItem(item, endTime);
+        _cursedLoot.ActivateItem(item, endTime, newEncounter: true);
 
         // new data for cursed item. (this is the same as what was sent over the server, so it syncs)
         var newData = new ActiveGagSlot
@@ -391,7 +391,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnectionDataSynced)
             return;
 
-        _cursedLoot.ActivateItem(item, endTime);
+        _cursedLoot.ActivateItem(item, endTime, newEncounter: true);
         // now we need to update the equivalent visual data.
         if (_restrictions.ApplyCursedItem(item, out var layer))
             await _cacheManager.AddCursedItem(item, layer);
