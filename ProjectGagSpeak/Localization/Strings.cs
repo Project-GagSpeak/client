@@ -1261,6 +1261,9 @@ namespace GagSpeak.Localization
         public readonly string PrefThreeCharaAnonNameTT = Loc.Localize("Preferences_ThreeCharaAnonNameTT", "Displays the first three characters of a player's name instead of 4." +
             "--SEP--Primary intended for legacy users attached to their 3 character names.");
 
+        public readonly string ShowChatInputPreview = Loc.Localize("Preferences_ShowChatInputPreview", "Show Global Chat message preview while typing");
+        public readonly string ShowChatInputPreviewTT = Loc.Localize("Preferences_ShowChatInputPreviewTT", "Displays a preview of your message above the Global Chat input box as you type.");
+
         public readonly string ShowProfilesLabel = Loc.Localize("Preferences_ShowProfilesLabel", "Show GagSpeak profiles on hover");
         public readonly string ShowProfilesTT = Loc.Localize("Preferences_ShowProfilesTT", "Displays the configured user profile after hovering over the player.");
 

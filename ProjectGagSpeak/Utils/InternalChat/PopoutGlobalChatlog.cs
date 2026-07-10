@@ -203,7 +203,7 @@ public class PopoutGlobalChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubs
     {
         // Preview Text padding area
         using var style = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(5));
-        var drawTextPreview = !string.IsNullOrWhiteSpace(previewMessage);
+        var drawTextPreview = _config.Current.ShowChatInputPreview && !string.IsNullOrWhiteSpace(previewMessage);
         // if we should show the preview, do so.
         if (drawTextPreview)
             DrawTextPreview(previewMessage, inputPosMin);
