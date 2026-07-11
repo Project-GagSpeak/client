@@ -41,7 +41,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
         return newTrigger;
     }
 
-    public Trigger CreateClone(Trigger other, string newName)
+    public Trigger CreateClone(Trigger other, string newName, string? folderPath = null)
     {
         newName = RegexEx.EnsureUniqueName(newName, Storage, (t) => t.Label);
         Trigger clonedItem = other switch
@@ -59,7 +59,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
         _saver.Save(this);
 
         Logger.LogDebug($"Cloned trigger {other.Label} to {newName}.");
-        Mediator.Publish(new ConfigTriggerChanged(StorageChangeType.Created, clonedItem, null));
+        Mediator.Publish(new ConfigTriggerChanged(StorageChangeType.Created, clonedItem, folderPath));
         return clonedItem;
     }
 

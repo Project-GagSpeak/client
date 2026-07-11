@@ -71,7 +71,7 @@ public sealed class RestraintManager : IHybridSavable
         return restraint;
     }
 
-    public RestraintSet CreateClone(RestraintSet clone, string newName)
+    public RestraintSet CreateClone(RestraintSet clone, string newName, string? folderPath = null)
     {
         // Strip private formatting codes.
         newName = CkGui.TooltipTokenRegex().Replace(newName, string.Empty);
@@ -81,7 +81,7 @@ public sealed class RestraintManager : IHybridSavable
         Storage.Add(clonedItem);
         _saver.Save(this);
         _logger.LogDebug($"Cloned restraint {clonedItem.Identifier}.");
-        _mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Created, clonedItem, null));
+        _mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Created, clonedItem, folderPath));
         return clonedItem;
     }
 
