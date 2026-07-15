@@ -136,7 +136,7 @@ public sealed class LootHandler
     {
         // Return if there is nothing to apply.
         var validItems = _manager.Storage.ActiveUnappliedLoot;
-        if (validItems.Count <= 0)
+        if (validItems.Count <= 0 || _manager.LockChance <= 0)
             return;
 
         // run our first roll, return if not in range.
