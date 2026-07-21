@@ -124,7 +124,7 @@ public class ChatService : DisposableMediatorSubscriberBase
     private void CheckForPvpActivity(ILogMessage message)
     {
         // Pvp defeat log messages are of type SystemError.
-        if (!PlayerData.InPvP || message.LogMessageId is not 7409)
+        if (!PlayerData.InPvP || message.LogMessageId is not 557)
             return;
         
         // If we got a kill, fore achievement.
