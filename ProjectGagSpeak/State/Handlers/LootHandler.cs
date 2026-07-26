@@ -1,5 +1,6 @@
 using CkCommons;
 using CkCommons.Helpers;
+using Dalamud.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
@@ -13,6 +14,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
+using Lumina.Excel.Sheets;
 
 namespace GagSpeak.State.Handlers;
 
@@ -30,10 +32,20 @@ public sealed class LootHandler
     private readonly MainConfig _config;
     private readonly CharaDataDistributor _dds;
 
+    /// <summary> Completion sheet row holding the localized name shared by silver and gold deep dungeon coffers. </summary>
+    private const uint TreasureChestNameRow = 395;
+    private const uint GoldCofferNameRow = 10420;
+    private const uint SilverCofferNameRow = 10421;
+    private const uint BronzeCofferNameRow = 10422;
+
     /// <summary> Stores last interacted chestId so we dont keep spam opening the same chest. </summary>
     /// <remarks> This is static so we can send it to mediator calls and update it. </remarks>
     private uint _prevOpenedLootObjectId = 0;
     private Task? _openLootTask = null;
+
+    /// <summary> The resolved coffer name, cached against the language it was resolved for. </summary>
+    private string _cofferName = string.Empty;
+    private ClientLanguage? _cofferNameLang = null;
 
     public LootHandler(ILogger<LootHandler> logger, GagspeakMediator mediator, GagRestrictionManager gags,
         RestrictionManager restrictions, CursedLootManager manager, CallbackHandler visuals,
@@ -86,7 +98,30 @@ public sealed class LootHandler
         && obj->EventHandler->Info.EventId.Id is 983600
         && obj->EventHandler->Info.EventId.EntryId is 560
         && obj->EventHandler->Info.EventId.ContentId is EventHandlerContent.GimmickAccessor
-        && GsLang.DeepDungeonCoffer.Any(n => n.Equals(obj->NameString.ToString()));
+        && CofferName() is { Length: > 0 } cofferName
+        && string.Equals(cofferName, obj->NameString, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary> The coffer's name in the client's language, resolved once per language. </summary>
+    /// <remarks> Returns an empty string if the row cannot be read, which fails the name check rather than matching everything. </remarks>
+    private string CofferName()
+    {
+        var lang = Svc.ClientState.ClientLanguage;
+        if (_cofferNameLang == lang)
+            return _cofferName;
+
+        if (Svc.Data.GetExcelSheet<Addon>(lang)?.GetRowOrDefault(TreasureChestNameRow) is not { } row)
+        {
+            _logger.LogWarning($"Completion row {TreasureChestNameRow} is missing for language {lang}, cannot detect deep dungeon coffers.");
+            _cofferName = string.Empty;
+            _cofferNameLang = lang;
+            return _cofferName;
+        }
+
+        _cofferName = row.Text.ToDalamudString().ToString();
+        _cofferNameLang = lang;
+        _logger.LogDebug($"Resolved deep dungeon coffer name for {lang}: [{_cofferName}]", LoggerType.CursedItems);
+        return _cofferName;
+    }
 
     /// <summary> 
     ///     Handles opening a loot item to apply cursed loot!. <para />
