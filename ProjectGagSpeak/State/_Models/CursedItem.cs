@@ -14,6 +14,7 @@ public abstract class CursedItem : IEditableStorageItem<CursedItem>
     public string Label { get; set; } = string.Empty;
     public DateTimeOffset AppliedTime { get; set; } = DateTimeOffset.MinValue;
     public DateTimeOffset ReleaseTime { get; set; } = DateTimeOffset.MinValue;
+    public DateTimeOffset CreditedUntil { get; set; } = DateTimeOffset.MinValue;
     public Precedence Precedence { get; set; } = Precedence.Default; // the priority system.
     public bool ApplyTraits { get; set; } = true; // For Hardcore Traits.
 
@@ -36,6 +37,7 @@ public abstract class CursedItem : IEditableStorageItem<CursedItem>
         InPool = other.InPool;
         AppliedTime = other.AppliedTime;
         ReleaseTime = other.ReleaseTime;
+        CreditedUntil = other.CreditedUntil;
         Precedence = other.Precedence;
         ApplyTraits = other.ApplyTraits;
     }
@@ -116,6 +118,7 @@ public class CursedGagItem : CursedItem
             ["Label"] = Label,
             ["AppliedTime"] = AppliedTime.UtcDateTime.ToString("o"),
             ["ReleaseTime"] = ReleaseTime.UtcDateTime.ToString("o"),
+            ["CreditedUntil"] = CreditedUntil.UtcDateTime.ToString("o"),
             ["Precedence"] = Precedence.ToString(),
             ["GagRef"] = RefItem.GagType.ToString(),
             ["ApplyTraits"] = ApplyTraits
@@ -168,6 +171,7 @@ public class CursedRestrictionItem : CursedItem
             ["Label"] = Label,
             ["AppliedTime"] = AppliedTime.UtcDateTime.ToString("o"),
             ["ReleaseTime"] = ReleaseTime.UtcDateTime.ToString("o"),
+            ["CreditedUntil"] = CreditedUntil.UtcDateTime.ToString("o"),
             ["Precedence"] = Precedence.ToString(),
             ["RestrictionRef"] = RefItem.Identifier.ToString(),
             ["ApplyTraits"] = ApplyTraits
