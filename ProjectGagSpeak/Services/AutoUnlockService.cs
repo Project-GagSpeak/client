@@ -170,6 +170,10 @@ public sealed class AutoUnlockService : BackgroundService
             return;
 
         await CheckAlarms().ConfigureAwait(false);
+
+        // Self-heal: catch any case where an outbound Glamourer push silently failed
+        if (PlayerData.Available)
+            await _cacheManager.ReconcileGlamourState().ConfigureAwait(false);
     }
 
     // -------- Checker Methods Below.

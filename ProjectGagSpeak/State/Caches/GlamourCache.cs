@@ -183,7 +183,12 @@ public class GlamourCache
             _metaStates[metaIdx] = new SortedList<CombinedCacheKey, TriStateBool>();
     }
 
-    public bool UpdateFinalGlamourCache(out List<EquipSlot> removedSlots)
+    /// <summary>
+    ///     Recalculates <see cref="FinalGlamour"/> from the sorted glamour cache. <para />
+    ///     <paramref name="removedSlots"/> maps each slot that is no longer restricted to the item
+    ///     that was being forced on it, so callers can verify their restore push actually occurred.
+    /// </summary>
+    public bool UpdateFinalGlamourCache(out Dictionary<EquipSlot, EquipItem> removedSlots)
     {
         var anyChanges = false;
         var seenSlots = new HashSet<EquipSlot>();
@@ -204,15 +209,17 @@ public class GlamourCache
             }
         }
 
-        removedSlots = _finalGlamour.Keys.Except(seenSlots).ToList();
-        foreach (var slot in removedSlots)
+        removedSlots = new Dictionary<EquipSlot, EquipItem>();
+        foreach (var slot in _finalGlamour.Keys.Except(seenSlots).ToList())
         {
-            _logger.LogTrace($"Removing Final Glamour Slot {slot} with Item {_finalGlamour[slot].GameItem.Name}");
+            var releasedItem = _finalGlamour[slot].GameItem;
+            _logger.LogTrace($"Removing Final Glamour Slot {slot} with Item {releasedItem.Name}");
+            removedSlots[slot] = releasedItem;
             _finalGlamour.Remove(slot);
             anyChanges |= true;
         }
 
-        return anyChanges || removedSlots.Any();
+        return anyChanges || removedSlots.Count > 0;
     }
 
     public bool UpdateFinalMetaCache(out bool noHat, out bool noVisor, out bool noWeapon)

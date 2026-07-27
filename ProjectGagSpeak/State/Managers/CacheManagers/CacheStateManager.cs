@@ -40,6 +40,11 @@ public class CacheStateManager : IHostedService
     private readonly ArousalService _arousalHandler;
     private readonly MainConfig _config;
 
+    // Guards every cache-mutating method below so that a cursed-loot expiry and a pair-triggered
+    // restraint/restriction change can never interleave their mutations of the shared, non-thread-safe
+    // GlamourCache/ModCache/etc. collections.
+    private readonly SemaphoreSlim _stateLock = new(1, 1);
+
     public CacheStateManager(ILogger<CacheStateManager> logger, IpcCallerPenumbra redrawAssist,
         GagRestrictionManager gags, RestrictionManager restrictions, RestraintManager restraints,
         CollarManager collar, CursedLootManager cursedItems, CustomizePlusHandler profiles, 
@@ -66,19 +71,47 @@ public class CacheStateManager : IHostedService
     public Task StartAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("CacheStateManager started, listening for logout events.");
-        Svc.ClientState.Logout += (_, _) => ClearCaches();
+        Svc.ClientState.Logout += OnLogout;
         return Task.CompletedTask;
     }
 
-    public Task StopAsync(CancellationToken cancellationToken)
+    public async Task StopAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("CacheStateManager stopping, clearing caches.");
-        Svc.ClientState.Logout -= (_, _) => ClearCaches();
-        ClearCaches();
-        return Task.CompletedTask;
+        Svc.ClientState.Logout -= OnLogout;
+        await ClearCachesSafely().ConfigureAwait(false);
+        _stateLock.Dispose();
     }
 
-    private async void ClearCaches()
+    private void OnLogout(int type, int code) => _ = ClearCachesSafely();
+
+    /// <summary> Clears the caches, keeping any failure from escaping into an unobserved task. </summary>
+    private async Task ClearCachesSafely()
+    {
+        try
+        {
+            await ClearCaches().ConfigureAwait(false);
+        }
+        catch (Bagagwa ex)
+        {
+            _logger.LogError($"Failed to clear caches: {ex}");
+        }
+    }
+
+    private async Task WithStateLock(Func<Task> action)
+    {
+        await _stateLock.WaitAsync();
+        try
+        {
+            await action();
+        }
+        finally
+        {
+            _stateLock.Release();
+        }
+    }
+
+    private Task ClearCaches() => WithStateLock(async () =>
     {
         _logger.LogInformation("------- Clearing all caches on logout -------");
         await Task.WhenAll(
@@ -91,10 +124,10 @@ public class CacheStateManager : IHostedService
             _arousalHandler.ClearArousals()
         );
         _logger.LogInformation("------- All caches cleared -------");
-    }
+    });
 
     // going to need to make this not effect the collar restriction later, and maybe some other arousals!
-    public async Task ResetCachesDueToSafeword()
+    public Task ResetCachesDueToSafeword() => WithStateLock(async () =>
     {
         _logger.LogInformation("------- Resetting all caches due to safeword -------");
         _gags.LoadServerData(new CharaActiveGags());
@@ -114,10 +147,10 @@ public class CacheStateManager : IHostedService
         );
 
         _logger.LogInformation("------- All caches reset -------");
-    }
+    });
 
     // Keep in mind that while this looks heavy, everything uses .TryAdd, meaning duplicates will not be reapplied.
-    public async Task SyncWithServerData(ConnectionResponse connectionDto)
+    public Task SyncWithServerData(ConnectionResponse connectionDto) => WithStateLock(async () =>
     {
         var sw = Stopwatch.StartNew();
         // Sync all server gag data with the GagRestrictionManager.
@@ -335,11 +368,11 @@ public class CacheStateManager : IHostedService
             _redrawAssist.RedrawObject();
         sw.Stop();
         _logger.LogInformation($"------ All Updates & Visuals Applied in {sw.ElapsedMilliseconds}ms ------");
-    }
+    });
 
     /// <summary> Adds a GagItem's visual properties to the cache at the defined layer. </summary>
     /// <remarks> Changes are immediately reflected and updated to the player. </remarks>
-    public async Task AddGagItem(GarblerRestriction item, int layerIdx, string enabler)
+    public Task AddGagItem(GarblerRestriction item, int layerIdx, string enabler) => WithStateLock(async () =>
     {
         _logger.LogDebug($"Adding ({item.GagType.GagName()}) at layer {layerIdx}, enabled by ({enabler}).");
         var key = new CombinedCacheKey(ManagerPriority.Gags, layerIdx, enabler, item.GagType.GagName());
@@ -363,11 +396,11 @@ public class CacheStateManager : IHostedService
         // Handle Redraw afterwards
         if (item.DoRedraw)
             _redrawAssist.RedrawObject();
-    }
+    });
 
     /// <summary> Removes the visuals of a <see cref="GarblerRestriction"/> stored in the caches at a <paramref name="layerIdx"/></summary>
     /// <remarks> Changes are immidiately reflected and updated to the player. </remarks>
-    public async Task RemoveGagItem(GarblerRestriction item, int layerIdx)
+    public Task RemoveGagItem(GarblerRestriction item, int layerIdx) => WithStateLock(async () =>
     {
         _logger.LogDebug($"Removing ({item.GagType.GagName()}) from cache at layer {layerIdx}");
         var key = new CombinedCacheKey(ManagerPriority.Gags, layerIdx, string.Empty, item.GagType.GagName());
@@ -383,9 +416,9 @@ public class CacheStateManager : IHostedService
         // Handle Redraw afterwards
         if (item.DoRedraw)
             _redrawAssist.RedrawObject();
-    }
+    });
 
-    public async Task AddRestrictionItem(RestrictionItem item, int layerIdx, string enabler)
+    public Task AddRestrictionItem(RestrictionItem item, int layerIdx, string enabler) => WithStateLock(async () =>
     {
         _logger.LogDebug($"Adding Restriction ({item.Label}) at layer {layerIdx}, enabled by ({enabler}).");
         var key = new CombinedCacheKey(ManagerPriority.Restrictions, layerIdx, enabler, item.Label);
@@ -409,9 +442,9 @@ public class CacheStateManager : IHostedService
         // Handle Redraw afterwards
         if (item.DoRedraw)
             _redrawAssist.RedrawObject();
-    }
+    });
 
-    public async Task RemoveRestrictionItem(RestrictionItem item, int layerIdx)
+    public Task RemoveRestrictionItem(RestrictionItem item, int layerIdx) => WithStateLock(async () =>
     {
         _logger.LogInformation($"Removing Restriction [{item.Label}] from cache at layer {layerIdx}");
         var key = new CombinedCacheKey(ManagerPriority.Restrictions, layerIdx, string.Empty, item.Label);
@@ -428,9 +461,9 @@ public class CacheStateManager : IHostedService
         // Handle Redraw afterwards
         if (item.DoRedraw)
             _redrawAssist.RedrawObject();
-    }
+    });
 
-    public async Task AddRestraintSet(RestraintSet item, string enabler)
+    public Task AddRestraintSet(RestraintSet item, string enabler) => WithStateLock(async () =>
     {
         _logger.LogInformation($"Adding RestraintSet ({item.Label}), which was enabled by {enabler}.");
         var key = new CombinedCacheKey(ManagerPriority.Restraints, 0, enabler, item.Label);
@@ -455,9 +488,9 @@ public class CacheStateManager : IHostedService
         // Handle Redraw afterwards
         if (item.DoRedraw)
             _redrawAssist.RedrawObject();
-    }
+    });
 
-    public async Task SwapRestraintSetLayers(RestraintSet item, RestraintLayer added, RestraintLayer removed, string enactor)
+    public Task SwapRestraintSetLayers(RestraintSet item, RestraintLayer added, RestraintLayer removed, string enactor) => WithStateLock(async () =>
     {
         // If we want blindfolds and hypno to work on the applier, it will be hard to fix once reconnect since we wont know who applied each layer.
         // So for now, we are just going to restrict it to the enabler, or the enactor if the padlock is devotional.
@@ -502,9 +535,9 @@ public class CacheStateManager : IHostedService
             _arousalHandler.UpdateFinalCache(),
             _overlayHandler.UpdateCaches()
         );
-    }
+    });
 
-    public async Task AddRestraintSetLayers(RestraintSet item, RestraintLayer added, string enactor)
+    public Task AddRestraintSetLayers(RestraintSet item, RestraintLayer added, string enactor) => WithStateLock(async () =>
     {
         // If we want blindfolds and hypno to work on the applier, it will be hard to fix once reconnect since we wont know who applied each layer.
         // So for now, we are just going to restrict it to the enabler, or the enactor if the padlock is devotional.
@@ -539,11 +572,11 @@ public class CacheStateManager : IHostedService
             _arousalHandler.UpdateFinalCache(),
             _overlayHandler.UpdateCaches()
         );
-    }
+    });
 
     // I can almost guarantee that removing this without considering for any
     // active layers will cause issues, handle later, or restrict well.
-    public async Task RemoveRestraintSet(RestraintSet item, RestraintLayer removedLayers)
+    public Task RemoveRestraintSet(RestraintSet item, RestraintLayer removedLayers) => WithStateLock(async () =>
     {
         foreach (var idx in removedLayers.GetLayerIndices())
         {
@@ -571,11 +604,11 @@ public class CacheStateManager : IHostedService
         // Handle Redraw afterwards
         if (item.DoRedraw)
             _redrawAssist.RedrawObject();
-    }
+    });
 
 
     // Enabler here is only for logging purposes.
-    public async Task RemoveRestraintSetLayers(RestraintSet item, RestraintLayer removed)
+    public Task RemoveRestraintSetLayers(RestraintSet item, RestraintLayer removed) => WithStateLock(async () =>
     {
         _logger.LogInformation($"Removing RestraintSet ({item.Label}) from cache on layers ({removed})");
         // Add all enabled layers.
@@ -600,10 +633,10 @@ public class CacheStateManager : IHostedService
             _arousalHandler.UpdateFinalCache(),
             _overlayHandler.UpdateCaches()
         );
-    }
+    });
 
     // For CURSED ITEMS.
-    public async Task AddCursedItem(CursedRestrictionItem item, int layer)
+    public Task AddCursedItem(CursedRestrictionItem item, int layer) => WithStateLock(async () =>
     {
         _logger.LogDebug($"Adding CursedItem [{item.Label}] with ({item.Precedence}) precedence to layer {layer}.");
         var key = new CombinedCacheKey(ManagerPriority.CursedLoot, layer, "Mimic", $"Cursed {item.RefItem.Label}");
@@ -630,9 +663,9 @@ public class CacheStateManager : IHostedService
         // Handle Redraw afterwards
         if (item.RefItem.DoRedraw)
             _redrawAssist.RedrawObject();
-    }
+    });
 
-    public async Task RemoveCursedItem(CursedRestrictionItem item, int layer)
+    public Task RemoveCursedItem(CursedRestrictionItem item, int layer) => WithStateLock(async () =>
     {
         _logger.LogInformation($"Removing Cursed Item [{item.Label}] from layer {layer}");
         var key = new CombinedCacheKey(ManagerPriority.CursedLoot, layer, "Mimic", string.Empty);
@@ -649,11 +682,11 @@ public class CacheStateManager : IHostedService
         // Handle Redraw afterwards
         if (item.RefItem.DoRedraw)
             _redrawAssist.RedrawObject();
-    }
+    });
 
     /// <summary> Adds a cursed loot gag's visual properties to the cache, keyed by the gag slot layer it occupies. </summary>
     /// <remarks> The gag slot layers (0-2) never collide with the generated cursed restriction keys (1000+). </remarks>
-    public async Task AddCursedGagItem(CursedGagItem item, int layer)
+    public Task AddCursedGagItem(CursedGagItem item, int layer) => WithStateLock(async () =>
     {
         _logger.LogDebug($"Adding Cursed Gag [{item.Label}] with ({item.Precedence}) precedence to gag layer {layer}.");
         var refGag = item.RefItem;
@@ -677,9 +710,9 @@ public class CacheStateManager : IHostedService
         // Handle Redraw afterwards
         if (refGag.DoRedraw)
             _redrawAssist.RedrawObject();
-    }
+    });
 
-    public async Task RemoveCursedGagItem(CursedGagItem item, int layer)
+    public Task RemoveCursedGagItem(CursedGagItem item, int layer) => WithStateLock(async () =>
     {
         _logger.LogInformation($"Removing Cursed Gag [{item.Label}] from gag layer {layer}");
         var key = new CombinedCacheKey(ManagerPriority.CursedLoot, layer, "Mimic", string.Empty);
@@ -695,11 +728,11 @@ public class CacheStateManager : IHostedService
         // Handle Redraw afterwards
         if (item.RefItem.DoRedraw)
             _redrawAssist.RedrawObject();
-    }
+    });
 
     // Always use MainHub.UID for the applier so that we can track the updates easier.
     // Assumed SyncedData is valid.
-    public async Task AddCollar(UserData enactor)
+    public Task AddCollar(UserData enactor) => WithStateLock(async () =>
     {
         if (!_collar.IsActive || !_collar.ShowVisuals)
             return;
@@ -716,9 +749,9 @@ public class CacheStateManager : IHostedService
             AddModPreset(key, data.Mod),
             AddLociItem(key, new LociTuple(synced.StatusInfo))
         );
-    }
+    });
 
-    public async Task UpdateCollar(DataUpdateType type, UserData enactor)
+    public Task UpdateCollar(DataUpdateType type, UserData enactor) => WithStateLock(async () =>
     {
         if (_collar.SyncedData is not { } synced)
             return;
@@ -733,9 +766,9 @@ public class CacheStateManager : IHostedService
         await TimedWhenAll($"[{key}]'s Collar Visuals updated in caches", type is DataUpdateType.DyesChange
             ? UpdateGlamour(key, data.Glamour.Slot, new StainIds([synced.Dye1, synced.Dye2]))
             : UpdateLociData(key, new LociTuple(synced.StatusInfo)));
-    }
+    });
 
-    public async Task RemoveCollar(UserData enactor)
+    public Task RemoveCollar(UserData enactor) => WithStateLock(async () =>
     {
         _logger.LogDebug($"Removing Collar [{_collar.ClientCollar.Label}] Enacted by: {enactor.AliasOrUID} ({enactor.UID})");
         var key = new CombinedCacheKey(ManagerPriority.Collar, 0, string.Empty, _collar.ClientCollar.Label);
@@ -745,7 +778,13 @@ public class CacheStateManager : IHostedService
             RemoveModPreset(key),
             RemoveLociData(key)
         );
-    }
+    });
+
+    /// <summary>
+    ///     Diffs GagSpeak's cached final glamour/meta state against Glamourer's actual live actor
+    ///     state and re-applies corrective IPC calls if they've drifted apart.
+    /// </summary>
+    public Task ReconcileGlamourState() => _glamourHandler.ReconcileWithActualState();
 
     /// <summary> Gates a gag's traits when applied by a Mimic, so cursed loot gags never apply traits unrestricted. </summary>
     private Traits GagTraitsForEnabler(GarblerRestriction gag, string enabler)
