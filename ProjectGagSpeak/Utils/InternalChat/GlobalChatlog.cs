@@ -212,21 +212,24 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
 
 
         ImGui.SetNextItemWidth(width - (CkGui.IconButtonSize(scrollIcon).X + ImGui.GetStyle().ItemInnerSpacing.X) * 3);
-        ImGui.InputTextWithHint($"##ChatInput{Label}{ID}", "type here...", ref previewMessage, 300);
-        // Process submission Prevent losing chat focus after pressing the Enter key.
-        if (ImGui.IsItemFocused() && ImGui.IsKeyPressed(ImGuiKey.Enter))
+        using (ImRaii.Disabled(disableInput))
         {
-            shouldFocusChatInput = true;
-            _showEmotes = false;
-            OnSendMessage(previewMessage);
-        }
+            ImGui.InputTextWithHint($"##ChatInput{Label}{ID}", "type here...", ref previewMessage, 300);
+            // Process submission Prevent losing chat focus after pressing the Enter key.
+            if (ImGui.IsItemFocused() && (ImGui.IsKeyPressed(ImGuiKey.Enter) || ImGui.IsKeyPressed(ImGuiKey.KeypadEnter)))
+            {
+                shouldFocusChatInput = true;
+                _showEmotes = false;
+                OnSendMessage(previewMessage);
+            }
 
-        // toggle emote viewing.
-        ImUtf8.SameLineInner();
-        using (ImRaii.PushColor(ImGuiCol.Text, GsCol.VibrantPink.Uint(), _showEmotes))
-        {
-            if (CkGui.IconButton(FAI.Heart))
-                _showEmotes = !_showEmotes;
+            // toggle emote viewing.
+            ImUtf8.SameLineInner();
+            using (ImRaii.PushColor(ImGuiCol.Text, GsCol.VibrantPink.Uint(), _showEmotes))
+            {
+                if (CkGui.IconButton(FAI.Heart))
+                    _showEmotes = !_showEmotes;
+            }
         }
         CkGui.AttachTooltip($"Toggles Quick-Emote selection.");
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatEmotes, MainUI.LastPos, MainUI.LastSize);
