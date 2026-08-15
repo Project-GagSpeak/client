@@ -109,6 +109,8 @@ public sealed class GagSpeak : IDalamudPlugin
 
     public void Dispose()
     {
+        // Notify all threads that we are unloading.
+        Svc.IsUnloading = true;
         // Stop the host.
         _host.StopAsync().GetAwaiter().GetResult();
         // Dispose of CkCommons.

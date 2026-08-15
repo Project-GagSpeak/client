@@ -582,11 +582,20 @@ public class GlamourHandler
             // Schedule the re-enabling of glamour change events using RunOnFrameworkTickDelayed to offset Glamourer.)
             try
             {
-                await Svc.Framework.RunOnTick(() =>
+                // If we are unloading, don't attempt to await or else we will deadlock the client
+                if (Svc.IsUnloading)
                 {
                     _ipcBlocker &= ~IpcBlockReason.SemaphoreTask;
-                    _logger.LogDebug($"Releasing Semaphore Wait, Remaining Blockers: {_ipcBlocker.ToString()}", LoggerType.IpcGlamourer);
-                }, delayTicks: 1);
+                    _logger.LogDebug($"Releasing Semaphore Wait (unloading), Remaining Blockers: {_ipcBlocker.ToString()}", LoggerType.IpcGlamourer);
+                }
+                else
+                {
+                    await Svc.Framework.RunOnTick(() =>
+                    {
+                        _ipcBlocker &= ~IpcBlockReason.SemaphoreTask;
+                        _logger.LogDebug($"Releasing Semaphore Wait, Remaining Blockers: {_ipcBlocker.ToString()}", LoggerType.IpcGlamourer);
+                    }, delayTicks: 1);
+                }
             }
             catch (TaskCanceledException) { /* CONSUME */ }
 

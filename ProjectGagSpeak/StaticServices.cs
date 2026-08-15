@@ -57,6 +57,13 @@ public class Svc
     [PluginService] public static ITextureProvider Texture { get; private set; } = null!;
     [PluginService] public static IToastGui Toasts { get; private set; } = null!;
     [PluginService] public static ITextureSubstitutionProvider TextureSubstitution { get; private set; } = null!;
+
+    /// <summary>
+    ///     Set the moment the plugin begins tearing down, before the host is stopped. <para />
+    ///     Dalamud disposes us on the framework thread, so anything that waits on a future framework
+    ///     tick (Framework.RunOnTick) can never complete during teardown. Check this before awaiting one.
+    /// </summary>
+    public static volatile bool IsUnloading;
 }
 
 /// <summary>

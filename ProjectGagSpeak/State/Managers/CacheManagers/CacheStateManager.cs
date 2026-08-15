@@ -75,12 +75,12 @@ public class CacheStateManager : IHostedService
         return Task.CompletedTask;
     }
 
-    public async Task StopAsync(CancellationToken cancellationToken)
+    public Task StopAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("CacheStateManager stopping, clearing caches.");
         Svc.ClientState.Logout -= OnLogout;
-        await ClearCachesSafely().ConfigureAwait(false);
-        _stateLock.Dispose();
+        _ = ClearCachesSafely();
+        return Task.CompletedTask;
     }
 
     private void OnLogout(int type, int code) => _ = ClearCachesSafely();
