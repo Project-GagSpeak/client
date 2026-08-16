@@ -86,35 +86,43 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
     /// <summary>
     ///   Enforces the Clients EquipSlot data to reflect their bondage state.
     /// </summary>
-    public async Task SetClientItemSlot(ApiEquipSlot slot, ulong item, IReadOnlyList<byte> dye, uint variant)
+    /// <returns>
+    ///     Glamourer's result code, or null if the call never reached Glamourer at all
+    ///     (API unavailable, mid-zone, or it threw). Callers that need to know whether a push
+    ///     was handled must treat null as 'not applied'.
+    /// </returns>
+    public async Task<GlamourerApiEc?> SetClientItemSlot(ApiEquipSlot slot, ulong item, IReadOnlyList<byte> dye, uint variant)
     {
         if (!APIAvailable || PlayerData.IsZoning)
-            return;
+            return null;
         try
         {
-            await Svc.Framework.RunOnFrameworkThread(() => SetItem.Invoke(0, slot, item, dye, GAGSPEAK_LOCK)).ConfigureAwait(false);
+            return await Svc.Framework.RunOnFrameworkThread(() => SetItem.Invoke(0, slot, item, dye, GAGSPEAK_LOCK)).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, $"Failed to set Glamourer Item Slot {slot} to ItemID {item}!", LoggerType.IpcGlamourer);
+            return null;
         }
     }
 
     /// <summary>
     ///     Enforces the Clients Metadata bondage state.
     /// </summary>
-    public async Task SetMetaStates(MetaFlag metaTypes, bool newValue)
+    /// <returns> Glamourer's result code, or null if the call never reached Glamourer at all. </returns>
+    public async Task<GlamourerApiEc?> SetMetaStates(MetaFlag metaTypes, bool newValue)
     {
         if (!APIAvailable || PlayerData.IsZoning)
-            return;
+            return null;
 
         try
         {
-            await Svc.Framework.RunOnFrameworkThread(() => SetMetaState.Invoke(0, metaTypes, newValue, GAGSPEAK_LOCK)).ConfigureAwait(false);
+            return await Svc.Framework.RunOnFrameworkThread(() => SetMetaState.Invoke(0, metaTypes, newValue, GAGSPEAK_LOCK)).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, $"Failed to set Glamourer MetaState {metaTypes} to {newValue}!", LoggerType.IpcGlamourer);
+            return null;
         }
     }
 

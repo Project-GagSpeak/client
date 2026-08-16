@@ -17,9 +17,11 @@ public class GlamourHandler
     private SemaphoreSlim _applySlim = new SemaphoreSlim(1, 1);
     private IpcBlockReason _ipcBlocker = IpcBlockReason.None;
     
-    private readonly Dictionary<EquipSlot, (List<EquipItem> Released, int Attempts)> _pendingRestores = new();
+    private readonly Dictionary<EquipSlot, (List<EquipItem> Released, int Attempts, DateTime Seen)> _pendingRestores = new();
     private readonly Dictionary<MetaIndex, (TriStateBool Released, int Attempts)> _pendingMetaRestores = new();
     private const int MaxRestoreAttempts = 3;
+    private static readonly TimeSpan PendingRestoreTtl = TimeSpan.FromMinutes(3);
+    private readonly Dictionary<EquipSlot, EquipItem> _lastSeenEquipment = new();
 
     public GlamourHandler(ILogger<GlamourHandler> logger, IpcCallerGlamourer ipc, GlamourCache cache)
     {
@@ -119,6 +121,7 @@ public class GlamourHandler
             // Nothing left to reconcile against once the unbound snapshot is gone.
             _pendingRestores.Clear();
             _pendingMetaRestores.Clear();
+            _lastSeenEquipment.Clear();
         });
     }
 
@@ -192,8 +195,16 @@ public class GlamourHandler
             var stuckSlots = new List<EquipSlot>();
             var needsReapply = false;
 
-            foreach (var (slot, (released, attempts)) in _pendingRestores.ToList())
+            foreach (var (slot, (released, attempts, seen)) in _pendingRestores.ToList())
             {
+                if (DateTime.UtcNow - seen > PendingRestoreTtl)
+                {
+                    _logger.LogDebug($"Glamour reconciliation: slot {slot} went unconfirmed for over " +
+                        $"{PendingRestoreTtl.TotalMinutes} minutes, dropping.", LoggerType.IpcGlamourer);
+                    _pendingRestores.Remove(slot);
+                    continue;
+                }
+
                 if (!live.ParsedEquipment.TryGetValue(slot, out var actual))
                 {
                     _logger.LogDebug($"Glamour reconciliation: slot {slot} missing from live state, still watching it.", LoggerType.IpcGlamourer);
@@ -219,7 +230,7 @@ public class GlamourHandler
 
                     _logger.LogWarning($"Glamour reconciliation: slot {slot} should show [{forced.GameItem.Name}], " +
                         $"reapplying (attempt {attempts + 1}/{MaxRestoreAttempts}).", LoggerType.IpcGlamourer);
-                    _pendingRestores[slot] = (released, attempts + 1);
+                    _pendingRestores[slot] = (released, attempts + 1, seen);
                     needsReapply = true;
                     continue;
                 }
@@ -241,7 +252,7 @@ public class GlamourHandler
 
                 _logger.LogWarning($"Glamour reconciliation: slot {slot} still stuck on [{actual.Name}], " +
                     $"retrying restore (attempt {attempts + 1}/{MaxRestoreAttempts}).", LoggerType.IpcGlamourer);
-                _pendingRestores[slot] = (released, attempts + 1);
+                _pendingRestores[slot] = (released, attempts + 1, seen);
                 stuckSlots.Add(slot);
             }
 
@@ -320,9 +331,45 @@ public class GlamourHandler
         };
 
     /// <summary> Should only ever be used by the GlamourListener. </summary>
-    /// <remarks> Handled safely through a SemaphoreSlim. </remarks>
+    /// <remarks>
+    ///     Handled safely through a SemaphoreSlim.
+    /// </remarks>
     public async Task UpdateGlamourCacheSlim(bool reapply)
-        => await ExecuteWithSemaphore(() => UpdateGlamourInternal(false, reapply));
+        => await ExecuteWithSemaphore(() =>
+        {
+            if (_ipc.GetActorState() is { } liveObj)
+                DropPlayerChangedPendingRestores(new GlamourActorState(liveObj));
+            // Cache before applying so the player's manual choice is absorbed into the unbound state,
+            // otherwise a later restore would push whatever they were wearing before this change.
+            return UpdateGlamourInternal(true, reapply);
+        });
+
+    /// <summary>
+    ///     Clears pending restore tracking for slots changed outside this handler.
+    ///     <para>
+    ///     A genuinely stuck slot does not emit a Glamourer event because the item never changes.
+    ///     When an event is received here, the change did not originate from this handler, so the slot
+    ///     was changed externally, typically by the player.
+    ///     </para>
+    /// </summary>
+    /// <remarks>
+    ///     <see cref="StateChangeType.Equip"/> does not say which slot moved, so it is recovered by
+    ///     diffing against <see cref="_lastSeenEquipment"/>.
+    /// </remarks>
+    private void DropPlayerChangedPendingRestores(GlamourActorState live)
+    {
+        foreach (var (slot, item) in live.ParsedEquipment)
+        {
+            if (_lastSeenEquipment.TryGetValue(slot, out var prev) && prev.Equals(item))
+                continue;
+
+            if (_pendingRestores.Remove(slot))
+                _logger.LogDebug($"Glamour reconciliation: slot {slot} was changed by the player to " +
+                    $"[{item.Name}], no longer treating it as stuck.", LoggerType.IpcGlamourer);
+
+            _lastSeenEquipment[slot] = item;
+        }
+    }
 
     /// <summary> Should only ever be used by the GlamourListener. </summary>
     /// <remarks> Handled safely through a SemaphoreSlim. </remarks>
@@ -385,41 +432,60 @@ public class GlamourHandler
     ///     Restore slots no longer present in _finalGlamour from <see cref="_cache"/>, then reapplies what is still active.
     /// </summary>
     /// <remarks>
-    ///     Each released slot is recorded in <see cref="_pendingRestores"/> first, so that if this
-    ///     push silently fails to reach Glamourer the slot does not stay stuck forever.
+    ///     Each slot is added to <see cref="_pendingRestores"/> before the restore is pushed to Glamourer.
+    ///     This ensures a failed or unconfirmed push can be retried instead of leaving the slot stuck.
     /// </remarks>
     private async Task RestoreAndReapply(bool forceCacheCall, IReadOnlyDictionary<EquipSlot, EquipItem> slotsToRestore)
     {
-        foreach (var (slot, releasedItem) in slotsToRestore)
+        var results = await Task.WhenAll(slotsToRestore
+            .Select(async kvp => (Slot: kvp.Key, Released: kvp.Value, Confirmed: await RestoreSlot(kvp.Key))));
+
+        foreach (var (slot, releasedItem, confirmed) in results)
         {
+            if (confirmed || RestoresToSameItem(slot, releasedItem))
+                continue;
+
             if (_pendingRestores.TryGetValue(slot, out var pending))
             {
                 // An earlier release on this slot is still unconfirmed, so keep watching for that item
                 // too, and do not hand the slot a fresh attempt budget.
                 if (!pending.Released.Any(i => i.Equals(releasedItem)))
                     pending.Released.Add(releasedItem);
-                _pendingRestores[slot] = pending;
+                _pendingRestores[slot] = (pending.Released, pending.Attempts, DateTime.UtcNow);
             }
             else
-                _pendingRestores[slot] = ([releasedItem], 0);
+                _pendingRestores[slot] = ([releasedItem], 0, DateTime.UtcNow);
+
+            _lastSeenEquipment[slot] = releasedItem;
         }
 
-        await Task.WhenAll(slotsToRestore.Keys.Select(RestoreSlot));
         _logger.LogDebug($"Restored Glamourer Slots to last applied base value.", LoggerType.IpcGlamourer);
         // Now reapply the cache.
         _logger.LogDebug("Reapplying Glamourer Cache", LoggerType.IpcGlamourer);
         await ApplyGlamourCache(forceCacheCall);
     }
 
-    /// <summary> Pushes a single slot back to its last known unbound appearance. </summary>
-    private Task RestoreSlot(EquipSlot slot)
-    {
-        if (_cache.LastUnboundState.RecoverSlot(slot, out var itemId, out var stain, out var stain2))
-            return _ipc.SetClientItemSlot((ApiEquipSlot)slot, itemId, [stain, stain2], 0);
+    /// <summary> True when restoring <paramref name="slot"/> would put back the very item being released. </summary>
+    private bool RestoresToSameItem(EquipSlot slot, EquipItem released)
+        => _cache.LastUnboundState.RecoverSlot(slot, out var itemId, out _, out _) && itemId == released.Id.Id;
 
-        // Nothing to restore to. ReconcileWithActualState will notice the slot is still stuck and retry.
-        _logger.LogWarning($"Failed to restore slot {slot}, no data found in Glamourer cache.", LoggerType.IpcGlamourer);
-        return Task.CompletedTask;
+    /// <summary> Pushes a single slot back to its last known unbound appearance. </summary>
+    /// <returns> Whether Glamourer confirmed the push; false means it may not have taken effect. </returns>
+    private async Task<bool> RestoreSlot(EquipSlot slot)
+    {
+        if (!_cache.LastUnboundState.RecoverSlot(slot, out var itemId, out var stain, out var stain2))
+        {
+            // Nothing to restore to. ReconcileWithActualState will notice the slot is still stuck and retry.
+            _logger.LogWarning($"Failed to restore slot {slot}, no data found in Glamourer cache.", LoggerType.IpcGlamourer);
+            return false;
+        }
+
+        var result = await _ipc.SetClientItemSlot((ApiEquipSlot)slot, itemId, [stain, stain2], 0);
+        if (result is not (GlamourerApiEc.Success or GlamourerApiEc.NothingDone))
+            return false;
+
+        _lastSeenEquipment[slot] = ItemSvc.Resolve(slot, itemId);
+        return true;
     }
 
     /// <summary> 
