@@ -9,9 +9,12 @@ namespace GagSpeak.Services.Controller;
 public class ImprisonmentController : DisposableMediatorSubscriberBase
 {
     private const string ReturnToCageName = "RETURN_TO_CAGE";
+
+    // Threshold for arriving at the cage. This prevents a inf loop on entering and leaving the cage.
+    private const float ArrivalFactor = 0.75f;
+
     private readonly HcTaskManager _hcTasks;
 
-    private bool _returningToCage => StaticDetours.MoveOverrides.InMoveTask;
     public ImprisonmentController(ILogger<ImprisonmentController> logger, GagspeakMediator mediator,
         HcTaskManager hcTasks) : base(logger, mediator)
     {
@@ -52,7 +55,7 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
         var currentTerritory = PlayerContent.TerritoryIdInstanced;
         if (hc.ImprisonedTerritory != currentTerritory)
         {
-            _hcTasks.RemoveIfPresent("MoveToPoint");
+            _hcTasks.RemoveIfPresent(ReturnToCageName);
             IsImprisoned = false;
             Logger.LogDebug($"Updated: IsImprisoned={IsImprisoned}, CageTerritoryId={CageTerritoryId}, CageOrigin={CageOrigin}, CageRadius={CageRadius}");
             return;
@@ -65,7 +68,7 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
             // invalidate if we are too far from current position.
             if (PlayerData.DistanceTo(newPos) > 15)
             {
-                _hcTasks.RemoveIfPresent("MoveToPoint");
+                _hcTasks.RemoveIfPresent(ReturnToCageName);
                 IsImprisoned = false;
                 Logger.LogDebug($"Updated: IsImprisoned={IsImprisoned}, CageTerritoryId={CageTerritoryId}, CageOrigin={CageOrigin}, CageRadius={CageRadius}");
                 return;
@@ -81,25 +84,31 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
 
     private void FrameworkUpdate()
     {
-        if (!IsImprisoned)
+        if (!IsImprisoned || !PlayerData.Available)
             return;
 
-        // if we are not in a return task, check if we are further from the allowed area.
-        if (!_returningToCage && PlayerData.Available)
-        {
-            // if the distance is larger than the cage radius, begin returning to cage.
-            if (PlayerData.DistanceTo(CageOrigin) > CageRadius)
-                _hcTasks.InsertTask(() => StaticDetours.MoveOverrides.MoveToPoint(CageOrigin, CageRadius), ReturnToCageName, HcTaskConfiguration.Default with { OnEnd = () => StaticDetours.MoveOverrides.Disable(), Flags = State.HcTaskControl.BlockMovementKeys });
-        }
+        // already on our way back, don't stack another task on top of it.
+        if (_hcTasks.HasTask(ReturnToCageName))
+            return;
+        
+        if (PlayerData.DistanceTo(new Vector2(CageOrigin.X, CageOrigin.Z)) <= CageRadius)
+            return;
+
+        // snapshot the cage, so a task outliving FullStopImprisonment can't retarget to the world origin.
+        var origin = CageOrigin;
+        var arrival = CageRadius * ArrivalFactor;
+        _hcTasks.InsertTask(() => StaticDetours.MoveOverrides.MoveToPoint(origin, arrival), ReturnToCageName, HcTaskConfiguration.Default with { OnEnd = () => StaticDetours.MoveOverrides.Disable(), Flags = State.HcTaskControl.BlockMovementKeys });
     }
 
     public void FullStopImprisonment()
     {
+        _hcTasks.RemoveIfPresent(ReturnToCageName);
+        StaticDetours.MoveOverrides.Disable();
+
         ShouldBeImprisoned = false;
         IsImprisoned = false;
         CageTerritoryId = 0;
         CageOrigin = Vector3.Zero;
         CageRadius = 1f;
-        _hcTasks.RemoveIfPresent("MoveToPoint");
     }
 }

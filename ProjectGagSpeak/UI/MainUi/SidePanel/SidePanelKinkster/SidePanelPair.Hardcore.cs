@@ -87,7 +87,9 @@ public partial class SidePanelPair
             CkGui.AttachTooltip($"Set the radius {dispName} can move within their cage. Be careful of pathing!");
 
             ImUtf8.SameLineInner();
-            var clientInAnchorRange = PlayerData.DistanceTo(cache.ImprisonPos) <= cache.ImprisonRadius;
+            // XZ-only, to match the rule ImprisonmentController actually enforces on the cage.
+            var anchorXZ = new Vector2(cache.ImprisonPos.X, cache.ImprisonPos.Z);
+            var clientInAnchorRange = PlayerData.DistanceTo(anchorXZ) <= cache.ImprisonRadius;
             var frameCol = clientInAnchorRange ? CkCol.TriStateCheck.Vec4().ToUint() : CkCol.TriStateCross.Vec4().ToUint();
             using (CkRaii.FramedChild("CageAnchor", new Vector2(rightW, ImGui.GetFrameHeight()), 0, frameCol, CkStyle.ListItemRounding(), CkStyle.ThinThickness()))
                 CkGui.CenterTextAligned($"{cache.ImprisonPos:F1}");
