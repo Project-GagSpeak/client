@@ -1,4 +1,5 @@
 using CkCommons;
+using Dalamud.Interface.ImGuiNotification;
 using GagSpeak.GameInternals.Detours;
 using GagSpeak.PlayerClient;
 using GagSpeak.PlayerControl;
@@ -9,11 +10,15 @@ namespace GagSpeak.Services.Controller;
 public class ImprisonmentController : DisposableMediatorSubscriberBase
 {
     private const string ReturnToCageName = "RETURN_TO_CAGE";
-
-    // Threshold for arriving at the cage. This prevents a inf loop on entering and leaving the cage.
     private const float ArrivalFactor = 0.75f;
+    private const int StallTimeoutMs = 5000;
+    private const int RetryCooldownMs = 15000;
+    private const float RetryDistanceMargin = 1f;
+    private const float DivergenceMargin = 3f;
 
     private readonly HcTaskManager _hcTasks;
+    private float? _gaveUpAtDistance;
+    private long _gaveUpAtTick;
 
     public ImprisonmentController(ILogger<ImprisonmentController> logger, GagspeakMediator mediator,
         HcTaskManager hcTasks) : base(logger, mediator)
@@ -29,6 +34,8 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
     public uint CageTerritoryId { get; private set; } = 0;
     public Vector3 CageOrigin { get; private set; } = Vector3.Zero;
     public float CageRadius { get; private set; } = 1f;
+
+    private Vector2 CageOriginXZ => new(CageOrigin.X, CageOrigin.Z);
 
     private void OnHcCacheStateChange()
     {
@@ -73,9 +80,13 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
                 Logger.LogDebug($"Updated: IsImprisoned={IsImprisoned}, CageTerritoryId={CageTerritoryId}, CageOrigin={CageOrigin}, CageRadius={CageRadius}");
                 return;
             }
+            // A re-positioned cage is a different problem, so don't hold an earlier give-up against it.
+            if (newPos != CageOrigin || !hc.ImprisonedRadius.Equals(CageRadius))
+                _gaveUpAtDistance = null;
+
             // update our imprisonment data if we have any.
             CageTerritoryId = (uint)hc.ImprisonedTerritory;
-            CageOrigin = ClientData.GetImprisonmentPos();
+            CageOrigin = newPos;
             CageRadius = hc.ImprisonedRadius;
             IsImprisoned = true;
         }
@@ -90,14 +101,60 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
         // already on our way back, don't stack another task on top of it.
         if (_hcTasks.HasTask(ReturnToCageName))
             return;
-        
-        if (PlayerData.DistanceTo(new Vector2(CageOrigin.X, CageOrigin.Z)) <= CageRadius)
+
+        var distance = PlayerData.DistanceTo(CageOriginXZ);
+        if (distance <= CageRadius)
+        {
+            // Back inside, so any earlier failure is no longer interesting.
+            _gaveUpAtDistance = null;
             return;
+        }
+
+        if (!CanRetryReturn(distance))
+            return;
+
+        _gaveUpAtDistance = null;
 
         // snapshot the cage, so a task outliving FullStopImprisonment can't retarget to the world origin.
         var origin = CageOrigin;
         var arrival = CageRadius * ArrivalFactor;
-        _hcTasks.InsertTask(() => StaticDetours.MoveOverrides.MoveToPoint(origin, arrival), ReturnToCageName, HcTaskConfiguration.Default with { OnEnd = () => StaticDetours.MoveOverrides.Disable(), Flags = State.HcTaskControl.BlockMovementKeys });
+        _hcTasks.InsertTask(() => ReturnToCage(origin, arrival), ReturnToCageName,
+            HcTaskConfiguration.Default with { OnEnd = () => StaticDetours.MoveOverrides.Disable(), Flags = State.HcTaskControl.BlockMovementKeys });
+    }
+
+    /// <summary>
+    ///     Walks back toward the cage. Returns null once we have stopped making progress, which the
+    ///     task manager treats as a failure rather than grinding against a wall until the timeout.
+    /// </summary>
+    private bool? ReturnToCage(Vector3 origin, float arrival)
+    {
+        var result = StaticDetours.MoveOverrides.MoveToPointOrFail(origin, arrival, StallTimeoutMs, DivergenceMargin);
+        if (result is not null)
+            return result;
+
+        // Record where we stopped so we know what counts as 'they moved further out' later on.
+        _gaveUpAtDistance = PlayerData.DistanceTo(CageOriginXZ);
+        _gaveUpAtTick = Environment.TickCount64;
+        Logger.LogWarning($"Could not reach the cage at {origin:F2} (gave up {_gaveUpAtDistance:F1} yalms out, " +
+            $"stalled {StaticDetours.MoveOverrides.StalledFor}ms, diverged {StaticDetours.MoveOverrides.DivergedBy:F1} yalms). " +
+            $"Retrying in {RetryCooldownMs / 1000}s, or sooner if you move further away.");
+        Mediator.Publish(new NotificationMessage("Imprisonment", "Something is blocking the way back to your cage!", NotificationType.Warning));
+        return null;
+    }
+
+    /// <summary>
+    ///     After a failed return we hold off re-trying until either the cooldown elapses or the
+    ///     player has moved meaningfully further out than where the attempt was abandoned.
+    /// </summary>
+    private bool CanRetryReturn(float distance)
+    {
+        if (_gaveUpAtDistance is not { } gaveUpAt)
+            return true;
+
+        if (distance > gaveUpAt + RetryDistanceMargin)
+            return true;
+
+        return Environment.TickCount64 - _gaveUpAtTick >= RetryCooldownMs;
     }
 
     public void FullStopImprisonment()
@@ -110,5 +167,7 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
         CageTerritoryId = 0;
         CageOrigin = Vector3.Zero;
         CageRadius = 1f;
+        _gaveUpAtDistance = null;
+        _gaveUpAtTick = 0;
     }
 }
