@@ -179,7 +179,7 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
     public virtual RestrictionItem Clone(bool keepId = false) => new RestrictionItem(this, keepId);
 
     /// <summary> Applies updated changes to an edited item, while still maintaining the original references. <summary>
-    public void ApplyChanges(RestrictionItem other)
+    public virtual void ApplyChanges(RestrictionItem other)
     {
         Label = other.Label;
         ThumbnailPath = other.ThumbnailPath;
@@ -275,10 +275,11 @@ public class HypnoticRestriction : RestrictionItem
         => new HypnoticRestriction(this, keepId);
 
     /// <summary> Applies updated changes to an edited item, while still maintaining the original references. <summary>
-    public void ApplyChanges(HypnoticRestriction other)
+    public override void ApplyChanges(RestrictionItem other)
     {
         base.ApplyChanges(other);
-        Properties = other.Properties;
+        if (other is HypnoticRestriction hypnotic)
+            Properties = hypnotic.Properties;
     }
 
     public override JObject Serialize()
@@ -339,10 +340,11 @@ public class BlindfoldRestriction : RestrictionItem
         => new BlindfoldRestriction(this, keepId);
 
     /// <summary> Applies updated changes to an edited item, while still maintaining the original references. <summary>
-    public void ApplyChanges(BlindfoldRestriction other)
+    public override void ApplyChanges(RestrictionItem other)
     {
         base.ApplyChanges(other);
-        Properties = other.Properties;
+        if (other is BlindfoldRestriction blindfold)
+            Properties = blindfold.Properties;
     }
 
 
