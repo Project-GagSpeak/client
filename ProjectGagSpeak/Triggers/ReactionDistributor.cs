@@ -185,7 +185,7 @@ public class ReactionDistributor
     #endregion Invocations
 
     #region Reaction Logic
-    // Unique logic spesific to Non-Trigger logic, performed by aliases.
+    // Unique logic specific to Non-Trigger logic, performed by aliases.
 
     // Can happen from anyone, player or Kinkster. (Might want to include nameworld or something?)
     private bool TextReaction(TextAction act, string? enactorUid = null)
@@ -279,7 +279,13 @@ public class ReactionDistributor
         }
         else if (act.NewState is NewState.Disabled)
         {
-            layerIdx = gagData.FindOutermostActive();
+            // Any layer: find the outermost unlocked gag, restricted to the chosen gag type when one is set.
+            if (layerIdx is -1)
+                layerIdx = act.GagType is GagType.None ? gagData.FindOutermostActive() : gagData.FindOutermostActive(act.GagType);
+            // Specific layer: it must hold an unlocked gag matching the chosen gag type when one is set.
+            else if (gagData.GagSlots[layerIdx].GagItem is GagType.None || gagData.GagSlots[layerIdx].IsLocked()
+                || (act.GagType is not GagType.None && gagData.GagSlots[layerIdx].GagItem != act.GagType))
+                layerIdx = -1;
 
             if (layerIdx is -1)
             {
@@ -351,9 +357,15 @@ public class ReactionDistributor
         }
         else if (act.NewState is NewState.Disabled)
         {
-            layerIdx = act.RestrictionId != Guid.Empty
-                ? restrictions.Restrictions.IndexOf(x => x.Identifier == act.RestrictionId)
-                : restrictions.FindOutermostActiveUnlocked();
+            // Any layer: locate the chosen restriction when one is set, otherwise the outermost unlocked one.
+            if (layerIdx is -1)
+                layerIdx = act.RestrictionId != Guid.Empty
+                    ? restrictions.Restrictions.IndexOf(x => x.Identifier == act.RestrictionId)
+                    : restrictions.FindOutermostActiveUnlocked();
+            // Specific layer: it must hold a restriction matching the chosen one when set.
+            else if (restrictions.Restrictions[layerIdx].Identifier == Guid.Empty
+                || (act.RestrictionId != Guid.Empty && restrictions.Restrictions[layerIdx].Identifier != act.RestrictionId))
+                layerIdx = -1;
 
             if (layerIdx == -1 || !restrictions.Restrictions[layerIdx].CanRemove())
                 return false;
@@ -417,6 +429,9 @@ public class ReactionDistributor
         else if (act.NewState is NewState.Disabled)
         {
             if (!restraint.CanRemove())
+                return false;
+            // When a specific set is chosen, only remove if it is the currently active one.
+            if (act.RestrictionId != Guid.Empty && restraint.Identifier != act.RestrictionId)
                 return false;
             _logger.LogDebug($"Removing restraint [{act.RestrictionId}]", LoggerType.Triggers);
             return await _selfBondage.DoSelfRestraintResult(new CharaActiveRestraint(), DataUpdateType.Removed).ConfigureAwait(false);
