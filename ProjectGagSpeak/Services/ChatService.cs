@@ -82,12 +82,12 @@ public class ChatService : DisposableMediatorSubscriberBase
         var senderName = senderPayload?.PlayerName ?? PlayerData.Name;
         var senderWorld = senderPayload?.World.Value.Name.ToString() ?? PlayerData.HomeWorldName;
 
-        // Check for things that only ever arrive as chat lines.
-        CheckForDiceDeathroll(type, $"{senderName}@{senderWorld}", msg);
-
         // If the chat is not a normal chat channel do not process.
         if (ChatLogAgent.FromXivChatType(type) is not { } channel)
             return;
+        
+        // Check for things that only ever arrive as chat lines.
+        CheckForDiceDeathroll(type, $"{senderName}@{senderWorld}", msg);
 
         Mediator.Publish(new GameChatMessage(channel, $"{senderName}@{senderWorld}", msg));
     }
@@ -172,7 +172,8 @@ public class ChatService : DisposableMediatorSubscriberBase
     /// </summary>
     private void CheckForDiceDeathroll(XivChatType type, string senderNameWorld, SeString msg)
     {
-        if (ChatLogAgent.FromXivChatType(type) is null || !msg.Payloads.Exists(p => p.Type == PayloadType.Icon))
+        // Dice can't actually be used in say channel.
+        if (type is XivChatType.Say || !msg.Payloads.Exists(p => p.Type == PayloadType.Icon))
             return;
         
         Logger.LogDebug($"Received Dice Deathroll Message from {senderNameWorld}", LoggerType.Triggers);
