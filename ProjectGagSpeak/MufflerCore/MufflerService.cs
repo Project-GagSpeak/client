@@ -269,6 +269,8 @@ public class MufflerService : DisposableMediatorSubscriberBase
     /// </summary>
     private string GarbleWithFallback(string word, bool isAllCaps, bool isFirstLetterCapitalized)
     {
+        if (_mainConfig.Current.GarbleWordsNotInDictionary) return word;
+        
         // Return the no sound converter for no sound words
         if (_activeMuffleType.HasFlag(GagMuffleType.NoSound))
             return GetNoSoundWord(word, isAllCaps, isFirstLetterCapitalized);

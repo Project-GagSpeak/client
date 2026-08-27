@@ -614,8 +614,11 @@ public class CacheStateManager : IHostedService
         };
         // Conditional additions
         if (_config.Current.CursedItemsApplyTraits && item.ApplyTraits) tasks.Add(AddTraits(key, item.RefItem.Traits &~ (Traits.Immobile | Traits.Weighty)));
-        if (item.RefItem is BlindfoldRestriction bfr) tasks.Add(AddBlindfold(key, bfr.Properties));
-        if (item.RefItem is HypnoticRestriction hr) tasks.Add(AddHypnoEffect(key, hr.Properties));
+        if (_config.Current.CursedItemsApplyOverlays)
+        {
+            if (item.RefItem is BlindfoldRestriction bfr) tasks.Add(AddBlindfold(key, bfr.Properties));
+            if (item.RefItem is HypnoticRestriction hr) tasks.Add(AddHypnoEffect(key, hr.Properties));
+        }
 
         // Run in parallel.
         await TimedWhenAll($"[{key}]'s Visual Attributes added to caches", tasks);

@@ -1,5 +1,6 @@
 using CkCommons;
 using CkCommons.Gui;
+using CkCommons.Textures;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Textures.TextureWraps;
@@ -42,7 +43,7 @@ public class HypnoService : IDisposable
     // Active Display Item.
     private bool                    _hcStateEffect = false;
     private CombinedCacheKey        _activeSourceKey = CombinedCacheKey.Empty;
-    private HypnoticEffect?         _activeEffect = null;       
+    private HypnoticEffect?         _activeEffect = null;
     private string                  _applierUid   = string.Empty;
     private IDalamudTextureWrap?    _storedImage;
     // Animation Control
@@ -61,7 +62,7 @@ public class HypnoService : IDisposable
     }
 
     /// <summary>
-    ///     Indicates if this spiral came from a sent hypnosis effect, over a personal restraint. 
+    ///     Indicates if this spiral came from a sent hypnosis effect, over a personal restraint.
     /// </summary>
     public bool IsSentEffect => _hcStateEffect;
     public CombinedCacheKey ActiveSourceKey => _activeSourceKey;
@@ -80,8 +81,11 @@ public class HypnoService : IDisposable
     // For effect application done by bindings.
     public async Task ApplyEffect(HypnoticOverlay overlay, CombinedCacheKey enactor)
     {
+        // texture was deliberately unset, load a blank png so everything else can still work
+        if (overlay.OverlayPath.IsNullOrEmpty())
+            _storedImage = await TextureManager.GetImageFromBytesAsync(BlindfoldOverlay.FallbackImagePNG);
         // overlay image path does not exist, fallback to default.
-        if (!overlay.IsValid())
+        else if (!overlay.IsValid())
             _storedImage = await TextureManagerEx.RentMetadataPath(ImageDataType.Hypnosis, Constants.DefaultHypnoPath);
         else
             _storedImage = await TextureManagerEx.RentMetadataPath(ImageDataType.Hypnosis, overlay.OverlayPath);
@@ -147,14 +151,14 @@ public class HypnoService : IDisposable
         _hcStateEffect = false;
     }
 
-    /// <summary> 
+    /// <summary>
     ///     Safely, remove a Hypno Effect.
     /// </summary>
     public async Task RemoveEffect()
     {
         if (!HasValidEffect)
             return;
-        // Run the Removal Internal 
+        // Run the Removal Internal
         await ExecuteWithSemaphore(RemoveAnimationInternal);
         // Reset the state.
         _tasksCTS = _tasksCTS.SafeCancelRecreate();
@@ -209,7 +213,7 @@ public class HypnoService : IDisposable
                 progress = Math.Clamp(elapsed / adjustedDuration, 0.0f, 1.0f);
                 // Perform SmoothStep easing for interpolation.
                 _activeState.ImageOpacity = GagspeakEx.Lerp(startOpacity, endOpacity, progress);
-                
+
                 await Task.Delay(Svc.Framework.UpdateDelta.Milliseconds, token);
             }
             // Set final Opacity
@@ -503,4 +507,3 @@ public class HypnoService : IDisposable
         }
     }
 }
-

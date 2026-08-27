@@ -86,7 +86,7 @@ public class NicksConfig : IHybridSavable
         => Current.Nicknames.TryGetValue(uid, out var n) && n is { Length: > 0 } ? n : null;
 
 
-    /// <summary> 
+    /// <summary>
     ///     Set a nickname for a user identifier.
     /// </summary>
     /// <param name="uid">the user identifier</param>
@@ -97,6 +97,15 @@ public class NicksConfig : IHybridSavable
             return;
 
         Current.Nicknames[uid] = nickname;
+        Save();
+    }
+
+    public void ClearNickname(string uid)
+    {
+        if (uid.IsNullOrWhitespace())
+            throw new ArgumentException("uid cannot be null or empty.");
+
+        Current.Nicknames.Remove(uid);
         Save();
     }
 }

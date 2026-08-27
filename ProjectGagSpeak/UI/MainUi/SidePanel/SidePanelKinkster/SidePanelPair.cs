@@ -5,6 +5,8 @@ using CkCommons.Raii;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.CustomCombos;
+using GagSpeak.Interop;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
@@ -26,13 +28,15 @@ public partial class SidePanelPair
     private readonly KinksterManager _kinksters;
     private readonly SidePanelService _service;
     private readonly PiShockProvider _shockies;
+    private readonly IpcCallerLifestream _lifestream;
+    private readonly AddressBookCombo _addressBook;
 
     private Dictionary<KPID, string> _timespanCache = new();
     private static IconCheckboxEx EditAccessCheckbox = new(FAI.Pen, 0xFF00FF00, 0);
     private static IconCheckboxEx HardcoreCheckbox = new(FAI.UserLock, 0xFF00FF00, 0xFF0000FF);
 
     public SidePanelPair(ILogger<SidePanelPair> logger, GagspeakMediator mediator, MainHub hub,
-        KinksterManager kinksters, SidePanelService service, PiShockProvider shockies)
+        KinksterManager kinksters, SidePanelService service, PiShockProvider shockies, IpcCallerLifestream lifestream)
     {
         _logger = logger;
         _mediator = mediator;
@@ -40,6 +44,8 @@ public partial class SidePanelPair
         _kinksters = kinksters;
         _service = service;
         _shockies = shockies;
+        _lifestream = lifestream;
+        _addressBook = new AddressBookCombo(logger, () => _lifestream.GetAddressList() ?? new List<AddressBookEntryTuple>());
     }
 
     public void DrawClientPermissions(KinksterInfoCache cache, Kinkster kinkster, string dispName, float width)
@@ -199,8 +205,8 @@ public partial class SidePanelPair
         PanelPairEx.HardcoreConfirmationPopup(_hub, kinkster, dispName);
 
         ImGui.TextUnformatted("Shock Collar Permissions");
-        if (ClientData.Globals is not { } p || !p.HasValidShareCode())
-            CkGui.ColorTextCentered("Must have a valid Global ShareCode first!", ImGuiColors.DalamudRed);
+        if (!_shockies.IsConfigured)
+            CkGui.ColorTextCentered("PiShock not configured - set Username & API Key in Settings.", ImGuiColors.DalamudRed);
         else
         {
             UniqueShareCode(kinkster, dispName, width);

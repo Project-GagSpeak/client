@@ -111,6 +111,11 @@ public sealed class AutoUnlockService : BackgroundService
     {
         if (!MainHub.IsConnected)
             return;
+        
+        // Defer expiry processing while zoning, as Glamourer IPC calls are dropped during transitions
+        if (PlayerData.IsZoning || !PlayerData.Available)
+            return;
+        
         // remove the stopwatch if it becomes excessive.
         var sw = Stopwatch.StartNew();
         await Task.WhenAll(
@@ -288,7 +293,7 @@ public sealed class AutoUnlockService : BackgroundService
             _mediator.Publish(new EventMessage(new("Auto-Unlock", MainHub.UID, InteractionType.UnlockRestraint, $"Active RestraintSet's Timed Padlock Expired!")));
             
             // Auto remove if configured to do so.
-            if (_config.Current.RemoveRestrictionOnTimerExpire && await _dds.PushNewActiveRestraint(new CharaActiveRestraint(), DataUpdateType.Removed).ConfigureAwait(false) is not null)
+            if (_config.Current.RemoveRestraintOnTimerExpire && await _dds.PushNewActiveRestraint(new CharaActiveRestraint(), DataUpdateType.Removed).ConfigureAwait(false) is not null)
             {
                 if (_restraints.Remove(MainHub.UID, out var restraintSet, out var removedLayers))
                     await _cacheManager.RemoveRestraintSet(restraintSet, removedLayers);
@@ -318,8 +323,9 @@ public sealed class AutoUnlockService : BackgroundService
 
             _logger.LogInformation($"CursedLoot Item [{item.Label}] Timer Expired!", LoggerType.AutoUnlocks);
 
-            // store backup state.
-            var backup = item;
+            // store backup state. (CursedItem is a reference type, so copy the values off it, not the item itself)
+            var appliedBackup = item.AppliedTime;
+            var releaseBackup = item.ReleaseTime;
             // Temporarily update the changes locally, to prevent excess Auto-unlock calls.
             item.AppliedTime = DateTimeOffset.MinValue;
             item.ReleaseTime = DateTimeOffset.MinValue;
@@ -328,8 +334,8 @@ public sealed class AutoUnlockService : BackgroundService
             if (await _dds.PushActiveCursedLoot(_cursedLoot.Storage.AppliedLootIds.ToList(), item.Identifier, null).ConfigureAwait(false) is null)
             {
                 // Revert the values to prevent the update and trigger it again later. This helps to prevent false achievement triggering.
-                item.AppliedTime = backup.AppliedTime;
-                item.ReleaseTime = backup.ReleaseTime;
+                item.AppliedTime = appliedBackup;
+                item.ReleaseTime = releaseBackup;
                 _cursedLoot.ForceSave();
             }
             else

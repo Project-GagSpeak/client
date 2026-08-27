@@ -104,8 +104,9 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
     {
         Logger.LogDebug("Setting banned slots based on current traits.", LoggerType.HardcoreActions);
         var hotbarModule = Framework.Instance()->GetUIModule()->GetRaptureHotbarModule();
+
         // the length of our hotbar count
-        var hotbarSpan = hotbarModule->StandardHotbars;
+        var hotbarSpan = hotbarModule->Hotbars;
 
         // Check all active hotbar spans.
         for (var i = 0; i < hotbarSpan.Length; i++)
@@ -155,7 +156,7 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
             return;
 
         Logger.LogDebug("Restoring saved slots", LoggerType.HardcoreActions);
-        var baseSpan = hotbarModule->StandardHotbars; // the length of our hotbar count
+        var baseSpan = hotbarModule->Hotbars; // the length of our hotbar count
         for (var i = 0; i < baseSpan.Length; i++)
         {
             var hotbarRow = baseSpan.GetPointer(i);

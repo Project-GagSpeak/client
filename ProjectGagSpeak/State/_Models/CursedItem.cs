@@ -14,8 +14,12 @@ public abstract class CursedItem : IEditableStorageItem<CursedItem>
     public string Label { get; set; } = string.Empty;
     public DateTimeOffset AppliedTime { get; set; } = DateTimeOffset.MinValue;
     public DateTimeOffset ReleaseTime { get; set; } = DateTimeOffset.MinValue;
+    public DateTimeOffset CreditedUntil { get; set; } = DateTimeOffset.MinValue;
     public Precedence Precedence { get; set; } = Precedence.Default; // the priority system.
     public bool ApplyTraits { get; set; } = true; // For Hardcore Traits.
+
+    public TimeSpan? TimeRangeLower { get; set; } = null;
+    public TimeSpan? TimeRangeUpper { get; set; } = null;
 
     public abstract string RefLabel { get; }
 
@@ -36,8 +40,11 @@ public abstract class CursedItem : IEditableStorageItem<CursedItem>
         InPool = other.InPool;
         AppliedTime = other.AppliedTime;
         ReleaseTime = other.ReleaseTime;
+        CreditedUntil = other.CreditedUntil;
         Precedence = other.Precedence;
         ApplyTraits = other.ApplyTraits;
+        TimeRangeLower = other.TimeRangeLower;
+        TimeRangeUpper = other.TimeRangeUpper;
     }
 
     // May need to be moved up or something. Not sure though. Look into later.
@@ -116,9 +123,12 @@ public class CursedGagItem : CursedItem
             ["Label"] = Label,
             ["AppliedTime"] = AppliedTime.UtcDateTime.ToString("o"),
             ["ReleaseTime"] = ReleaseTime.UtcDateTime.ToString("o"),
+            ["CreditedUntil"] = CreditedUntil.UtcDateTime.ToString("o"),
             ["Precedence"] = Precedence.ToString(),
             ["GagRef"] = RefItem.GagType.ToString(),
-            ["ApplyTraits"] = ApplyTraits
+            ["ApplyTraits"] = ApplyTraits,
+            ["TimeRangeLower"] = TimeRangeLower.ToString(),
+            ["TimeRangeUpper"] = TimeRangeUpper.ToString()
         };
 }
 
@@ -168,8 +178,11 @@ public class CursedRestrictionItem : CursedItem
             ["Label"] = Label,
             ["AppliedTime"] = AppliedTime.UtcDateTime.ToString("o"),
             ["ReleaseTime"] = ReleaseTime.UtcDateTime.ToString("o"),
+            ["CreditedUntil"] = CreditedUntil.UtcDateTime.ToString("o"),
             ["Precedence"] = Precedence.ToString(),
             ["RestrictionRef"] = RefItem.Identifier.ToString(),
-            ["ApplyTraits"] = ApplyTraits
+            ["ApplyTraits"] = ApplyTraits,
+            ["TimeRangeLower"] = TimeRangeLower.ToString(),
+            ["TimeRangeUpper"] = TimeRangeUpper.ToString()
         };
 }

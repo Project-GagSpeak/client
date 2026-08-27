@@ -4,6 +4,7 @@ using GagSpeak.Interop.Helpers;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagspeakAPI.Data;
+using GagspeakAPI.Extensions;
 using GagspeakAPI.Dto.VibeRoom;
 using GagspeakAPI.Network;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -323,6 +324,7 @@ public partial class MainHub
         {
             Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
             Generic.Safe(() => _kinksters.StateChangeHardcore(dto.Target, dto.Enactor, dto.Changed, dto.NewData));
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, dto.Changed, dto.NewData.IsEnabled(dto.Changed), dto.Enactor, dto.Target.UID);
         }
         return Task.CompletedTask;
 

@@ -22,7 +22,7 @@ public sealed class IpcCallerSundouleia : IIpcCaller
     {
         try
         {
-            APIAvailable = ApiVersion.InvokeFunc() is 1;
+            APIAvailable = ApiVersion.InvokeFunc() is 2;
         }
         catch
         {

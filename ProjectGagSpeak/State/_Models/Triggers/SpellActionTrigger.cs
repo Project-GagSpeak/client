@@ -29,6 +29,11 @@ public class SpellActionTrigger : Trigger, IThresholdContainer
     public int ThresholdMinValue { get; set; } = -1;
     public int ThresholdMaxValue { get; set; } = 10000000;
 
+    // If true, the trigger fires on a random % chance instead of a damage threshold.
+    public bool UsePercentChance { get; set; } = false;
+    // The % chance (0-100) the trigger fires when UsePercentChance is true.
+    public int PercentChance { get; set; } = 100;
+
     public SpellActionTrigger()
     { }
 
@@ -46,6 +51,8 @@ public class SpellActionTrigger : Trigger, IThresholdContainer
         StoredActions = new Dictionary<JobType, List<uint>>(other.StoredActions);
         ThresholdMinValue = other.ThresholdMinValue;
         ThresholdMaxValue = other.ThresholdMaxValue;
+        UsePercentChance = other.UsePercentChance;
+        PercentChance = other.PercentChance;
     }
 
     public override SpellActionTrigger Clone(bool keepId) => new SpellActionTrigger(this, keepId);
@@ -66,5 +73,7 @@ public class SpellActionTrigger : Trigger, IThresholdContainer
         StoredActions = new Dictionary<JobType, List<uint>>(sat.StoredActions);
         ThresholdMinValue = sat.ThresholdMinValue;
         ThresholdMaxValue = sat.ThresholdMaxValue;
+        UsePercentChance = sat.UsePercentChance;
+        PercentChance = sat.PercentChance;
     }
 }

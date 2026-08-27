@@ -113,7 +113,7 @@ public sealed class RestrictionManager : IHybridSavable
         return restriction;
     }
 
-    public RestrictionItem CreateClone(RestrictionItem clone, string newName)
+    public RestrictionItem CreateClone(RestrictionItem clone, string newName, string? folderPath = null)
     {
         newName = CkGui.TooltipTokenRegex().Replace(newName, string.Empty);
         newName = RegexEx.EnsureUniqueName(newName, Storage, x => x.Label);
@@ -128,7 +128,7 @@ public sealed class RestrictionManager : IHybridSavable
         _saver.Save(this);
 
         _logger.LogDebug($"Cloned restriction {clonedItem.Identifier}.");
-        _mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Created, clonedItem, null));
+        _mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Created, clonedItem, folderPath));
         return clonedItem;
     }
 

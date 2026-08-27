@@ -141,10 +141,18 @@ public sealed class CursedLootManager : IHybridSavable
     // Called from safeword service, deactivates all items.
     public void InvalidateAllActive()
     {
-        foreach (var item in Storage.ActiveAppliedLoot.ToArray())
+        foreach (var item in Storage.AppliedLootUnsorted.ToArray())
         {
             item.AppliedTime = DateTimeOffset.MinValue;
             item.ReleaseTime = DateTimeOffset.MinValue;
+            item.CreditedUntil = DateTimeOffset.MinValue;
+        }
+        // Nothing remains active, so anything credited beyond "now" will never be served - claw it all back.
+        var now = DateTimeOffset.UtcNow;
+        if (CursedTimeCoveredUntil > now)
+        {
+            TimeInCursedLoot -= CursedTimeCoveredUntil - now;
+            CursedTimeCoveredUntil = now;
         }
         _saver.Save(this);
         SyncGarblerWithCursedGags();
@@ -160,22 +168,84 @@ public sealed class CursedLootManager : IHybridSavable
     }
 
     // does not relate to the cached item, handle this seperately in the visual listener.
-    public void ActivateItem(CursedItem item, DateTimeOffset endTimeUtc)
+    // newEncounter should only be true for freshly opened loot, not for re-activations from a server sync.
+    public void ActivateItem(CursedItem item, DateTimeOffset endTimeUtc, bool newEncounter = false)
     {
         item.AppliedTime = DateTimeOffset.UtcNow;
         item.ReleaseTime = endTimeUtc;
+        if (newEncounter)
+            RecordEncounterStats(item, endTimeUtc);
         _saver.Save(this);
         SyncGarblerWithCursedGags();
+    }
+
+    public void RecordMimicEvaded()
+    {
+        MimicsEvaded++;
+        _saver.Save(this);
+    }
+
+    private void RecordEncounterStats(CursedItem item, DateTimeOffset endTimeUtc)
+    {
+        TotalEncounters++;
+        if (item is CursedGagItem)
+            GagEncounters++;
+        else if (item is CursedRestrictionItem)
+            BindEncounters++;
+
+        var lockTime = endTimeUtc - item.AppliedTime;
+        if (lockTime > LongestLockTime)
+            LongestLockTime = lockTime;
+
+        // Only count time not already covered by other active loot, so overlapping locks don't inflate the total.
+        if (endTimeUtc > CursedTimeCoveredUntil)
+        {
+            var countFrom = item.AppliedTime > CursedTimeCoveredUntil ? item.AppliedTime : CursedTimeCoveredUntil;
+            TimeInCursedLoot += endTimeUtc - countFrom;
+            CursedTimeCoveredUntil = endTimeUtc;
+            item.CreditedUntil = endTimeUtc;
+        }
+
+        var activeCount = Storage.AppliedLootIds.Count();
+        if (activeCount > MaxLootActiveAtOnce)
+            MaxLootActiveAtOnce = activeCount;
     }
 
     public void SetInactive(Guid lootId)
     {
         if (!Storage.TryGetLoot(lootId, out var item))
             return;
+        RefundUnservedTime(item);
         item.AppliedTime = DateTimeOffset.MinValue;
         item.ReleaseTime = DateTimeOffset.MinValue;
+        item.CreditedUntil = DateTimeOffset.MinValue;
         _saver.Save(this);
         SyncGarblerWithCursedGags();
+    }
+
+    /// <summary> Removes any counted lock time that will no longer be served after an early release. </summary>
+    /// <remarks>
+    /// Only refunds if <paramref name="item"/> is the one that currently owns the watermark it advanced
+    /// (via <see cref="RecordEncounterStats"/>).
+    /// Remaining active items all began in the past, so their future coverage is the contiguous span [now, max release].
+    /// </remarks>
+    private void RefundUnservedTime(CursedItem item)
+    {
+        if (item.CreditedUntil == DateTimeOffset.MinValue || item.CreditedUntil != CursedTimeCoveredUntil)
+            return;
+
+        var now = DateTimeOffset.UtcNow;
+        var stillCovered = Storage.AppliedLootUnsorted
+            .Where(i => i.Identifier != item.Identifier)
+            .Select(i => i.ReleaseTime)
+            .Append(now)
+            .Max();
+
+        if (CursedTimeCoveredUntil > stillCovered)
+        {
+            TimeInCursedLoot -= CursedTimeCoveredUntil - stillCovered;
+            CursedTimeCoveredUntil = stillCovered;
+        }
     }
 
     public void SetLowerLimit(TimeSpan time)
@@ -205,9 +275,24 @@ public sealed class CursedLootManager : IHybridSavable
     public int GagEncounters { get; set; } = 0;
     public int BindEncounters { get; set; } = 0;
     public int MimicsEvaded { get; set; } = 0;
-    public TimeSpan TimeInCursedLoot { get; set; } = TimeSpan.Zero;
+    private TimeSpan _timeInCursedLoot = TimeSpan.Zero;
+    public TimeSpan TimeInCursedLoot
+    {
+        get => _timeInCursedLoot;
+        set
+        {
+            if (value < TimeSpan.Zero)
+            {
+                _logger.LogWarning($"TimeInCursedLoot was set to a negative value ({value}), clamping to zero.");
+                value = TimeSpan.Zero;
+            }
+            _timeInCursedLoot = value;
+        }
+    }
     public TimeSpan LongestLockTime { get; set; } = TimeSpan.Zero;
     public int MaxLootActiveAtOnce { get; set; } = 0;
+    // Tracks how far into the future TimeInCursedLoot has already been counted, so overlapping locks are not double counted.
+    public DateTimeOffset CursedTimeCoveredUntil { get; set; } = DateTimeOffset.MinValue;
 
 
     public int ConfigVersion => 0;
@@ -237,6 +322,7 @@ public sealed class CursedLootManager : IHybridSavable
             ["TimeInCursedLoot"] = TimeInCursedLoot.ToString(),
             ["LongestLockTime"] = LongestLockTime.ToString(),
             ["MaxLootActiveAtOnce"] = MaxLootActiveAtOnce,
+            ["CursedTimeCoveredUntil"] = CursedTimeCoveredUntil.UtcDateTime.ToString("o"),
             ["CursedItems"] = cursedItems,
         }.ToString(Formatting.Indented);
     }
@@ -310,6 +396,7 @@ public sealed class CursedLootManager : IHybridSavable
         TimeInCursedLoot = TimeSpan.TryParse(cursedLootData["TimeInCursedLoot"]?.Value<string>(), out var timeInLoot) ? timeInLoot : TimeSpan.Zero;
         LongestLockTime = TimeSpan.TryParse(cursedLootData["LongestLockTime"]?.Value<string>(), out var longestLock) ? longestLock : TimeSpan.Zero;
         MaxLootActiveAtOnce = cursedLootData["MaxLootActiveAtOnce"]?.Value<int>() ?? 0;
+        CursedTimeCoveredUntil = ReadUtcTime(cursedLootData["CursedTimeCoveredUntil"]);
 
         // get the array of cursed loot items from the token
         if (cursedLootData["CursedItems"] is not JArray lootItemsList)
@@ -341,6 +428,21 @@ public sealed class CursedLootManager : IHybridSavable
         }
     }
 
+    /// <summary> Reads a stored timestamp back as a UTC instant, regardless of how Newtonsoft typed the token. </summary>
+    private static DateTimeOffset ReadUtcTime(JToken? token)
+    {
+        if (token is null || token.Type is JTokenType.Null)
+            return DateTimeOffset.MinValue;
+
+        var time = token.Value<DateTime>();
+        return time.Kind switch
+        {
+            DateTimeKind.Utc => new DateTimeOffset(time, TimeSpan.Zero),
+            DateTimeKind.Local => new DateTimeOffset(time).ToUniversalTime(),
+            _ => new DateTimeOffset(DateTime.SpecifyKind(time, DateTimeKind.Utc), TimeSpan.Zero),
+        };
+    }
+
     private void MigrateV0toV1(JObject oldConfigJson)
     {
         // update only the version value to 1, then return it.
@@ -355,8 +457,9 @@ public sealed class CursedLootManager : IHybridSavable
 
         try
         {
-            var applyTime = token["AppliedTime"]?.Value<DateTime>() ?? DateTime.MinValue;
-            var releaseTime = token["ReleaseTime"]?.Value<DateTime>() ?? DateTime.MinValue;
+            var applyTime = ReadUtcTime(token["AppliedTime"]);
+            var releaseTime = ReadUtcTime(token["ReleaseTime"]);
+            var creditedUntil = ReadUtcTime(token["CreditedUntil"]);
             // get the gag by the gagtype.
             if (token["GagRef"] is not JValue gagRefValue)
                 return null;
@@ -371,11 +474,14 @@ public sealed class CursedLootManager : IHybridSavable
                 Identifier = token["Identifier"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier"),
                 Label = token["Label"]?.Value<string>() ?? string.Empty,
                 InPool = token["InPool"]?.Value<bool>() ?? false,
-                AppliedTime = new DateTimeOffset(applyTime, TimeSpan.Zero),
-                ReleaseTime = new DateTimeOffset(releaseTime, TimeSpan.Zero),
+                AppliedTime = applyTime,
+                ReleaseTime = releaseTime,
+                CreditedUntil = creditedUntil,
                 Precedence = Enum.TryParse<Precedence>(token["Precedence"]?.Value<string>(), out var precedence) ? precedence : Precedence.Default,
                 ApplyTraits = token["ApplyTraits"]?.Value<bool>() ?? true,
-                RefItem = gagRef
+                RefItem = gagRef,
+                TimeRangeLower = TimeSpan.TryParse(token["TimeRangeLower"]?.Value<string>(), out var lower) ? lower : null,
+                TimeRangeUpper = TimeSpan.TryParse(token["TimeRangeUpper"]?.Value<string>(), out var upper) ? upper : null
             };
             return item;
         }
@@ -392,8 +498,9 @@ public sealed class CursedLootManager : IHybridSavable
             return null;
         try
         {
-            var applyTime = token["AppliedTime"]?.Value<DateTime>() ?? DateTime.MinValue;
-            var releaseTime = token["ReleaseTime"]?.Value<DateTime>() ?? DateTime.MinValue;
+            var applyTime = ReadUtcTime(token["AppliedTime"]);
+            var releaseTime = ReadUtcTime(token["ReleaseTime"]);
+            var creditedUntil = ReadUtcTime(token["CreditedUntil"]);
             // get the restriction by the GUID.
             if (token["RestrictionRef"] is not JValue restRefValue)
                 return null;
@@ -408,11 +515,14 @@ public sealed class CursedLootManager : IHybridSavable
                 Identifier = token["Identifier"]?.ToObject<Guid>() ?? throw new ArgumentNullException("Identifier"),
                 Label = token["Label"]?.Value<string>() ?? string.Empty,
                 InPool = token["InPool"]?.Value<bool>() ?? false,
-                AppliedTime = new DateTimeOffset(applyTime, TimeSpan.Zero),
-                ReleaseTime = new DateTimeOffset(releaseTime, TimeSpan.Zero),
+                AppliedTime = applyTime,
+                ReleaseTime = releaseTime,
+                CreditedUntil = creditedUntil,
                 Precedence = Enum.TryParse<Precedence>(token["Precedence"]?.Value<string>(), out var precedence) ? precedence : Precedence.Default,
                 ApplyTraits = token["ApplyTraits"]?.Value<bool>() ?? true,
-                RefItem = restRef
+                RefItem = restRef,
+                TimeRangeLower = TimeSpan.TryParse(token["TimeRangeLower"]?.Value<string>(), out var lower) ? lower : null,
+                TimeRangeUpper = TimeSpan.TryParse(token["TimeRangeUpper"]?.Value<string>(), out var upper) ? upper : null
             };
             return item;
         }
