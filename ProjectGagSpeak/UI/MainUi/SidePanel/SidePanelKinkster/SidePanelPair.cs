@@ -206,7 +206,10 @@ public partial class SidePanelPair
 
         ImGui.TextUnformatted("Shock Collar Permissions");
         if (!_shockies.IsConfigured)
-            CkGui.ColorTextCentered("PiShock not configured - set Username & API Key in Settings.", ImGuiColors.DalamudRed);
+        {
+            CkGui.ColorTextCentered("PiShock not configured", ImGuiColors.DalamudRed);
+            CkGui.ColorTextCentered("Set API Key in Settings.", ImGuiColors.DalamudRed);
+        }
         else
         {
             UniqueShareCode(kinkster, dispName, width);
