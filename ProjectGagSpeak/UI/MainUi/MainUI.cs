@@ -205,9 +205,12 @@ public class MainUI : WindowMediatorSubscriberBase
                 break;
         }
     }
-
+    
+    private List<string> missingPlugins = [];
     private void ShowMissingPlugins(float width)
     {
+        missingPlugins.Clear();
+        var dismissed = _config.Current.DismissedPlugins;
         var total = GetMissingRecommended();
         var warnH = ImUtf8.TextHeight + ((ImUtf8.TextHeight + ImUtf8.ItemSpacing.Y * 2) * total);
         using var _ = CkRaii.FramedChildPaddedW("missing-recommended", width, warnH, 0, ImGuiColors.DalamudYellow.ToUint(), CkStyle.ChildRounding());
@@ -220,7 +223,7 @@ public class MainUI : WindowMediatorSubscriberBase
         CloseButton(drawPos, closeSize);
         CkGui.AttachTooltip("Dismiss this message for this instance of GagSpeak.");
 
-        if (!IpcCallerSundouleia.APIAvailable)
+        if (!IpcCallerSundouleia.APIAvailable && dismissed.TryGetValue("Sundouleia", out var sundCount) && sundCount < 3)
         {
             ImGui.Spacing();
             ImGui.Bullet();
@@ -229,6 +232,7 @@ public class MainUI : WindowMediatorSubscriberBase
             if (ImGui.SmallButton("Learn More##sund-warn"))
                 Mediator.Publish(new OpenSettingsPluginInfoMessage(OptionalPlugin.Sundouleia));
             CkGui.AttachTooltip("Opens a helper box in the Settings UI for more info.");
+            missingPlugins.Add("Sundouleia");
         }
         if (!IpcCallerPenumbra.APIAvailable)
         {
@@ -250,7 +254,7 @@ public class MainUI : WindowMediatorSubscriberBase
                 Mediator.Publish(new OpenSettingsPluginInfoMessage(OptionalPlugin.Glamourer));
             CkGui.AttachTooltip("Opens a helper box in the Settings UI for more info.");
         }
-        if (!IpcCallerLoci.APIAvailable)
+        if (!IpcCallerLoci.APIAvailable && dismissed.TryGetValue("Loci", out var lociCount) && lociCount < 3)
         {
             ImGui.Spacing();
             ImGui.Bullet();
@@ -259,6 +263,7 @@ public class MainUI : WindowMediatorSubscriberBase
             if (ImGui.SmallButton("Learn More##loci-warn"))
                 Mediator.Publish(new OpenSettingsPluginInfoMessage(OptionalPlugin.Loci));
             CkGui.AttachTooltip("Opens a helper box in the Settings UI for more info.");
+            missingPlugins.Add("Loci");
         }
 
         void CloseButton(Vector2 pos, Vector2 size)
@@ -269,7 +274,16 @@ public class MainUI : WindowMediatorSubscriberBase
             ImGui.GetWindowDrawList().AddLine(new Vector2(pos.X + size.X, pos.Y), new Vector2(pos.X, pos.Y + size.Y), closeButtonColor, 3 * ImGuiHelpers.GlobalScale);
 
             if (ImGui.IsMouseReleased(ImGuiMouseButton.Left) && hovered)
+            {
                 _showMissingRecommended = false;
+                foreach (var item in missingPlugins)
+                {
+                    if (!dismissed.ContainsKey(item)) dismissed.TryAdd(item, 0);
+                    dismissed[item]++;
+                    _config.Current.DismissedPlugins = dismissed;
+                    _config.Save();
+                }
+            }
         }
     }
 
