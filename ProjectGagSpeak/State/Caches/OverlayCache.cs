@@ -41,9 +41,6 @@ public sealed class OverlayCache
     /// </summary>
     public bool TryAddBlindfold(CombinedCacheKey key, BlindfoldOverlay overlay)
     {
-        if (!overlay.IsValid())
-            return false;
-
         if (!_blindfolds.TryAdd(key, overlay))
         {
             _logger.LogWarning($"KeyValuePair ([{key}]) already exists in the Cache!");
@@ -61,9 +58,6 @@ public sealed class OverlayCache
     /// </summary>
     public bool TryAddHypnoEffect(CombinedCacheKey key, HypnoticOverlay overlay)
     {
-        if (!overlay.IsValid())
-            return false;
-
         if (!_hypnoEffects.TryAdd(key, overlay))
         {
             _logger.LogWarning($"KeyValuePair ([{key}]) already exists in the Cache!");
@@ -121,7 +115,7 @@ public sealed class OverlayCache
     }
 
     /// <summary>
-    ///     Updates the priority blindfold by finding the highest priority blindfold. 
+    ///     Updates the priority blindfold by finding the highest priority blindfold.
     /// </summary>
     /// <remarks> Remember, while others see the outermost blindfold, you see the innermost. </remarks>
     /// <returns> If the profile Changed. </returns>
@@ -145,7 +139,7 @@ public sealed class OverlayCache
 
 
     /// <summary>
-    ///     Updates the priority hypnotic effect by finding the highest priority blindfold. 
+    ///     Updates the priority hypnotic effect by finding the highest priority blindfold.
     /// </summary>
     /// <remarks> Outputs the previous effects enactor. If the effect was null, the string will be empty. </remarks>
     /// <returns> If the profile Changed. </returns>

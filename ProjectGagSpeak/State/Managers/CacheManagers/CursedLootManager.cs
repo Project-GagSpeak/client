@@ -365,7 +365,9 @@ public sealed class CursedLootManager : IHybridSavable
                 ReleaseTime = new DateTimeOffset(releaseTime, TimeSpan.Zero),
                 Precedence = Enum.TryParse<Precedence>(token["Precedence"]?.Value<string>(), out var precedence) ? precedence : Precedence.Default,
                 ApplyTraits = token["ApplyTraits"]?.Value<bool>() ?? true,
-                RefItem = gagRef
+                RefItem = gagRef,
+                TimeRangeLower = TimeSpan.TryParse(token["TimeRangeLower"]?.Value<string>(), out var lower) ? lower : null,
+                TimeRangeUpper = TimeSpan.TryParse(token["TimeRangeUpper"]?.Value<string>(), out var upper) ? upper : null
             };
             return item;
         }
@@ -402,7 +404,9 @@ public sealed class CursedLootManager : IHybridSavable
                 ReleaseTime = new DateTimeOffset(releaseTime, TimeSpan.Zero),
                 Precedence = Enum.TryParse<Precedence>(token["Precedence"]?.Value<string>(), out var precedence) ? precedence : Precedence.Default,
                 ApplyTraits = token["ApplyTraits"]?.Value<bool>() ?? true,
-                RefItem = restRef
+                RefItem = restRef,
+                TimeRangeLower = TimeSpan.TryParse(token["TimeRangeLower"]?.Value<string>(), out var lower) ? lower : null,
+                TimeRangeUpper = TimeSpan.TryParse(token["TimeRangeUpper"]?.Value<string>(), out var upper) ? upper : null
             };
             return item;
         }

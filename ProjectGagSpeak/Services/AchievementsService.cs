@@ -368,7 +368,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
 
         // Bondodge - Within 2 seconds of having a restraint set applied to you, remove it from yourself (might want to add a duration conditional but idk?)
         _saveData.AddTimeLimitedConditional(AchievementModuleKind.Wardrobe, Achievements.Bondodge,
-            TimeSpan.FromSeconds(2), () => _restraints.AppliedRestraint is not null, DurationTimeUnit.Seconds, (id, name) => OnCompletion(id, name).ConfigureAwait(false));
+            TimeSpan.FromSeconds(2), () => _restraints.AppliedRestraint is not null, () => _restraints.AppliedRestraint is null, DurationTimeUnit.Seconds, (id, name) => OnCompletion(id, name).ConfigureAwait(false));
 
         #endregion WARDROBE MODULE
 

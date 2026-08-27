@@ -142,8 +142,11 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
             return;
 
         Logger.LogTrace("Received SwapRestriction instruction from server!", LoggerType.Gags);
-        var prevRestriction = curData.Restrictions[layer].Identifier;
-        PostActionMsg(enactor.UID, InteractionType.SwappedRestriction, $"Swapped Layer <{layer}> Restriction: [{prevRestriction} >> {newData.Identifier}]");
+        var prevId = curData.Restrictions[layer].Identifier;
+        var prevName = _restrictions.Storage.TryGetRestriction(prevId, out var prevItem) ? prevItem.Label : prevId.ToString();
+        var newName = _restrictions.Storage.TryGetRestriction(newData.Identifier, out var newItem) ? newItem.Label : newData.Identifier.ToString();
+        Logger.LogDebug($"Swapping Restriction [{prevId}] with [{newData.Identifier}]", LoggerType.Restrictions);
+        PostActionMsg(enactor.UID, InteractionType.SwappedRestriction, $"Swapped Layer <{layer}> Restriction: [{prevName} >> {newName}]");
         // Remove it.
         if (_restrictions.RemoveRestriction(layer, enactor.UID, out var visualRemItem))
             await _cacheManager.RemoveRestrictionItem(visualRemItem, layer);
@@ -158,7 +161,9 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
             return;
 
         Logger.LogTrace("Received ApplyRestriction instruction from server!", LoggerType.Restrictions);
-        PostActionMsg(enactor.UID, InteractionType.ApplyRestriction, "A Restriction item was applied to you!");
+        var setName = _restrictions.Storage.TryGetRestriction(newData.Identifier, out var appliedItem) ? appliedItem.Label : newData.Identifier.ToString();
+        Logger.LogDebug($"Applying Restriction [{newData.Identifier}]", LoggerType.Restrictions);
+        PostActionMsg(enactor.UID, InteractionType.ApplyRestriction, $"[{setName}] was applied to you!");
 
         if (_restrictions.ApplyRestriction(layer, newData, enactor.UID, out var visualItem))
             await _cacheManager.AddRestrictionItem(visualItem, layer, enactor.UID);
@@ -204,7 +209,10 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
             return;
 
         Logger.LogTrace("Received SwapRestraintSet instruction from server!", LoggerType.Restraints);
-        PostActionMsg(enactor.UID, InteractionType.SwappedRestraint, $"Swapped RestraintSet: [{itemData.Identifier} >> {newData.Identifier}]");
+        var prevName = _restraints.Storage.TryGetRestraint(itemData.Identifier, out var prevSet) ? prevSet.Label : itemData.Identifier.ToString();
+        var newName = _restraints.Storage.TryGetRestraint(newData.Identifier, out var newSet) ? newSet.Label : newData.Identifier.ToString();
+        Logger.LogDebug($"Swapping RestraintSet [{itemData.Identifier}] with [{newData.Identifier}]", LoggerType.Restraints);
+        PostActionMsg(enactor.UID, InteractionType.SwappedRestraint, $"Swapped RestraintSet: [{prevName} >> {newName}]");
         // Remove it.
         if (_restraints.Remove(enactor.UID, out var visualRemItem, out var remLayers))
             await _cacheManager.RemoveRestraintSet(visualRemItem, remLayers);
@@ -219,7 +227,9 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
             return;
 
         Logger.LogTrace("Received ApplyRestraint instruction from server!", LoggerType.Restraints);
-        PostActionMsg(enactor.UID, InteractionType.ApplyRestraint, $"A RestraintSet was applied to you! ({newData.Identifier})");
+        var setName = _restraints.Storage.TryGetRestraint(newData.Identifier, out var appliedSet) ? appliedSet.Label : newData.Identifier.ToString();
+        Logger.LogDebug($"Applying RestraintSet [{newData.Identifier}]", LoggerType.Restraints);
+        PostActionMsg(enactor.UID, InteractionType.ApplyRestraint, $"[{setName}] was applied to you!");
 
         if (_restraints.Apply(newData, enactor.UID, out var restraintSet))
             await _cacheManager.AddRestraintSet(restraintSet, enactor.UID);

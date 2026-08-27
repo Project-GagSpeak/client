@@ -111,6 +111,11 @@ public sealed class AutoUnlockService : BackgroundService
     {
         if (!MainHub.IsConnected)
             return;
+        
+        // Defer expiry processing while zoning, as Glamourer IPC calls are dropped during transitions
+        if (PlayerData.IsZoning || !PlayerData.Available)
+            return;
+        
         // remove the stopwatch if it becomes excessive.
         var sw = Stopwatch.StartNew();
         await Task.WhenAll(
@@ -286,7 +291,7 @@ public sealed class AutoUnlockService : BackgroundService
             _mediator.Publish(new EventMessage(new("Auto-Unlock", MainHub.UID, InteractionType.UnlockRestraint, $"Active RestraintSet's Timed Padlock Expired!")));
             
             // Auto remove if configured to do so.
-            if (_config.Current.RemoveRestrictionOnTimerExpire && await _dds.PushNewActiveRestraint(new CharaActiveRestraint(), DataUpdateType.Removed).ConfigureAwait(false) is not null)
+            if (_config.Current.RemoveRestraintOnTimerExpire && await _dds.PushNewActiveRestraint(new CharaActiveRestraint(), DataUpdateType.Removed).ConfigureAwait(false) is not null)
             {
                 if (_restraints.Remove(MainHub.UID, out var restraintSet, out var removedLayers))
                     await _cacheManager.RemoveRestraintSet(restraintSet, removedLayers);

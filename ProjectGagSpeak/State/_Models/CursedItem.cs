@@ -17,6 +17,9 @@ public abstract class CursedItem : IEditableStorageItem<CursedItem>
     public Precedence Precedence { get; set; } = Precedence.Default; // the priority system.
     public bool ApplyTraits { get; set; } = true; // For Hardcore Traits.
 
+    public TimeSpan? TimeRangeLower { get; set; } = null;
+    public TimeSpan? TimeRangeUpper { get; set; } = null;
+
     public abstract string RefLabel { get; }
 
     public CursedItem()
@@ -38,6 +41,8 @@ public abstract class CursedItem : IEditableStorageItem<CursedItem>
         ReleaseTime = other.ReleaseTime;
         Precedence = other.Precedence;
         ApplyTraits = other.ApplyTraits;
+        TimeRangeLower = other.TimeRangeLower;
+        TimeRangeUpper = other.TimeRangeUpper;
     }
 
     // May need to be moved up or something. Not sure though. Look into later.
@@ -118,7 +123,9 @@ public class CursedGagItem : CursedItem
             ["ReleaseTime"] = ReleaseTime.UtcDateTime.ToString("o"),
             ["Precedence"] = Precedence.ToString(),
             ["GagRef"] = RefItem.GagType.ToString(),
-            ["ApplyTraits"] = ApplyTraits
+            ["ApplyTraits"] = ApplyTraits,
+            ["TimeRangeLower"] = TimeRangeLower.ToString(),
+            ["TimeRangeUpper"] = TimeRangeUpper.ToString()
         };
 }
 
@@ -170,6 +177,8 @@ public class CursedRestrictionItem : CursedItem
             ["ReleaseTime"] = ReleaseTime.UtcDateTime.ToString("o"),
             ["Precedence"] = Precedence.ToString(),
             ["RestrictionRef"] = RefItem.Identifier.ToString(),
-            ["ApplyTraits"] = ApplyTraits
+            ["ApplyTraits"] = ApplyTraits,
+            ["TimeRangeLower"] = TimeRangeLower.ToString(),
+            ["TimeRangeUpper"] = TimeRangeUpper.ToString()
         };
 }

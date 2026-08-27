@@ -2,6 +2,7 @@ using CkCommons;
 using GagSpeak.State.Listeners;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 
 namespace GagSpeak.Services;
@@ -261,6 +262,21 @@ public class SelfBondageService : IDisposable
                     _ => Task.CompletedTask
                 };
                 await applierTask.ConfigureAwait(false);
+
+                // The server ignores layer bits on Applied/Swapped updates and retains whatever layers the
+                // previous set had, while our local state clears them. Push a followup within this same task
+                // (avoiding rejection as a concurrent update) whenever either side is left with layers set.
+                if (type is DataUpdateType.Swapped or DataUpdateType.Applied
+                    && (newData.ActiveLayers != retData.ActiveLayers || newData.ActiveLayers is not RestraintLayer.None))
+                {
+                    _logger.LogDebug($"Syncing layers [{newData.ActiveLayers}] on restraint [{newData.Identifier}]");
+                    if (await _dds.PushNewActiveRestraint(newData, DataUpdateType.LayersChanged).ConfigureAwait(false) is { } layerData)
+                        await _callbacks.SwapRestraintLayers(layerData, MainHub.OwnUserData).ConfigureAwait(false);
+                    // If the push was dropped as a no-change but the server already holds the desired layers,
+                    // our local state was still cleared by the swap, so sync it from the swap response.
+                    else if (retData.ActiveLayers == newData.ActiveLayers)
+                        await _callbacks.SwapRestraintLayers(retData, MainHub.OwnUserData).ConfigureAwait(false);
+                }
             }
         }, _runtimeCTS.Token);
     }
@@ -301,6 +317,21 @@ public class SelfBondageService : IDisposable
                     _ => Task.CompletedTask
                 };
                 await applierTask.ConfigureAwait(false);
+
+                // The server ignores layer bits on Applied/Swapped updates and retains whatever layers the
+                // previous set had, while our local state clears them. Push a followup within this same task
+                // (avoiding rejection as a concurrent update) whenever either side is left with layers set.
+                if (type is DataUpdateType.Swapped or DataUpdateType.Applied
+                    && (newData.ActiveLayers != retData.ActiveLayers || newData.ActiveLayers is not RestraintLayer.None))
+                {
+                    _logger.LogDebug($"Syncing layers [{newData.ActiveLayers}] on restraint [{newData.Identifier}]");
+                    if (await _dds.PushNewActiveRestraint(newData, DataUpdateType.LayersChanged).ConfigureAwait(false) is { } layerData)
+                        await _callbacks.SwapRestraintLayers(layerData, MainHub.OwnUserData).ConfigureAwait(false);
+                    // If the push was dropped as a no-change but the server already holds the desired layers,
+                    // our local state was still cleared by the swap, so sync it from the swap response.
+                    else if (retData.ActiveLayers == newData.ActiveLayers)
+                        await _callbacks.SwapRestraintLayers(retData, MainHub.OwnUserData).ConfigureAwait(false);
+                }
                 return true;
             }
             return false;

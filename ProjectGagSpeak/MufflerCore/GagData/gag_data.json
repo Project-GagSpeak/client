@@ -3979,7 +3979,7 @@
         "ヶ":   { "MUFFLE": 0, "SOUND": "ヶ"  },
         "ゎ":   { "MUFFLE": 0, "SOUND": "ゎ"  }
     },
-    "Wiffle Gag": {
+    "Whiffle Gag": {
         "p":    { "MUFFLE": 2, "SOUND": "v" },
         "b":    { "MUFFLE": 2, "SOUND": "v" },
         "m":    { "MUFFLE": 1, "SOUND": "eh" },
