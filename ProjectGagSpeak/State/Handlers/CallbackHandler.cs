@@ -362,10 +362,8 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnectionDataSynced)
             return;
 
-        // Update the release time inside of the cursed loot manager. 
-        item.AppliedTime = DateTimeOffset.UtcNow;
-        item.ReleaseTime = endTime;
-        _cursedLoot.ForceSave();
+        // Mark the loot as applied, so it shows up in the applied loot tab like the other cursed loot types.
+        _cursedLoot.ActivateItem(item, endTime);
 
         // new data for cursed item. (this is the same as what was sent over the server, so it syncs)
         var newData = new ActiveGagSlot
@@ -378,13 +376,12 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
             PadlockAssigner = "Mimic"
         };
 
-        // apply the gag, and it's visual updates.
-        if (_gags.ApplyGag(layer, newData.GagItem, "Mimic", out var gagItem))
-            await _cacheManager.AddGagItem(gagItem, layer, "Mimic");
-
-        // Lock it immediately.
+        // Mirror the server's gag slot state, and lock it immediately.
+        _gags.ApplyGag(layer, newData.GagItem, "Mimic", out _);
         _gags.LockGag(layer, newData, "Mimic");
-        // the apply gag function already handled all of the visual cache application for us, so we can return here.
+
+        // Cache the visuals through the cursed loot system instead of the gag system.
+        await _cacheManager.AddCursedGagItem(item, layer);
 
         Logger.LogInformation($"Cursed Loot Applied & Locked!", LoggerType.CursedItems);
         Svc.Chat.PrintError(new SeStringBuilder()
@@ -430,6 +427,14 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
             // remove it, and then remove it from the visuals if valid.
             if (_restrictions.RemoveCursedItem(restriction, out var layer))
                 await _cacheManager.RemoveCursedItem(restriction, layer);
+        }
+        else if (item is CursedGagItem cursedGag && _gags.ServerGagData is { } gagData)
+        {
+            // locate the gag slot the cursed gag occupies and clear its cursed visuals.
+            // (freeing the slot itself is pushed to the server by the auto-unlock service)
+            var layer = Array.FindIndex(gagData.GagSlots, s => s.Enabler == "Mimic" && s.GagItem == cursedGag.RefItem.GagType);
+            if (layer != -1)
+                await _cacheManager.RemoveCursedGagItem(cursedGag, layer);
         }
 
         Logger.LogInformation($"Cursed Loot Removed!", LoggerType.CursedItems);

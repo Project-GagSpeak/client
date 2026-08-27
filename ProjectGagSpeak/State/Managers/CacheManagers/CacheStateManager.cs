@@ -124,9 +124,28 @@ public class CacheStateManager : IHostedService
         bool anyRequestedRedraw = false;
         _gags.LoadServerData(connectionDto.GagData);
         _logger.LogInformation("------ Syncing Gag Data to Cache ------");
+        // Gag slots enabled by "Mimic" are cursed loot gags, and are cached through the cursed loot system instead.
+        var cursedGagSlots = new Dictionary<int, CursedGagItem>();
         foreach (var (layer, gagItem) in _gags.ActiveItems)
         {
             var serverItem = _gags.ServerGagData!.GagSlots[layer];
+            if (serverItem.Enabler == "Mimic")
+            {
+                // Locate the cursed loot item this gag slot belongs to, favoring ones already marked as applied.
+                var lootItem = _cursedItems.Storage.OfType<CursedGagItem>()
+                    .Where(c => c.RefItem?.GagType == gagItem.GagType && !cursedGagSlots.ContainsValue(c))
+                    .OrderByDescending(c => c.IsActive())
+                    .FirstOrDefault();
+                if (lootItem is not null)
+                {
+                    // if the loot lost its applied state (config desync), restore it from the slot's mimic timer.
+                    if (!lootItem.IsActive())
+                        _cursedItems.ActivateItem(lootItem, serverItem.Timer);
+                    cursedGagSlots[layer] = lootItem;
+                    continue;
+                }
+                _logger.LogWarning($"No CursedGagItem found for Mimic-applied gag ({gagItem.GagType.GagName()}), treating as a normal gag.");
+            }
             _logger.LogDebug($"Adding ({gagItem.GagType.GagName()}) at layer {layer}, which was enabled by {serverItem.Enabler}.");
 
             var key = new CombinedCacheKey(ManagerPriority.Gags, layer, serverItem.Enabler, gagItem.GagType.GagName());
@@ -137,11 +156,17 @@ public class CacheStateManager : IHostedService
                 _modHandler.TryAddModToCache(key, gagItem.Mod);
             }
             _lociHandler.TryAddLociItemToCache(key, gagItem.LociData);
-            _traitsHandler.TryAddTraitsToCache(key, gagItem.Traits);
+            _traitsHandler.TryAddTraitsToCache(key, GagTraitsForEnabler(gagItem, serverItem.Enabler));
             _cplusHandler.TryAddToCache(key, gagItem.CPlusProfile);
             _arousalHandler.TryAddArousalToCache(key, gagItem.Arousal);
 
             anyRequestedRedraw |= gagItem.DoRedraw;
+        }
+        // Deactivate any applied cursed gags that no longer hold a gag slot on the server. (expired while we were away)
+        foreach (var staleGag in _cursedItems.Storage.AppliedLootUnsorted.OfType<CursedGagItem>().Where(c => !cursedGagSlots.ContainsValue(c)).ToArray())
+        {
+            _logger.LogDebug($"Cursed Gag [{staleGag.Label}] was applied locally but holds no gag slot on the server, deactivating.");
+            _cursedItems.SetInactive(staleGag.Identifier);
         }
         _logger.LogInformation("------ Gag Data synced to Cache ------ ");
 
@@ -245,6 +270,26 @@ public class CacheStateManager : IHostedService
             anyRequestedRedraw |= item.DoRedraw;
         }
 
+        // Sync the cursed loot gags found during the gag data sync. (these use the gag slot layer, which never collides with cursed restriction keys)
+        foreach (var (layer, loot) in cursedGagSlots)
+        {
+            var refGag = loot.RefItem;
+            _logger.LogDebug($"Adding Cursed Gag [{loot.Label}] at gag layer {layer}.");
+            var key = new CombinedCacheKey(ManagerPriority.CursedLoot, layer, "Mimic", $"Cursed {loot.Label}");
+            if (refGag.IsEnabled)
+            {
+                _glamourHandler.TryAddGlamourToCache(key, refGag.Glamour);
+                _glamourHandler.TryAddMetaToCache(key, new(refGag.HeadgearState, refGag.VisorState));
+                _modHandler.TryAddModToCache(key, refGag.Mod);
+            }
+            _lociHandler.TryAddLociItemToCache(key, refGag.LociData);
+            _cplusHandler.TryAddToCache(key, refGag.CPlusProfile);
+            if (_config.Current.CursedItemsApplyTraits && loot.ApplyTraits)
+                _traitsHandler.TryAddTraitsToCache(key, refGag.Traits & ~(Traits.Immobile | Traits.Weighty));
+            _arousalHandler.TryAddArousalToCache(key, refGag.Arousal);
+
+            anyRequestedRedraw |= refGag.DoRedraw;
+        }
 
         _logger.LogInformation("------ Cursed Item Data synced to Cache ------ ");
 
@@ -302,7 +347,7 @@ public class CacheStateManager : IHostedService
         var tasks = new List<Task>
         {
             AddLociItem(key, item.LociData),
-            AddTraits(key, item.Traits),
+            AddTraits(key, GagTraitsForEnabler(item, enabler)),
             AddArousalStrength(key, item.Arousal)
         };
 
@@ -606,6 +651,52 @@ public class CacheStateManager : IHostedService
             _redrawAssist.RedrawObject();
     }
 
+    /// <summary> Adds a cursed loot gag's visual properties to the cache, keyed by the gag slot layer it occupies. </summary>
+    /// <remarks> The gag slot layers (0-2) never collide with the generated cursed restriction keys (1000+). </remarks>
+    public async Task AddCursedGagItem(CursedGagItem item, int layer)
+    {
+        _logger.LogDebug($"Adding Cursed Gag [{item.Label}] with ({item.Precedence}) precedence to gag layer {layer}.");
+        var refGag = item.RefItem;
+        var key = new CombinedCacheKey(ManagerPriority.CursedLoot, layer, "Mimic", $"Cursed {item.Label}");
+        var tasks = new List<Task>
+        {
+            AddLociItem(key, refGag.LociData),
+            AddArousalStrength(key, refGag.Arousal)
+        };
+        if (refGag.IsEnabled)
+        {
+            tasks.Add(AddGlamourMeta(key, refGag.Glamour, new(refGag.HeadgearState, refGag.VisorState)));
+            tasks.Add(AddModPreset(key, refGag.Mod));
+            tasks.Add(AddProfile(key, refGag.CPlusProfile));
+        }
+        if (_config.Current.CursedItemsApplyTraits && item.ApplyTraits)
+            tasks.Add(AddTraits(key, refGag.Traits & ~(Traits.Immobile | Traits.Weighty)));
+
+        // Run in parallel.
+        await TimedWhenAll($"[{key}]'s Visual Attributes added to caches", tasks);
+        // Handle Redraw afterwards
+        if (refGag.DoRedraw)
+            _redrawAssist.RedrawObject();
+    }
+
+    public async Task RemoveCursedGagItem(CursedGagItem item, int layer)
+    {
+        _logger.LogInformation($"Removing Cursed Gag [{item.Label}] from gag layer {layer}");
+        var key = new CombinedCacheKey(ManagerPriority.CursedLoot, layer, "Mimic", string.Empty);
+        // Remove and update in parallel.
+        await TimedWhenAll($"[{key}] removed from cache and base states restored",
+            RemoveGlamourMeta(key),
+            RemoveModPreset(key),
+            RemoveLociData(key),
+            RemoveProfile(key),
+            RemoveTraits(key),
+            RemoveArousalStrength(key)
+        );
+        // Handle Redraw afterwards
+        if (item.RefItem.DoRedraw)
+            _redrawAssist.RedrawObject();
+    }
+
     // Always use MainHub.UID for the applier so that we can track the updates easier.
     // Assumed SyncedData is valid.
     public async Task AddCollar(UserData enactor)
@@ -655,6 +746,11 @@ public class CacheStateManager : IHostedService
             RemoveLociData(key)
         );
     }
+
+    /// <summary> Gates a gag's traits when applied by a Mimic, so cursed loot gags never apply traits unrestricted. </summary>
+    private Traits GagTraitsForEnabler(GarblerRestriction gag, string enabler)
+        => enabler != "Mimic" ? gag.Traits
+            : _config.Current.CursedItemsApplyTraits ? gag.Traits & ~(Traits.Immobile | Traits.Weighty) : Traits.None;
 
     private async Task TimedWhenAll(string label, IEnumerable<Task> tasks)
     {
