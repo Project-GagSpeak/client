@@ -136,7 +136,6 @@ public partial class SidePanelPair
         var garblerEditDisabled = !k.PairPerms.AllowGarbleChannelEditing;
         DrawColoredExpander(InteractionType.GarblerChannelChange, garbEditInfo.Item1, garbEditInfo.Item2, false, garblerEditDisabled, garbEditInfo.Item2);
         UniqueHcChild(InteractionType.GarblerChannelChange, false, CkStyle.TwoRowHeight()*5, () => DrawGarblerChild(cache, k, dispName, width, garblerEditDisabled));
-        
 
         // >> Helpers Below
         void DrawColoredExpander(InteractionType type, FAI icon, string text, bool showCol, bool disabled, string tooltip)
