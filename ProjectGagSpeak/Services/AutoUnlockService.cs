@@ -323,8 +323,9 @@ public sealed class AutoUnlockService : BackgroundService
 
             _logger.LogInformation($"CursedLoot Item [{item.Label}] Timer Expired!", LoggerType.AutoUnlocks);
 
-            // store backup state.
-            var backup = item;
+            // store backup state. (CursedItem is a reference type, so copy the values off it, not the item itself)
+            var appliedBackup = item.AppliedTime;
+            var releaseBackup = item.ReleaseTime;
             // Temporarily update the changes locally, to prevent excess Auto-unlock calls.
             item.AppliedTime = DateTimeOffset.MinValue;
             item.ReleaseTime = DateTimeOffset.MinValue;
@@ -333,8 +334,8 @@ public sealed class AutoUnlockService : BackgroundService
             if (await _dds.PushActiveCursedLoot(_cursedLoot.Storage.AppliedLootIds.ToList(), item.Identifier, null).ConfigureAwait(false) is null)
             {
                 // Revert the values to prevent the update and trigger it again later. This helps to prevent false achievement triggering.
-                item.AppliedTime = backup.AppliedTime;
-                item.ReleaseTime = backup.ReleaseTime;
+                item.AppliedTime = appliedBackup;
+                item.ReleaseTime = releaseBackup;
                 _cursedLoot.ForceSave();
             }
             else

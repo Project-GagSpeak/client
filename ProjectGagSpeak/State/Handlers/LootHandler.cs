@@ -195,16 +195,19 @@ public sealed class LootHandler
 
     private async Task ApplyCursedLoot()
     {
+        // Return if there is nothing to apply.
+        var validItems = _manager.Storage.ActiveUnappliedLoot;
+        if (validItems.Count <= 0 || _manager.LockChance <= 0)
+            return;
+
         // run our first roll, return if not in range.
         var roll = new Random().Next(1, 101); // 0,101 will return 0 to 100 inclusive, so 1,101 is what you want for 1-100 inclusive (and for a config value of 5% to not actually be 5.9%[6/101] chance)
         _logger.LogDebug($"Cursed Loot Roll: {roll} vs Chance: {_manager.LockChance}", LoggerType.CursedItems);
         if (roll > _manager.LockChance)
+        {
+            _manager.RecordMimicEvaded();
             return;
-
-        // Return if there is nothing to apply.to.
-        var validItems = _manager.Storage.ActiveUnappliedLoot;
-        if (validItems.Count <= 0)
-            return;
+        }
 
         // Select a random item index to apply.
         var chosenIdx = new Random().Next(0, validItems.Count);
