@@ -329,6 +329,8 @@ public class ActiveItemsDrawer
                 });
             }
         }
+        if (_restraintItem.DrawPopup($"##RestraintSetSelector", data.Identifier, ImGui.GetContentRegionAvail().X * .90f, drawPos))
+            RestraintComboChanged(data.Identifier);
     }
 
     public void UnlockItemGroup(int slotIdx, ActiveGagSlot data)

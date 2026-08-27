@@ -56,6 +56,13 @@ public sealed class RestraintCombo : CkFilterComboCache<RestraintSet>, IMediator
         var preview = Items.FirstOrDefault(i => i.Identifier == current)?.Label ?? "Select Restraint...";
         return Draw(label, preview, string.Empty, width, ImGui.GetTextLineHeightWithSpacing(), flags, customSearchBg);
     }
+    
+    public bool DrawPopup(string label, Guid current, float width, Vector2 drawPos, uint? searchBg = null)
+    {
+        InnerWidth = width * 1.25f;
+        _currentRestraint = current;
+        return DrawPopup(label, drawPos, ImGui.GetTextLineHeightWithSpacing(), searchBg);
+    }
 
     protected override bool DrawSelectable(int globalIdx, bool selected)
     {
