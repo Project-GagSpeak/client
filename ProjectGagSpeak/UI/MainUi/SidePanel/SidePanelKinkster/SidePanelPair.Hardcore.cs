@@ -6,6 +6,9 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.GameInternals.Agents;
+using GagSpeak.CustomCombos;
+using GagSpeak.Interop;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.Utils;
@@ -58,7 +61,9 @@ public partial class SidePanelPair
         var confinementAllowed = k.PairPerms.AllowIndoorConfinement && hc.CanChange(HcAttribute.Confinement, MainHub.UID);
         var confinementTT = confinementActive ? $"End {dispName}'s confinement period." : $"Confine {dispName} indoors.";
         DrawColoredExpander(InteractionType.Confinement, confinementInfo.Item1, confinementInfo.Item2, confinementActive, !confinementAllowed, confinementTT);
-        UniqueHcChild(InteractionType.Confinement, confinementActive, CkStyle.GetFrameRowsHeight(4).AddWinPadY(), () =>
+        // Confine child = timer row (1) + address config rows. Address config grows by a row for the Lifestream toggle when it is available.
+        var confineRows = AddressConfigRows(cache) + 1;
+        UniqueHcChild(InteractionType.Confinement, confinementActive, CkStyle.GetFrameRowsHeight(confineRows).AddWinPadY(), () =>
         {
             DrawTimerButtonRow(InteractionType.Confinement, ref cache.ConfinementTimer, "Confine", !confinementAllowed);
             DrawAddressConfig(cache, k, dispName, width);
@@ -89,7 +94,9 @@ public partial class SidePanelPair
             CkGui.AttachTooltip($"Set the radius {dispName} can move within their cage. Be careful of pathing!");
 
             ImUtf8.SameLineInner();
-            var clientInAnchorRange = PlayerData.DistanceTo(cache.ImprisonPos) <= cache.ImprisonRadius;
+            // XZ-only, to match the rule ImprisonmentController actually enforces on the cage.
+            var anchorXZ = new Vector2(cache.ImprisonPos.X, cache.ImprisonPos.Z);
+            var clientInAnchorRange = PlayerData.DistanceTo(anchorXZ) <= cache.ImprisonRadius;
             var frameCol = clientInAnchorRange ? CkCol.TriStateCheck.Vec4().ToUint() : CkCol.TriStateCross.Vec4().ToUint();
             using (CkRaii.FramedChild("CageAnchor", new Vector2(rightW, ImGui.GetFrameHeight()), 0, frameCol, CkStyle.ListItemRounding(), CkStyle.ThinThickness()))
                 CkGui.CenterTextAligned($"{cache.ImprisonPos:F1}");
@@ -131,7 +138,7 @@ public partial class SidePanelPair
         UniqueHcChild(InteractionType.GarblerChannelChange, false, CkStyle.TwoRowHeight()*5, () => DrawGarblerChild(cache, k, dispName, width, garblerEditDisabled));
         
 
-        // >> Helpers Below 
+        // >> Helpers Below
         void DrawColoredExpander(InteractionType type, FAI icon, string text, bool showCol, bool disabled, string tooltip)
         {
             using (ImRaii.PushColor(ImGuiCol.Text, showCol ? ImGuiColors.DalamudYellow : ImGuiColors.DalamudWhite))
@@ -243,9 +250,37 @@ public partial class SidePanelPair
         }
     }
 
+    // Rows the AddressConfig child needs. Default (no Lifestream) = 3. With Lifestream a toggle row is added;
+    // when that toggle picks the address book, the manual slider rows collapse away.
+    private static int AddressConfigRows(KinksterInfoCache cache)
+        => !IpcCallerLifestream.APIAvailable ? 3 : (cache.UseLifestreamAddress ? 1 : 4);
+
     private void DrawAddressConfig(KinksterInfoCache cache, Kinkster k, string dispName, float width)
     {
-        using var c = CkRaii.FramedChildPaddedWH("##AddressConfig", new(width, CkStyle.GetFrameRowsHeight(3).AddWinPadY()), 0, GsCol.VibrantPink.Uint());
+        using var c = CkRaii.FramedChildPaddedWH("##AddressConfig", new(width, CkStyle.GetFrameRowsHeight(AddressConfigRows(cache)).AddWinPadY()), 0, GsCol.VibrantPink.Uint());
+
+        // When Lifestream is installed, offer pulling a saved address from its address book instead of the manual sliders.
+        if (IpcCallerLifestream.APIAvailable)
+        {
+            ImGui.Checkbox("##UseLifestreamAddr", ref cache.UseLifestreamAddress);
+            CkGui.AttachTooltip("Pick a saved address from your Lifestream address book instead of entering it manually.");
+
+            ImUtf8.SameLineInner();
+            using (ImRaii.Disabled(!cache.UseLifestreamAddress))
+            {
+                // Default AddressBookEntry leaves World at ushort.MaxValue; treat that as "nothing picked yet".
+                var preview = cache.Address.World == ushort.MaxValue
+                    ? "Select an Address.."
+                    : AddressBookCombo.DisplayString(cache.Address.AsTuple());
+                if (_addressBook.Draw(preview, ImGui.GetContentRegionAvail().X, CFlags.NoArrowButton) && _addressBook.Current is { } picked)
+                    cache.Address = AddressBookEntry.FromTuple(picked);
+            }
+            CkGui.AttachTooltip($"The saved Lifestream address {dispName} will be confined to.");
+
+            // When using the address book, all manual fields are sourced from the picked entry, so hide them.
+            if (cache.UseLifestreamAddress)
+                return;
+        }
 
         CkGui.FramedIconText(FAI.Home);
         ImUtf8.SameLineInner();
@@ -305,22 +340,22 @@ public partial class SidePanelPair
         {
             case PropertyType.House:
                 ImGui.SetNextItemWidth(sliderW);
-                ImGui.SliderInt("##plot", ref cache.Address.Plot, 1, 60, "Plot %d");
+                ImGui.SliderInt("##plot", ref cache.Address.Plot, 1, 60, "Plot %d", ImGuiSliderFlags.AlwaysClamp);
                 CkGui.AttachTooltip($"The plot # of the home {dispName} will be confined to.");
                 break;
             case PropertyType.Apartment:
                 ImGui.SetNextItemWidth(sliderW);
-                ImGui.SliderInt("##room", ref cache.Address.Apartment, 1, 100, "Room %d");
+                ImGui.SliderInt("##room", ref cache.Address.Apartment, 1, 90, "Room %d", ImGuiSliderFlags.AlwaysClamp);
                 CkGui.AttachTooltip($"The apartment room # {dispName} will be confined to.");
                 break;
             case PropertyType.PrivateChambers:
                 ImGui.SetNextItemWidth(sliderW);
-                ImGui.SliderInt("##plot", ref cache.Address.Plot, 1, 60, "Plot %d");
+                ImGui.SliderInt("##plot", ref cache.Address.Plot, 1, 60, "Plot %d", ImGuiSliderFlags.AlwaysClamp);
                 CkGui.AttachTooltip($"The plot # of the home {dispName} will be confined to.");
 
                 ImUtf8.SameLineInner();
                 ImGui.SetNextItemWidth(sliderW);
-                ImGui.SliderInt("##chambers", ref cache.Address.Apartment, 1, 100, "Chamber %d");
+                ImGui.SliderInt("##chambers", ref cache.Address.Apartment, 1, 512, "Chamber %d", ImGuiSliderFlags.AlwaysClamp);
                 CkGui.AttachTooltip($"The private chambers # {dispName} will be confined to.");
                 break;
             default:

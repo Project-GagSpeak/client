@@ -396,7 +396,6 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
                 if (await _processor.HandleActionAsync(trigger.InvokableAction, enactor).ConfigureAwait(false))
                 {
                     GagspeakEventManager.AchievementEvent(UnlocksEvent.TriggerFired);
-                    break;
                 }
             }
             else
@@ -405,7 +404,6 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
                 if (_processor.HandleAction(trigger.InvokableAction))
                 {
                     GagspeakEventManager.AchievementEvent(UnlocksEvent.TriggerFired);
-                    break;
                 }
             }
         }
@@ -502,11 +500,23 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
                 LimitedActionEffectType.BlockedDamage or
                 LimitedActionEffectType.ParriedDamage;
 
-            if (isDamageRelated && !IsDamageWithinThreshold(actEff.Damage, trigger.ThresholdMinValue, trigger.ThresholdMaxValue))
+            if (isDamageRelated)
             {
-                Logger.LogTrace($"Was ActionKind [{actEff.Type}], but its damage ({actEff.Damage}) wasn't " +
-                    $"between ({trigger.ThresholdMinValue}) & ({trigger.ThresholdMaxValue})", LoggerType.Triggers);
-                continue;
+                if (trigger.UsePercentChance)
+                {
+                    var roll = Random.Shared.Next(100);
+                    if (roll >= trigger.PercentChance)
+                    {
+                        Logger.LogTrace($"Percent-chance roll failed ({roll} >= {trigger.PercentChance}%)", LoggerType.Triggers);
+                        continue;
+                    }
+                }
+                else if (!IsDamageWithinThreshold(actEff.Damage, trigger.ThresholdMinValue, trigger.ThresholdMaxValue))
+                {
+                    Logger.LogTrace($"Was ActionKind [{actEff.Type}], but its damage ({actEff.Damage}) wasn't " +
+                        $"between ({trigger.ThresholdMinValue}) & ({trigger.ThresholdMaxValue})", LoggerType.Triggers);
+                    continue;
+                }
             }
 
             // Execute trigger action if all conditions are met

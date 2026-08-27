@@ -49,9 +49,22 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
         _guides = guides;
 
         Mediator.Subscribe<ConfigRestraintSetChanged>(this, (msg) => OnRestraintSetChange(msg.Type, msg.Item, msg.OldString));
+
+        SubscribeRightClickLeaf(CloneRestraintSet, 10);
     }
 
     public override ISortMode<RestraintSet> SortMode => new RestraintSetSorter();
+
+    private void CloneRestraintSet(RestraintSetFileSystem.Leaf leaf)
+    {
+        if (ImGui.MenuItem("Clone Restraint Set"))
+        {
+            var folderPath = leaf.Parent.IsRoot ? null : leaf.Parent.FullName();
+            _manager.CreateClone(leaf.Value, leaf.Value.Label, folderPath);
+            ImGui.CloseCurrentPopup();
+        }
+        CkGui.AttachTooltip("Create a copy of this restraint set.");
+    }
 
     private void RenameLeafRestraintSet(RestraintSetFileSystem.Leaf leaf)
     {

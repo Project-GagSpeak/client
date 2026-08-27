@@ -142,8 +142,11 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
             return;
 
         Logger.LogTrace("Received SwapRestriction instruction from server!", LoggerType.Gags);
-        var prevRestriction = curData.Restrictions[layer].Identifier;
-        PostActionMsg(enactor.UID, InteractionType.SwappedRestriction, $"Swapped Layer <{layer}> Restriction: [{prevRestriction} >> {newData.Identifier}]");
+        var prevId = curData.Restrictions[layer].Identifier;
+        var prevName = _restrictions.Storage.TryGetRestriction(prevId, out var prevItem) ? prevItem.Label : prevId.ToString();
+        var newName = _restrictions.Storage.TryGetRestriction(newData.Identifier, out var newItem) ? newItem.Label : newData.Identifier.ToString();
+        Logger.LogDebug($"Swapping Restriction [{prevId}] with [{newData.Identifier}]", LoggerType.Restrictions);
+        PostActionMsg(enactor.UID, InteractionType.SwappedRestriction, $"Swapped Layer <{layer}> Restriction: [{prevName} >> {newName}]");
         // Remove it.
         if (_restrictions.RemoveRestriction(layer, enactor.UID, out var visualRemItem))
             await _cacheManager.RemoveRestrictionItem(visualRemItem, layer);
@@ -158,7 +161,9 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
             return;
 
         Logger.LogTrace("Received ApplyRestriction instruction from server!", LoggerType.Restrictions);
-        PostActionMsg(enactor.UID, InteractionType.ApplyRestriction, "A Restriction item was applied to you!");
+        var setName = _restrictions.Storage.TryGetRestriction(newData.Identifier, out var appliedItem) ? appliedItem.Label : newData.Identifier.ToString();
+        Logger.LogDebug($"Applying Restriction [{newData.Identifier}]", LoggerType.Restrictions);
+        PostActionMsg(enactor.UID, InteractionType.ApplyRestriction, $"[{setName}] was applied to you!");
 
         if (_restrictions.ApplyRestriction(layer, newData, enactor.UID, out var visualItem))
             await _cacheManager.AddRestrictionItem(visualItem, layer, enactor.UID);
@@ -204,7 +209,10 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
             return;
 
         Logger.LogTrace("Received SwapRestraintSet instruction from server!", LoggerType.Restraints);
-        PostActionMsg(enactor.UID, InteractionType.SwappedRestraint, $"Swapped RestraintSet: [{itemData.Identifier} >> {newData.Identifier}]");
+        var prevName = _restraints.Storage.TryGetRestraint(itemData.Identifier, out var prevSet) ? prevSet.Label : itemData.Identifier.ToString();
+        var newName = _restraints.Storage.TryGetRestraint(newData.Identifier, out var newSet) ? newSet.Label : newData.Identifier.ToString();
+        Logger.LogDebug($"Swapping RestraintSet [{itemData.Identifier}] with [{newData.Identifier}]", LoggerType.Restraints);
+        PostActionMsg(enactor.UID, InteractionType.SwappedRestraint, $"Swapped RestraintSet: [{prevName} >> {newName}]");
         // Remove it.
         if (_restraints.Remove(enactor.UID, out var visualRemItem, out var remLayers))
             await _cacheManager.RemoveRestraintSet(visualRemItem, remLayers);
@@ -219,7 +227,9 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
             return;
 
         Logger.LogTrace("Received ApplyRestraint instruction from server!", LoggerType.Restraints);
-        PostActionMsg(enactor.UID, InteractionType.ApplyRestraint, $"A RestraintSet was applied to you! ({newData.Identifier})");
+        var setName = _restraints.Storage.TryGetRestraint(newData.Identifier, out var appliedSet) ? appliedSet.Label : newData.Identifier.ToString();
+        Logger.LogDebug($"Applying RestraintSet [{newData.Identifier}]", LoggerType.Restraints);
+        PostActionMsg(enactor.UID, InteractionType.ApplyRestraint, $"[{setName}] was applied to you!");
 
         if (_restraints.Apply(newData, enactor.UID, out var restraintSet))
             await _cacheManager.AddRestraintSet(restraintSet, enactor.UID);
@@ -352,10 +362,8 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnectionDataSynced)
             return;
 
-        // Update the release time inside of the cursed loot manager. 
-        item.AppliedTime = DateTimeOffset.UtcNow;
-        item.ReleaseTime = endTime;
-        _cursedLoot.ForceSave();
+        // Mark the loot as applied, so it shows up in the applied loot tab like the other cursed loot types.
+        _cursedLoot.ActivateItem(item, endTime, newEncounter: true);
 
         // new data for cursed item. (this is the same as what was sent over the server, so it syncs)
         var newData = new ActiveGagSlot
@@ -368,13 +376,12 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
             PadlockAssigner = "Mimic"
         };
 
-        // apply the gag, and it's visual updates.
-        if (_gags.ApplyGag(layer, newData.GagItem, "Mimic", out var gagItem))
-            await _cacheManager.AddGagItem(gagItem, layer, "Mimic");
-
-        // Lock it immediately.
+        // Mirror the server's gag slot state, and lock it immediately.
+        _gags.ApplyGag(layer, newData.GagItem, "Mimic", out _);
         _gags.LockGag(layer, newData, "Mimic");
-        // the apply gag function already handled all of the visual cache application for us, so we can return here.
+
+        // Cache the visuals through the cursed loot system instead of the gag system.
+        await _cacheManager.AddCursedGagItem(item, layer);
 
         Logger.LogInformation($"Cursed Loot Applied & Locked!", LoggerType.CursedItems);
         Svc.Chat.PrintError(new SeStringBuilder()
@@ -394,7 +401,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnectionDataSynced)
             return;
 
-        _cursedLoot.ActivateItem(item, endTime);
+        _cursedLoot.ActivateItem(item, endTime, newEncounter: true);
         // now we need to update the equivalent visual data.
         if (_restrictions.ApplyCursedItem(item, out var layer))
             await _cacheManager.AddCursedItem(item, layer);
@@ -420,6 +427,14 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
             // remove it, and then remove it from the visuals if valid.
             if (_restrictions.RemoveCursedItem(restriction, out var layer))
                 await _cacheManager.RemoveCursedItem(restriction, layer);
+        }
+        else if (item is CursedGagItem cursedGag && _gags.ServerGagData is { } gagData)
+        {
+            // locate the gag slot the cursed gag occupies and clear its cursed visuals.
+            // (freeing the slot itself is pushed to the server by the auto-unlock service)
+            var layer = Array.FindIndex(gagData.GagSlots, s => s.Enabler == "Mimic" && s.GagItem == cursedGag.RefItem.GagType);
+            if (layer != -1)
+                await _cacheManager.RemoveCursedGagItem(cursedGag, layer);
         }
 
         Logger.LogInformation($"Cursed Loot Removed!", LoggerType.CursedItems);

@@ -220,7 +220,10 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
         ImGui.SetNextItemWidth(width);
         if (ImGui.InputTextWithHint($"##{leaf.FullPath}-nick", "Give a nickname..", ref _cache.NameEditStr, 45, ITFlags.EnterReturnsTrue))
         {
-            _nicks.SetNickname(leaf.Data.UserData.UID, _cache.NameEditStr);
+            if (!_cache.NameEditStr.IsNullOrWhitespace())
+                _nicks.SetNickname(leaf.Data.UserData.UID, _cache.NameEditStr);
+            else
+                _nicks.ClearNickname(leaf.Data.UserData.UID);
             _cache.RenamingNode = null;
         }
         if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
@@ -393,4 +396,3 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
     }
     #endregion Utility
 }
-

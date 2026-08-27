@@ -49,7 +49,8 @@ public sealed class AliasesFileSelector : CkFileSystemSelector<AliasTrigger, Ali
         // Do not subscribe to the default renamer, we only want to rename the item itself.
         UnsubscribeRightClickLeaf(RenameLeaf);
         SubscribeRightClickLeaf(DissolveLeafOption);
-        SubscribeRightClickLeaf(RenameAlias);
+        SubscribeRightClickLeaf(RenameAlias, 1000);
+        SubscribeRightClickLeaf(CloneAlias, 10);
     }
 
     public override ISortMode<AliasTrigger> SortMode => new AliasSorter();
@@ -57,6 +58,17 @@ public sealed class AliasesFileSelector : CkFileSystemSelector<AliasTrigger, Ali
     private void DissolveLeafOption(AliasesFileSystem.Leaf leaf)
     {
         // Some logic here to remove a leaf from its current folders to the root folder.
+    }
+
+    private void CloneAlias(AliasesFileSystem.Leaf leaf)
+    {
+        if (ImGui.MenuItem("Clone Alias"))
+        {
+            var folderPath = leaf.Parent.IsRoot ? null : leaf.Parent.FullName();
+            _manager.CreateClone(leaf.Value, leaf.Value.Label, folderPath);
+            ImGui.CloseCurrentPopup();
+        }
+        CkGui.AttachTooltip("Create a copy of this alias.");
     }
 
     private void RenameAlias(AliasesFileSystem.Leaf leaf)

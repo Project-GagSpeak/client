@@ -21,7 +21,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
     private LayerFlagsWidget _layersHelper = new(FAI.LayerGroup, "RestraintLayers", "Select Layers..");
 
     public PairRestraintCombo(ILogger log, MainHub hub, Kinkster pair, Action postButtonPress)
-        : base(() => [ ..pair.LightCache.Restraints.Values ], log)
+        : base(() => [ ..pair.LightCache.Restraints.Values.OrderBy(x => x.Label) ], log)
     {
         _mainHub = hub;
         _pairRef = pair;

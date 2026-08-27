@@ -197,6 +197,16 @@ public static class GagspeakEx
         return json;
     }
 
+    /// <summary> Creates a copy of a LociItem that shares no mutable state with the original. </summary>
+    /// <remarks> The derived type of the item is preserved. </remarks>
+    public static LociItem DeepClone(this LociItem item)
+        => item switch
+        {
+            LociPreset preset => new LociPreset(preset.Id, preset.StatusIds),
+            LociTuple tuple => new LociTuple(tuple),
+            _ => new LociItem(item.Id),
+        };
+
     public static LociItem LoadLociItem(JToken? token)
     {
         if (token is not JObject jsonObject)
