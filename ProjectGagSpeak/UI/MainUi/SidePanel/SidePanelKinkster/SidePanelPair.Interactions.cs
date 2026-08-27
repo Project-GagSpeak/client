@@ -599,20 +599,12 @@ public partial class SidePanelPair
             canShock = k.PairPerms.AllowShocks;
             canVibrate = k.PairPerms.AllowVibrations;
             canBeep = k.PairPerms.AllowBeeps;
-            maxDuration = k.PairPerms.MaxDuration;
+            maxDuration = (float)k.PairPerms.GetTimespanFromDuration().TotalSeconds;
             maxIntensity = k.PairPerms.MaxIntensity;
-        }
-        else if (k.PairGlobals.HasValidShareCode())
-        {
-            canShock = k.PairGlobals.AllowShocks;
-            canVibrate = k.PairGlobals.AllowVibrations;
-            canBeep = k.PairGlobals.AllowBeeps;
-            maxDuration = k.PairGlobals.MaxDuration;
-            maxIntensity = k.PairGlobals.MaxIntensity;
         }
         else
         {
-            ImGui.TextUnformatted("Not permitted to use.");
+            CkGui.ColorTextCentered("No PiShock configured or online.", ImGuiColors.DalamudGrey);
             return;
         }
 
@@ -626,7 +618,7 @@ public partial class SidePanelPair
         if (shockerIntensity < 1) shockerIntensity = 1;
         else if (shockerIntensity > maxIntensity) shockerIntensity = maxIntensity;
 
-        var shockerDurationSeconds = (int)(shockerDuration * 1000f);
+        var durationMs = (int)(shockerDuration * 1000f);
 
         ImGui.SetNextItemWidth(120 * ImGuiHelpers.GlobalScale);
         ImGui.SliderInt("Intensity", ref shockerIntensity, 1, maxIntensity, "%d%%");
@@ -639,7 +631,7 @@ public partial class SidePanelPair
         {
             UiService.SetUITask(async () =>
             {
-                var res = await _hub.UserShockKinkster(new(k.UserData, 0 /* shock */, shockerIntensity, shockerDurationSeconds));
+                var res = await _hub.UserShockKinkster(new(k.UserData, 0 /* shock */, shockerIntensity, durationMs));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                     _logger.LogError($"Failed to shock {dispName}. ({res.ErrorCode})", LoggerType.StickyUI);
             });
@@ -650,7 +642,7 @@ public partial class SidePanelPair
         {
             UiService.SetUITask(async () =>
             {
-                var res = await _hub.UserShockKinkster(new(k.UserData, 2 /* beep */, shockerIntensity, shockerDurationSeconds));
+                var res = await _hub.UserShockKinkster(new(k.UserData, 2 /* beep */, shockerIntensity, durationMs));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                     _logger.LogError($"Failed to beep {dispName}. ({res.ErrorCode})", LoggerType.StickyUI);
             });
@@ -661,7 +653,7 @@ public partial class SidePanelPair
         {
             UiService.SetUITask(async () =>
             {
-                var res = await _hub.UserShockKinkster(new(k.UserData, 1 /* vibrate */, shockerIntensity, shockerDurationSeconds));
+                var res = await _hub.UserShockKinkster(new(k.UserData, 1 /* vibrate */, shockerIntensity, durationMs));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                     _logger.LogError($"Failed to vibrate {dispName}. ({res.ErrorCode})", LoggerType.StickyUI);
             });

@@ -80,20 +80,26 @@ public sealed class AutoPromptController : DisposableMediatorSubscriberBase
         var baseAddon = (AtkUnitBase*)yesno;
 
         string[] nodesToDecline = [ ..GsLang.ConfirmHouseExit, ..GsLang.ConfirmChamberLeave ];
+        string[] nodesToDeclineContains = [ ..GsLang.ConfirmTeleportOffer ];
         string[] nodesToAccept = [ ..GsLang.ConfirmHouseEntrance ];
 
-        // Check for auto-no responces
-        if (HcTaskUtils.YesNoMatches(baseAddon, contains: false, nodesToDecline))
+        // Check for auto-no responses
+        if (HcTaskUtils.YesNoMatches(baseAddon, contains: false, nodesToDecline) || HcTaskUtils.YesNoMatches(baseAddon, contains: true, nodesToDeclineContains))
         {
-            // if addon is ready, check for validation to hit the yes button prior to pressing it.
-            if (yesno->NoButton is not null && !yesno->NoButton->IsEnabled)
+            var noButton = yesno->NoButton;
+            // if the addon is actually a Yes Wait No, then we need to find the No button.
+            if (yesno->AtkComponentButton238 is not null && yesno->AtkComponentButton238->ButtonTextNode->NodeText.ExtractText() == "No")
+                noButton = yesno->AtkComponentButton238;
+            
+            // if addon is ready, check for validation to hit the no button prior to pressing it.
+            if (noButton is not null && !noButton->IsEnabled)
             {
-                // forcibly enable the yes button through node flag manipulation.
+                // forcibly enable the no button through node flag manipulation.
                 Svc.Logger.Verbose($"{nameof(AddonSelectYesno)}: Force enabling [No]");
-                var flagsPtr = (ushort*)&yesno->NoButton->AtkComponentBase.OwnerNode->AtkResNode.NodeFlags;
+                var flagsPtr = (ushort*)&noButton->AtkComponentBase.OwnerNode->AtkResNode.NodeFlags;
                 *flagsPtr ^= 1 << 5; // Toggle the 5th bit to enable the button.
             }
-            HcTaskUtils.ClickButtonIfEnabled(baseAddon, yesno->NoButton);
+            HcTaskUtils.ClickButtonIfEnabled(baseAddon, noButton);
             return;
         }
 

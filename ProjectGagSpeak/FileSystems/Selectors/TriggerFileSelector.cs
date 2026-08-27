@@ -44,10 +44,22 @@ public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerF
         Mediator.Subscribe<ConfigTriggerChanged>(this, (msg) => OnTriggerChange(msg.Type, msg.Item, msg.OldString));
         // Do not subscribe to the default renamer, we only want to rename the item itself.
         UnsubscribeRightClickLeaf(RenameLeaf);
-        SubscribeRightClickLeaf(RenameTrigger);
+        SubscribeRightClickLeaf(RenameTrigger, 1000);
+        SubscribeRightClickLeaf(CloneTrigger, 10);
     }
 
     public override ISortMode<Trigger> SortMode => new TriggerSorter();
+
+    private void CloneTrigger(TriggerFileSystem.Leaf leaf)
+    {
+        if (ImGui.MenuItem("Clone Trigger"))
+        {
+            var folderPath = leaf.Parent.IsRoot ? null : leaf.Parent.FullName();
+            _manager.CreateClone(leaf.Value, leaf.Value.Label, folderPath);
+            ImGui.CloseCurrentPopup();
+        }
+        CkGui.AttachTooltip("Create a copy of this trigger.");
+    }
 
     private void RenameTrigger(TriggerFileSystem.Leaf leaf)
     {

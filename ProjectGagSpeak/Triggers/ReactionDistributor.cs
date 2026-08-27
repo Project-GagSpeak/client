@@ -8,6 +8,7 @@ using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using OtterGui.Extensions;
@@ -24,6 +25,7 @@ public class ReactionDistributor
 {
     private readonly ILogger<ReactionDistributor> _logger;
     private readonly PiShockProvider _shockies;
+    private readonly MainConfig _mainConfig;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly RestraintManager _restraints;
@@ -35,6 +37,7 @@ public class ReactionDistributor
     public ReactionDistributor(
         ILogger<ReactionDistributor> logger,
         PiShockProvider shockies,
+        MainConfig mainConfig,
         GagRestrictionManager gags,
         RestrictionManager restrictions,
         RestraintManager restraints,
@@ -45,6 +48,7 @@ public class ReactionDistributor
     {
         _logger = logger;
         _shockies = shockies;
+        _mainConfig = mainConfig;
         _gags = gags;
         _restrictions = restrictions;
         _restraints = restraints;
@@ -185,7 +189,7 @@ public class ReactionDistributor
     #endregion Invocations
 
     #region Reaction Logic
-    // Unique logic spesific to Non-Trigger logic, performed by aliases.
+    // Unique logic specific to Non-Trigger logic, performed by aliases.
 
     // Can happen from anyone, player or Kinkster. (Might want to include nameworld or something?)
     private bool TextReaction(TextAction act, string? enactorUid = null)
@@ -279,7 +283,13 @@ public class ReactionDistributor
         }
         else if (act.NewState is NewState.Disabled)
         {
-            layerIdx = gagData.FindOutermostActive();
+            // Any layer: find the outermost unlocked gag, restricted to the chosen gag type when one is set.
+            if (layerIdx is -1)
+                layerIdx = act.GagType is GagType.None ? gagData.FindOutermostActive() : gagData.FindOutermostActive(act.GagType);
+            // Specific layer: it must hold an unlocked gag matching the chosen gag type when one is set.
+            else if (gagData.GagSlots[layerIdx].GagItem is GagType.None || gagData.GagSlots[layerIdx].IsLocked()
+                || (act.GagType is not GagType.None && gagData.GagSlots[layerIdx].GagItem != act.GagType))
+                layerIdx = -1;
 
             if (layerIdx is -1)
             {
@@ -351,9 +361,15 @@ public class ReactionDistributor
         }
         else if (act.NewState is NewState.Disabled)
         {
-            layerIdx = act.RestrictionId != Guid.Empty
-                ? restrictions.Restrictions.IndexOf(x => x.Identifier == act.RestrictionId)
-                : restrictions.FindOutermostActiveUnlocked();
+            // Any layer: locate the chosen restriction when one is set, otherwise the outermost unlocked one.
+            if (layerIdx is -1)
+                layerIdx = act.RestrictionId != Guid.Empty
+                    ? restrictions.Restrictions.IndexOf(x => x.Identifier == act.RestrictionId)
+                    : restrictions.FindOutermostActiveUnlocked();
+            // Specific layer: it must hold a restriction matching the chosen one when set.
+            else if (restrictions.Restrictions[layerIdx].Identifier == Guid.Empty
+                || (act.RestrictionId != Guid.Empty && restrictions.Restrictions[layerIdx].Identifier != act.RestrictionId))
+                layerIdx = -1;
 
             if (layerIdx == -1 || !restrictions.Restrictions[layerIdx].CanRemove())
                 return false;
@@ -372,16 +388,17 @@ public class ReactionDistributor
 
         if (act.NewState is NewState.Enabled)
         {
-            if (!restraint.CanApply() || !_restraints.Storage.Contains(act.RestrictionId))
+            if (!restraint.CanApply() || !_restraints.Storage.TryGetRestraint(act.RestrictionId, out var setItem))
                 return false;
 
-            _logger.LogDebug($"Applying restraint [{act.RestrictionId}]", LoggerType.Triggers);
+            _logger.LogDebug($"Applying restraint [{act.RestrictionId}] with layers [{act.Layers}]", LoggerType.Triggers);
             var setData = restraint with
             {
                 Identifier = act.RestrictionId,
-                Enabler = enactor ?? MainHub.UID
+                Enabler = enactor ?? MainHub.UID,
+                ActiveLayers = act.Layers & (RestraintLayer)((1 << setItem.Layers.Count) - 1)
             };
-            return await _selfBondage.DoSelfRestraintResult(setData, DataUpdateType.Applied).ConfigureAwait(false);
+            return await _selfBondage.DoSelfRestraintResult(setData, DataUpdateType.Swapped).ConfigureAwait(false);
         }
         else if (act.NewState is NewState.Locked)
         {
@@ -418,6 +435,9 @@ public class ReactionDistributor
         {
             if (!restraint.CanRemove())
                 return false;
+            // When a specific set is chosen, only remove if it is the currently active one.
+            if (act.RestrictionId != Guid.Empty && restraint.Identifier != act.RestrictionId)
+                return false;
             _logger.LogDebug($"Removing restraint [{act.RestrictionId}]", LoggerType.Triggers);
             return await _selfBondage.DoSelfRestraintResult(new CharaActiveRestraint(), DataUpdateType.Removed).ConfigureAwait(false);
         }
@@ -440,19 +460,19 @@ public class ReactionDistributor
 
     private bool PiShockReaction(PiShockAction act, string? enactor = null)
     {
-        if (ClientData.Globals is not { } perms)
+        if (ClientData.Globals is null)
             return false;
 
-        if(string.IsNullOrWhiteSpace(perms.GlobalShockShareCode) || !perms.HasValidShareCode())
+        var shockerId = _mainConfig.Current.GlobalShockerId;
+        if (shockerId == 0)
         {
-            _logger.LogWarning("Can't execute Shock Instruction if none are currently connected!");
+            _logger.LogWarning("Can't execute Shock Instruction if no shocker is selected!");
             return false;
         }
 
-        // execute the instruction with our global share code.
-        _logger.LogInformation("DoPiShock Action is executing instruction based on global sharecode settings!", LoggerType.PiShock);
-        var shareCode = perms.GlobalShockShareCode;
-        _shockies.ExecuteOperation(shareCode, (int)act.ShockInstruction.OpCode, act.ShockInstruction.Intensity, act.ShockInstruction.Duration);
+        _logger.LogInformation("DoPiShock Action is executing instruction based on global shocker settings!", LoggerType.PiShock);
+        var durationMs = (int)(act.ShockInstruction.GetDurationFloat() * 1000f);
+        _shockies.ExecuteOperation(shockerId, (int)act.ShockInstruction.OpCode, act.ShockInstruction.Intensity, durationMs);
         return true;
     }
 

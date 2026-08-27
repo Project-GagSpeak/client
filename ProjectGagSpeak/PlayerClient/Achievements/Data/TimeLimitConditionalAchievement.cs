@@ -6,17 +6,19 @@ public class TimeLimitConditionalAchievement : AchievementBase
 {
     private readonly TimeSpan MilestoneDuration;
     public DateTime StartPoint { get; set; } = DateTime.MinValue;
+    public Func<bool> RequiredStartCondition;
     public Func<bool> RequiredCondition;
     public DurationTimeUnit TimeUnit { get; init; }
     private CancellationTokenSource _cancellationTokenSource;
     private bool TaskStarted = false;
 
 
-    public TimeLimitConditionalAchievement(AchievementModuleKind module, AchievementInfo infoBase, TimeSpan duration, Func<bool> condition, 
+    public TimeLimitConditionalAchievement(AchievementModuleKind module, AchievementInfo infoBase, TimeSpan duration, Func<bool> startCondition, Func<bool> condition, 
         Action<int, string> onCompleted, DurationTimeUnit unit, string prefix = "", string suffix = "", bool isSecret = false) 
         : base(module, infoBase, ConvertToUnit(duration, unit), prefix, suffix, onCompleted, isSecret)
     {
         MilestoneDuration = duration;
+        RequiredStartCondition = startCondition;
         RequiredCondition = condition;
         TimeUnit = unit;
     }
@@ -112,7 +114,7 @@ public class TimeLimitConditionalAchievement : AchievementBase
         if (IsCompleted || !MainHub.IsConnected || TaskStarted)
             return;
 
-        if (RequiredCondition())
+        if (RequiredStartCondition())
         {
             GagspeakEventManager.UnlocksLogger.LogTrace($"Condition for {Title} met. Starting the timer.", LoggerType.AchievementInfo);
             StartPoint = DateTime.UtcNow;

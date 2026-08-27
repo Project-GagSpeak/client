@@ -54,7 +54,8 @@ public class GagspeakConfig
     public string Safeword { get; set; } = "";
     public GarbleCoreLang Language { get; set; } = GarbleCoreLang.English; // MuffleCore
     public GarbleCoreDialect LanguageDialect { get; set; } = GarbleCoreDialect.US; // MuffleCore
-    
+    public bool GarbleWordsNotInDictionary { get; set; } = true; // toggle for fallback garbler.
+
     public bool CursedLootUI { get; set; } = false;                   // CursedLootUI
     public bool CursedItemsApplyTraits { get; set; } = false;         // If Mimics can apply restriction traits to you.
     public bool CursedItemsApplyOverlays { get; set; } = false;         // If Mimics can apply restriction overlays to you.
@@ -75,12 +76,14 @@ public class GagspeakConfig
     public string IntifaceConnectionSocket { get; set; } = "ws://localhost:12345"; // connection link from plugin to intiface
 
     // GLOBAL HARDCORE SETTINGS. (maybe make it its own file if it gets too rediculous but yeah.
-    public string PiShockApiKey { get; set; } = ""; // PiShock Settings.
-    public string PiShockUsername { get; set; } = ""; // PiShock Settings.
+    public string PiShockApiKey { get; set; } = "";
+    public string PiShockUsername { get; set; } = "";
+    public int GlobalShockerId { get; set; } = 0;
+    public Dictionary<string, int> PairShockerIds { get; set; } = new(); // Per-pair shocker device selection (UID → shocker ID).
     public bool MoveToChambersInEstates { get; set; } = false; // Move to Chambers in Estates during ForcedStay
 
     public float OverlayMaxOpacity { get; set; } = 1.0f; // Blindfold Opacity
     public HypnoticEffect? HypnoEffectInfo { get; set; } = null;
     public string? Base64CustomImageData { get; set; } = null;
-}
 
+}

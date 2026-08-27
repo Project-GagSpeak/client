@@ -111,6 +111,11 @@ public sealed class AutoUnlockService : BackgroundService
     {
         if (!MainHub.IsConnected)
             return;
+        
+        // Defer expiry processing while zoning, as Glamourer IPC calls are dropped during transitions
+        if (PlayerData.IsZoning || !PlayerData.Available)
+            return;
+        
         // remove the stopwatch if it becomes excessive.
         var sw = Stopwatch.StartNew();
         await Task.WhenAll(
@@ -180,6 +185,8 @@ public sealed class AutoUnlockService : BackgroundService
 
         foreach (var (gag, index) in gags.GagSlots.Select((slot, index) => (slot, index)))
         {
+            // Mimic padlocks belong to cursed loot gags, whose lifecycle is handled by CheckCursedLoot.
+            if (gag.Padlock is Padlocks.Mimic) continue;
             if (!gag.Padlock.IsTimerLock()) continue;
             if (!gag.HasTimerExpired()) continue;
 
@@ -286,7 +293,7 @@ public sealed class AutoUnlockService : BackgroundService
             _mediator.Publish(new EventMessage(new("Auto-Unlock", MainHub.UID, InteractionType.UnlockRestraint, $"Active RestraintSet's Timed Padlock Expired!")));
             
             // Auto remove if configured to do so.
-            if (_config.Current.RemoveRestrictionOnTimerExpire && await _dds.PushNewActiveRestraint(new CharaActiveRestraint(), DataUpdateType.Removed).ConfigureAwait(false) is not null)
+            if (_config.Current.RemoveRestraintOnTimerExpire && await _dds.PushNewActiveRestraint(new CharaActiveRestraint(), DataUpdateType.Removed).ConfigureAwait(false) is not null)
             {
                 if (_restraints.Remove(MainHub.UID, out var restraintSet, out var removedLayers))
                     await _cacheManager.RemoveRestraintSet(restraintSet, removedLayers);
@@ -316,8 +323,9 @@ public sealed class AutoUnlockService : BackgroundService
 
             _logger.LogInformation($"CursedLoot Item [{item.Label}] Timer Expired!", LoggerType.AutoUnlocks);
 
-            // store backup state.
-            var backup = item;
+            // store backup state. (CursedItem is a reference type, so copy the values off it, not the item itself)
+            var appliedBackup = item.AppliedTime;
+            var releaseBackup = item.ReleaseTime;
             // Temporarily update the changes locally, to prevent excess Auto-unlock calls.
             item.AppliedTime = DateTimeOffset.MinValue;
             item.ReleaseTime = DateTimeOffset.MinValue;
@@ -326,8 +334,8 @@ public sealed class AutoUnlockService : BackgroundService
             if (await _dds.PushActiveCursedLoot(_cursedLoot.Storage.AppliedLootIds.ToList(), item.Identifier, null).ConfigureAwait(false) is null)
             {
                 // Revert the values to prevent the update and trigger it again later. This helps to prevent false achievement triggering.
-                item.AppliedTime = backup.AppliedTime;
-                item.ReleaseTime = backup.ReleaseTime;
+                item.AppliedTime = appliedBackup;
+                item.ReleaseTime = releaseBackup;
                 _cursedLoot.ForceSave();
             }
             else
@@ -335,6 +343,49 @@ public sealed class AutoUnlockService : BackgroundService
                 // was successful, so make sure to remove it from viausals and cache manager.
                 await _visuals.CursedItemRemoved(item.Identifier);
             }
+        }
+
+        // Free any gag slots still held by expired cursed loot gags.
+        await FreeExpiredCursedGagSlots().ConfigureAwait(false);
+    }
+
+    /// <summary>
+    ///     Unlocks and removes gag slots locked by an expired Mimic padlock once their cursed loot
+    ///     item is no longer applied. Runs after the loot expiry pass so the cursed visuals are
+    ///     already cleared, and retries on later ticks if a server push fails.
+    /// </summary>
+    private async Task FreeExpiredCursedGagSlots()
+    {
+        if (_gags.ServerGagData is not { } data)
+            return;
+
+        for (var layer = 0; layer < data.GagSlots.Length; layer++)
+        {
+            var slot = data.GagSlots[layer];
+            if (slot.Padlock is not Padlocks.Mimic || !slot.HasTimerExpired())
+                continue;
+
+            // leave the slot alone while its cursed loot item is still applied; the loot expiry pass handles that first.
+            if (_cursedLoot.Storage.AppliedLootUnsorted.OfType<CursedGagItem>().Any(c => c.RefItem?.GagType == slot.GagItem))
+                continue;
+
+            // capture the name now, the unlock & removal below mutate the slot.
+            var gagName = slot.GagItem.GagName();
+            _logger.LogInformation($"Freeing gag slot {layer} from expired cursed loot gag [{gagName}]", LoggerType.AutoUnlocks);
+            // unlock the mimic padlock first, the server will not remove a locked gag.
+            var unlockData = new ActiveGagSlot() with { Padlock = slot.Padlock, Password = slot.Password, PadlockAssigner = slot.PadlockAssigner };
+            if (await _dds.PushNewActiveGagSlot(layer, unlockData, DataUpdateType.Unlocked).ConfigureAwait(false) is null)
+                continue;
+            _gags.UnlockGag(layer, MainHub.UID);
+
+            // now remove the gag from the slot entirely.
+            if (await _dds.PushNewActiveGagSlot(layer, new ActiveGagSlot(), DataUpdateType.Removed).ConfigureAwait(false) is null)
+                continue;
+            // cursed gag visuals live in the cursed loot cache and were removed with the loot item,
+            // but clear the gag-keyed cache too in case this slot was cached as a normal gag.
+            if (_gags.RemoveGag(layer, MainHub.UID, out var visualItem))
+                await _cacheManager.RemoveGagItem(visualItem, layer);
+            _mediator.Publish(new EventMessage(new("Auto-Unlock", MainHub.UID, InteractionType.RemoveGag, $"Cursed Loot Gag [{gagName}] expired and was removed!")));
         }
     }
 

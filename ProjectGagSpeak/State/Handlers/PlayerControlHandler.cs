@@ -29,6 +29,8 @@ public class PlayerCtrlHandler
     private readonly OverlayHandler _overlay;
     private readonly HcTaskManager _hcTasks;
     private readonly KinksterManager _kinksters;
+    
+    private const string ConfinementTaskName = "Travel To Location";
 
     // Stores the players's movement mode, useful for when we change it.
     private MovementMode _cachedPlayerMoveMode = MovementMode.NotSet;
@@ -178,7 +180,7 @@ public class PlayerCtrlHandler
         Svc.Framework.RunOnFrameworkThread(() =>
         {
             // Not respecting inner timeouts for some reason
-            _hcTasks.CreateCollection("Travel To Location", HcTaskConfiguration.Branch with {  Flags = taskCtrlFlags })
+            _hcTasks.CreateCollection(ConfinementTaskName, HcTaskConfiguration.Branch with {  Flags = taskCtrlFlags })
                 .Add(_hcTasks.CreateBranch(() => doLifestreamMethod, "LifestreamTravelTask", HcTaskConfiguration.Branch)
                     .SetTrueTask(_hcTasks.CreateGroup("TravelTaskGroup", HcTaskConfiguration.Default with { TimeoutAt = 120000 })
                         .Add(GagspeakEx.IsPlayerFullyLoaded)
@@ -206,7 +208,8 @@ public class PlayerCtrlHandler
     {
         _logger.LogInformation($"[{enactor.AliasOrUID}] Disabled your Indoor Confinement state!", LoggerType.HardcoreMovement);
 
-        _hcTasks.RemoveIfPresent("Travel To Confinement");
+        _hcTasks.RemoveIfPresent(ConfinementTaskName);
+        _hcTasks.RemoveIfPresent(HcApproachNearestHousing.CollectionName);
         _mediator.Publish(new HcStateCacheChanged());
 
         if (giveAchievements)

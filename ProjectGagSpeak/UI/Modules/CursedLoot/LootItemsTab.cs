@@ -3,6 +3,7 @@ using CkCommons.Gui;
 using CkCommons.Gui.Utility;
 using CkCommons.Raii;
 using CkCommons.Widgets;
+using CkCommons.Helpers;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
@@ -70,7 +71,7 @@ public class LootItemsTab : IFancyTab
         ImUtf8.SameLineInner();
         using (ImRaii.Group())
         {
-            DrawSelectedItem(CkStyle.GetFrameRowsHeight(5), rounding);
+            DrawSelectedItem(CkStyle.GetFrameRowsHeight(7), rounding);
             DrawStatistics(rounding);
         }
     }
@@ -182,6 +183,8 @@ public class LootItemsTab : IFancyTab
         if (ImGui.Checkbox("Apply Traits", ref doTraits))
             item.ApplyTraits = doTraits;
         CkGui.AttachTooltip("If the cursed Loot should apply the item's attached hardcore traits.");
+
+        DrawIndividualTimeSpan(item);
     }
 
     private void DrawSetupOverview(Vector2 region, float rounding)
@@ -230,6 +233,12 @@ public class LootItemsTab : IFancyTab
         // Trait Application.
         CkGui.BoolIcon(selected.ApplyTraits, false);
         CkGui.TextFrameAlignedInline(selected.ApplyTraits ? "Applies traits" : "Ignores traits");
+
+        // Time Range.
+        var minTime = selected.TimeRangeLower?.ToGsRemainingTime() ?? "Not Set";
+        var maxTime = selected.TimeRangeUpper?.ToGsRemainingTime() ?? "Not Set";
+        CkGui.TextFrameAligned("Minimum Time: " + minTime);
+        CkGui.TextFrameAligned("Maximum Time: " + maxTime);
     }
 
     private void DrawBindLootEditor(Vector2 region, CursedRestrictionItem item, float rounding)
@@ -286,5 +295,42 @@ public class LootItemsTab : IFancyTab
         if (ImGui.Checkbox("Apply Traits", ref doTraits))
             item.ApplyTraits = doTraits;
         CkGui.AttachTooltip("If the ref item's hardcore traits are applied.");
+
+        DrawIndividualTimeSpan(item);
+    }
+
+    private void DrawIndividualTimeSpan(CursedItem item)
+    {
+        var minTimeString = item.TimeRangeLower?.ToGsRemainingTime() ?? "";
+        ImGui.InputTextWithHint("##ItemMinTime", "Min Time", ref minTimeString, 64);
+        if (ImGui.IsItemDeactivatedAfterEdit())
+        {
+
+            if (minTimeString != "" && RegexEx.TryParseTimeSpan(minTimeString, out var newLower))
+            {
+                if (!item.TimeRangeUpper.HasValue || newLower <= item.TimeRangeUpper) item.TimeRangeLower = newLower;
+            }
+            else
+            {
+                item.TimeRangeLower = null; // We can either keep it 0s or null, but null is more appropriate for "no minimum time set" Aka. Try to use the global range instead.
+            }
+        }
+        CkGui.AttachTooltip("The minimum time for the item. Will override the default time if set.");
+
+        var maxTimeString = item.TimeRangeUpper?.ToGsRemainingTime() ?? "";
+        ImGui.InputTextWithHint("##ItemMaxTime", "Max Time", ref maxTimeString, 64);
+        if (ImGui.IsItemDeactivatedAfterEdit())
+        {
+
+            if (maxTimeString != "" && RegexEx.TryParseTimeSpan(maxTimeString, out var newUpper))
+            {
+                if(!item.TimeRangeLower.HasValue || newUpper >= item.TimeRangeLower) item.TimeRangeUpper = newUpper;
+            }
+            else if (maxTimeString == "")
+            {
+                item.TimeRangeUpper = null; // We can either keep it 0s or null, but null is more appropriate for "no maximum time set" Aka. Try to use the global range instead.
+            }
+        }
+        CkGui.AttachTooltip("The maximum time for the item. Will override the default time if set.");
     }
 }
