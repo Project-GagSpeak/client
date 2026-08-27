@@ -123,7 +123,7 @@ public partial class SidePanelPair
         GenericHcChild(InteractionType.ChatInputBlocking, ref cache.ChatInputBlockTimer, "Block Input", chatIptBlockActive, chatIptBlockDis);
 
 
-        // >> Helpers Below 
+        // >> Helpers Below
         void DrawColoredExpander(InteractionType type, FAI icon, string text, bool showCol, bool disabled, string tooltip)
         {
             using (ImRaii.PushColor(ImGuiCol.Text, showCol ? ImGuiColors.DalamudYellow : ImGuiColors.DalamudWhite))
@@ -297,22 +297,22 @@ public partial class SidePanelPair
         {
             case PropertyType.House:
                 ImGui.SetNextItemWidth(sliderW);
-                ImGui.SliderInt("##plot", ref cache.Address.Plot, 1, 60, "Plot %d");
+                ImGui.SliderInt("##plot", ref cache.Address.Plot, 1, 60, "Plot %d", ImGuiSliderFlags.AlwaysClamp);
                 CkGui.AttachTooltip($"The plot # of the home {dispName} will be confined to.");
                 break;
             case PropertyType.Apartment:
                 ImGui.SetNextItemWidth(sliderW);
-                ImGui.SliderInt("##room", ref cache.Address.Apartment, 1, 100, "Room %d");
+                ImGui.SliderInt("##room", ref cache.Address.Apartment, 1, 90, "Room %d", ImGuiSliderFlags.AlwaysClamp);
                 CkGui.AttachTooltip($"The apartment room # {dispName} will be confined to.");
                 break;
             case PropertyType.PrivateChambers:
                 ImGui.SetNextItemWidth(sliderW);
-                ImGui.SliderInt("##plot", ref cache.Address.Plot, 1, 60, "Plot %d");
+                ImGui.SliderInt("##plot", ref cache.Address.Plot, 1, 60, "Plot %d", ImGuiSliderFlags.AlwaysClamp);
                 CkGui.AttachTooltip($"The plot # of the home {dispName} will be confined to.");
 
                 ImUtf8.SameLineInner();
                 ImGui.SetNextItemWidth(sliderW);
-                ImGui.SliderInt("##chambers", ref cache.Address.Apartment, 1, 100, "Chamber %d");
+                ImGui.SliderInt("##chambers", ref cache.Address.Apartment, 1, 512, "Chamber %d", ImGuiSliderFlags.AlwaysClamp);
                 CkGui.AttachTooltip($"The private chambers # {dispName} will be confined to.");
                 break;
             default:
