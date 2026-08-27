@@ -27,3 +27,6 @@ bash.exe.*
 
 #difftool files
 *.orig
+
+# language server cache
+*.lscache
