@@ -9,6 +9,9 @@ namespace GagSpeak;
 
 public static unsafe class HcApproachNearestHousing
 {
+    // Callers enqueue this collection standalone, so they need the name to remove it again.
+    public const string CollectionName = "Enter Housing";
+
     public static bool IsTargetApartment()
     {
         var tName = Svc.Targets.Target?.Name.ToString() ?? string.Empty;
@@ -20,7 +23,7 @@ public static unsafe class HcApproachNearestHousing
 
     public static HardcoreTaskCollection GetTaskCollection(HcTaskManager hcTasks, int appartmentRoom = int.MaxValue)
     {
-        return hcTasks.CreateCollection("Enter Housing", new(HcTaskControl.LockThirdPerson | HcTaskControl.BlockAllKeys | HcTaskControl.DoConfinementPrompts))
+        return hcTasks.CreateCollection(CollectionName, new(HcTaskControl.LockThirdPerson | HcTaskControl.BlockAllKeys | HcTaskControl.DoConfinementPrompts))
             .Add(new HardcoreTask(GagspeakEx.IsPlayerFullyLoaded))
             .Add(new HardcoreTask(TargetNearestHousingNode))
             .Add(hcTasks.CreateBranch(IsTargetApartment, "Approach Housing Node")

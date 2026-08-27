@@ -91,7 +91,7 @@ public class Kinkster : IComparable<Kinkster>
     public bool IsTargetable => IsRendered ? _player.DataState.GetIsTargetable() : false;
 
     // Additional Information.
-    public bool HasShockCollar => PairGlobals.HasValidShareCode() || PairPerms.HasValidShareCode();
+    public bool HasShockCollar => PairPerms.HasValidShareCode();
 
     // Definitely change how this information is stored, possibly do so within some internal kinkplate cache or whatever.
     // It would need to hold an updated mini-cache of what we hold for the client themselves whenever a change to

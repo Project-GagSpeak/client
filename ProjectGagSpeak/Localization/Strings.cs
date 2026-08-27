@@ -1,4 +1,5 @@
 using CheapLoc;
+using Dalamud.Bindings.ImGui;
 
 namespace GagSpeak.Localization
 {
@@ -1137,6 +1138,16 @@ namespace GagSpeak.Localization
         public readonly string GaggedNameplates = Loc.Localize("MainOptions_GaggedNameplates", "Gagged Nameplates");
         public readonly string GaggedNameplatesTT = Loc.Localize("MainOptions_GaggedNameplatesTT", "Displays custom icons indicating your gagstate on your nameplate while gagged!");
 
+        public readonly string NotInDictionaryGarbling = Loc.Localize("MainOptions_NotInDictionaryGarbling", "Use Fallback \"Mumbles\"");
+        public readonly string NotInDictionaryGarblingTT = Loc.Localize("MainOptions_NotInDictionaryGarblingTT", "The gag garbler turns " +
+            "misspelled and unknown words into randomized mumbling sounds. Default On.");
+
+        public readonly string OverlayMaxOpacity = Loc.Localize("MainOptions_OverlayMaxOpacity", "Overlay Opacity %");
+        public readonly string OverlayMaxOpacityTT = Loc.Localize("MainOptions_OverlayMaxOpacityTT", "Opacity of blindfold and hypnosis overlays. Applied to " +
+                "whole image. --NL--Values above 90% may make things extremely difficult to see, depending on the overlay images you use." +
+                "--NL--Default Value: 100%");
+
+
         public readonly string GagGlamours = Loc.Localize("MainOptions_GagGlamours", "Gag Glamours");
         public readonly string GagGlamoursTT = Loc.Localize("MainOptions_GagGlamoursTT", "Allows Glamourer to apply gag glamour items from your Gag Storage.");
 
@@ -1149,7 +1160,7 @@ namespace GagSpeak.Localization
         public readonly string RestrictionGlamours = Loc.Localize("MainOptions_RestrictionGlamours", "Restriction Glamours");
         public readonly string RestrictionGlamoursTT = Loc.Localize("MainOptions_RestrictionGlamoursTT", "Allows Glamourer to apply restraint glamour items from your Restraint Storage." +
             "--SEP--Restraint glamours can be created in the Wardrobe Interface.");
-        
+
         public readonly string RestrictionPadlockTimer = Loc.Localize("MainOptions_RestrictionPadlockTimer", "Expired Timer Restriction Removal");
         public readonly string RestrictionPadlockTimerTT = Loc.Localize("MainOptions_RestrictionPadlockTimerTT", "Automatically removes locked restrictions when the timer expires.");
 
@@ -1169,6 +1180,10 @@ namespace GagSpeak.Localization
         public readonly string MimicsApplyTraits = Loc.Localize("MainOptions_MimicsApplyTraits", "Cursed Loot can Apply Traits");
         public readonly string MimicsApplyTraitsTT = Loc.Localize("MainOptions_MimicsApplyTraitsTT", "Allows applied cursed items to set their hardcore traits." +
             "--SEP--WARNING: This includes traits such as immobilize, weighted, and other action limiting factors!");
+        
+        public readonly string MimicsApplyOverlays = Loc.Localize("MainOptions_MimicsApplyOverlays", "Cursed Loot can Apply Overlays");
+        public readonly string MimicsApplyOverlaysTT = Loc.Localize("MainOptions_MimicsApplyOverlaysTT", "Allows applied cursed items to set overlays." +
+                                                                      "--SEP--WARNING: This means blindfolds and hypnotic overlays!");
 
         public readonly string LociActive = Loc.Localize("MainOptions_LociActive", "Loci Integration");
         public readonly string LociActiveTT = Loc.Localize("MainOptions_LociActiveTT", "Enables Loci integration and functionality.");

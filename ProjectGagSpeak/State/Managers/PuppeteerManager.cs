@@ -54,7 +54,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         Mediator.Publish(new ConfigAliasItemChanged(StorageChangeType.Created, alias, null));
         return alias;
     }
-    public AliasTrigger CreateClone(AliasTrigger clone, string newName)
+    public AliasTrigger CreateClone(AliasTrigger clone, string newName, string? folderPath = null)
     {
         // Strip private formatting codes.
         newName = CkGui.TooltipTokenRegex().Replace(newName, string.Empty);
@@ -64,7 +64,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         Storage.Items.Add(clonedItem);
         _saver.Save(this);
         Logger.LogDebug($"Cloned Alias {clonedItem.Identifier}.", LoggerType.Puppeteer);
-        Mediator.Publish(new ConfigAliasItemChanged(StorageChangeType.Created, clonedItem, null));
+        Mediator.Publish(new ConfigAliasItemChanged(StorageChangeType.Created, clonedItem, folderPath));
         return clonedItem;
     }
 

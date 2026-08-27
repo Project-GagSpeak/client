@@ -27,6 +27,7 @@ using GagspeakAPI.Util;
 using ImSharp;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Gui.Components;
 
@@ -163,6 +164,7 @@ public class ActiveItemsDrawer
         {
             Identifier = _restraintItem.Current.Identifier,
             Enabler = MainHub.UID,
+            ActiveLayers = RestraintLayer.None,
         };
         _selfBondage.DoSelfRestraint(newData, updateType);
     }
@@ -328,6 +330,8 @@ public class ActiveItemsDrawer
                 });
             }
         }
+        if (_restraintItem.DrawPopup($"##RestraintSetSelector", data.Identifier, ImGui.GetContentRegionAvail().X * .90f, drawPos))
+            RestraintComboChanged(data.Identifier);
     }
 
     public void UnlockItemGroup(int slotIdx, ActiveGagSlot data)
@@ -437,7 +441,7 @@ public class ActiveItemsDrawer
         ImUtf8.SameLineInner();
         //ImGui.SameLine(0,0);
         using var s = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, CkStyle.ChildRoundingLarge());
-        using var _ = ImRaii.Disabled(data.PadlockAssigner != MainHub.UID);
+        using var _ = ImRaii.Disabled(data.PadlockAssigner != MainHub.UID || data.Padlock == Padlocks.PredicamentTimer);
         using (ImRaii.Group())
         {
             // draw sync button, and call layer update if pressed.
@@ -467,15 +471,25 @@ public class ActiveItemsDrawer
     {
         _kinksters.TryGetNickAliasOrUid(enabler, out var nickEnabler);
         _kinksters.TryGetNickAliasOrUid(padlockAssigner, out var lockEnabler);
-        return $"{label ?? "--COL----COL--Unknown Item"} applied by {nickEnabler ?? "yourself"}" +
-            $"--NL--Locked with {(padlock == Padlocks.Owner || padlock == Padlocks.OwnerTimer ? "an " : "a ")}--COL--{padlock.ToName()}--COL--" +
-            $" by {lockEnabler ?? "yourself"}";
+
+        if (nickEnabler is null && enabler == MainHub.UID)
+            nickEnabler = "yourself";
+        if (lockEnabler is null && padlockAssigner == MainHub.UID)
+            lockEnabler = "yourself";
+
+        return $"{label ?? "--COL----COL--Unknown Item"} applied by {nickEnabler ?? "Unknown Kinkster"}" +
+            $"--NL--Locked with {(padlock is Padlocks.Owner or Padlocks.OwnerTimer ? "an " : "a ")}--COL--{padlock.ToName()}--COL--" +
+            $" by {lockEnabler ?? "Unknown Kinkster"}";
     }
 
     private string LockTooltip(string? label, string enabler, string itemType)
     {
         _kinksters.TryGetNickAliasOrUid(enabler, out var nickEnabler);
-        return $"{label ?? "Unknown item"} applied by {nickEnabler ?? "yourself"}" +
+
+        if (nickEnabler is null && enabler == MainHub.UID)
+            nickEnabler = "yourself";
+
+        return $"{label ?? "Unknown item"} applied by {nickEnabler ?? "Unknown Kinkster"}" +
             $"--SEP----COL--Left-Click--COL-- ⇒ Select another {itemType} Item." +
             $"--NL----COL--Right-Click--COL-- ⇒ Clear active {itemType} Item.";
     }
