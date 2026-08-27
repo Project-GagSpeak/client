@@ -22,6 +22,21 @@ public sealed class ModCombo : CkFilterComboCache<ModInfo>
         Cleanup();
     }
 
+    /// <summary>
+    ///     Syncs the cached selection to an externally-driven mod path without needing the popup opened.
+    ///     UpdateCurrentSelected only runs while the popup is open, so dependents (the preset list) would
+    ///     otherwise never react on the first draw of an already-selected mod.
+    /// </summary>
+    /// <returns> True if the resolved selection changed. </returns>
+    public bool SyncToPath(string dirPath)
+    {
+        var prevPath = Current?.DirPath ?? string.Empty;
+        _currentPath = dirPath;
+        CurrentSelectionIdx = Items.IndexOf(i => i.DirPath == dirPath);
+        Current = CurrentSelectionIdx >= 0 ? Items[CurrentSelectionIdx] : null;
+        return (Current?.DirPath ?? string.Empty) != prevPath;
+    }
+
     protected override int UpdateCurrentSelected(int currentSelected)
     {
         if (Current?.DirPath == _currentPath)

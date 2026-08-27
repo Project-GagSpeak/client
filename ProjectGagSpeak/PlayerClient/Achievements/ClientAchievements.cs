@@ -155,8 +155,8 @@ public class ClientAchievements
     public void AddRequiredTimeConditional(AchievementModuleKind module, AchievementInfo info, TimeSpan duration, Func<bool> cond, DurationTimeUnit timeUnit, Action<int, string> onCompleted, string suffix = "", string prefix = "", bool isSecret = false)
         => _saveData.Add(info.Id, new TimeRequiredConditionalAchievement(module, info, duration, cond, onCompleted, timeUnit, prefix, suffix, isSecret));
 
-    public void AddTimeLimitedConditional(AchievementModuleKind module, AchievementInfo info, TimeSpan dur, Func<bool> cond, DurationTimeUnit timeUnit, Action<int, string> onCompleted, string suffix = "", string prefix = "", bool isSecret = false)
-        => _saveData.Add(info.Id, new TimeLimitConditionalAchievement(module, info, dur, cond, onCompleted, timeUnit, prefix, suffix, isSecret));
+    public void AddTimeLimitedConditional(AchievementModuleKind module, AchievementInfo info, TimeSpan dur, Func<bool> startCond, Func<bool> cond, DurationTimeUnit timeUnit, Action<int, string> onCompleted, string suffix = "", string prefix = "", bool isSecret = false)
+        => _saveData.Add(info.Id, new TimeLimitConditionalAchievement(module, info, dur, startCond, cond, onCompleted, timeUnit, prefix, suffix, isSecret));
 
     public void AddConditionalProgress(AchievementModuleKind module, AchievementInfo info, int goal, Func<bool> cond, Action<int, string> onCompleted, string suffix = "", string prefix = "", bool reqBeginAndFinish = true, bool isSecret = false)
         => _saveData.Add(info.Id, new ConditionalProgressAchievement(module, info, goal, cond, onCompleted, reqBeginAndFinish, prefix, suffix, isSecret));

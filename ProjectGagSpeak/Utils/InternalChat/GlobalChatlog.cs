@@ -49,8 +49,8 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
 
     private bool _showEmotes = false;
 
-    public GlobalChatLog(GagspeakMediator mediator, MainHub hub, MainMenuTabs tabs, 
-        MainConfig config, GagRestrictionManager gags, KinksterManager kinksters, 
+    public GlobalChatLog(GagspeakMediator mediator, MainHub hub, MainMenuTabs tabs,
+        MainConfig config, GagRestrictionManager gags, KinksterManager kinksters,
         MufflerService garbler, TutorialService guides)
         : base(0, "Global Chat", 1000)
     {
@@ -119,7 +119,7 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
             _newMsgCount = 0;
             _newMsgFromDev = false;
         }
-        
+
         // Default sender name and tag, respects 3-4 character string.
         var userTagCode = networkChat.Message.UserTagCode;
         var SenderName = "Kinkster-" + userTagCode;
@@ -209,24 +209,27 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
             ImGui.SetKeyboardFocusHere(0);
             shouldFocusChatInput = false;
         }
-        
+
 
         ImGui.SetNextItemWidth(width - (CkGui.IconButtonSize(scrollIcon).X + ImGui.GetStyle().ItemInnerSpacing.X) * 3);
-        ImGui.InputTextWithHint($"##ChatInput{Label}{ID}", "type here...", ref previewMessage, 300);
-        // Process submission Prevent losing chat focus after pressing the Enter key.
-        if (ImGui.IsItemFocused() && ImGui.IsKeyPressed(ImGuiKey.Enter))
+        using (ImRaii.Disabled(disableInput))
         {
-            shouldFocusChatInput = true;
-            _showEmotes = false;
-            OnSendMessage(previewMessage);
-        }
+            ImGui.InputTextWithHint($"##ChatInput{Label}{ID}", "type here...", ref previewMessage, 300);
+            // Process submission Prevent losing chat focus after pressing the Enter key.
+            if (ImGui.IsItemFocused() && (ImGui.IsKeyPressed(ImGuiKey.Enter) || ImGui.IsKeyPressed(ImGuiKey.KeypadEnter)))
+            {
+                shouldFocusChatInput = true;
+                _showEmotes = false;
+                OnSendMessage(previewMessage);
+            }
 
-        // toggle emote viewing.
-        ImUtf8.SameLineInner();
-        using (ImRaii.PushColor(ImGuiCol.Text, GsCol.VibrantPink.Uint(), _showEmotes))
-        {
-            if (CkGui.IconButton(FAI.Heart))
-                _showEmotes = !_showEmotes;
+            // toggle emote viewing.
+            ImUtf8.SameLineInner();
+            using (ImRaii.PushColor(ImGuiCol.Text, GsCol.VibrantPink.Uint(), _showEmotes))
+            {
+                if (CkGui.IconButton(FAI.Heart))
+                    _showEmotes = !_showEmotes;
+            }
         }
         CkGui.AttachTooltip($"Toggles Quick-Emote selection.");
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatEmotes, MainUI.LastPos, MainUI.LastSize);
@@ -326,7 +329,7 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
             _hub.UserSendGlobalChat(new(MainHub.OwnUserData, previewMessage, _config.Current.PreferThreeCharaAnonName)).ConfigureAwait(false);
             GagspeakEventManager.AchievementEvent(UnlocksEvent.GlobalSent);
         }
-        
+
         // Clear message and trigger achievement event
         previewMessage = string.Empty;
     }
@@ -352,7 +355,7 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
             }
             CkGui.AttachTooltip(!shiftHeld ? "Must be holding SHIFT to select." : string.IsNullOrWhiteSpace(_requestMessage)
                 ? "Must attach a message to the request!" : $"Sends a Kinkster Request to {LastInteractedMsg.Name}.");
-            
+
             ImGui.SetNextItemWidth(ImGui.GetWindowWidth() - 20);
             ImGui.InputTextWithHint("##attachedPairMsg", "Attached Request Msg..", ref _requestMessage, 150);
             ImGui.Separator();
@@ -375,7 +378,7 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
 
         if (CkGui.SelectableEx("Report Chat Behavior", !(shiftHeld && ctrlHeld) || sysOrSelf))
         {
-
+            Mediator.Publish(new OpenReportUIMessage(LastInteractedMsg.UserData, ReportKind.Chat));
         }
         CkGui.AttachTooltip(!(shiftHeld && ctrlHeld) ? "Must be holding CTRL + SHIFT to report!" : $"Report {LastInteractedMsg.Name} for their Chat Behavior!");
     }
@@ -402,7 +405,7 @@ public class GlobalChatLog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscriber
             sanitizedToSave.Add(msg with { Message = sanitizedMsg });
         }
         var logToSave = new SerializableChatLog(TimeCreated, sanitizedToSave);
-        
+
         try
         {
             var json = JsonConvert.SerializeObject(logToSave);

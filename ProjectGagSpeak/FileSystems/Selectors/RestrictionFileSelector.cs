@@ -43,7 +43,6 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
 
     // Helper operations used for creating new items and cloning them.
     private RestrictionType _newType;
-    // private RestrictionItem? _clonedRestrictionItem;
 
     /// <summary> This is the currently selected leaf in the file system. </summary>
     public new RestrictionFileSystem.Leaf? SelectedLeaf
@@ -61,11 +60,24 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
 
         // Do not subscribe to the default renamer, we only want to rename the item itself.
         UnsubscribeRightClickLeaf(RenameLeaf);
-        // Subscribe to the rename Restriction.
-        SubscribeRightClickLeaf(RenameRestriction);
+        // Subscribe to the rename Restriction. (matches the priority slot of the default renamer)
+        SubscribeRightClickLeaf(RenameRestriction, 1000);
+        // Subscribe to the clone option in the right-click context menu.
+        SubscribeRightClickLeaf(CloneRestriction, 10);
     }
 
     public override ISortMode<RestrictionItem> SortMode => new RestrictionSorter();
+
+    private void CloneRestriction(RestrictionFileSystem.Leaf leaf)
+    {
+        if (ImGui.MenuItem("Clone Restriction"))
+        {
+            var folderPath = leaf.Parent.IsRoot ? null : leaf.Parent.FullName();
+            _manager.CreateClone(leaf.Value, leaf.Value.Label, folderPath);
+            ImGui.CloseCurrentPopup();
+        }
+        CkGui.AttachTooltip("Create a copy of this restriction item.");
+    }
 
     private void RenameRestriction(RestrictionFileSystem.Leaf leaf)
     {

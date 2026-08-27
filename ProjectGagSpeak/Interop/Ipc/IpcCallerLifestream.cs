@@ -12,6 +12,7 @@ public sealed class IpcCallerLifestream : IIpcCaller
     // API Getters
     private readonly ICallGateSubscriber<AddressBookEntryTuple, bool> GetIsAtAddress;
     private readonly ICallGateSubscriber<bool>                        GetIsBusy;
+    private readonly ICallGateSubscriber<List<AddressBookEntryTuple>> GetAddressBookList;
 
     // API Enactors
     // IPC Function Delegates (calls that instruct Lifestream to do something)
@@ -27,6 +28,8 @@ public sealed class IpcCallerLifestream : IIpcCaller
 
         TravelToAddress = Svc.PluginInterface.GetIpcSubscriber<AddressBookEntryTuple, object>("Lifestream.GoToHousingAddress");
         AbortTask = Svc.PluginInterface.GetIpcSubscriber<object>("Lifestream.Abort");
+
+        GetAddressBookList = Svc.PluginInterface.GetIpcSubscriber<List<AddressBookEntryTuple>>("Lifestream.GetAddressBookEntries");
 
         // subscribe to event.
         OnHouseEnterError.Subscribe(OnErrorEnteringHouse);
@@ -92,5 +95,14 @@ public sealed class IpcCallerLifestream : IIpcCaller
 
         // invoke the action for the address.
         TravelToAddress.InvokeAction(address);
+    }
+
+    /// <summary> Gets the address book list. </summary>
+    public List<AddressBookEntryTuple>? GetAddressList()
+    {
+        if (!APIAvailable)
+            return null;
+
+        return GetAddressBookList.InvokeFunc();
     }
 }

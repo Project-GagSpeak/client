@@ -59,7 +59,7 @@ internal class ReportPopupHandler : IPopupHandler
         var pfpPos = rectMin + Vector2.One * 16f;
         var pfpSize = Vector2.One * 192;
         var descPos = pfpBorderPos + new Vector2(0, pfpBorderSize.Y + outerPadding.Y);
-        var descSize = pfpBorderSize with { Y = size.Y - outerPadding.Y * 3 - pfpBorderSize.Y }; 
+        var descSize = pfpBorderSize with { Y = size.Y - outerPadding.Y * 3 - pfpBorderSize.Y };
 
         // grab our profile image and draw the baseline.
         var kinkPlate = _kinkPlates.GetKinkPlate(_reportedUser);
@@ -242,6 +242,7 @@ internal class ReportPopupHandler : IPopupHandler
             ? _reportedUser.AliasOrUID
             : "Kinkster-" + _reportedUser.UID.Substring(_reportedUser.UID.Length - 4);
         _reportReason = DEFAULT_REASON;
+        _reportType = msg.Kind;
         if (msg.Kind is ReportKind.Chat)
             _compressedChatData = _globalChat.GetRecentChatForReport();
     }

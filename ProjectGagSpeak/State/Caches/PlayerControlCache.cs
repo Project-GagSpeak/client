@@ -140,6 +140,10 @@ public sealed class PlayerControlCache
     // Update the hardcore task manager control state and refresh the controllers with the latest cache information.
     public void SetActiveTaskControl(HcTaskControl control)
     {
+        // Task begin/end calls this every frame a task runs, so only wake the controllers on a real change.
+        if (_activeTaskControl == control)
+            return;
+
         _activeTaskControl = control;
         _mediator.Publish(new HcStateCacheChanged());
     }
