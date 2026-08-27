@@ -47,6 +47,4 @@ internal static class GsLang
 
     public static readonly string[] ExitChambers = [ "Exit" ];
 
-    public static readonly string[] DeepDungeonCoffer = [ "Treasure Coffer", "Schatztruhe" ];
-
 }
