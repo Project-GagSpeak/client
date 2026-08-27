@@ -21,6 +21,7 @@ public record HpMonitorTriggered(nint PlayerAddr, HealthPercentTrigger HpTrigger
 
 // Could make a more generic method for Minigames, but for now just per-activity is fine.
 public record DeathrollMessage(string SenderNameWorld, int Roll, int RollCap) : MessageBase;
+public record DeathrollDiceMessage(string SenderNameWorld, SeString Msg) : MessageBase;
 public record DeathrollResult(string WinnerNameWorld, string LoserNameWorld) : MessageBase;
 
 /// <summary>

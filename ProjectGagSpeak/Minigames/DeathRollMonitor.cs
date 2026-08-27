@@ -11,12 +11,16 @@ namespace GagSpeak.Minigames.Watchers;
 /// </summary>
 public sealed class DeathRollMonitor : DisposableMediatorSubscriberBase
 {
+    // Pulls the roll and cap out of a Random! chat line.
+    private static readonly Regex _rollNumbers = new(@"\d+", RegexOptions.Compiled);
+
     private Dictionary<string, DeathRollSession> _monitored = [];
 
     public DeathRollMonitor(ILogger<DeathRollMonitor> logger, GagspeakMediator mediator)
         : base(logger, mediator)
     {
         Mediator.Subscribe<DeathrollMessage>(this, _ => OnDeathrollMessage(_.SenderNameWorld, _.Roll, _.RollCap));
+        Mediator.Subscribe<DeathrollDiceMessage>(this, _ => OnDeathrollDiceMessage(_.SenderNameWorld, _.Msg));
     }
 
     // add a helper function to retrieve the roll cap of the last active session our player is in.
@@ -29,6 +33,24 @@ public sealed class DeathRollMonitor : DisposableMediatorSubscriberBase
             .FirstOrDefault(s => s.Opponent.IsNullOrEmpty() || ((s.Opponent == player || s.Initializer == player) && s.LastRoller != player));
 
         return matchedSession?.CurrentRollCap ?? null;
+    }
+
+    /// <summary>
+    ///     Handles the deathrolls that never reach the LogMessage event (ex /dice)
+    /// </summary>
+    private void OnDeathrollDiceMessage(string nameWithWorld, SeString msg)
+    {
+        var numbers = _rollNumbers.Matches(msg.TextValue);
+        // An opening roll reads "Random! 783", while a reply reads "Random! (1-783) 771",
+        // so the cap is the top of the printed range and the roll is always the final number.
+        var (roll, cap) = numbers.Count switch
+        {
+            1 => (int.Parse(numbers[0].Value), -1),
+            3 => (int.Parse(numbers[2].Value), int.Parse(numbers[1].Value)),
+            _ => (-1, -1),
+        };
+
+        OnDeathrollMessage(nameWithWorld, roll > 999 ? -1 : roll, cap > 999 ? -1 : cap);
     }
 
     private void OnDeathrollMessage(string nameWithWorld, int rollValue, int rollCap)
