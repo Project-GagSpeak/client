@@ -46,5 +46,7 @@ internal static class GsLang
     public static readonly string[] ConfirmHouseExit = [ "Leave the estate hall?", "Das Gebäude verlassen?"]; // yes | no option.
 
     public static readonly string[] ExitChambers = [ "Exit" ];
+    
+    public static readonly string[] ConfirmTeleportOffer = ["Accept Teleport to"]; // SelectString, option we want is below.
 
 }
