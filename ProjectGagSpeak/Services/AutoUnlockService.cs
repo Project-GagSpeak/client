@@ -111,6 +111,11 @@ public sealed class AutoUnlockService : BackgroundService
     {
         if (!MainHub.IsConnected)
             return;
+        
+        // Defer expiry processing while zoning, as Glamourer IPC calls are dropped during transitions
+        if (PlayerData.IsZoning || !PlayerData.Available)
+            return;
+        
         // remove the stopwatch if it becomes excessive.
         var sw = Stopwatch.StartNew();
         await Task.WhenAll(
