@@ -43,7 +43,7 @@ public class GagspeakConfig
     public bool ConnectionNotifications { get; set; } = true;
     public bool OnlineNotifications { get; set; } = true;
     public bool NotifyLimitToNickedPairs { get; set; } = false;
-    public Dictionary<string, uint> DismissedPlugins = [];
+    public Dictionary<string, ushort> DismissedPlugins = [];
 
     public NotificationLocation InfoNotification { get; set; } = NotificationLocation.Both;
     public NotificationLocation WarningNotification { get; set; } = NotificationLocation.Both;

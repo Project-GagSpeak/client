@@ -47,12 +47,15 @@ public class MainUI : WindowMediatorSubscriberBase
     private readonly GlobalChatTab _globalChatTab;
 
     private bool _showMissingRecommended = true;
-
+    
+    
     private bool _creatingRequest = false;
     public string _uidToSentTo = string.Empty;
     public string _requestMessage = string.Empty;
 
     private bool ThemePushed = false;
+    
+    private Dictionary<string, ushort> dismissedPlugins;
 
     public MainUI(ILogger<MainUI> logger, GagspeakMediator mediator, MainConfig config,
         AccountManager account, MainHub hub, MainMenuTabs tabMenu, IpcManager ipc,
@@ -100,6 +103,8 @@ public class MainUI : WindowMediatorSubscriberBase
         // Update the tab menu selection.
         _tabMenu.TabSelection = _config.Current.MainUiTab;
 
+        dismissedPlugins = _config.Current.DismissedPlugins;
+
         Mediator.Subscribe<SwitchToMainUiMessage>(this, (_) => IsOpen = true);
         Mediator.Subscribe<SwitchToIntroUiMessage>(this, (_) => IsOpen = false);
         // make sure opening the side panel also opens the main ui and selects whitelist tab
@@ -134,14 +139,15 @@ public class MainUI : WindowMediatorSubscriberBase
         }
     }
 
+    
     private int GetMissingRecommended()
     {
         var missing = 0;
         if (!_showMissingRecommended) return missing;
-        if (!IpcCallerSundouleia.APIAvailable) missing++;
+        if (!IpcCallerSundouleia.APIAvailable && dismissedPlugins.TryGetValue("Sundouleia", out var sundCount) && sundCount < 3) missing++;
         if (!IpcCallerPenumbra.APIAvailable) missing++;
         if (!IpcCallerGlamourer.APIAvailable) missing++;
-        if (!IpcCallerLoci.APIAvailable) missing++;
+        if (!IpcCallerLoci.APIAvailable && dismissedPlugins.TryGetValue("Loci", out var lociCount) && lociCount < 3) missing++;
         return missing;
     }
 
@@ -210,7 +216,7 @@ public class MainUI : WindowMediatorSubscriberBase
     private void ShowMissingPlugins(float width)
     {
         missingPlugins.Clear();
-        var dismissed = _config.Current.DismissedPlugins;
+        var dismissed = dismissedPlugins;
         var total = GetMissingRecommended();
         var warnH = ImUtf8.TextHeight + ((ImUtf8.TextHeight + ImUtf8.ItemSpacing.Y * 2) * total);
         using var _ = CkRaii.FramedChildPaddedW("missing-recommended", width, warnH, 0, ImGuiColors.DalamudYellow.ToUint(), CkStyle.ChildRounding());
@@ -280,7 +286,7 @@ public class MainUI : WindowMediatorSubscriberBase
                 {
                     if (!dismissed.ContainsKey(item)) dismissed.TryAdd(item, 0);
                     dismissed[item]++;
-                    _config.Current.DismissedPlugins = dismissed;
+                    dismissedPlugins = dismissed;
                     _config.Save();
                 }
             }
