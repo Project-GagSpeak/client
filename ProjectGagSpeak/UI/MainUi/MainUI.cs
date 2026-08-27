@@ -47,12 +47,15 @@ public class MainUI : WindowMediatorSubscriberBase
     private readonly GlobalChatTab _globalChatTab;
 
     private bool _showMissingRecommended = true;
-
+    
+    
     private bool _creatingRequest = false;
     public string _uidToSentTo = string.Empty;
     public string _requestMessage = string.Empty;
 
     private bool ThemePushed = false;
+    
+    private Dictionary<string, ushort> dismissedPlugins;
 
     public MainUI(ILogger<MainUI> logger, GagspeakMediator mediator, MainConfig config,
         AccountManager account, MainHub hub, MainMenuTabs tabMenu, IpcManager ipc,
@@ -100,6 +103,8 @@ public class MainUI : WindowMediatorSubscriberBase
         // Update the tab menu selection.
         _tabMenu.TabSelection = _config.Current.MainUiTab;
 
+        dismissedPlugins = _config.Current.DismissedPlugins;
+
         Mediator.Subscribe<SwitchToMainUiMessage>(this, (_) => IsOpen = true);
         Mediator.Subscribe<SwitchToIntroUiMessage>(this, (_) => IsOpen = false);
         // make sure opening the side panel also opens the main ui and selects whitelist tab
@@ -134,14 +139,15 @@ public class MainUI : WindowMediatorSubscriberBase
         }
     }
 
+    
     private int GetMissingRecommended()
     {
         var missing = 0;
         if (!_showMissingRecommended) return missing;
-        if (!IpcCallerSundouleia.APIAvailable) missing++;
+        if (!IpcCallerSundouleia.APIAvailable && dismissedPlugins.TryGetValue("Sundouleia", out var sundCount) && sundCount < 3) missing++;
         if (!IpcCallerPenumbra.APIAvailable) missing++;
         if (!IpcCallerGlamourer.APIAvailable) missing++;
-        if (!IpcCallerLoci.APIAvailable) missing++;
+        if (!IpcCallerLoci.APIAvailable && dismissedPlugins.TryGetValue("Loci", out var lociCount) && lociCount < 3) missing++;
         return missing;
     }
 
@@ -205,9 +211,12 @@ public class MainUI : WindowMediatorSubscriberBase
                 break;
         }
     }
-
+    
+    private List<string> missingPlugins = [];
     private void ShowMissingPlugins(float width)
     {
+        missingPlugins.Clear();
+        var dismissed = dismissedPlugins;
         var total = GetMissingRecommended();
         var warnH = ImUtf8.TextHeight + ((ImUtf8.TextHeight + ImUtf8.ItemSpacing.Y * 2) * total);
         using var _ = CkRaii.FramedChildPaddedW("missing-recommended", width, warnH, 0, ImGuiColors.DalamudYellow.ToUint(), CkStyle.ChildRounding());
@@ -220,7 +229,7 @@ public class MainUI : WindowMediatorSubscriberBase
         CloseButton(drawPos, closeSize);
         CkGui.AttachTooltip("Dismiss this message for this instance of GagSpeak.");
 
-        if (!IpcCallerSundouleia.APIAvailable)
+        if (!IpcCallerSundouleia.APIAvailable && dismissed.TryGetValue("Sundouleia", out var sundCount) && sundCount < 3)
         {
             ImGui.Spacing();
             ImGui.Bullet();
@@ -229,6 +238,7 @@ public class MainUI : WindowMediatorSubscriberBase
             if (ImGui.SmallButton("Learn More##sund-warn"))
                 Mediator.Publish(new OpenSettingsPluginInfoMessage(OptionalPlugin.Sundouleia));
             CkGui.AttachTooltip("Opens a helper box in the Settings UI for more info.");
+            missingPlugins.Add("Sundouleia");
         }
         if (!IpcCallerPenumbra.APIAvailable)
         {
@@ -250,7 +260,7 @@ public class MainUI : WindowMediatorSubscriberBase
                 Mediator.Publish(new OpenSettingsPluginInfoMessage(OptionalPlugin.Glamourer));
             CkGui.AttachTooltip("Opens a helper box in the Settings UI for more info.");
         }
-        if (!IpcCallerLoci.APIAvailable)
+        if (!IpcCallerLoci.APIAvailable && dismissed.TryGetValue("Loci", out var lociCount) && lociCount < 3)
         {
             ImGui.Spacing();
             ImGui.Bullet();
@@ -259,6 +269,7 @@ public class MainUI : WindowMediatorSubscriberBase
             if (ImGui.SmallButton("Learn More##loci-warn"))
                 Mediator.Publish(new OpenSettingsPluginInfoMessage(OptionalPlugin.Loci));
             CkGui.AttachTooltip("Opens a helper box in the Settings UI for more info.");
+            missingPlugins.Add("Loci");
         }
 
         void CloseButton(Vector2 pos, Vector2 size)
@@ -269,7 +280,16 @@ public class MainUI : WindowMediatorSubscriberBase
             ImGui.GetWindowDrawList().AddLine(new Vector2(pos.X + size.X, pos.Y), new Vector2(pos.X, pos.Y + size.Y), closeButtonColor, 3 * ImGuiHelpers.GlobalScale);
 
             if (ImGui.IsMouseReleased(ImGuiMouseButton.Left) && hovered)
+            {
                 _showMissingRecommended = false;
+                foreach (var item in missingPlugins)
+                {
+                    if (!dismissed.ContainsKey(item)) dismissed.TryAdd(item, 0);
+                    dismissed[item]++;
+                    dismissedPlugins = dismissed;
+                    _config.Save();
+                }
+            }
         }
     }
 
