@@ -70,6 +70,10 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
     {
         GagType = other.GagType;
         ApplyChanges(other);
+        // deep copy the mutable references, 
+        Glamour = new GlamourSlot(other.Glamour);
+        Mod = new ModSettingsPreset(other.Mod);
+        LociData = other.LociData.DeepClone();
     }
 
     public GarblerRestriction Clone(bool _ = true) => new GarblerRestriction(this);
@@ -169,12 +173,13 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
         // deep copy glamour
         Glamour = new GlamourSlot(other.Glamour);
         Mod = new ModSettingsPreset(other.Mod);
+        LociData = other.LociData.DeepClone();
     }
 
     public virtual RestrictionItem Clone(bool keepId = false) => new RestrictionItem(this, keepId);
 
     /// <summary> Applies updated changes to an edited item, while still maintaining the original references. <summary>
-    public void ApplyChanges(RestrictionItem other)
+    public virtual void ApplyChanges(RestrictionItem other)
     {
         Label = other.Label;
         ThumbnailPath = other.ThumbnailPath;
@@ -259,7 +264,8 @@ public class HypnoticRestriction : RestrictionItem
     public HypnoticRestriction(HypnoticRestriction other, bool keepIdentifier)
         : base(other, keepIdentifier)
     {
-        ApplyChanges(other);
+        // deep copy the overlay
+        Properties = new HypnoticOverlay(other.Properties);
     }
 
     public bool HasValidPath() => !string.IsNullOrEmpty(Properties.OverlayPath)
@@ -269,10 +275,11 @@ public class HypnoticRestriction : RestrictionItem
         => new HypnoticRestriction(this, keepId);
 
     /// <summary> Applies updated changes to an edited item, while still maintaining the original references. <summary>
-    public void ApplyChanges(HypnoticRestriction other)
+    public override void ApplyChanges(RestrictionItem other)
     {
         base.ApplyChanges(other);
-        Properties = other.Properties;
+        if (other is HypnoticRestriction hypnotic)
+            Properties = hypnotic.Properties;
     }
 
     public override JObject Serialize()
@@ -322,7 +329,8 @@ public class BlindfoldRestriction : RestrictionItem
     public BlindfoldRestriction(BlindfoldRestriction other, bool keepIdentifier)
         : base(other, keepIdentifier)
     {
-        Properties = other.Properties;
+        // deep copy the overlay
+        Properties = new BlindfoldOverlay(other.Properties);
     }
 
     public bool HasValidPath() => !string.IsNullOrEmpty(Properties.OverlayPath)
@@ -332,10 +340,11 @@ public class BlindfoldRestriction : RestrictionItem
         => new BlindfoldRestriction(this, keepId);
 
     /// <summary> Applies updated changes to an edited item, while still maintaining the original references. <summary>
-    public void ApplyChanges(BlindfoldRestriction other)
+    public override void ApplyChanges(RestrictionItem other)
     {
         base.ApplyChanges(other);
-        Properties = other.Properties;
+        if (other is BlindfoldRestriction blindfold)
+            Properties = blindfold.Properties;
     }
 
 
