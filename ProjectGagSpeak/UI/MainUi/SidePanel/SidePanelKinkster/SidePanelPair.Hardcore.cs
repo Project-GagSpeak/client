@@ -5,11 +5,13 @@ using CkCommons.Raii;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.GameInternals.Agents;
 using GagSpeak.CustomCombos;
 using GagSpeak.Interop;
 using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
+using GagSpeak.Utils;
 using GagSpeak.Watchers;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
@@ -128,7 +130,13 @@ public partial class SidePanelPair
             $"--SEP----COL--CTRL+ALT+BACKSPACE--COL-- is the emergency safeword!";
         DrawColoredExpander(InteractionType.ChatInputBlocking, chatIptBlockInfo.Item1, chatIptBlockInfo.Item2, chatIptBlockActive, chatIptBlockDis, chatIptBlockTT);
         GenericHcChild(InteractionType.ChatInputBlocking, ref cache.ChatInputBlockTimer, "Block Input", chatIptBlockActive, chatIptBlockDis);
-
+        
+        // ------ Garbler Channel State Editing ------
+        var garbEditInfo = (FAI.Cog, $"Edit {dispName}'s Garbler Channels");
+        var garblerEditDisabled = !k.PairPerms.AllowGarbleChannelEditing;
+        DrawColoredExpander(InteractionType.GarblerChannelChange, garbEditInfo.Item1, garbEditInfo.Item2, false, garblerEditDisabled, garbEditInfo.Item2);
+        UniqueHcChild(InteractionType.GarblerChannelChange, false, CkStyle.TwoRowHeight()*5, () => DrawGarblerChild(cache, k, dispName, width, garblerEditDisabled));
+        
 
         // >> Helpers Below
         void DrawColoredExpander(InteractionType type, FAI icon, string text, bool showCol, bool disabled, string tooltip)
@@ -353,6 +361,34 @@ public partial class SidePanelPair
             default:
                 CkGui.ColorTextCentered("UNKNOWN PLOT TYPE", ImGuiColors.DalamudRed);
                 break;
+        }
+    }
+    
+    private void DrawGarblerChild(KinksterInfoCache cache, Kinkster k, string dispName, float width, bool disable)
+    {
+        using (ImRaii.Child("GarblerChannelChangeChild", new Vector2(width, CkStyle.TwoRowHeight()*5)))
+        {
+            foreach (var (label, channels) in ChatLogAgent.SortedChannels)
+            {
+                ImGui.Text(label); // Show the group label
+
+                for (var i = 0; i < channels.Length; i++)
+                {
+                    var channel = channels[i];
+                    var enabled = k.PairGlobals.AllowedGarblerChannels.IsActiveChannel((int)channel);
+                    var checkboxLabel = channel.ToString();
+
+                    if (ImGui.Checkbox(checkboxLabel, ref enabled))
+                    {
+                        var newBitfield = k.PairGlobals.AllowedGarblerChannels.SetChannelState((int)channel, enabled);
+                        PermHelper.ChangeOtherGlobal(_hub, k.UserData, k.PairGlobals, "AllowedGarblerChannels", newBitfield);
+                    }
+
+                    // Only SameLine if not the third column
+                    if ((i + 1) % 4 != 0 && (i + 1) != channels.Length)
+                        ImGui.SameLine();
+                }
+            }
         }
     }
 }
