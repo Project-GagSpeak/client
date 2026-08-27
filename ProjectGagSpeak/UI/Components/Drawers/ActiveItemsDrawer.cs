@@ -163,6 +163,7 @@ public class ActiveItemsDrawer
         {
             Identifier = _restraintItem.Current.Identifier,
             Enabler = MainHub.UID,
+            ActiveLayers = RestraintLayer.None,
         };
         _selfBondage.DoSelfRestraint(newData, updateType);
     }
