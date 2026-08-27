@@ -36,6 +36,10 @@ public sealed class ModPresetDrawer
     {
         using var _ = ImRaii.Group();
 
+        // Keep the shared combos aligned with this item before drawing, so a freshly-opened editor
+        // pulls the correct preset list instead of a stale/empty one (combos only self-sync while open).
+        _manager.SyncCombosToItem(modItem.Mod);
+
         var change = _manager.ModCombo.Draw($"##MP-ModCombo-{id}", modItem.Mod.Container.DirectoryPath, width, 1.4f);
         if (change && !modItem.Mod.Container.DirectoryPath.Equals(_manager.ModCombo.Current?.DirPath))
         {
@@ -76,6 +80,10 @@ public sealed class ModPresetDrawer
         using var c = CkRaii.HeaderChild("Associated Mod", winSize, HeaderFlags.AddPaddingToHeight);
         using (ImRaii.Group())
         {
+            // Keep the shared combos aligned with this item before drawing, so a freshly-opened editor
+            // pulls the correct preset list instead of a stale/empty one (combos only self-sync while open).
+            _manager.SyncCombosToItem(item.Mod);
+
             // The Mod Selection.
             var change = _manager.ModCombo.Draw("AMP-ModCombo-" + id, item.Mod.Container.DirectoryPath, c.InnerRegion.X, 1.4f);
             if (change && !item.Mod.Container.DirectoryPath.Equals(_manager.ModCombo.Current?.DirPath))
