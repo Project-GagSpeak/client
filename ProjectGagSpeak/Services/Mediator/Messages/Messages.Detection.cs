@@ -20,7 +20,8 @@ public record EmoteDetected(ushort ID, nint CallerAddr, nint TargetAddr) : SameT
 public record HpMonitorTriggered(nint PlayerAddr, HealthPercentTrigger HpTrigger) : SameThreadMessage;
 
 // Could make a more generic method for Minigames, but for now just per-activity is fine.
-public record DeathrollMessage(XivChatType Type, string SenderNameWorld, SeString Msg) : MessageBase;
+public record DeathrollMessage(string SenderNameWorld, int Roll, int RollCap) : MessageBase;
+public record DeathrollDiceMessage(string SenderNameWorld, SeString Msg) : MessageBase;
 public record DeathrollResult(string WinnerNameWorld, string LoserNameWorld) : MessageBase;
 
 /// <summary>

@@ -30,6 +30,7 @@ public class ChatService : DisposableMediatorSubscriberBase
     {
         _delayTimer.Start();
         Svc.Chat.ChatMessage += OnChatboxMessage;
+        Svc.Chat.LogMessage += OnLogMessage;
         Mediator.Subscribe<FrameworkUpdateMessage>(this, (_) => FrameworkUpdate());
     }
 
@@ -38,6 +39,7 @@ public class ChatService : DisposableMediatorSubscriberBase
         base.Dispose(disposing);
         Logger.LogInformation("Disposing ChatService and unsubscribing from events.");
         Svc.Chat.ChatMessage -= OnChatboxMessage;
+        Svc.Chat.LogMessage -= OnLogMessage;
         _delayTimer?.Stop();
     }
 
@@ -62,11 +64,12 @@ public class ChatService : DisposableMediatorSubscriberBase
         _delayTimer.Restart();
     }
 
+
     /// <summary>
     ///     Handles incoming chat messages that have finished being processed by the server.
+    ///     Parses normal chat channels into a <see cref="GameChatMessage"/> for downstream consumers.
     /// </summary>
     private void OnChatboxMessage(IHandleableChatMessage message)
-    //private void OnChatboxMessage(XivChatType type, int ts, ref SeString sender, ref SeString msg, ref bool showInChatbox)
     {
         if (!MainHub.IsConnected || !PlayerData.Available)
             return; // Process as normal.
@@ -79,27 +82,57 @@ public class ChatService : DisposableMediatorSubscriberBase
         var senderName = senderPayload?.PlayerName ?? PlayerData.Name;
         var senderWorld = senderPayload?.World.Value.Name.ToString() ?? PlayerData.HomeWorldName;
 
-        // Check for things we dont need the player payload for.
-        CheckForPvpActivity(type, msg);
-        CheckForDeathroll(type, msg);
-
         // If the chat is not a normal chat channel do not process.
-        if(ChatLogAgent.FromXivChatType(type) is not { } channel)
+        if (ChatLogAgent.FromXivChatType(type) is not { } channel)
             return;
+        
+        // Check for things that only ever arrive as chat lines.
+        CheckForDiceDeathroll(type, $"{senderName}@{senderWorld}", msg);
 
         Mediator.Publish(new GameChatMessage(channel, $"{senderName}@{senderWorld}", msg));
     }
 
     /// <summary>
+    /// Handles the `LogMessage` event, parsing incoming chat messages and invoking specific checks
+    /// for relevant in-game activities such as deathroll or PvP activity.
+    /// </summary>
+    /// <param name="message">
+    /// The chat message provided by the game's logging system, containing details to be processed.
+    /// </param>
+    private void OnLogMessage(ILogMessage message)
+    {
+        if (!MainHub.IsConnected || !PlayerData.Available)
+            return; // Process as normal.
+        
+        // Check for things that are pushed to LogMessages.
+        CheckForDeathroll(message);
+        CheckForPvpActivity(message);
+    }
+
+    /// <summary>
+    /// Generates the full entity name including the world name if available.
+    /// </summary>
+    /// <param name="entity">The log message entity containing the name and home world information.</param>
+    /// <returns>
+    /// A string representing the entity name combined with the world name, or an empty string if the entity is null.
+    /// </returns>
+    private static string CalculateEntityNameWithWorld(ILogMessageEntity? entity)
+    {
+        return entity is null ? string.Empty : $"{entity.Name}@{entity.HomeWorld.ValueNullable?.Name.ToString()}";
+    }
+    
+    /// <summary>
     ///     Detects any desired activity from PVP interactions.
     /// </summary>
-    private void CheckForPvpActivity(XivChatType type, SeString msg)
+    private void CheckForPvpActivity(ILogMessage message)
     {
-        if (!PlayerData.InPvP || type is not (XivChatType)2874)
+        // Pvp defeat log messages are of type SystemError.
+        if (!PlayerData.InPvP || message.LogMessageId is not 557)
             return;
-
+        
         // If we got a kill, fore achievement.
-        if (!PlayerData.IsDead)
+        var sourceName = CalculateEntityNameWithWorld(message.SourceEntity);
+        if (!PlayerData.IsDead && sourceName == PlayerData.NameWithWorld)
         {
             Logger.LogInformation("We just killed someone in PvP!", LoggerType.Achievements);
             GagspeakEventManager.AchievementEvent(UnlocksEvent.PvpPlayerSlain);
@@ -107,17 +140,44 @@ public class ChatService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Handle Deathroll Checks (/random or /dice)
+    ///     Handle Deathroll Checks (/random)
+    ///     MessageId 856 -> /random
+    ///     MessageId 3887 -> /random 1000
     /// </summary>
-    private void CheckForDeathroll(XivChatType type, SeString msg)
+    private void CheckForDeathroll(ILogMessage message)
     {
-        if (type is (XivChatType)2122 || type is (XivChatType)8266 || type is (XivChatType)4170)
-        {
-            if (msg.Payloads.OfType<PlayerPayload>().FirstOrDefault() is { } otherPlayer)
-                Mediator.Publish(new DeathrollMessage(type, $"{otherPlayer.PlayerName}@{otherPlayer.World.Value.Name.ToString()}", msg));
-            else
-                Mediator.Publish(new DeathrollMessage(type, PlayerData.NameWithWorld, msg));
-        }
+        // Only care about /random messages
+        if (message.LogMessageId is not (856 or 3887))
+            return;
+        
+        Logger.LogDebug("Handling Deathroll Message.", LoggerType.Triggers);
+        var sourceName = CalculateEntityNameWithWorld(message.SourceEntity);
+        var rolled = message.Parameters[1].UIntValue;
+        Logger.LogDebug($"Received Deathroll Message from {sourceName}", LoggerType.Triggers);
+        
+        // Check for a number cap. If not present, default to 999.
+        var cap = message.ParameterCount > 2 ? message.Parameters[2].UIntValue : 0;
+        
+        Logger.LogDebug($"Rolled {rolled} with cap {cap}", LoggerType.Triggers);
+        // Clamp and validate values.
+        var rollResult = rolled > 999 ? -1 : (int)rolled;
+        var capResult = cap is 0 or > 999 ? -1 : (int)cap;
+        
+        Logger.LogDebug($"Validated Deathroll: Roll {rollResult}, Cap {capResult}", LoggerType.Triggers);
+        Mediator.Publish(new DeathrollMessage(sourceName, rollResult, capResult));
+    }
+
+    /// <summary>
+    ///     Handle Deathroll Checks (/dice) <para />
+    /// </summary>
+    private void CheckForDiceDeathroll(XivChatType type, string senderNameWorld, SeString msg)
+    {
+        // Dice can't actually be used in say channel.
+        if (type is XivChatType.Say || !msg.Payloads.Exists(p => p.Type == PayloadType.Icon))
+            return;
+        
+        Logger.LogDebug($"Received Dice Deathroll Message from {senderNameWorld}", LoggerType.Triggers);
+        Mediator.Publish(new DeathrollDiceMessage(senderNameWorld, msg));
     }
 
     /// <summary>
@@ -178,7 +238,7 @@ public class ChatService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     The filters to apply when sanatizing a chat message we are sending off.
+    ///     The filters to apply when sanitizing a chat message we are sending off.
     /// </summary>
     private const AllowedEntities SanatizeFilters =
         AllowedEntities.UppercaseLetters |
