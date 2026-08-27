@@ -143,6 +143,7 @@ public sealed class RestraintManager : IHybridSavable
             // _managerCache.UpdateCache(AppliedRestraint);
             _mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Modified, sourceItem));
             _saver.Save(this);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintUpdated, sourceItem);
         }
     }
 
