@@ -58,6 +58,7 @@ public class GagspeakConfig
 
     public bool CursedLootUI { get; set; } = false;                   // CursedLootUI
     public bool CursedItemsApplyTraits { get; set; } = false;         // If Mimics can apply restriction traits to you.
+    public bool CursedItemsApplyOverlays { get; set; } = false;         // If Mimics can apply restriction overlays to you.
     public bool RemoveGagOnTimerExpire { get; set; } = false; // Auto-Remove Items when timer falloff occurs.
     public bool RemoveRestrictionOnTimerExpire { get; set; } = false; // Auto-Remove Restriction when timer falloff occurs.
     public bool RemoveRestraintOnTimerExpire { get; set; } = false; // Auto-Remove restraint when timer falloff occurs.

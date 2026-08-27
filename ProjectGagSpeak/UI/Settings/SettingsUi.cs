@@ -304,6 +304,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         var restraintSetVisuals = globals.RestraintSetVisuals;
         var cursedDungeonLoot = _mainConfig.Current.CursedLootUI;
         var mimicsApplyTraits = _mainConfig.Current.CursedItemsApplyTraits;
+        var mimicsApplyOverlays = _mainConfig.Current.CursedItemsApplyOverlays;
         var removeRestrictionOnLockExpiration = _mainConfig.Current.RemoveRestrictionOnTimerExpire;
         var removeRestraintOnLockExpiration = _mainConfig.Current.RemoveRestraintOnTimerExpire;
         var blindfoldMaxOpacity = _mainConfig.Current.OverlayMaxOpacity;
@@ -368,6 +369,13 @@ public class SettingsUi : WindowMediatorSubscriberBase
             }
 
             CkGui.HelpText(GSLoc.Settings.MainOptions.MimicsApplyTraitsTT);
+            
+            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.MimicsApplyOverlays, ref mimicsApplyOverlays))
+            {
+                _mainConfig.Current.CursedItemsApplyOverlays = mimicsApplyOverlays;
+                _mainConfig.Save();
+            }
+            CkGui.HelpText(GSLoc.Settings.MainOptions.MimicsApplyOverlaysTT);
 
             blindfoldMaxOpacity *= 100; // show a prettier value for the end user
             ImGui.SetNextItemWidth(200f);
