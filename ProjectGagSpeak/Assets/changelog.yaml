@@ -1,0 +1,21 @@
+
+icon: "InfoCircle"
+tagline: "Sundouleia 0.6 - Complete Overhaul"
+subline: "Radars, Sanctions, Chats, UI rework, and more!"
+changelog:
+
+  - version: v0.6.0
+    date: "July 15th, 2026"
+    title: "Complete Plugin Overhaul, Radar, Sanctions, Chats, UI, and More!"
+    headerMessage: ""
+
+    segments:
+      - icon: "Star"
+        title: New Features
+        accent: "Gold"
+        bullets:
+          - "Dummy1"
+          - "Dummy2"
+          - "Dummy3"
+          - "Dummy4"
+          - "Dummy5"

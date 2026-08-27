@@ -23,7 +23,6 @@ public enum StyleTab
     NativeStyle,
 }
 
-// No, im not yoinking this from penumbra/glamourer and making modifications to it at all. Totally not.
 public class StyleEditorUI : WindowMediatorSubscriberBase
 {
     private const string COLOR_PICKER_TIP = "--COL--[Left-Click Square]--COL-- Opens color picker." +
