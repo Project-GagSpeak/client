@@ -208,7 +208,7 @@ public partial class SidePanelPair
         if (!_shockies.IsConfigured)
         {
             CkGui.ColorTextCentered("PiShock not configured", ImGuiColors.DalamudRed);
-            CkGui.ColorTextCentered("Set Username & API Key in Settings.", ImGuiColors.DalamudRed);
+            CkGui.ColorTextCentered("Set API Key in Settings.", ImGuiColors.DalamudRed);
         }
         else
         {
