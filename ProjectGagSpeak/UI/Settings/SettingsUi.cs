@@ -609,10 +609,14 @@ public class SettingsUi : WindowMediatorSubscriberBase
                     var enabled = globals.AllowedGarblerChannels.IsActiveChannel((int)channel);
                     var checkboxLabel = channel.ToString();
 
-                    if (ImGui.Checkbox(checkboxLabel, ref enabled))
+                    using (ImRaii.Disabled(globals.ChatGarblerLocked && enabled))
                     {
-                        var newBitfield = globals.AllowedGarblerChannels.SetChannelState((int)channel, enabled);
-                        AssignGlobalPermChangeTask(globals, nameof(GlobalPerms.AllowedGarblerChannels), newBitfield);
+                        if (ImGui.Checkbox(checkboxLabel, ref enabled))
+                        {
+                            var newBitfield = globals.AllowedGarblerChannels.SetChannelState((int)channel, enabled);
+                            AssignGlobalPermChangeTask(globals, nameof(GlobalPerms.AllowedGarblerChannels),
+                                                       newBitfield);
+                        }
                     }
 
                     // Only SameLine if not the third column
