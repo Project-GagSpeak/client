@@ -67,7 +67,7 @@ public class LootPoolTab : IFancyTab
                 return;
 
             using var padding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(ImUtf8.ItemInnerSpacing.X * .5f, 0));
-            foreach (var inactiveLoot in itemsOutOfPool)
+            foreach (var inactiveLoot in itemsOutOfPool.OrderBy(i => i.Label, StringComparer.OrdinalIgnoreCase))
                 DrawLootItem(inactiveLoot, _.InnerRegion.X);
         }
     }
@@ -84,7 +84,7 @@ public class LootPoolTab : IFancyTab
                 return;
 
             using var padding = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, new Vector2(ImUtf8.ItemInnerSpacing.X * .5f, 0));
-            foreach (var inactiveLoot in itemsInPool)
+            foreach (var inactiveLoot in itemsInPool.OrderBy(i => i.Label, StringComparer.OrdinalIgnoreCase))
                 DrawLootItem(inactiveLoot, _.InnerRegion.X);
         }
     }
