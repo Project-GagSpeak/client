@@ -65,16 +65,33 @@ public partial class HcTaskManager : IDisposable
         if (taskName.Equals(_taskOperations[0].Name, StringComparison.OrdinalIgnoreCase))
             AbortCurrentTask();
     }
+    public bool HasTask(string taskName)
+        => _taskOperations.Any(t => taskName.Equals(t.Name, StringComparison.OrdinalIgnoreCase));
+
     public void RemoveIfPresent(string taskName)
     {
         if (_taskOperations.Count is 0)
             return;
 
-        // if the task with the same name exists in the queue, remove it.
-        if (_taskOperations[0].Name.Equals(taskName, StringComparison.OrdinalIgnoreCase))
-            AbortCurrentTask();
-        else
-            _taskOperations.RemoveAll(t => taskName.Equals(t.Name, StringComparison.OrdinalIgnoreCase));
+        var removedActive = false;
+        // Walk backwards so a removal never shifts an index we have yet to visit.
+        for (var i = _taskOperations.Count - 1; i >= 0; i--)
+        {
+            var task = _taskOperations[i];
+            if (!taskName.Equals(task.Name, StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            _logger.LogDebug($"Aborting Task: {task.Name}", LoggerType.HardcoreTasks);
+            if (!task.Finished)
+                task.End();
+
+            _taskOperations.RemoveAt(i);
+            removedActive |= i is 0;
+        }
+
+        // Only surrender the control flags if the task holding them is the one that went away.
+        if (removedActive)
+            _cache.SetActiveTaskControl(HcTaskControl.None);
     }
 
     public void AbortTasks()
