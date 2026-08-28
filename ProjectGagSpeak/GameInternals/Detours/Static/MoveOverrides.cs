@@ -69,8 +69,8 @@ public unsafe class MoveOverrides : IDisposable
     public void Dispose()
     {
         Svc.GameConfig.UiControlChanged -= OnConfigChanged;
-        RMIWalkHook?.Dispose();
-        CameraOverrideHook?.Dispose();
+        RMIWalkHook?.SafeDispose();
+        CameraOverrideHook?.SafeDispose();
     }
 
     private void OnConfigChanged(object? sender, ConfigChangeEvent evt)
