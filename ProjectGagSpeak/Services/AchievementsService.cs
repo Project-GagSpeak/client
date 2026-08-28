@@ -14,7 +14,7 @@ using Microsoft.Extensions.Hosting;
 namespace GagSpeak.Services;
 
 /// <summary>
-///     A service that manages achievements for the GagSpeak client.
+///   A service that manages achievements for the GagSpeak client.
 /// </summary>
 public class AchievementsService : DisposableMediatorSubscriberBase, IHostedService
 {
@@ -30,7 +30,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
     private readonly AlarmManager _alarms;
     private readonly TriggerManager _triggers;
     private readonly AchievementEventHandler _handler;
-    private readonly NotificationService _notifier;
+    private readonly AlertService _notifier;
     private readonly RemoteService _remoteService;
     
     private Task? _updateLoopTask = null;
@@ -51,7 +51,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         AlarmManager alarms,
         TriggerManager triggers,
         AchievementEventHandler handler, 
-        NotificationService notifier,
+        AlertService notifier,
         RemoteService remoteService)
         : base(logger, mediator)
     {
@@ -300,7 +300,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         _saveData.AddDuration(AchievementModuleKind.Wardrobe, Achievements.YourRubberSlut, TimeSpan.FromDays(14), DurationTimeUnit.Days, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Days locked up", "Spent");
         _saveData.AddDuration(AchievementModuleKind.Wardrobe, Achievements.ATrueBondageSlave, TimeSpan.FromDays(30), DurationTimeUnit.Days, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Days locked up", "Spent");
 
-        _saveData.AddConditional(AchievementModuleKind.Wardrobe, Achievements.KinkyExplorer, () => _config.Current.CursedLootUI, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Cursed Runs Started");
+        _saveData.AddConditional(AchievementModuleKind.Wardrobe, Achievements.KinkyExplorer, () => _config.Data.CursedLootUI, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Cursed Runs Started");
         _saveData.AddProgress(AchievementModuleKind.Wardrobe, Achievements.TemptingFatesTreasure, 1, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Cursed Loot Discovered");
         _saveData.AddConditionalProgress(AchievementModuleKind.Wardrobe, Achievements.BadEndSeeker, 25,
             () => _cursedLoot.LockChance <= 25, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Cursed Loot Discovered", reqBeginAndFinish: false);

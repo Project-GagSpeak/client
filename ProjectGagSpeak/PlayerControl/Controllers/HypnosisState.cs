@@ -1,7 +1,7 @@
 namespace GagSpeak.Services.Controller;
 
 /// <summary>
-///     Variables that dictate the current state of the Hypnosis effect.
+///   Variables that dictate the current state of the Hypnosis effect.
 /// </summary>
 public class HypnosisState
 {

@@ -17,25 +17,25 @@ public sealed class RestraintManager : IHybridSavable
 {
     private readonly ILogger<RestraintManager> _logger;
     private readonly GagspeakMediator _mediator;
+    private readonly ConnectionsConfig _connections;
+    private readonly FavoritesConfig _favorites;
     private readonly RestrictionManager _restrictions;
     private readonly ModPresetManager _modPresets;
-    private readonly FavoritesConfig _favorites;
-    private readonly ConfigFileProvider _fileNames;
     private readonly HybridSaveService _saver;
 
     private StorageItemEditor<RestraintSet> _itemEditor = new();
     private CharaActiveRestraint? _serverRestraintData = null;
 
     public RestraintManager(ILogger<RestraintManager> logger, GagspeakMediator mediator,
-        RestrictionManager restrictions, ModPresetManager mods, FavoritesConfig favorites,
-        ConfigFileProvider fileNames, HybridSaveService saver)
+        ConnectionsConfig connections, FavoritesConfig favorites, RestrictionManager restrictions, 
+        ModPresetManager mods, HybridSaveService saver)
     {
         _logger = logger;
         _mediator = mediator;
+        _connections = connections;
+        _favorites = favorites;
         _restrictions = restrictions;
         _modPresets = mods;
-        _favorites = favorites;
-        _fileNames = fileNames;
         _saver = saver;
     }
 
@@ -65,7 +65,7 @@ public sealed class RestraintManager : IHybridSavable
         restraintName = RegexEx.EnsureUniqueName(restraintName, Storage, rs => rs.Label);
         var restraint = new RestraintSet { Label = restraintName };
         Storage.Add(restraint);
-        _saver.Save(this);
+        Save();
         _logger.LogDebug($"Created new restraint {restraint.Identifier}.");
         _mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Created, restraint, null));
         return restraint;
@@ -79,7 +79,7 @@ public sealed class RestraintManager : IHybridSavable
         newName = RegexEx.EnsureUniqueName(newName, Storage, rs => rs.Label);
         var clonedItem = new RestraintSet(clone, false) { Label = newName };
         Storage.Add(clonedItem);
-        _saver.Save(this);
+        Save();
         _logger.LogDebug($"Cloned restraint {clonedItem.Identifier}.");
         _mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Created, clonedItem, folderPath));
         return clonedItem;
@@ -93,7 +93,7 @@ public sealed class RestraintManager : IHybridSavable
         {
             _logger.LogDebug($"Deleted restraint {restraint.Identifier}.");
             _mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Deleted, restraint, null));
-            _saver.Save(this);
+            Save();
         }
     }
 
@@ -108,7 +108,7 @@ public sealed class RestraintManager : IHybridSavable
         // ensure the new name is unique.
         newName = RegexEx.EnsureUniqueName(newName, Storage, rs => rs.Label);
         restraint.Label = newName;
-        _saver.Save(this);
+        Save();
         _logger.LogDebug($"Renamed restraint {restraint.Identifier}.");
         _mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Renamed, restraint, oldName));
     }
@@ -120,7 +120,7 @@ public sealed class RestraintManager : IHybridSavable
         {
             _logger.LogDebug($"Thumbnail updated for {restraint.Label} to {restraint.ThumbnailPath}");
             restraint.ThumbnailPath = newPath;
-            _saver.Save(this);
+            Save();
             _mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Modified, restraint, null));
         }
     }
@@ -142,7 +142,7 @@ public sealed class RestraintManager : IHybridSavable
             _logger.LogDebug($"Saved changes to restraint {sourceItem.Identifier}.");
             // _managerCache.UpdateCache(AppliedRestraint);
             _mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Modified, sourceItem));
-            _saver.Save(this);
+            Save();
             GagspeakEventManager.AchievementEvent(UnlocksEvent.RestraintUpdated, sourceItem);
         }
     }
@@ -153,12 +153,12 @@ public sealed class RestraintManager : IHybridSavable
         {
             item.IsEnabled = !item.IsEnabled;
             _mediator.Publish(new ConfigRestraintSetChanged(StorageChangeType.Modified, item));
-            _saver.Save(this);
+            Save();
         }
     }
 
-    public void AddFavorite(RestraintSet rs) => _favorites.TryAddRestriction(FavoriteIdContainer.Restraint, rs.Identifier);
-    public void RemoveFavorite(RestraintSet rs) => _favorites.RemoveRestriction(FavoriteIdContainer.Restraint, rs.Identifier);
+    public void AddFavorite(RestraintSet rs) => _favorites.Favorite(FavoriteType.Restraint, rs.Identifier);
+    public void RemoveFavorite(RestraintSet rs) => _favorites.Unfavorite(FavoriteType.Restraint, rs.Identifier);
 
     public bool CanApply() => ServerData is { } d && d.CanApply();
     public bool CanLock() => ServerData is { } d && d.CanLock();
@@ -311,15 +311,13 @@ public sealed class RestraintManager : IHybridSavable
 
     #region HybridSaver
     public int ConfigVersion => 1;
-    public HybridSaveType SaveType => HybridSaveType.Json;
-    public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
-        => (isAccountUnique = true, files.RestraintSets).Item2;
-
-    public void WriteToStream(StreamWriter writer)
-        => throw new NotImplementedException();
-
+    public int MaxBackups => 2;
     private bool AllowSaving = true;
+    public HybridSaveType SaveType => HybridSaveType.Json;
+    public DateTime LastWriteTimeUTC => DateTime.MinValue;
+    public string ToFilePath(GsFiles files) => GetSaveFilePath();
+    public void WriteToStream(StreamWriter _) => throw new NotImplementedException();
+    private string GetSaveFilePath() => Path.Combine(GsFiles.ConfigDirectory, _connections.CurrentProfileUID, GsFiles.RestraintSetsFile);
 
     public string JsonSerialize()
     {
@@ -346,60 +344,58 @@ public sealed class RestraintManager : IHybridSavable
         }.ToString(Formatting.Indented);
     }
 
-    // our CUSTOM defined load and migration.
-    public void Load()
+    public void Save()
     {
-        var file = _fileNames.RestraintSets;
-        _logger.LogInformation($"Loading in Restraints Config for file: {file}");
-
-        Storage.Clear();
-        JObject jObject;
-        // Read the json from the file.
-        if (!File.Exists(file))
+        if (string.IsNullOrEmpty(_connections.CurrentProfileUID))
         {
-            _logger.LogWarning($"No Restraints Config file found at {file}");
-            // create a new file with default values.
-
-            var oldFormatFile = Path.Combine(_fileNames.CurrentPlayerDirectory, "wardrobe.json");
-            if (File.Exists(oldFormatFile))
-            {
-                var oldText = File.ReadAllText(oldFormatFile);
-                var oldObject = JObject.Parse(oldText);
-                jObject = ConfigMigrator.MigrateWardrobeConfig(oldObject, _fileNames, oldFormatFile);
-            }
-            else
-            {
-                _logger.LogWarning("No Config file found for: " + oldFormatFile);
-                _saver.Save(this);
-                return;
-                // create a new file with default values.
-            }
-        }
-        else
-        {
-            var jsonText = File.ReadAllText(file);
-            jObject = JObject.Parse(jsonText);
-        }
-        // Perform Migrations if any, and then load the data.
-
-        var version = jObject["Version"]?.Value<int>() ?? 0;
-
-        switch (version)
-        {
-            case 0:
-                MigrateRestraintSetsV0toV1(jObject);
-                goto case 1;
-
-            case 1:
-                LoadV0(jObject["RestraintSets"]);
-                break;
-
-            default:
-                _logger.LogError("Invalid Version!");
-                return;
+            _logger.LogInformation("[Save Aborted] No profile selected.");
+            return;
         }
         _saver.Save(this);
-        _mediator.Publish(new ReloadFileSystem(GSModule.Restraint));
+    }
+
+    public void Load()
+    {
+        var file = GetSaveFilePath();
+        _logger.LogInformation($"Loading RestraintSetsData Config: ({file})");
+
+        Storage.Clear();
+        try
+        {
+            if (!File.Exists(file))
+            {
+                _logger.LogDebug($"[File Not Found] {file}");
+                var directory = Path.GetDirectoryName(file);
+                if (directory is not null)
+                    Directory.CreateDirectory(directory);
+                Save();
+                return;
+            }
+
+            var jsonText = File.ReadAllText(file);
+            var jObject = JObject.Parse(jsonText);
+            // Perform Migrations if any, and then load the data.
+
+            var version = jObject["Version"]?.Value<int>() ?? 0;
+
+            switch (version)
+            {
+                case 0:
+                    MigrateRestraintSetsV0toV1(jObject);
+                    goto case 1;
+
+                case 1:
+                    LoadV0(jObject["RestraintSets"]);
+                    break;
+
+                default:
+                    _logger.LogError("Invalid Version!");
+                    return;
+            }
+            Save();
+            _mediator.Publish(new ReloadFileSystem(GSModule.Restraint));
+        }
+        catch (Bagagwa ex) { _logger.LogError("Failed to load config." + ex); }
     }
 
     private void LoadV0(JToken? data)

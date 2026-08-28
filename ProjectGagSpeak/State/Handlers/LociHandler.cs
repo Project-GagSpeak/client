@@ -2,7 +2,6 @@ using GagSpeak.Interop;
 using GagSpeak.Interop.Helpers;
 using GagSpeak.State.Caches;
 using GagspeakAPI.Data;
-using LociApi.Enums;
 using Microsoft.IdentityModel.Tokens;
 
 namespace GagSpeak.State.Handlers;
@@ -75,11 +74,11 @@ public class LociHandler
     }
 
     /// <summary>
-    ///     Applies all cached restricted loci statuses to the client.
+    ///   Applies all cached restricted loci statuses to the client.
     /// </summary>
     /// <remarks>
-    ///     Likely makes things fucky with timed statuses but yeah, idk.
-    ///     Could add more overhead but not in the mood, just want efficiency rn.
+    ///   Likely makes things fucky with timed statuses but yeah, idk.
+    ///   Could add more overhead but not in the mood, just want efficiency rn.
     /// </remarks>
     private async Task ApplyLociCache()
     {
@@ -93,7 +92,7 @@ public class LociHandler
     }
 
     /// <summary>
-    ///     Removes lociItems no longer meant to be present, then reapplies restricted ones
+    ///   Removes lociItems no longer meant to be present, then reapplies restricted ones
     /// </summary>
     private async Task RestoreAndReapplyCache(IEnumerable<Guid> itemsToRemove)
     {

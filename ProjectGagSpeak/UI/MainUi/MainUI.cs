@@ -52,8 +52,6 @@ public class MainUI : WindowMediatorSubscriberBase
     public string _uidToSentTo = string.Empty;
     public string _requestMessage = string.Empty;
 
-    private bool ThemePushed = false;
-
     public MainUI(ILogger<MainUI> logger, GagspeakMediator mediator, MainConfig config,
         AccountManager account, MainHub hub, MainMenuTabs tabMenu, IpcManager ipc,
         SidePanelService sidePanel, RequestsManager requestmanager, KinksterManager kinksters,
@@ -95,13 +93,13 @@ public class MainUI : WindowMediatorSubscriberBase
             .Build();
 
         // Default to open if the user desires for it to be open.
-        if (_config.Current.OpenMainUiOnStartup)
+        if (_config.Data.OpenUiOnStartup)
             Toggle();
         // Update the tab menu selection.
-        _tabMenu.TabSelection = _config.Current.MainUiTab;
+        _tabMenu.TabSelection = _config.Data.MainUiTab;
 
-        Mediator.Subscribe<SwitchToMainUiMessage>(this, (_) => IsOpen = true);
-        Mediator.Subscribe<SwitchToIntroUiMessage>(this, (_) => IsOpen = false);
+        Mediator.Subscribe<IntoFinishedMessage>(this, _ => IsOpen = true);
+        Mediator.Subscribe<SwitchToIntroUiMessage>(this, _ => IsOpen = false);
         // make sure opening the side panel also opens the main ui and selects whitelist tab
         Mediator.Subscribe<OpenKinksterSidePanel>(this, _ =>
         {
@@ -113,26 +111,6 @@ public class MainUI : WindowMediatorSubscriberBase
     public static Vector2 LastPos { get; private set; } = Vector2.Zero;
     public static Vector2 LastSize { get; private set; } = Vector2.Zero;
     public static Vector2 LastBottomTabMenuPos { get; private set; } = Vector2.Zero;
-
-    protected override void PreDrawInternal()
-    {
-        if (!ThemePushed)
-        {
-            ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .803f));
-            ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.579f, 0.170f, 0.359f, 0.828f));
-
-            ThemePushed = true;
-        }
-    }
-
-    protected override void PostDrawInternal()
-    {
-        if (ThemePushed)
-        {
-            ImGui.PopStyleColor(2);
-            ThemePushed = false;
-        }
-    }
 
     private int GetMissingRecommended()
     {
@@ -282,12 +260,12 @@ public class MainUI : WindowMediatorSubscriberBase
         ImUtf8.SameLineInner();
 
         // Disable the add button if they are already added or nothing is in the field. (might need to also account for alias here)
-        var allowSend = !string.IsNullOrEmpty(_uidToSentTo) && !_kinksters.ContainsKinkster(_uidToSentTo);
+        var allowSend = !string.IsNullOrEmpty(_uidToSentTo) && !_kinksters.Contains(_uidToSentTo);
         if (CkGui.IconTextButton(FAI.Upload, "Send", buttonSize, false, !allowSend))
         {
             UiService.SetUITask(async () =>
             {
-                var res = await _hub.UserSendKinksterRequest(new(new(_uidToSentTo), false, string.Empty, _requestMessage));
+                var res = await _hub.UserCreatePairRequest(new(new(_uidToSentTo), false, _requestMessage));
                 // Add the request if it was successful!
                 if (res.ErrorCode is GagSpeakApiEc.Success)
                     _requests.AddNewRequest(res.Value!);
@@ -324,7 +302,7 @@ public class MainUI : WindowMediatorSubscriberBase
         // Get the expanded width
         var topBarWidth = innerMaxPos.X - innerMinPos.X;
         var sideWidth = ImGui.CalcTextSize("Connecting").X + CkGui.IconSize(FAI.Satellite).X + ImUtf8.ItemSpacing.X * 3;
-        var height = CkGui.CalcFontTextSize("A", Fonts.Default150Percent).Y;
+        var height = CkGui.CalcFontTextSize("A", Fonts.DefaultScaled).Y;
 
         if (DrawAddUser(winPtr, new Vector2(sideWidth, height), innerMinPos, disableButtons || !MainHub.IsConnected))
             _creatingRequest = !_creatingRequest;
@@ -350,7 +328,7 @@ public class MainUI : WindowMediatorSubscriberBase
                 UiService.SetUITask(_hub.Connect());
             }
         }
-        CkGui.AttachTooltip($"{(MainHub.IsConnected ? "Disconnect from" : "Connect to")} {MainHub.MAIN_SERVER_NAME}--SEP--Current Status: {MainHub.ServerStatus}");
+        CkGui.AttachTooltip($"{(MainHub.IsConnected ? "Disconnect from" : "Connect to")} {ConnectionsConfig.CurrentHubName}--SEP--Current Status: {MainHub.ServerStatus}");
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ConnectionState, LastPos, LastSize);
 
         winPtr.DrawList.PopClipRect();
@@ -401,7 +379,7 @@ public class MainUI : WindowMediatorSubscriberBase
 
     private void DrawConnectedUsers(ImGuiWindowPtr winPtr, Vector2 region, float topBarWidth)
     {
-        using var font = Fonts.Default150Percent.Push();
+        using var font = Fonts.DefaultScaled.Push();
 
         var userCount = MainHub.OnlineUsers.ToString(CultureInfo.InvariantCulture);
         var text = MainHub.IsConnected ? $"{userCount} Online" : GagspeakEx.GetCenterStateText();
@@ -423,7 +401,7 @@ public class MainUI : WindowMediatorSubscriberBase
         {
             if (MainHub.IsConnected)
             {
-                CkGui.ColorText(userCount, GsCol.VibrantPink.Vec4Ref());
+                CkGui.ColorText(userCount, GsCol.VibrantPink.Vec4());
                 CkGui.TextInline("Online");
             }
             else
@@ -494,7 +472,7 @@ public class MainUI : WindowMediatorSubscriberBase
         => disabled ? 0.44f : active ? 0.19f : hovered ? 0.26f : 0.39f;
 
     /// <summary>
-    ///     Retrieves the various server error messages based on the current server state.
+    ///   Retrieves the various server error messages based on the current server state.
     /// </summary>
     private string GetServerError()
     {
@@ -523,7 +501,6 @@ public class MainUI : WindowMediatorSubscriberBase
 
     public override void OnClose()
     {
-        Mediator.Publish(new ClosedMainUiMessage());
         _sidePanel.ClearDisplay();
         base.OnClose();
     }

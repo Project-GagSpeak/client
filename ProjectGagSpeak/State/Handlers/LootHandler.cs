@@ -19,7 +19,7 @@ using Lumina.Excel.Sheets;
 namespace GagSpeak.State.Handlers;
 
 /// <summary> 
-///     Handles what happens to cursed loot when found, and provides helpers for object interaction.
+///   Handles what happens to cursed loot when found, and provides helpers for object interaction.
 /// </summary> 
 public sealed class LootHandler
 {
@@ -65,7 +65,7 @@ public sealed class LootHandler
 
     /// <summary> If any cursed loot can even be applied at the moment. </summary>
     public bool CanApplyAnyLoot
-        => _config.Current.CursedLootUI && MainHub.IsServerAlive && _manager.Storage.ActiveUnappliedLoot.Any();
+        => _config.Data.CursedLootUI && MainHub.IsServerAlive && _manager.Storage.ActiveUnappliedLoot.Any();
 
     /// <summary> If the GameObject is a deep dungeon coffer or a treasure chest. </summary>
     public unsafe bool IsAnyTreasure(GameObject* obj)
@@ -75,22 +75,22 @@ public sealed class LootHandler
         => obj->GetGameObjectId().ObjectId == _prevOpenedLootObjectId;
 
     /// <summary>
-    ///     Checks if any items being rolled for loot belong to the given game object id, which indicates
-    ///     that the object has already been opened by another player.
+    ///   Checks if any items being rolled for loot belong to the given game object id, which indicates
+    ///   that the object has already been opened by another player.
     /// </summary>
     public unsafe bool ObjectInLootInstance(uint gameObjId)
         => Loot.Instance()->Items.ToArray().Any(x => x.ChestObjectId == gameObjId);
 
     /// <summary>
-    ///     Checks if a coffer has already been opened by another player in the party. False if in solo party.
+    ///   Checks if a coffer has already been opened by another player in the party. False if in solo party.
     /// </summary>
     public bool CofferAlreadyOpened(uint gameObjId)
         => !PlayerData.InSoloParty && ObjectInLootInstance(gameObjId);
 
 
     /// <summary>
-    ///     Bronzes are already categorized as "Treasure" and need no changes to function with cursed loot.
-    ///     Silver and gold chests across every deep dungeon and every language share all attributes aside from name.
+    ///   Bronzes are already categorized as "Treasure" and need no changes to function with cursed loot.
+    ///   Silver and gold chests across every deep dungeon and every language share all attributes aside from name.
     /// </summary>
     public unsafe bool IsDeepDungeonCoffer(GameObject* obj)
         => obj->ObjectKind is ObjectKind.EventObj
@@ -124,8 +124,8 @@ public sealed class LootHandler
     }
 
     /// <summary> 
-    ///     Handles opening a loot item to apply cursed loot!. <para />
-    ///     Expects that all of the above helper's returned true (where nessisary).
+    ///   Handles opening a loot item to apply cursed loot!. <para />
+    ///   Expects that all of the above helper's returned true (where nessisary).
     /// </summary>
     /// <remarks> Calling this during a loot opening task running will fail. </remarks>
     public unsafe void OpenLootItem(GameObject* obj)

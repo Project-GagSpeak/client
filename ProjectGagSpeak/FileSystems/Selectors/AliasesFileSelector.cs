@@ -116,7 +116,7 @@ public sealed class AliasesFileSelector : CkFileSystemSelector<AliasTrigger, Ali
         // Begin drawing out the contents.
         using (ImRaii.Group())
         {
-            if (Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Alias, leaf.Value.Identifier, false))
+            if (Icons.DrawFavoriteStar(_favorites, FavoriteType.Alias, leaf.Value.Identifier, false))
                 SetFilterDirty();
             keyElementHovered |= ImGui.IsItemHovered();
             CkGui.TextInline(leaf.Value.Label);

@@ -1,15 +1,15 @@
 using GagSpeak.Kinksters;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
-using GagspeakAPI.Data;
 using GagspeakAPI.Dto.VibeRoom;
 using GagspeakAPI.Network;
+using GagspeakAPI.User;
 
 namespace GagSpeak.State.Listeners;
 
 /// <summary>
-///     Listens for callback changes related to Alarms, Patterns, Triggers. <para/>
-///     Unfortunitely was unable to fit most vibe lobby calls in here, maybe will figure out how in the future.
+///   Listens for callback changes related to Alarms, Patterns, Triggers. <para/>
+///   Unfortunitely was unable to fit most vibe lobby calls in here, maybe will figure out how in the future.
 /// </summary>
 public sealed class ToyboxStateListener
 {

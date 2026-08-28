@@ -87,7 +87,7 @@ public class PuppeteersTab : IFancyTab
         using (ImRaii.Group())
         {
             CkGui.IconTextAligned(FAI.User);
-            if (_manager.Puppeteers.TryGetValue(kinkster.UserData.UID, out var puppeteerData))
+            if (_manager.Puppeteers.TryGetValue(kinkster.User.UID, out var puppeteerData))
             {
                 CkGui.TextFrameAlignedInline("Puppeteered by:");
                 CkGui.ColorTextFrameAlignedInline(puppeteerData.NameWithWorld, CkCol.TriStateCheck.Vec4());
@@ -116,7 +116,7 @@ public class PuppeteersTab : IFancyTab
                 {
                     _logger.LogTrace($"Updating Ignore-Case to {ignoreCase}", LoggerType.Puppeteer);
                     // This updates the result between transit to look instant on the client end, reverting edit on failure.
-                    await PermHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, nameof(PairPerms.IgnoreTriggerCase), ignoreCase);
+                    await PermHelper.ChangeOwnUnique(_hub, kinkster.User, kinkster.OwnPerms, nameof(PairPerms.IgnoreTriggerCase), ignoreCase);
                 });
             }
             CkGui.ColorTextFrameAlignedInline("Ignore Case?", ImGuiColors.DalamudGrey2);
@@ -125,10 +125,10 @@ public class PuppeteersTab : IFancyTab
             using (var phraseBox = CkRaii.FramedChildPaddedW("triggers", _.InnerRegion.X, CkStyle.GetFrameRowsHeight(2), 0, GsCol.RemoteLines.Uint(), rounding, DFlags.RoundCornersAll))
             {
                 var triggers = kinkster.OwnPerms.TriggerPhrase;
-                if (_triggersBox.DrawTagsEditor("##box", triggers, out var updatedString, GsCol.VibrantPink.Vec4Ref()))
+                if (_triggersBox.DrawTagsEditor("##box", triggers, out var updatedString, GsCol.VibrantPink.Vec4()))
                 {
                     _logger.LogTrace("The Tag Editor had an update!");
-                    UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, nameof(PairPerms.TriggerPhrase), updatedString));
+                    UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, kinkster.User, kinkster.OwnPerms, nameof(PairPerms.TriggerPhrase), updatedString));
                 }
             }
         }
@@ -164,7 +164,7 @@ public class PuppeteersTab : IFancyTab
             }
             // Check for updates
             if (kinkster.OwnPerms.PuppetPerms != (PuppetPerms)filter)
-                UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, kinkster.UserData, kinkster.OwnPerms, nameof(PairPerms.PuppetPerms), (PuppetPerms)filter));
+                UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, kinkster.User, kinkster.OwnPerms, nameof(PairPerms.PuppetPerms), (PuppetPerms)filter));
         }
         _guides.OpenTutorial(TutorialType.Puppeteer, StepsPuppeteer.PuppeteersPairOrders, PuppeteerUI.LastPos, PuppeteerUI.LastSize);
 
@@ -193,7 +193,7 @@ public class PuppeteersTab : IFancyTab
             if (!char.IsWhiteSpace(sChar, 0) && sChar[0] != puppeteer.OwnPerms.StartChar)
             {
                 _logger.LogTrace($"Updating Start Bracket as it changed to: {sChar}");
-                UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, puppeteer.UserData, puppeteer.OwnPerms, nameof(PairPerms.StartChar), sChar[0]));
+                UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, puppeteer.User, puppeteer.OwnPerms, nameof(PairPerms.StartChar), sChar[0]));
             }
         }
         CkGui.AttachTooltip($"Optional Start character that scopes an order following a trigger phrase.");
@@ -207,7 +207,7 @@ public class PuppeteersTab : IFancyTab
             if (!char.IsWhiteSpace(eChar, 0) && eChar[0] != puppeteer.OwnPerms.EndChar)
             {
                 _logger.LogTrace($"Updating End Bracket as it changed to: {sChar}");
-                UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, puppeteer.UserData, puppeteer.OwnPerms, nameof(PairPerms.EndChar), eChar[0]));
+                UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, puppeteer.User, puppeteer.OwnPerms, nameof(PairPerms.EndChar), eChar[0]));
             }
         }
         CkGui.AttachTooltip($"Optional End character that scopes an order following a trigger phrase.");
@@ -221,11 +221,11 @@ public class PuppeteersTab : IFancyTab
         if (_selected is not { } puppeteer)
             return;
 
-        CkGui.FontTextCentered("Marionette Stats", Fonts.UidFont);
+        CkGui.FontTextCentered("Marionette Stats", Fonts.SubtitleFont);
         CkGui.Separator(GsCol.VibrantPink.Uint());
 
         // Fallback in the case that this puppeteer is not yet tracked for us.
-        if (!_manager.Puppeteers.TryGetValue(puppeteer.UserData.UID, out var data))
+        if (!_manager.Puppeteers.TryGetValue(puppeteer.User.UID, out var data))
         {
             CkGui.ColorTextCentered("No Puppeteer Data Found", ImGuiColors.DalamudRed);
             return;

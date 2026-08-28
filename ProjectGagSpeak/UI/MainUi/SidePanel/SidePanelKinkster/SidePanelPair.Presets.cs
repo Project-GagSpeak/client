@@ -94,7 +94,7 @@ public partial class SidePanelPair
                 break;
 
             default:
-                Svc.Logger.Warning("No preset selected for pair {pair}", kinkster.UserData.UID);
+                Svc.Logger.Warning("No preset selected for pair {pair}", kinkster.User.UID);
                 break;
         }
     }
@@ -103,7 +103,7 @@ public partial class SidePanelPair
     {
         UiService.SetUITask(async () =>
         {
-            var res = await _hub.UserBulkChangeUnique(new(kinkster.UserData, perms.Item1, perms.Item2, UpdateDir.Own, MainHub.OwnUserData));
+            var res = await _hub.UserBulkChangeUnique(new(kinkster.User, perms.Item1, perms.Item2, UpdateDir.Own, MainHub.OwnUserData));
             if (res.ErrorCode != GagSpeakApiEc.Success)
             {
                 Svc.Logger.Error($"Failed preset application for [{kinkster.GetNickAliasOrUid()}]. Error: {res.ErrorCode}");

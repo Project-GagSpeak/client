@@ -8,7 +8,7 @@ using CkCommons.Gui;
 namespace GagSpeak.State.Caches;
 
 /// <summary>
-///     Stores the expected traits while restricted.
+///   Stores the expected traits while restricted.
 /// </summary>
 public class TraitsCache
 {
@@ -32,7 +32,7 @@ public class TraitsCache
     }
 
     /// <summary>
-    ///     Adds the given <paramref name="traits"/> to the cache for the specified <paramref name="key"/>.
+    ///   Adds the given <paramref name="traits"/> to the cache for the specified <paramref name="key"/>.
     /// </summary>
     /// <returns> If the traits were successfully added. </returns>
     public bool AddTraits(CombinedCacheKey key, Traits traits)
@@ -48,7 +48,7 @@ public class TraitsCache
     }
 
     /// <summary>
-    ///     Removes the traits for the given <paramref name="key"/> from the cache.
+    ///   Removes the traits for the given <paramref name="key"/> from the cache.
     /// </summary>
     /// <returns> If the traits were successfully removed. </returns>
     public bool RemoveTraits(CombinedCacheKey key)
@@ -64,7 +64,7 @@ public class TraitsCache
     }
 
     /// <summary>
-    ///     Updates the _finalTraits based on the current _traits by aggregating all traits
+    ///   Updates the _finalTraits based on the current _traits by aggregating all traits
     /// </summary>
     /// <returns> If the cache changed at all. </returns>
     public bool UpdateFinalCache()
@@ -83,8 +83,8 @@ public class TraitsCache
     }
 
     /// <summary>
-    ///     Careful where and how you call this, use responsibly.
-    ///     If done poorly, things will go out of sync.
+    ///   Careful where and how you call this, use responsibly.
+    ///   If done poorly, things will go out of sync.
     /// </summary>
     public void ClearCache()
         => _traits.Clear();

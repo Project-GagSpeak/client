@@ -7,7 +7,7 @@ using GagSpeak.Services.Configs;
 namespace GagSpeak.MufflerCore.Handler;
 
 /// <summary>
-///     Class to convert Cantonese text to International Phonetic Alphabet (IPA) notation
+///   Class to convert Cantonese text to International Phonetic Alphabet (IPA) notation
 /// </summary>
 public class Ipa_Cantonese_Handler
 {
@@ -27,7 +27,7 @@ public class Ipa_Cantonese_Handler
         var data_file = "MufflerCore\\StoredDictionaries\\yue.json";
         try
         {
-            var jsonFilePath = Path.Combine(ConfigFileProvider.AssemblyDirectory, data_file);
+            var jsonFilePath = Path.Combine(GsFiles.AssemblyDirectory, data_file);
             var json = File.ReadAllText(jsonFilePath);
             obj = JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
             _logger.LogInformation($"[IPA Parser] File read: {data_file}", LoggerType.GarblerCore);

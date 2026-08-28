@@ -6,10 +6,8 @@ using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.State.Caches;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using OtterGui.Text;
 
@@ -44,7 +42,7 @@ public sealed class OwnPresetCombo : LociComboBase<LociPresetInfo>
         var titleSpace = size.X - iconsSpace;
 
         // Push the font first so the height is correct.
-        using var _ = Fonts.Default150Percent.Push();
+        using var _ = Fonts.DefaultScaled.Push();
 
         var ret = ImGui.Selectable($"##{lociPreset.Title}", selected, ImGuiSelectableFlags.None, size);
 
@@ -71,7 +69,7 @@ public sealed class OwnPresetCombo : LociComboBase<LociPresetInfo>
         ImGui.SameLine(ImUtf8.ItemInnerSpacing.X);
         var adjust = (size.Y - ImUtf8.TextHeight) * 0.5f;
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + adjust);
-        CkRichText.Text(titleSpace, lociPreset.Title);
+        NewRichText.TextWrapped(lociPreset.Title, titleSpace);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - adjust);
         return ret;
     }
@@ -98,7 +96,7 @@ public sealed class OwnPresetCombo : LociComboBase<LociPresetInfo>
                 if (LociCache.Data.Statuses.TryGetValue(guid, out var s))
                     statuses.Add(s.ToStruct());
 
-            var res = await _mainHub.UserApplyLociStatusTuples(new(_kinksterRef.UserData, statuses, false));
+            var res = await _mainHub.UserApplyLociStatusTuples(new(_kinksterRef.User, statuses, false));
             if (res.ErrorCode is GagSpeakApiEc.Success)
                 Log.LogDebug($"Failed to apply loci preset {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
         });

@@ -3,57 +3,57 @@ namespace GagSpeak.Utils;
 internal sealed class UsageTracker
 {
     /// <summary>
-    ///     The current score for this usage tracker.
+    ///   The current score for this usage tracker.
     /// </summary>
     public double BaseScore;
 
     /// <summary>
-    ///     Increases each time the threshold is passed. A punishment multiplier.
+    ///   Increases each time the threshold is passed. A punishment multiplier.
     /// </summary>
     public int StackCount = 0;
 
     /// <summary>
-    ///     The last tick this was updated. (Calculates decay and timeout.)
+    ///   The last tick this was updated. (Calculates decay and timeout.)
     /// </summary>
     public long LastTick;
 
     /// <summary>
-    ///     The tick when we last passed the threshold. 0 if not yet passed.
+    ///   The tick when we last passed the threshold. 0 if not yet passed.
     /// </summary>
     public long LastThresholdTick = 0;
 }
 
 /// <summary>
-///     Makeshift rate limiter that allows for actions to be performed in burst, but decay
-///     overtime and prevent excessive use.
+///   Makeshift rate limiter that allows for actions to be performed in burst, but decay
+///   overtime and prevent excessive use.
 /// </summary>
 internal sealed class RateLimiter<T> where T : notnull
 {
     /// <summary>
-    ///     How much to remove from the score per second.
+    ///   How much to remove from the score per second.
     /// </summary>
     internal double DecayRate { get; }
 
     internal double LogDecay { get; }
 
     /// <summary>
-    ///     The threshold to decline actions after.
+    ///   The threshold to decline actions after.
     /// </summary>
     internal double Threshold { get; }
 
     /// <summary>
-    ///     If no action occurs for the length of the reset time, reset to 0.
+    ///   If no action occurs for the length of the reset time, reset to 0.
     /// </summary>
     internal double ScoreTimeout { get; } = 30;
 
     /// <summary>
-    ///     The multiplier to apply to the score when the threshold is passed.
+    ///   The multiplier to apply to the score when the threshold is passed.
     /// </summary>
     internal double PunishMultiplier { get; } = 1.5;
 
     /// <summary>
-    ///     How many seconds after the last threshold pass tick that 
-    ///     we will increase the pass count over resetting it.
+    ///   How many seconds after the last threshold pass tick that 
+    ///   we will increase the pass count over resetting it.
     /// </summary>
     internal double PunishWindow { get; } = 15;
 
@@ -86,7 +86,7 @@ internal sealed class RateLimiter<T> where T : notnull
     }
 
     /// <summary>
-    ///     Records usage, returning if we went over the threshold or not.
+    ///   Records usage, returning if we went over the threshold or not.
     /// </summary>
     public bool RecordUse(T key)
     {
@@ -111,8 +111,8 @@ internal sealed class RateLimiter<T> where T : notnull
     }
 
     /// <summary>
-    ///     Applies usage, updating the score and stack count as necessary. <para />
-    ///     <b>Ensure this is called within a LOCK</b>
+    ///   Applies usage, updating the score and stack count as necessary. <para />
+    ///   <b>Ensure this is called within a LOCK</b>
     /// </summary>
     private void ApplyUse(UsageTracker t)
     {

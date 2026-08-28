@@ -120,15 +120,12 @@ public sealed class AliasesFileSystem : CkFileSystem<AliasTrigger>, IMediatorSub
 
     // HybridSavable
     public int ConfigVersion => 0;
+    public int MaxBackups => 2;
     public HybridSaveType SaveType => HybridSaveType.StreamWrite;
-    public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
-        => (isAccountUnique = false, files.CKFS_Aliases).Item2;
-
-    public string JsonSerialize() 
-        => throw new NotImplementedException();
-
-    public void WriteToStream(StreamWriter writer) 
+    public DateTime LastWriteTimeUTC => DateTime.MinValue;
+    public string ToFilePath(GsFiles files) => files.CKFS_Aliases;
+    public string JsonSerialize() => throw new NotImplementedException();
+    public void WriteToStream(StreamWriter writer)
         => SaveToFile(writer, SaveAlias, true);
 }
 

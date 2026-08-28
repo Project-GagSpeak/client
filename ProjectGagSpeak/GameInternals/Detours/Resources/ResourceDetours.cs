@@ -1,8 +1,3 @@
-using CkCommons;
-using GagSpeak.PlayerClient;
-using GagSpeak.State.Caches;
-using System.Runtime.InteropServices;
-
 // Until I find a better way to revisit this, do not process this data.
 namespace GagSpeak.GameInternals.Detours;
 //public unsafe partial class ResourceDetours : IDisposable

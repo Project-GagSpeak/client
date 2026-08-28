@@ -114,15 +114,11 @@ public sealed class RestrictionFileSystem : CkFileSystem<RestrictionItem>, IMedi
 
     // HybridSavable
     public int ConfigVersion => 0;
+    public int MaxBackups => 2;
     public HybridSaveType SaveType => HybridSaveType.StreamWrite;
-    public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
-        => (isAccountUnique = false, files.CKFS_Restrictions).Item2;
-
-    public string JsonSerialize() 
-        => throw new NotImplementedException();
-
-    public void WriteToStream(StreamWriter writer) 
-        => SaveToFile(writer, SaveRestriction, true);
+    public DateTime LastWriteTimeUTC => DateTime.MinValue;
+    public string ToFilePath(GsFiles files) => files.CKFS_Restrictions;
+    public string JsonSerialize() => throw new NotImplementedException();
+    public void WriteToStream(StreamWriter writer) => SaveToFile(writer, SaveRestriction, true);
 }
 

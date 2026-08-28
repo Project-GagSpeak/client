@@ -42,7 +42,7 @@ public static unsafe class HcTaskUtils
             return false;
         if (Svc.Targets.Target != null && NodeThrottler.Throttle("Follow", 200))
         {
-            ChatService.SendCommand("follow <t>");
+            ChatControlService.SendCommand("follow <t>");
             return true;
         }
         return false;
@@ -54,7 +54,7 @@ public static unsafe class HcTaskUtils
             return false;
         if (Svc.Targets.Target != null && NodeThrottler.Throttle("LockOn", 200))
         {
-            ChatService.SendCommand("lockon");
+            ChatControlService.SendCommand("lockon");
             return true;
         }
         return false;
@@ -66,7 +66,7 @@ public static unsafe class HcTaskUtils
             return false;
         if (NodeThrottler.Throttle("EnableAutoMove", 200))
         {
-            ChatService.SendCommand("automove on");
+            ChatControlService.SendCommand("automove on");
             return true;
         }
         return false;
@@ -78,7 +78,7 @@ public static unsafe class HcTaskUtils
             return false;
         if (NodeThrottler.Throttle("DisableAutoMove", 200))
         {
-            ChatService.SendCommand("automove off");
+            ChatControlService.SendCommand("automove off");
             return true;
         }
         return false;

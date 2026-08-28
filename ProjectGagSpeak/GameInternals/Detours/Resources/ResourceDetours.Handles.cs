@@ -1,13 +1,3 @@
-using Dalamud.Hooking;
-using Dalamud.Utility.Signatures;
-using FFXIVClientStructs.FFXIV.Client.System.Resource;
-using GagSpeak.GameInternals.Structs;
-using Penumbra.Api.Enums;
-using Penumbra.GameData;
-using Penumbra.String;
-using Penumbra.String.Classes;
-using System.Diagnostics.CodeAnalysis;
-using System.Runtime.InteropServices;
 #nullable enable
 
 // Until I find a better way to revisit this, do not process this data.
@@ -84,8 +74,8 @@ namespace GagSpeak.GameInternals.Detours;
 //        => GetResourceHandler(false, resourceManager, categoryId, resourceType, resourceHash, path, pGetResParams, isUnknown, unk8, unk9);
 
 //    /// <summary>
-//    ///     Resources can be obtained synchronously and asynchronously. We need to change behaviour in both cases.
-//    ///     Both work basically the same, so we can reduce the main work to one function used by both hooks.
+//    ///   Resources can be obtained synchronously and asynchronously. We need to change behaviour in both cases.
+//    ///   Both work basically the same, so we can reduce the main work to one function used by both hooks.
 //    /// </summary>
 //    private ResourceHandle* GetResourceHandler(bool isSync, ResourceManager* resourceManager, ResourceCategory* categoryId,
 //        ResourceType* resourceType, int* resourceHash, byte* path, GetResourceParameters* pGetResParams, byte isUnk, nint unk8, uint unk9)
@@ -136,8 +126,8 @@ namespace GagSpeak.GameInternals.Detours;
 //    }
 
 //    /// <summary>
-//    ///     We don't nessisarily need to validate the path is from the game path, but rather return original
-//    ///     if the path is not one of our custom paths. This way we do not need to iterate gamedata every process.
+//    ///   We don't nessisarily need to validate the path is from the game path, but rather return original
+//    ///   if the path is not one of our custom paths. This way we do not need to iterate gamedata every process.
 //    /// </summary>
 //    private bool TryGetGsResourcePath(string gamePath, [NotNullWhen(true)] out string? gsResourcePath)
 //    {

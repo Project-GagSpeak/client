@@ -31,7 +31,7 @@ public class ThumbnailFolder : IDisposable
         if (!_files.Contains(file))
             return;
 
-        var dir = Path.Combine(ConfigFileProvider.ThumbnailDirectory, FolderName.ToString());
+        var dir = Path.Combine(GsFiles.ThumbnailDirectory, FolderName.ToString());
         if (File.Exists(Path.Combine(dir, file.FileName)))
         {
             try
@@ -70,7 +70,7 @@ public class ThumbnailFolder : IDisposable
         if (_files.Count > 0)
             ClearFiles();
 
-        var directoryPath = Path.Combine(ConfigFileProvider.ThumbnailDirectory, FolderName.ToString());
+        var directoryPath = Path.Combine(GsFiles.ThumbnailDirectory, FolderName.ToString());
         if (!Directory.Exists(directoryPath))
         {
             _logger.LogWarning($"Thumbnail directory does not exist: {directoryPath}, Creating one!");

@@ -1,42 +1,56 @@
+using GagSpeak.Kinksters;
+using GagSpeak.Pairs;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Network;
+using GagspeakAPI.User;
 
 namespace GagSpeak.PlayerClient;
 
 /// <summary> 
-///     Manages all kinkster requests for the client. <para />
-///     This includes both incoming and outgoing requests.
+///   Manages all kinkster requests for the client. <para />
+///   This includes both incoming and outgoing requests.
 /// </summary>
 public sealed class RequestsManager : DisposableMediatorSubscriberBase
 {
-    // Maybe revise this as time goes on, as we store a seperate list of UserData's, if the requestEntry should be revised at any point.
-    // It is currently functional, but a bit messy and could be improved upon.
-    private HashSet<RequestEntry> _allRequests = new();
+    private readonly MainConfig _config;
+    private readonly OnlineKinksterManager _onlineUsers;
+    private readonly KinksterManager _kinksters;
 
-    // Lazily created lists from the full request list.
-    private Lazy<List<RequestEntry>> _incomingInternal;
-    private Lazy<List<RequestEntry>> _outgoingInternal;
+    // Potentially turn to dictionary/concurrent dict if entry format changes later.
+    private readonly HashSet<RequestEntry> _allRequests = [];
 
-    public RequestsManager(ILogger<RequestsManager> logger, GagspeakMediator mediator)
+    // Seperation of request types.
+    private List<RequestEntry> _incomingInternal;
+    private List<RequestEntry> _outgoingInternal;
+    // Distinct Users involved requests as either sender or target.
+    private HashSet<string> _involvedInRequests;
+
+    public RequestsManager(ILogger<RequestsManager> logger, GagspeakMediator mediator,
+        MainConfig config, OnlineKinksterManager onlineUsers, KinksterManager kinksters)
         : base(logger, mediator)
     {
-        _incomingInternal = new Lazy<List<RequestEntry>>(() => _allRequests.Where(r => !r.FromClient).ToList());
-        _outgoingInternal = new Lazy<List<RequestEntry>>(() => _allRequests.Where(r => r.FromClient).ToList());
+        _config = config;
+        _onlineUsers = onlineUsers;
+        _kinksters = kinksters;
 
+        UpdateCache();
         Mediator.Subscribe<DisconnectedMessage>(this, _ =>
         {
-            // Clear all requests on disconnect.
             Logger.LogDebug("Clearing all requests on disconnect.", LoggerType.PairManagement);
             _allRequests.Clear();
-            RecreateLazy();
+            UpdateCache();
         });
     }
-
     public int TotalRequests => _allRequests.Count;
+    public IReadOnlyList<RequestEntry> Incoming => _incomingInternal;
+    public IReadOnlyList<RequestEntry> Outgoing => _outgoingInternal;
 
-    // Expose the Request Entries.
-    public List<RequestEntry> Incoming => _incomingInternal.Value;
-    public List<RequestEntry> Outgoing => _outgoingInternal.Value;
+    public bool IsInRequests(string userUid)
+        => _involvedInRequests.Contains(userUid);
+
+    public bool IsInRequests(UserData user)
+        => _involvedInRequests.Contains(user.UID);
 
     public void AddNewRequest(KinksterRequest newRequest)
     {
@@ -46,11 +60,14 @@ public sealed class RequestsManager : DisposableMediatorSubscriberBase
         // Add it to the requests.
         Logger.LogDebug($"Adding new request entry to manager.", LoggerType.PairManagement);
         _allRequests.Add(entry);
+        // If we have it set to play sounds, play them if for us.
+        if (!entry.FromClient && _config.Data.AlertKind.HasAny(AlertKind.Audio))
+            _config.PlaySound();
 
-        RecreateLazy();
+        UpdateCache();
     }
 
-    public void AddNewRequest(IEnumerable<KinksterRequest> newRequests)
+    public void AddNewRequests(IEnumerable<KinksterRequest> newRequests)
     {
         // Assume we can add all requests.
         var toAdd = newRequests.Select(r => new RequestEntry(r));
@@ -61,7 +78,7 @@ public sealed class RequestsManager : DisposableMediatorSubscriberBase
         // Add them to the requests.
         Logger.LogDebug($"Adding {validToAdd.Count} new request entries to manager.", LoggerType.PairManagement);
         _allRequests.UnionWith(validToAdd);
-        RecreateLazy();
+        UpdateCache();
     }
 
     // From UI Callback.
@@ -71,7 +88,14 @@ public sealed class RequestsManager : DisposableMediatorSubscriberBase
             return;
         // Removed successfully.
         Logger.LogDebug($"Removed request entry from manager.", LoggerType.PairManagement);
-        RecreateLazy();
+        UpdateCache();
+    }
+
+    public void RemoveRequests(IEnumerable<RequestEntry> requestEntries)
+    {
+        _allRequests.ExceptWith(requestEntries);
+        Logger.LogDebug($"Removed {requestEntries.Count()} request entries from manager.", LoggerType.PairManagement);
+        UpdateCache();
     }
 
     // From server callback.
@@ -82,15 +106,49 @@ public sealed class RequestsManager : DisposableMediatorSubscriberBase
             return;
         // Removed successfully.
         Logger.LogDebug($"Removed request entry from manager.", LoggerType.PairManagement);
-        RecreateLazy();
+        UpdateCache();
     }
 
-    private void RecreateLazy()
+    // Still in testing.
+    public void AcceptRequest(RequestEntry acceptedRequest, AddedKinksterPair addedPair)
+    {
+        // Ensure the request is removed.
+        _allRequests.Remove(acceptedRequest);
+        // Regardless, follow up by adding the pair, and marking them online if true
+        _kinksters.AddKinkster(addedPair.Pair);
+        if (addedPair.OnlineInfo is { } onlineInfo)
+            _kinksters.MarkKinksterOnline(onlineInfo);
+
+        Logger.LogDebug($"Accepted request, adding pair: {addedPair.Pair.User.AliasOrUID}.", LoggerType.PairManagement);
+        UpdateCache();
+    }
+
+    public void AcceptRequests(List<RequestEntry> relatedRequests, List<AddedKinksterPair> addedPairs)
+    {
+        // Ensure all removal
+        foreach (var request in relatedRequests)
+            _allRequests.Remove(request);
+        // Add all pairs
+        foreach (var addedPair in addedPairs)
+        {
+            _kinksters.AddKinkster(addedPair.Pair);
+            if (addedPair.OnlineInfo is { } onlineInfo)
+                _kinksters.MarkKinksterOnline(onlineInfo);
+        }
+
+        Logger.LogDebug($"Accepted requests in bulk, adding pairs: {string.Join(", ", addedPairs.Select(ap => ap.Pair.User.AliasOrUID))}", LoggerType.PairManagement);
+        UpdateCache();
+    }
+
+    #region helpers
+    private void UpdateCache()
     {
         // Update internals
-        _incomingInternal = new Lazy<List<RequestEntry>>(() => _allRequests.Where(r => !r.FromClient).OrderByDescending(r => r.TimeToRespond).ToList());
-        _outgoingInternal = new Lazy<List<RequestEntry>>(() => _allRequests.Where(r => r.FromClient).OrderByDescending(r => r.TimeToRespond).ToList());
-        Logger.LogInformation($"Recreated lazy Request lists with {_allRequests.Count} total requests. ({Incoming.Count} in, {Outgoing.Count} out)", LoggerType.PairManagement);
-        Mediator.Publish(new FolderUpdateRequests());
+        _incomingInternal = [.. _allRequests.Where(r => !r.FromClient).OrderByDescending(r => r.TimeToRespond)];
+        _outgoingInternal = [.. _allRequests.Where(r => r.FromClient).OrderByDescending(r => r.TimeToRespond)];
+        _involvedInRequests = [.. _allRequests.SelectMany(r => new[] { r.Data.User.UID, r.Data.Target.UID })];
+        Logger.LogInformation($"Updated partitioned caches with {_allRequests.Count} total requests. ({Incoming.Count} in, {Outgoing.Count} out)", LoggerType.PairManagement);
+        Mediator.Publish(new DDSUpdateRequests());
     }
+    #endregion
 }

@@ -1,6 +1,7 @@
 using Buttplug.Client;
 using GagSpeak.Gui.Remote;
 using GagspeakAPI.Data;
+using GagspeakAPI.User;
 
 namespace GagSpeak.Services.Mediator;
 

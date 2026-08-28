@@ -106,7 +106,7 @@ public sealed class TriggerFileSelector : CkFileSystemSelector<Trigger, TriggerF
         }
 
         ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
-        if (Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Trigger, leaf.Value.Identifier))
+        if (Icons.DrawFavoriteStar(_favorites, FavoriteType.Trigger, leaf.Value.Identifier))
             SetFilterDirty();
         CkGui.TextFrameAlignedInline(leaf.Value.Label);
 

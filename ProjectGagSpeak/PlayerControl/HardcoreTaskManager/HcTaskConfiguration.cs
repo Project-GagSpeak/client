@@ -3,8 +3,8 @@ using GagSpeak.State;
 namespace GagSpeak.PlayerControl;
 
 /// <summary>
-///     The essential configuration to be provided to the hardcore task manager. <para />
-///     You can use <paramref name="Flags"/> to restrict what the player can do during task execution.
+///   The essential configuration to be provided to the hardcore task manager. <para />
+///   You can use <paramref name="Flags"/> to restrict what the player can do during task execution.
 /// </summary>
 public record HcTaskConfiguration(HcTaskControl Flags = HcTaskControl.None, int TimeoutAt = 30000, bool InnerTimouts = false)
 {

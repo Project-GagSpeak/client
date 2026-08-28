@@ -8,7 +8,7 @@ using GagSpeak.Services.Configs;
 namespace GagSpeak.MufflerCore.Handler;
 
 /// <summary>
-///     Class to convert Persian text to International Phonetic Alphabet (IPA) notation
+///   Class to convert Persian text to International Phonetic Alphabet (IPA) notation
 /// </summary>
 public class Ipa_Persian_Handler
 {
@@ -34,7 +34,7 @@ public class Ipa_Persian_Handler
     {
         try
         {
-            var jsonFilePath = Path.Combine(ConfigFileProvider.AssemblyDirectory, data_file);
+            var jsonFilePath = Path.Combine(GsFiles.AssemblyDirectory, data_file);
             var json = File.ReadAllText(jsonFilePath);
             obj = JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
             _logger.LogInformation($"File read: {data_file}", LoggerType.GarblerCore);

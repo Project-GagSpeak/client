@@ -101,7 +101,7 @@ public class LootItemsTab : IFancyTab
         var region = ImGui.GetContentRegionAvail();
         using var _ = CkRaii.FramedChildPaddedWH("Stats", ImGui.GetContentRegionAvail(), 0, GsCol.VibrantPink.Uint(), rounding);
 
-        CkGui.FontTextCentered("Statistics", Fonts.UidFont);
+        CkGui.FontTextCentered("Statistics", Fonts.SubtitleFont);
         CkGui.Separator(GsCol.VibrantPink.Uint());
 
         ImGui.Text("Total Loot Found:");

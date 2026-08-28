@@ -439,14 +439,14 @@ public class ImageImportTool
             var generatedName = ImportedImage.FileName.IsNullOrEmpty() ? Guid.NewGuid().ToString() : ImportedImage.FileName;
 
             var folderFileNames = Directory
-                .GetFiles(Path.Combine(ConfigFileProvider.ThumbnailDirectory, ImportedImage.ImageType.ToString()))
+                .GetFiles(Path.Combine(GsFiles.ThumbnailDirectory, ImportedImage.ImageType.ToString()))
                 .Where(f => Path.GetExtension(f).Equals(".png", StringComparison.OrdinalIgnoreCase))
                 .Select(f => Path.GetFileName(f))
                 .Where(name => name is not null)
                 .ToList();
 
             var finalName = RegexEx.EnsureUniqueName(generatedName, folderFileNames, name => name);
-            var savePath = Path.Combine(ConfigFileProvider.ThumbnailDirectory, ImportedImage.ImageType.ToString(), finalName + ".png");
+            var savePath = Path.Combine(GsFiles.ThumbnailDirectory, ImportedImage.ImageType.ToString(), finalName + ".png");
             File.WriteAllBytes(savePath, finalizedByteData);
             _logger.LogInformation($"Saved image with name {finalName} to {savePath}!");
             // Dispose of the image data

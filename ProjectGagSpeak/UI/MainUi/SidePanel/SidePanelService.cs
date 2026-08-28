@@ -13,13 +13,13 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
+using GagspeakAPI.User;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -152,7 +152,7 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
 
     public void UpdateKinkster(Kinkster kinkster, bool resetVars = true)
     {
-        LastUID = kinkster.UserData.UID;
+        LastUID = kinkster.User.UID;
         Kinkster = kinkster;
 
         Gags = new PairGagCombo(_log, _hub, Kinkster, ClearInteraction);
@@ -226,7 +226,7 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
         // compose the DTO to send.
         UiService.SetUITask(async () =>
         {
-            var dto = new HypnoticAction(Kinkster!.UserData, DateTimeOffset.UtcNow.AddSeconds(newTime.TotalSeconds), effect);
+            var dto = new HypnoticAction(Kinkster!.User, DateTimeOffset.UtcNow.AddSeconds(newTime.TotalSeconds), effect);
             if (await _hub.UserHypnotizeKinkster(dto) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             {
                 switch (res.ErrorCode)
@@ -316,7 +316,7 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
         // Process the task.
         UiService.SetUITask(async () =>
         {
-            var dto = new HardcoreStateChange(Kinkster.UserData, newHcData, attribute, MainHub.OwnUserData);
+            var dto = new HardcoreStateChange(Kinkster.User, newHcData, attribute, MainHub.OwnUserData);
             if (await _hub.UserChangeOtherHardcoreState(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             {
                 switch (res.ErrorCode)
@@ -341,7 +341,7 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
     {
         UiService.SetUITask(async () =>
         {
-            var dto = new HardcoreStateChange(Kinkster!.UserData, new HardcoreState(), attribute, MainHub.OwnUserData);
+            var dto = new HardcoreStateChange(Kinkster!.User, new HardcoreState(), attribute, MainHub.OwnUserData);
             if (await _hub.UserChangeOtherHardcoreState(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             {
                 switch (res.ErrorCode)

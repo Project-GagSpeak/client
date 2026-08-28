@@ -1,5 +1,4 @@
 using CheapLoc;
-using Dalamud.Bindings.ImGui;
 
 namespace GagSpeak.Localization
 {
@@ -1096,6 +1095,7 @@ namespace GagSpeak.Localization
         public readonly string TabsGlobal = Loc.Localize("Settings_TabsGlobal", "General");
         public readonly string TabsHardcore = Loc.Localize("Settings_TabsHardcore", "Hardcore");
         public readonly string TabsPreferences = Loc.Localize("Settings_TabsPreferences", "Chat & UI");
+        public readonly string TabsVanity = Loc.Localize("Settings_TabsVanity", "Vanity Options");
         public readonly string TabsAccounts = Loc.Localize("Settings_TabsAccounts", "Account");
 
         public DDSPrefs DDSPrefs { get; set; } = new();
@@ -1106,9 +1106,6 @@ namespace GagSpeak.Localization
 
     public class DDSPrefs
     {
-        public readonly string FavoritesFirstLabel = Loc.Localize("Preferences_FavoritesFirstLabel", "By Favorites First");
-        public readonly string FavoritesFirstTT = Loc.Localize("Preferences_FavoritesFirstTT", "Sort Favorite-First Render for main folders.");
-
         public readonly string ShowVisibleSeparateLabel = Loc.Localize("Preferences_ShowVisibleSeparateLabel", "Visible Folder");
         public readonly string ShowVisibleSeparateTT = Loc.Localize("Preferences_ShowVisibleSeparateTT", "Lists rendered online kinksters in a separate folder.");
 

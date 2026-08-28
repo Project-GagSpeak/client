@@ -58,8 +58,8 @@ public class AliasesTab : IFancyTab
 
         _pairCombo = new(logger, mediator, favorites, () => [
             ..( _manager.ItemInEditor is { } editor
-                ? kinksters.DirectPairs.Where(k => !editor.WhitelistedUIDs.Contains(k.UserData.UID)) : kinksters.DirectPairs)
-                .OrderByDescending(p => FavoritesConfig.Kinksters.Contains(p.UserData.UID))
+                ? kinksters.DirectPairs.Where(k => !editor.WhitelistedUIDs.Contains(k.User.UID)) : kinksters.DirectPairs)
+                .OrderByDescending(p => FavoritesConfig.Kinksters.Contains(p.User.UID))
                 .ThenByDescending(u => u.IsRendered)
                 .ThenByDescending(u => u.IsOnline)
                 .ThenBy(pair => pair.GetDisplayName())
@@ -192,14 +192,14 @@ public class AliasesTab : IFancyTab
 
     private void DrawWhitelist(AliasTrigger alias)
     {
-        CkGui.FontText("Allowed Kinksters:", Fonts.Default150Percent);
+        CkGui.FontText("Allowed Kinksters:", Fonts.DefaultScaled);
         CkGui.Separator(GsCol.VibrantPink.Uint());
 
         if (alias.WhitelistedUIDs.Count is 0)
         {
-            CkGui.FontTextAligned("Everyone", Fonts.Default150Percent);
+            CkGui.FontTextAligned("Everyone", Fonts.DefaultScaled);
             ImUtf8.SameLineInner();
-            CkGui.FontTextAligned("(Global)", Fonts.Default150Percent, ImGuiColors.DalamudGrey2);
+            CkGui.FontTextAligned("(Global)", Fonts.DefaultScaled, ImGuiColors.DalamudGrey2);
             return;
         }
 
@@ -216,11 +216,11 @@ public class AliasesTab : IFancyTab
         foreach (var kinksterUid in alias.WhitelistedUIDs.ToList())
         {
             ImGui.TableNextColumn();
-            if (_kinksters.TryGetKinkster(new(kinksterUid), out var Kinkster))
+            if (_kinksters.TryGetValue(new(kinksterUid), out var Kinkster))
             {
                 CkGui.IconTextAligned(FAI.UserCircle);
                 DrawDisplayName(Kinkster);
-                CkGui.AttachTooltip($"UID: --COL--{kinksterUid}--COL--", GsCol.VibrantPink.Vec4Ref());
+                CkGui.AttachTooltip($"UID: --COL--{kinksterUid}--COL--", GsCol.VibrantPink.Vec4());
             }
             else
             {
@@ -236,7 +236,7 @@ public class AliasesTab : IFancyTab
             // Set it to the display name.
             var dispName = s.GetDisplayName();
             // Update mono to be disabled if the display name is not the alias/uid.
-            var useMono = s.UserData.AliasOrUID.Equals(dispName, StringComparison.Ordinal);
+            var useMono = s.User.AliasOrUID.Equals(dispName, StringComparison.Ordinal);
             // Display the name.
             using (ImRaii.PushFont(UiBuilder.MonoFont, useMono))
                 CkGui.TextFrameAlignedInline(dispName);
@@ -372,13 +372,13 @@ public class AliasesTab : IFancyTab
     private void DrawWhitelistEditor(AliasTrigger alias)
     {
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 8f);
-        CkGui.FontText("Whitelist", Fonts.Default150Percent);
+        CkGui.FontText("Whitelist", Fonts.DefaultScaled);
 
         if (CkGui.IconTextButton(FAI.Ban, "Clear", disabled: ImGui.GetIO().KeyShift))
         {
             alias.WhitelistedUIDs.Clear();
         }
-        CkGui.AttachTooltip(" Add all visible sundesmos nearby.");
+        CkGui.AttachTooltip(" Add all visible kinksters nearby.");
 
         ImUtf8.SameLineInner();
         if (_pairCombo.Draw(_selectedKinkster, ImGui.GetContentRegionAvail().X))
@@ -386,7 +386,7 @@ public class AliasesTab : IFancyTab
             if (_pairCombo.Current is not { } selected)
                 return;
 
-            if (alias.WhitelistedUIDs.Add(selected.UserData.UID))
+            if (alias.WhitelistedUIDs.Add(selected.User.UID))
                 _logger.LogInformation($"Adding {selected.GetDisplayName()} to Alias {alias.Label}");
             // Reset selection.
             _selectedKinkster = null;
@@ -403,11 +403,11 @@ public class AliasesTab : IFancyTab
         foreach (var kinksterUid in alias.WhitelistedUIDs.ToList())
         {
             ImGui.TableNextColumn();
-            if (_kinksters.TryGetKinkster(new(kinksterUid), out var Kinkster))
+            if (_kinksters.TryGetValue(new(kinksterUid), out var Kinkster))
             {
                 CkGui.IconTextAligned(FAI.UserCircle);
                 DrawDisplayName(Kinkster);
-                CkGui.AttachTooltip($"UID: --COL--{kinksterUid}--COL--", GsCol.VibrantPink.Vec4Ref());
+                CkGui.AttachTooltip($"UID: --COL--{kinksterUid}--COL--", GsCol.VibrantPink.Vec4());
             }
             else
             {
@@ -428,7 +428,7 @@ public class AliasesTab : IFancyTab
             // Set it to the display name.
             var dispName = s.GetDisplayName();
             // Update mono to be disabled if the display name is not the alias/uid.
-            var useMono = s.UserData.AliasOrUID.Equals(dispName, StringComparison.Ordinal);
+            var useMono = s.User.AliasOrUID.Equals(dispName, StringComparison.Ordinal);
             // Display the name.
             using (ImRaii.PushFont(UiBuilder.MonoFont, useMono))
                 CkGui.TextFrameAlignedInline(dispName);

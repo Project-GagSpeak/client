@@ -175,8 +175,8 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
         if (!string.IsNullOrEmpty(isolatedUID))
         {
             Logger.LogInformation($"[SAFEWORD PROGRESS]: Safeword Invoked specifically for: {isolatedUID}. Reverting hardcore!");
-            if (_kinksters.TryGetKinkster(new(isolatedUID), out var kinkster))
-                await _hub.UserChangeOwnPairPerm(new(kinkster.UserData, new KeyValuePair<string, object>(nameof(PairPerms.InHardcore) , false), UpdateDir.Own, MainHub.OwnUserData)).ConfigureAwait(false);
+            if (_kinksters.TryGetValue(new(isolatedUID), out var kinkster))
+                await _hub.UserChangeOwnPairPerm(new(kinkster.User, new KeyValuePair<string, object>(nameof(PairPerms.InHardcore) , false), UpdateDir.Own, MainHub.OwnUserData)).ConfigureAwait(false);
             else
                 Logger.LogWarning($"[SAFEWORD PROGRESS]: Kinkster with UID {isolatedUID} not found for safeword revert.");
         }
@@ -185,8 +185,8 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
             // Process it for everyone!
             foreach (var pair in _kinksters.DirectPairs.Where(p => p.OwnPerms.InHardcore))
             {
-                Logger.LogInformation($"[SAFEWORD PROGRESS]: Reverting hardcore for Kinkster {pair.UserData.UID}.");
-                await _hub.UserChangeOwnPairPerm(new(pair.UserData, new KeyValuePair<string, object>(nameof(PairPerms.InHardcore), false), UpdateDir.Own, MainHub.OwnUserData)).ConfigureAwait(false);
+                Logger.LogInformation($"[SAFEWORD PROGRESS]: Reverting hardcore for Kinkster {pair.User.UID}.");
+                await _hub.UserChangeOwnPairPerm(new(pair.User, new KeyValuePair<string, object>(nameof(PairPerms.InHardcore), false), UpdateDir.Own, MainHub.OwnUserData)).ConfigureAwait(false);
             }
         }
 
@@ -224,14 +224,14 @@ public class SafewordService : DisposableMediatorSubscriberBase, IHostedService
         _achievementHandler.SafewordUsed(isolatedUID);
 
         // Reset the permissions on all associated Kinksters.
-        var kinkstersToReset = (!string.IsNullOrEmpty(isolatedUID) && _kinksters.TryGetKinkster(new(isolatedUID), out var match))
+        var kinkstersToReset = (!string.IsNullOrEmpty(isolatedUID) && _kinksters.TryGetValue(new(isolatedUID), out var match))
             ? [match] : _kinksters.DirectPairs.Where(p => p.OwnPerms.InHardcore);
 
         foreach (var kinkster in kinkstersToReset)
         {
             Logger.LogInformation($"[HC-SAFEWORD PROGRESS]: Changing Perms for: {isolatedUID}");
             var newPairPerms = kinkster.OwnPerms.WithSafewordApplied();
-            await _hub.UserBulkChangeUnique(new(kinkster.UserData, newPairPerms, kinkster.OwnPermAccess, UpdateDir.Own, MainHub.OwnUserData)).ConfigureAwait(false);
+            await _hub.UserBulkChangeUnique(new(kinkster.User, newPairPerms, kinkster.OwnPermAccess, UpdateDir.Own, MainHub.OwnUserData)).ConfigureAwait(false);
             Logger.LogInformation($"[HC-SAFEWORD PROGRESS]: Hardcore allowances reverted for ({isolatedUID})!");
         }
 

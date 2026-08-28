@@ -4,7 +4,7 @@ using GagSpeak.Services.Mediator;
 namespace GagSpeak.Interop;
 
 /// <summary>
-///     The primary manager for all IPC calls.
+///   The primary manager for all IPC calls.
 /// </summary>
 public sealed partial class IpcManager : DisposableMediatorSubscriberBase
 {

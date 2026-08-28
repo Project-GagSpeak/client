@@ -6,42 +6,42 @@ namespace GagSpeak.State.Models;
 public abstract class BuzzToy : IDisposable
 {
     /// <summary>
-    ///     Determines the kind of connected device
+    ///   Determines the kind of connected device
     /// </summary>
     public abstract SexToyType Type { get; }
 
     /// <summary>
-    ///     If a device is currently valid or not.
+    ///   If a device is currently valid or not.
     /// </summary>
     public abstract bool ValidForRemotes { get; }
 
     /// <summary>
-    ///     Unique identifier for the BuzzToy, useful for maintaining data
-    ///     loaded from config storage.
+    ///   Unique identifier for the BuzzToy, useful for maintaining data
+    ///   loaded from config storage.
     /// </summary>
     public Guid Id { get; protected set; } = Guid.NewGuid();
 
     /// <summary>
-    ///     Factory Name of the SexToy [Lovense Hush]
+    ///   Factory Name of the SexToy [Lovense Hush]
     /// </summary>
     /// <remarks> This is static and pre-assigned. (its Identifier) </remarks>
     public abstract ToyBrandName FactoryName { get; protected set; }
 
     /// <summary> 
-    ///     The labeled name given for the connected device.
+    ///   The labeled name given for the connected device.
     /// </summary>
     /// <remarks> Used for display in the UI. </remarks>
     public abstract string LabelName { get; set; }
 
     /// <summary>
-    ///     The current battery level of the device.
+    ///   The current battery level of the device.
     /// </summary>
     /// <remarks> This should be modified by a battery level fetch task. </remarks>
     public double BatteryLevel { get; protected set; } = -1.0;
 
     /// <summary>
-    ///     If the device can be interacted with. <para/>
-    ///     (An indicator for other kinksters and toy manager)
+    ///   If the device can be interacted with. <para/>
+    ///   (An indicator for other kinksters and toy manager)
     /// </summary>
     public bool Interactable { get; set; } = false;
 
@@ -54,18 +54,18 @@ public abstract class BuzzToy : IDisposable
 
     // Motors via motor mapping.
     /// <summary>
-    ///     An internal Motor mapping for efficient Motor access via MotorIdx.
+    ///   An internal Motor mapping for efficient Motor access via MotorIdx.
     /// </summary>
     protected readonly Dictionary<uint, BuzzToyMotor> _motorMap = new Dictionary<uint, BuzzToyMotor>();
 
     /// <summary>
-    ///     Internal motor mapping by type for efficient access.
+    ///   Internal motor mapping by type for efficient access.
     /// </summary>
     protected readonly Dictionary<ToyMotor, List<BuzzToyMotor>> _motorTypeMap = new();
 
     /// <summary>
-    ///     Public read-only accessor (dont by reference so no data duplication). <para />
-    ///     Efficient access to all buzzToyMotors via their MotorIdx. (Useful for datastreams)
+    ///   Public read-only accessor (dont by reference so no data duplication). <para />
+    ///   Efficient access to all buzzToyMotors via their MotorIdx. (Useful for datastreams)
     /// </summary>
     public IReadOnlyDictionary<uint, BuzzToyMotor> MotorMap => _motorMap;
 
@@ -74,7 +74,7 @@ public abstract class BuzzToy : IDisposable
     public virtual void Dispose() { }
 
     /// <summary>
-    ///     Halts all current activity on the device.
+    ///   Halts all current activity on the device.
     /// </summary>
     public void StopAllMotors()
     {
@@ -86,7 +86,7 @@ public abstract class BuzzToy : IDisposable
     }
 
     /// <summary>
-    ///     Set all VibeMotors to the defined <paramref name="intensity"/>
+    ///   Set all VibeMotors to the defined <paramref name="intensity"/>
     /// </summary>
     public virtual bool VibrateAll(double intensity)
     {
@@ -99,7 +99,7 @@ public abstract class BuzzToy : IDisposable
     }
 
     /// <summary>
-    ///     Set the intensity of a specific motor.
+    ///   Set the intensity of a specific motor.
     /// </summary>
     public virtual bool Vibrate(uint motorIdx, double intensity)
     {
@@ -111,7 +111,7 @@ public abstract class BuzzToy : IDisposable
     }
 
     /// <summary>
-    ///     Set all Oscillations to the defined <paramref name="speed"/>
+    ///   Set all Oscillations to the defined <paramref name="speed"/>
     /// </summary>
     public virtual bool OscillateAll(double speed)
     {
@@ -136,7 +136,7 @@ public abstract class BuzzToy : IDisposable
     }
 
     /// <summary>
-    ///     Update the speed and direction of the rotation motor.
+    ///   Update the speed and direction of the rotation motor.
     /// </summary>
     public virtual bool Rotate(double speed, bool clockwise)
     {
@@ -148,7 +148,7 @@ public abstract class BuzzToy : IDisposable
     }
 
     /// <summary>
-    ///     Update the severity of the constriction motor.
+    ///   Update the severity of the constriction motor.
     /// </summary>
     public virtual bool Constrict(double severity)
     {
@@ -160,7 +160,7 @@ public abstract class BuzzToy : IDisposable
     }
 
     /// <summary>
-    ///     Update the severity of the inflation motor.
+    ///   Update the severity of the inflation motor.
     /// </summary>
     public virtual bool Inflate(double severity)
     {
@@ -172,7 +172,7 @@ public abstract class BuzzToy : IDisposable
     }
 
     /// <summary>
-    ///     Updates the battery level of the device.
+    ///   Updates the battery level of the device.
     /// </summary>
     public abstract Task UpdateBattery();
 

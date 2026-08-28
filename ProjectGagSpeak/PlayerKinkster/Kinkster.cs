@@ -4,14 +4,17 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Interop.Helpers;
+using GagSpeak.Pairs;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
+using GagspeakAPI.Connection;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Network;
+using GagspeakAPI.User;
 using OtterGui;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
@@ -19,8 +22,8 @@ using Penumbra.GameData.Structs;
 namespace GagSpeak.Kinksters;
 
 /// <summary>
-///     Stores information about a pairing between 2 Kinksters. <para />
-///     The handlers associated with the kinkster must be disposed of when removing.
+///   Stores information about a pairing between 2 Kinksters. <para />
+///   The handlers associated with the kinkster must be disposed of when removing.
 /// </summary>
 public class Kinkster : IComparable<Kinkster>
 {
@@ -28,19 +31,19 @@ public class Kinkster : IComparable<Kinkster>
     private readonly GagspeakMediator _mediator;
     private readonly MainConfig _config;
     private readonly NicksConfig _nicks;
-
-    private OnlineKinkster? _onlineUser;
+    private readonly OnlineKinksterManager _onlineUsers;
 
     // Tracks information about the Kinkster's Visible state.
     private KinksterHandler _player;
 
     public Kinkster(KinksterPair pair, ILogger<Kinkster> logger, GagspeakMediator mediator,
-        MainConfig config, NicksConfig nicks, KinksterFactory factory)
+        MainConfig config, NicksConfig nicks, KinksterFactory factory, OnlineKinksterManager onlineUsers)
     {
         _logger = logger;
         _mediator = mediator;
         _config = config;
         _nicks = nicks;
+        _onlineUsers = onlineUsers;
 
         UserPair = pair;
         // Initialize all handlers for the kinkster, holding their lifetime until disposal.
@@ -51,11 +54,11 @@ public class Kinkster : IComparable<Kinkster>
 
     // Permissions
     public KinksterPair     UserPair { get; private set; }
-    public UserData         UserData        => UserPair.User;
+    public UserData         User            => UserPair.User;
     public PairPerms        OwnPerms        => UserPair.OwnPerms;
     public PairPermAccess   OwnPermAccess   => UserPair.OwnAccess;
     public GlobalPerms      PairGlobals     => UserPair.Globals;
-    public HardcoreState   PairHardcore    => UserPair.Hardcore;
+    public HardcoreState    PairHardcore    => UserPair.Hardcore;
     public PairPerms        PairPerms       => UserPair.Perms;
     public PairPermAccess   PairPermAccess  => UserPair.Access;
 
@@ -77,11 +80,14 @@ public class Kinkster : IComparable<Kinkster>
     public LociContainer LociData { get; private set; } = new();
 
     // Internal Helpers.
-    // public bool IsTemporary => UserPair.IsTemporary; (Can implement this later maybe, idk)
     public bool IsRendered => _player.IsRendered;
-    public bool IsOnline => _onlineUser != null;
-    public bool IsFavorite => FavoritesConfig.Kinksters.Contains(UserData.UID);
-    public string Ident => _onlineUser?.Ident ?? string.Empty;
+    public bool IsOnline => _onlineUsers.Contains(User);
+    public bool IsFavorite => FavoritesConfig.Kinksters.Contains(User.UID);
+    public bool IsTemporary => UserPair.IsTemporary;
+    public string TempAccepterUID => UserPair.TempAccepterUID;
+    public DateTime CreatedAt => UserPair.CreatedAt;
+
+    public string Ident => _onlineUsers.GetIdent(User) ?? string.Empty;
     public string PlayerName => _player.NameString;
     public string PlayerNameWorld => _player.NameWithWorld;
     public IntPtr PlayerAddress => IsRendered ? _player.Address : IntPtr.Zero;
@@ -102,88 +108,81 @@ public class Kinkster : IComparable<Kinkster>
     public int CompareTo(Kinkster? other)
     {
         if (other is null) return 1;
-        return string.Compare(UserData.UID, other.UserData.UID, StringComparison.Ordinal);
+        return string.Compare(User.UID, other.User.UID, StringComparison.Ordinal);
     }
 
     public string? AlphabeticalSortKey()
         => (IsRendered && !string.IsNullOrEmpty(PlayerName)
-        ? (_config.Current.NickOverPlayerName ? GetNickAliasOrUid() : PlayerName) : GetNickAliasOrUid());
+        ? (_config.Data.UseNicksOverPlayerNames ? GetNickAliasOrUid() : PlayerName) : GetNickAliasOrUid());
 
     public string GetDisplayName()
     {
-        var condition = IsRendered && !_config.Current.NickOverPlayerName && !string.IsNullOrEmpty(PlayerName);
+        var condition = IsRendered && !_config.Data.UseNicksOverPlayerNames && !string.IsNullOrEmpty(PlayerName);
         return condition ? PlayerName : GetNickAliasOrUid();
     }
 
     public string? GetNickname() 
-        => _nicks.GetNicknameForUid(UserData.UID);
+        => _nicks.GetNicknameForUid(User.UID);
 
     public string GetNickAliasOrUid() 
-        => _nicks.TryGetNickname(UserData.UID, out var n) ? n : UserData.AliasOrUID;
+        => _nicks.TryGetNickname(User.UID, out var n) ? n : User.AliasOrUID;
 
     public float DistanceToPlayer() 
         => IsRendered ? PlayerData.DistanceTo(_player.DataState.Position) : float.MaxValue;
 
+    public bool MatchesMonoName(string name)
+        => User.AliasOrUID.Equals(name, StringComparison.OrdinalIgnoreCase)
+        || User.UID.Equals(name, StringComparison.OrdinalIgnoreCase);
+
     /// <summary>
-    ///     After a Kinkster is initialized / created, it will then be marked as
-    ///     Online, if they are online. (Or after a reconnection, after being created)
+    ///   Updates the UserPair's UserData with the latest vanity information.
+    /// </summary>
+    public void UpdateUserData(UserData newData)
+        => UserPair = UserPair with { User = newData };
+
+    /// <summary>
+    ///   Convert a temporary Kinkster to a permanent one.
+    /// </summary>
+    public void MarkAsPermanent()
+        => UserPair = UserPair with { TempAccepterUID = string.Empty };
+
+    /// <summary>
+    ///   After a Kinkster is initialized / created, it will then be marked as
+    ///   Online, if they are online. (Or after a reconnection, after being created)
     /// </summary>
     public void MarkOnline(OnlineKinkster dto)
     {
-        _onlineUser = dto;
-        // Inform mediator of Online update.
-        _mediator.Publish(new KinksterOnline(this));
+        _onlineUsers.AddOnline(dto.User, dto.Ident);
         // Check to see if they are visible, and if so, reapply alterations.
         _player.SetVisibleIfRendered().ConfigureAwait(false);
     }
 
-    /// <summary>
-    ///     Convert a temporary Kinkster to a permanent one. (Once we add this at least)
-    /// </summary>
-    public void MarkAsPermanent()
-    {
-        //if (!UserPair.IsTemporary)
-        //{
-        //    _logger.LogWarning($"Attempted to set a tmp kinkster ({GetNickAliasOrUid()}) to permanent, but they already are!", LoggerType.PairManagement);
-        //    return;
-        //}
-        // Update the status to non-temporary.
-        //UserPair = UserPair with { TempAccepterUID = string.Empty };
-        _logger.LogInformation($"Kinkster [{PlayerName}] ({GetNickAliasOrUid()}) updated to a permanent pair.", LoggerType.PairManagement);
-    }
-
     /// <summary> 
-    ///     Mark a Kinkster as offline, reverting any visible state if applied.
+    ///   Mark a Kinkster as offline, reverting any visible state if applied.
     /// </summary>
     public void MarkOffline()
     {
-        _onlineUser = null;
-        _mediator.Publish(new KinksterOffline(this));
+        _onlineUsers.RemoveOnline(User);
         _logger.LogTrace($"[{PlayerName}] ({GetNickAliasOrUid()}) went offline, reverting alterations.", LoggerType.PairManagement);
     }
 
 
     /// <summary>
-    ///     Disposes of the Kinkster's Handlers, and all internal data. <para/>
-    ///     <b>Should be called when intending to dispose a Kinkster ONLY.</b>
+    ///   Disposes of the Kinkster's Handlers, and all internal data. <para/>
+    ///   <b>Should be called when intending to dispose a Kinkster ONLY.</b>
     /// </summary>
     public void DisposeData()
     {
         _logger.LogTrace($"Disposing data for {PlayerName}({GetNickAliasOrUid()})", LoggerType.PairManagement);
         // If online, just simply mark offline.
         if (IsOnline)
-        {
-            _onlineUser = null;
-            _mediator.Publish(new KinksterOffline(this));
-        }
-
+            _onlineUsers.RemoveOnline(User);
         // The handler disposal methods effective perform a revert + data clear + final disposal state.
         // Because of this calling mark offline prior is not necessary.
         _player.Dispose();
     }
 
     #region Data Updates
-
     public void NewActiveCompositeData(CharaCompositeActiveData data, bool wasSafeword)
     {
         if (wasSafeword)
@@ -234,7 +233,7 @@ public class Kinkster : IComparable<Kinkster>
 
         // Regarldess of the change, we should update the kinkster's latest data to the achievement handler.
         _logger.LogDebug($"Aligning Achievement Trackers in sync with {GetNickAliasOrUid()}'s latest composite data!", LoggerType.PairDataTransfer);
-        _mediator.Publish(new PlayerLatestActiveItems(UserData, ActiveGags, ActiveRestrictions, ActiveRestraint)); // <-- Send whole composite?
+        _mediator.Publish(new PlayerLatestActiveItems(User, ActiveGags, ActiveRestrictions, ActiveRestraint)); // <-- Send whole composite?
     }
 
     public void NewLociData(LociContainerData newData)
@@ -248,22 +247,22 @@ public class Kinkster : IComparable<Kinkster>
         switch (data.Type)
         {
             case DataUpdateType.Swapped:
-                _mediator.Publish(new GagStateChanged(NewState.Disabled, data.AffectedLayer, prev, data.Enactor.UID, UserData.UID));
-                _mediator.Publish(new GagStateChanged(NewState.Enabled, data.AffectedLayer, data.NewData, data.Enactor.UID, UserData.UID));
+                _mediator.Publish(new GagStateChanged(NewState.Disabled, data.AffectedLayer, prev, data.Enactor.UID, User.UID));
+                _mediator.Publish(new GagStateChanged(NewState.Enabled, data.AffectedLayer, data.NewData, data.Enactor.UID, User.UID));
                 UpdateCachedLockedSlots();
                 return;
             case DataUpdateType.Applied:
-                _mediator.Publish(new GagStateChanged(NewState.Enabled, data.AffectedLayer, data.NewData, data.Enactor.UID, UserData.UID));
+                _mediator.Publish(new GagStateChanged(NewState.Enabled, data.AffectedLayer, data.NewData, data.Enactor.UID, User.UID));
                 UpdateCachedLockedSlots();
                 return;
             case DataUpdateType.Locked:
-                _mediator.Publish(new GagStateChanged(NewState.Locked, data.AffectedLayer, data.NewData, data.Enactor.UID, UserData.UID));
+                _mediator.Publish(new GagStateChanged(NewState.Locked, data.AffectedLayer, data.NewData, data.Enactor.UID, User.UID));
                 return;
             case DataUpdateType.Unlocked:
-                _mediator.Publish(new GagStateChanged(NewState.Unlocked, data.AffectedLayer, prev, data.Enactor.UID, UserData.UID));
+                _mediator.Publish(new GagStateChanged(NewState.Unlocked, data.AffectedLayer, prev, data.Enactor.UID, User.UID));
                 return;
             case DataUpdateType.Removed:
-                _mediator.Publish(new GagStateChanged(NewState.Disabled, data.AffectedLayer, prev, data.Enactor.UID, UserData.UID));
+                _mediator.Publish(new GagStateChanged(NewState.Disabled, data.AffectedLayer, prev, data.Enactor.UID, User.UID));
                 UpdateCachedLockedSlots();
                 return;
         }
@@ -281,22 +280,22 @@ public class Kinkster : IComparable<Kinkster>
         switch (data.Type)
         {
             case DataUpdateType.Swapped:
-                _mediator.Publish(new RestrictionStateChanged(NewState.Disabled, data.AffectedLayer, prev, data.Enactor.UID, UserData.UID));
-                _mediator.Publish(new RestrictionStateChanged(NewState.Enabled, data.AffectedLayer, data.NewData, data.Enactor.UID, UserData.UID));
+                _mediator.Publish(new RestrictionStateChanged(NewState.Disabled, data.AffectedLayer, prev, data.Enactor.UID, User.UID));
+                _mediator.Publish(new RestrictionStateChanged(NewState.Enabled, data.AffectedLayer, data.NewData, data.Enactor.UID, User.UID));
                 UpdateCachedLockedSlots();
                 return;
             case DataUpdateType.Applied:
-                _mediator.Publish(new RestrictionStateChanged(NewState.Enabled, data.AffectedLayer, data.NewData, data.Enactor.UID, UserData.UID));
+                _mediator.Publish(new RestrictionStateChanged(NewState.Enabled, data.AffectedLayer, data.NewData, data.Enactor.UID, User.UID));
                 UpdateCachedLockedSlots();
                 return;
             case DataUpdateType.Locked:
-                _mediator.Publish(new RestrictionStateChanged(NewState.Locked, data.AffectedLayer, data.NewData, data.Enactor.UID, UserData.UID));
+                _mediator.Publish(new RestrictionStateChanged(NewState.Locked, data.AffectedLayer, data.NewData, data.Enactor.UID, User.UID));
                 return;
             case DataUpdateType.Unlocked:
-                _mediator.Publish(new RestrictionStateChanged(NewState.Unlocked, data.AffectedLayer, prev, data.Enactor.UID, UserData.UID));
+                _mediator.Publish(new RestrictionStateChanged(NewState.Unlocked, data.AffectedLayer, prev, data.Enactor.UID, User.UID));
                 return;
             case DataUpdateType.Removed:
-                _mediator.Publish(new RestrictionStateChanged(NewState.Disabled, data.AffectedLayer, prev, data.Enactor.UID, UserData.UID));
+                _mediator.Publish(new RestrictionStateChanged(NewState.Disabled, data.AffectedLayer, prev, data.Enactor.UID, User.UID));
                 UpdateCachedLockedSlots();
                 return;
         }
@@ -311,22 +310,22 @@ public class Kinkster : IComparable<Kinkster>
         switch (data.Type)
         {
             case DataUpdateType.Swapped:
-                _mediator.Publish(new RestraintStateChanged(NewState.Disabled, prev, data.Enactor.UID, UserData.UID));
-                _mediator.Publish(new RestraintStateChanged(NewState.Enabled, data.NewData, data.Enactor.UID, UserData.UID));
+                _mediator.Publish(new RestraintStateChanged(NewState.Disabled, prev, data.Enactor.UID, User.UID));
+                _mediator.Publish(new RestraintStateChanged(NewState.Enabled, data.NewData, data.Enactor.UID, User.UID));
                 UpdateCachedLockedSlots();
                 break;
             case DataUpdateType.Applied:
-                _mediator.Publish(new RestraintStateChanged(NewState.Enabled, data.NewData, data.Enactor.UID, UserData.UID));
+                _mediator.Publish(new RestraintStateChanged(NewState.Enabled, data.NewData, data.Enactor.UID, User.UID));
                 UpdateCachedLockedSlots();
                 break;
             case DataUpdateType.Locked:
-                _mediator.Publish(new RestraintStateChanged(NewState.Locked, data.NewData, data.Enactor.UID, UserData.UID));
+                _mediator.Publish(new RestraintStateChanged(NewState.Locked, data.NewData, data.Enactor.UID, User.UID));
                 break;
             case DataUpdateType.Unlocked:
-                _mediator.Publish(new RestraintStateChanged(NewState.Unlocked, prev, data.Enactor.UID, UserData.UID));
+                _mediator.Publish(new RestraintStateChanged(NewState.Unlocked, prev, data.Enactor.UID, User.UID));
                 break;
             case DataUpdateType.Removed:
-                _mediator.Publish(new RestraintStateChanged(NewState.Disabled, prev, data.Enactor.UID, UserData.UID));
+                _mediator.Publish(new RestraintStateChanged(NewState.Disabled, prev, data.Enactor.UID, User.UID));
                 UpdateCachedLockedSlots();
                 break;
         }
@@ -509,7 +508,7 @@ public class Kinkster : IComparable<Kinkster>
     {
         var result = new Dictionary<EquipSlot, (EquipItem, string)>();
         // Rewrite this completely. It sucks, and it does nothing with the 2.0 structure.
-        _logger.LogDebug("Updated Locked Slots for " + UserData.UID, LoggerType.PairInfo);
+        _logger.LogDebug("Updated Locked Slots for " + User.UID, LoggerType.PairInfo);
         LockedSlots = result;
     }
 
@@ -517,10 +516,10 @@ public class Kinkster : IComparable<Kinkster>
     // ----- Debuggers -----
     public void DrawRenderDebug()
     {
-        using var node = ImRaii.TreeNode($"Player Info##{UserData.UID}-visible");
+        using var node = ImRaii.TreeNode($"Player Info##{User.UID}-visible");
         if (!node) return;
 
-        using (var t = ImRaii.Table($"##debug-visible{UserData.UID}", 12, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
+        using (var t = ImRaii.Table($"##debug-visible{User.UID}", 12, ImGuiTableFlags.Borders | ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
             if (!t) return;
             ImGui.TableSetupColumn("OwnedObject");

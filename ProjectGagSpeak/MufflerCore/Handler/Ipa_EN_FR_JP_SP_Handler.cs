@@ -6,8 +6,8 @@ using GagSpeak.Services.Configs;
 namespace GagSpeak.MufflerCore.Handler;
 
 /// <summary>
-///     Class to convert English, French, Japanese, and Spanish text to
-///     International Phonetic Alphabet (IPA) notation
+///   Class to convert English, French, Japanese, and Spanish text to
+///   International Phonetic Alphabet (IPA) notation
 /// </summary>
 public class Ipa_EN_FR_JP_SP_Handler
 {
@@ -30,7 +30,7 @@ public class Ipa_EN_FR_JP_SP_Handler
         var data_file = GetDataFilePath();
         try
         {
-            var jsonFilePath = Path.Combine(ConfigFileProvider.AssemblyDirectory, data_file);
+            var jsonFilePath = Path.Combine(GsFiles.AssemblyDirectory, data_file);
             var json = File.ReadAllText(jsonFilePath);
             obj = JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
             _logger.LogInformation($"File read: {data_file}", LoggerType.GarblerCore);
@@ -46,8 +46,8 @@ public class Ipa_EN_FR_JP_SP_Handler
     }
 
     /// <summary>
-    ///     Function for converting an input string to IPA notation. <br />
-    ///     <b>FOR UI DISPLAY PURPOSES, Hince the DASHED SPACE BETWEEN PHONEMES </b>
+    ///   Function for converting an input string to IPA notation. <br />
+    ///   <b>FOR UI DISPLAY PURPOSES, Hince the DASHED SPACE BETWEEN PHONEMES </b>
     /// </summary>
     /// <returns> The input string converted to IPA notation</returns>
     public string ToIPAStringDisplay(string input)
@@ -84,7 +84,7 @@ public class Ipa_EN_FR_JP_SP_Handler
     }
 
     /// <summary>
-    ///     The same as ToIPAStringDisp but shows the next step where its split by dashes
+    ///   The same as ToIPAStringDisp but shows the next step where its split by dashes
     /// </summary>
     public string ToIPAStringSpacedDisplay(string input)
     {
@@ -95,7 +95,7 @@ public class Ipa_EN_FR_JP_SP_Handler
     }
 
     /// <summary>
-    ///     Converts a string to a list corrilating their words to their phonetic symbols.
+    ///   Converts a string to a list corrilating their words to their phonetic symbols.
     /// </summary>
     /// <returns> The list of (word, phonetic symbols, found in lookup) </returns>
     public List<(string Word, List<string> Phonetics, bool Found)> ToIPAList(string input)
@@ -184,7 +184,7 @@ public class Ipa_EN_FR_JP_SP_Handler
     }
 
     /// <summary>
-    ///     Converts a dictionary of words and their phonetic symbols to a string of spaced phonetics
+    ///   Converts a dictionary of words and their phonetic symbols to a string of spaced phonetics
     /// </summary>
     public string ConvertDictionaryToSpacedPhonetics(List<(string Word, List<string> Phonetics, bool Found)> input)
     {
@@ -205,7 +205,7 @@ public class Ipa_EN_FR_JP_SP_Handler
     /// </summary>
     public string GetDataFilePath()
     {
-        switch (_config.Current.LanguageDialect)
+        switch (_config.Data.LanguageDialect)
         {
             case GarbleCoreDialect.UK:
                 return "MufflerCore\\StoredDictionaries\\en_UK.json";
@@ -230,7 +230,7 @@ public class Ipa_EN_FR_JP_SP_Handler
     /// </summary>
     public List<string> GetMasterListBasedOnDialect()
     {
-        switch (_config.Current.LanguageDialect)
+        switch (_config.Data.LanguageDialect)
         {
             case GarbleCoreDialect.UK:
                 return GagPhonetics.MasterListEN_UK;

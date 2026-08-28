@@ -20,7 +20,7 @@ using GagspeakAPI.Data;
 namespace GagSpeak.State.Handlers;
 
 /// <summary>
-///     Handles incoming monitored or manually invoked updates to call respective invocations if valid.
+///   Handles incoming monitored or manually invoked updates to call respective invocations if valid.
 /// </summary>
 public class TriggerHandler : DisposableMediatorSubscriberBase
 {
@@ -54,7 +54,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
 
     #region Handlers
     /// <summary>
-    ///     Processes a game's chat message for trigger detection. This is independant of GagPlates.
+    ///   Processes a game's chat message for trigger detection. This is independant of GagPlates.
     /// </summary>
     private void OnGameChat(InputChannel channel, string senderNameWorld, SeString msg)
     {
@@ -67,7 +67,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
         }
 
         // Otherwise it's a potential Puppeteer Command. Ignore if not valid channel.
-        if (!_config.Current.PuppeteerChannelsBitfield.IsActiveChannel((int)channel))
+        if (!_config.Data.PuppeteerChannelsBitfield.IsActiveChannel((int)channel))
             return;
 
         // Also ignore if we have no valid globals, or if our Puppeteer is not enabled.
@@ -81,7 +81,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
         if (_puppeteer.GetPuppeteerUid(senderNameWorld) is { } matchedUID)
         {
             // Ensure still paired (avoid stalking abuse)
-            if (_kinksters.TryGetKinkster(new(matchedUID), out var k))
+            if (_kinksters.TryGetValue(new(matchedUID), out var k))
             {
                 pairPermissions = k.OwnPerms.PuppetPerms;
                 var pTriggers = k.OwnPerms.TriggerPhrase.Split(',').Select(t => t.TrimStart()).ToList();
@@ -113,17 +113,17 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     A SameThreadMessage from the Mediator fired whenever an emote used by anyone occurs. <para />
-    ///     (Hopefully reduce heavy load on system or something with optimized call logic ;-;)
+    ///   A SameThreadMessage from the Mediator fired whenever an emote used by anyone occurs. <para />
+    ///   (Hopefully reduce heavy load on system or something with optimized call logic ;-;)
     /// </summary>
     private unsafe void OnEmote(uint emoteId, nint callerAddr, nint targetAddr)
     {
         // Caller must be something, (Target can be nothing)
-        if (!CharaObjectWatcher.Rendered.Contains(callerAddr))
+        if (!CharaWatcher.Rendered.Contains(callerAddr))
             return;
 
         // Filter based on the type.
-        var isClientRendered = CharaObjectWatcher.LocalPlayerRendered;
+        var isClientRendered = PlayerData.Available;
         var clientIsCaller = isClientRendered && callerAddr == PlayerData.Address;
         var clientIsTarget = isClientRendered && targetAddr == PlayerData.Address;
 
@@ -146,7 +146,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
 
                 case TriggerDirection.OtherToSelf:
                     // Ensure valid states.
-                    if (!(CharaObjectWatcher.Rendered.Contains(targetAddr) && !clientIsCaller && clientIsTarget))
+                    if (!(CharaWatcher.Rendered.Contains(targetAddr) && !clientIsCaller && clientIsTarget))
                         return false;
                     // If the target was defined, ensure it matches.
                     return !string.IsNullOrEmpty(trigger.PlayerNameWorld)
@@ -155,7 +155,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
 
                 case TriggerDirection.Other:
                     // Ensure valid states.
-                    if (!(CharaObjectWatcher.Rendered.Contains(targetAddr) && !clientIsCaller))
+                    if (!(CharaWatcher.Rendered.Contains(targetAddr) && !clientIsCaller))
                         return false;
                     // If the target was defined, ensure it matches.
                     return !string.IsNullOrEmpty(trigger.PlayerNameWorld)
@@ -164,7 +164,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
 
                 case TriggerDirection.SelfToOther:
                     // Ensure valid states.
-                    if (!(CharaObjectWatcher.Rendered.Contains(targetAddr) && clientIsCaller))
+                    if (!(CharaWatcher.Rendered.Contains(targetAddr) && clientIsCaller))
                         return false;
                     // If the target was defined, ensure it matches.
                     return !string.IsNullOrEmpty(trigger.PlayerNameWorld)
@@ -183,8 +183,9 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
     private unsafe void OnHpTrigger(nint playerAddr, HealthPercentTrigger trigger)
     {
         // Ensure they are visible and rendered
-        if (!CharaObjectWatcher.TryGetValue(playerAddr, out Character* chara))
+        if (!VisibilityWatcher.Rendered.ContainsKey(playerAddr))
             return;
+        var chara = (Character*)playerAddr;
 
         // Get the health triggers scoped down to this person we are monitoring.
         var hpTriggers = _triggers.Storage.OfType<HealthPercentTrigger>()
@@ -241,7 +242,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Called upon by the ActionEffectDetour
+    ///   Called upon by the ActionEffectDetour
     /// </summary>
     public unsafe void OnActionEffectEvent(List<ActionEffectEntry> actionEffects)
     {
@@ -268,7 +269,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     The result of a /dr between two individuals
+    ///   The result of a /dr between two individuals
     /// </summary>
     private void OnSocialGameEnd(string winnerNameWorld, string loserNameWorld)
     {
@@ -316,7 +317,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
     };
 
     /// <summary>
-    ///     Personalized Achievement detection for our own chat messages.
+    ///   Personalized Achievement detection for our own chat messages.
     /// </summary>
     public void ScanOwnChat(InputChannel channel, SeString msg)
     {
@@ -346,7 +347,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Attempt to locate the first valid trigger in a chat message.
+    ///   Attempt to locate the first valid trigger in a chat message.
     /// </summary>
     private string? GetValidTrigger(List<string> triggerPhrases, SeString chatMessage)
     {
@@ -364,7 +365,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Attempts to get if this person was a kinkster, global or per pair.
+    ///   Attempts to get if this person was a kinkster, global or per pair.
     /// </summary>
     private string? GetUidFromNameWorld(string nameWithWorld)
     {
@@ -373,12 +374,12 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
             return puppeteerUid;
         // Otherwise, try to get from current visible.
         foreach (var k in _kinksters.DirectPairs.Where(k => k.IsRendered && string.Equals(k.PlayerNameWorld, nameWithWorld, StringComparison.OrdinalIgnoreCase)))
-            return k.UserData.UID;
+            return k.User.UID;
         return null;
     }
 
     /// <summary>
-    ///     Handles the candidates from a series of selected triggers to identify which should be executed.
+    ///   Handles the candidates from a series of selected triggers to identify which should be executed.
     /// </summary>
     private async void HandleTriggerCandidates<T>(IEnumerable<T> candidates, string? enactor = null) where T : Trigger
     {
@@ -411,7 +412,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
 
 
     /// <summary>
-    ///     Parses out a valid puppeteer message using its context, then runs the associated handle command.
+    ///   Parses out a valid puppeteer message using its context, then runs the associated handle command.
     /// </summary>
     private async void ProcessPuppetMsg(PuppetMsgContext context, SeString msg)
     {

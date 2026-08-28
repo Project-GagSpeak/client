@@ -1,7 +1,7 @@
 namespace GagSpeak.PlayerControl;
 
 /// <summary>
-///     Hardcore Task Manager task stacking.
+///   Hardcore Task Manager task stacking.
 /// </summary>
 public partial class HcTaskManager
 {

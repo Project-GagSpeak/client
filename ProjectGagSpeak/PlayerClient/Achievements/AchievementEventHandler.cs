@@ -11,6 +11,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.User;
 using GagspeakAPI.Util;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
@@ -18,8 +19,8 @@ using Penumbra.GameData.Structs;
 namespace GagSpeak.PlayerClient;
 
 /// <summary>
-///     Controls when Achievement Event calls are being monitored.
-///     Also dictates what to do when they are called.
+///   Controls when Achievement Event calls are being monitored.
+///   Also dictates what to do when they are called.
 /// </summary>
 public class AchievementEventHandler : DisposableMediatorSubscriberBase
 {

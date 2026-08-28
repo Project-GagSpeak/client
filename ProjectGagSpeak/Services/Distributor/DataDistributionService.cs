@@ -2,6 +2,7 @@ using CkCommons;
 using GagSpeak.FileSystems;
 using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
+using GagSpeak.Pairs;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
@@ -11,6 +12,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
+using GagspeakAPI.User;
 using Microsoft.AspNetCore.SignalR;
 
 namespace GagSpeak.Services;
@@ -32,6 +34,8 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
     private readonly PatternManager _patternManager;
     private readonly AlarmManager _alarmManager;
     private readonly TriggerManager _triggerManager;
+    private readonly OnlineKinksterManager _onlineUsers;
+    private readonly KinkPlateService _kinkplates;
 
     private SemaphoreSlim _updateSlim = new SemaphoreSlim(1, 1);
     private readonly HashSet<UserData> _newVisibleKinksters = [];
@@ -51,7 +55,9 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
         PuppeteerManager puppetManager,
         PatternManager patterns,
         AlarmManager alarms,
-        TriggerManager triggers)
+        TriggerManager triggers,
+        OnlineKinksterManager onlineUsers,
+        KinkPlateService kinkplates)
         : base(logger, mediator)
     {
         _hub = hub;
@@ -67,6 +73,8 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
         _patternManager = patterns;
         _alarmManager = alarms;
         _triggerManager = triggers;
+        _onlineUsers = onlineUsers;
+        _kinkplates = kinkplates;
 
         // Achievement Handling
         Mediator.Subscribe<SendAchievementData>(this, (_) => UpdateAchievementData().ConfigureAwait(false));
@@ -76,13 +84,9 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => DelayedFrameworkOnUpdate());
 
         // Kinkster Pair management.
-        Mediator.Subscribe<KinksterOnline>(this, arg =>
-        {
-            if (!MainHub.IsConnectionDataSynced)
-                return;
-            _newOnlineKinksters.Add(arg.Kinkster.UserData);
-        });
-        Mediator.Subscribe<KinksterRendered>(this, msg => _newVisibleKinksters.Add(msg.Kinkster.UserData));
+        _onlineUsers.UserWentOnline += OnKinksterOnline;
+        // Shift this to new the visibility watcher later.
+        Mediator.Subscribe<KinksterRendered>(this, msg => _newVisibleKinksters.Add(msg.User));
 
         // Online Data Updaters
         Mediator.Subscribe<ConnectedMessage>(this, _ =>
@@ -107,6 +111,18 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
     private ActiveRestriction? _prevRestrictionData;
     private CharaActiveRestraint? _prevRestraintData;
     private CharaActiveCollar? _prevCollarData;
+
+    protected override void Dispose(bool disposing)
+    {
+        _onlineUsers.UserWentOnline -= OnKinksterOnline;
+        base.Dispose(disposing);
+    }
+
+    private void OnKinksterOnline(UserData user, string ident)
+    {
+        if (MainHub.IsConnectionDataSynced)
+            _newOnlineKinksters.Add(user);
+    }
 
     private void DelayedFrameworkOnUpdate()
     {
@@ -143,8 +159,8 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Method used for updating all provided visible kinkster's with our loci data. <para />
-    ///     Called whenever a new visible pair enters our render range.
+    ///   Method used for updating all provided visible kinkster's with our loci data. <para />
+    ///   Called whenever a new visible pair enters our render range.
     /// </summary>
     private async Task UpdateVisibleFull(List<UserData> visibleCharas)
     {
@@ -160,8 +176,8 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     This IPC Method should ONLY be sent to the newly visible kinksters, as it is the heaviest weight IPC call. <para />
-    ///     Never generate for _kinksters.GetVisibleConnected() as this will cause a lot of unnecessary data to be sent.
+    ///   This IPC Method should ONLY be sent to the newly visible kinksters, as it is the heaviest weight IPC call. <para />
+    ///   Never generate for _kinksters.GetVisibleConnected() as this will cause a lot of unnecessary data to be sent.
     /// </summary>
     public async Task UserPushLociData(List<UserData> visibleCharas)
     {
@@ -251,11 +267,11 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
         try
         {
             KinkPlateContent currentContent;
-            if (KinkPlateService.KinkPlates.TryGetValue(MainHub.OwnUserData, out var existing))
-                currentContent = existing.Info;
+            if (_kinkplates.Contains(MainHub.OwnUserData) && _kinkplates.GetUserProfile(MainHub.OwnUserData) is { } existingProfile)
+                currentContent = existingProfile.Data;
             else
             {
-                var response = await _hub.UserGetKinkPlate(new KinksterBase(MainHub.OwnUserData));
+                var response = await _hub.GetKinkplate(new UserDto(MainHub.OwnUserData));
                 currentContent = response.Info;
             }
 
@@ -327,7 +343,7 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Manually call to ensure we only invoke when we change our state.
+    ///   Manually call to ensure we only invoke when we change our state.
     /// </summary>
     public async Task PushEnabledItemChanged(EnabledItemChanged arg)
     {

@@ -7,32 +7,33 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
 using GagSpeak.Utils;
-using GagspeakAPI.Data;
+using GagspeakAPI.Chat;
+using GagspeakAPI.Connection;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
+using GagspeakAPI.User;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Hosting;
 using System.Reflection;
 
 namespace GagSpeak.WebAPI;
 /// <summary>
-///     Facilitates interactions with the GagSpeak Hub connection. <para />
-///     To ensure that interactions with vibe lobbies function correctly, <see cref="_hubConnection"/> will be static.
+///   Facilitates interactions with the GagSpeak Hub connection. <para />
+///   To ensure that interactions with vibe lobbies function correctly, <see cref="_hubConnection"/> will be static.
 /// </summary>
 public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubClient, IHostedService
 {
-    public const string MAIN_SERVER_NAME = "GagSpeak Main";
-    public const string MAIN_SERVER_URI = "wss://gagspeak.kinkporium.studio";
-
     private readonly ClientAchievements _achievements;
     private readonly HubFactory _hubFactory;
     private readonly TokenProvider _tokenProvider;
     private readonly MainConfig _config;
     private readonly AccountManager _accounts;
 
+    private readonly GlobalChatLog _globalChat;
     private readonly KinksterManager _kinksters;
     private readonly RequestsManager _requests;
     private readonly CollarManager _collarManager;
+    private readonly PairService _pairService;
 
     private readonly IpcCallerLoci _loci;
 
@@ -66,9 +67,11 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         TokenProvider tokenProvider,
         MainConfig config,
         AccountManager accounts,
+        GlobalChatLog globalChat,
         KinksterManager kinksters,
         RequestsManager requests,
         CollarManager collarManager,
+        PairService pairService,
         IpcCallerLoci loci,
         ClientDataListener clientDatListener,
         CallbackHandler callbackHandler,
@@ -82,9 +85,11 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         _tokenProvider = tokenProvider;
         _config = config;
         _accounts = accounts;
+        _globalChat = globalChat;
         _kinksters = kinksters;
         _requests = requests;
         _collarManager = collarManager;
+        _pairService = pairService;
         _loci = loci;
         _clientDatListener = clientDatListener;
         _callbackHandler = callbackHandler;
@@ -126,7 +131,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     public static string AuthFailureMessage { get; private set; } = string.Empty;
     public static int OnlineUsers => _serverInfo?.OnlineUsers ?? 0;
     public static UserData OwnUserData => ConnectionResponse!.User;
-    public static string DisplayName => ConnectionResponse?.User.AliasOrUID ?? string.Empty;
+    public static string AliasOrUID => ConnectionResponse?.User.AliasOrUID ?? string.Empty;
     public static string UID => ConnectionResponse?.User.UID ?? string.Empty;
     public static UserReputation Reputation => ConnectionResponse?.Reputation ?? new();
     public static HashSet<string> SharehubTags = [];
@@ -210,13 +215,15 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
             return;
 
         Logger.LogDebug("Initializing data", LoggerType.ApiCore);
-        // [ WHEN GET SERVER CALLBACK ] --------> [PERFORM THIS FUNCTION]
         OnServerMessage((sev, msg) => _ = Callback_ServerMessage(sev, msg));
         OnHardReconnectMessage((sev, msg, state) => _ = Callback_HardReconnectMessage(sev, msg, state));
+        OnUserFlaggedForReport((kind, msg) => _ = Callback_UserFlaggedForReport(kind, msg));
+        OnReputationInfo((rep, msg) => _ = Callback_ReputationInfo(rep, msg));
         OnServerInfo(dto => _ = Callback_ServerInfo(dto));
 
-        OnAddClientPair(dto => _ = Callback_AddClientPair(dto));
-        OnRemoveClientPair(dto => _ = Callback_RemoveClientPair(dto));
+        OnAddPair(dto => _ = Callback_AddPair(dto));
+        OnRemovePair(dto => _ = Callback_RemovePair(dto));
+        OnPersistPair(dto => _ = Callback_PersistPair(dto));
         OnAddPairRequest(dto => _ = Callback_AddPairRequest(dto));
         OnRemovePairRequest(dto => _ = Callback_RemovePairRequest(dto));
         OnAddCollarRequest(dto => _ = Callback_AddCollarRequest(dto));
@@ -264,11 +271,12 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         OnKinksterNewAlarmData(dto => _ = Callback_KinksterNewAlarmData(dto));
         OnKinksterNewTriggerData(dto => _ = Callback_KinksterNewTriggerData(dto));
 
-        OnChatMessageGlobal(dto => _ = Callback_ChatMessageGlobal(dto));
-        OnKinksterOffline(dto => _ = Callback_KinksterOffline(dto));
         OnKinksterOnline(dto => _ = Callback_KinksterOnline(dto));
-        OnProfileUpdated(dto => _ = Callback_ProfileUpdated(dto));
+        OnKinksterOffline(dto => _ = Callback_KinksterOffline(dto));
+        OnUserVanityUpdated(dto => _ = Callback_UserVanityUpdated(dto));
+        OnUserProfileUpdated(dto => _ = Callback_UserProfileUpdated(dto));
         OnShowVerification(dto => _ = Callback_ShowVerification(dto));
+        OnChatMessageReceived(dto => _ = Callback_ChatMessageReceived(dto));
 
         OnRoomJoin(dto => _ = Callback_RoomJoin(dto));
         OnRoomLeave(dto => _ = Callback_RoomLeave(dto));
@@ -288,65 +296,96 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         _apiHooksInitialized = true;
     }
 
+    private async Task LoadInitialConnectionData()
+    {
+        // Update the mention regexes for chat.
+        ChatService.UpdateMentionRegex();
+
+        var sw = Stopwatch.StartNew();
+
+        // Gather up our DirectPairs, and then our SanctionPairs,
+        var kinksters = await GetAllKinksterPairs().ConfigureAwait(false);
+        _kinksters.AddKinksters(kinksters);
+        Logger.LogDebug($"Initial Kinksters Loaded: [{string.Join(", ", kinksters.Select(x => x.User.AliasOrUID))}]", LoggerType.ApiCore);
+#if DEBUG
+        Logger.LogInformation($"[Performance] Fetched pairs in {sw.ElapsedMilliseconds}ms");
+        sw.Restart();
+#endif
+
+        var onlineKinksters = await GetOnlineKinksters().ConfigureAwait(false);
+        foreach (var entry in onlineKinksters)
+            _kinksters.MarkKinksterOnline(entry, false);
+        Logger.LogDebug($"Online Kinksters: [{string.Join(", ", onlineKinksters.Select(x => x.User.AliasOrUID))}]", LoggerType.ApiCore);
+#if DEBUG
+        Logger.LogInformation($"[Performance] Retrieved OnlineKinksters in {sw.ElapsedMilliseconds}ms");
+        sw.Restart();
+#endif
+
+        // Gather up all online data (OnlineUsers, PauseStates, ext)
+        var onlineData = await GetOnlineKinksters().ConfigureAwait(false);
+        Logger.LogDebug($"Online Users: [{string.Join(", ", onlineData.Select(x => x.User.AliasOrUID))}]", LoggerType.ApiCore);
+#if DEBUG
+        Logger.LogInformation($"[Performance] Retrieved ConnectionData in {sw.ElapsedMilliseconds}ms");
+        sw.Restart();
+#endif
+
+
+        // retrieve any current kinkster requests.
+        var requests = await GetRequests().ConfigureAwait(false);
+#if DEBUG
+        // Generate some dummy entries.
+        var dummyRequests = new List<KinksterRequest>();
+        for (int i = 0; i < 5; i++)
+        {
+            dummyRequests.Add(new KinksterRequest(new($"Dummy Sender {i}"), OwnUserData, false, "Wawa", DateTime.Now));
+            dummyRequests.Add(new KinksterRequest(OwnUserData, new($"Dummy Recipient {i}"), false, "Wawa", DateTime.Now));
+        }
+        requests.KinksterRequests.AddRange(dummyRequests);
+#endif
+        _requests.AddNewRequests(requests.KinksterRequests);
+        _collarManager.LoadServerRequests(requests.CollarRequests);
+
+        Logger.LogDebug($"Loaded {requests.KinksterRequests.Count} KinksterRequests and {requests.CollarRequests.Count} CollarRequests", LoggerType.ApiCore);
+#if DEBUG
+        Logger.LogInformation($"[Performance] Retrieved Requests in {sw.ElapsedMilliseconds}ms");
+        sw.Restart();
+#endif
+
+    }
+
     public async Task<bool> HealthCheck()
         => await _hubConnection!.InvokeAsync<bool>(nameof(HealthCheck)).ConfigureAwait(false);
+
     public async Task<ConnectionResponse> GetConnectionResponse()
         => await _hubConnection!.InvokeAsync<ConnectionResponse>(nameof(GetConnectionResponse)).ConfigureAwait(false);
+
+    public async Task<List<KinksterPair>> GetAllKinksterPairs()
+        => await _hubConnection!.InvokeAsync<List<KinksterPair>>(nameof(GetAllKinksterPairs)).ConfigureAwait(false);
+
+    public async Task<List<OnlineKinkster>> GetOnlineKinksters()
+        => await _hubConnection!.InvokeAsync<List<OnlineKinkster>>(nameof(GetOnlineKinksters)).ConfigureAwait(false);
+
+    public async Task<ActiveRequests> GetRequests()
+        => await _hubConnection!.InvokeAsync<ActiveRequests>(nameof(GetRequests)).ConfigureAwait(false);
 
     public async Task<LobbyAndHubInfoResponse> GetShareHubAndLobbyInfo()
         => await _hubConnection!.InvokeAsync<LobbyAndHubInfoResponse>(nameof(GetShareHubAndLobbyInfo)).ConfigureAwait(false);
 
-    public async Task<List<OnlineKinkster>> UserGetOnlinePairs()
-        => await _hubConnection!.InvokeAsync<List<OnlineKinkster>>(nameof(UserGetOnlinePairs)).ConfigureAwait(false);
+    public async Task<List<ChatlogMessage>> GetChatHistory(ChatHistoryRequest dto)
+        => await _hubConnection!.InvokeAsync<List<ChatlogMessage>>(nameof(GetChatHistory)).ConfigureAwait(false);
 
-    public async Task<List<KinksterPair>> UserGetPairedClients()
-        => await _hubConnection!.InvokeAsync<List<KinksterPair>>(nameof(UserGetPairedClients)).ConfigureAwait(false);
+    public async Task<KinkPlateFull> GetKinkplate(UserDto dto)
+        => await _hubConnection!.InvokeAsync<KinkPlateFull>(nameof(GetKinkplate), dto).ConfigureAwait(false);
 
-    public async Task<ActiveRequests> UserGetActiveRequests()
-        => await _hubConnection!.InvokeAsync<ActiveRequests>(nameof(UserGetActiveRequests)).ConfigureAwait(false);
-
-    public async Task<KinkPlateFull> UserGetKinkPlate(KinksterBase dto)
-        => await _hubConnection!.InvokeAsync<KinkPlateFull>(nameof(UserGetKinkPlate), dto).ConfigureAwait(false);
-
-    private async Task LoadInitialKinksters()
-    {
-        var kinksters = await UserGetPairedClients().ConfigureAwait(false);
-        _kinksters.AddKinksters(kinksters);
-        Logger.LogDebug($"Initial Kinksters Loaded: [{string.Join(", ", kinksters.Select(x => x.User.AliasOrUID))}]", LoggerType.ApiCore);
-    }
-
-    private async Task LoadOnlineKinksters()
-    {
-        var onlineKinksters = await UserGetOnlinePairs().ConfigureAwait(false);
-        foreach (var entry in onlineKinksters)
-            _kinksters.MarkKinksterOnline(entry, false);
-        Logger.LogDebug($"Online Kinksters: [{string.Join(", ", onlineKinksters.Select(x => x.User.AliasOrUID))}]", LoggerType.ApiCore);
-    }
-
-    private async Task LoadRequests()
-    {
-        // retrieve any current kinkster requests.
-        var requests = await UserGetActiveRequests().ConfigureAwait(false);
-//#if DEBUG
-//        // Generate some dummy entries.
-//        var dummyRequests = new List<KinksterRequest>();
-//        for (int i = 0; i < 5; i++)
-//        {
-//            dummyRequests.Add(new KinksterRequest(new($"Dummy Sender {i}"), OwnUserData, new(false, "Wawa", "Blah Blah"), DateTime.Now));
-//            dummyRequests.Add(new KinksterRequest(OwnUserData, new($"Dummy Recipient {i}"), new(false, "Wawa", "Blah Blah"), DateTime.Now));
-//        }
-//        requests.KinksterRequests.AddRange(dummyRequests);
-//#endif
-        _requests.AddNewRequest(requests.KinksterRequests);
-        _collarManager.LoadServerRequests(requests.CollarRequests);
-    }
+    public async Task<List<KinkPlateFull>> GetKinkplates(UserListDto dto)
+        => await _hubConnection!.InvokeAsync<List<KinkPlateFull>>(nameof(GetKinkplates), dto).ConfigureAwait(false);
 
     /// <summary>
-    ///     Awaits for the player to be present, ensuring that they are 
-    ///     logged in before this fires. <para/>
-    ///     
-    ///     There is a possibility we wont need this anymore with the new system,
-    ///     so attempt it without it once this works!
+    ///   Awaits for the player to be present, ensuring that they are 
+    ///   logged in before this fires. <para/>
+    ///   
+    ///   There is a possibility we wont need this anymore with the new system,
+    ///   so attempt it without it once this works!
     /// </summary>
     private async Task WaitForWhenPlayerIsPresent(CancellationToken token)
     {

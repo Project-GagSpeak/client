@@ -17,7 +17,6 @@ public class WardrobeUI : WindowMediatorSubscriberBase
     private readonly RestrictionsPanel _restrictionsPanel;
     private readonly GagRestrictionsPanel _gagRestrictionsPanel;
     private readonly CollarPanel _collarPanel;
-    private readonly CosmeticService _cosmetics;
     private readonly TutorialService _guides;
     public WardrobeUI(
         ILogger<WardrobeUI> logger,
@@ -26,14 +25,12 @@ public class WardrobeUI : WindowMediatorSubscriberBase
         RestrictionsPanel restrictionsPanel,
         GagRestrictionsPanel gagRestrictionsPanel,
         CollarPanel collarPanel,
-        CosmeticService cosmetics,
         TutorialService guides) : base(logger, mediator, "Wardrobe UI")
     {
         _restraintPanel = restraintPanel;
         _restrictionsPanel = restrictionsPanel;
         _gagRestrictionsPanel = gagRestrictionsPanel;
         _collarPanel = collarPanel;
-        _cosmetics = cosmetics;
         _guides = guides;
 
         // recompile the tab menu, along with its buttons.
@@ -52,33 +49,11 @@ public class WardrobeUI : WindowMediatorSubscriberBase
     public static Vector2 LastSize { get; private set; } = Vector2.Zero;
 
     private WardrobeTabs _tabMenu { get; init; }
-    private bool ThemePushed = false;
 
     public static float SelectedRestrictionH() => ImGui.GetFrameHeight() * 2 + LociIcon.Size.Y + ImGui.GetStyle().ItemSpacing.Y * 2;
     public static float SelectedRestraintH() => ImGui.GetFrameHeight() * 3 + LociIcon.Size.Y + ImGui.GetStyle().ItemSpacing.Y * 3;
     public static float SelectedOtherH() => ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemSpacing.Y * 2;
     private static float RightLength() => 7 * ImGui.GetFrameHeightWithSpacing() + (SelectedRestraintH() / 1.2f);
-
-    protected override void PreDrawInternal()
-    {
-        if (!ThemePushed)
-        {
-            ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(4));
-            ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .403f));
-            ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.579f, 0.170f, 0.359f, 0.428f));
-            ThemePushed = true;
-        }
-    }
-
-    protected override void PostDrawInternal()
-    {
-        if (ThemePushed)
-        {
-            ImGui.PopStyleVar();
-            ImGui.PopStyleColor(2);
-            ThemePushed = false;
-        }
-    }
 
     protected override void DrawInternal()
     {

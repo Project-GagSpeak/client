@@ -2,27 +2,32 @@
 using CkCommons;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagspeakAPI.Network;
+using GagSpeak.Utils;
+using GagspeakAPI.Connection;
 
 namespace GagSpeak.PlayerClient;
 
 /// <summary> 
-///     Config Management for all Server related configs in one, including
-///     helper methods to make interfacing with config data easier.
+///   Config Management for all Server related configs in one, including
+///   helper methods to make interfacing with config data easier.
 /// </summary>
 public class AccountManager
 {
     private readonly ILogger<AccountManager> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly AccountConfig _config;
-    private readonly ConfigFileProvider _fileProvider;
+    private readonly MainConfig _mainConfig;
+    private readonly ConnectionsConfig _connections;
+    private readonly GsFiles _fileProvider;
 
     public AccountManager(ILogger<AccountManager> logger, GagspeakMediator mediator,
-        AccountConfig config, ConfigFileProvider files)
+        AccountConfig config, MainConfig mainConfig, ConnectionsConfig connections, GsFiles files)
     {
         _logger = logger;
         _mediator = mediator;
         _config = config;
+        _mainConfig = mainConfig;
+        _connections = connections;
         _fileProvider = files;
     }
 
@@ -31,14 +36,6 @@ public class AccountManager
     // Avoid calling this wherever possible maybe?
     public void Save()
         => _config.Save();
-
-    public void UpdateFileProviderForConnection(ConnectionResponse response)
-    {
-        _logger.LogDebug($"Setting FileProvider ProfileUID to {response.User.UID}");
-        var isProfileDifferent = _fileProvider.CurrentUserUID != response.User.UID;
-        _fileProvider.UpdateConfigs(response.User.UID);
-    }
-
     /// <summary>
     /// Determines whether any profiles are currently available.
     /// </summary>
@@ -47,26 +44,26 @@ public class AccountManager
         => Profiles.Count != 0;
 
     /// <summary>
-    ///     Determines whether the current instance has at least one profile with a valid connection.
+    ///   Determines whether the current instance has at least one profile with a valid connection.
     /// </summary>
     public bool HasValidProfile()
         => Profiles.Count != 0 && Profiles.Any(p => p.HadValidConnection);
 
     /// <summary>
-    ///     If the character has an entry in the profiles dictionary.
+    ///   If the character has an entry in the profiles dictionary.
     /// </summary>
     public bool CharaIsTracked()
         => _config.Current.Profiles.ContainsKey(PlayerData.CID);
 
     /// <summary>
-    ///     If the character has a profile entry with a 
-    ///     valid secret key of 64 characters.
+    ///   If the character has a profile entry with a 
+    ///   valid secret key of 64 characters.
     /// </summary>
     public bool CharaIsAttached()
         => _config.Current.Profiles.TryGetValue(PlayerData.CID, out var a) && a.Key.Length is 64;
 
     /// <summary>
-    ///     Determines whether the current player has a valid profile with a successful connection.
+    ///   Determines whether the current player has a valid profile with a successful connection.
     /// </summary>
     public bool CharaHasValidProfile()
         => _config.Current.Profiles.TryGetValue(PlayerData.CID, out var p) && p.HadValidConnection;
@@ -118,7 +115,7 @@ public class AccountManager
     }
 
     /// <summary>
-    ///     Creates and adds a new account profile for the current player.
+    ///   Creates and adds a new account profile for the current player.
     /// </summary>
     /// <remarks>This method generates a new profile using the current player's name, home world, and
     /// content ID. If a profile with the same content ID already exists, the method does not overwrite it and
@@ -166,7 +163,7 @@ public class AccountManager
     }
 
     /// <summary> 
-    ///     Updates the authentication.
+    ///   Updates the authentication.
     /// </summary>
     public void UpdateAuthentication(string secretKey, ConnectionResponse response)
     {

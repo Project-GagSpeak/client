@@ -1,9 +1,9 @@
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data;
 using GagspeakAPI.Dto.VibeRoom;
 using GagspeakAPI.Network;
+using GagspeakAPI.User;
 
 namespace GagSpeak.State.Managers;
 
@@ -157,7 +157,7 @@ public class VibeLobbyManager : DisposableMediatorSubscriberBase
 
     public RoomParticipant GetOwnParticipantInfo()
     {
-        return new RoomParticipant(MainHub.OwnUserData, _config.Current.NicknameInVibeRooms)
+        return new RoomParticipant(MainHub.OwnUserData, _config.Data.NicknameInVibeRooms)
         {
             AllowedUids = new List<string>(),
             Devices = _clientToys.InteractableToys.Select(toy => toy.ToToyInfo()).ToList()

@@ -90,15 +90,8 @@ public partial class DebugStorageUI : WindowMediatorSubscriberBase
         _requestsDDS = requestsDDS;
 
         IsOpen = false;
-
         this.SetBoundaries(new(380, 400), ImGui.GetIO().DisplaySize);
     }
-
-    protected override void PreDrawInternal()
-    { }
-
-    protected override void PostDrawInternal()
-    { }
 
     protected override void DrawInternal()
     {
@@ -419,7 +412,7 @@ public partial class DebugStorageUI : WindowMediatorSubscriberBase
         if (!ImGui.CollapsingHeader("Puppeteers Storage"))
             return;
 
-        CkGui.ColorText("Puppeteers:", GsCol.VibrantPink.Vec4Ref());
+        CkGui.ColorText("Puppeteers:", GsCol.VibrantPink.Vec4());
         using (ImRaii.Table("puppeteers", 7, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit))
         {
             ImGuiUtil.DrawTableColumn("UID");

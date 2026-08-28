@@ -22,7 +22,7 @@ public class SidePanelTabs : IconTabBar<SidePanelTabs.SelectedTab>
         get => base.TabSelection;
         set
         {
-            _config.Current.PairPanelTab = value;
+            _config.Data.PairPanelTab = value;
             _config.Save();
             base.TabSelection = value;
         }

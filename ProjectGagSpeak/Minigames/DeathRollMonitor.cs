@@ -1,5 +1,4 @@
 using CkCommons;
-using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using GagSpeak.Services.Mediator;
 using System.Text.RegularExpressions;
@@ -7,7 +6,7 @@ using System.Text.RegularExpressions;
 namespace GagSpeak.Minigames.Watchers;
 
 /// <summary>
-///     Monitors the chatlogs for deathroll messages sent to the chat.
+///   Monitors the chatlogs for deathroll messages sent to the chat.
 /// </summary>
 public sealed class DeathRollMonitor : DisposableMediatorSubscriberBase
 {
@@ -36,7 +35,7 @@ public sealed class DeathRollMonitor : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Handles the deathrolls that never reach the LogMessage event (ex /dice)
+    ///   Handles the deathrolls that never reach the LogMessage event (ex /dice)
     /// </summary>
     private void OnDeathrollDiceMessage(string nameWithWorld, SeString msg)
     {

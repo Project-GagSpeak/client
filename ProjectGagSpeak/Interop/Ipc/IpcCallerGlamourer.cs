@@ -4,8 +4,8 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using Glamourer.Api.Enums;
-using Glamourer.Api.Helpers;
 using Glamourer.Api.IpcSubscribers;
+using Luna;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
 
@@ -101,7 +101,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
     }
 
     /// <summary>
-    ///     Enforces the Clients Metadata bondage state.
+    ///   Enforces the Clients Metadata bondage state.
     /// </summary>
     public async Task SetMetaStates(MetaFlag metaTypes, bool newValue)
     {
@@ -119,7 +119,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
     }
 
     /// <summary>
-    ///     Applies any restrained customizations to the client's state.
+    ///   Applies any restrained customizations to the client's state.
     /// </summary>
     public async Task SetClientCustomize(JToken customizations, JToken parameters)
     {

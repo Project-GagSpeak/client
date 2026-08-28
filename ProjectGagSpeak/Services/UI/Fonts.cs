@@ -1,59 +1,49 @@
+using Dalamud;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
+using Dalamud.Interface.GameFonts;
 using Dalamud.Interface.ManagedFontAtlas;
 
 namespace GagSpeak.Services;
 
 /// <summary>
-///     Manages GagSpeaks custom fonts during plugin lifetime. <para />
-///     Should probably look at chat2 to see how to handle
-///     pointers for fonts and various font scales better at some point.
+///   Manages GagSpeaks custom fonts during plugin lifetime. <para />
+///   Should probably look at chat2 to see how to handle
+///   pointers for fonts and various font scales better at some point.
 /// </summary>
 public static class Fonts
 {
-    public const int FULLSCREEN_FONT_SIZE = 300;
-    public static IFontHandle FullscreenFont { get; private set; }
-    public static ImFontPtr FullscreenFontPtr { get; private set; }
+    public static IFontHandle IconFont => Svc.PluginInterface.UiBuilder.IconFontHandle;
+    public static IFontHandle IconFramedFont => Svc.PluginInterface.UiBuilder.IconFontFixedWidthHandle;
+
+    public static IFontHandle TitleFont { get; private set; }
+    public static IFontHandle SubtitleFont { get; private set; }
+    public static IFontHandle HeaderFont { get; private set; }
+    public static IFontHandle GameFont { get; private set; }
 
     // Gs-Related Fonts.
-    public static IFontHandle GagspeakFont { get; private set; }
-    public static IFontHandle GagspeakLabelFont { get; private set; }
     public static IFontHandle GagspeakTitleFont { get; private set; }
+    public static IFontHandle GagspeakFont { get; private set; }
 
-    // Normal Fonts
-    public static IFontHandle IconFont => Svc.PluginInterface.UiBuilder.IconFontFixedWidthHandle;
-    public static IFontHandle UidFont { get; private set; }
-    public static IFontHandle Default150Percent { get; private set; }
-    public static ImFontPtr Default150PercentPtr { get; private set; }
+    // Fonts for Hypno and pointer storage.
+    public static IFontHandle HypnoFont { get; private set; }
+    public static ImFontPtr HypnoFontPtr { get; private set; }
+
+    // Scaled default game font.
+    public static IFontHandle DefaultScaled { get; private set; }
+    public static ImFontPtr DefaultScaledPtr { get; private set; }
 
     /// <summary>
-    ///     Helper task to initialize GagSpeak's fonts.
+    ///   Helper task to initialize GagSpeak's fonts.
     /// </summary>
     public static async Task InitializeFonts()
     {
-        // Attempt the large font first.
-        FullscreenFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
-        {
-            tk.OnPreBuild(prebuild =>
-            {
-                FullscreenFontPtr = prebuild.AddDalamudAssetFont(Dalamud.DalamudAsset.InconsolataRegular, new() { SizePx = 300 });
-            });
-        });
-
-        // grab the file locat ion of the GagSpeak Font.
+        // Unique GagSpeak Font:
         var gsFontFileLoc = Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName!, "Assets", "DoulosSIL-Regular.ttf");
         if (File.Exists(gsFontFileLoc))
         {
-            // get the glyph ranges
             var glyphRanges = GetGlyphRanges();
-
-            // Assign the IFontHandltk.
             GagspeakFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
-            {
-                tk.OnPreBuild(e => e.AddFontFromFile(gsFontFileLoc, new SafeFontConfig { SizePx = 22, GlyphRanges = glyphRanges }));
-            });
-
-            GagspeakLabelFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
             {
                 tk.OnPreBuild(e => e.AddFontFromFile(gsFontFileLoc, new SafeFontConfig { SizePx = 36, GlyphRanges = glyphRanges }));
             });
@@ -64,40 +54,69 @@ public static class Fonts
             });
         }
 
-        // Now for UID and 150% default.
-        UidFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
+        TitleFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
         {
-            tk.OnPreBuild(tk => tk.AddDalamudAssetFont(Dalamud.DalamudAsset.NotoSansCjkMedium, new() { SizePx = 35 }));
+            tk.OnPreBuild(tk => tk.AddDalamudAssetFont(DalamudAsset.NotoSansCjkMedium, new() { SizePx = 45 }));
         });
 
-        Default150Percent = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
+        SubtitleFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
         {
-            tk.OnPreBuild(prebuild =>
+            tk.OnPreBuild(tk => tk.AddDalamudAssetFont(DalamudAsset.NotoSansCjkMedium, new() { SizePx = 35 }));
+        });
+
+        HeaderFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
+        {
+            tk.OnPreBuild(tk => tk.AddDalamudAssetFont(DalamudAsset.NotoSansCjkMedium, new() { SizePx = 23 }));
+        });
+
+        GameFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewGameFontHandle(new(GameFontFamilyAndSize.Axis12));
+
+        // Perform the ones with the pointers last.
+        DefaultScaled = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
+        {
+            tk.OnPreBuild(tk =>
             {
-                Default150PercentPtr = prebuild.AddDalamudDefaultFont(UiBuilder.DefaultFontSizePx * 1.5f);
+                DefaultScaledPtr = tk.AddDalamudDefaultFont(UiBuilder.DefaultFontSizePx * 1.5f);
+            });
+        });
+
+        HypnoFont = Svc.PluginInterface.UiBuilder.FontAtlas.NewDelegateFontHandle(tk =>
+        {
+            tk.OnPreBuild(tk => 
+            {
+                HypnoFontPtr = tk.AddDalamudAssetFont(DalamudAsset.InconsolataRegular, new() { SizePx = 300 });
             });
         });
 
         // Wait for them to be valid.
-        await UidFont.WaitAsync().ConfigureAwait(false);
-        await Default150Percent.WaitAsync().ConfigureAwait(false);
+        await TitleFont.WaitAsync().ConfigureAwait(false);
+        await SubtitleFont.WaitAsync().ConfigureAwait(false);
+        await HeaderFont.WaitAsync().ConfigureAwait(false);
+        await GameFont.WaitAsync().ConfigureAwait(false);
+        await DefaultScaled.WaitAsync().ConfigureAwait(false);
+        // GS fonts.
         await GagspeakFont.WaitAsync().ConfigureAwait(false);
-        await GagspeakLabelFont.WaitAsync().ConfigureAwait(false);
         await GagspeakTitleFont.WaitAsync().ConfigureAwait(false);
-        await FullscreenFont.WaitAsync().ConfigureAwait(false);
-        await Svc.PluginInterface.UiBuilder.FontAtlas.BuildFontsAsync().ConfigureAwait(false);
-        Svc.Logger.Information("Fonts: Initialized Nessisary fonts.");
+        // This one will take the longest to load by far.
+        await HypnoFont.WaitAsync().ConfigureAwait(false);
+        // Do not build fonts, this will make them all trigger twice which is twice as resource intensive.
+        Svc.Logger.Information("Fonts: Initialized Necessary fonts.");
     }
 
     public static void Dispose()
     {
         Svc.Logger.Information("Disposing Fonts.");
+        // Base
+        TitleFont?.Dispose();
+        SubtitleFont?.Dispose();
+        HeaderFont?.Dispose();
+        GameFont?.Dispose();
+        DefaultScaled?.Dispose();
+        // GS
         GagspeakFont?.Dispose();
-        GagspeakLabelFont?.Dispose();
         GagspeakTitleFont?.Dispose();
-        UidFont?.Dispose();
-        Default150Percent?.Dispose();
-        FullscreenFont?.Dispose();
+        // Hypno
+        HypnoFont?.Dispose();
     }
 
     private static ushort[] GetGlyphRanges() // Used for the GagSpeak custom Font Service to be injected properly.

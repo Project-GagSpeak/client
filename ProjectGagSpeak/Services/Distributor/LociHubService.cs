@@ -6,9 +6,9 @@ using GagSpeak.Interop.Helpers;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Connection;
 using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
-using GagspeakAPI.Network;
 
 namespace GagSpeak.Services;
 

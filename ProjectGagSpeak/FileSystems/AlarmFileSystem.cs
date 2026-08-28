@@ -23,10 +23,11 @@ public sealed class AlarmFileSystem : CkFileSystem<Alarm>, IMediatorSubscriber, 
         _manager = manager;
         _hybridSaver = saver;
 
+        Reload();
+
         Mediator.Subscribe<ConfigAlarmChanged>(this, (msg) => OnAlarmChange(msg.Type, msg.Item, msg.OldString));
         Mediator.Subscribe<ReloadFileSystem>(this, (msg) => { if (msg.Module is GSModule.Alarm) Reload(); });
         Changed += OnChange;
-        Reload();
     }
 
     private void Reload()
@@ -115,14 +116,11 @@ public sealed class AlarmFileSystem : CkFileSystem<Alarm>, IMediatorSubscriber, 
 
     // HybridSavable
     public int ConfigVersion => 0;
+    public int MaxBackups => 2;
     public HybridSaveType SaveType => HybridSaveType.StreamWrite;
-    public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
-        => (isAccountUnique = false, files.CKFS_Alarms).Item2;
-
-    public string JsonSerialize() 
-        => throw new NotImplementedException();
-
+    public DateTime LastWriteTimeUTC => DateTime.MinValue;
+    public string ToFilePath(GsFiles files) => files.CKFS_Alarms;
+    public string JsonSerialize() => throw new NotImplementedException();
     public void WriteToStream(StreamWriter writer) 
         => SaveToFile(writer, SaveAlarm, true);
 }

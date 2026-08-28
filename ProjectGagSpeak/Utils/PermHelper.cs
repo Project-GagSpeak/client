@@ -5,24 +5,24 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.PlayerClient;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
-using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
+using GagspeakAPI.User;
 using GagspeakAPI.Util;
 using OtterGui;
 
 namespace GagSpeak.Utils;
 
 /// <summary>
-///     WARNING: This class can bypass any special permissions that need to happen on value change, 
-///     be sure to account for these, or else it will become problematic.
-///     
-///     This classes primary purpose is for the UI to display updated values before recieving the callback, and processing the callback after it gets it
-///     to handle any achievement tracking or handlers.
-///     
-///     Either find a way to handle the callbacks automatically based on their changed state, or setup callbacks to never callback to the caller 
-///     that made the change and process internally. Either way, do this AFTER the update, as it mostly saves on server cost for interactions.
+///   WARNING: This class can bypass any special permissions that need to happen on value change, 
+///   be sure to account for these, or else it will become problematic.
+///   
+///   This classes primary purpose is for the UI to display updated values before recieving the callback, and processing the callback after it gets it
+///   to handle any achievement tracking or handlers.
+///   
+///   Either find a way to handle the callbacks automatically based on their changed state, or setup callbacks to never callback to the caller 
+///   that made the change and process internally. Either way, do this AFTER the update, as it mostly saves on server cost for interactions.
 /// </summary>
 public static class PermHelper
 {
@@ -44,9 +44,9 @@ public static class PermHelper
         };
 
     /// <summary>
-    ///     Updates a client's own global permission client-side.
-    ///     After the client-side change is made, it requests the change serverside.
-    ///     If any error occurs from the server-call, the value is reverted to its state before the change.
+    ///   Updates a client's own global permission client-side.
+    ///   After the client-side change is made, it requests the change serverside.
+    ///   If any error occurs from the server-call, the value is reverted to its state before the change.
     /// </summary>
     public static async Task<bool> ChangeOwnGlobal(MainHub hub, GlobalPerms ownGlobals, string propertyName, object newValue)
     {
@@ -90,9 +90,9 @@ public static class PermHelper
     }
 
     /// <summary>
-    ///     Updates a client's own PairPermission for a defined <paramref name="target"/> Kinkster client-side.
-    ///     After the client-side change is made, it requests the change serverside.
-    ///     If any error occurs from the server-call, the value is reverted to its state before the change.
+    ///   Updates a client's own PairPermission for a defined <paramref name="target"/> Kinkster client-side.
+    ///   After the client-side change is made, it requests the change serverside.
+    ///   If any error occurs from the server-call, the value is reverted to its state before the change.
     /// </summary>
     public static async Task<bool> ChangeOwnUnique(MainHub hub, UserData target, PairPerms perms, string propertyName, object newValue)
     {
@@ -131,9 +131,9 @@ public static class PermHelper
     }
 
     /// <summary>
-    ///     Updates a client's own PairPermAccess for a defined <paramref name="target"/> Kinkster client-side.
-    ///     After the client-side change is made, it requests the change serverside.
-    ///     If any error occurs from the server-call, the value is reverted to its state before the change.
+    ///   Updates a client's own PairPermAccess for a defined <paramref name="target"/> Kinkster client-side.
+    ///   After the client-side change is made, it requests the change serverside.
+    ///   If any error occurs from the server-call, the value is reverted to its state before the change.
     /// </summary>
     public static async Task<bool> ChangeOwnAccess(MainHub hub, UserData target, PairPermAccess perms, string propertyName, object newValue)
     {
@@ -173,9 +173,9 @@ public static class PermHelper
 
 
     /// <summary>
-    ///     Changes one of the client's Kinkster pair <paramref name="target"/>'s GlobalPerms, if permissions allow.
-    ///     This is initially changed client-side, and then a request for the change is sent to the server.
-    ///     If any error occurs from the server-call, the value is reverted to its state before the change.
+    ///   Changes one of the client's Kinkster pair <paramref name="target"/>'s GlobalPerms, if permissions allow.
+    ///   This is initially changed client-side, and then a request for the change is sent to the server.
+    ///   If any error occurs from the server-call, the value is reverted to its state before the change.
     /// </summary>
     public static async Task<bool> ChangeOtherGlobal(MainHub hub, UserData target, GlobalPerms perms, string propertyName, object newValue)
     {
@@ -213,9 +213,9 @@ public static class PermHelper
     }
 
     /// <summary>
-    ///     Changes one of the client's Kinkster pair <paramref name="target"/>'s PairPerms, if permissions allow.
-    ///     This is initially changed client-side, and then a request for the change is sent to the server.
-    ///     If any error occurs from the server-call, the value is reverted to its state before the change.
+    ///   Changes one of the client's Kinkster pair <paramref name="target"/>'s PairPerms, if permissions allow.
+    ///   This is initially changed client-side, and then a request for the change is sent to the server.
+    ///   If any error occurs from the server-call, the value is reverted to its state before the change.
     /// </summary>
     public static async Task<bool> ChangeOtherUnique(MainHub hub, UserData target, PairPerms perms, string propertyName, object newValue)
     {

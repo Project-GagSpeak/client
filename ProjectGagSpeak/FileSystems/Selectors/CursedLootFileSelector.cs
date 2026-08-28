@@ -129,7 +129,7 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
             ImUtf8.SameLineInner();
             using (ImRaii.Group())
             {
-                Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.CursedLoot, leaf.Value.Identifier, false);
+                Icons.DrawFavoriteStar(_favorites, FavoriteType.CursedLoot, leaf.Value.Identifier, false);
                 keyElementHovered |= ImGui.IsItemHovered();
                 CkGui.TextInline(leaf.Value.Label);
 
@@ -150,7 +150,7 @@ public sealed class CursedLootFileSelector : CkFileSystemSelector<CursedItem, Cu
             ImUtf8.SameLineInner();
             using (ImRaii.Group())
             {
-                if (Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.CursedLoot, leaf.Value.Identifier, false))
+                if (Icons.DrawFavoriteStar(_favorites, FavoriteType.CursedLoot, leaf.Value.Identifier, false))
                     SetFilterDirty();
                 keyElementHovered = ImGui.IsItemHovered();
                 CkGui.TextInline(leaf.Value.Label);

@@ -17,7 +17,7 @@ namespace GagSpeak;
 // And the difference is neglegable and its basically implied to make them static with the PluginService attribute.
 
 /// <summary>
-///     A collection of internally handled Dalamud Interface static services
+///   A collection of internally handled Dalamud Interface static services
 /// </summary>
 [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Local")]
 public class Svc
@@ -60,8 +60,8 @@ public class Svc
 }
 
 /// <summary>
-///     Static container to help deal with penumbra.gamedata accessor hell, and simplify item resolving.
-///     Because I want to sometimes curl up and cry resolving it normally.
+///   Static container to help deal with penumbra.gamedata accessor hell, and simplify item resolving.
+///   Because I want to sometimes curl up and cry resolving it normally.
 /// </summary>
 public static class ItemSvc
 {

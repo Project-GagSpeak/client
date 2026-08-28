@@ -8,7 +8,7 @@ using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Hub;
-using GagspeakAPI.Network;
+using GagspeakAPI.User;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.MainWindow;
@@ -31,7 +31,7 @@ public partial class SidePanelPair
 
             UiService.SetUITask(async () =>
             {
-                if (await PermHelper.ChangeOwnUnique(_hub, k.UserData, k.OwnPerms, nameof(PairPerms.PiShockShareCode), refCode))
+                if (await PermHelper.ChangeOwnUnique(_hub, k.User, k.OwnPerms, nameof(PairPerms.PiShockShareCode), refCode))
                     await SyncAllPairsAsync(k, refCode);
             });
         }
@@ -82,18 +82,18 @@ public partial class SidePanelPair
         if (shockers.Count > 0)
         {
             ImGui.Spacing();
-            var currentId = _shockies.GetPairShockerId(k.UserData.UID);
+            var currentId = _shockies.GetPairShockerId(k.User.UID);
             var currentName = shockers.FirstOrDefault(s => s.Id == currentId).Name ?? "Select Device...";
 
             ImGui.SetNextItemWidth(width);
-            using (var combo = ImRaii.Combo("##Dev_" + k.UserData.UID, currentName))
+            using (var combo = ImRaii.Combo("##Dev_" + k.User.UID, currentName))
             {
                 if (combo)
                 {
                     foreach (var (id, name) in shockers)
                     {
                         if (ImGui.Selectable(name, id == currentId))
-                            _shockies.SetPairShockerId(k.UserData.UID, id);
+                            _shockies.SetPairShockerId(k.User.UID, id);
                     }
                 }
             }
@@ -161,7 +161,7 @@ public partial class SidePanelPair
         await SyncPermissionsWithCode(codeForCurrent, currentK);
         foreach (var k in _kinksters.DirectPairs)
         {
-            if (k.UserData.UID == currentK.UserData.UID) continue;
+            if (k.User.UID == currentK.User.UID) continue;
             var code = k.OwnPerms.PiShockShareCode;
             if (!string.IsNullOrEmpty(code))
                 await SyncPermissionsWithCode(code, k);
@@ -180,17 +180,17 @@ public partial class SidePanelPair
             MaxDuration = newShockPerms.MaxDuration,
             MaxIntensity = newShockPerms.MaxIntensity
         };
-        await _hub.UserBulkChangeUnique(new(k.UserData, newPerms, k.OwnPermAccess, UpdateDir.Own, MainHub.OwnUserData));
+        await _hub.UserBulkChangeUnique(new(k.User, newPerms, k.OwnPermAccess, UpdateDir.Own, MainHub.OwnUserData));
     }
 
     private void ShockAct(KinksterInfoCache cache, Kinkster k, string dispName, float width, TimeSpan maxDuration)
     {
         var maxIntensity = k.PairPerms.MaxIntensity;
         ImGui.SetNextItemWidth(width);
-        ImGui.SliderInt($"##SCI-{k.UserData.UID}", ref cache.ApplyIntensity, 0, maxIntensity, " % d%%", ImGuiSliderFlags.None);
+        ImGui.SliderInt($"##SCI-{k.User.UID}", ref cache.ApplyIntensity, 0, maxIntensity, " % d%%", ImGuiSliderFlags.None);
 
         ImGui.SetNextItemWidth(width - CkGui.IconTextButtonSize(FAI.BoltLightning, "Shock") - ImGui.GetStyle().ItemInnerSpacing.X);
-        ImGui.SliderFloat($"##SCD-{k.UserData.UID}", ref cache.ApplyDuration, 0.1f, (float)maxDuration.TotalSeconds, "%.1fs", ImGuiSliderFlags.None);
+        ImGui.SliderFloat($"##SCD-{k.User.UID}", ref cache.ApplyDuration, 0.1f, (float)maxDuration.TotalSeconds, "%.1fs", ImGuiSliderFlags.None);
 
         ImUtf8.SameLineInner();
         if (CkGui.IconTextButton(FAI.BoltLightning, "Send Shock", disabled: cache.ApplyDuration <= 0))
@@ -199,7 +199,7 @@ public partial class SidePanelPair
             _logger.LogDebug($"Sending Shock with duration: {durationMs}ms");
             UiService.SetUITask(async () =>
             {
-                var res = await _hub.UserShockKinkster(new(k.UserData, 0, cache.ApplyIntensity, durationMs));
+                var res = await _hub.UserShockKinkster(new(k.User, 0, cache.ApplyIntensity, durationMs));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                 {
                     _logger.LogDebug($"Failed to send Shock to {dispName}'s Shock Collar. ({res})", LoggerType.StickyUI);
@@ -214,10 +214,10 @@ public partial class SidePanelPair
     private void VibeAct(KinksterInfoCache cache, Kinkster k, string dispName, float width, TimeSpan maxDuration)
     {
         ImGui.SetNextItemWidth(width);
-        ImGui.SliderInt($"##ISR-{k.UserData.UID}", ref cache.ApplyVibeIntensity, 0, 100, "%d%%", ImGuiSliderFlags.None);
+        ImGui.SliderInt($"##ISR-{k.User.UID}", ref cache.ApplyVibeIntensity, 0, 100, "%d%%", ImGuiSliderFlags.None);
 
         ImGui.SetNextItemWidth(width - CkGui.IconTextButtonSize(FAI.HeartCircleBolt, "Vibrate") - ImGui.GetStyle().ItemInnerSpacing.X);
-        ImGui.SliderFloat($"##DSR-{k.UserData.UID}", ref cache.ApplyVibeDur, 0.0f, (float)maxDuration.TotalSeconds, "%.1fs", ImGuiSliderFlags.None);
+        ImGui.SliderFloat($"##DSR-{k.User.UID}", ref cache.ApplyVibeDur, 0.0f, (float)maxDuration.TotalSeconds, "%.1fs", ImGuiSliderFlags.None);
 
         ImUtf8.SameLineInner();
         if (CkGui.IconTextButton(FAI.HeartCircleBolt, "Send Vibration", disabled: cache.ApplyVibeDur <= 0))
@@ -226,7 +226,7 @@ public partial class SidePanelPair
             _logger.LogDebug($"Sending Vibration with duration: {durationMs}ms");
             UiService.SetUITask(async () =>
             {
-                var res = await _hub.UserShockKinkster(new(k.UserData, 1, cache.ApplyVibeIntensity, durationMs));
+                var res = await _hub.UserShockKinkster(new(k.User, 1, cache.ApplyVibeIntensity, durationMs));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                     _logger.LogDebug($"Failed to send Vibration to {dispName}'s Shock Collar. ({res})", LoggerType.StickyUI);
                 else
@@ -239,7 +239,7 @@ public partial class SidePanelPair
     {
         var max = (float)maxDuration.TotalSeconds;
         ImGui.SetNextItemWidth(width - CkGui.IconTextButtonSize(FAI.LandMineOn, "Beep") - ImGui.GetStyle().ItemInnerSpacing.X);
-        ImGui.SliderFloat("##DurationSliderRef" + k.UserData.UID, ref cache.ApplyVibeDur, 0.1f, max, "%.1fs", ImGuiSliderFlags.None);
+        ImGui.SliderFloat("##DurationSliderRef" + k.User.UID, ref cache.ApplyVibeDur, 0.1f, max, "%.1fs", ImGuiSliderFlags.None);
 
         ImUtf8.SameLineInner();
         if (CkGui.IconTextButton(FAI.LandMineOn, "Send Beep", disabled: cache.ApplyVibeDur <= 0))
@@ -248,7 +248,7 @@ public partial class SidePanelPair
             _logger.LogDebug($"Sending Beep for: {durationMs}ms");
             UiService.SetUITask(async () =>
             {
-                var res = await _hub.UserShockKinkster(new ShockCollarAction(k.UserData, 2, 0, durationMs));
+                var res = await _hub.UserShockKinkster(new ShockCollarAction(k.User, 2, 0, durationMs));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                     _logger.LogDebug($"Failed to send Beep to {dispName}'s Shock Collar. ({res})", LoggerType.StickyUI);
                 else

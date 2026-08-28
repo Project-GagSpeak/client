@@ -51,7 +51,7 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
 
         Log.LogInformation($"Locking with a final time of {finalTime} for {SelectedLock.ToName()} which is a timespan of {finalTime - DateTimeOffset.UtcNow} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
 
-        var newData = new PushKinksterActiveGagSlot(_ref.UserData, DataUpdateType.Locked)
+        var newData = new PushKinksterActiveGagSlot(_ref.User, DataUpdateType.Locked)
         {
             Layer = layerIdx,
             Padlock = SelectedLock,
@@ -82,7 +82,7 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
             return;
         }
 
-        var dto = new PushKinksterActiveGagSlot(_ref.UserData, DataUpdateType.Unlocked)
+        var dto = new PushKinksterActiveGagSlot(_ref.User, DataUpdateType.Unlocked)
         {
             Layer = layerIdx,
             Padlock = ActiveItem.Padlock,

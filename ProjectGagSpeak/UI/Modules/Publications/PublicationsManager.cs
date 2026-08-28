@@ -18,7 +18,6 @@ using GagspeakAPI.Data;
 using LociApi.Enums;
 using OtterGui;
 using OtterGui.Text;
-using System.Collections.Immutable;
 using System.Globalization;
 
 namespace GagSpeak.Gui.Publications;
@@ -55,7 +54,7 @@ public class PublicationsManager
 
     public void DrawPatternPublications()
     {
-        CkGui.FontText("Publish A Pattern", Fonts.UidFont);
+        CkGui.FontText("Publish A Pattern", Fonts.SubtitleFont);
 
         _patternCombo.Draw("##pattern-selector", _selectedPattern.Identifier, 200f);
 
@@ -189,7 +188,7 @@ public class PublicationsManager
         else
         {
             // draw the create section.
-            CkGui.FontText("Publish Loci Status", Fonts.UidFont);
+            CkGui.FontText("Publish Loci Status", Fonts.SubtitleFont);
 
             _statusCombo.Draw("##status-selector", 200f);
             CkGui.ColorTextFrameAlignedInline("Chosen Status", ImGuiColors.ParsedGold);
@@ -239,7 +238,7 @@ public class PublicationsManager
 
             ImGui.Spacing();
             ImGui.Separator();
-            CkGui.FontTextCentered("Your Published Loci Statuses", Fonts.GagspeakLabelFont);
+            CkGui.FontTextCentered("Your Published Loci Statuses", Fonts.GagspeakFont);
             ImGui.Separator();
         }
 

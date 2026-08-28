@@ -57,10 +57,10 @@ public class HypnoEffectEditor : IDisposable
     }
 
     /// <summary>
-    ///     The current active hypnotic effect being used in the editor. <para />
-    ///     If the name is empty, then the effect is not in binding mode. <para />
-    ///     While the effect is in binding mode, any changes made are updated to the preset manager. <para />
-    ///     When an effect is applied from a preset, <see cref="_activeEffect.Name"/> is not set.
+    ///   The current active hypnotic effect being used in the editor. <para />
+    ///   If the name is empty, then the effect is not in binding mode. <para />
+    ///   While the effect is in binding mode, any changes made are updated to the preset manager. <para />
+    ///   When an effect is applied from a preset, <see cref="_activeEffect.Name"/> is not set.
     /// </summary>
     private (string Name, HypnoticEffect? Effect) _current = (string.Empty, null);
     private HypnosisState _activeState = new();
@@ -109,10 +109,10 @@ public class HypnoEffectEditor : IDisposable
     }
 
     /// <summary>
-    ///     Loads a generic effect into the editor. <para />
-    ///     Generic effects are not considered presets, and updates are not saved to the preset Manager. <para />
-    ///     Only case in which a generic effect's values are saves is when the popup methods 
-    ///     OnSaveAndClose copies them over before they are reset.
+    ///   Loads a generic effect into the editor. <para />
+    ///   Generic effects are not considered presets, and updates are not saved to the preset Manager. <para />
+    ///   Only case in which a generic effect's values are saves is when the popup methods 
+    ///   OnSaveAndClose copies them over before they are reset.
     /// </summary>
     public void SetGenericEffect(HypnoticEffect effect)
     {
@@ -147,7 +147,7 @@ public class HypnoEffectEditor : IDisposable
     }
 
     /// <summary>
-    ///     Performs an update to the current effect item, and then if it was a binded preset, updates the preset manager with the new values.
+    ///   Performs an update to the current effect item, and then if it was a binded preset, updates the preset manager with the new values.
     /// </summary>
     public void UpdateEffect(Action updateAct)
     {
@@ -605,20 +605,20 @@ public class HypnoEffectEditor : IDisposable
             drawList.PopClipRect();
 
             // If text is not present, or font is not valid, do not draw.
-            if (_activeState.CurrentText.IsNullOrEmpty() || Fonts.FullscreenFontPtr.Handle is null)
+            if (_activeState.CurrentText.IsNullOrEmpty() || Fonts.HypnoFontPtr.Handle is null)
                 return screenSize;
 
             // determine the font scalar.
-            var fontScaler = sizeScale * (eff.TextFontSize / Fonts.FullscreenFontPtr.FontSize) * _activeState.TextScale;
+            var fontScaler = sizeScale * (eff.TextFontSize / Fonts.HypnoFontPtr.FontSize) * _activeState.TextScale;
 
             // determine the new target position.
             var targetPos = eff.Attributes.HasAny(HypnoAttributes.LinearTextScale)
                 ? center - Vector2.Lerp(sizeScale * _activeState.TextOffsetStart, sizeScale * _activeState.TextOffsetEnd, _activeState.TextScaleProgress)
-                : center - (CkGui.CalcTextSizeFontPtr(Fonts.FullscreenFontPtr, _activeState.CurrentText) * fontScaler) * 0.5f;
+                : center - (CkGui.CalcTextSizeFontPtr(Fonts.HypnoFontPtr, _activeState.CurrentText) * fontScaler) * 0.5f;
 
             drawList.OutlinedFontScaled(
-                Fonts.FullscreenFontPtr,
-                Fonts.FullscreenFontPtr.FontSize,
+                Fonts.HypnoFontPtr,
+                Fonts.HypnoFontPtr.FontSize,
                 fontScaler,
                 targetPos,
                 _activeState.CurrentText,

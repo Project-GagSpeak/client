@@ -1,11 +1,11 @@
 using CkCommons;
-using System.Net;
-using System.Text.Json;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Data.Struct;
-using GagspeakAPI.Network;
+using GagspeakAPI.User;
+using System.Net;
+using System.Text.Json;
 using SysJsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace GagSpeak.WebAPI;
@@ -26,7 +26,7 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
 
     public IReadOnlyList<(int Id, string Name)> CachedShockers => _cachedShockers;
     public ConnectState LastConnectState => _connectState;
-    public bool IsConfigured => !string.IsNullOrEmpty(_mainConfig.Current.PiShockApiKey);
+    public bool IsConfigured => !string.IsNullOrEmpty(_mainConfig.Data.PiShockApiKey);
     public int ShockerCount => _cachedShockers.Count;
 
     public PiShockProvider(ILogger<PiShockProvider> logger, GagspeakMediator mediator, MainConfig mainConfig,
@@ -123,21 +123,21 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
 
     public int GetPairShockerId(string uid)
     {
-        if (_mainConfig.Current.PairShockerIds.TryGetValue(uid, out var id) && id != 0)
+        if (_mainConfig.Data.PairShockerIds.TryGetValue(uid, out var id) && id != 0)
             return id;
-        return _mainConfig.Current.GlobalShockerId;
+        return _mainConfig.Data.GlobalShockerId;
     }
 
     public void SetPairShockerId(string uid, int id)
     {
-        _mainConfig.Current.PairShockerIds[uid] = id;
+        _mainConfig.Data.PairShockerIds[uid] = id;
         _mainConfig.Save();
     }
 
     private HttpRequestMessage AuthedRequest(HttpMethod method, string url)
     {
         var req = new HttpRequestMessage(method, url);
-        req.Headers.Add("X-PiShock-Api-Key", _mainConfig.Current.PiShockApiKey);
+        req.Headers.Add("X-PiShock-Api-Key", _mainConfig.Data.PiShockApiKey);
         return req;
     }
 
@@ -171,7 +171,7 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
                 return Task.FromResult(ExtractPermissions(shocker));
             }
 
-            var targetId = _mainConfig.Current.GlobalShockerId;
+            var targetId = _mainConfig.Data.GlobalShockerId;
             if (targetId != 0)
             {
                 foreach (var shocker in _cachedShockerData)
@@ -215,7 +215,7 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
 
     public void PerformShockCollarAct(ShockCollarAction dto)
     {
-        if (!_kinksters.TryGetKinkster(dto.User, out var enactor))
+        if (!_kinksters.TryGetValue(dto.User, out var enactor))
             throw new InvalidOperationException($"Shock Collar Action received from non-kinkster user: {dto.User.AliasOrUID}");
 
         var interactionType = dto.OpCode switch { 0 => "shocked", 1 => "vibrated", 2 => "beeped", _ => "unknown" };
@@ -255,7 +255,7 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
         }
 
         Logger.LogDebug("Executing Shock Instruction via pair permissions.", LoggerType.Callbacks);
-        Mediator.Publish(new EventMessage(new(enactor.GetNickAliasOrUid(), enactor.UserData.UID, InteractionType.PiShockUpdate, eventLogMessage)));
+        Mediator.Publish(new EventMessage(new(enactor.GetNickAliasOrUid(), enactor.User.UID, InteractionType.PiShockUpdate, eventLogMessage)));
         ExecuteOperation(shockerId, dto.OpCode, dto.Intensity, dto.Duration);
         if (dto.OpCode is 0)
             GagspeakEventManager.AchievementEvent(UnlocksEvent.ShockReceived);

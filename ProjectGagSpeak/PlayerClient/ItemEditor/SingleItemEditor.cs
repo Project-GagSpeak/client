@@ -5,7 +5,7 @@ namespace GagSpeak.PlayerClient;
 #pragma warning disable IDE1006 // Naming Styles
 
 /// <summary>
-///     Handles editing of a single item, not tied to any storage.
+///   Handles editing of a single item, not tied to any storage.
 /// </summary>
 public sealed class SingleItemEditor<T> where T : class, IEditableStorageItem<T>
 {

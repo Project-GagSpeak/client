@@ -19,17 +19,17 @@ internal sealed record PlayerHealth(string NameWithWorld)
 }
 
 /// <summary>
-///     Track the HP of rendered actors that we have for Health% Triggers.
+///   Track the HP of rendered actors that we have for Health% Triggers.
 /// </summary>
 public sealed class HealthMonitor : DisposableMediatorSubscriberBase
 {
     private readonly TriggerManager _manager;
-    private readonly CharaObjectWatcher _watcher;
+    private readonly CharaWatcher _watcher;
     
     private Dictionary<nint, PlayerHealth> Monitored = [];
 
     public HealthMonitor(ILogger<HealthMonitor> logger, GagspeakMediator mediator,
-        TriggerManager manager, CharaObjectWatcher watcher)
+        TriggerManager manager, CharaWatcher watcher)
         : base(logger, mediator)
     {
         _manager = manager;
@@ -79,7 +79,7 @@ public sealed class HealthMonitor : DisposableMediatorSubscriberBase
 
     private unsafe void GetInitialMonitors()
     {
-        foreach (var charaAddr in CharaObjectWatcher.Rendered)
+        foreach (var charaAddr in CharaWatcher.Rendered)
         {
             var chara = (Character*)charaAddr;
             Monitored.Add(charaAddr, new PlayerHealth(chara->GetNameWithWorld())

@@ -123,8 +123,8 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Walks back toward the cage. Returns null once we have stopped making progress, which the
-    ///     task manager treats as a failure rather than grinding against a wall until the timeout.
+    ///   Walks back toward the cage. Returns null once we have stopped making progress, which the
+    ///   task manager treats as a failure rather than grinding against a wall until the timeout.
     /// </summary>
     private bool? ReturnToCage(Vector3 origin, float arrival)
     {
@@ -143,8 +143,8 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     After a failed return we hold off re-trying until either the cooldown elapses or the
-    ///     player has moved meaningfully further out than where the attempt was abandoned.
+    ///   After a failed return we hold off re-trying until either the cooldown elapses or the
+    ///   player has moved meaningfully further out than where the attempt was abandoned.
     /// </summary>
     private bool CanRetryReturn(float distance)
     {

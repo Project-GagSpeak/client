@@ -13,11 +13,12 @@ using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
+using GagspeakAPI.User;
 
 namespace GagSpeak.State.Handlers;
 
 /// <summary>
-///     Handles the enabling and disabling of various hardcore changes.
+///   Handles the enabling and disabling of various hardcore changes.
 /// </summary>
 public class PlayerCtrlHandler
 {
@@ -50,7 +51,7 @@ public class PlayerCtrlHandler
 
     public async void ApplyHypnoEffect(UserData enactor, HypnoticEffect effect, DateTimeOffset expireTimeUTC, string? image)
     {
-        if (!_kinksters.TryGetKinkster(enactor, out var kinkster))
+        if (!_kinksters.TryGetValue(enactor, out var kinkster))
             throw new Bagagwa($"Failed to get Kinkster for UID: {enactor.UID} for Hypnosis!");
         
         try
@@ -65,14 +66,14 @@ public class PlayerCtrlHandler
     }
 
     /// <summary>
-    ///     It is possible that the removal effect is triggered on a safeword or natural timer falloff. <para />
+    ///   It is possible that the removal effect is triggered on a safeword or natural timer falloff. <para />
     /// 
-    ///     If the server it down or the change cannot be processed, we want to still remove the player controls 
-    ///     client-side, but not invoke the achievements for the change. <para />
-    ///     
-    ///     This way, on reconnection, the hardcore state will be reapplied, timer will immediately expire, and
-    ///     they will get the achievement then. It also ensures they are not 'stuck' in restricted controls, so
-    ///     a safeword is still effective.
+    ///   If the server it down or the change cannot be processed, we want to still remove the player controls 
+    ///   client-side, but not invoke the achievements for the change. <para />
+    ///   
+    ///   This way, on reconnection, the hardcore state will be reapplied, timer will immediately expire, and
+    ///   they will get the achievement then. It also ensures they are not 'stuck' in restricted controls, so
+    ///   a safeword is still effective.
     /// </summary>
     public void RemoveHypnoEffect(UserData enactor, bool giveAchievements, bool fromPluginDisposal = false)
     {
@@ -83,7 +84,7 @@ public class PlayerCtrlHandler
 
     public void EnableLockedFollow(UserData enactor)
     {
-        if (!_kinksters.TryGetKinkster(enactor, out var kinkster))
+        if (!_kinksters.TryGetValue(enactor, out var kinkster))
             throw new Exception($"Failed to get Kinkster for UID: {enactor.UID} for Locked Follow!");
 
         _logger.LogInformation($"[{kinkster.GetNickAliasOrUid()}] Enabled your LockedFollowing state!", LoggerType.HardcoreMovement);
@@ -122,7 +123,7 @@ public class PlayerCtrlHandler
 
     public void EnableLockedEmote(UserData enactor)
     {
-        if (!_kinksters.TryGetKinkster(enactor, out var kinkster))
+        if (!_kinksters.TryGetValue(enactor, out var kinkster))
             throw new Exception($"Failed to get Kinkster for UID: {enactor.UID} for Locked Emote!");
 
         _logger.LogInformation($"[{enactor.AliasOrUID}] Enabled your LockedFollowing state!", LoggerType.HardcoreMovement);
@@ -140,7 +141,7 @@ public class PlayerCtrlHandler
 
     public void UpdateLockedEmote(UserData enactor)
     {
-        if (!_kinksters.TryGetKinkster(enactor, out var kinkster))
+        if (!_kinksters.TryGetValue(enactor, out var kinkster))
             throw new Exception($"Failed to get Kinkster for UID: {enactor.UID} for Locked Emote Update!");
 
         _logger.LogInformation($"[{kinkster.GetNickAliasOrUid()}] Updated your LockedFollowing state!", LoggerType.HardcoreMovement);
@@ -245,7 +246,7 @@ public class PlayerCtrlHandler
 
     public void EnableHiddenChatBoxes(UserData enactor)
     {
-        if (!_kinksters.TryGetKinkster(enactor, out var kinkster))
+        if (!_kinksters.TryGetValue(enactor, out var kinkster))
             throw new Bagagwa($"Failed to get Kinkster for UID: {enactor.UID} for Hidden Chat Boxes!");
 
         AddonChatLog.SetChatPanelVisibility(false);
@@ -256,14 +257,14 @@ public class PlayerCtrlHandler
     }
 
     /// <summary>
-    ///     It is possible that the removal effect is triggered on a safeword or natural timer falloff. <para />
+    ///   It is possible that the removal effect is triggered on a safeword or natural timer falloff. <para />
     /// 
-    ///     If the server it down or the change cannot be processed, we want to still remove the player controls 
-    ///     client-side, but not invoke the achievements for the change. <para />
-    ///     
-    ///     This way, on reconnection, the hardcore state will be reapplied, timer will immediately expire, and
-    ///     they will get the achievement then. It also ensures they are not 'stuck' in restricted controls, so
-    ///     a safeword is still effective.
+    ///   If the server it down or the change cannot be processed, we want to still remove the player controls 
+    ///   client-side, but not invoke the achievements for the change. <para />
+    ///   
+    ///   This way, on reconnection, the hardcore state will be reapplied, timer will immediately expire, and
+    ///   they will get the achievement then. It also ensures they are not 'stuck' in restricted controls, so
+    ///   a safeword is still effective.
     /// </summary>
     public void DisableHiddenChatBoxes(UserData enactor, bool giveAchievements)
     {
@@ -277,7 +278,7 @@ public class PlayerCtrlHandler
 
     public void HideChatInputVisibility(UserData enactor)
     {
-        if (!_kinksters.TryGetKinkster(enactor, out var kinkster))
+        if (!_kinksters.TryGetValue(enactor, out var kinkster))
             throw new Bagagwa($"Failed to get Kinkster for UID: {enactor.UID} for Hidden Chat Input!");
 
         AddonChatLog.SetChatInputVisibility(false);
@@ -288,14 +289,14 @@ public class PlayerCtrlHandler
     }
 
     /// <summary>
-    ///     It is possible that the removal effect is triggered on a safeword or natural timer falloff. <para />
+    ///   It is possible that the removal effect is triggered on a safeword or natural timer falloff. <para />
     /// 
-    ///     If the server it down or the change cannot be processed, we want to still remove the player controls 
-    ///     client-side, but not invoke the achievements for the change. <para />
-    ///     
-    ///     This way, on reconnection, the hardcore state will be reapplied, timer will immediately expire, and
-    ///     they will get the achievement then. It also ensures they are not 'stuck' in restricted controls, so
-    ///     a safeword is still effective.
+    ///   If the server it down or the change cannot be processed, we want to still remove the player controls 
+    ///   client-side, but not invoke the achievements for the change. <para />
+    ///   
+    ///   This way, on reconnection, the hardcore state will be reapplied, timer will immediately expire, and
+    ///   they will get the achievement then. It also ensures they are not 'stuck' in restricted controls, so
+    ///   a safeword is still effective.
     /// </summary>
     public void RestoreChatInputVisibility(UserData enactor, bool giveAchievements)
     {
@@ -309,7 +310,7 @@ public class PlayerCtrlHandler
 
     public void BlockChatInput(UserData enactor)
     {
-        if (!_kinksters.TryGetKinkster(enactor, out var kinkster))
+        if (!_kinksters.TryGetValue(enactor, out var kinkster))
             throw new Bagagwa($"Failed to get Kinkster for UID: {enactor.UID} for Blocked Chat Input!");
         
         _logger.LogInformation($"[{kinkster.GetNickAliasOrUid()}] Enabled your BlockedChatInput state!", LoggerType.HardcoreActions);
@@ -319,14 +320,14 @@ public class PlayerCtrlHandler
     }
 
     /// <summary>
-    ///     It is possible that the removal effect is triggered on a safeword or natural timer falloff. <para />
+    ///   It is possible that the removal effect is triggered on a safeword or natural timer falloff. <para />
     /// 
-    ///     If the server it down or the change cannot be processed, we want to still remove the player controls 
-    ///     client-side, but not invoke the achievements for the change. <para />
-    ///     
-    ///     This way, on reconnection, the hardcore state will be reapplied, timer will immediately expire, and
-    ///     they will get the achievement then. It also ensures they are not 'stuck' in restricted controls, so
-    ///     a safeword is still effective.
+    ///   If the server it down or the change cannot be processed, we want to still remove the player controls 
+    ///   client-side, but not invoke the achievements for the change. <para />
+    ///   
+    ///   This way, on reconnection, the hardcore state will be reapplied, timer will immediately expire, and
+    ///   they will get the achievement then. It also ensures they are not 'stuck' in restricted controls, so
+    ///   a safeword is still effective.
     /// </summary>
     public void UnblockChatInput(UserData enactor, bool giveAchievements)
     {

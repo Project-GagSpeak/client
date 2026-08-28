@@ -65,7 +65,7 @@ public class HubFactory : MediatorSubscriberBase
     private HubConnection BuildHubConnection(CancellationToken ct, string token = "")
     {
         Logger.LogDebug("Building new HubConnection", LoggerType.HubFactory);
-        var connectionURI = MainHub.MAIN_SERVER_URI + IGagspeakHub.Path;
+        var connectionURI = ConnectionsConfig.MAIN_SERVER_URI + IGagspeakHub.Path;
 
         Logger.LogDebug($"Attempting to connect to URI: {connectionURI}", LoggerType.HubFactory);
         // create the instance, based on the hub type.

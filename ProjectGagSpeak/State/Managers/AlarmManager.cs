@@ -12,22 +12,25 @@ public sealed class AlarmManager : IHybridSavable
 {
     private readonly ILogger<AlarmManager> _logger;
     private readonly GagspeakMediator _mediator;
-    private readonly PatternManager _patterns;
+    private readonly ConnectionsConfig _connections;
     private readonly FavoritesConfig _favorites;
-    private readonly ConfigFileProvider _fileNames;
+    private readonly PatternManager _patterns;
+    private readonly GsFiles _fileNames;
     private readonly HybridSaveService _saver;
 
     private StorageItemEditor<Alarm> _itemEditor = new();
     public AlarmManager(ILogger<AlarmManager> logger, GagspeakMediator mediator,
-        PatternManager patterns, FavoritesConfig favorites, ConfigFileProvider files, 
-        HybridSaveService saver)
+        ConnectionsConfig connections, PatternManager patterns, FavoritesConfig favorites,
+        GsFiles files, HybridSaveService saver)
     {
         _logger = logger;
         _mediator = mediator;
+        _connections = connections;
         _patterns = patterns;
         _favorites = favorites;
         _fileNames = files;
         _saver = saver;
+        Load();
     }
 
     public AlarmStorage Storage { get; private set; } = new AlarmStorage();
@@ -100,11 +103,8 @@ public sealed class AlarmManager : IHybridSavable
         }
     }
 
-    /// <summary> Attempts to add the alarm as a favorite. </summary>
-    public bool AddFavorite(Alarm a) => _favorites.TryAddRestriction(FavoriteIdContainer.Alarm, a.Identifier);
-
-    /// <summary> Attempts to remove the alarm as a favorite. </summary>
-    public bool RemoveFavorite(Alarm a) => _favorites.RemoveRestriction(FavoriteIdContainer.Alarm, a.Identifier);
+    public void AddFavorite(Alarm a) => _favorites.Favorite(FavoriteType.Alarm, a.Identifier);
+    public void RemoveFavorite(Alarm a) => _favorites.Unfavorite(FavoriteType.Alarm, a.Identifier);
 
     public bool ToggleAlarm(Guid alarmId, string enactor)
     {
@@ -146,11 +146,12 @@ public sealed class AlarmManager : IHybridSavable
     }
 
     public int ConfigVersion => 0;
+    public int MaxBackups => 2;
     public HybridSaveType SaveType => HybridSaveType.Json;
-    public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
-        => (isAccountUnique = true, files.Alarms).Item2;
-    public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
+    public DateTime LastWriteTimeUTC => DateTime.MinValue;
+    public string ToFilePath(GsFiles files) => GetSaveFilePath();
+    public void WriteToStream(StreamWriter _) => throw new NotImplementedException();
+    private string GetSaveFilePath() => Path.Combine(GsFiles.ConfigDirectory, _connections.CurrentProfileUID, GsFiles.AlarmsFile);
     public string JsonSerialize()
     {
         // we need to iterate through our list of trigger objects and serialize them.
@@ -162,17 +163,29 @@ public sealed class AlarmManager : IHybridSavable
         }.ToString(Formatting.Indented);
     }
 
+    public void Save()
+    {
+        if (string.IsNullOrEmpty(_connections.CurrentProfileUID))
+        {
+            _logger.LogInformation("[Save Aborted] No profile selected.");
+            return;
+        }
+        _saver.Save(this);
+    }
+
     public void Load()
     {
-        var file = _fileNames.Alarms;
-        _logger.LogInformation("Loading in Alarms Config for file: " + file);
+        var file = GetSaveFilePath();
+        _logger.LogInformation($"Loading in Alarms config: {file}");
 
         Storage.Clear();
         if (!File.Exists(file))
         {
-            _logger.LogWarning("No Alarms Config file found at {0}", file);
-            // create a new file with default values.
-            _saver.Save(this);
+            _logger.LogDebug($"[File Not Found] {file}");
+            var directory = Path.GetDirectoryName(file);
+            if (directory is not null)
+                Directory.CreateDirectory(directory);
+            Save();
             return;
         }
 
@@ -182,7 +195,7 @@ public sealed class AlarmManager : IHybridSavable
 
         // Migrate the jObject if it is using the old format.
         if (jObject["AlarmStorage"] is JObject)
-            jObject = ConfigMigrator.MigrateAlarmsConfig(jObject, _fileNames);
+            jObject = ConfigMigrator.MigrateAlarmsConfig(jObject, _connections);
 
         var version = jObject["Version"]?.Value<int>() ?? 0;
 

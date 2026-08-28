@@ -1,4 +1,5 @@
 using CkCommons;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Windowing;
 using GagSpeak.Gui;
 using GagSpeak.Gui.Components;
@@ -61,7 +62,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
         }
 
         // subscribe to the event message for removing a window
-        Mediator.Subscribe<RemoveWindowMessage>(this, (msg) =>
+        Mediator.Subscribe<RemoveCreatedWindowMessage>(this, (msg) =>
         {
             // Check if the window is registered in the WindowSystem before removing it
             if (_windowSystem.Windows.Contains(msg.Window))
@@ -74,10 +75,10 @@ public sealed class UiService : DisposableMediatorSubscriberBase
         });
 
         /* ---------- The following subscribers are for factory made windows, meant to be unique to each pair ---------- */
-        Mediator.Subscribe<KinkPlateCreateOpenMessage>(this, (msg) =>
+        Mediator.Subscribe<OpenUserProfileMessage>(this, (msg) =>
         {
             if (!_createdWindows.Exists(p => p is KinkPlateUI ui
-                && string.Equals(ui.Pair.UserData.UID, msg.Kinkster.UserData.UID, StringComparison.Ordinal)))
+                && string.Equals(ui.Pair.User.UID, msg.Kinkster.User.UID, StringComparison.Ordinal)))
             {
                 var window = _uiFactory.CreateStandaloneKinkPlateUi(msg.Kinkster);
                 _createdWindows.Add(window);
@@ -85,7 +86,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
             }
         });
 
-        Mediator.Subscribe<KinkPlateLightCreateOpenMessage>(this, (msg) =>
+        Mediator.Subscribe<OpenUserLightProfileMessage>(this, (msg) =>
         {
             if (_createdWindows.FirstOrDefault(p => p is KinkPlateLightUI ui && ui.UserDataToDisplay.UID == msg.UserData.UID) is { } match)
             {
@@ -101,8 +102,8 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Offloads a UI task to the thread pool to not halt ImGui. 
-    ///     When the task is finished DisableUI will be set to false.
+    ///   Offloads a UI task to the thread pool to not halt ImGui. 
+    ///   When the task is finished DisableUI will be set to false.
     /// </summary>
     public static void SetUITask(Task task)
     {
@@ -117,8 +118,8 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Offloads a UI task to the thread pool to not halt ImGui. 
-    ///     When the task is finished DisableUI will be set to false.
+    ///   Offloads a UI task to the thread pool to not halt ImGui. 
+    ///   When the task is finished DisableUI will be set to false.
     /// </summary>
     public static void SetUITask(Func<Task> asyncAction)
     {
@@ -133,8 +134,8 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Offloads a UI Task to the thread pool so ImGui is not halted. It
-    ///     contains an inner task function that can return <typeparamref name="T"/>.
+    ///   Offloads a UI Task to the thread pool so ImGui is not halted. It
+    ///   contains an inner task function that can return <typeparamref name="T"/>.
     /// </summary>
     /// <returns> A task that can be awaited, returning a value of type <typeparamref name="T"/>. </returns>
     public static async Task<T> SetUITaskWithReturn<T>(Func<Task<T>> asyncTask)
@@ -159,7 +160,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     /// <remarks> Checks if user has valid setup, and opens introUI or MainUI </remarks>
     public void ToggleMainUi()
     {
-        if (_mainConfig.Current.HasValidSetup() && _serverConfig.Current.HasValidSetup())
+        if (_mainConfig.Data.HasValidSetup() && _serverConfig.Current.HasValidSetup())
         {
             Mediator.Publish(new UiToggleMessage(typeof(MainUI)));
         }
@@ -179,7 +180,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     /// </summary>
     public void ToggleUi()
     {
-        if (_mainConfig.Current.HasValidSetup() && _serverConfig.Current.HasValidSetup())
+        if (_mainConfig.Data.HasValidSetup() && _serverConfig.Current.HasValidSetup())
             Mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
         else
             Mediator.Publish(new UiToggleMessage(typeof(IntroUi)));
@@ -202,28 +203,75 @@ public sealed class UiService : DisposableMediatorSubscriberBase
         Svc.PluginInterface.UiBuilder.OpenMainUi -= ToggleMainUi;
     }
 
-    /// <summary> Draw the windows system and file dialogue managers </summary>
+    internal static readonly Dictionary<GsCol, Vector4> GsColChanges = [];
+    internal static readonly Dictionary<CkCol, Vector4> CkColChanges = [];
+
+    /// <summary>
+    ///   Draw the windows system and file dialogue managers
+    /// </summary>
     private void Draw()
     {
-        PushCustomStyle();
+        var colorsPushed = 0;
         try
         {
+            CkColors.PushColor(CkCol.TipFrame, GsCol.VibrantPink.Vec4());
+            colorsPushed++;
+
+            ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .803f));
+            ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.579f, 0.170f, 0.359f, 0.828f));
+            ImGui.PushStyleVar(ImGuiStyleVar.PopupBorderSize, 1f);
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 8f);
+            ImGui.PushStyleVar(ImGuiStyleVar.PopupRounding, 6f);
+
+            // Draw contents
             _windowSystem.Draw();
             _fileService.Draw();
         }
+        catch (Bagagwa ex)
+        {
+            Logger.LogError(ex, "Fatal error in UI Draw loop! UI disabled to prevent game crash.");
+        }
         finally
         {
-            PopCustomStyle();
+            ImGui.PopStyleColor(2);
+            ImGui.PopStyleVar(3);
+
+            if (colorsPushed > 0)
+                CkColors.PopColor(colorsPushed);
+        }
+
+        SetColorChanges();
+    }
+
+    private void SetColorChanges()
+    {
+        if (GsColChanges.Count > 0)
+        {
+            if (GsColors.StackSize != 0)
+            {
+                Logger.LogDebug("Waiting to apply GsColors changes until stack is 0.");
+            }
+            else
+            {
+                foreach (var change in GsColChanges)
+                    GsColors.Set(change.Key, change.Value);
+                GsColChanges.Clear();
+            }
+        }
+
+        if (CkColChanges.Count > 0)
+        {
+            if (CkColors.StackSize != 0)
+            {
+                Logger.LogDebug("Waiting to apply CkColors changes until stack is 0.");
+            }
+            else
+            {
+                foreach (var change in CkColChanges)
+                    CkColors.Set(change.Key, change.Value);
+                CkColChanges.Clear();
+            }
         }
     }
 
-    private void PushCustomStyle()
-    {
-        CkColors.PushColor(CkCol.TipFrame, GsCol.VibrantPink.Vec4Ref());
-    }
-
-    private void PopCustomStyle()
-    {
-        CkColors.PopColor();
-    }
 }

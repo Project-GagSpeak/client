@@ -79,7 +79,7 @@ public sealed class PairTriggerCombo : CkFilterComboIconTextButton<KinksterTrigg
         {
             var newState = !_ref.ActiveTriggers.Contains(Current.Id);
             // Construct the dto, and then send it off.
-            var result = await _mainHub.UserChangeKinksterTriggerState(new(_ref.UserData, GSModule.Trigger, Current.Id, newState));
+            var result = await _mainHub.UserChangeKinksterTriggerState(new(_ref.User, GSModule.Trigger, Current.Id, newState));
             if (result.ErrorCode is not GagSpeakApiEc.Success)
                 Log.LogDebug($"Failed to perform TriggerToggle on {_ref.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LoggerType.StickyUI);
             else

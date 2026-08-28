@@ -10,7 +10,6 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
-using GagspeakAPI.Extensions;
 
 namespace GagSpeak.Gui.Wardrobe;
 

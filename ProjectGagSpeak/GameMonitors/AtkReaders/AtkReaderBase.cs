@@ -7,8 +7,8 @@ namespace GagSpeak.Game.Readers;
 #nullable disable
 
 /// <summary>
-///     Various AtkReaders for undocumented AtkUnitBase's in FFXIVClientStructs. <para />
-///     Pulled from ECommons for navigation in MansionSelectRoom
+///   Various AtkReaders for undocumented AtkUnitBase's in FFXIVClientStructs. <para />
+///   Pulled from ECommons for navigation in MansionSelectRoom
 /// </summary>
 public abstract unsafe class AtkReaderBase(AtkUnitBase* UnitBase, int BeginOffset = 0)
 {
@@ -91,7 +91,7 @@ public abstract unsafe class AtkReaderBase(AtkUnitBase* UnitBase, int BeginOffse
         {
             return null;
         }
-        if (!value.Type.EqualsAny(AtkValueType.String, AtkValueType.String8, AtkValueType.WideString, AtkValueType.ManagedString))
+        if (!value.Type.EqualsAny(AtkValueType.String, AtkValueType.ConstString, AtkValueType.WideString, AtkValueType.ManagedString))
             throw new InvalidCastException($"Value {num} from Addon {Generic.Read(UnitBase->Name)} was requested as SeString but it was {value.Type}");
 
         return MemoryHelper.ReadSeStringNullTerminated((nint)value.String.Value);
@@ -106,7 +106,7 @@ public abstract unsafe class AtkReaderBase(AtkUnitBase* UnitBase, int BeginOffse
         {
             return null;
         }
-        if (!value.Type.EqualsAny(AtkValueType.String, AtkValueType.ManagedString, AtkValueType.String8, AtkValueType.WideString))
+        if (!value.Type.EqualsAny(AtkValueType.String, AtkValueType.ManagedString, AtkValueType.ConstString, AtkValueType.WideString))
             throw new InvalidCastException($"Value {num} from Addon {Generic.Read(UnitBase->Name)} was requested as String but it was {value.Type}");
         return MemoryHelper.ReadStringNullTerminated((nint)value.String.Value);
     }

@@ -69,8 +69,8 @@ public unsafe class MoveOverrides : IDisposable
     public void Dispose()
     {
         Svc.GameConfig.UiControlChanged -= OnConfigChanged;
-        RMIWalkHook?.Dispose();
-        CameraOverrideHook?.Dispose();
+        RMIWalkHook?.SafeDispose();
+        CameraOverrideHook?.SafeDispose();
     }
 
     private void OnConfigChanged(object? sender, ConfigChangeEvent evt)
@@ -105,8 +105,8 @@ public unsafe class MoveOverrides : IDisposable
     }
 
     /// <summary>
-    ///     Mirrors the pair of checks PlayerMoveController::readInput performs. If the signatures
-    ///     could not be resolved, we fall back to the old, weaker condition rather than doing nothing.
+    ///   Mirrors the pair of checks PlayerMoveController::readInput performs. If the signatures
+    ///   could not be resolved, we fall back to the old, weaker condition rather than doing nothing.
     /// </summary>
     private bool GameWantsWalkInput(void* self)
     {
@@ -117,10 +117,10 @@ public unsafe class MoveOverrides : IDisposable
     }
 
     /// <summary>
-    ///     Offset between the camera's stored DirH and the direction it actually looks. <para />
-    ///     In third person mode DirH is the character-to-camera orbit azimuth, so the look direction sits
-    ///     180 degrees off it. In first person the camera rides the character and DirH already is the
-    ///     look direction. Both verified against observed travel headings.
+    ///   Offset between the camera's stored DirH and the direction it actually looks. <para />
+    ///   In third person mode DirH is the character-to-camera orbit azimuth, so the look direction sits
+    ///   180 degrees off it. In first person the camera rides the character and DirH already is the
+    ///   look direction. Both verified against observed travel headings.
     /// </summary>
     private static Angle CameraLookOffset
         => AddonCameraManager.ActiveMode is CameraControlMode.FirstPerson ? default : 180.Degrees();
@@ -218,8 +218,8 @@ public unsafe class MoveOverrides : IDisposable
     }
 
     /// <summary>
-    ///     <see cref="MoveToPoint"/>, but returns null once we have made no progress for
-    ///     <paramref name="stallMs"/>, which the task manager treats as a hard failure.
+    ///   <see cref="MoveToPoint"/>, but returns null once we have made no progress for
+    ///   <paramref name="stallMs"/>, which the task manager treats as a hard failure.
     /// </summary>
     public unsafe bool? MoveToPointOrFail(Vector3 point, float proximity, int stallMs, float divergeMargin)
     {
@@ -238,8 +238,8 @@ public unsafe class MoveOverrides : IDisposable
     }
 
     /// <summary>
-    ///     Records whether we actually displaced this frame, and jumps to try shaking loose of
-    ///     whatever we are caught on when we did not.
+    ///   Records whether we actually displaced this frame, and jumps to try shaking loose of
+    ///   whatever we are caught on when we did not.
     /// </summary>
     private unsafe void TrackProgress(float distanceXZ)
     {
@@ -268,7 +268,7 @@ public unsafe class MoveOverrides : IDisposable
         {
             if (NodeThrottler.Throttle("HcTaskFunc.Jump", 1250))
             {
-                ChatService.SendGeneralActionCommand(2); // Jumping!
+                ChatControlService.SendGeneralActionCommand(2); // Jumping!
                 Svc.Logger.Verbose("Jumping to try and get unstuck.");
             }
         }

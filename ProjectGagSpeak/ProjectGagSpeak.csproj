@@ -40,10 +40,10 @@
         <ProjectReference Include="..\Submodules\CkCommons\CkCommons.csproj" />
         <ProjectReference Include="..\Submodules\GagspeakAPI\ProjectGagspeakAPI.csproj" GlobalPropertiesToRemove="Platform" />
         <ProjectReference Include="..\Submodules\OtterGui\OtterGui.csproj" />
-        <ProjectReference Include="..\Submodules\Luna\Luna.Generators\Luna.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
-        <ProjectReference Include="..\Submodules\Luna\Luna\Luna.csproj"/>
-        <ProjectReference Include="..\Submodules\Penumbra.Api\Penumbra.Api.csproj"/>
-        <ProjectReference Include="..\Submodules\Penumbra.String\Penumbra.String.csproj"/>
+        <ProjectReference Include="..\Submodules\Luna\Luna.Generators\Luna.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\Submodules\Luna\Luna\Luna.csproj" />
+        <ProjectReference Include="..\Submodules\Penumbra.Api\Penumbra.Api.csproj" />
+        <ProjectReference Include="..\Submodules\Penumbra.String\Penumbra.String.csproj" />
         <ProjectReference Include="..\Submodules\Penumbra.GameData\Penumbra.GameData.csproj" />
         <ProjectReference Include="..\Submodules\GlamourerAPI\Glamourer.Api.csproj" />
         <ProjectReference Include="..\Submodules\LociAPI\Loci.Api.csproj" />
@@ -69,6 +69,9 @@
 
         <!-- Toybox Lovense Compatibility. (According to docs possibly estim too) -->
         <PackageReference Include="Buttplug" Version="4.0.0" />
+        
+        <!--I wanted a better Changelog format-->
+        <PackageReference Include="SharpYaml" Version="3.11.0" />
     </ItemGroup>
 
     <!-- If i could use projectgagspeak.json i would, but sadly dalamud prevents this lol.-->
@@ -79,6 +82,9 @@
         <EmbeddedResource Include="Localization\de.json" />
         <EmbeddedResource Include="Localization\jp.json" />
         <EmbeddedResource Include="Localization\fr.json" />
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="PlayerKinkster\Data\" />
     </ItemGroup>
 </Project>
 

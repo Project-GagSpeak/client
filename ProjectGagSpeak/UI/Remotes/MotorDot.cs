@@ -4,9 +4,9 @@ using GagSpeak.State.Models;
 namespace GagSpeak.Gui.Remote;
 
 /// <summary>
-///     Represents a single plot point in a SexToyRemote used to control a Toy's Motor. <para/>
-///     The <see cref="BuzzToyMotor"/> associated with the MotorDot is intended to be 
-///     defined by <see cref="DeviceDot"/>, which holds the <see cref="BuzzToy"/>'s data.
+///   Represents a single plot point in a SexToyRemote used to control a Toy's Motor. <para/>
+///   The <see cref="BuzzToyMotor"/> associated with the MotorDot is intended to be 
+///   defined by <see cref="DeviceDot"/>, which holds the <see cref="BuzzToy"/>'s data.
 /// </summary>
 public class MotorDot(BuzzToyMotor motor) : IEquatable<MotorDot>
 {
@@ -68,8 +68,8 @@ public class MotorDot(BuzzToyMotor motor) : IEquatable<MotorDot>
     }
 
     /// <summary> 
-    ///     Determines if the MotorDot is recording data in loop mode. <para/>
-    ///     While in loop mode, all data from the start to the end of a dragged motion is played back repeatedly.
+    ///   Determines if the MotorDot is recording data in loop mode. <para/>
+    ///   While in loop mode, all data from the start to the end of a dragged motion is played back repeatedly.
     /// </summary>
     /// <remarks> Looping playback stops upon being false, or starting another drag loop. </remarks>
     public bool IsLooping
@@ -127,8 +127,8 @@ public class MotorDot(BuzzToyMotor motor) : IEquatable<MotorDot>
     }
 
     /// <summary>
-    ///     Adds the latest position of the motorDot to the PosHistory. <para/>
-    ///     If <paramref name="deviceEnabled"/> is false, store 0.0 instead.
+    ///   Adds the latest position of the motorDot to the PosHistory. <para/>
+    ///   If <paramref name="deviceEnabled"/> is false, store 0.0 instead.
     /// </summary>
     public void AddPosToHistory(bool deviceEnabled)
     {
@@ -152,8 +152,8 @@ public class MotorDot(BuzzToyMotor motor) : IEquatable<MotorDot>
     }
 
     /// <summary> 
-    ///     Records the latest position to the recorded data. <para/>
-    ///     Records 0.0 if <paramref name="deviceEnabled"/> is false.
+    ///   Records the latest position to the recorded data. <para/>
+    ///   Records 0.0 if <paramref name="deviceEnabled"/> is false.
     /// </summary>
     /// <returns> True an the latest data is a different interval from the last recorded one. </returns>
     public bool RecordPosition(bool deviceEnabled)

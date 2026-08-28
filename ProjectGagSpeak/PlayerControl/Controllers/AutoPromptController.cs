@@ -1,7 +1,6 @@
 using CkCommons;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
-using Dalamud.Memory;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -12,10 +11,10 @@ using GagSpeak.State.Caches;
 namespace GagSpeak.Services.Controller;
 
 /// <summary>
-///     Handles automatically opening and responding to prompts for the player.
+///   Handles automatically opening and responding to prompts for the player.
 ///
-///     Ideally we should be adapting more of Lifestreams behavior for this, but
-///     wait until we turn to the dark side of the force for that.
+///   Ideally we should be adapting more of Lifestreams behavior for this, but
+///   wait until we turn to the dark side of the force for that.
 /// </summary>
 public sealed class AutoPromptController : DisposableMediatorSubscriberBase
 {

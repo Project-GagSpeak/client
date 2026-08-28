@@ -21,7 +21,7 @@ namespace GagSpeak.Services;
 // Modifying the ORIGIN_X and ORIGIN_Y values of an image allow you to perminantly altar their changed location.
 // using SetPositionFloat and other methods will NOT change this. Calculate the offsets with the ORIGIN, for persisted changes.
 /// <summary>
-///     Monitors and controls the state of the nameplate.
+///   Monitors and controls the state of the nameplate.
 /// </summary>
 public sealed class NameplateService : DisposableMediatorSubscriberBase
 {
@@ -123,7 +123,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
     private void CheckUpdateKinkster(NewState newState, string enactor, string target)
     {
         // Attempt to grab the Kinkster associated with this targetted message
-        if (!_kinksters.TryGetKinkster(new(target), out var kinkster))
+        if (!_kinksters.TryGetValue(new(target), out var kinkster))
             return;
 
         // If the kinkster is not rendered, we do not care (I think?)
@@ -210,7 +210,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         }
     }
 
-    private void OnKinksterMessage(Kinkster k, InputChannel c, string message)
+    private void OnKinksterMessage(Kinkster k, NativeInputChannel c, string message)
     {
         // Discard if not a garbled message.
         if (!k.ActiveGags.IsGagged() || !k.PairGlobals.ChatGarblerActive || !k.PairGlobals.AllowedGarblerChannels.IsActiveChannel((int)c))
@@ -224,7 +224,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Temporarily sets a tracked Kinkster's GagPlate to the speaking variant momentarily, and then sets it back.
+    ///   Temporarily sets a tracked Kinkster's GagPlate to the speaking variant momentarily, and then sets it back.
     /// </summary>
     private async void DisplayGaggedSpeaking(string playerNameWorld, int milliseconds)
     {

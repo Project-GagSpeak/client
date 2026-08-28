@@ -14,7 +14,7 @@ namespace GagSpeak.State.Managers;
 public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
     private readonly FavoritesConfig _favorites;
-    private readonly ConfigFileProvider _fileNames;
+    private readonly ConnectionsConfig _connections;
     private readonly HybridSaveService _saver;
     private readonly RemoteService _remotes;
 
@@ -22,11 +22,11 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
     private StorageItemEditor<Pattern> _itemEditor = new();
 
     public PatternManager(ILogger<PatternManager> logger, GagspeakMediator mediator,
-        FavoritesConfig favorites, ConfigFileProvider fileNames,
+        FavoritesConfig favorites, ConnectionsConfig connections,
         HybridSaveService saver, RemoteService remotes) : base(logger, mediator)
     {
         _favorites = favorites;
-        _fileNames = fileNames;
+        _connections = connections;
         _saver = saver;
         _remotes = remotes;
         Load();
@@ -101,11 +101,8 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
         }
     }
 
-    /// <summary> Attempts to add the pattern as a favorite. </summary>
-    public bool AddFavorite(Pattern p) => _favorites.TryAddRestriction(FavoriteIdContainer.Pattern, p.Identifier);
-
-    /// <summary> Attempts to remove the pattern as a favorite. </summary>
-    public bool RemoveFavorite(Pattern p) => _favorites.RemoveRestriction(FavoriteIdContainer.Pattern, p.Identifier);
+    public void AddFavorite(Pattern p) => _favorites.Favorite(FavoriteType.Pattern, p.Identifier);
+    public void RemoveFavorite(Pattern p) => _favorites.Unfavorite(FavoriteType.Pattern, p.Identifier);
 
     public void OpenRemoteForRecording()
     {
@@ -186,10 +183,10 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
 
     #region HybridSavable
     public int ConfigVersion => 0;
+    public int MaxBackups => 1;
     public HybridSaveType SaveType => HybridSaveType.Json;
-    public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
-        => (isAccountUnique = false, files.Patterns).Item2;
+    public DateTime LastWriteTimeUTC => DateTime.MinValue;
+    public string ToFilePath(GsFiles files) => files.Patterns;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize()
     {
@@ -208,14 +205,13 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
 
     public void Load()
     {
-        var file = _fileNames.Patterns;
+        var file = _saver.FileNames.Patterns;
         Logger.LogInformation("Loading in Patterns Config for file: " + file);
 
         Storage.Clear();
         if (!File.Exists(file))
         {
             Logger.LogWarning("No Patterns Config file found at {0}", file);
-            // create a new file with default values.
             _saver.Save(this);
             return;
         }
@@ -226,7 +222,7 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
 
         // Migrate the jObject if it is using the old format.
         if (jObject["PatternStorage"] is JToken)
-            jObject = ConfigMigrator.MigratePatternConfig(jObject, _fileNames);
+            jObject = ConfigMigrator.MigratePatternConfig(jObject, _saver.FileNames);
 
         var version = jObject["Version"]?.Value<int>() ?? 0;
 

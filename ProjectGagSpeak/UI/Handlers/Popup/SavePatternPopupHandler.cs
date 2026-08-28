@@ -10,7 +10,10 @@ using Dalamud.Bindings.ImGui;
 
 namespace GagSpeak.Gui.Components;
 
-/// <summary> A interface for handling the popups in the UI. </summary>
+/// <summary> 
+///   A interface for handling the popups in the UI. <br/>
+///   TODO: Phase this out, make it more like its own window.
+/// </summary>
 public class SavePatternPopupHandler : IPopupHandler
 {
     private readonly GagspeakMediator _mediator;
@@ -43,7 +46,7 @@ public class SavePatternPopupHandler : IPopupHandler
         SaveWidth = CkGui.IconTextButtonSize(FAI.Save, "Save Pattern Data");
         RevertWidth = CkGui.IconTextButtonSize(FAI.Undo, "Discard Pattern");
         var start = 0f;
-        using (Fonts.UidFont.Push())
+        using (Fonts.SubtitleFont.Push())
         {
             start = ImGui.GetCursorPosY() - ImGui.CalcTextSize("Create New Pattern").Y;
             ImGui.Text("Create New Pattern");

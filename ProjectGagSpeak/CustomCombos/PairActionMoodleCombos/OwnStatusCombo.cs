@@ -6,9 +6,8 @@ using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.State.Caches;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Extensions;
+using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
 using OtterGui.Text;
 
@@ -47,7 +46,7 @@ public sealed class OwnStatusCombo : LociComboBase<LociStatusInfo>
         var myStatus = Items[globalIdx];
 
         // Push the font first so the height is correct.
-        using var _ = Fonts.Default150Percent.Push();
+        using var _ = Fonts.DefaultScaled.Push();
 
         var ret = ImGui.Selectable($"##{myStatus.Title}", selected, ImGuiSelectableFlags.None, size);
 
@@ -58,7 +57,7 @@ public sealed class OwnStatusCombo : LociComboBase<LociStatusInfo>
         ImGui.SameLine(ImUtf8.ItemInnerSpacing.X);
         var adjust = (size.Y - ImUtf8.TextHeight) * 0.5f;
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + adjust);
-        CkRichText.Text(titleSpace, myStatus.Title);
+        NewRichText.TextWrapped(myStatus.Title, titleSpace);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - adjust);
 
         return ret;
@@ -71,7 +70,7 @@ public sealed class OwnStatusCombo : LociComboBase<LociStatusInfo>
     {
         UiService.SetUITask(async () =>
         {
-            var res = await _mainHub.UserApplyLociStatusTuples(new(_kinksterRef.UserData, [item.ToStruct()], false));
+            var res = await _mainHub.UserApplyLociStatusTuples(new(_kinksterRef.User, [item.ToStruct()], false));
             if (res.ErrorCode is not GagSpeakApiEc.Success)
                 Log.LogDebug($"Failed to apply loci status {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
         });

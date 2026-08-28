@@ -6,9 +6,11 @@ using GagSpeak.DrawSystem;
 using GagSpeak.FileSystems;
 using GagSpeak.GameInternals.Detours;
 using GagSpeak.Gui;
+using GagSpeak.Gui.Chat;
 using GagSpeak.Gui.Components;
 using GagSpeak.Gui.MainWindow;
 using GagSpeak.Gui.Profile;
+using GagSpeak.Gui.Profiles;
 using GagSpeak.Gui.Publications;
 using GagSpeak.Gui.Remote;
 using GagSpeak.Gui.Toybox;
@@ -18,6 +20,7 @@ using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.Minigames.Watchers;
 using GagSpeak.MufflerCore.Handler;
+using GagSpeak.Pairs;
 using GagSpeak.PlayerClient;
 using GagSpeak.PlayerControl;
 using GagSpeak.Services;
@@ -134,38 +137,34 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<GagSpeakLoc>()
         .AddSingleton<GagspeakEventManager>()
 
+        // Chat
+        .AddSingleton<ChatColors>()
+        .AddSingleton<ChatFactory>()
+        .AddSingleton<ChatHooks>()
+        .AddSingleton<GlobalChatLog>()
+        .AddSingleton<ChatFontManager>()
+        .AddSingleton<GlobalChatDrawer>()
+        .AddSingleton<HybridChatDrawer>()
+        .AddSingleton<BlockService>()
+        .AddSingleton<ChatService>()
+
         // Draw System
         .AddSingleton<RequestsInDrawer>()
         .AddSingleton<RequestsOutDrawer>()
         .AddSingleton<WhitelistDrawer>()
-        .AddSingleton<RequestsDrawSystem>()
-        .AddSingleton<WhitelistDrawSystem>()
         .AddSingleton<PuppeteersDrawer>()
-        .AddSingleton<PuppeteersDrawSystem>()
         .AddSingleton<MarionetteDrawer>()
-        .AddSingleton<MarionetteDrawSystem>()
-
-        // File System
+        // CKFS Selectors
         .AddSingleton<GagRestrictionFileSelector>()
-        .AddSingleton<GagFileSystem>()
         .AddSingleton<RestrictionFileSelector>()
-        .AddSingleton<RestrictionFileSystem>()
         .AddSingleton<RestraintSetFileSelector>()
-        .AddSingleton<RestraintSetFileSystem>()
         .AddSingleton<CursedLootFileSelector>()
-        .AddSingleton<CursedLootFileSystem>()
         .AddSingleton<AliasesFileSelector>()
-        .AddSingleton<AliasesFileSystem>()
         .AddSingleton<BuzzToyFileSelector>()
-        .AddSingleton<BuzzToyFileSystem>()
         .AddSingleton<PatternFileSelector>()
-        .AddSingleton<PatternFileSystem>()
         .AddSingleton<AlarmFileSelector>()
-        .AddSingleton<AlarmFileSystem>()
         .AddSingleton<TriggerFileSelector>()
-        .AddSingleton<TriggerFileSystem>()
         .AddSingleton<ModPresetFileSelector>()
-        .AddSingleton<ModPresetFileSystem>()
 
         // Game Internals
         .AddSingleton<StaticDetours>()
@@ -197,12 +196,18 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<KinksterFactory>()
         .AddSingleton<KinksterManager>()
 
+        // Pairs
+        .AddSingleton<CharaWatcher>()
+        .AddSingleton<OnlineKinksterManager>()
+        .AddSingleton<VisibilityWatcher>()
+        .AddSingleton<PairService>()
+
         // Services (Deathroll)
         .AddSingleton<DeathRollMonitor>()
         .AddSingleton<GagspeakMediator>()
 
         // Services (KinkPlates)
-        .AddSingleton<KinkPlateFactory>()
+        .AddSingleton<ProfileFactory>()
         .AddSingleton<KinkPlateService>()
 
         // Services (Player Control)
@@ -219,16 +224,16 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<AchievementsService>()
         .AddSingleton<ArousalService>()
         .AddSingleton<AutoUnlockService>()
-        .AddSingleton<CharaObjectWatcher>()
-        .AddSingleton<ChatService>()
+        .AddSingleton<ChatControlService>()
         .AddSingleton<CosmeticService>()
         .AddSingleton<ConnectionSyncService>()
         .AddSingleton<DtrBarService>()
+        .AddSingleton<GsEmojiLoader>()
         .AddSingleton<EmoteService>()
         .AddSingleton<GagspeakMediator>()
         .AddSingleton<MufflerService>()
         .AddSingleton<NameplateService>()
-        .AddSingleton<NotificationService>()
+        .AddSingleton<AlertService>()
         .AddSingleton<OnTickService>()
         .AddSingleton<RemoteService>()
         .AddSingleton<SafewordService>()
@@ -237,6 +242,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<SpellActionService>()
         .AddSingleton<SelfBondageService>()
         .AddSingleton<TutorialService>()
+        .AddSingleton<VisibilityWatcher>()
 
         // State (Caches)
         .AddSingleton<CustomizePlusCache>()
@@ -288,8 +294,6 @@ public static class GagSpeakServiceExtensions
 
         // UI (Probably mostly in Scoped)
         .AddSingleton<AccountInfoExchanger>()
-        .AddSingleton<GlobalChatLog>()
-        .AddSingleton<PopoutGlobalChatlog>()
         .AddSingleton<VibeRoomChatlog>()
         .AddSingleton<PluginGuideProvider>()
         .AddSingleton<MainMenuTabs>()
@@ -320,11 +324,31 @@ public static class GagSpeakServiceExtensions
 
     public static IServiceCollection AddGagSpeakConfigs(this IServiceCollection services)
     => services
-        .AddSingleton<ConfigFileProvider>()
-        .AddSingleton<MainConfig>()
-        .AddSingleton<NicksConfig>()
-        .AddSingleton<FavoritesConfig>()
+        // Purely Client
+        .AddSingleton<GsFiles>()
         .AddSingleton<AccountConfig>()
+        .AddSingleton<ConnectionsConfig>()
+        .AddSingleton<ChatConfig>()
+        .AddSingleton<FavoritesConfig>()
+        .AddSingleton<MainConfig>()
+        // DDS & CKFS
+        .AddSingleton<WhitelistDrawSystem>()
+        .AddSingleton<RequestsDrawSystem>()
+        .AddSingleton<PuppeteersDrawSystem>()
+        .AddSingleton<MarionetteDrawSystem>()
+        .AddSingleton<GagFileSystem>()
+        .AddSingleton<RestrictionFileSystem>()
+        .AddSingleton<RestraintSetFileSystem>()
+        .AddSingleton<CursedLootFileSystem>()
+        .AddSingleton<AliasesFileSystem>()
+        .AddSingleton<BuzzToyFileSystem>()
+        .AddSingleton<PatternFileSystem>()
+        .AddSingleton<AlarmFileSystem>()
+        .AddSingleton<TriggerFileSystem>()
+        .AddSingleton<ModPresetFileSystem>()
+        // DataSync & Server Related
+        .AddSingleton<NicksConfig>()
+        // Managers / Savers
         .AddSingleton<AccountManager>()
         .AddSingleton<HybridSaveService>();
 
@@ -342,14 +366,22 @@ public static class GagSpeakServiceExtensions
         .AddScoped<SidePanelPair>()
 
         // Scoped Factories
+        .AddScoped<SorterHelpers>()
         .AddScoped<UiFactory>()
+
+        // Scoped Chat
+        .AddScoped<WindowMediatorSubscriberBase, ChatWindowUI>()
+        // .AddScoped<WindowMediatorSubscriberBase, ChatContextMenuUI>() <-- Add Later
+
+        // Standalone Windows
+        .AddScoped<WindowMediatorSubscriberBase, ChangelogUI>()
+        .AddScoped<WindowMediatorSubscriberBase, ReportWindowUI>()
+        .AddScoped<WindowMediatorSubscriberBase, VerificationUi>()
 
         // Scoped Handlers
         .AddScoped<WindowMediatorSubscriberBase, ThumbnailUI>()
         .AddScoped<WindowMediatorSubscriberBase, PopupHandler>()
-        .AddScoped<IPopupHandler, VerificationPopupHandler>()
         .AddScoped<IPopupHandler, SavePatternPopupHandler>()
-        .AddScoped<IPopupHandler, ReportPopupHandler>()
 
         // Scoped MainUI (Home)
         .AddScoped<WindowMediatorSubscriberBase, IntroUi>()
@@ -429,8 +461,6 @@ public static class GagSpeakServiceExtensions
         // Scoped Misc
         .AddScoped<WindowMediatorSubscriberBase, InteractionEventsUI>()
         .AddScoped<WindowMediatorSubscriberBase, DtrVisibleWindow>()
-        .AddScoped<WindowMediatorSubscriberBase, ChangelogUI>()
-        .AddScoped<WindowMediatorSubscriberBase, GlobalChatPopoutUI>()
         .AddScoped<WindowMediatorSubscriberBase, DebugStorageUI>()
         .AddScoped<WindowMediatorSubscriberBase, DebugPersonalDataUI>()
         .AddScoped<WindowMediatorSubscriberBase, DebugActiveStateUI>()
@@ -443,8 +473,8 @@ public static class GagSpeakServiceExtensions
     #endregion ScopedServices
 
     /// <summary>
-    ///     Services that must run logic on initialization to help with monitoring.
-    ///     If it does not, it can also be an important monitor background service.
+    ///   Services that must run logic on initialization to help with monitoring.
+    ///   If it does not, it can also be an important monitor background service.
     /// </summary>
     /// <remarks> Services that simply monitor actions should be invoked in 'WaitForPlayerAndLaunchCharacterManager' </remarks>
     public static IServiceCollection AddGagSpeakHosted(this IServiceCollection services)
@@ -452,10 +482,11 @@ public static class GagSpeakServiceExtensions
         .AddHostedService(p => p.GetRequiredService<HybridSaveService>())   // Begins the SaveCycle task loop
         .AddHostedService(p => p.GetRequiredService<CosmeticService>())     // Initializes our required textures so methods can work.
         .AddHostedService(p => p.GetRequiredService<GagspeakMediator>())    // Runs the task for monitoring mediator events.
-        .AddHostedService(p => p.GetRequiredService<NotificationService>()) // Important Background Monitor.
+        .AddHostedService(p => p.GetRequiredService<AlertService>()) // Important Background Monitor.
         .AddHostedService(p => p.GetRequiredService<OnTickService>())  // Starts & monitors the framework update cycle.
 
         // Cached Data That MUST be initialized before anything else for validity.
+        .AddHostedService(p => p.GetRequiredService<CharaWatcher>())
         .AddHostedService(p => p.GetRequiredService<CosmeticService>())     // Provides all Textures nessisary for the plugin.
         .AddHostedService(p => p.GetRequiredService<SpellActionService>())  // Provides all actions nessisary for the plugin.
         .AddHostedService(p => p.GetRequiredService<EmoteService>())        // Provides all emotes nessisary for the plugin.

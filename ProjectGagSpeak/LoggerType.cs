@@ -86,6 +86,10 @@ public enum LoggerType : long
     Health              = 1L << 60,
     JwtTokens           = 1L << 61,
 
+    ChatHooks = 1L << 62,
+    GsTells = 1L << 63,
+
+
     // All Recommended types.
     Recommended =
             Achievements |

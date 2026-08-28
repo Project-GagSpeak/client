@@ -20,16 +20,16 @@ using Microsoft.Extensions.Hosting;
 namespace GagSpeak.Services;
 
 /// <summary>
-///     Dedicated to monitoring all current padlock states and timed events in hardcore
-///     to perform server calls that will automatically unlock them. <para />
-///     
-///     <b> NOTICE FOR ACIEVEMENT SYNCRONIZATION: </b> <para />
-///     When we restore backups, we will force it to re-trigger again. It is not prudent 
-///     that we unlock them over and over until the server reconnects. What is important
-///     is that if a unlock fails, that when the server does reconnect, the achievement 
-///     that SHOULD HAVE fired, DOES fire. <para />
-///     
-///     So long as we can make that work, its golden.
+///   Dedicated to monitoring all current padlock states and timed events in hardcore
+///   to perform server calls that will automatically unlock them. <para />
+///   
+///   <b> NOTICE FOR ACIEVEMENT SYNCRONIZATION: </b> <para />
+///   When we restore backups, we will force it to re-trigger again. It is not prudent 
+///   that we unlock them over and over until the server reconnects. What is important
+///   is that if a unlock fails, that when the server does reconnect, the achievement 
+///   that SHOULD HAVE fired, DOES fire. <para />
+///   
+///   So long as we can make that work, its golden.
 /// </summary>
 public sealed class AutoUnlockService : BackgroundService
 {
@@ -206,7 +206,7 @@ public sealed class AutoUnlockService : BackgroundService
                 _mediator.Publish(new EventMessage(new("Auto-Unlock", MainHub.UID, InteractionType.UnlockGag, $"{gag.GagItem.GagName()}'s Timed Padlock Expired!")));
 
                 // Auto remove Gag if configured to do so.
-                if (_config.Current.RemoveGagOnTimerExpire && await _dds.PushNewActiveGagSlot(index, new ActiveGagSlot(), DataUpdateType.Removed).ConfigureAwait(false) is not null)
+                if (_config.Data.RemoveGagOnTimerExpire && await _dds.PushNewActiveGagSlot(index, new ActiveGagSlot(), DataUpdateType.Removed).ConfigureAwait(false) is not null)
                 {
                     // _mediator.Publish(new GagStateChanged(NewState.Disabled, index, backup, MainHub.UID, MainHub.UID));
                     if (_gags.RemoveGag(index, MainHub.UID, out var visualItem))
@@ -249,7 +249,7 @@ public sealed class AutoUnlockService : BackgroundService
                 _mediator.Publish(new EventMessage(new("Auto-Unlock", MainHub.UID, InteractionType.UnlockRestriction, $"Restriction Layer {index + 1}'s Timed Padlock Expired!")));
                 
                 // Auto remove if configured to do so.
-                if (_config.Current.RemoveRestrictionOnTimerExpire && await _dds.PushNewActiveRestriction(index, new ActiveRestriction(), DataUpdateType.Removed).ConfigureAwait(false) is not null)
+                if (_config.Data.RemoveRestrictionOnTimerExpire && await _dds.PushNewActiveRestriction(index, new ActiveRestriction(), DataUpdateType.Removed).ConfigureAwait(false) is not null)
                 {
                     if (_restrictions.RemoveRestriction(index, MainHub.UID, out var visualItem))
                         await _cacheManager.RemoveRestrictionItem(visualItem, index);
@@ -293,7 +293,7 @@ public sealed class AutoUnlockService : BackgroundService
             _mediator.Publish(new EventMessage(new("Auto-Unlock", MainHub.UID, InteractionType.UnlockRestraint, $"Active RestraintSet's Timed Padlock Expired!")));
             
             // Auto remove if configured to do so.
-            if (_config.Current.RemoveRestraintOnTimerExpire && await _dds.PushNewActiveRestraint(new CharaActiveRestraint(), DataUpdateType.Removed).ConfigureAwait(false) is not null)
+            if (_config.Data.RemoveRestraintOnTimerExpire && await _dds.PushNewActiveRestraint(new CharaActiveRestraint(), DataUpdateType.Removed).ConfigureAwait(false) is not null)
             {
                 if (_restraints.Remove(MainHub.UID, out var restraintSet, out var removedLayers))
                     await _cacheManager.RemoveRestraintSet(restraintSet, removedLayers);
@@ -350,9 +350,9 @@ public sealed class AutoUnlockService : BackgroundService
     }
 
     /// <summary>
-    ///     Unlocks and removes gag slots locked by an expired Mimic padlock once their cursed loot
-    ///     item is no longer applied. Runs after the loot expiry pass so the cursed visuals are
-    ///     already cleared, and retries on later ticks if a server push fails.
+    ///   Unlocks and removes gag slots locked by an expired Mimic padlock once their cursed loot
+    ///   item is no longer applied. Runs after the loot expiry pass so the cursed visuals are
+    ///   already cleared, and retries on later ticks if a server push fails.
     /// </summary>
     private async Task FreeExpiredCursedGagSlots()
     {

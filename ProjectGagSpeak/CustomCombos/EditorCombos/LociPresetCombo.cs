@@ -1,12 +1,13 @@
 using CkCommons.Helpers;
 using CkCommons.RichText;
 using CkCommons.Textures;
+using Dalamud.Bindings.ImGui;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.Services;
 using GagSpeak.State.Caches;
-using Dalamud.Bindings.ImGui;
+using LociApi.Ipc;
 using OtterGui.Extensions;
 using OtterGui.Text;
-using GagSpeak.Interop.Helpers;
 
 namespace GagSpeak.CustomCombos.Editor;
 
@@ -83,8 +84,8 @@ public sealed class LociPresetCombo : CkLociComboBase<LociPresetInfo>
         ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
         var pos = ImGui.GetCursorPosY();
         ImGui.SetCursorPosY(pos + (size.Y - SelectableTextHeight) * 0.5f);
-        using (Fonts.Default150Percent.Push())
-            CkRichText.Text(titleSpace, lociPreset.Title);
+        using (Fonts.DefaultScaled.Push())
+            NewRichText.TextWrapped(lociPreset.Title, titleSpace);
         return ret;
     }
 }

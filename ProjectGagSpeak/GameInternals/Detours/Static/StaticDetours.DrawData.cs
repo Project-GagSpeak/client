@@ -8,9 +8,9 @@ public unsafe partial class StaticDetours
 {
 
     /// <summary>
-    ///     Intercepts the application of Glamour Plates. <para />
-    ///     Do not attempt to invoke upon this action if the glamour plate is not open or not valid for use. <para />
-    ///     This purpose is primarily to act as a listener for when a glamour plate is applied.
+    ///   Intercepts the application of Glamour Plates. <para />
+    ///   Do not attempt to invoke upon this action if the glamour plate is not open or not valid for use. <para />
+    ///   This purpose is primarily to act as a listener for when a glamour plate is applied.
     /// </summary>
     private unsafe delegate void ApplyGlamourPlateDelegate(MirageManager* glamPlatePtr, uint glamPlateIdx);
     [Signature(Signatures.ApplyGlamourPlate, DetourName = nameof(ApplyGlamourPlateDetour), Fallibility = Fallibility.Auto)]
@@ -25,8 +25,8 @@ public unsafe partial class StaticDetours
 
 
     /// <summary>
-    ///     While EquipGearset allows you to attempt equipping a gearset, EquipGearsetInternal
-    ///     Informs us whenever the client Processes a valid EquipGearset Request, prior to it applying.
+    ///   While EquipGearset allows you to attempt equipping a gearset, EquipGearsetInternal
+    ///   Informs us whenever the client Processes a valid EquipGearset Request, prior to it applying.
     /// </summary>
     /// <remarks> This is called BEFORE anything is applied to the character. </remarks>
     internal Hook<RaptureGearsetModule.Delegates.EquipGearsetInternal> GearsetInternalHook;

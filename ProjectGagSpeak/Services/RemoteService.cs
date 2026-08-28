@@ -17,8 +17,8 @@ using OtterGui.Text;
 namespace GagSpeak.Services;
 
 /// <summary>
-///     Service to maintain the active devices selected for recording, 
-///     and cache their recorded states.
+///   Service to maintain the active devices selected for recording, 
+///   and cache their recorded states.
 /// </summary>
 public sealed class RemoteService : DisposableMediatorSubscriberBase
 {
@@ -42,7 +42,7 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
         _toyManager = toyManager;
         _lobbyManager = lobbyManager;
         // set an initial data, this will initially be a empty string, but rectified upon connection.
-        ClientData = new ClientPlotedDevices(Logger, mediator, new(new(MainHub.UID), _config.Current.NicknameInVibeRooms), RemoteAccess.Full);
+        ClientData = new ClientPlotedDevices(Logger, mediator, new(new(MainHub.UID), _config.Data.NicknameInVibeRooms), RemoteAccess.Full);
 
         /// Monitors for changes to the client players devices.
         Mediator.Subscribe<ConfigSexToyChanged>(this, (msg) => OnClientToyChange(msg.Type, msg.Item));
@@ -56,7 +56,7 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
         Mediator.Subscribe<ConnectedMessage>(this, _ =>
         {
             Logger.LogInformation("Reconnected to GagSpeak. Setting Client Devices.");
-            ClientData = new ClientPlotedDevices(Logger, mediator, new(new(MainHub.UID), _config.Current.NicknameInVibeRooms), RemoteAccess.Full);
+            ClientData = new ClientPlotedDevices(Logger, mediator, new(new(MainHub.UID), _config.Data.NicknameInVibeRooms), RemoteAccess.Full);
             UpdateClientDevices();
             SelectedKey = MainHub.UID;
         });

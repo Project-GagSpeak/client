@@ -11,11 +11,12 @@ using System.Text.RegularExpressions;
 namespace GagSpeak.Services;
 
 /// <summary>
-///     Service for managing the gags.
+///   Service for managing the gags.
 /// </summary>
 public class MufflerService : DisposableMediatorSubscriberBase
 {
     private readonly MainConfig _mainConfig;
+    private readonly GsEmojiLoader _emojiLoader;
     private readonly Ipa_EN_FR_JP_SP_Handler _ipaParser;
 
     /// <summary>
@@ -25,22 +26,24 @@ public class MufflerService : DisposableMediatorSubscriberBase
     private static Dictionary<string, Dictionary<string, PhonemeProperties>> _garbleData;
 
     /// <summary>
-    ///     The collected GarblerData for all Gags.
+    ///   The collected GarblerData for all Gags.
     /// </summary>
     private static List<GarbleData> _allGarblerData = new List<GarbleData>();
 
     /// <summary>
-    ///     The Muffler GagData for the currently active Gags worn.
+    ///   The Muffler GagData for the currently active Gags worn.
     /// </summary>
     private static List<GarbleData> _activeGags;
 
     private static GagMuffleType _activeMuffleType = GagMuffleType.None;
 
-    public MufflerService(ILogger<MufflerService> logger, GagspeakMediator mediator, MainConfig mainConfig,
-        Ipa_EN_FR_JP_SP_Handler ipaParser, ConfigFileProvider fileprovider)
+    public MufflerService(ILogger<MufflerService> logger, GagspeakMediator mediator, 
+        MainConfig mainConfig, GsEmojiLoader emojis, Ipa_EN_FR_JP_SP_Handler ipaParser,
+        GsFiles fileprovider)
         : base(logger, mediator)
     {
         _mainConfig = mainConfig;
+        _emojiLoader = emojis;
         _ipaParser = ipaParser;
 
         // Try to read the JSON file and de-serialize it into the obj dictionary
@@ -74,7 +77,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
 
     private void CreateGags()
     {
-        var masterList = _mainConfig.Current.LanguageDialect switch
+        var masterList = _mainConfig.Data.LanguageDialect switch
         {
             GarbleCoreDialect.UK => GagPhonetics.MasterListEN_UK,
             GarbleCoreDialect.US => GagPhonetics.MasterListEN_US,
@@ -103,8 +106,8 @@ public class MufflerService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Processes the input message by converting it to GagSpeak format <br />
-    ///     (we should probably consider using a ref string for this. Idk.
+    ///   Processes the input message by converting it to GagSpeak format <br />
+    ///   (we should probably consider using a ref string for this. Idk.
     /// </summary>
     public string GarbleMessage(string inputMessage, bool allowEmotes = false)
     {
@@ -127,7 +130,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Internal convert for gagspeak
+    ///   Internal convert for gagspeak
     /// </summary>
     private string GarbleMessageInternal(string inputMessage, bool allowEmotes)
     {
@@ -168,7 +171,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
                 if (allowEmotes && parsed.Word.Length > 2)
                 {
                     // Only validate if a valid emote.
-                    if (parsed.Word.StartsWith(':') && parsed.Word.EndsWith(':') && CosmeticLabels.NameToEmote.ContainsKey(parsed.Word[1..^1]))
+                    if (parsed.Word.StartsWith(':') && parsed.Word.EndsWith(':') && _emojiLoader.Emotes.ContainsKey(parsed.Word[1..^1]))
                     {
                         toggleAfter = !skipTranslation;
                         skipTranslation = true;
@@ -220,7 +223,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Phonetic IPA -> Garbled sound equivalent in selected language
+    ///   Phonetic IPA -> Garbled sound equivalent in selected language
     /// </summary>
     private string GarbleWithPhonetics(string word, List<string> phonetics, bool isAllCaps, bool isFirstLetterCapitalized)
     {

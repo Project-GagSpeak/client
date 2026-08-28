@@ -27,5 +27,5 @@ public readonly struct PuppetMsgContext
         => new PuppetMsgContext(nameWorld, uid, trigger, aliases, perms, null, null);
 
     public static PuppetMsgContext ForPair(Kinkster k, string trigger, IReadOnlyList<AliasTrigger> aliases)
-        => new PuppetMsgContext(k.GetDisplayName(), k.UserData.UID, trigger, aliases, k.OwnPerms.PuppetPerms, k.OwnPerms.StartChar, k.OwnPerms.EndChar);
+        => new PuppetMsgContext(k.GetDisplayName(), k.User.UID, trigger, aliases, k.OwnPerms.PuppetPerms, k.OwnPerms.StartChar, k.OwnPerms.EndChar);
 }

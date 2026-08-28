@@ -25,7 +25,7 @@ using TFlags = Dalamud.Bindings.ImGui.ImGuiTableFlags;
 namespace GagSpeak.Gui.Remote;
 
 /// <summary>
-///     Im not insane, i promise.
+///   Im not insane, i promise.
 /// </summary>
 public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
 {
@@ -97,7 +97,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
     }
 
     // This is where we set the remote name, based on the current state our remote is in.
-    protected override void PreDrawInternal()
+    public override void PreDraw()
     {
         WindowName = _service.GetRemoteUiName();
         this.SetBoundaries(_lobbyManager.IsInVibeRoom ? _vibeRoomSize : _remoteSize);
@@ -123,10 +123,11 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
             ImPlot.PushStyleColor(ImPlotCol.FrameBg, 0x00FFFFFF);
             _themePushed = true;
         }
+        base.PreDraw();
     }
 
     // This is where we pop the theme, to ensure we do not leak styles.
-    protected override void PostDrawInternal()
+    public override void PostDraw()
     {
         if (_themePushed)
         {
@@ -137,6 +138,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
             ImPlot.PopStyleColor(3);
             _themePushed = false;
         }
+        base.PostDraw();
     }
 
     // The actual juicy part of the code.
@@ -608,7 +610,7 @@ public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
         using var c = CkRaii.Child("###VibeRoomChat", ImGui.GetContentRegionAvail(), wFlags: WFlags.AlwaysUseWindowPadding);
         if (!c) return;
         // Draw the chat log.
-        _lobbyChatLog.DrawChat(c.InnerRegion);
+        //_lobbyChatLog.DrawChat(c.InnerRegion);
     }
 
     public override void OnClose()

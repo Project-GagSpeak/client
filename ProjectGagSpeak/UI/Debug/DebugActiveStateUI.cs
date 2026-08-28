@@ -67,15 +67,8 @@ public class DebugActiveStateUI : WindowMediatorSubscriberBase
         _iconTextures = iconTextures;
         _onTick = onTick;
 
-        // IsOpen = true;
         this.SetBoundaries(new Vector2(625, 400), ImGui.GetIO().DisplaySize);
     }
-
-    protected override void PreDrawInternal()
-    { }
-
-    protected override void PostDrawInternal()
-    { }
 
     protected override void DrawInternal()
     {

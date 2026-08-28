@@ -12,12 +12,12 @@ namespace GagSpeak.State.Managers;
 /// <summary> Responsible for tracking the custom settings we have configured for a mod. </summary>
 public class ModPresetManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
-    private readonly ConfigFileProvider _fileNames;
+    private readonly GsFiles _fileNames;
     private readonly HybridSaveService _saver;
 
     private StorageItemEditor<ModSettingsPreset> _itemEditor = new();
     public ModPresetManager(ILogger<ModPresetManager> logger, GagspeakMediator mediator, 
-        ConfigFileProvider fileNames, HybridSaveService saver) 
+        GsFiles fileNames, HybridSaveService saver) 
         : base(logger, mediator)
     {
         _fileNames = fileNames;
@@ -41,9 +41,9 @@ public class ModPresetManager : DisposableMediatorSubscriberBase, IHybridSavable
     public ModSettingsPreset? ItemInEditor => _itemEditor.ItemInEditor;
 
     /// <summary>
-    ///     Aligns the shared Mod/Preset combos with the mod referenced by <paramref name="mod"/>, regenerating
-    ///     the preset list when the mod changed. The combos only sync their selection while their popup is open,
-    ///     so a freshly-drawn editor would otherwise show a stale or empty preset list for an already-selected mod.
+    ///   Aligns the shared Mod/Preset combos with the mod referenced by <paramref name="mod"/>, regenerating
+    ///   the preset list when the mod changed. The combos only sync their selection while their popup is open,
+    ///   so a freshly-drawn editor would otherwise show a stale or empty preset list for an already-selected mod.
     /// </summary>
     public void SyncCombosToItem(ModSettingsPreset mod)
     {
@@ -237,10 +237,10 @@ public class ModPresetManager : DisposableMediatorSubscriberBase, IHybridSavable
 
     #region HybridSavable
     public int ConfigVersion => 0;
+    public int MaxBackups => 3;
     public HybridSaveType SaveType => HybridSaveType.Json;
-    public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
-        => (isAccountUnique = false, files.CustomModSettings).Item2;
+    public DateTime LastWriteTimeUTC => DateTime.MinValue;
+    public string ToFilePath(GsFiles files) => files.CustomModSettings;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize()
     {

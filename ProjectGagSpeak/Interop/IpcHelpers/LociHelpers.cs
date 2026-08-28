@@ -5,8 +5,8 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
-using GagspeakAPI.Extensions;
 using LociApi.Enums;
+using NAudio.SoundFont;
 
 namespace GagSpeak.Interop.Helpers;
 
@@ -127,11 +127,11 @@ public static class LociHelpers
         using var tt = ImRaii.Tooltip();
 
         // push the title, converting all color tags into the actual label.
-        CkRichText.Text(item.Title, cloneId: 100);
+        NewRichText.TextWrapped(item.Title, id: "tooltip");
         if (!item.Description.IsNullOrWhitespace())
         {
             ImGui.Separator();
-            CkRichText.Text(350f, item.Description);
+            NewRichText.TextWrapped(item.Description, 350f);
         }
 
         CkGui.ColorText("Duration:", ImGuiColors.ParsedGold);
@@ -150,14 +150,15 @@ public static class LociHelpers
                 CkGui.ColorText("Chained Status:", ImGuiColors.ParsedGold);
                 ImGui.SameLine();
                 var status = data.Statuses.TryGetValue(item.ChainedGUID, out var match) ? match.Title : "Unknown";
-                CkRichText.Text(status, 100);
+                NewRichText.TextWrapped(status, "tooltip");
+
             }
             else
             {
                 CkGui.ColorText("Chained Preset:", ImGuiColors.ParsedGold);
                 ImGui.SameLine();
                 var preset = data.Presets.TryGetValue(item.ChainedGUID, out var match) ? match.Title : "Unknown";
-                CkRichText.Text(preset, 100);
+                NewRichText.TextWrapped(preset, "tooltip");
             }
         }
     }
@@ -175,11 +176,11 @@ public static class LociHelpers
         using var tt = ImRaii.Tooltip();
 
         // push the title, converting all color tags into the actual label.
-        CkRichText.Text(item.Title, cloneId: 100);
+        NewRichText.TextWrapped(item.Title, id: "tooltip");
         if (!item.Description.IsNullOrWhitespace())
         {
             ImGui.Separator();
-            CkRichText.Text(350f, item.Description);
+            NewRichText.TextWrapped(item.Description, 350f);
         }
 
         CkGui.ColorText("Duration:", ImGuiColors.ParsedGold);
@@ -198,14 +199,14 @@ public static class LociHelpers
                 CkGui.ColorText("Chained Status:", ImGuiColors.ParsedGold);
                 ImGui.SameLine();
                 var status = data.Statuses.TryGetValue(item.ChainedGUID, out var match) ? match.Title : "Unknown";
-                CkRichText.Text(status, 100);
+                NewRichText.TextWrapped(status, "tooltip");
             }
             else
             {
                 CkGui.ColorText("Chained Preset:", ImGuiColors.ParsedGold);
                 ImGui.SameLine();
                 var preset = data.Presets.TryGetValue(item.ChainedGUID, out var match) ? match.Title : "Unknown";
-                CkRichText.Text(preset, 100);
+                NewRichText.TextWrapped(preset, "tooltip");
             }
         }
     }
@@ -250,7 +251,7 @@ public static class LociHelpers
     }
 
     /// <summary>
-    ///     API Tuple format of if we can apply statuses or not.
+    ///   API Tuple format of if we can apply statuses or not.
     /// </summary>
     public static bool CanApply(PairPerms perms, IEnumerable<LociStatusStruct> statuses)
     {

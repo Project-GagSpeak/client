@@ -26,9 +26,6 @@ namespace GagSpeak.Gui.Wardrobe;
 // Independant window for Triggers.
 public class TriggersUI : WindowMediatorSubscriberBase
 {
-    // Revamp this later.
-    private static bool THEME_PUSHED = false;
-
     private readonly MainHub _hub;
     private readonly TriggerFileSelector _selector;
     private readonly DetectionDrawer _detections;
@@ -58,27 +55,6 @@ public class TriggersUI : WindowMediatorSubscriberBase
     // Accessed by Tutorial System
     public static Vector2 LastPos { get; private set; } = Vector2.Zero;
     public static Vector2 LastSize { get; private set; } = Vector2.Zero;
-
-    protected override void PreDrawInternal()
-    {
-        if (!THEME_PUSHED)
-        {
-            ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(4));
-            ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .403f));
-            ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.579f, 0.170f, 0.359f, 0.428f));
-            THEME_PUSHED = true;
-        }
-    }
-
-    protected override void PostDrawInternal()
-    {
-        if (THEME_PUSHED)
-        {
-            ImGui.PopStyleVar();
-            ImGui.PopStyleColor(2);
-            THEME_PUSHED = false;
-        }
-    }
 
     protected override void DrawInternal()
     {
@@ -146,7 +122,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
         ImGui.Separator();
 
         // Draw out the detection method, then a line down from it for the total lines drawn out ext.
-        CkGui.FontText($"Detects {trigger.Type.ToName()}", Fonts.Default150Percent);
+        CkGui.FontText($"Detects {trigger.Type.ToName()}", Fonts.DefaultScaled);
         // Draw out the group
         switch (trigger)
         {
@@ -161,7 +137,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
         
         ImGui.Spacing();
         ImGui.Separator();
-        CkGui.FontText($"Reacts with {trigger.ActionType.ToName()}", Fonts.Default150Percent);
+        CkGui.FontText($"Reacts with {trigger.ActionType.ToName()}", Fonts.DefaultScaled);
         // Draw out the group
         switch (trigger.InvokableAction)
         {

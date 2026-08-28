@@ -2,7 +2,7 @@ using Dalamud.Bindings.ImGui;
 using GagSpeak.Gui.MainWindow;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagspeakAPI.Data;
+using GagspeakAPI.User;
 
 namespace GagSpeak.Gui.Profile;
 
@@ -11,7 +11,7 @@ public class PopoutKinkPlateUi : WindowMediatorSubscriberBase
     private bool ThemePushed = false;
 
     private readonly KinkPlateLight _lightUI;
-    private readonly KinkPlateService _service;
+    private readonly KinkPlateService _kinkplates;
 
     private UserData? User = null;
 
@@ -20,23 +20,23 @@ public class PopoutKinkPlateUi : WindowMediatorSubscriberBase
         : base(logger, mediator, "###GSPopoutProfileUI")
     {
         _lightUI = plateLightUi;
-        _service = service;
+        _kinkplates = service;
 
         Flags = WFlags.NoDecoration;
 
-        Mediator.Subscribe<OpenKinkPlatePopout>(this, (msg) =>
+        Mediator.Subscribe<OpenProfilePopout>(this, (msg) =>
         {
             IsOpen = true;
             User = msg.UserData;
         });
-        Mediator.Subscribe<CloseKinkPlatePopout>(this, (msg) =>
+        Mediator.Subscribe<CloseProfilePopout>(this, (msg) =>
         {
             IsOpen = false;
             User = null;
         });
     }
 
-    protected override void PreDrawInternal()
+    public override void PreDraw()
     {
         if (!ThemePushed)
         {
@@ -56,7 +56,7 @@ public class PopoutKinkPlateUi : WindowMediatorSubscriberBase
 
         ImGui.SetNextWindowSize(size);
     }
-    protected override void PostDrawInternal()
+    public override void PostDraw()
     {
         if (ThemePushed)
         {
@@ -70,7 +70,7 @@ public class PopoutKinkPlateUi : WindowMediatorSubscriberBase
         if (User is null)
             return;
         // obtain the profile for this userPair.
-        var toDraw = _service.GetKinkPlate(User);
+        var toDraw = _kinkplates.GetUserProfile(User);
         var dispName = User.AliasOrUID;
 
         var wdl = ImGui.GetWindowDrawList();

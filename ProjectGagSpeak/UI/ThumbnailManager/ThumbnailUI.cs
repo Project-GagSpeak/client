@@ -41,12 +41,6 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
         Mediator.Subscribe<ReScanThumbnailFolder>(this, _ => TryRefresh(true));
     }
 
-    protected override void PreDrawInternal()
-    { }
-
-    protected override void PostDrawInternal()
-    { }
-
     protected override void DrawInternal()
     {
         LastPos = ImGui.GetWindowPos();
@@ -77,7 +71,7 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
         var fileImportW = CkGui.IconTextButtonSize(FAI.FileImport, "From File");
 
         var searchWidth = ImGui.GetContentRegionAvail().X / 3;
-        FancySearchBar.Draw("Filter", searchWidth, ref _service.SearchString, "Browse for a thumbnail to use.", 128, buttonW, () =>
+        FancySearchBar.DrawWithButtons("Filter", "Browse thumbnails..", searchWidth, ref _service.SearchString, 128, buttonW, () =>
         {
             if (CkGui.IconButton(FAI.Sync))
                 TryRefresh(true);
@@ -89,9 +83,9 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - clipboardImportW - fileImportW - ImGui.GetStyle().ItemInnerSpacing.X * 3);
 
         // Let the user control the size of the displayed icons.
-        var size = _config.Current.FileIconScale;
+        var size = _config.Data.FileIconScale;
         if (ImGui.SliderFloat("##icon_scaler", ref size, 0.5f, 2.0f, $"Scale: %.2fx"))
-            _config.Current.FileIconScale = size;
+            _config.Data.FileIconScale = size;
         CkGui.AttachTooltip($"Scalar: {size}x (Size: {_service.ItemSize.X}px)");
         // Save changes only once we deactivate, to avoid spamming the hybrid saver.
         if (ImGui.IsItemDeactivatedAfterEdit())
@@ -231,7 +225,7 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
                 ImGui.SetCursorScreenPos(rectMin + new Vector2(0, imgSpace.Y));
 
                 if(!imgFits)
-                    using (Fonts.GagspeakLabelFont.Push())
+                    using (Fonts.GagspeakFont.Push())
                         ImGuiUtil.TextWrapped(entry.FileNameNoExtension);
                 else
                     ImGuiUtil.TextWrapped(entry.FileNameNoExtension);

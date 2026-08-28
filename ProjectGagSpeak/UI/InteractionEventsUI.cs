@@ -13,7 +13,6 @@ namespace GagSpeak.Gui;
 internal class InteractionEventsUI : WindowMediatorSubscriberBase
 {
     private readonly EventAggregator _eventAggregator;
-    private bool ThemePushed = false;
 
     private List<InteractionEvent> CurrentEvents => _eventAggregator.EventList.Value.OrderByDescending(f => f.EventTime).ToList();
     private List<InteractionEvent> FilteredEvents => CurrentEvents.Where(f => (string.IsNullOrEmpty(FilterText) || ApplyDynamicFilter(f))).ToList();
@@ -70,25 +69,6 @@ internal class InteractionEventsUI : WindowMediatorSubscriberBase
         EventAggregator.UnreadInteractionsCount = 0;
     }
 
-    protected override void PreDrawInternal()
-    {
-        if (!ThemePushed)
-        {
-            ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .803f));
-            ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.579f, 0.170f, 0.359f, 0.828f));
-
-            ThemePushed = true;
-        }
-    }
-
-    protected override void PostDrawInternal()
-    {
-        if (ThemePushed)
-        {
-            ImGui.PopStyleColor(2);
-            ThemePushed = false;
-        }
-    }
     protected override void DrawInternal()
     {
         using (ImRaii.Group())
@@ -116,7 +96,7 @@ internal class InteractionEventsUI : WindowMediatorSubscriberBase
             {
                 ProcessStartInfo ps = new()
                 {
-                    FileName = ConfigFileProvider.EventDirectory,
+                    FileName = GsFiles.EventDirectory,
                     UseShellExecute = true,
                     WindowStyle = ProcessWindowStyle.Normal
                 };

@@ -138,7 +138,7 @@ public unsafe partial class StaticDetours
                     str.Append(a.Int);
                     break;
                 }
-            case AtkValueType.String8:
+            case AtkValueType.ConstString:
             case AtkValueType.WideString:
             case AtkValueType.ManagedString:
             case AtkValueType.String:

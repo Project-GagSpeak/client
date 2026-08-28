@@ -1,7 +1,9 @@
 using Dalamud.Interface.ImGuiNotification;
+using GagSpeak.Interop.Helpers;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Events;
-using GagspeakAPI.Data;
-using GagspeakAPI.Network;
+using GagspeakAPI.Chat;
+using GagspeakAPI.Connection;
 
 namespace GagSpeak.Services.Mediator;
 
@@ -22,7 +24,13 @@ public record NotificationMessage(string Title, string Message, NotificationType
 /// <param name="Event"> The event that was triggered. </param>
 public record EventMessage(InteractionEvent Event) : MessageBase;
 
+/// <summary> The ConnectionKind was updated to reflect a new type. </summary>
+public record ConnectionKindChanged(ConnectionKind PrevState, ConnectionKind NewState) : MessageBase;
 
+// Remove later.
+public record OpenSettingsPluginInfoMessage(OptionalPlugin Plugin) : MessageBase;
+
+public record ConnectedHubProfileChanged : MessageBase;
 
 /// <summary> Fires whenever the client is disconnected from the GagSpeak Hub. </summary>
 public record DisconnectedMessage(DisconnectIntent Intent) : SameThreadMessage;
@@ -42,16 +50,12 @@ public record ConnectedMessage : MessageBase;
 /// <summary> Fired once all personal data related to sharehubs and invites are received after connection. </summary>
 public record ConnectedDataSyncedMessage(LobbyAndHubInfoResponse Info) : MessageBase;
 
-
 /// <summary> When we want to send off our current Achievement Data. </summary>
 public record SendAchievementData : MessageBase;
 
 /// <summary> When we want to update the total achievement count. </summary>
 public record UpdateCompletedAchievements: MessageBase;
 
-/// <summary> Contains the message content of a Global Chat message. </summary>
-public record GlobalChatMessage(ChatMessageGlobal Message, bool FromSelf) : MessageBase;
-
 /// <summary> Notifies you that a Kinkster in the VibeRoom has sent a message. </summary>
 /// <param name="User"> The Kinkster that sent the message. </param>
-public record VibeRoomChatMessage(UserData Kinkster, string Message) : MessageBase;
+public record VibeRoomChatMessage(ChatlogMessage Message) : MessageBase;

@@ -10,7 +10,6 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data;
 using GagspeakAPI.Network;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -22,7 +21,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
 {
     private readonly MainHub _hub;
     private readonly UiFileDialogService _dialogService;
-    private readonly KinkPlateService _KinkPlateManager;
+    private readonly KinkPlateService _kinkplates;
     private readonly CosmeticService _cosmetics;
     private readonly TutorialService _guides;
 
@@ -42,7 +41,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
         AllowPinning = false;
         _hub = hub;
         _dialogService = dialogService;
-        _KinkPlateManager = KinkPlateManager;
+        _kinkplates = KinkPlateManager;
         _cosmetics = cosmetics;
         _guides = guides;
 
@@ -75,24 +74,22 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
     public string ScaledFileSize { get; private set; } = string.Empty;
     public string CroppedFileSize { get; private set; } = string.Empty;
 
-    protected override void PreDrawInternal() { }
-    protected override void PostDrawInternal() { }
     protected override void DrawInternal()
     {
         var spacing = ImGui.GetStyle().ItemSpacing.X;
 
         // grab our profile.
-        var profile = _KinkPlateManager.GetKinkPlate(new UserData(MainHub.UID));
+        var profile = _kinkplates.GetUserProfile(new(MainHub.UID));
 
         // check if flagged
-        if (profile.Info.Flagged)
+        if (profile.Data.Flagged)
         {
-            CkGui.ColorTextWrapped(profile.Info.Description, ImGuiColors.DalamudRed);
+            CkGui.ColorTextWrapped(profile.Data.Description, ImGuiColors.DalamudRed);
             return;
         }
 
         // grab our profile image and draw the baseline.
-        var pfpWrap = profile.GetProfileOrDefault();
+        var pfpWrap = profile.GetIconWrapOrDefault();
         if (pfpWrap != null)
         {
             ImGui.Image(pfpWrap.Handle, ImGuiHelpers.ScaledVector2(pfpWrap.Width, pfpWrap.Height));
@@ -136,7 +133,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
                 _croppedImageData = null!;
                 _croppedImageToShow = null;
                 _useCompressedImage = false;
-                _ = _hub.UserSetKinkPlatePicture(new KinkPlateImage(new UserData(MainHub.UID), string.Empty));
+                _ = _hub.UserSetKinkPlatePicture(new KinkPlateImage(MainHub.OwnUserData, string.Empty));
             }
             CkGui.AttachTooltip("Clear your currently uploaded profile picture--SEP--Must be holding SHIFT to clear.");
 
@@ -224,7 +221,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
         });
     }
 
-    private void DrawNewProfileDisplay(KinkPlate profile)
+    private void DrawNewProfileDisplay(UserKinkPlate profile)
     {
         var spacing = ImGui.GetStyle().ItemSpacing.X;
         if (_uploadedImageData != null)
@@ -302,7 +299,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
         }
     }
 
-    private async Task UploadToServer(KinkPlate profile)
+    private async Task UploadToServer(UserKinkPlate profile)
     {
         // grab the _croppedImageData and upload it to the server.
         if (_croppedImageData is null)

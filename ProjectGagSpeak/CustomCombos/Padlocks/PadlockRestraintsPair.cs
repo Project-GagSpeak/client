@@ -51,7 +51,7 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
             ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5))
             : Timer.GetEndTimeUTC();
 
-        var dto = new PushKinksterActiveRestraint(_ref.UserData, DataUpdateType.Locked)
+        var dto = new PushKinksterActiveRestraint(_ref.User, DataUpdateType.Locked)
         {
             Padlock = SelectedLock,
             Password = Password,
@@ -79,7 +79,7 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
         if (!ActiveItem.CanUnlock() || !_ref.PairPerms.UnlockRestraintSets)
             return;
 
-        var dto = new PushKinksterActiveRestraint(_ref.UserData, DataUpdateType.Unlocked)
+        var dto = new PushKinksterActiveRestraint(_ref.User, DataUpdateType.Unlocked)
         {
             Padlock = ActiveItem.Padlock,
             Password = Password,

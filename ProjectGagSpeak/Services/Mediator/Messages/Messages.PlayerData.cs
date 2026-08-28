@@ -1,24 +1,22 @@
 using GagSpeak.Kinksters;
-using GagspeakAPI.Data;
+using GagspeakAPI.User;
 
 namespace GagSpeak.Services.Mediator;
 
-// Client Player or Player 
-public record KinksterOnline(Kinkster Kinkster) : MessageBase; // Revise
-public record KinksterOffline(Kinkster Kinkster) : MessageBase;
-public record KinksterRendered(KinksterHandler Handler, Kinkster Kinkster) : SameThreadMessage; // Effectively "becoming visible"
-public record KinksterUnrendered(IntPtr Address) : SameThreadMessage; // Effectively "becoming invisible"
+public record TargetKinksterMessage(Kinkster Kinkster) : MessageBase; // called when publishing a targeted pair connection (see UI)
+public record KinksterRemovedMessage(UserData UserData) : MessageBase; // a message indicating a pair has been removed.
+
+// Effectively "becoming visible"
+public record HandledUserRendered(UserData User, IntPtr Address) : SameThreadMessage;
+// Technically "becoming invisible"
+public record KinksterRendered(UserData User, IntPtr Address) : SameThreadMessage;
+public record KinksterUnrendered(UserData User, IntPtr Address) : SameThreadMessage;
+
+//public record KinksterRendered(KinksterHandler Handler, Kinkster Kinkster) : SameThreadMessage; // Effectively "becoming visible"
+//public record KinksterUnrendered(IntPtr Address) : SameThreadMessage; // Effectively "becoming invisible"
 
 // Maybe remove this down the line.
 public record KinksterActiveGagsChanged(Kinkster Kinkster) : SameThreadMessage; // when the active gags of a kinkster change.
-
-public record KinksterRemovedMessage(UserData UserData) : MessageBase; // a message indicating a pair has been removed.
-
-public record TargetKinksterMessage(Kinkster Kinkster) : MessageBase; // called when publishing a targeted pair connection (see UI)
-
-// Object Management
-public record WatchedObjectCreated(IntPtr Address) : SameThreadMessage;
-public record WatchedObjectDestroyed(IntPtr Address) : SameThreadMessage;
 
 // Action spesific mediator calls
 public record MufflerLanguageChanged : MessageBase;

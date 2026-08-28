@@ -7,9 +7,10 @@ public class HypnoEffectManager : IHybridSavable
 {
     private readonly HybridSaveService _saver;
     public int ConfigVersion => 0;
+    public int MaxBackups => 1;
     public HybridSaveType SaveType => HybridSaveType.StreamWrite;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider ser, out bool upa) => (upa = false, ser.HypnoEffects).Item2;
+    public string ToFilePath(GsFiles files) => files.HypnoEffects;
     public string JsonSerialize() => throw new NotImplementedException();
     public HypnoEffectManager(HybridSaveService saver)
     {

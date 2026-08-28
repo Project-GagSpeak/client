@@ -1,6 +1,5 @@
 using CkCommons;
 using CkCommons.Gui;
-using CkCommons.Gui.Utility;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
@@ -120,7 +119,7 @@ public partial class SidePanelPair
         {
             if (ImGui.Button("Remove Gag", new Vector2(width, ImGui.GetFrameHeight())))
             {
-                var dto = new PushKinksterActiveGagSlot(k.UserData, DataUpdateType.Removed)
+                var dto = new PushKinksterActiveGagSlot(k.User, DataUpdateType.Removed)
                 {
                     Layer = cache.GagLayer,
                     Gag = GagType.None,
@@ -243,7 +242,7 @@ public partial class SidePanelPair
         {
             if (ImGui.Button("Remove Restriction", new Vector2(width, ImGui.GetFrameHeight())))
             {
-                var dto = new PushKinksterActiveRestriction(k.UserData, DataUpdateType.Removed) { Layer = cache.RestrictionLayer };
+                var dto = new PushKinksterActiveRestriction(k.User, DataUpdateType.Removed) { Layer = cache.RestrictionLayer };
                 UiService.SetUITask(async () =>
                 {
                     var result = await _hub.UserChangeKinksterActiveRestriction(dto).ConfigureAwait(false);
@@ -383,7 +382,7 @@ public partial class SidePanelPair
             {
                 UiService.SetUITask(async () =>
                 {
-                    var result = await _hub.UserChangeKinksterActiveRestraint(new(k.UserData, DataUpdateType.Removed)).ConfigureAwait(false);
+                    var result = await _hub.UserChangeKinksterActiveRestraint(new(k.User, DataUpdateType.Removed)).ConfigureAwait(false);
                     if (result.ErrorCode is not GagSpeakApiEc.Success)
                         _logger.LogDebug($"Failed to Remove {dispName}'s Restraint Set. ({result})", LoggerType.StickyUI);
                     else
@@ -430,7 +429,7 @@ public partial class SidePanelPair
         if (cache.OpenItem is InteractionType.ApplyOwnStatus)
         {
             using (ImRaii.Child("applyownstatus", new Vector2(width, ImGui.GetFrameHeight())))
-                cache.OwnStatuses.DrawApplyStatuses($"##ownstatus-{k.UserData.UID}", width, $"Applies this Status to {dispName}");
+                cache.OwnStatuses.DrawApplyStatuses($"##ownstatus-{k.User.UID}", width, $"Applies this Status to {dispName}");
             ImGui.Separator();
         }
 
@@ -442,7 +441,7 @@ public partial class SidePanelPair
         if (cache.OpenItem is InteractionType.ApplyOwnPreset)
         {
             using (ImRaii.Child("applyownpresets", new Vector2(width, ImGui.GetFrameHeight())))
-                cache.OwnPresets.DrawApplyPresets($"##ownpreset-{k.UserData.UID}", width, $"Applies this Preset to {dispName}");
+                cache.OwnPresets.DrawApplyPresets($"##ownpreset-{k.User.UID}", width, $"Applies this Preset to {dispName}");
             ImGui.Separator();
         }
     }
@@ -466,7 +465,7 @@ public partial class SidePanelPair
         if (cache.OpenItem is InteractionType.ApplyOtherStatus)
         {
             using (ImRaii.Child("applyotherstatus", new Vector2(width, ImGui.GetFrameHeight())))
-                cache.Statuses.DrawStatuses($"##otherstatus-{k.UserData.UID}", width, true, $"Applies this Status to {dispName}");
+                cache.Statuses.DrawStatuses($"##otherstatus-{k.User.UID}", width, true, $"Applies this Status to {dispName}");
             ImGui.Separator();
         }
 
@@ -478,7 +477,7 @@ public partial class SidePanelPair
         if (cache.OpenItem is InteractionType.ApplyOtherPreset)
         {
             using (ImRaii.Child("applyotherpresets", new Vector2(width, ImGui.GetFrameHeight())))
-                cache.Presets.DrawPresets($"##otherpreset-{k.UserData.UID}", width, $"Applies this Preset to {dispName}");
+                cache.Presets.DrawPresets($"##otherpreset-{k.User.UID}", width, $"Applies this Preset to {dispName}");
             ImGui.Separator();
         }
 
@@ -496,7 +495,7 @@ public partial class SidePanelPair
         if (cache.OpenItem is InteractionType.RemoveStatus)
         {
             using (ImRaii.Child("removestatus", new Vector2(width, ImGui.GetFrameHeight())))
-                cache.Remover.DrawStatuses($"##statusremover-{k.UserData.UID}", width, false, $"Removes Selected Status from {dispName}");
+                cache.Remover.DrawStatuses($"##statusremover-{k.User.UID}", width, false, $"Removes Selected Status from {dispName}");
         }
     }
     #endregion Loci
@@ -519,7 +518,7 @@ public partial class SidePanelPair
         if (cache.OpenItem is InteractionType.StartPattern)
         {
             using (ImRaii.Child("PatternExecute", new Vector2(width, ImGui.GetFrameHeight())))
-                cache.Patterns.Draw("##ExecutePattern" + k.UserData.UID, width, "Execute a Pattern");
+                cache.Patterns.Draw("##ExecutePattern" + k.User.UID, width, "Execute a Pattern");
             ImGui.Separator();
         }
 
@@ -534,7 +533,7 @@ public partial class SidePanelPair
             // Avoid blocking the UI by executing this off the UI thread.
             UiService.SetUITask(async () =>
             {
-                var res = await _hub.UserChangeKinksterPatternState(new(k.UserData, GSModule.Pattern, k.ActivePattern, false));
+                var res = await _hub.UserChangeKinksterPatternState(new(k.User, GSModule.Pattern, k.ActivePattern, false));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                     _logger.LogError($"Failed to stop {dispName}'s active pattern. ({res.ErrorCode})", LoggerType.StickyUI);
                 else
@@ -559,7 +558,7 @@ public partial class SidePanelPair
         if (cache.OpenItem is InteractionType.ToggleAlarm)
         {
             using (ImRaii.Child("AlarmToggle", new Vector2(width, ImGui.GetFrameHeight())))
-                cache.Alarms.Draw($"##AlarmToggle-{k.UserData.UID}", width, "this Alarm");
+                cache.Alarms.Draw($"##AlarmToggle-{k.User.UID}", width, "this Alarm");
             ImGui.Separator();
         }
 
@@ -576,7 +575,7 @@ public partial class SidePanelPair
         if (cache.OpenItem is InteractionType.ToggleTrigger)
         {
             using (ImRaii.Child("TriggerToggle", new Vector2(width, ImGui.GetFrameHeight())))
-                cache.Triggers.Draw($"##ToggleTrigger-{k.UserData.UID}", width, "this Trigger");
+                cache.Triggers.Draw($"##ToggleTrigger-{k.User.UID}", width, "this Trigger");
         }
     }
     #endregion Toybox
@@ -631,7 +630,7 @@ public partial class SidePanelPair
         {
             UiService.SetUITask(async () =>
             {
-                var res = await _hub.UserShockKinkster(new(k.UserData, 0 /* shock */, shockerIntensity, durationMs));
+                var res = await _hub.UserShockKinkster(new(k.User, 0 /* shock */, shockerIntensity, durationMs));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                     _logger.LogError($"Failed to shock {dispName}. ({res.ErrorCode})", LoggerType.StickyUI);
             });
@@ -642,7 +641,7 @@ public partial class SidePanelPair
         {
             UiService.SetUITask(async () =>
             {
-                var res = await _hub.UserShockKinkster(new(k.UserData, 2 /* beep */, shockerIntensity, durationMs));
+                var res = await _hub.UserShockKinkster(new(k.User, 2 /* beep */, shockerIntensity, durationMs));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                     _logger.LogError($"Failed to beep {dispName}. ({res.ErrorCode})", LoggerType.StickyUI);
             });
@@ -653,7 +652,7 @@ public partial class SidePanelPair
         {
             UiService.SetUITask(async () =>
             {
-                var res = await _hub.UserShockKinkster(new(k.UserData, 1 /* vibrate */, shockerIntensity, durationMs));
+                var res = await _hub.UserShockKinkster(new(k.User, 1 /* vibrate */, shockerIntensity, durationMs));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                     _logger.LogError($"Failed to vibrate {dispName}. ({res.ErrorCode})", LoggerType.StickyUI);
             });
@@ -681,7 +680,7 @@ public partial class SidePanelPair
         {
             var buttonW = CkGui.IconTextButtonSize(FAI.Upload, "Send Effect");
             var txtWidth = width - buttonW - ImGui.GetStyle().ItemInnerSpacing.X;
-            CkGui.IconInputText($"##HypnoTime-{k.UserData.UID}", txtWidth, FAI.Clock, "Ex: 20m5s", ref cache.HypnoTimer, 12);
+            CkGui.IconInputText($"##HypnoTime-{k.User.UID}", txtWidth, FAI.Clock, "Ex: 20m5s", ref cache.HypnoTimer, 12);
 
             ImUtf8.SameLineInner();
             if (CkGui.IconTextButton(FAI.Upload, "Send Effect", buttonW, disabled: cache.HypnoTimer.IsNullOrEmpty()))

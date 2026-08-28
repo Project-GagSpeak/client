@@ -7,7 +7,7 @@ namespace GagSpeak.Utils;
 public static class ActionTooltipEx
 {
     /// <summary>
-    ///     Obtains the correct title based on the trait the action tooltip is for.
+    ///   Obtains the correct title based on the trait the action tooltip is for.
     /// </summary>
     /// <param name="trait"> The trait to get the title for.</param>
     /// <returns> The title of the trait.</returns>
@@ -23,7 +23,7 @@ public static class ActionTooltipEx
     };
 
     /// <summary>
-    ///     Obtains the correct description text based on the trait the action tooltip is for.
+    ///   Obtains the correct description text based on the trait the action tooltip is for.
     /// </summary>
     /// <param name="trait"> The trait to get the description for.</param>
     /// <param name="sourceLabel"> The label of the source that applied the trait.</param>
@@ -52,8 +52,8 @@ public static class ActionTooltipEx
     }
 
     /// <summary>
-    ///     Replaces the text of a text node in an addon.
-    ///     This is used to update the action tooltip with the correct trait information.
+    ///   Replaces the text of a text node in an addon.
+    ///   This is used to update the action tooltip with the correct trait information.
     /// </summary>
     /// <param name="addon">pointer to the addon</param>
     /// <param name="textNodeId">index of the text node within the addon</param>
@@ -69,8 +69,8 @@ public static class ActionTooltipEx
     }
 
     /// <summary>
-    ///     Replaces the text of a text node in an addon.
-    ///     This is used to update the action tooltip with the correct trait information.
+    ///   Replaces the text of a text node in an addon.
+    ///   This is used to update the action tooltip with the correct trait information.
     /// </summary>
     /// <param name="addon">pointer to the addon</param>
     /// <param name="textNodeId">index of the text node within the addon</param>

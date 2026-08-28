@@ -16,8 +16,8 @@ public enum SelfBondageType
 }
 
 /// <summary>
-///     Services funneled distribution for server calls that relate to self bondage updates. <para />
-///     Allows the flow of multiple updates, without allowing more than one of the same type to occur.
+///   Services funneled distribution for server calls that relate to self bondage updates. <para />
+///   Allows the flow of multiple updates, without allowing more than one of the same type to occur.
 /// </summary>
 public class SelfBondageService : IDisposable
 {
@@ -46,7 +46,7 @@ public class SelfBondageService : IDisposable
     }
 
     /// <summary>
-    ///     Checks if we are currently allowed to execute a spesific task.
+    ///   Checks if we are currently allowed to execute a spesific task.
     /// </summary>
     public bool CanRunTask(SelfBondageType type)
         => !_updateTasks.TryGetValue(type, out var task) || task is null || task.IsCompleted;
@@ -60,13 +60,13 @@ public class SelfBondageService : IDisposable
     };
 
     /// <summary>
-    ///     Check if we're able to perform an alias reaction based on its types. If any fail, all fail.
+    ///   Check if we're able to perform an alias reaction based on its types. If any fail, all fail.
     /// </summary>
     public bool CanExecute(IEnumerable<InvokableActionType> actionTypes)
         => actionTypes.All(CanExecute);
 
     /// <summary>
-    ///     Attempt to perform a Gag related SelfBondage act. If one is in progress, it will be rejected.
+    ///   Attempt to perform a Gag related SelfBondage act. If one is in progress, it will be rejected.
     /// </summary>
     public void DoSelfGag(int layer, ActiveGagSlot newData, DataUpdateType type)
     {
@@ -104,7 +104,7 @@ public class SelfBondageService : IDisposable
     }
 
     /// <summary>
-    ///     Attempt to perform a Gag related SelfBondage act and await its result. If one is in progress, it will be rejected.
+    ///   Attempt to perform a Gag related SelfBondage act and await its result. If one is in progress, it will be rejected.
     /// </summary>
     public async Task<bool> DoSelfGagResult(int layer, ActiveGagSlot newData, DataUpdateType type)
     {
@@ -147,7 +147,7 @@ public class SelfBondageService : IDisposable
     }
 
     /// <summary>
-    ///     Attempt to perform a Bind / Restriction related SelfBondage act. If one is in progress, it will be rejected.
+    ///   Attempt to perform a Bind / Restriction related SelfBondage act. If one is in progress, it will be rejected.
     /// </summary>
     public void DoSelfBind(int layer, ActiveRestriction newData, DataUpdateType type)
     {
@@ -184,7 +184,7 @@ public class SelfBondageService : IDisposable
     }
 
     /// <summary>
-    ///     Attempt to perform a Restriction related SelfBondage act and await its result. If one is in progress, it will be rejected.
+    ///   Attempt to perform a Restriction related SelfBondage act and await its result. If one is in progress, it will be rejected.
     /// </summary>
     public async Task<bool> DoSelfBindResult(int layer, ActiveRestriction newData, DataUpdateType type)
     {
@@ -227,7 +227,7 @@ public class SelfBondageService : IDisposable
     }
 
     /// <summary>
-    ///     Attempt to perform a RestraintSet related SelfBondage act. If one is in progress, it will be rejected.
+    ///   Attempt to perform a RestraintSet related SelfBondage act. If one is in progress, it will be rejected.
     /// </summary>
     public void DoSelfRestraint(CharaActiveRestraint newData, DataUpdateType type)
     {
@@ -282,7 +282,7 @@ public class SelfBondageService : IDisposable
     }
 
     /// <summary>
-    ///     Attempt to perform a RestraintSet related SelfBondage act and await its result. If one is in progress, it will be rejected.
+    ///   Attempt to perform a RestraintSet related SelfBondage act and await its result. If one is in progress, it will be rejected.
     /// </summary>
     public async Task<bool> DoSelfRestraintResult(CharaActiveRestraint newData, DataUpdateType type)
     {
@@ -343,7 +343,7 @@ public class SelfBondageService : IDisposable
     }
 
     /// <summary>
-    ///     Attempt to perform a self-invoked CollarUpdate act. If one is in progress, it will be rejected.
+    ///   Attempt to perform a self-invoked CollarUpdate act. If one is in progress, it will be rejected.
     /// </summary>
     public void DoSelfCollarUpdate(CharaActiveCollar newData, DataUpdateType type)
     {

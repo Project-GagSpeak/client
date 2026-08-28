@@ -20,7 +20,6 @@ using GagspeakAPI.Data;
 using LociApi.Enums;
 using OtterGui;
 using OtterGui.Text;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -78,11 +77,11 @@ public class LociSharehubTab : DisposableMediatorSubscriberBase
         {
             // Draw warnings if we should.
             ImGui.GetWindowDrawList().AddRectFilledMultiColor(minPos, maxPos, 0x77000000, 0x77000000, 0xAA000000, 0xAA000000);
-            var errorHeight = CkGui.CalcFontTextSize("A", Fonts.UidFont).Y + CkGui.CalcFontTextSize("A", Fonts.Default150Percent).Y + ImUtf8.FrameHeightSpacing;
+            var errorHeight = CkGui.CalcFontTextSize("A", Fonts.SubtitleFont).Y + CkGui.CalcFontTextSize("A", Fonts.DefaultScaled).Y + ImUtf8.FrameHeightSpacing;
             var centerDrawHeight = (ImGui.GetContentRegionAvail().Y - errorHeight) / 2;
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + centerDrawHeight);
-            CkGui.FontTextCentered("Requires Loci To Use!", Fonts.UidFont, ImGuiColors.DalamudRed);
-            CkGui.FontTextCentered("Try-on and status importing require Loci", Fonts.Default150Percent);
+            CkGui.FontTextCentered("Requires Loci To Use!", Fonts.SubtitleFont, ImGuiColors.DalamudRed);
+            CkGui.FontTextCentered("Try-on and status importing require Loci", Fonts.DefaultScaled);
             var buttonW = ImGui.GetContentRegionAvail().X * .4f;
             CkGui.SetCursorXtoCenter(buttonW);
             using (ImRaii.PushColor(ImGuiCol.Button, ImGuiColors.DPSRed))

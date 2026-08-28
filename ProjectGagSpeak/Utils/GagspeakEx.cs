@@ -13,8 +13,8 @@ namespace GagSpeak.Utils;
 public static class GagspeakEx
 {
     /// <summary>
-    ///     A reliable Player.Interactable, that also waits on the loading screen to finish. <para />
-    ///     Useful when waiting on player loading for UI manipulation and interactions.
+    ///   A reliable Player.Interactable, that also waits on the loading screen to finish. <para />
+    ///   Useful when waiting on player loading for UI manipulation and interactions.
     /// </summary>
     public static async Task WaitForPlayerLoading()
     {
@@ -27,7 +27,7 @@ public static class GagspeakEx
     public static bool IsPlayerFullyLoaded()
         => PlayerData.Interactable && HcTaskUtils.IsScreenReady();
 
-    public static bool HasValidSetup(this GagspeakConfig configuration)
+    public static bool HasValidSetup(this MainConfigData configuration)
         => configuration.AcknowledgementUnderstood;
     public static bool HasValidSetup(this AccountStorage configuration)
         => configuration.Profiles.Count > 0;
@@ -99,11 +99,11 @@ public static class GagspeakEx
             ServerState.Reconnecting => ImGuiColors.DalamudYellow,
             ServerState.Connected => ImGuiColors.HealerGreen,
             ServerState.ConnectedDataSynced => ImGuiColors.HealerGreen,
-            ServerState.Disconnected => CkCol.TriStateCross.Vec4Ref(),
+            ServerState.Disconnected => CkCol.TriStateCross.Vec4(),
             ServerState.Disconnecting => ImGuiColors.DalamudYellow,
             ServerState.Unauthorized => ImGuiColors.ParsedOrange,
             ServerState.VersionMisMatch => ImGuiColors.ParsedOrange,
-            ServerState.Offline => CkCol.TriStateCross.Vec4Ref(),
+            ServerState.Offline => CkCol.TriStateCross.Vec4(),
             ServerState.NoSecretKey => ImGuiColors.ParsedOrange,
             _ => ImGuiColors.ParsedOrange
         };

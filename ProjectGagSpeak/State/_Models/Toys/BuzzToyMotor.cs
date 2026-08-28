@@ -7,7 +7,7 @@ public class BuzzToyMotor : IEquatable<BuzzToyMotor>
 {
     public ToyMotor Type { get; }
     /// <summary>
-    ///     The MotorIdx defined upon ButtplugProtocol connection for motor-spesific instructions.
+    ///   The MotorIdx defined upon ButtplugProtocol connection for motor-spesific instructions.
     /// </summary>
     public uint MotorIdx { get; }
     public uint StepCount { get; }
@@ -44,7 +44,7 @@ public class BuzzToyMotor : IEquatable<BuzzToyMotor>
         => $"({MotorIdx},{StepCount},{(int)Type})";
 
     /// <summary>
-    ///     This will throw if the format is invalid.
+    ///   This will throw if the format is invalid.
     /// </summary>
     public static BuzzToyMotor FromCompact(string? compact)
     {

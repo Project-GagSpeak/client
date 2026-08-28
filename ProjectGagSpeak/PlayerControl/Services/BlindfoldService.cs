@@ -64,12 +64,12 @@ public class BlindfoldService : IDisposable
         _opacityCTS = _opacityCTS.SafeCancelRecreate();
         _currentOpacity = 0.0f;
         // Perform the equip animation!
-        await ExecuteWithSemaphore(() => AnimateOpacityTransition(_currentOpacity, _config.Current.OverlayMaxOpacity, _opacityCTS.Token));
+        await ExecuteWithSemaphore(() => AnimateOpacityTransition(_currentOpacity, _config.Data.OverlayMaxOpacity, _opacityCTS.Token));
     }
 
     /// <summary>
-    ///     Performs the remove animation then clears the stored data.
-    ///     Will inturrupt equip-animation.
+    ///   Performs the remove animation then clears the stored data.
+    ///   Will inturrupt equip-animation.
     /// </summary>
     public async Task RemoveBlindfold()
     {

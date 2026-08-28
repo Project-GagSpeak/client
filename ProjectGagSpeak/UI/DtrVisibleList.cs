@@ -12,8 +12,9 @@ namespace GagSpeak.Gui.Components;
 // So sloppy right now lol.
 internal class DtrVisibleWindow : WindowMediatorSubscriberBase
 {
+    private bool _themePushed = false;
+
     private readonly DtrBarService _service;
-    private bool ThemePushed = false;
     public DtrVisibleWindow(ILogger<DtrVisibleWindow> logger, GagspeakMediator mediator,
         DtrBarService dtrService) : base(logger, mediator, "##DtrLinker")
     {
@@ -24,9 +25,10 @@ internal class DtrVisibleWindow : WindowMediatorSubscriberBase
 
     private nint _selectedAddr = nint.Zero;
     private Vector2 _lastPos = Vector2.Zero;
-    public override void OnOpen() => _lastPos = ImGui.GetMousePos();
+    public override void OnOpen()
+        => _lastPos = ImGui.GetMousePos();
 
-    protected override void PreDrawInternal() 
+    public override void PreDraw() 
     {
         var posX = _lastPos.X - 100;
         var posY = _lastPos.Y + ImGui.GetFrameHeight();
@@ -39,16 +41,29 @@ internal class DtrVisibleWindow : WindowMediatorSubscriberBase
 
         ImGui.SetNextWindowSize(size);
 
-        if (!ThemePushed)
+        if (!_themePushed)
         {
             ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 5f);
             ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 1f);
             ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.5f, 0.5f));
             ImGui.PushStyleColor(ImGuiCol.Border, ImGuiColors.ParsedPink);
             ImGui.PushStyleColor(ImGuiCol.ChildBg, new Vector4(0.25f, 0.2f, 0.2f, 0.4f));
-            ThemePushed = true;
+            _themePushed = true;
         }
+        base.PreDraw();
     }
+
+    public override void PostDraw()
+    {
+        if (_themePushed)
+        {
+            ImGui.PopStyleVar(3);
+            ImGui.PopStyleColor(2);
+            _themePushed = false;
+        }
+        base.PostDraw();
+    }
+
     protected override void DrawInternal()
     {
         // close window if its not focused.
@@ -78,15 +93,6 @@ internal class DtrVisibleWindow : WindowMediatorSubscriberBase
         if (remaining > 0)
         {
             CkGui.ColorTextCentered($"And {remaining} more...", ImGuiColors.ParsedPink);
-        }
-    }
-    protected override void PostDrawInternal()
-    {
-        if (ThemePushed)
-        {
-            ImGui.PopStyleVar(3);
-            ImGui.PopStyleColor(2);
-            ThemePushed = false;
         }
     }
 }

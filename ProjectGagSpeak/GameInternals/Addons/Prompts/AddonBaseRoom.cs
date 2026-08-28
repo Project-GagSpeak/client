@@ -1,6 +1,5 @@
 using CkCommons;
 using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Memory;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 
 namespace GagSpeak.GameInternals.Addons;

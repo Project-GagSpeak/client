@@ -59,7 +59,7 @@ public sealed class PluginGuideProvider : IDisposable
         using (ImRaii.PushColor(ImGuiCol.Button, 0xFFDA8972))
             if (ImGui.Button("Discord", buttonSize))
                 Util.OpenLink(details.DiscordUrl!);
-        CkGui.AttachTooltip(details.DiscordTooltip, CkCol.TriStateCross.Vec4Ref());
+        CkGui.AttachTooltip(details.DiscordTooltip, CkCol.TriStateCross.Vec4());
 
         ImUtf8.SameLineInner();
         using (ImRaii.PushColor(ImGuiCol.Button, 0xFFD5449D))
@@ -81,7 +81,7 @@ public sealed class PluginGuideProvider : IDisposable
 
         var isCordyProject = plugin is OptionalPlugin.Sundouleia or OptionalPlugin.Loci;
         var bulletCnt = details.BulletInfo.Count + (isCordyProject ? 1 : 0);
-        var headerH = ImUtf8.FrameHeightSpacing * 2 + CkGui.CalcFontTextSize("A", Fonts.Default150Percent).Y;
+        var headerH = ImUtf8.FrameHeightSpacing * 2 + CkGui.CalcFontTextSize("A", Fonts.DefaultScaled).Y;
         var contextH = ImUtf8.TextHeightSpacing * bulletCnt;
         var imgSize = new Vector2(headerH);
 
@@ -98,7 +98,7 @@ public sealed class PluginGuideProvider : IDisposable
             using (ImRaii.Group())
             {
                 // Title + punchline
-                CkGui.FontText(details.Name, Fonts.Default150Percent);
+                CkGui.FontText(details.Name, Fonts.DefaultScaled);
                 CkGui.ColorTextFrameAligned(details.Punchline, ImGuiColors.DalamudViolet);
 
                 var buttonSize = new Vector2(80f * ImGuiHelpers.GlobalScale, 0);
@@ -109,7 +109,7 @@ public sealed class PluginGuideProvider : IDisposable
                         if (ImGui.Button("Discord", buttonSize))
                             Util.OpenLink(details.DiscordUrl);
                     if (!string.IsNullOrEmpty(details.DiscordTooltip))
-                        CkGui.AttachTooltip(details.DiscordTooltip, CkCol.TriStateCross.Vec4Ref());
+                        CkGui.AttachTooltip(details.DiscordTooltip, CkCol.TriStateCross.Vec4());
 
                     ImGui.SameLine();
                 }
@@ -232,7 +232,7 @@ public sealed class PluginGuideProvider : IDisposable
                 Punchline = "A powerful modern tool to create, customize, and manage status icons.",
 
                 DiscordUrl = "https://discord.gg/QJy4zTqpMD",
-                DiscordTooltip = "Opens the Sundouleia & Loci Discord--SEP----COL--DO NOT USE THIS TO REPORT GS ISSUES.--COL--",
+                DiscordTooltip = "Opens the GagSpeak & Loci Discord--SEP----COL--DO NOT USE THIS TO REPORT GS ISSUES.--COL--",
                 GithubUrl = "https://github.com/CordeliaMist/Loci",
 
                 RepoUrl = "https://raw.githubusercontent.com/CordeliaMist/Loci/main/repo.json",
@@ -290,10 +290,10 @@ public sealed class PluginGuideProvider : IDisposable
                 IconUrl = "https://raw.githubusercontent.com/Sundouleia/repo/main/Images/icon.png",
                 Name = "Sundouleia",
                 Author = "Cordelia",
-                Punchline = "Fresh approach to DataSync through a new lens, free of constraint.",
+                Punchline = "Uncapped Communities, Syncs, Chats, In-Depth Profiles, Instantaneous Speeds, Minimal Redraws.",
 
                 DiscordUrl = "https://discord.gg/QJy4zTqpMD",
-                DiscordTooltip = "Opens the Sundouleia & Loci Discord--SEP----COL--DO NOT USE THIS TO REPORT GS ISSUES.--COL--",
+                DiscordTooltip = "Opens the GagSpeak & Loci Discord--SEP----COL--DO NOT USE THIS TO REPORT GS ISSUES.--COL--",
                 GithubUrl = "https://github.com/Sundouleia",
 
                 RepoUrl = "https://raw.githubusercontent.com/Sundouleia/repo/main/sundouleia.json",

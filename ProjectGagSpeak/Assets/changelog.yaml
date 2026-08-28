@@ -1,0 +1,741 @@
+icon: "Book"
+tagline: "GagSpeak 2.2 - The Chat Update"
+subline: "DM Integration, 150+ new emotes, GIF Support, stickers, vanity names, name colors, and more."
+changelog:
+
+  - version: v2.2.0.0
+    date: "August 27th, 2026"
+    title: "Chat Integration, Profile Preperation, UI Polish, and tons of PRs"
+    segments:
+      - icon: "Comments"
+        title: "ChatLog & Text Rendering"
+        accent: "Blue"
+        subsections:
+          - title: "Optimizations & Improvements"
+            bullets:
+              - text: "CkRichText rendering performance improved by over 600%."
+                isImportant: true
+              - text: "Added support for direct messaging (GsTells). (Functionality coming soon)"
+                isImportant: true
+              - text: "Names and colors are split from messages."
+              - text: "Display messages in either flow wrap or inline display."
+              - text: "ChatLogs can now also show messages in a Discord-stylied format."
+
+          - title: "New Features"
+            bullets:
+              - text: "Full support for animated emotes."
+                isImportant: true
+              - text: "Contains ALL emotes from the CK Discord."
+                isImportant: true
+              - text: "Now supports cycling through sent message history."
+                isImportant: true
+              - text: "Insert emotes mid-sentence."
+              - text: "Save favorites to a new categorized emote window."
+              - text: "'Sticker Mode' sends standalone emotes at 4x size."
+
+          - title: "Native GameChat Integration"
+            bullets:
+              - text: "Flawlessly integrates GlobalChat and GsTells with the GameChat."
+              - text: "ChatChannel overrides stay consistent, supporting hotkeys, temporary channels, and replies."
+                isImportant: true
+              - text: "Integration respects all base GameChat rules for seamless integration\nThis helps it feel like a natural extension of the game."
+                isImportant: true
+              - text: "Interact directly with sender names or channel labels (e.g., [CWLS])."
+                isImportant: true
+              - text: "Shorthand commands added for fast inline chat routing."
+              - text: "Resolves the correct Nick/VanityName/Alias/UID/Anon-Name based on relation."
+  
+      - icon: "Star"
+        title: "New Features & Integrations"
+        accent: "Pink"
+        bullets:
+          - text: "Added GarblerChannel settings in the SidePanel for Hardcore."
+            contributor: "AzureRavie"
+          - text: "Added GarblerChannel locking (properly this time)."
+            contributor: "AzureRavie"
+          - text: "Added start condition for timed achievements."
+            contributor: "AzureRavie"
+          - text: "Implemented the ability to clear a user's nickname."
+            contributor: "AndrielChaoti"
+          - text: "Migrated PiShock integration to the new REST API."
+            contributor: "NalaPraline"
+          - text: "Added additional cursed loot stat tracking."
+            isImportant: true
+            contributor: "AzureRavie"
+          - text: "Apply restraint trigger can now set layers."
+            isImportant: true
+            contributor: "AzureRavie"
+          - text: "Integrated Lifestream address book combo for confinement."
+            isImportant: true
+            contributor: "AzureRavie"
+          - text: "Added percent-chance-based firing mechanism for Spells."
+            contributor: "AzureRavie"
+          - text: "Triggers can now select an item to remove."
+            contributor: "AzureRavie"
+          - text: "Updated signalr/messagepack and API."
+            contributor: "AndrielChaoti"
+
+      - icon: "Wrench"
+        title: "Quality of Life"
+        accent: "Blue"
+        bullets:
+          - text: "Updated cursed loot traits setting tooltip."
+            contributor: "AzureRavie"
+          - text: "Wardrobe tooltips no longer use 'yourself' as a fallback."
+            contributor: "AndrielChaoti"
+          - text: "Added fallback garble toggle & restored blindfold opacity setting."
+            contributor: "AndrielChaoti"
+          - text: "Allowed hardcore trait hotbar module to affect cross hotbars too."
+            contributor: "AndrielChaoti"
+          - text: "Added new cursed loot config option for blindfolds."
+            contributor: "AzureRavie"
+          - text: "Cloned right-click UI for ease of access."
+            contributor: "AzureRavie"
+          - text: "Added toggle to hide Global Chat message preview."
+            contributor: "AzureRavie"
+          - text: "Used descriptive labels for the restriction and restraint alerts."
+            contributor: "AzureRavie"
+          - text: "Updated sorting for some visually shown lists."
+            contributor: "AzureRavie"
+          - text: "Adjusted text formatting so it doesn't clip outside the interactions pane."
+            contributor: "AndrielChaoti"
+          - text: "Restored Mimic Trait Tooltip lost from a conflict."
+            contributor: "AzureRavie"
+          - text: "Bumped expected Sundouleia version."
+            contributor: "AndrielChaoti"
+
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Yellow"
+        bullets:
+          - text: "Fixed Puppeteer achievement 'Of Complete Devotion'."
+            contributor: "AzureRavie"
+            isImportant: true
+          - text: "Fixed hardcore imprisonment not pathing correctly and spamming logs."
+            contributor: "AzureRavie"
+            isImportant: true
+          - text: "Deferred expiry processing during zoning."
+            contributor: "AzureRavie"
+          - text: "Fixed typo in Whiffle gag."
+            contributor: "AndrielChaoti"
+          - text: "Fixed Hardcore emote state tracking."
+            contributor: "AzureRavie"
+          - text: "Fixed active restraint sets selector when set is already active."
+            contributor: "AzureRavie"
+          - text: "Disabled layer toggles on predicament-locked sets."
+            contributor: "yfthbr"
+          - text: "Fixed misleading achievement timer in hardcore category."
+            contributor: "AzureRavie"
+          - text: "Fixed typo for Whiffle gag to properly work with garble."
+            contributor: "sayurikat"
+          - text: "Fixed Deathroll command and PVP achievements."
+            contributor: "AzureRavie"
+          - text: "Fixed achievement tracking for dye-related achievements."
+            contributor: "AzureRavie"
+          - text: "Corrected variable check for removing active restraint set."
+            contributor: "AzureRavie"
+          - text: "Fixed cursed gag hardcore traits being applied incorrectly."
+            contributor: "AzureRavie"
+            isImportant: true
+          - text: "Fixed chat reports not being implemented."
+            contributor: "AndrielChaoti"
+          - text: "Fixed stuck glamour visuals."
+            contributor: "AzureRavie"
+            isImportant: true
+          - text: "Fixed cursed loot coffer name detection."
+            contributor: "AzureRavie"
+          - text: "Fixed Puppeteer's Debug storage UI layout."
+            contributor: "AzureRavie"
+          - text: "Updated and fixed achievement sync logic."
+            contributor: "AzureRavie"
+          - text: "Fixed teleport offer confirmation handling while confined."
+            contributor: "AzureRavie"
+          - text: "Fixed mod preset combobox sync issues."
+            contributor: "AzureRavie"
+          - text: "Fixed achievement event firing for hardcore state change enactors."
+            contributor: "AzureRavie"
+          - text: "Fixed plot and room selection for confine."
+            contributor: "AndrielChaoti"
+          - text: "Fixed multiple triggers on same action not firing."
+            contributor: "AzureRavie"
+          - text: "Fixed restraint trigger enable not applying visuals."
+            contributor: "AzureRavie"
+
+  - version: v2.1.3.2
+    date: "May 4th, 2026"
+    title: "Bug Fixes"
+    headerMessage: ""
+    segments:
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Yellow"
+        bullets:
+          - text: "Fixed Gags causing messages to not be sent in chat under certain conditions."
+            contributor: "Yfthbr"
+          - text: "Fixed some cursed loot bugs."
+            contributor: "NBS"
+          - text: "Fixed restriction application requiring restraint set permissions for some reason."
+          - text: "Fixed MetaData application not applying for restrictions."
+  
+  - version: v2.1.2.0
+    date: "April 19th, 2026"
+    title: "Beeeeg patch of many small things."
+    headerMessage: ""
+    segments:
+      - icon: "Star"
+        title: "New Features"
+        accent: "Pink"
+        bullets:
+          - text: "Additional support for Deustch localization for Hardcore traits."
+            contributor: "Cuteki"
+          - text: "Make the Visuals toggle determine if Mod / Glamour application is blocked or not for application. (This may be revised and is a temp fix.)"
+            contributor: "Yfthbr"
+
+      - icon: "Wrench"
+        title: "Quality of Life"
+        accent: "Blue"
+        bullets:
+          - text: "Auto-Remove Gags on timer expiration now works as intended."
+            contributor: "Azure"
+          - text: "More consistant ModPreset priority setting to respect layer priority."
+            contributor: "Yfthbr"
+          - text: "Padlock fields should no longer randomly vanish due to bad caching."
+            contributor: "A'nil"
+          - text: "Added support for /gdr to avoid conflict with /dr where applicable."
+            contributor: "Azure"
+          - text: "Added /gagspeak chat to quick-open GlobalChatPopout."
+            contributor: "Azure"
+          - text: "Puppeteer now properly supports multiple trigger phrases."
+            contributor: "Azure"
+          - text: "Garbler supports both /cwl and /cwlinkshell for chat channels."
+            contributor: "Azure"
+
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Yellow"
+        bullets:
+          - text: "Fixed enactor in autoUnlock for chatHidden."
+            contributor: "Yfthbr"
+          - text: "Fixed bad text parsing that allowed color formatting in text to break from text like :catscream:."
+          - text: "Fixed Moodle/Loci preset titles not displaying when no icons are used."
+            contributor: "A'nil"
+          - text: "CursedLoot now properly reflects the apply traits setting in the config."
+            contributor: "Azure"
+          - text: "Some achievement logic polished."
+            contributor: "Arghb"
+          - text: "Fix block chat input not working sometimes."
+            contributor: "A'nil"
+
+  - version: v2.1.1.0
+    date: "March 17th, 2026"
+    title: "Allows LociRemoval on triggers."
+    headerMessage: ""
+    segments:
+      - icon: "Wrench"
+        title: "Quality of Life"
+        accent: "Blue"
+        bullets:
+          - text: "Basic bondage application uses moodles as a fallback. However, locking, sharehub, and interactions with statuses remain broken with Moodles."
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Yellow"
+        bullets:
+          - text: "Fixed Pair removal not updating until reconnection."
+            isImportant: true
+          - text: "Sent pair requests now properly show up in the incoming requests."
+            isImportant: true
+          - text: "Recieved pair requests now properly show up in the incoming requests."
+            isImportant: true
+
+  - version: v2.0.5.0
+    date: "February 24th, 2026"
+    title: "Triggers are now implemented"
+    headerMessage: ""
+    segments:
+      - icon: "Star"
+        title: "New Features"
+        accent: "Pink"
+        bullets:
+          - text: "TraitAllowances are moved to permissions (WIP)."
+      - icon: "Wrench"
+        title: "Quality of Life"
+        accent: "Blue"
+        bullets:
+          - text: "Garbler fallback no longer fires when it shouldnt."
+          - text: "Garbler fallback does not make words longer than they should be."
+          - text: "Garbler performs unique logic when a sound cannot be produced. (Find out~)"
+          - text: "UI No longer squishes like Jello (Kinkplates still do because JELLO)."
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Yellow"
+        bullets:
+          - text: "Fixed DevChat not printing properly to global chat."
+          - text: "Fixed CN/JP Names not rendering in the account manager properly."
+          - text: "Updated the discord bot to now run scheduled checks for vanity access, over only once when its restarted."
+
+  - version: v2.0.4.0
+    date: "February 18th, 2026"
+    title: "Minor Updates & Fixes"
+    headerMessage: ""
+    segments:
+      - icon: "Star"
+        title: "New Features"
+        accent: "Pink"
+        bullets:
+          - text: "[Bone Gag] Is now supported in the Ck's MufflerCore."
+      - icon: "Wrench"
+        title: "Quality of Life"
+        accent: "Blue"
+        bullets:
+          - text: "Global chat now has a scrollbar."
+          - text: "Global chat auto-scroll functions as intended now."
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Yellow"
+        bullets:
+          - text: "Fixed issue where emotes didnt wrap properly."
+          - text: "Fixed issue where emotes and text didnt wrap properly with global scaling."
+
+  - version: v2.0.3.0
+    date: "February 17th, 2026"
+    title: "Fixed the VRAM leak with fonts constantly rebuilding."
+    headerMessage: ""
+    segments:
+      - icon: "Wrench"
+        title: "Quality of Life"
+        accent: "Blue"
+        bullets:
+          - text: "Polished restraints tutorial."
+          - text: "Further Hardcore prompt support for German Localization."
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Yellow"
+        bullets:
+          - text: "Fixed Intiface Central link."
+
+  - version: v2.0.1.0
+    date: "February 16th, 2026"
+    title: "Complete Rework & Migration"
+    headerMessage: "A lot has changed. I helped you migrate what I could, but a lot will take some time to set up. Yes the UI Coloring is going to suck and look bad for a bit. Bare with it while I get things sorted. Go explore, have fun, meet friends!"
+    segments:
+      - icon: "Wrench"
+        title: "Overview"
+        accent: "Teal"
+        bullets:
+          - text: "Pretty much everything got reworked from the ground up. Everything is much more interconnected."
+            isImportant: true
+
+  - version: v1.2.1.6
+    date: "January 16th, 2025"
+    title: "Hotfix - Appearance Updates"
+    headerMessage: ""
+    segments:
+      - icon: "ExclamationTriangle"
+        title: "Important Notes"
+        accent: "Red"
+        bullets:
+          - text: "Fixed all the lingering issues since 1.2.1.0 in regards to appearance updates."
+          - text: "IF YOU HAD A PADLOCK ON PRIOR TO 1.2.1.0, YOU WILL NEED TO SAFEWORD OUT OF IT."
+            isImportant: true
+
+  - version: v1.2.1.0
+    date: "2025"
+    title: "Orders Module Backend & Fixes"
+    headerMessage: "Please be patient with me and features, i will be pivoting my attention to helping add additions to glamourer soon."
+    segments:
+      - icon: "Star"
+        title: "New Features"
+        accent: "Pink"
+        bullets:
+          - text: "Backend structure for Orders Module is now implemented."
+          - text: "Backend alignment with appearance updates is now more streamlined."
+          - text: "Active Restraint Sets are now stored server-side, along with gags."
+          - text: "Emote Trigger section has been added, but is not functional. Triggers rework update next.™"
+      - icon: "Wrench"
+        title: "Quality of Life"
+        accent: "Blue"
+        bullets:
+          - text: "Timer locks should now function properly."
+          - text: "Command help for /safeword and /safewordhardcore parameters have been added."
+          - text: "GagSpeak will now wait for you to be fully present after login before reactivating hardcore states."
+          - text: "Some achievements are not functional once more / work properly."
+          - text: "You can now toggle client-side settings while offline."
+          - text: "Puppeteer alias permissions are now implemented and functional."
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Yellow"
+        bullets:
+          - text: "Fixed backend logic for client padlocks to retain same structure as padlocks, which should correct most sync issues."
+          - text: "Prevented crash that occured while disabling the plugin in the menu after logging out."
+          - text: "Fixed issue where the forced stay filters cleared on each plugin load."
+
+  - version: v1.2.0.0
+    date: "2025"
+    title: "HIGHLY RECOMMEND YOU SKIM THROUGH THIS"
+    headerMessage: "Custom Pair Action Combos are now Live! See the finer details about what you apply to your pairs! A new Timer Padlock has been added, no more hope of guessing the password for you!"
+    segments:
+      - icon: "Star"
+        title: "New Features"
+        accent: "Pink"
+        bullets:
+          - text: "GagType dropdowns lets you see their enabled Gag Glamours, along with the slot and item."
+          - text: "Restraint dropdowns lets you preview the outfit and view any Hardcore traits applied when you equip it."
+          - text: "Pattern dropdowns lets you see pattern descriptions, if they loop, and how long they run for!"
+          - text: "Alarm dropdowns let you see when they go off (scoped to your time zone), and what pattern it sets off."
+          - text: "Trigger dropdowns let you see trigger priority, description, its kind, and execution action type."
+      - icon: "Wrench"
+        title: "Quality of Life"
+        accent: "Blue"
+        bullets:
+          - text: "Padlocks have now had their permission hierarchy restructured. There is now unique permissions for allowing permanent, owner, and devotional type locks, giving you full control over what locks can be applied, and for how long."
+            isImportant: true
+          - text: "GagStorage now properly waits for you to hit save before updating the data, and will not revert if you click off."
+          - text: "LightStorage now also contains a few extra lightweight details about the data on pairs you store."
+          - text: "SafewordUsed is no longer in permissions to avoid confusion."
+          - text: "Aggressive detection for C+ is now in place, if issues persist, it is likely a customize+ issue."
+          - text: "ForcedStay text node filters now use proper syntax for serialization (backend stuff)."
+          - text: "Preliminary support for Puppeteer AllowAliasTriggers permission level has been added, logic WIP."
+          - text: "Pairs you have not allowed to apply your own moodles to you, will not be able to see your moodles in the wardrobe."
+          - text: "Kinkster-### is not Kinkster-####, this can be opt-out in the config settings under preferences."
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Yellow"
+        bullets:
+          - text: "Fixed an issue that caused [REDACTED]."
+          - text: "Achievement 'Silence of Shame' properly tracks now."
+
+  - version: v1.1.3.1
+    date: "January 2nd, 2025"
+    title: "Forced Follow & Achievement Fixes"
+    headerMessage: ""
+    segments:
+      - icon: "Wrench"
+        title: "Updates"
+        accent: "Teal"
+        bullets:
+          - text: "This whole time ive been handling movement controls with Forced follow wrong. It will now read your movement mode when it starts and cache it. Afterwards, it will update your movement only while cached, and restore it to the cached mode afterwards."
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Yellow"
+        bullets:
+          - text: "Fixed issue where time required achievements were counting down instead of up."
+          - text: "Fixed issue that caused automatically stopped forced follows to not halt achievement timers."
+          - text: "Fixed the issue where the 6 hour interval token refreshes could return invalid auth tokens while zoning."
+          - text: "Added a 2 second wait time after blindfold equips to account for mares 1st person update delays until they fix it."
+
+  - version: v1.1.3.0
+    date: "January 1st, 2025"
+    title: "FAQ & Display Toggles"
+    headerMessage: ""
+    segments:
+      - icon: "Star"
+        title: "New Features"
+        accent: "Pink"
+        bullets:
+          - text: "Added FAQ section in the account tab of the UI."
+      - icon: "Wrench"
+        title: "Quality of Life"
+        accent: "Blue"
+        bullets:
+          - text: "The DTR bar options function with the action notifiers correctly."
+          - text: "The option to hide the main UI actually does something now."
+          - text: "The privacy filter DTR only displays player characters now and not NPC's."
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Yellow"
+        bullets:
+          - text: "Fixed issue where PVP kills required a vibe AND restraint set."
+          - text: "Hopefully fixed most hardcore achievements."
+
+  - version: v1.1.2.0
+    date: "Dec 29th, 2024"
+    title: "The Achievement System Issue/Bug Polish Update."
+    headerMessage: ""
+    segments:
+      - icon: "Star"
+        title: "New Features"
+        accent: "Pink"
+        bullets:
+          - text: "Achievement Data will no longer update if you are in ANY state where your data is not either fully loaded, or any issues occurred during loading state."
+          - text: "Duration achievements now have a leeway gap to make sure if you lock something and the achievement doesn't register it until a second later, you wont run into issues with losing progress."
+          - text: "Duration Achievement Progress on self is now checked upon each connection, and automatically rewarded if you met the milestone."
+      - icon: "Wrench"
+        title: "Quality of Life"
+        accent: "Blue"
+        bullets:
+          - text: "The progress bars now update in a more dynamic manner than by a percentage based increase based on the end milestone unit."
+          - text: "To ensure that Achievement Titles fit in kinkplates, the title 'I Can't Believe You've Done This' is now 'You've Done It Now'."
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Yellow"
+        bullets:
+          - text: "Fixed issue where the pvp kill achievements did not require you to be restrained before. But now they do."
+          - text: "Fixed the 'Escaping Isn't So Easy' achievement."
+          - text: "Hopefully fixed the forced follow movement change legacy issue for most."
+          - text: "Prevent Gags with empty slots from being considered a valid item to store."
+
+  - version: v1.1.1.2
+    date: "2024"
+    title: "Achievement Leeway Hotfix"
+    headerMessage: ""
+    segments:
+      - icon: "ExclamationTriangle"
+        title: "Updates"
+        accent: "Red"
+        bullets:
+          - text: "Quick HotFix to ensure that duration based achievements give a leeway gap for the achievement to trigger a success."
+          - text: "Working on deducing a permanent fix to the achievement bug is still in progress but wanted to get this out ASAP."
+
+  - version: v1.1.1.1
+    date: "2024"
+    title: "Safewords & Blindfold Opacity"
+    headerMessage: ""
+    segments:
+      - icon: "Star"
+        title: "New Features & QoL"
+        accent: "Pink"
+        bullets:
+          - text: "When using /safeword or /safewordhardcore, you can provide a UID at the end of the command to isolate the revert function to a single pair."
+          - text: "You can now adjust the opacity of the blindfold overlay."
+          - text: "You can now click through the blindfold window."
+          - text: "Privacy DTR bar no longer shows characters that are not controllable players (no more examine actor ghosts)."
+          - text: "Kinkplates now abide by dalamuds global scaling tool."
+          - text: "Kinkplates have had their width expanded to account for longer titles, and the height expanded to account for the overflow line in the description."
+          - text: "Kinkplates profile pictures are now slightly larger in light kinkplates."
+          - text: "Sends event messages on PiShock instructions send to you from others."
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Yellow"
+        bullets:
+          - text: "HOPEFULLY fix the blindfold delay?"
+          - text: "Fixed Devotional locks breaking blindfolds."
+          - text: "Fixed movement always resetting to standard upon disabling the plugin if you had legacy prior."
+          - text: "made minor bug fixes to resolve over 30+ reported other minor bugs."
+
+  - version: v1.1.1.0
+    date: "2024"
+    title: "Authentication Issue Resolution"
+    headerMessage: "Authentication issues should be almost if not completely resolved now... (I pray and hope so) Safe to say more may spawn but should be easier to patch."
+    segments:
+      - icon: "Star"
+        title: "New Features"
+        accent: "Pink"
+        bullets:
+          - text: "Prevent duplicate keys from characters."
+          - text: "Prevent people from trying to connect as a primary user with an alt account."
+          - text: "Cursed Loot should now function in Deep Dungeons."
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Yellow"
+        bullets:
+          - text: "Fixed crash that occured when you reconnected with an expected restraint set that no longer exists for you."
+          - text: "Fixed issue where the 'Your Rubber Slut' Achievement required 4 days instead of 14 days."
+          - text: "Fixed an issue where the pair requests only displayed 1 outgoing max."
+          - text: "Fixed pair request messages not displaying."
+          - text: "Fixed where migrations for restraint sets were not allowing 'Transfer All' unless you had a cursed item created for some reason."
+
+  - version: v1.1.0.3
+    date: "2024"
+    title: "Moodles Tuple Update"
+    headerMessage: ""
+    segments:
+      - icon: "Wrench"
+        title: "Updates"
+        accent: "Teal"
+        bullets:
+          - text: "Update for new Moodles tuple status. Until Moodles is 1.0.0.39 expect the ShareHub and other Moodles features to be non-functional."
+
+  - version: v1.1.0.2
+    date: "2024"
+    title: "Minor Bugfix"
+    headerMessage: ""
+    segments:
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Yellow"
+        bullets:
+          - text: "We're just not going to talk about how stupid of a fix this was."
+
+  - version: v1.1.0.0
+    date: "2024"
+    title: "Moodles ShareHub is now Live!"
+    headerMessage: "ACHIEVEMENT SAVE DATA IS NOW OUTPUT TO YOUR LOGS EVERY TIME YOU CONNECT TO THE SERVER. IF IT SOMEHOW RESETS BEFORE I CAN FIX THE ISSUES, SEND ME YOUR LOGS IMMIDIATELY SO I CAN RESTORE THEM."
+    segments:
+      - icon: "Star"
+        title: "New Features"
+        accent: "Pink"
+        bullets:
+          - text: "'My Publications' tab is now in the Home Page. Manage published uploads of Patterns & Moodles in one place!"
+          - text: "Browse, Like, Un-Like, Copy, and Try-On browsed Moodles in the Moodle ShareHub!"
+          - text: "Use the 'Try On' feature to apply moodles to your character before copying them to your status list to see how you like them!"
+      - icon: "Wrench"
+        title: "Quality of Life"
+        accent: "Blue"
+        bullets:
+          - text: "A new interface for uploading and publishing Moodles now exists."
+          - text: "All publication features from the pattern edit window and save window have been removed, and moved to the Publications UI."
+          - text: "You can now like patterns and moodles once again."
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Yellow"
+        bullets:
+          - text: "Fixed the rare issue in where loading the game after repedative crashing failed to load required configs from services. (or at least a band-aid fix)."
+
+  - version: v1.0.4.2
+    date: "2024"
+    title: "Moodles Hotfix"
+    headerMessage: ""
+    segments:
+      - icon: "Star"
+        title: "Updates"
+        accent: "Pink"
+        bullets:
+          - text: "Support for new Moodles Preset and Stack On Reapply mare issue fixed."
+
+  - version: v1.0.4.1
+    date: "2024"
+    title: "Requests Softlock Fix"
+    headerMessage: ""
+    segments:
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Yellow"
+        bullets:
+          - text: "Fixed the issue where sending requests with no pairs added displayed nothing, softlocking new users."
+
+  - version: v1.0.4.0
+    date: "2024"
+    title: "Kinkster Request System"
+    headerMessage: "Replaced adding Kinksters with a Kinkster Request System. Send or Cancel Kinkster Requests, and Accept / Decline incoming ones. Kinkster Requests can be sent directly from Global Chat."
+    segments:
+      - icon: "Star"
+        title: "New Features"
+        accent: "Pink"
+        bullets:
+          - text: "A Primer for the Moodles Share Hub has been added."
+      - icon: "Wrench"
+        title: "Quality of Life"
+        accent: "Blue"
+        bullets:
+          - text: "Your 3 Letter tag is now displayed beside paired users in Global Chat for better clarity."
+          - text: "The ammount of cached messages in global chat was reduced from 1000 to 350 for increased performance."
+          - text: "Instead of using mouse keybinds to interact with users in global chat, there is a Popup menu instead. This should help prevent accidentally performing a kinkster pair request to the wrong person if chat moves too fast."
+
+  - version: v1.0.3.1
+    date: "2024"
+    title: "Global Alias Triggers"
+    headerMessage: ""
+    segments:
+      - icon: "Star"
+        title: "New Features"
+        accent: "Pink"
+        bullets:
+          - text: "Added Global Alias Triggers."
+      - icon: "Wrench"
+        title: "Quality of Life"
+        accent: "Blue"
+        bullets:
+          - text: "Overall grammer and spelling improvements."
+          - text: "Added the ability to clone hardcore permissions set for one Kinkster to other pairs in different collection types."
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Yellow"
+        bullets:
+          - text: "Fixed issue where you couldnt remove alias triggers."
+          - text: "Fixed issue where you couldnt fire commands that were not aliases at all lol."
+
+  - version: v1.0.3.0
+    date: "2024"
+    title: "Puppeteer Massive DLC Expansion Pack"
+    headerMessage: "Puppeteer alias outputs can now contain all trigger actions. Lots of bugs are still known in my #gagspeak-issues channel, i will try and sort through them overtime. Please be paitent."
+    segments:
+      - icon: "Star"
+        title: "New Features"
+        accent: "Pink"
+        bullets:
+          - text: "Chat Triggers were removed."
+          - text: "Trigger configs were reset due to the above change."
+      - icon: "Wrench"
+        title: "Quality of Life"
+        accent: "Blue"
+        bullets:
+          - text: "Alias Triggers should be automatically migrated for you."
+
+  - version: v1.0.2.1
+    date: "2024"
+    title: "Puppeteer Trigger Info"
+    headerMessage: "Appended back the Puppeteer Trigger Info section of the Puppeteer Module. (Alias Lists still in progress)"
+    segments:
+      - icon: "Wrench"
+        title: "Quality of Life"
+        accent: "Blue"
+        bullets:
+          - text: "Update pair with your UID button has been moved to the puppeteer UI and no longer in the actions list."
+          
+  - version: v1.0.2.0
+    date: "2024"
+    title: "Puppeteer Maintenance"
+    headerMessage: "Puppeteer Module temporarily under Maitenance after recovering from the backend changes."
+    segments:
+      - icon: "Star"
+        title: "New Features"
+        accent: "Pink"
+        bullets:
+          - text: "You will now be able to see when you have successfully updated a pair with your name for puppeteer."
+          - text: "Alias List entries now have a better UI and can be labeled."
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Yellow"
+        bullets:
+          - text: "Fixed the backend explosion that ruined everything."
+          - text: "Fixed some other bugs."
+
+  - version: v1.0.1.0
+    date: "2024"
+    title: "Minor Bug Fixes & Adjustments"
+    headerMessage: ""
+    segments:
+      - icon: "Wrench"
+        title: "Quality of Life"
+        accent: "Blue"
+        bullets:
+          - text: "Glamourer Automatic Recalculations now only occur when you are Gagged, Restrained, or have Cursed Loot active, instead of happening all the time. This was an oversight, I apologize."
+          - text: "New Account creation now WAITS until you have a valid registered authentication before appending your primary account."
+          - text: "If you attempt to make your primary account during server downtime, GagSpeak will reset the authentication and allow you to use the button again."
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Yellow"
+        bullets:
+          - text: "Tells now properly garble when enabled."
+          - text: "The issue where new Cursed Items could not be made after removing a cursed item has been fixed."
+          - text: "Rolling the same value in a deathroll as the cap is no longer seen as an invalid roll."
+          - text: "When in forced stay, you will no longer attempt to interact with the chamber enterance node in estates where one doesn't exist."
+          - text: "Fixed issue where removing patterns/restraints with the right click popup menu crashed the game."
+          - text: "No longer checks say chat back on in the garbler preferences."
+          - text: "Fixed Duration achievements displaying progress in the UI incorrectly."
+          - text: "A Note on anyone reporting Mare related Crashes: This occurs due to (what I highly presume to be the case) Mare loading Mods with invalid Vertexs (invalid mods) multiple times in quick succession. You likely already notice these crashes occur when people with broken mods load in for the first time, because on login's and first loads they load twice. The same occurs when mare connects and tries to load someones glamour and their restraint set. GagSpeak does not interact with Mare, they have no association with a reason for crash than any other plugin loading a set at the same time would have."
+            isImportant: true
+
+  - version: v1.0.0.6
+    date: "2024"
+    title: "Global Chat & Cursed Loot Fixes"
+    headerMessage: ""
+    segments:
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Yellow"
+        bullets:
+          - text: "Fixed Global Chat not checking if Live Chat Garbler was active or not before translating a message."
+          - text: "Fixed Cursed Loot not working when in solo instances. (no it doesnt work in Deep dungeons, stop asking.)"
+
+  - version: v1.0.0.0
+    date: "2024"
+    title: "Initial Public Open-Beta Release of Project GagSpeak"
+    headerMessage: ""
+    segments:
+      - icon: "Star"
+        title: "New Features"
+        accent: "Pink"
+        bullets:
+          - text: "All Features from Closed Beta Migrated to Open-Beta"
+          - text: "Expect UI To get overall polish, and other documented or closed off featured to be completed during open Devlopment."

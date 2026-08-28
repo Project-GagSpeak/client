@@ -154,7 +154,7 @@ public sealed class ModPresetDrawer
             if (preset is null)
                 return;
 
-            using (Fonts.GagspeakLabelFont.Push())
+            using (Fonts.GagspeakFont.Push())
             {
                 var offset = (region.X - ImGui.CalcTextSize("Previewing").X) / 2;
                 ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offset);

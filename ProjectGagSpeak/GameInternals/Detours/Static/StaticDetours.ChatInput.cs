@@ -16,16 +16,16 @@ namespace GagSpeak.GameInternals.Detours;
 public partial class StaticDetours
 {
     /// <summary>
-    ///     Intercepts messages after pressing enter and before they are sent off to the server.
-    ///     Be very fucking careful with how you handle this as one slip-up makes you detectable.
+    ///   Intercepts messages after pressing enter and before they are sent off to the server.
+    ///   Be very fucking careful with how you handle this as one slip-up makes you detectable.
     /// </summary>
     private unsafe delegate void ProcessChatInputDelegate(ShellCommandModule* uiModule, Utf8String* message, UIModule* a3);
     [Signature(Signatures.ProcessChatInput, DetourName = nameof(ProcessChatInputDetour), Fallibility = Fallibility.Auto)]
     private Hook<ProcessChatInputDelegate> ProcessChatInputHook { get; set; } = null!;
 
     /// <summary>
-    ///     Intercepts messages after pressing enter and before they are sent off to the server.
-    ///     Be very fucking careful with how you handle this as one slip-up makes you detectable.
+    ///   Intercepts messages after pressing enter and before they are sent off to the server.
+    ///   Be very fucking careful with how you handle this as one slip-up makes you detectable.
     /// </summary>
     /// <remarks> Yes, you are wondering that is why I am not functionalizing any of this to not take risks. </remarks>
     private unsafe void ProcessChatInputDetour(ShellCommandModule* uiModule, Utf8String* message, UIModule* a3)

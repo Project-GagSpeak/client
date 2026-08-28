@@ -108,7 +108,7 @@ public class MarionettesTab : IFancyTab
             CkGui.IconTextAligned(FAI.User);
             if (marionette.IsListeningToClient)
             {
-                CkGui.ColorTextFrameAlignedInline(PlayerData.NameWithWorld, CkCol.TriStateCheck.Vec4Ref());
+                CkGui.ColorTextFrameAlignedInline(PlayerData.NameWithWorld, CkCol.TriStateCheck.Vec4());
                 CkGui.AttachTooltip($"{marionette.GetDisplayName()} is associating your PlayerName with your Kinkster.", ImGuiColors.TankBlue);
             }
             else
@@ -126,7 +126,7 @@ public class MarionettesTab : IFancyTab
                 {
                     await GagspeakEx.WaitForPlayerLoading().ConfigureAwait(false);
                     var nameWorld = PlayerData.NameWithWorld;
-                    var res = await _hub.UserSendNameToKinkster(new(marionette.UserData, nameWorld)).ConfigureAwait(false);
+                    var res = await _hub.UserSendNameToKinkster(new(marionette.User, nameWorld)).ConfigureAwait(false);
                     if (res.ErrorCode is not GagSpeakApiEc.Success)
                         _logger.LogWarning($"Failed to send Player Name to Marionette: {res.ErrorCode}");
                     else

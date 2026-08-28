@@ -9,14 +9,14 @@ using System.Net.WebSockets;
 
 namespace GagSpeak.WebAPI;
 /// <summary>
-///     Facilitates interactions with the GagSpeak Hub connection. <para/>
-///     To ensure that interactions with vibe lobbies function correctly, 
-///     <see cref="_hubConnection"/> will be static. <para />
+///   Facilitates interactions with the GagSpeak Hub connection. <para/>
+///   To ensure that interactions with vibe lobbies function correctly, 
+///   <see cref="_hubConnection"/> will be static. <para />
 /// </summary>
 public partial class MainHub
 {
     /// <summary>
-    ///     Primary method for connecting to the GagSpeak Hub.
+    ///   Primary method for connecting to the GagSpeak Hub.
     /// </summary>
     public async Task Connect()
     {
@@ -28,7 +28,7 @@ public partial class MainHub
             return;
         }
 
-        Logger.LogInformation($"SecretKey Fetched, Creating Connection to [{MAIN_SERVER_NAME}]", LoggerType.ApiCore);
+        Logger.LogInformation($"SecretKey Fetched, Creating Connection to [{ConnectionsConfig.CurrentHubName}]", LoggerType.ApiCore);
         // if the current state was offline, change it to disconnected.
         if (ServerStatus is ServerState.Offline)
             ServerStatus = ServerState.Disconnected;
@@ -83,11 +83,11 @@ public partial class MainHub
                 Logger.LogInformation("Successfully Connected to GagSpeakHub-Main", LoggerType.ApiCore);
                 ServerStatus = ServerState.Connected;
 
-                // Load in our initial pairs, then the online ones.
-                await LoadInitialKinksters().ConfigureAwait(false);
-                await LoadOnlineKinksters().ConfigureAwait(false);
-                await LoadRequests().ConfigureAwait(false);
-                await _dataSync.SetClientDataForProfile().ConfigureAwait(false);
+                await LoadInitialConnectionData().ConfigureAwait(false);
+
+                // Sync configs and other things with the server.
+                await _dataSync.SetClientDataForProfile(ConnectionResponse!).ConfigureAwait(false);
+
                 // once data is synchronized, update the serverStatus.
                 ServerStatus = ServerState.ConnectedDataSynced;
                 Mediator.Publish(new ConnectedMessage());
@@ -155,12 +155,12 @@ public partial class MainHub
     }
 
     /// <summary>
-    ///     Primary method for disconnecting from the GagSpeakHub. <para />
+    ///   Primary method for disconnecting from the GagSpeakHub. <para />
     /// </summary>
     /// <param name="dcReason"> The reason we are disconnecting. </param>
     /// <param name="intent">
-    ///     Why the disconnection occurred, allowing subscribers to handle logic after a 
-    ///     disconnect according to what kind of disconnect it was.
+    ///   Why the disconnection occurred, allowing subscribers to handle logic after a 
+    ///   disconnect according to what kind of disconnect it was.
     /// </param>
     public async Task Disconnect(ServerState dcReason, DisconnectIntent intent, bool saveAchievements = true)
     {
@@ -200,7 +200,7 @@ public partial class MainHub
         if (_hubConnection is not null)
         {
             Logger.LogInformation("Instance disposed of in '_hubFactory', but still exists in MainHub.cs, " +
-                $"clearing all data for [{MAIN_SERVER_NAME}]", LoggerType.ApiCore);
+                $"clearing all data for [{ConnectionsConfig.CurrentHubName}]", LoggerType.ApiCore);
             // Clear the Health check so we stop pinging the server, set Initialized to false, publish a disconnect.
             _apiHooksInitialized = false;
             _hubHealthCTS?.Cancel();
@@ -216,7 +216,7 @@ public partial class MainHub
     }
 
     /// <summary>
-    ///     Reconnection method to use when we want to force a disconnect followed by a new Connection.
+    ///   Reconnection method to use when we want to force a disconnect followed by a new Connection.
     /// </summary>
     public async Task Reconnect(DisconnectIntent intent = DisconnectIntent.Normal, bool saveAchievements = true)
     {
@@ -233,8 +233,8 @@ public partial class MainHub
     }
 
     /// <summary>
-    ///     A Temporary connection established without the Authorized Claim, but rather TemporaryAccess claim. <para />
-    ///     This allows us to generate a fresh UID & SecretKey for our account upon its first creation.
+    ///   A Temporary connection established without the Authorized Claim, but rather TemporaryAccess claim. <para />
+    ///   This allows us to generate a fresh UID & SecretKey for our account upon its first creation.
     /// </summary>
     /// <returns> ([new UID for character],[new secretKey]) </returns>
     public async Task<(string, string)> FetchFreshAccountDetails()
@@ -377,6 +377,7 @@ public partial class MainHub
             return false;
         }
 
+#if !DEBUG
         Logger.LogTrace("Checking if Client Connection is Outdated", LoggerType.ApiCore);
         Logger.LogInformation($"{ClientVerString} - {ExpectedVerString}", LoggerType.ApiCore);
         if (_expectedApiVersion != IGagspeakHub.ApiVersion || _expectedVersion > _clientVersion)
@@ -386,6 +387,7 @@ public partial class MainHub
             await Disconnect(ServerState.VersionMisMatch, DisconnectIntent.Normal).ConfigureAwait(false);
             return false;
         }
+#endif
 
         // Client is up to date!
         return true;
@@ -510,7 +512,7 @@ public partial class MainHub
             _achievements.HadUnhandledDisconnect(webException);
         }
 
-        Logger.LogWarning($"Connection to [{MAIN_SERVER_NAME}] Closed... Reconnecting. (Reason: {arg}");
+        Logger.LogWarning($"Connection to [{ConnectionsConfig.CurrentHubName}] Closed... Reconnecting. (Reason: {arg}");
     }
 
     private async Task HubInstanceOnReconnected()
@@ -525,11 +527,9 @@ public partial class MainHub
             if (await ConnectionResponseAndVersionIsValid())
             {
                 ServerStatus = ServerState.Connected;
-                await LoadInitialKinksters().ConfigureAwait(false);
-                await LoadOnlineKinksters().ConfigureAwait(false);
-
+                await LoadInitialConnectionData().ConfigureAwait(false);
                 // Re-Sync data for the current character profile.
-                await _dataSync.SetClientDataForProfile().ConfigureAwait(false);
+                await _dataSync.SetClientDataForProfile(ConnectionResponse).ConfigureAwait(false);
                 
                 // once data is syncronized, update the serverStatus.
                 ServerStatus = ServerState.ConnectedDataSynced;

@@ -1,12 +1,12 @@
 using CkCommons.Gui;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Windowing;
 using GagSpeak.Services.Tutorial;
-using static Dalamud.Interface.Windowing.Window;
 
 namespace GagSpeak.Utils;
 
 /// <summary>
-///     Reduce the boilerplate code of title bar buttons with a builder.
+///   Reduce the boilerplate code of title bar buttons with a builder.
 /// </summary>
 public class TitleBarButtonBuilder
 {
@@ -75,8 +75,8 @@ public class TitleBarButtonBuilder
 }
 
 /// <summary>
-///     Extension methods that help simplify Dalamud window
-///     setup and operations, to reduce boilerplate code.
+///   Extension methods that help simplify Dalamud window
+///   setup and operations, to reduce boilerplate code.
 /// </summary>
 public static class DalamudWindowExtentions
 {
@@ -108,5 +108,64 @@ public static class DalamudWindowExtentions
     {
         window.ShowCloseButton = allowClose;
         window.RespectCloseHotkey = allowClose;
+    }
+
+
+    // Code yoinked directly from native ImGui for the custom ResizeGrip rendering.
+    public static void RenderCustomResizeGrips(this ImGuiWindowPtr winPtr)
+    {
+        if ((winPtr.Flags & ImGuiWindowFlags.NoResize) != 0)
+            return;
+
+        var border = winPtr.WindowBorderSize;
+        var rounding = winPtr.WindowRounding;
+        var fontSize = winPtr.CalcFontSize();
+        var gripSize = MathF.Floor(MathF.Max(fontSize * 1.1f, rounding + 1f + fontSize * 0.2f));
+        var hoveredId = ImGuiP.GetHoveredID();
+        var activeId = ImGuiP.GetActiveID();
+
+        for (int i = 0; i < Grips.Length; i++)
+        {
+            var g = Grips[i];
+            var corner = Vector2.Lerp(winPtr.Pos, winPtr.Pos + winPtr.Size, g.CornerPosN);
+            var id = ImGuiP.GetWindowResizeCornerID(winPtr, i);
+            var hovered = hoveredId == id;
+            var active = activeId == id;
+
+            if (!((i == 0) || hovered || active))
+                continue;
+
+            var col = hovered
+                ? (active
+                    ? ImGui.GetColorU32(ImGuiCol.ResizeGripActive)
+                    : ImGui.GetColorU32(ImGuiCol.ResizeGripHovered))
+                : ImGui.GetColorU32(ImGuiCol.ResizeGrip);
+
+            var flip = (i & 1) != 0;
+            var sideA = corner + g.InnerDir * (flip ? new Vector2(border, gripSize) : new Vector2(gripSize, border));
+            var sideB = corner + g.InnerDir * (flip ? new Vector2(gripSize, border) : new Vector2(border, gripSize));
+
+            winPtr.DrawList.PathLineTo(sideA);
+            winPtr.DrawList.PathLineTo(sideB);
+            winPtr.DrawList.PathArcToFast(corner + g.InnerDir * (rounding + border), rounding, g.AngleMin12, g.AngleMax12);
+            winPtr.DrawList.PathFillConvex(col);
+        }
+    }
+
+    // Grips as defined by native ImGui.
+    private static readonly ResizeGripDef[] Grips =
+    {
+        new() { CornerPosN = new(1,1), InnerDir = new(-1,-1), AngleMin12 = 0,  AngleMax12 = 3  }, // BR
+        new() { CornerPosN = new(0,1), InnerDir = new(1,-1),  AngleMin12 = 3,  AngleMax12 = 6  }, // BL
+        new() { CornerPosN = new(0,0), InnerDir = new(1,1),   AngleMin12 = 6,  AngleMax12 = 9  }, // TL
+        new() { CornerPosN = new(1,0), InnerDir = new(-1,1),  AngleMin12 = 9,  AngleMax12 = 12 }  // TR
+    };
+
+    private struct ResizeGripDef
+    {
+        public Vector2 CornerPosN; // (0,0) (1,0) etc
+        public Vector2 InnerDir;   // direction into window
+        public int AngleMin12;
+        public int AngleMax12;
     }
 }

@@ -21,7 +21,6 @@ public class AchievementsUI : WindowMediatorSubscriberBase
 {
     private readonly AchievementTabs _tabMenu;
     private readonly CosmeticService _textures;
-    public bool ThemePushed = false;
 
     public AchievementsUI(ILogger<AchievementsUI> logger, GagspeakMediator mediator,
         AchievementTabs tabMenu, CosmeticService textures)
@@ -37,25 +36,6 @@ public class AchievementsUI : WindowMediatorSubscriberBase
 
     private string _searchStr = string.Empty;
     private static readonly Vector2 IconSize = new(96, 96);
-
-    protected override void PreDrawInternal()
-    {
-        if (!ThemePushed)
-        {
-            ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .803f));
-            ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.579f, 0.170f, 0.359f, 0.828f));
-            ThemePushed = true;
-    }
-    }
-
-    protected override void PostDrawInternal()
-    {
-        if (ThemePushed)
-        {
-            ImGui.PopStyleColor(2);
-            ThemePushed = false;
-        }
-    }
 
     protected override void DrawInternal()
     {
@@ -81,7 +61,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
     private void CenteredHeader()
     {
         var text = $"GagSpeak Achievements ({ClientAchievements.Completed}/{ClientAchievements.Total})";
-        using (Fonts.UidFont.Push())
+        using (Fonts.SubtitleFont.Push())
         {
             var uidTextSize = ImGui.CalcTextSize(text);
             ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) / 2 - uidTextSize.X / 2);

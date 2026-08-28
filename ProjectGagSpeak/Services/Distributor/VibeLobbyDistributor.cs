@@ -6,6 +6,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Dto.VibeRoom;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
+using GagspeakAPI.User;
 
 namespace GagSpeak.Services;
 
@@ -68,7 +69,7 @@ public sealed class VibeLobbyDistributor : DisposableMediatorSubscriberBase
         }
 
         Logger.LogDebug($"Creating Room: {name}", LoggerType.VibeLobbies);
-        var hostInfo = new RoomParticipant(MainHub.OwnUserData, _config.Current.NicknameInVibeRooms)
+        var hostInfo = new RoomParticipant(MainHub.OwnUserData, _config.Data.NicknameInVibeRooms)
         {
             AllowedUids = new List<string>(),
             Devices = _clientToys.InteractableToys.Select(toy => toy.ToToyInfo()).ToList()
@@ -105,7 +106,7 @@ public sealed class VibeLobbyDistributor : DisposableMediatorSubscriberBase
         }
 
         Logger.LogDebug($"Joining room: {name}", LoggerType.VibeLobbies);
-        var hostParticipantData = new RoomParticipant(MainHub.OwnUserData, _config.Current.NicknameInVibeRooms)
+        var hostParticipantData = new RoomParticipant(MainHub.OwnUserData, _config.Data.NicknameInVibeRooms)
         {
             AllowedUids = new List<string>(),
             Devices = _clientToys.InteractableToys.Select(toy => toy.ToToyInfo()).ToList()
@@ -184,7 +185,7 @@ public sealed class VibeLobbyDistributor : DisposableMediatorSubscriberBase
             Logger.LogError($"Failed to change room password. [{result.ErrorCode}]", LoggerType.VibeLobbies);
     }
 
-    public async Task RoomGrantAccess(KinksterBase dto)
+    public async Task RoomGrantAccess(UserDto dto)
     {
         if (!MainHub.IsConnectionDataSynced)
         {
@@ -200,7 +201,7 @@ public sealed class VibeLobbyDistributor : DisposableMediatorSubscriberBase
             Logger.LogError($"Failed to grant room access. [{result.ErrorCode}]", LoggerType.VibeLobbies);
     }
 
-    public async Task RoomRevokeAccess(KinksterBase dto)
+    public async Task RoomRevokeAccess(UserDto dto)
     {
         if (!MainHub.IsConnectionDataSynced)
         {

@@ -1,7 +1,7 @@
 namespace GagSpeak.PlayerControl;
 
 /// <summary>
-///     Handle Task Enqueuing, placing tasks at the end of the TaskManager's Task List
+///   Handle Task Enqueuing, placing tasks at the end of the TaskManager's Task List
 /// </summary>
 public partial class HcTaskManager
 {

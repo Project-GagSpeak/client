@@ -9,7 +9,7 @@ namespace GagSpeak.GameInternals.Structs;
 // FFXIVClientStructs.FFXIV.Client.Game.Control.CameraManager 
 // https://github.com/aers/FFXIVClientStructs/blob/main/FFXIVClientStructs/FFXIV/Client/Game/Control/CameraManager.cs
 /// <summary>
-///     FFXIVClientStructs.FFXIV.Client.Game.Control.GameCameraManager with some additional fields
+///   FFXIVClientStructs.FFXIV.Client.Game.Control.GameCameraManager with some additional fields
 /// </summary>
 [StructLayout(LayoutKind.Explicit, Size = 0x190)]
 public unsafe partial struct GameCameraManager {

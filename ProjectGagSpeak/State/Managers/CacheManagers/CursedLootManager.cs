@@ -14,21 +14,24 @@ public sealed class CursedLootManager : IHybridSavable
     private readonly ILogger<CursedLootManager> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly MainConfig _mainConfig;
+    private readonly ConnectionsConfig _connections;
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly FavoritesConfig _favorites;
-    private readonly ConfigFileProvider _fileNames;
+    private readonly GsFiles _fileNames;
     private readonly HybridSaveService _saver;
 
     private StorageItemEditor<CursedItem> _itemEditor = new();
 
     public CursedLootManager(ILogger<CursedLootManager> logger, GagspeakMediator mediator,
-        MainConfig config, GagRestrictionManager gags, RestrictionManager restrictions,
-        FavoritesConfig favorites, ConfigFileProvider fileNames, HybridSaveService saver)
+        MainConfig config, ConnectionsConfig connections, GagRestrictionManager gags,
+        RestrictionManager restrictions, FavoritesConfig favorites, GsFiles fileNames,
+        HybridSaveService saver)
     {
         _logger = logger;
         _mediator = mediator;
         _mainConfig = config;
+        _connections = connections;
         _gags = gags;
         _restrictions = restrictions;
         _favorites = favorites;
@@ -50,7 +53,7 @@ public sealed class CursedLootManager : IHybridSavable
         };
         _logger.LogInformation("Created new cursed item: " + lootName, LoggerType.CursedItems);
         Storage.Add(newItem);
-        _saver.Save(this);
+        Save();
         _mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Created, newItem, null));
         return newItem;
     }
@@ -65,7 +68,7 @@ public sealed class CursedLootManager : IHybridSavable
             _ => throw new NotImplementedException("Unknown Cursted Item type."),
         };
         Storage.Add(clonedItem);
-        _saver.Save(this);
+        Save();
 
         _logger.LogInformation("Created new cursed item: " + newName, LoggerType.CursedItems);
         _mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Created, clonedItem, null));
@@ -96,7 +99,7 @@ public sealed class CursedLootManager : IHybridSavable
         var prevName = lootItem.Label;
         newName = RegexEx.EnsureUniqueName(newName, Storage, x => x.Label);
         lootItem.Label = newName;
-        _saver.Save(this);
+        Save();
 
         _logger.LogInformation($"Renamed cursed item: {prevName} to {newName}", LoggerType.CursedItems);
         _mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Renamed, lootItem, prevName));
@@ -108,7 +111,7 @@ public sealed class CursedLootManager : IHybridSavable
         {
             _logger.LogDebug($"Deleted cursed item: {lootItem.Label}.", LoggerType.CursedItems);
             _mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Deleted, lootItem, null));
-            _saver.Save(this);
+            Save();
         }
     }
 
@@ -126,12 +129,12 @@ public sealed class CursedLootManager : IHybridSavable
         {
             _logger.LogTrace("Saved changes to Edited CursedItem.");
             _mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Modified, sourceItem, null));
-            _saver.Save(this);
+            Save();
         }
     }
 
-    public void AddFavorite(CursedItem loot) => _favorites.TryAddRestriction(FavoriteIdContainer.CursedLoot, loot.Identifier);
-    public void RemoveFavorite(CursedItem loot) => _favorites.RemoveRestriction(FavoriteIdContainer.CursedLoot, loot.Identifier);
+    public void AddFavorite(CursedItem loot) => _favorites.Favorite(FavoriteType.CursedLoot, loot.Identifier);
+    public void RemoveFavorite(CursedItem loot) => _favorites.Unfavorite(FavoriteType.CursedLoot, loot.Identifier);
     #endregion Generic Methods
     /// <summary> Feeds the chat garbler the gag types of all applied cursed loot gags. </summary>
     /// <remarks> Required, as cursed loot gags garble through this list instead of the gag slots. </remarks>
@@ -154,16 +157,16 @@ public sealed class CursedLootManager : IHybridSavable
             TimeInCursedLoot -= CursedTimeCoveredUntil - now;
             CursedTimeCoveredUntil = now;
         }
-        _saver.Save(this);
+        Save();
         SyncGarblerWithCursedGags();
     }
 
-    public void ForceSave() => _saver.Save(this);
+    public void ForceSave() => Save();
 
     public void TogglePoolState(CursedItem item)
     {
         item.InPool = !item.InPool;
-        _saver.Save(this);
+        Save();
         _mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Modified, item, null));
     }
 
@@ -175,14 +178,14 @@ public sealed class CursedLootManager : IHybridSavable
         item.ReleaseTime = endTimeUtc;
         if (newEncounter)
             RecordEncounterStats(item, endTimeUtc);
-        _saver.Save(this);
+        Save();
         SyncGarblerWithCursedGags();
     }
 
     public void RecordMimicEvaded()
     {
         MimicsEvaded++;
-        _saver.Save(this);
+        Save();
     }
 
     private void RecordEncounterStats(CursedItem item, DateTimeOffset endTimeUtc)
@@ -219,7 +222,7 @@ public sealed class CursedLootManager : IHybridSavable
         item.AppliedTime = DateTimeOffset.MinValue;
         item.ReleaseTime = DateTimeOffset.MinValue;
         item.CreditedUntil = DateTimeOffset.MinValue;
-        _saver.Save(this);
+        Save();
         SyncGarblerWithCursedGags();
     }
 
@@ -251,19 +254,19 @@ public sealed class CursedLootManager : IHybridSavable
     public void SetLowerLimit(TimeSpan time)
     {
         LockRangeLower = time;
-        _saver.Save(this);
+        Save();
     }
 
     public void SetUpperLimit(TimeSpan time)
     {
         LockRangeUpper = time;
-        _saver.Save(this);
+        Save();
     }
 
     public void SetLockChance(int chance)
     {
         LockChance = chance;
-        _saver.Save(this);
+        Save();
     }
 
     #region HybridSavable
@@ -296,11 +299,12 @@ public sealed class CursedLootManager : IHybridSavable
 
 
     public int ConfigVersion => 0;
+    public int MaxBackups => 2;
     public HybridSaveType SaveType => HybridSaveType.Json;
-    public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
-        => (isAccountUnique = false, files.CursedLoot).Item2;
-    public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
+    public DateTime LastWriteTimeUTC => DateTime.MinValue;
+    public string ToFilePath(GsFiles files) => GetSaveFilePath();
+    public void WriteToStream(StreamWriter _) => throw new NotImplementedException();
+    private string GetSaveFilePath() => Path.Combine(GsFiles.ConfigDirectory, _connections.CurrentProfileUID, GsFiles.CursedLootFile);
     public string JsonSerialize()
     {
         // Construct the array of CursedLootItems.
@@ -327,57 +331,56 @@ public sealed class CursedLootManager : IHybridSavable
         }.ToString(Formatting.Indented);
     }
 
+    public void Save()
+    {
+        if (string.IsNullOrEmpty(_connections.CurrentProfileUID))
+        {
+            _logger.LogInformation("[Save Aborted] No profile selected.");
+            return;
+        }
+        _saver.Save(this);
+    }
+
     public void Load()
     {
-        var file = _fileNames.CursedLoot;
+        var file = GetSaveFilePath();
         _logger.LogInformation("Loading in CursedLoot Config for file: " + file);
-        
+
         Storage.Clear();
-
-        var jsonText = "";
-        JObject jObject = new();
-        // if the main file does not exist, attempt to load the text from the backup.
-        if (File.Exists(file))
+        try
         {
-            jsonText = File.ReadAllText(file);
-            jObject = JObject.Parse(jsonText);
-        }
-        else
-        {
-            _logger.LogWarning("Cursed Loot Config file not found. Attempting to find old config.");
-            var oldFormatFile = Path.Combine(_fileNames.CurrentPlayerDirectory, "cursedloot.json");
-            if (File.Exists(oldFormatFile))
+            if (!File.Exists(file))
             {
-                jsonText = File.ReadAllText(oldFormatFile);
-                jObject = JObject.Parse(jsonText);
-                jObject = ConfigMigrator.MigrateCursedLootConfig(jObject, _fileNames, oldFormatFile);
-            }
-            else
-            {
-                _logger.LogWarning("No Config file found for: " + oldFormatFile);
-                // create a new file with default values.
-                _saver.Save(this);
+                _logger.LogDebug($"[File Not Found] {file}");
+                var directory = Path.GetDirectoryName(file);
+                if (directory is not null)
+                    Directory.CreateDirectory(directory);
+                Save();
                 return;
             }
-        }
-        // Read the json from the file.
-        var version = jObject["Version"]?.Value<int>() ?? 0;
 
-        // Perform Migrations if any, and then load the data.
-        switch (version)
-        {
-            case 0:
-                LoadV0(jObject);
-                break;
-            default:
-                _logger.LogError("Invalid Version!");
-                return;
+            var jsonText = File.ReadAllText(file);
+            var jObject = JObject.Parse(jsonText);
+            // Read the json from the file.
+            var version = jObject["Version"]?.Value<int>() ?? 0;
+
+            // Perform Migrations if any, and then load the data.
+            switch (version)
+            {
+                case 0:
+                    LoadV0(jObject);
+                    break;
+                default:
+                    _logger.LogError("Invalid Version!");
+                    return;
+            }
+            // run a save after the load.
+            Save();
+            // feed the garbler any cursed gags that were applied when this config last saved. Might not need?
+            SyncGarblerWithCursedGags();
+            _mediator.Publish(new ReloadFileSystem(GSModule.CursedLoot));
         }
-        // run a save after the load.
-        _saver.Save(this);
-        // feed the garbler any cursed gags that were applied when this config last saved. Might not need?
-        SyncGarblerWithCursedGags();
-        _mediator.Publish(new ReloadFileSystem(GSModule.CursedLoot));
+        catch (Bagagwa ex) { _logger.LogError("Failed to load config." + ex); }
     }
 
     private void LoadV0(JToken? data)

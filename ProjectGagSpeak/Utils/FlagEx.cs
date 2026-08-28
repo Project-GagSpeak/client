@@ -1,0 +1,28 @@
+using GagSpeak.PlayerClient;
+using GagSpeak.State;
+
+namespace GagSpeak;
+
+// We handle this through individual cases because its more efficient 
+public static class FlagEx
+{
+    // we avoid doing generic types here because it actually increases the processing time in the compiler if we convert to ambiguous types.
+    public static bool HasAny(this HcTaskControl flags, HcTaskControl check) => (flags & check) != 0;
+    public static bool HasAny(this PuppetPerms flags, PuppetPerms check) => (flags & check) != 0;
+    public static bool HasAny(this HypnoAttributes flags, HypnoAttributes check) => (flags & check) != 0;
+    public static bool HasAny(this DaysOfWeek flags, DaysOfWeek check) => (flags & check) != 0;
+    public static bool HasAny(this AlertKind flags, AlertKind check) => (flags & check) != 0;
+    public static bool HasAny(this OnlineFilter flags, OnlineFilter check) => (flags & check) != 0;
+
+    public static int ActiveCount<TEnum>(this TEnum value) where TEnum : Enum
+    {
+        int v = Convert.ToInt32(value);
+        int count = 0;
+        while (v != 0)
+        {
+            count += (int)(v & 1);
+            v >>= 1;
+        }
+        return count;
+    }
+}

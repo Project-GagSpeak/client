@@ -1,7 +1,7 @@
 namespace GagSpeak.State;
 
 /// <summary>
-///     The reasons for why an IPC Call should be blocked.
+///   The reasons for why an IPC Call should be blocked.
 /// </summary>
 [Flags]
 public enum IpcBlockReason : byte

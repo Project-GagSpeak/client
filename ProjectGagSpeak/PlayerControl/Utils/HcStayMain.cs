@@ -54,8 +54,8 @@ public static unsafe class HcApproachNearestHousing
     }
 
     /// <summary>
-    ///     You are expected to know how to handle restoring overrides if 
-    ///     this aborts, throws, or fails.
+    ///   You are expected to know how to handle restoring overrides if 
+    ///   this aborts, throws, or fails.
     /// </summary>
     public static unsafe bool MoveToAcceptableRange()
     {

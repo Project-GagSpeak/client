@@ -82,16 +82,16 @@ public static class Icons
             ImGuiUtil.HoverIconTooltip(ptr, textureSize, size);
     }
 
-    public static bool DrawFavoriteStar(FavoritesConfig favorites, FavoriteIdContainer type, Guid id, bool framed = true)
+    public static bool DrawFavoriteStar(FavoritesConfig favorites, FavoriteType type, Guid id, bool framed = true)
     {
         var isFavorite = type switch
         {
-            FavoriteIdContainer.Restraint => FavoritesConfig.Restraints.Contains(id),
-            FavoriteIdContainer.Restriction => FavoritesConfig.Restrictions.Contains(id),
-            FavoriteIdContainer.CursedLoot => FavoritesConfig.CursedLoot.Contains(id),
-            FavoriteIdContainer.Pattern => FavoritesConfig.Patterns.Contains(id),
-            FavoriteIdContainer.Alarm => FavoritesConfig.Alarms.Contains(id),
-            FavoriteIdContainer.Trigger => FavoritesConfig.Triggers.Contains(id),
+            FavoriteType.Restraint => FavoritesConfig.Restraints.Contains(id),
+            FavoriteType.Restriction => FavoritesConfig.Restrictions.Contains(id),
+            FavoriteType.CursedLoot => FavoritesConfig.CursedLoot.Contains(id),
+            FavoriteType.Pattern => FavoritesConfig.Patterns.Contains(id),
+            FavoriteType.Alarm => FavoritesConfig.Alarms.Contains(id),
+            FavoriteType.Trigger => FavoritesConfig.Triggers.Contains(id),
             _ => false
         };
         var hovering = ImGui.IsMouseHoveringRect(
@@ -107,8 +107,8 @@ public static class Icons
         
         if (hovering && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
         {
-            if (isFavorite) favorites.RemoveRestriction(type, id);
-            else favorites.TryAddRestriction(type, id);
+            if (isFavorite) favorites.Unfavorite(type, id);
+            else favorites.Favorite(type, id);
             return true;
         }
         return false;
@@ -130,8 +130,8 @@ public static class Icons
         
         if (hovering && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
         {
-            if (isFavorite) favorites.RemoveGag(gag);
-            else favorites.TryAddGag(gag);
+            if (isFavorite) favorites.UnfavoriteGag(gag);
+            else favorites.FavoriteGag(gag);
             return true;
         }
         return false;
@@ -152,8 +152,8 @@ public static class Icons
         
         if (hovering && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
         {
-            if (isFavorite) favorites.RemoveKinkster(kinksterUid);
-            else favorites.TryAddKinkster(kinksterUid);
+            if (isFavorite) favorites.UnfavoriteKinkster(kinksterUid);
+            else favorites.FavoriteKinkster(kinksterUid);
             return true;
         }
         return false;

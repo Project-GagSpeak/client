@@ -1,7 +1,7 @@
 namespace GagSpeak.PlayerControl;
 
 /// <summary>
-///     Handles Task Insertion, adding tasks to the beginning of the _tasks list.
+///   Handles Task Insertion, adding tasks to the beginning of the _tasks list.
 /// </summary>
 public partial class HcTaskManager
 {

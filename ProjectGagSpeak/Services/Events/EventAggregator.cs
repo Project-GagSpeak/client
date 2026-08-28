@@ -8,7 +8,7 @@ using GagSpeak.Services.Configs;
 namespace GagSpeak.Services.Events;
 
 /// <summary>
-///     Handles the management of logging, storing, and saving collected Events through the plugins lifespan.
+///   Handles the management of logging, storing, and saving collected Events through the plugins lifespan.
 /// </summary>
 public class EventAggregator : MediatorSubscriberBase, IHostedService
 {
@@ -109,7 +109,7 @@ public class EventAggregator : MediatorSubscriberBase, IHostedService
             try
             {
                 _currentTime = DateTime.Now;
-                var filesInDirectory = Directory.EnumerateFiles(ConfigFileProvider.EventDirectory, "*.log");
+                var filesInDirectory = Directory.EnumerateFiles(GsFiles.EventDirectory, "*.log");
                 if (filesInDirectory.Skip(10).Any())
                 {
                     File.Delete(filesInDirectory.OrderBy(f => new FileInfo(f).LastWriteTimeUtc).First());
@@ -121,7 +121,7 @@ public class EventAggregator : MediatorSubscriberBase, IHostedService
             }
         }
 
-        var eventLogFile = Path.Combine(ConfigFileProvider.EventDirectory, CurrentLogName);
+        var eventLogFile = Path.Combine(GsFiles.EventDirectory, CurrentLogName);
         try
         {
             File.AppendAllLines(eventLogFile, [receivedEvent.ToString()]);

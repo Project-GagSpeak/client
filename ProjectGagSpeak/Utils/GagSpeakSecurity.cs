@@ -13,25 +13,25 @@ public static class GagSpeakSecurity
     private static readonly SHA256 _sha256CryptoProvider = SHA256.Create();
 
     /// <summary>
-    ///     Only call this when the ptr is visible.
+    ///   Only call this when the ptr is visible.
     /// </summary>
     public unsafe static string GetIdentHashByCharacterPtr(nint address)
         => ((Character*)address)->ContentId.ToString().GetHash256();
 
     /// <summary>
-    ///     Only call this when you are visible.
+    ///   Only call this when you are visible.
     /// </summary>
     public unsafe static string GetClientIdentHashThreadSafe()
         => Control.Instance()->LocalPlayer->ContentId.ToString().GetHash256();
 
     /// <summary>
-    ///     Only call this when you are visible.
+    ///   Only call this when you are visible.
     /// </summary>
     public static async Task<string> GetClientIdentHash()
         => await Svc.Framework.RunOnFrameworkThread(() => PlayerData.CID.ToString().GetHash256());
 
     /// <summary>
-    ///     for right now i wont be encrypting in and out the secret keys but later on i can keep this here and just add it back in. 
+    ///   for right now i wont be encrypting in and out the secret keys but later on i can keep this here and just add it back in. 
     /// </summary>
     public static string GetHash256(this string stringToHash)
         => GetOrComputeHashSHA256(stringToHash);

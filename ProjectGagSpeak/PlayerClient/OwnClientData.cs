@@ -3,10 +3,10 @@ using GagSpeak.Kinksters;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
-using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Data.Struct;
 using GagspeakAPI.Network;
+using GagspeakAPI.User;
 using GagspeakAPI.Util;
 
 namespace GagSpeak.PlayerClient;
@@ -42,7 +42,7 @@ public sealed class ClientData : IDisposable
     private HashSet<CollarRequest> _collarRequests = new();
 
     /// <summary>
-    ///     When true, <see cref="GlobalPerms"/> or <see cref="HardcoreState"/> are not initialized.
+    ///   When true, <see cref="GlobalPerms"/> or <see cref="HardcoreState"/> are not initialized.
     /// </summary>
     public static bool IsNull { get; private set; } = false;
     internal static GlobalPerms? Globals => _clientGlobals;
@@ -106,10 +106,10 @@ public sealed class ClientData : IDisposable
     }
 
     /// <summary>
-    ///     Can either enable or disable a hardcore state via <paramref name="attribute"/>, and the values 
-    ///     within <paramref name="newData"/>. <para />
-    ///     This method cannot, and should be enabled by the client, and must only be enacted by a kinkster pair.
-    ///     <b> THIS WILL NOT HANDLE ANY PLAYER CONTROL LOGIC AND MUST BE HANDLED SEPERATELY. </b>
+    ///   Can either enable or disable a hardcore state via <paramref name="attribute"/>, and the values 
+    ///   within <paramref name="newData"/>. <para />
+    ///   This method cannot, and should be enabled by the client, and must only be enacted by a kinkster pair.
+    ///   <b> THIS WILL NOT HANDLE ANY PLAYER CONTROL LOGIC AND MUST BE HANDLED SEPERATELY. </b>
     /// </summary>
     public void SetHardcoreStatus(UserData enactor, HcAttribute attribute, HardcoreState newData, Kinkster pair)
     {
@@ -178,8 +178,8 @@ public sealed class ClientData : IDisposable
     }
 
     /// <summary>
-    ///     Assumes server has already validated this operation. If called locally, implies a natural falloff has occurred. <para />
-    ///     <b> THIS WILL NOT HANDLE ANY PLAYER CONTROL LOGIC OR ACHIEVEMENTS AND MUST BE HANDLED SEPERATELY. </b>
+    ///   Assumes server has already validated this operation. If called locally, implies a natural falloff has occurred. <para />
+    ///   <b> THIS WILL NOT HANDLE ANY PLAYER CONTROL LOGIC OR ACHIEVEMENTS AND MUST BE HANDLED SEPERATELY. </b>
     /// </summary>
     public void DisableHardcoreStatus(UserData enactor, HcAttribute attribute, Kinkster? pair = null)
     {

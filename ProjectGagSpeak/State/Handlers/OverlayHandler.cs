@@ -6,6 +6,7 @@ using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.User;
 
 namespace GagSpeak.State.Handlers;
 
@@ -51,21 +52,21 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
         }
 
         // if the cached data no longer exists, it failed.
-        if (_config.Current.HypnoEffectInfo is null)
+        if (_config.Data.HypnoEffectInfo is null)
         {
             SentEffectValid = false;
             return;
         }
 
         // if we cannot apply it, fail this too.
-        if (!_hypnoService.CanApplyTimedEffect(_config.Current.HypnoEffectInfo, _config.Current.Base64CustomImageData))
+        if (!_hypnoService.CanApplyTimedEffect(_config.Data.HypnoEffectInfo, _config.Data.Base64CustomImageData))
         {
             SentEffectValid = false;
             return;
         }
 
         // reapply it.
-        await _hypnoService.ApplyEffect(_config.Current.HypnoEffectInfo, hs.Enactor(HcAttribute.HypnoticEffect), _config.Current.Base64CustomImageData);
+        await _hypnoService.ApplyEffect(_config.Data.HypnoEffectInfo, hs.Enactor(HcAttribute.HypnoticEffect), _config.Data.Base64CustomImageData);
     }
 
     private void DrawOverlays()
@@ -97,8 +98,8 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
         // Achievements here maybe.
 
         // Set the effect.
-        _config.Current.HypnoEffectInfo = effect;
-        _config.Current.Base64CustomImageData = customImage;
+        _config.Data.HypnoEffectInfo = effect;
+        _config.Data.Base64CustomImageData = customImage;
         _config.Save();
         // becuz it's kind of a hcStateCacheChange!
         Mediator.Publish(new HcStateCacheChanged());
@@ -112,8 +113,8 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
         // Remove the stored HardcoreStatus effect & image from the config if not ran by plugin disposal.
         if (!fromDispose)
         {
-            _config.Current.HypnoEffectInfo = null;
-            _config.Current.Base64CustomImageData = null;
+            _config.Data.HypnoEffectInfo = null;
+            _config.Data.Base64CustomImageData = null;
             _config.Save();
         }
         // becuz it's kind of a hcStateCacheChange!
@@ -158,7 +159,7 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     The Go-To All-In-One update for both overlay caches at once.
+    ///   The Go-To All-In-One update for both overlay caches at once.
     /// </summary>
     /// <remarks> This runs through a SemaphoreSlim execution and is handled safely. </remarks>
     public async Task UpdateCaches()

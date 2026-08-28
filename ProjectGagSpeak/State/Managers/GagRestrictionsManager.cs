@@ -7,7 +7,6 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using OtterGui.Extensions;
 using System.Diagnostics.CodeAnalysis;
@@ -19,8 +18,8 @@ public sealed class GagRestrictionManager : IHybridSavable
     private readonly ILogger<GagRestrictionManager> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly FavoritesConfig _favorites;
+    private readonly ConnectionsConfig _connections;
     private readonly ModPresetManager _modPresets;
-    private readonly ConfigFileProvider _fileNames;
     private readonly MufflerService _muffler;
     private readonly HybridSaveService _saver;
 
@@ -33,16 +32,16 @@ public sealed class GagRestrictionManager : IHybridSavable
         ILogger<GagRestrictionManager> logger,
         GagspeakMediator mediator,
         FavoritesConfig favorites,
+        ConnectionsConfig connections,
         ModPresetManager modPresets,
-        ConfigFileProvider fileNames,
         MufflerService muffler,
         HybridSaveService saver)
     {
         _logger = logger;
         _mediator = mediator;
         _favorites = favorites;
+        _connections = connections;
         _modPresets = modPresets;
-        _fileNames = fileNames;
         _muffler = muffler;
         _saver = saver;
     }
@@ -104,7 +103,7 @@ public sealed class GagRestrictionManager : IHybridSavable
             _logger.LogTrace("Saved changes to Edited GagRestriction.");
             // update the cache somehow here, idk how, my brain is fried.
             _mediator.Publish(new ConfigGagRestrictionChanged(StorageChangeType.Modified, sourceItem));
-            _saver.Save(this);
+            Save();
         }
     }
 
@@ -114,17 +113,17 @@ public sealed class GagRestrictionManager : IHybridSavable
         {
             item.IsEnabled = !item.IsEnabled;
             _mediator.Publish(new ConfigGagRestrictionChanged(StorageChangeType.Modified, item));
-            _saver.Save(this);
+            Save();
         }
     }
 
     /// <summary> Attempts to add the gag restriction as a favorite. </summary>
-    public bool AddFavorite(GarblerRestriction restriction)
-        => _favorites.TryAddGag(restriction.GagType);
+    public void AddFavorite(GarblerRestriction restriction)
+        => _favorites.FavoriteGag(restriction.GagType);
 
     /// <summary> Attempts to remove the gag restriction as a favorite. </summary>
-    public bool RemoveFavorite(GarblerRestriction restriction)
-        => _favorites.RemoveGag(restriction.GagType);
+    public void RemoveFavorite(GarblerRestriction restriction)
+        => _favorites.UnfavoriteGag(restriction.GagType);
 
     #region Validators
     public bool CanApply(int layer)
@@ -231,11 +230,13 @@ public sealed class GagRestrictionManager : IHybridSavable
 
     #region HybridSavable
     public int ConfigVersion => 1;
+    public int MaxBackups => 2;
     public HybridSaveType SaveType => HybridSaveType.Json;
-    public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
-        => (isAccountUnique = true, files.GagRestrictions).Item2;
-    public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
+    public DateTime LastWriteTimeUTC => DateTime.MinValue;
+    public string ToFilePath(GsFiles files) => GetSaveFilePath();
+    public void WriteToStream(StreamWriter _) => throw new NotImplementedException();
+    private string GetSaveFilePath() => Path.Combine(GsFiles.ConfigDirectory, _connections.CurrentProfileUID, GsFiles.GagRestrictionsFile);
+
     public string JsonSerialize()
     {
         var gagRestrictions = new JObject();
@@ -250,61 +251,62 @@ public sealed class GagRestrictionManager : IHybridSavable
         }.ToString(Formatting.Indented);
     }
 
+    public void Save()
+    {
+        if (string.IsNullOrEmpty(_connections.CurrentProfileUID))
+        {
+            _logger.LogInformation("[Save Aborted] No profile selected.");
+            return;
+        }
+        _saver.Save(this);
+    }
+
     // our CUSTOM defined load and migration.
     public void Load()
     {
-        var file = _fileNames.GagRestrictions;
+        var file = GetSaveFilePath();
+        _logger.LogInformation($"Loading GagData Config: ({file})");
+
         Storage = new GagRestrictionStorage();
-        // Migrate to the new filetype if necessary.
-        _logger.LogInformation("Loading GagRestrictions Config from {0}", file);
-
-        var jsonText = "";
-        JObject jObject = new();
-
-        // if the main file does not exist, attempt to load the text from the backup.
-        if (File.Exists(file))
+        try
         {
-            jsonText = File.ReadAllText(file);
-            jObject = JObject.Parse(jsonText);
-        }
-        else
-        {
-            _logger.LogWarning("Gag Restrictions Config not found. Attempting to find old config.");
-            var oldFormatFile = Path.Combine(_fileNames.CurrentPlayerDirectory, "gag-storage.json");
-            if (File.Exists(oldFormatFile))
+            if (!File.Exists(file))
             {
-                jsonText = File.ReadAllText(oldFormatFile);
-                jObject = JObject.Parse(jsonText);
-                jObject = ConfigMigrator.MigrateGagRestrictionsConfig(jObject, _fileNames, oldFormatFile);
-            }
-            else
-            {
-                _logger.LogWarning("No Config file found for: " + oldFormatFile);
-                _saver.Save(this);
+                _logger.LogDebug($"[File Not Found] {file}");
+                var directory = Path.GetDirectoryName(file);
+                if (directory is not null)
+                    Directory.CreateDirectory(directory);
+                Save();
                 return;
             }
+
+            var jsonText = File.ReadAllText(file);
+            var jObject = JObject.Parse(jsonText);
+
+            // Read the json from the file.
+            var version = jObject["Version"]?.Value<int>() ?? 1;
+
+            // Perform Migrations if any, and then load the data.
+            switch (version)
+            {
+                case 0:
+                    MigrateV0toV1(jObject);
+                    goto case 1;
+
+                case 1:
+                    LoadV1(jObject["GagRestrictions"]);
+                    break;
+
+                default:
+                    _logger.LogError("Invalid Version!");
+                    return;
+            }
+
+            _logger.LogInformation("Successfully loaded GagData config.");
+            Save();
+            _mediator.Publish(new ReloadFileSystem(GSModule.Gag));
         }
-
-        // Read the json from the file.
-        var version = jObject["Version"]?.Value<int>() ?? 1;
-
-        // Perform Migrations if any, and then load the data.
-        switch (version)
-        {
-            case 0:
-                MigrateV0toV1(jObject);
-                goto case 1;
-
-            case 1:
-                LoadV1(jObject["GagRestrictions"]);
-                break;
-
-            default:
-                _logger.LogError("Invalid Version!");
-                return;
-        }
-        _saver.Save(this);
-        _mediator.Publish(new ReloadFileSystem(GSModule.Gag));
+        catch (Bagagwa ex) { _logger.LogError("Failed to load config." + ex); }
     }
 
     private void LoadV1(JToken? data)
