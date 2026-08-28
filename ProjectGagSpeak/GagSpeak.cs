@@ -294,7 +294,6 @@ public static class GagSpeakServiceExtensions
 
         // UI (Probably mostly in Scoped)
         .AddSingleton<AccountInfoExchanger>()
-        .AddSingleton<GlobalChatLog>()
         .AddSingleton<VibeRoomChatlog>()
         .AddSingleton<PluginGuideProvider>()
         .AddSingleton<MainMenuTabs>()
@@ -487,6 +486,7 @@ public static class GagSpeakServiceExtensions
         .AddHostedService(p => p.GetRequiredService<OnTickService>())  // Starts & monitors the framework update cycle.
 
         // Cached Data That MUST be initialized before anything else for validity.
+        .AddHostedService(p => p.GetRequiredService<CharaWatcher>())
         .AddHostedService(p => p.GetRequiredService<CosmeticService>())     // Provides all Textures nessisary for the plugin.
         .AddHostedService(p => p.GetRequiredService<SpellActionService>())  // Provides all actions nessisary for the plugin.
         .AddHostedService(p => p.GetRequiredService<EmoteService>())        // Provides all emotes nessisary for the plugin.
