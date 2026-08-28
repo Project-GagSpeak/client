@@ -332,16 +332,16 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
 
         // retrieve any current kinkster requests.
         var requests = await GetRequests().ConfigureAwait(false);
-#if DEBUG
-        // Generate some dummy entries.
-        var dummyRequests = new List<KinksterRequest>();
-        for (int i = 0; i < 5; i++)
-        {
-            dummyRequests.Add(new KinksterRequest(new($"Dummy Sender {i}"), OwnUserData, false, "Wawa", DateTime.Now));
-            dummyRequests.Add(new KinksterRequest(OwnUserData, new($"Dummy Recipient {i}"), false, "Wawa", DateTime.Now));
-        }
-        requests.KinksterRequests.AddRange(dummyRequests);
-#endif
+//#if DEBUG
+//        // Generate some dummy entries.
+//        var dummyRequests = new List<KinksterRequest>();
+//        for (int i = 0; i < 5; i++)
+//        {
+//            dummyRequests.Add(new KinksterRequest(new($"Dummy Sender {i}"), OwnUserData, false, "Wawa", DateTime.Now));
+//            dummyRequests.Add(new KinksterRequest(OwnUserData, new($"Dummy Recipient {i}"), false, "Wawa", DateTime.Now));
+//        }
+//        requests.KinksterRequests.AddRange(dummyRequests);
+//#endif
         _requests.AddNewRequests(requests.KinksterRequests);
         _collarManager.LoadServerRequests(requests.CollarRequests);
 
@@ -350,7 +350,13 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         Logger.LogInformation($"[Performance] Retrieved Requests in {sw.ElapsedMilliseconds}ms");
         sw.Restart();
 #endif
-
+        // Retrieve the DM's and GlobalChat history.
+        var chatData = await GetChatHistory(new ChatHistoryRequest([], true, 75)).ConfigureAwait(false);
+#if DEBUG
+        foreach (var chat in chatData.ChatHistory)
+            Logger.LogInformation($"[Performance] Retrieved {chat.Key} ChatHistory with {chat.Value.Count} messages in {sw.ElapsedMilliseconds}ms");
+#endif
+        _globalChat.LoadChatHistory(chatData.ChatHistory.GetValueOrDefault(ChatlogId.GlobalChat, []));
     }
 
     public async Task<bool> HealthCheck()
@@ -371,8 +377,8 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     public async Task<LobbyAndHubInfoResponse> GetShareHubAndLobbyInfo()
         => await _hubConnection!.InvokeAsync<LobbyAndHubInfoResponse>(nameof(GetShareHubAndLobbyInfo)).ConfigureAwait(false);
 
-    public async Task<List<ChatlogMessage>> GetChatHistory(ChatHistoryRequest dto)
-        => await _hubConnection!.InvokeAsync<List<ChatlogMessage>>(nameof(GetChatHistory)).ConfigureAwait(false);
+    public async Task<ChatHistoryResult> GetChatHistory(ChatHistoryRequest dto)
+        => await _hubConnection!.InvokeAsync<ChatHistoryResult>(nameof(GetChatHistory), dto).ConfigureAwait(false);
 
     public async Task<KinkPlateFull> GetKinkplate(UserDto dto)
         => await _hubConnection!.InvokeAsync<KinkPlateFull>(nameof(GetKinkplate), dto).ConfigureAwait(false);

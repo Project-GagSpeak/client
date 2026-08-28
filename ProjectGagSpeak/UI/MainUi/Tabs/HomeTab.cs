@@ -290,13 +290,10 @@ public class HomeTab
 
         using (ImRaii.Group())
         {
-            using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedGold))
-            {
-                using (Fonts.IconFramedFont.Push())
-                    CkGui.TextShadowed(FAI.Award.ToIconString(), offset, radius);
-                ImUtf8.SameLineInner();
-                CkGui.TextShadowed($"{ClientAchievements.Completed}/{ClientAchievements.Total}", 0xFF000000, offset, radius);
-            }
+            using (Fonts.IconFramedFont.Push())
+                CkGui.TextShadowed(FAI.Award.ToIconString(), 0xFF4AADF4, 0xFF000000, offset, radius);
+            ImUtf8.SameLineInner();
+            CkGui.TextShadowed($"{ClientAchievements.Completed}/{ClientAchievements.Total}", 0xFF4AADF4, 0xFF000000, offset, radius);
         }
         CkGui.AttachTooltip("Your current achievement progress.");
 
@@ -322,9 +319,8 @@ public class HomeTab
 
         void DrawSafewordRow()
         {
-            using var col = ImRaii.PushColor(ImGuiCol.Text, 0xFF211098);
             using (Fonts.IconFramedFont.Push())
-                CkGui.TextShadowed(FAI.HandPaper.ToIconString(), offset, radius);
+                CkGui.TextShadowed(FAI.HandPaper.ToIconString(), CkCol.TriStateCross.Uint(), 0xFF000000, offset, radius);
             ImUtf8.SameLineInner();
             using var font = ImRaii.PushFont(UiBuilder.MonoFont);
             if (_editingSafeword)
@@ -348,9 +344,9 @@ public class HomeTab
             {
                 // Display based on if we have a safeword set or not.
                 if (string.IsNullOrWhiteSpace(_config.Data.Safeword))
-                    CkGui.TextShadowed("Click to set Safeword..", 0xFF000000);
+                    CkGui.TextShadowed("Click to set Safeword..", 0xFF211098, 0xFF000000);
                 else
-                    CkGui.TextShadowed(_config.Data.Safeword, CkCol.TriStateCross.Uint());
+                    CkGui.TextShadowed(_config.Data.Safeword, CkCol.TriStateCross.Uint(), 0xFF000000);
                 font.Dispose();
                 _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SettingSafeword, MainUI.LastPos, MainUI.LastSize);
                 // Toggle safeword editing.

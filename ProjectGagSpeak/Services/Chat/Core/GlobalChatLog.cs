@@ -62,6 +62,18 @@ public class GlobalChatLog : RichChatLog<NewGsChatMessage>, IMediatorSubscriber,
         _mentionRegex = new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.Compiled);
     }
 
+    public void LoadChatHistory(List<ChatlogMessage> chatHistory)
+    {
+        ClearLog();
+        // Reload log, mark as read.
+        foreach (var msg in chatHistory)
+            ProcessChatMessage(msg, false);
+        MarkAsRead(true);
+        _logger.LogDebug("Loaded GlobalChat history, marked all as read.", LoggerType.GlobalChat);
+    }
+
+
+    // May not always be valid if the passed in user is just a UID.
     public string GetChatName(UserData user)
     {
         if (_kinksters.GetValueOrDefault(user) is { } kinkster)
