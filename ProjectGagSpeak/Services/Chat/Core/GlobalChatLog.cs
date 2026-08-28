@@ -77,7 +77,7 @@ public class GlobalChatLog : RichChatLog<NewGsChatMessage>, IMediatorSubscriber,
     public string GetChatName(UserData user)
     {
         if (_kinksters.GetValueOrDefault(user) is { } kinkster)
-            return $"{kinkster.GetNickAliasOrUid()} ({user.UID[..4]})";
+            return $"{kinkster.GetNickAliasOrUid()} ({user.AnonTag})";
         if (_userFlags.TryGetValue(user, out var flags) && flags.HasAny(ChatFlags.UseDisplayName))
             return user.VanityOrAnonName;
         return user.AnonName;
@@ -125,7 +125,7 @@ public class GlobalChatLog : RichChatLog<NewGsChatMessage>, IMediatorSubscriber,
             return sender.VanityName;
         // Fallback for pairs
         if (_kinksters.GetValueOrDefault(sender) is { } kinkster)
-            return $"{kinkster.GetNickAliasOrUid()} ({sender.UID[..4]})";
+            return $"{kinkster.GetNickAliasOrUid()} ({sender.AnonTag})";
         // Final fallback
         return radarFlags.HasAny(ChatFlags.UseDisplayName) ? sender.VanityOrAnonName : sender.AnonName;
     }
