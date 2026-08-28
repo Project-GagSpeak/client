@@ -50,7 +50,7 @@ public sealed class GagSpeak : IDalamudPlugin
         pi.Create<Svc>();
         // init the CkCommons.
         ItemSvc.Init(pi);
-        CkCommonsHost.Init(pi, this, CkLogFilter.None);
+        CkCommonsHost.Init(pi, this, CkLogFilter.Emojis);
         // create the host builder for the plugin
         _host = ConstructHostBuilder(pi);
         // start up the host

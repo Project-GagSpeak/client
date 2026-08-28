@@ -243,7 +243,7 @@ public class HomeTab
         ImUtf8.SameLineInner();
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (CkGui.CalcFontTextSize("A", Fonts.SubtitleFont).Y - ImUtf8.FrameHeightSpacing));
         if (CkGui.IconButton(FAI.PencilAlt, inPopup: true))
-            _mediator.Publish(new OpenSettingsUI(7, 1));
+            _mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
         CkGui.AttachTooltip("Open Alias/Vanity Editor");
 
         // Below it, draw out the other data
@@ -319,44 +319,47 @@ public class HomeTab
         CkGui.AttachTooltip("Reflects current Account Standing.--NL--" +
             "--COL--Too many strikes can lead to restrictions or bans.--COL--", ImGuiColors.ParsedGrey);
 
-        // Wrap the final safeword line in a group
-        using var __ = ImRaii.Group();
-        using var col = ImRaii.PushColor(ImGuiCol.Text, 0xFF211098);
-        
-        using (Fonts.IconFramedFont.Push())
-            CkGui.TextShadowed(FAI.HandPaper.ToIconString(), offset, radius);
-        ImUtf8.SameLineInner();
-        using var font = ImRaii.PushFont(UiBuilder.MonoFont);
-        if (_editingSafeword)
+        DrawSafewordRow();
+        CkGui.AttachTooltip("Your current safeword. Click to edit!");
+
+
+        void DrawSafewordRow()
         {
-            ImGui.SameLine();
-            ImGui.SetNextItemWidth(region.X * .5f);
-            var safeword = _config.Data.Safeword;
-            if (ImGui.InputTextWithHint("##safeword", "Set a Safeword..", ref safeword, 35))
+            using var col = ImRaii.PushColor(ImGuiCol.Text, 0xFF211098);
+            using (Fonts.IconFramedFont.Push())
+                CkGui.TextShadowed(FAI.HandPaper.ToIconString(), offset, radius);
+            ImUtf8.SameLineInner();
+            using var font = ImRaii.PushFont(UiBuilder.MonoFont);
+            if (_editingSafeword)
             {
-                _config.Data.Safeword = safeword;
-                _config.Save();
+                ImGui.SameLine();
+                ImGui.SetNextItemWidth(region.X * .5f);
+                var safeword = _config.Data.Safeword;
+                if (ImGui.InputTextWithHint("##safeword", "Set a Safeword..", ref safeword, 35))
+                {
+                    _config.Data.Safeword = safeword;
+                    _config.Save();
+                }
+                if (ImGui.IsItemDeactivated())
+                    _editingSafeword = false;
+                if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
+                    _editingSafeword = false;
+                font.Dispose();
+                CkGui.AttachTooltip("Enter to save, right-click to cancel.");
             }
-            if (ImGui.IsItemDeactivated())
-                _editingSafeword = false;
-            if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-                _editingSafeword = false;
-            font.Dispose();
-            CkGui.AttachTooltip("Enter to save, right-click to cancel.");
-        }
-        else
-        {
-            // Display based on if we have a safeword set or not.
-            if (string.IsNullOrWhiteSpace(_config.Data.Safeword))
-                CkGui.TextShadowed("Click to set Safeword..", 0xFFCCCCFF);
             else
-                CkGui.TextShadowed(_config.Data.Safeword, CkCol.TriStateCross.Uint());
-            font.Dispose();
-            CkGui.AttachTooltip("Your current safeword. Click to edit!");
-            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SettingSafeword, MainUI.LastPos, MainUI.LastSize);
-            // Toggle safeword editing.
-            if (ImGui.IsItemClicked())
-                _editingSafeword = !_editingSafeword;
+            {
+                // Display based on if we have a safeword set or not.
+                if (string.IsNullOrWhiteSpace(_config.Data.Safeword))
+                    CkGui.TextShadowed("Click to set Safeword..", 0xFF000000);
+                else
+                    CkGui.TextShadowed(_config.Data.Safeword, CkCol.TriStateCross.Uint());
+                font.Dispose();
+                _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SettingSafeword, MainUI.LastPos, MainUI.LastSize);
+                // Toggle safeword editing.
+                if (ImGui.IsItemClicked())
+                    _editingSafeword = !_editingSafeword;
+            }
         }
     }
 
