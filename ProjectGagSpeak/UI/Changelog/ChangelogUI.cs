@@ -119,7 +119,7 @@ public class ChangelogUI : WindowMediatorSubscriberBase
             _selectedPage = ChangelogPage.Contributors;
 
         drawPos += new Vector2(0, boxH);
-        winPtr.DrawList.AddRectFilledMultiColor(drawPos, innerMaxPos, GsCol.LushPinkLineDisabled.Uint(), GsCol.LushPinkLineDisabled.Uint(), 0, 0);
+        winPtr.DrawList.AddRectFilledMultiColor(drawPos, innerMaxPos, 0x489567D2, 0x489567D2, 0, 0);
         winPtr.DrawList.AddLine(drawPos, drawPos + new Vector2(width, 0), 0xFF000000);
 
         winPtr.DrawList.PopClipRect();
@@ -168,21 +168,13 @@ public class ChangelogUI : WindowMediatorSubscriberBase
         if (!string.IsNullOrWhiteSpace(_changelogFile.Tagline))
         {
             CkGui.InlineSpacingInner();
-            if (_changelogFile.Icon is not FAI.None)
-            {
-                CkGui.IconTextAligned(_changelogFile.Icon);
-                ImUtf8.SameLineInner();
-                CkGui.ColorTextFrameAligned(_changelogFile.Tagline, AccentToColor(AccentColor.Gold));
-            }
-            else
-            {
-                CkGui.FontTextAligned(_changelogFile.Tagline, Fonts.HeaderFont);
-            }
+            CkGui.FontTextAligned(_changelogFile.Tagline, Fonts.HeaderFont);
+
             // Subline
             if (!string.IsNullOrWhiteSpace(_changelogFile.Subline))
             {
                 CkGui.InlineSpacingInner();
-                CkGui.ColorText(_changelogFile.Subline, 0x33FFFFFF);
+                CkGui.ColorText(_changelogFile.Subline, 0x88FFFFFF);
             }
             // Padding
             ImGui.Spacing();

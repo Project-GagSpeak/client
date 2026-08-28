@@ -282,7 +282,7 @@ public class HomeTab
             using (ImRaii.PushColor(ImGuiCol.Text, 0xFF888888))
             {
                 using (Fonts.IconFramedFont.Push())
-                    CkGui.TextShadowed(FAI.Calendar.ToIconString(), offset, radius);
+                    CkGui.TextShadowed(FAI.Calendar.ToIconString(), Vector2.One, radius);
                 ImUtf8.SameLineInner();
                 CkGui.TextShadowed(createdDate, 0xFF000000, offset, radius);
             }
@@ -292,9 +292,9 @@ public class HomeTab
         using (ImRaii.Group())
         {
             using (Fonts.IconFramedFont.Push())
-                CkGui.TextShadowed(FAI.Award.ToIconString(), 0xFF4AADF4, 0xFF000000, offset, radius);
+                CkGui.TextShadowed(FAI.Award.ToIconString(), 0xFF4AADF4, 0xFF000000, Vector2.One, radius);
             ImUtf8.SameLineInner();
-            CkGui.TextShadowed($"{ClientAchievements.Completed}/{ClientAchievements.Total}", 0xFF4AADF4, 0xFF000000, offset, radius);
+            CkGui.TextShadowed($"{ClientAchievements.Completed}/{ClientAchievements.Total}", 0xFF4AADF4, 0xFF000000, Vector2.One, radius);
         }
         CkGui.AttachTooltip("Your current achievement progress.");
 
@@ -310,7 +310,7 @@ public class HomeTab
             }
         }
         if (ImGui.IsItemClicked())
-            _mediator.Publish(new OpenSettingsUI(6, 0));
+            _mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
         CkGui.AttachTooltip("Reflects current Account Standing.--NL--" +
             "--COL--Too many strikes can lead to restrictions or bans.--COL--", ImGuiColors.ParsedGrey);
 
@@ -322,7 +322,7 @@ public class HomeTab
         void DrawSafewordRow()
         {
             using (Fonts.IconFramedFont.Push())
-                CkGui.TextShadowed(FAI.HandPaper.ToIconString(), CkCol.TriStateCross.Uint(), 0xFF000000, offset, radius);
+                CkGui.TextShadowed(FAI.HandPaper.ToIconString(), CkCol.TriStateCross.Uint(), 0xFF000000, Vector2.One, radius);
             ImUtf8.SameLineInner();
             using var font = ImRaii.PushFont(UiBuilder.MonoFont);
             if (_editingSafeword)
