@@ -31,7 +31,7 @@ public class ChatConfigData : IAudioConfigData
     public IFontSpec? ChatFont { get; set; }
 
     // PREFS -> GLOBAL-CHAT //
-    public ChatFlags ChatPerms { get; set; } = ChatFlags.AllowRequests | ChatFlags.UseDisplayName;
+    public ChatFlags ChatPerms { get; set; } = ChatFlags.AllowRequests | ChatFlags.UseDisplayName | ChatFlags.AllowProfileViewing;
     public bool UseNativeChat { get; set; } = false;
     public XivChatType ChatType { get; set; } = XivChatType.Debug;
     public NativeUiColor ChatColor { get; set; } = GsDefaults.GlobalChatColor;

@@ -133,8 +133,6 @@ public sealed class PluginGuideProvider : IDisposable
             // Do the bullet list thing.
             foreach (var bullet in details.BulletInfo)
                 ImGui.BulletText(bullet);
-            if (plugin is (OptionalPlugin.Sundouleia or OptionalPlugin.Loci))
-                CkGui.BulletText("For more details, view the [Cordys Projects] tab below.", ImGuiColors.DalamudViolet);
         }
     }
 
@@ -290,10 +288,10 @@ public sealed class PluginGuideProvider : IDisposable
                 IconUrl = "https://raw.githubusercontent.com/Sundouleia/repo/main/Images/icon.png",
                 Name = "Sundouleia",
                 Author = "Cordelia",
-                Punchline = "Uncapped Communities, Syncs, Chats, In-Depth Profiles, Instantaneous Speeds, Minimal Redraws.",
+                Punchline = "No user caps, Syncs, Chats, In-Depth Profiles, Instant Data, Minimal Redraws.",
 
                 DiscordUrl = "https://discord.gg/QJy4zTqpMD",
-                DiscordTooltip = "Opens the GagSpeak & Loci Discord--SEP----COL--DO NOT USE THIS TO REPORT GS ISSUES.--COL--",
+                DiscordTooltip = "Opens the Sundouleia & Loci Discord--SEP----COL--DO NOT USE THIS TO REPORT GS ISSUES.--COL--",
                 GithubUrl = "https://github.com/Sundouleia",
 
                 RepoUrl = "https://raw.githubusercontent.com/Sundouleia/repo/main/sundouleia.json",

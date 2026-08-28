@@ -6,11 +6,9 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using FFXIVClientStructs.FFXIV.Client.UI;
 using GagSpeak.GameInternals.Agents;
 using GagSpeak.Interop;
 using GagSpeak.Interop.Helpers;
-using GagSpeak.Kinksters;
 using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
@@ -26,6 +24,7 @@ using GagspeakAPI.User;
 using OtterGui;
 using OtterGui.Text;
 using System.Windows.Forms;
+using FFXIVClientStructs.FFXIV.Client.UI;
 
 namespace GagSpeak.Gui;
 
@@ -37,6 +36,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
     private readonly DebugTab _debugTab;
     private readonly PiShockProvider _shockProvider;
     private readonly ClientDataListener _clientDatListener;
+    private readonly PluginGuideProvider _guideProvider;
     private readonly UiFileDialogService _fileDialog;
 
     private static bool _isLinux;
@@ -44,7 +44,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
     public SettingsUi(ILogger<SettingsUi> logger, GagspeakMediator mediator, MainHub hub,
         MainConfig config, ProfilesTab accounts, DebugTab debug, PiShockProvider shockProvider,
-        ClientDataListener listener, UiFileDialogService fileDialog)
+        ClientDataListener listener, PluginGuideProvider guide, UiFileDialogService fileDialog)
         : base(logger, mediator, "GagSpeak Settings")
     {
         _hub = hub;
@@ -53,6 +53,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         _debugTab = debug;
         _shockProvider = shockProvider;
         _clientDatListener = listener;
+        _guideProvider = guide;
         _fileDialog = fileDialog;
 
         Flags = WFlags.NoScrollbar;
@@ -91,6 +92,9 @@ public class SettingsUi : WindowMediatorSubscriberBase
             DrawOptionalPluginButton("Lifestream", IpcCallerLifestream.APIAvailable, OptionalPlugin.Lifestream, false);
             ImGui.SameLine();
             DrawOptionalPluginButton("Intiface", IpcCallerIntiface.APIAvailable, OptionalPlugin.Intiface, false);
+
+            // Below it, draw out the plugin details if we should.
+            _guideProvider.DrawOptionalPluginDetails(_expandedInfo, leftLength);
 
             ImGui.Text(GSLoc.Settings.AccountClaimText);
             ImGui.SameLine();

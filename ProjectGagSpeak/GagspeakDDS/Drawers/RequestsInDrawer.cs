@@ -15,7 +15,10 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Hub;
+using GagspeakAPI.Network;
+using GagspeakAPI.User;
 using OtterGui.Text;
+using static FFXIVClientStructs.FFXIV.Client.Game.ServerRequestCallbackManager.Delegates;
 
 namespace GagSpeak.DrawSystem;
 
@@ -184,14 +187,14 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
         ImGui.SameLine(endX);
         using (ImRaii.PushColor(ImGuiCol.Text, CkCol.TriStateCheck.Uint()))
             if (CkGui.IconTextButton(FAI.CheckCircle, "Accept All", null, true, UiService.DisableUI))
-                Log.Information("Accepting all incoming kinkster requests.");
+                AcceptRequests(_manager.Incoming.ToList());
         CkGui.AttachTooltip("Accept all incoming kinkster requests.");
 
         CkGui.FrameSeparatorV(inner: true);
 
         using (ImRaii.PushColor(ImGuiCol.Text, CkCol.TriStateCross.Uint()))
             if (CkGui.IconTextButton(FAI.TimesCircle, "Reject All", null, true, UiService.DisableUI))
-                Log.Information("Rejecting all incoming kinkster requests.");
+                RejectRequests(_manager.Incoming.ToList());
         CkGui.AttachTooltip("Reject all incoming kinkster requests.");
 
         return endX;
@@ -329,6 +332,23 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
         });
     }
 
+    private void AcceptRequests(List<RequestEntry> requests)
+    {
+        UiService.SetUITask(async () =>
+        {
+            var responses = requests.Select(r => new RequestResponse(new(r.SenderUID), r.IsTemporaryRequest)).ToList();
+            var res = await _hub.UserAcceptRequests(new(responses)).ConfigureAwait(false);
+            if (res.ErrorCode is GagSpeakApiEc.Success && res.Value is not null)
+                _manager.AcceptRequests(requests, res.Value);
+            else
+            {
+                Log.Warning($"Failed to accept bulk requests: {res.ErrorCode}");
+                if (res.ErrorCode is GagSpeakApiEc.AlreadyPaired)
+                    _manager.RemoveRequests(requests);
+            }
+        });
+    }
+
     private void RejectRequest(RequestEntry request)
     {
         UiService.SetUITask(async () =>
@@ -338,6 +358,18 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
                 _manager.RemoveRequest(request);
             else
                 Log.Warning($"Failed to reject kinkster request from {request.SenderAnonName} ({request.SenderUID}): {res.ErrorCode}");
+        });
+    }
+
+    private void RejectRequests(List<RequestEntry> requests)
+    {
+        UiService.SetUITask(async () =>
+        {
+            var res = await _hub.UserRejectRequests(new(requests.Select(x => new UserData(x.SenderUID)).ToList()));
+            if (res.ErrorCode is GagSpeakApiEc.Success)
+                _manager.RemoveRequests(requests);
+            else
+                Log.Warning($"Failed to bulk cancel outgoing requests: {res.ErrorCode}");
         });
     }
 }

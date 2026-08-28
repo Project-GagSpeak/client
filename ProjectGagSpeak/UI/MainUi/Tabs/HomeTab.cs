@@ -453,7 +453,7 @@ public class HomeTab
         CkGui.AttachTooltip("See the latest patch notes for Sundouleia.");
 
         SupportButton(winPtr, style, width);
-        FeedbackButton(width);
+        FeedbackButton(winPtr, style, width);
     }
 
     private void DrawMenuNavCompact(ImGuiWindowPtr winPtr, ImGuiStylePtr style, float width)
@@ -514,7 +514,7 @@ public class HomeTab
             CkGui.AttachTooltip("See the latest patch notes for Sundouleia.");
 
             SupportButton(winPtr, style, width);
-            FeedbackButton(width);
+            FeedbackButton(winPtr, style, width);
         }
     }
 
@@ -547,9 +547,9 @@ public class HomeTab
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SelfPlug, MainUI.LastPos, MainUI.LastSize);
     }
 
-    private void FeedbackButton(float buttonWidth)
+    private void FeedbackButton(ImGuiWindowPtr winPtr, ImGuiStylePtr style, float width)
     {
-        if (CkGui.FancyButton(FAI.ThumbsUp, "Positive Feedback", buttonWidth, false))
+        if (DrawMenuButton(winPtr, style, FAI.ThumbsUp, "Positive Feedback", width, false))
         {
             try { Process.Start(new ProcessStartInfo { FileName = "https://forms.gle/4AL43XUeWna2DtYK7", UseShellExecute = true }); }
             catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the google form. {e.Message}"); }

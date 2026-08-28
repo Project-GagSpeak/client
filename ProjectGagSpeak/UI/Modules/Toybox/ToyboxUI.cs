@@ -41,6 +41,27 @@ public class ToyboxUI : WindowMediatorSubscriberBase
 
     private static float RightLength() => 300 * ImGuiHelpers.GlobalScale;
 
+    private bool _themePushed = false;
+    public override void PreDraw()
+    {
+        if (!_themePushed)
+        {
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(4));
+            ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .403f));
+            ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.579f, 0.170f, 0.359f, 0.428f));
+            _themePushed = true;
+        }
+    }
+
+    public override void PostDraw()
+    {
+        if (_themePushed)
+        {
+            ImGui.PopStyleVar();
+            ImGui.PopStyleColor(2);
+            _themePushed = false;
+        }
+    }
     protected override void DrawInternal()
     {
         var frameH = ImGui.GetFrameHeight();
