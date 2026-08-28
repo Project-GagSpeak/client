@@ -749,7 +749,6 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 _config.Save();
             }
             CkGui.HelpText(GSLoc.Settings.Preferences.VibeStatusTT);
-            ImGui.Unindent();
         }
 
         if (ImGui.Checkbox(GSLoc.Settings.Preferences.PrefThreeCharaAnonName, ref preferThreeCharaAnonName))
