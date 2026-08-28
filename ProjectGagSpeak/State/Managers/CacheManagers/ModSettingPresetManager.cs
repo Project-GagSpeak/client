@@ -12,12 +12,12 @@ namespace GagSpeak.State.Managers;
 /// <summary> Responsible for tracking the custom settings we have configured for a mod. </summary>
 public class ModPresetManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
-    private readonly ConfigFileProvider _fileNames;
+    private readonly GsFiles _fileNames;
     private readonly HybridSaveService _saver;
 
     private StorageItemEditor<ModSettingsPreset> _itemEditor = new();
     public ModPresetManager(ILogger<ModPresetManager> logger, GagspeakMediator mediator, 
-        ConfigFileProvider fileNames, HybridSaveService saver) 
+        GsFiles fileNames, HybridSaveService saver) 
         : base(logger, mediator)
     {
         _fileNames = fileNames;
@@ -239,7 +239,7 @@ public class ModPresetManager : DisposableMediatorSubscriberBase, IHybridSavable
     public int ConfigVersion => 0;
     public HybridSaveType SaveType => HybridSaveType.Json;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
+    public string GetFileName(GsFiles files, out bool isAccountUnique)
         => (isAccountUnique = false, files.CustomModSettings).Item2;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize()

@@ -53,7 +53,7 @@ public static unsafe class HcCommonTaskFuncs
             var minSpeedAllowed = Control.Instance()->IsWalking ? 0.015f : 0.05f;
             // Svc.Logger.Information($"Speed is {PlayerData.DistanceTo(_prevPlayerPos)} yalm/s");
             if (PlayerData.DistanceTo(obj) < minDistance && NodeThrottler.Throttle("HcTaskFunc.AutoMoveOff", 200))
-                ChatService.SendCommand("automove off");
+                ChatControlService.SendCommand("automove off");
 
             // If something is potentially obstructing our movement, and we have slowed down, and not jumped in .75s, try jumping.
             else if (HcTaskManager.ElapsedTime > 500 && !PlayerData.IsJumping)
@@ -61,7 +61,7 @@ public static unsafe class HcCommonTaskFuncs
                 // try to jump if our speed is slow enough.
                 if (PlayerData.DistanceTo(_prevPlayerPos) < minSpeedAllowed && NodeThrottler.Throttle("HcTaskFunc.Jump", 1250))
                 {
-                    ChatService.SendGeneralActionCommand(2); // Jumping!
+                    ChatControlService.SendGeneralActionCommand(2); // Jumping!
                     Svc.Logger.Verbose("Jumping to try and get unstuck.");
                 }
             }
@@ -82,8 +82,8 @@ public static unsafe class HcCommonTaskFuncs
                 // target and begin automove.
                 if (NodeThrottler.Throttle("HcTaskFunc.LockOn"))
                 {
-                    ChatService.SendCommand("lockon on");
-                    ChatService.SendCommand("automove on");
+                    ChatControlService.SendCommand("lockon on");
+                    ChatControlService.SendCommand("automove on");
                     return false; // still have not reached the object, so ret false.
                 }
             }

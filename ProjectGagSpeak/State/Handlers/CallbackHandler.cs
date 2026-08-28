@@ -7,9 +7,11 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Connection;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
+using GagspeakAPI.User;
 using GagspeakAPI.Util;
 
 namespace GagSpeak.State.Listeners;

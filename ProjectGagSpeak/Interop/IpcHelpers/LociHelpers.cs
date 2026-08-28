@@ -1,11 +1,9 @@
 using CkCommons.Gui;
-using CkCommons.RichText;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
-using GagspeakAPI.Extensions;
 using LociApi.Enums;
 
 namespace GagSpeak.Interop.Helpers;

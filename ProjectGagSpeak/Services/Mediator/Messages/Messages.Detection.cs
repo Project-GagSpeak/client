@@ -1,6 +1,4 @@
-using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
-using GagSpeak.GameInternals;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;

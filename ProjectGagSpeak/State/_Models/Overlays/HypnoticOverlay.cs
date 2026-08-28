@@ -24,7 +24,7 @@ public class HypnoticOverlay : IOverlayEffect
     }
 
     public bool IsValid() => File.Exists(
-        Path.Combine(ConfigFileProvider.ThumbnailDirectory, ImageDataType.Hypnosis.ToString(), OverlayPath));
+        Path.Combine(GsFiles.ThumbnailDirectory, ImageDataType.Hypnosis.ToString(), OverlayPath));
 
     public HypnoticOverlay Clone() => new HypnoticOverlay(this);
 }

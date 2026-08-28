@@ -1,12 +1,12 @@
 using CkCommons.Gui;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data;
-using Dalamud.Bindings.ImGui;
+using GagspeakAPI.User;
 
 namespace GagSpeak.Gui.Profile;
 
@@ -21,7 +21,7 @@ public class KinkPlateLightUI : WindowMediatorSubscriberBase
 
     public KinkPlateLightUI(ILogger<KinkPlateLightUI> logger, GagspeakMediator mediator,
         KinkPlateLight plateLightUi, KinkPlateService KinkPlateManager,
-        KinksterManager pairManager, UserData pairUserData) : base(logger, mediator, "###KinkPlateLight" + pairUserData.UID)
+        KinksterManager pairManager, UserData user) : base(logger, mediator, "###KinkPlateLight" + user.UID)
     {
         _lightUI = plateLightUi;
         _KinkPlateManager = KinkPlateManager;
@@ -33,31 +33,25 @@ public class KinkPlateLightUI : WindowMediatorSubscriberBase
         IsOpen = true;
         ForceMainWindow = true;
 
-        _showFullUID = _pairManager.DirectPairs.Any(x => x.UserData.UID == pairUserData.UID) || pairUserData.UID == MainHub.UID;
-        UserDataToDisplay = pairUserData;
+        _showFullUID = _pairManager.DirectPairs.Any(x => x.User.UID == user.UID) || user.UID == MainHub.UID;
+        UserDataToDisplay = user;
     }
 
     public UserData UserDataToDisplay { get; init; }
     private bool HoveringCloseButton = false;
     private bool HoveringReportButton = false;
 
-    protected override void PreDrawInternal()
+    public override void PreDraw()
     {
-        if (!ThemePushed)
-        {
-            ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0, 0));
-            ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 35f * ImGuiHelpers.GlobalScale);
-
-            ThemePushed = true;
-        }
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0, 0));
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 35f * ImGuiHelpers.GlobalScale);
+        base.PreDraw();
     }
-    protected override void PostDrawInternal()
+
+    public override void PostDraw()
     {
-        if (ThemePushed)
-        {
-            ImGui.PopStyleVar(2);
-            ThemePushed = false;
-        }
+        ImGui.PopStyleVar(2);
+        base.PostDraw();
     }
 
     protected override void DrawInternal()
@@ -111,8 +105,8 @@ public class KinkPlateLightUI : WindowMediatorSubscriberBase
     {
         // remove profile on close if not in our direct pairs.
         if (_showFullUID is false)
-            Mediator.Publish(new ClearKinkPlateDataMessage(UserDataToDisplay));
+            Mediator.Publish(new ClearUserProfileMessage(UserDataToDisplay));
         // destroy the window.        
-        Mediator.Publish(new RemoveWindowMessage(this));
+        Mediator.Publish(new RemoveCreatedWindowMessage(this));
     }
 }

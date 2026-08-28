@@ -47,7 +47,7 @@ public class GlobalChatPopoutUI : WindowMediatorSubscriberBase
 
     protected override void DrawInternal()
     {
-        using var font = Fonts.Default150Percent.Push();
+        using var font = Fonts.DefaultScaled.Push();
         using var style = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 10f * ImGuiHelpers.GlobalScale);
         using var col = ImRaii.PushColor(ImGuiCol.ScrollbarGrab, GsCol.VibrantPink.Uint())
             .Push(ImGuiCol.ScrollbarGrabHovered, GsCol.VibrantPinkHovered.Uint());
@@ -90,24 +90,24 @@ public class GlobalChatPopoutUI : WindowMediatorSubscriberBase
 
     private void DrawChatUseBlockedWarning()
     {
-        var errorHeight = CkGui.CalcFontTextSize("A", Fonts.UidFont).Y * 2 + CkGui.CalcFontTextSize("A", Fonts.Default150Percent).Y + ImUtf8.ItemSpacing.Y * 2;
+        var errorHeight = CkGui.CalcFontTextSize("A", Fonts.SubtitleFont).Y * 2 + CkGui.CalcFontTextSize("A", Fonts.DefaultScaled).Y + ImUtf8.ItemSpacing.Y * 2;
         var centerDrawHeight = (ImGui.GetContentRegionAvail().Y - ImUtf8.FrameHeightSpacing - errorHeight) / 2;
 
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + centerDrawHeight);
-        CkGui.FontTextCentered("Blocked Via Bad Reputation!", Fonts.UidFont, ImGuiColors.DalamudRed);
-        CkGui.FontTextCentered("Unable to view chat anymore.", Fonts.UidFont, ImGuiColors.DalamudRed);
-        CkGui.FontTextCentered($"You have [{MainHub.Reputation.ChatStrikes}] chat strikes.", Fonts.Default150Percent, ImGuiColors.DalamudRed);
+        CkGui.FontTextCentered("Blocked Via Bad Reputation!", Fonts.SubtitleFont, ImGuiColors.DalamudRed);
+        CkGui.FontTextCentered("Unable to view chat anymore.", Fonts.SubtitleFont, ImGuiColors.DalamudRed);
+        CkGui.FontTextCentered($"You have [{MainHub.Reputation.ChatStrikes}] chat strikes.", Fonts.DefaultScaled, ImGuiColors.DalamudRed);
     }
 
     private void DrawNotVerifiedHelp()
     {
-        var errorHeight = CkGui.CalcFontTextSize("A", Fonts.UidFont).Y * 2 + CkGui.CalcFontTextSize("A", Fonts.Default150Percent).Y * 2 + ImUtf8.TextHeight * 3 + ImUtf8.ItemSpacing.Y * 6;
+        var errorHeight = CkGui.CalcFontTextSize("A", Fonts.SubtitleFont).Y * 2 + CkGui.CalcFontTextSize("A", Fonts.DefaultScaled).Y * 2 + ImUtf8.TextHeight * 3 + ImUtf8.ItemSpacing.Y * 6;
         var centerDrawHeight = (ImGui.GetContentRegionAvail().Y - errorHeight) / 2;
 
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + centerDrawHeight);
-        CkGui.FontTextCentered("Must Claim Account To Chat!", Fonts.UidFont, ImGuiColors.DalamudRed);
-        CkGui.FontTextCentered("For Moderation & Safety Reasons", Fonts.Default150Percent, ImGuiColors.DalamudGrey);
-        CkGui.FontTextCentered("Only Verified Users Get Social Features.", Fonts.Default150Percent, ImGuiColors.DalamudGrey);
+        CkGui.FontTextCentered("Must Claim Account To Chat!", Fonts.SubtitleFont, ImGuiColors.DalamudRed);
+        CkGui.FontTextCentered("For Moderation & Safety Reasons", Fonts.DefaultScaled, ImGuiColors.DalamudGrey);
+        CkGui.FontTextCentered("Only Verified Users Get Social Features.", Fonts.DefaultScaled, ImGuiColors.DalamudGrey);
         ImGui.Spacing();
         CkGui.CenterText("You can verify via GagSpeak's Discord Bot.");
         CkGui.CenterText("Verification is easy & doesn't interact with lodestone");

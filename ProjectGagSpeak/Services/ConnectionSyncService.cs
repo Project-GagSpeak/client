@@ -1,3 +1,4 @@
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Handlers;
@@ -13,6 +14,9 @@ namespace GagSpeak.Services;
 /// <remarks> Helps update config folder locations, update stored data, and update achievement data status. </remarks>
 public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
 {
+    private readonly MainConfig _config;
+    private readonly AccountConfig _accounts;
+    private readonly ConnectionsConfig _connections;
     private readonly OverlayHandler _overlays;
     private readonly PlayerCtrlHandler _playerControl;
     private readonly RestraintManager _restraints;
@@ -25,12 +29,15 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
     private readonly TriggerManager _triggers;
     private readonly ClientDataListener _clientDatListener;
     private readonly CallbackHandler _visuals;
-    private readonly ConfigFileProvider _fileNames;
+    private readonly GsFiles _fileNames;
     private readonly AchievementsService _achievements;
 
     public ConnectionSyncService(
         ILogger<ConnectionSyncService> logger,
         GagspeakMediator mediator,
+        MainConfig config,
+        AccountConfig accounts,
+        ConnectionsConfig connections,
         RestraintManager restraints,
         RestrictionManager restrictions,
         GagRestrictionManager gags,
@@ -43,10 +50,13 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
         PlayerCtrlHandler playerControl,
         ClientDataListener clientDatListener,
         CallbackHandler visuals,
-        ConfigFileProvider fileNames,
+        GsFiles fileNames,
         AchievementsService achievements)
         : base(logger, mediator)
     {
+        _config = config;
+        _accounts = accounts;
+        _connections = connections;
         _overlays = overlays;
         _playerControl = playerControl;
         _restraints = restraints;
@@ -90,6 +100,7 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
         // 1. Load in the updated config storages for the profile.
         Logger.LogInformation($"[SYNC PROGRESS]: Updating FileProvider for Profile ({MainHub.UID})");
         _fileNames.UpdateConfigs(MainHub.UID);
+        _connections.SetCurrentProfile(MainHub.UID);
 
         // 2. Load in Profile-specific Configs.
         Logger.LogInformation($"[SYNC PROGRESS]: Loading Configs for Profile!");

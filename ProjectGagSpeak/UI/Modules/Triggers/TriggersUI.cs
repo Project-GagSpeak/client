@@ -146,7 +146,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
         ImGui.Separator();
 
         // Draw out the detection method, then a line down from it for the total lines drawn out ext.
-        CkGui.FontText($"Detects {trigger.Type.ToName()}", Fonts.Default150Percent);
+        CkGui.FontText($"Detects {trigger.Type.ToName()}", Fonts.DefaultScaled);
         // Draw out the group
         switch (trigger)
         {
@@ -161,7 +161,7 @@ public class TriggersUI : WindowMediatorSubscriberBase
         
         ImGui.Spacing();
         ImGui.Separator();
-        CkGui.FontText($"Reacts with {trigger.ActionType.ToName()}", Fonts.Default150Percent);
+        CkGui.FontText($"Reacts with {trigger.ActionType.ToName()}", Fonts.DefaultScaled);
         // Draw out the group
         switch (trigger.InvokableAction)
         {

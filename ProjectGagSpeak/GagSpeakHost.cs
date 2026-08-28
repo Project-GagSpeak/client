@@ -133,21 +133,21 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             // AudioSystem.InitializeOutputDevice(_mainConfig.Current.AudioOutputType, _mainConfig.GetDefaultAudioDevice());
 
             // display changelog if we should.
-            if (_mainConfig.Current.LastRunVersion != Assembly.GetExecutingAssembly().GetName().Version!)
+            if (_mainConfig.Data.LastRunVersion != Assembly.GetExecutingAssembly().GetName().Version!)
             {
                 // update the version and toggle the UI.
                 Logger?.LogInformation("Version was different, displaying UI");
-                _mainConfig.Current.LastRunVersion = Assembly.GetExecutingAssembly().GetName().Version!;
+                _mainConfig.Data.LastRunVersion = Assembly.GetExecutingAssembly().GetName().Version!;
                 _mainConfig.Save();
                 Mediator.Publish(new UiToggleMessage(typeof(ChangelogUI)));
             }
 
             // if the client does not have a valid setup or config, switch to the intro ui
-            if (!_mainConfig.Current.HasValidSetup() || !_serverConfig.Current.HasValidSetup())
+            if (!_mainConfig.Data.HasValidSetup() || !_serverConfig.Current.HasValidSetup())
             {
-                Logger?.LogDebug($"Has Valid Setup: {_mainConfig.Current.HasValidSetup()} | Valid Server Setup: {!_serverConfig.Current.HasValidSetup()}");
+                Logger?.LogDebug($"Has Valid Setup: {_mainConfig.Data.HasValidSetup()} | Valid Server Setup: {!_serverConfig.Current.HasValidSetup()}");
                 // publish the switch to intro ui message to the mediator
-                _mainConfig.Current.ButtonUsed = false;
+                _mainConfig.Data.ButtonUsed = false;
 
                 Mediator.Publish(new SwitchToIntroUiMessage());
             }
@@ -169,7 +169,7 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             _runtimeServiceScope.ServiceProvider.GetRequiredService<ConnectionSyncService>();
 
             // boot up our chat services. (this don't work as hosted services because they are unsafe)
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<ChatService>();
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<ChatControlService>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<StaticDetours>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<MovementDetours>();
 

@@ -14,12 +14,12 @@ public sealed class AlarmManager : IHybridSavable
     private readonly GagspeakMediator _mediator;
     private readonly PatternManager _patterns;
     private readonly FavoritesConfig _favorites;
-    private readonly ConfigFileProvider _fileNames;
+    private readonly GsFiles _fileNames;
     private readonly HybridSaveService _saver;
 
     private StorageItemEditor<Alarm> _itemEditor = new();
     public AlarmManager(ILogger<AlarmManager> logger, GagspeakMediator mediator,
-        PatternManager patterns, FavoritesConfig favorites, ConfigFileProvider files, 
+        PatternManager patterns, FavoritesConfig favorites, GsFiles files, 
         HybridSaveService saver)
     {
         _logger = logger;
@@ -148,7 +148,7 @@ public sealed class AlarmManager : IHybridSavable
     public int ConfigVersion => 0;
     public HybridSaveType SaveType => HybridSaveType.Json;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
+    public string GetFileName(GsFiles files, out bool isAccountUnique)
         => (isAccountUnique = true, files.Alarms).Item2;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize()

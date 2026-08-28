@@ -1,11 +1,13 @@
 using CkCommons;
 using CkCommons.Gui;
+using CkCommons.Helpers;
 using CkCommons.Raii;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Gui.Chat;
 using GagSpeak.Gui.Profile;
 using GagSpeak.Gui.Publications;
 using GagSpeak.Gui.Remote;
@@ -16,170 +18,327 @@ using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
+using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using GagspeakAPI.User;
 using OtterGui.Text;
+using OtterGuiInternal;
 using System.Globalization;
 
 namespace GagSpeak.Gui.MainWindow;
 
-/// <summary>
-///   The landing page of GagSpeak. Pretty UI, and polished design.
-/// </summary>
 public class HomeTab
 {
-    private const string SUPPORTER_NAME_TOOLTIP = "Your Profile's Alias / UID." +
-    "--SEP----COL--[L-Click]--COL--Copy your UID" +
-    "--NL----COL--[CTRL + L-Click]--COL--Copy your Alias";
     private const string NAME_TOOLTIP = "Your Profile's Alias / UID." +
-        "--SEP----COL--[L-Click]--COL--Copy your UID";
+        "--SEP----COL--[L-Click]:--COL-- Copy your UID" +
+        "--NL----COL--[CTRL + L-Click]:--COL-- Copy your Alias";
 
     private readonly GagspeakMediator _mediator;
     private readonly MainConfig _config;
-    private readonly KinkPlateService _service;
+    private readonly ChatService _chatService;
+    private readonly KinkPlateService _kinkplates;
     private readonly TutorialService _guides;
 
     private bool _editingSafeword = false;
-
-    public HomeTab(GagspeakMediator mediator, MainConfig config,
-        KinkPlateService service, TutorialService guides)
+    public HomeTab(GagspeakMediator mediator, MainConfig config, ChatService chat,
+        KinkPlateService kinkplates, TutorialService guides)
     {
         _mediator = mediator;
         _config = config;
-        _service = service;
+        _chatService = chat;
+        _kinkplates = kinkplates;
         _guides = guides;
     }
 
-    // Profile Draw Helpers.
-    private Vector2 ProfileSize => ImGuiHelpers.ScaledVector2(201);
-    private Vector2 RectMin { get; set; } = Vector2.Zero;
-    private Vector2 AvatarPos => RectMin + ImGuiHelpers.ScaledVector2(6f);
-    private Vector2 AvatarSize => ImGuiHelpers.ScaledVector2(MainUI.AVATAR_SIZE);
-    private Vector2 EditBorderSize => ImGuiHelpers.ScaledVector2(44f);
-    private Vector2 EditBorderPos => RectMin + ImGuiHelpers.ScaledVector2(156f, 2f);
-    private Vector2 EditIconPos => RectMin + ImGuiHelpers.ScaledVector2(165f, 11f);
-    private Vector2 EditIconSize => ImGuiHelpers.ScaledVector2(27f);
-
     public void DrawSection()
     {
-        var wdl = ImGui.GetWindowDrawList();
-        var pos = ImGui.GetCursorScreenPos();
-        var size = ImGui.GetContentRegionAvail();
-        var max = pos + size;
-        var halfPos = pos with { Y = pos.Y + size.Y / 2f };
-        var profile = _service.GetKinkPlate(MainHub.OwnUserData);
-        // Background
-        if (CosmeticService.TryGetBackground(PlateElement.Plate, profile.Info.PlateBG, out var plateBG))
-            wdl.AddDalamudImageRounded(plateBG, pos, size, CkStyle.ChildRounding());
+        DrawBackdrop();
 
-        // Gradient backdrop
-        wdl.AddRectFilledMultiColor(halfPos, max, uint.MinValue, uint.MinValue, 0x44000000, 0x44000000);
+        using var _ = ImRaii.Child("homepage", ImGui.GetContentRegionAvail(), false, flags: WFlags.AlwaysUseWindowPadding);
 
-        using var _ = CkRaii.FramedChildPaddedWH("Account", size, 0, GsCol.VibrantPink.Uint(), CkStyle.ChildRounding(), wFlags: WFlags.NoScrollbar);
+        DrawHeadingLeft();
+        ImGui.SameLine();
+        DrawHeadingRight();
 
-        DrawProfileInfo(_.InnerRegion, profile);
-        ImGui.Spacing();
-        DrawMenuOptions();
+        // Draw out the selectable options here, just like in our settings options.
+        using var s = ImRaii.PushStyle(ImGuiStyleVar.FramePadding, ImGuiHelpers.ScaledVector2(6, 7));
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() - ImUtf8.ItemSpacing.Y);
+        using (CkRaii.Child("modules-sidenav", new(ImGui.GetContentRegionAvail().X, -1), wFlags: WFlags.NoScrollbar))
+            DrawMenuNav(ImGui.GetContentRegionAvail().X);
     }
 
-    private void DrawProfileInfo(Vector2 region, KinkPlate profile)
+    private void DrawHeadingRight()
     {
-        var left = region.X - ProfileSize.X - ImUtf8.ItemSpacing.X;
-        var wdl = ImGui.GetWindowDrawList();
-        using (var _ = CkRaii.Child("##AccountInfo", new Vector2(region.X, ProfileSize.Y)))
+        if (!MainHub.IsConnectionDataSynced)
+            return;
+
+        var profile = _kinkplates.GetUserProfile(MainHub.OwnUserData);
+        if (profile.GetIconWrapOrDefault() is not { } wrap)
+            return;
+
+        var winPtr = ImGuiInternal.GetCurrentWindow();
+        if (winPtr.SkipItems)
+            return;
+
+        var canEdit = MainHub.Reputation.CanEditProfiles;
+        var id = ImGui.GetID("icon-image");
+        var style = ImGui.GetStyle();
+
+        var sizeY = CkGui.CalcFontTextSize("A", Fonts.SubtitleFont).Y + CkGui.CalcFontTextSize("A", Fonts.HeaderFont).Y + style.ItemInnerSpacing.Y;
+        var drawSize = new Vector2(sizeY);
+        var drawRadius = drawSize.X * .5f;
+        var drawPos = new Vector2(winPtr.InnerRect.Max.X - drawSize.X - style.WindowPadding.X / 2, winPtr.InnerRect.Min.Y + style.WindowPadding.Y);
+
+        var bb = new ImRect(drawPos, drawPos + drawSize);
+        var drawBox = new ImRect(bb.Min + style.FramePadding, bb.Max - style.FramePadding);
+
+        winPtr.DC.CursorPos = drawPos;
+        ImGuiInternal.ItemSize(drawSize, style.FramePadding.Y);
+        if (!ImGuiP.ItemAdd(bb, id, null))
+            return;
+
+        bool hovered = false, active = false;
+        var clicked = ImGuiP.ButtonBehavior(bb, id, ref hovered, ref active);
+        // Render item
+        ImGuiP.RenderNavHighlight(bb, id);
+        ImGuiP.RenderFrame(bb.Min, bb.Max, 0);
+
+        winPtr.DrawList.AddDalamudImage(wrap, drawPos, drawSize);
+        if (hovered || active)
         {
-            var min = ImGui.GetCursorPos();
-            ProfileDisplayName();
-            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ClientUID, MainUI.LastPos, MainUI.LastSize);
-            // Line Splitter.
-            var pos = ImGui.GetCursorScreenPos();
-            var lineSize = new Vector2(region.X - ProfileSize.X - ImUtf8.ItemSpacing.X, 5 * ImGuiHelpers.GlobalScale);
-            wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.AchievementLineSplit], pos, lineSize);
-            ImGui.Dummy(lineSize);
+            var icon = canEdit ? FAI.PenAlt : FAI.Eye;
+            var iconSize = CkGui.IconSize(icon);
+            var circleCol = active ? 0xBB555555 : hovered ? 0x99444444 : 0xAA333333;
+            winPtr.DrawList.AddRectFilled(drawPos, drawPos + drawSize, circleCol);
+            var penDrawPos = drawPos + (drawSize - iconSize) * .5f;
+            using (Fonts.IconFramedFont.Push())
+                winPtr.DrawList.AddText(penDrawPos, ImGui.GetColorU32(hovered ? ImGuiCol.Text : ImGuiCol.TextDisabled), icon.ToIconString());
+        }
+        winPtr.DrawList.AddRect(drawPos, drawPos + drawSize, 0xFF999999, 2f * ImGuiHelpers.GlobalScale);
 
-            ProfileInfoRow(FAI.UserSecret, MainHub.OwnUserData.AnonName, "Your Anonymous name used in Requests / Chats.");
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileEditing, MainUI.LastPos, MainUI.LastSize,
+            _ => _mediator.Publish(new UiToggleMessage(typeof(KinkPlateEditorUI), ToggleType.Show)));
 
-            var formattedDate = MainHub.OwnUserData.CreatedOn ?? DateTime.MinValue;
-            string createdDate = formattedDate != DateTime.MinValue ? formattedDate.ToString("d", CultureInfo.CurrentCulture) : "MM-DD-YYYY";
-            ProfileInfoRow(FAI.Calendar, createdDate, "Date your GagSpeak account was made.");
-
-            ProfileInfoRow(FAI.Award, $"{ClientAchievements.Completed}/{ClientAchievements.Total}", "Current Achievement Progress.");
-
-            ProfileInfoRow(FAI.ExclamationTriangle, $"0 Strikes.", "Reflects current Account Standing." +
-                "--SEP--Accumulating too many strikes may lead to restrictions or bans.");
-
-            DrawSafewordRow(left);
-            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Safewords, MainUI.LastPos, MainUI.LastSize);
-
-            ImGui.SetCursorPos(min + new Vector2(ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth() - ProfileSize.X, 0));
-            var avatar = profile.GetProfileOrDefault();
-            RectMin = ImGui.GetCursorScreenPos();
-
-            // Draw out the avatar image.
-            wdl.AddDalamudImageRounded(avatar, AvatarPos, AvatarSize, AvatarSize.Y / 2);
-            // draw out the border for the profile picture
-            if (CosmeticService.TryGetBorder(PlateElement.Avatar, profile.Info.AvatarBorder, out var pfpBorder))
-                wdl.AddDalamudImageRounded(pfpBorder, RectMin, ProfileSize, ProfileSize.Y / 2);
-
-            // Draw out Supporter Icon Black BG base.
-            ImGui.SetCursorScreenPos(EditBorderPos);
-            if (ImGui.InvisibleButton("##EditProfileButton", EditBorderSize))
-                _mediator.Publish(new UiToggleMessage(typeof(KinkPlateEditorUI)));
-            CkGui.AttachTooltip("Open and Customize your KinkPlate™!");
-
-            _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileEditing, MainUI.LastPos, MainUI.LastSize,
-                _ => _mediator.Publish(new UiToggleMessage(typeof(KinkPlateEditorUI), ToggleType.Show)));
-
-            var bgCol = ImGui.IsItemHovered() ? 0xFF444444 : 0xFF000000;
-            wdl.AddCircleFilled(EditBorderPos + EditBorderSize / 2, EditBorderSize.X / 2, bgCol);
-            // Draw out Edit Icon.
-            wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.Edit], EditIconPos, EditIconSize);
-            wdl.AddCircle(EditBorderPos + EditBorderSize / 2, EditBorderSize.X / 2, GsCol.VibrantPink.Uint(), 0, 3f * ImGuiHelpers.GlobalScale);
+        if (clicked)
+        {
+            if (canEdit)
+                _mediator.Publish(new UiToggleMessage(typeof(KinkPlateEditorUI), ToggleType.Show));
+            else
+                _mediator.Publish(new OpenUserProfileMessage(MainHub.OwnUserData));
+        }
+        if (hovered)
+        {
+            using var s = ImRaii.PushStyle(ImGuiStyleVar.WindowPadding, Vector2.One * 6f)
+                .Push(ImGuiStyleVar.WindowRounding, 4f)
+                .Push(ImGuiStyleVar.PopupBorderSize, 1f);
+            using var c = ImRaii.PushColor(ImGuiCol.Border, GsCol.VibrantPink.Vec4());
+            ImGui.BeginTooltip();
+            ImGui.Text("Your Profile Icon.");
+            if (canEdit)
+                CkGui.ColorText("Click to open editor.", ImGuiColors.DalamudGrey2);
+            else
+            {
+                CkGui.ColorText("Click to preview profile.", ImGuiColors.DalamudGrey2);
+                CkGui.ColorText("Your Reputation is preventing edit access.", CkCol.TriStateCross.Vec4());
+                var timeout = MainHub.Reputation.ProfileEditTimeout;
+                if (timeout > DateTime.UtcNow)
+                    CkGui.ColorTextInline($"Timeout expires in {(timeout - DateTime.UtcNow).ToTimeSpanStr()}", ImGuiColors.DalamudGrey, false);
+            }
+            ImGui.EndTooltip();
         }
     }
 
-    private void ProfileDisplayName()
+    private void DrawBackdrop()
     {
-        var isSupporter = MainHub.OwnUserData.Tier is not CkVanityTier.NoRole;
+        var winPtr = ImGuiInternal.GetCurrentWindow();
+        var style = ImGui.GetStyle();
+        // Get clipped rect for the background.
+        var startY = winPtr.DC.CursorPos.Y - (style.ItemSpacing.Y * .5f);
+        var drawMin = new Vector2(winPtr.InnerRect.Min.X, startY);
+        var drawMax = winPtr.InnerRect.Max;
+        var drawRegion = drawMax - drawMin;
 
-        CkGui.FontText(MainHub.DisplayName, Fonts.UidFont);
-        CkGui.AttachTooltip(isSupporter ? SUPPORTER_NAME_TOOLTIP : NAME_TOOLTIP);
-        // Copy based on interaction type.
-        if (isSupporter && ImGui.GetIO().KeyCtrl && ImGui.IsItemClicked())
-            ImGui.SetClipboardText(MainHub.OwnUserData.Alias);
-        else if (ImGui.IsItemClicked())
-            ImGui.SetClipboardText(MainHub.UID);
-    }
+        winPtr.DrawList.PushClipRect(drawMin, drawMax, false);
+        // Grey gradient fade.
+        winPtr.DrawList.AddRectFilledMultiColor(drawMin, drawMax, 0xCC3D3D3D, 0xCC333333, 0xCC141414, 0xCC1E1E1E);
 
-    private void ProfileInfoRow(FAI icon, string text, string tooltip)
-    {
-        ImGui.Spacing();
-        using (ImRaii.Group())
+        // Image Background (Use placeholder for now)
+        if (CosmeticService.TryGetBackground(PlateElement.Plate, KinkPlateBG.Default, out var wrap) && wrap is { } bgWrap)
         {
-            CkGui.IconTextAligned(icon);
-            CkGui.TextFrameAlignedInline(text);
+            // Ensure it is drawn at the correct scale.
+            var drawWidth = drawMax.X - drawMin.X;
+            var imgScale = drawWidth / bgWrap.Width;
+            var drawHeight = bgWrap.Height * imgScale;
+            var imgMax = new Vector2(drawMin.X + drawWidth, drawMin.Y + drawHeight);
+            // How far the blur spreads
+            var blurRadius = 4f * ImGuiHelpers.GlobalScale;
+
+            // We use a very low alpha hex for the stacked images. 
+            uint blurColor = 0x15444444;
+            uint centerColor = 0x22444444;
+            Span<Vector2> offsets =
+            [
+                new(-blurRadius, -blurRadius), new(blurRadius, -blurRadius),
+                new(-blurRadius,  blurRadius), new(blurRadius,  blurRadius),
+                new(0, -blurRadius),           new(0,  blurRadius),
+                new(-blurRadius, 0),           new(blurRadius, 0)
+            ];
+
+            // Fake blur effect.
+            foreach (var offset in offsets)
+                winPtr.DrawList.AddImage(bgWrap.Handle, drawMin + offset, imgMax + offset, Vector2.Zero, Vector2.One, blurColor);
+            // Image center overlay.
+            winPtr.DrawList.AddImage(bgWrap.Handle, drawMin, imgMax, Vector2.Zero, Vector2.One, centerColor);
+            
+            // Get bottom fade transition and solid, and draw if nessisary
+            var fadeHeight = drawHeight * 0.15f;
+            var fadeTopY = imgMax.Y - fadeHeight;
+            if (drawMax.Y > fadeTopY)
+            {
+                var fadeTop = new Vector2(drawMin.X, fadeTopY);
+                var fadeBot = new Vector2(drawMax.X, imgMax.Y);
+                winPtr.DrawList.AddRectFilledMultiColor(fadeTop, fadeBot, 0, 0, 0xFF000000, 0xFF000000);
+                // Then draw out a solid fill for the remainder of the space.
+                if (imgMax.Y < drawMax.Y)
+                {
+                    var solidTop = new Vector2(drawMin.X, imgMax.Y);
+                    winPtr.DrawList.AddRectFilled(solidTop, drawMax, 0xFF000000);
+                }
+            }
         }
-        CkGui.AttachTooltip(tooltip);
+
+        winPtr.RenderCustomResizeGrips();
+        winPtr.DrawList.PopClipRect();
     }
 
-    private void DrawSafewordRow(float width)
+    private void DrawHeadingLeft()
     {
         using var _ = ImRaii.Group();
 
-        CkGui.IconTextAligned(FAI.HandPaper);
-        using var font = ImRaii.PushFont(UiBuilder.MonoFont);
+        if (!MainHub.IsConnectionDataSynced)
+            return;
 
+        var userData = MainHub.OwnUserData;
+        var profile = _kinkplates.GetUserProfile(userData);
+        var nameCol = userData.Color.HasValue ? userData.Color.Value : ImGui.GetColorU32(ImGuiCol.Text);
+        var uid = MainHub.UID;
+
+        var region = ImGui.GetContentRegionAvail();
+        var gScale = ImGuiHelpers.GlobalScale;
+        var gapX = 5f * gScale;
+        var offset = new Vector2(3f);
+        var radius = 2f;
+
+        using (ImRaii.PushColor(ImGuiCol.Text, nameCol, userData.Color.HasValue))
+            using (Fonts.SubtitleFont.Push())
+                CkGui.TextShadowed(MainHub.AliasOrUID, nameCol, 0xFF000000, offset, radius);
+        if (ImGui.IsItemClicked())
+            ImGui.SetClipboardText(ImGui.GetIO().KeyCtrl ? userData.Alias : MainHub.UID);
+        // Indicate UID can be copied here.
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
+            CkGui.ToolTipInternal(NAME_TOOLTIP, ImGuiColors.DalamudOrange);
+        }
+        // Beside it draw the edit button.
+        ImUtf8.SameLineInner();
+        ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (CkGui.CalcFontTextSize("A", Fonts.SubtitleFont).Y - ImUtf8.FrameHeightSpacing));
+        if (CkGui.IconButton(FAI.PencilAlt, inPopup: true))
+            _mediator.Publish(new OpenSettingsUI(7, 1));
+        CkGui.AttachTooltip("Open Alias/Vanity Editor");
+
+        // Below it, draw out the other data
+        if (!string.IsNullOrEmpty(userData.VanityName))
+        {
+            CkGui.TextShadowed(userData.VanityName, 0xFF000000, offset, radius);
+            if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
+                ImGui.SetClipboardText(userData.VanityName);
+            // Indicate UID can be copied here.
+            if (ImGui.IsItemHovered())
+            {
+                ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
+                CkGui.ToolTipInternal("Copy VanityName");
+            }
+            ImGui.SameLine(0, gapX);
+            CkGui.TextShadowed("•", 0xFF000000, offset, radius);
+            ImGui.SameLine(0, gapX);
+        }
+        // UID
+        CkGui.TextShadowed(userData.UID, 0xFF000000, offset, radius);
+        if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
+            ImGui.SetClipboardText(userData.UID);
+        // Indicate UID can be copied here.
+        if (ImGui.IsItemHovered())
+        {
+            ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
+            CkGui.ToolTipInternal("Copy UID");
+        }
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ClientUID, MainUI.LastPos, MainUI.LastSize);
+
+        // Creation Date
+        var formattedDate = MainHub.OwnUserData.CreatedOn ?? DateTime.MinValue;
+        var createdDate = formattedDate != DateTime.MinValue ? formattedDate.ToString("d", CultureInfo.CurrentCulture) : "MM-DD-YYYY";
+        ImGui.Spacing();
+        using (ImRaii.Group())
+        {
+            using (ImRaii.PushColor(ImGuiCol.Text, 0xFF888888))
+            {
+                using (Fonts.IconFramedFont.Push())
+                    CkGui.TextShadowed(FAI.Calendar.ToIconString(), offset, radius);
+                ImUtf8.SameLineInner();
+                CkGui.TextShadowed(createdDate, 0xFF000000, offset, radius);
+            }
+        }
+        CkGui.AttachTooltip("The date your account was made.");
+
+        using (ImRaii.Group())
+        {
+            using (ImRaii.PushColor(ImGuiCol.Text, ImGuiColors.ParsedGold))
+            {
+                using (Fonts.IconFramedFont.Push())
+                    CkGui.TextShadowed(FAI.Award.ToIconString(), offset, radius);
+                ImUtf8.SameLineInner();
+                CkGui.TextShadowed($"{ClientAchievements.Completed}/{ClientAchievements.Total}", 0xFF000000, offset, radius);
+            }
+        }
+        CkGui.AttachTooltip("Your current achievement progress.");
+
+        ImGui.Spacing();
+        using (ImRaii.Group())
+        {
+            using (ImRaii.PushColor(ImGuiCol.Text, 0xFF211098))
+            {
+                var strikes = MainHub.Reputation.WarningStrikes;
+                using (Svc.PluginInterface.UiBuilder.IconFontFixedWidthHandle.Push())
+                    CkGui.TextShadowed(FAI.ExclamationTriangle.ToIconString(), offset, radius);
+                ImUtf8.SameLineInner();
+                CkGui.TextShadowed($"{MainHub.Reputation.WarningStrikes} Strikes.", 0xFF000000, offset, radius);
+            }
+        }
+        if (ImGui.IsItemClicked())
+            _mediator.Publish(new OpenSettingsUI(6, 0));
+        CkGui.AttachTooltip("Reflects current Account Standing.--NL--" +
+            "--COL--Too many strikes can lead to restrictions or bans.--COL--", ImGuiColors.ParsedGrey);
+
+        // Wrap the final safeword line in a group
+        using var __ = ImRaii.Group();
+        using var col = ImRaii.PushColor(ImGuiCol.Text, 0xFF211098);
+        
+        using (Fonts.IconFramedFont.Push())
+            CkGui.TextShadowed(FAI.HandPaper.ToIconString(), offset, radius);
+        ImUtf8.SameLineInner();
+        using var font = ImRaii.PushFont(UiBuilder.MonoFont);
         if (_editingSafeword)
         {
             ImGui.SameLine();
-            ImGui.SetNextItemWidth(width - ImUtf8.ItemInnerSpacing.X - ImUtf8.FrameHeight);
-            var safeword = _config.Current.Safeword;
-            if (ImGui.InputTextWithHint("##safeword", "Set a Safeword..", ref safeword, 35, ITFlags.EnterReturnsTrue))
+            ImGui.SetNextItemWidth(region.X * .5f);
+            var safeword = _config.Data.Safeword;
+            if (ImGui.InputTextWithHint("##safeword", "Set a Safeword..", ref safeword, 35))
             {
-                _config.Current.Safeword = safeword;
+                _config.Data.Safeword = safeword;
                 _config.Save();
-                _editingSafeword = false;
             }
+            if (ImGui.IsItemDeactivated())
+                _editingSafeword = false;
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 _editingSafeword = false;
             font.Dispose();
@@ -188,173 +347,203 @@ public class HomeTab
         else
         {
             // Display based on if we have a safeword set or not.
-            if (string.IsNullOrWhiteSpace(_config.Current.Safeword))
-                CkGui.ColorTextFrameAlignedInline("Click to set Safeword..", ImGuiColors.DalamudGrey2, false);
+            if (string.IsNullOrWhiteSpace(_config.Data.Safeword))
+                CkGui.TextShadowed("Click to set Safeword..", 0xFFCCCCFF);
             else
-                CkGui.ColorTextFrameAlignedInline(_config.Current.Safeword, CkCol.TriStateCross.Uint(), false);
-            font.Dispose(); // will affect tt and tutorial if not.
+                CkGui.TextShadowed(_config.Data.Safeword, CkCol.TriStateCross.Uint());
+            font.Dispose();
             CkGui.AttachTooltip("Your current safeword. Click to edit!");
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SettingSafeword, MainUI.LastPos, MainUI.LastSize);
-
+            // Toggle safeword editing.
             if (ImGui.IsItemClicked())
                 _editingSafeword = !_editingSafeword;
         }
     }
 
-    // Draw 1 or 2 rows based on the menu height.
-    private void DrawMenuOptions()
+    private uint _hidden;
+    private uint _pinkFeint;
+    private uint _pinkHovered;
+    private uint _pinkPressed;
+    private uint _pinkActive;
+
+    private void DrawMenuNav(float width)
     {
+        _pinkActive = GsCol.VibrantPink.Vec4().WithAlpha(0.25f).ToUint();
+        _pinkPressed = GsCol.VibrantPink.Vec4().WithAlpha(0.35f).ToUint();
+        _pinkHovered = GsCol.VibrantPink.Vec4().WithAlpha(0.15f).ToUint();
+        _pinkFeint = GsCol.VibrantPink.Vec4().WithAlpha(0.05f).ToUint();
+        _hidden = GsCol.VibrantPink.Vec4().WithAlpha(0f).ToUint();
+
+        using var c = ImRaii.PushColor(ImGuiCol.Button, 0).Push(ImGuiCol.ButtonHovered, 0x19FFFFFF).Push(ImGuiCol.ButtonActive, 0x33FFFFFF);
+        using var s = ImRaii.PushStyle(ImGuiStyleVar.ButtonTextAlign, new Vector2(0f, 0.5f));
+
+        var winPtr = ImGuiInternal.GetCurrentWindow();
+        var style = ImGui.GetStyle();
+
+        ImGui.Dummy(new Vector2(ImUtf8.FrameHeight));
+
+        // Draw out the heading
+        using (Fonts.HeaderFont.Push())
+            CkGui.TextShadowed("Modules", 0xFF000000, new Vector2(3f), 2f);
+        var labelPos = ImGui.GetItemRectMin();
+        var labelSize = ImGui.GetItemRectSize();
+        var linePos = new Vector2(labelPos.X, labelPos.Y + labelSize.Y);
+        winPtr.DrawList.PathLineTo(linePos);
+        linePos.X += winPtr.InnerClipRect.GetSize().X;
+        winPtr.DrawList.PathLineTo(linePos);
+        winPtr.DrawList.PathStroke(uint.MaxValue);
+
         var region = ImGui.GetContentRegionAvail();
-        var buttonH = CkGui.GetFancyButtonHeight();
-        // The threshold to draw 2 or 1 rows.
-        var thresholdHeight = buttonH * 8 + ImUtf8.ItemSpacing.Y * 7;
-        // if we draw compact (2 columns) or full (1 column)
-        var showCompact = region.Y < thresholdHeight;
-        // Finalized Height of the child.
-        var finalHeight = buttonH * (showCompact ? 4 : 8) + ImUtf8.ItemSpacing.Y * (showCompact ? 3 : 7);
-
-        if (showCompact)
-            DrawCompactButtons(region);
+        var thresholdHeight = CkStyle.GetFrameRowsHeight(10);
+        if (region.Y < thresholdHeight)
+            DrawMenuNavCompact(winPtr, style, (region.X - style.ItemSpacing.X) * .5f);
         else
-            DrawButtonList(region);
+            DrawMenuNavList(winPtr, style, region.X);
     }
 
-    private void DrawCompactButtons(Vector2 region)
+    private void DrawMenuNavList(ImGuiWindowPtr winPtr, ImGuiStylePtr style, float width)
     {
-        var buttonWidth = (region.X - ImUtf8.ItemInnerSpacing.X) / 2;
-        using (ImRaii.Group())
-        {
-            WardrobeButton(buttonWidth);
-            CursedLootButton(buttonWidth);
-            PuppeteerButton(buttonWidth);
-            TriggersButton(buttonWidth);
-            ToyboxButton(buttonWidth);
-            ModPresetsButton(buttonWidth);
-        }
-        ImUtf8.SameLineInner();
-        using (ImRaii.Group())
-        {
-            SexToyRemoteButton(buttonWidth);
-            PublicationsButton(buttonWidth);
-            AchievementsButton(buttonWidth);
-            KoFiButton(buttonWidth);
-            PatreonButton(buttonWidth);
-
-            FeedbackButton(buttonWidth);
-        }
-    }
-
-    private void DrawButtonList(Vector2 region)
-    {
-        var buttonWidth = region.X;
-        using (ImRaii.Group())
-        {
-            SexToyRemoteButton(buttonWidth);
-            WardrobeButton(buttonWidth);
-            CursedLootButton(buttonWidth);
-            PuppeteerButton(buttonWidth);
-            TriggersButton(buttonWidth);
-            ToyboxButton(buttonWidth);
-            ModPresetsButton(buttonWidth);
-            PublicationsButton(buttonWidth);
-            AchievementsButton(buttonWidth);
-            KoFiButton(buttonWidth);
-            PatreonButton(buttonWidth);
-            FeedbackButton(buttonWidth);
-        }
-    }
-
-    private void SexToyRemoteButton(float width)
-    {
-        var disabled = true;
-#if DEBUG
-        // TODO: Remove when this works
-        disabled = false;
-#endif
-        if (CkGui.FancyButton(FAI.WaveSquare, "Sex Toy Remote", width, disabled))
-            _mediator.Publish(new UiToggleMessage(typeof(BuzzToyRemoteUI)));
-        CkGui.AttachTooltip("Control Simulated, or IRL Sex Toys! --COL--[WIP]--COL--");
-    }
-
-    private void WardrobeButton(float width)
-    {
-        if (CkGui.FancyButton(FAI.ToiletPortable, "Wardrobe", width, false))
+        if (DrawMenuButton(winPtr, style, FAI.ToiletPortable, "Wardrobe", width, false))
             _mediator.Publish(new UiToggleMessage(typeof(WardrobeUI)));
         CkGui.AttachTooltip("Restraint Sets, Restrictions, Gags, and Collars");
-    }
 
-    private void CursedLootButton(float width)
-    {
-        if (CkGui.FancyButton(FAI.Coins, "Cursed Loot", width, false))
+        if (DrawMenuButton(winPtr, style, FAI.Coins, "Cursed Loot", width, false))
             _mediator.Publish(new UiToggleMessage(typeof(CursedLootUI)));
         CkGui.AttachTooltip("Gamble away your fortunes and freedom with Cursed Loot!");
-    }
 
-    private void PuppeteerButton(float width)
-    {
-        if (CkGui.FancyButton(FAI.PersonHarassing, "Puppeteer", width))
+        if (DrawMenuButton(winPtr, style, FAI.PersonHarassing, "Puppeteer", width, false))
             _mediator.Publish(new UiToggleMessage(typeof(PuppeteerUI)));
         CkGui.AttachTooltip("Who's in control now? (Global & Per-Kinkster Control)");
-    }
 
-    private void TriggersButton(float width)
-    {
-        if (CkGui.FancyButton(FAI.Bolt, "Triggers", width))
+        if (DrawMenuButton(winPtr, style, FAI.Bolt, "Triggers", width, false))
             _mediator.Publish(new UiToggleMessage(typeof(TriggersUI)));
         CkGui.AttachTooltip("Monitor events and react to them");
-    }
 
-    private void ToyboxButton(float width)
-    {
-        if (CkGui.FancyButton(FAI.BoxOpen, "Toybox", width))
+        if (DrawMenuButton(winPtr, style, FAI.BoxOpen, "Toybox", width, false))
             _mediator.Publish(new UiToggleMessage(typeof(ToyboxUI)));
-        CkGui.AttachTooltip("Contains your Toys, Patterns, and Alarms--COL--[WIP]--COL--");
-    }
+        CkGui.AttachTooltip("Inspect data of owned actors!");
 
-    private void ModPresetsButton(float width)
-    {
-        if (CkGui.FancyButton(FAI.FileAlt, "Mod Presets", width, false))
+        if (DrawMenuButton(winPtr, style, FAI.WaveSquare, "Sex Toy Remote", width, false))
+            _mediator.Publish(new UiToggleMessage(typeof(BuzzToyRemoteUI)));
+        CkGui.AttachTooltip("Control Simulated, or IRL Sex Toys! --COL--[WIP]--COL--");
+        
+        if (DrawMenuButton(winPtr, style, FAI.FileAlt, "Mod Presets", width, false))
             _mediator.Publish(new UiToggleMessage(typeof(ModPresetsUI)));
         CkGui.AttachTooltip("Configure presets for your Penumbra mod settings!" +
-            "--SEP--Presets can be attached to restraints and restrictions!");
-    }
+            "--NL----COL--NOTICE: Will migrate to Penumbra's ModPresets soon.--COL--", ImGuiColors.DalamudYellow);
 
-    private void PublicationsButton(float width)
-    {
-        if (CkGui.FancyButton(FAI.CloudUploadAlt, "Publications", width, false))
-            _mediator.Publish(new UiToggleMessage(typeof(PublicationsUI)));
-        CkGui.AttachTooltip("Publish created Patterns & LociData for others to enjoy!");
-    }
+        if (DrawMenuButton(winPtr, style, FAI.Comments, "GagSpeak Chats", width, false))
+            _mediator.Publish(new UiToggleMessage(typeof(ChatWindowUI)));
+        CkGui.AttachTooltip("Standalone UI for DMs and GlobalChat.");
 
-    private void AchievementsButton(float width)
-    {
-        if (CkGui.FancyButton(FAI.Trophy, "Achievements", width, false))
+        if (DrawMenuButton(winPtr, style, FAI.Trophy, "Achievements", width, false))
             _mediator.Publish(new UiToggleMessage(typeof(AchievementsUI)));
         CkGui.AttachTooltip("View Achievement Progress & Rewards.");
+
+        if (DrawMenuButton(winPtr, style, FAI.CloudUploadAlt, "Publications", width, false))
+            _mediator.Publish(new UiToggleMessage(typeof(PublicationsUI)));
+        CkGui.AttachTooltip("Publish created Patterns & LociData for others to enjoy!");
+
+        if (DrawMenuButton(winPtr, style, FAI.Cog, "Settings Menu", width, false))
+            _mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
+        CkGui.AttachTooltip("Opens the Settings UI.");
+
+        if (DrawMenuButton(winPtr, style, FAI.Book, "View Changelog", width, false))
+            _mediator.Publish(new UiToggleMessage(typeof(ChangelogUI)));
+        CkGui.AttachTooltip("See the latest patch notes for Sundouleia.");
+
+        SupportButton(winPtr, style, width);
+        FeedbackButton(width);
     }
 
-    private void KoFiButton(float buttonWidth)
+    private void DrawMenuNavCompact(ImGuiWindowPtr winPtr, ImGuiStylePtr style, float width)
     {
-        if (CkGui.FancyButton(FAI.Coffee, "Tip GagSpeak", buttonWidth, false))
+        using (ImRaii.Group())
         {
-            try { Process.Start(new ProcessStartInfo { FileName = "https://www.ko-fi.com/cordeliamist", UseShellExecute = true }); }
-            catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the Patreon link. {e.Message}"); }
+            if (DrawMenuButton(winPtr, style, FAI.ToiletPortable, "Wardrobe", width, false))
+                _mediator.Publish(new UiToggleMessage(typeof(WardrobeUI)));
+            CkGui.AttachTooltip("Restraint Sets, Restrictions, Gags, and Collars");
+
+            if (DrawMenuButton(winPtr, style, FAI.Coins, "Cursed Loot", width, false))
+                _mediator.Publish(new UiToggleMessage(typeof(CursedLootUI)));
+            CkGui.AttachTooltip("Gamble away your fortunes and freedom with Cursed Loot!");
+
+            if (DrawMenuButton(winPtr, style, FAI.PersonHarassing, "Puppeteer", width, false))
+                _mediator.Publish(new UiToggleMessage(typeof(PuppeteerUI)));
+            CkGui.AttachTooltip("Who's in control now? (Global & Per-Kinkster Control)");
+
+            if (DrawMenuButton(winPtr, style, FAI.Bolt, "Triggers", width, false))
+                _mediator.Publish(new UiToggleMessage(typeof(TriggersUI)));
+            CkGui.AttachTooltip("Monitor events and react to them");
+
+            if (DrawMenuButton(winPtr, style, FAI.BoxOpen, "Toybox", width, false))
+                _mediator.Publish(new UiToggleMessage(typeof(ToyboxUI)));
+            CkGui.AttachTooltip("Inspect data of owned actors!");
+
+            if (DrawMenuButton(winPtr, style, FAI.WaveSquare, "Sex Toy Remote", width, false))
+                _mediator.Publish(new UiToggleMessage(typeof(BuzzToyRemoteUI)));
+            CkGui.AttachTooltip("Control Simulated, or IRL Sex Toys! --COL--[WIP]--COL--");
+
+            if (DrawMenuButton(winPtr, style, FAI.FileAlt, "Mod Presets", width, false))
+                _mediator.Publish(new UiToggleMessage(typeof(ModPresetsUI)));
+            CkGui.AttachTooltip("Configure presets for your Penumbra mod settings!" +
+                "--NL----COL--NOTICE: Will migrate to Penumbra's ModPresets soon.--COL--", ImGuiColors.DalamudYellow);
         }
-        CkGui.AttachTooltip("This plugin took a massive toll on my life." +
-            "--NL--As happy as I am to make this free for all of you to enjoy, any support is much appreciated ♥" +
-            "--NL--Will open --COL--ko-fi.com--COL-- in a new browser window.", ImGuiColors.ParsedPink);
+
+        ImGui.SameLine();
+        using (ImRaii.Group())
+        {
+            if (DrawMenuButton(winPtr, style, FAI.Comments, "GagSpeak Chats", width, false))
+                _mediator.Publish(new UiToggleMessage(typeof(ChatWindowUI)));
+            CkGui.AttachTooltip("Standalone UI for DMs and GlobalChat.");
+
+            if (DrawMenuButton(winPtr, style, FAI.Trophy, "Achievements", width, false))
+                _mediator.Publish(new UiToggleMessage(typeof(AchievementsUI)));
+            CkGui.AttachTooltip("View Achievement Progress & Rewards.");
+
+            if (DrawMenuButton(winPtr, style, FAI.CloudUploadAlt, "Publications", width, false))
+                _mediator.Publish(new UiToggleMessage(typeof(PublicationsUI)));
+            CkGui.AttachTooltip("Publish created Patterns & LociData for others to enjoy!");
+
+            if (DrawMenuButton(winPtr, style, FAI.Cog, "Settings Menu", width, false))
+                _mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
+            CkGui.AttachTooltip("Opens the Settings UI.");
+
+            if (DrawMenuButton(winPtr, style, FAI.Book, "View Changelog", width, false))
+                _mediator.Publish(new UiToggleMessage(typeof(ChangelogUI)));
+            CkGui.AttachTooltip("See the latest patch notes for Sundouleia.");
+
+            SupportButton(winPtr, style, width);
+            FeedbackButton(width);
+        }
     }
 
-    private void PatreonButton(float buttonWidth)
+    private void SupportButton(ImGuiWindowPtr winPtr, ImGuiStylePtr style, float width)
     {
-        if (CkGui.FancyButton(FAI.Pray, "Support GagSpeak", buttonWidth, false))
+        var isShift = ImGui.GetIO().KeyShift;
+        if (DrawMenuButton(winPtr, style, FAI.Coffee, "Support GagSpeak", width, false))
         {
-            try { Process.Start(new ProcessStartInfo { FileName = "https://www.patreon.com/CordeliaMist", UseShellExecute = true }); }
-            catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the Patreon link. {e.Message}"); }
+            var url = isShift ? "https://www.patreon.com/CordeliaMist" : "https://www.ko-fi.com/cordeliamist";
+            try
+            {
+                Process.Start(new ProcessStartInfo { FileName = url, UseShellExecute = true });
+            }
+            catch (Bagagwa e)
+            {
+                Svc.Logger.Error($"Failed to open the support link. {e.Message}");
+            }
         }
+
+        // Dynamically swap the tooltip text based on the shift state
+        var targetPlatform = isShift ? "patreon.com" : "ko-fi.com";
+        var swapHint = isShift ? "Release SHIFT for Ko-Fi" : "Hold SHIFT for Patreon";
+
         CkGui.AttachTooltip("This plugin took a massive toll on my life." +
             "--NL--As happy as I am to make this free for all of you to enjoy, any support is much appreciated ♥" +
-            "--NL--Will open --COL--patreon.com--COL-- in a new browser window.", ImGuiColors.ParsedPink);
+            $"--NL--Will open --COL--{targetPlatform}--COL-- in a new browser window." +
+            $"--NL--({swapHint})", ImGuiColors.DalamudOrange);
+
+        // Ensure the tutorial only fires when in the Patreon state, as it did in your original code
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SelfPlug, MainUI.LastPos, MainUI.LastSize);
     }
 
@@ -367,5 +556,96 @@ public class HomeTab
         }
         CkGui.AttachTooltip("Opens a short 1 question positive feedback form ♥" +
             "--SEP--They're a nice way for me to reflect how my efforts are positively impacting others~");
+    }
+
+    private bool DrawMenuButton(ImGuiWindowPtr winPtr, ImGuiStylePtr style, FAI icon, string label, float width, bool disabled)
+    {
+        var id = ImGui.GetID(label);
+        var pos = winPtr.DC.CursorPos;
+        var itemSize = new Vector2(width, ImUtf8.FrameHeight);
+        var bb = new ImRect(pos, pos + itemSize);
+        var drawBox = new ImRect(bb.Min + style.FramePadding, bb.Max - style.FramePadding);
+
+        ImGuiInternal.ItemSize(itemSize, style.FramePadding.Y);
+        if (!ImGuiP.ItemAdd(bb, id, null))
+            return false;
+
+        bool hovered = false, active = false;
+        var clicked = ImGuiP.ButtonBehavior(bb, id, ref hovered, ref active);
+        // Render item
+        ImGuiP.RenderNavHighlight(bb, id);
+        ImGuiP.RenderFrame(bb.Min, bb.Max, 0);
+        // Feint outline that respects the highlight states.
+        var frameCol = GetFrameBg(hovered, active);
+        winPtr.DrawList.AddRect(bb.Min, bb.Max, CkGui.ApplyAlpha(frameCol, .075f), style.FrameRounding, ImDrawFlags.RoundCornersAll, 1.5f);
+        winPtr.DrawList.AddRectFilled(bb.Min, bb.Max, CkGui.ApplyAlpha(frameCol, .1f), style.FrameRounding, ImDrawFlags.RoundCornersAll);
+
+        // The button renders its "selected" visual state while hovered or pressed.
+        if (!disabled && hovered || active)
+        {
+            // Darken the gold slightly if actively clicking it
+            var bgMain = active ? _pinkPressed : _pinkActive;
+            var seam = pos.X + width * 0.80f;
+            winPtr.DrawList.AddRectFilledMultiColor(pos, new Vector2(seam, bb.Max.Y), bgMain, _pinkFeint, _pinkFeint, bgMain);
+            winPtr.DrawList.AddRectFilledMultiColor(new Vector2(seam, bb.Min.Y), bb.Max, _pinkFeint, _hidden, _hidden, _pinkFeint);
+            // Glowing Vertical left bar
+            var gap = (bb.Max.Y - bb.Min.Y) * .15f;
+            var barMin = new Vector2(bb.Min.X, bb.Min.Y + gap);
+            var barMax = new Vector2(bb.Min.X + 3f * ImGuiHelpers.GlobalScale, bb.Max.Y - gap);
+            var step = gap / 3f;
+
+            for (int g = 3; g >= 1; g--)
+            {
+                var pad = g * step;
+                var gMin = new Vector2(barMin.X - pad, barMin.Y - pad);
+                var gMax = new Vector2(barMax.X + pad, barMax.Y + pad);
+                var gCol = GsCol.VibrantPink.Vec4().WithAlpha(0.10f / g).ToUint();
+                winPtr.DrawList.AddRectFilled(gMin, gMax, gCol);
+            }
+            winPtr.DrawList.AddRectFilled(barMin, barMax, GsCol.LushPinkButton.Uint());
+        }
+
+        var drawPos = drawBox.Min;
+        var txtCol = ImGui.GetColorU32(disabled ? ImGuiCol.TextDisabled : ImGuiCol.Text);
+        var iconSize = CkGui.IconSize(icon);
+        using (Svc.PluginInterface.UiBuilder.IconFontFixedWidthHandle.Push())
+            winPtr.DrawList.AddTextShadowed(icon.ToIconString(), drawPos, txtCol, 0xFF000000);
+
+        drawPos.X += iconSize.X + style.ItemInnerSpacing.X;
+        winPtr.DrawList.AddTextShadowed(label, drawPos, txtCol, 0xFF000000);
+
+        if (label == "GagSpeak Chats")
+        {
+            var unreadMentions = _chatService.AllUnreadMentions();
+            if (unreadMentions > 0)
+            {
+                var txt = unreadMentions > 99 ? "99+" : unreadMentions.ToString();
+
+                // Calculate exact dimensions
+                var textSize = ImGui.CalcTextSize(txt);
+                var padding = new Vector2(6f * ImGuiHelpers.GlobalScale, 0);
+                var bubbleSize = textSize + (padding * 2);
+
+                // Position it immediately to the right of the button's content area, vertically centered in the row
+                var bubbleMin = new Vector2(drawBox.Max.X - bubbleSize.X - style.FramePadding.X, bb.Min.Y + (itemSize.Y - bubbleSize.Y) / 2);
+                var bubbleMax = bubbleMin + bubbleSize;
+
+                // Draw the pill-shaped background (rounding = half of the height)
+                winPtr.DrawList.AddRectFilled(bubbleMin, bubbleMax, ImGuiColors.TankBlue.ToUint(), bubbleSize.Y / 2);
+
+                // Draw the text perfectly centered inside the pill
+                winPtr.DrawList.AddTextShadowed(txt, bubbleMin + padding, uint.MaxValue, 0xFF000000);
+            }
+        }
+
+        return clicked && !disabled;
+
+        uint GetFrameBg(bool hovered, bool held)
+            => ImGui.GetColorU32((hovered, held) switch
+            {
+                (true, true) => ImGuiCol.FrameBgActive,
+                (true, false) => ImGuiCol.FrameBgHovered,
+                _ => ImGuiCol.FrameBg,
+            });
     }
 }

@@ -1,9 +1,9 @@
 using GagSpeak.Kinksters;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
-using GagspeakAPI.Data;
 using GagspeakAPI.Dto.VibeRoom;
 using GagspeakAPI.Network;
+using GagspeakAPI.User;
 
 namespace GagSpeak.State.Listeners;
 

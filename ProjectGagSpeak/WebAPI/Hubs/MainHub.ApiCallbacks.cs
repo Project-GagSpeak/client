@@ -1,13 +1,18 @@
 using CkCommons;
 using Dalamud.Interface.ImGuiNotification;
 using GagSpeak.Interop.Helpers;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
-using GagspeakAPI.Data;
-using GagspeakAPI.Extensions;
+using GagspeakAPI.Chat;
+using GagspeakAPI.Connection;
 using GagspeakAPI.Dto.VibeRoom;
+using GagspeakAPI.Extensions;
+using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
+using GagspeakAPI.User;
 using Microsoft.AspNetCore.SignalR.Client;
+using SundouleiaAPI.Reporting;
 
 namespace GagSpeak.WebAPI;
 
@@ -15,10 +20,9 @@ namespace GagSpeak.WebAPI;
 // We use this to perform actions to our client's data.
 public partial class MainHub
 {
-    #region Pairing & Messages
-    /// <summary> 
-    ///   Called when the server sends a message to the client.
-    /// </summary>
+    #region CALLBACKS
+
+    #region Callbacks (Connection Responses)
     public Task Callback_ServerMessage(MessageSeverity messageSeverity, string message)
     {
         if (messageSeverity == MessageSeverity.Information && _suppressNextNotification)
@@ -29,18 +33,15 @@ public partial class MainHub
 
         var (title, type) = messageSeverity switch
         {
-            MessageSeverity.Error => ($"Error from {MAIN_SERVER_NAME}", NotificationType.Error),
-            MessageSeverity.Warning => ($"Warning from {MAIN_SERVER_NAME}", NotificationType.Warning),
-            _ => ($"Info from {MAIN_SERVER_NAME}", NotificationType.Info),
+            MessageSeverity.Error => ($"Error from {ConnectionsConfig.CurrentHubName}", NotificationType.Error),
+            MessageSeverity.Warning => ($"Warning from {ConnectionsConfig.CurrentHubName}", NotificationType.Warning),
+            _ => ($"Info from {ConnectionsConfig.CurrentHubName}", NotificationType.Info),
         };
 
-        Mediator.Publish(new NotificationMessage(title, message, type, TimeSpan.FromSeconds(7.5)));
+        Mediator.Publish(new NotificationMessage(title, message, type, TimeSpan.FromSeconds(5)));
         return Task.CompletedTask;
     }
 
-    /// <summary>
-    ///   Sometimes Corby just wants to do a little bullying.
-    /// </summary>
     public Task Callback_HardReconnectMessage(MessageSeverity messageSeverity, string message, ServerState newServerState)
     {
         if (messageSeverity == MessageSeverity.Information && _suppressNextNotification)
@@ -49,9 +50,9 @@ public partial class MainHub
         {
             var (title, type, duration) = messageSeverity switch
             {
-                MessageSeverity.Error => ($"Error from {MAIN_SERVER_NAME}", NotificationType.Error, 7.5),
-                MessageSeverity.Warning => ($"Warning from {MAIN_SERVER_NAME}", NotificationType.Warning, 7.5),
-                _ => ($"Info from {MAIN_SERVER_NAME}", NotificationType.Info, 5.0),
+                MessageSeverity.Error => ($"Error from {ConnectionsConfig.CurrentHubName}", NotificationType.Error, 7.5),
+                MessageSeverity.Warning => ($"Warning from {ConnectionsConfig.CurrentHubName}", NotificationType.Warning, 7.5),
+                _ => ($"Info from {ConnectionsConfig.CurrentHubName}", NotificationType.Info, 5.0),
             };
             Mediator.Publish(new NotificationMessage(title, message, type, TimeSpan.FromSeconds(duration)));
         }
@@ -81,170 +82,202 @@ public partial class MainHub
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc cref="IGagspeakHub.Callback_UserFlaggedForReport"/>
+    public Task Callback_UserFlaggedForReport(ReportKind kind, string flaggedUID)
+    {
+        Logger.LogDebug($"Cb_RadarUserFlagged: [{kind}] {flaggedUID}", LoggerType.Callbacks);
+        // Will perform some basic immidiate action against flagged users to prevent further malicious intent.
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc cref="IGagspeakHub.Callback_ReputationInfo"/>
+    public Task Callback_ReputationInfo(UserReputation reputation, string message)
+    {
+        Logger.LogWarning($"Cb_ReputationInfo: Msg ({message})", LoggerType.Callbacks);
+        if (ConnectionResponse is not null)
+        {
+            ConnectionResponse = ConnectionResponse with { Reputation = reputation };
+        }
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc cref="IGagspeakHub.Callback_ServerInfo"/>
     public Task Callback_ServerInfo(ServerInfoResponse serverInfo)
     {
         _serverInfo = serverInfo;
         return Task.CompletedTask;
     }
+    #endregion
 
-    public Task Callback_AddClientPair(KinksterPair dto)
+    #region Callbacks (Pairs/Requests)
+    public Task Callback_AddPair(KinksterPair dto)
     {
-        Logger.LogDebug($"Callback_AddClientPair: {dto}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_AddClientPair: {dto}", LoggerType.Callbacks);
         Generic.Safe(() =>
         {
             _kinksters.AddKinkster(dto);
-            // we just added a pair, so ping the achievement manager that a pair was added!
             GagspeakEventManager.AchievementEvent(UnlocksEvent.PairAdded);
         });
         return Task.CompletedTask;
     }
 
-    public Task Callback_RemoveClientPair(KinksterBase dto)
+    public Task Callback_RemovePair(UserDto dto)
     {
-        Logger.LogDebug($"Callback_AddClientPair: {dto}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_RemovePair: {dto}", LoggerType.Callbacks);
         Generic.Safe(() => _kinksters.RemoveKinkster(dto));
         return Task.CompletedTask;
     }
 
+    public Task Callback_PersistPair(UserDto dto)
+    {
+        Logger.LogDebug($"Cb_PersistPair: {dto}", LoggerType.Callbacks);
+        Generic.Safe(() =>
+        {
+            if (_kinksters.TryGetValue(dto.User, out var k))
+                k.MarkAsPermanent();
+        });
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc cref="IGagspeakHub.Callback_AddPairRequest"/>
     public Task Callback_AddPairRequest(KinksterRequest dto)
     {
-        Logger.LogDebug($"Callback_AddPairRequest: {dto}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_AddPairRequest: {dto}", LoggerType.Callbacks);
         _requests.AddNewRequest(dto);
         return Task.CompletedTask;
     }
 
+    /// <inheritdoc cref="IGagspeakHub.Callback_RemovePairRequest"/>
     public Task Callback_RemovePairRequest(KinksterRequest dto)
     {
-        Logger.LogDebug($"Callback_RemovePairRequest: {dto}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_RemovePairRequest: {dto}", LoggerType.Callbacks);
         Generic.Safe(() => _requests.RemoveRequest(dto));
         return Task.CompletedTask;
     }
 
     public Task Callback_AddCollarRequest(CollarRequest dto)
     {
-        Logger.LogDebug($"Callback_AddCollarRequest: {dto}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_AddCollarRequest: {dto}", LoggerType.Callbacks);
         Generic.Safe(() => _collarManager.AddRequest(dto));
         return Task.CompletedTask;
     }
 
     public Task Callback_RemoveCollarRequest(CollarRequest dto)
     {
-        Logger.LogDebug($"Callback_RemoveCollarRequest: {dto}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_RemoveCollarRequest: {dto}", LoggerType.Callbacks);
         Generic.Safe(() => _collarManager.RemoveRequest(dto));
         return Task.CompletedTask;
     }
-
-    #endregion Pairing & Messages
+    #endregion
 
     #region Loci
     public Task Callback_LociDataUpdated(LociDataUpdate dto)
     {
-        Logger.LogDebug($"Callback_LociDataUpdated: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_LociDataUpdated: {dto.User.AliasOrUID}", LoggerType.Callbacks);
         Generic.Safe(() => _kinksters.ReceiveLociData(dto.User, dto.Data));
         return Task.CompletedTask;
     }
 
     public Task Callback_LociStatusesUpdate(LociStatusesUpdate dto)
     {
-        Logger.LogDebug($"Callback_LociStatusesUpdate: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_LociStatusesUpdate: {dto.User.AliasOrUID}", LoggerType.Callbacks);
         Generic.Safe(() => _kinksters.ReceiveLociStatuses(dto.User, dto.Statuses));
         return Task.CompletedTask;
     }
 
     public Task Callback_LociPresetsUpdate(LociPresetsUpdate dto)
     {
-        Logger.LogDebug($"Callback_LociPresetsUpdate: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_LociPresetsUpdate: {dto.User.AliasOrUID}", LoggerType.Callbacks);
         Generic.Safe(() => _kinksters.ReceiveLociPresets(dto.User, dto.Presets));
         return Task.CompletedTask;
     }
 
     public Task Callback_LociStatusModified(LociStatusModified dto)
     {
-        Logger.LogDebug($"Callback_LociStatusModified: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_LociStatusModified: {dto.User.AliasOrUID}", LoggerType.Callbacks);
         Generic.Safe(() => _kinksters.ReceiveLociStatusUpdate(dto.User, dto.Status, dto.Deleted));
         return Task.CompletedTask;
     }
 
     public Task Callback_LociPresetModified(LociPresetModified dto)
     {
-        Logger.LogDebug($"Callback_LociPresetModified: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_LociPresetModified: {dto.User.AliasOrUID}", LoggerType.Callbacks);
         Generic.Safe(() => _kinksters.ReceiveLociPresetUpdate(dto.User, dto.Preset, dto.Deleted));
         return Task.CompletedTask;
     }
     public async Task Callback_LociApplyDataById(ApplyLociDataById dto)
     {
-        Logger.LogDebug($"Callback_LociApplyDataById: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_LociApplyDataById: {dto.User.AliasOrUID}", LoggerType.Callbacks);
         // Fail if not a valid pair or not rendered.
-        if (_kinksters.GetUserOrDefault(dto.User) is not { } kinkster)
+        if (_kinksters.GetValueOrDefault(dto.User) is not { } kinkster)
             Logger.LogWarning($"Received ApplyLociDataById for an unpaired Kinkster: {dto.User.AliasOrUID}");
         else if (!kinkster.IsRendered)
             Logger.LogWarning($"Received ApplyLociDataById for an unrendered Kinkster: {dto.User.AliasOrUID}");
         else
         {
-            Mediator.Publish(new EventMessage(new(kinkster.GetNickAliasOrUid(), kinkster.UserData.UID, InteractionType.ApplyOwnStatus, "Applied by Kinkster.")));
+            Mediator.Publish(new EventMessage(new(kinkster.GetNickAliasOrUid(), kinkster.User.UID, InteractionType.ApplyOwnStatus, "Applied by Kinkster.")));
             await _loci.ApplyStatus([..dto.Ids], dto.LockIds).ConfigureAwait(false);
         }
     }
 
     public async Task Callback_LociApplyStatus(ApplyLociStatus dto)
     {
-        Logger.LogDebug($"Callback_LociApplyStatus: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_LociApplyStatus: {dto.User.AliasOrUID}", LoggerType.Callbacks);
         // Fail if not a valid pair.
-        if (_kinksters.GetUserOrDefault(dto.User) is not { } pair)
+        if (_kinksters.GetValueOrDefault(dto.User) is not { } pair)
             Logger.LogWarning($"Received LociApplyStatus for an unpaired Kinkster: {dto.User.AliasOrUID}");
         else if (!pair.IsRendered)
             Logger.LogWarning($"Received LociApplyStatus for an unrendered Kinkster: {pair.GetNickAliasOrUid()}");
         else
         {
-            Mediator.Publish(new EventMessage(new(pair.GetNickAliasOrUid(), pair.UserData.UID, InteractionType.ApplyOtherStatus, "Applied by Kinkster.")));
+            Mediator.Publish(new EventMessage(new(pair.GetNickAliasOrUid(), pair.User.UID, InteractionType.ApplyOtherStatus, "Applied by Kinkster.")));
             await _loci.ApplyStatusInfo([.. dto.Statuses.Select(s => s.ToTuple())], dto.LockIds).ConfigureAwait(false);
         }
     }
 
     public async Task Callback_LociRemoveData(RemoveLociData dto)
     {
-        Logger.LogDebug($"Callback_LociRemmoveData: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_LociRemmoveData: {dto.User.AliasOrUID}", LoggerType.Callbacks);
         // Fail if not a valid pair or not rendered.
-        if (_kinksters.GetUserOrDefault(dto.User) is not { } pair)
+        if (_kinksters.GetValueOrDefault(dto.User) is not { } pair)
             Logger.LogWarning($"Received RemoveLociData from an unpaired kinkster: {dto.User.AliasOrUID}");
         else if (!pair.IsRendered)
             Logger.LogWarning($"Received RemoveLociData from an unrendered kinkster: {pair.GetNickAliasOrUid()}");
         else
         {
-            Mediator.Publish(new EventMessage(new(pair.GetNickAliasOrUid(), pair.UserData.UID, InteractionType.RemoveStatus, "Removed by Kinkster.")));
+            Mediator.Publish(new EventMessage(new(pair.GetNickAliasOrUid(), pair.User.UID, InteractionType.RemoveStatus, "Removed by Kinkster.")));
             await _loci.BombStatus([ ..dto.Ids], false).ConfigureAwait(false);
         }
     }
 
-    public async Task Callback_LociClearData(KinksterBase dto)
+    public async Task Callback_LociClearData(UserDto dto)
     {
-        Logger.LogInformation($"Callback_LociClearData: {dto.User.AliasOrUID}");
+        Logger.LogInformation($"Cb_LociClearData: {dto.User.AliasOrUID}");
         // Fail if not a valid pair or not rendered.
-        if (_kinksters.GetUserOrDefault(dto.User) is not { } pair)
+        if (_kinksters.GetValueOrDefault(dto.User) is not { } pair)
             Logger.LogWarning($"Received LociClearData from an unpaired user: {dto.User.AliasOrUID}");
         else if (!pair.IsRendered)
             Logger.LogWarning($"Received LociClearData from an unrendered kinkster: {pair.GetNickAliasOrUid()}");
         else
         {
-            Mediator.Publish(new EventMessage(new(pair.GetNickAliasOrUid(), pair.UserData.UID, InteractionType.ClearStatuses, "Cleared by Kinkster.")));
+            Mediator.Publish(new EventMessage(new(pair.GetNickAliasOrUid(), pair.User.UID, InteractionType.ClearStatuses, "Cleared by Kinkster.")));
             await _loci.BombStatus([..LociCache.Data.DataInfo.Keys], false).ConfigureAwait(false);
         }
     }
-    #endregion Loci
+    #endregion
 
-    #region Pair Permission Exchange
+    #region Callbacks (Permissions)
     public Task Callback_BulkChangeGlobal(BulkChangeGlobal dto)
     {
         if (dto.User.UID == UID)
         {
-            Logger.LogDebug($"[OWN-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
+            Logger.LogDebug($"[OWN] Cb_BulkChangeGlobal: {dto}", LoggerType.Callbacks);
             Generic.Safe(() => _clientDatListener.ChangeAllClientGlobals(dto.User, dto.NewPerms, dto.NewState));
-            // handle soon.
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
+            Logger.LogDebug($"[OTHER] Cb_BulkChangeGlobal: {dto}", LoggerType.Callbacks);
             Generic.Safe(() => _kinksters.PermBulkChangeGlobal(dto));
             return Task.CompletedTask;
         }
@@ -329,7 +362,7 @@ public partial class MainHub
         return Task.CompletedTask;
 
     }
-    #endregion Pair Permission Exchange
+    #endregion
 
     /// <summary> Should only ever get the other pairs. If getting self, something is up. </summary>
     public Task Callback_KinksterUpdateComposite(KinksterUpdateComposite dto)
@@ -341,6 +374,7 @@ public partial class MainHub
     }
 
     // Invoked by other kinksters.
+    #region Callbacks (Data Updates)
     public Task Callback_KinksterUpdateActiveGag(KinksterUpdateActiveGag dataDto)
     {
         if (dataDto.User.UID == UID)
@@ -602,11 +636,13 @@ public partial class MainHub
     // Expected to update their global permission with this new state. If it fails, should reset.
     public Task Callback_HypnoticEffect(HypnoticAction dto)
     {
-        Logger.LogDebug("Callback_HypnoticEffect: " + dto, LoggerType.Callbacks);
+        Logger.LogDebug("Cb_HypnoticEffect: " + dto, LoggerType.Callbacks);
         Generic.Safe(() => _clientDatListener.Hypnotize(dto.User, dto.Effect, dto.ExpireTime, dto.base64Image));
         return Task.CompletedTask;
     }
+    #endregion
 
+    #region Callbacks (Light Storage Updates)
     public Task Callback_KinksterNewGagData(KinksterNewGagData dto)
     {
         Generic.Safe(() => _kinksters.CachedGagDataChange(dto.User, dto.GagType, dto.NewData));
@@ -663,123 +699,120 @@ public partial class MainHub
         Generic.Safe(() => _kinksters.CachedTriggerDataChange(dto.User, dto.ItemId, dto.NewData));
         return Task.CompletedTask;
     }
+    #endregion
 
-    /// <summary> Receive a Global Chat Message. </summary>
-    public Task Callback_ChatMessageGlobal(ChatMessageGlobal dto)
-    {
-        Mediator.Publish(new GlobalChatMessage(dto, dto.Sender.UID.Equals(UID)));
-        return Task.CompletedTask;
-    }
-
-    /// <summary> Received whenever any of our client pairs disconnects from GagSpeak Servers. </summary>
-    /// <remarks> Use this info to update the KinksterBase in our pair manager so they are marked as offline. </remarks>
-    public Task Callback_KinksterOffline(KinksterBase dto)
-    {
-        Logger.LogDebug("Callback_SendOffline: " + dto, LoggerType.Callbacks);
-        Generic.Safe(() => _kinksters.MarkKinksterOffline(dto.User));
-        return Task.CompletedTask;
-    }
-
-    /// <summary> Received whenever any of our client pairs connects from GagSpeak Servers. </summary>
-    /// <remarks> Use this info to update the KinksterBase in our pair manager so they are marked as online. </remarks>
+    #region Callbacks (UserState / Misc.)
     public Task Callback_KinksterOnline(OnlineKinkster dto)
     {
-        Logger.LogDebug("Callback_SendOnline: " + dto, LoggerType.Callbacks);
+        Logger.LogDebug("Cb_SendOnline: " + dto, LoggerType.Callbacks);
         Generic.Safe(() => _kinksters.MarkKinksterOnline(dto));
         return Task.CompletedTask;
     }
 
-    /// <summary> Received whenever we need to update the profile data of anyone, including ourselves. </summary>
-    public Task Callback_ProfileUpdated(KinksterBase dto)
+    public Task Callback_KinksterOffline(UserDto dto)
     {
-        Logger.LogDebug("Callback_UpdateProfile: " + dto, LoggerType.Callbacks);
-        Mediator.Publish(new ClearKinkPlateDataMessage(dto.User));
+        Logger.LogDebug("Cb_SendOffline: " + dto, LoggerType.Callbacks);
+        Generic.Safe(() => _kinksters.MarkKinksterOffline(dto.User));
         return Task.CompletedTask;
     }
 
-    /// <summary> The callback responsible for displaying verification codes to the clients monitor. </summary>
-    /// <remarks> This is currently experiencing issues for some reason with the discord bot. Look into more? </remarks>
+    public Task Callback_UserVanityUpdated(UserDto dto)
+    {
+        Logger.LogDebug($"Cb_UserVanityUpdate: [{dto.User.AliasOrUID}]", LoggerType.Callbacks);
+        Generic.Safe(() => _pairService.UpdateVanityData(dto));
+        return Task.CompletedTask;
+    }
+
+    public Task Callback_UserProfileUpdated(UserDto dto)
+    {
+        Logger.LogDebug($"Cb_UserProfileUpdated: [{dto.User.AliasOrUID}]", LoggerType.Callbacks);
+        Mediator.Publish(new FetchLatestUserProfile(dto.User));
+        return Task.CompletedTask;
+    }
+
     public Task Callback_ShowVerification(VerificationCode dto)
     {
-        Logger.LogDebug("Callback_ShowVerification: " + dto, LoggerType.Callbacks);
+        Logger.LogDebug("Cb_ShowVerification: " + dto, LoggerType.Callbacks);
         Mediator.Publish(new VerificationPopupMessage(dto));
         return Task.CompletedTask;
     }
 
+    public Task Callback_ChatMessageReceived(ChatlogMessage dto)
+    {
+        Logger.LogDebug($"Cb_ChatMessageReceived Called for: {dto.Sender.AnonName}", LoggerType.Callbacks);
+        Mediator.Publish(new ChatReceivedMessage(dto));
+        return Task.CompletedTask;
+    }
+    #endregion
+
+    #region VibeRooms
     public Task Callback_RoomJoin(RoomParticipant dto)
     {
-        Logger.LogDebug("Callback_RoomJoin: " + dto, LoggerType.Callbacks);
+        Logger.LogDebug("Cb_RoomJoin: " + dto, LoggerType.Callbacks);
         _toyboxListener.KinksterJoinedRoom(dto);
         return Task.CompletedTask;
     }
 
-    /// <summary> Receive a Room Leave from a Room. </summary>
     public Task Callback_RoomLeave(UserData dto)
     {
-        Logger.LogDebug("Callback_RoomLeave: " + dto, LoggerType.Callbacks);
+        Logger.LogDebug("Cb_RoomLeave: " + dto, LoggerType.Callbacks);
         _toyboxListener.KinksterLeftRoom(dto);
         return Task.CompletedTask;
     }
 
-    /// <summary> Receive a Room Leave from a Room. </summary>
     public Task Callback_RoomAddInvite(RoomInvite dto)
     {
-        Logger.LogDebug("Callback_RoomAddInvite: " + dto, LoggerType.Callbacks);
+        Logger.LogDebug("Cb_RoomAddInvite: " + dto, LoggerType.Callbacks);
         _toyboxListener.VibeRoomInviteReceived(dto);
         return Task.CompletedTask;
     }
 
-    /// <summary> Receive a Room Leave from a Room. </summary>
     public Task Callback_RoomHostChanged(UserData dto)
     {
-        Logger.LogDebug("Callback_RoomHostChanged: " + dto, LoggerType.Callbacks);
+        Logger.LogDebug("Cb_RoomHostChanged: " + dto, LoggerType.Callbacks);
         _toyboxListener.VibeRoomHostChanged(dto);
         return Task.CompletedTask;
     }
 
-
-
-    /// <summary> Receive a Device Update from a Room. </summary>
     public Task Callback_RoomDeviceUpdate(UserData user, ToyInfo device)
     {
-        Logger.LogDebug("Callback_RoomDeviceUpdate: " + user, LoggerType.Callbacks);
+        Logger.LogDebug("Cb_RoomDeviceUpdate: " + user, LoggerType.Callbacks);
         _toyboxListener.KinksterUpdatedDevice(user, device);
         return Task.CompletedTask;
     }
 
-    /// <summary> Receive a Data Stream from a Room. </summary>
     public Task Callback_RoomIncDataStream(ToyDataStreamResponse dto)
     {
-        Logger.LogDebug("Callback_RoomIncDataStream: " + dto, LoggerType.Callbacks);
+        Logger.LogDebug("Cb_RoomIncDataStream: " + dto, LoggerType.Callbacks);
         _toyboxListener.ReceivedBuzzToyDataStream(dto);
         return Task.CompletedTask;
     }
 
-    /// <summary> A User granted us access to control their sex toys. </summary>
     public Task Callback_RoomAccessGranted(UserData user)
     {
-        Logger.LogDebug("Callback_RoomAccessGranted: " + user, LoggerType.Callbacks);
+        Logger.LogDebug("Cb_RoomAccessGranted: " + user, LoggerType.Callbacks);
         _toyboxListener.KinksterGrantedAccess(user);
         return Task.CompletedTask;
     }
 
-    /// <summary> A User revoked access to their sextoys. </summary>
     public Task Callback_RoomAccessRevoked(UserData user)
     {
-        Logger.LogDebug("Callback_RoomAccessRevoked: " + user, LoggerType.Callbacks);
+        Logger.LogDebug("Cb_RoomAccessRevoked: " + user, LoggerType.Callbacks);
         _toyboxListener.KinksterRevokedAccess(user);
         return Task.CompletedTask;
     }
 
-    /// <summary> Receive a Chat Message from a Room. </summary>
     public Task Callback_RoomChatMessage(UserData user, string message)
     {
-        Logger.LogDebug("Callback_RoomChatMessage: " + user + " - " + message, LoggerType.Callbacks);
-        Mediator.Publish(new VibeRoomChatMessage(user, message));
+        Logger.LogDebug("Cb_RoomChatMessage", LoggerType.Callbacks);
+        Mediator.Publish(new VibeRoomChatMessage(new ChatlogMessage(ChatlogId.Invalid, "", DateTime.UtcNow, MainHub.OwnUserData, "", [])));
         return Task.CompletedTask;
     }
+    #endregion
 
+    #endregion CALLBACKS
     /* --------------------------------- void methods from the API to call the hooks --------------------------------- */
+    # region CALLBACK ACTIONS
     public void OnServerMessage(Action<MessageSeverity, string> act)
     {
         if (_apiHooksInitialized) return;
@@ -792,22 +825,40 @@ public partial class MainHub
         _hubConnection!.On(nameof(Callback_HardReconnectMessage), act);
     }
 
+    public void OnUserFlaggedForReport(Action<ReportKind, string> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_UserFlaggedForReport), act);
+    }
+
+    public void OnReputationInfo(Action<UserReputation, string> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_ReputationInfo), act);
+    }
+
     public void OnServerInfo(Action<ServerInfoResponse> act)
     {
         if (_apiHooksInitialized) return;
         _hubConnection!.On(nameof(Callback_ServerInfo), act);
     }
 
-    public void OnAddClientPair(Action<KinksterPair> act)
+    public void OnAddPair(Action<KinksterPair> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_AddClientPair), act);
+        _hubConnection!.On(nameof(Callback_AddPair), act);
     }
 
-    public void OnRemoveClientPair(Action<KinksterBase> act)
+    public void OnRemovePair(Action<UserDto> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_RemoveClientPair), act);
+        _hubConnection!.On(nameof(Callback_RemovePair), act);
+    }
+
+    public void OnPersistPair(Action<UserDto> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_PersistPair), act);
     }
 
     public void OnAddPairRequest(Action<KinksterRequest> act)
@@ -882,7 +933,7 @@ public partial class MainHub
         _hubConnection!.On(nameof(Callback_LociRemoveData), act);
     }
 
-    public void OnLociClearData(Action<KinksterBase> act)
+    public void OnLociClearData(Action<UserDto> act)
     {
         if (_apiHooksInitialized) return;
         _hubConnection!.On(nameof(Callback_LociClearData), act);
@@ -1062,28 +1113,28 @@ public partial class MainHub
         _hubConnection!.On(nameof(Callback_KinksterNewTriggerData), act);
     }
 
-    public void OnChatMessageGlobal(Action<ChatMessageGlobal> act)
-    {
-        if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_ChatMessageGlobal), act);
-    }
-
-    public void OnKinksterOffline(Action<KinksterBase> act)
-    {
-        if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_KinksterOffline), act);
-    }
-
     public void OnKinksterOnline(Action<OnlineKinkster> act)
     {
         if (_apiHooksInitialized) return;
         _hubConnection!.On(nameof(Callback_KinksterOnline), act);
     }
 
-    public void OnProfileUpdated(Action<KinksterBase> act)
+    public void OnKinksterOffline(Action<UserDto> act)
     {
         if (_apiHooksInitialized) return;
-        _hubConnection!.On(nameof(Callback_ProfileUpdated), act);
+        _hubConnection!.On(nameof(Callback_KinksterOffline), act);
+    }
+
+    public void OnUserVanityUpdated(Action<UserDto> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_UserVanityUpdated), act);
+    }
+
+    public void OnUserProfileUpdated(Action<UserDto> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_UserProfileUpdated), act);
     }
 
     public void OnShowVerification(Action<VerificationCode> act)
@@ -1092,6 +1143,11 @@ public partial class MainHub
         _hubConnection!.On(nameof(Callback_ShowVerification), act);
     }
 
+    public void OnChatMessageReceived(Action<ChatlogMessage> act)
+    {
+        if (_apiHooksInitialized) return;
+        _hubConnection!.On(nameof(Callback_ChatMessageReceived), act);
+    }
 
     public void OnRoomJoin(Action<RoomParticipant> act)
     {
@@ -1146,4 +1202,5 @@ public partial class MainHub
         if (_apiHooksInitialized) return;
         _hubConnection!.On(nameof(Callback_RoomChatMessage), act);
     }
+    #endregion
 }

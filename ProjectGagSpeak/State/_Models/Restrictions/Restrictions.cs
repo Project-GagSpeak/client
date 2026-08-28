@@ -269,7 +269,7 @@ public class HypnoticRestriction : RestrictionItem
     }
 
     public bool HasValidPath() => !string.IsNullOrEmpty(Properties.OverlayPath)
-        && File.Exists(Path.Combine(ConfigFileProvider.ThumbnailDirectory, ImageDataType.Hypnosis.ToString(), Properties.OverlayPath));
+        && File.Exists(Path.Combine(GsFiles.ThumbnailDirectory, ImageDataType.Hypnosis.ToString(), Properties.OverlayPath));
 
     public override HypnoticRestriction Clone(bool keepId = false)
         => new HypnoticRestriction(this, keepId);
@@ -334,7 +334,7 @@ public class BlindfoldRestriction : RestrictionItem
     }
 
     public bool HasValidPath() => !string.IsNullOrEmpty(Properties.OverlayPath)
-        && File.Exists(Path.Combine(ConfigFileProvider.ThumbnailDirectory, ImageDataType.Blindfolds.ToString(), Properties.OverlayPath));
+        && File.Exists(Path.Combine(GsFiles.ThumbnailDirectory, ImageDataType.Blindfolds.ToString(), Properties.OverlayPath));
 
     public override BlindfoldRestriction Clone(bool keepId = false)
         => new BlindfoldRestriction(this, keepId);

@@ -9,6 +9,7 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.User;
 using ImSharp;
 
 namespace GagSpeak.State.Listeners;
@@ -66,7 +67,7 @@ public sealed class ClientDataListener : IDisposable
     public void Hypnotize(UserData enactor, HypnoticEffect effect, DateTimeOffset expireTime, string? customImage)
     {
         // Find the kinkster for this change.
-        if (_kinksters.GetUserOrDefault(enactor) is not { } kinkster)
+        if (_kinksters.GetValueOrDefault(enactor) is not { } kinkster)
             throw new InvalidOperationException($"Kinkster [{enactor.AliasOrUID}] not found, this will throw your data out of sync!");
         // get a dummy HcPerms.
         var newData = new HardcoreState()
@@ -108,7 +109,7 @@ public sealed class ClientDataListener : IDisposable
     {
         var prevGlobals = ClientData.GlobalPermClone();
         // Find the nickname of the person enacting this change.
-        var kinkster = _kinksters.TryGetKinkster(enactor, out var k) ? k : null;
+        var kinkster = _kinksters.TryGetValue(enactor, out var k) ? k : null;
         _data.ChangeGlobalPermInternal(enactor, permName, newValue, kinkster);
         // Process global permission updates.
         HandleGlobalPermChanges(enactor, prevGlobals, ClientData.Globals);
@@ -128,7 +129,7 @@ public sealed class ClientDataListener : IDisposable
 
         var prevState = ClientData.Hardcore.IsEnabled(attribute);
         // Find the kinkster for this change.
-        if (_kinksters.GetUserOrDefault(enactor) is not { } kinkster)
+        if (_kinksters.GetValueOrDefault(enactor) is not { } kinkster)
             throw new InvalidOperationException($"Kinkster [{enactor.AliasOrUID}] not found.");
         // Make the change.
         _data.SetHardcoreStatus(enactor, attribute, newData, kinkster);

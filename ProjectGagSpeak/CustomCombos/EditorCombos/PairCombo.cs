@@ -19,7 +19,7 @@ public sealed class PairCombo : CkFilterComboCache<Kinkster>, IMediatorSubscribe
     public PairCombo(ILogger log, GagspeakMediator mediator, KinksterManager pairs, FavoritesConfig favorites)
         : base(() => [
             ..pairs.DirectPairs
-                .OrderByDescending(p => FavoritesConfig.Kinksters.Contains(p.UserData.UID))
+                .OrderByDescending(p => FavoritesConfig.Kinksters.Contains(p.User.UID))
                 .ThenByDescending(u => u.IsRendered)
                 .ThenByDescending(u => u.IsOnline)
                 .ThenBy(pair => pair.GetDisplayName(), StringComparer.OrdinalIgnoreCase)
@@ -29,7 +29,7 @@ public sealed class PairCombo : CkFilterComboCache<Kinkster>, IMediatorSubscribe
         _favorites = favorites;
         SearchByParts = true;
         // Phase out? we shouldnt need this, should just call refresh
-        Mediator.Subscribe<FolderUpdateKinkster>(this, _ => _needsRefresh = true);
+        Mediator.Subscribe<DDSUpdateKinkster>(this, _ => _needsRefresh = true);
     }
 
     public PairCombo(ILogger log, GagspeakMediator mediator, FavoritesConfig favorites, Func<IReadOnlyList<Kinkster>> generator)
@@ -38,7 +38,7 @@ public sealed class PairCombo : CkFilterComboCache<Kinkster>, IMediatorSubscribe
         Mediator = mediator;
         _favorites = favorites;
         SearchByParts = true;
-        Mediator.Subscribe<FolderUpdateKinkster>(this, _ => _needsRefresh = true);
+        Mediator.Subscribe<DDSUpdateKinkster>(this, _ => _needsRefresh = true);
     }
 
     public GagspeakMediator Mediator { get; }
@@ -64,7 +64,7 @@ public sealed class PairCombo : CkFilterComboCache<Kinkster>, IMediatorSubscribe
             Cleanup();
 
         // Update the Idx from the cache.
-        CurrentSelectionIdx = Items.IndexOf(i => i.UserData.UID == Current?.UserData.UID);
+        CurrentSelectionIdx = Items.IndexOf(i => i.User.UID == Current?.User.UID);
         // if the index is a valid index, update the selection.
         if (CurrentSelectionIdx >= 0)
         {
@@ -83,7 +83,7 @@ public sealed class PairCombo : CkFilterComboCache<Kinkster>, IMediatorSubscribe
     }
 
     protected override bool IsVisible(int globalIndex, LowerString filter)
-        => Items[globalIndex].UserData.AliasOrUID.Contains(filter, StringComparison.OrdinalIgnoreCase)
+        => Items[globalIndex].User.AliasOrUID.Contains(filter, StringComparison.OrdinalIgnoreCase)
         || (Items[globalIndex].GetNickname()?.Contains(filter, StringComparison.OrdinalIgnoreCase) ?? false)
         || (Items[globalIndex].PlayerName?.Contains(filter, StringComparison.OrdinalIgnoreCase) ?? false);
 
@@ -124,7 +124,7 @@ public sealed class PairCombo : CkFilterComboCache<Kinkster>, IMediatorSubscribe
     {
         var kinkster = Items[globalIdx];
 
-        if(Icons.DrawFavoriteStar(_favorites, kinkster.UserData.UID, false) && CurrentSelectionIdx == globalIdx)
+        if(Icons.DrawFavoriteStar(_favorites, kinkster.User.UID, false) && CurrentSelectionIdx == globalIdx)
         {
             CurrentSelectionIdx = -1;
             Current = default;

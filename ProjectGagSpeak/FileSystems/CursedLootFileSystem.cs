@@ -123,7 +123,7 @@ public sealed class CursedLootFileSystem : CkFileSystem<CursedItem>, IMediatorSu
     public int ConfigVersion => 0;
     public HybridSaveType SaveType => HybridSaveType.StreamWrite;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
+    public string GetFileName(GsFiles files, out bool isAccountUnique)
         => (isAccountUnique = false, files.CKFS_CursedLoot).Item2;
 
     public string JsonSerialize() 

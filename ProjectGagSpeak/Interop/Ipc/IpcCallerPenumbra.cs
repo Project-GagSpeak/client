@@ -3,7 +3,6 @@ using Dalamud.Interface.ImGuiNotification;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using Penumbra.Api.Enums;
-using Penumbra.Api.Helpers;
 using Penumbra.Api.IpcSubscribers;
 using System.Diagnostics.CodeAnalysis;
 

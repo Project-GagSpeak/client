@@ -85,7 +85,7 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<KinksterRestricti
             ? DataUpdateType.Applied : DataUpdateType.Swapped;
 
         // construct the dto to send.
-        var dto = new PushKinksterActiveRestriction(_ref.UserData, updateType)
+        var dto = new PushKinksterActiveRestriction(_ref.User, updateType)
         {
             Layer = layerIdx,
             RestrictionId = Current.Id,

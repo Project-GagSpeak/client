@@ -21,10 +21,10 @@ public static class TextureManagerEx
         => Svc.Texture.CreateFromImageAsync(imageData).Result;
     
     public static IDalamudTextureWrap? GetMetadataPath(ImageDataType folder, string path)
-        => Svc.Texture.GetFromFile(Path.Combine(ConfigFileProvider.ThumbnailDirectory, folder.ToString(), path)).GetWrapOrDefault();
+        => Svc.Texture.GetFromFile(Path.Combine(GsFiles.ThumbnailDirectory, folder.ToString(), path)).GetWrapOrDefault();
 
     public static async Task<IDalamudTextureWrap?> RentMetadataPath(ImageDataType folder, string path)
-        => await TextureManager.RentTextureAsync(Path.Combine(ConfigFileProvider.ThumbnailDirectory, folder.ToString(), path));
+        => await TextureManager.RentTextureAsync(Path.Combine(GsFiles.ThumbnailDirectory, folder.ToString(), path));
 
     public static bool TryRentAssetImage(string path, [NotNullWhen(true)] out IDalamudTextureWrap? fileTexture)
         => TextureManager.TryRentAssetDirectoryImage(path, out fileTexture);

@@ -8,9 +8,7 @@ using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Components;
@@ -156,9 +154,9 @@ internal class ReportPopupHandler : IPopupHandler
 
             CkGui.FontTextWrapped("We will analyze reports with care. Cordy has been a victum " +
                 "of manipulation and abuse multiple times, and will do her best to ensure her team does not allow " +
-                "predators to exploit this reporting system on you.", Fonts.Default150Percent);
+                "predators to exploit this reporting system on you.", Fonts.DefaultScaled);
 
-            using var font = Fonts.UidFont.Push();
+            using var font = Fonts.SubtitleFont.Push();
             // Get the center of this screen.
             var disableButton = _reportReason.IsNullOrWhitespace() || string.Equals(_reportReason, DEFAULT_REASON, StringComparison.OrdinalIgnoreCase);
             var buttonSize = ImGuiHelpers.GetButtonSize($"Report {_reportedDisplayName} To CK");
@@ -238,7 +236,7 @@ internal class ReportPopupHandler : IPopupHandler
     public void Open(OpenReportUIMessage msg)
     {
         _reportedUser = msg.UserToReport;
-        _reportedDisplayName = _pairs.DirectPairs.Any(x => x.UserData.UID == _reportedUser.UID)
+        _reportedDisplayName = _pairs.DirectPairs.Any(x => x.User.UID == _reportedUser.UID)
             ? _reportedUser.AliasOrUID
             : "Kinkster-" + _reportedUser.UID.Substring(_reportedUser.UID.Length - 4);
         _reportReason = DEFAULT_REASON;

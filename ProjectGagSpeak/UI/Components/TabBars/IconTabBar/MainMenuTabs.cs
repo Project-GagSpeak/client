@@ -9,7 +9,6 @@ using GagSpeak.Gui.MainWindow;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
-using GagSpeak.Utils;
 
 namespace GagSpeak.Gui.Components;
 
@@ -30,7 +29,7 @@ public class MainMenuTabs : IconTabBar<MainMenuTabs.SelectedTab>
         get => base.TabSelection;
         set
         {
-            _config.Current.MainUiTab = value;
+            _config.Data.MainUiTab = value;
             _config.Save();
             base.TabSelection = value;
         }

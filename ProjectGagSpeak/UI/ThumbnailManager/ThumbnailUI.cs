@@ -89,9 +89,9 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - clipboardImportW - fileImportW - ImGui.GetStyle().ItemInnerSpacing.X * 3);
 
         // Let the user control the size of the displayed icons.
-        var size = _config.Current.FileIconScale;
+        var size = _config.Data.FileIconScale;
         if (ImGui.SliderFloat("##icon_scaler", ref size, 0.5f, 2.0f, $"Scale: %.2fx"))
-            _config.Current.FileIconScale = size;
+            _config.Data.FileIconScale = size;
         CkGui.AttachTooltip($"Scalar: {size}x (Size: {_service.ItemSize.X}px)");
         // Save changes only once we deactivate, to avoid spamming the hybrid saver.
         if (ImGui.IsItemDeactivatedAfterEdit())
@@ -231,7 +231,7 @@ public class ThumbnailUI : WindowMediatorSubscriberBase
                 ImGui.SetCursorScreenPos(rectMin + new Vector2(0, imgSpace.Y));
 
                 if(!imgFits)
-                    using (Fonts.GagspeakLabelFont.Push())
+                    using (Fonts.GagspeakFont.Push())
                         ImGuiUtil.TextWrapped(entry.FileNameNoExtension);
                 else
                     ImGuiUtil.TextWrapped(entry.FileNameNoExtension);

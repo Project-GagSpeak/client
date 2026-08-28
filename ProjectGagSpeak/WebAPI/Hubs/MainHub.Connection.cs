@@ -28,7 +28,7 @@ public partial class MainHub
             return;
         }
 
-        Logger.LogInformation($"SecretKey Fetched, Creating Connection to [{MAIN_SERVER_NAME}]", LoggerType.ApiCore);
+        Logger.LogInformation($"SecretKey Fetched, Creating Connection to [{ConnectionsConfig.CurrentHubName}]", LoggerType.ApiCore);
         // if the current state was offline, change it to disconnected.
         if (ServerStatus is ServerState.Offline)
             ServerStatus = ServerState.Disconnected;
@@ -83,11 +83,11 @@ public partial class MainHub
                 Logger.LogInformation("Successfully Connected to GagSpeakHub-Main", LoggerType.ApiCore);
                 ServerStatus = ServerState.Connected;
 
-                // Load in our initial pairs, then the online ones.
-                await LoadInitialKinksters().ConfigureAwait(false);
-                await LoadOnlineKinksters().ConfigureAwait(false);
-                await LoadRequests().ConfigureAwait(false);
+                await LoadInitialConnectionData().ConfigureAwait(false);
+
+                // Sync configs and other things with the server.
                 await _dataSync.SetClientDataForProfile().ConfigureAwait(false);
+
                 // once data is synchronized, update the serverStatus.
                 ServerStatus = ServerState.ConnectedDataSynced;
                 Mediator.Publish(new ConnectedMessage());
@@ -200,7 +200,7 @@ public partial class MainHub
         if (_hubConnection is not null)
         {
             Logger.LogInformation("Instance disposed of in '_hubFactory', but still exists in MainHub.cs, " +
-                $"clearing all data for [{MAIN_SERVER_NAME}]", LoggerType.ApiCore);
+                $"clearing all data for [{ConnectionsConfig.CurrentHubName}]", LoggerType.ApiCore);
             // Clear the Health check so we stop pinging the server, set Initialized to false, publish a disconnect.
             _apiHooksInitialized = false;
             _hubHealthCTS?.Cancel();
@@ -510,7 +510,7 @@ public partial class MainHub
             _achievements.HadUnhandledDisconnect(webException);
         }
 
-        Logger.LogWarning($"Connection to [{MAIN_SERVER_NAME}] Closed... Reconnecting. (Reason: {arg}");
+        Logger.LogWarning($"Connection to [{ConnectionsConfig.CurrentHubName}] Closed... Reconnecting. (Reason: {arg}");
     }
 
     private async Task HubInstanceOnReconnected()
@@ -525,9 +525,7 @@ public partial class MainHub
             if (await ConnectionResponseAndVersionIsValid())
             {
                 ServerStatus = ServerState.Connected;
-                await LoadInitialKinksters().ConfigureAwait(false);
-                await LoadOnlineKinksters().ConfigureAwait(false);
-
+                await LoadInitialConnectionData().ConfigureAwait(false);
                 // Re-Sync data for the current character profile.
                 await _dataSync.SetClientDataForProfile().ConfigureAwait(false);
                 

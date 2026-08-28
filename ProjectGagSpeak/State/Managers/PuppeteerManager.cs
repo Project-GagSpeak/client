@@ -23,12 +23,12 @@ public sealed class PuppeteerPlayer
 
 public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
-    private readonly ConfigFileProvider _fileNames;
+    private readonly GsFiles _fileNames;
     private readonly HybridSaveService _saver;
 
     private StorageItemEditor<AliasTrigger> _itemEditor = new();
 
-    public PuppeteerManager(ILogger<PuppeteerManager> logger, GagspeakMediator mediator, ConfigFileProvider fileNames, HybridSaveService saver)
+    public PuppeteerManager(ILogger<PuppeteerManager> logger, GagspeakMediator mediator, GsFiles fileNames, HybridSaveService saver)
         : base(logger, mediator)
     {
         _fileNames = fileNames;
@@ -164,7 +164,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
     public int ConfigVersion => 1;
     public HybridSaveType SaveType => HybridSaveType.Json;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
+    public string GetFileName(GsFiles files, out bool isAccountUnique)
         => (isAccountUnique = false, files.Puppeteer).Item2;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize()

@@ -29,12 +29,12 @@ public class ProfilesTab
     private readonly MainConfig _mainConfig;
     private readonly AccountManager _account;
     private readonly KinkPlateService _kinkPlates;
-    private readonly ConfigFileProvider _fileProvider;
+    private readonly GsFiles _fileProvider;
 
     private readonly Queue<Action> _postDrawActions = new();
 
     public ProfilesTab(ILogger<ProfilesTab> logger, GagspeakMediator mediator,
-        MainHub hub, MainConfig config, AccountManager account, KinkPlateService kinkPlates, ConfigFileProvider fileProvider)
+        MainHub hub, MainConfig config, AccountManager account, KinkPlateService kinkPlates, GsFiles fileProvider)
     {
         _logger = logger;
         _mediator = mediator;
@@ -286,13 +286,13 @@ public class ProfilesTab
         var leftWidth = region.X - ProfileSize.X - _style.ItemSpacing.X;
         if (_selected is not { } profile)
         {
-            CkGui.FontText("No Profile Selected", Fonts.UidFont);
+            CkGui.FontText("No Profile Selected", Fonts.SubtitleFont);
             return;
         }
 
         using (ImRaii.Group())
         {
-            CkGui.FontText(profile.PlayerName, Fonts.UidFont);
+            CkGui.FontText(profile.PlayerName, Fonts.SubtitleFont);
             var lineSize = new Vector2(leftWidth, _lineH);
             _wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.AchievementLineSplit], ImGui.GetCursorScreenPos(), lineSize);
             ImGui.Dummy(lineSize);
@@ -439,7 +439,7 @@ public class ProfilesTab
 
         using (ImRaii.Group())
         {
-            CkGui.FontTextCentered("WARNING", Fonts.UidFont, ImGuiColors.DalamudRed);
+            CkGui.FontTextCentered("WARNING", Fonts.SubtitleFont, ImGuiColors.DalamudRed);
             CkGui.Separator(ImGuiColors.DalamudRed.ToUint(), size.X);
 
             if (profile.IsPrimary)
@@ -506,7 +506,7 @@ public class ProfilesTab
             }
 
             // Update the last logged in UID.
-            _mainConfig.Current.LastUidLoggedIn = string.Empty;
+            _mainConfig.Data.LastUidLoggedIn = string.Empty;
             _mainConfig.Save();
 
             // Extract the UID's so that we know what folders to delete in our config. (If we want to, we could keep them as a backup, idk)
@@ -517,7 +517,7 @@ public class ProfilesTab
             // Delete the folders based off our profile type that was deleted.
             if (isMain)
             {
-                var toDelete = Directory.GetDirectories(ConfigFileProvider.GagSpeakDirectory)
+                var toDelete = Directory.GetDirectories(GsFiles.GagSpeakDirectory)
                     .Where(d => accountUids.Contains(d, StringComparer.OrdinalIgnoreCase))
                     .ToList();
 

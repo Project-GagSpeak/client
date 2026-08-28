@@ -4,7 +4,6 @@ using GagSpeak.State.Managers;
 using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
-using GagspeakAPI.Extensions;
 using OtterGui.Extensions;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;

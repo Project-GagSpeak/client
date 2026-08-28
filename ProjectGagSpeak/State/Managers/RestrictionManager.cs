@@ -22,7 +22,7 @@ public sealed class RestrictionManager : IHybridSavable
     private readonly GagspeakMediator _mediator;
     private readonly FavoritesConfig _favorites;
     private readonly ModPresetManager _modPresets;
-    private readonly ConfigFileProvider _fileNames;
+    private readonly GsFiles _fileNames;
     private readonly HybridSaveService _saver;
 
     private StorageItemEditor<RestrictionItem> _itemEditor = new();
@@ -39,7 +39,7 @@ public sealed class RestrictionManager : IHybridSavable
         GagspeakMediator mediator,
         FavoritesConfig favorites,
         ModPresetManager modPresets,
-        ConfigFileProvider fileNames,
+        GsFiles fileNames,
         HybridSaveService saver)
     {
         _logger = logger;
@@ -332,7 +332,7 @@ public sealed class RestrictionManager : IHybridSavable
     public int ConfigVersion => 1;
     public HybridSaveType SaveType => HybridSaveType.Json;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
+    public string GetFileName(GsFiles files, out bool isAccountUnique)
         => (isAccountUnique = true, files.Restrictions).Item2;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize()

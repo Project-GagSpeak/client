@@ -206,7 +206,7 @@ public sealed class AutoUnlockService : BackgroundService
                 _mediator.Publish(new EventMessage(new("Auto-Unlock", MainHub.UID, InteractionType.UnlockGag, $"{gag.GagItem.GagName()}'s Timed Padlock Expired!")));
 
                 // Auto remove Gag if configured to do so.
-                if (_config.Current.RemoveGagOnTimerExpire && await _dds.PushNewActiveGagSlot(index, new ActiveGagSlot(), DataUpdateType.Removed).ConfigureAwait(false) is not null)
+                if (_config.Data.RemoveGagOnTimerExpire && await _dds.PushNewActiveGagSlot(index, new ActiveGagSlot(), DataUpdateType.Removed).ConfigureAwait(false) is not null)
                 {
                     // _mediator.Publish(new GagStateChanged(NewState.Disabled, index, backup, MainHub.UID, MainHub.UID));
                     if (_gags.RemoveGag(index, MainHub.UID, out var visualItem))
@@ -249,7 +249,7 @@ public sealed class AutoUnlockService : BackgroundService
                 _mediator.Publish(new EventMessage(new("Auto-Unlock", MainHub.UID, InteractionType.UnlockRestriction, $"Restriction Layer {index + 1}'s Timed Padlock Expired!")));
                 
                 // Auto remove if configured to do so.
-                if (_config.Current.RemoveRestrictionOnTimerExpire && await _dds.PushNewActiveRestriction(index, new ActiveRestriction(), DataUpdateType.Removed).ConfigureAwait(false) is not null)
+                if (_config.Data.RemoveRestrictionOnTimerExpire && await _dds.PushNewActiveRestriction(index, new ActiveRestriction(), DataUpdateType.Removed).ConfigureAwait(false) is not null)
                 {
                     if (_restrictions.RemoveRestriction(index, MainHub.UID, out var visualItem))
                         await _cacheManager.RemoveRestrictionItem(visualItem, index);
@@ -293,7 +293,7 @@ public sealed class AutoUnlockService : BackgroundService
             _mediator.Publish(new EventMessage(new("Auto-Unlock", MainHub.UID, InteractionType.UnlockRestraint, $"Active RestraintSet's Timed Padlock Expired!")));
             
             // Auto remove if configured to do so.
-            if (_config.Current.RemoveRestraintOnTimerExpire && await _dds.PushNewActiveRestraint(new CharaActiveRestraint(), DataUpdateType.Removed).ConfigureAwait(false) is not null)
+            if (_config.Data.RemoveRestraintOnTimerExpire && await _dds.PushNewActiveRestraint(new CharaActiveRestraint(), DataUpdateType.Removed).ConfigureAwait(false) is not null)
             {
                 if (_restraints.Remove(MainHub.UID, out var restraintSet, out var removedLayers))
                     await _cacheManager.RemoveRestraintSet(restraintSet, removedLayers);

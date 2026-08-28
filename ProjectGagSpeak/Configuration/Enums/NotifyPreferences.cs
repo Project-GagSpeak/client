@@ -16,8 +16,6 @@ public enum OnlineFilter : int
     Temporary = 1 << 0,
     Nicknamed = 1 << 1,
     Favorited = 1 << 2,
-    Sanctions = 1 << 3, // Maybe put in policy instead?
-    Sundesmos = 1 << 4, // Maybe put in policy instead?
 }
 
 public enum FilterPolicy

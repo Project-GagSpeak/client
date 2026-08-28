@@ -83,13 +83,13 @@ public unsafe class SpatialAudioCache : IDisposable
         => CustomAvfxPaths.Keys.ToList();
     public List<string> GetValidAvfxPaths()
         => CustomAvfxPaths
-            .Where(kvp => Path.Exists(Path.Combine(ConfigFileProvider.SpatialDirectory, "effects", kvp.Value)))
+            .Where(kvp => Path.Exists(Path.Combine(GsFiles.SpatialDirectory, "effects", kvp.Value)))
             .Select(kvp => kvp.Key)
             .ToList();
 
     public List<string> GetValidScdPaths()
         => CustomScdPaths
-            .Where(kvp => Path.Exists(Path.Combine(ConfigFileProvider.SpatialDirectory, "sounds", kvp.Value)))
+            .Where(kvp => Path.Exists(Path.Combine(GsFiles.SpatialDirectory, "sounds", kvp.Value)))
             .Select(kvp => kvp.Key)
             .ToList();
 
@@ -105,7 +105,7 @@ public unsafe class SpatialAudioCache : IDisposable
         {
             if (CustomScdPaths.TryGetValue(path, out var mappedSoundPath))
             {
-                var fullPath = Path.Combine(ConfigFileProvider.SpatialDirectory, "sounds", mappedSoundPath);
+                var fullPath = Path.Combine(GsFiles.SpatialDirectory, "sounds", mappedSoundPath);
                 // if the path does not exist, return false.
                 if (!Path.Exists(fullPath))
                 {
@@ -121,7 +121,7 @@ public unsafe class SpatialAudioCache : IDisposable
         {
             if (CustomAvfxPaths.TryGetValue(path, out var mappedEffectPath))
             {
-                var fullPath = Path.Combine(ConfigFileProvider.SpatialDirectory, "effects", mappedEffectPath);
+                var fullPath = Path.Combine(GsFiles.SpatialDirectory, "effects", mappedEffectPath);
                 // if the path does not exist, return false.
                 if (!Path.Exists(fullPath))
                 {

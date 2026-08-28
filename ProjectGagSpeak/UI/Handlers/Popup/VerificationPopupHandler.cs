@@ -26,11 +26,11 @@ internal class VerificationPopupHandler : IPopupHandler
     {
         var width = ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X;
         // push the title for the popup.
-        using (Fonts.UidFont.Push())
+        using (Fonts.SubtitleFont.Push())
         {
-            var headerTextSize = ImGui.CalcTextSize("Verification Code for " + MainHub.DisplayName);
+            var headerTextSize = ImGui.CalcTextSize("Verification Code for " + MainHub.AliasOrUID);
             ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) / 2 - (headerTextSize.X / 2));
-            CkGui.TextWrapped("Verification Code for " + MainHub.DisplayName);
+            CkGui.TextWrapped("Verification Code for " + MainHub.AliasOrUID);
 
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ImGuiHelpers.GlobalScale * 5);
             ImGui.Separator();

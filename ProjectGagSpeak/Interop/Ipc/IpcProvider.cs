@@ -26,8 +26,8 @@ public class IpcProvider : DisposableMediatorSubscriberBase, IHostedService
         // Should subscribe to characterActorCreated or rendered / unrendered events.
         Mediator.Subscribe<KinksterRendered>(this, _ =>
         {
-            if (_handledKinksters.Add(_.Handler.Address))
-                Generic.Safe(() => KinksterRendered?.SendMessage(_.Handler.Address));
+            if (_handledKinksters.Add(_.Address))
+                Generic.Safe(() => KinksterRendered?.SendMessage(_.Address));
         });
         Mediator.Subscribe<KinksterUnrendered>(this, _ =>
         {

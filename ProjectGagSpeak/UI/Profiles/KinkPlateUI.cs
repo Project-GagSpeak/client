@@ -27,7 +27,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
     public KinkPlateUI(ILogger<KinkPlateUI> logger, GagspeakMediator mediator,
         KinksterManager pairManager, KinkPlateService profileService, CosmeticService cosmetics,
         TextureService textureService, Kinkster pair) 
-        : base(logger, mediator, pair.UserData.AliasOrUID + "'s KinkPlate##GagspeakKinkPlateUI" + pair.UserData.AliasOrUID)
+        : base(logger, mediator, pair.User.AliasOrUID + "'s KinkPlate##GagspeakKinkPlateUI" + pair.User.AliasOrUID)
     {
         _pairManager = pairManager;
         _profileService = profileService;
@@ -42,8 +42,8 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
 
     private bool HoveringCloseButton { get; set; } = false;
     public Kinkster Pair { get; init; } // The pair this profile is being drawn for.
-    private string DisplayName => Pair.UserData.AliasOrUID;
-    private string PairUID => Pair.UserData.UID;
+    private string DisplayName => Pair.User.AliasOrUID;
+    private string PairUID => Pair.User.UID;
 
     private static Vector4 Gold = new Vector4(1f, 0.851f, 0.299f, 1f);
 
@@ -75,14 +75,14 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         //_logger.LogDebug("RectMin: {rectMin}, RectMax: {rectMax}", rectMin, rectMax);
 
         // obtain the profile for this userPair.
-        var KinkPlate = _profileService.GetKinkPlate(Pair.UserData);
+        var KinkPlate = _profileService.GetKinkPlate(Pair.User);
 
         // Draw KinkPlateUI Function here.
         DrawKinkPlatePair(wdl, KinkPlate);
     }
 
     // Size = 750 by 450
-    private void DrawKinkPlatePair(ImDrawListPtr wdl, KinkPlate profile)
+    private void DrawKinkPlatePair(ImDrawListPtr wdl, UserKinkPlate profile)
     {
         DrawPlate(wdl, profile.Info);
 
@@ -130,10 +130,10 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         CkGui.AttachToolTipRect(CloseButtonPos, CloseButtonSize, "Close " + DisplayName + "'s KinkPlate™");
     }
 
-    private void DrawProfilePic(ImDrawListPtr wdl, KinkPlate profile)
+    private void DrawProfilePic(ImDrawListPtr wdl, UserKinkPlate profile)
     {
         // We should always display the default GagSpeak Logo if the profile is either flagged or disabled.
-        if (profile.TempDisabled)
+        if (profile.Flagged)
         {
             wdl.AddDalamudImageRounded(CosmeticService.CoreTextures.Cache[CoreTexture.Icon256Bg], ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
         }
@@ -152,7 +152,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
             SupporterIconBorderSize.X / 2, ImGui.GetColorU32(new Vector4(0, 0, 0, 1)));
 
         // Draw out Supporter Icon.
-        var supporterInfo = CosmeticService.GetSupporterInfo(Pair.UserData);
+        var supporterInfo = CosmeticService.GetSupporterInfo(Pair.User);
         if (supporterInfo.SupporterWrap is { } wrap)
             wdl.AddDalamudImageRounded(wrap, SupporterIconPos, SupporterIconSize, SupporterIconSize.Y / 2, supporterInfo.Tooltip);
         // Draw out the border for the icon.
@@ -165,7 +165,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         // determine the height gap between the icon overview and bottom of the profile picture.
         var gapHeight = IconOverviewListPos.Y - (ProfilePictureBorderPos.Y + ProfilePictureBorderSize.Y);
         var ttText = DisplayName == PairUID ? "This Pairs UID" : "This Pairs Alias --SEP-- Their UID is: " + PairUID;
-        using (Fonts.UidFont.Push())
+        using (Fonts.SubtitleFont.Push())
         {
             var aliasOrUidSize = ImGui.CalcTextSize(DisplayName);
             var yHeight = (gapHeight - aliasOrUidSize.Y) / 2;
@@ -175,10 +175,10 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
             ImGui.TextColored(ImGuiColors.ParsedPink, DisplayName);
         }
         CkGui.AttachTooltip(ttText);
-        CkGui.CopyableDisplayText(Pair.UserData.UID);
+        CkGui.CopyableDisplayText(Pair.User.UID);
     }
 
-    private void DrawIconSummary(ImDrawListPtr wdl, KinkPlate profile)
+    private void DrawIconSummary(ImDrawListPtr wdl, UserKinkPlate profile)
     {
         var iconWidthPlusSpacing = 38;
         var iconOverviewPos = IconOverviewListPos;
@@ -225,7 +225,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         wdl.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.HypnoSpiral], iconOverviewPos, Vector2.One * 34, hypnotizedColor, hypnotizedTT);
     }
 
-    private void DrawDescription(ImDrawListPtr wdl, KinkPlate profile)
+    private void DrawDescription(ImDrawListPtr wdl, UserKinkPlate profile)
     {
         // draw out the description background.
         if (CosmeticService.TryGetBackground(PlateElement.Description, profile.Info.DescriptionBG, out var descBG))
@@ -242,10 +242,10 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         // draw out the description text here. What displays is affected by if it is flagged or not.
         ImGui.SetCursorScreenPos(DescriptionBorderPos + Vector2.One * 10f);
         // shadowban them by displaying the default text if flagged or disabled.
-        var description = profile.TempDisabled ? "Profile is currently disabled."
+        var description = profile.Flagged ? "Profile is currently disabled."
             : profile.Info.Description.IsNullOrEmpty()
             ? "No Description Was Set.." : profile.Info.Description;
-        var color = (profile.Info.Description.IsNullOrEmpty() || profile.TempDisabled) 
+        var color = (profile.Info.Description.IsNullOrEmpty() || profile.Flagged) 
             ? ImGuiColors.DalamudGrey2 : ImGuiColors.DalamudWhite;
         DrawLimitedDescription(description, color, DescriptionBorderSize - Vector2.One * 12f);
     }
@@ -362,7 +362,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
         statsPos += new Vector2(24, 0);
 
         ImGui.SetCursorScreenPos(statsPos);
-        var formattedDate = Pair.UserData.CreatedOn ?? DateTime.MinValue;
+        var formattedDate = Pair.User.CreatedOn ?? DateTime.MinValue;
         var createdDate = formattedDate != DateTime.MinValue ? formattedDate.ToString("d", CultureInfo.CurrentCulture) : "MM-DD-YYYY";
 
         CkGui.ColorText(createdDate, ImGuiColors.ParsedGold);
@@ -555,7 +555,7 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
 
 
         ImGui.SetCursorScreenPos(btnPos);
-        if (ImGui.InvisibleButton($"CloseButton##KinkPlateClose" + Pair.UserData.UID, btnSize))
+        if (ImGui.InvisibleButton($"CloseButton##KinkPlateClose" + Pair.User.UID, btnSize))
         {
             this.IsOpen = false;
         }
@@ -564,6 +564,6 @@ public partial class KinkPlateUI : WindowMediatorSubscriberBase
 
     public override void OnClose()
     {
-        Mediator.Publish(new RemoveWindowMessage(this));
+        Mediator.Publish(new RemoveCreatedWindowMessage(this));
     }
 }

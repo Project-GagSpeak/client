@@ -118,7 +118,7 @@ public sealed class RestraintSetFileSystem : CkFileSystem<RestraintSet>, IMediat
     public int ConfigVersion => 0;
     public HybridSaveType SaveType => HybridSaveType.StreamWrite;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
+    public string GetFileName(GsFiles files, out bool isAccountUnique)
         => (isAccountUnique = false, files.CKFS_RestraintSets).Item2;
 
     public string JsonSerialize() 

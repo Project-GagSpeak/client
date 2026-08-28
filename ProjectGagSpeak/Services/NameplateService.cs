@@ -6,7 +6,6 @@ using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Kernel;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using GagSpeak.GameInternals;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
@@ -123,7 +122,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
     private void CheckUpdateKinkster(NewState newState, string enactor, string target)
     {
         // Attempt to grab the Kinkster associated with this targetted message
-        if (!_kinksters.TryGetKinkster(new(target), out var kinkster))
+        if (!_kinksters.TryGetValue(new(target), out var kinkster))
             return;
 
         // If the kinkster is not rendered, we do not care (I think?)

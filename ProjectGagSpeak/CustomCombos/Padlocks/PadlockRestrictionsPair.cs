@@ -47,7 +47,7 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
         var finalTime = SelectedLock == Padlocks.FiveMinutes
             ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
 
-        var dto = new PushKinksterActiveRestriction(_ref.UserData, DataUpdateType.Locked)
+        var dto = new PushKinksterActiveRestriction(_ref.User, DataUpdateType.Locked)
         {
             Layer = layerIdx,
             Padlock = SelectedLock,
@@ -77,7 +77,7 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
         if (!ActiveItem.CanUnlock() || !_ref.PairPerms.UnlockRestrictions)
             return;
 
-        var dto = new PushKinksterActiveRestriction(_ref.UserData, DataUpdateType.Unlocked)
+        var dto = new PushKinksterActiveRestriction(_ref.User, DataUpdateType.Unlocked)
         {
             Layer = layerIdx,
             Padlock = ActiveItem.Padlock,

@@ -12,13 +12,13 @@ namespace GagSpeak.State.Managers;
 public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
     private readonly FavoritesConfig _favorites;
-    private readonly ConfigFileProvider _fileNames;
+    private readonly GsFiles _fileNames;
     private readonly HybridSaveService _saver;
 
     private StorageItemEditor<Trigger> _itemEditor = new();
 
     public TriggerManager(ILogger<TriggerManager> logger, GagspeakMediator mediator,
-        FavoritesConfig favorites, ConfigFileProvider fileNames, HybridSaveService saver) 
+        FavoritesConfig favorites, GsFiles fileNames, HybridSaveService saver) 
         : base(logger, mediator)
     {
         _favorites = favorites;
@@ -173,7 +173,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
     public int ConfigVersion => 1;
     public HybridSaveType SaveType => HybridSaveType.Json;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider files, out bool isAccountUnique) => (isAccountUnique = true, files.Triggers).Item2;
+    public string GetFileName(GsFiles files, out bool isAccountUnique) => (isAccountUnique = true, files.Triggers).Item2;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize()
     {

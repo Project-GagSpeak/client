@@ -19,8 +19,6 @@ public enum StyleTab
     GagSpeakStyle,
     CkColors,
     CkStyle,
-    NativeColors,
-    NativeStyle,
 }
 
 public class StyleEditorUI : WindowMediatorSubscriberBase
@@ -29,66 +27,34 @@ public class StyleEditorUI : WindowMediatorSubscriberBase
         "--NL----COL--[Right-Click Square]--COL-- Open edit options menu.";
 
     private readonly MainConfig _config;
-    // Maybe a Theme config but thats a 2.X feature
 
-    private StyleTab _lastTab = StyleTab.GagSpeakColors;
-    private bool _copyModifiedOnly = false;
+    private StyleTab _lastTab = StyleTab.CkColors;
     private string _filterString = string.Empty;
 
     private ImGuiColorEditFlags _colorFlags = ImGuiColorEditFlags.AlphaPreviewHalf;
 
     // Atm only works for GsCols, but should try making it work for other types too, or just give them their own dictionaries.
-    private Dictionary<GsCol, Vector4>    _gsColChanges     = [];
-    private Dictionary<CkCol, Vector4>    _ckColChanges     = [];
-    private Dictionary<ImGuiCol, Vector4> _imguiColChanges  = [];
-
-    public StyleEditorUI(ILogger<StyleEditorUI> logger, GagspeakMediator mediator, MainConfig config)
-        : base(logger, mediator, "GagSpeak Style Editor")
-    {
-        _config = config;
-
-        Flags = WFlags.NoScrollbar;
-        this.SetBoundaries(new Vector2(625, 400), ImGui.GetIO().DisplaySize);
-    }
-
-    protected override void PreDrawInternal()
-    { }
-
-    protected override void PostDrawInternal()
-    { }
+    private Dictionary<GsCol, Vector4> _gsColChanges = [];
+    private Dictionary<CkCol, Vector4> _ckColChanges = [];
 
     private string? _vec4ConvertStr = null;
     private Vector4 _parsedStr = Vector4.Zero;
     private string? _uintConvertStr = null;
     private uint _parsedUint = uint.MinValue;
 
+    public StyleEditorUI(ILogger<StyleEditorUI> logger, GagspeakMediator mediator, MainConfig config)
+        : base(logger, mediator, "GagSpeak Style Editor")
+    {
+        _config = config;
+        Flags = WFlags.NoScrollbar;
+        this.SetBoundaries(new Vector2(625, 400), ImGui.GetIO().DisplaySize);
+    }
+
     protected override void DrawInternal()
     {
         var width = ImGui.GetContentRegionAvail().X;
         var halfW = width / 2;
-        CkGui.FontText("Selected Theme:", Fonts.GagspeakLabelFont);
-        if (DrawThemeCombo(width))
-        {
-            // Do some theme Setting here
-        }
-
-        if (CkGui.IconTextButton(FAI.Save, "Save Changes", disabled: true))
-        {
-            // Some uniform save, eventually, hopefully.
-        }
-        CkGui.AttachTooltip("Currently Non-Functional" +
-            "--NL--Should Save all changes to a temporary theme template storage in the editor, " +
-            "which is used as a placeholder theme until the window is exited." +
-            "--SEP--Saving this as a Theme will export it and add it to your Config.");
-
-        ImUtf8.SameLineInner();
-        if (CkGui.IconTextButton(FAI.Redo, "Revert All Changes", disabled: true))
-        {
-            // Some uniform save, eventually, hopefully
-        }
-        CkGui.AttachTooltip("Currently Non-Functional." +
-            "--NL--Should revert all applied / saved changes and revert to the selected theme.");
-
+        CkGui.FontText("Selected Theme:", Fonts.DefaultScaled);
         ImGui.Separator();
         DrawValueConverters();
 
@@ -99,12 +65,16 @@ public class StyleEditorUI : WindowMediatorSubscriberBase
     private void DrawStyleEditor()
     {
         using var bar = ImRaii.TabBar("##style-editor-tabs", ImGuiTabBarFlags.None);
-        GsColorTab();
-        //GsStyleTab();
-        CkColorTab();
-        //CkStyleTab();
-        //NativeColorTab();
-        //NativeStyleTab();
+        try
+        {
+            GsColorTab();
+            CkColorTab();
+            //CkStyleTab();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error rendering style editor: {ex}");
+        }
     }
 
     private ImRaii.TabItemDisposable DrawTab(StyleTab newTab)
@@ -116,14 +86,12 @@ public class StyleEditorUI : WindowMediatorSubscriberBase
         // UpdateMeta();
         return tab;
 
-        string GetName (StyleTab tab) => tab switch
+        string GetName(StyleTab tab) => tab switch
         {
-            StyleTab.GagSpeakColors => "GS Colors",
-            StyleTab.GagSpeakStyle => "GS Style",
+            StyleTab.GagSpeakColors => "Sund Colors",
+            StyleTab.GagSpeakStyle => "Sund Style",
             StyleTab.CkColors => "Ck Colors",
             StyleTab.CkStyle => "Ck Style",
-            StyleTab.NativeColors => "ImGui Colors",
-            StyleTab.NativeStyle => "ImGui Style",
             _ => string.Empty
         };
     }
@@ -133,16 +101,6 @@ public class StyleEditorUI : WindowMediatorSubscriberBase
     {
         using var tab = DrawTab(StyleTab.GagSpeakColors);
         if (!tab) return;
-
-        if (CkGui.IconTextButton(FAI.Clipboard, "Copy Vec4s"))
-            GsColors.Vec4ToClipboard(_copyModifiedOnly ? _gsColChanges : GsColors.AsVec4Dictionary());
-
-        ImUtf8.SameLineInner();
-        if (CkGui.IconTextButton(FAI.Clipboard, "Copy Uints"))
-            GsColors.UintToClipboard(_copyModifiedOnly ? _gsColChanges.ToDictionary(c => c.Key, c => c.Value.ToUint()) : GsColors.AsUintDictionary());
-
-        ImUtf8.SameLineInner();
-        ImGui.Checkbox("Only copy modified", ref _copyModifiedOnly);
 
         // Search Filter for the selected colors
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X / 2);
@@ -172,27 +130,14 @@ public class StyleEditorUI : WindowMediatorSubscriberBase
             var vec4 = GsColors.Vec4(colIdx);
             ImGui.ColorEdit4("##color", ref vec4, ImGuiColorEditFlags.AlphaBar | flags);
             if (!GsColors.Vec4(colIdx).Equals(vec4))
-            {
-                // placeholder until we get something more stable, since the vec4 ref messes up the uint
-                GsColors.Set(colIdx, vec4);
-                // Would do some comparison and temporary applicatoin here idealy.
-                _gsColChanges[colIdx] = GsColors.Vec4(colIdx);
-            }
+                UiService.GsColChanges[colIdx] = vec4;
+
             // Some disabled save and reverts for the individual row.
             ImGui.SameLine();
-            if (CkGui.IconButton(FAI.Save, disabled: true))
-            {
-                // An individual save to the temporary placeholder theme.
-            }
-            CkGui.AttachTooltip("Does nothing atm, but would save the individual color change.");
-
-            ImUtf8.SameLineInner();
-            if (CkGui.IconButton(FAI.Redo, disabled: !_gsColChanges.ContainsKey(colIdx)))
-            {
-                GsColors.RevertCol(colIdx);
-                _gsColChanges.Remove(colIdx);
-            }
-            CkGui.AttachTooltip("Reverts any changes made to this color.");
+            var isDefaultCol = !GsColors.Defaults.GetValueOrDefault(colIdx).Equals(GsColors.Vec4(colIdx));
+            if (CkGui.IconButton(FAI.Redo, disabled: !isDefaultCol))
+                UiService.GsColChanges[colIdx] = GsColors.Defaults.GetValueOrDefault(colIdx, Vector4.One);
+            CkGui.AttachTooltip("Revert this color to default value.");
 
             CkGui.TextInline(name);
             ImGui.PopID();
@@ -206,23 +151,15 @@ public class StyleEditorUI : WindowMediatorSubscriberBase
         using var tab = DrawTab(StyleTab.CkColors);
         if (!tab) return;
 
-        if (CkGui.IconTextButton(FAI.Clipboard, "Copy Vec4s"))
-            CkColors.Vec4ToClipboard(_copyModifiedOnly ? _ckColChanges : CkColors.AsVec4Dictionary());
-
-        ImUtf8.SameLineInner();
-        if (CkGui.IconTextButton(FAI.Clipboard, "Copy Uints"))
-            CkColors.UintToClipboard(_copyModifiedOnly ? _ckColChanges.ToDictionary(c => c.Key, c => c.Value.ToUint()) : CkColors.AsUintDictionary());
-
-        ImUtf8.SameLineInner();
-        ImGui.Checkbox("Only copy modified", ref _copyModifiedOnly);
-
         // Search Filter for the selected colors
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X / 2);
         ImGui.InputTextWithHint("Display Filter", "Filter Style...", ref _filterString, 64);
 
         var flags = _colorFlags;
-        if (ImGui.RadioButton("Opaque", flags == ImGuiColorEditFlags.NoAlpha)) { _colorFlags = ImGuiColorEditFlags.NoAlpha; } ImGui.SameLine();
-        if (ImGui.RadioButton("Alpha", flags == ImGuiColorEditFlags.AlphaPreview)) { _colorFlags = ImGuiColorEditFlags.AlphaPreview; } ImGui.SameLine();
+        if (ImGui.RadioButton("Opaque", flags == ImGuiColorEditFlags.NoAlpha)) { _colorFlags = ImGuiColorEditFlags.NoAlpha; }
+        ImGui.SameLine();
+        if (ImGui.RadioButton("Alpha", flags == ImGuiColorEditFlags.AlphaPreview)) { _colorFlags = ImGuiColorEditFlags.AlphaPreview; }
+        ImGui.SameLine();
         if (ImGui.RadioButton("Alpha Half", flags == ImGuiColorEditFlags.AlphaPreviewHalf)) { _colorFlags = ImGuiColorEditFlags.AlphaPreviewHalf; }
         CkGui.HelpText(COLOR_PICKER_TIP, ImGuiColors.DalamudOrange);
 
@@ -244,41 +181,19 @@ public class StyleEditorUI : WindowMediatorSubscriberBase
             var vec4 = CkColors.Vec4(colIdx);
             ImGui.ColorEdit4("##color", ref vec4, ImGuiColorEditFlags.AlphaBar | flags);
             if (!CkColors.Vec4(colIdx).Equals(vec4))
-            {
-                // placeholder until we get something more stable, since the vec4 ref messes up the uint
-                CkColors.SetDefault(colIdx, vec4);
-                CkColors.ApplyTheme();
-                // Would do some comparison and temporary applicatoin here idealy.
-                _ckColChanges[colIdx] = CkColors.Vec4(colIdx);
-            }
-            // Some disabled save and reverts for the individual row.
-            ImGui.SameLine();
-            if (CkGui.IconButton(FAI.Save, disabled: true))
-            {
-                // An individual save to the temporary placeholder theme.
-            }
-            CkGui.AttachTooltip("Does nothing atm, but would save the individual color change.");
+                UiService.CkColChanges[colIdx] = vec4;
 
-            ImUtf8.SameLineInner();
-            if (CkGui.IconButton(FAI.Redo, disabled: !_ckColChanges.ContainsKey(colIdx)))
-            {
-                CkColors.RevertCol(colIdx);
-                _ckColChanges.Remove(colIdx);
-            }
-            CkGui.AttachTooltip("Reverts any changes made to this color.");
+            ImGui.SameLine();
+            var isDefaultCol = !CkColors.Defaults.GetValueOrDefault(colIdx).Equals(CkColors.Vec4(colIdx));
+            if (CkGui.IconButton(FAI.Redo, disabled: !isDefaultCol))
+                UiService.CkColChanges[colIdx] = CkColors.Defaults.GetValueOrDefault(colIdx, Vector4.One);
+            CkGui.AttachTooltip("Revert this color to default value.");
 
             CkGui.TextInline(name);
             ImGui.PopID();
         }
     }
     #endregion CkCommons
-
-    private bool DrawThemeCombo(float width)
-    {
-        return false;
-    }
-
-    // Helps cordys sanity
     private void DrawValueConverters()
     {
         var halfW = ImGui.GetContentRegionAvail().X / 2;

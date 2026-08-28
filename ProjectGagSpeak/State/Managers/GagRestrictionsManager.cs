@@ -7,7 +7,6 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
-using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using OtterGui.Extensions;
 using System.Diagnostics.CodeAnalysis;
@@ -20,7 +19,7 @@ public sealed class GagRestrictionManager : IHybridSavable
     private readonly GagspeakMediator _mediator;
     private readonly FavoritesConfig _favorites;
     private readonly ModPresetManager _modPresets;
-    private readonly ConfigFileProvider _fileNames;
+    private readonly GsFiles _fileNames;
     private readonly MufflerService _muffler;
     private readonly HybridSaveService _saver;
 
@@ -34,7 +33,7 @@ public sealed class GagRestrictionManager : IHybridSavable
         GagspeakMediator mediator,
         FavoritesConfig favorites,
         ModPresetManager modPresets,
-        ConfigFileProvider fileNames,
+        GsFiles fileNames,
         MufflerService muffler,
         HybridSaveService saver)
     {
@@ -233,7 +232,7 @@ public sealed class GagRestrictionManager : IHybridSavable
     public int ConfigVersion => 1;
     public HybridSaveType SaveType => HybridSaveType.Json;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
+    public string GetFileName(GsFiles files, out bool isAccountUnique)
         => (isAccountUnique = true, files.GagRestrictions).Item2;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize()

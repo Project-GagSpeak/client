@@ -10,7 +10,6 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data;
 using GagspeakAPI.Network;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
@@ -224,7 +223,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
         });
     }
 
-    private void DrawNewProfileDisplay(KinkPlate profile)
+    private void DrawNewProfileDisplay(UserKinkPlate profile)
     {
         var spacing = ImGui.GetStyle().ItemSpacing.X;
         if (_uploadedImageData != null)
@@ -302,7 +301,7 @@ public class ProfilePictureEditor : WindowMediatorSubscriberBase
         }
     }
 
-    private async Task UploadToServer(KinkPlate profile)
+    private async Task UploadToServer(UserKinkPlate profile)
     {
         // grab the _croppedImageData and upload it to the server.
         if (_croppedImageData is null)

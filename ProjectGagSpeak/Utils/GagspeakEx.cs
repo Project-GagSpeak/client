@@ -27,7 +27,7 @@ public static class GagspeakEx
     public static bool IsPlayerFullyLoaded()
         => PlayerData.Interactable && HcTaskUtils.IsScreenReady();
 
-    public static bool HasValidSetup(this GagspeakConfig configuration)
+    public static bool HasValidSetup(this MainConfigData configuration)
         => configuration.AcknowledgementUnderstood;
     public static bool HasValidSetup(this AccountStorage configuration)
         => configuration.Profiles.Count > 0;

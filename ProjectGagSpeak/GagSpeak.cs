@@ -32,7 +32,6 @@ using GagSpeak.State.Handlers;
 using GagSpeak.State.Listeners;
 using GagSpeak.State.Managers;
 using GagSpeak.Utils;
-using GagSpeak.Watchers;
 using GagSpeak.WebAPI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -47,7 +46,7 @@ public sealed class GagSpeak : IDalamudPlugin
         pi.Create<Svc>();
         // init the CkCommons.
         ItemSvc.Init(pi);
-        CkCommonsHost.Init(pi, this, CkLogFilter.None);
+        CkCommonsHost.Init(pi, this, CkLoggerType.None);
         // create the host builder for the plugin
         _host = ConstructHostBuilder(pi);
         // start up the host
@@ -220,7 +219,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<ArousalService>()
         .AddSingleton<AutoUnlockService>()
         .AddSingleton<CharaObjectWatcher>()
-        .AddSingleton<ChatService>()
+        .AddSingleton<ChatControlService>()
         .AddSingleton<CosmeticService>()
         .AddSingleton<ConnectionSyncService>()
         .AddSingleton<DtrBarService>()
@@ -228,7 +227,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<GagspeakMediator>()
         .AddSingleton<MufflerService>()
         .AddSingleton<NameplateService>()
-        .AddSingleton<NotificationService>()
+        .AddSingleton<AlertService>()
         .AddSingleton<OnTickService>()
         .AddSingleton<RemoteService>()
         .AddSingleton<SafewordService>()
@@ -320,7 +319,7 @@ public static class GagSpeakServiceExtensions
 
     public static IServiceCollection AddGagSpeakConfigs(this IServiceCollection services)
     => services
-        .AddSingleton<ConfigFileProvider>()
+        .AddSingleton<GsFiles>()
         .AddSingleton<MainConfig>()
         .AddSingleton<NicksConfig>()
         .AddSingleton<FavoritesConfig>()
@@ -452,7 +451,7 @@ public static class GagSpeakServiceExtensions
         .AddHostedService(p => p.GetRequiredService<HybridSaveService>())   // Begins the SaveCycle task loop
         .AddHostedService(p => p.GetRequiredService<CosmeticService>())     // Initializes our required textures so methods can work.
         .AddHostedService(p => p.GetRequiredService<GagspeakMediator>())    // Runs the task for monitoring mediator events.
-        .AddHostedService(p => p.GetRequiredService<NotificationService>()) // Important Background Monitor.
+        .AddHostedService(p => p.GetRequiredService<AlertService>()) // Important Background Monitor.
         .AddHostedService(p => p.GetRequiredService<OnTickService>())  // Starts & monitors the framework update cycle.
 
         // Cached Data That MUST be initialized before anything else for validity.

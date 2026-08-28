@@ -1,5 +1,4 @@
 using CkCommons.Helpers;
-using CkCommons.RichText;
 using CkCommons.Textures;
 using GagSpeak.Services;
 using GagSpeak.State.Caches;
@@ -69,7 +68,7 @@ public sealed class LociStatusCombo : CkLociComboBase<LociStatusInfo>
         ImGui.SameLine(ImGui.GetStyle().ItemInnerSpacing.X);
         var pos = ImGui.GetCursorPosY();
         ImGui.SetCursorPosY(pos + (size.Y - SelectableTextHeight) * 0.5f);
-        using (Fonts.Default150Percent.Push())
+        using (Fonts.DefaultScaled.Push())
             CkRichText.Text(titleSpace, lociStatus.Title);
 
         return ret;

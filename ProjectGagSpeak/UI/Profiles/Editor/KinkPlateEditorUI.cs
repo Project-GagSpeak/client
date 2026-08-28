@@ -8,7 +8,6 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data;
 using GagspeakAPI.Network;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Windowing;
@@ -206,7 +205,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
                 profile.Info.Description = refText;
         }
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileDescription, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
-            _ => Mediator.Publish(new KinkPlateLightCreateOpenMessage(MainHub.OwnUserData)));
+            _ => Mediator.Publish(new OpenUserLightProfileMessage(MainHub.OwnUserData)));
 
         CkGui.AttachTooltip("You're Profile Customization Access has been Revoked!" +
             "--SEP--You will not be able to edit your KinkPlate Description!", !canEdit);
@@ -215,7 +214,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
         var width = (ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) / 2;
 
         if (CkGui.IconTextButton(FAI.Expand, "Preview KinkPlate™ Light", width, id: MainHub.UID + "KinkPlatePreviewLight"))
-            Mediator.Publish(new KinkPlateLightCreateOpenMessage(MainHub.OwnUserData));
+            Mediator.Publish(new OpenUserLightProfileMessage(MainHub.OwnUserData));
         CkGui.AttachTooltip("Preview your Light KinkPlate™ in a standalone window!");
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfilePreviewLight, ImGui.GetWindowPos(), ImGui.GetWindowSize(), _ =>
         {

@@ -14,7 +14,7 @@ namespace GagSpeak.State.Managers;
 public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
     private readonly FavoritesConfig _favorites;
-    private readonly ConfigFileProvider _fileNames;
+    private readonly GsFiles _fileNames;
     private readonly HybridSaveService _saver;
     private readonly RemoteService _remotes;
 
@@ -22,7 +22,7 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
     private StorageItemEditor<Pattern> _itemEditor = new();
 
     public PatternManager(ILogger<PatternManager> logger, GagspeakMediator mediator,
-        FavoritesConfig favorites, ConfigFileProvider fileNames,
+        FavoritesConfig favorites, GsFiles fileNames,
         HybridSaveService saver, RemoteService remotes) : base(logger, mediator)
     {
         _favorites = favorites;
@@ -188,7 +188,7 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
     public int ConfigVersion => 0;
     public HybridSaveType SaveType => HybridSaveType.Json;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
+    public string GetFileName(GsFiles files, out bool isAccountUnique)
         => (isAccountUnique = false, files.Patterns).Item2;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize()

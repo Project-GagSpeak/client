@@ -12,7 +12,6 @@ using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.Utils;
-using GagSpeak.Watchers;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
@@ -181,7 +180,7 @@ public partial class SidePanelPair
         {
             var buttonW = CkGui.IconTextButtonSize(FAI.Upload, enableText);
             var txtWidth = width - buttonW - ImGui.GetStyle().ItemInnerSpacing.X;
-            CkGui.IconInputText($"##Timer{type}{k.UserData.UID}", txtWidth, FAI.Clock, "Ex: 2h8m43s..", ref timerStr, 12);
+            CkGui.IconInputText($"##Timer{type}{k.User.UID}", txtWidth, FAI.Clock, "Ex: 2h8m43s..", ref timerStr, 12);
             CkGui.AttachTooltip("Define a time to enable this state for (or blank to make permanent)" +
                 "--NL--When the timer expires, the state is automatically disabled." +
                 "--NL--You can also disable this early manually.");
@@ -206,7 +205,7 @@ public partial class SidePanelPair
             // Timer & Button Row.
             var buttonW = CkGui.IconTextButtonSize(FAI.PersonRays, "Force State");
             var txtWidth = width - buttonW - ImGui.GetStyle().ItemInnerSpacing.X;
-            CkGui.IconInputText($"##EmoteTimer-{k.UserData.UID}", txtWidth, FAI.Clock, "Ex: 2h8m43s..", ref cache.EmoteTimer, 12);
+            CkGui.IconInputText($"##EmoteTimer-{k.User.UID}", txtWidth, FAI.Clock, "Ex: 2h8m43s..", ref cache.EmoteTimer, 12);
             CkGui.AttachTooltip($"Define how long {dispName} will be locked in the selected looping emote state for." +
                 "--SEP--LockedEmoteState automatically disables when the timer expires. (leave blank for permanent)" +
                 "--NL--You can also disable this early manually.");
@@ -380,7 +379,7 @@ public partial class SidePanelPair
                     if (ImGui.Checkbox(checkboxLabel, ref enabled))
                     {
                         var newBitfield = k.PairGlobals.AllowedGarblerChannels.SetChannelState((int)channel, enabled);
-                        PermHelper.ChangeOtherGlobal(_hub, k.UserData, k.PairGlobals, "AllowedGarblerChannels", newBitfield);
+                        PermHelper.ChangeOtherGlobal(_hub, k.User, k.PairGlobals, "AllowedGarblerChannels", newBitfield);
                     }
 
                     // Only SameLine if not the third column

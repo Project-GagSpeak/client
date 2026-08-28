@@ -2,7 +2,6 @@ using Dalamud.Game.ClientState.Keys;
 using GagSpeak.GameInternals;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 

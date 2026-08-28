@@ -81,7 +81,7 @@ public class AchievementsUI : WindowMediatorSubscriberBase
     private void CenteredHeader()
     {
         var text = $"GagSpeak Achievements ({ClientAchievements.Completed}/{ClientAchievements.Total})";
-        using (Fonts.UidFont.Push())
+        using (Fonts.SubtitleFont.Push())
         {
             var uidTextSize = ImGui.CalcTextSize(text);
             ImGui.SetCursorPosX((ImGui.GetWindowContentRegionMax().X - ImGui.GetWindowContentRegionMin().X) / 2 - uidTextSize.X / 2);

@@ -1,5 +1,4 @@
 using CheapLoc;
-using Dalamud.Bindings.ImGui;
 
 namespace GagSpeak.Localization
 {
@@ -1096,6 +1095,7 @@ namespace GagSpeak.Localization
         public readonly string TabsGlobal = Loc.Localize("Settings_TabsGlobal", "General");
         public readonly string TabsHardcore = Loc.Localize("Settings_TabsHardcore", "Hardcore");
         public readonly string TabsPreferences = Loc.Localize("Settings_TabsPreferences", "Chat & UI");
+        public readonly string TabsVanity = Loc.Localize("Settings_TabsVanity", "Vanity Options");
         public readonly string TabsAccounts = Loc.Localize("Settings_TabsAccounts", "Account");
 
         public DDSPrefs DDSPrefs { get; set; } = new();

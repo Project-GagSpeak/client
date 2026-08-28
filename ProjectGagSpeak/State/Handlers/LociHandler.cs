@@ -2,7 +2,6 @@ using GagSpeak.Interop;
 using GagSpeak.Interop.Helpers;
 using GagSpeak.State.Caches;
 using GagspeakAPI.Data;
-using LociApi.Enums;
 using Microsoft.IdentityModel.Tokens;
 
 namespace GagSpeak.State.Handlers;

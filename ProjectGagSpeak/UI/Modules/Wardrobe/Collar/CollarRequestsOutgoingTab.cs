@@ -60,14 +60,14 @@ public class CollarRequestsOutgoingTab : IFancyTab
         using var _ = CkRaii.FramedChildPaddedW("Creator", width, createorH.AddWinPadY(), 0, GsCol.VibrantPink.Uint(), FancyTabBar.RoundingInner);
 
         var spacing = ImUtf8.ItemInnerSpacing.X;
-        var titleSize = CkGui.CalcFontTextSize("Create Request", Fonts.UidFont);
+        var titleSize = CkGui.CalcFontTextSize("Create Request", Fonts.SubtitleFont);
         var sendWidth = CkGui.IconTextButtonSize(FAI.CloudUploadAlt, "Send");
         var lineSize = titleSize.X + sendWidth + ImUtf8.FrameHeight;
         
         using (ImRaii.Group())
         {
 
-            CkGui.FontText("Create Request", Fonts.UidFont);
+            CkGui.FontText("Create Request", Fonts.SubtitleFont);
             CkGui.Separator(GsCol.VibrantPink.Uint(), lineSize);
 
             // the Kinkster Selection.

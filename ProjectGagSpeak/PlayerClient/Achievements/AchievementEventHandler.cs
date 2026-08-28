@@ -11,6 +11,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.User;
 using GagspeakAPI.Util;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;

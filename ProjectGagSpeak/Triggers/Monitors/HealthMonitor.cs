@@ -7,7 +7,6 @@ using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
-using GagSpeak.Watchers;
 
 namespace GagSpeak.State.Listeners;
 

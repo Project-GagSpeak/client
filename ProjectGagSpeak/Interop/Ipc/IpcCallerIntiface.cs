@@ -37,7 +37,7 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
     public static bool APIAvailable { get; private set; } = false;
     public static bool ScanningForDevices { get; private set; } = false;
     public static bool IsConnected => client.Connected;
-    public bool AutoConnect => _config.Current.IntifaceAutoConnect;
+    public bool AutoConnect => _config.Data.IntifaceAutoConnect;
 
     public void CheckAPI()
     {
@@ -91,8 +91,8 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
         => _mediator.Publish(new IntifaceClientDisconnected());
 
     private ButtplugWebsocketConnector CreateNewConnection()
-        => _config.Current.IntifaceConnectionSocket is not null
-        ? new ButtplugWebsocketConnector(new Uri($"{_config.Current.IntifaceConnectionSocket}"))
+        => _config.Data.IntifaceConnectionSocket is not null
+        ? new ButtplugWebsocketConnector(new Uri($"{_config.Data.IntifaceConnectionSocket}"))
         : new ButtplugWebsocketConnector(new Uri("ws://localhost:12345"));
 
     public void OpenAndConnect()

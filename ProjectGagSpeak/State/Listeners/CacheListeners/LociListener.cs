@@ -226,7 +226,7 @@ public class LociListener : DisposableMediatorSubscriberBase
         // It is valid, so push the update out
         try
         {
-            await _dds.ApplyTuplesToKinkster(match.UserData, data, false).ConfigureAwait(false);
+            await _dds.ApplyTuplesToKinkster(match.User, data, false).ConfigureAwait(false);
         }
         catch (Bagagwa)
         {

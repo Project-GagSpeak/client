@@ -13,6 +13,7 @@ using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
+using GagspeakAPI.User;
 
 namespace GagSpeak.State.Handlers;
 
@@ -50,7 +51,7 @@ public class PlayerCtrlHandler
 
     public async void ApplyHypnoEffect(UserData enactor, HypnoticEffect effect, DateTimeOffset expireTimeUTC, string? image)
     {
-        if (!_kinksters.TryGetKinkster(enactor, out var kinkster))
+        if (!_kinksters.TryGetValue(enactor, out var kinkster))
             throw new Bagagwa($"Failed to get Kinkster for UID: {enactor.UID} for Hypnosis!");
         
         try
@@ -83,7 +84,7 @@ public class PlayerCtrlHandler
 
     public void EnableLockedFollow(UserData enactor)
     {
-        if (!_kinksters.TryGetKinkster(enactor, out var kinkster))
+        if (!_kinksters.TryGetValue(enactor, out var kinkster))
             throw new Exception($"Failed to get Kinkster for UID: {enactor.UID} for Locked Follow!");
 
         _logger.LogInformation($"[{kinkster.GetNickAliasOrUid()}] Enabled your LockedFollowing state!", LoggerType.HardcoreMovement);
@@ -122,7 +123,7 @@ public class PlayerCtrlHandler
 
     public void EnableLockedEmote(UserData enactor)
     {
-        if (!_kinksters.TryGetKinkster(enactor, out var kinkster))
+        if (!_kinksters.TryGetValue(enactor, out var kinkster))
             throw new Exception($"Failed to get Kinkster for UID: {enactor.UID} for Locked Emote!");
 
         _logger.LogInformation($"[{enactor.AliasOrUID}] Enabled your LockedFollowing state!", LoggerType.HardcoreMovement);
@@ -140,7 +141,7 @@ public class PlayerCtrlHandler
 
     public void UpdateLockedEmote(UserData enactor)
     {
-        if (!_kinksters.TryGetKinkster(enactor, out var kinkster))
+        if (!_kinksters.TryGetValue(enactor, out var kinkster))
             throw new Exception($"Failed to get Kinkster for UID: {enactor.UID} for Locked Emote Update!");
 
         _logger.LogInformation($"[{kinkster.GetNickAliasOrUid()}] Updated your LockedFollowing state!", LoggerType.HardcoreMovement);
@@ -245,7 +246,7 @@ public class PlayerCtrlHandler
 
     public void EnableHiddenChatBoxes(UserData enactor)
     {
-        if (!_kinksters.TryGetKinkster(enactor, out var kinkster))
+        if (!_kinksters.TryGetValue(enactor, out var kinkster))
             throw new Bagagwa($"Failed to get Kinkster for UID: {enactor.UID} for Hidden Chat Boxes!");
 
         AddonChatLog.SetChatPanelVisibility(false);
@@ -277,7 +278,7 @@ public class PlayerCtrlHandler
 
     public void HideChatInputVisibility(UserData enactor)
     {
-        if (!_kinksters.TryGetKinkster(enactor, out var kinkster))
+        if (!_kinksters.TryGetValue(enactor, out var kinkster))
             throw new Bagagwa($"Failed to get Kinkster for UID: {enactor.UID} for Hidden Chat Input!");
 
         AddonChatLog.SetChatInputVisibility(false);
@@ -309,7 +310,7 @@ public class PlayerCtrlHandler
 
     public void BlockChatInput(UserData enactor)
     {
-        if (!_kinksters.TryGetKinkster(enactor, out var kinkster))
+        if (!_kinksters.TryGetValue(enactor, out var kinkster))
             throw new Bagagwa($"Failed to get Kinkster for UID: {enactor.UID} for Blocked Chat Input!");
         
         _logger.LogInformation($"[{kinkster.GetNickAliasOrUid()}] Enabled your BlockedChatInput state!", LoggerType.HardcoreActions);

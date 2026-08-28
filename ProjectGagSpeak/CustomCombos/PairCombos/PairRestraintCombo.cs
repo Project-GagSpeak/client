@@ -65,7 +65,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
         var updateType = _pairRef.ActiveRestraint.Identifier== Guid.Empty
             ? DataUpdateType.Applied : DataUpdateType.Swapped;
         // construct the dto to send.
-        var dto = new PushKinksterActiveRestraint(_pairRef.UserData, updateType)
+        var dto = new PushKinksterActiveRestraint(_pairRef.User, updateType)
         {
             ActiveSetId = Current.Id,
             Enabler = MainHub.UID,
@@ -113,7 +113,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
             {
                 // if we have changes, we will apply them.
                 var newLayers = _pairRef.ActiveRestraint.ActiveLayers | changes;
-                var dto = new PushKinksterActiveRestraint(_pairRef.UserData, DataUpdateType.LayersApplied) { ActiveLayers = newLayers };
+                var dto = new PushKinksterActiveRestraint(_pairRef.User, DataUpdateType.LayersApplied) { ActiveLayers = newLayers };
                 var result = await _mainHub.UserChangeKinksterActiveRestraint(dto);
                 if (result.ErrorCode is not GagSpeakApiEc.Success)
                 {
@@ -168,7 +168,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
                     return;
                 // if we have changes, we will apply them.
                 var newLayers = _pairRef.ActiveRestraint.ActiveLayers & ~changes;
-                var dto = new PushKinksterActiveRestraint(_pairRef.UserData, DataUpdateType.LayersRemoved) { ActiveLayers = newLayers };
+                var dto = new PushKinksterActiveRestraint(_pairRef.User, DataUpdateType.LayersRemoved) { ActiveLayers = newLayers };
                 var result = await _mainHub.UserChangeKinksterActiveRestraint(dto);
                 if (result.ErrorCode is not GagSpeakApiEc.Success)
                 {

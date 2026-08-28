@@ -16,7 +16,6 @@ using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Hub;
 using OtterGui;
 using OtterGui.Text;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -180,7 +179,7 @@ public partial class SidePanelPair
         CkGui.HoverIconText(FAI.QuestionCircle, ImGuiColors.TankBlue.ToUint(), ImGui.GetColorU32(ImGuiCol.TextDisabled));
         if (ImGui.IsItemHovered())
         {
-            using (Fonts.UidFont.Push())
+            using (Fonts.SubtitleFont.Push())
                 CkGui.AttachTooltip($"--COL--IMPORTANT:--COL-- Once in hardcore mode, you can only change EditAccess for {dispName}." +
                     $"--NL--{dispName} will have control over any permissions they have edit access to instead." +
                     "--NL--Be sure you are ok with this before enabling!", color: ImGuiColors.DalamudRed);
@@ -362,23 +361,23 @@ public partial class SidePanelPair
 
         ImGui.TextUnformatted("Individual Pair Functions");
         if (CkGui.IconTextButton(FAI.User, "Open Profile", width, true))
-            _mediator.Publish(new KinkPlateLightCreateOpenMessage(kinkster.UserData));
+            _mediator.Publish(new OpenUserLightProfileMessage(kinkster.User));
         CkGui.AttachTooltip($"Opens {dispName}'s profile!");
 
         if (CkGui.IconTextButton(FAI.ExclamationTriangle, $"Report {dispName}'s KinkPlate", width, true))
-            _mediator.Publish(new OpenReportUIMessage(kinkster.UserData, ReportKind.Profile));
+            _mediator.Publish(new OpenReportUIMessage(kinkster.User, ReportKind.Profile));
         CkGui.AttachTooltip($"Snapshot {dispName}'s KinkPlate and make a report with its state.");
         
         if (CkGui.IconTextButton(FAI.Trash, "Unpair Permanently", width, true, !KeyMonitor.CtrlPressed() || !KeyMonitor.ShiftPressed()))
             UiService.SetUITask(async () =>
             {
-                var res = await _hub.UserRemoveKinkster(new(kinkster.UserData)).ConfigureAwait(false);
+                var res = await _hub.UserRemoveKinkster(new(kinkster.User)).ConfigureAwait(false);
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                     _logger.LogWarning($"Failed to remove pair {dispName}. Reason: {res.ErrorCode}");
                 else
                 {
                     _logger.LogInformation($"Successfully removed pair {dispName}.");
-                    _kinksters.RemoveKinkster(new(kinkster.UserData));
+                    _kinksters.RemoveKinkster(new(kinkster.User));
                     _service.ClearDisplay();
                 }
             });

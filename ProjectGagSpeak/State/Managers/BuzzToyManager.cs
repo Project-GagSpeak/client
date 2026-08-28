@@ -18,7 +18,7 @@ public class BuzzToyManager : IDisposable, IHybridSavable
     private readonly ILogger<BuzzToyManager> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly IpcCallerIntiface _ipc;
-    private readonly ConfigFileProvider _fileNames;
+    private readonly GsFiles _fileNames;
     private readonly HybridSaveService _saver;
 
     private BuzzToyStorage _storage = new();
@@ -29,7 +29,7 @@ public class BuzzToyManager : IDisposable, IHybridSavable
     private CancellationTokenSource _batteryCTS;
 
     public BuzzToyManager(ILogger<BuzzToyManager> logger, GagspeakMediator mediator,
-        IpcCallerIntiface ipc, ConfigFileProvider fileNames, HybridSaveService saver)
+        IpcCallerIntiface ipc, GsFiles fileNames, HybridSaveService saver)
     {
         _logger = logger;
         _mediator = mediator;
@@ -232,7 +232,7 @@ public class BuzzToyManager : IDisposable, IHybridSavable
     public int ConfigVersion => 0;
     public HybridSaveType SaveType => HybridSaveType.Json;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
+    public string GetFileName(GsFiles files, out bool isAccountUnique)
         => (isAccountUnique = false, files.BuzzToys).Item2;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize()

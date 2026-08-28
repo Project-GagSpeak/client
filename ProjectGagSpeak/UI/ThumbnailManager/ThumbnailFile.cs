@@ -31,7 +31,7 @@ public sealed class ThumbnailFile : IDisposable
         if (newName == FileNameNoExtension)
             return false;
 
-        var dir = Path.Combine(ConfigFileProvider.ThumbnailDirectory, ParentFolder.FolderName.ToString());
+        var dir = Path.Combine(GsFiles.ThumbnailDirectory, ParentFolder.FolderName.ToString());
         var oldPath = Path.Combine(dir, FileName);
         var newPath = Path.Combine(dir, newName + ".png");
 

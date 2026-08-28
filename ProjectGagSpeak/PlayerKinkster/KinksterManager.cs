@@ -1,17 +1,18 @@
 using CkCommons;
 using Dalamud.Game.Gui.ContextMenu;
 using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Interface.ImGuiNotification;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using GagSpeak.Interop.Helpers;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Attributes;
+using GagspeakAPI.Connection;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Comparer;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Network;
+using GagspeakAPI.User;
 using GagspeakAPI.Util;
 using System.Diagnostics.CodeAnalysis;
 
@@ -56,6 +57,8 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         DisposeKinksters();
     }
 
+    public List<UserData> Keys => [ .._allKinksters.Keys ];
+
     /// <summary>
     ///   Adds a Kinkster to the manager. Called by GetPairedUsers upon connection.
     ///   Also called when a kinkster goes online, or after accepting a kinkster request.
@@ -99,7 +102,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     ///   Usually called when unpairing from a kinkster, or when a 
     ///   kinkster unpaired you.
     /// </summary>
-    public void RemoveKinkster(KinksterBase dto)
+    public void RemoveKinkster(UserDto dto)
     {
         // try and get the value from the client's pair list
         if (!_allKinksters.TryGetValue(dto.User, out var pair))
@@ -109,6 +112,18 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         _allKinksters.TryRemove(dto.User, out _);
         Mediator.Publish(new KinksterRemovedMessage(dto.User));
         RecreateLazy();
+    }
+
+    /// <summary>
+    ///   Updates the Alias/DisplayName/Colors of the kinkster's UserData.
+    /// </summary>
+    /// <exception cref="InvalidOperationException"/>
+    public void UpdateUserVanity(UserDto newUserDto)
+    {
+        if (!_allKinksters.TryGetValue(newUserDto.User, out var pair))
+            return;
+        pair.UpdateUserData(newUserDto.User);
+        Logger.LogDebug($"Updated vanity for {pair.GetNickAliasOrUid()}!", LoggerType.PairManagement);
     }
 
     private void DisposeKinksters()
@@ -122,7 +137,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     }
 
     // Upgrades a temporary kinkster to a permanent one. (Include this if we ever do add temp kinkster pairing)
-    public void UpdateToPermanent(KinksterBase dto)
+    public void UpdateToPermanent(UserDto dto)
     {
         if (!_allKinksters.TryGetValue(dto.User, out var kinkster))
             return;
@@ -176,26 +191,14 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         if (!_allKinksters.TryGetValue(dto.User, out var kinkster))
             throw new InvalidOperationException($"No user found [{dto}]");
 
-        // Refresh any existing profile data.
-        Mediator.Publish(new ClearKinkPlateDataMessage(dto.User));
+        // Refresh any existing profile data. (Remove this later)
+        Mediator.Publish(new ClearUserProfileMessage(dto.User));
 
         // If they were already online simply recreate the list.
         if (kinkster.IsOnline)
         {
             RecreateLazy();
             return;
-        }
-
-        // Init the proper first-time online message. (also prevent reload spamming logs)
-        if (notify && _config.Current.OnlineNotifications)
-        {
-            var nick = kinkster.GetNickname();
-            // Do not show if we limit it to nicked pairs and there is no nickname.
-            if (!(_config.Current.NotifyLimitToNickedPairs && string.IsNullOrEmpty(nick)))
-            {
-                var msg = !string.IsNullOrEmpty(nick) ? $"{nick} ({dto.User.AliasOrUID}) is now online" : $"{dto.User.AliasOrUID} is now online";
-                Mediator.Publish(new NotificationMessage("Kinkster Online", msg, NotificationType.Info, TimeSpan.FromSeconds(2)));
-            }
         }
 
         Logger.LogTrace($"Marked {kinkster.PlayerName}({kinkster.GetNickAliasOrUid()}) as online", LoggerType.PairManagement);
@@ -213,7 +216,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         if (_allKinksters.TryGetValue(user, out var pair))
         {
             Logger.LogTrace($"Marked {pair.PlayerName}({pair.GetNickAliasOrUid()}) as offline", LoggerType.PairManagement);
-            Mediator.Publish(new ClearKinkPlateDataMessage(pair.UserData));
+            Mediator.Publish(new ClearUserProfileMessage(pair.User));
             pair.MarkOffline();
             RecreateLazy();
         }
@@ -224,7 +227,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         if (PlayerData.InPvP || !k.IsRendered)
             return;
         
-        if (_config.Current.TargetWithFocus)
+        if (_config.Data.UseFocusTargetOnUsers)
             TargetSystem.Instance()->FocusTarget = (GameObject*)k.PlayerAddress;
         else
             TargetSystem.Instance()->SetHardTarget((GameObject*)k.PlayerAddress);
@@ -233,10 +236,22 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     public void RecreateLazy()
     {
         _directPairsInternal = new(() => _allKinksters.Select(k => k.Value).ToList());
-        Mediator.Publish(new FolderUpdateKinkster());
+        Mediator.Publish(new DDSUpdateKinkster());
     }
 
     #region ManagerHelpers
+    public bool Contains(string uid)
+        => _allKinksters.ContainsKey(new(uid));
+
+    public bool Contains(UserData user)
+        => _allKinksters.ContainsKey(user);
+
+    public bool TryGetValue(UserData user, [NotNullWhen(true)] out Kinkster? k)
+        => _allKinksters.TryGetValue(user, out k);
+
+    public Kinkster? GetValueOrDefault(UserData user)
+        => _allKinksters.TryGetValue(user, out var kinkster) ? kinkster : null;
+
     /// <summary>
     ///   Kinksters that we have an OnlineUser DTO of, implying they are connected.
     /// </summary>
@@ -265,14 +280,6 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     public List<UserData> GetVisibleConnected() => _allKinksters.Where(p => p.Value.IsRendered && p.Value.IsOnline).Select(p => p.Key).ToList();
 
     /// <summary>
-    ///   If a Kinkster exists given their UID.
-    /// </summary>
-    public bool ContainsKinkster(string uid) => _allKinksters.ContainsKey(new(uid));
-
-    public bool TryGetKinkster(UserData user, [NotNullWhen(true)] out Kinkster? kinkster)
-        => _allKinksters.TryGetValue(user, out kinkster);
-
-    /// <summary>
     ///   Useful for cases where you have the UID but you dont have the pair object and 
     ///   need a way to get the nickname/alias without iterating through them all.
     /// </summary>
@@ -290,12 +297,6 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
 
     public UserData? GetFromAliasOrUid(string aliasOrUid)
         => _allKinksters.Keys.FirstOrDefault(p => string.Equals(p.AliasOrUID, aliasOrUid, StringComparison.OrdinalIgnoreCase));
-
-    /// <summary>
-    ///   Attempt to retrieve a kinkster by <see cref="UserData"/>. If failed, null is returned.
-    /// </summary>
-    public Kinkster? GetUserOrDefault(UserData user) => _allKinksters.TryGetValue(user, out var kinkster) ? kinkster : null;
-
     #endregion ManagerHelpers
 
     #region Updates
@@ -725,7 +726,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     {
         Logger.LogInformation("Opening Pair Context Menu of type " + args.MenuType, LoggerType.PairManagement);
         if (args.MenuType is ContextMenuType.Inventory) return;
-        if (!_config.Current.ShowContextMenus) return;
+        if (!_config.Data.ShowContextMenus) return;
         if (args.Target is not MenuTargetDefault target || target.TargetObjectId == 0) return;
         // Find the kinkster that matches this and display the results.
         if (DirectPairs.FirstOrDefault(p => p.IsRendered && p.PlayerObjectId == target.TargetObjectId) is not { } match)
@@ -757,7 +758,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
             Name = new SeStringBuilder().AddText("Open KinkPlate").Build(),
             PrefixChar = 'G',
             PrefixColor = 561,
-            OnClicked = (a) => { Mediator.Publish(new KinkPlateCreateOpenMessage(kinkster)); },
+            OnClicked = (a) => { Mediator.Publish(new OpenUserProfileMessage(kinkster)); },
         });
         args.AddMenuItem(new MenuItem()
         {

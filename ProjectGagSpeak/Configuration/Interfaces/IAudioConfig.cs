@@ -1,10 +1,3 @@
-using CkCommons;
-using CkCommons.HybridSaver;
-using Dalamud.Game.Text;
-using FFXIVClientStructs.FFXIV.Client.UI;
-using NAudio.Wave;
-using TerraFX.Interop.Windows;
-
 namespace GagSpeak.PlayerClient;
 
 public interface IAudioConfig<T> where T : IAudioConfigData

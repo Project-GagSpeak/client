@@ -9,7 +9,6 @@ using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Events;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Watchers;
 using GagSpeak.WebAPI;
 using Lumina.Excel.Sheets;
 
@@ -78,9 +77,9 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
         if (!MainHub.IsServerAlive)
             return;
 
-        PrivacyEntry.Shown = _mainConfig.Current.ShowPrivacyRadar;
-        UpdateMessagesEntry.Shown = (EventAggregator.UnreadInteractionsCount is 0) ? false : _mainConfig.Current.ShowActionNotifs;
-        VibratorEntry.Shown = _mainConfig.Current.ShowVibeStatus;
+        PrivacyEntry.Shown = _mainConfig.Data.ShowPrivacyRadar;
+        UpdateMessagesEntry.Shown = (EventAggregator.UnreadInteractionsCount is 0) ? false : _mainConfig.Data.ShowActionNotifs;
+        VibratorEntry.Shown = _mainConfig.Data.ShowVibeStatus;
 
         if (PrivacyEntry.Shown)
         {

@@ -1,9 +1,10 @@
-using CkCommons.RichText;
+using CkCommons.Classes;
+using CkCommons.RichText.Emoji;
 using CkCommons.Textures;
 using Dalamud.Interface.Textures.TextureWraps;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagspeakAPI.Data;
+using GagspeakAPI.User;
 using Microsoft.Extensions.Hosting;
 
 namespace GagSpeak.Services.Textures;
@@ -14,13 +15,19 @@ namespace GagSpeak.Services.Textures;
 public class CosmeticService : IHostedService, IDisposable
 {
     private readonly ILogger<CosmeticService> _logger;
+    private readonly SimpleThreadPool _pool;
+
     public CosmeticService(ILogger<CosmeticService> logger, GagspeakMediator mediator)
     {
         _logger = logger;
+        _pool = new SimpleThreadPool();
+
+        Loading = new ImageFile(_pool, Path.Combine(GsFiles.AssemblyDirectoryName, "Assets\\RequiredImages\\loading_tmp.gif"));
+        Error = new ImageFile(_pool, Path.Combine(GsFiles.AssemblyDirectoryName, "Assets\\RequiredImages\\error_tmp.png"));
+
         CoreTextures = TextureManager.CreateEnumTextureCache(CosmeticLabels.NecessaryImages);
         EmoteTextures = TextureManager.CreateEnumTextureCache(CosmeticLabels.ChatEmoteTextures);
         IntifaceTextures = TextureManager.CreateEnumTextureCache(CosmeticLabels.IntifaceImages);
-        CkRichText.DefineEmoteResolver(TryResolveEmote);
 
         LoadAllCosmetics();
     }
@@ -29,9 +36,14 @@ public class CosmeticService : IHostedService, IDisposable
     public static EnumTextureCache<CoreEmoteTexture>    EmoteTextures;
     public static EnumTextureCache<CoreIntifaceElement> IntifaceTextures;
     private static ConcurrentDictionary<string, IDalamudTextureWrap> InternalCosmeticCache = [];
-
+    public static ImageFile Loading { get; private set; }
+    public static ImageFile Error { get; private set; }
     public void Dispose()
     {
+        Loading.Dispose();
+        Error.Dispose();
+        _pool.Dispose();
+
         _logger.LogInformation("GagSpeak Profile Cosmetic Cache Disposing.");
         foreach (var texture in InternalCosmeticCache.Values)
             texture?.Dispose();
@@ -39,8 +51,18 @@ public class CosmeticService : IHostedService, IDisposable
         InternalCosmeticCache.Clear();
     }
 
-    private IDalamudTextureWrap? TryResolveEmote(string name)
-        => Enum.TryParse<CoreEmoteTexture>(name, out var key) ? EmoteTextures.Cache.GetValueOrDefault(key) : null;
+    public static byte[] GetDefaultIconBytes()
+    {
+        var path = Path.Combine(GsFiles.AssemblyDirectoryName, "Assets\\RequiredImages\\icon256bg.png");
+        return File.Exists(path) ? File.ReadAllBytes(path) : [];
+    }
+
+    public static byte[] GetDefaultBackgroundBytes()
+    {
+        // Get the folder where your plugin DLL is located
+        var path = Path.Combine(GsFiles.AssemblyDirectoryName, "Assets\\RequiredImages\\default_userprofile_bg.png"); // Adjust path as needed
+        return File.Exists(path) ? File.ReadAllBytes(path) : [];
+    }
 
     public void LoadAllCosmetics()
     {
@@ -160,7 +182,7 @@ public class CosmeticService : IHostedService, IDisposable
             // Ensure our directories exist.
             foreach (var (_, subDir, _) in transferTargets)
             {
-                var targetDir = Path.Combine(ConfigFileProvider.ThumbnailDirectory, subDir);
+                var targetDir = Path.Combine(GsFiles.ThumbnailDirectory, subDir);
                 Directory.CreateDirectory(targetDir);
             }
 
@@ -168,7 +190,7 @@ public class CosmeticService : IHostedService, IDisposable
             foreach (var (sourceFile, subDirectory, targetFile) in transferTargets)
             {
                 var sourcePath = Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName!, "Assets", "RequiredImages", sourceFile);
-                var destDir = Path.Combine(ConfigFileProvider.ThumbnailDirectory, subDirectory);
+                var destDir = Path.Combine(GsFiles.ThumbnailDirectory, subDirectory);
                 var destPath = Path.Combine(destDir, targetFile);
 
                 // Migrate the file if it does not exist in the target directory (renaming it in the process)

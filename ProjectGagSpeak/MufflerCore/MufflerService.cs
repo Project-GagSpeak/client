@@ -37,7 +37,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
     private static GagMuffleType _activeMuffleType = GagMuffleType.None;
 
     public MufflerService(ILogger<MufflerService> logger, GagspeakMediator mediator, MainConfig mainConfig,
-        Ipa_EN_FR_JP_SP_Handler ipaParser, ConfigFileProvider fileprovider)
+        Ipa_EN_FR_JP_SP_Handler ipaParser, GsFiles fileprovider)
         : base(logger, mediator)
     {
         _mainConfig = mainConfig;
@@ -74,7 +74,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
 
     private void CreateGags()
     {
-        var masterList = _mainConfig.Current.LanguageDialect switch
+        var masterList = _mainConfig.Data.LanguageDialect switch
         {
             GarbleCoreDialect.UK => GagPhonetics.MasterListEN_UK,
             GarbleCoreDialect.US => GagPhonetics.MasterListEN_US,
@@ -269,7 +269,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
     /// </summary>
     private string GarbleWithFallback(string word, bool isAllCaps, bool isFirstLetterCapitalized)
     {
-        if (_mainConfig.Current.GarbleWordsNotInDictionary) return word;
+        if (_mainConfig.Data.GarbleWordsNotInDictionary) return word;
         
         // Return the no sound converter for no sound words
         if (_activeMuffleType.HasFlag(GagMuffleType.NoSound))

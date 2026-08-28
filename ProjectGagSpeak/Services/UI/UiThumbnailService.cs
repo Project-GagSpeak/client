@@ -29,7 +29,7 @@ public sealed class UiThumbnailService : IDisposable
     public ImageDataType Kind { get; private set; } = ImageDataType.None;
     public ThumbnailFolder Folder => _folder;
 
-    public Vector2 ItemSize => BaseSize * _config.Current.FileIconScale;
+    public Vector2 ItemSize => BaseSize * _config.Data.FileIconScale;
     public Vector2 DispSize => Kind switch
     {
         ImageDataType.Blindfolds or ImageDataType.Hypnosis or ImageDataType.Collar => BaseSize,

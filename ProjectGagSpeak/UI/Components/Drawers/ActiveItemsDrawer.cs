@@ -27,7 +27,6 @@ using GagspeakAPI.Util;
 using ImSharp;
 using OtterGui.Text;
 using Penumbra.GameData.Enums;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Gui.Components;
 

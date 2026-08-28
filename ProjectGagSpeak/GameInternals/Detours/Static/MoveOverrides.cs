@@ -268,7 +268,7 @@ public unsafe class MoveOverrides : IDisposable
         {
             if (NodeThrottler.Throttle("HcTaskFunc.Jump", 1250))
             {
-                ChatService.SendGeneralActionCommand(2); // Jumping!
+                ChatControlService.SendGeneralActionCommand(2); // Jumping!
                 Svc.Logger.Verbose("Jumping to try and get unstuck.");
             }
         }

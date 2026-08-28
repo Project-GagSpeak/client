@@ -6,10 +6,11 @@ using GagSpeak.State.Handlers;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
+using GagspeakAPI.Connection;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Struct;
 using GagspeakAPI.Extensions;
-using GagspeakAPI.Network;
+using GagspeakAPI.User;
 using GagspeakAPI.Util;
 using Microsoft.Extensions.Hosting;
 using Penumbra.GameData.Enums;
@@ -260,7 +261,7 @@ public class CacheStateManager : IHostedService
             }
             _lociHandler.TryAddLociItemToCache(key, item.LociData);
             // We have to check if the item we are about to apply traits for actually has the ApplyTraits flag set.
-            if (_config.Current.CursedItemsApplyTraits && validCursedItems[cursedId].ApplyTraits)
+            if (_config.Data.CursedItemsApplyTraits && validCursedItems[cursedId].ApplyTraits)
                 _traitsHandler.TryAddTraitsToCache(key, item.Traits & ~(Traits.Immobile | Traits.Weighty));
             _arousalHandler.TryAddArousalToCache(key, item.Arousal);
             // Conditional Additions.
@@ -284,7 +285,7 @@ public class CacheStateManager : IHostedService
             }
             _lociHandler.TryAddLociItemToCache(key, refGag.LociData);
             _cplusHandler.TryAddToCache(key, refGag.CPlusProfile);
-            if (_config.Current.CursedItemsApplyTraits && loot.ApplyTraits)
+            if (_config.Data.CursedItemsApplyTraits && loot.ApplyTraits)
                 _traitsHandler.TryAddTraitsToCache(key, refGag.Traits & ~(Traits.Immobile | Traits.Weighty));
             _arousalHandler.TryAddArousalToCache(key, refGag.Arousal);
 
@@ -621,8 +622,8 @@ public class CacheStateManager : IHostedService
             AddArousalStrength(key, item.RefItem.Arousal)
         };
         // Conditional additions
-        if (_config.Current.CursedItemsApplyTraits && item.ApplyTraits) tasks.Add(AddTraits(key, item.RefItem.Traits &~ (Traits.Immobile | Traits.Weighty)));
-        if (_config.Current.CursedItemsApplyOverlays)
+        if (_config.Data.CursedItemsApplyTraits && item.ApplyTraits) tasks.Add(AddTraits(key, item.RefItem.Traits &~ (Traits.Immobile | Traits.Weighty)));
+        if (_config.Data.CursedItemsApplyOverlays)
         {
             if (item.RefItem is BlindfoldRestriction bfr) tasks.Add(AddBlindfold(key, bfr.Properties));
             if (item.RefItem is HypnoticRestriction hr) tasks.Add(AddHypnoEffect(key, hr.Properties));
@@ -672,7 +673,7 @@ public class CacheStateManager : IHostedService
             tasks.Add(AddModPreset(key, refGag.Mod));
             tasks.Add(AddProfile(key, refGag.CPlusProfile));
         }
-        if (_config.Current.CursedItemsApplyTraits && item.ApplyTraits)
+        if (_config.Data.CursedItemsApplyTraits && item.ApplyTraits)
             tasks.Add(AddTraits(key, refGag.Traits & ~(Traits.Immobile | Traits.Weighty)));
 
         // Run in parallel.
@@ -753,7 +754,7 @@ public class CacheStateManager : IHostedService
     /// <summary> Gates a gag's traits when applied by a Mimic, so cursed loot gags never apply traits unrestricted. </summary>
     private Traits GagTraitsForEnabler(GarblerRestriction gag, string enabler)
         => enabler != "Mimic" ? gag.Traits
-            : _config.Current.CursedItemsApplyTraits ? gag.Traits & ~(Traits.Immobile | Traits.Weighty) : Traits.None;
+            : _config.Data.CursedItemsApplyTraits ? gag.Traits & ~(Traits.Immobile | Traits.Weighty) : Traits.None;
 
     private async Task TimedWhenAll(string label, IEnumerable<Task> tasks)
     {

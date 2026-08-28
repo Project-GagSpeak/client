@@ -2,7 +2,7 @@
 using CkCommons;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagspeakAPI.Network;
+using GagspeakAPI.Connection;
 
 namespace GagSpeak.PlayerClient;
 
@@ -15,10 +15,10 @@ public class AccountManager
     private readonly ILogger<AccountManager> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly AccountConfig _config;
-    private readonly ConfigFileProvider _fileProvider;
+    private readonly GsFiles _fileProvider;
 
     public AccountManager(ILogger<AccountManager> logger, GagspeakMediator mediator,
-        AccountConfig config, ConfigFileProvider files)
+        AccountConfig config, GsFiles files)
     {
         _logger = logger;
         _mediator = mediator;

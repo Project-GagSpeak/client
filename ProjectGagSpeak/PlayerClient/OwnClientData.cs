@@ -3,10 +3,10 @@ using GagSpeak.Kinksters;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
-using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Data.Struct;
 using GagspeakAPI.Network;
+using GagspeakAPI.User;
 using GagspeakAPI.Util;
 
 namespace GagSpeak.PlayerClient;

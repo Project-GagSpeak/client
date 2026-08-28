@@ -8,7 +8,6 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
-using GagspeakAPI.Extensions;
 using System.Collections.Immutable;
 using Dalamud.Game.Gui;
 

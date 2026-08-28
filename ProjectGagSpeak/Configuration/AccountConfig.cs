@@ -59,7 +59,7 @@ public class AccountConfig : IHybridSavable
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     public int ConfigVersion => 2;
     public HybridSaveType SaveType => HybridSaveType.Json;
-    public string GetFileName(ConfigFileProvider files, out bool upa) => (upa = false, files.ServerConfig).Item2;
+    public string GetFileName(GsFiles files, out bool upa) => (upa = false, files.AccountConfig).Item2;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize()
     {
@@ -79,7 +79,7 @@ public class AccountConfig : IHybridSavable
     public void Save() => _saver.Save(this);
     public void Load()
     {
-        var file = _saver.FileNames.ServerConfig;
+        var file = _saver.FileNames.AccountConfig;
         _logger.LogInformation("Loading in Config for file: " + file);
         if (!File.Exists(file))
         {

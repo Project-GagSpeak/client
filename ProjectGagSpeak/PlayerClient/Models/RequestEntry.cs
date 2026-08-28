@@ -8,22 +8,24 @@ namespace GagSpeak.PlayerClient;
 /// </summary>
 public class RequestEntry(KinksterRequest request) : IEquatable<RequestEntry>, IEquatable<KinksterRequest>
 {
+    internal KinksterRequest Data => request;
     public bool FromClient => request.User.UID == MainHub.OwnUserData.UID;
 
     // For anonymous display.
     public string SenderAnonName => request.User.AnonName;
+    public string SenderTag => request.User.AnonTag;
     public string RecipientAnonName => request.Target.AnonName;
+    public string RecipientTag => request.Target.AnonTag;
 
     // For comparison and unique identification.
     public string SenderUID => request.User.UID;
     public string RecipientUID => request.Target.UID;
 
     // Information about said request.
-    public bool IsTemporaryRequest => request.Details.IsTemp;
-    public string Message => request.Details.Message;
+    public bool IsTemporaryRequest => request.IsTemp;
+    public string Message => request.Message;
 
-    // About expiration time.
-    public bool HasMessage => request.Details.Message.Length > 0;
+    public bool HasMessage => request.Message.Length > 0;
     public bool HasExpired => request.IsExpired();
     public TimeSpan TimeToRespond => request.TimeLeft();
     public DateTime SentTime => request.CreatedAt;

@@ -1,13 +1,10 @@
 using CkCommons.Helpers;
-using CkCommons.RichText;
 using CkCommons.Textures;
 using Dalamud.Bindings.ImGui;
 using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using OtterGui.Text;
 
@@ -43,7 +40,7 @@ public sealed class PairPresetCombo : LociComboBase<LociPresetInfo>
         var ret = ImGui.Selectable($"##{lociPreset.Title}", selected, ImGuiSelectableFlags.None, size);
 
         // Push the font first so the height is correct.
-        using var _ = Fonts.Default150Percent.Push();
+        using var _ = Fonts.DefaultScaled.Push();
 
         if (lociPreset.Statuses.Count > 0)
         {
@@ -87,7 +84,7 @@ public sealed class PairPresetCombo : LociComboBase<LociPresetInfo>
     {
         UiService.SetUITask(async () =>
         {
-            var res = await _mainHub.UserApplyLociData(new(_kinksterRef.UserData, item.Statuses, true, false));
+            var res = await _mainHub.UserApplyLociData(new(_kinksterRef.User, item.Statuses, true, false));
             if (res.ErrorCode is not GagSpeakApiEc.Success)
                 Log.LogDebug($"Failed to apply loci preset {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
         });

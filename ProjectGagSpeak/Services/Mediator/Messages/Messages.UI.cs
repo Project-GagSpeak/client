@@ -1,9 +1,10 @@
+using CkCommons.RichChat;
 using GagSpeak.Gui.Components;
-using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.State.Models;
-using GagspeakAPI.Data;
-using GagspeakAPI.Network;
+using GagspeakAPI.Connection;
+using GagspeakAPI.User;
+using SundouleiaAPI.Reporting;
 
 namespace GagSpeak.Services.Mediator;
 
@@ -21,41 +22,34 @@ public record OpenKinksterSidePanel(Kinkster Kinkster, bool ForceOpen = false) :
 /// <summary> Fires whenever we need to toggle the UI. </summary>
 public record UiToggleMessage(Type UiType, ToggleType ToggleType = ToggleType.Toggle) : MessageBase;
 
-/// <summary> Once fired, closes all other windows, and switches to the Introduction UI </summary>
+public record OpenSettingsUI(int NavbarIdx, int SubnavBarIdx) : MessageBase;
+
+/// <summary> Close all windows and open the IntroUI </summary>
 public record SwitchToIntroUiMessage : MessageBase;
 
-/// <summary> Forcefully opens the Main UI, and closes the Introduction UI if opened. </summary>
-public record SwitchToMainUiMessage : MessageBase;
+/// <summary> Forcefully opens Main UI, and closes the Introduction UI if opened. </summary>
+public record IntoFinishedMessage : MessageBase;
 
-/// <summary> Opens the Settings UI and expands the chosen OptionalPlugin info. </summary>
-public record OpenSettingsPluginInfoMessage(OptionalPlugin Plugin) : MessageBase;
+/// <summary> Requests to the popup handler to display a report profile prompt. </summary>
+public record OpenReportUIMessage(ReportKind Kind, UserData User, RichChatLog<NewGsChatMessage>? ChatLog, string? MsgId) : MessageBase;
 
-/// <summary> Forces a specific tab to be opened within the Main UI </summary>
+/// <summary> Sets the tab of the MainUI. </summary>
 public record MainWindowTabChangeMessage(MainMenuTabs.SelectedTab NewTab) : MessageBase;
+public record OpenMainUiTab(MainMenuTabs.SelectedTab ToOpen) : MessageBase;
 
-/// <summary> Informs other components in GagSpeak that the Main UI was just closed. </summary>
-public record ClosedMainUiMessage : MessageBase;
+// Profile UI
+public record OpenUserProfileMessage(UserData Kinkster) : MessageBase;
+public record OpenUserLightProfileMessage(UserData UserData) : MessageBase;
+public record OpenProfilePopout(UserData UserData) : MessageBase;
+public record CloseProfilePopout : MessageBase;
 
-/// <summary> Fired when we want to remove a specific window from the UI service. </summary>
-public record RemoveWindowMessage(WindowMediatorSubscriberBase Window) : MessageBase;
+// Profile Updates
+public record FetchLatestUserProfile(UserData UserData) : MessageBase;
+public record ClearUserProfileMessage(UserData UserData) : MessageBase;
+public record UserProfileThemeChanged(UserData User) : MessageBase;
 
-/// <summary> Creates and opens a standalone KinkPlate™ UI. </summary>
-public record KinkPlateCreateOpenMessage(Kinkster Kinkster) : MessageBase;
-
-/// <summary> Creates and opens a standalone light KinkPlate™ UI. </summary>
-public record KinkPlateLightCreateOpenMessage(UserData UserData) : MessageBase;
-
-/// <summary> When the whitelist has a User hovered long enough and displays a KinkPlate™, this is fired. </summary>
-public record OpenKinkPlatePopout(UserData UserData) : MessageBase;
-
-/// <summary> When the KinkPlate™ popout is closed or needs to be toggled. </summary>
-public record CloseKinkPlatePopout : MessageBase;
-
-/// <summary> Notifies us that the profile data for a specific Kinkster needs to be cleared from the KinkPlate service. </summary>
-public record ClearKinkPlateDataMessage(UserData? UserData = null) : MessageBase;
-
-/// <summary> When we wish to create a report on a defined Kinkster's profile. </summary>
-public record OpenReportUIMessage(UserData UserToReport, ReportKind Kind) : MessageBase;
+// Removal
+public record RemoveCreatedWindowMessage(WindowMediatorSubscriberBase Window) : MessageBase;
 
 /// <summary> This is fired whenever the discord bot wishes to send out an account verification to our client. </summary>
 public record VerificationPopupMessage(VerificationCode VerificationCode) : MessageBase;

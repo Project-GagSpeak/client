@@ -11,6 +11,8 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data;
+using GagspeakAPI.User;
+using SundouleiaAPI.Reporting;
 using System.Globalization;
 
 namespace GagSpeak.Gui.Profile;
@@ -49,7 +51,7 @@ public class KinkPlateLight
     private Vector2 StatIconSize => ImGuiHelpers.ScaledVector2(22.5f);
     private static Vector4 Gold = new Vector4(1f, 0.851f, 0.299f, 1f);
 
-    public bool DrawKinkPlateLight(ImDrawListPtr drawList, KinkPlate profile, string displayName, UserData userData, bool isPair, bool hoveringReport)
+    public bool DrawKinkPlateLight(ImDrawListPtr drawList, UserKinkPlate profile, string displayName, UserData userData, bool isPair, bool hoveringReport)
     {
         DrawPlate(drawList, profile.Info, displayName);
         
@@ -58,7 +60,7 @@ public class KinkPlateLight
         DrawDescription(drawList, profile, userData, isPair);
 
         // Now let's draw out the chosen achievement Name..
-        using (Fonts.GagspeakLabelFont.Push())
+        using (Fonts.GagspeakFont.Push())
         {
             var titleName = ClientAchievements.GetTitleById(profile.Info.ChosenTitleId);
             var chosenTitleSize = ImGui.CalcTextSize(titleName);
@@ -84,7 +86,7 @@ public class KinkPlateLight
             drawList.AddDalamudImageRounded(plateBorder, RectMin, PlateSize, 20f);
     }
 
-    private void DrawProfilePic(ImDrawListPtr drawList, KinkPlate profile, string displayName, UserData userData, bool isPair)
+    private void DrawProfilePic(ImDrawListPtr drawList, UserKinkPlate profile, string displayName, UserData userData, bool isPair)
     {
         if (userData.UID == MainHub.UID)
         {
@@ -92,13 +94,13 @@ public class KinkPlateLight
             var pfpWrap = profile.GetProfileOrDefault();
             drawList.AddDalamudImageRounded(pfpWrap, ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
         }
-        else if(profile.TempDisabled)
+        else if(profile.Flagged)
         {
             // profile is pending report review.
             drawList.AddDalamudImageRounded(CosmeticService.CoreTextures.Cache[CoreTexture.Icon256Bg], ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
             CkGui.AttachToolTipRect(ProfilePictureBorderPos + ProfilePictureBorderSize / 4, ProfilePictureBorderSize / 2, "Profile Image is reset to default, currently under report submission.");
         }
-        else if ((!profile.Info.IsPublic && !isPair))
+        else if (!isPair)
         {
             // profile is not public.
             drawList.AddDalamudImageRounded(CosmeticService.CoreTextures.Cache[CoreTexture.Icon256Bg], ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
@@ -132,7 +134,7 @@ public class KinkPlateLight
 
         // draw out the UID here. We must make it centered. To do this, we must fist calculate how to center it.
         var widthToCenterOn = ProfilePictureBorderSize.X;
-        using (Fonts.UidFont.Push())
+        using (Fonts.SubtitleFont.Push())
         {
             var aliasOrUidSize = ImGui.CalcTextSize(displayName);
             ImGui.SetCursorScreenPos(new Vector2(ProfilePictureBorderPos.X + widthToCenterOn / 2 - aliasOrUidSize.X / 2, ProfilePictureBorderPos.Y + ProfilePictureBorderSize.Y + 5));
@@ -144,7 +146,7 @@ public class KinkPlateLight
 #endif
     }
 
-    private void DrawDescription(ImDrawListPtr drawList, KinkPlate profile, UserData userData, bool isPair)
+    private void DrawDescription(ImDrawListPtr drawList, UserKinkPlate profile, UserData userData, bool isPair)
     {
         // draw out the description background.
         if (CosmeticService.TryGetBackground(PlateElement.DescriptionLight, profile.Info.DescriptionBG, out var descBG))
@@ -167,13 +169,13 @@ public class KinkPlateLight
             var color = profile.Info.Description.IsNullOrEmpty() ? ImGuiColors.DalamudGrey2 : ImGuiColors.DalamudWhite;
             DrawLimitedDescription(description, color, DescriptionBorderSize - new Vector2(15, 0));
         }
-        else if (profile.TempDisabled)
+        else if (profile.Flagged)
         {
             // profile is pending report review.
             DrawLimitedDescription("Profile is pending review from the CK Team after being reported.", ImGuiColors.DalamudRed, DescriptionBorderSize - new Vector2(15, 0));
 
         }
-        else if ((!profile.Info.IsPublic && !isPair))
+        else if (!isPair)
         {
             DrawLimitedDescription("This Kinkster hasn't made their plate public!", ImGuiColors.DalamudRed, DescriptionBorderSize - new Vector2(15, 0));
         }

@@ -4,7 +4,6 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
 using Glamourer.Api.Enums;
-using Glamourer.Api.Helpers;
 using Glamourer.Api.IpcSubscribers;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;

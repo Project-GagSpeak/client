@@ -1,13 +1,10 @@
 using CkCommons.Helpers;
-using CkCommons.RichText;
 using CkCommons.Textures;
 using Dalamud.Bindings.ImGui;
 using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using OtterGui.Text;
 
@@ -43,7 +40,7 @@ public sealed class PairStatusCombo : LociComboBase<LociStatusInfo>
         var myStatus = Items[globalIdx];
 
         // Push the font first so the height is correct.
-        using var _ = Fonts.Default150Percent.Push();
+        using var _ = Fonts.DefaultScaled.Push();
 
         var ret = ImGui.Selectable("##" + myStatus.Title, selected, ImGuiSelectableFlags.None, size);
 
@@ -66,7 +63,7 @@ public sealed class PairStatusCombo : LociComboBase<LociStatusInfo>
     {
         UiService.SetUITask(async () =>
         {
-            var res = await _mainHub.UserApplyLociData(new(_kinksterRef.UserData, [item.GUID], false, false));
+            var res = await _mainHub.UserApplyLociData(new(_kinksterRef.User, [item.GUID], false, false));
             if (res.ErrorCode is not GagSpeakApiEc.Success)
                 Log.LogDebug($"Failed to apply loci status {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
         });
@@ -76,7 +73,7 @@ public sealed class PairStatusCombo : LociComboBase<LociStatusInfo>
     {
         UiService.SetUITask(async () =>
         {
-            var res = await _mainHub.UserRemoveLociData(new(_kinksterRef.UserData, [item.GUID]));
+            var res = await _mainHub.UserRemoveLociData(new(_kinksterRef.User, [item.GUID]));
             if (res.ErrorCode is not GagSpeakApiEc.Success)
                 Log.LogDebug($"Failed to remove loci status {item.Title} from {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
         });

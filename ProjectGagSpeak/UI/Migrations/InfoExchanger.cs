@@ -10,7 +10,7 @@ namespace GagSpeak.Gui.Components;
 /// </summary>
 public class AccountInfoExchanger
 {
-    public string ConfigDirectory => ConfigFileProvider.GagSpeakDirectory;
+    public string ConfigDirectory => GsFiles.GagSpeakDirectory;
     public string CurrentUID => MainHub.UID;
 
     // the config directory files for each account

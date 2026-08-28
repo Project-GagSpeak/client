@@ -102,7 +102,7 @@ public class HypnoService : IDisposable
     // Ideally remove this overhead.
     public bool CanApplyTimedEffect(HypnoticEffect effect, string? base64ImgString = null)
         => !HasValidEffect && (base64ImgString is null
-            ? File.Exists(Path.Combine(ConfigFileProvider.ThumbnailDirectory, ImageDataType.Hypnosis.ToString(), Constants.DefaultHypnoPath))
+            ? File.Exists(Path.Combine(GsFiles.ThumbnailDirectory, ImageDataType.Hypnosis.ToString(), Constants.DefaultHypnoPath))
             : !string.IsNullOrEmpty(base64ImgString) && Convert.FromBase64String(base64ImgString) is { Length: > 0 });
 
     // For hypnotic effects manually applied.
@@ -294,23 +294,23 @@ public class HypnoService : IDisposable
             imgTint);
 
         // If text is not present, or font is not valid, do not draw.
-        if (_activeState.CurrentText.IsNullOrEmpty() || Fonts.FullscreenFontPtr.Handle is null)
+        if (_activeState.CurrentText.IsNullOrEmpty() || Fonts.HypnoFontPtr.Handle is null)
             return;
 
 
         // determine the font scalar.
-        var fontScaler = scaledZoom * (_activeEffect.TextFontSize / Fonts.FullscreenFontPtr.FontSize) * _activeState.TextScale;
+        var fontScaler = scaledZoom * (_activeEffect.TextFontSize / Fonts.HypnoFontPtr.FontSize) * _activeState.TextScale;
 
         // determine the new target position.
         var targetPos = Vector2.Zero;
         if (_activeEffect.Attributes.HasAny(HypnoAttributes.LinearTextScale))
             targetPos = center - Vector2.Lerp(scaledZoom * _activeState.TextOffsetStart, scaledZoom * _activeState.TextOffsetEnd, _activeState.TextScaleProgress);
         else
-            targetPos = center - (CkGui.CalcTextSizeFontPtr(Fonts.FullscreenFontPtr, _activeState.CurrentText) * fontScaler) * 0.5f;
+            targetPos = center - (CkGui.CalcTextSizeFontPtr(Fonts.HypnoFontPtr, _activeState.CurrentText) * fontScaler) * 0.5f;
 
         drawList.OutlinedFontScaled(
-            Fonts.FullscreenFontPtr,
-            Fonts.FullscreenFontPtr.FontSize,
+            Fonts.HypnoFontPtr,
+            Fonts.HypnoFontPtr.FontSize,
             fontScaler,
             targetPos,
             _activeState.CurrentText,
@@ -425,8 +425,8 @@ public class HypnoService : IDisposable
         if (linearScale)
         {
             // Calculate it with the font pointer since we run this off the main thread.
-            var sizeBase = CkGui.CalcTextSizeFontPtr(Fonts.FullscreenFontPtr, state.CurrentText);
-            var sizeScaled = sizeBase * (effect.TextFontSize / Fonts.FullscreenFontPtr.FontSize);
+            var sizeBase = CkGui.CalcTextSizeFontPtr(Fonts.HypnoFontPtr, state.CurrentText);
+            var sizeScaled = sizeBase * (effect.TextFontSize / Fonts.HypnoFontPtr.FontSize);
             state.TextOffsetStart = (sizeScaled * 0.75f) * 0.5f; // offset from center
             state.TextOffsetEnd = (sizeScaled * 1.35f) * 0.5f; // offset from center
             state.TextScaleProgress = 0f; // Reset the progress for linear scaling.

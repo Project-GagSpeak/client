@@ -64,7 +64,7 @@ public sealed class PairGagCombo : CkFilterComboButton<KinksterGag>
             ? DataUpdateType.Applied : DataUpdateType.Swapped;
         
         // construct the dto to send.
-        var dto = new PushKinksterActiveGagSlot(_kinksterRef.UserData, updateType)
+        var dto = new PushKinksterActiveGagSlot(_kinksterRef.User, updateType)
         {
             Layer = layerIdx,
             Gag = Current.Gag,

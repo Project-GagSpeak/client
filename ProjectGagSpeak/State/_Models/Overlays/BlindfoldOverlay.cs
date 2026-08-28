@@ -1,4 +1,3 @@
-using System.Buffers.Text;
 using GagSpeak.Services.Configs;
 
 namespace GagSpeak.State.Models;
@@ -34,7 +33,7 @@ public class BlindfoldOverlay : IOverlayEffect
     }
 
     public bool IsValid() => File.Exists(
-        Path.Combine(ConfigFileProvider.ThumbnailDirectory, ImageDataType.Blindfolds.ToString(), OverlayPath));
+        Path.Combine(GsFiles.ThumbnailDirectory, ImageDataType.Blindfolds.ToString(), OverlayPath));
 
     public BlindfoldOverlay Clone() => new BlindfoldOverlay(this);
 }

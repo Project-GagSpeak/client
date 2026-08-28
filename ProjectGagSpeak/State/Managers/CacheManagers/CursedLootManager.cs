@@ -17,14 +17,14 @@ public sealed class CursedLootManager : IHybridSavable
     private readonly GagRestrictionManager _gags;
     private readonly RestrictionManager _restrictions;
     private readonly FavoritesConfig _favorites;
-    private readonly ConfigFileProvider _fileNames;
+    private readonly GsFiles _fileNames;
     private readonly HybridSaveService _saver;
 
     private StorageItemEditor<CursedItem> _itemEditor = new();
 
     public CursedLootManager(ILogger<CursedLootManager> logger, GagspeakMediator mediator,
         MainConfig config, GagRestrictionManager gags, RestrictionManager restrictions,
-        FavoritesConfig favorites, ConfigFileProvider fileNames, HybridSaveService saver)
+        FavoritesConfig favorites, GsFiles fileNames, HybridSaveService saver)
     {
         _logger = logger;
         _mediator = mediator;
@@ -298,7 +298,7 @@ public sealed class CursedLootManager : IHybridSavable
     public int ConfigVersion => 0;
     public HybridSaveType SaveType => HybridSaveType.Json;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
+    public string GetFileName(GsFiles files, out bool isAccountUnique)
         => (isAccountUnique = false, files.CursedLoot).Item2;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize()

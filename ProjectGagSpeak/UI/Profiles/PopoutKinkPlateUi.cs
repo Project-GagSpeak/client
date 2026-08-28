@@ -2,7 +2,6 @@ using Dalamud.Bindings.ImGui;
 using GagSpeak.Gui.MainWindow;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
-using GagspeakAPI.Data;
 
 namespace GagSpeak.Gui.Profile;
 
@@ -24,12 +23,12 @@ public class PopoutKinkPlateUi : WindowMediatorSubscriberBase
 
         Flags = WFlags.NoDecoration;
 
-        Mediator.Subscribe<OpenKinkPlatePopout>(this, (msg) =>
+        Mediator.Subscribe<OpenProfilePopout>(this, (msg) =>
         {
             IsOpen = true;
             User = msg.UserData;
         });
-        Mediator.Subscribe<CloseKinkPlatePopout>(this, (msg) =>
+        Mediator.Subscribe<CloseProfilePopout>(this, (msg) =>
         {
             IsOpen = false;
             User = null;

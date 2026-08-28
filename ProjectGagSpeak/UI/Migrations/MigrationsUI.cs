@@ -470,13 +470,13 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
         using var rounding = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 12f);
         var startYpos = ImGui.GetCursorPosY();
         Vector2 textSize;
-        using (Fonts.UidFont.Push()) { textSize = ImGui.CalcTextSize("Select Account UID"); }
+        using (Fonts.SubtitleFont.Push()) { textSize = ImGui.CalcTextSize("Select Account UID"); }
         var centerYpos = (textSize.Y - ImGui.GetFrameHeight());
 
         using (ImRaii.Child("MigrationsHeader", new Vector2(CkGui.GetWindowContentRegionWidth(), ImGui.GetFrameHeight() + (centerYpos - startYpos) * 2)))
         {
             ImGui.SameLine(ImGui.GetStyle().ItemSpacing.X);
-            using (Fonts.UidFont.Push())
+            using (Fonts.SubtitleFont.Push())
             {
                 ImGui.AlignTextToFramePadding();
                 CkGui.ColorText("Select Account UID", ImGuiColors.ParsedPink);

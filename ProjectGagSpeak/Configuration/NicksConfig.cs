@@ -16,7 +16,7 @@ public class NicksConfig : IHybridSavable
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     public int ConfigVersion => 0;
     public HybridSaveType SaveType => HybridSaveType.Json;
-    public string GetFileName(ConfigFileProvider files, out bool upa) => (upa = false, files.Nicknames).Item2;
+    public string GetFileName(GsFiles files, out bool upa) => (upa = false, files.Nicknames).Item2;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize()
     {

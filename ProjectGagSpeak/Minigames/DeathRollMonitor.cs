@@ -1,5 +1,4 @@
 using CkCommons;
-using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using GagSpeak.Services.Mediator;
 using System.Text.RegularExpressions;

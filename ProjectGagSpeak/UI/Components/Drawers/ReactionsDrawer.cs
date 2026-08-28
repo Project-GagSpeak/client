@@ -11,7 +11,6 @@ using GagSpeak.CustomCombos.Editor;
 using GagSpeak.Interop.Helpers;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
-using GagSpeak.WebAPI;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;

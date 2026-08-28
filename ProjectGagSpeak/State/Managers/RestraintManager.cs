@@ -20,7 +20,7 @@ public sealed class RestraintManager : IHybridSavable
     private readonly RestrictionManager _restrictions;
     private readonly ModPresetManager _modPresets;
     private readonly FavoritesConfig _favorites;
-    private readonly ConfigFileProvider _fileNames;
+    private readonly GsFiles _fileNames;
     private readonly HybridSaveService _saver;
 
     private StorageItemEditor<RestraintSet> _itemEditor = new();
@@ -28,7 +28,7 @@ public sealed class RestraintManager : IHybridSavable
 
     public RestraintManager(ILogger<RestraintManager> logger, GagspeakMediator mediator,
         RestrictionManager restrictions, ModPresetManager mods, FavoritesConfig favorites,
-        ConfigFileProvider fileNames, HybridSaveService saver)
+        GsFiles fileNames, HybridSaveService saver)
     {
         _logger = logger;
         _mediator = mediator;
@@ -313,7 +313,7 @@ public sealed class RestraintManager : IHybridSavable
     public int ConfigVersion => 1;
     public HybridSaveType SaveType => HybridSaveType.Json;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider files, out bool isAccountUnique)
+    public string GetFileName(GsFiles files, out bool isAccountUnique)
         => (isAccountUnique = true, files.RestraintSets).Item2;
 
     public void WriteToStream(StreamWriter writer)

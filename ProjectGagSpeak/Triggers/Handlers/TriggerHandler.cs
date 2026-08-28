@@ -12,7 +12,6 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
-using GagSpeak.Watchers;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
@@ -67,7 +66,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
         }
 
         // Otherwise it's a potential Puppeteer Command. Ignore if not valid channel.
-        if (!_config.Current.PuppeteerChannelsBitfield.IsActiveChannel((int)channel))
+        if (!_config.Data.PuppeteerChannelsBitfield.IsActiveChannel((int)channel))
             return;
 
         // Also ignore if we have no valid globals, or if our Puppeteer is not enabled.
@@ -81,7 +80,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
         if (_puppeteer.GetPuppeteerUid(senderNameWorld) is { } matchedUID)
         {
             // Ensure still paired (avoid stalking abuse)
-            if (_kinksters.TryGetKinkster(new(matchedUID), out var k))
+            if (_kinksters.TryGetValue(new(matchedUID), out var k))
             {
                 pairPermissions = k.OwnPerms.PuppetPerms;
                 var pTriggers = k.OwnPerms.TriggerPhrase.Split(',').Select(t => t.TrimStart()).ToList();
@@ -373,7 +372,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
             return puppeteerUid;
         // Otherwise, try to get from current visible.
         foreach (var k in _kinksters.DirectPairs.Where(k => k.IsRendered && string.Equals(k.PlayerNameWorld, nameWithWorld, StringComparison.OrdinalIgnoreCase)))
-            return k.UserData.UID;
+            return k.User.UID;
         return null;
     }
 

@@ -1,12 +1,9 @@
 using CkCommons.Helpers;
 using Dalamud.Game.Text.SeStringHandling;
-using GagSpeak.Interop;
-using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.State.Handlers;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
-using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
@@ -116,7 +113,7 @@ public class ReactionDistributor
         if (context.PuppetPerms.HasAny(PuppetPerms.All) && !IsEmoteMatch(message, out var _))
         {
             _logger.LogDebug($"Puppeteered by {context.DisplayName} with an [ALL] message.", LoggerType.Puppeteer);
-            ChatService.EnqueueMessage($"/{message.TextValue}");
+            ChatControlService.EnqueueMessage($"/{message.TextValue}");
             IncrementStats(context, PuppetPerms.All);
             return;
         }
@@ -125,7 +122,7 @@ public class ReactionDistributor
         if (context.PuppetPerms.HasAny(PuppetPerms.Emotes) && IsEmoteMatch(message, out var emoteRow))
         {
             _logger.LogDebug($"Puppeteered by {context.DisplayName} with an [EMOTE] message.", LoggerType.Puppeteer);
-            ChatService.EnqueueMessage($"/{message.TextValue}");
+            ChatControlService.EnqueueMessage($"/{message.TextValue}");
             IncrementStats(context, PuppetPerms.Emotes, emoteRow);
             return;
         }
@@ -138,7 +135,7 @@ public class ReactionDistributor
             if (sitEmote.RowId is 50 or 52)
             {
                 _logger.LogDebug($"Puppeteered by {context.DisplayName} with an [SIT] message.", LoggerType.Puppeteer);
-                ChatService.EnqueueMessage($"/{message.TextValue}");
+                ChatControlService.EnqueueMessage($"/{message.TextValue}");
                 IncrementStats(context, PuppetPerms.Sit, sitEmote.RowId);
                 return;
             }
@@ -146,7 +143,7 @@ public class ReactionDistributor
             if (EmoteService.ValidLightEmoteCache.Where(e => e.RowId == 90).Any(e => message.TextValue.Contains(e.Name.Replace(" ", "").ToLower())))
             {
                 _logger.LogDebug($"Puppeteered by {context.DisplayName} with a [CPOSE] message.", LoggerType.Puppeteer);
-                ChatService.EnqueueMessage($"/{message.TextValue}");
+                ChatControlService.EnqueueMessage($"/{message.TextValue}");
                 IncrementStats(context, PuppetPerms.Sit, 90);
             }
         }
@@ -201,7 +198,7 @@ public class ReactionDistributor
             return false;
 
         _logger.LogInformation("Text Action is being executed.", LoggerType.Triggers);
-        ChatService.EnqueueMessage($"/{remainingMessage.TextValue}");
+        ChatControlService.EnqueueMessage($"/{remainingMessage.TextValue}");
         return true;
     }
 
@@ -463,7 +460,7 @@ public class ReactionDistributor
         if (ClientData.Globals is null)
             return false;
 
-        var shockerId = _mainConfig.Current.GlobalShockerId;
+        var shockerId = _mainConfig.Data.GlobalShockerId;
         if (shockerId == 0)
         {
             _logger.LogWarning("Can't execute Shock Instruction if no shocker is selected!");

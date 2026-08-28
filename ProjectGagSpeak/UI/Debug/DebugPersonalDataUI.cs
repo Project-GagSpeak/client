@@ -68,7 +68,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         _triggers = triggers;
 
         // Ensure the list updates properly.
-        Mediator.Subscribe<FolderUpdateKinkster>(this, _ => UpdateList());
+        Mediator.Subscribe<DDSUpdateKinkster>(this, _ => UpdateList());
 
         this.SetBoundaries(new Vector2(625, 400), ImGui.GetIO().DisplaySize);
     }
@@ -91,7 +91,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
                 if (_searchValue.IsNullOrEmpty())
                     return true;
                 // Match for Alias, Uid, Nick, or PlayerName.
-                return p.UserData.AliasOrUID.Contains(_searchValue, StringComparison.OrdinalIgnoreCase)
+                return p.User.AliasOrUID.Contains(_searchValue, StringComparison.OrdinalIgnoreCase)
                     || (p.GetNickname()?.Contains(_searchValue, StringComparison.OrdinalIgnoreCase) ?? false)
                     || (p.PlayerName?.Contains(_searchValue, StringComparison.OrdinalIgnoreCase) ?? false);
             });
@@ -137,15 +137,15 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 
         DrawPairPerms(nick, pair);
         DrawPairAccess(nick, pair);
-        DrawGlobalPermissions(pair.UserData.UID + "'s Global Perms", pair.PairGlobals);
-        DrawHardcoreStatus(pair.UserData.UID + "'s Hardcore State", pair.PairHardcore);
+        DrawGlobalPermissions(pair.User.UID + "'s Global Perms", pair.PairGlobals);
+        DrawHardcoreStatus(pair.User.UID + "'s Hardcore State", pair.PairHardcore);
         DrawKinksterIpcData(pair);
-        DrawGagData(pair.UserData.UID, pair.ActiveGags);
-        DrawPairRestrictions(pair.UserData.UID, pair);
-        DrawRestraint(pair.UserData.UID, pair);
-        DrawCursedLoot(pair.UserData.UID, pair.ActiveCursedItems);
+        DrawGagData(pair.User.UID, pair.ActiveGags);
+        DrawPairRestrictions(pair.User.UID, pair);
+        DrawRestraint(pair.User.UID, pair);
+        DrawCursedLoot(pair.User.UID, pair.ActiveCursedItems);
         DrawPuppeteer(pair);
-        DrawToybox(pair.UserData.UID, pair);
+        DrawToybox(pair.User.UID, pair);
         DrawKinksterCache(pair);
         ImGui.Separator();
     }
@@ -332,7 +332,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         using var nodeMain = ImRaii.TreeNode($"{label}'s Pair Permissions");
         if (!nodeMain) return;
 
-        using var table = ImRaii.Table("##debug-pair" + k.UserData.UID, 3, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit);
+        using var table = ImRaii.Table("##debug-pair" + k.User.UID, 3, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit);
         ImGui.TableSetupColumn("Permission");
         ImGui.TableSetupColumn("Own Setting");
         ImGui.TableSetupColumn($"{label}'s Setting");
@@ -424,7 +424,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         using var nodeMain = ImRaii.TreeNode($"{label}'s Edit Access");
         if (!nodeMain) return;
 
-        using var table = ImRaii.Table("##debug-access-" + k.UserData.UID, 3, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit);
+        using var table = ImRaii.Table("##debug-access-" + k.User.UID, 3, ImGuiTableFlags.RowBg | ImGuiTableFlags.SizingFixedFit);
         ImGui.TableSetupColumn("Permission");
         ImGui.TableSetupColumn("Own Setting");
         ImGui.TableSetupColumn($"{label}'s Setting");
@@ -1012,10 +1012,10 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 
     private void DrawKinksterCache(Kinkster kinksterRef)
     {
-        using var nodeMain = ImRaii.TreeNode($"{kinksterRef.UserData.UID}'s Cache");
+        using var nodeMain = ImRaii.TreeNode($"{kinksterRef.User.UID}'s Cache");
         if (!nodeMain) return;
 
-        var uid = kinksterRef.UserData.UID;
+        var uid = kinksterRef.User.UID;
         var cache = kinksterRef.LightCache;
         DrawKinksterGagCache(uid, cache);
         DrawKinksterRestrictionCache(uid, cache);

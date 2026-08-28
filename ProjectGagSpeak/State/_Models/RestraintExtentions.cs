@@ -1,8 +1,6 @@
 using GagSpeak.PlayerClient;
-using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
-using GagspeakAPI.Extensions;
 using Penumbra.GameData.Enums;
 
 namespace GagSpeak.State.Models;

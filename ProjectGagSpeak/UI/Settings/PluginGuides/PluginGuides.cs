@@ -79,9 +79,9 @@ public sealed class PluginGuideProvider : IDisposable
         if (!PluginInfo.TryGetValue(plugin, out var details))
             return;
 
-        var isCordyProject = plugin is OptionalPlugin.Sundouleia or OptionalPlugin.Loci;
+        var isCordyProject = plugin is OptionalPlugin.GagSpeak or OptionalPlugin.Loci;
         var bulletCnt = details.BulletInfo.Count + (isCordyProject ? 1 : 0);
-        var headerH = ImUtf8.FrameHeightSpacing * 2 + CkGui.CalcFontTextSize("A", Fonts.Default150Percent).Y;
+        var headerH = ImUtf8.FrameHeightSpacing * 2 + CkGui.CalcFontTextSize("A", Fonts.DefaultScaled).Y;
         var contextH = ImUtf8.TextHeightSpacing * bulletCnt;
         var imgSize = new Vector2(headerH);
 
@@ -98,7 +98,7 @@ public sealed class PluginGuideProvider : IDisposable
             using (ImRaii.Group())
             {
                 // Title + punchline
-                CkGui.FontText(details.Name, Fonts.Default150Percent);
+                CkGui.FontText(details.Name, Fonts.DefaultScaled);
                 CkGui.ColorTextFrameAligned(details.Punchline, ImGuiColors.DalamudViolet);
 
                 var buttonSize = new Vector2(80f * ImGuiHelpers.GlobalScale, 0);
@@ -133,7 +133,7 @@ public sealed class PluginGuideProvider : IDisposable
             // Do the bullet list thing.
             foreach (var bullet in details.BulletInfo)
                 ImGui.BulletText(bullet);
-            if (plugin is (OptionalPlugin.Sundouleia or OptionalPlugin.Loci))
+            if (plugin is (OptionalPlugin.GagSpeak or OptionalPlugin.Loci))
                 CkGui.BulletText("For more details, view the [Cordys Projects] tab below.", ImGuiColors.DalamudViolet);
         }
     }
@@ -232,7 +232,7 @@ public sealed class PluginGuideProvider : IDisposable
                 Punchline = "A powerful modern tool to create, customize, and manage status icons.",
 
                 DiscordUrl = "https://discord.gg/QJy4zTqpMD",
-                DiscordTooltip = "Opens the Sundouleia & Loci Discord--SEP----COL--DO NOT USE THIS TO REPORT GS ISSUES.--COL--",
+                DiscordTooltip = "Opens the GagSpeak & Loci Discord--SEP----COL--DO NOT USE THIS TO REPORT GS ISSUES.--COL--",
                 GithubUrl = "https://github.com/CordeliaMist/Loci",
 
                 RepoUrl = "https://raw.githubusercontent.com/CordeliaMist/Loci/main/repo.json",
@@ -285,18 +285,18 @@ public sealed class PluginGuideProvider : IDisposable
                     "Alarms in GagSpeak can link to your toys",
                 ]
             },
-            [OptionalPlugin.Sundouleia] = new OptionalPluginInfo
+            [OptionalPlugin.GagSpeak] = new OptionalPluginInfo
             {
-                IconUrl = "https://raw.githubusercontent.com/Sundouleia/repo/main/Images/icon.png",
-                Name = "Sundouleia",
+                IconUrl = "https://raw.githubusercontent.com/GagSpeak/repo/main/Images/icon.png",
+                Name = "GagSpeak",
                 Author = "Cordelia",
                 Punchline = "Fresh approach to DataSync through a new lens, free of constraint.",
 
                 DiscordUrl = "https://discord.gg/QJy4zTqpMD",
-                DiscordTooltip = "Opens the Sundouleia & Loci Discord--SEP----COL--DO NOT USE THIS TO REPORT GS ISSUES.--COL--",
-                GithubUrl = "https://github.com/Sundouleia",
+                DiscordTooltip = "Opens the GagSpeak & Loci Discord--SEP----COL--DO NOT USE THIS TO REPORT GS ISSUES.--COL--",
+                GithubUrl = "https://github.com/GagSpeak",
 
-                RepoUrl = "https://raw.githubusercontent.com/Sundouleia/repo/main/sundouleia.json",
+                RepoUrl = "https://raw.githubusercontent.com/GagSpeak/repo/main/sundouleia.json",
 
                 BulletInfo =
                 [

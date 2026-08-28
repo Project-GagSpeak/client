@@ -116,7 +116,7 @@ internal class InteractionEventsUI : WindowMediatorSubscriberBase
             {
                 ProcessStartInfo ps = new()
                 {
-                    FileName = ConfigFileProvider.EventDirectory,
+                    FileName = GsFiles.EventDirectory,
                     UseShellExecute = true,
                     WindowStyle = ProcessWindowStyle.Normal
                 };

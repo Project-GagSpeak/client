@@ -4,30 +4,50 @@ using GagSpeak.Services.Mediator;
 
 namespace GagSpeak.PlayerClient;
 
-public enum FavoriteIdContainer
+public enum FavoriteType
 {
     Restraint,
     Restriction,
-    Gag,
     Collar,
     CursedLoot,
     Alias,
     Pattern,
     Alarm,
-    Trigger,
-    Kinkster,
+    Trigger
+}
+
+public class FavoritesAccountData
+{
+    public HashSet<string> Kinksters { get; set; } = new HashSet<string>(StringComparer.Ordinal);
+    public HashSet<string> Emotes { get; set; } = new HashSet<string>(StringComparer.Ordinal);
+    public HashSet<string> GsTells { get; set; } = new(StringComparer.Ordinal);
 }
 
 public class FavoritesConfig : IHybridSavable
 {
     private readonly ILogger<FavoritesConfig> _logger;
     private readonly GagspeakMediator _mediator;
+    private readonly ConnectionsConfig _serverConfig;
     private readonly HybridSaveService _saver;
-    public int ConfigVersion => 0;
+    public int ConfigVersion => 1;
+    public int MaxBackups => 3;
     public HybridSaveType SaveType => HybridSaveType.StreamWrite;
-    public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(ConfigFileProvider ser, out bool upa) => (upa = false, ser.Favorites).Item2;
+    public DateTime LastWriteTimeUTC => DateTime.MinValue;
+    public string ToFilePath(GsFiles files) => files.Favorites;
     public string JsonSerialize() => throw new NotImplementedException();
+
+    private static readonly Dictionary<string, FavoritesAccountData> _dataByServer = new(StringComparer.Ordinal);
+    private static readonly HashSet<Guid> _restraints = [];
+    private static readonly HashSet<Guid> _restrictions = [];
+    private static readonly HashSet<GagType> _gags = [];
+    private static readonly HashSet<Guid> _collars = [];
+    private static readonly HashSet<Guid> _cursedLoot = [];
+    private static readonly HashSet<Guid> _aliases = [];
+    private static readonly HashSet<Guid> _patterns = [];
+    private static readonly HashSet<Guid> _alarms = [];
+    private static readonly HashSet<Guid> _triggers = [];
+    private static FavoritesAccountData _current => GetOrCreateConfigData();
+
     public FavoritesConfig(ILogger<FavoritesConfig> logger, GagspeakMediator mediator, HybridSaveService saver)
     {
         _logger = logger;
@@ -36,160 +56,221 @@ public class FavoritesConfig : IHybridSavable
         Load();
     }
 
-    // Favorites Sections.
-    public static readonly HashSet<Guid>    Restraints      = [];
-    public static readonly HashSet<Guid>    Restrictions    = [];
-    public static readonly HashSet<GagType> Gags            = [];
-    public static readonly HashSet<Guid>    Collars         = [];
-    public static readonly HashSet<Guid>    CursedLoot      = [];
-    public static readonly HashSet<Guid>    Aliases         = [];
-    public static readonly HashSet<Guid>    Patterns        = [];
-    public static readonly HashSet<Guid>    Alarms          = [];
-    public static readonly HashSet<Guid>    Triggers        = [];
-    // Stores the UID
-    public static readonly HashSet<string>  Kinksters       = [];
+    public static IReadOnlySet<string> Kinksters    => _current.Kinksters;
+    public static IReadOnlySet<string> Emotes       => _current.Emotes;
+    public static IReadOnlySet<string> ChatLogs     => _current.GsTells;
+    public static IReadOnlySet<Guid> Restraints     => _restraints;
+    public static IReadOnlySet<Guid> Restrictions   => _restrictions;
+    public static IReadOnlySet<GagType> Gags        => _gags;
+    public static IReadOnlySet<Guid> Collars        => _collars;
+    public static IReadOnlySet<Guid> CursedLoot     => _cursedLoot;
+    public static IReadOnlySet<Guid> Aliases        => _aliases;
+    public static IReadOnlySet<Guid> Patterns       => _patterns;
+    public static IReadOnlySet<Guid> Alarms         => _alarms;
+    public static IReadOnlySet<Guid> Triggers       => _triggers;
 
+    private static FavoritesAccountData GetOrCreateConfigData()
+    {
+        if (_dataByServer.TryGetValue(ConnectionsConfig.CurrentHubURI, out var set))
+            return set;
+        // Create
+        return (_dataByServer[ConnectionsConfig.CurrentHubURI] = new FavoritesAccountData());
+    }
+
+    private static HashSet<Guid>? GetTypeSet(FavoriteType type) => type switch
+    {
+        FavoriteType.Restraint => _restraints,
+        FavoriteType.Restriction => _restrictions,
+        FavoriteType.Collar => _collars,
+        FavoriteType.CursedLoot => _cursedLoot,
+        FavoriteType.Alias => _aliases,
+        FavoriteType.Pattern => _patterns,
+        FavoriteType.Alarm => _alarms,
+        FavoriteType.Trigger => _triggers,
+        _ => null
+    };
+
+    #region Additions
+    public void Favorite(FavoriteType type, Guid id)
+    {
+        var set = GetTypeSet(type);
+        if (set?.Add(id) == true)
+            _saver.Save(this);
+    }
+
+    public void FavoriteGag(GagType gag)
+    {
+        if (_gags.Add(gag))
+            _saver.Save(this);
+    }
+
+    public void FavoriteKinkster(string kinksterId)
+    {
+        if (_current.Kinksters.Add(kinksterId))
+            _saver.Save(this);
+    }
+
+    public void FavoriteEmote(string emoteId)
+    {
+        if (_current.Emotes.Add(emoteId))
+            _saver.Save(this);
+    }
+
+    public void FavoriteTell(string chatId)
+    {
+        if (_current.GsTells.Add(chatId))
+            _saver.Save(this);
+    }
+
+    public void BulkFavorite(FavoriteType type, IEnumerable<Guid> ids)
+    {
+        var set = GetTypeSet(type);
+        if (set != null)
+        {
+            set.UnionWith(ids);
+            _saver.Save(this);
+        }
+    }
+
+    public void BulkFavoriteKinksters(IEnumerable<string> kinksterIds)
+    {
+        _current.Kinksters.UnionWith(kinksterIds);
+        _saver.Save(this);
+    }
+    #endregion
+
+    #region Removals & Toggles
+    public void Unfavorite(FavoriteType type, Guid id)
+    {
+        var set = GetTypeSet(type);
+        if (set?.Remove(id) == true)
+            _saver.Save(this);
+    }
+
+    public void UnfavoriteGag(GagType gag)
+    {
+        if (_gags.Remove(gag))
+            _saver.Save(this);
+    }
+
+    public void UnfavoriteKinkster(string kinksterId)
+    {
+        if (_current.Kinksters.Remove(kinksterId))
+            _saver.Save(this);
+    }
+
+    public void UnfavoriteEmote(string emoteId)
+    {
+        if (_current.Emotes.Remove(emoteId))
+            _saver.Save(this);
+    }
+
+    public void UnfavoriteChat(string chatId)
+    {
+        if (_current.GsTells.Remove(chatId))
+            _saver.Save(this);
+    }
+
+    public void ToggleFavorite(FavoriteType type, Guid id)
+    {
+        var set = GetTypeSet(type);
+        if (set is null) return;
+
+        if (!set.Remove(id))
+            set.Add(id);
+
+        _saver.Save(this);
+    }
+    #endregion
+
+    #region Saver
     public void Load()
     {
         var file = _saver.FileNames.Favorites;
-        Svc.Logger.Information("Loading in Favorites Config for file: " + file);
+        _logger.LogInformation($"Loading FavoritesConfig file: {file}");
         if (!File.Exists(file))
         {
-            Svc.Logger.Warning("No Favorites Config file found at {0}", file);
+            _logger.LogWarning($"FavoritesConfig file not found: {file}");
+            _dataByServer.Clear();
+            _gags.Clear();
+            _restraints.Clear();
+            _restrictions.Clear();
+            _collars.Clear();
+            _cursedLoot.Clear();
+            _aliases.Clear();
+            _patterns.Clear();
+            _alarms.Clear();
+            _triggers.Clear();
             _saver.Save(this);
             return;
         }
 
         try
         {
-            var load = JsonConvert.DeserializeObject<LoadIntermediary>(File.ReadAllText(file));
-            if (load is null)
-                throw new Exception("Failed to load favorites.");
-            // Load favorites.
-            // (No Migration Needed yet).
-            Restraints.UnionWith(load.Restraints);
-            Restrictions.UnionWith(load.Restrictions);
-            Gags.UnionWith(load.Gags);
-            Collars.UnionWith(load.Collars);
-            CursedLoot.UnionWith(load.CursedLoot);
-            Patterns.UnionWith(load.Patterns);
-            Alarms.UnionWith(load.Alarms);
-            Triggers.UnionWith(load.Triggers);
-            Kinksters.UnionWith(load.Kinksters);
+            var load = JsonConvert.DeserializeObject<LoadIntermediary>(File.ReadAllText(file))
+                ?? throw new Exception("Failed to deserialize FavoritesConfig");
+
+            switch (load.Version)
+            {
+                case 0:
+                case 1:
+                    LoadV1(load);
+                    break;
+                case 2:
+                    LoadV2(load);
+                    break;
+                default:
+                    throw new NotSupportedException($"Unsupported FavoritesConfig version {load.Version}");
+            }
         }
-        catch (Bagagwa e)
+        catch (Exception e)
         {
-            Svc.Logger.Error(e, "Failed to load favorites.");
+            _logger.LogError(e, "Failed to load FavoritesConfig.");
         }
+        _saver.Save(this);
     }
 
-    #region Additions
-    public bool TryAddRestriction(FavoriteIdContainer type, Guid restriction)
+    private void LoadV1(LoadIntermediary load)
     {
-        var res = type switch
-        {
-            FavoriteIdContainer.Restriction => Restrictions.Add(restriction),
-            FavoriteIdContainer.Restraint => Restraints.Add(restriction),
-            FavoriteIdContainer.Collar => Collars.Add(restriction),
-            FavoriteIdContainer.CursedLoot => CursedLoot.Add(restriction),
-            FavoriteIdContainer.Alias => Aliases.Add(restriction),
-            FavoriteIdContainer.Pattern => Patterns.Add(restriction),
-            FavoriteIdContainer.Alarm => Alarms.Add(restriction),
-            FavoriteIdContainer.Trigger => Triggers.Add(restriction),
-            _ => false
-        };
+        _logger.LogInformation("Migrating FavoritesConfig from v1 to v2");
+        var acc = GetOrCreateConfigData();
 
-        if (res)
+        if (load.Kinksters is not null)
+            acc.Kinksters.UnionWith(load.Kinksters);
+
+        LoadGlobals(load);
+    }
+
+    private void LoadV2(LoadIntermediary load)
+    {
+        if (load.Accounts is not null)
         {
-            Svc.Logger.Information("Added {0} to favorites.", type);
-            _saver.Save(this);
+            foreach (var (server, acc) in load.Accounts)
+            {
+                _dataByServer[server] = new FavoritesAccountData
+                {
+                    Kinksters = new HashSet<string>(acc.Kinksters, StringComparer.Ordinal),
+                    Emotes = new HashSet<string>(acc.Emotes, StringComparer.Ordinal)
+                };
+            }
         }
 
-        return res;
+        LoadGlobals(load);
     }
 
-    public bool TryAddGag(GagType gag)
+    private void LoadGlobals(LoadIntermediary load)
     {
-        if (!Gags.Add(gag))
-            return false;
-
-        _mediator.Publish(new FavoritesChanged(FavoriteIdContainer.Gag));
-        _saver.Save(this);
-        return true;
+        _gags.UnionWith(load.Gags ?? []);
+        _restraints.UnionWith(load.Restraints ?? []);
+        _restrictions.UnionWith(load.Restrictions ?? []);
+        _collars.UnionWith(load.Collars ?? []);
+        _cursedLoot.UnionWith(load.CursedLoot ?? []);
+        _aliases.UnionWith(load.Aliases ?? []);
+        _patterns.UnionWith(load.Patterns ?? []);
+        _alarms.UnionWith(load.Alarms ?? []);
+        _triggers.UnionWith(load.Triggers ?? []);
     }
 
-    public bool TryAddKinkster(string kinkster)
-    {
-        if (!Kinksters.Add(kinkster))
-            return false;
-
-        _mediator.Publish(new FavoritesChanged(FavoriteIdContainer.Kinkster));
-        _saver.Save(this);
-        return true;
-    }
-
-    public void AddKinksters(IEnumerable<string> kinksters)
-    {
-        Kinksters.UnionWith(kinksters);
-        _mediator.Publish(new FavoritesChanged(FavoriteIdContainer.Kinkster));
-        _saver.Save(this);
-    }
-
-    #endregion Additions
-
-    #region Removals
-    public bool RemoveRestriction(FavoriteIdContainer type, Guid restriction)
-    {
-        var res = type switch
-        {
-            FavoriteIdContainer.Restraint => Restraints.Remove(restriction),
-            FavoriteIdContainer.Restriction => Restrictions.Remove(restriction),
-            FavoriteIdContainer.Collar => Collars.Remove(restriction),
-            FavoriteIdContainer.CursedLoot => CursedLoot.Remove(restriction),
-            FavoriteIdContainer.Alias => Aliases.Remove(restriction),
-            FavoriteIdContainer.Pattern => Patterns.Remove(restriction),
-            FavoriteIdContainer.Alarm => Alarms.Remove(restriction),
-            FavoriteIdContainer.Trigger => Triggers.Remove(restriction),
-            _ => false
-        };
-        if (res)
-        {
-            _mediator.Publish(new FavoritesChanged(type));
-            _saver.Save(this);
-        }
-        return res;
-    }
-
-    public bool RemoveGag(GagType gag)
-    {
-        if (!Gags.Remove(gag))
-            return false;
-
-        _mediator.Publish(new FavoritesChanged(FavoriteIdContainer.Gag));
-        _saver.Save(this);
-        return true;
-    }
-
-    public bool RemoveKinkster(string kinkster)
-    {
-        if (!Kinksters.Remove(kinkster))
-            return false;
-
-        _mediator.Publish(new FavoritesChanged(FavoriteIdContainer.Kinkster));
-        _saver.Save(this);
-        return true;
-    }
-
-    public void RemoveKinksters(IEnumerable<string> kinksters)
-    {
-        Kinksters.ExceptWith(kinksters);
-        _mediator.Publish(new FavoritesChanged(FavoriteIdContainer.Kinkster));
-        _saver.Save(this);
-    }
-
-    #endregion Removals
-
-    #region Saver
     public void WriteToStream(StreamWriter writer)
     {
         using var j = new JsonTextWriter(writer);
@@ -199,77 +280,75 @@ public class FavoritesConfig : IHybridSavable
         j.WritePropertyName(nameof(LoadIntermediary.Version));
         j.WriteValue(ConfigVersion);
 
-        j.WritePropertyName(nameof(LoadIntermediary.Restrictions));
-        j.WriteStartArray();
-        foreach (var restriction in Restrictions)
-            j.WriteValue(restriction);
-        j.WriteEndArray();
+        j.WritePropertyName(nameof(LoadIntermediary.Accounts));
+        j.WriteStartObject();
+        foreach (var (server, acc) in _dataByServer)
+        {
+            j.WritePropertyName(server);
+            j.WriteStartObject();
 
-        j.WritePropertyName(nameof(LoadIntermediary.Restraints));
-        j.WriteStartArray();
-        foreach (var restraint in Restraints)
-            j.WriteValue(restraint);
-        j.WriteEndArray();
+            j.WritePropertyName(nameof(FavoritesAccountData.Kinksters));
+            j.WriteStartArray();
+            foreach (var uid in acc.Kinksters) j.WriteValue(uid);
+            j.WriteEndArray();
+
+            j.WritePropertyName(nameof(FavoritesAccountData.Emotes));
+            j.WriteStartArray();
+            foreach (var uid in acc.Emotes) j.WriteValue(uid);
+            j.WriteEndArray();
+
+            j.WriteEndObject();
+        }
+        j.WriteEndObject();
+
+        // Write Globals
+        WriteGuidArray(j, nameof(LoadIntermediary.Restraints), Restraints);
+        WriteGuidArray(j, nameof(LoadIntermediary.Restrictions), Restrictions);
+        WriteGuidArray(j, nameof(LoadIntermediary.Collars), Collars);
+        WriteGuidArray(j, nameof(LoadIntermediary.CursedLoot), CursedLoot);
+        WriteGuidArray(j, nameof(LoadIntermediary.Aliases), Aliases);
+        WriteGuidArray(j, nameof(LoadIntermediary.Patterns), Patterns);
+        WriteGuidArray(j, nameof(LoadIntermediary.Alarms), Alarms);
+        WriteGuidArray(j, nameof(LoadIntermediary.Triggers), Triggers);
 
         j.WritePropertyName(nameof(LoadIntermediary.Gags));
         j.WriteStartArray();
-        foreach (var gag in Gags)
-            j.WriteValue(gag);
-        j.WriteEndArray();
-
-        j.WritePropertyName(nameof(LoadIntermediary.Collars));
-        j.WriteStartArray();
-        foreach (var collar in Collars)
-            j.WriteValue(collar);
-        j.WriteEndArray();
-
-        j.WritePropertyName(nameof(LoadIntermediary.CursedLoot));
-        j.WriteStartArray();
-        foreach (var loot in CursedLoot)
-            j.WriteValue(loot);
-        j.WriteEndArray();
-
-        j.WritePropertyName(nameof(LoadIntermediary.Patterns));
-        j.WriteStartArray();
-        foreach (var pattern in Patterns)
-            j.WriteValue(pattern);
-        j.WriteEndArray();
-
-        j.WritePropertyName(nameof(LoadIntermediary.Alarms));
-        j.WriteStartArray();
-        foreach (var alarm in Alarms)
-            j.WriteValue(alarm);
-        j.WriteEndArray();
-
-        j.WritePropertyName(nameof(LoadIntermediary.Triggers));
-        j.WriteStartArray();
-        foreach (var trigger in Triggers)
-            j.WriteValue(trigger);
-        j.WriteEndArray();
-
-        j.WritePropertyName(nameof(LoadIntermediary.Kinksters));
-        j.WriteStartArray();
-        foreach (var kinkster in Kinksters)
-            j.WriteValue(kinkster);
+        foreach (var gag in Gags) j.WriteValue(gag);
         j.WriteEndArray();
 
         j.WriteEndObject();
     }
-    #endregion Saver
+
+    // Helpers to clean up JSON writing
+    private static void WriteGuidArray(JsonTextWriter j, string name, IEnumerable<Guid> items)
+    {
+        j.WritePropertyName(name);
+        j.WriteStartArray();
+        foreach (var item in items) j.WriteValue(item);
+        j.WriteEndArray();
+    }
+    #endregion
 
     // Used to help with object based deserialization from the json loader.
-    private class LoadIntermediary
+    private sealed class LoadIntermediary
     {
-        public int Version = 1;
-        public IEnumerable<Guid>    Restraints   = [];
-        public IEnumerable<Guid>    Restrictions = [];
-        public IEnumerable<GagType> Gags         = [];
-        public IEnumerable<Guid>    Collars      = [];
-        public IEnumerable<Guid>    CursedLoot   = [];
-        public IEnumerable<Guid>    Aliases      = [];
-        public IEnumerable<Guid>    Patterns     = [];
-        public IEnumerable<Guid>    Alarms       = [];
-        public IEnumerable<Guid>    Triggers     = [];
-        public IEnumerable<string>  Kinksters    = [];
+        public int Version = 2;
+
+        // v2 Properties
+        public Dictionary<string, FavoritesAccountData>? Accounts;
+
+        // Globals
+        public IEnumerable<Guid>? Restraints = [];
+        public IEnumerable<Guid>? Restrictions = [];
+        public IEnumerable<GagType>? Gags = [];
+        public IEnumerable<Guid>? Collars = [];
+        public IEnumerable<Guid>? CursedLoot = [];
+        public IEnumerable<Guid>? Aliases = [];
+        public IEnumerable<Guid>? Patterns = [];
+        public IEnumerable<Guid>? Alarms = [];
+        public IEnumerable<Guid>? Triggers = [];
+
+        // v1 Legacy
+        public IEnumerable<string>? Kinksters = [];
     }
 }
