@@ -100,12 +100,6 @@ public class KinkPlateLight
             drawList.AddDalamudImageRounded(CosmeticService.CoreTextures.Cache[CoreTexture.Icon256Bg], ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
             CkGui.AttachToolTipRect(ProfilePictureBorderPos + ProfilePictureBorderSize / 4, ProfilePictureBorderSize / 2, "Profile Image is reset to default, currently under report submission.");
         }
-        else if (!isPair)
-        {
-            // profile is not public.
-            drawList.AddDalamudImageRounded(CosmeticService.CoreTextures.Cache[CoreTexture.Icon256Bg], ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
-            CkGui.AttachToolTipRect(ProfilePictureBorderPos + ProfilePictureBorderSize / 4, ProfilePictureBorderSize / 2, "Profile Pic is hidden as they have not allowed public plates!");
-        }
         else
         {
             // Viewing a direct pair, draw the profile picture.
@@ -124,13 +118,10 @@ public class KinkPlateLight
         // Draw out Supporter Icon.
         var supporterInfo = CosmeticService.GetSupporterInfo(userData);
         if (supporterInfo.SupporterWrap is { } wrap)
-        {
             drawList.AddDalamudImageRounded(wrap, SupporterIconPos, SupporterIconSize, SupporterIconSize.Y / 2, displayName + " Is Supporting CK!");
-        }
         // Draw out the border for the icon.
         drawList.AddCircle(SupporterIconBorderPos + SupporterIconBorderSize / 2, SupporterIconBorderSize.X / 2,
             ImGui.GetColorU32(ImGuiColors.ParsedPink), 0, 4f);
-
 
         // draw out the UID here. We must make it centered. To do this, we must fist calculate how to center it.
         var widthToCenterOn = ProfilePictureBorderSize.X;
@@ -173,11 +164,6 @@ public class KinkPlateLight
         {
             // profile is pending report review.
             DrawLimitedDescription("Profile is pending review from the CK Team after being reported.", ImGuiColors.DalamudRed, DescriptionBorderSize - new Vector2(15, 0));
-
-        }
-        else if (!isPair)
-        {
-            DrawLimitedDescription("This Kinkster hasn't made their plate public!", ImGuiColors.DalamudRed, DescriptionBorderSize - new Vector2(15, 0));
         }
         else
         {
