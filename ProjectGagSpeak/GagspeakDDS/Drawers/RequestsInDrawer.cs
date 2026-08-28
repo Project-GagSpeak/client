@@ -59,7 +59,7 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
 
         var tmp = FilterCache.Filter;
         // Update the search bar if things change, like normal.
-        if (FancySearchBar.Draw("Filter", "filter Requests..", width, ref tmp, length))
+        if (FancySearchBar.Draw("##filter", "filter Requests..", width, ref tmp, length))
             FilterCache.Filter = tmp;
     }
 

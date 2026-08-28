@@ -66,7 +66,7 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
     {
         var tmp = FilterCache.Filter;
         // Update the search bar if things change, like normal.
-        if (FancySearchBar.DrawWithButtons("##Filter", "filter..", width, ref tmp, length, CkGui.IconTextButtonSize(FAI.Cog, "Settings"), DrawButtons))
+        if (FancySearchBar.DrawWithButtons("##filter", "filter..", width, ref tmp, length, CkGui.IconTextButtonSize(FAI.Cog, "Settings"), DrawButtons))
             FilterCache.Filter = tmp;
 
         // If the config is expanded, draw that.
