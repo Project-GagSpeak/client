@@ -23,6 +23,7 @@ using GagSpeak.WebAPI;
 using OtterGui.Text;
 using OtterGuiInternal;
 using System.Globalization;
+using FFXIVClientStructs.FFXIV.Client.UI;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -315,6 +316,7 @@ public class HomeTab
 
         DrawSafewordRow();
         CkGui.AttachTooltip("Your current safeword. Click to edit!");
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Safewords, MainUI.LastPos, MainUI.LastSize);
 
 
         void DrawSafewordRow()
