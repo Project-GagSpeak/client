@@ -68,7 +68,7 @@ public class MarionetteDrawSystem : DynamicDrawSystem<AliasTrigger>, IMediatorSu
     }
 
     /// <summary>
-    ///     Properly draws out the Marionette selector for the given width.
+    ///   Properly draws out the Marionette selector for the given width.
     /// </summary>
     public bool DrawMarionetteCombo(float width, float scalar = 1.15f)
     {

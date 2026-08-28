@@ -78,7 +78,7 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     By awaiting this, we know it will be distribute data once complete.
+    ///   By awaiting this, we know it will be distribute data once complete.
     /// </summary>
     public async Task SetClientDataForProfile()
     {

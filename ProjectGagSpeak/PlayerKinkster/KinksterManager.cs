@@ -57,8 +57,8 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Adds a Kinkster to the manager. Called by GetPairedUsers upon connection.
-    ///     Also called when a kinkster goes online, or after accepting a kinkster request.
+    ///   Adds a Kinkster to the manager. Called by GetPairedUsers upon connection.
+    ///   Also called when a kinkster goes online, or after accepting a kinkster request.
     /// </summary>
     public void AddKinkster(KinksterPair dto)
     {
@@ -95,9 +95,9 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Performs a hard-removal of a kinkster from the manager.
-    ///     Usually called when unpairing from a kinkster, or when a 
-    ///     kinkster unpaired you.
+    ///   Performs a hard-removal of a kinkster from the manager.
+    ///   Usually called when unpairing from a kinkster, or when a 
+    ///   kinkster unpaired you.
     /// </summary>
     public void RemoveKinkster(KinksterBase dto)
     {
@@ -131,8 +131,8 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Occurs whenever our client disconnects from the SundouleiaServer. <para />
-    ///     What actions are taken depend on the disconnection intent.
+    ///   Occurs whenever our client disconnects from the SundouleiaServer. <para />
+    ///   What actions are taken depend on the disconnection intent.
     /// </summary>
     public void OnClientDisconnected(DisconnectIntent intent)
     {
@@ -168,8 +168,8 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     }
 
     /// <summary> 
-    ///     A Kinkster has just come online. We should mark this, and also run a check for
-    ///     player visibility against CharaObjectWatcher.
+    ///   A Kinkster has just come online. We should mark this, and also run a check for
+    ///   player visibility against CharaObjectWatcher.
     /// </summary>
     public void MarkKinksterOnline(OnlineKinkster dto, bool notify = true)
     {
@@ -205,8 +205,8 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Marks a kinkster as offline. This will clear their OnlineUser. <para />
-    ///     A Kinkster's Chara* can still be valid while offline, and they can still download updates.
+    ///   Marks a kinkster as offline. This will clear their OnlineUser. <para />
+    ///   A Kinkster's Chara* can still be valid while offline, and they can still download updates.
     /// </summary>
     public void MarkKinksterOffline(UserData user)
     {
@@ -238,34 +238,34 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
 
     #region ManagerHelpers
     /// <summary>
-    ///     Kinksters that we have an OnlineUser DTO of, implying they are connected.
+    ///   Kinksters that we have an OnlineUser DTO of, implying they are connected.
     /// </summary>
     public List<Kinkster> GetOnlineKinksters() => _allKinksters.Where(p => !string.IsNullOrEmpty(p.Value.Ident)).Select(p => p.Value).ToList();
 
     /// <summary>
-    ///     Kinksters that we have an OnlineUser DTO of, implying they are connected.
+    ///   Kinksters that we have an OnlineUser DTO of, implying they are connected.
     /// </summary>
     public List<UserData> GetOnlineUserDatas() => _allKinksters.Where(p => !string.IsNullOrEmpty(p.Value.Ident)).Select(p => p.Key).ToList();
 
     /// <summary>
-    ///     The number of kinksters that are in our render range. <para />
-    ///     NOTE: This does not mean that they have applied data!
+    ///   The number of kinksters that are in our render range. <para />
+    ///   NOTE: This does not mean that they have applied data!
     /// </summary>
     public int GetVisibleCount() => _allKinksters.Count(p => p.Value.IsRendered);
 
     /// <summary>
-    ///     Get the <see cref="UserData"/> for all rendered kinksters. <para />
-    ///     <b>NOTE: It is possible for a visible kinksters to be offline!</b>
+    ///   Get the <see cref="UserData"/> for all rendered kinksters. <para />
+    ///   <b>NOTE: It is possible for a visible kinksters to be offline!</b>
     /// </summary>
     public List<UserData> GetVisible() => _allKinksters.Where(p => p.Value.IsRendered).Select(p => p.Key).ToList();
 
     /// <summary>
-    ///     Get the <see cref="UserData"/> for all rendered kinksters that are connected.
+    ///   Get the <see cref="UserData"/> for all rendered kinksters that are connected.
     /// </summary>
     public List<UserData> GetVisibleConnected() => _allKinksters.Where(p => p.Value.IsRendered && p.Value.IsOnline).Select(p => p.Key).ToList();
 
     /// <summary>
-    ///     If a Kinkster exists given their UID.
+    ///   If a Kinkster exists given their UID.
     /// </summary>
     public bool ContainsKinkster(string uid) => _allKinksters.ContainsKey(new(uid));
 
@@ -273,8 +273,8 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         => _allKinksters.TryGetValue(user, out kinkster);
 
     /// <summary>
-    ///     Useful for cases where you have the UID but you dont have the pair object and 
-    ///     need a way to get the nickname/alias without iterating through them all.
+    ///   Useful for cases where you have the UID but you dont have the pair object and 
+    ///   need a way to get the nickname/alias without iterating through them all.
     /// </summary>
     public bool TryGetNickAliasOrUid(string uid, [NotNullWhen(true)] out string? nickAliasUid)
     {
@@ -292,7 +292,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         => _allKinksters.Keys.FirstOrDefault(p => string.Equals(p.AliasOrUID, aliasOrUid, StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
-    ///     Attempt to retrieve a kinkster by <see cref="UserData"/>. If failed, null is returned.
+    ///   Attempt to retrieve a kinkster by <see cref="UserData"/>. If failed, null is returned.
     /// </summary>
     public Kinkster? GetUserOrDefault(UserData user) => _allKinksters.TryGetValue(user, out var kinkster) ? kinkster : null;
 
@@ -719,7 +719,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     #endregion Updates
 
     /// <summary>
-    ///     Logic for ensuring that correct pairs display a context menu when right-clicked.
+    ///   Logic for ensuring that correct pairs display a context menu when right-clicked.
     /// </summary>
     private void OnContextMenuOpened(IMenuOpenedArgs args)
     {
@@ -745,7 +745,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         OpenSubMenu(match, args);
     }
     /// <summary>
-    ///     Required to show the nested menu in the opened context menus.
+    ///   Required to show the nested menu in the opened context menus.
     /// </summary>
     private void OpenSubMenu(Kinkster kinkster, IMenuOpenedArgs args)
     {

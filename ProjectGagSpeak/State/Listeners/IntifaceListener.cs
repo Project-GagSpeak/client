@@ -8,7 +8,7 @@ using GagSpeak.State.Models;
 namespace GagSpeak.State.Listeners;
 
 /// <summary>
-///     Listens for the Intiface IPC updates, and informs the manager accordingly.
+///   Listens for the Intiface IPC updates, and informs the manager accordingly.
 /// </summary>
 public sealed class IntifaceListener : DisposableMediatorSubscriberBase
 {

@@ -108,7 +108,7 @@ public class ClientAchievements
     }
 
     /// <summary>
-    ///     Deserializes the provided compressed Base64 string into the achievement data.
+    ///   Deserializes the provided compressed Base64 string into the achievement data.
     /// </summary>
     public void DeserializeData(string compressedBase64Data)
     {

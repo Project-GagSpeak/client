@@ -88,7 +88,7 @@ public class PopoutGlobalChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubs
         // get the UserData from the GlobalChatMessage (may not be a pair)
         var userData = networkChat.Message.Sender;
         // Set the SenderName according to conditions.
-        if (userData.Tier is CkSupporterTier.KinkporiumMistress)
+        if (userData.Tier is CkVanityTier.KinkporiumMistress)
             SenderName = $"Mistress Cordy";
         else if (_kinksters.DirectPairs.FirstOrDefault(p => p.UserData.UID == userData.UID) is { } match)
             SenderName = match.GetNickAliasOrUid() + " (" + userTagCode + ")";
@@ -101,7 +101,7 @@ public class PopoutGlobalChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubs
     protected override void AddMessage(GagSpeakChatMessage newMsg)
     {
         // Cordy is special girl :3
-        if (newMsg.Tier is CkSupporterTier.KinkporiumMistress)
+        if (newMsg.Tier is CkVanityTier.KinkporiumMistress)
         {
             // Force set the uid color to her favorite color.
             UserColors[newMsg.UID] = GsCol.ShopKeeperColor.Vec4();
@@ -126,10 +126,10 @@ public class PopoutGlobalChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubs
             // append special formatting to the start of the message based on supporter type.
             var prefix = newMsg.Tier switch
             {
-                CkSupporterTier.DistinguishedConnoisseur => $"[img=RequiredImages\\Tier3Icon][rawcolor={col}]{newMsg.Name}[/rawcolor]: ",
-                CkSupporterTier.EsteemedPatron => $"[img=RequiredImages\\Tier2Icon][rawcolor={col}]{newMsg.Name}[/rawcolor]: ",
-                CkSupporterTier.ServerBooster => $"[img=RequiredImages\\TierBoosterIcon][rawcolor={col}]{newMsg.Name}[/rawcolor]: ",
-                CkSupporterTier.IllustriousSupporter => $"[img=RequiredImages\\Tier1Icon][rawcolor={col}]{newMsg.Name}[/rawcolor]: ",
+                CkVanityTier.DistinguishedConnoisseur => $"[img=RequiredImages\\Tier3Icon][rawcolor={col}]{newMsg.Name}[/rawcolor]: ",
+                CkVanityTier.EsteemedPatron => $"[img=RequiredImages\\Tier2Icon][rawcolor={col}]{newMsg.Name}[/rawcolor]: ",
+                CkVanityTier.ServerBooster => $"[img=RequiredImages\\TierBoosterIcon][rawcolor={col}]{newMsg.Name}[/rawcolor]: ",
+                CkVanityTier.IllustriousSupporter => $"[img=RequiredImages\\Tier1Icon][rawcolor={col}]{newMsg.Name}[/rawcolor]: ",
                 _ => $"[rawcolor={col}]{newMsg.Name}[/rawcolor]: "
             };
             Messages.PushBack(newMsg with { Message = prefix + sanitizedMsg });
@@ -140,7 +140,7 @@ public class PopoutGlobalChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubs
     private void AddExistingMessage(GagSpeakChatMessage newMsg)
     {
         // Cordy is special girl :3
-        if (newMsg.Tier is CkSupporterTier.KinkporiumMistress)
+        if (newMsg.Tier is CkVanityTier.KinkporiumMistress)
         {
             // Force set the uid color to her favorite color.
             UserColors[newMsg.UID] = GsCol.ShopKeeperColor.Vec4();

@@ -11,8 +11,8 @@ using System.Windows.Forms;
 namespace GagSpeak.Services.Controller;
 
 /// <summary>
-///     Controls how <see cref="IKeyState"/> handles interacted keys, overriding them with a reference
-///     binder to forcefully set values one could not normally set through the service.
+///   Controls how <see cref="IKeyState"/> handles interacted keys, overriding them with a reference
+///   binder to forcefully set values one could not normally set through the service.
 /// </summary>
 public sealed class KeystateController : DisposableMediatorSubscriberBase
 {
@@ -73,7 +73,7 @@ public sealed class KeystateController : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     The keys that are used for movement, which will be cancelled if the player is not allowed to move.
+    ///   The keys that are used for movement, which will be cancelled if the player is not allowed to move.
     /// </summary>
     private void CancelMoveKeys()
     {
@@ -83,7 +83,7 @@ public sealed class KeystateController : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Resets any keys that were cancelled.
+    ///   Resets any keys that were cancelled.
     /// </summary>
     private void ResetCancelledMoveKeys(IEnumerable<VirtualKey> keysToRestore)
     {
@@ -94,7 +94,7 @@ public sealed class KeystateController : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Sets the key state (if you start crashing when using this you probably have a fucked up getrefvalue)
+    ///   Sets the key state (if you start crashing when using this you probably have a fucked up getrefvalue)
     /// </summary>
     private static void SetKeyState(VirtualKey key, int state) => _getRefValue!((int)key) = state;      
 }

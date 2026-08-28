@@ -82,8 +82,8 @@ public class MainConfig : IHybridSavable
     public GagspeakConfig Current { get; private set; } = new();
 
     /// <summary>
-    ///     Updates the paused state of the server. <para />
-    ///     When set to a value, the config is automatically saved.
+    ///   Updates the paused state of the server. <para />
+    ///   When set to a value, the config is automatically saved.
     /// </summary>
     public bool ServerPaused { get; set; } = false;
 

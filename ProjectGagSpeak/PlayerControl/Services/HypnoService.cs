@@ -15,7 +15,7 @@ using GagspeakAPI.Data;
 namespace GagSpeak.Services.Controller;
 
 /// <summary>
-///     Manages the rendering of a hypnosis overlay onto your screen.
+///   Manages the rendering of a hypnosis overlay onto your screen.
 /// </summary>
 public class HypnoService : IDisposable
 {
@@ -62,7 +62,7 @@ public class HypnoService : IDisposable
     }
 
     /// <summary>
-    ///     Indicates if this spiral came from a sent hypnosis effect, over a personal restraint.
+    ///   Indicates if this spiral came from a sent hypnosis effect, over a personal restraint.
     /// </summary>
     public bool IsSentEffect => _hcStateEffect;
     public CombinedCacheKey ActiveSourceKey => _activeSourceKey;
@@ -152,7 +152,7 @@ public class HypnoService : IDisposable
     }
 
     /// <summary>
-    ///     Safely, remove a Hypno Effect.
+    ///   Safely, remove a Hypno Effect.
     /// </summary>
     public async Task RemoveEffect()
     {

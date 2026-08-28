@@ -6,7 +6,7 @@ namespace GagSpeak.GameInternals.Detours;
 public partial class StaticDetours
 {
     /// <summary>
-    ///     SHOULD fire whenever we interact with any object thing.
+    ///   SHOULD fire whenever we interact with any object thing.
     /// </summary>
     internal Hook<TargetSystem.Delegates.InteractWithObject> ItemInteractedHook;
 

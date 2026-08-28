@@ -8,7 +8,7 @@ using GagSpeak.Services;
 namespace GagSpeak;
 
 /// <summary>
-///     Essential Task Operations used in Hardcore Actions.
+///   Essential Task Operations used in Hardcore Actions.
 /// </summary>
 public static unsafe class HcCommonTaskFuncs
 {

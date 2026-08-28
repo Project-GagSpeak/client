@@ -16,7 +16,7 @@ using Dalamud.Game.Gui;
 namespace GagSpeak.Services.Controller;
 
 /// <summary>
-///     Controls what hotbar actions are restricted or not, and the customized tooltips for each action.
+///   Controls what hotbar actions are restricted or not, and the customized tooltips for each action.
 /// </summary>
 public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
 {
@@ -98,7 +98,7 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     the Internal function that updates the current hotbar slots with the banned actions.
+    ///   the Internal function that updates the current hotbar slots with the banned actions.
     /// </summary>
     private unsafe void SetBannedSlots()
     {
@@ -147,7 +147,7 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     To ensure hotbar slot data is not lost, restore them to defaults here.
+    ///   To ensure hotbar slot data is not lost, restore them to defaults here.
     /// </summary>
     private unsafe void RestoreSavedSlots()
     {
@@ -180,7 +180,7 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Every time we change jobs, we need to aquire the new banned actions.
+    ///   Every time we change jobs, we need to aquire the new banned actions.
     /// </summary>
     private void SetBannedJobActions(uint jobId)
     {
@@ -237,10 +237,10 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Called when action tooltip has finished drawing.
-    ///     This is used to update the tooltip with the correct trait information for restricted actions.
-    ///     It replaces the title, description, and other text nodes with the appropriate trait information.
-    ///     If the action is not a trait restriction, it will skip updating the tooltip.
+    ///   Called when action tooltip has finished drawing.
+    ///   This is used to update the tooltip with the correct trait information for restricted actions.
+    ///   It replaces the title, description, and other text nodes with the appropriate trait information.
+    ///   If the action is not a trait restriction, it will skip updating the tooltip.
     /// </summary>
     /// <param name="addon">pointer to the tooltip addon</param>
     private unsafe void OnActionTooltip(AtkUnitBase* addon)

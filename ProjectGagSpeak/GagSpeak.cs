@@ -443,8 +443,8 @@ public static class GagSpeakServiceExtensions
     #endregion ScopedServices
 
     /// <summary>
-    ///     Services that must run logic on initialization to help with monitoring.
-    ///     If it does not, it can also be an important monitor background service.
+    ///   Services that must run logic on initialization to help with monitoring.
+    ///   If it does not, it can also be an important monitor background service.
     /// </summary>
     /// <remarks> Services that simply monitor actions should be invoked in 'WaitForPlayerAndLaunchCharacterManager' </remarks>
     public static IServiceCollection AddGagSpeakHosted(this IServiceCollection services)

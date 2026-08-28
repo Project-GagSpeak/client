@@ -20,7 +20,7 @@ using GagspeakAPI.Data;
 namespace GagSpeak.State.Handlers;
 
 /// <summary>
-///     Handles incoming monitored or manually invoked updates to call respective invocations if valid.
+///   Handles incoming monitored or manually invoked updates to call respective invocations if valid.
 /// </summary>
 public class TriggerHandler : DisposableMediatorSubscriberBase
 {
@@ -54,7 +54,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
 
     #region Handlers
     /// <summary>
-    ///     Processes a game's chat message for trigger detection. This is independant of GagPlates.
+    ///   Processes a game's chat message for trigger detection. This is independant of GagPlates.
     /// </summary>
     private void OnGameChat(InputChannel channel, string senderNameWorld, SeString msg)
     {
@@ -113,8 +113,8 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     A SameThreadMessage from the Mediator fired whenever an emote used by anyone occurs. <para />
-    ///     (Hopefully reduce heavy load on system or something with optimized call logic ;-;)
+    ///   A SameThreadMessage from the Mediator fired whenever an emote used by anyone occurs. <para />
+    ///   (Hopefully reduce heavy load on system or something with optimized call logic ;-;)
     /// </summary>
     private unsafe void OnEmote(uint emoteId, nint callerAddr, nint targetAddr)
     {
@@ -241,7 +241,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Called upon by the ActionEffectDetour
+    ///   Called upon by the ActionEffectDetour
     /// </summary>
     public unsafe void OnActionEffectEvent(List<ActionEffectEntry> actionEffects)
     {
@@ -268,7 +268,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     The result of a /dr between two individuals
+    ///   The result of a /dr between two individuals
     /// </summary>
     private void OnSocialGameEnd(string winnerNameWorld, string loserNameWorld)
     {
@@ -316,7 +316,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
     };
 
     /// <summary>
-    ///     Personalized Achievement detection for our own chat messages.
+    ///   Personalized Achievement detection for our own chat messages.
     /// </summary>
     public void ScanOwnChat(InputChannel channel, SeString msg)
     {
@@ -346,7 +346,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Attempt to locate the first valid trigger in a chat message.
+    ///   Attempt to locate the first valid trigger in a chat message.
     /// </summary>
     private string? GetValidTrigger(List<string> triggerPhrases, SeString chatMessage)
     {
@@ -364,7 +364,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Attempts to get if this person was a kinkster, global or per pair.
+    ///   Attempts to get if this person was a kinkster, global or per pair.
     /// </summary>
     private string? GetUidFromNameWorld(string nameWithWorld)
     {
@@ -378,7 +378,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Handles the candidates from a series of selected triggers to identify which should be executed.
+    ///   Handles the candidates from a series of selected triggers to identify which should be executed.
     /// </summary>
     private async void HandleTriggerCandidates<T>(IEnumerable<T> candidates, string? enactor = null) where T : Trigger
     {
@@ -411,7 +411,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
 
 
     /// <summary>
-    ///     Parses out a valid puppeteer message using its context, then runs the associated handle command.
+    ///   Parses out a valid puppeteer message using its context, then runs the associated handle command.
     /// </summary>
     private async void ProcessPuppetMsg(PuppetMsgContext context, SeString msg)
     {

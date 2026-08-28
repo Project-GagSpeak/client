@@ -19,8 +19,8 @@ using Penumbra.GameData.Structs;
 namespace GagSpeak.Kinksters;
 
 /// <summary>
-///     Stores information about a pairing between 2 Kinksters. <para />
-///     The handlers associated with the kinkster must be disposed of when removing.
+///   Stores information about a pairing between 2 Kinksters. <para />
+///   The handlers associated with the kinkster must be disposed of when removing.
 /// </summary>
 public class Kinkster : IComparable<Kinkster>
 {
@@ -125,8 +125,8 @@ public class Kinkster : IComparable<Kinkster>
         => IsRendered ? PlayerData.DistanceTo(_player.DataState.Position) : float.MaxValue;
 
     /// <summary>
-    ///     After a Kinkster is initialized / created, it will then be marked as
-    ///     Online, if they are online. (Or after a reconnection, after being created)
+    ///   After a Kinkster is initialized / created, it will then be marked as
+    ///   Online, if they are online. (Or after a reconnection, after being created)
     /// </summary>
     public void MarkOnline(OnlineKinkster dto)
     {
@@ -138,7 +138,7 @@ public class Kinkster : IComparable<Kinkster>
     }
 
     /// <summary>
-    ///     Convert a temporary Kinkster to a permanent one. (Once we add this at least)
+    ///   Convert a temporary Kinkster to a permanent one. (Once we add this at least)
     /// </summary>
     public void MarkAsPermanent()
     {
@@ -153,7 +153,7 @@ public class Kinkster : IComparable<Kinkster>
     }
 
     /// <summary> 
-    ///     Mark a Kinkster as offline, reverting any visible state if applied.
+    ///   Mark a Kinkster as offline, reverting any visible state if applied.
     /// </summary>
     public void MarkOffline()
     {
@@ -164,8 +164,8 @@ public class Kinkster : IComparable<Kinkster>
 
 
     /// <summary>
-    ///     Disposes of the Kinkster's Handlers, and all internal data. <para/>
-    ///     <b>Should be called when intending to dispose a Kinkster ONLY.</b>
+    ///   Disposes of the Kinkster's Handlers, and all internal data. <para/>
+    ///   <b>Should be called when intending to dispose a Kinkster ONLY.</b>
     /// </summary>
     public void DisposeData()
     {

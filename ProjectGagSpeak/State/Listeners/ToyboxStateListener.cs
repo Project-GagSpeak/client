@@ -8,8 +8,8 @@ using GagspeakAPI.Network;
 namespace GagSpeak.State.Listeners;
 
 /// <summary>
-///     Listens for callback changes related to Alarms, Patterns, Triggers. <para/>
-///     Unfortunitely was unable to fit most vibe lobby calls in here, maybe will figure out how in the future.
+///   Listens for callback changes related to Alarms, Patterns, Triggers. <para/>
+///   Unfortunitely was unable to fit most vibe lobby calls in here, maybe will figure out how in the future.
 /// </summary>
 public sealed class ToyboxStateListener
 {

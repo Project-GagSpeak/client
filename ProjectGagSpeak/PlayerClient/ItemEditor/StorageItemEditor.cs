@@ -5,8 +5,8 @@ namespace GagSpeak.PlayerClient;
 #pragma warning disable IDE1006 // Naming Styles
 
 /// <summary> 
-///     Handles the editing of items which are referenced storage items. <para />
-///     Finished edits apply updates to the object source without replacing the object itself.
+///   Handles the editing of items which are referenced storage items. <para />
+///   Finished edits apply updates to the object source without replacing the object itself.
 /// </summary>
 /// <typeparam name="T"> An editable storage item that can clone and apply changes. </typeparam>
 public sealed class StorageItemEditor<T> where T : class, IEditableStorageItem<T>

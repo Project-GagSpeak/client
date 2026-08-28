@@ -12,10 +12,10 @@ using System.Diagnostics.CodeAnalysis;
 namespace GagSpeak.Watchers;
 
 /// <summary> 
-///     ClientState.LocalPlayer doesn't allow us to get player data outside the games framework thread. <para />
-///     This service tracks all Client-Owned Object Creation, Destruction, & Notifiers. <para />
-///     This allows us to cache an address that we can guarantee will always be the current 
-///     valid state without checking every tick. <para />
+///   ClientState.LocalPlayer doesn't allow us to get player data outside the games framework thread. <para />
+///   This service tracks all Client-Owned Object Creation, Destruction, & Notifiers. <para />
+///   This allows us to cache an address that we can guarantee will always be the current 
+///   valid state without checking every tick. <para />
 /// </summary>
 public class CharaObjectWatcher : DisposableMediatorSubscriberBase
 {
@@ -87,7 +87,7 @@ public class CharaObjectWatcher : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Obtain the Character* of a rendered address, or null if not present.
+    ///   Obtain the Character* of a rendered address, or null if not present.
     /// </summary>
     public static unsafe Character* AsCharacter(nint address)
         => Rendered.Contains(address) ? (Character*)address : null;
@@ -124,7 +124,7 @@ public class CharaObjectWatcher : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Obtain a Character* if rendered, returning false otherwise.
+    ///   Obtain a Character* if rendered, returning false otherwise.
     /// </summary>
     public static unsafe bool TryGetValue(nint address, [NotNullWhen(true)] out Character* character)
     {
@@ -138,7 +138,7 @@ public class CharaObjectWatcher : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Determine if a Kinkster's OnlineUser Ident matches to any of the currently rendered characters. <para />
+    ///   Determine if a Kinkster's OnlineUser Ident matches to any of the currently rendered characters. <para />
     /// </summary>
     /// <returns> True if a match was found, false otherwise. If false, output is <see cref="IntPtr.Zero"/> </returns>
     public bool TryGetExisting(KinksterHandler handler, out IntPtr address)
@@ -243,9 +243,9 @@ public class CharaObjectWatcher : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     There are conditions where an object can be rendered / created, but not drawable, or currently bring drawn. <para />
-    ///     This mainly occurs on login or when transferring between zones, but can also occur during redraws and such.
-    ///     We can get around this by checking for various draw conditions.
+    ///   There are conditions where an object can be rendered / created, but not drawable, or currently bring drawn. <para />
+    ///   This mainly occurs on login or when transferring between zones, but can also occur during redraws and such.
+    ///   We can get around this by checking for various draw conditions.
     /// </summary>
     public unsafe bool IsObjectLoaded(IntPtr gameObjectAddress)
     {

@@ -6,16 +6,16 @@
 //namespace GagSpeak.Services;
 
 ///// <summary>
-/////     <b> TODO: Migrate this format from the audio player to the scd effect spawner if possible. Or keep this if more accurate. </b><para/>
-/////     
-/////     This is a scuffed port from the old gagspeak to get something working by open beta. <para/>
-/////     
-/////     This is susceptible to audio scrapes when hitting the lowest volume or the highest volume.
-/////     Going above and below the max threshold causes this, and is why migrating to an scd may be better.
+/////   <b> TODO: Migrate this format from the audio player to the scd effect spawner if possible. Or keep this if more accurate. </b><para/>
+/////   
+/////   This is a scuffed port from the old gagspeak to get something working by open beta. <para/>
+/////   
+/////   This is susceptible to audio scrapes when hitting the lowest volume or the highest volume.
+/////   Going above and below the max threshold causes this, and is why migrating to an scd may be better.
 ///// </summary>
 ///// <remarks>
-/////     If anything should be fixed for QoL it would be finding a better waveplayer, as this
-/////     scratches audio when hitting 0.0 and 1.0 thresholds.
+/////   If anything should be fixed for QoL it would be finding a better waveplayer, as this
+/////   scratches audio when hitting 0.0 and 1.0 thresholds.
 ///// </remarks>
 //public sealed class VibeSimService
 //{

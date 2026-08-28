@@ -9,8 +9,8 @@ using System;
 namespace GagSpeak.Kinksters;
 
 /// <summary>
-///     Handles the Kinksters current visibility state. <para />
-///     Responsible for storing details on the linked visible kinkster.
+///   Handles the Kinksters current visibility state. <para />
+///   Responsible for storing details on the linked visible kinkster.
 /// </summary>
 public sealed class KinksterHandler : DisposableMediatorSubscriberBase
 {
@@ -106,7 +106,7 @@ public sealed class KinksterHandler : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Fired whenever the player is unrendered from the game world. <para />
+    ///   Fired whenever the player is unrendered from the game world. <para />
     /// </summary>
     private unsafe void UnrenderPlayer(IntPtr address)
     {

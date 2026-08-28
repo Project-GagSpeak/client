@@ -7,7 +7,7 @@ using GagSpeak.Services.Configs;
 
 namespace GagSpeak.MufflerCore.Handler;
 /// <summary>
-///     Class to convert Mandarian text to International Phonetic Alphabet (IPA) notation
+///   Class to convert Mandarian text to International Phonetic Alphabet (IPA) notation
 /// </summary>
 public class Ipa_Mandarian_Handler
 {

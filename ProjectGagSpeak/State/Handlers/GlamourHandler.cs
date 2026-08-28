@@ -76,15 +76,15 @@ public class GlamourHandler
         => _cache.RemoveGlamour(keys);
 
     /// <summary>
-    ///     For the appropriate <paramref name="metaIdx"/> metaState, add a key-value
-    ///     pair with <paramref name="key"/> and <paramref name="value"/>.
+    ///   For the appropriate <paramref name="metaIdx"/> metaState, add a key-value
+    ///   pair with <paramref name="key"/> and <paramref name="value"/>.
     /// </summary>
     public bool TryAddMetaToCache(CombinedCacheKey key, MetaIndex metaIdx, TriStateBool value)
         => _cache.AddMeta(key, metaIdx, value);
 
     /// <summary>
-    ///     Adds <paramref name="meta"/>'s <see cref="TriStateBool"/>'s to all metaState caches,
-    ///     adding the key-value pair at key <paramref name="key"/>.
+    ///   Adds <paramref name="meta"/>'s <see cref="TriStateBool"/>'s to all metaState caches,
+    ///   adding the key-value pair at key <paramref name="key"/>.
     /// </summary>
     public bool TryAddMetaToCache(CombinedCacheKey key, MetaDataStruct meta)
         => _cache.AddMeta(key, meta);
@@ -153,7 +153,7 @@ public class GlamourHandler
         => await ExecuteWithSemaphore(() => UpdateMetaInternal(true, reapply));
 
     /// <summary>
-    ///     Updates the Final Glamour Cache, and then applies the visual updates.
+    ///   Updates the Final Glamour Cache, and then applies the visual updates.
     /// </summary>
     private async Task UpdateGlamourInternal(bool forceCacheCall, bool reapply)
     {
@@ -178,7 +178,7 @@ public class GlamourHandler
     }
 
     /// <summary>
-    ///     Updates the Final Meta Cache, and then applies the visual updates.
+    ///   Updates the Final Meta Cache, and then applies the visual updates.
     /// </summary>
     private async Task UpdateMetaInternal(bool forceCacheCall, bool reapply)
     {
@@ -203,7 +203,7 @@ public class GlamourHandler
     }
 
     /// <summary> 
-    ///     Restore slots no longer present in _finalGlamour from <see cref="_cache"/>, then reapplies what is still active.
+    ///   Restore slots no longer present in _finalGlamour from <see cref="_cache"/>, then reapplies what is still active.
     /// </summary>
     private async Task RestoreAndReapply(bool forceCacheCall, IEnumerable<EquipSlot> slotsToRestore)
     {
@@ -225,7 +225,7 @@ public class GlamourHandler
     }
 
     /// <summary> 
-    ///     Apples the FinalGlamour from <see cref="_cache"/> to the Client. 
+    ///   Apples the FinalGlamour from <see cref="_cache"/> to the Client. 
     /// </summary>
     private async Task ApplyGlamourCache(bool cacheBeforeApply)
     {
@@ -265,7 +265,7 @@ public class GlamourHandler
     }
 
     /// <summary>
-    ///     Apples the _finalMeta from the <see cref="_cache"/> Cache to the Client.
+    ///   Apples the _finalMeta from the <see cref="_cache"/> Cache to the Client.
     /// </summary>
     private async Task ApplyMetaCache(bool cacheBeforeApply)
     {
@@ -303,12 +303,12 @@ public class GlamourHandler
     }
 
     /// <summary>
-    ///     Caches the latest state from Glamourer IPC to store the latest unbound state. <para />
-    ///     To anyone reviewing this code, I am so sorry you have to try and understand this clusterfuck of a method to adapt with 
-    ///     Glamourer's MetaState handling. <para />
-    ///     Idealy we could set these by detouring the direct detours from the game's virtual table, but it would also
-    ///     mean falling out of sync with glamourer's internal state, which may not reflect the game state (it does this sometimes). <para />
-    ///     This is the best I could get it. Hopefully it improves down the line.
+    ///   Caches the latest state from Glamourer IPC to store the latest unbound state. <para />
+    ///   To anyone reviewing this code, I am so sorry you have to try and understand this clusterfuck of a method to adapt with 
+    ///   Glamourer's MetaState handling. <para />
+    ///   Idealy we could set these by detouring the direct detours from the game's virtual table, but it would also
+    ///   mean falling out of sync with glamourer's internal state, which may not reflect the game state (it does this sometimes). <para />
+    ///   This is the best I could get it. Hopefully it improves down the line.
     /// </summary>
     public void CacheActorMeta(bool flagFromLatest)
     {
@@ -352,7 +352,7 @@ public class GlamourHandler
     }
 
     /// <summary>
-    ///     Ensures that all other calls from Glamourer are blocked during a execution.
+    ///   Ensures that all other calls from Glamourer are blocked during a execution.
     /// </summary>
     /// <remarks> This is nessisary to avoid deadlocks and infinite looping calls.</remarks>
     private async Task ExecuteWithSemaphore(Func<Task> action)

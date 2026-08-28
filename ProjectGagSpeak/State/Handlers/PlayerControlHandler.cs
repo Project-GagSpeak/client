@@ -17,7 +17,7 @@ using GagspeakAPI.Data;
 namespace GagSpeak.State.Handlers;
 
 /// <summary>
-///     Handles the enabling and disabling of various hardcore changes.
+///   Handles the enabling and disabling of various hardcore changes.
 /// </summary>
 public class PlayerCtrlHandler
 {
@@ -65,14 +65,14 @@ public class PlayerCtrlHandler
     }
 
     /// <summary>
-    ///     It is possible that the removal effect is triggered on a safeword or natural timer falloff. <para />
+    ///   It is possible that the removal effect is triggered on a safeword or natural timer falloff. <para />
     /// 
-    ///     If the server it down or the change cannot be processed, we want to still remove the player controls 
-    ///     client-side, but not invoke the achievements for the change. <para />
-    ///     
-    ///     This way, on reconnection, the hardcore state will be reapplied, timer will immediately expire, and
-    ///     they will get the achievement then. It also ensures they are not 'stuck' in restricted controls, so
-    ///     a safeword is still effective.
+    ///   If the server it down or the change cannot be processed, we want to still remove the player controls 
+    ///   client-side, but not invoke the achievements for the change. <para />
+    ///   
+    ///   This way, on reconnection, the hardcore state will be reapplied, timer will immediately expire, and
+    ///   they will get the achievement then. It also ensures they are not 'stuck' in restricted controls, so
+    ///   a safeword is still effective.
     /// </summary>
     public void RemoveHypnoEffect(UserData enactor, bool giveAchievements, bool fromPluginDisposal = false)
     {
@@ -256,14 +256,14 @@ public class PlayerCtrlHandler
     }
 
     /// <summary>
-    ///     It is possible that the removal effect is triggered on a safeword or natural timer falloff. <para />
+    ///   It is possible that the removal effect is triggered on a safeword or natural timer falloff. <para />
     /// 
-    ///     If the server it down or the change cannot be processed, we want to still remove the player controls 
-    ///     client-side, but not invoke the achievements for the change. <para />
-    ///     
-    ///     This way, on reconnection, the hardcore state will be reapplied, timer will immediately expire, and
-    ///     they will get the achievement then. It also ensures they are not 'stuck' in restricted controls, so
-    ///     a safeword is still effective.
+    ///   If the server it down or the change cannot be processed, we want to still remove the player controls 
+    ///   client-side, but not invoke the achievements for the change. <para />
+    ///   
+    ///   This way, on reconnection, the hardcore state will be reapplied, timer will immediately expire, and
+    ///   they will get the achievement then. It also ensures they are not 'stuck' in restricted controls, so
+    ///   a safeword is still effective.
     /// </summary>
     public void DisableHiddenChatBoxes(UserData enactor, bool giveAchievements)
     {
@@ -288,14 +288,14 @@ public class PlayerCtrlHandler
     }
 
     /// <summary>
-    ///     It is possible that the removal effect is triggered on a safeword or natural timer falloff. <para />
+    ///   It is possible that the removal effect is triggered on a safeword or natural timer falloff. <para />
     /// 
-    ///     If the server it down or the change cannot be processed, we want to still remove the player controls 
-    ///     client-side, but not invoke the achievements for the change. <para />
-    ///     
-    ///     This way, on reconnection, the hardcore state will be reapplied, timer will immediately expire, and
-    ///     they will get the achievement then. It also ensures they are not 'stuck' in restricted controls, so
-    ///     a safeword is still effective.
+    ///   If the server it down or the change cannot be processed, we want to still remove the player controls 
+    ///   client-side, but not invoke the achievements for the change. <para />
+    ///   
+    ///   This way, on reconnection, the hardcore state will be reapplied, timer will immediately expire, and
+    ///   they will get the achievement then. It also ensures they are not 'stuck' in restricted controls, so
+    ///   a safeword is still effective.
     /// </summary>
     public void RestoreChatInputVisibility(UserData enactor, bool giveAchievements)
     {
@@ -319,14 +319,14 @@ public class PlayerCtrlHandler
     }
 
     /// <summary>
-    ///     It is possible that the removal effect is triggered on a safeword or natural timer falloff. <para />
+    ///   It is possible that the removal effect is triggered on a safeword or natural timer falloff. <para />
     /// 
-    ///     If the server it down or the change cannot be processed, we want to still remove the player controls 
-    ///     client-side, but not invoke the achievements for the change. <para />
-    ///     
-    ///     This way, on reconnection, the hardcore state will be reapplied, timer will immediately expire, and
-    ///     they will get the achievement then. It also ensures they are not 'stuck' in restricted controls, so
-    ///     a safeword is still effective.
+    ///   If the server it down or the change cannot be processed, we want to still remove the player controls 
+    ///   client-side, but not invoke the achievements for the change. <para />
+    ///   
+    ///   This way, on reconnection, the hardcore state will be reapplied, timer will immediately expire, and
+    ///   they will get the achievement then. It also ensures they are not 'stuck' in restricted controls, so
+    ///   a safeword is still effective.
     /// </summary>
     public void UnblockChatInput(UserData enactor, bool giveAchievements)
     {

@@ -170,20 +170,20 @@ public sealed class RestrictionManager : IHybridSavable
     }
 
     /// <summary>
-    ///     Begin the editing process, making a clone of the item we want to edit.
+    ///   Begin the editing process, making a clone of the item we want to edit.
     /// </summary>
     public void StartEditing(RestrictionItem item)
         => _itemEditor.StartEditing(Storage, item);
 
     /// <summary> 
-    ///     Cancel the editing process without saving anything.
+    ///   Cancel the editing process without saving anything.
     /// </summary>
     public void StopEditing()
         => _itemEditor.QuitEditing();
 
     /// <summary>
-    ///     Injects all the changes made to the GagRestriction and applies them to the actual item. <para />
-    ///     All changes are saved to the config once this completes.
+    ///   Injects all the changes made to the GagRestriction and applies them to the actual item. <para />
+    ///   All changes are saved to the config once this completes.
     /// </summary>
     public void SaveChangesAndStopEditing()
     {
@@ -214,8 +214,8 @@ public sealed class RestrictionManager : IHybridSavable
     public bool RemoveFavorite(GarblerRestriction restriction) => _favorites.RemoveGag(restriction.GagType);
 
     /// <summary> 
-    ///     Applies a cursed items restriction ref to the active restrictions cache. <para />
-    ///     If successful, the stored layer is placed inside <paramref name="item"/>.
+    ///   Applies a cursed items restriction ref to the active restrictions cache. <para />
+    ///   If successful, the stored layer is placed inside <paramref name="item"/>.
     /// </summary>
     public bool ApplyCursedItem(CursedRestrictionItem item, out int layer)
     {

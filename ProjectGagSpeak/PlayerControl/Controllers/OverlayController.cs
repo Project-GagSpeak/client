@@ -6,7 +6,7 @@ using GagSpeak.State.Caches;
 namespace GagSpeak.Services.Controller;
 
 /// <summary>
-///     Controls the players current POV.
+///   Controls the players current POV.
 /// </summary>
 public sealed class POVController : DisposableMediatorSubscriberBase
 {
@@ -50,7 +50,7 @@ public sealed class POVController : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Sets the camera's perspective to a spesified control mode.
+    ///   Sets the camera's perspective to a spesified control mode.
     /// </summary>
     private void SetCameraPerspective(CameraControlMode mode)
     {

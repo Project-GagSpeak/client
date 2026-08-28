@@ -30,13 +30,13 @@ public class KinksterFactory
     }
 
     /// <summary> 
-    ///     Creates a new Kinkster from the KinksterPair
+    ///   Creates a new Kinkster from the KinksterPair
     /// </summary>
     public Kinkster Create(KinksterPair kinksterPair)
         => new(kinksterPair, _loggerFactory.CreateLogger<Kinkster>(), _mediator, _config, _nicks, this);
 
     /// <summary>
-    ///     Handles the current visible state of the Kinkster.
+    ///   Handles the current visible state of the Kinkster.
     /// </summary>
     public KinksterHandler Create(Kinkster kinkster)
         => new KinksterHandler(kinkster, _loggerFactory.CreateLogger<KinksterHandler>(), _mediator, _ipc, _watcher);

@@ -41,7 +41,7 @@ public static class SorterEx
         };
 
     /// <summary>
-    ///     Preset for the AllFolder, to sort by name -> visible -> online -> favorite.
+    ///   Preset for the AllFolder, to sort by name -> visible -> online -> favorite.
     /// </summary>
     public static readonly IReadOnlyList<ISortMethod<DynamicLeaf<Kinkster>>> AllFolderSorter
         = [ ByRendered, ByOnline, ByFavorite, ByPairName ];

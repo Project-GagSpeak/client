@@ -44,8 +44,8 @@ public class TraitsHandler
     }
 
     /// <summary>
-    ///     Updates the Final Traits Cache, then Updates the 
-    ///     controller's sources with the latest trait data.
+    ///   Updates the Final Traits Cache, then Updates the 
+    ///   controller's sources with the latest trait data.
     /// </summary>
     public Task UpdateTraitCache()
     {

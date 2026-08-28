@@ -5,7 +5,7 @@ using GagSpeak.Services.Mediator;
 namespace GagSpeak.Services;
 
 /// <summary> 
-///     Tracks the current state that the Thumbnail's UI should reflect.
+///   Tracks the current state that the Thumbnail's UI should reflect.
 /// </summary>
 public sealed class UiThumbnailService : IDisposable
 {

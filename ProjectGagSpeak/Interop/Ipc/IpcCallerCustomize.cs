@@ -102,7 +102,7 @@ public sealed class IpcCallerCustomize : DisposableMediatorSubscriberBase, IIpcC
     }
 
     /// <summary>
-    ///     Enables one of the client's personal profiles by GUID.
+    ///   Enables one of the client's personal profiles by GUID.
     /// </summary>
     public void EnableClientProfile(Guid profileIdentifier)
     {
@@ -113,7 +113,7 @@ public sealed class IpcCallerCustomize : DisposableMediatorSubscriberBase, IIpcC
     }
 
     /// <summary>
-    ///     Disables one of the client's personal profiles by GUID.
+    ///   Disables one of the client's personal profiles by GUID.
     /// </summary>
     public void DisableClientProfile(Guid profileIdentifier)
     {

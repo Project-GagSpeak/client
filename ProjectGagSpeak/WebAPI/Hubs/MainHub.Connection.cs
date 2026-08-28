@@ -9,14 +9,14 @@ using System.Net.WebSockets;
 
 namespace GagSpeak.WebAPI;
 /// <summary>
-///     Facilitates interactions with the GagSpeak Hub connection. <para/>
-///     To ensure that interactions with vibe lobbies function correctly, 
-///     <see cref="_hubConnection"/> will be static. <para />
+///   Facilitates interactions with the GagSpeak Hub connection. <para/>
+///   To ensure that interactions with vibe lobbies function correctly, 
+///   <see cref="_hubConnection"/> will be static. <para />
 /// </summary>
 public partial class MainHub
 {
     /// <summary>
-    ///     Primary method for connecting to the GagSpeak Hub.
+    ///   Primary method for connecting to the GagSpeak Hub.
     /// </summary>
     public async Task Connect()
     {
@@ -155,12 +155,12 @@ public partial class MainHub
     }
 
     /// <summary>
-    ///     Primary method for disconnecting from the GagSpeakHub. <para />
+    ///   Primary method for disconnecting from the GagSpeakHub. <para />
     /// </summary>
     /// <param name="dcReason"> The reason we are disconnecting. </param>
     /// <param name="intent">
-    ///     Why the disconnection occurred, allowing subscribers to handle logic after a 
-    ///     disconnect according to what kind of disconnect it was.
+    ///   Why the disconnection occurred, allowing subscribers to handle logic after a 
+    ///   disconnect according to what kind of disconnect it was.
     /// </param>
     public async Task Disconnect(ServerState dcReason, DisconnectIntent intent, bool saveAchievements = true)
     {
@@ -216,7 +216,7 @@ public partial class MainHub
     }
 
     /// <summary>
-    ///     Reconnection method to use when we want to force a disconnect followed by a new Connection.
+    ///   Reconnection method to use when we want to force a disconnect followed by a new Connection.
     /// </summary>
     public async Task Reconnect(DisconnectIntent intent = DisconnectIntent.Normal, bool saveAchievements = true)
     {
@@ -233,8 +233,8 @@ public partial class MainHub
     }
 
     /// <summary>
-    ///     A Temporary connection established without the Authorized Claim, but rather TemporaryAccess claim. <para />
-    ///     This allows us to generate a fresh UID & SecretKey for our account upon its first creation.
+    ///   A Temporary connection established without the Authorized Claim, but rather TemporaryAccess claim. <para />
+    ///   This allows us to generate a fresh UID & SecretKey for our account upon its first creation.
     /// </summary>
     /// <returns> ([new UID for character],[new secretKey]) </returns>
     public async Task<(string, string)> FetchFreshAccountDetails()

@@ -101,8 +101,8 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Offloads a UI task to the thread pool to not halt ImGui. 
-    ///     When the task is finished DisableUI will be set to false.
+    ///   Offloads a UI task to the thread pool to not halt ImGui. 
+    ///   When the task is finished DisableUI will be set to false.
     /// </summary>
     public static void SetUITask(Task task)
     {
@@ -117,8 +117,8 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Offloads a UI task to the thread pool to not halt ImGui. 
-    ///     When the task is finished DisableUI will be set to false.
+    ///   Offloads a UI task to the thread pool to not halt ImGui. 
+    ///   When the task is finished DisableUI will be set to false.
     /// </summary>
     public static void SetUITask(Func<Task> asyncAction)
     {
@@ -133,8 +133,8 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Offloads a UI Task to the thread pool so ImGui is not halted. It
-    ///     contains an inner task function that can return <typeparamref name="T"/>.
+    ///   Offloads a UI Task to the thread pool so ImGui is not halted. It
+    ///   contains an inner task function that can return <typeparamref name="T"/>.
     /// </summary>
     /// <returns> A task that can be awaited, returning a value of type <typeparamref name="T"/>. </returns>
     public static async Task<T> SetUITaskWithReturn<T>(Func<Task<T>> asyncTask)

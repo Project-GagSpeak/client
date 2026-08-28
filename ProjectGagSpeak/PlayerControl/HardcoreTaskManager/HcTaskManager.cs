@@ -11,13 +11,13 @@ using OtterGui;
 namespace GagSpeak.PlayerControl;
 
 /// <summary>
-///     TaskManager for Hardcore operations, that is capable of automating multiple sub tasks 
-///     in sequence, while completely provending various forms of player movement.
+///   TaskManager for Hardcore operations, that is capable of automating multiple sub tasks 
+///   in sequence, while completely provending various forms of player movement.
 /// </summary>
 /// <remarks> 
-///     It is possible to retain multiple instances if this is assumed with 
-///     static CkCommon integration, but the questionable hardcore methods might make it best 
-///     to keep seperate.
+///   It is possible to retain multiple instances if this is assumed with 
+///   static CkCommon integration, but the questionable hardcore methods might make it best 
+///   to keep seperate.
 /// </remarks>
 public partial class HcTaskManager : IDisposable
 {
@@ -26,7 +26,7 @@ public partial class HcTaskManager : IDisposable
     private readonly PlayerControlCache _cache;
 
     /// <summary> 
-    ///     The list of hardcore task operations managed by the HcTaskManager.
+    ///   The list of hardcore task operations managed by the HcTaskManager.
     /// </summary>
     private static List<HardcoreTaskBase> _taskOperations = new List<HardcoreTaskBase>();
 

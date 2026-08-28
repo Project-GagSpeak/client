@@ -1,7 +1,7 @@
 namespace GagSpeak.State;
 
 /// <summary>
-///     The Priority order of all Managers for the visual state.
+///   The Priority order of all Managers for the visual state.
 /// </summary>
 public enum ManagerPriority : byte
 {

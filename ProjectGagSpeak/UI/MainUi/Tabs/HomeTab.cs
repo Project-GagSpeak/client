@@ -17,13 +17,14 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.WebAPI;
+using GagspeakAPI.User;
 using OtterGui.Text;
 using System.Globalization;
 
 namespace GagSpeak.Gui.MainWindow;
 
 /// <summary>
-///     The landing page of GagSpeak. Pretty UI, and polished design.
+///   The landing page of GagSpeak. Pretty UI, and polished design.
 /// </summary>
 public class HomeTab
 {
@@ -139,7 +140,7 @@ public class HomeTab
 
     private void ProfileDisplayName()
     {
-        var isSupporter = MainHub.OwnUserData.Tier is not CkSupporterTier.NoRole;
+        var isSupporter = MainHub.OwnUserData.Tier is not CkVanityTier.NoRole;
 
         CkGui.FontText(MainHub.DisplayName, Fonts.UidFont);
         CkGui.AttachTooltip(isSupporter ? SUPPORTER_NAME_TOOLTIP : NAME_TOOLTIP);

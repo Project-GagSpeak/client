@@ -26,7 +26,7 @@ public unsafe struct UnkTargetFollowStruct_Unk0xC8
 }
 
 /// <summary>
-///     The main Follow object info used with /follow.
+///   The main Follow object info used with /follow.
 /// </summary>
 [StructLayout(LayoutKind.Explicit, Size = 0x60)]
 public unsafe struct UnkFollowType4Struct

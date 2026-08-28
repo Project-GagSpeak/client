@@ -20,16 +20,16 @@ using Microsoft.Extensions.Hosting;
 namespace GagSpeak.Services;
 
 /// <summary>
-///     Dedicated to monitoring all current padlock states and timed events in hardcore
-///     to perform server calls that will automatically unlock them. <para />
-///     
-///     <b> NOTICE FOR ACIEVEMENT SYNCRONIZATION: </b> <para />
-///     When we restore backups, we will force it to re-trigger again. It is not prudent 
-///     that we unlock them over and over until the server reconnects. What is important
-///     is that if a unlock fails, that when the server does reconnect, the achievement 
-///     that SHOULD HAVE fired, DOES fire. <para />
-///     
-///     So long as we can make that work, its golden.
+///   Dedicated to monitoring all current padlock states and timed events in hardcore
+///   to perform server calls that will automatically unlock them. <para />
+///   
+///   <b> NOTICE FOR ACIEVEMENT SYNCRONIZATION: </b> <para />
+///   When we restore backups, we will force it to re-trigger again. It is not prudent 
+///   that we unlock them over and over until the server reconnects. What is important
+///   is that if a unlock fails, that when the server does reconnect, the achievement 
+///   that SHOULD HAVE fired, DOES fire. <para />
+///   
+///   So long as we can make that work, its golden.
 /// </summary>
 public sealed class AutoUnlockService : BackgroundService
 {
@@ -350,9 +350,9 @@ public sealed class AutoUnlockService : BackgroundService
     }
 
     /// <summary>
-    ///     Unlocks and removes gag slots locked by an expired Mimic padlock once their cursed loot
-    ///     item is no longer applied. Runs after the loot expiry pass so the cursed visuals are
-    ///     already cleared, and retries on later ticks if a server push fails.
+    ///   Unlocks and removes gag slots locked by an expired Mimic padlock once their cursed loot
+    ///   item is no longer applied. Runs after the loot expiry pass so the cursed visuals are
+    ///   already cleared, and retries on later ticks if a server push fails.
     /// </summary>
     private async Task FreeExpiredCursedGagSlots()
     {

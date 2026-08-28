@@ -115,9 +115,9 @@ public class UserPlotedDevices
     protected virtual void OnControlEnd(string enactor) => _timeAlive.Reset();
 
     /// <summary>
-    ///     The update loop task is the essential component of a user's device data. <para />
-    ///     Once the timer is running, the update loop task will execute every 20milliseconds. <para />
-    ///     Data will be played back, recorded, or update devices based on various conditions. <para />
+    ///   The update loop task is the essential component of a user's device data. <para />
+    ///   Once the timer is running, the update loop task will execute every 20milliseconds. <para />
+    ///   Data will be played back, recorded, or update devices based on various conditions. <para />
     /// </summary>
     public virtual void OnUpdateTick()
         => throw new NotImplementedException("OnUpdateTick must be implemented in derived classes.");

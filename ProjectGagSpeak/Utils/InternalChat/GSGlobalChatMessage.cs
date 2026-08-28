@@ -6,5 +6,5 @@ public record GagSpeakChatMessage(UserData UserData, string Name, string Message
     : CkChatMessage(Name, Message, DateTime.UtcNow)
 {
     public override string UID => UserData.UID ?? base.UID;
-    public CkSupporterTier Tier => UserData.Tier ?? CkSupporterTier.NoRole;
+    public CkVanityTier Tier => UserData.Tier ?? CkVanityTier.NoRole;
 }

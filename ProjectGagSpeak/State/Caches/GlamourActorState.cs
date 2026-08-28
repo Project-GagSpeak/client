@@ -6,7 +6,7 @@ using Penumbra.GameData.Structs;
 namespace GagSpeak.State.Caches;
 
 /// <summary>
-///     Represents a cache for the Glamour Actor's state.
+///   Represents a cache for the Glamour Actor's state.
 /// </summary>
 /// <remarks> Useful for storing unrestricted states to restore slots when removed. </remarks>
 public struct GlamourActorState
@@ -43,9 +43,9 @@ public struct GlamourActorState
     }
 
     /// <summary>
-    ///     Attempts to update the active Glamour Actors state with its most recent data. <para />
-    ///     Current bound state is passed in so that we can run a comparison against the slots. <para />
-    ///     However, do not pass in the FinalMeta, as we should cache the latest metadata state in accordance to base game.
+    ///   Attempts to update the active Glamour Actors state with its most recent data. <para />
+    ///   Current bound state is passed in so that we can run a comparison against the slots. <para />
+    ///   However, do not pass in the FinalMeta, as we should cache the latest metadata state in accordance to base game.
     /// </summary>
     public void UpdateEquipment(JObject newState, IReadOnlyDictionary<EquipSlot, EquipItem> boundState)
     {

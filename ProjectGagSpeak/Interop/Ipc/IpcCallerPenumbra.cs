@@ -179,12 +179,12 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
     }
 
     /// <summary>
-    ///     An event firing every time an objects resource path is resolved. <para />
-    ///     We use this to fetch the changes in data that <see cref="GetKinksterModData"/> fails to obtain. <para />
+    ///   An event firing every time an objects resource path is resolved. <para />
+    ///   We use this to fetch the changes in data that <see cref="GetKinksterModData"/> fails to obtain. <para />
     /// </summary>
     /// <remarks>
-    ///     Maybe if one day this is fixed by penumbra a lot of overhead could be reduced, if they made it 
-    ///     so before firing a resource loaded, they updated the paths shown on screen to the client with it.
+    ///   Maybe if one day this is fixed by penumbra a lot of overhead could be reduced, if they made it 
+    ///   so before firing a resource loaded, they updated the paths shown on screen to the client with it.
     /// </remarks>
     private unsafe void GameObjectResourceLoaded(IntPtr address, string gamePath, string resolvedPath)
     {

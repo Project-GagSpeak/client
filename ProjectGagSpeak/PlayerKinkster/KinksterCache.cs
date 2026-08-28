@@ -265,8 +265,8 @@ public class KinksterAlarm
 public record KinksterTrigger(Guid Id, string Label, string Description, int Priority, TriggerKind Kind, InvokableActionType ActionType);
 
 /// <summary>
-///     Contains lightweight storage of a Kinkster's storages for the client. <para />
-///     The only data stored here is what helps assist for KinkPlates and tooltip hovering.
+///   Contains lightweight storage of a Kinkster's storages for the client. <para />
+///   The only data stored here is what helps assist for KinkPlates and tooltip hovering.
 /// </summary>
 /// <remarks> Down the line can make some storages only retain enabled items to allow toggling. </remarks>
 public class KinksterCache

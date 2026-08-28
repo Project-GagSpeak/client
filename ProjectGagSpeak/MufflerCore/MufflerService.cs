@@ -11,7 +11,7 @@ using System.Text.RegularExpressions;
 namespace GagSpeak.Services;
 
 /// <summary>
-///     Service for managing the gags.
+///   Service for managing the gags.
 /// </summary>
 public class MufflerService : DisposableMediatorSubscriberBase
 {
@@ -25,12 +25,12 @@ public class MufflerService : DisposableMediatorSubscriberBase
     private static Dictionary<string, Dictionary<string, PhonemeProperties>> _garbleData;
 
     /// <summary>
-    ///     The collected GarblerData for all Gags.
+    ///   The collected GarblerData for all Gags.
     /// </summary>
     private static List<GarbleData> _allGarblerData = new List<GarbleData>();
 
     /// <summary>
-    ///     The Muffler GagData for the currently active Gags worn.
+    ///   The Muffler GagData for the currently active Gags worn.
     /// </summary>
     private static List<GarbleData> _activeGags;
 
@@ -103,8 +103,8 @@ public class MufflerService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Processes the input message by converting it to GagSpeak format <br />
-    ///     (we should probably consider using a ref string for this. Idk.
+    ///   Processes the input message by converting it to GagSpeak format <br />
+    ///   (we should probably consider using a ref string for this. Idk.
     /// </summary>
     public string GarbleMessage(string inputMessage, bool allowEmotes = false)
     {
@@ -127,7 +127,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Internal convert for gagspeak
+    ///   Internal convert for gagspeak
     /// </summary>
     private string GarbleMessageInternal(string inputMessage, bool allowEmotes)
     {
@@ -220,7 +220,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Phonetic IPA -> Garbled sound equivalent in selected language
+    ///   Phonetic IPA -> Garbled sound equivalent in selected language
     /// </summary>
     private string GarbleWithPhonetics(string word, List<string> phonetics, bool isAllCaps, bool isFirstLetterCapitalized)
     {

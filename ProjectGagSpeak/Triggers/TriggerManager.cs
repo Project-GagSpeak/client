@@ -128,13 +128,13 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
     }
 
     /// <summary>
-    ///     Attempts to add the Trigger as a favorite.
+    ///   Attempts to add the Trigger as a favorite.
     /// </summary>
     public bool AddFavorite(Trigger t)
         => _favorites.TryAddRestriction(FavoriteIdContainer.Trigger, t.Identifier);
 
     /// <summary>
-    ///     Attempts to remove the Trigger as a favorite.
+    ///   Attempts to remove the Trigger as a favorite.
     /// </summary>
     public bool RemoveFavorite(Trigger t)
         => _favorites.RemoveRestriction(FavoriteIdContainer.Trigger, t.Identifier);

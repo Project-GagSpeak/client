@@ -7,8 +7,8 @@ using GagspeakAPI.Network;
 namespace GagSpeak.PlayerClient;
 
 /// <summary> 
-///     Config Management for all Server related configs in one, including
-///     helper methods to make interfacing with config data easier.
+///   Config Management for all Server related configs in one, including
+///   helper methods to make interfacing with config data easier.
 /// </summary>
 public class AccountManager
 {
@@ -47,26 +47,26 @@ public class AccountManager
         => Profiles.Count != 0;
 
     /// <summary>
-    ///     Determines whether the current instance has at least one profile with a valid connection.
+    ///   Determines whether the current instance has at least one profile with a valid connection.
     /// </summary>
     public bool HasValidProfile()
         => Profiles.Count != 0 && Profiles.Any(p => p.HadValidConnection);
 
     /// <summary>
-    ///     If the character has an entry in the profiles dictionary.
+    ///   If the character has an entry in the profiles dictionary.
     /// </summary>
     public bool CharaIsTracked()
         => _config.Current.Profiles.ContainsKey(PlayerData.CID);
 
     /// <summary>
-    ///     If the character has a profile entry with a 
-    ///     valid secret key of 64 characters.
+    ///   If the character has a profile entry with a 
+    ///   valid secret key of 64 characters.
     /// </summary>
     public bool CharaIsAttached()
         => _config.Current.Profiles.TryGetValue(PlayerData.CID, out var a) && a.Key.Length is 64;
 
     /// <summary>
-    ///     Determines whether the current player has a valid profile with a successful connection.
+    ///   Determines whether the current player has a valid profile with a successful connection.
     /// </summary>
     public bool CharaHasValidProfile()
         => _config.Current.Profiles.TryGetValue(PlayerData.CID, out var p) && p.HadValidConnection;
@@ -118,7 +118,7 @@ public class AccountManager
     }
 
     /// <summary>
-    ///     Creates and adds a new account profile for the current player.
+    ///   Creates and adds a new account profile for the current player.
     /// </summary>
     /// <remarks>This method generates a new profile using the current player's name, home world, and
     /// content ID. If a profile with the same content ID already exists, the method does not overwrite it and
@@ -166,7 +166,7 @@ public class AccountManager
     }
 
     /// <summary> 
-    ///     Updates the authentication.
+    ///   Updates the authentication.
     /// </summary>
     public void UpdateAuthentication(string secretKey, ConnectionResponse response)
     {

@@ -276,7 +276,7 @@ public class ProfilesTab
     }
 
     /// <summary>
-    ///     Draws out the content for the currently selected profile, and the lower, registered players area.
+    ///   Draws out the content for the currently selected profile, and the lower, registered players area.
     /// </summary>
     private void DrawProfilePanel(Vector2 region)
     {

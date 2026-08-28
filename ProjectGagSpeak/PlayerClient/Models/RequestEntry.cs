@@ -4,7 +4,7 @@ using GagspeakAPI.Network;
 namespace GagSpeak.PlayerClient;
 
 /// <summary>
-///     Information on a current request that you have pending for another user.
+///   Information on a current request that you have pending for another user.
 /// </summary>
 public class RequestEntry(KinksterRequest request) : IEquatable<RequestEntry>, IEquatable<KinksterRequest>
 {

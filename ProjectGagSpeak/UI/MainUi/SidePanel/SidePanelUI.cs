@@ -26,8 +26,8 @@ public class SidePanelUI : WindowMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Internal logic performed every draw frame regardless of if the window is open or not. <para />
-    ///     Lets us Open/Close the window based on logic in the service using minimal computation.
+    ///   Internal logic performed every draw frame regardless of if the window is open or not. <para />
+    ///   Lets us Open/Close the window based on logic in the service using minimal computation.
     /// </summary>
     public override void PreOpenCheck()
     {

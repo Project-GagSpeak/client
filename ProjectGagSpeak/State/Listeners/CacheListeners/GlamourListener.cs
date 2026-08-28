@@ -42,12 +42,12 @@ public class GlamourListener : IDisposable
     }
 
     /// <summary>
-    ///     When ANY Glamourer state change occurs for ANY given actor, this is fired. <para />
-    ///     
-    ///     While it is primarily used to enforce bondage on the client, it is also used to sync
-    ///     the client's current glamour state with other Kinksters. <para />
-    ///     
-    ///     For this purpose, any case where we would abort, we should still push a change to the Mediator.
+    ///   When ANY Glamourer state change occurs for ANY given actor, this is fired. <para />
+    ///   
+    ///   While it is primarily used to enforce bondage on the client, it is also used to sync
+    ///   the client's current glamour state with other Kinksters. <para />
+    ///   
+    ///   For this purpose, any case where we would abort, we should still push a change to the Mediator.
     /// </summary>
     private async void OnStateChanged(nint address, StateChangeType changeType)
     {
@@ -106,8 +106,8 @@ public class GlamourListener : IDisposable
     private bool _cacheLatestForNextMeta = false;
 
     /// <summary> 
-    ///     Any any primary Glamourer Operation has completed, StateFinalized will fire. 
-    ///     (This IPC Call is a Godsend).
+    ///   Any any primary Glamourer Operation has completed, StateFinalized will fire. 
+    ///   (This IPC Call is a Godsend).
     /// </summary>
     /// <param name="address"> The address of the actor that was finalized. </param>
     /// <param name="finalizationType"> The type of finalization that occurred. </param>

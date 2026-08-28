@@ -7,8 +7,8 @@ namespace GagSpeak.Game.Readers;
 #nullable disable
 
 /// <summary>
-///     Various AtkReaders for undocumented AtkUnitBase's in FFXIVClientStructs. <para />
-///     Pulled from ECommons for navigation in MansionSelectRoom
+///   Various AtkReaders for undocumented AtkUnitBase's in FFXIVClientStructs. <para />
+///   Pulled from ECommons for navigation in MansionSelectRoom
 /// </summary>
 public abstract unsafe class AtkReaderBase(AtkUnitBase* UnitBase, int BeginOffset = 0)
 {

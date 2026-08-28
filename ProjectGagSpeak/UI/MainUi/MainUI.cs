@@ -494,7 +494,7 @@ public class MainUI : WindowMediatorSubscriberBase
         => disabled ? 0.44f : active ? 0.19f : hovered ? 0.26f : 0.39f;
 
     /// <summary>
-    ///     Retrieves the various server error messages based on the current server state.
+    ///   Retrieves the various server error messages based on the current server state.
     /// </summary>
     private string GetServerError()
     {

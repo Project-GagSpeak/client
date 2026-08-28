@@ -383,14 +383,14 @@ public class BlindfoldRestriction : RestrictionItem
 }
 
 /// <summary>
-///     Collar restrictions are special due to the way that they work. <para />
+///   Collar restrictions are special due to the way that they work. <para />
 ///
-///     Collar's settings that ONLY the collar's bearer can change are stored here,
-///     while properties that can be changed by either are located in the active collar state. <para />
+///   Collar's settings that ONLY the collar's bearer can change are stored here,
+///   while properties that can be changed by either are located in the active collar state. <para />
 ///
-///     The primary purpose of the GagSpeakCollar is to serve as a foundation for glamour
-///     and mods, while glamour dyes, lociData, writing, ownership, and visual toggles can be found
-///     inside the ActiveCollar item.
+///   The primary purpose of the GagSpeakCollar is to serve as a foundation for glamour
+///   and mods, while glamour dyes, lociData, writing, ownership, and visual toggles can be found
+///   inside the ActiveCollar item.
 /// </summary>
 public class GagSpeakCollar : IEditableStorageItem<GagSpeakCollar>, IModPreset
 {

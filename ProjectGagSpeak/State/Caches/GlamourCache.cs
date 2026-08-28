@@ -13,8 +13,8 @@ using Penumbra.GameData.Structs;
 namespace GagSpeak.State.Caches;
 
 /// <summary>
-///     Stores the expected glamour and metadata restrictions that should be applied.
-///     Also Stores the latest unbound state for restoring slots no longer restrained after removal.
+///   Stores the expected glamour and metadata restrictions that should be applied.
+///   Also Stores the latest unbound state for restoring slots no longer restrained after removal.
 /// </summary>
 public class GlamourCache
 {
@@ -43,13 +43,13 @@ public class GlamourCache
     }
 
     /// <summary>
-    ///     Applies a <paramref name="glamour"/> with <paramref name="combinedKey"/> to the Cache.
+    ///   Applies a <paramref name="glamour"/> with <paramref name="combinedKey"/> to the Cache.
     /// </summary>
     public bool AddGlamour(CombinedCacheKey combinedKey, GlamourSlot glamour)
         => AddGlamour(combinedKey, [glamour]);
 
     /// <summary>
-    ///     Applies multiple <paramref name="glamours"/> with <paramref name="combinedKey"/> to the Cache.
+    ///   Applies multiple <paramref name="glamours"/> with <paramref name="combinedKey"/> to the Cache.
     /// </summary>
     public bool AddGlamour(CombinedCacheKey combinedKey, IEnumerable<GlamourSlot> glamours)
     {
@@ -83,13 +83,13 @@ public class GlamourCache
     }
 
     /// <summary>
-    ///     Removes all <see cref="CombinedCacheKey"/>'s using <paramref name="combinedKey"/>
+    ///   Removes all <see cref="CombinedCacheKey"/>'s using <paramref name="combinedKey"/>
     /// </summary>
     public bool RemoveGlamour(CombinedCacheKey combinedKey)
         => RemoveGlamour([combinedKey]);
 
     /// <summary>
-    ///     Removes all <see cref="CombinedCacheKey"/>'s using any of the <paramref name="combinedKeys"/>
+    ///   Removes all <see cref="CombinedCacheKey"/>'s using any of the <paramref name="combinedKeys"/>
     /// </summary>
     public bool RemoveGlamour(IEnumerable<CombinedCacheKey> combinedKeys)
     {
@@ -111,8 +111,8 @@ public class GlamourCache
     }
 
     /// <summary> 
-    ///     Adds in the MetaState Cache at the CombinedKey <paramref name="key"/>, 
-    ///     The TriStateBool <paramref name="value"/> for the provided <paramref name="metaIdx"/>.
+    ///   Adds in the MetaState Cache at the CombinedKey <paramref name="key"/>, 
+    ///   The TriStateBool <paramref name="value"/> for the provided <paramref name="metaIdx"/>.
     /// </summary>
     public bool AddMeta(CombinedCacheKey key, MetaIndex metaIdx, TriStateBool value)
     {
@@ -129,8 +129,8 @@ public class GlamourCache
     }
 
     /// <summary> 
-    ///     Adds <paramref name="meta"/>'s <see cref="TriStateBool"/>'s to the <see cref="_metaStates"/> Cache,
-    ///     with key <paramref name="combinedKey"/>, then updates the final MetaCache.
+    ///   Adds <paramref name="meta"/>'s <see cref="TriStateBool"/>'s to the <see cref="_metaStates"/> Cache,
+    ///   with key <paramref name="combinedKey"/>, then updates the final MetaCache.
     /// </summary>
     public bool AddMeta(CombinedCacheKey combinedKey, MetaDataStruct meta)
     {
@@ -149,7 +149,7 @@ public class GlamourCache
     }
 
     /// <summary>
-    ///     Removes all entries for each CombinedCacheKey across all MetaIndex states.
+    ///   Removes all entries for each CombinedCacheKey across all MetaIndex states.
     /// </summary>
     public bool RemoveMeta(IEnumerable<CombinedCacheKey> combinedKeys)
     {
@@ -160,7 +160,7 @@ public class GlamourCache
     }
 
     /// <summary>
-    ///     Removes all entries with the given CombinedCacheKey across all MetaIndex caches.
+    ///   Removes all entries with the given CombinedCacheKey across all MetaIndex caches.
     /// </summary>
     public bool RemoveMeta(CombinedCacheKey key)
     {
@@ -171,8 +171,8 @@ public class GlamourCache
     }
 
     /// <summary>
-    ///     Careful where and how you call this, use responsibly.
-    ///     If done poorly, things will go out of sync.
+    ///   Careful where and how you call this, use responsibly.
+    ///   If done poorly, things will go out of sync.
     /// </summary>
     public void ClearCaches()
     {

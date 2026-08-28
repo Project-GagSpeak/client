@@ -19,7 +19,7 @@ internal sealed record PlayerHealth(string NameWithWorld)
 }
 
 /// <summary>
-///     Track the HP of rendered actors that we have for Health% Triggers.
+///   Track the HP of rendered actors that we have for Health% Triggers.
 /// </summary>
 public sealed class HealthMonitor : DisposableMediatorSubscriberBase
 {

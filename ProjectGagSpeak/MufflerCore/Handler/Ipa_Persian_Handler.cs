@@ -8,7 +8,7 @@ using GagSpeak.Services.Configs;
 namespace GagSpeak.MufflerCore.Handler;
 
 /// <summary>
-///     Class to convert Persian text to International Phonetic Alphabet (IPA) notation
+///   Class to convert Persian text to International Phonetic Alphabet (IPA) notation
 /// </summary>
 public class Ipa_Persian_Handler
 {

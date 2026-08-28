@@ -45,9 +45,9 @@ public enum GsCol
 }
 
 /// <summary>
-///     Highly optimized Color storage container with room for theme application. <br />
-///     GSColors include colors used distinctly by GS for its coloring.
-///     Can also contain colors intended to override the CkStyle colors.
+///   Highly optimized Color storage container with room for theme application. <br />
+///   GSColors include colors used distinctly by GS for its coloring.
+///   Can also contain colors intended to override the CkStyle colors.
 /// </summary>
 public static class GsColors
 {
@@ -140,7 +140,7 @@ public static class GsColors
     }
 
     /// <summary>
-    ///     Converts the colors to the config dictionary format.
+    ///   Converts the colors to the config dictionary format.
     /// </summary>
     public static Dictionary<GsCol, uint> ToConfigDict()
     {

@@ -5,9 +5,9 @@ using Dalamud.Interface.ManagedFontAtlas;
 namespace GagSpeak.Services;
 
 /// <summary>
-///     Manages GagSpeaks custom fonts during plugin lifetime. <para />
-///     Should probably look at chat2 to see how to handle
-///     pointers for fonts and various font scales better at some point.
+///   Manages GagSpeaks custom fonts during plugin lifetime. <para />
+///   Should probably look at chat2 to see how to handle
+///   pointers for fonts and various font scales better at some point.
 /// </summary>
 public static class Fonts
 {
@@ -27,7 +27,7 @@ public static class Fonts
     public static ImFontPtr Default150PercentPtr { get; private set; }
 
     /// <summary>
-    ///     Helper task to initialize GagSpeak's fonts.
+    ///   Helper task to initialize GagSpeak's fonts.
     /// </summary>
     public static async Task InitializeFonts()
     {

@@ -8,22 +8,22 @@ namespace GagSpeak.DrawSystem;
 public class WhitelistCache(DynamicDrawSystem<Kinkster> parent) : DynamicFilterCache<Kinkster>(parent)
 {
     /// <summary>
-    ///     If the config options under the filter bar should show.
+    ///   If the config options under the filter bar should show.
     /// </summary>
     public bool FilterConfigOpen = false;
 
     /// <summary>
-    ///     The Nodes that display MonoFont UIDs instead of DisplayName.
+    ///   The Nodes that display MonoFont UIDs instead of DisplayName.
     /// </summary>
     public HashSet<IDynamicNode<Kinkster>> ShowingUID = new();
 
     /// <summary>
-    ///     The node currently being renamed, if any.
+    ///   The node currently being renamed, if any.
     /// </summary>
     public IDynamicNode<Kinkster>? RenamingNode = null;
 
     /// <summary>
-    ///     Temp nick text.
+    ///   Temp nick text.
     /// </summary>
     public string NameEditStr = string.Empty;
 

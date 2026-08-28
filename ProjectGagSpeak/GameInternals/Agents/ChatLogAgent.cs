@@ -38,7 +38,7 @@ public static class ChatLogAgent
     ];
 
     /// <summary>
-    ///     Personal Lookup Table.
+    ///   Personal Lookup Table.
     /// </summary>
     public static readonly ImmutableDictionary<string, InputChannel> PrefixToChannel = ImmutableDictionary<string, InputChannel>.Empty
         .Add("/t", InputChannel.Tell)
@@ -90,7 +90,7 @@ public static class ChatLogAgent
         .Add("/linkshell8", InputChannel.LS8);
 
     /// <summary>
-    ///     Get the chat channel type from the XIVChatType
+    ///   Get the chat channel type from the XIVChatType
     /// </summary>
     public static InputChannel? FromXivChatType(XivChatType type)
     {

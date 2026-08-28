@@ -17,8 +17,8 @@ using OtterGui.Text;
 namespace GagSpeak.Services;
 
 /// <summary>
-///     Service to maintain the active devices selected for recording, 
-///     and cache their recorded states.
+///   Service to maintain the active devices selected for recording, 
+///   and cache their recorded states.
 /// </summary>
 public sealed class RemoteService : DisposableMediatorSubscriberBase
 {

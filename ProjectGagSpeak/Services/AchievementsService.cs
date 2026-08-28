@@ -14,7 +14,7 @@ using Microsoft.Extensions.Hosting;
 namespace GagSpeak.Services;
 
 /// <summary>
-///     A service that manages achievements for the GagSpeak client.
+///   A service that manages achievements for the GagSpeak client.
 /// </summary>
 public class AchievementsService : DisposableMediatorSubscriberBase, IHostedService
 {

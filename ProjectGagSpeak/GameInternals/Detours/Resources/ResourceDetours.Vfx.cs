@@ -20,13 +20,13 @@ namespace GagSpeak.GameInternals.Detours;
 //    private readonly delegate* unmanaged<VfxStruct*, nint> RemoveStaticVfx;
 
 //    /// <summary>
-//    ///     Invokable function pointer to create an actorVFX.
+//    ///   Invokable function pointer to create an actorVFX.
 //    /// </summary>
 //    private static ActorVfxCreateDelegate ActorVfxCreateFunc = null!;
 
 //    /// <summary>
-//    ///     Invokable function pointer to remove an actorVFX. <para />
-//    ///     Unfortunately we cannot use the signature attribute here, and must assign it in constructor.
+//    ///   Invokable function pointer to remove an actorVFX. <para />
+//    ///   Unfortunately we cannot use the signature attribute here, and must assign it in constructor.
 //    /// </summary>
 //    private static ActorVfxRemoveDelegate ActorVfxRemoveFunc = null!;
 
@@ -56,13 +56,13 @@ namespace GagSpeak.GameInternals.Detours;
 
 //    // add more paramaters as we learn more about this function!
 //    /// <summary>
-//    ///     Creates an actor vfx. This will summon Bagagwa if the path is invalid or the vfx is not found.
+//    ///   Creates an actor vfx. This will summon Bagagwa if the path is invalid or the vfx is not found.
 //    /// </summary>
 //    public static VfxStruct* CreateActorVfx(string path, IntPtr caster, IntPtr target)
 //        => (VfxStruct*)ActorVfxCreateFunc(path, caster, target, -1, (char)0, 0, (char)0);
 
 //    /// <summary>
-//    ///     Forcefully removes the vfx spesified at the passed in pointer.
+//    ///   Forcefully removes the vfx spesified at the passed in pointer.
 //    /// </summary>
 //    /// <param name="vfxPtr"> address of the vfx to remove </param>
 //    /// <param name="a2"> should be 1 in most cases. </param>

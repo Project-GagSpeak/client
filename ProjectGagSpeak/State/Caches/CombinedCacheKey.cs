@@ -3,7 +3,7 @@ using GagspeakAPI.Attributes;
 namespace GagSpeak.State.Caches;
 
 /// <summary>
-///     A struct that combines the key attribute of a Manager, with the layerIdx of an item.
+///   A struct that combines the key attribute of a Manager, with the layerIdx of an item.
 /// </summary>
 /// <remarks> Helps with code readability, and optimal sorting of storage caches. </remarks>
 public readonly struct CombinedCacheKey : IComparable<CombinedCacheKey>, IEquatable<CombinedCacheKey>

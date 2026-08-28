@@ -6,13 +6,13 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 namespace GagSpeak.GameInternals.Addons;
 
 /// <summary>
-///     Provides helper methods for <see cref="GameCameraManager"/>, not included in FFXIVClientStructs by default.
-///     To provide easier access and interaction.
+///   Provides helper methods for <see cref="GameCameraManager"/>, not included in FFXIVClientStructs by default.
+///   To provide easier access and interaction.
 /// </summary>
 public static unsafe class AddonCameraManager
 {
     /// <summary>
-    ///     Provides access to the <see cref="GameCameraManager"/> instance.
+    ///   Provides access to the <see cref="GameCameraManager"/> instance.
     /// </summary>
     public static CameraManager* CameraManager => (CameraManager*)Control.Instance();
 
@@ -32,7 +32,7 @@ public static unsafe class AddonCameraManager
     public static SpectatorCamera* SpectatorCamera => CameraManager->SpectatorCamera;
 
     /// <summary>
-    ///     Gets the mode of the active camera in integer form.
+    ///   Gets the mode of the active camera in integer form.
     /// </summary>
     public static int GetMode()
     {

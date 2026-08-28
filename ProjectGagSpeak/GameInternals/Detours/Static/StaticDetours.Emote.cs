@@ -14,20 +14,20 @@ namespace GagSpeak.GameInternals.Detours;
 public partial class StaticDetours
 {
     /// <summary>
-    ///     Detours Emote Requests sent by the Client Player to perform an emote.
-    ///     Performs an early return if the emote is not allowed to be executed.
+    ///   Detours Emote Requests sent by the Client Player to perform an emote.
+    ///   Performs an early return if the emote is not allowed to be executed.
     /// </summary>
     internal Hook<AgentEmote.Delegates.ExecuteEmote> OnExecuteEmoteHook;
 
     /// <summary>
-    ///     Processes emotes performed by other players besides yourself.
+    ///   Processes emotes performed by other players besides yourself.
     /// </summary>
     public delegate void OnEmoteFuncDelegate(ulong unk, ulong emoteCallerAddr, ushort emoteId, ulong targetId, ulong unk2);
     internal static Hook<OnEmoteFuncDelegate> ProcessEmoteHook = null!;
 
     /// <summary>
-    ///     Processes who did what emote for achievement and trigger purposes.
-    ///     Provides the source and target along with the emote ID.
+    ///   Processes who did what emote for achievement and trigger purposes.
+    ///   Provides the source and target along with the emote ID.
     /// </summary>
     private unsafe void ProcessEmoteDetour(ulong unk, ulong emoteCallerAddr, ushort emoteId, ulong targetId, ulong unk2)
     {
@@ -60,8 +60,8 @@ public partial class StaticDetours
     }
 
     /// <summary>
-    ///     Detours emote request from ClientPlayer. 
-    ///     Performs an early return if the emote is not allowed to be executed.
+    ///   Detours emote request from ClientPlayer. 
+    ///   Performs an early return if the emote is not allowed to be executed.
     /// </summary>
     unsafe void OnExecuteEmote(AgentEmote* thisPtr, ushort emoteId, EmoteController.PlayEmoteOption* playEmoteOption, bool addToHistory, bool liveUpdateHistory)
     {

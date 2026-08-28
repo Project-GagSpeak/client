@@ -64,7 +64,7 @@ public class VibeRoomChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscrib
         // get the display name by polling from the current vibe lobby participants.
         // If the user is not found do not send the message.
         var dispName = "UNKNOWN";
-        if (message.Kinkster.Tier is CkSupporterTier.KinkporiumMistress)
+        if (message.Kinkster.Tier is CkVanityTier.KinkporiumMistress)
             dispName = $"Mistress Cordy";
         // construct the chat message struct to add, and append it.
         AddMessage(new GagSpeakChatMessage(message.Kinkster, dispName, message.Message));
@@ -74,7 +74,7 @@ public class VibeRoomChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscrib
     {
         _logger.LogDebug($"Adding Message: {newMsg.Message} from {newMsg.Name} ({newMsg.UID})", LoggerType.GlobalChat);
         // Cordy is special girl :3
-        if (newMsg.Tier is CkSupporterTier.KinkporiumMistress)
+        if (newMsg.Tier is CkVanityTier.KinkporiumMistress)
         {
             // Force set the uid color to her favorite color.
             UserColors[newMsg.UID] = GsCol.ShopKeeperColor.Vec4();
@@ -92,10 +92,10 @@ public class VibeRoomChatlog : CkChatlog<GagSpeakChatMessage>, IMediatorSubscrib
             // append special formatting to the start of the message based on supporter type.
             var prefix = newMsg.Tier switch
             {
-                CkSupporterTier.DistinguishedConnoisseur => $"[img=RequiredImages\\Tier3Icon][rawcolor={col}]{newMsg.Name}[/rawcolor]: ",
-                CkSupporterTier.EsteemedPatron => $"[img=RequiredImages\\Tier2Icon][rawcolor={col}]{newMsg.Name}[/rawcolor]: ",
-                CkSupporterTier.ServerBooster => $"[img=RequiredImages\\TierBoosterIcon][rawcolor={col}]{newMsg.Name}[/rawcolor]: ",
-                CkSupporterTier.IllustriousSupporter => $"[img=RequiredImages\\Tier1Icon][rawcolor={col}]{newMsg.Name}[/rawcolor]: ",
+                CkVanityTier.DistinguishedConnoisseur => $"[img=RequiredImages\\Tier3Icon][rawcolor={col}]{newMsg.Name}[/rawcolor]: ",
+                CkVanityTier.EsteemedPatron => $"[img=RequiredImages\\Tier2Icon][rawcolor={col}]{newMsg.Name}[/rawcolor]: ",
+                CkVanityTier.ServerBooster => $"[img=RequiredImages\\TierBoosterIcon][rawcolor={col}]{newMsg.Name}[/rawcolor]: ",
+                CkVanityTier.IllustriousSupporter => $"[img=RequiredImages\\Tier1Icon][rawcolor={col}]{newMsg.Name}[/rawcolor]: ",
                 _ => $"[rawcolor={col}]{newMsg.Name}[/rawcolor]: "
             };
             Messages.PushBack(newMsg with { Message = prefix + sanitizedMsg });

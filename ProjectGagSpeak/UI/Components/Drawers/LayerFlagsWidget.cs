@@ -46,8 +46,8 @@ public class LayerFlagsWidget
     }
 
     /// <summary>
-    ///     Draws a combo - button pair, that tracks what flags are enabled and which are removed. <para />
-    ///     Changes are passed out as <c>added</c> and <c>removed</c> flags, which can be used to apply the changes.
+    ///   Draws a combo - button pair, that tracks what flags are enabled and which are removed. <para />
+    ///   Changes are passed out as <c>added</c> and <c>removed</c> flags, which can be used to apply the changes.
     /// </summary>
     /// <returns> True when the update button is pressed, false otherwise.</returns>
     public bool Draw(float width, RestraintLayer current, out RestraintLayer added, out RestraintLayer removed, IEnumerable<RestraintLayer> options,
@@ -147,8 +147,8 @@ public class LayerFlagsWidget
     }
 
     /// <summary>
-    ///     Combo-Button pair, that tracks the <seealso cref="_added"/> flags, not currently enabled in <paramref name="current"/>.<para />
-    ///     Changes are passed out as <paramref name="updates"/>, which can be used to apply the changes.
+    ///   Combo-Button pair, that tracks the <seealso cref="_added"/> flags, not currently enabled in <paramref name="current"/>.<para />
+    ///   Changes are passed out as <paramref name="updates"/>, which can be used to apply the changes.
     /// </summary>
     /// <returns> True when the update button is pressed, false otherwise.</returns>
     public bool DrawApply(float width, RestraintLayer current, out RestraintLayer updates,
@@ -156,8 +156,8 @@ public class LayerFlagsWidget
         => DrawInternal(FlagComboMode.EnableOnly, width, current, out updates, out _, options, toName, flags);
 
     /// <summary>
-    ///     Combo-Button pair, that tracks the <seealso cref="_removed"/> flags, not currently enabled in <paramref name="current"/>.<para />
-    ///     Changes are passed out as <paramref name="updates"/>, which can be used to apply the changes.
+    ///   Combo-Button pair, that tracks the <seealso cref="_removed"/> flags, not currently enabled in <paramref name="current"/>.<para />
+    ///   Changes are passed out as <paramref name="updates"/>, which can be used to apply the changes.
     /// </summary>
     /// <returns> True when the update button is pressed, false otherwise.</returns>
     public bool DrawRemove(float width, RestraintLayer current, out RestraintLayer updates,

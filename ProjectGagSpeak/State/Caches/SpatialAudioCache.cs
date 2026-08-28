@@ -7,8 +7,8 @@ using System.Diagnostics.CodeAnalysis;
 namespace GagSpeak.State.Caches;
 
 /// <summary>
-///     Internal Cache to help identify all custom Spatial Audio Resource paths for the Spatial Audio System. <para />
-///     Can also cache the static pointers or spawned vfx items to help with cleanup and references.
+///   Internal Cache to help identify all custom Spatial Audio Resource paths for the Spatial Audio System. <para />
+///   Can also cache the static pointers or spawned vfx items to help with cleanup and references.
 /// </summary>
 public unsafe class SpatialAudioCache : IDisposable
 {

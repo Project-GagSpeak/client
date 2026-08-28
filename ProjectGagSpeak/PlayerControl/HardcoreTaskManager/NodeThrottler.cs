@@ -1,7 +1,7 @@
 namespace GagSpeak;
 /// <summary>
-///     Helps ensure that nodes are not interacted with too frequently, 
-///     but just enough to make people feel helpless.
+///   Helps ensure that nodes are not interacted with too frequently, 
+///   but just enough to make people feel helpless.
 /// </summary>
 public static class NodeThrottler
 {
@@ -22,7 +22,7 @@ public static class NodeThrottler
 
 
     /// <summary>
-    ///     Internal string throttler to help mitigate the frequency of interactions with nodes in the game.
+    ///   Internal string throttler to help mitigate the frequency of interactions with nodes in the game.
     /// </summary>
     public class StringThrottler
     {

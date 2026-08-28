@@ -7,7 +7,7 @@ using System.Diagnostics.CodeAnalysis;
 namespace GagSpeak.Services.Textures;
 
 /// <summary>
-///     Friendly Reminder, all methods in this class must be called in the framework thread or they will fail.
+///   Friendly Reminder, all methods in this class must be called in the framework thread or they will fail.
 /// </summary>
 public static class TextureManagerEx
 {

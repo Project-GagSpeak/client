@@ -87,7 +87,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     }
 
     /// <summary> 
-    ///     Gets the list of all our clients Moodles Info
+    ///   Gets the list of all our clients Moodles Info
     /// </summary>
     public async Task<List<LociStatusInfo>> GetStatusListDetails()
     {
@@ -97,7 +97,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     }
 
     /// <summary> 
-    ///     Gets the preset info for a provided GUID from the client.
+    ///   Gets the preset info for a provided GUID from the client.
     /// </summary>
     public async Task<LociPresetInfo> GetPresetDetails(Guid guid)
     {
@@ -107,7 +107,7 @@ public sealed class IpcCallerMoodles : IIpcCaller
     }
 
     /// <summary>
-    ///     Gets the list of all our clients Presets Info 
+    ///   Gets the list of all our clients Presets Info 
     /// </summary>
     public async Task<List<LociPresetInfo>> GetPresetListDetails()
     {

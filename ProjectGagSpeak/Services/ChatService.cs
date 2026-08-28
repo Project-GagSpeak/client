@@ -14,8 +14,8 @@ using Lumina.Excel.Sheets;
 namespace GagSpeak.Services;
 
 /// <summary>
-///     Centralized Message dispatcher and informant for chat related activities. <para />
-///     Chat Messages are parsed into a friendly format that can be passed through the mediator with essential data parsed.
+///   Centralized Message dispatcher and informant for chat related activities. <para />
+///   Chat Messages are parsed into a friendly format that can be passed through the mediator with essential data parsed.
 /// </summary>
 public class ChatService : DisposableMediatorSubscriberBase
 {
@@ -44,7 +44,7 @@ public class ChatService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Process the requested queue of messages to send.
+    ///   Process the requested queue of messages to send.
     /// </summary>
     private void FrameworkUpdate()
     {
@@ -66,8 +66,8 @@ public class ChatService : DisposableMediatorSubscriberBase
 
 
     /// <summary>
-    ///     Handles incoming chat messages that have finished being processed by the server.
-    ///     Parses normal chat channels into a <see cref="GameChatMessage"/> for downstream consumers.
+    ///   Handles incoming chat messages that have finished being processed by the server.
+    ///   Parses normal chat channels into a <see cref="GameChatMessage"/> for downstream consumers.
     /// </summary>
     private void OnChatboxMessage(IHandleableChatMessage message)
     {
@@ -122,7 +122,7 @@ public class ChatService : DisposableMediatorSubscriberBase
     }
     
     /// <summary>
-    ///     Detects any desired activity from PVP interactions.
+    ///   Detects any desired activity from PVP interactions.
     /// </summary>
     private void CheckForPvpActivity(ILogMessage message)
     {
@@ -140,9 +140,9 @@ public class ChatService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Handle Deathroll Checks (/random)
-    ///     MessageId 856 -> /random
-    ///     MessageId 3887 -> /random 1000
+    ///   Handle Deathroll Checks (/random)
+    ///   MessageId 856 -> /random
+    ///   MessageId 3887 -> /random 1000
     /// </summary>
     private void CheckForDeathroll(ILogMessage message)
     {
@@ -168,7 +168,7 @@ public class ChatService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Handle Deathroll Checks (/dice) <para />
+    ///   Handle Deathroll Checks (/dice) <para />
     /// </summary>
     private void CheckForDiceDeathroll(XivChatType type, string senderNameWorld, SeString msg)
     {
@@ -181,7 +181,7 @@ public class ChatService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Allows other sources to Enqueue a message to send without adding the service.
+    ///   Allows other sources to Enqueue a message to send without adding the service.
     /// </summary>
     public static void EnqueueMessage(string message)
         => _messagesToSend.Enqueue(message);
@@ -194,7 +194,7 @@ public class ChatService : DisposableMediatorSubscriberBase
 
     #region Helper Methods
     /// <summary>
-    ///     A better way to handle sending a message safely now that it is integrated into XIVCLientStructs.
+    ///   A better way to handle sending a message safely now that it is integrated into XIVCLientStructs.
     /// </summary>
     private static void SendMessage(string message)
     {
@@ -223,7 +223,7 @@ public class ChatService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     A better way to handle sending a message safely now that it is integrated into XIVCLientStructs.
+    ///   A better way to handle sending a message safely now that it is integrated into XIVCLientStructs.
     /// </summary>
     private static unsafe void SendMessageUnsafe(string message)
     {
@@ -238,7 +238,7 @@ public class ChatService : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     The filters to apply when sanitizing a chat message we are sending off.
+    ///   The filters to apply when sanitizing a chat message we are sending off.
     /// </summary>
     private const AllowedEntities SanatizeFilters =
         AllowedEntities.UppercaseLetters |

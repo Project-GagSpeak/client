@@ -13,8 +13,8 @@ using LuminaWorld = Lumina.Excel.Sheets.World;
 namespace GagSpeak.Services;
 
 /// <summary>
-///     Only value is for delayed framework updates and other small things now. 
-///     Has no other purpose.
+///   Only value is for delayed framework updates and other small things now. 
+///   Has no other purpose.
 /// </summary>
 public class OnTickService : IHostedService
 {
@@ -234,7 +234,7 @@ public class OnTickService : IHostedService
 
 #region Location Tracking
 /// <summary>
-///     Determines how a location entry will match with another.
+///   Determines how a location entry will match with another.
 /// </summary>
 public enum LocationScope : sbyte
 {

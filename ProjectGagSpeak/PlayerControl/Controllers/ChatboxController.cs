@@ -8,8 +8,8 @@ using GagSpeak.State.Caches;
 namespace GagSpeak.Services.Controller;
 
 /// <summary>
-///     Controls when the user is able to interact with the chatbox at all.
-///     If stuck in this state, remember you have CTRL+ALT+BACKSPACE.
+///   Controls when the user is able to interact with the chatbox at all.
+///   If stuck in this state, remember you have CTRL+ALT+BACKSPACE.
 /// </summary>
 public sealed class ChatboxController : DisposableMediatorSubscriberBase
 {

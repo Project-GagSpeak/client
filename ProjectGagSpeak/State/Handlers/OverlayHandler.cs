@@ -158,7 +158,7 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     The Go-To All-In-One update for both overlay caches at once.
+    ///   The Go-To All-In-One update for both overlay caches at once.
     /// </summary>
     /// <remarks> This runs through a SemaphoreSlim execution and is handled safely. </remarks>
     public async Task UpdateCaches()

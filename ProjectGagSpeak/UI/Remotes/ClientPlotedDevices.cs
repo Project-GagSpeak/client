@@ -37,7 +37,7 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
     }
 
     /// <summary>
-    ///     Should be called whenever the remote window closed, and halt any current state.
+    ///   Should be called whenever the remote window closed, and halt any current state.
     /// </summary>
     public void OnRemoteWindowClosed()
     {
@@ -48,9 +48,9 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
 
 
     /// <summary>
-    ///     Override method for startup on remote power for the client user. <para />
-    ///     If you intend to fire achievements or custom operations for Recording Start, add them here. <para />
-    ///     If you want to fire events on custom startup for patterns or injections, use their respective methods.
+    ///   Override method for startup on remote power for the client user. <para />
+    ///   If you intend to fire achievements or custom operations for Recording Start, add them here. <para />
+    ///   If you want to fire events on custom startup for patterns or injections, use their respective methods.
     /// </summary>
     /// <remarks> You will want to fire any achievements in this method, server calls outside it.</remarks>
     protected override void OnControlBegin(string enactor)
@@ -97,9 +97,9 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
     }
 
     /// <summary>
-    ///     The update loop task is the essential component of a user's device data. <para />
-    ///     Once the timer is running, the update loop task will execute every 20milliseconds. <para />
-    ///     Data will be played back, recorded, or update devices based on various conditions. <para />
+    ///   The update loop task is the essential component of a user's device data. <para />
+    ///   Once the timer is running, the update loop task will execute every 20milliseconds. <para />
+    ///   Data will be played back, recorded, or update devices based on various conditions. <para />
     /// </summary>
     public override void OnUpdateTick()
     {
@@ -233,7 +233,7 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
     }
 
     /// <summary>
-    ///     Determines if a pattern can be executed with the current devices assigned to the remote.
+    ///   Determines if a pattern can be executed with the current devices assigned to the remote.
     /// </summary>
     public bool CanExecuteForDevices(Pattern pattern)
     {
@@ -249,7 +249,7 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
     }
 
     /// <summary>
-    ///     You are expected to validate this action with <seealso cref="CanExecuteForDevices(Pattern)"/>, as this will not check for validity.
+    ///   You are expected to validate this action with <seealso cref="CanExecuteForDevices(Pattern)"/>, as this will not check for validity.
     /// </summary>
     public bool TryStartPatternPlayback(Pattern pattern, TimeSpan startPoint, TimeSpan duration, string enactor)
     {

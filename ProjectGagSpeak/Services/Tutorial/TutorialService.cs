@@ -11,7 +11,7 @@ using ImSharp;
 namespace GagSpeak.Services.Tutorial;
 
 /// <summary>
-///     Service for the in-game tutorial.
+///   Service for the in-game tutorial.
 /// </summary>
 public class TutorialService
 {

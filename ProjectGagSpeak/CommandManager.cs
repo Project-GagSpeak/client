@@ -13,7 +13,7 @@ using OtterGui.Classes;
 namespace GagSpeak;
 
 /// <summary>
-///     Handles all of the commands that are used in the plugin.
+///   Handles all of the commands that are used in the plugin.
 /// </summary>
 public sealed class CommandManager : IDisposable
 {

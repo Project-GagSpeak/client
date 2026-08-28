@@ -301,8 +301,8 @@ public class ModPresetLayer : IRestraintLayer, IModPreset
 
 
 /// <summary>
-///     This class is the most complex out of everything in CK.
-///     Any methods to get or fetch data from this should be in extension methods.
+///   This class is the most complex out of everything in CK.
+///   Any methods to get or fetch data from this should be in extension methods.
 /// </summary>
 /// <remarks></remarks>
 public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem

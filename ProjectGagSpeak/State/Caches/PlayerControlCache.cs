@@ -9,10 +9,10 @@ using GagspeakAPI.Extensions;
 namespace GagSpeak.State.Caches;
 
 /// <summary>
-///     Cache holding what control over the player GagSpeak has. <para />
-///     
-///     The HcTaskManager can also impact final result of the cache. 
-///     <b>Results should only change in controllers when a refresh is requested.</b>
+///   Cache holding what control over the player GagSpeak has. <para />
+///   
+///   The HcTaskManager can also impact final result of the cache. 
+///   <b>Results should only change in controllers when a refresh is requested.</b>
 /// </summary>
 public sealed class PlayerControlCache
 {

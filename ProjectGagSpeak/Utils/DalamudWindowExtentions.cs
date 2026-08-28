@@ -6,7 +6,7 @@ using static Dalamud.Interface.Windowing.Window;
 namespace GagSpeak.Utils;
 
 /// <summary>
-///     Reduce the boilerplate code of title bar buttons with a builder.
+///   Reduce the boilerplate code of title bar buttons with a builder.
 /// </summary>
 public class TitleBarButtonBuilder
 {
@@ -75,8 +75,8 @@ public class TitleBarButtonBuilder
 }
 
 /// <summary>
-///     Extension methods that help simplify Dalamud window
-///     setup and operations, to reduce boilerplate code.
+///   Extension methods that help simplify Dalamud window
+///   setup and operations, to reduce boilerplate code.
 /// </summary>
 public static class DalamudWindowExtentions
 {

@@ -9,7 +9,7 @@ using Microsoft.Extensions.Hosting;
 namespace GagSpeak.Services.Textures;
 
 /// <summary>
-///     Friendly Reminder, all methods in this class must be called in the framework thread or they will fail.
+///   Friendly Reminder, all methods in this class must be called in the framework thread or they will fail.
 /// </summary>
 public class CosmeticService : IHostedService, IDisposable
 {
@@ -111,27 +111,27 @@ public class CosmeticService : IHostedService, IDisposable
 
         switch (userData.Tier)
         {
-            case CkSupporterTier.ServerBooster:
+            case CkVanityTier.ServerBooster:
                 supporterWrap = CoreTextures.Cache[CoreTexture.TierBoosterIcon];
                 tooltipString = userData.AliasOrUID + " is supporting the discord with a server Boost!";
                 break;
 
-            case CkSupporterTier.IllustriousSupporter:
+            case CkVanityTier.IllustriousSupporter:
                 supporterWrap = CoreTextures.Cache[CoreTexture.Tier1Icon];
                 tooltipString = userData.AliasOrUID + " is supporting CK as an Illustrious Supporter";
                 break;
 
-            case CkSupporterTier.EsteemedPatron:
+            case CkVanityTier.EsteemedPatron:
                 supporterWrap = CoreTextures.Cache[CoreTexture.Tier2Icon];
                 tooltipString = userData.AliasOrUID + " is supporting CK as an Esteemed Patron";
                 break;
 
-            case CkSupporterTier.DistinguishedConnoisseur:
+            case CkVanityTier.DistinguishedConnoisseur:
                 supporterWrap = CoreTextures.Cache[CoreTexture.Tier3Icon];
                 tooltipString = userData.AliasOrUID + " is supporting CK as a Distinguished Connoisseur";
                 break;
 
-            case CkSupporterTier.KinkporiumMistress:
+            case CkVanityTier.KinkporiumMistress:
                 supporterWrap = CoreTextures.Cache[CoreTexture.Tier4Icon];
                 tooltipString = userData.AliasOrUID + " is the Shop Mistress of CK, and the Dev of GagSpeak.";
                 break;

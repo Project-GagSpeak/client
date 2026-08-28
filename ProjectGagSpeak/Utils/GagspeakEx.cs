@@ -13,8 +13,8 @@ namespace GagSpeak.Utils;
 public static class GagspeakEx
 {
     /// <summary>
-    ///     A reliable Player.Interactable, that also waits on the loading screen to finish. <para />
-    ///     Useful when waiting on player loading for UI manipulation and interactions.
+    ///   A reliable Player.Interactable, that also waits on the loading screen to finish. <para />
+    ///   Useful when waiting on player loading for UI manipulation and interactions.
     /// </summary>
     public static async Task WaitForPlayerLoading()
     {

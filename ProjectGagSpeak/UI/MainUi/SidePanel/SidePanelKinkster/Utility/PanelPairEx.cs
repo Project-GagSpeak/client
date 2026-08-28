@@ -1,7 +1,7 @@
 using CkCommons;using CkCommons.Gui;using Dalamud.Bindings.ImGui;using Dalamud.Interface.Colors;using Dalamud.Interface.Utility;using Dalamud.Interface.Utility.Raii;using GagSpeak.Kinksters;using GagSpeak.Services;using GagSpeak.Utils;using GagSpeak.WebAPI;using GagspeakAPI.Data.Permissions;using System.Collections.Immutable;namespace GagSpeak.Gui.MainWindow;
 
 /// <summary> 
-///     Kinkster Permission ID 
+///   Kinkster Permission ID 
 /// </summary>
 public enum KPID : byte
 {

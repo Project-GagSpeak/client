@@ -15,7 +15,7 @@ using GagspeakAPI.Util;
 namespace GagSpeak.State.Listeners;
 
 /// <summary>
-///     Any callback from the server that should update our state is handled here.
+///   Any callback from the server that should update our state is handled here.
 /// </summary>
 public sealed class CallbackHandler : DisposableMediatorSubscriberBase
 {
@@ -443,9 +443,9 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
     #endregion CursedLoot Manipulation
 
     /// <summary>
-    ///     OUR CLIENT recieved a name from ANOTHER KINKSTER. <para />
-    ///     This means we should be updating the PUPPETEERS since 
-    ///     we are now listening to THEM.
+    ///   OUR CLIENT recieved a name from ANOTHER KINKSTER. <para />
+    ///   This means we should be updating the PUPPETEERS since 
+    ///   we are now listening to THEM.
     /// </summary>
     public void UpdateListener(string pairUid, string listenerName)
     {

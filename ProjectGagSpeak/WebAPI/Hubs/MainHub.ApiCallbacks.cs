@@ -17,7 +17,7 @@ public partial class MainHub
 {
     #region Pairing & Messages
     /// <summary> 
-    ///     Called when the server sends a message to the client.
+    ///   Called when the server sends a message to the client.
     /// </summary>
     public Task Callback_ServerMessage(MessageSeverity messageSeverity, string message)
     {
@@ -39,7 +39,7 @@ public partial class MainHub
     }
 
     /// <summary>
-    ///     Sometimes Corby just wants to do a little bullying.
+    ///   Sometimes Corby just wants to do a little bullying.
     /// </summary>
     public Task Callback_HardReconnectMessage(MessageSeverity messageSeverity, string message, ServerState newServerState)
     {

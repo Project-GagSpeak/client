@@ -68,8 +68,8 @@ public class BlindfoldService : IDisposable
     }
 
     /// <summary>
-    ///     Performs the remove animation then clears the stored data.
-    ///     Will inturrupt equip-animation.
+    ///   Performs the remove animation then clears the stored data.
+    ///   Will inturrupt equip-animation.
     /// </summary>
     public async Task RemoveBlindfold()
     {

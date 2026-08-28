@@ -59,7 +59,7 @@ public class ModHandler
     }
 
     /// <summary>
-    ///     Updates the Final Glamour Cache, and then applies the visual updates.
+    ///   Updates the Final Glamour Cache, and then applies the visual updates.
     /// </summary>
     public async Task UpdateModCache()
     {
@@ -78,7 +78,7 @@ public class ModHandler
     }
 
     /// <summary>
-    ///     Applies the current FinalMods Cache to the Penumbra IPC, setting them as temporary mods.
+    ///   Applies the current FinalMods Cache to the Penumbra IPC, setting them as temporary mods.
     /// </summary>
     private Task ApplyModCache()
     {
@@ -88,8 +88,8 @@ public class ModHandler
     }
 
     /// <summary>
-    ///     Restores the previous state of the Mod Cache by removing the mods that are no longer in the cache,
-    ///     then reapplies the current FinalMods Cache.
+    ///   Restores the previous state of the Mod Cache by removing the mods that are no longer in the cache,
+    ///   then reapplies the current FinalMods Cache.
     /// </summary>
     private Task RestoreAndReapplyCache(IEnumerable<ModSettingsPreset> modsToRemove)
     {

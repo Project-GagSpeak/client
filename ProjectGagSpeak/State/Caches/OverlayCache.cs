@@ -9,8 +9,8 @@ using CkCommons.Gui;
 namespace GagSpeak.State.Caches;
 
 /// <summary>
-///     Caches the current sources that have overlay items applied.
-///     Helpful for the overlay controller and overlay services.
+///   Caches the current sources that have overlay items applied.
+///   Helpful for the overlay controller and overlay services.
 /// </summary>
 public sealed class OverlayCache
 {
@@ -37,7 +37,7 @@ public sealed class OverlayCache
 
 
     /// <summary>
-    ///     Adds a Blindfold <paramref name="overlay"/> to the cache with <paramref name="key"/>
+    ///   Adds a Blindfold <paramref name="overlay"/> to the cache with <paramref name="key"/>
     /// </summary>
     public bool TryAddBlindfold(CombinedCacheKey key, BlindfoldOverlay overlay)
     {
@@ -54,7 +54,7 @@ public sealed class OverlayCache
     }
 
     /// <summary>
-    ///     Adds a HypnoEffect <paramref name="overlay"/> to the cache with <paramref name="key"/>
+    ///   Adds a HypnoEffect <paramref name="overlay"/> to the cache with <paramref name="key"/>
     /// </summary>
     public bool TryAddHypnoEffect(CombinedCacheKey key, HypnoticOverlay overlay)
     {
@@ -71,7 +71,7 @@ public sealed class OverlayCache
     }
 
     /// <summary>
-    ///     Removes the <paramref name="combinedKey"/> from the cache.
+    ///   Removes the <paramref name="combinedKey"/> from the cache.
     /// </summary>
     public bool TryRemoveBlindfold(CombinedCacheKey combinedKey)
     {
@@ -88,7 +88,7 @@ public sealed class OverlayCache
     }
 
     /// <summary>
-    ///     Removes the <paramref name="combinedKey"/> from the cache.
+    ///   Removes the <paramref name="combinedKey"/> from the cache.
     /// </summary>
     public bool TryRemoveHypnoEffect(CombinedCacheKey combinedKey)
     {
@@ -105,8 +105,8 @@ public sealed class OverlayCache
     }
 
     /// <summary>
-    ///     Careful where and how you call this, use responsibly.
-    ///     If done poorly, things will go out of sync.
+    ///   Careful where and how you call this, use responsibly.
+    ///   If done poorly, things will go out of sync.
     /// </summary>
     public void ClearCaches()
     {
@@ -115,7 +115,7 @@ public sealed class OverlayCache
     }
 
     /// <summary>
-    ///     Updates the priority blindfold by finding the highest priority blindfold.
+    ///   Updates the priority blindfold by finding the highest priority blindfold.
     /// </summary>
     /// <remarks> Remember, while others see the outermost blindfold, you see the innermost. </remarks>
     /// <returns> If the profile Changed. </returns>
@@ -139,7 +139,7 @@ public sealed class OverlayCache
 
 
     /// <summary>
-    ///     Updates the priority hypnotic effect by finding the highest priority blindfold.
+    ///   Updates the priority hypnotic effect by finding the highest priority blindfold.
     /// </summary>
     /// <remarks> Outputs the previous effects enactor. If the effect was null, the string will be empty. </remarks>
     /// <returns> If the profile Changed. </returns>

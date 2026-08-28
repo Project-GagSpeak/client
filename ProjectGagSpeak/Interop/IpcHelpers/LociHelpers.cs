@@ -250,7 +250,7 @@ public static class LociHelpers
     }
 
     /// <summary>
-    ///     API Tuple format of if we can apply statuses or not.
+    ///   API Tuple format of if we can apply statuses or not.
     /// </summary>
     public static bool CanApply(PairPerms perms, IEnumerable<LociStatusStruct> statuses)
     {

@@ -41,9 +41,9 @@ public class ModPresetManager : DisposableMediatorSubscriberBase, IHybridSavable
     public ModSettingsPreset? ItemInEditor => _itemEditor.ItemInEditor;
 
     /// <summary>
-    ///     Aligns the shared Mod/Preset combos with the mod referenced by <paramref name="mod"/>, regenerating
-    ///     the preset list when the mod changed. The combos only sync their selection while their popup is open,
-    ///     so a freshly-drawn editor would otherwise show a stale or empty preset list for an already-selected mod.
+    ///   Aligns the shared Mod/Preset combos with the mod referenced by <paramref name="mod"/>, regenerating
+    ///   the preset list when the mod changed. The combos only sync their selection while their popup is open,
+    ///   so a freshly-drawn editor would otherwise show a stale or empty preset list for an already-selected mod.
     /// </summary>
     public void SyncCombosToItem(ModSettingsPreset mod)
     {

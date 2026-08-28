@@ -6,37 +6,37 @@ namespace GagSpeak.State.Models;
 public class AliasTrigger : IEditableStorageItem<AliasTrigger>
 {
     /// <summary>
-    ///     Unique identifier for the trigger.
+    ///   Unique identifier for the trigger.
     /// </summary>
     public Guid Identifier { get; set; } = Guid.NewGuid();
 
     /// <summary>
-    ///     Whether the trigger is enabled or not.
+    ///   Whether the trigger is enabled or not.
     /// </summary>
     public bool Enabled { get; set; } = false;
 
     /// <summary>
-    ///     The label for the trigger.
+    ///   The label for the trigger.
     /// </summary>
     public string Label { get; set; } = string.Empty;
 
     /// <summary>
-    ///     If the trigger should ignore case sensativity or respect it.
+    ///   If the trigger should ignore case sensativity or respect it.
     /// </summary>
     public bool IgnoreCase { get; set; } = false;
 
     /// <summary>
-    ///     The input command that triggers the output command
+    ///   The input command that triggers the output command
     /// </summary>
     public string InputCommand { get; set; } = string.Empty;
 
     /// <summary>
-    ///     Stores Actions with unique types.
+    ///   Stores Actions with unique types.
     /// </summary>
     public HashSet<InvokableGsAction> Actions { get; set; } = new HashSet<InvokableGsAction>();
    
     /// <summary>
-    ///     The Kinksters allowed to view and use this Alias.
+    ///   The Kinksters allowed to view and use this Alias.
     /// </summary>
     public HashSet<string> WhitelistedUIDs { get; set; } = new HashSet<string>();
     

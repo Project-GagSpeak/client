@@ -25,7 +25,7 @@ using TFlags = Dalamud.Bindings.ImGui.ImGuiTableFlags;
 namespace GagSpeak.Gui.Remote;
 
 /// <summary>
-///     Im not insane, i promise.
+///   Im not insane, i promise.
 /// </summary>
 public class BuzzToyRemoteUI : WindowMediatorSubscriberBase
 {

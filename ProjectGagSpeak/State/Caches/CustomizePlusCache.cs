@@ -8,7 +8,7 @@ using OtterGui;
 namespace GagSpeak.State.Caches;
 
 /// <summary>
-///     Stores the expected restrainted customize profile in a cache.
+///   Stores the expected restrainted customize profile in a cache.
 /// </summary>
 public sealed class CustomizePlusCache
 {
@@ -27,7 +27,7 @@ public sealed class CustomizePlusCache
     public CustomizeProfile FinalProfile => _finalProfile;
 
     /// <summary>
-    ///     Updates the stored C+ Profile list from C+ locally in our cache.
+    ///   Updates the stored C+ Profile list from C+ locally in our cache.
     /// </summary>
     public void UpdateIpcProfileList(IEnumerable<CustomizeProfile> profiles)
     {
@@ -36,7 +36,7 @@ public sealed class CustomizePlusCache
     }
 
     /// <summary>
-    ///     Adds a <paramref name="profile"/> to the cache with <paramref name="combinedKey"/>
+    ///   Adds a <paramref name="profile"/> to the cache with <paramref name="combinedKey"/>
     /// </summary>
     public bool Addprofile(CombinedCacheKey combinedKey, CustomizeProfile profile)
     {
@@ -62,7 +62,7 @@ public sealed class CustomizePlusCache
     }
 
     /// <summary>
-    ///     Removes the <paramref name="combinedKey"/> from the cache.
+    ///   Removes the <paramref name="combinedKey"/> from the cache.
     /// </summary>
     public bool Removeprofile(CombinedCacheKey combinedKey)
     {
@@ -79,14 +79,14 @@ public sealed class CustomizePlusCache
     }
 
     /// <summary>
-    ///     Careful where and how you call this, use responsibly.
-    ///     If done poorly, things will go out of sync.
+    ///   Careful where and how you call this, use responsibly.
+    ///   If done poorly, things will go out of sync.
     /// </summary>
     public void ClearCache()
         => _profiles.Clear();
 
     /// <summary>
-    ///     Updates the final profile cache to the first profile in the cache.
+    ///   Updates the final profile cache to the first profile in the cache.
     /// </summary>
     /// <returns> If the profile Changed. </returns>
     public bool UpdateFinalCache()

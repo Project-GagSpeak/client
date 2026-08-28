@@ -74,20 +74,20 @@ public class NicksConfig : IHybridSavable
     public NicksStorage Current { get; set; } = new NicksStorage();
 
     /// <summary>
-    ///     Try to get a nickname for the provided UID.
+    ///   Try to get a nickname for the provided UID.
     /// </summary>
     public bool TryGetNickname(string uid, [NotNullWhen(true)] out string? nickname)
         => Current.Nicknames.TryGetValue(uid, out nickname);
 
     /// <returns>
-    ///     Returns the nickname if found, null otherwise.
+    ///   Returns the nickname if found, null otherwise.
     /// </returns>
     public string? GetNicknameForUid(string uid)
         => Current.Nicknames.TryGetValue(uid, out var n) && n is { Length: > 0 } ? n : null;
 
 
     /// <summary>
-    ///     Set a nickname for a user identifier.
+    ///   Set a nickname for a user identifier.
     /// </summary>
     /// <param name="uid">the user identifier</param>
     /// <param name="nickname">the nickname to add</param>

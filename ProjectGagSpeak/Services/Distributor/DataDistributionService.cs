@@ -143,8 +143,8 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Method used for updating all provided visible kinkster's with our loci data. <para />
-    ///     Called whenever a new visible pair enters our render range.
+    ///   Method used for updating all provided visible kinkster's with our loci data. <para />
+    ///   Called whenever a new visible pair enters our render range.
     /// </summary>
     private async Task UpdateVisibleFull(List<UserData> visibleCharas)
     {
@@ -160,8 +160,8 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     This IPC Method should ONLY be sent to the newly visible kinksters, as it is the heaviest weight IPC call. <para />
-    ///     Never generate for _kinksters.GetVisibleConnected() as this will cause a lot of unnecessary data to be sent.
+    ///   This IPC Method should ONLY be sent to the newly visible kinksters, as it is the heaviest weight IPC call. <para />
+    ///   Never generate for _kinksters.GetVisibleConnected() as this will cause a lot of unnecessary data to be sent.
     /// </summary>
     public async Task UserPushLociData(List<UserData> visibleCharas)
     {
@@ -327,7 +327,7 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///     Manually call to ensure we only invoke when we change our state.
+    ///   Manually call to ensure we only invoke when we change our state.
     /// </summary>
     public async Task PushEnabledItemChanged(EnabledItemChanged arg)
     {

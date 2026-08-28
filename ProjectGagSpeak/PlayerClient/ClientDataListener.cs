@@ -14,8 +14,8 @@ using ImSharp;
 namespace GagSpeak.State.Listeners;
 
 /// <summary>
-///     Processes all changes to ClientData Globals and HardcoreStatus <para />
-///     Helps process Handler updates in addition to this.
+///   Processes all changes to ClientData Globals and HardcoreStatus <para />
+///   Helps process Handler updates in addition to this.
 /// </summary>
 public sealed class ClientDataListener : IDisposable
 {
@@ -117,8 +117,8 @@ public sealed class ClientDataListener : IDisposable
     }
 
     /// <summary>
-    ///     Either enables or disables a hardcore attribute within the hardcore state, making use of the newData object. <para />
-    ///     If enabling a hardcore state, <paramref name="newData"/> <b> MUST BE NON-NULL.</b>
+    ///   Either enables or disables a hardcore attribute within the hardcore state, making use of the newData object. <para />
+    ///   If enabling a hardcore state, <paramref name="newData"/> <b> MUST BE NON-NULL.</b>
     /// </summary>
     public void ChangeHardcoreStatus(UserData enactor, HcAttribute attribute, HardcoreState newData)
     {

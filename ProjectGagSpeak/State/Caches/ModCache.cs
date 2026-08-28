@@ -9,7 +9,7 @@ using GagSpeak.Services.Textures;
 namespace GagSpeak.State.Caches;
 
 /// <summary>
-///     Stores the expected mods and their respective modSettings to keep as temporary mods while restricted.
+///   Stores the expected mods and their respective modSettings to keep as temporary mods while restricted.
 /// </summary>
 public class ModCache
 {
@@ -74,8 +74,8 @@ public class ModCache
     }
 
     /// <summary>
-    ///     Careful where and how you call this, use responsibly.
-    ///     If done poorly, things will go out of sync.
+    ///   Careful where and how you call this, use responsibly.
+    ///   If done poorly, things will go out of sync.
     /// </summary>
     public void ClearCache()
         => _mods.Clear();

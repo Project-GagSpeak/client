@@ -1,7 +1,7 @@
 namespace GagSpeak.GameInternals;
 
 /// <summary> 
-///     A Full Representation of the actual ChatChannel enum from AgentChatLog. 
+///   A Full Representation of the actual ChatChannel enum from AgentChatLog. 
 /// </summary>
 public enum InputChannel
 {

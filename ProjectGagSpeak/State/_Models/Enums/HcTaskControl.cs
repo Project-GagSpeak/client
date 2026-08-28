@@ -1,7 +1,7 @@
 namespace GagSpeak.State;
 
 /// <summary>
-///     Dictates what a player has access to.
+///   Dictates what a player has access to.
 /// </summary>
 [Flags]
 public enum HcTaskControl

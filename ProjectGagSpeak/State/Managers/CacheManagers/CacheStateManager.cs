@@ -18,8 +18,8 @@ using Penumbra.GameData.Structs;
 namespace GagSpeak.State.Managers;
 
 /// <summary>
-///     Manages the current collective, and final active state for all visual alterations.
-///     Helper functions for appending, removing, and managing individual caches are included.
+///   Manages the current collective, and final active state for all visual alterations.
+///   Helper functions for appending, removing, and managing individual caches are included.
 /// </summary>
 /// <remarks> Helps with code readability, and optimal sorting of storage caches. </remarks>
 public class CacheStateManager : IHostedService

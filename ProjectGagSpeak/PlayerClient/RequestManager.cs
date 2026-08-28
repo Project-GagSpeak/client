@@ -4,8 +4,8 @@ using GagspeakAPI.Network;
 namespace GagSpeak.PlayerClient;
 
 /// <summary> 
-///     Manages all kinkster requests for the client. <para />
-///     This includes both incoming and outgoing requests.
+///   Manages all kinkster requests for the client. <para />
+///   This includes both incoming and outgoing requests.
 /// </summary>
 public sealed class RequestsManager : DisposableMediatorSubscriberBase
 {

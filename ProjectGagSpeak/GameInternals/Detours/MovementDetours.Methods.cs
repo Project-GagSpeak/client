@@ -82,15 +82,15 @@ public partial class MovementDetours : IDisposable
     }
 
     /// <summary>
-    ///     Controls the complete blockage of movement from the player (Blocks /follow movement)
+    ///   Controls the complete blockage of movement from the player (Blocks /follow movement)
     /// </summary>
     [Signature(Signatures.ForceDisableMovement, ScanType = ScanType.StaticAddress, Fallibility = Fallibility.Infallible)]
     private readonly nint forceDisableMovementPtr;
     internal unsafe ref int ForceDisableMovement => ref *(int*)(forceDisableMovementPtr + 4);
 
     /// <summary>
-    ///     prevents LMB+RMB moving by processing it prior to the games update movement check.
-    ///     If this fails, check our HybridCamera's new movement detection method.
+    ///   prevents LMB+RMB moving by processing it prior to the games update movement check.
+    ///   If this fails, check our HybridCamera's new movement detection method.
     /// </summary>
     public unsafe delegate void MovementDirectionUpdateDelegate(MoveControllerSubMemberForMine* thisx, float* wishdir_h, float* wishdir_v, float* rotatedir, byte* align_with_camera, byte* autorun, byte dont_rotate_with_camera);
     [Signature(Signatures.MouseMoveBlock, DetourName = nameof(MovementDirectionUpdate), Fallibility = Fallibility.Auto)]
@@ -109,7 +109,7 @@ public partial class MovementDetours : IDisposable
     }
 
     /// <summary>
-    ///     Prevents the player from unfollowing a target, which is used to prevent the player from canceling follow.
+    ///   Prevents the player from unfollowing a target, which is used to prevent the player from canceling follow.
     /// </summary>
     /// <remarks> This fires the entire duration you are following someone, so it is best not to log everything. </remarks>
     public unsafe delegate void UnfollowTargetDelegate(UnkTargetFollowStruct* unk1, IntPtr unk2);

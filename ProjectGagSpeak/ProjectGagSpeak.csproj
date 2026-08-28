@@ -40,10 +40,10 @@
         <ProjectReference Include="..\Submodules\CkCommons\CkCommons.csproj" />
         <ProjectReference Include="..\Submodules\GagspeakAPI\ProjectGagspeakAPI.csproj" GlobalPropertiesToRemove="Platform" />
         <ProjectReference Include="..\Submodules\OtterGui\OtterGui.csproj" />
-        <ProjectReference Include="..\Submodules\Luna\Luna.Generators\Luna.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false"/>
-        <ProjectReference Include="..\Submodules\Luna\Luna\Luna.csproj"/>
-        <ProjectReference Include="..\Submodules\Penumbra.Api\Penumbra.Api.csproj"/>
-        <ProjectReference Include="..\Submodules\Penumbra.String\Penumbra.String.csproj"/>
+        <ProjectReference Include="..\Submodules\Luna\Luna.Generators\Luna.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+        <ProjectReference Include="..\Submodules\Luna\Luna\Luna.csproj" />
+        <ProjectReference Include="..\Submodules\Penumbra.Api\Penumbra.Api.csproj" />
+        <ProjectReference Include="..\Submodules\Penumbra.String\Penumbra.String.csproj" />
         <ProjectReference Include="..\Submodules\Penumbra.GameData\Penumbra.GameData.csproj" />
         <ProjectReference Include="..\Submodules\GlamourerAPI\Glamourer.Api.csproj" />
         <ProjectReference Include="..\Submodules\LociAPI\Loci.Api.csproj" />
@@ -79,6 +79,9 @@
         <EmbeddedResource Include="Localization\de.json" />
         <EmbeddedResource Include="Localization\jp.json" />
         <EmbeddedResource Include="Localization\fr.json" />
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="PlayerClient\Configs\" />
     </ItemGroup>
 </Project>
 

@@ -6,8 +6,8 @@ namespace GagSpeak.GameInternals.Detours;
 public partial class StaticDetours
 {
     /// <summary>
-    ///     Detours Emote Requests sent by the Client Player to perform an emote.
-    ///     Performs an early return if the emote is not allowed to be executed.
+    ///   Detours Emote Requests sent by the Client Player to perform an emote.
+    ///   Performs an early return if the emote is not allowed to be executed.
     /// </summary>
     internal Hook<TargetSystem.Delegates.SetHardTarget> SetHardTargetHook;
 

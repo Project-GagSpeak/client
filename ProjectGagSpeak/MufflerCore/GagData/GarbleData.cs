@@ -1,7 +1,7 @@
 namespace GagSpeak.MufflerCore;
 
 /// <summary>
-///     Phonetically accurate, realistic garbling data.
+///   Phonetically accurate, realistic garbling data.
 /// </summary>
 public class GarbleData
 {
@@ -25,7 +25,7 @@ public class PhonemeProperties
 }
 
 /// <summary>
-///     Fallback, classic garbler data used by most common garble applications.
+///   Fallback, classic garbler data used by most common garble applications.
 /// </summary>
 public static class FallbackGarbleData
 {

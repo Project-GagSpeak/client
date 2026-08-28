@@ -7,20 +7,20 @@ namespace GagSpeak.GameInternals.Detours;
 public unsafe partial class StaticDetours
 {
     /// <summary>
-    ///     Detours every time a request to use an action is made.
-    ///     Returning false prevents the action from being executed.
+    ///   Detours every time a request to use an action is made.
+    ///   Returning false prevents the action from being executed.
     /// </summary>
     internal Hook<Delegates.UseAction> UseActionHook;
 
 
     /// <summary>
-    ///     The Time that you used the last action from cooldown group 58.
+    ///   The Time that you used the last action from cooldown group 58.
     /// </summary>
     private DateTime _lastUsedActionTime = DateTime.MinValue;
 
 
     /// <summary>
-    ///     Determines if the action should be used or not.
+    ///   Determines if the action should be used or not.
     /// </summary>
     /// <returns> True if the action should execute, false if it should not.</returns>
     private unsafe bool UseActionDetour(ActionManager* am, ActionType type, uint acId, ulong targetId, uint extraParam, UseActionMode mode, uint comboRouteId, bool* outOptAreaTargeted)

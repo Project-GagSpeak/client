@@ -16,8 +16,8 @@ using System.Reflection;
 
 namespace GagSpeak.WebAPI;
 /// <summary>
-///     Facilitates interactions with the GagSpeak Hub connection. <para />
-///     To ensure that interactions with vibe lobbies function correctly, <see cref="_hubConnection"/> will be static.
+///   Facilitates interactions with the GagSpeak Hub connection. <para />
+///   To ensure that interactions with vibe lobbies function correctly, <see cref="_hubConnection"/> will be static.
 /// </summary>
 public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubClient, IHostedService
 {
@@ -342,11 +342,11 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     }
 
     /// <summary>
-    ///     Awaits for the player to be present, ensuring that they are 
-    ///     logged in before this fires. <para/>
-    ///     
-    ///     There is a possibility we wont need this anymore with the new system,
-    ///     so attempt it without it once this works!
+    ///   Awaits for the player to be present, ensuring that they are 
+    ///   logged in before this fires. <para/>
+    ///   
+    ///   There is a possibility we wont need this anymore with the new system,
+    ///   so attempt it without it once this works!
     /// </summary>
     private async Task WaitForWhenPlayerIsPresent(CancellationToken token)
     {

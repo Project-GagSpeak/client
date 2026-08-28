@@ -106,8 +106,8 @@ public class HardcoreTask : HardcoreTaskBase
 }
 
 /// <summary>
-///     Represents a sequence of tasks to be performed. <para />
-///     This can also be a single task. But this 'group' of tasks are confined to the associated configuration.
+///   Represents a sequence of tasks to be performed. <para />
+///   This can also be a single task. But this 'group' of tasks are confined to the associated configuration.
 /// </summary>
 public class HardcoreTaskGroup : HardcoreTaskBase
 {

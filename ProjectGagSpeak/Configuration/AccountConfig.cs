@@ -3,6 +3,55 @@ using GagSpeak.Services.Configs;
 
 namespace GagSpeak.PlayerClient;
 
+public class AccountStorage
+{
+    // Every user can have 1 Account. 1 Account is made up of 1 Main Profile, and multiple AltProfiles.
+    // Each Profile is bound to a character. This can be further inforced but I'd rather not unless necessary.
+    public Dictionary<ulong, AccountProfile> Profiles { get; set; } = [];
+}
+
+public record AccountProfile
+{
+    /// <summary>
+    ///   The unique value of this authentication. <para />
+    ///   A ContentID is a static value given to a character of a FFXIV Service Account. <br/>
+    ///   Persists through name and world changes.
+    /// </summary>
+    public ulong ContentId { get; set; } = 0;
+
+    /// <summary>
+    ///   The Character Name associated with this ContentID.
+    /// </summary>
+    public string PlayerName { get; set; } = string.Empty;
+
+    /// <summary>
+    ///   The HomeWorld associated with this ContentID.
+    /// </summary>
+    public ushort WorldId { get; set; } = 0;
+
+    /// <summary>
+    ///   The UserUID associated with this secret key. <para />
+    ///   This is recieved from the server upon the first valid connection with this key.
+    /// </summary>
+    public string UserUID { get; set; } = string.Empty;
+
+    /// <summary>
+    ///   The secret key used to authenticate with the server and connect.
+    /// </summary>
+    public string Key { get; set; } = string.Empty;
+
+    /// <summary>
+    ///   If this is the primary key, all other keys are removed when it is removed.
+    /// </summary>
+    public bool IsPrimary { get; set; } = false;
+
+    /// <summary>
+    ///   If a valid connection was established. This could easily be removed or replaced with if UserUID != string.Empty (?)
+    /// </summary>
+    public bool HadValidConnection { get; set; } = false;
+
+}
+
 public class AccountConfig : IHybridSavable
 {
     private readonly ILogger<AccountConfig> _logger;
@@ -155,55 +204,6 @@ public class AccountConfig : IHybridSavable
     }
 
     public AccountStorage Current { get; set; } = new AccountStorage();
-}
-
-public class AccountStorage
-{
-    // Every user can have 1 Account. 1 Account is made up of 1 Main Profile, and multiple AltProfiles.
-    // Each Profile is bound to a character. This can be further inforced but I'd rather not unless necessary.
-    public Dictionary<ulong, AccountProfile> Profiles { get; set; } = [];
-}
-
-public record AccountProfile
-{
-    /// <summary>
-    ///     The unique value of this authentication. <para />
-    ///     A ContentID is a static value given to a character of a FFXIV Service Account. <br/>
-    ///     Persists through name and world changes.
-    /// </summary>
-    public ulong ContentId { get; set; } = 0;
-
-    /// <summary>
-    ///     The Character Name associated with this ContentID.
-    /// </summary>
-    public string PlayerName { get; set; } = string.Empty;
-
-    /// <summary>
-    ///     The HomeWorld associated with this ContentID.
-    /// </summary>
-    public ushort WorldId { get; set; } = 0;
-
-    /// <summary>
-    ///     The UserUID associated with this secret key. <para />
-    ///     This is recieved from the server upon the first valid connection with this key.
-    /// </summary>
-    public string UserUID { get; set; } = string.Empty;
-
-    /// <summary>
-    ///     The secret key used to authenticate with the server and connect.
-    /// </summary>
-    public string Key { get; set; } = string.Empty;
-
-    /// <summary>
-    ///     If this is the primary key, all other keys are removed when it is removed.
-    /// </summary>
-    public bool IsPrimary { get; set; } = false;
-
-    /// <summary>
-    ///     If a valid connection was established. This could easily be removed or replaced with if UserUID != string.Empty (?)
-    /// </summary>
-    public bool HadValidConnection { get; set; } = false;
-
 }
 
 /* FOR FUTURE REFERENCE - DO NOT DELETE

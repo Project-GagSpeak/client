@@ -9,7 +9,7 @@ using OtterGui;
 namespace GagSpeak.State.Caches;
 
 /// <summary>
-///     Stores the expected lociData applied while restricted.
+///   Stores the expected lociData applied while restricted.
 /// </summary>
 public class LociCache
 {
@@ -26,17 +26,17 @@ public class LociCache
     private HashSet<Guid> _finalStatusIds = new();
 
     /// <summary>
-    ///     The cached IPC Data reflecting their Loci Information.
+    ///   The cached IPC Data reflecting their Loci Information.
     /// </summary>
     public static LociContainer Data => _cache;
 
     /// <summary>
-    ///     The combined LociData collection from the full Cache.
+    ///   The combined LociData collection from the full Cache.
     /// </summary>
     public IReadOnlySet<LociItem> FinalLociItems => _finalItems;
 
     /// <summary>
-    ///     The Loci Status GUID's extracted from <see cref="_finalLociItems"/> status/preset ambiguity.
+    ///   The Loci Status GUID's extracted from <see cref="_finalLociItems"/> status/preset ambiguity.
     /// </summary>
     public IReadOnlySet<Guid> FinalStatusIds => _finalStatusIds;
 
@@ -82,13 +82,13 @@ public class LociCache
     }
 
     /// <summary>
-    ///     Removes the <paramref name="key"/> from the Cache.
+    ///   Removes the <paramref name="key"/> from the Cache.
     /// </summary>
     public bool RemoveLoci(CombinedCacheKey key)
         => RemoveLociData([key]);
 
     /// <summary>
-    ///     Removes all <paramref name="keys"/> from the Cache.
+    ///   Removes all <paramref name="keys"/> from the Cache.
     /// </summary>
     public bool RemoveLociData(IEnumerable<CombinedCacheKey> keys)
     {
@@ -109,8 +109,8 @@ public class LociCache
     }
 
     /// <summary>
-    ///     Careful where and how you call this, use responsibly.
-    ///     If done poorly, things will go out of sync.
+    ///   Careful where and how you call this, use responsibly.
+    ///   If done poorly, things will go out of sync.
     /// </summary>
     public void ClearCache()
         => _lociData.Clear();

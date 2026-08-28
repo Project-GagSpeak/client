@@ -26,9 +26,9 @@
 //    private readonly HashSet<ISortMethod<DynamicLeaf<Kinkster>>> _selectedSteps = new();
 
 //    /// <summary>
-//    ///     Draws the popup display to the topright of the last drawn item. <para />
-//    ///     The popup draws the filter options, that are drag-drop re-orderable.
-//    ///     Additionally checkboxes can enable/disable filters. <para />
+//    ///   Draws the popup display to the topright of the last drawn item. <para />
+//    ///   The popup draws the filter options, that are drag-drop re-orderable.
+//    ///   Additionally checkboxes can enable/disable filters. <para />
 //    /// </summary>
 //    /// <returns> True if <paramref name="group"/>'s Sorter in <see cref="FolderConfig"/> updated. </returns>
 //    public bool DrawPopup(string popupId, GroupFolder folder, float width)
@@ -54,8 +54,8 @@
 //    }
 
 //    /// <summary>
-//    ///     Draws the filter options, that are drag-drop re-orderable.
-//    ///     Additionally checkboxes can enable/disable filters. <para />
+//    ///   Draws the filter options, that are drag-drop re-orderable.
+//    ///   Additionally checkboxes can enable/disable filters. <para />
 //    /// </summary>
 //    /// <returns> True if <paramref name="group"/>'s Sorter in <see cref="FolderConfig"/> updated. </returns>
 //    public bool DrawFilterOptions(GroupFolder group, float width)

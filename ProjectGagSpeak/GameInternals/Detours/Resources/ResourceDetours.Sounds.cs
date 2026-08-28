@@ -29,7 +29,7 @@ namespace GagSpeak.GameInternals.Detours;
 //    private readonly Hook<SoundOnLoadDelegate> SoundOnLoadHook = null!;
 
 //    /// <summary>
-//    ///     Checks the state of a file, returning whether it is loaded or not.
+//    ///   Checks the state of a file, returning whether it is loaded or not.
 //    /// </summary>
 //    private nint CheckFileStateDetour(IntPtr ptr, ulong crc64)
 //    {
@@ -40,7 +40,7 @@ namespace GagSpeak.GameInternals.Detours;
 //    }
 
 //    /// <summary>
-//    ///     Fired whenever a sound file is loaded.
+//    ///   Fired whenever a sound file is loaded.
 //    /// </summary>
 //    private byte OnScdLoadDetour(ResourceHandle* handle, SeFileDescriptor* descriptor, byte unk)
 //    {

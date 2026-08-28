@@ -149,7 +149,7 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
             DrawLeafInner(leaf, _.InnerRegion, flags, editing);
 
         // Draw out the supporter icon after if needed.
-        if (leaf.Data.UserData.Tier is not CkSupporterTier.NoRole)
+        if (leaf.Data.UserData.Tier is not CkVanityTier.NoRole)
         {
             var Image = CosmeticService.GetSupporterInfo(leaf.Data.UserData);
             if (Image.SupporterWrap is { } wrap)

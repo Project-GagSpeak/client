@@ -7,7 +7,7 @@ using GagSpeak.Services.Configs;
 namespace GagSpeak.MufflerCore.Handler;
 
 /// <summary>
-///     Class to convert Cantonese text to International Phonetic Alphabet (IPA) notation
+///   Class to convert Cantonese text to International Phonetic Alphabet (IPA) notation
 /// </summary>
 public class Ipa_Cantonese_Handler
 {

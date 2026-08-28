@@ -11,7 +11,7 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 namespace GagSpeak.GameInternals.Addons;
 
 /// <summary>
-///     Essential Info Nessisary for GagSpeak that comes from the Addon_chatLogPanels*.
+///   Essential Info Nessisary for GagSpeak that comes from the Addon_chatLogPanels*.
 /// </summary>
 public static unsafe class AddonChatLog
 {
@@ -20,12 +20,12 @@ public static unsafe class AddonChatLog
     private const ushort TEXT_INPUT_INPUT_NODE_ID = 16;
 
     /// <summary>
-    ///     The Area in the Chat Box with the Chat-Input field and button row.
+    ///   The Area in the Chat Box with the Chat-Input field and button row.
     /// </summary>
     private static AddonChatLogPanel* _mainChatLog => (AddonChatLogPanel*)(AtkUnitBase*)Svc.GameGui.GetAddonByName("ChatLog").Address;
 
     /// <summary>
-    ///     The 4 Chat Panels in your Chat Box.
+    ///   The 4 Chat Panels in your Chat Box.
     /// </summary>
     private static AddonChatLogPanel*[] _chatLogPanels =>
     [
@@ -109,7 +109,7 @@ public static unsafe class AddonChatLog
         => panel != null && panel->AtkUnitBase.RootNode != null;
 
     /// <summary>
-    ///     Obtains the Chat Input's Cursor Node to interact with it's State.
+    ///   Obtains the Chat Input's Cursor Node to interact with it's State.
     /// </summary>
     /// <returns> the <see cref="AtkResNode"/> of the InputCursor for the Chat Input. </returns>
     private static AtkResNode* GetChatInputCursorNode()

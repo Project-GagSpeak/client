@@ -18,8 +18,8 @@ using Penumbra.GameData.Structs;
 namespace GagSpeak.PlayerClient;
 
 /// <summary>
-///     Controls when Achievement Event calls are being monitored.
-///     Also dictates what to do when they are called.
+///   Controls when Achievement Event calls are being monitored.
+///   Also dictates what to do when they are called.
 /// </summary>
 public class AchievementEventHandler : DisposableMediatorSubscriberBase
 {
