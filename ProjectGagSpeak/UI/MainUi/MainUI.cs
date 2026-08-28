@@ -85,16 +85,13 @@ public class MainUI : WindowMediatorSubscriberBase
         Flags |= WFlags.NoDocking;
 
         this.PinningClickthroughFalse();
-        this.SetBoundaries(new Vector2(MAIN_UI_WIDTH, 535), new Vector2(MAIN_UI_WIDTH, 2000));
+        this.SetBoundaries(new Vector2(MAIN_UI_WIDTH, 550), new Vector2(MAIN_UI_WIDTH, 2000));
         TitleBarButtons = new TitleBarButtonBuilder()
             .Add(FAI.Book, "Changelog", () => Mediator.Publish(new UiToggleMessage(typeof(ChangelogUI))))
             .Add(FAI.Cog, "Settings", () => Mediator.Publish(new UiToggleMessage(typeof(SettingsUi))))
             .AddTutorial(_guides, TutorialType.MainUi)
             .Build();
 
-        // Default to open if the user desires for it to be open.
-        if (_config.Data.OpenUiOnStartup)
-            Toggle();
         // Update the tab menu selection.
         _tabMenu.TabSelection = _config.Data.MainUiTab;
 

@@ -509,8 +509,7 @@ public class ProfilesTab
             }
 
             // Update the last logged in UID.
-            _mainConfig.Data.LastUidLoggedIn = string.Empty;
-            _mainConfig.Save();
+            _connections.SetCurrentProfile(string.Empty);
 
             // Extract the UID's so that we know what folders to delete in our config. (If we want to, we could keep them as a backup, idk)
             var accountUids = MainHub.ConnectionResponse?.AccountProfileUids ?? [];

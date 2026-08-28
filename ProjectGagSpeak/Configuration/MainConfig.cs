@@ -16,7 +16,6 @@ namespace GagSpeak.PlayerClient;
 public class MainConfigData : IAudioConfigData
 {
     public Version? LastRunVersion { get; set; } = null;
-    public string LastUidLoggedIn { get; set; } = "";
 
     public bool AcknowledgementUnderstood { get; set; } = false;
     public bool ButtonUsed { get; set; } = false;
@@ -142,7 +141,7 @@ public class MainConfig : IHybridSavable, IAudioConfig<MainConfigData>, IDisposa
 
     [JsonIgnore] public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     [JsonIgnore] public HybridSaveType SaveType => HybridSaveType.Json;
-    public int ConfigVersion => 1;
+    public int ConfigVersion => 2;
     public int LogFilterVersion => 1;
     public int MaxBackups => 4;
     public string ToFilePath(GsFiles files) => files.MainConfig;
