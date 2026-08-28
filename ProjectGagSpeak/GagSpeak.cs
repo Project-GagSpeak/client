@@ -294,7 +294,6 @@ public static class GagSpeakServiceExtensions
 
         // UI (Probably mostly in Scoped)
         .AddSingleton<AccountInfoExchanger>()
-        .AddSingleton<GlobalChatLog>()
         .AddSingleton<VibeRoomChatlog>()
         .AddSingleton<PluginGuideProvider>()
         .AddSingleton<MainMenuTabs>()
@@ -462,7 +461,6 @@ public static class GagSpeakServiceExtensions
         // Scoped Misc
         .AddScoped<WindowMediatorSubscriberBase, InteractionEventsUI>()
         .AddScoped<WindowMediatorSubscriberBase, DtrVisibleWindow>()
-        .AddScoped<WindowMediatorSubscriberBase, ChangelogUI>()
         .AddScoped<WindowMediatorSubscriberBase, DebugStorageUI>()
         .AddScoped<WindowMediatorSubscriberBase, DebugPersonalDataUI>()
         .AddScoped<WindowMediatorSubscriberBase, DebugActiveStateUI>()

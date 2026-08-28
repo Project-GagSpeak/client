@@ -24,7 +24,7 @@ public enum SpecialActorIdx : ushort
 ///   This allows us to cache an address that we can guarantee will always be the current 
 ///   valid state without checking every tick.
 /// </summary>
-public unsafe class CharaWatcher : IHostedService
+public unsafe class CharaWatcher : IHostedService, IDisposable
 {
     internal Hook<Character.Delegates.OnInitialize> OnCharaInitializeHook;
     internal Hook<Character.Delegates.Dtor> OnCharaDestroyHook;
@@ -67,10 +67,15 @@ public unsafe class CharaWatcher : IHostedService
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        OnCharaInitializeHook?.Dispose();
-        OnCharaTerminateHook?.Dispose();
-        OnCharaDestroyHook?.Dispose();
+        Dispose();
         return Task.CompletedTask;
+    }
+    
+    public void Dispose()
+    {
+        OnCharaInitializeHook?.SafeDispose();
+        OnCharaTerminateHook?.SafeDispose();
+        OnCharaDestroyHook?.SafeDispose();
     }
 
     private void CollectInitialData()
