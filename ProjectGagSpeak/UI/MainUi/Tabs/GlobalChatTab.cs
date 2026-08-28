@@ -82,8 +82,11 @@ public class GlobalChatTab
             _chatDrawer.Draw();
 
         CkGui.AttachTooltip("Cannot use chat, your account is not verified!", MainHub.Reputation.IsVerified);
-        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.GlobalChat, MainUI.LastPos, MainUI.LastSize);
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.UsingGlobalChat, MainUI.LastPos, MainUI.LastSize);
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatEmotes, MainUI.LastPos, MainUI.LastSize);
+        _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatScroll, MainUI.LastPos, MainUI.LastSize);
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ChatMessageExamine, MainUI.LastPos, MainUI.LastSize, _ => _tabMenu.TabSelection = MainMenuTabs.SelectedTab.Homepage);
+        
 
         var showOverlay = !MainHub.Reputation.CanUseChat || _showRules || !MainHub.Reputation.IsVerified;
         if (!showOverlay)
