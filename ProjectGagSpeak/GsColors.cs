@@ -1,6 +1,7 @@
 using GagSpeak.PlayerClient;
 using System.Runtime.CompilerServices;
 using System.Windows.Forms;
+using ImSharp;
 
 namespace GagSpeak;
 
@@ -51,7 +52,7 @@ public static class GsColors
     public static readonly Vector4 SurfaceCol = new Vector4(0.055f, 0.063f, 0.078f, 0.75f);
 
 
-    public static readonly int Count = Enum.GetValues<GsCol>().Length;
+    public static readonly int Count = GsCol.Values.Count;
     private static readonly Vector4[] _vec4 = new Vector4[Count];
     private static readonly uint[] _u32 = new uint[Count];
 
