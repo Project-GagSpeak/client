@@ -1,11 +1,12 @@
 using CkCommons.GarblerCore;
+using GagSpeak.PlayerClient;
 
 namespace GagSpeak.Services.Configs;
 
 /// <summary> Migrates all configs before v1.2 to v1.3+ format. </summary>
 public static class ConfigMigrator
 {
-    public static JObject MigrateMainConfig(JObject mainConfig, GsFiles fileNames)
+    public static JObject MigrateMainConfig(JObject mainConfig, ConnectionsConfig connections, GsFiles files)
     {
         Svc.Logger.Warning("Outdated MainConfig detected, migrating to new format!");
 
@@ -17,9 +18,9 @@ public static class ConfigMigrator
         config["LastUidLoggedIn"] = mainConfig["LastUidLoggedIn"];
 
         // open the server config file and count how many auth objects there are inside of it. If any are present, set acknoledge to true.
-        if (File.Exists(fileNames.AccountConfig))
+        if (File.Exists(files.AccountConfig))
         {
-            var json = File.ReadAllText(fileNames.AccountConfig);
+            var json = File.ReadAllText(files.AccountConfig);
             var serverConfig = JObject.Parse(json);
             var hasProfiles = serverConfig.SelectToken("ServerStorage.Authentications")?.HasValues == true 
                            || serverConfig.SelectToken("AccountInfo.Profiles")?.HasValues == true;
@@ -100,7 +101,7 @@ public static class ConfigMigrator
         };
 
         // move all old files into the backup folder.
-        foreach (var file in Directory.GetFiles(GsFiles.GagSpeakDirectory, "config-testing.json.bak*"))
+        foreach (var file in Directory.GetFiles(GsFiles.ConfigDirectory, "config-testing.json.bak*"))
         {
             // Send it to the shadow realm.
             var fileName = Path.GetFileName(file);
@@ -110,7 +111,7 @@ public static class ConfigMigrator
         return newFormat;
     }
 
-    public static JObject MigrateGagRestrictionsConfig(JObject oldConfig, GsFiles fileNames, string oldPath)
+    public static JObject MigrateGagRestrictionsConfig(JObject oldConfig, ConnectionsConfig connections, string oldPath)
     {
         Svc.Logger.Warning("Outdated GagRestrictionConfig detected, migrating to new format!");
 
@@ -172,12 +173,12 @@ public static class ConfigMigrator
         };
 
         // remove the backups of old versions.
-        var oldFormatBackupDir = Path.Combine(fileNames.CurrentPlayerDirectory, "OldFormatBackups");
+        var oldFormatBackupDir = Path.Combine(GsFiles.ConfigDirectory, connections.CurrentProfileUID, "OldFormatBackups");
         if (!Directory.Exists(oldFormatBackupDir))
             Directory.CreateDirectory(oldFormatBackupDir);
 
         // move all old files into the backup folder.
-        foreach (var file in Directory.GetFiles(fileNames.CurrentPlayerDirectory, "gag-storage.json*"))
+        foreach (var file in Directory.GetFiles(oldFormatBackupDir, "gag-storage.json*"))
         {
             var fileName = Path.GetFileName(file);
             var destPath = Path.Combine(oldFormatBackupDir, fileName);
@@ -192,7 +193,7 @@ public static class ConfigMigrator
         return newConfig;
     }
 
-    public static JObject MigrateWardrobeConfig(JObject oldConfig, GsFiles fileNames, string oldPath)
+    public static JObject MigrateWardrobeConfig(JObject oldConfig, ConnectionsConfig connections, string oldPath)
     {
         Svc.Logger.Warning("Outdated RestraintConfig detected, migrating to new format!");
 
@@ -272,12 +273,12 @@ public static class ConfigMigrator
         }
 
         // remove the backups of old versions.
-        var oldFormatBackupDir = Path.Combine(fileNames.CurrentPlayerDirectory, "OldFormatBackups");
+        var oldFormatBackupDir = Path.Combine(GsFiles.ConfigDirectory, connections.CurrentProfileUID, "OldFormatBackups");
         if (!Directory.Exists(oldFormatBackupDir))
             Directory.CreateDirectory(oldFormatBackupDir);
 
         // move all old files into the backup folder.
-        foreach (var file in Directory.GetFiles(fileNames.CurrentPlayerDirectory, "wardrobe.json*"))
+        foreach (var file in Directory.GetFiles(oldFormatBackupDir, "wardrobe.json*"))
         {
             var fileName = Path.GetFileName(file);
             var destPath = Path.Combine(oldFormatBackupDir, fileName);
@@ -298,7 +299,7 @@ public static class ConfigMigrator
     }
 
     /// <summary> "Migrates" the few external values. Actual cursed items must be reset. </summary>
-    public static JObject MigrateCursedLootConfig(JObject oldConfig, GsFiles fileNames, string oldPath)
+    public static JObject MigrateCursedLootConfig(JObject oldConfig, ConnectionsConfig connections, string oldPath)
     {
         Svc.Logger.Warning("Outdated CursedLootConfig detected, migrating to new format!");
 
@@ -329,12 +330,12 @@ public static class ConfigMigrator
             ["LockChance"] = oldConfig["CursedLootStorage"]!["LockChance"],
         };
         // remove the backups of old versions.
-        var oldFormatBackupDir = Path.Combine(fileNames.CurrentPlayerDirectory, "OldFormatBackups");
+        var oldFormatBackupDir = Path.Combine(GsFiles.ConfigDirectory, connections.CurrentProfileUID, "OldFormatBackups");
         if (!Directory.Exists(oldFormatBackupDir))
             Directory.CreateDirectory(oldFormatBackupDir);
 
         // move all old files into the backup folder.
-        foreach (var file in Directory.GetFiles(fileNames.CurrentPlayerDirectory, "cursedloot.json*"))
+        foreach (var file in Directory.GetFiles(oldFormatBackupDir, "cursedloot.json*"))
         {
             var fileName = Path.GetFileName(file);
             var destPath = Path.Combine(oldFormatBackupDir, fileName);
@@ -392,7 +393,7 @@ public static class ConfigMigrator
         };
 
         // move all old files into the backup folder.
-        foreach (var file in Directory.GetFiles(GsFiles.GagSpeakDirectory, "patterns.json.bak*"))
+        foreach (var file in Directory.GetFiles(GsFiles.ConfigDirectory, "patterns.json.bak*"))
         {
             // Send it to the shadow realm.
             var fileName = Path.GetFileName(file);
@@ -402,7 +403,7 @@ public static class ConfigMigrator
         return newFormat;
     }
 
-    public static JObject MigrateAlarmsConfig(JObject oldConfig, GsFiles fileNames)
+    public static JObject MigrateAlarmsConfig(JObject oldConfig, ConnectionsConfig connections)
     {
         Svc.Logger.Warning("Outdated AlarmsConfig detected, migrating to new format!");
 
@@ -446,12 +447,12 @@ public static class ConfigMigrator
         Svc.Logger.Information("New JOBject:" + newFormat.ToString(Formatting.Indented));
 
         // remove the backups of old versions.
-        var oldFormatBackupDir = Path.Combine(fileNames.CurrentPlayerDirectory, "OldFormatBackups");
+        var oldFormatBackupDir = Path.Combine(GsFiles.ConfigDirectory, connections.CurrentProfileUID, "OldFormatBackups");
         if (!Directory.Exists(oldFormatBackupDir))
             Directory.CreateDirectory(oldFormatBackupDir);
 
         // move all old files into the backup folder.
-        foreach (var file in Directory.GetFiles(fileNames.CurrentPlayerDirectory, "alarms.json*"))
+        foreach (var file in Directory.GetFiles(oldFormatBackupDir, "alarms.json*"))
         {
             var fileName = Path.GetFileName(file);
             var destPath = Path.Combine(oldFormatBackupDir, fileName);
@@ -466,7 +467,7 @@ public static class ConfigMigrator
         return newFormat;
     }
 
-    public static JObject MigrateTriggersConfig(JObject oldConfig, GsFiles fileNames, string oldPath)
+    public static JObject MigrateTriggersConfig(JObject oldConfig, ConnectionsConfig connections, string oldPath)
     {
         Svc.Logger.Warning("Outdated TriggersConfig detected, migrating to new format!");
 
@@ -506,12 +507,12 @@ public static class ConfigMigrator
         }
 
         // remove the backups of old versions.
-        var oldFormatBackupDir = Path.Combine(fileNames.CurrentPlayerDirectory, "OldFormatBackups");
+        var oldFormatBackupDir = Path.Combine(GsFiles.ConfigDirectory, connections.CurrentProfileUID, "OldFormatBackups");
         if (!Directory.Exists(oldFormatBackupDir))
             Directory.CreateDirectory(oldFormatBackupDir);
 
         // move all old files into the backup folder.
-        foreach (var file in Directory.GetFiles(fileNames.CurrentPlayerDirectory, "triggers.json*"))
+        foreach (var file in Directory.GetFiles(oldFormatBackupDir, "triggers.json*"))
         {
             var fileName = Path.GetFileName(file);
             var destPath = Path.Combine(oldFormatBackupDir, fileName);
@@ -585,7 +586,7 @@ public static class ConfigMigrator
         }
         return null;
     }
-    public static JObject MigratePuppeteerAliasConfig(JObject oldConfig, GsFiles fileNames, string oldPath)
+    public static JObject MigratePuppeteerAliasConfig(JObject oldConfig, ConnectionsConfig connections, string oldPath)
     {
         Svc.Logger.Warning("Outdated PuppeteerAliasConfig detected, migrating to new format!");
 
@@ -654,12 +655,12 @@ public static class ConfigMigrator
             ["PairStorage"] = pairStorage
         };
         // Begin cleaning up the configuration directory.
-        var oldFormatBackupDir = Path.Combine(fileNames.CurrentPlayerDirectory, "OldFormatBackups");
+        var oldFormatBackupDir = Path.Combine(GsFiles.ConfigDirectory, connections.CurrentProfileUID, "OldFormatBackups");
         if (!Directory.Exists(oldFormatBackupDir))
             Directory.CreateDirectory(oldFormatBackupDir);
 
         // Ensure that there's nothing at the destination path so the move is successful.
-        foreach (var file in Directory.GetFiles(fileNames.CurrentPlayerDirectory, "alias-lists.json*"))
+        foreach (var file in Directory.GetFiles(oldFormatBackupDir, "alias-lists.json*"))
         {
             var fileName = Path.GetFileName(file);
             var destPath = Path.Combine(oldFormatBackupDir, fileName);

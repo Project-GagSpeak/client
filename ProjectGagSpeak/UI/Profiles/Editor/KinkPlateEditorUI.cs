@@ -20,7 +20,7 @@ namespace GagSpeak.Gui.Profile;
 public class KinkPlateEditorUI : WindowMediatorSubscriberBase
 {
     private readonly MainHub _hub;
-    private readonly KinkPlateService _KinkPlateManager;
+    private readonly KinkPlateService _kinkplates;
     private readonly CosmeticService _cosmetics;
     private readonly TutorialService _guides;
     private readonly MainMenuTabs _mainMenuTabs;
@@ -35,7 +35,7 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
         MainMenuTabs mainMenuTabs) : base(logger, mediator, "KinkPlate Editor###KP_EditorUI")
     {
         _hub = hub;
-        _KinkPlateManager = KinkPlateManager;
+        _kinkplates = KinkPlateManager;
         _cosmetics = cosmetics;
         _mainMenuTabs = mainMenuTabs;
         _guides = guides;
@@ -89,9 +89,6 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
             .Select(x => (KinkPlateOverlay)x.RewardStyleIndex)
             .Distinct();
 
-    protected override void PreDrawInternal() { }
-    protected override void PostDrawInternal() { }
-
     protected override void DrawInternal()
     {
         var drawList = ImGui.GetWindowDrawList();
@@ -101,9 +98,8 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
         var spacing = ImGui.GetStyle().ItemSpacing.X;
 
         // grab our profile.
-        var profile = _KinkPlateManager.GetKinkPlate(new UserData(MainHub.UID));
-        var publicRef = profile.Info.IsPublic;
-        var canEdit = MainHub.Reputation.CanEditProfile();
+        var profile = _kinkplates.GetUserProfile(new(MainHub.UID));
+        var canEdit = MainHub.Reputation.CanEditProfiles;
         var pos = new Vector2(ImGui.GetCursorScreenPos().X + contentRegion.X - 242, ImGui.GetCursorScreenPos().Y);
         using (ImRaii.Group())
         {
@@ -117,29 +113,21 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
 
                 ImUtf8.SameLineInner();
                 if (CkGui.IconTextButton(FAI.Save, "Save Changes"))
-                    _ = _hub.UserSetKinkPlateContent(new KinkPlateInfo(new UserData(MainHub.UID), profile.Info));
+                    _ = _hub.UserSetKinkPlateContent(new KinkPlateInfo(new(MainHub.UID), profile.Data));
                 CkGui.AttachTooltip("Updates your stored profile with latest information");
                 _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileSaving, ImGui.GetWindowPos(), ImGui.GetWindowSize(), _ =>
                 {
                     IsOpen = false;
                     _mainMenuTabs.TabSelection = MainMenuTabs.SelectedTab.PatternSharehub;
                 }); // tutorial locks interactions, no need to save, just close
-
-                ImUtf8.SameLineInner();
-                if (ImGui.Checkbox("Public", ref publicRef))
-                    profile.Info.IsPublic = publicRef;
-                CkGui.AttachTooltip("If checked, your profile picture and description will become visible\n" +
-                    "to others through private rooms and global chat!" +
-                    "--SEP--Non-Paired Kinksters still won't be able to see your UID if viewing your KinkPlate");
                 _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfilePublicity, ImGui.GetWindowPos(), ImGui.GetWindowSize());
             }
         }
 
-        var pfpWrap = profile.GetProfileOrDefault();
-        if (pfpWrap != null)
+        if (profile.GetIconWrapOrDefault() is { } pfpWrap)
         {
             var currentPosition = ImGui.GetCursorPos();
-            drawList.AddImageRounded(pfpWrap.Handle, pos, pos + Vector2.One * 232f, Vector2.Zero, Vector2.One, ImGui.GetColorU32(new Vector4(1f, 1f, 1f, 1f)), 116f);
+            drawList.AddImageRounded(pfpWrap.Handle, pos, pos + Vector2.One * 232f, Vector2.Zero, Vector2.One, uint.MaxValue, 116f);
         }
 
         using (ImRaii.Group())
@@ -149,10 +137,10 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
 
             CkGui.ColorText("Select Title", ImGuiColors.ParsedGold);
             CkGui.HelpText("Select a title to display on your KinkPlate!--SEP--Can only select Achievement Titles you've completed!");
-            if (CkGuiUtils.IntCombo("##TitleSelect", 200f, profile.Info.ChosenTitleId, out var newTitleId, completed.Keys,
+            if (CkGuiUtils.IntCombo("##TitleSelect", 200f, profile.Data.ChosenTitleId, out var newTitleId, completed.Keys,
                 num => completed.TryGetValue(num, out var title) ? title : "Unknown Title", "Select Title..."))
             {
-                profile.Info.ChosenTitleId = newTitleId;
+                profile.Data.ChosenTitleId = newTitleId;
             }
             _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.SettingTitles, ImGui.GetWindowPos(), ImGui.GetWindowSize());
         }
@@ -199,10 +187,10 @@ public class KinkPlateEditorUI : WindowMediatorSubscriberBase
         CkGui.ColorText("Description", ImGuiColors.ParsedGold);
         using (ImRaii.Disabled(!canEdit))
         {
-            var refText = profile.Info.Description.IsNullOrEmpty() ? "No Description Set..." : profile.Info.Description;
+            var refText = profile.Data.Description.IsNullOrEmpty() ? "No Description Set..." : profile.Data.Description;
             var size = new Vector2(ImGui.GetContentRegionAvail().X, ImGui.GetContentRegionAvail().Y - ImGui.GetFrameHeightWithSpacing());
             if (ImGui.InputTextMultiline("##pfpDescription", ref refText, 1000, size))
-                profile.Info.Description = refText;
+                profile.Data.Description = refText;
         }
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ProfileDescription, ImGui.GetWindowPos(), ImGui.GetWindowSize(),
             _ => Mediator.Publish(new OpenUserLightProfileMessage(MainHub.OwnUserData)));

@@ -220,7 +220,7 @@ public class AliasesTab : IFancyTab
             {
                 CkGui.IconTextAligned(FAI.UserCircle);
                 DrawDisplayName(Kinkster);
-                CkGui.AttachTooltip($"UID: --COL--{kinksterUid}--COL--", GsCol.VibrantPink.Vec4Ref());
+                CkGui.AttachTooltip($"UID: --COL--{kinksterUid}--COL--", GsCol.VibrantPink.Vec4());
             }
             else
             {
@@ -378,7 +378,7 @@ public class AliasesTab : IFancyTab
         {
             alias.WhitelistedUIDs.Clear();
         }
-        CkGui.AttachTooltip(" Add all visible sundesmos nearby.");
+        CkGui.AttachTooltip(" Add all visible kinksters nearby.");
 
         ImUtf8.SameLineInner();
         if (_pairCombo.Draw(_selectedKinkster, ImGui.GetContentRegionAvail().X))
@@ -407,7 +407,7 @@ public class AliasesTab : IFancyTab
             {
                 CkGui.IconTextAligned(FAI.UserCircle);
                 DrawDisplayName(Kinkster);
-                CkGui.AttachTooltip($"UID: --COL--{kinksterUid}--COL--", GsCol.VibrantPink.Vec4Ref());
+                CkGui.AttachTooltip($"UID: --COL--{kinksterUid}--COL--", GsCol.VibrantPink.Vec4());
             }
             else
             {

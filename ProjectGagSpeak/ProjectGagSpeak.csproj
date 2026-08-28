@@ -83,6 +83,9 @@
         <EmbeddedResource Include="Localization\jp.json" />
         <EmbeddedResource Include="Localization\fr.json" />
     </ItemGroup>
+    <ItemGroup>
+      <Folder Include="PlayerKinkster\Data\" />
+    </ItemGroup>
 </Project>
 
 

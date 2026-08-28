@@ -19,6 +19,7 @@ using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
+using GagspeakAPI.User;
 
 namespace GagSpeak.Gui.MainWindow;
 

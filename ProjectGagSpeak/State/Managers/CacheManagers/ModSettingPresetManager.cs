@@ -237,10 +237,10 @@ public class ModPresetManager : DisposableMediatorSubscriberBase, IHybridSavable
 
     #region HybridSavable
     public int ConfigVersion => 0;
+    public int MaxBackups => 3;
     public HybridSaveType SaveType => HybridSaveType.Json;
-    public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(GsFiles files, out bool isAccountUnique)
-        => (isAccountUnique = false, files.CustomModSettings).Item2;
+    public DateTime LastWriteTimeUTC => DateTime.MinValue;
+    public string ToFilePath(GsFiles files) => files.CustomModSettings;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize()
     {

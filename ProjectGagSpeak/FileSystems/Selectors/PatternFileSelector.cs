@@ -109,7 +109,7 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
         }
 
         ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
-        if (Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Pattern, leaf.Value.Identifier))
+        if (Icons.DrawFavoriteStar(_favorites, FavoriteType.Pattern, leaf.Value.Identifier))
             SetFilterDirty();
         CkGui.TextFrameAlignedInline(leaf.Value.Label);
         if(leaf.Value.ShouldLoop)

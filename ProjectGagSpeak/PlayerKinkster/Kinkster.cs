@@ -141,7 +141,7 @@ public class Kinkster : IComparable<Kinkster>
         => UserPair = UserPair with { User = newData };
 
     /// <summary>
-    ///   Convert a temporary Sundesmo to a permanent one.
+    ///   Convert a temporary Kinkster to a permanent one.
     /// </summary>
     public void MarkAsPermanent()
         => UserPair = UserPair with { TempAccepterUID = string.Empty };

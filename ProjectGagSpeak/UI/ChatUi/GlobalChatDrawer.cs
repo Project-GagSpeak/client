@@ -1,4 +1,3 @@
-using CkCommons;
 using CkCommons.Gui;
 using CkCommons.RichText;
 using Dalamud.Bindings.ImGui;
@@ -10,9 +9,9 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Chat;
+using GagspeakAPI.Reporting;
 using OtterGui.Text;
 using OtterGuiInternal;
-using SundouleiaAPI.Reporting;
 using System.Globalization;
 
 namespace GagSpeak.Gui.Chat;
@@ -160,7 +159,7 @@ public class GlobalChatDrawer : RichEmoteChatDrawer
         {
             // Need to ensure we have valid access to open.
             if (((GlobalChatLog)ChatLog!).ChatUsers.GetValueOrDefault(msg.Sender, ChatFlags.None).HasAny(ChatFlags.AllowProfileViewing))
-                _mediator.Publish(new OpenUserProfileMessage(msg.Sender));
+                _mediator.Publish(new OpenUserLightProfileMessage(msg.Sender));
         }
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
@@ -189,7 +188,7 @@ public class GlobalChatDrawer : RichEmoteChatDrawer
             var canProfile = flags.HasAny(ChatFlags.AllowProfileViewing);
             if (CkGui.SelectableEx("Open Profile", !canProfile))
             {
-                _mediator.Publish(new OpenUserProfileMessage(msg.Sender));
+                _mediator.Publish(new OpenUserLightProfileMessage(msg.Sender));
                 ImGui.CloseCurrentPopup();
             }
             CkGui.AttachTooltip(!canProfile ? "This user does not allow Profile Viewing." : $"Opens {dispName}'s profile.", ImGuiHoveredFlags.AllowWhenDisabled);

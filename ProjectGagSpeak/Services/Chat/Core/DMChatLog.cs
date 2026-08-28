@@ -27,6 +27,7 @@ public class DMChatLog : RichChatLog<NewGsChatMessage>
         _chatColors = chatColors;
         _kinksters = kinksters;
         _blockedUsers = blockedUsers;
+        _pairService = pairService;
 
         TargetUser = targetUser;
         ChatID = id;
@@ -49,7 +50,7 @@ public class DMChatLog : RichChatLog<NewGsChatMessage>
         => ClearLog();
 
     // Processes a external chat message that can be any unsanitized or modified type,
-    // then converts its contents into NewSundChatMessage, adding it to the log.
+    // then converts its contents into NewGsChatMessage, adding it to the log.
     // This is where detections for mentions, highlights, or other nuances should be handled.
     public void ProcessChatMessage(ChatlogMessage msg, bool doPings = true)
     {
@@ -67,11 +68,11 @@ public class DMChatLog : RichChatLog<NewGsChatMessage>
         }
 
         var finalMsgText = ProcessMentions(ctx, out bool wasMentioned);
-        var sundMsg = new NewGsChatMessage(msg, GetSenderName(msg), finalMsgText, NewSenderSinceLastMsg(msg.Sender.UID))
+        var gsMsg = new NewGsChatMessage(msg, GetSenderName(msg), finalMsgText, NewSenderSinceLastMsg(msg.Sender.UID))
         {
             WasMentioned = wasMentioned
         };
-        AddLogMessage(sundMsg);
+        AddLogMessage(gsMsg);
         if (!wasMentioned && !_chatConfig.Data.PingOnDM)
             return;
         if (doPings && !_blockedUsers.IsMuted(msg.Sender.UID) && _chatConfig.Data.AlertKind.HasAny(AlertKind.Audio))

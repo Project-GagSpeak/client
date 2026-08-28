@@ -1,4 +1,5 @@
 using Dalamud.Interface.ImGuiNotification;
+using GagSpeak.Interop.Helpers;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Events;
 using GagspeakAPI.Chat;
@@ -25,6 +26,9 @@ public record EventMessage(InteractionEvent Event) : MessageBase;
 
 /// <summary> The ConnectionKind was updated to reflect a new type. </summary>
 public record ConnectionKindChanged(ConnectionKind PrevState, ConnectionKind NewState) : MessageBase;
+
+// Remove later.
+public record OpenSettingsPluginInfoMessage(OptionalPlugin Plugin) : MessageBase;
 
 public record ConnectedHubProfileChanged : MessageBase;
 

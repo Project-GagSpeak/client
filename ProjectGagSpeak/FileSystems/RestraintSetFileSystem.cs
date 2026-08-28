@@ -116,15 +116,11 @@ public sealed class RestraintSetFileSystem : CkFileSystem<RestraintSet>, IMediat
 
     // HybridSavable
     public int ConfigVersion => 0;
+    public int MaxBackups => 2;
     public HybridSaveType SaveType => HybridSaveType.StreamWrite;
-    public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(GsFiles files, out bool isAccountUnique)
-        => (isAccountUnique = false, files.CKFS_RestraintSets).Item2;
-
-    public string JsonSerialize() 
-        => throw new NotImplementedException();
-
-    public void WriteToStream(StreamWriter writer) 
-        => SaveToFile(writer, SaveRestraintSet, true);
+    public DateTime LastWriteTimeUTC => DateTime.MinValue;
+    public string ToFilePath(GsFiles files) => files.CKFS_RestraintSets;
+    public string JsonSerialize() => throw new NotImplementedException();
+    public void WriteToStream(StreamWriter writer) => SaveToFile(writer, SaveRestraintSet, true);
 }
 

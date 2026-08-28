@@ -9,6 +9,7 @@ using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Events;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Watchers;
 using GagSpeak.WebAPI;
 using Lumina.Excel.Sheets;
 
@@ -77,15 +78,15 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
         if (!MainHub.IsServerAlive)
             return;
 
-        PrivacyEntry.Shown = _mainConfig.Data.ShowPrivacyRadar;
-        UpdateMessagesEntry.Shown = (EventAggregator.UnreadInteractionsCount is 0) ? false : _mainConfig.Data.ShowActionNotifs;
-        VibratorEntry.Shown = _mainConfig.Data.ShowVibeStatus;
+        PrivacyEntry.Shown = _mainConfig.Data.DtrPrivacy;
+        UpdateMessagesEntry.Shown = (EventAggregator.UnreadInteractionsCount is 0) ? false : _mainConfig.Data.DtrActionNotifs;
+        VibratorEntry.Shown = _mainConfig.Data.DtrVibeStatus;
 
         if (PrivacyEntry.Shown)
         {
             var visibleKinksters = _kinksters.DirectPairs.Where(k => k.IsRendered).Select(k => k.PlayerAddress).ToHashSet();
             // Gets the rendered players that are not paired kinksters.
-            var otherNonKinksters = CharaObjectWatcher.Rendered.Where(addr => !visibleKinksters.Contains(addr) && !PlayerData.Address.Equals(addr)).ToHashSet();
+            var otherNonKinksters = CharaWatcher.Rendered.Where(addr => !visibleKinksters.Contains(addr) && !PlayerData.Address.Equals(addr)).ToHashSet();
 
             // Update the stored list of visible non-paired players.
             NonKinksters = otherNonKinksters;
@@ -118,7 +119,7 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
 
     public unsafe void LocatePlayer(Character* chara)
     {
-        if (!PlayerData.Available || !CharaObjectWatcher.Rendered.Contains((nint)chara))
+        if (!PlayerData.Available || !CharaWatcher.Rendered.Contains((nint)chara))
             return;
 
         try

@@ -26,29 +26,6 @@ public class PublicationsUI : WindowMediatorSubscriberBase
         this.SetBoundaries(new Vector2(525, 450), ImGui.GetIO().DisplaySize);
         RespectCloseHotkey = false;
     }
-    // perhaps migrate the opened selectable for the UIShared service so that other trackers can determine if they should refresh / update it or not.
-    // (this is not yet implemented, but we can modify it later when we need to adapt)
-
-    private bool ThemePushed = false;
-    protected override void PreDrawInternal()
-    {
-        if (!ThemePushed)
-        {
-            ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .803f));
-            ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.579f, 0.170f, 0.359f, 0.828f));
-
-            ThemePushed = true;
-        }
-    }
-
-    protected override void PostDrawInternal()
-    {
-        if (ThemePushed)
-        {
-            ImGui.PopStyleColor(2);
-            ThemePushed = false;
-        }
-    }
 
     protected override void DrawInternal()
     {

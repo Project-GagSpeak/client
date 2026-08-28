@@ -2,9 +2,12 @@ using CkCommons;
 using CkCommons.DrawSystem;
 using CkCommons.HybridSaver;
 using GagSpeak.Kinksters;
+using GagSpeak.Pairs;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
+using GagspeakAPI.User;
 
 namespace GagSpeak.DrawSystem;
 
@@ -12,30 +15,41 @@ public class WhitelistDrawSystem : DynamicDrawSystem<Kinkster>, IMediatorSubscri
 {
     private readonly ILogger<WhitelistDrawSystem> _logger;
     private readonly MainConfig _config;
+    private readonly SorterHelpers _sortHelpers;
     private readonly KinksterManager _kinksters;
+    private readonly OnlineKinksterManager _onlineUsers;
     private readonly HybridSaveService _hybridSaver;
+    private readonly PairService _pairService;
 
-    private readonly object _folderUpdateLock = new();
+    private readonly object _updateLock = new();
+
 
     public GagspeakMediator Mediator { get; init; }
 
     public WhitelistDrawSystem(ILogger<WhitelistDrawSystem> logger, GagspeakMediator mediator,
-        MainConfig config, KinksterManager kinksters, HybridSaveService saver)
+        MainConfig config, SorterHelpers sortHelpers, KinksterManager kinksters,
+        OnlineKinksterManager onlineUsers, HybridSaveService saver, PairService pairService)
     {
         _logger = logger;
         Mediator = mediator;
         _config = config;
+        _sortHelpers = sortHelpers;
         _kinksters = kinksters;
+        _onlineUsers = onlineUsers;
         _hybridSaver = saver;
+        _pairService = pairService;
 
         // Load the hierarchy and initialize the folders.
         LoadData();
 
-        Mediator.Subscribe<DDSUpdateKinkster>(this, _ => { lock (_folderUpdateLock) UpdateFolders(); });
-        Mediator.Subscribe<KinksterRendered>(this, _ => { lock (_folderUpdateLock) UpdateFolder(Constants.FolderTagVisible); });
-        Mediator.Subscribe<ConnectedMessage>(this, _ => { lock (_folderUpdateLock) UpdateFolders(); });
+        _onlineUsers.UserWentOnline += OnUserStatusChanged;
+        _onlineUsers.UserWentOffline += OnUserStatusChanged;
 
-        // Subscribe to the changes (which is to change very, very soon, with overrides.
+        Mediator.Subscribe<DDSUpdateKinkster>(this, _ => RequestUpdateAll());
+        Mediator.Subscribe<KinksterRendered>(this, _ => RequestUpdateVisible());
+        Mediator.Subscribe<KinksterUnrendered>(this, _ => RequestUpdateVisible());
+        Mediator.Subscribe<ConnectedMessage>(this, _ => RequestUpdateAll());
+
         DDSChanged += OnChange;
         CollectionUpdated += OnCollectionUpdate;
     }
@@ -43,11 +57,28 @@ public class WhitelistDrawSystem : DynamicDrawSystem<Kinkster>, IMediatorSubscri
     public void Dispose()
     {
         Mediator.UnsubscribeAll(this);
+        _onlineUsers.UserWentOnline -= OnUserStatusChanged;
+        _onlineUsers.UserWentOffline -= OnUserStatusChanged;
         DDSChanged -= OnChange;
         CollectionUpdated -= OnCollectionUpdate;
     }
 
-    // Note that this will change very soon, as saves should only occur for certain changes.
+    #region Events
+    private void OnUserStatusChanged(UserData _, string __)
+        => RequestUpdateAll();
+
+    internal void RequestUpdateAll()
+    {
+        lock (_updateLock)
+            UpdateFolders();
+    }
+
+    internal void RequestUpdateVisible()
+    {
+        lock (_updateLock)
+            UpdateFolder(Consts.DDS_Rendered);
+    }
+
     private void OnChange(DDSChange type, IDynamicNode<Kinkster> obj, IDynamicCollection<Kinkster>? _, IDynamicCollection<Kinkster>? __)
     {
         if (type is not (DDSChange.FullReloadStarting or DDSChange.FullReloadFinished))
@@ -62,18 +93,17 @@ public class WhitelistDrawSystem : DynamicDrawSystem<Kinkster>, IMediatorSubscri
         if (kind is CollectionUpdate.OpenStateChange)
             _hybridSaver.Save(this);
     }
+    #endregion
 
     private void LoadData()
     {
-        // Before we load anything, inverse the sort direction of root.
-        SetSortDirection(root, true);
-        // If any changes occured, re-save the file.
+        SetSortDirection(root, true); // Visible->Online->Offline
+
         if (LoadFile(new FileInfo(_hybridSaver.FileNames.DDS_Whitelist)))
         {
             _logger.LogInformation("WhitelistDrawSystem folder structure changed on load, saving updated structure.");
             _hybridSaver.Save(this);
         }
-        // See if the file doesnt exist, if it does not, load defaults.
         else if (!File.Exists(_hybridSaver.FileNames.DDS_Whitelist))
         {
             _logger.LogInformation("Loading Defaults and saving.");
@@ -82,81 +112,77 @@ public class WhitelistDrawSystem : DynamicDrawSystem<Kinkster>, IMediatorSubscri
         }
     }
 
+    #region Folder Management
     protected override bool EnsureAllFolders(Dictionary<string, string> _)
     {
-        // Load in the folders, they are all descendants of root.
-        bool anyChanged = false;
-        anyChanged |= UpdateVisibleFolderState(_config.Data.VisibleFolder);
-        anyChanged |= UpdateOfflineFolderState(_config.Data.OfflineFolder);
-        _logger.LogInformation($"Ensured all folders, total now {FolderMap.Count} folders.");
+        var anyChanged = UpdateVisibleFolderState(_config.Data.VisibleFolder)
+                       | UpdateOfflineFolderState(_config.Data.OfflineFolder);
+        _logger.LogDebug($"Ensured all folders, total now {FolderMap.Count} folders.", LoggerType.UI);
         return anyChanged;
     }
 
-    // Update the FolderSystem folders based on if it should be included or not.
     public bool UpdateVisibleFolderState(bool showFolder)
     {
-        // If we want to show the folder and it already exists then change nothing.
         if (showFolder)
         {
-            if (FolderMap.ContainsKey(Constants.FolderTagVisible))
-                return false;
-            // Try to add it.
-            return AddFolder(new PairFolder(root, idCounter + 1u, FAI.Eye, Constants.FolderTagVisible, CkCol.TriStateCheck.Uint(),
-                () => [.. _kinksters.DirectPairs.Where(u => u.IsRendered && u.IsOnline)], GetDefaultSorter()));
+            if (FolderMap.ContainsKey(Consts.DDS_Rendered)) return false;
+
+            return AddFolder(CreateDefaultFolder(
+                Consts.DDS_Rendered, FAI.Eye, CkCol.TriStateCheck.Uint(),
+                GetVisible, () => _config.Data.WhitelistSortOrderVisible));
         }
-        // Otherwise attempt to remove it.
-        return Delete(Constants.FolderTagVisible);
+        return Delete(Consts.DDS_Rendered);
     }
 
-    // Not too worried about additional work here since it only happens on recalculations.
     public bool UpdateOfflineFolderState(bool showFolder)
     {
-        // Assume no changes.
-        bool anyChanges = false;
-        // If we wanted to show offline/online..
+        var anyChanges = false;
         if (showFolder)
         {
-            var sorter = GetDefaultSorter();
-            anyChanges |= Delete(Constants.FolderTagAll);
-            anyChanges |= AddFolder(new PairFolder(root, idCounter + 1u, FAI.Link, Constants.FolderTagOnline, CkCol.TriStateCheck.Uint(), () => [.. _kinksters.DirectPairs.Where(s => s.IsOnline)], new(sorter)));
-            anyChanges |= AddFolder(new PairFolder(root, idCounter + 1u, FAI.Link, Constants.FolderTagOffline, CkCol.TriStateCross.Uint(), () => [.. _kinksters.DirectPairs.Where(s => !s.IsOnline)], new(sorter)));
+            anyChanges |= Delete(Consts.DDS_All);
+
+            anyChanges |= AddFolder(CreateDefaultFolder(
+                Consts.DDS_Online, FAI.Link, CkCol.TriStateCheck.Uint(),
+                GetOnline, () => _config.Data.WhitelistSortOrderOnline));
+
+            anyChanges |= AddFolder(CreateDefaultFolder(
+                Consts.DDS_Offline, FAI.Link, CkCol.TriStateCross.Uint(),
+                GetOffline, () => _config.Data.WhitelistSortOrderOffline));
         }
-        // Otherwise we wanted to only show ALL.
         else
         {
-            var sorter = GetDefaultSorter();
-            sorter.Prepend(SorterEx.ByRendered);
-            sorter.Prepend(SorterEx.ByOnline);
+            anyChanges |= Delete(Consts.DDS_Online);
+            anyChanges |= Delete(Consts.DDS_Offline);
 
-            anyChanges |= Delete(Constants.FolderTagOnline);
-            anyChanges |= Delete(Constants.FolderTagOffline);
-            anyChanges |= AddFolder(new PairFolder(root, idCounter + 1u, FAI.Globe, Constants.FolderTagAll, uint.MaxValue, () => _kinksters.DirectPairs, sorter));
+            anyChanges |= AddFolder(CreateDefaultFolder(
+                Consts.DDS_All, FAI.Globe, uint.MaxValue,
+                GetAllUsers, () => _config.Data.WhitelistSortOrderAll));
         }
-        // Return if anything was modified.
         return anyChanges;
     }
 
-    public void UpdateFilters()
-    {
-        var sorter = GetDefaultSorter();
-        // Update all children to be either favorites first or not.
-        foreach (var folder in Root.Children.OfType<PairFolder>())
-            SetSorterSteps(folder, sorter);
-    }
+    private PairFolder CreateDefaultFolder(string tag, FAI icon, uint color, Func<List<Kinkster>> fetcher, Func<List<FolderSortFilter>> sortOrder)
+        => new(_sortHelpers, _config, root, idCounter + 1u, icon, tag, color, fetcher, sortOrder);
 
-    private IReadOnlyList<ISortMethod<DynamicLeaf<Kinkster>>> GetDefaultSorter()
-        => _config.Data.PrioritizeFavorites ? [SorterEx.ByFavorite, SorterEx.ByPairName] : [SorterEx.ByPairName];
+    public List<Kinkster> GetVisible()
+        => _kinksters.DirectPairs.Where(u => u.IsRendered && u.IsOnline).ToList();
+
+    public List<Kinkster> GetOnline()
+        => _kinksters.DirectPairs.Where(u => u.IsOnline).ToList();
+
+    public List<Kinkster> GetOffline()
+        => _kinksters.DirectPairs.Where(u => !u.IsOnline).ToList();
+
+    public List<Kinkster> GetAllUsers()
+        => _kinksters.DirectPairs;
+    #endregion
 
     // HybridSavable
     public int ConfigVersion => 0;
+    public int MaxBackups => 2;
     public HybridSaveType SaveType => HybridSaveType.StreamWrite;
-    public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(GsFiles files, out bool isAccountUnique)
-        => (isAccountUnique = false, files.DDS_Whitelist).Item2;
-
-    public string JsonSerialize()
-        => throw new NotImplementedException();
-
-    public void WriteToStream(StreamWriter writer)
-        => SaveToFile(writer);
+    public DateTime LastWriteTimeUTC => DateTime.MinValue;
+    public string ToFilePath(GsFiles files) => files.DDS_Whitelist;
+    public string JsonSerialize() => throw new NotImplementedException();
+    public void WriteToStream(StreamWriter writer) => SaveToFile(writer);
 }

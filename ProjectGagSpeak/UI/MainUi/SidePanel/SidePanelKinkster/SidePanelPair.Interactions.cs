@@ -8,6 +8,7 @@ using GagSpeak.Interop;
 using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
+using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;

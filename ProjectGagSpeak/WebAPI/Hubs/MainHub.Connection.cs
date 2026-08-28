@@ -86,7 +86,7 @@ public partial class MainHub
                 await LoadInitialConnectionData().ConfigureAwait(false);
 
                 // Sync configs and other things with the server.
-                await _dataSync.SetClientDataForProfile().ConfigureAwait(false);
+                await _dataSync.SetClientDataForProfile(ConnectionResponse!).ConfigureAwait(false);
 
                 // once data is synchronized, update the serverStatus.
                 ServerStatus = ServerState.ConnectedDataSynced;
@@ -377,6 +377,7 @@ public partial class MainHub
             return false;
         }
 
+#if !DEBUG
         Logger.LogTrace("Checking if Client Connection is Outdated", LoggerType.ApiCore);
         Logger.LogInformation($"{ClientVerString} - {ExpectedVerString}", LoggerType.ApiCore);
         if (_expectedApiVersion != IGagspeakHub.ApiVersion || _expectedVersion > _clientVersion)
@@ -386,6 +387,7 @@ public partial class MainHub
             await Disconnect(ServerState.VersionMisMatch, DisconnectIntent.Normal).ConfigureAwait(false);
             return false;
         }
+#endif
 
         // Client is up to date!
         return true;
@@ -527,7 +529,7 @@ public partial class MainHub
                 ServerStatus = ServerState.Connected;
                 await LoadInitialConnectionData().ConfigureAwait(false);
                 // Re-Sync data for the current character profile.
-                await _dataSync.SetClientDataForProfile().ConfigureAwait(false);
+                await _dataSync.SetClientDataForProfile(ConnectionResponse).ConfigureAwait(false);
                 
                 // once data is syncronized, update the serverStatus.
                 ServerStatus = ServerState.ConnectedDataSynced;

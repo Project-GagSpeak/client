@@ -2,6 +2,7 @@
 using CkCommons;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Utils;
 using GagspeakAPI.Connection;
 
 namespace GagSpeak.PlayerClient;
@@ -15,14 +16,18 @@ public class AccountManager
     private readonly ILogger<AccountManager> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly AccountConfig _config;
+    private readonly MainConfig _mainConfig;
+    private readonly ConnectionsConfig _connections;
     private readonly GsFiles _fileProvider;
 
     public AccountManager(ILogger<AccountManager> logger, GagspeakMediator mediator,
-        AccountConfig config, GsFiles files)
+        AccountConfig config, MainConfig mainConfig, ConnectionsConfig connections, GsFiles files)
     {
         _logger = logger;
         _mediator = mediator;
         _config = config;
+        _mainConfig = mainConfig;
+        _connections = connections;
         _fileProvider = files;
     }
 
@@ -31,14 +36,6 @@ public class AccountManager
     // Avoid calling this wherever possible maybe?
     public void Save()
         => _config.Save();
-
-    public void UpdateFileProviderForConnection(ConnectionResponse response)
-    {
-        _logger.LogDebug($"Setting FileProvider ProfileUID to {response.User.UID}");
-        var isProfileDifferent = _fileProvider.CurrentUserUID != response.User.UID;
-        _fileProvider.UpdateConfigs(response.User.UID);
-    }
-
     /// <summary>
     /// Determines whether any profiles are currently available.
     /// </summary>

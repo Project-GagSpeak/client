@@ -24,11 +24,11 @@ public sealed class ProjectTabBar
         _imageResolver = resolver;
         // Pull from your existing plugin info source
         var loci = PluginGuideProvider.PluginInfo[OptionalPlugin.Loci];
-        var sundouleia = PluginGuideProvider.PluginInfo[OptionalPlugin.GagSpeak];
-        AddProject(OptionalPlugin.GagSpeak, sundouleia.IconUrl, sundouleia.Name, sundouleia.Punchline);
+        var sundouleia = PluginGuideProvider.PluginInfo[OptionalPlugin.Sundouleia];
+        AddProject(OptionalPlugin.Sundouleia, sundouleia.IconUrl, sundouleia.Name, sundouleia.Punchline);
         AddProject(OptionalPlugin.Loci, loci.IconUrl, loci.Name, loci.Punchline);
 
-        _selectedTab = OptionalPlugin.GagSpeak;
+        _selectedTab = OptionalPlugin.Sundouleia;
     }
 
     public OptionalPlugin TabSelection

@@ -5,6 +5,7 @@ using GagSpeak.State.Caches;
 using Dalamud.Bindings.ImGui;
 using OtterGui.Extensions;
 using GagSpeak.Interop.Helpers;
+using CkCommons.RichText;
 
 namespace GagSpeak.CustomCombos.Editor;
 
@@ -69,7 +70,7 @@ public sealed class LociStatusCombo : CkLociComboBase<LociStatusInfo>
         var pos = ImGui.GetCursorPosY();
         ImGui.SetCursorPosY(pos + (size.Y - SelectableTextHeight) * 0.5f);
         using (Fonts.DefaultScaled.Push())
-            CkRichText.Text(titleSpace, lociStatus.Title);
+            NewRichText.TextWrapped(lociStatus.Title, titleSpace);
 
         return ret;
     }

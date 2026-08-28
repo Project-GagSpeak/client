@@ -26,8 +26,6 @@ public class FavoritesAccountData
 public class FavoritesConfig : IHybridSavable
 {
     private readonly ILogger<FavoritesConfig> _logger;
-    private readonly GagspeakMediator _mediator;
-    private readonly ConnectionsConfig _serverConfig;
     private readonly HybridSaveService _saver;
     public int ConfigVersion => 1;
     public int MaxBackups => 3;
@@ -48,10 +46,9 @@ public class FavoritesConfig : IHybridSavable
     private static readonly HashSet<Guid> _triggers = [];
     private static FavoritesAccountData _current => GetOrCreateConfigData();
 
-    public FavoritesConfig(ILogger<FavoritesConfig> logger, GagspeakMediator mediator, HybridSaveService saver)
+    public FavoritesConfig(ILogger<FavoritesConfig> logger, HybridSaveService saver)
     {
         _logger = logger;
-        _mediator = mediator;
         _saver = saver;
         Load();
     }
@@ -335,7 +332,7 @@ public class FavoritesConfig : IHybridSavable
         public int Version = 2;
 
         // v2 Properties
-        public Dictionary<string, FavoritesAccountData>? Accounts;
+        public Dictionary<string, FavoritesAccountData>? Accounts = null;
 
         // Globals
         public IEnumerable<Guid>? Restraints = [];

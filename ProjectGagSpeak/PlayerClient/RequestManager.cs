@@ -16,7 +16,6 @@ public sealed class RequestsManager : DisposableMediatorSubscriberBase
     private readonly MainConfig _config;
     private readonly OnlineKinksterManager _onlineUsers;
     private readonly KinksterManager _kinksters;
-    private readonly AlertService _alerts;
 
     // Potentially turn to dictionary/concurrent dict if entry format changes later.
     private readonly HashSet<RequestEntry> _allRequests = [];
@@ -28,14 +27,12 @@ public sealed class RequestsManager : DisposableMediatorSubscriberBase
     private HashSet<string> _involvedInRequests;
 
     public RequestsManager(ILogger<RequestsManager> logger, GagspeakMediator mediator,
-        MainConfig config, OnlineKinksterManager onlineUsers, KinksterManager kinksters,
-        AlertService alerts)
+        MainConfig config, OnlineKinksterManager onlineUsers, KinksterManager kinksters)
         : base(logger, mediator)
     {
         _config = config;
         _onlineUsers = onlineUsers;
         _kinksters = kinksters;
-        _alerts = alerts;
 
         UpdateCache();
         Mediator.Subscribe<DisconnectedMessage>(this, _ =>

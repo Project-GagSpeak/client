@@ -95,7 +95,7 @@ public sealed class AlarmFileSelector : CkFileSystemSelector<Alarm, AlarmFileSel
         }
 
         ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
-        if (Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Alarm, leaf.Value.Identifier))
+        if (Icons.DrawFavoriteStar(_favorites, FavoriteType.Alarm, leaf.Value.Identifier))
             SetFilterDirty();
         CkGui.TextFrameAlignedInline(leaf.Value.Label);
         // Only draw the deletion if the item is not active or occupied.

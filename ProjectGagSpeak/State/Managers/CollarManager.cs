@@ -19,6 +19,7 @@ public sealed class CollarManager : IHybridSavable
 {
     private readonly ILogger<CollarManager> _logger;
     private readonly GagspeakMediator _mediator;
+    private readonly ConnectionsConfig _connections;
     private readonly ModPresetManager _modPresets;
     private readonly GsFiles _fileNames;
     private readonly HybridSaveService _saver;
@@ -26,10 +27,12 @@ public sealed class CollarManager : IHybridSavable
     private SingleItemEditor<GagSpeakCollar> _itemEditor = new();
     private CharaActiveCollar? _serverData = null;
     public CollarManager(ILogger<CollarManager> logger, GagspeakMediator mediator,
-        ModPresetManager mods, GsFiles fileNames, HybridSaveService saver)
+        ConnectionsConfig connections, ModPresetManager mods, GsFiles fileNames,
+        HybridSaveService saver)
     {
         _logger = logger;
         _mediator = mediator;
+        _connections = connections;
         _modPresets = mods;
         _fileNames = fileNames;
         _saver = saver;
@@ -80,7 +83,7 @@ public sealed class CollarManager : IHybridSavable
         // make the name change.
         var oldName = ClientCollar.Label;
         ClientCollar.Label = newName;
-        _saver.Save(this);
+        Save();
         _logger.LogDebug($"Renamed collar from [{oldName}] to [{ClientCollar.Label}]");
         _mediator.Publish(new ConfigCollarChanged(StorageChangeType.Renamed, ClientCollar, oldName));
     }
@@ -89,7 +92,7 @@ public sealed class CollarManager : IHybridSavable
     {
         _logger.LogDebug($"Thumbnail updated for {ClientCollar.Label} to {ClientCollar.ThumbnailPath}");
         ClientCollar.ThumbnailPath = newPath;
-        _saver.Save(this);
+        Save();
         _mediator.Publish(new ConfigCollarChanged(StorageChangeType.Modified, ClientCollar, null));
     }
 
@@ -110,7 +113,7 @@ public sealed class CollarManager : IHybridSavable
         {
             _logger.LogDebug($"Saved changes to collar {sourceItem.Label}.");
             _mediator.Publish(new ConfigCollarChanged(StorageChangeType.Modified, sourceItem));
-            _saver.Save(this);
+            Save();
         }
     }
 
@@ -206,14 +209,12 @@ public sealed class CollarManager : IHybridSavable
 
     #region HybridSaver
     public int ConfigVersion => 0;
+    public int MaxBackups => 2;
     public HybridSaveType SaveType => HybridSaveType.Json;
-    public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(GsFiles files, out bool isAccountUnique)
-        => (isAccountUnique = true, files.CollarData).Item2;
-
-    public void WriteToStream(StreamWriter writer)
-        => throw new NotImplementedException();
-
+    public DateTime LastWriteTimeUTC => DateTime.MinValue;
+    public string ToFilePath(GsFiles files) => GetSaveFilePath();
+    public void WriteToStream(StreamWriter _) => throw new NotImplementedException();
+    private string GetSaveFilePath() => Path.Combine(GsFiles.ConfigDirectory, _connections.CurrentProfileUID, GsFiles.CollarDataFile);
     public string JsonSerialize()
     {
         return new JObject()
@@ -223,10 +224,20 @@ public sealed class CollarManager : IHybridSavable
         }.ToString(Formatting.Indented);
     }
 
+    public void Save()
+    {
+        if (string.IsNullOrEmpty(_connections.CurrentProfileUID))
+        {
+            _logger.LogInformation("[Save Aborted] No profile selected.");
+            return;
+        }
+        _saver.Save(this);
+    }
+
     // our CUSTOM defined load and migration.
     public void Load()
     {
-        var file = _fileNames.CollarData;
+        var file = GetSaveFilePath();
         _logger.LogInformation($"Loading CollarData Config: ({file})");
         JObject jObject;
         // Read the json from the file.
@@ -234,8 +245,11 @@ public sealed class CollarManager : IHybridSavable
         {
             if (!File.Exists(file))
             {
-                _logger.LogWarning($"No CollarData Config found at ({file}), creating new one.");
-                _saver.Save(this);
+                _logger.LogDebug($"[File Not Found] {file}");
+                var directory = Path.GetDirectoryName(file);
+                if (directory is not null)
+                    Directory.CreateDirectory(directory);
+                Save();
                 return;
             }
 
@@ -258,7 +272,7 @@ public sealed class CollarManager : IHybridSavable
             }
 
             _logger.LogInformation("Successfully loaded CollarData config.");
-            _saver.Save(this);
+            Save();
             _mediator.Publish(new ReloadFileSystem(GSModule.Collar));
         }
         catch (Bagagwa ex) { _logger.LogError("Failed to load config." + ex); }

@@ -10,6 +10,7 @@ using GagspeakAPI.Dto.VibeRoom;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
+using GagspeakAPI.Reporting;
 using GagspeakAPI.User;
 using Microsoft.AspNetCore.SignalR.Client;
 using SundouleiaAPI.Reporting;

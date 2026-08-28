@@ -11,6 +11,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
+using GagSpeak.WebAPI;
 using OtterGui.Text;
 using OtterGuiInternal;
 
@@ -379,23 +380,97 @@ public class ChatWindowUI : WindowMediatorSubscriberBase
     private void DrawChatArea(Vector2 min, float width)
     {
         using var s = ImRaii.PushStyle(ImGuiStyleVar.ScrollbarSize, 10f * ImGuiHelpers.GlobalScale);
-        using var _ = ImRaii.Child("contents", new Vector2(width, -1));
-
-        if (_selected is not { } validChatLog)
-            return;
-
-        // If this sanction does not have a chatlog configured, do not display the window.
-        if (string.IsNullOrEmpty(validChatLog.ID))
+        using (ImRaii.Child("contents", new Vector2(width, -1)))
         {
-            var centerH = CkGui.CalcFontTextSize("A", Fonts.SubtitleFont).Y + CkGui.CalcFontTextSize("A", Fonts.DefaultScaled).Y + ImUtf8.ItemSpacing.Y;
-            var centerDrawHeight = (ImGui.GetContentRegionAvail().Y - centerH) / 2;
-            CkGui.FontTextCentered("ChatlogId is Invalid", Fonts.SubtitleFont, CkCol.TriStateCross.Uint());
-            CkGui.FontTextCentered("Nothing to see here yet!", Fonts.DefaultScaled, ImGuiColors.DalamudGrey2);
-            return;
-        }
 
-        // Otherwise we are good to run GetOrCreate on the chatlog.
-        _chatDrawer.Draw(validChatLog);
+            if (_selected is not { } validChatLog)
+                return;
+
+            // If this sanction does not have a chatlog configured, do not display the window.
+            if (string.IsNullOrEmpty(validChatLog.ID))
+            {
+                var centerH = CkGui.CalcFontTextSize("A", Fonts.SubtitleFont).Y + CkGui.CalcFontTextSize("A", Fonts.DefaultScaled).Y + ImUtf8.ItemSpacing.Y;
+                var centerDrawHeight = (ImGui.GetContentRegionAvail().Y - centerH) / 2;
+                CkGui.FontTextCentered("ChatlogId is Invalid", Fonts.SubtitleFont, CkCol.TriStateCross.Uint());
+                CkGui.FontTextCentered("Nothing to see here yet!", Fonts.DefaultScaled, ImGuiColors.DalamudGrey2);
+                return;
+            }
+
+            // Otherwise we are good to run GetOrCreate on the chatlog.
+            _chatDrawer.Draw(validChatLog);
+        }
+        var max = ImGui.GetItemRectMax();
+
+        var showOverlay = !MainHub.Reputation.CanUseChat || !MainHub.Reputation.IsVerified;
+        if (!showOverlay)
+            return;
+
+        ImGui.SetCursorScreenPos(min);
+        using var overlay = ImRaii.Child("overlay-child", max - min, false);
+        ImGui.GetWindowDrawList().AddRectFilledMultiColor(min, max, 0xCC000000, 0xCC000000, 0x99111111, 0x99111111);
+
+        if (!MainHub.Reputation.CanUseChat)
+        {
+            var strikeText = $"You have [{MainHub.Reputation.ChatStrikes}] radar chat strikes.";
+            var row1Size = CkGui.CalcFontTextSize("Blocked Via Bad Reputation!", Fonts.SubtitleFont);
+            var row2Size = CkGui.CalcFontTextSize("Unable to view chat anymore.", Fonts.SubtitleFont);
+            var row3Size = CkGui.CalcFontTextSize(strikeText, Fonts.DefaultScaled);
+
+            var errorH = row1Size + row2Size + row3Size;
+            var centerDrawHeight = (ImGui.GetContentRegionAvail().Y - errorH.Y) / 2;
+
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + centerDrawHeight);
+            using (Fonts.SubtitleFont.Push())
+            {
+                CkGui.SetCursorXtoCenter(row1Size.X);
+                CkGui.TextShadowed("Blocked Via Bad Reputation!", CkCol.TriStateCross.Uint(), 0xFF000000, Vector2.One, 4f, 8);
+
+                CkGui.SetCursorXtoCenter(row2Size.X);
+                CkGui.TextShadowed("Unable to view chat anymore.", CkCol.TriStateCross.Uint(), 0xFF000000, Vector2.One, 4f, 8);
+            }
+            using (Fonts.DefaultScaled.Push())
+            {
+                CkGui.SetCursorXtoCenter(row3Size.X);
+                CkGui.TextShadowed(strikeText, CkCol.TriStateCross.Uint(), 0xFF000000, Vector2.One, 4f, 8);
+            }
+        }
+        else if (!MainHub.Reputation.IsVerified)
+        {
+            var row1Size = CkGui.CalcFontTextSize("Must Claim Account To Chat!", Fonts.SubtitleFont);
+            var row2Size = CkGui.CalcFontTextSize("For Moderation & Safety Reasons", Fonts.DefaultScaled);
+            var row3Size = CkGui.CalcFontTextSize("Only Verified Users Get Social Features.", Fonts.DefaultScaled);
+            var row4Size = CkGui.CalcFontTextSize("You can verify via GagSpeaks's Discord Bot.", Fonts.HeaderFont);
+            var row5Size = CkGui.CalcFontTextSize("Verification is easy & doesn't interact", Fonts.HeaderFont);
+            var row6Size = CkGui.CalcFontTextSize("with lodestone or other SE properties.", Fonts.HeaderFont);
+
+            var errorH = row1Size + row2Size + row3Size + row4Size + row5Size + row6Size;
+            var centerDrawHeight = (ImGui.GetContentRegionAvail().Y - errorH.Y) / 2;
+
+            ImGui.SetCursorPosY(ImGui.GetCursorPosY() + centerDrawHeight);
+            using (Fonts.SubtitleFont.Push())
+            {
+                CkGui.SetCursorXtoCenter(row1Size.X);
+                CkGui.TextShadowed("Must Claim Account To Chat!", CkCol.TriStateCross.Uint(), 0xFF000000, Vector2.One, 4f, 8);
+            }
+            using (Fonts.DefaultScaled.Push())
+            {
+                CkGui.SetCursorXtoCenter(row2Size.X);
+                CkGui.TextShadowed("For Moderation & Safety Reasons", 0x33FFFFFF, 0xFF000000, Vector2.One, 4f, 8);
+
+                CkGui.SetCursorXtoCenter(row3Size.X);
+                CkGui.TextShadowed("Only Verified Users Get Social Features.", 0x33FFFFFF, 0xFF000000, Vector2.One, 4f, 8);
+            }
+            ImGui.Spacing();
+            using (Fonts.HeaderFont.Push())
+            {
+                CkGui.SetCursorXtoCenter(row4Size.X);
+                CkGui.TextShadowed("You can verify via Sundouleia's Discord Bot.", uint.MaxValue, 0xFF000000, Vector2.One, 4f, 8);
+                CkGui.SetCursorXtoCenter(row5Size.X);
+                CkGui.TextShadowed("Verification is easy & doesn't interact", uint.MaxValue, 0xFF000000, Vector2.One, 4f, 8);
+                CkGui.SetCursorXtoCenter(row6Size.X);
+                CkGui.TextShadowed("with lodestone or other SE properties.", uint.MaxValue, 0xFF000000, Vector2.One, 4f, 8);
+            }
+        }
     }
 
     private void DrawChatSearch(float searchWidth)

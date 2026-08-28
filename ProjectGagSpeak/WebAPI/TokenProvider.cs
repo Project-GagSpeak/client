@@ -122,7 +122,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
                     // var auth = secretKey.GetHash256(); // leaving out this because i took out double encryption to just single for now
 
                     // Set the token URI to the appropriate endpoint for secret key authentication
-                    tokenUri = GagspeakAuth.AuthFullPath(new Uri(MainHub.MAIN_SERVER_URI
+                    tokenUri = GagspeakAuth.AuthFullPath(new Uri(ConnectionsConfig.MAIN_SERVER_URI
                         .Replace("wss://", "https://", StringComparison.OrdinalIgnoreCase)
                         .Replace("ws://", "http://", StringComparison.OrdinalIgnoreCase)));
 
@@ -141,7 +141,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
                     var localContentID = localContentIDIdentifier.LocalContentID;
 
                     // Set the token URI to the appropriate endpoint for local content ID authentication
-                    tokenUri = GagspeakAuth.TempTokenFullPath(new Uri(MainHub.MAIN_SERVER_URI
+                    tokenUri = GagspeakAuth.TempTokenFullPath(new Uri(ConnectionsConfig.MAIN_SERVER_URI
                         .Replace("wss://", "https://", StringComparison.OrdinalIgnoreCase)
                         .Replace("ws://", "http://", StringComparison.OrdinalIgnoreCase)));
 
@@ -164,7 +164,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
                 // set the token URI to GagspeakAuth's full path, with the base URI being the
                 // server's current API URL, with https:// replaced with wss://
                 // (calling RenewTokenFullPath is different from AuthFullPath
-                tokenUri = GagspeakAuth.RenewTokenFullPath(new Uri(MainHub.MAIN_SERVER_URI
+                tokenUri = GagspeakAuth.RenewTokenFullPath(new Uri(ConnectionsConfig.MAIN_SERVER_URI
                     .Replace("wss://", "https://", StringComparison.OrdinalIgnoreCase)
                     .Replace("ws://", "http://", StringComparison.OrdinalIgnoreCase)));
 
@@ -259,7 +259,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
             }
 
             // get the remaining attributes.
-            var apiUrl = MainHub.MAIN_SERVER_URI;
+            var apiUrl = ConnectionsConfig.MAIN_SERVER_URI;
             var charaHash = GagSpeakSecurity.GetClientIdentHash().GetAwaiter().GetResult();
             // Example logic to decide which identifier to use.
             if (!string.IsNullOrEmpty(secretKey))

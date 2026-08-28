@@ -108,7 +108,7 @@ public class MarionettesTab : IFancyTab
             CkGui.IconTextAligned(FAI.User);
             if (marionette.IsListeningToClient)
             {
-                CkGui.ColorTextFrameAlignedInline(PlayerData.NameWithWorld, CkCol.TriStateCheck.Vec4Ref());
+                CkGui.ColorTextFrameAlignedInline(PlayerData.NameWithWorld, CkCol.TriStateCheck.Vec4());
                 CkGui.AttachTooltip($"{marionette.GetDisplayName()} is associating your PlayerName with your Kinkster.", ImGuiColors.TankBlue);
             }
             else

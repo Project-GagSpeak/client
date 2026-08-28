@@ -13,18 +13,16 @@ namespace GagSpeak.Gui.Profile;
 public class KinkPlateLightUI : WindowMediatorSubscriberBase
 {
     private readonly KinkPlateLight _lightUI;
-    private readonly KinkPlateService _KinkPlateManager;
+    private readonly KinkPlateService _kinkplates;
     private readonly KinksterManager _pairManager;
     private bool _showFullUID;
-
-    private bool ThemePushed = false;
 
     public KinkPlateLightUI(ILogger<KinkPlateLightUI> logger, GagspeakMediator mediator,
         KinkPlateLight plateLightUi, KinkPlateService KinkPlateManager,
         KinksterManager pairManager, UserData user) : base(logger, mediator, "###KinkPlateLight" + user.UID)
     {
         _lightUI = plateLightUi;
-        _KinkPlateManager = KinkPlateManager;
+        _kinkplates = KinkPlateManager;
         _pairManager = pairManager;
 
 
@@ -43,7 +41,7 @@ public class KinkPlateLightUI : WindowMediatorSubscriberBase
 
     public override void PreDraw()
     {
-        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0, 0));
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
         ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 35f * ImGuiHelpers.GlobalScale);
         base.PreDraw();
     }
@@ -61,7 +59,7 @@ public class KinkPlateLightUI : WindowMediatorSubscriberBase
             return;
 
         // obtain the profile for this userPair.
-        var KinkPlate = _KinkPlateManager.GetKinkPlate(UserDataToDisplay);
+        var KinkPlate = _kinkplates.GetUserProfile(UserDataToDisplay);
 
         var DisplayName = _showFullUID
             ? UserDataToDisplay.AliasOrUID

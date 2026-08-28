@@ -309,7 +309,7 @@ public unsafe class ChatHooks : DisposableMediatorSubscriberBase
                     return false;
                 }
 
-                Logger.LogDebug($"Intercepted SundChatLog [{command} {targetArg}] -> (Kind: {resolved.Kind} - ID: {resolved.ChatId})", LoggerType.ChatHooks);
+                Logger.LogDebug($"Intercepted CkChatLog [{command} {targetArg}] -> (Kind: {resolved.Kind} - ID: {resolved.ChatId})", LoggerType.ChatHooks);
                 // Extract the message.
                 var entireMessage = MemoryHelper.ReadRawNullTerminated((nint)message->StringPtr.Value);
                 // Update the channel we are sending it to.
@@ -364,14 +364,14 @@ public unsafe class ChatHooks : DisposableMediatorSubscriberBase
     /// <summary>
     ///   Called when we select a chat channel from the bubble icon in the ChatboxUI.
     /// </summary>
-    /// <param name="channel"> The <see cref="InputChannel"/> to set the chat to. </param>
+    /// <param name="channel"> The <see cref="NativeInputChannel"/> to set the chat to. </param>
     /// <remarks> The channel set is NOT a tempChatType, it changes it internally. </remarks>
     private void SetChatChannelDetour(RaptureShellModule* module, uint channel)
     {
         // avoid potential stack overflow from recursion
         if (_chatService.ChatlogOverride != ChatlogId.Invalid)
         {
-            Logger.LogDebug($"SetChatChannel called on channel={(InputChannel)channel}, with TmpChannel={(InputChannel)RaptureShellModule.Instance()->TempChatType}", LoggerType.ChatHooks);
+            Logger.LogDebug($"SetChatChannel called on channel={(NativeInputChannel)channel}, with TmpChannel={(NativeInputChannel)RaptureShellModule.Instance()->TempChatType}", LoggerType.ChatHooks);
             // If the TempChatType is -2, it means that we should restore the temp channel to its original state.
             if (RaptureShellModule.Instance()->TempChatType == -2)
             {
@@ -380,16 +380,16 @@ public unsafe class ChatHooks : DisposableMediatorSubscriberBase
             }
         }
 
-        Logger.LogTrace($"SetChatChannel called with channel={(InputChannel)channel}.", LoggerType.ChatHooks);
+        Logger.LogTrace($"SetChatChannel called with channel={(NativeInputChannel)channel}.", LoggerType.ChatHooks);
         SetChatChannelHook.Original(module, channel);
     }
 
     private bool HasTempChannelDiffThanCurrent()
     {
         var shell = RaptureShellModule.Instance();
-        var chatType = (InputChannel)shell->ChatType;
-        var tmpChatType = (InputChannel)shell->TempChatType;
-        return tmpChatType is not InputChannel.None && tmpChatType != chatType;
+        var chatType = (NativeInputChannel)shell->ChatType;
+        var tmpChatType = (NativeInputChannel)shell->TempChatType;
+        return tmpChatType is not NativeInputChannel.None && tmpChatType != chatType;
     }
 
     /// <summary>
@@ -400,10 +400,10 @@ public unsafe class ChatHooks : DisposableMediatorSubscriberBase
     {
         var ret = ChangeChannelNameHook!.Original(agent);
         Logger.LogTrace($"ChangeChannelName At the time of this call:" +
-            $"\n\tChannel      : {(InputChannel)agent->CurrentChannel}" +
-            $"\n\tTmpChannel   : {(InputChannel)RaptureShellModule.Instance()->TempChatType}" +
+            $"\n\tChannel      : {(NativeInputChannel)agent->CurrentChannel}" +
+            $"\n\tTmpChannel   : {(NativeInputChannel)RaptureShellModule.Instance()->TempChatType}" +
             $"\n\tLabel        : {agent->ChannelLabel.ToString()}" +
-            $"\n\tReplyChannel : {(InputChannel)agent->ReplyChannel}" +
+            $"\n\tReplyChannel : {(NativeInputChannel)agent->ReplyChannel}" +
             $"\n\tTellName     : {agent->TellPlayerName.ToString()} @ {agent->TellWorldId}" +
             $"\n\tChatLogId    : [{_chatService.ChatlogOverride.Kind}_{_chatService.ChatlogOverride.ChatId}]", LoggerType.ChatHooks);
 
@@ -438,8 +438,8 @@ public unsafe class ChatHooks : DisposableMediatorSubscriberBase
     private bool ChangeChatChannelDetour(RaptureShellModule* shell, int channel, uint linkshellIndex, Utf8String* target, bool setChatType)
     {
         var ret = ChangeChatChannelHook!.Original(shell, channel, linkshellIndex, target, setChatType);
-        Logger.LogDebug($"ChangeChatChannelDetour: to {(InputChannel)channel} with linkshellIndex {linkshellIndex} and target '{(target != null ? target->ToString() : "null")}', setChatType={setChatType}", LoggerType.ChatHooks);
-        Logger.LogDebug($"TempChatType: {(InputChannel)shell->TempChatType}, CurrChatType: {(InputChannel)shell->ChatType}, RetValue={ret}", LoggerType.ChatHooks);
+        Logger.LogDebug($"ChangeChatChannelDetour: to {(NativeInputChannel)channel} with linkshellIndex {linkshellIndex} and target '{(target != null ? target->ToString() : "null")}', setChatType={setChatType}", LoggerType.ChatHooks);
+        Logger.LogDebug($"TempChatType: {(NativeInputChannel)shell->TempChatType}, CurrChatType: {(NativeInputChannel)shell->ChatType}, RetValue={ret}", LoggerType.ChatHooks);
         return ret;
     }
 
@@ -455,7 +455,7 @@ public unsafe class ChatHooks : DisposableMediatorSubscriberBase
         }
         
         Logger.LogDebug($"ReplyInSelectedChatMode called with replyMode {replyMode}, setting channel to {(XivChatType)replyMode} before calling original function", LoggerType.ChatHooks);
-        SetChannelInternal((InputChannel)replyMode);
+        SetChannelInternal((NativeInputChannel)replyMode);
         ReplyInSelectedChatModeHook!.Original(agent);
     }
     
@@ -482,17 +482,17 @@ public unsafe class ChatHooks : DisposableMediatorSubscriberBase
 
     // I dont think this will be called by anything we need yet.
     // If no telltarget is provided we can assume this is not a tell channel being set.
-    internal void SetChannelInternal(InputChannel channel, UserData? tellTarget = null)
+    internal void SetChannelInternal(NativeInputChannel channel, UserData? tellTarget = null)
     {
-        // Custom SundChat channels are not supported in-game, so we dont want to call it with them.
+        // Custom GS channels are not supported in-game, so we dont want to call it with them.
         // ExtraChat linkshells aren't supported in game so we never want to
         // call the ChangeChatChannel function with them.
         //
         // Callers should call ChatLogWindow.SetChannel() which handles ExtraChat channels
         Logger.LogTrace($"SetChannelInternal called with channel {channel} and tellTarget '{tellTarget?.VanityOrAnonName ?? "UNK"}'", LoggerType.ChatHooks);
-        if (channel is InputChannel.Invalid)
+        if (channel is NativeInputChannel.Invalid)
         {
-            Logger.LogTrace("SetChannelInternal was a SundChat channel, ignoring.", LoggerType.ChatHooks);
+            Logger.LogTrace("SetChannelInternal was a GSChat channel, ignoring.", LoggerType.ChatHooks);
             return;
         }
 

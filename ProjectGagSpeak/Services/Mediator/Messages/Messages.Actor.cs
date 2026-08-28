@@ -4,12 +4,12 @@ using GagspeakAPI.User;
 namespace GagSpeak.Services.Mediator;
 
 /// <summary>
-///   Whenever a NON-CLIENT OWNED OBJECT is created. Intended for Sundesmos.
+///   Whenever a NON-CLIENT OWNED OBJECT is created. Intended for Kinksters.
 /// </summary>
 public record WatchedObjectCreated(IntPtr Address, CharacterInfo Info) : SameThreadMessage;
 
 /// <summary>
-///   Whenever a NON-CLIENT OWNED OBJECT is destroyed. Intended for Sundesmos.
+///   Whenever a NON-CLIENT OWNED OBJECT is destroyed. Intended for Kinksters.
 /// </summary>
 public record WatchedObjectDestroyed(IntPtr Address, CharacterInfo Info, bool WasClientActor, UserData? User) : SameThreadMessage;
 

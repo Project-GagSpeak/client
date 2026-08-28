@@ -11,6 +11,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Utils;
+using GagspeakAPI.User;
 using OtterGui.Text;
 
 namespace GagSpeak.DrawSystem;
@@ -39,7 +40,7 @@ public sealed class PuppeteersDrawer : DynamicDrawer<Kinkster>
     private void DrawFolderInner(PairFolder folder, Vector2 region, DynamicFlags flags)
     {
         var pos = ImGui.GetCursorPos();
-        CkGui.FramedIconText(folder.IsOpen ? FAI.CaretDown : FAI.CaretRight);
+        CkGui.FramedIconText(folder.Expanded ? FAI.CaretDown : FAI.CaretRight);
         CkGui.ColorTextFrameAlignedInline(folder.Name, folder.NameColor);
         CkGui.ColorTextFrameAlignedInline($"[{folder.TotalChildren}]", ImGuiColors.DalamudGrey2);
         CkGui.AttachTooltip(folder.BracketTooltip);

@@ -99,11 +99,11 @@ public static class GagspeakEx
             ServerState.Reconnecting => ImGuiColors.DalamudYellow,
             ServerState.Connected => ImGuiColors.HealerGreen,
             ServerState.ConnectedDataSynced => ImGuiColors.HealerGreen,
-            ServerState.Disconnected => CkCol.TriStateCross.Vec4Ref(),
+            ServerState.Disconnected => CkCol.TriStateCross.Vec4(),
             ServerState.Disconnecting => ImGuiColors.DalamudYellow,
             ServerState.Unauthorized => ImGuiColors.ParsedOrange,
             ServerState.VersionMisMatch => ImGuiColors.ParsedOrange,
-            ServerState.Offline => CkCol.TriStateCross.Vec4Ref(),
+            ServerState.Offline => CkCol.TriStateCross.Vec4(),
             ServerState.NoSecretKey => ImGuiColors.ParsedOrange,
             _ => ImGuiColors.ParsedOrange
         };

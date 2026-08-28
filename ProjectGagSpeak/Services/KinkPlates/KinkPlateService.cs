@@ -143,7 +143,7 @@ public class KinkPlateService : DisposableMediatorSubscriberBase
         try
         {
             Logger.LogTrace($"Fetching profile for {user.AnonName}", LoggerType.KinkPlates);
-            var data = await _hub.GetKinkPlate(new(user)).ConfigureAwait(false);
+            var data = await _hub.GetKinkplate(new(user)).ConfigureAwait(false);
             // apply the retrieved profile data to the profile object.
             _kinkplates[user].ApplyDataFromHub(data.Info, data.ImageBase64);
             Logger.LogDebug($"Profile data fetched for {user.AnonName}", LoggerType.KinkPlates);
@@ -163,7 +163,7 @@ public class KinkPlateService : DisposableMediatorSubscriberBase
         try
         {
             Logger.LogTrace($"Fetching profiles for {users.Count} users..", LoggerType.KinkPlates);
-            var retrieved = await _hub.GetKinkPlates(new(users)).ConfigureAwait(false);
+            var retrieved = await _hub.GetKinkplates(new(users)).ConfigureAwait(false);
             foreach (var profile in retrieved)
                 _kinkplates[profile.User].ApplyDataFromHub(profile.Info, profile.ImageBase64);
             Logger.LogDebug($"Profile data fetched for {users.Count} users.", LoggerType.KinkPlates);

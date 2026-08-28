@@ -12,17 +12,17 @@ namespace GagSpeak.State.Managers;
 public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
     private readonly FavoritesConfig _favorites;
-    private readonly GsFiles _fileNames;
+    private readonly ConnectionsConfig _connections;
     private readonly HybridSaveService _saver;
 
     private StorageItemEditor<Trigger> _itemEditor = new();
 
     public TriggerManager(ILogger<TriggerManager> logger, GagspeakMediator mediator,
-        FavoritesConfig favorites, GsFiles fileNames, HybridSaveService saver) 
+        FavoritesConfig favorites, ConnectionsConfig connections, HybridSaveService saver) 
         : base(logger, mediator)
     {
         _favorites = favorites;
-        _fileNames = fileNames;
+        _connections = connections;
         _saver = saver;
     }
 
@@ -127,17 +127,8 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
         }
     }
 
-    /// <summary>
-    ///   Attempts to add the Trigger as a favorite.
-    /// </summary>
-    public bool AddFavorite(Trigger t)
-        => _favorites.TryAddRestriction(FavoriteIdContainer.Trigger, t.Identifier);
-
-    /// <summary>
-    ///   Attempts to remove the Trigger as a favorite.
-    /// </summary>
-    public bool RemoveFavorite(Trigger t)
-        => _favorites.RemoveRestriction(FavoriteIdContainer.Trigger, t.Identifier);
+    public void AddFavorite(Trigger t) => _favorites.Favorite(FavoriteType.Trigger, t.Identifier);
+    public void RemoveFavorite(Trigger t) => _favorites.Unfavorite(FavoriteType.Trigger, t.Identifier);
 
     // unsure how stable these are to use atm but we will see.
     public bool ToggleState(Guid triggerId, string enactor)
@@ -171,10 +162,12 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
 
     #region HybridSavable
     public int ConfigVersion => 1;
+    public int MaxBackups => 2;
     public HybridSaveType SaveType => HybridSaveType.Json;
-    public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(GsFiles files, out bool isAccountUnique) => (isAccountUnique = true, files.Triggers).Item2;
-    public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
+    public DateTime LastWriteTimeUTC => DateTime.MinValue;
+    public string ToFilePath(GsFiles files) => GetSaveFilePath();
+    public void WriteToStream(StreamWriter _) => throw new NotImplementedException();
+    private string GetSaveFilePath() => Path.Combine(GsFiles.ConfigDirectory, _connections.CurrentProfileUID, GsFiles.TriggersFile);
     public string JsonSerialize()
     {
         // construct the config object to serialize.
@@ -185,43 +178,60 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
         }.ToString(Formatting.Indented);
     }
 
-    public void Load()
+    public void Save()
     {
-        var file = _fileNames.Triggers;
-        Logger.LogInformation("Loading in Triggers Config for file: " + file);
-
-        Storage.Clear();
-        if (!File.Exists(file))
+        if (string.IsNullOrEmpty(_connections.CurrentProfileUID))
         {
-            Logger.LogWarning("No Triggers Config file found at {0}", file);
-            // create a new file with default values.
-            _saver.Save(this);
+            Logger.LogInformation("[Save Aborted] No profile selected.");
             return;
         }
-
-        // Read the json from the file.
-        var jsonText = File.ReadAllText(file);
-        var jObject = JObject.Parse(jsonText);
-
-        // Migrate the jObject if it is using the old format.
-        if (jObject["Triggers"] is JObject)
-            jObject = ConfigMigrator.MigrateTriggersConfig(jObject, _fileNames, file);
-
-        var version = jObject["Version"]?.Value<int>() ?? 1;
-
-        // Perform Migrations if any, and then load the data.
-        switch (version)
-        {
-            case 0:
-            case 1:
-                LoadV1(jObject["Triggers"]);
-                break;
-            default:
-                Logger.LogError("Invalid Version!");
-                return;
-        }
         _saver.Save(this);
-        Mediator.Publish(new ReloadFileSystem(GSModule.Trigger));
+    }
+
+    public void Load()
+    {
+        var file = GetSaveFilePath();
+        Logger.LogInformation($"Loading Triggers Config: ({file})");
+
+        Storage.Clear();
+        try
+        {
+            if (!File.Exists(file))
+            {
+                Logger.LogDebug($"[File Not Found] {file}");
+                var directory = Path.GetDirectoryName(file);
+                if (directory is not null)
+                    Directory.CreateDirectory(directory);
+                Save();
+                return;
+            }
+
+            // Read the json from the file.
+            var jsonText = File.ReadAllText(file);
+            var jObject = JObject.Parse(jsonText);
+
+            // Migrate the jObject if it is using the old format.
+            if (jObject["Triggers"] is JObject)
+                jObject = ConfigMigrator.MigrateTriggersConfig(jObject, _connections, file);
+
+            var version = jObject["Version"]?.Value<int>() ?? 1;
+
+            // Perform Migrations if any, and then load the data.
+            switch (version)
+            {
+                case 0:
+                case 1:
+                    LoadV1(jObject["Triggers"]);
+                    break;
+                default:
+                    Logger.LogError("Invalid Version!");
+                    return;
+            }
+            _saver.Save(this);
+            Mediator.Publish(new ReloadFileSystem(GSModule.Trigger));
+        }
+        catch (Bagagwa ex) { Logger.LogError("Failed to load config." + ex); }
+
     }
 
     private void LoadV1(JToken? data)

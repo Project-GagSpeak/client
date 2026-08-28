@@ -3,8 +3,8 @@ using GagSpeak.Gui.Components;
 using GagSpeak.Kinksters;
 using GagSpeak.State.Models;
 using GagspeakAPI.Connection;
+using GagspeakAPI.Reporting;
 using GagspeakAPI.User;
-using SundouleiaAPI.Reporting;
 
 namespace GagSpeak.Services.Mediator;
 
@@ -38,7 +38,7 @@ public record MainWindowTabChangeMessage(MainMenuTabs.SelectedTab NewTab) : Mess
 public record OpenMainUiTab(MainMenuTabs.SelectedTab ToOpen) : MessageBase;
 
 // Profile UI
-public record OpenUserProfileMessage(UserData Kinkster) : MessageBase;
+public record OpenUserProfileMessage(Kinkster Kinkster) : MessageBase;
 public record OpenUserLightProfileMessage(UserData UserData) : MessageBase;
 public record OpenProfilePopout(UserData UserData) : MessageBase;
 public record CloseProfilePopout : MessageBase;

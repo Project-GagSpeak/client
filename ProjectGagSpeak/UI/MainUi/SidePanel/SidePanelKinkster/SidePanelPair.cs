@@ -14,6 +14,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Hub;
+using GagspeakAPI.Reporting;
 using OtterGui;
 using OtterGui.Text;
 
@@ -365,7 +366,7 @@ public partial class SidePanelPair
         CkGui.AttachTooltip($"Opens {dispName}'s profile!");
 
         if (CkGui.IconTextButton(FAI.ExclamationTriangle, $"Report {dispName}'s KinkPlate", width, true))
-            _mediator.Publish(new OpenReportUIMessage(kinkster.User, ReportKind.Profile));
+            _mediator.Publish(new OpenReportUIMessage(ReportKind.Profile, kinkster.User, null, null));
         CkGui.AttachTooltip($"Snapshot {dispName}'s KinkPlate and make a report with its state.");
         
         if (CkGui.IconTextButton(FAI.Trash, "Unpair Permanently", width, true, !KeyMonitor.CtrlPressed() || !KeyMonitor.ShiftPressed()))

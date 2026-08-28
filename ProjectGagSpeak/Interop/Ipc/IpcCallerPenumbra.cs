@@ -2,6 +2,7 @@ using CkCommons;
 using Dalamud.Interface.ImGuiNotification;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
+using Luna;
 using Penumbra.Api.Enums;
 using Penumbra.Api.IpcSubscribers;
 using System.Diagnostics.CodeAnalysis;

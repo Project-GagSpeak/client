@@ -18,7 +18,6 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
     private readonly CosmeticService _cosmetics;
     private readonly TextureService _textures;
 
-    private bool ThemePushed = false;
     public KinkPlatePreviewUI(ILogger<KinkPlatePreviewUI> logger, GagspeakMediator mediator,
         KinksterManager pairs, KinkPlateService kinkPlates, CosmeticService cosmetics,
         TextureService textures) : base(logger, mediator, "Own KinkPlate##PlatePreviewUI")
@@ -35,24 +34,16 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
 
     private bool HoveringCloseButton { get; set; } = false;
 
-    protected override void PreDrawInternal()
+    public override void PreDraw()
     {
-        if (!ThemePushed)
-        {
-            ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0, 0));
-            ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 25f);
-
-            ThemePushed = true;
-        }
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 25f);
+        base.PreDraw();
     }
-    protected override void PostDrawInternal()
+
+    public override void PostDraw()
     {
-        // include our personalized theme for this window here if we have themes enabled.
-        if (ThemePushed)
-        {
-            ImGui.PopStyleVar(2);
-            ThemePushed = false;
-        }
+        ImGui.PopStyleVar(2);
     }
 
     protected override void DrawInternal()
@@ -62,8 +53,7 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
         RectMax = drawList.GetClipRectMax();
 
         // obtain the profile for this userPair.
-        var KinkPlate = _profiles.GetKinkPlate(MainHub.OwnUserData);
-
+        var KinkPlate = _profiles.GetUserProfile(MainHub.OwnUserData);
         // Draw KinkPlateUI Function here.
         DrawKinkPlate(drawList, KinkPlate);
     }
@@ -71,7 +61,7 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
     // Size = 750 by 450
     private void DrawKinkPlate(ImDrawListPtr drawList, UserKinkPlate profile)
     {
-        DrawPlate(drawList, profile.Info);
+        DrawPlate(drawList, profile.Data);
 
         DrawProfilePic(drawList, profile);
 
@@ -82,7 +72,7 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
         // Now let's draw out the chosen achievement Name..
         using (Fonts.GagspeakTitleFont.Push())
         {
-            var titleName = ClientAchievements.GetTitleById(profile.Info.ChosenTitleId);
+            var titleName = ClientAchievements.GetTitleById(profile.Data.ChosenTitleId);
             var titleHeightGap = TitleLineStartPos.Y - (RectMin.Y + 4f);
             var chosenTitleSize = ImGui.CalcTextSize(titleName);
             // calculate the Y height it should be drawn on by taking the gap height and dividing it by 2 and subtracting the text height.
@@ -95,11 +85,11 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
         // move over to the top area to draw out the achievement title line wrap.
         drawList.AddDalamudImage(CosmeticService.CoreTextures.Cache[CoreTexture.AchievementLineSplit], TitleLineStartPos, TitleLineSize);
 
-        DrawGagInfo(drawList, profile.Info);
+        DrawGagInfo(drawList, profile.Data);
 
-        DrawStats(drawList, profile.Info);
+        DrawStats(drawList, profile.Data);
 
-        DrawBlockedSlots(drawList, profile.Info);
+        DrawBlockedSlots(drawList, profile.Data);
     }
 
     private void DrawPlate(ImDrawListPtr drawList, KinkPlateContent info)
@@ -120,11 +110,11 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
     private void DrawProfilePic(ImDrawListPtr drawList, UserKinkPlate profile)
     {
         // We should always display the default GagSpeak Logo if the profile is either flagged or disabled.
-        var pfpWrap = profile.GetProfileOrDefault();
+        var pfpWrap = profile.GetIconWrapOrDefault();
         drawList.AddDalamudImageRounded(pfpWrap, ProfilePicturePos, ProfilePictureSize, ProfilePictureSize.Y / 2);
 
         // draw out the border for the profile picture
-        if (CosmeticService.TryGetBorder(PlateElement.Avatar, profile.Info.AvatarBorder, out var pfpBorder))
+        if (CosmeticService.TryGetBorder(PlateElement.Avatar, profile.Data.AvatarBorder, out var pfpBorder))
             drawList.AddDalamudImageRounded(pfpBorder, ProfilePictureBorderPos, ProfilePictureBorderSize, ProfilePictureSize.Y / 2);
 
         // Draw out Supporter Icon Black BG base.
@@ -181,24 +171,24 @@ public partial class KinkPlatePreviewUI : WindowMediatorSubscriberBase
     private void DrawDescription(ImDrawListPtr drawList, UserKinkPlate profile)
     {
         // draw out the description background.
-        if (CosmeticService.TryGetBackground(PlateElement.Description, profile.Info.DescriptionBG, out var descBG))
+        if (CosmeticService.TryGetBackground(PlateElement.Description, profile.Data.DescriptionBG, out var descBG))
             drawList.AddDalamudImageRounded(descBG, DescriptionBorderPos, DescriptionBorderSize, 2f);
 
         // description border
-        if (CosmeticService.TryGetBorder(PlateElement.Description, profile.Info.DescriptionBorder, out var descBorder))
+        if (CosmeticService.TryGetBorder(PlateElement.Description, profile.Data.DescriptionBorder, out var descBorder))
             drawList.AddDalamudImageRounded(descBorder, DescriptionBorderPos, DescriptionBorderSize, 2f);
 
         // description overlay.
-        if (CosmeticService.TryGetOverlay(PlateElement.Description, profile.Info.DescriptionOverlay, out var descOverlay))
+        if (CosmeticService.TryGetOverlay(PlateElement.Description, profile.Data.DescriptionOverlay, out var descOverlay))
             drawList.AddDalamudImageRounded(descOverlay, DescriptionBorderPos, DescriptionBorderSize, 2f);
 
         // draw out the description text here. What displays is affected by if it is flagged or not.
         ImGui.SetCursorScreenPos(DescriptionBorderPos + Vector2.One * 10f);
         // shadowban them by displaying the default text if flagged or disabled.
         var description = profile.Flagged ? "Profile is currently disabled."
-            : profile.Info.Description.IsNullOrEmpty()
-            ? "No Description Was Set.." : profile.Info.Description;
-        var color = (profile.Info.Description.IsNullOrEmpty() || profile.Flagged)
+            : profile.Data.Description.IsNullOrEmpty()
+            ? "No Description Was Set.." : profile.Data.Description;
+        var color = (profile.Data.Description.IsNullOrEmpty() || profile.Flagged)
             ? ImGuiColors.DalamudGrey2 : ImGuiColors.DalamudWhite;
         KinkPlateUI.DrawLimitedDescription(description, color, DescriptionBorderSize - Vector2.One * 12f);
     }

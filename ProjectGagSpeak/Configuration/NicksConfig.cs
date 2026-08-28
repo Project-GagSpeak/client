@@ -13,10 +13,11 @@ public class NicksConfig : IHybridSavable
 {
     private readonly ILogger<NicksConfig> _logger;
     private readonly HybridSaveService _saver;
-    public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     public int ConfigVersion => 0;
+    public int MaxBackups => 1;
     public HybridSaveType SaveType => HybridSaveType.Json;
-    public string GetFileName(GsFiles files, out bool upa) => (upa = false, files.Nicknames).Item2;
+    public DateTime LastWriteTimeUTC => DateTime.MinValue;
+    public string ToFilePath(GsFiles files) => files.Nicknames;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize()
     {
@@ -33,7 +34,8 @@ public class NicksConfig : IHybridSavable
         Load();
     }
 
-    public void Save() => _saver.Save(this);
+    public void Save()
+        => _saver.Save(this);
     public void Load()
     {
         var file = _saver.FileNames.Nicknames;

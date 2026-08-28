@@ -12,10 +12,7 @@ using OtterGui.Text;
 namespace GagSpeak.Gui.Wardrobe;
 
 public class PuppeteerUI : WindowMediatorSubscriberBase
-{
-    // Revamp this later.
-    private static bool THEME_PUSHED = false;
-    
+{  
     private readonly PuppeteerManager _manager;
     private readonly TutorialService _guides;
 
@@ -38,27 +35,6 @@ public class PuppeteerUI : WindowMediatorSubscriberBase
     // Accessed by Tutorial System
     public static Vector2 LastPos { get; private set; } = Vector2.Zero;
     public static Vector2 LastSize { get; private set; } = Vector2.Zero;
-
-    protected override void PreDrawInternal()
-    {
-        if (!THEME_PUSHED)
-        {
-            ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(4));
-            ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .403f));
-            ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.579f, 0.170f, 0.359f, 0.428f));
-            THEME_PUSHED = true;
-        }
-    }
-
-    protected override void PostDrawInternal()
-    {
-        if (THEME_PUSHED)
-        {
-            ImGui.PopStyleVar();
-            ImGui.PopStyleColor(2);
-            THEME_PUSHED = false;
-        }
-    }
 
     protected override void DrawInternal()
     {

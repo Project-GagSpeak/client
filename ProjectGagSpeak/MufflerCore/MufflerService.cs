@@ -16,6 +16,7 @@ namespace GagSpeak.Services;
 public class MufflerService : DisposableMediatorSubscriberBase
 {
     private readonly MainConfig _mainConfig;
+    private readonly GsEmojiLoader _emojiLoader;
     private readonly Ipa_EN_FR_JP_SP_Handler _ipaParser;
 
     /// <summary>
@@ -36,11 +37,13 @@ public class MufflerService : DisposableMediatorSubscriberBase
 
     private static GagMuffleType _activeMuffleType = GagMuffleType.None;
 
-    public MufflerService(ILogger<MufflerService> logger, GagspeakMediator mediator, MainConfig mainConfig,
-        Ipa_EN_FR_JP_SP_Handler ipaParser, GsFiles fileprovider)
+    public MufflerService(ILogger<MufflerService> logger, GagspeakMediator mediator, 
+        MainConfig mainConfig, GsEmojiLoader emojis, Ipa_EN_FR_JP_SP_Handler ipaParser,
+        GsFiles fileprovider)
         : base(logger, mediator)
     {
         _mainConfig = mainConfig;
+        _emojiLoader = emojis;
         _ipaParser = ipaParser;
 
         // Try to read the JSON file and de-serialize it into the obj dictionary
@@ -168,7 +171,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
                 if (allowEmotes && parsed.Word.Length > 2)
                 {
                     // Only validate if a valid emote.
-                    if (parsed.Word.StartsWith(':') && parsed.Word.EndsWith(':') && CosmeticLabels.NameToEmote.ContainsKey(parsed.Word[1..^1]))
+                    if (parsed.Word.StartsWith(':') && parsed.Word.EndsWith(':') && _emojiLoader.Emotes.ContainsKey(parsed.Word[1..^1]))
                     {
                         toggleAfter = !skipTranslation;
                         skipTranslation = true;

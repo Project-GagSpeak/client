@@ -1,6 +1,8 @@
 using CkCommons;
 using GagSpeak.GameInternals.Detours;
 using GagSpeak.Gui;
+using GagSpeak.Gui.Chat;
+using GagSpeak.Gui.MainWindow;
 using GagSpeak.Interop.Helpers;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
@@ -19,16 +21,19 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
 {
     private readonly MainConfig _mainConfig;
     private readonly AccountConfig _serverConfig;
+    private readonly ChatConfig _chatConfig;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private IServiceScope? _runtimeServiceScope;
     private Task? _launchTask;
     public GagSpeakHost(ILogger<GagSpeakHost> logger, GagspeakMediator mediator,
-        MainConfig mainConfig, AccountConfig serverConfig, IServiceScopeFactory scopeFactory)
+        MainConfig mainConfig, AccountConfig serverConfig, ChatConfig chatConfig,
+        IServiceScopeFactory scopeFactory)
         : base(logger, mediator)
     {
         // set the services
         _mainConfig = mainConfig;
         _serverConfig = serverConfig;
+        _chatConfig = chatConfig;
         _serviceScopeFactory = scopeFactory;
     }
     /// <summary> 
@@ -47,10 +52,7 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
         Svc.ClientState.Logout += (_, _) => DalamudUtilOnLogOut();
 
         // subscribe to the main UI message window for making the primary UI be the main UI interface.
-        Mediator.Subscribe<SwitchToMainUiMessage>(this, (msg) =>
-        {
-            if (_launchTask == null || _launchTask.IsCompleted) _launchTask = Task.Run(WaitForPlayerAndLaunchCharacterManager);
-        });
+        Mediator.Subscribe<IntoFinishedMessage>(this, _ => DalamudUtilOnLogIn());
 
         // start processing the mediator queue.
         Mediator.StartQueueProcessing();
@@ -85,8 +87,8 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
     /// </summary>
     private void DalamudUtilOnLogIn()
     {
-        Svc.Logger.Debug("Client login");
-        if (_launchTask == null || _launchTask.IsCompleted) _launchTask = Task.Run(WaitForPlayerAndLaunchCharacterManager);
+        if (_launchTask is null || _launchTask.IsCompleted)
+            _launchTask = Task.Run(WaitForPlayerAndLaunchCharacterManager);
     }
 
     /// <summary> What to execute whenever the user logs out.
@@ -132,25 +134,9 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             // Initialize the audio manager for our configured audio devices.
             // AudioSystem.InitializeOutputDevice(_mainConfig.Current.AudioOutputType, _mainConfig.GetDefaultAudioDevice());
 
-            // display changelog if we should.
-            if (_mainConfig.Data.LastRunVersion != Assembly.GetExecutingAssembly().GetName().Version!)
-            {
-                // update the version and toggle the UI.
-                Logger?.LogInformation("Version was different, displaying UI");
-                _mainConfig.Data.LastRunVersion = Assembly.GetExecutingAssembly().GetName().Version!;
-                _mainConfig.Save();
-                Mediator.Publish(new UiToggleMessage(typeof(ChangelogUI)));
-            }
 
-            // if the client does not have a valid setup or config, switch to the intro ui
-            if (!_mainConfig.Data.HasValidSetup() || !_serverConfig.Current.HasValidSetup())
-            {
-                Logger?.LogDebug($"Has Valid Setup: {_mainConfig.Data.HasValidSetup()} | Valid Server Setup: {!_serverConfig.Current.HasValidSetup()}");
-                // publish the switch to intro ui message to the mediator
-                _mainConfig.Data.ButtonUsed = false;
-
-                Mediator.Publish(new SwitchToIntroUiMessage());
-            }
+            TryDisplayChangelog();
+            TrySwitchIntroUI();
 
             // Services that require an initial constructor call during bootup.
             _runtimeServiceScope.ServiceProvider.GetRequiredService<SpellActionService>();
@@ -189,6 +175,42 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
         catch (Bagagwa ex)
         {
             Logger?.LogCritical(ex, "Error during launch of managers");
+        }
+    }
+
+    private void TryDisplayChangelog()
+    {
+        // display changelog if we should.
+        if (_mainConfig.Data.LastRunVersion != Assembly.GetExecutingAssembly().GetName().Version!)
+        {
+            // update the version and toggle the UI.
+            Logger?.LogInformation("Version was different, displaying UI");
+            _mainConfig.Data.LastRunVersion = Assembly.GetExecutingAssembly().GetName().Version!;
+            _mainConfig.Save();
+            Mediator.Publish(new UiToggleMessage(typeof(ChangelogUI)));
+        }
+    }
+
+    private void TrySwitchIntroUI()
+    {
+        // if the client does not have a valid setup or config, switch to the intro ui
+        if (!_mainConfig.Data.HasValidSetup() || !_serverConfig.Current.HasValidSetup())
+        {
+            Logger?.LogDebug("Has Valid Setup: {setup} Has Valid Config: {config}", _mainConfig.Data.HasValidSetup(), _serverConfig.Current.HasValidSetup());
+            // publish the switch to intro ui message to the mediator
+            _mainConfig.Data.ButtonUsed = false;
+
+            Mediator.Publish(new SwitchToIntroUiMessage());
+        }
+        else if (_mainConfig.Data.OpenUiOnStartup)
+        {
+            Mediator.Publish(new UiToggleMessage(typeof(MainUI)));
+            if (_chatConfig.Data.OpenUIOnStartup)
+                Mediator.Publish(new UiToggleMessage(typeof(ChatWindowUI)));
+        }
+        else if (_chatConfig.Data.OpenUIOnStartup)
+        {
+            Mediator.Publish(new UiToggleMessage(typeof(ChatWindowUI)));
         }
     }
 }

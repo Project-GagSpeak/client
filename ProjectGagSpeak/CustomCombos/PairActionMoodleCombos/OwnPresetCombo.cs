@@ -1,4 +1,5 @@
 using CkCommons.Helpers;
+using CkCommons.RichText;
 using CkCommons.Textures;
 using Dalamud.Bindings.ImGui;
 using GagSpeak.Interop.Helpers;
@@ -68,7 +69,7 @@ public sealed class OwnPresetCombo : LociComboBase<LociPresetInfo>
         ImGui.SameLine(ImUtf8.ItemInnerSpacing.X);
         var adjust = (size.Y - ImUtf8.TextHeight) * 0.5f;
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + adjust);
-        CkRichText.Text(titleSpace, lociPreset.Title);
+        NewRichText.TextWrapped(lociPreset.Title, titleSpace);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - adjust);
         return ret;
     }

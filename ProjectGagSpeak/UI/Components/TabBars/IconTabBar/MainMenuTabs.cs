@@ -1,3 +1,4 @@
+using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
@@ -7,6 +8,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.MainWindow;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 
@@ -36,14 +38,19 @@ public class MainMenuTabs : IconTabBar<MainMenuTabs.SelectedTab>
     }
 
     private readonly MainConfig _config;
+    private readonly ChatConfig _chatConfig;
     private readonly GagspeakMediator _mediator;
     private readonly RequestsManager _requests;
+    private readonly GlobalChatLog _globalChat;
 
-    public MainMenuTabs(GagspeakMediator mediator, MainConfig config, RequestsManager requests, TutorialService guides)
+    public MainMenuTabs(GagspeakMediator mediator, MainConfig config, ChatConfig chatConfig,
+        RequestsManager requests, GlobalChatLog globalChat, TutorialService guides)
     {
         _config = config;
+        _chatConfig = chatConfig;
         _mediator = mediator;
         _requests = requests;
+        _globalChat = globalChat;
 
         AddDrawButton(FontAwesomeIcon.Home, SelectedTab.Homepage, "Homepage",
             () => guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.Homepage, MainUI.LastPos, MainUI.LastSize));
@@ -126,14 +133,19 @@ public class MainMenuTabs : IconTabBar<MainMenuTabs.SelectedTab>
                     drawList.OutlinedFont(newMsgTxt, newMsgTxtPos, ImGuiColors.ParsedPink.ToUint(), 0xFF000000, 1);
                 }
             }
-            else if (tab.TargetTab is SelectedTab.GlobalChat)
+            else if (tab.TargetTab is SelectedTab.GlobalChat && _chatConfig.Data.UnreadBubble)
             {
-                if (GlobalChatLog.NewMsgCount > 0)
+                if (_globalChat.UnreadMentions > 0)
                 {
-                    var newMsgTxtPos = new Vector2(x.X + buttonSize.X / 2, x.Y - spacing.Y);
-                    var newMsgTxt = GlobalChatLog.NewMsgCount > 99 ? "99+" : GlobalChatLog.NewMsgCount.ToString();
-                    var newMsgCol = GlobalChatLog.NewMsgFromDev ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGold;
-                    drawList.OutlinedFont(newMsgTxt, newMsgTxtPos, newMsgCol.ToUint(), 0xFF000000, 1);
+                    var pos = new Vector2(x.X + buttonSize.X / 2, x.Y - spacing.Y);
+                    var txt = _globalChat.UnreadMentions > 99 ? "99+" : _globalChat.UnreadMentions.ToString();
+                    drawList.OutlinedFont(txt, pos, CkCol.TriStateCross.Uint(), 0xFF000000, 1);
+                }
+                else if (_globalChat.UnreadMessages > 0)
+                {
+                    var pos = new Vector2(x.X + buttonSize.X / 2, x.Y - spacing.Y);
+                    var txt = _globalChat.UnreadMessages > 99 ? "99+" : _globalChat.UnreadMessages.ToString();
+                    drawList.OutlinedFont(txt, pos, ImGuiColors.TankBlue.ToUint(), 0xFF000000, 1);
                 }
             }
         }

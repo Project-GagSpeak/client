@@ -7,7 +7,7 @@ using GagspeakAPI.User;
 namespace GagSpeak.Services;
 
 // Defined by FFXIVClientStructs as uint, but could be wrong?
-public enum InputChannel : int
+public enum NativeInputChannel : int
 {
     None = -2,
 
@@ -95,7 +95,7 @@ public unsafe static class ChatHelpers
     public static ChatlogId GetDirectMessageChatId(UserData sender, UserData recipient)
         => new(GsChatKind.Direct, string.CompareOrdinal(sender.UID, recipient.UID) < 0 ? $"{sender.UID}-{recipient.UID}" : $"{recipient.UID}-{sender.UID}");
 
-    internal static bool ValidAnyLinkshell(this InputChannel channel)
+    internal static bool ValidAnyLinkshell(this NativeInputChannel channel)
     {
         var idx = channel.LinkshellIdx();
         if (idx == uint.MaxValue) // Another way to validate a custom ReplyChannel!!! (Because we shouldnt be setting custom ones anyways?!?
@@ -116,52 +116,52 @@ public unsafe static class ChatHelpers
     internal static bool ValidCrossLinkshell(uint idx)
         => idx <= 7 && InfoProxyCrossWorldLinkshell.Instance()->CrossWorldLinkshells[(int)idx].Name.Length > 0;
 
-    internal static uint LinkshellIdx(this InputChannel channel) => channel switch
+    internal static uint LinkshellIdx(this NativeInputChannel channel) => channel switch
     {
-        InputChannel.LS1 => 0,
-        InputChannel.LS2 => 1,
-        InputChannel.LS3 => 2,
-        InputChannel.LS4 => 3,
-        InputChannel.LS5 => 4,
-        InputChannel.LS6 => 5,
-        InputChannel.LS7 => 6,
-        InputChannel.LS8 => 7,
-        InputChannel.CWL1 => 0,
-        InputChannel.CWL2 => 1,
-        InputChannel.CWL3 => 2,
-        InputChannel.CWL4 => 3,
-        InputChannel.CWL5 => 4,
-        InputChannel.CWL6 => 5,
-        InputChannel.CWL7 => 6,
-        InputChannel.CWL8 => 7,
+        NativeInputChannel.LS1 => 0,
+        NativeInputChannel.LS2 => 1,
+        NativeInputChannel.LS3 => 2,
+        NativeInputChannel.LS4 => 3,
+        NativeInputChannel.LS5 => 4,
+        NativeInputChannel.LS6 => 5,
+        NativeInputChannel.LS7 => 6,
+        NativeInputChannel.LS8 => 7,
+        NativeInputChannel.CWL1 => 0,
+        NativeInputChannel.CWL2 => 1,
+        NativeInputChannel.CWL3 => 2,
+        NativeInputChannel.CWL4 => 3,
+        NativeInputChannel.CWL5 => 4,
+        NativeInputChannel.CWL6 => 5,
+        NativeInputChannel.CWL7 => 6,
+        NativeInputChannel.CWL8 => 7,
         _ => uint.MaxValue,
     };
 
     // Could do ranges for this.
-    internal static bool IsLinkshell(this InputChannel channel) => channel switch
+    internal static bool IsLinkshell(this NativeInputChannel channel) => channel switch
     {
-        InputChannel.LS1 => true,
-        InputChannel.LS2 => true,
-        InputChannel.LS3 => true,
-        InputChannel.LS4 => true,
-        InputChannel.LS5 => true,
-        InputChannel.LS6 => true,
-        InputChannel.LS7 => true,
-        InputChannel.LS8 => true,
+        NativeInputChannel.LS1 => true,
+        NativeInputChannel.LS2 => true,
+        NativeInputChannel.LS3 => true,
+        NativeInputChannel.LS4 => true,
+        NativeInputChannel.LS5 => true,
+        NativeInputChannel.LS6 => true,
+        NativeInputChannel.LS7 => true,
+        NativeInputChannel.LS8 => true,
         _ => false,
     };
 
     // Could do ranges for this.
-    internal static bool IsCrossLinkshell(this InputChannel channel) => channel switch
+    internal static bool IsCrossLinkshell(this NativeInputChannel channel) => channel switch
     {
-        InputChannel.CWL1 => true,
-        InputChannel.CWL2 => true,
-        InputChannel.CWL3 => true,
-        InputChannel.CWL4 => true,
-        InputChannel.CWL5 => true,
-        InputChannel.CWL6 => true,
-        InputChannel.CWL7 => true,
-        InputChannel.CWL8 => true,
+        NativeInputChannel.CWL1 => true,
+        NativeInputChannel.CWL2 => true,
+        NativeInputChannel.CWL3 => true,
+        NativeInputChannel.CWL4 => true,
+        NativeInputChannel.CWL5 => true,
+        NativeInputChannel.CWL6 => true,
+        NativeInputChannel.CWL7 => true,
+        NativeInputChannel.CWL8 => true,
         _ => false,
     };
 }

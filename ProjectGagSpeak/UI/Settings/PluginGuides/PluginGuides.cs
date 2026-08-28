@@ -59,7 +59,7 @@ public sealed class PluginGuideProvider : IDisposable
         using (ImRaii.PushColor(ImGuiCol.Button, 0xFFDA8972))
             if (ImGui.Button("Discord", buttonSize))
                 Util.OpenLink(details.DiscordUrl!);
-        CkGui.AttachTooltip(details.DiscordTooltip, CkCol.TriStateCross.Vec4Ref());
+        CkGui.AttachTooltip(details.DiscordTooltip, CkCol.TriStateCross.Vec4());
 
         ImUtf8.SameLineInner();
         using (ImRaii.PushColor(ImGuiCol.Button, 0xFFD5449D))
@@ -79,7 +79,7 @@ public sealed class PluginGuideProvider : IDisposable
         if (!PluginInfo.TryGetValue(plugin, out var details))
             return;
 
-        var isCordyProject = plugin is OptionalPlugin.GagSpeak or OptionalPlugin.Loci;
+        var isCordyProject = plugin is OptionalPlugin.Sundouleia or OptionalPlugin.Loci;
         var bulletCnt = details.BulletInfo.Count + (isCordyProject ? 1 : 0);
         var headerH = ImUtf8.FrameHeightSpacing * 2 + CkGui.CalcFontTextSize("A", Fonts.DefaultScaled).Y;
         var contextH = ImUtf8.TextHeightSpacing * bulletCnt;
@@ -109,7 +109,7 @@ public sealed class PluginGuideProvider : IDisposable
                         if (ImGui.Button("Discord", buttonSize))
                             Util.OpenLink(details.DiscordUrl);
                     if (!string.IsNullOrEmpty(details.DiscordTooltip))
-                        CkGui.AttachTooltip(details.DiscordTooltip, CkCol.TriStateCross.Vec4Ref());
+                        CkGui.AttachTooltip(details.DiscordTooltip, CkCol.TriStateCross.Vec4());
 
                     ImGui.SameLine();
                 }
@@ -133,7 +133,7 @@ public sealed class PluginGuideProvider : IDisposable
             // Do the bullet list thing.
             foreach (var bullet in details.BulletInfo)
                 ImGui.BulletText(bullet);
-            if (plugin is (OptionalPlugin.GagSpeak or OptionalPlugin.Loci))
+            if (plugin is (OptionalPlugin.Sundouleia or OptionalPlugin.Loci))
                 CkGui.BulletText("For more details, view the [Cordys Projects] tab below.", ImGuiColors.DalamudViolet);
         }
     }
@@ -285,18 +285,18 @@ public sealed class PluginGuideProvider : IDisposable
                     "Alarms in GagSpeak can link to your toys",
                 ]
             },
-            [OptionalPlugin.GagSpeak] = new OptionalPluginInfo
+            [OptionalPlugin.Sundouleia] = new OptionalPluginInfo
             {
-                IconUrl = "https://raw.githubusercontent.com/GagSpeak/repo/main/Images/icon.png",
-                Name = "GagSpeak",
+                IconUrl = "https://raw.githubusercontent.com/Sundouleia/repo/main/Images/icon.png",
+                Name = "Sundouleia",
                 Author = "Cordelia",
-                Punchline = "Fresh approach to DataSync through a new lens, free of constraint.",
+                Punchline = "Uncapped Communities, Syncs, Chats, In-Depth Profiles, Instantaneous Speeds, Minimal Redraws.",
 
                 DiscordUrl = "https://discord.gg/QJy4zTqpMD",
                 DiscordTooltip = "Opens the GagSpeak & Loci Discord--SEP----COL--DO NOT USE THIS TO REPORT GS ISSUES.--COL--",
-                GithubUrl = "https://github.com/GagSpeak",
+                GithubUrl = "https://github.com/Sundouleia",
 
-                RepoUrl = "https://raw.githubusercontent.com/GagSpeak/repo/main/sundouleia.json",
+                RepoUrl = "https://raw.githubusercontent.com/Sundouleia/repo/main/sundouleia.json",
 
                 BulletInfo =
                 [

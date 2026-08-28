@@ -9,7 +9,7 @@ public sealed class AliasFolder : DynamicFolder<AliasTrigger>
     private Func<IReadOnlyList<AliasTrigger>> _generator;
     public AliasFolder(DynamicFolderGroup<AliasTrigger> parent, uint id, string name, uint iconColor,
         Func<IReadOnlyList<AliasTrigger>> generator)
-        : base(parent, FAI.None, name, id, new([new SorterEx.ByAliasName()]))
+        : base(parent, id, FAI.None, name, sorter: new([new SorterEx.ByAliasName()]))
     {
         // Can set stylizations here.
         NameColor = uint.MaxValue;

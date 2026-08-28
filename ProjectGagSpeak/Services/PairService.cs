@@ -3,6 +3,7 @@ using GagSpeak.Pairs;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.WebAPI;
+using GagspeakAPI.Chat;
 using GagspeakAPI.User;
 using System.Text.RegularExpressions;
 
@@ -15,6 +16,7 @@ public class PairService : DisposableMediatorSubscriberBase
 {
     private readonly MainConfig _config;
     private readonly NicksConfig _nicks;
+    private readonly ChatConfig _chatConfig;
     private readonly GlobalChatLog _globalChatlog;
     private readonly VisibilityWatcher _visibleUsers;
     private readonly RequestsManager _requests;
@@ -22,13 +24,15 @@ public class PairService : DisposableMediatorSubscriberBase
     private readonly OnlineKinksterManager _onlineUsers;
 
     public PairService(ILogger<PairService> logger, GagspeakMediator mediator,
-        MainConfig config, NicksConfig nicks, GlobalChatLog globalChat,
-        VisibilityWatcher visibleUsers, RequestsManager requests,
-        KinksterManager kinksters, OnlineKinksterManager onlineUsers)
+        MainConfig config, NicksConfig nicks, ChatConfig chatConfig,
+        GlobalChatLog globalChat, VisibilityWatcher visibleUsers,
+        RequestsManager requests, KinksterManager kinksters,
+        OnlineKinksterManager onlineUsers)
         : base(logger, mediator)
     {
         _config = config;
         _nicks = nicks;
+        _chatConfig = chatConfig;
         _globalChatlog = globalChat;
         _visibleUsers = visibleUsers;
         _requests = requests;
@@ -65,7 +69,7 @@ public class PairService : DisposableMediatorSubscriberBase
 
     public void UpdateVanityData(UserDto newUserDto)
     {
-        // Update the userdata in the sundesmos.
+        // Update the userdata in the kinksters.
         _kinksters.UpdateUserVanity(newUserDto);
         // Then grab the existing data for that user.
         if (_onlineUsers.GetMappedUserData(newUserDto.User) is { } prevUser)
@@ -140,11 +144,9 @@ public class PairService : DisposableMediatorSubscriberBase
             return MainHub.OwnUserData.AliasOrUID;
         if (_kinksters.TryGetValue(user, out var s))
             return s.User.AliasOrUID;
-        // Fallback to radar
-        if (_globalChatlog.ChatUsers..TryGetPublicUser(user, out var pru))
-            return pru.RadarName;
-        if (_radar.TryGetGroupUser(user, out var gru))
-            return gru.RadarName;
+        // Fallback to GlobalChat
+        if (_globalChatlog.ChatUsers.TryGetValue(user, out var chatFlags) && chatFlags.HasAny(ChatFlags.UseDisplayName))
+            return user.VanityOrAnonName;
         return user.AnonName;
     }
     #endregion
@@ -155,18 +157,12 @@ public class PairService : DisposableMediatorSubscriberBase
         => searchFilter.Length is 0
         || user.AliasOrUID.Contains(searchFilter, StringComparison.OrdinalIgnoreCase)
         || (GetNickname(user)?.Contains(searchFilter, StringComparison.OrdinalIgnoreCase) ?? false)
-        || (_handlers.GetValueOrDefault(user)?.PlayerName?.Contains(searchFilter, StringComparison.OrdinalIgnoreCase) ?? false);
+        || (_kinksters.GetValueOrDefault(user)?.PlayerName?.Contains(searchFilter, StringComparison.OrdinalIgnoreCase) ?? false);
 
-    // No need for UID?
+    // Likely incorrect here.
     public bool MatchesMonoName(UserData user, string printedName)
         => user.AliasOrUID.Equals(printedName, StringComparison.OrdinalIgnoreCase);
-
-    public bool MatchesMonoName(IRadarSyncMember ru, string printedName)
-        => _kinksters.Contains(ru.User)
-        ? ru.User.AliasOrUID.Equals(printedName, StringComparison.OrdinalIgnoreCase)
-        : ru.RadarName.Equals(printedName, StringComparison.OrdinalIgnoreCase);
     #endregion
-
 
     #region Advanced Helpers
     public bool IsValidDMChatUser(UserData user)
@@ -174,42 +170,17 @@ public class PairService : DisposableMediatorSubscriberBase
         // Check direct pairs first.
         if (_kinksters.Contains(user))
             return true;
-        // Fallback to radar.
-        if (_radarConfig.Data.RadarPerms.HasAny(RadarFlags.AllowDirectMessages) && _radar.ContainsPublicUser(user))
-            return true;
-        if (_radarConfig.Data.RadarGroupPerms.HasAny(RadarGroupFlags.AllowMessaging) && _radar.ContainsGroupUser(user))
-            return true;
-        // Fallback to radarchat
-        if (_radarConfig.Data.ChatPerms.HasAny(RadarChatFlags.AllowDirectMessages) && _globalChatlog.ChatUsers.ContainsKey(user))
-            return true;
-        // Fallback to sanctions.
-        foreach (var group in _sanctions.Joined)
-        {
-            if (!group.Members.TryGetValue(new(MainHub.UID), out var ownPair) || !ownPair.InChat)
-                continue;
-            if (group.Members.TryGetValue(user, out var sPair) && sPair.InChat)
-                return true;
-        }
-
-        return false;
+        // Fallback to GlobalChat, if we allow DM's and they are a global chat user, accept.
+        return _chatConfig.Data.ChatPerms.HasAny(ChatFlags.AllowDirectMessages) && _globalChatlog.ChatUsers.ContainsKey(user);
     }
 
     public string GetChatNameLabel(UserData user)
     {
-        if (_kinksters.TryGetValue(user, out var sundesmo))
-            return sundesmo.GetNickAliasOrUid();
-        if (_radar.TryGetPublicUser(user, out var pru))
-            return pru.RadarName;
-        if (_radar.TryGetGroupUser(user, out var gru))
-            return gru.RadarName;
-        // Fallback to sanctions.
-        foreach (var group in _sanctions.Joined)
-        {
-            if (!group.Members.TryGetValue(new(MainHub.UID), out var ownPair) || !ownPair.InChat)
-                continue;
-            if (group.Members.TryGetValue(user, out var sPair) && sPair.InChat)
-                return sPair.User.AliasOrUID;
-        }
+        if (_kinksters.TryGetValue(user, out var kinkster))
+            return kinkster.GetNickAliasOrUid();
+        // Fallback to GlobalChat
+        if (_globalChatlog.ChatUsers.TryGetValue(user, out var chatFlags) && chatFlags.HasAny(ChatFlags.UseDisplayName))
+            return user.VanityOrAnonName;
         // Default to Anon if fail.
         return user.AnonName;
     }
@@ -221,65 +192,35 @@ public class PairService : DisposableMediatorSubscriberBase
     /// </summary>
     public UserData? ResolveChatName(string chatNameArg, StringComparison comparer = StringComparison.Ordinal)
     {
-        // (?i) makes it case-insensitive.
-        // ^anon(?:-?user|-)? matches "anon", "anon-", "anonuser", "anon-user"
-        // (.{4})$ captures exactly the last 4 characters into a group.
-        var anonMatch = Regex.Match(chatNameArg, @"(?i)^anon(?:-?user|-)?(.{4})$");
+        // Matches kinkster or kinkster- followed by 3 to 4 characters
+        var anonMatch = Regex.Match(chatNameArg, @"(?i)^kinkster-?(.{3,4})$");
         if (anonMatch.Success)
         {
             var anonTag = anonMatch.Groups[1].Value;
-
-            // Search Radar Public for this tag
-            if (_radar.PublicUsers.FirstOrDefault(u => string.Equals(u.User.AnonTag, anonTag, comparer) && u.Flags.HasAny(RadarFlags.AllowDirectMessages)) is { } pUser)
-                return pUser.User;
-            // Search Radar Group for this tag
-            if (_radar.GroupUsers.FirstOrDefault(u => string.Equals(u.User.AnonTag, anonTag, comparer) && u.Flags.HasAny(RadarGroupFlags.AllowMessaging)) is { } gUser)
-                return gUser.User;
-            // Search RadarChat for the tag.
-            if (_globalChatlog.ChatUsers.FirstOrDefault(u => string.Equals(u.Key.AnonTag, chatNameArg, comparer) && u.Value.HasAll(RadarChatFlags.AllowDirectMessages)) is { } rcUser)
+            // Search GlobalChat for the tag.
+            if (_globalChatlog.ChatUsers.FirstOrDefault(u => string.Equals(u.Key.AnonTag, chatNameArg, comparer) && u.Value.HasAny(ChatFlags.AllowDirectMessages)) is { } rcUser)
             {
-                if (!Equals(rcUser, default(KeyValuePair<UserData, RadarChatFlags>)))
+                if (!Equals(rcUser, default(KeyValuePair<UserData, ChatFlags>)))
                     return rcUser.Key;
             }
-            // Abort early since we looked strictly for the tag. 
             return null;
         }
 
         // Otherwise, attempt to perform O(1) Lookup by UID.
-        if (ResolvePairedUser(chatNameArg) is UserData userFromUID)
-            return userFromUID;
+        if (_kinksters.TryGetValue(new(chatNameArg.ToUpperInvariant()), out var directPair))
+            return directPair.User;
 
-        // Fallback to a possible vanityName check
-        if (_radar.PublicUsers.FirstOrDefault(u => string.Equals(u.User.VanityName, chatNameArg, comparer) && u.Flags.HasAll(RadarFlags.UseDisplayName | RadarFlags.AllowDirectMessages)) is { } prMatch)
-            return prMatch.User;
-        // Fallback to RadarGroup VanityName
-        if (_radar.GroupUsers.FirstOrDefault(u => string.Equals(u.User.VanityName, chatNameArg, comparer) && u.Flags.HasAll(RadarGroupFlags.UseDisplayName | RadarGroupFlags.AllowMessaging)) is { } grMatch)
-            return grMatch.User;
-        // Radarchat iterates a Dictionary, so check against default after.
-        if (_globalChatlog.ChatUsers.FirstOrDefault(u => string.Equals(u.Key.VanityName, chatNameArg, comparer) && u.Value.HasAll(RadarChatFlags.UseDisplayName | RadarChatFlags.AllowDirectMessages)) is { } rcMatch)
-            if (!Equals(rcMatch, default(KeyValuePair<UserData, RadarChatFlags>)))
+        // GlobalChat iterates a Dictionary, so check against default after.
+        if (_globalChatlog.ChatUsers.FirstOrDefault(u => string.Equals(u.Key.VanityName, chatNameArg, comparer) && u.Value.HasAll(ChatFlags.UseDisplayName | ChatFlags.AllowDirectMessages)) is { } rcMatch)
+            if (!Equals(rcMatch, default(KeyValuePair<UserData, ChatFlags>)))
                 return rcMatch.Key;
 
         // Final fallback, Alias check. Perform a lookup in the alias map, then find by uid.
         if (_userByAlias.TryGetValue(chatNameArg, out var found))
-            if (ResolvePairedUser(found.UID) is { } aliasMappedUser)
-                return aliasMappedUser;
+            if (_kinksters.GetValueOrDefault(new(found.UID)) is { } aliasMappedUser)
+                return aliasMappedUser.User;
         // We failed all conditions, so abort.
         return null;
-
-        UserData? ResolvePairedUser(string uid)
-        {
-            var emptyUser = new UserData(uid.ToUpperInvariant());
-            if (_kinksters.TryGetValue(emptyUser, out var directPair))
-                return directPair.User;
-            // Get all chats we are in.
-            var joinedChats = _sanctions.Joined.Where(s => s.Members.TryGetValue(new(MainHub.UID), out var ownData) && ownData.InChat);
-            // Get all distinct users.
-            foreach (var sGroup in joinedChats)
-                if (sGroup.Members.TryGetValue(emptyUser, out var sPair) && sPair.InChat)
-                    return sPair.User;
-            return null;
-        }
     }
     #endregion
 

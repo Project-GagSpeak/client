@@ -9,8 +9,6 @@ using CkCommons.RichChat;
 namespace GagSpeak.Utils;
 public class VibeRoomChatlog : RichChatLog<NewGsChatMessage>, IMediatorSubscriber, IDisposable
 {
-    private static RichTextFilter AllowedTypes = RichTextFilter.All & ~RichTextFilter.Images;
-
     private readonly ILogger<VibeRoomChatlog> _logger;
     private readonly MainHub _hub;
     private readonly MainConfig _config;

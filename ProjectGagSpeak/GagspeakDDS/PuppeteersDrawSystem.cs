@@ -1,6 +1,7 @@
 using CkCommons.DrawSystem;
 using CkCommons.HybridSaver;
 using GagSpeak.Kinksters;
+using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
@@ -11,6 +12,8 @@ namespace GagSpeak.DrawSystem;
 public class PuppeteersDrawSystem : DynamicDrawSystem<Kinkster>, IMediatorSubscriber, IDisposable, IHybridSavable
 {
     private readonly ILogger<PuppeteersDrawSystem> _logger;
+    private readonly SorterHelpers _sortHelpers;
+    private readonly MainConfig _config;
     private readonly PuppeteerManager _puppeteer;
     private readonly KinksterManager _kinksters;
     private readonly HybridSaveService _hybridSaver;
@@ -18,10 +21,13 @@ public class PuppeteersDrawSystem : DynamicDrawSystem<Kinkster>, IMediatorSubscr
     public GagspeakMediator Mediator { get; init; }
 
     public PuppeteersDrawSystem(ILogger<PuppeteersDrawSystem> logger, GagspeakMediator mediator,
-        PuppeteerManager puppeteer, KinksterManager kinksters, HybridSaveService saver)
+        SorterHelpers sortHelpers, MainConfig config, PuppeteerManager puppeteer,
+        KinksterManager kinksters, HybridSaveService saver)
     {
         _logger = logger;
         Mediator = mediator;
+        _sortHelpers = sortHelpers;
+        _config = config;
         _puppeteer = puppeteer;
         _kinksters = kinksters;
         _hybridSaver = saver;
@@ -87,26 +93,24 @@ public class PuppeteersDrawSystem : DynamicDrawSystem<Kinkster>, IMediatorSubscr
         bool anyChanged = false;
         // Ensure Puppeteers Folder
         if (!FolderMap.ContainsKey(Constants.FolderTagPuppeteers))
-            anyChanged |= AddFolder(new PairFolder(root, idCounter + 1u, FAI.None, Constants.FolderTagPuppeteers, uint.MaxValue,
-                () => [ .. _kinksters.DirectPairs.Where(p => _puppeteer.Puppeteers.ContainsKey(p.User.UID)).ToList()], [SorterEx.ByFavorite, SorterEx.ByPairName]));
+            anyChanged |= AddFolder(new PairFolder(_sortHelpers, _config, root, idCounter + 1u, FAI.None, Constants.FolderTagPuppeteers,
+                uint.MaxValue, () => [ .. _kinksters.DirectPairs.Where(p => _puppeteer.Puppeteers.ContainsKey(p.User.UID)).ToList()],
+                () => [FolderSortFilter.Favorite, FolderSortFilter.Alphabetical]));
         // Ensure Other Folder.
         if (!FolderMap.ContainsKey(Constants.FolderTagNonPuppeteers))
-            anyChanged |= AddFolder(new PairFolder(root, idCounter + 1u, FAI.None, Constants.FolderTagNonPuppeteers, uint.MaxValue,
-                () => [.. _kinksters.DirectPairs.Where(p => !_puppeteer.Puppeteers.ContainsKey(p.User.UID)).ToList()], [SorterEx.ByFavorite, SorterEx.ByPairName]));
+            anyChanged |= AddFolder(new PairFolder(_sortHelpers, _config, root, idCounter + 1u, FAI.None, Constants.FolderTagNonPuppeteers,
+                uint.MaxValue, () => [.. _kinksters.DirectPairs.Where(p => !_puppeteer.Puppeteers.ContainsKey(p.User.UID)).ToList()],
+                () => [FolderSortFilter.Favorite, FolderSortFilter.Alphabetical])); 
 
         return anyChanged;
     }
 
     // HybridSavable
     public int ConfigVersion => 0;
+    public int MaxBackups => 2;
     public HybridSaveType SaveType => HybridSaveType.StreamWrite;
-    public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(GsFiles files, out bool isAccountUnique)
-        => (isAccountUnique = false, files.DDS_Puppeteers).Item2;
-
-    public string JsonSerialize()
-        => throw new NotImplementedException();
-
-    public void WriteToStream(StreamWriter writer)
-        => SaveToFile(writer);
+    public DateTime LastWriteTimeUTC => DateTime.MinValue;
+    public string ToFilePath(GsFiles files) => files.DDS_Puppeteers;
+    public string JsonSerialize() => throw new NotImplementedException();
+    public void WriteToStream(StreamWriter writer) => SaveToFile(writer);
 }

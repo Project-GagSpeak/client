@@ -126,7 +126,7 @@ public sealed class RestrictionFileSelector : CkFileSystemSelector<RestrictionIt
         }
 
         ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
-        if (Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restriction, leaf.Value.Identifier))
+        if (Icons.DrawFavoriteStar(_favorites, FavoriteType.Restriction, leaf.Value.Identifier))
             SetFilterDirty();
         CkGui.TextFrameAlignedInline(leaf.Value.Label);
         // Only draw the deletion if the item is not active or occupied.

@@ -32,7 +32,7 @@ public sealed class MarionetteDrawer : DynamicDrawer<AliasTrigger>
 
         // Back to the start, then draw.
         ImGui.SameLine(pos.X);
-        CkGui.FramedIconText(folder.IsOpen ? FAI.FolderOpen : FAI.FolderClosed);
+        CkGui.FramedIconText(folder.Expanded ? FAI.FolderOpen : FAI.FolderClosed);
         CkGui.ColorTextFrameAlignedInline(folder.Name, folder.NameColor);
         // Total Context.
         CkGui.ColorTextFrameAlignedInline(folder.BracketText, ImGuiColors.DalamudGrey2);

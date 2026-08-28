@@ -6,6 +6,7 @@ using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Kernel;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using GagSpeak.GameInternals;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
@@ -209,7 +210,7 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         }
     }
 
-    private void OnKinksterMessage(Kinkster k, InputChannel c, string message)
+    private void OnKinksterMessage(Kinkster k, NativeInputChannel c, string message)
     {
         // Discard if not a garbled message.
         if (!k.ActiveGags.IsGagged() || !k.PairGlobals.ChatGarblerActive || !k.PairGlobals.AllowedGarblerChannels.IsActiveChannel((int)c))

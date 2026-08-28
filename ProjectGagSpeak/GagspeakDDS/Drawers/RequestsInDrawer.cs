@@ -9,6 +9,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Gui.MainWindow;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
@@ -32,10 +33,11 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
     private readonly RequestsManager _manager;
     private readonly KinksterManager _kinksters;
 
+    private RequestCache _cache => (RequestCache)FilterCache;
+
     private IDynamicNode? _hoveredReplyNode;     // From last frame.
     private IDynamicNode? _newHoveredReplyNode;  // Tracked each frame.
-    private DateTime? _hoverExpiry;            // time until we should hide the hovered reply node.
-
+    private DateTime? _hoverExpiry;             // time until we should hide the hovered reply node.
     public RequestsInDrawer(ILogger<RequestsInDrawer> logger, MainHub hub, MainConfig config, 
         RequestsManager manager, KinksterManager kinksters, RequestsDrawSystem ds) 
         : base("##GSRequestsInDrawer", Svc.Logger.Logger, ds, new RequestCache(ds))
@@ -48,9 +50,13 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
 
     protected override void DrawSearchBar(float width, int length)
     {
+        // Update the side panel if currently set to none, but drawing incoming.
+        //if (_sidePanel.DisplayMode is not SidePanelMode.IncomingRequests)
+        //    _sidePanel.ForRequests(_cache, Selector); // Maybe later.
+
         var tmp = FilterCache.Filter;
         // Update the search bar if things change, like normal.
-        if (FancySearchBar.Draw("Filter", width, ref tmp, "filter Requests..", length))
+        if (FancySearchBar.Draw("Filter", "filter Requests..", width, ref tmp, length))
             FilterCache.Filter = tmp;
     }
 
@@ -77,11 +83,41 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
         base.UpdateHoverNode();
     }
 
+    #region Custom Calls
+    // Custom draw method to display the list of selected requests, allowing for them to be removed.
+    public void DrawSelectedRequests(float width, DynamicFlags flags = DynamicFlags.None)
+    {
+        var endX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
+        var minusX = CkGui.IconButtonSize(FAI.Minus).X;
+        // Perform the following for each row.
+        foreach (var leaf in Selector.Leaves.ToList())
+        {
+            DrawLeftSide(leaf.Data, flags);
+            ImUtf8.SameLineInner();
+
+            // Store the pos at the point we draw out the name area.
+            using (ImRaii.PushFont(UiBuilder.MonoFont))
+                CkGui.TextFrameAligned(leaf.Data.SenderAnonName);
+
+            if (leaf.Data.IsTemporaryRequest)
+            {
+                ImGui.SameLine();
+                CkGui.IconTextAligned(FAI.Stopwatch, ImGuiColors.DalamudGrey2);
+                CkGui.AttachTooltip("A temporary pairing, that expires unless you make it permanent.");
+            }
+
+            ImGui.SameLine(endX - minusX);
+            if (CkGui.IconButton(FAI.Minus, null, leaf.Name, UiService.DisableUI, true))
+                Selector.Deselect(leaf);
+            CkGui.AttachTooltip("Remove from selection.");
+        }
+    }
+
     // Custom draw method spesifically for our incoming folder.
     public void DrawRequests(float width, DynamicFlags flags = DynamicFlags.None)
     {
         // Obtain the folder first before handling the draw logic.
-        if (!DrawSystem.FolderMap.TryGetValue(Constants.FolderTagRequestInc, out var folder))
+        if (!DrawSystem.FolderMap.TryGetValue(Consts.RDDS_Incoming, out var folder))
             return;
 
         // Ensure the child is at least draw to satisfy the expected drawn content region.
@@ -115,12 +151,14 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
     private void DrawIncomingRequests(DynamicFolderCache<RequestEntry> cf, DynamicFlags flags)
     {
         using var id = ImRaii.PushId($"DDS_{Label}_{cf.Folder.ID}");
-        
+
         DrawFolderBanner(cf.Folder, flags);
         // The below, the request entries.
         DrawFolderLeaves(cf, flags);
     }
+    #endregion
 
+    #region Custom Sub-Calls
     private void DrawFolderBanner(IDynamicFolder<RequestEntry> f, DynamicFlags flags)
     {
         var width = CkGui.GetWindowContentRegionWidth() - ImGui.GetCursorPosX();
@@ -133,12 +171,10 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
         CkGui.ColorTextFrameAlignedInline(f.Name, f.NameColor);
         CkGui.ColorTextFrameAlignedInline($"[{f.TotalChildren}]", ImGuiColors.DalamudGrey2);
 
-        // Could draw more stuff to the right if we want.
-        if (Selector.Leaves.Count > 0 && f is RequestFolder folder)
-            DrawFolderButtons(folder);        
+        DrawFolderButtons((RequestFolder)f);
     }
 
-    private void DrawFolderButtons(RequestFolder folder)
+    private float DrawFolderButtons(RequestFolder folder)
     {
         var endX = ImGui.GetWindowContentRegionMin().X + CkGui.GetWindowContentRegionWidth();
         var rejectAllSize = CkGui.IconTextButtonSize(FAI.TimesCircle, "Reject All");
@@ -157,8 +193,10 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
             if (CkGui.IconTextButton(FAI.TimesCircle, "Reject All", null, true, UiService.DisableUI))
                 Log.Information("Rejecting all incoming kinkster requests.");
         CkGui.AttachTooltip("Reject all incoming kinkster requests.");
-    }
 
+        return endX;
+    }
+    #endregion Custom Sub-Calls
 
     // Override each drawn leaf for its unique display in the request folder.
     protected override void DrawLeafInner(IDynamicLeaf<RequestEntry> leaf, Vector2 region, DynamicFlags flags)
@@ -220,20 +258,34 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
             {
                 using (ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, 12f))
                 {
+                    // override button.
+                    var overrideIcon = leaf.Data.IsTemporaryRequest ? FAI.Check : FAI.Stopwatch;
                     // Draw out the initial frame with a small outer boarder.
-                    if (CkGui.IconButtonColored(FAI.Check, CkCol.TriStateCheck.Uint(), UiService.DisableUI))
-                        AcceptRequest(leaf.Data);
-                    CkGui.AttachTooltip("Accept this kinkster request.");
+                    using (ImRaii.PushColor(ImGuiCol.Button, GsCol.VibrantPink.Uint()))
+                        if (CkGui.IconButton(overrideIcon, disabled: UiService.DisableUI))
+                            AcceptRequest(leaf.Data, !leaf.Data.IsTemporaryRequest);
+                    CkGui.AttachTooltip($"Override pairing preference.--NL----COL--Accept {leaf.Data.SenderTag} as a " +
+                        $"{(leaf.Data.IsTemporaryRequest ? "permanent" : "temporary")} pair.--COL--", ImGuiColors.DalamudOrange);
+
+                    // Draw out the initial frame with a small outer boarder.
                     ImUtf8.SameLineInner();
-                    if (CkGui.IconButtonColored(FAI.Times, CkCol.TriStateCross.Uint(), UiService.DisableUI))
-                        RejectRequest(leaf.Data);
-                    CkGui.AttachTooltip("Reject this kinkster request.");
+                    var defaultIcon = leaf.Data.IsTemporaryRequest ? FAI.Clock : FAI.Check;
+                    using (ImRaii.PushColor(ImGuiCol.Button, CkCol.TriStateCheck.Uint()))
+                        if (CkGui.IconButton(defaultIcon, disabled: UiService.DisableUI))
+                            AcceptRequest(leaf.Data, leaf.Data.IsTemporaryRequest);
+                    CkGui.AttachTooltip($"Accept this --COL--{(leaf.Data.IsTemporaryRequest ? "Temporary" : "Permanent")}--COL-- request.", ImGuiColors.DalamudOrange);
+
+                    ImUtf8.SameLineInner();
+                    using (ImRaii.PushColor(ImGuiCol.Button, CkCol.TriStateCross.Uint()))
+                        if (CkGui.IconButton(FAI.Times, disabled: UiService.DisableUI))
+                            RejectRequest(leaf.Data);
+                    CkGui.AttachTooltip("Reject this request.");
                     ImUtf8.SameLineInner();
                 }
             }
 
             CkGui.FramedHoverIconText(FAI.Reply, uint.MaxValue);
-            CkGui.AttachTooltip("Hover me to open single-request responder.");
+            CkGui.AttachTooltip("Open Quick-Responder");
         }
         // Should be if we hover anywhere in the area.
         if (ImGui.IsItemHovered())
@@ -245,47 +297,36 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
             endX -= (timeTxtWidth + spacing);
             ImGui.SameLine(endX);
             CkGui.ColorTextFrameAligned(timeTxt, ImGuiColors.ParsedGrey);
-            CkGui.AttachTooltip("Time left to respond to this request.");
+            CkGui.AttachTooltip($"Time to respond to {leaf.Data.SenderTag}'s request.");
+
+            if (leaf.Data.IsTemporaryRequest)
+            {
+                endX -= (CkGui.IconButtonSize(FAI.History).X);
+                ImGui.SameLine(endX);
+                CkGui.IconTextAligned(FAI.History, ImGuiColors.TankBlue);
+                CkGui.AttachTooltip("This is a Temporary Request.");
+            }
         }
         
         return endX;
     }
 
     // Accepts a single request.
-    private void AcceptRequest(RequestEntry request)
+    private void AcceptRequest(RequestEntry request, bool acceptAsTemp)
     {
         UiService.SetUITask(async () =>
         {
-            // Wait for the response.
-            Log.Information($"Accepting kinkster request from {request.SenderAnonName} ({request.SenderUID})");
-            var res = await _hub.UserAcceptRequest(new(new(request.SenderUID))).ConfigureAwait(false);
-            
+            Log.Information($"Accepting request from {request.SenderAnonName}");
+            var res = await _hub.UserAcceptRequest(new(new(request.SenderUID), acceptAsTemp)).ConfigureAwait(false);
             // If already paired, we should remove the request from the manager.
             if (res.ErrorCode is GagSpeakApiEc.AlreadyPaired)
                 _manager.RemoveRequest(request);
             // Otherwise, if successful, proceed with pairing operations.
             else if (res.ErrorCode is GagSpeakApiEc.Success)
-            {
-                // Remove the request from the manager.
-                _manager.RemoveRequest(request);
-                // Add the Kinkster to the KinksterManager.
-                _kinksters.AddKinkster(res.Value!.Pair);
-                // If they are online, mark them online.
-                if (res.Value!.OnlineInfo is { } onlineKinkster)
-                    _kinksters.MarkKinksterOnline(onlineKinkster);
-            }
+                _manager.AcceptRequest(request, res.Value!);
             else
-            {
-                Log.Warning($"Failed to accept kinkster request from {request.SenderAnonName} ({request.SenderUID}): {res.ErrorCode}");
-            }
+                Log.Warning($"Failed to accept request from {request.SenderAnonName}: {res.ErrorCode}");
         });
-    }
-
-    private void AcceptRequests(IEnumerable<RequestEntry> requests)
-    {
-        // Process the TO BE ADDED Bulk accept server call, then handle responses accordingly.
-
-        // For now, do nothing.
     }
 
     private void RejectRequest(RequestEntry request)
@@ -298,12 +339,6 @@ public class RequestsInDrawer : DynamicDrawer<RequestEntry>
             else
                 Log.Warning($"Failed to reject kinkster request from {request.SenderAnonName} ({request.SenderUID}): {res.ErrorCode}");
         });
-    }
-
-    private void RejectRequests(IEnumerable<RequestEntry> requests)
-    {
-        // Process the TO BE ADDED Bulk reject server call, then handle responses accordingly.
-        // For now, do nothing.
     }
 }
 

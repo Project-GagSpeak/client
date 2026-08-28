@@ -23,15 +23,16 @@ public sealed class PuppeteerPlayer
 
 public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybridSavable
 {
-    private readonly GsFiles _fileNames;
+    private readonly ConnectionsConfig _connections;
     private readonly HybridSaveService _saver;
 
     private StorageItemEditor<AliasTrigger> _itemEditor = new();
 
-    public PuppeteerManager(ILogger<PuppeteerManager> logger, GagspeakMediator mediator, GsFiles fileNames, HybridSaveService saver)
+    public PuppeteerManager(ILogger<PuppeteerManager> logger, GagspeakMediator mediator, 
+        ConnectionsConfig connections, HybridSaveService saver)
         : base(logger, mediator)
     {
-        _fileNames = fileNames;
+        _connections = connections;
         _saver = saver;
     }
 
@@ -49,7 +50,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         aliasLabel = RegexEx.EnsureUniqueName(aliasLabel, Storage.Items, rs => rs.Label);
         var alias = new AliasTrigger { Label = aliasLabel};
         Storage.Items.Add(alias);
-        _saver.Save(this);
+        Save();
         Logger.LogDebug($"Created new Alias {alias.Label} ({alias.Identifier}).", LoggerType.Puppeteer);
         Mediator.Publish(new ConfigAliasItemChanged(StorageChangeType.Created, alias, null));
         return alias;
@@ -62,7 +63,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         newName = RegexEx.EnsureUniqueName(newName, Storage.Items, rs => rs.Label);
         var clonedItem = new AliasTrigger(clone, false) { Label = newName };
         Storage.Items.Add(clonedItem);
-        _saver.Save(this);
+        Save();
         Logger.LogDebug($"Cloned Alias {clonedItem.Identifier}.", LoggerType.Puppeteer);
         Mediator.Publish(new ConfigAliasItemChanged(StorageChangeType.Created, clonedItem, folderPath));
         return clonedItem;
@@ -75,7 +76,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         {
             Logger.LogDebug($"Deleted AliasTrigger {alias.Label} ({alias.Identifier})", LoggerType.Puppeteer);
             Mediator.Publish(new ConfigAliasItemChanged(StorageChangeType.Deleted, alias, null));
-            _saver.Save(this);
+            Save();
         }
     }
 
@@ -89,7 +90,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         // ensure the new name is unique.
         newName = RegexEx.EnsureUniqueName(newName, Storage.Items, rs => rs.Label);
         alias.Label = newName;
-        _saver.Save(this);
+        Save();
         Logger.LogDebug($"Renamed restraint {alias.Label} ({alias.Identifier}).", LoggerType.Puppeteer);
         Mediator.Publish(new ConfigAliasItemChanged(StorageChangeType.Renamed, alias, oldName));
     }
@@ -111,18 +112,14 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
             Logger.LogDebug($"Saved changes to {source.Label} ({source.Identifier}).", LoggerType.Puppeteer);
             // _managerCache.UpdateCache(AppliedRestraint);
             Mediator.Publish(new ConfigAliasItemChanged(StorageChangeType.Modified, source));
-            _saver.Save(this);
+            Save();
         }
     }
-
-    public void Save()
-        => _saver.Save(this);
-
     public void SetEnabledState(AliasTrigger alias, bool newState)
     {
         alias.Enabled = newState;
         Logger.LogDebug($"Set EnabledState: {alias.Label} to {(alias.Enabled ? "Enabled" : "Disabled")}", LoggerType.Puppeteer);
-        _saver.Save(this);
+        Save();
         Mediator.Publish(new EnabledItemChanged(GSModule.Puppeteer, alias.Identifier, newState));
     }
 
@@ -130,7 +127,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
     {
         foreach (var a in aliases)
             a.Enabled = newState;
-        _saver.Save(this);
+        Save();
         Logger.LogDebug($"SetEnabledState for ({string.Join(", ", aliases.Select(a => a.Label))})", LoggerType.Puppeteer);
         Mediator.Publish(new EnabledItemsChanged(GSModule.Puppeteer, aliases.Select(a => a.Identifier), newState));
     }
@@ -162,11 +159,13 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
 
     #region HybridSavable
     public int ConfigVersion => 1;
+    public int MaxBackups => 2;
     public HybridSaveType SaveType => HybridSaveType.Json;
-    public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(GsFiles files, out bool isAccountUnique)
-        => (isAccountUnique = false, files.Puppeteer).Item2;
+    public DateTime LastWriteTimeUTC => DateTime.MinValue;
+    public string ToFilePath(GsFiles files) => GetSaveFilePath();
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
+    private string GetSaveFilePath() => Path.Combine(GsFiles.ConfigDirectory, _connections.CurrentProfileUID, GsFiles.PuppeteerFile);
+
     public string JsonSerialize()
     {
         // Constructing the config object to serialize
@@ -178,60 +177,75 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         };
         return configObject.ToString(Formatting.Indented);
     }
+
+    public void Save()
+    {
+        if (string.IsNullOrEmpty(_connections.CurrentProfileUID))
+        {
+            Logger.LogInformation("[Save Aborted] No profile selected.");
+            return;
+        }
+        _saver.Save(this);
+    }
+
     public void Load()
     {
-        var file = _fileNames.Puppeteer;
-        Logger.LogInformation($"Loading in Puppeteer Config for file: {file}");
+        var file = GetSaveFilePath();
+        Logger.LogInformation($"Loading Puppeteer Config: ({file})");
+
         Storage.Items.Clear();
         Puppeteers.Clear();
-
-        JObject jObject;
-        // Read the json from the file.
-        if (!File.Exists(file))
+        try
         {
-            Logger.LogWarning($"No Puppeteer file found at {file}");
-            // create a new file with default values.
-
-            var oldFormatFile = Path.Combine(_fileNames.CurrentPlayerDirectory, "alias-lists.json");
-            if (File.Exists(oldFormatFile))
+            JObject jObject;
+            if (!File.Exists(file))
             {
-                var oldText = File.ReadAllText(oldFormatFile);
-                var oldObject = JObject.Parse(oldText);
-                jObject = ConfigMigrator.MigratePuppeteerAliasConfig(oldObject, _fileNames, oldFormatFile);
+                Logger.LogDebug($"[File Not Found] {file}");
+
+                // Attempt migration
+                var oldFormatFile = Path.Combine(GsFiles.ConfigDirectory, _connections.CurrentProfileUID, "alias-lists.json");
+                if (File.Exists(oldFormatFile))
+                {
+                    var oldText = File.ReadAllText(oldFormatFile);
+                    var oldObject = JObject.Parse(oldText);
+                    jObject = ConfigMigrator.MigratePuppeteerAliasConfig(oldObject, _connections, oldFormatFile);
+                }
+
+                var directory = Path.GetDirectoryName(file);
+                if (directory is not null)
+                    Directory.CreateDirectory(directory);
+                Logger.LogInformation("No Puppeteer config found, creating new one.");
+                Save();
+                return;
             }
             else
             {
-                Logger.LogWarning($"No Config file found for: " + oldFormatFile);
-                _saver.Save(this);
-                return;
-                // create a new file with default values.
+                var jsonText = File.ReadAllText(file);
+                jObject = JObject.Parse(jsonText);
             }
-        }
-        else
-        {
-            var jsonText = File.ReadAllText(file);
-            jObject = JObject.Parse(jsonText);
-        }
-        // Read the json from the file.
-        var version = jObject["Version"]?.Value<int>() ?? 1;
 
-        // Perform Migrations if any, and then load the data.
-        switch (version)
-        {
-            case 0:
-                jObject = MigrateV0ToV1(jObject);
-                goto case 1;
+            // Read the json from the file.
+            var version = jObject["Version"]?.Value<int>() ?? 1;
 
-            case 1:
-                LoadV1(jObject);
-                break;
+            // Perform Migrations if any, and then load the data.
+            switch (version)
+            {
+                case 0:
+                    jObject = MigrateV0ToV1(jObject);
+                    goto case 1;
 
-            default:
-                Logger.LogError("Invalid Version!");
-                return;
+                case 1:
+                    LoadV1(jObject);
+                    break;
+
+                default:
+                    Logger.LogError("Invalid Version!");
+                    return;
+            }
+            Save();
+            Mediator.Publish(new ReloadFileSystem(GSModule.Puppeteer));
         }
-        _saver.Save(this);
-        Mediator.Publish(new ReloadFileSystem(GSModule.Puppeteer));
+        catch (Bagagwa ex) { Logger.LogError("Failed to load config." + ex); }
     }
 
     private static JObject MigrateV0ToV1(JObject v0)

@@ -146,7 +146,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     }
 
     /// <summary>
-    ///   Occurs whenever our client disconnects from the SundouleiaServer. <para />
+    ///   Occurs whenever our client disconnects from the Server. <para />
     ///   What actions are taken depend on the disconnection intent.
     /// </summary>
     public void OnClientDisconnected(DisconnectIntent intent)

@@ -33,7 +33,7 @@ public class SidePanelUI : WindowMediatorSubscriberBase
     {
         IsOpen = _service.CanDraw;
     }
-    protected override void PreDrawInternal()
+    public override void PreDraw()
     {
         // Magic that makes the sticky pair window move with the main UI.
         var position = MainUI.LastPos;
@@ -46,10 +46,8 @@ public class SidePanelUI : WindowMediatorSubscriberBase
         float fixedHeight = MainUI.LastSize.Y - ImGui.GetFrameHeightWithSpacing() * 2;
         
         this.SetBoundaries(new(fixedWidth, fixedHeight), new(fixedWidth, fixedHeight));
+        base.PreDraw();
     }
-
-    protected override void PostDrawInternal()
-    { }
 
     // If this runs, it is assumed that for this frame the data is valid for drawing.
     protected override void DrawInternal()

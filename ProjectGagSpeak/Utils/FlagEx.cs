@@ -13,7 +13,6 @@ public static class FlagEx
     public static bool HasAny(this DaysOfWeek flags, DaysOfWeek check) => (flags & check) != 0;
     public static bool HasAny(this AlertKind flags, AlertKind check) => (flags & check) != 0;
     public static bool HasAny(this OnlineFilter flags, OnlineFilter check) => (flags & check) != 0;
-    public static bool HasAny(this OnlinePresence flags, OnlinePresence check) => (flags & check) != 0;
 
     public static int ActiveCount<TEnum>(this TEnum value) where TEnum : Enum
     {

@@ -33,7 +33,6 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     private readonly KinksterManager _kinksters;
     private readonly RequestsManager _requests;
     private readonly CollarManager _collarManager;
-    private readonly ChatService _chatService;
     private readonly PairService _pairService;
 
     private readonly IpcCallerLoci _loci;
@@ -72,7 +71,6 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         KinksterManager kinksters,
         RequestsManager requests,
         CollarManager collarManager,
-        ChatService chatService,
         PairService pairService,
         IpcCallerLoci loci,
         ClientDataListener clientDatListener,
@@ -91,7 +89,6 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         _kinksters = kinksters;
         _requests = requests;
         _collarManager = collarManager;
-        _chatService = chatService;
         _pairService = pairService;
         _loci = loci;
         _clientDatListener = clientDatListener;

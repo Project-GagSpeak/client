@@ -64,8 +64,8 @@ public class GlobalChatLog : RichChatLog<NewGsChatMessage>, IMediatorSubscriber,
 
     public string GetChatName(UserData user)
     {
-        if (_kinksters.GetValueOrDefault(user) is { } sundesmo)
-            return $"{sundesmo.GetNickAliasOrUid()} ({user.UID[..4]})";
+        if (_kinksters.GetValueOrDefault(user) is { } kinkster)
+            return $"{kinkster.GetNickAliasOrUid()} ({user.UID[..4]})";
         if (_userFlags.TryGetValue(user, out var flags) && flags.HasAny(ChatFlags.UseDisplayName))
             return user.VanityOrAnonName;
         return user.AnonName;
@@ -91,11 +91,11 @@ public class GlobalChatLog : RichChatLog<NewGsChatMessage>, IMediatorSubscriber,
 
         // Process for mentions
         var finalMsgText = ProcessMentions(ctx, out bool wasMentioned);
-        var sundMsg = new NewGsChatMessage(msg, GetSenderName(msg), finalMsgText, NewSenderSinceLastMsg(msg.Sender.UID))
+        var gsMsg = new NewGsChatMessage(msg, GetSenderName(msg), finalMsgText, NewSenderSinceLastMsg(msg.Sender.UID))
         {
             WasMentioned = wasMentioned
         };
-        AddLogMessage(sundMsg);
+        AddLogMessage(gsMsg);
 
         if (!wasMentioned)
             return;
@@ -112,8 +112,8 @@ public class GlobalChatLog : RichChatLog<NewGsChatMessage>, IMediatorSubscriber,
         if (sender.VanityName is not null && radarFlags.HasAny(ChatFlags.UseDisplayName))
             return sender.VanityName;
         // Fallback for pairs
-        if (_kinksters.GetValueOrDefault(sender) is { } sundesmo)
-            return $"{sundesmo.GetNickAliasOrUid()} ({sender.UID[..4]})";
+        if (_kinksters.GetValueOrDefault(sender) is { } kinkster)
+            return $"{kinkster.GetNickAliasOrUid()} ({sender.UID[..4]})";
         // Final fallback
         return radarFlags.HasAny(ChatFlags.UseDisplayName) ? sender.VanityOrAnonName : sender.AnonName;
     }

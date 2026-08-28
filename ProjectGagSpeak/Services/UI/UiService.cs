@@ -249,7 +249,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
         {
             if (GsColors.StackSize != 0)
             {
-                Logger.LogDebug("Waiting to apply SundColors changes until stack is 0.");
+                Logger.LogDebug("Waiting to apply GsColors changes until stack is 0.");
             }
             else
             {

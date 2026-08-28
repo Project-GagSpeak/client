@@ -1,6 +1,21 @@
 using CkCommons;
+using System.Collections.Immutable;
 
 namespace GagSpeak;
+
+public static class Consts
+{
+    public const string DDS_All = "All Kinksters";
+    public const string DDS_Rendered = "Visible";
+    public const string DDS_Online = "Online";
+    public const string DDS_Offline = "Offline";
+    // Nearby
+    public const string NDDS_Paired = "Paired";
+    public const string NDDS_Unpaired = "Unpaired";
+    // Requests
+    public const string RDDS_Incoming = "Incoming Requests";
+    public const string RDDS_Pending = "Pending Requests";
+}
 
 // Default values for reversions.
 public static class GsDefaults

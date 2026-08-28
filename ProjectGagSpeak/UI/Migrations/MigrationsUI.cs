@@ -17,7 +17,6 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
     private readonly AccountInfoExchanger _infoExchanger;
     private readonly MainConfig _mainConfig;
     private readonly CosmeticService _cosmetics;
-    private bool ThemePushed = false;
 
     // Come back to this when we actually have everything working properly.
     public MigrationsUI(ILogger<InteractionEventsUI> logger, GagspeakMediator mediator,
@@ -52,26 +51,6 @@ internal class MigrationsUI : WindowMediatorSubscriberBase
     //private CursedItem? SelectedCursedItem = null;
     //private Trigger? SelectedTrigger = null;
     //private Alarm? SelectedAlarm = null;
-
-    protected override void PreDrawInternal()
-    {
-        if (!ThemePushed)
-        {
-            ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .803f));
-            ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.579f, 0.170f, 0.359f, 0.828f));
-
-            ThemePushed = true;
-        }
-    }
-
-    protected override void PostDrawInternal()
-    {
-        if (ThemePushed)
-        {
-            ImGui.PopStyleColor(2);
-            ThemePushed = false;
-        }
-    }
 
     protected override void DrawInternal()
     {

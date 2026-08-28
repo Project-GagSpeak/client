@@ -1,4 +1,5 @@
 using CkCommons.Helpers;
+using CkCommons.RichText;
 using CkCommons.Textures;
 using Dalamud.Bindings.ImGui;
 using GagSpeak.Interop.Helpers;
@@ -51,7 +52,7 @@ public sealed class PairStatusCombo : LociComboBase<LociStatusInfo>
         ImGui.SameLine(ImUtf8.ItemInnerSpacing.X);
         var adjust = (size.Y - ImUtf8.TextHeight) * 0.5f;
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + adjust);
-        CkRichText.Text(titleSpace, myStatus.Title);
+        NewRichText.TextWrapped(myStatus.Title, titleSpace);
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() - adjust);
         return ret;
     }

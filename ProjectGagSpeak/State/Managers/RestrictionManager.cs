@@ -21,8 +21,8 @@ public sealed class RestrictionManager : IHybridSavable
     private readonly ILogger<RestrictionManager> _logger;
     private readonly GagspeakMediator _mediator;
     private readonly FavoritesConfig _favorites;
+    private readonly ConnectionsConfig _connections;
     private readonly ModPresetManager _modPresets;
-    private readonly GsFiles _fileNames;
     private readonly HybridSaveService _saver;
 
     private StorageItemEditor<RestrictionItem> _itemEditor = new();
@@ -38,15 +38,15 @@ public sealed class RestrictionManager : IHybridSavable
         ILogger<RestrictionManager> logger,
         GagspeakMediator mediator,
         FavoritesConfig favorites,
+        ConnectionsConfig connections,
         ModPresetManager modPresets,
-        GsFiles fileNames,
         HybridSaveService saver)
     {
         _logger = logger;
         _mediator = mediator;
         _favorites = favorites;
+        _connections = connections;
         _modPresets = modPresets;
-        _fileNames = fileNames;
         _saver = saver;
     }
 
@@ -107,7 +107,7 @@ public sealed class RestrictionManager : IHybridSavable
             _ => new RestrictionItem() { Label = name }
         };
         Storage.Add(restriction);
-        _saver.Save(this);
+        Save();
         _logger.LogDebug($"Created New [{type}] Restriction ({restriction.Label}) with ID: {restriction.Identifier}.");
         _mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Created, restriction, null));
         return restriction;
@@ -125,7 +125,7 @@ public sealed class RestrictionManager : IHybridSavable
             _ => throw new NotImplementedException("Unknown restriction type."),
         };
         Storage.Add(clonedItem);
-        _saver.Save(this);
+        Save();
 
         _logger.LogDebug($"Cloned restriction {clonedItem.Identifier}.");
         _mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Created, clonedItem, folderPath));
@@ -139,7 +139,7 @@ public sealed class RestrictionManager : IHybridSavable
         {
             _logger.LogDebug($"Deleted restriction {restriction.Identifier}.");
             _mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Deleted, restriction, null));
-            _saver.Save(this);
+            Save();
         }
     }
 
@@ -152,7 +152,7 @@ public sealed class RestrictionManager : IHybridSavable
         newName = CkGui.TooltipTokenRegex().Replace(newName, string.Empty);
         newName = RegexEx.EnsureUniqueName(newName, Storage, x => x.Label);
         restriction.Label = newName;
-        _saver.Save(this);
+        Save();
         _logger.LogDebug($"Renamed restriction {restriction.Identifier}.");
         _mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Renamed, restriction, oldName));
     }
@@ -164,7 +164,7 @@ public sealed class RestrictionManager : IHybridSavable
         {
             _logger.LogDebug($"Thumbnail updated for {restriction.Label} to {restriction.ThumbnailPath}");
             restriction.ThumbnailPath = newPath;
-            _saver.Save(this);
+            Save();
             _mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Modified, restriction, null));
         }
     }
@@ -190,7 +190,7 @@ public sealed class RestrictionManager : IHybridSavable
         if (_itemEditor.SaveAndQuitEditing(out var sourceItem))
         {
             // _managerCache.UpdateCache(AppliedRestrictions);
-            _saver.Save(this);
+            Save();
 
             _logger.LogTrace("Saved changes to Edited RestrictionItem.");
             _mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Modified, sourceItem, null));
@@ -203,15 +203,15 @@ public sealed class RestrictionManager : IHybridSavable
         {
             item.IsEnabled = !item.IsEnabled;
             _mediator.Publish(new ConfigRestrictionChanged(StorageChangeType.Modified, item));
-            _saver.Save(this);
+            Save();
         }
     }
 
     /// <summary> Attempts to add the gag restriction as a favorite. </summary>
-    public bool AddFavorite(GarblerRestriction restriction) => _favorites.TryAddGag(restriction.GagType);
+    public void AddFavorite(GarblerRestriction restriction) => _favorites.FavoriteGag(restriction.GagType);
 
     /// <summary> Attempts to remove the gag restriction as a favorite. </summary>
-    public bool RemoveFavorite(GarblerRestriction restriction) => _favorites.RemoveGag(restriction.GagType);
+    public void RemoveFavorite(GarblerRestriction restriction) => _favorites.UnfavoriteGag(restriction.GagType);
 
     /// <summary> 
     ///   Applies a cursed items restriction ref to the active restrictions cache. <para />
@@ -330,11 +330,12 @@ public sealed class RestrictionManager : IHybridSavable
 
     #region HybridSavable
     public int ConfigVersion => 1;
+    public int MaxBackups => 2;
     public HybridSaveType SaveType => HybridSaveType.Json;
-    public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
-    public string GetFileName(GsFiles files, out bool isAccountUnique)
-        => (isAccountUnique = true, files.Restrictions).Item2;
-    public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
+    public DateTime LastWriteTimeUTC => DateTime.MinValue;
+    public string ToFilePath(GsFiles files) => GetSaveFilePath();
+    public void WriteToStream(StreamWriter _) => throw new NotImplementedException();
+    private string GetSaveFilePath() => Path.Combine(GsFiles.ConfigDirectory, _connections.CurrentProfileUID, GsFiles.RestrictionsFile);
     public string JsonSerialize()
     {
         // Construct the array of CursedLootItems.
@@ -353,41 +354,58 @@ public sealed class RestrictionManager : IHybridSavable
         }.ToString(Formatting.Indented);
     }
 
-    public void Load()
+    public void Save()
     {
-        var file = _fileNames.Restrictions;
-        _logger.LogInformation("Loading in Restrictions Config for file: " + file);
-        Storage.Clear();
-        if (!File.Exists(file))
+        if (string.IsNullOrEmpty(_connections.CurrentProfileUID))
         {
-            _logger.LogWarning("No Restrictions file found at {0}", file);
-            // create a new file with default values.
-            _saver.Save(this);
+            _logger.LogInformation("[Save Aborted] No profile selected.");
             return;
         }
-
-        // Read the json from the file.
-        var jsonText = File.ReadAllText(file);
-        var jObject = JObject.Parse(jsonText);
-        var version = jObject["Version"]?.Value<int>() ?? 0;
-
-        // Perform Migrations if any, and then load the data.
-        switch (version)
-        {
-            case 0:
-                MigrateRestrictionsV0toV1(jObject);
-                goto case 1;
-
-            case 1:
-                LoadV1(jObject["RestrictionItems"]);
-                break;
-
-            default:
-                _logger.LogError("Invalid Version!");
-                return;
-        }
         _saver.Save(this);
-        _mediator.Publish(new ReloadFileSystem(GSModule.Restriction));
+    }
+
+    public void Load()
+    {
+        var file = GetSaveFilePath();
+        _logger.LogInformation($"Loading RestrictionData Config: ({file})");
+        
+        Storage.Clear();
+        try
+        {
+            if (!File.Exists(file))
+            {
+                _logger.LogDebug($"[File Not Found] {file}");
+                var directory = Path.GetDirectoryName(file);
+                if (directory is not null)
+                    Directory.CreateDirectory(directory);
+                Save();
+                return;
+            }
+
+            // Read the json from the file.
+            var jsonText = File.ReadAllText(file);
+            var jObject = JObject.Parse(jsonText);
+            var version = jObject["Version"]?.Value<int>() ?? 0;
+
+            // Perform Migrations if any, and then load the data.
+            switch (version)
+            {
+                case 0:
+                    MigrateRestrictionsV0toV1(jObject);
+                    goto case 1;
+
+                case 1:
+                    LoadV1(jObject["RestrictionItems"]);
+                    break;
+
+                default:
+                    _logger.LogError("Invalid Version!");
+                    return;
+            }
+            Save();
+            _mediator.Publish(new ReloadFileSystem(GSModule.Restriction));
+        }
+        catch (Bagagwa ex) { _logger.LogError("Failed to load config." + ex); }
     }
 
     private void LoadV1(JToken? data)

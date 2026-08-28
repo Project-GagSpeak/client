@@ -12,7 +12,7 @@ namespace GagSpeak.Services;
 public class UserKinkPlate : DisposableMediatorSubscriberBase
 {
     private readonly UserData _user;
-    private UserProfileV1 _data; // Future ref
+    // private UserProfileV1 _data; // Future ref
     private KinkPlateContent _currData;
 
     private string _base64Icon;

@@ -125,7 +125,7 @@ public class PuppeteersTab : IFancyTab
             using (var phraseBox = CkRaii.FramedChildPaddedW("triggers", _.InnerRegion.X, CkStyle.GetFrameRowsHeight(2), 0, GsCol.RemoteLines.Uint(), rounding, DFlags.RoundCornersAll))
             {
                 var triggers = kinkster.OwnPerms.TriggerPhrase;
-                if (_triggersBox.DrawTagsEditor("##box", triggers, out var updatedString, GsCol.VibrantPink.Vec4Ref()))
+                if (_triggersBox.DrawTagsEditor("##box", triggers, out var updatedString, GsCol.VibrantPink.Vec4()))
                 {
                     _logger.LogTrace("The Tag Editor had an update!");
                     UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, kinkster.User, kinkster.OwnPerms, nameof(PairPerms.TriggerPhrase), updatedString));

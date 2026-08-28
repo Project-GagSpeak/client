@@ -16,13 +16,10 @@ public class ToyboxUI : WindowMediatorSubscriberBase
     private readonly AlarmsPanel _alarms;
     private readonly TutorialService _guides;
 
-    public ToyboxUI(
-        ILogger<ToyboxUI> logger,
-        GagspeakMediator mediator,
-        ToysPanel sexToys,
-        PatternsPanel patterns,
-        AlarmsPanel alarms,
-        TutorialService guides) : base(logger, mediator, "Toybox UI")
+    public ToyboxUI(ILogger<ToyboxUI> logger, GagspeakMediator mediator,
+        ToysPanel sexToys, PatternsPanel patterns, AlarmsPanel alarms,
+        TutorialService guides)
+        : base(logger, mediator, "Toybox UI")
     {
         _sexToys = sexToys;
         _patterns = patterns;
@@ -41,30 +38,8 @@ public class ToyboxUI : WindowMediatorSubscriberBase
     }
 
     private ToyboxTabs _tabMenu { get; init; }
-    private bool ThemePushed = false;
 
     private static float RightLength() => 300 * ImGuiHelpers.GlobalScale;
-
-    protected override void PreDrawInternal()
-    {
-        if (!ThemePushed)
-        {
-            ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(4));
-            ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .403f));
-            ImGui.PushStyleColor(ImGuiCol.TitleBgActive, new Vector4(0.579f, 0.170f, 0.359f, 0.428f));
-            ThemePushed = true;
-        }
-    }
-
-    protected override void PostDrawInternal()
-    {
-        if (ThemePushed)
-        {
-            ImGui.PopStyleVar();
-            ImGui.PopStyleColor(2);
-            ThemePushed = false;
-        }
-    }
 
     protected override void DrawInternal()
     {

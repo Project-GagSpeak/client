@@ -26,14 +26,12 @@ public class CosmeticService : IHostedService, IDisposable
         Error = new ImageFile(_pool, Path.Combine(GsFiles.AssemblyDirectoryName, "Assets\\RequiredImages\\error_tmp.png"));
 
         CoreTextures = TextureManager.CreateEnumTextureCache(CosmeticLabels.NecessaryImages);
-        EmoteTextures = TextureManager.CreateEnumTextureCache(CosmeticLabels.ChatEmoteTextures);
         IntifaceTextures = TextureManager.CreateEnumTextureCache(CosmeticLabels.IntifaceImages);
 
         LoadAllCosmetics();
     }
     
     public static EnumTextureCache<CoreTexture>         CoreTextures;
-    public static EnumTextureCache<CoreEmoteTexture>    EmoteTextures;
     public static EnumTextureCache<CoreIntifaceElement> IntifaceTextures;
     private static ConcurrentDictionary<string, IDalamudTextureWrap> InternalCosmeticCache = [];
     public static ImageFile Loading { get; private set; }

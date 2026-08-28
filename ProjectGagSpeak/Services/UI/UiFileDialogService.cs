@@ -34,7 +34,7 @@ public sealed class UiFileDialogService : IDisposable
                 _manager.CustomSideBarItems.Add(($"{name}##{idx}", path, FontAwesomeIcon.Folder, -1));
 
         // Add The GagSpeakConfig Root.
-        _manager.CustomSideBarItems.Add(("GagSpeak", GsFiles.GagSpeakDirectory, FontAwesomeIcon.Handcuffs, 0));
+        _manager.CustomSideBarItems.Add(("GagSpeak", GsFiles.ConfigDirectory, FontAwesomeIcon.Handcuffs, 0));
     }
 
     public void OpenMultiFilePicker(string title, string filters, Action<bool, List<string>> callback, int selectionCountMax, string? startPath,

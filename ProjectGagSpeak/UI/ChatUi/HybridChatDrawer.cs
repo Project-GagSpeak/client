@@ -12,10 +12,10 @@ using GagSpeak.Services.Textures;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Chat;
 using GagspeakAPI.Data.Comparer;
+using GagspeakAPI.Reporting;
 using GagspeakAPI.User;
 using OtterGui.Text;
 using OtterGuiInternal;
-using SundouleiaAPI.Reporting;
 using System.Globalization;
 
 namespace GagSpeak.Gui.Chat;
@@ -240,10 +240,15 @@ public class HybridChatDrawer : RichEmoteChatDrawer
         {
             // RadarChat requires access.
             if (ChatLog is GlobalChatLog gcl)
+            {
                 if (gcl.ChatUsers.GetValueOrDefault(msg.Sender, ChatFlags.None).HasAny(ChatFlags.AllowProfileViewing))
-                    _mediator.Publish(new OpenUserProfileMessage(msg.Sender));
-            // Otherwise just open the profile.
-            _mediator.Publish(new OpenUserProfileMessage(msg.Sender));
+                    _mediator.Publish(new OpenUserLightProfileMessage(msg.Sender));
+            }
+            else
+            {
+                // Otherwise just open the profile.
+                _mediator.Publish(new OpenUserLightProfileMessage(msg.Sender));
+            }
         }
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
@@ -353,7 +358,7 @@ public class HybridChatDrawer : RichEmoteChatDrawer
         {
             if (ImGui.Selectable("Open Profile"))
             {
-                _mediator.Publish(new OpenUserProfileMessage(msg.Sender));
+                _mediator.Publish(new OpenUserLightProfileMessage(msg.Sender));
                 ImGui.CloseCurrentPopup();
             }
             CkGui.AttachTooltip($"Open {dispName}'s profile.--NL----COL--Shortcut: Middle-Click--COL--", ImGuiColors.DalamudGrey2, ImGuiHoveredFlags.AllowWhenDisabled);
@@ -391,7 +396,7 @@ public class HybridChatDrawer : RichEmoteChatDrawer
             var canProfile = flags.HasAny(ChatFlags.AllowProfileViewing);
             if (CkGui.SelectableEx("Open Profile", !canProfile))
             {
-                _mediator.Publish(new OpenUserProfileMessage(msg.Sender));
+                _mediator.Publish(new OpenUserLightProfileMessage(msg.Sender));
                 ImGui.CloseCurrentPopup();
             }
             CkGui.AttachTooltip(!canProfile ? "This user does not allow Profile Viewing." : $"Opens {dispName}'s profile.", ImGuiHoveredFlags.AllowWhenDisabled);
@@ -450,7 +455,7 @@ public class HybridChatDrawer : RichEmoteChatDrawer
 
         if (CkGui.SelectableEx("Send PairRequest", disableReq))
         {
-            _hub.UserSendKinksterRequest(new(msg.Sender, true, _requestMsg)).ConfigureAwait(false);
+            _hub.UserCreatePairRequest(new(msg.Sender, true, _requestMsg)).ConfigureAwait(false);
             ImGui.CloseCurrentPopup();
         }
         var pairTooltip = !canPair ? "This kinkster does not accept Requests."

@@ -58,8 +58,9 @@ public class AccountConfig : IHybridSavable
     private readonly HybridSaveService _saver;
     public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     public int ConfigVersion => 2;
+    public int MaxBackups => 2;
     public HybridSaveType SaveType => HybridSaveType.Json;
-    public string GetFileName(GsFiles files, out bool upa) => (upa = false, files.AccountConfig).Item2;
+    public string ToFilePath(GsFiles files) => files.AccountConfig;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
     public string JsonSerialize()
     {

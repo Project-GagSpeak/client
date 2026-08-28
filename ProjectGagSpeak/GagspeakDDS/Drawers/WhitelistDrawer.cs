@@ -15,6 +15,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
 using GagSpeak.Utils;
+using GagspeakAPI.User;
 using OtterGui.Text;
 
 namespace GagSpeak.DrawSystem;
@@ -65,7 +66,7 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
     {
         var tmp = FilterCache.Filter;
         // Update the search bar if things change, like normal.
-        if (FancySearchBar.Draw("Filter", width, ref tmp, "filter..", length, CkGui.IconTextButtonSize(FAI.Cog, "Settings"), DrawButtons))
+        if (FancySearchBar.DrawWithButtons("Filter", "filter..", width, ref tmp, length, CkGui.IconTextButtonSize(FAI.Cog, "Settings"), DrawButtons))
             FilterCache.Filter = tmp;
 
         // If the config is expanded, draw that.
@@ -128,7 +129,7 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
 
         // Back to the start, then draw.
         ImGui.SameLine(pos.X);
-        CkGui.FramedIconText(folder.IsOpen ? FAI.CaretDown : FAI.CaretRight);
+        CkGui.FramedIconText(folder.Expanded ? FAI.CaretDown : FAI.CaretRight);
         ImGui.SameLine();
         CkGui.IconTextAligned(folder.Icon, folder.IconColor);
         CkGui.ColorTextFrameAlignedInline(folder.Name, folder.NameColor);
@@ -385,14 +386,6 @@ public sealed class WhitelistDrawer : DynamicDrawer<Kinkster>
             _config.Save();
         }
         CkGui.AttachTooltip(GSLoc.Settings.DDSPrefs.PreferNicknamesTT);
-
-        var prioritizeFavs = _config.Data.PrioritizeFavorites;
-        if (ImGui.Checkbox(GSLoc.Settings.DDSPrefs.FavoritesFirstLabel, ref prioritizeFavs))
-        {
-            _config.Data.PrioritizeFavorites = prioritizeFavs;
-            _config.Save();
-        }
-        CkGui.AttachTooltip(GSLoc.Settings.DDSPrefs.FavoritesFirstTT);
     }
     #endregion Utility
 }

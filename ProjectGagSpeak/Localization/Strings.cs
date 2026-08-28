@@ -1106,9 +1106,6 @@ namespace GagSpeak.Localization
 
     public class DDSPrefs
     {
-        public readonly string FavoritesFirstLabel = Loc.Localize("Preferences_FavoritesFirstLabel", "By Favorites First");
-        public readonly string FavoritesFirstTT = Loc.Localize("Preferences_FavoritesFirstTT", "Sort Favorite-First Render for main folders.");
-
         public readonly string ShowVisibleSeparateLabel = Loc.Localize("Preferences_ShowVisibleSeparateLabel", "Visible Folder");
         public readonly string ShowVisibleSeparateTT = Loc.Localize("Preferences_ShowVisibleSeparateTT", "Lists rendered online kinksters in a separate folder.");
 

@@ -7,6 +7,7 @@ using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
+using GagSpeak.Watchers;
 
 namespace GagSpeak.State.Listeners;
 
@@ -23,12 +24,12 @@ internal sealed record PlayerHealth(string NameWithWorld)
 public sealed class HealthMonitor : DisposableMediatorSubscriberBase
 {
     private readonly TriggerManager _manager;
-    private readonly CharaObjectWatcher _watcher;
+    private readonly CharaWatcher _watcher;
     
     private Dictionary<nint, PlayerHealth> Monitored = [];
 
     public HealthMonitor(ILogger<HealthMonitor> logger, GagspeakMediator mediator,
-        TriggerManager manager, CharaObjectWatcher watcher)
+        TriggerManager manager, CharaWatcher watcher)
         : base(logger, mediator)
     {
         _manager = manager;
@@ -78,7 +79,7 @@ public sealed class HealthMonitor : DisposableMediatorSubscriberBase
 
     private unsafe void GetInitialMonitors()
     {
-        foreach (var charaAddr in CharaObjectWatcher.Rendered)
+        foreach (var charaAddr in CharaWatcher.Rendered)
         {
             var chara = (Character*)charaAddr;
             Monitored.Add(charaAddr, new PlayerHealth(chara->GetNameWithWorld())

@@ -31,22 +31,20 @@ namespace GagSpeak.Gui;
 
 public class SettingsUi : WindowMediatorSubscriberBase
 {
-    private static bool THEME_PUSHED = false;
-
     private readonly MainHub _hub;
     private readonly MainConfig _config;
     private readonly ProfilesTab _accountsTab;
     private readonly DebugTab _debugTab;
     private readonly PiShockProvider _shockProvider;
     private readonly ClientDataListener _clientDatListener;
-    private readonly PluginGuideProvider _guideProvider;
-    private readonly KinksterManager _kinksters;
+    private readonly UiFileDialogService _fileDialog;
 
     private static bool _isLinux;
+    private OptionalPlugin _expandedInfo = OptionalPlugin.None;
 
     public SettingsUi(ILogger<SettingsUi> logger, GagspeakMediator mediator, MainHub hub,
         MainConfig config, ProfilesTab accounts, DebugTab debug, PiShockProvider shockProvider,
-        ClientDataListener listener, PluginGuideProvider guideProvider, KinksterManager kinksters)
+        ClientDataListener listener, UiFileDialogService fileDialog)
         : base(logger, mediator, "GagSpeak Settings")
     {
         _hub = hub;
@@ -55,8 +53,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         _debugTab = debug;
         _shockProvider = shockProvider;
         _clientDatListener = listener;
-        _guideProvider = guideProvider;
-        _kinksters = kinksters;
+        _fileDialog = fileDialog;
 
         Flags = WFlags.NoScrollbar;
         this.PinningClickthroughFalse();
@@ -117,6 +114,19 @@ public class SettingsUi : WindowMediatorSubscriberBase
                     DrawPreferences();
                     ImGui.EndTabItem();
                 }
+
+                if (ImGui.BeginTabItem("Notifications"))
+                {
+                    DrawAlertLocations();
+                    ImGui.EndTabItem();
+                }
+
+                if (ImGui.BeginTabItem("Online Users"))
+                {
+                    DrawOnlineUserOptions();
+                    ImGui.EndTabItem();
+                }
+
                 if (ImGui.BeginTabItem(GSLoc.Settings.TabsVanity))
                 {
                     DrawVanity();
@@ -136,38 +146,21 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 ImGui.EndTabItem();
             }
 
-            if (ImGui.BeginTabItem("Cordy's Projects"))
-            {
-                DrawProjectPromo();
-                ImGui.EndTabItem();
-            }
-
             ImGui.EndTabBar();
         }
 
         ImGui.SetCursorPos(buttonPos);
         using (ImRaii.Group())
         {
-            var noStyler = true;
-#if DEBUG
-            noStyler = false;
-#endif
-            if (CkGui.FancyButton(FAI.Palette, "Styler", rWidth, noStyler))
+            if (CkGui.FancyButton(FAI.Palette, "Styler", rWidth, false))
                 Mediator.Publish(new UiToggleMessage(typeof(StyleEditorUI)));
-            CkGui.AttachTooltip("Edit GagSpeak Style, Create Themes, and Import them for editor styles!");
+            CkGui.AttachTooltip("Edit Style (very WIP and incomplete, use at your own risk)");
 
             if (CkGui.FancyButton(FAI.Folder, "Configs", rWidth, false))
             {
-                try
-                {
-                    Process.Start(new ProcessStartInfo { FileName = GsFiles.GagSpeakDirectory, UseShellExecute = true });
-                }
-                catch (Bagagwa e)
-                {
-                    Svc.Logger.Error($"Failed to open the config directory. {e.Message}");
-                }
+                try { Process.Start(new ProcessStartInfo { FileName = GsFiles.ConfigDirectory, UseShellExecute = true }); }
+                catch (Bagagwa e) { Svc.Logger.Error($"Failed to open the config directory. {e.Message}"); }
             }
-
             CkGui.AttachTooltip("Opens the Config Folder.--NL--(Useful for debugging)");
         }
     }
@@ -1032,7 +1025,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
                 var dto = new UserDataUpdate(aliasUpdate, vanityUpdate, colorUpdate, null);
 
                 var ret = await _hub.UserUpdateData(dto).ConfigureAwait(false);
-                if (ret.ErrorCode is not SundouleiaApiEc.Success)
+                if (ret.ErrorCode is not GagSpeakApiEc.Success)
                 {
                     _logger.LogWarning($"Failed to set new VanityData: {ret.ErrorCode}");
                     _tmpDispName = null;
@@ -1180,7 +1173,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
     {
         if (CkGui.IconButton(FAI.FolderOpen))
         {
-            if (FileCacheUtils.IsWine)
+            if (_isLinux)
                 OpenDalamudAudioDialog(onSelected);
             else
                 ImGui.OpenPopup("audio-import-options");
@@ -1208,7 +1201,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         }
         CkGui.AttachTooltip("Opens Dalamuds FileDialog window to select a file from.");
 
-        if (CkGui.IconTextButton(FAI.FolderOpen, "Import via File Explorer", 240 * ImGuiHelpers.GlobalScale, true, FileCacheUtils.IsWine))
+        if (CkGui.IconTextButton(FAI.FolderOpen, "Import via File Explorer", 240 * ImGuiHelpers.GlobalScale, true, _isLinux))
         {
             OpenWindowsAudioExplorer(onSelected);
             ImGui.CloseCurrentPopup();

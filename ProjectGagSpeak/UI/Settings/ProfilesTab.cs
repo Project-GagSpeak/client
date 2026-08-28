@@ -27,6 +27,7 @@ public class ProfilesTab
     private readonly GagspeakMediator _mediator;
     private readonly MainHub _hub;
     private readonly MainConfig _mainConfig;
+    private readonly ConnectionsConfig _connections;
     private readonly AccountManager _account;
     private readonly KinkPlateService _kinkPlates;
     private readonly GsFiles _fileProvider;
@@ -34,12 +35,14 @@ public class ProfilesTab
     private readonly Queue<Action> _postDrawActions = new();
 
     public ProfilesTab(ILogger<ProfilesTab> logger, GagspeakMediator mediator,
-        MainHub hub, MainConfig config, AccountManager account, KinkPlateService kinkPlates, GsFiles fileProvider)
+        MainHub hub, MainConfig config, ConnectionsConfig connections,
+        AccountManager account, KinkPlateService kinkPlates, GsFiles fileProvider)
     {
         _logger = logger;
         _mediator = mediator;
         _hub = hub;
         _mainConfig = config;
+        _connections = connections;
         _account = account;
         _kinkPlates = kinkPlates;
         _fileProvider = fileProvider;
@@ -395,13 +398,13 @@ public class ProfilesTab
         if (!MainHub.IsConnectionDataSynced || !profile.HadValidConnection)
             return;
 
-        var profileData = _kinkPlates.GetKinkPlate(new(profile.UserUID));
-        var avatar = profileData.GetProfileOrDefault();
+        var profileData = _kinkPlates.GetUserProfile(new(profile.UserUID));
+        var avatar = profileData.GetIconWrapOrDefault();
         RectMin = ImGui.GetCursorScreenPos();
         // Draw out the avatar image.
         _wdl.AddDalamudImageRounded(avatar, AvatarPos, AvatarSize, AvatarSize.Y / 2);
         // draw out the border for the profile picture
-        if (CosmeticService.TryGetBorder(PlateElement.Avatar, profileData.Info.AvatarBorder, out var pfpBorder))
+        if (CosmeticService.TryGetBorder(PlateElement.Avatar, profileData.Data.AvatarBorder, out var pfpBorder))
             _wdl.AddDalamudImageRounded(pfpBorder, RectMin, ProfileSize, ProfileSize.Y / 2);
     }
 
@@ -517,7 +520,7 @@ public class ProfilesTab
             // Delete the folders based off our profile type that was deleted.
             if (isMain)
             {
-                var toDelete = Directory.GetDirectories(GsFiles.GagSpeakDirectory)
+                var toDelete = Directory.GetDirectories(GsFiles.ConfigDirectory)
                     .Where(d => accountUids.Contains(d, StringComparer.OrdinalIgnoreCase))
                     .ToList();
 
@@ -526,20 +529,20 @@ public class ProfilesTab
 
                 _logger.LogInformation("Removed all deleted profile-related folders.");
                 // Cleanup the remaining UID's
-                _fileProvider.ClearUidConfigs();
+                _connections.SetCurrentProfile(string.Empty);
                 // Fully disconnect and switch back to the intro UI.
                 await _hub.Disconnect(ServerState.Disconnected, DisconnectIntent.Reload);
                 _mediator.Publish(new SwitchToIntroUiMessage());
             }
             else
             {
-                var toDelete = _fileProvider.CurrentPlayerDirectory;
+                var toDelete = _connections.CurrentProfileUID;
                 if (Directory.Exists(toDelete))
                 {
                     _logger.LogDebug("Deleting Config Folder for removed profile.", LoggerType.ApiCore);
                     Directory.Delete(toDelete, true);
                 }
-                _fileProvider.ClearUidConfigs();
+                _connections.SetCurrentProfile(string.Empty);
                 await _hub.Reconnect(DisconnectIntent.Reload);
             }
         }

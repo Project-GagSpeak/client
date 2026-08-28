@@ -272,7 +272,7 @@ public sealed class DetectionDrawer : IDisposable
             _selectedJob = _jobCombo.Current.JobId;
         if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
             _selectedJob = JobType.ADV;
-        CkGui.AttachTooltip("The job to add actions for.--SEP----COL--[R-Click]:--COL-- Reset to ADV", GsCol.VibrantPink.Vec4Ref());
+        CkGui.AttachTooltip("The job to add actions for.--SEP----COL--[R-Click]:--COL-- Reset to ADV", GsCol.VibrantPink.Vec4());
 
         ImUtf8.SameLineInner();
         if (_jobActionCombo.Draw("##JobActionSelector", _selectedAction, ImGui.GetContentRegionAvail().X, 1.5f))
@@ -312,7 +312,7 @@ public sealed class DetectionDrawer : IDisposable
                 // Maybe check out XIVCombo or something to figure out how they properly display all actions to their screen fine.
                 // (They handle icon management well, perhaps we could learn a thing or two from them)
                 ImGui.Image(Svc.Texture.GetFromGameIcon((uint)iconData.IconID).GetWrapOrEmpty().Handle, iconSize);
-                CkGui.AttachTooltip($"--COL--[R-Click]:--COL-- Remove {iconData.Name} from actions", GsCol.VibrantPink.Vec4Ref());
+                CkGui.AttachTooltip($"--COL--[R-Click]:--COL-- Remove {iconData.Name} from actions", GsCol.VibrantPink.Vec4());
                 if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 {
                     if (trigger.StoredActions.FirstOrDefault(kvp => kvp.Value.Contains(actionIcon)) is { } list)
@@ -386,7 +386,7 @@ public sealed class DetectionDrawer : IDisposable
         if (CkGuiUtils.EnumCombo("##PassTypeCombo", ImGui.CalcTextSize("undermmm").X, trigger.PassKind, out var newVal))
             trigger.PassKind = newVal;
         CkGui.AttachTooltip("--COL--[Under]:--COL-- HP drops below the threshold" +
-            "--SEP----COL--[Over]:--COL-- HP goes above the threshold", GsCol.VibrantPink.Vec4Ref());
+            "--SEP----COL--[Over]:--COL-- HP goes above the threshold", GsCol.VibrantPink.Vec4());
 
         if (trigger.UsePercentageHealth)
         {
@@ -592,7 +592,7 @@ public sealed class DetectionDrawer : IDisposable
             "--NL----COL--[Self ⇒ Others]:--COL-- You used an emote on someone" +
             "--NL----COL--[Others]:--COL-- Someone else used an emote" +
             "--NL----COL--[Others ⇒ Self]:--COL-- Done by someone else, and the target WAS you." +
-            "--NL----COL--[Any]--COL-- Ignores Direction.", GsCol.VibrantPink.Vec4Ref());
+            "--NL----COL--[Any]--COL-- Ignores Direction.", GsCol.VibrantPink.Vec4());
 
         if (trigger.EmoteDirection is not (TriggerDirection.Self or TriggerDirection.Any))
         {
@@ -605,7 +605,7 @@ public sealed class DetectionDrawer : IDisposable
                 trigger.PlayerNameWorld = playerStrRef;
             if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
                 trigger.PlayerNameWorld = string.Empty;
-            CkGui.AttachTooltip("Defines the --COL--Target--COL----SEP--Leaving this blank allows anyone.", GsCol.VibrantPink.Vec4Ref());
+            CkGui.AttachTooltip("Defines the --COL--Target--COL----SEP--Leaving this blank allows anyone.", GsCol.VibrantPink.Vec4());
         }
     }
 

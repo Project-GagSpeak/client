@@ -5,6 +5,7 @@ using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
+using GagspeakAPI.Connection;
 using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;

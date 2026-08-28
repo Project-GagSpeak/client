@@ -6,6 +6,7 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Gui.MainWindow;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
@@ -20,8 +21,6 @@ namespace GagSpeak.Gui;
 /// <summary> The introduction UI that will be shown the first time that the user starts the plugin. </summary>
 public class IntroUi : WindowMediatorSubscriberBase
 {
-    private bool ThemePushed = false;
-
     private enum IntroUiPage : byte
     {
         Welcome = 0,
@@ -56,7 +55,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         RespectCloseHotkey = false;
         Flags = WFlags.NoScrollbar | WFlags.NoResize;
 
-        Mediator.Subscribe<SwitchToMainUiMessage>(this, (_) => IsOpen = false);
+        Mediator.Subscribe<IntoFinishedMessage>(this, (_) => IsOpen = false);
         Mediator.Subscribe<SwitchToIntroUiMessage>(this, (_) => IsOpen = true);
 
         // Make initial page assumptions.
@@ -78,27 +77,20 @@ public class IntroUi : WindowMediatorSubscriberBase
 
     }
 
-    protected override void PreDrawInternal()
+    public override void PreDraw()
     {
-        if (!ThemePushed)
-        {
-            ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 12f);
-            ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .803f));
-            ImGui.PushStyleColor(ImGuiCol.TitleBgCollapsed, ImGui.GetColorU32(ImGuiCol.TitleBg));
-            ImGui.PushStyleColor(ImGuiCol.TitleBgActive, ImGui.GetColorU32(ImGuiCol.TitleBg));
-
-            ThemePushed = true;
-        }
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 12f);
+        ImGui.PushStyleColor(ImGuiCol.TitleBg, new Vector4(0.331f, 0.081f, 0.169f, .803f));
+        ImGui.PushStyleColor(ImGuiCol.TitleBgCollapsed, ImGui.GetColorU32(ImGuiCol.TitleBg));
+        ImGui.PushStyleColor(ImGuiCol.TitleBgActive, ImGui.GetColorU32(ImGuiCol.TitleBg));
+        base.PreDraw();
     }
 
-    protected override void PostDrawInternal()
+    public override void PostDraw()
     {
-        if (ThemePushed)
-        {
-            ImGui.PopStyleVar();
-            ImGui.PopStyleColor(3);
-            ThemePushed = false;
-        }
+        ImGui.PopStyleVar();
+        ImGui.PopStyleColor(3);
+        base.PostDraw();
     }
 
     protected override void DrawInternal()
@@ -106,7 +98,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         if (_furthestPage is IntroUiPage.Initialized)
         {
             _logger.LogDebug("Switching to main UI");
-            Mediator.Publish(new SwitchToMainUiMessage());
+            Mediator.Publish(new UiToggleMessage(typeof(MainUI), ToggleType.Show));
             IsOpen = false;
             return;
         }
@@ -254,7 +246,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         {
             IntroUiPage.AttributionsAbout => "To Usage Agreement",
             IntroUiPage.UsageAgreement => "I Understand BDSM & GagSpeak's Importance On Privacy",
-            IntroUiPage.AccountSetup => "Login to Sundouleia!",
+            IntroUiPage.AccountSetup => "Login to GagSpeak!",
             _ => string.Empty
         };
 
@@ -420,7 +412,7 @@ public class IntroUi : WindowMediatorSubscriberBase
                 CkGui.BulletText("An area of control that requires mutual trust and respect between both parties.", ImGuiColors.DalamudGrey2);
             }
 
-            CkGui.ColorTextWrapped("Click the header image to proceed ♥", GsCol.VibrantPink.Vec4Ref());
+            CkGui.ColorTextWrapped("Click the header image to proceed ♥", GsCol.VibrantPink.Vec4());
         }
     }
     // Attributions, Acknowledgements, and 'What helped get GagSpeak to this point.'
@@ -432,7 +424,7 @@ public class IntroUi : WindowMediatorSubscriberBase
         CkGui.BulletText("TBD", GsCol.VibrantPink.Uint());
     }
 
-    // Understanding Sundouleia Privacy & Usage Transparency
+    // Understanding GagSpeak Privacy & Usage Transparency
     private void PageContentsUsage(Vector2 region)
     {
         CkGui.FontTextCentered("READ CAREFULLY, YOU WILL ONLY SEE THIS ONCE", Fonts.DefaultScaled, ImGuiColors.DalamudRed);

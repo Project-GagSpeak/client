@@ -12,6 +12,7 @@ using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
+using GagSpeak.Watchers;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
@@ -118,11 +119,11 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
     private unsafe void OnEmote(uint emoteId, nint callerAddr, nint targetAddr)
     {
         // Caller must be something, (Target can be nothing)
-        if (!CharaObjectWatcher.Rendered.Contains(callerAddr))
+        if (!CharaWatcher.Rendered.Contains(callerAddr))
             return;
 
         // Filter based on the type.
-        var isClientRendered = CharaObjectWatcher.LocalPlayerRendered;
+        var isClientRendered = PlayerData.Available;
         var clientIsCaller = isClientRendered && callerAddr == PlayerData.Address;
         var clientIsTarget = isClientRendered && targetAddr == PlayerData.Address;
 
@@ -145,7 +146,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
 
                 case TriggerDirection.OtherToSelf:
                     // Ensure valid states.
-                    if (!(CharaObjectWatcher.Rendered.Contains(targetAddr) && !clientIsCaller && clientIsTarget))
+                    if (!(CharaWatcher.Rendered.Contains(targetAddr) && !clientIsCaller && clientIsTarget))
                         return false;
                     // If the target was defined, ensure it matches.
                     return !string.IsNullOrEmpty(trigger.PlayerNameWorld)
@@ -154,7 +155,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
 
                 case TriggerDirection.Other:
                     // Ensure valid states.
-                    if (!(CharaObjectWatcher.Rendered.Contains(targetAddr) && !clientIsCaller))
+                    if (!(CharaWatcher.Rendered.Contains(targetAddr) && !clientIsCaller))
                         return false;
                     // If the target was defined, ensure it matches.
                     return !string.IsNullOrEmpty(trigger.PlayerNameWorld)
@@ -163,7 +164,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
 
                 case TriggerDirection.SelfToOther:
                     // Ensure valid states.
-                    if (!(CharaObjectWatcher.Rendered.Contains(targetAddr) && clientIsCaller))
+                    if (!(CharaWatcher.Rendered.Contains(targetAddr) && clientIsCaller))
                         return false;
                     // If the target was defined, ensure it matches.
                     return !string.IsNullOrEmpty(trigger.PlayerNameWorld)
@@ -182,8 +183,9 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
     private unsafe void OnHpTrigger(nint playerAddr, HealthPercentTrigger trigger)
     {
         // Ensure they are visible and rendered
-        if (!CharaObjectWatcher.TryGetValue(playerAddr, out Character* chara))
+        if (!VisibilityWatcher.Rendered.ContainsKey(playerAddr))
             return;
+        var chara = (Character*)playerAddr;
 
         // Get the health triggers scoped down to this person we are monitoring.
         var hpTriggers = _triggers.Storage.OfType<HealthPercentTrigger>()

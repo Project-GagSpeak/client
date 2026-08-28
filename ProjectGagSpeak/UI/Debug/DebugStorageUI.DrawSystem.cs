@@ -123,7 +123,6 @@ public partial class DebugStorageUI
             ImGui.TableSetupColumn("Name");
             ImGui.TableSetupColumn("Items");
             ImGui.TableSetupColumn("FullPath");
-            ImGui.TableSetupColumn("Flags");
             ImGui.TableHeadersRow();
 
             ImGui.TableNextColumn();
@@ -138,8 +137,6 @@ public partial class DebugStorageUI
             ImGui.Text(folder.TotalChildren.ToString());
             ImGui.TableNextColumn();
             CkGui.ColorText(folder.FullPath, ImGuiColors.TankBlue);
-            ImGui.TableNextColumn();
-            ImGui.Text(folder.Flags.ToString());
         }
     }
 }

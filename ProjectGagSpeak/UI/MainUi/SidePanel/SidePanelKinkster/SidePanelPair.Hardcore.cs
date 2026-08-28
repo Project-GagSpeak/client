@@ -17,6 +17,7 @@ using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using OtterGui;
 using OtterGui.Text;
+using GagSpeak.Watchers;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -28,7 +29,7 @@ public partial class SidePanelPair
         ImGui.TextUnformatted("Hardcore Actions");
         var hc = k.PairHardcore;
         var enactingString = k.PairPerms.DevotionalLocks ? $"{MainHub.UID}{Constants.DevotedString}" : MainHub.UID;
-        var isTarget = k.IsRendered && CharaObjectWatcher.TargetAddress.Equals(k.PlayerAddress);
+        var isTarget = k.IsRendered && CharaWatcher.TargetAddress.Equals(k.PlayerAddress);
         var inFollowRange = isTarget && k.DistanceToPlayer() < 5;
         var inImprisonRange = k.IsRendered && k.DistanceToPlayer() < 12;
 
@@ -379,7 +380,7 @@ public partial class SidePanelPair
                     if (ImGui.Checkbox(checkboxLabel, ref enabled))
                     {
                         var newBitfield = k.PairGlobals.AllowedGarblerChannels.SetChannelState((int)channel, enabled);
-                        PermHelper.ChangeOtherGlobal(_hub, k.User, k.PairGlobals, "AllowedGarblerChannels", newBitfield);
+                        PermHelper.ChangeOtherGlobal(_hub, k.User, k.PairGlobals, "AllowedGarblerChannels", newBitfield).ConfigureAwait(false);
                     }
 
                     // Only SameLine if not the third column

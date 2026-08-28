@@ -64,7 +64,7 @@ public sealed class PatternCombo : CkFilterComboCache<Pattern>, IMediatorSubscri
     {
         var pattern = Items[globalIdx];
 
-        if(Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Pattern, pattern.Identifier) && CurrentSelectionIdx == globalIdx)
+        if(Icons.DrawFavoriteStar(_favorites, FavoriteType.Pattern, pattern.Identifier) && CurrentSelectionIdx == globalIdx)
         {
             CurrentSelectionIdx = -1;
             Current = default;

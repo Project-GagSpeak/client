@@ -123,7 +123,7 @@ public class HomeTab
             if (canEdit)
                 _mediator.Publish(new UiToggleMessage(typeof(KinkPlateEditorUI), ToggleType.Show));
             else
-                _mediator.Publish(new OpenUserProfileMessage(MainHub.OwnUserData));
+                _mediator.Publish(new OpenUserLightProfileMessage(MainHub.OwnUserData));
         }
         if (hovered)
         {

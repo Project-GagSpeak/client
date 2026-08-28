@@ -8,13 +8,13 @@ namespace GagSpeak.DrawSystem;
 public class SorterHelpers
 {
     private readonly MainConfig _config;
-    private readonly KinksterManager _sundesmos;
+    private readonly KinksterManager _kinksters;
     private readonly PairService _pairService;
 
-    public SorterHelpers(MainConfig config, KinksterManager sundesmos, PairService pairService)
+    public SorterHelpers(MainConfig config, KinksterManager kinksters, PairService pairService)
     {
         _config = config;
-        _sundesmos = sundesmos;
+        _kinksters = kinksters;
         _pairService = pairService;
 
 

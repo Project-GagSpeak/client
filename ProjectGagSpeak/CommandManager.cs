@@ -2,6 +2,7 @@ using CkCommons;
 using Dalamud.Game.Command;
 using Dalamud.Game.Text.SeStringHandling;
 using GagSpeak.Gui;
+using GagSpeak.Gui.Chat;
 using GagSpeak.Gui.MainWindow;
 using GagSpeak.Kinksters;
 using GagSpeak.Minigames.Watchers;
@@ -107,7 +108,7 @@ public sealed class CommandManager : DisposableMediatorSubscriberBase
             Svc.Chat.Print(new SeStringBuilder().AddCommand("settings <navIdx> <panelIdx>", "Opens the settings UI.").BuiltString);
             Svc.Chat.Print(new SeStringBuilder().AddCommand("account", "Opens the account settings UI.").BuiltString);
             Svc.Chat.Print(new SeStringBuilder().AddCommand("profile", "Previews your UserProfile. (Append 'edit' for editor).").BuiltString);
-            Svc.Chat.Print(new SeStringBuilder().AddCommand("chat", "Toggles the Sundouleia Chat UI.").BuiltString);
+            Svc.Chat.Print(new SeStringBuilder().AddCommand("chat", "Toggles the GagSpeak Chat UI.").BuiltString);
             return;
         }
 
@@ -181,7 +182,7 @@ public sealed class CommandManager : DisposableMediatorSubscriberBase
         else if (string.Equals(splitArgs[0], "chat", StringComparison.OrdinalIgnoreCase))
         {
             if (_mainConfig.Data.HasValidSetup())
-                Mediator.Publish(new UiToggleMessage(typeof(GlobalChatPopoutUI)));
+                Mediator.Publish(new UiToggleMessage(typeof(ChatWindowUI)));
         }
 #if DEBUG
         else if (string.Equals(splitArgs[0], "intro", StringComparison.OrdinalIgnoreCase))

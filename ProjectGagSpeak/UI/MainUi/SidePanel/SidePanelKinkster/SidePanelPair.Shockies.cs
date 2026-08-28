@@ -8,6 +8,7 @@ using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Hub;
+using GagspeakAPI.User;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.MainWindow;

@@ -73,12 +73,6 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         this.SetBoundaries(new Vector2(625, 400), ImGui.GetIO().DisplaySize);
     }
 
-    protected override void PreDrawInternal()
-    { }
-
-    protected override void PostDrawInternal()
-    { }
-
     protected ImmutableList<Kinkster> _immutablePairs = ImmutableList<Kinkster>.Empty;
     protected string _searchValue = string.Empty;
 
@@ -117,7 +111,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
             ImGui.Text($"Visible Users: {_pairs.GetVisibleCount()}");
 
             // The search.
-            if (FancySearchBar.Draw("##PairDebugSearch", ImGui.GetContentRegionAvail().X, ref _searchValue, "Search for Pair..", 40))
+            if (FancySearchBar.Draw("##PairDebugSearch", "Search for Pair..", ImGui.GetContentRegionAvail().X, ref _searchValue, 40))
                 UpdateList();
 
             // Separator, then the results.
@@ -194,7 +188,7 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
 
         CkGui.FramedIconText(FAI.ExclamationTriangle, ImGuiColors.DalamudYellow);
         CkGui.TextFrameAlignedInline("WarningStrikes:");
-        CkGui.ColorTextInline($"{responce.Reputation.TotalStrikes()}", ImGuiColors.DalamudOrange);
+        CkGui.ColorTextInline($"{responce.Reputation.WarningStrikes}", ImGuiColors.DalamudOrange);
 
         // Display Hardcore State.
         using var t = ImRaii.Table("ReputationStatus", 3, ImGuiTableFlags.BordersInnerV | ImGuiTableFlags.SizingFixedFit);

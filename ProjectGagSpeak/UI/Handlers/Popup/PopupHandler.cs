@@ -29,17 +29,6 @@ public class PopupHandler : WindowMediatorSubscriberBase
 
         _handlers = popups.ToHashSet();
 
-        Mediator.Subscribe<VerificationPopupMessage>(this, (msg) =>
-        {
-            // open the verification popup, and label the handler that one is open.
-            _openPopup = true;
-            // set the current popup handler to the verification popup handler
-            _currentHandler = _handlers.OfType<VerificationPopupHandler>().Single();
-            ((VerificationPopupHandler)_currentHandler).Open(msg);
-            // set is open to true after processing the open function.
-            IsOpen = true;
-        });
-
         Mediator.Subscribe<PatternSavePromptMessage>(this, (msg) =>
         {
             // open the save pattern popup, and label the handler that one is open.
@@ -60,51 +49,32 @@ public class PopupHandler : WindowMediatorSubscriberBase
             IsOpen = false;
             _openPopup = false;
         });
-
-        Mediator.Subscribe<OpenReportUIMessage>(this, (msg) =>
-        {
-            // open the save pattern popup, and label the handler that one is open.
-            _openPopup = true;
-            // set the current popup handler to the save pattern popup handler
-            _currentHandler = _handlers.OfType<ReportPopupHandler>().Single();
-            ((ReportPopupHandler)_currentHandler).Open(msg);
-            // set is open to true after processing the open function.
-            IsOpen = true;
-        });
     }
 
-    protected override void PreDrawInternal()
+    public override void PreDraw()
     {
         if (!ThemePushed)
         {
             if (_currentHandler != null)
             {
                 if (_currentHandler.WindowPadding.HasValue)
-                {
                     ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, _currentHandler.WindowPadding.Value);
-                }
                 if (_currentHandler.WindowRounding.HasValue)
-                {
                     ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, _currentHandler.WindowRounding.Value);
-                }
             }
             ThemePushed = true;
         }
     }
-    protected override void PostDrawInternal()
+    public override void PostDraw()
     {
         if (ThemePushed)
         {
             if (_currentHandler != null)
             {
                 if (_currentHandler.WindowPadding.HasValue)
-                {
                     ImGui.PopStyleVar();
-                }
                 if (_currentHandler.WindowRounding.HasValue)
-                {
                     ImGui.PopStyleVar();
-                }
             }
             ThemePushed = false;
         }
@@ -112,7 +82,8 @@ public class PopupHandler : WindowMediatorSubscriberBase
     protected override void DrawInternal()
     {
         // If there is no handler, do nothing
-        if (_currentHandler == null) return;
+        if (_currentHandler == null)
+            return;
 
         // if we need to open a popup, do so
         if (_openPopup)

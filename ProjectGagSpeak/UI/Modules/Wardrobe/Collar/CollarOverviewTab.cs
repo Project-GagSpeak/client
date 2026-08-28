@@ -2,6 +2,7 @@ using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Gui.Utility;
 using CkCommons.Raii;
+using CkCommons.RichText;
 using CkCommons.Textures;
 using CkCommons.Widgets;
 using Dalamud.Bindings.ImGui;
@@ -380,7 +381,7 @@ public class CollarOverviewTab : IFancyTab
             return;
         }
 
-        CkRichText.Text(ImGui.GetContentRegionAvail().X - LociIcon.SizeFramed.X, status.Title);
+        NewRichText.TextWrapped(status.Title, ImGui.GetContentRegionAvail().X - LociIcon.SizeFramed.X);
         ImGui.SameLine();
         LociIcon.Draw(status.IconID, status.Stacks, LociIcon.SizeFramed);
         LociHelpers.AttachTooltip(status, LociCache.Data);

@@ -87,7 +87,7 @@ public sealed class ReactionsDrawer
         CkGui.AttachTooltip("The Classic PuppetMaster reaction of sending a message");
         var isValid = act.IsValid();
         ImUtf8.SameLineInner();
-        CkGui.ColorTextWrapped($"/{act.OutputCommand}", isValid ? ImGuiColors.TankBlue : CkCol.TriStateCross.Vec4Ref());
+        CkGui.ColorTextWrapped($"/{act.OutputCommand}", isValid ? ImGuiColors.TankBlue : CkCol.TriStateCross.Vec4());
         CkGui.AttachTooltip("What you send in chat.--SEP--The --COL--'/'--COL--, it is added for you.", GsCol.VibrantPink.Vec4());
     }
 

@@ -7,6 +7,11 @@ namespace GagSpeak.DrawSystem;
 // RequesterCache used by RequestInDrawer and RequestOutDrawer.
 public class RequestCache(DynamicDrawSystem<RequestEntry> parent) : DynamicFilterCache<RequestEntry>(parent)
 {
+    /// <summary>
+    ///   If the config options under the filter bar should show.
+    /// </summary>
+    public bool FilterConfigOpen = false;
+
     protected override bool IsVisible(IDynamicNode<RequestEntry> node)
     {
         if (Filter.Length is 0)

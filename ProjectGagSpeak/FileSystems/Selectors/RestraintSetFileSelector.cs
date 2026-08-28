@@ -132,7 +132,7 @@ public sealed class RestraintSetFileSelector : CkFileSystemSelector<RestraintSet
             ImGui.SetCursorScreenPos(rectMin with { X = rectMin.X + ImGui.GetStyle().ItemSpacing.X });
             using (ImRaii.Group())
             {
-                if (Icons.DrawFavoriteStar(_favorites, FavoriteIdContainer.Restraint, leaf.Value.Identifier))
+                if (Icons.DrawFavoriteStar(_favorites, FavoriteType.Restraint, leaf.Value.Identifier))
                     SetFilterDirty();
                 CkGui.TextFrameAlignedInline(leaf.Name, false);
                 // below, in a darker text, draw out the description, up to 100 characters.

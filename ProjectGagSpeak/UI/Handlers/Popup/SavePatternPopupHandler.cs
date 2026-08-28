@@ -10,7 +10,10 @@ using Dalamud.Bindings.ImGui;
 
 namespace GagSpeak.Gui.Components;
 
-/// <summary> A interface for handling the popups in the UI. </summary>
+/// <summary> 
+///   A interface for handling the popups in the UI. <br/>
+///   TODO: Phase this out, make it more like its own window.
+/// </summary>
 public class SavePatternPopupHandler : IPopupHandler
 {
     private readonly GagspeakMediator _mediator;

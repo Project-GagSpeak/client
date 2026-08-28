@@ -9,7 +9,7 @@ public class GsFiles : IConfigFileProvider
     public static string AssemblyLocation       => Svc.PluginInterface.AssemblyLocation.FullName;
     public static string AssemblyDirectoryName  => Svc.PluginInterface.AssemblyLocation.DirectoryName ?? string.Empty;
     public static string AssemblyDirectory      => Svc.PluginInterface.AssemblyLocation.Directory?.FullName ?? string.Empty;
-    public static string GagSpeakDirectory      => Svc.PluginInterface.ConfigDirectory.FullName;
+    public static string ConfigDirectory        => Svc.PluginInterface.ConfigDirectory.FullName;
     public static string SpatialDirectory   { get; private set; } = string.Empty;
     public static string EventDirectory     { get; private set; } = string.Empty;
     public static string FileSysDirectory   { get; private set; } = string.Empty;
@@ -49,26 +49,22 @@ public class GsFiles : IConfigFileProvider
 
 
     // Unique Client Configs Per Account.
-    public string RestraintSets => Path.Combine(CurrentPlayerDirectory, "restraint-sets.json");
-    public string Restrictions => Path.Combine(CurrentPlayerDirectory, "restrictions.json");
-    public string GagRestrictions => Path.Combine(CurrentPlayerDirectory, "gag-restrictions.json");
-    public string CollarData => Path.Combine(CurrentPlayerDirectory, "collar.json");
-    public string CursedLoot => Path.Combine(CurrentPlayerDirectory, "cursed-loot.json");
-    public string Puppeteer => Path.Combine(CurrentPlayerDirectory, "puppeteer.json");
-    public string Alarms => Path.Combine(CurrentPlayerDirectory, "alarms.json");
-    public string Triggers => Path.Combine(CurrentPlayerDirectory, "triggers.json");
-
-    public string CurrentPlayerDirectory => Path.Combine(GagSpeakDirectory, CurrentUserUID ?? "InvalidFiles");
-    public string? CurrentUserUID { get; private set; } = null;
+    public static readonly string RestraintSetsFile = "restraint-sets.json";
+    public static readonly string RestrictionsFile = "restrictions.json";
+    public static readonly string GagRestrictionsFile = "gag-restrictions.json";
+    public static readonly string CollarDataFile = "collar.json";
+    public static readonly string CursedLootFile = "cursed-loot.json";
+    public static readonly string PuppeteerFile = "puppeteer.json";
+    public static readonly string AlarmsFile = "alarms.json";
+    public static readonly string TriggersFile = "triggers.json";
 
     public GsFiles()
     {
         GagDataJson = Path.Combine(AssemblyDirectory, "MufflerCore", "GagData", "gag_data.json");
-        SpatialDirectory = Path.Combine(GagSpeakDirectory, "spatialaudio");
-        EventDirectory = Path.Combine(GagSpeakDirectory, "eventlog");
-        FileSysDirectory = Path.Combine(GagSpeakDirectory, "filesystem");
-        ThumbnailDirectory = Path.Combine(GagSpeakDirectory, "thumbnails");
-
+        SpatialDirectory = Path.Combine(ConfigDirectory, "spatialaudio");
+        EventDirectory = Path.Combine(ConfigDirectory, "eventlog");
+        FileSysDirectory = Path.Combine(ConfigDirectory, "filesystem");
+        ThumbnailDirectory = Path.Combine(ConfigDirectory, "thumbnails");
         // Ensure all directories exist.
         // We do this here to avoid having to synchronize between each file provider that share a directory.
         foreach (var dir in new[] { SpatialDirectory, EventDirectory, FileSysDirectory, ThumbnailDirectory })
@@ -77,18 +73,18 @@ public class GsFiles : IConfigFileProvider
                 Directory.CreateDirectory(dir);
         }
 
-        AccountConfig = Path.Combine(GagSpeakDirectory, "server.json");
-        ConnectionsConfig = Path.Combine(GagSpeakDirectory, "connections.json");
-        MainConfig = Path.Combine(GagSpeakDirectory, "config.json");
-        ChatConfig = Path.Combine(GagSpeakDirectory, "chat.json");
-        Nicknames = Path.Combine(GagSpeakDirectory, "nicknames.json");
-        Patterns = Path.Combine(GagSpeakDirectory, "patterns.json");
+        AccountConfig = Path.Combine(ConfigDirectory, "server.json");
+        ConnectionsConfig = Path.Combine(ConfigDirectory, "connections.json");
+        ChatConfig = Path.Combine(ConfigDirectory, "chat.json");
+        MainConfig = Path.Combine(ConfigDirectory, "config.json");
+        Nicknames = Path.Combine(ConfigDirectory, "nicknames.json");
+        Patterns = Path.Combine(ConfigDirectory, "patterns.json");
 
-        CustomModSettings = Path.Combine(GagSpeakDirectory, "custom-mod-settings.json");
-        TraitAllowances = Path.Combine(GagSpeakDirectory, "trait-allowances.json");
-        Favorites = Path.Combine(GagSpeakDirectory, "favorites.json");
-        HypnoEffects = Path.Combine(GagSpeakDirectory, "hypno-effect-presets.json");
-        BuzzToys = Path.Combine(GagSpeakDirectory, "buzz-devices.json");
+        CustomModSettings = Path.Combine(ConfigDirectory, "custom-mod-settings.json");
+        TraitAllowances = Path.Combine(ConfigDirectory, "trait-allowances.json");
+        Favorites = Path.Combine(ConfigDirectory, "favorites.json");
+        HypnoEffects = Path.Combine(ConfigDirectory, "hypno-effect-presets.json");
+        BuzzToys = Path.Combine(ConfigDirectory, "buzz-devices.json");
 
         if (File.Exists(ConnectionsConfig))
         {
@@ -116,61 +112,5 @@ public class GsFiles : IConfigFileProvider
 
         // Add _hub_ prefix
         return $"_hub_{cleanUri}";
-    }
-
-    // If this is not true, we should not be saving our configs anyways.
-    public bool HasValidProfileConfigs { get; private set; } = false;
-
-    public void ClearUidConfigs()
-    {
-        HasValidProfileConfigs = false;
-        UpdateUserUID(null);
-    }
-
-    public void UpdateConfigs(string uid)
-    {
-        Svc.Logger.Information("Updating Configs for UID: " + uid);
-        UpdateUserUID(uid);
-
-        if (!Directory.Exists(CurrentPlayerDirectory))
-            Directory.CreateDirectory(CurrentPlayerDirectory);
-
-        Svc.Logger.Information("Configs Updated.");
-        HasValidProfileConfigs = true;
-    }
-
-    private void UpdateUserUID(string? uid)
-    {
-        if (CurrentUserUID != uid)
-        {
-            CurrentUserUID = uid;
-            UpdateUidInConfig(uid);
-        }
-    }
-
-    private void UpdateUidInConfig(string? uid)
-    {
-        var uidFilePath = Path.Combine(GagSpeakDirectory, "config.json");
-        if (!File.Exists(uidFilePath))
-            return;
-
-        var tempFilePath = uidFilePath + ".tmp";
-        using (var reader = new StreamReader(uidFilePath))
-        using (var writer = new StreamWriter(tempFilePath))
-        {
-            string? line;
-            while ((line = reader.ReadLine()) != null)
-            {
-                if (line.Trim().StartsWith("\"LastUidLoggedIn\""))
-                {
-                    writer.WriteLine($"    \"LastUidLoggedIn\": \"{uid ?? ""}\",");
-                }
-                else
-                {
-                    writer.WriteLine(line);
-                }
-            }
-        }
-        File.Move(tempFilePath, uidFilePath, true);
     }
 }
