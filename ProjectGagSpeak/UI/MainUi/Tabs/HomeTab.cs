@@ -158,11 +158,10 @@ public class HomeTab
         var drawRegion = drawMax - drawMin;
 
         winPtr.DrawList.PushClipRect(drawMin, drawMax, false);
-        // Grey gradient fade.
-        winPtr.DrawList.AddRectFilledMultiColor(drawMin, drawMax, 0xCC3D3D3D, 0xCC333333, 0xCC141414, 0xCC1E1E1E);
+        winPtr.DrawList.AddRectFilled(drawMin, drawMax, 0xCC333333, style.WindowRounding, DFlags.RoundCornersBottom);
 
         // Image Background (Use placeholder for now)
-        if (CosmeticService.TryGetBackground(PlateElement.Plate, KinkPlateBG.Default, out var wrap) && wrap is { } bgWrap)
+        if (CosmeticService.TryGetBackground(PlateElement.PlateLight, KinkPlateBG.Default, out var wrap) && wrap is { } bgWrap)
         {
             // Ensure it is drawn at the correct scale.
             var drawWidth = drawMax.X - drawMin.X;
@@ -174,7 +173,7 @@ public class HomeTab
 
             // We use a very low alpha hex for the stacked images. 
             uint blurColor = 0x15444444;
-            uint centerColor = 0x22444444;
+            uint centerColor = 0x44444444;
             Span<Vector2> offsets =
             [
                 new(-blurRadius, -blurRadius), new(blurRadius, -blurRadius),
@@ -185,10 +184,10 @@ public class HomeTab
 
             // Fake blur effect.
             foreach (var offset in offsets)
-                winPtr.DrawList.AddImage(bgWrap.Handle, drawMin + offset, imgMax + offset, Vector2.Zero, Vector2.One, blurColor);
+                winPtr.DrawList.AddImageRounded(bgWrap.Handle, drawMin + offset, imgMax + offset, Vector2.Zero, Vector2.One, blurColor, style.WindowRounding, DFlags.RoundCornersBottom);
             // Image center overlay.
-            winPtr.DrawList.AddImage(bgWrap.Handle, drawMin, imgMax, Vector2.Zero, Vector2.One, centerColor);
-            
+            winPtr.DrawList.AddImageRounded(bgWrap.Handle, drawMin, imgMax, Vector2.Zero, Vector2.One, centerColor, style.WindowRounding, DFlags.RoundCornersBottom);
+
             // Get bottom fade transition and solid, and draw if nessisary
             var fadeHeight = drawHeight * 0.15f;
             var fadeTopY = imgMax.Y - fadeHeight;
@@ -201,7 +200,7 @@ public class HomeTab
                 if (imgMax.Y < drawMax.Y)
                 {
                     var solidTop = new Vector2(drawMin.X, imgMax.Y);
-                    winPtr.DrawList.AddRectFilled(solidTop, drawMax, 0xFF000000);
+                    winPtr.DrawList.AddRectFilled(solidTop, drawMax, 0xFF000000, style.WindowRounding, DFlags.RoundCornersBottom);
                 }
             }
         }
@@ -277,7 +276,6 @@ public class HomeTab
         // Creation Date
         var formattedDate = MainHub.OwnUserData.CreatedOn ?? DateTime.MinValue;
         var createdDate = formattedDate != DateTime.MinValue ? formattedDate.ToString("d", CultureInfo.CurrentCulture) : "MM-DD-YYYY";
-        ImGui.Spacing();
         using (ImRaii.Group())
         {
             using (ImRaii.PushColor(ImGuiCol.Text, 0xFF888888))
@@ -302,7 +300,6 @@ public class HomeTab
         }
         CkGui.AttachTooltip("Your current achievement progress.");
 
-        ImGui.Spacing();
         using (ImRaii.Group())
         {
             using (ImRaii.PushColor(ImGuiCol.Text, 0xFF211098))
@@ -383,7 +380,8 @@ public class HomeTab
         var winPtr = ImGuiInternal.GetCurrentWindow();
         var style = ImGui.GetStyle();
 
-        ImGui.Dummy(new Vector2(ImUtf8.FrameHeight));
+        ImGui.Spacing();
+        ImGui.Spacing();
 
         // Draw out the heading
         using (Fonts.HeaderFont.Push())

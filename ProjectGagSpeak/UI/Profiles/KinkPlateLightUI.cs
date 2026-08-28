@@ -42,7 +42,7 @@ public class KinkPlateLightUI : WindowMediatorSubscriberBase
     public override void PreDraw()
     {
         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, Vector2.Zero);
-        ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 35f * ImGuiHelpers.GlobalScale);
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowRounding, 40 * ImGuiHelpers.GlobalScale);
         base.PreDraw();
     }
 

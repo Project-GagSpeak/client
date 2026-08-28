@@ -57,7 +57,6 @@ public sealed class GagSpeak : IDalamudPlugin
         _ = _host.StartAsync();
         // Init the fonts
         _ = Fonts.InitializeFonts().ConfigureAwait(false);
-
     }
 
     // Method that creates the host builder for the GagSpeak plugin
@@ -281,16 +280,16 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<AlarmManager>()
         .AddSingleton<CacheStateManager>()
         .AddSingleton<CursedLootManager>()
-        .AddSingleton<GagRestrictionManager>()
-        .AddSingleton<CollarManager>()
         .AddSingleton<ModPresetManager>()
+        .AddSingleton<CollarManager>()
+        .AddSingleton<GagRestrictionManager>()
         .AddSingleton<BuzzToyManager>()
-        .AddSingleton<VibeLobbyManager>()
         .AddSingleton<PatternManager>()
         .AddSingleton<PuppeteerManager>()
         .AddSingleton<RestraintManager>()
         .AddSingleton<RestrictionManager>()
         .AddSingleton<TriggerManager>()
+        .AddSingleton<VibeLobbyManager>()
 
         // UI (Probably mostly in Scoped)
         .AddSingleton<AccountInfoExchanger>()

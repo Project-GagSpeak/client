@@ -97,13 +97,16 @@ public sealed class ConnectionSyncService : DisposableMediatorSubscriberBase
         if (response is null)
             return;
 
+        Logger.LogDebug($"ConnectionResponse: {response}, response UID {response.User.UID}, curProfile {_connections.CurrentProfileUID}");
+        
         var curProfile = _connections.CurrentProfileUID;
-        if (curProfile == response.User.UID)
-            return;
-        // Profile was different, process changes and send to IntroUI if nessisary.
-        Logger.LogInformation($"Profile UID changed: {curProfile} -> {response.User.UID}");
-        // This ensures all of the below configs get properly loaded in after this change occurs, so we can track when it finishes loading in everything.
-        _connections.SetCurrentProfile(response.User.UID);
+        if (curProfile != response.User.UID)
+        {
+            // Profile was different, process changes and send to IntroUI if nessisary.
+            Logger.LogInformation($"Profile UID changed: {curProfile} -> {response.User.UID}");
+            // This ensures all of the below configs get properly loaded in after this change occurs, so we can track when it finishes loading in everything.
+            _connections.SetCurrentProfile(response.User.UID);
+        }
 
         // Send them to the intro screen if the service account is not valid.
         if (!_config.Data.HasValidSetup() || !_accountConfig.Current.HasValidSetup())
