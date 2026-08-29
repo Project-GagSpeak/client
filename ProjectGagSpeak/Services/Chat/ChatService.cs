@@ -359,7 +359,7 @@ public class ChatService : DisposableMediatorSubscriberBase
             var garbledMsg = _garbler.GarbleMessage(messageDto.Message, true);
             // hacky, but just recreate the message dto with the garbler data replacing the original message
             // because we can't edit it after it's created
-            finalMessage = new SentMessage(messageDto.ChatID, messageDto.Sender, garbledMsg, messageDto.Contents);
+            finalMessage = messageDto with { Sender = MainHub.OwnUserData, Message = garbledMsg };
         }
         else
         {
