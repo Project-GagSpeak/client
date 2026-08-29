@@ -14,6 +14,8 @@ using GagspeakAPI.Chat;
 using GagspeakAPI.Hub;
 using GagspeakAPI.User;
 using System.Text.RegularExpressions;
+using GagSpeak.State.Managers;
+using GagspeakAPI.Extensions;
 using RichFilter = CkCommons.RichText.RichTextFilter;
 using SeTextPayload = Dalamud.Game.Text.SeStringHandling.Payloads.TextPayload;
 
@@ -33,6 +35,9 @@ public class ChatService : DisposableMediatorSubscriberBase
     private readonly ChatFactory _factory;
     private readonly KinksterManager _kinksters;
     private readonly PairService _pairService;
+    private readonly GagRestrictionManager _gags;
+    private readonly MufflerService _garbler;
+    
 
     private ChatlogId _overrideChatlogId = ChatlogId.Invalid;
     private readonly Dictionary<ChatlogId, DMChatLog> _dmChats = [];
@@ -44,7 +49,8 @@ public class ChatService : DisposableMediatorSubscriberBase
 
     public ChatService(ILogger<ChatService> logger, GagspeakMediator mediator,
         MainHub hub, MainConfig config, ChatConfig chatConfig, GlobalChatLog radarChat,
-        ChatFactory factory, KinksterManager kinksters, PairService pairService)
+        ChatFactory factory, KinksterManager kinksters, GagRestrictionManager gags,
+        MufflerService garbler, PairService pairService)
         : base(logger, mediator)
     {
         _hub = hub;
@@ -54,6 +60,8 @@ public class ChatService : DisposableMediatorSubscriberBase
         _factory = factory;
         _kinksters = kinksters;
         _pairService = pairService;
+        _gags = gags;
+        _garbler = garbler;
 
         ShowUID = Svc.Chat.AddChatLinkHandler(ShowUidID, OnShowUID);
         OpenRadarChat = Svc.Chat.AddChatLinkHandler(OpenGlobalChatID, OnOpenGlobalChat);
@@ -343,7 +351,22 @@ public class ChatService : DisposableMediatorSubscriberBase
     private async void SendChatInternal(ChatlogId id, SentMessage messageDto)
     {
         Logger.LogInformation($"Sending off message to [{id.Kind}]({id.ChatId})", LoggerType.ChatHooks);
-        var result = await _hub.UserSendChat(messageDto).ConfigureAwait(false);
+        
+        // this will need to be moved or changed for future planned chat updates
+        SentMessage finalMessage;
+        if ((_gags.ServerGagData?.IsGagged() ?? true) && (ClientData.Globals?.ChatGarblerActive ?? false))
+        {
+            var garbledMsg = _garbler.GarbleMessage(messageDto.Message, true);
+            // hacky, but just recreate the message dto with the garbler data replacing the original message
+            // because we can't edit it after it's created
+            finalMessage = new SentMessage(messageDto.ChatID, messageDto.Sender, garbledMsg, messageDto.Contents);
+        }
+        else
+        {
+            finalMessage = messageDto;
+        }
+
+        var result = await _hub.UserSendChat(finalMessage).ConfigureAwait(false);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to send message to [{id.Kind}]({id.ChatId}) through the hub! Error code: {result.ErrorCode}");
     }
