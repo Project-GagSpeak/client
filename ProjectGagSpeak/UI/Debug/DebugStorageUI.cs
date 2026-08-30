@@ -20,7 +20,6 @@ using GagspeakAPI.Network;
 using GagspeakAPI.Util;
 using Microsoft.IdentityModel.Tokens;
 using OtterGui;
-using OtterGui.Extensions;
 using Penumbra.GameData.Enums;
 
 namespace GagSpeak.Gui;

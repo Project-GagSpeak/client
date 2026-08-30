@@ -13,7 +13,6 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagspeakAPI.Util;
 using Dalamud.Bindings.ImGui;
-using OtterGui.Extensions;
 using OtterGui.Raii;
 using OtterGui.Text;
 using CkCommons.Textures;

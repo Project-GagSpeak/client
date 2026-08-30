@@ -10,8 +10,6 @@ using GagSpeak.State.Managers;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Network;
-using OtterGui.Extensions;
-using OtterGui.Text;
 
 namespace GagSpeak.Gui.Wardrobe;
 
@@ -84,24 +82,24 @@ public class CollarRequestsIncomingTab : IFancyTab
         {
             // Owner Access.
             ImGui.Dummy(new Vector2(ImGui.GetFrameHeight()));
-            ImUtf8.SameLineInner();
+            CkGui.SameLineInner();
             AccessPerm(FAI.Eye, request.OwnerAccess.HasAny(CollarAccess.Visuals), "Owners can toggle visuals", "Owners cannot toggle visuals.");
-            ImUtf8.SameLineInner();
+            CkGui.SameLineInner();
             AccessPerm(FAI.FillDrip, request.OwnerAccess.HasAny(CollarAccess.Dyes), "Owners can dye your collar", "Owners cannot dye your collar.");
-            ImUtf8.SameLineInner();
+            CkGui.SameLineInner();
             AccessPerm(FAI.TheaterMasks, request.OwnerAccess.HasAny(CollarAccess.LociData), "Owners can change the collar LociData", "Owners cannot change the collar LociData.");
-            ImUtf8.SameLineInner();
+            CkGui.SameLineInner();
             AccessPerm(FAI.PenFancy, request.OwnerAccess.HasAny(CollarAccess.Writing), "Owners can change the collar writing", "Owners cannot change the collar writing.");
 
             // Own Access.
             AccessPerm(FAI.Vest, request.TargetAccess.HasAny(CollarAccess.GlamMod), "You can change your collar glamour & mod.", "You cannot change your collar glamour & mod.");
-            ImUtf8.SameLineInner();
+            CkGui.SameLineInner();
             AccessPerm(FAI.Eye, request.TargetAccess.HasAny(CollarAccess.Visuals), "You can toggle visuals", "You cannot toggle visuals.");
-            ImUtf8.SameLineInner();
+            CkGui.SameLineInner();
             AccessPerm(FAI.FillDrip, request.TargetAccess.HasAny(CollarAccess.Dyes), "You can dye your collar", "You cannot dye your collar.");
-            ImUtf8.SameLineInner();
+            CkGui.SameLineInner();
             AccessPerm(FAI.TheaterMasks, request.TargetAccess.HasAny(CollarAccess.LociData), "You can change your collar LociData", "You cannot change your collar LociData.");
-            ImUtf8.SameLineInner();
+            CkGui.SameLineInner();
             AccessPerm(FAI.PenFancy, request.TargetAccess.HasAny(CollarAccess.Writing), "You can change your collar writing", "You cannot change your collar writing.");
         }
 

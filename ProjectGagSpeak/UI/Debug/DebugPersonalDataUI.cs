@@ -21,7 +21,6 @@ using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Extensions;
 using GagspeakAPI.Util;
 using OtterGui;
-using OtterGui.Extensions;
 using System.Collections.Immutable;
 
 namespace GagSpeak.Gui;

@@ -3,6 +3,22 @@ tagline: "GagSpeak 2.2 - The Chat Update"
 subline: "DM Integration, 150+ new emotes, GIF Support, stickers, vanity names, name colors, and more."
 changelog:
 
+  - version: v2.2.0.5
+    date: "August 30th, 2026"
+    title: "General Improvements"
+    headerMessage: ""
+    segments:
+      - icon: "Wrench"
+        title: "Improvements"
+        accent: "Blue"
+        bullets:
+          - text: "Updated the CKFS (FileSystems) to no longer be case sensative."
+            contributor: "Yfthbr"
+          - text: "Re-Implemented the ChatGarbler for global chat."
+            contributor: "AndrielChaoti"
+          - text: "Fixed emote favorites not saving between login sessions."
+            contributor: "AzureRavie"
+
   - version: v2.2.0.0
     date: "August 27th, 2026"
     title: "Chat Integration, Profile Preperation, UI Polish, and tons of PRs"

@@ -17,7 +17,6 @@ using GagSpeak.Services.Tutorial;
 using GagSpeak.State.Managers;
 using GagSpeak.State.Models;
 using GagspeakAPI.Attributes;
-using OtterGui.Extensions;
 using OtterGui.Text;
 
 namespace GagSpeak.Gui.Wardrobe;
