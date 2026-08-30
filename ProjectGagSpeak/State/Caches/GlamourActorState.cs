@@ -43,6 +43,38 @@ public struct GlamourActorState
     }
 
     /// <summary>
+    ///   Reads a single equipment slot out of a raw Glamourer state object.
+    /// </summary>
+    /// <remarks> Lets us compare against Glamourer's live state without parsing the whole object. </remarks>
+    public static bool TryReadSlot(JObject? state, EquipSlot slot, out ulong customItemId, out byte stain, out byte stain2)
+    {
+        customItemId = ulong.MaxValue;
+        stain = 0;
+        stain2 = 0;
+
+        if (state?["Equipment"] is not JToken equipment || !EquipSlotExtensions.EqdpSlots.Contains(slot))
+            return false;
+
+        customItemId = equipment[slot.ToString()]?["ItemId"]?.Value<ulong>() ?? 4294967164;
+        stain = equipment[slot.ToString()]?["Stain"]?.Value<byte>() ?? 0;
+        stain2 = equipment[slot.ToString()]?["Stain2"]?.Value<byte>() ?? 0;
+        return true;
+    }
+
+    /// <summary>
+    ///   Reads the Hat/Visor/Weapon metadata out of a raw Glamourer state object.
+    /// </summary>
+    public static bool TryReadMeta(JObject? state, out MetaDataStruct meta)
+    {
+        meta = MetaDataStruct.Empty;
+        if (state?["Equipment"] is not JToken equipment)
+            return false;
+
+        meta = ReadMeta(equipment);
+        return true;
+    }
+
+    /// <summary>
     ///   Attempts to update the active Glamour Actors state with its most recent data. <para />
     ///   Current bound state is passed in so that we can run a comparison against the slots. <para />
     ///   However, do not pass in the FinalMeta, as we should cache the latest metadata state in accordance to base game.
@@ -92,7 +124,7 @@ public struct GlamourActorState
     }
 
     /// <summary> Only updates metadata when no flags for a particular metastate are occupied by bound items. </summary>
-    public void UpdateMetaCheckBinds(JObject newState, MetaDataStruct finalMeta, bool anyHat, bool anyVisor, bool anyWep)
+    public void UpdateMetaCheckBinds(JObject newState, bool anyHat, bool anyVisor, bool anyWep)
     {
         // Update object entirely if it was null before.
         if (State is null)
@@ -101,29 +133,15 @@ public struct GlamourActorState
         if (newState?["Equipment"] is not JToken equipment)
             return;
 
-        // parse the metadata.
-        var sh = newState["Equipment"]?["Hat"]?["Show"]?.Value<bool>() ?? false;
-        var ah = newState["Equipment"]?["Hat"]?["Apply"]?.Value<bool>() ?? false;
-        var sv = newState["Equipment"]?["Visor"]?["IsToggled"]?.Value<bool>() ?? false;
-        var av = newState["Equipment"]?["Visor"]?["Apply"]?.Value<bool>() ?? false;
-        var sw = newState["Equipment"]?["Weapon"]?["Show"]?.Value<bool>() ?? false;
-        var aw = newState["Equipment"]?["Weapon"]?["Apply"]?.Value<bool>() ?? false;
-        //Svc.Logger.Verbose($"[GlamourActorState] Updating Meta: Hat({sh}, {ah}), Visor({sv}, {av}), Weapon({sw}, {aw})");
-        // set the metadata based on the retrieved values.
-        var hatState = (sh, ah) switch { (true, true) => TriStateBool.True, (false, true) => TriStateBool.False, _ => TriStateBool.Null };
-        // If no hatstates are stored, just apply whatever was passed in.
+        // Only refresh a metastate that no bound item is currently occupying, otherwise
+        // we would cache our own enforced value as the base to restore back to later.
+        var latest = ReadMeta(equipment);
         if (!anyHat)
-            MetaStates = MetaStates.WithMetaIfDifferent(MetaIndex.HatState, hatState);
-        
-        var visorState = (sv, av) switch { (true, true) => TriStateBool.True, (false, true) => TriStateBool.False, _ => TriStateBool.Null };
-        // If no visor states are stored, just apply whatever was passed in.
+            MetaStates = MetaStates.WithMetaIfDifferent(MetaIndex.HatState, latest.Headgear);
         if (!anyVisor)
-            MetaStates = MetaStates.WithMetaIfDifferent(MetaIndex.VisorState, visorState);
-       
-        // If no weapon states are stored, just apply whatever was passed in.
-        var weaponState = (sw, aw) switch { (true, true) => TriStateBool.True, (false, true) => TriStateBool.False, _ => TriStateBool.Null };
+            MetaStates = MetaStates.WithMetaIfDifferent(MetaIndex.VisorState, latest.Visor);
         if (!anyWep)
-            MetaStates = MetaStates.WithMetaIfDifferent(MetaIndex.WeaponState, weaponState);
+            MetaStates = MetaStates.WithMetaIfDifferent(MetaIndex.WeaponState, latest.Weapon);
     }
 
     /// <summary> Forcibly updates all metastates to the latest JObject state. </summary>
@@ -155,36 +173,28 @@ public struct GlamourActorState
         if (equipmentToken is not JObject equipmentObj)
             return;
 
-        // parse the metadata.
-        var sh = equipmentObj?["Hat"]?["Show"]?.Value<bool>() ?? false;
-        var ah = equipmentObj?["Hat"]?["Apply"]?.Value<bool>() ?? false;
-        var sv = equipmentObj?["Visor"]?["IsToggled"]?.Value<bool>() ?? false;
-        var av = equipmentObj?["Visor"]?["Apply"]?.Value<bool>() ?? false;
-        var sw = equipmentObj?["Weapon"]?["Show"]?.Value<bool>() ?? false;
-        var aw = equipmentObj?["Weapon"]?["Apply"]?.Value<bool>() ?? false;
-        // set the metadata based on the retrieved values.
-        var hatState = (sh, ah) switch { (true, true) => TriStateBool.True, (false, true) => TriStateBool.False, _ => TriStateBool.Null };
-        MetaStates = MetaStates.WithMetaIfDifferent(MetaIndex.HatState, hatState);
-        var visorState = (sv, av) switch { (true, true) => TriStateBool.True, (false, true) => TriStateBool.False, _ => TriStateBool.Null };
-        MetaStates = MetaStates.WithMetaIfDifferent(MetaIndex.VisorState, visorState);
-        var weaponState = (sw, aw) switch { (true, true) => TriStateBool.True, (false, true) => TriStateBool.False, _ => TriStateBool.Null };
-        MetaStates = MetaStates.WithMetaIfDifferent(MetaIndex.WeaponState, weaponState);
+        var latest = ReadMeta(equipmentObj);
+        MetaStates = MetaStates
+            .WithMetaIfDifferent(MetaIndex.HatState, latest.Headgear)
+            .WithMetaIfDifferent(MetaIndex.VisorState, latest.Visor)
+            .WithMetaIfDifferent(MetaIndex.WeaponState, latest.Weapon);
     }
+
+    /// <summary> Maps Glamourer's (shown, applied) pairs onto our TriStateBool metadata. </summary>
+    /// <remarks> A state Glamourer is not applying is <see cref="TriStateBool.Null"/>, meaning 'untouched'. </remarks>
+    private static MetaDataStruct ReadMeta(JToken equipment)
+        => new(ToTriState(equipment["Hat"]?["Show"], equipment["Hat"]?["Apply"]),
+               ToTriState(equipment["Visor"]?["IsToggled"], equipment["Visor"]?["Apply"]),
+               ToTriState(equipment["Weapon"]?["Show"], equipment["Weapon"]?["Apply"]));
+
+    private static TriStateBool ToTriState(JToken? shown, JToken? applied)
+        => (shown?.Value<bool>() ?? false, applied?.Value<bool>() ?? false) switch
+        {
+            (true, true) => TriStateBool.True,
+            (false, true) => TriStateBool.False,
+            _ => TriStateBool.Null,
+        };
 
     public bool RecoverSlot(EquipSlot slot, out ulong customItemId, out byte stain, out byte stain2)
-    {
-        if (Equipment is null || !EquipSlotExtensions.EqdpSlots.Contains(slot))
-        {
-            customItemId = ulong.MaxValue;
-            stain = 0;
-            stain2 = 0;
-            return false;
-        }
-        // Return the proper values for the slot.
-        customItemId = Equipment?[slot.ToString()]?["ItemId"]?.Value<ulong>() ?? 4294967164;
-        stain = Equipment?[slot.ToString()]?["Stain"]?.Value<byte>() ?? 0;
-        stain2 = Equipment?[slot.ToString()]?["Stain2"]?.Value<byte>() ?? 0;
-
-        return true;
-    }
+        => TryReadSlot(State, slot, out customItemId, out stain, out stain2);
 }

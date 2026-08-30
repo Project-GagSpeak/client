@@ -6,6 +6,7 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Services.Textures;
 using GagSpeak.State.Models;
 using GagSpeak.Utils;
+using Glamourer.Api.Enums;
 using OtterGui;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
@@ -183,10 +184,12 @@ public class GlamourCache
             _metaStates[metaIdx] = new SortedList<CombinedCacheKey, TriStateBool>();
     }
 
-    public bool UpdateFinalGlamourCache(out List<EquipSlot> removedSlots)
+    /// <param name="changedSlots"> Slots whose forced item changed, so callers know what must be pushed regardless of live state. </param>
+    public bool UpdateFinalGlamourCache(out List<EquipSlot> removedSlots, out HashSet<EquipSlot> changedSlots)
     {
         var anyChanges = false;
         var seenSlots = new HashSet<EquipSlot>();
+        changedSlots = new HashSet<EquipSlot>();
 
         // Cycle through the glamours in the order they are sorted in.
         foreach (var glamItem in _glamours.Values)
@@ -200,6 +203,7 @@ public class GlamourCache
             {
                 _logger.LogTrace($"Final Slot was: {curr?.GameItem.Name} and will now be {glamItem.GameItem.Name} for slot {glamItem.Slot}");
                 _finalGlamour[glamItem.Slot] = glamItem;
+                changedSlots.Add(glamItem.Slot);
                 anyChanges |= true;
             }
         }
@@ -215,8 +219,10 @@ public class GlamourCache
         return anyChanges || removedSlots.Any();
     }
 
-    public bool UpdateFinalMetaCache(out bool noHat, out bool noVisor, out bool noWeapon)
+    /// <param name="changedFlags"> MetaStates whose forced value changed, so callers know what must be pushed regardless of live state. </param>
+    public bool UpdateFinalMetaCache(out bool noHat, out bool noVisor, out bool noWeapon, out MetaFlag changedFlags)
     {
+        changedFlags = 0;
         var firstHat = GetFirstHatState();
         var firstVisor = GetFirstVisorState();
         var firstWeapon = GetFirstWeaponState();
@@ -229,18 +235,21 @@ public class GlamourCache
         {
             anyChanges |= true;
             _logger.LogDebug($"Updating Final Meta Cache: Hat({firstHat})");
+            changedFlags |= MetaFlag.HatState;
             _finalMeta = _finalMeta.WithMeta(MetaIndex.HatState, firstHat);
         }
         if (_finalMeta.IsDifferent(MetaIndex.VisorState, firstVisor))
         {
             anyChanges |= true;
             _logger.LogDebug($"Updating Final Meta Cache: Visor({firstVisor})");
+            changedFlags |= MetaFlag.VisorState;
             _finalMeta = _finalMeta.WithMeta(MetaIndex.VisorState, firstVisor);
         }
         if (_finalMeta.IsDifferent(MetaIndex.WeaponState, firstWeapon))
         {
             anyChanges |= true;
             _logger.LogDebug($"Updating Final Meta Cache: Weapon({firstWeapon})");
+            changedFlags |= MetaFlag.WeaponState;
             _finalMeta = _finalMeta.WithMeta(MetaIndex.WeaponState, firstWeapon);
         }
         return anyChanges;
