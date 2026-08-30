@@ -27,7 +27,7 @@ public class FavoritesConfig : IHybridSavable
 {
     private readonly ILogger<FavoritesConfig> _logger;
     private readonly HybridSaveService _saver;
-    public int ConfigVersion => 1;
+    public int ConfigVersion => 2;
     public int MaxBackups => 3;
     public HybridSaveType SaveType => HybridSaveType.StreamWrite;
     public DateTime LastWriteTimeUTC => DateTime.MinValue;
@@ -207,22 +207,33 @@ public class FavoritesConfig : IHybridSavable
             var load = JsonConvert.DeserializeObject<LoadIntermediary>(File.ReadAllText(file))
                 ?? throw new Exception("Failed to deserialize FavoritesConfig");
 
-            switch (load.Version)
+            // Builds up to 2.2.0.4 wrote the v2 format but output as Version 1
+            // so check for the presence of the Accounts object and force LoadV2.
+            if (load.Accounts is not null)
             {
-                case 0:
-                case 1:
-                    LoadV1(load);
-                    break;
-                case 2:
-                    LoadV2(load);
-                    break;
-                default:
-                    throw new NotSupportedException($"Unsupported FavoritesConfig version {load.Version}");
+                LoadV2(load);
+            }
+            else
+            {
+                switch (load.Version)
+                {
+                    case 0:
+                    case 1:
+                        LoadV1(load);
+                        break;
+                    case 2:
+                        LoadV2(load);
+                        break;
+                    default:
+                        throw new NotSupportedException($"Unsupported FavoritesConfig version {load.Version}");
+                }
             }
         }
         catch (Exception e)
         {
+            // Leave the file on disk untouched so it stays recoverable.
             _logger.LogError(e, "Failed to load FavoritesConfig.");
+            return;
         }
         _saver.Save(this);
     }
