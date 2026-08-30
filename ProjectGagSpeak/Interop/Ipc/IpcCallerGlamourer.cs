@@ -92,6 +92,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
             return;
         try
         {
+            _logger.LogTrace($"Setting Glamourer Item Slot {slot} to ItemID {item}.", LoggerType.IpcGlamourer);
             await Svc.Framework.RunOnFrameworkThread(() => SetItem.Invoke(0, slot, item, dye, GAGSPEAK_LOCK)).ConfigureAwait(false);
         }
         catch (Exception ex)
@@ -110,6 +111,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
 
         try
         {
+            _logger.LogTrace($"Setting Glamourer MetaState {metaTypes} to {newValue}.", LoggerType.IpcGlamourer);
             await Svc.Framework.RunOnFrameworkThread(() => SetMetaState.Invoke(0, metaTypes, newValue, GAGSPEAK_LOCK)).ConfigureAwait(false);
         }
         catch (Exception ex)
