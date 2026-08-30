@@ -1,3 +1,4 @@
+using CkCommons;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.ImGuiNotification;
 using GagSpeak.Kinksters;
@@ -7,6 +8,7 @@ using GagSpeak.State.Managers;
 using GagspeakAPI.Connection;
 using GagspeakAPI.Extensions;
 using Microsoft.Extensions.Hosting;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Services;
 
@@ -50,38 +52,57 @@ public class AlertService : DisposableMediatorSubscriberBase, IHostedService
         });
     }
 
-    public void ShowCustomNotification(Notification customNotif)
+    public static void ShowCustomNotification(Notification customNotif)
         => Svc.Notifications.AddNotification(customNotif);
 
-    private void PrintErrorChat(string? message)
+    private static void PrintErrorChat(string? message)
     {
         var se = new SeStringBuilder().AddText("[Gagspeak] Error: " + message);
         Svc.Chat.PrintError(se.BuiltString);
     }
 
-    private void PrintInfoChat(string? message)
+    public static void PrintInfoChat(string? message)
     {
-        var se = new SeStringBuilder().AddText("[Gagspeak] Info: ").AddItalics(message ?? string.Empty);
+        var se = new SeStringBuilder().AddUiForeground("[Gagspeak] ", 561).AddUiForegroundOff().AddText("Info: ").AddItalics(message ?? string.Empty);
         Svc.Chat.Print(se.BuiltString);
     }
 
-    private void PrintWarnChat(string? message)
+    public static void PrintWarnChat(string? message)
     {
-        var se = new SeStringBuilder().AddText("[Gagspeak] ").AddUiForeground("Warning: " + (message ?? string.Empty), 31).AddUiForegroundOff();
+        var se = new SeStringBuilder().AddUiForeground("[Gagspeak] ", 561).AddUiForegroundOff().AddUiForeground("Warning: " + (message ?? string.Empty), 31).AddUiForegroundOff();
         Svc.Chat.Print(se.BuiltString);
     }
 
-    public void PrintCustomChat(SeString builtMessage)
+    public static void PrintCustomChat(SeString builtMessage)
     {
        Svc.Chat.Print(builtMessage);
     }
 
-    public void PrintCustomErrorChat(SeString builtMessage)
+    public static void PrintCustomErrorChat(SeString builtMessage)
     {
         Svc.Chat.PrintError(builtMessage);
     }
 
-    private void ShowChat(NotificationMessage msg)
+    public static void PrintVersionUpdateMessage(string message, string version)
+    {
+        var se = new SeStringBuilder()
+            .AddUiForeground("[Gagspeak] ", 561)
+            .AddUiForegroundOff()
+            .AddUiForeground(message, 31)
+            .AddUiForegroundOff();
+        Svc.Logger.Warning($"A new GagSpeak version is out and pending for download!");
+        Svc.Chat.Print(se.BuiltString);
+        Svc.Notifications.AddNotification(new Notification()
+        {
+            Content = $"GagSpeak v{version} is available for download. Update to recieve its latest features.",
+            Title = "GagSpeak Has Updated",
+            Type = NotificationType.Warning,
+            Minimized = false,
+            InitialDuration = TimeSpan.FromSeconds(6)
+        });
+    }
+
+    private static void ShowChat(NotificationMessage msg)
     {
         switch (msg.Type)
         {
@@ -145,7 +166,7 @@ public class AlertService : DisposableMediatorSubscriberBase, IHostedService
         }
     }
 
-    private void ShowToast(NotificationMessage msg)
+    private static void ShowToast(NotificationMessage msg)
     {
         Svc.Notifications.AddNotification(new Notification()
         {

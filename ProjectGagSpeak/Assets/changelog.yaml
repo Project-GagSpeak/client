@@ -3,6 +3,17 @@ tagline: "GagSpeak 2.2 - The Chat Update"
 subline: "DM Integration, 150+ new emotes, GIF Support, stickers, vanity names, name colors, and more."
 changelog:
 
+  - version: v2.2.0.6
+    date: "August 30th, 2026"
+    title: "Version Checker"
+    headerMessage: ""
+    segments:
+      - icon: "Sync"
+        title: "Version Checker"
+        accent: "Green"
+        bullets:
+          - text: "Added a version checker to GagSpeak, now you'll know whenever an update is available!"    
+
   - version: v2.2.0.5
     date: "August 30th, 2026"
     title: "General Improvements"
@@ -90,6 +101,8 @@ changelog:
             contributor: "AzureRavie"
           - text: "Updated signalr/messagepack and API."
             contributor: "AndrielChaoti"
+          - text: "Per-item lock times for cursed loot"
+            contributor: "NBS"
 
       - icon: "Wrench"
         title: "Quality of Life"

@@ -171,6 +171,8 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             _runtimeServiceScope.ServiceProvider.GetRequiredService<KeystateController>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<MovementController>();
             _runtimeServiceScope.ServiceProvider.GetRequiredService<POVController>();
+
+            _runtimeServiceScope.ServiceProvider.GetRequiredService<VersionUpdateService>();
         }
         catch (Bagagwa ex)
         {

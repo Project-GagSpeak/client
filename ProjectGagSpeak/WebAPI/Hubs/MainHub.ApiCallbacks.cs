@@ -2,6 +2,7 @@ using CkCommons;
 using Dalamud.Interface.ImGuiNotification;
 using GagSpeak.Interop.Helpers;
 using GagSpeak.PlayerClient;
+using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagspeakAPI.Chat;
@@ -95,6 +96,7 @@ public partial class MainHub
     public Task Callback_ReputationInfo(UserReputation reputation, string message)
     {
         Logger.LogWarning($"Cb_ReputationInfo: Msg ({message})", LoggerType.Callbacks);
+        AlertService.PrintWarnChat(message);
         if (ConnectionResponse is not null)
         {
             ConnectionResponse = ConnectionResponse with { Reputation = reputation };
@@ -740,7 +742,6 @@ public partial class MainHub
 
     public Task Callback_ChatMessageReceived(ChatlogMessage dto)
     {
-        Logger.LogDebug($"Cb_ChatMessageReceived Called for: {dto.Sender.AnonName}", LoggerType.Callbacks);
         Mediator.Publish(new ChatReceivedMessage(dto));
         return Task.CompletedTask;
     }

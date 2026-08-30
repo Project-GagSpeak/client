@@ -267,7 +267,7 @@ public class ChangelogUI : WindowMediatorSubscriberBase
             if (bullet.IsImportant)
                 CkGui.BulletText(bullet.Text, 0xFF7FE57F);
             else
-                ImGui.BulletText(bullet.Text);
+                CkGui.BulletText(bullet.Text);
 
             if (!string.IsNullOrWhiteSpace(bullet.Contributor))
                 CkGui.ColorTextInline($" - {bullet.Contributor}", GsCol.ShopKeeperColor.Vec4(), false);

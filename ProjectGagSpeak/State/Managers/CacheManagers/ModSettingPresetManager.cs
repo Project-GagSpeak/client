@@ -335,7 +335,7 @@ public class ModPresetManager : DisposableMediatorSubscriberBase, IHybridSavable
         }
         catch (Bagagwa ex)
         {
-            Logger.LogError(ex, "Failed to load custom mod settings.");
+            Logger.LogWarning(ex, "Failed to load custom mod settings.");
             ModPresetStorage.Clear();
             return;
         }

@@ -30,7 +30,6 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
     private readonly AlarmManager _alarms;
     private readonly TriggerManager _triggers;
     private readonly AchievementEventHandler _handler;
-    private readonly AlertService _notifier;
     private readonly RemoteService _remoteService;
     
     private Task? _updateLoopTask = null;
@@ -51,7 +50,6 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         AlarmManager alarms,
         TriggerManager triggers,
         AchievementEventHandler handler, 
-        AlertService notifier,
         RemoteService remoteService)
         : base(logger, mediator)
     {
@@ -67,7 +65,6 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         _alarms = alarms;
         _triggers = triggers;
         _handler = handler;
-        _notifier = notifier;
         _remoteService = remoteService;
 
         Mediator.Subscribe<DisconnectedMessage>(this, _ =>
@@ -136,7 +133,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
     {
         Logger.LogInformation("Achievement Completed: " + title, LoggerType.Achievements);
         // publish the award notification to the notification manager regardless of if we get inturrupted or not.
-        _notifier.ShowCustomNotification(new()
+        AlertService.ShowCustomNotification(new()
         {
             Title = "Achievement Completed!",
             Content = "Completed: " + title,

@@ -39,18 +39,22 @@ using GagSpeak.Watchers;
 using GagSpeak.WebAPI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System.Net.Http.Headers;
+using System.Reflection;
 
 namespace GagSpeak;
 
 public sealed class GagSpeak : IDalamudPlugin
 {
     private readonly IHost _host;  // the host builder for the plugin instance. (What makes everything work)
+    private readonly HttpClientHandler _httpHandler = new(); // the http client handler for the plugin instance.
+
     public GagSpeak(IDalamudPluginInterface pi)
     {
         pi.Create<Svc>();
         // init the CkCommons.
         ItemSvc.Init(pi);
-        CkCommonsHost.Init(pi, this, CkLogFilter.Emojis);
+        CkCommonsHost.Init(pi, this, CkLogFilter.None);
         // create the host builder for the plugin
         _host = ConstructHostBuilder(pi);
         // start up the host
@@ -98,7 +102,7 @@ public sealed class GagSpeak : IDalamudPlugin
             .AddSingleton<UiThumbnailService>()
             .AddSingleton(new Dalamud.Localization("GagSpeak.Localization.", "", useEmbedded: true))
             // add the generic services for GagSpeak
-            .AddGagSpeakGeneric()
+            .AddGagSpeakGeneric(_httpHandler)
             // add the services related to the IPC calls for GagSpeak
             .AddGagSpeakIPC()
             // add the services related to the configs for GagSpeak
@@ -127,7 +131,7 @@ public sealed class GagSpeak : IDalamudPlugin
 public static class GagSpeakServiceExtensions
 {
     #region GenericServices
-    public static IServiceCollection AddGagSpeakGeneric(this IServiceCollection services)
+    public static IServiceCollection AddGagSpeakGeneric(this IServiceCollection services, HttpClientHandler httpHandler)
     => services
         // Necessary Services
         .AddSingleton<ILoggerProvider, Microsoft.Extensions.Logging.Console.ConsoleLoggerProvider>()
@@ -135,6 +139,14 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<EventAggregator>()
         .AddSingleton<GagSpeakLoc>()
         .AddSingleton<GagspeakEventManager>()
+        .AddSingleton((s) =>
+        {
+            var httpClient = new HttpClient(httpHandler);
+            var ver = Assembly.GetExecutingAssembly().GetName().Version;
+            httpClient.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("GagSpeak", ver!.Major + "." + ver!.Minor + "." + ver!.Build));
+            return httpClient;
+        })
+        .AddSingleton<VersionUpdateService>()
 
         // Chat
         .AddSingleton<ChatColors>()
