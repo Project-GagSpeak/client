@@ -497,10 +497,11 @@ public class ActiveItemsDrawer
         if (nickEnabler is null && enabler == MainHub.UID)
             nickEnabler = "yourself";
 
+        var swapLabel = _escape.HardcoreEscapeEnabled ? "Attempt to swap to" : "Select";
         var clearLabel = _escape.HardcoreEscapeEnabled ? "Attempt to escape" : "Clear";
 
         return $"{label ?? "Unknown item"} applied by {nickEnabler ?? "Unknown Kinkster"}" +
-               $"--SEP----COL--Left-Click--COL-- ⇒ Select another {itemType} Item." +
+               $"--SEP----COL--Left-Click--COL-- ⇒ {swapLabel} another {itemType} Item." +
                $"--NL----COL--Right-Click--COL-- ⇒ {clearLabel} active {itemType} Item.";
     }
 
