@@ -10,12 +10,15 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
 {
     private readonly RestrictionManager _manager;
     private readonly SelfBondageService _selfBondage;
+    private readonly HardcoreEscapeService _escape;
 
-    public PadlockRestrictionsClient(ILogger log, RestrictionManager manager, SelfBondageService selfBondage)
+    public PadlockRestrictionsClient(
+        ILogger log, RestrictionManager manager, SelfBondageService selfBondage, HardcoreEscapeService escape)
         : base(() => [..PadlockEx.ClientLocks], log)
     {
         _manager = manager;
         _selfBondage = selfBondage;
+        _escape = escape;
     }
 
     protected override string ItemName(ActiveRestriction item)
@@ -141,7 +144,7 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
         };
 
         if (valid)
-            return true;
+            return _escape.AttemptSelfRemove();
 
         // If we don't, display the appropriate error and reset inputs.
         switch (ActiveItem.Padlock)

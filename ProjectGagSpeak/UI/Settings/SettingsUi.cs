@@ -38,13 +38,15 @@ public class SettingsUi : WindowMediatorSubscriberBase
     private readonly ClientDataListener _clientDatListener;
     private readonly PluginGuideProvider _guideProvider;
     private readonly UiFileDialogService _fileDialog;
+    private readonly HardcoreEscapeService _escape;
 
     private static bool _isLinux;
     private OptionalPlugin _expandedInfo = OptionalPlugin.None;
 
     public SettingsUi(ILogger<SettingsUi> logger, GagspeakMediator mediator, MainHub hub,
         MainConfig config, ProfilesTab accounts, DebugTab debug, PiShockProvider shockProvider,
-        ClientDataListener listener, PluginGuideProvider guide, UiFileDialogService fileDialog)
+        ClientDataListener listener, PluginGuideProvider guide, UiFileDialogService fileDialog,
+        HardcoreEscapeService escape)
         : base(logger, mediator, "GagSpeak Settings")
     {
         _hub = hub;
@@ -55,6 +57,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         _clientDatListener = listener;
         _guideProvider = guide;
         _fileDialog = fileDialog;
+        _escape = escape;
 
         Flags = WFlags.NoScrollbar;
         this.PinningClickthroughFalse();
@@ -280,6 +283,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         var removeRestrictionOnLockExpiration = _config.Data.RemoveRestrictionOnTimerExpire;
         var removeRestraintOnLockExpiration = _config.Data.RemoveRestraintOnTimerExpire;
         var blindfoldMaxOpacity = _config.Data.OverlayMaxOpacity;
+        var hardcoreEscape = _config.Data.HardcoreEscape;
 
         ImGui.Separator();
         CkGui.FontText(GSLoc.Settings.MainOptions.HeaderWardrobe, Fonts.SubtitleFont);
@@ -359,6 +363,17 @@ public class SettingsUi : WindowMediatorSubscriberBase
 
             CkGui.HelpText(GSLoc.Settings.MainOptions.OverlayMaxOpacityTT);
         }
+
+        using (ImRaii.Disabled(hardcoreEscape && !_escape.CanDisable))
+        {
+            if (ImGui.Checkbox(GSLoc.Settings.MainOptions.HardcoreEscape, ref hardcoreEscape))
+            {
+                _config.Data.HardcoreEscape = hardcoreEscape;
+                _config.Save();
+            }
+        }
+
+        CkGui.HelpText(GSLoc.Settings.MainOptions.HardcoreEscapeTT);
     }
 
     private void DrawPuppeteerSettings(GlobalPerms globals)

@@ -252,6 +252,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<LociHubService>()
         .AddSingleton<SpellActionService>()
         .AddSingleton<SelfBondageService>()
+        .AddSingleton<HardcoreEscapeService>()
         .AddSingleton<TutorialService>()
         .AddSingleton<VisibilityWatcher>()
 
