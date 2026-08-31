@@ -12,12 +12,15 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
 {
     private readonly SelfBondageService _selfBondage;
     private readonly GagRestrictionManager _manager;
+    private readonly HardcoreEscapeService _escape;
 
-    public PadlockGagsClient(ILogger log, GagRestrictionManager manager, SelfBondageService selfBondage)
+    public PadlockGagsClient(
+        ILogger log, GagRestrictionManager manager, SelfBondageService selfBondage, HardcoreEscapeService escape)
         : base(() => [..PadlockEx.ClientLocks], log)
     {
         _selfBondage = selfBondage;
         _manager = manager;
+        _escape = escape;
     }
 
     protected override string ItemName(ActiveGagSlot item)
@@ -141,7 +144,7 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
         };
 
         if (valid)
-            return true;
+            return _escape.AttemptSelfRemove();
 
         // If we don't, display the appropriate error and reset inputs.
         switch (SelectedLock)
