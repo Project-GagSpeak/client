@@ -1,4 +1,5 @@
 using GagSpeak.PlayerClient;
+using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagspeakAPI.Attributes;
 
@@ -7,7 +8,7 @@ namespace GagSpeak.Services;
 /// <summary>
 ///   Handles the logic for escaping your own equippables.
 /// </summary>
-public class HardcoreEscapeService : IDisposable
+public class HardcoreEscapeService : DisposableMediatorSubscriberBase
 {
     private readonly ILogger<HardcoreEscapeService> _logger;
     private readonly MainConfig _config;
@@ -15,25 +16,31 @@ public class HardcoreEscapeService : IDisposable
     private readonly Random _rand = new();
 
     private DateTime _nextAllowedAttempt = DateTime.Now;
+    private int _pityCounter = 0;
 
     public bool HardcoreEscapeEnabled => _config.Data.HardcoreEscape;
     public bool CanDisable => _traits.FinalTraits == Traits.None;
 
-    public HardcoreEscapeService(ILogger<HardcoreEscapeService> logger, MainConfig config, TraitsCache traits)
+    public HardcoreEscapeService(
+        ILogger<HardcoreEscapeService> logger, MainConfig config, TraitsCache traits, GagspeakMediator mediator)
+        : base(logger, mediator)
     {
         _logger = logger;
         _config = config;
         _traits = traits;
 
         UpdateNextAllowedAttempt(0);
-    }
 
-    public void Dispose() { }
+        Mediator.Subscribe<GagStateChanged>(this, _ => _pityCounter = 0);
+        Mediator.Subscribe<RestrictionStateChanged>(this, _ => _pityCounter = 0);
+        Mediator.Subscribe<RestraintStateChanged>(this, _ => _pityCounter = 0);
+    }
 
     public bool AttemptSelfRemove()
     {
         // Hardcore escape not enabled, always allow
-        if (!HardcoreEscapeEnabled) return true;
+        if (!HardcoreEscapeEnabled)
+            return true;
 
         // One in X chance to succeed
         int difficultyOneIn = 1;
@@ -53,8 +60,18 @@ public class HardcoreEscapeService : IDisposable
                 difficultyOneIn += 5;
         }
 
+        var prePity = difficultyOneIn;
+        var pityCount = Math.Min(_pityCounter, 10);
+        // 0.9^0 = 1 => no change
+        // 0.9^10 ~= 0.34 => ~66% easier to escape at the end
+        difficultyOneIn = (int)Math.Ceiling(difficultyOneIn * Math.Pow(0.9, pityCount));
+
         // If there is no challenge present, allow it.
-        if (difficultyOneIn == 1) return true;
+        if (difficultyOneIn == 1)
+        {
+            _pityCounter = 0;
+            return true;
+        }
 
         // If cooldown is active, disallow it.
         if (DateTime.Now < _nextAllowedAttempt)
@@ -67,15 +84,18 @@ public class HardcoreEscapeService : IDisposable
         var roll = _rand.NextInt64(difficultyOneIn);
         UpdateNextAllowedAttempt(roll);
         _logger.LogDebug(
-            $"Attempted remove hardcore, difficulty one in {difficultyOneIn}, rolled {roll}. Next attempt allowed at {_nextAllowedAttempt}",
+            $"Attempted remove hardcore, difficulty one in {prePity} with pity {_pityCounter}=>{difficultyOneIn}, rolled {roll}. Next attempt allowed at {_nextAllowedAttempt}",
             LoggerType.HardcoreActions);
 
         if (roll > 0)
         {
-            Svc.Toasts.ShowError($"Failed to remove! You may try again in {CooldownString()}.");
+            Svc.Toasts.ShowError(
+                $"Failed to remove, but you feel a sense of progress! You may try again in {CooldownString()}.");
+            _pityCounter++;
             return false;
         }
 
+        _pityCounter = 0;
         return true;
     }
 
