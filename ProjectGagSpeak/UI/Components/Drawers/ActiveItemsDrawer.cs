@@ -245,7 +245,8 @@ public class ActiveItemsDrawer
 
         // Draw out the potential popup if we should.
         var applyCombo = _gagItems[slotIdx];
-        if (_gagItems[slotIdx].DrawPopup($"##GagSelector-{slotIdx}", data.GagItem, rightWidth * .9f, drawPos))
+        if (_gagItems[slotIdx].DrawPopup($"##GagSelector-{slotIdx}", data.GagItem, rightWidth * .9f, drawPos) &&
+            _escape.AttemptSelfRemove())
             GagComboChanged(applyCombo, slotIdx, data.GagItem);
     }
 
@@ -283,7 +284,8 @@ public class ActiveItemsDrawer
 
         // Draw the potential popup if we should.
         var applyCombo = _restrictionItems[slotIdx];
-        if (applyCombo.DrawPopup($"##Restrictions-{slotIdx}", data.Identifier, rightWidth * .75f, drawPos))
+        if (applyCombo.DrawPopup($"##Restrictions-{slotIdx}", data.Identifier, rightWidth * .75f, drawPos) &&
+            _escape.AttemptSelfRemove())
             RestrictionComboChanged(applyCombo, slotIdx, data.Identifier);
     }
 
@@ -333,7 +335,10 @@ public class ActiveItemsDrawer
                 });
             }
         }
-        if (_restraintItem.DrawPopup($"##RestraintSetSelector", data.Identifier, ImGui.GetContentRegionAvail().X * .90f, drawPos))
+
+        if (_restraintItem.DrawPopup("##RestraintSetSelector", data.Identifier, ImGui.GetContentRegionAvail().X * .90f,
+                                     drawPos) &&
+            _escape.AttemptSelfRemove())
             RestraintComboChanged(data.Identifier);
     }
 
