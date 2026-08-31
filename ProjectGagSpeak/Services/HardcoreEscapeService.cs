@@ -17,6 +17,7 @@ public class HardcoreEscapeService : IDisposable
     private DateTime _nextAllowedAttempt = DateTime.Now;
 
     public bool HardcoreEscapeEnabled => _config.Data.HardcoreEscape;
+    public bool CanDisable => _traits.FinalTraits == Traits.None;
 
     public HardcoreEscapeService(ILogger<HardcoreEscapeService> logger, MainConfig config, TraitsCache traits)
     {

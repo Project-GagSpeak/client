@@ -1173,6 +1173,13 @@ namespace GagSpeak.Localization
             "--SEP--When opening dungeon coffers, there is a chance that a gag or restraint will be applied and locked." +
             "--SEP--Cursed Loot timers and chance can be set under Wardrobe > Cursed Loot and CANNOT be unlocked. ");
 
+        public readonly string HardcoreEscape = Loc.Localize("MainOptions_HardcoreEscape", "Hardcore Item Removal");
+
+        public readonly string HardcoreEscapeTT = Loc.Localize("MainOptions_HardcoreEscapeTT",
+                                                               "Enables hardcore escaping." +
+                                                               "--SEP--When sufficiently restrained with hardcore traits applied, removing items becomes a dice roll." +
+                                                               "--SEP--CANNOT be unchecked while any hardcore traits are active. ");
+
 
         public readonly string MimicsApplyTraits = Loc.Localize("MainOptions_MimicsApplyTraits", "Cursed Loot can Apply Traits");
         public readonly string MimicsApplyTraitsTT = Loc.Localize("MainOptions_MimicsApplyTraitsTT", "Allows applied cursed items to set their hardcore traits." +
