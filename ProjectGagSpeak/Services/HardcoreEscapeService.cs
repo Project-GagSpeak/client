@@ -33,7 +33,7 @@ public class HardcoreEscapeService : IDisposable
     public bool AttemptSelfRemove()
     {
         // Hardcore escape not enabled, always allow
-        if (!_config.Data.HardcoreEscape) return true;
+        if (!HardcoreEscapeEnabled) return true;
 
         // One in X chance to succeed
         int difficultyOneIn = 1;
@@ -58,8 +58,11 @@ public class HardcoreEscapeService : IDisposable
 
         // If cooldown is active, disallow it.
         if (DateTime.Now < _nextAllowedAttempt)
+        {
             Svc.Toasts.ShowError(
                 $"You are too exhausted to do that! You may try again in {CooldownString()}.");
+            return false;
+        }
 
         var roll = _rand.NextInt64(difficultyOneIn);
         UpdateNextAllowedAttempt(roll);
@@ -68,8 +71,12 @@ public class HardcoreEscapeService : IDisposable
             LoggerType.HardcoreActions);
 
         if (roll > 0)
+        {
             Svc.Toasts.ShowError($"Failed to remove! You may try again in {CooldownString()}.");
-        return roll == 0;
+            return false;
+        }
+
+        return true;
     }
 
     private void UpdateNextAllowedAttempt(long roll)
