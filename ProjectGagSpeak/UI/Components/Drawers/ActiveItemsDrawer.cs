@@ -449,7 +449,10 @@ public class ActiveItemsDrawer
         ImUtf8.SameLineInner();
         //ImGui.SameLine(0,0);
         using var s = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, CkStyle.ChildRoundingLarge());
-        using var _ = ImRaii.Disabled(data.PadlockAssigner != MainHub.UID || data.Padlock == Padlocks.PredicamentTimer);
+        // Disable layer editing, when padlock was added by someone else, it's a predicament lock with no self-access, or any lock exists with hardcore escape turned on.
+        using var _ = ImRaii.Disabled(data.PadlockAssigner != MainHub.UID ||
+                                      data.Padlock == Padlocks.PredicamentTimer ||
+                                      (data.Padlock != Padlocks.None && _escape.HardcoreEscapeEnabled));
         using (ImRaii.Group())
         {
             // draw sync button, and call layer update if pressed.
