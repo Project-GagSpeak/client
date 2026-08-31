@@ -16,13 +16,15 @@ public class HardcoreEscapeService : IDisposable
 
     private DateTime _nextAllowedAttempt = DateTime.Now;
 
+    public bool HardcoreEscapeEnabled => _config.Data.HardcoreEscape;
+
     public HardcoreEscapeService(ILogger<HardcoreEscapeService> logger, MainConfig config, TraitsCache traits)
     {
         _logger = logger;
         _config = config;
         _traits = traits;
 
-        UpdateNextAllowedAttempt(1);
+        UpdateNextAllowedAttempt(0);
     }
 
     public void Dispose() { }
@@ -55,7 +57,8 @@ public class HardcoreEscapeService : IDisposable
 
         // If cooldown is active, disallow it.
         if (DateTime.Now < _nextAllowedAttempt)
-            ShowError();
+            Svc.Toasts.ShowError(
+                $"You are too exhausted to do that! You may try again in {CooldownString()}.");
 
         var roll = _rand.NextInt64(difficultyOneIn);
         UpdateNextAllowedAttempt(roll);
@@ -64,12 +67,19 @@ public class HardcoreEscapeService : IDisposable
             LoggerType.HardcoreActions);
 
         if (roll > 0)
-            ShowError();
+            Svc.Toasts.ShowError($"Failed to remove! You may try again in {CooldownString()}.");
         return roll == 0;
     }
 
     private void UpdateNextAllowedAttempt(long roll)
     {
+        var baseCooldown = TimeSpan.FromMinutes(2);
+        if (roll == 0)
+        {
+            _nextAllowedAttempt = DateTime.Now + (baseCooldown / 2);
+            return;
+        }
+
         // Add a small penalty for each active trait, simulating higher exhaustion from higher restriction
         var exhaustionCooldownMultiplier = 0;
         for (int i = 1; i <= (1 << 6); i++)
@@ -80,16 +90,15 @@ public class HardcoreEscapeService : IDisposable
 
         var exhaustionCooldown = TimeSpan.FromSeconds(10) * exhaustionCooldownMultiplier;
         var rollCooldown = TimeSpan.FromSeconds(2) * roll; // Max 86 seconds penalty for rolling poorly
-        var cooldown = TimeSpan.FromMinutes(2) + rollCooldown + exhaustionCooldown;
+        var cooldown = baseCooldown + rollCooldown + exhaustionCooldown;
         _nextAllowedAttempt = DateTime.Now + cooldown;
     }
 
-    private void ShowError()
+    private string CooldownString()
     {
         var duration = _nextAllowedAttempt - DateTime.Now;
         var minutes = Math.Floor(duration.TotalMinutes);
         var seconds = duration.Seconds;
-        var durationMessage = minutes > 0 ? $"{minutes} minutes" : $"{seconds} seconds";
-        Svc.Toasts.ShowError($"Failed to remove. You may try again in {durationMessage}.");
+        return minutes > 0 ? $"{minutes} minutes" : $"{seconds} seconds";
     }
 }
