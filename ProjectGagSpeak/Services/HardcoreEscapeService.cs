@@ -1,6 +1,7 @@
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 
 namespace GagSpeak.Services;
@@ -31,9 +32,22 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
 
         UpdateNextAllowedAttempt(0);
 
-        Mediator.Subscribe<GagStateChanged>(this, _ => _pityCounter = 0);
-        Mediator.Subscribe<RestrictionStateChanged>(this, _ => _pityCounter = 0);
-        Mediator.Subscribe<RestraintStateChanged>(this, _ => _pityCounter = 0);
+        Mediator.Subscribe<GagStateChanged>(this, e =>
+        {
+            if (e.Target == MainHub.UID) _pityCounter = 0;
+        });
+        Mediator.Subscribe<RestrictionStateChanged>(this, e =>
+        {
+            if (e.Target == MainHub.UID) _pityCounter = 0;
+        });
+        Mediator.Subscribe<RestraintStateChanged>(this, e =>
+        {
+            if (e.Target == MainHub.UID) _pityCounter = 0;
+        });
+        Mediator.Subscribe<RestraintLayersChanged>(this, e =>
+        {
+            if (e.Target == MainHub.UID) _pityCounter = 0;
+        });
     }
 
     public bool AttemptSelfRemove()
