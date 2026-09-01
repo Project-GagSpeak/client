@@ -1,4 +1,17 @@
-using CkCommons;using CkCommons.Gui;using Dalamud.Bindings.ImGui;using Dalamud.Interface.Colors;using Dalamud.Interface.Utility;using Dalamud.Interface.Utility.Raii;using GagSpeak.Kinksters;using GagSpeak.Services;using GagSpeak.Utils;using GagSpeak.WebAPI;using GagspeakAPI.Data.Permissions;using System.Collections.Immutable;namespace GagSpeak.Gui.MainWindow;
+using CkCommons;
+using CkCommons.Gui;
+using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Kinksters;
+using GagSpeak.Services;
+using GagSpeak.Utils;
+using GagSpeak.WebAPI;
+using GagspeakAPI.Data.Permissions;
+using System.Collections.Immutable;
+
+namespace GagSpeak.Gui.MainWindow;
 
 /// <summary> 
 ///   Kinkster Permission ID 
@@ -77,7 +90,8 @@ public enum KPID : byte
     PiShockShareCode,
     MaxVibrateDuration,
 }
-public static class PanelPairEx
+
+public static class PanelPairEx
 {
     public record OwnPermRowData(bool IsGlobal, FAI IconYes, FAI IconNo, string AllowedStr, string BlockedStr, string PermLabel, string JoinWord, string PairAllowedTT, string PairBlockedTT);
     public record OtherPermRowData(FAI IconYes, FAI IconNo, string CondTrue, string CondFalse, string Label, bool CondAfterLabel, string suffix = "");
@@ -228,6 +242,7 @@ public enum KPID : byte
         {
             KPID.ChatGarblerActive     => (nameof(GlobalPerms.ChatGarblerActive),          PermissionType.Global),
             KPID.ChatGarblerLocked     => (nameof(GlobalPerms.ChatGarblerLocked),          PermissionType.Global),
+            KPID.GaggedNameplate       => (nameof(GlobalPerms.GaggedNameplate),            PermissionType.Global),
 
             KPID.PermanentLocks        => (nameof(PairPerms.PermanentLocks),               PermissionType.PairPerm),
             KPID.OwnerLocks            => (nameof(PairPerms.OwnerLocks),                   PermissionType.PairPerm),
@@ -235,6 +250,7 @@ public enum KPID : byte
 
             KPID.GagVisuals            => (nameof(GlobalPerms.GagVisuals),                 PermissionType.Global),
             KPID.ApplyGags             => (nameof(PairPerms.ApplyGags),                    PermissionType.PairPerm),
+            
             KPID.LockGags              => (nameof(PairPerms.LockGags),                     PermissionType.PairPerm),
             KPID.MaxGagTime            => (nameof(PairPerms.MaxGagTime),                   PermissionType.PairPerm),
             KPID.UnlockGags            => (nameof(PairPerms.UnlockGags),                   PermissionType.PairPerm),
@@ -454,4 +470,4 @@ public enum KPID : byte
     }
 }
 
-
+

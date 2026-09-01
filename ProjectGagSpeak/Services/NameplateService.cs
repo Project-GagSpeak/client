@@ -198,6 +198,9 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
             // If not rendered, ignore.
             if (!match.IsRendered)
                 return;
+            // if they don't have gagplates turned on, ignore.
+            if (!match.PairGlobals.GaggedNameplate)
+                return;
             // Handle a Kinkster chat message.
             if (!match.ActiveGags.IsGagged() || !match.PairGlobals.ChatGarblerActive || !match.PairGlobals.AllowedGarblerChannels.IsActiveChannel((int)channel))
                 return;
@@ -262,6 +265,8 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
             // Otherwise, load the correct asset into the nameplate.
             var nameContainer = nmo->NameContainer;
             var nameIcon = nmo->NameIcon;
+            if (!nmo->NameText->IsVisible())
+                continue; // don't show if the node with the player's name isn't shown
 
             // If they aint tracked, dont do nothin.
             var pnww = handlerChara->GetNameWithWorld();
