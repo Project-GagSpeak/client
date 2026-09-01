@@ -131,15 +131,14 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
             return;
 
         var hasNameplates = kinkster.PairGlobals.GaggedNameplate;
-        if (hasNameplates && newState is NewState.Enabled)
+        // skip processing kinsters without nameplates
+        if (!hasNameplates)
+            return;
+
+        // if the kinkster is telling us they have a new gag, or they're gagged, and we haven't added them, add them.
+        if ((newState is NewState.Enabled || kinkster.ActiveGags.IsGagged()) && !TrackedKinksters.ContainsKey(kinkster.PlayerNameWorld))
         {
             Logger.LogDebug($"Adding {kinkster.PlayerNameWorld} to tracked Nameplates", LoggerType.Gags);
-            TrackedKinksters.TryAdd(kinkster.PlayerNameWorld, false);
-        }
-        // Otherwise if they are gagged we shouldnt do anything.
-        else if (hasNameplates && kinkster.ActiveGags.IsGagged())
-        {
-            // Add it if we are not already added.
             TrackedKinksters.TryAdd(kinkster.PlayerNameWorld, false);
         }
         // Otherwise we should remove the tracked nameplate.
