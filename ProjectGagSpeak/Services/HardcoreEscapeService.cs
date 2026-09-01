@@ -124,9 +124,10 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
 
         // Add a small penalty for each active trait, simulating higher exhaustion from higher restriction
         var exhaustionCooldownMultiplier = 0;
-        for (int i = 1; i <= (1 << 6); i++)
+        for (int i = 1; i <= 6; i++)
         {
-            if (_traits.FinalTraits.HasFlag((Traits)i))
+            var trait = 1 << i;
+            if (_traits.FinalTraits.HasFlag((Traits)trait))
                 exhaustionCooldownMultiplier++;
         }
 
