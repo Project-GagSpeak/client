@@ -18,6 +18,7 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
 
     private DateTime _nextAllowedAttempt = DateTime.Now;
     private int _pityCounter = 0;
+    private const int MAX_PITY = 10;
 
     public bool HardcoreEscapeEnabled => _config.Data.HardcoreEscape;
     public bool CanDisable => _traits.FinalTraits == Traits.None;
@@ -75,10 +76,10 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
         }
 
         var prePity = difficultyOneIn;
-        var pityCount = Math.Min(_pityCounter, 10);
+        var pityCount = Math.Min(_pityCounter, MAX_PITY);
         // 0.9^0 = 1 => no change
         // 0.9^10 ~= 0.34 => ~66% easier to escape at the end
-        difficultyOneIn = (int)Math.Ceiling(difficultyOneIn * Math.Pow(0.9, pityCount));
+        difficultyOneIn = (int)Math.Ceiling(difficultyOneIn * Math.Pow(0.89, pityCount));
 
         // If there is no challenge present, allow it.
         if (difficultyOneIn == 1)
@@ -96,16 +97,32 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
         }
 
         var roll = _rand.NextInt64(difficultyOneIn);
-        UpdateNextAllowedAttempt(roll);
+        var criticalFail = roll == difficultyOneIn - 1;
+        UpdateNextAllowedAttempt(roll, criticalFail);
         _logger.LogDebug(
             $"Attempted remove hardcore, difficulty one in {prePity} with pity {_pityCounter}=>{difficultyOneIn}, rolled {roll}. Next attempt allowed at {_nextAllowedAttempt}",
             LoggerType.HardcoreActions);
 
         if (roll > 0)
         {
-            Svc.Toasts.ShowError(
-                $"Failed to remove, but you feel a sense of progress! You may try again in {CooldownString()}.");
-            _pityCounter++;
+            if (criticalFail)
+            {
+                Svc.Toasts.ShowError(
+                    $"You make a mistake and the restraint tightens! You may try again in {CooldownString()}");
+                _pityCounter -= 2;
+                if (_pityCounter < 0) _pityCounter = 0;
+            }
+            else if (pityCount < MAX_PITY)
+            {
+                Svc.Toasts.ShowError(
+                    $"Failed to remove, but you feel a sense of progress! You may try again in {CooldownString()}.");
+                _pityCounter++;
+            }
+            else
+            {
+                Svc.Toasts.ShowError($"Failed to remove! You may try again in {CooldownString()}");
+            }
+
             return false;
         }
 
@@ -113,12 +130,12 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
         return true;
     }
 
-    private void UpdateNextAllowedAttempt(long roll)
+    private void UpdateNextAllowedAttempt(long roll, bool criticalFail = false)
     {
-        var baseCooldown = TimeSpan.FromMinutes(2);
+        var baseCooldown = TimeSpan.FromMinutes(1);
         if (roll == 0)
         {
-            _nextAllowedAttempt = DateTime.Now + (baseCooldown / 2);
+            _nextAllowedAttempt = DateTime.Now + baseCooldown;
             return;
         }
 
@@ -131,9 +148,13 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
                 exhaustionCooldownMultiplier++;
         }
 
-        var exhaustionCooldown = TimeSpan.FromSeconds(10) * exhaustionCooldownMultiplier;
-        var rollCooldown = TimeSpan.FromSeconds(2) * roll; // Max 86 seconds penalty for rolling poorly
+        var exhaustionCooldown = TimeSpan.FromSeconds(20) * exhaustionCooldownMultiplier;
+        var rollCooldown = TimeSpan.FromSeconds(10) * roll; // Add penalty for rolling poorly, worst possible roll is 43
         var cooldown = baseCooldown + rollCooldown + exhaustionCooldown;
+        if (criticalFail)
+        {
+            cooldown += rollCooldown;
+        }
         _nextAllowedAttempt = DateTime.Now + cooldown;
     }
 
