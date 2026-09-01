@@ -16,7 +16,10 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
     private readonly TraitsCache _traits;
     private readonly Random _rand = new();
 
-    private DateTime _nextAllowedAttempt = DateTime.Now;
+    private DateTime
+        _nextAllowedAttempt =
+            DateTime.Now +
+            TimeSpan.FromMinutes(5); // Initial cooldown to avoid brats reloading the plugin to reset cooldown
     private int _pityCounter = 0;
     private const int MAX_PITY = 10;
 
@@ -30,8 +33,6 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
         _logger = logger;
         _config = config;
         _traits = traits;
-
-        UpdateNextAllowedAttempt(0);
 
         Mediator.Subscribe<GagStateChanged>(this, e =>
         {
