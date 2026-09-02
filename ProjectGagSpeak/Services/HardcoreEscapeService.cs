@@ -80,7 +80,7 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
         var pityCount = Math.Min(_pityCounter, MAX_PITY);
         // 0.9^0 = 1 => no change
         // 0.9^10 ~= 0.34 => ~66% easier to escape at the end
-        difficultyOneIn = (int)Math.Ceiling(difficultyOneIn * Math.Pow(0.89, pityCount));
+        difficultyOneIn = (int)Math.Ceiling(difficultyOneIn * Math.Pow(0.83, pityCount));
 
         // If there is no challenge present, allow it.
         if (difficultyOneIn == 1)
