@@ -3,6 +3,7 @@ using Dalamud.Game.Gui.Dtr;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using GagSpeak.Gui;
 using GagSpeak.Gui.Components;
 using GagSpeak.Kinksters;
@@ -124,40 +125,22 @@ public sealed class DtrBarService : DisposableMediatorSubscriberBase
 
         try
         {
-            if(!Svc.Data.GetExcelSheet<TerritoryType>().TryGetRow(PlayerContent.TerritoryID, out var row))
+            var map = AgentMap.Instance();
+            if (map == null)
             {
-                Logger.LogError("Failed to get map data.");
+                Logger.LogError("Failed to open map: AgentMap instance is null.");
                 return;
             }
 
-            var coords = GenerateMapLinkMessageForObject(*chara);
-            Logger.LogTrace($"{chara->NameString} at {coords}", LoggerType.ContextDtr);
-            var mapLink = new MapLinkPayload(PlayerContent.TerritoryID, row.Map.RowId, coords.Item1, coords.Item2);
-            PlayerData.OpenMapWithMapLink(mapLink);
+            map->FlagMarkerCount = 0;
+            map->SetFlagMapMarker(Svc.ClientState.TerritoryType, Svc.ClientState.MapId, chara->Position.X,
+                                  chara->Position.Z);
+            map->OpenMap(Svc.ClientState.MapId, Svc.ClientState.TerritoryType);
         }
         catch (Bagagwa ex)
         {
             Logger.LogError(ex, "Failed to locate player.");
         }
-    }
-
-    private unsafe (float, float) GenerateMapLinkMessageForObject(Character chara)
-    {
-        var place = Svc.Data
-            .GetExcelSheet<Map>(Svc.ClientState.ClientLanguage)?
-            .FirstOrDefault(m => m.TerritoryType.RowId == PlayerContent.TerritoryID);
-        var placeName = place?.PlaceName.RowId;
-        var scale = place?.SizeFactor ?? 100f;
-
-        return ((float)ToMapCoordinate(chara.Position.X, scale), (float)ToMapCoordinate(chara.Position.Z, scale));
-    }
-
-    // Ref: https://github.com/Bluefissure/MapLinker/blob/master/MapLinker/MapLinker.cs#L223
-    private double ToMapCoordinate(double val, float scale)
-    {
-        var c = scale / 100.0;
-        val *= c;
-        return ((41.0 / c) * ((val + 1024.0) / 2048.0)) + 1;
     }
 }
 
