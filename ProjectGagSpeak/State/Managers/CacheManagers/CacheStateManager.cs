@@ -503,6 +503,10 @@ public class CacheStateManager : IHostedService
             _arousalHandler.UpdateFinalCache(),
             _overlayHandler.UpdateCaches()
         );
+
+        // Handle Redraw afterwards
+        if (item.DoRedraw)
+            _redrawAssist.RedrawObject();
     }
 
     public async Task AddRestraintSetLayers(RestraintSet item, RestraintLayer added, string enactor)
@@ -540,6 +544,10 @@ public class CacheStateManager : IHostedService
             _arousalHandler.UpdateFinalCache(),
             _overlayHandler.UpdateCaches()
         );
+
+        // Handle Redraw afterwards
+        if (item.DoRedraw)
+            _redrawAssist.RedrawObject();
     }
 
     // I can almost guarantee that removing this without considering for any
@@ -601,6 +609,10 @@ public class CacheStateManager : IHostedService
             _arousalHandler.UpdateFinalCache(),
             _overlayHandler.UpdateCaches()
         );
+
+        // Handle Redraw afterwards
+        if (item.DoRedraw)
+            _redrawAssist.RedrawObject();
     }
 
     // For CURSED ITEMS.
