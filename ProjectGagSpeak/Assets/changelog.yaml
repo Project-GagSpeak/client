@@ -23,6 +23,8 @@ changelog:
         title: "Quality of Life"
         accent: "Teal"
         bullets:
+          - text: "GlobalChat messages now respect legacy tags. (Band-aid patch)"
+            IsImportant: true
           - text: "Trigger lock actions can target a specific item."
             contributor: "AzureRavie"
 

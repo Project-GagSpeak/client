@@ -145,7 +145,7 @@ public class PairService : DisposableMediatorSubscriberBase
         if (_kinksters.TryGetValue(user, out var s))
             return s.User.AliasOrUID;
         // Fallback to GlobalChat
-        if (_globalChatlog.ChatUsers.TryGetValue(user, out var chatFlags) && chatFlags.HasAny(ChatFlags.UseDisplayName))
+        if (_globalChatlog.ChatUsers.TryGetValue(user, out var meta) && meta.Flags.HasAny(ChatFlags.UseDisplayName))
             return user.VanityOrAnonName;
         return user.AnonName;
     }
@@ -179,7 +179,7 @@ public class PairService : DisposableMediatorSubscriberBase
         if (_kinksters.TryGetValue(user, out var kinkster))
             return kinkster.GetNickAliasOrUid();
         // Fallback to GlobalChat
-        if (_globalChatlog.ChatUsers.TryGetValue(user, out var chatFlags) && chatFlags.HasAny(ChatFlags.UseDisplayName))
+        if (_globalChatlog.ChatUsers.TryGetValue(user, out var meta) && meta.Flags.HasAny(ChatFlags.UseDisplayName))
             return user.VanityOrAnonName;
         // Default to Anon if fail.
         return user.AnonName;
@@ -198,7 +198,7 @@ public class PairService : DisposableMediatorSubscriberBase
         {
             var anonTag = anonMatch.Groups[1].Value;
             // Search GlobalChat for the tag.
-            if (_globalChatlog.ChatUsers.FirstOrDefault(u => string.Equals(u.Key.AnonTag, chatNameArg, comparer) && u.Value.HasAny(ChatFlags.AllowDirectMessages)) is { } rcUser)
+            if (_globalChatlog.ChatUsers.FirstOrDefault(u => string.Equals(u.Key.AnonTag, chatNameArg, comparer) && u.Value.Flags.HasAny(ChatFlags.AllowDirectMessages)) is { } rcUser)
             {
                 if (!Equals(rcUser, default(KeyValuePair<UserData, ChatFlags>)))
                     return rcUser.Key;
@@ -211,7 +211,7 @@ public class PairService : DisposableMediatorSubscriberBase
             return directPair.User;
 
         // GlobalChat iterates a Dictionary, so check against default after.
-        if (_globalChatlog.ChatUsers.FirstOrDefault(u => string.Equals(u.Key.VanityName, chatNameArg, comparer) && u.Value.HasAll(ChatFlags.UseDisplayName | ChatFlags.AllowDirectMessages)) is { } rcMatch)
+        if (_globalChatlog.ChatUsers.FirstOrDefault(u => string.Equals(u.Key.VanityName, chatNameArg, comparer) && u.Value.Flags.HasAll(ChatFlags.UseDisplayName | ChatFlags.AllowDirectMessages)) is { } rcMatch)
             if (!Equals(rcMatch, default(KeyValuePair<UserData, ChatFlags>)))
                 return rcMatch.Key;
 

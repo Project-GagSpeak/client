@@ -287,7 +287,7 @@ public class ChatService : DisposableMediatorSubscriberBase
     internal async void SendGlobalChatMessage(ChatlogId log, string message)
     {
         var msgBytes = new SeStringBuilder().Add(new SeTextPayload(message)).Encode();
-        var msgDto = new SentMessage(log, MainHub.OwnUserData, message, msgBytes) { GlobalChatFlags = (ushort)_chatConfig.Data.ChatPerms };
+        var msgDto = new SentMessage(log, MainHub.OwnUserData, message, msgBytes, _config.Data.UseLegacyAnonName, _chatConfig.Data.ChatPerms);
         SendChatInternal(log, msgDto);
     }
 
@@ -305,22 +305,18 @@ public class ChatService : DisposableMediatorSubscriberBase
 
     private unsafe void SendDMNative(ChatlogId log, byte[] msgBytes, Utf8String* nativeMsg, SeString msgSeStr)
     {
+        // Dont.
+        return;
         // Get the labelName
         var parts = log.ChatId.Split('-');
         var targetUid = parts[0] == MainHub.UID ? parts[1] : parts[0];
-        var msgDto = new SentMessage(log, MainHub.OwnUserData, msgSeStr.TextValue, msgBytes);
-        SendChatInternal(log, msgDto);
-    }
-
-    private unsafe void SendSanctionNative(ChatlogId log, byte[] msgBytes, Utf8String* nativeMsg, SeString msgSeStr)
-    {
-        var msgDto = new SentMessage(log, MainHub.OwnUserData, msgSeStr.TextValue, msgBytes);
+        var msgDto = new SentMessage(log, MainHub.OwnUserData, msgSeStr.TextValue, msgBytes, _config.Data.UseLegacyAnonName, _chatConfig.Data.ChatPerms);
         SendChatInternal(log, msgDto);
     }
 
     private unsafe void SendGlobalChatNative(ChatlogId log, byte[] msgBytes, Utf8String* nativeMsg, SeString msgSeStr)
     {
-        var msgDto = new SentMessage(log, MainHub.OwnUserData, msgSeStr.TextValue, msgBytes) { GlobalChatFlags = (ushort)_chatConfig.Data.ChatPerms, };
+        var msgDto = new SentMessage(log, MainHub.OwnUserData, msgSeStr.TextValue, msgBytes, _config.Data.UseLegacyAnonName, _chatConfig.Data.ChatPerms);
         SendChatInternal(log, msgDto);
     }
 
@@ -328,24 +324,12 @@ public class ChatService : DisposableMediatorSubscriberBase
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
+        // Dont
+        return;
         // Ensure the correct log by running a comparer against sender and recipient.
         var dmChatId = string.CompareOrdinal(MainHub.UID, recipient.UID) < 0 ? $"{MainHub.UID}-{recipient.UID}" : $"{recipient.UID}-{MainHub.UID}";
         var dmChatlogId = new ChatlogId(GsChatKind.Direct, dmChatId);
-        SendChatInternal(dmChatlogId, new(dmChatlogId, MainHub.OwnUserData, message, msgBytes));
-    }
-
-    private async void SendSanctionInternal(ChatlogId log, string message, byte[] msgBytes)
-    {
-        if (!MainHub.IsConnectionDataSynced)
-            return;
-        SendChatInternal(log, new(log, MainHub.OwnUserData, message, msgBytes));
-    }
-
-    private async void SendRadarInternal(ChatlogId log, string message, byte[] msgBytes)
-    {
-        if (!MainHub.IsConnectionDataSynced)
-            return;
-        SendChatInternal(log, new(log, MainHub.OwnUserData, message, msgBytes) { GlobalChatFlags = (ushort)_chatConfig.Data.ChatPerms });
+        SendChatInternal(dmChatlogId, new(dmChatlogId, MainHub.OwnUserData, message, msgBytes, _config.Data.UseLegacyAnonName, _chatConfig.Data.ChatPerms));
     }
 
     private async void SendChatInternal(ChatlogId id, SentMessage messageDto)

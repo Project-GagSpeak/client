@@ -158,7 +158,8 @@ public class GlobalChatDrawer : RichEmoteChatDrawer
         if (ImGui.IsItemClicked(ImGuiMouseButton.Middle) && MainHub.Reputation.CanViewProfiles)
         {
             // Need to ensure we have valid access to open.
-            if (((GlobalChatLog)ChatLog!).ChatUsers.GetValueOrDefault(msg.Sender, ChatFlags.None).HasAny(ChatFlags.AllowProfileViewing))
+            var flags = ((GlobalChatLog)ChatLog!).ChatUsers.GetValueOrDefault(msg.Sender, (false, ChatFlags.None)).Item2;
+            if (flags.HasAny(ChatFlags.AllowProfileViewing))
                 _mediator.Publish(new OpenUserLightProfileMessage(msg.Sender));
         }
 
@@ -177,11 +178,11 @@ public class GlobalChatDrawer : RichEmoteChatDrawer
         var disableSilence = !ctrlHeld || isOwnMsg;
         var disableBlock = !(ctrlHeld && shiftHeld) || isOwnMsg;
 
-        var flags = ((GlobalChatLog)ChatLog!).ChatUsers.GetValueOrDefault(msg.Sender, ChatFlags.None);
-        var dispName = flags.HasAny(ChatFlags.UseDisplayName) ? msg.Sender.VanityOrAnonName : msg.Sender.AnonName;
+        var flags = ((GlobalChatLog)ChatLog!).ChatUsers.GetValueOrDefault(msg.Sender, (false, ChatFlags.None)).Item2;
+        var dispName = msg.DisplayName;
 
         using (Fonts.GameFont.Push())
-            CkGui.TextUnderlined(msg.Sender.VanityOrAnonName);
+            CkGui.TextUnderlined(dispName);
 
         if (MainHub.Reputation.CanViewProfiles)
         {

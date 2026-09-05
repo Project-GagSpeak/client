@@ -80,7 +80,17 @@ public class DMChatLog : RichChatLog<NewGsChatMessage>
     }
 
     private string GetSenderName(ChatlogMessage msg)
-        => _pairService.GetDisplayName(msg.Sender);
+    {
+        var sender = msg.Sender;
+        // Prioritize VanityName if set
+        if (sender.VanityName is not null && msg.Flags.HasAny(ChatFlags.UseDisplayName))
+            return $"${sender.VanityName}-{msg.KinksterTag}";
+        // Fallback for pairs
+        if (_kinksters.GetValueOrDefault(sender) is { } kinkster)
+            return $"{kinkster.GetNickAliasOrUid()} ({msg.KinksterTag})";
+        // Final fallback - AnonKinkster name.
+        return $"Kinkster-{msg.KinksterTag}";
+    }
 
     private string ProcessMentions(string sanitizedMessage, out bool wasMentioned)
     {

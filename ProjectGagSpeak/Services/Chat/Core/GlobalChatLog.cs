@@ -19,7 +19,7 @@ public class GlobalChatLog : RichChatLog<NewGsChatMessage>, IMediatorSubscriber,
     private readonly KinksterManager _kinksters;
     private readonly BlockService _blockService;
 
-    private Dictionary<UserData, ChatFlags> _userFlags = new(UserDataComparer.Instance);
+    private Dictionary<UserData, (bool LegacyId, ChatFlags Flags)> _userMeta = new(UserDataComparer.Instance);
     // Used exclusively for radar mentions.
     private Regex? _mentionRegex;
 
@@ -41,8 +41,8 @@ public class GlobalChatLog : RichChatLog<NewGsChatMessage>, IMediatorSubscriber,
     }
 
     public const string DisplayName = "Global Chat";
-    public int Participants => _userFlags.Count;
-    internal IReadOnlyDictionary<UserData, ChatFlags> ChatUsers => _userFlags;
+    public int Participants => _userMeta.Count;
+    internal IReadOnlyDictionary<UserData, (bool LegacyId, ChatFlags Flags)> ChatUsers => _userMeta;
 
     public void Dispose()
     {
@@ -78,18 +78,18 @@ public class GlobalChatLog : RichChatLog<NewGsChatMessage>, IMediatorSubscriber,
     {
         if (_kinksters.GetValueOrDefault(user) is { } kinkster)
             return $"{kinkster.GetNickAliasOrUid()} ({user.AnonTag})";
-        if (_userFlags.TryGetValue(user, out var flags) && flags.HasAny(ChatFlags.UseDisplayName))
+        if (_userMeta.TryGetValue(user, out var meta) && meta.Flags.HasAny(ChatFlags.UseDisplayName))
             return user.VanityOrAnonName;
         return user.AnonName;
     }
 
     public void AddUpdateMember(GlobalChatMember dto)
-        => _userFlags[dto.User] = dto.Flags;
+        => _userMeta[dto.User] = (dto.LegacyId, dto.Flags);
 
     public void ProcessChatMessage(ChatlogMessage msg, bool doPings = true)
     {
         _logger.LogDebug($"[RadarChat] {ID} recieved msg from {msg.Sender.AnonTag}", LoggerType.GlobalChat);
-        _userFlags[msg.Sender] = (ChatFlags)msg.GlobalChatFlags;
+        _userMeta[msg.Sender] = (msg.LegacyId, msg.Flags);
         // Wrap devs in special text.
         var ctx = msg.Sender.Tier is CkVanityTier.KinkporiumMistress
             ? $"[rawcolor={GsCol.ShopKeeperText.Uint()}]{msg.Message}[/rawcolor]"
@@ -118,16 +118,15 @@ public class GlobalChatLog : RichChatLog<NewGsChatMessage>, IMediatorSubscriber,
     // Move to message handler.
     private string GetSenderName(ChatlogMessage msg)
     {
-        var radarFlags = (ChatFlags)msg.GlobalChatFlags;
         var sender = msg.Sender;
         // Prioritize VanityName if set
-        if (sender.VanityName is not null && radarFlags.HasAny(ChatFlags.UseDisplayName))
-            return sender.VanityName;
+        if (sender.VanityName is not null && msg.Flags.HasAny(ChatFlags.UseDisplayName))
+            return $"{sender.VanityName}-{msg.KinksterTag}";
         // Fallback for pairs
         if (_kinksters.GetValueOrDefault(sender) is { } kinkster)
-            return $"{kinkster.GetNickAliasOrUid()} ({sender.AnonTag})";
-        // Final fallback
-        return radarFlags.HasAny(ChatFlags.UseDisplayName) ? sender.VanityOrAnonName : sender.AnonName;
+            return $"{kinkster.GetNickAliasOrUid()} ({msg.KinksterTag})";
+        // Final fallback - AnonKinkster name.
+        return $"Kinkster-{msg.KinksterTag}";
     }
 
     private string ProcessMentions(string sanitizedMessage, out bool wasMentioned)
@@ -144,6 +143,7 @@ public class GlobalChatLog : RichChatLog<NewGsChatMessage>, IMediatorSubscriber,
             if (_chatConfig.Data.MentionHighlights)
                 return regex.Replace(sanitizedMessage, $"[rawcolor={_chatConfig.Data.MentionColor}]$0[/rawcolor]");
         }
+
         return sanitizedMessage;
     }
 }

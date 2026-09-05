@@ -241,7 +241,7 @@ public class HybridChatDrawer : RichEmoteChatDrawer
             // RadarChat requires access.
             if (ChatLog is GlobalChatLog gcl)
             {
-                if (gcl.ChatUsers.GetValueOrDefault(msg.Sender, ChatFlags.None).HasAny(ChatFlags.AllowProfileViewing))
+                if (gcl.ChatUsers.GetValueOrDefault(msg.Sender, (false, ChatFlags.None)).Item2.HasAny(ChatFlags.AllowProfileViewing))
                     _mediator.Publish(new OpenUserLightProfileMessage(msg.Sender));
             }
             else
@@ -385,11 +385,11 @@ public class HybridChatDrawer : RichEmoteChatDrawer
         var disableSilence = !ctrlHeld || isOwnMsg;
         var disableBlock = !(ctrlHeld && shiftHeld) || isOwnMsg;
 
-        var flags = globalChat.ChatUsers.GetValueOrDefault(msg.Sender, ChatFlags.None);
-        var dispName = flags.HasAny(ChatFlags.UseDisplayName) ? msg.Sender.VanityOrAnonName : msg.Sender.AnonName;
+        var flags = globalChat.ChatUsers.GetValueOrDefault(msg.Sender, (false, ChatFlags.None)).Item2;
+        var dispName = msg.DisplayName;
 
         using (Fonts.HeaderFont.Push())
-            CkGui.TextUnderlined(msg.Sender.VanityOrAnonName);
+            CkGui.TextUnderlined(dispName);
 
         if (MainHub.Reputation.CanViewProfiles)
         {

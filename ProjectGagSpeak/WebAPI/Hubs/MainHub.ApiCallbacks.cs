@@ -807,7 +807,7 @@ public partial class MainHub
     public Task Callback_RoomChatMessage(UserData user, string message)
     {
         Logger.LogDebug("Cb_RoomChatMessage", LoggerType.Callbacks);
-        Mediator.Publish(new VibeRoomChatMessage(new ChatlogMessage(ChatlogId.Invalid, "", DateTime.UtcNow, MainHub.OwnUserData, "", [])));
+        Mediator.Publish(new VibeRoomChatMessage(new ChatlogMessage(ChatlogId.Invalid, "", DateTime.UtcNow, MainHub.OwnUserData, "", [], false)));
         return Task.CompletedTask;
     }
     #endregion
