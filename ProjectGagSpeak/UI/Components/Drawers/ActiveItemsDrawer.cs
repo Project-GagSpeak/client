@@ -245,7 +245,8 @@ public class ActiveItemsDrawer
 
         // Draw out the potential popup if we should.
         var applyCombo = _gagItems[slotIdx];
-        if (_gagItems[slotIdx].DrawPopup($"##GagSelector-{slotIdx}", data.GagItem, rightWidth * .9f, drawPos))
+        if (_gagItems[slotIdx].DrawPopup($"##GagSelector-{slotIdx}", data.GagItem, rightWidth * .9f, drawPos) &&
+            _escape.AttemptSelfRemove())
             GagComboChanged(applyCombo, slotIdx, data.GagItem);
     }
 
@@ -283,7 +284,8 @@ public class ActiveItemsDrawer
 
         // Draw the potential popup if we should.
         var applyCombo = _restrictionItems[slotIdx];
-        if (applyCombo.DrawPopup($"##Restrictions-{slotIdx}", data.Identifier, rightWidth * .75f, drawPos))
+        if (applyCombo.DrawPopup($"##Restrictions-{slotIdx}", data.Identifier, rightWidth * .75f, drawPos) &&
+            _escape.AttemptSelfRemove())
             RestrictionComboChanged(applyCombo, slotIdx, data.Identifier);
     }
 
@@ -333,7 +335,10 @@ public class ActiveItemsDrawer
                 });
             }
         }
-        if (_restraintItem.DrawPopup($"##RestraintSetSelector", data.Identifier, ImGui.GetContentRegionAvail().X * .90f, drawPos))
+
+        if (_restraintItem.DrawPopup("##RestraintSetSelector", data.Identifier, ImGui.GetContentRegionAvail().X * .90f,
+                                     drawPos) &&
+            _escape.AttemptSelfRemove())
             RestraintComboChanged(data.Identifier);
     }
 
@@ -444,7 +449,10 @@ public class ActiveItemsDrawer
         ImUtf8.SameLineInner();
         //ImGui.SameLine(0,0);
         using var s = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, CkStyle.ChildRoundingLarge());
-        using var _ = ImRaii.Disabled(data.PadlockAssigner != MainHub.UID || data.Padlock == Padlocks.PredicamentTimer);
+        // Disable layer editing, when padlock was added by someone else, it's a predicament lock with no self-access, or any lock exists with hardcore escape turned on.
+        using var _ = ImRaii.Disabled(data.PadlockAssigner != MainHub.UID ||
+                                      data.Padlock == Padlocks.PredicamentTimer ||
+                                      (data.Padlock != Padlocks.None && _escape.HardcoreEscapeEnabled));
         using (ImRaii.Group())
         {
             // draw sync button, and call layer update if pressed.
@@ -492,10 +500,11 @@ public class ActiveItemsDrawer
         if (nickEnabler is null && enabler == MainHub.UID)
             nickEnabler = "yourself";
 
+        var swapLabel = _escape.HardcoreEscapeEnabled ? "Attempt to swap to" : "Select";
         var clearLabel = _escape.HardcoreEscapeEnabled ? "Attempt to escape" : "Clear";
 
         return $"{label ?? "Unknown item"} applied by {nickEnabler ?? "Unknown Kinkster"}" +
-               $"--SEP----COL--Left-Click--COL-- ⇒ Select another {itemType} Item." +
+               $"--SEP----COL--Left-Click--COL-- ⇒ {swapLabel} another {itemType} Item." +
                $"--NL----COL--Right-Click--COL-- ⇒ {clearLabel} active {itemType} Item.";
     }
 
