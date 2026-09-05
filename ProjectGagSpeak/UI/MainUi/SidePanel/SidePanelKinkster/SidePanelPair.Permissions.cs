@@ -410,6 +410,7 @@ public partial class SidePanelPair
         {
             var res = perm.ToPermValue();
             var newState = newStateFunc();
+            Svc.Logger.Debug($"{perm} ({res.type}, {res.name}) is currently {current}, changing to {newState}");
             if (newState is null || res.name.IsNullOrEmpty())
                 return;
 
@@ -418,9 +419,11 @@ public partial class SidePanelPair
                 switch (res.type)
                 {
                     case PermissionType.Global:
+                        Svc.Logger.Debug($"Changing {kinkster.PlayerName} global permission {perm} to {newState}");
                         await PermHelper.ChangeOtherGlobal(_hub, kinkster.User, kinkster.PairGlobals, res.name, newState);
                         break;
                     case PermissionType.PairPerm:
+                        Svc.Logger.Debug($"Changing {kinkster.PlayerName} other permission {perm} to {newState}");
                         await PermHelper.ChangeOtherUnique(_hub, kinkster.User, kinkster.PairPerms, res.name, newState);
                         break;
                     default:

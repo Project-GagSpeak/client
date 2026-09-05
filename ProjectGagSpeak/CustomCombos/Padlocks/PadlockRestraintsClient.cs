@@ -10,12 +10,15 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
 {
     private readonly RestraintManager _manager;
     private readonly SelfBondageService _selfBondage;
+    private readonly HardcoreEscapeService _escape;
 
-    public PadlockRestraintsClient(ILogger log, RestraintManager manager, SelfBondageService selfBondage)
+    public PadlockRestraintsClient(
+        ILogger log, RestraintManager manager, SelfBondageService selfBondage, HardcoreEscapeService escape)
         : base(() => [..PadlockEx.ClientLocks], log)
     {
         _manager = manager;
         _selfBondage = selfBondage;
+        _escape = escape;
     }
 
     protected override string ItemName(CharaActiveRestraint item)
@@ -138,7 +141,7 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
         };
 
         if (valid)
-            return true;
+            return _escape.AttemptSelfRemove();
 
         // If we don't, display the appropriate error and reset inputs.
         switch (SelectedLock)

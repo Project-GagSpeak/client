@@ -112,6 +112,7 @@ public class MainConfigData : IAudioConfigData
     public int GlobalShockerId { get; set; } = 0;
     public Dictionary<string, int> PairShockerIds { get; set; } = new(); // Per-pair shocker device selection (UID → shocker ID).
     public bool MoveToChambersInEstates { get; set; } = false; // Move to Chambers in Estates during ForcedStay
+    public bool HardcoreEscape { get; set; } = false; // Challenge removing or unlocking equipment, when bound
 
     public float OverlayMaxOpacity { get; set; } = 1.0f; // Blindfold Opacity
     public HypnoticEffect? HypnoEffectInfo { get; set; } = null;

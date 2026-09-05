@@ -44,6 +44,7 @@ public class ActiveItemsDrawer
     private readonly CosmeticService _cosmetics;
     private readonly KinksterManager _kinksters;
     private readonly SelfBondageService _selfBondage;
+    private readonly HardcoreEscapeService _escape;
     private readonly TutorialService _guides;
 
     private RestrictionGagCombo[] _gagItems;
@@ -70,6 +71,7 @@ public class ActiveItemsDrawer
         CosmeticService cosmetics,
         KinksterManager kinksters,
         SelfBondageService selfBondage,
+        HardcoreEscapeService escape,
         TutorialService guides)
     {
         _logger = logger;
@@ -84,6 +86,7 @@ public class ActiveItemsDrawer
         _cosmetics = cosmetics;
         _kinksters = kinksters;
         _selfBondage = selfBondage;
+        _escape = escape;
         _guides = guides;
 
         // Initialize the GagCombos.
@@ -97,7 +100,7 @@ public class ActiveItemsDrawer
         // Init Gag Padlocks.
         _gagPadlocks = new PadlockGagsClient[Constants.MaxGagSlots];
         for (var i = 0; i < _gagPadlocks.Length; i++)
-            _gagPadlocks[i] = new PadlockGagsClient(logger, gags, selfBondage);
+            _gagPadlocks[i] = new PadlockGagsClient(logger, gags, selfBondage, _escape);
 
         // Init Restriction Combos.
         _restrictionItems = new RestrictionCombo[Constants.MaxRestrictionSlots];
@@ -110,14 +113,14 @@ public class ActiveItemsDrawer
         // Init Restriction Padlocks.
         _restrictionPadlocks = new PadlockRestrictionsClient[Constants.MaxRestrictionSlots];
         for (var i = 0; i < _restrictionPadlocks.Length; i++)
-            _restrictionPadlocks[i] = new PadlockRestrictionsClient(logger, restrictions, selfBondage);
+            _restrictionPadlocks[i] = new PadlockRestrictionsClient(logger, restrictions, selfBondage, _escape);
 
         // Init Restraint Combo & Padlock.
         _restraintItem = new RestraintCombo(logger, mediator, favorites, () =>
         [
             ..restraints.Storage.OrderByDescending(p => FavoritesConfig.Restraints.Contains(p.Identifier)).ThenBy(p => p.Label)
         ]);
-        _restraintPadlocks = new PadlockRestraintsClient(logger, restraints, selfBondage);
+        _restraintPadlocks = new PadlockRestraintsClient(logger, restraints, selfBondage, _escape);
 
         // Init Layer Editor Client.
         _layerFlagsWidget = new(FAI.LayerGroup, "ClientRestraintLayers", string.Empty);
@@ -232,7 +235,7 @@ public class ActiveItemsDrawer
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             ImGui.OpenPopup($"##GagSelector-{slotIdx}");
-        else if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _gags.CanRemove(slotIdx))
+        else if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _gags.CanRemove(slotIdx) && _escape.AttemptSelfRemove())
             _selfBondage.DoSelfGag(slotIdx, new ActiveGagSlot(), DataUpdateType.Removed);
 
         // Draw out padlocks selections.
@@ -242,7 +245,8 @@ public class ActiveItemsDrawer
 
         // Draw out the potential popup if we should.
         var applyCombo = _gagItems[slotIdx];
-        if (_gagItems[slotIdx].DrawPopup($"##GagSelector-{slotIdx}", data.GagItem, rightWidth * .9f, drawPos))
+        if (_gagItems[slotIdx].DrawPopup($"##GagSelector-{slotIdx}", data.GagItem, rightWidth * .9f, drawPos) &&
+            _escape.AttemptSelfRemove())
             GagComboChanged(applyCombo, slotIdx, data.GagItem);
     }
 
@@ -262,7 +266,8 @@ public class ActiveItemsDrawer
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             ImGui.OpenPopup($"##Restrictions-{slotIdx}");
-        else if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _restrictions.CanRemove(slotIdx))
+        else if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _restrictions.CanRemove(slotIdx) &&
+                 _escape.AttemptSelfRemove())
             _selfBondage.DoSelfBind(slotIdx, new ActiveRestriction(), DataUpdateType.Removed);
 
         ImUtf8.SameLineInner();
@@ -279,7 +284,8 @@ public class ActiveItemsDrawer
 
         // Draw the potential popup if we should.
         var applyCombo = _restrictionItems[slotIdx];
-        if (applyCombo.DrawPopup($"##Restrictions-{slotIdx}", data.Identifier, rightWidth * .75f, drawPos))
+        if (applyCombo.DrawPopup($"##Restrictions-{slotIdx}", data.Identifier, rightWidth * .75f, drawPos) &&
+            _escape.AttemptSelfRemove())
             RestrictionComboChanged(applyCombo, slotIdx, data.Identifier);
     }
 
@@ -304,7 +310,7 @@ public class ActiveItemsDrawer
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             ImGui.OpenPopup($"##RestraintSetSelector");
-        else if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _restraints.CanRemove())
+        else if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _restraints.CanRemove() && _escape.AttemptSelfRemove())
             _selfBondage.DoSelfRestraint(new CharaActiveRestraint(), DataUpdateType.Removed);
 
         ImUtf8.SameLineInner();
@@ -329,7 +335,10 @@ public class ActiveItemsDrawer
                 });
             }
         }
-        if (_restraintItem.DrawPopup($"##RestraintSetSelector", data.Identifier, ImGui.GetContentRegionAvail().X * .90f, drawPos))
+
+        if (_restraintItem.DrawPopup("##RestraintSetSelector", data.Identifier, ImGui.GetContentRegionAvail().X * .90f,
+                                     drawPos) &&
+            _escape.AttemptSelfRemove())
             RestraintComboChanged(data.Identifier);
     }
 
@@ -440,7 +449,10 @@ public class ActiveItemsDrawer
         ImUtf8.SameLineInner();
         //ImGui.SameLine(0,0);
         using var s = ImRaii.PushStyle(ImGuiStyleVar.FrameRounding, CkStyle.ChildRoundingLarge());
-        using var _ = ImRaii.Disabled(data.PadlockAssigner != MainHub.UID || data.Padlock == Padlocks.PredicamentTimer);
+        // Disable layer editing, when padlock was added by someone else, it's a predicament lock with no self-access, or any lock exists with hardcore escape turned on.
+        using var _ = ImRaii.Disabled(data.PadlockAssigner != MainHub.UID ||
+                                      data.Padlock == Padlocks.PredicamentTimer ||
+                                      (data.Padlock != Padlocks.None && _escape.HardcoreEscapeEnabled));
         using (ImRaii.Group())
         {
             // draw sync button, and call layer update if pressed.
@@ -488,9 +500,12 @@ public class ActiveItemsDrawer
         if (nickEnabler is null && enabler == MainHub.UID)
             nickEnabler = "yourself";
 
+        var swapLabel = _escape.HardcoreEscapeEnabled ? "Attempt to swap to" : "Select";
+        var clearLabel = _escape.HardcoreEscapeEnabled ? "Attempt to escape" : "Clear";
+
         return $"{label ?? "Unknown item"} applied by {nickEnabler ?? "Unknown Kinkster"}" +
-            $"--SEP----COL--Left-Click--COL-- ⇒ Select another {itemType} Item." +
-            $"--NL----COL--Right-Click--COL-- ⇒ Clear active {itemType} Item.";
+               $"--SEP----COL--Left-Click--COL-- ⇒ {swapLabel} another {itemType} Item." +
+               $"--NL----COL--Right-Click--COL-- ⇒ {clearLabel} active {itemType} Item.";
     }
 
     public void DrawFramedImage(GagType gag, float size, float rounding, uint frameTint = uint.MaxValue)

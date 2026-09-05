@@ -229,22 +229,14 @@ public class ReactionDistributor
             if (act.Padlock is Padlocks.None)
                 return false;
 
-            // If we have defined a layer idx, look for a gag on that index and return false if none are present or it is locked.
-            if (act.LayerIdx != -1)
-            {
-                if (gagData.GagSlots[act.LayerIdx].IsLocked() || gagData.GagSlots[act.LayerIdx].GagItem is GagType.None)
-                    return false;
-            }
-
-            // If we have selected a specific gag to lock, look for it, and if none are found, return false.
-            if (act.GagType is not GagType.None && gagData.FindOutermostActive(act.GagType) is -1)
-                return false;
-
-            // Otherwise, attempt to locate the first lockable gagslot.
+            // Any layer: locate the chosen gag when one is set, otherwise the outermost lockable one.
             if (layerIdx is -1)
-                layerIdx = gagData.FindFirstUnlocked();
+                layerIdx = act.GagType is GagType.None ? gagData.FindOutermostActive() : gagData.FindOutermostActive(act.GagType);
+            // Specific layer: it must hold an unlocked gag matching the chosen gag type when one is set.
+            else if (gagData.GagSlots[layerIdx].GagItem is GagType.None || gagData.GagSlots[layerIdx].IsLocked()
+                || (act.GagType is not GagType.None && gagData.GagSlots[layerIdx].GagItem != act.GagType))
+                layerIdx = -1;
 
-            // If still not valid, fail.
             if (layerIdx is -1)
                 return false;
 
@@ -268,7 +260,7 @@ public class ReactionDistributor
                     timer = Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound);
             }
 
-            _logger.LogInformation($"Locking [{act.GagType}] with [{act.Padlock}] on layer {layerIdx}", LoggerType.Triggers);
+            _logger.LogInformation($"Locking [{gagData.GagSlots[layerIdx].GagItem}] with [{act.Padlock}] on layer {layerIdx}", LoggerType.Triggers);
             var gagSlot = gagData.GagSlots[layerIdx] with
             {
                 Padlock = act.Padlock,
@@ -325,9 +317,20 @@ public class ReactionDistributor
         }
         else if (act.NewState is NewState.Locked)
         {
-            layerIdx = act.LayerIdx == -1 ? restrictions.Restrictions.IndexOf(x => x.Identifier != Guid.Empty && x.CanLock()) : act.LayerIdx;
+            if (act.Padlock is Padlocks.None)
+                return false;
 
-            if (layerIdx is -1 || !restrictions.Restrictions[layerIdx].CanLock() || act.Padlock is Padlocks.None)
+            // Any layer: locate the chosen restriction when one is set, otherwise the outermost lockable one.
+            if (layerIdx is -1)
+                layerIdx = act.RestrictionId != Guid.Empty
+                    ? Array.FindLastIndex(restrictions.Restrictions, x => x.Identifier == act.RestrictionId && x.CanLock())
+                    : restrictions.FindOutermostActiveUnlocked();
+            // Specific layer: it must hold a restriction matching the chosen one when set.
+            else if (restrictions.Restrictions[layerIdx].Identifier == Guid.Empty
+                || (act.RestrictionId != Guid.Empty && restrictions.Restrictions[layerIdx].Identifier != act.RestrictionId))
+                layerIdx = -1;
+
+            if (layerIdx is -1 || !restrictions.Restrictions[layerIdx].CanLock())
                 return false;
 
             var timer = TimeSpan.Zero;
@@ -340,7 +343,7 @@ public class ReactionDistributor
                     timer = Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound);
             }
 
-            _logger.LogInformation($"Locking restriction [{act.RestrictionId}] with [{act.Padlock}] on layer {layerIdx}", LoggerType.Triggers);
+            _logger.LogInformation($"Locking restriction [{restrictions.Restrictions[layerIdx].Identifier}] with [{act.Padlock}] on layer {layerIdx}", LoggerType.Triggers);
             var itemSlot = restrictions.Restrictions[layerIdx] with
             {
                 Padlock = act.Padlock,
@@ -399,7 +402,12 @@ public class ReactionDistributor
         }
         else if (act.NewState is NewState.Locked)
         {
-            if (!restraint.CanLock() || act.Padlock is Padlocks.None)
+            if (act.Padlock is Padlocks.None)
+                return false;
+            // When a specific set is chosen, only lock if it is the currently active one.
+            if (act.RestrictionId != Guid.Empty && restraint.Identifier != act.RestrictionId)
+                return false;
+            if (!restraint.CanLock())
                 return false;
 
             var timer = TimeSpan.Zero;
@@ -412,7 +420,7 @@ public class ReactionDistributor
                     timer = Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound);
             }
 
-            _logger.LogDebug($"Locking restraint [{act.RestrictionId}] with [{act.Padlock}]", LoggerType.Triggers);
+            _logger.LogDebug($"Locking restraint [{restraint.Identifier}] with [{act.Padlock}]", LoggerType.Triggers);
             var setData = restraint with
             {
                 Padlock = act.Padlock,

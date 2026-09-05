@@ -1,4 +1,17 @@
-using CkCommons;using CkCommons.Gui;using Dalamud.Bindings.ImGui;using Dalamud.Interface.Colors;using Dalamud.Interface.Utility;using Dalamud.Interface.Utility.Raii;using GagSpeak.Kinksters;using GagSpeak.Services;using GagSpeak.Utils;using GagSpeak.WebAPI;using GagspeakAPI.Data.Permissions;using System.Collections.Immutable;namespace GagSpeak.Gui.MainWindow;
+using CkCommons;
+using CkCommons.Gui;
+using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Colors;
+using Dalamud.Interface.Utility;
+using Dalamud.Interface.Utility.Raii;
+using GagSpeak.Kinksters;
+using GagSpeak.Services;
+using GagSpeak.Utils;
+using GagSpeak.WebAPI;
+using GagspeakAPI.Data.Permissions;
+using System.Collections.Immutable;
+
+namespace GagSpeak.Gui.MainWindow;
 
 /// <summary> 
 ///   Kinkster Permission ID 
@@ -77,7 +90,8 @@ public enum KPID : byte
     PiShockShareCode,
     MaxVibrateDuration,
 }
-public static class PanelPairEx
+
+public static class PanelPairEx
 {
     public record OwnPermRowData(bool IsGlobal, FAI IconYes, FAI IconNo, string AllowedStr, string BlockedStr, string PermLabel, string JoinWord, string PairAllowedTT, string PairBlockedTT);
     public record OtherPermRowData(FAI IconYes, FAI IconNo, string CondTrue, string CondFalse, string Label, bool CondAfterLabel, string suffix = "");
@@ -85,122 +99,122 @@ public enum KPID : byte
     public record OtherHcRowData(FAI IconActive, FAI IconInactive, string PermLabel, string ActionText, string InactiveText, string AllowedTT);
 
     public static readonly ImmutableDictionary<KPID, OwnPermRowData> OwnRowInfo = ImmutableDictionary<KPID, OwnPermRowData>.Empty
-        .Add(KPID.ChatGarblerActive,     new OwnPermRowData(true, FAI.MicrophoneSlash,       FAI.Microphone,    "active",        "inactive",    "Chat Garbler", "is",       string.Empty, string.Empty))
-        .Add(KPID.ChatGarblerLocked,     new OwnPermRowData(true, FAI.Key,                   FAI.UnlockAlt,     "locked",        "unlocked",    "Chat Garbler", "is",       string.Empty, string.Empty))
-        .Add(KPID.GaggedNameplate,       new OwnPermRowData(true, FAI.IdCard,                FAI.Ban,           "enabled",       "disabled",    "GagPlates", "are",         string.Empty, string.Empty))
-
-        .Add(KPID.PermanentLocks,        new OwnPermRowData(false, FAI.Infinity,              FAI.Ban,           "allow",       "prevent",      "Permanent Locks", "are", "to use padlocks without timers.", "from using padlocks without timers."))
-        .Add(KPID.OwnerLocks,            new OwnPermRowData(false, FAI.UserLock,              FAI.Ban,           "allow",       "prevent",      "Owner Locks", "are", "to use owner padlocks.", "from using owner padlocks."))
-        .Add(KPID.DevotionalLocks,       new OwnPermRowData(false, FAI.UserLock,              FAI.Ban,           "allow",       "prevent",      "Devotional Locks", "are", "to use devotional padlocks.", "from using devotional padlocks."))
-
-        .Add(KPID.GagVisuals,            new OwnPermRowData(true, FAI.Surprise,              FAI.Ban,           "enabled",       "disabled",        "Gag Visuals", "are", string.Empty, string.Empty))
-        .Add(KPID.ApplyGags,             new OwnPermRowData(false, FAI.Mask,                  FAI.Ban,           "allow",       "prevent",      "applying Gags", "are", "to apply gags.", "from applying gags"))
-        .Add(KPID.LockGags,              new OwnPermRowData(false, FAI.Lock,                  FAI.Ban,           "allow",       "prevent",      "locking Gags", "are", "to lock gags",                     "from locking gags"))
-        .Add(KPID.MaxGagTime,            new OwnPermRowData(false, FAI.HourglassHalf,         FAI.None,          string.Empty,    string.Empty,      "Max Gag Time", "are", string.Empty,                       string.Empty))
-        .Add(KPID.UnlockGags,            new OwnPermRowData(false, FAI.Key,                   FAI.Ban,           "allow",       "prevent",      "unlocking Gags", "are", "to unlock gags",                   "from unlocking gags"))
-        .Add(KPID.RemoveGags,            new OwnPermRowData(false, FAI.Eraser,                FAI.Ban,           "allow",       "prevent",      "removing Gags", "are", "to remove gags",                   "from removing gags"))
-
-        .Add(KPID.RestrictionVisuals,    new OwnPermRowData(true,  FAI.Tshirt,                FAI.Ban,           "enabled",       "disabled",        "Restriction Visuals", "are", "to enable restriction visuals",    "from enabling restriction visuals"))
-        .Add(KPID.ApplyRestrictions,     new OwnPermRowData(false, FAI.Handcuffs,             FAI.Ban,           "allow",       "prevent",      "Applying Restrictions", "are", "to apply restrictions",            "from applying restrictions"))
-        .Add(KPID.LockRestrictions,      new OwnPermRowData(false, FAI.Lock,                  FAI.Ban,           "allow",       "prevent",      "Locking Restrictions", "are", "to lock restrictions",             "from locking restrictions"))
-        .Add(KPID.MaxRestrictionTime,    new OwnPermRowData(false, FAI.HourglassHalf,         FAI.None,          string.Empty,    string.Empty,      "Max Restriction Time", string.Empty, string.Empty,                       string.Empty))
-        .Add(KPID.UnlockRestrictions,    new OwnPermRowData(false, FAI.Key,                   FAI.Ban,           "allow",       "prevent",      "Unlocking Restrictions", "are", "to unlock restrictions",           "from unlocking restrictions"))
-        .Add(KPID.RemoveRestrictions,    new OwnPermRowData(false, FAI.Eraser,                FAI.Ban,           "allow",       "prevent",      "Removing Restrictions", "are", "to remove restrictions",           "from removing restrictions"))
-
-        .Add(KPID.RestraintSetVisuals,   new OwnPermRowData(true, FAI.Tshirt,                FAI.Ban,           "enabled",       "disabled",    "Restraint Visuals", "are", "to enable restraint visuals",      "from enabling restraint visuals"))
-        .Add(KPID.ApplyRestraintSets,    new OwnPermRowData(false, FAI.Handcuffs,             FAI.Ban,           "allow",       "prevent",      "applying restraints", "are", "to apply restraints",              "from applying restraints"))
-        .Add(KPID.ApplyLayers,           new OwnPermRowData(false, FAI.LayerGroup,            FAI.Ban,           "allow",       "prevent",      "adding layers", "are", "to apply layers",                  "from applying layers"))
-        .Add(KPID.ApplyLayersWhileLocked,new OwnPermRowData(false, FAI.LayerGroup,            FAI.Ban,           "allow",       "prevent",      "adding layers when locked", "are", "to apply layers while locked",   "from applying layers while locked"))
-        .Add(KPID.LockRestraintSets,     new OwnPermRowData(false, FAI.Lock,                  FAI.Ban,           "allow",       "prevent",      "locking restraints", "are", "to lock restraints",               "from locking restraints"))
-        .Add(KPID.MaxRestraintTime,      new OwnPermRowData(false, FAI.HourglassHalf,         FAI.None,          string.Empty,    string.Empty, "Max Restraint Time", string.Empty,      string.Empty,                       string.Empty))
-        .Add(KPID.UnlockRestraintSets,   new OwnPermRowData(false, FAI.Key,                   FAI.Ban,           "allow",       "prevent",      "unlocking restraints", "are", "to unlock restraints",             "from unlocking restraints"))
-        .Add(KPID.RemoveLayers,          new OwnPermRowData(false, FAI.Eraser,                FAI.Ban,           "allow",       "prevent",      "layer removal", "are", "to remove layers",                 "from removing layers"))
+        .Add(KPID.ChatGarblerActive,      new OwnPermRowData(true, FAI.MicrophoneSlash,       FAI.Microphone,    "active",        "inactive",    "Chat Garbler", "is",       string.Empty, string.Empty))
+        .Add(KPID.ChatGarblerLocked,      new OwnPermRowData(true, FAI.Key,                   FAI.UnlockAlt,     "locked",        "unlocked",    "Chat Garbler", "is",       string.Empty, string.Empty))
+        .Add(KPID.GaggedNameplate,        new OwnPermRowData(true, FAI.IdCard,                FAI.Ban,           "enabled",       "disabled",    "GagPlates", "are",         string.Empty, string.Empty))
+ 
+        .Add(KPID.PermanentLocks,         new OwnPermRowData(false, FAI.Infinity,              FAI.Ban,           "allow",       "prevent",      "Permanent Locks", "are", "to use padlocks without timers.", "from using padlocks without timers."))
+        .Add(KPID.OwnerLocks,             new OwnPermRowData(false, FAI.UserLock,              FAI.Ban,           "allow",       "prevent",      "Owner Locks", "are", "to use owner padlocks.", "from using owner padlocks."))
+        .Add(KPID.DevotionalLocks,        new OwnPermRowData(false, FAI.UserLock,              FAI.Ban,           "allow",       "prevent",      "Devotional Locks", "are", "to use devotional padlocks.", "from using devotional padlocks."))
+ 
+        .Add(KPID.GagVisuals,             new OwnPermRowData(true, FAI.Surprise,              FAI.Ban,           "enabled",       "disabled",        "Gag Visuals", "are", string.Empty, string.Empty))
+        .Add(KPID.ApplyGags,              new OwnPermRowData(false, FAI.Mask,                  FAI.Ban,           "allow",       "prevent",      "applying Gags", "are", "to apply gags.", "from applying gags"))
+        .Add(KPID.LockGags,               new OwnPermRowData(false, FAI.Lock,                  FAI.Ban,           "allow",       "prevent",      "locking Gags", "are", "to lock gags",                     "from locking gags"))
+        .Add(KPID.MaxGagTime,             new OwnPermRowData(false, FAI.HourglassHalf,         FAI.None,          string.Empty,    string.Empty,      "Max Gag Time", "are", string.Empty,                       string.Empty))
+        .Add(KPID.UnlockGags,             new OwnPermRowData(false, FAI.Key,                   FAI.Ban,           "allow",       "prevent",      "unlocking Gags", "are", "to unlock gags",                   "from unlocking gags"))
+        .Add(KPID.RemoveGags,             new OwnPermRowData(false, FAI.Eraser,                FAI.Ban,           "allow",       "prevent",      "removing Gags", "are", "to remove gags",                   "from removing gags"))
+ 
+        .Add(KPID.RestrictionVisuals,     new OwnPermRowData(true,  FAI.Tshirt,                FAI.Ban,           "enabled",       "disabled",        "Restriction Visuals", "are", "to enable restriction visuals",    "from enabling restriction visuals"))
+        .Add(KPID.ApplyRestrictions,      new OwnPermRowData(false, FAI.Handcuffs,             FAI.Ban,           "allow",       "prevent",      "Applying Restrictions", "are", "to apply restrictions",            "from applying restrictions"))
+        .Add(KPID.LockRestrictions,       new OwnPermRowData(false, FAI.Lock,                  FAI.Ban,           "allow",       "prevent",      "Locking Restrictions", "are", "to lock restrictions",             "from locking restrictions"))
+        .Add(KPID.MaxRestrictionTime,     new OwnPermRowData(false, FAI.HourglassHalf,         FAI.None,          string.Empty,    string.Empty,      "Max Restriction Time", string.Empty, string.Empty,                       string.Empty))
+        .Add(KPID.UnlockRestrictions,     new OwnPermRowData(false, FAI.Key,                   FAI.Ban,           "allow",       "prevent",      "Unlocking Restrictions", "are", "to unlock restrictions",           "from unlocking restrictions"))
+        .Add(KPID.RemoveRestrictions,     new OwnPermRowData(false, FAI.Eraser,                FAI.Ban,           "allow",       "prevent",      "Removing Restrictions", "are", "to remove restrictions",           "from removing restrictions"))
+ 
+        .Add(KPID.RestraintSetVisuals,    new OwnPermRowData(true, FAI.Tshirt,                FAI.Ban,           "enabled",       "disabled",    "Restraint Visuals", "are", "to enable restraint visuals",      "from enabling restraint visuals"))
+        .Add(KPID.ApplyRestraintSets,     new OwnPermRowData(false, FAI.Handcuffs,             FAI.Ban,           "allow",       "prevent",      "applying restraints", "are", "to apply restraints",              "from applying restraints"))
+        .Add(KPID.ApplyLayers,            new OwnPermRowData(false, FAI.LayerGroup,            FAI.Ban,           "allow",       "prevent",      "adding layers", "are", "to apply layers",                  "from applying layers"))
+        .Add(KPID.ApplyLayersWhileLocked, new OwnPermRowData(false, FAI.LayerGroup,            FAI.Ban,           "allow",       "prevent",      "adding layers when locked", "are", "to apply layers while locked",   "from applying layers while locked"))
+        .Add(KPID.LockRestraintSets,      new OwnPermRowData(false, FAI.Lock,                  FAI.Ban,           "allow",       "prevent",      "locking restraints", "are", "to lock restraints",               "from locking restraints"))
+        .Add(KPID.MaxRestraintTime,       new OwnPermRowData(false, FAI.HourglassHalf,         FAI.None,          string.Empty,    string.Empty, "Max Restraint Time", string.Empty,      string.Empty,                       string.Empty))
+        .Add(KPID.UnlockRestraintSets,    new OwnPermRowData(false, FAI.Key,                   FAI.Ban,           "allow",       "prevent",      "unlocking restraints", "are", "to unlock restraints",             "from unlocking restraints"))
+        .Add(KPID.RemoveLayers,           new OwnPermRowData(false, FAI.Eraser,                FAI.Ban,           "allow",       "prevent",      "layer removal", "are", "to remove layers",                 "from removing layers"))
         .Add(KPID.RemoveLayersWhileLocked,new OwnPermRowData(false, FAI.Eraser,                FAI.Ban,           "allow",       "prevent",     "layer removal when locked", "are", "to remove layers while locked", "from removing layers while locked"))
-        .Add(KPID.RemoveRestraintSets,   new OwnPermRowData(false, FAI.Eraser,                FAI.Ban,           "allow",       "prevent",      "removing restraints", "are", "to remove restraints",             "from removing restraints"))
+        .Add(KPID.RemoveRestraintSets,    new OwnPermRowData(false, FAI.Eraser,                FAI.Ban,           "allow",       "prevent",      "removing restraints", "are", "to remove restraints",             "from removing restraints"))
 
-        .Add(KPID.PuppetPermSit,         new OwnPermRowData(false, FAI.Chair,                 FAI.Ban,           "allow",       "prevent",      "sit requests", "are", "to invoke sit requests",           "from invoking sit requests"))
-        .Add(KPID.PuppetPermEmote,       new OwnPermRowData(false, FAI.Walking,               FAI.Ban,           "allow",       "prevent",      "emote requests", "are", "to invoke emote requests",         "from invoking emote requests"))
-        .Add(KPID.PuppetPermAlias,       new OwnPermRowData(false, FAI.Scroll,                FAI.Ban,           "allow",       "prevent",      "alias requests", "are", "to invoke alias requests",         "from invoking alias requests"))
-        .Add(KPID.PuppetPermAll,         new OwnPermRowData(false, FAI.CheckDouble,           FAI.Ban,           "allow",       "prevent",      "all requests", "are", "to invoke all requests",           "from invoking all requests"))
+        .Add(KPID.PuppetPermSit,          new OwnPermRowData(false, FAI.Chair,                 FAI.Ban,           "allow",       "prevent",      "sit requests", "are", "to invoke sit requests",           "from invoking sit requests"))
+        .Add(KPID.PuppetPermEmote,        new OwnPermRowData(false, FAI.Walking,               FAI.Ban,           "allow",       "prevent",      "emote requests", "are", "to invoke emote requests",         "from invoking emote requests"))
+        .Add(KPID.PuppetPermAlias,        new OwnPermRowData(false, FAI.Scroll,                FAI.Ban,           "allow",       "prevent",      "alias requests", "are", "to invoke alias requests",         "from invoking alias requests"))
+        .Add(KPID.PuppetPermAll,          new OwnPermRowData(false, FAI.CheckDouble,           FAI.Ban,           "allow",       "prevent",      "all requests", "are", "to invoke all requests",           "from invoking all requests"))
 
-        .Add(KPID.ApplyPositive,         new OwnPermRowData(false, FAI.SmileBeam,             FAI.Ban,           "allow",       "prevent",      "positive statuses", "are", "to apply positive statuses",        "from applying positive statuses"))
-        .Add(KPID.ApplyNegative,         new OwnPermRowData(false, FAI.FrownOpen,             FAI.Ban,           "allow",       "prevent",      "negative statuses", "are", "to apply negative statuses",        "from applying negative statuses"))
-        .Add(KPID.ApplySpecial,          new OwnPermRowData(false, FAI.WandMagicSparkles,     FAI.Ban,           "allow",       "prevent",      "special statuses", "are", "to apply special statuses",         "from applying special statuses"))
+        .Add(KPID.ApplyPositive,          new OwnPermRowData(false, FAI.SmileBeam,             FAI.Ban,           "allow",       "prevent",      "positive statuses", "are", "to apply positive statuses",        "from applying positive statuses"))
+        .Add(KPID.ApplyNegative,          new OwnPermRowData(false, FAI.FrownOpen,             FAI.Ban,           "allow",       "prevent",      "negative statuses", "are", "to apply negative statuses",        "from applying negative statuses"))
+        .Add(KPID.ApplySpecial,           new OwnPermRowData(false, FAI.WandMagicSparkles,     FAI.Ban,           "allow",       "prevent",      "special statuses", "are", "to apply special statuses",         "from applying special statuses"))
         .Add(KPID.ApplyPairsLociData,     new OwnPermRowData(false, FAI.PersonArrowUpFromLine, FAI.Ban,           "allow",       "prevent",      "applying your LociData", "are", "to apply your LociData",            "from applying your LociData"))
         .Add(KPID.ApplyOwnLociData,       new OwnPermRowData(false, FAI.PersonArrowDownToLine, FAI.Ban,           "allow",       "prevent",      "applying their LociData", "are", "to apply their LociData",           "from applying their LociData"))
-        .Add(KPID.MaxLociStatusTime,         new OwnPermRowData(false, FAI.HourglassHalf,         FAI.None,          string.Empty,    string.Empty, "Max Status Time", string.Empty,         string.Empty,                       string.Empty))
+        .Add(KPID.MaxLociStatusTime,      new OwnPermRowData(false, FAI.HourglassHalf,         FAI.None,          string.Empty,    string.Empty, "Max Status Time", string.Empty,         string.Empty,                       string.Empty))
         .Add(KPID.PermaLociStatuses,      new OwnPermRowData(false, FAI.Infinity,              FAI.Ban,           "allow",       "prevent",      "permanent statuses", "are", "to apply permanent statuses",       "from applying permanent statuses"))
         .Add(KPID.RemoveAppliedLociData,  new OwnPermRowData(false, FAI.Eraser,                FAI.Ban,           "allow",       "prevent",      "removing applied statuses", "are", "to remove applied statuses",                "from removing applied statuses"))
-        .Add(KPID.RemoveAnyLociStatus,      new OwnPermRowData(false, FAI.Eraser,                FAI.Ban,           "allow",       "prevent",      "removing any status", "are", "to remove any status",                "from removing any status"))
+        .Add(KPID.RemoveAnyLociStatus,    new OwnPermRowData(false, FAI.Eraser,                FAI.Ban,           "allow",       "prevent",      "removing any status", "are", "to remove any status",                "from removing any status"))
 
-        .Add(KPID.HypnosisMaxTime,       new OwnPermRowData(false, FAI.HourglassHalf,         FAI.None,          string.Empty,    string.Empty, "Max Hypnosis Time", string.Empty, string.Empty,                       string.Empty))
-        .Add(KPID.HypnosisEffect,        new OwnPermRowData(false, FAI.CameraRotate,          FAI.Ban,           "allow",       "prevent",      "Hypnotic Effect Sending", "are", "to send hypnotic effects",         "from sending hypnotic effects"))
+        .Add(KPID.HypnosisMaxTime,        new OwnPermRowData(false, FAI.HourglassHalf,         FAI.None,          string.Empty,    string.Empty, "Max Hypnosis Time", string.Empty, string.Empty,                       string.Empty))
+        .Add(KPID.HypnosisEffect,         new OwnPermRowData(false, FAI.CameraRotate,          FAI.Ban,           "allow",       "prevent",      "Hypnotic Effect Sending", "are", "to send hypnotic effects",         "from sending hypnotic effects"))
 
-        .Add(KPID.PatternStarting,       new OwnPermRowData(false, FAI.Play,                  FAI.Ban,           "allow",       "prevent",      "Pattern Starting", "is", "to start patterns",                "from starting patterns"))
-        .Add(KPID.PatternStopping,       new OwnPermRowData(false, FAI.Stop,                  FAI.Ban,           "allow",       "prevent",      "Pattern Stopping", "is", "to stop patterns",                 "from stopping patterns"))
-        .Add(KPID.AlarmToggling,         new OwnPermRowData(false, FAI.Bell,                  FAI.Ban,           "allow",       "prevent",      "Alarm Toggling", "is", "to toggle alarms",                 "from toggling alarms"))
-        .Add(KPID.TriggerToggling,       new OwnPermRowData(false, FAI.FileMedicalAlt,        FAI.Ban,           "allow",       "prevent",      "Trigger Toggling", "is", "to toggle triggers",               "from toggling triggers"))
-
-        .Add(KPID.HardcoreModeState,     new OwnPermRowData(false, FAI.AnchorLock,            FAI.Unlock,        "enabled",     "disabled",     "Hardcore Mode", "is",  string.Empty,                             string.Empty))
-        .Add(KPID.GarbleChannelEditing,  new OwnPermRowData(false, FAI.CommentDots,           FAI.Ban,           "allow",       "prevent",      "garble channel editing", "is", "to change your configured garbler channels", "from changing your configured garbler channels."))
-        .Add(KPID.HypnoticImage,         new OwnPermRowData(false, FAI.Images,                FAI.Ban,           "allow",       "prevent",      "hypnotic image sending", "is", "to send custom hypnosis BG's", "from sending custom hypnosis BG's"));
+        .Add(KPID.PatternStarting,        new OwnPermRowData(false, FAI.Play,                  FAI.Ban,           "allow",       "prevent",      "Pattern Starting", "is", "to start patterns",                "from starting patterns"))
+        .Add(KPID.PatternStopping,        new OwnPermRowData(false, FAI.Stop,                  FAI.Ban,           "allow",       "prevent",      "Pattern Stopping", "is", "to stop patterns",                 "from stopping patterns"))
+        .Add(KPID.AlarmToggling,          new OwnPermRowData(false, FAI.Bell,                  FAI.Ban,           "allow",       "prevent",      "Alarm Toggling", "is", "to toggle alarms",                 "from toggling alarms"))
+        .Add(KPID.TriggerToggling,        new OwnPermRowData(false, FAI.FileMedicalAlt,        FAI.Ban,           "allow",       "prevent",      "Trigger Toggling", "is", "to toggle triggers",               "from toggling triggers"))
+ 
+        .Add(KPID.HardcoreModeState,      new OwnPermRowData(false, FAI.AnchorLock,            FAI.Unlock,        "enabled",     "disabled",     "Hardcore Mode", "is",  string.Empty,                             string.Empty))
+        .Add(KPID.GarbleChannelEditing,   new OwnPermRowData(false, FAI.CommentDots,           FAI.Ban,           "allow",       "prevent",      "garble channel editing", "is", "to change your configured garbler channels", "from changing your configured garbler channels."))
+        .Add(KPID.HypnoticImage,          new OwnPermRowData(false, FAI.Images,                FAI.Ban,           "allow",       "prevent",      "hypnotic image sending", "is", "to send custom hypnosis BG's", "from sending custom hypnosis BG's"));
 
     public static readonly ImmutableDictionary<KPID, OtherPermRowData> OtherRowInfo = ImmutableDictionary<KPID, OtherPermRowData>.Empty
-        .Add(KPID.ChatGarblerActive,     new OtherPermRowData(FAI.MicrophoneSlash,       FAI.Microphone, "enabled",       "disabled",     "Chat Garbler",              true , "is"))
-        .Add(KPID.ChatGarblerLocked,     new OtherPermRowData(FAI.Key,                   FAI.UnlockAlt,  "locked",        "unlocked",     "Chat Garbler",              true , "is"))
-        .Add(KPID.GaggedNameplate,       new OtherPermRowData(FAI.IdCard,                FAI.Ban,        "enabled",       "disabled",     "GagPlates",                 true , "are"))
-
-        .Add(KPID.PermanentLocks,        new OtherPermRowData(FAI.Infinity,              FAI.Ban,        "allows",        "prevents",     "permanent locks",           false))
-        .Add(KPID.OwnerLocks,            new OtherPermRowData(FAI.UserLock,              FAI.Ban,        "allows",        "prevents",     "owner locks",               false))
-        .Add(KPID.DevotionalLocks,       new OtherPermRowData(FAI.UserLock,              FAI.Ban,        "allows",        "prevents",     "devotional locks",          false))
-
-        .Add(KPID.GagVisuals,            new OtherPermRowData(FAI.Surprise,              FAI.Ban,        "enabled",       "disabled",     "Gag Visuals",               true , "are"))
-        .Add(KPID.ApplyGags,             new OtherPermRowData(FAI.Mask,                  FAI.Ban,        "allows",        "prevents",     "applying Gags",             false))
-        .Add(KPID.LockGags,              new OtherPermRowData(FAI.Lock,                  FAI.Ban,        "allows",        "prevents",     "locking Gags",              false))
-        .Add(KPID.MaxGagTime,            new OtherPermRowData(FAI.HourglassHalf,         FAI.None,       string.Empty,    string.Empty,   "Max Gag time",              false))
-        .Add(KPID.UnlockGags,            new OtherPermRowData(FAI.Key,                   FAI.Ban,        "allows",        "prevents",     "unlocking Gags",            false))
-        .Add(KPID.RemoveGags,            new OtherPermRowData(FAI.Eraser,                FAI.Ban,        "allows",        "prevents",     "removing Gags",             false))
-
-        .Add(KPID.RestrictionVisuals,    new OtherPermRowData(FAI.Tshirt,                FAI.Ban,        "enabled",       "disabled",     "Restriction visuals",       true , "are"))
-        .Add(KPID.ApplyRestrictions,     new OtherPermRowData(FAI.Handcuffs,             FAI.Ban,        "allows",        "prevents",     "applying Restrictions",     false))
-        .Add(KPID.LockRestrictions,      new OtherPermRowData(FAI.Lock,                  FAI.Ban,        "allows",        "prevents",     "locking Restrictions",      false))
-        .Add(KPID.MaxRestrictionTime,    new OtherPermRowData(FAI.HourglassHalf,         FAI.None,       string.Empty,    string.Empty,   "Max Restriction time",      false))
-        .Add(KPID.UnlockRestrictions,    new OtherPermRowData(FAI.Key,                   FAI.Ban,        "allows",        "prevents",     "unlocking Restrictions",    false))
-        .Add(KPID.RemoveRestrictions,    new OtherPermRowData(FAI.Eraser,                FAI.Ban,        "allows",        "prevents",     "removing Restrictions",     false))
-
-        .Add(KPID.RestraintSetVisuals,   new OtherPermRowData(FAI.Tshirt,                FAI.Ban,        "enabled",       "disabled",     "Restraint visuals",         true , "are"))
-        .Add(KPID.ApplyRestraintSets,    new OtherPermRowData(FAI.Handcuffs,             FAI.Ban,        "allows",        "prevents",     "applying Restraints",       false))
-        .Add(KPID.ApplyLayers,           new OtherPermRowData(FAI.LayerGroup,            FAI.Ban,        "allows",        "prevents",     "applying Layers",           false))
-        .Add(KPID.ApplyLayersWhileLocked,new OtherPermRowData(FAI.LayerGroup,            FAI.Ban,        "allows",        "prevents",     "applying locked Layers",    false))
-        .Add(KPID.LockRestraintSets,     new OtherPermRowData(FAI.Lock,                  FAI.Ban,        "allows",        "prevents",     "locking Restraints",        false))
-        .Add(KPID.MaxRestraintTime,      new OtherPermRowData(FAI.HourglassHalf,         FAI.None,       string.Empty,    string.Empty,   "Max Restraint time",        false))
-        .Add(KPID.UnlockRestraintSets,   new OtherPermRowData(FAI.Key,                   FAI.Ban,        "allows",        "prevents",     "unlocking Restraints",      false))
-        .Add(KPID.RemoveLayers,          new OtherPermRowData(FAI.Eraser,                FAI.Ban,        "allows",        "prevents",     "removing Layers",           false))
+        .Add(KPID.ChatGarblerActive,      new OtherPermRowData(FAI.MicrophoneSlash,       FAI.Microphone, "enabled",       "disabled",     "Chat Garbler",              true , "is"))
+        .Add(KPID.ChatGarblerLocked,      new OtherPermRowData(FAI.Key,                   FAI.UnlockAlt,  "locked",        "unlocked",     "Chat Garbler",              true , "is"))
+        .Add(KPID.GaggedNameplate,        new OtherPermRowData(FAI.IdCard,                FAI.Ban,        "enabled",       "disabled",     "GagPlates",                 true , "are"))
+ 
+        .Add(KPID.PermanentLocks,         new OtherPermRowData(FAI.Infinity,              FAI.Ban,        "allows",        "prevents",     "permanent locks",           false))
+        .Add(KPID.OwnerLocks,             new OtherPermRowData(FAI.UserLock,              FAI.Ban,        "allows",        "prevents",     "owner locks",               false))
+        .Add(KPID.DevotionalLocks,        new OtherPermRowData(FAI.UserLock,              FAI.Ban,        "allows",        "prevents",     "devotional locks",          false))
+ 
+        .Add(KPID.GagVisuals,             new OtherPermRowData(FAI.Surprise,              FAI.Ban,        "enabled",       "disabled",     "Gag Visuals",               true , "are"))
+        .Add(KPID.ApplyGags,              new OtherPermRowData(FAI.Mask,                  FAI.Ban,        "allows",        "prevents",     "applying Gags",             false))
+        .Add(KPID.LockGags,               new OtherPermRowData(FAI.Lock,                  FAI.Ban,        "allows",        "prevents",     "locking Gags",              false))
+        .Add(KPID.MaxGagTime,             new OtherPermRowData(FAI.HourglassHalf,         FAI.None,       string.Empty,    string.Empty,   "Max Gag time",              false))
+        .Add(KPID.UnlockGags,             new OtherPermRowData(FAI.Key,                   FAI.Ban,        "allows",        "prevents",     "unlocking Gags",            false))
+        .Add(KPID.RemoveGags,             new OtherPermRowData(FAI.Eraser,                FAI.Ban,        "allows",        "prevents",     "removing Gags",             false))
+ 
+        .Add(KPID.RestrictionVisuals,     new OtherPermRowData(FAI.Tshirt,                FAI.Ban,        "enabled",       "disabled",     "Restriction visuals",       true , "are"))
+        .Add(KPID.ApplyRestrictions,      new OtherPermRowData(FAI.Handcuffs,             FAI.Ban,        "allows",        "prevents",     "applying Restrictions",     false))
+        .Add(KPID.LockRestrictions,       new OtherPermRowData(FAI.Lock,                  FAI.Ban,        "allows",        "prevents",     "locking Restrictions",      false))
+        .Add(KPID.MaxRestrictionTime,     new OtherPermRowData(FAI.HourglassHalf,         FAI.None,       string.Empty,    string.Empty,   "Max Restriction time",      false))
+        .Add(KPID.UnlockRestrictions,     new OtherPermRowData(FAI.Key,                   FAI.Ban,        "allows",        "prevents",     "unlocking Restrictions",    false))
+        .Add(KPID.RemoveRestrictions,     new OtherPermRowData(FAI.Eraser,                FAI.Ban,        "allows",        "prevents",     "removing Restrictions",     false))
+ 
+        .Add(KPID.RestraintSetVisuals,    new OtherPermRowData(FAI.Tshirt,                FAI.Ban,        "enabled",       "disabled",     "Restraint visuals",         true , "are"))
+        .Add(KPID.ApplyRestraintSets,     new OtherPermRowData(FAI.Handcuffs,             FAI.Ban,        "allows",        "prevents",     "applying Restraints",       false))
+        .Add(KPID.ApplyLayers,            new OtherPermRowData(FAI.LayerGroup,            FAI.Ban,        "allows",        "prevents",     "applying Layers",           false))
+        .Add(KPID.ApplyLayersWhileLocked, new OtherPermRowData(FAI.LayerGroup,            FAI.Ban,        "allows",        "prevents",     "applying locked Layers",    false))
+        .Add(KPID.LockRestraintSets,      new OtherPermRowData(FAI.Lock,                  FAI.Ban,        "allows",        "prevents",     "locking Restraints",        false))
+        .Add(KPID.MaxRestraintTime,       new OtherPermRowData(FAI.HourglassHalf,         FAI.None,       string.Empty,    string.Empty,   "Max Restraint time",        false))
+        .Add(KPID.UnlockRestraintSets,    new OtherPermRowData(FAI.Key,                   FAI.Ban,        "allows",        "prevents",     "unlocking Restraints",      false))
+        .Add(KPID.RemoveLayers,           new OtherPermRowData(FAI.Eraser,                FAI.Ban,        "allows",        "prevents",     "removing Layers",           false))
         .Add(KPID.RemoveLayersWhileLocked,new OtherPermRowData(FAI.Eraser,               FAI.Ban,        "allows",        "prevents",     "removing locked Layers",    false))
-        .Add(KPID.RemoveRestraintSets,   new OtherPermRowData(FAI.Eraser,                FAI.Ban,        "allows",        "prevents",     "removing Restraints",       false))
+        .Add(KPID.RemoveRestraintSets,    new OtherPermRowData(FAI.Eraser,                FAI.Ban,        "allows",        "prevents",     "removing Restraints",       false))
 
-        .Add(KPID.PuppetPermSit,         new OtherPermRowData(FAI.Chair,                 FAI.Ban,        "allows",        "prevents",     "sit Requests",              false))
-        .Add(KPID.PuppetPermEmote,       new OtherPermRowData(FAI.Walking,               FAI.Ban,        "allows",        "prevents",     "emote Requests",            false))
-        .Add(KPID.PuppetPermAlias,       new OtherPermRowData(FAI.Scroll,                FAI.Ban,        "allows",        "prevents",     "alias Requests",            false))
-        .Add(KPID.PuppetPermAll,         new OtherPermRowData(FAI.CheckDouble,           FAI.Ban,        "allows",        "prevents",     "all Requests",              false))
-
-        .Add(KPID.ApplyPositive,         new OtherPermRowData(FAI.SmileBeam,             FAI.Ban,        "allows",        "prevents",     "positive statuses",          false))
-        .Add(KPID.ApplyNegative,         new OtherPermRowData(FAI.FrownOpen,             FAI.Ban,        "allows",        "prevents",     "negative statuses",          false))
-        .Add(KPID.ApplySpecial,          new OtherPermRowData(FAI.WandMagicSparkles,     FAI.Ban,        "allows",        "prevents",     "special statuses",           false))
+        .Add(KPID.PuppetPermSit,          new OtherPermRowData(FAI.Chair,                 FAI.Ban,        "allows",        "prevents",     "sit Requests",              false))
+        .Add(KPID.PuppetPermEmote,        new OtherPermRowData(FAI.Walking,               FAI.Ban,        "allows",        "prevents",     "emote Requests",            false))
+        .Add(KPID.PuppetPermAlias,        new OtherPermRowData(FAI.Scroll,                FAI.Ban,        "allows",        "prevents",     "alias Requests",            false))
+        .Add(KPID.PuppetPermAll,          new OtherPermRowData(FAI.CheckDouble,           FAI.Ban,        "allows",        "prevents",     "all Requests",              false))
+ 
+        .Add(KPID.ApplyPositive,          new OtherPermRowData(FAI.SmileBeam,             FAI.Ban,        "allows",        "prevents",     "positive statuses",          false))
+        .Add(KPID.ApplyNegative,          new OtherPermRowData(FAI.FrownOpen,             FAI.Ban,        "allows",        "prevents",     "negative statuses",          false))
+        .Add(KPID.ApplySpecial,           new OtherPermRowData(FAI.WandMagicSparkles,     FAI.Ban,        "allows",        "prevents",     "special statuses",           false))
         .Add(KPID.ApplyPairsLociData,     new OtherPermRowData(FAI.PersonArrowUpFromLine, FAI.Ban,       "allows",        "prevents",     "applying your LociData",     false))
         .Add(KPID.ApplyOwnLociData,       new OtherPermRowData(FAI.PersonArrowDownToLine, FAI.Ban,       "allows",        "prevents",     "applying their LociData",    false))
-        .Add(KPID.MaxLociStatusTime,         new OtherPermRowData(FAI.HourglassHalf,     FAI.None,       string.Empty,    string.Empty,   "Max status time",           false))
+        .Add(KPID.MaxLociStatusTime,      new OtherPermRowData(FAI.HourglassHalf,     FAI.None,       string.Empty,    string.Empty,   "Max status time",           false))
         .Add(KPID.PermaLociStatuses,      new OtherPermRowData(FAI.Infinity,             FAI.Ban,        "allows",        "prevents",     "permanent statuses",         false))
         .Add(KPID.RemoveAppliedLociData,  new OtherPermRowData(FAI.Eraser,               FAI.Ban,        "allows",        "prevents",     "removing applied statuses",  false))
-        .Add(KPID.RemoveAnyLociStatus,      new OtherPermRowData(FAI.Eraser,             FAI.Ban,        "allows",        "prevents",     "removing any status",       false))
+        .Add(KPID.RemoveAnyLociStatus,    new OtherPermRowData(FAI.Eraser,             FAI.Ban,        "allows",        "prevents",     "removing any status",       false))
 
-        .Add(KPID.HypnosisMaxTime,       new OtherPermRowData(FAI.HourglassHalf,         FAI.None,       string.Empty,    string.Empty,   "Max hypnosis time",         false))
-        .Add(KPID.HypnosisEffect,        new OtherPermRowData(FAI.CameraRotate,          FAI.Ban,        "allows",        "prevents",     "Hypno effect sending",      false))
-
-        .Add(KPID.PatternStarting,       new OtherPermRowData(FAI.Play,                  FAI.Ban,        "allows",        "prevents",     "Pattern starting",          false))
-        .Add(KPID.PatternStopping,       new OtherPermRowData(FAI.Stop,                  FAI.Ban,        "allows",        "prevents",     "Pattern stopping",          false))
-        .Add(KPID.AlarmToggling,         new OtherPermRowData(FAI.Bell,                  FAI.Ban,        "allows",        "prevents",     "Alarm toggling",            false))
-        .Add(KPID.TriggerToggling,       new OtherPermRowData(FAI.FileMedicalAlt,        FAI.Ban,        "allows",        "prevents",     "Trigger toggling",          false));
+        .Add(KPID.HypnosisMaxTime,        new OtherPermRowData(FAI.HourglassHalf,         FAI.None,       string.Empty,    string.Empty,   "Max hypnosis time",         false))
+        .Add(KPID.HypnosisEffect,         new OtherPermRowData(FAI.CameraRotate,          FAI.Ban,        "allows",        "prevents",     "Hypno effect sending",      false))
+ 
+        .Add(KPID.PatternStarting,        new OtherPermRowData(FAI.Play,                  FAI.Ban,        "allows",        "prevents",     "Pattern starting",          false))
+        .Add(KPID.PatternStopping,        new OtherPermRowData(FAI.Stop,                  FAI.Ban,        "allows",        "prevents",     "Pattern stopping",          false))
+        .Add(KPID.AlarmToggling,          new OtherPermRowData(FAI.Bell,                  FAI.Ban,        "allows",        "prevents",     "Alarm toggling",            false))
+        .Add(KPID.TriggerToggling,        new OtherPermRowData(FAI.FileMedicalAlt,        FAI.Ban,        "allows",        "prevents",     "Trigger toggling",          false));
 
 
     public readonly static ImmutableDictionary<KPID, OwnHcRowData> OwnHcRowInfo = ImmutableDictionary<KPID, OwnHcRowData>.Empty
@@ -228,6 +242,7 @@ public enum KPID : byte
         {
             KPID.ChatGarblerActive     => (nameof(GlobalPerms.ChatGarblerActive),          PermissionType.Global),
             KPID.ChatGarblerLocked     => (nameof(GlobalPerms.ChatGarblerLocked),          PermissionType.Global),
+            KPID.GaggedNameplate       => (nameof(GlobalPerms.GaggedNameplate),            PermissionType.Global),
 
             KPID.PermanentLocks        => (nameof(PairPerms.PermanentLocks),               PermissionType.PairPerm),
             KPID.OwnerLocks            => (nameof(PairPerms.OwnerLocks),                   PermissionType.PairPerm),
@@ -235,6 +250,7 @@ public enum KPID : byte
 
             KPID.GagVisuals            => (nameof(GlobalPerms.GagVisuals),                 PermissionType.Global),
             KPID.ApplyGags             => (nameof(PairPerms.ApplyGags),                    PermissionType.PairPerm),
+            
             KPID.LockGags              => (nameof(PairPerms.LockGags),                     PermissionType.PairPerm),
             KPID.MaxGagTime            => (nameof(PairPerms.MaxGagTime),                   PermissionType.PairPerm),
             KPID.UnlockGags            => (nameof(PairPerms.UnlockGags),                   PermissionType.PairPerm),
@@ -454,4 +470,4 @@ public enum KPID : byte
     }
 }
 
-
+
