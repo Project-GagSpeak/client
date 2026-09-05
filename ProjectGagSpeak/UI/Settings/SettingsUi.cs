@@ -1000,7 +1000,7 @@ public class SettingsUi : WindowMediatorSubscriberBase
         ImGui.InputTextWithHint("##vanity-alias", "Alias..", ref _tmpAlias, 15);
         var validAlias = IsValidName(_tmpAlias);
         if (!validAlias)
-            CkGui.ColorTextWrapped("Must be 5-15 characters with no spaces (underscores & dashes allowed)", ImGuiColors.DalamudYellow);
+            CkGui.ColorTextWrapped("Must be 4-15 characters with no spaces (underscores & dashes allowed)", ImGuiColors.DalamudYellow);
 
         ImGui.Spacing();
         CkGui.TextUnderlined("Vanity Name");
@@ -1011,13 +1011,13 @@ public class SettingsUi : WindowMediatorSubscriberBase
         using (ImRaii.Disabled(!isDonor))
         {
             ImGui.SetNextItemWidth(240f * ImGuiHelpers.GlobalScale);
-            ImGui.InputTextWithHint("##vanity-name", "Vanity name..", ref _tmpDispName, 15);
+            ImGui.InputTextWithHint("##vanity-name", "Vanity name..", ref _tmpDispName, 10);
         }
         CkGui.AttachTooltip("Only supporters can set a vanity name", isDonor);
 
-        var validVanityName = IsValidName(_tmpDispName);
+        var validVanityName = IsValidVanityName(_tmpDispName);
         if (!validVanityName)
-            CkGui.ColorTextWrapped("Must be 5-15 characters with no spaces (underscores & dashes allowed)", ImGuiColors.DalamudYellow);
+            CkGui.ColorTextWrapped("Must be 4-10 characters with no spaces", ImGuiColors.DalamudYellow);
 
         ImGui.Spacing();
         CkGui.TextUnderlined("Name Appearance");
@@ -1106,8 +1106,15 @@ public class SettingsUi : WindowMediatorSubscriberBase
             if (string.IsNullOrEmpty(value))
                 return true;
 
-            return value.Length is >= 5 and <= 15 &&
+            return value.Length is >= 4 and <= 15 &&
                    value.All(c => char.IsLetterOrDigit(c) || c is '_' or '-');
+        }
+
+        bool IsValidVanityName(string? value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return true;
+            return value.Length is >= 4 and <= 10 && value.All(c => char.IsLetterOrDigit(c));
         }
     }
 

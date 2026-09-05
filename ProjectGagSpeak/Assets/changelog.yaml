@@ -1,11 +1,11 @@
 icon: "Book"
 tagline: "GagSpeak 2.2 - The Chat Update"
-subline: "DM Integration, 150+ new emotes, GIF Support, stickers, vanity names, name colors, and more."
+subline: "150+ new emotes, GIF Support, stickers, vanity names, name colors, and more."
 changelog:
 
   - version: v2.2.1.0
     date: "September 4th, 2026"
-    title: "Hardcore Escape & BugFixes"
+    title: "Hardcore Escape & Other Improvements/Fixes"
     headerMessage: ""
     segments:
       - icon: "Handcuffs"
@@ -13,9 +13,9 @@ changelog:
         accent: "Pink"
         bullets:
           - text: "Added an optional dice-roll based escape minigame."
-            IsImportant: true
+            isImportant: true
           - text: "Minigame works when using HC traits and removing or unlocking items on yourself."
-            IsImportant: true
+            isImportant: true
           - text: "Hardcore Escape does not allow bypassing locks."
           - text: "If an item is locked (and you have the ability to unlock it), you must roll your way out of the lock, then must roll for the binding."
       
@@ -23,8 +23,11 @@ changelog:
         title: "Quality of Life"
         accent: "Teal"
         bullets:
-          - text: "GlobalChat messages now respect legacy tags. (Band-aid patch)"
-            IsImportant: true
+          - text: "GlobalChat messages now respect legacy tags."
+            isImportant: true
+          - text: "Updated VanityName requirements to help chat names be more uniform in display."
+            isImportant: true
+          - text: "Aliases and VanityNames can now have a min of 4 chars instead of 5."
           - text: "Trigger lock actions can target a specific item."
             contributor: "AzureRavie"
 
