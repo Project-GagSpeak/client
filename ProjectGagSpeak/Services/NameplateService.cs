@@ -131,15 +131,14 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
             return;
 
         var hasNameplates = kinkster.PairGlobals.GaggedNameplate;
-        if (hasNameplates && newState is NewState.Enabled)
+        // skip processing kinsters without nameplates
+        if (!hasNameplates)
+            return;
+
+        // if the kinkster is telling us they have a new gag, or they're gagged, and we haven't added them, add them.
+        if ((newState is NewState.Enabled || kinkster.ActiveGags.IsGagged()) && !TrackedKinksters.ContainsKey(kinkster.PlayerNameWorld))
         {
             Logger.LogDebug($"Adding {kinkster.PlayerNameWorld} to tracked Nameplates", LoggerType.Gags);
-            TrackedKinksters.TryAdd(kinkster.PlayerNameWorld, false);
-        }
-        // Otherwise if they are gagged we shouldnt do anything.
-        else if (hasNameplates && kinkster.ActiveGags.IsGagged())
-        {
-            // Add it if we are not already added.
             TrackedKinksters.TryAdd(kinkster.PlayerNameWorld, false);
         }
         // Otherwise we should remove the tracked nameplate.
@@ -197,6 +196,9 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         {
             // If not rendered, ignore.
             if (!match.IsRendered)
+                return;
+            // if they don't have gagplates turned on, ignore.
+            if (!match.PairGlobals.GaggedNameplate)
                 return;
             // Handle a Kinkster chat message.
             if (!match.ActiveGags.IsGagged() || !match.PairGlobals.ChatGarblerActive || !match.PairGlobals.AllowedGarblerChannels.IsActiveChannel((int)channel))
@@ -262,6 +264,8 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
             // Otherwise, load the correct asset into the nameplate.
             var nameContainer = nmo->NameContainer;
             var nameIcon = nmo->NameIcon;
+            if (!nmo->NameText->IsVisible())
+                continue; // don't show if the node with the player's name isn't shown
 
             // If they aint tracked, dont do nothin.
             var pnww = handlerChara->GetNameWithWorld();
