@@ -264,11 +264,7 @@ public class ChangelogUI : WindowMediatorSubscriberBase
 
         void BulletText(ChangelogBullet bullet)
         {
-            if (bullet.IsImportant)
-                CkGui.BulletText(bullet.Text, 0xFF7FE57F);
-            else
-                CkGui.BulletText(bullet.Text);
-
+            CkGui.BulletText(bullet.Text, 0xFF7FE57F, bullet.IsImportant);
             if (!string.IsNullOrWhiteSpace(bullet.Contributor))
                 CkGui.ColorTextInline($" - {bullet.Contributor}", GsCol.ShopKeeperColor.Vec4(), false);
         }
@@ -279,6 +275,7 @@ public class ChangelogUI : WindowMediatorSubscriberBase
         AccentColor.None => ImGui.GetColorU32(ImGuiCol.Text),
         AccentColor.Gold => 0xFF6CD5FF,
         AccentColor.Yellow => ImGuiColors.DalamudYellow.ToUint(),
+        AccentColor.Green => ImGuiColors.HealerGreen.ToUint(),
         AccentColor.Blue => 0xFFFFCC00,
         AccentColor.Purple => 0xFFFFA7ED,
         AccentColor.Teal => 0xFFF9FF6C,
