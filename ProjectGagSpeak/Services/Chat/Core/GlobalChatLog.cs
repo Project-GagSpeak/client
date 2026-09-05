@@ -118,6 +118,10 @@ public class GlobalChatLog : RichChatLog<NewGsChatMessage>, IMediatorSubscriber,
     // Move to message handler.
     private string GetSenderName(ChatlogMessage msg)
     {
+        if (msg.Sender.Tier is CkVanityTier.KinkporiumMistress)
+            return msg.Sender.VanityOrAnonName;
+
+        // Otherwise parse normally.
         var sender = msg.Sender;
         // Prioritize VanityName if set
         if (sender.VanityName is not null && msg.Flags.HasAny(ChatFlags.UseDisplayName))

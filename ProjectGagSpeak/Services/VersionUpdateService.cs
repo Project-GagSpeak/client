@@ -102,7 +102,7 @@ public class VersionUpdateService : DisposableMediatorSubscriberBase
                     {
                         _logger.LogInformation($"Detected repository version (v{version}) is higher than the client version (v{_latestVersion})");
                         _latestVersion = version;
-                        AlertService.PrintVersionUpdateMessage($"Update v{version} is now downloadable. Please update at your leasure.", version.ToString());
+                        AlertService.PrintVersionUpdateMessage($"Update v{version} is now downloadable. Please update at your leisure.", version.ToString());
                     }
                     await Task.Delay(UPDATE_PERIOD, ct).ConfigureAwait(false);
                 }

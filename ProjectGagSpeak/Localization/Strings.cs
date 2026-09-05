@@ -1276,7 +1276,7 @@ namespace GagSpeak.Localization
         public readonly string VibeStatusLabel = Loc.Localize("Preferences_VibeStatusLabel", "Vibe Status DTR Entry");
         public readonly string VibeStatusTT = Loc.Localize("Preferences_VibeStatusTT", "Displays a vibe icon when you have an actively vibrating sex toy.");
 
-        public readonly string PrefThreeCharaAnonName = Loc.Localize("Preferences_ThreeCharaAnonName", "Display [Kinkster-###] over [Kinkster-####] in Global Chat");
+        public readonly string PrefThreeCharaAnonName = Loc.Localize("Preferences_ThreeCharaAnonName", "Display [Kinkster-XXX] over [Kinkster-XXXX] in Global Chat");
         public readonly string PrefThreeCharaAnonNameTT = Loc.Localize("Preferences_ThreeCharaAnonNameTT", "Displays the first three characters of a player's name instead of 4." +
             "--SEP--Primary intended for legacy users attached to their 3 character names.");
 
