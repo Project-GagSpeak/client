@@ -78,9 +78,21 @@ public class ChatControlService : DisposableMediatorSubscriberBase
         var type = message.LogKind;
         var msg = message.OriginalMessage.ToDalamudString();
 
-        var senderPayload = sender.Payloads.OfType<PlayerPayload>().FirstOrDefault();
-        var senderName = senderPayload?.PlayerName ?? PlayerData.Name;
-        var senderWorld = senderPayload?.World.Value.Name.ToString() ?? PlayerData.HomeWorldName;
+        string senderName;
+        string senderWorld;
+        
+        // Checking if message is send as Outgoing from the same user.
+        if (type is XivChatType.TellOutgoing)
+        {
+            senderName = PlayerData.Name;
+            senderWorld = PlayerData.HomeWorldName;
+        }
+        else
+        {
+            var senderPayload = sender.Payloads.OfType<PlayerPayload>().FirstOrDefault();
+            senderName = senderPayload?.PlayerName ?? PlayerData.Name;
+            senderWorld = senderPayload?.World.Value.Name.ToString() ?? PlayerData.HomeWorldName;
+        }
 
         // If the chat is not a normal chat channel do not process.
         if (ChatLogAgent.FromXivChatType(type) is not { } channel)
@@ -88,7 +100,7 @@ public class ChatControlService : DisposableMediatorSubscriberBase
         
         // Check for things that only ever arrive as chat lines.
         CheckForDiceDeathroll(type, $"{senderName}@{senderWorld}", msg);
-
+        
         Mediator.Publish(new GameChatMessage(channel, $"{senderName}@{senderWorld}", msg));
     }
 
