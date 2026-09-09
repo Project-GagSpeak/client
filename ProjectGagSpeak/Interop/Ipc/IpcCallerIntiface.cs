@@ -10,7 +10,7 @@ namespace GagSpeak.Interop;
 
 public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
 {
-    public static readonly string ClientName = "Connected To Intiface";
+    public static readonly string ClientName = "GagSpeak";
 
     private readonly ILogger<IpcCallerIntiface> _logger;
     private readonly GagspeakMediator _mediator;
