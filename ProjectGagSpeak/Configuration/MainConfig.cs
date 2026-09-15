@@ -61,9 +61,7 @@ public class MainConfigData : IAudioConfigData
     public bool DtrPrivacy { get; set; } = false;
     public NativeUiColor DtrPrivacyColor { get; set; } = GsDefaults.DtrColorPairs;
     public bool DtrActionNotifs { get; set; } = true;
-    public NativeUiColor DtrActionNotifColor { get; set; } = GsDefaults.DtrColorDisconnected;
     public bool DtrVibeStatus { get; set; } = true;
-    public NativeUiColor DtrVibeStatusColor { get; set; } = GsDefaults.DtrColorVisibleUsers;
 
     // NATIVE UI -> CONTEXT MENUS //
     public bool ShowContextMenus { get; set; } = true;

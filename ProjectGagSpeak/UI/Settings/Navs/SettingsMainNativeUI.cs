@@ -236,7 +236,7 @@ public class SettingsMainNativeUI
             _chatConfig.Data.ShowDMsInChatbox = useDMsNative;
             _chatConfig.Save();
         }
-        CkGui.HelpTextFramed("Includes DirectMessages sent via Sundouleia." +
+        CkGui.HelpTextFramed("Includes DirectMessages sent via GagSpeak." +
             "--NL----COL--This is not yet integrated due to feedback.--COL--", CkCol.TriStateCross.Uint(), true);
 
         using (ImRaii.Disabled(!useDMsNative))

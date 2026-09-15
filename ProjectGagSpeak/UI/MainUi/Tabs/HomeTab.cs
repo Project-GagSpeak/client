@@ -450,7 +450,7 @@ public class HomeTab
 
         if (DrawMenuButton(winPtr, style, FAI.Book, "View Changelog", width, false))
             _mediator.Publish(new UiToggleMessage(typeof(ChangelogUI)));
-        CkGui.AttachTooltip("See the latest patch notes for Sundouleia.");
+        CkGui.AttachTooltip("See the latest patch notes for GagSpeak.");
 
         SupportButton(winPtr, style, width);
         FeedbackButton(winPtr, style, width);
@@ -511,7 +511,7 @@ public class HomeTab
 
             if (DrawMenuButton(winPtr, style, FAI.Book, "View Changelog", width, false))
                 _mediator.Publish(new UiToggleMessage(typeof(ChangelogUI)));
-            CkGui.AttachTooltip("See the latest patch notes for Sundouleia.");
+            CkGui.AttachTooltip("See the latest patch notes for GagSpeak.");
 
             SupportButton(winPtr, style, width);
             FeedbackButton(winPtr, style, width);

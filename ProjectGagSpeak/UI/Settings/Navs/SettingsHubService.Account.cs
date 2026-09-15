@@ -90,12 +90,9 @@ public partial class SettingsHubService
         var io = ImGui.GetIO();
         var labelToShow = string.IsNullOrWhiteSpace(profile.PlayerName) ? "UNK PLAYER" : profile.PlayerName;
         var labelSize = CkGui.CalcFontTextSize(labelToShow, Fonts.DefaultScaled);
-        var editSize = CkGui.IconButtonSize(FAI.PencilAlt).Y;
         var deleteSize = 100 * ImGuiHelpers.GlobalScale;
         // Draw out the label
         CkGui.FontText(labelToShow, Fonts.DefaultScaled);
-        ImGui.SetCursorPos(cursorMin + new Vector2(labelSize.X + _style.ItemInnerSpacing.X, (labelSize.Y - editSize) / 2));
-        CkGui.AttachTooltip("Edit profile label.");
 
         // Shift all the way to the right and then draw the delete button.
         ImGui.SetCursorPos(cursorMin + new Vector2(ImGui.GetContentRegionAvail().X - deleteSize, (labelSize.Y - _frameH) / 2));
@@ -110,7 +107,7 @@ public partial class SettingsHubService
                     _postDrawActions.Enqueue(() =>
                     {
                         // We can just remove it plainly as it is not bound to any profile serverside.
-                        if (_account.Profiles.Remove(_selected))
+                        if (_account.RemoveProfile(_selected))
                         {
                             _account.Save();
                             _selected = null;

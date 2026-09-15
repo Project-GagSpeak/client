@@ -107,6 +107,13 @@ public class SettingsMainNotifications
         }
         CkGui.HelpTextFramed("Where notifications for incoming requests appear.", true);
 
+        if (AlertLocationCombo("Connection Notifications", _config.Data.ConnectionAlertLocation, out var newConnect))
+        {
+            _config.Data.ConnectionAlertLocation = newConnect;
+            _config.Save();
+        }
+        CkGui.HelpTextFramed("Where messages go once connected.", true);
+
         if (AlertLocationCombo("Online Users##notifOnline", _config.Data.OnlineAlertLocation, out var newOnline))
         {
             _config.Data.OnlineAlertLocation = newOnline;

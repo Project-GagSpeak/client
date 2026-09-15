@@ -68,8 +68,6 @@ public sealed class CommandManager : DisposableMediatorSubscriberBase
 
     private static string BuildChatHelp()
         => "Switches the native chat channel to GagSpeak Global Chat.\n" +
-            $"{GlobalChatAbrv} → Shorthand for {GlobalChatCommand}\n" +
-            $"{GlobalChatCommand} <message> → Sends a message to the Global Chat.\n" +
             $"{GsTellCommand} <alias|uid|anon-user name|anon-user tag> → DM's another Kinkster.\n" +
             $"\n" +
             $"Subcommands for {MainCommand} & {ShortCommand}:\n" +

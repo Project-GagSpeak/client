@@ -3,6 +3,36 @@ tagline: "GagSpeak 2.2 - The Chat Update"
 subline: "150+ new emotes, GIF Support, stickers, vanity names, name colors, and more."
 changelog:
 
+  - version: v2.2.2.0
+    date: "September 15th, 2026"
+    title: "Settings UI Rework, GlobalChat permissions, and some Fixes"
+    headerMessage: ""
+    segments:
+      - icon: "Wrench"
+        title: "New Settings UI"
+        accent: "Pink"
+        bullets:
+          - text: "Revised the SettingsUI to be more polished and fleshed out for GagSpeak."
+            isImportant: true
+          - text: "GlobalChat can now work natively and is configurable."
+          - text: "You can now fully customize the appearance of your chat."
+            isImportant: true
+      
+      - icon: "Bug"
+        title: "Bug Fixes"
+        accent: "Yellow"
+        bullets:
+          - text: "Fixed GagPlate issues even further."
+            contributor: "AndrielChaoti"
+          - text: "Prevents using your own timer locks to bypass hc escape."
+            contributor: "Yfthbr"
+          - text: "Fix Intiface ID and message in Telloutgoing."
+            contributor: "nesforia"
+          - text: "Implemented some temporary band-aid fixes for the ModPreset loader until we figure out the penumbra preset manager."
+            contributor: "AndrielChaoti"
+          - text: "Add safety calls to Loci IPC"
+            contributor: "AndrielChaoti"
+
   - version: v2.2.1.0
     date: "September 4th, 2026"
     title: "Hardcore Escape & Other Improvements/Fixes"

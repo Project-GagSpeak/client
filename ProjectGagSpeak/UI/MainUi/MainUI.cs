@@ -120,7 +120,6 @@ public class MainUI : WindowMediatorSubscriberBase
         if (!IpcCallerSundouleia.APIAvailable) missing++;
         if (!IpcCallerPenumbra.APIAvailable) missing++;
         if (!IpcCallerGlamourer.APIAvailable) missing++;
-        if (!IpcCallerLoci.APIAvailable) missing++;
         return missing;
     }
 

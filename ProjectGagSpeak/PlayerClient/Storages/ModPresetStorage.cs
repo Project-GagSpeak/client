@@ -170,7 +170,7 @@ public sealed class ModSettingsPreset : IEditableStorageItem<ModSettingsPreset>,
         var container = mp.ModPresetStorage.FirstOrDefault(x => x.DirectoryPath == dirPath);
         if (container is null)
         {
-            Svc.Logger.Error($"ModSettingsPreset: No container found for {dirPath}");
+            Svc.Logger.Warning($"ModSettingsPreset: No container found for {dirPath}");
             return new ModSettingsPreset(new ModPresetContainer()); // return an empty object if we couldn't load
         }
         //?? throw new Exception($"ModSettingsPreset: No container found for directory path {dirPath}" +
@@ -203,7 +203,7 @@ public sealed class ModSettingsPreset : IEditableStorageItem<ModSettingsPreset>,
         var container = mp.ModPresetStorage.FirstOrDefault(x => x.DirectoryPath == dirPath);
         if (container is null)
         {
-            Svc.Logger.Error($"ModSettingsPreset: No container found for {dirPath}");
+            Svc.Logger.Warning($"ModSettingsPreset: No container found for {dirPath}");
             return new ModSettingsPreset(new ModPresetContainer());
         }
         return new ModSettingsPreset(container)

@@ -178,6 +178,11 @@ public class AlertService : DisposableMediatorSubscriberBase, IHostedService
         });
     }
 
+    #region OnlineUsers
+    private readonly HashSet<string> _pendingOnlineUsers = [];
+    private readonly object _batchLock = new();
+    private CancellationTokenSource? _batchCts;
+    private readonly TimeSpan _onlineBatchDelay = TimeSpan.FromSeconds(2.5);
     public void NotifyOnline(OnlineKinkster onlineUser)
     {
         var filter = _config.Data.OnlineNotifyFilter;
@@ -186,6 +191,7 @@ public class AlertService : DisposableMediatorSubscriberBase, IHostedService
             return;
 
         var kinkster = _kinksters.GetValueOrDefault(onlineUser.User);
+        var isKinkster = kinkster is not null;
         var isTemp = kinkster?.IsTemporary ?? false;
         var isNicked = !string.IsNullOrEmpty(_nicks.GetNicknameForUid(onlineUser.User.UID));
         var isFavorite = FavoritesConfig.Kinksters.Contains(onlineUser.User.UID);
@@ -205,9 +211,44 @@ public class AlertService : DisposableMediatorSubscriberBase, IHostedService
         if (policy is FilterPolicy.MatchAny ? any : all)
         {
             var displayName = _pairService.GetDisplayName(onlineUser.User);
-            Mediator.Publish(new NotificationMessage("Pair Online", $"{displayName} is now online", NotificationType.Info, TimeSpan.FromSeconds(2)));
+            lock (_batchLock)
+            {
+                _pendingOnlineUsers.Add(displayName);
+                _batchCts = _batchCts.SafeCancelRecreate();
+                _ = ProcessOnlineBatchAsync(_batchCts.Token);
+            }
         }
     }
+
+    private async Task ProcessOnlineBatchAsync(CancellationToken ct)
+    {
+        try
+        {
+            await Task.Delay(_onlineBatchDelay, ct).ConfigureAwait(false);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
+        List<string> users;
+        lock (_batchLock)
+        {
+            users = [.. _pendingOnlineUsers];
+            _pendingOnlineUsers.Clear();
+        }
+
+        if (users.Count is 0)
+            return;
+        if (users.Count is 1)
+            ShowNotificationLocationBased(new("Kinkster Online", $"{users[0]} is now online.", NotificationType.Info, TimeSpan.FromSeconds(3)), _config.Data.OnlineAlertLocation);
+        else
+        {
+            var summary = users.Count <= 3 ? string.Join(", ", users) : $"{string.Join(", ", users.Take(2))} and {users.Count - 2} others";
+            ShowNotificationLocationBased(new("Kinksters Online", $"{users.Count} users went online:\n{summary}", NotificationType.Info, TimeSpan.FromSeconds(4)), _config.Data.OnlineAlertLocation);
+        }
+    }
+    #endregion
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
