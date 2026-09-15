@@ -244,7 +244,7 @@ public class GlobalChatDrawer : RichEmoteChatDrawer
 
         var canPair = flags.HasAny(ChatFlags.AllowRequests);
         var requestExists = _pairService.RequestExistsFor(msg.Sender);
-        var disableReq = !canPair || requestExists || !shiftHeld || string.IsNullOrWhiteSpace(_requestMsg);
+        var disableReq = !canPair || requestExists;
         if (canPair)
         {
             if (CkGui.SelectableEx("Send Request", disableReq))

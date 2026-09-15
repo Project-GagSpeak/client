@@ -451,7 +451,7 @@ public class HybridChatDrawer : RichEmoteChatDrawer
 
         var canPair = flags.HasAny(ChatFlags.AllowRequests);
         var requestExists = _pairService.RequestExistsFor(msg.Sender);
-        var disableReq = !canPair || requestExists || !shiftHeld;
+        var disableReq = !canPair || requestExists;
 
         if (canPair)
         {
