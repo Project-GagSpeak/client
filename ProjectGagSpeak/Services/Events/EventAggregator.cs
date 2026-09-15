@@ -53,6 +53,7 @@ public class EventAggregator : MediatorSubscriberBase, IHostedService
             }
 
             RecreateLazy();
+            Mediator.Publish(new DTRRefreshMessage());
         });
 
         // Create a new event list

@@ -8,6 +8,7 @@ using GagspeakAPI.Chat;
 using GagspeakAPI.Data.Comparer;
 using GagspeakAPI.User;
 using System.Text.RegularExpressions;
+using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Services;
 
@@ -72,17 +73,6 @@ public class GlobalChatLog : RichChatLog<NewGsChatMessage>, IMediatorSubscriber,
         _logger.LogDebug("Loaded GlobalChat history, marked all as read.", LogFilter.GlobalChat);
     }
 
-
-    // May not always be valid if the passed in user is just a UID.
-    public string GetChatName(UserData user)
-    {
-        if (_kinksters.GetValueOrDefault(user) is { } kinkster)
-            return $"{kinkster.GetNickAliasOrUid()} ({user.AnonTag})";
-        if (_userMeta.TryGetValue(user, out var meta) && meta.Flags.HasAny(ChatFlags.UseDisplayName))
-            return user.VanityOrAnonName;
-        return user.AnonName;
-    }
-
     public void AddUpdateMember(GlobalChatMember dto)
         => _userMeta[dto.User] = (dto.LegacyId, dto.Flags);
 
@@ -113,6 +103,22 @@ public class GlobalChatLog : RichChatLog<NewGsChatMessage>, IMediatorSubscriber,
             return;
         if (doPings && !_blockService.IsMuted(msg.Sender.UID) && _chatConfig.Data.AlertKind.HasAny(AlertKind.Audio))
             _chatConfig.PlaySound();
+    }
+
+    // May not always be valid if the passed in user is just a UID.
+    public string GetChatName(UserData user, bool useLegacy, ChatFlags flags)
+    {
+        if (user.Tier is CkVanityTier.KinkporiumMistress)
+            return user.VanityOrAnonName;
+
+        // Prioritize VanityName if set
+        if (user.VanityName is not null && flags.HasAny(ChatFlags.UseDisplayName))
+            return $"{user.VanityName}-{(useLegacy ? user.UID[^3..] : user.UID[^4..])}";
+        // Fallback for pairs
+        if (_kinksters.GetValueOrDefault(user) is { } kinkster)
+            return $"{kinkster.GetNickAliasOrUid()} ({(useLegacy ? user.UID[^3..] : user.UID[^4..])})";
+        // Final fallback - AnonKinkster name.
+        return $"Kinkster-{(useLegacy ? user.UID[^3..] : user.UID[^4..])}";
     }
 
     // Move to message handler.

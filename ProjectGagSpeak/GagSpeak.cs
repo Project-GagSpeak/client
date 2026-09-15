@@ -239,7 +239,7 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<ChatControlService>()
         .AddSingleton<CosmeticService>()
         .AddSingleton<ConnectionSyncService>()
-        .AddSingleton<DtrBarService>()
+        .AddSingleton<DtrService>()
         .AddSingleton<GsEmojiLoader>()
         .AddSingleton<EmoteService>()
         .AddSingleton<GagspeakMediator>()

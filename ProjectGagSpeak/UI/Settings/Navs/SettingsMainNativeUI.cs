@@ -166,6 +166,7 @@ public class SettingsMainNativeUI
         {
             _config.Data.DtrPrivacy = privacyDtr;
             _config.Save();
+            _mediator.Publish(new DTRRefreshMessage());
         }
         CkGui.HelpTextFramed(GSLoc.Settings.Options.PrivacyRadarTT, true);
 
@@ -174,6 +175,7 @@ public class SettingsMainNativeUI
         {
             _config.Data.DtrActionNotifs = actionNotifsDtr;
             _config.Save();
+            _mediator.Publish(new DTRRefreshMessage());
         }
         CkGui.HelpTextFramed(GSLoc.Settings.Options.ActionsNotifTT, true);
 
@@ -182,6 +184,7 @@ public class SettingsMainNativeUI
         {
             _config.Data.DtrVibeStatus = vibeDtr;
             _config.Save();
+            _mediator.Publish(new DTRRefreshMessage());
         }
         CkGui.HelpTextFramed(GSLoc.Settings.Options.VibeStatusTT, true);
     }

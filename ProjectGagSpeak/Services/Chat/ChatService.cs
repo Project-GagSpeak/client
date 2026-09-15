@@ -427,7 +427,7 @@ public class ChatService : DisposableMediatorSubscriberBase
         if (color.Glow != default) prefix.BeginGlowColor(color.Glow);
 
         prefix.AddText("[").Add(OpenRadarChat).AddText("GlobalChat").Add(RawPayload.LinkTerminator).AddText("]<");
-        prefix.Add(ShowUID).AddText(_globalChat.GetChatName(msg.Sender)).Add(RawPayload.LinkTerminator).AddText("> ");
+        prefix.Add(ShowUID).AddText(_globalChat.GetChatName(msg.Sender, msg.LegacyId, msg.Flags)).Add(RawPayload.LinkTerminator).AddText("> ");
 
         if (color.Glow != default) prefix.EndGlowColor();
         if (color.Foreground != default) prefix.EndForegroundColor();

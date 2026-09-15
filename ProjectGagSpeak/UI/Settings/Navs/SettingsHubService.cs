@@ -149,26 +149,6 @@ public partial class SettingsHubService
                 UiService.SetUITask(async () => await _hub.Reconnect(DisconnectIntent.Reload).ConfigureAwait(false));
             }
         }
-
-        ImGui.Separator();
-        ImGui.SetNextItemWidth(250);
-        ImGui.InputText("Custom Service Name", ref _customServerName, 255);
-
-        ImGui.SetNextItemWidth(250);
-        ImGui.InputText("Custom Service URI", ref _customServerUri, 255);
-        if (CkGui.IconTextButton(FAI.Plus, "Add Service"))
-        {
-            if (string.IsNullOrWhiteSpace(_customServerUri) || !Uri.IsWellFormedUriString(_customServerUri, UriKind.Absolute))
-                return;
-            // It is valid, so add the service.
-            var newService = new ServerHubInfo() { HubName = _customServerName, HubURI = _customServerUri };
-            if (!_connections.AddServerHub(newService))
-                return;
-
-            // Reset the input fields, and save the config.
-            _customServerName = string.Empty;
-            _customServerUri = string.Empty;
-        }        
     }
 
     private void DrawReputation()

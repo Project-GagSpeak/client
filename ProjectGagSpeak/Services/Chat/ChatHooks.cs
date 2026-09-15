@@ -247,12 +247,12 @@ public unsafe class ChatHooks : DisposableMediatorSubscriberBase
             if (_commands.IsGlobalChatCommand(command))
             {
                 Logger.LogTrace($"Intercepted GlobalChat message [{command}]", LogFilter.ChatHooks);
-                var radarLogId = new ChatlogId(GsChatKind.Global, "GlobalChat");
+                var globalLog = new ChatlogId(GsChatKind.Global, "GlobalChat");
                 Logger.LogDebug($"Intercepted GlobalChatLog: [{command}]", LogFilter.ChatHooks);
                 // Extract the message.
                 var entireMessage = MemoryHelper.ReadRawNullTerminated((nint)message->StringPtr.Value);
                 // Update the channel we are sending it to.
-                sendTo = radarLogId;
+                sendTo = globalLog;
                 // Skip past the command and any whitespace to get to the actual message.
                 if (entireMessage.Length - 1 >= i && char.IsWhiteSpace((char)entireMessage[i]))
                     i += 1; // i++?..
@@ -262,7 +262,7 @@ public unsafe class ChatHooks : DisposableMediatorSubscriberBase
                 // If the message is blank, we should instead override the current channel to reflect this channel by default!
                 if (msgContents.Length is 0 || msgContents.All(c => char.IsWhiteSpace((char)c)))
                 {
-                    _chatService.ChatlogOverride = radarLogId;
+                    _chatService.ChatlogOverride = globalLog;
                     return false;
                 }
                 // The ALT+R or whatever we used to make temp channels was also used to

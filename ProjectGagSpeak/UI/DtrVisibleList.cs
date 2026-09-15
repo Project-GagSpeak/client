@@ -14,9 +14,9 @@ internal class DtrVisibleWindow : WindowMediatorSubscriberBase
 {
     private bool _themePushed = false;
 
-    private readonly DtrBarService _service;
+    private readonly DtrService _service;
     public DtrVisibleWindow(ILogger<DtrVisibleWindow> logger, GagspeakMediator mediator,
-        DtrBarService dtrService) : base(logger, mediator, "##DtrLinker")
+        DtrService dtrService) : base(logger, mediator, "##DtrLinker")
     {
         _service = dtrService;
 
@@ -36,7 +36,7 @@ internal class DtrVisibleWindow : WindowMediatorSubscriberBase
 
         Flags |= WFlags.NoMove;
 
-        var cnt = DtrBarService.NonKinksters.Count > 10 ? 10+2 : DtrBarService.NonKinksters.Count+2;
+        var cnt = DtrService.NonKinksters.Count > 10 ? 10+2 : DtrService.NonKinksters.Count+2;
         var size = new Vector2(200f, (ImGui.GetTextLineHeightWithSpacing() * cnt) - ImGui.GetFrameHeight() - ImGui.GetStyle().WindowPadding.Y + ImGuiHelpers.GlobalScale);
 
         ImGui.SetNextWindowSize(size);
@@ -70,13 +70,13 @@ internal class DtrVisibleWindow : WindowMediatorSubscriberBase
         if (!ImGui.IsWindowFocused())
             IsOpen = false;
 
-        if (DtrBarService.NonKinksters.Count is 0)
+        if (DtrService.NonKinksters.Count is 0)
             return;
 
         // draw a list of tree nodes, for each player. When they are selected, display the map coordinates of them.
-        var displayed = DtrBarService.NonKinksters.Take(10).ToList();
-        var remaining = DtrBarService.NonKinksters.Count - displayed.Count;
-        bool anyNonKinksters = DtrBarService.NonKinksters.Count is not 0;
+        var displayed = DtrService.NonKinksters.Take(10).ToList();
+        var remaining = DtrService.NonKinksters.Count - displayed.Count;
+        bool anyNonKinksters = DtrService.NonKinksters.Count is not 0;
         unsafe
         {
             foreach (var addr in displayed)

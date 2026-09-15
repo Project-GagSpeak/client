@@ -23,7 +23,7 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
     private readonly AccountConfig _serverConfig;
     private readonly ChatConfig _chatConfig;
     private readonly IServiceScopeFactory _serviceScopeFactory;
-    private IServiceScope? _runtimeServiceScope;
+    private IServiceScope? _serviceScope;
     private Task? _launchTask;
     public GagSpeakHost(ILogger<GagSpeakHost> logger, GagspeakMediator mediator,
         MainConfig mainConfig, AccountConfig serverConfig, ChatConfig chatConfig,
@@ -100,7 +100,7 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
     private void DalamudUtilOnLogOut()
     {
         Svc.Logger.Debug("Client logout");
-        _runtimeServiceScope?.Dispose();
+        _serviceScope?.Dispose();
     }
 
     /// <summary> The Task executed by the launchTask var from the main plugin.cs 
@@ -124,12 +124,12 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
         {
             Svc.Logger.Debug("Launching Managers");
             // before we do lets recreate the runtime service scope
-            _runtimeServiceScope?.Dispose();
-            _runtimeServiceScope = _serviceScopeFactory.CreateScope();
+            _serviceScope?.Dispose();
+            _serviceScope = _serviceScopeFactory.CreateScope();
 
             // startup services that have no other services that call on them, yet are essential.
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<UiService>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<CommandManager>();
+            _serviceScope.ServiceProvider.GetRequiredService<UiService>();
+            _serviceScope.ServiceProvider.GetRequiredService<CommandManager>();
 
             // Initialize the audio manager for our configured audio devices.
             // AudioSystem.InitializeOutputDevice(_mainConfig.Current.AudioOutputType, _mainConfig.GetDefaultAudioDevice());
@@ -139,40 +139,41 @@ public class GagSpeakHost : MediatorSubscriberBase, IHostedService
             TrySwitchIntroUI();
 
             // Services that require an initial constructor call during bootup.
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<SpellActionService>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<EmoteService>();
+            _serviceScope.ServiceProvider.GetRequiredService<SpellActionService>();
+            _serviceScope.ServiceProvider.GetRequiredService<EmoteService>();
 
             // Init our listeners for IPC.
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<CustomizePlusListener>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<GlamourListener>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<ModListener>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<LociListener>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<HealthMonitor>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<IntifaceListener>();
+            _serviceScope.ServiceProvider.GetRequiredService<CustomizePlusListener>();
+            _serviceScope.ServiceProvider.GetRequiredService<GlamourListener>();
+            _serviceScope.ServiceProvider.GetRequiredService<ModListener>();
+            _serviceScope.ServiceProvider.GetRequiredService<LociListener>();
+            _serviceScope.ServiceProvider.GetRequiredService<HealthMonitor>();
+            _serviceScope.ServiceProvider.GetRequiredService<IntifaceListener>();
 
             // get the required service for the online player manager (and notification service if we add it)
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<CharaDataDistributor>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<ConnectionSyncService>();
+            _serviceScope.ServiceProvider.GetRequiredService<CharaDataDistributor>();
+            _serviceScope.ServiceProvider.GetRequiredService<ConnectionSyncService>();
 
             // boot up our chat services. (this don't work as hosted services because they are unsafe)
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<ChatControlService>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<StaticDetours>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<MovementDetours>();
+            _serviceScope.ServiceProvider.GetRequiredService<ChatControlService>();
+            _serviceScope.ServiceProvider.GetRequiredService<StaticDetours>();
+            _serviceScope.ServiceProvider.GetRequiredService<MovementDetours>();
+            _serviceScope.ServiceProvider.GetRequiredService<ChatHooks>();
 
             // stuff that should probably be a hosted service but isn't yet.
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<AchievementsService>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<DtrBarService>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<NameplateService>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<PenumbraTooltips>();
+            _serviceScope.ServiceProvider.GetRequiredService<AchievementsService>();
+            _serviceScope.ServiceProvider.GetRequiredService<DtrService>();
+            _serviceScope.ServiceProvider.GetRequiredService<NameplateService>();
+            _serviceScope.ServiceProvider.GetRequiredService<PenumbraTooltips>();
 
             // Init Player Controllers.
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<AutoPromptController>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<ChatboxController>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<KeystateController>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<MovementController>();
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<POVController>();
+            _serviceScope.ServiceProvider.GetRequiredService<AutoPromptController>();
+            _serviceScope.ServiceProvider.GetRequiredService<ChatboxController>();
+            _serviceScope.ServiceProvider.GetRequiredService<KeystateController>();
+            _serviceScope.ServiceProvider.GetRequiredService<MovementController>();
+            _serviceScope.ServiceProvider.GetRequiredService<POVController>();
 
-            _runtimeServiceScope.ServiceProvider.GetRequiredService<VersionUpdateService>();
+            _serviceScope.ServiceProvider.GetRequiredService<VersionUpdateService>();
         }
         catch (Bagagwa ex)
         {
