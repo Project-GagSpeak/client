@@ -3,7 +3,6 @@ using Dalamud.Bindings.ImGui;
 using GagSpeak.DrawSystem;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
-using GagSpeak.Services;
 
 namespace GagSpeak.DrawSystem;
 

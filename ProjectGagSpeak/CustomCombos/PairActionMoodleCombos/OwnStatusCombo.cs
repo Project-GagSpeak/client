@@ -7,7 +7,6 @@ using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.State.Caches;
 using GagSpeak.WebAPI;
-using GagspeakAPI.Data;
 using GagspeakAPI.Hub;
 using OtterGui.Text;
 

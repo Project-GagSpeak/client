@@ -1,6 +1,5 @@
 using GagSpeak.Kinksters;
 using GagSpeak.Pairs;
-using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagspeakAPI.Network;
 using GagspeakAPI.User;

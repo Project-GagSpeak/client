@@ -7,7 +7,6 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using FFXIVClientStructs.FFXIV.Client.UI;
 using GagSpeak.Gui.Chat;
 using GagSpeak.Gui.Profile;
 using GagSpeak.Gui.Publications;

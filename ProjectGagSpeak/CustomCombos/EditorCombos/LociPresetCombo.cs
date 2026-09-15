@@ -5,7 +5,6 @@ using Dalamud.Bindings.ImGui;
 using GagSpeak.Interop.Helpers;
 using GagSpeak.Services;
 using GagSpeak.State.Caches;
-using LociApi.Ipc;
 using OtterGui.Extensions;
 using OtterGui.Text;
 

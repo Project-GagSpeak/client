@@ -12,10 +12,8 @@ using GagSpeak.Services.Events;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Watchers;
 using GagSpeak.WebAPI;
-using Lumina.Excel.Sheets;
 using Luna;
 using Microsoft.Extensions.Hosting;
-using static FFXIVClientStructs.FFXIV.Client.Game.ServerRequestCallbackManager.Delegates;
 
 namespace GagSpeak.Services;
 

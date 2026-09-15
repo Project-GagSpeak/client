@@ -6,14 +6,11 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Chat;
 using GagSpeak.Gui.Components;
-using GagSpeak.Gui.Settings;
-using GagSpeak.Localization;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Tutorial;
 using GagSpeak.WebAPI;
 using OtterGui.Text;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Gui.MainWindow;
 

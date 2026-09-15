@@ -2,7 +2,6 @@
 using CkCommons;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Utils;
 using GagspeakAPI.Connection;
 
 namespace GagSpeak.PlayerClient;

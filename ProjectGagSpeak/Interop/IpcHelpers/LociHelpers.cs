@@ -6,7 +6,6 @@ using Dalamud.Interface.Utility.Raii;
 using GagspeakAPI.Data;
 using GagspeakAPI.Data.Permissions;
 using LociApi.Enums;
-using NAudio.SoundFont;
 
 namespace GagSpeak.Interop.Helpers;
 

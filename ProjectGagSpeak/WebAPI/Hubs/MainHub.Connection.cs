@@ -1,8 +1,6 @@
 using CkCommons;
-using Dalamud.Interface.ImGuiNotification;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
-using GagspeakAPI.Hub;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
 using System.Net.WebSockets;

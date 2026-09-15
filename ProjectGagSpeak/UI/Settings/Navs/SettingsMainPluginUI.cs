@@ -3,8 +3,6 @@ using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
-using OtterGui.Text;
-using OtterGui.Text.Widget.Editors;
 using GagSpeak.DrawSystem;
 using GagSpeak.Gui.Components;
 using GagSpeak.Localization;

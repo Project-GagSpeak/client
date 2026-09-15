@@ -2,7 +2,6 @@ using CkCommons;
 using CkCommons.Gui;
 using CkCommons.Gui.Utility;
 using Dalamud.Bindings.ImGui;
-using Dalamud.Game.Text;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
@@ -16,8 +15,6 @@ using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Hub;
-using OtterGui.Text;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Gui.Settings;
 

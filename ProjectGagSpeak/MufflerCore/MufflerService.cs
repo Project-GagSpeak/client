@@ -4,7 +4,6 @@ using GagSpeak.MufflerCore.Handler;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Configs;
 using GagSpeak.Services.Mediator;
-using GagSpeak.Services.Textures;
 using OtterGui.Extensions;
 using System.Text.RegularExpressions;
 

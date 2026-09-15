@@ -1,29 +1,20 @@
 using CkCommons.GarblerCore;
 using CkCommons.Gui;
 using Dalamud.Bindings.ImGui;
-using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.DrawSystem;
-using GagSpeak.DrawSystem;
 using GagSpeak.GameInternals.Agents;
 using GagSpeak.Gui.Components;
-using GagSpeak.Gui.Components;
-using GagSpeak.Localization;
 using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services;
-using GagSpeak.Services;
-using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data.Permissions;
 using OtterGui;
-using OtterGui.Text;
-using OtterGui.Text.Widget.Editors;
 
 namespace GagSpeak.Gui.Settings;
 

@@ -8,7 +8,6 @@ using GagspeakAPI.Chat;
 using GagspeakAPI.Data.Comparer;
 using GagspeakAPI.User;
 using System.Text.RegularExpressions;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Services;
 

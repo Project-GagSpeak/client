@@ -8,7 +8,6 @@ using GagSpeak.State.Managers;
 using GagspeakAPI.Connection;
 using GagspeakAPI.Extensions;
 using Microsoft.Extensions.Hosting;
-using TerraFX.Interop.Windows;
 
 namespace GagSpeak.Services;
 

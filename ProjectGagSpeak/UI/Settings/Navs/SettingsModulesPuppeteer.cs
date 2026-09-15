@@ -4,24 +4,16 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.DrawSystem;
-using GagSpeak.DrawSystem;
 using GagSpeak.GameInternals.Agents;
 using GagSpeak.Gui.Components;
-using GagSpeak.Gui.Components;
-using GagSpeak.Localization;
 using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services;
-using GagSpeak.Services;
-using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data.Permissions;
-using OtterGui.Text;
-using OtterGui.Text.Widget.Editors;
 
 namespace GagSpeak.Gui.Settings;
 
@@ -52,8 +44,8 @@ public class SettingsModulesPuppeteer
 
         _tabs = new StylizedTabbarBuilder<PluginUiTabs>()
             .AddTab(PluginUiTabs.Globals, "Global Settings")
-            .AddTab(PluginUiTabs.Listeners, "Listeners")
             .AddTab(PluginUiTabs.Channels, "Enabled Channels")
+            .AddTab(PluginUiTabs.Listeners, "Listeners")
             .Build();
     }
 
@@ -96,7 +88,7 @@ public class SettingsModulesPuppeteer
 
     private void DrawGlobals()
     {
-        CkGui.FontText(GSLoc.Settings.Options.HeaderPuppet, Fonts.SubtitleFont);
+        CkGui.FontText("Global Permissions", Fonts.SubtitleFont);
         if (ClientData.Globals is not { } globals)
         {
             ImGui.Text("Global Perms is null! Safely returning early");
@@ -150,7 +142,7 @@ public class SettingsModulesPuppeteer
 
     private void DrawChannels()
     {
-        CkGui.FontText(GSLoc.Settings.Options.HeaderPuppet, Fonts.SubtitleFont);
+        CkGui.FontText("Enabled Channels", Fonts.SubtitleFont);
         using var _ = ImRaii.Group();
 
         foreach (var (label, channels) in ChatLogAgent.SortedChannels)
