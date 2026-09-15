@@ -464,7 +464,7 @@ public class ChatWindowUI : WindowMediatorSubscriberBase
             using (Fonts.HeaderFont.Push())
             {
                 CkGui.SetCursorXtoCenter(row4Size.X);
-                CkGui.TextShadowed("You can verify via Sundouleia's Discord Bot.", uint.MaxValue, 0xFF000000, Vector2.One, 4f, 8);
+                CkGui.TextShadowed("You can verify via GagSpeak's Discord Bot.", uint.MaxValue, 0xFF000000, Vector2.One, 4f, 8);
                 CkGui.SetCursorXtoCenter(row5Size.X);
                 CkGui.TextShadowed("Verification is easy & doesn't interact", uint.MaxValue, 0xFF000000, Vector2.One, 4f, 8);
                 CkGui.SetCursorXtoCenter(row6Size.X);

@@ -31,7 +31,7 @@ public class ChangelogUI : WindowMediatorSubscriberBase
     private readonly Vector2 _defaultSize = new(710, 745);
 
     public ChangelogUI(ILogger<ChangelogUI> logger, GagspeakMediator mediator)
-        : base(logger, mediator, "Changelog UI")
+        : base(logger, mediator, "Changelog UI###Gagspeak_ChangelogUI")
     {
         this.SetBoundaries(_defaultSize, new(710, 1500));
         this.PinningClickthroughFalse();
