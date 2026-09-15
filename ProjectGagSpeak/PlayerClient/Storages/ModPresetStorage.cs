@@ -165,21 +165,28 @@ public sealed class ModSettingsPreset : IEditableStorageItem<ModSettingsPreset>,
         // if the directory path is an empty string, then we should return a default preset, otherwise, we should load it.
         if (dirPath.IsNullOrEmpty() || presetName.IsNullOrEmpty())
             return new ModSettingsPreset(new ModPresetContainer());
-        else
+        
+        // if the directory path is not in the mod preset storage, we should not bomb the entire load routine and just notify the user.
+        var container = mp.ModPresetStorage.FirstOrDefault(x => x.DirectoryPath == dirPath);
+        if (container is null)
         {
-            // if the directory path is not in the mod preset storage, then we should throw an exception.
-            var container = mp.ModPresetStorage.FirstOrDefault(x => x.DirectoryPath == dirPath)
-                ?? throw new Exception($"ModSettingsPreset: No container found for directory path {dirPath}");
-            //?? throw new Exception($"ModSettingsPreset: No container found for directory path {dirPath}" +
-            //$"\nCurrent Containers are: {string.Join("\n", mp.ModPresetStorage.Select(x => x.DirectoryPath))}");
-
-            var preset = container.ModPresets.FirstOrDefault(x => x.Label == presetName)
-                ?? throw new Exception($"ModSettingsPreset: No preset found for directory path {dirPath} with name {presetName}");
-                //?? throw new Exception($"ModSettingsPreset: No preset found for directory path {dirPath} with name {presetName}" +
-                //$"\nCurrent Presets are: {string.Join("\n", container.ModPresets.Select(x => x.Label))}");
-
-            return preset;
+            Svc.Logger.Error($"ModSettingsPreset: No container found for {dirPath}");
+            return new ModSettingsPreset(new ModPresetContainer()); // return an empty object if we couldn't load
         }
+        //?? throw new Exception($"ModSettingsPreset: No container found for directory path {dirPath}" +
+        //$"\nCurrent Containers are: {string.Join("\n", mp.ModPresetStorage.Select(x => x.DirectoryPath))}");
+
+        var preset = container.ModPresets.FirstOrDefault(x => x.Label == presetName);
+        if (preset is null)
+        {
+            preset = container.ModPresets[0]; // the mod was found but no preset was found, so just load the preset that should always exist?
+            Svc.Logger.Error($"ModSettingsPreset: No preset found for directory path {dirPath} with name {presetName}");
+        }
+                         
+        //?? throw new Exception($"ModSettingsPreset: No preset found for directory path {dirPath} with name {presetName}" +
+        //$"\nCurrent Presets are: {string.Join("\n", container.ModPresets.Select(x => x.Label))}");
+
+        return preset;
     }
 
     // For mod preset storage
@@ -192,18 +199,17 @@ public sealed class ModSettingsPreset : IEditableStorageItem<ModSettingsPreset>,
         // if the directory path is an empty string, then we should return a default preset, otherwise, we should load it.
         if (dirPath.IsNullOrEmpty())
             return new ModSettingsPreset(new ModPresetContainer());
-        else
+        // if the directory path is not in the mod preset storage, then we should throw an exception.
+        var container = mp.ModPresetStorage.FirstOrDefault(x => x.DirectoryPath == dirPath);
+        if (container is null)
         {
-            // if the directory path is not in the mod preset storage, then we should throw an exception.
-            var container = mp.ModPresetStorage.FirstOrDefault(x => x.DirectoryPath == dirPath)
-                ?? throw new Exception($"ModSettingsPreset: No container found for directory path {dirPath}" +
-                $"\nCurrent Containers are: {string.Join("\n", mp.ModPresetStorage.Select(x => x.DirectoryPath))}");
-
-            return new ModSettingsPreset(container)
-            {
-                Label = jsonObject["Label"]?.Value<string>() ?? string.Empty,
-                ModSettings = jsonObject["ModSettings"]?.ToObject<Dictionary<string, List<string>>>() ?? new Dictionary<string, List<string>>()
-            };
+            Svc.Logger.Error($"ModSettingsPreset: No container found for {dirPath}");
+            return new ModSettingsPreset(new ModPresetContainer());
         }
+        return new ModSettingsPreset(container)
+        {
+            Label = jsonObject["Label"]?.Value<string>() ?? string.Empty,
+            ModSettings = jsonObject["ModSettings"]?.ToObject<Dictionary<string, List<string>>>() ?? new Dictionary<string, List<string>>()
+        };
     }
 }
