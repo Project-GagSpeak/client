@@ -98,16 +98,14 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         if (ClientData.Globals is not { } g)
             return;
 
+        // skip processing client gagplate if they have it disabled.
+        if (!g.GaggedNameplate)
+            return;
+
         // If we have gaggedNameplate settings on and the change was apply, we should attempt to add them to tracked.
-        if (g.GaggedNameplate && newState is NewState.Enabled)
+        if (newState is NewState.Enabled || (_gags.ServerGagData is {} data && data.IsGagged()))
         {
             Logger.LogDebug($"Adding {PlayerData.NameWithWorld} to tracked Nameplates", LoggerType.Gags);
-            TrackedKinksters.TryAdd(PlayerData.NameWithWorld, false);
-        }
-        // If we had gagged data and are gagged, we should proceed as normal
-        else if (_gags.ServerGagData is { } data && data.IsGagged())
-        {
-            // Add it if we are not already added.
             TrackedKinksters.TryAdd(PlayerData.NameWithWorld, false);
         }
         // Otherwise, remove it
@@ -136,10 +134,14 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
             return;
 
         // if the kinkster is telling us they have a new gag, or they're gagged, and we haven't added them, add them.
-        if ((newState is NewState.Enabled || kinkster.ActiveGags.IsGagged()) && !TrackedKinksters.ContainsKey(kinkster.PlayerNameWorld))
+        if (newState is NewState.Enabled || kinkster.ActiveGags.IsGagged())
         {
-            Logger.LogDebug($"Adding {kinkster.PlayerNameWorld} to tracked Nameplates", LoggerType.Gags);
-            TrackedKinksters.TryAdd(kinkster.PlayerNameWorld, false);
+            // check if they need to be added.
+            if (!TrackedKinksters.ContainsKey(kinkster.PlayerNameWorld))
+            {
+                Logger.LogDebug($"Adding {kinkster.PlayerNameWorld} to tracked Nameplates", LoggerType.Gags);
+                TrackedKinksters.TryAdd(kinkster.PlayerNameWorld, false);
+            }
         }
         // Otherwise we should remove the tracked nameplate.
         else
