@@ -26,7 +26,7 @@ public class ConnectionsConfig : IHybridSavable
 {
     public const string MAIN_SERVER_NAME = "GagSpeak Main";
     public const string MAIN_SERVER_URI = "wss://gagspeak.kinkporium.studio";
-     
+
     private static readonly List<ServerHubInfo> OfficialHubs =
     [
         new ServerHubInfo

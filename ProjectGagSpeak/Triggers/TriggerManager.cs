@@ -137,7 +137,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
             return false;
 
         trigger.Enabled = !trigger.Enabled;
-        Logger.LogDebug($"Toggled Trigger: {trigger.Label} to {(trigger.Enabled ? "Enabled" : "Disabled")}", LoggerType.Triggers);
+        Logger.LogDebug($"Toggled Trigger: {trigger.Label} to {(trigger.Enabled ? "Enabled" : "Disabled")}", LogFilter.Triggers);
         _saver.Save(this);
         Mediator.Publish(new EnabledItemChanged(GSModule.Trigger, trigger.Identifier, trigger.Enabled));
         return true;
@@ -147,7 +147,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
     {
         trigger.Enabled = newState;
         _saver.Save(this);
-        Logger.LogDebug($"Toggled Trigger: {trigger.Label} to {(trigger.Enabled ? "Enabled" : "Disabled")}", LoggerType.Triggers);
+        Logger.LogDebug($"Toggled Trigger: {trigger.Label} to {(trigger.Enabled ? "Enabled" : "Disabled")}", LogFilter.Triggers);
         Mediator.Publish(new EnabledItemChanged(GSModule.Trigger, trigger.Identifier, trigger.Enabled));
     }
 
@@ -156,7 +156,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
         foreach (var a in triggers)
             a.Enabled = newState;
         _saver.Save(this);
-        Logger.LogDebug($"Toggled Trigger(s): ({string.Join(", ", triggers.Select(a => a.Label))})", LoggerType.Triggers);
+        Logger.LogDebug($"Toggled Trigger(s): ({string.Join(", ", triggers.Select(a => a.Label))})", LogFilter.Triggers);
         Mediator.Publish(new EnabledItemsChanged(GSModule.Trigger, triggers.Select(t => t.Identifier), newState));
     }
 

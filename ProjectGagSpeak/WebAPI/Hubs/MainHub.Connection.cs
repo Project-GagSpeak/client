@@ -20,21 +20,21 @@ public partial class MainHub
     /// </summary>
     public async Task Connect()
     {
-        Logger.LogInformation("Client Wished to Connect to the server", LoggerType.ApiCore);
+        Logger.LogInformation("Client Wished to Connect to the server", LogFilter.MainHub);
         if (!ShouldClientConnect(out var secretKey))
         {
-            Logger.LogInformation("Client was not in a valid state to connect to the server.", LoggerType.ApiCore);
+            Logger.LogInformation("Client was not in a valid state to connect to the server.", LogFilter.MainHub);
             _hubConnectionCTS?.Cancel();
             return;
         }
 
-        Logger.LogInformation($"SecretKey Fetched, Creating Connection to [{ConnectionsConfig.CurrentHubName}]", LoggerType.ApiCore);
+        Logger.LogInformation($"SecretKey Fetched, Creating Connection to [{ConnectionsConfig.CurrentHubName}]", LogFilter.MainHub);
         // if the current state was offline, change it to disconnected.
         if (ServerStatus is ServerState.Offline)
             ServerStatus = ServerState.Disconnected;
 
         // Debug the current state here encase shit hits the fan.
-        Logger.LogDebug($"Current ServerState on Connection: {ServerStatus}", LoggerType.ApiCore);
+        Logger.LogDebug($"Current ServerState on Connection: {ServerStatus}", LogFilter.MainHub);
         // Recreate the ConnectionCTS.
         _hubConnectionCTS = _hubConnectionCTS.SafeCancelRecreate();
         var connectionToken = _hubConnectionCTS.Token;
@@ -44,7 +44,7 @@ public partial class MainHub
         {
             AuthFailureMessage = string.Empty;
 
-            Logger.LogInformation("Attempting to Connect to GagSpeakHub-Main", LoggerType.ApiCore);
+            Logger.LogInformation("Attempting to Connect to GagSpeakHub-Main", LogFilter.MainHub);
             ServerStatus = ServerState.Connecting;
             try
             {
@@ -64,7 +64,7 @@ public partial class MainHub
                 // (do it here incase the wait for the player is long or the token is cancelled during the wait)
                 if (connectionToken.IsCancellationRequested)
                 {
-                    Logger.LogWarning("GagSpeakHub-Main's ConnectionToken was cancelled during connection. Aborting!", LoggerType.ApiCore);
+                    Logger.LogWarning("GagSpeakHub-Main's ConnectionToken was cancelled during connection. Aborting!", LogFilter.MainHub);
                     return;
                 }
 
@@ -80,7 +80,7 @@ public partial class MainHub
                 }
 
                 // if we reach here it means we are officially connected to the server
-                Logger.LogInformation("Successfully Connected to GagSpeakHub-Main", LoggerType.ApiCore);
+                Logger.LogInformation("Successfully Connected to GagSpeakHub-Main", LogFilter.MainHub);
                 ServerStatus = ServerState.Connected;
 
                 await LoadInitialConnectionData().ConfigureAwait(false);
@@ -112,7 +112,7 @@ public partial class MainHub
                 Logger.LogWarning("HttpRequestException on Connection:" + ex.Message);
                 if (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
-                    Logger.LogWarning("This HTTP Exception was caused by GagSpeakAuthFailure. Message was: " + AuthFailureMessage, LoggerType.ApiCore);
+                    Logger.LogWarning("This HTTP Exception was caused by GagSpeakAuthFailure. Message was: " + AuthFailureMessage, LogFilter.MainHub);
                     await Disconnect(ServerState.Unauthorized, DisconnectIntent.Normal).ConfigureAwait(false);
                     return; // (Prevent further reconnections)
                 }
@@ -170,12 +170,12 @@ public partial class MainHub
             // only perform the following if SaveData is in a valid state for uploading on Disconnect.
             if(ClientAchievements.HasValidData && !ClientAchievements.HadUnhandledDC)
             {
-                Logger.LogDebug("Sending Final Achievement SaveData Update before Hub Instance Disposal.", LoggerType.Achievements);
+                Logger.LogDebug("Sending Final Achievement SaveData Update before Hub Instance Disposal.", LogFilter.Achievements);
                 await UserUpdateAchievementData(new(OwnUserData, _achievements.SerializeData()));
             }
             else
             {
-                Logger.LogWarning("CanUploadSaveData was false during disconnect. Skipping final save on disconnect.", LoggerType.Achievements);
+                Logger.LogWarning("CanUploadSaveData was false during disconnect. Skipping final save on disconnect.", LogFilter.Achievements);
             }
         }
 
@@ -190,7 +190,7 @@ public partial class MainHub
 
         // Set new state to Disconnecting.
         ServerStatus = ServerState.Disconnecting;
-        Logger.LogInformation("Disposing of GagSpeakHub-Main's Hub Instance", LoggerType.ApiCore);
+        Logger.LogInformation("Disposing of GagSpeakHub-Main's Hub Instance", LogFilter.MainHub);
 
         // Obliterate the GagSpeakHub-Main into the ground, erase it out of existence.
         await _hubFactory.DisposeHubAsync().ConfigureAwait(false);
@@ -200,7 +200,7 @@ public partial class MainHub
         if (_hubConnection is not null)
         {
             Logger.LogInformation("Instance disposed of in '_hubFactory', but still exists in MainHub.cs, " +
-                $"clearing all data for [{ConnectionsConfig.CurrentHubName}]", LoggerType.ApiCore);
+                $"clearing all data for [{ConnectionsConfig.CurrentHubName}]", LogFilter.MainHub);
             // Clear the Health check so we stop pinging the server, set Initialized to false, publish a disconnect.
             _apiHooksInitialized = false;
             _hubHealthCTS?.Cancel();
@@ -211,7 +211,7 @@ public partial class MainHub
         }
 
         // Update our server state to the necessary reason
-        Logger.LogInformation($"GagSpeakHub-Main disconnected: [{dcReason}({intent})]", LoggerType.ApiCore);
+        Logger.LogInformation($"GagSpeakHub-Main disconnected: [{dcReason}({intent})]", LogFilter.MainHub);
         ServerStatus = dcReason;
     }
 
@@ -245,11 +245,11 @@ public partial class MainHub
         {
             // Set our connection state to connecting.
             ServerStatus = ServerState.Connecting;
-            Logger.LogDebug("Connecting to MainHub to fetch newly generated Account Details and disconnect.", LoggerType.ApiCore);
+            Logger.LogDebug("Connecting to MainHub to fetch newly generated Account Details and disconnect.", LogFilter.MainHub);
             try
             {
                 // Fetch a fresh token for our brand new account. Catch any authentication exceptions that may occur.
-                Logger.LogTrace("Fetching a fresh token for the new account from TokenProvider.", LoggerType.JwtTokens);
+                Logger.LogTrace("Fetching a fresh token for the new account from TokenProvider.", LogFilter.JwtTokens);
                 _latestToken = await _tokenProvider.GetOrUpdateToken(freshAccountCTS).ConfigureAwait(false);
             }
             catch (GagspeakAuthFailureException ex)
@@ -262,15 +262,15 @@ public partial class MainHub
             await WaitForWhenPlayerIsPresent(freshAccountCTS);
 
             // Create instance of hub connection (with our temporary access token for the fresh account)
-            Logger.LogDebug("Starting created hub instance", LoggerType.ApiCore);
+            Logger.LogDebug("Starting created hub instance", LogFilter.MainHub);
             _hubConnection = _hubFactory.GetOrCreate(freshAccountCTS);
             await _hubConnection.StartAsync(freshAccountCTS).ConfigureAwait(false);
 
             // Obtain the fresh account details.
-            Logger.LogDebug("Calling OneTimeUseAccountGeneration.", LoggerType.ApiCore);
+            Logger.LogDebug("Calling OneTimeUseAccountGeneration.", LogFilter.MainHub);
             var accountDetails = await _hubConnection.InvokeAsync<(string, string)>("OneTimeUseAccountGeneration");
 
-            Logger.LogInformation("New Account Details Fetched.", LoggerType.ApiCore);
+            Logger.LogInformation("New Account Details Fetched.", LogFilter.MainHub);
             return accountDetails;
         }
         catch (HubException ex)
@@ -280,12 +280,12 @@ public partial class MainHub
         }
         catch (Bagagwa ex)
         {
-            Logger.LogError($"Error fetching new account details: {ex.StackTrace}", LoggerType.ApiCore);
+            Logger.LogError($"Error fetching new account details: {ex.StackTrace}", LogFilter.MainHub);
             throw;
         }
         finally
         {
-            Logger.LogInformation("Disposing of GagSpeakHub-Main after obtaining account details.", LoggerType.ApiCore);
+            Logger.LogInformation("Disposing of GagSpeakHub-Main after obtaining account details.", LogFilter.MainHub);
             if (_hubConnection is not null && _hubConnection.State is HubConnectionState.Connected)
                 await Disconnect(ServerState.Disconnected, DisconnectIntent.Normal).ConfigureAwait(false);
             Logger.LogInformation("Disposed of GagSpeakHub-Main after obtaining account details.");
@@ -299,14 +299,14 @@ public partial class MainHub
         // if we are not logged in, we should not be able to connect.
         if (!PlayerData.IsLoggedIn)
         {
-            Logger.LogDebug("Attempted to connect while not logged in, this shouldnt be possible! Aborting!", LoggerType.ApiCore);
+            Logger.LogDebug("Attempted to connect while not logged in, this shouldnt be possible! Aborting!", LogFilter.MainHub);
             return false;
         }
 
         // if we have not yet made an account, abort this connection.
         if (_accounts.Profiles.Count <= 0)
         {
-            Logger.LogDebug("No Authentications created. No Primary Account or Alt Account to connect with. Aborting!", LoggerType.ApiCore);
+            Logger.LogDebug("No Authentications created. No Primary Account or Alt Account to connect with. Aborting!", LogFilter.MainHub);
             return false;
         }
 
@@ -314,28 +314,28 @@ public partial class MainHub
         if (!_accounts.CharaIsTracked())
         {
             _accounts.AddNewProfile();
-            Logger.LogInformation("Current character was not tracked in accounts. Created new profile for them.", LoggerType.ApiCore);
+            Logger.LogInformation("Current character was not tracked in accounts. Created new profile for them.", LogFilter.MainHub);
             return false;
         }
 
         // Ensure that we have an attached secret key.
         if (!_accounts.CharaIsAttached())
         {
-            Logger.LogInformation("A Valid secret key entry was not found for the character.", LoggerType.ApiCore);
+            Logger.LogInformation("A Valid secret key entry was not found for the character.", LogFilter.MainHub);
             ServerStatus = ServerState.NoSecretKey;
             return false;
         }
 
         // If the client wishes to not be connected to the server, return.
-        if (IsFullPaused)
+        if (_connections.ConnectionState is ConnectionKind.FullPause)
         {
-            Logger.LogDebug("You have your connection to server paused. Stopping any attempt to connect!", LoggerType.ApiCore);
+            Logger.LogDebug("You have your connection to server paused. Stopping any attempt to connect!", LogFilter.MainHub);
             return false;
         }
 
         if (_accounts.GetCharaProfile() is not { } profile)
         {
-            Logger.LogWarning($"GetCharaProfile failed! Potentially corrupted data?!", LoggerType.ApiCore);
+            Logger.LogWarning($"GetCharaProfile failed! Potentially corrupted data?!", LogFilter.MainHub);
             return false;
         }
 
@@ -343,10 +343,10 @@ public partial class MainHub
         if (string.IsNullOrEmpty(fetchedSecretKey))
         {
             // log a warning that no secret key is set for the current character
-            Logger.LogWarning("No secret key set for current character, aborting Connection with [NoSecretKey]", LoggerType.ApiCore);
+            Logger.LogWarning("No secret key set for current character, aborting Connection with [NoSecretKey]", LogFilter.MainHub);
 
             if (ConnectionResponse is not null)
-                Logger.LogWarning("No secret key, yet ConnectionResponse was not null here!", LoggerType.ApiCore);
+                Logger.LogWarning("No secret key, yet ConnectionResponse was not null here!", LogFilter.MainHub);
             ConnectionResponse = null;
 
             // Set our new ServerState to NoSecretKey and reject connection.
@@ -356,7 +356,7 @@ public partial class MainHub
         }
         else // Log the successful fetch.
         {
-            Logger.LogInformation("Secret Key fetched for current character", LoggerType.ApiCore);
+            Logger.LogInformation("Secret Key fetched for current character", LogFilter.MainHub);
             return true;
         }
     }
@@ -378,12 +378,12 @@ public partial class MainHub
         }
 
 #if !DEBUG
-        Logger.LogTrace("Checking if Client Connection is Outdated", LoggerType.ApiCore);
-        Logger.LogInformation($"{ClientVerString} - {ExpectedVerString}", LoggerType.ApiCore);
+        Logger.LogTrace("Checking if Client Connection is Outdated", LogFilter.MainHub);
+        Logger.LogInformation($"{ClientVerString} - {ExpectedVerString}", LogFilter.MainHub);
         if (_expectedApiVersion != IGagspeakHub.ApiVersion || _expectedVersion > _clientVersion)
         {
             Mediator.Publish(new NotificationMessage("Client outdated", $"Outdated: ({ClientVerString} - {ExpectedVerString})\nPlease keep Gagspeak up-to-date.", NotificationType.Warning));
-            Logger.LogInformation("Client Was Outdated in either its API or its Version, Disconnecting.", LoggerType.ApiCore);
+            Logger.LogInformation("Client Was Outdated in either its API or its Version, Disconnecting.", LogFilter.MainHub);
             await Disconnect(ServerState.VersionMisMatch, DisconnectIntent.Normal).ConfigureAwait(false);
             return false;
         }
@@ -398,7 +398,7 @@ public partial class MainHub
     /// <returns> True if we require a reconnection (token updated, AuthFailure, token refresh failed) </returns>
     private async Task<bool> RefreshToken(CancellationToken ct)
     {
-        Logger.LogTrace("Checking token", LoggerType.JwtTokens);
+        Logger.LogTrace("Checking token", LogFilter.JwtTokens);
         var requireReconnect = false;
         try
         {
@@ -413,7 +413,7 @@ public partial class MainHub
         }
         catch (GagspeakAuthFailureException ex) // Failed to acquire authentication. Means our key was banned or removed.
         {
-            Logger.LogDebug("Exception During Token Refresh. (Key was banned or removed from DB)", LoggerType.ApiCore);
+            Logger.LogDebug("Exception During Token Refresh. (Key was banned or removed from DB)", LogFilter.MainHub);
             AuthFailureMessage = ex.Reason;
             requireReconnect = true;
         }
@@ -435,7 +435,7 @@ public partial class MainHub
         // Ensure the hub connection is initialized before starting the loop
         if (_hubConnection is null)
         {
-            Logger.LogError("HubConnection is null. Cannot perform main client health check.", LoggerType.Health);
+            Logger.LogError("HubConnection is null. Cannot perform main client health check.", LogFilter.Health);
             return;
         }
 
@@ -445,7 +445,7 @@ public partial class MainHub
             try
             {
                 await Task.Delay(TimeSpan.FromSeconds(30), ct).ConfigureAwait(false);
-                Logger.LogTrace("Checking Main Server Client Health State", LoggerType.Health);
+                Logger.LogTrace("Checking Main Server Client Health State", LogFilter.Health);
 
                 // Refresh and update our token, checking for if we will need to reconnect.
                 var requireReconnect = await RefreshToken(ct).ConfigureAwait(false);
@@ -454,7 +454,7 @@ public partial class MainHub
                 // Thus, this check is no longer valid and we should break out of the health check loop.
                 if (requireReconnect)
                 {
-                    Logger.LogDebug("Disconnecting From GagSpeakHub-Main due to updated token", LoggerType.ApiCore);
+                    Logger.LogDebug("Disconnecting From GagSpeakHub-Main due to updated token", LogFilter.MainHub);
                     await Reconnect().ConfigureAwait(false);
                     break;
                 }
@@ -467,20 +467,20 @@ public partial class MainHub
                 }
                 else
                 {
-                    Logger.LogError("HubConnection became null during health check loop.", LoggerType.Health);
+                    Logger.LogError("HubConnection became null during health check loop.", LogFilter.Health);
                     break;
                 }
             }
             catch (TaskCanceledException)
             {
                 // Task was canceled, exit the loop gracefully
-                Logger.LogInformation("Client health check loop was canceled.", LoggerType.Health);
+                Logger.LogInformation("Client health check loop was canceled.", LogFilter.Health);
                 break;
             }
             catch (Bagagwa ex)
             {
                 // Log any other exceptions
-                Logger.LogError($"Exception in ClientHealthCheckLoop: {ex}", LoggerType.Health);
+                Logger.LogError($"Exception in ClientHealthCheckLoop: {ex}", LogFilter.Health);
             }
         }
     }

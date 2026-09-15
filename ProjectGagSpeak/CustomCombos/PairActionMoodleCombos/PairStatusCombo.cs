@@ -66,7 +66,7 @@ public sealed class PairStatusCombo : LociComboBase<LociStatusInfo>
         {
             var res = await _mainHub.UserApplyLociData(new(_kinksterRef.User, [item.GUID], false, false));
             if (res.ErrorCode is not GagSpeakApiEc.Success)
-                Log.LogDebug($"Failed to apply loci status {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
+                Log.LogDebug($"Failed to apply loci status {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LogFilter.StickyUI);
         });
     }
 
@@ -76,7 +76,7 @@ public sealed class PairStatusCombo : LociComboBase<LociStatusInfo>
         {
             var res = await _mainHub.UserRemoveLociData(new(_kinksterRef.User, [item.GUID]));
             if (res.ErrorCode is not GagSpeakApiEc.Success)
-                Log.LogDebug($"Failed to remove loci status {item.Title} from {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
+                Log.LogDebug($"Failed to remove loci status {item.Title} from {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LogFilter.StickyUI);
         });
     }
 }

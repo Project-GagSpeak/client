@@ -105,12 +105,12 @@ public sealed class PairPatternCombo : CkFilterComboIconTextButton<KinksterPatte
             var result = await _mainHub.UserChangeKinksterAlarmState(new(_ref.User, GSModule.Pattern, Current.Id, true));
             if (result.ErrorCode is not GagSpeakApiEc.Success)
             {
-                Log.LogDebug($"Failed to perform Pattern with {Current.Label} on {_ref.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LoggerType.StickyUI);
+                Log.LogDebug($"Failed to perform Pattern with {Current.Label} on {_ref.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LogFilter.StickyUI);
                 PostButtonPress?.Invoke();
             }
             else
             {
-                Log.LogDebug($"Executing Pattern {Current.Label} on {_ref.GetNickAliasOrUid()}'s Toy", LoggerType.StickyUI);
+                Log.LogDebug($"Executing Pattern {Current.Label} on {_ref.GetNickAliasOrUid()}'s Toy", LogFilter.StickyUI);
                 PostButtonPress?.Invoke();
             }
         });

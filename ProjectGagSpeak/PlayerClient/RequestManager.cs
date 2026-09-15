@@ -37,7 +37,7 @@ public sealed class RequestsManager : DisposableMediatorSubscriberBase
         UpdateCache();
         Mediator.Subscribe<DisconnectedMessage>(this, _ =>
         {
-            Logger.LogDebug("Clearing all requests on disconnect.", LoggerType.PairManagement);
+            Logger.LogDebug("Clearing all requests on disconnect.", LogFilter.PairManagement);
             _allRequests.Clear();
             UpdateCache();
         });
@@ -58,7 +58,7 @@ public sealed class RequestsManager : DisposableMediatorSubscriberBase
         if (_allRequests.Contains(entry))
             return;
         // Add it to the requests.
-        Logger.LogDebug($"Adding new request entry to manager.", LoggerType.PairManagement);
+        Logger.LogDebug($"Adding new request entry to manager.", LogFilter.PairManagement);
         _allRequests.Add(entry);
         // If we have it set to play sounds, play them if for us.
         if (!entry.FromClient && _config.Data.AlertKind.HasAny(AlertKind.Audio))
@@ -76,7 +76,7 @@ public sealed class RequestsManager : DisposableMediatorSubscriberBase
         if (validToAdd.Count is 0)
             return;
         // Add them to the requests.
-        Logger.LogDebug($"Adding {validToAdd.Count} new request entries to manager.", LoggerType.PairManagement);
+        Logger.LogDebug($"Adding {validToAdd.Count} new request entries to manager.", LogFilter.PairManagement);
         _allRequests.UnionWith(validToAdd);
         UpdateCache();
     }
@@ -87,14 +87,14 @@ public sealed class RequestsManager : DisposableMediatorSubscriberBase
         if (!_allRequests.Remove(requestEntry))
             return;
         // Removed successfully.
-        Logger.LogDebug($"Removed request entry from manager.", LoggerType.PairManagement);
+        Logger.LogDebug($"Removed request entry from manager.", LogFilter.PairManagement);
         UpdateCache();
     }
 
     public void RemoveRequests(IEnumerable<RequestEntry> requestEntries)
     {
         _allRequests.ExceptWith(requestEntries);
-        Logger.LogDebug($"Removed {requestEntries.Count()} request entries from manager.", LoggerType.PairManagement);
+        Logger.LogDebug($"Removed {requestEntries.Count()} request entries from manager.", LogFilter.PairManagement);
         UpdateCache();
     }
 
@@ -105,7 +105,7 @@ public sealed class RequestsManager : DisposableMediatorSubscriberBase
         if (!_allRequests.Remove(entry))
             return;
         // Removed successfully.
-        Logger.LogDebug($"Removed request entry from manager.", LoggerType.PairManagement);
+        Logger.LogDebug($"Removed request entry from manager.", LogFilter.PairManagement);
         UpdateCache();
     }
 
@@ -119,7 +119,7 @@ public sealed class RequestsManager : DisposableMediatorSubscriberBase
         if (addedPair.OnlineInfo is { } onlineInfo)
             _kinksters.MarkKinksterOnline(onlineInfo);
 
-        Logger.LogDebug($"Accepted request, adding pair: {addedPair.Pair.User.AliasOrUID}.", LoggerType.PairManagement);
+        Logger.LogDebug($"Accepted request, adding pair: {addedPair.Pair.User.AliasOrUID}.", LogFilter.PairManagement);
         UpdateCache();
     }
 
@@ -136,7 +136,7 @@ public sealed class RequestsManager : DisposableMediatorSubscriberBase
                 _kinksters.MarkKinksterOnline(onlineInfo);
         }
 
-        Logger.LogDebug($"Accepted requests in bulk, adding pairs: {string.Join(", ", addedPairs.Select(ap => ap.Pair.User.AliasOrUID))}", LoggerType.PairManagement);
+        Logger.LogDebug($"Accepted requests in bulk, adding pairs: {string.Join(", ", addedPairs.Select(ap => ap.Pair.User.AliasOrUID))}", LogFilter.PairManagement);
         UpdateCache();
     }
 
@@ -147,7 +147,7 @@ public sealed class RequestsManager : DisposableMediatorSubscriberBase
         _incomingInternal = [.. _allRequests.Where(r => !r.FromClient).OrderByDescending(r => r.TimeToRespond)];
         _outgoingInternal = [.. _allRequests.Where(r => r.FromClient).OrderByDescending(r => r.TimeToRespond)];
         _involvedInRequests = [.. _allRequests.SelectMany(r => new[] { r.Data.User.UID, r.Data.Target.UID })];
-        Logger.LogInformation($"Updated partitioned caches with {_allRequests.Count} total requests. ({Incoming.Count} in, {Outgoing.Count} out)", LoggerType.PairManagement);
+        Logger.LogInformation($"Updated partitioned caches with {_allRequests.Count} total requests. ({Incoming.Count} in, {Outgoing.Count} out)", LogFilter.PairManagement);
         Mediator.Publish(new DDSUpdateRequests());
     }
     #endregion

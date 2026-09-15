@@ -46,7 +46,7 @@ public partial class StaticDetours
             foreach (var payload in originalSeString.Payloads)
                 Logger.LogTrace($"Message Payload [{payload.Type}]: {payload.ToString()}");
 
-            Logger.LogTrace($"Message Payload Present", LoggerType.ChatDetours);
+            Logger.LogTrace($"Message Payload Present", LogFilter.ChatDetours);
 
             if (string.IsNullOrWhiteSpace(messageDecoded))
             {
@@ -102,7 +102,7 @@ public partial class StaticDetours
                     prefix = Regex.Match(messageDecoded, tellRegex).Value;
                 }
 
-                Logger.LogTrace($"Matched Command [{prefix}] for [{channel}]", LoggerType.ChatDetours);
+                Logger.LogTrace($"Matched Command [{prefix}] for [{channel}]", LogFilter.ChatDetours);
                 // Finally if we reached this point, update `muffleAllowedForChannel` to reflect the intended channel.
                 muffleMessage = g.AllowedGarblerChannels.IsActiveChannel((int)channel);
             }
@@ -110,7 +110,7 @@ public partial class StaticDetours
             // If it's not allowed, do not garble.
             if (muffleMessage)
             {
-                Logger.LogTrace($"Detouring Message: {messageDecoded}", LoggerType.ChatDetours);
+                Logger.LogTrace($"Detouring Message: {messageDecoded}", LogFilter.ChatDetours);
 
                 // only obtain the text payloads from this message, as nothing else should madder.
                 var textPayloads = originalSeString.Payloads.OfType<TextPayload>().ToList();
@@ -129,7 +129,7 @@ public partial class StaticDetours
                     return;
                 }
 
-                Logger.LogTrace("Output: " + output, LoggerType.ChatDetours);
+                Logger.LogTrace("Output: " + output, LogFilter.ChatDetours);
                 var newSeString = new SeStringBuilder().Add(new TextPayload(output)).Build();
 
                 // Verify its a legal width
@@ -147,7 +147,7 @@ public partial class StaticDetours
             }
             else
             {
-                Logger.LogTrace($"Not Garbling Message: {messageDecoded}", LoggerType.ChatDetours);
+                Logger.LogTrace($"Not Garbling Message: {messageDecoded}", LogFilter.ChatDetours);
                 ProcessChatInputHook.Original(uiModule, message, a3);
             }
         }

@@ -74,13 +74,13 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
 
     private void OnDeviceAdded(ButtplugClientDevice device)
     {
-        _logger.LogInformation($"Device Added: [{device.Name}] ({device.DisplayName}) at index {device.Index}", LoggerType.Toys);
+        _logger.LogInformation($"Device Added: [{device.Name}] ({device.DisplayName}) at index {device.Index}", LogFilter.Toys);
         _mediator.Publish(new BuzzToyAdded(device));
     }
 
     private void OnDeviceRemoved(ButtplugClientDevice device)
     {
-        _logger.LogInformation($"Device Removed: [{device.Name}] ({device.DisplayName}) at index {device.Index}", LoggerType.Toys);
+        _logger.LogInformation($"Device Removed: [{device.Name}] ({device.DisplayName}) at index {device.Index}", LogFilter.Toys);
         _mediator.Publish(new BuzzToyRemoved(device));
     }
 
@@ -121,12 +121,12 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
             }
             else if (client.Connected)
             {
-                _logger.LogInformation("Already connected to Intiface Central", LoggerType.Toys);
+                _logger.LogInformation("Already connected to Intiface Central", LogFilter.Toys);
                 return;
             }
 
             // Attempt connection to server
-            _logger.LogDebug("Attempting connection to Intiface Central", LoggerType.Toys);
+            _logger.LogDebug("Attempting connection to Intiface Central", LogFilter.Toys);
             await client.ConnectAsync(CreateNewConnection());
 
             // let other classes know of the connection.
@@ -156,21 +156,21 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
                 // Handle actions to perform upon disconnect.
                 await client.DisconnectAsync();
                 // if we have successfully disconnected, handle the disconnect.
-                _logger.LogInformation("Disconnected from Intiface Central", LoggerType.Toys);
+                _logger.LogInformation("Disconnected from Intiface Central", LogFilter.Toys);
                 ScanningForDevices = false;
             }
         }
         catch (ButtplugException ex)
         {
-            _logger.LogError($"Buttplug Exception while disconnecting: {ex.Message}", LoggerType.Toys);
+            _logger.LogError($"Buttplug Exception while disconnecting: {ex.Message}", LogFilter.Toys);
         }
         catch (WebSocketException ex)
         {
-            _logger.LogError($"WebSocket Exception while disconnecting: {ex.Message}", LoggerType.Toys);
+            _logger.LogError($"WebSocket Exception while disconnecting: {ex.Message}", LogFilter.Toys);
         }
         catch (Bagagwa ex)
         {
-            _logger.LogError($"Error disconnecting from Intiface Central: {ex.Message}", LoggerType.Toys);
+            _logger.LogError($"Error disconnecting from Intiface Central: {ex.Message}", LogFilter.Toys);
         }
     }
 
@@ -181,13 +181,13 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
 
         await Generic.Safe(async () =>
         {
-            _logger.LogDebug("Scanning for new devices...", LoggerType.Toys);
+            _logger.LogDebug("Scanning for new devices...", LogFilter.Toys);
             await client.StartScanningAsync();
             ScanningForDevices = true;
 
             await Task.Delay(2500); // Wait for 2.5 seconds to allow scanning to complete
 
-            _logger.LogDebug("Stopping device scan...", LoggerType.Toys);
+            _logger.LogDebug("Stopping device scan...", LogFilter.Toys);
             await client.StopScanningAsync();
             ScanningForDevices = false;
         });

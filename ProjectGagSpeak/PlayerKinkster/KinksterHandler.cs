@@ -59,7 +59,7 @@ public sealed class KinksterHandler : DisposableMediatorSubscriberBase
         if (string.IsNullOrEmpty(Kinkster.Ident)) return; // Must have valid CharaIdent.
         if (Kinkster.Ident != GagSpeakSecurity.GetIdentHashByCharacterPtr(address)) return;
 
-        Logger.LogDebug($"Matched {Kinkster.GetNickAliasOrUid()} to a created object @ [{address:X}]", LoggerType.PairHandlers);
+        Logger.LogDebug($"Matched {Kinkster.GetNickAliasOrUid()} to a created object @ [{address:X}]", LogFilter.PairHandlers);
         MarkRenderedInternal(address);
     }
 
@@ -71,13 +71,13 @@ public sealed class KinksterHandler : DisposableMediatorSubscriberBase
         // If already rendered, reapply alterations and return.
         if (IsRendered)
         {
-            Logger.LogDebug($"{NameString}({Kinkster.GetNickAliasOrUid()}) is already rendered, reapplying alterations.", LoggerType.PairHandlers);
+            Logger.LogDebug($"{NameString}({Kinkster.GetNickAliasOrUid()}) is already rendered, reapplying alterations.", LogFilter.PairHandlers);
             Mediator.Publish(new KinksterRendered(Kinkster.User, Address));
             Mediator.Publish(new DDSUpdateKinkster());
         }
         else if (VisibilityWatcher.HashedIdentLookup.TryGetValue(Kinkster.Ident, out var playerAddr))
         {
-            Logger.LogDebug($"Matched {Kinkster.GetNickAliasOrUid()} to an existing object @ [{playerAddr:X}]", LoggerType.PairHandlers);
+            Logger.LogDebug($"Matched {Kinkster.GetNickAliasOrUid()} to an existing object @ [{playerAddr:X}]", LogFilter.PairHandlers);
             MarkRenderedInternal(playerAddr);
         }
     }
@@ -89,7 +89,7 @@ public sealed class KinksterHandler : DisposableMediatorSubscriberBase
         NameString = _player->NameString;
         NameWithWorld = _player->GetNameWithWorld();
         // Notify other services.
-        Logger.LogInformation($"[{Kinkster.GetNickAliasOrUid()}] rendered!", LoggerType.PairHandlers);
+        Logger.LogInformation($"[{Kinkster.GetNickAliasOrUid()}] rendered!", LogFilter.PairHandlers);
         Mediator.Publish(new KinksterRendered(Kinkster.User, Address));
         TryRegisterLoci().ConfigureAwait(false);
     }
@@ -112,7 +112,7 @@ public sealed class KinksterHandler : DisposableMediatorSubscriberBase
         if (Address == IntPtr.Zero || address != Address)
             return;
 
-        Logger.LogDebug($"Marking {Kinkster.GetNickAliasOrUid()} as unrendered @ [{address:X}]", LoggerType.PairHandlers);
+        Logger.LogDebug($"Marking {Kinkster.GetNickAliasOrUid()} as unrendered @ [{address:X}]", LogFilter.PairHandlers);
         _player = null;
         // Unregister after leaving visibility range.
         if (!string.IsNullOrEmpty(NameWithWorld))
@@ -129,7 +129,7 @@ public sealed class KinksterHandler : DisposableMediatorSubscriberBase
         // If they were valid before, post the disposal event message.
         if (!string.IsNullOrEmpty(NameString))
         {
-            Logger.LogDebug($"Disposing {NameString}({Kinkster.GetNickAliasOrUid()}) @ [{Address:X}]", LoggerType.PairHandlers);
+            Logger.LogDebug($"Disposing {NameString}({Kinkster.GetNickAliasOrUid()}) @ [{Address:X}]", LogFilter.PairHandlers);
             Mediator.Publish(new EventMessage(new(NameString, Kinkster.User.UID, InteractionType.VisibilityChange, "Disposed")));
         }
 

@@ -384,7 +384,7 @@ public partial class SidePanelPair
                 // Assign the blocking task if allowed.
                 if (!res.name.IsNullOrEmpty() && res.type is PermissionType.PairPerm)
                 {
-                    Svc.Logger.Information($"Attempting to change {dispName}'s {res.name} to {ticks} ticks.", LoggerType.UI);
+                    Svc.Logger.Information($"Attempting to change {dispName}'s {res.name} to {ticks} ticks.", LogFilter.UITasks);
                     UiService.SetUITask(async () => await PermHelper.ChangeOtherUnique(_hub, kinkster.User, kinkster.PairPerms, res.name, ticks));
                 }
             }

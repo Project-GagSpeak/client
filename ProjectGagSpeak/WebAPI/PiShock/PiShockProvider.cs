@@ -220,7 +220,7 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
 
         var interactionType = dto.OpCode switch { 0 => "shocked", 1 => "vibrated", 2 => "beeped", _ => "unknown" };
         var eventLogMessage = $"Pishock {interactionType}, intensity: {dto.Intensity}, duration: {dto.Duration}";
-        Logger.LogDebug($"Received Instruction for {eventLogMessage}", LoggerType.Callbacks);
+        Logger.LogDebug($"Received Instruction for {eventLogMessage}", LogFilter.Callbacks);
 
         if (dto.Duration < 1000)
         {
@@ -254,7 +254,7 @@ public sealed class PiShockProvider : DisposableMediatorSubscriberBase
             return;
         }
 
-        Logger.LogDebug("Executing Shock Instruction via pair permissions.", LoggerType.Callbacks);
+        Logger.LogDebug("Executing Shock Instruction via pair permissions.", LogFilter.Callbacks);
         Mediator.Publish(new EventMessage(new(enactor.GetNickAliasOrUid(), enactor.User.UID, InteractionType.PiShockUpdate, eventLogMessage)));
         ExecuteOperation(shockerId, dto.OpCode, dto.Intensity, dto.Duration);
         if (dto.OpCode is 0)

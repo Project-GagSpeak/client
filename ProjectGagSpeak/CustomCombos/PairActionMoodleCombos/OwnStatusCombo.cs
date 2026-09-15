@@ -72,7 +72,7 @@ public sealed class OwnStatusCombo : LociComboBase<LociStatusInfo>
         {
             var res = await _mainHub.UserApplyLociStatusTuples(new(_kinksterRef.User, [item.ToStruct()], false));
             if (res.ErrorCode is not GagSpeakApiEc.Success)
-                Log.LogDebug($"Failed to apply loci status {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
+                Log.LogDebug($"Failed to apply loci status {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LogFilter.StickyUI);
         });
     }
 }

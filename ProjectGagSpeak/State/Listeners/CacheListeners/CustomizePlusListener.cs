@@ -42,14 +42,14 @@ public class CustomizePlusListener : DisposableMediatorSubscriberBase
     private void FetchProfileList()
     {
         _cache.UpdateIpcProfileList(_ipc.GetClientProfiles());
-        Logger.LogInformation("All CustomizePlus Profiles Retrieved!", LoggerType.IpcCustomize);
+        Logger.LogInformation("All CustomizePlus Profiles Retrieved!", LogFilter.IpcCustomize);
     }
 
     /// <summary> Called whenever a profile is updated. </summary>
     /// <remarks> Calls upon EnsureRestrictedProfile is the object is for the Client. </remarks>
     private void OnProfileUpdate(ushort characterObjectIndex, Guid g)
     {
-        Logger.LogInformation("IPC-Customize received profile update for character " + characterObjectIndex + " with profile " + g, LoggerType.IpcCustomize);
+        Logger.LogInformation("IPC-Customize received profile update for character " + characterObjectIndex + " with profile " + g, LogFilter.IpcCustomize);
         if (characterObjectIndex != 0)
             return;
 

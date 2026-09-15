@@ -51,7 +51,7 @@ public sealed class CursedLootManager : IHybridSavable
             Label = lootName,
             RefItem = _gags.Storage.Values.First() // Default to BallGag.
         };
-        _logger.LogInformation("Created new cursed item: " + lootName, LoggerType.CursedItems);
+        _logger.LogInformation("Created new cursed item: " + lootName, LogFilter.CursedItems);
         Storage.Add(newItem);
         Save();
         _mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Created, newItem, null));
@@ -70,7 +70,7 @@ public sealed class CursedLootManager : IHybridSavable
         Storage.Add(clonedItem);
         Save();
 
-        _logger.LogInformation("Created new cursed item: " + newName, LoggerType.CursedItems);
+        _logger.LogInformation("Created new cursed item: " + newName, LogFilter.CursedItems);
         _mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Created, clonedItem, null));
         return clonedItem;
     }
@@ -90,7 +90,7 @@ public sealed class CursedLootManager : IHybridSavable
         };
 
         // Update the editor item to reflect that of the new type.
-        _logger.LogInformation($"Converted Cursed Item: {oldItem.Label} from {oldItem.Type} to {convertedLoot.Type}", LoggerType.CursedItems);
+        _logger.LogInformation($"Converted Cursed Item: {oldItem.Label} from {oldItem.Type} to {convertedLoot.Type}", LogFilter.CursedItems);
         _itemEditor.ItemInEditor = convertedLoot;
     }
 
@@ -101,7 +101,7 @@ public sealed class CursedLootManager : IHybridSavable
         lootItem.Label = newName;
         Save();
 
-        _logger.LogInformation($"Renamed cursed item: {prevName} to {newName}", LoggerType.CursedItems);
+        _logger.LogInformation($"Renamed cursed item: {prevName} to {newName}", LogFilter.CursedItems);
         _mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Renamed, lootItem, prevName));
     }
 
@@ -109,7 +109,7 @@ public sealed class CursedLootManager : IHybridSavable
     {
         if (Storage.Remove(lootItem))
         {
-            _logger.LogDebug($"Deleted cursed item: {lootItem.Label}.", LoggerType.CursedItems);
+            _logger.LogDebug($"Deleted cursed item: {lootItem.Label}.", LogFilter.CursedItems);
             _mediator.Publish(new ConfigCursedItemChanged(StorageChangeType.Deleted, lootItem, null));
             Save();
         }

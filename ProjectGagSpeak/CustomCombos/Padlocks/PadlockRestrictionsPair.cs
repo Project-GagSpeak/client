@@ -59,12 +59,12 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
         var result = await _mainHub.UserChangeKinksterActiveRestriction(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
-            Log.LogDebug($"Failed to perform LockRestriction with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
+            Log.LogDebug($"Failed to perform LockRestriction with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LogFilter.StickyUI}");
             DisplayToastErrorAndReset(result.ErrorCode, SelectedLock, false);
         }
         else
         {
-            Log.LogDebug($"Locking Restriction with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
+            Log.LogDebug($"Locking Restriction with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}", LogFilter.StickyUI);
             ResetSelection();
             ResetInputs();
             ActiveItem = new ActiveRestriction();
@@ -88,12 +88,12 @@ public class PairRestrictionPadlockCombo : CkPadlockComboBase<ActiveRestriction>
         var result = await _mainHub.UserChangeKinksterActiveRestriction(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
-            Log.LogDebug($"Failed to perform UnlockRestriction with {ActiveItem.Padlock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
+            Log.LogDebug($"Failed to perform UnlockRestriction with {ActiveItem.Padlock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LogFilter.StickyUI}");
             DisplayToastErrorAndReset(result.ErrorCode, ActiveItem.Padlock, true);
         }
         else
         {
-            Log.LogDebug($"Unlocking Restriction with {ActiveItem.Padlock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
+            Log.LogDebug($"Unlocking Restriction with {ActiveItem.Padlock.ToName()} on {_ref.GetNickAliasOrUid()}", LogFilter.StickyUI);
             ResetSelection();
             ResetInputs();
             ActiveItem = new ActiveRestriction();

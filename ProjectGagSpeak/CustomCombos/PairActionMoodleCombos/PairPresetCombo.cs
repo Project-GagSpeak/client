@@ -87,7 +87,7 @@ public sealed class PairPresetCombo : LociComboBase<LociPresetInfo>
         {
             var res = await _mainHub.UserApplyLociData(new(_kinksterRef.User, item.Statuses, true, false));
             if (res.ErrorCode is not GagSpeakApiEc.Success)
-                Log.LogDebug($"Failed to apply loci preset {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
+                Log.LogDebug($"Failed to apply loci preset {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LogFilter.StickyUI);
         });
     }
 }

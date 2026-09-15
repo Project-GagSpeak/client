@@ -60,20 +60,20 @@ public sealed class DeathRollMonitor : DisposableMediatorSubscriberBase
         // if the roll value and cap are 0, its an invalid, so return.
         if (rollValue is -1 && rollCap is -1)
         {
-            Logger.LogDebug("Ignoring message due to invalid roll values.", LoggerType.Triggers);
+            Logger.LogDebug("Ignoring message due to invalid roll values.", LogFilter.Triggers);
             return;
         }
 
-        Logger.LogDebug($"{nameWithWorld} rolled {rollValue} with cap {rollCap}", LoggerType.Triggers);
+        Logger.LogDebug($"{nameWithWorld} rolled {rollValue} with cap {rollCap}", LogFilter.Triggers);
 
         if (rollCap is -1)
         {
-            Logger.LogDebug($"A Player has started a different deathroll session!", LoggerType.Triggers);
+            Logger.LogDebug($"A Player has started a different deathroll session!", LogFilter.Triggers);
             StartNewSession(nameWithWorld, rollValue);
         }
         else
         {
-            Logger.LogDebug($"{nameWithWorld} is attempting to continue / join a session", LoggerType.Triggers);
+            Logger.LogDebug($"{nameWithWorld} is attempting to continue / join a session", LogFilter.Triggers);
             ContinueSession(nameWithWorld, rollValue, rollCap);
         }
     }
@@ -86,7 +86,7 @@ public sealed class DeathRollMonitor : DisposableMediatorSubscriberBase
         // Create and add new session
         var session = new DeathRollSession(initializer, initialRollCap, OnSessionComplete);
         _monitored[initializer] = session;
-        Logger.LogDebug($"New session started by {initializer} with cap {initialRollCap}", LoggerType.Triggers);
+        Logger.LogDebug($"New session started by {initializer} with cap {initialRollCap}", LogFilter.Triggers);
     }
 
     private void ContinueSession(string playerName, int rollValue, int rollCap)
@@ -96,13 +96,13 @@ public sealed class DeathRollMonitor : DisposableMediatorSubscriberBase
             .FirstOrDefault(s => s.CurrentRollCap == rollCap && !s.IsComplete && s.LastRoller != playerName);
 
         if (session is null) {
-            Logger.LogDebug("No active session found to match roll.", LoggerType.Triggers);
+            Logger.LogDebug("No active session found to match roll.", LogFilter.Triggers);
             return;
         }
 
         // do not join a session we are not a part of.
         if (!session.Opponent.IsNullOrEmpty() && (session.Opponent != playerName && session.Initializer != playerName)) {
-            Logger.LogTrace($"{playerName} is not part of the session, ignoring!", LoggerType.Triggers);
+            Logger.LogTrace($"{playerName} is not part of the session, ignoring!", LogFilter.Triggers);
             return;
         }
 
@@ -110,13 +110,13 @@ public sealed class DeathRollMonitor : DisposableMediatorSubscriberBase
         // and should clear all other instances with our name.
         if (session.Opponent.IsNullOrEmpty())
         {
-            Logger.LogDebug($"{playerName} joined session with {session.Initializer}.", LoggerType.Triggers);
+            Logger.LogDebug($"{playerName} joined session with {session.Initializer}.", LogFilter.Triggers);
             RemovePlayerSessions(playerName);
         }
 
         if (session.TryProcessRoll(playerName, rollValue))
         {
-            Logger.LogDebug($"{playerName} rolled {rollValue} in session.", LoggerType.Triggers);
+            Logger.LogDebug($"{playerName} rolled {rollValue} in session.", LogFilter.Triggers);
         }
         else
         {
@@ -132,7 +132,7 @@ public sealed class DeathRollMonitor : DisposableMediatorSubscriberBase
         foreach (var session in _monitored.Values.Where(k => k.Initializer == playerName || k.Opponent == playerName).ToList())
         {
             Logger.LogDebug($"Removing session involving {playerName}, (Initializer: {session.Initializer} and Opponent {session.Opponent}" +
-                " due to them joining / creating another!", LoggerType.Triggers);
+                " due to them joining / creating another!", LogFilter.Triggers);
             _monitored.Remove(session.Initializer);
         }
     }

@@ -40,12 +40,12 @@ public partial class StaticDetours
 
             var tgtObj = GameObjectManager.Instance()->Objects.GetObjectByGameObjectId(targetId);
 
-            if ((MainConfig.LoggerFilters & LoggerType.EmoteMonitor) != 0)
+            if (GsLogFilters.ShouldLog(LogFilter.EmoteMonitor))
             {
                 var emoteCallerName = (emoteCaller->IsCharacter()) ? ((Character*)emoteCaller)->GetNameWithWorld() : "No Player Was Emote Caller";
                 var emoteName = EmoteService.EmoteName(emoteId);
                 var targetName = (tgtObj != null && tgtObj->IsCharacter()) ? ((Character*)tgtObj)->GetNameWithWorld() : "No Player Was Target";
-                Logger.LogTrace($"OnEmote >> [{emoteCallerName}] used Emote [{emoteName}](ID:{emoteId}) on Target: [{targetName}]", LoggerType.EmoteMonitor);
+                Logger.LogTrace($"OnEmote >> [{emoteCallerName}] used Emote [{emoteName}](ID:{emoteId}) on Target: [{targetName}]", LogFilter.EmoteMonitor);
             }
 
             // Published as a SameThreadMessage to be handled internally by respective monitors.
@@ -65,7 +65,7 @@ public partial class StaticDetours
     /// </summary>
     unsafe void OnExecuteEmote(AgentEmote* thisPtr, ushort emoteId, EmoteController.PlayEmoteOption* playEmoteOption, bool addToHistory, bool liveUpdateHistory)
     {
-        Logger.LogTrace("OnExecuteEmote >> Emote [" + EmoteService.EmoteName(emoteId) + "](ID:"+emoteId+") requested to be Executed", LoggerType.EmoteMonitor);
+        Logger.LogTrace("OnExecuteEmote >> Emote [" + EmoteService.EmoteName(emoteId) + "](ID:"+emoteId+") requested to be Executed", LogFilter.EmoteMonitor);
             
         // Block all emotes if forced to follow
         if(ClientData.Hardcore.IsEnabled(HcAttribute.Follow))
@@ -77,7 +77,7 @@ public partial class StaticDetours
             // if our current emote state is any sitting pose and we are attempting to perform yes or no, allow it.
             if (hc.EmoteId is 50 or 52 && emoteId is 42 or 24)
             {
-                Logger.LogDebug($"Allowing Emote Execution for [{EmoteService.EmoteName(emoteId)} ({emoteId})]", LoggerType.EmoteMonitor);
+                Logger.LogDebug($"Allowing Emote Execution for [{EmoteService.EmoteName(emoteId)} ({emoteId})]", LogFilter.EmoteMonitor);
             }
             else
             {
@@ -91,7 +91,7 @@ public partial class StaticDetours
                     return; // Block Emote Execution
                 }
                 // The Emote is the same as the expected, so allow it.
-                Logger.LogDebug($"Allowing Emote Execution for [{EmoteService.EmoteName(emoteId)} ({emoteId})]", LoggerType.EmoteMonitor);
+                Logger.LogDebug($"Allowing Emote Execution for [{EmoteService.EmoteName(emoteId)} ({emoteId})]", LogFilter.EmoteMonitor);
                 EmoteService.ResetSpecialAllowance();
             }
         }

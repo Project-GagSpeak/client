@@ -69,7 +69,7 @@ public sealed class IpcCallerCustomize : DisposableMediatorSubscriberBase, IIpcC
         var result = GetActiveProfile.InvokeFunc(0);
         if (result.Item2 is null)
             return CustomizeProfile.Empty;
-        _logger.LogDebug($"Retrieved active profile [{result.Item2}] with EC: [{result.Item1}]", LoggerType.IpcCustomize);
+        _logger.LogDebug($"Retrieved active profile [{result.Item2}] with EC: [{result.Item1}]", LogFilter.IpcCustomize);
         return new(result.Item2.Value, result.Item1);
     }
 
@@ -96,7 +96,7 @@ public sealed class IpcCallerCustomize : DisposableMediatorSubscriberBase, IIpcC
     {
         if (!APIAvailable) return new List<CustomizeProfile>();
 
-        _logger.LogTrace("IPC-Customize is fetching profile list.", LoggerType.IpcCustomize);
+        _logger.LogTrace("IPC-Customize is fetching profile list.", LogFilter.IpcCustomize);
         var res = GetProfileList.InvokeFunc();
         return res.Select(tuple => new CustomizeProfile(tuple.UniqueId, tuple.Priority, tuple.Name)).ToList();
     }
@@ -108,7 +108,7 @@ public sealed class IpcCallerCustomize : DisposableMediatorSubscriberBase, IIpcC
     {
         if (!APIAvailable) return;
 
-        _logger.LogTrace("IPC-Customize is enabling profile " + profileIdentifier, LoggerType.IpcCustomize);
+        _logger.LogTrace("IPC-Customize is enabling profile " + profileIdentifier, LogFilter.IpcCustomize);
         Generic.Safe(() => EnableProfile.InvokeFunc(profileIdentifier));
     }
 
@@ -118,7 +118,7 @@ public sealed class IpcCallerCustomize : DisposableMediatorSubscriberBase, IIpcC
     public void DisableClientProfile(Guid profileIdentifier)
     {
         if (!APIAvailable) return;
-        _logger.LogTrace("IPC-Customize is disabling profile [" + profileIdentifier + "]", LoggerType.IpcCustomize);
+        _logger.LogTrace("IPC-Customize is disabling profile [" + profileIdentifier + "]", LogFilter.IpcCustomize);
         Generic.Safe(() => DisableProfile!.InvokeFunc(profileIdentifier));
     }
 }

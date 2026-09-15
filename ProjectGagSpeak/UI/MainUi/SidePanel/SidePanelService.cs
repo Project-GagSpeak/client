@@ -239,7 +239,7 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
             }
             else
             {
-                Svc.Logger.Debug($"Sent Hypnosis Effect to {DisplayName} with duration: {newTime} (seconds)", LoggerType.StickyUI);
+                Svc.Logger.Debug($"Sent Hypnosis Effect to {DisplayName} with duration: {newTime} (seconds)", LogFilter.StickyUI);
             }
         });
     }
@@ -330,7 +330,7 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
             }
             else
             {
-                Svc.Logger.Debug($"Changed {DisplayName}'s Hardcore State ({attribute}) to enabled [For {(expireTimer - DateTimeOffset.UtcNow)}]", LoggerType.HardcoreActions);
+                Svc.Logger.Debug($"Changed {DisplayName}'s Hardcore State ({attribute}) to enabled [For {(expireTimer - DateTimeOffset.UtcNow)}]", LogFilter.HardcoreActions);
                 ClearInteraction();
             }
         });
@@ -355,7 +355,7 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
             }
             else
             {
-                Svc.Logger.Debug($"Changed {DisplayName}'s Hardcore State ({attribute}) to disabled", LoggerType.HardcoreActions);
+                Svc.Logger.Debug($"Changed {DisplayName}'s Hardcore State ({attribute}) to disabled", LogFilter.HardcoreActions);
                 ClearInteraction();
             }
         });

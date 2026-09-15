@@ -88,7 +88,7 @@ public sealed class ArousalService : IDisposable
     {
         if (_arousals.TryAdd(combinedKey, strength))
         {
-            _logger.LogDebug($"Added ([{combinedKey}] <-> [{strength.ToString()}]) to Cache.", LoggerType.Arousal);
+            _logger.LogDebug($"Added ([{combinedKey}] <-> [{strength.ToString()}]) to Cache.", LogFilter.Arousal);
             return true;
         }
         else
@@ -104,7 +104,7 @@ public sealed class ArousalService : IDisposable
     {
         if (_arousals.Remove(combinedKey, out var a))
         {
-            _logger.LogDebug($"Removed Arousal of strength [{a.ToString()}] from cache at key [{combinedKey}].", LoggerType.Arousal);
+            _logger.LogDebug($"Removed Arousal of strength [{a.ToString()}] from cache at key [{combinedKey}].", LogFilter.Arousal);
             return true;
         }
         else
@@ -117,7 +117,7 @@ public sealed class ArousalService : IDisposable
     public async Task ClearArousals()
     {
         _arousals.Clear();
-        _logger.LogDebug("Cleared all Arousals from cache.", LoggerType.Arousal);
+        _logger.LogDebug("Cleared all Arousals from cache.", LogFilter.Arousal);
         await UpdateFinalCache();
     }
 
@@ -144,7 +144,7 @@ public sealed class ArousalService : IDisposable
         // Decay: usually a fraction of generation
         _degenerationRate = _generationRate * 0.5f;
 
-        _logger.LogDebug("Finished Updating Arousal Caches.", LoggerType.Arousal);
+        _logger.LogDebug("Finished Updating Arousal Caches.", LogFilter.Arousal);
 
         return Task.CompletedTask;
     }
@@ -178,7 +178,7 @@ public sealed class ArousalService : IDisposable
         // Clamp the new arousal value to the maximum cap.
         Arousal = Math.Clamp(newArousal, 0f, AROUSAL_CAP);
         // Log the current arousal state.
-        _logger.LogTrace($"Updated Arousal: {(float)Arousal} (Static: {StaticArousal})", LoggerType.Arousal);
+        _logger.LogTrace($"Updated Arousal: {(float)Arousal} (Static: {StaticArousal})", LogFilter.Arousal);
     }
 
     #region DebugHelper

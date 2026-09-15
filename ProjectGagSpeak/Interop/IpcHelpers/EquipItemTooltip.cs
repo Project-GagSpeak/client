@@ -61,20 +61,20 @@ public sealed class PenumbraTooltips : DisposableMediatorSubscriberBase
         {
             if (ImGui.GetIO().KeyCtrl)
             {
-                Logger.LogDebug($"Applying {item.Name} to Right Finger.", LoggerType.IpcPenumbra);
+                Logger.LogDebug($"Applying {item.Name} to Right Finger.", LogFilter.IpcPenumbra);
                 Mediator.Publish(new TooltipSetItemToEditorMessage(EquipSlot.RFinger, item));
                 return;
             }
             else
             {
-                Logger.LogDebug($"Applying {item.Name} to Left Finger.", LoggerType.IpcPenumbra);
+                Logger.LogDebug($"Applying {item.Name} to Left Finger.", LogFilter.IpcPenumbra);
                 Mediator.Publish(new TooltipSetItemToEditorMessage(EquipSlot.LFinger, item));
                 return;
             }
         }
         else
         {
-            Logger.LogDebug($"Applying {item.Name} to {slot.ToName()}.", LoggerType.IpcPenumbra);
+            Logger.LogDebug($"Applying {item.Name} to {slot.ToName()}.", LogFilter.IpcPenumbra);
             Mediator.Publish(new TooltipSetItemToEditorMessage(slot, item));
             return;
         }

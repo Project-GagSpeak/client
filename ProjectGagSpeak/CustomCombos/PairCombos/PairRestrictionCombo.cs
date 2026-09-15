@@ -97,11 +97,11 @@ public sealed class PairRestrictionCombo : CkFilterComboButton<KinksterRestricti
             var result = await _mainHub.UserChangeKinksterActiveRestriction(dto);
             if (result.ErrorCode is not GagSpeakApiEc.Success)
             {
-                Log.LogDebug($"Failed to perform ApplyRestraint with {Current.Label} on {_ref.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LoggerType.StickyUI);
+                Log.LogDebug($"Failed to perform ApplyRestraint with {Current.Label} on {_ref.GetNickAliasOrUid()}, Reason:{result.ErrorCode}", LogFilter.StickyUI);
             }
             else
             {
-                Log.LogDebug($"Applying Restraint with {Current.Label} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
+                Log.LogDebug($"Applying Restraint with {Current.Label} on {_ref.GetNickAliasOrUid()}", LogFilter.StickyUI);
                 PostButtonPress.Invoke();
             }
         });

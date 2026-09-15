@@ -160,7 +160,7 @@ public class GlamourHandler
         // Update the final cache. `removedSlots` contains slots that are no longer restricted after the change.
         if (_cache.UpdateFinalGlamourCache(out var removedSlots))
         {
-            _logger.LogDebug($"Final Glamour Cache was updated!", LoggerType.VisualCache);
+            _logger.LogDebug($"Final Glamour Cache was updated!", LogFilter.VisualCache);
             if (removedSlots.Any())
                 await RestoreAndReapply(forceCacheCall, removedSlots);
             else
@@ -169,12 +169,12 @@ public class GlamourHandler
         }
         else if (reapply)
         {
-            _logger.LogDebug("Reapplying Glamour Cache", LoggerType.VisualCache);
+            _logger.LogDebug("Reapplying Glamour Cache", LogFilter.VisualCache);
             await ApplyGlamourCache(forceCacheCall);
             return;
         }
         // No Change
-        _logger.LogTrace("No change in Final Glamour Cache.", LoggerType.VisualCache);
+        _logger.LogTrace("No change in Final Glamour Cache.", LogFilter.VisualCache);
     }
 
     /// <summary>
@@ -185,7 +185,7 @@ public class GlamourHandler
         // Update the final cache. `removedSlots` contains slots that are no longer restricted after the change.
         if (_cache.UpdateFinalMetaCache(out bool noHat, out bool noVisor, out bool noWeapon))
         {
-            _logger.LogDebug($"Final MetaState Cache was updated!", LoggerType.VisualCache);
+            _logger.LogDebug($"Final MetaState Cache was updated!", LogFilter.VisualCache);
             if (noHat || noVisor || noWeapon)
                 await RestoreMetaAndReapply(forceCacheCall, noHat, noVisor, noWeapon);
             else
@@ -194,12 +194,12 @@ public class GlamourHandler
         }
         else if (reapply)
         {
-            _logger.LogDebug("Reapplying MetaState Cache", LoggerType.VisualCache);
+            _logger.LogDebug("Reapplying MetaState Cache", LogFilter.VisualCache);
             await ApplyMetaCache(forceCacheCall);
             return;
         }
         // No Change
-        _logger.LogTrace("No change in Final MetaState Cache.", LoggerType.VisualCache);
+        _logger.LogTrace("No change in Final MetaState Cache.", LogFilter.VisualCache);
     }
 
     /// <summary> 
@@ -214,13 +214,13 @@ public class GlamourHandler
                     return _ipc.SetClientItemSlot((ApiEquipSlot)slot, itemId, [stain, stain2], 0);
                 else
                 {
-                    _logger.LogWarning($"Failed to restore slot {slot}, no data found in Glamourer cache.", LoggerType.IpcGlamourer);
+                    _logger.LogWarning($"Failed to restore slot {slot}, no data found in Glamourer cache.", LogFilter.IpcGlamourer);
                     return Task.CompletedTask;
                 }
             }));
-        _logger.LogDebug($"Restored Glamourer Slots to last applied base value.", LoggerType.IpcGlamourer);
+        _logger.LogDebug($"Restored Glamourer Slots to last applied base value.", LogFilter.IpcGlamourer);
         // Now reapply the cache.
-        _logger.LogDebug("Reapplying Glamourer Cache", LoggerType.IpcGlamourer);
+        _logger.LogDebug("Reapplying Glamourer Cache", LogFilter.IpcGlamourer);
         await ApplyGlamourCache(forceCacheCall);
     }
 
@@ -241,10 +241,10 @@ public class GlamourHandler
                 var gameStain1 = slot.Value.GameStain.Stain1;
                 var gameStain2 = slot.Value.GameStain.Stain2;
                 // The whole 'Overlay Mode' logic was already handled in the listener, so dont worry about it here and just set.
-                _logger.LogTrace($"Correcting slot {equipSlot} to ensure helplessness.", LoggerType.IpcGlamourer);
+                _logger.LogTrace($"Correcting slot {equipSlot} to ensure helplessness.", LogFilter.IpcGlamourer);
                 return _ipc.SetClientItemSlot(equipSlot, gameItem.Id.Id, [gameStain1.Id, gameStain2.Id], 0);
             }));
-        _logger.LogTrace("Applied Active Slots to Glamour", LoggerType.IpcGlamourer);
+        _logger.LogTrace("Applied Active Slots to Glamour", LogFilter.IpcGlamourer);
     }
 
     private async Task RestoreMetaAndReapply(bool forceCacheCall, bool restoreHat, bool restoreVisor, bool restoreWeapon)
@@ -257,10 +257,10 @@ public class GlamourHandler
         if (restoreWeapon && (bool?)_cache.LastUnboundState.MetaStates.Weapon is { } newVal3)
             await _ipc.SetMetaStates(MetaFlag.WeaponState, newVal3);
 
-        _logger.LogDebug($"Restored Meta Slots to last applied base value.", LoggerType.IpcGlamourer);
+        _logger.LogDebug($"Restored Meta Slots to last applied base value.", LogFilter.IpcGlamourer);
 
         // Now reapply the states
-        _logger.LogDebug("Reapplying Meta Cache", LoggerType.IpcGlamourer);
+        _logger.LogDebug("Reapplying Meta Cache", LogFilter.IpcGlamourer);
         await ApplyMetaCache(forceCacheCall);
     }
 
@@ -281,12 +281,12 @@ public class GlamourHandler
             await Task.Delay(1);
             await _ipc.SetMetaStates(MetaFlag.HatState, true);
         }
-        //_logger.LogDebug("Updated Meta States", LoggerType.IpcGlamourer);
+        //_logger.LogDebug("Updated Meta States", LogFilter.IpcGlamourer);
     }
 
     public void CacheActorEquip()
     {
-        _logger.LogTrace("Caching latest Equip from Glamourer IPC.", LoggerType.IpcGlamourer);
+        _logger.LogTrace("Caching latest Equip from Glamourer IPC.", LogFilter.IpcGlamourer);
         var latestState = _ipc.GetActorState();
         if (latestState != null)
         {
@@ -297,7 +297,7 @@ public class GlamourHandler
         }
         else
         {
-            _logger.LogDebug("Failed to cache Glamourer state, latest state was null.", LoggerType.IpcGlamourer);
+            _logger.LogDebug("Failed to cache Glamourer state, latest state was null.", LogFilter.IpcGlamourer);
             _cache.CacheUnboundState(new GlamourActorState(latestState));
         }
     }
@@ -312,7 +312,7 @@ public class GlamourHandler
     /// </summary>
     public void CacheActorMeta(bool flagFromLatest)
     {
-        _logger.LogTrace("Caching latest state from Glamourer IPC.", LoggerType.IpcGlamourer);
+        _logger.LogTrace("Caching latest state from Glamourer IPC.", LogFilter.IpcGlamourer);
         var latestState = _ipc.GetActorState();
         if (latestState != null)
         {
@@ -327,13 +327,13 @@ public class GlamourHandler
         }
         else
         {
-            _logger.LogDebug("Failed to cache Glamourer state, latest state was null.", LoggerType.IpcGlamourer);
+            _logger.LogDebug("Failed to cache Glamourer state, latest state was null.", LogFilter.IpcGlamourer);
             _cache.CacheUnboundState(new GlamourActorState(latestState));
         }
     }
     public void CacheActorFromLatest()
     {
-        _logger.LogTrace("Caching Actor from Latest State from Glamourer IPC.", LoggerType.IpcGlamourer);
+        _logger.LogTrace("Caching Actor from Latest State from Glamourer IPC.", LogFilter.IpcGlamourer);
         var latestState = _ipc.GetActorState();
         if (latestState != null)
         {
@@ -346,7 +346,7 @@ public class GlamourHandler
         }
         else
         {
-            _logger.LogDebug("Failed to cache Glamourer state, latest state was null.", LoggerType.IpcGlamourer);
+            _logger.LogDebug("Failed to cache Glamourer state, latest state was null.", LogFilter.IpcGlamourer);
             _cache.CacheUnboundState(new GlamourActorState(latestState));
         }
     }
@@ -362,7 +362,7 @@ public class GlamourHandler
 
         // Now that we've acquired it, update block reason.
         _ipcBlocker |= IpcBlockReason.SemaphoreTask;
-        _logger.LogDebug($"Now running Semaphore. Blockers: {_ipcBlocker}", LoggerType.IpcGlamourer);
+        _logger.LogDebug($"Now running Semaphore. Blockers: {_ipcBlocker}", LogFilter.IpcGlamourer);
 
         try
         {
@@ -380,7 +380,7 @@ public class GlamourHandler
                 await Svc.Framework.RunOnTick(() =>
                 {
                     _ipcBlocker &= ~IpcBlockReason.SemaphoreTask;
-                    _logger.LogDebug($"Releasing Semaphore Wait, Remaining Blockers: {_ipcBlocker.ToString()}", LoggerType.IpcGlamourer);
+                    _logger.LogDebug($"Releasing Semaphore Wait, Remaining Blockers: {_ipcBlocker.ToString()}", LogFilter.IpcGlamourer);
                 }, delayTicks: 1);
             }
             catch (TaskCanceledException) { /* CONSUME */ }

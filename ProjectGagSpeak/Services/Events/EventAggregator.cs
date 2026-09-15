@@ -42,7 +42,7 @@ public class EventAggregator : MediatorSubscriberBase, IHostedService
                         msg.Event.ApplierNickAliasOrUID = "UNK PAIR";
                 }
 
-                Logger.LogTrace("Received Event: "+msg.Event.ToString(), LoggerType.ActionsNotifier);
+                Logger.LogTrace("Received Event: "+msg.Event.ToString(), LogFilter.EventNotifier);
                 _events.Add(msg.Event);
                 WriteToFile(msg.Event);
                 UnreadInteractionsCount++;

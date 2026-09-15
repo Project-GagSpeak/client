@@ -81,7 +81,7 @@ public partial class HcTaskManager : IDisposable
             if (!taskName.Equals(task.Name, StringComparison.OrdinalIgnoreCase))
                 continue;
 
-            _logger.LogDebug($"Aborting Task: {task.Name}", LoggerType.HardcoreTasks);
+            _logger.LogDebug($"Aborting Task: {task.Name}", LogFilter.HardcoreTasks);
             if (!task.Finished)
                 task.End();
 
@@ -104,7 +104,7 @@ public partial class HcTaskManager : IDisposable
     {
         if (_taskOperations.Count > 0)
         {
-            _logger.LogDebug($"Aborting Task: {_taskOperations[0].Name}", LoggerType.HardcoreTasks);
+            _logger.LogDebug($"Aborting Task: {_taskOperations[0].Name}", LogFilter.HardcoreTasks);
             if (!_taskOperations[0].Finished)
                 _taskOperations[0].End();
             _taskOperations.RemoveAt(0);
@@ -143,7 +143,7 @@ public partial class HcTaskManager : IDisposable
             currentHcTask.PerformTask();
             if (currentHcTask.Finished)
             {
-                _logger.LogDebug($"OutermostScope Finished! (Scope -> {currentHcTask.Name})", LoggerType.HardcoreTasks);
+                _logger.LogDebug($"OutermostScope Finished! (Scope -> {currentHcTask.Name})", LogFilter.HardcoreTasks);
                 currentHcTask.End();
                 _cache.SetActiveTaskControl(HcTaskControl.None);
             }

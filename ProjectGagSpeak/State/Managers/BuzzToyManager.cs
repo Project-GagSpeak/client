@@ -85,7 +85,7 @@ public class BuzzToyManager : IDisposable, IHybridSavable
         // try to add it first.
         if (_storage.TryAdd(newToy.Id, newToy))
         {
-            _logger.LogInformation($"Added new virtual toy [{newToy.FactoryName}] ({newToy.LabelName}) to connected toys.", LoggerType.Toys);
+            _logger.LogInformation($"Added new virtual toy [{newToy.FactoryName}] ({newToy.LabelName}) to connected toys.", LogFilter.Toys);
             _saver.Save(this);
             _mediator.Publish(new ConfigSexToyChanged(StorageChangeType.Created, newToy, null));
             return;
@@ -93,7 +93,7 @@ public class BuzzToyManager : IDisposable, IHybridSavable
         else
         {
             // it existed, so update it.
-            _logger.LogInformation($"Updating existing virtual toy [{newToy.FactoryName}] ({newToy.LabelName}) in connected toys.", LoggerType.Toys);
+            _logger.LogInformation($"Updating existing virtual toy [{newToy.FactoryName}] ({newToy.LabelName}) in connected toys.", LogFilter.Toys);
             _storage[newToy.Id] = newToy;
             _saver.Save(this);
             _mediator.Publish(new ConfigSexToyChanged(StorageChangeType.Modified, newToy, null));
@@ -114,7 +114,7 @@ public class BuzzToyManager : IDisposable, IHybridSavable
             }
 
             // Found a match, update and break.
-            _logger.LogInformation($"Updating [{toy.FactoryName}] ({toy.LabelName}) with new device info.", LoggerType.Toys);
+            _logger.LogInformation($"Updating [{toy.FactoryName}] ({toy.LabelName}) with new device info.", LogFilter.Toys);
             toy.UpdateDevice(newToy);
             _saver.Save(this);
             _mediator.Publish(new ConfigSexToyChanged(StorageChangeType.Modified, toy, null));
@@ -126,14 +126,14 @@ public class BuzzToyManager : IDisposable, IHybridSavable
         if(_storage.TryAdd(created.Id, created))
         {
             // Successfully added the new toy.
-            _logger.LogInformation($"Added new Intiface toy [{created.FactoryName}] ({created.LabelName}) to connected toys.", LoggerType.Toys);
+            _logger.LogInformation($"Added new Intiface toy [{created.FactoryName}] ({created.LabelName}) to connected toys.", LogFilter.Toys);
             _saver.Save(this);
             _mediator.Publish(new ConfigSexToyChanged(StorageChangeType.Created, created, null));
 
             // If the battery task is not yet running, we should begin it.
             if (_batteryCheckTask is null || _batteryCheckTask.IsCompleted)
             {
-                _logger.LogInformation("Starting Battery Check Loop for Intiface Toys.", LoggerType.Toys);
+                _logger.LogInformation("Starting Battery Check Loop for Intiface Toys.", LogFilter.Toys);
                 StartBatteryCheck();
             }
         }
@@ -165,7 +165,7 @@ public class BuzzToyManager : IDisposable, IHybridSavable
         if(_storage.TryRemove(device.Id, out var removedDevice))
         {
             removedDevice.Dispose();
-            _logger.LogInformation($"Removed device {removedDevice.LabelName} ({removedDevice.Id}) from connected toys.", LoggerType.Toys);
+            _logger.LogInformation($"Removed device {removedDevice.LabelName} ({removedDevice.Id}) from connected toys.", LogFilter.Toys);
             _saver.Save(this);
             _mediator.Publish(new ConfigSexToyChanged(StorageChangeType.Deleted, removedDevice, null));
         }
@@ -211,7 +211,7 @@ public class BuzzToyManager : IDisposable, IHybridSavable
         {
             while (!ct.IsCancellationRequested && IpcCallerIntiface.IsConnected)
             {
-                _logger.LogTrace("Scheduled Battery Check on connected devices", LoggerType.Toys);
+                _logger.LogTrace("Scheduled Battery Check on connected devices", LogFilter.Toys);
                 if (!IpcCallerIntiface.IsConnected)
                     break;
 

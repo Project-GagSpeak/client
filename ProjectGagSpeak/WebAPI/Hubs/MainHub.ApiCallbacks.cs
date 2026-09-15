@@ -14,7 +14,6 @@ using GagspeakAPI.Network;
 using GagspeakAPI.Reporting;
 using GagspeakAPI.User;
 using Microsoft.AspNetCore.SignalR.Client;
-using SundouleiaAPI.Reporting;
 
 namespace GagSpeak.WebAPI;
 
@@ -65,14 +64,16 @@ public partial class MainHub
             _ = Task.Run(async () =>
             {
                 // pause the server state
-                _config.SetPauseState(true);
+                var prevState = _connections.ConnectionState;
+                _connections.ConnectionState = ConnectionKind.FullPause;
                 _suppressNextNotification = true;
                 // If forcing a hard reconnect, fully unload the client & their kinksters.
                 await Disconnect(ServerState.Disconnected, DisconnectIntent.Reload).ConfigureAwait(false);
                 // Clear our token cache between, incase we were banned.
                 _tokenProvider.ResetTokenCache();
                 // Revert full pause status and create a new connection.
-                _config.SetPauseState(false);
+                _connections.ConnectionState = prevState; // Can cause issues where it doesnt restore after... Maybe seperate intent?
+                _accounts.Save();
                 _suppressNextNotification = true;
 
                 await Task.Delay(TimeSpan.FromSeconds(3)).ConfigureAwait(false);
@@ -87,7 +88,7 @@ public partial class MainHub
     /// <inheritdoc cref="IGagspeakHub.Callback_UserFlaggedForReport"/>
     public Task Callback_UserFlaggedForReport(ReportKind kind, string flaggedUID)
     {
-        Logger.LogDebug($"Cb_RadarUserFlagged: [{kind}] {flaggedUID}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_RadarUserFlagged: [{kind}] {flaggedUID}", LogFilter.Callbacks);
         // Will perform some basic immidiate action against flagged users to prevent further malicious intent.
         return Task.CompletedTask;
     }
@@ -95,7 +96,7 @@ public partial class MainHub
     /// <inheritdoc cref="IGagspeakHub.Callback_ReputationInfo"/>
     public Task Callback_ReputationInfo(UserReputation reputation, string message)
     {
-        Logger.LogWarning($"Cb_ReputationInfo: Msg ({message})", LoggerType.Callbacks);
+        Logger.LogWarning($"Cb_ReputationInfo: Msg ({message})", LogFilter.Callbacks);
         AlertService.PrintWarnChat(message);
         if (ConnectionResponse is not null)
         {
@@ -115,7 +116,7 @@ public partial class MainHub
     #region Callbacks (Pairs/Requests)
     public Task Callback_AddPair(KinksterPair dto)
     {
-        Logger.LogDebug($"Cb_AddClientPair: {dto}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_AddClientPair: {dto}", LogFilter.Callbacks);
         Generic.Safe(() =>
         {
             _kinksters.AddKinkster(dto);
@@ -126,14 +127,14 @@ public partial class MainHub
 
     public Task Callback_RemovePair(UserDto dto)
     {
-        Logger.LogDebug($"Cb_RemovePair: {dto}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_RemovePair: {dto}", LogFilter.Callbacks);
         Generic.Safe(() => _kinksters.RemoveKinkster(dto));
         return Task.CompletedTask;
     }
 
     public Task Callback_PersistPair(UserDto dto)
     {
-        Logger.LogDebug($"Cb_PersistPair: {dto}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_PersistPair: {dto}", LogFilter.Callbacks);
         Generic.Safe(() =>
         {
             if (_kinksters.TryGetValue(dto.User, out var k))
@@ -145,7 +146,7 @@ public partial class MainHub
     /// <inheritdoc cref="IGagspeakHub.Callback_AddPairRequest"/>
     public Task Callback_AddPairRequest(KinksterRequest dto)
     {
-        Logger.LogDebug($"Cb_AddPairRequest: {dto}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_AddPairRequest: {dto}", LogFilter.Callbacks);
         _requests.AddNewRequest(dto);
         return Task.CompletedTask;
     }
@@ -153,21 +154,21 @@ public partial class MainHub
     /// <inheritdoc cref="IGagspeakHub.Callback_RemovePairRequest"/>
     public Task Callback_RemovePairRequest(KinksterRequest dto)
     {
-        Logger.LogDebug($"Cb_RemovePairRequest: {dto}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_RemovePairRequest: {dto}", LogFilter.Callbacks);
         Generic.Safe(() => _requests.RemoveRequest(dto));
         return Task.CompletedTask;
     }
 
     public Task Callback_AddCollarRequest(CollarRequest dto)
     {
-        Logger.LogDebug($"Cb_AddCollarRequest: {dto}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_AddCollarRequest: {dto}", LogFilter.Callbacks);
         Generic.Safe(() => _collarManager.AddRequest(dto));
         return Task.CompletedTask;
     }
 
     public Task Callback_RemoveCollarRequest(CollarRequest dto)
     {
-        Logger.LogDebug($"Cb_RemoveCollarRequest: {dto}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_RemoveCollarRequest: {dto}", LogFilter.Callbacks);
         Generic.Safe(() => _collarManager.RemoveRequest(dto));
         return Task.CompletedTask;
     }
@@ -176,41 +177,41 @@ public partial class MainHub
     #region Loci
     public Task Callback_LociDataUpdated(LociDataUpdate dto)
     {
-        Logger.LogDebug($"Cb_LociDataUpdated: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_LociDataUpdated: {dto.User.AliasOrUID}", LogFilter.Callbacks);
         Generic.Safe(() => _kinksters.ReceiveLociData(dto.User, dto.Data));
         return Task.CompletedTask;
     }
 
     public Task Callback_LociStatusesUpdate(LociStatusesUpdate dto)
     {
-        Logger.LogDebug($"Cb_LociStatusesUpdate: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_LociStatusesUpdate: {dto.User.AliasOrUID}", LogFilter.Callbacks);
         Generic.Safe(() => _kinksters.ReceiveLociStatuses(dto.User, dto.Statuses));
         return Task.CompletedTask;
     }
 
     public Task Callback_LociPresetsUpdate(LociPresetsUpdate dto)
     {
-        Logger.LogDebug($"Cb_LociPresetsUpdate: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_LociPresetsUpdate: {dto.User.AliasOrUID}", LogFilter.Callbacks);
         Generic.Safe(() => _kinksters.ReceiveLociPresets(dto.User, dto.Presets));
         return Task.CompletedTask;
     }
 
     public Task Callback_LociStatusModified(LociStatusModified dto)
     {
-        Logger.LogDebug($"Cb_LociStatusModified: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_LociStatusModified: {dto.User.AliasOrUID}", LogFilter.Callbacks);
         Generic.Safe(() => _kinksters.ReceiveLociStatusUpdate(dto.User, dto.Status, dto.Deleted));
         return Task.CompletedTask;
     }
 
     public Task Callback_LociPresetModified(LociPresetModified dto)
     {
-        Logger.LogDebug($"Cb_LociPresetModified: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_LociPresetModified: {dto.User.AliasOrUID}", LogFilter.Callbacks);
         Generic.Safe(() => _kinksters.ReceiveLociPresetUpdate(dto.User, dto.Preset, dto.Deleted));
         return Task.CompletedTask;
     }
     public async Task Callback_LociApplyDataById(ApplyLociDataById dto)
     {
-        Logger.LogDebug($"Cb_LociApplyDataById: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_LociApplyDataById: {dto.User.AliasOrUID}", LogFilter.Callbacks);
         // Fail if not a valid pair or not rendered.
         if (_kinksters.GetValueOrDefault(dto.User) is not { } kinkster)
             Logger.LogWarning($"Received ApplyLociDataById for an unpaired Kinkster: {dto.User.AliasOrUID}");
@@ -225,7 +226,7 @@ public partial class MainHub
 
     public async Task Callback_LociApplyStatus(ApplyLociStatus dto)
     {
-        Logger.LogDebug($"Cb_LociApplyStatus: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_LociApplyStatus: {dto.User.AliasOrUID}", LogFilter.Callbacks);
         // Fail if not a valid pair.
         if (_kinksters.GetValueOrDefault(dto.User) is not { } pair)
             Logger.LogWarning($"Received LociApplyStatus for an unpaired Kinkster: {dto.User.AliasOrUID}");
@@ -240,7 +241,7 @@ public partial class MainHub
 
     public async Task Callback_LociRemoveData(RemoveLociData dto)
     {
-        Logger.LogDebug($"Cb_LociRemmoveData: {dto.User.AliasOrUID}", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_LociRemmoveData: {dto.User.AliasOrUID}", LogFilter.Callbacks);
         // Fail if not a valid pair or not rendered.
         if (_kinksters.GetValueOrDefault(dto.User) is not { } pair)
             Logger.LogWarning($"Received RemoveLociData from an unpaired kinkster: {dto.User.AliasOrUID}");
@@ -274,13 +275,13 @@ public partial class MainHub
     {
         if (dto.User.UID == UID)
         {
-            Logger.LogDebug($"[OWN] Cb_BulkChangeGlobal: {dto}", LoggerType.Callbacks);
+            Logger.LogDebug($"[OWN] Cb_BulkChangeGlobal: {dto}", LogFilter.Callbacks);
             Generic.Safe(() => _clientDatListener.ChangeAllClientGlobals(dto.User, dto.NewPerms, dto.NewState));
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogDebug($"[OTHER] Cb_BulkChangeGlobal: {dto}", LoggerType.Callbacks);
+            Logger.LogDebug($"[OTHER] Cb_BulkChangeGlobal: {dto}", LogFilter.Callbacks);
             Generic.Safe(() => _kinksters.PermBulkChangeGlobal(dto));
             return Task.CompletedTask;
         }
@@ -293,7 +294,7 @@ public partial class MainHub
             if (dto.User.UID == UID)
                 throw new Exception("Should never be calling a permission update for yourself in bulk, use BulkChangeAll for these!");
 
-            Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
+            Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LogFilter.Callbacks);
             if (dto.Direction is UpdateDir.Own)
                 _kinksters.PermBulkChangeUniqueOwn(dto.User, dto.NewPerms, dto.NewAccess);
             else
@@ -306,12 +307,12 @@ public partial class MainHub
     {
         if (dto.User.UID == UID)
         {
-            Logger.LogDebug($"[OWN-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
+            Logger.LogDebug($"[OWN-PERM-CHANGE]: {dto}", LogFilter.Callbacks);
             Generic.Safe(() => _clientDatListener.ChangeGlobalPerm(dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value));
         }
         else
         {
-            Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
+            Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LogFilter.Callbacks);
             Generic.Safe(() => _kinksters.PermChangeGlobal(dto.Target, dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value));
         }
         return Task.CompletedTask;
@@ -321,13 +322,13 @@ public partial class MainHub
     {
         if (dto.Direction is UpdateDir.Own)
         {
-            Logger.LogDebug($"[OWN-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
+            Logger.LogDebug($"[OWN-PERM-CHANGE]: {dto}", LogFilter.Callbacks);
             Generic.Safe(() => _kinksters.PermChangeUnique(dto.Target, dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value));
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
+            Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LogFilter.Callbacks);
             Generic.Safe(() => _kinksters.PermChangeUniqueOther(dto.Target, dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value));
             return Task.CompletedTask;
         }
@@ -337,13 +338,13 @@ public partial class MainHub
     {
         if (dto.Direction is UpdateDir.Own)
         {
-            Logger.LogDebug($"[OWN-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
+            Logger.LogDebug($"[OWN-PERM-CHANGE]: {dto}", LogFilter.Callbacks);
             Generic.Safe(() => _kinksters.PermChangeAccess(dto.Target, dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value));
             return Task.CompletedTask;
         }
         else
         {
-            Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
+            Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LogFilter.Callbacks);
             Generic.Safe(() => _kinksters.PermChangeAccessOther(dto.Target, dto.Enactor, dto.NewPerm.Key, dto.NewPerm.Value));
             return Task.CompletedTask;
         }
@@ -353,12 +354,12 @@ public partial class MainHub
     {
         if (dto.Target.UID == UID)
         {
-            Logger.LogDebug($"[OWN-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
+            Logger.LogDebug($"[OWN-PERM-CHANGE]: {dto}", LogFilter.Callbacks);
             Generic.Safe(() => _clientDatListener.ChangeHardcoreStatus(dto.Enactor, dto.Changed, dto.NewData));
         }
         else
         {
-            Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LoggerType.Callbacks);
+            Logger.LogDebug($"[OTHER-PERM-CHANGE]: {dto}", LogFilter.Callbacks);
             Generic.Safe(() => _kinksters.StateChangeHardcore(dto.Target, dto.Enactor, dto.Changed, dto.NewData));
             GagspeakEventManager.AchievementEvent(UnlocksEvent.HardcoreAction, dto.Changed, dto.NewData.IsEnabled(dto.Changed), dto.Enactor, dto.Target.UID);
         }
@@ -382,7 +383,7 @@ public partial class MainHub
     {
         if (dataDto.User.UID == UID)
         {
-            Logger.LogDebug($"[OWN-GAGS-ACTIVE]: {dataDto.User} ({dataDto.Type})", LoggerType.Callbacks);
+            Logger.LogDebug($"[OWN-GAGS-ACTIVE]: {dataDto.User} ({dataDto.Type})", LogFilter.Callbacks);
             switch (dataDto.Type)
             {
                 case DataUpdateType.Swapped:
@@ -406,7 +407,7 @@ public partial class MainHub
         }
         else
         {
-            Logger.LogDebug($"[OTHER-GAGS-ACTIVE]: {dataDto.User} ({dataDto.Type})", LoggerType.Callbacks);
+            Logger.LogDebug($"[OTHER-GAGS-ACTIVE]: {dataDto.User} ({dataDto.Type})", LogFilter.Callbacks);
             Generic.Safe(() => _kinksters.NewActiveGags(dataDto));
             return Task.CompletedTask;
         }
@@ -416,7 +417,7 @@ public partial class MainHub
     {
         if (dataDto.User.UID == UID)
         {
-            Logger.LogDebug($"[OWN-RESTRICTIONS-ACTIVE]: {dataDto.User} ({dataDto.Type})", LoggerType.Callbacks);
+            Logger.LogDebug($"[OWN-RESTRICTIONS-ACTIVE]: {dataDto.User} ({dataDto.Type})", LogFilter.Callbacks);
             switch (dataDto.Type)
             {
                 case DataUpdateType.Swapped:
@@ -440,7 +441,7 @@ public partial class MainHub
         }
         else
         {
-            Logger.LogDebug($"[OTHER-RESTRICTIONS-ACTIVE]: {dataDto.User} ({dataDto.Type})", LoggerType.Callbacks);
+            Logger.LogDebug($"[OTHER-RESTRICTIONS-ACTIVE]: {dataDto.User} ({dataDto.Type})", LogFilter.Callbacks);
             Generic.Safe(() => _kinksters.NewActiveRestriction(dataDto));
             return Task.CompletedTask;
         }
@@ -451,7 +452,7 @@ public partial class MainHub
         // If the update is for us, handle it.
         if (dataDto.User.UID == UID)
         {
-            Logger.LogDebug($"[OWN-RESTRAINT-ACTIVE]: {dataDto.User} ({dataDto.Type})", LoggerType.Callbacks);
+            Logger.LogDebug($"[OWN-RESTRAINT-ACTIVE]: {dataDto.User} ({dataDto.Type})", LogFilter.Callbacks);
             switch (dataDto.Type)
             {
                 case DataUpdateType.Swapped:
@@ -484,7 +485,7 @@ public partial class MainHub
         }
         else
         {
-            Logger.LogDebug($"[OTHER-RESTRAINT-ACTIVE]: {dataDto.User} ({dataDto.Type})", LoggerType.Callbacks);
+            Logger.LogDebug($"[OTHER-RESTRAINT-ACTIVE]: {dataDto.User} ({dataDto.Type})", LogFilter.Callbacks);
             Generic.Safe(() => _kinksters.NewActiveRestraint(dataDto));
             return Task.CompletedTask;
         }
@@ -494,7 +495,7 @@ public partial class MainHub
     {
         if (dataDto.User.UID == UID)
         {
-            Logger.LogDebug($"[OWN-COLLAR-ACTIVE]: {dataDto.User} ({dataDto.Type})", LoggerType.Callbacks);
+            Logger.LogDebug($"[OWN-COLLAR-ACTIVE]: {dataDto.User} ({dataDto.Type})", LogFilter.Callbacks);
 
             switch (dataDto.Type)
             {
@@ -526,7 +527,7 @@ public partial class MainHub
         }
         else
         {
-            Logger.LogDebug($"[OTHER-COLLAR-ACTIVE]: {dataDto.User} ({dataDto.Type})", LoggerType.Callbacks);
+            Logger.LogDebug($"[OTHER-COLLAR-ACTIVE]: {dataDto.User} ({dataDto.Type})", LogFilter.Callbacks);
             Generic.Safe(() => _kinksters.NewActiveCollar(dataDto));
             return Task.CompletedTask;
         }
@@ -534,7 +535,7 @@ public partial class MainHub
 
     public async Task Callback_KinksterChangeEnabledItem(KinksterChangeEnabledItem dto)
     {
-        Logger.LogDebug($"KinksterChangeEnabledItem for {dto.User.AliasOrUID} (from {dto.Enactor.AliasOrUID})", LoggerType.Callbacks);
+        Logger.LogDebug($"KinksterChangeEnabledItem for {dto.User.AliasOrUID} (from {dto.Enactor.AliasOrUID})", LogFilter.Callbacks);
         if (dto.User.UID != UID)
         {
             Generic.Safe(() => _kinksters.UpdateItemState(dto.User, dto.Enactor, dto.Module, dto.ItemId, dto.NewState));
@@ -580,21 +581,21 @@ public partial class MainHub
 
     public Task Callback_KinksterChangeEnabledGag(KinksterChangeEnabledGag dto)
     {
-        Logger.LogDebug($"KinksterChangeEnabledGag for {dto.User.AliasOrUID})", LoggerType.Callbacks);
+        Logger.LogDebug($"KinksterChangeEnabledGag for {dto.User.AliasOrUID})", LogFilter.Callbacks);
         Generic.Safe(() => _kinksters.UpdateGagState(dto.User, dto.Gag, dto.NewState));
         return Task.CompletedTask;
     }
 
     public Task Callback_KinksterChangeEnabledToy(KinksterChangeEnabledToy dto)
     {
-        Logger.LogDebug($"KinksterChangeEnabledToy for {dto.User.AliasOrUID})", LoggerType.Callbacks);
+        Logger.LogDebug($"KinksterChangeEnabledToy for {dto.User.AliasOrUID})", LogFilter.Callbacks);
         Generic.Safe(() => _kinksters.UpdateToyState(dto.User, dto.Toy, dto.NewState));
         return Task.CompletedTask;
     }
 
     public Task Callback_KinksterChangeEnabledItems(KinksterChangeEnabledItems dto)
     {
-        Logger.LogDebug($"KinksterChangeEnabledItems for {dto.User.AliasOrUID} (from {dto.Enactor.AliasOrUID})", LoggerType.Callbacks);
+        Logger.LogDebug($"KinksterChangeEnabledItems for {dto.User.AliasOrUID} (from {dto.Enactor.AliasOrUID})", LogFilter.Callbacks);
         if (dto.User.UID != UID)
         {
             Generic.Safe(() => _kinksters.UpdateItemStates(dto.User, dto.Enactor, dto.Module, dto.ActiveItems, dto.NewState));
@@ -610,21 +611,21 @@ public partial class MainHub
     
     public Task Callback_KinksterChangeEnabledGags(KinksterChangeEnabledGags dto)
     {
-        Logger.LogDebug($"KinksterChangeEnabledGags for {dto.User.AliasOrUID})", LoggerType.Callbacks);
+        Logger.LogDebug($"KinksterChangeEnabledGags for {dto.User.AliasOrUID})", LogFilter.Callbacks);
         Generic.Safe(() => _kinksters.UpdateGagStates(dto.User, dto.ActiveGags, dto.NewState));
         return Task.CompletedTask;
     }
 
     public Task Callback_KinksterChangeEnabledToys(KinksterChangeEnabledToys dto)
     {
-        Logger.LogDebug($"KinksterChangeEnabledToys for {dto.User.AliasOrUID})", LoggerType.Callbacks);
+        Logger.LogDebug($"KinksterChangeEnabledToys for {dto.User.AliasOrUID})", LogFilter.Callbacks);
         Generic.Safe(() => _kinksters.UpdateToyStates(dto.User, dto.ActiveToys, dto.NewState));
         return Task.CompletedTask;
     }
 
     public Task Callback_ListenerName(SendNameAction dto)
     {
-        Logger.LogDebug($"Kinkster {dto.User.AliasOrUID}'s updated their Listener Name", LoggerType.Callbacks);
+        Logger.LogDebug($"Kinkster {dto.User.AliasOrUID}'s updated their Listener Name", LogFilter.Callbacks);
         Generic.Safe(() => _callbackHandler.UpdateListener(dto.User.UID, dto.Name));
         return Task.CompletedTask;
     }
@@ -639,7 +640,7 @@ public partial class MainHub
     // Expected to update their global permission with this new state. If it fails, should reset.
     public Task Callback_HypnoticEffect(HypnoticAction dto)
     {
-        Logger.LogDebug("Cb_HypnoticEffect: " + dto, LoggerType.Callbacks);
+        Logger.LogDebug("Cb_HypnoticEffect: " + dto, LogFilter.Callbacks);
         Generic.Safe(() => _clientDatListener.Hypnotize(dto.User, dto.Effect, dto.ExpireTime, dto.base64Image));
         return Task.CompletedTask;
     }
@@ -707,35 +708,35 @@ public partial class MainHub
     #region Callbacks (UserState / Misc.)
     public Task Callback_KinksterOnline(OnlineKinkster dto)
     {
-        Logger.LogDebug("Cb_SendOnline: " + dto, LoggerType.Callbacks);
+        Logger.LogDebug("Cb_SendOnline: " + dto, LogFilter.Callbacks);
         Generic.Safe(() => _kinksters.MarkKinksterOnline(dto));
         return Task.CompletedTask;
     }
 
     public Task Callback_KinksterOffline(UserDto dto)
     {
-        Logger.LogDebug("Cb_SendOffline: " + dto, LoggerType.Callbacks);
+        Logger.LogDebug("Cb_SendOffline: " + dto, LogFilter.Callbacks);
         Generic.Safe(() => _kinksters.MarkKinksterOffline(dto.User));
         return Task.CompletedTask;
     }
 
     public Task Callback_UserVanityUpdated(UserDto dto)
     {
-        Logger.LogDebug($"Cb_UserVanityUpdate: [{dto.User.AliasOrUID}]", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_UserVanityUpdate: [{dto.User.AliasOrUID}]", LogFilter.Callbacks);
         Generic.Safe(() => _pairService.UpdateVanityData(dto));
         return Task.CompletedTask;
     }
 
     public Task Callback_UserProfileUpdated(UserDto dto)
     {
-        Logger.LogDebug($"Cb_UserProfileUpdated: [{dto.User.AliasOrUID}]", LoggerType.Callbacks);
+        Logger.LogDebug($"Cb_UserProfileUpdated: [{dto.User.AliasOrUID}]", LogFilter.Callbacks);
         Mediator.Publish(new FetchLatestUserProfile(dto.User));
         return Task.CompletedTask;
     }
 
     public Task Callback_ShowVerification(VerificationCode dto)
     {
-        Logger.LogDebug("Cb_ShowVerification: " + dto, LoggerType.Callbacks);
+        Logger.LogDebug("Cb_ShowVerification: " + dto, LogFilter.Callbacks);
         Mediator.Publish(new VerificationPopupMessage(dto));
         return Task.CompletedTask;
     }
@@ -750,63 +751,63 @@ public partial class MainHub
     #region VibeRooms
     public Task Callback_RoomJoin(RoomParticipant dto)
     {
-        Logger.LogDebug("Cb_RoomJoin: " + dto, LoggerType.Callbacks);
+        Logger.LogDebug("Cb_RoomJoin: " + dto, LogFilter.Callbacks);
         _toyboxListener.KinksterJoinedRoom(dto);
         return Task.CompletedTask;
     }
 
     public Task Callback_RoomLeave(UserData dto)
     {
-        Logger.LogDebug("Cb_RoomLeave: " + dto, LoggerType.Callbacks);
+        Logger.LogDebug("Cb_RoomLeave: " + dto, LogFilter.Callbacks);
         _toyboxListener.KinksterLeftRoom(dto);
         return Task.CompletedTask;
     }
 
     public Task Callback_RoomAddInvite(RoomInvite dto)
     {
-        Logger.LogDebug("Cb_RoomAddInvite: " + dto, LoggerType.Callbacks);
+        Logger.LogDebug("Cb_RoomAddInvite: " + dto, LogFilter.Callbacks);
         _toyboxListener.VibeRoomInviteReceived(dto);
         return Task.CompletedTask;
     }
 
     public Task Callback_RoomHostChanged(UserData dto)
     {
-        Logger.LogDebug("Cb_RoomHostChanged: " + dto, LoggerType.Callbacks);
+        Logger.LogDebug("Cb_RoomHostChanged: " + dto, LogFilter.Callbacks);
         _toyboxListener.VibeRoomHostChanged(dto);
         return Task.CompletedTask;
     }
 
     public Task Callback_RoomDeviceUpdate(UserData user, ToyInfo device)
     {
-        Logger.LogDebug("Cb_RoomDeviceUpdate: " + user, LoggerType.Callbacks);
+        Logger.LogDebug("Cb_RoomDeviceUpdate: " + user, LogFilter.Callbacks);
         _toyboxListener.KinksterUpdatedDevice(user, device);
         return Task.CompletedTask;
     }
 
     public Task Callback_RoomIncDataStream(ToyDataStreamResponse dto)
     {
-        Logger.LogDebug("Cb_RoomIncDataStream: " + dto, LoggerType.Callbacks);
+        Logger.LogDebug("Cb_RoomIncDataStream: " + dto, LogFilter.Callbacks);
         _toyboxListener.ReceivedBuzzToyDataStream(dto);
         return Task.CompletedTask;
     }
 
     public Task Callback_RoomAccessGranted(UserData user)
     {
-        Logger.LogDebug("Cb_RoomAccessGranted: " + user, LoggerType.Callbacks);
+        Logger.LogDebug("Cb_RoomAccessGranted: " + user, LogFilter.Callbacks);
         _toyboxListener.KinksterGrantedAccess(user);
         return Task.CompletedTask;
     }
 
     public Task Callback_RoomAccessRevoked(UserData user)
     {
-        Logger.LogDebug("Cb_RoomAccessRevoked: " + user, LoggerType.Callbacks);
+        Logger.LogDebug("Cb_RoomAccessRevoked: " + user, LogFilter.Callbacks);
         _toyboxListener.KinksterRevokedAccess(user);
         return Task.CompletedTask;
     }
 
     public Task Callback_RoomChatMessage(UserData user, string message)
     {
-        Logger.LogDebug("Cb_RoomChatMessage", LoggerType.Callbacks);
+        Logger.LogDebug("Cb_RoomChatMessage", LogFilter.Callbacks);
         Mediator.Publish(new VibeRoomChatMessage(new ChatlogMessage(ChatlogId.Invalid, "", DateTime.UtcNow, MainHub.OwnUserData, "", [], false)));
         return Task.CompletedTask;
     }

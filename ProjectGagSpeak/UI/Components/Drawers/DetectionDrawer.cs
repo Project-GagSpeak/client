@@ -90,7 +90,7 @@ public sealed class DetectionDrawer : IDisposable
     private void OnJobSelected(LightJob oldJob, LightJob newJob)
     {
         // Refresh the actions based on the selected job.
-        _logger.LogTrace($"Changed from ({oldJob.ToString()}) to ({newJob.ToString()}). Refreshing action list.", LoggerType.Triggers);
+        _logger.LogTrace($"Changed from ({oldJob.ToString()}) to ({newJob.ToString()}). Refreshing action list.", LogFilter.Triggers);
         _jobActionCombo.RefreshActionList();
     }
 

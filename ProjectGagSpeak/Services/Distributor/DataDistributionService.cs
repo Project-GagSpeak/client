@@ -154,7 +154,7 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
         if (prevData is null || !Equals(newData, prevData))
             return true;
 
-        Logger.LogDebug("Data was no different. Not sending data", LoggerType.OnlinePairs);
+        Logger.LogDebug("Data was no different. Not sending data", LogFilter.OnlineUsers);
         return false;
     }
 
@@ -166,12 +166,12 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
     {
         if (!MainHub.IsConnectionDataSynced)
         {
-            Logger.LogDebug("Not pushing Visible Full Data, not connected to server or data not synced.", LoggerType.ApiCore);
+            Logger.LogDebug("Not pushing Visible Full Data, not connected to server or data not synced.", LogFilter.MainHub);
             _newVisibleKinksters.UnionWith(visibleCharas);
             return;
         }
 
-        Logger.LogDebug($"Pushing Appearance and Loci data to ({string.Join(", ", visibleCharas.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
+        Logger.LogDebug($"Pushing Appearance and Loci data to ({string.Join(", ", visibleCharas.Select(v => v.AliasOrUID))})", LogFilter.ActorVisibility);
         await UserPushLociData(visibleCharas);
     }
 
@@ -188,7 +188,7 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
             return;
         }
         // Distribute the full IPC Data to the list of visible characters passed in.
-        Logger.LogDebug($"Pushing LociData to ({string.Join(", ", visibleCharas.Select(v => v.AliasOrUID))})", LoggerType.VisiblePairs);
+        Logger.LogDebug($"Pushing LociData to ({string.Join(", ", visibleCharas.Select(v => v.AliasOrUID))})", LogFilter.ActorVisibility);
         try
         {
             await _hub.UserPushLociData(new(visibleCharas, LociCache.Data.ToDto()));
@@ -205,12 +205,12 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
 
     public async Task ApplyTuplesToKinkster(UserData target, IEnumerable<LociStatusInfo> data, bool lockIds)
     {
-        Logger.LogDebug($"Pushing ApplyLociStatusTuples to: {target.AliasOrUID}", LoggerType.ApiCore);
+        Logger.LogDebug($"Pushing ApplyLociStatusTuples to: {target.AliasOrUID}", LogFilter.MainHub);
         var apiData = data.Select(s => s.ToStruct()).ToList();
         if (await _hub.UserApplyLociStatusTuples(new(target, apiData, lockIds)).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push ApplyLociStatusTuples to server. [{res.ErrorCode}]");
         else
-            Logger.LogDebug($"Successfully pushed ApplyLociStatusTuples to the server", LoggerType.ApiCore);
+            Logger.LogDebug($"Successfully pushed ApplyLociStatusTuples to the server", LogFilter.MainHub);
     }
 
     private CharaLightStorageData GetLatestLightStorage()
@@ -245,13 +245,13 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
         }
 
         // obtain the data to upload.
-        Logger.LogInformation("Sending updated achievement data to the server", LoggerType.Achievements);
+        Logger.LogInformation("Sending updated achievement data to the server", LogFilter.Achievements);
         var dataString = _achievements.SerializeData();
         Logger.LogInformation("Connected with AchievementData String:\n" + dataString);
         var result = await _hub.UserUpdateAchievementData(new(MainHub.OwnUserData, dataString)).ConfigureAwait(false);
         if (result.ErrorCode is GagSpeakApiEc.Success)
         {
-            Logger.LogDebug("Successfully pushed latest Achievement Data to server", LoggerType.Achievements);
+            Logger.LogDebug("Successfully pushed latest Achievement Data to server", LogFilter.Achievements);
         }
         else
         {
@@ -275,13 +275,13 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
                 currentContent = response.Info;
             }
 
-            Logger.LogDebug($"Updating KinkPlate™ with {ClientAchievements.Completed} Completions.", LoggerType.Achievements);
+            Logger.LogDebug($"Updating KinkPlate™ with {ClientAchievements.Completed} Completions.", LogFilter.Achievements);
             currentContent.CompletedTotal = ClientAchievements.Completed;
             await _hub.UserSetKinkPlateContent(new(MainHub.OwnUserData, currentContent));
         }
         catch (Bagagwa ex)
         {
-            Logger.LogError($"Failed to update KinkPlate™ with latest achievement count: {ex}", LoggerType.Achievements);
+            Logger.LogError($"Failed to update KinkPlate™ with latest achievement count: {ex}", LogFilter.Achievements);
         }
         finally
         {
@@ -294,7 +294,7 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
         // if not connected and data synced just add the kinksters to the list. (Extra safety net)
         if (!MainHub.IsConnectionDataSynced)
         {
-            Logger.LogDebug("Not pushing Composite Data, not connected to server or data not synced.", LoggerType.ApiCore);
+            Logger.LogDebug("Not pushing Composite Data, not connected to server or data not synced.", LogFilter.MainHub);
             _newOnlineKinksters.UnionWith(newOnlinekinksters);
             return;
         }
@@ -323,11 +323,11 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
                 LightStorageData = newLightStorage,
             };
 
-            Logger.LogDebug($"Pushing CharaCompositeActiveData to: {string.Join(", ", newOnlinekinksters.Select(v => v.UID))}", LoggerType.ApiCore);
+            Logger.LogDebug($"Pushing CharaCompositeActiveData to: {string.Join(", ", newOnlinekinksters.Select(v => v.UID))}", LogFilter.MainHub);
             var result = await _hub.UserPushActiveData(new(newOnlinekinksters, data, false)).ConfigureAwait(false);
             if (result.ErrorCode is GagSpeakApiEc.Success)
             {
-                Logger.LogDebug("Successfully pushed Composite Data to server", LoggerType.ApiCore);
+                Logger.LogDebug("Successfully pushed Composite Data to server", LogFilter.MainHub);
             }
             else
             {
@@ -348,7 +348,7 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
     public async Task PushEnabledItemChanged(EnabledItemChanged arg)
     {
         var onlineUsers = _kinksters.GetOnlineUserDatas();
-        Logger.LogDebug($"Pushing EnabledItemChanged to {string.Join(", ", onlineUsers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
+        Logger.LogDebug($"Pushing EnabledItemChanged to {string.Join(", ", onlineUsers.Select(v => v.AliasOrUID))}", LogFilter.OnlineUsers);
         var dto = new PushItemEnabledState(onlineUsers, arg.Module, arg.ItemId, arg.NewState);
         if (await _hub.UserPushItemEnabledState(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push EnabledItemChanged update to server. Reason: [{res}]");
@@ -357,7 +357,7 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
     public async Task PushEnabledGagChanged(EnabledGagChanged arg)
     {
         var onlineUsers = _kinksters.GetOnlineUserDatas();
-        Logger.LogDebug($"Pushing EnabledGagChanged to {string.Join(", ", onlineUsers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
+        Logger.LogDebug($"Pushing EnabledGagChanged to {string.Join(", ", onlineUsers.Select(v => v.AliasOrUID))}", LogFilter.OnlineUsers);
         var dto = new PushGagEnabledState(onlineUsers, arg.Gag, arg.NewState);
         if (await _hub.UserPushGagEnabledState(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push EnabledGagChanged update to server. Reason: [{res}]");
@@ -366,7 +366,7 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
     public async Task PushEnabledToyChanged(EnabledToyChanged arg)
     {
         var onlineUsers = _kinksters.GetOnlineUserDatas();
-        Logger.LogDebug($"Pushing EnabledToyChanged to {string.Join(", ", onlineUsers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
+        Logger.LogDebug($"Pushing EnabledToyChanged to {string.Join(", ", onlineUsers.Select(v => v.AliasOrUID))}", LogFilter.OnlineUsers);
         var dto = new PushToyEnabledState(onlineUsers, arg.Toy, arg.NewState);
         if (await _hub.UserPushToyEnabledState(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push EnabledToyChanged update to server. Reason: [{res}]");
@@ -375,7 +375,7 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
     public async Task PushEnabledItemsChanged(EnabledItemsChanged arg)
     {
         var onlineUsers = _kinksters.GetOnlineUserDatas();
-        Logger.LogDebug($"Pushing EnabledItemsChanged to {string.Join(", ", onlineUsers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
+        Logger.LogDebug($"Pushing EnabledItemsChanged to {string.Join(", ", onlineUsers.Select(v => v.AliasOrUID))}", LogFilter.OnlineUsers);
         var dto = new PushItemEnabledStates(onlineUsers, arg.Module, arg.Items.ToList(), arg.NewState);
         if (await _hub.UserPushItemEnabledStates(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push EnabledItemsChanged update to server. Reason: [{res}]");
@@ -384,7 +384,7 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
     public async Task PushEnabledGagsChanged(EnabledGagsChanged arg)
     {
         var onlineUsers = _kinksters.GetOnlineUserDatas();
-        Logger.LogDebug($"Pushing EnabledGagsChanged to {string.Join(", ", onlineUsers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
+        Logger.LogDebug($"Pushing EnabledGagsChanged to {string.Join(", ", onlineUsers.Select(v => v.AliasOrUID))}", LogFilter.OnlineUsers);
         var dto = new PushGagEnabledStates(onlineUsers, arg.Gags.ToList(), arg.NewState);
         if (await _hub.UserPushGagEnabledStates(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push EnabledGagsChanged update to server. Reason: [{res}]");
@@ -393,7 +393,7 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
     public async Task PushEnabledToysChanged(EnabledToysChanged arg)
     {
         var onlineUsers = _kinksters.GetOnlineUserDatas();
-        Logger.LogDebug($"Pushing EnabledToysChanged to {string.Join(", ", onlineUsers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
+        Logger.LogDebug($"Pushing EnabledToysChanged to {string.Join(", ", onlineUsers.Select(v => v.AliasOrUID))}", LogFilter.OnlineUsers);
         var dto = new PushToyEnabledStates(onlineUsers, arg.Toys.ToList(), arg.NewState);
         if (await _hub.UserPushToyEnabledStates(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push EnabledToysChanged update to server. Reason: [{res}]");
@@ -410,7 +410,7 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
             return null;
         }
 
-        Logger.LogDebug($"Pushing GagChange [{type}] to: {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
+        Logger.LogDebug($"Pushing GagChange [{type}] to: {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LogFilter.OnlineUsers);
 
         var dto = new PushClientActiveGagSlot(onlinePlayers, type)
         {
@@ -441,7 +441,7 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
         if (type is not DataUpdateType.Unlocked && !DataIsDifferent(_prevRestrictionData, newData))
             return null;
 
-        Logger.LogDebug($"Pushing RestrictionChange [{type}] to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
+        Logger.LogDebug($"Pushing RestrictionChange [{type}] to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LogFilter.OnlineUsers);
 
         var dto = new PushClientActiveRestriction(onlinePlayers, type)
         {
@@ -472,7 +472,7 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
         if (type is not DataUpdateType.Unlocked && !DataIsDifferent(_prevRestraintData, newData))
             return null;
 
-        Logger.LogDebug($"Pushing RestraintData to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))} [{type}]", LoggerType.OnlinePairs);
+        Logger.LogDebug($"Pushing RestraintData to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))} [{type}]", LogFilter.OnlineUsers);
 
         var dto = new PushClientActiveRestraint(onlinePlayers, type)
         {
@@ -504,7 +504,7 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
             return null;
 
         _prevCollarData = newData;
-        Logger.LogDebug($"Pushing CollarChange [{type}] to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
+        Logger.LogDebug($"Pushing CollarChange [{type}] to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LogFilter.OnlineUsers);
         // Visuals DataTypeUpdate covers toggling the visual state.
         var dto = new PushClientActiveCollar(onlinePlayers, type)
         {
@@ -535,7 +535,7 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
 
     public async Task<AppliedCursedItem?> PushActiveCursedLoot(List<UserData> onlinePlayers, List<Guid> activeItems, Guid changeItem, AppliedItem? lootItem)
     {
-        Logger.LogDebug($"Pushing ActiveCursedLoot to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LoggerType.OnlinePairs);
+        Logger.LogDebug($"Pushing ActiveCursedLoot to {string.Join(", ", onlinePlayers.Select(v => v.AliasOrUID))}", LogFilter.OnlineUsers);
         var res = await _hub.UserPushActiveLoot(new(onlinePlayers, activeItems, changeItem, lootItem)).ConfigureAwait(false);
         // if not successful, log and return null.
         if (res.ErrorCode is not GagSpeakApiEc.Success)
@@ -550,100 +550,100 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
     private async Task DistributeGagUpdate(GarblerRestriction item, StorageChangeType kind)
     {
         var onlinePlayers = _kinksters.GetOnlineUserDatas();
-        Logger.LogDebug($"Pushing GagChange [{kind}] to pnline pairs.", LoggerType.OnlinePairs);
+        Logger.LogDebug($"Pushing GagChange [{kind}] to pnline pairs.", LogFilter.OnlineUsers);
         var dto = new PushClientDataChangeGag(onlinePlayers, item.GagType, item.ToLightItem());
         if (await _hub.UserPushNewGagData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push GagData to paired Kinksters. [{res}]");
         else
-            Logger.LogDebug("Successfully pushed GagData to server", LoggerType.OnlinePairs);
+            Logger.LogDebug("Successfully pushed GagData to server", LogFilter.OnlineUsers);
     }
 
     private async Task DistributeRestrictionUpdate(RestrictionItem item, StorageChangeType kind)
     {
         var onlinePlayers = _kinksters.GetOnlineUserDatas();
-        Logger.LogDebug($"Pushing RestrictionChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
+        Logger.LogDebug($"Pushing RestrictionChange [{kind}] to online pairs.", LogFilter.OnlineUsers);
         var dto = new PushClientDataChangeRestriction(onlinePlayers, item.Identifier, kind is StorageChangeType.Deleted ? null : item.ToLightItem());
         if (await _hub.UserPushNewRestrictionData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push RestrictionData to paired Kinksters. [{res}]");
         else
-            Logger.LogDebug("Successfully pushed RestrictionData to server", LoggerType.OnlinePairs);
+            Logger.LogDebug("Successfully pushed RestrictionData to server", LogFilter.OnlineUsers);
     }
 
     private async Task DistributeRestraintSetUpdate(RestraintSet item, StorageChangeType kind)
     {
         var onlinePlayers = _kinksters.GetOnlineUserDatas();
-        Logger.LogDebug($"Pushing RestraintSetChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
+        Logger.LogDebug($"Pushing RestraintSetChange [{kind}] to online pairs.", LogFilter.OnlineUsers);
         var dto = new PushClientDataChangeRestraint(onlinePlayers, item.Identifier, kind is StorageChangeType.Deleted ? null : item.ToLightItem());
         if (await _hub.UserPushNewRestraintData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push RestraintSetData to paired Kinksters. [{res}]");
         else
-            Logger.LogDebug("Successfully pushed RestraintSetData to server", LoggerType.OnlinePairs);
+            Logger.LogDebug("Successfully pushed RestraintSetData to server", LogFilter.OnlineUsers);
     }
 
     private async Task DistributeCollarUpdate(GagSpeakCollar collar, StorageChangeType kind)
     {
         var onlinePlayers = _kinksters.GetOnlineUserDatas();
-        Logger.LogDebug($"Pushing CollarChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
+        Logger.LogDebug($"Pushing CollarChange [{kind}] to online pairs.", LogFilter.OnlineUsers);
         var dto = new PushClientDataChangeCollar(onlinePlayers, kind is StorageChangeType.Deleted ? null : collar.ToLightItem());
         if (await _hub.UserPushNewCollarData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push CollarData to paired Kinksters. [{res}]");
         else
-            Logger.LogDebug("Successfully pushed CollarData to server", LoggerType.OnlinePairs);
+            Logger.LogDebug("Successfully pushed CollarData to server", LogFilter.OnlineUsers);
     }
 
     private async Task DistributeCursedItemUpdate(CursedItem item, StorageChangeType kind)
     {
         var onlinePlayers = _kinksters.GetOnlineUserDatas();
-        Logger.LogDebug($"Pushing CursedItemChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
+        Logger.LogDebug($"Pushing CursedItemChange [{kind}] to online pairs.", LogFilter.OnlineUsers);
         var dto = new PushClientDataChangeLoot(onlinePlayers, item.Identifier, kind is StorageChangeType.Deleted ? null : item.ToLightItem());
         if (await _hub.UserPushNewLootData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push CursedItemData to paired Kinksters. [{res}]");
         else
-            Logger.LogDebug("Successfully pushed CursedItemData to server", LoggerType.OnlinePairs);
+            Logger.LogDebug("Successfully pushed CursedItemData to server", LogFilter.OnlineUsers);
     }
 
     // Recipients will know if they should remove the item if they are not contained within the new whitelist, or if it is null.
     private async Task DistributeAliasItemUpdate(AliasTrigger item, StorageChangeType kind)
     {
         var online = _kinksters.GetOnlineUserDatas();
-        Logger.LogDebug($"Pushing AliasTriggerChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
+        Logger.LogDebug($"Pushing AliasTriggerChange [{kind}] to online pairs.", LogFilter.OnlineUsers);
         var dto = new PushClientDataChangeAlias(online, item.Identifier, kind is StorageChangeType.Deleted ? null : item.ToDto());
         if (await _hub.UserPushNewAliasData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push AliasTriggerChange to paired Kinksters. [{res}]");
         else
-            Logger.LogDebug("Successfully pushed AliasTriggerChange to server", LoggerType.OnlinePairs);
+            Logger.LogDebug("Successfully pushed AliasTriggerChange to server", LogFilter.OnlineUsers);
     }
 
     private async Task DistributePatternUpdate(Pattern item, StorageChangeType kind)
     {
         var onlinePlayers = _kinksters.GetOnlineUserDatas();
-        Logger.LogDebug($"Pushing PatternChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
+        Logger.LogDebug($"Pushing PatternChange [{kind}] to online pairs.", LogFilter.OnlineUsers);
         var dto = new PushClientDataChangePattern(onlinePlayers, item.Identifier, kind is StorageChangeType.Deleted ? null : item.ToLightItem());
         if (await _hub.UserPushNewPatternData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push PatternData to paired Kinksters. [{res}]");
         else
-            Logger.LogDebug("Successfully pushed PatternData to server", LoggerType.OnlinePairs);
+            Logger.LogDebug("Successfully pushed PatternData to server", LogFilter.OnlineUsers);
     }
 
     private async Task DistributeAlarmUpdate(Alarm item, StorageChangeType kind)
     {
         var onlinePlayers = _kinksters.GetOnlineUserDatas();
-        Logger.LogDebug($"Pushing AlarmChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
+        Logger.LogDebug($"Pushing AlarmChange [{kind}] to online pairs.", LogFilter.OnlineUsers);
         var dto = new PushClientDataChangeAlarm(onlinePlayers, item.Identifier, kind is StorageChangeType.Deleted ? null : item.ToLightItem());
         if (await _hub.UserPushNewAlarmData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push AlarmData to paired Kinksters. [{res}]");
         else
-            Logger.LogDebug("Successfully pushed AlarmData to server", LoggerType.OnlinePairs);
+            Logger.LogDebug("Successfully pushed AlarmData to server", LogFilter.OnlineUsers);
     }
 
     private async Task DistributeTriggerUpdate(Trigger item, StorageChangeType kind)
     {
         var onlinePlayers = _kinksters.GetOnlineUserDatas();
-        Logger.LogDebug($"Pushing TriggerChange [{kind}] to online pairs.", LoggerType.OnlinePairs);
+        Logger.LogDebug($"Pushing TriggerChange [{kind}] to online pairs.", LogFilter.OnlineUsers);
         var dto = new PushClientDataChangeTrigger(onlinePlayers, item.Identifier, kind is StorageChangeType.Deleted ? null : item.ToLightItem());
         if (await _hub.UserPushNewTriggerData(dto).ConfigureAwait(false) is { } res && res.ErrorCode is not GagSpeakApiEc.Success)
             Logger.LogError($"Failed to push TriggerData to paired Kinksters. [{res}]");
         else
-            Logger.LogDebug("Successfully pushed TriggerData to server", LoggerType.OnlinePairs);
+            Logger.LogDebug("Successfully pushed TriggerData to server", LogFilter.OnlineUsers);
     }
 }

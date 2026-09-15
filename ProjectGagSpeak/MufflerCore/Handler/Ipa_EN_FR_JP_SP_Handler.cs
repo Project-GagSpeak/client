@@ -33,15 +33,15 @@ public class Ipa_EN_FR_JP_SP_Handler
             var jsonFilePath = Path.Combine(GsFiles.AssemblyDirectory, data_file);
             var json = File.ReadAllText(jsonFilePath);
             obj = JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
-            _logger.LogInformation($"File read: {data_file}", LoggerType.GarblerCore);
+            _logger.LogInformation($"File read: {data_file}", LogFilter.GarblerCore);
         }
         catch (FileNotFoundException)
         {
-            _logger.LogDebug($"File does not exist: {data_file}", LoggerType.GarblerCore);
+            _logger.LogDebug($"File does not exist: {data_file}", LogFilter.GarblerCore);
         }
         catch (Bagagwa ex)
         {
-            _logger.LogDebug($"An error occurred while reading the file: {ex.Message}", LoggerType.GarblerCore);
+            _logger.LogDebug($"An error occurred while reading the file: {ex.Message}", LogFilter.GarblerCore);
         }
     }
 
@@ -78,7 +78,7 @@ public class Ipa_EN_FR_JP_SP_Handler
                 }
             }
         }
-        _logger.LogTrace($"Parsed IPA string: {str}", LoggerType.GarblerCore);
+        _logger.LogTrace($"Parsed IPA string: {str}", LogFilter.GarblerCore);
         //str = ConvertToSpacedPhonetics(str);
         return str;
     }
@@ -100,7 +100,7 @@ public class Ipa_EN_FR_JP_SP_Handler
     /// <returns> The list of (word, phonetic symbols, found in lookup) </returns>
     public List<(string Word, List<string> Phonetics, bool Found)> ToIPAList(string input)
     {
-        _logger.LogTrace($"Parsing input to Phonetics...", LoggerType.GarblerCore);
+        _logger.LogTrace($"Parsing input to Phonetics...", LogFilter.GarblerCore);
         // Clear line endings and split by spaces, removing empty entries.
         var sanitizedInput = input.ReplaceLineEndings(" ").Split(' ', StringSplitOptions.RemoveEmptyEntries);
 
@@ -179,7 +179,7 @@ public class Ipa_EN_FR_JP_SP_Handler
             parsedResult.Add((word, phoneticSymbols, true));
         }
 
-        _logger.LogTrace($"Parsed \"{input}\" to final list:\n{string.Join(',', parsedResult.Select(t => $"{t.Item1}:[{string.Join(',',t.Item2)}]"))}", LoggerType.GarblerCore);
+        _logger.LogTrace($"Parsed \"{input}\" to final list:\n{string.Join(',', parsedResult.Select(t => $"{t.Item1}:[{string.Join(',',t.Item2)}]"))}", LogFilter.GarblerCore);
         return parsedResult;
     }
 

@@ -69,7 +69,7 @@ public class GlobalChatLog : RichChatLog<NewGsChatMessage>, IMediatorSubscriber,
         foreach (var msg in chatHistory)
             ProcessChatMessage(msg, false);
         MarkAsRead(true);
-        _logger.LogDebug("Loaded GlobalChat history, marked all as read.", LoggerType.GlobalChat);
+        _logger.LogDebug("Loaded GlobalChat history, marked all as read.", LogFilter.GlobalChat);
     }
 
 
@@ -88,7 +88,7 @@ public class GlobalChatLog : RichChatLog<NewGsChatMessage>, IMediatorSubscriber,
 
     public void ProcessChatMessage(ChatlogMessage msg, bool doPings = true)
     {
-        _logger.LogDebug($"[RadarChat] {ID} recieved msg from {msg.Sender.AnonTag}", LoggerType.GlobalChat);
+        _logger.LogDebug($"[RadarChat] {ID} recieved msg from {msg.Sender.AnonTag}", LogFilter.GlobalChat);
         _userMeta[msg.Sender] = (msg.LegacyId, msg.Flags);
         // Wrap devs in special text.
         var ctx = msg.Sender.Tier is CkVanityTier.KinkporiumMistress

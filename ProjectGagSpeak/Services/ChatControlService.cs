@@ -146,7 +146,7 @@ public class ChatControlService : DisposableMediatorSubscriberBase
         var sourceName = CalculateEntityNameWithWorld(message.SourceEntity);
         if (!PlayerData.IsDead && sourceName == PlayerData.NameWithWorld)
         {
-            Logger.LogInformation("We just killed someone in PvP!", LoggerType.Achievements);
+            Logger.LogInformation("We just killed someone in PvP!", LogFilter.Achievements);
             GagspeakEventManager.AchievementEvent(UnlocksEvent.PvpPlayerSlain);
         }
     }
@@ -162,20 +162,20 @@ public class ChatControlService : DisposableMediatorSubscriberBase
         if (message.LogMessageId is not (856 or 3887))
             return;
         
-        Logger.LogDebug("Handling Deathroll Message.", LoggerType.Triggers);
+        Logger.LogDebug("Handling Deathroll Message.", LogFilter.Triggers);
         var sourceName = CalculateEntityNameWithWorld(message.SourceEntity);
         var rolled = message.Parameters[1].UIntValue;
-        Logger.LogDebug($"Received Deathroll Message from {sourceName}", LoggerType.Triggers);
+        Logger.LogDebug($"Received Deathroll Message from {sourceName}", LogFilter.Triggers);
         
         // Check for a number cap. If not present, default to 999.
         var cap = message.ParameterCount > 2 ? message.Parameters[2].UIntValue : 0;
         
-        Logger.LogDebug($"Rolled {rolled} with cap {cap}", LoggerType.Triggers);
+        Logger.LogDebug($"Rolled {rolled} with cap {cap}", LogFilter.Triggers);
         // Clamp and validate values.
         var rollResult = rolled > 999 ? -1 : (int)rolled;
         var capResult = cap is 0 or > 999 ? -1 : (int)cap;
         
-        Logger.LogDebug($"Validated Deathroll: Roll {rollResult}, Cap {capResult}", LoggerType.Triggers);
+        Logger.LogDebug($"Validated Deathroll: Roll {rollResult}, Cap {capResult}", LogFilter.Triggers);
         Mediator.Publish(new DeathrollMessage(sourceName, rollResult, capResult));
     }
 
@@ -188,7 +188,7 @@ public class ChatControlService : DisposableMediatorSubscriberBase
         if (type is XivChatType.Say || !msg.Payloads.Exists(p => p.Type == PayloadType.Icon))
             return;
         
-        Logger.LogDebug($"Received Dice Deathroll Message from {senderNameWorld}", LoggerType.Triggers);
+        Logger.LogDebug($"Received Dice Deathroll Message from {senderNameWorld}", LogFilter.Triggers);
         Mediator.Publish(new DeathrollDiceMessage(senderNameWorld, msg));
     }
 

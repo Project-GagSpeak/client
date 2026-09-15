@@ -87,7 +87,7 @@ public sealed class EmoteService : IHostedService
         if (IsCyclePoseTaskRunning)
             return;
 
-        Svc.Logger.Verbose("Forcing player into cycle pose: " + expectedCyclePose, LoggerType.EmoteMonitor);
+        Svc.Logger.Verbose("Forcing player into cycle pose: " + expectedCyclePose, LogFilter.EmoteMonitor);
         EnforceCyclePoseTask = ForceCyclePoseInternal(playerAddr, expectedCyclePose);
     }
 
@@ -109,7 +109,7 @@ public sealed class EmoteService : IHostedService
                     if (current == expectedCyclePose)
                         break;
 
-                    Svc.Logger.Verbose("Cycle Pose State was [" + current + "], expected [" + expectedCyclePose + "]. Sending /cpose.", LoggerType.EmoteMonitor);
+                    Svc.Logger.Verbose("Cycle Pose State was [" + current + "], expected [" + expectedCyclePose + "]. Sending /cpose.", LogFilter.EmoteMonitor);
                     ExecuteEmote(90);
                     await WaitForCondition(() => CanUseEmote(90), 5);
                 }
@@ -135,26 +135,26 @@ public sealed class EmoteService : IHostedService
                 if (condition()) 
                     return true;
 
-                Svc.Logger.Verbose("(Excessive) Waiting for condition to be true.", LoggerType.EmoteMonitor);
+                Svc.Logger.Verbose("(Excessive) Waiting for condition to be true.", LogFilter.EmoteMonitor);
                 await Task.Delay(100, timeout.Token);
             }
         }
         catch (TaskCanceledException)
         {
-            Svc.Logger.Verbose("WaitForCondition was canceled due to timeout.", LoggerType.EmoteMonitor);
+            Svc.Logger.Verbose("WaitForCondition was canceled due to timeout.", LogFilter.EmoteMonitor);
         }
         return false;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        Svc.Logger.Information("EmoteMonitor started.", LoggerType.EmoteMonitor);
+        Svc.Logger.Information("EmoteMonitor started.", LogFilter.EmoteMonitor);
         return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        Svc.Logger.Information("EmoteMonitor stopped.", LoggerType.EmoteMonitor);
+        Svc.Logger.Information("EmoteMonitor stopped.", LogFilter.EmoteMonitor);
         return Task.CompletedTask;
     }
 }

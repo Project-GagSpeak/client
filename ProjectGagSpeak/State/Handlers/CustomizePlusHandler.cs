@@ -40,17 +40,17 @@ public class CustomizePlusHandler
     {
         var prevprofile = FinalProfile;
         if (_cache.UpdateFinalCache())
-            _logger.LogDebug($"Final C+ Profile updated to [{FinalProfile.ProfileName}] with Priority {FinalProfile.Priority}.", LoggerType.VisualCache);
+            _logger.LogDebug($"Final C+ Profile updated to [{FinalProfile.ProfileName}] with Priority {FinalProfile.Priority}.", LogFilter.VisualCache);
         else
-            _logger.LogTrace("No change in Final C+ Profile.", LoggerType.VisualCache);
+            _logger.LogTrace("No change in Final C+ Profile.", LogFilter.VisualCache);
 
         // If the profile changed, apply the profile cache.
         if (!FinalProfile.Equals(prevprofile))
         {
-            _logger.LogDebug("Ensuring C+ is locked in the correct state.", LoggerType.VisualCache);
+            _logger.LogDebug("Ensuring C+ is locked in the correct state.", LogFilter.VisualCache);
             await ApplyProfileCache();
         }
-        _logger.LogDebug("Finished Updating C+ Caches.", LoggerType.VisualCache);
+        _logger.LogDebug("Finished Updating C+ Caches.", LogFilter.VisualCache);
     }
 
     public void EnsureRestrictedProfile()
@@ -67,7 +67,7 @@ public class CustomizePlusHandler
         // Ensure the item is staying enabled.
         if (active.ProfileGuid != FinalProfile.ProfileGuid)
         {
-            _logger.LogTrace($"C+ Profile [{FinalProfile.ProfileName}] found in Cache! Reapplying to enforce helplessness!", LoggerType.IpcCustomize);
+            _logger.LogTrace($"C+ Profile [{FinalProfile.ProfileName}] found in Cache! Reapplying to enforce helplessness!", LogFilter.IpcCustomize);
             _ipc.EnableClientProfile(FinalProfile.ProfileGuid);
         }
     }
@@ -82,7 +82,7 @@ public class CustomizePlusHandler
         }
         else
         {
-            _logger.LogDebug($"Applying C+ Cache ([{FinalProfile.ProfileName} - Priority {FinalProfile.Priority}]", LoggerType.IpcGlamourer);
+            _logger.LogDebug($"Applying C+ Cache ([{FinalProfile.ProfileName} - Priority {FinalProfile.Priority}]", LogFilter.IpcGlamourer);
             EnsureRestrictedProfile();
             return Task.CompletedTask;
         }

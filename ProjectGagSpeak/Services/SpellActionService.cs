@@ -86,13 +86,13 @@ public sealed class SpellActionService : IHostedService
 
     public Task StartAsync(CancellationToken ct)
     {
-        Svc.Logger.Information("SpellAction Monitor started.", LoggerType.EmoteMonitor);
+        Svc.Logger.Information("SpellAction Monitor started.", LogFilter.EmoteMonitor);
         return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken ct)
     {
-        Svc.Logger.Information("SpellAction Monitor stopped.", LoggerType.EmoteMonitor);
+        Svc.Logger.Information("SpellAction Monitor stopped.", LogFilter.EmoteMonitor);
         return Task.CompletedTask;
     }
 }

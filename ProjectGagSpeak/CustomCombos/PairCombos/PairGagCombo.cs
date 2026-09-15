@@ -76,11 +76,11 @@ public sealed class PairGagCombo : CkFilterComboButton<KinksterGag>
             var result = await _mainHub.UserChangeKinksterActiveGag(dto);
             if (result.ErrorCode is not GagSpeakApiEc.Success)
             {
-                Log.LogDebug($"Failed to perform ApplyGag with {Current.Gag.GagName()} on {_kinksterRef.GetNickAliasOrUid()}, Reason:{result}", LoggerType.StickyUI);
+                Log.LogDebug($"Failed to perform ApplyGag with {Current.Gag.GagName()} on {_kinksterRef.GetNickAliasOrUid()}, Reason:{result}", LogFilter.StickyUI);
             }
             else
             {
-                Log.LogDebug($"Applying Gag with {Current.Gag.GagName()} on {_kinksterRef.GetNickAliasOrUid()}", LoggerType.StickyUI);
+                Log.LogDebug($"Applying Gag with {Current.Gag.GagName()} on {_kinksterRef.GetNickAliasOrUid()}", LogFilter.StickyUI);
                 PostButtonPress?.Invoke();
             }
         });

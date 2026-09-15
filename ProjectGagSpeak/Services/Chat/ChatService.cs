@@ -137,7 +137,7 @@ public class ChatService : DisposableMediatorSubscriberBase
 
         //var sChatLog = GetOrCreateSanctionLog(sGroup.Info.Sanction, sGroup.ChatId);
         //sChatLog.LoadHistory(history);
-        Logger.LogDebug($"Loaded ChatHistory for {chatID.ChatId} with {history.Count} messages.", LoggerType.GlobalChat);
+        Logger.LogDebug($"Loaded ChatHistory for {chatID.ChatId} with {history.Count} messages.", LogFilter.GlobalChat);
     }
 
     internal void OnChatMessageRecieved(ChatlogMessage logMsg)
@@ -221,7 +221,7 @@ public class ChatService : DisposableMediatorSubscriberBase
     {
         if (ChatlogOverride.Equals(ChatlogId.Invalid))
         {
-            Logger.LogDebug("[ReloadOverrideColor] ChatlogOverride is Invalid. Resetting color.", LoggerType.GlobalChat);
+            Logger.LogDebug("[ReloadOverrideColor] ChatlogOverride is Invalid. Resetting color.", LogFilter.GlobalChat);
             OverrideColor = new();
             return;
         }
@@ -234,14 +234,14 @@ public class ChatService : DisposableMediatorSubscriberBase
             case GsChatKind.Direct:
                 if (_chatConfig.Data.DMTextColor != default)
                 {
-                    Logger.LogDebug("[ReloadOverrideColor] Applying custom Direct Message text color.", LoggerType.GlobalChat);
+                    Logger.LogDebug("[ReloadOverrideColor] Applying custom Direct Message text color.", LogFilter.GlobalChat);
                     newColor = _chatConfig.Data.DMTextColor;
                 }
                 break;
             case GsChatKind.Global:
                 if (_chatConfig.Data.ChatColor != default)
                 {
-                    Logger.LogDebug("[ReloadOverrideColor] Applying custom Global chat color.", LoggerType.GlobalChat);
+                    Logger.LogDebug("[ReloadOverrideColor] Applying custom Global chat color.", LogFilter.GlobalChat);
                     newColor = _chatConfig.Data.ChatColor;
                 }
                 break;
@@ -334,7 +334,7 @@ public class ChatService : DisposableMediatorSubscriberBase
 
     private async void SendChatInternal(ChatlogId id, SentMessage messageDto)
     {
-        Logger.LogInformation($"Sending off message to [{id.Kind}]({id.ChatId})", LoggerType.ChatHooks);
+        Logger.LogInformation($"Sending off message to [{id.Kind}]({id.ChatId})", LogFilter.ChatHooks);
         
         // this will need to be moved or changed for future planned chat updates
         SentMessage finalMessage;

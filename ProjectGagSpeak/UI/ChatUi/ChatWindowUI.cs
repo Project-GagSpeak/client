@@ -259,7 +259,7 @@ public class ChatWindowUI : WindowMediatorSubscriberBase
         {
             _selected = _globalChat;
             _chatDrawer.UseDiscordFormat = false;
-            _logger.LogInformation($"Selected RadarChat", LoggerType.GlobalChat);
+            _logger.LogInformation($"Selected RadarChat", LogFilter.GlobalChat);
         }
 
         if (_chatService.DMChats.Count > 0)
@@ -273,7 +273,7 @@ public class ChatWindowUI : WindowMediatorSubscriberBase
                 {
                     _selected = dmLog;
                     _chatDrawer.UseDiscordFormat = true;
-                    _logger.LogInformation($"Selected DMChatLog: DMLog_{label}", LoggerType.GlobalChat);
+                    _logger.LogInformation($"Selected DMChatLog: DMLog_{label}", LogFilter.GlobalChat);
                 }
             }
         }

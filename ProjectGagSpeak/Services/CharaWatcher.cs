@@ -121,7 +121,7 @@ public unsafe class CharaWatcher : IHostedService
 
         // Add it to the list of valid rendered characters.
         _validRendered.Add(addr);
-        // _logger.LogTrace($"Valid Actor Rendered: {addr:X} - {chara->GetName()}", LoggerType.OwnedObjects);
+        // _logger.LogTrace($"Valid Actor Rendered: {addr:X} - {chara->GetName()}", LogFilter.OwnedObjects);
 
         // If it was a GPose actor, early return.
         if (_visibleActors.TryAddTrackedGPoseActor(chara))

@@ -38,7 +38,7 @@ public sealed class ChatboxController : DisposableMediatorSubscriberBase
 
     private void ChatLogPostShow(AddonEvent type, AddonArgs args)
     {
-        Logger.LogTrace("ChatLog Visibility changed. Checking if helplessness needs reinforcing.", LoggerType.HardcoreActions);
+        Logger.LogTrace("ChatLog Visibility changed. Checking if helplessness needs reinforcing.", LogFilter.HardcoreActions);
         if (_hideChatInput)
             Svc.Framework.RunOnTick(() => AddonChatLog.SetChatInputVisibility(!_hideChatInput), delayTicks:1);
 
@@ -49,7 +49,7 @@ public sealed class ChatboxController : DisposableMediatorSubscriberBase
     private void FrameworkUpdate()
     {
         if (_blockingInput == _blockInput) return;
-        Logger.LogTrace($"Chat input block changed to {_blockInput}. Correcting text box state.", LoggerType.HardcoreActions);
+        Logger.LogTrace($"Chat input block changed to {_blockInput}. Correcting text box state.", LogFilter.HardcoreActions);
         AddonChatLog.DisableInput(_blockInput);
         _blockingInput = _blockInput;
     }

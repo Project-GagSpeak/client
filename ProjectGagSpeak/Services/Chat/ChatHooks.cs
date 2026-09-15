@@ -213,12 +213,12 @@ public unsafe class ChatHooks : DisposableMediatorSubscriberBase
         if (message->StringPtr.Value[0] == 2)
         {
             // check for autotranslate commands
-            Logger.LogTrace("SendMessageInternal starts with 0x02, checking for autotranslate command...", LoggerType.ChatHooks);
+            Logger.LogTrace("SendMessageInternal starts with 0x02, checking for autotranslate command...", LogFilter.ChatHooks);
             var payload = Payload.Decode(new BinaryReader(new UnmanagedMemoryStream(message->StringPtr, message->BufSize)));
             // Custom commands dont have Auto-Translate, so valid.
             if (payload is AutoTranslatePayload at && at.Text[2..].StartsWith('/'))
             {
-                Logger.LogTrace("SendMessageInternal was AutoTranslatePayload with command, allowing.", LoggerType.ChatHooks);
+                Logger.LogTrace("SendMessageInternal was AutoTranslatePayload with command, allowing.", LogFilter.ChatHooks);
                 return true;
             }
         }
@@ -246,9 +246,9 @@ public unsafe class ChatHooks : DisposableMediatorSubscriberBase
             // Clean this up so the command manager can handle errored return values.
             if (_commands.IsGlobalChatCommand(command))
             {
-                Logger.LogTrace($"Intercepted GlobalChat message [{command}]", LoggerType.ChatHooks);
+                Logger.LogTrace($"Intercepted GlobalChat message [{command}]", LogFilter.ChatHooks);
                 var radarLogId = new ChatlogId(GsChatKind.Global, "GlobalChat");
-                Logger.LogDebug($"Intercepted GlobalChatLog: [{command}]", LoggerType.ChatHooks);
+                Logger.LogDebug($"Intercepted GlobalChatLog: [{command}]", LogFilter.ChatHooks);
                 // Extract the message.
                 var entireMessage = MemoryHelper.ReadRawNullTerminated((nint)message->StringPtr.Value);
                 // Update the channel we are sending it to.
@@ -272,7 +272,7 @@ public unsafe class ChatHooks : DisposableMediatorSubscriberBase
 
             if (_commands.IsTellCommand(command))
             {
-                Logger.LogTrace($"Intercepted GsTellChatLog message [{command}]", LoggerType.ChatHooks);
+                Logger.LogTrace($"Intercepted GsTellChatLog message [{command}]", LogFilter.ChatHooks);
                 if (_commands.CommandToChatKind(command) is not { } chatKind)
                 {
                     Mediator.Publish(new ChatCmdFailureMessage(null, command, string.Empty, ChatFailType.TargetResolutionFailed));
@@ -309,7 +309,7 @@ public unsafe class ChatHooks : DisposableMediatorSubscriberBase
                     return false;
                 }
 
-                Logger.LogDebug($"Intercepted CkChatLog [{command} {targetArg}] -> (Kind: {resolved.Kind} - ID: {resolved.ChatId})", LoggerType.ChatHooks);
+                Logger.LogDebug($"Intercepted CkChatLog [{command} {targetArg}] -> (Kind: {resolved.Kind} - ID: {resolved.ChatId})", LogFilter.ChatHooks);
                 // Extract the message.
                 var entireMessage = MemoryHelper.ReadRawNullTerminated((nint)message->StringPtr.Value);
                 // Update the channel we are sending it to.
@@ -335,13 +335,13 @@ public unsafe class ChatHooks : DisposableMediatorSubscriberBase
         // Allow the message if it was an invalid ChatLogId
         if (sendTo.Equals(ChatlogId.Invalid))
         {
-            Logger.LogTrace($"SendMessageInternal: No valid chatlog override found.", LoggerType.ChatHooks);
+            Logger.LogTrace($"SendMessageInternal: No valid chatlog override found.", LogFilter.ChatHooks);
             return true;
         }
 
         if (blockCustomNative)
         {
-            Logger.LogTrace($"SendMessageInternal: blockCustomNative was true.", LoggerType.ChatHooks);
+            Logger.LogTrace($"SendMessageInternal: blockCustomNative was true.", LogFilter.ChatHooks);
             return true;
         }
 
@@ -350,12 +350,12 @@ public unsafe class ChatHooks : DisposableMediatorSubscriberBase
         // don't send blank messages even to the original handler
         if (msgContents.Length is 0 || msgContents.All(c => char.IsWhiteSpace((char)c)))
         {
-            Logger.LogTrace($"SendMessageInternal: Message is blank after processing, not sending.", LoggerType.ChatHooks);
+            Logger.LogTrace($"SendMessageInternal: Message is blank after processing, not sending.", LogFilter.ChatHooks);
             return false;
         }
 
         // Internally send off the message, and perhaps also off to others via chat distribution.
-        Logger.LogTrace($"SendMessageInternal: Sending off message to chatlog override (Kind: {sendTo.Kind} - ID: {sendTo.ChatId}), with contents: '{Encoding.UTF8.GetString(msgContents)}'", LoggerType.ChatHooks);
+        Logger.LogTrace($"SendMessageInternal: Sending off message to chatlog override (Kind: {sendTo.Kind} - ID: {sendTo.ChatId}), with contents: '{Encoding.UTF8.GetString(msgContents)}'", LogFilter.ChatHooks);
         _chatService.SendMessageNative(sendTo, msgContents, message);
         // Prevent it from being sent off to the game.
         return false;
@@ -371,16 +371,16 @@ public unsafe class ChatHooks : DisposableMediatorSubscriberBase
         // avoid potential stack overflow from recursion
         if (_chatService.ChatlogOverride != ChatlogId.Invalid)
         {
-            Logger.LogDebug($"SetChatChannel called on channel={(NativeInputChannel)channel}, with TmpChannel={(NativeInputChannel)RaptureShellModule.Instance()->TempChatType}", LoggerType.ChatHooks);
+            Logger.LogDebug($"SetChatChannel called on channel={(NativeInputChannel)channel}, with TmpChannel={(NativeInputChannel)RaptureShellModule.Instance()->TempChatType}", LogFilter.ChatHooks);
             // If the TempChatType is -2, it means that we should restore the temp channel to its original state.
             if (RaptureShellModule.Instance()->TempChatType == -2)
             {
-                Logger.LogTrace($"Restoring original temp chat channel. Setting override to Invalid.", LoggerType.ChatHooks);
+                Logger.LogTrace($"Restoring original temp chat channel. Setting override to Invalid.", LogFilter.ChatHooks);
                 _chatService.ChatlogOverride = ChatlogId.Invalid;
             }
         }
 
-        Logger.LogTrace($"SetChatChannel called with channel={(NativeInputChannel)channel}.", LoggerType.ChatHooks);
+        Logger.LogTrace($"SetChatChannel called with channel={(NativeInputChannel)channel}.", LogFilter.ChatHooks);
         SetChatChannelHook.Original(module, channel);
     }
 
@@ -405,7 +405,7 @@ public unsafe class ChatHooks : DisposableMediatorSubscriberBase
             $"\n\tLabel        : {agent->ChannelLabel.ToString()}" +
             $"\n\tReplyChannel : {(NativeInputChannel)agent->ReplyChannel}" +
             $"\n\tTellName     : {agent->TellPlayerName.ToString()} @ {agent->TellWorldId}" +
-            $"\n\tChatLogId    : [{_chatService.ChatlogOverride.Kind}_{_chatService.ChatlogOverride.ChatId}]", LoggerType.ChatHooks);
+            $"\n\tChatLogId    : [{_chatService.ChatlogOverride.Kind}_{_chatService.ChatlogOverride.ChatId}]", LogFilter.ChatHooks);
 
         // Nothing to override, so return.
         if (_chatService.ChatlogOverride == ChatlogId.Invalid)
@@ -420,7 +420,7 @@ public unsafe class ChatHooks : DisposableMediatorSubscriberBase
         var chatChannel = agent->ChannelLabel;
         var overrideName = _chatService.ResolveOverrideName();
         // If not a temp channel update the name, otherwise, allow it to function as normal.
-        Logger.LogDebug($"ChangeChannelName overriding current chatChannel ({overrideName}) ({chatChannel.ToString()})", LoggerType.ChatHooks);
+        Logger.LogDebug($"ChangeChannelName overriding current chatChannel ({overrideName}) ({chatChannel.ToString()})", LogFilter.ChatHooks);
         fixed (byte* bytesPtr = Encoding.UTF8.GetBytes("\u3000 " + overrideName + "\0"))
         {
             chatChannel.SetString(bytesPtr);
@@ -438,8 +438,8 @@ public unsafe class ChatHooks : DisposableMediatorSubscriberBase
     private bool ChangeChatChannelDetour(RaptureShellModule* shell, int channel, uint linkshellIndex, Utf8String* target, bool setChatType)
     {
         var ret = ChangeChatChannelHook!.Original(shell, channel, linkshellIndex, target, setChatType);
-        Logger.LogDebug($"ChangeChatChannelDetour: to {(NativeInputChannel)channel} with linkshellIndex {linkshellIndex} and target '{(target != null ? target->ToString() : "null")}', setChatType={setChatType}", LoggerType.ChatHooks);
-        Logger.LogDebug($"TempChatType: {(NativeInputChannel)shell->TempChatType}, CurrChatType: {(NativeInputChannel)shell->ChatType}, RetValue={ret}", LoggerType.ChatHooks);
+        Logger.LogDebug($"ChangeChatChannelDetour: to {(NativeInputChannel)channel} with linkshellIndex {linkshellIndex} and target '{(target != null ? target->ToString() : "null")}', setChatType={setChatType}", LogFilter.ChatHooks);
+        Logger.LogDebug($"TempChatType: {(NativeInputChannel)shell->TempChatType}, CurrChatType: {(NativeInputChannel)shell->ChatType}, RetValue={ret}", LogFilter.ChatHooks);
         return ret;
     }
 
@@ -449,12 +449,12 @@ public unsafe class ChatHooks : DisposableMediatorSubscriberBase
         var replyMode = AgentChatLog.Instance()->ReplyChannel;
         if (replyMode == -2)
         {
-            Logger.LogTrace($"ReplyInSelectedChatMode called with replyMode -2, using original function without setting channel", LoggerType.ChatHooks);
+            Logger.LogTrace($"ReplyInSelectedChatMode called with replyMode -2, using original function without setting channel", LogFilter.ChatHooks);
             ReplyInSelectedChatModeHook!.Original(agent);
             return;
         }
         
-        Logger.LogDebug($"ReplyInSelectedChatMode called with replyMode {replyMode}, setting channel to {(XivChatType)replyMode} before calling original function", LoggerType.ChatHooks);
+        Logger.LogDebug($"ReplyInSelectedChatMode called with replyMode {replyMode}, setting channel to {(XivChatType)replyMode} before calling original function", LogFilter.ChatHooks);
         SetChannelInternal((NativeInputChannel)replyMode);
         ReplyInSelectedChatModeHook!.Original(agent);
     }
@@ -467,7 +467,7 @@ public unsafe class ChatHooks : DisposableMediatorSubscriberBase
             try
             {
                 Logger.LogTrace($"SetContextTellTarget called with playerName='{playerName->ToString()}', worldName='{(worldName != null ? worldName->ToString() : "null")}', " +
-                    $"worldId={worldId}, accountId={accountId}, contentId={contentId}, reason={reason}, setChatType={setChatType}", LoggerType.ChatHooks);
+                    $"worldId={worldId}, accountId={accountId}, contentId={contentId}, reason={reason}, setChatType={setChatType}", LogFilter.ChatHooks);
                 // Can maybe do something here idk.
             }
             catch (Exception ex)
@@ -489,10 +489,10 @@ public unsafe class ChatHooks : DisposableMediatorSubscriberBase
         // call the ChangeChatChannel function with them.
         //
         // Callers should call ChatLogWindow.SetChannel() which handles ExtraChat channels
-        Logger.LogTrace($"SetChannelInternal called with channel {channel} and tellTarget '{tellTarget?.VanityOrAnonName ?? "UNK"}'", LoggerType.ChatHooks);
+        Logger.LogTrace($"SetChannelInternal called with channel {channel} and tellTarget '{tellTarget?.VanityOrAnonName ?? "UNK"}'", LogFilter.ChatHooks);
         if (channel is NativeInputChannel.Invalid)
         {
-            Logger.LogTrace("SetChannelInternal was a GSChat channel, ignoring.", LoggerType.ChatHooks);
+            Logger.LogTrace("SetChannelInternal was a GSChat channel, ignoring.", LogFilter.ChatHooks);
             return;
         }
 
@@ -504,11 +504,11 @@ public unsafe class ChatHooks : DisposableMediatorSubscriberBase
         // As a fallback if not valid for any linkshell, abort.
         if (!channel.ValidAnyLinkshell())
         {
-            Logger.LogWarning($"Attempted to set chat channel to {channel} which is not valid for any linkshell, aborting.", LoggerType.ChatHooks);
+            Logger.LogWarning($"Attempted to set chat channel to {channel} which is not valid for any linkshell, aborting.", LogFilter.ChatHooks);
             return;
         }
 
-        Logger.LogDebug($"Setting chat channel to {channel} with idx {idx} and target, Nullable: '{target is null}', for tellTarget '{tellTarget?.VanityOrAnonName}'", LoggerType.ChatHooks);
+        Logger.LogDebug($"Setting chat channel to {channel} with idx {idx} and target, Nullable: '{target is null}', for tellTarget '{tellTarget?.VanityOrAnonName}'", LogFilter.ChatHooks);
         RaptureShellModule.Instance()->ChangeChatChannel(tellTarget != null ? 17 : (int)channel, idx, target, true);
         target->Dtor(true);
     }

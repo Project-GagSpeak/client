@@ -6,6 +6,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Chat;
 using GagSpeak.Gui.Components;
+using GagSpeak.Gui.Settings;
 using GagSpeak.Localization;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
@@ -68,7 +69,7 @@ public class GlobalChatTab
         ImGui.SameLine(minX + totalWidth - CkGui.IconSize(FAI.Book).X);
         CkGui.HoverIconText(FAI.Cog, ImGuiColors.TankBlue.ToUint());
         if (ImGui.IsItemClicked())
-            _mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
+            _mediator.Publish(new UiToggleMessage(typeof(NewSettingsUI)));
         CkGui.AttachTooltip("View configurable settings for chat.");
 
         ImGui.Separator();

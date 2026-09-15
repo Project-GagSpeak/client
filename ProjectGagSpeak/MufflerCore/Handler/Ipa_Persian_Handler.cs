@@ -37,18 +37,18 @@ public class Ipa_Persian_Handler
             var jsonFilePath = Path.Combine(GsFiles.AssemblyDirectory, data_file);
             var json = File.ReadAllText(jsonFilePath);
             obj = JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
-            _logger.LogInformation($"File read: {data_file}", LoggerType.GarblerCore);
+            _logger.LogInformation($"File read: {data_file}", LogFilter.GarblerCore);
             ExtractUniquePhonetics();
             uniqueSymbolsString = string.Join(",", uniqueSymbols);
         }
         catch (FileNotFoundException)
         {
-            _logger.LogDebug($"File does not exist: {data_file}", LoggerType.GarblerCore);
+            _logger.LogDebug($"File does not exist: {data_file}", LogFilter.GarblerCore);
             obj = new Dictionary<string, string>();
         }
         catch (Bagagwa ex)
         {
-            _logger.LogDebug($"An error occurred while reading the file: {ex.Message}", LoggerType.GarblerCore);
+            _logger.LogDebug($"An error occurred while reading the file: {ex.Message}", LogFilter.GarblerCore);
             obj = new Dictionary<string, string>();
         }
     }
@@ -160,7 +160,7 @@ public class Ipa_Persian_Handler
 
     public string ConvertToSpacedPhonetics(string input)
     {
-        _logger.LogDebug($"[IPA Parser] Converting phonetics to spaced phonetics: {input}", LoggerType.GarblerCore);
+        _logger.LogDebug($"[IPA Parser] Converting phonetics to spaced phonetics: {input}", LogFilter.GarblerCore);
         var output = "";
         // Add a placeholder at the start and end of the input string
         input = " " + input + " ";
@@ -169,7 +169,7 @@ public class Ipa_Persian_Handler
         // Iterate over the phonetic representations
         foreach (var representation in phoneticRepresentations)
         {
-            _logger.LogDebug($"[IPA Parser] Phonetic representation: {representation}", LoggerType.GarblerCore);
+            _logger.LogDebug($"[IPA Parser] Phonetic representation: {representation}", LogFilter.GarblerCore);
             // Remove the placeholders
             var phonetics = representation.Trim();
             // Check if the representation has a phonetic representation
@@ -218,7 +218,7 @@ public class Ipa_Persian_Handler
                 output += phonetics + " ";
             }
         }
-        _logger.LogDebug($"[IPA Parser] Converted phonetics to spaced phonetics: {output}", LoggerType.GarblerCore);
+        _logger.LogDebug($"[IPA Parser] Converted phonetics to spaced phonetics: {output}", LogFilter.GarblerCore);
         // Remove the trailing space and return the output
         return output.TrimEnd();
     }

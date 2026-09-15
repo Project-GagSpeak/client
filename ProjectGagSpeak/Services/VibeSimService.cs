@@ -65,17 +65,17 @@
 //        try
 //        {
 //            // if devicechange is false, assume we are initializing
-//            _logger.LogDebug($"Detected Device Count: {WaveOut.DeviceCount}", LoggerType.Toys);
+//            _logger.LogDebug($"Detected Device Count: {WaveOut.DeviceCount}", LogFilter.Toys);
 //            // see what device is currently selected
 //            for (var i = 0; i < WaveOut.DeviceCount; i++)
 //            {
 //                var capabilities = WaveOut.GetCapabilities(i);
-//                _logger.LogTrace($"Device {i}: {capabilities.ProductName}", LoggerType.Toys);
+//                _logger.LogTrace($"Device {i}: {capabilities.ProductName}", LogFilter.Toys);
 //                PlaybackDevices.Add(capabilities.ProductName); // add the device name to the list
 //            }
 
 //            waveOutDevice.Init(waveProvider);
-//            _logger.LogInformation("SoundPlayer sucessfully setup with NAudio", LoggerType.Toys);
+//            _logger.LogInformation("SoundPlayer sucessfully setup with NAudio", LogFilter.Toys);
 //        }
 //        catch (NAudio.MmException ex)
 //        {
@@ -91,11 +91,11 @@
 //                    {
 //                        var capabilities = WaveOut.GetCapabilities(i);
 //                        _logger.LogTrace($"Device {i}: {capabilities.ProductName}\n" +
-//                        $" --- Supports Playback Control: {capabilities.SupportsPlaybackRateControl}", LoggerType.Toys);
+//                        $" --- Supports Playback Control: {capabilities.SupportsPlaybackRateControl}", LogFilter.Toys);
 
 //                        waveOutDevice = new WaveOutEvent { DeviceNumber = i, DesiredLatency = 80, NumberOfBuffers = 3 };
 //                        waveOutDevice.Init(waveProvider);
-//                        _logger.LogTrace("SoundPlayer successfully setup with NAudio for device " + i, LoggerType.Toys);
+//                        _logger.LogTrace("SoundPlayer successfully setup with NAudio for device " + i, LogFilter.Toys);
 //                        // if we reach here, the device is valid and we can break the loop
 //                        ActivePlaybackDeviceId = i + 1;
 //                        break;
@@ -144,7 +144,7 @@
 
 //        waveOutDevice = new WaveOutEvent { DeviceNumber = deviceId - 1, DesiredLatency = 80, NumberOfBuffers = 3 };
 //        waveOutDevice.Init(pitchShifter.ToWaveProvider16());
-//        _logger.LogDebug($"Switched to device {deviceId}: {PlaybackDevices[deviceId]}", LoggerType.Toys);
+//        _logger.LogDebug($"Switched to device {deviceId}: {PlaybackDevices[deviceId]}", LogFilter.Toys);
 
 //        if (wasActiveBeforeChange)
 //        {

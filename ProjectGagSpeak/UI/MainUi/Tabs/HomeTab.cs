@@ -7,10 +7,12 @@ using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using GagSpeak.Gui.Chat;
 using GagSpeak.Gui.Profile;
 using GagSpeak.Gui.Publications;
 using GagSpeak.Gui.Remote;
+using GagSpeak.Gui.Settings;
 using GagSpeak.Gui.Toybox;
 using GagSpeak.Gui.Wardrobe;
 using GagSpeak.PlayerClient;
@@ -23,7 +25,6 @@ using GagSpeak.WebAPI;
 using OtterGui.Text;
 using OtterGuiInternal;
 using System.Globalization;
-using FFXIVClientStructs.FFXIV.Client.UI;
 
 namespace GagSpeak.Gui.MainWindow;
 
@@ -243,7 +244,7 @@ public class HomeTab
         ImUtf8.SameLineInner();
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + (CkGui.CalcFontTextSize("A", Fonts.SubtitleFont).Y - ImUtf8.FrameHeightSpacing));
         if (CkGui.IconButton(FAI.PencilAlt, inPopup: true))
-            _mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
+            _mediator.Publish(new UiToggleMessage(typeof(NewSettingsUI)));
         CkGui.AttachTooltip("Open Alias/Vanity Editor");
 
         // Below it, draw out the other data
@@ -310,7 +311,7 @@ public class HomeTab
             }
         }
         if (ImGui.IsItemClicked())
-            _mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
+            _mediator.Publish(new UiToggleMessage(typeof(NewSettingsUI)));
         CkGui.AttachTooltip("Reflects current Account Standing.--NL--" +
             "--COL--Too many strikes can lead to restrictions or bans.--COL--", ImGuiColors.ParsedGrey);
 
@@ -444,7 +445,7 @@ public class HomeTab
         CkGui.AttachTooltip("Publish created Patterns & LociData for others to enjoy!");
 
         if (DrawMenuButton(winPtr, style, FAI.Cog, "Settings Menu", width, false))
-            _mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
+            _mediator.Publish(new UiToggleMessage(typeof(NewSettingsUI)));
         CkGui.AttachTooltip("Opens the Settings UI.");
 
         if (DrawMenuButton(winPtr, style, FAI.Book, "View Changelog", width, false))
@@ -505,7 +506,7 @@ public class HomeTab
             CkGui.AttachTooltip("Publish created Patterns & LociData for others to enjoy!");
 
             if (DrawMenuButton(winPtr, style, FAI.Cog, "Settings Menu", width, false))
-                _mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
+                _mediator.Publish(new UiToggleMessage(typeof(NewSettingsUI)));
             CkGui.AttachTooltip("Opens the Settings UI.");
 
             if (DrawMenuButton(winPtr, style, FAI.Book, "View Changelog", width, false))

@@ -73,7 +73,7 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
         // If the traits changed, update the slots.
         if (sources != _latestSources)
         {
-            Logger.LogDebug($"Updating sources from [{_latestSources}] to [{sources}].", LoggerType.HardcoreActions);
+            Logger.LogDebug($"Updating sources from [{_latestSources}] to [{sources}].", LogFilter.HardcoreActions);
             _latestSources = sources;
             // recalculate the banned slots for this job.
             SetBannedJobActions(PlayerData.JobId);
@@ -88,7 +88,7 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
         // If there are no more controlling traits, restore and return.
         if (_latestSources is Traits.None)
         {
-            Logger.LogDebug("No controlling traits, restoring saved slots.", LoggerType.HardcoreActions);
+            Logger.LogDebug("No controlling traits, restoring saved slots.", LogFilter.HardcoreActions);
             return;
         }
 
@@ -101,7 +101,7 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
     /// </summary>
     private unsafe void SetBannedSlots()
     {
-        Logger.LogDebug("Setting banned slots based on current traits.", LoggerType.HardcoreActions);
+        Logger.LogDebug("Setting banned slots based on current traits.", LogFilter.HardcoreActions);
         var hotbarModule = Framework.Instance()->GetUIModule()->GetRaptureHotbarModule();
 
         // the length of our hotbar count
@@ -154,7 +154,7 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
         if (hotbarModule is null)
             return;
 
-        Logger.LogDebug("Restoring saved slots", LoggerType.HardcoreActions);
+        Logger.LogDebug("Restoring saved slots", LogFilter.HardcoreActions);
         var baseSpan = hotbarModule->Hotbars; // the length of our hotbar count
         for (var i = 0; i < baseSpan.Length; i++)
         {
@@ -165,7 +165,7 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
         }
 
         // Reset the last modified tooltip to null, as we no longer need it.
-        Logger.LogDebug("Resetting last modified tooltip's recast timer item.", LoggerType.HardcoreActions);
+        Logger.LogDebug("Resetting last modified tooltip's recast timer item.", LogFilter.HardcoreActions);
         if (_lastModifiedTooltip is not null)
         {
             var castRecastContainer = _lastModifiedTooltip->GetNodeById(CAST_RECAST_CONTAINER_ID);
@@ -259,7 +259,7 @@ public sealed class HotbarActionHandler : DisposableMediatorSubscriberBase
         if (_traitActionIds.All(x => x.Id != hoveredAct.ActionId))
             return;
 
-        Logger.LogTrace($"Action ({hoveredAct.ActionId}) is a TraitRestriction tooltip, altaring display.", LoggerType.HardcoreActions);
+        Logger.LogTrace($"Action ({hoveredAct.ActionId}) is a TraitRestriction tooltip, altaring display.", LogFilter.HardcoreActions);
         // hide away the recast container, as it is not needed. (but maybe make it work?)
         var castRecastContainer = addon->GetNodeById(CAST_RECAST_CONTAINER_ID);
         if (castRecastContainer is not null)

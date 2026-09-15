@@ -181,7 +181,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
 
     private void OnTerritoryChanged(ushort prevZone, ushort newZone)
     {
-        Logger.LogTrace("Current Territory Id: " + PlayerContent.TerritoryID, LoggerType.AchievementEvents);
+        Logger.LogTrace("Current Territory Id: " + PlayerContent.TerritoryID, LogFilter.AchievementEvents);
         if (PlayerContent.InMainCity)
             (ClientAchievements.SaveData[Achievements.WalkOfShame.Id] as TimeRequiredConditionalAchievement)?.StartTask();
 
@@ -269,7 +269,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
 
     private void OnDutyStart(IDutyStateEventArgs args)
     {
-        Logger.LogInformation("Duty Started", LoggerType.AchievementEvents);
+        Logger.LogInformation("Duty Started", LogFilter.AchievementEvents);
         if (PlayerData.InPvP)
             return;
 
@@ -298,7 +298,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
         if (PlayerData.InPvP)
             return;
 
-        Logger.LogInformation("Duty Ended", LoggerType.AchievementEvents);
+        Logger.LogInformation("Duty Ended", LogFilter.AchievementEvents);
         if ((ClientAchievements.SaveData[Achievements.UCanTieThis.Id] as ConditionalProgressAchievement)?.ConditionalTaskBegun ?? false)
             (ClientAchievements.SaveData[Achievements.UCanTieThis.Id] as ConditionalProgressAchievement)?.FinishConditionalTask();
 
@@ -340,7 +340,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
     private void OnCharaOnlineCleanupForLatest(UserData user, CharaActiveGags gagInfo, CharaActiveRestrictions restrictionsInfo, CharaActiveRestraint restraintInfo)
     {
         var activeGagTrackingKeys = gagInfo.ActiveGagTrackingKeys();
-        Logger.LogDebug("Player Character " + user.AliasOrUID + " went online and has new active data. Cleaning up expired information!", LoggerType.AchievementEvents);
+        Logger.LogDebug("Player Character " + user.AliasOrUID + " went online and has new active data. Cleaning up expired information!", LogFilter.AchievementEvents);
         // Do stuff if its a gag type.
         (ClientAchievements.SaveData[Achievements.WhispersToWhimpers.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGagTrackingKeys);
         (ClientAchievements.SaveData[Achievements.OfMuffledMoans.Id] as DurationAchievement)?.CleanupTracking(user.UID, activeGagTrackingKeys);
@@ -896,7 +896,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
 
     private void ClientHardcoreFollowChanged(string enactorUID, bool newState)
     {
-        Logger.LogDebug("We just had another pair set our ForceFollow to " + newState, LoggerType.AchievementInfo);
+        Logger.LogDebug("We just had another pair set our ForceFollow to " + newState, LogFilter.AchievementInfo);
         // client will always be the affectedUID
         var affectedUID = MainHub.UID;
 
@@ -929,7 +929,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
 
     private void PairHardcoreFollowChanged(string enactorUID, string affectedUID, bool newState)
     {
-        Logger.LogDebug("You have set a pairs forcedFollow to " + newState, LoggerType.AchievementInfo);
+        Logger.LogDebug("You have set a pairs forcedFollow to " + newState, LogFilter.AchievementInfo);
         // Check to see if we are the one toggling this or if it was someone else.
         var enactorWasSelf = enactorUID == MainHub.UID;
 
@@ -939,7 +939,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
             // dont allow tracking for the enabled state by any pairs that are not us.
             if (!enactorWasSelf)
             {
-                Logger.LogDebug("We should not be tracking hardcore achievements for any pairs that we are not directly applying hardcore actions to!", LoggerType.AchievementInfo);
+                Logger.LogDebug("We should not be tracking hardcore achievements for any pairs that we are not directly applying hardcore actions to!", LogFilter.AchievementInfo);
                 return;
             }
 
@@ -961,7 +961,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
 
     private void ClientHardcoreEmoteStateChanged(string enactorUID, bool newState)
     {
-        Logger.LogDebug("We just had another pair set our ForceEmote to " + newState, LoggerType.AchievementInfo);
+        Logger.LogDebug("We just had another pair set our ForceEmote to " + newState, LogFilter.AchievementInfo);
         // client will always be the affectedUID
         var affectedUID = MainHub.UID;
 
@@ -982,7 +982,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
 
     private void ClientHardcoreStayChanged(string enactorUID, bool newState)
     {
-        Logger.LogDebug("We just had another pair set our ForceStay to " + newState, LoggerType.AchievementInfo);
+        Logger.LogDebug("We just had another pair set our ForceStay to " + newState, LogFilter.AchievementInfo);
         // client will always be the affectedUID
         var affectedUID = MainHub.UID;
 
@@ -1008,7 +1008,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
 
     private void ClientHardcoreBlindfoldChanged(string enactorUID, bool newState)
     {
-        Logger.LogDebug("We just had another pair set our ForceBlindfold to " + newState, LoggerType.AchievementInfo);
+        Logger.LogDebug("We just had another pair set our ForceBlindfold to " + newState, LogFilter.AchievementInfo);
         // client will always be the affectedUID
         var affectedUID = MainHub.UID;
 
@@ -1047,7 +1047,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
     private void OnHardcoreAction(HcAttribute actionKind, bool state, UserData enactor, string targetUID)
     {
         var enactorUID = enactor!.UID;
-        Logger.LogDebug($"HardcoreStatus ({actionKind}) is now ({state}). And was enacted by [{enactorUID}] on [{targetUID}]", LoggerType.AchievementInfo);
+        Logger.LogDebug($"HardcoreStatus ({actionKind}) is now ({state}). And was enacted by [{enactorUID}] on [{targetUID}]", LogFilter.AchievementInfo);
         var targetIsClient = targetUID == MainHub.UID;
 
         if (actionKind is HcAttribute.Follow)

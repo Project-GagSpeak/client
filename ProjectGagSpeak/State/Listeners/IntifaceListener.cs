@@ -37,7 +37,7 @@ public sealed class IntifaceListener : DisposableMediatorSubscriberBase
         Generic.Safe(() =>
         {
             // Get the idx of the removed device.
-            Logger.LogInformation($"Device {removed.Name} removed from device list.", LoggerType.Toys);
+            Logger.LogInformation($"Device {removed.Name} removed from device list.", LogFilter.Toys);
             var realToys = _manager.Storage.Values.OfType<IntifaceBuzzToy>();
             if (realToys.FirstOrDefault(st => st.DeviceIdx == removed.Index) is { } match)
                 _manager.RemoveDevice(match);
@@ -49,13 +49,13 @@ public sealed class IntifaceListener : DisposableMediatorSubscriberBase
     /// <summary> Fired when scanning for devices is finished </summary>
     private void OnScanningFinished()
     {
-        Logger.LogInformation("Finished Scanning for new Devices", LoggerType.Toys);
+        Logger.LogInformation("Finished Scanning for new Devices", LogFilter.Toys);
     }
 
     private async void OnPostConnected()
     {
         // see if we sucessfully connected
-        Logger.LogInformation("Connected to Intiface Central", LoggerType.Toys);
+        Logger.LogInformation("Connected to Intiface Central", LogFilter.Toys);
         await _ipc.DeviceScannerTask();
         // begin the battery check loop
         _manager.StartBatteryCheck();

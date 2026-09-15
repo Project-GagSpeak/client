@@ -12,6 +12,14 @@ public enum GsCol
     VibrantPinkHovered,
     VibrantPinkPressed,
 
+    Text,
+    TextMuted,
+    TextFaint,
+    TextGhost,
+
+    HoverOverlay,
+    ActiveOverlay,
+
     ShopKeeperColor,
     ShopKeeperText,
 
@@ -29,6 +37,8 @@ public enum GsCol
     SideButton,
     SideButtonBG,
 }
+
+
 public struct ColorMod
 {
     public GsCol Var;
@@ -82,12 +92,6 @@ public static class GsColors
 
     public static Vector4 Vec4(this GsCol col)
         => _vec4[(int)col];
-
-    public static void SetColors(MainConfig config)
-    {
-        foreach (var kvp in config.GsColors)
-            Set(kvp.Key, kvp.Value);
-    }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization | MethodImplOptions.AggressiveInlining)]
     public static void Set(GsCol var, Vector4 col)
@@ -274,6 +278,13 @@ public static class GsColors
 
         { GsCol.ShopKeeperColor,         new Vector4(0.886f, 0.407f, 0.658f, 1.000f) },
         { GsCol.ShopKeeperText,          new Vector4(1.000f, 0.711f, 0.843f, 1.000f) },
+
+        { GsCol.Text,                    new Vector4(0.910f, 0.918f, 0.941f, 1.000f) },
+        { GsCol.TextMuted,               new Vector4(0.553f, 0.576f, 0.635f, 1.000f) },
+        { GsCol.TextFaint,               new Vector4(0.357f, 0.380f, 0.455f, 1.000f) },
+        { GsCol.TextGhost,               new Vector4(0.235f, 0.255f, 0.314f, 1.000f) },
+        { GsCol.HoverOverlay,            new Vector4(1.000f, 1.000f, 1.000f, 0.100f) },
+        { GsCol.ActiveOverlay,           new Vector4(1.000f, 1.000f, 1.000f, 0.200f) },
 
         { GsCol.LushPinkLine,            new Vector4(0.806f, 0.102f, 0.407f, 1.000f) },
         { GsCol.LushPinkLineDisabled,    new Vector4(0.806f, 0.102f, 0.407f, 0.500f) },

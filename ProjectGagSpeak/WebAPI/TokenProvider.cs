@@ -59,7 +59,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
     {
         foreach (var entry in _tokenCache)
         {
-            Logger.LogInformation($"Identifier: {entry.Key}, Token: {entry.Value}", LoggerType.JwtTokens);
+            Logger.LogInformation($"Identifier: {entry.Key}, Token: {entry.Value}", LogFilter.JwtTokens);
         }
     }
 
@@ -91,7 +91,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
         {
             while (!PlayerData.Available && !token.IsCancellationRequested)
             {
-                Logger.LogDebug("Player not loaded in yet, waiting", LoggerType.ApiCore);
+                Logger.LogDebug("Player not loaded in yet, waiting", LogFilter.MainHub);
                 await Task.Delay(TimeSpan.FromSeconds(1), token).ConfigureAwait(false);
             }
         }
@@ -109,12 +109,12 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
             if (!isRenewal)
             {
                 // if we are not renewing, we are requesting a new token
-                Logger.LogDebug("GetNewToken: Requesting new token", LoggerType.JwtTokens);
+                Logger.LogDebug("GetNewToken: Requesting new token", LogFilter.JwtTokens);
 
                 // check the identifier type.
                 if (identifier is SecretKeyJwtIdentifier secretKeyIdentifier)
                 {
-                    Logger.LogDebug("Calling the SecretKeyJwtIdentifier", LoggerType.JwtTokens);
+                    Logger.LogDebug("Calling the SecretKeyJwtIdentifier", LogFilter.JwtTokens);
                     // Use the secret key for authentication
                     var secretKey = secretKeyIdentifier.SecretKey;
                     var forceMain = secretKeyIdentifier.ExpectPrimary.ToString();
@@ -126,7 +126,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
                         .Replace("wss://", "https://", StringComparison.OrdinalIgnoreCase)
                         .Replace("ws://", "http://", StringComparison.OrdinalIgnoreCase)));
 
-                    Logger.LogTrace("Token URI: "+tokenUri, LoggerType.JwtTokens);
+                    Logger.LogTrace("Token URI: "+tokenUri, LogFilter.JwtTokens);
                     result = await _httpClient.PostAsync(tokenUri, new FormUrlEncodedContent(new[]
                     {
                         new KeyValuePair<string, string>("charaIdent", await GagSpeakSecurity.GetClientIdentHash().ConfigureAwait(false)),
@@ -136,7 +136,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
                 }
                 else if (identifier is LocalContentIDJwtIdentifier localContentIDIdentifier)
                 {
-                    Logger.LogDebug("Calling the LocalContentIDJwtIdentifier", LoggerType.JwtTokens);
+                    Logger.LogDebug("Calling the LocalContentIDJwtIdentifier", LogFilter.JwtTokens);
                     // Use the local content ID for authentication
                     var localContentID = localContentIDIdentifier.LocalContentID;
 
@@ -145,7 +145,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
                         .Replace("wss://", "https://", StringComparison.OrdinalIgnoreCase)
                         .Replace("ws://", "http://", StringComparison.OrdinalIgnoreCase)));
 
-                    Logger.LogTrace("Token URI: "+tokenUri, LoggerType.JwtTokens);
+                    Logger.LogTrace("Token URI: "+tokenUri, LogFilter.JwtTokens);
                     result = await _httpClient.PostAsync(tokenUri, new FormUrlEncodedContent(new[]
                     {
                         new KeyValuePair<string, string>("charaIdent", await GagSpeakSecurity.GetClientIdentHash().ConfigureAwait(false)),
@@ -160,7 +160,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
             else
             {
                 // we are renewing
-                Logger.LogDebug("GetNewToken: Renewal", LoggerType.JwtTokens);
+                Logger.LogDebug("GetNewToken: Renewal", LogFilter.JwtTokens);
                 // set the token URI to GagspeakAuth's full path, with the base URI being the
                 // server's current API URL, with https:// replaced with wss://
                 // (calling RenewTokenFullPath is different from AuthFullPath
@@ -216,9 +216,9 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(response);
         // log it
-        Logger.LogTrace("GetNewToken: JWT "+response, LoggerType.JwtTokens);
+        Logger.LogTrace("GetNewToken: JWT "+response, LogFilter.JwtTokens);
         Logger.LogDebug("GetNewToken: Valid until " + jwtToken.ValidTo + ", ValidClaim until " +
-            new DateTime(long.Parse(jwtToken.Claims.Single(c => string.Equals(c.Type, "expiration_date", StringComparison.Ordinal)).Value), DateTimeKind.Utc), LoggerType.JwtTokens);
+            new DateTime(long.Parse(jwtToken.Claims.Single(c => string.Equals(c.Type, "expiration_date", StringComparison.Ordinal)).Value), DateTimeKind.Utc), LogFilter.JwtTokens);
         // check if the token is valid by seeing if the token is within 10 minutes of the current time
         var dateTimeMinus10 = DateTime.UtcNow.Subtract(TimeSpan.FromMinutes(10));
         var dateTimePlus10 = DateTime.UtcNow.Add(TimeSpan.FromMinutes(10));
@@ -330,7 +330,7 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
         {
             while (!PlayerData.Available && !linkedCTS.Token.IsCancellationRequested)
             {
-                Logger.LogDebug("Player not loaded in yet, waiting", LoggerType.ApiCore);
+                Logger.LogDebug("Player not loaded in yet, waiting", LogFilter.MainHub);
                 await Task.Delay(TimeSpan.FromSeconds(1), linkedCTS.Token).ConfigureAwait(false);
             }
         }
@@ -338,11 +338,11 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
         {
             if (timeoutCTS.Token.IsCancellationRequested)
             {
-                Logger.LogWarning("GetOrUpdateToken: Timeout reached while waiting for player to load in", LoggerType.ApiCore);
+                Logger.LogWarning("GetOrUpdateToken: Timeout reached while waiting for player to load in", LogFilter.MainHub);
             }
             else
             {
-                Logger.LogWarning("GetOrUpdateToken: Player not loaded in yet, waiting", LoggerType.ApiCore);
+                Logger.LogWarning("GetOrUpdateToken: Player not loaded in yet, waiting", LogFilter.MainHub);
             }
             return null;
         }
@@ -363,26 +363,26 @@ public sealed class TokenProvider : DisposableMediatorSubscriberBase
             if (jwt.ValidTo == DateTime.MinValue || jwt.ValidTo.Subtract(TimeSpan.FromMinutes(5)) > DateTime.UtcNow)
             {
                 // token was valid, so return it LOG NOTE: This is very spammy to the logs if left unchecked.
-                Logger.LogTrace("GetOrUpdate: Returning Valid token from cache", LoggerType.JwtTokens);
+                Logger.LogTrace("GetOrUpdate: Returning Valid token from cache", LogFilter.JwtTokens);
                 return token;
             }
 
             // token expired, requires renewal.
-            Logger.LogDebug("GetOrUpdate: Cached token was found but requires renewal, token valid to: "+jwt.ValidTo+" UTC is now: "+DateTime.UtcNow, LoggerType.JwtTokens);
+            Logger.LogDebug("GetOrUpdate: Cached token was found but requires renewal, token valid to: "+jwt.ValidTo+" UTC is now: "+DateTime.UtcNow, LogFilter.JwtTokens);
             renewal = true;
         }
         // if we did not find the token in the cache, log that we did not find it.
         else
         {
-            Logger.LogDebug("GetOrUpdate: Did not find token in cache, requesting a new one", LoggerType.JwtTokens);
+            Logger.LogDebug("GetOrUpdate: Did not find token in cache, requesting a new one", LogFilter.JwtTokens);
         }
 
         // if we are renewing, log that we are getting a new token, and return it
-        Logger.LogTrace("GetOrUpdate: Getting new token", LoggerType.JwtTokens);
+        Logger.LogTrace("GetOrUpdate: Getting new token", LogFilter.JwtTokens);
 
         // log if the identifier is secretkey or contentid
-        if (jwtIdentifier is SecretKeyJwtIdentifier secretKeyIdentifier) { Logger.LogDebug("GetOrUpdate: Using SecretKeyIdentifier", LoggerType.JwtTokens); }
-        else if (jwtIdentifier is LocalContentIDJwtIdentifier localContentIDIdentifier) { Logger.LogDebug("GetOrUpdate: Using LocalContentIdIdentifier", LoggerType.JwtTokens); }
+        if (jwtIdentifier is SecretKeyJwtIdentifier secretKeyIdentifier) { Logger.LogDebug("GetOrUpdate: Using SecretKeyIdentifier", LogFilter.JwtTokens); }
+        else if (jwtIdentifier is LocalContentIDJwtIdentifier localContentIDIdentifier) { Logger.LogDebug("GetOrUpdate: Using LocalContentIdIdentifier", LogFilter.JwtTokens); }
 
         return await GetNewToken(renewal, jwtIdentifier, ct).ConfigureAwait(false);
     }

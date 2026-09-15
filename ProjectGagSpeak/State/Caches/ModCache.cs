@@ -95,14 +95,14 @@ public class ModCache
                 {
                     anyChange = true;
                 }
-                Logger.LogTrace($"Adding Mod [{mod.Key.ModCacheKey}] with priority [{mod.Key.Key.Priority}] to FinalMods Cache.", LoggerType.VisualCache);
+                Logger.LogTrace($"Adding Mod [{mod.Key.ModCacheKey}] with priority [{mod.Key.Key.Priority}] to FinalMods Cache.", LogFilter.VisualCache);
             }
             else
             {
-                Logger.LogTrace($"Skipped Mod [{mod.Key.ModCacheKey}] with priority [{mod.Key.Key.Priority}] because a mod from the same source mod is already in the FinalMods Cache.", LoggerType.VisualCache);
+                Logger.LogTrace($"Skipped Mod [{mod.Key.ModCacheKey}] with priority [{mod.Key.Key.Priority}] because a mod from the same source mod is already in the FinalMods Cache.", LogFilter.VisualCache);
             }
         }
-        Logger.LogDebug($"FinalMods Cache has [{_finalMods.Count}] mods after update. Any Change: {anyChange}. Total mods tracked: {_mods.Count}", LoggerType.VisualCache);
+        Logger.LogDebug($"FinalMods Cache has [{_finalMods.Count}] mods after update. Any Change: {anyChange}. Total mods tracked: {_mods.Count}", LogFilter.VisualCache);
 
         // output the mods that were removed as well.
         removed = prevMods.Except(_finalMods).ToList();

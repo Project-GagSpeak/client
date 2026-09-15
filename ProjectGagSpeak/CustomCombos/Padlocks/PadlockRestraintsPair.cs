@@ -62,12 +62,12 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
         var result = await _mainHub.UserChangeKinksterActiveRestraint(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
-            Log.LogDebug($"Failed to perform LockRestraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
+            Log.LogDebug($"Failed to perform LockRestraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LogFilter.StickyUI}");
             DisplayToastErrorAndReset(result.ErrorCode, SelectedLock, false);
             return;
         }
 
-        Log.LogDebug($"Locking Restraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
+        Log.LogDebug($"Locking Restraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}", LogFilter.StickyUI);
         ResetSelection();
         ResetInputs();
         ActiveItem = new CharaActiveRestraint();
@@ -91,12 +91,12 @@ public class PairRestraintPadlockCombo : CkPadlockComboBase<CharaActiveRestraint
         var result = await _mainHub.UserChangeKinksterActiveRestraint(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
-            Log.LogDebug($"Failed to perform UnlockRestraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LoggerType.StickyUI}");
+            Log.LogDebug($"Failed to perform UnlockRestraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{LogFilter.StickyUI}");
             DisplayToastErrorAndReset(result.ErrorCode, ActiveItem.Padlock, true);
             return;
         }
 
-        Log.LogDebug($"Unlocking Restraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
+        Log.LogDebug($"Unlocking Restraint with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}", LogFilter.StickyUI);
         ResetSelection();
         ResetInputs();
         ActiveItem = new CharaActiveRestraint();

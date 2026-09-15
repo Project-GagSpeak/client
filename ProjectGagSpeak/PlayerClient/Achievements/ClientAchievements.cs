@@ -128,7 +128,7 @@ public class ClientAchievements
             SetSaveData(dataJObject["LightAchievementData"]);
 
             // Reaching here implies success.
-            _logger.LogInformation("Achievement Data Loaded from Server", LoggerType.Achievements);
+            _logger.LogInformation("Achievement Data Loaded from Server", LogFilter.Achievements);
             _logger.LogDebug("Achievement Data String Loaded:\n" + compressedBase64Data);
             HasValidData = true;
         }

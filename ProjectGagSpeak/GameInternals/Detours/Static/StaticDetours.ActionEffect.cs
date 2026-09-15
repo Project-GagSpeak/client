@@ -15,7 +15,7 @@ public unsafe partial class StaticDetours
     {
         try
         {
-            Logger.LogTrace($"--- source actor: {sourceCharacter->GameObject.EntityId}, action id {effectHeader->ActionId}, numTargets: {effectHeader->NumTargets} ---", LoggerType.ActionEffects);
+            Logger.LogTrace($"--- source actor: {sourceCharacter->GameObject.EntityId}, action id {effectHeader->ActionId}, numTargets: {effectHeader->NumTargets} ---", LogFilter.ActionEffects);
 
             var TargetEffects = new TargetEffect[effectHeader->NumTargets];
 
@@ -32,7 +32,7 @@ public unsafe partial class StaticDetours
 
                     if (!entry.TryGetActionEffectType(out var actionEffectType))
                     {
-                        Logger.LogTrace("EffectType was of type : " + entry.type, LoggerType.ActionEffects);
+                        Logger.LogTrace("EffectType was of type : " + entry.type, LogFilter.ActionEffects);
                         return;
                     }
 

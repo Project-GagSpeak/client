@@ -34,7 +34,7 @@ public class HubFactory : MediatorSubscriberBase
         if (_instance == null || _isDisposed) 
             return;
 
-        Logger.LogDebug("Disposing current connection with GagSpeakHub-Main", LoggerType.HubFactory);
+        Logger.LogDebug("Disposing current connection with GagSpeakHub-Main", LogFilter.HubFactory);
         // Set the _isDisposed flag to true, as we are disposing of the current HubConnection
         _isDisposed = true;
 
@@ -47,7 +47,7 @@ public class HubFactory : MediatorSubscriberBase
         await _instance.StopAsync().ConfigureAwait(false);
         await _instance.DisposeAsync().ConfigureAwait(false);
         _instance = null;
-        Logger.LogDebug("GagSpeakHub-Main Finished Disposing", LoggerType.HubFactory);
+        Logger.LogDebug("GagSpeakHub-Main Finished Disposing", LogFilter.HubFactory);
     }
 
     /// <summary> Gets or creates a new HubConnection. </summary>
@@ -64,10 +64,10 @@ public class HubFactory : MediatorSubscriberBase
     /// <summary> Builds a new HubConnection. </summary>
     private HubConnection BuildHubConnection(CancellationToken ct, string token = "")
     {
-        Logger.LogDebug("Building new HubConnection", LoggerType.HubFactory);
+        Logger.LogDebug("Building new HubConnection", LogFilter.HubFactory);
         var connectionURI = ConnectionsConfig.MAIN_SERVER_URI + IGagspeakHub.Path;
 
-        Logger.LogDebug($"Attempting to connect to URI: {connectionURI}", LoggerType.HubFactory);
+        Logger.LogDebug($"Attempting to connect to URI: {connectionURI}", LogFilter.HubFactory);
         // create the instance, based on the hub type.
         _instance = new HubConnectionBuilder()
             // give it the appropriate URL for the connection.

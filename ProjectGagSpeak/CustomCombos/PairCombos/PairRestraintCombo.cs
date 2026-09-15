@@ -76,11 +76,11 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
             var result = await _mainHub.UserChangeKinksterActiveRestraint(dto);
             if (result.ErrorCode is not GagSpeakApiEc.Success)
             {
-                Log.LogError($"Failed to Perform PairRestraint action to {_pairRef.GetNickAliasOrUid()} : {result.ErrorCode}", LoggerType.StickyUI);
+                Log.LogError($"Failed to Perform PairRestraint action to {_pairRef.GetNickAliasOrUid()} : {result.ErrorCode}", LogFilter.StickyUI);
             }
             else
             {
-                Log.LogDebug("Applying Restraint Set " + Current.Label + " to " + _pairRef.GetNickAliasOrUid(), LoggerType.StickyUI);
+                Log.LogDebug("Applying Restraint Set " + Current.Label + " to " + _pairRef.GetNickAliasOrUid(), LogFilter.StickyUI);
                 PostButtonPress?.Invoke();
             }
         });
@@ -129,7 +129,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
                 }
                 else
                 {
-                    Log.LogDebug($"Applied Layers to {_pairRef.GetNickAliasOrUid()}'s Restraint Set.", LoggerType.StickyUI);
+                    Log.LogDebug($"Applied Layers to {_pairRef.GetNickAliasOrUid()}'s Restraint Set.", LogFilter.StickyUI);
                     PostButtonPress?.Invoke();
                 }
             });
@@ -184,7 +184,7 @@ public sealed class PairRestraintCombo : CkFilterComboButton<KinksterRestraint>
                 }
                 else
                 {
-                    Log.LogDebug($"Removed Layers from {_pairRef.GetNickAliasOrUid()}'s Restraint Set", LoggerType.StickyUI);
+                    Log.LogDebug($"Removed Layers from {_pairRef.GetNickAliasOrUid()}'s Restraint Set", LogFilter.StickyUI);
                     PostButtonPress?.Invoke();
                 }
             });

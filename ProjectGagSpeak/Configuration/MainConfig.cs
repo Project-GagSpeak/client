@@ -53,7 +53,7 @@ public class MainConfigData : IAudioConfigData
     public bool UseLegacyAnonName { get; set; } = false;
 
     // NATIVE UI -> NAMEPLATES //
-    public bool PlateIncludeFriendHighlights { get; set; } = true;
+    public bool PlateIncludeFriendHighlights { get; set; } = false;
     public bool PlateHighlightKinksters { get; set; } = false;
     public NativeUiColor KinksterHighlight { get; set; } = GsDefaults.NameplateColorKinkster;
 
@@ -69,7 +69,7 @@ public class MainConfigData : IAudioConfigData
     public bool ShowContextMenus { get; set; } = true;
 
     // NOTIFICATIONS -> PLUGIN //
-    public bool LiveGarblerZoneChangeWarn { get; set; } = true;
+    public AlertLocation GarblerWarnLocation { get; set; } = AlertLocation.Toast;
     public AlertLocation RequestAlertLocation { get; set; } = AlertLocation.Toast;
     public AlertLocation ConnectionAlertLocation { get; set; } = AlertLocation.Toast;
     public AlertLocation OnlineAlertLocation { get; set; } = AlertLocation.Toast;
@@ -143,7 +143,7 @@ public class MainConfig : IHybridSavable, IAudioConfig<MainConfigData>, IDisposa
     [JsonIgnore] public DateTime LastWriteTimeUTC { get; private set; } = DateTime.MinValue;
     [JsonIgnore] public HybridSaveType SaveType => HybridSaveType.Json;
     public int ConfigVersion => 2;
-    public int LogFilterVersion => 1;
+    public int LogFilterVersion => 2;
     public int MaxBackups => 4;
     public string ToFilePath(GsFiles files) => files.MainConfig;
     public void WriteToStream(StreamWriter writer) => throw new NotImplementedException();
@@ -152,10 +152,10 @@ public class MainConfig : IHybridSavable, IAudioConfig<MainConfigData>, IDisposa
         return new JObject()
         {
             ["Version"] = ConfigVersion,
+            ["LogVersion"] = LogFilterVersion,
             ["Config"] = JObject.FromObject(Data),
             ["LogLevel"] = LogLevel.ToString(),
-            ["LoggerFilters"] = JToken.FromObject(LoggerFilters),
-            ["ServerPaused"] = ServerPaused
+            ["Filters"] = JToken.FromObject(LogFilters),
         }.ToString(Formatting.Indented);
     }
 
@@ -215,14 +215,30 @@ public class MainConfig : IHybridSavable, IAudioConfig<MainConfigData>, IDisposa
             }
             // Read the json from the file.
             var version = jObject["Version"]?.Value<int>() ?? 0;
+            var logVersion = jObject["LogVersion"]?.Value<int>() ?? 0;
 
             // Load instance configuration
-            Data       = jObject["Config"]?.ToObject<MainConfigData>() ?? new MainConfigData();
-            LogLevel      = Enum.TryParse(jObject["LogLevel"]?.Value<string>(), out LogLevel logLevel) ? logLevel : LogLevel.Debug;
-            LoggerFilters = GetLoggerFilters(jObject["LoggerFilters"]);
-            ServerPaused  = jObject["ServerPaused"]?.Value<bool>() ?? false;
+            Data = jObject["Config"]?.ToObject<MainConfigData>() ?? new MainConfigData();
+            LogLevel = Enum.TryParse(jObject["LogLevel"]?.Value<string>(), out LogLevel logLevel) ? logLevel : LogLevel.Debug;
 
-            Svc.Logger.Information("Config loaded.");
+            // Version checking for log filters.
+            if (logVersion < LogFilterVersion)
+            {
+                _logger.LogInformation($"Log Version mismatch, reverting to recommended.");
+                LogFilters = [.. GsLogFilters.Recommended];
+            }
+            else
+            {
+                // Load the new JSON array format directly into a HashSet
+                if (jObject["Filters"] is JArray filtersArray)
+                    LogFilters = filtersArray.ToObject<HashSet<LogFilter>>() ?? [.. GsLogFilters.Recommended];
+                else
+                    LogFilters = [.. GsLogFilters.Recommended];
+            }
+
+            GsLogFilters.UpdateFilters(LogFilters);
+
+            _logger.LogInformation("Config loaded.");
             Save();
             UpdateAudio();
         }
@@ -233,37 +249,10 @@ public class MainConfig : IHybridSavable, IAudioConfig<MainConfigData>, IDisposa
     }
 
     public MainConfigData Data { get; private set; } = new();
-    public Dictionary<GsCol, uint> GsColors { get; private set; } = [];
-    public Dictionary<CkCol, uint> CkColors { get; private set; } = [];
-
-    /// <summary>
-    ///   Updates the paused state of the server. <para />
-    ///   When set to a value, the config is automatically saved.
-    /// </summary>
-    public bool ServerPaused { get; set; } = false;
-
 
     public static LogLevel LogLevel = LogLevel.Trace;
-    public static LoggerType LoggerFilters = LoggerType.Recommended;
+    public static HashSet<LogFilter> LogFilters = [.. GsLogFilters.Recommended];
 
-    public void SetPauseState(bool newValue)
-    {
-        ServerPaused = newValue;
-        Save();
-    }
-
-    private LoggerType GetLoggerFilters(JToken? filtersToken)
-    {
-        if (filtersToken is JArray array)
-        {
-            var list = array.ToObject<List<LoggerType>>() ?? new List<LoggerType>();
-            return list.Aggregate(LoggerType.None, (acc, val) => acc | val);
-        }
-        else
-        {
-            return filtersToken?.ToObject<LoggerType>() ?? LoggerType.Recommended;
-        }
-    }
 
     // Audio Helpers
     public bool IsAudioReady()

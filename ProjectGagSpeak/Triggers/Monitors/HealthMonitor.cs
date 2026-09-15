@@ -49,7 +49,7 @@ public sealed class HealthMonitor : DisposableMediatorSubscriberBase
         {
             if (_.Module is GSModule.Trigger)
             {
-                Logger.LogDebug($"EnabledItemChanged : {_.ItemId} to {_.NewState}", LoggerType.Triggers);
+                Logger.LogDebug($"EnabledItemChanged : {_.ItemId} to {_.NewState}", LogFilter.Triggers);
                 UpdateTriggerForMonitors(_.ItemId, _.NewState);
             }
         });
@@ -57,7 +57,7 @@ public sealed class HealthMonitor : DisposableMediatorSubscriberBase
         {
             if (_.Module is GSModule.Trigger)
             {
-                Logger.LogDebug($"EnabledItemsChanged : {_.Items.Count()} to {_.NewState}", LoggerType.Triggers);
+                Logger.LogDebug($"EnabledItemsChanged : {_.Items.Count()} to {_.NewState}", LogFilter.Triggers);
                 UpdateTriggersForMonitors(_.Items, _.NewState);
             }
         });
@@ -145,7 +145,7 @@ public sealed class HealthMonitor : DisposableMediatorSubscriberBase
 
         // For any triggers associated with this user, add them in.
         var relevantTriggers = _manager.Storage.HealthPercent.Where(t => t.PlayerNameWorld == nameWorld);
-        Logger.LogDebug($"Adding monitor for {addr:X} with {relevantTriggers.Count()} triggers.", LoggerType.Triggers);
+        Logger.LogDebug($"Adding monitor for {addr:X} with {relevantTriggers.Count()} triggers.", LogFilter.Triggers);
         Monitored.Add(addr, new PlayerHealth(nameWorld)
         {
             Triggers = relevantTriggers.Any() ? relevantTriggers.ToHashSet() : [],
@@ -157,7 +157,7 @@ public sealed class HealthMonitor : DisposableMediatorSubscriberBase
     private unsafe void RemoveMonitorsForAddr(nint addr)
     {
         if (Monitored.Remove(addr))
-            Logger.LogDebug($"Removed monitor for {addr:X}", LoggerType.Triggers);
+            Logger.LogDebug($"Removed monitor for {addr:X}", LogFilter.Triggers);
     }
 
     private unsafe void UpdateHpValues()

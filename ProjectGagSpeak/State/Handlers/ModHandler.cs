@@ -66,15 +66,15 @@ public class ModHandler
         // Update the final cache. `removedSlots` contains slots that are no longer restricted after the change.
         if (_cache.UpdateFinalCache(out var removedMods))
         {
-            _logger.LogDebug($"FinalMods Cache was updated!", LoggerType.VisualCache);
+            _logger.LogDebug($"FinalMods Cache was updated!", LogFilter.VisualCache);
             if (removedMods.Any())
                 await RestoreAndReapplyCache(removedMods);
             else
                 await ApplyModCache();
         }
         else
-            _logger.LogTrace("No change in FinalMods Cache.", LoggerType.VisualCache);
-        _logger.LogDebug("Finished Updating Mod Caches.", LoggerType.VisualCache);
+            _logger.LogTrace("No change in FinalMods Cache.", LogFilter.VisualCache);
+        _logger.LogDebug("Finished Updating Mod Caches.", LogFilter.VisualCache);
     }
 
     /// <summary>

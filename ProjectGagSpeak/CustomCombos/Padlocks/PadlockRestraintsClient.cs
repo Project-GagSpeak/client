@@ -56,7 +56,7 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
         }
         else
         {
-            Log.LogDebug($"Failed to perform LockRestraint with {SelectedLock.ToName()} on self.", LoggerType.StickyUI);
+            Log.LogDebug($"Failed to perform LockRestraint with {SelectedLock.ToName()} on self.", LogFilter.StickyUI);
         }
         ResetSelection();
         ResetInputs();

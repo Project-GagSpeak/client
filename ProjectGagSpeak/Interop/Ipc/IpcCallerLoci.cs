@@ -69,14 +69,14 @@ public sealed class IpcCallerLoci : IIpcCaller
         {
             APIAvailable = true;
             FeaturesEnabled = IsEnabled.Invoke();
-            _logger.LogDebug("Loci Enabled!", LoggerType.IpcLoci);
+            _logger.LogDebug("Loci Enabled!", LogFilter.IpcLoci);
             mediator.Publish(new LociReady());
         });
         Disposed = LociApi.Ipc.Disposed.Subscriber(Svc.PluginInterface, () =>
         {
             APIAvailable = false;
             FeaturesEnabled = false;
-            _logger.LogDebug("Loci Disabled!", LoggerType.IpcLoci);
+            _logger.LogDebug("Loci Disabled!", LogFilter.IpcLoci);
             mediator.Publish(new LociDisposed());
         });
         EnabledChanged = EnabledStateChanged.Subscriber(Svc.PluginInterface, state => FeaturesEnabled = state);

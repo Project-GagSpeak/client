@@ -6,6 +6,7 @@ using GagSpeak.Gui.Components;
 using GagSpeak.Gui.MainWindow;
 using GagSpeak.Gui.Profile;
 using GagSpeak.Gui.Remote;
+using GagSpeak.Gui.Settings;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Utils;
@@ -68,7 +69,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
             if (_windowSystem.Windows.Contains(msg.Window))
                 _windowSystem.RemoveWindow(msg.Window);
             else
-                _logger.LogWarning("Attempted to remove a window that is not registered in the WindowSystem: " + msg.Window.WindowName, LoggerType.UI);
+                _logger.LogWarning("Attempted to remove a window that is not registered in the WindowSystem: " + msg.Window.WindowName, LogFilter.UITasks);
 
             _createdWindows.Remove(msg.Window);
             msg.Window.Dispose();
@@ -109,12 +110,12 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     {
         if (DisableUI)
         {
-            Svc.Logger.Warning("Attempted to assign a new UI blocking task while one is already running.", LoggerType.UI);
+            Svc.Logger.Warning("Attempted to assign a new UI blocking task while one is already running.", LogFilter.UITasks);
             return;
         }
 
         UiTask = task;
-        Svc.Logger.Verbose("Assigned new UI blocking task: " + task, LoggerType.UI);
+        Svc.Logger.Verbose("Assigned new UI blocking task: " + task, LogFilter.UITasks);
     }
 
     /// <summary>
@@ -125,12 +126,12 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     {
         if (DisableUI)
         {
-            Svc.Logger.Warning("Attempted to assign a new UI blocking task while one is already running.", LoggerType.UI);
+            Svc.Logger.Warning("Attempted to assign a new UI blocking task while one is already running.", LogFilter.UITasks);
             return;
         }
 
         UiTask = Task.Run(asyncAction);
-        Svc.Logger.Verbose("Assigned new UI blocking task.", LoggerType.UI);
+        Svc.Logger.Verbose("Assigned new UI blocking task.", LogFilter.UITasks);
     }
 
     /// <summary>
@@ -142,13 +143,13 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     {
         if (DisableUI)
         {
-            Svc.Logger.Warning("Attempted to assign a new UI blocking task while one is already running.", LoggerType.UI);
+            Svc.Logger.Warning("Attempted to assign a new UI blocking task while one is already running.", LogFilter.UITasks);
             return default(T)!;
         }
 
         var taskToRun = Task.Run(asyncTask);
         UiTask = taskToRun;
-        Svc.Logger.Verbose("Assigned new UI blocking task.", LoggerType.UI);
+        Svc.Logger.Verbose("Assigned new UI blocking task.", LogFilter.UITasks);
         return await taskToRun.ConfigureAwait(false);
     }
 
@@ -181,7 +182,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
     public void ToggleUi()
     {
         if (_mainConfig.Data.HasValidSetup() && _serverConfig.Current.HasValidSetup())
-            Mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
+            Mediator.Publish(new UiToggleMessage(typeof(NewSettingsUI)));
         else
             Mediator.Publish(new UiToggleMessage(typeof(IntroUi)));
     }
@@ -192,7 +193,7 @@ public sealed class UiService : DisposableMediatorSubscriberBase
         // dispose of the base class
         base.Dispose(disposing);
 
-        _logger.LogTrace("Disposing "+GetType().Name, LoggerType.UI);
+        _logger.LogTrace("Disposing "+GetType().Name, LogFilter.UITasks);
         _windowSystem.RemoveAllWindows();
         foreach (var window in _createdWindows)
             window.Dispose();

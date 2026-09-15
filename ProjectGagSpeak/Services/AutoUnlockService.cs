@@ -127,7 +127,7 @@ public sealed class AutoUnlockService : BackgroundService
         ).ConfigureAwait(false);
         sw.Stop();
         if (sw.ElapsedMilliseconds > 1)
-            _logger.LogDebug($"Checked Padlock & Hardcore Timers in {sw.ElapsedMilliseconds}ms", LoggerType.AutoUnlocks);
+            _logger.LogDebug($"Checked Padlock & Hardcore Timers in {sw.ElapsedMilliseconds}ms", LogFilter.AutoUnlocks);
     }
 
     private unsafe void OnFiveSeconds()
@@ -162,7 +162,7 @@ public sealed class AutoUnlockService : BackgroundService
             var playersInRange = Svc.Objects.OfType<IPlayerCharacter>().Where(player => PlayerData.DistanceTo(player.Position) < 30f).Count();
             if (playersInRange != _lastPlayerCount)
             {
-                _logger.LogTrace("(New Update) There are " + playersInRange + " Players nearby", LoggerType.AchievementInfo, LoggerType.AutoUnlocks);
+                _logger.LogTrace("(New Update) There are " + playersInRange + " Players nearby", LogFilter.AchievementInfo, LogFilter.AutoUnlocks);
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.PlayersInProximity, playersInRange);
                 _lastPlayerCount = playersInRange;
             }
@@ -190,7 +190,7 @@ public sealed class AutoUnlockService : BackgroundService
             if (!gag.Padlock.IsTimerLock()) continue;
             if (!gag.HasTimerExpired()) continue;
 
-            _logger.LogInformation($"{gag.GagItem.GagName()}'s [{gag.Padlock}] Timer Expired!", LoggerType.AutoUnlocks);
+            _logger.LogInformation($"{gag.GagItem.GagName()}'s [{gag.Padlock}] Timer Expired!", LogFilter.AutoUnlocks);
             // store backup state.
             var backup = gag with { };
             var dat = new ActiveGagSlot() with { Padlock = backup.Padlock, Password = backup.Password, PadlockAssigner = backup.PadlockAssigner };
@@ -215,7 +215,7 @@ public sealed class AutoUnlockService : BackgroundService
                     // _mediator.Publish(new GagStateChanged(NewState.Disabled, index, backup, MainHub.UID, MainHub.UID));
                     if (_gags.RemoveGag(index, MainHub.UID, out var visualItem))
                         await _cacheManager.RemoveGagItem(visualItem, index);
-                    _logger.LogInformation($"Gag [{gag.GagItem.GagName()}] Removed due to Timer Expire!", LoggerType.AutoUnlocks);
+                    _logger.LogInformation($"Gag [{gag.GagItem.GagName()}] Removed due to Timer Expire!", LogFilter.AutoUnlocks);
                 }
             }
             else
@@ -238,7 +238,7 @@ public sealed class AutoUnlockService : BackgroundService
             if (!item.Padlock.IsTimerLock()) continue;
             if (!item.HasTimerExpired()) continue;
 
-            _logger.LogInformation($"Restriction Layer {index + 1}'s [{item.Padlock}] Timer Expired!", LoggerType.Restrictions);
+            _logger.LogInformation($"Restriction Layer {index + 1}'s [{item.Padlock}] Timer Expired!", LogFilter.Restrictions);
             // store backup state.
             var backup = item with { };
             var dat = new ActiveRestriction() with { Padlock = backup.Padlock, Password = backup.Password, PadlockAssigner = backup.PadlockAssigner };
@@ -261,7 +261,7 @@ public sealed class AutoUnlockService : BackgroundService
                 {
                     if (_restrictions.RemoveRestriction(index, MainHub.UID, out var visualItem))
                         await _cacheManager.RemoveRestrictionItem(visualItem, index);
-                    _logger.LogInformation($"Restriction Layer {index + 1} Removed due to Timer Expire!", LoggerType.AutoUnlocks);
+                    _logger.LogInformation($"Restriction Layer {index + 1} Removed due to Timer Expire!", LogFilter.AutoUnlocks);
                 }
             }
             else
@@ -286,7 +286,7 @@ public sealed class AutoUnlockService : BackgroundService
         if (!data.HasTimerExpired())
             return;
 
-        _logger.LogInformation($"RestraintSet's [{data.Padlock.ToName()}] Timer Expired!", LoggerType.AutoUnlocks);
+        _logger.LogInformation($"RestraintSet's [{data.Padlock.ToName()}] Timer Expired!", LogFilter.AutoUnlocks);
         // store backup state.
         var backup = data with { };
         var dat = new CharaActiveRestraint() with { Padlock = backup.Padlock, Password = backup.Password, PadlockAssigner = backup.PadlockAssigner };
@@ -309,7 +309,7 @@ public sealed class AutoUnlockService : BackgroundService
             {
                 if (_restraints.Remove(MainHub.UID, out var restraintSet, out var removedLayers))
                     await _cacheManager.RemoveRestraintSet(restraintSet, removedLayers);
-                _logger.LogInformation($"RestraintSet Removed due to Timer Expire!", LoggerType.AutoUnlocks);
+                _logger.LogInformation($"RestraintSet Removed due to Timer Expire!", LogFilter.AutoUnlocks);
             }
         }
         else
@@ -333,7 +333,7 @@ public sealed class AutoUnlockService : BackgroundService
         {
             if (item.ReleaseTime >= DateTimeOffset.UtcNow) continue;
 
-            _logger.LogInformation($"CursedLoot Item [{item.Label}] Timer Expired!", LoggerType.AutoUnlocks);
+            _logger.LogInformation($"CursedLoot Item [{item.Label}] Timer Expired!", LogFilter.AutoUnlocks);
 
             // store backup state. (CursedItem is a reference type, so copy the values off it, not the item itself)
             var appliedBackup = item.AppliedTime;
@@ -383,7 +383,7 @@ public sealed class AutoUnlockService : BackgroundService
 
             // capture the name now, the unlock & removal below mutate the slot.
             var gagName = slot.GagItem.GagName();
-            _logger.LogInformation($"Freeing gag slot {layer} from expired cursed loot gag [{gagName}]", LoggerType.AutoUnlocks);
+            _logger.LogInformation($"Freeing gag slot {layer} from expired cursed loot gag [{gagName}]", LogFilter.AutoUnlocks);
             // unlock the mimic padlock first, the server will not remove a locked gag.
             var unlockData = new ActiveGagSlot() with { Padlock = slot.Padlock, Password = slot.Password, PadlockAssigner = slot.PadlockAssigner };
             if (await _dds.PushNewActiveGagSlot(layer, unlockData, DataUpdateType.Unlocked).ConfigureAwait(false) is null)
@@ -413,7 +413,7 @@ public sealed class AutoUnlockService : BackgroundService
         // forced follow is special in a sense.
         if (hcState.LockedFollowing.Length > 0 && MovementController.TimeIdleDuringFollow > TimeSpan.FromSeconds(6))
         {
-            _logger.LogInformation("Standing Still for over 6 seconds during LockedFollow. Auto-Disabling!", LoggerType.AutoUnlocks);
+            _logger.LogInformation("Standing Still for over 6 seconds during LockedFollow. Auto-Disabling!", LogFilter.AutoUnlocks);
             var enactor = hcState.LockedFollowing.Split('|')[0];
             // locally change first.
             _clientData.DisableHardcoreStatus(MainHub.OwnUserData, HcAttribute.Follow);
@@ -429,7 +429,7 @@ public sealed class AutoUnlockService : BackgroundService
         // Check Emote Timer.
         if (hcState.LockedEmoteState.Length > 0 && hcState.EmoteExpireTime < DateTimeOffset.UtcNow)
         {
-            _logger.LogInformation("LockedEmote Timer Expired!", LoggerType.AutoUnlocks);
+            _logger.LogInformation("LockedEmote Timer Expired!", LogFilter.AutoUnlocks);
             var enactor = hcState.LockedEmoteState.Split('|')[0];
             // locally change first.
             _clientData.DisableHardcoreStatus(MainHub.OwnUserData, HcAttribute.EmoteState);
@@ -444,7 +444,7 @@ public sealed class AutoUnlockService : BackgroundService
         // Check Confinement Timer.
         if (hcState.IndoorConfinement.Length > 0 && hcState.ConfinementTimer < DateTimeOffset.UtcNow)
         {
-            _logger.LogInformation("Confinement Timer Expired!", LoggerType.AutoUnlocks);
+            _logger.LogInformation("Confinement Timer Expired!", LogFilter.AutoUnlocks);
             var enactor = hcState.IndoorConfinement.Split('|')[0];
             // locally change first.
             _clientData.DisableHardcoreStatus(MainHub.OwnUserData, HcAttribute.Confinement);
@@ -462,7 +462,7 @@ public sealed class AutoUnlockService : BackgroundService
             // if we should be imprisoned but are not (due to failed application)
             if ((_cageControl.ShouldBeImprisoned && !_cageControl.IsImprisoned) || hcState.ImprisonmentTimer < DateTimeOffset.UtcNow)
             {
-                _logger.LogInformation("Imprisonment Timer Expired (or state was invalid!)", LoggerType.AutoUnlocks);
+                _logger.LogInformation("Imprisonment Timer Expired (or state was invalid!)", LogFilter.AutoUnlocks);
                 var enactor = hcState.Imprisonment.Split('|')[0];
                 // locally change first.
                 _clientData.DisableHardcoreStatus(MainHub.OwnUserData, HcAttribute.Imprisonment);
@@ -478,7 +478,7 @@ public sealed class AutoUnlockService : BackgroundService
         // Check Chat Boxes Hidden Timer.
         if (hcState.ChatBoxesHidden.Length > 0 && hcState.ChatBoxesHiddenTimer < DateTimeOffset.UtcNow)
         {
-            _logger.LogInformation("Hidden ChatBoxes Expired!", LoggerType.AutoUnlocks);
+            _logger.LogInformation("Hidden ChatBoxes Expired!", LogFilter.AutoUnlocks);
             var enactor = hcState.ChatBoxesHidden.Split('|')[0];
             // locally change first.
             _clientData.DisableHardcoreStatus(MainHub.OwnUserData, HcAttribute.HiddenChatBox);
@@ -493,7 +493,7 @@ public sealed class AutoUnlockService : BackgroundService
         // Check Chat Input Hidden Timer.
         if (hcState.ChatInputHidden.Length > 0 && hcState.ChatInputHiddenTimer < DateTimeOffset.UtcNow)
         {
-            _logger.LogInformation("Hidden ChatInput Expired!", LoggerType.AutoUnlocks);
+            _logger.LogInformation("Hidden ChatInput Expired!", LogFilter.AutoUnlocks);
             var enactor = hcState.ChatInputHidden.Split('|')[0];
             // locally change first.
             _clientData.DisableHardcoreStatus(MainHub.OwnUserData, HcAttribute.HiddenChatInput);
@@ -508,7 +508,7 @@ public sealed class AutoUnlockService : BackgroundService
         // Check Chat Input Blocked Timer.
         if (hcState.ChatInputBlocked.Length > 0 && hcState.ChatInputBlockedTimer < DateTimeOffset.UtcNow)
         {
-            _logger.LogInformation("Blocked ChatInput Expired!", LoggerType.AutoUnlocks);
+            _logger.LogInformation("Blocked ChatInput Expired!", LogFilter.AutoUnlocks);
             var enactor = hcState.ChatInputBlocked.Split('|')[0];
             // locally change first.
             _clientData.DisableHardcoreStatus(MainHub.OwnUserData, HcAttribute.BlockedChatInput);
@@ -523,7 +523,7 @@ public sealed class AutoUnlockService : BackgroundService
         // Check Hypnotic Effect Timer.
         if (hcState.HypnoticEffect.Length > 0 && hcState.HypnoticEffectTimer < DateTimeOffset.UtcNow)
         {
-            _logger.LogInformation("Hypnotic Effect Timer Expired!", LoggerType.AutoUnlocks);
+            _logger.LogInformation("Hypnotic Effect Timer Expired!", LogFilter.AutoUnlocks);
             var enactor = hcState.HypnoticEffect.Split('|')[0];
             // locally change first.
             _clientData.DisableHardcoreStatus(MainHub.OwnUserData, HcAttribute.HypnoticEffect);
@@ -560,7 +560,7 @@ public sealed class AutoUnlockService : BackgroundService
                 continue;
 
             // Fire that alarm!
-            _logger.LogInformation($"Alarm Triggered!: [{alarm.PatternRef.Label}] Playing Pattern ({alarm.PatternRef.Label})", LoggerType.Alarms);
+            _logger.LogInformation($"Alarm Triggered!: [{alarm.PatternRef.Label}] Playing Pattern ({alarm.PatternRef.Label})", LogFilter.Alarms);
             _patterns.SwitchPattern(alarm.PatternRef, alarm.PatternStartPoint, alarm.PatternDuration, MainHub.UID);
         }
 

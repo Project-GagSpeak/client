@@ -102,7 +102,7 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
         UpdateNextAllowedAttempt(roll, criticalFail);
         _logger.LogDebug(
             $"Attempted remove hardcore, difficulty one in {prePity} with pity {_pityCounter}=>{difficultyOneIn}, rolled {roll}. Next attempt allowed at {_nextAllowedAttempt}",
-            LoggerType.HardcoreActions);
+            LogFilter.HardcoreActions);
 
         if (roll > 0)
         {

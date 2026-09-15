@@ -47,8 +47,8 @@ public class AlertService : DisposableMediatorSubscriberBase, IHostedService
             if(_gags.ServerGagData is not { } gags || ClientData.Globals is not { } perms)
                 return;
 
-            if (_config.Data.LiveGarblerZoneChangeWarn && gags.IsGagged() && perms.ChatGarblerActive)
-                ShowNotification(new NotificationMessage("Zone Switch", "Live Chat Garbler is still Active!", NotificationType.Warning));
+            if (_config.Data.GarblerWarnLocation is not AlertLocation.Nowhere && gags.IsGagged() && perms.ChatGarblerActive)
+                ShowNotificationLocationBased(new NotificationMessage("Zone Switch", "Live Chat Garbler is still Active!", NotificationType.Warning), _config.Data.GarblerWarnLocation);
         });
     }
 

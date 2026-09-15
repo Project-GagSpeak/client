@@ -124,7 +124,7 @@ public class LociHubService : DisposableMediatorSubscriberBase
         {
             try
             {
-                Logger.LogTrace("Uploading Loci Status to server.", LoggerType.ShareHub);
+                Logger.LogTrace("Uploading Loci Status to server.", LogFilter.ShareHub);
                 var res = await _hub.UploadLociStatus(new(authorName, tags, statusInfo.ToStruct()));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                     throw new Exception($"Failed to upload status to servers. Error: {res.ErrorCode}");
@@ -198,7 +198,7 @@ public class LociHubService : DisposableMediatorSubscriberBase
                 return;
             }
 
-            Logger.LogInformation("Like interaction successful.", LoggerType.ShareHub);
+            Logger.LogInformation("Like interaction successful.", LogFilter.ShareHub);
             if (_searchResults.FirstOrDefault(x => x.Status.GUID == statusId) is not { } status)
                 return;
 
@@ -224,7 +224,7 @@ public class LociHubService : DisposableMediatorSubscriberBase
             }
 
             // if successful, notify the user.
-            Logger.LogInformation("Unpublish completed.", LoggerType.ShareHub);
+            Logger.LogInformation("Unpublish completed.", LogFilter.ShareHub);
             _publications.Remove(match);
         }, _sharehubCts.Token);
     }

@@ -202,10 +202,10 @@ public partial class SidePanelPair
                 var res = await _hub.UserShockKinkster(new(k.User, 0, cache.ApplyIntensity, durationMs));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                 {
-                    _logger.LogDebug($"Failed to send Shock to {dispName}'s Shock Collar. ({res})", LoggerType.StickyUI);
+                    _logger.LogDebug($"Failed to send Shock to {dispName}'s Shock Collar. ({res})", LogFilter.StickyUI);
                     return;
                 }
-                _logger.LogDebug($"Sent Shock to {dispName}'s Shock Collar for: {durationMs}ms", LoggerType.StickyUI);
+                _logger.LogDebug($"Sent Shock to {dispName}'s Shock Collar for: {durationMs}ms", LogFilter.StickyUI);
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.ShockSent);
             });
         }
@@ -228,9 +228,9 @@ public partial class SidePanelPair
             {
                 var res = await _hub.UserShockKinkster(new(k.User, 1, cache.ApplyVibeIntensity, durationMs));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
-                    _logger.LogDebug($"Failed to send Vibration to {dispName}'s Shock Collar. ({res})", LoggerType.StickyUI);
+                    _logger.LogDebug($"Failed to send Vibration to {dispName}'s Shock Collar. ({res})", LogFilter.StickyUI);
                 else
-                    _logger.LogDebug($"Sent Vibration to {dispName}'s Shock Collar for: {durationMs}ms", LoggerType.StickyUI);
+                    _logger.LogDebug($"Sent Vibration to {dispName}'s Shock Collar for: {durationMs}ms", LogFilter.StickyUI);
             });
         }
     }
@@ -250,9 +250,9 @@ public partial class SidePanelPair
             {
                 var res = await _hub.UserShockKinkster(new ShockCollarAction(k.User, 2, 0, durationMs));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
-                    _logger.LogDebug($"Failed to send Beep to {dispName}'s Shock Collar. ({res})", LoggerType.StickyUI);
+                    _logger.LogDebug($"Failed to send Beep to {dispName}'s Shock Collar. ({res})", LogFilter.StickyUI);
                 else
-                    _logger.LogDebug($"Sent Beep to {dispName}'s Shock Collar for: {durationMs}ms", LoggerType.StickyUI);
+                    _logger.LogDebug($"Sent Beep to {dispName}'s Shock Collar for: {durationMs}ms", LogFilter.StickyUI);
             });
         }
     }

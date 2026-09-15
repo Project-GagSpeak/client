@@ -13,6 +13,7 @@ using GagSpeak.Gui.Profile;
 using GagSpeak.Gui.Profiles;
 using GagSpeak.Gui.Publications;
 using GagSpeak.Gui.Remote;
+using GagSpeak.Gui.Settings;
 using GagSpeak.Gui.Toybox;
 using GagSpeak.Gui.Wardrobe;
 using GagSpeak.Interop;
@@ -440,19 +441,13 @@ public static class GagSpeakServiceExtensions
         .AddScoped<PatternsPanel>()
         .AddScoped<AlarmsPanel>()
 
-        // Scoped UI (Mod Presets)
+        // Scoped Standalones
         .AddScoped<WindowMediatorSubscriberBase, ModPresetsUI>()
         .AddScoped<ModPresetsPanel>()
-
-        // Scoped UI (Publications)
         .AddScoped<WindowMediatorSubscriberBase, PublicationsUI>()
         .AddScoped<PublicationsManager>()
-
-        // Scoped UI (Achievements)
         .AddScoped<WindowMediatorSubscriberBase, AchievementsUI>()
         .AddScoped<AchievementTabs>()
-
-        // Scoped Migrations
         .AddScoped<WindowMediatorSubscriberBase, MigrationsUI>()
 
         // Scoped Profiles
@@ -466,9 +461,19 @@ public static class GagSpeakServiceExtensions
         .AddScoped<WindowMediatorSubscriberBase, BuzzToyRemoteUI>()
 
         // Scoped Settings
-        .AddScoped<WindowMediatorSubscriberBase, SettingsUi>()
-        .AddScoped<ProfilesTab>()
-        .AddScoped<DebugTab>()
+        .AddScoped<WindowMediatorSubscriberBase, NewSettingsUI>()
+        .AddScoped<SettingsMainPluginUI>()
+        .AddScoped<SettingsMainNativeUI>()
+        .AddScoped<SettingsMainChat>()
+        .AddScoped<SettingsMainNotifications>()
+        .AddScoped<SettingsModulesHardcore>()
+        .AddScoped<SettingsModulesWardrobe>()
+        // .AddScoped<SettingsModulesCursedLoot>()
+        .AddScoped<SettingsModulesPuppeteer>()
+        .AddScoped<SettingsModulesToybox>()
+        .AddScoped<SettingsHubService>()
+        .AddScoped<SettingsHubProfile>()
+        .AddScoped<SettingsDataDebug>()
 
         // Scoped Misc
         .AddScoped<WindowMediatorSubscriberBase, InteractionEventsUI>()

@@ -80,7 +80,7 @@ public partial class MovementDetours : IDisposable
         if (ForceDisableMovementIsActive)
             return;
 
-        _logger.LogTrace("Turning on ForceDisableMovement due to being in a locked state or immobile!", LoggerType.HardcoreMovement);
+        _logger.LogTrace("Turning on ForceDisableMovement due to being in a locked state or immobile!", LogFilter.HardcoreMovement);
         ForceDisableMovement = 1;
     }
 
@@ -90,7 +90,7 @@ public partial class MovementDetours : IDisposable
         if (!ForceDisableMovementIsActive)
             return;
 
-        _logger.LogTrace("Turning off ForceDisableMovement as you are no longer in a locked state or immobile!", LoggerType.HardcoreMovement);
+        _logger.LogTrace("Turning off ForceDisableMovement as you are no longer in a locked state or immobile!", LogFilter.HardcoreMovement);
         ForceDisableMovement = 0;
     }
 }

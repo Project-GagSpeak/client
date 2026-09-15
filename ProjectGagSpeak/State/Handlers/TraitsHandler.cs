@@ -51,12 +51,12 @@ public class TraitsHandler
     {
         // If true, a change occured and there was a difference in traits from the previous.
         if (_cache.UpdateFinalCache())
-            _logger.LogDebug("Final Traits updated.", LoggerType.VisualCache);
+            _logger.LogDebug("Final Traits updated.", LogFilter.VisualCache);
         else
-            _logger.LogTrace("No change in Final Traits.", LoggerType.VisualCache);
+            _logger.LogTrace("No change in Final Traits.", LogFilter.VisualCache);
         _controller.UpdateHardcoreStatus();
         _mediator.Publish(new HcStateCacheChanged());
-        _logger.LogDebug("Finished Updating Traits Caches.", LoggerType.VisualCache);
+        _logger.LogDebug("Finished Updating Traits Caches.", LogFilter.VisualCache);
 
         return Task.CompletedTask;
     }

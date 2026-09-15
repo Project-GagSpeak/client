@@ -57,7 +57,7 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
         }
         else
         {
-            Log.LogDebug($"Failed to perform LockRestriction with {SelectedLock.ToName()} on self.", LoggerType.StickyUI);
+            Log.LogDebug($"Failed to perform LockRestriction with {SelectedLock.ToName()} on self.", LogFilter.StickyUI);
         }
 
         ResetSelection();

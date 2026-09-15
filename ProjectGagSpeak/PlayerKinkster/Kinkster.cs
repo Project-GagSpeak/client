@@ -49,7 +49,7 @@ public class Kinkster : IComparable<Kinkster>
         // Initialize all handlers for the kinkster, holding their lifetime until disposal.
         // Create handlers for each of the objects.
         _player = factory.Create(this);
-        _logger.LogTrace($"Initialized Kinkster for ({GetNickAliasOrUid()}).", LoggerType.PairManagement);
+        _logger.LogTrace($"Initialized Kinkster for ({GetNickAliasOrUid()}).", LogFilter.PairManagement);
     }
 
     // Permissions
@@ -163,7 +163,7 @@ public class Kinkster : IComparable<Kinkster>
     public void MarkOffline()
     {
         _onlineUsers.RemoveOnline(User);
-        _logger.LogTrace($"[{PlayerName}] ({GetNickAliasOrUid()}) went offline, reverting alterations.", LoggerType.PairManagement);
+        _logger.LogTrace($"[{PlayerName}] ({GetNickAliasOrUid()}) went offline, reverting alterations.", LogFilter.PairManagement);
     }
 
 
@@ -173,7 +173,7 @@ public class Kinkster : IComparable<Kinkster>
     /// </summary>
     public void DisposeData()
     {
-        _logger.LogTrace($"Disposing data for {PlayerName}({GetNickAliasOrUid()})", LoggerType.PairManagement);
+        _logger.LogTrace($"Disposing data for {PlayerName}({GetNickAliasOrUid()})", LogFilter.PairManagement);
         // If online, just simply mark offline.
         if (IsOnline)
             _onlineUsers.RemoveOnline(User);
@@ -187,7 +187,7 @@ public class Kinkster : IComparable<Kinkster>
     {
         if (wasSafeword)
         {
-            _logger.LogInformation($"{GetNickAliasOrUid()} used their safeword! Syncronizing their new composite data!", LoggerType.PairDataTransfer);
+            _logger.LogInformation($"{GetNickAliasOrUid()} used their safeword! Syncronizing their new composite data!", LogFilter.DataTransfers);
             ActiveGags = data.Gags;
             ActiveRestrictions = data.Restrictions;
             ActiveRestraint = data.Restraint;
@@ -200,7 +200,7 @@ public class Kinkster : IComparable<Kinkster>
         }
         else
         {
-            _logger.LogDebug("Received Character Composite Data from " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
+            _logger.LogDebug("Received Character Composite Data from " + GetNickAliasOrUid(), LogFilter.DataTransfers);
             ActiveGags = data.Gags;
             ActiveRestrictions = data.Restrictions;
             ActiveRestraint = data.Restraint;
@@ -215,7 +215,7 @@ public class Kinkster : IComparable<Kinkster>
 
             // Update the kinkster cache with the light storage data.
             _logger.LogDebug($"Updating LightCache for {GetNickAliasOrUid()} " +
-                $"[Shared Aliases: {SharedAliases.Count} | ListeningToYou: {IsListeningToClient}]", LoggerType.KinksterCache);
+                $"[Shared Aliases: {SharedAliases.Count} | ListeningToYou: {IsListeningToClient}]", LogFilter.KinksterCache);
 
             _logger.LogInformation($"Initializing Kinkster Cache with " +
                 $"{data.LightStorageData.GagItems.Count()} Gags, " +
@@ -224,7 +224,7 @@ public class Kinkster : IComparable<Kinkster>
                 $"{data.LightStorageData.CursedItems.Count()} Cursed Items, " +
                 $"{data.LightStorageData.Patterns.Count()} Patterns, " +
                 $"{data.LightStorageData.Alarms.Count()} Alarms, " +
-                $"and {data.LightStorageData.Triggers.Count()} Triggers.", LoggerType.KinksterCache);
+                $"and {data.LightStorageData.Triggers.Count()} Triggers.", LogFilter.KinksterCache);
             LightCache = new KinksterCache(data.LightStorageData);
         }
 
@@ -232,7 +232,7 @@ public class Kinkster : IComparable<Kinkster>
         _mediator.Publish(new KinksterActiveGagsChanged(this));
 
         // Regarldess of the change, we should update the kinkster's latest data to the achievement handler.
-        _logger.LogDebug($"Aligning Achievement Trackers in sync with {GetNickAliasOrUid()}'s latest composite data!", LoggerType.PairDataTransfer);
+        _logger.LogDebug($"Aligning Achievement Trackers in sync with {GetNickAliasOrUid()}'s latest composite data!", LogFilter.DataTransfers);
         _mediator.Publish(new PlayerLatestActiveItems(User, ActiveGags, ActiveRestrictions, ActiveRestraint)); // <-- Send whole composite?
     }
 
@@ -241,7 +241,7 @@ public class Kinkster : IComparable<Kinkster>
 
     public void NewActiveGagData(KinksterUpdateActiveGag data)
     {
-        _logger.LogDebug($"Applying updated gag data for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+        _logger.LogDebug($"Applying updated gag data for {GetNickAliasOrUid()}", LogFilter.DataTransfers);
         var prev = ActiveGags.GagSlots[data.AffectedLayer] with { };
         ActiveGags.GagSlots[data.AffectedLayer] = data.NewData;
         switch (data.Type)
@@ -273,7 +273,7 @@ public class Kinkster : IComparable<Kinkster>
 
     public void NewActiveRestrictionData(KinksterUpdateActiveRestriction data)
     {
-        _logger.LogDebug("Applying updated restriction data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
+        _logger.LogDebug("Applying updated restriction data for " + GetNickAliasOrUid(), LogFilter.DataTransfers);
         var prev = ActiveRestrictions.Restrictions[data.AffectedLayer] with { };
         ActiveRestrictions.Restrictions[data.AffectedLayer] = data.NewData;
 
@@ -303,7 +303,7 @@ public class Kinkster : IComparable<Kinkster>
 
     public void NewActiveRestraintData(KinksterUpdateActiveRestraint data)
     {
-        _logger.LogDebug("Applying updated restraint data for " + GetNickAliasOrUid(), LoggerType.PairDataTransfer);
+        _logger.LogDebug("Applying updated restraint data for " + GetNickAliasOrUid(), LogFilter.DataTransfers);
         var prev = ActiveRestraint with { };
         ActiveRestraint = data.NewData;
 
@@ -333,7 +333,7 @@ public class Kinkster : IComparable<Kinkster>
 
     public void NewActiveCollarData(KinksterUpdateActiveCollar data)
     {
-        _logger.LogDebug($"Applying updated collar data for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+        _logger.LogDebug($"Applying updated collar data for {GetNickAliasOrUid()}", LogFilter.DataTransfers);
         ActiveCollar = data.NewData;
         // Achievement and internal kinkplateCache updates based on type.
         switch (data.Type)
@@ -476,18 +476,18 @@ public class Kinkster : IComparable<Kinkster>
             if (newData is not null && newData.CanView(MainHub.UID))
             {
                 alias.ApplyChanges(newData);
-                _logger.LogDebug($"Updating Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+                _logger.LogDebug($"Updating Alias for {GetNickAliasOrUid()}", LogFilter.DataTransfers);
             }
             else
             {
                 SharedAliases.Remove(alias);
-                _logger.LogDebug($"Removing Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+                _logger.LogDebug($"Removing Alias for {GetNickAliasOrUid()}", LogFilter.DataTransfers);
             }
         }
         else if (newData is not null && newData.CanView(MainHub.UID))
         {
             SharedAliases.Add(new AliasTrigger(newData));
-            _logger.LogDebug($"Adding Alias for {GetNickAliasOrUid()}", LoggerType.PairDataTransfer);
+            _logger.LogDebug($"Adding Alias for {GetNickAliasOrUid()}", LogFilter.DataTransfers);
         }
         // Inform marionettes tab of the change.
         _mediator.Publish(new FolderUpdateKinksterAliases(this));
@@ -495,7 +495,7 @@ public class Kinkster : IComparable<Kinkster>
 
     public void UpdateIsListening(bool newState)
     {
-        _logger.LogDebug($"Updating IsListening for {GetNickAliasOrUid()} to {newState}", LoggerType.PairDataTransfer);
+        _logger.LogDebug($"Updating IsListening for {GetNickAliasOrUid()} to {newState}", LogFilter.DataTransfers);
         IsListeningToClient = newState;
         _mediator.Publish(new FolderUpdateMarionettes());
 
@@ -508,7 +508,7 @@ public class Kinkster : IComparable<Kinkster>
     {
         var result = new Dictionary<EquipSlot, (EquipItem, string)>();
         // Rewrite this completely. It sucks, and it does nothing with the 2.0 structure.
-        _logger.LogDebug("Updated Locked Slots for " + User.UID, LoggerType.PairInfo);
+        _logger.LogDebug("Updated Locked Slots for " + User.UID, LogFilter.DataTransfers);
         LockedSlots = result;
     }
 

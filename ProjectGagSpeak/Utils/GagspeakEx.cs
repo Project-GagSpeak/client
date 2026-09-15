@@ -1,5 +1,5 @@
-using System.Runtime.InteropServices;
 using CkCommons;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using GagSpeak.PlayerClient;
@@ -7,6 +7,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using Penumbra.GameData.Structs;
+using System.Runtime.InteropServices;
 
 namespace GagSpeak.Utils;
 
@@ -91,6 +92,15 @@ public static class GagspeakEx
             _ => ImGuiColors.DalamudGrey,
         };
 
+
+    public static uint GetFrameBg(bool hovered, bool held)
+        => ImGui.GetColorU32((hovered, held) switch
+        {
+            (true, true) => ImGuiCol.FrameBgActive,
+            (true, false) => ImGuiCol.FrameBgHovered,
+            _ => ImGuiCol.FrameBg,
+        });
+
     public static Vector4 ServerStateColor()
     {
         return MainHub.ServerStatus switch
@@ -124,24 +134,6 @@ public static class GagspeakEx
             ServerState.Offline => FAI.Signal,
             ServerState.NoSecretKey => FAI.Key,
             _ => FAI.ExclamationTriangle
-        };
-    }
-
-    public static string GetCenterStateText()
-    {
-        return MainHub.ServerStatus switch
-        {
-            ServerState.Reconnecting => "Reconnecting",
-            ServerState.Connecting => "Connecting",
-            ServerState.Disconnected => "Disconnected",
-            ServerState.Disconnecting => "Disconnecting",
-            ServerState.Unauthorized => "Unauthorized",
-            ServerState.VersionMisMatch => "Version Version",
-            ServerState.Offline => "Offline",
-            ServerState.NoSecretKey => "No Secret Key",
-            ServerState.Connected => "Connected",
-            ServerState.ConnectedDataSynced => "Connected",
-            _ => "UNK-STATE"
         };
     }
 

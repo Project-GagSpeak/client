@@ -64,7 +64,7 @@ public class GsEmojiLoader : EmojiLoader
 
     private void LoadGagSpeakEmojis()
     {
-        _logger.LogInformation($"Loading default emojis", LoggerType.Textures);
+        _logger.LogInformation($"Loading default emojis", LogFilter.Textures);
         try
         {
             var defaultEmojiFolder = Path.Combine(GsFiles.AssemblyDirectory, "Assets", "Emotes");
@@ -72,7 +72,7 @@ public class GsEmojiLoader : EmojiLoader
             foreach(var file in Directory.GetFiles(defaultEmojiFolder))
             {
                 // Only use when debugging.
-                _logger.LogTrace($"Loading default emoji {file} exists={File.Exists(file)}", LoggerType.Textures);
+                _logger.LogTrace($"Loading default emoji {file} exists={File.Exists(file)}", LogFilter.Textures);
                 _cache[Path.GetFileNameWithoutExtension(file)] = new(_pool, file);
             }
         }

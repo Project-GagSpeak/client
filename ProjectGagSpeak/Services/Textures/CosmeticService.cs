@@ -76,11 +76,11 @@ public class CosmeticService : IHostedService, IDisposable
                 return;
             }
 
-            _logger.LogDebug("Renting image to store in Cache: " + key, LoggerType.Textures);
+            _logger.LogDebug("Renting image to store in Cache: " + key, LogFilter.Textures);
             if (TextureManager.TryRentAssetDirectoryImage(path, out var texture))
                 InternalCosmeticCache[key] = texture;
         }
-        _logger.LogInformation("GagSpeak Profile Cosmetic Cache Fetched all Cosmetic Images!", LoggerType.Textures);
+        _logger.LogInformation("GagSpeak Profile Cosmetic Cache Fetched all Cosmetic Images!", LogFilter.Textures);
     }
 
     /// <summary> Grabs the texture from GagSpeak Cosmetic Cache Service, if it exists. </summary>

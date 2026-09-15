@@ -98,7 +98,7 @@ public sealed class OwnPresetCombo : LociComboBase<LociPresetInfo>
 
             var res = await _mainHub.UserApplyLociStatusTuples(new(_kinksterRef.User, statuses, false));
             if (res.ErrorCode is GagSpeakApiEc.Success)
-                Log.LogDebug($"Failed to apply loci preset {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LoggerType.StickyUI);
+                Log.LogDebug($"Failed to apply loci preset {item.Title} on {_kinksterRef.GetNickAliasOrUid()}: [{res.ErrorCode}]", LogFilter.StickyUI);
         });
     }
 }

@@ -131,12 +131,12 @@ public partial class SidePanelPair
                     var result = await _hub.UserChangeKinksterActiveGag(dto).ConfigureAwait(false);
                     if (result.ErrorCode is not GagSpeakApiEc.Success)
                     {
-                        _logger.LogDebug($"Failed to Remove ({slot.GagItem.GagName()}) on {dispName}, Reason:{result}", LoggerType.StickyUI);
+                        _logger.LogDebug($"Failed to Remove ({slot.GagItem.GagName()}) on {dispName}, Reason:{result}", LogFilter.StickyUI);
                         return;
                     }
                     else
                     {
-                        _logger.LogDebug($"Removed ({slot.GagItem.GagName()}) from {dispName}", LoggerType.StickyUI);
+                        _logger.LogDebug($"Removed ({slot.GagItem.GagName()}) from {dispName}", LogFilter.StickyUI);
                         cache.ClearInteraction();
                     }
                 });
@@ -248,12 +248,12 @@ public partial class SidePanelPair
                     var result = await _hub.UserChangeKinksterActiveRestriction(dto).ConfigureAwait(false);
                     if (result.ErrorCode is not GagSpeakApiEc.Success)
                     {
-                        _logger.LogDebug($"Failed to Remove Restriction Item on {dispName}, Reason:{result}", LoggerType.StickyUI);
+                        _logger.LogDebug($"Failed to Remove Restriction Item on {dispName}, Reason:{result}", LogFilter.StickyUI);
                         return;
                     }
                     else
                     {
-                        _logger.LogDebug($"Removed Restriction Item from {dispName} on layer {cache.RestrictionLayer}", LoggerType.StickyUI);
+                        _logger.LogDebug($"Removed Restriction Item from {dispName} on layer {cache.RestrictionLayer}", LogFilter.StickyUI);
                         cache.ClearInteraction();
                     }
                 });
@@ -384,7 +384,7 @@ public partial class SidePanelPair
                 {
                     var result = await _hub.UserChangeKinksterActiveRestraint(new(k.User, DataUpdateType.Removed)).ConfigureAwait(false);
                     if (result.ErrorCode is not GagSpeakApiEc.Success)
-                        _logger.LogDebug($"Failed to Remove {dispName}'s Restraint Set. ({result})", LoggerType.StickyUI);
+                        _logger.LogDebug($"Failed to Remove {dispName}'s Restraint Set. ({result})", LogFilter.StickyUI);
                     else
                         cache.ClearInteraction();
                 });
@@ -535,7 +535,7 @@ public partial class SidePanelPair
             {
                 var res = await _hub.UserChangeKinksterPatternState(new(k.User, GSModule.Pattern, k.ActivePattern, false));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
-                    _logger.LogError($"Failed to stop {dispName}'s active pattern. ({res.ErrorCode})", LoggerType.StickyUI);
+                    _logger.LogError($"Failed to stop {dispName}'s active pattern. ({res.ErrorCode})", LogFilter.StickyUI);
                 else
                 {
                     k.NewEnabledState(GSModule.Pattern, k.ActivePattern, false);
@@ -632,7 +632,7 @@ public partial class SidePanelPair
             {
                 var res = await _hub.UserShockKinkster(new(k.User, 0 /* shock */, shockerIntensity, durationMs));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
-                    _logger.LogError($"Failed to shock {dispName}. ({res.ErrorCode})", LoggerType.StickyUI);
+                    _logger.LogError($"Failed to shock {dispName}. ({res.ErrorCode})", LogFilter.StickyUI);
             });
         }
         CkGui.AttachTooltip($"--COL--Delivers a shock to {dispName}.{(canShock ? "" : " Not permitted.")}--COL--", color: canShock ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudGrey);
@@ -643,7 +643,7 @@ public partial class SidePanelPair
             {
                 var res = await _hub.UserShockKinkster(new(k.User, 2 /* beep */, shockerIntensity, durationMs));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
-                    _logger.LogError($"Failed to beep {dispName}. ({res.ErrorCode})", LoggerType.StickyUI);
+                    _logger.LogError($"Failed to beep {dispName}. ({res.ErrorCode})", LogFilter.StickyUI);
             });
         }
         CkGui.AttachTooltip($"--COL--Delivers a beep to {dispName}.{(canBeep ? "" : " Not permitted.")}--COL--", color: canBeep ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudGrey);
@@ -654,7 +654,7 @@ public partial class SidePanelPair
             {
                 var res = await _hub.UserShockKinkster(new(k.User, 1 /* vibrate */, shockerIntensity, durationMs));
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
-                    _logger.LogError($"Failed to vibrate {dispName}. ({res.ErrorCode})", LoggerType.StickyUI);
+                    _logger.LogError($"Failed to vibrate {dispName}. ({res.ErrorCode})", LogFilter.StickyUI);
             });
         }
         CkGui.AttachTooltip($"--COL--Delivers a vibration to {dispName}.{(canVibrate ? "" : " Not permitted.")}--COL--", color: canVibrate ? ImGuiColors.DalamudWhite : ImGuiColors.DalamudGrey);

@@ -114,7 +114,7 @@ public class PuppeteersTab : IFancyTab
             {
                 UiService.SetUITask(async () =>
                 {
-                    _logger.LogTrace($"Updating Ignore-Case to {ignoreCase}", LoggerType.Puppeteer);
+                    _logger.LogTrace($"Updating Ignore-Case to {ignoreCase}", LogFilter.Puppeteer);
                     // This updates the result between transit to look instant on the client end, reverting edit on failure.
                     await PermHelper.ChangeOwnUnique(_hub, kinkster.User, kinkster.OwnPerms, nameof(PairPerms.IgnoreTriggerCase), ignoreCase);
                 });

@@ -27,7 +27,7 @@ public class ThresholdAchievement : AchievementBase
 
         LastRecordedThreshold = threshold;
         GagspeakEventManager.UnlocksLogger.LogTrace($"Updating Threshold for {Title}. Current Threshold: {LastRecordedThreshold}" +
-            $" -- Total Required: {MilestoneGoal}", LoggerType.AchievementInfo);
+            $" -- Total Required: {MilestoneGoal}", LogFilter.AchievementInfo);
         CheckCompletion();
     }
 

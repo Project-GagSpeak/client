@@ -143,7 +143,7 @@ public sealed class GagspeakMediator : IHostedService
             }
 
             // otherwise, we would have sucessfully added it to the dictionary, logging its sucess afterward
-            _logger.LogDebug("Subscriber added for message "+typeof(T).Name+": "+subscriber.GetType().Name, LoggerType.Mediator);
+            _logger.LogDebug("Subscriber added for message "+typeof(T).Name+": "+subscriber.GetType().Name, LogFilter.Mediator);
         }
     }
 
@@ -184,7 +184,7 @@ public sealed class GagspeakMediator : IHostedService
                 // if the subscriber was removed, log the sucess
                 if (unSubbed > 0)
                 {
-                    _logger.LogDebug(subscriber.GetType().Name+" unsubscribed from "+kvp.Name, LoggerType.Mediator);
+                    _logger.LogDebug(subscriber.GetType().Name+" unsubscribed from "+kvp.Name, LogFilter.Mediator);
                 }
             }
         }

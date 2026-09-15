@@ -72,7 +72,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
     {
         _allGarblerData.Clear();
         CreateGags();
-        Logger.LogDebug("Recreated Gags", LoggerType.GarblerCore);
+        Logger.LogDebug("Recreated Gags", LogFilter.GarblerCore);
     }
 
     private void CreateGags()
@@ -120,7 +120,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
         try
         {
             outputStr = GarbleMessageInternal(inputMessage, allowEmotes);
-            Logger.LogTrace($"Garlbed msg: {outputStr}", LoggerType.GarblerCore);
+            Logger.LogTrace($"Garlbed msg: {outputStr}", LogFilter.GarblerCore);
         }
         catch (Bagagwa e)
         {
@@ -139,7 +139,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
             return inputMessage;
 
         // Initialize the algorithm scoped variables
-        Logger.LogDebug($"Converting message to GagSpeak, at least one gag is not None.", LoggerType.GarblerCore);
+        Logger.LogDebug($"Converting message to GagSpeak, at least one gag is not None.", LogFilter.GarblerCore);
         var finalMessage = new StringBuilder();
         var skipTranslation = false;
         try
@@ -201,7 +201,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
                         finalMessage.Append($"{leadingPunctuation}{converted}{trailingPunctuation} ");
 
                         /* ---- THE BELOW LINE WILL CAUSE LOTS OF SPAM, ONLY FOR USE WHEN DEVELOPER DEBUGGING ---- */
-                        Logger.LogTrace($"Converting word [{parsed.Word}] with phonetics [{string.Join(", ", parsed.Phonetics)}]", LoggerType.GarblerCore);
+                        Logger.LogTrace($"Converting word [{parsed.Word}] with phonetics [{string.Join(", ", parsed.Phonetics)}]", LogFilter.GarblerCore);
                     }
                 }
                 else
@@ -227,7 +227,7 @@ public class MufflerService : DisposableMediatorSubscriberBase
     /// </summary>
     private string GarbleWithPhonetics(string word, List<string> phonetics, bool isAllCaps, bool isFirstLetterCapitalized)
     {
-        Logger.LogTrace($"Garbling word [{word}] with phonetics [{string.Join(", ", phonetics)}]", LoggerType.GarblerCore);
+        Logger.LogTrace($"Garbling word [{word}] with phonetics [{string.Join(", ", phonetics)}]", LogFilter.GarblerCore);
         // Otherwise, parse it out normally.
         var outputString = new StringBuilder();
         foreach (var phonetic in phonetics)

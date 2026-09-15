@@ -62,7 +62,7 @@ public class GlamourListener : IDisposable
 
         if (_handler.BlockIpcCalls is not IpcBlockReason.None)
         {
-            // _logger.LogTrace($"[OnStateChanged] ChangeType: [{changeType}] blocked! Still processing! ({_handler.BlockIpcCalls})", LoggerType.IpcGlamourer);
+            // _logger.LogTrace($"[OnStateChanged] ChangeType: [{changeType}] blocked! Still processing! ({_handler.BlockIpcCalls})", LogFilter.IpcGlamourer);
             return;
         }
 
@@ -76,7 +76,7 @@ public class GlamourListener : IDisposable
                 return;
             }
 
-            _logger.LogDebug($"[OnStateChanged] ChangeType: [{changeType}] accepted, Processing ApplySemaphore!", LoggerType.IpcGlamourer);
+            _logger.LogDebug($"[OnStateChanged] ChangeType: [{changeType}] accepted, Processing ApplySemaphore!", LogFilter.IpcGlamourer);
             await _handler.UpdateGlamourCacheSlim(true);
         }
         else if (changeType is StateChangeType.Other)
@@ -93,7 +93,7 @@ public class GlamourListener : IDisposable
                 return;
             }
 
-            _logger.LogDebug($"[OnStateChanged] ChangeType: [{changeType}] accepted, Processing ApplyMetaCache!", LoggerType.IpcGlamourer);
+            _logger.LogDebug($"[OnStateChanged] ChangeType: [{changeType}] accepted, Processing ApplyMetaCache!", LogFilter.IpcGlamourer);
             await _handler.UpdateMetaCacheSlim(true);
         }
 
@@ -117,7 +117,7 @@ public class GlamourListener : IDisposable
         if (address != PlayerData.Address)
             return;
 
-        _logger.LogDebug($"[OnStateFinalized] Type: ({finalizationType})", LoggerType.IpcGlamourer);
+        _logger.LogDebug($"[OnStateFinalized] Type: ({finalizationType})", LogFilter.IpcGlamourer);
 
         // if the finalization type was a gearset finalized, remove the gearset from the ipc blocker filter.
         if (finalizationType is StateFinalizationType.Gearset)
@@ -125,7 +125,7 @@ public class GlamourListener : IDisposable
             // if there was a gearset blocker for the same class
             if (_handler.BlockIpcCalls.HasFlag(IpcBlockReason.Gearset))
             {
-                _logger.LogDebug($"[OnStateFinalized] Type was ({finalizationType}), removing Gearset Blocker!", LoggerType.IpcGlamourer);
+                _logger.LogDebug($"[OnStateFinalized] Type was ({finalizationType}), removing Gearset Blocker!", LogFilter.IpcGlamourer);
                 _handler.OnEquipGearsetFinalized();
                 _cacheLatestForNextMeta = true;
             }
@@ -133,12 +133,12 @@ public class GlamourListener : IDisposable
         
         if (_handler.BlockIpcCalls is not IpcBlockReason.None)
         {
-            _logger.LogDebug($"[OnStateFinalized] Type: ({finalizationType}) blocked! Still processing! ({_handler.BlockIpcCalls})", LoggerType.IpcGlamourer);
+            _logger.LogDebug($"[OnStateFinalized] Type: ({finalizationType}) blocked! Still processing! ({_handler.BlockIpcCalls})", LogFilter.IpcGlamourer);
             _mediator.Publish(new GlamourerChanged());
             return;
         }
 
-        _logger.LogDebug($"[OnStateFinalized] Type: ({finalizationType}) accepted, Caching & Applying!", LoggerType.IpcGlamourer);
+        _logger.LogDebug($"[OnStateFinalized] Type: ({finalizationType}) accepted, Caching & Applying!", LogFilter.IpcGlamourer);
         await _handler.ReapplyAllCaches();
         // process a kinksterSync update post-bondage reapplication.
         _mediator.Publish(new GlamourerChanged());

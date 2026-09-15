@@ -10,7 +10,7 @@ public abstract class WindowMediatorSubscriberBase : Window, IMediatorSubscriber
     {
         _logger = logger;
         Mediator = mediator;
-        _logger.LogTrace("Creating "+GetType(), LoggerType.Mediator);
+        _logger.LogTrace("Creating "+GetType(), LogFilter.Mediator);
 
         Mediator.Subscribe<UiToggleMessage>(this, (msg) =>
         {
@@ -21,18 +21,18 @@ public abstract class WindowMediatorSubscriberBase : Window, IMediatorSubscriber
                 {
                     case ToggleType.Toggle:
                         Toggle();  // Toggles visibility (e.g., if visible, hide; if hidden, show)
-                        _logger.LogTrace("Toggling UI", LoggerType.Mediator);
+                        _logger.LogTrace("Toggling UI", LogFilter.Mediator);
                         break;
 
                     case ToggleType.Show:
                         IsOpen = true;
                         BringToFront();
-                        _logger.LogTrace("Showing UI", LoggerType.Mediator);
+                        _logger.LogTrace("Showing UI", LogFilter.Mediator);
                         break;
 
                     case ToggleType.Hide:
                         IsOpen = false;
-                        _logger.LogTrace("Hiding UI", LoggerType.Mediator);
+                        _logger.LogTrace("Hiding UI", LogFilter.Mediator);
                         break;
                 }
             }
@@ -72,7 +72,7 @@ public abstract class WindowMediatorSubscriberBase : Window, IMediatorSubscriber
 
     protected virtual void Dispose(bool disposing)
     {
-        _logger.LogTrace("Disposing "+GetType(), LoggerType.Mediator);
+        _logger.LogTrace("Disposing "+GetType(), LogFilter.Mediator);
         Mediator.UnsubscribeAll(this);
     }
 }

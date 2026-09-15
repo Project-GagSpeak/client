@@ -16,7 +16,7 @@ public abstract class DisposableMediatorSubscriberBase : MediatorSubscriberBase,
 
     protected virtual void Dispose(bool disposing)
     {
-        Logger.LogTrace("Disposing "+GetType().Name+" ("+this+")", LoggerType.Mediator);
+        Logger.LogTrace("Disposing "+GetType().Name+" ("+this+")", LogFilter.Mediator);
         UnsubscribeAll();
     }
 }

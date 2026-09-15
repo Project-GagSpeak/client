@@ -73,7 +73,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
             // if the lastUnhandled disconnect is MinValue, then we should reset the cache entirely.
             if (!ClientAchievements.HadUnhandledDC)
             {
-                Logger.LogInformation("Had normal disconnect, cleaning up cache for next connection.", LoggerType.Achievements);
+                Logger.LogInformation("Had normal disconnect, cleaning up cache for next connection.", LogFilter.Achievements);
                 ReInitializeAchievements(true);
             }
             // otherwise, they are not re-initialized,
@@ -112,18 +112,18 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         // if the last unhandled disconnect is any value besides MinValue, then load in that data.
         if (!ClientAchievements.HasValidData)
         {
-            Logger.LogWarning("Achievement Save Data is invalid, cannot load achievements. Refusing the update.", LoggerType.Achievements);
+            Logger.LogWarning("Achievement Save Data is invalid, cannot load achievements. Refusing the update.", LogFilter.Achievements);
             return;
         }
 
         // Otherwise we should begin the update loop.
-        Logger.LogInformation("Achievement Save Data is valid, beginning save cycle.", LoggerType.Achievements);
+        Logger.LogInformation("Achievement Save Data is valid, beginning save cycle.", LogFilter.Achievements);
         BeginSaveCycle();
     }
 
     private void BeginSaveCycle()
     {
-        Logger.LogInformation("Beginning Achievement Save Cycle", LoggerType.Achievements);
+        Logger.LogInformation("Beginning Achievement Save Cycle", LogFilter.Achievements);
         _updateLoopCTS = _updateLoopCTS.SafeCancelRecreate();
         _updateLoopTask = RunPeriodicUpdate(_updateLoopCTS!.Token);
     }
@@ -131,7 +131,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
 
     private Task OnCompletion(int id, string title)
     {
-        Logger.LogInformation("Achievement Completed: " + title, LoggerType.Achievements);
+        Logger.LogInformation("Achievement Completed: " + title, LogFilter.Achievements);
         // publish the award notification to the notification manager regardless of if we get inturrupted or not.
         AlertService.ShowCustomNotification(new()
         {
@@ -149,14 +149,14 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
 
     private async Task RunPeriodicUpdate(CancellationToken ct)
     {
-        Logger.LogInformation("Starting SaveData Update Loop", LoggerType.Achievements);
+        Logger.LogInformation("Starting SaveData Update Loop", LogFilter.Achievements);
         var random = new Random();
         while (!ct.IsCancellationRequested)
         {
             var minutesToNextCheck = 60;
             try
             {
-                Logger.LogDebug("Achievement SaveData Update processing...", LoggerType.Achievements);
+                Logger.LogDebug("Achievement SaveData Update processing...", LogFilter.Achievements);
 
                 if (!ClientAchievements.HasValidData)
                 {
@@ -171,13 +171,13 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
                 else
                 {
                     Mediator.Publish(new SendAchievementData());
-                    Logger.LogDebug("Achievement SaveData Update completed successfully.", LoggerType.Achievements);
+                    Logger.LogDebug("Achievement SaveData Update completed successfully.", LogFilter.Achievements);
                     minutesToNextCheck = random.Next(20, 31);
                 }
             }
             catch (OperationCanceledException)
             {
-                Logger.LogDebug("SaveData Update loop canceled.", LoggerType.Achievements);
+                Logger.LogDebug("SaveData Update loop canceled.", LogFilter.Achievements);
                 break;
             }
             catch (Bagagwa ex)
@@ -192,7 +192,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
 
     public void ReInitializeAchievements(bool invalidate)
     {
-        Logger.LogInformation("Resetting achievements data.", LoggerType.Achievements);
+        Logger.LogInformation("Resetting achievements data.", LogFilter.Achievements);
         _saveData.ResetAchievements(invalidate);
 
         #region GAG MODULE
@@ -244,11 +244,11 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
             // We can get this in a way easier way now, but fix later.
             //if (_pairs.GetV().Any(x => x.GameObjectId == Svc.Targets.Target?.GameObjectId))
             //{
-            //    Logger.LogTrace("Target is visible in the pair manager, checking if they are gagged.", LoggerType.Achievements);
+            //    Logger.LogTrace("Target is visible in the pair manager, checking if they are gagged.", LogFilter.Achievements);
             //    var targetPair = _pairs.DirectPairs.FirstOrDefault(x => x.VisiblePairGameObject?.GameObjectId == Svc.Targets.Target?.GameObjectId);
             //    if (targetPair is not null)
             //    {
-            //        Logger.LogTrace("Target is in the direct pairs, checking if they are gagged.", LoggerType.Achievements);
+            //        Logger.LogTrace("Target is in the direct pairs, checking if they are gagged.", LogFilter.Achievements);
             //        targetIsGagged = targetPair.ActiveGags.GagSlots.Any(x => x.GagItem is not GagType.None);
             //    }
             //}
@@ -560,11 +560,11 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
             // We can get this in a way easier way now, but fix later.
             //if (_pairs.GetVisiblePairGameObjects().Any(x => x.GameObjectId == Svc.Targets.Target?.GameObjectId))
             //{
-            //    Logger.LogTrace("Target is visible in the pair manager, checking if they are gagged.", LoggerType.Achievements);
+            //    Logger.LogTrace("Target is visible in the pair manager, checking if they are gagged.", LogFilter.Achievements);
             //    var targetPair = _pairs.DirectPairs.FirstOrDefault(x => x.VisiblePairGameObject?.GameObjectId == Svc.Targets.Target?.GameObjectId);
             //    if (targetPair is not null)
             //    {
-            //        Logger.LogTrace("Target is in the direct pairs, checking if they are gagged.", LoggerType.Achievements);
+            //        Logger.LogTrace("Target is in the direct pairs, checking if they are gagged.", LogFilter.Achievements);
             //        // store if they are stuck emoting.
             //        targetIsImmobile = targetPair.PairHardcore.IsEnabled(HcAttribute.EmoteState);
             //        // TODO:

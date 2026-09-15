@@ -9,7 +9,7 @@ public abstract class MediatorSubscriberBase : IMediatorSubscriber
     {
         Logger = logger;
 
-        Logger.LogTrace("Creating " + GetType().Name + " (" + this + ")", LoggerType.Mediator);
+        Logger.LogTrace("Creating " + GetType().Name + " (" + this + ")", LogFilter.Mediator);
         Mediator = mediator;
     }
 
@@ -18,7 +18,7 @@ public abstract class MediatorSubscriberBase : IMediatorSubscriber
 
     protected void UnsubscribeAll()
     {
-        Logger.LogTrace("Unsubscribing from all for " + GetType().Name + " (" + this + ")", LoggerType.Mediator);
+        Logger.LogTrace("Unsubscribing from all for " + GetType().Name + " (" + this + ")", LogFilter.Mediator);
         Mediator.UnsubscribeAll(this);
     }
 }

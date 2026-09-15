@@ -58,7 +58,7 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
         }
         else
         {
-            Log.LogDebug($"Failed to perform LockGag with {SelectedLock.ToName()} on self.", LoggerType.StickyUI);
+            Log.LogDebug($"Failed to perform LockGag with {SelectedLock.ToName()} on self.", LogFilter.StickyUI);
         }
         ResetSelection();
         ResetInputs();

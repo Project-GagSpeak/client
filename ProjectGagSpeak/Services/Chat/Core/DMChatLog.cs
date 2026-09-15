@@ -54,7 +54,7 @@ public class DMChatLog : RichChatLog<NewGsChatMessage>
     // This is where detections for mentions, highlights, or other nuances should be handled.
     public void ProcessChatMessage(ChatlogMessage msg, bool doPings = true)
     {
-        _logger.LogTrace($"[DirectMsg] ({ID}) recieved msg from <{msg.Sender.UID}>: {msg.Message}", LoggerType.GsTells);
+        _logger.LogTrace($"[DirectMsg] ({ID}) recieved msg from <{msg.Sender.UID}>: {msg.Message}", LogFilter.DMChatlogs);
         // Wrap devs in special text.
         var ctx = msg.Sender.Tier is CkVanityTier.KinkporiumMistress
             ? $"[rawcolor={GsCol.ShopKeeperText.Uint()}]{msg.Message}[/rawcolor]"

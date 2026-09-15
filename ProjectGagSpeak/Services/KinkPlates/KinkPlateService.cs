@@ -43,7 +43,7 @@ public class KinkPlateService : DisposableMediatorSubscriberBase
     {
         if (disposing)
         {
-            Logger.LogInformation("Clearing User Profiles", LoggerType.KinkPlates);
+            Logger.LogInformation("Clearing User Profiles", LogFilter.KinkPlates);
             foreach (var kvp in _kinkplates)
                 if (_kinkplates.TryRemove(kvp.Key, out var profile))
                     profile.Dispose();
@@ -62,7 +62,7 @@ public class KinkPlateService : DisposableMediatorSubscriberBase
         foreach (var kvp in _kinkplates.ToList())
             if (!validUsers.Contains(kvp.Key) && _kinkplates.TryRemove(kvp.Key, out var removedUser))
                 removedUser.Dispose();
-        Logger.LogInformation($"Cleared all Stale Kinkplates™ on connection.", LoggerType.KinkPlates);
+        Logger.LogInformation($"Cleared all Stale Kinkplates™ on connection.", LogFilter.KinkPlates);
     }
 
     // Frees up memory for all profiles which we no longer need the texture wraps for.
@@ -70,7 +70,7 @@ public class KinkPlateService : DisposableMediatorSubscriberBase
     {
         foreach (var userProfile in _kinkplates.Values.ToList())
             userProfile.Dispose();
-        Logger.LogInformation($"Freed all TextureWraps for cached Kinkplates.", LoggerType.KinkPlates);
+        Logger.LogInformation($"Freed all TextureWraps for cached Kinkplates.", LogFilter.KinkPlates);
     }
 
     public bool Contains(UserData user)
@@ -84,7 +84,7 @@ public class KinkPlateService : DisposableMediatorSubscriberBase
         if (_kinkplates.TryGetValue(userData, out var profile))
             return profile;
         // Return a default profile while internally loading the requested profile.
-        Logger.LogTrace($"Assigning LoadingProfile stand-in for {userData.AnonName}", LoggerType.KinkPlates);
+        Logger.LogTrace($"Assigning LoadingProfile stand-in for {userData.AnonName}", LogFilter.KinkPlates);
         _kinkplates[userData] = _factory.CreateKinkplate(userData);
         _ = Task.Run(() => GetUserProfileInternal(userData));
         return _kinkplates[userData];
@@ -106,7 +106,7 @@ public class KinkPlateService : DisposableMediatorSubscriberBase
             return placeholder;
         }).ToList();
 
-        Logger.LogDebug($"GetUserProfiles: {results.Count} profiles returned, {missing.Count} missing.", LoggerType.KinkPlates);
+        Logger.LogDebug($"GetUserProfiles: {results.Count} profiles returned, {missing.Count} missing.", LogFilter.KinkPlates);
         // Enqueue the bulk fetch operation.
         if (missing.Count > 0)
             _ = Task.Run(() => GetUserProfilesInternal(missing));
@@ -128,7 +128,7 @@ public class KinkPlateService : DisposableMediatorSubscriberBase
         if (!_kinkplates.TryGetValue(userData, out var profile))
             return;
 
-        Logger.LogDebug($"Removing ProfileCache for {userData.AnonName}.", LoggerType.KinkPlates);
+        Logger.LogDebug($"Removing ProfileCache for {userData.AnonName}.", LogFilter.KinkPlates);
         // Free up the rented image data, then remove from the cache.
         profile.Dispose();
         _kinkplates.TryRemove(userData, out _);
@@ -142,11 +142,11 @@ public class KinkPlateService : DisposableMediatorSubscriberBase
     {
         try
         {
-            Logger.LogTrace($"Fetching profile for {user.AnonName}", LoggerType.KinkPlates);
+            Logger.LogTrace($"Fetching profile for {user.AnonName}", LogFilter.KinkPlates);
             var data = await _hub.GetKinkplate(new(user)).ConfigureAwait(false);
             // apply the retrieved profile data to the profile object.
             _kinkplates[user].ApplyDataFromHub(data.Info, data.ImageBase64);
-            Logger.LogDebug($"Profile data fetched for {user.AnonName}", LoggerType.KinkPlates);
+            Logger.LogDebug($"Profile data fetched for {user.AnonName}", LogFilter.KinkPlates);
         }
         catch (Bagagwa ex)
         {
@@ -162,11 +162,11 @@ public class KinkPlateService : DisposableMediatorSubscriberBase
     {
         try
         {
-            Logger.LogTrace($"Fetching profiles for {users.Count} users..", LoggerType.KinkPlates);
+            Logger.LogTrace($"Fetching profiles for {users.Count} users..", LogFilter.KinkPlates);
             var retrieved = await _hub.GetKinkplates(new(users)).ConfigureAwait(false);
             foreach (var profile in retrieved)
                 _kinkplates[profile.User].ApplyDataFromHub(profile.Info, profile.ImageBase64);
-            Logger.LogDebug($"Profile data fetched for {users.Count} users.", LoggerType.KinkPlates);
+            Logger.LogDebug($"Profile data fetched for {users.Count} users.", LogFilter.KinkPlates);
         }
         catch (Bagagwa ex)
         {

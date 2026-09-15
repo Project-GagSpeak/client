@@ -94,7 +94,7 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
         if (!await _hypnoService.ApplyEffect(effect, enactor.UID, customImage))
             throw new Bagagwa("Summoned Bagagwa while setting a timed hypnotic effect! This should never happen!");
 
-        Logger.LogInformation($"Timed Hypnosis Effect successfully applied!", LoggerType.VisualCache);
+        Logger.LogInformation($"Timed Hypnosis Effect successfully applied!", LogFilter.VisualCache);
         // Achievements here maybe.
 
         // Set the effect.
@@ -174,7 +174,7 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
             );
             Logger.LogInformation($"Processed Cache Updates Successfully!");
         });
-        Logger.LogDebug("Finished Updating Overlay Caches.", LoggerType.VisualCache);
+        Logger.LogDebug("Finished Updating Overlay Caches.", LogFilter.VisualCache);
     }
 
 
@@ -197,7 +197,7 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
         if (_cache.UpdateFinalBlindfoldCache(out var prevActiveKey))
         {
             // The blindfold cache changed, and we should apply the new cached lace overlay.
-            Logger.LogDebug($"Blindfold Cache changed! Priority was [{prevActiveKey.ToString()}] and is now [{_cache.PriorityEffectKey.ToString()}] Reapplying cache!", LoggerType.VisualCache);
+            Logger.LogDebug($"Blindfold Cache changed! Priority was [{prevActiveKey.ToString()}] and is now [{_cache.PriorityEffectKey.ToString()}] Reapplying cache!", LogFilter.VisualCache);
             // if the previous type was not CombinedCacheKey.Empty, try and remove the blindfold.
             if (!prevActiveKey.Equals(CombinedCacheKey.Empty))
             {
@@ -208,12 +208,12 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
             // If the active cache currently has a blindfold overlay, and none are applied, apply it.
             if (!_bfService.HasValidBlindfold && _cache.ActiveBlindfold is { } activeBlindfold)
             {
-                Logger.LogDebug("Currently no Blindfold applied, but we have one in our cache, so applying!", LoggerType.VisualCache);
+                Logger.LogDebug("Currently no Blindfold applied, but we have one in our cache, so applying!", LogFilter.VisualCache);
                 await OnApplyBlindfold(activeBlindfold, _cache.PriorityEffectKey);
             }
         }
         else
-            Logger.LogTrace("No change in Final Blindfold Cache.", LoggerType.VisualCache);
+            Logger.LogTrace("No change in Final Blindfold Cache.", LogFilter.VisualCache);
     }
 
     // Called whenever a spesific visual cached Blindfold should be removed.
@@ -262,7 +262,7 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
         if (_cache.UpdateFinalHypnoEffectCache(out var prevActiveKey))
         {
             // The hypnotic cache changed, and we should apply the new cached effect.
-            Logger.LogDebug($"Hypnosis Cache changed! Priority was [{prevActiveKey.ToString()}] and is now [{_cache.PriorityEffectKey.ToString()}] Reapplying cache!", LoggerType.VisualCache);
+            Logger.LogDebug($"Hypnosis Cache changed! Priority was [{prevActiveKey.ToString()}] and is now [{_cache.PriorityEffectKey.ToString()}] Reapplying cache!", LogFilter.VisualCache);
             // if the previous type was not CombinedCacheKey.Empty, try and remove the effect.
             if (!prevActiveKey.Equals(CombinedCacheKey.Empty))
             {
@@ -273,12 +273,12 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
             // If the active cache currently has an effect, and we are not processing a sent effect, start it.
             if (!_hypnoService.HasValidEffect && _cache.ActiveEffect is { } effect)
             {
-                Logger.LogDebug("There is no effect running, and we have an effect in our cache to apply, so applying!", LoggerType.VisualCache);
+                Logger.LogDebug("There is no effect running, and we have an effect in our cache to apply, so applying!", LogFilter.VisualCache);
                 await OnApplyHypnoEffect(effect, _cache.PriorityEffectKey);
             }
         }
         else
-            Logger.LogTrace("No change in Final HypnoEffect Cache.", LoggerType.VisualCache);
+            Logger.LogTrace("No change in Final HypnoEffect Cache.", LogFilter.VisualCache);
     }
 
     // Passes in the enactorUID that had applied the effect which just got removed from the cache.

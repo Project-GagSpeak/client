@@ -37,7 +37,7 @@ public class CollarPanel : DisposableMediatorSubscriberBase
             if (_manager.ItemInEditor is GagSpeakCollar collar)
             {
                 collar.Glamour.GameItem = msg.Item;
-                Logger.LogDebug($"Set [{msg.Slot}] to [{msg.Item.Name}] on edited collar [{_manager.ItemInEditor.Label}]", LoggerType.Collars);
+                Logger.LogDebug($"Set [{msg.Slot}] to [{msg.Item.Name}] on edited collar [{_manager.ItemInEditor.Label}]", LogFilter.Collars);
             }
         });
 

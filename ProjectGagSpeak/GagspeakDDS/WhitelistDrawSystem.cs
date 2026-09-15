@@ -117,7 +117,7 @@ public class WhitelistDrawSystem : DynamicDrawSystem<Kinkster>, IMediatorSubscri
     {
         var anyChanged = UpdateVisibleFolderState(_config.Data.VisibleFolder)
                        | UpdateOfflineFolderState(_config.Data.OfflineFolder);
-        _logger.LogDebug($"Ensured all folders, total now {FolderMap.Count} folders.", LoggerType.UI);
+        _logger.LogDebug($"Ensured all folders, total now {FolderMap.Count} folders.", LogFilter.DrawSystems);
         return anyChanged;
     }
 

@@ -66,25 +66,25 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         if (_cache.PreventUnfollowing && !_detours.NoUnfollowingActive)
         {
             _detours.NoUnfollowingActive = true;
-            Logger.LogInformation("Activating Unfollow prevention due to hardcore status.", LoggerType.HardcoreMovement);
+            Logger.LogInformation("Activating Unfollow prevention due to hardcore status.", LogFilter.HardcoreMovement);
         }
         //if our states to have an unfollow hook are not met and it is active, disable it.
         else if (!_cache.PreventUnfollowing && _detours.NoUnfollowingActive)
         {
             _detours.NoUnfollowingActive = false;
-            Logger.LogInformation("Deactivating Unfollow prevention due to change in hardcore status.", LoggerType.HardcoreMovement);
+            Logger.LogInformation("Deactivating Unfollow prevention due to change in hardcore status.", LogFilter.HardcoreMovement);
         }
 
         // if we were not set to require walking, but should be walking, enforce it.
         if (_cache.BlockRunning && !_moveState.MustWalk)
         {
             _moveState = new MoveState(true, IsWalking());
-            Logger.LogInformation("Enforcing walking due to hardcore status.", LoggerType.HardcoreMovement);
+            Logger.LogInformation("Enforcing walking due to hardcore status.", LogFilter.HardcoreMovement);
         }
         // if there is no need to ban running, but we are forced to walk, revert it, along with the state.
         else if (!_cache.BlockRunning && _moveState.MustWalk)
         {
-            Logger.LogInformation("Releasing walking restriction due to change in hardcore status.", LoggerType.HardcoreMovement);
+            Logger.LogInformation("Releasing walking restriction due to change in hardcore status.", LogFilter.HardcoreMovement);
             // restore the state only if we were running before.
             if (!_moveState.WasWalking)
                 ForceRunning();
@@ -97,13 +97,13 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         // * so we must update it every frame)
         if (_cache.FreezePlayer && !_freezePlayer)
         {
-            Logger.LogInformation("Freezing player due to hardcore status.", LoggerType.HardcoreMovement);
+            Logger.LogInformation("Freezing player due to hardcore status.", LogFilter.HardcoreMovement);
             _freezePlayer = true;
         }
         // If the player should not be immobilized, but the local value does match, update it!
         else if (!_cache.FreezePlayer && _freezePlayer)
         {
-            Logger.LogInformation("Unfreezing player due to change in hardcore status.", LoggerType.HardcoreMovement);
+            Logger.LogInformation("Unfreezing player due to change in hardcore status.", LogFilter.HardcoreMovement);
             _freezePlayer = false;
             _detours.DisableFullMovementLock();
         }
@@ -112,13 +112,13 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         var areBlocksActive = _detours.NoAutoMoveActive && _detours.NoMouseMovementActive;
         if (shouldBlock && !areBlocksActive)
         {
-            Logger.LogInformation("Activating movement key blocking due to hardcore status.", LoggerType.HardcoreMovement);
+            Logger.LogInformation("Activating movement key blocking due to hardcore status.", LogFilter.HardcoreMovement);
             _detours.NoAutoMoveActive = true;
             _detours.NoMouseMovementActive = true;
         }
         else if (!shouldBlock && areBlocksActive)
         {
-            Logger.LogInformation("Deactivating movement key blocking due to change in hardcore status.", LoggerType.HardcoreMovement);
+            Logger.LogInformation("Deactivating movement key blocking due to change in hardcore status.", LogFilter.HardcoreMovement);
             _detours.NoAutoMoveActive = false;
             _detours.NoMouseMovementActive = false;
         }
@@ -129,12 +129,12 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         // Occurs whenever we change zones.
         if (ClientData.Hardcore is not { } hcState)
         {
-            Logger.LogInformation("Not ensuring confinement due to null hardcore state.", LoggerType.HardcoreMovement);
+            Logger.LogInformation("Not ensuring confinement due to null hardcore state.", LogFilter.HardcoreMovement);
             return;
         }
         if (!hcState.IsEnabled(HcAttribute.Confinement))
         {
-            Logger.LogInformation("Not ensuring confinement due to confinement hardcore status being disabled.", LoggerType.HardcoreMovement);
+            Logger.LogInformation("Not ensuring confinement due to confinement hardcore status being disabled.", LogFilter.HardcoreMovement);
             return;
         }
 
@@ -145,11 +145,11 @@ public sealed class MovementController : DisposableMediatorSubscriberBase
         // meaning we are already on the way to our destination.
         // If we can identify the nearest node from this point, we almost
         // garentee it is our destination.
-        Logger.LogInformation("Ensuring confinement by checking if we can approach nearest housing node.", LoggerType.HardcoreMovement);
+        Logger.LogInformation("Ensuring confinement by checking if we can approach nearest housing node.", LogFilter.HardcoreMovement);
         if (HcApproachNearestHousing.TargetNearestHousingNode())
         {
             // We could, so we should enqueue the task to re-enter.
-            Logger.LogInformation("Enqueuing approach nearest housing task due to confinement hardcore status.", LoggerType.HardcoreMovement);
+            Logger.LogInformation("Enqueuing approach nearest housing task due to confinement hardcore status.", LogFilter.HardcoreMovement);
             var addr = AddressBookEntry.FromHardcoreStatus(hcState);
             var roomNum = addr is not null && addr.PropertyType is PropertyType.Apartment ? addr.Apartment : int.MaxValue;
             _hcTasks.EnqueueOperation(HcApproachNearestHousing.GetTaskCollection(_hcTasks, roomNum));

@@ -51,7 +51,7 @@ public class LociCache
     {
         if (_lociData.Keys.Any(keys => keys.Item1.Equals(key)))
         {
-            _logger.LogWarning($"Cannot add [{key}] to Cache, the Key already exists!", LoggerType.VisualCache);
+            _logger.LogWarning($"Cannot add [{key}] to Cache, the Key already exists!", LogFilter.VisualCache);
             return false;
         }
 
@@ -59,7 +59,7 @@ public class LociCache
         foreach (var item in lociItems)
         {
             added |= _lociData.TryAdd((key, item.Id), item);
-            if (added) _logger.LogDebug($"Added KeyValuePair ([{key}] - [{item.Id}]) to Cache.", LoggerType.VisualCache);
+            if (added) _logger.LogDebug($"Added KeyValuePair ([{key}] - [{item.Id}]) to Cache.", LogFilter.VisualCache);
         }
         return added;
     }
@@ -69,7 +69,7 @@ public class LociCache
         var originalKey = _lociData.Keys.FirstOrDefault(k => k.Item1.Equals(key));
         if (!_lociData.ContainsKey(originalKey))
         {
-            _logger.LogWarning($"Cannot update LociData with Key [{key}], it does not exist in the Cache!", LoggerType.VisualCache);
+            _logger.LogWarning($"Cannot update LociData with Key [{key}], it does not exist in the Cache!", LogFilter.VisualCache);
             return false;
         }
         // Remove the old entry
@@ -77,7 +77,7 @@ public class LociCache
         // Add the new entry with the same CombinedCacheKey and new lociItem's Id
         _lociData.Add((originalKey.Item1, newItem.Id), newItem);
 
-        _logger.LogDebug($"Updated LociData with Key [{key}] to new Id [{newItem.Id}]", LoggerType.VisualCache);
+        _logger.LogDebug($"Updated LociData with Key [{key}] to new Id [{newItem.Id}]", LogFilter.VisualCache);
         return true;
     }
 
@@ -95,14 +95,14 @@ public class LociCache
         var allKeys = _lociData.Keys.Where(k => keys.Contains(k.Item1)).ToList();
         if (!allKeys.Any())
         {
-            _logger.LogWarning($"None of the CombinedKeys were found in the LociCache!", LoggerType.VisualCache);
+            _logger.LogWarning($"None of the CombinedKeys were found in the LociCache!", LogFilter.VisualCache);
             return false;
         }
 
         bool anyRemoved = false;
         foreach (var key in allKeys)
         {
-            _logger.LogDebug($"Removing Cache key ([{key.Item1}] - [{key.Item2}])", LoggerType.VisualCache);
+            _logger.LogDebug($"Removing Cache key ([{key.Item1}] - [{key.Item2}])", LogFilter.VisualCache);
             anyRemoved |= _lociData.Remove(key);
         }
         return anyRemoved;

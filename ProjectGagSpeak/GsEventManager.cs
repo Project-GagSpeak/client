@@ -190,19 +190,19 @@ public class GagspeakEventManager
         {
             try
             {
-                UnlocksLogger.LogDebug($"EventFired: [({eventName})", LoggerType.AchievementEvents);
+                UnlocksLogger.LogDebug($"EventFired: [({eventName})", LogFilter.AchievementEvents);
                 if (action is Action eventHandler)
                 {
                     eventHandler.Invoke();
                 }
                 else
                 {
-                    UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
+                    UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LogFilter.AchievementEvents);
                 }
             }
             catch (Bagagwa ex)
             {
-                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName + "! {Bagagwa}", ex, LoggerType.AchievementEvents);
+                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName + "! {Bagagwa}", ex, LogFilter.AchievementEvents);
             }
         }
     }
@@ -214,19 +214,19 @@ public class GagspeakEventManager
         {
             try
             {
-                UnlocksLogger.LogDebug($"EventFired: [({eventName}) >> ({param})", LoggerType.AchievementEvents);
+                UnlocksLogger.LogDebug($"EventFired: [({eventName}) >> ({param})", LogFilter.AchievementEvents);
                 if (action is Action<T> eventHandler)
                 {
                     eventHandler.Invoke(param);
                 }
                 else
                 {
-                    UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
+                    UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LogFilter.AchievementEvents);
                 }
             }
             catch (Bagagwa ex)
             {
-                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName + "! {Bagagwa}", ex, LoggerType.AchievementEvents);
+                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName + "! {Bagagwa}", ex, LogFilter.AchievementEvents);
             }
         }
     }
@@ -238,19 +238,19 @@ public class GagspeakEventManager
         {
             try
             {
-                UnlocksLogger.LogDebug($"EventFired: [({eventName}) >> ({param1}) ({param2})", LoggerType.AchievementEvents);
+                UnlocksLogger.LogDebug($"EventFired: [({eventName}) >> ({param1}) ({param2})", LogFilter.AchievementEvents);
                 if (action is Action<T1, T2> eventHandler)
                 {
                     eventHandler.Invoke(param1, param2);
                 }
                 else
                 {
-                    UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
+                    UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LogFilter.AchievementEvents);
                 }
             }
             catch (Bagagwa ex)
             {
-                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName + "! {Bagagwa}", ex, LoggerType.AchievementEvents);
+                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName + "! {Bagagwa}", ex, LogFilter.AchievementEvents);
             }
         }
     }
@@ -262,19 +262,19 @@ public class GagspeakEventManager
         {
             try
             {
-                UnlocksLogger.LogDebug($"EventFired: [({eventName}) >> ({param1}) ({param2}) ({param3})", LoggerType.AchievementEvents);
+                UnlocksLogger.LogDebug($"EventFired: [({eventName}) >> ({param1}) ({param2}) ({param3})", LogFilter.AchievementEvents);
                 if (action is Action<T1, T2, T3> eventHandler)
                 {
                     eventHandler.Invoke(param1, param2, param3);
                 }
                 else
                 {
-                    UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
+                    UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LogFilter.AchievementEvents);
                 }
             }
             catch (Bagagwa ex)
             {
-                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName + "! {Bagagwa}", ex, LoggerType.AchievementEvents);
+                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName + "! {Bagagwa}", ex, LogFilter.AchievementEvents);
             }
         }
     }
@@ -286,19 +286,19 @@ public class GagspeakEventManager
         {
             try
             {
-                UnlocksLogger.LogDebug($"EventFired: [({eventName}) >> ({param1}) ({param2}) ({param3}) ({param4})", LoggerType.AchievementEvents);
+                UnlocksLogger.LogDebug($"EventFired: [({eventName}) >> ({param1}) ({param2}) ({param3}) ({param4})", LogFilter.AchievementEvents);
                 if (action is Action<T1, T2, T3, T4> eventHandler)
                 {
                     eventHandler.Invoke(param1, param2, param3, param4);
                 }
                 else
                 {
-                    UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
+                    UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LogFilter.AchievementEvents);
                 }
             }
             catch (Bagagwa ex)
             {
-                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName + "! {Bagagwa}", ex, LoggerType.AchievementEvents);
+                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName + "! {Bagagwa}", ex, LogFilter.AchievementEvents);
             }
         }
     }
@@ -310,19 +310,19 @@ public class GagspeakEventManager
         {
             try
             {
-                UnlocksLogger.LogDebug($"EventFired: [({eventName}) >> ({param1}) ({param2}) ({param3}) ({param4}) ({param5})", LoggerType.AchievementEvents);
+                UnlocksLogger.LogDebug($"EventFired: [({eventName}) >> ({param1}) ({param2}) ({param3}) ({param4}) ({param5})", LogFilter.AchievementEvents);
                 if (action is Action<T1, T2, T3, T4, T5> eventHandler)
                 {
                     eventHandler.Invoke(param1, param2, param3, param4, param5);
                 }
                 else
                 {
-                    UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LoggerType.AchievementEvents);
+                    UnlocksLogger.LogError($"Invalid action type for event: {eventName}", LogFilter.AchievementEvents);
                 }
             }
             catch (Bagagwa ex)
             {
-                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName + "! {Bagagwa}", ex, LoggerType.AchievementEvents);
+                UnlocksLogger.LogError("Error in AchievementEvent: " + eventName + "! {Bagagwa}", ex, LogFilter.AchievementEvents);
             }
         }
     }

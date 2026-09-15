@@ -51,7 +51,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         var alias = new AliasTrigger { Label = aliasLabel};
         Storage.Items.Add(alias);
         Save();
-        Logger.LogDebug($"Created new Alias {alias.Label} ({alias.Identifier}).", LoggerType.Puppeteer);
+        Logger.LogDebug($"Created new Alias {alias.Label} ({alias.Identifier}).", LogFilter.Puppeteer);
         Mediator.Publish(new ConfigAliasItemChanged(StorageChangeType.Created, alias, null));
         return alias;
     }
@@ -64,7 +64,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         var clonedItem = new AliasTrigger(clone, false) { Label = newName };
         Storage.Items.Add(clonedItem);
         Save();
-        Logger.LogDebug($"Cloned Alias {clonedItem.Identifier}.", LoggerType.Puppeteer);
+        Logger.LogDebug($"Cloned Alias {clonedItem.Identifier}.", LogFilter.Puppeteer);
         Mediator.Publish(new ConfigAliasItemChanged(StorageChangeType.Created, clonedItem, folderPath));
         return clonedItem;
     }
@@ -74,7 +74,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         // should never be able to remove active restraints, but if that happens to occur, add checks here.
         if (Storage.Items.Remove(alias))
         {
-            Logger.LogDebug($"Deleted AliasTrigger {alias.Label} ({alias.Identifier})", LoggerType.Puppeteer);
+            Logger.LogDebug($"Deleted AliasTrigger {alias.Label} ({alias.Identifier})", LogFilter.Puppeteer);
             Mediator.Publish(new ConfigAliasItemChanged(StorageChangeType.Deleted, alias, null));
             Save();
         }
@@ -91,7 +91,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         newName = RegexEx.EnsureUniqueName(newName, Storage.Items, rs => rs.Label);
         alias.Label = newName;
         Save();
-        Logger.LogDebug($"Renamed restraint {alias.Label} ({alias.Identifier}).", LoggerType.Puppeteer);
+        Logger.LogDebug($"Renamed restraint {alias.Label} ({alias.Identifier}).", LogFilter.Puppeteer);
         Mediator.Publish(new ConfigAliasItemChanged(StorageChangeType.Renamed, alias, oldName));
     }
 
@@ -109,7 +109,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
     {
         if (_itemEditor.SaveAndQuitEditing(out var source))
         {
-            Logger.LogDebug($"Saved changes to {source.Label} ({source.Identifier}).", LoggerType.Puppeteer);
+            Logger.LogDebug($"Saved changes to {source.Label} ({source.Identifier}).", LogFilter.Puppeteer);
             // _managerCache.UpdateCache(AppliedRestraint);
             Mediator.Publish(new ConfigAliasItemChanged(StorageChangeType.Modified, source));
             Save();
@@ -118,7 +118,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
     public void SetEnabledState(AliasTrigger alias, bool newState)
     {
         alias.Enabled = newState;
-        Logger.LogDebug($"Set EnabledState: {alias.Label} to {(alias.Enabled ? "Enabled" : "Disabled")}", LoggerType.Puppeteer);
+        Logger.LogDebug($"Set EnabledState: {alias.Label} to {(alias.Enabled ? "Enabled" : "Disabled")}", LogFilter.Puppeteer);
         Save();
         Mediator.Publish(new EnabledItemChanged(GSModule.Puppeteer, alias.Identifier, newState));
     }
@@ -128,7 +128,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         foreach (var a in aliases)
             a.Enabled = newState;
         Save();
-        Logger.LogDebug($"SetEnabledState for ({string.Join(", ", aliases.Select(a => a.Label))})", LoggerType.Puppeteer);
+        Logger.LogDebug($"SetEnabledState for ({string.Join(", ", aliases.Select(a => a.Label))})", LogFilter.Puppeteer);
         Mediator.Publish(new EnabledItemsChanged(GSModule.Puppeteer, aliases.Select(a => a.Identifier), newState));
     }
 

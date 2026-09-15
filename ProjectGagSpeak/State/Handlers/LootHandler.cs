@@ -119,7 +119,7 @@ public sealed class LootHandler
 
         _cofferName = row.Text.ToDalamudString().ToString();
         _cofferNameLang = lang;
-        _logger.LogDebug($"Resolved deep dungeon coffer name for {lang}: [{_cofferName}]", LoggerType.CursedItems);
+        _logger.LogDebug($"Resolved deep dungeon coffer name for {lang}: [{_cofferName}]", LogFilter.CursedItems);
         return _cofferName;
     }
 
@@ -132,29 +132,29 @@ public sealed class LootHandler
     {
         if (LootTaskRunning)
         {
-            _logger.LogTrace("Loot task already running, skipping open attempt.", LoggerType.CursedItems);
+            _logger.LogTrace("Loot task already running, skipping open attempt.", LogFilter.CursedItems);
             return;
         }
 
         // Handle Deep Dungeon Coffers. (or i suppose any non-standard (non-treasure type) chests.
         if (IsDeepDungeonCoffer(obj))
         {
-            _logger.LogTrace("Attempting to open deep dungeon coffer", LoggerType.CursedItems);
+            _logger.LogTrace("Attempting to open deep dungeon coffer", LogFilter.CursedItems);
             _openLootTask = CheckDeepDungeonCoffers(obj->GetGameObjectId().ObjectId);
         }
         // Handle normal coffers.
         else
         {
-            _logger.LogTrace("Attempting to open treasure chest.", LoggerType.CursedItems);
+            _logger.LogTrace("Attempting to open treasure chest.", LogFilter.CursedItems);
             var objId = obj->GetGameObjectId().ObjectId;
             // If in a party with other players, make sure we are the first to open it.
             if (CofferAlreadyOpened(objId))
             {
-                _logger.LogTrace("Chest was already opened by someone else! Skipping.", LoggerType.CursedItems);
+                _logger.LogTrace("Chest was already opened by someone else! Skipping.", LogFilter.CursedItems);
                 return;
             }
 
-            _logger.LogTrace("we just attempted to open a dungeon chest.", LoggerType.CursedItems);
+            _logger.LogTrace("we just attempted to open a dungeon chest.", LogFilter.CursedItems);
             _prevOpenedLootObjectId = objId;
             _openLootTask = ApplyCursedLoot();
         }
@@ -162,7 +162,7 @@ public sealed class LootHandler
 
     private async Task CheckDeepDungeonCoffers(uint interactedObjectId)
     {
-        _logger.LogTrace("we just attempted to open a deep dungeon chest.", LoggerType.CursedItems);
+        _logger.LogTrace("we just attempted to open a deep dungeon chest.", LogFilter.CursedItems);
         _prevOpenedLootObjectId = interactedObjectId;
         await ApplyCursedLoot().ConfigureAwait(false);
     }
@@ -202,7 +202,7 @@ public sealed class LootHandler
 
         // run our first roll, return if not in range.
         var roll = new Random().Next(1, 101); // 0,101 will return 0 to 100 inclusive, so 1,101 is what you want for 1-100 inclusive (and for a config value of 5% to not actually be 5.9%[6/101] chance)
-        _logger.LogDebug($"Cursed Loot Roll: {roll} vs Chance: {_manager.LockChance}", LoggerType.CursedItems);
+        _logger.LogDebug($"Cursed Loot Roll: {roll} vs Chance: {_manager.LockChance}", LogFilter.CursedItems);
         if (roll > _manager.LockChance)
         {
             _manager.RecordMimicEvaded();
@@ -230,7 +230,7 @@ public sealed class LootHandler
         }
         else
         {
-            _logger.LogError("Chosen cursed item was neither gag nor restriction", LoggerType.CursedItems);
+            _logger.LogError("Chosen cursed item was neither gag nor restriction", LogFilter.CursedItems);
             return;
         }
     }
@@ -243,7 +243,7 @@ public sealed class LootHandler
 
     private async Task<bool> ApplyCursedGag(CursedGagItem item, TimeSpan lockTime)
     {
-        _logger.LogInformation($"Applying a cursed Gag to an open gagslot!", LoggerType.CursedItems);
+        _logger.LogInformation($"Applying a cursed Gag to an open gagslot!", LogFilter.CursedItems);
         if (await _dds.PushActiveCursedLoot(_manager.Storage.AppliedLootIds.ToList(), item.Identifier, FromGag(item.RefItem, lockTime)) is not { } res)
             return false;
 
@@ -254,7 +254,7 @@ public sealed class LootHandler
 
     private async Task<bool> ApplyCursedRestriction(CursedRestrictionItem item, TimeSpan lockTime)
     {
-        _logger.LogInformation($"Applying a cursed Item [{item.Label}] to you!", LoggerType.CursedItems);
+        _logger.LogInformation($"Applying a cursed Item [{item.Label}] to you!", LogFilter.CursedItems);
         if (await _dds.PushActiveCursedLoot(_manager.Storage.AppliedLootIds.ToList(), item.Identifier, FromRestriction(item.RefItem, lockTime)) is not { } res)
             return false;
 

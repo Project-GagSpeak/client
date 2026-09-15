@@ -220,7 +220,7 @@ public class IpcCallerPenumbra : DisposableMediatorSubscriberBase, IIpcCaller
     /// <summary> Attempts to perform a manual redraw on the client. </summary>
     public void RedrawObject()
     {
-        Logger.LogWarning("Manually redrawing the client!", LoggerType.IpcPenumbra);
+        Logger.LogWarning("Manually redrawing the client!", LogFilter.IpcPenumbra);
         RedrawClient.Invoke(0, RedrawType.Redraw);
     }
 

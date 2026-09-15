@@ -27,6 +27,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     private readonly HubFactory _hubFactory;
     private readonly TokenProvider _tokenProvider;
     private readonly MainConfig _config;
+    private readonly ConnectionsConfig _connections;
     private readonly AccountManager _accounts;
 
     private readonly GlobalChatLog _globalChat;
@@ -66,6 +67,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         HubFactory hubFactory,
         TokenProvider tokenProvider,
         MainConfig config,
+        ConnectionsConfig connections,
         AccountManager accounts,
         GlobalChatLog globalChat,
         KinksterManager kinksters,
@@ -84,6 +86,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         _hubFactory = hubFactory;
         _tokenProvider = tokenProvider;
         _config = config;
+        _connections = connections;
         _accounts = accounts;
         _globalChat = globalChat;
         _kinksters = kinksters;
@@ -142,7 +145,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         {
             if (_serverStatus != value)
             {
-                Svc.Logger.Debug($"[Hub-Main]: New ServerState: {value}, prev ServerState: {_serverStatus}", LoggerType.ApiCore);
+                Svc.Logger.Debug($"[Hub-Main]: New ServerState: {value}, prev ServerState: {_serverStatus}", LogFilter.MainHub);
                 _serverStatus = value;
             }
         }
@@ -151,7 +154,6 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     public static bool IsConnectionDataSynced => _serverStatus is ServerState.ConnectedDataSynced;
     public static bool IsConnected => _serverStatus is ServerState.Connected or ServerState.ConnectedDataSynced;
     public static bool IsServerAlive => _serverStatus is ServerState.ConnectedDataSynced or ServerState.Connected or ServerState.Unauthorized or ServerState.Disconnected;
-    public bool IsFullPaused => _config.ServerPaused;
 
     protected override void Dispose(bool disposing)
     {
@@ -168,7 +170,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
 
     public async Task StopAsync(CancellationToken cancellationToken)
     {
-        Logger.LogInformation("MainHub is stopping. Closing down GagSpeakHub-Main!", LoggerType.ApiCore);
+        Logger.LogInformation("MainHub is stopping. Closing down GagSpeakHub-Main!", LogFilter.MainHub);
         _hubHealthCTS?.Cancel();
         await Disconnect(ServerState.Disconnected, DisconnectIntent.Shutdown).ConfigureAwait(false);
         _hubConnectionCTS?.Cancel();
@@ -181,13 +183,13 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     //    var ret = await UserSendRequest(new(new(user.UID), true, msg)).ConfigureAwait(false);
     //    if (ret.ErrorCode is SundouleiaApiEc.Success && ret.Value is { } request)
     //    {
-    //        Logger.LogInformation($"Temporary request sent to {user.AnonName}.", LoggerType.RadarData);
+    //        Logger.LogInformation($"Temporary request sent to {user.AnonName}.", LogFilter.RadarData);
     //        // Add to our requests, updating the requests manager.
     //        _requests.AddNewRequest(request);
     //        return;
     //    }
 
-    //    Logger.LogWarning($"Failed to send temporary pair request to {user.AnonName} [{ret.ErrorCode}]", LoggerType.RadarData);
+    //    Logger.LogWarning($"Failed to send temporary pair request to {user.AnonName} [{ret.ErrorCode}]", LogFilter.RadarData);
     //}
 
 
@@ -202,7 +204,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
 
     private async void OnLogout()
     {
-        Logger.LogInformation("Stopping connection on logout", LoggerType.ApiCore);
+        Logger.LogInformation("Stopping connection on logout", LogFilter.MainHub);
         // as we are changing characters, we should fully unload any kinksters from the manager, and other chara spesific data.
         await Disconnect(ServerState.Disconnected, DisconnectIntent.Logout).ConfigureAwait(false);
         // switch the server state to offline.
@@ -214,7 +216,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         if (_hubConnection is null)
             return;
 
-        Logger.LogDebug("Initializing data", LoggerType.ApiCore);
+        Logger.LogDebug("Initializing data", LogFilter.MainHub);
         OnServerMessage((sev, msg) => _ = Callback_ServerMessage(sev, msg));
         OnHardReconnectMessage((sev, msg, state) => _ = Callback_HardReconnectMessage(sev, msg, state));
         OnUserFlaggedForReport((kind, msg) => _ = Callback_UserFlaggedForReport(kind, msg));
@@ -306,7 +308,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         // Gather up our DirectPairs, and then our SanctionPairs,
         var kinksters = await GetAllKinksterPairs().ConfigureAwait(false);
         _kinksters.AddKinksters(kinksters);
-        Logger.LogDebug($"Initial Kinksters Loaded: [{string.Join(", ", kinksters.Select(x => x.User.AliasOrUID))}]", LoggerType.ApiCore);
+        Logger.LogDebug($"Initial Kinksters Loaded: [{string.Join(", ", kinksters.Select(x => x.User.AliasOrUID))}]", LogFilter.MainHub);
 #if DEBUG
         Logger.LogInformation($"[Performance] Fetched pairs in {sw.ElapsedMilliseconds}ms");
         sw.Restart();
@@ -315,7 +317,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         var onlineKinksters = await GetOnlineKinksters().ConfigureAwait(false);
         foreach (var entry in onlineKinksters)
             _kinksters.MarkKinksterOnline(entry, false);
-        Logger.LogDebug($"Online Kinksters: [{string.Join(", ", onlineKinksters.Select(x => x.User.AliasOrUID))}]", LoggerType.ApiCore);
+        Logger.LogDebug($"Online Kinksters: [{string.Join(", ", onlineKinksters.Select(x => x.User.AliasOrUID))}]", LogFilter.MainHub);
 #if DEBUG
         Logger.LogInformation($"[Performance] Retrieved OnlineKinksters in {sw.ElapsedMilliseconds}ms");
         sw.Restart();
@@ -323,7 +325,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
 
         // Gather up all online data (OnlineUsers, PauseStates, ext)
         var onlineData = await GetOnlineKinksters().ConfigureAwait(false);
-        Logger.LogDebug($"Online Users: [{string.Join(", ", onlineData.Select(x => x.User.AliasOrUID))}]", LoggerType.ApiCore);
+        Logger.LogDebug($"Online Users: [{string.Join(", ", onlineData.Select(x => x.User.AliasOrUID))}]", LogFilter.MainHub);
 #if DEBUG
         Logger.LogInformation($"[Performance] Retrieved ConnectionData in {sw.ElapsedMilliseconds}ms");
         sw.Restart();
@@ -345,7 +347,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         _requests.AddNewRequests(requests.KinksterRequests);
         _collarManager.LoadServerRequests(requests.CollarRequests);
 
-        Logger.LogDebug($"Loaded {requests.KinksterRequests.Count} KinksterRequests and {requests.CollarRequests.Count} CollarRequests", LoggerType.ApiCore);
+        Logger.LogDebug($"Loaded {requests.KinksterRequests.Count} KinksterRequests and {requests.CollarRequests.Count} CollarRequests", LogFilter.MainHub);
 #if DEBUG
         Logger.LogInformation($"[Performance] Retrieved Requests in {sw.ElapsedMilliseconds}ms");
         sw.Restart();
@@ -397,7 +399,7 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
     {
         while (!PlayerData.Available && !token.IsCancellationRequested)
         {
-            Logger.LogDebug("Player not loaded in yet, waiting", LoggerType.ApiCore);
+            Logger.LogDebug("Player not loaded in yet, waiting", LogFilter.MainHub);
             await Task.Delay(TimeSpan.FromSeconds(1), token).ConfigureAwait(false);
         }
     }

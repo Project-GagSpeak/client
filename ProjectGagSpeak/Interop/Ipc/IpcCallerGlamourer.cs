@@ -65,7 +65,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
         {
             if (!prevAvail && APIAvailable)
             {
-                _logger.LogInformation("Glamourer is now Ready!", LoggerType.IpcGlamourer);
+                _logger.LogInformation("Glamourer is now Ready!", LogFilter.IpcGlamourer);
                 _mediator.Publish(new GlamourerReady());
             }
             // Only show if logged in and this fails.
@@ -96,7 +96,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Failed to set Glamourer Item Slot {slot} to ItemID {item}!", LoggerType.IpcGlamourer);
+            _logger.LogError(ex, $"Failed to set Glamourer Item Slot {slot} to ItemID {item}!", LogFilter.IpcGlamourer);
         }
     }
 
@@ -114,7 +114,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, $"Failed to set Glamourer MetaState {metaTypes} to {newValue}!", LoggerType.IpcGlamourer);
+            _logger.LogError(ex, $"Failed to set Glamourer MetaState {metaTypes} to {newValue}!", LogFilter.IpcGlamourer);
         }
     }
 
@@ -139,7 +139,7 @@ public sealed class IpcCallerGlamourer : DisposableMediatorSubscriberBase, IIpcC
         }
         catch (Exception ex)
         {
-            _logger.LogError($"Failed to set Glamourer Customization: {ex}", LoggerType.IpcGlamourer);
+            _logger.LogError($"Failed to set Glamourer Customization: {ex}", LogFilter.IpcGlamourer);
         }
     }
 

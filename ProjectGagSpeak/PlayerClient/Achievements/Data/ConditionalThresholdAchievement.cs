@@ -38,7 +38,7 @@ public class ConditionalThresholdAchievement : AchievementBase
         {
             LastRecordedThreshold = newestThreshold;
             GagspeakEventManager.UnlocksLogger.LogTrace($"Updating Threshold for {Title}. Current Threshold: {LastRecordedThreshold}" +
-                $" -- Total Required: {MilestoneGoal}", LoggerType.AchievementInfo);
+                $" -- Total Required: {MilestoneGoal}", LogFilter.AchievementInfo);
             CheckCompletion();
         }
         else

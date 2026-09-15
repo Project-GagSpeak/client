@@ -66,7 +66,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     public void AddKinkster(KinksterPair dto)
     {
         var exists = _allKinksters.ContainsKey(dto.User);
-        Logger.LogDebug($"Kinkster ({dto.User.UID}) {(exists ? "found, applying latest!" : "not found. Creating!")}.", LoggerType.PairManagement);
+        Logger.LogDebug($"Kinkster ({dto.User.UID}) {(exists ? "found, applying latest!" : "not found. Creating!")}.", LogFilter.PairManagement);
         // Determine if we need to create
         if (!exists)
             _allKinksters[dto.User] = _pairFactory.Create(dto);
@@ -93,8 +93,8 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         }
         RecreateLazy();
 
-        if (created.Count > 0) Logger.LogDebug($"Created: {string.Join(", ", created)}", LoggerType.PairManagement);
-        if (refreshed.Count > 0) Logger.LogDebug($"Refreshed: {string.Join(", ", refreshed)}", LoggerType.PairManagement);
+        if (created.Count > 0) Logger.LogDebug($"Created: {string.Join(", ", created)}", LogFilter.PairManagement);
+        if (refreshed.Count > 0) Logger.LogDebug($"Refreshed: {string.Join(", ", refreshed)}", LogFilter.PairManagement);
     }
 
     /// <summary>
@@ -123,16 +123,16 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         if (!_allKinksters.TryGetValue(newUserDto.User, out var pair))
             return;
         pair.UpdateUserData(newUserDto.User);
-        Logger.LogDebug($"Updated vanity for {pair.GetNickAliasOrUid()}!", LoggerType.PairManagement);
+        Logger.LogDebug($"Updated vanity for {pair.GetNickAliasOrUid()}!", LogFilter.PairManagement);
     }
 
     private void DisposeKinksters()
     { 
-        Logger.LogInformation("Disposing all Kinksters", LoggerType.PairManagement);
+        Logger.LogInformation("Disposing all Kinksters", LogFilter.PairManagement);
         var pairCount = _allKinksters.Count;
         Parallel.ForEach(_allKinksters, k => k.Value.DisposeData());
         _allKinksters.Clear();
-        Logger.LogDebug($"Disposed {pairCount} Kinksters.", LoggerType.PairManagement);
+        Logger.LogDebug($"Disposed {pairCount} Kinksters.", LogFilter.PairManagement);
         RecreateLazy();
     }
 
@@ -151,7 +151,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     /// </summary>
     public void OnClientDisconnected(DisconnectIntent intent)
     {
-        Logger.LogInformation($"Client disconnected with intent: {intent}", LoggerType.PairManagement);
+        Logger.LogInformation($"Client disconnected with intent: {intent}", LogFilter.PairManagement);
         switch (intent)
         {
             // For normal or unexpected disconnects, simply mark all as offline. (but do not dispose)
@@ -170,7 +170,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
 
             case DisconnectIntent.Logout:
                 // Dispose of all kinksters properly upon logout.
-                Logger.LogInformation("Client in Logout, disposing all Kinksters.", LoggerType.PairManagement);
+                Logger.LogInformation("Client in Logout, disposing all Kinksters.", LogFilter.PairManagement);
                 DisposeKinksters();
                 break;
 
@@ -201,7 +201,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
             return;
         }
 
-        Logger.LogTrace($"Marked {kinkster.PlayerName}({kinkster.GetNickAliasOrUid()}) as online", LoggerType.PairManagement);
+        Logger.LogTrace($"Marked {kinkster.PlayerName}({kinkster.GetNickAliasOrUid()}) as online", LogFilter.PairManagement);
         // Mark online internally, and then recreate the whitelist display.
         kinkster.MarkOnline(dto);
         RecreateLazy();
@@ -215,7 +215,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     {
         if (_allKinksters.TryGetValue(user, out var pair))
         {
-            Logger.LogTrace($"Marked {pair.PlayerName}({pair.GetNickAliasOrUid()}) as offline", LoggerType.PairManagement);
+            Logger.LogTrace($"Marked {pair.PlayerName}({pair.GetNickAliasOrUid()}) as offline", LogFilter.PairManagement);
             Mediator.Publish(new ClearUserProfileMessage(pair.User));
             pair.MarkOffline();
             RecreateLazy();
@@ -305,7 +305,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         if (!_allKinksters.TryGetValue(target, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
 
-        Logger.LogTrace($"Received loci update for {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
+        Logger.LogTrace($"Received loci update for {kinkster.GetNickAliasOrUid()}!", LogFilter.Callbacks);
         kinkster.NewLociData(newLociData);
     }
 
@@ -313,7 +313,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     {
         if (!_allKinksters.TryGetValue(target, out var kinkster))
             throw new InvalidOperationException($"User [{target.AliasOrUID}] not found.");
-        Logger.LogTrace($"Received loci status update for {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
+        Logger.LogTrace($"Received loci status update for {kinkster.GetNickAliasOrUid()}!", LogFilter.Callbacks);
         kinkster.LociData.SetStatuses(newStatuses);
     }
 
@@ -321,7 +321,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     {
         if (!_allKinksters.TryGetValue(target, out var kinkster))
             throw new InvalidOperationException($"User [{target.AliasOrUID}] not found.");
-        Logger.LogTrace($"Received loci preset update for {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
+        Logger.LogTrace($"Received loci preset update for {kinkster.GetNickAliasOrUid()}!", LogFilter.Callbacks);
         kinkster.LociData.SetPresets(newPresets);
     }
 
@@ -329,7 +329,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     {
         if (!_allKinksters.TryGetValue(target, out var kinkster))
             throw new InvalidOperationException($"User [{target.AliasOrUID}] not found.");
-        Logger.LogTrace($"Received loci status single update for {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
+        Logger.LogTrace($"Received loci status single update for {kinkster.GetNickAliasOrUid()}!", LogFilter.Callbacks);
 
         if (deleted) kinkster.LociData.Statuses.Remove(status.GUID);
         else kinkster.LociData.Statuses[status.GUID] = status.ToTuple();
@@ -339,7 +339,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     {
         if (!_allKinksters.TryGetValue(target, out var kinkster))
             throw new InvalidOperationException($"User [{target.AliasOrUID}] not found.");
-        Logger.LogTrace($"Received loci preset single update for {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
+        Logger.LogTrace($"Received loci preset single update for {kinkster.GetNickAliasOrUid()}!", LogFilter.Callbacks);
 
         if (deleted) kinkster.LociData.Presets.Remove(preset.GUID);
         else kinkster.LociData.Presets[preset.GUID] = preset.ToTuple();
@@ -349,7 +349,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     {
         if (!_allKinksters.TryGetValue(target, out var kinkster))
             throw new InvalidOperationException($"Kinkster [{target.AliasOrUID}] not found.");
-        Logger.LogDebug($"Received Composite Active Data from {kinkster.GetNickAliasOrUid()}!", LoggerType.Callbacks);
+        Logger.LogDebug($"Received Composite Active Data from {kinkster.GetNickAliasOrUid()}!", LogFilter.Callbacks);
         kinkster.NewActiveCompositeData(data, safeword);
     }
 
@@ -509,7 +509,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         kinkster.UserPair.Globals = dto.NewPerms;
         kinkster.UserPair.Hardcore = dto.NewState;
 
-        Logger.LogDebug($"BulkChangeGlobal for [{kinkster.GetNickAliasOrUid()}]", LoggerType.PairDataTransfer);
+        Logger.LogDebug($"BulkChangeGlobal for [{kinkster.GetNickAliasOrUid()}]", LogFilter.DataTransfers);
         // use comparisons to fire various achievements related to global permissions. (or just make some handler process it idk)
     }
 
@@ -521,7 +521,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         if (!PropertyChanger.TrySetProperty(kinkster.PairGlobals, permName, newValue, out var finalVal) || finalVal is null)
             throw new InvalidOperationException($"Failed to set property '{permName}' on {kinkster.GetNickAliasOrUid()} with value '{newValue}'");
 
-        Logger.LogDebug($"PermChangeGlobal for [{kinkster.GetNickAliasOrUid()}] set [{permName}] to [{finalVal}]", LoggerType.PairDataTransfer);
+        Logger.LogDebug($"PermChangeGlobal for [{kinkster.GetNickAliasOrUid()}] set [{permName}] to [{finalVal}]", LogFilter.DataTransfers);
         // use comparisons to fire various achievements related to global permissions.
     }
 
@@ -538,7 +538,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         kinkster.UserPair.OwnPerms = newPerms;
         kinkster.UserPair.OwnAccess = newAccess;
 
-        Logger.LogDebug($"OWN BulkChangeUnique for [{kinkster.GetNickAliasOrUid()}]", LoggerType.PairDataTransfer);
+        Logger.LogDebug($"OWN BulkChangeUnique for [{kinkster.GetNickAliasOrUid()}]", LogFilter.DataTransfers);
         // Handle LociData change
         var lociPermChange = (prevPerms.LociAccess != newPerms.LociAccess) || (prevPerms.MaxLociTime != newPerms.MaxLociTime);
         // Could add some achievement handling here maybe, idk.
@@ -564,7 +564,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         kinkster.UserPair.Perms = newPerms;
         kinkster.UserPair.Access = newAccess;
 
-        Logger.LogDebug($"OTHER BulkChangeUnique for [{kinkster.GetNickAliasOrUid()}]", LoggerType.PairDataTransfer);
+        Logger.LogDebug($"OTHER BulkChangeUnique for [{kinkster.GetNickAliasOrUid()}]", LogFilter.DataTransfers);
 
         // Handle informing loci of permission changes.
         var lociPermChange = (prevPerms.LociAccess != newPerms.LociAccess) || (prevPerms.MaxLociTime != newPerms.MaxLociTime);
@@ -589,7 +589,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         if (!PropertyChanger.TrySetProperty(kinkster.OwnPerms, permName, newValue, out var finalVal) || finalVal is null)
             throw new InvalidOperationException($"Failed to set property '{permName}' on {kinkster.GetNickAliasOrUid()} with value '{newValue}'");
 
-        Logger.LogDebug($"OWN PermChangeUnique for [{kinkster.GetNickAliasOrUid()}] set [{permName}] to [{finalVal}]", LoggerType.PairDataTransfer);
+        Logger.LogDebug($"OWN PermChangeUnique for [{kinkster.GetNickAliasOrUid()}] set [{permName}] to [{finalVal}]", LogFilter.DataTransfers);
 
         // Handle our clients LociData change for this Kinkster
         if (permName.Equals(nameof(PairPerms.LociAccess)) || permName.Equals(nameof(PairPerms.MaxLociTime)))
@@ -615,7 +615,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         if (!PropertyChanger.TrySetProperty(kinkster.PairPerms, permName, newValue, out var finalVal) || finalVal is null)
             throw new InvalidOperationException($"Failed to set property '{permName}' on {kinkster.GetNickAliasOrUid()} with value '{newValue}'");
 
-        Logger.LogDebug($"OTHER SingleChangeUnique for [{kinkster.GetNickAliasOrUid()}] set [{permName}] to [{finalVal}]", LoggerType.PairDataTransfer);
+        Logger.LogDebug($"OTHER SingleChangeUnique for [{kinkster.GetNickAliasOrUid()}] set [{permName}] to [{finalVal}]", LogFilter.DataTransfers);
 
         // If lociAccess updated, notify IpcProvider (LociData) that we have a change.
         if (permName.Equals(nameof(PairPerms.LociAccess)) || permName.Equals(nameof(PairPerms.MaxLociTime)))
@@ -636,7 +636,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         if (!PropertyChanger.TrySetProperty(kinkster.OwnPermAccess, permName, newValue, out var finalVal) || finalVal is null)
             throw new InvalidOperationException($"Failed to set property '{permName}' on {kinkster.GetNickAliasOrUid()} with value '{newValue}'");
 
-        Logger.LogDebug($"OWN PermChangeAccess for [{kinkster.GetNickAliasOrUid()}] set [{permName}] to [{finalVal}]", LoggerType.PairDataTransfer);
+        Logger.LogDebug($"OWN PermChangeAccess for [{kinkster.GetNickAliasOrUid()}] set [{permName}] to [{finalVal}]", LogFilter.DataTransfers);
         // process distinct handles here.
     }
 
@@ -648,7 +648,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         if (!PropertyChanger.TrySetProperty(kinkster.PairPermAccess, permName, newValue, out var finalVal) || finalVal is null)
             throw new InvalidOperationException($"Failed to set property '{permName}' on {kinkster.GetNickAliasOrUid()} with value '{newValue}'");
 
-        Logger.LogDebug($"OTHER PermChangeAccess for [{kinkster.GetNickAliasOrUid()}] set [{permName}] to [{finalVal}]", LoggerType.PairDataTransfer);
+        Logger.LogDebug($"OTHER PermChangeAccess for [{kinkster.GetNickAliasOrUid()}] set [{permName}] to [{finalVal}]", LogFilter.DataTransfers);
         // process distinct handles here.
     }
 
@@ -724,7 +724,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
     /// </summary>
     private void OnContextMenuOpened(IMenuOpenedArgs args)
     {
-        Logger.LogInformation("Opening Pair Context Menu of type " + args.MenuType, LoggerType.PairManagement);
+        Logger.LogInformation("Opening Pair Context Menu of type " + args.MenuType, LogFilter.PairManagement);
         if (args.MenuType is ContextMenuType.Inventory) return;
         if (!_config.Data.ShowContextMenus) return;
         if (args.Target is not MenuTargetDefault target || target.TargetObjectId == 0) return;
@@ -732,7 +732,7 @@ public sealed partial class KinksterManager : DisposableMediatorSubscriberBase
         if (DirectPairs.FirstOrDefault(p => p.IsRendered && p.PlayerObjectId == target.TargetObjectId) is not { } match)
             return;
 
-        Logger.LogDebug($"Found matching pair for context menu: {match.GetNickAliasOrUid()}", LoggerType.PairManagement);
+        Logger.LogDebug($"Found matching pair for context menu: {match.GetNickAliasOrUid()}", LogFilter.PairManagement);
         // This only works when you create it prior to adding it to the args,
         // otherwise the += has trouble calling. (it would fall out of scope)
 

@@ -112,7 +112,7 @@ public class ReactionDistributor
         // ALL permission (non-emote)
         if (context.PuppetPerms.HasAny(PuppetPerms.All) && !IsEmoteMatch(message, out var _))
         {
-            _logger.LogDebug($"Puppeteered by {context.DisplayName} with an [ALL] message.", LoggerType.Puppeteer);
+            _logger.LogDebug($"Puppeteered by {context.DisplayName} with an [ALL] message.", LogFilter.Puppeteer);
             ChatControlService.EnqueueMessage($"/{message.TextValue}");
             IncrementStats(context, PuppetPerms.All);
             return;
@@ -121,7 +121,7 @@ public class ReactionDistributor
         // EMOTES
         if (context.PuppetPerms.HasAny(PuppetPerms.Emotes) && IsEmoteMatch(message, out var emoteRow))
         {
-            _logger.LogDebug($"Puppeteered by {context.DisplayName} with an [EMOTE] message.", LoggerType.Puppeteer);
+            _logger.LogDebug($"Puppeteered by {context.DisplayName} with an [EMOTE] message.", LogFilter.Puppeteer);
             ChatControlService.EnqueueMessage($"/{message.TextValue}");
             IncrementStats(context, PuppetPerms.Emotes, emoteRow);
             return;
@@ -134,7 +134,7 @@ public class ReactionDistributor
             var sitEmote = EmoteEx.SittingEmotes().FirstOrDefault(e => message.TextValue.Contains(e.Name.Replace(" ", "").ToLower()));
             if (sitEmote.RowId is 50 or 52)
             {
-                _logger.LogDebug($"Puppeteered by {context.DisplayName} with an [SIT] message.", LoggerType.Puppeteer);
+                _logger.LogDebug($"Puppeteered by {context.DisplayName} with an [SIT] message.", LogFilter.Puppeteer);
                 ChatControlService.EnqueueMessage($"/{message.TextValue}");
                 IncrementStats(context, PuppetPerms.Sit, sitEmote.RowId);
                 return;
@@ -142,7 +142,7 @@ public class ReactionDistributor
             // Match CPOSE emotes (90)
             if (EmoteService.ValidLightEmoteCache.Where(e => e.RowId == 90).Any(e => message.TextValue.Contains(e.Name.Replace(" ", "").ToLower())))
             {
-                _logger.LogDebug($"Puppeteered by {context.DisplayName} with a [CPOSE] message.", LoggerType.Puppeteer);
+                _logger.LogDebug($"Puppeteered by {context.DisplayName} with a [CPOSE] message.", LogFilter.Puppeteer);
                 ChatControlService.EnqueueMessage($"/{message.TextValue}");
                 IncrementStats(context, PuppetPerms.Sit, 90);
             }
@@ -197,7 +197,7 @@ public class ReactionDistributor
         if (remainingMessage.TextValue.IsNullOrEmpty())
             return false;
 
-        _logger.LogInformation("Text Action is being executed.", LoggerType.Triggers);
+        _logger.LogInformation("Text Action is being executed.", LogFilter.Triggers);
         ChatControlService.EnqueueMessage($"/{remainingMessage.TextValue}");
         return true;
     }
@@ -216,7 +216,7 @@ public class ReactionDistributor
             if (layerIdx == -1)
                 return false;
 
-            _logger.LogInformation($"Applying [{act.GagType}] to layer {layerIdx}", LoggerType.Triggers | LoggerType.Gags);
+            _logger.LogInformation($"Applying [{act.GagType}] to layer {layerIdx}", LogFilter.Triggers | LogFilter.Gags);
             var gagSlot = gagData.GagSlots[layerIdx] with
             {
                 GagItem = act.GagType,
@@ -260,7 +260,7 @@ public class ReactionDistributor
                     timer = Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound);
             }
 
-            _logger.LogInformation($"Locking [{gagData.GagSlots[layerIdx].GagItem}] with [{act.Padlock}] on layer {layerIdx}", LoggerType.Triggers);
+            _logger.LogInformation($"Locking [{gagData.GagSlots[layerIdx].GagItem}] with [{act.Padlock}] on layer {layerIdx}", LogFilter.Triggers);
             var gagSlot = gagData.GagSlots[layerIdx] with
             {
                 Padlock = act.Padlock,
@@ -282,11 +282,11 @@ public class ReactionDistributor
 
             if (layerIdx is -1)
             {
-                _logger.LogWarning($"No active gag found for [{act.GagType}] when attempting to disable.", LoggerType.Triggers);
+                _logger.LogWarning($"No active gag found for [{act.GagType}] when attempting to disable.", LogFilter.Triggers);
                 return false;
             }
 
-            _logger.LogDebug($"Removing [{gagData.GagSlots[layerIdx].GagItem}] from layer {layerIdx}", LoggerType.Triggers);
+            _logger.LogDebug($"Removing [{gagData.GagSlots[layerIdx].GagItem}] from layer {layerIdx}", LogFilter.Triggers);
             return await _selfBondage.DoSelfGagResult(layerIdx, new ActiveGagSlot(), DataUpdateType.Removed);
         }
 
@@ -307,7 +307,7 @@ public class ReactionDistributor
             if (layerIdx is -1 || restrictions.Restrictions[layerIdx].IsLocked() || !restrictions.Restrictions[layerIdx].CanApply())
                 return false;
 
-            _logger.LogInformation($"Applying restriction [{act.RestrictionId}] to layer {layerIdx}", LoggerType.Triggers);
+            _logger.LogInformation($"Applying restriction [{act.RestrictionId}] to layer {layerIdx}", LogFilter.Triggers);
             var itemSlot = restrictions.Restrictions[layerIdx] with
             {
                 Identifier = act.RestrictionId,
@@ -343,7 +343,7 @@ public class ReactionDistributor
                     timer = Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound);
             }
 
-            _logger.LogInformation($"Locking restriction [{restrictions.Restrictions[layerIdx].Identifier}] with [{act.Padlock}] on layer {layerIdx}", LoggerType.Triggers);
+            _logger.LogInformation($"Locking restriction [{restrictions.Restrictions[layerIdx].Identifier}] with [{act.Padlock}] on layer {layerIdx}", LogFilter.Triggers);
             var itemSlot = restrictions.Restrictions[layerIdx] with
             {
                 Padlock = act.Padlock,
@@ -374,7 +374,7 @@ public class ReactionDistributor
             if (layerIdx == -1 || !restrictions.Restrictions[layerIdx].CanRemove())
                 return false;
 
-            _logger.LogDebug($"Removing restriction [{restrictions.Restrictions[layerIdx].Identifier}] from layer {layerIdx}", LoggerType.Triggers);
+            _logger.LogDebug($"Removing restriction [{restrictions.Restrictions[layerIdx].Identifier}] from layer {layerIdx}", LogFilter.Triggers);
             return await _selfBondage.DoSelfBindResult(layerIdx, new ActiveRestriction(), DataUpdateType.Removed).ConfigureAwait(false);
         }
 
@@ -391,7 +391,7 @@ public class ReactionDistributor
             if (!restraint.CanApply() || !_restraints.Storage.TryGetRestraint(act.RestrictionId, out var setItem))
                 return false;
 
-            _logger.LogDebug($"Applying restraint [{act.RestrictionId}] with layers [{act.Layers}]", LoggerType.Triggers);
+            _logger.LogDebug($"Applying restraint [{act.RestrictionId}] with layers [{act.Layers}]", LogFilter.Triggers);
             var setData = restraint with
             {
                 Identifier = act.RestrictionId,
@@ -420,7 +420,7 @@ public class ReactionDistributor
                     timer = Generators.GetRandomTimeSpan(act.LowerBound, act.UpperBound);
             }
 
-            _logger.LogDebug($"Locking restraint [{restraint.Identifier}] with [{act.Padlock}]", LoggerType.Triggers);
+            _logger.LogDebug($"Locking restraint [{restraint.Identifier}] with [{act.Padlock}]", LogFilter.Triggers);
             var setData = restraint with
             {
                 Padlock = act.Padlock,
@@ -443,7 +443,7 @@ public class ReactionDistributor
             // When a specific set is chosen, only remove if it is the currently active one.
             if (act.RestrictionId != Guid.Empty && restraint.Identifier != act.RestrictionId)
                 return false;
-            _logger.LogDebug($"Removing restraint [{act.RestrictionId}]", LoggerType.Triggers);
+            _logger.LogDebug($"Removing restraint [{act.RestrictionId}]", LogFilter.Triggers);
             return await _selfBondage.DoSelfRestraintResult(new CharaActiveRestraint(), DataUpdateType.Removed).ConfigureAwait(false);
         }
 
@@ -475,7 +475,7 @@ public class ReactionDistributor
             return false;
         }
 
-        _logger.LogInformation("DoPiShock Action is executing instruction based on global shocker settings!", LoggerType.PiShock);
+        _logger.LogInformation("DoPiShock Action is executing instruction based on global shocker settings!", LogFilter.PiShock);
         var durationMs = (int)(act.ShockInstruction.GetDurationFloat() * 1000f);
         _shockies.ExecuteOperation(shockerId, (int)act.ShockInstruction.OpCode, act.ShockInstruction.Intensity, durationMs);
         return true;

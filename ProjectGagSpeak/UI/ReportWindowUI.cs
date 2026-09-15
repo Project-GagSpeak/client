@@ -9,7 +9,6 @@ using Dalamud.Interface.Textures.TextureWraps;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Kinksters;
-using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.Services.Textures;
@@ -22,7 +21,6 @@ using GagspeakAPI.Reporting;
 using GagspeakAPI.User;
 using OtterGui.Text;
 using OtterGuiInternal;
-using SundouleiaAPI.Reporting;
 
 namespace GagSpeak.Gui.Profiles;
 

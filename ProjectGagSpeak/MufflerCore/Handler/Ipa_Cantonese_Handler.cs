@@ -30,16 +30,16 @@ public class Ipa_Cantonese_Handler
             var jsonFilePath = Path.Combine(GsFiles.AssemblyDirectory, data_file);
             var json = File.ReadAllText(jsonFilePath);
             obj = JsonConvert.DeserializeObject<Dictionary<string, string>>(json) ?? new Dictionary<string, string>();
-            _logger.LogInformation($"[IPA Parser] File read: {data_file}", LoggerType.GarblerCore);
+            _logger.LogInformation($"[IPA Parser] File read: {data_file}", LogFilter.GarblerCore);
         }
         catch (FileNotFoundException)
         {
-            _logger.LogDebug($"[IPA Parser] File does not exist: {data_file}", LoggerType.GarblerCore);
+            _logger.LogDebug($"[IPA Parser] File does not exist: {data_file}", LogFilter.GarblerCore);
             obj = new Dictionary<string, string>();
         }
         catch (Bagagwa ex)
         {
-            _logger.LogDebug($"[IPA Parser] An error occurred while reading the file: {ex.Message}", LoggerType.GarblerCore);
+            _logger.LogDebug($"[IPA Parser] An error occurred while reading the file: {ex.Message}", LogFilter.GarblerCore);
             obj = new Dictionary<string, string>();
         }
     }

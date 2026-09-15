@@ -93,7 +93,7 @@ public class TimeRequiredConditionalAchievement : AchievementBase
         }
         else if (!RequiredCondition())
         {
-            GagspeakEventManager.UnlocksLogger.LogTrace($"Condition for {Title} not met. Resetting the timer.", LoggerType.AchievementInfo);
+            GagspeakEventManager.UnlocksLogger.LogTrace($"Condition for {Title} not met. Resetting the timer.", LogFilter.AchievementInfo);
             ResetTask();
         }
     }
@@ -106,7 +106,7 @@ public class TimeRequiredConditionalAchievement : AchievementBase
 
         if (RequiredCondition())
         {
-            GagspeakEventManager.UnlocksLogger.LogTrace($"Condition for {Title} met. Starting the timer.", LoggerType.AchievementInfo);
+            GagspeakEventManager.UnlocksLogger.LogTrace($"Condition for {Title} met. Starting the timer.", LogFilter.AchievementInfo);
             StartPoint = DateTime.UtcNow;
             StartTimer();
         }
@@ -118,14 +118,14 @@ public class TimeRequiredConditionalAchievement : AchievementBase
         if (IsCompleted || !MainHub.IsConnected)
             return;
 
-        GagspeakEventManager.UnlocksLogger.LogTrace($"Interrupting task for {Title}.", LoggerType.AchievementInfo);
+        GagspeakEventManager.UnlocksLogger.LogTrace($"Interrupting task for {Title}.", LogFilter.AchievementInfo);
         ResetTask();
     }
 
     // Method to Complete the Task when time and condition are met
     private void CompleteTask()
     {
-        GagspeakEventManager.UnlocksLogger.LogTrace($"Time and condition met for {Title}. Marking as completed.", LoggerType.AchievementInfo);
+        GagspeakEventManager.UnlocksLogger.LogTrace($"Time and condition met for {Title}. Marking as completed.", LogFilter.AchievementInfo);
         MarkCompleted();
         _cancellationTokenSource?.Cancel();
         StartPoint = DateTime.MinValue;
@@ -147,7 +147,7 @@ public class TimeRequiredConditionalAchievement : AchievementBase
             }
             catch (TaskCanceledException)
             {
-                GagspeakEventManager.UnlocksLogger.LogDebug($"Timer for {Title} was canceled.", LoggerType.AchievementInfo);
+                GagspeakEventManager.UnlocksLogger.LogDebug($"Timer for {Title} was canceled.", LogFilter.AchievementInfo);
             }
         }, token);
     }
@@ -155,7 +155,7 @@ public class TimeRequiredConditionalAchievement : AchievementBase
     // Resets the task if condition fails or is interrupted
     private void ResetTask()
     {
-        GagspeakEventManager.UnlocksLogger.LogTrace($"Did not keep active for the required time for {Title}. Resetting task.", LoggerType.AchievementInfo);
+        GagspeakEventManager.UnlocksLogger.LogTrace($"Did not keep active for the required time for {Title}. Resetting task.", LogFilter.AchievementInfo);
         StartPoint = DateTime.MinValue;
         _cancellationTokenSource?.Cancel();
     }

@@ -27,7 +27,7 @@ public class ConditionalAchievement : AchievementBase
         if (IsCompleted || !MainHub.IsConnected)
             return;
 
-        GagspeakEventManager.UnlocksLogger.LogTrace($"Checking if {Title} satisfies conditional", LoggerType.AchievementInfo);
+        GagspeakEventManager.UnlocksLogger.LogTrace($"Checking if {Title} satisfies conditional", LogFilter.AchievementInfo);
 
         if (Condition())
         {

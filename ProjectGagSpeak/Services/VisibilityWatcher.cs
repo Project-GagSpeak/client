@@ -54,7 +54,7 @@ public unsafe sealed class VisibilityWatcher : DisposableMediatorSubscriberBase
     {
         if (_visibleUsers.TryAdd(addr, user))
         {
-            Logger.LogTrace($"AddVisibleUser New: {user.AliasOrUID} - {addr:X}", LoggerType.VisiblePairs);
+            Logger.LogTrace($"AddVisibleUser New: {user.AliasOrUID} - {addr:X}", LogFilter.ActorVisibility);
             Mediator.Publish(new HandledUserRendered(user, addr));
         }
     }
@@ -64,14 +64,14 @@ public unsafe sealed class VisibilityWatcher : DisposableMediatorSubscriberBase
         var addrAdded = _visibleUsers.TryAdd(addr, user);
         if (addrAdded)
         {
-            Logger.LogTrace($"New Visible User: {user.AnonName} - {addr:X}", LoggerType.VisiblePairs);
+            Logger.LogTrace($"New Visible User: {user.AnonName} - {addr:X}", LogFilter.ActorVisibility);
             Mediator.Publish(new HandledUserRendered(user, addr));
         }
 
         // Append to newly visible if forced, or added. (for DataDistribution)
         if (forceNew || addrAdded)
         {
-            Logger.LogDebug($"NewlyVisible Added (Forced={forceNew}) : {user.AnonName} - {addr:X}", LoggerType.VisiblePairs);
+            Logger.LogDebug($"NewlyVisible Added (Forced={forceNew}) : {user.AnonName} - {addr:X}", LogFilter.ActorVisibility);
             _newlyVisible.Add(user);
         }
     }
@@ -104,7 +104,7 @@ public unsafe sealed class VisibilityWatcher : DisposableMediatorSubscriberBase
         if (info.HashedCID.Length is not 0)
             _hashedIdentToAddr.TryAdd(info.HashedCID, addr);
 
-        Logger.LogDebug($"New TrackedActor: {addr:X} - {chara->GetName()} | Info: {info}", LoggerType.GameObjects);
+        Logger.LogDebug($"New TrackedActor: {addr:X} - {chara->GetName()} | Info: {info}", LogFilter.ActorVisibility);
         // Assuming WatchedObjectCreated is updated to remove the Parent IntPtr
         Mediator.Publish(new WatchedObjectCreated(addr, info));
     }
@@ -117,7 +117,7 @@ public unsafe sealed class VisibilityWatcher : DisposableMediatorSubscriberBase
         // Remove the lookup and other possible entries.
         _hashedIdentToAddr.Remove(removed.HashedCID);
         RemoveVisibleUser(addr, out var userData);
-        Logger.LogDebug($"Removed TrackedActor: {addr:X} - {chara->GetName()}", LoggerType.GameObjects);
+        Logger.LogDebug($"Removed TrackedActor: {addr:X} - {chara->GetName()}", LogFilter.ActorVisibility);
         Mediator.Publish(new WatchedObjectDestroyed(addr, removed, wasClientActor, userData));
     }
 
@@ -136,7 +136,7 @@ public unsafe sealed class VisibilityWatcher : DisposableMediatorSubscriberBase
         var info = new CharacterInfo(addr, chara->ContentId, hashedCID, chara->EntityId);
         // Append to the GPose actors, do not append to lookup table.
         _gPoseActors.Add(addr, info);
-        Logger.LogDebug($"New TrackedGPoseActor: {addr:X} - {chara->NameString}", LoggerType.GameObjects);
+        Logger.LogDebug($"New TrackedGPoseActor: {addr:X} - {chara->NameString}", LogFilter.ActorVisibility);
         Mediator.Publish(new GPoseObjectCreated(addr, info));
         return true;
     }
@@ -155,7 +155,7 @@ public unsafe sealed class VisibilityWatcher : DisposableMediatorSubscriberBase
         // Attempt removal from other sources.
         RemoveVisibleUser(addr, out var userData);
         // Log the removal. No need to remove from the mapping since all GPose players are CopyCharacters.
-        Logger.LogDebug($"Tracked GPoseActor Removed: {addr:X} - {chara->NameString}", LoggerType.GameObjects);
+        Logger.LogDebug($"Tracked GPoseActor Removed: {addr:X} - {chara->NameString}", LogFilter.ActorVisibility);
         Mediator.Publish(new GPoseObjectDestroyed(addr, *chara, userData));
         return true;
     }

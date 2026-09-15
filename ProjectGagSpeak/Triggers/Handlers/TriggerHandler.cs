@@ -58,7 +58,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
     /// </summary>
     private void OnGameChat(InputChannel channel, string senderNameWorld, SeString msg)
     {
-        Logger.LogTrace($"OnGameChat: [{channel}]{senderNameWorld} - {msg.TextValue}", LoggerType.ChatDetours);
+        Logger.LogTrace($"OnGameChat: [{channel}]{senderNameWorld} - {msg.TextValue}", LogFilter.ChatDetours);
         // If from ourselves run a check if we issued a puppeteer command on someone else.
         if (PlayerData.NameWithWorld == senderNameWorld)
         {
@@ -251,7 +251,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
 
         foreach (var actionEffect in actionEffects)
         {
-            if ((LoggerFilter.FilteredLogTypes & LoggerType.ActionEffects) != 0)
+            if (GsLogFilters.ShouldLog(LogFilter.ActionEffects))
             {
                 // Perform logging and action processing for each effect
                 var srcChara = GameObjectManager.Instance()->Objects.GetObjectByGameObjectId(actionEffect.SourceID);
@@ -261,7 +261,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
 
                 var actionStr = SpellActionService.AllActionsLookup.TryGetValue(actionEffect.ActionID, out var match) ? match.Name.ToString() : "UNKN ACT";
                 Logger.LogTrace($"Source:{srcCharaStr}, Target: {tgtCharaStr}, Action: {actionStr}, Action ID:{actionEffect.ActionID}, " +
-                    $"Type: {actionEffect.Type.ToString()} Amount: {actionEffect.Damage}", LoggerType.ActionEffects);
+                    $"Type: {actionEffect.Type.ToString()} Amount: {actionEffect.Damage}", LogFilter.ActionEffects);
             }
 
             CheckSpellActionTriggers(actionEffect);
@@ -357,7 +357,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
                 continue;
             if (!RegexEx.TryMatchTriggerWord(chatMessage.TextValue, triggerWord).Success)
                 continue;
-            Logger.LogTrace($"Matched trigger {{{triggerWord}}}", LoggerType.Puppeteer);
+            Logger.LogTrace($"Matched trigger {{{triggerWord}}}", LogFilter.Puppeteer);
             return triggerWord;
         }
 
@@ -393,7 +393,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
                 if (!_selfBondage.CanExecute(trigger.ActionType))
                     continue;
 
-                // Logger.LogInformation($"Executing async action of type {trigger.ActionType} for trigger {trigger.Label}.", LoggerType.Triggers);
+                // Logger.LogInformation($"Executing async action of type {trigger.ActionType} for trigger {trigger.Label}.", LogFilter.Triggers);
                 if (await _processor.HandleActionAsync(trigger.InvokableAction, enactor).ConfigureAwait(false))
                 {
                     GagspeakEventManager.AchievementEvent(UnlocksEvent.TriggerFired);
@@ -416,11 +416,11 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
     /// </summary>
     private async void ProcessPuppetMsg(PuppetMsgContext context, SeString msg)
     {
-        Logger.LogTrace($"Trigger ({context.Trigger}) detected in: [ {msg} ]", LoggerType.Puppeteer);
+        Logger.LogTrace($"Trigger ({context.Trigger}) detected in: [ {msg} ]", LogFilter.Puppeteer);
         // Trim everything before the trigger
         SeString scoped = msg.TextValue.Substring(msg.TextValue.IndexOf(context.Trigger) + context.Trigger.Length).Trim();
         scoped = scoped.GetSubstringWithinParentheses(context.StartChar ?? '(', context.EndChar ?? ')');
-        Logger.LogTrace($"Scoped message: {scoped}", LoggerType.Puppeteer);
+        Logger.LogTrace($"Scoped message: {scoped}", LogFilter.Puppeteer);
 
         // if the final scoped message is empty return
         if (string.IsNullOrWhiteSpace(scoped.TextValue))
@@ -428,13 +428,13 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
 
         scoped = scoped.ConvertSquareToAngleBrackets();
 
-        Logger.LogTrace($"Context for scoped message {scoped} is UID: {context.UID}, DisplayName: {context.DisplayName}, Trigger: {context.Trigger}, Aliases ({context.Aliases.Count}): {string.Join(", ", context.Aliases.Select(a => a.InputCommand))}, Perms: {context.PuppetPerms}", LoggerType.Puppeteer);
+        Logger.LogTrace($"Context for scoped message {scoped} is UID: {context.UID}, DisplayName: {context.DisplayName}, Trigger: {context.Trigger}, Aliases ({context.Aliases.Count}): {string.Join(", ", context.Aliases.Select(a => a.InputCommand))}, Perms: {context.PuppetPerms}", LogFilter.Puppeteer);
 
         // Alias execution
         if (context.PuppetPerms.HasAny(PuppetPerms.Alias) && GetValidAlias(context.Aliases, scoped) is { } match)
         {
             // It was a valid alias instruction, so we should run its reaction context.
-            Logger.LogDebug($"Puppeteered by {context.DisplayName} with an [ALIAS] message.", LoggerType.Puppeteer);
+            Logger.LogDebug($"Puppeteered by {context.DisplayName} with an [ALIAS] message.", LogFilter.Puppeteer);
             // Invoke if true only. (Only fails if the server return call fails to be honest)
             if (await _processor.HandleActionsAsync(match.Actions, context.UID).ConfigureAwait(false))
                 _processor.IncrementStats(context, PuppetPerms.Alias);
@@ -453,18 +453,18 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
         {
             if (!aliasMsg.TextValue.Contains(alias.InputCommand, alias.IgnoreCase ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
             {
-                Logger.LogTrace($"Alias not matched due to string contains: {alias.InputCommand}", LoggerType.Puppeteer);
+                Logger.LogTrace($"Alias not matched due to string contains: {alias.InputCommand}", LogFilter.Puppeteer);
                 continue;
             }
             // We found a potential match, but we must make sure it is allowed to be executed.
             if (!_selfBondage.CanExecute(alias.Actions.Select(a => a.ActionType)))
             {
-                Logger.LogTrace($"Alias found but cannot be executed: {alias.InputCommand} - actions: {string.Join(", ", alias.Actions.Select(a => a.ActionType.ToName()))}", LoggerType.Puppeteer);
+                Logger.LogTrace($"Alias found but cannot be executed: {alias.InputCommand} - actions: {string.Join(", ", alias.Actions.Select(a => a.ActionType.ToName()))}", LogFilter.Puppeteer);
                 continue;
             }
 
             // We have a valid AliasTrigger whose reactions are all available to process.
-            Logger.LogTrace($"Alias found: {alias.InputCommand}", LoggerType.Puppeteer);
+            Logger.LogTrace($"Alias found: {alias.InputCommand}", LogFilter.Puppeteer);
             return alias;
         }
         return null;
@@ -472,7 +472,7 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
 
     private async void CheckSpellActionTriggers(ActionEffectEntry actEff)
     {
-        Logger.LogTrace($"SourceID ({actEff.SourceID} | TargetID: {actEff.TargetID} | ActionID: {actEff.ActionID} | Type: {actEff.Type} | Damage: {actEff.Damage}", LoggerType.Triggers);
+        Logger.LogTrace($"SourceID ({actEff.SourceID} | TargetID: {actEff.TargetID} | ActionID: {actEff.ActionID} | Type: {actEff.Type} | Damage: {actEff.Damage}", LogFilter.Triggers);
 
         // please for the love of god find a better way to handle this.
         var relevantTriggers = _triggers.Storage.SpellAction
@@ -481,20 +481,20 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
 
         if (!relevantTriggers.Any())
         {
-            Logger.LogDebug("No relevant triggers found for this spell/action", LoggerType.Triggers);
+            Logger.LogDebug("No relevant triggers found for this spell/action", LogFilter.Triggers);
             return;
         }
 
         foreach (var trigger in relevantTriggers)
         {
-            Logger.LogTrace("Checking Trigger: " + trigger.Label, LoggerType.Triggers);
+            Logger.LogTrace("Checking Trigger: " + trigger.Label, LogFilter.Triggers);
             if (!IsDirectionMatch(trigger.Direction, PlayerData.GameObjectId, actEff.SourceID, actEff.TargetID))
             {
-                Logger.LogDebug("Direction didn't match", LoggerType.Triggers);
+                Logger.LogDebug("Direction didn't match", LogFilter.Triggers);
                 continue;
             }
 
-            Logger.LogTrace("Direction Matches, checking damage type", LoggerType.Triggers);
+            Logger.LogTrace("Direction Matches, checking damage type", LogFilter.Triggers);
             var isDamageRelated = trigger.ActionKind is
                 LimitedActionEffectType.Heal or
                 LimitedActionEffectType.Damage or
@@ -508,21 +508,21 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
                     var roll = Random.Shared.Next(100);
                     if (roll >= trigger.PercentChance)
                     {
-                        Logger.LogTrace($"Percent-chance roll failed ({roll} >= {trigger.PercentChance}%)", LoggerType.Triggers);
+                        Logger.LogTrace($"Percent-chance roll failed ({roll} >= {trigger.PercentChance}%)", LogFilter.Triggers);
                         continue;
                     }
                 }
                 else if (!IsDamageWithinThreshold(actEff.Damage, trigger.ThresholdMinValue, trigger.ThresholdMaxValue))
                 {
                     Logger.LogTrace($"Was ActionKind [{actEff.Type}], but its damage ({actEff.Damage}) wasn't " +
-                        $"between ({trigger.ThresholdMinValue}) & ({trigger.ThresholdMaxValue})", LoggerType.Triggers);
+                        $"between ({trigger.ThresholdMinValue}) & ({trigger.ThresholdMaxValue})", LogFilter.Triggers);
                     continue;
                 }
             }
 
             // Execute trigger action if all conditions are met
             Logger.LogInformation("Your Trigger With Name " + trigger.Label + " and priority " + trigger.Priority + " triggering action "
-                + trigger.InvokableAction.ActionType.ToName(), LoggerType.Triggers);
+                + trigger.InvokableAction.ActionType.ToName(), LogFilter.Triggers);
 
             if (await _processor.HandleActionAsync(trigger.InvokableAction).ConfigureAwait(false))
                 GagspeakEventManager.AchievementEvent(UnlocksEvent.TriggerFired);

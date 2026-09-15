@@ -180,7 +180,7 @@ public sealed class AutoPromptController : DisposableMediatorSubscriberBase
 
         //if (lastLabel.Contains("Skip cutscene", StringComparison.OrdinalIgnoreCase) && lastSelected.Contains("Yes", StringComparison.OrdinalIgnoreCase))
         //{
-        //    Logger.LogTrace("Cutscene Skip Detected, Halting Achievement WarriorOfLewd", LoggerType.Achievements);
+        //    Logger.LogTrace("Cutscene Skip Detected, Halting Achievement WarriorOfLewd", LogFilter.Achievements);
         //    GagspeakEventManager.AchievementEvent(UnlocksEvent.CutsceneInturrupted);
         //}
     }

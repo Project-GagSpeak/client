@@ -7,6 +7,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility;
 using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Gui.Components;
+using GagSpeak.Gui.Settings;
 using GagSpeak.Interop;
 using GagSpeak.Interop.Helpers;
 using GagSpeak.Kinksters;
@@ -31,6 +32,7 @@ public class MainUI : WindowMediatorSubscriberBase
     public const float MAIN_UI_WIDTH = 380f;
 
     private readonly MainConfig _config;
+    private readonly ConnectionsConfig _connections;
     private readonly AccountManager _account;
     private readonly MainHub _hub;
     private readonly MainMenuTabs _tabMenu;
@@ -53,13 +55,15 @@ public class MainUI : WindowMediatorSubscriberBase
     public string _requestMessage = string.Empty;
 
     public MainUI(ILogger<MainUI> logger, GagspeakMediator mediator, MainConfig config,
-        AccountManager account, MainHub hub, MainMenuTabs tabMenu, IpcManager ipc,
-        SidePanelService sidePanel, RequestsManager requestmanager, KinksterManager kinksters,
-        TutorialService guides, HomeTab home, RequestsTab requests, WhitelistTab whitelist,
-        PatternSharehubTab patternHub, LociSharehubTab lociSharehub, GlobalChatTab globalChat)
+        ConnectionsConfig connections, AccountManager account, MainHub hub, 
+        MainMenuTabs tabMenu, IpcManager ipc, SidePanelService sidePanel,
+        RequestsManager requestmanager, KinksterManager kinksters, TutorialService guides,
+        HomeTab home, RequestsTab requests, WhitelistTab whitelist, PatternSharehubTab patternHub,
+        LociSharehubTab lociSharehub, GlobalChatTab globalChat)
         : base(logger, mediator, "###GagSpeakMainUI")
     {
         _config = config;
+        _connections = connections;
         _account = account;
         _hub = hub;
         _tabMenu = tabMenu;
@@ -88,7 +92,7 @@ public class MainUI : WindowMediatorSubscriberBase
         this.SetBoundaries(new Vector2(MAIN_UI_WIDTH, 550), new Vector2(MAIN_UI_WIDTH, 2000));
         TitleBarButtons = new TitleBarButtonBuilder()
             .Add(FAI.Book, "Changelog", () => Mediator.Publish(new UiToggleMessage(typeof(ChangelogUI))))
-            .Add(FAI.Cog, "Settings", () => Mediator.Publish(new UiToggleMessage(typeof(SettingsUi))))
+            .Add(FAI.Cog, "Settings", () => Mediator.Publish(new UiToggleMessage(typeof(NewSettingsUI))))
             .AddTutorial(_guides, TutorialType.MainUi)
             .Build();
 
@@ -123,22 +127,50 @@ public class MainUI : WindowMediatorSubscriberBase
     protected override void DrawInternal()
     {
         // get the width of the window content region we set earlier
-        var width = CkGui.GetWindowContentRegionWidth();
-
-        var disableButtons = MainHub.ServerStatus is (ServerState.NoSecretKey or ServerState.VersionMisMatch or ServerState.Unauthorized);
-        DrawTopBar();
-
+        var winContentWidth = CkGui.GetWindowContentRegionWidth();
         LastPos = ImGui.GetWindowPos();
         LastSize = ImGui.GetWindowSize();
+
+        DrawTopBar();
+
+        // If unauthorized draw the unauthorized display, otherwise draw the server status.
+        if (MainHub.ServerStatus is (ServerState.NoSecretKey or ServerState.VersionMisMatch or ServerState.Unauthorized or ServerState.Unattached))
+            DisplayHelpForInvalidState();
 
         // If we are not connected, then do not draw any further.
         if (!MainHub.IsConnected)
         {
-            if (disableButtons)
+            ImGui.Spacing();
+            ImGui.Separator();
+            if (MainHub.ServerStatus is ServerState.Connecting)
             {
-                ImGui.Spacing();
-                ImGui.Separator();
-                CkGui.ColorTextWrapped(GetServerError(), ImGuiColors.DalamudWhite);
+                CkGui.FontTextCentered("Connecting...", Fonts.SubtitleFont, ImGuiColors.DalamudYellow);
+            }
+            else
+            {
+                CkGui.FontTextCentered("Currently Disconnected!", Fonts.SubtitleFont, CkCol.TriStateCross.Vec4());
+                var width = CkGui.CalcFontTextSize("Connect via the above icons:", Fonts.HeaderFont);
+                var iconWidth = CkGui.IconsSize(FAI.ToiletPortable, FAI.BroadcastTower, FAI.Link).X + ImUtf8.ItemInnerSpacing.X * 3;
+                CkGui.SetCursorXtoCenter(width.X + iconWidth);
+                CkGui.FontTextAligned("Connect via the above icons:", Fonts.HeaderFont);
+
+                var yOffset = ImUtf8.ItemSpacing.Y;
+
+                ImUtf8.SameLineInner();
+                ImGui.SetCursorPosY(ImGui.GetCursorPosY() + yOffset);
+                CkGui.IconText(FAI.ToiletPortable, CkCol.TriStateCheck.Vec4());
+                ImUtf8.SameLineInner();
+                ImGui.SetCursorPosY(ImGui.GetCursorPosY() + yOffset);
+                CkGui.IconText(FAI.BroadcastTower, CkCol.TriStateCheck.Vec4());
+                ImUtf8.SameLineInner();
+                ImGui.SetCursorPosY(ImGui.GetCursorPosY() + yOffset);
+                CkGui.IconText(FAI.Link, CkCol.TriStateCheck.Vec4());
+
+                CkGui.CenterColorTextAligned("If none are green, ensure account is valid for connection", 0xFFBBBBBB);
+                CkGui.SetCursorXtoCenter(175f * ImGuiHelpers.GlobalScale);
+                using (ImRaii.PushColor(ImGuiCol.Button, 0xFF9E5C49))
+                    if (CkGui.IconTextButtonCentered(FAI.UserCircle, "Open Account Settings", 175f * ImGuiHelpers.GlobalScale))
+                        Mediator.Publish(new OpenSettingsUI(6, 1));
             }
             return;
         }
@@ -146,14 +178,14 @@ public class MainUI : WindowMediatorSubscriberBase
 
         // If we are creating a request to send to another user, draw this first.
         if (_creatingRequest)
-            DrawRequestCreator(width, ImUtf8.ItemInnerSpacing.X);
+            DrawRequestCreator(winContentWidth, ImUtf8.ItemInnerSpacing.X);
 
         // draw the bottom tab bar
-        _tabMenu.Draw(width);
+        _tabMenu.Draw(winContentWidth);
 
         // Get if we have missing recommended plugins.
         if (GetMissingRecommended() > 0)
-            ShowMissingPlugins(width);
+            ShowMissingPlugins(winContentWidth);
 
         // display content based on the tab selected
         switch (_tabMenu.TabSelection)
@@ -225,16 +257,6 @@ public class MainUI : WindowMediatorSubscriberBase
                 Mediator.Publish(new OpenSettingsPluginInfoMessage(OptionalPlugin.Glamourer));
             CkGui.AttachTooltip("Opens a helper box in the Settings UI for more info.");
         }
-        if (!IpcCallerLoci.APIAvailable)
-        {
-            ImGui.Spacing();
-            ImGui.Bullet();
-            CkGui.TextInline("Loci");
-            ImGui.SameLine();
-            if (ImGui.SmallButton("Learn More##loci-warn"))
-                Mediator.Publish(new OpenSettingsPluginInfoMessage(OptionalPlugin.Loci));
-            CkGui.AttachTooltip("Opens a helper box in the Settings UI for more info.");
-        }
 
         void CloseButton(Vector2 pos, Vector2 size)
         {
@@ -266,7 +288,6 @@ public class MainUI : WindowMediatorSubscriberBase
                 // Add the request if it was successful!
                 if (res.ErrorCode is GagSpeakApiEc.Success)
                     _requests.AddNewRequest(res.Value!);
-
                 // Clear values
                 _uidToSentTo = string.Empty;
                 _requestMessage = string.Empty;
@@ -311,25 +332,42 @@ public class MainUI : WindowMediatorSubscriberBase
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.InitialWelcome, LastPos, LastSize);
 
         ImGui.SameLine(topBarWidth - sideWidth);
-        var blockStateChange = MainHub.ServerStatus is ServerState.Reconnecting or ServerState.Disconnecting;
-        if (DrawConnection(winPtr, new Vector2(sideWidth, height), ImGui.GetCursorScreenPos(), disableButtons || blockStateChange))
+
+        var isConnBtnDisabled = UiService.DisableUI || (MainHub.IsConnected ? IsStateDisabled(ConnectionKind.FullPause) : IsStateDisabled(ConnectionKind.Normal));
+        if (DrawConnection(winPtr, new Vector2(sideWidth, height), winPtr.DC.CursorPos, isConnBtnDisabled))
         {
             if (MainHub.IsConnected)
             {
-                _config.SetPauseState(true);
+                _connections.ConnectionState = ConnectionKind.FullPause;
                 UiService.SetUITask(_hub.Disconnect(ServerState.Disconnected, DisconnectIntent.Normal));
             }
-            else if (MainHub.ServerStatus is (ServerState.Disconnected or ServerState.Offline))
+            else if (!_blockConnection && !_changingStates)
             {
-                _config.SetPauseState(false);
+                _connections.ConnectionState = ConnectionKind.Normal;
                 UiService.SetUITask(_hub.Connect());
             }
         }
-        CkGui.AttachTooltip($"{(MainHub.IsConnected ? "Disconnect from" : "Connect to")} {ConnectionsConfig.CurrentHubName}--SEP--Current Status: {MainHub.ServerStatus}");
+        var ttMsg = MainHub.IsConnected ? $"--COL--[Connected]--COL----NL--Normal/Default connection with the server." : $"--COL--[Disconnected]--COL----NL--Disconnected from Servers.";
+        CkGui.AttachTooltip(ttMsg);
         _guides.OpenTutorial(TutorialType.MainUi, StepsMainUi.ConnectionState, LastPos, LastSize);
 
         winPtr.DrawList.PopClipRect();
     }
+
+    private bool _blockConnection => MainHub.ServerStatus is (ServerState.NoSecretKey or ServerState.VersionMisMatch or ServerState.Unauthorized or ServerState.Unattached);
+    private bool _changingStates => MainHub.ServerStatus is (ServerState.Connecting or ServerState.Reconnecting or ServerState.Disconnecting);
+    private bool IsStateDisabled(ConnectionKind kind) => _changingStates || kind switch
+    {
+        ConnectionKind.FullPause => !MainHub.IsConnected,
+        ConnectionKind.Normal => _blockConnection || _connections.ConnectionState is ConnectionKind.Normal,
+        _ => true
+    };
+    private bool InState(ConnectionKind kind) => kind switch
+    {
+        ConnectionKind.FullPause => _connections.ConnectionState is ConnectionKind.FullPause && !MainHub.IsConnected,
+        ConnectionKind.Normal => _connections.ConnectionState is ConnectionKind.Normal && MainHub.IsConnected,
+        _ => false
+    };
 
     private bool DrawAddUser(ImGuiWindowPtr winPtr, Vector2 region, Vector2 minPos, bool disabled)
     {
@@ -379,7 +417,7 @@ public class MainUI : WindowMediatorSubscriberBase
         using var font = Fonts.DefaultScaled.Push();
 
         var userCount = MainHub.OnlineUsers.ToString(CultureInfo.InvariantCulture);
-        var text = MainHub.IsConnected ? $"{userCount} Online" : GagspeakEx.GetCenterStateText();
+        var text = MainHub.IsConnected ? $"{userCount} Online" : GetErrorText();
         var textSize = ImGui.CalcTextSize(text);
         var offsetX = (topBarWidth - textSize.X - ImUtf8.ItemInnerSpacing.X) / 2;
 
@@ -495,6 +533,100 @@ public class MainUI : WindowMediatorSubscriberBase
             _ => string.Empty
         };
     }
+
+    private void DisplayHelpForInvalidState()
+    {
+        ImGui.Separator();
+        if (MainHub.ServerStatus is ServerState.Unattached)
+        {
+            CkGui.FontText("Your Character is Unattached from a Profile.", Fonts.HeaderFont, CkCol.TriStateCross.Uint());
+            CkGui.TextWrapped("Your Account has 'Profiles' tied to players you login with.");
+            ImGui.TextUnformatted("If you aren't attached to a profile, you are");
+            CkGui.ColorTextInline("UNATTACHED", CkCol.TriStateCross.Uint());
+            ImGui.Spacing();
+            CkGui.TextUnderlined("How to Resolve:");
+            ImGui.BulletText("Select (or add) your profile in");
+            ImUtf8.SameLineInner();
+            if (CkGui.SmallButtonEx("Service Settings > Account"))
+                Mediator.Publish(new OpenSettingsUI(7, 1));
+            ImGui.BulletText("Drag your character to the profile you want to use.");
+        }
+        else if (MainHub.ServerStatus is ServerState.NoSecretKey)
+        {
+            CkGui.FontText("No Secret Key is Set.", Fonts.HeaderFont, CkCol.TriStateCross.Uint());
+            CkGui.TextWrapped("You're attached to a profile, but the secret key is invalid.");
+            ImGui.Spacing();
+            CkGui.TextUnderlined("How to Resolve:");
+            ImGui.BulletText("Inspect the profile in");
+            ImUtf8.SameLineInner();
+            if (CkGui.SmallButtonEx("Service Settings > Account"))
+                Mediator.Publish(new OpenSettingsUI(7, 1));
+
+            ImGui.BulletText("Ensure the profile has the correct secret key.");
+            ImGui.BulletText("If unsure, you may need to refresh your secret key.");
+            ImGui.BulletText("This can be done via the bot in the ");
+            ImUtf8.SameLineInner();
+            if (CkGui.SmallButtonEx("CK Discord", 0xFF9E5C49))
+                Util.OpenLink("https://discord.gg/kinkporium");
+            CkGui.AttachTooltip("Opens a link to the CK Discord.");
+        }
+        else if (MainHub.ServerStatus is ServerState.VersionMisMatch)
+        {
+            CkGui.FontText("Client Version Mismatch.", Fonts.HeaderFont, CkCol.TriStateCross.Uint());
+            CkGui.TextWrapped("Your client is currently outdated.");
+            ImGui.Spacing();
+
+            ImGui.TextUnformatted("Current Ver: ");
+            CkGui.ColorTextInline(MainHub.ClientVerString, CkCol.TriStateCross.Uint());
+            ImGui.TextUnformatted("Expected Ver: ");
+            CkGui.ColorTextInline(MainHub.ExpectedVerString, CkCol.TriStateCheck.Uint());
+            ImGui.Spacing();
+
+            CkGui.TextUnderlined("How to Resolve:");
+            ImGui.BulletText("Check the plugin installer for updates.");
+            ImGui.BulletText("If no update is visible, try forcing a repository refresh or game restart.");
+            CkGui.BulletText("If still unavailable, servers are likely under maitenance, or cordy is running final stability tests. Hang tight!", ImGuiColors.DalamudYellow);
+        }
+        else if (MainHub.ServerStatus is ServerState.Unauthorized)
+        {
+            CkGui.FontText("Unauthorized Access.", Fonts.HeaderFont, CkCol.TriStateCross.Uint());
+            CkGui.TextWrapped("You are unauthorized to access GagSpeak servers with this account.");
+            ImGui.Spacing();
+
+            ImGui.TextUnformatted("Details: ");
+            ImUtf8.SameLineInner();
+            CkGui.TextWrapped(MainHub.AuthFailureMessage);
+            ImGui.Spacing();
+
+            CkGui.TextUnderlined("How to Resolve:");
+            ImGui.BulletText("Verify your secret key in");
+            ImUtf8.SameLineInner();
+            if (CkGui.SmallButtonEx("Service Settings > Account"))
+                Mediator.Publish(new OpenSettingsUI(7, 1));
+            CkGui.BulletText("If your account was deleted via Discord, delete this local profile to reset.", CkCol.TriStateCross.Uint());
+            ImGui.BulletText("If you believe this is an error, please open a support ticket.");
+        }
+    }
+
+    private string GetErrorText()
+    {
+        return MainHub.ServerStatus switch
+        {
+            ServerState.Reconnecting => "Reconnecting",
+            ServerState.Connecting => "Connecting",
+            ServerState.Disconnected => "Disconnected",
+            ServerState.Disconnecting => "Disconnecting",
+            ServerState.Unauthorized => "Unauthorized",
+            ServerState.VersionMisMatch => "Version mismatch",
+            ServerState.Offline => "Unavailable",
+            ServerState.Unattached => "Unattached",
+            ServerState.NoSecretKey => "No Secret Key",
+            ServerState.Connected => "Connected",
+            ServerState.ConnectedDataSynced => "Connected",
+            _ => string.Empty
+        };
+    }
+
 
     public override void OnClose()
     {

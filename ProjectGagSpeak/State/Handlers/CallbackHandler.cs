@@ -78,7 +78,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnectionDataSynced || _gags.ServerGagData is not { } gagData)
             return;
 
-        Logger.LogTrace("Received SwapGag instruction from server!", LoggerType.Gags);
+        Logger.LogTrace("Received SwapGag instruction from server!", LogFilter.Gags);
         var prevGag = gagData.GagSlots[layer].GagItem.GagName();
         PostActionMsg(enactor.UID, InteractionType.SwappedGag, $"Swapped Gag: [{prevGag} >> {newData.GagItem.GagName()}] on layer <{layer}>");
 
@@ -95,7 +95,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnectionDataSynced)
             return;
 
-        Logger.LogTrace("Received ApplyGag instruction from server!", LoggerType.Gags);
+        Logger.LogTrace("Received ApplyGag instruction from server!", LogFilter.Gags);
         PostActionMsg(enactor.UID, InteractionType.ApplyGag, $"A {newData.GagItem.GagName()} was applied on layer <{layer}>");
 
         if (_gags.ApplyGag(layer, newData.GagItem, enactor.UID, out var gagItem))
@@ -107,7 +107,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnectionDataSynced)
             return Task.CompletedTask;
 
-        Logger.LogTrace("Received LockGag instruction from server!", LoggerType.Gags);
+        Logger.LogTrace("Received LockGag instruction from server!", LogFilter.Gags);
         PostActionMsg(enactor.UID, InteractionType.LockGag, $"A {newData.Padlock.ToName()} was locked onto layer <{layer}>'s Gag");
         _gags.LockGag(layer, newData, enactor.UID);
         return Task.CompletedTask;
@@ -118,7 +118,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnectionDataSynced || _gags.ServerGagData is not { } gagData)
             return Task.CompletedTask;
 
-        Logger.LogTrace("Received UnlockGag instruction from server!", LoggerType.Gags);
+        Logger.LogTrace("Received UnlockGag instruction from server!", LogFilter.Gags);
         PostActionMsg(enactor.UID, InteractionType.UnlockGag, $"A {gagData.GagSlots[layer].Padlock.ToName()} was removed from layer <{layer}>'s Gag");
         _gags.UnlockGag(layer, enactor.UID);
         return Task.CompletedTask;
@@ -130,7 +130,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
             return;
 
         PostActionMsg(enactor.UID, InteractionType.RemoveGag, $"The {curData.GagSlots[layer].GagItem.GagName()} on layer <{layer}> was removed!");
-        Logger.LogTrace("Received RemoveGag instruction from server!", LoggerType.Gags);
+        Logger.LogTrace("Received RemoveGag instruction from server!", LogFilter.Gags);
         if (_gags.RemoveGag(layer, enactor.UID, out var visualItem))
             await _cacheManager.RemoveGagItem(visualItem, layer);
     }
@@ -143,11 +143,11 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnectionDataSynced || _restrictions.ServerRestrictionData is not { } curData)
             return;
 
-        Logger.LogTrace("Received SwapRestriction instruction from server!", LoggerType.Gags);
+        Logger.LogTrace("Received SwapRestriction instruction from server!", LogFilter.Gags);
         var prevId = curData.Restrictions[layer].Identifier;
         var prevName = _restrictions.Storage.TryGetRestriction(prevId, out var prevItem) ? prevItem.Label : prevId.ToString();
         var newName = _restrictions.Storage.TryGetRestriction(newData.Identifier, out var newItem) ? newItem.Label : newData.Identifier.ToString();
-        Logger.LogDebug($"Swapping Restriction [{prevId}] with [{newData.Identifier}]", LoggerType.Restrictions);
+        Logger.LogDebug($"Swapping Restriction [{prevId}] with [{newData.Identifier}]", LogFilter.Restrictions);
         PostActionMsg(enactor.UID, InteractionType.SwappedRestriction, $"Swapped Layer <{layer}> Restriction: [{prevName} >> {newName}]");
         // Remove it.
         if (_restrictions.RemoveRestriction(layer, enactor.UID, out var visualRemItem))
@@ -162,9 +162,9 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnectionDataSynced)
             return;
 
-        Logger.LogTrace("Received ApplyRestriction instruction from server!", LoggerType.Restrictions);
+        Logger.LogTrace("Received ApplyRestriction instruction from server!", LogFilter.Restrictions);
         var setName = _restrictions.Storage.TryGetRestriction(newData.Identifier, out var appliedItem) ? appliedItem.Label : newData.Identifier.ToString();
-        Logger.LogDebug($"Applying Restriction [{newData.Identifier}]", LoggerType.Restrictions);
+        Logger.LogDebug($"Applying Restriction [{newData.Identifier}]", LogFilter.Restrictions);
         PostActionMsg(enactor.UID, InteractionType.ApplyRestriction, $"[{setName}] was applied to you!");
 
         if (_restrictions.ApplyRestriction(layer, newData, enactor.UID, out var visualItem))
@@ -175,7 +175,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
     {
         if (!MainHub.IsConnectionDataSynced)
             return Task.CompletedTask;
-        Logger.LogTrace("Received LockRestriction instruction from server!", LoggerType.Restrictions);
+        Logger.LogTrace("Received LockRestriction instruction from server!", LogFilter.Restrictions);
         PostActionMsg(enactor.UID, InteractionType.LockRestriction, $"Locked a {newData.Padlock.ToName()} to layer <{layer}>'s Restriction");
         _restrictions.LockRestriction(layer, newData, enactor.UID);
         return Task.CompletedTask;
@@ -185,7 +185,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
     {
         if (!MainHub.IsConnectionDataSynced || _restrictions.ServerRestrictionData is not { } curData)
             return Task.CompletedTask;
-        Logger.LogTrace("Received UnlockRestriction instruction from server!", LoggerType.Restrictions);
+        Logger.LogTrace("Received UnlockRestriction instruction from server!", LogFilter.Restrictions);
         PostActionMsg(enactor.UID, InteractionType.UnlockRestriction, $"Removed {curData.Restrictions[layer].Padlock.ToName()} from layer <{layer}>'s Restriction");
         _restrictions.UnlockRestriction(layer, enactor.UID);
         return Task.CompletedTask;
@@ -195,7 +195,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
-        Logger.LogTrace("Received RemoveRestriction instruction from server!", LoggerType.Restrictions);
+        Logger.LogTrace("Received RemoveRestriction instruction from server!", LogFilter.Restrictions);
         PostActionMsg(enactor.UID, InteractionType.RemoveRestriction, "A Restriction item was removed from you!");
 
         if (_restrictions.RemoveRestriction(layer, enactor.UID, out var visualItem))
@@ -210,10 +210,10 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnectionDataSynced || _restraints.ServerData is not { } itemData)
             return;
 
-        Logger.LogTrace("Received SwapRestraintSet instruction from server!", LoggerType.Restraints);
+        Logger.LogTrace("Received SwapRestraintSet instruction from server!", LogFilter.Restraints);
         var prevName = _restraints.Storage.TryGetRestraint(itemData.Identifier, out var prevSet) ? prevSet.Label : itemData.Identifier.ToString();
         var newName = _restraints.Storage.TryGetRestraint(newData.Identifier, out var newSet) ? newSet.Label : newData.Identifier.ToString();
-        Logger.LogDebug($"Swapping RestraintSet [{itemData.Identifier}] with [{newData.Identifier}]", LoggerType.Restraints);
+        Logger.LogDebug($"Swapping RestraintSet [{itemData.Identifier}] with [{newData.Identifier}]", LogFilter.Restraints);
         PostActionMsg(enactor.UID, InteractionType.SwappedRestraint, $"Swapped RestraintSet: [{prevName} >> {newName}]");
         // Remove it.
         if (_restraints.Remove(enactor.UID, out var visualRemItem, out var remLayers))
@@ -228,9 +228,9 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnectionDataSynced)
             return;
 
-        Logger.LogTrace("Received ApplyRestraint instruction from server!", LoggerType.Restraints);
+        Logger.LogTrace("Received ApplyRestraint instruction from server!", LogFilter.Restraints);
         var setName = _restraints.Storage.TryGetRestraint(newData.Identifier, out var appliedSet) ? appliedSet.Label : newData.Identifier.ToString();
-        Logger.LogDebug($"Applying RestraintSet [{newData.Identifier}]", LoggerType.Restraints);
+        Logger.LogDebug($"Applying RestraintSet [{newData.Identifier}]", LogFilter.Restraints);
         PostActionMsg(enactor.UID, InteractionType.ApplyRestraint, $"[{setName}] was applied to you!");
 
         if (_restraints.Apply(newData, enactor.UID, out var restraintSet))
@@ -242,7 +242,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnectionDataSynced)
             return;
 
-        Logger.LogTrace("Received SwapRestraintLayer instruction from server!", LoggerType.Restraints);
+        Logger.LogTrace("Received SwapRestraintLayer instruction from server!", LogFilter.Restraints);
         PostActionMsg(enactor.UID, InteractionType.SwappedRestraintLayers, $"RestraintSet Layers were swapped! ({newData.ActiveLayers})");
 
         if (_restraints.SwapLayers(newData, enactor.UID, out var restraintSet, out var removedLayers, out var addedLayers))
@@ -254,7 +254,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
-        Logger.LogTrace("Received ApplyRestraintLayer instruction from server!", LoggerType.Restraints);
+        Logger.LogTrace("Received ApplyRestraintLayer instruction from server!", LogFilter.Restraints);
         PostActionMsg(enactor.UID, InteractionType.ApplyRestraintLayers, $"New RestraintSet Layers were applied! ({newData.ActiveLayers})");
 
         if (_restraints.ApplyLayers(newData.ActiveLayers, enactor.UID, out var restraintSet, out var addedLayers))
@@ -265,7 +265,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
     {
         if (!MainHub.IsConnectionDataSynced)
             return Task.CompletedTask;
-        Logger.LogTrace("Received LockRestraint instruction from server!", LoggerType.Restraints);
+        Logger.LogTrace("Received LockRestraint instruction from server!", LogFilter.Restraints);
         PostActionMsg(enactor.UID, InteractionType.LockRestraint, $"A {newData.Padlock.ToName()} was locked onto your Restraint Set");
         _restraints.Lock(newData, enactor.UID);
         return Task.CompletedTask;
@@ -276,7 +276,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnectionDataSynced || _restraints.ServerData is not { } itemData)
             return Task.CompletedTask;
 
-        Logger.LogTrace("Received UnlockRestraint instruction from server!", LoggerType.Restraints);
+        Logger.LogTrace("Received UnlockRestraint instruction from server!", LogFilter.Restraints);
         PostActionMsg(enactor.UID, InteractionType.UnlockRestraint, $"The {itemData.Padlock.ToName()} was removed from your Restraint Set");
         _restraints.Unlock(enactor.UID);
         return Task.CompletedTask;
@@ -287,7 +287,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnectionDataSynced)
             return;
 
-        Logger.LogTrace("Received RemoveRestraintLayer instruction from server!", LoggerType.Restraints);
+        Logger.LogTrace("Received RemoveRestraintLayer instruction from server!", LogFilter.Restraints);
         PostActionMsg(enactor.UID, InteractionType.RemoveRestraintLayers, "RestraintSet Layers were removed from you!");
 
         if (_restraints.RemoveLayers(newData.ActiveLayers, enactor.UID, out var restraintSet, out var removedLayers))
@@ -299,7 +299,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnectionDataSynced)
             return;
 
-        Logger.LogTrace("Received RemoveRestraint instruction from server!", LoggerType.Restraints);
+        Logger.LogTrace("Received RemoveRestraint instruction from server!", LogFilter.Restraints);
         PostActionMsg(enactor.UID, InteractionType.RemoveRestraint, "Your RestraintSet was removed!");
 
         if (_restraints.Remove(enactor.UID, out var restraintSet, out var removedLayers))
@@ -315,7 +315,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnectionDataSynced)
             return;
 
-        Logger.LogTrace("Received ApplyCollar instruction from server!", LoggerType.Collars);
+        Logger.LogTrace("Received ApplyCollar instruction from server!", LogFilter.Collars);
         // Apply the collar.
         _collar.Apply(collarData);
         await _cacheManager.AddCollar(collarData.Enactor);
@@ -328,7 +328,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
         if (!MainHub.IsConnectionDataSynced || _collar.SyncedData is not { } synced)
             return;
 
-        Logger.LogTrace($"Received {type} instruction from server!", LoggerType.Collars);
+        Logger.LogTrace($"Received {type} instruction from server!", LogFilter.Collars);
         var prevVisuals = synced.Visuals;
         _collar.UpdateActive(newData, enactor, type);
 
@@ -349,7 +349,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
     {
         if (!MainHub.IsConnectionDataSynced)
             return;
-        Logger.LogTrace("Received RemoveCollar instruction from server!", LoggerType.Collars);
+        Logger.LogTrace("Received RemoveCollar instruction from server!", LogFilter.Collars);
 
         _collar.Remove(enactor);
         await _cacheManager.RemoveCollar(enactor);
@@ -385,7 +385,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
         // Cache the visuals through the cursed loot system instead of the gag system.
         await _cacheManager.AddCursedGagItem(item, layer);
 
-        Logger.LogInformation($"Cursed Loot Applied & Locked!", LoggerType.CursedItems);
+        Logger.LogInformation($"Cursed Loot Applied & Locked!", LogFilter.CursedItems);
         Svc.Chat.PrintError(new SeStringBuilder()
             .AddItalics("As the coffer opens, cursed loot spills forth, silencing your mouth with a Gag now strapped on tight!")
             .BuiltString);
@@ -408,7 +408,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
         if (_restrictions.ApplyCursedItem(item, out var layer))
             await _cacheManager.AddCursedItem(item, layer);
 
-        Logger.LogInformation($"Cursed Loot Applied!", LoggerType.CursedItems);
+        Logger.LogInformation($"Cursed Loot Applied!", LogFilter.CursedItems);
         Svc.Chat.PrintError(new SeStringBuilder().AddItalics("As the coffer opens, cursed loot spills forth, binding you in an inescapable restraint!").BuiltString);
         // Signal achievement event.
         GagspeakEventManager.AchievementEvent(UnlocksEvent.CursedDungeonLootFound);
@@ -439,7 +439,7 @@ public sealed class CallbackHandler : DisposableMediatorSubscriberBase
                 await _cacheManager.RemoveCursedGagItem(cursedGag, layer);
         }
 
-        Logger.LogInformation($"Cursed Loot Removed!", LoggerType.CursedItems);
+        Logger.LogInformation($"Cursed Loot Removed!", LogFilter.CursedItems);
         Svc.Chat.PrintError(new SeStringBuilder().AddItalics("The curse lifts, and the item vanishes in a puff of smoke!").BuiltString);
     }
     #endregion CursedLoot Manipulation

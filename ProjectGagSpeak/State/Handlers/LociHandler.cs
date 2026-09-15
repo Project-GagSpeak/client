@@ -53,7 +53,7 @@ public class LociHandler
     /// <summary> Clears the Caches contents and updates the visuals after. </summary>
     public async Task ClearCache()
     {
-        _logger.LogDebug("Clearing LociCache.", LoggerType.VisualCache);
+        _logger.LogDebug("Clearing LociCache.", LogFilter.VisualCache);
         _cache.ClearCache();
         await UpdateLociCache();
     }
@@ -62,15 +62,15 @@ public class LociHandler
     {
         if (_cache.UpdateFinalCache(out var removedItems))
         {
-            _logger.LogDebug($"FinalLociCache was updated! Removed: {removedItems.Count()}", LoggerType.VisualCache);
+            _logger.LogDebug($"FinalLociCache was updated! Removed: {removedItems.Count()}", LogFilter.VisualCache);
             if (removedItems.Any())
                 await RestoreAndReapplyCache(removedItems);
             else
                 await ApplyLociCache();
         }
         else
-            _logger.LogTrace("No change in FinalLociCache.", LoggerType.VisualCache);
-        _logger.LogDebug("Finished Updating LociCaches.", LoggerType.VisualCache);
+            _logger.LogTrace("No change in FinalLociCache.", LogFilter.VisualCache);
+        _logger.LogDebug("Finished Updating LociCaches.", LogFilter.VisualCache);
     }
 
     /// <summary>
@@ -88,7 +88,7 @@ public class LociHandler
 
         // Handle application accordingly.
         await ApplyStatus(idsToApply.ToList(), true);
-        _logger.LogDebug("Applied all Statuses to the client.", LoggerType.IpcLoci);
+        _logger.LogDebug("Applied all Statuses to the client.", LogFilter.IpcLoci);
     }
 
     /// <summary>
@@ -97,7 +97,7 @@ public class LociHandler
     private async Task RestoreAndReapplyCache(IEnumerable<Guid> itemsToRemove)
     {
         await RemoveStatus([.. itemsToRemove], true);
-        _logger.LogDebug($"Removed LociItems: {string.Join(", ", itemsToRemove)}", LoggerType.IpcLoci);
+        _logger.LogDebug($"Removed LociItems: {string.Join(", ", itemsToRemove)}", LogFilter.IpcLoci);
         // Reapply restricted.
         await ApplyLociCache();
     }

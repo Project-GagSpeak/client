@@ -478,7 +478,7 @@ public class ImageImportTool
             // Step 1: Calculate the scaled size based on the zoom factor
             var scaledWidth = (int)(imageData.OriginalImage.Width * imageData.ZoomFactor);
             var scaledHeight = (int)(imageData.OriginalImage.Height * imageData.ZoomFactor);
-            _logger.LogTrace($"Scaled Size: {scaledWidth} x {scaledHeight}", LoggerType.Textures);
+            _logger.LogTrace($"Scaled Size: {scaledWidth} x {scaledHeight}", LogFilter.Textures);
 
             // Step 2: Resize the image based on zoom
             using var scaled = imageData.OriginalImage.Clone(ctx => ctx.Resize(scaledWidth, scaledHeight));
@@ -489,38 +489,38 @@ public class ImageImportTool
             var sin = Math.Sin(radians);
             var adjustedPanX = PanX * cos - PanY * sin;
             var adjustedPanY = PanX * sin + PanY * cos;
-            _logger.LogTrace($"Adjusted Pan: {adjustedPanX} x {adjustedPanY}", LoggerType.Textures);
+            _logger.LogTrace($"Adjusted Pan: {adjustedPanX} x {adjustedPanY}", LogFilter.Textures);
 
             // Step 4: Calculate viewport center (the center of the cropped frame in the current view)
             var viewportCenterX = scaledWidth / 2 + (int)PanX;
             var viewportCenterY = scaledHeight / 2 + (int)PanY;
-            _logger.LogTrace($"Viewport Center: {viewportCenterX} x {viewportCenterY}", LoggerType.Textures);
+            _logger.LogTrace($"Viewport Center: {viewportCenterX} x {viewportCenterY}", LogFilter.Textures);
 
             // Step 5: Create a new padded canvas large enough to avoid clipping during rotation
             var paddedSize = (int)(Math.Sqrt(targetWidth * targetWidth + targetHeight * targetHeight) * 1.5); // extra room
             var canvasWidth = paddedSize;
             var canvasHeight = paddedSize;
-            _logger.LogTrace($"Canvas Size: {canvasWidth} x {canvasHeight}", LoggerType.Textures);
+            _logger.LogTrace($"Canvas Size: {canvasWidth} x {canvasHeight}", LogFilter.Textures);
 
             // Step 6: Create padded image and draw scaled image onto it, so the desired rotation center is at the canvas center
             using var padded = new Image<Rgba32>(canvasWidth, canvasHeight);
             var drawX = (canvasWidth / 2) - viewportCenterX;
             var drawY = (canvasHeight / 2) - viewportCenterY;
             padded.Mutate(ctx => ctx.DrawImage(scaled, new Point(drawX, drawY), 1f));
-            _logger.LogTrace($"Draw Position: {drawX} x {drawY}", LoggerType.Textures);
+            _logger.LogTrace($"Draw Position: {drawX} x {drawY}", LogFilter.Textures);
 
             // Step 7: Calculate the crop region in the scaled image based on pan and zoom
             var offsetX = (scaledWidth - targetWidth) / 2 + (int)PanX;
             var offsetY = (scaledHeight - targetHeight) / 2 + (int)PanY;
-            _logger.LogTrace($"Crop Offset: {offsetX} x {offsetY}", LoggerType.Textures);
+            _logger.LogTrace($"Crop Offset: {offsetX} x {offsetY}", LogFilter.Textures);
 
             // Ensure the crop rectangle stays within the image bounds
             offsetX = Math.Max(0, Math.Min(offsetX, scaledWidth - targetWidth));
             offsetY = Math.Max(0, Math.Min(offsetY, scaledHeight - targetHeight));
-            _logger.LogTrace($"Adjusted Crop Offset: {offsetX} x {offsetY}", LoggerType.Textures);
+            _logger.LogTrace($"Adjusted Crop Offset: {offsetX} x {offsetY}", LogFilter.Textures);
 
             var cropRect = new Rectangle(offsetX, offsetY, targetWidth, targetHeight);
-            _logger.LogTrace($"Crop Rectangle: {cropRect}", LoggerType.Textures);
+            _logger.LogTrace($"Crop Rectangle: {cropRect}", LogFilter.Textures);
 
             // Step 8: Apply rotation around the center of the cropped region
             var rotated = padded.Clone(ctx =>
@@ -529,7 +529,7 @@ public class ImageImportTool
                     // Rotate around the center of the cropped area
                     ctx.Rotate(Rotation);
             });
-            _logger.LogTrace($"Rotated Image Size: {rotated.Width} x {rotated.Height}", LoggerType.Textures);
+            _logger.LogTrace($"Rotated Image Size: {rotated.Width} x {rotated.Height}", LogFilter.Textures);
 
             // Step 9: Crop the final result to ensure it's centered within the target size
             var final = rotated.Clone(ctx =>
@@ -538,7 +538,7 @@ public class ImageImportTool
                 var cy = (rotated.Height - targetHeight) / 2;
                 ctx.Crop(new Rectangle(cx, cy, targetWidth, targetHeight));
             });
-            _logger.LogTrace($"Final Image Size: {final.Width} x {final.Height}", LoggerType.Textures);
+            _logger.LogTrace($"Final Image Size: {final.Width} x {final.Height}", LogFilter.Textures);
 
             // Convert the processed image to byte array
             using (var ms = new MemoryStream())

@@ -113,12 +113,12 @@ public class DurationAchievement : AchievementBase
 
         if (!ActiveItems.Any(x => x.Item == item && x.UIDAffected == affectedUID))
         {
-            GagspeakEventManager.UnlocksLogger.LogTrace($"Started Tracking item {item} on {affectedUID} for {Title}", LoggerType.Achievements);
+            GagspeakEventManager.UnlocksLogger.LogTrace($"Started Tracking item {item} on {affectedUID} for {Title}", LogFilter.Achievements);
             ActiveItems.Add(new TrackedItem(item, affectedUID)); // Start tracking time
         }
         else
         {
-            GagspeakEventManager.UnlocksLogger.LogTrace($"Item {item} on {affectedUID} is already being tracked for {Title}, ignoring. (Likely loading in from reconnect)", LoggerType.AchievementInfo);
+            GagspeakEventManager.UnlocksLogger.LogTrace($"Item {item} on {affectedUID} is already being tracked for {Title}, ignoring. (Likely loading in from reconnect)", LogFilter.AchievementInfo);
         }
     }
 
@@ -145,7 +145,7 @@ public class DurationAchievement : AchievementBase
             if ((DateTime.UtcNow - trackedItem.TimeAdded) + TimeSpan.FromSeconds(10) >= MilestoneDuration && uidToScan != MainHub.UID)
             {
                 // if it does, we should mark the achievement as completed.
-                GagspeakEventManager.UnlocksLogger.LogInformation($"Achievement {Title} has been been active for the required Duration. Marking as finished!", LoggerType.AchievementInfo);
+                GagspeakEventManager.UnlocksLogger.LogInformation($"Achievement {Title} has been been active for the required Duration. Marking as finished!", LogFilter.AchievementInfo);
                 MarkCompleted();
                 // clear the list and exit.
                 ActiveItems.Clear();
@@ -153,7 +153,7 @@ public class DurationAchievement : AchievementBase
             }
 
             // otherwise, it failed to meet the expected duration, so we should remove it from tracking.
-            GagspeakEventManager.UnlocksLogger.LogTrace("Kinkster: "+uidToScan +" no longer has "+ trackedItem.Item +" applied, removing from tracking.", LoggerType.AchievementInfo);
+            GagspeakEventManager.UnlocksLogger.LogTrace("Kinkster: "+uidToScan +" no longer has "+ trackedItem.Item +" applied, removing from tracking.", LogFilter.AchievementInfo);
             ActiveItems.Remove(trackedItem);
         }
 
@@ -166,7 +166,7 @@ public class DurationAchievement : AchievementBase
             // Add some wavier duration to ensure timers set for the same time as the achievment dont end up a second off.
             if ((DateTime.UtcNow - trackedItem.TimeAdded) + TimeSpan.FromSeconds(10) >= MilestoneDuration)
             {
-                GagspeakEventManager.UnlocksLogger.LogInformation($"Achievement {Title} has been been active for the required Duration. Marking as finished!", LoggerType.AchievementInfo);
+                GagspeakEventManager.UnlocksLogger.LogInformation($"Achievement {Title} has been been active for the required Duration. Marking as finished!", LogFilter.AchievementInfo);
                 MarkCompleted();
                 // clear the list and exit.
                 ActiveItems.Clear();
@@ -183,7 +183,7 @@ public class DurationAchievement : AchievementBase
         if (IsCompleted || !MainHub.IsConnected)
             return;
 
-        GagspeakEventManager.UnlocksLogger.LogTrace($"Stopped Tracking item "+item+" on "+fromThisUID+" for "+Title, LoggerType.AchievementInfo);
+        GagspeakEventManager.UnlocksLogger.LogTrace($"Stopped Tracking item "+item+" on "+fromThisUID+" for "+Title, LogFilter.AchievementInfo);
 
         // check completion before we stop tracking.
         CheckCompletion();
@@ -192,13 +192,13 @@ public class DurationAchievement : AchievementBase
         {
             if (ActiveItems.Any(x => x.Item == item && x.UIDAffected == fromThisUID))
             {
-                GagspeakEventManager.UnlocksLogger.LogTrace($"Item "+item+" from "+fromThisUID+" was not completed, removing from tracking.", LoggerType.AchievementInfo);
+                GagspeakEventManager.UnlocksLogger.LogTrace($"Item "+item+" from "+fromThisUID+" was not completed, removing from tracking.", LogFilter.AchievementInfo);
                 ActiveItems.RemoveAll(x => x.Item == item && x.UIDAffected == fromThisUID);
             }
             else
             {
                 // Log all currently active tracked items for debugging.
-                GagspeakEventManager.UnlocksLogger.LogTrace($"Items Currently still being tracked: {string.Join(", ", ActiveItems.Select(x => x.Item))}", LoggerType.AchievementInfo);
+                GagspeakEventManager.UnlocksLogger.LogTrace($"Items Currently still being tracked: {string.Join(", ", ActiveItems.Select(x => x.Item))}", LogFilter.AchievementInfo);
             }
         }
     }
@@ -217,7 +217,7 @@ public class DurationAchievement : AchievementBase
         {
             // Mark the achievement as completed
             GagspeakEventManager.UnlocksLogger.LogInformation($"Achievement {Title} has been been active for the required Duration. "
-                + "Marking as finished!", LoggerType.AchievementInfo);
+                + "Marking as finished!", LogFilter.AchievementInfo);
             MarkCompleted();
             // clear the list.
             ActiveItems.Clear();

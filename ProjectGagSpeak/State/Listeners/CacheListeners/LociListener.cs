@@ -120,7 +120,7 @@ public class LociListener : DisposableMediatorSubscriberBase
 
     private async void OnLociReady()
     {
-        Logger.LogDebug("Loci ready, pushing to visible kinksters", LoggerType.IpcLoci);
+        Logger.LogDebug("Loci ready, pushing to visible kinksters", LogFilter.IpcLoci);
         var dataInfo = await _loci.GetOwnManagerInfo().ConfigureAwait(false);
         var statuses = await _loci.GetStatusInfos().ConfigureAwait(false);
         var presets = await _loci.GetPresetInfos().ConfigureAwait(false);
@@ -136,7 +136,7 @@ public class LociListener : DisposableMediatorSubscriberBase
         LociCache.Data.Statuses.Clear();
         LociCache.Data.Presets.Clear();
         await _dds.UserPushLociData(_kinksters.GetVisibleConnected());
-        Logger.LogDebug("Loci disposed, pushing empty data to visible kinksters", LoggerType.IpcLoci);
+        Logger.LogDebug("Loci disposed, pushing empty data to visible kinksters", LogFilter.IpcLoci);
     }
 
     public async void OnManagerModified(nint charaAddr, ManagerChangeType changeType)
@@ -205,7 +205,7 @@ public class LociListener : DisposableMediatorSubscriberBase
         }
         catch (Bagagwa)
         {
-            Logger.LogError($"Hub is still undergoing reworks with calls, safely exiting.", LoggerType.IpcLoci);
+            Logger.LogError($"Hub is still undergoing reworks with calls, safely exiting.", LogFilter.IpcLoci);
         }
     }
 
@@ -230,7 +230,7 @@ public class LociListener : DisposableMediatorSubscriberBase
         }
         catch (Bagagwa)
         {
-            Logger.LogError($"Hub is still undergoing reworks with calls, safely exiting.", LoggerType.IpcLoci);
+            Logger.LogError($"Hub is still undergoing reworks with calls, safely exiting.", LogFilter.IpcLoci);
         }
     }
 

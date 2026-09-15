@@ -68,7 +68,7 @@ public sealed class OnlineKinksterManager : DisposableMediatorSubscriberBase
             lock (_lock)
                 _identMap[ident] = user;
 
-            Logger.LogDebug($"Added OnlineUser {user.AliasOrUID}", LoggerType.OnlinePairs);
+            Logger.LogDebug($"Added OnlineUser {user.AliasOrUID}", LogFilter.OnlineUsers);
             UserWentOnline?.Invoke(user, ident);
         }
     }
@@ -85,7 +85,7 @@ public sealed class OnlineKinksterManager : DisposableMediatorSubscriberBase
         if (_onlineUsers.TryRemove(user, out var ident))
         {
             RemoveIdent(ident, out var removed);
-            Logger.LogDebug($"Removed OnlineUser {user.AliasOrUID}", LoggerType.OnlinePairs);
+            Logger.LogDebug($"Removed OnlineUser {user.AliasOrUID}", LogFilter.OnlineUsers);
             UserWentOffline?.Invoke(user, ident);
         }
     }

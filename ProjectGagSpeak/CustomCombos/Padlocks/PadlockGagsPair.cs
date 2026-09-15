@@ -49,7 +49,7 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
         var finalTime = SelectedLock == Padlocks.FiveMinutes
             ? DateTimeOffset.UtcNow.Add(TimeSpan.FromMinutes(5)) : Timer.GetEndTimeUTC();
 
-        Log.LogInformation($"Locking with a final time of {finalTime} for {SelectedLock.ToName()} which is a timespan of {finalTime - DateTimeOffset.UtcNow} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
+        Log.LogInformation($"Locking with a final time of {finalTime} for {SelectedLock.ToName()} which is a timespan of {finalTime - DateTimeOffset.UtcNow} on {_ref.GetNickAliasOrUid()}", LogFilter.StickyUI);
 
         var newData = new PushKinksterActiveGagSlot(_ref.User, DataUpdateType.Locked)
         {
@@ -62,11 +62,11 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
         var result = await _mainHub.UserChangeKinksterActiveGag(newData);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
-            Log.LogDebug($"Failed to perform LockGag with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{result}", LoggerType.StickyUI);
+            Log.LogDebug($"Failed to perform LockGag with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{result}", LogFilter.StickyUI);
             DisplayToastErrorAndReset(result.ErrorCode, SelectedLock, false);
             return;
         }
-        Log.LogDebug($"Locking Gag with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
+        Log.LogDebug($"Locking Gag with {SelectedLock.ToName()} on {_ref.GetNickAliasOrUid()}", LogFilter.StickyUI);
         ResetSelection();
         ResetInputs();
         ActiveItem = new ActiveGagSlot();
@@ -78,7 +78,7 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
         // return if we cannot lock.
         if (!ActiveItem.CanUnlock() || !_ref.PairPerms.UnlockGags)
         {
-            Log.LogDebug($"Cannot unlock Gag with {ActiveItem.Padlock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason: Cannot Unlock", LoggerType.StickyUI);
+            Log.LogDebug($"Cannot unlock Gag with {ActiveItem.Padlock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason: Cannot Unlock", LogFilter.StickyUI);
             return;
         }
 
@@ -93,12 +93,12 @@ public class PairGagPadlockCombo : CkPadlockComboBase<ActiveGagSlot>
         var result = await _mainHub.UserChangeKinksterActiveGag(dto);
         if (result.ErrorCode is not GagSpeakApiEc.Success)
         {
-            Log.LogDebug($"Failed to perform UnlockGag with {ActiveItem.Padlock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{result}", LoggerType.StickyUI);
+            Log.LogDebug($"Failed to perform UnlockGag with {ActiveItem.Padlock.ToName()} on {_ref.GetNickAliasOrUid()}, Reason:{result}", LogFilter.StickyUI);
             DisplayToastErrorAndReset(result.ErrorCode, ActiveItem.Padlock, true);
             return;
         }
 
-        Log.LogDebug($"Unlocking Gag with {ActiveItem.Padlock.ToName()} on {_ref.GetNickAliasOrUid()}", LoggerType.StickyUI);
+        Log.LogDebug($"Unlocking Gag with {ActiveItem.Padlock.ToName()} on {_ref.GetNickAliasOrUid()}", LogFilter.StickyUI);
         ResetSelection();
         ResetInputs();
         ActiveItem = new ActiveGagSlot();

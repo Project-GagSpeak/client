@@ -66,7 +66,7 @@ public class RestraintsPanel : DisposableMediatorSubscriberBase
             if (_manager.ItemInEditor?.RestraintSlots[msg.Slot] is RestraintSlotBasic basicSlot)
             {
                 basicSlot.Glamour.GameItem = msg.Item;
-                Logger.LogDebug($"Set [" + msg.Slot + "] to [" + msg.Item.Name + "] on edited set " + "[" + _manager.ItemInEditor.Label + "]", LoggerType.Restraints);
+                Logger.LogDebug($"Set [" + msg.Slot + "] to [" + msg.Item.Name + "] on edited set " + "[" + _manager.ItemInEditor.Label + "]", LogFilter.Restraints);
             }
         });
 

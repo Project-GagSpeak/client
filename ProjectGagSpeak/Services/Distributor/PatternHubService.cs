@@ -148,7 +148,7 @@ public class PatternHubService : DisposableMediatorSubscriberBase
                     MotorsUsed = pattern.PlaybackData.MotorsUsed,
                 };
 
-                Logger.LogDebug("Uploading Pattern to server.", LoggerType.ShareHub);
+                Logger.LogDebug("Uploading Pattern to server.", LogFilter.ShareHub);
                 var res = await _hub.UploadPattern(new(patternInfo, base64Pattern)).ConfigureAwait(false);
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                     throw new Exception($"Failed to upload pattern to servers. Error: {res.ErrorCode}");
@@ -195,7 +195,7 @@ public class PatternHubService : DisposableMediatorSubscriberBase
             }
             else
             {
-                Logger.LogInformation("Downloaded pattern from servers.", LoggerType.ShareHub);
+                Logger.LogInformation("Downloaded pattern from servers.", LogFilter.ShareHub);
                 // add one download count to the pattern.
                 var matchedPattern = _searchResults.FirstOrDefault(x => x.Identifier == patternId);
                 if (matchedPattern is not null)
@@ -254,7 +254,7 @@ public class PatternHubService : DisposableMediatorSubscriberBase
             }
 
             // otherwise, it worked.
-            Logger.LogInformation("Like interaction successful.", LoggerType.ShareHub);
+            Logger.LogInformation("Like interaction successful.", LogFilter.ShareHub);
             // update the pattern stuff
             if (_searchResults.FirstOrDefault(x => x.Identifier == patternId) is { } pattern)
             {
@@ -282,7 +282,7 @@ public class PatternHubService : DisposableMediatorSubscriberBase
                 if (res.ErrorCode is not GagSpeakApiEc.Success)
                     throw new Exception($"Failed to remove pattern from servers: [{res.ErrorCode}]");
 
-                Logger.LogTrace("Unpublish pattern completed.", LoggerType.ShareHub);
+                Logger.LogTrace("Unpublish pattern completed.", LogFilter.ShareHub);
                 _publications.Remove(publication);
                 Mediator.Publish(new NotificationMessage("Pattern Removal", "removed successful!", NotificationType.Info));
             }

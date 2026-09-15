@@ -105,13 +105,13 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
         // If we have gaggedNameplate settings on and the change was apply, we should attempt to add them to tracked.
         if (newState is NewState.Enabled || (_gags.ServerGagData is {} data && data.IsGagged()))
         {
-            Logger.LogDebug($"Adding {PlayerData.NameWithWorld} to tracked Nameplates", LoggerType.Gags);
+            Logger.LogDebug($"Adding {PlayerData.NameWithWorld} to tracked Nameplates", LogFilter.Gags);
             TrackedKinksters.TryAdd(PlayerData.NameWithWorld, false);
         }
         // Otherwise, remove it
         else
         {
-            Logger.LogDebug($"Removing {PlayerData.NameWithWorld} to tracked Nameplates", LoggerType.Gags);
+            Logger.LogDebug($"Removing {PlayerData.NameWithWorld} to tracked Nameplates", LogFilter.Gags);
             TrackedKinksters.Remove(PlayerData.NameWithWorld, out var _);
         }
         // Request a redraw afterwards to the latest state is reflected.
@@ -139,14 +139,14 @@ public sealed class NameplateService : DisposableMediatorSubscriberBase
             // check if they need to be added.
             if (!TrackedKinksters.ContainsKey(kinkster.PlayerNameWorld))
             {
-                Logger.LogDebug($"Adding {kinkster.PlayerNameWorld} to tracked Nameplates", LoggerType.Gags);
+                Logger.LogDebug($"Adding {kinkster.PlayerNameWorld} to tracked Nameplates", LogFilter.Gags);
                 TrackedKinksters.TryAdd(kinkster.PlayerNameWorld, false);
             }
         }
         // Otherwise we should remove the tracked nameplate.
         else
         {
-            Logger.LogDebug($"Removing {kinkster.PlayerNameWorld} to tracked Nameplates", LoggerType.Gags);
+            Logger.LogDebug($"Removing {kinkster.PlayerNameWorld} to tracked Nameplates", LogFilter.Gags);
             TrackedKinksters.Remove(kinkster.PlayerNameWorld, out var _);
         }
 

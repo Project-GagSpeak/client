@@ -4,6 +4,7 @@ using Dalamud.Game.Text.SeStringHandling;
 using GagSpeak.Gui;
 using GagSpeak.Gui.Chat;
 using GagSpeak.Gui.MainWindow;
+using GagSpeak.Gui.Settings;
 using GagSpeak.Kinksters;
 using GagSpeak.Minigames.Watchers;
 using GagSpeak.PlayerClient;
@@ -177,7 +178,7 @@ public sealed class CommandManager : DisposableMediatorSubscriberBase
         else if (string.Equals(splitArgs[0], "settings", StringComparison.OrdinalIgnoreCase))
         {
             if (_mainConfig.Data.HasValidSetup())
-                Mediator.Publish(new UiToggleMessage(typeof(SettingsUi)));
+                Mediator.Publish(new UiToggleMessage(typeof(NewSettingsUI)));
         }
         else if (string.Equals(splitArgs[0], "chat", StringComparison.OrdinalIgnoreCase))
         {
