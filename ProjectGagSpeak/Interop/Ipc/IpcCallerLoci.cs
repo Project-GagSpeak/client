@@ -1,3 +1,4 @@
+using CkCommons;
 using GagSpeak.Services.Mediator;
 using LociApi.Enums;
 using LociApi.Helpers;
@@ -146,7 +147,7 @@ public sealed class IpcCallerLoci : IIpcCaller
     public async Task<bool> RegisterActor(nint address)
     {
         if (!APIAvailable) return false;
-        var res = await Svc.Framework.RunOnFrameworkThread(() => Register.Invoke(address, GAGSPEAK_TAG)).ConfigureAwait(false);
+        var res = await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(() => Register.Invoke(address, GAGSPEAK_TAG)).ConfigureAwait(false));
         if (res is not (LociApiEc.Success or LociApiEc.NoChange))
             _logger.LogWarning($"Loci Failed to register Actor {address} with Loci! Error: {res}");
         return res is (LociApiEc.Success or LociApiEc.NoChange);
@@ -156,7 +157,7 @@ public sealed class IpcCallerLoci : IIpcCaller
     public async Task<bool> RegisterPlayer(string playerNameWorld)
     {
         if (!APIAvailable) return false;
-        var res = await Svc.Framework.RunOnFrameworkThread(() => RegisterName.Invoke(playerNameWorld, GAGSPEAK_TAG)).ConfigureAwait(false);
+        var res = await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(() => RegisterName.Invoke(playerNameWorld, GAGSPEAK_TAG)).ConfigureAwait(false));
         if (res is not (LociApiEc.Success or LociApiEc.NoChange))
             _logger.LogWarning($"Loci Failed to register Player {playerNameWorld} with Loci! Error: {res}");
         return res is (LociApiEc.Success or LociApiEc.NoChange);
@@ -166,7 +167,7 @@ public sealed class IpcCallerLoci : IIpcCaller
     public async Task UnregisterActor(nint address)
     {
         if (!APIAvailable) return;
-        await Svc.Framework.RunOnFrameworkThread(() => Unregister.Invoke(address, GAGSPEAK_TAG)).ConfigureAwait(false);
+        await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(() => Unregister.Invoke(address, GAGSPEAK_TAG)).ConfigureAwait(false));
     }
 
     /// <inheritdoc cref="LociApi.Ipc.UnregisterByName"/>
@@ -187,49 +188,49 @@ public sealed class IpcCallerLoci : IIpcCaller
     public async Task<string> GetOwnManagerStr()
     {
         if (!APIAvailable) return string.Empty;
-        return await Svc.Framework.RunOnFrameworkThread(() => GetManager.Invoke().Item2 ?? string.Empty).ConfigureAwait(false);
+        return await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(() => GetManager.Invoke().Item2 ?? string.Empty).ConfigureAwait(false));
     }
 
     /// <inheritdoc cref="LociApi.Ipc.GetManagerByPtr"/>
     public async Task<string> GetActorSMStr(nint actorAddr)
     {
         if (!APIAvailable) return string.Empty;
-        return await Svc.Framework.RunOnFrameworkThread(() => GetManagerByPtr.Invoke(actorAddr).Item2 ?? string.Empty).ConfigureAwait(false);
+        return await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(() => GetManagerByPtr.Invoke(actorAddr).Item2 ?? string.Empty).ConfigureAwait(false));
     }
 
     /// <inheritdoc cref="LociApi.Ipc.GetManagerInfo"/>
     public async Task<List<LociStatusInfo>> GetOwnManagerInfo()
     {
         if (!APIAvailable) return [];
-        return await Svc.Framework.RunOnFrameworkThread(() => GetManagerInfo.Invoke()).ConfigureAwait(false);
+        return await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(() => GetManagerInfo.Invoke()).ConfigureAwait(false));
     }
 
     /// <inheritdoc cref="LociApi.Ipc.GetManagerInfoByPtr"/>
     public async Task<List<LociStatusInfo>> GetActorSMInfo(nint actorAddr)
     {
         if (!APIAvailable) return [];
-        return await Svc.Framework.RunOnFrameworkThread(() => GetManagerInfoByPtr.Invoke(actorAddr)).ConfigureAwait(false);
+        return await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(() => GetManagerInfoByPtr.Invoke(actorAddr)).ConfigureAwait(false));
     }
 
     /// <inheritdoc cref="LociApi.Ipc.GetStatusInfo"/>
     public async Task<LociStatusInfo> GetStatusInfo(Guid guid)
     {
         if (!APIAvailable) return default;
-        return await Svc.Framework.RunOnFrameworkThread(() => GetStatusTuple.Invoke(guid).Item2).ConfigureAwait(false);
+        return await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(() => GetStatusTuple.Invoke(guid).Item2).ConfigureAwait(false));
     }
 
     /// <inheritdoc cref="LociApi.Ipc.GetStatusInfoList"/>
     public async Task<List<LociStatusInfo>> GetStatusInfos()
     {
         if (!APIAvailable) return [];
-        return await Svc.Framework.RunOnFrameworkThread(GetAllStatuseTuples.Invoke).ConfigureAwait(false);
+        return await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(GetAllStatuseTuples.Invoke).ConfigureAwait(false));
     }
 
     /// <inheritdoc cref="LociApi.Ipc.ApplyStatus"/>
     public async Task<bool> ApplyStatus(Guid id, bool asLocked)
     {
         if (!APIAvailable) return false;
-        var res = await Svc.Framework.RunOnFrameworkThread(() => ApplyStatusById.Invoke(id, asLocked ? GAGSPEAK_KEY : 0)).ConfigureAwait(false);
+        var res = await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(() => ApplyStatusById.Invoke(id, asLocked ? GAGSPEAK_KEY : 0)).ConfigureAwait(false));
         return res is (LociApiEc.Success or LociApiEc.PartialSuccess);
     }
 
@@ -237,7 +238,7 @@ public sealed class IpcCallerLoci : IIpcCaller
     public async Task<bool> ApplyStatus(List<Guid> ids, bool asLocked)
     {
         if (!APIAvailable) return false;
-        var res = await Svc.Framework.RunOnFrameworkThread(() => ApplyStatusByIds.Invoke(ids, asLocked ? GAGSPEAK_KEY : 0, out _)).ConfigureAwait(false);
+        var res = await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(() => ApplyStatusByIds.Invoke(ids, asLocked ? GAGSPEAK_KEY : 0, out _)).ConfigureAwait(false));
         return res is (LociApiEc.Success or LociApiEc.PartialSuccess);
     }
 
@@ -245,7 +246,7 @@ public sealed class IpcCallerLoci : IIpcCaller
     public async Task<bool> ApplyStatusInfo(LociStatusInfo tuple, bool asLocked)
     {
         if (!APIAvailable) return false;
-        var res = await Svc.Framework.RunOnFrameworkThread(() => ApplyStatusTuple.Invoke(tuple, asLocked ? GAGSPEAK_KEY : 0)).ConfigureAwait(false);
+        var res = await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(() => ApplyStatusTuple.Invoke(tuple, asLocked ? GAGSPEAK_KEY : 0)).ConfigureAwait(false));
         return res is (LociApiEc.Success or LociApiEc.PartialSuccess);
     }
 
@@ -253,7 +254,7 @@ public sealed class IpcCallerLoci : IIpcCaller
     public async Task<bool> ApplyStatusInfo(List<LociStatusInfo> tuples, bool asLocked)
     {
         if (!APIAvailable) return false;
-        var res = await Svc.Framework.RunOnFrameworkThread(() => ApplyStatusTuples.Invoke(tuples, asLocked ? GAGSPEAK_KEY : 0)).ConfigureAwait(false);
+        var res = await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(() => ApplyStatusTuples.Invoke(tuples, asLocked ? GAGSPEAK_KEY : 0)).ConfigureAwait(false));
         return res is (LociApiEc.Success or LociApiEc.PartialSuccess);
     }
 
@@ -261,7 +262,7 @@ public sealed class IpcCallerLoci : IIpcCaller
     public async Task<bool> BombStatus(Guid id, bool useKey)
     {
         if (!APIAvailable) return false;
-        var res = await Svc.Framework.RunOnFrameworkThread(() => RemoveStatus.Invoke(id, useKey ? GAGSPEAK_KEY : 0)).ConfigureAwait(false);
+        var res = await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(() => RemoveStatus.Invoke(id, useKey ? GAGSPEAK_KEY : 0)).ConfigureAwait(false));
         return res is (LociApiEc.Success or LociApiEc.PartialSuccess);
     }
 
@@ -269,7 +270,7 @@ public sealed class IpcCallerLoci : IIpcCaller
     public async Task<bool> BombStatus(List<Guid> ids, bool useKey)
     {
         if (!APIAvailable) return false;
-        var res = await Svc.Framework.RunOnFrameworkThread(() => RemoveStatuses.Invoke(ids, useKey ? GAGSPEAK_KEY : 0, out _)).ConfigureAwait(false);
+        var res = await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(() => RemoveStatuses.Invoke(ids, useKey ? GAGSPEAK_KEY : 0, out _)).ConfigureAwait(false));
         return res is (LociApiEc.Success or LociApiEc.PartialSuccess);
     }
 
@@ -277,28 +278,28 @@ public sealed class IpcCallerLoci : IIpcCaller
     public async Task<LociPresetInfo> GetPresetInfo(Guid guid)
     {
         if (!APIAvailable) return default;
-        return await Svc.Framework.RunOnFrameworkThread(() => GetPresetTuple.Invoke(guid).Item2).ConfigureAwait(false);
+        return await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(() => GetPresetTuple.Invoke(guid).Item2).ConfigureAwait(false));
     }
 
     /// <inheritdoc cref="LociApi.Ipc.GetPresetInfoList"/>
     public async Task<List<LociPresetInfo>> GetPresetInfos()
     {
         if (!APIAvailable) return [];
-        return await Svc.Framework.RunOnFrameworkThread(GetAllPresetTuples.Invoke).ConfigureAwait(false);
+        return await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(GetAllPresetTuples.Invoke).ConfigureAwait(false));
     }
 
     /// <inheritdoc cref="LociApi.Ipc.ApplyPreset"/>
     public async Task<bool> ApplyPreset(Guid id, bool asLocked)
     {
         if (!APIAvailable) return false;
-        var res = await Svc.Framework.RunOnFrameworkThread(() => ApplyPresetById.Invoke(id, asLocked ? GAGSPEAK_KEY : 0)).ConfigureAwait(false);
+        var res = await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(() => ApplyPresetById.Invoke(id, asLocked ? GAGSPEAK_KEY : 0)).ConfigureAwait(false));
         return res is (LociApiEc.Success or LociApiEc.PartialSuccess);
     }
 
     public async Task<bool> ApplyPreset(List<Guid> ids, bool asLocked)
     {
         if (!APIAvailable) return false;
-        var res = await Svc.Framework.RunOnFrameworkThread(() => ApplyPresetByIds.Invoke(ids, asLocked ? GAGSPEAK_KEY : 0, out _)).ConfigureAwait(false);
+        var res = await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(() => ApplyPresetByIds.Invoke(ids, asLocked ? GAGSPEAK_KEY : 0, out _)).ConfigureAwait(false));
         return res is (LociApiEc.Success or LociApiEc.PartialSuccess);
     }
 
@@ -306,7 +307,7 @@ public sealed class IpcCallerLoci : IIpcCaller
     public async Task ApplyPresetInfo(LociPresetInfo tuple, bool asLocked)
     {
         if (!APIAvailable) return;
-        await Svc.Framework.RunOnFrameworkThread(() => ApplyPresetTuple.Invoke(tuple, asLocked ? GAGSPEAK_KEY : 0)).ConfigureAwait(false);
+        await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(() => ApplyPresetTuple.Invoke(tuple, asLocked ? GAGSPEAK_KEY : 0)).ConfigureAwait(false));
     }
 
     // All of the below should be able to all be called syncronously?..
@@ -322,35 +323,35 @@ public sealed class IpcCallerLoci : IIpcCaller
     public async Task LockStatus(Guid id)
     {
         if (!APIAvailable) return;
-        await Svc.Framework.RunOnFrameworkThread(() => LockStatusById.Invoke(id, GAGSPEAK_KEY)).ConfigureAwait(false);
+        await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(() => LockStatusById.Invoke(id, GAGSPEAK_KEY)).ConfigureAwait(false));
     }
 
     /// <inheritdoc cref="LociApi.Ipc.LockStatuses"/>
     public async Task LockStatuses(List<Guid> ids)
     {
         if (!APIAvailable) return;
-        await Svc.Framework.RunOnFrameworkThread(() => LockStatusesById.Invoke(ids, GAGSPEAK_KEY, out _)).ConfigureAwait(false);
+        await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(() => LockStatusesById.Invoke(ids, GAGSPEAK_KEY, out _)).ConfigureAwait(false));
     }
 
     /// <inheritdoc cref="LociApi.Ipc.UnlockStatus"/>
     public async Task UnlockStatus(Guid id)
     {
         if (!APIAvailable) return;
-        await Svc.Framework.RunOnFrameworkThread(() => UnlockStatusById.Invoke(id, GAGSPEAK_KEY)).ConfigureAwait(false);
+        await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(() => UnlockStatusById.Invoke(id, GAGSPEAK_KEY)).ConfigureAwait(false));
     }
 
     /// <inheritdoc cref="LociApi.Ipc.UnlockStatuses"/>
     public async Task UnlockStatuses(List<Guid> ids)
     {
         if (!APIAvailable) return;
-        await Svc.Framework.RunOnFrameworkThread(() => UnlockStatusesById.Invoke(ids, GAGSPEAK_KEY, out _)).ConfigureAwait(false);
+        await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(() => UnlockStatusesById.Invoke(ids, GAGSPEAK_KEY, out _)).ConfigureAwait(false));
     }
 
     /// <inheritdoc cref="LociApi.Ipc.UnlockAll"/>
     public async Task ClearAllLocks()
     {
         if (!APIAvailable) return;
-        await Svc.Framework.RunOnFrameworkThread(() => ClearLocks.Invoke(GAGSPEAK_KEY)).ConfigureAwait(false);
+        await Generic.Safe(() => Svc.Framework.RunOnFrameworkThread(() => ClearLocks.Invoke(GAGSPEAK_KEY)).ConfigureAwait(false));
     }
 
 
