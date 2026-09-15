@@ -69,7 +69,7 @@ public class GlobalChatTab
         ImGui.SameLine(minX + totalWidth - CkGui.IconSize(FAI.Book).X);
         CkGui.HoverIconText(FAI.Cog, ImGuiColors.TankBlue.ToUint());
         if (ImGui.IsItemClicked())
-            _mediator.Publish(new UiToggleMessage(typeof(NewSettingsUI)));
+            _mediator.Publish(new OpenSettingsUI(2, 4));
         CkGui.AttachTooltip("View configurable settings for chat.");
 
         ImGui.Separator();

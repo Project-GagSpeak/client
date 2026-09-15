@@ -177,22 +177,6 @@ public partial class MainHub : DisposableMediatorSubscriberBase, IGagspeakHubCli
         return;
     }
 
-    //private async void OnSendTempRequest(UserData user)
-    //{
-    //    var msg = $"Temporary Request from {OwnUserData.AnonName}";
-    //    var ret = await UserSendRequest(new(new(user.UID), true, msg)).ConfigureAwait(false);
-    //    if (ret.ErrorCode is SundouleiaApiEc.Success && ret.Value is { } request)
-    //    {
-    //        Logger.LogInformation($"Temporary request sent to {user.AnonName}.", LogFilter.RadarData);
-    //        // Add to our requests, updating the requests manager.
-    //        _requests.AddNewRequest(request);
-    //        return;
-    //    }
-
-    //    Logger.LogWarning($"Failed to send temporary pair request to {user.AnonName} [{ret.ErrorCode}]", LogFilter.RadarData);
-    //}
-
-
     private async void OnLogin()
     {
         Logger.LogInformation("Starting connection on login after fully loaded...");

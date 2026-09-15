@@ -451,20 +451,21 @@ public class HybridChatDrawer : RichEmoteChatDrawer
 
         var canPair = flags.HasAny(ChatFlags.AllowRequests);
         var requestExists = _pairService.RequestExistsFor(msg.Sender);
-        var disableReq = !canPair || requestExists || !shiftHeld || string.IsNullOrWhiteSpace(_requestMsg);
+        var disableReq = !canPair || requestExists || !shiftHeld;
 
-        if (CkGui.SelectableEx("Send PairRequest", disableReq))
+        if (canPair)
         {
-            _hub.UserCreatePairRequest(new(msg.Sender, true, _requestMsg)).ConfigureAwait(false);
-            ImGui.CloseCurrentPopup();
-        }
-        var pairTooltip = !canPair ? "This kinkster does not accept Requests."
-            : requestExists ? "A request already exists for this kinkster."
-            : $"Send Request to {dispName}.--NL--" +
-              $"--COL--Must hold SHIFT and attach a message to select.--COL--";
-        CkGui.AttachTooltip(pairTooltip, ImGuiColors.ParsedGrey, ImGuiHoveredFlags.AllowWhenDisabled);
-        if (!disableReq)
-        {
+            if (CkGui.SelectableEx("Send Request", disableReq))
+            {
+                _hub.UserCreatePairRequest(new(msg.Sender, true, _requestMsg)).ConfigureAwait(false);
+                ImGui.CloseCurrentPopup();
+            }
+            var pairTooltip = !canPair ? "This kinkster does not accept Requests."
+                : requestExists ? "A request already exists for this kinkster."
+                : $"Send Request to {dispName}.--NL--" +
+                  $"--COL--Must hold SHIFT to interact.--COL--";
+            CkGui.AttachTooltip(pairTooltip, ImGuiColors.ParsedGrey, ImGuiHoveredFlags.AllowWhenDisabled);
+
             ImGui.SetNextItemWidth(ImGui.GetWindowWidth() - 20);
             ImGui.InputTextWithHint("##attachedPairMsg", "Attached Request Msg..", ref _requestMsg, 150);
             ImGui.Separator();

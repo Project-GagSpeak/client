@@ -169,7 +169,7 @@ public class MainUI : WindowMediatorSubscriberBase
                 CkGui.SetCursorXtoCenter(175f * ImGuiHelpers.GlobalScale);
                 using (ImRaii.PushColor(ImGuiCol.Button, 0xFF9E5C49))
                     if (CkGui.IconTextButtonCentered(FAI.UserCircle, "Open Account Settings", 175f * ImGuiHelpers.GlobalScale))
-                        Mediator.Publish(new OpenSettingsUI(6, 1));
+                        Mediator.Publish(new OpenSettingsUI(8, 1));
             }
             return;
         }
@@ -547,7 +547,7 @@ public class MainUI : WindowMediatorSubscriberBase
             ImGui.BulletText("Select (or add) your profile in");
             ImUtf8.SameLineInner();
             if (CkGui.SmallButtonEx("Service Settings > Account"))
-                Mediator.Publish(new OpenSettingsUI(7, 1));
+                Mediator.Publish(new OpenSettingsUI(8, 1));
             ImGui.BulletText("Drag your character to the profile you want to use.");
         }
         else if (MainHub.ServerStatus is ServerState.NoSecretKey)
@@ -559,7 +559,7 @@ public class MainUI : WindowMediatorSubscriberBase
             ImGui.BulletText("Inspect the profile in");
             ImUtf8.SameLineInner();
             if (CkGui.SmallButtonEx("Service Settings > Account"))
-                Mediator.Publish(new OpenSettingsUI(7, 1));
+                Mediator.Publish(new OpenSettingsUI(8, 1));
 
             ImGui.BulletText("Ensure the profile has the correct secret key.");
             ImGui.BulletText("If unsure, you may need to refresh your secret key.");
@@ -601,7 +601,7 @@ public class MainUI : WindowMediatorSubscriberBase
             ImGui.BulletText("Verify your secret key in");
             ImUtf8.SameLineInner();
             if (CkGui.SmallButtonEx("Service Settings > Account"))
-                Mediator.Publish(new OpenSettingsUI(7, 1));
+                Mediator.Publish(new OpenSettingsUI(8, 1));
             CkGui.BulletText("If your account was deleted via Discord, delete this local profile to reset.", CkCol.TriStateCross.Uint());
             ImGui.BulletText("If you believe this is an error, please open a support ticket.");
         }
