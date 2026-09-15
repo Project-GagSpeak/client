@@ -1011,11 +1011,12 @@ public class SettingsUi : WindowMediatorSubscriberBase
         using (ImRaii.Disabled(!isDonor))
         {
             ImGui.SetNextItemWidth(240f * ImGuiHelpers.GlobalScale);
-            ImGui.InputTextWithHint("##vanity-name", "Vanity name..", ref _tmpDispName, 10);
+            var maxLen = userData.Tier is CkVanityTier.KinkporiumMistress ? 15 : 10;
+            ImGui.InputTextWithHint("##vanity-name", "Vanity name..", ref _tmpDispName, maxLen);
         }
         CkGui.AttachTooltip("Only supporters can set a vanity name", isDonor);
 
-        var validVanityName = IsValidVanityName(_tmpDispName);
+        var validVanityName = IsValidVanityName(_tmpDispName) || userData.Tier is CkVanityTier.KinkporiumMistress;
         if (!validVanityName)
             CkGui.ColorTextWrapped("Must be 4-10 characters with no spaces", ImGuiColors.DalamudYellow);
 

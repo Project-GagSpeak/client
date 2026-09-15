@@ -207,12 +207,6 @@ public sealed class RestrictionManager : IHybridSavable
         }
     }
 
-    /// <summary> Attempts to add the gag restriction as a favorite. </summary>
-    public void AddFavorite(GarblerRestriction restriction) => _favorites.FavoriteGag(restriction.GagType);
-
-    /// <summary> Attempts to remove the gag restriction as a favorite. </summary>
-    public void RemoveFavorite(GarblerRestriction restriction) => _favorites.UnfavoriteGag(restriction.GagType);
-
     /// <summary> 
     ///   Applies a cursed items restriction ref to the active restrictions cache. <para />
     ///   If successful, the stored layer is placed inside <paramref name="item"/>.
