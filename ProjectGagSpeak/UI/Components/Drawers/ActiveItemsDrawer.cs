@@ -383,7 +383,9 @@ public class ActiveItemsDrawer
                 ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ImGui.GetFrameHeight());
 
             // Display the unlock row.
-            _gagPadlocks[slotIdx].DrawUnlockCombo(c.InnerRegion.X, slotIdx, "Attempt to unlock this Padlock!");
+            _gagPadlocks[slotIdx].DrawUnlockCombo(c.InnerRegion.X, slotIdx,
+                                                  "Attempt to unlock this Padlock!" +
+                                                  _escape.ProgressTooltip(HardcoreEscapeService.Type.Gag, slotIdx));
         }
     }
 
@@ -414,7 +416,10 @@ public class ActiveItemsDrawer
         // Move over the distance of the framed image.
         ImGui.SameLine();
         ImGui.SetCursorPosY(ImGui.GetCursorPosY() + ImGui.GetFrameHeight() / 2);
-        _restrictionPadlocks[slotIdx].DrawUnlockCombo(ImGui.GetContentRegionAvail().X, slotIdx, "Attempt to unlock this Padlock!");
+        _restrictionPadlocks[slotIdx].DrawUnlockCombo(ImGui.GetContentRegionAvail().X, slotIdx,
+                                                      "Attempt to unlock this Padlock!" +
+                                                      _escape.ProgressTooltip(
+                                                          HardcoreEscapeService.Type.Restriction, slotIdx));
         if (drawGuide)
         {
             _guides.OpenTutorial(TutorialType.Restrictions, StepsRestrictions.Unlocking, WardrobeUI.LastPos, WardrobeUI.LastSize, gc =>
@@ -444,7 +449,9 @@ public class ActiveItemsDrawer
         using (ImRaii.Group())
         {
             ImGui.SetCursorPosY(ImGui.GetCursorPosY() + offsetV);
-            _restraintPadlocks.DrawUnlockCombo(ImGui.GetContentRegionAvail().X, "Attempt to unlock this Padlock!");
+            _restraintPadlocks.DrawUnlockCombo(ImGui.GetContentRegionAvail().X,
+                                               "Attempt to unlock this Padlock!" +
+                                               _escape.ProgressTooltip(HardcoreEscapeService.Type.Restraint));
             _guides.OpenTutorial(TutorialType.Restraints, StepsRestraints.UnlockingRestraints, WardrobeUI.LastPos, WardrobeUI.LastSize, _ =>
             {
                 var tdata = data with { Padlock = Padlocks.None, PadlockAssigner = string.Empty };
