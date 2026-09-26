@@ -56,7 +56,8 @@ public class AttributeDrawer
             return;
 
         var totalTraits = toShow.ActiveCount();
-        var rows = (int)Math.Ceiling((float)totalTraits / maxPerRow);
+        var rows = (int)Math.Ceiling((float)totalTraits / maxPerRow) +
+                   1; // number of rows the arranged traits take up, + 1 for tightness slider on its own row
         var height = ImGui.GetFrameHeight() * rows + ImGui.GetStyle().ItemSpacing.Y * (rows - 1);
 
         using (var c = CkRaii.HeaderChild("Attributes", new Vector2(width, height), HeaderFlags.AddPaddingToHeight))
@@ -85,6 +86,16 @@ public class AttributeDrawer
             attributes.Arousal = newVal;
         }
         CkGui.AttachTooltip("How much this item arouses you.");
+
+        var tightness = attributes.DefaultTightness;
+        ImGui.SetNextItemWidth(width / 2);
+        if (ImGui.SliderInt("Default Tightness", ref tightness, 0, 1000))
+        {
+            attributes.DefaultTightness = tightness;
+        }
+
+        CkGui.AttachTooltip(
+            "Controls how difficult the item and locks on it will be to remove by yourself, when 'Hardcore Item Removal' is enabled and severe traits worn.--SEP--0 = cannot remove by yourself--SEP--1 = no resistance");
     }
 
     public void DrawTraitPreview(Traits itemTraits)

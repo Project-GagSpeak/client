@@ -144,7 +144,7 @@ public class PadlockRestrictionsClient : CkPadlockComboBase<ActiveRestriction>
         };
 
         if (valid)
-            return _escape.AttemptSelfRemove();
+            return _escape.AttemptSelfRemove(HardcoreEscapeService.Type.Restriction, layerIdx);
 
         // If we don't, display the appropriate error and reset inputs.
         switch (ActiveItem.Padlock)

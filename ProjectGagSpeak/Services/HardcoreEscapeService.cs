@@ -1,6 +1,8 @@
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
+using GagSpeak.State.Managers;
+using GagSpeak.State.Models;
 using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 
@@ -11,83 +13,139 @@ namespace GagSpeak.Services;
 /// </summary>
 public class HardcoreEscapeService : DisposableMediatorSubscriberBase
 {
+    public enum Type
+    {
+        Gag,
+        Restraint,
+        Restriction
+    }
+
     private readonly ILogger<HardcoreEscapeService> _logger;
     private readonly MainConfig _config;
     private readonly TraitsCache _traits;
+    private readonly GagRestrictionManager _gags;
+    private readonly RestraintManager _restraint;
+    private readonly RestrictionManager _restrictions;
     private readonly Random _rand = new();
 
-    private DateTime
-        _nextAllowedAttempt =
-            DateTime.Now +
-            TimeSpan.FromMinutes(5); // Initial cooldown to avoid brats reloading the plugin to reset cooldown
-    private int _pityCounter = 0;
-    private const int MAX_PITY = 10;
+    private readonly int[] _gagTightness = [-1, -1, -1];
+    private readonly int[] _restrictionTightness = [-1, -1, -1, -1, -1];
+    private int _restraintTightness = -1;
+
+    private DateTime _nextAllowedAttempt = DateTime.Now;
 
     public bool HardcoreEscapeEnabled => _config.Data.HardcoreEscape;
     public bool CanDisable => _traits.FinalTraits == Traits.None;
 
     public HardcoreEscapeService(
-        ILogger<HardcoreEscapeService> logger, MainConfig config, TraitsCache traits, GagspeakMediator mediator)
+        ILogger<HardcoreEscapeService> logger, MainConfig config, TraitsCache traits, GagspeakMediator mediator,
+        GagRestrictionManager gags, RestraintManager restraint, RestrictionManager restrictions)
         : base(logger, mediator)
     {
         _logger = logger;
         _config = config;
         _traits = traits;
+        _gags = gags;
+        _restraint = restraint;
+        _restrictions = restrictions;
 
         Mediator.Subscribe<GagStateChanged>(this, e =>
         {
-            if (e.Target == MainHub.UID) _pityCounter = 0;
+            if (e.Target != MainHub.UID) return;
+
+            if (e.State != NewState.Disabled)
+            {
+                // When added or changed, reset tightness
+                var gag = _gags.ActiveItems[e.Layer];
+                _gagTightness[e.Layer] = gag.DefaultTightness;
+
+                _logger.LogDebug(
+                    $"Hardcore Escape GagChange for layer {e.Layer}: {e.State} - Initial Tightness {gag.DefaultTightness}",
+                    LogFilter.HardcoreActions);
+            }
         });
         Mediator.Subscribe<RestrictionStateChanged>(this, e =>
         {
-            if (e.Target == MainHub.UID) _pityCounter = 0;
+            if (e.Target != MainHub.UID) return;
+
+            if (e.State != NewState.Disabled)
+            {
+                // When added or changed, reset tightness
+                var restriction = _restrictions.ActiveItems[e.Layer];
+                _restrictionTightness[e.Layer] = restriction.DefaultTightness;
+
+                _logger.LogDebug(
+                    $"Hardcore Escape RestrictionsChange for layer {e.Layer}: {e.State} - Initial Tightness {restriction.DefaultTightness}",
+                    LogFilter.HardcoreActions);
+            }
         });
         Mediator.Subscribe<RestraintStateChanged>(this, e =>
         {
-            if (e.Target == MainHub.UID) _pityCounter = 0;
+            if (e.Target != MainHub.UID) return;
+
+            if (e.State != NewState.Disabled)
+            {
+                // When added or changed, reset tightness
+                var appliedRestraint = _restraint.AppliedRestraint;
+                if (appliedRestraint is null)
+                {
+                    _logger.LogError(
+                        "RestraintStateChanged with active restraint, but RestraintManager.AppliedRestraint was null! This should never happen!");
+                    return;
+                }
+
+                _restraintTightness = appliedRestraint.DefaultTightness;
+
+                _logger.LogDebug(
+                    $"Hardcore Escape RestraintChange: {e.State} - Initial Tightness {appliedRestraint.DefaultTightness}",
+                    LogFilter.HardcoreActions);
+            }
         });
         Mediator.Subscribe<RestraintLayersChanged>(this, e =>
         {
-            if (e.Target == MainHub.UID) _pityCounter = 0;
+            if (e.Target != MainHub.UID) return;
+
+            var appliedRestraint = _restraint.AppliedRestraint;
+            if (appliedRestraint is null)
+            {
+                _logger.LogError(
+                    "RestraintLayersChanged, but RestraintManager.AppliedRestraint was null! This should never happen!");
+                return;
+            }
+
+            _restraintTightness = appliedRestraint.DefaultTightness;
+
+            _logger.LogDebug(
+                $"Hardcore Escape RestraintLayerChange - Initial Tightness {appliedRestraint.DefaultTightness}",
+                LogFilter.HardcoreActions);
         });
     }
 
-    public bool AttemptSelfRemove()
+    public bool AttemptSelfRemove(Type type, int layerIdx = 0)
     {
         // Hardcore escape not enabled, always allow
         if (!HardcoreEscapeEnabled)
             return true;
 
-        // One in X chance to succeed
-        int difficultyOneIn = 1;
-        if (_traits.FinalTraits.HasFlag(Traits.Blindfolded))
-            difficultyOneIn += 3;
-        if (_traits.FinalTraits.HasAny(Traits.BoundArms | Traits.Immobile))
-            difficultyOneIn += 19;
+        var (item, tightness, updateTightnessAction) = GetItemDetails(type, layerIdx);
 
-        // Some traits compound difficulty, but only if more restrictive traits already exist.
-        if (difficultyOneIn >= 10)
+        var difficultyMultiplier = CalculateDifficultyMultiplier(item);
+
+        if (item.DefaultTightness == 0)
         {
-            if (_traits.FinalTraits.HasFlag(Traits.BoundLegs))
-                difficultyOneIn += 8;
-            if (_traits.FinalTraits.HasFlag(Traits.Gagged))
-                difficultyOneIn += 7;
-            if (_traits.FinalTraits.HasFlag(Traits.Weighty))
-                difficultyOneIn += 5;
+            Svc.Toasts.ShowError("Try as you might, you cannot remove this item in your current condition!");
+            return false;
         }
 
-        var prePity = difficultyOneIn;
-        var pityCount = Math.Min(_pityCounter, MAX_PITY);
-        // 0.9^0 = 1 => no change
-        // 0.9^10 ~= 0.34 => ~66% easier to escape at the end
-        difficultyOneIn = (int)Math.Ceiling(difficultyOneIn * Math.Pow(0.83, pityCount));
-
-        // If there is no challenge present, allow it.
-        if (difficultyOneIn == 1)
+        // Allow, when item poses no challenge
+        if (item.DefaultTightness == 1)
         {
-            _pityCounter = 0;
             return true;
         }
+
+        // Allow, when no traits pose a challenge
+        if (difficultyMultiplier == 1)
+            return true;
 
         // If cooldown is active, disallow it.
         if (DateTime.Now < _nextAllowedAttempt)
@@ -97,73 +155,168 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
             return false;
         }
 
-        var roll = _rand.NextInt64(difficultyOneIn);
-        var criticalFail = roll == difficultyOneIn - 1;
-        UpdateNextAllowedAttempt(roll, criticalFail);
-        _logger.LogDebug(
-            $"Attempted remove hardcore, difficulty one in {prePity} with pity {_pityCounter}=>{difficultyOneIn}, rolled {roll}. Next attempt allowed at {_nextAllowedAttempt}",
-            LogFilter.HardcoreActions);
+        // D100
+        var roll = _rand.NextInt64(100) + 1;
 
-        if (roll > 0)
-        {
-            if (criticalFail)
-            {
-                Svc.Toasts.ShowError(
-                    $"You make a mistake and the restraint tightens! You may try again in {CooldownString()}");
-                _pityCounter -= 2;
-                if (_pityCounter < 0) _pityCounter = 0;
-            }
-            else if (pityCount < MAX_PITY)
-            {
-                Svc.Toasts.ShowError(
-                    $"Failed to remove, but you feel a sense of progress! You may try again in {CooldownString()}.");
-                _pityCounter++;
-            }
-            else
-            {
-                Svc.Toasts.ShowError($"Failed to remove! You may try again in {CooldownString()}");
-            }
+        // Base amount of progress on only arms bound = 25 per roll (difficulty 4)
+        var progress = (int)Math.Ceiling(100d / difficultyMultiplier);
+        var oldTightness = tightness;
 
-            return false;
-        }
+        // 1 in 20 low: critical fail
+        var criticalFail = roll < 5;
+        UpdateNextAllowedAttempt(difficultyMultiplier, criticalFail);
 
-        _pityCounter = 0;
-        return true;
-    }
-
-    private void UpdateNextAllowedAttempt(long roll, bool criticalFail = false)
-    {
-        var baseCooldown = TimeSpan.FromMinutes(1);
-        if (roll == 0)
-        {
-            _nextAllowedAttempt = DateTime.Now + baseCooldown;
-            return;
-        }
-
-        // Add a small penalty for each active trait, simulating higher exhaustion from higher restriction
-        var exhaustionCooldownMultiplier = 0;
-        for (int i = 1; i <= 6; i++)
-        {
-            var trait = 1 << i;
-            if (_traits.FinalTraits.HasFlag((Traits)trait))
-                exhaustionCooldownMultiplier++;
-        }
-
-        var exhaustionCooldown = TimeSpan.FromSeconds(20) * exhaustionCooldownMultiplier;
-        var rollCooldown = TimeSpan.FromSeconds(10) * roll; // Add penalty for rolling poorly, worst possible roll is 43
-        var cooldown = baseCooldown + rollCooldown + exhaustionCooldown;
+        // Critical fail reverses progress greatly
+        // Low rolls reverse progress slightly
+        // Middling rolls do not make progress
+        // Progress guaranteed over long term
         if (criticalFail)
         {
-            cooldown += rollCooldown;
+            tightness += 3 * progress;
+            Svc.Toasts.ShowError("You make a big mistake and the item tightens its grip on you!");
         }
-        _nextAllowedAttempt = DateTime.Now + cooldown;
+        else
+            switch (roll)
+            {
+                case <= 25:
+                    tightness += progress;
+                    Svc.Toasts.ShowError("You make a mistake and the item tightens its grip on you!");
+                    break;
+                case <= 40:
+                    // No tightness change
+                    Svc.Toasts.ShowError("You struggle, but make no progress.");
+                    break;
+                case <= 90:
+                    tightness -= progress;
+                    Svc.Toasts.ShowError("You struggle and feel a sense of progress!");
+                    break;
+                default:
+                    tightness -= progress * 3;
+                    Svc.Toasts.ShowError("You struggle and feel the item giving in!");
+                    break;
+            }
+
+        _logger.LogDebug(
+            $"Attempted remove hardcore, difficulty {difficultyMultiplier} => progress {progress}, rolled {roll}. Tightness change {oldTightness} => {tightness} / {item.DefaultTightness} Next attempt allowed at {_nextAllowedAttempt}",
+            LogFilter.HardcoreActions);
+
+        updateTightnessAction(tightness);
+
+        // If tightness was reduced below maximum, allow unlock
+        return tightness <= 0;
+    }
+
+    public string ProgressTooltip(Type type, int layerIdx = 0)
+    {
+        var (item, tightness, _) = GetItemDetails(type, layerIdx);
+        if (!IsHardToRemove(item))
+            return "";
+
+        return $"--SEP--Tightness: {tightness} / {item.DefaultTightness}";
+    }
+
+    public (int Current, int Total) Progress(Type type, int layerIdx = 0)
+    {
+        var (item, tightness, _) = GetItemDetails(type, layerIdx);
+        return (tightness, item.DefaultTightness);
+    }
+
+    public bool IsHardToRemove(IAttributeItem item)
+    {
+        if (!HardcoreEscapeEnabled)
+            return false;
+
+        return CalculateDifficultyMultiplier(item) > 1;
+    }
+
+    private int CalculateDifficultyMultiplier(IAttributeItem item)
+    {
+        // One in X chance to succeed
+        var armsLimited = false;
+        int difficultyMultiplier = 1;
+        if (_traits.FinalTraits.HasFlag(Traits.Blindfolded))
+            difficultyMultiplier += 1;
+        if (_traits.FinalTraits.HasAny(Traits.BoundArms | Traits.Immobile))
+        {
+            armsLimited = true;
+            difficultyMultiplier += 3;
+
+            // Some traits compound difficulty, but only if more restrictive traits already exist.
+            if (_traits.FinalTraits.HasFlag(Traits.BoundLegs))
+                difficultyMultiplier += 2;
+            if (_traits.FinalTraits.HasFlag(Traits.Gagged))
+                difficultyMultiplier += 2;
+            if (_traits.FinalTraits.HasFlag(Traits.Weighty))
+                difficultyMultiplier += 1;
+        }
+
+        // When arms are restricted, escaping from other items is much more challenging
+        if (armsLimited && !item.Traits.HasAny(Traits.BoundArms | Traits.Immobile))
+        {
+            difficultyMultiplier *= 3;
+        }
+
+        return difficultyMultiplier;
+    }
+
+    private (IAttributeItem, int, Action<int>) GetItemDetails(Type type, int layerIdx)
+    {
+        switch (type)
+        {
+            case Type.Gag:
+                var tightness = _gagTightness[layerIdx] < 0
+                                    ? _gags.ActiveItems[layerIdx].DefaultTightness
+                                    : _gagTightness[layerIdx];
+                return (_gags.ActiveItems[layerIdx], tightness,
+                           (newTightness) =>
+                           {
+                               if (newTightness > _gags.ActiveItems[layerIdx].DefaultTightness)
+                                   newTightness = _gags.ActiveItems[layerIdx].DefaultTightness;
+                               _gagTightness[layerIdx] = newTightness;
+                           });
+            case Type.Restraint:
+                tightness = _restraintTightness < 0
+                                ? _restraint.AppliedRestraint!.DefaultTightness
+                                : _restraintTightness;
+                return (_restraint.AppliedRestraint!, tightness,
+                           (newTightness) =>
+                           {
+                               if (newTightness > _restraint.AppliedRestraint!.DefaultTightness)
+                                   newTightness = _restraint.AppliedRestraint!.DefaultTightness;
+                               _restraintTightness = newTightness;
+                           });
+            case Type.Restriction:
+                tightness = _restrictionTightness[layerIdx] < 0
+                                ? _restrictions.ActiveItems[layerIdx].DefaultTightness
+                                : _restrictionTightness[layerIdx];
+                return (_restrictions.ActiveItems[layerIdx], tightness,
+                           (newTightness) =>
+                           {
+                               if (newTightness > _restrictions.ActiveItems[layerIdx].DefaultTightness)
+                                   newTightness = _restrictions.ActiveItems[layerIdx].DefaultTightness;
+                               _restrictionTightness[layerIdx] = newTightness;
+                           });
+        }
+
+        throw new Exception("HardcoreEscapeService.Item unhandled type! This should not happen!");
+    }
+
+    private void UpdateNextAllowedAttempt(int difficulty, bool criticalFail = false)
+    {
+        // Random cooldown between 2 and 5 minutes, double on a critical fail
+        var cd = TimeSpan.FromSeconds((difficulty * 30) + _rand.NextInt64(90));
+        if (criticalFail)
+            cd *= 2;
+        _nextAllowedAttempt = DateTime.Now + cd;
     }
 
     private string CooldownString()
     {
         var duration = _nextAllowedAttempt - DateTime.Now;
-        var minutes = Math.Floor(duration.TotalMinutes);
+        var minutes = (int)Math.Floor(duration.TotalMinutes);
+        var minLabel = minutes == 1 ? "minute" : "minutes";
         var seconds = duration.Seconds;
-        return minutes > 0 ? $"{minutes} minutes" : $"{seconds} seconds";
+        var secLabel = seconds == 1 ? "second" : "seconds";
+        return minutes > 0 ? $"{minutes} {minLabel}" : $"{seconds} {secLabel}";
     }
 }

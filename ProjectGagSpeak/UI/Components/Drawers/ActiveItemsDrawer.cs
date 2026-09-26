@@ -231,11 +231,14 @@ public class ActiveItemsDrawer
         var height = CkStyle.ThreeRowHeight();
         DrawFramedImage(data.GagItem, height, 10f, uint.MaxValue);
         var drawPos = ImGui.GetItemRectMin() + new Vector2(ImGui.GetItemRectSize().X, 0);
-        CkGui.AttachTooltip(LockTooltip(data.GagItem.GagName(), data.Enabler, "Gag"), color: ImGuiColors.ParsedGold);
+        CkGui.AttachTooltip(LockTooltip(data.GagItem.GagName(), data.Enabler, "Gag")
+                            + _escape.ProgressTooltip(HardcoreEscapeService.Type.Gag, slotIdx),
+                            color: ImGuiColors.ParsedGold);
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             ImGui.OpenPopup($"##GagSelector-{slotIdx}");
-        else if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _gags.CanRemove(slotIdx) && _escape.AttemptSelfRemove())
+        else if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _gags.CanRemove(slotIdx) &&
+                 _escape.AttemptSelfRemove(HardcoreEscapeService.Type.Gag, slotIdx))
             _selfBondage.DoSelfGag(slotIdx, new ActiveGagSlot(), DataUpdateType.Removed);
 
         // Draw out padlocks selections.
@@ -246,7 +249,7 @@ public class ActiveItemsDrawer
         // Draw out the potential popup if we should.
         var applyCombo = _gagItems[slotIdx];
         if (_gagItems[slotIdx].DrawPopup($"##GagSelector-{slotIdx}", data.GagItem, rightWidth * .9f, drawPos) &&
-            _escape.AttemptSelfRemove())
+            _escape.AttemptSelfRemove(HardcoreEscapeService.Type.Gag, slotIdx))
             GagComboChanged(applyCombo, slotIdx, data.GagItem);
     }
 
@@ -258,7 +261,9 @@ public class ActiveItemsDrawer
         // Draw out the framed image first.
         DrawRestrictionImage(dispData, height, 10f);
         var drawPos = ImGui.GetItemRectMin() + new Vector2(ImGui.GetItemRectSize().X, 0);
-        CkGui.AttachTooltip(LockTooltip(dispData?.Label, data.Enabler, "Restriction"), color: ImGuiColors.ParsedGold);
+        CkGui.AttachTooltip(LockTooltip(dispData?.Label, data.Enabler, "Restriction")
+                            + _escape.ProgressTooltip(HardcoreEscapeService.Type.Restriction, slotIdx),
+                            color: ImGuiColors.ParsedGold);
         if (dispData is null)
             CkGui.AttachTooltip("--SEP----COL--The item that was here couldn't be found." +
                 "--NL--It may have been deleted or the data is corrupted.--COL--", color: ImGuiColors.DalamudRed);
@@ -267,7 +272,7 @@ public class ActiveItemsDrawer
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             ImGui.OpenPopup($"##Restrictions-{slotIdx}");
         else if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _restrictions.CanRemove(slotIdx) &&
-                 _escape.AttemptSelfRemove())
+                 _escape.AttemptSelfRemove(HardcoreEscapeService.Type.Restriction, slotIdx))
             _selfBondage.DoSelfBind(slotIdx, new ActiveRestriction(), DataUpdateType.Removed);
 
         ImUtf8.SameLineInner();
@@ -285,7 +290,7 @@ public class ActiveItemsDrawer
         // Draw the potential popup if we should.
         var applyCombo = _restrictionItems[slotIdx];
         if (applyCombo.DrawPopup($"##Restrictions-{slotIdx}", data.Identifier, rightWidth * .75f, drawPos) &&
-            _escape.AttemptSelfRemove())
+            _escape.AttemptSelfRemove(HardcoreEscapeService.Type.Restriction, slotIdx))
             RestrictionComboChanged(applyCombo, slotIdx, data.Identifier);
     }
 
@@ -302,7 +307,9 @@ public class ActiveItemsDrawer
         var height = ImGui.GetFrameHeightWithSpacing() * 5 + ImGui.GetFrameHeight();
         DrawRestraintImage(dispData, new Vector2(height / 1.2f, height), CkStyle.ChildRoundingLarge(), CkCol.CurvedHeaderFade.Uint());
         var drawPos = ImGui.GetItemRectMin() + new Vector2(ImGui.GetItemRectSize().X, 0);
-        CkGui.AttachTooltip(LockTooltip(dispData?.Label, data.Enabler, "Restraint"), color: ImGuiColors.ParsedGold);
+        CkGui.AttachTooltip(LockTooltip(dispData?.Label, data.Enabler, "Restraint")
+                            + _escape.ProgressTooltip(HardcoreEscapeService.Type.Restraint),
+                            color: ImGuiColors.ParsedGold);
         if (dispData is null)
             CkGui.AttachTooltip("--SEP----COL--The item that was here couldn't be found." +
                 "--NL--It may have been deleted or the data is corrupted.--COL--", color: ImGuiColors.DalamudRed);
@@ -310,7 +317,9 @@ public class ActiveItemsDrawer
 
         if (ImGui.IsItemClicked(ImGuiMouseButton.Left))
             ImGui.OpenPopup($"##RestraintSetSelector");
-        else if (ImGui.IsItemClicked(ImGuiMouseButton.Right) && _restraints.CanRemove() && _escape.AttemptSelfRemove())
+        else if (ImGui.IsItemClicked(ImGuiMouseButton.Right)
+                 && _restraints.CanRemove()
+                 && _escape.AttemptSelfRemove(HardcoreEscapeService.Type.Restraint))
             _selfBondage.DoSelfRestraint(new CharaActiveRestraint(), DataUpdateType.Removed);
 
         ImUtf8.SameLineInner();
@@ -338,7 +347,7 @@ public class ActiveItemsDrawer
 
         if (_restraintItem.DrawPopup("##RestraintSetSelector", data.Identifier, ImGui.GetContentRegionAvail().X * .90f,
                                      drawPos) &&
-            _escape.AttemptSelfRemove())
+            _escape.AttemptSelfRemove(HardcoreEscapeService.Type.Restraint))
             RestraintComboChanged(data.Identifier);
     }
 
