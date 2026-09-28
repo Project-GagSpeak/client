@@ -158,8 +158,8 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
         // D100
         var roll = _rand.NextInt64(100) + 1;
 
-        // Base amount of progress on only arms bound = 25 per roll (difficulty 4)
-        var progress = (int)Math.Ceiling(100d / difficultyMultiplier);
+        // Base amount of progress on only arms bound = 25 per roll (difficulty 4), with a bit of randomness to keep it more natural
+        var progress = (int)Math.Ceiling(100d / difficultyMultiplier) + (int)_rand.NextInt64(3);
         var oldTightness = tightness;
 
         // 1 in 20 low: critical fail
