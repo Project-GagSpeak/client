@@ -82,10 +82,7 @@ public class AttributeDrawer
             ImGui.SetNextItemWidth(ImGui.GetFrameHeight() * 2);
             if (ImGui.InputInt("Tightness (50-1000)", ref tightness))
             {
-                if (tightness < 50)
-                    tightness = 50;
-                else if (tightness > 1000)
-                    tightness = 1000;
+                tightness = Math.Clamp(tightness, 50, 1000);
                 attributes.DefaultTightness = tightness;
             }
         }
