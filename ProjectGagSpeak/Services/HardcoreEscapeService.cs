@@ -156,10 +156,10 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
         }
 
         // D100
-        var roll = _rand.NextInt64(100) + 1;
+        var roll = _rand.Next(100) + 1;
 
         // Base amount of progress on only arms bound = 25 per roll (difficulty 4), with a bit of randomness to keep it more natural
-        var progress = (int)Math.Ceiling(100d / difficultyMultiplier) + (int)_rand.NextInt64(3);
+        var progress = (int)Math.Ceiling(100d / difficultyMultiplier) + _rand.Next(3);
         var oldTightness = tightness;
 
         // 1 in 20 low: critical fail
@@ -172,17 +172,17 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
         // Progress guaranteed over long term
         if (criticalFail)
         {
-            tightness += 3 * progress;
+            tightness += 2 * progress;
             Svc.Toasts.ShowError("You make a big mistake and the item tightens its grip on you!");
         }
         else
             switch (roll)
             {
-                case <= 25:
-                    tightness += progress;
+                case <= 19:
+                    tightness += (int)Math.Ceiling(progress / 2d);
                     Svc.Toasts.ShowError("You make a mistake and the item tightens its grip on you!");
                     break;
-                case <= 40:
+                case <= 35:
                     // No tightness change
                     Svc.Toasts.ShowError("You struggle, but make no progress.");
                     break;
@@ -191,7 +191,7 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
                     Svc.Toasts.ShowError("You struggle and feel a sense of progress!");
                     break;
                 default:
-                    tightness -= progress * 3;
+                    tightness -= progress * 2;
                     Svc.Toasts.ShowError("You struggle and feel the item giving in!");
                     break;
             }
@@ -212,7 +212,12 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
         if (!IsHardToRemove(item))
             return "";
 
-        return $"--SEP--Tightness: {tightness} / {item.DefaultTightness}";
+        if (item.DefaultTightness == 0)
+            return "--SEP--Tightness: Impossible";
+
+        var cooldown = DateTime.Now < _nextAllowedAttempt ? $" - Try again in {CooldownString()}" : "";
+
+        return $"--SEP--Tightness: {tightness} / {item.DefaultTightness}{cooldown}";
     }
 
     public (int Current, int Total) Progress(Type type, int layerIdx = 0)
