@@ -84,42 +84,37 @@ public class AttributeDrawer
     private void DrawEscapeAttributesInternal(IAttributeItem attributes, bool singleRow)
     {
         var tightness = attributes.DefaultTightness;
-        var trivial = attributes.DefaultTightness == 1;
-        var impossible = attributes.DefaultTightness == 0;
 
-        using (ImRaii.Disabled(trivial || impossible))
+        ImGui.SetNextItemWidth(ImGui.GetFrameHeight() * 2);
+        if (ImGui.InputInt(TightnessLabel, ref tightness))
         {
-            ImGui.SetNextItemWidth(ImGui.GetFrameHeight() * 2);
-            if (ImGui.InputInt(TightnessLabel, ref tightness))
+            if (tightness != 0 && tightness != 1)
             {
                 tightness = Math.Clamp(tightness, 50, 1000);
-                attributes.DefaultTightness = tightness;
             }
+
+            attributes.DefaultTightness = tightness;
         }
 
         CkGui.AttachTooltip(
             "Controls how difficult the item and locks on it will be to remove by yourself, when 'Hardcore Item Removal' is enabled and severe traits worn.--SEP--Tightness above 250 is likely to take hours by itself. Other active traits from all worn items impact escape progress negatively.");
 
-        using (ImRaii.Disabled(impossible))
+        if (singleRow)
+            ImGui.SameLine();
+
+        using var g = ImRaii.Group();
+        if (ImGui.RadioButton(TrivialLabel, ref tightness, 1))
         {
-            if (singleRow)
-                ImGui.SameLine();
-            if (ImGui.Checkbox(TrivialLabel, ref trivial))
-            {
-                attributes.DefaultTightness = trivial ? 1 : 100;
-            }
+            attributes.DefaultTightness = tightness;
         }
 
         CkGui.AttachTooltip(
             "You will always be able to remove this item with little effort, even when 'Hardcore Item Removal' is enabled and other stricter restraints are worn.");
 
-        using (ImRaii.Disabled(trivial))
+        ImGui.SameLine();
+        if (ImGui.RadioButton(ImpossibleLabel, ref tightness, 0))
         {
-            ImGui.SameLine();
-            if (ImGui.Checkbox(ImpossibleLabel, ref impossible))
-            {
-                attributes.DefaultTightness = impossible ? 0 : 100;
-            }
+            attributes.DefaultTightness = tightness;
         }
 
         CkGui.AttachTooltip(
