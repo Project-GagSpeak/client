@@ -50,6 +50,15 @@ public class AttributeDrawer
 
     private static Vector2 TraitBoxSize = new Vector2(ImGui.GetFrameHeight() * 2 + ImGui.GetStyle().ItemInnerSpacing.X, ImGui.GetFrameHeight());
 
+    private const string TightnessLabel = "Tightness (50-1000)";
+    private const string TrivialLabel = "Trivial";
+    private const string ImpossibleLabel = "Impossible";
+
+    private static float EscapeAttributeContentWidth =>
+        ImGui.CalcTextSize(TightnessLabel + TrivialLabel + ImpossibleLabel).X
+        + (ImGui.GetFrameHeight() * 4)
+        + (ImGui.GetStyle().ItemSpacing.X * 7);
+
     public void DrawAttributesChild(IAttributeItem attributes, float width, int maxPerRow, Traits toShow = Traits.All)
     {
         if (toShow is Traits.None)
@@ -63,15 +72,16 @@ public class AttributeDrawer
                                           HeaderFlags.AddPaddingToHeight))
             DrawAttributesInternal(attributes, toShow, c.InnerRegion.X, maxPerRow);
 
-        height = ImGui.GetFrameHeightWithSpacing() + 2 * ImGui.GetStyle().ItemSpacing.Y;
+        rows = width < EscapeAttributeContentWidth ? 2 : 1;
+        height = (ImGui.GetFrameHeightWithSpacing() * rows) + (2 * ImGui.GetStyle().ItemSpacing.Y);
 
         using (var c = CkRaii.HeaderChild("Escape Difficulty", new Vector2(width, height)))
         {
-            DrawEscapeAttributesInternal(attributes);
+            DrawEscapeAttributesInternal(attributes, rows == 1);
         }
     }
 
-    private void DrawEscapeAttributesInternal(IAttributeItem attributes)
+    private void DrawEscapeAttributesInternal(IAttributeItem attributes, bool singleRow)
     {
         var tightness = attributes.DefaultTightness;
         var trivial = attributes.DefaultTightness == 1;
@@ -80,7 +90,7 @@ public class AttributeDrawer
         using (ImRaii.Disabled(trivial || impossible))
         {
             ImGui.SetNextItemWidth(ImGui.GetFrameHeight() * 2);
-            if (ImGui.InputInt("Tightness (50-1000)", ref tightness))
+            if (ImGui.InputInt(TightnessLabel, ref tightness))
             {
                 tightness = Math.Clamp(tightness, 50, 1000);
                 attributes.DefaultTightness = tightness;
@@ -92,8 +102,9 @@ public class AttributeDrawer
 
         using (ImRaii.Disabled(impossible))
         {
-            ImGui.SameLine();
-            if (ImGui.Checkbox("Trivial", ref trivial))
+            if (singleRow)
+                ImGui.SameLine();
+            if (ImGui.Checkbox(TrivialLabel, ref trivial))
             {
                 attributes.DefaultTightness = trivial ? 1 : 100;
             }
@@ -105,7 +116,7 @@ public class AttributeDrawer
         using (ImRaii.Disabled(trivial))
         {
             ImGui.SameLine();
-            if (ImGui.Checkbox("Impossible", ref impossible))
+            if (ImGui.Checkbox(ImpossibleLabel, ref impossible))
             {
                 attributes.DefaultTightness = impossible ? 0 : 100;
             }
