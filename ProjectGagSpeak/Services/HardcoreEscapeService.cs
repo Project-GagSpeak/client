@@ -9,7 +9,7 @@ using GagspeakAPI.Attributes;
 namespace GagSpeak.Services;
 
 /// <summary>
-///   Handles the logic for escaping your own equippables.
+///   Handles minigames for escaping your own equippables.
 /// </summary>
 public class HardcoreEscapeService : DisposableMediatorSubscriberBase
 {
@@ -94,10 +94,10 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
                     return;
                 }
 
-                _restraintTightness = appliedRestraint.DefaultTightness;
+                _restraintTightness = ActiveRestraintDefaultTightness();
 
                 _logger.LogDebug(
-                    $"Hardcore Escape RestraintChange: {e.State} - Initial Tightness {appliedRestraint.DefaultTightness}",
+                    $"Hardcore Escape RestraintChange: {e.State} - Initial Tightness {_restraintTightness}",
                     LogFilter.HardcoreActions);
             }
         });
@@ -113,32 +113,38 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
                 return;
             }
 
-            _restraintTightness = appliedRestraint.DefaultTightness;
+            _restraintTightness = ActiveRestraintDefaultTightness();
 
             _logger.LogDebug(
-                $"Hardcore Escape RestraintLayerChange - Initial Tightness {appliedRestraint.DefaultTightness}",
+                $"Hardcore Escape RestraintLayerChange - Initial Tightness {_restraintTightness}",
                 LogFilter.HardcoreActions);
         });
     }
 
+    /// <summary>
+    /// Checks whether removing the item in the target slot is permissible under hardcore escape rules. Expected to be called repeatedly through manual player action until success.
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="layerIdx"></param>
+    /// <returns></returns>
     public bool AttemptSelfRemove(Type type, int layerIdx = 0)
     {
         // Hardcore escape not enabled, always allow
         if (!HardcoreEscapeEnabled)
             return true;
 
-        var (item, tightness, updateTightnessAction) = GetItemDetails(type, layerIdx);
+        var (item, defaultTightness, tightness, updateTightnessAction) = GetItemDetails(type, layerIdx);
 
         var difficultyMultiplier = CalculateDifficultyMultiplier(item);
 
-        if (item.DefaultTightness == 0)
+        if (defaultTightness == 0)
         {
             Svc.Toasts.ShowError("Try as you might, you cannot remove this item in your current condition!");
             return false;
         }
 
         // Allow, when item poses no challenge
-        if (item.DefaultTightness == 1)
+        if (defaultTightness == 1)
         {
             return true;
         }
@@ -197,7 +203,7 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
             }
 
         _logger.LogDebug(
-            $"Attempted remove hardcore, difficulty {difficultyMultiplier} => progress {progress}, rolled {roll}. Tightness change {oldTightness} => {tightness} / {item.DefaultTightness} Next attempt allowed at {_nextAllowedAttempt}",
+            $"Attempted remove hardcore, difficulty {difficultyMultiplier} => progress {progress}, rolled {roll}. Tightness change {oldTightness} => {tightness} / {defaultTightness} Next attempt allowed at {_nextAllowedAttempt}",
             LogFilter.HardcoreActions);
 
         updateTightnessAction(tightness);
@@ -206,13 +212,20 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
         return tightness <= 0;
     }
 
+    /// <summary>
+    /// Builds a CkGui-compatible tooltip suffix containing information about escape progress and availability for a given slot.
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="layerIdx"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException">called for an empty slot</exception>
     public string ProgressTooltip(Type type, int layerIdx = 0)
     {
-        var (item, tightness, _) = GetItemDetails(type, layerIdx);
+        var (item, defaultTightness, tightness, _) = GetItemDetails(type, layerIdx);
         if (!IsHardToRemove(item))
             return "";
 
-        if (item.DefaultTightness == 0)
+        if (defaultTightness == 0)
             return "--SEP--Tightness: Impossible";
 
         var cooldown = DateTime.Now < _nextAllowedAttempt ? $" - Try again in {CooldownString()}" : "";
@@ -220,12 +233,24 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
         return $"--SEP--Tightness: {tightness} / {item.DefaultTightness}{cooldown}";
     }
 
+    /// <summary>
+    /// Gets the current and default tightness for a slot. The slot must have an item in it.
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="layerIdx"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException">called for an empty slot</exception>
     public (int Current, int Total) Progress(Type type, int layerIdx = 0)
     {
-        var (item, tightness, _) = GetItemDetails(type, layerIdx);
-        return (tightness, item.DefaultTightness);
+        var (_, defaultTightness, tightness, _) = GetItemDetails(type, layerIdx);
+        return (tightness, defaultTightness);
     }
 
+    /// <summary>
+    /// Determines if the target item is trivial to remove or requires escape progress. Always false, if this module is disabled in the global settings.
+    /// </summary>
+    /// <param name="item"></param>
+    /// <returns></returns>
     public bool IsHardToRemove(IAttributeItem item)
     {
         if (!HardcoreEscapeEnabled)
@@ -234,6 +259,11 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
         return CalculateDifficultyMultiplier(item) > 1;
     }
 
+    /// <summary>
+    /// Calculates the difficulty in removing the target item. Difficulty increased by number of active traits across all items and whether the target item is the most restrictive one or not.
+    /// </summary>
+    /// <param name="item"></param>
+    /// <returns></returns>
     private int CalculateDifficultyMultiplier(IAttributeItem item)
     {
         // One in X chance to succeed
@@ -264,7 +294,14 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
         return difficultyMultiplier;
     }
 
-    private (IAttributeItem, int, Action<int>) GetItemDetails(Type type, int layerIdx)
+    /// <summary>
+    /// Gets the item, default tightness, current tightness and callback to update tightness for the given slot.
+    /// </summary>
+    /// <param name="type"></param>
+    /// <param name="layerIdx"></param>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    private (IAttributeItem, int, int, Action<int>) GetItemDetails(Type type, int layerIdx)
     {
         switch (type)
         {
@@ -272,7 +309,7 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
                 var tightness = _gagTightness[layerIdx] < 0
                                     ? _gags.ActiveItems[layerIdx].DefaultTightness
                                     : _gagTightness[layerIdx];
-                return (_gags.ActiveItems[layerIdx], tightness,
+                return (_gags.ActiveItems[layerIdx], _gags.ActiveItems[layerIdx].DefaultTightness, tightness,
                            (newTightness) =>
                            {
                                if (newTightness > _gags.ActiveItems[layerIdx].DefaultTightness)
@@ -280,21 +317,23 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
                                _gagTightness[layerIdx] = newTightness;
                            });
             case Type.Restraint:
+                var defaultTightness = ActiveRestraintDefaultTightness();
                 tightness = _restraintTightness < 0
-                                ? _restraint.AppliedRestraint!.DefaultTightness
+                                ? defaultTightness
                                 : _restraintTightness;
-                return (_restraint.AppliedRestraint!, tightness,
+                return (_restraint.AppliedRestraint!, defaultTightness, tightness,
                            (newTightness) =>
                            {
-                               if (newTightness > _restraint.AppliedRestraint!.DefaultTightness)
-                                   newTightness = _restraint.AppliedRestraint!.DefaultTightness;
+                               if (newTightness > defaultTightness)
+                                   newTightness = defaultTightness;
                                _restraintTightness = newTightness;
                            });
             case Type.Restriction:
                 tightness = _restrictionTightness[layerIdx] < 0
                                 ? _restrictions.ActiveItems[layerIdx].DefaultTightness
                                 : _restrictionTightness[layerIdx];
-                return (_restrictions.ActiveItems[layerIdx], tightness,
+                return (_restrictions.ActiveItems[layerIdx], _restrictions.ActiveItems[layerIdx].DefaultTightness,
+                           tightness,
                            (newTightness) =>
                            {
                                if (newTightness > _restrictions.ActiveItems[layerIdx].DefaultTightness)
@@ -303,9 +342,14 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
                            });
         }
 
-        throw new Exception("HardcoreEscapeService.Item unhandled type! This should not happen!");
+        throw new InvalidOperationException("HardcoreEscapeService.Item unhandled type! This should not happen!");
     }
 
+    /// <summary>
+    /// Sets the cooldown for next attempt. Higher difficulty multipliers and critical fails increase the cooldown.
+    /// </summary>
+    /// <param name="difficulty"></param>
+    /// <param name="criticalFail"></param>
     private void UpdateNextAllowedAttempt(int difficulty, bool criticalFail = false)
     {
         // Random cooldown between 2 and 5 minutes, double on a critical fail
@@ -315,6 +359,10 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
         _nextAllowedAttempt = DateTime.Now + cd;
     }
 
+    /// <summary>
+    /// Converts the current cooldown into a human-friendly string
+    /// </summary>
+    /// <returns></returns>
     private string CooldownString()
     {
         var duration = _nextAllowedAttempt - DateTime.Now;
@@ -323,5 +371,54 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
         var seconds = duration.Seconds;
         var secLabel = seconds == 1 ? "second" : "seconds";
         return minutes > 0 ? $"{minutes} {minLabel}" : $"{seconds} {secLabel}";
+    }
+
+    /// <summary>
+    /// Calculates current restraint default tightness level taking active layers into account.
+    /// </summary>
+    /// <returns></returns>
+    /// <exception cref="InvalidOperationException">throws if called when no restraint is worn or serverdata for it does not exist in the manager</exception>
+    private int ActiveRestraintDefaultTightness()
+    {
+        var restraint = _restraint.AppliedRestraint;
+        if (restraint is null)
+        {
+            throw new InvalidOperationException(
+                "Trying to get active restraint default tightness with no active restraint");
+        }
+
+        var tightness = restraint.DefaultTightness;
+        var activeLayers = _restraint.ServerData?.ActiveLayers;
+        if (activeLayers is null)
+        {
+            throw new InvalidOperationException(
+                "Trying to get active restraint default tightness but no server data for restraint exists");
+        }
+
+        RestraintLayer[] layers =
+        [
+            RestraintLayer.Layer1,
+            RestraintLayer.Layer2,
+            RestraintLayer.Layer3,
+            RestraintLayer.Layer4,
+            RestraintLayer.Layer5
+        ];
+
+        for (int i = 0; i < layers.Length; i++)
+        {
+            if ((activeLayers & layers[i]) > 0)
+            {
+                var layer = restraint.Layers[i];
+                if (_restrictions.Storage.TryGetRestriction(layer.ID, out var restriction))
+                {
+                    if (restriction.DefaultTightness > tightness)
+                    {
+                        tightness = restriction.DefaultTightness;
+                    }
+                }
+            }
+        }
+
+        return tightness;
     }
 }
