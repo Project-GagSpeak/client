@@ -230,7 +230,7 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
 
         var cooldown = DateTime.Now < _nextAllowedAttempt ? $" - Try again in {CooldownString()}" : "";
 
-        return $"--SEP--Tightness: {tightness} / {item.DefaultTightness}{cooldown}";
+        return $"--SEP--Tightness: {tightness} / {defaultTightness}{cooldown}";
     }
 
     /// <summary>
