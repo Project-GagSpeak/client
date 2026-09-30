@@ -21,6 +21,7 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
     private const float RetryDistanceMargin = 1f;
     private const float DivergenceMargin = 3f;
     private const int ZoneCheckIntervalMs = 250;
+    private const float ArrivalHeightTolerance = 2f;
 
     private readonly HcTaskManager _hcTasks;
     private readonly IpcCallerVnavmesh _vnav;
@@ -205,8 +206,11 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
         if (!PlayerData.Available)
             return false;
 
+        var pos = PlayerData.Position;
+        var inRange = new Vector2(pos.X - origin.X, pos.Z - origin.Z).LengthSquared() <= arrival * arrival;
+
         // Succeeding subtasks don't End() in a collection, so stop vnavmesh here.
-        if (PlayerData.DistanceTo(new Vector2(origin.X, origin.Z)) <= arrival)
+        if (inRange && MathF.Abs(pos.Y - origin.Y) <= ArrivalHeightTolerance)
         {
             _vnav.Stop();
             return true;
@@ -225,6 +229,9 @@ public class ImprisonmentController : DisposableMediatorSubscriberBase
 
         if (_vnav.IsBusy())
             return false;
+        
+        if (inRange)
+            return true;
 
         RecordGiveUp(origin, "vnavmesh stopped short");
         return null;
