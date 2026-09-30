@@ -46,8 +46,7 @@ public sealed class IpcCallerVnavmesh : IIpcCaller
     public void CheckAPI()
     {
         var wasAvailable = APIAvailable;
-        var vnavPlugin = Svc.PluginInterface.InstalledPlugins.FirstOrDefault(p => string.Equals(p.InternalName, "vnavmesh", StringComparison.OrdinalIgnoreCase));
-        APIAvailable = vnavPlugin is not null && vnavPlugin.IsLoaded;
+        APIAvailable = Svc.PluginInterface.InstalledPlugins.Any(p => p.IsLoaded && string.Equals(p.InternalName, "vnavmesh", StringComparison.OrdinalIgnoreCase));
         // Don't let a stale 'ready' from a previous load leak into a fresh one.
         if (APIAvailable != wasAvailable)
         {
