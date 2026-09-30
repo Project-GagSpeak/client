@@ -13,7 +13,7 @@ public static unsafe class HcStayApartment
 {
     public static HardcoreTaskGroup GetTaskGroup(HcTaskManager hcTasks)
     {
-        return hcTasks.CreateGroup("WalkToAndOpenApartmentMenu", new(HcTaskControl.LockThirdPerson | HcTaskControl.BlockAllKeys | HcTaskControl.DoConfinementPrompts))
+        return hcTasks.CreateGroup("WalkToAndOpenApartmentMenu", new(HcTaskControl.LockThirdPerson | HcTaskControl.BlockAllKeys | HcTaskControl.DoConfinementPrompts | HcTaskControl.AllowMovement))
             .Add(HcTaskUtils.IsScreenReady)
             .Add(TargetApartmentEntrance)
             .Add(HcTaskUtils.LockOnToTarget)

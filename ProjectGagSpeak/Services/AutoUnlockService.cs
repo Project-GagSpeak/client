@@ -459,8 +459,9 @@ public sealed class AutoUnlockService : BackgroundService
         // Check Imprisonment Timer.
         if (hcState.Imprisonment.Length > 0)
         {
-            // if we should be imprisoned but are not (due to failed application)
-            if ((_cageControl.ShouldBeImprisoned && !_cageControl.IsImprisoned) || hcState.ImprisonmentTimer < DateTimeOffset.UtcNow)
+            // if we should be imprisoned but are not (failed application). Loading or confinement travel doesn't count.
+            var invalidState = _cageControl.ShouldBeImprisoned && !_cageControl.IsImprisoned && !_cageControl.AwaitingArrival;
+            if (invalidState || hcState.ImprisonmentTimer < DateTimeOffset.UtcNow)
             {
                 _logger.LogInformation("Imprisonment Timer Expired (or state was invalid!)", LogFilter.AutoUnlocks);
                 var enactor = hcState.Imprisonment.Split('|')[0];
