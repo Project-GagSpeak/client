@@ -320,6 +320,9 @@ public class NewSettingsUI : WindowMediatorSubscriberBase
             ImGui.SameLine();
             DrawIpcStatusPill("Intiface", IpcCallerIntiface.APIAvailable);
 
+            ImGui.SameLine();
+            DrawIpcStatusPill("vnavmesh", IpcCallerVnavmesh.APIAvailable);
+
             // Resources.
             if (CkCustom.ButtonPillTag("Discord", 0xFFDA8972.ToVec4()))
                 Util.OpenLink("https://discord.gg/kinkporium");
