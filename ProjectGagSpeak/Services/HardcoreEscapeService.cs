@@ -395,6 +395,10 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
                 "Trying to get active restraint default tightness but no server data for restraint exists");
         }
 
+        // Restraint itself marked impossible, layers cannot override this
+        if (tightness == 0)
+            return 0;
+
         RestraintLayer[] layers =
         [
             RestraintLayer.Layer1,
@@ -406,17 +410,23 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
 
         for (int i = 0; i < layers.Length; i++)
         {
-            if ((activeLayers & layers[i]) > 0)
+            // Layer isn't created, skip
+            if ((activeLayers & layers[i]) == 0)
+                continue;
+
+            // The layer isn't a restriction or valid
+            if (restraint.Layers[i] is not RestrictionLayer restrictionLayer || !restrictionLayer.IsValid())
+                continue;
+
+            var layerTightness = restrictionLayer.Ref.DefaultTightness;
+            if (layerTightness == 0)
             {
-                var layer = restraint.Layers[i];
-                if (_restrictions.Storage.TryGetRestriction(layer.ID, out var restriction))
-                {
-                    if (restriction.DefaultTightness > tightness)
-                    {
-                        tightness = restriction.DefaultTightness;
-                    }
-                }
+                tightness = 0;
+                break;
             }
+
+            if (layerTightness > tightness)
+                tightness = layerTightness;
         }
 
         return tightness;
