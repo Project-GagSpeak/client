@@ -20,6 +20,8 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
     public Guid ActivePattern => _patternInfo.PatternId;
     public bool IsPlayingPattern => _patternInfo.Idx != -1;
     public bool IsPlayingVibeData => _injectedInfo.Idx != -1;
+    /// <summary> If any motor on the client's devices currently has an intensity above 0. </summary>
+    public bool IsVibrating { get; private set; } = false;
 
     public bool TryUpdateRemoteForRecording()
     {
@@ -94,6 +96,8 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
             device.CleanupData();
             Log.LogInformation($"Powered down device {device.FactoryName} for kinkster {Owner.DisplayName}.");
         }
+        IsVibrating = false;
+        Mediator.Publish(new DTRRefreshMessage());
     }
 
     /// <summary>
@@ -143,6 +147,14 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
             // if we are recording data, update the latest positions of all devices.
             foreach (var device in _devices)
                 device.UpdatePosition();
+        }
+
+        // Refresh the DTR only when the active motor state flips.
+        var vibrating = _devices.Any(d => d.MotorDotMap.Values.Any(m => m.Motor.Intensity > 0));
+        if (vibrating != IsVibrating)
+        {
+            IsVibrating = vibrating;
+            Mediator.Publish(new DTRRefreshMessage());
         }
     }
 
