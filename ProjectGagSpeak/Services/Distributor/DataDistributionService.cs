@@ -104,6 +104,7 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
         Mediator.Subscribe<ConfigPatternChanged>(this, msg => DistributePatternUpdate(msg.Item, msg.Type).ConfigureAwait(false));
         Mediator.Subscribe<ConfigAlarmChanged>(this, msg => DistributeAlarmUpdate(msg.Item, msg.Type).ConfigureAwait(false));
         Mediator.Subscribe<ConfigTriggerChanged>(this, msg => DistributeTriggerUpdate(msg.Item, msg.Type).ConfigureAwait(false));
+        Mediator.Subscribe<EnabledToysChanged>(this, msg => PushEnabledToysChanged(msg).ConfigureAwait(false));
     }
 
     // Idk why we need this really, anymore, but whatever i guess. If it helps it helps.

@@ -8,20 +8,18 @@ using GagspeakAPI.Extensions;
 
 namespace GagSpeak.State.Models;
 
-// MAINTAINERS NOTE: for the intiface toy, and maybe all toys,
-// efficiency can likely be increased by using the Scalar and Rotate commands directly,
-// in order to execute multiple instructions via a single message.
-
-// Something to look into if we need to optimize further, but for now a switch statement will do.
 public class IntifaceBuzzToy : BuzzToy
 {
-    // create a new Debouncer with a 20ms delay. (extend if too fast or run into issues, but this allows for max accuracy)
-    private DebounceDispatcher VibeDebouncer = new(TimeSpan.FromMilliseconds(20));
-    private DebounceDispatcher RotateDebouncer = new(TimeSpan.FromMilliseconds(20));
-    private DebounceDispatcher OscillateDebouncer = new(TimeSpan.FromMilliseconds(20));
-    private DebounceDispatcher ConstrictDebouncer = new(TimeSpan.FromMilliseconds(20));
-    private DebounceDispatcher InflateDebouncer = new(TimeSpan.FromMilliseconds(20));
+    // maxDelay forces a flush every 50ms during continuous input.
+    private DebounceDispatcher VibeDebouncer = new(TimeSpan.FromMilliseconds(20), TimeSpan.FromMilliseconds(50));
+    private DebounceDispatcher RotateDebouncer = new(TimeSpan.FromMilliseconds(20), TimeSpan.FromMilliseconds(50));
+    private DebounceDispatcher OscillateDebouncer = new(TimeSpan.FromMilliseconds(20), TimeSpan.FromMilliseconds(50));
+    private DebounceDispatcher ConstrictDebouncer = new(TimeSpan.FromMilliseconds(20), TimeSpan.FromMilliseconds(50));
+    private DebounceDispatcher InflateDebouncer = new(TimeSpan.FromMilliseconds(20), TimeSpan.FromMilliseconds(50));
 
+    // Serializes device commands to prevent out-of-order delivery.
+    private readonly object _sendLock = new();
+    private Task _sendQueue = Task.CompletedTask;
 
     private ButtplugClientDevice _device = null!; // This is set by the constructor or UpdateDevice.
     private uint _deviceIdx = uint.MaxValue;
@@ -104,78 +102,84 @@ public class IntifaceBuzzToy : BuzzToy
         }
     }
 
+    public void ClearDevice()
+    {
+        _device = null!;
+        _deviceIdx = uint.MaxValue;
+    }
+
     public override bool VibrateAll(double intensity)
     {
-        if (!IpcCallerIntiface.IsConnected)
+        if (!DeviceConnected)
             return false;
-        // Update Values
         if(base.VibrateAll(intensity))
-            VibeDebouncer.Debounce(() => _device!.VibrateAsync(intensity));
+            VibeDebouncer.Debounce(() => SendScalars(ToyMotor.Vibration, ActuatorType.Vibrate));
         return true;
     }
 
     public override bool Vibrate(uint motorIdx, double intensity)
     {
-        if (!IpcCallerIntiface.IsConnected)
+        if (!DeviceConnected)
             return false;
 
         if (base.Vibrate(motorIdx, intensity))
-            VibeDebouncer.Debounce(() => _device!.ScalarAsync(new ScalarCmd.ScalarSubcommand(motorIdx, intensity, ActuatorType.Vibrate)));
-
-
+            VibeDebouncer.Debounce(() => SendScalars(ToyMotor.Vibration, ActuatorType.Vibrate));
         return true;
     }
 
     public override bool OscillateAll(double speed)
     {
-        if (!IpcCallerIntiface.IsConnected)
+        if (!DeviceConnected)
             return false;
-        // Update Values
         if (base.OscillateAll(speed))
-            OscillateDebouncer.Debounce(() => _device!.OscillateAsync(speed));
+            OscillateDebouncer.Debounce(() => SendScalars(ToyMotor.Oscillation, ActuatorType.Oscillate));
         return true;
     }
 
     public override bool Oscillate(uint motorIdx, double speed)
     {
-        if (!IpcCallerIntiface.IsConnected)
+        if (!DeviceConnected)
             return false;
-        // Update Values
         if (base.Oscillate(motorIdx, speed))
-            OscillateDebouncer.Debounce(() => _device!.ScalarAsync(new ScalarCmd.ScalarSubcommand(motorIdx, speed, ActuatorType.Oscillate)));
+            OscillateDebouncer.Debounce(() => SendScalars(ToyMotor.Oscillation, ActuatorType.Oscillate));
         return true;
     }
 
     public override bool Rotate(double speed, bool clockwise)
     {
-        if (!IpcCallerIntiface.IsConnected)
+        if (!DeviceConnected)
             return false;
-        // Update Value
         if (base.Rotate(speed, clockwise))
-            RotateDebouncer.Debounce(() => _device.RotateAsync(speed, clockwise));
+            RotateDebouncer.Debounce(() => Enqueue(() => _device.RotateAsync(speed, clockwise)));
         return true;
     }
 
     public override bool Constrict(double severity)
     {
-        if (!IpcCallerIntiface.IsConnected)
+        if (!DeviceConnected)
             return false;
-        // Update Value
         if(base.Constrict(severity))
-            ConstrictDebouncer.Debounce(() => _device!.ScalarAsync(new ScalarCmd.ScalarSubcommand
-                (_motorTypeMap[ToyMotor.Constriction][0].MotorIdx, severity, ActuatorType.Constrict)));
+            ConstrictDebouncer.Debounce(() => SendScalars(ToyMotor.Constriction, ActuatorType.Constrict));
         return true;
     }
 
     public override bool Inflate(double severity)
     {
-        if (!IpcCallerIntiface.IsConnected)
+        if (!DeviceConnected)
             return false;
-        // Update Value
         if(base.Inflate(severity))
-            InflateDebouncer.Debounce(() => _device!.ScalarAsync(new ScalarCmd.ScalarSubcommand
-                (_motorTypeMap[ToyMotor.Inflation][0].MotorIdx, severity, ActuatorType.Inflate)));
+            InflateDebouncer.Debounce(() => SendScalars(ToyMotor.Inflation, ActuatorType.Inflate));
         return true;
+    }
+
+    // Batches all motors of the specified type into a single payload so debouncing does not overwrite or drop concurrent motor updates.
+    private void SendScalars(ToyMotor type, ActuatorType actuator)
+        => Enqueue(() => _device.ScalarAsync(_motorTypeMap[type].Select(m => new ScalarCmd.ScalarSubcommand(m.MotorIdx, m.Intensity, actuator)).ToList()));
+
+    private void Enqueue(Func<Task> send)
+    {
+        lock (_sendLock)
+            _sendQueue = _sendQueue.ContinueWith(_ => send()).Unwrap();
     }
 
     public override async Task UpdateBattery()

@@ -99,7 +99,7 @@ public class MotorDot(BuzzToyMotor motor) : IEquatable<MotorDot>
 
     public double LatestIntervalPos(bool deviceEnabled)
         => deviceEnabled
-            ? Math.Round((_useDragLoopData ? _dragLoopData[_dragLoopPlaybackIdx] : PosHistory[0]) / Motor.Interval) * Motor.Interval
+            ? Math.Clamp(Math.Round((_useDragLoopData ? _dragLoopData[_dragLoopPlaybackIdx] : PosHistory[0]) / Motor.Interval) * Motor.Interval, 0.0, 1.0)
             : 0.0;
 
     // Lightweight cleanup method to be used whenever playbacks finish.

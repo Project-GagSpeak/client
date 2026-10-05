@@ -58,6 +58,7 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
             Logger.LogInformation("Reconnected to GagSpeak. Setting Client Devices.");
             ClientData = new ClientPlotedDevices(Logger, mediator, new(new(MainHub.UID), _config.Data.NicknameInVibeRooms), RemoteAccess.Full);
             UpdateClientDevices();
+            _selectedKey = string.Empty;
             SelectedKey = MainHub.UID;
         });
 
@@ -120,8 +121,8 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
 
     private void OnClientToyChange(StorageChangeType changeType, BuzzToy item)
     {
-        var validItems = ClientData.Devices.Select(d => d.FactoryName).ToHashSet();
-        Logger.LogDebug($"Current Valid Items: {string.Join(", ", validItems)}");
+        var preValid = ClientData.Devices.Select(d => d.FactoryName).ToHashSet();
+        Logger.LogDebug($"Current Valid Items: {string.Join(", ", preValid)}");
         switch (changeType)
         {
             case StorageChangeType.Created:
@@ -136,20 +137,19 @@ public sealed class RemoteService : DisposableMediatorSubscriberBase
                 UpdateClientDevices();
                 break;
         }
-        var postValid = ClientData.Devices.Select(d => d.FactoryName);
-        validItems.SymmetricExceptWith(postValid);
-        if (validItems.Count > 0)
-        {
-            Logger.LogDebug($"Valid Devices changed from {string.Join(", ", validItems)} to {string.Join(", ", postValid)}.");
-            // Might need to revise how this works to behave seperately in logic...
-            Mediator.Publish(new EnabledToysChanged(postValid.ToList(), true));
-        }
+        var postValid = ClientData.Devices.Select(d => d.FactoryName).ToHashSet();
+        var added = postValid.Except(preValid).ToList();
+        var removed = preValid.Except(postValid).ToList();
+        if (added.Count > 0)
+            Mediator.Publish(new EnabledToysChanged(added, true));
+        if (removed.Count > 0)
+            Mediator.Publish(new EnabledToysChanged(removed, false));
     }
 
     private void UpdateClientDevices()
     {
         var toysToCheck = _toyManager.InteractableToys.Where(t => t.ValidForRemotes).ToList();
-        foreach (var device in ClientData.Devices)
+        foreach (var device in ClientData.Devices.ToList())
         {
             // check if there is a valid toy in the list for this device.
             if (toysToCheck.FirstOrDefault(t => t.FactoryName.Equals(device.FactoryName)) is { } match)

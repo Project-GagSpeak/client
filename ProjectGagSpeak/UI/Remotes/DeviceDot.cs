@@ -117,7 +117,7 @@ public class DeviceDot : IEquatable<DeviceDot>
                     continue;
 
                 // process the intensity to play.
-                var intensityToPlay = motor.RecordedData[motor.PlaybackRef.Idx];
+                var intensityToPlay = Math.Clamp(motor.RecordedData[motor.PlaybackRef.Idx], 0.0, 1.0);
                 switch (motor.Motor.Type)
                 {
                     case ToyMotor.Vibration:

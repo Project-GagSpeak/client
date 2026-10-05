@@ -1,5 +1,6 @@
 using Buttplug.Client;
 using CkCommons;
+using GagSpeak.FileSystems;
 using GagSpeak.Interop;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
@@ -40,7 +41,10 @@ public sealed class IntifaceListener : DisposableMediatorSubscriberBase
             Logger.LogInformation($"Device {removed.Name} removed from device list.", LogFilter.Toys);
             var realToys = _manager.Storage.Values.OfType<IntifaceBuzzToy>();
             if (realToys.FirstOrDefault(st => st.DeviceIdx == removed.Index) is { } match)
-                _manager.RemoveDevice(match);
+            {
+                match.ClearDevice();
+                Mediator.Publish(new ConfigSexToyChanged(StorageChangeType.Modified, match));
+            }
             else
                 throw new Exception($"Device with index {removed.Index} not found in connected toys list.");
         });
