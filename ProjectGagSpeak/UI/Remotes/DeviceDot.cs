@@ -81,19 +81,19 @@ public class DeviceDot : IEquatable<DeviceDot>
             switch (dot.Motor.Type)
             {
                 case ToyMotor.Vibration:
-                    _device.Vibrate(dot.MotorIdx, dot.LatestIntervalPos(IsEnabled));
+                    _device.Vibrate(dot.MotorIdx, Math.Max(dot.LatestIntervalPos(IsEnabled), dot.OverlayIntensity));
                     break;
                 case ToyMotor.Oscillation:
-                    _device.Oscillate(dot.MotorIdx, dot.LatestIntervalPos(IsEnabled));
+                    _device.Oscillate(dot.MotorIdx, Math.Max(dot.LatestIntervalPos(IsEnabled), dot.OverlayIntensity));
                     break;
                 case ToyMotor.Rotation:
-                    _device.Rotate(dot.LatestIntervalPos(IsEnabled), IsClockwise);
+                    _device.Rotate(Math.Max(dot.LatestIntervalPos(IsEnabled), dot.OverlayIntensity), IsClockwise);
                     break;
                 case ToyMotor.Constriction:
-                    _device.Constrict(dot.LatestIntervalPos(IsEnabled));
+                    _device.Constrict(Math.Max(dot.LatestIntervalPos(IsEnabled), dot.OverlayIntensity));
                     break;
                 case ToyMotor.Inflation:
-                    _device.Inflate(dot.LatestIntervalPos(IsEnabled));
+                    _device.Inflate(Math.Max(dot.LatestIntervalPos(IsEnabled), dot.OverlayIntensity));
                     break;
             }
         }
@@ -112,12 +112,9 @@ public class DeviceDot : IEquatable<DeviceDot>
 
             foreach (var motor in _motorDotMap.Values)
             {
-                // dont bother if no playback data is present.
-                if (motor.PlaybackRef.Idx == -1)
-                    continue;
-
-                // process the intensity to play.
-                var intensityToPlay = Math.Clamp(motor.RecordedData[motor.PlaybackRef.Idx], 0.0, 1.0);
+                // process the intensity to play, with any layered pattern taking priority if higher.
+                var playbackPos = motor.PlaybackRef.Idx == -1 ? 0.0 : Math.Clamp(motor.RecordedData[motor.PlaybackRef.Idx], 0.0, 1.0);
+                var intensityToPlay = Math.Max(playbackPos, motor.OverlayIntensity);
                 switch (motor.Motor.Type)
                 {
                     case ToyMotor.Vibration:

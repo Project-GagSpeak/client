@@ -507,9 +507,11 @@ public class ReactionDistributor
                 return;
             }
 
+            // Layer over our own playing pattern, otherwise start it.
             var pattern = stored ?? CreateVibrationPattern(act);
             var duration = act.EndAfter > TimeSpan.Zero ? act.EndAfter : pattern.Duration;
-            _patterns.SwitchPattern(pattern, pattern.StartPoint, duration, MainHub.UID);
+            if (!(_remotes.ClientData.IsPlayingPattern && _remotes.ClientData.TryLayerPattern(pattern, pattern.StartPoint, duration)))
+                _patterns.SwitchPattern(pattern, pattern.StartPoint, duration, MainHub.UID);
         });
         return true;
     }

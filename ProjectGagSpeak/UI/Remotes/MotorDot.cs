@@ -20,6 +20,9 @@ public class MotorDot(BuzzToyMotor motor) : IEquatable<MotorDot>
     private bool _dragging = false;
     private bool _looping = false;
 
+    /// <summary> The highest intensity of any layered pattern this tick. Played if above the motor's own value. </summary>
+    public double OverlayIntensity { get; set; } = 0.0;
+
     /// <summary> The current Position of the MotorDot on the PlotGraph. </summary>
     public double[] Position = new double[2];
 

@@ -139,6 +139,22 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
         return true;
     }
 
+    /// <summary> Layers a pattern over anything the remote is running, or starts it if the remote is idle. </summary>
+    /// <remarks> Used by alarms so they never interrupt what is already playing. Skipped while recording. </remarks>
+    public bool LayerPattern(Pattern pattern, TimeSpan startTime, TimeSpan duration, string enactor)
+    {
+        if (_remotes.ClientData.InRecordingMode)
+        {
+            Logger.LogDebug($"Not playing {pattern.Label}, a pattern is being recorded.");
+            return false;
+        }
+
+        if (_remotes.ClientData.UserIsBeingBuzzed)
+            return _remotes.ClientData.TryLayerPattern(pattern, startTime, duration);
+
+        return SwitchPattern(pattern, startTime, duration, enactor);
+    }
+
     /// <summary> Enables a pattern, beginning the execution to the simulated, or connected sex toy. </summary>
     /// <remarks> If no pattern in the storage is found, no pattern will activate. </remarks>
     public bool EnablePattern(Guid patternId, string enactor)
