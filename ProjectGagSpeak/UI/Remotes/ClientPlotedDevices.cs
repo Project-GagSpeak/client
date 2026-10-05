@@ -21,6 +21,8 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
     public Guid ActivePattern => _patternInfo.PatternId;
     public bool IsPlayingPattern => _patternInfo.Idx != -1;
     public bool IsPlayingVibeData => _injectedInfo.Idx != -1;
+    /// <summary> If a pattern started by another Kinkster is playing. </summary>
+    public bool IsPlayingForcedPattern => IsPlayingPattern && Access == RemoteAccess.ForcedPlayback;
     /// <summary> If any motor on the client's devices currently has an intensity above 0. </summary>
     public bool IsVibrating { get; private set; } = false;
     // Last time a motor was manually dialed to full intensity.
@@ -219,7 +221,7 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
         Access = enactor == MainHub.UID ? RemoteAccess.Playback : RemoteAccess.ForcedPlayback;
         // Server-side, any time an active pattern update is received, it sends that update back to us and all our paired Kinksters.
         // Thus, if only send the update if the call is not self-invoked.
-        if (enactor == MainHub.UID)
+        if (enactor == MainHub.UID && ActivePattern != Guid.Empty)
             Mediator.Publish(new EnabledItemChanged(GSModule.Pattern, ActivePattern, true));
     }
 
@@ -231,12 +233,12 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
 
         Log.LogInformation($"User {enactor} ended currently playing Pattern {ActivePattern} for {Owner.DisplayName}.");
         GagspeakEventManager.AchievementEvent(UnlocksEvent.RemoteAction, RemoteInteraction.PatternPlaybackEnd, ActivePattern, enactor);
-        _patternInfo.Reset();
-        Access = RemoteAccess.Full;
         // Server-side, any time an active pattern update is received, it sends that update back to us and all our paired Kinksters.
         // Thus, if only send the update if the call is not self-invoked.
-        if (enactor == MainHub.UID && callSource is not (RemoteSource.PatternSwitch or RemoteSource.Safeword))
+        if (enactor == MainHub.UID && ActivePattern != Guid.Empty && callSource is not (RemoteSource.PatternSwitch or RemoteSource.Safeword))
             Mediator.Publish(new EnabledItemChanged(GSModule.Pattern, ActivePattern, false));
+        _patternInfo.Reset();
+        Access = RemoteAccess.Full;
 
         // if the call source is not from a power on or down, we must perform cleanup.
         if (callSource is not RemoteSource.PowerOn and not RemoteSource.PowerOff)
