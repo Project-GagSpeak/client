@@ -89,6 +89,7 @@ public class SettingsModulesToybox
         var emitSpatialAudio = globals.SpatialAudio;
         var vibeLobbyNickname = _config.Data.NicknameInVibeRooms;
         var intifaceAutoConnect = _config.Data.IntifaceAutoConnect;
+        var intifaceOpenInstallerLink = _config.Data.IntifaceOpenInstallerLink;
         var intifaceConnectionAddr = _config.Data.IntifaceConnectionSocket;
 
         if (ImGui.Checkbox(GSLoc.Settings.Options.ToyboxActive, ref toyboxEnabled))
@@ -113,6 +114,13 @@ public class SettingsModulesToybox
             _config.Save();
         }
         CkGui.HelpText(GSLoc.Settings.Options.IntifaceAutoConnectTT);
+
+        if (ImGui.Checkbox(GSLoc.Settings.Options.IntifaceOpenInstallerLink, ref intifaceOpenInstallerLink))
+        {
+            _config.Data.IntifaceOpenInstallerLink = intifaceOpenInstallerLink;
+            _config.Save();
+        }
+        CkGui.HelpText(GSLoc.Settings.Options.IntifaceOpenInstallerLinkTT);
 
         ImGui.SetNextItemWidth(200f);
         if (ImGui.InputTextWithHint($"Server Address##ConnectionWSaddr", "Leave blank for default...", ref intifaceConnectionAddr, 100))

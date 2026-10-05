@@ -94,7 +94,7 @@ public class ToysPanel
         {
             // Draw the intiface opener button.
             if (CkGui.IconButton(FAI.ArrowUpRightFromSquare, inPopup: true))
-                IntifaceCentral.OpenIntiface(true);
+                IntifaceCentral.OpenIntiface(true, _ipc.OpenInstallerLink);
             CkGui.AttachTooltip("Opens Intiface Central on your PC for connection.\nIf application is not detected, opens a link to installer.");
 
             // Now we need to draw our connection state, centered to the remaining width.
@@ -112,7 +112,7 @@ public class ToysPanel
                 if (IpcCallerIntiface.IsConnected)
                     UiService.SetUITask(_ipc.Disconnect);
                 else
-                    UiService.SetUITask(_ipc.Connect);
+                    UiService.SetUITask(() => _ipc.Connect());
             }
             CkGui.AttachTooltip(IpcCallerIntiface.IsConnected ? "Disconnect from Intiface Central" : "Connect to Intiface Central");
         }

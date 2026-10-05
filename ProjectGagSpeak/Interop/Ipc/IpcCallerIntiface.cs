@@ -38,6 +38,7 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
     public static bool ScanningForDevices { get; private set; } = false;
     public static bool IsConnected => client.Connected;
     public bool AutoConnect => _config.Data.IntifaceAutoConnect;
+    public bool OpenInstallerLink => _config.Data.IntifaceOpenInstallerLink;
 
     public void CheckAPI()
     {
@@ -102,7 +103,7 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
             return;
 
         // Intiface may already be running (where window detection can't see it), so try connecting first.
-        await Connect().ConfigureAwait(false);
+        await Connect(true).ConfigureAwait(false);
         if (IsConnected)
             return;
 
@@ -110,12 +111,25 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
         if (string.IsNullOrEmpty(IntifaceCentral.AppPath))
             IntifaceCentral.GetApplicationPath();
 
-        // Then forcibly open it, and connect.
-        IntifaceCentral.OpenIntiface(false);
-        await Connect().ConfigureAwait(false);
+        // Then forcibly open it, and connect once it has started.
+        if (!IntifaceCentral.OpenIntiface(false, OpenInstallerLink))
+        {
+            _logger.LogInformation("Intiface Central was not found, skipping auto-connect.", LogFilter.Toys);
+            return;
+        }
+
+        for (var attempt = 0; attempt < 10 && !IsConnected; attempt++)
+        {
+            await Task.Delay(1000).ConfigureAwait(false);
+            await Connect(true).ConfigureAwait(false);
+        }
+
+        if (!IsConnected)
+            _logger.LogWarning("Intiface Central was opened but could not be connected to.", LogFilter.Toys);
     }
 
-    public async Task Connect()
+    /// <param name="quiet"> If a refused connection should only log a debug line (for probing if Intiface is running). </param>
+    public async Task Connect(bool quiet = false)
     {
         try
         {
@@ -139,7 +153,10 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
         }
         catch (ButtplugException socketEx)
         {
-            _logger.LogError($"Error Connecting to Websocket. Is your Intiface Opened? | {socketEx}");
+            if (quiet)
+                _logger.LogDebug("Intiface Central is not reachable.", LogFilter.Toys);
+            else
+                _logger.LogError($"Error Connecting to Websocket. Is your Intiface Opened? | {socketEx}");
             await Disconnect();
             return;
         }
