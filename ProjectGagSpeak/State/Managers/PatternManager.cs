@@ -132,7 +132,7 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
     public bool SwitchPattern(Pattern pattern, TimeSpan startTime, TimeSpan duration, string enactor)
     {
         Logger.LogDebug($"Attempting to switch to pattern {pattern.Label} by {enactor}.");
-        if (!_remotes.ClientData.SwitchPatternPlaybackData(pattern, pattern.StartPoint, pattern.Duration, enactor))
+        if (!_remotes.ClientData.SwitchPatternPlaybackData(pattern, startTime, duration, enactor))
             return false;
         
         Logger.LogDebug($"Switched to new pattern ({pattern.Label}) for playback!");
