@@ -87,6 +87,8 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
         _onlineUsers.UserWentOnline += OnKinksterOnline;
         // Shift this to new the visibility watcher later.
         Mediator.Subscribe<KinksterRendered>(this, msg => _newVisibleKinksters.Add(msg.User));
+        // Self-enacted pattern changes are not routed through the server, so push them to pairs.
+        Mediator.Subscribe<EnabledItemChanged>(this, msg => { if (msg.Module is GSModule.Pattern) PushEnabledItemChanged(msg).ConfigureAwait(false); });
 
         // Online Data Updaters
         Mediator.Subscribe<ConnectedMessage>(this, _ =>

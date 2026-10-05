@@ -132,9 +132,11 @@ public class MotorDot(BuzzToyMotor motor) : IEquatable<MotorDot>
     /// </summary>
     public void AddPosToHistory(bool deviceEnabled)
     {
+        // Snapshot idx, playback is advanced/cleared on the remote update thread.
+        var idx = PlaybackRef.Idx;
         var posToPush = !deviceEnabled
-            ? 0.0 : PlaybackRef.Idx != -1
-                ? RecordedData[PlaybackRef.Idx] : (_useDragLoopData ? _dragLoopData[_dragLoopPlaybackIdx] : Position[1]);
+            ? 0.0 : idx >= 0 && idx < RecordedData.Count
+                ? RecordedData[idx] : (_useDragLoopData ? _dragLoopData[_dragLoopPlaybackIdx] : Position[1]);
 
         PosHistory.PushFront(posToPush);
 

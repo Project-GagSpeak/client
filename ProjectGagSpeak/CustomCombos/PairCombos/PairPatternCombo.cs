@@ -111,6 +111,8 @@ public sealed class PairPatternCombo : CkFilterComboIconTextButton<KinksterPatte
             else
             {
                 Log.LogDebug($"Executing Pattern {Current.Label} on {_ref.GetNickAliasOrUid()}'s Toy", LogFilter.StickyUI);
+                // Server excludes the enactor from the broadcast, so update locally.
+                _ref.NewEnabledState(GSModule.Pattern, Current.Id, true);
                 PostButtonPress?.Invoke();
             }
         });
