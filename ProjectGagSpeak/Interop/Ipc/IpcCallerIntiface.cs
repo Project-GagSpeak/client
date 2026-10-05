@@ -95,10 +95,15 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
         ? new ButtplugWebsocketConnector(new Uri($"{_config.Data.IntifaceConnectionSocket}"))
         : new ButtplugWebsocketConnector(new Uri("ws://localhost:12345"));
 
-    public void OpenAndConnect()
+    public async Task OpenAndConnect()
     {
         // Early return if conditions are not satisfied.
         if (!AutoConnect || IsConnected)
+            return;
+
+        // Intiface may already be running (where window detection can't see it), so try connecting first.
+        await Connect().ConfigureAwait(false);
+        if (IsConnected)
             return;
 
         // If they are, forcibly locate the Intiface Central application path.
@@ -107,7 +112,7 @@ public sealed class IpcCallerIntiface : IDisposable, IIpcCaller
 
         // Then forcibly open it, and connect.
         IntifaceCentral.OpenIntiface(false);
-        Connect().ConfigureAwait(false);
+        await Connect().ConfigureAwait(false);
     }
 
     public async Task Connect()
