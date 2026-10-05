@@ -562,6 +562,7 @@ public sealed class AutoUnlockService : BackgroundService
             // Fire that alarm!
             _logger.LogInformation($"Alarm Triggered!: [{alarm.PatternRef.Label}] Playing Pattern ({alarm.PatternRef.Label})", LogFilter.Alarms);
             _patterns.SwitchPattern(alarm.PatternRef, alarm.PatternStartPoint, alarm.PatternDuration, MainHub.UID);
+            GagspeakEventManager.AchievementEvent(UnlocksEvent.AlarmTriggered);
         }
 
         return Task.CompletedTask;

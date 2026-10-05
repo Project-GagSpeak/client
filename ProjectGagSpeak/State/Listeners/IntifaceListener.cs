@@ -30,7 +30,10 @@ public sealed class IntifaceListener : DisposableMediatorSubscriberBase
         Mediator.Subscribe<IntifaceClientDisconnected>(this, _ => OnPostDisconnect());
     }
     private void OnDeviceAdded(ButtplugClientDevice added)
-        => _manager.AddOrUpdateDevice(added);
+    {
+        _manager.AddOrUpdateDevice(added);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.DeviceConnected);
+    }
 
     private void OnDeviceRemoved(ButtplugClientDevice removed)
     {

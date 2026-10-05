@@ -1,3 +1,4 @@
+using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Models;
@@ -22,6 +23,8 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
     public bool IsPlayingVibeData => _injectedInfo.Idx != -1;
     /// <summary> If any motor on the client's devices currently has an intensity above 0. </summary>
     public bool IsVibrating { get; private set; } = false;
+    // Last time a motor was manually dialed to full intensity.
+    private DateTime _lastMaxIntensity = DateTime.MinValue;
 
     public bool TryUpdateRemoteForRecording()
     {
@@ -108,6 +111,7 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
     public override void OnUpdateTick()
     {
         //Log.LogDebug("Processing Update Tick for UserPlotedDevices.");
+        var manual = !IsPlayingPattern && !IsPlayingVibeData;
         // perform the latest data update based on the current state of the plottedDevices.
         if (IsPlayingPattern)
         {
@@ -149,12 +153,18 @@ public sealed class ClientPlotedDevices : UserPlotedDevices
                 device.UpdatePosition();
         }
 
+        if (manual && _devices.Any(d => d.MotorDotMap.Values.Any(m => m.Motor.Intensity >= 1.0)))
+            _lastMaxIntensity = DateTime.UtcNow;
+
         // Refresh the DTR only when the active motor state flips.
         var vibrating = _devices.Any(d => d.MotorDotMap.Values.Any(m => m.Motor.Intensity > 0));
         if (vibrating != IsVibrating)
         {
             IsVibrating = vibrating;
             Mediator.Publish(new DTRRefreshMessage());
+            // Dialed from 100% to 0% in under a second.
+            if (!vibrating && manual && DateTime.UtcNow - _lastMaxIntensity < TimeSpan.FromSeconds(1))
+                (ClientAchievements.SaveData[Achievements.DontKillMyVibe.Id] as ProgressAchievement)?.IncrementProgress();
         }
     }
 

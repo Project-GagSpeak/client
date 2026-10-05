@@ -2,6 +2,7 @@ using CkCommons;
 using Dalamud.Interface.ImGuiNotification;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using GagSpeak.Interop;
 using GagSpeak.Kinksters;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
@@ -437,7 +438,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         _saveData.AddDuration(AchievementModuleKind.Toybox, Achievements.EnduranceQueen, TimeSpan.FromMinutes(59), DurationTimeUnit.Minutes, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Minutes", "Vibrated for");
 
         _saveData.AddConditional(AchievementModuleKind.Toybox, Achievements.CollectorOfSinfulTreasures, () =>
-        { return (ClientData.Globals?.HasValidShareCode() ?? false) || _remoteService.IsClientBeingBuzzed; }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Devices Connected");
+        { return (ClientData.Globals?.HasValidShareCode() ?? false) || IpcCallerIntiface.IsConnected; }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Devices Connected");
 
         _saveData.AddRequiredTimeConditional(AchievementModuleKind.Toybox, Achievements.MotivationForRestoration, TimeSpan.FromMinutes(30),
             () => _remoteService.ClientData.ActivePattern != Guid.Empty, DurationTimeUnit.Minutes, (id, name) => OnCompletion(id, name).ConfigureAwait(false), suffix: " Vibrated in Diadem");
