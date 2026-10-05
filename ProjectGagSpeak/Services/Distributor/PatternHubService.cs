@@ -7,6 +7,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Connection;
 using GagspeakAPI.Data;
+using GagspeakAPI.Dto.VibeRoom;
 using GagspeakAPI.Hub;
 using GagspeakAPI.Network;
 
@@ -224,8 +225,10 @@ public class PatternHubService : DisposableMediatorSubscriberBase
                         // Serialize the modified JObject back into a JSON string
                         decompressed = patternObject.ToString();
                     }
-                    // Deserialize the string back to pattern data
-                    var pattern = JsonConvert.DeserializeObject<Pattern>(decompressed) ?? new Pattern();
+                    // Deserialize the string back to pattern data, converting 1.x uploads.
+                    var pattern = patternObject.ContainsKey("PatternByteData")
+                        ? FromLegacyPattern(patternObject)
+                        : JsonConvert.DeserializeObject<Pattern>(decompressed) ?? new Pattern();
 
                     // Set the active pattern
                     _patterns.CreateClone(pattern, pattern.Label);
@@ -238,6 +241,27 @@ public class PatternHubService : DisposableMediatorSubscriberBase
                 }
             }
         }, _sharehubCts.Token);
+    }
+
+    /// <summary> Converts a 1.x upload (single 0-100 vibration track) to a Hush vibration pattern. </summary>
+    private static Pattern FromLegacyPattern(JObject legacy)
+    {
+        var byteData = legacy["PatternByteData"];
+        var values = byteData is JArray array
+            ? array.Select(t => t.Value<double>())
+            : (byteData?.ToString() ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries).Select(double.Parse);
+        var data = values.Select(v => Math.Clamp(v / 100.0, 0.0, 1.0)).ToArray();
+
+        return new Pattern()
+        {
+            Label = legacy["Name"]?.ToString() ?? string.Empty,
+            Description = legacy["Description"]?.ToString() ?? string.Empty,
+            Duration = legacy["Duration"]?.ToObject<TimeSpan>() ?? TimeSpan.Zero,
+            StartPoint = legacy["StartPoint"]?.ToObject<TimeSpan>() ?? TimeSpan.Zero,
+            PlaybackDuration = legacy["PlaybackDuration"]?.ToObject<TimeSpan>() ?? TimeSpan.Zero,
+            ShouldLoop = legacy["ShouldLoop"]?.Value<bool>() ?? false,
+            PlaybackData = new FullPatternData([ new DeviceStream(ToyBrandName.Hush, [ new MotorStream(ToyMotor.Vibration, 0, data) ]) ]),
+        };
     }
 
     public void ToggleLike(Guid patternId)
