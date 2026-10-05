@@ -91,7 +91,7 @@ public sealed class AutoUnlockService : BackgroundService
         _intervalTasks.Add(CheckOnInterval(1000, OnSecond, stoppingToken));
         _intervalTasks.Add(CheckOnInterval(5000, OnFiveSeconds, stoppingToken));
         _intervalTasks.Add(CheckOnInterval(15000, OnQuarterMinute, stoppingToken));
-        _intervalTasks.Add(CheckOnInterval(60000, OnMinute, stoppingToken));
+        _intervalTasks.Add(CheckOnMinuteStart(OnMinute, stoppingToken));
 
         // Wait for all tasks to complete (which will be when stoppingToken is cancelled)
         return Task.CompletedTask;
@@ -103,6 +103,18 @@ public sealed class AutoUnlockService : BackgroundService
         {
             Generic.Safe(checkFunc);
             await Task.Delay(msDelay, stoppingToken);
+        }
+    }
+
+    // Runs just after the start of every clock minute, so time-of-day checks (alarms) never skip or drift past a minute.
+    private async Task CheckOnMinuteStart(Action checkFunc, CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            var now = DateTime.Now;
+            var nextMinute = now.AddTicks(-(now.Ticks % TimeSpan.TicksPerMinute)).AddMinutes(1).AddMilliseconds(500);
+            await Task.Delay(nextMinute - now, stoppingToken);
+            Generic.Safe(checkFunc);
         }
     }
 
