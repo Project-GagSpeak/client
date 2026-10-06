@@ -8,6 +8,7 @@ using GagSpeak.PlayerClient;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Caches;
 using GagSpeak.State.Managers;
+using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -32,6 +33,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
     private readonly TriggerManager _triggers;
     private readonly AchievementEventHandler _handler;
     private readonly RemoteService _remoteService;
+    private readonly PiShockProvider _shockies;
     
     private Task? _updateLoopTask = null;
     private CancellationTokenSource? _updateLoopCTS = new();
@@ -51,7 +53,8 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         AlarmManager alarms,
         TriggerManager triggers,
         AchievementEventHandler handler, 
-        RemoteService remoteService)
+        RemoteService remoteService,
+        PiShockProvider shockies)
         : base(logger, mediator)
     {
         _saveData = saveData;
@@ -67,6 +70,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         _triggers = triggers;
         _handler = handler;
         _remoteService = remoteService;
+        _shockies = shockies;
 
         Mediator.Subscribe<DisconnectedMessage>(this, _ =>
         {
@@ -438,7 +442,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         _saveData.AddDuration(AchievementModuleKind.Toybox, Achievements.EnduranceQueen, TimeSpan.FromMinutes(59), DurationTimeUnit.Minutes, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Minutes", "Vibrated for");
 
         _saveData.AddConditional(AchievementModuleKind.Toybox, Achievements.CollectorOfSinfulTreasures, () =>
-        { return (ClientData.Globals?.HasValidShareCode() ?? false) || IpcCallerIntiface.IsConnected; }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Devices Connected");
+        { return _shockies.ShockerCount > 0 || IpcCallerIntiface.IsConnected; }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Devices Connected");
 
         _saveData.AddRequiredTimeConditional(AchievementModuleKind.Toybox, Achievements.MotivationForRestoration, TimeSpan.FromMinutes(30),
             () => _remoteService.ClientData.ActivePattern != Guid.Empty, DurationTimeUnit.Minutes, (id, name) => OnCompletion(id, name).ConfigureAwait(false), suffix: " Vibrated in Diadem");
