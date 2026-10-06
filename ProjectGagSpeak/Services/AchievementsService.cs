@@ -124,6 +124,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         // Otherwise we should begin the update loop.
         Logger.LogInformation("Achievement Save Data is valid, beginning save cycle.", LogFilter.Achievements);
         BeginSaveCycle();
+        Mediator.Publish(new UpdateCompletedAchievements());
     }
 
     private void BeginSaveCycle()

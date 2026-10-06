@@ -278,6 +278,9 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
                 currentContent = response.Info;
             }
 
+            if (currentContent.CompletedTotal == ClientAchievements.Completed)
+                return;
+
             Logger.LogDebug($"Updating KinkPlate™ with {ClientAchievements.Completed} Completions.", LogFilter.Achievements);
             currentContent.CompletedTotal = ClientAchievements.Completed;
             await _hub.UserSetKinkPlateContent(new(MainHub.OwnUserData, currentContent));
