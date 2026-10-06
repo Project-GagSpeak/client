@@ -139,20 +139,32 @@ public class SettingsModulesToybox
     private void DrawPiShock()
     {
         CkGui.FontText("Pi-Shock Integration", Fonts.SubtitleFont);
+        var username = _config.Data.PiShockUsername;
         var apiKey = _config.Data.PiShockApiKey;
 
         var inputWidth = 250 * ImGuiHelpers.GlobalScale;
         var saveWidth = CkGui.IconTextButtonSize(FAI.PlugCircleCheck, "Save & Connect");
+        var fieldWidth = inputWidth - saveWidth - ImGui.GetStyle().ItemInnerSpacing.X;
 
-        ImGui.SetNextItemWidth(inputWidth - saveWidth - ImGui.GetStyle().ItemInnerSpacing.X);
-        ImGui.InputText("##PiShock API Key", ref apiKey, 100);
+        ImGui.SetNextItemWidth(fieldWidth);
+        if (ImGui.InputText("##PiShock Username", ref username, 100))
+            _config.Data.PiShockUsername = username;
+        if (ImGui.IsItemDeactivatedAfterEdit())
+            _config.Save();
+        CkGui.AttachTooltip(GSLoc.Settings.Options.PiShockUsernameTT);
+        CkGui.TextInline("Username");
+
+        ImGui.SetNextItemWidth(fieldWidth);
+        if (ImGui.InputText("##PiShock API Key", ref apiKey, 100))
+            _config.Data.PiShockApiKey = apiKey;
+        if (ImGui.IsItemDeactivatedAfterEdit())
+            _config.Save();
         CkGui.AttachTooltip(GSLoc.Settings.Options.PiShockKeyTT);
 
         CkGui.TextInline("API Key");
         ImUtf8.SameLineInner();
-        if (CkGui.IconTextButton(FAI.PlugCircleCheck, "Save & Connect", disabled: UiService.DisableUI || string.IsNullOrEmpty(apiKey)))
+        if (CkGui.IconTextButton(FAI.PlugCircleCheck, "Save & Connect", disabled: UiService.DisableUI || !_shockProvider.IsConfigured))
         {
-            _config.Data.PiShockApiKey = apiKey;
             _config.Save();
             UiService.SetUITask(async () => await _shockProvider.ConnectAsync());
         }
@@ -164,13 +176,13 @@ public class SettingsModulesToybox
         {
             case PiShockProvider.ConnectState.NotAttempted:
                 if (!_shockProvider.IsConfigured)
-                    CkGui.ColorText("Enter your API Key, then click Save & Connect.", ImGuiColors.DalamudGrey);
+                    CkGui.ColorText("Enter your Username and API Key, then click Save & Connect.", ImGuiColors.DalamudGrey);
                 else
                     CkGui.ColorText("Click Save & Connect to detect your PiShock devices.", ImGuiColors.DalamudYellow);
                 break;
 
             case PiShockProvider.ConnectState.AuthFailed:
-                CkGui.ColorText("Authentication failed - check your API Key.", ImGuiColors.DalamudRed);
+                CkGui.ColorText("Authentication failed - check your Username and API Key.", ImGuiColors.DalamudRed);
                 break;
 
             case PiShockProvider.ConnectState.NetworkError:
