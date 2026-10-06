@@ -5,7 +5,6 @@ using Dalamud.Interface.Utility.Raii;
 using GagSpeak.Kinksters;
 using GagSpeak.Services;
 using GagSpeak.Utils;
-using GagSpeak.WebAPI;
 using GagspeakAPI.Data.Permissions;
 using GagspeakAPI.Hub;
 using GagspeakAPI.User;
@@ -16,90 +15,58 @@ namespace GagSpeak.Gui.MainWindow;
 // Helper methods for drawing out the hardcore actions.
 public partial class SidePanelPair
 {
+    private int? _maxIntensityEdit;
+    private int? _maxDurationEdit;
+
     private void UniqueShareCode(Kinkster k, string dispName, float width)
     {
         using var _ = ImRaii.Group();
 
         var refCode = k.OwnPerms.PiShockShareCode;
-        var refreshWidth = CkGui.IconTextButtonSize(FAI.Sync, "Refresh");
-        ImGui.SetNextItemWidth(width - refreshWidth - ImGui.GetStyle().ItemInnerSpacing.X);
-        CkGui.IconInputText(FAI.ShareAlt, string.Empty, "Unique Share Code", ref refCode, 40, width - refreshWidth - ImGui.GetStyle().ItemInnerSpacing.X, true, false);
+        CkGui.IconInputText(FAI.ShareAlt, string.Empty, "Unique Share Code", ref refCode, 40, width, true, false);
+        if (ImGui.IsItemDeactivatedAfterEdit() && refCode != k.OwnPerms.PiShockShareCode)
+            ChangeShockPerm(k, nameof(PairPerms.PiShockShareCode), refCode);
+        CkGui.AttachTooltip($"Unique Share Code for --COL--{dispName}--COL--." +
+            $"--NL--This code gives {dispName} permission to interact with your PiShock device." +
+            "--NL--PiShock also enforces the limits set on the code itself.");
+
+        ShockToggle(k, "Shock", k.OwnPerms.AllowShocks, nameof(PairPerms.AllowShocks));
+        ImGui.SameLine();
+        ShockToggle(k, "Vibrate", k.OwnPerms.AllowVibrations, nameof(PairPerms.AllowVibrations));
+        ImGui.SameLine();
+        ShockToggle(k, "Beep", k.OwnPerms.AllowBeeps, nameof(PairPerms.AllowBeeps));
+
+        var curIntensity = Math.Clamp(k.OwnPerms.MaxIntensity, 1, 100);
+        ShockLimitSlider(k, ref _maxIntensityEdit, curIntensity, 1, 100, "Max Intensity: %d%%", nameof(PairPerms.MaxIntensity), width);
+        var curDuration = (int)Math.Clamp(k.OwnPerms.GetTimespanFromDuration().TotalSeconds, 1, 15);
+        ShockLimitSlider(k, ref _maxDurationEdit, curDuration, 1, 15, "Max Duration: %ds", nameof(PairPerms.MaxDuration), width);
+
+        if (!string.IsNullOrWhiteSpace(k.OwnPerms.PiShockShareCode) && k.OwnPerms.MaxDuration <= 0)
+            CkGui.ColorText("Set a Max Duration to enable shock actions.", ImGuiColors.DalamudYellow);
+    }
+
+    private void ShockToggle(Kinkster k, string label, bool current, string propertyName)
+    {
+        if (ImGui.Checkbox($"{label}##{k.User.UID}", ref current))
+            ChangeShockPerm(k, propertyName, current);
+    }
+
+    // Holds the dragged value while active so the slider doesn't snap back to the stored perm each frame.
+    private void ShockLimitSlider(Kinkster k, ref int? editValue, int current, int min, int max, string format, string propertyName, float width)
+    {
+        var value = editValue ?? current;
+        ImGui.SetNextItemWidth(width);
+        if (ImGui.SliderInt($"##{propertyName}{k.User.UID}", ref value, min, max, format))
+            editValue = value;
         if (ImGui.IsItemDeactivatedAfterEdit())
         {
-            if (refCode == k.OwnPerms.PiShockShareCode)
-                return;
-
-            UiService.SetUITask(async () =>
-            {
-                if (await PermHelper.ChangeOwnUnique(_hub, k.User, k.OwnPerms, nameof(PairPerms.PiShockShareCode), refCode))
-                    await SyncAllPairsAsync(k, refCode);
-            });
-        }
-        CkGui.AttachTooltip($"Unique Share Code for --COL--{dispName}--COL--." +
-            $"--NL--This code gives {dispName} permission to interact with your PiShock device.");
-
-        ImUtf8.SameLineInner();
-        if (CkGui.IconTextButton(FAI.Sync, "Refresh", disabled: string.IsNullOrEmpty(refCode) || UiService.DisableUI))
-            UiService.SetUITask(async () => await SyncAllPairsAsync(k, k.OwnPerms.PiShockShareCode));
-        CkGui.AttachTooltip("Refresh permissions for all pairs with a share code set.");
-
-        if (_shockies.LastConnectState is not PiShockProvider.ConnectState.Success)
-        {
-            CkGui.ColorText("Not connected - click Save & Connect in Settings first.", ImGuiColors.DalamudRed);
-            return;
-        }
-
-        if (!string.IsNullOrEmpty(refCode))
-        {
-            if (k.OwnPerms.MaxDuration <= 0)
-            {
-                CkGui.ColorText("Not synced - click Refresh", ImGuiColors.DalamudYellow);
-            }
-            else
-            {
-                var maxSecs = (float)k.OwnPerms.GetTimespanFromDuration().TotalSeconds;
-                var shock = k.OwnPerms.AllowShocks;
-                var vibe  = k.OwnPerms.AllowVibrations;
-                var beep  = k.OwnPerms.AllowBeeps;
-
-                CkGui.ColorText("Shock: ", ImGuiColors.DalamudGrey);
-                ImGui.SameLine(0, 2);
-                CkGui.ColorText(shock ? "Yes" : "No", shock ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed);
-                ImGui.SameLine(0, 8);
-                CkGui.ColorText("Vibrate: ", ImGuiColors.DalamudGrey);
-                ImGui.SameLine(0, 2);
-                CkGui.ColorText(vibe ? "Yes" : "No", vibe ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed);
-                ImGui.SameLine(0, 8);
-                CkGui.ColorText("Beep: ", ImGuiColors.DalamudGrey);
-                ImGui.SameLine(0, 2);
-                CkGui.ColorText(beep ? "Yes" : "No", beep ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed);
-
-                CkGui.ColorText($"Max Intensity: {k.OwnPerms.MaxIntensity}%  |  Max Duration: {maxSecs:0.#}s", ImGuiColors.DalamudGrey);
-            }
-        }
-
-        var shockers = _shockies.CachedShockers;
-        if (shockers.Count > 0)
-        {
-            ImGui.Spacing();
-            var currentId = _shockies.GetPairShockerId(k.User.UID);
-            var currentName = shockers.FirstOrDefault(s => s.Id == currentId).Name ?? "Select Device...";
-
-            ImGui.SetNextItemWidth(width);
-            using (var combo = ImRaii.Combo("##Dev_" + k.User.UID, currentName))
-            {
-                if (combo)
-                {
-                    foreach (var (id, name) in shockers)
-                    {
-                        if (ImGui.Selectable(name, id == currentId))
-                            _shockies.SetPairShockerId(k.User.UID, id);
-                    }
-                }
-            }
-            CkGui.AttachTooltip($"Choose which PiShock device {dispName} controls.");
+            ChangeShockPerm(k, propertyName, value);
+            editValue = null;
         }
     }
+
+    private void ChangeShockPerm(Kinkster k, string propertyName, object newValue)
+        => UiService.SetUITask(async () => await PermHelper.ChangeOwnUnique(_hub, k.User, k.OwnPerms, propertyName, newValue));
 
     public void DrawShockActions(KinksterInfoCache cache, Kinkster k, string dispName, float width)
     {
@@ -154,33 +121,6 @@ public partial class SidePanelPair
                 BeepAct(cache, k, dispName, width, maxDuration);
             ImGui.Separator();
         }
-    }
-
-    private async Task SyncAllPairsAsync(Kinkster currentK, string codeForCurrent)
-    {
-        await SyncPermissionsWithCode(codeForCurrent, currentK);
-        foreach (var k in _kinksters.DirectPairs)
-        {
-            if (k.User.UID == currentK.User.UID) continue;
-            var code = k.OwnPerms.PiShockShareCode;
-            if (!string.IsNullOrEmpty(code))
-                await SyncPermissionsWithCode(code, k);
-        }
-    }
-
-    private async Task SyncPermissionsWithCode(string code, Kinkster k)
-    {
-        var newShockPerms = await _shockies.GetPermissionsFromCode(code);
-        var newPerms = k.OwnPerms with
-        {
-            PiShockShareCode = code,
-            AllowShocks = newShockPerms.AllowShocks,
-            AllowVibrations = newShockPerms.AllowVibrations,
-            AllowBeeps = newShockPerms.AllowBeeps,
-            MaxDuration = newShockPerms.MaxDuration,
-            MaxIntensity = newShockPerms.MaxIntensity
-        };
-        await _hub.UserBulkChangeUnique(new(k.User, newPerms, k.OwnPermAccess, UpdateDir.Own, MainHub.OwnUserData));
     }
 
     private void ShockAct(KinksterInfoCache cache, Kinkster k, string dispName, float width, TimeSpan maxDuration)
