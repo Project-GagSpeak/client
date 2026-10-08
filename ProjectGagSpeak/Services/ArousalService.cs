@@ -161,15 +161,22 @@ public sealed class ArousalService : IDisposable
     public static string ApplyChatEffects(string msg)
     {
         var words = msg.Split(' ');
-        var wordCount = words.Length;
-        if (DoLimitedWords)
-            words = words.Take(Math.Max(2, (int)MathF.Ceiling(wordCount * WordLimitMultiplier))).ToArray();
+
+        // Text between * (RP actions) is never stuttered or cut, matching the garbler.
+        var isAction = new bool[words.Length];
+        var inAction = false;
+        for (var i = 0; i < words.Length; i++)
+        {
+            isAction[i] = inAction || words[i].Contains('*');
+            if (words[i].Count(c => c == '*') % 2 == 1)
+                inAction = !inAction;
+        }
 
         if (DoStutter)
         {
             for (var i = 0; i < words.Length; i++)
             {
-                if (words[i].Length == 0 || !char.IsLetter(words[i][0]))
+                if (isAction[i] || words[i].Length == 0 || !char.IsLetter(words[i][0]))
                     continue;
 
                 var stutter = $"{words[i][0]}-";
@@ -180,8 +187,27 @@ public sealed class ArousalService : IDisposable
             }
         }
 
-        // Trail off if words were cut.
-        return string.Join(' ', words) + (words.Length < wordCount ? "..." : string.Empty);
+        if (DoLimitedWords)
+        {
+            var spoken = words.Length - isAction.Count(a => a);
+            var limit = Math.Max(2, (int)MathF.Ceiling(spoken * WordLimitMultiplier));
+            var kept = new List<string>();
+            var spokenSeen = 0;
+            for (var i = 0; i < words.Length; i++)
+            {
+                if (isAction[i] || ++spokenSeen <= limit)
+                    kept.Add(words[i]);
+                // Mark each cut stretch of speech once, on its first cut word:
+                // trail off the kept word before it, or stand in for a fully cut stretch.
+                else if (isAction[i - 1])
+                    kept.Add("...");
+                else if (spokenSeen - 1 == limit)
+                    kept[^1] += "...";
+            }
+            words = kept.ToArray();
+        }
+
+        return string.Join(' ', words);
     }
     #endregion Public Methods
 
