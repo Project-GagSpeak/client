@@ -11,7 +11,7 @@ https://raw.githubusercontent.com/Project-GagSpeak/repo/main/projectgagspeak.jso
 ## Privacy Policy & Account Verification
 To ensure a safe environment and effective moderation, accounts must be verified to access GagSpeak's social features. 
 
-Verification is handled by linking your Discord account. We store only your **Discord User ID** in our database to securely associate it with your GagSpeak profile. Absolutely no other Discord data (such as messages, friends, or personal info) is collected or stored. 
+Verification is handled by linking your Discord account. We store only your **Discord User ID** in our database to securely associate it with your GagSpeak profile. 
 
 Your Discord ID is automatically and permanently removed from our database if:
 * You leave the official Discord server
