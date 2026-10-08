@@ -68,6 +68,7 @@ public sealed class ArousalService : IDisposable
     private float _generationRate;
     private float _generationFrequency;
     private float _degenerationRate;
+    private static float _pulsePhase;
 
     // Exposed Properties
     public static float StaticArousal { get; private set; } = 0f;
@@ -208,6 +209,32 @@ public sealed class ArousalService : IDisposable
         }
 
         return string.Join(' ', words);
+    }
+
+    /// <summary> Draws a pink vignette from the screen edges for blush, throbbing when pulse is active. </summary>
+    /// <remarks> When blur effects are implemented, make this work the same as how blur does it </remarks>
+    public static void DrawBlush()
+    {
+        if (!DoBlush)
+            return;
+
+        var alpha = BlushOpacity * 0.6f;
+        if (DoPulse)
+        {
+            _pulsePhase = (_pulsePhase + ImGui.GetIO().DeltaTime * (2f + 4f * PulseRate)) % MathF.Tau;
+            alpha *= 0.75f + 0.25f * MathF.Sin(_pulsePhase);
+        }
+
+        var edge = CkGui.Color(new Vector4(1f, 0.3f, 0.5f, alpha));
+        var clear = CkGui.Color(new Vector4(1f, 0.3f, 0.5f, 0f));
+        var size = ImGui.GetIO().DisplaySize;
+        var depth = size * 0.25f;
+        var drawList = ImGui.GetForegroundDrawList();
+        // Corner order: upper-left, upper-right, bottom-right, bottom-left.
+        drawList.AddRectFilledMultiColor(Vector2.Zero, new(size.X, depth.Y), edge, edge, clear, clear);
+        drawList.AddRectFilledMultiColor(new(0, size.Y - depth.Y), size, clear, clear, edge, edge);
+        drawList.AddRectFilledMultiColor(Vector2.Zero, new(depth.X, size.Y), edge, clear, clear, edge);
+        drawList.AddRectFilledMultiColor(new(size.X - depth.X, 0), size, clear, edge, edge, clear);
     }
     #endregion Public Methods
 
