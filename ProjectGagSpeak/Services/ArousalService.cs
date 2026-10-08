@@ -83,6 +83,7 @@ public sealed class ArousalService : IDisposable
     public static float WordLimitMultiplier => ArousalEffects.MaxWordLimitFactor(EffectPercent);
     public static bool DoGcdDelay => ArousalEffects.ShouldSlowGCD(EffectPercent);
     public static float GcdDelayFactor => ArousalEffects.GCDFactor(EffectPercent);
+    public static bool HasChatEffects => DoStutter || DoLimitedWords;
 
     #region Public Methods
     /// <summary> Marks a <see cref="CombinedCacheKey"/> for an Arousal <paramref name="strength"/>.</summary>
@@ -150,6 +151,33 @@ public sealed class ArousalService : IDisposable
         _logger.LogDebug("Finished Updating Arousal Caches.", LogFilter.Arousal);
 
         return Task.CompletedTask;
+    }
+
+    /// <summary> Applies the word limit and stutter effects for the current arousal to a chat message. </summary>
+    public static string ApplyChatEffects(string msg)
+    {
+        var words = msg.Split(' ');
+        var wordCount = words.Length;
+        if (DoLimitedWords)
+            words = words.Take(Math.Max(2, (int)MathF.Ceiling(wordCount * WordLimitMultiplier))).ToArray();
+
+        if (DoStutter)
+        {
+            for (var i = 0; i < words.Length; i++)
+            {
+                if (words[i].Length == 0 || !char.IsLetter(words[i][0]))
+                    continue;
+
+                var stutter = $"{words[i][0]}-";
+                if (Random.Shared.NextSingle() < StutterFrequency)
+                    words[i] = stutter + words[i];
+                if (Random.Shared.NextSingle() < StutterFrequency - 1f)
+                    words[i] = stutter + words[i];
+            }
+        }
+
+        // Trail off if words were cut.
+        return string.Join(' ', words) + (words.Length < wordCount ? "..." : string.Empty);
     }
     #endregion Public Methods
 
@@ -240,7 +268,7 @@ public sealed class ArousalService : IDisposable
 
         ImGui.Text("Limited Words:");
         CkGui.ColorTextInline(DoLimitedWords.ToString(), DoLimitedWords ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGreen);
-        CkGui.TextInline($"| {WordLimitMultiplier:P2} of the 500 character limit can be typed.");
+        CkGui.TextInline($"| {WordLimitMultiplier:P2} of words kept.");
 
         ImGui.Text("GCD Delay:");
         CkGui.ColorTextInline(DoGcdDelay.ToString(), DoGcdDelay ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGreen);
