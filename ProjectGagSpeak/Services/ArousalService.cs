@@ -173,6 +173,7 @@ public sealed class ArousalService : IDisposable
         {
             // Decay if no arousals are present.
             Arousal = MathF.Max(0f, Arousal - _degenerationRate);
+            return;
         }
 
         // Calculate the new arousal value.
