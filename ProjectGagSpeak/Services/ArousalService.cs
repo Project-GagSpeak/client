@@ -258,7 +258,13 @@ public sealed class ArousalService : IDisposable
         }
         ImGui.Separator();
         ImGui.TextUnformatted($"Static Arousal: {StaticArousal}");
+#if DEBUG
+        var arousal = Arousal;
+        if (ImGui.SliderFloat("Current Arousal", ref arousal, 0f, AROUSAL_CAP, "%.1f", ImGuiSliderFlags.AlwaysClamp))
+            Arousal = arousal;
+#else
         ImGui.TextUnformatted($"Current Arousal: {Arousal}");
+#endif
         ImGui.TextUnformatted($"Arousal Percent: {ArousalPercent:P2}");
         ImGui.TextUnformatted($"Generation Rate: {_generationRate}");
         ImGui.TextUnformatted($"Generation Frequency: {_generationFrequency}");
