@@ -2,6 +2,7 @@ using CkCommons.Gui;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.PlayerClient;
 using GagSpeak.State.Caches;
 using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
@@ -68,18 +69,20 @@ public sealed class ArousalService : IDisposable
     public static float StaticArousal { get; private set; } = 0f;
     public static float Arousal { get; private set; } = 0f;
     public static float ArousalPercent => Arousal / AROUSAL_CAP;
-    public static bool DoScreenBlur => ArousalEffects.ShouldBlur(ArousalPercent);
-    public static float BlurIntensity => ArousalEffects.BlurIntensity(ArousalPercent);
-    public static bool DoBlush => ArousalEffects.ShouldBlush(ArousalPercent);
-    public static float BlushOpacity => ArousalEffects.BlushOpacity(ArousalPercent);
-    public static bool DoStutter => ArousalEffects.ShouldStutter(ArousalPercent);
-    public static float StutterFrequency => ArousalEffects.StutterFrequency(ArousalPercent);
-    public static bool DoPulse => ArousalEffects.ShouldPulse(ArousalPercent);
-    public static float PulseRate => ArousalEffects.PulseRate(ArousalPercent);
-    public static bool DoLimitedWords => ArousalEffects.ShouldLimitWords(ArousalPercent);
-    public static float WordLimitMultiplier => ArousalEffects.MaxWordLimitFactor(ArousalPercent);
-    public static bool DoGcdDelay => ArousalEffects.ShouldSlowGCD(ArousalPercent);
-    public static float GcdDelayFactor => ArousalEffects.GCDFactor(ArousalPercent);
+    // Effects only apply while Arousal Effects is enabled, though the meter itself keeps running.
+    public static float EffectPercent => ClientData.Globals?.GlobalArousal == true ? ArousalPercent : 0f;
+    public static bool DoScreenBlur => ArousalEffects.ShouldBlur(EffectPercent);
+    public static float BlurIntensity => ArousalEffects.BlurIntensity(EffectPercent);
+    public static bool DoBlush => ArousalEffects.ShouldBlush(EffectPercent);
+    public static float BlushOpacity => ArousalEffects.BlushOpacity(EffectPercent);
+    public static bool DoStutter => ArousalEffects.ShouldStutter(EffectPercent);
+    public static float StutterFrequency => ArousalEffects.StutterFrequency(EffectPercent);
+    public static bool DoPulse => ArousalEffects.ShouldPulse(EffectPercent);
+    public static float PulseRate => ArousalEffects.PulseRate(EffectPercent);
+    public static bool DoLimitedWords => ArousalEffects.ShouldLimitWords(EffectPercent);
+    public static float WordLimitMultiplier => ArousalEffects.MaxWordLimitFactor(EffectPercent);
+    public static bool DoGcdDelay => ArousalEffects.ShouldSlowGCD(EffectPercent);
+    public static float GcdDelayFactor => ArousalEffects.GCDFactor(EffectPercent);
 
     #region Public Methods
     /// <summary> Marks a <see cref="CombinedCacheKey"/> for an Arousal <paramref name="strength"/>.</summary>
