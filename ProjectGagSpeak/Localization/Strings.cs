@@ -1190,6 +1190,9 @@ namespace GagSpeak.Localization
         public readonly string GagGlamours = Loc.Localize("MainOptions_GagGlamours", "Gag Glamours");
         public readonly string GagGlamoursTT = Loc.Localize("MainOptions_GagGlamoursTT", "Allows Glamourer to apply gag glamour items from your Gag Storage.");
 
+        public readonly string GlobalArousal = Loc.Localize("MainOptions_GlobalArousal", "Arousal Effects");
+        public readonly string GlobalArousalTT = Loc.Localize("MainOptions_GlobalArousalTT", "Lets your arousal affect you with chat stutter, shortened messages, a screen blush, and slower GCDs. Arousal still builds and fades while this is off.");
+
         public readonly string GagPadlockTimer = Loc.Localize("MainOptions_GagPadlockTimer", "Expired Timer Gag Removal");
         public readonly string GagPadlockTimerTT = Loc.Localize("MainOptions_GagPadlockTimerTT", "Automatically removes locked gags when the timer expires.");
 

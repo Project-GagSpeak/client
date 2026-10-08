@@ -180,6 +180,7 @@ public class SettingsModulesWardrobe
         var liveChatGarblerActive = globals.ChatGarblerActive;
         var gaggedNamePlates = globals.GaggedNameplate;
         var gagVisuals = globals.GagVisuals;
+        var globalArousal = globals.GlobalArousal;
         var removeGagOnLockExpiration = _config.Data.RemoveGagOnTimerExpire;
         var garbleWordsNotInDictionary = _config.Data.GarbleWordsNotInDictionary;
 
@@ -201,6 +202,10 @@ public class SettingsModulesWardrobe
         if (ImGui.Checkbox(GSLoc.Settings.Options.GagGlamours, ref gagVisuals))
             AssignGlobalPermChangeTask(globals, nameof(GlobalPerms.GagVisuals), gagVisuals);
         CkGui.HelpTextFramed(GSLoc.Settings.Options.GagGlamoursTT);
+
+        if (ImGui.Checkbox(GSLoc.Settings.Options.GlobalArousal, ref globalArousal))
+            AssignGlobalPermChangeTask(globals, nameof(GlobalPerms.GlobalArousal), globalArousal);
+        CkGui.HelpTextFramed(GSLoc.Settings.Options.GlobalArousalTT);
 
         if (ImGui.Checkbox(GSLoc.Settings.Options.GagPadlockTimer, ref removeGagOnLockExpiration))
         {
