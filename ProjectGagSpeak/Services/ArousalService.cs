@@ -56,10 +56,11 @@ public sealed class ArousalService : IDisposable
 
     // Tweakable Values for different results.
     private const float AROUSAL_CAP = 100f;           // Max total arousal
-    private const float MAX_GEN_RATE = 0.01f;         // Upper bound per tick
-    private const float MIN_GEN_RATE = 0.0001f;       // Lower bound
+    private const float MAX_GEN_RATE = 0.5f;          // Upper bound per tick
+    private const float MIN_GEN_RATE = 0.005f;        // Lower bound
     private const float MAX_FREQ = 0.1f;              // 10 times per second
     private const float MIN_FREQ = 2.0f;              // 1 times per 2 seconds
+    private const float IDLE_DECAY_RATE = 0.05f;      // Decay per tick while no arousal items are worn
     private const float STIM_SOFTCAP = 200f;          // Total stimulation where deminishing returns begin
     private const float STIM_HARD_CAP = 400f;         // Max total considered for gen rate
 
@@ -150,8 +151,8 @@ public sealed class ArousalService : IDisposable
         // Frequency: faster when more stimulated
         _generationFrequency = GagspeakEx.Lerp(MIN_FREQ, MAX_FREQ, percent);
 
-        // Decay: usually a fraction of generation
-        _degenerationRate = _generationRate * 0.5f;
+        // Decay: half of generation while stimulated, a fixed idle rate otherwise.
+        _degenerationRate = _arousals.Count > 0 ? _generationRate * 0.5f : IDLE_DECAY_RATE;
 
         _logger.LogDebug("Finished Updating Arousal Caches.", LogFilter.Arousal);
 
@@ -310,18 +311,18 @@ public sealed class ArousalService : IDisposable
             }
         }
         ImGui.Separator();
-        ImGui.TextUnformatted($"Static Arousal: {StaticArousal}");
+        ImGui.TextUnformatted($"Static Arousal: {StaticArousal:F2}");
 #if DEBUG
         var arousal = Arousal;
         if (ImGui.SliderFloat("Current Arousal", ref arousal, 0f, AROUSAL_CAP, "%.1f", ImGuiSliderFlags.AlwaysClamp))
             Arousal = arousal;
 #else
-        ImGui.TextUnformatted($"Current Arousal: {Arousal}");
+        ImGui.TextUnformatted($"Current Arousal: {Arousal:F2}");
 #endif
         ImGui.TextUnformatted($"Arousal Percent: {ArousalPercent:P2}");
-        ImGui.TextUnformatted($"Generation Rate: {_generationRate}");
-        ImGui.TextUnformatted($"Generation Frequency: {_generationFrequency}");
-        ImGui.TextUnformatted($"Degeneration Rate: {_degenerationRate}");
+        ImGui.TextUnformatted($"Generation Rate: {_generationRate:F5} per tick");
+        ImGui.TextUnformatted($"Generation Frequency: {_generationFrequency:F2}s");
+        ImGui.TextUnformatted($"Degeneration Rate: {_degenerationRate:F5} per tick");
         ImGui.Separator();
         ImGui.TextUnformatted("Arousal Effects:");
 
