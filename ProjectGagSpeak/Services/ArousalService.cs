@@ -15,13 +15,17 @@ namespace GagSpeak.Services;
 public sealed class ArousalService : IDisposable
 {
     private readonly ILogger<ArousalService> _logger;
+    private readonly MainConfig _config;
 
     private readonly CancellationTokenSource _timerCts = new();
     private Task? _timerTask;
+    private DateTime _lastSave = DateTime.MinValue;
 
-    public ArousalService(ILogger<ArousalService> logger)
+    public ArousalService(ILogger<ArousalService> logger, MainConfig config)
     {
         _logger = logger;
+        _config = config;
+        Arousal = config.Data.Arousal;
         UpdateFinalCache();
         _timerTask = Task.Run(TimerTask, _timerCts.Token);
     }
@@ -197,6 +201,7 @@ public sealed class ArousalService : IDisposable
     /// <summary> Called on each new frequency point. </summary>
     public void Update()
     {
+        SaveArousal();
         if (_arousals.Count <= 0)
         {
             // Decay if no arousals are present.
@@ -211,6 +216,17 @@ public sealed class ArousalService : IDisposable
         Arousal = Math.Clamp(newArousal, 0f, AROUSAL_CAP);
         // Log the current arousal state.
         _logger.LogTrace($"Updated Arousal: {(float)Arousal} (Static: {StaticArousal})", LogFilter.Arousal);
+    }
+
+    /// <summary> Persists the current arousal at most once a minute. </summary>
+    private void SaveArousal()
+    {
+        if (_config.Data.Arousal == Arousal || DateTime.UtcNow - _lastSave < TimeSpan.FromMinutes(1))
+            return;
+
+        _config.Data.Arousal = Arousal;
+        _config.Save();
+        _lastSave = DateTime.UtcNow;
     }
 
     #region DebugHelper

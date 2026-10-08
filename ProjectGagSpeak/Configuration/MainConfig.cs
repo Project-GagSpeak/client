@@ -113,6 +113,7 @@ public class MainConfigData : IAudioConfigData
     public bool HardcoreEscape { get; set; } = false; // Challenge removing or unlocking equipment, when bound
 
     public float OverlayMaxOpacity { get; set; } = 1.0f; // Blindfold Opacity
+    public float Arousal { get; set; } = 0f; // Last known arousal, restored on reload.
     public HypnoticEffect? HypnoEffectInfo { get; set; } = null;
     public string? Base64CustomImageData { get; set; } = null;
 
