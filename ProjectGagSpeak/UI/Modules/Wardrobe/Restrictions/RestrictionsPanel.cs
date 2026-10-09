@@ -287,7 +287,11 @@ public partial class RestrictionsPanel : DisposableMediatorSubscriberBase
             // if no item is selected, display the unique 'Applier' group.
             if (data.Identifier == Guid.Empty)
             {
-                _activeItemDrawer.ApplyItemGroup(index, data, index == _guideItemIndex);
+                // this shouldn't be able to happen, but in rare cases it can, so... inform the user if it did.
+                if (data.IsLocked())
+                    _activeItemDrawer.UnlockItemGroup(index, data, null, index == _guideItemIndex);
+                else
+                    _activeItemDrawer.ApplyItemGroup(index, data, index == _guideItemIndex);
                 if (_guideItemIndex == -1 && currentStep >= (int)StepsRestrictions.Applying) _guideItemIndex = index;
                 continue;
             }
