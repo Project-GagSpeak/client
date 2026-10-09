@@ -152,7 +152,7 @@ public sealed class ArousalService : IDisposable
         _generationFrequency = GagspeakEx.Lerp(MIN_FREQ, MAX_FREQ, percent);
 
         // Decay: half of generation while stimulated, otherwise drains a full meter in the configured decay time.
-        _degenerationRate = _arousals.Count > 0
+        _degenerationRate = StaticArousal > 0
             ? _generationRate * 0.5f
             : AROUSAL_CAP / (_config.Data.ArousalDecayMinutes * 60f) * _generationFrequency;
 
@@ -266,9 +266,9 @@ public sealed class ArousalService : IDisposable
     public void Update()
     {
         SaveArousal();
-        if (_arousals.Count <= 0)
+        if (StaticArousal <= 0)
         {
-            // Decay if no arousals are present.
+            // Decay if nothing worn has an arousal strength.
             Arousal = MathF.Max(0f, Arousal - _degenerationRate);
             return;
         }
