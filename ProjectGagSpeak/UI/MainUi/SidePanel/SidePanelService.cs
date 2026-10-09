@@ -304,7 +304,7 @@ public class KinksterInfoCache : ISidePanelCache, IDisposable
                 Imprisonment = enactingString,
                 ImprisonmentTimer = expireTimer,
                 ImprisonedTerritory = (short)PlayerContent.TerritoryIdInstanced,
-                ImprisonedPos = ImprisonPos,
+                ImprisonedPos = ImprisonPos == Vector3.Zero ? Kinkster.PlayerPosition : ImprisonPos,
                 ImprisonedRadius = ImprisonRadius
             },
             HcAttribute.HiddenChatBox => Kinkster.PairHardcore with { ChatBoxesHidden = enactingString, ChatBoxesHiddenTimer = expireTimer },
