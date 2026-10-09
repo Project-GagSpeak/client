@@ -113,7 +113,6 @@ public class MainConfigData : IAudioConfigData
     public bool HardcoreEscape { get; set; } = false; // Challenge removing or unlocking equipment, when bound
 
     public float OverlayMaxOpacity { get; set; } = 1.0f; // Blindfold Opacity
-    public float Arousal { get; set; } = 0f; // Last known arousal, restored on reload.
     public int ArousalBuildMinutes { get; set; } = 120; // Minutes for a Strong gag + Strong restraint set to fill the meter.
     public int ArousalDecayMinutes { get; set; } = 60; // Minutes for a full meter to drain with no arousal items worn.
     public bool ArousalStutter { get; set; } = true;
