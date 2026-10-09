@@ -15,7 +15,7 @@ namespace GagSpeak.Services;
 public sealed class ArousalService : IDisposable
 {
     private readonly ILogger<ArousalService> _logger;
-    private readonly MainConfig _config;
+    private static MainConfig _config = null!;
 
     private readonly CancellationTokenSource _timerCts = new();
     private Task? _timerTask;
@@ -56,11 +56,11 @@ public sealed class ArousalService : IDisposable
 
     // Tweakable Values for different results.
     private const float AROUSAL_CAP = 100f;           // Max total arousal
-    private const float MAX_GEN_RATE = 0.5f;          // Upper bound per tick
-    private const float MIN_GEN_RATE = 0.005f;        // Lower bound
+    private const float MAX_GEN_RATE = 0.01f;         // Upper bound per tick
+    private const float MIN_GEN_RATE = 0.0001f;       // Lower bound
     private const float MAX_FREQ = 0.1f;              // 10 times per second
     private const float MIN_FREQ = 2.0f;              // 1 times per 2 seconds
-    private const float IDLE_DECAY_RATE = 0.05f;      // Decay per tick while no arousal items are worn
+    private const float REF_STRENGTH = 8f;            // Strong gag + Strong restraint set, the reference for the build-up time
     private const float STIM_SOFTCAP = 200f;          // Total stimulation where deminishing returns begin
     private const float STIM_HARD_CAP = 400f;         // Max total considered for gen rate
 
@@ -79,16 +79,16 @@ public sealed class ArousalService : IDisposable
     public static float EffectPercent => ClientData.Globals?.GlobalArousal == true ? ArousalPercent : 0f;
     public static bool DoScreenBlur => ArousalEffects.ShouldBlur(EffectPercent);
     public static float BlurIntensity => ArousalEffects.BlurIntensity(EffectPercent);
-    public static bool DoBlush => ArousalEffects.ShouldBlush(EffectPercent);
+    public static bool DoBlush => ArousalEffects.ShouldBlush(EffectPercent) && _config.Data.ArousalBlush;
     public static float BlushOpacity => ArousalEffects.BlushOpacity(EffectPercent);
-    public static bool DoStutter => ArousalEffects.ShouldStutter(EffectPercent);
+    public static bool DoStutter => ArousalEffects.ShouldStutter(EffectPercent) && _config.Data.ArousalStutter;
     public static float StutterFrequency => ArousalEffects.StutterFrequency(EffectPercent);
-    public static bool DoPulse => ArousalEffects.ShouldPulse(EffectPercent);
+    public static bool DoPulse => DoBlush && ArousalEffects.ShouldPulse(EffectPercent);
     public static float PulseRate => ArousalEffects.PulseRate(EffectPercent);
-    public static bool DoLimitedWords => ArousalEffects.ShouldLimitWords(EffectPercent);
+    public static bool DoLimitedWords => ArousalEffects.ShouldLimitWords(EffectPercent) && _config.Data.ArousalWordLimit;
     public static float WordLimitMultiplier => ArousalEffects.MaxWordLimitFactor(EffectPercent);
-    public static bool DoGcdDelay => ArousalEffects.ShouldSlowGCD(EffectPercent);
-    public static float GcdDelayFactor => ArousalEffects.GCDFactor(EffectPercent);
+    public static bool DoGcdDelay => ArousalEffects.ShouldSlowGCD(EffectPercent) && _config.Data.ArousalGcdDelay;
+    public static float GcdDelayFactor => DoGcdDelay ? ArousalEffects.GCDFactor(EffectPercent) : 1f;
     public static bool HasChatEffects => DoStutter || DoLimitedWords;
 
     #region Public Methods
@@ -145,14 +145,16 @@ public sealed class ArousalService : IDisposable
         // Get how close to our arousal cap we are.
         float percent = StaticArousal / AROUSAL_CAP;
 
-        // Generation rate: scaled based on softcapped stimulation
-        _generationRate = GagspeakEx.Lerp(MIN_GEN_RATE, MAX_GEN_RATE, percent);
+        // Generation rate: scaled based on softcapped stimulation, then by the configured build-up time.
+        _generationRate = GagspeakEx.Lerp(MIN_GEN_RATE, MAX_GEN_RATE, percent) * BuildScale();
 
         // Frequency: faster when more stimulated
         _generationFrequency = GagspeakEx.Lerp(MIN_FREQ, MAX_FREQ, percent);
 
-        // Decay: half of generation while stimulated, a fixed idle rate otherwise.
-        _degenerationRate = _arousals.Count > 0 ? _generationRate * 0.5f : IDLE_DECAY_RATE;
+        // Decay: half of generation while stimulated, otherwise drains a full meter in the configured decay time.
+        _degenerationRate = _arousals.Count > 0
+            ? _generationRate * 0.5f
+            : AROUSAL_CAP / (_config.Data.ArousalDecayMinutes * 60f) * _generationFrequency;
 
         _logger.LogDebug("Finished Updating Arousal Caches.", LogFilter.Arousal);
 
@@ -238,6 +240,14 @@ public sealed class ArousalService : IDisposable
         drawList.AddRectFilledMultiColor(new(size.X - depth.X, 0), size, clear, edge, edge, clear);
     }
     #endregion Public Methods
+
+    /// <summary> Scales generation so <see cref="REF_STRENGTH"/> fills the meter in the configured build-up time. </summary>
+    private static float BuildScale()
+    {
+        var refPercent = REF_STRENGTH / AROUSAL_CAP;
+        var refGainPerSec = 0.5f * GagspeakEx.Lerp(MIN_GEN_RATE, MAX_GEN_RATE, refPercent) / GagspeakEx.Lerp(MIN_FREQ, MAX_FREQ, refPercent);
+        return AROUSAL_CAP / refGainPerSec / (_config.Data.ArousalBuildMinutes * 60f);
+    }
 
     // Maps a high stimulation value for a bounded growth curve to make more realistic sense.
     private float SoftcapStimuli(float value, float softcap, float hardcap)
