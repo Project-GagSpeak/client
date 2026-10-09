@@ -81,6 +81,23 @@ public partial class MovementDetours : IDisposable
         return IsInputIdUnknownHook.Original(unk, inputId);
     }
 
+    // Controller left stick is analog and bypasses the InputId hooks, so zero it after the pad updates.
+    private Hook<PadDevice.Delegates.Update> PadUpdateHook = null!;
+    private unsafe void PadUpdateDetour(PadDevice* thisPtr)
+    {
+        PadUpdateHook.Original(thisPtr);
+        if (_cache.BlockMovementKeys)
+        {
+            var data = thisPtr->GetData();
+            data->LeftStickX = 0;
+            data->LeftStickY = 0;
+            data->LeftStickLeft = 0;
+            data->LeftStickRight = 0;
+            data->LeftStickUp = 0;
+            data->LeftStickDown = 0;
+        }
+    }
+
     /// <summary>
     ///   Controls the complete blockage of movement from the player (Blocks /follow movement)
     /// </summary>
