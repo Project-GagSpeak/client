@@ -69,7 +69,7 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
         if (!ActiveItem.CanUnlock())
             return;
 
-        if (!ValidateUnlock())
+        if (!ValidateUnlock(layerIdx))
             return;
 
         //the server never uses this data, so why are we setting it?
@@ -131,7 +131,7 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
         return false;
     }
 
-    private bool ValidateUnlock()
+    private bool ValidateUnlock(int layerIdx)
     {
         // Determine if we have access to unlock.
         var valid = ActiveItem.Padlock switch
@@ -144,7 +144,7 @@ public class PadlockGagsClient : CkPadlockComboBase<ActiveGagSlot>
         };
 
         if (valid)
-            return _escape.AttemptSelfRemove();
+            return _escape.AttemptSelfRemove(HardcoreEscapeService.Type.Gag, layerIdx);
 
         // If we don't, display the appropriate error and reset inputs.
         switch (SelectedLock)

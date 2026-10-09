@@ -141,7 +141,7 @@ public class PadlockRestraintsClient : CkPadlockComboBase<CharaActiveRestraint>
         };
 
         if (valid)
-            return _escape.AttemptSelfRemove();
+            return _escape.AttemptSelfRemove(HardcoreEscapeService.Type.Restraint);
 
         // If we don't, display the appropriate error and reset inputs.
         switch (SelectedLock)
