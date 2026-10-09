@@ -16,6 +16,7 @@ public sealed partial class IpcManager : DisposableMediatorSubscriberBase
     public IpcCallerMoodles     Moodles     { get; }
     public IpcCallerPenumbra    Penumbra    { get; }
     public IpcCallerSundouleia  Sundouleia  { get; }
+    public IpcCallerVnavmesh    Vnavmesh    { get; }
 
     public IpcManager(ILogger<IpcManager> logger, GagspeakMediator mediator,
         IpcCallerCustomize customizePlus,
@@ -25,7 +26,8 @@ public sealed partial class IpcManager : DisposableMediatorSubscriberBase
         IpcCallerLoci loci,
         IpcCallerMoodles moodles,
         IpcCallerPenumbra penumbra,
-        IpcCallerSundouleia sundouleia
+        IpcCallerSundouleia sundouleia,
+        IpcCallerVnavmesh vnavmesh
         ) : base(logger, mediator)
     {
         CPlus = customizePlus;
@@ -36,6 +38,7 @@ public sealed partial class IpcManager : DisposableMediatorSubscriberBase
         Moodles = moodles;
         Penumbra = penumbra;
         Sundouleia = sundouleia;
+        Vnavmesh = vnavmesh;
 
         // subscribe to the delayed framework update message, which will call upon the periodic API state check.
         Mediator.Subscribe<DelayedFrameworkUpdateMessage>(this, (_) => PeriodicApiStateCheck());
@@ -54,5 +57,6 @@ public sealed partial class IpcManager : DisposableMediatorSubscriberBase
         Moodles.CheckAPI();
         Penumbra.CheckAPI();
         Penumbra.CheckModDirectory();
+        Vnavmesh.CheckAPI();
     }
 }

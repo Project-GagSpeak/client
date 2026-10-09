@@ -134,9 +134,10 @@ public partial class HcTaskManager : IDisposable
         if (!currentHcTask.IsRunning)
         {
             currentHcTask.Begin();
-            _cache.SetActiveTaskControl(currentHcTask.Config.Flags);
             ObservedTasks = QueuedTasks;
         }
+        // Every frame, so a task resuming after an inserted one regains its flags.
+        _cache.SetActiveTaskControl(currentHcTask.Config.Flags);
 
         try
         {
