@@ -176,16 +176,17 @@ public sealed class ArousalService : IDisposable
 
         if (DoStutter)
         {
+            var baseChance = StutterFrequency / 2f;
             for (var i = 0; i < words.Length; i++)
             {
                 if (isAction[i] || words[i].Length == 0 || !char.IsLetter(words[i][0]))
                     continue;
 
+                if (Random.Shared.NextSingle() >= baseChance * StutterPositionWeight(words, i) * StutterSoundWeight(words[i]))
+                    continue;
+
                 var stutter = $"{words[i][0]}-";
-                if (Random.Shared.NextSingle() < StutterFrequency)
-                    words[i] = stutter + words[i];
-                if (Random.Shared.NextSingle() < StutterFrequency - 1f)
-                    words[i] = stutter + words[i];
+                words[i] = (Random.Shared.NextSingle() < baseChance * 0.5f ? stutter + stutter : stutter) + words[i];
             }
         }
 
@@ -238,6 +239,21 @@ public sealed class ArousalService : IDisposable
         drawList.AddRectFilledMultiColor(new(size.X - depth.X, 0), size, clear, edge, edge, clear);
     }
     #endregion Public Methods
+
+    /// <summary> Stutters cluster at the start of a sentence, after a pause, or when speech resumes after an action. </summary>
+    private static float StutterPositionWeight(string[] words, int i)
+        => i == 0 || words[i - 1].Length == 0 || ".!?,;:-*".Contains(words[i - 1][^1]) ? 2f : 1f;
+
+    /// <summary> Hard consonants catch the most, other consonants less, vowels rarely. </summary>
+    /// <remarks> A leading y is a consonant before a vowel ("you"), otherwise a vowel ("Yvonne"). </remarks>
+    private static float StutterSoundWeight(string word)
+        => char.ToLowerInvariant(word[0]) switch
+        {
+            'p' or 'b' or 't' or 'd' or 's' or 'z' => 2f,
+            'a' or 'e' or 'i' or 'o' or 'u' => 0.2f,
+            'y' => word.Length > 1 && "aeiou".Contains(char.ToLowerInvariant(word[1])) ? 1.5f : 0.2f,
+            _ => 1.5f,
+        };
 
     /// <summary> Scales generation so <see cref="REF_STRENGTH"/> fills the meter in the configured build-up time. </summary>
     private static float BuildScale()
