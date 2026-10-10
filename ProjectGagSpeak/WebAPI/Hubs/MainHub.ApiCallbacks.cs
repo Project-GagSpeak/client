@@ -545,22 +545,15 @@ public partial class MainHub
             // For Patterns
             if (dto.Module is GSModule.Pattern)
             {
-                await Generic.Safe(async () =>
+                Generic.Safe(() =>
                 {
-                    //var success = dto.Type switch
-                    //{
-                    //    DataUpdateType.PatternSwitched => _toyboxListener.PatternSwitched(dto.ItemId, dto.Enactor.UID),
-                    //    DataUpdateType.PatternExecuted => _toyboxListener.PatternStarted(dto.ItemId, dto.Enactor.UID),
-                    //    DataUpdateType.PatternStopped => _toyboxListener.PatternStopped(dto.ItemId, dto.Enactor.UID),
-                    //    _ => false
-                    //};
-                    //if (!success)
-                    //{
-                    //    Logger.LogError($"Failed to handle KinksterUpdateActivePattern for {dto.User.AliasOrUID} with type {dto.Type}");
-                    //    Logger.LogError($"Attempt to find out why this is even allowed to happen, and fix it, as it should never occur!");
-                    //    var recallType = _toyboxListener.ActivePattern == Guid.Empty ? DataUpdateType.PatternStopped : DataUpdateType.PatternSwitched;
-                    //    await UserPushActivePattern(new PushItemEnabledState(_kinksters.GetOnlineUserDatas(), GSModule.Pattern, _toyboxListener.ActivePattern, false)));
-                    //}
+                    var success = !dto.NewState
+                        ? _toyboxListener.PatternStopped(dto.ItemId, dto.Enactor.UID)
+                        : _toyboxListener.ActivePattern == Guid.Empty
+                            ? _toyboxListener.PatternStarted(dto.ItemId, dto.Enactor.UID)
+                            : _toyboxListener.PatternSwitched(dto.ItemId, dto.Enactor.UID);
+                    if (!success)
+                        Logger.LogWarning($"Failed to apply pattern {dto.ItemId} (NewState: {dto.NewState}) from {dto.Enactor.AliasOrUID}.");
                 });
             }
             else if (dto.Module is GSModule.Alarm)

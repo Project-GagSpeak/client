@@ -63,6 +63,9 @@ public abstract class BuzzToy : IDisposable
     /// </summary>
     protected readonly Dictionary<ToyMotor, List<BuzzToyMotor>> _motorTypeMap = new();
 
+    /// <summary> Last applied rotation direction. </summary>
+    private bool _clockwise = true;
+
     /// <summary>
     ///   Public read-only accessor (dont by reference so no data duplication). <para />
     ///   Efficient access to all buzzToyMotors via their MotorIdx. (Useful for datastreams)
@@ -90,7 +93,7 @@ public abstract class BuzzToy : IDisposable
     /// </summary>
     public virtual bool VibrateAll(double intensity)
     {
-        if (!CanVibrate)
+        if (!CanVibrate || _motorTypeMap[ToyMotor.Vibration].All(m => m.Intensity == intensity))
             return false;
 
         foreach (var motor in _motorTypeMap[ToyMotor.Vibration])
@@ -103,7 +106,7 @@ public abstract class BuzzToy : IDisposable
     /// </summary>
     public virtual bool Vibrate(uint motorIdx, double intensity)
     {
-        if (!_motorMap.TryGetValue(motorIdx, out var m) || m.Type != ToyMotor.Vibration)
+        if (!_motorMap.TryGetValue(motorIdx, out var m) || m.Type != ToyMotor.Vibration || m.Intensity == intensity)
             return false;
 
         m.Intensity = intensity;
@@ -115,7 +118,7 @@ public abstract class BuzzToy : IDisposable
     /// </summary>
     public virtual bool OscillateAll(double speed)
     {
-        if (!CanOscillate)
+        if (!CanOscillate || _motorTypeMap[ToyMotor.Oscillation].All(m => m.Intensity == speed))
             return false;
 
         foreach (var motor in _motorTypeMap[ToyMotor.Oscillation])
@@ -128,7 +131,7 @@ public abstract class BuzzToy : IDisposable
     /// </summary>
     public virtual bool Oscillate(uint motorIdx, double speed)
     {
-        if (!_motorMap.TryGetValue(motorIdx, out var m) || m.Type != ToyMotor.Oscillation)
+        if (!_motorMap.TryGetValue(motorIdx, out var m) || m.Type != ToyMotor.Oscillation || m.Intensity == speed)
             return false;
 
         m.Intensity = speed;
@@ -140,10 +143,11 @@ public abstract class BuzzToy : IDisposable
     /// </summary>
     public virtual bool Rotate(double speed, bool clockwise)
     {
-        if (!CanRotate)
+        if (!CanRotate || (_motorTypeMap[ToyMotor.Rotation][0].Intensity == speed && _clockwise == clockwise))
             return false;
 
         _motorTypeMap[ToyMotor.Rotation][0].Intensity = speed;
+        _clockwise = clockwise;
         return true;
     }
 
@@ -152,7 +156,7 @@ public abstract class BuzzToy : IDisposable
     /// </summary>
     public virtual bool Constrict(double severity)
     {
-        if (!CanConstrict)
+        if (!CanConstrict || _motorTypeMap[ToyMotor.Constriction][0].Intensity == severity)
             return false;
 
         _motorTypeMap[ToyMotor.Constriction][0].Intensity = severity;
@@ -164,7 +168,7 @@ public abstract class BuzzToy : IDisposable
     /// </summary>
     public virtual bool Inflate(double severity)
     {
-        if (!CanInflate)
+        if (!CanInflate || _motorTypeMap[ToyMotor.Inflation][0].Intensity == severity)
             return false;
 
         _motorTypeMap[ToyMotor.Inflation][0].Intensity = severity;

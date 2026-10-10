@@ -281,6 +281,8 @@ public class TriggerHandler : DisposableMediatorSubscriberBase
         if (clientNameWorld != winnerNameWorld && clientNameWorld != loserNameWorld)
             return;
 
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.DeathRollCompleted);
+
         // Get if we won or lost.
         var isWinner = clientNameWorld == winnerNameWorld;
 

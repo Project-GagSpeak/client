@@ -1272,6 +1272,8 @@ namespace GagSpeak.Localization
 
         public readonly string IntifaceAutoConnect = Loc.Localize("MainOptions_IntifaceAutoConnect", "Auto-Connect to Intiface");
         public readonly string IntifaceAutoConnectTT = Loc.Localize("MainOptions_IntifaceAutoConnectTT", "Automatically connect to the Intiface Desktop App when GagSpeak starts.");
+        public readonly string IntifaceOpenInstallerLink = Loc.Localize("MainOptions_IntifaceOpenInstallerLink", "Open Intiface Download Page");
+        public readonly string IntifaceOpenInstallerLinkTT = Loc.Localize("MainOptions_IntifaceOpenInstallerLinkTT", "Opens the Intiface website when the Intiface Central app cannot be found.--SEP--Disable if Intiface is installed somewhere GagSpeak cannot detect.");
 
         public readonly string IntifaceAddressTT = Loc.Localize("MainOptions_IntifaceAddressTT", "Set a custom Intiface server address." +
             "--SEP--Leave blank to use the default Intiface server address.");

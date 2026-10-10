@@ -132,12 +132,27 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
     public bool SwitchPattern(Pattern pattern, TimeSpan startTime, TimeSpan duration, string enactor)
     {
         Logger.LogDebug($"Attempting to switch to pattern {pattern.Label} by {enactor}.");
-        if (!_remotes.ClientData.SwitchPatternPlaybackData(pattern, pattern.StartPoint, pattern.Duration, enactor))
+        if (!_remotes.ClientData.SwitchPatternPlaybackData(pattern, startTime, duration, enactor))
             return false;
         
-        // Log and return false.
-        Logger.LogWarning($"Switched to new pattern ({pattern.Label}) for playback!");
-        return false;
+        Logger.LogDebug($"Switched to new pattern ({pattern.Label}) for playback!");
+        return true;
+    }
+
+    /// <summary> Layers a pattern over anything the remote is running, or starts it if the remote is idle. </summary>
+    /// <remarks> Used by alarms so they never interrupt what is already playing. Skipped while recording. </remarks>
+    public bool LayerPattern(Pattern pattern, TimeSpan startTime, TimeSpan duration, string enactor)
+    {
+        if (_remotes.ClientData.InRecordingMode)
+        {
+            Logger.LogDebug($"Not playing {pattern.Label}, a pattern is being recorded.");
+            return false;
+        }
+
+        if (_remotes.ClientData.UserIsBeingBuzzed)
+            return _remotes.ClientData.TryLayerPattern(pattern, startTime, duration);
+
+        return SwitchPattern(pattern, startTime, duration, enactor);
     }
 
     /// <summary> Enables a pattern, beginning the execution to the simulated, or connected sex toy. </summary>

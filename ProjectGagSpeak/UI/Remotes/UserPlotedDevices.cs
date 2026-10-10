@@ -102,7 +102,7 @@ public class UserPlotedDevices
     public void RemoveAll()
     {
         // cleanup and remove all data within.
-        foreach (var device in _devices)
+        foreach (var device in _devices.ToList())
         {
             device.CleanupData();
             Log.LogInformation($"Powered down device {device.FactoryName} for kinkster.");
