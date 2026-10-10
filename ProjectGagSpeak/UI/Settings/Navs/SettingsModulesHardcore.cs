@@ -130,21 +130,21 @@ public class SettingsModulesHardcore
             return;
 
         var globalArousal = globals.GlobalArousal;
-        if (ImGui.Checkbox(GSLoc.Settings.Options.GlobalArousal, ref globalArousal))
+        if (CkGui.Checkbox(GSLoc.Settings.Options.GlobalArousal, ref globalArousal, ArousalService.AnyEffectActive))
             UiService.SetUITask(async () => await PermHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.GlobalArousal), globalArousal));
-        CkGui.HelpTextFramed(GSLoc.Settings.Options.GlobalArousalTT);
+        CkGui.HelpTextFramed(GSLoc.Settings.Options.GlobalArousalTT, true, hFlags: ImGuiHoveredFlags.AllowWhenDisabled);
 
         // Individual effects only matter while Arousal Effects is enabled.
         using (ImRaii.PushIndent())
         {
             DrawArousalToggle(GSLoc.Settings.Options.ArousalStutter, GSLoc.Settings.Options.ArousalStutterTT,
-                _config.Data.ArousalStutter, v => _config.Data.ArousalStutter = v, !globalArousal);
+                _config.Data.ArousalStutter, v => _config.Data.ArousalStutter = v, !globalArousal || ArousalService.DoStutter);
             DrawArousalToggle(GSLoc.Settings.Options.ArousalWordLimit, GSLoc.Settings.Options.ArousalWordLimitTT,
-                _config.Data.ArousalWordLimit, v => _config.Data.ArousalWordLimit = v, !globalArousal);
+                _config.Data.ArousalWordLimit, v => _config.Data.ArousalWordLimit = v, !globalArousal || ArousalService.DoLimitedWords);
             DrawArousalToggle(GSLoc.Settings.Options.ArousalBlush, GSLoc.Settings.Options.ArousalBlushTT,
-                _config.Data.ArousalBlush, v => _config.Data.ArousalBlush = v, !globalArousal);
+                _config.Data.ArousalBlush, v => _config.Data.ArousalBlush = v, !globalArousal || ArousalService.DoBlush);
             DrawArousalToggle(GSLoc.Settings.Options.ArousalGcdDelay, GSLoc.Settings.Options.ArousalGcdDelayTT,
-                _config.Data.ArousalGcdDelay, v => _config.Data.ArousalGcdDelay = v, !globalArousal);
+                _config.Data.ArousalGcdDelay, v => _config.Data.ArousalGcdDelay = v, !globalArousal || ArousalService.DoGcdDelay);
             // Blur is not implemented yet, so its toggle stays disabled.
             DrawArousalToggle(GSLoc.Settings.Options.ArousalBlur, GSLoc.Settings.Options.ArousalBlurTT, false, _ => { }, true);
         }

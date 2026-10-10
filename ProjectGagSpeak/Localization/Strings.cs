@@ -1191,15 +1191,15 @@ namespace GagSpeak.Localization
         public readonly string GagGlamoursTT = Loc.Localize("MainOptions_GagGlamoursTT", "Allows Glamourer to apply gag glamour items from your Gag Storage.");
 
         public readonly string GlobalArousal = Loc.Localize("MainOptions_GlobalArousal", "Arousal Effects");
-        public readonly string GlobalArousalTT = Loc.Localize("MainOptions_GlobalArousalTT", "Lets your arousal affect you with chat stutter, shortened messages, a screen blush, and slower GCDs. Arousal still builds and fades while this is off.");
+        public readonly string GlobalArousalTT = Loc.Localize("MainOptions_GlobalArousalTT", "Lets your arousal affect you with chat stutter, shortened messages, a screen blush, and slower GCDs. Arousal still builds and fades while this is off.--SEP--Can't be turned off while it's affecting you.");
         public readonly string ArousalStutter = Loc.Localize("MainOptions_ArousalStutter", "Stutter");
-        public readonly string ArousalStutterTT = Loc.Localize("MainOptions_ArousalStutterTT", "Your chat messages stutter as arousal builds.");
+        public readonly string ArousalStutterTT = Loc.Localize("MainOptions_ArousalStutterTT", "Your chat messages stutter as arousal builds.--SEP--Can't be turned off while it's affecting you.");
         public readonly string ArousalWordLimit = Loc.Localize("MainOptions_ArousalWordLimit", "Trailing Off");
-        public readonly string ArousalWordLimitTT = Loc.Localize("MainOptions_ArousalWordLimitTT", "At high arousal your chat messages get cut short and trail off.");
+        public readonly string ArousalWordLimitTT = Loc.Localize("MainOptions_ArousalWordLimitTT", "At high arousal your chat messages get cut short and trail off.--SEP--Can't be turned off while it's affecting you.");
         public readonly string ArousalBlush = Loc.Localize("MainOptions_ArousalBlush", "Screen Blush");
-        public readonly string ArousalBlushTT = Loc.Localize("MainOptions_ArousalBlushTT", "A pink blush creeps in from the edges of your screen, throbbing at very high arousal.");
+        public readonly string ArousalBlushTT = Loc.Localize("MainOptions_ArousalBlushTT", "A pink blush creeps in from the edges of your screen, throbbing at very high arousal.--SEP--Can't be turned off while it's affecting you.");
         public readonly string ArousalGcdDelay = Loc.Localize("MainOptions_ArousalGcdDelay", "Sluggish Actions");
-        public readonly string ArousalGcdDelayTT = Loc.Localize("MainOptions_ArousalGcdDelayTT", "At high arousal your combat actions take longer between uses.");
+        public readonly string ArousalGcdDelayTT = Loc.Localize("MainOptions_ArousalGcdDelayTT", "At high arousal your combat actions take longer between uses.--SEP--Can't be turned off while it's affecting you.");
         public readonly string ArousalBlur = Loc.Localize("MainOptions_ArousalBlur", "Blurred Vision");
         public readonly string ArousalBlurTT = Loc.Localize("MainOptions_ArousalBlurTT", "Not available yet.");
         public readonly string ArousalBuildTime = Loc.Localize("MainOptions_ArousalBuildTime", "Build-up Time");
