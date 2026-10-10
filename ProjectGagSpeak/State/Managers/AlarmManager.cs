@@ -179,7 +179,7 @@ public sealed class AlarmManager : IHybridSavable
         _logger.LogInformation($"Loading in Alarms config: {file}");
 
         Storage.Clear();
-        if (!File.Exists(file))
+        if (_saver.Load(this) is not { } jObject)
         {
             _logger.LogDebug($"[File Not Found] {file}");
             var directory = Path.GetDirectoryName(file);
@@ -188,10 +188,6 @@ public sealed class AlarmManager : IHybridSavable
             Save();
             return;
         }
-
-        // Read the json from the file.
-        var jsonText = File.ReadAllText(file);
-        var jObject = JObject.Parse(jsonText);
 
         // Migrate the jObject if it is using the old format.
         if (jObject["AlarmStorage"] is JObject)

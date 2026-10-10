@@ -197,8 +197,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
         Puppeteers.Clear();
         try
         {
-            JObject jObject;
-            if (!File.Exists(file))
+            if (_saver.Load(this) is not { } jObject)
             {
                 Logger.LogDebug($"[File Not Found] {file}");
 
@@ -218,13 +217,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
                 Save();
                 return;
             }
-            else
-            {
-                var jsonText = File.ReadAllText(file);
-                jObject = JObject.Parse(jsonText);
-            }
 
-            // Read the json from the file.
             var version = jObject["Version"]?.Value<int>() ?? 1;
 
             // Perform Migrations if any, and then load the data.

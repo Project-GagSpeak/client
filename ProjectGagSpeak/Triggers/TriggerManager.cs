@@ -196,7 +196,7 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
         Storage.Clear();
         try
         {
-            if (!File.Exists(file))
+            if (_saver.Load(this) is not { } jObject)
             {
                 Logger.LogDebug($"[File Not Found] {file}");
                 var directory = Path.GetDirectoryName(file);
@@ -205,10 +205,6 @@ public sealed class TriggerManager : DisposableMediatorSubscriberBase, IHybridSa
                 Save();
                 return;
             }
-
-            // Read the json from the file.
-            var jsonText = File.ReadAllText(file);
-            var jObject = JObject.Parse(jsonText);
 
             // Migrate the jObject if it is using the old format.
             if (jObject["Triggers"] is JObject)

@@ -102,16 +102,13 @@ public class ConnectionsConfig : IHybridSavable
     {
         var file = _saver.FileNames.ConnectionsConfig;
         _logger.LogInformation($"Loading in ServerConfig: {file}");
-        if (!File.Exists(file))
+        if (_saver.Load(this) is not { } jObject)
         {
             _logger.LogWarning($"ServerConfig file not found: {file}");
             _saver.Save(this);
             return;
         }
 
-        // Do not try-catch these, invalid loads of these should not allow the plugin to load.
-        var jsonText = File.ReadAllText(file);
-        var jObject = JObject.Parse(jsonText);
         var version = jObject["Version"]?.Value<int>() ?? 0;
 
         // Load additional fields safely.
