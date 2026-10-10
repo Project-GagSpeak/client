@@ -7,6 +7,9 @@ using GagSpeak.Localization;
 using GagSpeak.PlayerClient;
 using GagSpeak.Services;
 using GagSpeak.Services.Mediator;
+using GagSpeak.Utils;
+using GagSpeak.WebAPI;
+using GagspeakAPI.Data.Permissions;
 
 namespace GagSpeak.Gui.Settings;
 
@@ -15,21 +18,28 @@ public class SettingsModulesHardcore
     private enum HardcoreTabs
     {
         HardcoreState,
+        Arousal,
     }
 
     private readonly MainConfig _config;
+    private readonly MainHub _hub;
     private readonly HardcoreEscapeService _escape;
+    private readonly ArousalService _arousal;
 
     // Include the individual TabBar for this selection, even if only 1 tab.
     private readonly StylizedTabbar<HardcoreTabs> _tabs;
 
-    public SettingsModulesHardcore(GagspeakMediator mediator, MainConfig config, HardcoreEscapeService escape)
+    public SettingsModulesHardcore(GagspeakMediator mediator, MainConfig config, MainHub hub,
+        HardcoreEscapeService escape, ArousalService arousal)
     {
         _config = config;
+        _hub = hub;
         _escape = escape;
+        _arousal = arousal;
 
         _tabs = new StylizedTabbarBuilder<HardcoreTabs>()
             .AddTab(HardcoreTabs.HardcoreState, "Hardcore State", FAI.Handcuffs)
+            .AddTab(HardcoreTabs.Arousal, "Arousal", FAI.Heartbeat)
             .Build();
     }
 
@@ -56,6 +66,9 @@ public class SettingsModulesHardcore
         {
             case HardcoreTabs.HardcoreState:
                 DrawHardcoreStateOptions();
+                break;
+            case HardcoreTabs.Arousal:
+                DrawArousalOptions();
                 break;
         }
     }
@@ -108,5 +121,63 @@ public class SettingsModulesHardcore
             _config.Save();
         }
         CkGui.HelpTextFramed(GSLoc.Settings.Options.HardcoreEscapeTT, true, hFlags: ImGuiHoveredFlags.AllowWhenDisabled);
+    }
+
+    private void DrawArousalOptions()
+    {
+        CkGui.FontText("Arousal", Fonts.SubtitleFont);
+        if (ClientData.Globals is not { } globals)
+            return;
+
+        var globalArousal = globals.GlobalArousal;
+        if (CkGui.Checkbox(GSLoc.Settings.Options.GlobalArousal, ref globalArousal, ArousalService.AnyEffectActive))
+            UiService.SetUITask(async () => await PermHelper.ChangeOwnGlobal(_hub, globals, nameof(GlobalPerms.GlobalArousal), globalArousal));
+        CkGui.HelpTextFramed(GSLoc.Settings.Options.GlobalArousalTT, true, hFlags: ImGuiHoveredFlags.AllowWhenDisabled);
+
+        // Individual effects only matter while Arousal Effects is enabled.
+        using (ImRaii.PushIndent())
+        {
+            DrawArousalToggle(GSLoc.Settings.Options.ArousalStutter, GSLoc.Settings.Options.ArousalStutterTT,
+                _config.Data.ArousalStutter, v => _config.Data.ArousalStutter = v, !globalArousal || ArousalService.DoStutter);
+            DrawArousalToggle(GSLoc.Settings.Options.ArousalWordLimit, GSLoc.Settings.Options.ArousalWordLimitTT,
+                _config.Data.ArousalWordLimit, v => _config.Data.ArousalWordLimit = v, !globalArousal || ArousalService.DoLimitedWords);
+            DrawArousalToggle(GSLoc.Settings.Options.ArousalBlush, GSLoc.Settings.Options.ArousalBlushTT,
+                _config.Data.ArousalBlush, v => _config.Data.ArousalBlush = v, !globalArousal || ArousalService.DoBlush);
+            DrawArousalToggle(GSLoc.Settings.Options.ArousalGcdDelay, GSLoc.Settings.Options.ArousalGcdDelayTT,
+                _config.Data.ArousalGcdDelay, v => _config.Data.ArousalGcdDelay = v, !globalArousal || ArousalService.DoGcdDelay);
+            // Blur is not implemented yet, so its toggle stays disabled.
+            DrawArousalToggle(GSLoc.Settings.Options.ArousalBlur, GSLoc.Settings.Options.ArousalBlurTT, false, _ => { }, true);
+        }
+
+        // The meter runs regardless of Arousal Effects, so the timings are always editable.
+        var buildMinutes = _config.Data.ArousalBuildMinutes;
+        ImGui.SetNextItemWidth(200f);
+        if (ImGui.SliderInt(GSLoc.Settings.Options.ArousalBuildTime, ref buildMinutes, 15, 480, "%d min", ImGuiSliderFlags.AlwaysClamp))
+        {
+            _config.Data.ArousalBuildMinutes = buildMinutes;
+            _config.Save();
+            _arousal.UpdateFinalCache();
+        }
+        CkGui.HelpTextFramed(GSLoc.Settings.Options.ArousalBuildTimeTT, true);
+
+        var decayMinutes = _config.Data.ArousalDecayMinutes;
+        ImGui.SetNextItemWidth(200f);
+        if (ImGui.SliderInt(GSLoc.Settings.Options.ArousalDecayTime, ref decayMinutes, 5, 480, "%d min", ImGuiSliderFlags.AlwaysClamp))
+        {
+            _config.Data.ArousalDecayMinutes = decayMinutes;
+            _config.Save();
+            _arousal.UpdateFinalCache();
+        }
+        CkGui.HelpTextFramed(GSLoc.Settings.Options.ArousalDecayTimeTT, true);
+    }
+
+    private void DrawArousalToggle(string label, string tooltip, bool value, Action<bool> set, bool disabled)
+    {
+        if (CkGui.Checkbox(label, ref value, disabled))
+        {
+            set(value);
+            _config.Save();
+        }
+        CkGui.HelpTextFramed(tooltip, true, hFlags: ImGuiHoveredFlags.AllowWhenDisabled);
     }
 }

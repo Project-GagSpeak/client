@@ -232,7 +232,7 @@ public class CacheStateManager : IHostedService
                 }
                 _lociHandler.TryAddLociItemToCache(layerKey, restraintSet.GetLociDataAtLayer(idx));
                 _traitsHandler.TryAddTraitsToCache(layerKey, restraintSet.GetTraitsForLayer(idx));
-                _arousalHandler.TryAddArousalToCache(layerKey, restraintSet.Arousal);
+                _arousalHandler.TryAddArousalToCache(layerKey, restraintSet.GetArousalForLayer(idx));
                 _overlayHandler.TryAddBlindfoldToCache(layerKey, restraintSet.GetBlindfoldAtLayer(idx));
                 _overlayHandler.TryAddEffectToCache(layerKey, restraintSet.GetHypnoEffectAtLayer(idx));
             }
@@ -489,7 +489,7 @@ public class CacheStateManager : IHostedService
             }
             _lociHandler.TryAddLociItemToCache(layerKey, item.GetLociDataAtLayer(idx));
             _traitsHandler.TryAddTraitsToCache(layerKey, item.GetTraitsForLayer(idx));
-            _arousalHandler.TryAddArousalToCache(layerKey, item.Arousal);
+            _arousalHandler.TryAddArousalToCache(layerKey, item.GetArousalForLayer(idx));
             _overlayHandler.TryAddBlindfoldToCache(layerKey, item.GetBlindfoldAtLayer(idx));
             _overlayHandler.TryAddEffectToCache(layerKey, item.GetHypnoEffectAtLayer(idx));
         }
@@ -530,7 +530,7 @@ public class CacheStateManager : IHostedService
             }
             _lociHandler.TryAddLociItemToCache(layerKey, item.GetLociDataAtLayer(idx));
             _traitsHandler.TryAddTraitsToCache(layerKey, item.GetTraitsForLayer(idx));
-            _arousalHandler.TryAddArousalToCache(layerKey, item.Arousal);
+            _arousalHandler.TryAddArousalToCache(layerKey, item.GetArousalForLayer(idx));
             _overlayHandler.TryAddBlindfoldToCache(layerKey, item.GetBlindfoldAtLayer(idx));
             _overlayHandler.TryAddEffectToCache(layerKey, item.GetHypnoEffectAtLayer(idx));
         }

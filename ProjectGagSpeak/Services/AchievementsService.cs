@@ -327,7 +327,7 @@ public class AchievementsService : DisposableMediatorSubscriberBase, IHostedServ
         {
             if (PlayerData.Level < 90)
                 return false;
-            return _restraints.AppliedRestraint is not null && ArousalService.ArousalPercent > 0.5f;
+            return _restraints.AppliedRestraint is not null && ArousalService.EffectPercent > 0.5f && _remoteService.IsClientBeingBuzzed;
         }, (id, name) => OnCompletion(id, name).ConfigureAwait(false), "Hardcore Trials Cleared");
         _saveData.AddConditionalProgress(AchievementModuleKind.Wardrobe, Achievements.TrialOfDexterity, 1, () =>
         {

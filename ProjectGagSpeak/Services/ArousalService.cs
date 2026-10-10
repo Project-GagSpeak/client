@@ -2,6 +2,7 @@ using CkCommons.Gui;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Utility.Raii;
+using GagSpeak.PlayerClient;
 using GagSpeak.State.Caches;
 using GagSpeak.Utils;
 using GagspeakAPI.Attributes;
@@ -14,13 +15,17 @@ namespace GagSpeak.Services;
 public sealed class ArousalService : IDisposable
 {
     private readonly ILogger<ArousalService> _logger;
+    private static MainConfig _config = null!;
 
     private readonly CancellationTokenSource _timerCts = new();
     private Task? _timerTask;
+    private DateTime _lastSave = DateTime.MinValue;
 
-    public ArousalService(ILogger<ArousalService> logger)
+    public ArousalService(ILogger<ArousalService> logger, MainConfig config)
     {
         _logger = logger;
+        _config = config;
+        Arousal = config.Data.Arousal;
         UpdateFinalCache();
         _timerTask = Task.Run(TimerTask, _timerCts.Token);
     }
@@ -55,6 +60,7 @@ public sealed class ArousalService : IDisposable
     private const float MIN_GEN_RATE = 0.0001f;       // Lower bound
     private const float MAX_FREQ = 0.1f;              // 10 times per second
     private const float MIN_FREQ = 2.0f;              // 1 times per 2 seconds
+    private const float REF_STRENGTH = 8f;            // Strong gag + Strong restraint set, the reference for the build-up time
     private const float STIM_SOFTCAP = 200f;          // Total stimulation where deminishing returns begin
     private const float STIM_HARD_CAP = 400f;         // Max total considered for gen rate
 
@@ -63,23 +69,28 @@ public sealed class ArousalService : IDisposable
     private float _generationRate;
     private float _generationFrequency;
     private float _degenerationRate;
+    private static float _pulsePhase;
 
     // Exposed Properties
     public static float StaticArousal { get; private set; } = 0f;
     public static float Arousal { get; private set; } = 0f;
     public static float ArousalPercent => Arousal / AROUSAL_CAP;
-    public static bool DoScreenBlur => ArousalEffects.ShouldBlur(ArousalPercent);
-    public static float BlurIntensity => ArousalEffects.BlurIntensity(ArousalPercent);
-    public static bool DoBlush => ArousalEffects.ShouldBlush(ArousalPercent);
-    public static float BlushOpacity => ArousalEffects.BlushOpacity(ArousalPercent);
-    public static bool DoStutter => ArousalEffects.ShouldStutter(ArousalPercent);
-    public static float StutterFrequency => ArousalEffects.StutterFrequency(ArousalPercent);
-    public static bool DoPulse => ArousalEffects.ShouldPulse(ArousalPercent);
-    public static float PulseRate => ArousalEffects.PulseRate(ArousalPercent);
-    public static bool DoLimitedWords => ArousalEffects.ShouldLimitWords(ArousalPercent);
-    public static float WordLimitMultiplier => ArousalEffects.MaxWordLimitFactor(ArousalPercent);
-    public static bool DoGcdDelay => ArousalEffects.ShouldSlowGCD(ArousalPercent);
-    public static float GcdDelayFactor => ArousalEffects.GCDFactor(ArousalPercent);
+    // Effects only apply while Arousal Effects is enabled, though the meter itself keeps running.
+    public static float EffectPercent => ClientData.Globals?.GlobalArousal == true ? ArousalPercent : 0f;
+    public static bool DoScreenBlur => ArousalEffects.ShouldBlur(EffectPercent);
+    public static float BlurIntensity => ArousalEffects.BlurIntensity(EffectPercent);
+    public static bool DoBlush => ArousalEffects.ShouldBlush(EffectPercent) && _config.Data.ArousalBlush;
+    public static float BlushOpacity => ArousalEffects.BlushOpacity(EffectPercent);
+    public static bool DoStutter => ArousalEffects.ShouldStutter(EffectPercent) && _config.Data.ArousalStutter;
+    public static float StutterFrequency => ArousalEffects.StutterFrequency(EffectPercent);
+    public static bool DoPulse => DoBlush && ArousalEffects.ShouldPulse(EffectPercent);
+    public static float PulseRate => ArousalEffects.PulseRate(EffectPercent);
+    public static bool DoLimitedWords => ArousalEffects.ShouldLimitWords(EffectPercent) && _config.Data.ArousalWordLimit;
+    public static float WordLimitMultiplier => ArousalEffects.MaxWordLimitFactor(EffectPercent);
+    public static bool DoGcdDelay => ArousalEffects.ShouldSlowGCD(EffectPercent) && _config.Data.ArousalGcdDelay;
+    public static float GcdDelayFactor => DoGcdDelay ? ArousalEffects.GCDFactor(EffectPercent) : 1f;
+    public static bool HasChatEffects => DoStutter || DoLimitedWords;
+    public static bool AnyEffectActive => HasChatEffects || DoBlush || DoGcdDelay;
 
     #region Public Methods
     /// <summary> Marks a <see cref="CombinedCacheKey"/> for an Arousal <paramref name="strength"/>.</summary>
@@ -135,20 +146,125 @@ public sealed class ArousalService : IDisposable
         // Get how close to our arousal cap we are.
         float percent = StaticArousal / AROUSAL_CAP;
 
-        // Generation rate: scaled based on softcapped stimulation
-        _generationRate = GagspeakEx.Lerp(MIN_GEN_RATE, MAX_GEN_RATE, percent);
+        // Generation rate: scaled based on softcapped stimulation, then by the configured build-up time.
+        _generationRate = GagspeakEx.Lerp(MIN_GEN_RATE, MAX_GEN_RATE, percent) * BuildScale();
 
         // Frequency: faster when more stimulated
         _generationFrequency = GagspeakEx.Lerp(MIN_FREQ, MAX_FREQ, percent);
 
-        // Decay: usually a fraction of generation
-        _degenerationRate = _generationRate * 0.5f;
+        // Decay: half of generation while stimulated, otherwise drains a full meter in the configured decay time.
+        _degenerationRate = StaticArousal > 0
+            ? _generationRate * 0.5f
+            : AROUSAL_CAP / (_config.Data.ArousalDecayMinutes * 60f) * _generationFrequency;
 
         _logger.LogDebug("Finished Updating Arousal Caches.", LogFilter.Arousal);
 
         return Task.CompletedTask;
     }
+
+    /// <summary> Applies the word limit and stutter effects for the current arousal to a chat message. </summary>
+    public static string ApplyChatEffects(string msg)
+    {
+        var words = msg.Split(' ');
+
+        // Text between * (RP actions) is never stuttered or cut, matching the garbler.
+        var isAction = new bool[words.Length];
+        var inAction = false;
+        for (var i = 0; i < words.Length; i++)
+        {
+            isAction[i] = inAction || words[i].Contains('*');
+            if (words[i].Count(c => c == '*') % 2 == 1)
+                inAction = !inAction;
+        }
+
+        if (DoStutter)
+        {
+            var baseChance = StutterFrequency / 2f;
+            for (var i = 0; i < words.Length; i++)
+            {
+                if (isAction[i] || words[i].Length == 0 || !char.IsLetter(words[i][0]))
+                    continue;
+
+                if (Random.Shared.NextSingle() >= baseChance * StutterPositionWeight(words, i) * StutterSoundWeight(words[i]))
+                    continue;
+
+                var stutter = $"{words[i][0]}-";
+                words[i] = (Random.Shared.NextSingle() < baseChance * 0.5f ? stutter + stutter : stutter) + words[i];
+            }
+        }
+
+        if (DoLimitedWords)
+        {
+            var spoken = words.Length - isAction.Count(a => a);
+            var limit = Math.Max(2, (int)MathF.Ceiling(spoken * WordLimitMultiplier));
+            var kept = new List<string>();
+            var spokenSeen = 0;
+            for (var i = 0; i < words.Length; i++)
+            {
+                if (isAction[i] || ++spokenSeen <= limit)
+                    kept.Add(words[i]);
+                // Mark each cut stretch of speech once, on its first cut word:
+                // trail off the kept word before it, or stand in for a fully cut stretch.
+                else if (isAction[i - 1])
+                    kept.Add("...");
+                else if (spokenSeen - 1 == limit)
+                    kept[^1] += "...";
+            }
+            words = kept.ToArray();
+        }
+
+        return string.Join(' ', words);
+    }
+
+    /// <summary> Draws a pink vignette from the screen edges for blush, throbbing when pulse is active. </summary>
+    /// <remarks> When blur effects are implemented, make this work the same as how blur does it </remarks>
+    public static void DrawBlush()
+    {
+        if (!DoBlush)
+            return;
+
+        var alpha = BlushOpacity * 0.6f;
+        if (DoPulse)
+        {
+            _pulsePhase = (_pulsePhase + ImGui.GetIO().DeltaTime * (2f + 4f * PulseRate)) % MathF.Tau;
+            alpha *= 0.75f + 0.25f * MathF.Sin(_pulsePhase);
+        }
+
+        var edge = CkGui.Color(new Vector4(1f, 0.3f, 0.5f, alpha));
+        var clear = CkGui.Color(new Vector4(1f, 0.3f, 0.5f, 0f));
+        var size = ImGui.GetIO().DisplaySize;
+        var depth = size * 0.25f;
+        var drawList = ImGui.GetForegroundDrawList();
+        // Corner order: upper-left, upper-right, bottom-right, bottom-left.
+        drawList.AddRectFilledMultiColor(Vector2.Zero, new(size.X, depth.Y), edge, edge, clear, clear);
+        drawList.AddRectFilledMultiColor(new(0, size.Y - depth.Y), size, clear, clear, edge, edge);
+        drawList.AddRectFilledMultiColor(Vector2.Zero, new(depth.X, size.Y), edge, clear, clear, edge);
+        drawList.AddRectFilledMultiColor(new(size.X - depth.X, 0), size, clear, edge, edge, clear);
+    }
     #endregion Public Methods
+
+    /// <summary> Stutters cluster at the start of a sentence, after a pause, or when speech resumes after an action. </summary>
+    private static float StutterPositionWeight(string[] words, int i)
+        => i == 0 || words[i - 1].Length == 0 || ".!?,;:-*".Contains(words[i - 1][^1]) ? 2f : 1f;
+
+    /// <summary> Hard consonants catch the most, other consonants less, vowels rarely. </summary>
+    /// <remarks> A leading y is a consonant before a vowel ("you"), otherwise a vowel ("Yvonne"). </remarks>
+    private static float StutterSoundWeight(string word)
+        => char.ToLowerInvariant(word[0]) switch
+        {
+            'p' or 'b' or 't' or 'd' or 's' or 'z' => 2f,
+            'a' or 'e' or 'i' or 'o' or 'u' => 0.2f,
+            'y' => word.Length > 1 && "aeiou".Contains(char.ToLowerInvariant(word[1])) ? 1.5f : 0.2f,
+            _ => 1.5f,
+        };
+
+    /// <summary> Scales generation so <see cref="REF_STRENGTH"/> fills the meter in the configured build-up time. </summary>
+    private static float BuildScale()
+    {
+        var refPercent = REF_STRENGTH / AROUSAL_CAP;
+        var refGainPerSec = 0.5f * GagspeakEx.Lerp(MIN_GEN_RATE, MAX_GEN_RATE, refPercent) / GagspeakEx.Lerp(MIN_FREQ, MAX_FREQ, refPercent);
+        return AROUSAL_CAP / refGainPerSec / (_config.Data.ArousalBuildMinutes * 60f);
+    }
 
     // Maps a high stimulation value for a bounded growth curve to make more realistic sense.
     private float SoftcapStimuli(float value, float softcap, float hardcap)
@@ -166,10 +282,12 @@ public sealed class ArousalService : IDisposable
     /// <summary> Called on each new frequency point. </summary>
     public void Update()
     {
-        if (_arousals.Count <= 0)
+        SaveArousal();
+        if (StaticArousal <= 0)
         {
-            // Decay if no arousals are present.
+            // Decay if nothing worn has an arousal strength.
             Arousal = MathF.Max(0f, Arousal - _degenerationRate);
+            return;
         }
 
         // Calculate the new arousal value.
@@ -179,6 +297,17 @@ public sealed class ArousalService : IDisposable
         Arousal = Math.Clamp(newArousal, 0f, AROUSAL_CAP);
         // Log the current arousal state.
         _logger.LogTrace($"Updated Arousal: {(float)Arousal} (Static: {StaticArousal})", LogFilter.Arousal);
+    }
+
+    /// <summary> Persists the current arousal at most once a minute. </summary>
+    private void SaveArousal()
+    {
+        if (_config.Data.Arousal == Arousal || DateTime.UtcNow - _lastSave < TimeSpan.FromMinutes(1))
+            return;
+
+        _config.Data.Arousal = Arousal;
+        _config.Save();
+        _lastSave = DateTime.UtcNow;
     }
 
     #region DebugHelper
@@ -209,12 +338,18 @@ public sealed class ArousalService : IDisposable
             }
         }
         ImGui.Separator();
-        ImGui.TextUnformatted($"Static Arousal: {StaticArousal}");
-        ImGui.TextUnformatted($"Current Arousal: {Arousal}");
+        ImGui.TextUnformatted($"Static Arousal: {StaticArousal:F2}");
+#if DEBUG
+        var arousal = Arousal;
+        if (ImGui.SliderFloat("Current Arousal", ref arousal, 0f, AROUSAL_CAP, "%.1f", ImGuiSliderFlags.AlwaysClamp))
+            Arousal = arousal;
+#else
+        ImGui.TextUnformatted($"Current Arousal: {Arousal:F2}");
+#endif
         ImGui.TextUnformatted($"Arousal Percent: {ArousalPercent:P2}");
-        ImGui.TextUnformatted($"Generation Rate: {_generationRate}");
-        ImGui.TextUnformatted($"Generation Frequency: {_generationFrequency}");
-        ImGui.TextUnformatted($"Degeneration Rate: {_degenerationRate}");
+        ImGui.TextUnformatted($"Generation Rate: {_generationRate:F5} per tick");
+        ImGui.TextUnformatted($"Generation Frequency: {_generationFrequency:F2}s");
+        ImGui.TextUnformatted($"Degeneration Rate: {_degenerationRate:F5} per tick");
         ImGui.Separator();
         ImGui.TextUnformatted("Arousal Effects:");
 
@@ -236,7 +371,7 @@ public sealed class ArousalService : IDisposable
 
         ImGui.Text("Limited Words:");
         CkGui.ColorTextInline(DoLimitedWords.ToString(), DoLimitedWords ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGreen);
-        CkGui.TextInline($"| {WordLimitMultiplier:P2} of the 500 character limit can be typed.");
+        CkGui.TextInline($"| {WordLimitMultiplier:P2} of words kept.");
 
         ImGui.Text("GCD Delay:");
         CkGui.ColorTextInline(DoGcdDelay.ToString(), DoGcdDelay ? ImGuiColors.ParsedPink : ImGuiColors.ParsedGreen);
