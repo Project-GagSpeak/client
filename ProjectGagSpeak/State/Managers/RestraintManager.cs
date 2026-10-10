@@ -362,7 +362,7 @@ public sealed class RestraintManager : IHybridSavable
         Storage.Clear();
         try
         {
-            if (!File.Exists(file))
+            if (_saver.Load(this) is not { } jObject)
             {
                 _logger.LogDebug($"[File Not Found] {file}");
                 var directory = Path.GetDirectoryName(file);
@@ -372,8 +372,6 @@ public sealed class RestraintManager : IHybridSavable
                 return;
             }
 
-            var jsonText = File.ReadAllText(file);
-            var jObject = JObject.Parse(jsonText);
             // Perform Migrations if any, and then load the data.
 
             var version = jObject["Version"]?.Value<int>() ?? 0;

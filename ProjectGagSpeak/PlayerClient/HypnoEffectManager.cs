@@ -74,7 +74,7 @@ public class HypnoEffectManager : IHybridSavable
     {
         var file = _saver.FileNames.HypnoEffects;
         Svc.Logger.Information($"Loading in HypnoEffect Presets: {file}");
-        if (!File.Exists(file))
+        if (_saver.Load(this) is not { } jObject)
         {
             Svc.Logger.Warning($"Creating new HypnoEffectPreset file, as none were located at: {file}");
             _saver.Save(this);
@@ -83,8 +83,7 @@ public class HypnoEffectManager : IHybridSavable
 
         try
         {
-            var text = File.ReadAllText(file);
-            var loaded = JsonConvert.DeserializeObject<LoadIntermediary>(text);
+            var loaded = jObject.ToObject<LoadIntermediary>();
             if (loaded is null)
                 throw new Exception("Failed to load hypno effect presets.");
             if (loaded.Presets is null)

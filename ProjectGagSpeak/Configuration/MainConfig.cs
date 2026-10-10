@@ -187,10 +187,9 @@ public class MainConfig : IHybridSavable, IAudioConfig<MainConfigData>, IDisposa
         try
         {
             // if the main file does not exist, attempt to load the text from the backup.
-            if (File.Exists(file))
+            if (_saver.Load(this) is { } mainObject)
             {
-                jsonText = File.ReadAllText(file);
-                jObject = JObject.Parse(jsonText);
+                jObject = mainObject;
             }
             else
             {

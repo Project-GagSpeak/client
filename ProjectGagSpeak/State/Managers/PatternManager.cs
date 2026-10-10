@@ -209,16 +209,12 @@ public sealed class PatternManager : DisposableMediatorSubscriberBase, IHybridSa
         Logger.LogInformation("Loading in Patterns Config for file: " + file);
 
         Storage.Clear();
-        if (!File.Exists(file))
+        if (_saver.Load(this) is not { } jObject)
         {
             Logger.LogWarning("No Patterns Config file found at {0}", file);
             _saver.Save(this);
             return;
         }
-
-        // Read the json from the file.
-        var jsonText = File.ReadAllText(file);
-        var jObject = JObject.Parse(jsonText);
 
         // Migrate the jObject if it is using the old format.
         if (jObject["PatternStorage"] is JToken)

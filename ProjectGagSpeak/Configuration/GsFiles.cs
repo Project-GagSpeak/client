@@ -85,14 +85,6 @@ public class GsFiles : IConfigFileProvider
         Favorites = Path.Combine(ConfigDirectory, "favorites.json");
         HypnoEffects = Path.Combine(ConfigDirectory, "hypno-effect-presets.json");
         BuzzToys = Path.Combine(ConfigDirectory, "buzz-devices.json");
-
-        if (File.Exists(ConnectionsConfig))
-        {
-            var json = JObject.Parse(File.ReadAllText(ConnectionsConfig));
-            var lastUri = json["LastConnectedURI"]?.Value<string>() ?? PlayerClient.ConnectionsConfig.MAIN_SERVER_URI;
-            var lastUid = json["LastLoggedInUID"]?.Value<string>() ?? string.Empty;
-            Svc.Logger.Information($"Loaded LastConnectedURI [{lastUri}] and LastLoggedInUID [{lastUid}] from ServerConfig.");
-        }
     }
 
     public static string ToHubDir(string uri)
