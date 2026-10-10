@@ -90,6 +90,7 @@ public sealed class ArousalService : IDisposable
     public static bool DoGcdDelay => ArousalEffects.ShouldSlowGCD(EffectPercent) && _config.Data.ArousalGcdDelay;
     public static float GcdDelayFactor => DoGcdDelay ? ArousalEffects.GCDFactor(EffectPercent) : 1f;
     public static bool HasChatEffects => DoStutter || DoLimitedWords;
+    public static bool AnyEffectActive => HasChatEffects || DoBlush || DoGcdDelay;
 
     #region Public Methods
     /// <summary> Marks a <see cref="CombinedCacheKey"/> for an Arousal <paramref name="strength"/>.</summary>
