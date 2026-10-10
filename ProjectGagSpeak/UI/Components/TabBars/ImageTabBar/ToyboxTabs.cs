@@ -13,15 +13,6 @@ public class ToyboxTabs : ImageTabBar<ToyboxTabs.SelectedTab>
         Alarms,
     }
 
-    protected override bool IsTabDisabled(SelectedTab tab)
-    {
-        var disable = true;
-#if DEBUG
-        disable = false;
-#endif
-        return disable;
-    }
-
     public ToyboxTabs()
     {
         AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Vibrator], SelectedTab.BuzzToys,
