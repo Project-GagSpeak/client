@@ -27,15 +27,9 @@ public class ToyboxTabs : ImageTabBar<ToyboxTabs.SelectedTab>
         AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Vibrator], SelectedTab.BuzzToys,
             "Configure your interactable Sex Toy Devices");
         AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Stimulated], SelectedTab.Patterns,
-            "Create, Edit, and playback patterns " +
-            "--SEP----COL--[WIP]--COL--" +
-            "--NL--- Correctly Integrate into Remotes" +
-            "--NL--- Resolve conflicts with Alarms" +
-            "--NL--- Resolve conflict with Personal Remote");
+            "Create, Edit, and playback patterns");
         AddDrawButton(CosmeticService.CoreTextures.Cache[CoreTexture.Clock], SelectedTab.Alarms,
-            "Set various Alarms that play patterns when triggered" +
-            "--SEP----COL--[WIP]--COL--" +
-            "--NL--- Try overlapping on patterns without inturruption");
+            "Set various Alarms that play patterns when triggered");
     }
 
 }
