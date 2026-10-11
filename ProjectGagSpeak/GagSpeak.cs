@@ -268,7 +268,6 @@ public static class GagSpeakServiceExtensions
         .AddSingleton<SpatialAudioCache>()
 
         // State (Handlers)
-        .AddSingleton<RemoteHandler>()
         .AddSingleton<CustomizePlusHandler>()
         .AddSingleton<GlamourHandler>()
         .AddSingleton<PlayerCtrlHandler>()

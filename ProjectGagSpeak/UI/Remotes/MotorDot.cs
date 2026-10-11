@@ -20,6 +20,9 @@ public class MotorDot(BuzzToyMotor motor) : IEquatable<MotorDot>
     private bool _dragging = false;
     private bool _looping = false;
 
+    /// <summary> The highest intensity of any layered pattern this tick. Played if above the motor's own value. </summary>
+    public double OverlayIntensity { get; set; } = 0.0;
+
     /// <summary> The current Position of the MotorDot on the PlotGraph. </summary>
     public double[] Position = new double[2];
 
@@ -99,7 +102,7 @@ public class MotorDot(BuzzToyMotor motor) : IEquatable<MotorDot>
 
     public double LatestIntervalPos(bool deviceEnabled)
         => deviceEnabled
-            ? Math.Round((_useDragLoopData ? _dragLoopData[_dragLoopPlaybackIdx] : PosHistory[0]) / Motor.Interval) * Motor.Interval
+            ? Math.Clamp(Math.Round((_useDragLoopData ? _dragLoopData[_dragLoopPlaybackIdx] : PosHistory[0]) / Motor.Interval) * Motor.Interval, 0.0, 1.0)
             : 0.0;
 
     // Lightweight cleanup method to be used whenever playbacks finish.
@@ -132,9 +135,11 @@ public class MotorDot(BuzzToyMotor motor) : IEquatable<MotorDot>
     /// </summary>
     public void AddPosToHistory(bool deviceEnabled)
     {
+        // Snapshot idx, playback is advanced/cleared on the remote update thread.
+        var idx = PlaybackRef.Idx;
         var posToPush = !deviceEnabled
-            ? 0.0 : PlaybackRef.Idx != -1
-                ? RecordedData[PlaybackRef.Idx] : (_useDragLoopData ? _dragLoopData[_dragLoopPlaybackIdx] : Position[1]);
+            ? 0.0 : idx >= 0 && idx < RecordedData.Count
+                ? RecordedData[idx] : (_useDragLoopData ? _dragLoopData[_dragLoopPlaybackIdx] : Position[1]);
 
         PosHistory.PushFront(posToPush);
 

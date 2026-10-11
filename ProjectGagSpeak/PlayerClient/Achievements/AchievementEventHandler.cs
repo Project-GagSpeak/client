@@ -60,6 +60,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
 
         _events.Subscribe(UnlocksEvent.DeviceConnected, OnDeviceConnected);
         _events.Subscribe(UnlocksEvent.TriggerFired, OnTriggerFired);
+        _events.Subscribe(UnlocksEvent.AlarmTriggered, OnAlarmTriggered);
         _events.Subscribe(UnlocksEvent.DeathRollCompleted, () => (ClientAchievements.SaveData[Achievements.KinkyGambler.Id] as ConditionalAchievement)?.CheckCompletion());
         _events.Subscribe<bool>(UnlocksEvent.AlarmToggled, _ => (ClientAchievements.SaveData[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion());
         _events.Subscribe(UnlocksEvent.ShockSent, OnShockSent);
@@ -125,6 +126,7 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
 
         _events.Unsubscribe(UnlocksEvent.DeviceConnected, OnDeviceConnected);
         _events.Unsubscribe(UnlocksEvent.TriggerFired, OnTriggerFired);
+        _events.Unsubscribe(UnlocksEvent.AlarmTriggered, OnAlarmTriggered);
         _events.Unsubscribe(UnlocksEvent.DeathRollCompleted, () => (ClientAchievements.SaveData[Achievements.KinkyGambler.Id] as ConditionalAchievement)?.CheckCompletion());
         _events.Unsubscribe<bool>(UnlocksEvent.AlarmToggled, _ => (ClientAchievements.SaveData[Achievements.Experimentalist.Id] as ConditionalAchievement)?.CheckCompletion());
         _events.Unsubscribe(UnlocksEvent.ShockSent, OnShockSent);
@@ -886,6 +888,9 @@ public class AchievementEventHandler : DisposableMediatorSubscriberBase
     {
         (ClientAchievements.SaveData[Achievements.CollectorOfSinfulTreasures.Id] as ConditionalAchievement)?.CheckCompletion();
     }
+
+    private void OnAlarmTriggered()
+        => (ClientAchievements.SaveData[Achievements.HornyMornings.Id] as ProgressAchievement)?.IncrementProgress();
 
     private void OnTriggerFired()
     {

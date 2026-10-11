@@ -87,6 +87,8 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
         _onlineUsers.UserWentOnline += OnKinksterOnline;
         // Shift this to new the visibility watcher later.
         Mediator.Subscribe<KinksterRendered>(this, msg => _newVisibleKinksters.Add(msg.User));
+        // Self-enacted pattern changes are not routed through the server, so push them to pairs.
+        Mediator.Subscribe<EnabledItemChanged>(this, msg => { if (msg.Module is GSModule.Pattern) PushEnabledItemChanged(msg).ConfigureAwait(false); });
 
         // Online Data Updaters
         Mediator.Subscribe<ConnectedMessage>(this, _ =>
@@ -104,6 +106,7 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
         Mediator.Subscribe<ConfigPatternChanged>(this, msg => DistributePatternUpdate(msg.Item, msg.Type).ConfigureAwait(false));
         Mediator.Subscribe<ConfigAlarmChanged>(this, msg => DistributeAlarmUpdate(msg.Item, msg.Type).ConfigureAwait(false));
         Mediator.Subscribe<ConfigTriggerChanged>(this, msg => DistributeTriggerUpdate(msg.Item, msg.Type).ConfigureAwait(false));
+        Mediator.Subscribe<EnabledToysChanged>(this, msg => PushEnabledToysChanged(msg).ConfigureAwait(false));
     }
 
     // Idk why we need this really, anymore, but whatever i guess. If it helps it helps.
@@ -274,6 +277,9 @@ public sealed class CharaDataDistributor : DisposableMediatorSubscriberBase
                 var response = await _hub.GetKinkplate(new UserDto(MainHub.OwnUserData));
                 currentContent = response.Info;
             }
+
+            if (currentContent.CompletedTotal == ClientAchievements.Completed)
+                return;
 
             Logger.LogDebug($"Updating KinkPlate™ with {ClientAchievements.Completed} Completions.", LogFilter.Achievements);
             currentContent.CompletedTotal = ClientAchievements.Completed;

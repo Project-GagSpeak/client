@@ -102,6 +102,10 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         if (ImGui.CollapsingHeader("Client Player Data (Serverside Active State)"))
             DrawPlayerCharacterDebug();
 
+        ImGui.Separator();
+        if (ImGui.CollapsingHeader("Achievements"))
+            DrawAchievements();
+
 #if DEBUG
         ImGui.Separator();
         if (ImGui.CollapsingHeader("Pair Data"))
@@ -143,6 +147,24 @@ public class DebugPersonalDataUI : WindowMediatorSubscriberBase
         ImGui.Separator();
     }
 
+
+    private void DrawAchievements()
+    {
+        ImGui.Text($"Completed: {ClientAchievements.Completed} / {ClientAchievements.Total}");
+        CkGui.ColorTextBool($"Valid Save Data: {ClientAchievements.HasValidData}", ClientAchievements.HasValidData);
+        CkGui.ColorTextBool($"Recovering From Unhandled DC: {ClientAchievements.HadUnhandledDC}", !ClientAchievements.HadUnhandledDC);
+
+#if DEBUG
+        // Uploading invalid or mid-recovery data would overwrite good server data.
+        var canSync = MainHub.IsConnected && ClientAchievements.HasValidData && !ClientAchievements.HadUnhandledDC;
+        if (CkGui.IconTextButton(FAI.CloudUploadAlt, "Resync Achievements", disabled: !canSync))
+        {
+            Mediator.Publish(new SendAchievementData());
+            Mediator.Publish(new UpdateCompletedAchievements());
+        }
+        CkGui.AttachTooltip("Re-uploads your achievement save data and completed total (KinkPlate) to the server.");
+#endif
+    }
 
     private void DrawPlayerCharacterDebug()
     {

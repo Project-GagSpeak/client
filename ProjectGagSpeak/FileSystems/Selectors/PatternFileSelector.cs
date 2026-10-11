@@ -163,7 +163,9 @@ public sealed class PatternFileSelector : CkFileSystemSelector<Pattern, PatternF
     {
         if (CkGui.IconButton(FAI.Plus, disabled: !_manager.CanRecordPattern, inPopup: true))
             _manager.OpenRemoteForRecording();
-        CkGui.AttachTooltip(_manager.CanRecordPattern ? "Create a new Pattern." : "Cannot be in a VibeRoom, or playing a pattern!");
+        CkGui.AttachTooltip(_manager.CanRecordPattern ? "Create a new Pattern."
+            : !_manager.HasValidToys ? "No usable toys! Mark a toy as Interactable (and connect it, if it's a real toy) to record a pattern."
+            : "Cannot be in a VibeRoom, or playing a pattern!");
 
         ImGui.SameLine(0, 1);
         DrawFolderButton();

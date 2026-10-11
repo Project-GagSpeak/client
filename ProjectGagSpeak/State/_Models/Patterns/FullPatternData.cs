@@ -5,7 +5,8 @@ using GagspeakAPI.Dto.VibeRoom;
 namespace GagSpeak.State.Models;
 public readonly record struct FullPatternData
 {
-    public DeviceStream[] DeviceData { get; init; } = Array.Empty<DeviceStream>();
+    private readonly DeviceStream[]? _deviceData;
+    public DeviceStream[] DeviceData { get => _deviceData ?? []; init => _deviceData = value; }
     public ToyBrandName PrimaryDeviceUsed { get; init; } = ToyBrandName.Unknown;
     public ToyBrandName SecondaryDeviceUsed { get; init; } = ToyBrandName.Unknown;
     public ToyMotor MotorsUsed { get; init; } = ToyMotor.Unknown;

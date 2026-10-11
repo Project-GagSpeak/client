@@ -27,6 +27,7 @@ public sealed class DtrService : DisposableMediatorSubscriberBase, IHostedServic
     private readonly KinksterManager _kinksters;
     private readonly RequestsManager _requests;
     private readonly VisibilityWatcher _visibility;
+    private readonly RemoteService _remotes;
 
     private IDtrBarEntry _requestsEntry;
     private IDtrBarEntry _privacyEntry;
@@ -38,7 +39,7 @@ public sealed class DtrService : DisposableMediatorSubscriberBase, IHostedServic
     // maybe change up how this is shown, as there are new detailed tooltips and additional click methods for DTR entries.
     public DtrService(ILogger<DtrService> logger, GagspeakMediator mediator,
         MainConfig mainConfig, ChatConfig chatConfig, KinksterManager pairs,
-        RequestsManager requests, VisibilityWatcher visibility)
+        RequestsManager requests, VisibilityWatcher visibility, RemoteService remotes)
         : base(logger, mediator)
     {
         _config = mainConfig;
@@ -46,6 +47,7 @@ public sealed class DtrService : DisposableMediatorSubscriberBase, IHostedServic
         _kinksters = pairs;
         _requests = requests;
         _visibility = visibility;
+        _remotes = remotes;
 
         _requestsEntry = CreateRequestsDtr();
         _privacyEntry = CreatePrivacyDtr();
@@ -205,15 +207,15 @@ public sealed class DtrService : DisposableMediatorSubscriberBase, IHostedServic
 
     private void UpdateVibeToy()
     {
-        if (!_config.Data.DtrVibeStatus || !MainHub.IsConnectionDataSynced)
+        if (!_config.Data.DtrVibeStatus || !MainHub.IsConnectionDataSynced || !_remotes.ClientData.IsVibrating)
         {
             _vibeEntry.Shown = false;
             return;
         }
 
-        //_vibeEntry.Shown = true;
-        //_notifierEntry.Text = new SeString(new IconPayload(BitmapFontIcon.ElementLightning));
-        //_notifierEntry.Tooltip = new SeString(new TextPayload("VibeStatus is WIP"));
+        _vibeEntry.Shown = true;
+        _vibeEntry.Text = new SeString(new IconPayload(BitmapFontIcon.ElementLightning));
+        _vibeEntry.Tooltip = new SeString(new TextPayload("Your toys are vibrating"));
     }
 
     public Task StartAsync(CancellationToken cancellationToken)

@@ -1,5 +1,6 @@
 using Buttplug.Client;
 using CkCommons;
+using GagSpeak.FileSystems;
 using GagSpeak.Interop;
 using GagSpeak.Services.Mediator;
 using GagSpeak.State.Managers;
@@ -20,7 +21,7 @@ public sealed class IntifaceListener : DisposableMediatorSubscriberBase
         _ipc = ipc;
         _manager = manager;
 
-        Mediator.Subscribe<ConnectedMessage>(this, _ => _ipc.OpenAndConnect());
+        Mediator.Subscribe<ConnectedMessage>(this, _ => _ipc.OpenAndConnect().ConfigureAwait(false));
 
         Mediator.Subscribe<BuzzToyAdded>(this, msg => OnDeviceAdded(msg.Device));
         Mediator.Subscribe<BuzzToyRemoved>(this, msg => OnDeviceRemoved(msg.Device));
@@ -29,7 +30,10 @@ public sealed class IntifaceListener : DisposableMediatorSubscriberBase
         Mediator.Subscribe<IntifaceClientDisconnected>(this, _ => OnPostDisconnect());
     }
     private void OnDeviceAdded(ButtplugClientDevice added)
-        => _manager.AddOrUpdateDevice(added);
+    {
+        _manager.AddOrUpdateDevice(added);
+        GagspeakEventManager.AchievementEvent(UnlocksEvent.DeviceConnected);
+    }
 
     private void OnDeviceRemoved(ButtplugClientDevice removed)
     {
@@ -40,7 +44,10 @@ public sealed class IntifaceListener : DisposableMediatorSubscriberBase
             Logger.LogInformation($"Device {removed.Name} removed from device list.", LogFilter.Toys);
             var realToys = _manager.Storage.Values.OfType<IntifaceBuzzToy>();
             if (realToys.FirstOrDefault(st => st.DeviceIdx == removed.Index) is { } match)
-                _manager.RemoveDevice(match);
+            {
+                match.ClearDevice();
+                Mediator.Publish(new ConfigSexToyChanged(StorageChangeType.Modified, match));
+            }
             else
                 throw new Exception($"Device with index {removed.Index} not found in connected toys list.");
         });

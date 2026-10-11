@@ -8,6 +8,7 @@ using GagSpeak.WebAPI;
 using GagspeakAPI.Attributes;
 using GagspeakAPI.Data;
 using GagspeakAPI.Extensions;
+using GagspeakAPI.Dto.VibeRoom;
 using OtterGui.Extensions;
 
 namespace GagSpeak.Services;
@@ -28,6 +29,8 @@ public class ReactionDistributor
     private readonly RestraintManager _restraints;
     private readonly PuppeteerManager _puppeteer;
     private readonly BuzzToyManager _toys;
+    private readonly PatternManager _patterns;
+    private readonly RemoteService _remotes;
     private readonly LociHandler _loci;
     private readonly SelfBondageService _selfBondage;
 
@@ -40,6 +43,8 @@ public class ReactionDistributor
         RestraintManager restraints,
         PuppeteerManager puppeteer,
         BuzzToyManager toys,
+        PatternManager patterns,
+        RemoteService remotes,
         LociHandler loci,
         SelfBondageService selfBondage)
     {
@@ -51,6 +56,8 @@ public class ReactionDistributor
         _restraints = restraints;
         _puppeteer = puppeteer;
         _toys = toys;
+        _patterns = patterns;
+        _remotes = remotes;
         _loci = loci;
         _selfBondage = selfBondage;
     }
@@ -483,8 +490,49 @@ public class ReactionDistributor
 
     private bool SexToyReaction(SexToyAction act, string? enactor = null)
     {
-        // Nothing atm.
+        Pattern? stored = null;
+        if (act.ActionKind is ToyActionType.Pattern && !_patterns.Storage.TryGetPattern(act.PatternId, out stored))
+        {
+            _logger.LogWarning($"SexToy reaction pattern {act.PatternId} not found.", LogFilter.Triggers);
+            return false;
+        }
+
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(act.StartAfter).ConfigureAwait(false);
+            // Never override a pattern a Kinkster is playing on us, or an active recording.
+            if (_remotes.ClientData.IsPlayingForcedPattern || _remotes.ClientData.InRecordingMode)
+            {
+                _logger.LogDebug("Skipping SexToy reaction, remote is in use by a forced pattern or recording.", LogFilter.Triggers);
+                return;
+            }
+
+            // Layer over our own playing pattern, otherwise start it.
+            var pattern = stored ?? CreateVibrationPattern(act);
+            var duration = act.EndAfter > TimeSpan.Zero ? act.EndAfter : pattern.Duration;
+            if (!(_remotes.ClientData.IsPlayingPattern && _remotes.ClientData.TryLayerPattern(pattern, pattern.StartPoint, duration)))
+                _patterns.SwitchPattern(pattern, pattern.StartPoint, duration, MainHub.UID);
+        });
         return true;
+    }
+
+    /// <summary> A temporary (Guid.Empty) pattern holding a constant intensity on all remote-valid motors. </summary>
+    private Pattern CreateVibrationPattern(SexToyAction act)
+    {
+        var intensity = Math.Clamp(act.Intensity, 0, 100) / 100.0;
+        var count = (int)(act.EndAfter.TotalMilliseconds / 20);
+        var devices = _remotes.ClientData.Devices
+            .Where(d => d.ValidForRemote)
+            .Select(d => new DeviceStream(d.FactoryName, d.MotorDotMap.Values
+                .Select(m => new MotorStream(m.Motor.Type, m.MotorIdx, Enumerable.Repeat(intensity, count).ToArray()))
+                .ToArray()))
+            .ToArray();
+
+        var pattern = Pattern.AsEmpty();
+        pattern.Label = "Trigger Vibration";
+        pattern.Duration = act.EndAfter;
+        pattern.PlaybackData = new FullPatternData(devices);
+        return pattern;
     }
     #endregion Reaction Logic
 }
