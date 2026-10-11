@@ -265,9 +265,12 @@ public class CacheStateManager : IHostedService
                 _traitsHandler.TryAddTraitsToCache(key, item.Traits & ~(Traits.Immobile | Traits.Weighty));
             _arousalHandler.TryAddArousalToCache(key, item.Arousal);
             // Conditional Additions.
-            if (item is BlindfoldRestriction bfr) _overlayHandler.TryAddBlindfoldToCache(key, bfr.Properties);
-            if (item is HypnoticRestriction hr) _overlayHandler.TryAddEffectToCache(key, hr.Properties);
-
+            if (_config.Data.CursedItemsApplyOverlays)
+            {
+                if (item is BlindfoldRestriction bfr) _overlayHandler.TryAddBlindfoldToCache(key, bfr.Properties);
+                if (item is HypnoticRestriction hr) _overlayHandler.TryAddEffectToCache(key, hr.Properties);
+            }
+            
             anyRequestedRedraw |= item.DoRedraw;
         }
 
