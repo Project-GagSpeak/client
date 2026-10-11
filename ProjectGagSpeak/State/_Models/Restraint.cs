@@ -311,6 +311,7 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
     public string Description { get; set; } = string.Empty;
     public string ThumbnailPath { get; set; } = string.Empty;
     public bool DoRedraw { get; set; } = false;
+    public int DefaultTightness { get; set; } = 100;
 
     public Dictionary<EquipSlot, IRestraintSlot> RestraintSlots { get; set; } = EquipSlotExtensions.EqdpSlots.ToDictionary(slot => slot, slot => (IRestraintSlot)new RestraintSlotBasic(slot));
     public GlamourBonusSlot Glasses { get; set; } = new GlamourBonusSlot();
@@ -341,6 +342,7 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
         Description = other.Description;
         ThumbnailPath = other.ThumbnailPath;
         DoRedraw = other.DoRedraw;
+        DefaultTightness = other.DefaultTightness;
 
         RestraintSlots = other.RestraintSlots.ToDictionary(x => x.Key, x => x.Value.Clone());
         Glasses = new GlamourBonusSlot(other.Glasses);
@@ -365,6 +367,7 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
             ["Description"] = Description,
             ["ThumbnailPath"] = ThumbnailPath,
             ["DoRedraw"] = DoRedraw,
+            ["DefaultTightness"] = DefaultTightness,
             ["RestraintSlots"] = new JObject(RestraintSlots.Select(x => new JProperty(x.Key.ToString(), x.Value.Serialize()))),
             ["Glasses"] = Glasses.Serialize(),
             ["RestraintLayers"] = new JArray(Layers.Select(x => x.Serialize())),
@@ -447,6 +450,7 @@ public class RestraintSet : IEditableStorageItem<RestraintSet>, IAttributeItem
             Description = setJObj["Description"]?.Value<string>() ?? string.Empty,
             ThumbnailPath = setJObj["ThumbnailPath"]?.Value<string>() ?? string.Empty,
             DoRedraw = setJObj["DoRedraw"]?.Value<bool>() ?? false,
+            DefaultTightness = setJObj["DefaultTightness"]?.Value<int>() ?? 1,
             RestraintSlots = slotDict,
             Glasses = ItemSvc.ParseBonusSlot(setJObj["Glasses"]),
             Layers = layers,

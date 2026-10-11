@@ -8,6 +8,7 @@ public partial class MovementDetours : IDisposable
 {
     private readonly InputId[] movementInputs = [ InputId.MOVE_AND_STEER, InputId.MOVE_ANGLE_DESCENT, InputId.MOVE_ANGLE_RISING,
             InputId.MOVE_LEFT, InputId.MOVE_RIGHT, InputId.MOVE_DESCENT, InputId.MOVE_RETENTION, InputId.MOVE_STRIFE_L, InputId.MOVE_STRIFE_R, InputId.MOVE_FORE, InputId.MOVE_BACK ];
+    private readonly InputId[] weaponInputs = [ InputId.SWARD, InputId.PAD_DRAWN_SWORD ];
 
     private readonly ILogger<MovementDetours> _logger;
     private readonly PlayerControlCache _cache;
@@ -20,6 +21,8 @@ public partial class MovementDetours : IDisposable
         IsInputIdDownHook.Enable();
         IsInputIdHeldHook.Enable();
         IsInputIdUnknownHook.Enable();
+        PadUpdateHook = Svc.Hook.HookFromAddress<PadDevice.Delegates.Update>((nint)PadDevice.StaticVirtualTablePointer->Update, PadUpdateDetour);
+        PadUpdateHook.Enable();
         _logger.LogInformation("MovementDetours initialized successfully.");
     }
 
@@ -67,6 +70,7 @@ public partial class MovementDetours : IDisposable
         IsInputIdDownHook.SafeDispose();
         IsInputIdHeldHook.SafeDispose();
         IsInputIdUnknownHook.SafeDispose();
+        PadUpdateHook.SafeDispose();
         UnfollowHook.SafeDispose();
         MoveUpdateHook.SafeDispose();
 

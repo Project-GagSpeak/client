@@ -23,6 +23,11 @@ public interface IAttributeItem
 {
     Traits Traits { get; set; }
     Arousal Arousal { get; set; }
+
+    /// <summary>
+    /// Used for hardcore escape as the initial progress
+    /// </summary>
+    int DefaultTightness { get; set; }
 }
 
 /// <summary> Basic Restriction Item Contract requirements. </summary>
@@ -64,6 +69,7 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
     public TriStateBool VisorState { get; set; } = TriStateBool.Null;
     public CustomizeProfile CPlusProfile { get; set; } = CustomizeProfile.Empty;
     public bool DoRedraw { get; set; } = false;
+    public int DefaultTightness { get; set; } = 100;
 
     internal GarblerRestriction(GagType gagType) => GagType = gagType;
     public GarblerRestriction(GarblerRestriction other)
@@ -91,6 +97,7 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
         VisorState = other.VisorState;
         CPlusProfile = other.CPlusProfile;
         DoRedraw = other.DoRedraw;
+        DefaultTightness = other.DefaultTightness;
     }
 
     public JObject Serialize()
@@ -107,6 +114,7 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
             ["ProfileGuid"] = CPlusProfile.ProfileGuid.ToString(),
             ["ProfilePriority"] = CPlusProfile.Priority,
             ["DoRedraw"] = DoRedraw,
+            ["DefaultTightness"] = DefaultTightness,
         };
 
     public LightGag ToLightItem()
@@ -143,6 +151,7 @@ public class GarblerRestriction : IEditableStorageItem<GarblerRestriction>, IRes
             VisorState = TriStateBool.FromJObject(json["VisorState"]),
             CPlusProfile = new CustomizeProfile(profileId, profilePrio),
             DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
+            DefaultTightness = json["DefaultTightness"]?.ToObject<int>() ?? 1,
         };
     }
 }
@@ -162,6 +171,7 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
     public Traits Traits { get; set; } = Traits.None;
     public Arousal Arousal { get; set; } = Arousal.None;
     public bool DoRedraw { get; set; } = false;
+    public int DefaultTightness { get; set; } = 100;
 
     public RestrictionItem()
     { }
@@ -191,6 +201,7 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
         Traits = other.Traits;
         Arousal = other.Arousal;
         DoRedraw = other.DoRedraw;
+        DefaultTightness = other.DefaultTightness;
     }
 
     public virtual JObject Serialize()
@@ -209,6 +220,7 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
             ["Traits"] = Traits.ToString(),
             ["Arousal"] = Arousal.ToString(),
             ["DoRedraw"] = DoRedraw,
+            ["DefaultTightness"] = DefaultTightness,
         };
 
     public LightRestriction ToLightItem()
@@ -246,6 +258,7 @@ public class RestrictionItem : IEditableStorageItem<RestrictionItem>, IRestricti
             Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
             Arousal = Enum.TryParse<Arousal>(json["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
             DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
+            DefaultTightness = json["DefaultTightness"]?.ToObject<int>() ?? 1,
         };
     }
 
@@ -310,6 +323,7 @@ public class HypnoticRestriction : RestrictionItem
             Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
             Arousal = Enum.TryParse<Arousal>(json["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
             DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
+            DefaultTightness = json["DefaultTightness"]?.ToObject<int>() ?? 1,
             HeadgearState = TriStateBool.FromJObject(json["HeadgearState"]),
             VisorState = TriStateBool.FromJObject(json["VisorState"]),
             Properties = json["Properties"]?.ToObject<HypnoticOverlay>() ?? new HypnoticOverlay(),
@@ -375,6 +389,7 @@ public class BlindfoldRestriction : RestrictionItem
             Traits = Enum.TryParse<Traits>(json["Traits"]?.ToObject<string>(), out var traits) ? traits : Traits.None,
             Arousal = Enum.TryParse<Arousal>(json["Arousal"]?.ToObject<string>(), out var stim) ? stim : Arousal.None,
             DoRedraw = json["DoRedraw"]?.ToObject<bool>() ?? false,
+            DefaultTightness = json["DefaultTightness"]?.ToObject<int>() ?? 1,
             HeadgearState = TriStateBool.FromJObject(json["HeadgearState"]),
             VisorState = TriStateBool.FromJObject(json["VisorState"]),
             Properties = json["Properties"]?.ToObject<BlindfoldOverlay>() ?? new BlindfoldOverlay(),
