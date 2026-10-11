@@ -21,6 +21,8 @@ public partial class MovementDetours : IDisposable
         IsInputIdDownHook.Enable();
         IsInputIdHeldHook.Enable();
         IsInputIdUnknownHook.Enable();
+        PadUpdateHook = Svc.Hook.HookFromAddress<PadDevice.Delegates.Update>((nint)PadDevice.StaticVirtualTablePointer->Update, PadUpdateDetour);
+        PadUpdateHook.Enable();
         _logger.LogInformation("MovementDetours initialized successfully.");
     }
 
@@ -68,6 +70,7 @@ public partial class MovementDetours : IDisposable
         IsInputIdDownHook.SafeDispose();
         IsInputIdHeldHook.SafeDispose();
         IsInputIdUnknownHook.SafeDispose();
+        PadUpdateHook.SafeDispose();
         UnfollowHook.SafeDispose();
         MoveUpdateHook.SafeDispose();
 
