@@ -116,7 +116,7 @@ public class GlobalChatDrawer : RichEmoteChatDrawer
         var preview = $"Message Global Chat...";
         ImGui.InputTextWithHint($"##chat-input-{radarLog.ID}", preview, ref previewMessage, 400, ImGuiInputTextFlags.CallbackHistory | ImGuiInputTextFlags.CallbackAlways, OnChatInputCallback);
         // Process submission Prevent losing chat focus after pressing the Enter key.
-        if (ImGui.IsItemFocused() && ImGui.IsKeyPressed(ImGuiKey.Enter))
+        if (ImGui.IsItemFocused() && (ImGui.IsKeyPressed(ImGuiKey.Enter) || ImGui.IsKeyPressed(ImGuiKey.KeypadEnter)))
         {
             SendMessage(previewMessage);
             shouldFocusInput = true;
