@@ -67,6 +67,7 @@ internal class InteractionEventsUI : WindowMediatorSubscriberBase
     {
         ClearFilters();
         EventAggregator.UnreadInteractionsCount = 0;
+        Mediator.Publish(new DTRRefreshMessage());
     }
 
     protected override void DrawInternal()

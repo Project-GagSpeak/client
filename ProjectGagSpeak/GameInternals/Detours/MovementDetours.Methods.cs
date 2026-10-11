@@ -32,12 +32,17 @@ public partial class MovementDetours : IDisposable
         AutoMoveUpdateHook?.Original(unk1, unk2);
     }
 
+    // Movement keys while immobile, Draw/Sheathe while actions are blocked (it bypasses UseAction).
+    private bool IsInputBlocked(InputId inputId)
+        => (_cache.BlockMovementKeys && movementInputs.Contains(inputId))
+        || (_cache.BlockActions && weaponInputs.Contains(inputId));
+
     public unsafe delegate byte IsInputIdPressedDelegate(void* unk, InputId inputId);
     [Signature(Signatures.IsInputIdPressed, DetourName = nameof(IsInputIdPressedDetour), Fallibility = Fallibility.Auto)]
     private readonly Hook<IsInputIdPressedDelegate> IsInputIdPressedHook = null!;
     private unsafe byte IsInputIdPressedDetour(void* unk, InputId inputId)
     {
-        if (_cache.BlockMovementKeys && movementInputs.Contains(inputId))
+        if (IsInputBlocked(inputId))
         {
             return 0x00;
         }
@@ -49,7 +54,7 @@ public partial class MovementDetours : IDisposable
     private readonly Hook<IsInputIdDownDelegate> IsInputIdDownHook = null!;
     private unsafe byte IsInputIdDownDetour(void* unk, InputId inputId)
     {
-        if (_cache.BlockMovementKeys && movementInputs.Contains(inputId))
+        if (IsInputBlocked(inputId))
         {
             return 0x00;
         }
@@ -61,7 +66,7 @@ public partial class MovementDetours : IDisposable
     private readonly Hook<IsInputIdHeldDelegate> IsInputIdHeldHook = null!;
     private unsafe byte IsInputIdHeldDetour(void* unk, InputId inputId)
     {
-        if (_cache.BlockMovementKeys && movementInputs.Contains(inputId))
+        if (IsInputBlocked(inputId))
         {
             return 0x00;
         }
@@ -74,11 +79,28 @@ public partial class MovementDetours : IDisposable
     private readonly Hook<IsInputIdUnknownDelegate> IsInputIdUnknownHook = null!;
     private unsafe byte IsInputIdUnknownDetour(void* unk, InputId inputId)
     {
-        if (_cache.BlockMovementKeys && movementInputs.Contains(inputId))
+        if (IsInputBlocked(inputId))
         {
             return 0x00;
         }
         return IsInputIdUnknownHook.Original(unk, inputId);
+    }
+
+    // Controller left stick is analog and bypasses the InputId hooks, so zero it after the pad updates.
+    private Hook<PadDevice.Delegates.Update> PadUpdateHook = null!;
+    private unsafe void PadUpdateDetour(PadDevice* thisPtr)
+    {
+        PadUpdateHook.Original(thisPtr);
+        if (_cache.BlockMovementKeys)
+        {
+            var data = thisPtr->GetData();
+            data->LeftStickX = 0;
+            data->LeftStickY = 0;
+            data->LeftStickLeft = 0;
+            data->LeftStickRight = 0;
+            data->LeftStickUp = 0;
+            data->LeftStickDown = 0;
+        }
     }
 
     /// <summary>
