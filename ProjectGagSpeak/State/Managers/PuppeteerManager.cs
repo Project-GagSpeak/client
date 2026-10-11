@@ -306,6 +306,7 @@ public sealed class PuppeteerManager : DisposableMediatorSubscriberBase, IHybrid
             Identifier = Guid.TryParse(obj["Identifier"]?.Value<string>(), out var guid) ? guid : throw new InvalidOperationException("Invalid GUID"),
             Enabled = obj["Enabled"]?.Value<bool>() ?? false,
             Label = obj["Label"]?.Value<string>() ?? string.Empty,
+            IgnoreCase = obj["IgnoreCase"]?.Value<bool>() ?? false,
             InputCommand = obj["InputCommand"]?.Value<string>() ?? string.Empty,
             Actions = ParseExecutions(obj["Actions"] as JArray),
             WhitelistedUIDs = obj["WhitelistedUIDs"] is JArray arr ? arr.Select(uid => uid.Value<string>() ?? string.Empty).ToHashSet() : new HashSet<string>()
