@@ -197,7 +197,7 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
         if (_cache.UpdateFinalBlindfoldCache(out var prevActiveKey))
         {
             // The blindfold cache changed, and we should apply the new cached lace overlay.
-            Logger.LogDebug($"Blindfold Cache changed! Priority was [{prevActiveKey.ToString()}] and is now [{_cache.PriorityEffectKey.ToString()}] Reapplying cache!", LogFilter.VisualCache);
+            Logger.LogDebug($"Blindfold Cache changed! Priority was [{prevActiveKey.ToString()}] and is now [{_cache.PriorityBlindfoldKey.ToString()}] Reapplying cache!", LogFilter.VisualCache);
             // if the previous type was not CombinedCacheKey.Empty, try and remove the blindfold.
             if (!prevActiveKey.Equals(CombinedCacheKey.Empty))
             {
@@ -209,7 +209,7 @@ public class OverlayHandler : DisposableMediatorSubscriberBase
             if (!_bfService.HasValidBlindfold && _cache.ActiveBlindfold is { } activeBlindfold)
             {
                 Logger.LogDebug("Currently no Blindfold applied, but we have one in our cache, so applying!", LogFilter.VisualCache);
-                await OnApplyBlindfold(activeBlindfold, _cache.PriorityEffectKey);
+                await OnApplyBlindfold(activeBlindfold, _cache.PriorityBlindfoldKey);
             }
         }
         else

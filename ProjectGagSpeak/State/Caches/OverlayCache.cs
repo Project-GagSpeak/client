@@ -117,7 +117,7 @@ public sealed class OverlayCache
     /// <summary>
     ///   Updates the priority blindfold by finding the highest priority blindfold.
     /// </summary>
-    /// <remarks> Remember, while others see the outermost blindfold, you see the innermost. </remarks>
+    /// <remarks> Outermost (highest priority) blindfold wins. </remarks>
     /// <returns> If the profile Changed. </returns>
     public bool UpdateFinalBlindfoldCache([NotNullWhen(true)] out CombinedCacheKey prevPriorityKey)
     {
@@ -130,7 +130,7 @@ public sealed class OverlayCache
             return anyChange;
         }
 
-        var newFinalItem = _blindfolds.Last();
+        var newFinalItem = _blindfolds.First();
         anyChange = !_priorityBlindfold?.Key.Equals(newFinalItem.Key) ?? true;
         prevPriorityKey = _priorityBlindfold?.Key ?? CombinedCacheKey.Empty;
         _priorityBlindfold = newFinalItem;
