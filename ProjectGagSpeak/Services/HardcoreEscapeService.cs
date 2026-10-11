@@ -137,6 +137,10 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
 
         var difficultyMultiplier = CalculateDifficultyMultiplier(item);
 
+        // Allow, when no traits pose a challenge
+        if (difficultyMultiplier == 1)
+            return true;
+
         if (defaultTightness == 0)
         {
             Svc.Toasts.ShowError("Try as you might, you cannot remove this item in your current condition!");
@@ -148,10 +152,6 @@ public class HardcoreEscapeService : DisposableMediatorSubscriberBase
         {
             return true;
         }
-
-        // Allow, when no traits pose a challenge
-        if (difficultyMultiplier == 1)
-            return true;
 
         // If cooldown is active, disallow it.
         if (DateTime.Now < _nextAllowedAttempt)
