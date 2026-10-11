@@ -349,7 +349,7 @@ public sealed class CursedLootManager : IHybridSavable
         Storage.Clear();
         try
         {
-            if (!File.Exists(file))
+            if (_saver.Load(this) is not { } jObject)
             {
                 _logger.LogDebug($"[File Not Found] {file}");
                 var directory = Path.GetDirectoryName(file);
@@ -359,9 +359,6 @@ public sealed class CursedLootManager : IHybridSavable
                 return;
             }
 
-            var jsonText = File.ReadAllText(file);
-            var jObject = JObject.Parse(jsonText);
-            // Read the json from the file.
             var version = jObject["Version"]?.Value<int>() ?? 0;
 
             // Perform Migrations if any, and then load the data.

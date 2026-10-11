@@ -82,14 +82,12 @@ public class AccountConfig : IHybridSavable
     {
         var file = _saver.FileNames.AccountConfig;
         _logger.LogInformation("Loading in Config for file: " + file);
-        if (!File.Exists(file))
+        if (_saver.Load(this) is not { } jObject)
         {
             _logger.LogWarning("Config file not found for: " + file);
             return;
         }
 
-        var jsonText = File.ReadAllText(file);
-        var jObject = JObject.Parse(jsonText);
         var version = jObject["Version"]?.Value<int>() ?? 0;
 
         // execute based on version.

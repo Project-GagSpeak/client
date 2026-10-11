@@ -239,11 +239,9 @@ public sealed class CollarManager : IHybridSavable
     {
         var file = GetSaveFilePath();
         _logger.LogInformation($"Loading CollarData Config: ({file})");
-        JObject jObject;
-        // Read the json from the file.
         try
         {
-            if (!File.Exists(file))
+            if (_saver.Load(this) is not { } jObject)
             {
                 _logger.LogDebug($"[File Not Found] {file}");
                 var directory = Path.GetDirectoryName(file);
@@ -253,11 +251,6 @@ public sealed class CollarManager : IHybridSavable
                 return;
             }
 
-            // read & parse the text by version.
-            var jsonText = File.ReadAllText(file);
-            jObject = JObject.Parse(jsonText);
-
-            // Read the json from the file.
             var version = jObject["Version"]?.Value<int>() ?? 0;
 
             // Load the instanced CollarData.          
