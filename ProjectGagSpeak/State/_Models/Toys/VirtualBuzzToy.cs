@@ -92,8 +92,13 @@ public class VirtualBuzzToy : BuzzToy, IEditableStorageItem<VirtualBuzzToy>
             // Fetch the shared cached sound data
             var path = Path.Combine(GsFiles.AssemblyDirectory, "Assets", "Audio", "vibrator_loop.wav");
             var cachedSound = AudioSystem.GetOrAddSound(path);
-            AudioSystem.PlaySound(audioKey, cachedSound, loop: true, initialIntensity: intensity);
-            AudioSystem.SetIntensity(audioKey, intensity);
+
+            // Motors are offset in the loop and share volume so they don't stack in phase or clip.
+            var motors = _motorTypeMap[motor];
+            var channels = cachedSound.WaveFormat.Channels;
+            var startPos = (long)cachedSound.AudioData.Length / channels / motors.Count * motors.FindIndex(m => m.MotorIdx == motorIdx) * channels;
+            AudioSystem.PlaySound(audioKey, cachedSound, loop: true, initialIntensity: 0, startPosition: startPos);
+            AudioSystem.SetIntensity(audioKey, intensity / motors.Count);
         }
         else
         {
